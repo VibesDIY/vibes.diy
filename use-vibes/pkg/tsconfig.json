@@ -4,5 +4,5 @@
     "outDir": "./dist"
   },
   "include": ["**/*"],
-  "exclude": ["../tests/**/*", "node_modules", "dist", "build-npm.ts", "main.deno.ts", "commands/cli-output-deno.ts"]
+  "exclude": ["../tests/**/*", "node_modules", "dist"]
 }

@@ -5,11 +5,9 @@
   "description": "Transform any DOM element into an AI-powered micro-app",
   "scripts": {
     "build": "core-cli tsc",
-    "build:npm": "deno task --config ./deno.json build-npm",
     "test": "vitest run",
-    "test:cli": "deno task --config ./deno.json test-cli",
-    "check:cli": "deno task --config ./deno.json check-cli",
-    "run:cli:deno": "deno task --config ./deno.json run-cli",
+    "test:cli": "pnpm --dir ../tests run test:cli",
+    "check:cli": "pnpm exec eslint ./dispatcher.ts ./cli/ ./commands/ ../tests/cli/",
     "pack": "core-cli build -x '^' --doPack",
     "publish": "core-cli build -x '^'"
   },
@@ -29,6 +27,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@adviser/cement": "^0.5.32",
+    "find-up": "^8.0.0",
     "cmd-ts": "^0.15.0",
     "@vibes.diy/prompts": "workspace:*",
     "@fireproof/core": "0.24.12",

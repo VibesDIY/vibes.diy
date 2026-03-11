@@ -14,9 +14,9 @@ runs:
         NPM_TOKEN: ${{ inputs.NPM_TOKEN }}
       run: |
         set -e
+        rm -f **/.npmrc
         echo "GITHUB_REF->"$GITHUB_REF
-        VERSION="${GITHUB_REF#refs/tags/create-vibe@v}"
-        echo "Publishing create-vibe@$VERSION"
-        npm version "$VERSION" --no-git-tag-version
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > ~/.npmrc
-        npm publish --access public --registry https://registry.npmjs.org/
+        mkdir -p dist
+        echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/.npmrc
+        pnpm run publish --registry https://registry.npmjs.org/

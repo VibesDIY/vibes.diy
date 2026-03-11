@@ -1,6 +1,6 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { makeBaseSystemPrompt, getDefaultDependencies, getLlmCatalogNames } from "@vibes.diy/prompts";
-import { type CliOutput, defaultCliOutput } from "./cli-output.js";
+import type { CliOutput } from "./cli-output-node.js";
 
 export interface RunSystemOptions {
   readonly skillsCsv?: string;
@@ -45,7 +45,7 @@ async function resolveSkills(parsedSkills: string[]): Promise<Result<string[]>> 
 
 export async function runSystem(
   options: RunSystemOptions,
-  output: CliOutput = defaultCliOutput,
+  output: CliOutput,
 ): Promise<Result<void>> {
   const rParsedSkills = parseSkillsCsv(options);
   if (rParsedSkills.isErr()) {

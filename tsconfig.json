@@ -45,9 +45,6 @@
     "**/.react-router/**",
     "**/.netlify/**",
     "**/tests-new/**",
-    "hosting/tests/unit/**",
-    "**/build-npm.ts",
-    "**/main.deno.ts",
-    "**/cli-output-deno.ts"
+    "hosting/tests/unit/**"
   ]
 }

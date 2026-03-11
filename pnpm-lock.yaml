@@ -233,6 +233,9 @@ importers:
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
+      zx:
+        specifier: ^8.8.5
+        version: 8.8.5
 
   hosting/base:
     dependencies:
@@ -676,6 +679,9 @@ importers:
       cmd-ts:
         specifier: ^0.15.0
         version: 0.15.0
+      find-up:
+        specifier: ^8.0.0
+        version: 8.0.0
       react:
         specifier: '>=19.1.0'
         version: 19.2.4

@@ -35,9 +35,7 @@
     "dev:router": "cd vibes.diy/pkg && pnpm run dev:router",
     "pack": "echo skip pack",
     "publish": "echo skip publish",
-    "deno:check": "deno task --config use-vibes/pkg/deno.json check-cli",
-    "deno:test": "deno task --config use-vibes/pkg/deno.json test-cli",
-    "check": "pnpm build && pnpm lint && pnpm deno:check && pnpm test && pnpm deno:test && pnpm --filter @vibes.diy/hosting-tests test",
+    "check": "pnpm build && pnpm lint && pnpm --filter use-vibes run check:cli && pnpm test && pnpm --filter use-vibes-test run test:cli && pnpm --filter @vibes.diy/hosting-tests test",
     "storybook": "cd vibes.diy/pkg && cross-env DISABLE_REACT_ROUTER=true pnpm run storybook",
     "storybook:use-vibes": "cd use-vibes/base && pnpm run storybook"
   },

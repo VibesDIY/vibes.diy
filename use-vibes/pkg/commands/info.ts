@@ -1,6 +1,6 @@
 import { cwd } from "node:process";
 import { Result } from "@adviser/cement";
-import type { CliOutput } from "./cli-output.js";
+import type { CliOutput } from "./cli-output-node.js";
 import { findVibesJson } from "./config.js";
 import { resolveTarget } from "./resolve-target.js";
 

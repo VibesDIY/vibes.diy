@@ -10,7 +10,7 @@ export const infoExec: CommandExecutable = {
       return 1;
     }
     const target = argv[0];
-    const result = await runInfo({ target }, runtime.output);
+    const result = await runInfo({ target, startDir: runtime.cwd }, runtime.output);
     if (result.isErr()) {
       runtime.output.stderr(String(result.Err()) + "\n");
       return 1;

@@ -1,25 +1,14 @@
-import { Buffer } from "node:buffer";
-import { resolve, join } from "node:path";
-import { mkdir, rm } from "node:fs/promises";
-import type { CliOutput } from "../../pkg/commands/cli-output.js";
-
-export const MAIN_DENO = resolve(import.meta.dirname, "../../pkg/main.deno.ts");
-export const DENO_CONFIG = resolve(import.meta.dirname, "../../pkg/deno.json");
+import { mkdtemp, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import process from "node:process";
+import { dispatch } from "../../pkg/dispatcher.js";
+import type { CliOutput } from "../../pkg/commands/cli-output-node.js";
 
 export interface CliSpawnResult {
   readonly stdout: string;
   readonly stderr: string;
   readonly code: number;
-}
-
-export function assertTrue(condition: boolean, message: string): void {
-  if (condition !== true) {
-    throw new Error(message);
-  }
-}
-
-export function assertContains(text: string, expected: string, message: string): void {
-  assertTrue(text.includes(expected), `${message}\nExpected to find: ${expected}\nOutput:\n${text}`);
 }
 
 export function captureOutput(): { output: CliOutput; stdout: () => string; stderr: () => string } {
@@ -39,34 +28,25 @@ export function captureOutput(): { output: CliOutput; stdout: () => string; stde
   };
 }
 
-export async function spawnCli(args: readonly string[], opts?: { cwd?: string }): Promise<CliSpawnResult> {
-  const command = new Deno.Command("deno", {
-    args: [
-      "run",
-      "--config",
-      DENO_CONFIG,
-      "--unstable-sloppy-imports",
-      "--allow-read",
-      "--allow-env",
-      MAIN_DENO,
-      ...args,
-    ],
-    stdout: "piped",
-    stderr: "piped",
-    cwd: opts?.cwd,
+export async function runCli(args: readonly string[], opts?: { cwd?: string }): Promise<CliSpawnResult> {
+  const captured = captureOutput();
+  let code = 0;
+  await dispatch([...args], {
+    cwd: opts?.cwd ?? process.cwd(),
+    output: captured.output,
+    setExitCode(nextCode: number): void {
+      code = nextCode;
+    },
   });
-
-  const output = await command.output();
   return {
-    stdout: Buffer.from(output.stdout).toString("utf8"),
-    stderr: Buffer.from(output.stderr).toString("utf8"),
-    code: output.code,
+    stdout: captured.stdout(),
+    stderr: captured.stderr(),
+    code,
   };
 }
 
 export async function withTempDir(fn: (dir: string) => Promise<void>): Promise<void> {
-  const dir = join("/tmp", `use-vibes-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-  await mkdir(dir, { recursive: true });
+  const dir = await mkdtemp(join(tmpdir(), "use-vibes-test-"));
   try {
     await fn(dir);
   } finally {

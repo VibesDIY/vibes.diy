@@ -18,31 +18,27 @@ jobs:
 
       - uses: ./actions/runtime
 
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
       - name: install
         shell: bash
         run: pnpm install
 
-      - name: deno-cli-check
+      - name: use-vibes-cli-check
         shell: bash
-        run: deno task --config use-vibes/pkg/deno.json check-cli
+        run: pnpm --filter use-vibes run check:cli
 
-      - name: deno-cli-test
+      - name: use-vibes-cli-test
         shell: bash
-        run: deno task --config use-vibes/pkg/deno.json test-cli
+        run: pnpm --filter use-vibes-test run test:cli
 
       - name: format-check
         shell: bash
         run: pnpm run format --check
 
-      - name: lint-published-packages
+      - name: lint
         shell: bash
         run: pnpm exec eslint prompts/pkg call-ai/pkg use-vibes/types use-vibes/base use-vibes/pkg
 
-      - name: validate-published-packages
+      - name: validate-all-packages
         shell: bash
         run: |
           set -e

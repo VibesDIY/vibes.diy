@@ -72,34 +72,7 @@ runs:
       run: |
         set -e
         echo "GITHUB_REF->"$GITHUB_REF
-        # Extract version from tag: use-vibes@v0.19.18-dev-cli → 0.19.18-dev-cli
-        VERSION="${GITHUB_REF#refs/tags/use-vibes@v}"
-        echo "Publishing use-vibes@${VERSION} via dnt"
-        # Build npm package via dnt
-        PACKAGE_VERSION="$VERSION" deno run -A build-npm.ts
-        # Publish from dnt output
-        echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/npm/.npmrc
-        cd dist/npm && npm publish --registry https://registry.npmjs.org/
-    - name: publish-jsr
-      id: jsr
-      if: success()
-      shell: bash
-      working-directory: use-vibes/pkg
-      run: |
-        set -e
-        VERSION="${GITHUB_REF#refs/tags/use-vibes@v}"
-        echo "Publishing @vibes-diy/use-vibes@${VERSION} to JSR"
-        # Inject version + rewrite workspace imports to npm: specifiers for JSR
-        deno eval "
-          const f = 'deno.json';
-          const j = JSON.parse(Deno.readTextFileSync(f));
-          j.version = '${VERSION}';
-          j.nodeModulesDir = 'auto';
-          j.imports = {
-            '@vibes.diy/prompts': 'npm:@vibes.diy/prompts@${VERSION}',
-            '@vibes.diy/use-vibes-types': 'npm:@vibes.diy/use-vibes-types@${VERSION}',
-            'call-ai': 'npm:call-ai@${VERSION}'
-          };
-          Deno.writeTextFileSync(f, JSON.stringify(j, null, 2) + '\n');
-        "
-        deno publish --allow-dirty --unstable-sloppy-imports --no-check
+        echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > ~/.npmrc
+        mkdir -p dist
+        echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/.npmrc
+        pnpm run publish --registry https://registry.npmjs.org/
