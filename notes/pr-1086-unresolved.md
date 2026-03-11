@@ -1,6 +1,6 @@
 # PR #1086 — Unresolved Review Comments
 
-Cross-referenced 83 review comments on 2026-03-10. Resolved 76 threads. 5 remain:
+Cross-referenced 83 review comments on 2026-03-10. Resolved 78 threads. 5 remain open on GitHub:
 
 ## sthis context pattern (Meno preference)
 
