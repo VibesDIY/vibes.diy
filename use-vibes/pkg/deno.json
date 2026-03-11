@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "exports": "./main.deno.ts",
   "publish": {
-    "include": ["README.md", "main.deno.ts", "run-cli.ts", "bin.ts", "commands/"]
+    "include": ["README.md", "main.deno.ts", "dispatcher.ts", "bin.ts", "cli/", "commands/"]
   },
   "nodeModulesDir": "manual",
   "imports": {
@@ -20,7 +20,7 @@
     "run-cli": "deno run --unstable-sloppy-imports --allow-read --allow-env --allow-net=127.0.0.1 --allow-write --allow-run=open ./main.deno.ts",
     "test-cli": "deno test --no-check --unstable-sloppy-imports --allow-read --allow-env --allow-net=127.0.0.1 --allow-write=/tmp --allow-run=deno ../tests/cli/",
     "check-local-import-specifiers": "deno run --allow-read ./scripts/check-local-import-specifiers.ts",
-    "check-cli": "deno lint ./main.deno.ts ./run-cli.ts ./commands/ ../tests/cli/ && deno task check-local-import-specifiers",
+    "check-cli": "deno lint ./main.deno.ts ./dispatcher.ts ./cli/ ./commands/ ../tests/cli/ && deno task check-local-import-specifiers",
     "build-npm": "deno run -A build-npm.ts"
   }
 }

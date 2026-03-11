@@ -1,4 +1,4 @@
-import { EventoResultType, HandleTriggerCtx, Result } from "@adviser/cement";
+import { EventoResult, EventoResultType, HandleTriggerCtx, Result } from "@adviser/cement";
 import {
   DashAuthType,
   VerifiedAuthResult,
@@ -8,7 +8,7 @@ import {
 } from "@fireproof/core-types-protocols-dashboard";
 import { ClerkClaimSchema } from "@fireproof/core-types-base";
 import { VibesApiSQLCtx } from "./types.js";
-import { MsgBase } from "@vibes.diy/api-types";
+import { MsgBase, ResError } from "@vibes.diy/api-types";
 
 export type ReqWithVerifiedAuth<REQ extends { type: string; auth: DashAuthType }> = Omit<REQ, "auth"> & {
   readonly auth: VerifiedAuthResult;
@@ -106,12 +106,11 @@ export function optAuth<IReq, TReq extends MsgBase<X>, TRes, X extends { type: s
         } as TReq["payload"];
         // (payload as unknown as { auth: VerifiedResult }).auth = rAuth.Ok();
       } else {
+        console.error("optAuth: verification failed:", rAuth.isErr() ? rAuth.Err() : "unexpected result type");
         ctx.validated.payload = {
           ...payload,
           auth: undefined,
         };
-        // Auth provided but invalid — treat as unauthenticated
-        // (payload as unknown as { auth: undefined }).auth = undefined;
       }
     }
     return fn(ctx as unknown as HandleTriggerCtx<IReq, MsgBase<ReqWithOptionalAuth<X>>, TRes>);
@@ -125,7 +124,12 @@ export function checkAuth<IReq, TReq extends MsgBase<X>, TRes, X extends WithAut
     const payload = ctx.validated.payload;
     if (!payload.auth) {
       console.error("checkAuth: auth required but not verified");
-      return Result.Err("authentication required");
+      await ctx.send.send(ctx, {
+        type: "vibes.diy.error",
+        message: "authentication required",
+        code: "require-login",
+      } satisfies ResError);
+      return Result.Ok(EventoResult.Continue);
     }
     return fn(ctx as unknown as HandleTriggerCtx<IReq, MsgBase<ReqWithVerifiedAuth<X>>, TRes>);
   }) as (ctx: HandleTriggerCtx<IReq, MsgBase<ReqWithOptionalAuth<X>>, TRes>) => Promise<Result<EventoResultType>>);

@@ -1,9 +1,8 @@
-import { runCli } from "../../pkg/run-cli.js";
+import { dispatch } from "../../pkg/dispatcher.js";
 import type { LoginPlatform } from "../../pkg/commands/login.js";
 import { runSkills } from "../../pkg/commands/skills.js";
 import { runSystem } from "../../pkg/commands/system.js";
 import { runWhoami } from "../../pkg/commands/whoami.js";
-import { notImplemented } from "../../pkg/commands/not-implemented.js";
 import { assertTrue, assertContains, captureOutput, spawnCli } from "./test-helpers.js";
 
 /** No-op platform adapter for tests that don't exercise login */
@@ -17,7 +16,7 @@ const testLoginPlatform: LoginPlatform = {
 
 Deno.test("help (unit): outputs usage text", async function (): Promise<void> {
   const captured = captureOutput();
-  await runCli([], {
+  await dispatch([], {
     output: captured.output,
     setExitCode(_code: number): void {},
     loginPlatform: testLoginPlatform,
@@ -69,14 +68,6 @@ Deno.test("system (unit): --skills bogus returns error", async function (): Prom
   assertContains(String(result.Err()), "Unknown skills: bogus", "system should report unknown skill");
 });
 
-for (const cmd of ["dev", "live", "generate", "edit", "publish", "invite"] as const) {
-  Deno.test(`not-implemented (unit): ${cmd} returns not-yet-implemented`, async function (): Promise<void> {
-    const result = await notImplemented({ name: cmd })();
-    assertTrue(result.isErr(), `${cmd} should return not implemented`);
-    assertContains(String(result.Err()), "not yet implemented", `${cmd} should report not-yet-implemented`);
-  });
-}
-
 Deno.test("smoke: no args shows help (exit 0)", async function (): Promise<void> {
   const result = await spawnCli([]);
   assertTrue(result.code === 0, "no-args CLI invocation should exit 0");
@@ -106,10 +97,10 @@ Deno.test("smoke: unknown command exits 1", async function (): Promise<void> {
   assertTrue(result.code === 1, "unknown command should exit 1");
 });
 
-Deno.test("smoke: generate foo bar exits 1 with not-yet-implemented", async function (): Promise<void> {
+Deno.test("smoke: removed commands exit 1 as unknown", async function (): Promise<void> {
   const result = await spawnCli(["generate", "foo", "bar"]);
-  assertTrue(result.code === 1, "stub generate command should exit 1");
-  assertContains(result.stderr, "not yet implemented", "stub generate command should report not implemented");
+  assertTrue(result.code === 1, "removed command should exit 1");
+  assertContains(result.stderr, "Unknown command", "removed command should report unknown");
 });
 
 Deno.test("smoke: handle register with extra args exits 1", async function (): Promise<void> {

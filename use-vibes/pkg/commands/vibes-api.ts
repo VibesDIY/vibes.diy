@@ -47,8 +47,9 @@ export async function getCliDashAuth(): Promise<Result<DashAuthType>> {
     return Result.Err("Not logged in. Run: use-vibes login");
   }
 
+  const fingerprint = await deviceIdKey.fingerPrint();
   const signer = new DeviceIdSignMsg(sthis.txt.base64, deviceIdKey, cert.certificatePayload);
-  const token = await signer.sign({});
+  const token = await signer.sign({ deviceId: fingerprint, seq: 0 } as Record<string, unknown>);
 
   return Result.Ok({ type: "device-id", token } as DashAuthType);
 }
