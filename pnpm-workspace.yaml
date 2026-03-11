@@ -21,7 +21,6 @@ packages:
   - "hosting/base"
   - "hosting/pkg"
   - "hosting/tests/unit"
-  - "create-vibe/pkg"
   - "utils/pkg"
   - "utils/tests"
 
