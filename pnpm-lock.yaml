@@ -682,6 +682,9 @@ importers:
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../base
+      cmd-ts:
+        specifier: ^0.15.0
+        version: 0.15.0
       react:
         specifier: '>=19.1.0'
         version: 19.2.4
