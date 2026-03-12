@@ -240,10 +240,7 @@ export const reqEnsureAppSlug = type({
   auth: dashAuthType,
   "appSlug?": "string", // desired app slug
   "userSlug?": "string", // desired user slug
-  // "promptId?": "string", // used to emit events to the current chat session
-  // "chatId?": "string", // used to emit events to the current chat session
   mode: FSMode,
-  // env passed to the app
   "env?": vibeUserEnv,
   fileSystem: [vibeFile, "[]"],
 });
