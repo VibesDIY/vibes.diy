@@ -91,7 +91,7 @@
     "cmd-ts": "^0.15.0",
     "concurrently": "^9.1.2",
     "cross-env": "^10.0.0",
-    "deno": "^2.6.8",
+    "deno": "^2.7.5",
     "find-up": "^8.0.0",
     "mime-types": "^3.0.2",
     "netlify": "^23.13.5",
