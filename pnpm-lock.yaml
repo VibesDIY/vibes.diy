@@ -15,8 +15,8 @@ importers:
         specifier: ^9.39.2
         version: 9.39.2
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.58.2
         version: 1.58.2
@@ -97,8 +97,8 @@ importers:
         version: 0.24.12(@adviser/cement@0.5.21(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@types/node':
         specifier: ^25.2.0
         version: 25.2.0
@@ -116,8 +116,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@playwright/test':
         specifier: ^1.58.2
         version: 1.58.2
@@ -208,8 +208,8 @@ importers:
         version: 3.25.76
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.18
         version: 4.0.18(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.1.0)
@@ -343,8 +343,8 @@ importers:
         version: 19.2.4
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.18
         version: 4.0.18(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.18)
@@ -474,8 +474,8 @@ importers:
         specifier: ^5.125.1
         version: 5.125.1(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(@types/react@19.2.14)(bs58@5.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.4(react@19.2.4))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@6.0.6)(zod@4.3.6)
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@storybook/addon-a11y':
         specifier: ^10.2.9
         version: 10.2.9(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))
@@ -627,7 +627,7 @@ importers:
         version: 0.24.10(typescript@5.9.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.12
-        version: 0.24.12(@adviser/cement@0.5.25(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../base
@@ -636,8 +636,8 @@ importers:
         version: 19.2.4
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@vitest/browser-playwright':
         specifier: ^4.0.18
         version: 4.0.18(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.18)
@@ -664,7 +664,7 @@ importers:
         version: 19.2.4(react@19.2.4)
       use-fireproof:
         specifier: 0.24.12
-        version: 0.24.12(@adviser/cement@0.5.25(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
       use-vibes:
         specifier: workspace:0.0.0
         version: link:../pkg
@@ -749,7 +749,7 @@ importers:
         version: 0.24.10(typescript@5.9.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.12
-        version: 0.24.12(@adviser/cement@0.5.25(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
@@ -758,8 +758,8 @@ importers:
         version: 19.2.4
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@types/react':
         specifier: ~19.2.14
         version: 19.2.14
@@ -918,8 +918,8 @@ importers:
         specifier: ^1.23.0
         version: 1.23.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260310.1)(wrangler@4.72.0(@cloudflare/workers-types@4.20260305.0)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@pnpm/lockfile-file':
         specifier: ^9.1.3
         version: 9.1.3(@pnpm/logger@5.2.0)
@@ -1132,8 +1132,8 @@ importers:
         specifier: ^1.23.0
         version: 1.23.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260310.1)(wrangler@4.72.0(@cloudflare/workers-types@4.20260305.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@react-router/dev':
         specifier: ^7.13.0
         version: 7.13.0(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(wrangler@4.72.0(@cloudflare/workers-types@4.20260305.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(yaml@2.8.2)
@@ -1292,8 +1292,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -1392,8 +1392,8 @@ importers:
         version: link:../../pkg
     devDependencies:
       '@fireproof/core-cli':
-        specifier: 0.24.10
-        version: 0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        specifier: 0.24.12
+        version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
       '@testing-library/react':
         specifier: ^16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1439,6 +1439,11 @@ packages:
 
   '@adviser/cement@0.5.25':
     resolution: {integrity: sha512-KwhItZ2lv3Ar/16H989tH+B2srpaaOAOJedCjO5NHLVJhaRI7H8OFuVOo+P+ozBejiQbH5q1DwXoUTxcOG4qxQ==}
+    engines: {node: '>=20.19.0'}
+    hasBin: true
+
+  '@adviser/cement@0.5.33':
+    resolution: {integrity: sha512-2nDrWSu8l82iDOUXR9QFenk1kooCLhS06QxGSp8Z9wTVFh3mSUGHC7+IVkBNQKyaO0Jqo1XAIGzaPts22amB6A==}
     engines: {node: '>=20.19.0'}
     hasBin: true
 
@@ -2624,13 +2629,9 @@ packages:
   '@fireproof/core-blockstore@0.24.12':
     resolution: {integrity: sha512-ai7xmNuKaYpGWION+JA2QwGvFFfNzeu1XSkBM7z789dsQXeV2hOQJDTvpB9jUUbQfpHL6UUZ9/AebavHwcrERQ==}
 
-  '@fireproof/core-cli@0.24.10':
-    resolution: {integrity: sha512-ZZ40d3/70DV8CeGybCCY8q7tZWMKrC/0ozi8zbU7FVarFcpzFDXAy+EQRQoutLGdt6u25L4NJvgmKd2eX/bc0g==}
+  '@fireproof/core-cli@0.24.12':
+    resolution: {integrity: sha512-JA3osCKXw+zOLr/+eHqIBtthiVljSXsUTu382pvjr+hvCQquEuZ/wRkaMl4szJhXCVt/JZrg/nZD+QF1/vztKA==}
     hasBin: true
-
-  '@fireproof/core-device-id@0.24.10':
-    resolution: {integrity: sha512-nIg85PpRNFa1yzG+bb5yq3chLDsRfz2pBr4INFYsekhtZoq76T9oi0hYEVQZ0ucHkLYInvh/Daj6OCc6IguExg==}
-    engines: {node: '>=20'}
 
   '@fireproof/core-device-id@0.24.12':
     resolution: {integrity: sha512-OK/Xkmb48O7LXzbq5PCM68vs3KJENbHY+PZjJPdCFu/P+PG0QPU0sa8PPoVMYDK0ZOu2tWmLcpGtXteEPAUOWg==}
@@ -2711,9 +2712,6 @@ packages:
   '@fireproof/core-types-blockstore@0.24.12':
     resolution: {integrity: sha512-Sik8UAz2Frh2F5yDtUI1MitLHmsomEPdx3B8XFPk54Vhox7B46hrMk3rlOUUY3V/gU28b8hf9/mIB1bcGszQsA==}
 
-  '@fireproof/core-types-device-id@0.24.10':
-    resolution: {integrity: sha512-/kUuJktXAephn+mK6zoW5qatWhVxeu6JB19IQhQpHpbq8vWD5EnduWcC86kw0yUtOug7Dtp0UYNzGgvuikVU+g==}
-
   '@fireproof/core-types-device-id@0.24.12':
     resolution: {integrity: sha512-2LGlbCs90+Vi4kwTR2hHrt4BFxORDQOXlrq2tKb0JhHoXrBJAB4TdDBWQR5V6d1PHFLJYb6Yj6mSn8fVMlvSgA==}
 
@@ -2722,9 +2720,6 @@ packages:
 
   '@fireproof/core-types-protocols-cloud@0.24.12':
     resolution: {integrity: sha512-SAFbXLLuo6o95ACMZEO6R7v95NB2a0ZjY6ioBdbtl82b6sxVtunDoUEsSm9itVNZ+bJFudDTDw8ApbdkcfVjiQ==}
-
-  '@fireproof/core-types-protocols-dashboard@0.24.10':
-    resolution: {integrity: sha512-mk5YiPq0usNUJzHewQYYXUDuzF/FQo9h2CFMDyHV0nMUEY0xOI7tCAeb5jf4ysnXBAq2gMZfPLtpAWVMPCFPDA==}
 
   '@fireproof/core-types-protocols-dashboard@0.24.12':
     resolution: {integrity: sha512-AB+/bQMsvKz38vozR4mbkw05BE64sOsZFYwcpiw3YA7pOj4nP/s15x0bjNBLxamSaqCi4b97eLEgygcaxOywVg==}
@@ -2795,8 +2790,8 @@ packages:
     peerDependencies:
       hono: '>=3.0.0'
 
-  '@hono/node-server@1.19.9':
-    resolution: {integrity: sha512-vHL6w3ecZsky+8P5MD+eFfaGTyCeOHUIFYMGpQGbrBTSmNNoxv0if69rEZ5giu36weC5saFuznL411gRX7bJDw==}
+  '@hono/node-server@1.19.11':
+    resolution: {integrity: sha512-dr8/3zEaB+p0D2n/IUrlPF1HZm586qgJNXK1a9fhg/PzdtkK7Ksd5l312tJX2yBuALqDYBlG20QEbayqPyxn+g==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
@@ -5144,19 +5139,9 @@ packages:
     resolution: {integrity: sha512-q+SL+b+05Ud6LbEE35qe4A99P+htKTKVbyiNEe45eCbJFyh/HVK9QXwlrbz+Q4L8SOW4roxSVwXYj4DMBT7Ieg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260126.1':
-    resolution: {integrity: sha512-4VgZc/kKQEzPj4QJ7DIq9Wocy4ilpV4Qmy7OV80aPSwzR4mnp8ovyiu1++c3JptthdCNe5KVQguSRn2SseBvDA==}
-    cpu: [arm64]
-    os: [darwin]
-
   '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260223.1':
     resolution: {integrity: sha512-uDvCfIGr3PR8iKBA6OCNq6w0b2WMvmtkS8KUZVy04CH8ieFsxChYStLiyFTDX4GZs9BtWKeth/7qGDZewY20sQ==}
     cpu: [arm64]
-    os: [darwin]
-
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260126.1':
-    resolution: {integrity: sha512-mY1nYNE+CFUEIMemKPz4QSsOx3rnNLsmyT2OPcTIHSU7/6P4BPlasJ1jKtO60ydAbEjJEGLnpeSZGWsBQghtYw==}
-    cpu: [x64]
     os: [darwin]
 
   '@typescript/native-preview-darwin-x64@7.0.0-dev.20260223.1':
@@ -5164,19 +5149,9 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260126.1':
-    resolution: {integrity: sha512-V+eVxduCKUsujuRFVbmwUF4ZfGKlaJP5XYml+96TzW+m+bv+K0nCWmWQTFVF8e/UOH+NoW6mkb7p0KUQGQpV7A==}
-    cpu: [arm64]
-    os: [linux]
-
   '@typescript/native-preview-linux-arm64@7.0.0-dev.20260223.1':
     resolution: {integrity: sha512-oRt0l3O/itqBEwd5rhfDAyziEzbSgWar1NShduK4n2mHWTHCI1I7mFsbSPbox2pdrqOwOr0QW8xu7xEgDWWRXA==}
     cpu: [arm64]
-    os: [linux]
-
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260126.1':
-    resolution: {integrity: sha512-rPGcUjzuDx/t9ZfCkBLn15PQBr7FKd41sKAG3q2auy/0fLhTGzdaDQ3Qai7y5BtIswX5B19YJZAOPx3Z4Jzyew==}
-    cpu: [arm]
     os: [linux]
 
   '@typescript/native-preview-linux-arm@7.0.0-dev.20260223.1':
@@ -5184,39 +5159,20 @@ packages:
     cpu: [arm]
     os: [linux]
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260126.1':
-    resolution: {integrity: sha512-8F6WZkVu1O0Ob/weZ2siR8zitBbp7dPzOn3/jaC++FXXD9R1t/ILQ1WcLYUrW/W0U1bwq6Aenrs0xJq32Nn8WQ==}
-    cpu: [x64]
-    os: [linux]
-
   '@typescript/native-preview-linux-x64@7.0.0-dev.20260223.1':
     resolution: {integrity: sha512-qpFTW7q8Vvq1v/0bzfT8+D0wLjqydIP0qKlomrEGLlMnCCAnPodo2oLc2JCtacc40TSMZZARvhctTszCn1gWBA==}
     cpu: [x64]
     os: [linux]
-
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260126.1':
-    resolution: {integrity: sha512-UaHT07kICWJXstad3o5LA6PugKxOmmPRtbXrLcwaH6Q+67cJ4RMuWxsxl6KDgcouiooMM/TR2lSclYp+4bsz8g==}
-    cpu: [arm64]
-    os: [win32]
 
   '@typescript/native-preview-win32-arm64@7.0.0-dev.20260223.1':
     resolution: {integrity: sha512-HHu63F8cDhgIlqFGBnqBVQn7HSiORxyT0M6yPzG4tG4gdzx+aFUdogbYily0nzN5b6NolQTrFfh3Q85UfHCHqg==}
     cpu: [arm64]
     os: [win32]
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260126.1':
-    resolution: {integrity: sha512-NpP2XaMQrQHqP+fl5mM7xJOnUFlRi9IvIqxJ/AyrcforDt+0N5b9Jk8pYWqAyUgdmvPjvPgcVE6KanXUby50OQ==}
-    cpu: [x64]
-    os: [win32]
-
   '@typescript/native-preview-win32-x64@7.0.0-dev.20260223.1':
     resolution: {integrity: sha512-vSis36O5qT+vOYfei7GtfWWzvIoaNdmxa1zDypBKkGGCCHt/c5vp0pXls85+8jBVS11Ep6p7ECcHlt+R5CBaug==}
     cpu: [x64]
     os: [win32]
-
-  '@typescript/native-preview@7.0.0-dev.20260126.1':
-    resolution: {integrity: sha512-YlWe5IrAhleaAfGE5m8DQz/KhJyp71pzwXOU/zh1/nWpDAeqMlRzRRLPRMx7AbsIqPB5sClMg20DVw1mn1YWYw==}
-    hasBin: true
 
   '@typescript/native-preview@7.0.0-dev.20260223.1':
     resolution: {integrity: sha512-NEifR9F/0khbTQRztM4Yuxcj9dFuK9ubWIXJwLSmKMlncSp4u1fzRnlfv1vlNKKrXB7BUXoANFHpsM5BEXJ06w==}
@@ -6327,9 +6283,6 @@ packages:
   cmd-shim@8.0.0:
     resolution: {integrity: sha512-Jk/BK6NCapZ58BKUxlSI+ouKRbjH1NLZCgJkYoab+vEHUY3f6OzpNBN9u7HFSv9J6TRDGs4PLOHezoKGaFRSCA==}
     engines: {node: ^20.17.0 || >=22.9.0}
-
-  cmd-ts@0.14.3:
-    resolution: {integrity: sha512-i9miaLBHGPn4T4vUFUdAdWoQ9HI8ato6usFrhubO21o/MQGqI6Nsqyd4ncZusT2chvPetNMmTt0JWkbaAOdWPg==}
 
   cmd-ts@0.15.0:
     resolution: {integrity: sha512-ASyAx+P6DNzNEZ6OYmvjjaLAQeI3L+4lm5rX2Jg8tondXdj06o9JTxi9mfC92KoVbrVFKhZ+j2TfBF8fcura6g==}
@@ -7560,8 +7513,8 @@ packages:
   from2@2.3.0:
     resolution: {integrity: sha512-OMcX/4IC/uqEPVgGeyfN22LJk6AZrMkRZHxcHBMBvHScDGgwTm2GT2Wkgtocyd3JfZffjj2kYUDXXII0Fk9W0g==}
 
-  fs-extra@11.3.3:
-    resolution: {integrity: sha512-VWSRii4t0AFm6ixFFmLLx1t7wS1gh+ckoa84aOeapGum0h+EZd1EhEumSB+ZdDLnEPuucsVB9oB7cxJHap6Afg==}
+  fs-extra@11.3.4:
+    resolution: {integrity: sha512-CTXd6rk/M3/ULNQj8FBqBWHYBVYybQ3VPBw0xGKFe3tuH7ytT6ACnvzpIQ3UZtB8yvUKC2cXn1a+x+5EVQLovA==}
     engines: {node: '>=14.14'}
 
   fs-minipass@3.0.3:
@@ -7838,8 +7791,8 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.11.7:
-    resolution: {integrity: sha512-l7qMiNee7t82bH3SeyUCt9UF15EVmaBvsppY2zQtrbIhl/yzBTny+YUxsVjSjQ6gaqaeVtZmGocom8TzBlA4Yw==}
+  hono@4.11.10:
+    resolution: {integrity: sha512-kyWP5PAiMooEvGrA9jcD3IXF7ATu8+o7B3KCbPXid5se52NPqnOpM/r9qeW2heMnOekF4kqR1fXJqCYeCLKrZg==}
     engines: {node: '>=16.9.0'}
 
   hono@4.11.9:
@@ -12281,6 +12234,13 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
+  '@adviser/cement@0.5.33(typescript@5.9.3)':
+    dependencies:
+      ts-essentials: 10.1.1(typescript@5.9.3)
+      yaml: 2.8.2
+    transitivePeerDependencies:
+      - typescript
+
   '@adviser/ts-xxhash@1.0.2': {}
 
   '@asteasolutions/zod-to-openapi@8.4.0(zod@4.3.6)':
@@ -13439,7 +13399,7 @@ snapshots:
 
   '@fireproof/core-base@0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.21(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-blockstore': 0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag': 0.24.10(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
@@ -13458,7 +13418,7 @@ snapshots:
 
   '@fireproof/core-base@0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.21(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-blockstore': 0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag': 0.24.10(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
@@ -13477,7 +13437,7 @@ snapshots:
 
   '@fireproof/core-base@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-blockstore': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
@@ -13496,7 +13456,7 @@ snapshots:
 
   '@fireproof/core-base@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-blockstore': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
@@ -13515,7 +13475,7 @@ snapshots:
 
   '@fireproof/core-blockstore@0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-gateways-cloud': 0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-gateways-file': 0.24.10(typescript@5.9.3)
@@ -13541,7 +13501,7 @@ snapshots:
 
   '@fireproof/core-blockstore@0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-gateways-cloud': 0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@fireproof/core-gateways-file': 0.24.10(typescript@5.9.3)
@@ -13567,7 +13527,7 @@ snapshots:
 
   '@fireproof/core-blockstore@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-gateways-file': 0.24.12(typescript@5.9.3)
@@ -13593,7 +13553,7 @@ snapshots:
 
   '@fireproof/core-blockstore@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@fireproof/core-gateways-file': 0.24.12(typescript@5.9.3)
@@ -13617,26 +13577,26 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-cli@0.24.10(@pnpm/logger@5.2.0)(typescript@5.9.3)':
+  '@fireproof/core-cli@0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.21(typescript@5.9.3)
-      '@fireproof/core-device-id': 0.24.10(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.10(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.10(typescript@5.9.3)
-      '@hono/node-server': 1.19.9(hono@4.11.7)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
+      '@fireproof/core-device-id': 0.24.12(typescript@5.9.3)
+      '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
+      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
+      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@hono/node-server': 1.19.11(hono@4.11.10)
       '@pnpm/lockfile-file': 9.1.3(@pnpm/logger@5.2.0)
-      '@typescript/native-preview': 7.0.0-dev.20260126.1
+      '@typescript/native-preview': 7.0.0-dev.20260223.1
       aws4fetch: 1.0.20
-      cmd-ts: 0.14.3
+      cmd-ts: 0.15.0
       find-up: 8.0.0
-      fs-extra: 11.3.3
-      hono: 4.11.7
+      fs-extra: 11.3.4
+      hono: 4.11.10
       jose: 6.1.3
       multiformats: 13.4.2
       open: 8.4.2
-      semver: 7.7.3
+      semver: 7.7.4
       zod: 4.3.6
       zx: 8.8.5
     transitivePeerDependencies:
@@ -13645,23 +13605,9 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fireproof/core-device-id@0.24.10(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.21(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.10(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
-      '@fireproof/core-types-device-id': 0.24.10(typescript@5.9.3)
-      '@fireproof/core-types-protocols-dashboard': 0.24.10(typescript@5.9.3)
-      jose: 6.1.3
-      multiformats: 13.4.2
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-device-id@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
@@ -13675,7 +13621,7 @@ snapshots:
 
   '@fireproof/core-gateways-base@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.10(typescript@5.9.3)
@@ -13687,7 +13633,7 @@ snapshots:
 
   '@fireproof/core-gateways-base@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
@@ -13699,7 +13645,7 @@ snapshots:
 
   '@fireproof/core-gateways-cloud@0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-protocols-cloud': 0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
@@ -13715,7 +13661,7 @@ snapshots:
 
   '@fireproof/core-gateways-cloud@0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-protocols-cloud': 0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
@@ -13731,7 +13677,7 @@ snapshots:
 
   '@fireproof/core-gateways-cloud@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-protocols-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
@@ -13747,7 +13693,7 @@ snapshots:
 
   '@fireproof/core-gateways-cloud@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-protocols-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
@@ -13763,7 +13709,7 @@ snapshots:
 
   '@fireproof/core-gateways-file-deno@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
       '@fireproof/vendor': 0.24.10(typescript@5.9.3)
       '@types/deno': 2.5.0
@@ -13773,7 +13719,7 @@ snapshots:
 
   '@fireproof/core-gateways-file-deno@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
       '@fireproof/vendor': 0.24.12(typescript@5.9.3)
       '@types/deno': 2.5.0
@@ -13783,7 +13729,7 @@ snapshots:
 
   '@fireproof/core-gateways-file-node@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
       '@fireproof/vendor': 0.24.10(typescript@5.9.3)
     transitivePeerDependencies:
@@ -13791,7 +13737,7 @@ snapshots:
 
   '@fireproof/core-gateways-file-node@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
       '@fireproof/vendor': 0.24.12(typescript@5.9.3)
     transitivePeerDependencies:
@@ -13799,7 +13745,7 @@ snapshots:
 
   '@fireproof/core-gateways-file@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-gateways-file-deno': 0.24.10(typescript@5.9.3)
       '@fireproof/core-gateways-file-node': 0.24.10(typescript@5.9.3)
@@ -13812,7 +13758,7 @@ snapshots:
 
   '@fireproof/core-gateways-file@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.23(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-gateways-file-deno': 0.24.12(typescript@5.9.3)
       '@fireproof/core-gateways-file-node': 0.24.12(typescript@5.9.3)
@@ -13825,7 +13771,7 @@ snapshots:
 
   '@fireproof/core-gateways-indexeddb@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
@@ -13837,7 +13783,7 @@ snapshots:
 
   '@fireproof/core-gateways-indexeddb@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.23(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
@@ -13849,7 +13795,7 @@ snapshots:
 
   '@fireproof/core-gateways-memory@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
@@ -13860,7 +13806,7 @@ snapshots:
 
   '@fireproof/core-gateways-memory@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
@@ -13871,7 +13817,7 @@ snapshots:
 
   '@fireproof/core-keybag@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.21(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-gateways-file': 0.24.10(typescript@5.9.3)
       '@fireproof/core-gateways-indexeddb': 0.24.10(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
@@ -13899,7 +13845,7 @@ snapshots:
 
   '@fireproof/core-protocols-cloud@0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.24.10(typescript@5.9.3)
@@ -13913,7 +13859,7 @@ snapshots:
 
   '@fireproof/core-protocols-cloud@0.24.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.24.10(typescript@5.9.3)
@@ -13927,7 +13873,7 @@ snapshots:
 
   '@fireproof/core-protocols-cloud@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
@@ -13941,7 +13887,7 @@ snapshots:
 
   '@fireproof/core-protocols-cloud@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
@@ -13973,7 +13919,7 @@ snapshots:
 
   '@fireproof/core-runtime@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.21(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@adviser/ts-xxhash': 1.0.2
       '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.10(typescript@5.9.3)
@@ -14005,7 +13951,7 @@ snapshots:
 
   '@fireproof/core-types-base@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.21(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.10(typescript@5.9.3)
       '@fireproof/vendor': 0.24.10(typescript@5.9.3)
       '@web3-storage/pail': 0.6.2
@@ -14031,7 +13977,7 @@ snapshots:
 
   '@fireproof/core-types-blockstore@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
       '@fireproof/core-types-runtime': 0.24.10(typescript@5.9.3)
       '@fireproof/vendor': 0.24.10(typescript@5.9.3)
@@ -14042,7 +13988,7 @@ snapshots:
 
   '@fireproof/core-types-blockstore@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-runtime': 0.24.12(typescript@5.9.3)
       '@fireproof/vendor': 0.24.12(typescript@5.9.3)
@@ -14051,17 +13997,9 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-device-id@0.24.10(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-types-device-id@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
       zod: 4.3.6
     transitivePeerDependencies:
@@ -14081,7 +14019,7 @@ snapshots:
 
   '@fireproof/core-types-protocols-cloud@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
       '@fireproof/vendor': 0.24.12(typescript@5.9.3)
@@ -14091,18 +14029,9 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-protocols-dashboard@0.24.10(typescript@5.9.3)':
-    dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.10(typescript@5.9.3)
-      '@fireproof/core-types-device-id': 0.24.10(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.10(typescript@5.9.3)
-    transitivePeerDependencies:
-      - typescript
-
   '@fireproof/core-types-protocols-dashboard@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-device-id': 0.24.12(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
@@ -14111,7 +14040,7 @@ snapshots:
 
   '@fireproof/core-types-runtime@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/vendor': 0.24.10(typescript@5.9.3)
       multiformats: 13.4.2
     transitivePeerDependencies:
@@ -14119,7 +14048,7 @@ snapshots:
 
   '@fireproof/core-types-runtime@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/vendor': 0.24.12(typescript@5.9.3)
       multiformats: 13.4.2
     transitivePeerDependencies:
@@ -14195,9 +14124,9 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/use-fireproof@0.24.12(@adviser/cement@0.5.25(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@fireproof/use-fireproof@0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       '@fireproof/core-base': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
@@ -14219,14 +14148,14 @@ snapshots:
 
   '@fireproof/vendor@0.24.10(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.21(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
 
   '@fireproof/vendor@0.24.12(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.25(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@5.9.3)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
@@ -14283,9 +14212,9 @@ snapshots:
       - react
       - react-dom
 
-  '@hono/node-server@1.19.9(hono@4.11.7)':
+  '@hono/node-server@1.19.11(hono@4.11.10)':
     dependencies:
-      hono: 4.11.7
+      hono: 4.11.10
 
   '@humanfs/core@0.19.1': {}
 
@@ -17659,57 +17588,26 @@ snapshots:
       '@typescript-eslint/types': 8.56.0
       eslint-visitor-keys: 5.0.0
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260126.1':
-    optional: true
-
   '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260223.1':
-    optional: true
-
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260126.1':
     optional: true
 
   '@typescript/native-preview-darwin-x64@7.0.0-dev.20260223.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260126.1':
-    optional: true
-
   '@typescript/native-preview-linux-arm64@7.0.0-dev.20260223.1':
-    optional: true
-
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260126.1':
     optional: true
 
   '@typescript/native-preview-linux-arm@7.0.0-dev.20260223.1':
     optional: true
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260126.1':
-    optional: true
-
   '@typescript/native-preview-linux-x64@7.0.0-dev.20260223.1':
-    optional: true
-
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260126.1':
     optional: true
 
   '@typescript/native-preview-win32-arm64@7.0.0-dev.20260223.1':
     optional: true
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260126.1':
-    optional: true
-
   '@typescript/native-preview-win32-x64@7.0.0-dev.20260223.1':
     optional: true
-
-  '@typescript/native-preview@7.0.0-dev.20260126.1':
-    optionalDependencies:
-      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260126.1
-      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260126.1
-      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260126.1
-      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260126.1
-      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260126.1
-      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260126.1
-      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260126.1
 
   '@typescript/native-preview@7.0.0-dev.20260223.1':
     optionalDependencies:
@@ -19158,15 +19056,6 @@ snapshots:
   clsx@2.1.1: {}
 
   cmd-shim@8.0.0: {}
-
-  cmd-ts@0.14.3:
-    dependencies:
-      chalk: 5.6.2
-      debug: 4.4.3(supports-color@10.2.2)
-      didyoumean: 1.2.2
-      strip-ansi: 7.1.2
-    transitivePeerDependencies:
-      - supports-color
 
   cmd-ts@0.15.0:
     dependencies:
@@ -20624,7 +20513,7 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 2.3.8
 
-  fs-extra@11.3.3:
+  fs-extra@11.3.4:
     dependencies:
       graceful-fs: 4.2.11
       jsonfile: 6.2.0
@@ -20964,7 +20853,7 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.11.7: {}
+  hono@4.11.10: {}
 
   hono@4.11.9: {}
 
@@ -26311,9 +26200,9 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  use-fireproof@0.24.12(@adviser/cement@0.5.25(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6):
+  use-fireproof@0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6):
     dependencies:
-      '@fireproof/use-fireproof': 0.24.12(@adviser/cement@0.5.25(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@fireproof/use-fireproof': 0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - '@adviser/cement'
       - bufferutil
@@ -26966,7 +26855,7 @@ snapshots:
 
   wsl-utils@0.3.1:
     dependencies:
-      is-wsl: 3.1.0
+      is-wsl: 3.1.1
       powershell-utils: 0.1.0
 
   xdg-basedir@5.1.0: {}
