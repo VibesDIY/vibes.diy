@@ -78,7 +78,7 @@
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.13",
     "@types/react-dom": "~19.2.2",
-    "@vitest/browser-playwright": "^4.0.18",
+    "@vitest/browser-playwright": "^4.1.0",
     "arktype": "^2.1.29",
     "concurrently": "^9.1.2",
     "drizzle-kit": "^0.31.8",
