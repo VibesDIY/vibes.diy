@@ -10,9 +10,7 @@ import {
   EventoResult,
   EventoSendProvider,
   LRUMap,
-  processStream,
   EventoHandler,
-  Future,
   OnFunc,
 } from "@adviser/cement";
 import {
@@ -21,8 +19,6 @@ import {
   ResOkVibeRegisterFPDb,
   isReqCallAI,
   ReqCallAI,
-  ResErrorCallAI,
-  ResOkCallAI,
   EvtAttachFPDb,
   ReqFetchCloudToken,
   isReqFetchCloudToken,
@@ -31,8 +27,8 @@ import {
   EvtRuntimeReady,
 } from "@vibes.diy/vibe-types";
 import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
-import { isSectionEvent, SectionEvent, VibesDiyApiIface } from "@vibes.diy/api-types";
-import { ChatMessage, CodeEndMsg, isCodeBegin, isCodeEnd, isCodeLine, isPromptReq, PromptReq } from "@vibes.diy/call-ai-v2";
+import { VibesDiyApiIface } from "@vibes.diy/api-types";
+import { executeCallAI } from "./call-ai-flow.js";
 
 export class MessageEventEventoEnDecoder implements EventoEnDecoder<MessageEvent, unknown> {
   async encode(me: MessageEvent): Promise<Result<unknown>> {
@@ -157,36 +153,6 @@ function vibeRegisterFPDB(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
-export function getCodeBlock(stream: ReadableStream<unknown>): Promise<{
-  code: string;
-  sectionEvt: SectionEvent;
-  promptReq: PromptReq;
-  codeEnd: CodeEndMsg;
-}> {
-  const codeParts: string[] = [];
-  let promptReq!: PromptReq;
-  const firstCodeBlock = new Future<{ code: string; sectionEvt: SectionEvent; promptReq: PromptReq; codeEnd: CodeEndMsg }>();
-  processStream(stream, (msg) => {
-    if (isSectionEvent(msg)) {
-      for (const block of msg.blocks) {
-        if (isPromptReq(block)) {
-          promptReq = block;
-        }
-        if (isCodeBegin(block) && block.lang.toLocaleUpperCase() === "JSON") {
-          codeParts.splice(0, codeParts.length); // clear previous code parts
-        }
-        if (isCodeLine(block)) {
-          codeParts.push(block.line);
-        }
-        if (isCodeEnd(block)) {
-          firstCodeBlock.resolve({ code: codeParts.join("\n"), sectionEvt: msg, promptReq, codeEnd: block });
-        }
-      }
-    }
-  });
-  return firstCodeBlock.asPromise();
-}
-
 function vibeFetchCloudToken(sandbox: vibesDiySrvSandbox): EventoHandler {
   const { dashApi } = sandbox.args;
   return {
@@ -230,69 +196,8 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqCallAI, unknown>): Promise<Result<EventoResultType>> => {
-      console.log(`Handling vibe.callAI event with validated data`, ctx);
-      await vibeDiyApi
-        .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "application" })
-        .then(async (rChat) => {
-          console.log(`openChat result in callAI handler`, rChat);
-          if (rChat.isErr()) {
-            return ctx.send.send(ctx, {
-              tid: ctx.validated.tid,
-              type: "vibe.res.callAI",
-              status: "error",
-              message: rChat.Err().message,
-            } satisfies ResErrorCallAI);
-          }
-          getCodeBlock(rChat.Ok().sectionStream).then(({ code, sectionEvt: msg }) => {
-            ctx.send.send(ctx, {
-              tid: ctx.validated.tid,
-              type: "vibe.res.callAI",
-              status: "ok",
-              promptId: msg.promptId,
-              result: code,
-            } satisfies ResOkCallAI);
-          });
-          // console.log(`Sending prompt to chat`, ctx.validated.prompt);
-          const generateSchema: ChatMessage[] = [];
-          if (ctx.validated.schema) {
-            console.log(`Prompt has schema, sending schema`, ctx.validated.schema);
-            generateSchema.push({
-              role: "system",
-              content: [
-                {
-                  type: "text",
-                  text: `Here is the JSON schema for the expected response. 
-                    Please generate one result that conforms to this schema.
-                    Output like Code Blocks and like \`\`\`JSON 
-                    ${JSON.stringify(ctx.validated.schema)}`,
-                },
-              ],
-            });
-          }
-          const rPrompt = await rChat.Ok().prompt({
-            messages: [
-              ...generateSchema,
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: ctx.validated.prompt,
-                  },
-                ],
-              },
-            ],
-          });
-
-          if (rPrompt.isErr()) {
-            return ctx.send.send(ctx, {
-              tid: ctx.validated.tid,
-              type: "vibe.res.callAI",
-              status: "error",
-              message: rPrompt.Err().message,
-            } satisfies ResErrorCallAI);
-          }
-        });
+      const response = await executeCallAI(ctx.validated, vibeDiyApi);
+      await ctx.send.send(ctx, response);
       return Result.Ok(EventoResult.Stop);
     },
   };

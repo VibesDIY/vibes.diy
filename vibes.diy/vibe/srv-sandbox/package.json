@@ -6,7 +6,9 @@
   "scripts": {
     "build": "core-cli tsc",
     "pack": "core-cli build --doPack",
-    "publish": "core-cli build"
+    "publish": "core-cli build",
+    "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest --config vitest.config.ts"
   },
   "dependencies": {
     "@adviser/cement": "^0.5.33",
