@@ -11,37 +11,14 @@ export default [
     route("chat/:userSlug/:appSlug/:fsId?", "./routes/chat/chat.$userSlug.$appSlug.tsx"),
     route("vibes/mine/:userSlug?/:appSlug?/:tab?", "./routes/vibes/mine.tsx"),
     route("settings", "./routes/settings.tsx", { id: "settings" }),
+    route("settings/csr-to-cert", "./routes/settings/csr-to-cert.tsx", { id: "settings-csr-to-cert" }),
   ]),
-
-  // route("chat/:sessionId", "./routes/home.tsx", { id: "chat-session" }),
-  // route("chat/:sessionId/:title", "./routes/home.tsx", { id: "chat" }),
-  // route("chat/:sessionId/:title/app", "./routes/home.tsx", { id: "chat-app" }),
-  // route("chat/:sessionId/:title/code", "./routes/home.tsx", {
-  //   id: "chat-code",
-  // }),
-  // route("chat/:sessionId/:title/data", "./routes/home.tsx", {
-  //   id: "chat-data",
-  // }),
-  // route("chat/:sessionId/:title/chat", "./routes/home.tsx", {
-  //   id: "chat-chat",
-  // }),
-  // route("chat/:sessionId/:title/settings", "./routes/home.tsx", {
-  //   id: "chat-app-settings",
-  // }),
-  // route("groups", "./routes/groups.tsx", { id: "groups" }),
 
   route("vibe/:userSlug/:appSlug/:fsId?", "./routes/vibe.$userSlug.$appSlug.tsx"),
 
   route("about", "./routes/about.tsx", { id: "about" }),
-  route("sso-callback", "./routes/sso-callback.tsx", { id: "sso-callback" }),
-  // route("remix/:vibeSlug?", "./routes/remix.tsx", { id: "remix" }),
-  // route("vibe/:titleId/:installId", "./routes/vibe.$titleId.$installId.tsx", {
-  //   id: "vibe-instance-viewer",
-  // }),
-  // route("vibe/:titleId", "./routes/vibe.$titleId.tsx", {
-  //   id: "vibe-instances-list",
-  // }),
-  // route("firehose", "./routes/firehose.tsx", { id: "firehose" }),
+  // route("sso-callback", "./routes/sso-callback.tsx", { id: "sso-callback" }),
+
   route("legal/privacy", "./routes/legal/privacy.tsx", {
     id: "privacy-policy",
   }),

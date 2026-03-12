@@ -617,3 +617,26 @@ export type ReqSetModeFs = typeof ReqSetModeFs.infer;
 export function isReqSetModeFs(obj: unknown): obj is ReqSetModeFs {
   return !(ReqSetModeFs(obj) instanceof type.errors);
 }
+
+// export const reqCertFromCsr = type({
+//   type: "'vibes.diy.req-cert-from-csr'",
+//   auth: dashAuthType,
+//   csr: "string",
+// });
+
+// export type ReqCertFromCsr = typeof reqCertFromCsr.infer;
+
+// export function isReqCertFromCsr(obj: unknown): obj is ReqCertFromCsr {
+//   return !(reqCertFromCsr(obj) instanceof type.errors);
+// }
+
+// export const resCertFromCsr = type({
+//   type: "'vibes.diy.res-cert-from-csr'",
+//   cert: "string",
+// });
+
+// export type ResCertFromCsr = typeof resCertFromCsr.infer;
+
+// export function isResCertFromCsr(obj: unknown): obj is ResCertFromCsr {
+//   return !(resCertFromCsr(obj) instanceof type.errors);
+// }

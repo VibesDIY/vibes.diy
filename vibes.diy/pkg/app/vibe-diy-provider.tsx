@@ -1,4 +1,4 @@
-import { VibeDiyApi } from "@vibes.diy/api-impl";
+import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { FPApiInterface } from "@fireproof/core-types-protocols-dashboard";
 import React, { createContext, useContext } from "react";
 import { ClerkProvider, useClerk } from "@clerk/clerk-react";
@@ -23,8 +23,8 @@ export interface VibeDiyWebVars {
     DASHBOARD_URL: string;
     VIBES_DIY_API_URL: string;
     VIBES_SVC_HOSTNAME_BASE: string;
-    VIBES_SVC_PROTOCOL: string;
-    VIBES_SVC_PORT: string;
+    // VIBES_SVC_PROTOCOL: string;
+    // VIBES_SVC_PORT: string;
 
     CLERK_PUBLISHABLE_KEY: string;
   };
@@ -47,7 +47,7 @@ export interface VibesDiyCtx {
 const realCtx: VibesDiyCtx = {
   sthis: {} as SuperThis,
   dashApi: {} as FPApiInterface,
-  vibeDiyApi: {} as VibeDiyApi,
+  vibeDiyApi: {} as VibesDiyApi,
   webVars: {} as VibesDiyCtx["webVars"],
   srvVibeSandbox: {} as VibesDiyCtx["srvVibeSandbox"],
 };
@@ -87,7 +87,7 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
       }
     });
     console.log("VibeDiyApi for", apiUrl);
-    return new VibeDiyApi({
+    return new VibesDiyApi({
       apiUrl,
       getToken: async () => {
         if (clerkReady) {

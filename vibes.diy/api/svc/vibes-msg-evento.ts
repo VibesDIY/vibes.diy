@@ -12,6 +12,7 @@ import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
 import { listApplicationChats } from "./public/list-application-chats.js";
 import { ensureAppSettingsEvento } from "./public/ensure-app-settings.js";
 import { setModeFsIdEvento } from "./public/set-mode-fsid.js";
+import { getCertFromCsrEvento } from "./public/get-cert-from-csr.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -23,6 +24,7 @@ export const vibesMsgEvento = Lazy(() => {
     getAppByFsIdEvento,
     openChat,
     promptChatSection,
+    getCertFromCsrEvento,
     ensureAppSettingsEvento,
     setModeFsIdEvento,
     ensureUserSettingsEvento,

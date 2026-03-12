@@ -57,8 +57,6 @@ import {
   HandleTriggerCtx,
   EventoResult,
   ValidateTriggerCtx,
-  BuildURI,
-  URI,
 } from "@adviser/cement";
 import { ClerkClaim, SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
@@ -68,16 +66,12 @@ import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { ClerkApiToken } from "@fireproof/core-protocols-dashboard";
-import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
-
-// interface PkgRepos {
-//   readonly private: string;
-//   readonly public: string;
-// }
+import { ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 
 export interface VibesDiyApiParam {
   readonly apiUrl: string;
   // readonly pkgRepos?: Partial<PkgRepos>;
+  readonly ca?: string[];
   readonly me?: string;
   fetch?(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
   readonly ws?: WebSocket;
@@ -89,6 +83,7 @@ export interface VibesDiyApiParam {
 
 interface VibesDiyApiConfig {
   readonly apiUrl: string;
+  readonly ca?: string[];
   // readonly pkgRepos: PkgRepos;
   readonly me: string;
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
@@ -108,7 +103,7 @@ interface PendingRequest<S> {
 type ReqType<T> = Omit<T, "auth"> & OptionalAuth;
 type WithAuth<T> = Omit<T, "auth"> & { readonly auth: DashAuthType };
 
-export class VibeDiyApi implements VibesDiyApiIface<{
+export class VibesDiyApi implements VibesDiyApiIface<{
   auth?: DashAuthType;
   type?: string;
 }> {
@@ -124,17 +119,12 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     // };
     this.cfg = {
       apiUrl,
+      ca: cfg.ca,
       // pkgRepos,
       me: cfg.me ?? `vibes.diy.client.${sthis.nextId().str}`,
       getToken: cfg.getToken,
       fetch: cfg.fetch ?? fetch.bind(globalThis),
-      ws:
-        cfg.ws ??
-        new WebSocket(
-          BuildURI.from(apiUrl)
-            .protocol(["https", "wss"].find((i) => URI.from(apiUrl).protocol.startsWith(i)) ? "wss:" : "ws:")
-            .toString()
-        ),
+      ws: cfg.ws,
       timeoutMs: cfg.timeoutMs ?? 10000,
       msg: {
         src: "vibes.diy.client",
@@ -162,8 +152,12 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     return Result.Ok(rClaims.Ok() as VerifiedClaimsResult & { claims: ClerkClaim });
   }
 
+  close(): Promise<void> {
+    return this.getReadyConnection().then((conn) => conn.close());
+  }
+
   getReadyConnection(): Promise<VibeDiyApiConnection> {
-    return getVibesDiyWebSocketConnection(this.cfg.apiUrl, this.cfg.ws);
+    return getVibesDiyWebSocketConnection(this.cfg.apiUrl, this.cfg.ws, this.cfg.ca);
   }
 
   async send<T extends { auth?: DashAuthType }>(
@@ -361,13 +355,25 @@ export class VibeDiyApi implements VibesDiyApiIface<{
     );
   }
 
+  getCertFromCsr(req: Req<ReqCertFromCsr>): Promise<Result<ResCertFromCsr>> {
+    return this.request(
+      { ...req, type: "reqCertFromCsr" },
+      {
+        resMatch: (res): res is ResCertFromCsr => {
+          const r = (res as ResCertFromCsr).type === "resCertFromCsr";
+          return r;
+        },
+      }
+    );
+  }
+
   openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>> {
     return LLMChatImpl.open({ ...req, type: "vibes.diy.req-open-chat" }, this);
   }
 }
 
 class LLMChatImpl implements LLMChat {
-  readonly api: VibeDiyApi;
+  readonly api: VibesDiyApi;
   readonly tid: string;
   readonly res: ResOpenChat;
 
@@ -388,7 +394,7 @@ class LLMChatImpl implements LLMChat {
     return this.res.appSlug;
   }
 
-  static async open(open: ReqType<ReqOpenChat>, api: VibeDiyApi): Promise<Result<LLMChat>> {
+  static async open(open: ReqType<ReqOpenChat>, api: VibesDiyApi): Promise<Result<LLMChat>> {
     const conn = await api.getReadyConnection();
     const tid = api.cfg.sthis.nextId(12).str;
 
@@ -473,7 +479,7 @@ class LLMChatImpl implements LLMChat {
 
   // readonly #activePromptIds: LRUMap<string, void>;
   private constructor(
-    api: VibeDiyApi,
+    api: VibesDiyApi,
     tid: string,
     res: ResOpenChat,
     sectionEvents: ReadableStream<OnResponseTypes>,

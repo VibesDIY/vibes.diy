@@ -7,4 +7,5 @@ export interface VibeDiyApiConnection {
   onMessage: ReturnOnFunc<[W3CWebSocketMessageEvent]>;
   onClose: ReturnOnFunc<[W3CWebSocketCloseEvent]>;
   send(data: ToDecoder): void;
+  close(): Promise<void>;
 }
