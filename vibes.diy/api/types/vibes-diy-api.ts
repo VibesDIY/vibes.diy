@@ -25,7 +25,7 @@ import {
 } from "./msg-types.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
+import { ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { ClerkClaim } from "@fireproof/core-types-base";
 
 export const LLMChatEntry = type({
@@ -53,6 +53,7 @@ export interface OptionalAuth {
 export type Req<T> = Omit<T, "type" | "auth"> & OptionalAuth;
 
 export interface VibesDiyApiIface<_T = unknown> {
+  close(): Promise<void>;
   ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>>;
   // getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>>;
   listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>>;
@@ -66,4 +67,6 @@ export interface VibesDiyApiIface<_T = unknown> {
   getTokenClaims(): Promise<Result<VerifiedClaimsResult & { claims: ClerkClaim }>>;
 
   setSetModeFs(req: Req<ReqSetModeFs>): Promise<Result<ResSetModeFs>>;
+
+  getCertFromCsr(req: Req<ReqCertFromCsr>): Promise<Result<ResCertFromCsr>>;
 }

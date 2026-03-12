@@ -6,6 +6,7 @@ packages:
   - "use-vibes/types"
   - "use-vibes/base"
   - "use-vibes/pkg"
+  - "use-vibes/cli"
   - "use-vibes/tests"
   - "use-vibes/examples/react-example"
   - "use-vibes/examples/hosted-dev"

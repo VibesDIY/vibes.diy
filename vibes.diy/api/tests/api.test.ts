@@ -1,4 +1,4 @@
-import { VibeDiyApi } from "@vibes.diy/api-impl";
+import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { createClient } from "@libsql/client/node";
 import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 import { BuildURI, consumeStream, loadAsset, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
@@ -74,7 +74,7 @@ describe("VibesDiyApi", () => {
   const drizzleDB = drizzle(client);
 
   // let svc: Awaited<ReturnType<typeof createHandler>>;
-  let api: VibeDiyApi;
+  let api: VibesDiyApi;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -215,7 +215,7 @@ describe("VibesDiyApi", () => {
     //   } as unknown as ExecutionContext & CFInject
     // );
 
-    api = new VibeDiyApi({
+    api = new VibesDiyApi({
       apiUrl: "http://localhost:8787/api",
       ws: wsPair.p1 as unknown as WebSocket,
       fetch: fetchPair.client.fetch,

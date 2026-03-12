@@ -122,6 +122,18 @@ function SettingsContent() {
       </BrutalistCard>
 
       <BrutalistCard size="md">
+        <h3 className="text-2xl font-bold mb-4">Security</h3>
+        <div className="flex items-center justify-between">
+          <p style={{ color: "var(--vibes-text-secondary)" }}>
+            Convert a Certificate Signing Request (CSR) to a signed certificate.
+          </p>
+          <Link to="/settings/csr-to-cert">
+            <VibesButton variant="blue">CSR to Certificate</VibesButton>
+          </Link>
+        </div>
+      </BrutalistCard>
+
+      <BrutalistCard size="md">
         <h3 className="text-2xl font-bold mb-4">Account</h3>
         <div className="flex items-center justify-between">
           <p style={{ color: "var(--vibes-text-secondary)" }}>
