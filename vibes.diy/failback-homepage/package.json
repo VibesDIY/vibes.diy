@@ -53,7 +53,7 @@
     "mime": "^4.1.0",
     "monaco-editor": "^0.55.1",
     "multiformats": "^13.4.1",
-    "posthog-js": "^1.357.1",
+    "posthog-js": "^1.360.1",
     "react": "19.2.4",
     "react-cookie-consent": "^10.0.1",
     "react-dom": "19.2.4",
