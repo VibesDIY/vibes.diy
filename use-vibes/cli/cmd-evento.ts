@@ -1,0 +1,43 @@
+import { Evento, EventoResult, EventoResultType, HandleTriggerCtx, Result } from "@adviser/cement";
+import { userSettingsEvento } from "./cmds/user-settings-cmd.js";
+import { type } from "arktype";
+
+export const CmdTSMsg = type({
+  type: "'msg.cmd-ts'",
+  cmdTs: type({
+    raw: "unknown",
+    apiUrl: "string",
+    outputFormat: "'json'|'text'",
+  }),
+  result: "unknown",
+});
+export type CmdTSMsg = typeof CmdTSMsg.infer;
+export function isCmdTSMsg(u: unknown): u is CmdTSMsg {
+  return !(CmdTSMsg(u) instanceof type.errors);
+}
+export type WrapCmdTSMsg<T> = Omit<CmdTSMsg, "result"> & { result: T };
+
+export async function sendMsg<Q, S>(
+  ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, Q, S>,
+  result: S
+): Promise<Result<EventoResultType>> {
+  await ctx.send.send(ctx, {
+    ...ctx.request,
+    result,
+  } satisfies WrapCmdTSMsg<S>);
+  return Result.Ok(EventoResult.Continue);
+}
+
+export function cmdTsEvento() {
+  const evento = new Evento({
+    encode: (i) => {
+      if (isCmdTSMsg(i)) {
+        return Promise.resolve(Result.Ok(i.result));
+      }
+      return Promise.resolve(Result.Err("not a cmd-ts-msg"));
+    },
+    decode: (i) => Promise.resolve(Result.Ok(i)),
+  });
+  evento.push([userSettingsEvento]);
+  return evento;
+}

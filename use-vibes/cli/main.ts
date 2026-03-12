@@ -1,0 +1,171 @@
+import { FPDeviceIDSession, SuperThis } from "@fireproof/core";
+import { AppContext, EventoSendProvider, HandleTriggerCtx, Lazy, processStream, Result } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
+import { getKeyBag } from "@fireproof/core-keybag";
+import { DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
+import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import { VibesDiyApi } from "@vibes.diy/api-impl";
+import { readFile } from "fs/promises";
+import { join } from "path";
+import tls from "tls";
+import { $, dotenv } from "zx";
+import { cmd_tsStream } from "./cmd-ts-stream.js";
+import { runSafely, subcommands } from "cmd-ts";
+import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
+import { CliCtx } from "./cli-ctx.js";
+import { cmdTsEvento, WrapCmdTSMsg } from "./cmd-evento.js";
+import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
+import { isResEnsureUserSettings } from "@vibes.diy/api-types";
+
+async function loadMkcertCA(): Promise<string[] | undefined> {
+  try {
+    const caRootRes = await $`mkcert -CAROOT`;
+    const caFile = join(caRootRes.lines("\n\r")[0]?.trim(), "rootCA.pem");
+    const caPem = await readFile(caFile);
+    // console.log(`[mkcert] loaded CA from ${caFile}`);
+    return [...tls.rootCertificates, new TextDecoder().decode(caPem)];
+  } catch (e) {
+    console.warn("[mkcert] could not load CA:", e);
+    return undefined;
+  }
+}
+
+async function vibesDiyApiFactory(sthis: SuperThis, ca?: string[]) {
+  const kb = await getKeyBag(sthis);
+  const devid = await kb.getDeviceId();
+  const rDevkey = await DeviceIdKey.createFromJWK(devid.deviceId.Unwrap());
+  if (rDevkey.isErr()) {
+    throw rDevkey.Err();
+  }
+  if (devid.cert.IsNone()) {
+    throw new Error("Device ID certificate is missing");
+  }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const payload = devid.cert.Unwrap()!.certificatePayload;
+  const deviceIdSigner = new DeviceIdSignMsg(sthis.txt.base64, rDevkey.Ok(), payload);
+  let seq = 0;
+  const getToken = Lazy(
+    async (): Promise<Result<DashAuthType>> => {
+      const now = Math.floor(Date.now() / 1000);
+      const token = await deviceIdSigner.sign(
+        {
+          iss: "use-vibes/cli",
+          sub: "device-id",
+          deviceId: await rDevkey.Ok().fingerPrint(),
+          seq: ++seq,
+          exp: now + 120,
+          nbf: now - 2,
+          iat: now,
+          jti: sthis.nextId().str,
+        } satisfies FPDeviceIDSession,
+        "ES256"
+      );
+      return Result.Ok({
+        type: "device-id",
+        token,
+      });
+    },
+    { resetAfter: 60, skipUnref: true }
+  );
+  return Lazy((apiUrl: string) => {
+    // console.log(`create VibesDiyApi`, apiUrl);
+    return new VibesDiyApi({
+      apiUrl,
+      ca,
+      getToken,
+    });
+  });
+}
+
+class OutputSelector implements EventoSendProvider<unknown, unknown, unknown> {
+  readonly tstream = new TransformStream<unknown, WrapCmdTSMsg<unknown>>();
+  readonly outputStream: ReadableStream<WrapCmdTSMsg<unknown>> = this.tstream.readable;
+  readonly writer = this.tstream.writable.getWriter();
+  async send<IS, OS>(trigger: HandleTriggerCtx<unknown, unknown, unknown>, data: IS): Promise<Result<OS, Error>> {
+    // console.log("OutputSelector send called with data:", data);
+    await this.writer.write(data);
+    return Promise.resolve(Result.Ok());
+  }
+  done(_trigger: HandleTriggerCtx<unknown, unknown, unknown>): Promise<Result<void>> {
+    this.writer.releaseLock();
+    this.tstream.writable.close();
+    return Promise.resolve(Result.Ok());
+  }
+}
+
+async function main() {
+  const ca = await loadMkcertCA();
+  const sthis = ensureSuperThis();
+
+  const env = dotenv.loadSafe(".dev.vars", ".env");
+  sthis.env.sets({ ...env } as Record<string, string>);
+  const ctx: CliCtx = {
+    sthis,
+    cliStream: cmd_tsStream(),
+    vibesDiyApiFactory: await vibesDiyApiFactory(sthis, ca),
+  };
+  const rs = await runSafely(
+    subcommands({
+      name: "use-vibes Cli",
+      description: "use-vibes cli",
+      version: "1.0.0",
+      cmds: {
+        "user-settings": userSettingsCmd(ctx),
+      },
+    }),
+    process.argv.slice(2)
+  );
+  if (isErr(rs)) {
+    console.error(err(rs).error.error.config.message);
+    process.exit(err(rs).error.error.config.exitCode);
+  }
+  // console.log("CLI command result:", rs, process.argv.slice(1));
+
+  // console.error(x.error.message);
+  // process.exit(x.error.exitCode);
+  // }
+
+  const outputSelector = new OutputSelector();
+
+  const evento = cmdTsEvento();
+  const appCtx = new AppContext().set("cliCtx", ctx);
+
+  await Promise.all([
+    processStream(
+      ctx.cliStream.stream,
+      (msg) => {
+        return evento
+          .trigger({
+            ctx: appCtx,
+            send: outputSelector,
+            request: msg,
+          })
+          .then(() => {
+            /* no-op */
+          });
+      },
+      processStream(outputSelector.outputStream, async (wmsg) => {
+        // console.log("xxx", wmsg);
+        const msg = wmsg.result;
+        switch (true) {
+          case isResEnsureUserSettings(msg): {
+            console.log("UserId: ", msg.userId);
+            console.log("Setting:");
+            for (const set of msg.settings) {
+              console.log(` Type:`, set.type, ` Grants:`, JSON.stringify(set.grants));
+            }
+            break;
+          }
+        }
+      })
+    ),
+    ctx.cliStream.close(),
+  ]);
+}
+
+main()
+  .catch((err) => {
+    console.error("Error in use-vibes cli:", err);
+    process.exit(1);
+  })
+  .then(() => process.exit(0));

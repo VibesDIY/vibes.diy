@@ -34,7 +34,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
   validate: unwrapMsgBase(async (msg: MsgBase) => {
     const ret = reqGetAppByFsId(msg.payload);
     if (ret instanceof type.errors) {
-      console.log(`xxxx`, ret.summary);
+      // console.log(`xxxx`, ret.summary);
       return Result.Ok(Option.None());
     }
     return Result.Ok(
@@ -183,7 +183,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                 },
                 app.userId
               );
-              console.log(`xxxx`, rEas);
+              // console.log(`xxxx`, rEas);
               if (rEas.isErr()) {
                 await ctx.send.send(ctx, {
                   type: "vibes.diy.res-get-app-by-fsid",
