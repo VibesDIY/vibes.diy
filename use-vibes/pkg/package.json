@@ -24,6 +24,7 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
+    "cmd-ts": "^0.15.0",
     "@fireproof/core": "0.24.12",
     "@fireproof/core-keybag": "0.24.12",
     "@fireproof/core-runtime": "0.24.12",
