@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import type { ResGetChatDetails, MetaScreenShot } from "@vibes.diy/api-types";
 import { PromptsTab } from "./PromptsTab.js";
 import { AppChatsTab } from "./AppChatsTab.js";
-import { SharingTab } from "./SharingTab.js";
+import { SharingTab } from "./sharing-tab/SharingTab.js";
+import { SettingsTab } from "./settings-tab/index.js";
 
-type Tab = "prompts" | "chats" | "sharing";
+type Tab = "prompts" | "chats" | "sharing" | "settings";
 
 function toTab(s: string | undefined): Tab {
-  if (s === "chats" || s === "sharing") return s;
+  if (s === "chats" || s === "sharing" || s === "settings") return s;
   return "prompts";
 }
 
@@ -112,6 +113,13 @@ export function AppSlugItem({
             >
               Sharing
             </button>
+            <button
+              type="button"
+              onClick={() => navigateTab("settings")}
+              className={`rounded px-3 py-1 text-xs font-medium transition-colors ${activeTab === "settings" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"}`}
+            >
+              Settings
+            </button>
           </div>
           <div className="px-4 py-3">
             {activeTab === "prompts" ? (
@@ -123,6 +131,8 @@ export function AppSlugItem({
               />
             ) : activeTab === "chats" ? (
               <AppChatsTab userSlug={userSlug} appSlug={appSlug} />
+            ) : activeTab === "settings" ? (
+              <SettingsTab userSlug={userSlug} appSlug={appSlug} />
             ) : (
               <SharingTab userSlug={userSlug} appSlug={appSlug} />
             )}

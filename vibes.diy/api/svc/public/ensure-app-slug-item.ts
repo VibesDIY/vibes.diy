@@ -11,7 +11,6 @@ import {
 import {
   EvtNewFsId,
   MsgBase,
-  reqEnsureAppSlug,
   ReqEnsureAppSlug,
   ResEnsureAppSlug,
   VibeFile,
@@ -135,7 +134,7 @@ export const ensureAppSlugItemEvento: EventoHandler<
   hash: "ensure-appSlug-item",
   validate: unwrapMsgBase(async (msg: MsgBase) => {
     // async (ctx): Promise<Result<Option<ReqEnsureAppSlug>>> => {
-    const ret = reqEnsureAppSlug(msg.payload);
+    const ret = ReqEnsureAppSlug(msg.payload);
     // console.log("validate ensureAppSlugItem", payload, ret);
     if (ret instanceof type.errors) {
       return Result.Ok(Option.None());

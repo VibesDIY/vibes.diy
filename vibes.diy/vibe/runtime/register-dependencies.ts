@@ -224,20 +224,24 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
     >();
     ctxVibeApi.onMsg((event) => {
       // console.log("Received message event in vibeApi onMsg handler", event);
-      if (isEvtAttachFPDb(event.data)) {
-        const key = `${event.data.data.dbName}-${event.data.data.userSlug}-${event.data.data.appSlug}`;
+      const { data: evt } = event;
+      if (isEvtAttachFPDb(evt)) {
+        const key = `${evt.data.dbName}-${evt.data.userSlug}-${evt.data.appSlug}`;
         const attabable = attachables.get(key);
         if (attabable) {
           attabable.attach.once(async () => {
-            console.log("Attaching FPDb with key", event.data.data);
+            console.log("Attaching FPDb with key", evt.data);
             const result = await attabable.ledger.attach(
               toCloud({
-                name: `vibe-${event.data.data.dbName}-${event.data.data.userSlug}-${event.data.data.appSlug}`,
-                strategy: new VibeTokenStrategie(ctxVibeApi, event.data.data),
+                name: `vibe-${evt.data.dbName}-${evt.data.userSlug}-${evt.data.appSlug}`,
+                strategy: new VibeTokenStrategie(ctxVibeApi, evt.data),
+                urls: {
+                  base: evt.data.fpcloudUrl,
+                },
               })
             );
             ctxVibeApi.sendAttachStatusFPDbMessage({
-              data: event.data.data,
+              data: evt.data,
               status: result.status(),
             });
           });

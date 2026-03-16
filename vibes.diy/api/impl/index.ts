@@ -1,5 +1,4 @@
 import {
-  DashAuthType,
   MsgBase,
   MsgBaseCfg,
   ReqEnsureAppSlug,
@@ -44,6 +43,9 @@ import {
   ReqSetModeFs,
   ResSetModeFs,
   isResSetModeFs,
+  ReqFPCloudToken,
+  ResFPCloudToken,
+  isResFPCloudToken,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -66,7 +68,7 @@ import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { ClerkApiToken } from "@fireproof/core-protocols-dashboard";
-import { ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
+import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 
 export interface VibesDiyApiParam {
   readonly apiUrl: string;
@@ -165,17 +167,12 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     msgParam: Partial<Omit<MsgBase, "tid">> & { tid: string }
   ): Promise<Result<MsgBox<WithAuth<T>>, VibesDiyError>> {
     let auth = req.auth;
-    if (req.auth?.type !== "not-loggedin") {
-      const rDashAuth = await (req.auth ? Promise.resolve(Result.Ok(req.auth)) : this.cfg.getToken());
-      if (rDashAuth.isErr()) {
-        return Result.Err<MsgBox<WithAuth<T>>, VibesDiyError>({
-          type: "vibes.diy.error",
-          name: "VibesDiyError",
-          message: `Auth Error: ${rDashAuth.Err().message}`,
-          code: "auth-error",
-        });
+    if (!req.auth) {
+      const rDashAuth = await this.cfg.getToken();
+      if (rDashAuth.isOk()) {
+        auth = rDashAuth.Ok();
       }
-      auth = rDashAuth.unwrap();
+      // if getToken fails, proceed unauthenticated
     }
     const msgBox: MsgBase = {
       src: this.cfg.apiUrl,
@@ -351,6 +348,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-set-mode-fs" },
       {
         resMatch: isResSetModeFs,
+      }
+    );
+  }
+
+  getFPCloudToken(req: Req<ReqFPCloudToken>): Promise<Result<ResFPCloudToken>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-fpcloud-token" },
+      {
+        resMatch: isResFPCloudToken,
       }
     );
   }

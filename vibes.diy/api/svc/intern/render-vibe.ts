@@ -61,7 +61,6 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
     ...lockedGroupsVersions,
   });
 
-  console.log("renderVibe-2", genImport.imports);
   const importMap = await deps.renderImportMap({
     resolveFn: resolveVersionRegistry({
       fetch: defaultFetchPkgVersion({

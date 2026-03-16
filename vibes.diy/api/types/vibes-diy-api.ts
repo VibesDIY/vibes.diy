@@ -10,7 +10,6 @@ import {
   ResGetAppByFsId,
   ReqOpenChat,
   VibesDiyError,
-  DashAuthType,
   ResPromptChatSection,
   ResError,
   SectionEvent,
@@ -22,10 +21,12 @@ import {
   ResEnsureAppSettings,
   ReqSetModeFs,
   ResSetModeFs,
+  ReqFPCloudToken,
+  ResFPCloudToken,
 } from "./msg-types.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
+import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { ClerkClaim } from "@fireproof/core-types-base";
 
 export const LLMChatEntry = type({
@@ -50,7 +51,9 @@ export interface LLMChat extends LLMChatEntry {
 export interface OptionalAuth {
   readonly auth?: DashAuthType;
 }
-export type Req<T> = Omit<T, "type" | "auth"> & OptionalAuth;
+// export type Req<T> = Omit<T, "type" | "auth"> & OptionalAuth;
+
+export type Req<T> = T extends unknown ? Omit<T, "type" | "auth"> & OptionalAuth : never;
 
 export interface VibesDiyApiIface<_T = unknown> {
   close(): Promise<void>;
@@ -69,4 +72,6 @@ export interface VibesDiyApiIface<_T = unknown> {
   setSetModeFs(req: Req<ReqSetModeFs>): Promise<Result<ResSetModeFs>>;
 
   getCertFromCsr(req: Req<ReqCertFromCsr>): Promise<Result<ResCertFromCsr>>;
+
+  getFPCloudToken(req: Req<ReqFPCloudToken>): Promise<Result<ResFPCloudToken>>;
 }

@@ -11,13 +11,14 @@
   "dependencies": {
     "@adviser/cement": "^0.5.33",
     "@cloudflare/workers-types": "^4.20260128.0",
-    "@fireproof/core-runtime": "^0.24.12",
-    "@fireproof/core-types-base": "^0.24.12",
-    "@fireproof/core-types-protocols-dashboard": "^0.24.12",
+    "@fireproof/core-runtime": "^0.24.13",
+    "@fireproof/core-types-base": "^0.24.13",
+    "@fireproof/core-types-protocols-cloud": "^0.24.13",
+    "@fireproof/core-types-protocols-dashboard": "^0.24.13",
     "@vibes.diy/call-ai-v2": "workspace:*",
-    "arktype": "^2.1.29"
+    "arktype": "^2.2.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.12"
+    "@fireproof/core-cli": "0.24.13"
   }
 }
