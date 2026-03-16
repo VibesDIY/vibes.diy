@@ -61,8 +61,7 @@ export async function ensureChatId(
     if (resUser.isErr()) {
       return Result.Err(`Failed to ensure userSlug: ${resUser.Err().message}`);
     }
-    userSlug = resUser.Ok();
-
+    userSlug = resUser.Ok().userSlug;
     const resApp = await ensureAppSlug(ctx, {
       userId: req.auth.verifiedAuth.claims.userId,
       userSlug: userSlug,
@@ -71,7 +70,7 @@ export async function ensureChatId(
     if (resApp.isErr()) {
       return Result.Err(`Failed to ensure appSlug: ${resApp.Err().message}`);
     }
-    appSlug = resApp.Ok();
+    appSlug = resApp.Ok().appSlug;
     if (!chatId) {
       chatId = ctx.sthis.nextId(12).str;
       await ctx.db

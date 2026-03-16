@@ -3,9 +3,9 @@ import { type } from "arktype";
 import { injectDefaultVibesCtx, VibeBindings, VibesDiyMountParams, VibesEnv } from "../index.js";
 import { clerkDashApi, DashboardApiImpl } from "@fireproof/core-protocols-dashboard";
 import { ClerkProvider, useClerk } from "@clerk/clerk-react";
-import { ToCloudOpts, TokenAndClaims, TokenStrategie } from "@fireproof/core-types-protocols-cloud";
-import { Database, SuperThis } from "@fireproof/use-fireproof";
-import { Lazy, Logger, OnFunc, OnFuncReturn, ReturnOnFunc } from "@adviser/cement";
+import { TokenStrategie } from "@fireproof/core-types-protocols-cloud";
+import { Database } from "@fireproof/use-fireproof";
+import { OnFunc, OnFuncReturn, ReturnOnFunc } from "@adviser/cement";
 
 /**
  * Error codes for VibeMetadata validation failures.
@@ -40,10 +40,10 @@ export class VibeMetadataValidationError extends Error {
 // }
 
 export interface Vibe extends VibesDiyMountParams {
-  readonly dashApi: DashboardApiImpl<unknown>;
+  // readonly dashApi: DashboardApiImpl<unknown>;
   readonly clerk: ReturnType<typeof useClerk>;
   sessionReady(): boolean;
-  fpCloudStrategie(): TokenStrategie;
+  // fpCloudStrategie(): TokenStrategie;
   onDatabaseOpen: ReturnOnFunc<[_db: Database], unknown>;
 }
 
@@ -99,43 +99,43 @@ export interface VibeContextProviderProps {
   readonly children: ReactNode;
 }
 
-class UseVibesStrategie implements TokenStrategie {
-  readonly ctx: Pick<Vibe, "dashApi" | "env">;
-  constructor(ctx: Pick<Vibe, "dashApi" | "env">) {
-    this.ctx = ctx;
-  }
+// class UseVibesStrategie implements TokenStrategie {
+//   readonly ctx: Vibe //, "dashApi" | "env">;
+//   constructor(ctx: Vibe) { //, "dashApi" | "env">) {
+//     this.ctx = ctx;
+//   }
 
-  hash(): string {
-    return this.ctx.env.DASHBOARD_URL;
-  }
+//   hash(): string {
+//     return this.ctx.env.DASHBOARD_URL;
+//   }
 
-  open(): void {
-    /* */
-  }
-  tryToken(): Promise<TokenAndClaims | undefined> {
-    return Promise.resolve(undefined);
-  }
+//   open(): void {
+//     /* */
+//   }
+//   tryToken(): Promise<TokenAndClaims | undefined> {
+//     return Promise.resolve(undefined);
+//   }
 
-  async waitForToken(sthis: SuperThis, logger: Logger, deviceId: string, opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
-    const rRes = await this.ctx.dashApi.ensureCloudToken({
-      appId: opts.context.get("UseVibes.AppId") || deviceId,
-    });
-    if (rRes.isErr()) {
-      logger.Error().Err(rRes).Msg();
-      return undefined;
-    }
-    const res = rRes.Ok();
-    return {
-      token: res.cloudToken,
-      ...res,
-    };
-  }
-  stop(): void {
-    throw new Error("Method not implemented.");
-  }
-}
+//   async waitForToken(sthis: SuperThis, logger: Logger, deviceId: string, opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
+//     const rRes = await this.ctx.dashApi.ensureCloudToken({
+//       appId: opts.context.get("UseVibes.AppId") || deviceId,
+//     });
+//     if (rRes.isErr()) {
+//       logger.Error().Err(rRes).Msg();
+//       return undefined;
+//     }
+//     const res = rRes.Ok();
+//     return {
+//       token: res.cloudToken,
+//       ...res,
+//     };
+//   }
+//   stop(): void {
+//     throw new Error("Method not implemented.");
+//   }
+// }
 
-const lazyFpCloudStrategie = Lazy((ctx: Pick<Vibe, "dashApi" | "env">) => new UseVibesStrategie(ctx));
+// const lazyFpCloudStrategie = Lazy((ctx: Vibe) => new UseVibesStrategie(ctx));
 
 function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProviderProps) {
   console.log("LiveCycleVibeContextProvider", mountParams);
@@ -145,15 +145,15 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
     apiUrl: mountParams.env.DASHBOARD_URL,
   });
 
-  const fpCloudStrategie = lazyFpCloudStrategie({
-    ...mountParams,
-    dashApi,
-  });
+  // const fpCloudStrategie = lazyFpCloudStrategie({
+  //   ...mountParams,
+  //   dashApi,
+  // });
   const onDatabaseOpen = OnFunc<(_db: Database) => unknown>();
   const ctx = {
     dashApi,
     clerk,
-    fpCloudStrategie: () => fpCloudStrategie,
+    // fpCloudStrategie: () => fpCloudStrategie,
     onDatabaseOpen,
     sessionReady: () => {
       return clerk.session?.status === "active";

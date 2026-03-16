@@ -1,4 +1,6 @@
 import { type } from "arktype";
+import { FPCloudClaimSchema } from "@fireproof/core-types-protocols-cloud";
+
 export * from "./img-gen.js";
 
 const Base = type({
@@ -31,13 +33,15 @@ export const FPDbData = type({
   dbName: "string",
   appSlug: "string",
   userSlug: "string",
-  fsId: "string",
+  // fsId: "string",
   // appId: "string",
   // tenant: "string",
   // ledger: "string",
 });
 
 export type FPDbData = typeof FPDbData.infer;
+
+export const FBDbDataWithUrl = FPDbData.and(type({ fpcloudUrl: "string" }));
 
 export const ResOkVibeRegisterFPDb = type({
   type: "'vibe.res.register.fpdb'",
@@ -57,7 +61,7 @@ export function isEvtRuntimeReady(x: unknown): x is EvtRuntimeReady {
 
 export const EvtVibeAttachStatusFPDb = type({
   type: "'vibe.evt.attach.status.fpdb'",
-  data: FPDbData,
+  data: FBDbDataWithUrl,
   status: "'error' | 'attached' | 'loading' | 'loaded' | 'detached' | 'syncing' | 'idle'",
 });
 
@@ -65,7 +69,7 @@ export type EvtVibeAttachStatusFPDb = typeof EvtVibeAttachStatusFPDb.infer;
 
 export const EvtAttachFPDb = type({
   type: "'vibe.evt.attach.fpdb'",
-  data: FPDbData,
+  data: FBDbDataWithUrl,
 });
 export function isEvtAttachFPDb(x: unknown): x is typeof EvtAttachFPDb.infer {
   return !(EvtAttachFPDb(x) instanceof type.errors);
@@ -105,12 +109,8 @@ export const ResFetchCloudToken = type({
   data: FPDbData,
   token: {
     cloudToken: "string",
-    appId: "string",
-    tenant: "string",
-    ledger: "string",
+    claims: FPCloudClaimSchema,
     expiresInSec: "number",
-    expiresDate: "string",
-    claims: "Record<string, unknown>",
   },
 }).and(Base);
 

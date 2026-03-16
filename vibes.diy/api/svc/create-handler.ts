@@ -51,7 +51,6 @@ export async function createAppContext<T extends VibesSqlite>(
   // console.log("createAppContext called with params:", params.env);
   sthis.env.sets(params.env as unknown as Record<string, string>);
   const rEnvVals = sthis.env.gets({
-    CLOUD_SESSION_TOKEN_PUBLIC: param.REQUIRED,
     CLERK_PUBLISHABLE_KEY: param.REQUIRED,
     DEVICE_ID_CA_PRIV_KEY: param.REQUIRED,
     DEVICE_ID_CA_CERT: param.REQUIRED,
@@ -78,7 +77,7 @@ export async function createAppContext<T extends VibesSqlite>(
     DEV: param.OPTIONAL,
 
     FPCLOUD_URL: param.REQUIRED,
-    DASHBOARD_URL: param.REQUIRED,
+    // DASHBOARD_URL: param.REQUIRED,
 
     VIBES_SVC_HOSTNAME_BASE: param.OPTIONAL,
     VIBES_SVC_PROTOCOL: "https",
@@ -92,6 +91,11 @@ export async function createAppContext<T extends VibesSqlite>(
     GTM_CONTAINER_ID: param.OPTIONAL,
     POSTHOG_KEY: param.OPTIONAL,
     POSTHOG_HOST: param.OPTIONAL,
+
+    CLOUD_SESSION_TOKEN_PUBLIC: param.REQUIRED,
+    CLOUD_SESSION_TOKEN_SECRET: param.REQUIRED,
+    CLOUD_SESSION_TOKEN_ISSUER: param.REQUIRED,
+    CLOUD_SESSION_TOKEN_VALID_SEC: "600",
   });
   if (rEnvVals.isErr()) {
     throw rEnvVals.Err();
@@ -174,22 +178,15 @@ export async function createAppContext<T extends VibesSqlite>(
       },
       env: {
         CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
-        FPCLOUD_URL: envVals.FPCLOUD_URL,
-        DASHBOARD_URL: envVals.DASHBOARD_URL,
         VIBES_DIY_STYLES_URL: envVals.VIBES_DIY_STYLES_URL,
         VIBES_DIY_API_URL: envVals.VIBES_DIY_API_URL,
-        DEV_SERVER_HOST: envVals.DEV_SERVER_HOST,
-        DEV_SERVER_PORT: envVals.DEV_SERVER_PORT,
 
         GTM_CONTAINER_ID: envVals.GTM_CONTAINER_ID,
         POSTHOG_KEY: envVals.POSTHOG_KEY,
         POSTHOG_HOST: envVals.POSTHOG_HOST,
 
-        RESEND_API_KEY: envVals.RESEND_API_KEY,
-
         VIBES_DIY_PUBLIC_BASE_URL: envVals.VIBES_DIY_PUBLIC_BASE_URL,
 
-        VIBES_DIY_FROM_EMAIL: envVals.VIBES_DIY_FROM_EMAIL,
         // CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
         // CALLAI_API_KEY: "CALLAI_API_KEY",
         // CALLAI_CHAT_URL: "CALLAI_CHAT_URL",
@@ -224,17 +221,25 @@ export async function createAppContext<T extends VibesSqlite>(
         cache: params.cache,
       },
     }),
+    fpCloud: {
+      url: envVals.FPCLOUD_URL,
+      secretToken: envVals.CLOUD_SESSION_TOKEN_SECRET,
+      publicToken: envVals.CLOUD_SESSION_TOKEN_PUBLIC,
+      issuer: envVals.CLOUD_SESSION_TOKEN_ISSUER,
+      audience: "sandboxes.vibes.diy",
+      validFor: parseInt(envVals.CLOUD_SESSION_TOKEN_VALID_SEC ?? "600", 10) ?? 600,
+    },
     sendEmail: async (rm) => {
       const rRes = await exception2Result(() =>
         fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${svcParams.vibes.env.RESEND_API_KEY}`,
+            Authorization: `Bearer ${envVals.RESEND_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             ...rm,
-            from: svcParams.vibes.env.VIBES_DIY_FROM_EMAIL,
+            from: envVals.VIBES_DIY_FROM_EMAIL,
           }),
         })
       );

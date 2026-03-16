@@ -1,10 +1,12 @@
 // Should be compatible with FP Dashboard's auth types
 import { Result } from "@adviser/cement";
 import { type } from "arktype";
+import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 import { fileSystemItem, MetaItem } from "./types.js";
 import { BlockMsgs, CoercedDate, FileSystemRef, LLMRequest, PromptMsgs } from "@vibes.diy/call-ai-v2";
 import {
-  ActiveAclEntry,
+  AIParams,
+  ActiveEntry,
   ActiveInviteEditorAccepted,
   ActiveInviteEditorPending,
   ActiveInviteEditorRevoked,
@@ -16,17 +18,20 @@ import {
   ActiveRequestPending,
   ActiveRequestRejected,
   EnableRequest,
+  ActiveACL,
+  KVString,
 } from "./invite.js";
+import { FPCloudClaimSchema } from "@fireproof/core-types-protocols-cloud";
 
 // Base types
+
+// Runtime validator — must stay compatible with DashAuthType from @fireproof/core-types-protocols-dashboard
 export const dashAuthType = type({
-  type: "'clerk'|'device-id'|'ucan'|'not-loggedin'",
+  type: "'clerk'|'device-id'|'ucan'",
   token: "string",
-});
+}) satisfies { infer: DashAuthType };
 
 export const vibeUserEnv = type("Record<string, string>");
-
-export type DashAuthType = typeof dashAuthType.infer;
 
 // Base file properties - used for composition
 const baseFileProps = type({
@@ -235,17 +240,43 @@ export type EnvID = string;
 
 export const FSMode = type("'production'|'dev'");
 
-export const reqEnsureAppSlug = type({
-  type: "'vibes.diy.req-ensure-app-slug'",
-  auth: dashAuthType,
+export const AppSlugUserSlug = type({
+  appSlug: "string", // desired app slug
+  userSlug: "string", // desired user slug
+});
+export type AppSlugUserSlug = typeof AppSlugUserSlug.infer;
+
+export const OptAppSlugUserSlug = type({
+  "appSlug?": "string", // desired app slug
+  userSlug: "string", // desired user slug
+});
+export type OptAppSlugUserSlug = typeof OptAppSlugUserSlug.infer;
+
+export const AppSlugOptUserSlug = type({
+  appSlug: "string", // desired app slug
+  "userSlug?": "string", // desired user slug
+});
+export type AppSlugOptUserSlug = typeof AppSlugOptUserSlug.infer;
+
+export const OptAppSlugOptUserSlug = type({
   "appSlug?": "string", // desired app slug
   "userSlug?": "string", // desired user slug
+});
+export type OptAppSlugOptUserSlug = typeof OptAppSlugOptUserSlug.infer;
+
+export const NeedOneAppSlugUserSlug = AppSlugUserSlug.or(OptAppSlugUserSlug).or(AppSlugOptUserSlug).or(OptAppSlugOptUserSlug);
+
+export type NeedOneAppSlugUserSlug = typeof NeedOneAppSlugUserSlug.infer;
+
+export const ReqEnsureAppSlug = type({
+  type: "'vibes.diy.req-ensure-app-slug'",
+  auth: dashAuthType,
   mode: FSMode,
   "env?": vibeUserEnv,
   fileSystem: [vibeFile, "[]"],
-});
+}).and(NeedOneAppSlugUserSlug);
 
-export type ReqEnsureAppSlug = typeof reqEnsureAppSlug.infer;
+export type ReqEnsureAppSlug = typeof ReqEnsureAppSlug.infer;
 
 // Response types
 export const resEnsureAppSlug = type({
@@ -316,7 +347,7 @@ export const resGetAppByFsId = type({
   "fsId?": "string",
   mode: "'production'|'dev'",
   grant:
-    "'granted-access.editor'|'granted-access.viewer'|'owner'|'not-found'|'not-grant'|'public-access'|'accepted-email-invite'|'req-login.invite'|'req-login.request'",
+    "'revoked-access'|'pending-request'| 'granted-access.editor'|'granted-access.viewer'|'owner'|'not-found'|'not-grant'|'public-access'|'accepted-email-invite'|'req-login.invite'|'req-login.request'",
   releaseSeq: "number",
   env: vibeUserEnv,
   fileSystem: [fileSystemItem, "[]"],
@@ -491,21 +522,89 @@ export function isResEnsureUserSettings(obj: unknown): obj is ResEnsureUserSetti
   return !(resEnsureUserSettings(obj) instanceof type.errors);
 }
 
-export const reqEnsureAppSettings = type({
+export const reqEnsureAppSettingsBase = type({
   type: "'vibes.diy.req-ensure-app-settings'",
-  auth: dashAuthType,
+  "auth?": dashAuthType,
   appSlug: "string",
   userSlug: "string",
-  "aclEntry?": type({
-    entry: ActiveAclEntry,
+});
+
+export type ReqEnsureAppSettingsBase = typeof reqEnsureAppSettingsBase.infer;
+
+export function isReqEnsureAppSettingsBase(obj: unknown): obj is ReqEnsureAppSettingsBase {
+  return !(reqEnsureAppSettingsBase(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsAcl = type({
+  aclEntry: type({
+    entry: ActiveACL.or(EnablePublicAccess).or(EnableRequest),
     op: "'delete' | 'upsert'",
   }),
-});
-export type ReqEnsureAppSettings = typeof reqEnsureAppSettings.infer;
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsAcl = typeof reqEnsureAppSettingsAcl.infer;
+export function isReqEnsureAppSettingsAcl(obj: unknown): obj is ReqEnsureAppSettingsAcl {
+  return !(reqEnsureAppSettingsAcl(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsTitle = type({
+  title: "string",
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsTitle = typeof reqEnsureAppSettingsTitle.infer;
+export function isReqEnsureAppSettingsTitle(obj: unknown): obj is ReqEnsureAppSettingsTitle {
+  return !(reqEnsureAppSettingsTitle(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsApp = type({
+  app: AIParams.partial(),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsApp = typeof reqEnsureAppSettingsApp.infer;
+export function isReqEnsureAppSettingsApp(obj: unknown): obj is ReqEnsureAppSettingsApp {
+  return !(reqEnsureAppSettingsApp(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsChat = type({
+  chat: AIParams.partial(),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsChat = typeof reqEnsureAppSettingsChat.infer;
+export function isReqEnsureAppSettingsChat(obj: unknown): obj is ReqEnsureAppSettingsChat {
+  return !(reqEnsureAppSettingsChat(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsEnv = type({
+  env: KVString.array(),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsEnv = typeof reqEnsureAppSettingsEnv.infer;
+export function isReqEnsureAppSettingsEnv(obj: unknown): obj is ReqEnsureAppSettingsEnv {
+  return !(reqEnsureAppSettingsEnv(obj) instanceof type.errors);
+}
+
+export type ReqEnsureAppSettings =
+  | ReqEnsureAppSettingsAcl
+  | ReqEnsureAppSettingsTitle
+  | ReqEnsureAppSettingsApp
+  | ReqEnsureAppSettingsChat
+  | ReqEnsureAppSettingsEnv
+  | ReqEnsureAppSettingsBase;
+
+export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSettings {
+  return (
+    isReqEnsureAppSettingsAcl(obj) ||
+    isReqEnsureAppSettingsTitle(obj) ||
+    isReqEnsureAppSettingsApp(obj) ||
+    isReqEnsureAppSettingsChat(obj) ||
+    isReqEnsureAppSettingsEnv(obj) ||
+    isReqEnsureAppSettingsBase(obj)
+  );
+}
 
 export const AppSettings = type({
   // type: "'vibes.diy.app-settings'",
-  entries: ActiveAclEntry.array(),
+  entries: ActiveEntry.array(),
   entry: type({
     publicAccess: EnablePublicAccess.optional(),
     enableRequest: EnableRequest.optional(),
@@ -534,7 +633,9 @@ export const resEnsureAppSettings = type({
   type: "'vibes.diy.res-ensure-app-settings'",
   userId: "string",
   appSlug: "string",
+  ledger: "string",
   userSlug: "string",
+  tenant: "string",
   "error?": "string",
   settings: AppSettings,
   updated: "string",
@@ -613,6 +714,63 @@ export const reqSetModeFs = ReqSetModeFs;
 export type ReqSetModeFs = typeof ReqSetModeFs.infer;
 export function isReqSetModeFs(obj: unknown): obj is ReqSetModeFs {
   return !(ReqSetModeFs(obj) instanceof type.errors);
+}
+
+export const ReqFPCloudToken = type({
+  type: "'vibes.diy.req-fpcloud-token'",
+  auth: dashAuthType,
+  userSlug: "string",
+  appSlug: "string",
+  dbName: "string",
+});
+
+export type ReqFPCloudToken = typeof ReqFPCloudToken.infer;
+
+export function isReqFPCloudToken(obj: unknown): obj is ReqFPCloudToken {
+  return !(ReqFPCloudToken(obj) instanceof type.errors);
+}
+
+export const ResFPCloudTokenNoGrant = type({
+  type: "'vibes.diy.res-fpcloud-token'",
+  grant: "'no-grant'",
+});
+
+export type ResFPCloudTokenNoGrant = typeof ResFPCloudTokenNoGrant.infer;
+
+export function isResFPCloudTokenNoGrant(obj: unknown): obj is ResFPCloudTokenNoGrant {
+  return !(ResFPCloudTokenNoGrant(obj) instanceof type.errors);
+}
+
+export const Token = type({
+  expiresInSec: "number",
+  token: "string",
+  claims: FPCloudClaimSchema,
+});
+export type Token = typeof Token.infer;
+
+export const ResFPCloudTokenGrant = type({
+  type: "'vibes.diy.res-fpcloud-token'",
+  grant: "'public' | 'owner' | 'request-editor' | 'request-viewer' | 'invite-editor' | 'invite-viewer'",
+  token: Token,
+  fpCloudUrl: "string",
+  appSlug: "string",
+  userSlug: "string",
+  dbName: "string",
+  ledger: "string",
+  tenant: "string",
+});
+export type ResFPCloudTokenGrant = typeof ResFPCloudTokenGrant.infer;
+
+export function isResFPCloudTokenGrant(obj: unknown): obj is ResFPCloudTokenGrant {
+  return !(ResFPCloudTokenGrant(obj) instanceof type.errors);
+}
+
+export const ResFPCloudToken = ResFPCloudTokenGrant.or(ResFPCloudTokenNoGrant);
+
+export type ResFPCloudToken = typeof ResFPCloudToken.infer;
+
+export function isResFPCloudToken(obj: unknown): obj is ResFPCloudToken {
+  return !(ResFPCloudToken(obj) instanceof type.errors);
 }
 
 // export const reqCertFromCsr = type({

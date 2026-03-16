@@ -1,8 +1,28 @@
 import { type } from "arktype";
+import { CoercedDate } from "@vibes.diy/call-ai-v2";
 
-const CoercedDate = type("Date | string | number").pipe((v) => (v instanceof Date ? v : new Date(v)));
+export const KVString = type({ key: "string", value: "string" });
+export type KVString = typeof KVString.infer;
 
-const tick = type({
+export function toKVString(record: Record<string, string>): KVString[] {
+  return Object.entries(record).map(([key, value]) => ({ key, value }));
+}
+
+export function fromKVString(entries: KVString[]): Record<string, string> {
+  return Object.fromEntries(entries.map(({ key, value }) => [key, value]));
+}
+
+export const AIParams = type({
+  model: "string",
+  apiKey: "string",
+  // here we could add Endpoint url or backlink information
+});
+
+// export const CoercedDate = type("string.date.iso.parse | Date");
+// // export const CoercedDate = type("Date")
+// export type CoercedDate = typeof CoercedDate.infer
+
+export const tick = type({
   count: "number", // number of requests with this access level
   last: CoercedDate,
 });
@@ -20,15 +40,40 @@ export const RawEmail = type({
 }).and(RawEmailWithoutFrom);
 export type RawEmail = typeof RawEmail.infer;
 
-export const EmailOps = type({
+export const EmailOpsBase = type({
   dst: "string",
-  action: "'invite-editor' | 'invite-viewer'",
+  role: "'editor'|'viewer'",
   appSlug: "string",
   userSlug: "string",
   "fsId?": "string",
-  token: "string",
 });
+
+export const EmailOpsInvite = type({
+  action: "'invite'",
+  token: "string",
+}).and(EmailOpsBase);
+export type EmailOpsInvite = typeof EmailOpsInvite.infer;
+
+export function isEmailOpsInvite(obj: unknown): obj is EmailOpsInvite {
+  return !(EmailOpsInvite(obj) instanceof type.errors);
+}
+
+export const EmailOpsRequest = type({
+  action: "'req-accepted' | 'req-rejected'",
+}).and(EmailOpsBase);
+
+export type EmailOpsRequest = typeof EmailOpsRequest.infer;
+
+export function isEmailOpsRequest(obj: unknown): obj is EmailOpsRequest {
+  return !(EmailOpsRequest(obj) instanceof type.errors);
+}
+
+export const EmailOps = EmailOpsInvite.or(EmailOpsRequest);
 export type EmailOps = typeof EmailOps.infer;
+
+export function isEmailOps(obj: unknown): obj is EmailOps {
+  return !(EmailOps(obj) instanceof type.errors);
+}
 
 export const EnablePublicAccess = type({
   type: "'app.acl.enable.public.access'",
@@ -44,13 +89,14 @@ export function isEnablePublicAccess(obj: unknown): obj is EnablePublicAccess {
 
 export const EnableRequest = type({
   type: "'app.acl.enable.request'",
+  "autoAcceptViewRequest?": "boolean",
 });
 export type EnableRequestEditor = typeof EnableRequest.infer;
 export function isEnableRequest(obj: unknown): obj is EnableRequestEditor {
   return !(EnableRequest(obj) instanceof type.errors);
 }
 
-const requestBase = type({
+export const requestBase = type({
   key: "string", // email or nick of the requester
   provider: "'github' | 'google' | 'clerk'",
   "msg?": "string",
@@ -73,6 +119,7 @@ export function isActiveRequestPending(obj: unknown): obj is typeof ActiveReques
 
 const grant = type({
   ownerId: "string",
+  "key?": "string",
   on: CoercedDate,
 });
 
@@ -218,17 +265,51 @@ export function isActiveInvite(obj: unknown): obj is typeof ActiveInvite.infer {
   return !(ActiveInvite(obj) instanceof type.errors);
 }
 
-export const ActiveEnableFlag = EnableRequest;
-export type ActiveEnableFlag = typeof ActiveEnableFlag.infer;
-export function isActiveEnableFlag(obj: unknown): obj is ActiveEnableFlag {
-  return !(ActiveEnableFlag(obj) instanceof type.errors);
+export const ActiveACL = ActiveInvite.or(ActiveRequest);
+export type ActiveACL = typeof ActiveACL.infer;
+
+// export const ActiveEnableFlag = EnableRequest;
+// export type ActiveEnableFlag = typeof ActiveEnableFlag.infer;
+// export function isActiveEnableFlag(obj: unknown): obj is ActiveEnableFlag {
+//   return !(ActiveEnableFlag(obj) instanceof type.errors);
+// }
+
+export const ActiveTitle = type({
+  type: "'active.title'",
+  title: "string",
+});
+export type ActiveTitle = typeof ActiveTitle.infer;
+export function isActiveTitle(obj: unknown): obj is ActiveTitle {
+  return !(ActiveTitle(obj) instanceof type.errors);
 }
 
-export const ActiveAclEntry = EnablePublicAccess.or(ActiveRequest).or(ActiveInvite).or(ActiveEnableFlag);
-export const ActiveIdAclEntry = ActiveRequest.or(ActiveInvite);
-export type ActiveIdAclEntry = typeof ActiveIdAclEntry.infer;
-export function isActiveAclEntry(obj: unknown): obj is typeof ActiveAclEntry.infer {
-  return !(ActiveAclEntry(obj) instanceof type.errors);
+export const ActiveModelSetting = type({
+  type: "'active.model'",
+  usage: "'chat'|'app'",
+  param: AIParams,
+});
+export type ActiveModelSetting = typeof ActiveModelSetting.infer;
+export function isActiveModelSetting(obj: unknown): obj is ActiveModelSetting {
+  return !(ActiveModelSetting(obj) instanceof type.errors);
+}
+
+export const ActiveEnv = type({
+  type: "'active.env'",
+  env: KVString.array(),
+});
+export type ActiveEnv = typeof ActiveEnv.infer;
+export function isActiveEnv(obj: unknown): obj is ActiveEnv {
+  return !(ActiveEnv(obj) instanceof type.errors);
+}
+
+export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
+  .or(ActiveInvite)
+  .or(EnableRequest)
+  .or(ActiveTitle)
+  .or(ActiveModelSetting)
+  .or(ActiveEnv);
+export function isActiveAclEntry(obj: unknown): obj is typeof ActiveEntry.infer {
+  return !(ActiveEntry(obj) instanceof type.errors);
 }
 // export function isActiveIdAclEntry(obj: unknown): obj is typeof ActiveIdAclEntry.infer {
 //   const res = ActiveIdAclEntry(obj);
@@ -239,7 +320,7 @@ export function isActiveAclEntry(obj: unknown): obj is typeof ActiveAclEntry.inf
 //   return !(ActiveIdAclEntry(obj) instanceof type.errors);
 // }
 
-export type ActiveAclEntry = typeof ActiveAclEntry.infer;
+export type ActiveEntry = typeof ActiveEntry.infer;
 
 export const ActiveInviteEditor = ActiveInviteEditorPending.or(ActiveInviteEditorAccepted).or(ActiveInviteEditorRevoked);
 export const ActiveInviteViewer = ActiveInviteViewerPending.or(ActiveInviteViewerAccepted).or(ActiveInviteViewerRevoked);

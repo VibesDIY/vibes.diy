@@ -6,6 +6,7 @@ import { SignIn, useAuth, useSession } from "@clerk/clerk-react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
+import { Delayed } from "../components/Delayed.js";
 import { VibesSwitch } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
@@ -21,6 +22,8 @@ export default function VibeIframeWrapper() {
   const [notFound, setNotFound] = useState(false);
   const [reqLogin, setReqLogin] = useState(false);
   const [reqAccess, setReqAccess] = useState(false);
+  const [pendingRequest, setPendingRequest] = useState(false);
+  const [revokedAccess, setRevokedAccess] = useState(false);
   const [runtimeReady, setRuntimeReady] = useState(false);
   const { isSignedIn: authSignedIn, isLoaded } = useAuth();
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
@@ -61,7 +64,6 @@ export default function VibeIframeWrapper() {
         appSlug,
         userSlug,
         token: searchParam.get("token") ?? undefined,
-        auth: session.isSignedIn ? undefined : { type: "not-loggedin", token: searchParam.get("token") ?? "" },
       })
       .then((rRes) => {
         inGetAppByFsIdRef.current = false;
@@ -91,6 +93,12 @@ export default function VibeIframeWrapper() {
           case "req-login.invite":
             setReqLogin(true);
             setIsSidebarVisible(true);
+            break;
+          case "pending-request":
+            setPendingRequest(true);
+            break;
+          case "revoked-access":
+            setRevokedAccess(true);
             break;
           case "not-grant":
             setNotFound(true);
@@ -170,7 +178,7 @@ export default function VibeIframeWrapper() {
   const loginOverlay = showLoginOverlay
     ? createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <SignIn routing="hash" fallbackRedirectUrl={window.location.pathname + window.location.search} />
+          <SignIn routing="virtual" forceRedirectUrl={window.location.href} />
         </div>,
         document.body
       )
@@ -180,7 +188,7 @@ export default function VibeIframeWrapper() {
     const myUrl = URI.from(window.location.href);
     const previewUrl = BuildURI.from(iframeUrlRef.current).port(myUrl.port).setParam("npmUrl", vctx.webVars.pkgRepos.workspace);
 
-    console.log(`previewUrl`, previewUrl.toString());
+    // console.log(`previewUrl`, previewUrl.toString());
 
     return (
       <>
@@ -199,11 +207,15 @@ export default function VibeIframeWrapper() {
         </div>
         {createPortal(
           <div className="fixed bottom-4 right-4 z-50">
-            <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
+            <Delayed ms={1000}>
+              <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
+            </Delayed>
           </div>,
           document.body
         )}
-        <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+        <Delayed ms={1000}>
+          <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+        </Delayed>
         {sharingState && (
           <AllowFireproofSharing
             state={sharingState}
@@ -220,9 +232,24 @@ export default function VibeIframeWrapper() {
   return (
     <>
       <div className="grid-background flex h-screen w-screen items-center justify-center">
+        <div className="fixed top-4 left-4 z-50">
+          <Delayed ms={1000}>
+            <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
+          </Delayed>
+        </div>
         {showLoginOverlay ? (
           <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
             Login required to view this page
+          </div>
+        ) : revokedAccess ? (
+          <div className="text-center space-y-2" style={{ color: "var(--vibes-text-primary)" }}>
+            <div className="text-lg font-semibold">Access revoked</div>
+            <div className="text-sm opacity-60">Your access to this app has been revoked by the owner.</div>
+          </div>
+        ) : pendingRequest ? (
+          <div className="text-center space-y-2" style={{ color: "var(--vibes-text-primary)" }}>
+            <div className="text-lg font-semibold">Access requested</div>
+            <div className="text-sm opacity-60">Your request has been sent. You'll get access once the owner approves it.</div>
           </div>
         ) : notFound ? (
           <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
@@ -232,7 +259,9 @@ export default function VibeIframeWrapper() {
           <div style={{ color: "var(--vibes-text-primary)" }}>Preparing…</div>
         )}
       </div>
-      <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+      <Delayed ms={1000}>
+        <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+      </Delayed>
       {loginOverlay}
       {reqAccessOverlay}
       {sharingState && (

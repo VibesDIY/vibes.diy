@@ -32,8 +32,10 @@ export function useShareableDB() {
   // Listen for new shareable DBs from the sandbox
   useEffect(() => {
     return srvVibeSandbox.shareableDBs.onSet((_k, v, meta) => {
-      console.log(`New shareable DB registered:`, { key: _k, value: v, meta });
-      if (!meta.update) setPendingDbRef(v);
+      if (!meta.update) {
+        setPendingDbRef(v);
+        console.log(`New shareable DB registered:`, { key: _k, value: v, meta });
+      }
     });
   }, [srvVibeSandbox]);
 

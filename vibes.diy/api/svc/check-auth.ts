@@ -28,7 +28,7 @@ export async function verifyExtractClaims(
   }
   const rAuth = await tokenApi.verify(req.auth.token);
   if (rAuth.isErr()) {
-    return Result.Err(rAuth.Err());
+    return Result.Err(rAuth);
   }
   return Result.Ok({
     type: req.auth.type,
@@ -58,7 +58,7 @@ export function corercedVerifiedAuthUser(ver: VerifiedClaimsResult): Result<Veri
 
 export async function verifyAuth(
   ctx: VibesApiSQLCtx,
-  req: WithAuth
+  req: { readonly auth: DashAuthType }
   // status: UserStatus[] = ["active"],
 ): Promise<Result<VerifiedResult>> {
   const rvec = await verifyExtractClaims(ctx, req);

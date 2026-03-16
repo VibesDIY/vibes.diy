@@ -187,7 +187,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
         createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowSignIn(false)}>
             <div onClick={(e) => e.stopPropagation()}>
-              <SignIn routing="hash" fallbackRedirectUrl={window.location.href} />
+              <SignIn routing="virtual" forceRedirectUrl={window.location.href} />
             </div>
           </div>,
           document.body

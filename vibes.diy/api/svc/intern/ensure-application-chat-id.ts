@@ -14,10 +14,13 @@ interface EnsureChatIdPResult {
   userSlug: string;
 }
 
-export async function ensureApplicationChatId(
-  ctx: VibesApiSQLCtx,
-  req: ReqWithVerifiedAuth<ReqOpenChat>
-): Promise<Result<EnsureChatIdPResult>> {
+export async function ensureApplicationChatId({
+  ctx,
+  req,
+}: {
+  ctx: VibesApiSQLCtx;
+  req: ReqWithVerifiedAuth<ReqOpenChat>;
+}): Promise<Result<EnsureChatIdPResult>> {
   const { chatId } = req;
   const appSlug = req.appSlug;
   const userSlug = req.userSlug;

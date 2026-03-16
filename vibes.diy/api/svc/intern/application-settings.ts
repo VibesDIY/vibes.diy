@@ -1,17 +1,15 @@
 import { Result } from "@adviser/cement";
 import {
-  ActiveAclEntry,
+  ActiveEntry,
   isEnablePublicAccess,
   isActiveInviteEditorAccepted,
   isActiveInviteEditorRevoked,
   isActiveInviteViewerPending,
   isActiveInviteViewerAccepted,
   isActiveInviteViewerRevoked,
-  ActiveIdAclEntry,
   isActiveInviteEditor,
   isActiveInviteViewer,
   AppSettings,
-  isActiveEnableFlag,
   EmailOps,
   isActiveInviteEditorPending,
   isActiveRequestApproved,
@@ -23,8 +21,8 @@ import {
 import { type } from "arktype";
 
 export interface EnsureEntryArgs {
-  activeEntries: ActiveAclEntry[];
-  entry: ActiveAclEntry;
+  activeEntries: ActiveEntry[];
+  entry: ActiveEntry;
   crud: "upsert" | "delete";
   appSlug: string;
   userSlug: string;
@@ -32,14 +30,14 @@ export interface EnsureEntryArgs {
 }
 
 export function dbSettings2AppSettings(fromDb: unknown): Result<AppSettings> {
-  const settings = ActiveAclEntry.array()(fromDb);
+  const settings = ActiveEntry.array()(fromDb);
   if (settings instanceof type.errors) {
     return Result.Err(`error did not found: ${settings.summary}`);
   }
   return Result.Ok(buildEnsureEntryResult(settings));
 }
 
-export function buildEnsureEntryResult(entries: ActiveAclEntry[]): AppSettings {
+export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
   // just collect and assign to the right buckets
   const result: AppSettings = {
     entries,
@@ -114,7 +112,7 @@ function cannonicalEmail(email: string): string {
   return `${local}@${domain}`;
 }
 
-function updateTick(prev: ActiveAclEntry, next: ActiveAclEntry) {
+function updateTick(prev: ActiveEntry, next: ActiveEntry) {
   const prevTick = type({ tick: type({ count: "number", last: "Date" }) })(prev);
   const nextTick = type({ tick: type({ count: "number", last: "Date" }) })(next);
   if (!(prevTick instanceof type.errors || nextTick instanceof type.errors)) {
@@ -124,10 +122,10 @@ function updateTick(prev: ActiveAclEntry, next: ActiveAclEntry) {
 }
 
 function upsertEntry(
-  entries: ActiveAclEntry[],
-  entry: ActiveIdAclEntry,
+  entries: ActiveEntry[],
+  entry: ActiveEntry,
   crud: "upsert" | "delete",
-  pred: (e: ActiveAclEntry) => boolean
+  pred: (e: ActiveEntry) => boolean
 ): Result<void> {
   // warning: this is a mutating function
   const idx = entries.findIndex(pred);
@@ -171,9 +169,9 @@ export function ensureACLEntry({ activeEntries, entry, crud, appSlug, userSlug, 
       ret = Result.Ok(buildEnsureEntryResult(entries));
       break;
 
-    case isActiveEnableFlag(entry):
+    case isEnableRequest(entry):
       {
-        const idx = entries.findIndex((e) => isActiveEnableFlag(e) && e.type === entry.type);
+        const idx = entries.findIndex((e) => isEnableRequest(e) && e.type === entry.type);
         if (crud === "delete") {
           if (idx >= 0) entries.splice(idx, 1);
         } else {
@@ -207,7 +205,8 @@ export function ensureACLEntry({ activeEntries, entry, crud, appSlug, userSlug, 
       if (ret.isOk()) {
         emailOps.push({
           dst: entry.invite.email,
-          action: isActiveInviteEditorPending(entry) ? "invite-editor" : "invite-viewer",
+          action: "invite",
+          role: entry.role,
           appSlug,
           userSlug,
           token: entry.token,
@@ -224,8 +223,28 @@ export function ensureACLEntry({ activeEntries, entry, crud, appSlug, userSlug, 
       break;
 
     case isActiveRequestApproved(entry):
+      ret = upsertEntry(entries, entry, crud, (e) => isActiveRequest(e));
+      if (ret.isOk()) {
+        emailOps.push({
+          dst: entry.request.key,
+          role: entry.role,
+          action: "req-rejected",
+          appSlug,
+          userSlug,
+        });
+      }
+      break;
     case isActiveRequestRejected(entry):
       ret = upsertEntry(entries, entry, crud, (e) => isActiveRequest(e));
+      if (ret.isOk()) {
+        emailOps.push({
+          dst: entry.request.key,
+          role: entry.role,
+          action: "req-rejected",
+          appSlug,
+          userSlug,
+        });
+      }
       break;
 
     case isActiveInviteEditorAccepted(entry):

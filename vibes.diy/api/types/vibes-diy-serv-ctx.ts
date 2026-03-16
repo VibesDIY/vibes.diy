@@ -3,8 +3,6 @@ import { vibeUserEnv } from "./msg-types.js";
 
 export const vibesSvcEnv = type({
   CLERK_PUBLISHABLE_KEY: "string",
-  FPCLOUD_URL: "string",
-  DASHBOARD_URL: "string",
   // CLERK_PUBLISHABLE_KEY: "string",
   // CALLAI_API_KEY: "string",
   // CALLAI_CHAT_URL: "string",
@@ -16,13 +14,14 @@ export const vibesSvcEnv = type({
   "POSTHOG_KEY?": "string",
   "POSTHOG_HOST?": "string",
 
-  "DEV_SERVER_HOST?": "string",
-  "DEV_SERVER_PORT?": "string",
+  // "DEV_SERVER_HOST?": "string",
+  // "DEV_SERVER_PORT?": "string",
 
-  VIBES_DIY_FROM_EMAIL: "string",
-  RESEND_API_KEY: "string",
+  //VIBES_DIY_FROM_EMAIL: "string",
+  //RESEND_API_KEY: "string",
 
   VIBES_DIY_PUBLIC_BASE_URL: "string",
+
   // GTM_CONTAINER_ID: "string",
   // POSTHOG_KEY: "string",
   // POSTHOG_HOST: "string",

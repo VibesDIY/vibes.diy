@@ -1,8 +1,6 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
-import { FPApiInterface } from "@fireproof/core-types-protocols-dashboard";
 import React, { createContext, useContext } from "react";
 import { ClerkProvider, useClerk } from "@clerk/clerk-react";
-import { clerkDashApi } from "@fireproof/core-protocols-dashboard";
 import { BuildURI, Future, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
 import { PostHogProvider } from "posthog-js/react";
 import { PkgRepos, VibesDiyApiIface } from "@vibes.diy/api-types";
@@ -38,7 +36,7 @@ export interface AppUserSlugFsId {
 
 export interface VibesDiyCtx {
   sthis: SuperThis;
-  dashApi: FPApiInterface;
+  // dashApi: FPApiInterface;
   vibeDiyApi: VibesDiyApiIface;
   webVars: VibeDiyWebVars;
   srvVibeSandbox: vibesDiySrvSandbox;
@@ -46,7 +44,7 @@ export interface VibesDiyCtx {
 
 const realCtx: VibesDiyCtx = {
   sthis: {} as SuperThis,
-  dashApi: {} as FPApiInterface,
+  // dashApi: {} as FPApiInterface,
   vibeDiyApi: {} as VibesDiyApi,
   webVars: {} as VibesDiyCtx["webVars"],
   srvVibeSandbox: {} as VibesDiyCtx["srvVibeSandbox"],
@@ -65,10 +63,6 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
 
   realCtx.sthis = lazySuperThis();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  realCtx.dashApi = clerkDashApi(clerk as any, {
-    apiUrl: realCtx.webVars.env.DASHBOARD_URL,
-  });
   const apiUrl =
     realCtx.webVars.env.VIBES_DIY_API_URL ??
     BuildURI.from(window.location.href)
@@ -86,7 +80,6 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
         clerkReady?.resolve(undefined);
       }
     });
-    console.log("VibeDiyApi for", apiUrl);
     return new VibesDiyApi({
       apiUrl,
       getToken: async () => {
@@ -121,7 +114,7 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
       }
       toast.error(txt);
     },
-    dashApi: realCtx.dashApi as ReturnType<typeof clerkDashApi>,
+    // dashApi: realCtx.dashApi as ReturnType<typeof clerkDashApi>,
     vibeDiyApi: realCtx.vibeDiyApi,
     eventListeners: globalThis.window,
   });

@@ -143,34 +143,34 @@ export function useFireproof(nameOrDatabase: string | Database, config?: UseFPCo
         setAttachState({ state: "error", error: new Error("Session not ready for attach") });
       }
       setAttachState({ state: "attaching" });
-      mutexAttachState.once(() => {
-        vibeCtx.dashApi.ensureUser({}).then((rUser) => {
-          if (rUser.isErr()) {
-            console.error("Failed to ensure user for attach:", rUser);
-            setAttachState({ state: "error", error: rUser.Err() });
-            return;
-          }
-          const user = rUser.unwrap();
-          console.log("Ensured user for attach:", user);
-        });
+      //   mutexAttachState.once(() => {
+      //     vibeCtx.dashApi.ensureUser({}).then((rUser) => {
+      //       if (rUser.isErr()) {
+      //         console.error("Failed to ensure user for attach:", rUser);
+      //         setAttachState({ state: "error", error: rUser.Err() });
+      //         return;
+      //       }
+      //       const user = rUser.unwrap();
+      //       console.log("Ensured user for attach:", user);
+      //     });
 
-        console.log("attach invoked", defVibesCtx());
-        fpRet.database
-          .attach(
-            toCloud({
-              env: defVibesCtx().env,
-              strategy: defVibesCtx().fpCloudStrategie(),
-            })
-          )
-          .then((at) => {
-            console.log("Database attached");
-            setAttachState({ state: "attached", attach: at });
-          })
-          .catch((err) => {
-            console.error("Database attach failed:", err);
-            setAttachState({ state: "error", error: err });
-          });
-      });
+      //     console.log("attach invoked", defVibesCtx());
+      //     fpRet.database
+      //       .attach(
+      //         toCloud({
+      //           env: defVibesCtx().env,
+      //           // strategy: defVibesCtx().fpCloudStrategie(),
+      //         })
+      //       )
+      //       .then((at) => {
+      //         console.log("Database attached");
+      //         setAttachState({ state: "attached", attach: at });
+      //       })
+      //       .catch((err) => {
+      //         console.error("Database attach failed:", err);
+      //         setAttachState({ state: "error", error: err });
+      //       });
+      //   });
     },
     []
   );

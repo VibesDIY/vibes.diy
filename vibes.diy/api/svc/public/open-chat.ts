@@ -45,7 +45,7 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
           chatPromise = ensureChatId(vctx, req);
           break;
         case "application":
-          chatPromise = ensureApplicationChatId(vctx, req);
+          chatPromise = ensureApplicationChatId({ ctx: vctx, req });
           break;
         default:
           return Result.Err(`Invalid mode: ${req.mode}`);
