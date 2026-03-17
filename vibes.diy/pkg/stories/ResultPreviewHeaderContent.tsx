@@ -1,7 +1,7 @@
 import React from "react";
 import ResultPreviewHeaderContent from "../app/components/ResultPreview/ResultPreviewHeaderContent.js";
 import type { ViewType, ViewControlsType } from "@vibes.diy/prompts";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkProvider } from "@clerk/react";
 import { BrowserRouter } from "react-router-dom";
 import { PromptState } from "../app/routes/chat/chat.$userSlug.$appSlug.js";
 

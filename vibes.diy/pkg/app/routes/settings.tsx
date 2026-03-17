@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useAuth as useClerkAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth as useClerkAuth, useClerk } from "@clerk/react";
 import { BrutalistCard, VibesButton } from "@vibes.diy/base";
 import { Link, useNavigate } from "react-router-dom";
 import LoggedOutView from "../components/LoggedOutView.js";

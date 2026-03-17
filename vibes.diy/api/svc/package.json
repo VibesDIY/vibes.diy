@@ -9,8 +9,8 @@
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.33",
-    "@cloudflare/workers-types": "^4.20260128.0",
+    "@adviser/cement": "^0.5.34",
+    "@cloudflare/workers-types": "^4.20260317.1",
     "@fireproof/core-device-id": "0.24.13",
     "@fireproof/core-protocols-dashboard": "0.24.13",
     "@fireproof/core-runtime": "0.24.13",

@@ -2,7 +2,7 @@ import React, { createContext, useContext, type ReactNode } from "react";
 import { type } from "arktype";
 import { injectDefaultVibesCtx, VibeBindings, VibesDiyMountParams, VibesEnv } from "../index.js";
 import { clerkDashApi, DashboardApiImpl } from "@fireproof/core-protocols-dashboard";
-import { ClerkProvider, useClerk } from "@clerk/clerk-react";
+import { ClerkProvider, useClerk } from "@clerk/react";
 import { TokenStrategie } from "@fireproof/core-types-protocols-cloud";
 import { Database } from "@fireproof/use-fireproof";
 import { OnFunc, OnFuncReturn, ReturnOnFunc } from "@adviser/cement";

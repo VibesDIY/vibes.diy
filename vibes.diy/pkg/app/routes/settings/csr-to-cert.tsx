@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import { BuildURI } from "@adviser/cement";
-import { useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { BrutalistCard, VibesButton } from "@vibes.diy/base";
 import LoggedOutView from "../../components/LoggedOutView.js";
 import BrutalistLayout from "../../components/BrutalistLayout.js";

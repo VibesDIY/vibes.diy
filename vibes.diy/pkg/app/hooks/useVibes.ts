@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "@clerk/react";
 import type { LocalVibe } from "../utils/vibeUtils.js";
 import { deleteVibeDatabase, listLocalVibeIds, toggleVibeFavorite } from "../utils/vibeUtils.js";
 

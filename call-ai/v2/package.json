@@ -15,7 +15,7 @@
   "license": "AFL",
   "packageManager": "pnpm@10.20.0",
   "dependencies": {
-    "@adviser/cement": "^0.5.33",
+    "@adviser/cement": "^0.5.34",
     "@fireproof/core-runtime": "0.24.13",
     "arktype": "^2.2.0",
     "cmd-ts": "^0.14.3",
@@ -23,11 +23,11 @@
     "zx": "^8.8.5"
   },
   "devDependencies": {
-    "@vitest/browser": "^4.0.18",
-    "@vitest/browser-playwright": "^4.0.18",
+    "@vitest/browser": "^4.1.0",
+    "@vitest/browser-playwright": "^4.1.0",
     "eslint": "^9.39.2",
     "playwright": "^1.57.0",
     "tsx": "^4.21.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   }
 }

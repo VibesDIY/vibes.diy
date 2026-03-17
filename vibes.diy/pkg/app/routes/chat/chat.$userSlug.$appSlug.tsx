@@ -1,7 +1,7 @@
 import { SetURLSearchParams, useNavigate, useParams, useSearchParams } from "react-router";
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
 import { useVibeDiy } from "../../vibe-diy-provider.js";
-// import { useClerk } from "@clerk/clerk-react";
+// import { useClerk } from "@clerk/react";
 import { processStream } from "@adviser/cement";
 import { LLMChat, LLMChatEntry, PromptAndBlockMsgs, sectionEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";

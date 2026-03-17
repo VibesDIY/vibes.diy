@@ -185,7 +185,7 @@ export function workspacePackagesPlugin(): Plugin {
       });
     },
 
-    async generateBundle(_options, bundle) {
+    async generateBundle(_options) {
       const outDir = _options.dir || "";
       if (!outDir.includes("client")) return;
 
@@ -198,16 +198,7 @@ export function workspacePackagesPlugin(): Plugin {
           // Emit bundled JS as index.js inside a per-package directory
           const code = await buildPackage(pkgName);
           const jsFileName = `_vibe-pkg/${pkgName}/index.js`;
-          bundle[jsFileName] = {
-            type: "asset",
-            fileName: jsFileName,
-            name: pkgName,
-            names: [pkgName],
-            originalFileName: "",
-            originalFileNames: [],
-            needsCodeReference: false,
-            source: code,
-          };
+          this.emitFile({ type: "asset", fileName: jsFileName, source: code });
           console.log(`📦 Emitted ${jsFileName} (${code.length} bytes)`);
 
           // Copy non-JS/TS asset files (txt, md, json, …) into the same directory
@@ -215,16 +206,7 @@ export function workspacePackagesPlugin(): Plugin {
           for (const relativePath of assetFiles) {
             const assetFileName = `_vibe-pkg/${pkgName}/${relativePath}`;
             const content = await readFile(join(pkgPath, relativePath));
-            bundle[assetFileName] = {
-              type: "asset",
-              fileName: assetFileName,
-              name: relativePath,
-              names: [relativePath],
-              originalFileName: join(pkgPath, relativePath),
-              originalFileNames: [join(pkgPath, relativePath)],
-              needsCodeReference: false,
-              source: content,
-            };
+            this.emitFile({ type: "asset", fileName: assetFileName, source: content });
             console.log(`📄 Emitted ${assetFileName} (${content.length} bytes)`);
           }
         } catch {

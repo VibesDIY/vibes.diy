@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useClerk } from "@clerk/clerk-react";
+import { useClerk } from "@clerk/react";
 import { VibesButtonStyles, useMobile, LabelContainer } from "@vibes.diy/base";
 
 // Tornado/Wormhole icon for logout - similar to LoginIcon pattern

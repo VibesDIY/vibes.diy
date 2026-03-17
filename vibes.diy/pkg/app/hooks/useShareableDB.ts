@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth, useClerk } from "@clerk/react";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { isUserSettingSharing, type UserSettingItem } from "@vibes.diy/api-types";
 import type { ResOkVibeRegisterFPDb } from "@vibes.diy/vibe-types";

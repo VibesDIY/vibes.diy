@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
-import { SignIn, useAuth, useClerk, useUser } from "@clerk/clerk-react";
+import { SignIn, useAuth, useClerk, useUser } from "@clerk/react";
 import type { SessionSidebarProps } from "@vibes.diy/prompts";
 import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
@@ -187,7 +187,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
         createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowSignIn(false)}>
             <div onClick={(e) => e.stopPropagation()}>
-              <SignIn routing="virtual" forceRedirectUrl={window.location.href} />
+              <SignIn routing="hash" forceRedirectUrl={window.location.href} />
             </div>
           </div>,
           document.body
