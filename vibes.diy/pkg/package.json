@@ -75,7 +75,7 @@
     "@storybook/addon-onboarding": "^10.2.6",
     "@storybook/react": "^10.1.11",
     "@storybook/react-vite": "^10.2.6",
-    "@tailwindcss/vite": "^4.1.18",
+    "@tailwindcss/vite": "^4.2.1",
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.13",
     "@types/react-dom": "~19.2.2",
