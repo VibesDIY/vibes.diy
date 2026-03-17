@@ -40,9 +40,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: 4.1.0
         version: 4.1.0(@vitest/browser@4.1.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.1.0))(vitest@4.1.0)
-      cross-env:
-        specifier: ^10.0.0
-        version: 10.1.0
       eslint:
         specifier: ^9.39.2
         version: 9.39.2(jiti@2.6.1)
@@ -1659,11 +1656,6 @@ packages:
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
 
-  '@adviser/cement@0.5.33':
-    resolution: {integrity: sha512-2nDrWSu8l82iDOUXR9QFenk1kooCLhS06QxGSp8Z9wTVFh3mSUGHC7+IVkBNQKyaO0Jqo1XAIGzaPts22amB6A==}
-    engines: {node: '>=20.19.0'}
-    hasBin: true
-
   '@adviser/cement@0.5.34':
     resolution: {integrity: sha512-z0SbcniVXXrUTZJaKbROsv3CjcVuSCBsBqE+AkUW1xWlQfzY0BNEaDpN2IX5vcfQlR540kCr5HIG4ZrVucD+BA==}
     engines: {node: '>=20.19.0'}
@@ -1996,9 +1988,6 @@ packages:
 
   '@emnapi/wasi-threads@1.2.0':
     resolution: {integrity: sha512-N10dEJNSsUx41Z6pZsXU8FjPjpBEplgH24sfkmITrBED1/U2Esum9F3lfLrMjKHHjmi557zQn7kR9R+XWXu5Rg==}
-
-  '@epic-web/invariant@1.0.0':
-    resolution: {integrity: sha512-lrTPqgvfFQtR/eY/qkIzp98OGdNJu0m5ji3q/nJI8v3SXkRKEnWiOxMmbvcSoAIzv/cGiuvRy57k4suKQSAdwA==}
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
@@ -5139,11 +5128,6 @@ packages:
 
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
-
-  cross-env@10.1.0:
-    resolution: {integrity: sha512-GsYosgnACZTADcmEyJctkJIoqAhHjttw7RsFrVoJNXbsWWqaq6Ym+7kZjq6mS45O0jij6vtiReppKQEtqWy6Dw==}
-    engines: {node: '>=20'}
-    hasBin: true
 
   cross-fetch@4.1.0:
     resolution: {integrity: sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw==}
@@ -8858,13 +8842,6 @@ snapshots:
 
   '@adobe/css-tools@4.4.4': {}
 
-  '@adviser/cement@0.5.33(typescript@5.9.3)':
-    dependencies:
-      ts-essentials: 10.1.1(typescript@5.9.3)
-      yaml: 2.8.2
-    transitivePeerDependencies:
-      - typescript
-
   '@adviser/cement@0.5.34(typescript@5.9.3)':
     dependencies:
       ts-essentials: 10.1.1(typescript@5.9.3)
@@ -9252,8 +9229,6 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
-
-  '@epic-web/invariant@1.0.0': {}
 
   '@esbuild-kit/core-utils@3.3.2':
     dependencies:
@@ -9687,7 +9662,7 @@ snapshots:
 
   '@fireproof/core-cli@0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@5.9.3)
       '@fireproof/core-device-id': 0.24.13(typescript@5.9.3)
       '@fireproof/core-keybag': 0.24.13(typescript@5.9.3)
       '@fireproof/core-runtime': 0.24.13(typescript@5.9.3)
@@ -9969,7 +9944,7 @@ snapshots:
 
   '@fireproof/vendor@0.24.13(typescript@5.9.3)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@5.9.3)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
@@ -12510,11 +12485,6 @@ snapshots:
 
   create-require@1.1.1:
     optional: true
-
-  cross-env@10.1.0:
-    dependencies:
-      '@epic-web/invariant': 1.0.0
-      cross-spawn: 7.0.6
 
   cross-fetch@4.1.0(encoding@0.1.13):
     dependencies:
