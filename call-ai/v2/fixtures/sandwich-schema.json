@@ -1,0 +1,7 @@
+{
+  "name": "sandwich",
+  "properties": {
+    "name": { "type": "string" },
+    "layers": { "type": "array", "items": { "type": "string" } }
+  }
+}

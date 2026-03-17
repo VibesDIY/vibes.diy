@@ -141,6 +141,11 @@ const app = command({
       description: "Directory to save decoded images (enables image saving)",
       defaultValue: () => "",
     }),
+    text: flag({
+      long: "text",
+      short: "t",
+      description: "Output just the accumulated text content (no JSON wrapper)",
+    }),
   },
   handler: async ({
     prompt,
@@ -160,6 +165,7 @@ const app = command({
     statsInterval,
     image,
     imageDir,
+    text,
   }) => {
     let body: ReadableStream<Uint8Array>;
 
@@ -216,9 +222,10 @@ const app = command({
     }
     const sthis = ensureSuperThis();
 
-    if (all || line || data || sse || delta || full || block || stats || image || imageDir) {
+    if (all || line || data || sse || delta || full || block || stats || image || imageDir || text) {
       const streamId = sthis.nextId().str;
       const intervalMs = parseInt(statsInterval, 10) || 1000;
+      let textNeedsNewline = false;
       const pipeline = body
         .pipeThrough(createStatsCollector(streamId, intervalMs))
         .pipeThrough(createLineStream(streamId))
@@ -292,6 +299,12 @@ const app = command({
           }
         }
 
+        if (text && isToplevelLine(value)) {
+          if (textNeedsNewline) process.stdout.write("\n");
+          process.stdout.write(value.line);
+          textNeedsNewline = true;
+        }
+
         if (image && isBlockImage(value)) {
           const response = await fetch(value.url);
           const blob = await response.blob();
@@ -325,6 +338,7 @@ const app = command({
           console.log(JSON.stringify(value));
         }
       }
+      if (text && textNeedsNewline) process.stdout.write("\n");
     } else {
       const reader = body.getReader();
       const decoder = new TextDecoder();
