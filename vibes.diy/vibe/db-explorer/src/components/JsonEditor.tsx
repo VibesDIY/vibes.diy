@@ -84,13 +84,12 @@ export function JsonEditor({ doc, onSave, onDiscard }: JsonEditorProps) {
           onClick={handleSave}
           disabled={!isValid || !isDirty}
           bg={canSave ? S.accent : S.accent + "15"}
-          border={canSave ? S.accent : S.accent + "25"}
           color={canSave ? "#fff" : S.accent + "50"}
           style={{ fontWeight: 600, cursor: canSave ? "pointer" : "default" }}
         >
           Save
         </Btn>
-        <Btn onClick={onDiscard} border={S.border} color={S.textDim}>
+        <Btn onClick={onDiscard} color={S.textDim}>
           Discard
         </Btn>
       </div>

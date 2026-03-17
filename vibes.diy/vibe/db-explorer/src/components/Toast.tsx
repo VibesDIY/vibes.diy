@@ -34,6 +34,7 @@ export function Toast({ message, type, onDone }: ToastProps) {
         alignItems: "center",
         gap: 8,
         boxShadow: "0 8px 30px #00000040",
+        animation: "toast-in 0.2s ease-out",
       }}
     >
       <span

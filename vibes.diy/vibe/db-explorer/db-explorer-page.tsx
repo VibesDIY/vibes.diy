@@ -25,7 +25,6 @@ export function DBExplorerPage({
   };
   base: string;
 }) {
-  console.log("base", base);
   const mountCode = [
     "import { startDBExplorer } from '@vibes.diy/vibe-db-explorer';",
     `startDBExplorer(${JSON.stringify(base)});`,
@@ -36,6 +35,7 @@ export function DBExplorerPage({
         <script type="importmap" dangerouslySetInnerHTML={{ __html: JSON.stringify(importMap, null, 2) }} />
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/db-explorer.css" />
         <title>Fireproof DB Explorer</title>
       </head>
       <body>
