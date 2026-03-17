@@ -31,7 +31,7 @@
     "@fireproof/use-fireproof": "0.24.13",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.2.4",
-    "@react-router/node": "^7.11.0",
+    "@react-router/node": "^7.13.1",
     "@shikijs/monaco": "^4.0.2",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-table": "^8.21.3",
