@@ -16,3 +16,11 @@ runs:
       with:
         node-version: "22"
         cache: pnpm
+
+    - name: generate-https-certs
+      shell: bash
+      run: |
+        sudo apt-get install -y mkcert libnss3-tools
+        mkcert -install
+        cd vibes.diy/pkg
+        mkcert "*.localhost.vibesdiy.net" localhost
