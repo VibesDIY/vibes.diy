@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import type { AppConfig, ModelConfig } from "./types.js";
-import { getModelOptions } from "./models.js";
+import { getModelOptions } from "../../../data/models.js";
 import { useVibeDiy } from "../../../vibe-diy-provider.js";
-import { isActiveTitle, isActiveModelSetting, isActiveEnv, toKVString, fromKVString } from "@vibes.diy/api-types";
+import { fromKVString, toKVString, AIParams } from "@vibes.diy/api-types";
+import { toast } from "react-hot-toast";
 
 // ── card wrapper ─────────────────────────────────────────────────────────────
 
@@ -61,21 +61,19 @@ function SaveBtn({ saving, onClick }: { saving: boolean; onClick: () => void }) 
 
 // ── model config section ─────────────────────────────────────────────────────
 
-function ModelSection({ config, onSave }: { config: ModelConfig; onSave: (config: ModelConfig) => Promise<void> }) {
-  const [model, setModel] = useState(config.model);
-  const [apiKey, setApiKey] = useState(config.apiKey);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setModel(config.model);
-    setApiKey(config.apiKey);
-  }, [config]);
-
-  async function save() {
-    setSaving(true);
-    await onSave({ model, apiKey });
-    setSaving(false);
-  }
+function ModelSection({
+  config,
+  saving,
+  onSave,
+}: {
+  config?: Partial<AIParams>;
+  saving: boolean;
+  onSave: (cfg: AIParams) => void;
+}) {
+  const models = getModelOptions();
+  const [model, setModel] = useState(config?.model ?? "");
+  const [apiKey, setApiKey] = useState(config?.apiKey ?? "");
+  const selected = models.find((o) => o.name === model) ?? models[0];
 
   return (
     <div className="space-y-2">
@@ -86,16 +84,19 @@ function ModelSection({ config, onSave }: { config: ModelConfig; onSave: (config
           onChange={(e) => setModel(e.target.value)}
           className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
         >
-          {getModelOptions().map((opt) => (
-            <option key={opt.modelName} value={opt.modelName}>
-              {opt.visibleModelName}
+          {models.map((opt) => (
+            <option key={opt.id} value={opt.name}>
+              {opt.id}
             </option>
           ))}
         </select>
       </div>
+      {selected?.description && (
+        <p className="pl-[calc(1.5rem+6rem)] text-xs text-gray-400 dark:text-gray-500 italic">{selected.description}</p>
+      )}
       <Field label="API Key" value={apiKey} onChange={setApiKey} placeholder="sk-…" type="password" />
       <div className="flex justify-end">
-        <SaveBtn saving={saving} onClick={() => void save()} />
+        <SaveBtn saving={saving} onClick={() => onSave({ model, apiKey })} />
       </div>
     </div>
   );
@@ -105,39 +106,25 @@ function ModelSection({ config, onSave }: { config: ModelConfig; onSave: (config
 
 function EnvSection({
   env,
+  saving,
   onUpsert,
   onDelete,
 }: {
   env: Record<string, string>;
-  onUpsert: (key: string, value: string) => Promise<void>;
-  onDelete: (key: string) => Promise<void>;
+  saving: boolean;
+  onUpsert: (key: string, value: string) => void;
+  onDelete: (key: string) => void;
 }) {
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
-  const [adding, setAdding] = useState(false);
-  const [busyKey, setBusyKey] = useState<string | null>(null);
 
-  async function add() {
+  function add() {
     const key = newKey.trim();
     const value = newValue.trim();
     if (!key) return;
-    setAdding(true);
-    await onUpsert(key, value);
+    onUpsert(key, value);
     setNewKey("");
     setNewValue("");
-    setAdding(false);
-  }
-
-  async function remove(key: string) {
-    setBusyKey(key);
-    await onDelete(key);
-    setBusyKey(null);
-  }
-
-  async function updateValue(key: string, value: string) {
-    setBusyKey(key);
-    await onUpsert(key, value);
-    setBusyKey(null);
   }
 
   const keys = Object.keys(env);
@@ -159,9 +146,9 @@ function EnvSection({
                 key={k}
                 envKey={k}
                 value={env[k]}
-                isBusy={busyKey === k}
-                onSave={(v) => void updateValue(k, v)}
-                onDelete={() => void remove(k)}
+                isBusy={saving}
+                onSave={(v) => onUpsert(k, v)}
+                onDelete={() => onDelete(k)}
               />
             ))}
           </tbody>
@@ -184,11 +171,11 @@ function EnvSection({
         />
         <button
           type="button"
-          disabled={adding || !newKey.trim()}
-          onClick={() => void add()}
+          disabled={saving || !newKey.trim()}
+          onClick={add}
           className="rounded px-2 py-1 text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300 disabled:opacity-50"
         >
-          {adding ? "…" : "Add"}
+          {saving ? "…" : "Add"}
         </button>
       </div>
     </div>
@@ -249,6 +236,15 @@ function EnvRow({
   );
 }
 
+// ── pending update ────────────────────────────────────────────────────────────
+
+type SettingsUpdate =
+  | { kind: "fetch"; appSlug: string; userSlug: string }
+  | { kind: "title"; appSlug: string; userSlug: string; title: string }
+  | { kind: "chat"; appSlug: string; userSlug: string; chat: AIParams }
+  | { kind: "app"; appSlug: string; userSlug: string; app: AIParams }
+  | { kind: "env"; appSlug: string; userSlug: string; env: Record<string, string> };
+
 // ── main tab ─────────────────────────────────────────────────────────────────
 
 interface SettingsTabProps {
@@ -258,58 +254,86 @@ interface SettingsTabProps {
 
 export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
   const { vibeDiyApi } = useVibeDiy();
-  const [config, setConfig] = useState<AppConfig | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState("");
-  const [savingTitle, setSavingTitle] = useState(false);
 
+  const [title, setTitle] = useState("");
+  const [chatConfig, setChatConfig] = useState<Partial<AIParams>>({});
+  const [appConfig, setAppConfig] = useState<Partial<AIParams>>({});
+  const [env, setEnv] = useState<Record<string, string>>({});
+
+  const [pending, setPending] = useState<SettingsUpdate>({ kind: "fetch", appSlug, userSlug });
+  const [savingTitle, setSavingTitle] = useState(false);
+  const [savingChat, setSavingChat] = useState(false);
+  const [savingApp, setSavingApp] = useState(false);
+  const [savingEnv, setSavingEnv] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Reset to a fresh fetch whenever the app identity changes.
   useEffect(() => {
-    setLoading(true);
-    void vibeDiyApi.ensureAppSettings({ appSlug, userSlug }).then((res) => {
-      const cfg: AppConfig = { title: "", chat: { model: "", apiKey: "" }, app: { model: "", apiKey: "" }, env: {} };
-      if (res.isOk()) {
-        const { entries } = res.Ok().settings;
-        const titleEntry = entries.find(isActiveTitle);
-        const chatEntry = entries.find((e) => isActiveModelSetting(e) && e.usage === "chat");
-        const appEntry = entries.find((e) => isActiveModelSetting(e) && e.usage === "app");
-        const envEntry = entries.find(isActiveEnv);
-        if (titleEntry && isActiveTitle(titleEntry)) cfg.title = titleEntry.title;
-        if (chatEntry && isActiveModelSetting(chatEntry)) cfg.chat = chatEntry.param;
-        if (appEntry && isActiveModelSetting(appEntry)) cfg.app = appEntry.param;
-        if (envEntry && isActiveEnv(envEntry)) cfg.env = fromKVString(envEntry.env);
-      }
-      setConfig(cfg);
-      setTitle(cfg.title);
-      setLoading(false);
-    });
+    setPending({ kind: "fetch", appSlug, userSlug });
   }, [appSlug, userSlug, vibeDiyApi]);
 
-  async function saveTitle() {
-    if (!config) return;
-    setSavingTitle(true);
-    await vibeDiyApi.ensureAppSettings({ appSlug, userSlug, title });
-    setConfig({ ...config, title });
-    setSavingTitle(false);
+  // Single effect: handles initial fetch + every update.
+  // pending embeds appSlug/userSlug so deps stay stable at [pending, vibeDiyApi].
+  useEffect(() => {
+    let alive = true;
+
+    if (pending.kind === "title") setSavingTitle(true);
+    else if (pending.kind === "chat") setSavingChat(true);
+    else if (pending.kind === "app") setSavingApp(true);
+    else if (pending.kind === "env") setSavingEnv(true);
+    else setLoading(true);
+
+    const base = { appSlug: pending.appSlug, userSlug: pending.userSlug };
+    const req =
+      pending.kind === "title"
+        ? { ...base, title: pending.title }
+        : pending.kind === "chat"
+          ? { ...base, chat: pending.chat }
+          : pending.kind === "app"
+            ? { ...base, app: pending.app }
+            : pending.kind === "env"
+              ? { ...base, env: toKVString(pending.env) }
+              : base;
+
+    void vibeDiyApi.ensureAppSettings(req).then((res) => {
+      if (!alive) return;
+
+      if (pending.kind === "title") setSavingTitle(false);
+      else if (pending.kind === "chat") setSavingChat(false);
+      else if (pending.kind === "app") setSavingApp(false);
+      else if (pending.kind === "env") setSavingEnv(false);
+      else setLoading(false);
+
+      if (res.isErr()) {
+        toast.error(res.Err().message);
+        return;
+      }
+
+      const s = res.Ok().settings;
+      console.log("Settings saved/fetched successfully:", s.entry.settings);
+      setTitle(s.entry.settings.title ?? "");
+      setChatConfig(s.entry.settings.chat ?? {});
+      setAppConfig(s.entry.settings.app ?? {});
+      setEnv(fromKVString(s.entry.settings.env ?? []));
+
+      if (pending.kind !== "fetch") toast.success("Saved");
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [pending, vibeDiyApi]);
+
+  function upsertEnv(key: string, value: string) {
+    const updated = { ...env, [key]: value };
+    setEnv(updated);
+    setPending({ kind: "env", appSlug, userSlug, env: updated });
   }
 
-  async function saveModelConfig(target: "chat" | "app", cfg: ModelConfig) {
-    const req = target === "chat" ? { appSlug, userSlug, chat: cfg } : { appSlug, userSlug, app: cfg };
-    await vibeDiyApi.ensureAppSettings(req);
-    setConfig((prev) => (prev ? { ...prev, [target]: cfg } : prev));
-  }
-
-  async function upsertEnv(key: string, value: string) {
-    if (!config) return;
-    const updated = { ...config.env, [key]: value };
-    await vibeDiyApi.ensureAppSettings({ appSlug, userSlug, env: toKVString(updated) });
-    setConfig({ ...config, env: updated });
-  }
-
-  async function deleteEnv(key: string) {
-    if (!config) return;
-    const { [key]: _, ...updated } = config.env;
-    await vibeDiyApi.ensureAppSettings({ appSlug, userSlug, env: toKVString(updated) });
-    setConfig({ ...config, env: updated });
+  function deleteEnv(key: string) {
+    const { [key]: _, ...updated } = env;
+    setEnv(updated);
+    setPending({ kind: "env", appSlug, userSlug, env: updated });
   }
 
   if (loading) {
@@ -319,7 +343,6 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
       </div>
     );
   }
-  if (!config) return null;
 
   return (
     <ol className="space-y-5 text-sm">
@@ -327,21 +350,29 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
         <div className="space-y-2">
           <Field label="Title" value={title} onChange={setTitle} placeholder={appSlug} />
           <div className="flex justify-end">
-            <SaveBtn saving={savingTitle} onClick={() => void saveTitle()} />
+            <SaveBtn saving={savingTitle} onClick={() => setPending({ kind: "title", appSlug, userSlug, title })} />
           </div>
         </div>
       </Card>
 
       <Card title="Chat Model">
-        <ModelSection config={config.chat} onSave={(cfg) => saveModelConfig("chat", cfg)} />
+        <ModelSection
+          config={chatConfig}
+          saving={savingChat}
+          onSave={(cfg) => setPending({ kind: "chat", appSlug, userSlug, chat: cfg })}
+        />
       </Card>
 
       <Card title="App Model">
-        <ModelSection config={config.app} onSave={(cfg) => saveModelConfig("app", cfg)} />
+        <ModelSection
+          config={appConfig}
+          saving={savingApp}
+          onSave={(cfg) => setPending({ kind: "app", appSlug, userSlug, app: cfg })}
+        />
       </Card>
 
       <Card title="Environment Variables">
-        <EnvSection env={config.env} onUpsert={upsertEnv} onDelete={deleteEnv} />
+        <EnvSection env={env} saving={savingEnv} onUpsert={upsertEnv} onDelete={deleteEnv} />
       </Card>
     </ol>
   );

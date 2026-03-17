@@ -73,7 +73,7 @@ export function FlagToggle({
 
 export function toastError(res: Result<ResEnsureAppSettings>, ok: () => void) {
   if (res.isErr()) {
-    toast.error(String(res.Err()));
+    toast.error(res.Err().message);
   }
   if (res.Ok().error) {
     toast.error(res.Ok().error ?? "");

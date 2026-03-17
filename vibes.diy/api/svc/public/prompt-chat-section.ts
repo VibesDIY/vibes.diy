@@ -216,6 +216,7 @@ async function handlePromptContext({
         return acc;
       }, [] as VibeFile[]),
       auth: req.auth,
+      _auth: req._auth,
     });
     if (rFs.isErr()) {
       console.error("Failed to ensure app slug item for code blocks:", rFs.Err());
@@ -233,7 +234,7 @@ async function handlePromptContext({
     vctx.db
       .insert(sqlPromptContexts)
       .values({
-        userId: req.auth.verifiedAuth.claims.userId,
+        userId: req._auth.verifiedAuth.claims.userId,
         chatId: req.chatId,
         promptId,
         fsId: fsRef.IsSome() ? fsRef.unwrap().fsId : undefined,
@@ -377,7 +378,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         const iResChat = await vctx.db
           .select()
           .from(sqlChatContexts)
-          .where(and(eq(sqlChatContexts.chatId, req.chatId), eq(sqlChatContexts.userId, req.auth.verifiedAuth.claims.userId)))
+          .where(and(eq(sqlChatContexts.chatId, req.chatId), eq(sqlChatContexts.userId, req._auth.verifiedAuth.claims.userId)))
           .get();
         if (!iResChat) {
           return Result.Err(`Creation Chat ID ${req.chatId} not found`);
@@ -389,7 +390,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           .select()
           .from(sqlApplicationChats)
           .where(
-            and(eq(sqlApplicationChats.userId, req.auth.verifiedAuth.claims.userId), eq(sqlApplicationChats.chatId, req.chatId))
+            and(eq(sqlApplicationChats.userId, req._auth.verifiedAuth.claims.userId), eq(sqlApplicationChats.chatId, req.chatId))
           )
           .get();
         if (!iResChat) {

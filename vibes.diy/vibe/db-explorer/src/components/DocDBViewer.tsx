@@ -310,11 +310,7 @@ export function DocDBViewer({
         >
           <div style={{ flex: 1 }} />
           {doc && (
-            <Btn
-              onClick={() => setConfirmDelete(true)}
-              color={S.danger}
-              bg={S.danger + "15"}
-            >
+            <Btn onClick={() => setConfirmDelete(true)} color={S.danger} bg={S.danger + "15"}>
               Delete
             </Btn>
           )}
@@ -344,18 +340,10 @@ export function DocDBViewer({
             </span>
           )}
           <div style={{ flex: 1 }} />
-          <Btn
-            onClick={onSeedData}
-            color={S.textDim}
-          >
+          <Btn onClick={onSeedData} color={S.textDim}>
             Load 100 docs
           </Btn>
-          <Btn
-            onClick={newDoc}
-            bg={S.accent + "15"}
-            color={S.accent}
-            style={{ fontWeight: 600 }}
-          >
+          <Btn onClick={newDoc} bg={S.accent + "15"} color={S.accent} style={{ fontWeight: 600 }}>
             + New Document
           </Btn>
         </div>

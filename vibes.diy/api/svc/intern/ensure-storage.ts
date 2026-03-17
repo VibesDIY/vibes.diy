@@ -77,7 +77,7 @@ export function ensureStorage(db: VibesSqlite, s3: S3Api): Storage {
           > => {
             const [lag1, lag2] = coerceStreamUint8(item).tee();
             const cider = new Cider(lag1);
-            console.log("Created Cider for item, waiting for teeWriter...");
+            // console.log("Created Cider for item, waiting for teeWriter...");
             const peers = [new SQLitePeer(db, cider, 10 * 1024 * 1024) /*, new S3Peer(s3, cider) */];
             return teeWriter(peers, lag2).then(async (rTee) => {
               if (rTee.isErr()) {

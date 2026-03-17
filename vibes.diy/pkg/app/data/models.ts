@@ -7,6 +7,6 @@ interface Model {
   featured?: boolean;
 }
 
-const allModels: Model[] = modelsData;
-
-export const featuredModels: Model[] = allModels.filter((m) => m.featured);
+export function getModelOptions(): Model[] {
+  return modelsData;
+}

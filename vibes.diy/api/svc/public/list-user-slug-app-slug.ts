@@ -43,7 +43,7 @@ export const listUserSlugAppSlugEvento: EventoHandler<
     ): Promise<Result<EventoResultType>> => {
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-      const userId = req.auth.verifiedAuth.claims.userId;
+      const userId = req._auth.verifiedAuth.claims.userId;
 
       const conditions: SQL[] = [eq(sqlUserSlugBinding.userId, userId)];
       if (req.userSlug) {

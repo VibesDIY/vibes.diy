@@ -3,7 +3,6 @@ import ChatInput, { ChatInputRef } from "./ChatInput.js";
 import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
 import { partyPlannerPrompt, progressTrackerPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
-import { featuredModels } from "../data/models.js";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { useNavigate } from "react-router";
 import { BuildURI } from "@adviser/cement";
@@ -110,7 +109,6 @@ export default function HomePage() {
               </div>
               <ChatInput
                 ref={chatInput}
-                models={featuredModels}
                 // promptTextRef={promptTextRef}
                 // globalModel={chatState.globalModel}
                 onSubmit={setPrompt}

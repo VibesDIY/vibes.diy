@@ -17,6 +17,10 @@ import {
   isActiveRequestRejected,
   isActiveRequest,
   isEnableRequest,
+  isActiveTitle,
+  isActiveModelSettingChat,
+  isActiveModelSettingApp,
+  isActiveEnv,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
@@ -42,6 +46,9 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
   const result: AppSettings = {
     entries,
     entry: {
+      settings: {
+        env: [],
+      },
       request: {
         pending: [],
         approved: [],
@@ -97,6 +104,19 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
         break;
       case isActiveInviteViewerRevoked(e):
         result.entry.invite.viewers.revoked.push(e);
+        break;
+
+      case isActiveTitle(e):
+        result.entry.settings.title = e.title;
+        break;
+      case isActiveModelSettingChat(e):
+        result.entry.settings.chat = e.param;
+        break;
+      case isActiveModelSettingApp(e):
+        result.entry.settings.app = e.param;
+        break;
+      case isActiveEnv(e):
+        result.entry.settings.env.push(...e.env);
         break;
     }
   });
@@ -157,6 +177,7 @@ export function ensureACLEntry({ activeEntries, entry, crud, appSlug, userSlug, 
     case isEnablePublicAccess(entry):
       {
         const idx = entries.findIndex((e) => isEnablePublicAccess(e));
+        // console.log(`Ensuring public access with entry:`, entry, crud, idx);
         if (crud === "delete") {
           if (idx >= 0) {
             entries.splice(idx, 1);
@@ -171,13 +192,14 @@ export function ensureACLEntry({ activeEntries, entry, crud, appSlug, userSlug, 
 
     case isEnableRequest(entry):
       {
-        const idx = entries.findIndex((e) => isEnableRequest(e) && e.type === entry.type);
+        const idx = entries.findIndex((e) => isEnableRequest(e));
         if (crud === "delete") {
           if (idx >= 0) entries.splice(idx, 1);
         } else {
           if (idx >= 0) entries[idx] = entry;
           else entries.push(entry);
         }
+        // console.log(`Ensuring enable request with entry:`, entry, crud, idx, entries);
       }
       ret = Result.Ok(buildEnsureEntryResult(entries));
       break;

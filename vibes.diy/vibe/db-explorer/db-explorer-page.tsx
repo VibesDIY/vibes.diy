@@ -3,6 +3,11 @@ import { createRoot } from "react-dom/client";
 import { DBExplorerRoot } from "./db-explorer-root.js";
 
 export function startDBExplorer(base: string) {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = `${import.meta.url}/public/db-explorer.css`;
+  document.head.appendChild(link);
+
   const element = document.getElementById("db-explorer");
   if (!element) {
     throw new Error(`Can't find the dom element root`);
@@ -35,7 +40,6 @@ export function DBExplorerPage({
         <script type="importmap" dangerouslySetInnerHTML={{ __html: JSON.stringify(importMap, null, 2) }} />
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="/db-explorer.css" />
         <title>Fireproof DB Explorer</title>
       </head>
       <body>

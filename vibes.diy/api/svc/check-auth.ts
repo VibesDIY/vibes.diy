@@ -10,12 +10,12 @@ import { ClerkClaimSchema } from "@fireproof/core-types-base";
 import { VibesApiSQLCtx } from "./types.js";
 import { MsgBase } from "@vibes.diy/api-types";
 
-export type ReqWithVerifiedAuth<REQ extends { type: string; auth: DashAuthType }> = Omit<REQ, "auth"> & {
-  readonly auth: VerifiedAuthResult;
+export type ReqWithVerifiedAuth<REQ extends { type: string; auth: DashAuthType }> = REQ & {
+  readonly _auth: VerifiedAuthResult;
 };
 
-export type ReqWithOptionalAuth<REQ extends { type: string; auth?: DashAuthType }> = Omit<REQ, "auth"> & {
-  readonly auth?: VerifiedAuthResult;
+export type ReqWithOptionalAuth<REQ extends { type: string; auth?: DashAuthType }> = REQ & {
+  readonly _auth?: VerifiedAuthResult;
 };
 
 export async function verifyExtractClaims(
@@ -101,14 +101,14 @@ export function optAuth<IReq, TReq extends MsgBase<X>, TRes, X extends { type: s
       const rAuth = await verifyAuth(ctx.ctx.getOrThrow("vibesApiCtx"), payload as WithAuth);
       if (rAuth.isOk() && rAuth.Ok().type === "VerifiedAuthResult") {
         ctx.validated.payload = {
+          _auth: rAuth.Ok(),
           ...payload,
-          auth: rAuth.Ok(),
-        } as TReq["payload"];
+        };
         // (payload as unknown as { auth: VerifiedResult }).auth = rAuth.Ok();
       } else {
         ctx.validated.payload = {
           ...payload,
-          auth: undefined,
+          _auth: undefined,
         };
         // Auth provided but invalid — treat as unauthenticated
         // (payload as unknown as { auth: undefined }).auth = undefined;
@@ -123,7 +123,7 @@ export function checkAuth<IReq, TReq extends MsgBase<X>, TRes, X extends WithAut
 ): (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => Promise<Result<EventoResultType>> {
   return optAuth<IReq, TReq, TRes, X>((async (ctx) => {
     const payload = ctx.validated.payload;
-    if (!payload.auth) {
+    if (!payload._auth) {
       console.error("checkAuth: auth required but not verified");
       return Result.Err("authentication required");
     }

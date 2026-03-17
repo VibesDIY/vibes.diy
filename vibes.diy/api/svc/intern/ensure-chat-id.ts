@@ -36,7 +36,7 @@ export async function ensureChatId(
       ctx.db
         .select()
         .from(sqlChatContexts)
-        .where(and(condition, eq(sqlChatContexts.userId, req.auth.verifiedAuth.claims.userId)))
+        .where(and(condition, eq(sqlChatContexts.userId, req._auth.verifiedAuth.claims.userId)))
         .all()
     );
     if (rResult.isErr()) {
@@ -55,7 +55,7 @@ export async function ensureChatId(
     chatId = result[0].chatId;
   } else {
     const resUser = await ensureUserSlug(ctx, {
-      userId: req.auth.verifiedAuth.claims.userId,
+      userId: req._auth.verifiedAuth.claims.userId,
       userSlug: req.userSlug,
     });
     if (resUser.isErr()) {
@@ -63,7 +63,7 @@ export async function ensureChatId(
     }
     userSlug = resUser.Ok().userSlug;
     const resApp = await ensureAppSlug(ctx, {
-      userId: req.auth.verifiedAuth.claims.userId,
+      userId: req._auth.verifiedAuth.claims.userId,
       userSlug: userSlug,
       appSlug: req.appSlug,
     });
@@ -77,7 +77,7 @@ export async function ensureChatId(
         .insert(sqlChatContexts)
         .values({
           chatId,
-          userId: req.auth.verifiedAuth.claims.userId,
+          userId: req._auth.verifiedAuth.claims.userId,
           appSlug,
           userSlug,
           created: new Date().toISOString(),

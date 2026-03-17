@@ -215,7 +215,7 @@ export function SharingTab({ userSlug, appSlug }: SharingTabProps) {
     toastError(res, () => setSettings(res.Ok().settings));
   }
 
-  async function toggleFlag(key: string, entryType: string, enabled: boolean) {
+  async function toggleFlag(key: string, entryType: "app.acl.enable.public.access" | "app.acl.enable.request", enabled: boolean) {
     if (!settings) return;
     setToggling(key);
     const op = enabled ? "delete" : "upsert";
@@ -223,12 +223,14 @@ export function SharingTab({ userSlug, appSlug }: SharingTabProps) {
       appSlug,
       userSlug,
       aclEntry: {
-        entry: { type: entryType as "app.acl.enable.public.access", tick: { count: 0, last: new Date() } },
+        entry: { type: entryType, tick: { count: 0, last: new Date() } },
         op,
       },
     });
+    console.log(`Toggling ${entryType} to ${!enabled} with op ${op}`, res);
     setToggling(null);
     toastError(res, () => {
+      console.log(`toggleFlag res:`, res.Ok().settings);
       setSettings(res.Ok().settings);
     });
   }

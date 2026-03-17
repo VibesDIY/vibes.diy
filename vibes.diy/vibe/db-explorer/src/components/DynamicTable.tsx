@@ -1,4 +1,12 @@
-import { AllCommunityModule, colorSchemeDark, ModuleRegistry, themeQuartz, type CellStyle, type ColDef, type RowClickedEvent } from "ag-grid-community";
+import {
+  AllCommunityModule,
+  colorSchemeDark,
+  ModuleRegistry,
+  themeQuartz,
+  type CellStyle,
+  type ColDef,
+  type RowClickedEvent,
+} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import React, { useCallback, useMemo } from "react";
 import type { GridOptions } from "./GridFeatures.js";

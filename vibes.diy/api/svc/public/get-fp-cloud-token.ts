@@ -21,7 +21,7 @@ import { decodeJwt } from "jose";
 async function getFPCloudToken(ctx: VibesApiSQLCtx, req: ReqWithOptionalAuth<ReqFPCloudToken>): Promise<Result<ResFPCloudToken>> {
   // const binding = await getSlugBinding(ctx, req)
 
-  const reqUserId = req.auth?.verifiedAuth.claims.userId;
+  const reqUserId = req._auth?.verifiedAuth.claims.userId;
 
   const rAppSettings = await ensureAppSettings(ctx, {
     type: "vibes.diy.req-ensure-app-settings",

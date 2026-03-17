@@ -18,10 +18,8 @@ class SQLitePeerStream implements PeerStreamWithCommit {
   write(chunk: Uint8Array): Promise<void> {
     this.chunks.push(chunk);
     if (this.chunks.reduce((acc, curr) => acc + curr.length, 0) > this.owner.cutoffSize) {
-      console.log("SQLitePeerStream reject");
       return Promise.reject(new Error("SQLitePeerStream: max size exceeded (4KB)"));
     }
-    console.log("SQLitePeerStream write accepted");
     return Promise.resolve();
   }
   async cancel(): Promise<void> {
@@ -34,7 +32,6 @@ class SQLitePeerStream implements PeerStreamWithCommit {
     const now = new Date();
     const created = now.toISOString();
     const { cid: assetID } = await this.owner.cider.getCID();
-    console.log("SQLitePeerStream commit called", { assetID, created });
     const res = await exception2Result(() =>
       this.owner.db
         .insert(sqlAssets)
@@ -65,7 +62,7 @@ export class SQLitePeer implements PeerWithCommit {
     this.cutoffSize = cutoffSize;
   }
   begin(): Promise<Result<PeerStreamWithCommit>> {
-    console.log("SQLitePeer begin called");
+    // console.log("SQLitePeer begin called");
     return Promise.resolve(Result.Ok(new SQLitePeerStream(this)));
   }
 }
