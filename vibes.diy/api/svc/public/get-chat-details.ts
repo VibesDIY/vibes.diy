@@ -41,7 +41,7 @@ export const getChatDetailsEvento: EventoHandler<
     ): Promise<Result<EventoResultType>> => {
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-      const userId = req.auth.verifiedAuth.claims.userId;
+      const userId = req._auth.verifiedAuth.claims.userId;
 
       // Single query: verify ownership via UserSlugBinding, get chatId from ChatContexts,
       // fsId/created from PromptContexts, and blocks from ChatSections

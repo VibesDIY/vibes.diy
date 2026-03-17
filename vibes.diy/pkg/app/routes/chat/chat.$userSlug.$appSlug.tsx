@@ -9,7 +9,6 @@ import AppLayout from "../../components/AppLayout.js";
 import { BrutalistCard } from "@vibes.diy/base";
 import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
-import { featuredModels } from "../../data/models.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import { isCodeBegin, isPromptBlockBegin, isPromptBlockEnd } from "@vibes.diy/call-ai-v2";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
@@ -242,7 +241,7 @@ export default function Chat() {
         previewPanel={<ResultPreview promptState={promptState} currentView={currentView} />}
         chatInput={
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
-            <ChatInput ref={chatInput} models={featuredModels} onSubmit={sendPrompt} promptProcessing={promptState.running} />
+            <ChatInput ref={chatInput} onSubmit={sendPrompt} promptProcessing={promptState.running} />
           </BrutalistCard>
         }
         suggestionsComponent={undefined}

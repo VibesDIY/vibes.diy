@@ -32,7 +32,6 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.0",
-    "@clerk/clerk-js": "^5.121.1",
     "@fireproof/core-cli": "0.24.13",
     "@storybook/addon-a11y": "^10.1.7",
     "@storybook/addon-docs": "^10.2.6",

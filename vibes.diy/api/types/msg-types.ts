@@ -606,6 +606,12 @@ export const AppSettings = type({
   // type: "'vibes.diy.app-settings'",
   entries: ActiveEntry.array(),
   entry: type({
+    settings: {
+      "title?": "string",
+      "app?": AIParams.partial(),
+      "chat?": AIParams.partial(),
+      env: KVString.array(),
+    },
     publicAccess: EnablePublicAccess.optional(),
     enableRequest: EnableRequest.optional(),
     request: type({

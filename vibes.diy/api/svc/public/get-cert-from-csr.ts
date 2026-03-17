@@ -11,7 +11,7 @@ import { ReqCertFromCsr, ResCertFromCsr } from "@fireproof/core-types-protocols-
  */
 async function getCertFromCsr(ctx: VibesApiSQLCtx, req: ReqWithVerifiedAuth<ReqCertFromCsr>): Promise<Result<ResCertFromCsr>> {
   // Process the CSR using the DeviceIdCA
-  const rCert = await ctx.deviceCA.processCSR(req.csr, req.auth.verifiedAuth.claims);
+  const rCert = await ctx.deviceCA.processCSR(req.csr, req._auth.verifiedAuth.claims);
   if (rCert.isErr()) {
     return Result.Err(rCert.Err());
   }

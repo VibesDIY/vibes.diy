@@ -14,9 +14,11 @@ export function fromKVString(entries: KVString[]): Record<string, string> {
 
 export const AIParams = type({
   model: "string",
-  apiKey: "string",
+  "apiKey?": "string",
   // here we could add Endpoint url or backlink information
 });
+
+export type AIParams = typeof AIParams.infer;
 
 // export const CoercedDate = type("string.date.iso.parse | Date");
 // // export const CoercedDate = type("Date")
@@ -91,8 +93,8 @@ export const EnableRequest = type({
   type: "'app.acl.enable.request'",
   "autoAcceptViewRequest?": "boolean",
 });
-export type EnableRequestEditor = typeof EnableRequest.infer;
-export function isEnableRequest(obj: unknown): obj is EnableRequestEditor {
+export type EnableRequest = typeof EnableRequest.infer;
+export function isEnableRequest(obj: unknown): obj is EnableRequest {
   return !(EnableRequest(obj) instanceof type.errors);
 }
 
@@ -283,11 +285,32 @@ export function isActiveTitle(obj: unknown): obj is ActiveTitle {
   return !(ActiveTitle(obj) instanceof type.errors);
 }
 
-export const ActiveModelSetting = type({
+export const ActiveModelSettingBase = type({
   type: "'active.model'",
-  usage: "'chat'|'app'",
   param: AIParams,
 });
+
+export const ActiveModelSettingChat = type({
+  usage: "'chat'",
+}).and(ActiveModelSettingBase);
+
+export type ActiveModelSettingChat = typeof ActiveModelSettingChat.infer;
+
+export function isActiveModelSettingChat(obj: unknown): obj is typeof ActiveModelSettingChat.infer {
+  return !(ActiveModelSettingChat(obj) instanceof type.errors);
+}
+
+export const ActiveModelSettingApp = type({
+  usage: "'app'",
+}).and(ActiveModelSettingBase);
+
+export type ActiveModelSettingApp = typeof ActiveModelSettingApp.infer;
+export function isActiveModelSettingApp(obj: unknown): obj is typeof ActiveModelSettingApp.infer {
+  return !(ActiveModelSettingApp(obj) instanceof type.errors);
+}
+
+export const ActiveModelSetting = ActiveModelSettingChat.or(ActiveModelSettingApp);
+
 export type ActiveModelSetting = typeof ActiveModelSetting.infer;
 export function isActiveModelSetting(obj: unknown): obj is ActiveModelSetting {
   return !(ActiveModelSetting(obj) instanceof type.errors);

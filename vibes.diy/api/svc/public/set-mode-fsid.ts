@@ -78,7 +78,7 @@ export const setModeFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSetM
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      const rResult = await setModeFsId(vctx, req as unknown as ReqSetModeFs, req.auth.verifiedAuth.claims.userId);
+      const rResult = await setModeFsId(vctx, req as unknown as ReqSetModeFs, req._auth.verifiedAuth.claims.userId);
       if (rResult.isErr()) {
         return Result.Err(rResult);
       }

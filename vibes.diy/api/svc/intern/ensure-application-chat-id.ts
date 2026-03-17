@@ -25,7 +25,10 @@ export async function ensureApplicationChatId({
   const appSlug = req.appSlug;
   const userSlug = req.userSlug;
   if (chatId) {
-    const condition = [eq(sqlApplicationChats.userId, req.auth.verifiedAuth.claims.userId), eq(sqlApplicationChats.chatId, chatId)];
+    const condition = [
+      eq(sqlApplicationChats.userId, req._auth.verifiedAuth.claims.userId),
+      eq(sqlApplicationChats.chatId, chatId),
+    ];
     const rResult = await exception2Result(() =>
       ctx.db
         .select()
@@ -79,7 +82,7 @@ export async function ensureApplicationChatId({
   const newChatId = ctx.sthis.nextId(12).str;
   const created = new Date();
   const value = {
-    userId: req.auth.verifiedAuth.claims.userId,
+    userId: req._auth.verifiedAuth.claims.userId,
     appSlug,
     userSlug,
     chatId: newChatId,

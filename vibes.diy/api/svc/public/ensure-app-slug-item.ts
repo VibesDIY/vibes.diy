@@ -32,7 +32,7 @@ export async function ensureAppSlugItem(
 ): Promise<Result<ResEnsureAppSlug>> {
   // console.log("handle ensureAppSlugItem", ctx.validated);
   const rAppSlugBinding = await ensureSlugBinding(vctx, {
-    userId: req.auth.verifiedAuth.claims.userId,
+    userId: req._auth.verifiedAuth.claims.userId,
     appSlug: req.appSlug,
     userSlug: req.userSlug,
   });

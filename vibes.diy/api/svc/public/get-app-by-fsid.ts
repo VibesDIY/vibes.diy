@@ -33,9 +33,9 @@ function grantedAccess(role: "editor" | "viewer") {
 
 function getKeyFromAuth<T extends { type: string; auth?: DashAuthType | undefined }>(req: ReqWithOptionalAuth<T>) {
   return (
-    req.auth?.verifiedAuth?.claims.params.email ??
-    req.auth?.verifiedAuth?.claims.params.nick ??
-    req.auth?.verifiedAuth?.claims.params.name ??
+    req._auth?.verifiedAuth?.claims.params.email ??
+    req._auth?.verifiedAuth?.claims.params.nick ??
+    req._auth?.verifiedAuth?.claims.params.name ??
     "@anonymous@"
   );
 }
@@ -63,7 +63,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // // Determine if the caller is the owner
-      const callerUserId = req.auth?.verifiedAuth.claims.userId;
+      const callerUserId = req._auth?.verifiedAuth.claims.userId;
 
       let app: typeof sqlApps.$inferSelect | undefined;
       if (req.fsId) {
@@ -154,7 +154,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           return Result.Ok(EventoResult.Continue);
         }
 
-        const approvetedUserId = req.auth?.verifiedAuth?.claims.userId;
+        const approvetedUserId = req._auth?.verifiedAuth?.claims.userId;
         const settings = rAppSet.Ok().settings;
 
         if (settings.entry.publicAccess && app.mode === "production") {

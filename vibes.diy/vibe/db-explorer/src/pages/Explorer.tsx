@@ -22,15 +22,11 @@ export function Explorer() {
     setSelectedDb(db);
   };
 
-  return (
-    <ExplorerWithDB
-      key={selectedDb}
-      dbname={selectedDb}
-      docId={docId}
-      databases={databases}
-      onDbChange={handleDbChange}
-    />
-  );
+  if (!selectedDb) {
+    return <div>No databases Found</div>;
+  }
+
+  return <ExplorerWithDB key={selectedDb} dbname={selectedDb} docId={docId} databases={databases} onDbChange={handleDbChange} />;
 }
 
 function ExplorerWithDB({

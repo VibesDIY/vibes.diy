@@ -4,6 +4,10 @@ import {
   ActiveEnv,
   ActiveModelSetting,
   ActiveTitle,
+  AppSettings,
+  isActiveEnv,
+  isActiveModelSettingApp,
+  isActiveModelSettingChat,
   isActiveTitle,
   isReqEnsureAppSettings,
   isReqEnsureAppSettingsAcl,
@@ -32,61 +36,69 @@ export async function ensureAppSettings(
   req: ReqEnsureAppSettings,
   userId?: string
 ): Promise<Result<ResEnsureAppSettings>> {
-  const cond = [eq(sqlAppSettings.userSlug, req.userSlug), eq(sqlAppSettings.appSlug, req.appSlug)];
-  if (userId) {
-    cond.push(eq(sqlAppSettings.userId, userId));
-  }
+  // find existing app settings
   const rPrev = await exception2Result(() =>
     vctx.db
       .select()
-      .from(sqlAppSettings)
-      .innerJoin(sqlAppSlugBinding, eq(sqlAppSettings.appSlug, sqlAppSlugBinding.appSlug))
-      .innerJoin(sqlUserSlugBinding, eq(sqlAppSettings.userSlug, sqlUserSlugBinding.userSlug))
-      .where(and(...cond))
+      .from(sqlUserSlugBinding)
+      .innerJoin(sqlAppSlugBinding, eq(sqlAppSlugBinding.userSlug, sqlUserSlugBinding.userSlug))
+      .leftJoin(
+        sqlAppSettings,
+        and(eq(sqlAppSettings.userSlug, sqlUserSlugBinding.userSlug), eq(sqlAppSettings.appSlug, req.appSlug))
+      )
+      .where(and(eq(sqlAppSlugBinding.userSlug, req.userSlug), eq(sqlAppSlugBinding.appSlug, req.appSlug)))
       .get()
   );
   if (rPrev.isErr()) {
     return Result.Err(rPrev);
   }
-  if (!rPrev.Ok()) {
-    return Result.Err(`no appsettings for `);
-  }
   const record = rPrev.Ok();
   const now = new Date().toISOString();
-  if (!record) {
-    return Result.Ok({
-      type: "vibes.diy.res-ensure-app-settings",
-      userId: "------",
-      appSlug: req.appSlug,
-      ledger: req.appSlug,
-      userSlug: req.userSlug,
-      tenant: req.userSlug,
-      error: "not-found",
-      settings: buildEnsureEntryResult([]),
-      updated: now,
-      created: now,
-    } satisfies ResEnsureAppSettings);
-  }
-  const prev = record.AppSettings;
 
-  const settings = ActiveEntry.array()(prev?.settings || []);
-  if (settings instanceof type.errors) {
-    return Result.Err(settings.summary);
-  }
-  if (!userId) {
+  if (!userId || userId !== record?.UserSlugBindings.userId) {
+    if (!record) {
+      return Result.Ok({
+        type: "vibes.diy.res-ensure-app-settings",
+        userId: "------",
+        appSlug: req.appSlug,
+        ledger: req.appSlug,
+        userSlug: req.userSlug,
+        tenant: req.userSlug,
+        error: "not-found",
+        settings: buildEnsureEntryResult([]),
+        updated: now,
+        created: now,
+      } satisfies ResEnsureAppSettings);
+    }
+    const settings = ActiveEntry.array()(record.AppSettings?.settings || []);
+    if (settings instanceof type.errors) {
+      return Result.Err(settings.summary);
+    }
     return Result.Ok({
       type: "vibes.diy.res-ensure-app-settings",
-      userId: record.AppSettings.userId,
+      userId: record.UserSlugBindings.userId,
       appSlug: req.appSlug,
       ledger: record.AppSlugBindings.ledger,
       userSlug: req.userSlug,
       tenant: record.UserSlugBindings.tenant,
-      settings: buildEnsureEntryResult(settings),
-      updated: prev.updated,
-      created: prev.created,
+      settings: buildEnsureEntryResult(settings || []),
+      updated: record.AppSettings?.updated ?? now,
+      created: record.AppSettings?.created ?? now,
     } satisfies ResEnsureAppSettings);
   }
+  record.AppSettings = record.AppSettings ?? {
+    settings: [],
+    updated: now,
+    created: now,
+    userId: record.UserSlugBindings.userId,
+    userSlug: record.UserSlugBindings.userSlug,
+    appSlug: record.AppSlugBindings.appSlug,
+  };
 
+  const settings = ActiveEntry.array()(record.AppSettings.settings || []);
+  if (settings instanceof type.errors) {
+    return Result.Err(settings.summary);
+  }
   const res = {
     type: "vibes.diy.res-ensure-app-settings",
     userId,
@@ -96,16 +108,17 @@ export async function ensureAppSettings(
     tenant: record.UserSlugBindings.tenant,
     error: undefined as string | undefined,
     settings: buildEnsureEntryResult(settings),
-    updated: prev?.updated ?? now,
-    created: prev?.created ?? now,
+    updated: now,
+    created: record.AppSettings.created,
   } satisfies ResEnsureAppSettings;
-
   switch (true) {
     case isReqEnsureAppSettingsAcl(req):
       await aclAction(vctx, req, res, settings);
       break;
     case isReqEnsureAppSettingsTitle(req):
-      res.settings = upsert(
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
         settings,
         isActiveTitle,
         () =>
@@ -116,46 +129,52 @@ export async function ensureAppSettings(
       );
       break;
     case isReqEnsureAppSettingsApp(req):
-      res.settings = upsert(
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
         settings,
-        isReqEnsureAppSettingsApp,
+        isActiveModelSettingApp,
         (prev: ActiveModelSetting) =>
           ({
             type: "active.model",
             usage: "app",
             param: {
               ...prev.param,
-              ...req,
+              ...req.app,
             },
           }) satisfies ActiveModelSetting
       );
       break;
     case isReqEnsureAppSettingsChat(req):
-      res.settings = upsert(
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
         settings,
-        isReqEnsureAppSettingsChat,
+        isActiveModelSettingChat,
         (prev: ActiveModelSetting) =>
           ({
             type: "active.model",
             usage: "chat",
             param: {
               ...prev.param,
-              ...req,
+              ...req.chat,
             },
           }) satisfies ActiveModelSetting
       );
       break;
     case isReqEnsureAppSettingsEnv(req):
-      res.settings = upsert(
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
         settings,
-        isReqEnsureAppSettingsEnv,
-        (prev: ActiveEnv) =>
+        isActiveEnv,
+        (_prev: ActiveEnv) =>
           ({
             type: "active.env",
-            env: {
-              ...prev.env,
+            env: [
+              // ...prev.env,
               ...req.env,
-            },
+            ],
           }) satisfies ActiveEnv
       );
       break;
@@ -170,8 +189,46 @@ function upsert<T extends ActiveEntry, R extends ActiveEntry>(settings: T[], mat
   return buildEnsureEntryResult(settings);
 }
 
-async function aclAction(vctx: VibesApiSQLCtx, req: ReqEnsureAppSettingsAcl, res: ResEnsureAppSettings, settings: ActiveEntry[]) {
+async function sqlUpsert<T extends ActiveEntry, R extends ActiveEntry>(
+  vctx: VibesApiSQLCtx,
+  res: ResEnsureAppSettings,
+  settings: T[],
+  match: (e: unknown) => boolean,
+  fn: (prev: R) => R
+): Promise<[AppSettings, string?]> {
+  const entry = upsert(settings, match, fn);
+  const ret = await sqlUpdateSettings(vctx, res, entry.entries);
+  if (ret.isErr()) {
+    return [entry, ret.Err().message];
+  }
+  return [entry];
+}
+
+async function sqlUpdateSettings(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings, settings: ActiveEntry[]): Promise<Result<void>> {
   const now = new Date().toISOString();
+  const rIns = await exception2Result(() =>
+    vctx.db
+      .insert(sqlAppSettings)
+      .values({
+        userId: res.userId,
+        appSlug: res.appSlug,
+        userSlug: res.userSlug,
+        settings,
+        updated: now,
+        created: now,
+      })
+      .onConflictDoUpdate({
+        target: [sqlAppSettings.userId, sqlAppSettings.userSlug, sqlAppSettings.appSlug],
+        set: {
+          settings: res.settings.entries,
+          updated: now,
+        },
+      })
+  );
+  return rIns;
+}
+
+async function aclAction(vctx: VibesApiSQLCtx, req: ReqEnsureAppSettingsAcl, res: ResEnsureAppSettings, settings: ActiveEntry[]) {
   const result = ensureACLEntry({
     activeEntries: settings,
     crud: req.aclEntry.op === "delete" ? "delete" : "upsert",
@@ -184,25 +241,8 @@ async function aclAction(vctx: VibesApiSQLCtx, req: ReqEnsureAppSettingsAcl, res
     res.error = result.Err().message;
   } else {
     res.settings = result.Ok().appSettings;
-    const rIns = await exception2Result(() =>
-      vctx.db
-        .insert(sqlAppSettings)
-        .values({
-          userId: res.userId,
-          appSlug: res.appSlug,
-          userSlug: res.userSlug,
-          settings: res.settings.entries,
-          updated: now,
-          created: now,
-        })
-        .onConflictDoUpdate({
-          target: [sqlAppSettings.userId, sqlAppSettings.userSlug, sqlAppSettings.appSlug],
-          set: {
-            settings: res.settings.entries,
-            updated: now,
-          },
-        })
-    );
+    const rIns = await sqlUpdateSettings(vctx, res, result.Ok().appSettings.entries);
+    // console.log(`ACL action SQL update result:`, rIns, result.Ok().appSettings.entries, settings, req.aclEntry);
     if (rIns.isErr()) {
       res.error = rIns.Err().message;
     } else {
@@ -239,7 +279,8 @@ export const ensureAppSettingsEvento: EventoHandler<
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      const rResult = await ensureAppSettings(vctx, req as unknown as ReqEnsureAppSettings, req.auth?.verifiedAuth.claims.userId);
+      const rResult = await ensureAppSettings(vctx, req as unknown as ReqEnsureAppSettings, req._auth?.verifiedAuth.claims.userId);
+      // console.log(`ensureAppSettings result:`, req, JSON.stringify(rResult, null, 2));
       if (rResult.isErr()) {
         return Result.Err(rResult);
       }

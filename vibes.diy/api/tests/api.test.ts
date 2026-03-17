@@ -75,6 +75,7 @@ describe("VibesDiyApi", () => {
 
   // let svc: Awaited<ReturnType<typeof createHandler>>;
   let api: VibesDiyApi;
+  let api2: VibesDiyApi;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -114,6 +115,8 @@ describe("VibesDiyApi", () => {
 
       RESEND_API_KEY: "resend-key",
       VIBES_DIY_PUBLIC_BASE_URL: "https://no-where",
+
+      CLOUD_SESSION_TOKEN_ISSUER: "vibes-diy-test-issuer",
     };
 
     const fetchPair = TestFetchPair.create();
@@ -222,6 +225,17 @@ describe("VibesDiyApi", () => {
       timeoutMs: 100000,
       getToken: async () => {
         return Result.Ok(await testUser.getDashBoardToken());
+      },
+    });
+
+    const testUser2 = await createTestUser({ sthis, deviceCA });
+    api2 = new VibesDiyApi({
+      apiUrl: "http://localhost:8787/api",
+      ws: wsPair.p1 as unknown as WebSocket,
+      fetch: fetchPair.client.fetch,
+      timeoutMs: 100000,
+      getToken: async () => {
+        return Result.Ok(await testUser2.getDashBoardToken());
       },
     });
   });
@@ -449,5 +463,804 @@ describe("VibesDiyApi", () => {
       }
     });
     expect(nextFn.mock.calls.flatMap((call) => call[0].blocks).length).toEqual(44);
+  });
+
+  describe("ensureAppSettings", () => {
+    let appSlug: string;
+    let userSlug: string;
+    beforeAll(async () => {
+      const res = await api.ensureAppSlug({
+        mode: "dev",
+        fileSystem: [
+          {
+            type: "code-block",
+            lang: "jsx",
+            filename: "/App.jsx",
+            content: [
+              "import na from 'find-up';",
+              "function App() {",
+              "  return <div>Hello VibesDiy</div>;",
+              "}",
+              "console.log('hello world');",
+              "App();",
+            ]
+              .map((i) => i.trim())
+              .join("\n"),
+          },
+        ],
+      });
+      appSlug = res.Ok().appSlug;
+      userSlug = res.Ok().userSlug;
+    });
+
+    it("ensureAppSettings not found", async () => {
+      const res = await api.ensureAppSettings({ appSlug: "non-existent-app", userSlug: "non-existent-user" });
+      expect(res.Ok().error).toContain("not-found");
+    });
+
+    it("ensureAppSettings found", async () => {
+      const res = await api.ensureAppSettings({ appSlug, userSlug });
+      expect(res.Ok().error).toBeFalsy();
+    });
+
+    it("ensureAppSettings can't update if not owner", async () => {
+      // need for parallel test isolation, as the following tests will update the settings
+      const test = await api.ensureAppSlug({
+        mode: "dev",
+        fileSystem: [
+          {
+            type: "code-block",
+            lang: "jsx",
+            filename: "/App.jsx",
+            content: [
+              "import na from 'find-up';",
+              "function App() {",
+              "  return <div>Hello VibesDiy</div>;",
+              "}",
+              "console.log('hello world');",
+              "App();",
+            ]
+              .map((i) => i.trim())
+              .join("\n"),
+          },
+        ],
+      });
+      appSlug = test.Ok().appSlug;
+      userSlug = test.Ok().userSlug;
+
+      const ref = await api.ensureAppSettings({ appSlug, userSlug });
+      const res = await api2.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: { op: "upsert", entry: { type: "app.acl.enable.request" } },
+      });
+      expect(res.Ok().settings.entries).toEqual(ref.Ok().settings.entries);
+    });
+
+    it("ensureAppSettings update title", async () => {
+      const x1 = await api.ensureAppSettings({ appSlug, userSlug, title: "My App" });
+      const x2 = await api.ensureAppSettings({ appSlug, userSlug, title: "My App" });
+      const x3 = await api.ensureAppSettings({ appSlug, userSlug, title: "My App1" });
+      expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: "active.title",
+            title: "My App1",
+          }),
+        ])
+      );
+      expect(x3.Ok().settings.entry.settings.title).toBe("My App1");
+    });
+
+    it("ensureAppSettings update chat", async () => {
+      const x1 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: "x" } });
+      const x2 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: "x" } });
+      const x3 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: "x1", apiKey: "x" } });
+      expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            param: {
+              apiKey: "x",
+              model: "x1",
+            },
+            type: "active.model",
+            usage: "chat",
+          }),
+        ])
+      );
+      expect(x3.Ok().settings.entry.settings.chat).toEqual({
+        model: "x1",
+        apiKey: "x",
+      });
+    });
+
+    it("ensureAppSettings update app", async () => {
+      const x1 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: "x" } });
+      const x2 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: "x" } });
+      const x3 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: "x1", apiKey: "x" } });
+      expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            param: {
+              apiKey: "x",
+              model: "x1",
+            },
+            type: "active.model",
+            usage: "app",
+          }),
+        ])
+      );
+      expect(x3.Ok().settings.entry.settings.app).toEqual({
+        model: "x1",
+        apiKey: "x",
+      });
+    });
+
+    it("ensureAppSettings update env", async () => {
+      const x1 = await api.ensureAppSettings({ appSlug, userSlug, env: [{ key: "x", value: "x" }] });
+      const x2 = await api.ensureAppSettings({ appSlug, userSlug, env: [{ key: "x", value: "x" }] });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        env: [
+          { key: "x1", value: "x" },
+          { key: "x", value: "y" },
+        ],
+      });
+      expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entry.settings.env).toEqual([
+        { key: "x1", value: "x" },
+        { key: "x", value: "y" },
+      ]);
+    });
+
+    it("ensureAppSettings update enable-public-access", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: { op: "upsert", entry: { type: "app.acl.enable.public.access" } },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: { op: "upsert", entry: { type: "app.acl.enable.public.access" } },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: { op: "upsert", entry: { type: "app.acl.enable.public.access", tick: { count: 5, last: new Date() } } },
+      });
+      expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entry.publicAccess).toBeDefined();
+      expect(x3.Ok().settings.entry.publicAccess?.tick?.count).toBeGreaterThan(0);
+    });
+
+    it("ensureAppSettings update enable-request", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: { op: "upsert", entry: { type: "app.acl.enable.request" } },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: { op: "upsert", entry: { type: "app.acl.enable.request" } },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: { op: "upsert", entry: { type: "app.acl.enable.request", autoAcceptViewRequest: true } },
+      });
+      expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entry.enableRequest).toBeDefined();
+      expect(x3.Ok().settings.entry.enableRequest?.autoAcceptViewRequest).toBe(true);
+    });
+
+    it("ensureAppSettings acl invite editor pending", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "editor",
+            state: "pending",
+            invite: { email: "ed-pending@example.com", created: new Date() },
+            token: "placeholder",
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "editor",
+            state: "pending",
+            invite: { email: "ed-pending@example.com", created: new Date() },
+            token: "placeholder",
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "editor",
+            state: "accepted",
+            invite: { email: "ed-pending@example.com", created: new Date() },
+            grant: { ownerId: "owner-1", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entry.invite.editors.accepted.find((e) => e.invite.email === "ed-pending@example.com")).toBeDefined();
+    });
+
+    it("ensureAppSettings acl invite viewer pending", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "viewer",
+            state: "pending",
+            invite: { email: "vw-pending@example.com", created: new Date() },
+            token: "placeholder",
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "viewer",
+            state: "pending",
+            invite: { email: "vw-pending@example.com", created: new Date() },
+            token: "placeholder",
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "viewer",
+            state: "accepted",
+            invite: { email: "vw-pending@example.com", created: new Date() },
+            grant: { ownerId: "owner-2", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entry.invite.viewers.accepted.find((e) => e.invite.email === "vw-pending@example.com")).toBeDefined();
+    });
+
+    it("ensureAppSettings acl invite editor accepted", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "editor",
+            state: "accepted",
+            invite: { email: "ed-accepted@example.com", created: new Date() },
+            grant: { ownerId: "owner-3", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "editor",
+            state: "accepted",
+            invite: { email: "ed-accepted@example.com", created: new Date() },
+            grant: { ownerId: "owner-3", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "editor",
+            state: "accepted",
+            invite: { email: "ed-accepted@example.com", created: new Date() },
+            grant: { ownerId: "owner-3", on: new Date() },
+            tick: { count: 2, last: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      const entry = x3.Ok().settings.entry.invite.editors.accepted.find((e) => e.invite.email === "ed-accepted@example.com");
+      expect(entry).toBeDefined();
+      expect(entry?.tick.count).toBeGreaterThan(1);
+    });
+
+    it("ensureAppSettings acl invite viewer accepted", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "viewer",
+            state: "accepted",
+            invite: { email: "vw-accepted@example.com", created: new Date() },
+            grant: { ownerId: "owner-4", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "viewer",
+            state: "accepted",
+            invite: { email: "vw-accepted@example.com", created: new Date() },
+            grant: { ownerId: "owner-4", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "viewer",
+            state: "accepted",
+            invite: { email: "vw-accepted@example.com", created: new Date() },
+            grant: { ownerId: "owner-4", on: new Date() },
+            tick: { count: 2, last: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      const entry = x3.Ok().settings.entry.invite.viewers.accepted.find((e) => e.invite.email === "vw-accepted@example.com");
+      expect(entry).toBeDefined();
+      expect(entry?.tick.count).toBeGreaterThan(1);
+    });
+
+    it("ensureAppSettings acl invite editor revoked", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "editor",
+            state: "accepted",
+            invite: { email: "ed-revoked@example.com", created: new Date() },
+            grant: { ownerId: "owner-5", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "editor",
+            state: "accepted",
+            invite: { email: "ed-revoked@example.com", created: new Date() },
+            grant: { ownerId: "owner-5", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "editor",
+            state: "revoked",
+            invite: { email: "ed-revoked@example.com", created: new Date() },
+            grant: { ownerId: "owner-5", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entry.invite.editors.revoked.find((e) => e.invite.email === "ed-revoked@example.com")).toBeDefined();
+    });
+
+    it("ensureAppSettings acl invite viewer revoked", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "viewer",
+            state: "accepted",
+            invite: { email: "vw-revoked@example.com", created: new Date() },
+            grant: { ownerId: "owner-6", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "viewer",
+            state: "accepted",
+            invite: { email: "vw-revoked@example.com", created: new Date() },
+            grant: { ownerId: "owner-6", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.invite",
+            role: "viewer",
+            state: "revoked",
+            invite: { email: "vw-revoked@example.com", created: new Date() },
+            grant: { ownerId: "owner-6", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entry.invite.viewers.revoked.find((e) => e.invite.email === "vw-revoked@example.com")).toBeDefined();
+    });
+
+    it("ensureAppSettings acl request viewer pending", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "pending",
+            request: { key: "req-vw-pending@example.com", provider: "google", userId: "uid-001", created: new Date() },
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "pending",
+            request: { key: "req-vw-pending@example.com", provider: "google", userId: "uid-001", created: new Date() },
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "approved",
+            request: { key: "req-vw-pending@example.com", provider: "google", userId: "uid-001", created: new Date() },
+            grant: { ownerId: "owner-7", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entry.request.approved.find((e) => e.request.key === "req-vw-pending@example.com")).toBeDefined();
+    });
+
+    it("ensureAppSettings acl request viewer approved", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "approved",
+            request: { key: "req-vw-approved@example.com", provider: "github", userId: "uid-002", created: new Date() },
+            grant: { ownerId: "owner-8", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "approved",
+            request: { key: "req-vw-approved@example.com", provider: "github", userId: "uid-002", created: new Date() },
+            grant: { ownerId: "owner-8", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "approved",
+            request: { key: "req-vw-approved@example.com", provider: "github", userId: "uid-002", created: new Date() },
+            grant: { ownerId: "owner-8", on: new Date() },
+            tick: { count: 2, last: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      const entry = x3.Ok().settings.entry.request.approved.find((e) => e.request.key === "req-vw-approved@example.com");
+      expect(entry).toBeDefined();
+      expect(entry?.tick.count).toBeGreaterThan(1);
+    });
+
+    it("ensureAppSettings acl request viewer rejected", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "pending",
+            request: { key: "req-vw-rejected@example.com", provider: "clerk", userId: "uid-003", created: new Date() },
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "pending",
+            request: { key: "req-vw-rejected@example.com", provider: "clerk", userId: "uid-003", created: new Date() },
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "rejected",
+            request: { key: "req-vw-rejected@example.com", provider: "clerk", userId: "uid-003", created: new Date() },
+            grant: { ownerId: "owner-9", on: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entry.request.rejected.find((e) => e.request.key === "req-vw-rejected@example.com")).toBeDefined();
+    });
+
+    it("ensureAppSettings acl request editor approved", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "pending",
+            request: { key: "req-ed-approved@example.com", provider: "google", userId: "uid-004", created: new Date() },
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "pending",
+            request: { key: "req-ed-approved@example.com", provider: "google", userId: "uid-004", created: new Date() },
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "editor",
+            state: "approved",
+            request: { key: "req-ed-approved@example.com", provider: "google", userId: "uid-004", created: new Date() },
+            grant: { ownerId: "owner-10", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      const entry = x3.Ok().settings.entry.request.approved.find((e) => e.request.key === "req-ed-approved@example.com");
+      expect(entry).toBeDefined();
+      expect(entry?.role).toBe("editor");
+    });
+
+    it("ensureAppSettings acl request editor rejected", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "pending",
+            request: { key: "req-ed-rejected@example.com", provider: "github", userId: "uid-005", created: new Date() },
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "pending",
+            request: { key: "req-ed-rejected@example.com", provider: "github", userId: "uid-005", created: new Date() },
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "editor",
+            state: "rejected",
+            request: { key: "req-ed-rejected@example.com", provider: "github", userId: "uid-005", created: new Date() },
+            grant: { ownerId: "owner-11", on: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      const entry = x3.Ok().settings.entry.request.rejected.find((e) => e.request.key === "req-ed-rejected@example.com");
+      expect(entry).toBeDefined();
+      expect(entry?.role).toBe("editor");
+    });
+
+    it("ensureAppSettings acl request approved back to pending", async () => {
+      const x1 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "approved",
+            request: { key: "req-re-pending@example.com", provider: "clerk", userId: "uid-006", created: new Date() },
+            grant: { ownerId: "owner-12", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x2 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "approved",
+            request: { key: "req-re-pending@example.com", provider: "clerk", userId: "uid-006", created: new Date() },
+            grant: { ownerId: "owner-12", on: new Date() },
+            tick: { count: 1, last: new Date() },
+          },
+        },
+      });
+      const x3 = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        aclEntry: {
+          op: "upsert",
+          entry: {
+            type: "app.acl.active.request",
+            role: "viewer",
+            state: "pending",
+            request: { key: "req-re-pending@example.com", provider: "clerk", userId: "uid-006", created: new Date() },
+          },
+        },
+      });
+      expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
+      expect(x3.Ok().settings.entry.request.pending.find((e) => e.request.key === "req-re-pending@example.com")).toBeDefined();
+    });
   });
 });

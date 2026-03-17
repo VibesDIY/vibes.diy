@@ -19,7 +19,7 @@ export async function ensureUserSettings(
   vctx: VibesApiSQLCtx,
   req: ReqWithVerifiedAuth<ReqEnsureUserSettings>
 ): Promise<Result<ResEnsureUserSettings>> {
-  const userId = req.auth.verifiedAuth.claims.userId;
+  const userId = req._auth.verifiedAuth.claims.userId;
   const existing = await vctx.db.select().from(sqlUserSettings).where(eq(sqlUserSettings.userId, userId)).get();
   const now = new Date().toISOString();
   if (!existing) {

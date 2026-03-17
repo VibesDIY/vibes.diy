@@ -86,7 +86,7 @@ async function transformJSXAndImports(
   // }>[] = [];
   await Promise.all(
     givenFsItems.map(async (item) => {
-      console.log("Processing file system item:", item.fsItem);
+      // console.log("Processing file system item:", item.fsItem);
       if (item.fsItem.transform?.type === "jsx-to-js" && isVibeCodeBlock(item.vibeFileItem)) {
         // console.log("do jsx transform for file:", item.fsItem.fileName);
         const rJsStr = exception2Result(() => transformJSXToJS((item.vibeFileItem as VibeCodeBlock).content));
@@ -278,7 +278,7 @@ export async function ensureApps(
   }
 
   // transaction start
-  const rMaxSeq = await checkMaxAppsPerUser(ctx, req.auth.verifiedAuth.claims.sub, binding.appSlug);
+  const rMaxSeq = await checkMaxAppsPerUser(ctx, req._auth.verifiedAuth.claims.sub, binding.appSlug);
   if (rMaxSeq.isErr()) {
     return Result.Err(rMaxSeq);
   }
@@ -303,17 +303,10 @@ export async function ensureApps(
     mode: req.mode,
     created: new Date().toISOString(),
   };
-  console.log("ensureApps sqlVal", sqlVal);
-  // console.log("appSlug", await ctx.db.select().from(sqlAppSlugBinding).all());
-  // console.log("userSlug", await ctx.db.select().from(sqlUserSlugBinding).all());
   const rIns = await exception2Result(() => ctx.db.insert(sqlApps).values(sqlVal));
   if (rIns.isErr()) {
     return Result.Err(rIns);
   }
-  // console.log("ensureApps sqlVal", sqlVal);
-  // .returning();
-  // const appSlug = sqlAppToResEnsureAppSlug(sqlVal);
-
   return Result.Ok({
     ...binding,
     mode: req.mode,
