@@ -72,17 +72,13 @@ let orderedLlms: LlmCatalogEntry[];
 //   return entry ? (entry[1] as unknown as string) : "";
 // }
 
+const mockCallAI = vi.fn();
+
 const opts = {
   fallBackUrl: new URL("http://localhost/test"),
   callAiEndpoint: "http://localhost/test/call-ai",
   mock: {
-    callAI: vi.fn().mockResolvedValue(
-      JSON.stringify({
-        selected: knownModuleNames,
-        instructionalText: true,
-        demoData: true,
-      }),
-    ),
+    callAI: mockCallAI,
   },
 };
 
@@ -103,6 +99,43 @@ beforeAll(async () => {
 
 beforeEach(() => {
   mockFetch.mockClear();
+
+  mockCallAI.mockReset();
+  mockCallAI.mockImplementation(
+    (messages: { content?: string; role?: string }[]) => {
+      const systemMessage = messages[0];
+      const systemContent = systemMessage?.content ?? "";
+
+      // LLM/module selection call from selectLlmsAndOptions
+      if (
+        typeof systemContent === "string" &&
+        systemContent.startsWith(
+          "You select which library modules from a catalog should be included",
+        )
+      ) {
+        return Promise.resolve(
+          JSON.stringify({
+            selected: knownModuleNames,
+            instructionalText: true,
+            demoData: true,
+          }),
+        );
+      }
+
+      // Prompt expander call – return an enthusiastic expanded spec
+      if (
+        typeof systemContent === "string" &&
+        systemContent.includes("expert product designer and app spec writer")
+      ) {
+        const userMessage = messages.find((m) => m.role === "user");
+        const userContent = (userMessage?.content ?? "").toString();
+        return Promise.resolve(`Expanded app spec for: ${userContent}`);
+      }
+
+      // Fallback for any unexpected calls
+      return Promise.resolve("Mocked AI response");
+    },
+  );
 });
 
 describe("prompt builder (real implementation)", () => {
