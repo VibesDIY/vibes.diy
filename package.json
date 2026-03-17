@@ -24,7 +24,7 @@
     "lint": "eslint .",
     "knip": "knip",
     "test": "vitest --run",
-    "test:coverage": "cross-env DISABLE_REACT_ROUTER=true vitest run --coverage",
+    "test:coverage": "vitest run --coverage",
     "test:all": "cd vibes.diy/tests/app && pnpm run test && cd ../simple-chat && pnpm run test && cd ../../../prompts/tests && pnpm run test && cd ../../use-vibes/tests && pnpm run test && cd ../../call-ai/tests && pnpm run test",
     "playwright:claude": "playwright test -c claude-browse-vibes/playwright.config.js",
     "test:screenshot:local": "node claude-browse-vibes/test-screenshot-api.js",
@@ -36,7 +36,7 @@
     "pack": "echo skip pack",
     "publish": "echo skip publish",
     "check": "pnpm build && pnpm lint && pnpm test && pnpm --filter @vibes.diy/hosting-tests test",
-    "storybook": "cd vibes.diy/pkg && cross-env DISABLE_REACT_ROUTER=true pnpm run storybook",
+    "storybook": "cd vibes.diy/pkg && pnpm run storybook",
     "storybook:use-vibes": "cd use-vibes/base && pnpm run storybook"
   },
   "keywords": [
@@ -68,7 +68,6 @@
     "@typescript/native-preview": "7.0.0-dev.20260316.1",
     "@vitest/browser-playwright": "^4.1.0",
     "@vitest/coverage-v8": "4.1.0",
-    "cross-env": "^10.0.0",
     "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
     "knip": "^5.87.0",
