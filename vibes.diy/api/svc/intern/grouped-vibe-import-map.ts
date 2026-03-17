@@ -67,7 +67,7 @@ export const lockedGroupsVersions = {
     "react/jsx-dev-runtime": "version:REACT",
   },
   "ag-grid": {
-    "ag-grid-community": "version:AG_GRID,deps:react",
+    "ag-grid-community": "version:AG_GRID",
     "ag-grid-react": "version:AG_GRID,deps:react",
   },
   "react-router": {

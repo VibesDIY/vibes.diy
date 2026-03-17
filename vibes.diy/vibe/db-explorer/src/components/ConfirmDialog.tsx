@@ -23,6 +23,7 @@ export function ConfirmDialog({ title, message, onConfirm, onCancel, danger }: C
           inset: 0,
           background: "#00000060",
           zIndex: 200,
+          animation: "fade-in 0.15s ease-out",
         }}
       />
       <div
@@ -62,13 +63,12 @@ export function ConfirmDialog({ title, message, onConfirm, onCancel, danger }: C
           {message}
         </div>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <Btn onClick={onCancel} border={S.border} color={S.textDim}>
+          <Btn onClick={onCancel} color={S.textDim}>
             Cancel
           </Btn>
           <Btn
             onClick={onConfirm}
             bg={danger ? S.danger + "20" : S.accent + "20"}
-            border={danger ? S.danger + "50" : S.accent + "50"}
             color={danger ? S.danger : S.accent}
             style={{ fontWeight: 600 }}
           >

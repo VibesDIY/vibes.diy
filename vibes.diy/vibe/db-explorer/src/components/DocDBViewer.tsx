@@ -1,15 +1,15 @@
-import React, { useState, useCallback } from "react";
-import type { NavigateFunction } from "react-router-dom";
+import React, { useCallback, useState } from "react";
 import { S } from "../lib/styles.js";
 import { Btn } from "./Btn.js";
-import { JsonEditor } from "./JsonEditor.js";
+import { ConfirmDialog } from "./ConfirmDialog.js";
 import { DynamicTable } from "./DynamicTable.js";
 import { headersForDocs } from "./dynamicTableHelpers.js";
-import { ConfirmDialog } from "./ConfirmDialog.js";
-import { Toast } from "./Toast.js";
-import { useMobile } from "./MobileProvider.js";
-import { GridFeatures, defaultGridOptions } from "./GridFeatures.js";
 import type { GridOptions } from "./GridFeatures.js";
+import { GridFeatures, defaultGridOptions } from "./GridFeatures.js";
+import { JsonEditor } from "./JsonEditor.js";
+import { useMobile } from "./MobileProvider.js";
+import { Toast } from "./Toast.js";
+import { NavigateFunction } from "react-router";
 
 export interface DocRecord {
   _id?: string;
@@ -28,6 +28,8 @@ interface DocDBViewerProps {
   onCreate: (doc: Record<string, unknown>) => Promise<string>;
   onSeedData: () => Promise<void>;
   totalDocs: number;
+  databases?: string[];
+  onDbChange?: (db: string) => void;
 }
 
 export function DocDBViewer({
@@ -42,6 +44,8 @@ export function DocDBViewer({
   onCreate,
   onSeedData,
   totalDocs,
+  databases,
+  onDbChange,
 }: DocDBViewerProps) {
   const mob = useMobile();
   const [gridOpts, setGridOpts] = useState<GridOptions>(defaultGridOptions);
@@ -163,7 +167,7 @@ export function DocDBViewer({
           alignItems: "center",
           padding: mob ? "0 10px" : "0 16px",
           height: mob ? 48 : 44,
-          borderBottom: `1px solid ${S.border}`,
+          borderBottom: `2px solid ${S.border}`,
           background: S.bgSurface,
           gap: mob ? 6 : 10,
           flexShrink: 0,
@@ -191,7 +195,32 @@ export function DocDBViewer({
               d="M7669 9483l-1327 0 664 1150 0 0 1327 0c-397,-230 -664,-659 -664,-1150l0 0zm2656 0l-1328 0 -664 1150 1328 0 664 -1150z"
             />
           </svg>
-          {!mob && <span style={{ fontSize: 13, fontWeight: 600 }}>{dbName}</span>}
+          {!mob && databases && databases.length > 1 ? (
+            <select
+              value={dbName}
+              onChange={(e) => {
+                onDbChange?.(e.target.value);
+              }}
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: S.sans,
+                background: S.bgDeep,
+                color: S.text,
+                padding: "2px 6px",
+                cursor: "pointer",
+                outline: "none",
+              }}
+            >
+              {databases.map((db) => (
+                <option key={db} value={db}>
+                  {db}
+                </option>
+              ))}
+            </select>
+          ) : (
+            !mob && <span style={{ fontSize: 13, fontWeight: 600 }}>{dbName}</span>
+          )}
         </div>
 
         {/* Breadcrumb */}
@@ -273,7 +302,7 @@ export function DocDBViewer({
             display: "flex",
             alignItems: "center",
             padding: mob ? "6px 10px" : "6px 16px",
-            borderBottom: `1px solid ${S.border}`,
+            borderBottom: `2px solid ${S.border}`,
             background: S.bgSurface,
             gap: mob ? 6 : 8,
             flexShrink: 0,
@@ -284,12 +313,7 @@ export function DocDBViewer({
             <Btn
               onClick={() => setConfirmDelete(true)}
               color={S.danger}
-              border={S.danger + "30"}
-              bg={S.danger + "08"}
-              style={{
-                fontSize: 10,
-                padding: mob ? "6px 12px" : "4px 10px",
-              }}
+              bg={S.danger + "15"}
             >
               Delete
             </Btn>
@@ -301,7 +325,7 @@ export function DocDBViewer({
             display: "flex",
             alignItems: "center",
             padding: mob ? "6px 10px" : "6px 16px",
-            borderBottom: `1px solid ${S.border}`,
+            borderBottom: `2px solid ${S.border}`,
             background: S.bgSurface,
             gap: mob ? 5 : 8,
             flexShrink: 0,
@@ -322,25 +346,15 @@ export function DocDBViewer({
           <div style={{ flex: 1 }} />
           <Btn
             onClick={onSeedData}
-            border={S.border}
             color={S.textDim}
-            style={{
-              fontSize: 10,
-              padding: mob ? "6px 12px" : "4px 10px",
-            }}
           >
             Load 100 docs
           </Btn>
           <Btn
             onClick={newDoc}
             bg={S.accent + "15"}
-            border={S.accent + "40"}
             color={S.accent}
-            style={{
-              fontSize: 10,
-              padding: mob ? "6px 12px" : "4px 10px",
-              fontWeight: 600,
-            }}
+            style={{ fontWeight: 600 }}
           >
             + New Document
           </Btn>
@@ -414,7 +428,7 @@ export function DocDBViewer({
             }}
           >
             <div style={{ fontSize: 12, fontFamily: S.mono, marginBottom: 12 }}>Document not found</div>
-            <Btn onClick={navigateHome} border={S.border} color={S.accent} style={{ display: "inline-flex" }}>
+            <Btn onClick={navigateHome} color={S.accent} style={{ display: "inline-flex" }}>
               Back to table
             </Btn>
           </div>
