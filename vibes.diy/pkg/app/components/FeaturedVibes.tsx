@@ -3,6 +3,16 @@ import PublishedVibeCard from "./PublishedVibeCard.js";
 
 // Featured vibes data
 export const publishedVibes = [
+  // Newly featured vibes (2025-10-13)
+  {
+    name: "Bricksalot",
+    // From https://vivaldi-quasar-3156_pingpong.vibesdiy.app/
+    slug: "vivaldi-quasar-3156_pingpong",
+  },
+  {
+    name: "Create Emotional Playlists",
+    slug: "occupational-basilisk-4371",
+  },
   {
     name: "Dr. Deas Drum Machine",
     slug: "excited-wombat-4753",
