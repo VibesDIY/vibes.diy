@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { SignIn, useClerk } from "@clerk/clerk-react";
+import { SignIn, useClerk } from "@clerk/react";
 import { useNavigate, useSearchParams } from "react-router";
 
 export default function LoginPage() {

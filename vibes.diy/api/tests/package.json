@@ -10,8 +10,8 @@
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@adviser/cement": "^0.5.33",
-    "@cloudflare/workers-types": "^4.20260128.0",
+    "@adviser/cement": "^0.5.34",
+    "@cloudflare/workers-types": "^4.20260317.1",
     "@fireproof/core-device-id": "0.24.13",
     "@fireproof/core-runtime": "0.24.13",
     "@fireproof/core-types-device-id": "0.24.13",
@@ -27,8 +27,8 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.13",
-    "@vitest/ui": "4.0.18",
-    "vitest": "^4.0.18",
+    "@vitest/ui": "4.1.0",
+    "vitest": "^4.1.0",
     "zx": "^8.8.5"
   }
 }

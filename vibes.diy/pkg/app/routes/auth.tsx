@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router";
-import { SignIn, useAuth } from "@clerk/clerk-react";
+import { SignIn, useAuth } from "@clerk/react";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";

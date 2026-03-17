@@ -59,7 +59,7 @@ export function ImportMap(prop?: Partial<VibesDiyServCtx>) {
     "dequal/lite": "https://esm.sh/dequal@2.0.3/lite",
     "use-sync-external-store": "https://esm.sh/use-sync-external-store@1.6.0",
     "@adviser/cement": "https://esm.sh/@adviser/cement@0.5.5",
-    "@clerk/clerk-react": "https://esm.sh/@clerk/clerk-react?deps=react@19.2.1,react-dom@19.2.1",
+    "@clerk/react": "https://esm.sh/@clerk/react?deps=react@19.2.1,react-dom@19.2.1",
     "@clerk/clerk-js": "https://esm.sh/@clerk/clerk-js@5",
     multiformats: "https://esm.sh/multiformats",
     cborg: "https://esm.sh/cborg",

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useClerk } from "@clerk/clerk-react";
+import { useClerk } from "@clerk/react";
 import { trackAuthClick } from "../utils/analytics.js";
 import { useMobile, LabelContainer, VibesButton, VibesSwitch } from "@vibes.diy/base";
 

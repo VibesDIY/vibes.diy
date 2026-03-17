@@ -15,8 +15,8 @@ vi.mock("~/vibes.diy/app/utils/vibeUtils.js", () => ({
   loadVibeDocument: vi.fn(),
 }));
 
-// Mock @clerk/clerk-react
-vi.mock("@clerk/clerk-react", async (importOriginal) => {
+// Mock @clerk/react
+vi.mock("@clerk/react", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

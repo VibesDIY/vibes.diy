@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import { useVibeDiy } from "../../../vibe-diy-provider.js";
 import { toastError } from "./shared.jsx";
 import { PublicSharingSection } from "./PublicSharingSection.js";

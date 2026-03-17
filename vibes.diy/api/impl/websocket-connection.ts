@@ -1,4 +1,4 @@
-import { BuildURI, Future, KeyedResolvOnce, OnFunc, runtimeFn, ToDecoder, URI } from "@adviser/cement";
+import { BuildURI, Future, KeyedResolvOnce, OnFunc, runtimeFn, URI } from "@adviser/cement";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { W3CWebSocketErrorEvent, W3CWebSocketMessageEvent, W3CWebSocketCloseEvent } from "@vibes.diy/api-types";
 
@@ -55,8 +55,8 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
         // console.log('ws-close', x)
         return Promise.resolve();
       },
-      send: (data: ToDecoder) => {
-        ws.send(data as Uint8Array);
+      send: (data: Uint8Array<ArrayBuffer>) => {
+        ws.send(data);
       },
     }));
   });

@@ -1,6 +1,6 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import React, { createContext, useContext } from "react";
-import { ClerkProvider, useClerk } from "@clerk/clerk-react";
+import { ClerkProvider, useClerk } from "@clerk/react";
 import { BuildURI, Future, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
 import { PostHogProvider } from "posthog-js/react";
 import { PkgRepos, VibesDiyApiIface } from "@vibes.diy/api-types";

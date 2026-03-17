@@ -1,6 +1,6 @@
 import React from "react";
 import SessionSidebar from "../app/components/SessionSidebar.js";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkProvider } from "@clerk/react";
 import { BrowserRouter } from "react-router-dom";
 
 // Simple wrapper that provides the real SessionSidebar component

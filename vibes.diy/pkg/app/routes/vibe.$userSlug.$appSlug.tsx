@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { useVibeDiy } from "../vibe-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
-import { SignIn, useAuth, useSession } from "@clerk/clerk-react";
+import { SignIn, useAuth, useSession } from "@clerk/react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
@@ -178,7 +178,7 @@ export default function VibeIframeWrapper() {
   const loginOverlay = showLoginOverlay
     ? createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <SignIn routing="virtual" forceRedirectUrl={window.location.href} />
+          <SignIn routing="hash" forceRedirectUrl={window.location.href} />
         </div>,
         document.body
       )

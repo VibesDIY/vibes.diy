@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useFireproof } from "@fireproof/use-fireproof";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import type { VibeInstanceDocument } from "@vibes.diy/prompts";
 
 /**
