@@ -6,6 +6,7 @@ import { createMockFetchFromPkgFiles } from "./helpers/load-mock-data.js";
 // Create a fetchText mock that delegates to the mock fetch helper
 const mockFetchImpl = createMockFetchFromPkgFiles();
 function mockFetchText(_pkg: string, path: string): Promise<Result<string>> {
+  console.log(`mockFetchText called with pkg: ${_pkg}, path: ${path}`);
   return mockFetchImpl(path).then(async (res) => {
     if (res.ok) return Result.Ok(await res.text());
     return Result.Err(new Error(`fetch failed for path: ${path}`));

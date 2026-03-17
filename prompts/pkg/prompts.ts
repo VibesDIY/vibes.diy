@@ -348,6 +348,7 @@ export async function makeBaseSystemPrompt(
     // }
     concatenatedLlmsTxts.push(`<${llm.label}-docs>`);
     concatenatedLlmsTxts.push(rText.Ok() ?? "");
+    console.log(`Loaded text for LLM ${llm.name}, length:`, llm.label, rText.Ok().slice(0, 100), "...");
     concatenatedLlmsTxts.push(`</${llm.label}-docs>`);
   }
   const concatenatedLlmsTxt = concatenatedLlmsTxts.join("\n");
