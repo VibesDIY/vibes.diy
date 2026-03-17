@@ -590,8 +590,8 @@ importers:
         specifier: ^7.0.0
         version: 7.0.1(eslint@9.39.2(jiti@2.6.1))
       eslint-plugin-react-refresh:
-        specifier: ^0.5.0
-        version: 0.5.0(eslint@9.39.2(jiti@2.6.1))
+        specifier: ^0.5.2
+        version: 0.5.2(eslint@9.39.2(jiti@2.6.1))
       globals:
         specifier: ^17.4.0
         version: 17.4.0
@@ -7056,10 +7056,10 @@ packages:
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
 
-  eslint-plugin-react-refresh@0.5.0:
-    resolution: {integrity: sha512-ZYvmh7VfVgqR/7wR71I3Zl6hK/C5CcxdWYKZSpHawS5JCNgE4efhQWg/+/WPpgGAp9Ngp/rRZYyaIwmPQBq/lA==}
+  eslint-plugin-react-refresh@0.5.2:
+    resolution: {integrity: sha512-hmgTH57GfzoTFjVN0yBwTggnsVUF2tcqi7RJZHqi9lIezSs4eFyAMktA68YD4r5kNw1mxyY4dmkyoFDb3FIqrA==}
     peerDependencies:
-      eslint: '>=9'
+      eslint: ^9 || ^10
 
   eslint-scope@8.4.0:
     resolution: {integrity: sha512-sNXOfKCn74rt8RICKMvJS7XKV/Xk9kA7DyJr8mJik3S7Cwgy3qlkkmyS2uQB3jiJg6VNdZd/pDBJu0nvG2NlTg==}
@@ -15889,7 +15889,7 @@ snapshots:
       debug: 4.4.3(supports-color@10.2.2)
       invariant: 2.2.4
       metro: 0.83.5(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      metro-config: 0.83.5(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      metro-config: 0.83.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.83.5
       semver: 7.7.4
     transitivePeerDependencies:
@@ -19917,7 +19917,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-refresh@0.5.0(eslint@9.39.2(jiti@2.6.1)):
+  eslint-plugin-react-refresh@0.5.2(eslint@9.39.2(jiti@2.6.1)):
     dependencies:
       eslint: 9.39.2(jiti@2.6.1)
 
@@ -22376,21 +22376,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  metro-config@0.83.5(bufferutil@4.1.0)(utf-8-validate@5.0.10):
-    dependencies:
-      connect: 3.7.0
-      flow-enums-runtime: 0.0.6
-      jest-validate: 29.7.0
-      metro: 0.83.5(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      metro-cache: 0.83.5
-      metro-core: 0.83.5
-      metro-runtime: 0.83.5
-      yaml: 2.8.2
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
   metro-config@0.83.5(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       connect: 3.7.0
@@ -22542,7 +22527,7 @@ snapshots:
       metro-babel-transformer: 0.83.5
       metro-cache: 0.83.5
       metro-cache-key: 0.83.5
-      metro-config: 0.83.5(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      metro-config: 0.83.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       metro-core: 0.83.5
       metro-file-map: 0.83.5
       metro-resolver: 0.83.5
