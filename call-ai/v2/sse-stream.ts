@@ -22,7 +22,8 @@ export const SSeImage = type({
 
 export const SseChunk = type({
   id: "string",
-  provider: "string",
+  // OpenRouter adds "provider"; direct OpenAI/Anthropic calls do not
+  "provider?": "string",
   model: "string",
   object: "string",
   created: "number",
@@ -37,7 +38,8 @@ export const SseChunk = type({
       "+": "delete",
     },
     finish_reason: "string|null",
-    native_finish_reason: "string|null",
+    // OpenRouter adds "native_finish_reason"; direct OpenAI calls do not
+    "native_finish_reason?": "string|null",
     "logprobs?": "unknown",
   }).array(),
   "system_fingerprint?": "string",

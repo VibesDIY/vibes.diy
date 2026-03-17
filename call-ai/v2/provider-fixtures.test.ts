@@ -3,17 +3,17 @@ import { isBlockEnd, isDeltaLine, isSseEnd, isSseError } from "./index.js";
 import type { DeltaLineMsg, SseEndMsg } from "./index.js";
 import {
   loadFixtureLines,
-  parseToplevelJson,
+  parseCodeBlockJson,
   runDeltaPipeline,
   runFullPipeline,
   runSsePipeline,
 } from "./test-helper.js";
 
 const fixtureConfigs = [
-  { name: "OpenRouter GPT (json_schema)", file: "openrouter-gpt-json-schema.llm.txt" },
-  { name: "OpenRouter Claude (json_schema)", file: "openrouter-claude-json-schema.llm.txt" },
-  { name: "OpenAI Direct (json_schema)", file: "openai-json-schema.llm.txt" },
-  { name: "Anthropic Direct (tool_use)", file: "anthropic-json-schema.llm.txt" },
+  { name: "OpenRouter GPT (codeblock)", file: "openrouter-gpt-codeblock.llm.txt" },
+  { name: "OpenRouter Claude (codeblock)", file: "openrouter-claude-codeblock.llm.txt" },
+  { name: "OpenAI Direct (codeblock)", file: "openai-codeblock.llm.txt" },
+  { name: "Anthropic Direct (codeblock)", file: "anthropic-codeblock.llm.txt" },
 ] as const;
 
 const fixtures = new Map<string, string[]>();
@@ -60,7 +60,7 @@ describe("captured provider fixtures", () => {
 
     it(`${name}: full pipeline emits one block and valid sandwich JSON`, async () => {
       const res = await runFullPipeline(getFixtureLines(name));
-      const parsed = parseToplevelJson(res);
+      const parsed = parseCodeBlockJson(res);
       expectSandwichShape(parsed);
 
       const blockEnds = res.filter((event) => isBlockEnd(event));
@@ -69,12 +69,14 @@ describe("captured provider fixtures", () => {
 
     it(`${name}: delta-stream reconstructs valid JSON`, async () => {
       const res = await runDeltaPipeline(getFixtureLines(name));
+      // Deltas include the ```JSON fences; extract just the JSON body
       const fullText = res
         .filter((event): event is DeltaLineMsg => isDeltaLine(event))
         .map((event) => event.content)
         .join("");
-      expect(fullText).toContain('{"name"');
-      const parsed = JSON.parse(fullText);
+      const jsonText = fullText.match(/```(?:json|JSON)\n([\s\S]*?)\n```/)?.[1] ?? fullText;
+      expect(jsonText).toContain('"name"');
+      const parsed = JSON.parse(jsonText);
       expectSandwichShape(parsed);
     });
   }

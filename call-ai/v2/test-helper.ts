@@ -6,6 +6,9 @@ import {
   createSectionsStream,
   createSseStream,
   createStatsCollector,
+  isCodeBegin,
+  isCodeEnd,
+  isCodeLine,
   isToplevelLine,
 } from "./index.js";
 
@@ -70,4 +73,22 @@ export function parseToplevelJson(events: readonly unknown[]) {
     .map((event) => event.line)
     .join("\n");
   return JSON.parse(text);
+}
+
+// For fixtures where the model wraps its JSON in a ```JSON code block
+// (prompt-engineering approach). Mirrors srv-sandbox.ts getCodeBlock logic.
+export function parseCodeBlockJson(events: readonly unknown[]) {
+  const lines: string[] = [];
+  let inJsonBlock = false;
+  for (const event of events) {
+    if (isCodeBegin(event) && event.lang.toUpperCase() === "JSON") {
+      inJsonBlock = true;
+      lines.length = 0;
+    } else if (isCodeEnd(event)) {
+      inJsonBlock = false;
+    } else if (inJsonBlock && isCodeLine(event)) {
+      lines.push(event.line);
+    }
+  }
+  return JSON.parse(lines.join("\n"));
 }
