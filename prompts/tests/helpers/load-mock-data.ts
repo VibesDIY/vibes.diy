@@ -1,12 +1,15 @@
 // Simplified mock helper - only mocks text files now
 // JSON configs are imported directly as TypeScript modules
 
+import { CoerceURI, URI } from "@adviser/cement";
+
 /**
  * Creates a mock fetch implementation that serves only text documentation files.
  * JSON configs are now loaded directly as TypeScript imports, no mocking needed.
  */
-export function createMockFetchFromPkgFiles(): (url: string) => Promise<Response> {
-  return (url: string) => {
+export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Response> {
+  return (iurl: CoerceURI) => {
+    const url = URI.from(iurl).toString();
     // Mock text files - serve actual text file contents (abbreviated for tests)
     if (url.includes("callai.txt")) {
       return Promise.resolve({

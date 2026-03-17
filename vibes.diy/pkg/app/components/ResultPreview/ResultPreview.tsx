@@ -58,10 +58,7 @@ function ResultPreview({ promptState, currentView, children }: ResultPreviewProp
     case currentView === "settings":
       previewArea = (
         <div className="h-full overflow-y-auto p-6">
-          <AppSettingsPanel
-            userSlug={promptState.chat.userSlug}
-            appSlug={promptState.chat.appSlug}
-          />
+          <AppSettingsPanel userSlug={promptState.chat.userSlug} appSlug={promptState.chat.appSlug} />
         </div>
       );
       break;
