@@ -205,7 +205,11 @@ async function handlePromptContext({
           } else {
             filename = `/File-${idx}`;
           }
-          filename += block.begin.lang ? `.${block.begin.lang}` : "";
+          if (["js", "jsx"].includes(block.begin.lang.toLowerCase())) {
+            filename += ".jsx";
+          } else {
+            filename += block.begin.lang ? `.${block.begin.lang.toLowerCase()}` : "";
+          }
           acc.push({
             type: "code-block",
             filename,

@@ -347,7 +347,7 @@ export function createBlockStream(
             totalStat.lines++;
             controller.enqueue({
               type: "block.code.begin",
-              lang: currentLang,
+              lang: currentLang.toLowerCase(),
               timestamp: new Date(),
               sectionId: currentSectionId,
               blockId,
@@ -401,7 +401,7 @@ export function createBlockStream(
               sectionId: currentSectionId,
               seq: seq++,
               blockNr: blockNr++,
-              lang: currentLang,
+              lang: currentLang.toLowerCase(),
               stats: blockStat,
             });
             mode = "toplevel";
@@ -411,7 +411,7 @@ export function createBlockStream(
             blockStat.bytes += content.length;
             controller.enqueue({
               type: "block.code.line",
-              lang: currentLang,
+              lang: currentLang.toLowerCase(),
               timestamp: new Date(),
               sectionId: currentSectionId,
               lineNr: blockStat.lines++,
@@ -454,7 +454,7 @@ export function createBlockStream(
               type: "block.code.end",
               blockId,
               streamId,
-              lang: currentLang,
+              lang: currentLang.toLowerCase(),
               sectionId: currentSectionId,
               seq: seq++,
               blockNr: blockNr++,

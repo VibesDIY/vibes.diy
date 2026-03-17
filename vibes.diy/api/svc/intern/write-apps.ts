@@ -86,7 +86,7 @@ async function transformJSXAndImports(
   // }>[] = [];
   await Promise.all(
     givenFsItems.map(async (item) => {
-      console.log("Processing file system item:", item);
+      // console.log("Processing file system item:", item);
       if (item.fsItem.transform?.type === "jsx-to-js" && isVibeCodeBlock(item.vibeFileItem)) {
         // console.log("do jsx transform for file:", item.fsItem.fileName);
         const rJsStr = exception2Result(() => transformJSXToJS((item.vibeFileItem as VibeCodeBlock).content));
@@ -134,7 +134,7 @@ async function transformJSXAndImports(
           })
         );
       } else if (isVibeCodeBlock(item.vibeFileItem) && item.vibeFileItem.lang === "js") {
-        console.log("do import extraction for file:", item);
+        // console.log("do import extraction for file:", item);
         const rImports = exception2Result(() => importsFromJS((item.vibeFileItem as VibeCodeBlock).content));
         if (rImports.isErr()) {
           console.error(`Failed to extract imports from JS for file ${item.vibeFileItem.filename}: ${rImports.Err()}`);
@@ -203,7 +203,7 @@ async function toFileSystemItems(
       assetURI: f.storage.getURL,
       size: f.storage.size,
     };
-    console.log('toFileSystemItems - processing file:', f);
+    // console.log("toFileSystemItems - processing file:", f);
     if (isVibeCodeBlock(f.vibeFileItem) && f.vibeFileItem.lang === "jsx") {
       // console.log("marking for jsx transform for file:", f.vibeFileItem.filename);
       ret.transform = {

@@ -43,4 +43,3 @@ jobs:
           VIBES_SVC_HOSTNAME_BASE: ${{ vars.VIBES_SVC_HOSTNAME_BASE }}
           VIBES_SVC_PROTOCOL: ${{ vars.VIBES_SVC_PROTOCOL }}
           LLM_BACKEND_API_KEY: ${{ secrets.LLM_BACKEND_API_KEY }}
-
