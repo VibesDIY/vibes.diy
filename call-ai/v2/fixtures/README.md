@@ -4,14 +4,31 @@ Captured raw SSE responses for testing the v2 streaming pipeline.
 
 ## Providers
 
-| Fixture | Provider | Schema method | Format |
-|---------|----------|---------------|--------|
-| `openrouter-gpt-json-schema.llm.txt` | OpenRouter → GPT-4o-mini | `response_format: json_schema` | OpenRouter SSE |
-| `openrouter-claude-json-schema.llm.txt` | OpenRouter → Claude Sonnet | `response_format: json_schema` | OpenRouter SSE |
-| `openai-json-schema.llm.txt` | OpenAI direct | `response_format: json_schema` | OpenAI SSE |
-| `anthropic-json-schema.llm.txt` | Anthropic direct | `tool_use` + `tool_choice` | Anthropic SSE (`input_json_delta`) |
+### Active fixtures (used by provider-fixtures.test.ts)
 
-All fixtures return a sandwich JSON: `{ "name": "...", "layers": ["..."] }`
+| Fixture | Provider | Schema method | Status |
+|---------|----------|---------------|--------|
+| `openrouter-gpt-codeblock.llm.txt` | OpenRouter → GPT-4o-mini | prompt-engineering (```JSON block) | ✅ passes |
+| `openrouter-claude-codeblock.llm.txt` | OpenRouter → Claude Sonnet | prompt-engineering (```JSON block) | ✅ passes |
+| `openai-codeblock.llm.txt` | OpenAI direct | prompt-engineering (```JSON block) | ✅ passes |
+| `anthropic-codeblock.llm.txt` | Anthropic direct | prompt-engineering (```JSON block) | ❌ parser TODO |
+
+All fixtures request a sandwich JSON: `{ "name": "...", "layers": ["..."] }`
+
+The schema is injected into the user message and the model is asked to respond with a ` ```JSON ` code block. This mirrors the approach in `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts` (`callAI` handler, `generateSchema` message).
+
+### Reference fixtures (historical, not used by tests)
+
+| Fixture | Provider | Schema method |
+|---------|----------|---------------|
+| `openrouter-gpt-json-schema.llm.txt` | OpenRouter → GPT-4o-mini | `response_format: json_schema` |
+| `openrouter-claude-json-schema.llm.txt` | OpenRouter → Claude Sonnet | `response_format: json_schema` |
+| `openai-json-schema.llm.txt` | OpenAI direct | `response_format: json_schema` |
+| `anthropic-json-schema.llm.txt` | Anthropic direct | `tool_use` + `tool_choice` (`input_json_delta`) |
+
+## Anthropic Direct — known failure
+
+Anthropic's native SSE format uses `event:` prefix lines and a different payload structure (`content_block_delta`) that `SseChunk` does not yet handle. The `anthropic-codeblock.llm.txt` fixture correctly captures what a future Anthropic SSE normalizer must consume.
 
 ## Regenerating fixtures
 
@@ -22,25 +39,10 @@ bash fixtures/capture.sh
 
 Requires `.env` with: `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
 
-## CLI with schema
-
-The v2 CLI supports `--schema` for structured output:
-
-```bash
-# Dry run (prints request body, no API call)
-pnpm cli --prompt "Describe a sandwich" --schema fixtures/sandwich-schema.json --dry-run
-
-# Live capture (raw SSE to stdout)
-pnpm cli --prompt "Describe a sandwich" --schema fixtures/sandwich-schema.json
-```
-
-## Notes
-
-- Anthropic's native API doesn't support `response_format` — uses `tool_use` with `tool_choice` instead, producing `input_json_delta` events
-- In production, all models go through OpenRouter which provides a unified `response_format: json_schema` interface
-- The Anthropic fixture proves the pipeline handles `input_json_delta` for potential future direct-API support
+Note: Anthropic Direct is captured via `curl` directly because the CLI uses
+`Authorization: Bearer` whereas Anthropic requires `x-api-key`.
 
 ## Files
 
-- `sandwich-schema.json` — shared schema used by all captures
-- `capture.sh` — shell script to re-capture all fixtures via CLI
+- `sandwich-schema.json` — schema used in the capture prompt
+- `capture.sh` — shell script to re-capture all fixtures
