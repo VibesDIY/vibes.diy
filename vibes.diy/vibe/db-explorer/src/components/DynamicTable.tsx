@@ -1,7 +1,15 @@
 import {
-  AllCommunityModule,
-  colorSchemeDark,
+  ClientSideRowModelModule,
+  ColumnApiModule,
+  ColumnAutoSizeModule,
+  ColumnHoverModule,
   ModuleRegistry,
+  NumberFilterModule,
+  PaginationModule,
+  RowDragModule,
+  RowSelectionModule,
+  TextFilterModule,
+  colorSchemeDark,
   themeQuartz,
   type CellStyle,
   type ColDef,
@@ -11,7 +19,17 @@ import { AgGridReact } from "ag-grid-react";
 import React, { useCallback, useMemo } from "react";
 import type { GridOptions } from "./GridFeatures.js";
 
-ModuleRegistry.registerModules([AllCommunityModule]);
+ModuleRegistry.registerModules([
+  ClientSideRowModelModule,
+  ColumnApiModule,
+  ColumnAutoSizeModule,
+  ColumnHoverModule,
+  TextFilterModule,
+  NumberFilterModule,
+  PaginationModule,
+  RowDragModule,
+  RowSelectionModule,
+]);
 
 const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
   backgroundColor: "var(--vibes-bg-primary)",
@@ -61,7 +79,7 @@ export function DynamicTable({ headers, rows, onRowClick, gridOptions: opts }: D
     if (opts.rowNumbers) {
       cols.push({
         headerName: "#",
-        valueGetter: "node.rowIndex + 1",
+        valueGetter: (p) => (p.node?.rowIndex ?? 0) + 1,
         width: 60,
         minWidth: 50,
         maxWidth: 80,
