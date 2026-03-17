@@ -309,10 +309,10 @@ export async function makeBaseSystemPrompt(
     const rText = await keyedLoadAsset.get(llm.name).once(async () => {
       // console.log("Loading text asset for LLM:", llm.name, urlDirname(import.meta.url), import.meta.url);
       return loadAsset(`./llms/${llm.name}.txt`, {
-        fallBackUrl: "https://esm.sh/prompts/",
+        fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
         basePath: () => {
           const dir = import.meta.url;
-          // console.log("Base path for loading LLM text asset:", dir);
+          console.log("Base path for loading LLM text asset:", llm.name, dir);
           return dir;
         },
         mock: {
