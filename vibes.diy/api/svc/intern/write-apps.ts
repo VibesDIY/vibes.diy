@@ -204,20 +204,15 @@ async function toFileSystemItems(
       size: f.storage.size,
     };
     // console.log("toFileSystemItems - processing file:", f);
-    if (isVibeCodeBlock(f.vibeFileItem) && f.vibeFileItem.lang === "jsx") {
+    if (isVibeCodeBlock(f.vibeFileItem) && (f.vibeFileItem.lang === "jsx" || f.vibeFileItem.lang === "js")) {
       // console.log("marking for jsx transform for file:", f.vibeFileItem.filename);
       ret.transform = {
         type: "jsx-to-js",
         transformedAssetId: "setAfterTransform",
       };
     }
-    if (isVibeCodeBlock(f.vibeFileItem) && f.vibeFileItem.lang == "js") {
-      // console.log("marking for import extraction for file:", f.vibeFileItem.filename);
-      ret.transform = {
-        type: "imports",
-        importMapAssetId: "setAfterTransform",
-      };
-    }
+    // Note: "js" lang files also go through jsx-to-js transform above
+    // since prompt-chat-section.ts normalizes both js/jsx to .jsx filenames
     if (f.vibeFileItem.entryPoint) {
       ret.entryPoint = true;
     }

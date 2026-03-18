@@ -310,6 +310,84 @@ describe("VibesDiyApi", () => {
     }
   });
 
+  it("lang:js files get jsx transform and ~~transformed~~ entries", async () => {
+    // LLMs often output ```js instead of ```jsx for JSX code
+    // prompt-chat-section.ts normalizes both to .jsx filenames
+    // write-apps.ts must treat lang:"js" same as lang:"jsx" for transforms
+    const res = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "js", // LLM says "js" not "jsx"
+          filename: "/App.jsx", // but filename is .jsx (normalized by prompt-chat-section)
+          content: `export default function App() { return <div>Hello from JS lang</div>; }`,
+        },
+      ],
+    });
+    expect(res.isOk()).toBe(true);
+    const fs = res.Ok().fileSystem;
+
+    // Should have 3 entries: source, transformed, import-map
+    expect(fs.length).toBe(3);
+
+    // Source entry with jsx-to-js transform
+    const source = fs.find((f) => f.fileName === "/App.jsx");
+    expect(source).toBeDefined();
+    expect(source!.transform).toEqual({
+      type: "jsx-to-js",
+      transformedAssetId: expect.any(String),
+    });
+
+    // Transformed entry
+    const transformed = fs.find((f) => f.fileName.startsWith("/~~transformed~~/"));
+    expect(transformed).toBeDefined();
+    expect(transformed!.mimeType).toBe("text/javascript");
+    expect(transformed!.transform).toEqual({
+      type: "transformed",
+      action: "jsx-to-js",
+      transformedAssetId: source!.assetId,
+    });
+
+    // Import map entry
+    const importMap = fs.find((f) => f.fileName.startsWith("/~~calculated~~/"));
+    expect(importMap).toBeDefined();
+  });
+
+  it("lang:js iframe renders with mountVibe components", async () => {
+    const res = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "js",
+          filename: "/App.jsx",
+          content: `export default function App() { return <div>JS Lang Test</div>; }`,
+        },
+      ],
+    });
+    const url = calcEntryPointUrl({
+      hostnameBase: ".nowhere",
+      protocol: "http",
+      port: "4711",
+      bindings: {
+        appSlug: res.Ok().appSlug,
+        userSlug: res.Ok().userSlug,
+        fsId: res.Ok().fsId,
+      },
+    });
+    const resIframe = await api.cfg.fetch(url);
+    expect(resIframe.status).toBe(200);
+    const iframeText = await resIframe.text();
+
+    // Must have import statement for the transformed file
+    expect(iframeText).toMatch(/import V\d+ from/);
+    // Must pass components to mountVibe, not an empty array
+    expect(iframeText).toMatch(/mountVibe\(\[V\d+\]/);
+    // Must NOT have empty mountVibe
+    expect(iframeText).not.toContain("mountVibe([],");
+  });
+
   it("repeatable stable ensureAppSlug", async () => {
     const now = Date.now();
     for (let i = 0; i < 2; i++) {
