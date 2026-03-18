@@ -198,7 +198,7 @@ export default function VibeIframeWrapper() {
           <iframe
             src={previewUrl.toString()}
             className="w-full h-full border-none"
-            sandbox="allow-scripts allow-same-origin allow-forms"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
           {!runtimeReady && (
