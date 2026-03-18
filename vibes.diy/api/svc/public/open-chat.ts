@@ -55,7 +55,7 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
         return Result.Err(rChatId);
       }
       const { appSlug, userSlug, chatId } = rChatId.Ok();
-      console.log("openChat: Obtained chatId", chatId, "for appSlug:", appSlug, "userSlug:", userSlug, "mode:", req.mode);
+      // console.log("openChat: Obtained chatId", chatId, "for appSlug:", appSlug, "userSlug:", userSlug, "mode:", req.mode);
 
       const wsp = ctx.send.provider as WSSendProvider;
       // console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);

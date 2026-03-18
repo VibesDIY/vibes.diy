@@ -59,7 +59,7 @@ import {
   PromptContextSql,
   BlockEndMsg,
   BlockMsgs,
-  isBlockSteamMsg,
+  isBlockStreamMsg,
 } from "@vibes.diy/call-ai-v2";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
@@ -134,7 +134,7 @@ async function appendBlockEvent({
   return Result.Ok();
 }
 
-async function handlePromptContext({
+export async function handlePromptContext({
   vctx,
   req,
   resChat,
@@ -157,7 +157,7 @@ async function handlePromptContext({
   const code: CodeBlocks[] = [];
   const sections: SqlChatSection[] = [];
   for (const msg of collectedMsgs) {
-    if (!isBlockSteamMsg(msg)) {
+    if (!isBlockStreamMsg(msg)) {
       continue;
     }
     let sqlVal = sections[sections.length - 1];
@@ -206,15 +206,17 @@ async function handlePromptContext({
           } else {
             filename = `/File-${idx}`;
           }
-          if (["js", "jsx"].includes(block.begin.lang.toLowerCase())) {
+          let llmLangFix = block.begin.lang.toLowerCase();
+          if (["js", "jsx"].includes(llmLangFix)) {
+            llmLangFix = "jsx";
             filename += ".jsx";
           } else {
-            filename += block.begin.lang ? `.${block.begin.lang.toLowerCase()}` : "";
+            filename += llmLangFix ? `.${llmLangFix}` : "";
           }
           acc.push({
             type: "code-block",
             filename,
-            lang: block.begin.lang, // llm think between jsx and js is not a big deal
+            lang: llmLangFix, // llm think between jsx and js is not a big deal
             content,
           });
         }
@@ -433,8 +435,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         let blockSeq = 0;
 
         scope.onCatch(async (e) => {
-          console.log("--xy");
-          console.error("Failed to append initial block event for promptId:", promptId, "with error:", e);
           await appendBlockEvent({
             ctx,
             vctx,
@@ -453,10 +453,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           // console.error("Failed to append initial block event for promptId:", promptId, "with error:", e);
         }, 0);
 
-        console.log("-1");
         await scope
           .evalResult(async () => {
-            console.log("Created promptId:", promptId, "for chatId:", req.chatId);
             const res = await appendBlockEvent({
               ctx,
               vctx,
@@ -476,9 +474,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             return res;
           })
           .finally(async () => {
-            console.log("--xx");
             if (blockSeq > 1) {
-              console.log("Prompt completed for promptId:", promptId, "with final blockSeq:", blockSeq);
               await appendBlockEvent({
                 ctx,
                 vctx,
@@ -498,7 +494,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           })
           .do();
 
-        console.log("-2");
         await scope
           .evalResult(async () => {
             const r = await appendBlockEvent({
@@ -521,7 +516,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           })
           .do();
 
-        console.log("-3");
         const withSystemPrompt = await scope
           .evalResult(async () => {
             let withSystemPrompt = Result.Ok({
@@ -558,7 +552,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
         // add system prompt here
 
-        console.log("-4");
         const res = await scope
           .evalResult<Response>(async () => {
             const res = await vctx.llmRequest(llmReq);
@@ -572,10 +565,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             return Result.Ok(res);
           })
           .do();
-        console.log("-5");
         await scope
           .evalResult(async () => {
-            console.log("-6");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pipeline = res
               .body!.pipeThrough(createStatsCollector(promptId, 1000))
@@ -587,7 +578,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
             const reader = pipeline.getReader();
 
-            console.log("-7");
             const collectedMsgs: BlockMsgs[] = [];
             // const codeBlocks: CodeBlocks[] = [];
             while (true) {
@@ -596,7 +586,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
                 break;
               }
               if (!isBlockEnd(value)) {
-                if (!isBlockSteamMsg(value)) {
+                if (!isBlockStreamMsg(value)) {
                   continue;
                 }
                 collectedMsgs.push(value);
@@ -634,13 +624,10 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
                 collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
               }
             }
-            console.log("-9");
             return Result.Ok();
           })
           .do();
-        console.log("-10");
       });
-      console.log("-11");
       return Result.Ok(EventoResult.Continue);
     }
   ),

@@ -35,11 +35,6 @@ bucket_name = "vibes-diy-fs-ids"
 queue = "vibes-service"
 binding = "VIBES_SERVICE"
 
-[[queues.consumers]]
-queue = "vibes-service"
-max_batch_size = 10
-max_batch_timeout = 30
-
 [env.dev]
 name = "vibes-diy-v2-dev"
 vars = { ENVIRONMENT = "dev", VIBES_SVC_HOSTNAME_BASE = ".dev-v2.vibesdiy.net" }
@@ -77,11 +72,6 @@ bucket_name = "vibes-diy-fs-ids"
 queue = "vibes-service-dev"
 binding = "VIBES_SERVICE"
 
-[[env.dev.queues.consumers]]
-queue = "vibes-service-dev"
-max_batch_size = 10
-max_batch_timeout = 30
-
 [env.prod]
 name = "vibes-diy-v2-prod"
 vars = { ENVIRONMENT = "prod", VIBES_SVC_HOSTNAME_BASE = ".prod-v2.vibesdiy.net" }
@@ -118,9 +108,4 @@ bucket_name = "vibes-diy-fs-ids"
 [[env.prod.queues.producers]]
 queue = "vibes-service-prod"
 binding = "VIBES_SERVICE"
-
-[[env.prod.queues.consumers]]
-queue = "vibes-service-prod"
-max_batch_size = 10
-max_batch_timeout = 30
 

@@ -1,26 +1,26 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
-import { createClient } from "@libsql/client/node";
-import { beforeAll, describe, expect, inject, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { BuildURI, consumeStream, loadAsset, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
-import { ensureSuperThis, sts } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
-import { calcEntryPointUrl, CFInject, cfServe, createAppContext, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
+import {
+  calcEntryPointUrl,
+  CFInject,
+  cfServe,
+  handlePromptContext,
+  noopCache,
+  VibesApiSQLCtx,
+  vibesMsgEvento,
+  WSSendProvider,
+} from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
-import { drizzle } from "drizzle-orm/libsql";
-import { isPromptBlockEnd, LLMRequest } from "@vibes.diy/call-ai-v2";
-import { FetchResult, MsgBase, PromptAndBlockMsgs, S3Api, SectionEvent } from "@vibes.diy/api-types";
-
-const noopCache = {
-  put: async (_req: Request, _res: Response) => {
-    /* noop */
-  },
-  delete: async (_req: Request) => {
-    return false;
-  },
-  match: async () => {
-    return undefined;
-  },
-};
+import { BlockEndMsg, BlockMsgs, isBlockStreamMsg, isPromptBlockEnd, PromptMsgs } from "@vibes.diy/call-ai-v2";
+import { PromptAndBlockMsgs, ReqPromptChatSection, SectionEvent } from "@vibes.diy/api-types";
+import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.ts";
+import { ReqWithVerifiedAuth } from "@vibes.diy/api-svc/check-auth.ts";
+import { sqlApps } from "@vibes.diy/api-svc/sql/vibes-diy-api-schema.ts";
+import { and, eq } from "drizzle-orm";
+import { type } from "arktype";
 
 function toByPromptIds(calls: unknown[][]): Record<string, PromptAndBlockMsgs[]> {
   return calls.reduce(
@@ -69,95 +69,19 @@ function emptySectorStream(chatId: string, promptId: string, index: number) {
 
 describe("VibesDiyApi", () => {
   const sthis = ensureSuperThis();
-  const url = inject("VIBES_DIY_TEST_SQL_URL" as never) as string;
-  const client = createClient({ url });
-  const drizzleDB = drizzle(client);
 
   // let svc: Awaited<ReturnType<typeof createHandler>>;
   let api: VibesDiyApi;
   let api2: VibesDiyApi;
+  let appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
-
+    appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
     const testUser = await createTestUser({ sthis, deviceCA });
-
-    const env = {
-      CLOUD_SESSION_TOKEN_PUBLIC:
-        "zeWndr5LEoaySgKSo2aZniYqZ3z6Ecx3Z6qFThtXC8aMEAx6oDFMKgm3SptRgHhN4UxFSvTnmU5HXNrF6cZ4dBz6Ddphq8hsxzUKbryaBu5AFnbNyHrZEod2uw2q2UnPgeEdTDszU1AzSn7iiEfSv4NZ17ENVx7WfRAY8J8F1aog8",
-      CLERK_PUBLISHABLE_KEY: "pk_test_cHJlY2lzZS1jb2x0LTQ5LmNsZXJrLmFjY291bnRzLmRldiQ",
-      DEVICE_ID_CA_PRIV_KEY: await sts.jwk2env(await deviceCA.getCAKey().exportPrivateJWK()),
-      DEVICE_ID_CA_CERT: await deviceCA.caCertificate().then((r) => r.Ok().jwtStr),
-
-      CLOUD_SESSION_TOKEN_SECRET:
-        "z33KxHvFS3jLz72v9DeyGBqo7H34SCC1RA5LvQFCyDiU4r4YBR4jEZxZwA9TqBgm6VB5QzwjrZJoVYkpmHgH7kKJ6Sasat3jTDaBCkqWWfJAVrBL7XapUstnKW3AEaJJKvAYWrKYF9JGqrHNU8WVjsj3MZNyqqk8iAtTPPoKtPTLo2c657daVMkxibmvtz2egnK5wPeYEUtkbydrtBzteN25U7zmGqhS4BUzLjDiYKMLP8Tayi",
-
-      WRAPPER_BASE_URL: "https://tbd",
-      ENTRY_POINT_TEMPLATE_URL:
-        // "http://{fsId}{.groupid}.localhost.adviser.com/entry-point",
-        "http://{fsId}.localhost.adviser.com/entry-point",
-      FP_VERSION: "0.24.8-dev-test-device-id",
-
-      VIBES_SVC_HOSTNAME_BASE: "localhost.vibesdiy.net",
-      VIBES_SVC_PORT: "8787",
-      VIBES_SVC_PROTOCOL: "http",
-      CALLAI_API_KEY: "what-ever",
-      CALLAI_CHAT_URL: "what-ever",
-
-      LLM_BACKEND_URL: "http://what-ever",
-      ENVIRONMENT: "test",
-
-      LLM_BACKEND_API_KEY: "llm-api-key",
-      FPCLOUD_URL: "fpcloud-url",
-      DASHBOARD_URL: "dashboard-url",
-      DEV_SERVER_HOST: "localhost",
-      DEV_SERVER_PORT: "8787",
-
-      RESEND_API_KEY: "resend-key",
-      VIBES_DIY_PUBLIC_BASE_URL: "https://no-where",
-
-      CLOUD_SESSION_TOKEN_ISSUER: "vibes-diy-test-issuer",
-    };
 
     const fetchPair = TestFetchPair.create();
     const wsPair = TestWSPair.create();
-    const appCtx = await createAppContext({
-      sthis,
-      s3Api: new (class implements S3Api {
-        genId(): string {
-          throw new Error("Method not implemented.");
-        }
-        get(_iurl: string): Promise<FetchResult> {
-          throw new Error("Method not implemented.");
-        }
-        put(_iurl: string): Promise<WritableStream<Uint8Array>> {
-          throw new Error("Method not implemented.");
-        }
-        rename(_fromUrl: string, _toUrl: string): Promise<Result<void>> {
-          throw new Error("Method not implemented.");
-        }
-      })(),
-      fetchAsset: async (url: string) => {
-        throw new Error(`fetchAsset not implemented in test for url: ${url}`);
-      },
-      postQueue: async (_msg: MsgBase) => {
-        // throw new Error(`postQueue not implemented in test for msg: ${JSON.stringify(msg)}`);
-      },
-      llmRequest: async (prompt: LLMRequest) => {
-        // console.log("Received LLM request in test llmRequest handler with messages:", prompt.messages.filter((m) => m.content.some((c) => c.type === "text")).map((m) => m.content.filter((c) => c.type === "text").map((c) => c.text).join("\n")).join("\n---\n"));
-        if (prompt.messages[0]?.content?.some((c) => c.type === "text" && c.text.includes("use fixture response"))) {
-          const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
-          return new Response(fixture.Ok(), { status: 200 });
-        }
-        // console.log("Received LLM request in test llmRequest handler with messages:", prompt.messages);
-        return new Response("", { status: 200 });
-      },
-      netHash: () => "test-hash",
-      connections: new Set(),
-      env,
-      db: drizzleDB, // as unknown as VibesSqlite,
-      cache: noopCache,
-    });
 
     fetchPair.server.onServe(async (req: Request) => {
       // console.log("fetchPair.server received request:", req.url, Object.fromEntries(req.headers.entries()));
@@ -166,7 +90,7 @@ describe("VibesDiyApi", () => {
         {
           appCtx: appCtx.appCtx,
           cache: noopCache,
-          drizzle: drizzleDB,
+          drizzle: appCtx.vibesCtx.db,
           webSocket: {
             connections: new Set(),
             webSocketPair: () => ({
@@ -532,7 +456,7 @@ describe("VibesDiyApi", () => {
       const res = await api2.ensureAppSettings({
         appSlug,
         userSlug,
-        aclEntry: { op: "upsert", entry: { type: "app.acl.enable.request" } },
+        aclEntry: { op: "upsert", entry: { type: "app.acl.enable.request", autoAcceptViewRequest: true } },
       });
       expect(res.Ok().settings.entries).toEqual(ref.Ok().settings.entries);
     });
@@ -1261,6 +1185,139 @@ describe("VibesDiyApi", () => {
       expect(x1.Ok().settings.entries.length).toBe(x2.Ok().settings.entries.length);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entry.request.pending.find((e) => e.request.key === "req-re-pending@example.com")).toBeDefined();
+    });
+  });
+
+  describe("handlePromptContext", () => {
+    let vctx: VibesApiSQLCtx;
+    const req = {
+      _auth: {
+        verifiedAuth: {
+          claims: {
+            userId: "testUserId",
+          },
+        },
+      },
+      type: "vibes.diy.res-prompt-chat-section",
+      mode: "creation",
+    } as unknown as ReqWithVerifiedAuth<ReqPromptChatSection>;
+
+    const bp = BlockMsgs.or(PromptMsgs);
+    const collectedMsgs: BlockMsgs[] = [];
+    beforeAll(async () => {
+      vctx = appCtx.vibesCtx;
+      // setup vctx and req with necessary properties for testing
+      const rJsonl = await loadAsset("./prompt-ctx.fixture.jsonl", {
+        basePath: () => import.meta.url,
+      });
+      for await (const line of rJsonl.Ok().split("\n")) {
+        if (line.trim()) {
+          const parsed = bp.array()(JSON.parse(line));
+          if (parsed instanceof type.errors) {
+            console.error("Error parsing line in fixture:", parsed.summary);
+          } else {
+            collectedMsgs.push(...parsed.filter((i) => isBlockStreamMsg(i)));
+          }
+        }
+      }
+    });
+
+    it("processes prompt context correctly", async () => {
+      const chatId = `testChatId-${vctx.sthis.nextId(8).str}`;
+      const promptId = `testPromptId-${vctx.sthis.nextId(8).str}`;
+      const pctx = await handlePromptContext({
+        vctx,
+        req: {
+          ...req,
+          chatId,
+          userSlug: "exampleUser",
+          appSlug: "exampleApp",
+          promptId,
+          outerTid: "outer",
+        } as unknown as ReqWithVerifiedAuth<ReqPromptChatSection>,
+        resChat: {
+          appSlug: "exampleApp",
+          userSlug: "exampleUser",
+          mode: "creation",
+        },
+        promptId,
+        blockSeq: collectedMsgs.length,
+        value: collectedMsgs[collectedMsgs.length - 1] as BlockEndMsg,
+        collectedMsgs,
+      });
+      // console.log("handlePromptContext result:", x.Err());
+      expect(pctx.isOk()).toBe(true);
+
+      const fs = await vctx.db
+        .select()
+        .from(sqlApps)
+        .where(
+          and(
+            eq(sqlApps.appSlug, "exampleApp"),
+            eq(sqlApps.userSlug, "exampleUser"),
+            eq(sqlApps.fsId, pctx.Ok().fsRef.Unwrap().fsId)
+          )
+        )
+        .get();
+      // console.log("Database entries for exampleApp/exampleUser:", fs);
+      expect(fs).toEqual({
+        appSlug: "exampleApp",
+        created: expect.any(String),
+        env: {},
+        fileSystem: [
+          {
+            assetId: "z7s2pNqju7dRUpKYPc5AisTkM8TsK4PHp2suH9YzQxXvc",
+            assetURI: "sqlite://Assets/z7s2pNqju7dRUpKYPc5AisTkM8TsK4PHp2suH9YzQxXvc",
+            fileName: "/App.jsx",
+            mimeType: "text/javascript",
+            size: 5370,
+            transform: {
+              transformedAssetId: "z9F292JVxJPpjFBsMz9pzP8rc7qTPecWCzYxkBQrnsPMm",
+              type: "jsx-to-js",
+            },
+          },
+          {
+            assetId: "z9F292JVxJPpjFBsMz9pzP8rc7qTPecWCzYxkBQrnsPMm",
+            assetURI: "sqlite://Assets/z9F292JVxJPpjFBsMz9pzP8rc7qTPecWCzYxkBQrnsPMm",
+            fileName: "/~~transformed~~/z7s2pNqju7dRUpKYPc5AisTkM8TsK4PHp2suH9YzQxXvc",
+            mimeType: "text/javascript",
+            size: 9405,
+            transform: {
+              action: "jsx-to-js",
+              transformedAssetId: "z7s2pNqju7dRUpKYPc5AisTkM8TsK4PHp2suH9YzQxXvc",
+              type: "transformed",
+            },
+          },
+          {
+            assetId: "z2prY9cv7dc5XywUH4pxdyRSqtkmrA8S8Av768CRNiFs4",
+            assetURI: "sqlite://Assets/z2prY9cv7dc5XywUH4pxdyRSqtkmrA8S8Av768CRNiFs4",
+            fileName: "/~~calculated~~/import-map.json",
+            mimeType: "application/importmap+json",
+            size: 153,
+            transform: {
+              fromAssetIds: ["z7s2pNqju7dRUpKYPc5AisTkM8TsK4PHp2suH9YzQxXvc"],
+              type: "import-map",
+            },
+          },
+        ],
+        fsId: "zDdC6RKfJgJB9HzK8qKMXGgTSaENJXjXBWUarsrgShUCW",
+        meta: [],
+        mode: "dev",
+        releaseSeq: 1,
+        userId: "testUserId",
+        userSlug: "exampleUser",
+      });
+      expect(pctx.Ok()).toEqual({
+        blockSeq: 138,
+        fsRef: {
+          _t: {
+            appSlug: "exampleApp",
+            fsId: "zDdC6RKfJgJB9HzK8qKMXGgTSaENJXjXBWUarsrgShUCW",
+            mode: "dev",
+            userSlug: "exampleUser",
+          },
+        },
+      });
     });
   });
 });

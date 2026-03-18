@@ -18,7 +18,7 @@ import {
   isDeltaStats,
   isBlockStats,
   createSectionsStream,
-  isBlockSteamMsg,
+  isBlockStreamMsg,
   isToplevelBegin,
   isCodeBegin,
   isBlockImage,
@@ -256,7 +256,7 @@ const app = command({
           if (delta && isDeltaMsg(value)) {
             console.log(JSON.stringify(value));
           }
-          if (block && isBlockSteamMsg(value)) {
+          if (block && isBlockStreamMsg(value)) {
             console.log(JSON.stringify(value));
           }
         }
