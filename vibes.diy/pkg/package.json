@@ -85,7 +85,7 @@
     "drizzle-kit": "^0.31.8",
     "prettier": "^3.8.1",
     "rollup-plugin-visualizer": "^6.0.5",
-    "shiki": "^3.22.0",
+    "shiki": "^4.0.2",
     "storybook": "^10.2.19",
     "tailwindcss": "^4.1.18",
     "toml": "^3.0.0",
