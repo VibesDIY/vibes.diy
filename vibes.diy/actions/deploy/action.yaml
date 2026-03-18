@@ -63,7 +63,10 @@ runs:
       working-directory: vibes.diy/pkg
       shell: bash
       run: |
+        pnpm run format --check
+        pnpm run lint --check
         pnpm run build
+        pnpm run test
 
     - name: Deploy vibes.diy
       working-directory: vibes.diy/pkg
@@ -108,3 +111,45 @@ runs:
           --fromEnv LLM_BACKEND_API_KEY | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
+
+    - name: Deploy api-queue consumer
+      working-directory: vibes.diy/api/queue
+      shell: bash
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
+        CLOUDFLARE_ENV: ${{ inputs.CLOUDFLARE_ENV }}
+        CLOUD_SESSION_TOKEN_PUBLIC: ${{ inputs.CLOUD_SESSION_TOKEN_PUBLIC }}
+        CLERK_PUBLISHABLE_KEY: ${{ inputs.CLERK_PUBLISHABLE_KEY }}
+        DEVICE_ID_CA_PRIV_KEY: ${{ inputs.DEVICE_ID_CA_PRIV_KEY }}
+        DEVICE_ID_CA_CERT: ${{ inputs.DEVICE_ID_CA_CERT }}
+        WRAPPER_BASE_URL: ${{ inputs.WRAPPER_BASE_URL }}
+        FP_VERSION: ${{ inputs.FP_VERSION }}
+        FPCLOUD_URL: ${{ inputs.FPCLOUD_URL }}
+        RESEND_API_KEY: ${{ inputs.RESEND_API_KEY }}
+        VIBES_DIY_PUBLIC_BASE_URL: ${{ inputs.VIBES_DIY_PUBLIC_BASE_URL }}
+        CLOUD_SESSION_TOKEN_SECRET: ${{ inputs.CLOUD_SESSION_TOKEN_SECRET }}
+        CLOUD_SESSION_TOKEN_ISSUER: ${{ inputs.CLOUD_SESSION_TOKEN_ISSUER }}
+        VIBES_DIY_FROM_EMAIL: ${{ inputs.VIBES_DIY_FROM_EMAIL }}
+        VIBES_SVC_HOSTNAME_BASE: ${{ inputs.VIBES_SVC_HOSTNAME_BASE }}
+        VIBES_SVC_PROTOCOL: ${{ inputs.VIBES_SVC_PROTOCOL }}
+        LLM_BACKEND_API_KEY: ${{ inputs.LLM_BACKEND_API_KEY }}
+      run: |
+        pnpm exec core-cli writeEnv --out - --json \
+          --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
+          --fromEnv CLERK_PUBLISHABLE_KEY \
+          --fromEnv DEVICE_ID_CA_PRIV_KEY \
+          --fromEnv DEVICE_ID_CA_CERT \
+          --fromEnv WRAPPER_BASE_URL \
+          --fromEnv FP_VERSION \
+          --fromEnv FPCLOUD_URL \
+          --fromEnv RESEND_API_KEY \
+          --fromEnv VIBES_DIY_PUBLIC_BASE_URL \
+          --fromEnv CLOUD_SESSION_TOKEN_SECRET \
+          --fromEnv CLOUD_SESSION_TOKEN_ISSUER \
+          --fromEnv VIBES_DIY_FROM_EMAIL \
+          --fromEnv VIBES_SVC_HOSTNAME_BASE \
+          --fromEnv VIBES_SVC_PROTOCOL \
+          --fromEnv LLM_BACKEND_API_KEY | \
+          pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
+        pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}}

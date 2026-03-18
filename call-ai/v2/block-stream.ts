@@ -197,7 +197,7 @@ export const isCodeEnd = (msg: unknown, streamId?: string): msg is CodeEndMsg =>
   !(CodeEndMsg(msg) instanceof type.errors) && (!streamId || (msg as CodeEndMsg).streamId === streamId);
 export const isBlockImage = (msg: unknown, streamId?: string): msg is BlockImageMsg =>
   !(BlockImageMsg(msg) instanceof type.errors) && (!streamId || (msg as BlockImageMsg).streamId === streamId);
-export const isBlockSteamMsg = (msg: unknown, streamId?: string): msg is BlockStreamMsg =>
+export const isBlockStreamMsg = (msg: unknown, streamId?: string): msg is BlockStreamMsg =>
   !(BlockStreamMsg(msg) instanceof type.errors) && (!streamId || (msg as BlockStreamMsg).streamId === streamId);
 
 // Regex to match code fence start: ```lang or just ```

@@ -13,7 +13,6 @@ import { createRequestHandler } from "react-router";
 import * as serverBuild from "virtual:react-router/server-build";
 import { cfServe, CfCacheIf } from "@vibes.diy/api-svc";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
-import { processScreenShotEvent } from "./screen-shotter.js";
 import { NPMPackage } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 
@@ -119,24 +118,5 @@ export default {
     return requestHandler(request as unknown as Parameters<typeof requestHandler>[0], {
       vibeDiyAppParams: cfCtx.vibesCtx.params,
     }) as unknown as CFResponse;
-  },
-
-  async queue(batch, env: CFEnv) {
-    // Queue consumer handler - processes messages from VIBES_SERVICE queue
-    for (const message of batch.messages) {
-      try {
-        console.log("Queue message received:", message.id, typeof message.body);
-        let body = message.body;
-        if (typeof message.body === "string") {
-          body = JSON.parse(message.body);
-          console.log("Message body:", body);
-        }
-        await processScreenShotEvent(body, env);
-        message.ack();
-      } catch (error) {
-        console.error("Failed to process queue message:", error);
-        message.retry();
-      }
-    }
   },
 } satisfies ExportedHandler<CFEnv>;
