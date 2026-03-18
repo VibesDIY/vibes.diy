@@ -1,18 +1,23 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useVibeDiy } from "../../vibe-diy-provider.js";
 import { useNavigate, useSearchParams } from "react-router";
+import { Chat } from "./chat.$userSlug.$appSlug.js";
+import { toast } from "react-hot-toast";
 
 export default function ChatPrompt() {
   const { vibeDiyApi, sthis } = useVibeDiy();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const hasRun = useRef(false);
 
   const prompt64 = searchParams.get("prompt64");
 
   useEffect(() => {
-    if (!prompt64) {
+    if (!prompt64 || hasRun.current) {
       return;
     }
+    hasRun.current = true;
     const prompt = sthis.txt.base64.decode(prompt64);
     vibeDiyApi
       .getTokenClaims()
@@ -29,8 +34,7 @@ export default function ChatPrompt() {
       })
       .then((rChat) => {
         if (rChat.isErr()) {
-          console.error(`Error in useCallAIV2: ${rChat.Err()}`);
-          // setError(rChat.Err())
+          toast.error(`Error in useCallAIV2: ${rChat.Err().message}`);
           return;
         }
         const chat = rChat.Ok();
@@ -44,15 +48,34 @@ export default function ChatPrompt() {
             ],
           })
           .then((rPrompt) => {
-            // chat.close()
             if (rPrompt.isErr()) {
-              console.error("sendPrompt failed", rPrompt.Err());
+              toast.error(`sendPrompt failed: ${rPrompt.Err().message}`);
               return;
-            } else {
-              navigate(`/chat/${chat.userSlug}/${chat.appSlug}`);
             }
+            navigate(`/chat/${chat.userSlug}/${chat.appSlug}`);
           });
       });
   }, [prompt64]);
-  return <div>Preparing AI - Session</div>;
+
+  return (
+    <>
+      <Chat inConstruction />
+      {createPortal(
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          Preparing AI Session…
+        </div>,
+        document.body
+      )}
+    </>
+  );
 }

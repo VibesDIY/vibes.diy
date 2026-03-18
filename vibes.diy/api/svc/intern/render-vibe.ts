@@ -14,7 +14,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { type } from "arktype";
 // import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
 import { ExtractedHostToBindings } from "../entry-point-utils.js";
-import { VibePage } from "./components/vibes-page.js";
+import { VibePage } from "./components/vibe-page.js";
 import { renderToReadableStream } from "react-dom/server";
 import { serialize as cookieSerialize } from "cookie";
 import { Dependencies, render_esm_sh, resolveVersionRegistry } from "./import-map.js";
@@ -129,8 +129,9 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
     mountJS: [
       `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
       ...imports.map((i) => i.importStmt),
-      `registerDependencies(${JSON.stringify({ appSlug: fs.appSlug, userSlug: fs.userSlug, fsId: fs.fsId })}, ${JSON.stringify(importMap)}
-      )`,
+      `registerDependencies(`,
+      `  ${JSON.stringify({ appSlug: fs.appSlug, userSlug: fs.userSlug, fsId: fs.fsId })}, `,
+      `  JSON.parse(document.getElementById("vibe-import-map").textContent))`,
       `  .then(() => mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({ usrEnv })}));`,
     ].join("\n"),
   } satisfies VibesDiyServCtx;

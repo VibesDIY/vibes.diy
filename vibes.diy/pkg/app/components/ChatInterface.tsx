@@ -2,12 +2,14 @@ import React, { useEffect, useRef } from "react";
 import { useParams } from "react-router";
 // import type { ChatInterfaceProps } from "@vibes.diy/prompts";
 import MessageList from "./MessageList.js";
+import type { PromptError } from "@vibes.diy/call-ai-v2";
 import WelcomeScreen from "./WelcomeScreen.js";
 import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
 
 function ChatInterface({
   promptState,
   onClick,
+  onRetry,
   // selectedResponseDoc,
   // setSelectedResponseId,
   // setMobilePreviewShown,
@@ -15,6 +17,7 @@ function ChatInterface({
 }: {
   promptState: PromptState;
   onClick: (a: { fsId: string; appSlug: string; userSlug: string }) => void;
+  onRetry?: (msg: PromptError) => void;
 }) {
   const { fsId } = useParams<{ fsId?: string }>();
   const { running, blocks } = promptState;
@@ -45,6 +48,7 @@ function ChatInterface({
         <div ref={messagesContainerRef} className="flex flex-grow flex-col-reverse overflow-y-auto">
           <MessageList
             onClick={onClick}
+            onRetry={onRetry}
             promptBlocks={blocks}
             promptProcessing={running}
             chatId={promptState.chat.chatId}

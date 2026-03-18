@@ -4,7 +4,9 @@ import { VibesDiyServCtx } from "@vibes.diy/api-types";
 import React from "react";
 
 export function ImportMap(prop: VibesDiyServCtx) {
-  return <script type="importmap" dangerouslySetInnerHTML={{ __html: JSON.stringify(prop.importMap, null, 2) }} />;
+  return (
+    <script type="importmap" id="vibe-import-map" dangerouslySetInnerHTML={{ __html: JSON.stringify(prop.importMap, null, 2) }} />
+  );
 }
 
 export function Links() {

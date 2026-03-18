@@ -1,5 +1,6 @@
 import { VibesSwitch } from "@vibes.diy/base";
 import React from "react";
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import type { ReactNode } from "react";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { AllowFireproofSharing } from "./AllowFireproofSharing.js";
@@ -32,6 +33,7 @@ export default function AppLayout({
   fullWidthChat = false,
 }: AppLayoutProps) {
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
+  useDocumentTitle("vibes.diy");
 
   return (
     <div className="page-grid-background grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden">

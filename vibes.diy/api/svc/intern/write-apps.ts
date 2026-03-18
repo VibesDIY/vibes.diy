@@ -84,9 +84,13 @@ async function transformJSXAndImports(
   //   // prepareStorage?: Awaited<ReturnType<typeof calcCid>>;
   //   fsItem: FileSystemItem;
   // }>[] = [];
+  const id = ctx.sthis.nextId().str;
   await Promise.all(
-    givenFsItems.map(async (item) => {
-      console.log("Processing file system item:", item.fsItem.transform, item.vibeFileItem);
+    givenFsItems.map(async (item, idx) => {
+      console.log("Processing file system item:", id, idx, item.fsItem.transform, {
+        ...item.vibeFileItem,
+        content: "[content hidden]",
+      });
       if (item.fsItem.transform?.type === "jsx-to-js" && isVibeCodeBlock(item.vibeFileItem)) {
         // console.log("do jsx transform for file:", item.fsItem.fileName);
         const rJsStr = exception2Result(() => transformJSXToJS((item.vibeFileItem as VibeCodeBlock).content));

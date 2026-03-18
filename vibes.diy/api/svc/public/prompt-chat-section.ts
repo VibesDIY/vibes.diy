@@ -10,6 +10,7 @@ import {
   pathOps,
   URI,
 } from "@adviser/cement";
+import { scopey } from "@adviser/scopey";
 import {
   InMsgBase,
   isReqCreationPromptChatSection,
@@ -410,6 +411,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       const promptId = vctx.sthis.nextId(96 / 8).str;
       // needs to be sent before any block events
       // to allow the client to associate incoming blocks with the promptId
+
       await ctx.send.send(
         ctx,
         wrapMsgBase(ctx.validated, {
@@ -427,155 +429,218 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         } satisfies InMsgBase<ResPromptChatSection>)
       );
 
-      let blockSeq = 0;
-      // console.log("0-Created promptId:", promptId, "for chatId:", req.chatId);
-      const rBegin = await appendBlockEvent({
-        ctx,
-        vctx,
-        req,
-        promptId,
-        blockSeq: blockSeq,
-        evt: {
-          type: "prompt.block-begin",
-          streamId: promptId,
-          chatId: req.chatId,
-          // streamId:
-          seq: blockSeq,
-          timestamp: new Date(),
-        },
-      });
-      blockSeq++;
-      if (rBegin.isErr()) {
-        return Result.Err(rBegin);
-      }
+      await scopey(async (scope) => {
+        let blockSeq = 0;
 
-      const r = await appendBlockEvent({
-        ctx,
-        vctx,
-        req,
-        promptId,
-        blockSeq: blockSeq,
-        evt: {
-          type: "prompt.req",
-          streamId: promptId,
-          chatId: req.chatId,
-          seq: blockSeq,
-          request: req.prompt,
-          timestamp: new Date(),
-        },
-      });
-      blockSeq++;
-      if (r.isErr()) {
-        console.error("Failed to append prompt request event:", r.Err());
-        return Result.Err(r);
-      }
-
-      let withSystemPrompt = Result.Ok({ model: req.prompt.model ?? vctx.params.llm.default.model, messages: [] as ChatMessage[] });
-      if (req.mode === "creation") {
-        withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? vctx.params.llm.default.model);
-      } else if (req.mode === "application") {
-        withSystemPrompt = Result.Ok({
-          model: req.prompt.model ?? vctx.params.llm.default.model,
-          messages: req.prompt.messages,
-        });
-      }
-      if (withSystemPrompt.isErr()) {
-        return Result.Err(withSystemPrompt);
-      }
-      // console.log("Sending LLM request for promptId:", promptId);
-      const llmReq: LLMRequest & { headers: LLMHeaders } = {
-        ...vctx.params.llm.default,
-        ...{
-          ...req.prompt,
-          messages: withSystemPrompt.Ok().messages,
-        },
-        ...vctx.params.llm.enforced,
-        model: withSystemPrompt.Ok().model,
-        headers: vctx.params.llm.headers,
-        logprobs: true,
-        stream: true,
-      };
-
-      // add system prompt here
-      const rRes = await exception2Result(() => vctx.llmRequest(llmReq));
-      if (rRes.isErr()) {
-        return Result.Err(`LLM request failed: ${rRes.Err().message}`);
-      }
-      const res = rRes.Ok();
-      if (!res.ok) {
-        return Result.Err(`LLM request failed with status ${res.status}`);
-      }
-      if (!res.body) {
-        return Result.Err(`LLM request returned no body`);
-      }
-      const pipeline = res.body
-        .pipeThrough(createStatsCollector(promptId, 1000))
-        .pipeThrough(createLineStream(promptId))
-        .pipeThrough(createDataStream(promptId))
-        .pipeThrough(createSseStream(promptId))
-        .pipeThrough(createDeltaStream(promptId, () => vctx.sthis.nextId(12).str))
-        .pipeThrough(createSectionsStream(promptId, () => vctx.sthis.nextId(12).str));
-
-      const reader = pipeline.getReader();
-
-      const collectedMsgs: BlockMsgs[] = [];
-      // const codeBlocks: CodeBlocks[] = [];
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        if (!isBlockEnd(value)) {
-          if (!isBlockSteamMsg(value)) {
-            continue;
-          }
-          collectedMsgs.push(value);
-          const r = await appendBlockEvent({ ctx, vctx, req, promptId, blockSeq: blockSeq++, evt: value, emitMode: "emit-only" });
-          if (r.isErr()) {
-            return Result.Err(r);
-          }
-        } else {
-          collectedMsgs.push(value);
-          const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
-          if (r.isErr()) {
-            return Result.Err(r);
-          }
-          blockSeq = r.Ok().blockSeq;
-          const rEvt = await appendBlockEvent({
+        scope.onCatch(async (e) => {
+          console.log("--xy");
+          console.error("Failed to append initial block event for promptId:", promptId, "with error:", e);
+          await appendBlockEvent({
             ctx,
             vctx,
             req,
             promptId,
             blockSeq: blockSeq++,
-            evt: { ...value, fsRef: r.Ok().fsRef.toValue() },
-            emitMode: "emit-only",
+            evt: {
+              type: "prompt.error",
+              streamId: promptId,
+              chatId: req.chatId,
+              seq: blockSeq,
+              timestamp: new Date(),
+              error: (e as Error).message,
+            },
           });
-          if (rEvt.isErr()) {
-            return Result.Err(rEvt);
-          }
-          collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
-        }
-      }
-      if (blockSeq > 1) {
-        const rEnd = await appendBlockEvent({
-          ctx,
-          vctx,
-          req,
-          promptId,
-          blockSeq: blockSeq,
-          evt: {
-            type: "prompt.block-end",
-            streamId: promptId,
-            chatId: req.chatId,
-            seq: blockSeq,
-            timestamp: new Date(),
+          // console.error("Failed to append initial block event for promptId:", promptId, "with error:", e);
+        }, 0);
+
+        console.log("-1");
+        await scope
+          .evalResult(async () => {
+            console.log("Created promptId:", promptId, "for chatId:", req.chatId);
+            const res = await appendBlockEvent({
+              ctx,
+              vctx,
+              req,
+              promptId,
+              blockSeq: blockSeq,
+              evt: {
+                type: "prompt.block-begin",
+                streamId: promptId,
+                chatId: req.chatId,
+                // streamId:
+                seq: blockSeq,
+                timestamp: new Date(),
+              },
+            });
+            blockSeq++;
+            return res;
+          })
+          .finally(async () => {
+            console.log("--xx");
+            if (blockSeq > 1) {
+              console.log("Prompt completed for promptId:", promptId, "with final blockSeq:", blockSeq);
+              await appendBlockEvent({
+                ctx,
+                vctx,
+                req,
+                promptId,
+                blockSeq: blockSeq,
+                evt: {
+                  type: "prompt.block-end",
+                  streamId: promptId,
+                  chatId: req.chatId,
+                  seq: blockSeq,
+                  timestamp: new Date(),
+                },
+              });
+              blockSeq++;
+            }
+          })
+          .do();
+
+        console.log("-2");
+        await scope
+          .evalResult(async () => {
+            const r = await appendBlockEvent({
+              ctx,
+              vctx,
+              req,
+              promptId,
+              blockSeq: blockSeq,
+              evt: {
+                type: "prompt.req",
+                streamId: promptId,
+                chatId: req.chatId,
+                seq: blockSeq,
+                request: req.prompt,
+                timestamp: new Date(),
+              },
+            });
+            blockSeq++;
+            return r;
+          })
+          .do();
+
+        console.log("-3");
+        const withSystemPrompt = await scope
+          .evalResult(async () => {
+            let withSystemPrompt = Result.Ok({
+              model: req.prompt.model ?? vctx.params.llm.default.model,
+              messages: [] as ChatMessage[],
+            });
+            if (req.mode === "creation") {
+              withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? vctx.params.llm.default.model);
+            } else if (req.mode === "application") {
+              withSystemPrompt = Result.Ok({
+                model: req.prompt.model ?? vctx.params.llm.default.model,
+                messages: req.prompt.messages,
+              });
+            }
+            return withSystemPrompt;
+          })
+          .do();
+        // if (withSystemPrompt.isErr()) {
+        //   return Result.Err(withSystemPrompt);
+        // }
+        // console.log("Sending LLM request for promptId:", promptId);
+        const llmReq: LLMRequest & { headers: LLMHeaders } = {
+          ...vctx.params.llm.default,
+          ...{
+            ...req.prompt,
+            messages: withSystemPrompt.messages,
           },
-        });
-        blockSeq++;
-        if (rEnd.isErr()) {
-          return Result.Err(rEnd);
-        }
-      }
+          ...vctx.params.llm.enforced,
+          model: withSystemPrompt.model,
+          headers: vctx.params.llm.headers,
+          logprobs: true,
+          stream: true,
+        };
+
+        // add system prompt here
+
+        console.log("-4");
+        const res = await scope
+          .evalResult<Response>(async () => {
+            const res = await vctx.llmRequest(llmReq);
+
+            if (!res.ok) {
+              return Result.Err(`LLM request failed with status ${res.status} :${llmReq.model} : ${res.statusText}`);
+            }
+            if (!res.body) {
+              return Result.Err(`LLM request returned no body`);
+            }
+            return Result.Ok(res);
+          })
+          .do();
+        console.log("-5");
+        await scope
+          .evalResult(async () => {
+            console.log("-6");
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const pipeline = res
+              .body!.pipeThrough(createStatsCollector(promptId, 1000))
+              .pipeThrough(createLineStream(promptId))
+              .pipeThrough(createDataStream(promptId))
+              .pipeThrough(createSseStream(promptId))
+              .pipeThrough(createDeltaStream(promptId, () => vctx.sthis.nextId(12).str))
+              .pipeThrough(createSectionsStream(promptId, () => vctx.sthis.nextId(12).str));
+
+            const reader = pipeline.getReader();
+
+            console.log("-7");
+            const collectedMsgs: BlockMsgs[] = [];
+            // const codeBlocks: CodeBlocks[] = [];
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                break;
+              }
+              if (!isBlockEnd(value)) {
+                if (!isBlockSteamMsg(value)) {
+                  continue;
+                }
+                collectedMsgs.push(value);
+                const r = await appendBlockEvent({
+                  ctx,
+                  vctx,
+                  req,
+                  promptId,
+                  blockSeq: blockSeq++,
+                  evt: value,
+                  emitMode: "emit-only",
+                });
+                if (r.isErr()) {
+                  return Result.Err(r);
+                }
+              } else {
+                collectedMsgs.push(value);
+                const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
+                if (r.isErr()) {
+                  return Result.Err(r);
+                }
+                blockSeq = r.Ok().blockSeq;
+                const rEvt = await appendBlockEvent({
+                  ctx,
+                  vctx,
+                  req,
+                  promptId,
+                  blockSeq: blockSeq++,
+                  evt: { ...value, fsRef: r.Ok().fsRef.toValue() },
+                  emitMode: "emit-only",
+                });
+                if (rEvt.isErr()) {
+                  return Result.Err(rEvt);
+                }
+                collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
+              }
+            }
+            console.log("-9");
+            return Result.Ok();
+          })
+          .do();
+        console.log("-10");
+      });
+      console.log("-11");
       return Result.Ok(EventoResult.Continue);
     }
   ),

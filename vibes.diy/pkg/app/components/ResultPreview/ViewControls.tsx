@@ -15,9 +15,10 @@ interface ViewControlsProps {
   currentView: ViewType;
   onClick?: (view: ViewType) => void;
   onDoubleClick?: (view: ViewType) => void;
+  onContextMenu?: (view: ViewType, e: React.MouseEvent) => void;
 }
 
-export const ViewControls: React.FC<ViewControlsProps> = ({ viewControls, currentView, onClick, onDoubleClick }) => {
+export const ViewControls: React.FC<ViewControlsProps> = ({ viewControls, currentView, onClick, onDoubleClick, onContextMenu }) => {
   return (
     <div className="bg-light-decorative-00 dark:bg-dark-decorative-00 flex justify-center gap-1 rounded-md p-1 shadow-sm">
       {Object.entries(viewControls)
@@ -34,6 +35,10 @@ export const ViewControls: React.FC<ViewControlsProps> = ({ viewControls, curren
               disabled={!control.enabled}
               onClick={() => onClick?.(viewTypeKey)}
               onDoubleClick={() => onDoubleClick?.(viewTypeKey)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                onContextMenu?.(viewTypeKey, e);
+              }}
               className={`flex items-center justify-center space-x-1 rounded px-3 py-1.5 text-xs font-medium transition-colors sm:space-x-1.5 sm:px-4 sm:text-sm ${
                 isActive
                   ? "bg-light-background-00 dark:bg-dark-background-00 text-light-primary dark:text-dark-primary shadow-sm"

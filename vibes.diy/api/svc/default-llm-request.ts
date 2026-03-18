@@ -21,7 +21,7 @@ export function defaultLLMRequest(
       throw new Error(`Invalid LLMRequest: ${stripLLMRequest.summary}`);
     }
     const body = JSON.stringify(stripLLMRequest);
-    // console.log(`Making LLM request to ${url} with body:`, apiKey);
+    console.log(`Making LLM request to ${url} with body:`, apiKey);
     return fetch(url, {
       method: "POST",
       headers: {

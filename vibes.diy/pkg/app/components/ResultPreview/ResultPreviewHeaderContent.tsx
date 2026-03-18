@@ -14,6 +14,7 @@ interface ResultPreviewHeaderContentProps {
   hasCodeChanges: boolean;
   onCodeSave?: () => void;
   openVibe?: () => void;
+  onContextMenu?: (view: ViewType, e: React.MouseEvent) => void;
   // // Props from useViewState (lifted to home.tsx)
   // displayView: ViewType;
   // navigateToView: (view: ViewType) => void;
@@ -43,6 +44,7 @@ function ResultPreviewHeaderContent({
   onCodeSave,
   syntaxErrorCount,
   openVibe,
+  onContextMenu,
 
   // displayView,
   // navigateToView,
@@ -107,6 +109,7 @@ function ResultPreviewHeaderContent({
           currentView={currentView} // Use displayView for the currently active button highlight
           onClick={navigateToView}
           onDoubleClick={(view) => view == "preview" && openVibe?.()}
+          onContextMenu={onContextMenu}
         />
       </div>
       {/* Right side - Save and Publish buttons */}

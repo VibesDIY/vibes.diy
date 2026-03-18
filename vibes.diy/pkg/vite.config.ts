@@ -83,7 +83,7 @@ export default defineConfig({
   plugins: [
     setupSqlPlugin(),
     exposeDevServerInfo(),
-    workspacePackagesPlugin(),
+    workspacePackagesPlugin(), // { exclude: ["@vibes.diy/vibe-db-explorer"] }),
     tailwindcss(),
     tsconfigPaths({
       configNames: ["tsconfig.dev.json"],

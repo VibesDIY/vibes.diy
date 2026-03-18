@@ -11,11 +11,13 @@ import {
   isCodeBegin,
   isCodeEnd,
   isCodeLine,
+  isPromptError,
   isPromptReq,
   isToplevelBegin,
   isToplevelEnd,
   isToplevelLine,
   LineMsg,
+  PromptError,
   PromptReq,
   ToplevelBeginMsg,
   ToplevelEndMsg,
@@ -29,6 +31,7 @@ interface MessageListProps {
   chatId: string;
   selectedFsId?: string;
   onClick: (fsRes: { userSlug: string; appSlug: string; fsId: string }) => void;
+  onRetry?: (msg: PromptError) => void;
   // setSelectedResponseId: (id: string) => void;
   // selectedResponseId: string;
   // setMobilePreviewShown: (shown: boolean) => void;
@@ -62,6 +65,26 @@ function Prompt({ msg }: { msg: PromptReq }) {
               .join("\n")}
           </ReactMarkdown>
         </div>
+      </BrutalistCard>
+    </div>
+  );
+}
+
+function PromptErrorMsg({ msg, onRetry }: { msg: PromptError; onRetry?: (msg: PromptError) => void }) {
+  return (
+    <div className="mb-4 flex flex-row justify-end px-4" key={msg.streamId}>
+      <BrutalistCard size="md" messageType="user" className="max-w-[85%]">
+        <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
+          {`Error: ${msg.error}`}
+        </div>
+        {onRetry && (
+          <button
+            onClick={() => onRetry(msg)}
+            className="mt-2 rounded-sm px-3 py-1 text-sm font-medium text-orange-600 hover:bg-orange-100 dark:text-orange-400 dark:hover:bg-orange-900/30"
+          >
+            Retry
+          </button>
+        )}
       </BrutalistCard>
     </div>
   );
@@ -293,6 +316,7 @@ function MessageList({
   chatId,
   selectedFsId,
   onClick,
+  onRetry,
   // setSelectedResponseId,
   // selectedResponseId,
   // setMobilePreviewShown,
@@ -338,6 +362,9 @@ function MessageList({
       switch (true) {
         // case isPromptBlockBegin(msg):
         // case isPromptBlockEnd(msg):
+        case isPromptError(msg):
+          acc.push(<PromptErrorMsg key={msg.streamId} msg={msg} onRetry={onRetry} />);
+          break;
         case isPromptReq(msg):
           acc.push(<Prompt key={msg.streamId} msg={msg} />);
           break;
