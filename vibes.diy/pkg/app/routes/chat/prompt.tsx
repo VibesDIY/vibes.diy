@@ -4,17 +4,19 @@ import { useVibeDiy } from "../../vibe-diy-provider.js";
 import { useNavigate, useSearchParams } from "react-router";
 import { Chat } from "./chat.$userSlug.$appSlug.js";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@clerk/react";
 
 export default function ChatPrompt() {
   const { vibeDiyApi, sthis } = useVibeDiy();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const hasRun = useRef(false);
+  const { isSignedIn, isLoaded } = useAuth();
 
   const prompt64 = searchParams.get("prompt64");
 
   useEffect(() => {
-    if (!prompt64 || hasRun.current) {
+    if (!prompt64 || hasRun.current || !isLoaded || !isSignedIn) {
       return;
     }
     hasRun.current = true;
@@ -55,7 +57,7 @@ export default function ChatPrompt() {
             navigate(`/chat/${chat.userSlug}/${chat.appSlug}`);
           });
       });
-  }, [prompt64]);
+  }, [prompt64, isLoaded, isSignedIn]);
 
   return (
     <>

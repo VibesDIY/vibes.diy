@@ -131,7 +131,7 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
       ...imports.map((i) => i.importStmt),
       `registerDependencies(`,
       `  ${JSON.stringify({ appSlug: fs.appSlug, userSlug: fs.userSlug, fsId: fs.fsId })}, `,
-      `  JSON.parse(document.getElementById("vibe-import-map").textContent))`,
+      `  JSON.parse(document.getElementById("vibe-import-map").textContent).imports)`,
       `  .then(() => mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({ usrEnv })}));`,
     ].join("\n"),
   } satisfies VibesDiyServCtx;
