@@ -195,8 +195,8 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       chanfana:
-        specifier: ^3.2.1
-        version: 3.2.1
+        specifier: ^3.3.0
+        version: 3.3.0
       hono:
         specifier: ^4.11.9
         version: 4.11.9
@@ -235,8 +235,8 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       chanfana:
-        specifier: ^3.2.1
-        version: 3.2.1
+        specifier: ^3.3.0
+        version: 3.3.0
       hono:
         specifier: ^4.11.9
         version: 4.11.9
@@ -288,8 +288,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.18)
       chanfana:
-        specifier: ^3.2.1
-        version: 3.2.1
+        specifier: ^3.3.0
+        version: 3.3.0
       hono:
         specifier: ^4.11.9
         version: 4.11.9
@@ -6271,8 +6271,8 @@ packages:
     resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
-  chanfana@3.2.1:
-    resolution: {integrity: sha512-SHi6AYErJwS5C2iQx12AsCY1w0ztQcxWOI4yC+G2BGguLuuLGixTrUu7dP6apuPMjL04iwZALUT/m1+5+26+xw==}
+  chanfana@3.3.0:
+    resolution: {integrity: sha512-YKZkjymihSi9Wiwb4BbdMzXH7j9OxT4KS+5b9Y9ZUsj6Wthfodkw81cgoSEOMvgMTicCryohKhKZSIKCA6GFQA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -19517,7 +19517,7 @@ snapshots:
 
   chalk@5.6.2: {}
 
-  chanfana@3.2.1:
+  chanfana@3.3.0:
     dependencies:
       '@asteasolutions/zod-to-openapi': 8.4.3(zod@4.3.6)
       js-yaml: 4.1.1
