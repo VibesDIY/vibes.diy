@@ -19,7 +19,7 @@ interface PackageJson {
 
 const SKIP_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 
-export function workspacePackagesPlugin(): Plugin {
+export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): Plugin {
   const packages = new Map<string, string>();
   const buildCache = new Map<string, { code: string; timestamp: number }>();
   const repoRoot = resolve(__dirname, "../..");
@@ -43,7 +43,7 @@ export function workspacePackagesPlugin(): Plugin {
 
       for (const pkgJsonPath of matches) {
         const pkgJson: PackageJson = JSON.parse(await readFile(join(repoRoot, pkgJsonPath), "utf-8"));
-        if (pkgJson.name) {
+        if (pkgJson.name && !options.exclude?.includes(pkgJson.name)) {
           const pkgPath = join(repoRoot, pkgJsonPath, "..");
           const relativePath = pkgJsonPath.replace("/package.json", "");
           packages.set(pkgJson.name, pkgPath);
@@ -185,7 +185,7 @@ export function workspacePackagesPlugin(): Plugin {
       });
     },
 
-    async generateBundle(_options) {
+    async generateBundle(_options, bundle) {
       const outDir = _options.dir || "";
       if (!outDir.includes("client")) return;
 
@@ -198,7 +198,16 @@ export function workspacePackagesPlugin(): Plugin {
           // Emit bundled JS as index.js inside a per-package directory
           const code = await buildPackage(pkgName);
           const jsFileName = `_vibe-pkg/${pkgName}/index.js`;
-          this.emitFile({ type: "asset", fileName: jsFileName, source: code });
+          bundle[jsFileName] = {
+            type: "asset",
+            fileName: jsFileName,
+            name: pkgName,
+            names: [pkgName],
+            originalFileName: "",
+            originalFileNames: [],
+            // needsCodeReference: false,
+            source: code,
+          } as never;
           console.log(`📦 Emitted ${jsFileName} (${code.length} bytes)`);
 
           // Copy non-JS/TS asset files (txt, md, json, …) into the same directory
@@ -206,7 +215,16 @@ export function workspacePackagesPlugin(): Plugin {
           for (const relativePath of assetFiles) {
             const assetFileName = `_vibe-pkg/${pkgName}/${relativePath}`;
             const content = await readFile(join(pkgPath, relativePath));
-            this.emitFile({ type: "asset", fileName: assetFileName, source: content });
+            bundle[assetFileName] = {
+              type: "asset",
+              fileName: assetFileName,
+              name: relativePath,
+              names: [relativePath],
+              originalFileName: join(pkgPath, relativePath),
+              originalFileNames: [join(pkgPath, relativePath)],
+              // needsCodeReference: false,
+              source: content,
+            } as never;
             console.log(`📄 Emitted ${assetFileName} (${content.length} bytes)`);
           }
         } catch {

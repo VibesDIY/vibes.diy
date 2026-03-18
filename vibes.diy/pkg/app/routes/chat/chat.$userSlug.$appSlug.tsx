@@ -1,8 +1,9 @@
 import { SetURLSearchParams, useNavigate, useParams, useSearchParams } from "react-router";
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useVibeDiy } from "../../vibe-diy-provider.js";
 // import { useClerk } from "@clerk/react";
-import { processStream } from "@adviser/cement";
+import { processStream, BuildURI, URI } from "@adviser/cement";
 import { LLMChat, LLMChatEntry, PromptAndBlockMsgs, sectionEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import AppLayout from "../../components/AppLayout.js";
@@ -10,11 +11,15 @@ import { BrutalistCard } from "@vibes.diy/base";
 import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
-import { isCodeBegin, isPromptBlockBegin, isPromptBlockEnd } from "@vibes.diy/call-ai-v2";
+import type { ViewType } from "@vibes.diy/prompts";
+import { isCodeBegin, isPromptBlockBegin, isPromptBlockEnd, isPromptReq, PromptError } from "@vibes.diy/call-ai-v2";
+import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
 import ChatInterface from "../../components/ChatInterface.js";
 import ResultPreviewHeaderContent from "../../components/ResultPreview/ResultPreviewHeaderContent.js";
 import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
+import { Delayed } from "../../components/Delayed.js";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 
 export interface PromptState {
   chat: LLMChatEntry;
@@ -67,6 +72,7 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
         current: newBlock,
       };
     }
+
     case isPromptBlockEnd(block):
       // console.log(`PromptBlock-End`, block);
       return { ...state, running: false };
@@ -92,13 +98,14 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
   }
 }
 
-export default function Chat() {
-  const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
+export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
+  const { userSlug = "preparing", appSlug = "session", fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
+  useDocumentTitle(`${userSlug} - ${appSlug} - vibes.diy`);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [chat, setChat] = useState<LLMChat | null>(null);
   const openingRef = useRef(false);
-  const { vibeDiyApi } = useVibeDiy();
+  const { vibeDiyApi, webVars: svcVars } = useVibeDiy();
   // const clerk = useClerk();
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
@@ -115,6 +122,7 @@ export default function Chat() {
   });
 
   useEffect(() => {
+    if (inConstruction) return;
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
         const newSearch = new URLSearchParams(searchParams);
@@ -178,6 +186,29 @@ export default function Chat() {
   }, [userSlug, appSlug, chat, openingRef, vibeDiyApi, promptToSend]);
 
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const handleContextMenu = useCallback((_view: ViewType, e: React.MouseEvent) => {
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const sandboxUrl =
+    fsId && appSlug && userSlug
+      ? (() => {
+          const myUrl = URI.from(window.location.href);
+          return BuildURI.from(
+            calcEntryPointUrl({
+              hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
+              protocol: myUrl.protocol as "http" | "",
+              port: myUrl.port,
+              bindings: { appSlug, userSlug, fsId },
+            })
+          )
+            .setParam("npmUrl", svcVars.pkgRepos.workspace)
+            .setParam("preview", "yes")
+            .toString();
+        })()
+      : null;
 
   const openSidebar = useCallback(() => {
     setIsSidebarVisible(true);
@@ -201,7 +232,30 @@ export default function Chat() {
     window.open(`/vibe/${userSlug}/${appSlug}/${fsId}`, "_blank");
   }, [fsId, userSlug, appSlug]);
 
+  const handleRetry = useCallback(
+    (errorMsg: PromptError) => {
+      let promptText: string | undefined = undefined;
+      for (const block of promptState.blocks) {
+        for (const msg of block.msgs) {
+          if (isPromptReq(msg) && msg.chatId === errorMsg.chatId && msg.seq < errorMsg.seq) {
+            const text = msg.request.messages
+              .filter((m) => m.role === "user")
+              .flatMap((m) => m.content.filter((c) => c.type === "text").map((c) => c.text))
+              .join("\n");
+            if (text.trim()) promptText = text;
+          }
+        }
+      }
+      if (promptText) {
+        chatInput.current?.setPrompt(promptText);
+        sendPrompt(promptText);
+      }
+    },
+    [promptState.blocks, chatInput]
+  );
+
   useEffect(() => {
+    if (inConstruction) return;
     if (isMobileViewport()) {
       setMobilePreviewShown(true);
     }
@@ -235,9 +289,10 @@ export default function Chat() {
             currentView={currentView}
             hasCodeChanges={false}
             openVibe={openVibe}
+            onContextMenu={handleContextMenu}
           />
         }
-        chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} />}
+        chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} />}
         previewPanel={<ResultPreview promptState={promptState} currentView={currentView} />}
         chatInput={
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
@@ -247,7 +302,39 @@ export default function Chat() {
         suggestionsComponent={undefined}
         mobilePreviewShown={mobilePreviewShown}
       />
-      <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} />
+      <Delayed ms={1000}>
+        <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} />
+      </Delayed>
+      {contextMenu &&
+        createPortal(
+          <div
+            style={{ position: "fixed", top: contextMenu.y, left: contextMenu.x, zIndex: 9999 }}
+            className="bg-light-background-00 dark:bg-dark-background-00 border-light-decorative-01 dark:border-dark-decorative-01 flex flex-col gap-1 rounded-md border p-2 shadow-lg text-sm"
+            onMouseLeave={() => setContextMenu(null)}
+          >
+            <a
+              href={`/vibe/${userSlug}/${appSlug}/${fsId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-light-primary dark:text-dark-primary hover:underline px-2 py-1"
+            >
+              Open vibe
+            </a>
+            {sandboxUrl && (
+              <a
+                href={sandboxUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-light-primary dark:text-dark-primary hover:underline px-2 py-1"
+              >
+                Open sandbox
+              </a>
+            )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }
+
+export default Chat;

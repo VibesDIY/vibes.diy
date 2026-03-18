@@ -10,11 +10,13 @@ import { Delayed } from "../components/Delayed.js";
 import { VibesSwitch } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { toast } from "react-hot-toast";
 import { getAppByFsIdEvento } from "@vibes.diy/api-svc/public/get-app-by-fsid.js";
 
 export default function VibeIframeWrapper() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
+  useDocumentTitle(`${userSlug} - ${appSlug} - vibes.diy`);
   // const [searchParam] = useSearchParams();
   const vctx = useVibeDiy();
   const iframeUrlRef = useRef<string | null>(null);

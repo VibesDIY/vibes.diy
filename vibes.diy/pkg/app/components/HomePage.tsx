@@ -50,7 +50,7 @@ export default function HomePage() {
       return;
     }
     navigate(
-      BuildURI.from(location.href).pathname("/chat/prompt").setParam("prompt64", sthis.txt.base64.encode(prompt))
+      BuildURI.from(window.location.href).pathname("/chat/prompt").setParam("prompt64", sthis.txt.base64.encode(prompt))
         .withoutHostAndSchema
     );
   }, [prompt]);

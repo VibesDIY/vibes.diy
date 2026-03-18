@@ -66,13 +66,24 @@ export const PromptBlockBegin = type({
 
 export type PromptBlockBegin = typeof PromptBlockBegin.infer;
 
+export const PromptError = type({
+  type: "'prompt.error'",
+  error: "string",
+}).and(PromptBase);
+
+export type PromptError = typeof PromptError.infer;
+
+export function isPromptError(msg: unknown): msg is PromptError {
+  return !(PromptError(msg) instanceof type.errors);
+}
+
 export const PromptBlockEnd = type({
   type: "'prompt.block-end'",
 }).and(PromptBase);
 
 export type PromptBlockEnd = typeof PromptBlockEnd.infer;
 
-export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq);
+export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq).or(PromptError);
 export type PromptMsgs = typeof PromptMsgs.infer;
 
 // Type guard with optional streamId filter

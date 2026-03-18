@@ -327,7 +327,7 @@ export class vibesDiySrvSandbox implements Disposable {
   readonly onRuntimeReady = OnFunc<(evt: EvtRuntimeReady) => void>();
 
   readonly handleMessage = (event: MessageEvent): void => {
-    console.log(`Received message event in vibesDiySrvSandbox`, event);
+    // console.log(`Received message event in vibesDiySrvSandbox`, event);
     this.evento.trigger<MessageEvent, unknown, unknown>({
       request: event,
       send: new PostMsgSendProvider(window, event),
