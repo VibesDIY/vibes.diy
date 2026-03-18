@@ -66,7 +66,7 @@
     "wrangler": "^4.74.0"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^5.0.0",
+    "@chromatic-com/storybook": "^5.0.1",
     "@cloudflare/vite-plugin": "^1.29.0",
     "@fireproof/core-cli": "0.24.13",
     "@react-router/dev": "^7.13.1",
