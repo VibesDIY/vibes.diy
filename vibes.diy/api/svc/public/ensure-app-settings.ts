@@ -18,6 +18,7 @@ import {
   MsgBase,
   ReqEnsureAppSettings,
   ReqEnsureAppSettingsAcl,
+  ReqWithOptionalAuth,
   ResEnsureAppSettings,
   VibesDiyError,
   W3CWebSocketEvent,
@@ -25,7 +26,7 @@ import {
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { ReqWithOptionalAuth, optAuth } from "../check-auth.js";
+import { optAuth } from "../check-auth.js";
 import { sqlAppSettings, sqlAppSlugBinding, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import { eq, and } from "drizzle-orm";
 import { buildEnsureEntryResult, ensureACLEntry } from "../intern/application-settings.js";

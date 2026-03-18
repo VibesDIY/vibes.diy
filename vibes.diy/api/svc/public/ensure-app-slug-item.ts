@@ -12,6 +12,7 @@ import {
   EvtNewFsId,
   MsgBase,
   ReqEnsureAppSlug,
+  ReqWithVerifiedAuth,
   ResEnsureAppSlug,
   VibeFile,
   VibesDiyError,
@@ -20,7 +21,7 @@ import {
 import { type } from "arktype";
 import { unwrapMsgBase as unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
+import { checkAuth as checkAuth } from "../check-auth.js";
 import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
@@ -96,7 +97,8 @@ export async function ensureAppSlugItem(
     },
   });
   if (res.Ok().fsId) {
-    vctx.postQueue({
+    console.log(`Posting evt-new-fs-id for fsId ${res.Ok().fsId}, entryPointUrl: ${entryPointUrl}`);
+    await vctx.postQueue({
       payload: {
         type: "vibes.diy.evt-new-fs-id",
         userSlug: res.Ok().userSlug,

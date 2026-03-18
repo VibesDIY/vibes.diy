@@ -2,8 +2,7 @@ import { and, eq } from "drizzle-orm/sql/expressions";
 import { sqlApplicationChats, sqlAppSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
-import { PromptAndBlockMsgs, ReqOpenChat } from "@vibes.diy/api-types";
-import { ReqWithVerifiedAuth } from "../check-auth.js";
+import { PromptAndBlockMsgs, ReqOpenChat, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
 interface EnsureChatIdPResult {

@@ -11,6 +11,7 @@ export * from "./vibes-diy-api.js";
 export * from "./invite.js";
 
 export * from "./cf-env.js";
+export * from "./auth.js";
 
 export interface FetchOkResult {
   type: "fetch.ok";

@@ -8,11 +8,12 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
   PromptAndBlockMsgs,
+  ReqWithVerifiedAuth,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
+import { checkAuth } from "../check-auth.js";
 import { sqlChatContexts, sqlChatSections, sqlPromptContexts, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm";
 import { isPromptReq } from "@vibes.diy/call-ai-v2";

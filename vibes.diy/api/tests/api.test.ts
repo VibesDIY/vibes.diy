@@ -12,13 +12,12 @@ import {
   VibesApiSQLCtx,
   vibesMsgEvento,
   WSSendProvider,
+  sql,
 } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { BlockEndMsg, BlockMsgs, isBlockStreamMsg, isPromptBlockEnd, PromptMsgs } from "@vibes.diy/call-ai-v2";
-import { PromptAndBlockMsgs, ReqPromptChatSection, SectionEvent } from "@vibes.diy/api-types";
-import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.ts";
-import { ReqWithVerifiedAuth } from "@vibes.diy/api-svc/check-auth.ts";
-import { sqlApps } from "@vibes.diy/api-svc/sql/vibes-diy-api-schema.ts";
+import { PromptAndBlockMsgs, ReqPromptChatSection, ReqWithVerifiedAuth, SectionEvent } from "@vibes.diy/api-types";
+import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { and, eq } from "drizzle-orm";
 import { type } from "arktype";
 
@@ -1248,6 +1247,7 @@ describe("VibesDiyApi", () => {
       // console.log("handlePromptContext result:", x.Err());
       expect(pctx.isOk()).toBe(true);
 
+      const { sqlApps } = sql;
       const fs = await vctx.db
         .select()
         .from(sqlApps)

@@ -1,0 +1,29 @@
+{
+  "name": "@vibes.diy/api-queue",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "core-cli tsc",
+    "pack": "core-cli build --doPack",
+    "publish": "core-cli build",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:prod": "wrangler deploy --env prod"
+  },
+  "dependencies": {
+    "@adviser/cement": "^0.5.34",
+    "@cloudflare/puppeteer": "^1.0.6",
+    "@fireproof/core-runtime": "0.24.13",
+    "@vibes.diy/api-svc": "workspace:*",
+    "@vibes.diy/api-types": "workspace:*",
+    "arktype": "^2.2.0",
+    "drizzle-orm": "^0.45.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260317.1",
+    "@fireproof/core-cli": "0.24.13",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.74.0"
+  }
+}

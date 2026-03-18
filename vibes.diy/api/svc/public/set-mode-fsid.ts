@@ -1,9 +1,17 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
-import { MsgBase, ReqSetModeFs, reqSetModeFs, ResSetModeFs, VibesDiyError, W3CWebSocketEvent } from "@vibes.diy/api-types";
+import {
+  MsgBase,
+  ReqSetModeFs,
+  reqSetModeFs,
+  ReqWithVerifiedAuth,
+  ResSetModeFs,
+  VibesDiyError,
+  W3CWebSocketEvent,
+} from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
+import { checkAuth } from "../check-auth.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { eq, and } from "drizzle-orm";
 

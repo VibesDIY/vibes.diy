@@ -3,8 +3,7 @@ import { sqlChatContexts } from "../sql/vibes-diy-api-schema.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
 import { ensureUserSlug, ensureAppSlug } from "./ensure-slug-binding.js";
-import { ReqOpenChat } from "@vibes.diy/api-types";
-import { ReqWithVerifiedAuth } from "../check-auth.js";
+import { ReqOpenChat, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
 
 interface EnsureChatIdPResult {
   appSlug: string;

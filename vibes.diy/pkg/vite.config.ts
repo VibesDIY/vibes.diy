@@ -35,17 +35,6 @@ function loadHttpsCerts() {
   };
 }
 
-function setupQueueConsumerPlugin() {
-  return {
-    name: "queue-consumer",
-    configureServer(server: ViteDevServer) {
-      console.log("Starting api-queue consumer...");
-      const proc = $`pnpm --filter @vibes.diy/api-queue run dev`;
-      server.httpServer?.on("close", () => proc.kill());
-    },
-  };
-}
-
 function setupSqlPlugin() {
   return {
     name: "db-init",
@@ -90,10 +79,9 @@ function exposeDevServerInfo() {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     setupSqlPlugin(),
-    setupQueueConsumerPlugin(),
     exposeDevServerInfo(),
     workspacePackagesPlugin(), // { exclude: ["@vibes.diy/vibe-db-explorer"] }),
     tailwindcss(),
@@ -112,6 +100,11 @@ export default defineConfig({
           },
         };
       },
+      ...(command === "serve"
+        ? {
+            auxiliaryWorkers: [{ configPath: "wrangler.queue-consumer.toml" }],
+          }
+        : {}),
     }),
     reactRouter(),
     visualizer({
@@ -133,4 +126,4 @@ export default defineConfig({
     hmr: true,
     https: loadHttpsCerts(),
   },
-});
+}));

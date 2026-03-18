@@ -63,10 +63,7 @@ runs:
       working-directory: vibes.diy/pkg
       shell: bash
       run: |
-        pnpm run format --check
-        pnpm run lint --check
         pnpm run build
-        pnpm run test
 
     - name: Deploy vibes.diy
       working-directory: vibes.diy/pkg

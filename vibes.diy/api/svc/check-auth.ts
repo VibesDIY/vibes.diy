@@ -8,15 +8,7 @@ import {
 } from "@fireproof/core-types-protocols-dashboard";
 import { ClerkClaimSchema } from "@fireproof/core-types-base";
 import { VibesApiSQLCtx } from "./types.js";
-import { MsgBase } from "@vibes.diy/api-types";
-
-export type ReqWithVerifiedAuth<REQ extends { type: string; auth: DashAuthType }> = REQ & {
-  readonly _auth: VerifiedAuthResult;
-};
-
-export type ReqWithOptionalAuth<REQ extends { type: string; auth?: DashAuthType }> = REQ & {
-  readonly _auth?: VerifiedAuthResult;
-};
+import { MsgBase, ReqWithOptionalAuth, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
 
 export async function verifyExtractClaims(
   ctx: VibesApiSQLCtx,

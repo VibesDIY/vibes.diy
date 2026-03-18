@@ -16,23 +16,20 @@ export async function takeScreenshot(event: EvtNewFsId, env: CFEnv): Promise<Uin
   try {
     const page = await browser.newPage();
 
-    // Set viewport size
     await page.setViewport({
       width: 1280,
       height: 720,
       deviceScaleFactor: 1,
     });
 
-    // Navigate to the URL
     await page.goto(event.vibeUrl, {
       waitUntil: "networkidle0",
       timeout: 30000,
     });
 
-    // Take screenshot as JPEG
     const screenshot = await page.screenshot({
       type: "jpeg",
-      quality: 85, // 0-100, higher is better quality but larger file size
+      quality: 85,
       fullPage: false,
     });
 
@@ -61,19 +58,15 @@ export async function processScreenShotEvent(message: unknown, env: CFEnv): Prom
       shotUrl: payload.vibeUrl,
       fsId: payload.fsId,
     });
-    // Take the screenshot
-    const screenshot = await takeScreenshot(payload, env);
 
-    // Convert ArrayBuffer to Uint8Array
+    const screenshot = await takeScreenshot(payload, env);
     const screenshotData = new Uint8Array(screenshot);
 
     console.log(`Screenshot taken for ${payload.fsId}: ${screenshotData.byteLength} bytes`);
 
     const { db } = await cfDrizzle(env);
-    // Initialize sthis and db for storage
     const sthis = ensureSuperThis({ logger: new LoggerImpl() });
 
-    // Store the screenshot in the database
     const result = await storeScreenshot({ db, s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis) }, payload.fsId, screenshotData);
 
     if (result.isErr()) {

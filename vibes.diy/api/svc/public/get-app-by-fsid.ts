@@ -11,11 +11,12 @@ import {
   ActiveInviteEditorAccepted,
   ActiveInviteEditorPending,
   ActiveEntry,
+  ReqWithOptionalAuth,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { ReqWithOptionalAuth, optAuth } from "../check-auth.js";
+import { optAuth } from "../check-auth.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { and, eq, max } from "drizzle-orm";
 import { ensureAppSettings } from "./ensure-app-settings.js";

@@ -19,15 +19,15 @@ runs:
       run: pnpm run format --check
 
     # Lint temporarily disabled due to memory issues
-    # - name: lint
-    #   shell: bash
-    #   run: |
-    #     NODE_OPTIONS=--max-old-space-size=4096 pnpm run lint
+    - name: lint
+      shell: bash
+      run: |
+        NODE_OPTIONS=--max-old-space-size=4096 pnpm run lint
 
     # Build temporarily disabled due to pre-existing TypeScript errors in hosting/pkg and vibes.diy/pkg
-    # - name: build
-    #   shell: bash
-    #   run: pnpm run build
+    - name: build
+      shell: bash
+      run: pnpm run build
 
     - name: test
       shell: bash

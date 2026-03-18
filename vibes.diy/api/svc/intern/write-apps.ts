@@ -1,7 +1,14 @@
-import { ReqEnsureAppSlug, ResEnsureAppSlug, VibeFile, FileSystemItem, isVibeCodeBlock, VibeCodeBlock } from "@vibes.diy/api-types";
+import {
+  ReqEnsureAppSlug,
+  ResEnsureAppSlug,
+  VibeFile,
+  FileSystemItem,
+  isVibeCodeBlock,
+  VibeCodeBlock,
+  ReqWithVerifiedAuth,
+} from "@vibes.diy/api-types";
 import { exception2Result, Result, string2stream, to_uint8, toSortedObject } from "@adviser/cement";
 import { AppSlugBinding } from "./ensure-slug-binding.js";
-import { ReqWithVerifiedAuth } from "../check-auth.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { base58btc } from "multiformats/bases/base58";
 import { sha256 } from "multiformats/hashes/sha2";
