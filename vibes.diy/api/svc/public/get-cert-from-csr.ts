@@ -1,7 +1,7 @@
 import { EventoHandler, Result, HandleTriggerCtx, EventoResultType, Option, EventoResult } from "@adviser/cement";
 import { VibesApiSQLCtx } from "../types.js";
-import { MsgBase, VibesDiyError, W3CWebSocketEvent } from "@vibes.diy/api-types";
-import { checkAuth, ReqWithVerifiedAuth } from "../check-auth.js";
+import { MsgBase, ReqWithVerifiedAuth, VibesDiyError, W3CWebSocketEvent } from "@vibes.diy/api-types";
+import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { ReqCertFromCsr, ResCertFromCsr } from "@fireproof/core-types-protocols-dashboard";
 

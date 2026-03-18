@@ -7,8 +7,9 @@ import {
   ReqFPCloudToken,
   ResFPCloudToken,
   isReqFPCloudToken,
+  ReqWithOptionalAuth,
 } from "@vibes.diy/api-types";
-import { optAuth, ReqWithOptionalAuth } from "../check-auth.js";
+import { optAuth } from "../check-auth.js";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 
 import { createFPToken, getFPTokenContext } from "@fireproof/core-protocols-dashboard";

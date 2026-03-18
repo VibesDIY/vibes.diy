@@ -20,6 +20,7 @@ import {
   PromptAndBlockMsgs,
   ReqPromptChatSection,
   reqPromptChatSection,
+  ReqWithVerifiedAuth,
   ResPromptChatSection,
   SectionEvent,
   VibeFile,
@@ -28,7 +29,7 @@ import {
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { VibesApiSQLCtx } from "../types.js";
-import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
+import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
 import {
   sqlApplicationChats,

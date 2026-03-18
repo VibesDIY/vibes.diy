@@ -3,6 +3,7 @@ import {
   MsgBase,
   reqEnsureUserSettings,
   ReqEnsureUserSettings,
+  ReqWithVerifiedAuth,
   ResEnsureUserSettings,
   userSettingItem,
   VibesDiyError,
@@ -11,7 +12,7 @@ import {
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
+import { checkAuth } from "../check-auth.js";
 import { sqlUserSettings } from "../sql/vibes-diy-api-schema.js";
 import { eq } from "drizzle-orm";
 

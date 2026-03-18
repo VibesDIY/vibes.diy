@@ -3,6 +3,7 @@ import {
   MsgBase,
   reqListApplicationChats,
   ReqListApplicationChats,
+  ReqWithVerifiedAuth,
   ResListApplicationChats,
   VibesDiyError,
   W3CWebSocketEvent,
@@ -10,7 +11,7 @@ import {
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { ReqWithVerifiedAuth, checkAuth } from "../check-auth.js";
+import { checkAuth } from "../check-auth.js";
 import { sqlApplicationChats } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, lt, desc, SQL } from "drizzle-orm";
 

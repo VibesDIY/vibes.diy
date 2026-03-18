@@ -3,6 +3,7 @@ import {
   MsgBase,
   ReqOpenChat,
   reqOpenChat,
+  ReqWithVerifiedAuth,
   ResOpenChat,
   SectionEvent,
   VibesDiyError,
@@ -11,7 +12,7 @@ import {
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
+import { checkAuth as checkAuth } from "../check-auth.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
 import { ensureChatId } from "../intern/ensure-chat-id.js";
 import { resendChatSectionsPrevMsg } from "../intern/resend-prev-msg.js";
