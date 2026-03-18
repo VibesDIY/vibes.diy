@@ -1,19 +1,20 @@
 import {
-  ClientSideRowModelModule,
-  ColumnApiModule,
-  ColumnAutoSizeModule,
-  ColumnHoverModule,
-  ModuleRegistry,
-  NumberFilterModule,
-  PaginationModule,
-  RowDragModule,
-  RowSelectionModule,
-  TextFilterModule,
-  colorSchemeDark,
-  themeQuartz,
-  type CellStyle,
-  type ColDef,
-  type RowClickedEvent,
+    CellStyleModule,
+    ClientSideRowModelModule,
+    ColumnApiModule,
+    ColumnAutoSizeModule,
+    ColumnHoverModule,
+    ModuleRegistry,
+    NumberFilterModule,
+    PaginationModule,
+    RowDragModule,
+    RowSelectionModule,
+    TextFilterModule,
+    colorSchemeDark,
+    themeQuartz,
+    type CellStyle,
+    type ColDef,
+    type RowClickedEvent,
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import React, { useCallback, useMemo } from "react";
@@ -29,6 +30,7 @@ ModuleRegistry.registerModules([
   PaginationModule,
   RowDragModule,
   RowSelectionModule,
+  CellStyleModule
 ]);
 
 const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({

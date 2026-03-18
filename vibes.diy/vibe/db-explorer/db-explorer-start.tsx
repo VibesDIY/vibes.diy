@@ -2,11 +2,16 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { DBExplorerRoot } from "./db-explorer-root.js";
 
+function insertStylesheet(href: string) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    document.head.appendChild(link);
+}
+
 export function startDBExplorer(base: string) {
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = `${import.meta.url}/public/db-explorer.css`;
-  document.head.appendChild(link);
+  insertStylesheet(`${import.meta.url}/public/db-explorer-base.css`);
+  insertStylesheet(`${import.meta.url}/public/db-explorer.css`);
 
   const element = document.getElementById("db-explorer");
   if (!element) {
