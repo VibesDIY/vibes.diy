@@ -104,7 +104,7 @@ export function AppChatsTab({ userSlug, appSlug }: AppChatsTabProps) {
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 overflow-hidden">
       {chats.map((c) => (
         <div key={c.chatId}>
           <div className="flex items-center justify-between text-xs">
@@ -125,7 +125,7 @@ export function AppChatsTab({ userSlug, appSlug }: AppChatsTabProps) {
             </span>
           </div>
           {selectedChatId === c.chatId && (
-            <div className="mt-1 ml-2 pl-2 border-l-2 border-gray-300 dark:border-gray-600 text-xs space-y-2 bg-gray-50 dark:bg-gray-800">
+            <div className="mt-1 text-xs space-y-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 overflow-hidden">
               {detailLoading ? (
                 <span className="text-gray-400">Loading...</span>
               ) : chatDetail ? (
@@ -136,7 +136,7 @@ export function AppChatsTab({ userSlug, appSlug }: AppChatsTabProps) {
                   </div>
                   <div className="pb-1">
                     <div className="font-semibold mb-0.5 text-gray-500 dark:text-gray-400">Code</div>
-                    <pre className="overflow-x-auto max-h-48 overflow-y-auto text-xs text-gray-800 dark:text-gray-200">
+                    <pre className="max-w-full overflow-x-auto max-h-48 overflow-y-auto text-xs text-gray-800 dark:text-gray-200">
                       {chatDetail.code}
                     </pre>
                   </div>

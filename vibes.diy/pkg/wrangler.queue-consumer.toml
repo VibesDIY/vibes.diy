@@ -1,0 +1,40 @@
+name = "vibes-diy-v2-queue-consumer"
+main = "../api/queue/worker.ts"
+compatibility_date = "2025-02-24"
+compatibility_flags = ["nodejs_compat"]
+
+[browser]
+binding = "BROWSER"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dev-vibes-diy-v2"
+database_id = "105530de-9900-435b-92f4-15347af604f6"
+
+[[r2_buckets]]
+binding = "FS_IDS_BUCKET"
+bucket_name = "vibes-diy-fs-ids"
+
+[[queues.consumers]]
+queue = "vibes-service"
+max_batch_size = 10
+max_batch_timeout = 30
+
+[env.dev]
+
+[env.dev.browser]
+binding = "BROWSER"
+
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "dev-vibes-diy-v2"
+database_id = "105530de-9900-435b-92f4-15347af604f6"
+
+[[env.dev.r2_buckets]]
+binding = "FS_IDS_BUCKET"
+bucket_name = "vibes-diy-fs-ids"
+
+[[env.dev.queues.consumers]]
+queue = "vibes-service-dev"
+max_batch_size = 10
+max_batch_timeout = 30

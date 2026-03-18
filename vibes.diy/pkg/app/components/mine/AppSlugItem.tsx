@@ -50,7 +50,7 @@ export function AppSlugItem({
 
   return (
     <div
-      className={`rounded-lg border transition-all ${isSelected ? "border-blue-400 bg-blue-50/50 dark:border-blue-500 dark:bg-blue-950/30" : "border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-400"}`}
+      className={`rounded-lg border overflow-hidden transition-all ${isSelected ? "border-blue-400 bg-blue-50/50 dark:border-blue-500 dark:bg-blue-950/30" : "border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-400"}`}
     >
       <button
         onClick={() =>
@@ -121,7 +121,7 @@ export function AppSlugItem({
               Settings
             </button>
           </div>
-          <div className="px-4 py-3">
+          <div className="px-4 py-3 overflow-hidden">
             {activeTab === "prompts" ? (
               <PromptsTab
                 isLoading={isLoadingThis}

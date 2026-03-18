@@ -3,7 +3,7 @@ main = "./workers/app.ts"
 compatibility_date = "2025-02-24"
 compatibility_flags = ["nodejs_compat"]
 
-vars = { ENVIRONMENT = "test", VIBES_SVC_HOSTNAME_BASE = ".localhost.vibesdiy.net" }
+vars = { ENVIRONMENT = "test" }
 
 #[observability.logs]
 #enabled = true
@@ -37,7 +37,7 @@ binding = "VIBES_SERVICE"
 
 [env.dev]
 name = "vibes-diy-v2-dev"
-vars = { ENVIRONMENT = "dev", VIBES_SVC_HOSTNAME_BASE = ".dev-v2.vibesdiy.net" }
+vars = { ENVIRONMENT = "dev" }
 routes = [
   { pattern = "dev-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" },
   { pattern = "*.dev-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" }
@@ -74,7 +74,7 @@ binding = "VIBES_SERVICE"
 
 [env.prod]
 name = "vibes-diy-v2-prod"
-vars = { ENVIRONMENT = "prod", VIBES_SVC_HOSTNAME_BASE = ".prod-v2.vibesdiy.net" }
+vars = { ENVIRONMENT = "prod" }
 routes = [
   { pattern = "prod-v2.vibesdiy.net", zone_name = "vibesdiy.net" },
   { pattern = "*.prod-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" }
