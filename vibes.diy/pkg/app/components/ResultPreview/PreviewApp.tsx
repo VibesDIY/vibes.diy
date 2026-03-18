@@ -60,7 +60,7 @@ export function PreviewApp({ promptState: _p }: { promptState: PromptState }) {
       <iframe
         src={previewUrl.toString()}
         className="relative w-full h-full"
-        sandbox="allow-scripts allow-same-origin allow-forms"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
     </div>
