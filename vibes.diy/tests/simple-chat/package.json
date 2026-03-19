@@ -40,7 +40,7 @@
     "vibes-diy": "workspace:*"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.12",
+    "@fireproof/core-cli": "0.24.13",
     "@testing-library/react": "^16.3.2",
     "@types/react": "~19.2.14",
     "@types/react-dom": "^19.2.2",

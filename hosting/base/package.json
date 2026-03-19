@@ -31,7 +31,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.12",
+    "@fireproof/core-cli": "0.24.13",
     "@vitest/browser-playwright": "^4.1.0",
     "typescript": "^5.9.3"
   }
