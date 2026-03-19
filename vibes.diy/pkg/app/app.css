@@ -1,6 +1,6 @@
 @import "tailwindcss";
 /* @import "tailwindcss"; */
-@import "./styles/colors.css";
+/* Token definitions loaded async via loadThemeCSS() from @vibes.diy/base */
 @import "./styles/global-styles.css";
 
 @theme {
