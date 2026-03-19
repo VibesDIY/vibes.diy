@@ -915,8 +915,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
       '@cloudflare/vite-plugin':
-        specifier: ^1.27.0
-        version: 1.27.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260317.1)(wrangler@4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+        specifier: ^1.29.1
+        version: 1.29.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260317.1)(wrangler@4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@fireproof/core-cli':
         specifier: 0.24.12
         version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
@@ -1129,8 +1129,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))
       '@cloudflare/vite-plugin':
-        specifier: ^1.27.0
-        version: 1.27.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260317.1)(wrangler@4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        specifier: ^1.29.1
+        version: 1.29.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260317.1)(wrangler@4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@fireproof/core-cli':
         specifier: 0.24.12
         version: 0.24.12(@pnpm/logger@5.2.0)(typescript@5.9.3)
@@ -1792,11 +1792,11 @@ packages:
       workerd:
         optional: true
 
-  '@cloudflare/vite-plugin@1.27.0':
-    resolution: {integrity: sha512-+s8APrIadCf2h0zYZ3WIPVeQ2CYgbXgFiR3BIrKvbpoo5klLgTeYpTq8ggxBmtjwt88PNruI4eCGZ6XNaDHMaA==}
+  '@cloudflare/vite-plugin@1.29.1':
+    resolution: {integrity: sha512-HTbVG43olzk3KTZD8b0nlmJTI3G6sQdFTmuD9HMJy7bkQbxKppkt16jayFo/NWAAs1GJXpFjLkC8udRdyn3aEg==}
     peerDependencies:
-      vite: ^6.1.0 || ^7.0.0
-      wrangler: ^4.72.0
+      vite: ^6.1.0 || ^7.0.0 || ^8.0.0
+      wrangler: ^4.75.0
 
   '@cloudflare/vitest-pool-workers@0.12.21':
     resolution: {integrity: sha512-xqvqVR+qAhekXWaTNY36UtFFmHrz13yGUoWVGOu6LDC2ABiQqI1E1lQ3eUZY8KVB+1FXY/mP5dB6oD07XUGnPg==}
@@ -13125,10 +13125,10 @@ snapshots:
     optionalDependencies:
       workerd: 1.20260317.1
 
-  '@cloudflare/vite-plugin@1.27.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260317.1)(wrangler@4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))':
+  '@cloudflare/vite-plugin@1.29.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260317.1)(wrangler@4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))':
     dependencies:
       '@cloudflare/unenv-preset': 2.15.0(unenv@2.0.0-rc.24)(workerd@1.20260317.1)
-      miniflare: 4.20260310.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      miniflare: 4.20260317.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       unenv: 2.0.0-rc.24
       vite: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2)
       wrangler: 4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
@@ -13138,10 +13138,10 @@ snapshots:
       - utf-8-validate
       - workerd
 
-  '@cloudflare/vite-plugin@1.27.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260317.1)(wrangler@4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@cloudflare/vite-plugin@1.29.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260317.1)(wrangler@4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/unenv-preset': 2.15.0(unenv@2.0.0-rc.24)(workerd@1.20260317.1)
-      miniflare: 4.20260310.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      miniflare: 4.20260317.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       unenv: 2.0.0-rc.24
       vite: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2)
       wrangler: 4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -16619,7 +16619,7 @@ snapshots:
       debug: 4.4.3(supports-color@10.2.2)
       invariant: 2.2.4
       metro: 0.83.5(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      metro-config: 0.83.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      metro-config: 0.83.5(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       metro-core: 0.83.5
       semver: 7.7.4
     transitivePeerDependencies:
@@ -23239,6 +23239,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  metro-config@0.83.5(bufferutil@4.1.0)(utf-8-validate@5.0.10):
+    dependencies:
+      connect: 3.7.0
+      flow-enums-runtime: 0.0.6
+      jest-validate: 29.7.0
+      metro: 0.83.5(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      metro-cache: 0.83.5
+      metro-core: 0.83.5
+      metro-runtime: 0.83.5
+      yaml: 2.8.2
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   metro-config@0.83.5(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       connect: 3.7.0
@@ -23390,7 +23405,7 @@ snapshots:
       metro-babel-transformer: 0.83.5
       metro-cache: 0.83.5
       metro-cache-key: 0.83.5
-      metro-config: 0.83.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      metro-config: 0.83.5(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       metro-core: 0.83.5
       metro-file-map: 0.83.5
       metro-resolver: 0.83.5
@@ -23638,18 +23653,6 @@ snapshots:
   mimic-response@4.0.0: {}
 
   min-indent@1.0.1: {}
-
-  miniflare@4.20260310.0(bufferutil@4.1.0)(utf-8-validate@5.0.10):
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      sharp: 0.33.5
-      undici: 7.18.2
-      workerd: 1.20260310.1
-      ws: 8.18.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      youch: 4.1.0-beta.10
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
 
   miniflare@4.20260310.0(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
