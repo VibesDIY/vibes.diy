@@ -171,6 +171,7 @@ async function callAINonStreaming(prompt: string | Message[], options: CallAIOpt
         result = extractContent(json, schemaStrategy);
       }
     } catch (parseError) {
+      // eslint-disable-next-line preserve-caught-error
       throw new Error(`Failed to parse API response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
     }
 
@@ -314,6 +315,7 @@ async function extractClaudeResponse(response: Response): Promise<NonNullable<un
     // If content not found in expected structure, return the whole JSON
     return json;
   } catch (error) {
+    // eslint-disable-next-line preserve-caught-error
     throw new Error(`Failed to extract Claude response: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

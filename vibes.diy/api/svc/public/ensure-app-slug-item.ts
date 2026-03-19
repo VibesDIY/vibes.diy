@@ -97,7 +97,7 @@ export async function ensureAppSlugItem(
     },
   });
   if (res.Ok().fsId) {
-    console.log(`Posting evt-new-fs-id for fsId ${res.Ok().fsId}, entryPointUrl: ${entryPointUrl}`);
+    // console.log(`Posting evt-new-fs-id for fsId ${res.Ok().fsId}, entryPointUrl: ${entryPointUrl}`);
     await vctx.postQueue({
       payload: {
         type: "vibes.diy.evt-new-fs-id",

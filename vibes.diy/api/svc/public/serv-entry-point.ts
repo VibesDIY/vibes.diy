@@ -205,7 +205,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
 
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
     // console.log("servEntryPoint triggered with URL:", ctx.validated.url);
-    let fs: typeof sqlApps.$inferSelect | undefined = undefined;
+    let fs: typeof sqlApps.$inferSelect | undefined;
     if (ctx.validated.fsId) {
       fs = await vctx.db
         .select()

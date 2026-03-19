@@ -21,22 +21,5 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "zod"
         update-types: ["version-update:semver-major"]
-
-  - package-ecosystem: "npm"
-    directory: "/"
-    target-branch: "mabels/vibes-diy-api"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 20
-    ignore:
-      - dependency-name: "@adviser/cement"
-        update-types:
-          ["version-update:semver-major", "version-update:semver-minor"]
-      - dependency-name: "react"
-        update-types:
-          ["version-update:semver-major", "version-update:semver-minor"]
-      - dependency-name: "react-dom"
-        update-types:
-          ["version-update:semver-major", "version-update:semver-minor"]
-      - dependency-name: "zod"
+      - dependency-name: "vite"
         update-types: ["version-update:semver-major"]
