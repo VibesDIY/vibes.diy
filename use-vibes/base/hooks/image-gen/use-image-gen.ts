@@ -821,6 +821,7 @@ async function handleNewDoc({
     }
   } catch (err) {
     console.error("Error loading image file:", err);
+    // eslint-disable-next-line preserve-caught-error
     throw new Error(`Failed to load image from document: ${err instanceof Error ? err.message : String(err)}`);
   }
 }

@@ -12,7 +12,7 @@ const useTestContext = () => useContext(TestContext);
 
 // Mock other dependencies
 vi.mock("react-markdown", async () => {
-  const React = (await import("react")).default;
+  await import("react"); //.default
   return {
     default: ({ children }: { children: string }) => <div data-testid="markdown">{children}</div>,
   };

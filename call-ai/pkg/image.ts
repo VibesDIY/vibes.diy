@@ -62,6 +62,7 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
       const result = JSON.parse(responseText);
       return result;
     } catch (parseError) {
+      // eslint-disable-next-line preserve-caught-error
       throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : "Unknown error"}`);
     }
   } else {
@@ -110,6 +111,7 @@ export async function imageGen(prompt: string, options: ImageGenOptions = {}): P
       const result = JSON.parse(responseText);
       return result;
     } catch (parseError) {
+      // eslint-disable-next-line preserve-caught-error
       throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : "Unknown error"}`);
     }
   }

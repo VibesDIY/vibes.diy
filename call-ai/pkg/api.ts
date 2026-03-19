@@ -145,12 +145,11 @@ export function callAi(prompt: string | Message[], options: CallAIOptions = {}):
       // Handle the error with fallback model if appropriate
       if (!options.skipRetry) {
         const clonedResponse = response.clone();
-        let isInvalidModel = false;
 
         try {
           // Check if this is an invalid model error
           const modelCheckResult = await checkForInvalidModelError(clonedResponse, model, options.debug);
-          isInvalidModel = modelCheckResult.isInvalidModel;
+          const isInvalidModel = modelCheckResult.isInvalidModel;
 
           if (isInvalidModel) {
             if (options.debug) {

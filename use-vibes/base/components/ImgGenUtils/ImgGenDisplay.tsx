@@ -174,7 +174,7 @@ export function ImgGenDisplay({
     setUserSelectedIndex(null);
 
     // Save the prompt we're generating with
-    let promptToGenerate = "";
+    let promptToGenerate: string;
     if (editedPrompt !== null) {
       promptToGenerate = editedPrompt.trim();
     } else {
