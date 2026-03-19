@@ -29,9 +29,9 @@ interface Options {
   promptProcessing: boolean;
   codeReady: boolean;
   isDarkMode: boolean;
-  userScrolledRef: React.MutableRefObject<boolean>;
+  // userScrolledRef: React.MutableRefObject<boolean>;
   disposablesRef: React.MutableRefObject<{ dispose: () => void }[]>;
-  setRefs: (editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco) => void;
+  // setRefs: (editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco) => void;
   setHighlighter: (highlighter: HighlighterCore) => void;
 }
 
@@ -42,22 +42,22 @@ interface Options {
  * `noSyntaxValidation` based on `codeReady`, while preserving any
  * other existing diagnostics flags from `previous`.
  */
-export function diagnosticsForCodeReady(codeReady: boolean, previous?: MonacoDiagnosticsOptions): MonacoDiagnosticsOptions {
-  const { noSemanticValidation: _prevSemantic, noSyntaxValidation: _prevSyntax, ...rest } = previous ?? {};
+// export function diagnosticsForCodeReady(codeReady: boolean, previous?: MonacoDiagnosticsOptions): MonacoDiagnosticsOptions {
+//   const { ...rest } = previous ?? {};
 
-  return {
-    ...rest,
-    noSemanticValidation: !codeReady,
-    noSyntaxValidation: !codeReady,
-  };
-}
+//   return {
+//     ...rest,
+//     noSemanticValidation: !codeReady,
+//     noSyntaxValidation: !codeReady,
+//   };
+// }
 
 export async function setupMonacoEditor(
   editor: monaco.editor.IStandaloneCodeEditor,
   monaco: Monaco,
-  { promptProcessing, codeReady, isDarkMode, userScrolledRef, disposablesRef, setRefs, setHighlighter }: Options
+  { isDarkMode, setHighlighter }: Options
 ) {
-  setRefs(editor, monaco);
+  // setRefs(editor, monaco);
 
   const ts = monaco.languages.typescript;
 
@@ -78,10 +78,10 @@ export async function setupMonacoEditor(
   // When the code is still streaming/incomplete (`codeReady === false`), we
   // disable diagnostics to avoid noisy red squiggles. A React effect in
   // `IframeContent` will update these options as `codeReady` changes over time.
-  const jsDefaults = ts.javascriptDefaults as MonacoDiagnosticsDefaults;
-  const currentDiagnostics = jsDefaults.getDiagnosticsOptions?.();
+  // const jsDefaults = ts.javascriptDefaults as MonacoDiagnosticsDefaults;
+  // const currentDiagnostics = jsDefaults.getDiagnosticsOptions?.();
 
-  jsDefaults.setDiagnosticsOptions(diagnosticsForCodeReady(codeReady, currentDiagnostics));
+  // jsDefaults.setDiagnosticsOptions(diagnosticsForCodeReady(codeReady, currentDiagnostics));
 
   editor.updateOptions({
     tabSize: 2,
@@ -91,23 +91,6 @@ export async function setupMonacoEditor(
 
   monaco.languages.register({ id: "jsx" });
   monaco.languages.register({ id: "javascript" });
-
-  if (promptProcessing && !codeReady) {
-    let lastScrollTime = Date.now();
-    const scrollThrottleMs = 30;
-    const contentDisposable = editor.onDidChangeModelContent(() => {
-      const now = Date.now();
-      if (now - lastScrollTime > scrollThrottleMs && !userScrolledRef.current) {
-        lastScrollTime = now;
-        const model = editor.getModel();
-        if (model) {
-          const lineCount = model.getLineCount();
-          editor.revealLineNearTop(lineCount);
-        }
-      }
-    });
-    disposablesRef.current.push(contentDisposable);
-  }
 
   try {
     const highlighter = await createHighlighterCore({
@@ -128,38 +111,38 @@ export async function setupMonacoEditor(
     console.warn("Shiki highlighter setup failed:", error);
   }
 
-  editor.onDidScrollChange(() => {
-    const model = editor.getModel();
-    if (model) {
-      const totalLines = model.getLineCount();
-      const visibleRanges = editor.getVisibleRanges();
-      if (visibleRanges.length > 0) {
-        const lastVisibleLine = visibleRanges[0].endLineNumber;
-        if (lastVisibleLine >= totalLines - 2) {
-          userScrolledRef.current = false;
-        }
-      }
-    }
-  });
+  // editor.onDidScrollChange(() => {
+  //   const model = editor.getModel();
+  //   if (model) {
+  //     const totalLines = model.getLineCount();
+  //     const visibleRanges = editor.getVisibleRanges();
+  //     if (visibleRanges.length > 0) {
+  //       const lastVisibleLine = visibleRanges[0].endLineNumber;
+  //       if (lastVisibleLine >= totalLines - 2) {
+  //         userScrolledRef.current = false;
+  //       }
+  //     }
+  //   }
+  // });
 
-  const domNode = editor.getDomNode();
-  if (domNode) {
-    const wheelListener = () => {
-      const model = editor.getModel();
-      if (model) {
-        const totalLines = model.getLineCount();
-        const visibleRanges = editor.getVisibleRanges();
-        if (visibleRanges.length > 0) {
-          const lastVisibleLine = visibleRanges[0].endLineNumber;
-          if (lastVisibleLine < totalLines - 2) {
-            userScrolledRef.current = true;
-          }
-        }
-      }
-    };
-    domNode.addEventListener("wheel", wheelListener);
-    disposablesRef.current.push({
-      dispose: () => domNode.removeEventListener("wheel", wheelListener),
-    });
-  }
+  // const domNode = editor.getDomNode();
+  // if (domNode) {
+  // function wheelListener() {
+  //   const model = editor.getModel();
+  //   if (model) {
+  //     const totalLines = model.getLineCount();
+  //     const visibleRanges = editor.getVisibleRanges();
+  //     if (visibleRanges.length > 0) {
+  //       const lastVisibleLine = visibleRanges[0].endLineNumber;
+  //       if (lastVisibleLine < totalLines - 2) {
+  //         userScrolledRef.current = true;
+  //       }
+  //     }
+  //   }
+  // };
+  // domNode.addEventListener("wheel", wheelListener);
+  // disposablesRef.current.push({
+  //   dispose: () => domNode.removeEventListener("wheel", wheelListener),
+  // });
+  // }
 }

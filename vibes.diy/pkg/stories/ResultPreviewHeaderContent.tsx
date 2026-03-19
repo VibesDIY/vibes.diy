@@ -113,20 +113,10 @@ export const MockedResultPreviewHeaderContent: React.FC<MockedHeaderProps> = ({
             navigateToView={handleNavigateToView}
             viewControls={viewControls}
             currentView={displayView}
+            onCodeSave={() => {
+              /* noop */
+            }}
             hasCodeChanges={false} // displayView={displayView}
-            // navigateToView={handleNavigateToView}
-            // viewControls={viewControls}
-            // showViewControls={showViewControls}
-            // previewReady={previewReady}
-            // setMobilePreviewShown={handleMobilePreviewShown}
-            // setUserClickedBack={handleUserClickedBack}
-            // code={initialCode}
-            // promptProcessing={promptProcessing}
-            // sessionId={initialSessionId}
-            // title={{ title: initialTitle, src: "user" }}
-            // hasCodeChanges={hasCodeChanges}
-            // onCodeSave={handleCodeSave}
-            // syntaxErrorCount={syntaxErrorCount}
           />
         </div>
       </ClerkProvider>

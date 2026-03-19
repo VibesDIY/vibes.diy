@@ -12,7 +12,7 @@ interface ResultPreviewHeaderContentProps {
   viewControls: ViewControlsType;
   currentView: ViewType;
   hasCodeChanges: boolean;
-  onCodeSave?: () => void;
+  onCodeSave: () => void;
   openVibe?: () => void;
   onContextMenu?: (view: ViewType, e: React.MouseEvent) => void;
   // // Props from useViewState (lifted to home.tsx)
@@ -45,58 +45,13 @@ function ResultPreviewHeaderContent({
   syntaxErrorCount,
   openVibe,
   onContextMenu,
-
-  // displayView,
-  // navigateToView,
-  // viewControls,
-  // showViewControls,
-  // setMobilePreviewShown,
-  // setUserClickedBack,
-  // code,
-  // promptProcessing,
-  // sessionId: propSessionId,
-  // title: propTitle,
-  // hasCodeChanges,
-  // onCodeSave,
-  // syntaxErrorCount,
 }: React.PropsWithChildren<ResultPreviewHeaderContentProps>) {
-  // const { sessionId: urlSessionId, view: urlView } = useParams();
-  // const publishButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Use props if provided, otherwise use params from the URL
-  // const sessionId = propSessionId || urlSessionId;
-  // const title = propTitle || urlView;
-
-  // Use the session hook to get and update session data - only if we have a sessionId
-  // const { session, docs: messages, updatePublishedUrl, updateFirehoseShared } = useSession(sessionId || "temp-session");
-
-  // useViewState is now lifted, props like displayView, navigateToView, viewControls, showViewControls are passed in.
-  // The useEffect syncing activeView with displayView is no longer needed.
-
-  // Use the custom hook for publish functionality
-  // const { isPublishing, urlCopied, publishedAppUrl, handlePublish, toggleShareModal, isShareModalOpen, setIsShareModalOpen } =
-  //   usePublish({
-  //     sessionId,
-  //     code,
-  //     title: title.title,
-  //     messages,
-  //     updatePublishedUrl,
-  //     updateFirehoseShared,
-  //     publishedUrl: session.publishedUrl,
-  //   });
-
   return (
     <div className="flex h-full w-full items-center px-2 py-4">
       <div className="flex w-1/4 items-center justify-start">
         <BackButton
           onBackClick={() => {
             console.log("click-back");
-            // // Tell parent component user explicitly clicked back
-            // if (promptProcessing && setUserClickedBack) {
-            //   setUserClickedBack(true);
-            // }
-            // // Force showing the chat panel immediately
-            // setMobilePreviewShown(false);
           }}
         />
         <div className="h-10" />
@@ -116,7 +71,7 @@ function ResultPreviewHeaderContent({
       <div className="flex w-1/4 items-center justify-end">
         <div className="flex items-center gap-2">
           {/* Save button - show when in code view and has changes */}
-          {currentView === "code" && hasCodeChanges && onCodeSave && (
+          {currentView === "code" && hasCodeChanges && (
             <SaveButton
               onClick={onCodeSave}
               hasChanges={hasCodeChanges}
@@ -126,18 +81,6 @@ function ResultPreviewHeaderContent({
           )}
         </div>
       </div>
-      {/* {isShareModalOpen && (
-        <ShareModal
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-          buttonRef={publishButtonRef}
-          publishedAppUrl={publishedAppUrl}
-          onPublish={handlePublish}
-          isPublishing={isPublishing}
-          isFirehoseShared={session.firehoseShared}
-          title={title.title}
-        />
-      )} */}
     </div>
   );
 }

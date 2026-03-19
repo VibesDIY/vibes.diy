@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
 import { BrutalistCard, VibesButton } from "@vibes.diy/base";
-import { useVibeDiy } from "../../vibe-diy-provider.js";
+import { useVibesDiy } from "../../vibes-diy-provider.js";
 import type { ResListUserSlugAppSlugItem, ResGetChatDetails, MetaScreenShot } from "@vibes.diy/api-types";
 import { isMetaScreenShot } from "@vibes.diy/api-types";
 import { toast } from "react-hot-toast";
@@ -20,7 +20,7 @@ export default function VibesMine(): ReactElement {
     appSlug: paramAppSlug,
     tab: paramTab,
   } = useParams<{ userSlug?: string; appSlug?: string; tab?: string }>();
-  const { vibeDiyApi } = useVibeDiy();
+  const { vibeDiyApi } = useVibesDiy();
 
   const [isLoading, setIsLoading] = useState(true);
   const [vibeItems, setVibeItems] = useState<ResListUserSlugAppSlugItem[]>([]);

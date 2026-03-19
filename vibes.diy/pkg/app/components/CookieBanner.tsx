@@ -6,7 +6,7 @@ import { useTheme } from "../contexts/ThemeContext.js";
 import { pageview, trackEvent } from "../utils/analytics.js";
 import { initGTM } from "../utils/gtm.js";
 import { CookieConsent, getCookieConsentValue } from "react-cookie-consent";
-import { useVibeDiy } from "../vibe-diy-provider.js";
+import { useVibesDiy } from "../vibes-diy-provider.js";
 
 // We'll use any type for dynamic imports to avoid TypeScript errors with the cookie consent component
 
@@ -15,7 +15,7 @@ export default function CookieBanner() {
   const [hasConsent, setHasConsent] = useState(false);
   const { messageHasBeenSent } = useCookieConsent();
   const { isDarkMode } = useTheme();
-  const { webVars: svcVars } = useVibeDiy();
+  const { webVars: svcVars } = useVibesDiy();
 
   // Dynamic import for client-side only
   const [XCookieConsent, setXCookieConsent] = useState<typeof CookieConsent | null>(null);

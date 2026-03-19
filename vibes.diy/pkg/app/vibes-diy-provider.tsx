@@ -10,7 +10,7 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { toast } from "react-hot-toast";
 // import { PkgRepos } from "@vibes.diy/api-types";
 
-export interface VibeDiyWebVars {
+export interface VibesDiyWebVars {
   readonly pkgRepos: PkgRepos;
   readonly env: {
     GTM_CONTAINER_ID?: string;
@@ -18,7 +18,7 @@ export interface VibeDiyWebVars {
     POSTHOG_HOST?: string;
     // WORKSPACE_NPM_URL: string;
     // PUBLIC_NPM_URL: string;
-    DASHBOARD_URL: string;
+    // DASHBOARD_URL: string;
     VIBES_DIY_API_URL: string;
     VIBES_SVC_HOSTNAME_BASE: string;
     // VIBES_SVC_PROTOCOL: string;
@@ -38,7 +38,7 @@ export interface VibesDiyCtx {
   sthis: SuperThis;
   // dashApi: FPApiInterface;
   vibeDiyApi: VibesDiyApiIface;
-  webVars: VibeDiyWebVars;
+  webVars: VibesDiyWebVars;
   srvVibeSandbox: vibesDiySrvSandbox;
 }
 
@@ -50,13 +50,13 @@ const realCtx: VibesDiyCtx = {
   srvVibeSandbox: {} as VibesDiyCtx["srvVibeSandbox"],
 };
 
-const VibeDiyContext = createContext<VibesDiyCtx>(realCtx as Readonly<VibesDiyCtx>);
+const VibesDiyContext = createContext<VibesDiyCtx>(realCtx as Readonly<VibesDiyCtx>);
 
 const vibesDiyApis = new KeyedResolvOnce();
 
 const lazySuperThis = Lazy(() => ensureSuperThis());
 
-function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibeDiyWebVars }) {
+function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
   const clerk = useClerk();
 
   realCtx.webVars = webVars;
@@ -119,10 +119,10 @@ function LiveCycleVibeDiyProvider({ children, webVars }: { children: React.React
     eventListeners: globalThis.window,
   });
 
-  return <VibeDiyContext.Provider value={realCtx}>{children}</VibeDiyContext.Provider>;
+  return <VibesDiyContext.Provider value={realCtx}>{children}</VibesDiyContext.Provider>;
 }
 
-function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; webVars: VibeDiyWebVars }) {
+function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
   if (webVars.env.POSTHOG_KEY && webVars.env.POSTHOG_HOST) {
     return (
       <PostHogProvider
@@ -139,16 +139,16 @@ function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; 
   return <>{children}</>;
 }
 
-export function VibeDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibeDiyWebVars }) {
+export function VibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
   return (
     <ClerkProvider publishableKey={webVars.env.CLERK_PUBLISHABLE_KEY}>
-      <LiveCycleVibeDiyProvider webVars={webVars}>
+      <LiveCycleVibesDiyProvider webVars={webVars}>
         <ConditionalPostHog webVars={webVars}>{children}</ConditionalPostHog>
-      </LiveCycleVibeDiyProvider>
+      </LiveCycleVibesDiyProvider>
     </ClerkProvider>
   );
 }
 
-export function useVibeDiy() {
-  return useContext(VibeDiyContext);
+export function useVibesDiy() {
+  return useContext(VibesDiyContext);
 }

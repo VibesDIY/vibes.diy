@@ -1,28 +1,33 @@
-import { Editor, Monaco } from "@monaco-editor/react";
-import React, { useEffect, useRef, useState } from "react";
-import { diagnosticsForCodeReady, setupMonacoEditor } from "./setupMonacoEditor.js";
-import type { MonacoDiagnosticsDefaults } from "./setupMonacoEditor.js";
-import { editor, Uri } from "monaco-editor";
+import { Editor } from "@monaco-editor/react";
+import React, { useCallback, useEffect, useRef } from "react";
+import { setupMonacoEditor } from "./setupMonacoEditor.js";
+import { editor } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { useTheme } from "../../contexts/ThemeContext.js";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import { useParams } from "react-router";
 import { isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
+import { type } from "arktype";
+import * as MonacoEditor from "monaco-editor";
+import {
+  CodeEvent,
+  AppCode,
+  isCodeEventEdit,
+  isCodeEventError,
+  isCodeEventInit,
+  isCodeEventOk,
+  MonacoMarkerInfo,
+} from "../../types/code-editor.js";
+
+type Monaco = typeof MonacoEditor;
 
 interface CodeEditorProps {
-  // activeView: "preview" | "code" | "data" | "chat" | "settings";
-  // filesContent: IframeFiles;
-  // promptProcessing: boolean;
-  // codeReady: boolean;
-  // isDarkMode: boolean;
-  // sessionId: string;
+  // runState: SettleState;
   promptState: PromptState;
-  onCodeSave?: (code: string) => void;
-  onCodeChange?: (hasChanges: boolean, saveHandler: () => void) => void;
-  onSyntaxErrorChange?: (errorCount: number) => void;
+  onCode?: (event: CodeEvent) => void;
 }
 
-function getCode(promptState: PromptState, fsId?: string | null): { code: string; complete: boolean } {
+function getCode(promptState: PromptState, fsId?: string | null): AppCode {
   const retCode: string[] = [];
   let complete = false;
   for (const block of [...promptState.blocks].reverse()) {
@@ -55,184 +60,248 @@ function getCode(promptState: PromptState, fsId?: string | null): { code: string
   return { code: retCode.join("\n"), complete };
 }
 
-const CodeEditor: React.FC<CodeEditorProps> = ({
-  // activeView,
-  // filesContent,
-  // promptProcessing,
-  // codeReady,
-  // isDarkMode,
-  // sessionId,
+// function whyDiffers(a: string, b: string): string {
+//   if (a === b) return "equal";
+//   if (a.length !== b.length) return `length differs: ${a.length} vs ${b.length}`;
+//   for (let i = 0; i < a.length; i++) {
+//     if (a[i] !== b[i]) {
+//       return `first diff at [${i}]: '${a[i]}'(${a.charCodeAt(i)}) vs '${b[i]}'(${b.charCodeAt(i)}) — context: "${a.slice(Math.max(0, i - 10), i + 10)}" vs "${b.slice(Math.max(0, i - 10), i + 10)}"`;
+//     }
+//   }
+//   return "unknown";
+// }
 
-  promptState,
-  onCodeSave,
-  onCodeChange,
-  onSyntaxErrorChange,
-}) => {
-  // Theme state is now received from parent via props
+// interface EditorMountRefs {
+//   monacoEditorRef: React.RefObject<editor.IStandaloneCodeEditor | null>;
+//   monacoApiRef: React.RefObject<Monaco | null>;
+//   highlighterRef: React.RefObject<HighlighterGeneric<BundledLanguage, BundledTheme> | null>;
+//   errorMarkersRef: React.RefObject<editor.IMarker[]>;
+//   userScrolledRef: React.RefObject<boolean>;
+//   disposablesRef: React.RefObject<{ dispose: () => void }[]>;
+//   onMounted: () => void;
+// }
+
+export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
   const { isDarkMode } = useTheme();
   const { fsId } = useParams<{ fsId?: string }>();
 
-  // Reference to store the current Monaco editor instance
-  const monacoEditorRef = useRef<editor.IStandaloneCodeEditor>(null);
-  // Reference to store the Monaco API instance
-  const monacoApiRef = useRef<Monaco>(null);
-  // Reference to store the current Shiki highlighter
+  const editorChecker = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const monacoReadyRef = useRef<{
+    editor: editor.IStandaloneCodeEditor;
+    api: Monaco;
+  } | null>(null);
   const highlighterRef = useRef<HighlighterGeneric<BundledLanguage, BundledTheme> | null>(null);
-  // Reference to store disposables for cleanup
+  // const errorMarkersRef = useRef<editor.IMarker[]>([]);
+  // const userScrolledRef = useRef<boolean>(false);
   const disposablesRef = useRef<{ dispose: () => void }[]>([]);
-  // Flag to track if user has manually scrolled during streaming
-  const userScrolledRef = useRef<boolean>(false);
 
-  // Extract the current app code string
   const appCode = getCode(promptState, fsId);
-  // console.log(`codeEditor`, appCode)
 
-  // State for edited code
-  const [editedCode, setEditedCode] = useState(appCode.code);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const editedCodeRef = useRef<CodeEvent>({
+    type: "onCode",
+    codeState: "init",
+    appCode,
+  });
 
-  // Update edited code when app code changes
-  useEffect(() => {
-    setEditedCode(appCode.code);
-    setHasUnsavedChanges(false);
-  }, [appCode]);
+  function onCodeChange(event: CodeEvent) {
+    // console.log(`onCodeChange`, event);
+    editedCodeRef.current = event;
+    onCode?.(event);
+  }
 
-  // Handle code changes in the editor
-  const handleCodeChange = (value: string | undefined) => {
-    const newCode = value || "";
+  function editedCode(): CodeEvent {
+    return editedCodeRef.current;
+  }
 
-    // Also check the editor's current value to be extra sure
-    const editorCurrentValue = monacoEditorRef.current?.getValue() || newCode;
-    const actualValue = editorCurrentValue.length >= newCode.length ? editorCurrentValue : newCode;
+  const handleEditorMount = useCallback(
+    (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
+      setupMonacoEditor(editor, monaco, {
+        promptProcessing: !editedCode().appCode.complete,
+        codeReady: editedCode().appCode.complete,
+        isDarkMode: isDarkMode,
+        // userScrolledRef: userScrolledRef,
+        disposablesRef: disposablesRef,
+        setHighlighter: (h) => {
+          highlighterRef.current = h as HighlighterGeneric<BundledLanguage, BundledTheme>;
+        },
+      }).then(() => {
+        monacoReadyRef.current = { editor, api: monaco };
+      });
+    },
+    [monacoReadyRef, editedCode(), isDarkMode]
+  );
 
-    setEditedCode(actualValue);
-    const hasChanges = actualValue !== appCode.code;
-    setHasUnsavedChanges(hasChanges);
+  // useEffect(() => {
+  //   if (promptState.running) {
+  //     userScrolledRef.current = false;
+  //   }
+  // }, [promptState.running]);
 
-    // Notify parent about changes
-    if (onCodeChange) {
-      onCodeChange(hasChanges, () => handleSave());
-    }
-
-    // Note: Syntax error checking is handled by onDidChangeMarkers listener
-    // Don't check errors here as markers are updated asynchronously
-  };
-
-  // Handle save button click
-  const handleSave = async () => {
-    // Format the code before saving
-    try {
-      await monacoEditorRef.current?.getAction("editor.action.formatDocument")?.run();
-    } catch (error) {
-      console.warn("Could not format document:", error);
-    }
-
-    // Get the current value directly from Monaco editor to ensure we capture all keystrokes
-    const currentValue = monacoEditorRef.current?.getValue() || editedCode;
-
-    // Update our state with the actual current value
-    if (currentValue !== editedCode) {
-      setEditedCode(currentValue);
-    }
-
-    if (onCodeSave && (hasUnsavedChanges || currentValue !== appCode.code)) {
-      onCodeSave(currentValue);
-      setHasUnsavedChanges(false);
-      // Notify parent that changes are saved
-      if (onCodeChange) {
-        onCodeChange(false, () => handleSave());
-      }
-    }
-  };
-
-  // Theme detection is now handled in the parent component
-
-  // Cleanup for disposables
   useEffect(() => {
     return () => {
-      // Clean up all disposables when component unmounts
-      disposablesRef.current.forEach((disposable) => disposable.dispose());
-      disposablesRef.current = [];
+      console.log("Disposing editor resources");
+      // if (editorChecker.current) {
+      //   clearInterval(editorChecker.current);
+      // }
+      // monacoReadyRef.current?.editor.dispose();
+      // highlighterRef.current?.dispose();
+      // disposablesRef.current.forEach((d) => d.dispose());
+      // disposablesRef.current = [];
     };
   }, []);
 
-  // Update theme when dark mode changes
   useEffect(() => {
-    if (monacoApiRef.current) {
-      // Update the Shiki theme in Monaco when dark mode changes from parent
-      const currentTheme = isDarkMode ? "github-dark-default" : "github-light-default";
-      // Use monaco editor namespace to set theme
-      monacoApiRef.current.editor.setTheme(currentTheme);
-    }
-  }, [isDarkMode]);
+    console.log(`Checking for code changes...`, appCode.complete, editedCode().appCode.complete);
+    if (isCodeEventInit(editedCode()) && appCode.complete && editedCode().appCode.complete) return;
+    // if (appCode.code === editedCode().appCode.code) return; // prevent emitting if code is the same to avoid infinite loops with Monaco markers updates
+    onCodeChange({
+      type: "onCode",
+      codeState: "ok",
+      hasChanged: isCodeEventInit(editedCode()) || appCode.code !== editedCode().appCode.code,
+      appCode: appCode,
+    });
+  }, [appCode, editedCode()]);
 
-  // Enable Monaco diagnostics only when the generated code is ready. While
-  // the AI is still streaming partial code (`codeReady === false`), we
-  // disable both syntax and semantic validation to avoid distracting
-  // transient errors. The initial value is also configured in
-  // `setupMonacoEditor` so this effect only needs to respond to changes.
+  const handleCodeChange = useCallback(
+    (newCode: string | undefined) => {
+      // ignore changes until initial code is fully loaded to prevent emitting onCode events with incomplete code
+      if (!editedCode().appCode.complete) {
+        return;
+      }
+      if (newCode === undefined) return;
+      if (newCode === editedCode().appCode.code) return; // prevent emitting if code is the same to avoid infinite loops with Monaco markers updates
+      // console.log(`handleCodeChange: code changed, emitting onCode event...`, {
+      //   newCodeLength: newCode.length,
+      //   oldCodeLength: editedCode().appCode.code.length,
+      //   why: whyDiffers(newCode, editedCode().appCode.code),
+      // });
+      onCodeChange({
+        type: "onCode",
+        codeState: "edit",
+        appCode: {
+          complete: true,
+          code: newCode,
+        },
+      });
+    },
+    [editedCode()]
+  );
+
   useEffect(() => {
-    const monacoInstance = monacoApiRef.current;
-    if (!monacoInstance) return;
+    if (!onCode) return;
+    if (!monacoReadyRef.current) return;
+    if (editorChecker.current) return;
 
-    const defaults = monacoInstance.languages.typescript.javascriptDefaults as MonacoDiagnosticsDefaults;
-
-    if (typeof defaults.setDiagnosticsOptions !== "function") {
-      // This should never happen with a real Monaco instance; log so
-      // misconfigured test/mocked environments are easier to debug.
-      console.error("[IframeContent] Monaco javascriptDefaults.setDiagnosticsOptions is missing; skipping diagnostics toggle.");
+    const monaco = monacoReadyRef.current;
+    const defaults = monaco.api.typescript.javascriptDefaults;
+    if (!editedCode().appCode.complete) {
+      // if generating code, disable diagnostics to prevent noise from incomplete code
+      defaults.setDiagnosticsOptions({
+        noSemanticValidation: true,
+        noSyntaxValidation: true,
+      });
       return;
     }
+    // const current = typeof defaults.getDiagnosticsOptions === "function" ? defaults.getDiagnosticsOptions() : undefined;
+    defaults.setDiagnosticsOptions({
+      noSemanticValidation: false,
+      noSyntaxValidation: false,
+    });
 
-    const current = typeof defaults.getDiagnosticsOptions === "function" ? defaults.getDiagnosticsOptions() : undefined;
+    function refreshState() {
+      const model = monaco.editor.getModel();
+      if (!model) return;
+      const val = monaco.editor.getValue();
+      if (!val) return;
+      const errorMarkers = MonacoMarkerInfo.onDeepUndeclaredKey("delete").array()(
+        monaco.api.editor
+          .getModelMarkers({ resource: model.uri })
+          .filter((m: editor.IMarker) => m.severity === MonacoEditor.MarkerSeverity.Error)
+      );
 
-    defaults.setDiagnosticsOptions(diagnosticsForCodeReady(appCode.complete, current));
-  }, [appCode.complete]);
+      if (errorMarkers instanceof type.errors) {
+        console.error("Error validating Monaco markers:", errorMarkers);
+        return;
+      }
+      const edited = editedCode();
+      // console.log(`Checking code changes and markers...`, edited.codeState, errorMarkers.length);
+      if ((isCodeEventOk(edited) || isCodeEventEdit(edited)) && errorMarkers.length == 0 && val === edited.appCode.code) return; // only check for marker changes if code is the same to avoid infinite loops with Monaco markers updates
+      if (isCodeEventError(edited) && errorMarkers.length > 0 && JSON.stringify(errorMarkers) === JSON.stringify(edited.markers)) {
+        return; // prevent emitting if markers are the same to avoid infinite loops with Monaco markers updates
+      }
+      // console.log(`Code or markers changed, emitting onCode event...`,
+      //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      //   errorMarkers, (edited as any).markers)
+      // // console.log(`Checking code changes and markers...`, whyDiffers(val, edited.appCode.code));
 
-  // Reset manual scroll flag when streaming state changes
-  useEffect(() => {
-    if (promptState.running) {
-      // Reset the flag when streaming starts
-      userScrolledRef.current = false;
+      // console.log("xxxx-2");
+      if (errorMarkers.length > 0) {
+        onCodeChange({
+          type: "onCode",
+          codeState: "error",
+          markers: errorMarkers,
+          // .map((m) => ({
+          //   message: m.message,
+          //   startLineNumber: m.startLineNumber,
+          //   startColumn: m.startColumn,
+          //   endLineNumber: m.endLineNumber,
+          //   endColumn: m.endColumn,
+          //   severity: m.severity,
+          // })),
+          appCode: {
+            complete: true,
+            code: val,
+          },
+        });
+      } else if (val !== edited.appCode.code || errorMarkers.length === 0) {
+        // console.log(`Code is valid, emitting onCode event...`, val.length);
+        onCodeChange({
+          type: "onCode",
+          codeState: edited.codeState === "init" ? "ok" : "edit",
+          hasChanged: true,
+          appCode: {
+            complete: true,
+            code: val,
+          },
+        });
+      }
     }
-  }, [promptState.running]);
+    editorChecker.current = setInterval(refreshState, 500);
+    // refreshState();
+  }, [onCode, editedCode, monacoReadyRef, editorChecker]);
 
-  // Iframe removed - now using inline rendering with InlinePreview component
+  useEffect(() => {
+    if (!monacoReadyRef.current) return;
+    const editor = monacoReadyRef.current.editor;
+    if (!appCode.complete) {
+      let lastScrollTime = Date.now();
+      const scrollThrottleMs = 100;
+      const contentDisposable = editor.onDidChangeModelContent(() => {
+        const now = Date.now();
+        if (now - lastScrollTime > scrollThrottleMs) {
+          lastScrollTime = now;
+          const model = editor.getModel();
+          if (model) {
+            const lineCount = model.getLineCount();
+            editor.revealLineInCenter(lineCount);
+          }
+        }
+      });
+      return () => {
+        contentDisposable.dispose();
+      };
+    }
+  }, [monacoReadyRef, appCode]);
 
-  // // Determine which view to show based on URL path - gives more stable behavior on refresh
-  // const getViewFromPath = () => {
-  //   const path = window.location.pathname;
-  //   if (path.endsWith("/code")) return "code";
-  //   if (path.endsWith("/data")) return "data";
-  //   if (path.endsWith("/app")) return "preview";
-  //   if (path.endsWith("/chat")) return "preview"; // Show preview for chat view
-  //   if (path.endsWith("/settings")) return "settings";
-  //   return activeView; // Fall back to state if path doesn't have a suffix
-  // };
-
-  // Get view from URL path
-  // const currentView = getViewFromPath();
+  // Reset manual scroll flag when streaming starts
 
   return (
     <div data-testid="sandpack-provider" className="h-full">
-      {/* <div
-        style={{
-          visibility: currentView === "preview" ? "visible" : "hidden",
-          position: currentView === "preview" ? "static" : "absolute",
-          zIndex: currentView === "preview" ? 1 : 0,
-          height: "100%",
-          width: "100%",
-          top: 0,
-          left: 0,
-        }}
-      >
-        <InlinePreview code={appCode} sessionId={sessionId} codeReady={codeReady} />
-      </div> */}
       <div
         style={{
           visibility: "visible",
           position: "static",
-          // zIndex: 1,
           height: "100%",
           width: "100%",
           top: 0,
@@ -245,7 +314,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
           path="file.jsx"
           defaultLanguage="jsx"
           theme={isDarkMode ? "github-dark-default" : "github-light-default"}
-          value={editedCode}
+          value={editedCode().appCode.code}
           onChange={handleCodeChange}
           options={{
             readOnly: false,
@@ -259,104 +328,11 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             formatOnType: true,
             formatOnPaste: true,
           }}
-          onMount={async (editor, monaco) => {
-            await setupMonacoEditor(editor, monaco, {
-              promptProcessing: promptState.running,
-              codeReady: appCode.complete,
-              isDarkMode,
-              userScrolledRef,
-              disposablesRef,
-              setRefs: (ed, mo) => {
-                monacoEditorRef.current = ed;
-                monacoApiRef.current = mo;
-              },
-              setHighlighter: (h) => {
-                highlighterRef.current = h as HighlighterGeneric<BundledLanguage, BundledTheme>;
-              },
-            });
-
-            // Set up syntax error monitoring
-            const model = editor.getModel();
-            if (model) {
-              // Holds the timeout id for pending syntax-error checks so we can cancel
-              // any previously scheduled run before queuing a new one. This acts as a
-              // lightweight, manual debounce without bringing in lodash or a similar
-              // utility.
-              let syntaxErrorCheckTimeoutId: ReturnType<typeof setTimeout> | null = null;
-
-              const scheduleSyntaxCheck = (delay: number) => {
-                if (syntaxErrorCheckTimeoutId !== null) {
-                  clearTimeout(syntaxErrorCheckTimeoutId);
-                }
-                syntaxErrorCheckTimeoutId = setTimeout(checkSyntaxErrors, delay);
-              };
-
-              const checkSyntaxErrors = () => {
-                // Get ALL markers for our model from all sources
-                const allMarkers = monaco.editor.getModelMarkers({
-                  resource: model.uri,
-                });
-
-                // Filter for error markers from any language service
-                const errorMarkers = allMarkers.filter((marker: editor.IMarker) => marker.severity === monaco.MarkerSeverity.Error);
-
-                const errorCount = errorMarkers.length;
-
-                if (onSyntaxErrorChange) {
-                  onSyntaxErrorChange(errorCount);
-                }
-              };
-
-              // Initial check after a short delay to allow language service to initialize
-              scheduleSyntaxCheck(100);
-
-              // Listen for marker changes - check every time markers change
-              const disposable = monaco.editor.onDidChangeMarkers((uris: readonly Uri[]) => {
-                // Check if our model's URI is in the changed URIs
-                if (uris.some((uri: Uri) => uri.toString() === model.uri.toString())) {
-                  // Add a small delay to ensure markers are updated
-                  scheduleSyntaxCheck(50);
-                }
-              });
-
-              // Also listen for model content changes as a backup
-              const contentDisposable = editor.onDidChangeModelContent(() => {
-                // Queue a syntax check, cancelling any pending one, to avoid stacking
-                // up checks during rapid typing.
-                scheduleSyntaxCheck(500);
-              });
-
-              disposablesRef.current.push(disposable);
-              disposablesRef.current.push(contentDisposable);
-            }
-          }}
+          onMount={handleEditorMount}
         />
       </div>
-      {/* <div
-        style={{
-          visibility: currentView === "data" ? "visible" : "hidden",
-          position: currentView === "data" ? "static" : "absolute",
-          zIndex: currentView === "data" ? 1 : 0,
-          height: "100%",
-          width: "100%",
-          top: 0,
-          left: 0,
-          padding: "0px",
-          overflowY: "scroll",
-          overflowX: "hidden",
-        }}
-      >
-        <div className="data-container">
-          <DatabaseListView appCode={filesContent["/App.jsx"]?.code || ""} sessionId={sessionId || "default-session"} />
-        </div>
-      </div> */}
-      {/**
-       * Settings view is rendered by the parent ResultPreview component, not inside
-       * the iframe. We intentionally do not render a placeholder slot here to avoid
-       * any chance of intercepting pointer events or impacting layout.
-       */}
     </div>
   );
-};
+}
 
 export default CodeEditor;

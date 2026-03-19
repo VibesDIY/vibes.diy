@@ -204,6 +204,30 @@ export function isResPromptChatSection(obj: unknown): obj is ResPromptChatSectio
   return !(resPromptChatSection(obj) instanceof type.errors);
 }
 
+export const reqAddFS = type({
+  type: "'vibes.diy.req-add-fs'",
+  auth: dashAuthType,
+  chatId: "string",
+  outerTid: "string",
+  fs: [vibeFile, "[]"],
+});
+
+export type ReqAddFS = typeof reqAddFS.infer;
+export function isReqAddFS(obj: unknown): obj is ReqAddFS {
+  return !(reqAddFS(obj) instanceof type.errors);
+}
+
+export const resAddFS = type({
+  type: "'vibes.diy.res-add-fs'",
+  chatId: "string",
+  outerTid: "string",
+}).and(FileSystemRef);
+
+export type ResAddFS = typeof resAddFS.infer;
+export function isResAddFS(obj: unknown): obj is ResAddFS {
+  return !(resAddFS(obj) instanceof type.errors);
+}
+
 export const PromptAndBlockMsgs = PromptMsgs.or(BlockMsgs);
 export type PromptAndBlockMsgs = typeof PromptAndBlockMsgs.infer;
 

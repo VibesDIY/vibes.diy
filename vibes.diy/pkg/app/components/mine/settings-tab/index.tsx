@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getModelOptions } from "../../../data/models.js";
-import { useVibeDiy } from "../../../vibe-diy-provider.js";
+import { useVibesDiy } from "../../../vibes-diy-provider.js";
 import { fromKVString, toKVString, AIParams } from "@vibes.diy/api-types";
 import { toast } from "react-hot-toast";
 
@@ -253,7 +253,7 @@ interface SettingsTabProps {
 }
 
 export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
-  const { vibeDiyApi } = useVibeDiy();
+  const { vibeDiyApi } = useVibesDiy();
 
   const [title, setTitle] = useState("");
   const [chatConfig, setChatConfig] = useState<Partial<AIParams>>({});

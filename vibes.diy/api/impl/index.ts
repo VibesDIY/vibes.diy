@@ -46,6 +46,10 @@ import {
   ReqFPCloudToken,
   ResFPCloudToken,
   isResFPCloudToken,
+  VibeFile,
+  isResAddFS,
+  ReqAddFS,
+  ResAddFS,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -247,7 +251,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
           });
         });
         // console.log("Sending request with tid:", tid);
-        // console.log("VibeDiyApi request sending", req, tid);
+        console.log("VibeDiyApi request sending", req, tid);
         const rReq = await this.send(req, { tid });
         // console.log("Sended request with tid:", tid, rReq);
         if (rReq.isErr()) {
@@ -497,6 +501,21 @@ class LLMChatImpl implements LLMChat {
     this.sectionStream = sectionEvents;
     this.#writer = writer;
     // this.#activePromptIds = activePromptIds;
+  }
+
+  addFS(fs: VibeFile[]) {
+    console.log("LLMChat addFS called for chatId:", this.chatId, this.tid, fs);
+    return this.api.request<ReqType<ReqAddFS>, ResAddFS>(
+      {
+        type: "vibes.diy.req-add-fs",
+        chatId: this.chatId,
+        outerTid: this.tid,
+        fs,
+      },
+      {
+        resMatch: isResAddFS,
+      }
+    );
   }
 
   async prompt(msg: LLMRequest) {

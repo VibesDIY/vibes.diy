@@ -3,7 +3,7 @@ import ChatInput, { ChatInputRef } from "./ChatInput.js";
 import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
 import { partyPlannerPrompt, progressTrackerPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
-import { useVibeDiy } from "../vibe-diy-provider.js";
+import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useNavigate } from "react-router";
 import { BuildURI } from "@adviser/cement";
 import { VibesSwitch, BrutalistCard, VibesButton } from "@vibes.diy/base";
@@ -41,7 +41,7 @@ export default function HomePage() {
     [chatInput]
   );
 
-  const { sthis } = useVibeDiy();
+  const { sthis } = useVibesDiy();
   const navigate = useNavigate();
   // const [chat, setChat] = useState<LLMChat | null>()
 

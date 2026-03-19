@@ -6,7 +6,7 @@ import { useAuth as useClerkAuth } from "@clerk/react";
 import { BrutalistCard, VibesButton } from "@vibes.diy/base";
 import LoggedOutView from "../../components/LoggedOutView.js";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
-import { useVibeDiy } from "../../vibe-diy-provider.js";
+import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { toast } from "react-hot-toast";
 
 export function meta() {
@@ -24,7 +24,7 @@ function CsrToCertContent() {
   const [searchParams] = useSearchParams();
   const csrParam = searchParams.get("csr");
   const returnUrl = searchParams.get("returnUrl");
-  const { vibeDiyApi } = useVibeDiy();
+  const { vibeDiyApi } = useVibesDiy();
 
   const {
     register,

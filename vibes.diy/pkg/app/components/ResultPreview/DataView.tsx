@@ -2,12 +2,12 @@ import { useParams } from "react-router";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import React, { useMemo } from "react";
 import { BuildURI, URI } from "@adviser/cement";
-import { useVibeDiy } from "../../vibe-diy-provider.js";
+import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 
 export function DataView({ promptState: _p }: { promptState: PromptState }) {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
-  const { webVars: svcVars } = useVibeDiy();
+  const { webVars: svcVars } = useVibesDiy();
 
   const previewUrl = useMemo(() => {
     if (fsId && appSlug && userSlug) {
