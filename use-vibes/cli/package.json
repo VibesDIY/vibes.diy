@@ -41,7 +41,7 @@
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "arktype": "^2.2.0",
-    "cmd-ts": "^0.14.3",
+    "cmd-ts": "^0.15.0",
     "jose": "^6.2.1",
     "tsx": "^4.21.0",
     "undici": "^7.24.4",
