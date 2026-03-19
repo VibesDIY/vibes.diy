@@ -1,4 +1,5 @@
 import {
+  CellStyleModule,
   ClientSideRowModelModule,
   ColumnApiModule,
   ColumnAutoSizeModule,
@@ -29,6 +30,7 @@ ModuleRegistry.registerModules([
   PaginationModule,
   RowDragModule,
   RowSelectionModule,
+  CellStyleModule
 ]);
 
 const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
