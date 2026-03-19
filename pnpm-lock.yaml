@@ -1262,8 +1262,8 @@ importers:
         specifier: ^10.3.0
         version: 10.3.0(@types/react@19.2.14)(esbuild@0.27.4)(rollup@4.59.0)(storybook@10.3.0(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))
       '@storybook/addon-onboarding':
-        specifier: ^10.2.19
-        version: 10.2.19(storybook@10.3.0(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))
+        specifier: ^10.3.0
+        version: 10.3.0(storybook@10.3.0(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))
       '@storybook/react':
         specifier: ^10.3.0
         version: 10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.3.0(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)
@@ -3883,10 +3883,10 @@ packages:
     peerDependencies:
       storybook: ^10.3.0
 
-  '@storybook/addon-onboarding@10.2.19':
-    resolution: {integrity: sha512-nlsQrdVMRFpbdimouLJHmCOCSsa3J1ASgDT6ipuE1owpUltg7Dj2PdUg/JRaWE6ghlP7MOP5see6vvnUgZ0Feg==}
+  '@storybook/addon-onboarding@10.3.0':
+    resolution: {integrity: sha512-zhSmxO1VDntnAxSCvw1R9h2+KvAnY0PeDdhyrr9hQdVL1j3SEXxegc3dm/YJRhtBk6S2KPLgPU5+UQuFF0p2nA==}
     peerDependencies:
-      storybook: ^10.2.19
+      storybook: ^10.3.0
 
   '@storybook/builder-vite@10.2.19':
     resolution: {integrity: sha512-a59xALzM9GeYh6p+wzAeBbDyIe+qyrC4nxS3QNzb5i2ZOhrq1iIpvnDaOWe80NC8mV3IlqUEGY8Uawkf//1Rmg==}
@@ -11109,7 +11109,7 @@ snapshots:
       - vite
       - webpack
 
-  '@storybook/addon-onboarding@10.2.19(storybook@10.3.0(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))':
+  '@storybook/addon-onboarding@10.3.0(storybook@10.3.0(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))':
     dependencies:
       storybook: 10.3.0(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6)
 
