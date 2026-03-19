@@ -4,12 +4,15 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "dev": "vite",
-    "build": "core-cli tsc && vite build",
-    "pack": "core-cli build --doPack",
-    "publish": "core-cli build"
+    "sync:css": "node ./scripts/sync-shared-css.js",
+    "check:css": "node ./scripts/sync-shared-css.js --check",
+    "dev": "node ./scripts/sync-shared-css.js && vite",
+    "build": "node ./scripts/sync-shared-css.js && core-cli tsc && vite build",
+    "pack": "node ./scripts/sync-shared-css.js && core-cli build --doPack",
+    "publish": "node ./scripts/sync-shared-css.js && core-cli build"
   },
   "dependencies": {
+    "@adviser/cement": "^0.5.34",
     "@fireproof/use-fireproof": "0.24.13",
     "ag-grid-community": "^35.1.0",
     "ag-grid-react": "^35.1.0",
@@ -23,6 +26,6 @@
     "@types/react-dom": "~19.2.2",
     "@vitejs/plugin-react": "^6.0.1",
     "typescript": "^5.8.3",
-    "vite": "^7.3.1"
+    "vite": "^8.0.0"
   }
 }
