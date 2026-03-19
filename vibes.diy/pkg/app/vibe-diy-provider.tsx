@@ -11,6 +11,7 @@ import { toast } from "react-hot-toast";
 // import { PkgRepos } from "@vibes.diy/api-types";
 
 export interface VibeDiyWebVars {
+  readonly themeCSS?: string;
   readonly pkgRepos: PkgRepos;
   readonly env: {
     GTM_CONTAINER_ID?: string;
