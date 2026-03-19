@@ -851,8 +851,8 @@ importers:
         specifier: ^0.27.3
         version: 0.27.3
       isbot:
-        specifier: ^5.1.35
-        version: 5.1.35
+        specifier: ^5.1.36
+        version: 5.1.36
       jose:
         specifier: ^6.2.2
         version: 6.2.2
@@ -1080,8 +1080,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       isbot:
-        specifier: ^5.1.35
-        version: 5.1.35
+        specifier: ^5.1.36
+        version: 5.1.36
       jose:
         specifier: ^6.2.2
         version: 6.2.2
@@ -1246,8 +1246,8 @@ importers:
         specifier: workspace:*
         version: link:../../../call-ai/pkg
       isbot:
-        specifier: ^5.1.35
-        version: 5.1.35
+        specifier: ^5.1.36
+        version: 5.1.36
       jose:
         specifier: ^6.2.2
         version: 6.2.2
@@ -1349,8 +1349,8 @@ importers:
         specifier: workspace:*
         version: link:../../../call-ai/pkg
       isbot:
-        specifier: ^5.1.35
-        version: 5.1.35
+        specifier: ^5.1.36
+        version: 5.1.36
       jose:
         specifier: ^6.2.2
         version: 6.2.2
@@ -8447,10 +8447,6 @@ packages:
 
   isarray@2.0.5:
     resolution: {integrity: sha512-xHjhDr3cNBK0BzdUJSPXZntQUx/mwMS5Rw4A7lPJ90XGAO6ISP/ePDNuo0vhqOZU+UD5JoodwCAAoZQd3FeAKw==}
-
-  isbot@5.1.35:
-    resolution: {integrity: sha512-waFfC72ZNfwLLuJ2iLaoVaqcNo+CAaLR7xCpAn0Y5WfGzkNHv7ZN39Vbi1y+kb+Zs46XHOX3tZNExroFUPX+Kg==}
-    engines: {node: '>=18'}
 
   isbot@5.1.36:
     resolution: {integrity: sha512-C/ZtXyJqDPZ7G7JPr06ApWyYoHjYexQbS6hPYD4WYCzpv2Qes6Z+CCEfTX4Owzf+1EJ933PoI2p+B9v7wpGZBQ==}
@@ -22099,8 +22095,6 @@ snapshots:
   isarray@1.0.0: {}
 
   isarray@2.0.5: {}
-
-  isbot@5.1.35: {}
 
   isbot@5.1.36: {}
 
