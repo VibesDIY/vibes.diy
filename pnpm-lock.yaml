@@ -848,8 +848,8 @@ importers:
         specifier: ^0.27.4
         version: 0.27.4
       esbuild-wasm:
-        specifier: ^0.27.3
-        version: 0.27.3
+        specifier: ^0.27.4
+        version: 0.27.4
       isbot:
         specifier: ^5.1.36
         version: 5.1.36
@@ -7184,8 +7184,8 @@ packages:
     peerDependencies:
       esbuild: '>=0.12 <1'
 
-  esbuild-wasm@0.27.3:
-    resolution: {integrity: sha512-AUXuOxZ145/5Az+lIqk6TdJbxKTyDGkXMJpTExmBdbnHR6n6qAFx+F4oG9ORpVYJ9dQYeQAqzv51TO4DFKsbXw==}
+  esbuild-wasm@0.27.4:
+    resolution: {integrity: sha512-3xhVMcJ8Odvb1QjlWnjBGSYVYESsi3/oJYwLyVvbHOb2CiV4mFtD6x8Lk6JFnRxwEE3fUeVuJLbIxyVQWa867g==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -10811,8 +10811,8 @@ packages:
     resolution: {integrity: sha512-nLTrUKm2UyiL7rlhapu/Zl45FwNgkZGaCpZbIHajDYgwlJCOzLSk+cIPAnsEqV955GjILJnKbdQC1nVPz+gAYQ==}
     engines: {node: '>= 18'}
 
-  rpc-websockets@9.3.5:
-    resolution: {integrity: sha512-4mAmr+AEhPYJ9TmDtxF3r3ZcbWy7W8kvZ4PoZYw/Xgp2J7WixjwTgiQZsoTDvch5nimmg3Ay6/0Kuh9oIvVs9A==}
+  rpc-websockets@9.3.6:
+    resolution: {integrity: sha512-RzuOQDGd+EtR/cBYQAH/0jjaBzhyvXXGROhxigGJPf+q3XKyvtelZCucylzxiq5MaGlfBx1075djTsxFsFDgrA==}
 
   run-applescript@7.1.0:
     resolution: {integrity: sha512-DPe5pVFaAsinSaV6QjQ6gdiedWDcRCbUuiQfQa2wmWV7+xC9bGulGI8+TdRmoFkAPaBXk8CrAbnlY2ISniJ47Q==}
@@ -17403,7 +17403,7 @@ snapshots:
       fast-stable-stringify: 1.0.0
       jayson: 4.3.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       node-fetch: 2.7.0(encoding@0.1.13)
-      rpc-websockets: 9.3.5
+      rpc-websockets: 9.3.6
       superstruct: 2.0.2
     transitivePeerDependencies:
       - bufferutil
@@ -17426,7 +17426,7 @@ snapshots:
       fast-stable-stringify: 1.0.0
       jayson: 4.3.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       node-fetch: 2.7.0(encoding@0.1.13)
-      rpc-websockets: 9.3.5
+      rpc-websockets: 9.3.6
       superstruct: 2.0.2
     transitivePeerDependencies:
       - bufferutil
@@ -20403,7 +20403,7 @@ snapshots:
       - supports-color
     optional: true
 
-  esbuild-wasm@0.27.3: {}
+  esbuild-wasm@0.27.4: {}
 
   esbuild@0.27.2:
     optionalDependencies:
@@ -25776,7 +25776,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  rpc-websockets@9.3.5:
+  rpc-websockets@9.3.6:
     dependencies:
       '@swc/helpers': 0.5.19
       '@types/uuid': 10.0.0
