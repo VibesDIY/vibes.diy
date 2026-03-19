@@ -10,17 +10,16 @@ import { ErrorBoundary as AppErrorBoundary } from "./ErrorBoundary.js";
 import GtmNoScript from "./components/GtmNoScript.js";
 import { VibeDiyProvider, VibeDiyWebVars } from "./vibe-diy-provider.js";
 import { VibesFPApiParameters } from "@vibes.diy/api-types";
+import { loadThemeCSS } from "@vibes.diy/base";
 import "./app.css";
 import { Toaster } from "react-hot-toast";
 
 // Loader for root route
 export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters } }) {
-  // const env = await fetch("/api/clientEnv")
-  // console.log(`loader-invoke from root.tsx`, loaderCtx.context.vibeDiyAppParams.vibes.env);
   const params = loaderCtx.context.vibeDiyAppParams;
+  const themeResult = await loadThemeCSS();
   return new Response(
     JSON.stringify({
-      // pkgRepos: params.pkgRepos,
       env: {
         GTM_CONTAINER_ID: params.vibes.env.GTM_CONTAINER_ID,
         POSTHOG_KEY: params.vibes.env.POSTHOG_KEY,
@@ -32,7 +31,8 @@ export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPAp
         VIBES_SVC_HOSTNAME_BASE: params.vibes.svc.hostnameBase,
       },
       pkgRepos: params.pkgRepos,
-    } satisfies VibeDiyWebVars),
+      themeCSS: themeResult.isOk() ? themeResult.Ok() : "",
+    } satisfies VibeDiyWebVars & { themeCSS: string }),
     {
       headers: {
         "Content-type": "application/json",
@@ -46,11 +46,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   if (!svcEnv) {
     return <></>;
   }
+  const themeCSS = (svcEnv as VibeDiyWebVars & { themeCSS?: string }).themeCSS;
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {themeCSS && <style dangerouslySetInnerHTML={{ __html: themeCSS }} />}
         <Meta />
         <Links />
       </head>

@@ -15,7 +15,7 @@
  * @see ./modules/ for individual CSS module implementations
  */
 
-@import "./modules/css-variables.css";
+/* css-variables loaded async via loadThemeCSS() from @vibes.diy/base */
 @import "./modules/global-resets.css";
 @import "./modules/keyframe-animations.css";
 @import "./modules/tailwind-utilities.css";

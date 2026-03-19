@@ -34,6 +34,7 @@
     "vibes.diy/api/svc/public/.ts"
   ],
   "exclude": [
+    "vibes.diy/stories/**",
     "vibes.diy/tempo/**",
     "vibes.diy/**/slack/**",
     "vibes.diy/**/root.*",
