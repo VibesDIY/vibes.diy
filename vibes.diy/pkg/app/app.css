@@ -1,6 +1,6 @@
 @import "tailwindcss";
 /* @import "tailwindcss"; */
-@import "./styles/colors.css";
+@import "@vibes.diy/base/theme.css";
 @import "./styles/global-styles.css";
 
 @theme {

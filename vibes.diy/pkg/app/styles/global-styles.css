@@ -5,7 +5,7 @@
  * This ensures CSS loads BEFORE app.css, providing base styles for SSR.
  *
  * Architecture:
- * 1. CSS Variables - from colors.css (single source of truth)
+ * 1. CSS Variables - from @vibes.diy/base/theme.css (single source of truth)
  * 2. Global Resets - HTML/body base styles
  * 3. Keyframe Animations - @keyframes for UI animations
  * 4. Tailwind Utilities - Generated utility classes
