@@ -3,7 +3,7 @@ import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import React, { useMemo } from "react";
 // import { BlockEndMsg, CodeEndMsg, isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { BuildURI, URI } from "@adviser/cement";
-import { useVibeDiy } from "../../vibe-diy-provider.js";
+import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 
 // function findApp(promptState: PromptState, sectionId?: string | null) {
@@ -27,9 +27,9 @@ import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 //   return lastBlock;
 // }
 
-export function PreviewApp({ promptState: _p }: { promptState: PromptState }) {
+export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
-  const { webVars: svcVars } = useVibeDiy();
+  const { webVars: svcVars } = useVibesDiy();
 
   const previewUrl = useMemo(() => {
     if (fsId && appSlug && userSlug) {
@@ -44,6 +44,11 @@ export function PreviewApp({ promptState: _p }: { promptState: PromptState }) {
       // console.log(`iframe src=`, previewUrl.asObj());
       return previewUrl;
     }
+    promptState.setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set("view", "code");
+      return newParams;
+    });
     return null;
   }, [fsId, userSlug, appSlug]);
 

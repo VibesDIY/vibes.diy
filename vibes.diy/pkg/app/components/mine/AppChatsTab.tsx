@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useVibeDiy } from "../../vibe-diy-provider.js";
+import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { getCodeBlock } from "@vibes.diy/vibe-srv-sandbox";
 
 interface ChatItem {
@@ -20,7 +20,7 @@ interface AppChatsTabProps {
 }
 
 export function AppChatsTab({ userSlug, appSlug }: AppChatsTabProps) {
-  const { vibeDiyApi } = useVibeDiy();
+  const { vibeDiyApi } = useVibesDiy();
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);

@@ -4,7 +4,7 @@ import { BrutalistCard, VibesButton } from "@vibes.diy/base";
 import { Link, useNavigate } from "react-router-dom";
 import LoggedOutView from "../components/LoggedOutView.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";
-import { useVibeDiy } from "../vibe-diy-provider.js";
+import { useVibesDiy } from "../vibes-diy-provider.js";
 import { isUserSettingSharing } from "@vibes.diy/api-types";
 import type { UserSettingItem } from "@vibes.diy/api-types";
 export function meta() {
@@ -14,7 +14,7 @@ export function meta() {
 type SharingGrant = UserSettingItem["grants"][number];
 
 function GrantsList() {
-  const { vibeDiyApi } = useVibeDiy();
+  const { vibeDiyApi } = useVibesDiy();
   const [grants, setGrants] = useState<SharingGrant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

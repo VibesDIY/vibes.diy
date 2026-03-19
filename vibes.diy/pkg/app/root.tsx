@@ -8,7 +8,7 @@ import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { ErrorBoundary as AppErrorBoundary } from "./ErrorBoundary.js";
 import GtmNoScript from "./components/GtmNoScript.js";
-import { VibeDiyProvider, VibeDiyWebVars } from "./vibe-diy-provider.js";
+import { VibesDiyProvider, VibesDiyWebVars } from "./vibes-diy-provider.js";
 import { VibesFPApiParameters } from "@vibes.diy/api-types";
 import "./app.css";
 import { Toaster } from "react-hot-toast";
@@ -26,13 +26,13 @@ export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPAp
         POSTHOG_KEY: params.vibes.env.POSTHOG_KEY,
         POSTHOG_HOST: params.vibes.env.POSTHOG_HOST,
 
-        DASHBOARD_URL: params.vibes.env.DASHBOARD_URL,
+        // DASHBOARD_URL: params.vibes.env.DASHBOARD_URL,
         CLERK_PUBLISHABLE_KEY: params.clerkPublishableKey,
         VIBES_DIY_API_URL: params.vibes.env.VIBES_DIY_API_URL,
         VIBES_SVC_HOSTNAME_BASE: params.vibes.svc.hostnameBase,
       },
       pkgRepos: params.pkgRepos,
-    } satisfies VibeDiyWebVars),
+    } satisfies VibesDiyWebVars),
     {
       headers: {
         "Content-type": "application/json",
@@ -70,7 +70,7 @@ export default function App() {
     return <></>;
   }
   return (
-    <VibeDiyProvider webVars={webVars}>
+    <VibesDiyProvider webVars={webVars}>
       <AppErrorBoundary>
         <ThemeProvider>
           <CookieConsentProvider>
@@ -82,6 +82,6 @@ export default function App() {
           </CookieConsentProvider>
         </ThemeProvider>
       </AppErrorBoundary>
-    </VibeDiyProvider>
+    </VibesDiyProvider>
   );
 }

@@ -2,11 +2,13 @@
 // import { TitleSrc, ViewType } from "@vibes.diy/prompts";
 // import { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { ViewType } from "@vibes.diy/prompts";
-import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
+import { CodeEvent } from "./code-editor.js";
 
 export interface ResultPreviewProps {
   promptState: PromptState;
   currentView: ViewType;
+  onCode: (event: CodeEvent) => void;
   // code: string;
   // dependencies?: Record<string, string>;
   // onScreenshotCaptured?: (screenshotData: string | null) => void;

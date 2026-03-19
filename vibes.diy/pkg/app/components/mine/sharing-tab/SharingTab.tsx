@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@clerk/react";
-import { useVibeDiy } from "../../../vibe-diy-provider.js";
+import { useVibesDiy } from "../../../vibes-diy-provider.js";
 import { toastError } from "./shared.jsx";
 import { PublicSharingSection } from "./PublicSharingSection.js";
 import { RequestsSection } from "./RequestsSection.js";
@@ -13,7 +13,7 @@ interface SharingTabProps {
 }
 
 export function SharingTab({ userSlug, appSlug }: SharingTabProps) {
-  const { vibeDiyApi } = useVibeDiy();
+  const { vibeDiyApi } = useVibesDiy();
   const { userId } = useAuth();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);

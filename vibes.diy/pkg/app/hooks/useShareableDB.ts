@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth, useClerk } from "@clerk/react";
-import { useVibeDiy } from "../vibe-diy-provider.js";
+import { useVibesDiy } from "../vibes-diy-provider.js";
 import { isUserSettingSharing, type UserSettingItem } from "@vibes.diy/api-types";
 import type { ResOkVibeRegisterFPDb } from "@vibes.diy/vibe-types";
 import { toast } from "react-hot-toast";
@@ -15,7 +15,7 @@ export type SharingResult =
   | { status: "declined"; dbRef: DbRef };
 
 export function useShareableDB() {
-  const { srvVibeSandbox, vibeDiyApi } = useVibeDiy();
+  const { srvVibeSandbox, vibeDiyApi } = useVibesDiy();
   const { isSignedIn, isLoaded } = useAuth();
   const clerk = useClerk();
 

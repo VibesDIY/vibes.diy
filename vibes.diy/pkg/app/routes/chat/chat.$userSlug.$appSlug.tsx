@@ -1,7 +1,6 @@
 import { SetURLSearchParams, useNavigate, useParams, useSearchParams } from "react-router";
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { useVibeDiy } from "../../vibe-diy-provider.js";
+import { useVibesDiy } from "../../vibes-diy-provider.js";
 // import { useClerk } from "@clerk/react";
 import { processStream, BuildURI, URI } from "@adviser/cement";
 import { LLMChat, LLMChatEntry, PromptAndBlockMsgs, sectionEvent } from "@vibes.diy/api-types";
@@ -20,6 +19,47 @@ import ResultPreviewHeaderContent from "../../components/ResultPreview/ResultPre
 import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
 import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
+import { createPortal } from "react-dom";
+import { CodeEvent, isCodeEventEdit } from "../../types/code-editor.js";
+import { toast } from "react-hot-toast";
+
+interface VibeAppContextMenuProps {
+  x: number;
+  y: number;
+  vibeHref: string;
+  sandboxUrl?: string;
+  onClose: () => void;
+}
+
+function VibeAppContextMenu({ x, y, vibeHref, sandboxUrl, onClose }: VibeAppContextMenuProps) {
+  return createPortal(
+    <div
+      style={{ position: "fixed", top: y, left: x, zIndex: 9999 }}
+      className="bg-light-background-00 dark:bg-dark-background-00 border-light-decorative-01 dark:border-dark-decorative-01 flex flex-col gap-1 rounded-md border p-2 shadow-lg text-sm"
+      onMouseLeave={onClose}
+    >
+      <a
+        href={vibeHref}
+        target="_blank"
+        rel="noreferrer"
+        className="text-light-primary dark:text-dark-primary hover:underline px-2 py-1"
+      >
+        Open vibe
+      </a>
+      {sandboxUrl && (
+        <a
+          href={sandboxUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="text-light-primary dark:text-dark-primary hover:underline px-2 py-1"
+        >
+          Open sandbox
+        </a>
+      )}
+    </div>,
+    document.body
+  );
+}
 
 export interface PromptState {
   chat: LLMChatEntry;
@@ -105,7 +145,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const navigate = useNavigate();
   const [chat, setChat] = useState<LLMChat | null>(null);
   const openingRef = useRef(false);
-  const { vibeDiyApi, webVars: svcVars } = useVibeDiy();
+  const { vibeDiyApi, webVars: svcVars } = useVibesDiy();
   // const clerk = useClerk();
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
@@ -208,7 +248,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             .setParam("preview", "yes")
             .toString();
         })()
-      : null;
+      : undefined;
 
   const openSidebar = useCallback(() => {
     setIsSidebarVisible(true);
@@ -254,6 +294,43 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     [promptState.blocks, chatInput]
   );
 
+  const [hasCodeChanges, setHasCodeChanges] = useState<CodeEvent | null>(null);
+  const handleOnCode = useCallback(
+    (event: CodeEvent) => {
+      if (event.appCode.complete && isCodeEventEdit(event)) {
+        console.log(`handleOnCode`, event);
+        setHasCodeChanges(event);
+      } else {
+        setHasCodeChanges(null);
+      }
+    },
+    [hasCodeChanges]
+  );
+
+  const handleOnCodeSave = useCallback(() => {
+    if (hasCodeChanges && chat) {
+      const toSave = hasCodeChanges;
+      setHasCodeChanges(null);
+      chat
+        .addFS([
+          {
+            type: "code-block",
+            filename: "/App.jsx",
+            lang: "jsx", // "'jsx'|'js'",
+            content: toSave.appCode.code,
+          },
+        ])
+        .then((r) => {
+          if (r.isErr()) {
+            toast.error(`Failed to save code changes: ${r.Err().message}`);
+            setHasCodeChanges(toSave); // restore unsaved state
+          } else {
+            toast.success(`Code changes saved`);
+          }
+        });
+    }
+  }, [hasCodeChanges]);
+
   useEffect(() => {
     if (inConstruction) return;
     if (isMobileViewport()) {
@@ -287,13 +364,14 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             navigateToView={navigateToView}
             viewControls={viewControls}
             currentView={currentView}
-            hasCodeChanges={false}
+            onCodeSave={handleOnCodeSave}
+            hasCodeChanges={!!hasCodeChanges}
             openVibe={openVibe}
             onContextMenu={handleContextMenu}
           />
         }
         chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} />}
-        previewPanel={<ResultPreview promptState={promptState} currentView={currentView} />}
+        previewPanel={<ResultPreview promptState={promptState} currentView={currentView} onCode={handleOnCode} />}
         chatInput={
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
             <ChatInput ref={chatInput} onSubmit={sendPrompt} promptProcessing={promptState.running} />
@@ -305,34 +383,15 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       <Delayed ms={1000}>
         <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} />
       </Delayed>
-      {contextMenu &&
-        createPortal(
-          <div
-            style={{ position: "fixed", top: contextMenu.y, left: contextMenu.x, zIndex: 9999 }}
-            className="bg-light-background-00 dark:bg-dark-background-00 border-light-decorative-01 dark:border-dark-decorative-01 flex flex-col gap-1 rounded-md border p-2 shadow-lg text-sm"
-            onMouseLeave={() => setContextMenu(null)}
-          >
-            <a
-              href={`/vibe/${userSlug}/${appSlug}/${fsId}`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-light-primary dark:text-dark-primary hover:underline px-2 py-1"
-            >
-              Open vibe
-            </a>
-            {sandboxUrl && (
-              <a
-                href={sandboxUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-light-primary dark:text-dark-primary hover:underline px-2 py-1"
-              >
-                Open sandbox
-              </a>
-            )}
-          </div>,
-          document.body
-        )}
+      {contextMenu && (
+        <VibeAppContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          vibeHref={`/vibe/${userSlug}/${appSlug}/${fsId}`}
+          sandboxUrl={sandboxUrl}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </>
   );
 }

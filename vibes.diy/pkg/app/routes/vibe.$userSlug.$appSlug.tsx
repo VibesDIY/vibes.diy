@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
-import { useVibeDiy } from "../vibe-diy-provider.js";
+import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
 import { SignIn, useAuth, useSession } from "@clerk/react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
@@ -18,7 +18,7 @@ export default function VibeIframeWrapper() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
   useDocumentTitle(`${userSlug} - ${appSlug} - vibes.diy`);
   // const [searchParam] = useSearchParams();
-  const vctx = useVibeDiy();
+  const vctx = useVibesDiy();
   const iframeUrlRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
   const [notFound, setNotFound] = useState(false);

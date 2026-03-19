@@ -23,6 +23,8 @@ import {
   ResSetModeFs,
   ReqFPCloudToken,
   ResFPCloudToken,
+  VibeFile,
+  ResAddFS,
 } from "./msg-types.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -41,6 +43,7 @@ export type OnResponseTypes = ResError | SectionEvent;
 
 export interface LLMChat extends LLMChatEntry {
   prompt(req: LLMRequest): Promise<Result<ResPromptChatSection, VibesDiyError>>;
+  addFS(fs: VibeFile[]): Promise<Result<ResAddFS, VibesDiyError>>;
 
   readonly sectionStream: ReadableStream<OnResponseTypes>;
   // onResponse(fn: (msg: OnResponseTypes) => void): void;

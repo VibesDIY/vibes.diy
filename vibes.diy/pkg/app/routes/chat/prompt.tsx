@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useVibeDiy } from "../../vibe-diy-provider.js";
+import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { useNavigate, useSearchParams } from "react-router";
 import { Chat } from "./chat.$userSlug.$appSlug.js";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/react";
 
 export default function ChatPrompt() {
-  const { vibeDiyApi, sthis } = useVibeDiy();
+  const { vibeDiyApi, sthis } = useVibesDiy();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const hasRun = useRef(false);

@@ -1,11 +1,15 @@
-import React from "react";
+import React, { Suspense, lazy, memo } from "react";
 import { animationStyles } from "./ResultPreviewTemplates.js";
-import type { ResultPreviewProps } from "./ResultPreviewTypes.js";
-import CodeEditor from "./CodeEditor.js";
+import type { ResultPreviewProps } from "../../types/ResultPreviewTypes.js";
+import ClientOnly from "../ClientOnly.js";
+
+const CodeEditor = lazy(() => import("./CodeEditor.js"));
 import { PreviewApp } from "./PreviewApp.js";
 import { DataView } from "./DataView.js";
 import { SettingsTab } from "../mine/settings-tab/index.js";
 import { SharingTab } from "../mine/sharing-tab/SharingTab.js";
+import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
+import { CodeEvent } from "../../types/code-editor.js";
 // import { useTheme } from "../../contexts/ThemeContext.js";
 
 type SettingsSubTab = "settings" | "sharing";
@@ -35,17 +39,40 @@ function AppSettingsPanel({ userSlug, appSlug }: { userSlug: string; appSlug: st
   );
 }
 
-function ResultPreview({ promptState, currentView, children }: ResultPreviewProps & { children?: React.ReactNode }) {
+function CodeEditorWrapper({
+  promptState,
+  onCode,
+}: {
+  promptState: PromptState;
+  onCode: (event: CodeEvent) => void;
+  currentView: string;
+}) {
+  return (
+    <ClientOnly>
+      <Suspense>
+        <CodeEditor promptState={promptState} onCode={onCode} />
+      </Suspense>
+    </ClientOnly>
+  );
+}
+
+const MemoCodeEditor = memo(CodeEditorWrapper, (prevProps, nextProps) => {
+  console.log(`Memo check for CodeEditor:`, { prevView: prevProps.currentView, nextView: nextProps.currentView });
+  return nextProps.currentView === "code";
+});
+
+function ResultPreview({ promptState, currentView, children, onCode }: ResultPreviewProps & { children?: React.ReactNode }) {
   const showWelcome = !promptState.running && !promptState.hasCode;
 
-  let previewArea: React.ReactElement;
+  const codeEditor = <MemoCodeEditor promptState={promptState} onCode={onCode} currentView={currentView} />;
+  let previewArea: React.ReactNode;
   // console.log(`ResultPreview:`, currentView, promptState.searchParams.toString())
   switch (true) {
     case showWelcome:
       previewArea = <div className="h-full">{/* empty div to prevent layout shift */}</div>;
       break;
     case currentView === "code":
-      previewArea = <CodeEditor promptState={promptState} />;
+      previewArea = codeEditor;
       // console.log(`ToRender:code`);
       break;
     case currentView === "preview":
