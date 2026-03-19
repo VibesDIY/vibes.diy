@@ -72,7 +72,7 @@
     "@react-router/dev": "^7.13.1",
     "@storybook/addon-a11y": "^10.3.0",
     "@storybook/addon-docs": "^10.3.0",
-    "@storybook/addon-onboarding": "^10.2.19",
+    "@storybook/addon-onboarding": "^10.3.0",
     "@storybook/react": "^10.3.0",
     "@storybook/react-vite": "^10.2.19",
     "@tailwindcss/vite": "^4.2.1",
