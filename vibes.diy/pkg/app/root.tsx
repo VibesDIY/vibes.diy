@@ -32,7 +32,7 @@ export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPAp
       },
       pkgRepos: params.pkgRepos,
       themeCSS: themeResult.isOk() ? themeResult.Ok() : "",
-    } satisfies VibeDiyWebVars & { themeCSS: string }),
+    } satisfies VibeDiyWebVars),
     {
       headers: {
         "Content-type": "application/json",
@@ -46,7 +46,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   if (!svcEnv) {
     return <></>;
   }
-  const themeCSS = (svcEnv as VibeDiyWebVars & { themeCSS?: string }).themeCSS;
+  const themeCSS = svcEnv.themeCSS;
   return (
     <html lang="en">
       <head>
