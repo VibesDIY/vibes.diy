@@ -17,7 +17,7 @@ import { Toaster } from "react-hot-toast";
 // Loader for root route
 export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters } }) {
   const params = loaderCtx.context.vibeDiyAppParams;
-  const themeResult = await loadThemeCSS();
+  const themeResult = await loadThemeCSS(params.pkgRepos.workspace + "@vibes.diy/base/");
   return new Response(
     JSON.stringify({
       env: {
@@ -42,7 +42,7 @@ export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPAp
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const svcEnv = useLoaderData<typeof loader>();
+  const svcEnv = useLoaderData<VibeDiyWebVars>();
   if (!svcEnv) {
     return <></>;
   }
@@ -67,7 +67,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const webVars = useLoaderData<typeof loader>();
+  const webVars = useLoaderData<VibeDiyWebVars>();
   if (!webVars) {
     return <></>;
   }
