@@ -270,26 +270,28 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
     // refreshState();
   }, [onCode, editedCode, monacoReadyRef, editorChecker]);
 
+  const scrollToBottomRef = useRef<{ lastScrollTime: Date; lastLine: number } | null>(null);
   useEffect(() => {
     if (!monacoReadyRef.current) return;
     const editor = monacoReadyRef.current.editor;
     if (!appCode.complete) {
-      let lastScrollTime = Date.now();
-      const scrollThrottleMs = 100;
-      const contentDisposable = editor.onDidChangeModelContent(() => {
-        const now = Date.now();
-        if (now - lastScrollTime > scrollThrottleMs) {
-          lastScrollTime = now;
-          const model = editor.getModel();
-          if (model) {
-            const lineCount = model.getLineCount();
-            editor.revealLineInCenter(lineCount);
-          }
+      if (!scrollToBottomRef.current) {
+        scrollToBottomRef.current = { lastScrollTime: new Date(), lastLine: 1 };
+      } else {
+        const model = editor.getModel();
+        if (!model) {
+          return;
         }
-      });
-      return () => {
-        contentDisposable.dispose();
-      };
+        const now = Date.now();
+        const currentLineCount = model.getLineCount();
+        if (
+          now - scrollToBottomRef.current.lastScrollTime.getTime() > 100 &&
+          currentLineCount > scrollToBottomRef.current.lastLine
+        ) {
+          scrollToBottomRef.current = { lastScrollTime: new Date(), lastLine: currentLineCount };
+          editor.revealLineInCenter(currentLineCount);
+        }
+      }
     }
   }, [monacoReadyRef, appCode]);
 
