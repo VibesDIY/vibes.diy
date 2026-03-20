@@ -46,7 +46,9 @@ function blockDevVarsPlugin() {
       try {
         fs.rmSync(target);
         console.log(`🗑️  Removed ${target}`);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     },
   };
 }
