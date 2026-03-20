@@ -71,12 +71,18 @@ const preview: Preview = {
       const theme = context.globals.theme || "light";
 
       if (typeof document !== "undefined") {
-        if (theme === "dark") {
+        const isDark = theme === "dark" || (theme === "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+        if (isDark) {
           document.documentElement.classList.add("dark");
           document.documentElement.dataset.theme = "dark";
+          document.body.style.backgroundColor = "#1a1a1a";
+          document.body.style.color = "#e0e0e0";
         } else {
           document.documentElement.classList.remove("dark");
           document.documentElement.dataset.theme = "light";
+          document.body.style.backgroundColor = "#ffffff";
+          document.body.style.color = "#333333";
         }
       }
 
