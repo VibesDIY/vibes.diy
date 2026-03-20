@@ -27,7 +27,6 @@ VIBES_DIY_STYLES_URL=https://dev-v2.vibesdiy.net/ \
 --fromEnv CLERK_PUBLISHABLE_KEY \
 --fromEnv DEVICE_ID_CA_PRIV_KEY \
 --fromEnv DEVICE_ID_CA_CERT \
---fromEnv WRAPPER_BASE_URL \
 --fromEnv FP_VERSION \
 --fromEnv LLM_BACKEND_URL \
 --fromEnv LLM_BACKEND_API_KEY \

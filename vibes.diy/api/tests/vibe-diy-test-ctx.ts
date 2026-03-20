@@ -23,7 +23,6 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
     CLOUD_SESSION_TOKEN_SECRET:
       "z33KxHvFS3jLz72v9DeyGBqo7H34SCC1RA5LvQFCyDiU4r4YBR4jEZxZwA9TqBgm6VB5QzwjrZJoVYkpmHgH7kKJ6Sasat3jTDaBCkqWWfJAVrBL7XapUstnKW3AEaJJKvAYWrKYF9JGqrHNU8WVjsj3MZNyqqk8iAtTPPoKtPTLo2c657daVMkxibmvtz2egnK5wPeYEUtkbydrtBzteN25U7zmGqhS4BUzLjDiYKMLP8Tayi",
 
-    WRAPPER_BASE_URL: "https://tbd",
     ENTRY_POINT_TEMPLATE_URL:
       // "http://{fsId}{.groupid}.localhost.adviser.com/entry-point",
       "http://{fsId}.localhost.adviser.com/entry-point",

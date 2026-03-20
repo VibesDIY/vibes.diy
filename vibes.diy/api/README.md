@@ -278,7 +278,6 @@ Primary key: `(seq, contextId)`.
 | `CLERK_PUBLISHABLE_KEY` | Clerk auth verification |
 | `DEVICE_ID_CA_PRIV_KEY` | Device ID certificate authority private key |
 | `DEVICE_ID_CA_CERT` | Device ID certificate authority cert |
-| `WRAPPER_BASE_URL` | Base URL for app wrapper (e.g., `https://wrapper.vibes.diy`) |
 | `FP_VERSION` | Fireproof version for import maps |
 | `VIBES_SVC_HOSTNAME_BASE` | Base hostname for deployed apps (e.g., `vibes.app`) |
 
