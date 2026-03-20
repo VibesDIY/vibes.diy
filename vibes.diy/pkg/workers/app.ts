@@ -72,11 +72,24 @@ export default {
       const assetUrl = new URL(request.url);
       assetUrl.pathname = assetUrl.pathname.replace("/vibe-pkg/", "/_vibe-pkg/");
       // request.url = assjetUrl.toString();
-      const pkg = NPMPackage.parse(assetUrl.pathname.replace("/_vibe-pkg/", ""));
-      if (!pkg.suffix) {
-        assetUrl.pathname = `/_vibe-pkg/${pkg.pkg}/index.js`;
+      const npkg = NPMPackage.parse(assetUrl.pathname.replace("/_vibe-pkg/", ""));
+
+      const path = `/_vibe-pkg/${npkg.pkg}${npkg.suffix ?? ""}`;
+      let assetResponse: CFResponse | undefined;
+      for (let tryPath of [path, `${path}/index.js`]) {
+        tryPath = tryPath.replace(/\/+/g, "/");
+        assetResponse = await env.ASSETS.fetch(new Request(assetUrl.toString()) as unknown as CFRequest);
+        if (assetResponse.ok) {
+          break;
+        }
       }
-      const assetResponse = await env.ASSETS.fetch(new Request(assetUrl.toString()) as unknown as CFRequest);
+      if (!assetResponse) {
+        // this is to make ts happy - in practice, assetResponse should always be defined here
+        // it's only for TS
+        return new Response(`Asset not found for package ${npkg.pkg} with subpath ${npkg.suffix}`, {
+          status: 404,
+        }) as unknown as CFResponse;
+      }
       const headers = new Headers(Object.fromEntries(assetResponse.headers.entries()));
       headers.set("Content-Type", "application/javascript");
       headers.set("Access-Control-Allow-Origin", "*");
