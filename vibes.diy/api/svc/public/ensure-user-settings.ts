@@ -14,7 +14,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { sqlUserSettings } from "../sql/vibes-diy-api-schema.js";
-import { eq } from "drizzle-orm";
+import { eq } from "drizzle-orm/sql/expressions";
 
 export async function ensureUserSettings(
   vctx: VibesApiSQLCtx,

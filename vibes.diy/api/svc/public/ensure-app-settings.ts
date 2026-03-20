@@ -28,7 +28,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
 import { sqlAppSettings, sqlAppSlugBinding, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
-import { eq, and } from "drizzle-orm";
+import { eq, and } from "drizzle-orm/sql/expressions";
 import { buildEnsureEntryResult, ensureACLEntry } from "../intern/application-settings.js";
 import { sendEmailOpts } from "../intern/send-email.js";
 

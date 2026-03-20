@@ -30,7 +30,7 @@ ModuleRegistry.registerModules([
   PaginationModule,
   RowDragModule,
   RowSelectionModule,
-  CellStyleModule
+  CellStyleModule,
 ]);
 
 const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({

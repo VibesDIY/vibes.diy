@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "core-cli tsc",
+    "build": "core-cli tsc && wrangler build",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build",
     "dev": "wrangler dev",

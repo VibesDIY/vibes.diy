@@ -6,6 +6,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { visualizer } from "rollup-plugin-visualizer";
 import { $ } from "zx";
 import * as fs from "fs";
+import { join } from "path";
 import { workspacePackagesPlugin } from "./vite-plugin-workspace-packages.js";
 
 function loadHttpsCerts() {
@@ -15,13 +16,13 @@ function loadHttpsCerts() {
   if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
     console.error(`
 ╔══════════════════════════════════════════════════════════════════╗
-║  HTTPS certificates not found!                                  ║
+║  HTTPS certificates not found!                                   ║
 ║                                                                  ║
 ║  Run the following commands to generate them:                    ║
 ║                                                                  ║
 ║    brew install mkcert                                           ║
 ║    mkcert -install                                               ║
-║    mkcert "*.localhost.vibesdiy.net" localhost                    ║
+║    mkcert "*.localhost.vibesdiy.net" localhost                   ║
 ║                                                                  ║
 ║  Then move the generated .pem files to vibes.diy/pkg/            ║
 ╚══════════════════════════════════════════════════════════════════╝
@@ -32,6 +33,37 @@ function loadHttpsCerts() {
   return {
     key: fs.readFileSync(keyPath),
     cert: fs.readFileSync(certPath),
+  };
+}
+
+function blockDevVarsPlugin() {
+  return {
+    name: "block-dev-vars",
+    writeBundle(options: { dir?: string }) {
+      const outDir = options.dir;
+      if (!outDir) return;
+      const target = join(outDir, ".dev.vars");
+      try {
+        fs.rmSync(target);
+        console.log(`🗑️  Removed ${target}`);
+      } catch { /* ignore */ }
+    },
+  };
+}
+
+function monacoTrimLanguagesPlugin() {
+  return {
+    name: "monaco-trim-languages",
+    resolveId(id: string) {
+      if (id.includes("/basic-languages/") && !id.includes("/javascript/") && !id.includes("/typescript/")) {
+        return "\0monaco-empty";
+      }
+    },
+    load(id: string) {
+      if (id === "\0monaco-empty") {
+        return "export const language = {}; export const conf = {};";
+      }
+    },
   };
 }
 
@@ -81,6 +113,8 @@ function exposeDevServerInfo() {
 
 export default defineConfig(({ command }) => ({
   plugins: [
+    blockDevVarsPlugin(),
+    monacoTrimLanguagesPlugin(),
     setupSqlPlugin(),
     exposeDevServerInfo(),
     workspacePackagesPlugin(), // { exclude: ["@vibes.diy/vibe-db-explorer"] }),

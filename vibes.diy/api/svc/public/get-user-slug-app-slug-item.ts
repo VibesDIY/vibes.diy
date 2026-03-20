@@ -12,7 +12,7 @@
 // import { VibesApiSQLCtx } from "../types.js";
 // import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
 // import { sqlAppSlugBinding, sqlChatContexts, sqlChatSections, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
-// import { eq, and } from "drizzle-orm";
+// import { eq, and } from "drizzle-orm/sql/expressions";
 // import { BlockEndMsg, BlockMsgs, isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
 
 // export const getByUserSlugAppSlugItemEvento: EventoHandler<

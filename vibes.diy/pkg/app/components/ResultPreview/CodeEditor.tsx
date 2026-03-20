@@ -1,14 +1,13 @@
 import { Editor } from "@monaco-editor/react";
 import React, { useCallback, useEffect, useRef } from "react";
 import { setupMonacoEditor } from "./setupMonacoEditor.js";
-import { editor } from "monaco-editor";
+import { editor, MarkerSeverity } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { useTheme } from "../../contexts/ThemeContext.js";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import { useParams } from "react-router";
 import { isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
 import { type } from "arktype";
-import * as MonacoEditor from "monaco-editor";
 import {
   CodeEvent,
   AppCode,
@@ -19,7 +18,7 @@ import {
   MonacoMarkerInfo,
 } from "../../types/code-editor.js";
 
-type Monaco = typeof MonacoEditor;
+import type { Monaco } from "@monaco-editor/react";
 
 interface CodeEditorProps {
   // runState: SettleState;
@@ -217,7 +216,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
       const errorMarkers = MonacoMarkerInfo.onDeepUndeclaredKey("delete").array()(
         monaco.api.editor
           .getModelMarkers({ resource: model.uri })
-          .filter((m: editor.IMarker) => m.severity === MonacoEditor.MarkerSeverity.Error)
+          .filter((m: editor.IMarker) => m.severity === MarkerSeverity.Error)
       );
 
       if (errorMarkers instanceof type.errors) {

@@ -1,4 +1,4 @@
-import { DBExplorerPage } from "@vibes.diy/vibe-db-explorer";
+import { DBExplorerPage } from "@vibes.diy/vibe-db-explorer/page";
 import { Dependencies, render_esm_sh, resolveVersionRegistry } from "./import-map.js";
 import { defaultFetchPkgVersion } from "../npm-package-version.js";
 import { VibesApiSQLCtx } from "../types.js";

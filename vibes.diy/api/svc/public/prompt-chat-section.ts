@@ -38,7 +38,7 @@ import {
   sqlChatSections,
   sqlPromptContexts,
 } from "../sql/vibes-diy-api-schema.js";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm/sql/expressions";
 import {
   createStatsCollector,
   createLineStream,

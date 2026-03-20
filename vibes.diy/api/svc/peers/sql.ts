@@ -1,7 +1,7 @@
 import { Option, URI, uint8array2stream, exception2Result, concatUint8, Result } from "@adviser/cement";
 import { VibesSqlite } from "../create-handler.js";
 import { sqlAssets } from "../sql/vibes-diy-api-schema.js";
-import { eq } from "drizzle-orm";
+import { eq } from "drizzle-orm/sql/expressions";
 import { Cider, PeerStreamWithCommit, PeerWithCommit } from "../intern/ensure-storage.js";
 import { FetchResult } from "@vibes.diy/api-types";
 

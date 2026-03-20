@@ -1,7 +1,8 @@
 import { exception2Result, Result } from "@adviser/cement";
 import { VibesApiSQLCtx } from "../types.js";
 import { generate } from "random-words";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm/sql/expressions";
+import { sql } from "drizzle-orm/sql";
 import { sqlAppSlugBinding, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import {
   AppSlugOptUserSlug,
