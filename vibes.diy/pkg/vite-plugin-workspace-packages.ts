@@ -78,7 +78,9 @@ export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): P
               await access(base + ext);
               entry = base + ext;
               break;
-            } catch { /* ignore */ }
+            } catch {
+              /* ignore */
+            }
           }
           if (!entry) continue;
           const outputName = exportPath === "." || exportPath === "./" ? "index" : exportPath.replace(/^\.\//, "");
@@ -86,7 +88,9 @@ export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): P
         }
         if (entries.length > 0) return entries;
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     // Fallback: find index file
     for (const name of ["index.ts", "index.tsx", "index.js", "index.jsx"]) {
@@ -94,7 +98,9 @@ export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): P
       try {
         await access(candidate);
         return [{ entry: candidate, outputName: "index" }];
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     throw new Error(`No entry point found in ${pkgPath}`);
@@ -196,9 +202,7 @@ export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): P
         res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
 
         try {
-          const outputName = !subpath
-            ? "index"
-            : subpath.replace(/\/index\.js$/, "").replace(/\.js$/, "");
+          const outputName = !subpath ? "index" : subpath.replace(/\/index\.js$/, "").replace(/\.js$/, "");
           const codes = await buildPackage(pkgName);
           const code = codes.get(outputName);
           if (code !== undefined) {
@@ -230,9 +234,7 @@ export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): P
           const codes = await buildPackage(pkgName);
           for (const [outputName, code] of codes) {
             const jsFileName =
-              outputName === "index"
-                ? `_vibe-pkg/${pkgName}/index.js`
-                : `_vibe-pkg/${pkgName}/${outputName}/index.js`;
+              outputName === "index" ? `_vibe-pkg/${pkgName}/index.js` : `_vibe-pkg/${pkgName}/${outputName}/index.js`;
             bundle[jsFileName] = {
               type: "asset",
               fileName: jsFileName,

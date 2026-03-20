@@ -13,7 +13,7 @@ import { createRequestHandler } from "react-router";
 import * as serverBuild from "virtual:react-router/server-build";
 import { cfServe, CfCacheIf } from "@vibes.diy/api-svc";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
-import { NPMPackage } from "@adviser/cement";
+import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 
 export { ChatSessions } from "./chat-sessions.js";
@@ -51,7 +51,7 @@ export default {
     }
 
     if (url.pathname.startsWith("/vibe-pkg/")) {
-      console.log("Handling package vibe-pkg request for", url.pathname);
+      // console.log("Handling package vibe-pkg request for", url.pathname);
       const cache = caches.default;
       if (request.method === "OPTIONS") {
         const response = new Response(null, {
@@ -69,16 +69,17 @@ export default {
         );
         return response;
       }
-      const assetUrl = new URL(request.url);
-      assetUrl.pathname = assetUrl.pathname.replace("/vibe-pkg/", "/_vibe-pkg/");
+      // const npm = BuildURI.from(request.url).pathname(reqUrl.pathname.replace("/vibe-pkg/", "/_vibe-pkg/")).URI();
+      // assetUrl.pathname = assetUrl.pathname.replace("/vibe-pkg/", "/_vibe-pkg/");
       // request.url = assjetUrl.toString();
-      const npkg = NPMPackage.parse(assetUrl.pathname.replace("/_vibe-pkg/", ""));
-
-      const path = `/_vibe-pkg/${npkg.pkg}${npkg.suffix ?? ""}`;
+      const npkg = NPMPackage.parse(URI.from(request.url).pathname.replace("/vibe-pkg/", ""));
+      const path = `${npkg.pkg}${npkg.suffix ?? ""}`;
       let assetResponse: CFResponse | undefined;
       for (let tryPath of [path, `${path}/index.js`]) {
         tryPath = tryPath.replace(/\/+/g, "/");
-        assetResponse = await env.ASSETS.fetch(new Request(assetUrl.toString()) as unknown as CFRequest);
+        const assetUrl = BuildURI.from(request.url).pathname("/").appendRelative("/_vibe-pkg").appendRelative(tryPath).toString();
+        // console.log("Trying to fetch asset for package", assetUrl);
+        assetResponse = await env.ASSETS.fetch(new Request(assetUrl) as unknown as CFRequest);
         if (assetResponse.ok) {
           break;
         }
