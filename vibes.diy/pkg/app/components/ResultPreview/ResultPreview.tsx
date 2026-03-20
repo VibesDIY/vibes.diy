@@ -57,7 +57,17 @@ function CodeEditorWrapper({
 }
 
 const MemoCodeEditor = memo(CodeEditorWrapper, (prevProps, nextProps) => {
-  console.log(`Memo check for CodeEditor:`, { prevView: prevProps.currentView, nextView: nextProps.currentView });
+  // console.log("xxxx", nextProps.promptState.running)
+  if (
+    nextProps.promptState.running &&
+    nextProps.currentView === "code" &&
+    prevProps.currentView === "code" &&
+    prevProps.promptState.blocks.length === nextProps.promptState.blocks.length
+  ) {
+    // console.log(`Memo check for CodeEditor:`, { prevView: prevProps.currentView, nextView: nextProps.currentView });
+    return false; // re-render if still in code view to reflect changes in promptState.blocks
+  }
+
   return nextProps.currentView === "code";
 });
 
