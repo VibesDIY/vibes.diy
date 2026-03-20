@@ -1,14 +1,9 @@
 /**
- * Global Resets and Base Styles
- * HTML/body resets, font smoothing, iOS fixes, mobile Safari tweaks
- *
- * Extracted from global-styles.ts lines 215-321
+ * Global resets and base element styles.
+ * Extracted from app.css and app/styles/modules/global-resets.css.
  */
 
-/* ============================================
-   GLOBAL RESETS
-   ============================================ */
-
+export const globalResets = `
 html {
   margin: 0;
   padding: 0;
@@ -39,30 +34,21 @@ body {
 }
 
 @media (prefers-color-scheme: dark) {
-  body {
-    color-scheme: dark;
-    background-color: var(--color-dark-background-00);
-    color: var(--color-dark-primary);
-  }
-}
-
-hr {
-  opacity: 0.5;
-}
-
-/* Force dark mode based on system preference, regardless of class strategy */
-@media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
   }
 
-  html,
   body {
+    color-scheme: dark;
     background-color: var(--color-dark-background-00);
     color: var(--color-dark-primary);
   }
 
-  /* This adds all the standard dark mode styles that would normally require the 'dark' class */
+  html, body {
+    background-color: var(--color-dark-background-00);
+    color: var(--color-dark-primary);
+  }
+
   .text-accent-02 {
     color: var(--color-dark-secondary);
   }
@@ -72,16 +58,17 @@ hr {
   }
 }
 
-/* iOS-specific fix for dark mode */
 @supports (-webkit-touch-callout: none) {
   @media (prefers-color-scheme: dark) {
-    html,
-    body {
-      /* Force background color on iOS Safari */
+    html, body {
       background-color: var(--color-dark-background-00);
       color: var(--color-dark-primary);
     }
   }
+}
+
+hr {
+  opacity: 0.5;
 }
 
 #root {
@@ -92,14 +79,12 @@ button {
   font-family: inherit;
 }
 
-/* Prevent auto-zoom on input focus in mobile Safari */
 input,
 textarea,
 select {
-  font-size: 16px; /* prevents auto-zoom */
+  font-size: 16px;
 }
 
-/* Ensure all buttons and links show pointer cursor on hover */
 button,
 a,
 [role="button"],
@@ -112,3 +97,4 @@ a,
 .light {
   --sp-layout-height: 100vh !important;
 }
+`;
