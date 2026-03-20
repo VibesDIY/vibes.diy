@@ -13,7 +13,8 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { sqlApplicationChats } from "../sql/vibes-diy-api-schema.js";
-import { eq, and, lt, desc, SQL } from "drizzle-orm";
+import { eq, and, lt, desc } from "drizzle-orm/sql/expressions";
+import type { SQL } from "drizzle-orm/sql";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;

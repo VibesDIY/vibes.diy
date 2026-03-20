@@ -12,7 +12,7 @@ import { AppSlugBinding } from "./ensure-slug-binding.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { base58btc } from "multiformats/bases/base58";
 import { sha256 } from "multiformats/hashes/sha2";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm/sql/expressions";
 import mime from "mime";
 import { transform } from "sucrase";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";

@@ -13,7 +13,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
-import { eq, and } from "drizzle-orm";
+import { eq, and } from "drizzle-orm/sql/expressions";
 
 export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userId: string): Promise<Result<ResSetModeFs>> {
   if (req.mode === "production") {

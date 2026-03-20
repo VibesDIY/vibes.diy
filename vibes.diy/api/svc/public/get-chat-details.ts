@@ -15,7 +15,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { sqlChatContexts, sqlChatSections, sqlPromptContexts, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm/sql/expressions";
 import { isPromptReq } from "@vibes.diy/call-ai-v2";
 
 export const getChatDetailsEvento: EventoHandler<

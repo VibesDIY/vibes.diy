@@ -19,7 +19,7 @@ export const promptChatAddFS: EventoHandler<W3CWebSocketEvent, MsgBase<ReqAddFS>
   validate: unwrapMsgBase(async (msg: MsgBase) => {
     const ret = reqAddFS(msg.payload);
     if (ret instanceof type.errors) {
-      console.error("Validation error in promptChatAddFS:", ret.summary, msg.payload);
+      // console.error("Validation error in promptChatAddFS:", ret.summary, msg.payload);
       return Result.Ok(Option.None());
     }
     return Result.Ok(

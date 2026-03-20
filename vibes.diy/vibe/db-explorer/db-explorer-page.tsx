@@ -10,7 +10,7 @@ export function DBExplorerPage({
   base: string;
 }) {
   const mountCode = [
-    "import { startDBExplorer } from '@vibes.diy/vibe-db-explorer';",
+    "import { startDBExplorer } from '@vibes.diy/vibe-db-explorer/start';",
     `startDBExplorer(${JSON.stringify(base)});`,
   ].join("\n");
   return (

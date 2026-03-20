@@ -1,5 +1,5 @@
 import { Result, uint8array2stream } from "@adviser/cement";
-import { eq } from "drizzle-orm";
+import { eq } from "drizzle-orm/sql/expressions";
 import { type } from "arktype";
 import { VibesSqlite } from "../create-handler.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";

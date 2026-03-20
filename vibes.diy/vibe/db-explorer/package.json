@@ -3,6 +3,24 @@
   "version": "0.0.0",
   "type": "module",
   "sideEffects": false,
+  "exports": {
+    "./": {
+      "import": "./db-explorer-start.js",
+      "types": "./db-explorer-start.d.ts"
+    },
+    "./start": {
+      "import": "./db-explorer-start.js",
+      "types": "./db-explorer-start.d.ts"
+    },
+    "./root": {
+      "import": "./db-explorer-root.js",
+      "types": "./db-explorer-root.d.ts"
+    },
+    "./page": {
+      "import": "./db-explorer-page.js",
+      "types": "./db-explorer-page.d.ts"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "core-cli tsc && vite build",
@@ -10,6 +28,7 @@
     "publish": "core-cli build"
   },
   "dependencies": {
+    "@adviser/cement": "^0.5.34",
     "@fireproof/use-fireproof": "0.24.13",
     "ag-grid-community": "^35.1.0",
     "ag-grid-react": "^35.1.0",
@@ -21,7 +40,7 @@
   "devDependencies": {
     "@types/react": "~19.2.13",
     "@types/react-dom": "~19.2.2",
-    "@vitejs/plugin-react": "^6.0.1",
+    "@vitejs/plugin-react": "5.2.0",
     "typescript": "^5.8.3",
     "vite": "^7.3.1"
   }

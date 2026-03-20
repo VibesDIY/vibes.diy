@@ -1,7 +1,7 @@
 import { Result, SendStatItem } from "@adviser/cement";
 import { VibesApiSQLCtx } from "../types.js";
 import { sqlChatSections } from "../sql/vibes-diy-api-schema.js";
-import { eq } from "drizzle-orm";
+import { eq } from "drizzle-orm/sql/expressions";
 import { MsgBase, PromptAndBlockMsgs, SectionEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { BlockEndMsg, isBlockEnd } from "@vibes.diy/call-ai-v2";

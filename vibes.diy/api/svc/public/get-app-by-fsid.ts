@@ -18,7 +18,8 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
 import { sqlApps } from "../sql/vibes-diy-api-schema.js";
-import { and, eq, max } from "drizzle-orm";
+import { and, eq } from "drizzle-orm/sql/expressions";
+import { max } from "drizzle-orm/sql";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 

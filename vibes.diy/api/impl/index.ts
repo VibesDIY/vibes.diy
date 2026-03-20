@@ -244,14 +244,14 @@ export class VibesDiyApi implements VibesDiyApiIface<{
           evento.trigger({
             request: event,
             send: (async (_ctx: TriggerCtx<W3CWebSocketEvent, unknown, unknown>, data: unknown) => {
-              console.log("VibeDiyApi request sending from evento", data);
+              // console.log("VibeDiyApi request sending from evento", data);
               const res = await this.send(data as Parameters<this["send"]>[0], { tid });
               return res;
             }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
           });
         });
         // console.log("Sending request with tid:", tid);
-        console.log("VibeDiyApi request sending", req, tid);
+        // console.log("VibeDiyApi request sending", req, tid);
         const rReq = await this.send(req, { tid });
         // console.log("Sended request with tid:", tid, rReq);
         if (rReq.isErr()) {

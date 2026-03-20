@@ -18,7 +18,7 @@ import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-type
 import { BlockEndMsg, BlockMsgs, isBlockStreamMsg, isPromptBlockEnd, PromptMsgs } from "@vibes.diy/call-ai-v2";
 import { PromptAndBlockMsgs, ReqPromptChatSection, ReqWithVerifiedAuth, SectionEvent } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm/sql/expressions";
 import { type } from "arktype";
 
 function toByPromptIds(calls: unknown[][]): Record<string, PromptAndBlockMsgs[]> {
