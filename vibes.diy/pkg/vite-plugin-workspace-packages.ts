@@ -196,7 +196,9 @@ export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): P
         res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
 
         try {
-          const outputName = !subpath ? "index" : subpath.replace(/\.js$/, "");
+          const outputName = !subpath
+            ? "index"
+            : subpath.replace(/\/index\.js$/, "").replace(/\.js$/, "");
           const codes = await buildPackage(pkgName);
           const code = codes.get(outputName);
           if (code !== undefined) {
@@ -227,7 +229,10 @@ export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): P
         try {
           const codes = await buildPackage(pkgName);
           for (const [outputName, code] of codes) {
-            const jsFileName = `_vibe-pkg/${pkgName}/${outputName}.js`;
+            const jsFileName =
+              outputName === "index"
+                ? `_vibe-pkg/${pkgName}/index.js`
+                : `_vibe-pkg/${pkgName}/${outputName}/index.js`;
             bundle[jsFileName] = {
               type: "asset",
               fileName: jsFileName,
