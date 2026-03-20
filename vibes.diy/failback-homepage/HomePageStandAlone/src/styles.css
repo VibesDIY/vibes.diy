@@ -1,0 +1,61 @@
+@font-face {
+  font-family: "Alte Haas Grotesk";
+  src: url("/fonts/AlteHaasGroteskRegular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Alte Haas Grotesk";
+  src: url("/fonts/AlteHaasGroteskBold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "dseg7_classic_miniregular";
+  src: url("/fonts/dseg7classicmini-regular-webfont.woff2") format("woff2"),
+       url("/fonts/dseg7classicmini-regular-webfont.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root { --vibes-cream: #fffff0; --vibes-near-black: #1a1a1a; --vibes-near-gray: #cccdc8; --vibes-black: #231F20; --vibes-white: #ffffff; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* Match Tailwind preflight base */
+html { font-family: "Alte Haas Grotesk", Inter, sans-serif; line-height: 1.5; -webkit-text-size-adjust: 100%; tab-size: 4; }
+body { background: #000; overflow: hidden; margin: 0; padding: 0; line-height: inherit; }
+a { text-decoration: none; }
+
+/* Grid overlay — fixed cream lines */
+.grid-overlay {
+  position: fixed; inset: 10px; border-radius: 10px;
+  pointer-events: none; z-index: 2;
+  background-size: 40px 40px;
+  background-image: linear-gradient(var(--vibes-cream) 1px, transparent 1px), linear-gradient(90deg, var(--vibes-cream) 1px, transparent 1px);
+}
+/* Grid stays the same in dark mode — cream lines on dark bg look like a dark grid naturally */
+
+/* Hide scrollbars */
+.scroll-hide::-webkit-scrollbar { display: none; }
+
+/* Navbar button hover expand — exact from original injected styles */
+.navbar-button-wrapper { display: flex; align-items: center; }
+.navbar-button-wrapper button { width: 64px; justify-content: center; }
+.navbar-button-wrapper .navbar-button-label { width: 0; padding: 0; }
+.navbar-button-wrapper:hover button { width: 200px !important; justify-content: flex-start !important; }
+.navbar-button-wrapper:hover .navbar-button-label { opacity: 1 !important; width: auto !important; max-width: 150px !important; padding: 0 16px 0 8px !important; }
+.navbar-button-wrapper:hover .navbar-button-icon { animation: wiggle 0.6s ease-in-out infinite; }
+button:active { animation: shake 0.3s ease-in-out; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+
+/* Chat message scroll animations */
+.message-current-user, .message-other-user { animation: linear both; animation-timeline: view(); animation-range: entry 0% cover 30%; }
+.message-current-user { animation-name: slide-in-right; }
+.message-other-user { animation-name: slide-in-left; }
+
+@keyframes slide-in-left { from { opacity: 0; transform: translateX(-100px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slide-in-right { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes wiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
