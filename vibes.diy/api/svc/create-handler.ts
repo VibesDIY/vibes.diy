@@ -54,8 +54,6 @@ export async function createAppContext<T extends VibesSqlite>(
     CLERK_PUBLISHABLE_KEY: param.REQUIRED,
     DEVICE_ID_CA_PRIV_KEY: param.REQUIRED,
     DEVICE_ID_CA_CERT: param.REQUIRED,
-    WRAPPER_BASE_URL: param.REQUIRED,
-    // ENTRY_POINT_TEMPLATE_URL: param.REQUIRED,
 
     MAX_APP_SLUG_PER_USER_ID: "10",
     MAX_USER_SLUG_PER_USER_ID: "10",
@@ -165,7 +163,6 @@ export async function createAppContext<T extends VibesSqlite>(
     maxAppSlugPerUserId: parseInt(envVals.MAX_APP_SLUG_PER_USER_ID, 10),
     maxUserSlugPerUserId: parseInt(envVals.MAX_USER_SLUG_PER_USER_ID, 10),
     maxAppsPerUserId: parseInt(envVals.MAX_APPS_PER_USER_ID, 10),
-    wrapperBaseUrl: envVals.WRAPPER_BASE_URL,
     pkgRepos: {
       workspace: envVals.WORKSPACE_NPM_URL,
       public: envVals.PUBLIC_NPM_URL,

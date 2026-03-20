@@ -30,7 +30,6 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
   maxUserSlugPerUserId: number;
   maxAppsPerUserId: number;
   pkgRepos: PkgRepos;
-  wrapperBaseUrl: string; // relative should be access to Clerk-Auth to provide the entrypoint via postmessage the tokens to access FPCloud
   vibes: {
     svc: {
       hostnameBase: string; // localhost.vibes.app

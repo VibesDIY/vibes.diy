@@ -22,9 +22,6 @@ inputs:
   DEVICE_ID_CA_CERT:
     description: "Device ID CA certificate"
     required: true
-  WRAPPER_BASE_URL:
-    description: "Base URL for the wrapper"
-    required: true
   FP_VERSION:
     description: "Fireproof version"
     required: true
@@ -77,7 +74,6 @@ runs:
         CLERK_PUBLISHABLE_KEY: ${{ inputs.CLERK_PUBLISHABLE_KEY }}
         DEVICE_ID_CA_PRIV_KEY: ${{ inputs.DEVICE_ID_CA_PRIV_KEY }}
         DEVICE_ID_CA_CERT: ${{ inputs.DEVICE_ID_CA_CERT }}
-        WRAPPER_BASE_URL: ${{ inputs.WRAPPER_BASE_URL }}
         FP_VERSION: ${{ inputs.FP_VERSION }}
         FPCLOUD_URL: ${{ inputs.FPCLOUD_URL }}
         RESEND_API_KEY: ${{ inputs.RESEND_API_KEY }}
@@ -95,7 +91,6 @@ runs:
           --fromEnv CLERK_PUBLISHABLE_KEY \
           --fromEnv DEVICE_ID_CA_PRIV_KEY \
           --fromEnv DEVICE_ID_CA_CERT \
-          --fromEnv WRAPPER_BASE_URL \
           --fromEnv FP_VERSION \
           --fromEnv FPCLOUD_URL \
           --fromEnv RESEND_API_KEY \
@@ -120,7 +115,6 @@ runs:
         CLERK_PUBLISHABLE_KEY: ${{ inputs.CLERK_PUBLISHABLE_KEY }}
         DEVICE_ID_CA_PRIV_KEY: ${{ inputs.DEVICE_ID_CA_PRIV_KEY }}
         DEVICE_ID_CA_CERT: ${{ inputs.DEVICE_ID_CA_CERT }}
-        WRAPPER_BASE_URL: ${{ inputs.WRAPPER_BASE_URL }}
         FP_VERSION: ${{ inputs.FP_VERSION }}
         FPCLOUD_URL: ${{ inputs.FPCLOUD_URL }}
         RESEND_API_KEY: ${{ inputs.RESEND_API_KEY }}
@@ -137,7 +131,6 @@ runs:
           --fromEnv CLERK_PUBLISHABLE_KEY \
           --fromEnv DEVICE_ID_CA_PRIV_KEY \
           --fromEnv DEVICE_ID_CA_CERT \
-          --fromEnv WRAPPER_BASE_URL \
           --fromEnv FP_VERSION \
           --fromEnv FPCLOUD_URL \
           --fromEnv RESEND_API_KEY \
