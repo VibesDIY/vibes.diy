@@ -1,30 +1,245 @@
-/**
- * Global styles assembled into a CSS string by theme/index.ts.
- *
- * Organized by concern so designers can find what they need:
- *   1. Keyframe animations
- *   2. Document resets (html/body)
- *   3. Dark mode body overrides
- *   4. Element defaults (buttons, inputs, links)
- *   5. Scrollbar styling
- *   6. Selection & focus
- *   7. Neo-brutalist select
- *   8. Mobile overrides
- *   9. Animation utilities
- *  10. Color utilities (accent, decorative, background)
- *  11. Gradient & logo effects
- *  12. Typography (ai-markdown)
- *  13. Background patterns (grid, page-grid)
- *  14. Login button
- */
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-import { generateCSSVariables } from "./css-vars.js";
+exports[`global CSS snapshot > output is stable across refactors 1`] = `
+":root {
+  --vibes-blue: #3b82f6;
+  --vibes-blue-accent: #0066cc;
+  --vibes-blue-bright: #0074d9;
+  --vibes-blue-dark: #357abd;
+  --vibes-blue-darker: #4a90e2;
+  --vibes-red: #ef4444;
+  --vibes-red-accent: #da291c;
+  --vibes-red-dark: #b91c1c;
+  --vibes-red-bright: #dc2626;
+  --vibes-red-light: #ff6666;
+  --vibes-red-delete: #ff3333;
+  --vibes-yellow: #eab308;
+  --vibes-yellow-accent: #fedd00;
+  --vibes-yellow-bright: #fe0;
+  --vibes-gray: #6b7280;
+  --vibes-green: #51cf66;
+  --vibes-purple-neon: #c084fc;
+  --vibes-magenta-neon: #e879f9;
+  --vibes-pink-neon: #f472b6;
+  --vibes-cyan-neon: #22d3ee;
+  --vibes-lime-neon: #a3e635;
+  --vibes-orange-neon: #fb923c;
+  --vibes-black: #000000;
+  --vibes-near-black: #1a1a1a;
+  --vibes-dark-gray: #222222;
+  --vibes-gray-dark: #333333;
+  --vibes-gray-mid: #555555;
+  --vibes-gray-medium: #666666;
+  --vibes-gray-light: #aaaaaa;
+  --vibes-gray-lighter: #cccccc;
+  --vibes-gray-lightest: #d4d4d4;
+  --vibes-gray-ultralight: #e0e0e0;
+  --vibes-gray-pale: #e5e5e5;
+  --vibes-gray-offwhite: #eeeeee;
+  --vibes-gray-ghost: #f0f0f0;
+  --vibes-gray-whisper: #f5f5f5;
+  --vibes-gray-mist: #fafafa;
+  --vibes-white: #ffffff;
+  --vibes-cream: #fffff0;
+  --vibes-bg-primary: #ffffff;
+  --vibes-bg-secondary: #f5f5f5;
+  --vibes-bg-tertiary: #e5e5e5;
+  --vibes-bg-overlay: rgba(255, 255, 255, 0.5);
+  --vibes-bg-input: #ffffff;
+  --vibes-bg-dropzone: #fafafa;
+  --vibes-bg-dropzone-active: #f0f8ff;
+  --vibes-bg-light: #f0f0f0;
+  --vibes-text-primary: #333333;
+  --vibes-text-secondary: #666666;
+  --vibes-text-muted: #aaaaaa;
+  --vibes-text-inverse: #ffffff;
+  --vibes-border-primary: #1a1a1a;
+  --vibes-border-secondary: #cccccc;
+  --vibes-border-light: #dddddd;
+  --vibes-border-input: #cccccc;
+  --vibes-shadow-color: #1a1a1a;
+  --vibes-shadow-sm: rgba(0, 0, 0, 0.15);
+  --vibes-shadow-md: rgba(0, 0, 0, 0.3);
+  --vibes-shadow-lg: rgba(0, 0, 0, 0.5);
+  --vibes-shadow-backdrop: rgba(0, 0, 0, 0.9);
+  --vibes-button-bg: #fffff0;
+  --vibes-button-text: #1a1a1a;
+  --vibes-button-border: #1a1a1a;
+  --vibes-button-icon-bg: #2a2a2a;
+  --vibes-button-icon-fill: #ffffff;
+  --vibes-button-bg-dark-aware: #fffff0;
+  --vibes-button-text-dark-aware: #1a1a1a;
+  --vibes-button-border-dark-aware: #1a1a1a;
+  --vibes-button-icon-bg-dark-aware: #ffffff;
+  --vibes-variant-blue: #3b82f6;
+  --vibes-variant-red: #ef4444;
+  --vibes-variant-yellow: #eab308;
+  --vibes-variant-gray: #6b7280;
+  --vibes-card-bg: #e5e5e5;
+  --vibes-card-text: #1a1a1a;
+  --vibes-card-border: #1a1a1a;
+  --vibes-error-bg: rgba(0, 0, 0, 0.7);
+  --vibes-error-border: #ff6666;
+  --vibes-error-text: #ff6666;
+  --vibes-error-text-body: #ffffff;
+  --vibes-imggen-accent: #0066cc;
+  --vibes-imggen-flash: #fe0;
+  --vibes-imggen-button-bg: rgba(255, 255, 255, 0.7);
+  --vibes-imggen-delete-hover: #ff3333;
+  --vibes-tc-string: #059669;
+  --vibes-tc-number: #b45309;
+  --vibes-tc-boolean: #7c3aed;
+  --vibes-tc-null: #9ca3af;
+  --vibes-tc-object: #c2410c;
+  --vibes-tc-array: #0369a1;
+  --vibes-tc-key: #374151;
+  --vibes-hover-tint: rgba(0, 0, 0, 0.015);
+}
 
-/* ═══════════════════════════════════════════
-   1. KEYFRAME ANIMATIONS
-   ═══════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --vibes-bg-primary: #1a1a1a;
+    --vibes-bg-secondary: #2a2a2a;
+    --vibes-bg-tertiary: #404040;
+    --vibes-bg-overlay: rgba(0, 0, 0, 0.5);
+    --vibes-bg-input: #2a2a2a;
+    --vibes-bg-dropzone: #2a2a2a;
+    --vibes-bg-dropzone-active: #1a3a4a;
+    --vibes-bg-light: #404040;
+    --vibes-text-primary: #e0e0e0;
+    --vibes-text-secondary: #aaaaaa;
+    --vibes-text-muted: #666666;
+    --vibes-text-inverse: #1a1a1a;
+    --vibes-border-primary: #555555;
+    --vibes-border-secondary: #555555;
+    --vibes-border-light: #555555;
+    --vibes-border-input: #555555;
+    --vibes-shadow-color: #1a1a1a;
+    --vibes-shadow-sm: rgba(255, 255, 255, 0.1);
+    --vibes-shadow-md: rgba(255, 255, 255, 0.1);
+    --vibes-shadow-lg: rgba(0, 0, 0, 0.5);
+    --vibes-shadow-backdrop: rgba(0, 0, 0, 0.9);
+    --vibes-button-icon-bg: #ffffff;
+    --vibes-button-icon-fill: #2a2a2a;
+    --vibes-button-bg-dark-aware: #2a2a2a;
+    --vibes-button-text-dark-aware: #e0e0e0;
+    --vibes-button-border-dark-aware: #555555;
+    --vibes-button-icon-bg-dark-aware: #404040;
+    --vibes-variant-blue: #c084fc;
+    --vibes-variant-red: #f472b6;
+    --vibes-variant-yellow: #fb923c;
+    --vibes-variant-gray: #22d3ee;
+    --vibes-card-bg: #1a1a1a;
+    --vibes-card-text: #ffffff;
+    --vibes-card-border: #555555;
+    --vibes-imggen-button-bg: rgba(0, 0, 0, 0.7);
+    --vibes-tc-string: #5de4c7;
+    --vibes-tc-number: #e4b781;
+    --vibes-tc-boolean: #c4a7e7;
+    --vibes-tc-null: #585b70;
+    --vibes-tc-object: #f5a97f;
+    --vibes-tc-array: #7dc4e4;
+    --vibes-tc-key: #cad3f5;
+    --vibes-hover-tint: rgba(255, 255, 255, 0.015);
+  }
+}
 
-const keyframes = `
+
+html { margin: 0; padding: 0; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-light-background-00);
+  color: var(--color-light-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; }
+  body {
+    color-scheme: dark;
+    background-color: var(--color-dark-background-00);
+    color: var(--color-dark-primary);
+  }
+  html, body {
+    background-color: var(--color-dark-background-00);
+    color: var(--color-dark-primary);
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  @media (prefers-color-scheme: dark) {
+    html, body {
+      background-color: var(--color-dark-background-00);
+      color: var(--color-dark-primary);
+    }
+  }
+}
+
+hr { opacity: 0.5; }
+#root { height: 100%; }
+
+
+
+button { font-family: inherit; }
+input, textarea, select { font-size: 16px; }
+button, a, [role="button"], [type="button"], [type="submit"], [type="reset"] { cursor: pointer; }
+.light { --sp-layout-height: 100vh !important; }
+
+
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--vibes-border-primary) transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body { touch-action: manipulation; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--vibes-border-primary); border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+
+
+::selection {
+  background: color-mix(in srgb, var(--vibes-blue) 30%, transparent);
+  color: var(--vibes-text-primary);
+}
+
+:focus-visible { outline: 2px solid var(--vibes-blue); outline-offset: 2px; }
+button:disabled { pointer-events: none; opacity: 0.5; }
+
+
+
+select {
+  appearance: none;
+  border: 2px solid var(--vibes-border-primary);
+  border-radius: 5px;
+  box-shadow: 2px 2px 0px 0px var(--vibes-border-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 22px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+select:active { transform: translate(2px, 2px); box-shadow: none; }
+
+
+
+@media (max-width: 639px) {
+  input, select, textarea { font-size: 16px !important; }
+  textarea.code-editor { font-size: 14px !important; }
+}
+
+
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -75,142 +290,15 @@ const keyframes = `
   from { opacity: 0; }
   to { opacity: 1; }
 }
-`;
 
-/* ═══════════════════════════════════════════
-   2–3. DOCUMENT RESETS & DARK MODE
-   ═══════════════════════════════════════════ */
 
-const documentResets = `
-html { margin: 0; padding: 0; }
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  width: 100%;
-  height: 100%;
-  background-color: var(--color-light-background-00);
-  color: var(--color-light-primary);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root { color-scheme: dark; }
-  body {
-    color-scheme: dark;
-    background-color: var(--color-dark-background-00);
-    color: var(--color-dark-primary);
-  }
-  html, body {
-    background-color: var(--color-dark-background-00);
-    color: var(--color-dark-primary);
-  }
-}
-
-@supports (-webkit-touch-callout: none) {
-  @media (prefers-color-scheme: dark) {
-    html, body {
-      background-color: var(--color-dark-background-00);
-      color: var(--color-dark-primary);
-    }
-  }
-}
-
-hr { opacity: 0.5; }
-#root { height: 100%; }
-`;
-
-/* ═══════════════════════════════════════════
-   4. ELEMENT DEFAULTS
-   ═══════════════════════════════════════════ */
-
-const elementDefaults = `
-button { font-family: inherit; }
-input, textarea, select { font-size: 16px; }
-button, a, [role="button"], [type="button"], [type="submit"], [type="reset"] { cursor: pointer; }
-.light { --sp-layout-height: 100vh !important; }
-`;
-
-/* ═══════════════════════════════════════════
-   5. SCROLLBAR STYLING
-   ═══════════════════════════════════════════ */
-
-const scrollbarStyles = `
-* {
-  box-sizing: border-box;
-  scrollbar-width: thin;
-  scrollbar-color: var(--vibes-border-primary) transparent;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html, body { touch-action: manipulation; }
-
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-thumb { background: var(--vibes-border-primary); border-radius: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-`;
-
-/* ═══════════════════════════════════════════
-   6. SELECTION & FOCUS
-   ═══════════════════════════════════════════ */
-
-const selectionAndFocus = `
-::selection {
-  background: color-mix(in srgb, var(--vibes-blue) 30%, transparent);
-  color: var(--vibes-text-primary);
-}
-
-:focus-visible { outline: 2px solid var(--vibes-blue); outline-offset: 2px; }
-button:disabled { pointer-events: none; opacity: 0.5; }
-`;
-
-/* ═══════════════════════════════════════════
-   7. NEO-BRUTALIST SELECT
-   ═══════════════════════════════════════════ */
-
-const selectStyles = `
-select {
-  appearance: none;
-  border: 2px solid var(--vibes-border-primary);
-  border-radius: 5px;
-  box-shadow: 2px 2px 0px 0px var(--vibes-border-primary);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  padding-right: 22px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-select:active { transform: translate(2px, 2px); box-shadow: none; }
-`;
-
-/* ═══════════════════════════════════════════
-   8. MOBILE OVERRIDES
-   ═══════════════════════════════════════════ */
-
-const mobileOverrides = `
-@media (max-width: 639px) {
-  input, select, textarea { font-size: 16px !important; }
-  textarea.code-editor { font-size: 14px !important; }
-}
-`;
-
-/* ═══════════════════════════════════════════
-   9. ANIMATION UTILITIES
-   ═══════════════════════════════════════════ */
-
-const animationUtilities = `
 .animate-fade-in { animation: fadeIn 0.3s ease-in-out forwards; }
 .animate-bounce-in { animation: bounceIn 0.5s ease-out forwards; }
 .animate-gradient-x { background-size: 200% auto; animation: gradient-x 3s linear infinite; }
-`;
 
-/* ═══════════════════════════════════════════
-   10. COLOR UTILITIES (accent, decorative, bg)
-   ═══════════════════════════════════════════ */
 
-const colorUtilities = `
+
 .accent-00 { background-color: var(--color-accent-00-light); }
 @media (prefers-color-scheme: dark) { .accent-00 { background-color: var(--color-accent-00-dark); } }
 .accent-01 { background-color: var(--color-accent-01-light); }
@@ -242,25 +330,17 @@ const colorUtilities = `
 @media (prefers-color-scheme: dark) { .bg-secondary { background-color: var(--color-dark-background-01); } }
 .bg-tertiary { background-color: var(--color-light-background-02); }
 @media (prefers-color-scheme: dark) { .bg-tertiary { background-color: var(--color-dark-background-02); } }
-`;
 
-/* ═══════════════════════════════════════════
-   11. GRADIENT & LOGO EFFECTS
-   ═══════════════════════════════════════════ */
 
-const gradientAndLogo = `
+
 .light-gradient { background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,1) 45%, white 89%); }
 @media (prefers-color-scheme: dark) { .light-gradient { background: linear-gradient(110deg, transparent 0%, rgba(0,0,0,1) 45%, black 89%); } }
 
 .pulsing { width: 100%; height: auto; transform: rotate(-5deg) scale(6); animation: pulse 8s infinite; }
 .logo-pulse { transform: rotate(-5deg) scale(3); animation: logo-rotate 1410s ease-in-out infinite, logo-pulse-height 711s ease-in-out infinite; }
-`;
 
-/* ═══════════════════════════════════════════
-   12. TYPOGRAPHY (ai-markdown)
-   ═══════════════════════════════════════════ */
 
-const typography = `
+
 .ai-markdown p { margin-bottom: 0.5rem; }
 .ai-markdown ul { list-style-type: disc; padding-left: 1rem; padding-top: 0.5rem; }
 .ai-markdown ol { list-style-type: decimal; padding-left: 1rem; padding-top: 0.5rem; }
@@ -268,13 +348,9 @@ const typography = `
 .ai-markdown h1 { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; margin-bottom: 1rem; }
 .ai-markdown h2 { font-size: 1.3rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.75rem; }
 .ai-markdown h3 { font-size: 1.15rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem; }
-`;
 
-/* ═══════════════════════════════════════════
-   13. BACKGROUND PATTERNS
-   ═══════════════════════════════════════════ */
 
-const backgroundPatterns = `
+
 .page-grid-background {}
 body:has(.page-grid-background) {
   background-color: #d4d4d4;
@@ -289,13 +365,9 @@ body:has(.page-grid-background) {
     background-image: linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
   }
 }
-`;
 
-/* ═══════════════════════════════════════════
-   14. LOGIN BUTTON
-   ═══════════════════════════════════════════ */
 
-const loginButton = `
+
 .vibes-login-button {
   width: 100%; padding: 1rem 2rem;
   background: var(--color-light-background-00); color: var(--color-light-primary);
@@ -310,30 +382,5 @@ const loginButton = `
 @media (prefers-color-scheme: dark) {
   .vibes-login-button { background: var(--color-dark-background-00); color: var(--color-dark-primary); border-color: var(--color-dark-primary); }
 }
+"
 `;
-
-/* ═══════════════════════════════════════════
-   ASSEMBLY
-   ═══════════════════════════════════════════ */
-
-/**
- * Build the complete global CSS string.
- */
-export function buildGlobalCSS(): string {
-  return [
-    generateCSSVariables(),
-    documentResets,
-    elementDefaults,
-    scrollbarStyles,
-    selectionAndFocus,
-    selectStyles,
-    mobileOverrides,
-    keyframes,
-    animationUtilities,
-    colorUtilities,
-    gradientAndLogo,
-    typography,
-    backgroundPatterns,
-    loginButton,
-  ].join("\n\n");
-}
