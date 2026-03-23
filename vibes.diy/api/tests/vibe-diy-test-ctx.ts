@@ -2,6 +2,7 @@ import { Result, loadAsset } from "@adviser/cement";
 import { DeviceIdCA } from "@fireproof/core-device-id";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createAppContext, noopCache } from "@vibes.diy/api-svc";
+import * as sqliteTables from "@vibes.diy/api-svc/sql/vibes-diy-api-schema-sqlite.js";
 import { S3Api, FetchResult, MsgBase } from "@vibes.diy/api-types";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { createClient } from "@libsql/client/node";
@@ -84,6 +85,18 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
     connections: new Set(),
     env,
     db: drizzleDB, // as unknown as VibesSqlite,
+    tables: {
+      assets: sqliteTables.sqlAssets,
+      userSlugBinding: sqliteTables.sqlUserSlugBinding,
+      appSlugBinding: sqliteTables.sqlAppSlugBinding,
+      apps: sqliteTables.sqlApps,
+      chatContexts: sqliteTables.sqlChatContexts,
+      chatSections: sqliteTables.sqlChatSections,
+      promptContexts: sqliteTables.sqlPromptContexts,
+      applicationChats: sqliteTables.sqlApplicationChats,
+      userSettings: sqliteTables.sqlUserSettings,
+      appSettings: sqliteTables.sqlAppSettings,
+    },
     cache: noopCache,
   });
 }

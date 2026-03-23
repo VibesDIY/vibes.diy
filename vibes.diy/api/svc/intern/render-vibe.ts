@@ -8,7 +8,7 @@ import {
   vibeImportMap,
   vibeUserEnv,
 } from "@vibes.diy/api-types";
-import { sqlApps } from "../sql/vibes-diy-api-schema.js";
+import type { sqlApps } from "../sql/vibes-diy-api-schema-sqlite.js";
 import { NpmUrlCapture } from "../public/serv-entry-point.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { type } from "arktype";

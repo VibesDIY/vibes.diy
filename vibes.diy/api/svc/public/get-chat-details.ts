@@ -14,7 +14,6 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
-import { sqlChatContexts, sqlChatSections, sqlPromptContexts, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm/sql/expressions";
 import { isPromptReq } from "@vibes.diy/call-ai-v2";
 
@@ -46,29 +45,35 @@ export const getChatDetailsEvento: EventoHandler<
 
       // Single query: verify ownership via UserSlugBinding, get chatId from ChatContexts,
       // fsId/created from PromptContexts, and blocks from ChatSections
-      const rows = await vctx.db
+      const rows = await vctx.sql.db
         .select({
-          chatId: sqlChatContexts.chatId,
-          promptId: sqlPromptContexts.promptId,
-          fsId: sqlPromptContexts.fsId,
-          created: sqlPromptContexts.created,
-          blocks: sqlChatSections.blocks,
+          chatId: vctx.sql.tables.chatContexts.chatId,
+          promptId: vctx.sql.tables.promptContexts.promptId,
+          fsId: vctx.sql.tables.promptContexts.fsId,
+          created: vctx.sql.tables.promptContexts.created,
+          blocks: vctx.sql.tables.chatSections.blocks,
         })
-        .from(sqlUserSlugBinding)
-        .innerJoin(sqlChatContexts, eq(sqlChatContexts.userSlug, sqlUserSlugBinding.userSlug))
-        .innerJoin(sqlPromptContexts, eq(sqlPromptContexts.chatId, sqlChatContexts.chatId))
+        .from(vctx.sql.tables.userSlugBinding)
         .innerJoin(
-          sqlChatSections,
-          and(eq(sqlChatSections.chatId, sqlPromptContexts.chatId), eq(sqlChatSections.promptId, sqlPromptContexts.promptId))
+          vctx.sql.tables.chatContexts,
+          eq(vctx.sql.tables.chatContexts.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
+        )
+        .innerJoin(vctx.sql.tables.promptContexts, eq(vctx.sql.tables.promptContexts.chatId, vctx.sql.tables.chatContexts.chatId))
+        .innerJoin(
+          vctx.sql.tables.chatSections,
+          and(
+            eq(vctx.sql.tables.chatSections.chatId, vctx.sql.tables.promptContexts.chatId),
+            eq(vctx.sql.tables.chatSections.promptId, vctx.sql.tables.promptContexts.promptId)
+          )
         )
         .where(
           and(
-            eq(sqlUserSlugBinding.userId, userId),
-            eq(sqlChatContexts.userSlug, req.userSlug),
-            eq(sqlChatContexts.appSlug, req.appSlug)
+            eq(vctx.sql.tables.userSlugBinding.userId, userId),
+            eq(vctx.sql.tables.chatContexts.userSlug, req.userSlug),
+            eq(vctx.sql.tables.chatContexts.appSlug, req.appSlug)
           )
         )
-        .orderBy(desc(sqlPromptContexts.created))
+        .orderBy(desc(vctx.sql.tables.promptContexts.created))
         .all();
 
       if (rows.length === 0) {

@@ -2,7 +2,7 @@ import { Result, uint8array2stream } from "@adviser/cement";
 import { eq } from "drizzle-orm/sql/expressions";
 import { type } from "arktype";
 import { VibesSqlite } from "../create-handler.js";
-import { sqlApps } from "../sql/vibes-diy-api-schema.js";
+import type { VibesApiTables } from "../types.js";
 import { isMetaScreenShot, MetaItem, S3Api } from "@vibes.diy/api-types";
 import { ensureStorage } from "./ensure-storage.js";
 
@@ -14,30 +14,31 @@ export interface StoreScreenshotResult {
 
 /**
  * Stores a screenshot for an app by fsId
- * 1. Checks if app with fsId exists in sqlApps
+ * 1. Checks if app with fsId exists in apps
  * 2. Calculates CID for the screenshot
  * 3. Stores screenshot using ensureStorage
  * 4. Removes existing MetaScreenShot (if any) and adds new one
  */
 export async function storeScreenshot(
   {
-    db,
+    sql,
     s3Api,
   }: {
     s3Api: S3Api;
-    db: VibesSqlite;
+    sql: { db: VibesSqlite; tables: Pick<VibesApiTables, "apps" | "assets"> };
   },
   fsId: string,
   screenshotData: Uint8Array
 ): Promise<Result<StoreScreenshotResult>> {
+  const { db, tables } = sql;
   // 1. Check if app with fsId exists
-  const apps = await db.select().from(sqlApps).where(eq(sqlApps.fsId, fsId)).limit(1);
+  const found = await db.select().from(tables.apps).where(eq(tables.apps.fsId, fsId)).limit(1);
 
-  if (apps.length === 0) {
+  if (found.length === 0) {
     return Result.Err(`App with fsId ${fsId} not found`);
   }
 
-  const app = apps[0];
+  const app = found[0];
 
   // Parse meta using arktype
   const meta = MetaItem.array()(app.meta);
@@ -49,9 +50,9 @@ export async function storeScreenshot(
   // const cidResult = await calcCid({ sthis }, screenshotData);
 
   // 3. Store screenshot using ensureStorage
-  const [storageResult] = await ensureStorage(db, s3Api).ensure(uint8array2stream(screenshotData));
+  const [storageResult] = await ensureStorage(db, tables.assets, s3Api).ensure(uint8array2stream(screenshotData));
   if (!storageResult || storageResult.isErr()) {
-    return Result.Err(`Failed to store screenshot: ${storageResult.Err()}`);
+    return Result.Err(`Failed to store screenshot: ${storageResult?.Err()}`);
   }
   // 4. Remove existing screenshot ref (if any)
   const existingIdx = meta.findIndex((item) => isMetaScreenShot(item));
@@ -67,7 +68,7 @@ export async function storeScreenshot(
   });
 
   // Update the app's meta in the database
-  await db.update(sqlApps).set({ meta }).where(eq(sqlApps.fsId, fsId)).run();
+  await db.update(tables.apps).set({ meta }).where(eq(tables.apps.fsId, fsId)).run();
 
   return Result.Ok({
     fsId,

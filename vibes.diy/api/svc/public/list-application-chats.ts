@@ -12,7 +12,6 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
-import { sqlApplicationChats } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, lt, desc } from "drizzle-orm/sql/expressions";
 import type { SQL } from "drizzle-orm/sql";
 
@@ -51,22 +50,22 @@ export const listApplicationChats: EventoHandler<
 
       const limit = Math.min(req.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
 
-      const conditions: SQL[] = [eq(sqlApplicationChats.userId, userId)];
-      if (req.appSlug) conditions.push(eq(sqlApplicationChats.appSlug, req.appSlug));
-      if (req.userSlug) conditions.push(eq(sqlApplicationChats.userSlug, req.userSlug));
-      if (req.cursor) conditions.push(lt(sqlApplicationChats.created, req.cursor));
+      const conditions: SQL[] = [eq(vctx.sql.tables.applicationChats.userId, userId)];
+      if (req.appSlug) conditions.push(eq(vctx.sql.tables.applicationChats.appSlug, req.appSlug));
+      if (req.userSlug) conditions.push(eq(vctx.sql.tables.applicationChats.userSlug, req.userSlug));
+      if (req.cursor) conditions.push(lt(vctx.sql.tables.applicationChats.created, req.cursor));
 
       // Fetch limit+1 to detect whether a next page exists
-      const rows = await vctx.db
+      const rows = await vctx.sql.db
         .select({
-          chatId: sqlApplicationChats.chatId,
-          appSlug: sqlApplicationChats.appSlug,
-          userSlug: sqlApplicationChats.userSlug,
-          created: sqlApplicationChats.created,
+          chatId: vctx.sql.tables.applicationChats.chatId,
+          appSlug: vctx.sql.tables.applicationChats.appSlug,
+          userSlug: vctx.sql.tables.applicationChats.userSlug,
+          created: vctx.sql.tables.applicationChats.created,
         })
-        .from(sqlApplicationChats)
+        .from(vctx.sql.tables.applicationChats)
         .where(and(...conditions))
-        .orderBy(desc(sqlApplicationChats.created))
+        .orderBy(desc(vctx.sql.tables.applicationChats.created))
         .limit(limit + 1)
         .all();
 

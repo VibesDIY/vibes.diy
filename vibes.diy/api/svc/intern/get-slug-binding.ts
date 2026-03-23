@@ -1,6 +1,5 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { eq, and } from "drizzle-orm/sql/expressions";
-import { sqlUserSlugBinding, sqlAppSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { AppSlugBinding } from "./ensure-slug-binding.js";
 
@@ -11,11 +10,16 @@ export interface GetSlugBinding {
 
 export async function getSlugBinding(ctx: VibesApiSQLCtx, binding: GetSlugBinding): Promise<Result<AppSlugBinding>> {
   const r = await exception2Result(() =>
-    ctx.db
+    ctx.sql.db
       .select()
-      .from(sqlUserSlugBinding)
-      .innerJoin(sqlAppSlugBinding, eq(sqlAppSlugBinding.userSlug, sqlUserSlugBinding.userSlug))
-      .where(and(eq(sqlUserSlugBinding.userSlug, binding.userSlug), eq(sqlAppSlugBinding.appSlug, binding.appSlug)))
+      .from(ctx.sql.tables.userSlugBinding)
+      .innerJoin(ctx.sql.tables.appSlugBinding, eq(ctx.sql.tables.appSlugBinding.userSlug, ctx.sql.tables.userSlugBinding.userSlug))
+      .where(
+        and(
+          eq(ctx.sql.tables.userSlugBinding.userSlug, binding.userSlug),
+          eq(ctx.sql.tables.appSlugBinding.appSlug, binding.appSlug)
+        )
+      )
       .get()
   );
   if (r.isErr()) {

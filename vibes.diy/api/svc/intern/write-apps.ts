@@ -9,7 +9,6 @@ import {
 } from "@vibes.diy/api-types";
 import { exception2Result, Result, string2stream, to_uint8, toSortedObject } from "@adviser/cement";
 import { AppSlugBinding } from "./ensure-slug-binding.js";
-import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { base58btc } from "multiformats/bases/base58";
 import { sha256 } from "multiformats/hashes/sha2";
 import { and, eq, or } from "drizzle-orm/sql/expressions";
@@ -19,18 +18,27 @@ import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse 
 import { StorageResult, VibesApiSQLCtx } from "../types.js";
 
 async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug: string): Promise<Result<number>> {
-  const userApps = await ctx.db.select().from(sqlApps).where(eq(sqlApps.userId, userId)).orderBy(sqlApps.created).all();
+  const userApps = await ctx.sql.db
+    .select()
+    .from(ctx.sql.tables.apps)
+    .where(eq(ctx.sql.tables.apps.userId, userId))
+    .orderBy(ctx.sql.tables.apps.created)
+    .all();
   if (userApps.length >= ctx.params.maxAppSlugPerUserId) {
     const devApps = userApps.filter((app) => app.mode === "dev").slice(0, ~~(userApps.length / 10) + 1);
     if (devApps.length === 0) {
       return Result.Err(`user has reached max apps limit: ${ctx.params.maxAppSlugPerUserId}`);
     }
-    await ctx.db
-      .delete(sqlApps)
+    await ctx.sql.db
+      .delete(ctx.sql.tables.apps)
       .where(
         or(
           ...devApps.map((app) =>
-            and(eq(sqlApps.userId, userId), eq(sqlApps.releaseSeq, app.releaseSeq), eq(sqlApps.appSlug, app.appSlug))
+            and(
+              eq(ctx.sql.tables.apps.userId, userId),
+              eq(ctx.sql.tables.apps.releaseSeq, app.releaseSeq),
+              eq(ctx.sql.tables.apps.appSlug, app.appSlug)
+            )
           )
         )
       );
@@ -256,18 +264,18 @@ export async function ensureApps(
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
 ): Promise<Result<Omit<ResEnsureAppSlug, "type">>> {
   const fsId = await computeFsId(req.env ?? {}, fs);
-  const exist = await ctx.db
+  const exist = await ctx.sql.db
     .select()
-    .from(sqlApps)
-    .where(and(eq(sqlApps.fsId, fsId), eq(sqlApps.userId, binding.userId)))
+    .from(ctx.sql.tables.apps)
+    .where(and(eq(ctx.sql.tables.apps.fsId, fsId), eq(ctx.sql.tables.apps.userId, binding.userId)))
     .get();
   if (exist) {
     if (req.mode === "production" && exist.mode === "dev") {
       // upgrade dev to production
-      await ctx.db
-        .update(sqlApps)
+      await ctx.sql.db
+        .update(ctx.sql.tables.apps)
         .set({ mode: req.mode })
-        .where(and(eq(sqlApps.userId, binding.userId), eq(sqlApps.fsId, fsId)));
+        .where(and(eq(ctx.sql.tables.apps.userId, binding.userId), eq(ctx.sql.tables.apps.fsId, fsId)));
     }
     const rFileSystems = await toFileSystemItems(ctx, req.mode, fs);
     if (rFileSystems.some((item) => item.isErr())) {
@@ -315,7 +323,7 @@ export async function ensureApps(
     mode: req.mode,
     created: new Date().toISOString(),
   };
-  const rIns = await exception2Result(() => ctx.db.insert(sqlApps).values(sqlVal));
+  const rIns = await exception2Result(() => ctx.sql.db.insert(ctx.sql.tables.apps).values(sqlVal));
   if (rIns.isErr()) {
     return Result.Err(rIns);
   }

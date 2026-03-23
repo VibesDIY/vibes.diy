@@ -1,6 +1,5 @@
 import { Result, SendStatItem } from "@adviser/cement";
 import { VibesApiSQLCtx } from "../types.js";
-import { sqlChatSections } from "../sql/vibes-diy-api-schema.js";
 import { eq } from "drizzle-orm/sql/expressions";
 import { MsgBase, PromptAndBlockMsgs, SectionEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
@@ -16,12 +15,12 @@ interface ResendChatSectionsPrevMsgArgs {
 
 export async function resendChatSectionsPrevMsg(args: ResendChatSectionsPrevMsgArgs): Promise<Result<void>> {
   const { vctx, chatId, send, tid, dst } = args;
-  const sections = await vctx.db
+  const sections = await vctx.sql.db
     .select()
-    .from(sqlChatSections)
-    .where(eq(sqlChatSections.chatId, chatId))
-    // .groupBy(sqlChatSections.chatId, sqlChatSections.promptId)
-    .orderBy(sqlChatSections.created, sqlChatSections.promptId, sqlChatSections.blockSeq)
+    .from(vctx.sql.tables.chatSections)
+    .where(eq(vctx.sql.tables.chatSections.chatId, chatId))
+    // .groupBy(vctx.sql.tables.chatSections.chatId, vctx.sql.tables.chatSections.promptId)
+    .orderBy(vctx.sql.tables.chatSections.created, vctx.sql.tables.chatSections.promptId, vctx.sql.tables.chatSections.blockSeq)
     .all();
   for (const section of sections) {
     const blocks = PromptAndBlockMsgs.array()(section.blocks);

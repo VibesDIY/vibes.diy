@@ -27,7 +27,6 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
-import { sqlAppSettings, sqlAppSlugBinding, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import { eq, and } from "drizzle-orm/sql/expressions";
 import { buildEnsureEntryResult, ensureACLEntry } from "../intern/application-settings.js";
 import { sendEmailOpts } from "../intern/send-email.js";
@@ -39,15 +38,23 @@ export async function ensureAppSettings(
 ): Promise<Result<ResEnsureAppSettings>> {
   // find existing app settings
   const rPrev = await exception2Result(() =>
-    vctx.db
+    vctx.sql.db
       .select()
-      .from(sqlUserSlugBinding)
-      .innerJoin(sqlAppSlugBinding, eq(sqlAppSlugBinding.userSlug, sqlUserSlugBinding.userSlug))
-      .leftJoin(
-        sqlAppSettings,
-        and(eq(sqlAppSettings.userSlug, sqlUserSlugBinding.userSlug), eq(sqlAppSettings.appSlug, req.appSlug))
+      .from(vctx.sql.tables.userSlugBinding)
+      .innerJoin(
+        vctx.sql.tables.appSlugBinding,
+        eq(vctx.sql.tables.appSlugBinding.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
       )
-      .where(and(eq(sqlAppSlugBinding.userSlug, req.userSlug), eq(sqlAppSlugBinding.appSlug, req.appSlug)))
+      .leftJoin(
+        vctx.sql.tables.appSettings,
+        and(
+          eq(vctx.sql.tables.appSettings.userSlug, vctx.sql.tables.userSlugBinding.userSlug),
+          eq(vctx.sql.tables.appSettings.appSlug, req.appSlug)
+        )
+      )
+      .where(
+        and(eq(vctx.sql.tables.appSlugBinding.userSlug, req.userSlug), eq(vctx.sql.tables.appSlugBinding.appSlug, req.appSlug))
+      )
       .get()
   );
   if (rPrev.isErr()) {
@@ -208,8 +215,8 @@ async function sqlUpsert<T extends ActiveEntry, R extends ActiveEntry>(
 async function sqlUpdateSettings(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings, settings: ActiveEntry[]): Promise<Result<void>> {
   const now = new Date().toISOString();
   const rIns = await exception2Result(() =>
-    vctx.db
-      .insert(sqlAppSettings)
+    vctx.sql.db
+      .insert(vctx.sql.tables.appSettings)
       .values({
         userId: res.userId,
         appSlug: res.appSlug,
@@ -219,7 +226,7 @@ async function sqlUpdateSettings(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings
         created: now,
       })
       .onConflictDoUpdate({
-        target: [sqlAppSettings.userId, sqlAppSettings.userSlug, sqlAppSettings.appSlug],
+        target: [vctx.sql.tables.appSettings.userId, vctx.sql.tables.appSettings.userSlug, vctx.sql.tables.appSettings.appSlug],
         set: {
           settings: res.settings.entries,
           updated: now,

@@ -17,7 +17,6 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
-import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { max } from "drizzle-orm/sql";
 import { ensureAppSettings } from "./ensure-app-settings.js";
@@ -67,44 +66,50 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       // // Determine if the caller is the owner
       const callerUserId = req._auth?.verifiedAuth.claims.userId;
 
-      let app: typeof sqlApps.$inferSelect | undefined;
+      let app: typeof vctx.sql.tables.apps.$inferSelect | undefined;
       if (req.fsId) {
-        app = await vctx.db
+        app = await vctx.sql.db
           .select()
-          .from(sqlApps)
-          .where(and(eq(sqlApps.fsId, req.fsId), eq(sqlApps.appSlug, req.appSlug), eq(sqlApps.userSlug, req.userSlug)))
+          .from(vctx.sql.tables.apps)
+          .where(
+            and(
+              eq(vctx.sql.tables.apps.fsId, req.fsId),
+              eq(vctx.sql.tables.apps.appSlug, req.appSlug),
+              eq(vctx.sql.tables.apps.userSlug, req.userSlug)
+            )
+          )
           .get();
       } else {
-        const maxCreatedSub = vctx.db
-          .select({ mode: sqlApps.mode, maxCreated: max(sqlApps.created).as("max_created") })
-          .from(sqlApps)
-          .where(and(eq(sqlApps.userSlug, req.userSlug), eq(sqlApps.appSlug, req.appSlug)))
-          .groupBy(sqlApps.mode)
+        const maxCreatedSub = vctx.sql.db
+          .select({ mode: vctx.sql.tables.apps.mode, maxCreated: max(vctx.sql.tables.apps.created).as("max_created") })
+          .from(vctx.sql.tables.apps)
+          .where(and(eq(vctx.sql.tables.apps.userSlug, req.userSlug), eq(vctx.sql.tables.apps.appSlug, req.appSlug)))
+          .groupBy(vctx.sql.tables.apps.mode)
           .as("mc");
-        const rows = await vctx.db
+        const rows = await vctx.sql.db
           .select({
-            appSlug: sqlApps.appSlug,
-            userId: sqlApps.userId,
-            userSlug: sqlApps.userSlug,
-            releaseSeq: sqlApps.releaseSeq,
-            fsId: sqlApps.fsId,
-            env: sqlApps.env,
-            fileSystem: sqlApps.fileSystem,
-            meta: sqlApps.meta,
-            mode: sqlApps.mode,
-            created: sqlApps.created,
+            appSlug: vctx.sql.tables.apps.appSlug,
+            userId: vctx.sql.tables.apps.userId,
+            userSlug: vctx.sql.tables.apps.userSlug,
+            releaseSeq: vctx.sql.tables.apps.releaseSeq,
+            fsId: vctx.sql.tables.apps.fsId,
+            env: vctx.sql.tables.apps.env,
+            fileSystem: vctx.sql.tables.apps.fileSystem,
+            meta: vctx.sql.tables.apps.meta,
+            mode: vctx.sql.tables.apps.mode,
+            created: vctx.sql.tables.apps.created,
           })
-          .from(sqlApps)
+          .from(vctx.sql.tables.apps)
           .innerJoin(
             maxCreatedSub,
             and(
-              eq(sqlApps.mode, maxCreatedSub.mode),
-              eq(sqlApps.created, maxCreatedSub.maxCreated),
-              eq(sqlApps.userSlug, req.userSlug),
-              eq(sqlApps.appSlug, req.appSlug)
+              eq(vctx.sql.tables.apps.mode, maxCreatedSub.mode),
+              eq(vctx.sql.tables.apps.created, maxCreatedSub.maxCreated),
+              eq(vctx.sql.tables.apps.userSlug, req.userSlug),
+              eq(vctx.sql.tables.apps.appSlug, req.appSlug)
             )
           )
-          .orderBy(sqlApps.mode) // "dev" < "production" → last = production wins
+          .orderBy(vctx.sql.tables.apps.mode) // "dev" < "production" → last = production wins
           .all();
         app = rows[rows.length - 1];
       }

@@ -14,6 +14,7 @@ import { AppContext, Lazy, LoggerImpl, Result } from "@adviser/cement";
 import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf } from "./types.js";
 import { CFEnv, MsgBase } from "@vibes.diy/api-types";
+import * as sqliteTables from "./sql/vibes-diy-api-schema-sqlite.js";
 import { R2ToS3Api } from "./peers/r2-to-s3api.js";
 import { SuperThis } from "@fireproof/core-types-base";
 
@@ -92,6 +93,18 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
   return createAppContext({
     sthis,
     ...cfDrizzle(env, ctx.drizzle),
+    tables: {
+      assets: sqliteTables.sqlAssets,
+      userSlugBinding: sqliteTables.sqlUserSlugBinding,
+      appSlugBinding: sqliteTables.sqlAppSlugBinding,
+      apps: sqliteTables.sqlApps,
+      chatContexts: sqliteTables.sqlChatContexts,
+      chatSections: sqliteTables.sqlChatSections,
+      promptContexts: sqliteTables.sqlPromptContexts,
+      applicationChats: sqliteTables.sqlApplicationChats,
+      userSettings: sqliteTables.sqlUserSettings,
+      appSettings: sqliteTables.sqlAppSettings,
+    },
     s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis),
     // db: ctx.drizzle ?? drizzle(env.DB),
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,

@@ -1,4 +1,5 @@
 import { SuperThis } from "@fireproof/core-types-base";
+import type * as sqlite from "./sql/vibes-diy-api-schema-sqlite.js";
 import { FPApiToken } from "@fireproof/core-types-protocols-dashboard";
 import { VibesSqlite } from "./create-handler.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
@@ -6,6 +7,19 @@ import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { Logger, Result } from "@adviser/cement";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { FetchResult, LLMHeaders, MsgBase, RawEmailWithoutFrom, VibesFPApiParameters } from "@vibes.diy/api-types";
+
+export interface VibesApiTables {
+  assets: typeof sqlite.sqlAssets;
+  userSlugBinding: typeof sqlite.sqlUserSlugBinding;
+  appSlugBinding: typeof sqlite.sqlAppSlugBinding;
+  apps: typeof sqlite.sqlApps;
+  chatContexts: typeof sqlite.sqlChatContexts;
+  chatSections: typeof sqlite.sqlChatSections;
+  promptContexts: typeof sqlite.sqlPromptContexts;
+  applicationChats: typeof sqlite.sqlApplicationChats;
+  userSettings: typeof sqlite.sqlUserSettings;
+  appSettings: typeof sqlite.sqlAppSettings;
+}
 
 export interface StorageResult {
   cid: string;
@@ -27,7 +41,10 @@ export interface CfCacheIf {
 }
 export interface VibesApiSQLCtx {
   sthis: SuperThis;
-  db: VibesSqlite;
+  sql: {
+    db: VibesSqlite;
+    tables: VibesApiTables;
+  };
   fpCloud: {
     url: string;
     secretToken: string;
