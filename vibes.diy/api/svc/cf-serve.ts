@@ -94,7 +94,7 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
     ensureSuperThis({
       logger: new LoggerImpl(),
     });
-  console.log("Creating app context with netHash:", netHash());
+  console.log("Creating app context with netHash:", netHash(), env.DB_FLAVOUR, env.NEON_DATABASE_URL);
   return createAppContext({
     sthis,
     ...cfDrizzle(env, ctx.drizzle),
