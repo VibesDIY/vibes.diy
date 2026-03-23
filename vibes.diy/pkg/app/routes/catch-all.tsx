@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { gridBackground, cx } from "@vibes.diy/base";
 import VibesDIYLogo from "../components/VibesDIYLogo.js";
 
 export function meta({ location }: { location: { pathname: string } }) {
@@ -42,7 +43,7 @@ export default function CatchAll() {
 
 function NotFoundPage() {
   return (
-    <div className="grid-background flex min-h-screen flex-col items-center justify-center">
+    <div className={cx(gridBackground, "flex min-h-screen flex-col items-center justify-center")}>
       {/* Film strip holes */}
       <div className="absolute top-0 bottom-0 left-4 flex w-6 flex-col justify-center space-y-4">
         {Array.from({ length: 20 }).map((_, i) => (

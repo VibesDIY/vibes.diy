@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { BrutalistCard, VibesSwitch } from "@vibes.diy/base";
+import { BrutalistCard, VibesSwitch, gridBackground, cx } from "@vibes.diy/base";
 import SessionSidebar from "./SessionSidebar.js";
 
 interface BrutalistLayoutProps {
@@ -21,7 +21,7 @@ export default function BrutalistLayout({ children, title, subtitle, headerActio
   }, []);
 
   return (
-    <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
+    <div className={cx(gridBackground, "page-grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full")}>
       {/* SessionSidebar */}
       <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} />
 

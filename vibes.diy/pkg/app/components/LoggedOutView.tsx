@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useClerk } from "@clerk/react";
 import { trackAuthClick } from "../utils/analytics.js";
-import { useMobile, LabelContainer, VibesButton, VibesSwitch } from "@vibes.diy/base";
+import { useMobile, LabelContainer, VibesButton, VibesSwitch, gridBackground, cx } from "@vibes.diy/base";
 
 interface LoggedOutViewProps {
   /** Whether Clerk has finished loading */
@@ -51,7 +51,7 @@ export default function LoggedOutView({ isLoaded = true, trackingEventName }: Lo
   // Show loading state with grid background
   if (!isLoaded) {
     return (
-      <div className="grid-background flex h-screen w-screen items-center justify-center">
+      <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
         <div className="text-center">
           <p className="text-lg" style={{ color: "var(--vibes-text-primary)" }}>
             Loading...
@@ -62,7 +62,7 @@ export default function LoggedOutView({ isLoaded = true, trackingEventName }: Lo
   }
 
   return (
-    <div className="grid-background flex h-screen w-screen items-center justify-center relative">
+    <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center relative")}>
       {/* Center content */}
       <div className="text-center px-8 w-full">
         <LabelContainer label="Login">

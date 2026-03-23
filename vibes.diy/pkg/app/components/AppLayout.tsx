@@ -1,4 +1,4 @@
-import { VibesSwitch } from "@vibes.diy/base";
+import { VibesSwitch, gridBackground, cx } from "@vibes.diy/base";
 import React from "react";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import type { ReactNode } from "react";
@@ -36,7 +36,7 @@ export default function AppLayout({
   useDocumentTitle("vibes.diy");
 
   return (
-    <div className="page-grid-background grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden">
+    <div className={cx(gridBackground, "page-grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden")}>
       {/* Content with relative positioning to appear above the background */}
       <div
         className={`flex w-full flex-col ${fullWidthChat ? "md:w-full" : "md:w-1/3"} ${
