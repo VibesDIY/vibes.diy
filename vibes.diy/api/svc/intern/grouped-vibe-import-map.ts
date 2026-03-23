@@ -12,6 +12,7 @@ export const lockedVersions = {
   TAILWINDCSS: "4.1.18",
   REACT_ROUTER: "7.13.0",
   AG_GRID: "35.1.0",
+  EMOTION_CSS: "11.13.5",
 };
 
 export const lockedGroupsVersions = {
@@ -73,6 +74,9 @@ export const lockedGroupsVersions = {
   "react-router": {
     "react-router": "version:REACT_ROUTER,deps:react",
     "react-router-dom": "version:REACT_ROUTER,deps:react",
+  },
+  "emotion": {
+    "@emotion/css": "version:EMOTION_CSS",
   },
   "vibe-runtime": {
     "@vibes.diy/base": "privateNpm:",
