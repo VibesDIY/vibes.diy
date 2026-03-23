@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm/sql/expressions";
-import { sqlChatContexts } from "../sql/vibes-diy-api-schema.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
 import { ensureUserSlug, ensureAppSlug } from "./ensure-slug-binding.js";
@@ -20,22 +19,22 @@ export async function ensureChatId(
   let chatId: string | undefined;
   let condition;
   if (req.chatId) {
-    condition = eq(sqlChatContexts.chatId, req.chatId);
+    condition = eq(ctx.sql.tables.chatContexts.chatId, req.chatId);
   } else {
     if (req.userSlug && req.appSlug) {
-      condition = and(eq(sqlChatContexts.userSlug, req.userSlug), eq(sqlChatContexts.appSlug, req.appSlug));
+      condition = and(eq(ctx.sql.tables.chatContexts.userSlug, req.userSlug), eq(ctx.sql.tables.chatContexts.appSlug, req.appSlug));
     }
     if (req.appSlug) {
-      condition = eq(sqlChatContexts.appSlug, req.appSlug);
+      condition = eq(ctx.sql.tables.chatContexts.appSlug, req.appSlug);
     }
   }
   if (condition) {
     // console.log("openChat looking for Existing chat with condition", req);
     const rResult = await exception2Result(() =>
-      ctx.db
+      ctx.sql.db
         .select()
-        .from(sqlChatContexts)
-        .where(and(condition, eq(sqlChatContexts.userId, req._auth.verifiedAuth.claims.userId)))
+        .from(ctx.sql.tables.chatContexts)
+        .where(and(condition, eq(ctx.sql.tables.chatContexts.userId, req._auth.verifiedAuth.claims.userId)))
         .all()
     );
     if (rResult.isErr()) {
@@ -72,8 +71,8 @@ export async function ensureChatId(
     appSlug = resApp.Ok().appSlug;
     if (!chatId) {
       chatId = ctx.sthis.nextId(12).str;
-      await ctx.db
-        .insert(sqlChatContexts)
+      await ctx.sql.db
+        .insert(ctx.sql.tables.chatContexts)
         .values({
           chatId,
           userId: req._auth.verifiedAuth.claims.userId,

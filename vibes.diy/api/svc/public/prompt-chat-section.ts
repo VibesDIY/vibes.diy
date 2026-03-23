@@ -31,13 +31,7 @@ import { type } from "arktype";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
-import {
-  sqlApplicationChats,
-  sqlChatContexts,
-  SqlChatSection,
-  sqlChatSections,
-  sqlPromptContexts,
-} from "../sql/vibes-diy-api-schema.js";
+import type { SqlChatSection } from "../sql/vibes-diy-api-schema-sqlite.js";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import {
   createStatsCollector,
@@ -117,8 +111,8 @@ async function appendBlockEvent({
   if (emitMode === "store") {
     // Store block in DB
     const rUpdate = await exception2Result(() =>
-      vctx.db
-        .insert(sqlChatSections)
+      vctx.sql.db
+        .insert(vctx.sql.tables.chatSections)
         .values({
           chatId: req.chatId,
           promptId,
@@ -239,8 +233,8 @@ export async function handlePromptContext({
   // update prompt context with usage and fsRef into sections BlockEndMsg
   value.fsRef = fsRef.toValue();
   const rSql = await exception2Result(() =>
-    vctx.db
-      .insert(sqlPromptContexts)
+    vctx.sql.db
+      .insert(vctx.sql.tables.promptContexts)
       .values({
         userId: req._auth.verifiedAuth.claims.userId,
         chatId: req.chatId,
@@ -267,7 +261,7 @@ export async function handlePromptContext({
     input: sections,
     splitCondition: (secChunk) => secChunk.length >= 20,
     commit: async (secChunk) => {
-      await exception2Result(() => vctx.db.insert(sqlChatSections).values(secChunk).run());
+      await exception2Result(() => vctx.sql.db.insert(vctx.sql.tables.chatSections).values(secChunk).run());
       // console.log("Inserted block section into DB for promptId:", secChunk, rSections);
     },
   });
@@ -285,11 +279,11 @@ async function injectSystemPrompt(
     messages: ChatMessage[];
   }>
 > {
-  const sections = await vctx.db
+  const sections = await vctx.sql.db
     .select()
-    .from(sqlChatSections)
-    .where(eq(sqlChatSections.chatId, chatId))
-    .orderBy(sqlChatSections.created)
+    .from(vctx.sql.tables.chatSections)
+    .where(eq(vctx.sql.tables.chatSections.chatId, chatId))
+    .orderBy(vctx.sql.tables.chatSections.created)
     .all();
   const userMessages: ChatMessage[] = [];
   for (const rowSection of sections) {
@@ -383,10 +377,15 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
       let resChat!: { appSlug: string; userSlug: string; mode: "creation" | "application" };
       if (isReqCreationPromptChatSection(orig)) {
-        const iResChat = await vctx.db
+        const iResChat = await vctx.sql.db
           .select()
-          .from(sqlChatContexts)
-          .where(and(eq(sqlChatContexts.chatId, req.chatId), eq(sqlChatContexts.userId, req._auth.verifiedAuth.claims.userId)))
+          .from(vctx.sql.tables.chatContexts)
+          .where(
+            and(
+              eq(vctx.sql.tables.chatContexts.chatId, req.chatId),
+              eq(vctx.sql.tables.chatContexts.userId, req._auth.verifiedAuth.claims.userId)
+            )
+          )
           .get();
         if (!iResChat) {
           return Result.Err(`Creation Chat ID ${req.chatId} not found`);
@@ -394,11 +393,14 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         resChat = { ...iResChat, mode: "creation" };
       }
       if (isReqPromptApplicationChatSection(orig)) {
-        const iResChat = await vctx.db
+        const iResChat = await vctx.sql.db
           .select()
-          .from(sqlApplicationChats)
+          .from(vctx.sql.tables.applicationChats)
           .where(
-            and(eq(sqlApplicationChats.userId, req._auth.verifiedAuth.claims.userId), eq(sqlApplicationChats.chatId, req.chatId))
+            and(
+              eq(vctx.sql.tables.applicationChats.userId, req._auth.verifiedAuth.claims.userId),
+              eq(vctx.sql.tables.applicationChats.chatId, req.chatId)
+            )
           )
           .get();
         if (!iResChat) {

@@ -13,7 +13,6 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
-import { sqlUserSettings } from "../sql/vibes-diy-api-schema.js";
 import { eq } from "drizzle-orm/sql/expressions";
 
 export async function ensureUserSettings(
@@ -21,10 +20,14 @@ export async function ensureUserSettings(
   req: ReqWithVerifiedAuth<ReqEnsureUserSettings>
 ): Promise<Result<ResEnsureUserSettings>> {
   const userId = req._auth.verifiedAuth.claims.userId;
-  const existing = await vctx.db.select().from(sqlUserSettings).where(eq(sqlUserSettings.userId, userId)).get();
+  const existing = await vctx.sql.db
+    .select()
+    .from(vctx.sql.tables.userSettings)
+    .where(eq(vctx.sql.tables.userSettings.userId, userId))
+    .get();
   const now = new Date().toISOString();
   if (!existing) {
-    await vctx.db.insert(sqlUserSettings).values({
+    await vctx.sql.db.insert(vctx.sql.tables.userSettings).values({
       userId,
       settings: [],
       updated: now,
@@ -41,13 +44,13 @@ export async function ensureUserSettings(
   if (settings instanceof type.errors) {
     return Result.Err(`Failed to parse merged user settings: ${settings.summary}`);
   }
-  await vctx.db
-    .update(sqlUserSettings)
+  await vctx.sql.db
+    .update(vctx.sql.tables.userSettings)
     .set({
       settings,
       updated: now,
     })
-    .where(eq(sqlUserSettings.userId, userId))
+    .where(eq(vctx.sql.tables.userSettings.userId, userId))
     .run();
 
   return Result.Ok({

@@ -12,22 +12,21 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
-import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { eq, and } from "drizzle-orm/sql/expressions";
 
 export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userId: string): Promise<Result<ResSetModeFs>> {
   if (req.mode === "production") {
     // Reset any existing production row for this app back to dev first
     const rReset = await exception2Result(() =>
-      vctx.db
-        .update(sqlApps)
+      vctx.sql.db
+        .update(vctx.sql.tables.apps)
         .set({ mode: "dev" })
         .where(
           and(
-            eq(sqlApps.userId, userId),
-            eq(sqlApps.userSlug, req.userSlug),
-            eq(sqlApps.appSlug, req.appSlug),
-            eq(sqlApps.mode, "production")
+            eq(vctx.sql.tables.apps.userId, userId),
+            eq(vctx.sql.tables.apps.userSlug, req.userSlug),
+            eq(vctx.sql.tables.apps.appSlug, req.appSlug),
+            eq(vctx.sql.tables.apps.mode, "production")
           )
         )
         .run()
@@ -37,15 +36,15 @@ export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userI
     }
   }
   const rUpdate = await exception2Result(() =>
-    vctx.db
-      .update(sqlApps)
+    vctx.sql.db
+      .update(vctx.sql.tables.apps)
       .set({ mode: req.mode })
       .where(
         and(
-          eq(sqlApps.userId, userId),
-          eq(sqlApps.userSlug, req.userSlug),
-          eq(sqlApps.appSlug, req.appSlug),
-          eq(sqlApps.fsId, req.fsId)
+          eq(vctx.sql.tables.apps.userId, userId),
+          eq(vctx.sql.tables.apps.userSlug, req.userSlug),
+          eq(vctx.sql.tables.apps.appSlug, req.appSlug),
+          eq(vctx.sql.tables.apps.fsId, req.fsId)
         )
       )
       .run()

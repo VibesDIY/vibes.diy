@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm/sql/expressions";
-import { sqlApplicationChats, sqlAppSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
 import { PromptAndBlockMsgs, ReqOpenChat, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
@@ -25,18 +24,18 @@ export async function ensureApplicationChatId({
   const userSlug = req.userSlug;
   if (chatId) {
     const condition = [
-      eq(sqlApplicationChats.userId, req._auth.verifiedAuth.claims.userId),
-      eq(sqlApplicationChats.chatId, chatId),
+      eq(ctx.sql.tables.applicationChats.userId, req._auth.verifiedAuth.claims.userId),
+      eq(ctx.sql.tables.applicationChats.chatId, chatId),
     ];
     const rResult = await exception2Result(() =>
-      ctx.db
+      ctx.sql.db
         .select()
-        .from(sqlApplicationChats)
+        .from(ctx.sql.tables.applicationChats)
         .innerJoin(
-          sqlAppSlugBinding,
+          ctx.sql.tables.appSlugBinding,
           and(
-            eq(sqlAppSlugBinding.appSlug, sqlApplicationChats.appSlug),
-            eq(sqlAppSlugBinding.userSlug, sqlApplicationChats.userSlug)
+            eq(ctx.sql.tables.appSlugBinding.appSlug, ctx.sql.tables.applicationChats.appSlug),
+            eq(ctx.sql.tables.appSlugBinding.userSlug, ctx.sql.tables.applicationChats.userSlug)
           )
         )
         .where(and(...condition))
@@ -66,10 +65,10 @@ export async function ensureApplicationChatId({
     }
   }
   const rHasAppUserSlug = await exception2Result(() =>
-    ctx.db
+    ctx.sql.db
       .select()
-      .from(sqlAppSlugBinding)
-      .where(and(eq(sqlAppSlugBinding.appSlug, appSlug), eq(sqlAppSlugBinding.userSlug, userSlug)))
+      .from(ctx.sql.tables.appSlugBinding)
+      .where(and(eq(ctx.sql.tables.appSlugBinding.appSlug, appSlug), eq(ctx.sql.tables.appSlugBinding.userSlug, userSlug)))
       .get()
   );
   if (rHasAppUserSlug.isErr()) {
@@ -88,7 +87,7 @@ export async function ensureApplicationChatId({
     blocks: [],
     created: created.toISOString(),
   };
-  const rInsert = await exception2Result(async () => ctx.db.insert(sqlApplicationChats).values(value));
+  const rInsert = await exception2Result(async () => ctx.sql.db.insert(ctx.sql.tables.applicationChats).values(value));
   if (rInsert.isErr()) {
     return Result.Err(`Error Creating new app: ${rInsert.Err().message}`);
   }

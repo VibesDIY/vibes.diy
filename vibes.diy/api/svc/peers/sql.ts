@@ -1,6 +1,6 @@
 import { Option, URI, uint8array2stream, exception2Result, concatUint8, Result } from "@adviser/cement";
 import { VibesSqlite } from "../create-handler.js";
-import { sqlAssets } from "../sql/vibes-diy-api-schema.js";
+import type { VibesApiTables } from "../types.js";
 import { eq } from "drizzle-orm/sql/expressions";
 import { Cider, PeerStreamWithCommit, PeerWithCommit } from "../intern/ensure-storage.js";
 import { FetchResult } from "@vibes.diy/api-types";
@@ -34,7 +34,7 @@ class SQLitePeerStream implements PeerStreamWithCommit {
     const { cid: assetID } = await this.owner.cider.getCID();
     const res = await exception2Result(() =>
       this.owner.db
-        .insert(sqlAssets)
+        .insert(this.owner.assets)
         .values({
           assetId: assetID,
           content: concatUint8(...this.chunks),
@@ -54,10 +54,12 @@ class SQLitePeerStream implements PeerStreamWithCommit {
 
 export class SQLitePeer implements PeerWithCommit {
   readonly db: VibesSqlite;
+  readonly assets: VibesApiTables["assets"];
   readonly cider: Cider;
   readonly cutoffSize: number;
-  constructor(db: VibesSqlite, cider: Cider, cutoffSize: number) {
+  constructor(db: VibesSqlite, assets: VibesApiTables["assets"], cider: Cider, cutoffSize: number) {
     this.db = db;
+    this.assets = assets;
     this.cider = cider;
     this.cutoffSize = cutoffSize;
   }
@@ -69,8 +71,10 @@ export class SQLitePeer implements PeerWithCommit {
 
 export class SQLitePeerFetch {
   readonly db: VibesSqlite;
-  constructor(db: VibesSqlite) {
+  readonly assets: VibesApiTables["assets"];
+  constructor(db: VibesSqlite, assets: VibesApiTables["assets"]) {
     this.db = db;
+    this.assets = assets;
   }
   async fetch(url: URI): Promise<Option<FetchResult>> {
     if (!SQL_PEER_PROTOCOLS.includes(url.protocol)) {
@@ -78,7 +82,7 @@ export class SQLitePeerFetch {
     }
     // table name in sql
     const assetId = url.pathname.slice("Assets/".length);
-    const rAsset = await exception2Result(() => this.db.select().from(sqlAssets).where(eq(sqlAssets.assetId, assetId)).get());
+    const rAsset = await exception2Result(() => this.db.select().from(this.assets).where(eq(this.assets.assetId, assetId)).get());
     if (rAsset.isErr()) {
       return Option.Some({
         type: "fetch.err",

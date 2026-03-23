@@ -10,7 +10,6 @@ import {
 } from "@adviser/cement";
 import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-utils.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { sqlApps } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm/sql/expressions";
 import {
   FetchResult,
@@ -205,31 +204,31 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
 
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
     // console.log("servEntryPoint triggered with URL:", ctx.validated.url);
-    let fs: typeof sqlApps.$inferSelect | undefined;
+    let fs: typeof vctx.sql.tables.apps.$inferSelect | undefined;
     if (ctx.validated.fsId) {
-      fs = await vctx.db
+      fs = await vctx.sql.db
         .select()
-        .from(sqlApps)
+        .from(vctx.sql.tables.apps)
         .where(
           and(
-            eq(sqlApps.userSlug, ctx.validated.userSlug),
-            eq(sqlApps.appSlug, ctx.validated.appSlug),
-            eq(sqlApps.fsId, ctx.validated.fsId)
+            eq(vctx.sql.tables.apps.userSlug, ctx.validated.userSlug),
+            eq(vctx.sql.tables.apps.appSlug, ctx.validated.appSlug),
+            eq(vctx.sql.tables.apps.fsId, ctx.validated.fsId)
           )
         )
         .get();
     } else {
-      fs = await vctx.db
+      fs = await vctx.sql.db
         .select()
-        .from(sqlApps)
+        .from(vctx.sql.tables.apps)
         .where(
           and(
-            eq(sqlApps.userSlug, ctx.validated.userSlug),
-            eq(sqlApps.appSlug, ctx.validated.appSlug),
-            eq(sqlApps.mode, "production")
+            eq(vctx.sql.tables.apps.userSlug, ctx.validated.userSlug),
+            eq(vctx.sql.tables.apps.appSlug, ctx.validated.appSlug),
+            eq(vctx.sql.tables.apps.mode, "production")
           )
         )
-        .orderBy(desc(sqlApps.releaseSeq))
+        .orderBy(desc(vctx.sql.tables.apps.releaseSeq))
         .limit(1)
         .get();
       // inject fsId into validated for further use

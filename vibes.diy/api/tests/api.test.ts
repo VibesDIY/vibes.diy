@@ -12,8 +12,8 @@ import {
   VibesApiSQLCtx,
   vibesMsgEvento,
   WSSendProvider,
-  sql,
 } from "@vibes.diy/api-svc";
+import * as sqliteTables from "@vibes.diy/api-svc/sql/vibes-diy-api-schema-sqlite.js";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { BlockEndMsg, BlockMsgs, isBlockStreamMsg, isPromptBlockEnd, PromptMsgs } from "@vibes.diy/call-ai-v2";
 import { PromptAndBlockMsgs, ReqPromptChatSection, ReqWithVerifiedAuth, SectionEvent } from "@vibes.diy/api-types";
@@ -89,7 +89,7 @@ describe("VibesDiyApi", () => {
         {
           appCtx: appCtx.appCtx,
           cache: noopCache,
-          drizzle: appCtx.vibesCtx.db,
+          drizzle: appCtx.vibesCtx.sql.db,
           webSocket: {
             connections: new Set(),
             webSocketPair: () => ({
@@ -1247,15 +1247,14 @@ describe("VibesDiyApi", () => {
       // console.log("handlePromptContext result:", x.Err());
       expect(pctx.isOk()).toBe(true);
 
-      const { sqlApps } = sql;
-      const fs = await vctx.db
+      const fs = await vctx.sql.db
         .select()
-        .from(sqlApps)
+        .from(sqliteTables.sqlApps)
         .where(
           and(
-            eq(sqlApps.appSlug, "exampleApp"),
-            eq(sqlApps.userSlug, "exampleUser"),
-            eq(sqlApps.fsId, pctx.Ok().fsRef.Unwrap().fsId)
+            eq(sqliteTables.sqlApps.appSlug, "exampleApp"),
+            eq(sqliteTables.sqlApps.userSlug, "exampleUser"),
+            eq(sqliteTables.sqlApps.fsId, pctx.Ok().fsRef.Unwrap().fsId)
           )
         )
         .get();

@@ -2,6 +2,7 @@ import puppeteer from "@cloudflare/puppeteer";
 import { CFEnv, EvtNewFsId, isEvtNewFsId, isMsgBase, msgBase } from "@vibes.diy/api-types";
 import { R2ToS3Api, storeScreenshot } from "@vibes.diy/api-svc";
 import { cfDrizzle } from "@vibes.diy/api-svc/cf-serve.js";
+import * as sqliteTables from "@vibes.diy/api-svc/sql/vibes-diy-api-schema-sqlite.js";
 import { type } from "arktype";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { LoggerImpl } from "@adviser/cement";
@@ -67,7 +68,14 @@ export async function processScreenShotEvent(message: unknown, env: CFEnv): Prom
     const { db } = await cfDrizzle(env);
     const sthis = ensureSuperThis({ logger: new LoggerImpl() });
 
-    const result = await storeScreenshot({ db, s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis) }, payload.fsId, screenshotData);
+    const result = await storeScreenshot(
+      {
+        sql: { db, tables: { apps: sqliteTables.sqlApps, assets: sqliteTables.sqlAssets } },
+        s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis),
+      },
+      payload.fsId,
+      screenshotData
+    );
 
     if (result.isErr()) {
       console.error(`Failed to store screenshot: ${result.Err()}`);

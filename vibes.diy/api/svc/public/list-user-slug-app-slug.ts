@@ -13,7 +13,6 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
-import { sqlAppSlugBinding, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import { eq, and, desc } from "drizzle-orm/sql/expressions";
 import type { SQL } from "drizzle-orm/sql";
 
@@ -47,26 +46,29 @@ export const listUserSlugAppSlugEvento: EventoHandler<
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      const conditions: SQL[] = [eq(sqlUserSlugBinding.userId, userId)];
+      const conditions: SQL[] = [eq(vctx.sql.tables.userSlugBinding.userId, userId)];
       if (req.userSlug) {
-        conditions.push(eq(sqlUserSlugBinding.userSlug, req.userSlug));
+        conditions.push(eq(vctx.sql.tables.userSlugBinding.userSlug, req.userSlug));
       }
       if (req.appSlug) {
-        conditions.push(eq(sqlAppSlugBinding.appSlug, req.appSlug));
+        conditions.push(eq(vctx.sql.tables.appSlugBinding.appSlug, req.appSlug));
       }
 
-      const rows = await vctx.db
+      const rows = await vctx.sql.db
         .select({
-          userSlug: sqlUserSlugBinding.userSlug,
-          userId: sqlUserSlugBinding.userId,
-          appSlug: sqlAppSlugBinding.appSlug,
-          appCreated: sqlAppSlugBinding.created,
-          userCreated: sqlUserSlugBinding.created,
+          userSlug: vctx.sql.tables.userSlugBinding.userSlug,
+          userId: vctx.sql.tables.userSlugBinding.userId,
+          appSlug: vctx.sql.tables.appSlugBinding.appSlug,
+          appCreated: vctx.sql.tables.appSlugBinding.created,
+          userCreated: vctx.sql.tables.userSlugBinding.created,
         })
-        .from(sqlUserSlugBinding)
-        .leftJoin(sqlAppSlugBinding, eq(sqlAppSlugBinding.userSlug, sqlUserSlugBinding.userSlug))
+        .from(vctx.sql.tables.userSlugBinding)
+        .leftJoin(
+          vctx.sql.tables.appSlugBinding,
+          eq(vctx.sql.tables.appSlugBinding.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
+        )
         .where(and(...conditions))
-        .orderBy(desc(sqlUserSlugBinding.created), desc(sqlAppSlugBinding.created))
+        .orderBy(desc(vctx.sql.tables.userSlugBinding.created), desc(vctx.sql.tables.appSlugBinding.created))
         .all();
 
       // Group by userSlug

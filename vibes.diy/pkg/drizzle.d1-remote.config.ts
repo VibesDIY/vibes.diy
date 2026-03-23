@@ -74,7 +74,7 @@ if (!databaseId) {
 
 export default defineConfig({
   dialect: "sqlite",
-  schema: "./node_modules/@vibes.diy/api-svc/sql/vibes-diy-api-schema.ts",
+  schema: "./node_modules/@vibes.diy/api-svc/sql/vibes-diy-api-schema-sqlite.ts",
   out: "./dist",
   driver: "d1-http",
   dbCredentials: {

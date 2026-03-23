@@ -3,7 +3,6 @@ import { VibesApiSQLCtx } from "../types.js";
 import { generate } from "random-words";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { sql } from "drizzle-orm/sql";
-import { sqlAppSlugBinding, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
 import {
   AppSlugOptUserSlug,
   AppSlugUserSlug,
@@ -41,13 +40,17 @@ async function writeUserSlugBinding(
         tenant: string;
       }>
     > => {
-      const existing = await ctx.db.select().from(sqlUserSlugBinding).where(eq(sqlUserSlugBinding.userId, userId)).all();
+      const existing = await ctx.sql.db
+        .select()
+        .from(ctx.sql.tables.userSlugBinding)
+        .where(eq(ctx.sql.tables.userSlugBinding.userId, userId))
+        .all();
       if (existing.length >= ctx.params.maxUserSlugPerUserId) {
         return Result.Err("maximum userSlug bindings reached for this userId");
       }
       const tenant = ctx.sthis.nextId(12).str;
-      await ctx.db
-        .insert(sqlUserSlugBinding)
+      await ctx.sql.db
+        .insert(ctx.sql.tables.userSlugBinding)
         .values({
           userId,
           tenant,
@@ -91,7 +94,11 @@ export async function ensureUserSlug(
           if (tryUserSlug.length > 30) {
             continue;
           }
-          const existing = await ctx.db.select().from(sqlUserSlugBinding).where(eq(sqlUserSlugBinding.userSlug, tryUserSlug)).get();
+          const existing = await ctx.sql.db
+            .select()
+            .from(ctx.sql.tables.userSlugBinding)
+            .where(eq(ctx.sql.tables.userSlugBinding.userSlug, tryUserSlug))
+            .get();
           if (!existing) {
             userSlug = tryUserSlug;
             break;
@@ -102,10 +109,15 @@ export async function ensureUserSlug(
         }
         return writeUserSlugBinding(ctx, binding.userId, userSlug);
       }
-      const existing = await ctx.db
+      const existing = await ctx.sql.db
         .select()
-        .from(sqlUserSlugBinding)
-        .where(and(eq(sqlUserSlugBinding.userId, binding.userId), eq(sqlUserSlugBinding.userSlug, binding.userSlug)))
+        .from(ctx.sql.tables.userSlugBinding)
+        .where(
+          and(
+            eq(ctx.sql.tables.userSlugBinding.userId, binding.userId),
+            eq(ctx.sql.tables.userSlugBinding.userSlug, binding.userSlug)
+          )
+        )
         .get();
       if (!existing) {
         return writeUserSlugBinding(ctx, binding.userId, binding.userSlug);
@@ -136,17 +148,20 @@ async function writeAppSlugBinding(
         appSlug: string;
       }>
     > => {
-      const [{ count }] = await ctx.db
+      const [{ count }] = await ctx.sql.db
         .select({ count: sql<number>`count(*)` })
-        .from(sqlUserSlugBinding)
-        .innerJoin(sqlAppSlugBinding, eq(sqlUserSlugBinding.userSlug, sqlAppSlugBinding.userSlug))
-        .where(eq(sqlUserSlugBinding.userId, userId));
+        .from(ctx.sql.tables.userSlugBinding)
+        .innerJoin(
+          ctx.sql.tables.appSlugBinding,
+          eq(ctx.sql.tables.userSlugBinding.userSlug, ctx.sql.tables.appSlugBinding.userSlug)
+        )
+        .where(eq(ctx.sql.tables.userSlugBinding.userId, userId));
       if (count >= ctx.params.maxAppSlugPerUserId) {
         return Result.Err("maximum appSlug bindings reached for this userId");
       }
       const ledger = ctx.sthis.nextId(12).str;
-      await ctx.db
-        .insert(sqlAppSlugBinding)
+      await ctx.sql.db
+        .insert(ctx.sql.tables.appSlugBinding)
         .values({
           appSlug,
           userSlug,
@@ -190,7 +205,11 @@ export async function ensureAppSlug(
           if (tryAppSlug.length > 30) {
             continue;
           }
-          const existing = await ctx.db.select().from(sqlAppSlugBinding).where(eq(sqlAppSlugBinding.appSlug, tryAppSlug)).get();
+          const existing = await ctx.sql.db
+            .select()
+            .from(ctx.sql.tables.appSlugBinding)
+            .where(eq(ctx.sql.tables.appSlugBinding.appSlug, tryAppSlug))
+            .get();
           if (!existing) {
             appSlug = tryAppSlug;
             break;
@@ -201,11 +220,14 @@ export async function ensureAppSlug(
         }
         return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, appSlug);
       } else {
-        const existing = await ctx.db
+        const existing = await ctx.sql.db
           .select()
-          .from(sqlAppSlugBinding)
-          .innerJoin(sqlUserSlugBinding, eq(sqlAppSlugBinding.userSlug, sqlUserSlugBinding.userSlug))
-          .where(and(eq(sqlAppSlugBinding.appSlug, binding.appSlug)))
+          .from(ctx.sql.tables.appSlugBinding)
+          .innerJoin(
+            ctx.sql.tables.userSlugBinding,
+            eq(ctx.sql.tables.appSlugBinding.userSlug, ctx.sql.tables.userSlugBinding.userSlug)
+          )
+          .where(and(eq(ctx.sql.tables.appSlugBinding.appSlug, binding.appSlug)))
           .get();
         if (!existing) {
           return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, binding.appSlug);
