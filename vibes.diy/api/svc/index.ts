@@ -13,3 +13,4 @@ export * from "./peers/r2-to-s3api.js";
 export * from "./intern/application-settings.js";
 export * from "./public/prompt-chat-section.js";
 export * from "./noop-cache.js";
+export * from "./intern/ensure-slug-binding.js";

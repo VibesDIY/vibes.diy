@@ -47,6 +47,15 @@ async function writeUserSlugBinding(
       if (existing.length >= ctx.params.maxUserSlugPerUserId) {
         return Result.Err("maximum userSlug bindings reached for this userId");
       }
+      const slugOwner = await ctx.sql.db
+        .select()
+        .from(ctx.sql.tables.userSlugBinding)
+        .where(eq(ctx.sql.tables.userSlugBinding.userSlug, userSlug))
+        .limit(1)
+        .then((r) => r[0]);
+      if (slugOwner && slugOwner.userId !== userId) {
+        return Result.Err(`userSlug "${userSlug}" is owned by another user`);
+      }
       const tenant = ctx.sthis.nextId(12).str;
       await ctx.sql.db
         .insert(ctx.sql.tables.userSlugBinding)
