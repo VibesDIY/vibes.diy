@@ -68,7 +68,7 @@ export async function storeScreenshot(
   });
 
   // Update the app's meta in the database
-  await db.update(tables.apps).set({ meta }).where(eq(tables.apps.fsId, fsId)).run();
+  await db.update(tables.apps).set({ meta }).where(eq(tables.apps.fsId, fsId));
 
   return Result.Ok({
     fsId,

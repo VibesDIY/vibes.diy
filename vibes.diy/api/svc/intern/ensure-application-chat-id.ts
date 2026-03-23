@@ -39,7 +39,8 @@ export async function ensureApplicationChatId({
           )
         )
         .where(and(...condition))
-        .get()
+        .limit(1)
+        .then((r) => r[0])
     );
     if (rResult.isErr()) {
       return Result.Err(`Failed to query existing application chat: ${rResult.Err().message}`);
@@ -69,7 +70,8 @@ export async function ensureApplicationChatId({
       .select()
       .from(ctx.sql.tables.appSlugBinding)
       .where(and(eq(ctx.sql.tables.appSlugBinding.appSlug, appSlug), eq(ctx.sql.tables.appSlugBinding.userSlug, userSlug)))
-      .get()
+      .limit(1)
+      .then((r) => r[0])
   );
   if (rHasAppUserSlug.isErr()) {
     return Result.Err(`Failed to query app slug binding: ${rHasAppUserSlug.Err().message}`);

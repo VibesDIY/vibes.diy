@@ -13,6 +13,7 @@ export async function setup(project: TestProject) {
   await $`(cd ${root} && VIBES_DIY_TEST_SQL_URL=${dashSQLite} pnpm exec drizzle-kit push --config ./drizzle.libsql.config.ts)`;
 
   project.provide("VIBES_DIY_TEST_SQL_URL" as never, dashSQLite as never);
+  project.provide("DB_FLAVOUR" as never, "sqlite" as never);
   console.log("Provided VIBES_DIY_TEST_SQL_URL:", dashSQLite);
 
   return () => {

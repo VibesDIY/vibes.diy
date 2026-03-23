@@ -35,7 +35,6 @@ export async function ensureChatId(
         .select()
         .from(ctx.sql.tables.chatContexts)
         .where(and(condition, eq(ctx.sql.tables.chatContexts.userId, req._auth.verifiedAuth.claims.userId)))
-        .all()
     );
     if (rResult.isErr()) {
       return Result.Err(`Failed to query existing chat: ${rResult.Err().message}`);
@@ -71,16 +70,13 @@ export async function ensureChatId(
     appSlug = resApp.Ok().appSlug;
     if (!chatId) {
       chatId = ctx.sthis.nextId(12).str;
-      await ctx.sql.db
-        .insert(ctx.sql.tables.chatContexts)
-        .values({
-          chatId,
-          userId: req._auth.verifiedAuth.claims.userId,
-          appSlug,
-          userSlug,
-          created: new Date().toISOString(),
-        })
-        .run();
+      await ctx.sql.db.insert(ctx.sql.tables.chatContexts).values({
+        chatId,
+        userId: req._auth.verifiedAuth.claims.userId,
+        appSlug,
+        userSlug,
+        created: new Date().toISOString(),
+      });
     }
   }
   return Result.Ok({ appSlug, userSlug, chatId });

@@ -29,7 +29,6 @@ export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userI
             eq(vctx.sql.tables.apps.mode, "production")
           )
         )
-        .run()
     );
     if (rReset.isErr()) {
       return Result.Err(rReset);
@@ -47,7 +46,6 @@ export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userI
           eq(vctx.sql.tables.apps.fsId, req.fsId)
         )
       )
-      .run()
   );
   if (rUpdate.isErr()) {
     return Result.Err(rUpdate);

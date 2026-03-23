@@ -69,14 +69,50 @@ function monacoTrimLanguagesPlugin() {
   };
 }
 
+async function schemaHash(schemaPath: string): Promise<string> {
+  try {
+    const content = fs.readFileSync(schemaPath);
+    const hashBuffer = await globalThis.crypto.subtle.digest("SHA-256", content);
+    return Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    return "";
+  }
+}
+
 function setupSqlPlugin() {
   return {
     name: "db-init",
     async configureServer() {
-      // This blocks Vite from starting until the promise resolves
-      console.log("Initializing database...");
-      await $`pnpm run drizzle:d1-local`;
-      console.log("Database ready!");
+      const isPg = process.env.DB_FLAVOUR === "pg" && !!process.env.NEON_DATABASE_URL;
+
+      const schemaFile = isPg
+        ? join(import.meta.dirname, "node_modules/@vibes.diy/api-svc/sql/vibes-diy-api-schema-pg.ts")
+        : join(import.meta.dirname, "node_modules/@vibes.diy/api-svc/sql/vibes-diy-api-schema-sqlite.ts");
+      const hashFile = join(import.meta.dirname, "dist", isPg ? ".neon-schema-hash" : ".sqlite-schema-hash");
+
+      const currentHash = await schemaHash(schemaFile);
+      let cachedHash = "";
+      try {
+        cachedHash = fs.readFileSync(hashFile, "utf8").trim();
+      } catch {
+        // no cached hash yet
+      }
+
+      if (currentHash !== cachedHash) {
+        console.log(`[db-init] schema changed, running drizzle push (${isPg ? "neon" : "d1-local"})...`);
+        if (isPg) {
+          await $`pnpm run drizzle:neon`;
+        } else {
+          await $`pnpm run drizzle:d1-local`;
+        }
+        fs.mkdirSync(join(import.meta.dirname, "dist"), { recursive: true });
+        fs.writeFileSync(hashFile, currentHash);
+        console.log("[db-init] database ready!");
+      } else {
+        console.log(`[db-init] schema unchanged, skipping push`);
+      }
     },
   };
 }

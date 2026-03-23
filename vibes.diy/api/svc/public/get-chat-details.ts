@@ -73,8 +73,7 @@ export const getChatDetailsEvento: EventoHandler<
             eq(vctx.sql.tables.chatContexts.appSlug, req.appSlug)
           )
         )
-        .orderBy(desc(vctx.sql.tables.promptContexts.created))
-        .all();
+        .orderBy(desc(vctx.sql.tables.promptContexts.created));
 
       if (rows.length === 0) {
         await ctx.send.send(ctx, {

@@ -24,7 +24,8 @@ export async function ensureUserSettings(
     .select()
     .from(vctx.sql.tables.userSettings)
     .where(eq(vctx.sql.tables.userSettings.userId, userId))
-    .get();
+    .limit(1)
+    .then((r) => r[0]);
   const now = new Date().toISOString();
   if (!existing) {
     await vctx.sql.db.insert(vctx.sql.tables.userSettings).values({
@@ -50,8 +51,7 @@ export async function ensureUserSettings(
       settings,
       updated: now,
     })
-    .where(eq(vctx.sql.tables.userSettings.userId, userId))
-    .run();
+    .where(eq(vctx.sql.tables.userSettings.userId, userId));
 
   return Result.Ok({
     type: "vibes.diy.res-ensure-user-settings",

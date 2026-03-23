@@ -20,8 +20,7 @@ export async function resendChatSectionsPrevMsg(args: ResendChatSectionsPrevMsgA
     .from(vctx.sql.tables.chatSections)
     .where(eq(vctx.sql.tables.chatSections.chatId, chatId))
     // .groupBy(vctx.sql.tables.chatSections.chatId, vctx.sql.tables.chatSections.promptId)
-    .orderBy(vctx.sql.tables.chatSections.created, vctx.sql.tables.chatSections.promptId, vctx.sql.tables.chatSections.blockSeq)
-    .all();
+    .orderBy(vctx.sql.tables.chatSections.created, vctx.sql.tables.chatSections.promptId, vctx.sql.tables.chatSections.blockSeq);
   for (const section of sections) {
     const blocks = PromptAndBlockMsgs.array()(section.blocks);
     if (blocks instanceof type.errors) {
