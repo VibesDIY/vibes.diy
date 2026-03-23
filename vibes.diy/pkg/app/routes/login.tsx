@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { SignIn, useClerk } from "@clerk/react";
 import { useNavigate, useSearchParams } from "react-router";
+import { gridBackground, cx } from "@vibes.diy/base";
 
 export default function LoginPage() {
   const clerk = useClerk();
@@ -15,7 +16,7 @@ export default function LoginPage() {
   }, [clerk.loaded, clerk.isSignedIn, navigate, redirectTo]);
 
   return (
-    <div className="grid-background flex h-screen w-screen items-center justify-center">
+    <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
       <SignIn routing="hash" fallbackRedirectUrl={redirectTo} signUpUrl="/login" />
     </div>
   );

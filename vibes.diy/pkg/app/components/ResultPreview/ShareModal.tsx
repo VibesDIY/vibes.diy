@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { stripesOverlay, cx } from "@vibes.diy/base";
 import { trackPublishClick, trackEvent } from "../../utils/analytics.js";
 import PublishedVibeCard from "../PublishedVibeCard.js";
 
@@ -149,7 +150,7 @@ export function ShareModal({
                   type="button"
                   onClick={handlePublish}
                   disabled={isPublishing}
-                  className={`flex w-full items-center justify-between rounded border border-blue-500 bg-transparent px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20 ${isPublishing ? "animate-gradient-x stripes-overlay animate-pulse" : ""}`}
+                  className={cx("flex w-full items-center justify-between rounded border border-blue-500 bg-transparent px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20", isPublishing && stripesOverlay, isPublishing && "animate-gradient-x animate-pulse")}
                 >
                   <div className="flex items-center">
                     {showUpdateSuccess ? (
@@ -224,7 +225,7 @@ export function ShareModal({
                 type="button"
                 onClick={handlePublish}
                 disabled={isPublishing}
-                className={`flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 px-4 py-2 text-sm font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-violet-500 hover:via-pink-500 hover:to-orange-500 hover:shadow-xl focus:ring-4 focus:ring-violet-400/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 md:text-base dark:from-indigo-400 dark:via-violet-400 dark:to-fuchsia-400 ${isPublishing ? "animate-gradient-x stripes-overlay animate-pulse" : ""}`}
+                className={cx("flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 px-4 py-2 text-sm font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-violet-500 hover:via-pink-500 hover:to-orange-500 hover:shadow-xl focus:ring-4 focus:ring-violet-400/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 md:text-base dark:from-indigo-400 dark:via-violet-400 dark:to-fuchsia-400", isPublishing && stripesOverlay, isPublishing && "animate-gradient-x animate-pulse")}
                 role="menuitem"
               >
                 <span className="flex items-center gap-3">

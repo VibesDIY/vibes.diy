@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useClerk } from "@clerk/react";
-import { VibesButtonStyles, useMobile, LabelContainer } from "@vibes.diy/base";
+import { VibesButtonStyles, useMobile, LabelContainer, gridBackground, cx } from "@vibes.diy/base";
 
 // Tornado/Wormhole icon for logout - similar to LoginIcon pattern
 function LogoutIcon({
@@ -79,7 +79,7 @@ export function Logout() {
   }, []);
 
   return (
-    <div className="grid-background flex h-screen w-screen items-center justify-center">
+    <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
       <div className="text-center px-8 w-full">
         <LabelContainer label="Logout">
           <div

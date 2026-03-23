@@ -7,7 +7,7 @@ import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
-import { VibesSwitch } from "@vibes.diy/base";
+import { VibesSwitch, gridBackground, cx } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
@@ -202,7 +202,7 @@ export default function VibeIframeWrapper() {
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
           {!runtimeReady && (
-            <div className="grid-background absolute inset-0 flex h-full w-full items-center justify-center">
+            <div className={cx(gridBackground, "absolute inset-0 flex h-full w-full items-center justify-center")}>
               <div style={{ color: "var(--vibes-text-primary)" }}>Loading…</div>
             </div>
           )}
@@ -233,7 +233,7 @@ export default function VibeIframeWrapper() {
 
   return (
     <>
-      <div className="grid-background flex h-screen w-screen items-center justify-center">
+      <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
         <div className="fixed top-4 left-4 z-50">
           <Delayed ms={1000}>
             <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />

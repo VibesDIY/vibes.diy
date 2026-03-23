@@ -6,7 +6,7 @@ import { partyPlannerPrompt, progressTrackerPrompt, jamSessionPrompt } from "../
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useNavigate } from "react-router";
 import { BuildURI } from "@adviser/cement";
-import { VibesSwitch, BrutalistCard, VibesButton } from "@vibes.diy/base";
+import { VibesSwitch, BrutalistCard, VibesButton, gridBackground, cx } from "@vibes.diy/base";
 
 export default function HomePage() {
   // Sidebar state
@@ -57,7 +57,7 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="page-grid-background grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full">
+      <div className={cx(gridBackground, "page-grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full")}>
         <div className="px-8 pb-8 pt-0">
           {/* Hamburger menu button - top left in normal flow with z-index */}
           <div className="mb-8 ml-6 relative z-20">
