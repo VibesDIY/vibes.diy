@@ -49,6 +49,14 @@ const keyframes = `
   0% { background-position: 0 0; }
   100% { background-position: 40px 0; }
 }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 `;
 
 /** HTML/body resets */
@@ -95,6 +103,45 @@ button { font-family: inherit; }
 input, textarea, select { font-size: 16px; }
 button, a, [role="button"], [type="button"], [type="submit"], [type="reset"] { cursor: pointer; }
 .light { --sp-layout-height: 100vh !important; }
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--vibes-border-primary) transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body { touch-action: manipulation; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--vibes-border-primary); border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+::selection {
+  background: color-mix(in srgb, var(--vibes-blue) 30%, transparent);
+  color: var(--vibes-text-primary);
+}
+
+select {
+  appearance: none;
+  border: 2px solid var(--vibes-border-primary);
+  border-radius: 5px;
+  box-shadow: 2px 2px 0px 0px var(--vibes-border-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 22px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+select:active { transform: translate(2px, 2px); box-shadow: none; }
+
+:focus-visible { outline: 2px solid var(--vibes-blue); outline-offset: 2px; }
+button:disabled { pointer-events: none; opacity: 0.5; }
+
+@media (max-width: 639px) {
+  input, select, textarea { font-size: 16px !important; }
+  textarea.code-editor { font-size: 14px !important; }
+}
 `;
 
 /** Utility classes that reference --color-* CSS variables */
