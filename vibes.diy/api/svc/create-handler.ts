@@ -66,7 +66,7 @@ export async function createAppContext<T extends VibesSqlite>(
 
     LLM_BACKEND_URL: param.REQUIRED,
     LLM_BACKEND_API_KEY: param.REQUIRED,
-    LLM_BACKEND_MODEL: "anthropic/claude-sonnet-4",
+    LLM_BACKEND_MODEL: "anthropic/claude-sonnet-4.6",
 
     WORKSPACE_NPM_URL: param.OPTIONAL,
     PUBLIC_NPM_URL: param.OPTIONAL,

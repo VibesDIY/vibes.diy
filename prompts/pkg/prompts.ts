@@ -9,7 +9,7 @@ import { defaultStylePrompt } from "./style-prompts.js";
 import { ChatMessage } from "@vibes.diy/call-ai-v2";
 
 // Single source of truth for the default coding model used across the repo.
-export const DEFAULT_CODING_MODEL = "anthropic/claude-opus-4.5" as const;
+export const DEFAULT_CODING_MODEL = "anthropic/claude-sonnet-4.6" as const;
 
 // Model used for RAG decisions (module selection)
 const RAG_DECISION_MODEL = "openai/gpt-4o" as const;
