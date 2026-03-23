@@ -49,8 +49,6 @@ export function VibePage(props: VibesDiyServCtx) {
         <ImportMap {...props} />
         <Meta {...props} />
         <Links />
-        <link rel="stylesheet" href={vibesStyles(props, "/app/app.css")} />
-        <link rel="stylesheet" href={vibesStyles(props, "/vibes-controls/styles.css")} />
         <script type="module" src="https://esm.sh/@tailwindcss/browser@4" />
       </head>
       <body className="grid-background">

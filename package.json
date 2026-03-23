@@ -35,7 +35,7 @@
     "pack": "echo skip pack",
     "publish": "echo skip publish",
     "check": "pnpm build && pnpm lint && pnpm test && pnpm --filter @vibes.diy/hosting-tests test",
-    "storybook": "cd vibes.diy/pkg && pnpm run storybook",
+    "storybook": "cd vibes.diy/stories && pnpm run storybook",
     "storybook:use-vibes": "cd use-vibes/base && pnpm run storybook"
   },
   "keywords": [
