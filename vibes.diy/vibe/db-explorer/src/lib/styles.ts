@@ -16,13 +16,13 @@ export const S = {
 };
 
 export const TC: Record<string, string> = {
-  string: "var(--tc-string)",
-  number: "var(--tc-number)",
-  boolean: "var(--tc-boolean)",
-  null: "var(--tc-null)",
-  object: "var(--tc-object)",
-  array: "var(--tc-array)",
-  key: "var(--tc-key)",
+  string: "var(--vibes-tc-string)",
+  number: "var(--vibes-tc-number)",
+  boolean: "var(--vibes-tc-boolean)",
+  null: "var(--vibes-tc-null)",
+  object: "var(--vibes-tc-object)",
+  array: "var(--vibes-tc-array)",
+  key: "var(--vibes-tc-key)",
 };
 
 export const TL: Record<string, string> = {
