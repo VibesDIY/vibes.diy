@@ -322,13 +322,13 @@ const loginButton = `
 export function buildGlobalCSS(): string {
   return [
     generateCSSVariables(),
+    keyframes,
     documentResets,
     elementDefaults,
     scrollbarStyles,
     selectionAndFocus,
     selectStyles,
     mobileOverrides,
-    keyframes,
     animationUtilities,
     colorUtilities,
     gradientAndLogo,
