@@ -111,16 +111,13 @@ async function appendBlockEvent({
   if (emitMode === "store") {
     // Store block in DB
     const rUpdate = await exception2Result(() =>
-      vctx.sql.db
-        .insert(vctx.sql.tables.chatSections)
-        .values({
-          chatId: req.chatId,
-          promptId,
-          blockSeq,
-          blocks: [evt],
-          created: now.toISOString(),
-        })
-        .run()
+      vctx.sql.db.insert(vctx.sql.tables.chatSections).values({
+        chatId: req.chatId,
+        promptId,
+        blockSeq,
+        blocks: [evt],
+        created: now.toISOString(),
+      })
     );
     if (rUpdate.isErr()) {
       return Result.Err(rUpdate);
@@ -233,25 +230,22 @@ export async function handlePromptContext({
   // update prompt context with usage and fsRef into sections BlockEndMsg
   value.fsRef = fsRef.toValue();
   const rSql = await exception2Result(() =>
-    vctx.sql.db
-      .insert(vctx.sql.tables.promptContexts)
-      .values({
-        userId: req._auth.verifiedAuth.claims.userId,
-        chatId: req.chatId,
-        promptId,
-        fsId: fsRef.IsSome() ? fsRef.unwrap().fsId : undefined,
-        nethash: vctx.netHash(),
-        promptTokens: value.usage.calculated.prompt_tokens,
-        completionTokens: value.usage.calculated.completion_tokens,
-        totalTokens: value.usage.calculated.total_tokens,
-        ref: {
-          type: "prompt.usage.sql",
-          usage: value.usage,
-          fsRef: fsRef.toValue(),
-        } satisfies PromptContextSql, // BlockUsageSql has optional properties, so it can be satisfied by an empty object
-        created: new Date().toISOString(),
-      })
-      .run()
+    vctx.sql.db.insert(vctx.sql.tables.promptContexts).values({
+      userId: req._auth.verifiedAuth.claims.userId,
+      chatId: req.chatId,
+      promptId,
+      fsId: fsRef.IsSome() ? fsRef.unwrap().fsId : undefined,
+      nethash: vctx.netHash(),
+      promptTokens: value.usage.calculated.prompt_tokens,
+      completionTokens: value.usage.calculated.completion_tokens,
+      totalTokens: value.usage.calculated.total_tokens,
+      ref: {
+        type: "prompt.usage.sql",
+        usage: value.usage,
+        fsRef: fsRef.toValue(),
+      } satisfies PromptContextSql, // BlockUsageSql has optional properties, so it can be satisfied by an empty object
+      created: new Date().toISOString(),
+    })
   );
   if (rSql.isErr()) {
     return Result.Err(rSql);
@@ -261,7 +255,7 @@ export async function handlePromptContext({
     input: sections,
     splitCondition: (secChunk) => secChunk.length >= 20,
     commit: async (secChunk) => {
-      await exception2Result(() => vctx.sql.db.insert(vctx.sql.tables.chatSections).values(secChunk).run());
+      await exception2Result(() => vctx.sql.db.insert(vctx.sql.tables.chatSections).values(secChunk));
       // console.log("Inserted block section into DB for promptId:", secChunk, rSections);
     },
   });
@@ -283,8 +277,7 @@ async function injectSystemPrompt(
     .select()
     .from(vctx.sql.tables.chatSections)
     .where(eq(vctx.sql.tables.chatSections.chatId, chatId))
-    .orderBy(vctx.sql.tables.chatSections.created)
-    .all();
+    .orderBy(vctx.sql.tables.chatSections.created);
   const userMessages: ChatMessage[] = [];
   for (const rowSection of sections) {
     const msgs = PromptAndBlockMsgs.array()(rowSection.blocks);
@@ -386,7 +379,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
               eq(vctx.sql.tables.chatContexts.userId, req._auth.verifiedAuth.claims.userId)
             )
           )
-          .get();
+          .limit(1)
+          .then((r) => r[0]);
         if (!iResChat) {
           return Result.Err(`Creation Chat ID ${req.chatId} not found`);
         }
@@ -402,7 +396,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
               eq(vctx.sql.tables.applicationChats.chatId, req.chatId)
             )
           )
-          .get();
+          .limit(1)
+          .then((r) => r[0]);
         if (!iResChat) {
           return Result.Err(`Application Chat ID ${req.chatId} not found`);
         }
@@ -434,10 +429,13 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         } satisfies InMsgBase<ResPromptChatSection>)
       );
 
+      // console.log(promptId, "Starting promptChatSection for promptId: with request:");
+
       await scopey(async (scope) => {
         let blockSeq = 0;
 
         scope.onCatch(async (e) => {
+          console.error(promptId, "Error in promptChatSection scope for promptId: with error:", e);
           await appendBlockEvent({
             ctx,
             vctx,
@@ -458,6 +456,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
         await scope
           .evalResult(async () => {
+            // console.log(promptId, "Block-Begin ", blockSeq, req.chatId)
             const res = await appendBlockEvent({
               ctx,
               vctx,
@@ -477,6 +476,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             return res;
           })
           .finally(async () => {
+            // console.log(promptId, "Finally ", blockSeq, req.chatId)
             if (blockSeq > 1) {
               await appendBlockEvent({
                 ctx,
@@ -497,6 +497,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           })
           .do();
 
+        // console.log(promptId, "Pre prompt.req for promptId:");
         await scope
           .evalResult(async () => {
             const r = await appendBlockEvent({
@@ -519,6 +520,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           })
           .do();
 
+        // console.log(promptId, "Pre-System request for promptId:");
         const withSystemPrompt = await scope
           .evalResult(async () => {
             let withSystemPrompt = Result.Ok({
@@ -555,6 +557,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
         // add system prompt here
 
+        // console.log(promptId, "LLM request for promptId:");
         const res = await scope
           .evalResult<Response>(async () => {
             const res = await vctx.llmRequest(llmReq);
@@ -570,6 +573,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           .do();
         await scope
           .evalResult(async () => {
+            // console.log(promptId, "LLM response received for promptId: with status:", res.status, "statusText:", res.statusText);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pipeline = res
               .body!.pipeThrough(createStatsCollector(promptId, 1000))
@@ -588,6 +592,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
               if (done) {
                 break;
               }
+              // console.log(promptId, "Received chunk for promptId:", value);
               if (!isBlockEnd(value)) {
                 if (!isBlockStreamMsg(value)) {
                   continue;
@@ -630,6 +635,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             return Result.Ok();
           })
           .do();
+
+        // console.log(promptId, "Finished processing promptChatSection for promptId: with total blocks:", blockSeq);
       });
       return Result.Ok(EventoResult.Continue);
     }

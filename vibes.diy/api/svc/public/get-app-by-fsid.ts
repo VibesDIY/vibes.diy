@@ -78,7 +78,8 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
               eq(vctx.sql.tables.apps.userSlug, req.userSlug)
             )
           )
-          .get();
+          .limit(1)
+          .then((r) => r[0]);
       } else {
         const maxCreatedSub = vctx.sql.db
           .select({ mode: vctx.sql.tables.apps.mode, maxCreated: max(vctx.sql.tables.apps.created).as("max_created") })
@@ -109,8 +110,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
               eq(vctx.sql.tables.apps.appSlug, req.appSlug)
             )
           )
-          .orderBy(vctx.sql.tables.apps.mode) // "dev" < "production" → last = production wins
-          .all();
+          .orderBy(vctx.sql.tables.apps.mode); // "dev" < "production" → last = production wins
         app = rows[rows.length - 1];
       }
 

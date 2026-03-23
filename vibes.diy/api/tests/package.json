@@ -6,6 +6,7 @@
   "scripts": {
     "build": "core-cli tsc",
     "test": "vitest --run",
+    "test:neon": "vitest --run --config ./vitest.config.neon.ts",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build"
   },
@@ -16,6 +17,7 @@
     "@fireproof/core-runtime": "0.24.13",
     "@fireproof/core-types-device-id": "0.24.13",
     "@libsql/client": "^0.17.0",
+    "@neondatabase/serverless": "^1.0.2",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-pkg": "workspace:*",
     "@vibes.diy/api-svc": "workspace:*",

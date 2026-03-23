@@ -1,6 +1,6 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { BuildURI, consumeStream, loadAsset, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
+import { BuildURI, consumeStream, loadAsset, processStream, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import {
@@ -13,7 +13,6 @@ import {
   vibesMsgEvento,
   WSSendProvider,
 } from "@vibes.diy/api-svc";
-import * as sqliteTables from "@vibes.diy/api-svc/sql/vibes-diy-api-schema-sqlite.js";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { BlockEndMsg, BlockMsgs, isBlockStreamMsg, isPromptBlockEnd, PromptMsgs } from "@vibes.diy/call-ai-v2";
 import { PromptAndBlockMsgs, ReqPromptChatSection, ReqWithVerifiedAuth, SectionEvent } from "@vibes.diy/api-types";
@@ -322,16 +321,23 @@ describe("VibesDiyApi", () => {
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
     const resp = vi.fn();
-    const toWait = consumeStream(chat.sectionStream, (msg) => {
+    const promptIds: string[] = [];
+    const loops = 3;
+    const toWait = processStream(chat.sectionStream, async (msg) => {
       resp(msg);
-      if (msg.type === "vibes.diy.section-event" && msg.promptId === promptIds[2] && isPromptBlockEnd(msg.blocks[0])) {
-        rChatRes.Ok().close();
+      // console.log(resp.mock.calls.length)
+      if (resp.mock.calls.length >= loops * 3) {
+        await rChatRes.Ok().close();
       }
+
+      // if (msg.type === "vibes.diy.section-event" && msg.promptId === promptIds[loops - 1]
+      //   && isPromptBlockEnd(msg.blocks[0])) {
+      //   console.log("Closing chat stream", msg, resp.mock.calls.map(c => c[0].blocks));
+      // }
     });
     // console.log("Chat opened, sending prompts");
 
-    const promptIds: string[] = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < loops; i++) {
       const rPrompt = await chat.prompt({
         messages: [{ role: "user", content: [{ type: "text", text: `Hello world ${i}` }] }],
       });
@@ -340,9 +346,10 @@ describe("VibesDiyApi", () => {
     }
     // console.log("Prompts sent, waiting for responses");
     await toWait;
-    // console.log("Prompts sent, waited for responses");
+    // console.log("Prompts sent, waited for responses", resp.mock.calls.map(c => c[0].blocks));
 
     Array.from(Object.entries(toByPromptIds(resp.mock.calls))).forEach(([promptId, blocks], idx) => {
+      // console.log("Checking promptId", promptId, "blocks", blocks, idx);
       expect(blocks).toEqual(emptySectorStream(chat.chatId, promptId, idx));
     });
 
@@ -351,7 +358,7 @@ describe("VibesDiyApi", () => {
       mode: "creation",
     });
     const nextFn = vi.fn();
-    await consumeStream(rNext.Ok().sectionStream, (msg) => {
+    await processStream(rNext.Ok().sectionStream, (msg) => {
       nextFn(msg);
       if (msg.type === "vibes.diy.section-event" && msg.promptId === promptIds[2] && isPromptBlockEnd(msg.blocks[0])) {
         rNext.Ok().close();
@@ -359,6 +366,7 @@ describe("VibesDiyApi", () => {
     });
 
     Array.from(Object.entries(toByPromptIds(nextFn.mock.calls))).forEach(([promptId, blocks], idx) => {
+      // console.log("Checking promptId", promptId, "blocks", blocks, idx);
       expect(blocks).toEqual(emptySectorStream(chat.chatId, promptId, idx));
     });
   });
@@ -1209,7 +1217,7 @@ describe("VibesDiyApi", () => {
       const rJsonl = await loadAsset("./prompt-ctx.fixture.jsonl", {
         basePath: () => import.meta.url,
       });
-      for await (const line of rJsonl.Ok().split("\n")) {
+      for await (const line of (rJsonl.Ok() + "\n").split("\n")) {
         if (line.trim()) {
           const parsed = bp.array()(JSON.parse(line));
           if (parsed instanceof type.errors) {
@@ -1249,15 +1257,16 @@ describe("VibesDiyApi", () => {
 
       const fs = await vctx.sql.db
         .select()
-        .from(sqliteTables.sqlApps)
+        .from(vctx.sql.tables.apps)
         .where(
           and(
-            eq(sqliteTables.sqlApps.appSlug, "exampleApp"),
-            eq(sqliteTables.sqlApps.userSlug, "exampleUser"),
-            eq(sqliteTables.sqlApps.fsId, pctx.Ok().fsRef.Unwrap().fsId)
+            eq(vctx.sql.tables.apps.appSlug, "exampleApp"),
+            eq(vctx.sql.tables.apps.userSlug, "exampleUser"),
+            eq(vctx.sql.tables.apps.fsId, pctx.Ok().fsRef.Unwrap().fsId)
           )
         )
-        .get();
+        .limit(1)
+        .then((r) => r[0]);
       // console.log("Database entries for exampleApp/exampleUser:", fs);
       expect(fs).toEqual({
         appSlug: "exampleApp",

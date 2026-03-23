@@ -216,7 +216,8 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
             eq(vctx.sql.tables.apps.fsId, ctx.validated.fsId)
           )
         )
-        .get();
+        .limit(1)
+        .then((r) => r[0]);
     } else {
       fs = await vctx.sql.db
         .select()
@@ -230,7 +231,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         )
         .orderBy(desc(vctx.sql.tables.apps.releaseSeq))
         .limit(1)
-        .get();
+        .then((r) => r[0]);
       // inject fsId into validated for further use
       ctx.validated.fsId = fs?.fsId;
     }

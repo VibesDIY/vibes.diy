@@ -68,8 +68,7 @@ export const listUserSlugAppSlugEvento: EventoHandler<
           eq(vctx.sql.tables.appSlugBinding.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
         )
         .where(and(...conditions))
-        .orderBy(desc(vctx.sql.tables.userSlugBinding.created), desc(vctx.sql.tables.appSlugBinding.created))
-        .all();
+        .orderBy(desc(vctx.sql.tables.userSlugBinding.created), desc(vctx.sql.tables.appSlugBinding.created));
 
       // Group by userSlug
       const grouped = new Map<string, string[]>();

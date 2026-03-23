@@ -41,7 +41,6 @@ class SQLitePeerStream implements PeerStreamWithCommit {
           created,
         })
         .onConflictDoNothing()
-        .run()
     );
     if (res.isErr()) {
       return Result.Err(res);
@@ -82,7 +81,14 @@ export class SQLitePeerFetch {
     }
     // table name in sql
     const assetId = url.pathname.slice("Assets/".length);
-    const rAsset = await exception2Result(() => this.db.select().from(this.assets).where(eq(this.assets.assetId, assetId)).get());
+    const rAsset = await exception2Result(() =>
+      this.db
+        .select()
+        .from(this.assets)
+        .where(eq(this.assets.assetId, assetId))
+        .limit(1)
+        .then((r) => r[0])
+    );
     if (rAsset.isErr()) {
       return Option.Some({
         type: "fetch.err",

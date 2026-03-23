@@ -55,7 +55,8 @@ export async function ensureAppSettings(
       .where(
         and(eq(vctx.sql.tables.appSlugBinding.userSlug, req.userSlug), eq(vctx.sql.tables.appSlugBinding.appSlug, req.appSlug))
       )
-      .get()
+      .limit(1)
+      .then((r) => r[0])
   );
   if (rPrev.isErr()) {
     return Result.Err(rPrev);

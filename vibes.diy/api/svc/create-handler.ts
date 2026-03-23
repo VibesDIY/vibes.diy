@@ -13,8 +13,9 @@ import { HTTPSendProvider } from "./svc-http-send-provider.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { defaultLLMRequest } from "./default-llm-request.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
-import { CfCacheIf, VibesApiSQLCtx, VibesApiTables } from "./types.js";
+import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
 import { LLMDefault, LLMEnforced, LLMHeaders, MsgBase, S3Api, VibesFPApiParameters } from "@vibes.diy/api-types";
+import { createVibesApiTables, DBFlavour } from "./sql/tables.js";
 import { SuperThis } from "@fireproof/core-types-base";
 
 export type VibesSqlite = BaseSQLiteDatabase<"async", ResultSet | D1Result, Record<string, never>>;
@@ -22,7 +23,6 @@ export type BindPromise<T> = (promise: Promise<T>) => Promise<T>;
 
 export interface CreateHandlerParams<T extends VibesSqlite> {
   db: T;
-  tables: VibesApiTables;
   s3Api: S3Api;
   sthis: SuperThis;
   logger?: Logger;
@@ -61,6 +61,8 @@ export async function createAppContext<T extends VibesSqlite>(
     MAX_APPS_PER_USER_ID: "50",
 
     FP_VERSION: param.REQUIRED,
+
+    DB_FLAVOUR: "sqlite",
 
     LLM_BACKEND_URL: param.REQUIRED,
     LLM_BACKEND_API_KEY: param.REQUIRED,
@@ -206,10 +208,12 @@ export async function createAppContext<T extends VibesSqlite>(
     // },
   };
 
+  const tables = createVibesApiTables(envVals.DB_FLAVOUR as DBFlavour);
+
   const vibesCtx = {
     sthis,
     logger: params.logger ?? ensureLogger(sthis, "VibesApiSQLCtx"),
-    sql: { db: params.db, tables: params.tables },
+    sql: { db: params.db, tables },
     netHash: params.netHash,
     cache: params.cache,
     connections: params.connections,
@@ -258,7 +262,7 @@ export async function createAppContext<T extends VibesSqlite>(
       clockTolerance: 60,
       deviceIdCA: rDeviceIdCA.Ok(),
     }),
-    storage: ensureStorage(params.db, params.tables.assets, params.s3Api),
+    storage: ensureStorage(params.db, tables.assets, params.s3Api),
     llmRequest: defaultLLMRequest(params.llmRequest, {
       url: envVals.LLM_BACKEND_URL,
       apiKey: envVals.LLM_BACKEND_API_KEY,

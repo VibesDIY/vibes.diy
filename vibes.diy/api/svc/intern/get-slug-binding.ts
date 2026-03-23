@@ -20,7 +20,8 @@ export async function getSlugBinding(ctx: VibesApiSQLCtx, binding: GetSlugBindin
           eq(ctx.sql.tables.appSlugBinding.appSlug, binding.appSlug)
         )
       )
-      .get()
+      .limit(1)
+      .then((r) => r[0])
   );
   if (r.isErr()) {
     return Result.Err(r);

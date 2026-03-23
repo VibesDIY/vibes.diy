@@ -19,6 +19,8 @@ export interface CFEnv {
 
   CLERK_PUBLISHABLE_KEY: string;
   CLOUD_SESSION_TOKEN_PUBLIC: string;
+  DB_FLAVOUR?: string;
+  NEON_DATABASE_URL?: string;
 
   CHAT_SESSIONS: DurableObjectNamespace;
   VIBES_SERVICE: Queue;

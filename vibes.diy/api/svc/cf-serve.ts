@@ -6,7 +6,9 @@ import {
   CfProperties,
 } from "@cloudflare/workers-types";
 import { createAppContext, processRequest, VibesSqlite } from "./create-handler.js";
-import { drizzle } from "drizzle-orm/d1";
+import { drizzle as drizzleD1 } from "drizzle-orm/d1";
+import { drizzle as drizzleNeon } from "drizzle-orm/neon-serverless";
+import { Pool } from "@neondatabase/serverless";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -14,7 +16,6 @@ import { AppContext, Lazy, LoggerImpl, Result } from "@adviser/cement";
 import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf } from "./types.js";
 import { CFEnv, MsgBase } from "@vibes.diy/api-types";
-import * as sqliteTables from "./sql/vibes-diy-api-schema-sqlite.js";
 import { R2ToS3Api } from "./peers/r2-to-s3api.js";
 import { SuperThis } from "@fireproof/core-types-base";
 
@@ -79,7 +80,11 @@ function netHashFn({
 }
 
 export function cfDrizzle<T extends VibesSqlite>(env: CFEnv, ctxDrizzle?: T): { db: T } {
-  return { db: (ctxDrizzle ?? drizzle(env.DB)) as T };
+  if (ctxDrizzle) return { db: ctxDrizzle };
+  if (env.DB_FLAVOUR === "pg" && env.NEON_DATABASE_URL) {
+    return { db: drizzleNeon(new Pool({ connectionString: env.NEON_DATABASE_URL })) as unknown as T };
+  }
+  return { db: drizzleD1(env.DB) as unknown as T };
 }
 
 export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
@@ -93,18 +98,6 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
   return createAppContext({
     sthis,
     ...cfDrizzle(env, ctx.drizzle),
-    tables: {
-      assets: sqliteTables.sqlAssets,
-      userSlugBinding: sqliteTables.sqlUserSlugBinding,
-      appSlugBinding: sqliteTables.sqlAppSlugBinding,
-      apps: sqliteTables.sqlApps,
-      chatContexts: sqliteTables.sqlChatContexts,
-      chatSections: sqliteTables.sqlChatSections,
-      promptContexts: sqliteTables.sqlPromptContexts,
-      applicationChats: sqliteTables.sqlApplicationChats,
-      userSettings: sqliteTables.sqlUserSettings,
-      appSettings: sqliteTables.sqlAppSettings,
-    },
     s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis),
     // db: ctx.drizzle ?? drizzle(env.DB),
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,

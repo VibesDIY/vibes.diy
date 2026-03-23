@@ -22,8 +22,7 @@ async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug:
     .select()
     .from(ctx.sql.tables.apps)
     .where(eq(ctx.sql.tables.apps.userId, userId))
-    .orderBy(ctx.sql.tables.apps.created)
-    .all();
+    .orderBy(ctx.sql.tables.apps.created);
   if (userApps.length >= ctx.params.maxAppSlugPerUserId) {
     const devApps = userApps.filter((app) => app.mode === "dev").slice(0, ~~(userApps.length / 10) + 1);
     if (devApps.length === 0) {
@@ -268,7 +267,8 @@ export async function ensureApps(
     .select()
     .from(ctx.sql.tables.apps)
     .where(and(eq(ctx.sql.tables.apps.fsId, fsId), eq(ctx.sql.tables.apps.userId, binding.userId)))
-    .get();
+    .limit(1)
+    .then((r) => r[0]);
   if (exist) {
     if (req.mode === "production" && exist.mode === "dev") {
       // upgrade dev to production

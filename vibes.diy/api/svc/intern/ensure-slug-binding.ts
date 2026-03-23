@@ -43,8 +43,7 @@ async function writeUserSlugBinding(
       const existing = await ctx.sql.db
         .select()
         .from(ctx.sql.tables.userSlugBinding)
-        .where(eq(ctx.sql.tables.userSlugBinding.userId, userId))
-        .all();
+        .where(eq(ctx.sql.tables.userSlugBinding.userId, userId));
       if (existing.length >= ctx.params.maxUserSlugPerUserId) {
         return Result.Err("maximum userSlug bindings reached for this userId");
       }
@@ -57,8 +56,7 @@ async function writeUserSlugBinding(
           userSlug,
           created: new Date().toISOString(),
         })
-        .onConflictDoNothing()
-        .run();
+        .onConflictDoNothing();
       return Result.Ok({
         userSlug,
         tenant,
@@ -98,7 +96,8 @@ export async function ensureUserSlug(
             .select()
             .from(ctx.sql.tables.userSlugBinding)
             .where(eq(ctx.sql.tables.userSlugBinding.userSlug, tryUserSlug))
-            .get();
+            .limit(1)
+            .then((r) => r[0]);
           if (!existing) {
             userSlug = tryUserSlug;
             break;
@@ -118,7 +117,8 @@ export async function ensureUserSlug(
             eq(ctx.sql.tables.userSlugBinding.userSlug, binding.userSlug)
           )
         )
-        .get();
+        .limit(1)
+        .then((r) => r[0]);
       if (!existing) {
         return writeUserSlugBinding(ctx, binding.userId, binding.userSlug);
       }
@@ -160,15 +160,12 @@ async function writeAppSlugBinding(
         return Result.Err("maximum appSlug bindings reached for this userId");
       }
       const ledger = ctx.sthis.nextId(12).str;
-      await ctx.sql.db
-        .insert(ctx.sql.tables.appSlugBinding)
-        .values({
-          appSlug,
-          userSlug,
-          ledger,
-          created: new Date().toISOString(),
-        })
-        .run();
+      await ctx.sql.db.insert(ctx.sql.tables.appSlugBinding).values({
+        appSlug,
+        userSlug,
+        ledger,
+        created: new Date().toISOString(),
+      });
       return Result.Ok({
         ledger,
         appSlug,
@@ -209,7 +206,8 @@ export async function ensureAppSlug(
             .select()
             .from(ctx.sql.tables.appSlugBinding)
             .where(eq(ctx.sql.tables.appSlugBinding.appSlug, tryAppSlug))
-            .get();
+            .limit(1)
+            .then((r) => r[0]);
           if (!existing) {
             appSlug = tryAppSlug;
             break;
@@ -228,7 +226,8 @@ export async function ensureAppSlug(
             eq(ctx.sql.tables.appSlugBinding.userSlug, ctx.sql.tables.userSlugBinding.userSlug)
           )
           .where(and(eq(ctx.sql.tables.appSlugBinding.appSlug, binding.appSlug)))
-          .get();
+          .limit(1)
+          .then((r) => r[0]);
         if (!existing) {
           return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, binding.appSlug);
         }

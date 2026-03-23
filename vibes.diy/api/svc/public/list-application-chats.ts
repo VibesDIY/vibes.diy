@@ -66,8 +66,7 @@ export const listApplicationChats: EventoHandler<
         .from(vctx.sql.tables.applicationChats)
         .where(and(...conditions))
         .orderBy(desc(vctx.sql.tables.applicationChats.created))
-        .limit(limit + 1)
-        .all();
+        .limit(limit + 1);
 
       const hasMore = rows.length > limit;
       const items = hasMore ? rows.slice(0, limit) : rows;

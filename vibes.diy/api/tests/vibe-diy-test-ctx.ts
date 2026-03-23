@@ -1,18 +1,32 @@
 import { Result, loadAsset } from "@adviser/cement";
 import { DeviceIdCA } from "@fireproof/core-device-id";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
-import { createAppContext, noopCache } from "@vibes.diy/api-svc";
-import * as sqliteTables from "@vibes.diy/api-svc/sql/vibes-diy-api-schema-sqlite.js";
+import { createAppContext, noopCache, VibesSqlite } from "@vibes.diy/api-svc";
 import { S3Api, FetchResult, MsgBase } from "@vibes.diy/api-types";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { createClient } from "@libsql/client/node";
 import { inject } from "vitest";
-import { drizzle } from "drizzle-orm/libsql";
+import { drizzle as drizzleLibsql } from "drizzle-orm/libsql";
+import { drizzle as drizzleNeon } from "drizzle-orm/neon-serverless";
+import { Pool } from "@neondatabase/serverless";
 
-export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperThis>, deviceCA: DeviceIdCA) {
+async function createDrizzleDB(): Promise<VibesSqlite> {
+  const flavour = (inject("DB_FLAVOUR" as never) as string) ?? "sqlite";
+
+  if (flavour === "pg") {
+    const neonUrl = inject("VIBES_DIY_TEST_NEON_URL" as never) as string;
+    const pool = new Pool({ connectionString: neonUrl });
+    return drizzleNeon(pool) as unknown as VibesSqlite;
+  }
+
   const url = inject("VIBES_DIY_TEST_SQL_URL" as never) as string;
   const client = createClient({ url });
-  const drizzleDB = drizzle(client);
+  return drizzleLibsql(client) as unknown as VibesSqlite;
+}
+
+export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperThis>, deviceCA: DeviceIdCA) {
+  const flavour = (inject("DB_FLAVOUR" as never) as string) ?? "sqlite";
+  const drizzleDB = await createDrizzleDB();
 
   const env = {
     CLOUD_SESSION_TOKEN_PUBLIC:
@@ -48,6 +62,8 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
     VIBES_DIY_PUBLIC_BASE_URL: "https://no-where",
 
     CLOUD_SESSION_TOKEN_ISSUER: "vibes-diy-test-issuer",
+
+    DB_FLAVOUR: flavour,
   };
 
   return createAppContext({
@@ -84,19 +100,7 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
     netHash: () => "test-hash",
     connections: new Set(),
     env,
-    db: drizzleDB, // as unknown as VibesSqlite,
-    tables: {
-      assets: sqliteTables.sqlAssets,
-      userSlugBinding: sqliteTables.sqlUserSlugBinding,
-      appSlugBinding: sqliteTables.sqlAppSlugBinding,
-      apps: sqliteTables.sqlApps,
-      chatContexts: sqliteTables.sqlChatContexts,
-      chatSections: sqliteTables.sqlChatSections,
-      promptContexts: sqliteTables.sqlPromptContexts,
-      applicationChats: sqliteTables.sqlApplicationChats,
-      userSettings: sqliteTables.sqlUserSettings,
-      appSettings: sqliteTables.sqlAppSettings,
-    },
+    db: drizzleDB,
     cache: noopCache,
   });
 }
