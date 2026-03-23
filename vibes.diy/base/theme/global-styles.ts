@@ -14,6 +14,7 @@
  */
 
 import { generateCSSVariables } from "./css-vars.js";
+import { colors, semantic } from "./tokens.js";
 
 /* ═══════════════════════════════════════════
    1. KEYFRAME ANIMATIONS
@@ -181,7 +182,7 @@ const animationUtilities = `
 const backgroundPatterns = `
 .page-grid-background {}
 body:has(.page-grid-background) {
-  background-color: #d4d4d4;
+  background-color: ${colors.grayLightest};
   background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
   background-size: 40px 40px;
   background-attachment: scroll;
@@ -189,7 +190,7 @@ body:has(.page-grid-background) {
 @media (min-width: 768px) { body:has(.page-grid-background) { background-attachment: fixed; } }
 @media (prefers-color-scheme: dark) {
   body:has(.page-grid-background) {
-    background-color: #2a2a2a;
+    background-color: ${semantic.dark.bg.secondary};
     background-image: linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
   }
 }

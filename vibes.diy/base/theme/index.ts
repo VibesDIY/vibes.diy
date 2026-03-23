@@ -11,10 +11,6 @@ export { colors, semantic } from "./tokens.js";
 export type { SemanticTheme } from "./tokens.js";
 
 export {
-  brutalistPress,
-  bgGlimmer,
-  borderGlimmer,
-  glimmerOverlay,
   stripesOverlay,
   gridBackground,
 } from "./patterns.js";
