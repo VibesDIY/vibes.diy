@@ -43,3 +43,6 @@ jobs:
           VIBES_SVC_HOSTNAME_BASE: ${{ vars.VIBES_SVC_HOSTNAME_BASE }}
           VIBES_SVC_PROTOCOL: ${{ vars.VIBES_SVC_PROTOCOL }}
           LLM_BACKEND_API_KEY: ${{ secrets.LLM_BACKEND_API_KEY }}
+          DB_FLAVOUR: ${{ vars.DB_FLAVOUR }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          NEON_DATABASE_ADMIN_URL: ${{ secrets.NEON_DATABASE_ADMIN_URL }}

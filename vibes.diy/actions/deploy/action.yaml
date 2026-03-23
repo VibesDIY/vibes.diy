@@ -52,6 +52,16 @@ inputs:
   LLM_BACKEND_API_KEY:
     description: "API key for LLM backend"
     required: true
+  DB_FLAVOUR:
+    description: "Database flavour: sqlite (D1) or pg (Neon)"
+    required: false
+    default: "sqlite"
+  NEON_DATABASE_URL:
+    description: "Neon database connection URL for runtime (app role, required when DB_FLAVOUR=pg)"
+    required: false
+  NEON_DATABASE_ADMIN_URL:
+    description: "Neon database connection URL for schema migrations (admin role, required when DB_FLAVOUR=pg)"
+    required: false
 
 runs:
   using: "composite"
@@ -84,8 +94,15 @@ runs:
         VIBES_SVC_HOSTNAME_BASE: ${{ inputs.VIBES_SVC_HOSTNAME_BASE }}
         VIBES_SVC_PROTOCOL: ${{ inputs.VIBES_SVC_PROTOCOL }}
         LLM_BACKEND_API_KEY: ${{ inputs.LLM_BACKEND_API_KEY }}
+        DB_FLAVOUR: ${{ inputs.DB_FLAVOUR }}
+        NEON_DATABASE_URL: ${{ inputs.NEON_DATABASE_URL }}
+        NEON_DATABASE_ADMIN_URL: ${{ inputs.NEON_DATABASE_ADMIN_URL }}
       run: |
-        pnpm run drizzle:d1-remote
+        if [ "$DB_FLAVOUR" = "pg" ]; then
+          NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" pnpm run drizzle:neon
+        else
+          pnpm run drizzle:d1-remote
+        fi
         pnpm exec core-cli writeEnv --out - --json \
           --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
           --fromEnv CLERK_PUBLISHABLE_KEY \
@@ -100,7 +117,9 @@ runs:
           --fromEnv VIBES_DIY_FROM_EMAIL \
           --fromEnv VIBES_SVC_HOSTNAME_BASE \
           --fromEnv VIBES_SVC_PROTOCOL \
-          --fromEnv LLM_BACKEND_API_KEY | \
+          --fromEnv LLM_BACKEND_API_KEY \
+          --fromEnv DB_FLAVOUR \
+          --fromEnv NEON_DATABASE_URL | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
 
@@ -125,6 +144,8 @@ runs:
         VIBES_SVC_HOSTNAME_BASE: ${{ inputs.VIBES_SVC_HOSTNAME_BASE }}
         VIBES_SVC_PROTOCOL: ${{ inputs.VIBES_SVC_PROTOCOL }}
         LLM_BACKEND_API_KEY: ${{ inputs.LLM_BACKEND_API_KEY }}
+        DB_FLAVOUR: ${{ inputs.DB_FLAVOUR }}
+        NEON_DATABASE_URL: ${{ inputs.NEON_DATABASE_URL }}
       run: |
         pnpm exec core-cli writeEnv --out - --json \
           --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
@@ -140,6 +161,8 @@ runs:
           --fromEnv VIBES_DIY_FROM_EMAIL \
           --fromEnv VIBES_SVC_HOSTNAME_BASE \
           --fromEnv VIBES_SVC_PROTOCOL \
-          --fromEnv LLM_BACKEND_API_KEY | \
+          --fromEnv LLM_BACKEND_API_KEY \
+          --fromEnv DB_FLAVOUR \
+          --fromEnv NEON_DATABASE_URL | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}}
