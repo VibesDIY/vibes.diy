@@ -1,21 +1,16 @@
 /**
  * Global styles assembled into a CSS string by theme/index.ts.
  *
- * Organized by concern so designers can find what they need:
+ * Organized by concern:
  *   1. Keyframe animations
- *   2. Document resets (html/body)
- *   3. Dark mode body overrides
- *   4. Element defaults (buttons, inputs, links)
- *   5. Scrollbar styling
- *   6. Selection & focus
- *   7. Neo-brutalist select
- *   8. Mobile overrides
- *   9. Animation utilities
- *  10. Color utilities (accent, decorative, background)
- *  11. Gradient & logo effects
- *  12. Typography (ai-markdown)
- *  13. Background patterns (grid, page-grid)
- *  14. Login button
+ *   2. Document resets & dark mode
+ *   3. Element defaults
+ *   4. Scrollbar styling
+ *   5. Selection & focus
+ *   6. Neo-brutalist select
+ *   7. Mobile overrides
+ *   8. Animation utilities
+ *   9. Background patterns
  */
 
 import { generateCSSVariables } from "./css-vars.js";
@@ -25,15 +20,6 @@ import { generateCSSVariables } from "./css-vars.js";
    ═══════════════════════════════════════════ */
 
 const keyframes = `
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes bounceIn {
-  0% { transform: scale(0.8); opacity: 0; }
-  50% { transform: scale(1.05); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
 @keyframes buttonGlimmer {
   0% { background-position: -100% 0; }
   100% { background-position: 200% 0; }
@@ -42,21 +28,6 @@ const keyframes = `
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
-}
-@keyframes pulse {
-  0% { transform: rotate(-5deg) scale(1); }
-  50% { transform: rotate(0deg) scale(1.05); }
-  100% { transform: rotate(-5deg) scale(1); }
-}
-@keyframes logo-rotate {
-  0% { transform: rotate(45deg) scale(5.5); }
-  66% { transform: rotate(0deg) scale(1); }
-  100% { transform: rotate(45deg) scale(5.5); }
-}
-@keyframes logo-pulse-height {
-  0% { width: 200%; }
-  50% { width: 20%; }
-  100% { width: 200%; }
 }
 @keyframes gradient-x {
   0% { background-position: 0% 50%; }
@@ -78,7 +49,7 @@ const keyframes = `
 `;
 
 /* ═══════════════════════════════════════════
-   2–3. DOCUMENT RESETS & DARK MODE
+   2. DOCUMENT RESETS & DARK MODE
    ═══════════════════════════════════════════ */
 
 const documentResets = `
@@ -123,18 +94,17 @@ hr { opacity: 0.5; }
 `;
 
 /* ═══════════════════════════════════════════
-   4. ELEMENT DEFAULTS
+   3. ELEMENT DEFAULTS
    ═══════════════════════════════════════════ */
 
 const elementDefaults = `
 button { font-family: inherit; }
 input, textarea, select { font-size: 16px; }
 button, a, [role="button"], [type="button"], [type="submit"], [type="reset"] { cursor: pointer; }
-.light { --sp-layout-height: 100vh !important; }
 `;
 
 /* ═══════════════════════════════════════════
-   5. SCROLLBAR STYLING
+   4. SCROLLBAR STYLING
    ═══════════════════════════════════════════ */
 
 const scrollbarStyles = `
@@ -153,7 +123,7 @@ html, body { touch-action: manipulation; }
 `;
 
 /* ═══════════════════════════════════════════
-   6. SELECTION & FOCUS
+   5. SELECTION & FOCUS
    ═══════════════════════════════════════════ */
 
 const selectionAndFocus = `
@@ -167,7 +137,7 @@ button:disabled { pointer-events: none; opacity: 0.5; }
 `;
 
 /* ═══════════════════════════════════════════
-   7. NEO-BRUTALIST SELECT
+   6. NEO-BRUTALIST SELECT
    ═══════════════════════════════════════════ */
 
 const selectStyles = `
@@ -186,7 +156,7 @@ select:active { transform: translate(2px, 2px); box-shadow: none; }
 `;
 
 /* ═══════════════════════════════════════════
-   8. MOBILE OVERRIDES
+   7. MOBILE OVERRIDES
    ═══════════════════════════════════════════ */
 
 const mobileOverrides = `
@@ -197,81 +167,15 @@ const mobileOverrides = `
 `;
 
 /* ═══════════════════════════════════════════
-   9. ANIMATION UTILITIES
+   8. ANIMATION UTILITIES
    ═══════════════════════════════════════════ */
 
 const animationUtilities = `
-.animate-fade-in { animation: fadeIn 0.3s ease-in-out forwards; }
-.animate-bounce-in { animation: bounceIn 0.5s ease-out forwards; }
 .animate-gradient-x { background-size: 200% auto; animation: gradient-x 3s linear infinite; }
 `;
 
 /* ═══════════════════════════════════════════
-   10. COLOR UTILITIES (accent, decorative, bg)
-   ═══════════════════════════════════════════ */
-
-const colorUtilities = `
-.accent-00 { background-color: var(--color-accent-00-light); }
-@media (prefers-color-scheme: dark) { .accent-00 { background-color: var(--color-accent-00-dark); } }
-.accent-01 { background-color: var(--color-accent-01-light); }
-@media (prefers-color-scheme: dark) { .accent-01 { background-color: var(--color-accent-01-dark); } }
-.accent-02 { background-color: var(--color-accent-02-light); }
-@media (prefers-color-scheme: dark) { .accent-02 { background-color: var(--color-accent-02-dark); } }
-.accent-03 { background-color: var(--color-accent-03-light); }
-@media (prefers-color-scheme: dark) { .accent-03 { background-color: var(--color-accent-03-dark); } }
-
-.text-accent-00 { color: var(--color-accent-00-light); }
-@media (prefers-color-scheme: dark) { .text-accent-00 { color: var(--color-accent-00-dark); } }
-.text-accent-01 { color: var(--color-accent-01-light); }
-@media (prefers-color-scheme: dark) { .text-accent-01 { color: var(--color-accent-01-dark); } }
-.text-accent-02 { color: var(--color-accent-02-light); }
-@media (prefers-color-scheme: dark) { .text-accent-02 { color: var(--color-accent-02-dark); } }
-.text-accent-03 { color: var(--color-accent-03-light); }
-@media (prefers-color-scheme: dark) { .text-accent-03 { color: var(--color-accent-03-dark); } }
-
-.decorative-00 { background-color: var(--color-light-decorative-00); }
-@media (prefers-color-scheme: dark) { .decorative-00 { background-color: var(--color-dark-decorative-00); } }
-.decorative-01 { background-color: var(--color-light-decorative-01); }
-@media (prefers-color-scheme: dark) { .decorative-01 { background-color: var(--color-dark-decorative-01); } }
-.decorative-02 { background-color: var(--color-light-decorative-02); }
-@media (prefers-color-scheme: dark) { .decorative-02 { background-color: var(--color-dark-decorative-02); } }
-
-.bg-primary { background-color: var(--color-light-background-00); }
-@media (prefers-color-scheme: dark) { .bg-primary { background-color: var(--color-dark-background-00); } }
-.bg-secondary { background-color: var(--color-light-background-01); }
-@media (prefers-color-scheme: dark) { .bg-secondary { background-color: var(--color-dark-background-01); } }
-.bg-tertiary { background-color: var(--color-light-background-02); }
-@media (prefers-color-scheme: dark) { .bg-tertiary { background-color: var(--color-dark-background-02); } }
-`;
-
-/* ═══════════════════════════════════════════
-   11. GRADIENT & LOGO EFFECTS
-   ═══════════════════════════════════════════ */
-
-const gradientAndLogo = `
-.light-gradient { background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,1) 45%, white 89%); }
-@media (prefers-color-scheme: dark) { .light-gradient { background: linear-gradient(110deg, transparent 0%, rgba(0,0,0,1) 45%, black 89%); } }
-
-.pulsing { width: 100%; height: auto; transform: rotate(-5deg) scale(6); animation: pulse 8s infinite; }
-.logo-pulse { transform: rotate(-5deg) scale(3); animation: logo-rotate 1410s ease-in-out infinite, logo-pulse-height 711s ease-in-out infinite; }
-`;
-
-/* ═══════════════════════════════════════════
-   12. TYPOGRAPHY (ai-markdown)
-   ═══════════════════════════════════════════ */
-
-const typography = `
-.ai-markdown p { margin-bottom: 0.5rem; }
-.ai-markdown ul { list-style-type: disc; padding-left: 1rem; padding-top: 0.5rem; }
-.ai-markdown ol { list-style-type: decimal; padding-left: 1rem; padding-top: 0.5rem; }
-.ai-markdown li { margin-bottom: 0.5rem; }
-.ai-markdown h1 { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; margin-bottom: 1rem; }
-.ai-markdown h2 { font-size: 1.3rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.75rem; }
-.ai-markdown h3 { font-size: 1.15rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem; }
-`;
-
-/* ═══════════════════════════════════════════
-   13. BACKGROUND PATTERNS
+   9. BACKGROUND PATTERNS
    ═══════════════════════════════════════════ */
 
 const backgroundPatterns = `
@@ -288,27 +192,6 @@ body:has(.page-grid-background) {
     background-color: #2a2a2a;
     background-image: linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
   }
-}
-`;
-
-/* ═══════════════════════════════════════════
-   14. LOGIN BUTTON
-   ═══════════════════════════════════════════ */
-
-const loginButton = `
-.vibes-login-button {
-  width: 100%; padding: 1rem 2rem;
-  background: var(--color-light-background-00); color: var(--color-light-primary);
-  border: 3px solid var(--color-light-primary); border-radius: 12px;
-  font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-  cursor: pointer; transition: all 0.15s ease; position: relative;
-  transform: translate(0px, 0px); box-shadow: 4px 5px 0px 0px #009ace;
-}
-.vibes-login-button:hover { transform: translate(2px, 2px); box-shadow: 2px 3px 0px 0px #009ace; }
-.vibes-login-button:active { transform: translate(4px, 5px); box-shadow: none; }
-.vibes-login-button:focus-visible { outline: 3px solid #009ace; outline-offset: 4px; }
-@media (prefers-color-scheme: dark) {
-  .vibes-login-button { background: var(--color-dark-background-00); color: var(--color-dark-primary); border-color: var(--color-dark-primary); }
 }
 `;
 
@@ -330,10 +213,6 @@ export function buildGlobalCSS(): string {
     selectStyles,
     mobileOverrides,
     animationUtilities,
-    colorUtilities,
-    gradientAndLogo,
-    typography,
     backgroundPatterns,
-    loginButton,
   ].join("\n\n");
 }
