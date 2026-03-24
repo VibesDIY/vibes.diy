@@ -22,6 +22,7 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "@clerk/react": "^6.1.1",
+    "@cloudflare/puppeteer": "^1.0.6",
     "@cloudflare/workers-types": "^4.20260317.1",
     "@fireproof/core": "0.24.13",
     "@fireproof/core-protocols-dashboard": "0.24.13",
@@ -65,15 +66,9 @@
     "wrangler": "^4.74.0"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^5.0.1",
     "@cloudflare/vite-plugin": "^1.29.0",
     "@fireproof/core-cli": "0.24.13",
     "@react-router/dev": "^7.13.1",
-    "@storybook/addon-a11y": "^10.3.0",
-    "@storybook/addon-docs": "^10.3.0",
-    "@storybook/addon-onboarding": "^10.3.0",
-    "@storybook/react": "^10.3.0",
-    "@storybook/react-vite": "^10.2.19",
     "@tailwindcss/vite": "^4.2.2",
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.13",
@@ -85,7 +80,6 @@
     "prettier": "^3.8.1",
     "rollup-plugin-visualizer": "^7.0.1",
     "shiki": "^4.0.2",
-    "storybook": "^10.3.0",
     "tailwindcss": "^4.2.2",
     "toml": "^3.0.0",
     "typescript": "^5.9.3",
