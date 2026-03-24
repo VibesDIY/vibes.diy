@@ -141,6 +141,12 @@ const app = command({
       description: "Directory to save decoded images (enables image saving)",
       defaultValue: () => "",
     }),
+    systemMsg: option({
+      type: string,
+      long: "system",
+      description: "System message to prepend to the conversation",
+      defaultValue: () => "",
+    }),
   },
   handler: async ({
     prompt,
@@ -160,6 +166,7 @@ const app = command({
     statsInterval,
     image,
     imageDir,
+    systemMsg,
   }) => {
     let body: ReadableStream<Uint8Array>;
 
@@ -195,7 +202,10 @@ const app = command({
         },
         body: JSON.stringify({
           model,
-          messages: [{ role: "user", content: prompt }],
+          messages: [
+            ...(systemMsg ? [{ role: "system", content: systemMsg }] : []),
+            { role: "user", content: prompt },
+          ],
           logprobs: true,
           stream: true,
         }),

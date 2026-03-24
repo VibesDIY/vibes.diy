@@ -1,0 +1,48 @@
+event: message_start
+data: {"type":"message_start","message":{"model":"claude-sonnet-4-6","id":"msg_01JiA6jYteafKigMLC8JUbJK","type":"message","role":"assistant","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":83,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":1,"service_tier":"standard","inference_geo":"global"}}  }
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}          }
+
+event: ping
+data: {"type": "ping"}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"```"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"JSON\n{\"name\":\"sandwich\",\"properties\":{\"name\":{\"type\":\"string\"},\"layers\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}}\n```\n\nHere's a del"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"icious sandwich described using the schema:\n\n```JSON\n{\n  \"name\": \"Classic Club Sandwich\",\n  \"layers\": ["}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n    \"Top toasted white bread\",\n    \"Mayonnaise spread\",\n    \"Crispy romaine lettuce\",\n    \""}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Ripe tomato slices\",\n    \"Smoked turkey breast\",\n    \"Crispy bacon strips\",\n    \"C"}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"heddar cheese slice\",\n    \"Middle toasted white bread\",\n    \"Honey mustard spread\",\n    \"Sl"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"iced ham\",\n    \"Swiss cheese slice\",\n    \"Sliced avocado\",\n    \"Red onion rings\",\n    \"Bottom toasted white bread\"\n  ]"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n}\n```\n\nThis describes a hearty **Classic Club Sandwich** with multiple layers stacked between three"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" slices of toasted bread, featuring a combination of meats, cheeses, fresh"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" vegetables, and condiments! 🥪"}           }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0        }
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"input_tokens":83,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":256}            }
+
+event: message_stop
+data: {"type":"message_stop"        }
+

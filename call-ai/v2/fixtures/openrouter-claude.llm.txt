@@ -1,0 +1,116 @@
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"```JSON","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\n{\"","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"name\":\"sandwich\",\"properties\":{\"name","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\":{\"type\":\"string\"},\"layers","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\":{\"type\":\"array\",\"items\":","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"{\"type\":\"string\"","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"}}}}\n```\n\nHere","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" is","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" a described","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" sandwich that","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" con","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"forms to the schema","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":":\n\n```JSON","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\n{","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\n  \"name\": \"Classic","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" Club","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" Sandwich\",\n  \"layers","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\": [","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\n    \"Top","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" to","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"asted white","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" bread slice","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\",\n    \"","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"May","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"onnaise spread","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\",\n    \"Cri","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"spy rom","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"aine lettuce\",","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\n    \"R","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"ipe tomato sl","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"ices\",\n    \"Sm","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"oked turkey","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" breast","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\",\n    \"Cri","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"spy bacon strips","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\",\n    \"C","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"heddar cheese slice\",\n    \"","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"Middle","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" to","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"asted white bread slice\",\n    \"","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"Honey","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" mustard spread","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"\",\n    \"Sl","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"iced av","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"ocado\",\n    \"Gr","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"illed chicken","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" breast\",\n    \"Red","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" onion slices\",\n    \"","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"Bottom","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":" toasted white bread slice\"\n  ","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"]\n}\n```","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"stop","native_finish_reason":"end_turn"}]}
+
+data: {"id":"gen-1774381684-KdceKchmea8k9DxC3aUM","object":"chat.completion.chunk","created":1774381684,"model":"anthropic/claude-4.6-sonnet-20260217","provider":"Amazon Bedrock","choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"stop","native_finish_reason":"end_turn"}],"usage":{"prompt_tokens":83,"completion_tokens":208,"total_tokens":291,"cost":0.00333531,"is_byok":false,"prompt_tokens_details":{"cached_tokens":0,"cache_write_tokens":0,"audio_tokens":0,"video_tokens":0},"cost_details":{"upstream_inference_cost":0.003369,"upstream_inference_prompt_cost":0.000249,"upstream_inference_completions_cost":0.00312},"completion_tokens_details":{"reasoning_tokens":0,"image_tokens":0,"audio_tokens":0}}}
+
+data: [DONE]
+
