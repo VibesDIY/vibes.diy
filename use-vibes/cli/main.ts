@@ -1,5 +1,5 @@
 import { FPDeviceIDSession, SuperThis } from "@fireproof/core";
-import { AppContext, EventoSendProvider, HandleTriggerCtx, Lazy, processStream, Result } from "@adviser/cement";
+import { AppContext, EventoSendProvider, exception2Result, HandleTriggerCtx, Lazy, processStream, Result } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { getKeyBag } from "@fireproof/core-keybag";
 import { DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
@@ -12,6 +12,7 @@ import { $, dotenv } from "zx";
 import { cmd_tsStream } from "./cmd-ts-stream.js";
 import { runSafely, subcommands } from "cmd-ts";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
+import { loginCmd } from "./cmds/login-cmd.js";
 import { CliCtx } from "./cli-ctx.js";
 import { cmdTsEvento, WrapCmdTSMsg } from "./cmd-evento.js";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
@@ -99,10 +100,11 @@ async function main() {
 
   const env = dotenv.loadSafe(".dev.vars", ".env");
   sthis.env.sets({ ...env } as Record<string, string>);
+  const rApiFactory = await exception2Result(() => vibesDiyApiFactory(sthis, ca));
   const ctx: CliCtx = {
     sthis,
     cliStream: cmd_tsStream(),
-    vibesDiyApiFactory: await vibesDiyApiFactory(sthis, ca),
+    vibesDiyApiFactory: rApiFactory.isOk() ? rApiFactory.Ok() : undefined,
   };
   const rs = await runSafely(
     subcommands({
@@ -110,6 +112,7 @@ async function main() {
       description: "use-vibes cli",
       version: "1.0.0",
       cmds: {
+        login: loginCmd(ctx),
         "user-settings": userSettingsCmd(ctx),
       },
     }),
@@ -140,8 +143,10 @@ async function main() {
             send: outputSelector,
             request: msg,
           })
-          .then(() => {
-            /* no-op */
+          .then((r) => {
+            if (r.isErr()) {
+              console.error("Error:", String(r.Err()));
+            }
           });
       },
       processStream(outputSelector.outputStream, async (wmsg) => {

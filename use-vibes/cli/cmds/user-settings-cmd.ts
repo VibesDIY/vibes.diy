@@ -29,6 +29,9 @@ export const userSettingsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqUserSet
     ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqUserSettings, ResEnsureUserSettings>
   ): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
+    if (!ectx.vibesDiyApiFactory) {
+      return Result.Err("Not logged in. Run 'use-vibes login' first.");
+    }
     const rResult = await ectx.vibesDiyApiFactory(ctx.request.cmdTs.apiUrl).ensureUserSettings({ settings: [] });
     if (rResult.isOk()) {
       const result = resEnsureUserSettings(rResult.Ok());
