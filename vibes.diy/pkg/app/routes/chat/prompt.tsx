@@ -62,7 +62,7 @@ export default function ChatPrompt() {
   return (
     <>
       <Chat inConstruction />
-      {createPortal(
+      {isSignedIn && prompt64 && createPortal(
         <div
           style={{
             position: "fixed",
