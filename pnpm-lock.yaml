@@ -464,6 +464,9 @@ importers:
       '@fireproof/use-fireproof':
         specifier: 0.24.13
         version: 0.24.13(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@hono/node-server':
+        specifier: ^1.19.11
+        version: 1.19.11(hono@4.12.8)
       '@vibes.diy/api-impl':
         specifier: workspace:*
         version: link:../../vibes.diy/api/impl
@@ -476,9 +479,15 @@ importers:
       cmd-ts:
         specifier: ^0.15.0
         version: 0.15.0
+      hono:
+        specifier: ^4.12.8
+        version: 4.12.8
       jose:
         specifier: ^6.2.2
         version: 6.2.2
+      open:
+        specifier: ^11.0.0
+        version: 11.0.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -890,64 +899,6 @@ importers:
       wrangler:
         specifier: ^4.77.0
         version: 4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-
-  vibes.diy/api/sql:
-    dependencies:
-      '@adviser/cement':
-        specifier: ^0.5.34
-        version: 0.5.34(typescript@6.0.2)
-      '@cloudflare/workers-types':
-        specifier: ^4.20260317.1
-        version: 4.20260317.1
-      '@fireproof/core-protocols-dashboard':
-        specifier: 0.24.13
-        version: 0.24.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
-      '@fireproof/core-runtime':
-        specifier: 0.24.13
-        version: 0.24.13(typescript@6.0.2)
-      '@fireproof/core-types-base':
-        specifier: 0.24.13
-        version: 0.24.13(typescript@6.0.2)
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: 0.24.13
-        version: 0.24.13(typescript@6.0.2)
-      '@libsql/client':
-        specifier: ^0.17.0
-        version: 0.17.0(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6)
-      '@neondatabase/serverless':
-        specifier: ^1.0.2
-        version: 1.0.2
-      '@noble/hashes':
-        specifier: ^2.0.1
-        version: 2.0.1
-      '@vibes.diy/api-pkg':
-        specifier: workspace:*
-        version: link:../pkg
-      '@vibes.diy/api-types':
-        specifier: workspace:*
-        version: link:../types
-      '@vibes.diy/call-ai-v2':
-        specifier: workspace:*
-        version: link:../../../call-ai/v2
-      arktype:
-        specifier: ^2.2.0
-        version: 2.2.0
-      drizzle-orm:
-        specifier: ^0.45.1
-        version: 0.45.1(@cloudflare/workers-types@4.20260317.1)(@libsql/client@0.17.0(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0)
-      multiformats:
-        specifier: ^13.4.2
-        version: 13.4.2
-      ws:
-        specifier: ^8.20.0
-        version: 8.20.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-    devDependencies:
-      '@fireproof/core-cli':
-        specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.1
 
   vibes.diy/api/svc:
     dependencies:

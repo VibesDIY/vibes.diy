@@ -3,6 +3,8 @@ import { cmd_tsStream } from "./cmd-ts-stream.js";
 import { SuperThis } from "@fireproof/core";
 import { flag, option, string } from "cmd-ts";
 
+export const DEFAULT_API_URL = "https://dev-v2.vibesdiy.net/api";
+
 export function cmdTsDefaultArgs(ctx: CliCtx) {
   return {
     apiUrl: option({
@@ -10,7 +12,7 @@ export function cmdTsDefaultArgs(ctx: CliCtx) {
       short: "u",
       description: "set the api url",
       type: string,
-      defaultValue: () => ctx.sthis.env.get("VIBES_API_URL") ?? "https://vite.localhost.vibesdiy.net:8888/api",
+      defaultValue: () => ctx.sthis.env.get("VIBES_API_URL") ?? DEFAULT_API_URL,
       defaultValueIsSerializable: true,
     }),
     json: flag({
@@ -31,5 +33,5 @@ export function cmdTsDefaultArgs(ctx: CliCtx) {
 export interface CliCtx {
   sthis: SuperThis;
   cliStream: ReturnType<typeof cmd_tsStream>;
-  vibesDiyApiFactory: (apiUrl: string) => VibesDiyApi;
+  vibesDiyApiFactory?: (apiUrl: string) => VibesDiyApi;
 }
