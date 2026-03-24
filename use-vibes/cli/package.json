@@ -42,7 +42,10 @@
     "@vibes.diy/api-types": "workspace:*",
     "arktype": "^2.2.0",
     "cmd-ts": "^0.15.0",
+    "hono": "^4.12.8",
+    "@hono/node-server": "^1.19.11",
     "jose": "^6.2.1",
+    "open": "^11.0.0",
     "tsx": "^4.21.0",
     "ws": "^8.19.0",
     "zx": "^8.8.5"
