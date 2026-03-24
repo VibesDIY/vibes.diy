@@ -11,10 +11,8 @@ import GtmNoScript from "./components/GtmNoScript.js";
 import { VibesDiyProvider, VibesDiyWebVars } from "./vibes-diy-provider.js";
 import { VibesFPApiParameters } from "@vibes.diy/api-types";
 import { getVibesGlobalCSS } from "@vibes.diy/base";
-import appStyles from "./app.css?url";
+import "./app.css";
 import { Toaster } from "react-hot-toast";
-
-export const links = () => [{ rel: "stylesheet", href: appStyles }];
 
 // Loader for root route
 export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters } }) {
