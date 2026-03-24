@@ -64,28 +64,28 @@ body {
   -moz-osx-font-smoothing: grayscale;
   width: 100%;
   height: 100%;
-  background-color: var(--color-light-background-00);
-  color: var(--color-light-primary);
+  background-color: var(--vibes-bg-primary);
+  color: var(--vibes-text-primary);
 }
 
 @media (prefers-color-scheme: dark) {
   :root { color-scheme: dark; }
   body {
     color-scheme: dark;
-    background-color: var(--color-dark-background-00);
-    color: var(--color-dark-primary);
+    background-color: var(--vibes-bg-primary);
+    color: var(--vibes-text-primary);
   }
   html, body {
-    background-color: var(--color-dark-background-00);
-    color: var(--color-dark-primary);
+    background-color: var(--vibes-bg-primary);
+    color: var(--vibes-text-primary);
   }
 }
 
 @supports (-webkit-touch-callout: none) {
   @media (prefers-color-scheme: dark) {
     html, body {
-      background-color: var(--color-dark-background-00);
-      color: var(--color-dark-primary);
+      background-color: var(--vibes-bg-primary);
+      color: var(--vibes-text-primary);
     }
   }
 }
