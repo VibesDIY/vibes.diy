@@ -47,15 +47,6 @@ async function writeUserSlugBinding(
       if (existing.length >= ctx.params.maxUserSlugPerUserId) {
         return Result.Err("maximum userSlug bindings reached for this userId");
       }
-      const slugOwner = await ctx.sql.db
-        .select()
-        .from(ctx.sql.tables.userSlugBinding)
-        .where(eq(ctx.sql.tables.userSlugBinding.userSlug, userSlug))
-        .limit(1)
-        .then((r) => r[0]);
-      if (slugOwner && slugOwner.userId !== userId) {
-        return Result.Err(`userSlug "${userSlug}" is owned by another user`);
-      }
       const tenant = ctx.sthis.nextId(12).str;
       await ctx.sql.db
         .insert(ctx.sql.tables.userSlugBinding)
@@ -66,9 +57,20 @@ async function writeUserSlugBinding(
           created: new Date().toISOString(),
         })
         .onConflictDoNothing();
+      // Post-insert verification: confirm our userId owns the row.
+      // If another user won the race, the insert was a no-op and we reject.
+      const owner = await ctx.sql.db
+        .select()
+        .from(ctx.sql.tables.userSlugBinding)
+        .where(eq(ctx.sql.tables.userSlugBinding.userSlug, userSlug))
+        .limit(1)
+        .then((r) => r[0]);
+      if (!owner || owner.userId !== userId) {
+        return Result.Err(`userSlug "${userSlug}" is owned by another user`);
+      }
       return Result.Ok({
         userSlug,
-        tenant,
+        tenant: owner.tenant,
       });
     }
   );
