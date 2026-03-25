@@ -358,7 +358,7 @@ export async function makeBaseSystemPrompt(
   const stylePrompt = sessionDoc?.stylePrompt || defaultStylePrompt;
 
   const demoDataLines = includeDemoData
-    ? `- If your app has a function that uses callAI with a schema to save data, include a Demo Data button that calls that function with an example prompt. Don't write an extra function, use real app code so the data illustrates what it looks like to use the app.\n- Never have have an instance of callAI that is only used to generate demo data, always use the same calls that are triggered by user actions in the app.\n`
+    ? `- If your app has a function that uses callAI with a schema to save data, include a Demo Data button that calls that function with an example prompt. Don't write an extra function, use real app code so the data illustrates what it looks like to use the app.\n- Never have an instance of callAI that is only used to generate demo data, always use the same calls that are triggered by user actions in the app.\n`
     : "";
 
   const systemPromptLines = [
@@ -371,7 +371,7 @@ export async function makeBaseSystemPrompt(
     "- Avoid using external libraries unless they are essential for the component to function",
     "- Always import the libraries you need at the top of the file",
     "- Use Fireproof for data persistence",
-    "- Use `callAI` to fetch AI (set `stream: true` to enable streaming), use Structured JSON Outputs like this: `callAI(prompt, { schema: { properties: { todos: { type: 'array', items: { type: 'string' } } } } })` and save final responses as individual Fireproof documents.",
+    "- Use `callAI` to fetch AI, use schema like this: `JSON.parse(await callAI(prompt, { schema: { properties: { todos: { type: 'array', items: { type: 'string' } } } } }))` and save final responses as individual Fireproof documents.",
     "- For file uploads use drag and drop and store using the `doc._files` API",
     "- Don't try to generate png or base64 data, use placeholder image APIs instead, like https://picsum.photos/400 where 400 is the square size",
     "- Consider and potentially reuse/extend code from previous responses if relevant",
@@ -381,7 +381,7 @@ export async function makeBaseSystemPrompt(
     "- Keep the database name stable as you edit the code",
     "- The system can send you crash reports, fix them by simplifying the affected code",
     "- List data items on the main page of your app so users don't have to hunt for them",
-    "- If you save data, make sure it is browseable in the app, eg lists should be clickable for more details",
+    "- If you save data, make sure it is browsable in the app, eg lists should be clickable for more details",
     demoDataLines,
   ];
 
@@ -397,7 +397,9 @@ export async function makeBaseSystemPrompt(
     ...(userPrompt ? [userPrompt, ""] : []),
     "IMPORTANT: You are working in one JavaScript file, use tailwind classes for styling. Remember to use brackets like bg-[#242424] for custom colors.",
     "",
-    "Provide a title and brief explanation followed by the component code. The component should demonstrate proper Fireproof integration with real-time updates and proper data persistence.",
+    "Before writing code, provide a title and brief description of the app. Then list the top 3 features that are the best fit for a browser-only database with real-time collaboration and describe a short planned workflow showing how those features connect into a coherent user experience.",
+    "",
+    "Then write the full component code block. After the code block, add a short message (1-2 sentences) describing the core workflow the app supports.",
     "",
     "Begin the component with the import statements. Use react and the following libraries:",
     "",
@@ -419,5 +421,5 @@ export async function makeBaseSystemPrompt(
 
 // Response format requirements
 export const RESPONSE_FORMAT = {
-  structure: ["Brief explanation", "Component code with proper Fireproof integration", "Real-time updates", "Data persistence"],
+  structure: ["Title and description", "Top 7 features", "Top 3 for browser-only collab", "Planned workflow", "Component code", "Core workflow summary"],
 };

@@ -11,24 +11,7 @@ import { callAI } from 'call-ai';
 
 // Default behavior - returns a Promise<string>
 const response = await callAI("Write a haiku");
-
-// Use the complete response directly
 console.log(response); // Complete response text
-```
-
-## Streaming Mode
-
-If you prefer to receive the response incrementally as it's generated, set `stream: true`. This returns an AsyncGenerator which must be awaited:
-
-```javascript
-import { callAI } from 'call-ai';
-
-// Enable streaming mode explicitly - returns an AsyncGenerator
-const generator = await callAI("Write an epic poem", { stream: true });
-// Process the streaming response
-for await (const partialResponse of generator) {
-  console.log(partialResponse); // Updates incrementally
-}
 ```
 
 ## JSON Schema Responses
@@ -40,7 +23,6 @@ import { callAI } from 'call-ai';
 
 const todoResponse = await callAI("Give me a todo list for learning React", {
   schema: {
-    name: "todo",  // Optional - defaults to "result" if not provided
     properties: {
       todos: {
         type: "array",
@@ -53,189 +35,19 @@ const todoData = JSON.parse(todoResponse);
 console.log(todoData.todos); // Array of todo items
 ```
 
-## JSON with Streaming
-
-In this example, we're using the `callAI` helper function to get weather data in a structured format with streaming preview:
-
-```javascript
-import { callAI } from 'call-ai';
-
-// Get weather data with streaming updates
-const generator = await callAI("What's the weather like in Paris today?", {
-  stream: true,
-  schema: {
-    properties: {
-      location: {
-        type: "string",
-        description: "City or location name"
-      },
-      temperature: {
-        type: "number",
-        description: "Temperature in Celsius"
-      },
-      conditions: {
-        type: "string",
-        description: "Weather conditions description"
-      }
-    }
-  }
-});
-
-// Preview streaming updates as they arrive, don't parse until the end
-const resultElement = document.getElementById('result');
-let finalResponse;
-
-for await (const partialResponse of generator) {
-  resultElement.textContent = partialResponse;
-  finalResponse = partialResponse;
-}
-
-// Parse final result
-try {
-  const weatherData = JSON.parse(finalResponse);
-  
-  // Access individual fields
-  const { location, temperature, conditions } = weatherData;
-  
-  // Update UI with formatted data
-  document.getElementById('location').textContent = location;
-  document.getElementById('temperature').textContent = `${temperature}°C`;
-  document.getElementById('conditions').textContent = conditions;
-} catch (error) {
-  console.error("Failed to parse response:", error);
-}
-```
-
 ### Schema Structure Recommendations
 
 1. **Flat schemas perform better across all models**. If you need maximum compatibility, avoid deeply nested structures.
 
 2. **Field names matter**. Some models have preferences for certain property naming patterns:
-   - Use simple, common naming patterns like `name`, `type`, `items`, `price` 
+   - Use simple, common naming patterns like `name`, `type`, `items`, `price`
    - Avoid deeply nested object hierarchies (more than 2 levels deep)
    - Keep array items simple (strings or flat objects)
-
-## Specifying a Model
-
-By default, the function uses `openrouter/auto` (automatic model selection). You can specify a different model:
-
-```javascript
-import { callAI } from 'call-ai';
-
-// Use a specific model via options
-const response = await callAI(
-  "Explain quantum computing in simple terms", 
-  { model: "openai/gpt-4o" }
-);
-
-console.log(response);
-```
-
-## Additional Options
-
-You can pass extra parameters to customize the request:
-
-```javascript
-import { callAI } from 'call-ai';
-
-const response = await callAI(
-  "Write a creative story",
-  {
-    model: "anthropic/claude-3-opus",
-    temperature: 0.8,     // Higher for more creativity (0-1)
-    max_tokens: 1000,     // Limit response length
-    top_p: 0.95           // Control randomness
-  }
-);
-
-console.log(response);
-```
-
-## Message History
-
-For multi-turn conversations, you can pass an array of messages:
-
-```javascript
-import { callAI } from 'call-ai';
-
-// Create a conversation
-const messages = [
-  { role: "system", content: "You are a helpful coding assistant." },
-  { role: "user", content: "How do I use React hooks?" },
-  { role: "assistant", content: "React hooks are functions that let you use state and other React features in functional components..." },
-  { role: "user", content: "Can you show me an example of useState?" }
-];
-
-// Pass the entire conversation history
-const response = await callAI(messages);
-console.log(response);
-
-// To continue the conversation, add the new response and send again
-messages.push({ role: "assistant", content: response });
-messages.push({ role: "user", content: "What about useEffect?" });
-
-// Call again with updated history
-const nextResponse = await callAI(messages);
-console.log(nextResponse);
-```
-
-## Recommended Models
-
-| Model | Best For | Speed vs Quality |
-|-------|----------|------------------|
-| `openrouter/auto` | Default, automatically selects | Adaptive |
-| `openai/gpt-4o-mini` | data generation | Fast, good quality |
-| `anthropic/claude-3-haiku` | Cost-effective | Fast, good quality |
-| `openai/gpt-4o` | Best overall quality | Medium speed, highest quality |
-| `anthropic/claude-3-opus` | Complex reasoning | Slower, highest quality |
-| `mistralai/mistral-large` | Open weights alternative | Good balance |
-
-
-## Items with lists
-
-```javascript
-import { callAI } from 'call-ai';
-
-const generator = await callAI([
-  {
-    role: "user",
-    content: "Generate 3 JSON records with name, description, tags, and priority (0 is highest, 5 is lowest)."
-  }
-], {
-  stream: true,
-  schema: {
-    properties: {
-      records: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            name: { type: "string" },
-            description: { type: "string" },
-            tags: {
-              type: "array",
-              items: { type: "string" }
-            },
-            priority: { type: "integer" }
-          }
-        }
-      }
-    }
-  }
-});
-
-for await (const partialResponse of generator) {
-  console.log(partialResponse);
-}
-
-const recordData = JSON.parse(/* final response */);
-console.log(recordData.records); // Array of records
-```
 
 ## Items with properties
 
 ```javascript
-const demoData = await callAI("Generate 4 items with label, status, priority (low, medium, high, critical), and notes. Return as structured JSON with these fields.", {
+const response = await callAI("Generate 4 items with label, status, priority (low, medium, high, critical), and notes. Return as structured JSON with these fields.", {
   schema: {
     properties: {
       items: {
@@ -253,64 +65,88 @@ const demoData = await callAI("Generate 4 items with label, status, priority (lo
     }
   }
 });
+const demoData = JSON.parse(response);
+console.log(demoData.items); // Array of item objects
 ```
 
-## Error Handling
+## Streaming Mode
 
-Errors are handled through standard JavaScript try/catch blocks:
+For text responses you want to display incrementally, set `stream: true`. This returns an AsyncGenerator that yields chunks of text as they arrive:
+
+```javascript
+import { callAI } from 'call-ai';
+
+const generator = await callAI("Write an epic poem", { stream: true });
+let full = '';
+for await (const chunk of generator) {
+  full += chunk;
+  console.log(full); // Append each chunk to build the full response
+}
+```
+
+## Specifying a Model
+
+By default, the function uses `openrouter/auto` (automatic model selection). You can specify a different model:
+
+```javascript
+import { callAI } from 'call-ai';
+
+const response = await callAI(
+  "Explain quantum computing in simple terms",
+  { model: "openai/gpt-4o" }
+);
+```
+
+## Message History
+
+For multi-turn conversations, you can pass an array of messages:
+
+```javascript
+import { callAI } from 'call-ai';
+
+const messages = [
+  { role: "system", content: "You are a helpful coding assistant." },
+  { role: "user", content: "How do I use React hooks?" },
+  { role: "assistant", content: "React hooks are functions that let you use state and other React features in functional components..." },
+  { role: "user", content: "Can you show me an example of useState?" }
+];
+
+const response = await callAI(messages);
+console.log(response);
+
+// To continue the conversation, add the new response and send again
+messages.push({ role: "assistant", content: response });
+messages.push({ role: "user", content: "What about useEffect?" });
+
+const nextResponse = await callAI(messages);
+```
+
+## Recommended Models
+
+| Model | Best For | Speed vs Quality |
+|-------|----------|------------------|
+| `openrouter/auto` | Default, automatically selects | Adaptive |
+| `openai/gpt-4o-mini` | data generation | Fast, good quality |
+| `anthropic/claude-3-haiku` | Cost-effective | Fast, good quality |
+| `openai/gpt-4o` | Best overall quality | Medium speed, highest quality |
+| `anthropic/claude-3-opus` | Complex reasoning | Slower, highest quality |
+| `mistralai/mistral-large` | Open weights alternative | Good balance |
+
+## Error Handling
 
 ```javascript
 import { callAI } from 'call-ai';
 
 try {
-
-  const response = await callAI("Generate some content", {
-    apiKey: "invalid-key" // Invalid or missing API key
-  });
-  
-  // If no error was thrown, process the normal response
+  const response = await callAI("Generate some content");
   console.log(response);
 } catch (error) {
-  // API errors are standard Error objects with useful properties
   console.error("API error:", error.message);
   console.error("Status code:", error.status);
   console.error("Error type:", error.errorType);
   console.error("Error details:", error.details);
 }
 ```
-
-For streaming mode, error handling works the same way:
-
-```javascript
-import { callAI } from 'call-ai';
-
-try {
-  const generator = await callAI("Generate some content", {
-    apiKey: "invalid-key", // Invalid or missing API key
-    stream: true
-  });
-  
-  // Any error during streaming will throw an exception
-  let finalResponse = '';
-  for await (const chunk of generator) {
-    finalResponse = chunk;
-    console.log("Chunk:", chunk);
-  }
-  
-  // Process the final response
-  console.log("Final response:", finalResponse);
-} catch (error) {
-  // Handle errors with standard try/catch
-  console.error("API error:", error.message);
-  console.error("Error properties:", {
-    status: error.status,
-    type: error.errorType,
-    details: error.details
-  });
-}
-```
-
-This approach is idiomatic and consistent with standard JavaScript practices. Errors provide rich information for better debugging and error handling in your applications.
 
 ## Image Recognition Example
 
@@ -319,29 +155,25 @@ Call-AI supports image recognition using multimodal models like GPT-4o. You can 
 ```javascript
 import { callAI } from 'call-ai';
 
-// Function to analyze an image using GPT-4o
 async function analyzeImage(imageFile, prompt = 'Describe this image in detail') {
-  // Convert the image file to a data URL
   const dataUrl = await fileToDataUrl(imageFile);
-  
+
   const content = [
     { type: 'text', text: prompt },
     { type: 'image_url', image_url: { url: dataUrl } }
   ];
-  
-  // Call the model with the multimodal content
+
   const result = await callAI(
     [{ role: 'user', content }],
     {
-      model: 'openai/gpt-4o-2024-08-06', // Or 'openai/gpt-4o-latest'
+      model: 'openai/gpt-4o-2024-08-06',
       apiKey: window.CALLAI_API_KEY,
     }
   );
-  
+
   return result;
 }
 
-// Helper function to convert File to data URL
 async function fileToDataUrl(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
