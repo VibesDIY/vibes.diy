@@ -6,7 +6,11 @@ import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.
 
 // import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
-import { ChatMessage } from "@vibes.diy/call-ai-v2";
+// Inlined from call-ai-v2 to avoid unpublished workspace dep
+interface ChatMessage {
+  readonly role: "system" | "user" | "assistant";
+  readonly content: string | readonly { readonly type: string; readonly text: string }[];
+}
 
 // Single source of truth for the default coding model used across the repo.
 export const DEFAULT_CODING_MODEL = "anthropic/claude-opus-4.5" as const;
