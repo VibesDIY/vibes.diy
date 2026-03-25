@@ -12,3 +12,6 @@ export { resolveEffectiveModel } from "./prompts.js";
 
 // Export component transformation utilities
 export { normalizeComponentExports, transformImports, coreImportMap } from "./component-transforms.js";
+
+export { buildExample } from "./example-builder.js";
+export { buildSchemaSystemMessage } from "./build-schema-prompt.js";
