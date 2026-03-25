@@ -51,6 +51,7 @@
     "zx": "^8.8.5"
   },
   "devDependencies": {
+    "@fireproof/core-cli": "0.24.13",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@types/ws": "^8.18.1",
