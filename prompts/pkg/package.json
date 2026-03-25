@@ -31,7 +31,6 @@
     "@fireproof/core-types-base": "0.24.13",
     "@fireproof/core-types-protocols-cloud": "0.24.13",
     "@fireproof/use-fireproof": "0.24.13",
-    "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*"
   },
   "peerDependencies": {

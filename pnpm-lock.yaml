@@ -245,9 +245,6 @@ importers:
       '@fireproof/use-fireproof':
         specifier: 0.24.13
         version: 0.24.13(@adviser/cement@0.5.34(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@vibes.diy/call-ai-v2':
-        specifier: workspace:*
-        version: link:../../call-ai/v2
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
