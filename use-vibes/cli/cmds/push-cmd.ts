@@ -26,19 +26,18 @@ async function readProjectFiles(dir: string): Promise<VibeFile[]> {
     if (entry.name.startsWith(".")) continue;
 
     const ext = extname(entry.name).toLowerCase();
-    if (!isTextFile(ext)) continue;
+    if (isTextFile(ext) === false) continue;
 
     const content = await readFile(join(dir, entry.name), "utf-8");
     const filename = `/${entry.name}`;
     const lang = CODE_EXTENSIONS[ext];
 
-    if (lang) {
+    if (lang !== undefined) {
       files.push({
         type: "code-block",
         lang,
         content,
         filename,
-        entryPoint: entry.name.toLowerCase() === "app.jsx",
       });
     } else {
       files.push({
@@ -85,9 +84,11 @@ export function pushCmd(ctx: CliCtx) {
       readonly mode: string;
       readonly appSlug: string;
     }): Promise<void> {
+      const { stdout, stderr } = ctx.output;
+
       if (ctx.vibesDiyApiFactory === undefined) {
-        console.error("Not logged in. Run 'use-vibes login' first.");
-        process.exit(1);
+        stderr("Not logged in. Run 'use-vibes login' first.\n");
+        ctx.exitCode = 1;
         return;
       }
 
@@ -96,25 +97,25 @@ export function pushCmd(ctx: CliCtx) {
       const api = ctx.vibesDiyApiFactory(args.apiUrl);
 
       // Resolve userSlug
-      console.log("Resolving user...");
+      stdout("Resolving user...\n");
       const rList = await api.listUserSlugAppSlug({});
       const userSlug = rList.isOk() && rList.Ok().items.length > 0 ? rList.Ok().items[0].userSlug : undefined;
       if (userSlug !== undefined) {
-        console.log(`User: ${userSlug}`);
+        stdout(`User: ${userSlug}\n`);
       }
 
       // Read files from CWD
-      console.log("Reading files...");
+      stdout("Reading files...\n");
       const files = await readProjectFiles(process.cwd());
       if (files.length === 0) {
-        console.error("No files found in current directory. Expected at least App.jsx.");
-        process.exit(1);
+        stderr("No files found in current directory. Expected at least App.jsx.\n");
+        ctx.exitCode = 1;
         return;
       }
-      console.log(`Found ${files.length} file(s): ${files.map((f) => f.filename).join(", ")}`);
+      stdout(`Found ${files.length} file(s): ${files.map((f) => f.filename).join(", ")}\n`);
 
       // Push to API
-      console.log(`Pushing ${appSlug} (${mode})...`);
+      stdout(`Pushing ${appSlug} (${mode})...\n`);
       const rResult = await api.ensureAppSlug({
         mode,
         appSlug,
@@ -123,19 +124,19 @@ export function pushCmd(ctx: CliCtx) {
       });
 
       if (rResult.isErr()) {
-        console.error("Push failed:", rResult.Err());
-        process.exit(1);
+        stderr(`Push failed: ${String(rResult.Err())}\n`);
+        ctx.exitCode = 1;
         return;
       }
 
       const result = rResult.Ok();
       // entryPointUrl is returned at runtime but not yet in the arktype schema
       const maybeUrl = "entryPointUrl" in result ? String(result.entryPointUrl) : undefined;
-      console.log(`\nDeployed: ${result.userSlug}/${result.appSlug}`);
+      stdout(`\nDeployed: ${result.userSlug}/${result.appSlug}\n`);
       if (maybeUrl !== undefined) {
-        console.log(`URL: ${maybeUrl}`);
+        stdout(`URL: ${maybeUrl}\n`);
       }
-      console.log(`Mode: ${result.mode} | fsId: ${result.fsId}`);
+      stdout(`Mode: ${result.mode} | fsId: ${result.fsId}\n`);
     },
   });
 }
