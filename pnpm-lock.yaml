@@ -199,9 +199,6 @@ importers:
       mime:
         specifier: ^4.1.0
         version: 4.1.0
-      random-words:
-        specifier: ^2.0.1
-        version: 2.0.1
       zx:
         specifier: ^8.8.5
         version: 8.8.5
@@ -285,6 +282,9 @@ importers:
       '@vibes.diy/prompts':
         specifier: workspace:0.0.0
         version: link:../pkg
+      arktype:
+        specifier: ^2.2.0
+        version: 2.2.0
     devDependencies:
       '@adviser/cement':
         specifier: ^0.5.34
