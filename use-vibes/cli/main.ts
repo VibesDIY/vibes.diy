@@ -13,6 +13,7 @@ import { cmd_tsStream } from "./cmd-ts-stream.js";
 import { runSafely, subcommands } from "cmd-ts";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
 import { loginCmd } from "./cmds/login-cmd.js";
+import { pushCmd } from "./cmds/push-cmd.js";
 import { CliCtx } from "./cli-ctx.js";
 import { cmdTsEvento, WrapCmdTSMsg } from "./cmd-evento.js";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
@@ -113,6 +114,7 @@ async function main() {
       version: "1.0.0",
       cmds: {
         login: loginCmd(ctx),
+        push: pushCmd(ctx),
         "user-settings": userSettingsCmd(ctx),
       },
     }),

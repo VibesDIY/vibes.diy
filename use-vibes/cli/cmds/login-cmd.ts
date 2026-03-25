@@ -6,7 +6,7 @@ import { decodeJwt } from "jose";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import open from "open";
-import { Future, timeouted, isSuccess, isTimeout, BuildURI } from "@adviser/cement";
+import { exception2Result, Future, timeouted, isSuccess, isTimeout, BuildURI } from "@adviser/cement";
 import { hostname } from "os";
 import { CliCtx, DEFAULT_API_URL } from "../cli-ctx.js";
 
@@ -75,20 +75,24 @@ export function loginCmd(ctx: CliCtx) {
       }
 
       // Step 1: Get or create device key
-      let deviceIdKey: DeviceIdKey;
-      if (existing.deviceId.IsNone()) {
-        console.log("Creating new device key...");
-        deviceIdKey = await DeviceIdKey.create();
-        const jwkPrivate = await deviceIdKey.exportPrivateJWK();
-        await keyBag.setDeviceId(jwkPrivate);
-      } else {
+      const deviceIdKey = await (async (): Promise<DeviceIdKey | undefined> => {
+        if (existing.deviceId.IsNone()) {
+          console.log("Creating new device key...");
+          const key = await DeviceIdKey.create();
+          const jwkPrivate = await key.exportPrivateJWK();
+          await keyBag.setDeviceId(jwkPrivate);
+          return key;
+        }
         const rKey = await DeviceIdKey.createFromJWK(existing.deviceId.Unwrap());
         if (rKey.isErr()) {
           console.error("Failed to load device key:", rKey.Err());
-          process.exit(1);
-          return;
+          return undefined;
         }
-        deviceIdKey = rKey.Ok();
+        return rKey.Ok();
+      })();
+      if (deviceIdKey === undefined) {
+        process.exit(1);
+        return;
       }
 
       const fingerprint = await deviceIdKey.fingerPrint();
@@ -129,11 +133,8 @@ export function loginCmd(ctx: CliCtx) {
       const fullUrl = BuildURI.from(caUrl).setParam("csr", csrJWS).setParam("returnUrl", callbackUrl).toString();
 
       console.log("\nOpening browser for authentication...");
-      const rOpen = await open(fullUrl).then(
-        () => true,
-        () => false
-      );
-      if (!rOpen) {
+      const rOpen = await exception2Result(() => open(fullUrl));
+      if (rOpen.isErr()) {
         console.log("Could not open browser. Please open this URL manually:");
         console.log(fullUrl);
       }

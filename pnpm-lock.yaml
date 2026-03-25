@@ -623,6 +623,9 @@ importers:
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../base
+      '@vibes.diy/use-vibes-cli':
+        specifier: workspace:*
+        version: link:../cli
       react:
         specifier: '>=19.1.0'
         version: 19.2.4
