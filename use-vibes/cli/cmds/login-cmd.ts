@@ -54,30 +54,29 @@ export function loginCmd(ctx: CliCtx) {
       readonly force: boolean;
       readonly timeout: string;
     }): Promise<void> {
+      const { stdout, stderr } = ctx.output;
       const keyBag = await getKeyBag(ctx.sthis);
       const existing = await keyBag.getDeviceId();
 
       // Already registered — early exit unless --force
-      if (existing.cert.IsSome() && !args.force) {
-        if (existing.deviceId.IsSome()) {
-          const rKey = await DeviceIdKey.createFromJWK(existing.deviceId.Unwrap());
-          if (rKey.isOk()) {
-            const fp = await rKey.Ok().fingerPrint();
-            console.log(`Already logged in. Device fingerprint: ${fp}`);
-            console.log("Use --force to re-register.");
-          }
+      if (existing.cert.IsSome() && existing.deviceId.IsSome() && args.force === false) {
+        const rKey = await DeviceIdKey.createFromJWK(existing.deviceId.Unwrap());
+        if (rKey.isOk()) {
+          const fp = await rKey.Ok().fingerPrint();
+          stdout(`Already logged in. Device fingerprint: ${fp}\n`);
+          stdout("Use --force to re-register.\n");
         }
         return;
       }
 
       if (args.force && existing.cert.IsSome()) {
-        console.log("Force re-registering...");
+        stdout("Force re-registering...\n");
       }
 
       // Step 1: Get or create device key
       const deviceIdKey = await (async (): Promise<DeviceIdKey | undefined> => {
         if (existing.deviceId.IsNone()) {
-          console.log("Creating new device key...");
+          stdout("Creating new device key...\n");
           const key = await DeviceIdKey.create();
           const jwkPrivate = await key.exportPrivateJWK();
           await keyBag.setDeviceId(jwkPrivate);
@@ -85,27 +84,27 @@ export function loginCmd(ctx: CliCtx) {
         }
         const rKey = await DeviceIdKey.createFromJWK(existing.deviceId.Unwrap());
         if (rKey.isErr()) {
-          console.error("Failed to load device key:", rKey.Err());
+          stderr(`Failed to load device key: ${String(rKey.Err())}\n`);
           return undefined;
         }
         return rKey.Ok();
       })();
       if (deviceIdKey === undefined) {
-        process.exit(1);
+        ctx.exitCode = 1;
         return;
       }
 
       const fingerprint = await deviceIdKey.fingerPrint();
-      console.log(`Device fingerprint: ${fingerprint}`);
+      stdout(`Device fingerprint: ${fingerprint}\n`);
 
       // Step 2: Generate CSR
-      console.log("Generating certificate signing request...");
+      stdout("Generating certificate signing request...\n");
       const subject = buildSubject(hostname());
       const deviceIdCSR = new DeviceIdCSR(ctx.sthis, deviceIdKey);
       const csrResult = await deviceIdCSR.createCSR(subject);
       if (csrResult.isErr()) {
-        console.error("Failed to generate CSR:", csrResult.Err());
-        process.exit(1);
+        stderr(`Failed to generate CSR: ${String(csrResult.Err())}\n`);
+        ctx.exitCode = 1;
         return;
       }
       const csrJWS = csrResult.Ok();
@@ -115,11 +114,11 @@ export function loginCmd(ctx: CliCtx) {
       const app = new Hono();
       app.get("/cert", (c) => {
         const cert = c.req.query("cert");
-        if (!cert) {
+        if (cert === undefined || cert === "") {
           certFuture.reject(new Error("Missing cert parameter"));
           return c.text("Missing cert parameter", 400);
         }
-        console.log("\nCertificate received!");
+        stdout("\nCertificate received!\n");
         certFuture.resolve(cert);
         return c.text("Login complete. You can close this window.");
       });
@@ -132,32 +131,32 @@ export function loginCmd(ctx: CliCtx) {
       const caUrl = apiUrlToCaUrl(args.apiUrl);
       const fullUrl = BuildURI.from(caUrl).setParam("csr", csrJWS).setParam("returnUrl", callbackUrl).toString();
 
-      console.log("\nOpening browser for authentication...");
+      stdout("\nOpening browser for authentication...\n");
       const rOpen = await exception2Result(() => open(fullUrl));
       if (rOpen.isErr()) {
-        console.log("Could not open browser. Please open this URL manually:");
-        console.log(fullUrl);
+        stdout("Could not open browser. Please open this URL manually:\n");
+        stdout(fullUrl + "\n");
       }
 
       // Step 5: Wait for certificate
-      console.log("Waiting for authentication...\n");
+      stdout("Waiting for authentication...\n\n");
       const timeoutMs = parseInt(args.timeout, 10) * 1000;
       const result = await timeouted(certFuture.asPromise(), { timeout: timeoutMs });
 
       serverInstance.close();
 
-      if (!isSuccess(result)) {
+      if (isSuccess(result) === false) {
         if (isTimeout(result)) {
-          console.error(`Timed out after ${args.timeout}s waiting for authentication.`);
+          stderr(`Timed out after ${args.timeout}s waiting for authentication.\n`);
         } else {
-          console.error("Failed to receive certificate:", result.state === "error" ? result.error : result);
+          stderr(`Failed to receive certificate: ${String(result.state === "error" ? result.error : result)}\n`);
         }
-        process.exit(1);
+        ctx.exitCode = 1;
         return;
       }
 
       // Step 6: Store certificate
-      console.log("Storing credentials...");
+      stdout("Storing credentials...\n");
       const decoded = decodeJwt(result.value);
       const certPayload = CertificatePayloadSchema.parse(decoded);
       const jwkPrivate = await deviceIdKey.exportPrivateJWK();
@@ -166,7 +165,7 @@ export function loginCmd(ctx: CliCtx) {
         certificatePayload: certPayload,
       });
 
-      console.log(`\nLogin complete! Device fingerprint: ${fingerprint}`);
+      stdout(`\nLogin complete! Device fingerprint: ${fingerprint}\n`);
     },
   });
 }

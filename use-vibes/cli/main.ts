@@ -14,7 +14,9 @@ import { runSafely, subcommands } from "cmd-ts";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
 import { loginCmd } from "./cmds/login-cmd.js";
 import { pushCmd } from "./cmds/push-cmd.js";
-import { CliCtx } from "./cli-ctx.js";
+import { skillsCmd } from "./cmds/skills-cmd.js";
+import { systemCmd } from "./cmds/system-cmd.js";
+import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, WrapCmdTSMsg } from "./cmd-evento.js";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
 import { isResEnsureUserSettings } from "@vibes.diy/api-types";
@@ -95,7 +97,7 @@ class OutputSelector implements EventoSendProvider<unknown, unknown, unknown> {
   }
 }
 
-async function main() {
+async function main(): Promise<number> {
   const ca = await loadMkcertCA();
   const sthis = ensureSuperThis();
 
@@ -105,7 +107,9 @@ async function main() {
   const ctx: CliCtx = {
     sthis,
     cliStream: cmd_tsStream(),
+    output: defaultCliOutput,
     vibesDiyApiFactory: rApiFactory.isOk() ? rApiFactory.Ok() : undefined,
+    exitCode: 0,
   };
   const rs = await runSafely(
     subcommands({
@@ -115,6 +119,8 @@ async function main() {
       cmds: {
         login: loginCmd(ctx),
         push: pushCmd(ctx),
+        skills: skillsCmd(ctx),
+        system: systemCmd(ctx),
         "user-settings": userSettingsCmd(ctx),
       },
     }),
@@ -168,6 +174,7 @@ async function main() {
     ),
     ctx.cliStream.close(),
   ]);
+  return ctx.exitCode;
 }
 
 main()
@@ -175,4 +182,4 @@ main()
     console.error("Error in use-vibes cli:", err);
     process.exit(1);
   })
-  .then(() => process.exit(0));
+  .then((code) => process.exit(code));
