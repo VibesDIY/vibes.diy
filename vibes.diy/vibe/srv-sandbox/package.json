@@ -16,6 +16,7 @@
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
+    "@vibes.diy/prompts": "workspace:^",
     "@vibes.diy/vibe-types": "workspace:*",
     "arktype": "^2.2.0",
     "react": "^19.2.4",
