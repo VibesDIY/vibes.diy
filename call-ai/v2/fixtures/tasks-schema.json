@@ -1,0 +1,16 @@
+{
+  "name": "tasks",
+  "properties": {
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "difficulty": { "type": "string" }
+        }
+      }
+    }
+  }
+}
