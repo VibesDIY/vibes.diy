@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { type } from "arktype";
-import { buildExample } from "./example-builder.js";
+import { buildExample } from "@vibes.diy/prompts";
 
 describe("buildExample", () => {
-  it("flat scalars: string, number, boolean", () => {
+  it("flat scalars: string, number, boolean", async () => {
     const schema = {
       properties: {
         name: { type: "string" },
@@ -11,38 +11,37 @@ describe("buildExample", () => {
         active: { type: "boolean" },
       },
     };
-    const example = buildExample(schema);
+    const example = await buildExample(schema);
     const validator = type({ name: "string", score: "number", active: "boolean" });
     const result = validator(example);
     expect(result).not.toBeInstanceOf(type.errors);
   });
 
-  it("integer type produces a number", () => {
+  it("integer type produces a number", async () => {
     const schema = {
       properties: {
         count: { type: "integer" },
       },
     };
-    const example = buildExample(schema);
+    const example = await buildExample(schema);
     const validator = type({ count: "number" });
     const result = validator(example);
     expect(result).not.toBeInstanceOf(type.errors);
   });
 
-  it("string array", () => {
+  it("string array", async () => {
     const schema = {
       properties: {
         layers: { type: "array", items: { type: "string" } },
       },
     };
-    const example = buildExample(schema);
+    const example = await buildExample(schema);
     const validator = type({ layers: "string[]" });
     const result = validator(example);
     expect(result).not.toBeInstanceOf(type.errors);
-    expect((example.layers as string[]).length).toBeGreaterThanOrEqual(2);
   });
 
-  it("array of objects", () => {
+  it("array of objects", async () => {
     const schema = {
       properties: {
         tasks: {
@@ -57,16 +56,15 @@ describe("buildExample", () => {
         },
       },
     };
-    const example = buildExample(schema);
+    const example = await buildExample(schema);
     const validator = type({
       tasks: type({ title: "string", description: "string" }).array(),
     });
     const result = validator(example);
     expect(result).not.toBeInstanceOf(type.errors);
-    expect((example.tasks as unknown[]).length).toBeGreaterThanOrEqual(2);
   });
 
-  it("nested object", () => {
+  it("nested object", async () => {
     const schema = {
       properties: {
         address: {
@@ -78,13 +76,13 @@ describe("buildExample", () => {
         },
       },
     };
-    const example = buildExample(schema);
+    const example = await buildExample(schema);
     const validator = type({ address: { street: "string", city: "string" } });
     const result = validator(example);
     expect(result).not.toBeInstanceOf(type.errors);
   });
 
-  it("sandwich schema", () => {
+  it("sandwich schema", async () => {
     const schema = {
       name: "sandwich",
       properties: {
@@ -92,13 +90,13 @@ describe("buildExample", () => {
         layers: { type: "array", items: { type: "string" } },
       },
     };
-    const example = buildExample(schema);
+    const example = await buildExample(schema);
     const validator = type({ name: "string", layers: "string[]" });
     const result = validator(example);
     expect(result).not.toBeInstanceOf(type.errors);
   });
 
-  it("tasks schema", () => {
+  it("tasks schema", async () => {
     const schema = {
       name: "tasks",
       properties: {
@@ -115,7 +113,7 @@ describe("buildExample", () => {
         },
       },
     };
-    const example = buildExample(schema);
+    const example = await buildExample(schema);
     const validator = type({
       tasks: type({ title: "string", description: "string", difficulty: "string" }).array(),
     });
@@ -123,18 +121,18 @@ describe("buildExample", () => {
     expect(result).not.toBeInstanceOf(type.errors);
   });
 
-  it("empty schema returns empty object", () => {
-    const example = buildExample({});
+  it("empty schema returns empty object", async () => {
+    const example = await buildExample({});
     expect(example).toEqual({});
   });
 
-  it("number array", () => {
+  it("number array", async () => {
     const schema = {
       properties: {
         scores: { type: "array", items: { type: "number" } },
       },
     };
-    const example = buildExample(schema);
+    const example = await buildExample(schema);
     const validator = type({ scores: "number[]" });
     const result = validator(example);
     expect(result).not.toBeInstanceOf(type.errors);

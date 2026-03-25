@@ -199,9 +199,6 @@ importers:
       mime:
         specifier: ^4.1.0
         version: 4.1.0
-      random-words:
-        specifier: ^2.0.1
-        version: 2.0.1
       zx:
         specifier: ^8.8.5
         version: 8.8.5
@@ -254,6 +251,12 @@ importers:
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
+      arktype:
+        specifier: ^2.2.0
+        version: 2.2.0
+      json-schema-faker:
+        specifier: ^0.6.0
+        version: 0.6.0
       react:
         specifier: '>=19.1.0'
         version: 19.2.4
@@ -279,6 +282,9 @@ importers:
       '@vibes.diy/prompts':
         specifier: workspace:0.0.0
         version: link:../pkg
+      arktype:
+        specifier: ^2.2.0
+        version: 2.2.0
     devDependencies:
       '@adviser/cement':
         specifier: ^0.5.34
@@ -6692,6 +6698,10 @@ packages:
   json-parse-even-better-errors@2.3.1:
     resolution: {integrity: sha512-xyFwyhro/JEof6Ghe2iz2NcXoj2sloNsWr/XsERDK/oiPCfaNhl5ONfp+jQdAZRQQ0IJWNzH9zIZF7li91kh2w==}
 
+  json-schema-faker@0.6.0:
+    resolution: {integrity: sha512-KfTcb8UEjD4n1VBI1BOoHWOqSADP6KMah5BBKT/GeYxM4LbzOoyDs3T71jbrR3TflUtNiT8zSTpLiFU62iHZFQ==}
+    hasBin: true
+
   json-schema-traverse@0.4.1:
     resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
 
@@ -6738,6 +6748,7 @@ packages:
 
   libsql@0.5.22:
     resolution: {integrity: sha512-NscWthMQt7fpU8lqd7LXMvT9pi+KhhmTHAJWUB/Lj6MWa0MKFv0F2V4C6WKKpjCVZl0VwcDz4nOI3CyaT1DDiA==}
+    cpu: [x64, arm64, wasm32, arm]
     os: [darwin, linux, win32]
 
   lightningcss-android-arm64@1.32.0:
@@ -14410,6 +14421,8 @@ snapshots:
   json-buffer@3.0.1: {}
 
   json-parse-even-better-errors@2.3.1: {}
+
+  json-schema-faker@0.6.0: {}
 
   json-schema-traverse@0.4.1: {}
 
