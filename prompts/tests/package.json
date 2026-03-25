@@ -57,7 +57,6 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@vibes.diy/prompts": "workspace:0.0.0",
-    "arktype": "^2.2.0"
+    "@vibes.diy/prompts": "workspace:0.0.0"
   }
 }
