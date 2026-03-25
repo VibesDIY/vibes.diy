@@ -38,8 +38,6 @@
     "@fireproof/core-types-protocols-cloud": "0.24.13",
     "@fireproof/core-types-protocols-dashboard": "0.24.13",
     "@fireproof/use-fireproof": "0.24.13",
-    "@vibes.diy/api-impl": "workspace:*",
-    "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
     "arktype": "^2.2.0",
     "cmd-ts": "^0.15.0",
@@ -53,6 +51,8 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.13",
+    "@vibes.diy/api-impl": "workspace:*",
+    "@vibes.diy/api-types": "workspace:*",
     "@types/ws": "^8.18.1",
     "@vitest/browser-playwright": "~4.0.18",
     "vitest": "~4.0.18"

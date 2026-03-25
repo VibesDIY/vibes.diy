@@ -458,12 +458,6 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.11
         version: 1.19.11(hono@4.12.8)
-      '@vibes.diy/api-impl':
-        specifier: workspace:*
-        version: link:../../vibes.diy/api/impl
-      '@vibes.diy/api-types':
-        specifier: workspace:*
-        version: link:../../vibes.diy/api/types
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -498,6 +492,12 @@ importers:
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
+      '@vibes.diy/api-impl':
+        specifier: workspace:*
+        version: link:../../vibes.diy/api/impl
+      '@vibes.diy/api-types':
+        specifier: workspace:*
+        version: link:../../vibes.diy/api/types
       '@vitest/browser-playwright':
         specifier: ~4.0.18
         version: 4.0.18(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.18)
