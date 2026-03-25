@@ -61,7 +61,7 @@ ${
     : ""
 }IMPORTANT: You are working in one JavaScript file, use tailwind classes for styling. Remember to use brackets like bg-[#242424] for custom colors.
 
-Before writing code, provide a title and brief description of the app. Then list the top 3 features that are the best fit for a browser-only database with real-time collaboration and describe a short planned workflow showing how those features connect into a coherent user experience.
+Before writing code, provide a title and brief description of the app. Then list the top 3 features that are the best fit for a mobile web database with real-time collaboration and describe a short planned workflow showing how those features connect into a coherent user experience.
 
 Then write the full component code block. After the code block, add a short message (1-2 sentences) describing the core workflow the app supports.
 
