@@ -70,7 +70,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.29.0",
     "@fireproof/core-cli": "0.24.13",
-    "@react-router/dev": "^7.13.1",
+    "@react-router/dev": "^7.13.2",
     "@tailwindcss/vite": "^4.2.2",
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.13",
