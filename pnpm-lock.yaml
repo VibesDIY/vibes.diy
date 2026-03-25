@@ -467,6 +467,9 @@ importers:
       '@vibes.diy/api-types':
         specifier: workspace:*
         version: link:../../vibes.diy/api/types
+      '@vibes.diy/prompts':
+        specifier: workspace:*
+        version: link:../../prompts/pkg
       arktype:
         specifier: ^2.2.0
         version: 2.2.0

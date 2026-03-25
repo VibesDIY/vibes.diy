@@ -40,6 +40,7 @@
     "@fireproof/use-fireproof": "0.24.13",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
+    "@vibes.diy/prompts": "workspace:*",
     "arktype": "^2.2.0",
     "cmd-ts": "^0.15.0",
     "hono": "^4.12.8",
