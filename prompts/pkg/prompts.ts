@@ -418,8 +418,3 @@ export async function makeBaseSystemPrompt(
     model,
   };
 }
-
-// Response format requirements
-export const RESPONSE_FORMAT = {
-  structure: ["Title and description", "Top 7 features", "Top 3 for browser-only collab", "Planned workflow", "Component code", "Core workflow summary"],
-};
