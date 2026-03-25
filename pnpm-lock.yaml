@@ -279,9 +279,6 @@ importers:
       '@vibes.diy/prompts':
         specifier: workspace:0.0.0
         version: link:../pkg
-      arktype:
-        specifier: ^2.2.0
-        version: 2.2.0
     devDependencies:
       '@adviser/cement':
         specifier: ^0.5.34
@@ -1659,6 +1656,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../../call-ai/v2
+      '@vibes.diy/prompts':
+        specifier: workspace:^
+        version: link:../../../prompts/pkg
       '@vibes.diy/vibe-types':
         specifier: workspace:*
         version: link:../types

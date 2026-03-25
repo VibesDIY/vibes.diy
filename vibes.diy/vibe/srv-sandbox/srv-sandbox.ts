@@ -32,6 +32,7 @@ import {
 } from "@vibes.diy/vibe-types";
 import { isResFPCloudTokenGrant, isSectionEvent, SectionEvent, VibesDiyApiIface } from "@vibes.diy/api-types";
 import { ChatMessage, CodeEndMsg, isCodeBegin, isCodeEnd, isCodeLine, isPromptReq, PromptReq } from "@vibes.diy/call-ai-v2";
+import { buildSchemaSystemMessage } from "@vibes.diy/prompts";
 
 export class MessageEventEventoEnDecoder implements EventoEnDecoder<MessageEvent, unknown> {
   async encode(me: MessageEvent): Promise<Result<unknown>> {
@@ -276,21 +277,12 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
           // console.log(`Sending prompt to chat`, ctx.validated.prompt);
           const generateSchema: ChatMessage[] = [];
           if (ctx.validated.schema) {
-            console.log(`Prompt has schema, sending schema`, ctx.validated.schema);
             generateSchema.push({
               role: "system",
               content: [
                 {
                   type: "text",
-                  // move build-schema-prompt to a helper function called here
-                  // also example-builder. move to prompts pkg 
-                  // workbench for improving prompt in prompts package uses callai v2 CLI
-                  // triggered by a new target
-                  // call ai CLI option -- save fixture?
-                  text: `Here is the JSON schema for the expected response. 
-                    Please generate one result that conforms to this schema.
-                    Output like Code Blocks and like \`\`\`JSON 
-                    ${JSON.stringify(ctx.validated.schema)}`,
+                  text: await buildSchemaSystemMessage(ctx.validated.schema),
                 },
               ],
             });
