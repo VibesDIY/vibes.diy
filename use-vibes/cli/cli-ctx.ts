@@ -30,8 +30,20 @@ export function cmdTsDefaultArgs(ctx: CliCtx) {
   };
 }
 
+export interface CliOutput {
+  readonly stdout: (text: string) => void;
+  readonly stderr: (text: string) => void;
+}
+
+export const defaultCliOutput: CliOutput = {
+  stdout: (text) => process.stdout.write(text),
+  stderr: (text) => process.stderr.write(text),
+};
+
 export interface CliCtx {
-  sthis: SuperThis;
-  cliStream: ReturnType<typeof cmd_tsStream>;
-  vibesDiyApiFactory?: (apiUrl: string) => VibesDiyApi;
+  readonly sthis: SuperThis;
+  readonly cliStream: ReturnType<typeof cmd_tsStream>;
+  readonly output: CliOutput;
+  readonly vibesDiyApiFactory?: (apiUrl: string) => VibesDiyApi;
+  exitCode: number;
 }
