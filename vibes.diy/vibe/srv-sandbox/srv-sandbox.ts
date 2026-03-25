@@ -282,6 +282,11 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
               content: [
                 {
                   type: "text",
+                  // move build-schema-prompt to a helper function called here
+                  // also example-builder. move to prompts pkg 
+                  // workbench for improving prompt in prompts package uses callai v2 CLI
+                  // triggered by a new target
+                  // call ai CLI option -- save fixture?
                   text: `Here is the JSON schema for the expected response. 
                     Please generate one result that conforms to this schema.
                     Output like Code Blocks and like \`\`\`JSON 

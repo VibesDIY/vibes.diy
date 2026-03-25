@@ -8,10 +8,10 @@
  * Used by srv-sandbox vibeCallAI handler and capture.sh.
  */
 import { buildExample } from "./example-builder.js";
+import type { JsonSchema } from "json-schema-faker";
 
-export function buildSchemaSystemMessage(schema: unknown): string {
-  const schemaObj = schema as Record<string, unknown>;
-  const example = buildExample(schemaObj);
+export async function buildSchemaSystemMessage(schema: JsonSchema): Promise<string> {
+  const example = await buildExample(schema);
   return `Return a JSON object conforming to this schema: ${JSON.stringify(schema)}
 
 Example of expected output shape:
