@@ -5,13 +5,20 @@
  * anchors all models (especially GPT) on the correct flat structure
  * instead of echoing the schema's { name, properties } wrapper.
  *
- * Used by srv-sandbox vibeCallAI handler and capture.sh.
+ * Used by srv-sandbox vibeCallAI handler.
  */
-import { buildExample } from "./example-builder.js";
-import type { JsonSchema } from "json-schema-faker";
+import { generate, type JsonSchema } from "json-schema-faker";
 
-export async function buildSchemaSystemMessage(schema: JsonSchema): Promise<string> {
-  const example = await buildExample(schema);
+async function buildExample(schema: JsonSchema) {
+  const result = await generate(schema, { optionalsProbability: 1 });
+  if (!result) {
+    return {};
+  }
+  return result;
+}
+
+export async function buildSchemaSystemMessage(schema: object): Promise<string> {
+  const example = await buildExample(schema as JsonSchema);
   return `Return a JSON object conforming to this schema: ${JSON.stringify(schema)}
 
 Example of expected output shape:
