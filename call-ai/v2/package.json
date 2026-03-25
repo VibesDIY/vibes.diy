@@ -19,6 +19,7 @@
     "arktype": "^2.2.0",
     "cmd-ts": "^0.15.0",
     "mime": "^4.1.0",
+    "random-words": "^2.0.1",
     "zx": "^8.8.5"
   },
   "devDependencies": {
