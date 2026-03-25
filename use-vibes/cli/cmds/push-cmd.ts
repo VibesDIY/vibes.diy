@@ -1,6 +1,7 @@
 import { command, option, string } from "cmd-ts";
 import { readdir, readFile } from "fs/promises";
 import { basename, extname, join } from "path";
+import { BuildURI } from "@adviser/cement";
 import { CliCtx, DEFAULT_API_URL } from "../cli-ctx.js";
 import type { VibeFile } from "@vibes.diy/api-types";
 
@@ -130,12 +131,10 @@ export function pushCmd(ctx: CliCtx) {
       }
 
       const result = rResult.Ok();
-      // entryPointUrl is returned at runtime but not yet in the arktype schema
-      const maybeUrl = "entryPointUrl" in result ? String(result.entryPointUrl) : undefined;
+      const apiOrigin = BuildURI.from(args.apiUrl).pathname("/").toString().replace(/\/$/, "");
+      const vibeUrl = `${apiOrigin}/vibe/${result.userSlug}/${result.appSlug}`;
       stdout(`\nDeployed: ${result.userSlug}/${result.appSlug}\n`);
-      if (maybeUrl !== undefined) {
-        stdout(`URL: ${maybeUrl}\n`);
-      }
+      stdout(`URL: ${vibeUrl}\n`);
       stdout(`Mode: ${result.mode} | fsId: ${result.fsId}\n`);
     },
   });
