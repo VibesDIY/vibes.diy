@@ -26,6 +26,7 @@ const todoResponse = await callAI("Give me a todo list for learning React", {
     properties: {
       todos: {
         type: "array",
+        description: "List of actionable todo items",
         items: { type: "string" }
       }
     }
@@ -55,10 +56,10 @@ const response = await callAI("Generate 4 items with label, status, priority (lo
         items: {
           type: "object",
           properties: {
-            label: { type: "string" },
-            status: { type: "string" },
-            priority: { type: "string" },
-            notes: { type: "string" }
+            label: { type: "string", description: "Short name for the item" },
+            status: { type: "string", description: "Current status (active, done, blocked)" },
+            priority: { type: "string", description: "Priority level (low, medium, high, critical)" },
+            notes: { type: "string", description: "Additional context or details" }
           }
         }
       }
