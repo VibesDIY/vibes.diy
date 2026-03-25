@@ -21,9 +21,9 @@ function exec(cmd, args) {
   });
 }
 
-// const idxTsc = process.argv.findIndex(i => i === 'tsc')
-const idxRunIdx = process.argv.findIndex((i) => i.endsWith("run.js"));
-const runDirectory = path.dirname(process.argv[idxRunIdx]);
+import { fileURLToPath } from "url";
+
+const runDirectory = path.dirname(fileURLToPath(import.meta.url));
 const mainJs = path.join(runDirectory, "main.js");
 //const mainWithDistJs = path.join(runDirectory, "dist", "npm", "main.js");
 //const mainJs = fs.existsSync(mainPublishedJs) ? mainPublishedJs : fs.existsSync(mainWithDistJs) ? mainWithDistJs : undefined;
@@ -34,7 +34,7 @@ if (fs.existsSync(mainJs)) {
   import(addFile).catch((e) => console.error(e));
 } else {
   const tsxPath = fs.existsSync("./node_modules/.bin/tsx") ? "./node_modules/.bin/tsx" : "tsx";
-  const restArgv = process.argv.slice(idxRunIdx + 1) ?? [];
+  const restArgv = process.argv.slice(2);
   // console.log(">>>>>", restArgv, runDirectory)
   exec(tsxPath, [path.join(runDirectory, "main.ts"), ...restArgv], runDirectory);
 }
