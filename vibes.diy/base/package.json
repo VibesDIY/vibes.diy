@@ -1,7 +1,6 @@
 {
   "name": "@vibes.diy/base",
   "version": "0.0.0",
-  "private": "true",
   "type": "module",
   "scripts": {
     "build": "core-cli tsc",
