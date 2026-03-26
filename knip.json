@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignore": [
     "**/*.d.ts",
     "**/notes/**",
@@ -11,5 +11,6 @@
     ".react-router/**",
     "call-ai/tests-new/**"
   ],
-  "ignoreDependencies": ["prettier-plugin-tailwindcss"]
+  "ignoreDependencies": ["prettier-plugin-tailwindcss"],
+  "ignoreWorkspaces": ["use-vibes/examples/**"]
 }
