@@ -33,7 +33,7 @@
     "@chromatic-com/storybook": "^5.0.1",
     "@clerk/clerk-js": "^6.3.0",
     "@fireproof/core-cli": "0.24.13",
-    "@storybook/addon-a11y": "^10.2.9",
+    "@storybook/addon-a11y": "^10.3.3",
     "@storybook/addon-docs": "^10.2.19",
     "@storybook/react": "^10.3.0",
     "@storybook/react-vite": "^10.2.12",
