@@ -37,7 +37,6 @@ const opts = tseslint.config(
       "vibesbox/**",
       "vibes.diy/tempo/**",
       "vibes.diy/failback-homepage/**",
-      "vibes.diy/stable-entry/public/**",
       "hosting/**",
       "**/coverage/**",
       "**/.cache/**",

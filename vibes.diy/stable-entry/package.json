@@ -3,14 +3,21 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "build": "vite build",
+    "dev": "wrangler dev",
+    "dev:ui": "vite"
   },
   "dependencies": {
-    "arktype": "^2.2.0"
+    "arktype": "^2.2.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260317.1",
+    "@types/react": "~19.2.13",
+    "@types/react-dom": "~19.2.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.3.5",
     "wrangler": "^4.74.0"
   }
 }

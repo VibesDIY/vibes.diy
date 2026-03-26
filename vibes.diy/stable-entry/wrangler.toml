@@ -1,12 +1,12 @@
 name = "stable-entry"
-main = "src/index.ts"
+main = "index.ts"
 compatibility_date = "2025-12-12"
 
 [observability]
 enabled = true
 
 [assets]
-directory = "public"
+directory = "ui/dist"
 
 [vars]
 BACKEND = "https://vibes-diy-failback-update.jchris.workers.dev"
