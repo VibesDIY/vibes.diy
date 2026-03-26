@@ -8,18 +8,8 @@ import type { VibeFile } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 
-const CODE_EXTENSIONS: Readonly<Record<string, string>> = {
-  ".jsx": "jsx",
-  ".js": "js",
-  ".ts": "ts",
-  ".tsx": "tsx",
-};
-
-const TEXT_EXTENSIONS = new Set([".css", ".html", ".json", ".md", ".txt", ".svg"]);
-
-function isTextFile(ext: string): boolean {
-  return CODE_EXTENSIONS[ext] !== undefined || TEXT_EXTENSIONS.has(ext);
-}
+const CODE_EXTENSIONS = new Set(["jsx", "js", "ts", "tsx"]);
+const ALLOWED_EXTENSIONS = new Set([...CODE_EXTENSIONS, "css", "html", "json", "md", "txt", "svg"]);
 
 async function readProjectFiles(dir: string): Promise<VibeFile[]> {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -29,15 +19,14 @@ async function readProjectFiles(dir: string): Promise<VibeFile[]> {
     if (entry.isDirectory()) continue;
     if (entry.name.startsWith(".")) continue;
 
-    const ext = extname(entry.name).toLowerCase();
-    if (isTextFile(ext) === false) continue;
+    const lang = extname(entry.name).toLowerCase().slice(1);
+    if (ALLOWED_EXTENSIONS.has(lang) === false) continue;
 
     const content = await readFile(join(dir, entry.name), "utf-8");
     const filename = `/${entry.name}`;
-    const lang = CODE_EXTENSIONS[ext];
 
     switch (true) {
-      case lang !== undefined:
+      case CODE_EXTENSIONS.has(lang):
         files.push({ type: "code-block", lang, content, filename });
         break;
       default:
@@ -50,8 +39,6 @@ async function readProjectFiles(dir: string): Promise<VibeFile[]> {
 
 export const ReqPush = type({
   type: "'use-vibes.cli.push'",
-  mode: "'dev'|'production'",
-  appSlug: "string",
 });
 export type ReqPush = typeof ReqPush.infer;
 
@@ -62,6 +49,8 @@ export function isReqPush(obj: unknown): obj is ReqPush {
 export function isResPush(obj: unknown): obj is ResEnsureAppSlug {
   return !(resEnsureAppSlug(obj) instanceof type.errors);
 }
+
+const PushRawArgs = type({ mode: "string", appSlug: "string" });
 
 export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsureAppSlug> = {
   hash: "use-vibes.cli.push",
@@ -78,12 +67,15 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
     if (ectx.vibesDiyApiFactory === undefined) {
       return Result.Err("Not logged in. Run 'use-vibes login' first.");
     }
-    const req = ctx.request.result as ReqPush;
+    const rRaw = PushRawArgs(ctx.request.cmdTs.raw);
+    if (rRaw instanceof type.errors) {
+      return Result.Err(`invalid args: ${rRaw.summary}`);
+    }
     const apiUrl = ctx.request.cmdTs.apiUrl;
     const api = ectx.vibesDiyApiFactory(apiUrl);
 
-    const mode = req.mode;
-    const appSlug = req.appSlug === "" ? basename(process.cwd()) : req.appSlug;
+    const mode = rRaw.mode === "dev" ? "dev" : "production";
+    const appSlug = rRaw.appSlug === "" ? basename(process.cwd()) : rRaw.appSlug;
 
     // Resolve userSlug
     const rList = await api.listUserSlugAppSlug({});
@@ -141,9 +133,7 @@ export function pushCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((_args) => {
-      const args = _args as { readonly mode: string; readonly appSlug: string };
-      const mode = args.mode === "dev" ? "dev" : "production";
-      return { type: "use-vibes.cli.push", mode, appSlug: args.appSlug } satisfies ReqPush;
+      return { type: "use-vibes.cli.push" } satisfies ReqPush;
     }),
   });
 }
