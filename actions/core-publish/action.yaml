@@ -11,8 +11,8 @@ runs:
         npm install -g npm@11
         npm --version
         git fetch --tags --force > /dev/null 2>&1
-        git checkout origin/main ./allowed_signers
-        git config --local --add gpg.ssh.allowedSignersFile ./allowed_signers
+        echo git checkout origin/main ./allowed_signers
+        echo git config --local --add gpg.ssh.allowedSignersFile ./allowed_signers
         echo "GITHUB_REF->"$GITHUB_REF
-        git tag -v $(git describe --tags --abbrev=0)
+        echo git tag -v $(git describe --tags --abbrev=0)
         pnpm run publish --registry https://registry.npmjs.org/ --npm npm
