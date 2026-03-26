@@ -82,3 +82,35 @@ export const loginEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqLogin, ResLogi
     } satisfies ResLogin);
   },
 };
+
+export function loginCmd(ctx: CliCtx) {
+  return command({
+    name: "login",
+    description: "Authenticate this device with vibes.diy cloud.",
+    args: {
+      ...cmdTsDefaultArgs(ctx),
+      force: flag({
+        long: "force",
+        description: "Re-register even if a certificate already exists",
+      }),
+      timeout: option({
+        long: "timeout",
+        description: "Seconds to wait for browser auth callback",
+        type: string,
+        defaultValue: () => "120",
+        defaultValueIsSerializable: true,
+      }),
+      commonName: option({
+        long: "common-name",
+        short: "cn",
+        description: "Common name for the device certificate (defaults to random ID)",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
+    },
+    handler: ctx.cliStream.enqueue((_args) => {
+      return { type: "use-vibes.cli.login" } satisfies ReqLogin;
+    }),
+  });
+}
