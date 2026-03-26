@@ -91,5 +91,9 @@
     "vite-tsconfig-paths": "^6.1.1",
     "yaml": "^2.8.3",
     "zx": "^8.8.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
   }
 }

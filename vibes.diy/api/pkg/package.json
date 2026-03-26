@@ -27,5 +27,9 @@
     "@fireproof/core-cli": "0.24.13",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
   }
 }

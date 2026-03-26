@@ -48,5 +48,9 @@
     "@types/semver": "^7.7.1",
     "@types/ws": "^8.18.1",
     "semver": "^7.7.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
   }
 }

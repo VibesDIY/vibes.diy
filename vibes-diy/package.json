@@ -52,5 +52,9 @@
     "@vibes.diy/api-types": "workspace:*",
     "@vitest/browser-playwright": "~4.1.2",
     "vitest": "~4.1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
   }
 }
