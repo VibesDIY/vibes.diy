@@ -3,12 +3,6 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Core components and utilities for use-vibes (internal workspace package)",
-  "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "import": "./index.js"
-    }
-  },
   "scripts": {
     "build": "core-cli tsc",
     "pack": "core-cli build -x '^' --doPack",
@@ -30,7 +24,7 @@
   "devDependencies": {
     "@fireproof/core-cli": "0.24.13",
     "@types/react": "~19.2.13",
-    "@vitest/browser-playwright": "~4.0.18",
-    "typescript": "^6.0.2"
+    "@vitest/browser-playwright": "~4.1.2",
+    "typescript": "^5.9.2"
   }
 }

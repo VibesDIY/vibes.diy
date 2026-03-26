@@ -1,5 +1,14 @@
 import { command, flag, option, string } from "cmd-ts";
-import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType, exception2Result, BuildURI } from "@adviser/cement";
+import {
+  ValidateTriggerCtx,
+  Result,
+  HandleTriggerCtx,
+  Option,
+  EventoHandler,
+  EventoResultType,
+  exception2Result,
+  BuildURI,
+} from "@adviser/cement";
 import { type } from "arktype";
 import { $ } from "zx";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
@@ -38,9 +47,7 @@ export const loginEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqLogin, ResLogi
     }
     return Promise.resolve(Result.Ok(Option.None()));
   },
-  handle: async (
-    ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqLogin, ResLogin>
-  ): Promise<Result<EventoResultType>> => {
+  handle: async (ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqLogin, ResLogin>): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
     const rRaw = LoginRawArgs(ctx.request.cmdTs.raw);
     if (rRaw instanceof type.errors) {
@@ -50,7 +57,17 @@ export const loginEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqLogin, ResLogi
     const caUrl = apiUrlToCaUrl(apiUrl);
     const commonName = rRaw.commonName === "" ? ectx.sthis.nextId().str : rRaw.commonName;
 
-    const args: string[] = ["core-cli", "deviceId", "register", "--ca-url", caUrl, "--common-name", commonName, "--timeout", rRaw.timeout];
+    const args: string[] = [
+      "core-cli",
+      "deviceId",
+      "register",
+      "--ca-url",
+      caUrl,
+      "--common-name",
+      commonName,
+      "--timeout",
+      rRaw.timeout,
+    ];
     if (rRaw.force) {
       args.push("--force-renew");
     }

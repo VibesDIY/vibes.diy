@@ -26,6 +26,7 @@
   },
   "include": [
     "call-ai/**/*",
+    "vibes-diy/**/*",
     "use-vibes/**/*",
     "vibes.diy/**/*",
     "prompts/**/*",

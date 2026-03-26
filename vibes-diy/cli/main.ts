@@ -1,5 +1,14 @@
 import { FPDeviceIDSession, SuperThis } from "@fireproof/core";
-import { AppContext, BuildURI, EventoSendProvider, exception2Result, HandleTriggerCtx, Lazy, processStream, Result } from "@adviser/cement";
+import {
+  AppContext,
+  BuildURI,
+  EventoSendProvider,
+  exception2Result,
+  HandleTriggerCtx,
+  Lazy,
+  processStream,
+  Result,
+} from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { getKeyBag } from "@fireproof/core-keybag";
 import { DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
@@ -8,15 +17,15 @@ import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { dotenv } from "zx";
 import { cmd_tsStream } from "./cmd-ts-stream.js";
 import { runSafely, subcommands } from "cmd-ts";
-import { isResEnsureUserSettings } from "@vibes.diy/api-types";
+import { isResEnsureAppSlugOk, isResEnsureUserSettings } from "@vibes.diy/api-types";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
 import { loginCmd, isResLogin } from "./cmds/login-cmd.js";
-import { pushCmd, isResPush } from "./cmds/push-cmd.js";
+import { pushCmd } from "./cmds/push-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
 import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, WrapCmdTSMsg } from "./cmd-evento.js";
-import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
+import { err, isErr } from "cmd-ts/dist/esm/Result.js";
 
 async function vibesDiyApiFactory(sthis: SuperThis) {
   const kb = await getKeyBag(sthis);
@@ -93,8 +102,8 @@ async function main(): Promise<number> {
   };
   const rs = await runSafely(
     subcommands({
-      name: "use-vibes Cli",
-      description: "use-vibes cli",
+      name: "vibes-diy CLI",
+      description: "vibes-diy cli",
       version: "1.0.0",
       cmds: {
         login: loginCmd(ctx),
@@ -156,10 +165,10 @@ async function main(): Promise<number> {
             console.log(msg.systemPrompt);
             break;
           }
-          case isResPush(msg): {
+          case isResEnsureAppSlugOk(msg): {
             const apiUrl = wmsg.cmdTs.apiUrl;
             const apiOrigin = BuildURI.from(apiUrl).pathname("/").toString().replace(/\/$/, "");
-            const vibeUrl = `${apiOrigin}/vibe/${msg.env.userSlug ?? "unknown"}/${msg.env.appSlug ?? "unknown"}`;
+            const vibeUrl = `${apiOrigin}/vibe/${msg.userSlug ?? "unknown"}/${msg.env.appSlug ?? "unknown"}`;
             console.log(`Deployed: ${msg.env.userSlug ?? "unknown"}/${msg.env.appSlug ?? "unknown"}`);
             console.log(`URL: ${vibeUrl}`);
             break;
