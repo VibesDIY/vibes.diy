@@ -36,7 +36,7 @@ function parseBackends(raw?: string): BackendsMap | null {
       console.error("BACKENDS validation failed:", result.summary);
       return null;
     }
-    const normalized: BackendsMap = {};
+    const normalized: BackendsMap = Object.create(null);
     for (const [k, v] of Object.entries(result)) {
       normalized[k] = normalizeUrl(v);
     }
