@@ -5,5 +5,8 @@ compatibility_date = "2025-12-12"
 [observability]
 enabled = true
 
+[assets]
+directory = "public"
+
 [vars]
 BACKEND = "https://vibes-diy-failback-update.jchris.workers.dev"
