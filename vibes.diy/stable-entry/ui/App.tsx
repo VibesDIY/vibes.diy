@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 function getCookie(name: string): string {
   for (const part of document.cookie.split(";")) {
@@ -22,7 +22,7 @@ export function App() {
   const current = getCookie("Vibes-Backend") || "(default)";
 
   useEffect(() => {
-    fetch("/.stable-entry/config.json")
+    fetch("/.stable-entry/options.json")
       .then((r) => r.json())
       .then((config: { keys: string[] }) => setKeys(config.keys));
   }, []);

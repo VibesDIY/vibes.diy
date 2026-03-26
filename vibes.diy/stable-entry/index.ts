@@ -1,4 +1,6 @@
 import { type } from "arktype";
+import { URI, exception2Result } from "@adviser/cement";
+import { parse as parseCookies } from "cookie";
 
 // --- Types ---
 
@@ -8,12 +10,12 @@ interface Env {
 }
 
 const backendsType = type("Record<string, string>");
-const validKey = /^[a-z0-9-]+$/;
+const validKey = /^[a-z0-9_-]+$/;
 type BackendsMap = typeof backendsType.infer;
 
 interface StableEntryCtx {
   readonly backends: BackendsMap | null;
-  readonly defaultBackend: string;
+  readonly backend: string;
 }
 
 type RouteResult =
@@ -26,55 +28,47 @@ type RouteResult =
 // --- Pure core ---
 
 function normalizeUrl(url: string): string {
-  return new URL(url).toString().replace(/\/$/, "");
+  return URI.from(url).toString().replace(/\/$/, "");
 }
 
 function parseBackends(raw?: string): BackendsMap | null {
   if (!raw) return null;
-  try {
-    const result = backendsType(JSON.parse(raw));
-    if (result instanceof type.errors) {
-      throw new Error(`BACKENDS validation failed: ${result.summary}`);
+  const result = exception2Result(() => {
+    const parsed = backendsType(JSON.parse(raw));
+    if (parsed instanceof type.errors) {
+      throw new Error(`BACKENDS validation failed: ${parsed.summary}`);
     }
     const normalized: BackendsMap = Object.create(null);
-    for (const [k, v] of Object.entries(result)) {
+    for (const [k, v] of Object.entries(parsed)) {
       if (!validKey.test(k)) {
         throw new Error(`BACKENDS key "${k}" must match ${validKey}`);
       }
       normalized[k] = normalizeUrl(v);
     }
     return normalized;
-  } catch (e) {
-    console.error("BACKENDS config error, serving BACKEND:", e);
+  });
+  if (result.isErr()) {
+    console.error("BACKENDS config error, serving BACKEND:", result.Err());
     return null;
   }
-}
-
-function getCookie(request: Request, name: string): string | undefined {
-  const header = request.headers.get("Cookie");
-  if (!header) return undefined;
-  for (const part of header.split(";")) {
-    const [k, ...rest] = part.trim().split("=");
-    if (k === name) return rest.join("=");
-  }
-  return undefined;
+  return result.Ok();
 }
 
 function handleRequest(url: URL, cookieValue: string | undefined, ctx: StableEntryCtx): RouteResult {
   const backendParam = url.searchParams.get("_backend");
-  const validKey = backendParam && ctx.backends && Object.hasOwn(ctx.backends, backendParam);
+  const isValidKey = backendParam && ctx.backends && Object.hasOwn(ctx.backends, backendParam);
   const backendUrl = cookieValue && ctx.backends && Object.hasOwn(ctx.backends, cookieValue)
     ? ctx.backends[cookieValue]
-    : ctx.defaultBackend;
+    : ctx.backend;
 
   url.searchParams.delete("_backend");
   const cleanPath = url.pathname + url.search;
 
   switch (true) {
-    case url.pathname === "/.stable-entry/config.json":
+    case url.pathname === "/.stable-entry/options.json":
       return { type: "config", keys: ctx.backends ? Object.keys(ctx.backends) : [] };
 
-    case backendParam !== null && Boolean(validKey):
+    case backendParam !== null && Boolean(isValidKey):
       return { type: "set-backend", key: backendParam, redirect: cleanPath };
 
     case backendParam !== null:
@@ -137,10 +131,10 @@ export default {
     const url = new URL(request.url);
     const ctx: StableEntryCtx = {
       backends: parseBackends(env.BACKENDS),
-      defaultBackend: normalizeUrl(env.BACKEND),
+      backend: normalizeUrl(env.BACKEND),
     };
-    const cookieValue = getCookie(request, "Vibes-Backend");
-    const result = handleRequest(url, cookieValue, ctx);
+    const cookies = parseCookies(request.headers.get("Cookie") ?? "");
+    const result = handleRequest(url, cookies["Vibes-Backend"], ctx);
     return routeToResponse(result, request);
   },
 } satisfies ExportedHandler<Env>;

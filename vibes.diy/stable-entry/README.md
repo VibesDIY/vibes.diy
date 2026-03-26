@@ -7,7 +7,7 @@ Reverse proxy Cloudflare Worker sitting in front of vibes.diy. Supports cookie-b
 ```
 /.stable-entry/            → static HTML (from [assets])
 /.stable-entry/app.js      → static React app (from [assets])
-/.stable-entry/config.json → worker: returns available backend keys
+/.stable-entry/options.json → worker: returns available backend keys
 everything else            → worker: proxy to selected backend
 ```
 
@@ -53,7 +53,7 @@ BACKENDS={"dev":"https://dev-v2.vibesdiy.net"}
 ## Verification
 
 ```
-curl -s http://localhost:8787/.stable-entry/config.json
+curl -s http://localhost:8787/.stable-entry/options.json
 # → {"keys":["dev"]}
 
 curl -s -o /dev/null -w "%{http_code}" http://localhost:8787/.stable-entry/
