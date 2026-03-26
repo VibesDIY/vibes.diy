@@ -28,10 +28,10 @@
     "publish": "core-cli build"
   },
   "dependencies": {
-    "@vibes.diy/base": "workspace:*",
     "@adviser/cement": "^0.5.34",
     "@fireproof/use-fireproof": "0.24.13",
-    "ag-grid-community": "^35.1.0",
+    "@vibes.diy/base": "workspace:*",
+    "ag-grid-community": "^35.2.0",
     "ag-grid-react": "^35.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -41,8 +41,8 @@
   "devDependencies": {
     "@types/react": "~19.2.13",
     "@types/react-dom": "~19.2.2",
-    "@vitejs/plugin-react": "6.0.1",
-    "typescript": "^6.0.2",
+    "@vitejs/plugin-react": "5.2.0",
+    "typescript": "^5.9.2",
     "vite": "^7.3.1"
   }
 }

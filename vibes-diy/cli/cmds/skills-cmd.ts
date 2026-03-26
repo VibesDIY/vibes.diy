@@ -1,5 +1,13 @@
 import { command, option, string } from "cmd-ts";
-import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType, exception2Result } from "@adviser/cement";
+import {
+  ValidateTriggerCtx,
+  Result,
+  HandleTriggerCtx,
+  Option,
+  EventoHandler,
+  EventoResultType,
+  exception2Result,
+} from "@adviser/cement";
 import { type } from "arktype";
 import { getLlmCatalog, getLlmCatalogNames, getSkillText } from "@vibes.diy/prompts";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
@@ -50,9 +58,7 @@ export const skillsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqSkills, ResSk
     }
     return Promise.resolve(Result.Ok(Option.None()));
   },
-  handle: async (
-    ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqSkills, ResSkills>
-  ): Promise<Result<EventoResultType>> => {
+  handle: async (ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqSkills, ResSkills>): Promise<Result<EventoResultType>> => {
     const rRaw = SkillsRawArgs(ctx.request.cmdTs.raw);
     if (rRaw instanceof type.errors) {
       return Result.Err(`invalid args: ${rRaw.summary}`);
