@@ -20,12 +20,14 @@ everything else            → worker: proxy to selected backend
 
 ### Via query param
 
-Visit any URL with `?backend=<key>` to set the cookie and redirect:
+Visit any URL with `?_backend=<key>` to set the cookie and redirect:
 
 ```
-https://vibes.diy/?backend=dev    # sets cookie, redirects to /
-https://vibes.diy/?backend=       # clears cookie, back to default
+https://vibes.diy/?_backend=dev    # sets cookie, redirects to /
+https://vibes.diy/?_backend=       # clears cookie, back to default
 ```
+
+The `_backend` param is stripped and you're redirected to the same path — e.g. `/some/page?_backend=dev` redirects to `/some/page`.
 
 ### Via UI
 

@@ -1,5 +1,7 @@
 import { type } from "arktype";
 
+// --- Types ---
+
 interface Env {
   BACKEND: string;
   BACKENDS?: string;
@@ -8,21 +10,37 @@ interface Env {
 const backendsType = type("Record<string, string>");
 type BackendsMap = typeof backendsType.infer;
 
-let cachedBackends: BackendsMap | null = null;
-let cachedBackendsRaw: string | undefined;
+interface StableEntryCtx {
+  readonly backends: BackendsMap | null;
+  readonly defaultBackend: string;
+}
 
-function parseBackends(raw: string | undefined): BackendsMap | null {
+type RouteResult =
+  | { readonly type: "config"; readonly keys: readonly string[] }
+  | { readonly type: "set-backend"; readonly key: string; readonly redirect: string }
+  | { readonly type: "clear-backend"; readonly redirect: string }
+  | { readonly type: "proxy"; readonly targetUrl: string }
+  | { readonly type: "error" };
+
+// --- Pure core ---
+
+function normalizeUrl(url: string): string {
+  return new URL(url).toString().replace(/\/$/, "");
+}
+
+function parseBackends(raw?: string): BackendsMap | null {
   if (!raw) return null;
-  if (raw === cachedBackendsRaw && cachedBackends !== null) return cachedBackends;
   try {
     const result = backendsType(JSON.parse(raw));
     if (result instanceof type.errors) {
       console.error("BACKENDS validation failed:", result.summary);
       return null;
     }
-    cachedBackendsRaw = raw;
-    cachedBackends = result;
-    return result;
+    const normalized: BackendsMap = {};
+    for (const [k, v] of Object.entries(result)) {
+      normalized[k] = normalizeUrl(v);
+    }
+    return normalized;
   } catch (e) {
     console.error("Failed to parse BACKENDS JSON:", e);
     return null;
@@ -39,105 +57,87 @@ function getCookie(request: Request, name: string): string | undefined {
   return undefined;
 }
 
-function resolveBackendUrl(request: Request, env: Env): string | null {
-  const backends = parseBackends(env.BACKENDS);
+function handleRequest(url: URL, cookieValue: string | undefined, ctx: StableEntryCtx): RouteResult {
+  const backendParam = url.searchParams.get("_backend");
+  const validKey = backendParam && ctx.backends && Object.hasOwn(ctx.backends, backendParam);
+  const backendUrl = cookieValue && ctx.backends && Object.hasOwn(ctx.backends, cookieValue)
+    ? ctx.backends[cookieValue]
+    : ctx.defaultBackend;
 
-  if (backends) {
-    const cookieKey = getCookie(request, "Vibes-Backend");
-    if (cookieKey && Object.hasOwn(backends, cookieKey)) {
-      return backends[cookieKey];
-    }
+  url.searchParams.delete("_backend");
+  const cleanPath = url.pathname + url.search;
+
+  switch (true) {
+    case url.pathname === "/.stable-entry/config.json":
+      return { type: "config", keys: ctx.backends ? Object.keys(ctx.backends) : [] };
+
+    case backendParam !== null && Boolean(validKey):
+      return { type: "set-backend", key: backendParam, redirect: cleanPath };
+
+    case backendParam !== null:
+      return { type: "clear-backend", redirect: cleanPath };
+
+    case Boolean(backendUrl):
+      return { type: "proxy", targetUrl: `${backendUrl}${cleanPath}` };
+
+    default:
+      return { type: "error" };
   }
-
-  if (env.BACKEND) return env.BACKEND;
-  return null;
 }
 
-function rewriteHeaderValue(value: string, backendHost: string, requestHost: string, requestProtocol: string): string {
-  try {
-    const parsed = new URL(value);
-    if (parsed.host === backendHost) {
-      parsed.host = requestHost;
-      parsed.protocol = requestProtocol;
-      return parsed.toString();
+// --- IO glue ---
+
+function routeToResponse(result: RouteResult, request: Request): Response | Promise<Response> {
+  switch (result.type) {
+    case "config":
+      return new Response(JSON.stringify({ keys: result.keys }), {
+        headers: { "Content-Type": "application/json" },
+      });
+
+    case "set-backend":
+      return new Response(null, {
+        status: 302,
+        headers: {
+          "Location": result.redirect,
+          "Set-Cookie": `Vibes-Backend=${result.key}; Path=/; SameSite=Lax; Max-Age=86400`,
+        },
+      });
+
+    case "clear-backend":
+      return new Response(null, {
+        status: 302,
+        headers: {
+          "Location": result.redirect,
+          "Set-Cookie": "Vibes-Backend=; Path=/; SameSite=Lax; Max-Age=0",
+        },
+      });
+
+    case "proxy": {
+      const proxyRequest = new Request(result.targetUrl, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+      });
+      return fetch(proxyRequest).catch((e) => {
+        console.error("Proxy fetch failed:", e);
+        return new Response("Bad gateway", { status: 502 });
+      });
     }
-  } catch {
-    // not an absolute URL — leave as-is
+
+    case "error":
+      return new Response("Service temporarily unavailable", { status: 502 });
   }
-  return value;
-}
-
-const HEADERS_TO_STRIP = ["Server", "Via", "X-Powered-By"];
-const HEADERS_TO_REWRITE = ["Location", "Link", "Refresh", "Content-Location"];
-
-function sanitizeResponseHeaders(response: Response, requestUrl: URL, backendOrigin: string): Response {
-  const headers = new Headers(response.headers);
-  const backendHost = new URL(backendOrigin).host;
-  const requestProtocol = requestUrl.protocol;
-
-  for (const name of HEADERS_TO_STRIP) {
-    headers.delete(name);
-  }
-
-  for (const name of HEADERS_TO_REWRITE) {
-    const value = headers.get(name);
-    if (value) {
-      headers.set(name, rewriteHeaderValue(value, backendHost, requestUrl.host, requestProtocol));
-    }
-  }
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
 }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-
-    if (url.pathname === "/.stable-entry/config.json") {
-      const backends = parseBackends(env.BACKENDS);
-      const keys = backends ? Object.keys(backends) : [];
-      return new Response(JSON.stringify({ keys }), {
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const backendParam = url.searchParams.get("backend");
-    if (backendParam !== null) {
-      const backends = parseBackends(env.BACKENDS);
-      url.searchParams.delete("backend");
-      const headers = new Headers();
-      headers.set("Location", url.pathname + url.search);
-      if (backendParam && backends && Object.hasOwn(backends, backendParam)) {
-        headers.set("Set-Cookie", `Vibes-Backend=${backendParam}; Path=/; SameSite=Lax; Max-Age=86400`);
-      } else {
-        headers.set("Set-Cookie", "Vibes-Backend=; Path=/; SameSite=Lax; Max-Age=0");
-      }
-      return new Response(null, { status: 302, headers });
-    }
-
-    const backendUrl = resolveBackendUrl(request, env);
-    if (!backendUrl) {
-      return new Response("Service temporarily unavailable", { status: 502 });
-    }
-
-    const targetUrl = `${backendUrl}${url.pathname}${url.search}`;
-
-    const proxyRequest = new Request(targetUrl, {
-      method: request.method,
-      headers: request.headers,
-      body: request.body,
-    });
-
-    try {
-      const response = await fetch(proxyRequest);
-      return sanitizeResponseHeaders(response, url, backendUrl);
-    } catch (e) {
-      console.error("Proxy fetch failed:", e);
-      return new Response("Bad gateway", { status: 502 });
-    }
+    const ctx: StableEntryCtx = {
+      backends: parseBackends(env.BACKENDS),
+      defaultBackend: normalizeUrl(env.BACKEND),
+    };
+    const cookieValue = getCookie(request, "Vibes-Backend");
+    const result = handleRequest(url, cookieValue, ctx);
+    return routeToResponse(result, request);
   },
 } satisfies ExportedHandler<Env>;
