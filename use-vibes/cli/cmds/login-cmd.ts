@@ -1,8 +1,7 @@
-import { command, flag, option, string, run } from "cmd-ts";
+import { command, flag, option, string } from "cmd-ts";
 import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType, exception2Result, BuildURI } from "@adviser/cement";
 import { type } from "arktype";
-import { deviceIdCmd } from "@fireproof/core-cli/device-id-cmd.js";
-import { hostname } from "os";
+import { $ } from "zx";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 
@@ -18,8 +17,6 @@ export function isResLogin(obj: unknown): obj is ResLogin {
 
 export const ReqLogin = type({
   type: "'use-vibes.cli.login'",
-  force: "boolean",
-  timeout: "string",
 });
 export type ReqLogin = typeof ReqLogin.infer;
 
@@ -30,6 +27,8 @@ export function isReqLogin(obj: unknown): obj is ReqLogin {
 function apiUrlToCaUrl(apiUrl: string): string {
   return BuildURI.from(apiUrl).pathname("/settings/csr-to-cert").toString();
 }
+
+const LoginRawArgs = type({ force: "boolean", timeout: "string", commonName: "string" });
 
 export const loginEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqLogin, ResLogin> = {
   hash: "use-vibes.cli.login",
@@ -43,17 +42,20 @@ export const loginEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqLogin, ResLogi
     ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqLogin, ResLogin>
   ): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
-    const req = ctx.request.result as ReqLogin;
+    const rRaw = LoginRawArgs(ctx.request.cmdTs.raw);
+    if (rRaw instanceof type.errors) {
+      return Result.Err(`invalid args: ${rRaw.summary}`);
+    }
     const apiUrl = ctx.request.cmdTs.apiUrl;
     const caUrl = apiUrlToCaUrl(apiUrl);
+    const commonName = rRaw.commonName === "" ? ectx.sthis.nextId().str : rRaw.commonName;
 
-    const argv: string[] = ["register", "--ca-url", caUrl, "--common-name", hostname(), "--timeout", req.timeout];
-    if (req.force) {
-      argv.push("--force-renew");
+    const args: string[] = ["core-cli", "deviceId", "register", "--ca-url", caUrl, "--common-name", commonName, "--timeout", rRaw.timeout];
+    if (rRaw.force) {
+      args.push("--force-renew");
     }
 
-    const deviceId = deviceIdCmd(ectx.sthis);
-    const rRun = await exception2Result(() => run(deviceId, argv));
+    const rRun = await exception2Result(() => $`${args}`);
     if (rRun.isErr()) {
       return Result.Err(`Login failed: ${rRun.Err().message}`);
     }
@@ -81,14 +83,17 @@ export function loginCmd(ctx: CliCtx) {
         defaultValue: () => "120",
         defaultValueIsSerializable: true,
       }),
+      commonName: option({
+        long: "common-name",
+        short: "cn",
+        description: "Common name for the device certificate (defaults to random ID)",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
     },
     handler: ctx.cliStream.enqueue((_args) => {
-      const args = _args as { readonly force: boolean; readonly timeout: string };
-      return {
-        type: "use-vibes.cli.login",
-        force: args.force,
-        timeout: args.timeout,
-      } satisfies ReqLogin;
+      return { type: "use-vibes.cli.login" } satisfies ReqLogin;
     }),
   });
 }

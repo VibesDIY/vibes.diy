@@ -33,13 +33,14 @@ type ResSkills = ResSkillsList | ResSkillContent;
 
 export const ReqSkills = type({
   type: "'use-vibes.cli.skills'",
-  name: "string",
 });
 export type ReqSkills = typeof ReqSkills.infer;
 
 export function isReqSkills(obj: unknown): obj is ReqSkills {
   return !(ReqSkills(obj) instanceof type.errors);
 }
+
+const SkillsRawArgs = type({ name: "string" });
 
 export const skillsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqSkills, ResSkills> = {
   hash: "use-vibes.cli.skills",
@@ -52,10 +53,14 @@ export const skillsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqSkills, ResSk
   handle: async (
     ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqSkills, ResSkills>
   ): Promise<Result<EventoResultType>> => {
-    const req = ctx.request.result as ReqSkills;
+    const rRaw = SkillsRawArgs(ctx.request.cmdTs.raw);
+    if (rRaw instanceof type.errors) {
+      return Result.Err(`invalid args: ${rRaw.summary}`);
+    }
+    const name = rRaw.name;
 
     switch (true) {
-      case req.name === "": {
+      case name === "": {
         const rCatalog = await exception2Result(() => getLlmCatalog());
         if (rCatalog.isErr()) {
           return Result.Err(`Failed to load skills catalog: ${rCatalog.Err().message}`);
@@ -71,16 +76,16 @@ export const skillsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqSkills, ResSk
         if (rNames.isErr()) {
           return Result.Err(`Failed to load skill catalog: ${rNames.Err().message}`);
         }
-        if (!rNames.Ok().has(req.name)) {
-          return Result.Err(`Unknown skill: ${req.name}`);
+        if (rNames.Ok().has(name) === false) {
+          return Result.Err(`Unknown skill: ${name}`);
         }
-        const rText = await exception2Result(() => getSkillText(req.name));
+        const rText = await exception2Result(() => getSkillText(name));
         if (rText.isErr()) {
           return Result.Err(`Failed to load skill content: ${rText.Err().message}`);
         }
         return sendMsg(ctx, {
           type: "use-vibes.cli.res-skill-content",
-          name: req.name,
+          name,
           content: rText.Ok(),
         } satisfies ResSkillContent);
       }
@@ -104,8 +109,7 @@ export function skillsCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((_args) => {
-      const args = _args as { readonly name: string };
-      return { type: "use-vibes.cli.skills", name: args.name } satisfies ReqSkills;
+      return { type: "use-vibes.cli.skills" } satisfies ReqSkills;
     }),
   });
 }

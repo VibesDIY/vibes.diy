@@ -41,7 +41,6 @@
     "@vibes.diy/prompts": "workspace:*",
     "arktype": "^2.2.0",
     "cmd-ts": "^0.15.0",
-    "@fireproof/core-cli": "0.24.13",
     "tsx": "^4.21.0",
     "ws": "^8.19.0",
     "zx": "^8.8.5"
