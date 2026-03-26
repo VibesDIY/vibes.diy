@@ -8,6 +8,7 @@ interface Env {
 }
 
 const backendsType = type("Record<string, string>");
+const validKey = /^[a-z0-9-]+$/;
 type BackendsMap = typeof backendsType.infer;
 
 interface StableEntryCtx {
@@ -33,16 +34,18 @@ function parseBackends(raw?: string): BackendsMap | null {
   try {
     const result = backendsType(JSON.parse(raw));
     if (result instanceof type.errors) {
-      console.error("BACKENDS validation failed:", result.summary);
-      return null;
+      throw new Error(`BACKENDS validation failed: ${result.summary}`);
     }
     const normalized: BackendsMap = Object.create(null);
     for (const [k, v] of Object.entries(result)) {
+      if (!validKey.test(k)) {
+        throw new Error(`BACKENDS key "${k}" must match ${validKey}`);
+      }
       normalized[k] = normalizeUrl(v);
     }
     return normalized;
   } catch (e) {
-    console.error("Failed to parse BACKENDS JSON:", e);
+    console.error("BACKENDS config error, serving BACKEND:", e);
     return null;
   }
 }
