@@ -13,25 +13,25 @@ const backendsType = type("Record<string, string>");
 const validKey = /^[a-z0-9_-]+$/;
 type BackendsMap = typeof backendsType.infer;
 
-interface StableEntryCtx {
+export interface StableEntryCtx {
   readonly backends: BackendsMap | null;
   readonly backend: string;
 }
 
-type RouteResult =
+export type RouteResult =
   | { readonly type: "config"; readonly keys: readonly string[] }
   | { readonly type: "set-backend"; readonly key: string; readonly redirect: string }
   | { readonly type: "clear-backend"; readonly redirect: string }
   | { readonly type: "proxy"; readonly targetUrl: string }
   | { readonly type: "error" };
 
-// --- Pure core ---
+// --- Pure core (exported for testing) ---
 
 function normalizeUrl(url: string): string {
   return URI.from(url).toString().replace(/\/$/, "");
 }
 
-function parseBackends(raw?: string): BackendsMap | null {
+export function parseBackends(raw?: string): BackendsMap | null {
   if (!raw) return null;
   const result = exception2Result(() => {
     const parsed = backendsType(JSON.parse(raw));
@@ -54,7 +54,7 @@ function parseBackends(raw?: string): BackendsMap | null {
   return result.Ok();
 }
 
-function handleRequest(url: URL, cookieValue: string | undefined, ctx: StableEntryCtx): RouteResult {
+export function handleRequest(url: URL, cookieValue: string | undefined, ctx: StableEntryCtx): RouteResult {
   const backendParam = url.searchParams.get("_backend");
   const isValidKey = backendParam && ctx.backends && Object.hasOwn(ctx.backends, backendParam);
   const backendUrl = cookieValue && ctx.backends && Object.hasOwn(ctx.backends, cookieValue)

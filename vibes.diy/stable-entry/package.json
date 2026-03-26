@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "vite build",
+    "test": "vitest run",
     "dev": "wrangler dev",
     "dev:ui": "vite"
   },
