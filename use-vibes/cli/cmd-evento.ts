@@ -1,5 +1,9 @@
 import { Evento, EventoResult, EventoResultType, HandleTriggerCtx, Result } from "@adviser/cement";
 import { userSettingsEvento } from "./cmds/user-settings-cmd.js";
+import { skillsEvento } from "./cmds/skills-cmd.js";
+import { systemEvento } from "./cmds/system-cmd.js";
+import { pushEvento } from "./cmds/push-cmd.js";
+import { loginEvento } from "./cmds/login-cmd.js";
 import { type } from "arktype";
 
 export const CmdTSMsg = type({
@@ -38,6 +42,6 @@ export function cmdTsEvento() {
     },
     decode: (i) => Promise.resolve(Result.Ok(i)),
   });
-  evento.push([userSettingsEvento]);
+  evento.push([userSettingsEvento, skillsEvento, systemEvento, pushEvento, loginEvento]);
   return evento;
 }
