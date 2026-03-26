@@ -1,5 +1,5 @@
 import { FPDeviceIDSession, SuperThis } from "@fireproof/core";
-import { AppContext, EventoSendProvider, exception2Result, HandleTriggerCtx, Lazy, processStream, Result } from "@adviser/cement";
+import { AppContext, BuildURI, EventoSendProvider, exception2Result, HandleTriggerCtx, Lazy, processStream, Result } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { getKeyBag } from "@fireproof/core-keybag";
 import { DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
@@ -11,27 +11,21 @@ import tls from "tls";
 import { $, dotenv } from "zx";
 import { cmd_tsStream } from "./cmd-ts-stream.js";
 import { runSafely, subcommands } from "cmd-ts";
+import { isResEnsureUserSettings } from "@vibes.diy/api-types";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
-import { loginCmd } from "./cmds/login-cmd.js";
-import { pushCmd } from "./cmds/push-cmd.js";
-import { skillsCmd } from "./cmds/skills-cmd.js";
-import { systemCmd } from "./cmds/system-cmd.js";
+import { loginCmd, isResLogin } from "./cmds/login-cmd.js";
+import { pushCmd, isResPush } from "./cmds/push-cmd.js";
+import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
+import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, WrapCmdTSMsg } from "./cmd-evento.js";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
-import { isResEnsureUserSettings } from "@vibes.diy/api-types";
 
 async function loadMkcertCA(): Promise<string[] | undefined> {
-  try {
-    const caRootRes = await $`mkcert -CAROOT`;
-    const caFile = join(caRootRes.lines("\n\r")[0]?.trim(), "rootCA.pem");
-    const caPem = await readFile(caFile);
-    // console.log(`[mkcert] loaded CA from ${caFile}`);
-    return [...tls.rootCertificates, new TextDecoder().decode(caPem)];
-  } catch (e) {
-    console.warn("[mkcert] could not load CA:", e);
-    return undefined;
-  }
+  const caRootRes = await $`mkcert -CAROOT`;
+  const caFile = join(caRootRes.lines("\n\r")[0]?.trim(), "rootCA.pem");
+  const caPem = await readFile(caFile);
+  return [...tls.rootCertificates, new TextDecoder().decode(caPem)];
 }
 
 async function vibesDiyApiFactory(sthis: SuperThis, ca?: string[]) {
@@ -72,7 +66,6 @@ async function vibesDiyApiFactory(sthis: SuperThis, ca?: string[]) {
     { resetAfter: 60, skipUnref: true }
   );
   return Lazy((apiUrl: string) => {
-    // console.log(`create VibesDiyApi`, apiUrl);
     return new VibesDiyApi({
       apiUrl,
       ca,
@@ -86,7 +79,6 @@ class OutputSelector implements EventoSendProvider<unknown, unknown, unknown> {
   readonly outputStream: ReadableStream<WrapCmdTSMsg<unknown>> = this.tstream.readable;
   readonly writer = this.tstream.writable.getWriter();
   async send<IS, OS>(trigger: HandleTriggerCtx<unknown, unknown, unknown>, data: IS): Promise<Result<OS, Error>> {
-    // console.log("OutputSelector send called with data:", data);
     await this.writer.write(data);
     return Promise.resolve(Result.Ok());
   }
@@ -98,7 +90,8 @@ class OutputSelector implements EventoSendProvider<unknown, unknown, unknown> {
 }
 
 async function main(): Promise<number> {
-  const ca = await loadMkcertCA();
+  const rCa = await exception2Result(() => loadMkcertCA());
+  const ca = rCa.isOk() ? rCa.Ok() : undefined;
   const sthis = ensureSuperThis();
 
   const env = dotenv.loadSafe(".dev.vars", ".env");
@@ -130,14 +123,8 @@ async function main(): Promise<number> {
     console.error(err(rs).error.error.config.message);
     process.exit(err(rs).error.error.config.exitCode);
   }
-  // console.log("CLI command result:", rs, process.argv.slice(1));
-
-  // console.error(x.error.message);
-  // process.exit(x.error.exitCode);
-  // }
 
   const outputSelector = new OutputSelector();
-
   const evento = cmdTsEvento();
   const appCtx = new AppContext().set("cliCtx", ctx);
 
@@ -158,7 +145,6 @@ async function main(): Promise<number> {
           });
       },
       processStream(outputSelector.outputStream, async (wmsg) => {
-        // console.log("xxx", wmsg);
         const msg = wmsg.result;
         switch (true) {
           case isResEnsureUserSettings(msg): {
@@ -167,6 +153,32 @@ async function main(): Promise<number> {
             for (const set of msg.settings) {
               console.log(` Type:`, set.type, ` Grants:`, JSON.stringify(set.grants));
             }
+            break;
+          }
+          case isResSkillsList(msg): {
+            for (const skill of msg.skills) {
+              console.log(`${skill.name.padEnd(12)}${skill.description}`);
+            }
+            break;
+          }
+          case isResSkillContent(msg): {
+            console.log(msg.content);
+            break;
+          }
+          case isResSystem(msg): {
+            console.log(msg.systemPrompt);
+            break;
+          }
+          case isResPush(msg): {
+            const apiUrl = wmsg.cmdTs.apiUrl;
+            const apiOrigin = BuildURI.from(apiUrl).pathname("/").toString().replace(/\/$/, "");
+            const vibeUrl = `${apiOrigin}/vibe/${msg.env.userSlug ?? "unknown"}/${msg.env.appSlug ?? "unknown"}`;
+            console.log(`Deployed: ${msg.env.userSlug ?? "unknown"}/${msg.env.appSlug ?? "unknown"}`);
+            console.log(`URL: ${vibeUrl}`);
+            break;
+          }
+          case isResLogin(msg): {
+            console.log(msg.message);
             break;
           }
         }
@@ -178,8 +190,8 @@ async function main(): Promise<number> {
 }
 
 main()
-  .catch((err) => {
-    console.error("Error in use-vibes cli:", err);
+  .catch((e) => {
+    console.error("Error in use-vibes cli:", e);
     process.exit(1);
   })
   .then((code) => process.exit(code));
