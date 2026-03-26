@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { URI, exception2Result } from "@adviser/cement";
+import { URI, Result, exception2Result } from "@adviser/cement";
 import { parse as parseCookies } from "cookie";
 
 // --- Types ---
@@ -31,27 +31,26 @@ function normalizeUrl(url: string): string {
   return URI.from(url).toString().replace(/\/$/, "");
 }
 
-export function parseBackends(raw?: string): BackendsMap | null {
-  if (!raw) return null;
-  const result = exception2Result(() => {
-    const parsed = backendsType(JSON.parse(raw));
-    if (parsed instanceof type.errors) {
-      throw new Error(`BACKENDS validation failed: ${parsed.summary}`);
-    }
-    const normalized: BackendsMap = Object.create(null);
-    for (const [k, v] of Object.entries(parsed)) {
-      if (!validKey.test(k)) {
-        throw new Error(`BACKENDS key "${k}" must match ${validKey}`);
-      }
-      normalized[k] = normalizeUrl(v);
-    }
-    return normalized;
-  });
-  if (result.isErr()) {
-    console.error("BACKENDS config error, serving BACKEND:", result.Err());
-    return null;
+export function parseBackends(raw?: string): Result<BackendsMap> {
+  if (!raw) {
+    return Result.Err("no BACKENDS configured");
   }
-  return result.Ok();
+  const jsonResult = exception2Result(() => JSON.parse(raw) as unknown);
+  if (jsonResult.isErr()) {
+    return Result.Err("BACKENDS is not valid JSON");
+  }
+  const parsed = backendsType(jsonResult.Ok());
+  if (parsed instanceof type.errors) {
+    return Result.Err("BACKENDS validation failed");
+  }
+  const normalized: BackendsMap = Object.create(null);
+  for (const [k, v] of Object.entries(parsed)) {
+    if (!validKey.test(k)) {
+      return Result.Err(`BACKENDS key "${k}" must match ${validKey}`);
+    }
+    normalized[k] = normalizeUrl(v);
+  }
+  return Result.Ok(normalized);
 }
 
 export function handleRequest(url: URL, cookieValue: string | undefined, ctx: StableEntryCtx): RouteResult {
@@ -129,8 +128,12 @@ function routeToResponse(result: RouteResult, request: Request): Response | Prom
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const backendsResult = parseBackends(env.BACKENDS);
+    if (backendsResult.isErr()) {
+      console.error("BACKENDS config error, serving BACKEND:", backendsResult.Err());
+    }
     const ctx: StableEntryCtx = {
-      backends: parseBackends(env.BACKENDS),
+      backends: backendsResult.isOk() ? backendsResult.Ok() : null,
       backend: normalizeUrl(env.BACKEND),
     };
     const cookies = parseCookies(request.headers.get("Cookie") ?? "");

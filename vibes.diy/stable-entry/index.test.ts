@@ -13,38 +13,40 @@ const CTX_NO_BACKENDS: StableEntryCtx = {
 };
 
 describe("parseBackends", () => {
-  it("returns null for undefined", () => {
-    expect(parseBackends()).toBeNull();
+  it("returns Err for undefined", () => {
+    expect(parseBackends().isErr()).toBe(true);
   });
 
-  it("returns null for empty string", () => {
-    expect(parseBackends("")).toBeNull();
+  it("returns Err for empty string", () => {
+    expect(parseBackends("").isErr()).toBe(true);
   });
 
   it("parses valid JSON", () => {
     const result = parseBackends('{"dev":"https://dev.example.com/"}');
-    expect(result).toEqual({ dev: "https://dev.example.com" });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok()).toEqual({ dev: "https://dev.example.com" });
   });
 
-  it("returns null for invalid JSON", () => {
-    expect(parseBackends("not json")).toBeNull();
+  it("returns Err for invalid JSON", () => {
+    expect(parseBackends("not json").isErr()).toBe(true);
   });
 
-  it("returns null for non-object JSON", () => {
-    expect(parseBackends("[1,2,3]")).toBeNull();
+  it("returns Err for non-object JSON", () => {
+    expect(parseBackends("[1,2,3]").isErr()).toBe(true);
   });
 
-  it("returns null for invalid key", () => {
-    expect(parseBackends('{"UPPER":"https://example.com"}')).toBeNull();
+  it("returns Err for invalid key", () => {
+    expect(parseBackends('{"UPPER":"https://example.com"}').isErr()).toBe(true);
   });
 
-  it("returns null for key with spaces", () => {
-    expect(parseBackends('{"bad key":"https://example.com"}')).toBeNull();
+  it("returns Err for key with spaces", () => {
+    expect(parseBackends('{"bad key":"https://example.com"}').isErr()).toBe(true);
   });
 
   it("allows dashes and underscores in keys", () => {
     const result = parseBackends('{"dev-v2":"https://dev.example.com","my_staging":"https://staging.example.com"}');
-    expect(result).toEqual({
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok()).toEqual({
       "dev-v2": "https://dev.example.com",
       my_staging: "https://staging.example.com",
     });
@@ -52,7 +54,8 @@ describe("parseBackends", () => {
 
   it("normalizes backend URLs", () => {
     const result = parseBackends('{"dev":"https://example.com/"}');
-    expect(result).toEqual({ dev: "https://example.com" });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok()).toEqual({ dev: "https://example.com" });
   });
 });
 
