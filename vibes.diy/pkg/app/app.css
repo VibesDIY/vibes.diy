@@ -3,27 +3,27 @@
 @theme {
   /* Values from @vibes.diy/base tokens.ts — keep in sync */
 
-  --color-midnight: #333333;              /* colors.grayDark */
+  --color-midnight: #333333; /* colors.grayDark */
   --color-tahiti: #999;
-  --color-bermuda: #cccccc;               /* colors.grayLighter */
+  --color-bermuda: #cccccc; /* colors.grayLighter */
 
-  --color-light-primary: #333333;         /* colors.grayDark */
-  --color-light-secondary: #333333;       /* colors.grayDark */
-  --color-light-decorative-00: #eeeeee;   /* colors.grayOffwhite */
+  --color-light-primary: #333333; /* colors.grayDark */
+  --color-light-secondary: #333333; /* colors.grayDark */
+  --color-light-decorative-00: #eeeeee; /* colors.grayOffwhite */
   --color-light-decorative-01: #ddd;
-  --color-light-decorative-02: #333333;   /* colors.grayDark */
-  --color-light-background-00: #ffffff;   /* colors.white */
-  --color-light-background-01: #eeeeee;   /* colors.grayOffwhite */
+  --color-light-decorative-02: #333333; /* colors.grayDark */
+  --color-light-background-00: #ffffff; /* colors.white */
+  --color-light-background-01: #eeeeee; /* colors.grayOffwhite */
   --color-light-background-02: #ddd;
 
-  --color-dark-primary: #e0e0e0;          /* colors.grayUltralight */
-  --color-dark-secondary: #e0e0e0;        /* colors.grayUltralight */
-  --color-dark-decorative-00: #333333;    /* colors.grayDark */
+  --color-dark-primary: #e0e0e0; /* colors.grayUltralight */
+  --color-dark-secondary: #e0e0e0; /* colors.grayUltralight */
+  --color-dark-decorative-00: #333333; /* colors.grayDark */
   --color-dark-decorative-01: #444;
-  --color-dark-decorative-02: #e0e0e0;    /* colors.grayUltralight */
-  --color-dark-background-00: #1a1a1a;    /* colors.nearBlack */
-  --color-dark-background-01: #222222;    /* colors.darkGray */
-  --color-dark-background-02: #222222;    /* colors.darkGray */
+  --color-dark-decorative-02: #e0e0e0; /* colors.grayUltralight */
+  --color-dark-background-00: #1a1a1a; /* colors.nearBlack */
+  --color-dark-background-01: #222222; /* colors.darkGray */
+  --color-dark-background-02: #222222; /* colors.darkGray */
 
   --color-accent-00-light: #aaa;
   --color-accent-01-light: #999;

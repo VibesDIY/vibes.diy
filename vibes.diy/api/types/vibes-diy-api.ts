@@ -25,6 +25,30 @@ import {
   ResFPCloudToken,
   VibeFile,
   ResAddFS,
+  ReqCreateInvite,
+  ResCreateInvite,
+  ReqRevokeInvite,
+  ResRevokeInvite,
+  ReqRedeemInvite,
+  ResRedeemInviteOK,
+  ReqHasAccessInvite,
+  ResHasAccessInvite,
+  ReqInviteSetRole,
+  ResInviteSetRole,
+  ReqListInviteGrants,
+  ResListInviteGrants,
+  ReqListRequestGrants,
+  ResListRequestGrants,
+  ReqRequestAccess,
+  ResRequestAccess,
+  ReqApproveRequest,
+  ResApproveRequest,
+  ReqRequestSetRole,
+  ResRequestSetRole,
+  ReqRevokeRequest,
+  ResRevokeRequest,
+  ReqHasAccessRequest,
+  ResHasAccessRequest,
 } from "./msg-types.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -77,4 +101,17 @@ export interface VibesDiyApiIface<_T = unknown> {
   getCertFromCsr(req: Req<ReqCertFromCsr>): Promise<Result<ResCertFromCsr>>;
 
   getFPCloudToken(req: Req<ReqFPCloudToken>): Promise<Result<ResFPCloudToken>>;
+
+  createInvite(req: Req<ReqCreateInvite>): Promise<Result<ResCreateInvite, VibesDiyError>>;
+  revokeInvite(req: Req<ReqRevokeInvite>): Promise<Result<ResRevokeInvite, VibesDiyError>>;
+  redeemInvite(req: Req<ReqRedeemInvite>): Promise<Result<ResRedeemInviteOK, VibesDiyError>>;
+  hasAccessInvite(req: Req<ReqHasAccessInvite>): Promise<Result<ResHasAccessInvite, VibesDiyError>>;
+  inviteSetRole(req: Req<ReqInviteSetRole>): Promise<Result<ResInviteSetRole, VibesDiyError>>;
+  listInviteGrants(req: Req<ReqListInviteGrants>): Promise<Result<ResListInviteGrants, VibesDiyError>>;
+  requestAccess(req: Req<ReqRequestAccess>): Promise<Result<ResRequestAccess, VibesDiyError>>;
+  approveRequest(req: Req<ReqApproveRequest>): Promise<Result<ResApproveRequest, VibesDiyError>>;
+  requestSetRole(req: Req<ReqRequestSetRole>): Promise<Result<ResRequestSetRole, VibesDiyError>>;
+  revokeRequest(req: Req<ReqRevokeRequest>): Promise<Result<ResRevokeRequest, VibesDiyError>>;
+  listRequestGrants(req: Req<ReqListRequestGrants>): Promise<Result<ResListRequestGrants, VibesDiyError>>;
+  hasAccessRequest(req: Req<ReqHasAccessRequest>): Promise<Result<ResHasAccessRequest, VibesDiyError>>;
 }

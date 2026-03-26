@@ -62,6 +62,9 @@ inputs:
   NEON_DATABASE_ADMIN_URL:
     description: "Neon database connection URL for schema migrations (admin role, required when DB_FLAVOUR=pg)"
     required: false
+  MAX_APP_SLUG_PER_USER_ID:
+    description: "Maximum number of app slugs per user ID"
+    required: false
 
 runs:
   using: "composite"
@@ -97,6 +100,7 @@ runs:
         DB_FLAVOUR: ${{ inputs.DB_FLAVOUR }}
         NEON_DATABASE_URL: ${{ inputs.NEON_DATABASE_URL }}
         NEON_DATABASE_ADMIN_URL: ${{ inputs.NEON_DATABASE_ADMIN_URL }}
+        MAX_APP_SLUG_PER_USER_ID: ${{ inputs.MAX_APP_SLUG_PER_USER_ID }}
       run: |
         if [ "$DB_FLAVOUR" = "pg" ]; then
           NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" pnpm run drizzle:neon
@@ -119,7 +123,8 @@ runs:
           --fromEnv VIBES_SVC_PROTOCOL \
           --fromEnv LLM_BACKEND_API_KEY \
           --fromEnv DB_FLAVOUR \
-          --fromEnv NEON_DATABASE_URL | \
+          --fromEnv NEON_DATABASE_URL \
+          --fromEnv MAX_APP_SLUG_PER_USER_ID | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
 
@@ -146,6 +151,7 @@ runs:
         LLM_BACKEND_API_KEY: ${{ inputs.LLM_BACKEND_API_KEY }}
         DB_FLAVOUR: ${{ inputs.DB_FLAVOUR }}
         NEON_DATABASE_URL: ${{ inputs.NEON_DATABASE_URL }}
+        MAX_APP_SLUG_PER_USER_ID: ${{ inputs.MAX_APP_SLUG_PER_USER_ID }}
       run: |
         pnpm exec core-cli writeEnv --out - --json \
           --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
@@ -163,6 +169,7 @@ runs:
           --fromEnv VIBES_SVC_PROTOCOL \
           --fromEnv LLM_BACKEND_API_KEY \
           --fromEnv DB_FLAVOUR \
-          --fromEnv NEON_DATABASE_URL | \
+          --fromEnv NEON_DATABASE_URL \
+          --fromEnv MAX_APP_SLUG_PER_USER_ID | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}}

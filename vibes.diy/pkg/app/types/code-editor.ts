@@ -3,7 +3,8 @@
 import { type } from "arktype";
 
 export const AppCode = type({
-  code: "string",
+  "streamId?": "string",
+  code: "string[]",
   complete: "boolean",
 });
 

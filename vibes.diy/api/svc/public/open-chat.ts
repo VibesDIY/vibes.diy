@@ -39,7 +39,6 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       // console.log("openChat handler called", ctx.validated.payload);
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-
       let chatPromise: Promise<Result<{ appSlug: string; userSlug: string; chatId: string }>>;
       switch (req.mode) {
         case "creation":
@@ -60,14 +59,21 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
 
       const wsp = ctx.send.provider as WSSendProvider;
       // console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
-      wsp.chatIds.add({ chatId, tid: ctx.validated.tid });
+      let chatCtx = wsp.chatIds.get(chatId);
+      if (!chatCtx) {
+        chatCtx = { chatId, tids: new Set([ctx.validated.tid]), promptIds: new Map() };
+        wsp.chatIds.set(chatId, chatCtx);
+      } else {
+        chatCtx.tids.add(ctx.validated.tid);
+      }
 
       const rReSend = await resendChatSectionsPrevMsg({
         vctx,
-        chatId,
+        chatCtx,
         tid: ctx.validated.tid,
         dst: ctx.validated.src,
         send: (msg: MsgBase<SectionEvent>) => {
+          // console.log("Resending previous section event message for chatId:", chatId, "message:", msg);
           return ctx.send.send(ctx, msg);
         },
       });

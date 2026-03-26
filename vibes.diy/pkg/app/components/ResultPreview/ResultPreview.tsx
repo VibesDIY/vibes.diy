@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, memo } from "react";
+import React, { Suspense, lazy } from "react";
 import { animationStyles } from "./ResultPreviewTemplates.js";
 import type { ResultPreviewProps } from "../../types/ResultPreviewTypes.js";
 import ClientOnly from "../ClientOnly.js";
@@ -56,25 +56,25 @@ function CodeEditorWrapper({
   );
 }
 
-const MemoCodeEditor = memo(CodeEditorWrapper, (prevProps, nextProps) => {
-  // console.log("xxxx", nextProps.promptState.running)
-  if (
-    nextProps.promptState.running &&
-    nextProps.currentView === "code" &&
-    prevProps.currentView === "code" &&
-    prevProps.promptState.blocks.length === nextProps.promptState.blocks.length
-  ) {
-    // console.log(`Memo check for CodeEditor:`, { prevView: prevProps.currentView, nextView: nextProps.currentView });
-    return false; // re-render if still in code view to reflect changes in promptState.blocks
-  }
+// const MemoCodeEditor = memo(CodeEditorWrapper, (prevProps, nextProps) => {
+//   // console.log("xxxx", nextProps.promptState.running)
+//   if (
+//     nextProps.promptState.running &&
+//     nextProps.currentView === "code" &&
+//     prevProps.currentView === "code" &&
+//     prevProps.promptState.blocks.length === nextProps.promptState.blocks.length
+//   ) {
+//     // console.log(`Memo check for CodeEditor:`, { prevView: prevProps.currentView, nextView: nextProps.currentView });
+//     return false; // re-render if still in code view to reflect changes in promptState.blocks
+//   }
 
-  return nextProps.currentView === "code";
-});
+//   return nextProps.currentView === "code";
+// });
 
 function ResultPreview({ promptState, currentView, children, onCode }: ResultPreviewProps & { children?: React.ReactNode }) {
   const showWelcome = !promptState.running && !promptState.hasCode;
 
-  const codeEditor = <MemoCodeEditor promptState={promptState} onCode={onCode} currentView={currentView} />;
+  const codeEditor = <CodeEditorWrapper promptState={promptState} onCode={onCode} currentView={currentView} />;
   let previewArea: React.ReactNode;
   // console.log(`ResultPreview:`, currentView, promptState.searchParams.toString())
   switch (true) {

@@ -53,11 +53,11 @@ import {
   FileSystemRef,
   PromptContextSql,
   BlockEndMsg,
-  BlockMsgs,
   isBlockStreamMsg,
 } from "@vibes.diy/call-ai-v2";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
+import { ChatIdCtx } from "../svc-ws-send-provider.js";
 
 interface AppendBlockEventParams {
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -100,11 +100,10 @@ async function appendBlockEvent({
   } satisfies InMsgBase<SectionEvent>);
   // console.log("Emitting block event for promptId:", promptId, "blockSeq:", blockSeq, "connections:", vctx.connections);
   for (const conn of vctx.connections) {
-    // console.log("Emitting block event for promptId:", promptId, "blockSeq:", blockSeq, "to clients", conn.chatIds);
-    for (const tuple of conn.chatIds) {
-      if (tuple.chatId === req.chatId) {
-        // console.log("promptChatSection: Sending blockSeq", blockSeq, "to chatId:", req.chatId, "via tid:", tuple.tid);
-        await conn.send(ctx, { ...msgBase, tid: tuple.tid });
+    const chatCtx = conn.chatIds.get(req.chatId);
+    if (chatCtx) {
+      for (const tid of chatCtx.tids) {
+        await conn.send(ctx, { ...msgBase, tid });
       }
     }
   }
@@ -133,7 +132,7 @@ export async function handlePromptContext({
   promptId,
   blockSeq,
   value,
-  collectedMsgs,
+  collectedMsgs: iCollectedMsgs,
   blockChunks = 100,
 }: {
   vctx: VibesApiSQLCtx;
@@ -142,12 +141,16 @@ export async function handlePromptContext({
   promptId: string;
   blockSeq: number;
   value: BlockEndMsg;
-  collectedMsgs: BlockMsgs[];
+  collectedMsgs: PromptAndBlockMsgs[];
   blockChunks?: number;
 }): Promise<Result<{ blockSeq: number; fsRef: Option<FileSystemRef> }>> {
   let fsRef: Option<FileSystemRef> = Option.None();
   const code: CodeBlocks[] = [];
   const sections: SqlChatSection[] = [];
+
+  // the collectedMsgs are Queue
+  const collectedMsgs = [...iCollectedMsgs];
+
   for (const msg of collectedMsgs) {
     if (!isBlockStreamMsg(msg)) {
       continue;
@@ -217,6 +220,7 @@ export async function handlePromptContext({
       auth: req.auth,
       _auth: req._auth,
     });
+    // console.log("ensureAppSlugItem result for code blocks:", rFs);
     if (rFs.isErr()) {
       console.error("Failed to ensure app slug item for code blocks:", rFs.Err());
       return Result.Err(rFs);
@@ -228,6 +232,7 @@ export async function handlePromptContext({
     fsRef = Option.Some(tFsRef);
   }
   // update prompt context with usage and fsRef into sections BlockEndMsg
+
   value.fsRef = fsRef.toValue();
   const rSql = await exception2Result(() =>
     vctx.sql.db.insert(vctx.sql.tables.promptContexts).values({
@@ -256,9 +261,13 @@ export async function handlePromptContext({
     splitCondition: (secChunk) => secChunk.length >= 20,
     commit: async (secChunk) => {
       await exception2Result(() => vctx.sql.db.insert(vctx.sql.tables.chatSections).values(secChunk));
-      // console.log("Inserted block section into DB for promptId:", secChunk, rSections);
+      // console.log("Inserted block section into DB for promptId:", secChunk.reduce((acc, curr) => acc+curr.blocks.length, 0), res);
     },
   });
+  // there is on disc and during phase we use the iCollectedMsgs as resendBuffer
+  // now we could clean the iCollectedMsgs, now the written content will come
+  // from the DB
+  iCollectedMsgs.splice(0, collectedMsgs.length); // clear the original array while keeping the reference, so that new messages can be pushed into it from other parts of the code while we process the existing ones
 
   return Result.Ok({ blockSeq, fsRef });
 }
@@ -476,7 +485,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             return res;
           })
           .finally(async () => {
-            // console.log(promptId, "Finally ", blockSeq, req.chatId)
+            console.log(promptId, "Finally ", blockSeq, req.chatId);
             if (blockSeq > 1) {
               await appendBlockEvent({
                 ctx,
@@ -585,18 +594,43 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
             const reader = pipeline.getReader();
 
-            const collectedMsgs: BlockMsgs[] = [];
+            // const collectedMsgs: BlockMsgs[] = [];
+            let collectedMsgs!: PromptAndBlockMsgs[];
+            let chatCtx!: ChatIdCtx;
+            for (const conn of vctx.connections) {
+              const tChatCtx = conn.chatIds.get(req.chatId);
+              if (tChatCtx) {
+                chatCtx = tChatCtx;
+                const promptIdCtx = chatCtx.promptIds.get(promptId);
+                if (!promptIdCtx) {
+                  collectedMsgs = [];
+                  chatCtx.promptIds.set(promptId, {
+                    blocks: collectedMsgs,
+                    promptId,
+                    type: "vibes.diy.section-event",
+                    chatId: req.chatId,
+                    blockSeq: 0,
+                    timestamp: new Date(),
+                  });
+                } else {
+                  collectedMsgs = promptIdCtx.blocks;
+                }
+              }
+            }
+            if (!collectedMsgs) {
+              return Result.Err(`Chat context not found for chatId: ${req.chatId}`);
+            }
             // const codeBlocks: CodeBlocks[] = [];
             while (true) {
               const { done, value } = await reader.read();
               if (done) {
                 break;
               }
-              // console.log(promptId, "Received chunk for promptId:", value);
               if (!isBlockEnd(value)) {
                 if (!isBlockStreamMsg(value)) {
                   continue;
                 }
+                // console.log(promptId, "Received chunk for promptId:", value);
                 collectedMsgs.push(value);
                 const r = await appendBlockEvent({
                   ctx,
@@ -611,10 +645,15 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
                   return Result.Err(r);
                 }
               } else {
+                // console.log(promptId, "BlockEnd", value, collectedMsgs.length, req.chatId);
                 collectedMsgs.push(value);
                 const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
                 if (r.isErr()) {
                   return Result.Err(r);
+                }
+                const promptIdCtx = chatCtx.promptIds.get(promptId);
+                if (promptIdCtx) {
+                  chatCtx.promptIds.delete(promptId);
                 }
                 blockSeq = r.Ok().blockSeq;
                 const rEvt = await appendBlockEvent({

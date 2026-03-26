@@ -1,16 +1,17 @@
 import { EventoSendProvider, HandleTriggerCtx, JSONEnDecoder, JSONEnDecoderSingleton, Result } from "@adviser/cement";
-import { msgBase, MsgBase, W3CWebSocketEvent } from "@vibes.diy/api-types";
+import { msgBase, MsgBase, SectionEvent, W3CWebSocketEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
 export interface ChatIdCtx {
-  chatId: string;
-  tid: string;
+  readonly chatId: string;
+  readonly promptIds: Map<string, SectionEvent>;
+  readonly tids: Set<string>;
 }
 
 export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unknown, unknown> {
   readonly ws: WebSocket;
   readonly ende: JSONEnDecoder;
-  readonly chatIds = new Set<ChatIdCtx>();
+  readonly chatIds = new Map<string, ChatIdCtx>();
   constructor(ws: WebSocket, ende?: JSONEnDecoder) {
     this.ws = ws;
     this.ende = ende ?? JSONEnDecoderSingleton();

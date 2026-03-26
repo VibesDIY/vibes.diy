@@ -1,5 +1,5 @@
 import { PromptAndBlockMsgs } from "@vibes.diy/api-types";
-import { int, sqliteTable, text, blob, primaryKey, uniqueIndex, index } from "drizzle-orm/sqlite-core";
+import { int, sqliteTable, text, blob, primaryKey, uniqueIndex, index, numeric } from "drizzle-orm/sqlite-core";
 
 // could be put on R2
 export const sqlAssets = sqliteTable("Assets", {
@@ -157,50 +157,40 @@ export const sqlAppSettings = sqliteTable(
   (table) => [primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] })]
 );
 
-// export const sqlActiveAcls = sqliteTable("ActiveAcls", {
-//   userId: text().notNull(), // from Clerk
-//   appSlug: text().notNull(),
-//   userSlug: text().notNull(),
-//   acl: text({ mode: "json" }).notNull(), // AclEntry
-//   updated: text().notNull(),
-//   created: text().notNull(),
-// }, (table) => [
-//   primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] }),
-// ]);
+export const sqlRequestGrants = sqliteTable(
+  "RequestGrants",
+  {
+    userId: text().notNull(), // from Clerk
+    appSlug: text().notNull(),
+    userSlug: text().notNull(),
+    state: text().notNull(), // 'pending' | 'approved' | 'rejected'
+    role: text(), // 'editor' | 'viewer'
+    foreignUserId: text().notNull(), // sanitized email for grant
+    foreignInfo: text({ mode: "json" }).notNull(),
+    tick: numeric().notNull(), // no counts the use of the grant
+    updated: text().notNull(),
+    created: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.foreignUserId] })]
+);
 
-// export const sqlAppCollaborators = sqliteTable(
-//   "AppCollaborators",
-//   {
-//     userId: text().notNull(), // from Clerk
-//     appSlug: text().notNull(),
-//     userSlug: text().notNull(),
-
-//     type: text().notNull(), // request.public.access| request.editor.access | request.readonly.access | invite.editor.access | invite.readonly.access
-
-//     collaborator: text({ mode: "json" }).notNull(), //
-
-//     created: text().notNull(),
-//   }
-// );
-
-// export const sqlInviteTokens = sqliteTable("InviteTokens", {
-//   token: text().notNull().primaryKey(),
-//   appSlug: text().notNull(),
-//   userSlug: text().notNull(),
-//   ownerUserId: text().notNull(),
-//   validUntil: text().notNull(),
-//   created: text().notNull(),
-//   style: text({ mode: "json" }).notNull(), // InviteEmailToken.or(InviteLinkToken)
-// });
-
-// export const sqlAcceptInvites = sqliteTable(
-//   "AcceptInvites",
-//   {
-//     acceptId: text().notNull().primaryKey(), // uuid v4
-//     token: text().notNull(),
-//     acceptUserId: text().notNull(),
-//     acceptedInfo: text({ mode: "json" }).notNull(), // InviteToken info at time of accept
-//     created: text().notNull(),
-//   },
-//   (table) => [uniqueIndex("AcceptInvites_token_acceptedUserId_idx").on(table.token, table.acceptUserId)]
-// );
+export const sqlInviteGrants = sqliteTable(
+  "InviteGrants",
+  {
+    userId: text().notNull(), // from Clerk
+    appSlug: text().notNull(),
+    userSlug: text().notNull(),
+    state: text().notNull(), // 'pending' | 'accepted' | 'revoked'
+    role: text().notNull(), // 'editor' | 'viewer'
+    emailKey: text().notNull(), // sanitized email for grant
+    tokenOrGrantUserId: text().notNull(), // sanitized email for grant
+    foreignInfo: text({ mode: "json" }).notNull(), // { email: string }
+    tick: numeric().notNull(), // no counts the use of the grant
+    updated: text().notNull(),
+    created: text().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.emailKey] }),
+    index("tokenOrGrantUserId_idx").on(table.tokenOrGrantUserId),
+  ]
+);

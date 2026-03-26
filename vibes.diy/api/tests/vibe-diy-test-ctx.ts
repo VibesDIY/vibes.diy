@@ -63,6 +63,10 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
 
     CLOUD_SESSION_TOKEN_ISSUER: "vibes-diy-test-issuer",
 
+    MAX_APP_SLUG_PER_USER_ID: "10000",
+    MAX_USER_SLUG_PER_USER_ID: "10000",
+    MAX_APPS_PER_USER_ID: "50000",
+
     DB_FLAVOUR: flavour,
   };
 

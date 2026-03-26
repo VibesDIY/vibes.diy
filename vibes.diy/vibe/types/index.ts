@@ -1,5 +1,6 @@
+import { FPCloudClaim } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { FPCloudClaimSchema } from "@fireproof/core-types-protocols-cloud";
+// import { FPCloudClaimSchema } from "@fireproof/core-types-protocols-cloud";
 
 export * from "./img-gen.js";
 
@@ -109,7 +110,7 @@ export const ResFetchCloudToken = type({
   data: FPDbData,
   token: {
     cloudToken: "string",
-    claims: FPCloudClaimSchema,
+    claims: FPCloudClaim,
     expiresInSec: "number",
   },
 }).and(Base);

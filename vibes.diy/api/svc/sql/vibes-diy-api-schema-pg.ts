@@ -1,5 +1,5 @@
 import { PromptAndBlockMsgs } from "@vibes.diy/api-types";
-import { integer, pgTable, text, jsonb, primaryKey, uniqueIndex, index, customType } from "drizzle-orm/pg-core";
+import { integer, pgTable, text, jsonb, primaryKey, uniqueIndex, index, customType, numeric } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Uint8Array }>({
   dataType() {
@@ -156,4 +156,47 @@ export const sqlAppSettings = pgTable(
     created: text().notNull(),
   },
   (table) => [primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] })]
+);
+
+export const sqlRequestGrants = pgTable(
+  "RequestGrants",
+  {
+    userId: text().notNull(), // from Clerk
+    appSlug: text().notNull(),
+    userSlug: text().notNull(),
+    state: text().notNull(), // 'pending' | 'approved' | 'rejected'
+    role: text(), // 'editor' | 'viewer'
+    foreignUserId: text().notNull(), // sanitized email for grant
+    foreignInfo: jsonb().notNull(),
+    tick: numeric().notNull(), // counts the use of the grant
+    updated: text().notNull(),
+    created: text().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.foreignUserId] }),
+    index("RequestGrants_cursor").on(table.created),
+    index("RequestGrants_foreignUserId_idx").on(table.foreignUserId),
+  ]
+);
+
+export const sqlInviteGrants = pgTable(
+  "InviteGrants",
+  {
+    userId: text().notNull(), // from Clerk
+    appSlug: text().notNull(),
+    userSlug: text().notNull(),
+    state: text().notNull(), // 'pending' | 'accepted' | 'revoked'
+    role: text().notNull(), // 'editor' | 'viewer'
+    emailKey: text().notNull(), // sanitized email for grant
+    tokenOrGrantUserId: text().notNull(),
+    foreignInfo: jsonb().notNull(), // { email: string }
+    tick: numeric().notNull(), // counts the use of the grant
+    updated: text().notNull(),
+    created: text().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.emailKey] }),
+    index("InviteGrants_cursor").on(table.created),
+    index("InviteGrants_tokenOrGrantUserId_idx").on(table.tokenOrGrantUserId),
+  ]
 );
