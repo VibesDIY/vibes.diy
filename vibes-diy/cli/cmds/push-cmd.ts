@@ -1,7 +1,15 @@
 import { command, option, string } from "cmd-ts";
 import { readdir, readFile } from "fs/promises";
 import { basename, extname, join } from "path";
-import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType, exception2Result } from "@adviser/cement";
+import {
+  ValidateTriggerCtx,
+  Result,
+  HandleTriggerCtx,
+  Option,
+  EventoHandler,
+  EventoResultType,
+  exception2Result,
+} from "@adviser/cement";
 import { type } from "arktype";
 import { resEnsureAppSlug, ResEnsureAppSlug } from "@vibes.diy/api-types";
 import type { VibeFile } from "@vibes.diy/api-types";
@@ -46,9 +54,9 @@ export function isReqPush(obj: unknown): obj is ReqPush {
   return !(ReqPush(obj) instanceof type.errors);
 }
 
-export function isResPush(obj: unknown): obj is ResEnsureAppSlug {
-  return !(resEnsureAppSlug(obj) instanceof type.errors);
-}
+// export function isResPush(obj: unknown): obj is ResEnsureAppSlug {
+//   return !(resEnsureAppSlug(obj) instanceof type.errors);
+// }
 
 const PushRawArgs = type({ mode: "string", appSlug: "string" });
 
@@ -60,9 +68,7 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
     }
     return Promise.resolve(Result.Ok(Option.None()));
   },
-  handle: async (
-    ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqPush, ResEnsureAppSlug>
-  ): Promise<Result<EventoResultType>> => {
+  handle: async (ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqPush, ResEnsureAppSlug>): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
     if (ectx.vibesDiyApiFactory === undefined) {
       return Result.Err("Not logged in. Run 'use-vibes login' first.");

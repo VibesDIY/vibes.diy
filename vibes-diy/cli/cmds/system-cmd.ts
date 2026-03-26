@@ -1,5 +1,13 @@
 import { command } from "cmd-ts";
-import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType, exception2Result } from "@adviser/cement";
+import {
+  ValidateTriggerCtx,
+  Result,
+  HandleTriggerCtx,
+  Option,
+  EventoHandler,
+  EventoResultType,
+  exception2Result,
+} from "@adviser/cement";
 import { type } from "arktype";
 import { makeBaseSystemPrompt } from "@vibes.diy/prompts";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
@@ -32,9 +40,7 @@ export const systemEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqSystem, ResSy
     }
     return Promise.resolve(Result.Ok(Option.None()));
   },
-  handle: async (
-    ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqSystem, ResSystem>
-  ): Promise<Result<EventoResultType>> => {
+  handle: async (ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqSystem, ResSystem>): Promise<Result<EventoResultType>> => {
     const rPrompt = await exception2Result(() =>
       makeBaseSystemPrompt("cli", {
         dependenciesUserOverride: true,
