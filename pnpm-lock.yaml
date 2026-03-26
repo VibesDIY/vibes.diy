@@ -45,7 +45,7 @@ importers:
         version: 10.0.3(jiti@2.6.1)
       eslint-plugin-import:
         specifier: ^2.32.0
-        version: 2.32.0(eslint@10.0.3(jiti@2.6.1))
+        version: 2.32.0(@typescript-eslint/parser@8.57.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3))(eslint@10.0.3(jiti@2.6.1))
       knip:
         specifier: ^5.87.0
         version: 5.87.0(@types/node@25.5.0)(typescript@5.9.3)
@@ -245,6 +245,9 @@ importers:
       '@fireproof/use-fireproof':
         specifier: 0.24.13
         version: 0.24.13(@adviser/cement@0.5.34(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@vibes.diy/call-ai-v2':
+        specifier: workspace:*
+        version: link:../../call-ai/v2
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
@@ -374,8 +377,8 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       jose:
-        specifier: ^6.1.1
-        version: 6.2.1
+        specifier: ^6.2.2
+        version: 6.2.2
       react:
         specifier: '>=19.1.0'
         version: 19.2.4
@@ -470,6 +473,9 @@ importers:
       cmd-ts:
         specifier: ^0.15.0
         version: 0.15.0
+      jose:
+        specifier: ^6.2.2
+        version: 6.2.2
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -963,8 +969,8 @@ importers:
         specifier: ^0.45.1
         version: 0.45.1(@cloudflare/workers-types@4.20260317.1)(@libsql/client@0.17.0(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0)
       jose:
-        specifier: ^6.1.3
-        version: 6.2.1
+        specifier: ^6.2.2
+        version: 6.2.2
       mime:
         specifier: ^4.1.0
         version: 4.1.0
@@ -1383,8 +1389,8 @@ importers:
         specifier: ^5.1.36
         version: 5.1.36
       jose:
-        specifier: ^6.1.3
-        version: 6.2.1
+        specifier: ^6.2.2
+        version: 6.2.2
       multiformats:
         specifier: ^13.4.2
         version: 13.4.2
@@ -1489,8 +1495,8 @@ importers:
         specifier: ^5.1.36
         version: 5.1.36
       jose:
-        specifier: ^6.1.3
-        version: 6.2.1
+        specifier: ^6.2.2
+        version: 6.2.2
       multiformats:
         specifier: ^13.4.2
         version: 13.4.2
@@ -6645,6 +6651,9 @@ packages:
   jose@6.2.1:
     resolution: {integrity: sha512-jUaKr1yrbfaImV7R2TN/b3IcZzsw38/chqMpo2XJ7i2F8AfM/lA4G1goC3JVEwg0H7UldTmSt3P68nt31W7/mw==}
 
+  jose@6.2.2:
+    resolution: {integrity: sha512-d7kPDd34KO/YnzaDOlikGpOurfF0ByC2sEV4cANCtdqLlTfBlw2p14O/5d/zv40gJPbIQxfES3nSx1/oYNyuZQ==}
+
   js-base64@3.7.8:
     resolution: {integrity: sha512-hNngCeKxIUQiEUN3GPJOkz4wF/YvdUdbNL9hsBcMQTkKzboD7T/q3OYOuuPZLUE6dBxSGpwhk5mwuDud7JVAow==}
 
@@ -9794,7 +9803,7 @@ snapshots:
       '@fireproof/core-types-base': 0.24.13(typescript@5.9.3)
       '@fireproof/core-types-device-id': 0.24.13(typescript@5.9.3)
       '@fireproof/core-types-protocols-dashboard': 0.24.13(typescript@5.9.3)
-      jose: 6.2.1
+      jose: 6.2.2
       multiformats: 13.4.2
       zod: 4.3.6
     transitivePeerDependencies:
@@ -9822,7 +9831,7 @@ snapshots:
       '@fireproof/core-types-blockstore': 0.24.13(typescript@5.9.3)
       '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@5.9.3)
       '@fireproof/vendor': 0.24.13(typescript@5.9.3)
-      jose: 6.2.1
+      jose: 6.2.2
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -9921,7 +9930,7 @@ snapshots:
       '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@5.9.3)
       '@fireproof/core-types-protocols-dashboard': 0.24.13(typescript@5.9.3)
       '@fireproof/vendor': 0.24.13(typescript@5.9.3)
-      jose: 6.2.1
+      jose: 6.2.2
       zod: 4.3.6
     transitivePeerDependencies:
       - react
@@ -11587,10 +11596,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3))(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3))(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.57.1(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/parser': 8.57.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3)
       '@typescript-eslint/scope-manager': 8.57.1
       '@typescript-eslint/type-utils': 8.57.1(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)
       '@typescript-eslint/utils': 8.57.1(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)
@@ -13079,16 +13088,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.1(eslint-import-resolver-node@0.3.9)(eslint@10.0.3(jiti@2.6.1)):
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.57.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@10.0.3(jiti@2.6.1)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
+      '@typescript-eslint/parser': 8.57.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3)
       eslint: 10.0.3(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(eslint@10.0.3(jiti@2.6.1)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.57.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3))(eslint@10.0.3(jiti@2.6.1)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -13099,7 +13109,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 10.0.3(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.1(eslint-import-resolver-node@0.3.9)(eslint@10.0.3(jiti@2.6.1))
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.57.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@10.0.3(jiti@2.6.1))
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -13110,6 +13120,8 @@ snapshots:
       semver: 6.3.1
       string.prototype.trimend: 1.0.9
       tsconfig-paths: 3.15.0
+    optionalDependencies:
+      '@typescript-eslint/parser': 8.57.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3)
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
@@ -14352,6 +14364,8 @@ snapshots:
   jiti@2.6.1: {}
 
   jose@6.2.1: {}
+
+  jose@6.2.2: {}
 
   js-base64@3.7.8: {}
 
@@ -16381,7 +16395,7 @@ snapshots:
 
   typescript-eslint@8.57.1(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.57.1(@typescript-eslint/parser@8.57.1(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3))(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/eslint-plugin': 8.57.1(@typescript-eslint/parser@8.57.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3))(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)
       '@typescript-eslint/parser': 8.57.1(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)
       '@typescript-eslint/typescript-estree': 8.57.1(typescript@5.9.3)
       '@typescript-eslint/utils': 8.57.1(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)
