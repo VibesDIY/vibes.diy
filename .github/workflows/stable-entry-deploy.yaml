@@ -1,0 +1,45 @@
+name: Deploy stable-entry
+
+on:
+  push:
+    paths:
+      - 'vibes.diy/stable-entry/**/*'
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      STABLE_ENTRY_BACKEND: ${{ vars.STABLE_ENTRY_BACKEND }}
+      STABLE_ENTRY_BACKENDS: ${{ vars.STABLE_ENTRY_BACKENDS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/runtime
+      - run: pnpm install --frozen-lockfile
+      - name: Deploy code
+        working-directory: vibes.diy/stable-entry
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$STABLE_ENTRY_BACKEND" ]; then
+            pnpm exec wrangler deploy --var BACKEND:"$STABLE_ENTRY_BACKEND"
+          else
+            pnpm exec wrangler deploy
+          fi
+      - name: Sync BACKENDS
+        if: ${{ env.STABLE_ENTRY_BACKENDS != '' }}
+        working-directory: vibes.diy/stable-entry
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: printf '%s' "$STABLE_ENTRY_BACKENDS" | pnpm exec wrangler secret put BACKENDS
+      - name: Remove BACKENDS
+        if: ${{ env.STABLE_ENTRY_BACKENDS == '' }}
+        working-directory: vibes.diy/stable-entry
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm exec wrangler secret delete BACKENDS || true
