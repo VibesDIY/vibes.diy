@@ -31,5 +31,9 @@
     "@vitest/ui": "~4.1.2",
     "vitest": "~4.1.2",
     "zx": "^8.8.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
   }
 }
