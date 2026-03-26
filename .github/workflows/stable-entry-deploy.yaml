@@ -11,6 +11,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # environment: dev only to access CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID
+    # stable-entry itself is environment-agnostic (deploys a single global worker)
+    environment: dev
     env:
       STABLE_ENTRY_BACKEND: ${{ vars.STABLE_ENTRY_BACKEND }}
       STABLE_ENTRY_BACKENDS: ${{ vars.STABLE_ENTRY_BACKENDS }}
@@ -22,7 +25,7 @@ jobs:
         working-directory: vibes.diy/stable-entry
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -n "$STABLE_ENTRY_BACKEND" ]; then
             pnpm exec wrangler deploy --var BACKEND:"$STABLE_ENTRY_BACKEND"
@@ -34,12 +37,12 @@ jobs:
         working-directory: vibes.diy/stable-entry
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: printf '%s' "$STABLE_ENTRY_BACKENDS" | pnpm exec wrangler secret put BACKENDS
       - name: Remove BACKENDS
         if: ${{ env.STABLE_ENTRY_BACKENDS == '' }}
         working-directory: vibes.diy/stable-entry
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm exec wrangler secret delete BACKENDS || true
