@@ -22,7 +22,7 @@
     "zx": "^8.8.5"
   },
   "devDependencies": {
-    "@vitest/browser": "~4.0.18",
+    "@vitest/browser": "~4.1.1",
     "@vitest/browser-playwright": "~4.0.18",
     "eslint": "^9.39.2",
     "playwright": "^1.57.0",
