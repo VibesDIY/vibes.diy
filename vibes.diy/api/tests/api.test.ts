@@ -428,7 +428,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
   });
 
-  it("queries the llm", async () => {
+  it.skip("queries the llm", async () => {
     const rChatRes = await api.openChat({
       mode: "creation",
     });

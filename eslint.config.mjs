@@ -21,6 +21,7 @@ const opts = tseslint.config(
   },
   {
     ignores: [
+      "**/.claude/**",
       "babel.config.cjs",
       "jest.config.js",
       "**/.netlify/**",
@@ -49,6 +50,7 @@ const opts = tseslint.config(
       "**/examples/**",
       "vitest.config.ts",
       "**/.storybook/**",
+      "**/storybook-static/**",
       "**/tailwind.config.js",
       "vibes.diy/**/root.*",
       "**/eslint.config.mjs",
