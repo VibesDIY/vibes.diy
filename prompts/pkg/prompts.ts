@@ -273,6 +273,19 @@ export function generateImportStatements(llms: LlmCatalogEntry[]) {
 
 const keyedLoadAsset = new KeyedResolvOnce();
 
+export async function getSkillText(name: string): Promise<string> {
+  const rText = await keyedLoadAsset.get(name).once(async () => {
+    return loadAsset(`./llms/${name}.txt`, {
+      fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
+      basePath: () => import.meta.url,
+    });
+  });
+  if (rText.isErr()) {
+    return Promise.reject(rText.Err());
+  }
+  return rText.Ok();
+}
+
 // move this function to its own file along with generateImportStatements and selectLlmsAndOptions, and rexport from here
 export async function makeBaseSystemPrompt(
   model: string,

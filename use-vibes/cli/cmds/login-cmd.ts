@@ -1,42 +1,75 @@
-import { command, flag, option, string } from "cmd-ts";
-import { DeviceIdKey, DeviceIdCSR } from "@fireproof/core-device-id";
-import { getKeyBag } from "@fireproof/core-keybag";
-import { Subject, CertificatePayloadSchema } from "@fireproof/core-types-base";
-import { decodeJwt } from "jose";
-import { Hono } from "hono";
-import { serve } from "@hono/node-server";
-import open from "open";
-import { exception2Result, Future, timeouted, isSuccess, isTimeout, BuildURI } from "@adviser/cement";
+import { command, flag, option, string, run } from "cmd-ts";
+import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType, exception2Result, BuildURI } from "@adviser/cement";
+import { type } from "arktype";
+import { deviceIdCmd } from "@fireproof/core-cli/device-id-cmd.js";
 import { hostname } from "os";
-import { CliCtx, DEFAULT_API_URL } from "../cli-ctx.js";
+import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
+import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
+
+export const ResLogin = type({
+  type: "'use-vibes.cli.res-login'",
+  message: "string",
+});
+export type ResLogin = typeof ResLogin.infer;
+
+export function isResLogin(obj: unknown): obj is ResLogin {
+  return !(ResLogin(obj) instanceof type.errors);
+}
+
+export const ReqLogin = type({
+  type: "'use-vibes.cli.login'",
+  force: "boolean",
+  timeout: "string",
+});
+export type ReqLogin = typeof ReqLogin.infer;
+
+export function isReqLogin(obj: unknown): obj is ReqLogin {
+  return !(ReqLogin(obj) instanceof type.errors);
+}
 
 function apiUrlToCaUrl(apiUrl: string): string {
   return BuildURI.from(apiUrl).pathname("/settings/csr-to-cert").toString();
 }
 
-function buildSubject(commonName: string): Subject {
-  return {
-    commonName,
-    organization: "use-vibes-cli",
-    locality: "unset",
-    stateOrProvinceName: "unset",
-    countryName: "WD",
-  };
-}
+export const loginEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqLogin, ResLogin> = {
+  hash: "use-vibes.cli.login",
+  validate: (ctx: ValidateTriggerCtx<WrapCmdTSMsg<unknown>, ReqLogin, ResLogin>) => {
+    if (isReqLogin(ctx.enRequest)) {
+      return Promise.resolve(Result.Ok(Option.Some(ctx.enRequest)));
+    }
+    return Promise.resolve(Result.Ok(Option.None()));
+  },
+  handle: async (
+    ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqLogin, ResLogin>
+  ): Promise<Result<EventoResultType>> => {
+    const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
+    const req = ctx.request.result as ReqLogin;
+    const apiUrl = ctx.request.cmdTs.apiUrl;
+    const caUrl = apiUrlToCaUrl(apiUrl);
+
+    const argv: string[] = ["register", "--ca-url", caUrl, "--common-name", hostname(), "--timeout", req.timeout];
+    if (req.force) {
+      argv.push("--force-renew");
+    }
+
+    const deviceId = deviceIdCmd(ectx.sthis);
+    const rRun = await exception2Result(() => run(deviceId, argv));
+    if (rRun.isErr()) {
+      return Result.Err(`Login failed: ${rRun.Err().message}`);
+    }
+    return sendMsg(ctx, {
+      type: "use-vibes.cli.res-login",
+      message: "Login complete.",
+    } satisfies ResLogin);
+  },
+};
 
 export function loginCmd(ctx: CliCtx) {
   return command({
     name: "login",
     description: "Authenticate this device with vibes.diy cloud.",
     args: {
-      apiUrl: option({
-        long: "api-url",
-        short: "u",
-        description: "API base URL (used to derive the auth endpoint)",
-        type: string,
-        defaultValue: () => ctx.sthis.env.get("VIBES_API_URL") ?? DEFAULT_API_URL,
-        defaultValueIsSerializable: true,
-      }),
+      ...cmdTsDefaultArgs(ctx),
       force: flag({
         long: "force",
         description: "Re-register even if a certificate already exists",
@@ -49,123 +82,13 @@ export function loginCmd(ctx: CliCtx) {
         defaultValueIsSerializable: true,
       }),
     },
-    handler: async function handleLogin(args: {
-      readonly apiUrl: string;
-      readonly force: boolean;
-      readonly timeout: string;
-    }): Promise<void> {
-      const { stdout, stderr } = ctx.output;
-      const keyBag = await getKeyBag(ctx.sthis);
-      const existing = await keyBag.getDeviceId();
-
-      // Already registered — early exit unless --force
-      if (existing.cert.IsSome() && existing.deviceId.IsSome() && args.force === false) {
-        const rKey = await DeviceIdKey.createFromJWK(existing.deviceId.Unwrap());
-        if (rKey.isOk()) {
-          const fp = await rKey.Ok().fingerPrint();
-          stdout(`Already logged in. Device fingerprint: ${fp}\n`);
-          stdout("Use --force to re-register.\n");
-        }
-        return;
-      }
-
-      if (args.force && existing.cert.IsSome()) {
-        stdout("Force re-registering...\n");
-      }
-
-      // Step 1: Get or create device key
-      const deviceIdKey = await (async (): Promise<DeviceIdKey | undefined> => {
-        if (existing.deviceId.IsNone()) {
-          stdout("Creating new device key...\n");
-          const key = await DeviceIdKey.create();
-          const jwkPrivate = await key.exportPrivateJWK();
-          await keyBag.setDeviceId(jwkPrivate);
-          return key;
-        }
-        const rKey = await DeviceIdKey.createFromJWK(existing.deviceId.Unwrap());
-        if (rKey.isErr()) {
-          stderr(`Failed to load device key: ${String(rKey.Err())}\n`);
-          return undefined;
-        }
-        return rKey.Ok();
-      })();
-      if (deviceIdKey === undefined) {
-        ctx.exitCode = 1;
-        return;
-      }
-
-      const fingerprint = await deviceIdKey.fingerPrint();
-      stdout(`Device fingerprint: ${fingerprint}\n`);
-
-      // Step 2: Generate CSR
-      stdout("Generating certificate signing request...\n");
-      const subject = buildSubject(hostname());
-      const deviceIdCSR = new DeviceIdCSR(ctx.sthis, deviceIdKey);
-      const csrResult = await deviceIdCSR.createCSR(subject);
-      if (csrResult.isErr()) {
-        stderr(`Failed to generate CSR: ${String(csrResult.Err())}\n`);
-        ctx.exitCode = 1;
-        return;
-      }
-      const csrJWS = csrResult.Ok();
-
-      // Step 3: Start local callback server
-      const certFuture = new Future<string>();
-      const app = new Hono();
-      app.get("/cert", (c) => {
-        const cert = c.req.query("cert");
-        if (cert === undefined || cert === "") {
-          certFuture.reject(new Error("Missing cert parameter"));
-          return c.text("Missing cert parameter", 400);
-        }
-        stdout("\nCertificate received!\n");
-        certFuture.resolve(cert);
-        return c.text("Login complete. You can close this window.");
-      });
-
-      const port = Math.floor(Math.random() * (65535 - 49152) + 49152);
-      const callbackUrl = `http://localhost:${port}/cert`;
-      const serverInstance = serve({ fetch: app.fetch, port });
-
-      // Step 4: Open browser
-      const caUrl = apiUrlToCaUrl(args.apiUrl);
-      const fullUrl = BuildURI.from(caUrl).setParam("csr", csrJWS).setParam("returnUrl", callbackUrl).toString();
-
-      stdout("\nOpening browser for authentication...\n");
-      const rOpen = await exception2Result(() => open(fullUrl));
-      if (rOpen.isErr()) {
-        stdout("Could not open browser. Please open this URL manually:\n");
-        stdout(fullUrl + "\n");
-      }
-
-      // Step 5: Wait for certificate
-      stdout("Waiting for authentication...\n\n");
-      const timeoutMs = parseInt(args.timeout, 10) * 1000;
-      const result = await timeouted(certFuture.asPromise(), { timeout: timeoutMs });
-
-      serverInstance.close();
-
-      if (isSuccess(result) === false) {
-        if (isTimeout(result)) {
-          stderr(`Timed out after ${args.timeout}s waiting for authentication.\n`);
-        } else {
-          stderr(`Failed to receive certificate: ${String(result.state === "error" ? result.error : result)}\n`);
-        }
-        ctx.exitCode = 1;
-        return;
-      }
-
-      // Step 6: Store certificate
-      stdout("Storing credentials...\n");
-      const decoded = decodeJwt(result.value);
-      const certPayload = CertificatePayloadSchema.parse(decoded);
-      const jwkPrivate = await deviceIdKey.exportPrivateJWK();
-      await keyBag.setDeviceId(jwkPrivate, {
-        certificateJWT: result.value,
-        certificatePayload: certPayload,
-      });
-
-      stdout(`\nLogin complete! Device fingerprint: ${fingerprint}\n`);
-    },
+    handler: ctx.cliStream.enqueue((_args) => {
+      const args = _args as { readonly force: boolean; readonly timeout: string };
+      return {
+        type: "use-vibes.cli.login",
+        force: args.force,
+        timeout: args.timeout,
+      } satisfies ReqLogin;
+    }),
   });
 }

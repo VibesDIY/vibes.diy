@@ -1,103 +1,70 @@
-import { command, option, string } from "cmd-ts";
-import { exception2Result, Result } from "@adviser/cement";
-import { makeBaseSystemPrompt, getDefaultDependencies, getLlmCatalogNames } from "@vibes.diy/prompts";
-import { CliCtx } from "../cli-ctx.js";
+import { command } from "cmd-ts";
+import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType, exception2Result } from "@adviser/cement";
+import { type } from "arktype";
+import { makeBaseSystemPrompt } from "@vibes.diy/prompts";
+import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
+import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 
-function parseSkillsCsv(skillsCsv: string): Result<string[]> {
-  if (skillsCsv === "") {
-    return Result.Ok([]);
-  }
+export const ResSystem = type({
+  type: "'use-vibes.cli.res-system'",
+  systemPrompt: "string",
+});
+export type ResSystem = typeof ResSystem.infer;
 
-  const parsed = skillsCsv
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-
-  switch (true) {
-    case parsed.length === 0:
-      return Result.Err("--skills requires a value (e.g. --skills fireproof,d3)");
-    default:
-      return Result.Ok(parsed);
-  }
+export function isResSystem(obj: unknown): obj is ResSystem {
+  return !(ResSystem(obj) instanceof type.errors);
 }
 
-async function resolveSkills(parsed: readonly string[]): Promise<Result<string[]>> {
-  switch (true) {
-    case parsed.length > 0:
-      return Result.Ok([...parsed]);
-    default: {
-      const rDefaults = await exception2Result(() => getDefaultDependencies());
-      if (rDefaults.isErr()) {
-        return Result.Err(`Failed to load default skills: ${rDefaults.Err().message}`);
-      }
-      return Result.Ok(rDefaults.Ok());
+export const ReqSystem = type({
+  type: "'use-vibes.cli.system'",
+});
+export type ReqSystem = typeof ReqSystem.infer;
+
+export function isReqSystem(obj: unknown): obj is ReqSystem {
+  return !(ReqSystem(obj) instanceof type.errors);
+}
+
+export const systemEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqSystem, ResSystem> = {
+  hash: "use-vibes.cli.system",
+  validate: (ctx: ValidateTriggerCtx<WrapCmdTSMsg<unknown>, ReqSystem, ResSystem>) => {
+    if (isReqSystem(ctx.enRequest)) {
+      return Promise.resolve(Result.Ok(Option.Some(ctx.enRequest)));
     }
-  }
-}
+    return Promise.resolve(Result.Ok(Option.None()));
+  },
+  handle: async (
+    ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqSystem, ResSystem>
+  ): Promise<Result<EventoResultType>> => {
+    const rPrompt = await exception2Result(() =>
+      makeBaseSystemPrompt("cli", {
+        dependenciesUserOverride: true,
+        dependencies: ["fireproof"],
+        callAi: {
+          ModuleAndOptionsSelection() {
+            return Promise.resolve(Result.Err("ModuleAndOptionsSelection is not used by CLI"));
+          },
+        },
+      })
+    );
+    if (rPrompt.isErr()) {
+      return Result.Err(`Failed to build system prompt: ${rPrompt.Err().message}`);
+    }
+    return sendMsg(ctx, {
+      type: "use-vibes.cli.res-system",
+      systemPrompt: rPrompt.Ok().systemPrompt,
+    } satisfies ResSystem);
+  },
+};
 
 export function systemCmd(ctx: CliCtx) {
   return command({
     name: "system",
-    description: "Emit the assembled system prompt to stdout.",
+    description: "Emit the base system prompt to stdout.",
     args: {
-      skills: option({
-        type: string,
-        long: "skills",
-        description: "Comma-separated skills, e.g. fireproof,d3",
-        defaultValue: () => "",
-      }),
+      ...cmdTsDefaultArgs(ctx),
     },
-    handler: async function handleSystem(args: { readonly skills: string }): Promise<void> {
-      const { stdout, stderr } = ctx.output;
-
-      const rParsed = parseSkillsCsv(args.skills);
-      if (rParsed.isErr()) {
-        stderr(`${String(rParsed.Err())}\n`);
-        ctx.exitCode = 1;
-        return;
-      }
-
-      const rSelected = await resolveSkills(rParsed.Ok());
-      if (rSelected.isErr()) {
-        stderr(`${String(rSelected.Err())}\n`);
-        ctx.exitCode = 1;
-        return;
-      }
-      const selectedSkills = rSelected.Ok();
-
-      const rValidNames = await exception2Result(() => getLlmCatalogNames());
-      if (rValidNames.isErr()) {
-        stderr(`Failed to load skill catalog: ${rValidNames.Err().message}\n`);
-        ctx.exitCode = 1;
-        return;
-      }
-
-      const validNames = rValidNames.Ok();
-      const invalid = selectedSkills.filter((name) => validNames.has(name) === false);
-      if (invalid.length > 0) {
-        stderr(`Unknown skills: ${invalid.join(", ")}\nRun: use-vibes skills\n`);
-        ctx.exitCode = 1;
-        return;
-      }
-
-      const rPrompt = await exception2Result(() =>
-        makeBaseSystemPrompt("cli", {
-          dependenciesUserOverride: true,
-          dependencies: selectedSkills,
-          callAi: {
-            ModuleAndOptionsSelection() {
-              return Promise.resolve(Result.Err("ModuleAndOptionsSelection is not used by CLI"));
-            },
-          },
-        })
-      );
-      if (rPrompt.isErr()) {
-        stderr(`Failed to build system prompt: ${rPrompt.Err().message}\n`);
-        ctx.exitCode = 1;
-        return;
-      }
-
-      stdout(rPrompt.Ok().systemPrompt);
-    },
+    handler: ctx.cliStream.enqueue((_args) => {
+      return { type: "use-vibes.cli.system" } satisfies ReqSystem;
+    }),
   });
 }
