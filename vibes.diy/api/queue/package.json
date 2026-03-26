@@ -25,5 +25,9 @@
     "@fireproof/core-cli": "0.24.13",
     "typescript": "^5.9.2",
     "wrangler": "^4.77.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
   }
 }

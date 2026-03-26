@@ -20,5 +20,9 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.13"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
   }
 }
