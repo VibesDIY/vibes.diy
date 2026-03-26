@@ -1,7 +1,6 @@
 {
-  "name": "vibes-diy",
+  "name": "@vibes-diy/pkg",
   "version": "0.0.0",
-  "private": "true",
   "type": "module",
   "scripts": {
     "tsc": "core-cli tsc",

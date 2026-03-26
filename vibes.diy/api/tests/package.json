@@ -1,14 +1,13 @@
 {
   "name": "@vibes.diy/api-test",
   "version": "0.0.0",
-  "private": "true",
   "type": "module",
   "scripts": {
     "build": "core-cli tsc",
     "test": "vitest --run",
     "test:neon": "vitest --run --config ./vitest.config.neon.ts",
-    "pack": "core-cli build --doPack",
-    "publish": "core-cli build"
+    "pack": "echo core-cli build --doPack",
+    "publish": "echo core-cli build"
   },
   "dependencies": {
     "@adviser/cement": "^0.5.34",
