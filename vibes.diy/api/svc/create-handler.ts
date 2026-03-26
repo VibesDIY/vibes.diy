@@ -262,7 +262,7 @@ export async function createAppContext<T extends VibesSqlite>(
       clockTolerance: 60,
       deviceIdCA: rDeviceIdCA.Ok(),
     }),
-    storage: ensureStorage(params.db, tables.assets, params.s3Api),
+    storage: ensureStorage(envVals.DB_FLAVOUR as DBFlavour, params.db, tables.assets, params.s3Api),
     llmRequest: defaultLLMRequest(params.llmRequest, {
       url: envVals.LLM_BACKEND_URL,
       apiKey: envVals.LLM_BACKEND_API_KEY,

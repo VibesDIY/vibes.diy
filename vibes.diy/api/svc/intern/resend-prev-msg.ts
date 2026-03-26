@@ -4,21 +4,23 @@ import { eq } from "drizzle-orm/sql/expressions";
 import { MsgBase, PromptAndBlockMsgs, SectionEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { BlockEndMsg, isBlockEnd } from "@vibes.diy/call-ai-v2";
+import { ChatIdCtx } from "../svc-ws-send-provider.js";
 
 interface ResendChatSectionsPrevMsgArgs {
   vctx: VibesApiSQLCtx;
-  chatId: string;
+  chatCtx: ChatIdCtx;
   tid: string;
   dst: string;
   send: (msg: MsgBase<SectionEvent>) => Promise<Result<SendStatItem<MsgBase<SectionEvent>>>>;
 }
 
 export async function resendChatSectionsPrevMsg(args: ResendChatSectionsPrevMsgArgs): Promise<Result<void>> {
-  const { vctx, chatId, send, tid, dst } = args;
+  const { vctx, chatCtx, send, tid, dst } = args;
+
   const sections = await vctx.sql.db
     .select()
     .from(vctx.sql.tables.chatSections)
-    .where(eq(vctx.sql.tables.chatSections.chatId, chatId))
+    .where(eq(vctx.sql.tables.chatSections.chatId, chatCtx.chatId))
     // .groupBy(vctx.sql.tables.chatSections.chatId, vctx.sql.tables.chatSections.promptId)
     .orderBy(vctx.sql.tables.chatSections.created, vctx.sql.tables.chatSections.promptId, vctx.sql.tables.chatSections.blockSeq);
   for (const section of sections) {
@@ -52,6 +54,14 @@ export async function resendChatSectionsPrevMsg(args: ResendChatSectionsPrevMsgA
       blocks.splice(index, 1);
     }
     // Might be removed in future
+    if (toSplice.length > 0) {
+      console.log(
+        `sql-resend`,
+        sections.reduce((acc, s) => acc + (s.blocks as PromptAndBlockMsgs[]).length, 0),
+        blocks.length,
+        section.blocks
+      );
+    }
 
     if (blocks.length > 0) {
       const rCurrentMsg: Result<SendStatItem<MsgBase<SectionEvent>>> = await send({
@@ -75,6 +85,21 @@ export async function resendChatSectionsPrevMsg(args: ResendChatSectionsPrevMsgA
         return Result.Err(rCurrentMsg.Ok().item);
       }
     }
+  }
+  for (const section of chatCtx.promptIds.values()) {
+    console.log(`from-connection`, section.blocks.length);
+    // for (const collectedMsg of section.collectedMsgs) {
+    const rSend = await send({
+      payload: section,
+      tid,
+      src: "openChat",
+      dst,
+      ttl: 6,
+    } satisfies MsgBase<SectionEvent>);
+    if (rSend.isErr()) {
+      return Result.Err(rSend);
+    }
+    // }
   }
   return Result.Ok(undefined);
 }

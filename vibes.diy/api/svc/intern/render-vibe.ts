@@ -37,7 +37,7 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
   if (!fsIportMap) {
     return Result.Err(new Error("No import-map found in file system"));
   }
-  // console.log("renderVibe-7")
+  // console.log("renderVibe-7", fsIportMap);
   const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
   const rImportMapUint8 = await vctx.storage.fetch(fsIportMap.assetURI);
   // (ctx, fsIportMap);

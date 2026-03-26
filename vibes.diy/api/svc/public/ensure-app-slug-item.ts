@@ -14,6 +14,7 @@ import {
   ReqEnsureAppSlug,
   ReqWithVerifiedAuth,
   ResEnsureAppSlug,
+  ResEnsureAppSlugError,
   VibeFile,
   VibesDiyError,
   W3CWebSocketEvent,
@@ -26,12 +27,49 @@ import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 
+function toRFC2822_32ByteLength(slug: string | undefined): string | undefined {
+  if (!slug) return undefined;
+
+  return slug
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32);
+}
+
 // ReqWithVerifiedAuth<ReqEnsureAppSlug>
 export async function ensureAppSlugItem(
   vctx: VibesApiSQLCtx,
   req: ReqWithVerifiedAuth<ReqEnsureAppSlug>
 ): Promise<Result<ResEnsureAppSlug>> {
   // console.log("handle ensureAppSlugItem", ctx.validated);
+
+  const sanitizedAppSlug = toRFC2822_32ByteLength(req.appSlug);
+  const sanitizedUserSlug = toRFC2822_32ByteLength(req.userSlug);
+
+  if (sanitizedAppSlug !== req.appSlug) {
+    return Result.Ok({
+      type: "vibes.diy.error",
+      message: `appSlug "${req.appSlug}" is invalid. 
+        It must be 32 characters or less, contain only lowercase letters, 
+        numbers, and hyphens, and cannot start or end with a hyphen. 
+        Suggested slug: "${sanitizedAppSlug}"`,
+      code: "app-slug-invalid",
+    } satisfies ResEnsureAppSlugError);
+  }
+
+  if (sanitizedUserSlug !== req.userSlug) {
+    return Result.Ok({
+      type: "vibes.diy.error",
+      message: `userSlug "${req.userSlug}" is invalid. 
+        It must be 32 characters or less, contain only lowercase letters, 
+        numbers, and hyphens, and cannot start or end with a hyphen. 
+        Suggested slug: "${sanitizedUserSlug}"`,
+      code: "user-slug-invalid",
+    } satisfies ResEnsureAppSlugError);
+  }
+
   const rAppSlugBinding = await ensureSlugBinding(vctx, {
     userId: req._auth.verifiedAuth.claims.userId,
     appSlug: req.appSlug,

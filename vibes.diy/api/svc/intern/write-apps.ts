@@ -1,11 +1,11 @@
 import {
   ReqEnsureAppSlug,
-  ResEnsureAppSlug,
   VibeFile,
   FileSystemItem,
   isVibeCodeBlock,
   VibeCodeBlock,
   ReqWithVerifiedAuth,
+  ResEnsureAppSlugOk,
 } from "@vibes.diy/api-types";
 import { exception2Result, Result, string2stream, to_uint8, toSortedObject } from "@adviser/cement";
 import { AppSlugBinding } from "./ensure-slug-binding.js";
@@ -261,21 +261,37 @@ export async function ensureApps(
   req: ReqWithVerifiedAuth<ReqEnsureAppSlug>,
   binding: AppSlugBinding,
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
-): Promise<Result<Omit<ResEnsureAppSlug, "type">>> {
+): Promise<Result<Omit<ResEnsureAppSlugOk, "type">>> {
+  // console.log("0-ensureApps called with req:", req, "binding:", binding, "fs:", fs);
   const fsId = await computeFsId(req.env ?? {}, fs);
   const exist = await ctx.sql.db
     .select()
     .from(ctx.sql.tables.apps)
-    .where(and(eq(ctx.sql.tables.apps.fsId, fsId), eq(ctx.sql.tables.apps.userId, binding.userId)))
+    .where(
+      and(
+        eq(ctx.sql.tables.apps.appSlug, binding.appSlug),
+        eq(ctx.sql.tables.apps.userSlug, binding.userSlug),
+        eq(ctx.sql.tables.apps.fsId, fsId),
+        eq(ctx.sql.tables.apps.userId, binding.userId)
+      )
+    )
     .limit(1)
     .then((r) => r[0]);
   if (exist) {
+    // console.log("1-ensureApps called with req:", req, "binding:", binding, "fs:", fs);
     if (req.mode === "production" && exist.mode === "dev") {
       // upgrade dev to production
       await ctx.sql.db
         .update(ctx.sql.tables.apps)
         .set({ mode: req.mode })
-        .where(and(eq(ctx.sql.tables.apps.userId, binding.userId), eq(ctx.sql.tables.apps.fsId, fsId)));
+        .where(
+          and(
+            eq(ctx.sql.tables.apps.userId, binding.userId),
+            eq(ctx.sql.tables.apps.fsId, fsId),
+            eq(ctx.sql.tables.apps.appSlug, binding.appSlug),
+            eq(ctx.sql.tables.apps.userSlug, binding.userSlug)
+          )
+        );
     }
     const rFileSystems = await toFileSystemItems(ctx, req.mode, fs);
     if (rFileSystems.some((item) => item.isErr())) {
@@ -297,6 +313,7 @@ export async function ensureApps(
     });
   }
 
+  // console.log("2-ensureApps called with req:", req, "binding:", binding, "fs:", fs);
   // transaction start
   const rMaxSeq = await checkMaxAppsPerUser(ctx, req._auth.verifiedAuth.claims.userId, binding.appSlug);
   if (rMaxSeq.isErr()) {
@@ -324,6 +341,7 @@ export async function ensureApps(
     created: new Date().toISOString(),
   };
   const rIns = await exception2Result(() => ctx.sql.db.insert(ctx.sql.tables.apps).values(sqlVal));
+  // console.log("Inserted app record into database with values:", sqlVal);
   if (rIns.isErr()) {
     return Result.Err(rIns);
   }

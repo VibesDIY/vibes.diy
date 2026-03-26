@@ -4,14 +4,15 @@ import type { VibesApiTables } from "../types.js";
 import { eq } from "drizzle-orm/sql/expressions";
 import { Cider, PeerStreamWithCommit, PeerWithCommit } from "../intern/ensure-storage.js";
 import { FetchResult } from "@vibes.diy/api-types";
+import { DBFlavour } from "../sql/tables.js";
 
-const SQLITE_PEER_PROTOCOL = "sqlite:";
-const SQL_PEER_PROTOCOLS = ["sql:", SQLITE_PEER_PROTOCOL];
+// const SQLITE_PEER_PROTOCOL = "sqlite:";
+// const SQL_PEER_PROTOCOLS = ["sql:", SQLITE_PEER_PROTOCOL];
 
-class SQLitePeerStream implements PeerStreamWithCommit {
-  readonly owner: SQLitePeer;
+class SQLPeerStream implements PeerStreamWithCommit {
+  readonly owner: SQLPeer;
   readonly chunks: Uint8Array[] = [];
-  constructor(owner: SQLitePeer) {
+  constructor(owner: SQLPeer) {
     this.owner = owner;
   }
 
@@ -46,17 +47,19 @@ class SQLitePeerStream implements PeerStreamWithCommit {
       return Result.Err(res);
     }
     return Result.Ok({
-      url: `${SQLITE_PEER_PROTOCOL}//Assets/${assetID}`,
+      url: `${this.owner.flavour}://Assets/${assetID}`,
     });
   }
 }
 
-export class SQLitePeer implements PeerWithCommit {
+export class SQLPeer implements PeerWithCommit {
   readonly db: VibesSqlite;
   readonly assets: VibesApiTables["assets"];
   readonly cider: Cider;
   readonly cutoffSize: number;
-  constructor(db: VibesSqlite, assets: VibesApiTables["assets"], cider: Cider, cutoffSize: number) {
+  readonly flavour: DBFlavour;
+  constructor(flavour: DBFlavour, db: VibesSqlite, assets: VibesApiTables["assets"], cider: Cider, cutoffSize: number) {
+    this.flavour = flavour;
     this.db = db;
     this.assets = assets;
     this.cider = cider;
@@ -64,19 +67,25 @@ export class SQLitePeer implements PeerWithCommit {
   }
   begin(): Promise<Result<PeerStreamWithCommit>> {
     // console.log("SQLitePeer begin called");
-    return Promise.resolve(Result.Ok(new SQLitePeerStream(this)));
+    return Promise.resolve(Result.Ok(new SQLPeerStream(this)));
   }
 }
 
-export class SQLitePeerFetch {
+export class SQLPeerFetch {
   readonly db: VibesSqlite;
   readonly assets: VibesApiTables["assets"];
-  constructor(db: VibesSqlite, assets: VibesApiTables["assets"]) {
+  readonly flavour: DBFlavour;
+  constructor(flavour: DBFlavour, db: VibesSqlite, assets: VibesApiTables["assets"]) {
+    this.flavour = flavour;
     this.db = db;
     this.assets = assets;
   }
   async fetch(url: URI): Promise<Option<FetchResult>> {
-    if (!SQL_PEER_PROTOCOLS.includes(url.protocol)) {
+    let compatProtocol = url.protocol;
+    if (compatProtocol === "sql:") {
+      compatProtocol = this.flavour + ":";
+    }
+    if (compatProtocol !== `${this.flavour}:`) {
       return Promise.resolve(Option.None());
     }
     // table name in sql

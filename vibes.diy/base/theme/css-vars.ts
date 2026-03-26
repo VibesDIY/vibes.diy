@@ -33,12 +33,7 @@ function vibesSemanticVars(theme: Record<string, unknown>): string[] {
  * Generate :root CSS variable block + dark mode overrides from tokens.
  */
 export function generateCSSVariables(): string {
-  const lightRoot = [
-    ":root {",
-    ...vibesBaseVars(),
-    ...vibesSemanticVars(semantic.light),
-    "}",
-  ].join("\n");
+  const lightRoot = [":root {", ...vibesBaseVars(), ...vibesSemanticVars(semantic.light), "}"].join("\n");
 
   const darkOverrides = [
     "@media (prefers-color-scheme: dark) {",

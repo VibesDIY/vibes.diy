@@ -5,19 +5,24 @@ import {
   ActiveModelSetting,
   ActiveTitle,
   AppSettings,
+  EnablePublicAccess,
+  EnableRequest,
+  EvtAppSetting,
   isActiveEnv,
   isActiveModelSettingApp,
   isActiveModelSettingChat,
   isActiveTitle,
+  isEnablePublicAccess,
+  isEnableRequest,
   isReqEnsureAppSettings,
-  isReqEnsureAppSettingsAcl,
   isReqEnsureAppSettingsApp,
   isReqEnsureAppSettingsChat,
   isReqEnsureAppSettingsEnv,
   isReqEnsureAppSettingsTitle,
+  isReqPublicAccess,
+  isReqRequest,
   MsgBase,
   ReqEnsureAppSettings,
-  ReqEnsureAppSettingsAcl,
   ReqWithOptionalAuth,
   ResEnsureAppSettings,
   VibesDiyError,
@@ -28,8 +33,63 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
 import { eq, and } from "drizzle-orm/sql/expressions";
-import { buildEnsureEntryResult, ensureACLEntry } from "../intern/application-settings.js";
-import { sendEmailOpts } from "../intern/send-email.js";
+// import { buildEnsureEntryResult } from "../intern/application-settings.js";
+
+export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
+  // just collect and assign to the right buckets
+  const result: AppSettings = {
+    entries,
+    entry: {
+      settings: {
+        env: [],
+      },
+      // request: {
+      //   pending: [],
+      //   approved: [],
+      //   rejected: [],
+      // },
+      // invite: {
+      //   viewers: {
+      //     pending: [],
+      //     accepted: [],
+      //     revoked: [],
+      //   },
+      //   editors: {
+      //     pending: [],
+      //     accepted: [],
+      //     revoked: [],
+      //   },
+      // },
+    },
+  };
+  entries.forEach((e) => {
+    // const x = EnableRequest(e)
+    // if (x instanceof type.errors) {
+    //   // console.log(`Processing entry:`, e, x.summary);
+    // }
+    switch (true) {
+      case isEnablePublicAccess(e):
+        result.entry.publicAccess = e;
+        break;
+      case isEnableRequest(e):
+        result.entry.enableRequest = e;
+        break;
+      case isActiveTitle(e):
+        result.entry.settings.title = e.title;
+        break;
+      case isActiveModelSettingChat(e):
+        result.entry.settings.chat = e.param;
+        break;
+      case isActiveModelSettingApp(e):
+        result.entry.settings.app = e.param;
+        break;
+      case isActiveEnv(e):
+        result.entry.settings.env.push(...e.env);
+        break;
+    }
+  });
+  return result;
+}
 
 export async function ensureAppSettings(
   vctx: VibesApiSQLCtx,
@@ -121,9 +181,39 @@ export async function ensureAppSettings(
     created: record.AppSettings.created,
   } satisfies ResEnsureAppSettings;
   switch (true) {
-    case isReqEnsureAppSettingsAcl(req):
-      await aclAction(vctx, req, res, settings);
+    // case isReqEnsureAppSettingsAcl(req):
+    // await aclAction(vctx, req, res, settings);
+    // break;
+
+    case isReqPublicAccess(req):
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
+        settings,
+        isEnablePublicAccess,
+        () =>
+          ({
+            type: "app.public.access",
+            enable: req.publicAccess.enable,
+          }) satisfies EnablePublicAccess
+      );
       break;
+
+    case isReqRequest(req):
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
+        settings,
+        isEnableRequest,
+        () =>
+          ({
+            type: "app.request",
+            enable: req.request.enable,
+            autoAcceptViewRequest: req.request.autoAcceptViewRequest,
+          }) satisfies EnableRequest
+      );
+      break;
+
     case isReqEnsureAppSettingsTitle(req):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
@@ -195,6 +285,7 @@ function upsert<T extends ActiveEntry, R extends ActiveEntry>(settings: T[], mat
   const idx = settings.findIndex(match);
   if (idx >= 0) settings[idx] = fn(settings[idx] as unknown as R) as unknown as T;
   else settings.push(fn({} as unknown as R) as unknown as T);
+  console.log(">>>>", settings, idx, settings[idx]);
   return buildEnsureEntryResult(settings);
 }
 
@@ -224,7 +315,7 @@ async function sqlUpdateSettings(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings
         userSlug: res.userSlug,
         settings,
         updated: now,
-        created: now,
+        created: res.created,
       })
       .onConflictDoUpdate({
         target: [vctx.sql.tables.appSettings.userId, vctx.sql.tables.appSettings.userSlug, vctx.sql.tables.appSettings.appSlug],
@@ -234,31 +325,46 @@ async function sqlUpdateSettings(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings
         },
       })
   );
+  await vctx.postQueue({
+    payload: {
+      type: "vibes.diy.evt-app-setting",
+      userSlug: res.userSlug,
+      appSlug: res.appSlug,
+      settings,
+    },
+    tid: "queue-event",
+    src: "ensureAppSettings",
+    dst: "vibes-service",
+    ttl: 1,
+  } satisfies MsgBase<EvtAppSetting>);
+
   return rIns;
 }
 
-async function aclAction(vctx: VibesApiSQLCtx, req: ReqEnsureAppSettingsAcl, res: ResEnsureAppSettings, settings: ActiveEntry[]) {
-  const result = ensureACLEntry({
-    activeEntries: settings,
-    crud: req.aclEntry.op === "delete" ? "delete" : "upsert",
-    entry: req.aclEntry.entry,
-    appSlug: res.appSlug,
-    userSlug: res.userSlug,
-    token: () => vctx.sthis.nextId(128 / 8).str,
-  });
-  if (result.isErr()) {
-    res.error = result.Err().message;
-  } else {
-    res.settings = result.Ok().appSettings;
-    const rIns = await sqlUpdateSettings(vctx, res, result.Ok().appSettings.entries);
-    // console.log(`ACL action SQL update result:`, rIns, result.Ok().appSettings.entries, settings, req.aclEntry);
-    if (rIns.isErr()) {
-      res.error = rIns.Err().message;
-    } else {
-      await sendEmailOpts(vctx, result.Ok().emailOps);
-    }
-  }
-}
+// async function aclAction(vctx: VibesApiSQLCtx, req: ReqEnsureAppSettingsAcl, res: ResEnsureAppSettings, settings: ActiveEntry[]) {
+//   const result = await ensureACLEntry({
+//     vctx,
+//     userId: res.userId,
+//     activeEntries: settings.filter((e) => isActiveAcl(e)),
+//     crud: req.aclEntry.op === "delete" ? "delete" : "upsert",
+//     // entry: req.aclEntry.entry,
+//     appSlug: res.appSlug,
+//     userSlug: res.userSlug,
+//     token: () => vctx.sthis.nextId(128 / 8).str,
+//   });
+//   if (result.isErr()) {
+//     res.error = result.Err().message;
+//   } else {
+//     // res.settings = result.Ok().appSettings;
+//     // const rIns = await sqlUpdateSettings(vctx, res, result.Ok().appSettings.entries);
+//     // // console.log(`ACL action SQL update result:`, rIns, result.Ok().appSettings.entries, settings, req.aclEntry);
+//     // if (rIns.isErr()) {
+//     //   res.error = rIns.Err().message;
+//     // } else {
+//     await sendEmailOpts(vctx, result.Ok().emailOps);
+//     // }
+//   }
+// }
 
 export const ensureAppSettingsEvento: EventoHandler<
   W3CWebSocketEvent,

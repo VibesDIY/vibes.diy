@@ -1,28 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from "@tanstack/react-table";
 import { byNewest, inviteDate, stateLabel, fmtDate } from "./shared.js";
-import { ActiveInvite } from "@vibes.diy/api-types";
+import { InviteGrantItem } from "@vibes.diy/api-types";
 
-const columnHelper = createColumnHelper<ActiveInvite>();
+const columnHelper = createColumnHelper<InviteGrantItem>();
 
 const staticColumns = [
-  columnHelper.accessor((inv) => inv.invite.email, {
+  columnHelper.accessor((inv) => inv.emailKey, {
     id: "email",
     header: "Email",
     cell: (info) => <span className="font-mono truncate text-gray-700 dark:text-gray-300">{info.getValue()}</span>,
-  }),
-  columnHelper.display({
-    id: "accepted",
-    header: "Accepted",
-    cell: ({ row }) => {
-      const inv = row.original;
-      const key = "grant" in inv ? inv.grant.key : undefined;
-      return key ? (
-        <span className="font-mono text-gray-700 dark:text-gray-300">{key}</span>
-      ) : (
-        <span className="text-gray-400">—</span>
-      );
-    },
   }),
   columnHelper.accessor((inv) => inv.state, {
     id: "state",
@@ -37,14 +24,14 @@ const staticColumns = [
 ];
 
 interface InviteTableProps {
-  invites: ActiveInvite[];
+  invites: InviteGrantItem[];
   label: string;
-  onDelete: (inv: ActiveInvite) => Promise<void>;
-  onChangeState: (inv: ActiveInvite, newState: "accepted" | "revoked") => Promise<void>;
-  onChangeRole: (inv: ActiveInvite, newRole: "editor" | "viewer") => Promise<void>;
+  onDelete: (inv: InviteGrantItem) => Promise<void>;
+  onRevoke: (inv: InviteGrantItem) => Promise<void>;
+  onChangeRole: (inv: InviteGrantItem, newRole: "editor" | "viewer") => Promise<void>;
 }
 
-function InviteTable({ invites, label, onDelete, onChangeState, onChangeRole }: InviteTableProps) {
+function InviteTable({ invites, label, onDelete, onRevoke, onChangeRole }: InviteTableProps) {
   const [busy, setBusy] = useState<string | null>(null);
 
   const columns = useMemo(() => {
@@ -59,7 +46,7 @@ function InviteTable({ invites, label, onDelete, onChangeState, onChangeRole }: 
       header: "Role",
       cell: ({ row }) => {
         const inv = row.original;
-        const key = `${inv.invite.email}-${inv.role}-${inv.state}`;
+        const key = `${inv.emailKey}-${inv.role}-${inv.state}`;
         const isBusy = busy === key;
         return (
           <button
@@ -80,22 +67,18 @@ function InviteTable({ invites, label, onDelete, onChangeState, onChangeRole }: 
       header: "",
       cell: ({ row }) => {
         const inv = row.original;
-        const key = `${inv.invite.email}-${inv.role}-${inv.state}`;
+        const key = `${inv.emailKey}-${inv.role}-${inv.state}`;
         const isBusy = busy === key;
         return (
           <div className="flex items-center gap-1">
-            {inv.state !== "pending" && (
+            {inv.state === "accepted" && (
               <button
                 type="button"
                 disabled={isBusy}
-                onClick={() => void handle(key, () => onChangeState(inv, inv.state === "accepted" ? "revoked" : "accepted"))}
-                className={`rounded px-1.5 py-0.5 text-xs font-medium transition-colors disabled:opacity-50 ${
-                  inv.state === "accepted"
-                    ? "bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/40 dark:text-orange-300"
-                    : "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300"
-                }`}
+                onClick={() => void handle(key, () => onRevoke(inv))}
+                className="rounded px-1.5 py-0.5 text-xs font-medium transition-colors disabled:opacity-50 bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/40 dark:text-orange-300"
               >
-                {isBusy ? "…" : inv.state === "accepted" ? "Revoke" : "Accept"}
+                {isBusy ? "…" : "Revoke"}
               </button>
             )}
             <button
@@ -113,7 +96,7 @@ function InviteTable({ invites, label, onDelete, onChangeState, onChangeRole }: 
     });
 
     return [...staticColumns, roleColumn, actionColumn];
-  }, [onDelete, onChangeState, onChangeRole, busy]);
+  }, [onDelete, onRevoke, onChangeRole, busy]);
 
   const data = useMemo(() => [...invites].sort(byNewest(inviteDate)), [invites]);
   const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() });
@@ -154,28 +137,24 @@ function InviteTable({ invites, label, onDelete, onChangeState, onChangeRole }: 
 interface EmailInvitationsSectionProps {
   inviteEmail: string;
   inviting: boolean;
-  editorInvites: ActiveInvite[];
-  viewerInvites: ActiveInvite[];
+  invites: InviteGrantItem[];
   onEmailChange: (email: string) => void;
   onSendInvite: (role: "editor" | "viewer") => void;
-  onDelete: (inv: ActiveInvite) => Promise<void>;
-  onChangeState: (inv: ActiveInvite, newState: "accepted" | "revoked") => Promise<void>;
-  onChangeRole: (inv: ActiveInvite, newRole: "editor" | "viewer") => Promise<void>;
+  onDelete: (inv: InviteGrantItem) => Promise<void>;
+  onRevoke: (inv: InviteGrantItem) => Promise<void>;
+  onChangeRole: (inv: InviteGrantItem, newRole: "editor" | "viewer") => Promise<void>;
 }
 
 export function EmailInvitationsSection({
   inviteEmail,
   inviting,
-  editorInvites,
-  viewerInvites,
+  invites,
   onEmailChange,
   onSendInvite,
   onDelete,
-  onChangeState,
+  onRevoke,
   onChangeRole,
 }: EmailInvitationsSectionProps) {
-  const allInvites = useMemo(() => [...editorInvites, ...viewerInvites], [editorInvites, viewerInvites]);
-
   return (
     <li className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
       <div className="font-medium text-gray-700 dark:text-gray-300 mb-2">Email Invitations</div>
@@ -205,13 +184,7 @@ export function EmailInvitationsSection({
             {inviting ? "…" : "Viewer"}
           </button>
         </div>
-        <InviteTable
-          invites={allInvites}
-          label="Invites"
-          onDelete={onDelete}
-          onChangeState={onChangeState}
-          onChangeRole={onChangeRole}
-        />
+        <InviteTable invites={invites} label="Invites" onDelete={onDelete} onRevoke={onRevoke} onChangeRole={onChangeRole} />
       </div>
     </li>
   );

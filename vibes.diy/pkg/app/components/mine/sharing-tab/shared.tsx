@@ -1,26 +1,16 @@
 import React from "react";
 import { toast } from "react-hot-toast";
-import type { ResEnsureAppSettings, ActiveRequest, ActiveInvite } from "@vibes.diy/api-types";
+import { type AppSettings, type InviteGrantItem, type ResListRequestGrants } from "@vibes.diy/api-types";
 import { Result } from "@adviser/cement";
 
-// export type AnyRequest = ActiveRequestPending | ActiveRequestApproved | ActiveRequestRejected;
+export type RequestGrantItem = ResListRequestGrants["items"][number];
 
-// export type AnyInvite =
-//   | ActiveInviteEditorPending
-//   | ActiveInviteEditorAccepted
-//   | ActiveInviteEditorRevoked
-//   | ActiveInviteViewerPending
-//   | ActiveInviteViewerAccepted
-//   | ActiveInviteViewerRevoked;
-
-export function requestDate(r: ActiveRequest): Date {
-  if (r.state === "pending") return new Date(r.request.created);
-  return new Date(r.grant.on);
+export function requestDate(r: RequestGrantItem): Date {
+  return new Date(r.created);
 }
 
-export function inviteDate(i: ActiveInvite): Date {
-  if (i.state === "pending") return new Date(i.invite.created);
-  return new Date(i.tick.last);
+export function inviteDate(i: InviteGrantItem): Date {
+  return new Date(i.created);
 }
 
 export function byNewest<T>(dateFn: (item: T) => Date) {
@@ -71,12 +61,12 @@ export function FlagToggle({
   );
 }
 
-export function toastError(res: Result<ResEnsureAppSettings>, ok: () => void) {
+export function toastError<T>(res: Result<T>, ok: (val: T) => void) {
   if (res.isErr()) {
     toast.error(res.Err().message);
+    return;
   }
-  if (res.Ok().error) {
-    toast.error(res.Ok().error ?? "");
-  }
-  ok();
+  ok(res.Ok());
 }
+
+export type { AppSettings };

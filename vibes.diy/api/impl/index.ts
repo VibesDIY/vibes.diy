@@ -50,6 +50,42 @@ import {
   isResAddFS,
   ReqAddFS,
   ResAddFS,
+  ReqCreateInvite,
+  ResCreateInvite,
+  isResCreateInvite,
+  ReqRevokeInvite,
+  ResRevokeInvite,
+  isResRevokeInvite,
+  ReqRedeemInvite,
+  ResRedeemInviteOK,
+  isResRedeemInvite,
+  ReqHasAccessInvite,
+  ResHasAccessInvite,
+  isResHasAccessInvite,
+  ReqInviteSetRole,
+  ResInviteSetRole,
+  isResInviteSetRole,
+  ReqListInviteGrants,
+  ResListInviteGrants,
+  isResListInviteGrants,
+  ReqListRequestGrants,
+  ResListRequestGrants,
+  isResListRequestGrants,
+  ReqRequestAccess,
+  ResRequestAccess,
+  ReqApproveRequest,
+  ResApproveRequest,
+  isResApproveRequest,
+  ReqRequestSetRole,
+  ResRequestSetRole,
+  isResRequestSetRole,
+  ReqRevokeRequest,
+  ResRevokeRequest,
+  isResRevokeRequest,
+  ReqHasAccessRequest,
+  ResHasAccessRequest,
+  isResRequestAccessFlow,
+  isResHasAccessRequestFlow,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -223,6 +259,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
               // console.log("Valid event matched for tid:", tid);
               return Result.Ok(Option.Some(trigger.enRequest));
             }
+            // const r = ResListRequestGrants(msg.payload);
+            // if (r instanceof type.errors) {
+            //   console.log("VibeDiyApi request not matched received message for tid:", JSON.stringify(msg, null, 2), tid, r.summary);
+            // }
             return Result.Ok(Option.None());
           },
           handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
@@ -379,6 +419,54 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>> {
     return LLMChatImpl.open({ ...req, type: "vibes.diy.req-open-chat" }, this);
+  }
+
+  createInvite(req: Req<ReqCreateInvite>): Promise<Result<ResCreateInvite, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-create-invite" }, { resMatch: isResCreateInvite });
+  }
+
+  revokeInvite(req: Req<ReqRevokeInvite>): Promise<Result<ResRevokeInvite, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-revoke-invite" }, { resMatch: isResRevokeInvite });
+  }
+
+  redeemInvite(req: Req<ReqRedeemInvite>): Promise<Result<ResRedeemInviteOK, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-redeem-invite" }, { resMatch: isResRedeemInvite });
+  }
+
+  hasAccessInvite(req: Req<ReqHasAccessInvite>): Promise<Result<ResHasAccessInvite, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-has-access-invite" }, { resMatch: isResHasAccessInvite });
+  }
+
+  inviteSetRole(req: Req<ReqInviteSetRole>): Promise<Result<ResInviteSetRole, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-invite-set-role" }, { resMatch: isResInviteSetRole });
+  }
+
+  listInviteGrants(req: Req<ReqListInviteGrants>): Promise<Result<ResListInviteGrants, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-invite-grants" }, { resMatch: isResListInviteGrants });
+  }
+
+  requestAccess(req: Req<ReqRequestAccess>): Promise<Result<ResRequestAccess, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-request-access" }, { resMatch: isResRequestAccessFlow });
+  }
+
+  approveRequest(req: Req<ReqApproveRequest>): Promise<Result<ResApproveRequest, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-approve-request" }, { resMatch: isResApproveRequest });
+  }
+
+  requestSetRole(req: Req<ReqRequestSetRole>): Promise<Result<ResRequestSetRole, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-request-set-role" }, { resMatch: isResRequestSetRole });
+  }
+
+  revokeRequest(req: Req<ReqRevokeRequest>): Promise<Result<ResRevokeRequest, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-revoke-request" }, { resMatch: isResRevokeRequest });
+  }
+
+  listRequestGrants(req: Req<ReqListRequestGrants>): Promise<Result<ResListRequestGrants, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-request-grants" }, { resMatch: isResListRequestGrants });
+  }
+
+  hasAccessRequest(req: Req<ReqHasAccessRequest>): Promise<Result<ResHasAccessRequest, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-has-access-request" }, { resMatch: isResHasAccessRequestFlow });
   }
 }
 

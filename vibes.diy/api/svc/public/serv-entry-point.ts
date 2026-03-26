@@ -202,8 +202,9 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Ok(EventoResult.Continue);
     }
 
+    // console.log("-1servEntryPoint triggered with URL:", uri.toString())
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    // console.log("servEntryPoint triggered with URL:", ctx.validated.url);
+    // console.log("-2servEntryPoint triggered with URL:", uri.toString())
     let fs: typeof vctx.sql.tables.apps.$inferSelect | undefined;
     if (ctx.validated.fsId) {
       fs = await vctx.sql.db
@@ -235,6 +236,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       // inject fsId into validated for further use
       ctx.validated.fsId = fs?.fsId;
     }
+    // console.log("-3servEntryPoint triggered with URL:", uri.toString())
     if (!fs) {
       // todo render 404 page
       await ctx.send.send(ctx, {
@@ -247,11 +249,13 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       } satisfies HttpResponseJsonType);
       return Result.Ok(EventoResult.Stop);
     }
+    // console.log("-4servEntryPoint triggered with URL:", uri.toString())
     const fileSystem = type([fileSystemItem, "[]"])(fs.fileSystem);
     if (fileSystem instanceof type.errors) {
       return Result.Err(`Invalid filesystem data ${ctx.validated.fsId}`);
     }
 
+    // console.log("-5servEntryPoint triggered with URL:", uri.toString())
     // console.log('fsId =>', fileSystem)
 
     const selectedFsItem = fileSystem.find((i) => i.fileName === ctx.validated.path);
@@ -264,6 +268,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         return sendFetchOk(ctx, selectedFsItem, possiblePath);
       }
     }
+    // console.log("-6servEntryPoint triggered with URL:", uri.toString())
     const selectedEntryPoint = fileSystem.find((i) => i.entryPoint);
     if (selectedEntryPoint) {
       const entryPointPath = await vctx.storage.fetch(selectedEntryPoint.assetURI);
@@ -274,6 +279,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         return sendFetchOk(ctx, selectedEntryPoint, entryPointPath);
       }
     }
+    // console.log("-7servEntryPoint triggered with URL:", uri.toString())
     if (ctx.validated.path === "/" || ctx.validated.path === "/index.html") {
       const npmUrl = captureNpmUrl(vctx, ctx.request);
       const rVibesEntryPoint = await renderVibe({

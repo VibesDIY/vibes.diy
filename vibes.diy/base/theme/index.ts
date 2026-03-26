@@ -10,10 +10,7 @@ export { cx } from "@emotion/css";
 export { colors, semantic } from "./tokens.js";
 export type { SemanticTheme } from "./tokens.js";
 
-export {
-  stripesOverlay,
-  gridBackground,
-} from "./patterns.js";
+export { stripesOverlay, gridBackground } from "./patterns.js";
 
 const cachedCSS = Lazy(() => buildGlobalCSS());
 
