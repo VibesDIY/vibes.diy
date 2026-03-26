@@ -42,7 +42,7 @@
   "devDependencies": {
     "@fireproof/core-cli": "0.24.13",
     "@vitest/browser-playwright": "~4.0.18",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "typescript-eslint": "^8.57.1",
     "vitest": "~4.0.18"
   }
