@@ -1,0 +1,9 @@
+name = "stable-entry"
+main = "src/index.ts"
+compatibility_date = "2025-12-12"
+
+[observability]
+enabled = true
+
+[vars]
+BACKEND = "https://vibes.diy"

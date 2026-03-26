@@ -1,0 +1,12 @@
+{
+  "name": "@vibes.diy/stable-entry",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.74.0"
+  }
+}
