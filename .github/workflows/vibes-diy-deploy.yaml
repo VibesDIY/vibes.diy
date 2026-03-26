@@ -46,3 +46,4 @@ jobs:
           DB_FLAVOUR: ${{ vars.DB_FLAVOUR }}
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           NEON_DATABASE_ADMIN_URL: ${{ secrets.NEON_DATABASE_ADMIN_URL }}
+          MAX_APP_SLUG_PER_USER_ID: ${{ vars.MAX_APP_SLUG_PER_USER_ID }}

@@ -1,5 +1,5 @@
 import { Editor } from "@monaco-editor/react";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { setupMonacoEditor } from "./setupMonacoEditor.js";
 import { editor, MarkerSeverity } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
@@ -17,7 +17,6 @@ import {
   isCodeEventOk,
   MonacoMarkerInfo,
 } from "../../types/code-editor.js";
-
 import type { Monaco } from "@monaco-editor/react";
 
 interface CodeEditorProps {
@@ -29,6 +28,7 @@ interface CodeEditorProps {
 function getCode(promptState: PromptState, fsId?: string | null): AppCode {
   const retCode: string[] = [];
   let complete = false;
+  let streamId: string | undefined;
   for (const block of [...promptState.blocks].reverse()) {
     if (fsId) {
       const blockEnd = block.msgs.find((msg) => isBlockEnd(msg));
@@ -43,6 +43,7 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
           retCode.splice(0, retCode.length);
           foundCode = true;
           complete = false;
+          streamId = msg.streamId;
           break;
         case isCodeEnd(msg):
           complete = true;
@@ -53,10 +54,10 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
       }
     }
     if (foundCode) {
-      return { code: retCode.join("\n"), complete };
+      return { code: retCode, complete, streamId };
     }
   }
-  return { code: retCode.join("\n"), complete };
+  return { code: retCode, complete, streamId };
 }
 
 // function whyDiffers(a: string, b: string): string {
@@ -96,6 +97,13 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
   const disposablesRef = useRef<{ dispose: () => void }[]>([]);
 
   const appCode = getCode(promptState, fsId);
+  const prevAppCodeRef = useRef<AppCode>({
+    code: [],
+    complete: false,
+    streamId: undefined,
+  });
+  const prevAppCode = prevAppCodeRef.current;
+  prevAppCodeRef.current = appCode;
 
   const editedCodeRef = useRef<CodeEvent>({
     type: "onCode",
@@ -137,22 +145,32 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
   //   }
   // }, [promptState.running]);
 
-  useEffect(() => {
-    return () => {
-      console.log("Disposing editor resources");
-      // if (editorChecker.current) {
-      //   clearInterval(editorChecker.current);
-      // }
-      // monacoReadyRef.current?.editor.dispose();
-      // highlighterRef.current?.dispose();
-      // disposablesRef.current.forEach((d) => d.dispose());
-      // disposablesRef.current = [];
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     console.log("Disposing editor resources");
+  //     // if (editorChecker.current) {
+  //     //   clearInterval(editorChecker.current);
+  //     // }
+  //     // monacoReadyRef.current?.editor.dispose();
+  //     // highlighterRef.current?.dispose();
+  //     // disposablesRef.current.forEach((d) => d.dispose());
+  //     // disposablesRef.current = [];
+  //   };
+  // }, []);
+
+  const [updateRef, setUpdateRef] = useState(false);
 
   useEffect(() => {
-    console.log(`Checking for code changes...`, appCode.complete, editedCode().appCode.complete);
-    if (isCodeEventInit(editedCode()) && appCode.complete && editedCode().appCode.complete) return;
+    console.log(
+      `Checking for code changes...`,
+      appCode.complete,
+      appCode.code.length,
+      prevAppCode.code.length,
+      editedCode().appCode.code.length,
+      editedCode().appCode.complete,
+      editedCode().codeState
+    );
+    // if (isCodeEventInit(editedCode()) && appCode.complete && editedCode().appCode.complete) return;
     // if (appCode.code === editedCode().appCode.code) return; // prevent emitting if code is the same to avoid infinite loops with Monaco markers updates
     onCodeChange({
       type: "onCode",
@@ -160,7 +178,8 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
       hasChanged: isCodeEventInit(editedCode()) || appCode.code !== editedCode().appCode.code,
       appCode: appCode,
     });
-  }, [appCode, editedCode()]);
+    setUpdateRef(true);
+  }, [appCode.streamId, appCode.code.length, appCode.complete, updateRef]);
 
   const handleCodeChange = useCallback(
     (newCode: string | undefined) => {
@@ -169,7 +188,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
         return;
       }
       if (newCode === undefined) return;
-      if (newCode === editedCode().appCode.code) return; // prevent emitting if code is the same to avoid infinite loops with Monaco markers updates
+      if (newCode === editedCode().appCode.code.join("\n")) return; // prevent emitting if code is the same to avoid infinite loops with Monaco markers updates
       // console.log(`handleCodeChange: code changed, emitting onCode event...`, {
       //   newCodeLength: newCode.length,
       //   oldCodeLength: editedCode().appCode.code.length,
@@ -180,7 +199,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
         codeState: "edit",
         appCode: {
           complete: true,
-          code: newCode,
+          code: newCode.split("\n"),
         },
       });
     },
@@ -194,7 +213,15 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
 
     const monaco = monacoReadyRef.current;
     const defaults = monaco.api.typescript.javascriptDefaults;
-    if (!editedCode().appCode.complete) {
+    if (editedCode().appCode.complete) {
+      console.log(`Setting initial code value in Monaco editor...`, appCode.code.length);
+      const model = monaco.editor.getModel();
+      if (!model) {
+        return;
+      }
+      console.log(`Setting initial code value in Monaco editor...`, appCode.code.length);
+      model.setValue(appCode.code.join("\n"));
+
       // if generating code, disable diagnostics to prevent noise from incomplete code
       defaults.setDiagnosticsOptions({
         noSemanticValidation: true,
@@ -225,7 +252,8 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
       }
       const edited = editedCode();
       // console.log(`Checking code changes and markers...`, edited.codeState, errorMarkers.length);
-      if ((isCodeEventOk(edited) || isCodeEventEdit(edited)) && errorMarkers.length == 0 && val === edited.appCode.code) return; // only check for marker changes if code is the same to avoid infinite loops with Monaco markers updates
+      if ((isCodeEventOk(edited) || isCodeEventEdit(edited)) && errorMarkers.length == 0 && val === edited.appCode.code.join("\n"))
+        return; // only check for marker changes if code is the same to avoid infinite loops with Monaco markers updates
       if (isCodeEventError(edited) && errorMarkers.length > 0 && JSON.stringify(errorMarkers) === JSON.stringify(edited.markers)) {
         return; // prevent emitting if markers are the same to avoid infinite loops with Monaco markers updates
       }
@@ -250,10 +278,10 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
           // })),
           appCode: {
             complete: true,
-            code: val,
+            code: val.split("\n"),
           },
         });
-      } else if (val !== edited.appCode.code || errorMarkers.length === 0) {
+      } else if (val.split("\n") !== edited.appCode.code || errorMarkers.length === 0) {
         // console.log(`Code is valid, emitting onCode event...`, val.length);
         onCodeChange({
           type: "onCode",
@@ -261,7 +289,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
           hasChanged: true,
           appCode: {
             complete: true,
-            code: val,
+            code: val.split("\n"),
           },
         });
       }
@@ -270,30 +298,34 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
     // refreshState();
   }, [onCode, editedCode, monacoReadyRef, editorChecker]);
 
-  const scrollToBottomRef = useRef<{ lastScrollTime: Date; lastLine: number } | null>(null);
+  // const scrollToBottomRef = useRef<{ lastScrollTime: Date; lastLine: number } | null>(null);
   useEffect(() => {
     if (!monacoReadyRef.current) return;
-    const editor = monacoReadyRef.current.editor;
+    const { editor, api } = monacoReadyRef.current;
     if (!appCode.complete) {
-      if (!scrollToBottomRef.current) {
-        scrollToBottomRef.current = { lastScrollTime: new Date(), lastLine: 1 };
-      } else {
-        const model = editor.getModel();
-        if (!model) {
-          return;
-        }
-        const now = Date.now();
-        const currentLineCount = model.getLineCount();
-        if (
-          now - scrollToBottomRef.current.lastScrollTime.getTime() > 100 &&
-          currentLineCount > scrollToBottomRef.current.lastLine
-        ) {
-          scrollToBottomRef.current = { lastScrollTime: new Date(), lastLine: currentLineCount };
-          editor.revealLineInCenter(currentLineCount);
-        }
+      const model = editor.getModel();
+      if (!model) {
+        return;
       }
+      if (prevAppCode.streamId !== appCode.streamId) {
+        model.setValue(appCode.code.join("\n"));
+        return;
+      }
+      if (prevAppCode.streamId !== appCode.streamId || appCode.code.length == prevAppCode.code.length) {
+        return;
+      }
+      console.log(`Appending new code lines...`, appCode.code.length, prevAppCode.code.length);
+      const lastLine = model.getLineCount();
+      const lastCol = model.getLineMaxColumn(lastLine);
+      model.applyEdits([
+        {
+          range: new api.Range(lastLine, lastCol, lastLine, lastCol),
+          text: "\n" + appCode.code.slice(prevAppCode.code.length).join("\n"),
+        },
+      ]);
     }
-  }, [monacoReadyRef, appCode]);
+    editor.revealLineInCenter(appCode.code.length);
+  }, [monacoReadyRef, appCode, editedCode(), updateRef]);
 
   // Reset manual scroll flag when streaming starts
 
@@ -309,13 +341,18 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
           left: 0,
         }}
       >
+        <pre>
+          {editedCode().appCode.streamId && `Streaming from source ${editedCode().appCode.streamId}...`}
+          {` Complete ${editedCode().appCode.complete}`}
+          {editedCode().codeState && ` CodeState ${editedCode().codeState}`}
+        </pre>
         <Editor
           height="100%"
           width="100%"
           path="file.jsx"
           defaultLanguage="jsx"
           theme={isDarkMode ? "github-dark-default" : "github-light-default"}
-          value={editedCode().appCode.code}
+          // value={editedCode().appCode.code}
           onChange={handleCodeChange}
           options={{
             readOnly: false,

@@ -8,10 +8,13 @@ import {
   W3CWebSocketEvent,
   FileSystemItem,
   MetaItem,
-  ActiveInviteEditorAccepted,
-  ActiveInviteEditorPending,
-  ActiveEntry,
   ReqWithOptionalAuth,
+  isResHasAccessInviteAccepted,
+  isResHasAccessInvitePending,
+  isResHasAccessRequestApproved,
+  isResHasAccessRequestPending,
+  isResHasAccessRequestRevoked,
+  isResRequestAccessApproved,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
@@ -20,7 +23,8 @@ import { optAuth } from "../check-auth.js";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { max } from "drizzle-orm/sql";
 import { ensureAppSettings } from "./ensure-app-settings.js";
-import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import { hasAccessInvite, redeemInvite } from "./invite-flow.js";
+import { hasAccessRequest, requestAccess } from "./request-flow.js";
 
 function grantedAccess(role: "editor" | "viewer") {
   switch (role) {
@@ -32,14 +36,14 @@ function grantedAccess(role: "editor" | "viewer") {
   }
 }
 
-function getKeyFromAuth<T extends { type: string; auth?: DashAuthType | undefined }>(req: ReqWithOptionalAuth<T>) {
-  return (
-    req._auth?.verifiedAuth?.claims.params.email ??
-    req._auth?.verifiedAuth?.claims.params.nick ??
-    req._auth?.verifiedAuth?.claims.params.name ??
-    "@anonymous@"
-  );
-}
+// function getKeyFromAuth<T extends { type: string; auth?: DashAuthType | undefined }>(req: ReqWithOptionalAuth<T>) {
+//   return (
+//     req._auth?.verifiedAuth?.claims.params.email ??
+//     req._auth?.verifiedAuth?.claims.params.nick ??
+//     req._auth?.verifiedAuth?.claims.params.name ??
+//     "@anonymous@"
+//   );
+// }
 
 export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetAppByFsId>, ResGetAppByFsId | VibesDiyError> = {
   hash: "get-app-by-fsid",
@@ -65,6 +69,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
 
       // // Determine if the caller is the owner
       const callerUserId = req._auth?.verifiedAuth.claims.userId;
+      // console.log(`getAppByFsIdEvento called with req`, req, `callerUserId`, callerUserId);
 
       let app: typeof vctx.sql.tables.apps.$inferSelect | undefined;
       if (req.fsId) {
@@ -135,6 +140,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       let grant!: ResGetAppByFsId["grant"];
       // If not the owner, only return production apps
       const isOwner = callerUserId && callerUserId === app?.userId;
+      // console.log(`isOwner`, isOwner, callerUserId, app.userId);
       if (isOwner) {
         grant = "owner";
       } else {
@@ -161,57 +167,56 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           return Result.Ok(EventoResult.Continue);
         }
 
-        const approvetedUserId = req._auth?.verifiedAuth?.claims.userId;
+        const reqUserId = req._auth?.verifiedAuth?.claims.userId;
         const settings = rAppSet.Ok().settings;
 
-        if (settings.entry.publicAccess && app.mode === "production") {
+        if (settings.entry.publicAccess?.enable && app.mode === "production") {
           console.log(`grant-public`);
           grant = "public-access";
           // here we would could
         } else {
-          if (approvetedUserId) {
-            for (const i of [...settings.entry.invite.editors.accepted, ...settings.entry.invite.viewers.accepted]) {
-              if (i.grant.ownerId === approvetedUserId) {
-                grant = grantedAccess(i.role);
-                break;
-              }
-            }
+          // console.log(`-1`, settings.entry, settings.entries);
+          const rHasInvite = await hasAccessInvite(vctx, { ...req, grantUserId: reqUserId });
+          // console.log(`-2`, rHasInvite);
+          if (rHasInvite.isErr()) {
+            await ctx.send.send(ctx, {
+              type: "vibes.diy.res-get-app-by-fsid",
+              error: "access-invite-check-failed",
+              appSlug: req.appSlug,
+              userSlug: req.userSlug,
+              fsId: req.fsId,
+              grant: "not-found",
+              mode: "dev",
+              releaseSeq: -1,
+              env: {},
+              fileSystem: [],
+              meta: [],
+              created: new Date().toISOString(),
+            } satisfies ResGetAppByFsId);
+            return Result.Ok(EventoResult.Continue);
           }
-
+          console.log(`rHasInvite`, rHasInvite);
+          const hasInvite = rHasInvite.Ok();
+          if (isResHasAccessInviteAccepted(hasInvite)) {
+            console.log(`-3`, rHasInvite);
+            grant = grantedAccess(hasInvite.role);
+          }
           if (!grant && req.token) {
-            for (const i of [...settings.entry.invite.editors.pending, ...settings.entry.invite.viewers.pending]) {
-              console.log("has token", req.token, i.token);
-              if (i.token !== req.token) {
-                continue;
-              }
-              if (approvetedUserId) {
-                const rEas = await ensureAppSettings(
-                  vctx,
-                  {
-                    type: "vibes.diy.req-ensure-app-settings",
-                    aclEntry: {
-                      op: "upsert",
-                      entry: {
-                        ...(i as ActiveInviteEditorPending),
-                        state: "accepted" as const,
-                        grant: {
-                          ownerId: approvetedUserId,
-                          key: getKeyFromAuth(req),
-                          on: new Date(),
-                        },
-                        tick: { count: 1, last: new Date() },
-                      } as ActiveInviteEditorAccepted,
-                    },
-                    appSlug: app.appSlug,
-                    userSlug: app.userSlug,
-                  },
-                  app.userId
-                );
-                // console.log(`xxxx`, rEas);
-                if (rEas.isErr()) {
+            console.log(`-4`, rHasInvite);
+            if (isResHasAccessInvitePending(hasInvite) && hasInvite.tokenOrGrantUserId === req.token) {
+              if (!reqUserId) {
+                grant = "req-login.invite";
+              } else {
+                const rRedeemInvite = await redeemInvite(vctx, {
+                  token: req.token,
+                  redeemerId: reqUserId,
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  claims: req._auth!.verifiedAuth.claims,
+                });
+                if (rRedeemInvite.isErr()) {
                   await ctx.send.send(ctx, {
                     type: "vibes.diy.res-get-app-by-fsid",
-                    error: "app-settings-not-found",
+                    error: "redeem-invite-failed",
                     appSlug: req.appSlug,
                     userSlug: req.userSlug,
                     fsId: req.fsId,
@@ -226,88 +231,62 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                   return Result.Ok(EventoResult.Continue);
                 }
                 grant = "accepted-email-invite";
-              } else {
-                grant = "req-login.invite";
               }
-              break;
             }
           } else if (settings.entry.enableRequest) {
-            if (!approvetedUserId) {
+            console.log(`enableRequest`, reqUserId);
+            if (!reqUserId) {
               grant = "req-login.request";
             } else {
-              for (const i of settings.entry.request.approved) {
-                if (i.request.userId === approvetedUserId) {
-                  grant = grantedAccess(i.role);
-                  break;
-                }
+              const rHasRequest = await hasAccessRequest(vctx, {
+                appSlug: app.appSlug,
+                userSlug: app.userSlug,
+                foreignUserId: reqUserId,
+              });
+              console.log(`hasAccessRequest`, rHasRequest);
+              if (rHasRequest.isErr()) {
+                await ctx.send.send(ctx, {
+                  type: "vibes.diy.res-get-app-by-fsid",
+                  error: "access-request-check-failed",
+                  appSlug: req.appSlug,
+                  userSlug: req.userSlug,
+                  fsId: req.fsId,
+                  grant: "not-found",
+                  mode: "dev",
+                  releaseSeq: -1,
+                  env: {},
+                  fileSystem: [],
+                  meta: [],
+                  created: new Date().toISOString(),
+                } satisfies ResGetAppByFsId);
+                return Result.Ok(EventoResult.Continue);
               }
-              for (const i of settings.entry.request.pending) {
-                if (i.request.userId === approvetedUserId) {
+              const hasRequest = rHasRequest.Ok();
+              console.log(`hasRequest`, hasRequest);
+              switch (true) {
+                case isResHasAccessRequestApproved(hasRequest):
+                  grant = grantedAccess(hasRequest.role);
+                  break;
+                case isResHasAccessRequestPending(hasRequest):
                   grant = "pending-request";
                   break;
-                }
-              }
-              for (const i of settings.entry.request.rejected) {
-                if (i.request.userId === approvetedUserId) {
+                case isResHasAccessRequestRevoked(hasRequest):
                   grant = "revoked-access";
                   break;
-                }
               }
+              console.log(`grant after request check`, grant);
               if (!grant) {
-                let entry: ActiveEntry;
-                if (settings.entry.enableRequest?.autoAcceptViewRequest) {
-                  grant = "granted-access.viewer";
-                  entry = {
-                    type: "app.acl.active.request",
-                    role: "viewer",
-                    state: "approved",
-                    request: {
-                      key: getKeyFromAuth(req),
-                      provider: "github",
-                      userId: approvetedUserId,
-                      created: new Date(),
-                    },
-                    grant: {
-                      ownerId: approvetedUserId,
-                      on: new Date(),
-                    },
-                    tick: {
-                      count: 1,
-                      last: new Date(),
-                    },
-                  };
-                } else {
-                  grant = "pending-request";
-                  entry = {
-                    type: "app.acl.active.request",
-                    role: "viewer",
-                    state: "pending",
-                    request: {
-                      key: getKeyFromAuth(req),
-                      provider: "github",
-                      userId: approvetedUserId,
-                      created: new Date(),
-                    },
-                  };
-                }
-                // request access
-                const rEas = await ensureAppSettings(
-                  vctx,
-                  {
-                    type: "vibes.diy.req-ensure-app-settings",
-                    aclEntry: {
-                      op: "upsert",
-                      entry,
-                    },
-                    appSlug: app.appSlug,
-                    userSlug: app.userSlug,
-                  },
-                  app.userId
-                );
-                if (rEas.isErr()) {
+                console.log(`requestAccess`, hasRequest);
+                const rRequestAccess = await requestAccess(vctx, {
+                  appSlug: app.appSlug,
+                  userSlug: app.userSlug,
+                  foreignUserId: reqUserId,
+                  claims: req._auth?.verifiedAuth.claims,
+                });
+                if (rRequestAccess.isErr()) {
                   await ctx.send.send(ctx, {
                     type: "vibes.diy.res-get-app-by-fsid",
-                    error: "ensure-app-settings-failed",
+                    error: "request-access-failed",
                     appSlug: req.appSlug,
                     userSlug: req.userSlug,
                     fsId: req.fsId,
@@ -321,28 +300,31 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                   } satisfies ResGetAppByFsId);
                   return Result.Ok(EventoResult.Continue);
                 }
+                const requestAccessRes = rRequestAccess.Ok();
+                if (isResRequestAccessApproved(requestAccessRes)) {
+                  grant = grantedAccess(requestAccessRes.role);
+                }
+                console.log(`requestAccessRes`, requestAccessRes, `grant`, grant);
               }
             }
           }
         }
+        if (!grant) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-get-app-by-fsid",
+            appSlug: "not-existing",
+            userSlug: "not-existing",
+            fsId: "not-found",
+            grant: "not-grant",
+            mode: "dev",
+            releaseSeq: -1,
+            env: {},
+            fileSystem: [],
+            meta: [],
+            created: new Date().toISOString(),
+          } satisfies ResGetAppByFsId);
+        }
       }
-
-      if (!grant) {
-        await ctx.send.send(ctx, {
-          type: "vibes.diy.res-get-app-by-fsid",
-          appSlug: "not-existing",
-          userSlug: "not-existing",
-          fsId: "not-found",
-          grant: "not-grant",
-          mode: "dev",
-          releaseSeq: -1,
-          env: {},
-          fileSystem: [],
-          meta: [],
-          created: new Date().toISOString(),
-        } satisfies ResGetAppByFsId);
-      }
-
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-get-app-by-fsid",
         appSlug: app.appSlug,

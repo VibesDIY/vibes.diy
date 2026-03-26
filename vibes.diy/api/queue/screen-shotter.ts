@@ -71,7 +71,7 @@ export async function processScreenShotEvent(message: unknown, env: CFEnv): Prom
     const tables = createVibesApiTables((env.DB_FLAVOUR as "sqlite" | "pg") ?? "sqlite");
     const result = await storeScreenshot(
       {
-        sql: { db, tables },
+        sql: { dbFlavour: (env.DB_FLAVOUR as "sqlite" | "pg") ?? "sqlite", db, tables },
         s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis),
       },
       payload.fsId,

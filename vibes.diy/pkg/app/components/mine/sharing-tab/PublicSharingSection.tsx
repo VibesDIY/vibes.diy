@@ -12,7 +12,7 @@ export function PublicSharingSection({ publicAccess, toggling, onToggle }: Publi
   return (
     <li className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
       <div className="font-medium text-gray-700 dark:text-gray-300 mb-2">Public Sharing</div>
-      <FlagToggle label="public sharing" enabled={!!publicAccess} toggling={toggling === "public"} onToggle={onToggle} />
+      <FlagToggle label="public sharing" enabled={!!publicAccess?.enable} toggling={toggling === "public"} onToggle={onToggle} />
     </li>
   );
 }

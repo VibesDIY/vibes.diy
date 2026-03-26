@@ -317,7 +317,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             type: "code-block",
             filename: "/App.jsx",
             lang: "jsx", // "'jsx'|'js'",
-            content: toSave.appCode.code,
+            content: toSave.appCode.code.join("\n"),
           },
         ])
         .then((r) => {

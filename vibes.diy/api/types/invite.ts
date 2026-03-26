@@ -78,8 +78,8 @@ export function isEmailOps(obj: unknown): obj is EmailOps {
 }
 
 export const EnablePublicAccess = type({
-  type: "'app.acl.enable.public.access'",
-  // acl: readonlyPublicAccess,
+  type: "'app.public.access'",
+  enable: "boolean",
   "tick?": tick,
 });
 
@@ -90,8 +90,9 @@ export function isEnablePublicAccess(obj: unknown): obj is EnablePublicAccess {
 }
 
 export const EnableRequest = type({
-  type: "'app.acl.enable.request'",
-  "autoAcceptViewRequest?": "boolean",
+  type: "'app.request'",
+  enable: "boolean",
+  "autoAcceptViewRequest?": "boolean | undefined | null",
 });
 export type EnableRequest = typeof EnableRequest.infer;
 export function isEnableRequest(obj: unknown): obj is EnableRequest {
@@ -331,8 +332,9 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(ActiveTitle)
   .or(ActiveModelSetting)
   .or(ActiveEnv);
-export function isActiveAclEntry(obj: unknown): obj is typeof ActiveEntry.infer {
-  return !(ActiveEntry(obj) instanceof type.errors);
+
+export function isActiveAcl(obj: unknown): obj is typeof ActiveACL.infer {
+  return !(ActiveACL(obj) instanceof type.errors);
 }
 // export function isActiveIdAclEntry(obj: unknown): obj is typeof ActiveIdAclEntry.infer {
 //   const res = ActiveIdAclEntry(obj);

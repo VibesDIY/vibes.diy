@@ -15,6 +15,23 @@ import { setModeFsIdEvento } from "./public/set-mode-fsid.js";
 import { getCertFromCsrEvento } from "./public/get-cert-from-csr.js";
 import { getFPCloudTokenEvento } from "./public/get-fp-cloud-token.js";
 import { promptChatAddFS } from "./public/prompt-chat-add-fs.js";
+// import { listKeyGrantsEvento, upsertKeyGrantEvento, deleteKeyGrantEvento } from "./public/key-grant.js";
+import {
+  createInviteEvento,
+  revokeInviteEvento,
+  redeemInviteEvento,
+  hasAccessInviteEvento,
+  inviteSetRoleEvento,
+  listInviteGrantsEvento,
+} from "./public/invite-flow.js";
+import {
+  listRequestGrantsEvento,
+  requestAccessEvento,
+  approveRequestEvento,
+  requestSetRoleEvento,
+  revokeRequestEvento,
+  hasAccessRequestEvento,
+} from "./public/request-flow.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -28,6 +45,18 @@ export const vibesMsgEvento = Lazy(() => {
     openChat,
     promptChatSection,
     promptChatAddFS,
+    createInviteEvento,
+    revokeInviteEvento,
+    redeemInviteEvento,
+    hasAccessInviteEvento,
+    inviteSetRoleEvento,
+    listInviteGrantsEvento,
+    requestAccessEvento,
+    hasAccessRequestEvento,
+    approveRequestEvento,
+    requestSetRoleEvento,
+    revokeRequestEvento,
+    listRequestGrantsEvento,
     getCertFromCsrEvento,
     ensureAppSettingsEvento,
     setModeFsIdEvento,
@@ -49,7 +78,7 @@ export const vibesMsgEvento = Lazy(() => {
       type: EventoType.Error,
       hash: "error-handler",
       handle: async (ctx) => {
-        console.error("vibesMsgEvento error-handler", ctx.error);
+        console.error("vibesMsgEvento error-handler", ctx.error, (ctx.error as { cause?: unknown })?.cause);
         await ctx.send.send(ctx, {
           type: "vibes.diy.error",
           message: `Error: ${ctx.error?.message?.toString() || "Internal Server Error"}`,

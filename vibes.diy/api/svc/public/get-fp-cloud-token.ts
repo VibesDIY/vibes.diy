@@ -8,14 +8,20 @@ import {
   ResFPCloudToken,
   isReqFPCloudToken,
   ReqWithOptionalAuth,
+  isResHasAccessRequestApproved,
+  isResHasAccessInviteAccepted,
+  FPCloudClaim,
 } from "@vibes.diy/api-types";
 import { optAuth } from "../check-auth.js";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 
 import { createFPToken, getFPTokenContext } from "@fireproof/core-protocols-dashboard";
-import { FPCloudClaimSchema } from "@fireproof/core-types-protocols-cloud";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { decodeJwt } from "jose";
+import { hasAccessRequest } from "./request-flow.js";
+import { hasAccessInvite } from "./invite-flow.js";
+import { FPCloudClaimSchema as ZodFPCloudClaimSchema } from "@fireproof/core-types-protocols-cloud";
+import { type } from "arktype";
 /**
  * Get FP cloud token
  */
@@ -39,28 +45,28 @@ async function getFPCloudToken(ctx: VibesApiSQLCtx, req: ReqWithOptionalAuth<Req
     grant = "owner";
   } else {
     const entry = settings.settings.entry;
-    if (entry.enableRequest) {
-      const role = entry.request.approved.find((i) => i.grant.ownerId === reqUserId);
-      if (role) {
-        switch (role.role) {
-          case "editor":
-            grant = "request-editor";
-            break;
-          case "viewer":
-          default:
-            grant = "request-viewer";
-        }
+    if (entry.enableRequest && reqUserId) {
+      const rHasRequest = await hasAccessRequest(ctx, {
+        appSlug: req.appSlug,
+        userSlug: req.userSlug,
+        foreignUserId: reqUserId,
+      });
+      if (rHasRequest.isErr()) {
+        return Result.Err(rHasRequest);
+      }
+      const hasRequest = rHasRequest.Ok();
+      if (isResHasAccessRequestApproved(hasRequest)) {
+        grant = hasRequest.role === "editor" ? "request-editor" : "request-viewer";
       }
     }
-    const inviteEditor = entry.invite.editors.accepted.find((i) => i.grant.ownerId === reqUserId);
-    if (grant === "no-grant" && inviteEditor) {
-      grant = "invite-editor";
+    const rHasInvite = await hasAccessInvite(ctx, { ...req, grantUserId: reqUserId });
+    if (rHasInvite.isErr()) {
+      return Result.Err(rHasInvite);
     }
-    const inviteViewer = entry.invite.viewers.accepted.find((i) => i.grant.ownerId === reqUserId);
-    if (grant === "no-grant" && inviteViewer) {
-      grant = "invite-viewer";
+    const hasInvite = rHasInvite.Ok();
+    if (grant === "no-grant" && isResHasAccessInviteAccepted(hasInvite)) {
+      grant = hasInvite.role === "editor" ? "invite-editor" : "invite-viewer";
     }
-
     if (grant === "no-grant" && settings.settings.entry.publicAccess) {
       grant = "public";
     }
@@ -105,9 +111,13 @@ async function getFPCloudToken(ctx: VibesApiSQLCtx, req: ReqWithOptionalAuth<Req
     },
   });
 
-  const claims = FPCloudClaimSchema.safeParse(decodeJwt(cloudToken.token));
-  if (!claims.success) {
-    return Result.Err(`failed to decode cloud token claims: ${claims.error.message}`);
+  const zodClaim = ZodFPCloudClaimSchema.safeParse(decodeJwt(cloudToken.token));
+  if (!zodClaim.success) {
+    return Result.Err(`failed to decode cloud token claims: ${zodClaim.error.message}`);
+  }
+  const claims = FPCloudClaim(zodClaim.data);
+  if (claims instanceof type.errors) {
+    return Result.Err(`cloud token claims validation failed: ${claims.summary}`);
   }
 
   // ResEnsureCloudToken
@@ -117,7 +127,7 @@ async function getFPCloudToken(ctx: VibesApiSQLCtx, req: ReqWithOptionalAuth<Req
     type: "vibes.diy.res-fpcloud-token",
     token: {
       token: cloudToken.token,
-      claims: claims.data,
+      claims: claims,
       expiresInSec: 3600,
     },
     grant: grant, //as ResFPCloudTokenGrant['grant'],

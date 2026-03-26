@@ -5,6 +5,7 @@ import { VibesSqlite } from "../create-handler.js";
 import type { VibesApiTables } from "../types.js";
 import { isMetaScreenShot, MetaItem, S3Api } from "@vibes.diy/api-types";
 import { ensureStorage } from "./ensure-storage.js";
+import { DBFlavour } from "../sql/tables.js";
 
 // Define MetaItem array type
 export interface StoreScreenshotResult {
@@ -25,7 +26,7 @@ export async function storeScreenshot(
     s3Api,
   }: {
     s3Api: S3Api;
-    sql: { db: VibesSqlite; tables: Pick<VibesApiTables, "apps" | "assets"> };
+    sql: { dbFlavour: DBFlavour; db: VibesSqlite; tables: Pick<VibesApiTables, "apps" | "assets"> };
   },
   fsId: string,
   screenshotData: Uint8Array
@@ -50,7 +51,7 @@ export async function storeScreenshot(
   // const cidResult = await calcCid({ sthis }, screenshotData);
 
   // 3. Store screenshot using ensureStorage
-  const [storageResult] = await ensureStorage(db, tables.assets, s3Api).ensure(uint8array2stream(screenshotData));
+  const [storageResult] = await ensureStorage(sql.dbFlavour, db, tables.assets, s3Api).ensure(uint8array2stream(screenshotData));
   if (!storageResult || storageResult.isErr()) {
     return Result.Err(`Failed to store screenshot: ${storageResult?.Err()}`);
   }
