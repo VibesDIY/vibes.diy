@@ -34,7 +34,7 @@
     "@fireproof/core-cli": "0.24.13",
     "@types/node": "^25.5.0",
     "@vitest/browser-playwright": "^4.1.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "engines": {
     "node": ">=20.0.0"

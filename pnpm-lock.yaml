@@ -16,7 +16,7 @@ importers:
         version: 9.39.4
       '@fireproof/core-cli':
         specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@playwright/test':
         specifier: ^1.58.2
         version: 1.58.2
@@ -58,13 +58,13 @@ importers:
         version: 0.7.2(prettier@3.8.1)
       puppeteer:
         specifier: ^24.36.1
-        version: 24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 24.37.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
       serve:
         specifier: ^14.2.6
         version: 14.2.6
       typescript-eslint:
         specifier: ^8.57.1
-        version: 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.0.18)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -76,29 +76,29 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.5.33
-        version: 0.5.33(typescript@5.9.3)
+        version: 0.5.33(typescript@6.0.2)
       '@fireproof/core':
         specifier: 0.24.13
-        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag':
         specifier: 0.24.12
-        version: 0.24.12(typescript@5.9.3)
+        version: 0.24.12(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.12
-        version: 0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.12(@adviser/cement@0.5.33(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
@@ -106,8 +106,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.1)
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
 
   call-ai/tests/integration:
     dependencies:
@@ -117,7 +117,7 @@ importers:
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@playwright/test':
         specifier: ^1.58.2
         version: 1.58.2
@@ -131,8 +131,8 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.0.18)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -147,7 +147,7 @@ importers:
         version: link:../../pkg
       ts-jest:
         specifier: ^29.4.5
-        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.3.0)(@jest/types@30.3.0)(babel-jest@30.3.0(@babel/core@7.29.0))(esbuild@0.27.4)(jest-util@30.3.0)(jest@30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3)))(typescript@5.9.3)
+        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.3.0)(@jest/types@30.3.0)(babel-jest@30.3.0(@babel/core@7.29.0))(esbuild@0.27.4)(jest-util@30.3.0)(jest@30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2)))(typescript@6.0.2)
     devDependencies:
       '@playwright/test':
         specifier: ^1.58.2
@@ -163,13 +163,13 @@ importers:
         version: 4.1.0(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.0.18)
       jest:
         specifier: ^30.3.0
-        version: 30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3))
+        version: 30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2))
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.0.18)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -181,10 +181,10 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.5.33
-        version: 0.5.33(typescript@5.9.3)
+        version: 0.5.33(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -209,19 +209,19 @@ importers:
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@vitest/browser-playwright':
         specifier: ^4.1.0
         version: 4.1.0(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.1)
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
 
   hosting/pkg:
     dependencies:
       '@adviser/cement':
         specifier: ^0.5.33
-        version: 0.5.33(typescript@5.9.3)
+        version: 0.5.33(typescript@6.0.2)
       '@cloudflare/workers-types':
         specifier: ^4.20260317.1
         version: 4.20260317.1
@@ -260,8 +260,8 @@ importers:
         specifier: ^3.8.1
         version: 3.8.1
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
       wrangler:
         specifier: ^4.74.0
         version: 4.74.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -297,8 +297,8 @@ importers:
         specifier: ^3.8.1
         version: 3.8.1
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
       vite:
         specifier: ^8.0.0
         version: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -313,25 +313,25 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.5.33
-        version: 0.5.33(typescript@5.9.3)
+        version: 0.5.33(typescript@6.0.2)
       '@fireproof/core':
         specifier: 0.24.13
-        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag':
         specifier: 0.24.12
-        version: 0.24.12(typescript@5.9.3)
+        version: 0.24.12(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.12
-        version: 0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.12(@adviser/cement@0.5.33(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
@@ -344,16 +344,16 @@ importers:
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@vitest/browser-playwright':
         specifier: ^4.1.0
         version: 4.1.0(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.0.18)
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
       typescript-eslint:
         specifier: ^8.57.1
-        version: 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.0.18)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -366,7 +366,7 @@ importers:
     devDependencies:
       '@adviser/cement':
         specifier: ^0.5.33
-        version: 0.5.33(typescript@5.9.3)
+        version: 0.5.33(typescript@6.0.2)
       '@playwright/test':
         specifier: ^1.58.2
         version: 1.58.2
@@ -404,8 +404,8 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
       vite-plugin-devtools-json:
         specifier: ^1.0.0
         version: 1.0.0(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -420,31 +420,31 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.5.33
-        version: 0.5.33(typescript@5.9.3)
+        version: 0.5.33(typescript@6.0.2)
       '@clerk/clerk-react':
         specifier: ^5.61.3
         version: 5.61.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@fireproof/core':
         specifier: 0.24.13
-        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag':
         specifier: 0.24.12
-        version: 0.24.12(typescript@5.9.3)
+        version: 0.24.12(typescript@6.0.2)
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.12
-        version: 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+        version: 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.12
-        version: 0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.12(@adviser/cement@0.5.33(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -472,10 +472,10 @@ importers:
         version: 5.0.1(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))
       '@clerk/clerk-js':
         specifier: ^6.3.0
-        version: 6.3.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(@types/react@19.2.14)(bs58@6.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.4(react@19.2.4))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@6.0.6)(zod@4.3.6)
+        version: 6.3.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(@types/react@19.2.14)(bs58@6.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.4(react@19.2.4))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(react@19.2.4)(typescript@6.0.2)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@6.0.6)(zod@4.3.6)
       '@fireproof/core-cli':
         specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@storybook/addon-a11y':
         specifier: ^10.2.9
         version: 10.2.9(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))
@@ -484,10 +484,10 @@ importers:
         version: 10.2.19(@types/react@19.2.14)(esbuild@0.27.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       '@storybook/react':
         specifier: ^10.3.0
-        version: 10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)
+        version: 10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)
       '@storybook/react-vite':
         specifier: ^10.2.12
-        version: 10.2.12(esbuild@0.27.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 10.2.12(esbuild@0.27.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       '@types/babel__standalone':
         specifier: ^7.1.9
         version: 7.1.9
@@ -504,8 +504,8 @@ importers:
         specifier: ^10.2.11
         version: 10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6)
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
       vite:
         specifier: ^8.0.0
         version: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -547,8 +547,8 @@ importers:
         specifier: ^14.2.6
         version: 14.2.6
       typescript:
-        specifier: ~5.9.3
-        version: 5.9.3
+        specifier: ~6.0.2
+        version: 6.0.2
       vite:
         specifier: ^8.0.0
         version: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -596,38 +596,38 @@ importers:
         specifier: ^17.4.0
         version: 17.4.0
       typescript:
-        specifier: ~5.9.3
-        version: 5.9.3
+        specifier: ~6.0.2
+        version: 6.0.2
       typescript-eslint:
         specifier: ^8.57.1
-        version: 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+        version: 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
       vite:
         specifier: ^8.0.0
         version: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vite-tsconfig-paths:
         specifier: ^6.1.1
-        version: 6.1.1(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 6.1.1(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   use-vibes/pkg:
     dependencies:
       '@fireproof/core':
         specifier: 0.24.13
-        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag':
         specifier: 0.24.12
-        version: 0.24.12(typescript@5.9.3)
+        version: 0.24.12(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.12
-        version: 0.24.12(@adviser/cement@0.5.34(typescript@5.9.3))(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.12(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../base
@@ -637,7 +637,7 @@ importers:
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@vitest/browser-playwright':
         specifier: ^4.1.0
         version: 4.1.0(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.0.18)
@@ -652,7 +652,7 @@ importers:
         version: 0.0.3(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       '@react-router/dev':
         specifier: ^7.13.1
-        version: 7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(yaml@2.8.3)
+        version: 7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(yaml@2.8.3)
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -664,7 +664,7 @@ importers:
         version: 19.2.4(react@19.2.4)
       use-fireproof:
         specifier: 0.24.13
-        version: 0.24.13(@adviser/cement@0.5.34(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.13(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       use-vibes:
         specifier: workspace:0.0.0
         version: link:../pkg
@@ -673,7 +673,7 @@ importers:
         version: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vite-tsconfig-paths:
         specifier: ^6.1.1
-        version: 6.1.1(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 6.1.1(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@4.1.0)(@vitest/ui@4.0.18)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -721,8 +721,8 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
       vite-plugin-devtools-json:
         specifier: ^1.0.0
         version: 1.0.0(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -734,22 +734,22 @@ importers:
     dependencies:
       '@fireproof/core':
         specifier: 0.24.13
-        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag':
         specifier: 0.24.12
-        version: 0.24.12(typescript@5.9.3)
+        version: 0.24.12(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.12
-        version: 0.24.12(@adviser/cement@0.5.34(typescript@5.9.3))(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.12(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
@@ -759,7 +759,7 @@ importers:
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@types/react':
         specifier: ~19.2.14
         version: 19.2.14
@@ -767,17 +767,17 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.1)
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
 
   vibes.diy/failback-homepage:
     dependencies:
       '@adviser/cement':
         specifier: ^0.5.33
-        version: 0.5.33(typescript@5.9.3)
+        version: 0.5.33(typescript@6.0.2)
       '@clerk/clerk-js':
         specifier: ^6.3.0
-        version: 6.3.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(@types/react@19.2.14)(bs58@6.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.4(react@19.2.4))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@4.3.6)
+        version: 6.3.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(@types/react@19.2.14)(bs58@6.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.4(react@19.2.4))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@6.0.2)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@4.3.6)
       '@clerk/clerk-react':
         specifier: ^5.61.3
         version: 5.61.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -786,25 +786,25 @@ importers:
         version: 4.20260317.1
       '@fireproof/core':
         specifier: 0.24.13
-        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@5.0.10)
       '@fireproof/core-keybag':
         specifier: 0.24.12
-        version: 0.24.12(typescript@5.9.3)
+        version: 0.24.12(typescript@6.0.2)
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.12
-        version: 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+        version: 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.12
-        version: 0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        version: 0.24.12(@adviser/cement@0.5.33(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@5.0.10)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -813,10 +813,10 @@ importers:
         version: 1.2.4(@types/react@19.2.14)(react@19.2.4)
       '@react-router/node':
         specifier: ^7.13.1
-        version: 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
+        version: 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
       '@react-router/serve':
         specifier: ^7.13.1
-        version: 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
+        version: 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
       '@shikijs/monaco':
         specifier: ^4.0.2
         version: 4.0.2
@@ -919,16 +919,16 @@ importers:
         version: 1.29.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(workerd@1.20260317.1)(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@fireproof/core-cli':
         specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@pnpm/lockfile-file':
         specifier: ^9.1.3
         version: 9.1.3(@pnpm/logger@5.2.0)
       '@react-router/dev':
         specifier: ^7.13.1
-        version: 7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.3)
+        version: 7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.3)
       '@react-router/fs-routes':
         specifier: ^7.13.1
-        version: 7.13.1(@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.3))(typescript@5.9.3)
+        version: 7.13.1(@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.3))(typescript@6.0.2)
       '@storybook/addon-a11y':
         specifier: ^10.2.9
         version: 10.2.9(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
@@ -940,10 +940,10 @@ importers:
         version: 10.3.0(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
       '@storybook/react':
         specifier: ^10.3.0
-        version: 10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)
+        version: 10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)
       '@storybook/react-vite':
         specifier: ^10.2.12
-        version: 10.2.12(esbuild@0.27.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 10.2.12(esbuild@0.27.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1008,14 +1008,14 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
       vite:
         specifier: ^8.0.0
         version: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vite-tsconfig-paths:
         specifier: ^6.1.1
-        version: 6.1.1(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 6.1.1(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       yaml:
         specifier: ^2.8.3
         version: 2.8.3
@@ -1027,7 +1027,7 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.5.33
-        version: 0.5.33(typescript@5.9.3)
+        version: 0.5.33(typescript@6.0.2)
       '@clerk/clerk-react':
         specifier: ^5.61.3
         version: 5.61.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1036,10 +1036,10 @@ importers:
         version: 4.20260317.1
       '@fireproof/core':
         specifier: 0.24.13
-        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-runtime':
         specifier: 0.24.13
-        version: 0.24.13(typescript@5.9.3)
+        version: 0.24.13(typescript@6.0.2)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1048,10 +1048,10 @@ importers:
         version: 1.2.4(@types/react@19.2.14)(react@19.2.4)
       '@react-router/node':
         specifier: ^7.13.1
-        version: 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
+        version: 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
       '@react-router/serve':
         specifier: ^7.13.1
-        version: 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
+        version: 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
       '@shikijs/monaco':
         specifier: ^4.0.2
         version: 4.0.2
@@ -1120,7 +1120,7 @@ importers:
         version: 3.4.0
       use-fireproof:
         specifier: 0.24.13
-        version: 0.24.13(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        version: 0.24.13(@adviser/cement@0.5.33(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       use-vibes:
         specifier: workspace:*
         version: link:../../use-vibes/pkg
@@ -1133,10 +1133,10 @@ importers:
         version: 1.29.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(workerd@1.20260317.1)(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@fireproof/core-cli':
         specifier: 0.24.13
-        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@5.9.3)
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@react-router/dev':
         specifier: ^7.13.1
-        version: 7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(yaml@2.8.3)
+        version: 7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(yaml@2.8.3)
       '@storybook/addon-a11y':
         specifier: ^10.2.9
         version: 10.2.9(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))
@@ -1148,10 +1148,10 @@ importers:
         version: 10.3.0(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))
       '@storybook/react':
         specifier: ^10.3.0
-        version: 10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)
+        version: 10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)
       '@storybook/react-vite':
         specifier: ^10.2.12
-        version: 10.2.12(esbuild@0.27.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 10.2.12(esbuild@0.27.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -1195,14 +1195,14 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
       vite:
         specifier: ^8.0.0
         version: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vite-tsconfig-paths:
         specifier: ^6.1.1
-        version: 6.1.1(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 6.1.1(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   vibes.diy/tempo:
     dependencies:
@@ -11924,6 +11924,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@6.0.2:
+    resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   ufo@1.6.3:
     resolution: {integrity: sha512-yDJTmhydvl5lJzBmy/hyOAA0d+aqCBuwl818haVdYCRrWV84o7YyeVm4QlVHStqNrrJSTb6jKuFAVqAFsr+K3Q==}
 
@@ -12780,9 +12785,23 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
+  '@adviser/cement@0.5.33(typescript@6.0.2)':
+    dependencies:
+      ts-essentials: 10.1.1(typescript@6.0.2)
+      yaml: 2.8.2
+    transitivePeerDependencies:
+      - typescript
+
   '@adviser/cement@0.5.34(typescript@5.9.3)':
     dependencies:
       ts-essentials: 10.1.1(typescript@5.9.3)
+      yaml: 2.8.3
+    transitivePeerDependencies:
+      - typescript
+
+  '@adviser/cement@0.5.34(typescript@6.0.2)':
+    dependencies:
+      ts-essentials: 10.1.1(typescript@6.0.2)
       yaml: 2.8.3
     transitivePeerDependencies:
       - typescript
@@ -13073,15 +13092,15 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@base-org/account@2.0.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@base-org/account@2.0.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@noble/hashes': 1.4.0
       clsx: 1.2.1
       eventemitter3: 5.0.1
       idb-keyval: 6.2.1
-      ox: 0.6.9(typescript@5.9.3)(zod@4.3.6)
+      ox: 0.6.9(typescript@6.0.2)(zod@4.3.6)
       preact: 10.24.2
-      viem: 2.47.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      viem: 2.47.4(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)(zod@4.3.6)
       zustand: 5.0.3(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
     transitivePeerDependencies:
       - '@types/react'
@@ -13093,15 +13112,15 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@base-org/account@2.0.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@6.0.6)(zod@4.3.6)':
+  '@base-org/account@2.0.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@6.0.6)(zod@4.3.6)':
     dependencies:
       '@noble/hashes': 1.4.0
       clsx: 1.2.1
       eventemitter3: 5.0.1
       idb-keyval: 6.2.1
-      ox: 0.6.9(typescript@5.9.3)(zod@4.3.6)
+      ox: 0.6.9(typescript@6.0.2)(zod@4.3.6)
       preact: 10.24.2
-      viem: 2.47.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6)
+      viem: 2.47.4(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)(zod@4.3.6)
       zustand: 5.0.3(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
     transitivePeerDependencies:
       - '@types/react'
@@ -13183,14 +13202,14 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/clerk-js@6.3.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(@types/react@19.2.14)(bs58@6.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.4(react@19.2.4))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@clerk/clerk-js@6.3.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(@types/react@19.2.14)(bs58@6.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.4(react@19.2.4))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@6.0.2)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
-      '@base-org/account': 2.0.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@base-org/account': 2.0.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@4.3.6)
       '@clerk/shared': 4.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@coinbase/wallet-sdk': 4.3.0
-      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))
-      '@solana/wallet-adapter-react': 0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@5.9.3)
-      '@solana/wallet-standard': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)
+      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))
+      '@solana/wallet-adapter-react': 0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@6.0.2)
+      '@solana/wallet-standard': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)
       '@stripe/stripe-js': 5.6.0
       '@swc/helpers': 0.5.17
       '@tanstack/query-core': 5.90.16
@@ -13217,14 +13236,14 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@clerk/clerk-js@6.3.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(@types/react@19.2.14)(bs58@6.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.4(react@19.2.4))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@6.0.6)(zod@4.3.6)':
+  '@clerk/clerk-js@6.3.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(@types/react@19.2.14)(bs58@6.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.4(react@19.2.4))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(react@19.2.4)(typescript@6.0.2)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@6.0.6)(zod@4.3.6)':
     dependencies:
-      '@base-org/account': 2.0.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@6.0.6)(zod@4.3.6)
+      '@base-org/account': 2.0.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@6.0.6)(zod@4.3.6)
       '@clerk/shared': 4.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@coinbase/wallet-sdk': 4.3.0
-      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))
-      '@solana/wallet-adapter-react': 0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(react@19.2.4)(typescript@5.9.3)
-      '@solana/wallet-standard': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)
+      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))
+      '@solana/wallet-adapter-react': 0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(react@19.2.4)(typescript@6.0.2)
+      '@solana/wallet-standard': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)
       '@stripe/stripe-js': 5.6.0
       '@swc/helpers': 0.5.17
       '@tanstack/query-core': 5.90.16
@@ -13869,16 +13888,16 @@ snapshots:
       fastq: 1.20.1
       glob: 13.0.6
 
-  '@fireproof/core-base@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@fireproof/core-base@0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-blockstore': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-blockstore': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)
+      '@fireproof/core-keybag': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       '@ipld/dag-cbor': 9.2.5
       '@web3-storage/pail': 0.6.2
       charwise: 3.0.1
@@ -13888,35 +13907,16 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-base@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@fireproof/core-base@0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-blockstore': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
-      '@ipld/dag-cbor': 9.2.5
-      '@web3-storage/pail': 0.6.2
-      charwise: 3.0.1
-      prolly-trees: 1.0.4
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-
-  '@fireproof/core-base@0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
-      '@fireproof/core-blockstore': 0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-keybag': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.13(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-blockstore': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-keybag': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       '@ipld/dag-cbor': 9.2.5
       '@web3-storage/pail': 0.6.2
       charwise: 3.0.1
@@ -13945,20 +13945,58 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-blockstore@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@fireproof/core-base@0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-gateways-file': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-gateways-memory': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-blockstore': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)
+      '@fireproof/core-keybag': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      '@ipld/dag-cbor': 9.2.5
+      '@web3-storage/pail': 0.6.2
+      charwise: 3.0.1
+      prolly-trees: 1.0.4
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/core-base@0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-blockstore': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-keybag': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      '@ipld/dag-cbor': 9.2.5
+      '@web3-storage/pail': 0.6.2
+      charwise: 3.0.1
+      prolly-trees: 1.0.4
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/core-blockstore@0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)
+      '@fireproof/core-gateways-file': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-gateways-indexeddb': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-gateways-memory': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-keybag': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       '@ipld/car': 5.4.2
       '@ipld/dag-cbor': 9.2.5
       '@ipld/dag-json': 10.2.6
@@ -13971,46 +14009,20 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-blockstore@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@fireproof/core-blockstore@0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-gateways-file': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-gateways-memory': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
-      '@ipld/car': 5.4.2
-      '@ipld/dag-cbor': 9.2.5
-      '@ipld/dag-json': 10.2.6
-      '@web3-storage/pail': 0.6.2
-      multiformats: 13.4.2
-      p-map: 7.0.4
-      p-retry: 7.1.1
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-
-  '@fireproof/core-blockstore@0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-gateways-cloud': 0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-gateways-file': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-gateways-memory': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.13(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.13(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-gateways-file': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-gateways-indexeddb': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-gateways-memory': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-keybag': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       '@ipld/car': 5.4.2
       '@ipld/dag-cbor': 9.2.5
       '@ipld/dag-json': 10.2.6
@@ -14037,6 +14049,58 @@ snapshots:
       '@fireproof/core-types-blockstore': 0.24.13(typescript@5.9.3)
       '@fireproof/core-types-runtime': 0.24.13(typescript@5.9.3)
       '@fireproof/vendor': 0.24.13(typescript@5.9.3)
+      '@ipld/car': 5.4.2
+      '@ipld/dag-cbor': 9.2.5
+      '@ipld/dag-json': 10.2.6
+      '@web3-storage/pail': 0.6.2
+      multiformats: 13.4.2
+      p-map: 7.0.4
+      p-retry: 7.1.1
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/core-blockstore@0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-gateways-cloud': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)
+      '@fireproof/core-gateways-file': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-gateways-indexeddb': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-gateways-memory': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-keybag': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      '@ipld/car': 5.4.2
+      '@ipld/dag-cbor': 9.2.5
+      '@ipld/dag-json': 10.2.6
+      '@web3-storage/pail': 0.6.2
+      multiformats: 13.4.2
+      p-map: 7.0.4
+      p-retry: 7.1.1
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/core-blockstore@0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-gateways-cloud': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-gateways-file': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-gateways-indexeddb': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-gateways-memory': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-keybag': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
       '@ipld/car': 5.4.2
       '@ipld/dag-cbor': 9.2.5
       '@ipld/dag-json': 10.2.6
@@ -14077,14 +14141,42 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fireproof/core-device-id@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-cli@0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-device-id': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-dashboard': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-device-id': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-keybag': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      '@hono/node-server': 1.19.11(hono@4.12.8)
+      '@pnpm/lockfile-file': 9.1.3(@pnpm/logger@5.2.0)
+      '@typescript/native-preview': 7.0.0-dev.20260319.1
+      aws4fetch: 1.0.20
+      cmd-ts: 0.15.0
+      find-up: 8.0.0
+      fs-extra: 11.3.4
+      hono: 4.12.8
+      jose: 6.2.2
+      multiformats: 13.4.2
+      open: 11.0.0
+      semver: 7.7.4
+      zod: 4.3.6
+      zx: 8.8.5
+    transitivePeerDependencies:
+      - '@pnpm/logger'
+      - domexception
+      - supports-color
+      - typescript
+
+  '@fireproof/core-device-id@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-keybag': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-device-id': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-dashboard': 0.24.12(typescript@6.0.2)
       jose: 6.1.3
       multiformats: 13.4.2
       zod: 4.3.6
@@ -14105,13 +14197,27 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-base@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-device-id@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-keybag': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-device-id': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-dashboard': 0.24.13(typescript@6.0.2)
+      jose: 6.2.2
+      multiformats: 13.4.2
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-gateways-base@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       '@ipld/dag-json': 10.2.6
       '@web3-storage/pail': 0.6.2
     transitivePeerDependencies:
@@ -14129,49 +14235,45 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-cloud@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@fireproof/core-gateways-base@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-protocols-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      '@ipld/dag-json': 10.2.6
+      '@web3-storage/pail': 0.6.2
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-gateways-cloud@0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-protocols-cloud': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       jose: 6.1.3
     transitivePeerDependencies:
       - bufferutil
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-gateways-cloud@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@fireproof/core-gateways-cloud@0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-protocols-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-protocols-cloud': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       jose: 6.1.3
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-
-  '@fireproof/core-gateways-cloud@0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-protocols-cloud': 0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-runtime': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.13(typescript@5.9.3)
-      jose: 6.2.2
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -14193,11 +14295,43 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-gateways-file-deno@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-gateways-cloud@0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-protocols-cloud': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      jose: 6.2.2
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/core-gateways-cloud@0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-protocols-cloud': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      jose: 6.2.2
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/core-gateways-file-deno@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       '@types/deno': 2.5.0
       '@types/node': 25.2.3
     transitivePeerDependencies:
@@ -14213,11 +14347,21 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file-node@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-gateways-file-deno@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      '@types/deno': 2.5.0
+      '@types/node': 25.5.0
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-gateways-file-node@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
     transitivePeerDependencies:
       - typescript
 
@@ -14229,16 +14373,24 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-file@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-gateways-file-node@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-gateways-file-deno': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-gateways-file-node': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-gateways-file@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-gateways-file-deno': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-gateways-file-node': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
     transitivePeerDependencies:
       - typescript
 
@@ -14255,14 +14407,27 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-indexeddb@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-gateways-file@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-gateways-file-deno': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-gateways-file-node': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-gateways-indexeddb@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       idb: 8.0.3
     transitivePeerDependencies:
       - typescript
@@ -14279,14 +14444,26 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-gateways-memory@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-gateways-indexeddb@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-gateways-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      idb: 8.0.3
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-gateways-memory@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
     transitivePeerDependencies:
       - typescript
 
@@ -14301,14 +14478,25 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-keybag@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-gateways-memory@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
-      '@fireproof/core-gateways-file': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-gateways-indexeddb': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-gateways-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-keybag@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-gateways-file': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-gateways-indexeddb': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       jose: 6.1.3
       multiformats: 13.4.2
       zod: 4.3.6
@@ -14329,13 +14517,27 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-protocols-cloud@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@fireproof/core-keybag@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-gateways-file': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-gateways-indexeddb': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      jose: 6.2.2
+      multiformats: 13.4.2
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-protocols-cloud@0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       '@types/ws': 8.18.1
       ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
@@ -14343,29 +14545,15 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-protocols-cloud@0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@fireproof/core-protocols-cloud@0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       '@types/ws': 8.18.1
       ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-
-  '@fireproof/core-protocols-cloud@0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.13(typescript@5.9.3)
-      '@types/ws': 8.18.1
-      ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -14385,17 +14573,45 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core-protocols-dashboard@0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)':
+  '@fireproof/core-protocols-cloud@0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      '@types/ws': 8.18.1
+      ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/core-protocols-cloud@0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      '@types/ws': 8.18.1
+      ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/core-protocols-dashboard@0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
       '@clerk/shared': 3.45.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@fireproof/core-device-id': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-device-id': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-dashboard': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@fireproof/core-device-id': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-device-id': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-dashboard': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       jose: 6.1.3
       zod: 4.3.6
     transitivePeerDependencies:
@@ -14421,15 +14637,33 @@ snapshots:
       - react-dom
       - typescript
 
-  '@fireproof/core-runtime@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-protocols-dashboard@0.24.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@clerk/shared': 4.3.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@fireproof/core-device-id': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-device-id': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-dashboard': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      jose: 6.2.2
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - react
+      - react-dom
+      - typescript
+
+  '@fireproof/core-runtime@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
       '@adviser/ts-xxhash': 1.0.2
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       cborg: 4.5.8
       jose: 6.1.3
       multiformats: 13.4.2
@@ -14453,11 +14687,27 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-base@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-runtime@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@adviser/ts-xxhash': 1.0.2
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      cborg: 4.5.8
+      jose: 6.2.2
+      multiformats: 13.4.2
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-types-base@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       '@web3-storage/pail': 0.6.2
       jose: 6.1.3
       multiformats: 13.4.2
@@ -14479,12 +14729,25 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-blockstore@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-types-base@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      '@web3-storage/pail': 0.6.2
+      jose: 6.2.2
+      multiformats: 13.4.2
+      prolly-trees: 1.0.4
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-types-blockstore@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       '@web3-storage/pail': 0.6.2
       multiformats: 13.4.2
     transitivePeerDependencies:
@@ -14501,10 +14764,21 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-device-id@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-types-blockstore@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      '@web3-storage/pail': 0.6.2
+      multiformats: 13.4.2
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-types-device-id@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
       zod: 4.3.6
     transitivePeerDependencies:
       - typescript
@@ -14517,12 +14791,20 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-protocols-cloud@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-types-device-id@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-types-protocols-cloud@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       jose: 6.1.3
       multiformats: 13.4.2
       zod: 4.3.6
@@ -14541,12 +14823,24 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-protocols-dashboard@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-types-protocols-cloud@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-device-id': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      jose: 6.2.2
+      multiformats: 13.4.2
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-types-protocols-dashboard@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-device-id': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
     transitivePeerDependencies:
       - typescript
 
@@ -14559,10 +14853,19 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core-types-runtime@0.24.12(typescript@5.9.3)':
+  '@fireproof/core-types-protocols-dashboard@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-device-id': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core-types-runtime@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       multiformats: 13.4.2
     transitivePeerDependencies:
       - typescript
@@ -14575,12 +14878,20 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/core@0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@fireproof/core-types-runtime@0.24.13(typescript@6.0.2)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-types-base': 0.24.13(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.13(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      multiformats: 13.4.2
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/core@0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-base': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
       '@types/node': 25.5.0
       react: 19.2.4
     transitivePeerDependencies:
@@ -14588,12 +14899,12 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/core@0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@fireproof/core@0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-types-base': 0.24.13(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.13(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-base': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
       '@types/node': 25.5.0
       react: 19.2.4
     transitivePeerDependencies:
@@ -14601,66 +14912,66 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/use-fireproof@0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@fireproof/use-fireproof@0.24.12(@adviser/cement@0.5.33(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@5.0.10)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-base': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)
+      '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)
+      '@fireproof/core-keybag': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-protocols-dashboard': 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       dompurify: 3.3.1
       jose: 6.1.3
       react: 19.2.4
-      ts-essentials: 10.1.1(typescript@5.9.3)
+      ts-essentials: 10.1.1(typescript@6.0.2)
     transitivePeerDependencies:
       - bufferutil
       - react-dom
       - typescript
       - utf-8-validate
 
-  '@fireproof/use-fireproof@0.24.12(@adviser/cement@0.5.33(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@fireproof/use-fireproof@0.24.12(@adviser/cement@0.5.33(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-base': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-keybag': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-protocols-dashboard': 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       dompurify: 3.3.1
       jose: 6.1.3
       react: 19.2.4
-      ts-essentials: 10.1.1(typescript@5.9.3)
+      ts-essentials: 10.1.1(typescript@6.0.2)
     transitivePeerDependencies:
       - bufferutil
       - react-dom
       - typescript
       - utf-8-validate
 
-  '@fireproof/use-fireproof@0.24.12(@adviser/cement@0.5.34(typescript@5.9.3))(bufferutil@4.1.0)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@fireproof/use-fireproof@0.24.12(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-keybag': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.12(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.12(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-base': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-gateways-cloud': 0.24.12(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-keybag': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-protocols-dashboard': 0.24.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.12(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.12(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.12(typescript@6.0.2)
       dompurify: 3.3.1
       jose: 6.1.3
       react: 19.2.4
-      ts-essentials: 10.1.1(typescript@5.9.3)
+      ts-essentials: 10.1.1(typescript@6.0.2)
     transitivePeerDependencies:
       - bufferutil
       - react-dom
@@ -14689,31 +15000,53 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@fireproof/use-fireproof@0.24.13(@adviser/cement@0.5.34(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@fireproof/use-fireproof@0.24.13(@adviser/cement@0.5.33(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.34(typescript@5.9.3)
-      '@fireproof/core-base': 0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-gateways-cloud': 0.24.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-keybag': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-protocols-dashboard': 0.24.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
-      '@fireproof/core-runtime': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-base': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-blockstore': 0.24.13(typescript@5.9.3)
-      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@5.9.3)
-      '@fireproof/vendor': 0.24.13(typescript@5.9.3)
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
+      '@fireproof/core-base': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-gateways-cloud': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-keybag': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-protocols-dashboard': 0.24.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
       dompurify: 3.3.3
       jose: 6.2.2
       react: 19.2.4
-      ts-essentials: 10.1.1(typescript@5.9.3)
+      ts-essentials: 10.1.1(typescript@6.0.2)
     transitivePeerDependencies:
       - bufferutil
       - react-dom
       - typescript
       - utf-8-validate
 
-  '@fireproof/vendor@0.24.12(typescript@5.9.3)':
+  '@fireproof/use-fireproof@0.24.13(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@adviser/cement': 0.5.33(typescript@5.9.3)
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-base': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-gateways-cloud': 0.24.13(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-keybag': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-protocols-dashboard': 0.24.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
+      dompurify: 3.3.3
+      jose: 6.2.2
+      react: 19.2.4
+      ts-essentials: 10.1.1(typescript@6.0.2)
+    transitivePeerDependencies:
+      - bufferutil
+      - react-dom
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/vendor@0.24.12(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
@@ -14721,6 +15054,13 @@ snapshots:
   '@fireproof/vendor@0.24.13(typescript@5.9.3)':
     dependencies:
       '@adviser/cement': 0.5.33(typescript@5.9.3)
+      yocto-queue: 1.2.2
+    transitivePeerDependencies:
+      - typescript
+
+  '@fireproof/vendor@0.24.13(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.33(typescript@6.0.2)
       yocto-queue: 1.2.2
     transitivePeerDependencies:
       - typescript
@@ -14913,7 +15253,7 @@ snapshots:
       jest-util: 30.3.0
       slash: 3.0.0
 
-  '@jest/core@30.3.0(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3))':
+  '@jest/core@30.3.0(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2))':
     dependencies:
       '@jest/console': 30.3.0
       '@jest/pattern': 30.0.1
@@ -14928,7 +15268,7 @@ snapshots:
       exit-x: 0.2.2
       graceful-fs: 4.2.11
       jest-changed-files: 30.3.0
-      jest-config: 30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3))
+      jest-config: 30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2))
       jest-haste-map: 30.3.0
       jest-message-util: 30.3.0
       jest-regex-util: 30.0.1
@@ -15150,13 +15490,13 @@ snapshots:
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
-  '@joshwooding/vite-plugin-react-docgen-typescript@0.6.4(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))':
+  '@joshwooding/vite-plugin-react-docgen-typescript@0.6.4(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))':
     dependencies:
       glob: 13.0.6
-      react-docgen-typescript: 2.4.0(typescript@5.9.3)
+      react-docgen-typescript: 2.4.0(typescript@6.0.2)
       vite: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -17099,7 +17439,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  '@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.3)':
+  '@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.3)':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/generator': 7.29.1
@@ -17108,7 +17448,7 @@ snapshots:
       '@babel/preset-typescript': 7.28.5(@babel/core@7.29.0)
       '@babel/traverse': 7.29.0
       '@babel/types': 7.29.0
-      '@react-router/node': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
+      '@react-router/node': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
       '@remix-run/node-fetch-server': 0.13.0
       arg: 5.0.2
       babel-dead-code-elimination: 1.0.12
@@ -17128,12 +17468,12 @@ snapshots:
       react-router: 7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       semver: 7.7.4
       tinyglobby: 0.2.15
-      valibot: 1.2.0(typescript@5.9.3)
+      valibot: 1.2.0(typescript@6.0.2)
       vite: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vite-node: 3.2.4(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
     optionalDependencies:
-      '@react-router/serve': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
-      typescript: 5.9.3
+      '@react-router/serve': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
+      typescript: 6.0.2
       wrangler: 4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - '@types/node'
@@ -17150,7 +17490,7 @@ snapshots:
       - tsx
       - yaml
 
-  '@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(yaml@2.8.3)':
+  '@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(yaml@2.8.3)':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/generator': 7.29.1
@@ -17159,7 +17499,7 @@ snapshots:
       '@babel/preset-typescript': 7.28.5(@babel/core@7.29.0)
       '@babel/traverse': 7.29.0
       '@babel/types': 7.29.0
-      '@react-router/node': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
+      '@react-router/node': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
       '@remix-run/node-fetch-server': 0.13.0
       arg: 5.0.2
       babel-dead-code-elimination: 1.0.12
@@ -17179,12 +17519,12 @@ snapshots:
       react-router: 7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       semver: 7.7.4
       tinyglobby: 0.2.15
-      valibot: 1.2.0(typescript@5.9.3)
+      valibot: 1.2.0(typescript@6.0.2)
       vite: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vite-node: 3.2.4(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
     optionalDependencies:
-      '@react-router/serve': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
-      typescript: 5.9.3
+      '@react-router/serve': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
+      typescript: 6.0.2
       wrangler: 4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - '@types/node'
@@ -17209,12 +17549,20 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
-  '@react-router/fs-routes@7.13.1(@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.3))(typescript@5.9.3)':
+  '@react-router/express@7.13.1(express@4.22.1)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)':
     dependencies:
-      '@react-router/dev': 7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.3)
+      '@react-router/node': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
+      express: 4.22.1
+      react-router: 7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+    optionalDependencies:
+      typescript: 6.0.2
+
+  '@react-router/fs-routes@7.13.1(@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.3))(typescript@6.0.2)':
+    dependencies:
+      '@react-router/dev': 7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2))(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(wrangler@4.77.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))(yaml@2.8.3)
       minimatch: 9.0.8
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   '@react-router/node@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)':
     dependencies:
@@ -17223,11 +17571,33 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
+  '@react-router/node@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)':
+    dependencies:
+      '@mjackson/node-fetch-server': 0.2.0
+      react-router: 7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+    optionalDependencies:
+      typescript: 6.0.2
+
   '@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
       '@react-router/express': 7.13.1(express@4.22.1)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
       '@react-router/node': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
+      compression: 1.8.1
+      express: 4.22.1
+      get-port: 5.1.1
+      morgan: 1.10.1
+      react-router: 7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      source-map-support: 0.5.21
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
+  '@react-router/serve@7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)':
+    dependencies:
+      '@mjackson/node-fetch-server': 0.2.0
+      '@react-router/express': 7.13.1(express@4.22.1)(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
+      '@react-router/node': 7.13.1(react-router@7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)
       compression: 1.8.1
       express: 4.22.1
       get-port: 5.1.1
@@ -17519,10 +17889,10 @@ snapshots:
       color: 5.0.3
       text-hex: 1.0.0
 
-  '@solana-mobile/mobile-wallet-adapter-protocol-web3js@2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)':
+  '@solana-mobile/mobile-wallet-adapter-protocol-web3js@2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)':
     dependencies:
-      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)
       bs58: 6.0.0
       js-base64: 3.7.8
     transitivePeerDependencies:
@@ -17530,10 +17900,10 @@ snapshots:
       - react-native
       - typescript
 
-  '@solana-mobile/mobile-wallet-adapter-protocol-web3js@2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)':
+  '@solana-mobile/mobile-wallet-adapter-protocol-web3js@2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)':
     dependencies:
-      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)
       bs58: 6.0.0
       js-base64: 3.7.8
     transitivePeerDependencies:
@@ -17541,9 +17911,9 @@ snapshots:
       - react-native
       - typescript
 
-  '@solana-mobile/mobile-wallet-adapter-protocol@2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)':
+  '@solana-mobile/mobile-wallet-adapter-protocol@2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)':
     dependencies:
-      '@solana/codecs-strings': 4.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
+      '@solana/codecs-strings': 4.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@6.0.2)
       '@solana/wallet-standard-features': 1.3.0
       '@solana/wallet-standard-util': 1.1.2
       '@wallet-standard/core': 1.1.1
@@ -17553,9 +17923,9 @@ snapshots:
       - fastestsmallesttextencoderdecoder
       - typescript
 
-  '@solana-mobile/mobile-wallet-adapter-protocol@2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)':
+  '@solana-mobile/mobile-wallet-adapter-protocol@2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)':
     dependencies:
-      '@solana/codecs-strings': 4.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
+      '@solana/codecs-strings': 4.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@6.0.2)
       '@solana/wallet-standard-features': 1.3.0
       '@solana/wallet-standard-util': 1.1.2
       '@wallet-standard/core': 1.1.1
@@ -17565,14 +17935,14 @@ snapshots:
       - fastestsmallesttextencoderdecoder
       - typescript
 
-  '@solana-mobile/wallet-adapter-mobile@2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)':
+  '@solana-mobile/wallet-adapter-mobile@2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)':
     dependencies:
-      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)
-      '@solana-mobile/mobile-wallet-adapter-protocol-web3js': 2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)
-      '@solana-mobile/wallet-standard-mobile': 0.5.0(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)
-      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))
+      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)
+      '@solana-mobile/mobile-wallet-adapter-protocol-web3js': 2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)
+      '@solana-mobile/wallet-standard-mobile': 0.5.0(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)
+      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))
       '@solana/wallet-standard-features': 1.3.0
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)
       '@wallet-standard/core': 1.1.1
       bs58: 6.0.0
       js-base64: 3.7.8
@@ -17584,14 +17954,14 @@ snapshots:
       - fastestsmallesttextencoderdecoder
       - typescript
 
-  '@solana-mobile/wallet-adapter-mobile@2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)':
+  '@solana-mobile/wallet-adapter-mobile@2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)':
     dependencies:
-      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)
-      '@solana-mobile/mobile-wallet-adapter-protocol-web3js': 2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)
-      '@solana-mobile/wallet-standard-mobile': 0.5.0(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)
-      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))
+      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)
+      '@solana-mobile/mobile-wallet-adapter-protocol-web3js': 2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)
+      '@solana-mobile/wallet-standard-mobile': 0.5.0(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)
+      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))
       '@solana/wallet-standard-features': 1.3.0
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@wallet-standard/core': 1.1.1
       bs58: 6.0.0
       js-base64: 3.7.8
@@ -17603,9 +17973,9 @@ snapshots:
       - fastestsmallesttextencoderdecoder
       - typescript
 
-  '@solana-mobile/wallet-standard-mobile@0.5.0(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)':
+  '@solana-mobile/wallet-standard-mobile@0.5.0(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)':
     dependencies:
-      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)
+      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)
       '@solana/wallet-standard-chains': 1.1.1
       '@solana/wallet-standard-features': 1.3.0
       '@wallet-standard/base': 1.1.0
@@ -17622,9 +17992,9 @@ snapshots:
       - react-native
       - typescript
 
-  '@solana-mobile/wallet-standard-mobile@0.5.0(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)':
+  '@solana-mobile/wallet-standard-mobile@0.5.0(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)':
     dependencies:
-      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)
+      '@solana-mobile/mobile-wallet-adapter-protocol': 2.2.6(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)
       '@solana/wallet-standard-chains': 1.1.1
       '@solana/wallet-standard-features': 1.3.0
       '@wallet-standard/base': 1.1.0
@@ -17645,70 +18015,70 @@ snapshots:
     dependencies:
       buffer: 6.0.3
 
-  '@solana/codecs-core@2.3.0(typescript@5.9.3)':
+  '@solana/codecs-core@2.3.0(typescript@6.0.2)':
     dependencies:
-      '@solana/errors': 2.3.0(typescript@5.9.3)
-      typescript: 5.9.3
+      '@solana/errors': 2.3.0(typescript@6.0.2)
+      typescript: 6.0.2
 
-  '@solana/codecs-core@4.0.0(typescript@5.9.3)':
+  '@solana/codecs-core@4.0.0(typescript@6.0.2)':
     dependencies:
-      '@solana/errors': 4.0.0(typescript@5.9.3)
-      typescript: 5.9.3
+      '@solana/errors': 4.0.0(typescript@6.0.2)
+      typescript: 6.0.2
 
-  '@solana/codecs-numbers@2.3.0(typescript@5.9.3)':
+  '@solana/codecs-numbers@2.3.0(typescript@6.0.2)':
     dependencies:
-      '@solana/codecs-core': 2.3.0(typescript@5.9.3)
-      '@solana/errors': 2.3.0(typescript@5.9.3)
-      typescript: 5.9.3
+      '@solana/codecs-core': 2.3.0(typescript@6.0.2)
+      '@solana/errors': 2.3.0(typescript@6.0.2)
+      typescript: 6.0.2
 
-  '@solana/codecs-numbers@4.0.0(typescript@5.9.3)':
+  '@solana/codecs-numbers@4.0.0(typescript@6.0.2)':
     dependencies:
-      '@solana/codecs-core': 4.0.0(typescript@5.9.3)
-      '@solana/errors': 4.0.0(typescript@5.9.3)
-      typescript: 5.9.3
+      '@solana/codecs-core': 4.0.0(typescript@6.0.2)
+      '@solana/errors': 4.0.0(typescript@6.0.2)
+      typescript: 6.0.2
 
-  '@solana/codecs-strings@4.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)':
+  '@solana/codecs-strings@4.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@6.0.2)':
     dependencies:
-      '@solana/codecs-core': 4.0.0(typescript@5.9.3)
-      '@solana/codecs-numbers': 4.0.0(typescript@5.9.3)
-      '@solana/errors': 4.0.0(typescript@5.9.3)
+      '@solana/codecs-core': 4.0.0(typescript@6.0.2)
+      '@solana/codecs-numbers': 4.0.0(typescript@6.0.2)
+      '@solana/errors': 4.0.0(typescript@6.0.2)
       fastestsmallesttextencoderdecoder: 1.0.22
-      typescript: 5.9.3
+      typescript: 6.0.2
 
-  '@solana/errors@2.3.0(typescript@5.9.3)':
+  '@solana/errors@2.3.0(typescript@6.0.2)':
     dependencies:
       chalk: 5.6.2
       commander: 14.0.3
-      typescript: 5.9.3
+      typescript: 6.0.2
 
-  '@solana/errors@4.0.0(typescript@5.9.3)':
+  '@solana/errors@4.0.0(typescript@6.0.2)':
     dependencies:
       chalk: 5.6.2
       commander: 14.0.1
-      typescript: 5.9.3
+      typescript: 6.0.2
 
-  '@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))':
+  '@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))':
     dependencies:
       '@solana/wallet-standard-features': 1.3.0
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)
       '@wallet-standard/base': 1.1.0
       '@wallet-standard/features': 1.1.0
       eventemitter3: 5.0.4
 
-  '@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))':
+  '@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))':
     dependencies:
       '@solana/wallet-standard-features': 1.3.0
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@wallet-standard/base': 1.1.0
       '@wallet-standard/features': 1.1.0
       eventemitter3: 5.0.4
 
-  '@solana/wallet-adapter-react@0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@5.9.3)':
+  '@solana/wallet-adapter-react@0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@6.0.2)':
     dependencies:
-      '@solana-mobile/wallet-adapter-mobile': 2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)
-      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))
-      '@solana/wallet-standard-wallet-adapter-react': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@solana-mobile/wallet-adapter-mobile': 2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)
+      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))
+      '@solana/wallet-standard-wallet-adapter-react': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)
       react: 19.2.4
     transitivePeerDependencies:
       - bs58
@@ -17716,12 +18086,12 @@ snapshots:
       - react-native
       - typescript
 
-  '@solana/wallet-adapter-react@0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(react@19.2.4)(typescript@5.9.3)':
+  '@solana/wallet-adapter-react@0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(react@19.2.4)(typescript@6.0.2)':
     dependencies:
-      '@solana-mobile/wallet-adapter-mobile': 2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)
-      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))
-      '@solana/wallet-standard-wallet-adapter-react': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@solana-mobile/wallet-adapter-mobile': 2.2.6(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(fastestsmallesttextencoderdecoder@1.0.22)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)
+      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))
+      '@solana/wallet-standard-wallet-adapter-react': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)
       react: 19.2.4
     transitivePeerDependencies:
       - bs58
@@ -17750,36 +18120,36 @@ snapshots:
       '@solana/wallet-standard-chains': 1.1.1
       '@solana/wallet-standard-features': 1.3.0
 
-  '@solana/wallet-standard-wallet-adapter-base@1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)':
+  '@solana/wallet-standard-wallet-adapter-base@1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)':
     dependencies:
-      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))
+      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))
       '@solana/wallet-standard-chains': 1.1.1
       '@solana/wallet-standard-features': 1.3.0
       '@solana/wallet-standard-util': 1.1.2
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)
       '@wallet-standard/app': 1.1.0
       '@wallet-standard/base': 1.1.0
       '@wallet-standard/features': 1.1.0
       '@wallet-standard/wallet': 1.1.0
       bs58: 6.0.0
 
-  '@solana/wallet-standard-wallet-adapter-base@1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)':
+  '@solana/wallet-standard-wallet-adapter-base@1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)':
     dependencies:
-      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))
+      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))
       '@solana/wallet-standard-chains': 1.1.1
       '@solana/wallet-standard-features': 1.3.0
       '@solana/wallet-standard-util': 1.1.2
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@wallet-standard/app': 1.1.0
       '@wallet-standard/base': 1.1.0
       '@wallet-standard/features': 1.1.0
       '@wallet-standard/wallet': 1.1.0
       bs58: 6.0.0
 
-  '@solana/wallet-standard-wallet-adapter-react@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)':
+  '@solana/wallet-standard-wallet-adapter-react@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)':
     dependencies:
-      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))
-      '@solana/wallet-standard-wallet-adapter-base': 1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)
+      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))
+      '@solana/wallet-standard-wallet-adapter-base': 1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)
       '@wallet-standard/app': 1.1.0
       '@wallet-standard/base': 1.1.0
       react: 19.2.4
@@ -17787,10 +18157,10 @@ snapshots:
       - '@solana/web3.js'
       - bs58
 
-  '@solana/wallet-standard-wallet-adapter-react@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)':
+  '@solana/wallet-standard-wallet-adapter-react@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)':
     dependencies:
-      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))
-      '@solana/wallet-standard-wallet-adapter-base': 1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)
+      '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))
+      '@solana/wallet-standard-wallet-adapter-base': 1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)
       '@wallet-standard/app': 1.1.0
       '@wallet-standard/base': 1.1.0
       react: 19.2.4
@@ -17798,53 +18168,53 @@ snapshots:
       - '@solana/web3.js'
       - bs58
 
-  '@solana/wallet-standard-wallet-adapter@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)':
+  '@solana/wallet-standard-wallet-adapter@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)':
     dependencies:
-      '@solana/wallet-standard-wallet-adapter-base': 1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)
-      '@solana/wallet-standard-wallet-adapter-react': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)
+      '@solana/wallet-standard-wallet-adapter-base': 1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)
+      '@solana/wallet-standard-wallet-adapter-react': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)
     transitivePeerDependencies:
       - '@solana/wallet-adapter-base'
       - '@solana/web3.js'
       - bs58
       - react
 
-  '@solana/wallet-standard-wallet-adapter@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)':
+  '@solana/wallet-standard-wallet-adapter@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)':
     dependencies:
-      '@solana/wallet-standard-wallet-adapter-base': 1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)
-      '@solana/wallet-standard-wallet-adapter-react': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)
+      '@solana/wallet-standard-wallet-adapter-base': 1.1.4(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)
+      '@solana/wallet-standard-wallet-adapter-react': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)
     transitivePeerDependencies:
       - '@solana/wallet-adapter-base'
       - '@solana/web3.js'
       - bs58
       - react
 
-  '@solana/wallet-standard@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)':
-    dependencies:
-      '@solana/wallet-standard-core': 1.1.2
-      '@solana/wallet-standard-wallet-adapter': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)
-    transitivePeerDependencies:
-      - '@solana/wallet-adapter-base'
-      - '@solana/web3.js'
-      - bs58
-      - react
-
-  '@solana/wallet-standard@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)':
+  '@solana/wallet-standard@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)':
     dependencies:
       '@solana/wallet-standard-core': 1.1.2
-      '@solana/wallet-standard-wallet-adapter': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)
+      '@solana/wallet-standard-wallet-adapter': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10))(bs58@6.0.0)(react@19.2.4)
     transitivePeerDependencies:
       - '@solana/wallet-adapter-base'
       - '@solana/web3.js'
       - bs58
       - react
 
-  '@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@solana/wallet-standard@1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)':
+    dependencies:
+      '@solana/wallet-standard-core': 1.1.2
+      '@solana/wallet-standard-wallet-adapter': 1.1.4(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(react@19.2.4)
+    transitivePeerDependencies:
+      - '@solana/wallet-adapter-base'
+      - '@solana/web3.js'
+      - bs58
+      - react
+
+  '@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@5.0.10)':
     dependencies:
       '@babel/runtime': 7.29.2
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@solana/buffer-layout': 4.0.1
-      '@solana/codecs-numbers': 2.3.0(typescript@5.9.3)
+      '@solana/codecs-numbers': 2.3.0(typescript@6.0.2)
       agentkeepalive: 4.6.0
       bn.js: 5.2.3
       borsh: 0.7.0
@@ -17861,13 +18231,13 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@solana/web3.js@1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
       '@babel/runtime': 7.29.2
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@solana/buffer-layout': 4.0.1
-      '@solana/codecs-numbers': 2.3.0(typescript@5.9.3)
+      '@solana/codecs-numbers': 2.3.0(typescript@6.0.2)
       agentkeepalive: 4.6.0
       bn.js: 5.2.3
       borsh: 0.7.0
@@ -18045,12 +18415,12 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
       storybook: 10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6)
 
-  '@storybook/react-vite@10.2.12(esbuild@0.27.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))':
+  '@storybook/react-vite@10.2.12(esbuild@0.27.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))':
     dependencies:
-      '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.4(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.4(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       '@rollup/pluginutils': 5.3.0(rollup@4.55.1)
       '@storybook/builder-vite': 10.2.12(esbuild@0.27.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-      '@storybook/react': 10.2.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)
+      '@storybook/react': 10.2.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)
       empathic: 2.0.0
       magic-string: 0.30.21
       react: 19.2.4
@@ -18067,12 +18437,12 @@ snapshots:
       - typescript
       - webpack
 
-  '@storybook/react-vite@10.2.12(esbuild@0.27.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))':
+  '@storybook/react-vite@10.2.12(esbuild@0.27.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))':
     dependencies:
-      '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.4(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.6.4(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       '@rollup/pluginutils': 5.3.0(rollup@4.55.1)
       '@storybook/builder-vite': 10.2.12(esbuild@0.27.4)(rollup@4.55.1)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-      '@storybook/react': 10.2.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)
+      '@storybook/react': 10.2.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)
       empathic: 2.0.0
       magic-string: 0.30.21
       react: 19.2.4
@@ -18089,7 +18459,7 @@ snapshots:
       - typescript
       - webpack
 
-  '@storybook/react@10.2.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)':
+  '@storybook/react@10.2.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)':
     dependencies:
       '@storybook/global': 5.0.0
       '@storybook/react-dom-shim': 10.2.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
@@ -18098,11 +18468,11 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
       storybook: 10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
-  '@storybook/react@10.2.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)':
+  '@storybook/react@10.2.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)':
     dependencies:
       '@storybook/global': 5.0.0
       '@storybook/react-dom-shim': 10.2.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))
@@ -18111,35 +18481,35 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
       storybook: 10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
-  '@storybook/react@10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@5.9.3)':
+  '@storybook/react@10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))(typescript@6.0.2)':
     dependencies:
       '@storybook/global': 5.0.0
       '@storybook/react-dom-shim': 10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10))
       react: 19.2.4
       react-docgen: 8.0.3
-      react-docgen-typescript: 2.4.0(typescript@5.9.3)
+      react-docgen-typescript: 2.4.0(typescript@6.0.2)
       react-dom: 19.2.4(react@19.2.4)
       storybook: 10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@5.0.10)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
-  '@storybook/react@10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@5.9.3)':
+  '@storybook/react@10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))(typescript@6.0.2)':
     dependencies:
       '@storybook/global': 5.0.0
       '@storybook/react-dom-shim': 10.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6))
       react: 19.2.4
       react-docgen: 8.0.3
-      react-docgen-typescript: 2.4.0(typescript@5.9.3)
+      react-docgen-typescript: 2.4.0(typescript@6.0.2)
       react-dom: 19.2.4(react@19.2.4)
       storybook: 10.2.11(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
@@ -18496,59 +18866,59 @@ snapshots:
       '@types/node': 25.5.0
     optional: true
 
-  '@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2))(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/parser': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
       '@typescript-eslint/scope-manager': 8.57.1
-      '@typescript-eslint/type-utils': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/type-utils': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
+      '@typescript-eslint/utils': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
       '@typescript-eslint/visitor-keys': 8.57.1
       eslint: 9.39.2(jiti@2.6.1)
       ignore: 7.0.5
       natural-compare: 1.4.0
-      ts-api-utils: 2.4.0(typescript@5.9.3)
-      typescript: 5.9.3
+      ts-api-utils: 2.4.0(typescript@6.0.2)
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2))(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/parser': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
       '@typescript-eslint/scope-manager': 8.57.1
-      '@typescript-eslint/type-utils': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/type-utils': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
+      '@typescript-eslint/utils': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
       '@typescript-eslint/visitor-keys': 8.57.1
       eslint: 9.39.4(jiti@2.6.1)
       ignore: 7.0.5
       natural-compare: 1.4.0
-      ts-api-utils: 2.4.0(typescript@5.9.3)
-      typescript: 5.9.3
+      ts-api-utils: 2.4.0(typescript@6.0.2)
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/parser@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.57.1
       '@typescript-eslint/types': 8.57.1
-      '@typescript-eslint/typescript-estree': 8.57.1(supports-color@10.2.2)(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.57.1(typescript@6.0.2)
       '@typescript-eslint/visitor-keys': 8.57.1
       debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.39.2(jiti@2.6.1)
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/parser@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.57.1
       '@typescript-eslint/types': 8.57.1
-      '@typescript-eslint/typescript-estree': 8.57.1(supports-color@10.2.2)(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.57.1(typescript@6.0.2)
       '@typescript-eslint/visitor-keys': 8.57.1
       debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.39.4(jiti@2.6.1)
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
@@ -18561,6 +18931,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@typescript-eslint/project-service@8.57.1(typescript@6.0.2)':
+    dependencies:
+      '@typescript-eslint/tsconfig-utils': 8.57.1(typescript@6.0.2)
+      '@typescript-eslint/types': 8.57.1
+      debug: 4.4.3(supports-color@10.2.2)
+      typescript: 6.0.2
+    transitivePeerDependencies:
+      - supports-color
+
   '@typescript-eslint/scope-manager@8.57.1':
     dependencies:
       '@typescript-eslint/types': 8.57.1
@@ -18570,27 +18949,31 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  '@typescript-eslint/type-utils@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/tsconfig-utils@8.57.1(typescript@6.0.2)':
+    dependencies:
+      typescript: 6.0.2
+
+  '@typescript-eslint/type-utils@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)':
     dependencies:
       '@typescript-eslint/types': 8.57.1
-      '@typescript-eslint/typescript-estree': 8.57.1(supports-color@10.2.2)(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.57.1(typescript@6.0.2)
+      '@typescript-eslint/utils': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
       debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.39.2(jiti@2.6.1)
-      ts-api-utils: 2.4.0(typescript@5.9.3)
-      typescript: 5.9.3
+      ts-api-utils: 2.4.0(typescript@6.0.2)
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/type-utils@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/type-utils@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)':
     dependencies:
       '@typescript-eslint/types': 8.57.1
-      '@typescript-eslint/typescript-estree': 8.57.1(supports-color@10.2.2)(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.57.1(typescript@6.0.2)
+      '@typescript-eslint/utils': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
       debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.39.4(jiti@2.6.1)
-      ts-api-utils: 2.4.0(typescript@5.9.3)
-      typescript: 5.9.3
+      ts-api-utils: 2.4.0(typescript@6.0.2)
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
@@ -18611,25 +18994,40 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/typescript-estree@8.57.1(typescript@6.0.2)':
+    dependencies:
+      '@typescript-eslint/project-service': 8.57.1(typescript@6.0.2)
+      '@typescript-eslint/tsconfig-utils': 8.57.1(typescript@6.0.2)
+      '@typescript-eslint/types': 8.57.1
+      '@typescript-eslint/visitor-keys': 8.57.1
+      debug: 4.4.3(supports-color@10.2.2)
+      minimatch: 10.2.4
+      semver: 7.7.4
+      tinyglobby: 0.2.15
+      ts-api-utils: 2.4.0(typescript@6.0.2)
+      typescript: 6.0.2
+    transitivePeerDependencies:
+      - supports-color
+
+  '@typescript-eslint/utils@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.2(jiti@2.6.1))
       '@typescript-eslint/scope-manager': 8.57.1
       '@typescript-eslint/types': 8.57.1
-      '@typescript-eslint/typescript-estree': 8.57.1(supports-color@10.2.2)(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.57.1(typescript@6.0.2)
       eslint: 9.39.2(jiti@2.6.1)
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)':
+  '@typescript-eslint/utils@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4(jiti@2.6.1))
       '@typescript-eslint/scope-manager': 8.57.1
       '@typescript-eslint/types': 8.57.1
-      '@typescript-eslint/typescript-estree': 8.57.1(supports-color@10.2.2)(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.57.1(typescript@6.0.2)
       eslint: 9.39.4(jiti@2.6.1)
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
@@ -19257,9 +19655,9 @@ snapshots:
 
   abbrev@4.0.0: {}
 
-  abitype@1.2.3(typescript@5.9.3)(zod@4.3.6):
+  abitype@1.2.3(typescript@6.0.2)(zod@4.3.6):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
       zod: 4.3.6
 
   abort-controller@3.0.0:
@@ -20031,11 +20429,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  chromium-bidi@13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@5.9.3)(utf-8-validate@6.0.6):
+  chromium-bidi@13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@6.0.2)(utf-8-validate@6.0.6):
     dependencies:
       devtools-protocol: 0.0.1566079
       mitt: 3.0.1
-      puppeteer: 24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      puppeteer: 24.37.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
       zod: 3.25.76
     transitivePeerDependencies:
       - bare-abort-controller
@@ -20328,14 +20726,14 @@ snapshots:
       yaml: 1.10.3
     optional: true
 
-  cosmiconfig@9.0.0(typescript@5.9.3):
+  cosmiconfig@9.0.0(typescript@6.0.2):
     dependencies:
       env-paths: 2.2.1
       import-fresh: 3.3.1
       js-yaml: 4.1.1
       parse-json: 5.2.0
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   cpy@11.1.0:
     dependencies:
@@ -22703,15 +23101,15 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  jest-cli@30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3)):
+  jest-cli@30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2)):
     dependencies:
-      '@jest/core': 30.3.0(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3))
+      '@jest/core': 30.3.0(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2))
       '@jest/test-result': 30.3.0
       '@jest/types': 30.3.0
       chalk: 4.1.2
       exit-x: 0.2.2
       import-local: 3.2.0
-      jest-config: 30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3))
+      jest-config: 30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2))
       jest-util: 30.3.0
       jest-validate: 30.3.0
       yargs: 17.7.2
@@ -22722,7 +23120,7 @@ snapshots:
       - supports-color
       - ts-node
 
-  jest-config@30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3)):
+  jest-config@30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2)):
     dependencies:
       '@babel/core': 7.29.0
       '@jest/get-type': 30.1.0
@@ -22750,7 +23148,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.5.0
       esbuild-register: 3.6.0(esbuild@0.27.4)
-      ts-node: 10.9.2(@types/node@25.5.0)(typescript@5.9.3)
+      ts-node: 10.9.2(@types/node@25.5.0)(typescript@6.0.2)
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
@@ -23083,12 +23481,12 @@ snapshots:
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
-  jest@30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3)):
+  jest@30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2)):
     dependencies:
-      '@jest/core': 30.3.0(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3))
+      '@jest/core': 30.3.0(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2))
       '@jest/types': 30.3.0
       import-local: 3.2.0
-      jest-cli: 30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3))
+      jest-cli: 30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2))
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -25134,7 +25532,7 @@ snapshots:
       object-keys: 1.1.1
       safe-push-apply: 1.0.0
 
-  ox@0.14.5(typescript@5.9.3)(zod@4.3.6):
+  ox@0.14.5(typescript@6.0.2)(zod@4.3.6):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
       '@noble/ciphers': 1.3.0
@@ -25142,24 +25540,24 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.6)
+      abitype: 1.2.3(typescript@6.0.2)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - zod
 
-  ox@0.6.9(typescript@5.9.3)(zod@4.3.6):
+  ox@0.6.9(typescript@6.0.2)(zod@4.3.6):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.6)
+      abitype: 1.2.3(typescript@6.0.2)(zod@4.3.6)
       eventemitter3: 5.0.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - zod
 
@@ -25772,7 +26170,7 @@ snapshots:
   puppeteer-core@24.37.0(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       '@puppeteer/browsers': 2.12.0
-      chromium-bidi: 13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      chromium-bidi: 13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@6.0.2)(utf-8-validate@6.0.6)
       debug: 4.4.3(supports-color@10.2.2)
       devtools-protocol: 0.0.1566079
       typed-query-selector: 2.12.0
@@ -25786,11 +26184,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer@24.37.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6):
+  puppeteer@24.37.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6):
     dependencies:
       '@puppeteer/browsers': 2.12.0
-      chromium-bidi: 13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@5.9.3)(utf-8-validate@6.0.6)
-      cosmiconfig: 9.0.0(typescript@5.9.3)
+      chromium-bidi: 13.1.0(bufferutil@4.1.0)(devtools-protocol@0.0.1566079)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      cosmiconfig: 9.0.0(typescript@6.0.2)
       devtools-protocol: 0.0.1566079
       puppeteer-core: 24.37.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       typed-query-selector: 2.12.0
@@ -25884,9 +26282,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  react-docgen-typescript@2.4.0(typescript@5.9.3):
+  react-docgen-typescript@2.4.0(typescript@6.0.2):
     dependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   react-docgen@8.0.2:
     dependencies:
@@ -27219,24 +27617,32 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
+  ts-api-utils@2.4.0(typescript@6.0.2):
+    dependencies:
+      typescript: 6.0.2
+
   ts-dedent@2.2.0: {}
 
   ts-essentials@10.1.1(typescript@5.9.3):
     optionalDependencies:
       typescript: 5.9.3
 
-  ts-jest@29.4.6(@babel/core@7.29.0)(@jest/transform@30.3.0)(@jest/types@30.3.0)(babel-jest@30.3.0(@babel/core@7.29.0))(esbuild@0.27.4)(jest-util@30.3.0)(jest@30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3)))(typescript@5.9.3):
+  ts-essentials@10.1.1(typescript@6.0.2):
+    optionalDependencies:
+      typescript: 6.0.2
+
+  ts-jest@29.4.6(@babel/core@7.29.0)(@jest/transform@30.3.0)(@jest/types@30.3.0)(babel-jest@30.3.0(@babel/core@7.29.0))(esbuild@0.27.4)(jest-util@30.3.0)(jest@30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2)))(typescript@6.0.2):
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       handlebars: 4.7.8
-      jest: 30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3))
+      jest: 30.3.0(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))(ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2))
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
       semver: 7.7.3
       type-fest: 4.41.0
-      typescript: 5.9.3
+      typescript: 6.0.2
       yargs-parser: 21.1.1
     optionalDependencies:
       '@babel/core': 7.29.0
@@ -27264,9 +27670,32 @@ snapshots:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
+  ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.2):
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.12
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.4
+      '@types/node': 25.5.0
+      acorn: 8.16.0
+      acorn-walk: 8.3.4
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.4
+      make-error: 1.3.6
+      typescript: 6.0.2
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+    optional: true
+
   tsconfck@3.1.6(typescript@5.9.3):
     optionalDependencies:
       typescript: 5.9.3
+
+  tsconfck@3.1.6(typescript@6.0.2):
+    optionalDependencies:
+      typescript: 6.0.2
 
   tsconfig-paths@3.15.0:
     dependencies:
@@ -27366,29 +27795,31 @@ snapshots:
 
   typed-query-selector@2.12.0: {}
 
-  typescript-eslint@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3):
+  typescript-eslint@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.57.1(@typescript-eslint/parser@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/parser': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/typescript-estree': 8.57.1(supports-color@10.2.2)(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/eslint-plugin': 8.57.1(@typescript-eslint/parser@8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2))(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
+      '@typescript-eslint/parser': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
+      '@typescript-eslint/typescript-estree': 8.57.1(typescript@6.0.2)
+      '@typescript-eslint/utils': 8.57.1(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
       eslint: 9.39.2(jiti@2.6.1)
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
-  typescript-eslint@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3):
+  typescript-eslint@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.57.1(@typescript-eslint/parser@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/parser': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/typescript-estree': 8.57.1(supports-color@10.2.2)(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/eslint-plugin': 8.57.1(@typescript-eslint/parser@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2))(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
+      '@typescript-eslint/parser': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
+      '@typescript-eslint/typescript-estree': 8.57.1(typescript@6.0.2)
+      '@typescript-eslint/utils': 8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
       eslint: 9.39.4(jiti@2.6.1)
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
   typescript@5.9.3: {}
+
+  typescript@6.0.2: {}
 
   ufo@1.6.3: {}
 
@@ -27633,9 +28064,20 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  use-fireproof@0.24.13(@adviser/cement@0.5.34(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6):
+  use-fireproof@0.24.13(@adviser/cement@0.5.33(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6):
     dependencies:
-      '@fireproof/use-fireproof': 0.24.13(@adviser/cement@0.5.34(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@fireproof/use-fireproof': 0.24.13(@adviser/cement@0.5.33(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - '@adviser/cement'
+      - bufferutil
+      - react
+      - react-dom
+      - typescript
+      - utf-8-validate
+
+  use-fireproof@0.24.13(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6):
+    dependencies:
+      '@fireproof/use-fireproof': 0.24.13(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - '@adviser/cement'
       - bufferutil
@@ -27676,9 +28118,9 @@ snapshots:
       '@types/istanbul-lib-coverage': 2.0.6
       convert-source-map: 2.0.0
 
-  valibot@1.2.0(typescript@5.9.3):
+  valibot@1.2.0(typescript@6.0.2):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   validate-npm-package-license@3.0.4:
     dependencies:
@@ -27703,35 +28145,35 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  viem@2.47.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@4.3.6):
+  viem@2.47.4(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)(zod@4.3.6):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.6)
+      abitype: 1.2.3(typescript@6.0.2)(zod@4.3.6)
       isows: 1.0.7(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))
-      ox: 0.14.5(typescript@5.9.3)(zod@4.3.6)
+      ox: 0.14.5(typescript@6.0.2)(zod@4.3.6)
       ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
       - zod
 
-  viem@2.47.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6):
+  viem@2.47.4(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)(zod@4.3.6):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.6)
+      abitype: 1.2.3(typescript@6.0.2)(zod@4.3.6)
       isows: 1.0.7(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
-      ox: 0.14.5(typescript@5.9.3)(zod@4.3.6)
+      ox: 0.14.5(typescript@6.0.2)(zod@4.3.6)
       ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -27768,6 +28210,16 @@ snapshots:
       debug: 4.4.3(supports-color@10.2.2)
       globrex: 0.1.2
       tsconfck: 3.1.6(typescript@5.9.3)
+      vite: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
+  vite-tsconfig-paths@6.1.1(typescript@6.0.2)(vite@8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)):
+    dependencies:
+      debug: 4.4.3(supports-color@10.2.2)
+      globrex: 0.1.2
+      tsconfck: 3.1.6(typescript@6.0.2)
       vite: 8.0.0(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
       - supports-color

@@ -31,6 +31,6 @@
     "@fireproof/core-cli": "0.24.13",
     "@types/react": "~19.2.14",
     "@vitest/browser-playwright": "^4.1.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   }
 }

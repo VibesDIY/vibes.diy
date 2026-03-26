@@ -33,6 +33,6 @@
   "devDependencies": {
     "@fireproof/core-cli": "0.24.13",
     "@vitest/browser-playwright": "^4.1.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   }
 }
