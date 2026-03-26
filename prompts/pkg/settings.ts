@@ -3,6 +3,11 @@ export interface HistoryMessage {
   content: string;
 }
 
+export interface LlmChatMessage {
+  readonly role: "system" | "user" | "assistant";
+  readonly content: string | readonly { readonly type: string; readonly text: string }[];
+}
+
 /**
  * User settings for the application
  */
