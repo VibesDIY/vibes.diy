@@ -1,6 +1,5 @@
 {
   "name": "@vibes.diy/stories",
-  "private": true,
   "type": "module",
   "scripts": {
     "build": "core-cli tsc && storybook build",

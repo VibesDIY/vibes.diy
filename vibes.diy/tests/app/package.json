@@ -1,6 +1,5 @@
 {
-  "name": "vibes-diy-app-tests",
-  "private": true,
+  "name": "@vibes.diy/app-tests",
   "version": "0.2.0",
   "type": "module",
   "scripts": {
