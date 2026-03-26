@@ -5,8 +5,7 @@ Reverse proxy Cloudflare Worker sitting in front of vibes.diy. Supports cookie-b
 ## Architecture
 
 ```
-/.stable-entry/            → static HTML (from [assets])
-/.stable-entry/app.js      → static React app (from [assets])
+/.stable-entry/            → Vite-built React UI (from [assets])
 /.stable-entry/options.json → worker: returns available backend keys
 everything else            → worker: proxy to selected backend
 ```
@@ -15,6 +14,8 @@ everything else            → worker: proxy to selected backend
 
 - `BACKEND` — default backend URL (var in wrangler.toml)
 - `BACKENDS` — optional JSON mapping keys to URLs, e.g. `{"dev":"https://dev-v2.vibesdiy.net"}`
+
+Backend keys must match `/^[a-z0-9_-]+$/`.
 
 ## Backend selection
 
@@ -42,6 +43,7 @@ Visit `/.stable-entry/` for a browser UI to pick a backend.
 
 ```
 pnpm install
+pnpm run build
 npx wrangler dev
 ```
 
@@ -50,6 +52,14 @@ Create `.dev.vars` to test with BACKENDS:
 BACKENDS={"dev":"https://dev-v2.vibesdiy.net"}
 ```
 
+## Tests
+
+```
+pnpm test
+```
+
+20 pure function tests covering routing, config parsing, key validation, and cookie-based backend selection. No mocks.
+
 ## Verification
 
 ```
@@ -57,9 +67,6 @@ curl -s http://localhost:8787/.stable-entry/options.json
 # → {"keys":["dev"]}
 
 curl -s -o /dev/null -w "%{http_code}" http://localhost:8787/.stable-entry/
-# → 200
-
-curl -s -o /dev/null -w "%{http_code}" http://localhost:8787/.stable-entry/app.js
 # → 200
 
 curl -s -o /dev/null -w "%{http_code}" http://localhost:8787/
