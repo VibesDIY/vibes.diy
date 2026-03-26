@@ -7,7 +7,7 @@ import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { readFile } from "fs/promises";
 import { join } from "path";
-import tls from "tls";
+import * as tls from "tls";
 import { $, dotenv } from "zx";
 import { cmd_tsStream } from "./cmd-ts-stream.js";
 import { runSafely, subcommands } from "cmd-ts";
@@ -21,11 +21,11 @@ import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, WrapCmdTSMsg } from "./cmd-evento.js";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
 
-async function loadMkcertCA(): Promise<string[] | undefined> {
+async function loadMkcertCA(sthis: SuperThis): Promise<string[] | undefined> {
   const caRootRes = await $`mkcert -CAROOT`;
   const caFile = join(caRootRes.lines("\n\r")[0]?.trim(), "rootCA.pem");
   const caPem = await readFile(caFile);
-  return [...tls.rootCertificates, new TextDecoder().decode(caPem)];
+  return [...tls.rootCertificates, sthis.txt.decode(caPem)];
 }
 
 async function vibesDiyApiFactory(sthis: SuperThis, ca?: string[]) {
@@ -90,9 +90,9 @@ class OutputSelector implements EventoSendProvider<unknown, unknown, unknown> {
 }
 
 async function main(): Promise<number> {
-  const rCa = await exception2Result(() => loadMkcertCA());
-  const ca = rCa.isOk() ? rCa.Ok() : undefined;
   const sthis = ensureSuperThis();
+  const rCa = await exception2Result(() => loadMkcertCA(sthis));
+  const ca = rCa.isOk() ? rCa.Ok() : undefined;
 
   const env = dotenv.loadSafe(".dev.vars", ".env");
   sthis.env.sets({ ...env } as Record<string, string>);

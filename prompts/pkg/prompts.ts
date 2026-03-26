@@ -1,16 +1,11 @@
 // import { callAI, type Message, type CallAIOptions, Mocks } from "call-ai";
 
-import type { HistoryMessage, UserSettings } from "./settings.js";
+import type { LlmChatMessage, HistoryMessage, UserSettings } from "./settings.js";
 import { exception2Result, loadAsset, Result, KeyedResolvOnce } from "@adviser/cement";
 import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.js";
 
 // import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
-// Inlined from call-ai-v2 to avoid unpublished workspace dep
-interface ChatMessage {
-  readonly role: "system" | "user" | "assistant";
-  readonly content: string | readonly { readonly type: string; readonly text: string }[];
-}
 
 // Single source of truth for the default coding model used across the repo.
 export const DEFAULT_CODING_MODEL = "anthropic/claude-opus-4.5" as const;
@@ -112,7 +107,7 @@ interface LlmSelectionOptions {
   fetch?: typeof fetch;
 
   readonly callAi: {
-    ModuleAndOptionsSelection(msgs: ChatMessage[]): Promise<Result<string>>;
+    ModuleAndOptionsSelection(msgs: LlmChatMessage[]): Promise<Result<string>>;
   };
 
   // readonly getAuthToken?: () => Promise<string>;
@@ -157,7 +152,7 @@ async function selectLlmsAndOptions(
     history: history || [],
   };
 
-  const messages: ChatMessage[] = [
+  const messages: LlmChatMessage[] = [
     {
       role: "system",
       content: [

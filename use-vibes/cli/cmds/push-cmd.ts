@@ -75,7 +75,7 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
     ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqPush, ResEnsureAppSlug>
   ): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
-    if (!ectx.vibesDiyApiFactory) {
+    if (ectx.vibesDiyApiFactory === undefined) {
       return Result.Err("Not logged in. Run 'use-vibes login' first.");
     }
     const req = ctx.request.result as ReqPush;
