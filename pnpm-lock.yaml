@@ -893,8 +893,8 @@ importers:
         specifier: ^3.4.0
         version: 3.4.0
       three:
-        specifier: ^0.182.0
-        version: 0.182.0
+        specifier: ^0.183.2
+        version: 0.183.2
       use-vibes:
         specifier: workspace:*
         version: link:../../use-vibes/pkg
@@ -11629,8 +11629,8 @@ packages:
     resolution: {integrity: sha512-4iMVL6HAINXWf1ZKZjIPcz5wYaOdPhtO8ATvZ+Xqp3BTdaqtAwQkNmKORqcIo5YkQqGXq5cwfswDwMqqQNrpJA==}
     engines: {node: '>=20'}
 
-  three@0.182.0:
-    resolution: {integrity: sha512-GbHabT+Irv+ihI1/f5kIIsZ+Ef9Sl5A1Y7imvS5RQjWgtTPfPnZ43JmlYI7NtCRDK9zir20lQpfg8/9Yd02OvQ==}
+  three@0.183.2:
+    resolution: {integrity: sha512-di3BsL2FEQ1PA7Hcvn4fyJOlxRRgFYBpMTcyOgkwJIaDOdJMebEFPA+t98EvjuljDx4hNulAGwF6KIjtwI5jgQ==}
 
   throat@5.0.0:
     resolution: {integrity: sha512-fcwX4mndzpLQKBS1DVYhGAcYaYt7vsHNIvQV+WXMvnow5cgjPphq5CaayLaGsjRdSCKZFNGt7/GYAuXaNOiYCA==}
@@ -27091,7 +27091,7 @@ snapshots:
     dependencies:
       real-require: 0.2.0
 
-  three@0.182.0: {}
+  three@0.183.2: {}
 
   throat@5.0.0: {}
 
