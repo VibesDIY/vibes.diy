@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "Lightweight library for making AI API calls with streaming support",
   "type": "module",
+  "main": "./index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/VibesDIY/vibes.diy.git"
