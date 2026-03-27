@@ -130,4 +130,29 @@ describe("handleRequest", () => {
     const result = handleRequest(url, undefined, CTX_WITH_BACKENDS);
     expect(result).toEqual({ type: "proxy", targetUrl: "https://vibes.diy/path?foo=bar" });
   });
+
+  it("collapses leading slashes to prevent open redirect", () => {
+    const url = new URL("https://vibes.diy//evil.example?_backend=dev");
+    const result = handleRequest(url, undefined, CTX_WITH_BACKENDS);
+    expect(result.type).toBe("set-backend");
+    if (result.type === "set-backend") {
+      expect(result.redirect).toBe("/evil.example");
+      expect(result.redirect).not.toMatch(/^\/\//);
+    }
+  });
+
+  it("collapses multiple leading slashes in redirect", () => {
+    const url = new URL("https://vibes.diy////evil.example?_backend=dev");
+    const result = handleRequest(url, undefined, CTX_WITH_BACKENDS);
+    expect(result.type).toBe("set-backend");
+    if (result.type === "set-backend") {
+      expect(result.redirect).toBe("/evil.example");
+    }
+  });
+
+  it("collapses multiple slashes in proxy target path", () => {
+    const url = new URL("https://vibes.diy//evil.example");
+    const result = handleRequest(url, undefined, CTX_WITH_BACKENDS);
+    expect(result).toEqual({ type: "proxy", targetUrl: "https://vibes.diy/evil.example" });
+  });
 });

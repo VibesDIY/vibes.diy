@@ -61,7 +61,8 @@ export function handleRequest(url: URL, cookieValue: string | undefined, ctx: St
     : ctx.backend;
 
   url.searchParams.delete("_backend");
-  const cleanPath = url.pathname + url.search;
+  const safePath = url.pathname.replace(/\/\/+/g, "/");
+  const cleanPath = safePath + url.search;
 
   switch (true) {
     case url.pathname === "/.stable-entry/options.json":
@@ -129,7 +130,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const backendsResult = parseBackends(env.BACKENDS);
-    if (backendsResult.isErr()) {
+    if (backendsResult.isErr() && env.BACKENDS) {
       console.error("BACKENDS config error, serving BACKEND:", backendsResult.Err());
     }
     const ctx: StableEntryCtx = {
