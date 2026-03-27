@@ -24,8 +24,8 @@ import { pushCmd } from "./cmds/push-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
 import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
-import { cmdTsEvento, WrapCmdTSMsg } from "./cmd-evento.js";
-import { err, isErr } from "cmd-ts/dist/esm/Result.js";
+import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
+import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
 
 async function vibesDiyApiFactory(sthis: SuperThis) {
   const kb = await getKeyBag(sthis);
@@ -143,6 +143,20 @@ async function main(): Promise<number> {
       processStream(outputSelector.outputStream, async (wmsg) => {
         const msg = wmsg.result;
         switch (true) {
+          case isCmdProgress(msg): {
+            switch (msg.level) {
+              case "warn":
+                console.warn(msg.message);
+                break;
+              case "error":
+                console.error(msg.message);
+                break;
+              default:
+                console.log(msg.message);
+                break;
+            }
+            break;
+          }
           case isResEnsureUserSettings(msg): {
             console.log("UserId: ", msg.userId);
             console.log("Setting:");

@@ -21,6 +21,16 @@ export function isCmdTSMsg(u: unknown): u is CmdTSMsg {
 }
 export type WrapCmdTSMsg<T> = Omit<CmdTSMsg, "result"> & { result: T };
 
+export const CmdProgress = type({
+  type: "'cmd.progress'",
+  level: "'info'|'warn'|'error'",
+  message: "string",
+});
+export type CmdProgress = typeof CmdProgress.infer;
+export function isCmdProgress(u: unknown): u is CmdProgress {
+  return !(CmdProgress(u) instanceof type.errors);
+}
+
 export async function sendMsg<Q, S>(
   ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, Q, S>,
   result: S
@@ -30,6 +40,17 @@ export async function sendMsg<Q, S>(
     result,
   } satisfies WrapCmdTSMsg<S>);
   return Result.Ok(EventoResult.Continue);
+}
+
+export async function sendProgress<Q, S>(
+  ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, Q, S>,
+  level: CmdProgress["level"],
+  message: string,
+): Promise<void> {
+  await ctx.send.send(ctx, {
+    ...ctx.request,
+    result: { type: "cmd.progress", level, message } satisfies CmdProgress,
+  } satisfies WrapCmdTSMsg<CmdProgress>);
 }
 
 export function cmdTsEvento() {
