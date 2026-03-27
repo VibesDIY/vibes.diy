@@ -10,6 +10,6 @@ jobs:
 
     if: ${{ !contains(github.event.pull_request.title, '[skip ci]') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./actions/base
