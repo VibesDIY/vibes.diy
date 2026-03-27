@@ -10,13 +10,13 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.34",
-    "@fireproof/core-types-protocols-cloud": "^0.24.13",
+    "@fireproof/core-types-protocols-cloud": "^0.24.14",
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/vibe-types": "workspace:*",
     "arktype": "^2.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "use-fireproof": "0.24.13"
+    "use-fireproof": "0.24.14"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
