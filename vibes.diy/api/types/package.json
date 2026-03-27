@@ -12,15 +12,15 @@
     "@adviser/cement": "^0.5.34",
     "@ark/json-schema": "^0.0.4",
     "@cloudflare/workers-types": "^4.20260317.1",
-    "@fireproof/core-runtime": "^0.24.14",
-    "@fireproof/core-types-base": "^0.24.14",
-    "@fireproof/core-types-protocols-cloud": "^0.24.14",
-    "@fireproof/core-types-protocols-dashboard": "^0.24.14",
+    "@fireproof/core-runtime": "^0.24.15",
+    "@fireproof/core-types-base": "^0.24.15",
+    "@fireproof/core-types-protocols-cloud": "^0.24.15",
+    "@fireproof/core-types-protocols-dashboard": "^0.24.15",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "arktype": "^2.2.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.14"
+    "@fireproof/core-cli": "0.24.15"
   },
   "repository": {
     "type": "git",
