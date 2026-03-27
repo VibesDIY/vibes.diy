@@ -2,6 +2,7 @@
   "name": "vibes-diy",
   "version": "0.0.0",
   "type": "module",
+  "main": "./index.js",
   "description": "Transform any DOM element into an AI-powered micro-app",
   "bin": {
     "vibes-diy": "cli/run.js",

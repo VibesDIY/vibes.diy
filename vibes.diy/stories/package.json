@@ -1,6 +1,7 @@
 {
   "name": "@vibes.diy/stories",
   "type": "module",
+  "main": "./index.js",
   "scripts": {
     "build": "core-cli tsc && storybook build",
     "dev": "storybook dev -p 6006",
