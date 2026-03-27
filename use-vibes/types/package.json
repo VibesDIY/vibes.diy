@@ -2,6 +2,7 @@
   "name": "@vibes.diy/use-vibes-types",
   "version": "0.0.0",
   "type": "module",
+  "main": "./index.js",
   "description": "Core components and utilities for use-vibes (internal workspace package)",
   "scripts": {
     "build": "core-cli tsc",

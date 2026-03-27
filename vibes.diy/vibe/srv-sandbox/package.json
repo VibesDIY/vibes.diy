@@ -2,6 +2,7 @@
   "name": "@vibes.diy/vibe-srv-sandbox",
   "version": "0.0.0",
   "type": "module",
+  "main": "./index.js",
   "scripts": {
     "build": "core-cli tsc",
     "pack": "core-cli build --doPack",

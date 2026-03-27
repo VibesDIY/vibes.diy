@@ -2,6 +2,7 @@
   "name": "use-vibes",
   "version": "0.0.0",
   "type": "module",
+  "main": "./index.js",
   "description": "Transform any DOM element into an AI-powered micro-app",
   "scripts": {
     "build": "core-cli tsc",

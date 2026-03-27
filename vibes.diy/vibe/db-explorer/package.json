@@ -2,6 +2,7 @@
   "name": "@vibes.diy/vibe-db-explorer",
   "version": "0.0.0",
   "type": "module",
+  "main": "./index.js",
   "sideEffects": false,
   "exports": {
     "./": {
