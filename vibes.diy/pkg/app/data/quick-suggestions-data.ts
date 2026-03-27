@@ -100,20 +100,20 @@ export const quickSuggestions: Suggestion[] = [
     text: "Generate a wildcard app, something I wouldn't expect.",
   },
   {
-    label: "Party Planner",
-    text: "Create a party planning app with guest list, RSVP tracking, and budget calculator.",
+    label: "Event Tracker",
+    text: "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.",
   },
   {
-    label: "Random App",
-    text: "Create a random app idea and build it automatically.",
+    label: "History Quest",
+    text: "Create a history RPG where the AI writes a short scene set in a real era, then gives you 3 choices. Each choice leads to a new scene. Track your score.",
   },
   {
     label: "Jam Session",
-    text: "Create a music collaboration tool with chord progressions and shared bpm and drum machine.",
+    text: "Create a drum machine with tempo control, 8 pattern slots, and a step sequencer grid.",
   },
 ];
 
 // Named exports for specific prompts used in the create page
-export const partyPlannerPrompt = "Create a party planning app with guest list, RSVP tracking, and budget calculator.";
-export const progressTrackerPrompt = "Create a random app idea and build it automatically.";
-export const jamSessionPrompt = "Create a music collaboration tool with chord progressions and shared bpm and drum machine.";
+export const eventTrackerPrompt = "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.";
+export const historyQuestPrompt = "Create a history RPG where the AI writes a short scene set in a real era, then gives you 3 choices. Each choice leads to a new scene. Track your score.";
+export const jamSessionPrompt = "Create a drum machine with tempo control, 8 pattern slots, and a step sequencer grid.";
