@@ -25,26 +25,29 @@ export function cmd_tsStream(): CliStream<HandlerArgsType, HandlerReturnType> {
     },
     enqueue: ((wrappedFunc: (a: unknown) => unknown) => {
       return (args: unknown) => {
-        const p = Promise.resolve(wrappedFunc(args)).then((result) => {
-          const defaultArgs = args as {
-            apiUrl?: string;
-            json: boolean;
-            text: boolean;
-          };
-          const cmdTsMsg = {
-            type: "msg.cmd-ts",
-            cmdTs: {
-              raw: args,
-              apiUrl: defaultArgs.apiUrl ?? "no-where",
-              outputFormat: defaultArgs.json && !defaultArgs.text ? "json" : "text",
-            },
-            result,
-          } satisfies WrapCmdTSMsg<unknown>;
-          // console.log('enqueue', cmdTsMsg)
-          return writer.write(cmdTsMsg);
-        }).then(() => undefined).finally(() => {
-          pending.delete(p);
-        });
+        const p = Promise.resolve(wrappedFunc(args))
+          .then((result) => {
+            const defaultArgs = args as {
+              apiUrl?: string;
+              json: boolean;
+              text: boolean;
+            };
+            const cmdTsMsg = {
+              type: "msg.cmd-ts",
+              cmdTs: {
+                raw: args,
+                apiUrl: defaultArgs.apiUrl ?? "no-where",
+                outputFormat: defaultArgs.json && !defaultArgs.text ? "json" : "text",
+              },
+              result,
+            } satisfies WrapCmdTSMsg<unknown>;
+            // console.log('enqueue', cmdTsMsg)
+            return writer.write(cmdTsMsg);
+          })
+          .then(() => undefined)
+          .finally(() => {
+            pending.delete(p);
+          });
         pending.add(p);
         return undefined;
       };

@@ -45,7 +45,7 @@ export async function sendMsg<Q, S>(
 export async function sendProgress<Q, S>(
   ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, Q, S>,
   level: CmdProgress["level"],
-  message: string,
+  message: string
 ): Promise<void> {
   await ctx.send.send(ctx, {
     ...ctx.request,
