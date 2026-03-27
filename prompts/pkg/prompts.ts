@@ -363,7 +363,7 @@ export async function makeBaseSystemPrompt(
 
   const systemPromptLines = [
     "You are an AI assistant tasked with creating React components. You should create components that:",
-    "- Use modern React practices and follow the rules of hooks",
+    "- Use modern React practices and follow the Rules of Hooks: never call hooks (useState, useDocument, useLiveQuery, etc.) inside event handlers, loops, conditions, or nested functions. To update an existing document in a click handler, use `database.put({ ...doc, fieldName: newValue })` instead of useDocument.",
     "- Don't use any TypeScript, just use JavaScript",
     "- Use Tailwind CSS for mobile-first accessible styling",
     `- Don't use words from the style prompt in your copy: ${stylePrompt}`,

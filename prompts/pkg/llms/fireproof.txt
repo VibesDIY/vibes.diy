@@ -99,6 +99,20 @@ For form-based creation flows, use `submit`:
 
 When you call submit, the document is reset, so if you didn't provide an `_id` then you can use the form to create a stream of new documents as in the basic example above.
 
+### Updating Documents in Event Handlers
+
+To update an existing document from a click handler or callback, use `database.put()` directly. Never call `useDocument` inside an event handler — that violates React's Rules of Hooks.
+
+```js
+// ✅ Correct — use database.put() in handlers
+onClick={() => database.put({ ...doc, favorite: !doc.favorite })}
+
+// ❌ Wrong — never call hooks inside handlers
+function toggleFavorite(id) {
+  const { doc, save } = useDocument(() => id) // BREAKS Rules of Hooks
+}
+```
+
 ### Query Data
 
 Data is queried by sorted indexes defined by the application. Sort by strings, numbers, or booleans, as well as arrays for grouping. Use numbers when possible for sorting continuous data.
