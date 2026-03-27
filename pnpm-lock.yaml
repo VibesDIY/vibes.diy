@@ -1172,6 +1172,9 @@ importers:
       '@fireproof/core':
         specifier: 0.24.13
         version: 0.24.13(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-cli':
+        specifier: 0.24.13
+        version: 0.24.13(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@fireproof/core-device-id':
         specifier: 0.24.13
         version: 0.24.13(typescript@6.0.2)
