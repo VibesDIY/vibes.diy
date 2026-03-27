@@ -109,7 +109,7 @@ onClick={() => database.put({ ...doc, favorite: !doc.favorite })}
 
 // ❌ Wrong — never call hooks inside handlers
 function toggleFavorite(id) {
-  const { doc, save } = useDocument(() => id) // BREAKS Rules of Hooks
+  const { doc, save } = useDocument({ _id: id }) // BREAKS Rules of Hooks
 }
 ```
 

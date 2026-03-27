@@ -302,7 +302,7 @@ async function injectSystemPrompt(
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
       dependenciesUserOverride: true,
-      dependencies: ["callai", "image-gen"],
+      dependencies: ["fireproof", "callai", "image-gen"],
       fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
         const promptTxtUrl = BuildURI.from(vctx.params.pkgRepos.workspace)
           .appendRelative("@vibes.diy/prompts")
