@@ -1,4 +1,4 @@
-import { command, option, string } from "cmd-ts";
+import { command, flag, option, string } from "cmd-ts";
 import { readdir, readFile } from "fs/promises";
 import { basename, extname, join } from "path";
 import {
@@ -14,7 +14,7 @@ import { type } from "arktype";
 import { resEnsureAppSlug, ResEnsureAppSlug } from "@vibes.diy/api-types";
 import type { VibeFile } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
-import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
+import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 
 const CODE_EXTENSIONS = new Set(["jsx", "js", "ts", "tsx"]);
 const ALLOWED_EXTENSIONS = new Set([...CODE_EXTENSIONS, "css", "html", "json", "md", "txt", "svg"]);
@@ -58,7 +58,7 @@ export function isReqPush(obj: unknown): obj is ReqPush {
 //   return !(resEnsureAppSlug(obj) instanceof type.errors);
 // }
 
-const PushRawArgs = type({ mode: "string", appSlug: "string" });
+const PushRawArgs = type({ mode: "string", appSlug: "string", autoAllow: "boolean" });
 
 export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsureAppSlug> = {
   hash: "use-vibes.cli.push",
@@ -112,6 +112,22 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
     if (result instanceof type.errors) {
       return Result.Err(`type mismatch: ${result.summary}`);
     }
+
+    // Enable requests on every push, with auto-allow controlled by flag
+    if (userSlug) {
+      const rSettings = await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        request: { enable: true, autoAcceptViewRequest: rRaw.autoAllow },
+      });
+      if (rSettings.isErr()) {
+        await sendProgress(ctx, "warn", `Warning: failed to update app settings: ${String(rSettings.Err())}`);
+      } else {
+        const autoAllow = rSettings.Ok().settings.entry.enableRequest?.autoAcceptViewRequest;
+        await sendProgress(ctx, "info", `Requests enabled${autoAllow ? " (auto-allow)" : ""}`);
+      }
+    }
+
     return sendMsg(ctx, result);
   },
 };
@@ -136,6 +152,10 @@ export function pushCmd(ctx: CliCtx) {
         type: string,
         defaultValue: () => "",
         defaultValueIsSerializable: true,
+      }),
+      autoAllow: flag({
+        long: "auto-allow",
+        description: "Auto-accept database sharing view requests",
       }),
     },
     handler: ctx.cliStream.enqueue((_args) => {

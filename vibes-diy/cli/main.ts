@@ -182,8 +182,8 @@ async function main(): Promise<number> {
           case isResEnsureAppSlugOk(msg): {
             const apiUrl = wmsg.cmdTs.apiUrl;
             const apiOrigin = BuildURI.from(apiUrl).pathname("/").toString().replace(/\/$/, "");
-            const vibeUrl = `${apiOrigin}/vibe/${msg.userSlug ?? "unknown"}/${msg.env.appSlug ?? "unknown"}`;
-            console.log(`Deployed: ${msg.env.userSlug ?? "unknown"}/${msg.env.appSlug ?? "unknown"}`);
+            const vibeUrl = `${apiOrigin}/vibe/${msg.userSlug}/${msg.appSlug}`;
+            console.log(`Deployed: ${msg.userSlug}/${msg.appSlug}`);
             console.log(`URL: ${vibeUrl}`);
             break;
           }
