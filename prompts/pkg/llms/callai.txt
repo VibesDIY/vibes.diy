@@ -9,14 +9,28 @@ By default the function returns a Promise that resolves to the complete response
 ```javascript
 import { callAI } from 'call-ai';
 
-// Default behavior - returns a Promise<string>
 const response = await callAI("Write a haiku");
 console.log(response); // Complete response text
 ```
 
+## Streaming Mode
+
+Set `stream: true` to receive the response incrementally. Each chunk contains only the new text since the last chunk, so accumulate with `+=`:
+
+```javascript
+import { callAI } from 'call-ai';
+
+const generator = await callAI("Write an epic poem", { stream: true });
+let full = '';
+for await (const chunk of generator) {
+  full += chunk;
+  console.log(full); // Append each chunk to build the full response
+}
+```
+
 ## JSON Schema Responses
 
-To get structured JSON responses, provide a schema in the options:
+Provide a schema to get structured JSON responses:
 
 ```javascript
 import { callAI } from 'call-ai';
@@ -33,17 +47,16 @@ const todoResponse = await callAI("Give me a todo list for learning React", {
   }
 });
 const todoData = JSON.parse(todoResponse);
-console.log(todoData.todos); // Array of todo items
+console.log(todoData.todos);
 ```
 
-### Schema Structure Recommendations
+When streaming with a schema, accumulate chunks the same way and parse after the loop completes.
 
-1. **Flat schemas perform better across all models**. If you need maximum compatibility, avoid deeply nested structures.
+### Schema Tips
 
-2. **Field names matter**. Some models have preferences for certain property naming patterns:
-   - Use simple, common naming patterns like `name`, `type`, `items`, `price`
-   - Avoid deeply nested object hierarchies (more than 2 levels deep)
-   - Keep array items simple (strings or flat objects)
+- Flat schemas perform better across all models. Avoid nesting deeper than 2 levels.
+- Use simple property names like `name`, `type`, `items`, `price`.
+- Keep array items simple (strings or flat objects).
 
 ## Items with properties
 
@@ -70,24 +83,7 @@ const demoData = JSON.parse(response);
 console.log(demoData.items); // Array of item objects
 ```
 
-## Streaming Mode
-
-For text responses you want to display incrementally, set `stream: true`. This returns an AsyncGenerator that yields chunks of text as they arrive:
-
-```javascript
-import { callAI } from 'call-ai';
-
-const generator = await callAI("Write an epic poem", { stream: true });
-let full = '';
-for await (const chunk of generator) {
-  full += chunk;
-  console.log(full); // Append each chunk to build the full response
-}
-```
-
 ## Specifying a Model
-
-By default, the function uses `openrouter/auto` (automatic model selection). You can specify a different model:
 
 ```javascript
 import { callAI } from 'call-ai';
@@ -98,9 +94,11 @@ const response = await callAI(
 );
 ```
 
+Default is `openrouter/auto` (automatic model selection).
+
 ## Message History
 
-For multi-turn conversations, you can pass an array of messages:
+For multi-turn conversations, pass an array of messages:
 
 ```javascript
 import { callAI } from 'call-ai';
@@ -108,32 +106,21 @@ import { callAI } from 'call-ai';
 const messages = [
   { role: "system", content: "You are a helpful coding assistant." },
   { role: "user", content: "How do I use React hooks?" },
-  { role: "assistant", content: "React hooks are functions that let you use state and other React features in functional components..." },
+  { role: "assistant", content: "React hooks let you use state in functional components..." },
   { role: "user", content: "Can you show me an example of useState?" }
 ];
 
 const response = await callAI(messages);
-console.log(response);
 
-// To continue the conversation, add the new response and send again
+// Continue the conversation
 messages.push({ role: "assistant", content: response });
 messages.push({ role: "user", content: "What about useEffect?" });
-
 const nextResponse = await callAI(messages);
 ```
 
-## Recommended Models
-
-| Model | Best For | Speed vs Quality |
-|-------|----------|------------------|
-| `openrouter/auto` | Default, automatically selects | Adaptive |
-| `openai/gpt-4o-mini` | data generation | Fast, good quality |
-| `anthropic/claude-3-haiku` | Cost-effective | Fast, good quality |
-| `openai/gpt-4o` | Best overall quality | Medium speed, highest quality |
-| `anthropic/claude-3-opus` | Complex reasoning | Slower, highest quality |
-| `mistralai/mistral-large` | Open weights alternative | Good balance |
-
 ## Error Handling
+
+Errors are thrown as standard Error objects with extra properties. Works the same for both streaming and non-streaming:
 
 ```javascript
 import { callAI } from 'call-ai';
@@ -143,43 +130,31 @@ try {
   console.log(response);
 } catch (error) {
   console.error("API error:", error.message);
-  console.error("Status code:", error.status);
-  console.error("Error type:", error.errorType);
-  console.error("Error details:", error.details);
+  console.error("Status:", error.status);
+  console.error("Type:", error.errorType);
 }
 ```
 
-## Image Recognition Example
+## Image Recognition
 
-Call-AI supports image recognition using multimodal models like GPT-4o. You can pass both text and image content to analyze images in the browser:
+Pass image content alongside text using multimodal models:
 
 ```javascript
 import { callAI } from 'call-ai';
 
 async function analyzeImage(imageFile, prompt = 'Describe this image in detail') {
-  const dataUrl = await fileToDataUrl(imageFile);
-
-  const content = [
-    { type: 'text', text: prompt },
-    { type: 'image_url', image_url: { url: dataUrl } }
-  ];
-
-  const result = await callAI(
-    [{ role: 'user', content }],
-    {
-      model: 'openai/gpt-4o-2024-08-06',
-      apiKey: window.CALLAI_API_KEY,
-    }
-  );
-
-  return result;
-}
-
-async function fileToDataUrl(file) {
-  return new Promise((resolve) => {
+  const dataUrl = await new Promise((resolve) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(imageFile);
   });
+
+  return await callAI(
+    [{ role: 'user', content: [
+      { type: 'text', text: prompt },
+      { type: 'image_url', image_url: { url: dataUrl } }
+    ]}],
+    { model: 'openai/gpt-4o-2024-08-06' }
+  );
 }
 ```

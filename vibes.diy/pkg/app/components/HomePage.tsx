@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import ChatInput, { ChatInputRef } from "./ChatInput.js";
 import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
-import { partyPlannerPrompt, progressTrackerPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
+import { eventTrackerPrompt, historyQuestPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useNavigate } from "react-router";
 import { BuildURI } from "@adviser/cement";
@@ -79,11 +79,11 @@ export default function HomePage() {
 
             {/* Prompt suggestions section */}
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <VibesButton variant="blue" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(partyPlannerPrompt)}>
-                Party Planner
+              <VibesButton variant="blue" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(eventTrackerPrompt)}>
+                Event Tracker
               </VibesButton>
-              <VibesButton variant="red" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(progressTrackerPrompt)}>
-                Random App
+              <VibesButton variant="red" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(historyQuestPrompt)}>
+                History Quest
               </VibesButton>
               <VibesButton variant="yellow" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(jamSessionPrompt)}>
                 Jam Session
