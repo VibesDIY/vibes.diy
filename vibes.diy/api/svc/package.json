@@ -5,6 +5,8 @@
   "main": "./index.js",
   "scripts": {
     "build": "core-cli tsc",
+    "inspect:db": "tsx ./usage-report/inspect-db.ts",
+    "inspect:db-report": "tsx ./usage-report/inspect-db-report.ts",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build"
   },
@@ -49,7 +51,8 @@
     "@types/react-dom": "^19.2.3",
     "@types/semver": "^7.7.1",
     "@types/ws": "^8.18.1",
-    "semver": "^7.7.4"
+    "semver": "^7.7.4",
+    "tsx": "^4.21.0"
   },
   "repository": {
     "type": "git",
