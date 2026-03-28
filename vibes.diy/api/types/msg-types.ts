@@ -605,7 +605,17 @@ export function isUserSettingSharing(obj: unknown): obj is typeof userSettingSha
   return !(userSettingShareing(obj) instanceof type.errors);
 }
 
-export const userSettingItem = userSettingShareing;
+export const userSettingModel = type({
+  type: "'model'",
+  "codegenModel?": "string",
+  "runtimeModel?": "string",
+});
+export function isUserSettingModel(obj: unknown): obj is typeof userSettingModel.infer {
+  return !(userSettingModel(obj) instanceof type.errors);
+}
+export type UserSettingModel = typeof userSettingModel.infer;
+
+export const userSettingItem = userSettingShareing.or(userSettingModel);
 
 export type UserSettingItem = typeof userSettingItem.infer;
 
@@ -686,22 +696,22 @@ export function isReqEnsureAppSettingsTitle(obj: unknown): obj is ReqEnsureAppSe
   return !(reqEnsureAppSettingsTitle(obj) instanceof type.errors);
 }
 
-export const reqEnsureAppSettingsApp = type({
-  app: AIParams.partial(),
+export const reqEnsureAppSettingsRuntime = type({
+  runtime: AIParams.partial(),
 }).and(reqEnsureAppSettingsBase);
 
-export type ReqEnsureAppSettingsApp = typeof reqEnsureAppSettingsApp.infer;
-export function isReqEnsureAppSettingsApp(obj: unknown): obj is ReqEnsureAppSettingsApp {
-  return !(reqEnsureAppSettingsApp(obj) instanceof type.errors);
+export type ReqEnsureAppSettingsRuntime = typeof reqEnsureAppSettingsRuntime.infer;
+export function isReqEnsureAppSettingsRuntime(obj: unknown): obj is ReqEnsureAppSettingsRuntime {
+  return !(reqEnsureAppSettingsRuntime(obj) instanceof type.errors);
 }
 
-export const reqEnsureAppSettingsChat = type({
-  chat: AIParams.partial(),
+export const reqEnsureAppSettingsCodegen = type({
+  codegen: AIParams.partial(),
 }).and(reqEnsureAppSettingsBase);
 
-export type ReqEnsureAppSettingsChat = typeof reqEnsureAppSettingsChat.infer;
-export function isReqEnsureAppSettingsChat(obj: unknown): obj is ReqEnsureAppSettingsChat {
-  return !(reqEnsureAppSettingsChat(obj) instanceof type.errors);
+export type ReqEnsureAppSettingsCodegen = typeof reqEnsureAppSettingsCodegen.infer;
+export function isReqEnsureAppSettingsCodegen(obj: unknown): obj is ReqEnsureAppSettingsCodegen {
+  return !(reqEnsureAppSettingsCodegen(obj) instanceof type.errors);
 }
 
 export const reqEnsureAppSettingsEnv = type({
@@ -718,8 +728,8 @@ export type ReqEnsureAppSettings =
   | ReqPublicAccess
   | ReqRequest
   | ReqEnsureAppSettingsTitle
-  | ReqEnsureAppSettingsApp
-  | ReqEnsureAppSettingsChat
+  | ReqEnsureAppSettingsRuntime
+  | ReqEnsureAppSettingsCodegen
   | ReqEnsureAppSettingsEnv
   | ReqEnsureAppSettingsBase;
 
@@ -727,8 +737,8 @@ export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSetting
   return (
     // isReqEnsureAppSettingsAcl(obj) ||
     isReqEnsureAppSettingsTitle(obj) ||
-    isReqEnsureAppSettingsApp(obj) ||
-    isReqEnsureAppSettingsChat(obj) ||
+    isReqEnsureAppSettingsRuntime(obj) ||
+    isReqEnsureAppSettingsCodegen(obj) ||
     isReqEnsureAppSettingsEnv(obj) ||
     isReqEnsureAppSettingsBase(obj)
   );
@@ -740,8 +750,8 @@ export const AppSettings = type({
   entry: type({
     settings: {
       "title?": "string",
-      "app?": AIParams.partial(),
-      "chat?": AIParams.partial(),
+      "runtime?": AIParams.partial(),
+      "codegen?": AIParams.partial(),
       env: KVString.array(),
     },
     publicAccess: EnablePublicAccess.optional(),

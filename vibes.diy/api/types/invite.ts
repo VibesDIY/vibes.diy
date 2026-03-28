@@ -291,26 +291,26 @@ export const ActiveModelSettingBase = type({
   param: AIParams,
 });
 
-export const ActiveModelSettingChat = type({
-  usage: "'chat'",
+export const ActiveModelSettingCodegen = type({
+  usage: "'codegen'",
 }).and(ActiveModelSettingBase);
 
-export type ActiveModelSettingChat = typeof ActiveModelSettingChat.infer;
+export type ActiveModelSettingCodegen = typeof ActiveModelSettingCodegen.infer;
 
-export function isActiveModelSettingChat(obj: unknown): obj is typeof ActiveModelSettingChat.infer {
-  return !(ActiveModelSettingChat(obj) instanceof type.errors);
+export function isActiveModelSettingCodegen(obj: unknown): obj is typeof ActiveModelSettingCodegen.infer {
+  return !(ActiveModelSettingCodegen(obj) instanceof type.errors);
 }
 
-export const ActiveModelSettingApp = type({
-  usage: "'app'",
+export const ActiveModelSettingRuntime = type({
+  usage: "'runtime'",
 }).and(ActiveModelSettingBase);
 
-export type ActiveModelSettingApp = typeof ActiveModelSettingApp.infer;
-export function isActiveModelSettingApp(obj: unknown): obj is typeof ActiveModelSettingApp.infer {
-  return !(ActiveModelSettingApp(obj) instanceof type.errors);
+export type ActiveModelSettingRuntime = typeof ActiveModelSettingRuntime.infer;
+export function isActiveModelSettingRuntime(obj: unknown): obj is typeof ActiveModelSettingRuntime.infer {
+  return !(ActiveModelSettingRuntime(obj) instanceof type.errors);
 }
 
-export const ActiveModelSetting = ActiveModelSettingChat.or(ActiveModelSettingApp);
+export const ActiveModelSetting = ActiveModelSettingCodegen.or(ActiveModelSettingRuntime);
 
 export type ActiveModelSetting = typeof ActiveModelSetting.infer;
 export function isActiveModelSetting(obj: unknown): obj is ActiveModelSetting {

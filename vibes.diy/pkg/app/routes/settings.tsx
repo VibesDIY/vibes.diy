@@ -5,13 +5,19 @@ import { Link, useNavigate } from "react-router-dom";
 import LoggedOutView from "../components/LoggedOutView.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
-import { isUserSettingSharing } from "@vibes.diy/api-types";
-import type { UserSettingItem } from "@vibes.diy/api-types";
+import { isUserSettingSharing, isUserSettingModel } from "@vibes.diy/api-types";
+import { getModelOptions } from "../data/models.js";
+
 export function meta() {
   return [{ title: "Settings - Vibes DIY" }, { name: "description", content: "Settings for AI App Builder" }];
 }
 
-type SharingGrant = UserSettingItem["grants"][number];
+interface SharingGrant {
+  grant: "allow" | "deny";
+  appSlug: string;
+  userSlug: string;
+  dbName: string;
+}
 
 function GrantsList() {
   const { vibeDiyApi } = useVibesDiy();
@@ -102,6 +108,131 @@ function GrantsList() {
   );
 }
 
+function ModelSelect({
+  label,
+  description,
+  value,
+  onChange,
+  models,
+  saving,
+}: {
+  label: string;
+  description: string;
+  value: string;
+  onChange: (v: string) => void;
+  models: ReturnType<typeof getModelOptions>;
+  saving?: boolean;
+}) {
+  const featured = models.filter((m) => m.featured);
+  const other = models.filter((m) => !m.featured);
+  const selected = models.find((m) => m.name === value);
+
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1">
+        {label}
+        {saving && <span className="ml-2 text-xs opacity-50">saving...</span>}
+      </label>
+      <p className="text-xs mb-2" style={{ color: "var(--vibes-text-secondary)" }}>
+        {description}
+      </p>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded border px-3 py-2 text-sm"
+        style={{ borderColor: "var(--vibes-border-primary)", background: "var(--vibes-bg-secondary)" }}
+      >
+        <option value="">Default (server default)</option>
+        <optgroup label="Featured">
+          {featured.map((m) => (
+            <option key={m.id} value={m.name}>
+              {m.id}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="Other">
+          {other.map((m) => (
+            <option key={m.id} value={m.name}>
+              {m.id}
+            </option>
+          ))}
+        </optgroup>
+      </select>
+      {selected?.description && (
+        <p className="text-xs mt-1 italic" style={{ color: "var(--vibes-text-secondary)" }}>
+          {selected.description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ModelSettings() {
+  const { vibeDiyApi } = useVibesDiy();
+  const models = getModelOptions();
+
+  const [codegenModel, setCodegenModel] = useState("");
+  const [runtimeModel, setRuntimeModel] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
+      setLoading(false);
+      if (res.isErr()) return;
+      const m = res.Ok().settings.find(isUserSettingModel);
+      setCodegenModel(m?.codegenModel ?? "");
+      setRuntimeModel(m?.runtimeModel ?? "");
+    });
+  }, [vibeDiyApi]);
+
+  function save(cg: string, rt: string) {
+    setSaving(true);
+    void vibeDiyApi
+      .ensureUserSettings({
+        settings: [{ type: "model", codegenModel: cg || undefined, runtimeModel: rt || undefined }],
+      })
+      .then((res) => {
+        setSaving(false);
+        if (res.isErr()) return;
+        const m = res.Ok().settings.find(isUserSettingModel);
+        setCodegenModel(m?.codegenModel ?? "");
+        setRuntimeModel(m?.runtimeModel ?? "");
+      });
+  }
+
+  if (loading) {
+    return <p style={{ color: "var(--vibes-text-secondary)" }}>Loading model preferences...</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <ModelSelect
+        label="Codegen Model"
+        description="Used when building and editing vibes"
+        value={codegenModel}
+        onChange={(v) => {
+          setCodegenModel(v);
+          save(v, runtimeModel);
+        }}
+        models={models}
+        saving={saving}
+      />
+      <ModelSelect
+        label="Runtime Model"
+        description="Used when published vibes call AI at runtime"
+        value={runtimeModel}
+        onChange={(v) => {
+          setRuntimeModel(v);
+          save(codegenModel, v);
+        }}
+        models={models}
+        saving={saving}
+      />
+    </div>
+  );
+}
+
 function SettingsContent() {
   const { signOut } = useClerk();
   const navigate = useNavigate();
@@ -113,6 +244,14 @@ function SettingsContent() {
 
   return (
     <BrutalistLayout title="Settings" subtitle="Manage your account and data sharing">
+      <BrutalistCard size="md">
+        <h3 className="text-2xl font-bold mb-4">AI Models</h3>
+        <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
+          Default models for building and running vibes. Per-app settings override these.
+        </p>
+        <ModelSettings />
+      </BrutalistCard>
+
       <BrutalistCard size="md">
         <h3 className="text-2xl font-bold mb-4">Data Sharing Grants</h3>
         <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>

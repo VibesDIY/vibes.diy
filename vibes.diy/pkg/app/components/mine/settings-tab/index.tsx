@@ -241,8 +241,8 @@ function EnvRow({
 type SettingsUpdate =
   | { kind: "fetch"; appSlug: string; userSlug: string }
   | { kind: "title"; appSlug: string; userSlug: string; title: string }
-  | { kind: "chat"; appSlug: string; userSlug: string; chat: AIParams }
-  | { kind: "app"; appSlug: string; userSlug: string; app: AIParams }
+  | { kind: "codegen"; appSlug: string; userSlug: string; codegen: AIParams }
+  | { kind: "runtime"; appSlug: string; userSlug: string; runtime: AIParams }
   | { kind: "env"; appSlug: string; userSlug: string; env: Record<string, string> };
 
 // ── main tab ─────────────────────────────────────────────────────────────────
@@ -256,14 +256,14 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
   const { vibeDiyApi } = useVibesDiy();
 
   const [title, setTitle] = useState("");
-  const [chatConfig, setChatConfig] = useState<Partial<AIParams>>({});
-  const [appConfig, setAppConfig] = useState<Partial<AIParams>>({});
+  const [codegenConfig, setCodegenConfig] = useState<Partial<AIParams>>({});
+  const [runtimeConfig, setRuntimeConfig] = useState<Partial<AIParams>>({});
   const [env, setEnv] = useState<Record<string, string>>({});
 
   const [pending, setPending] = useState<SettingsUpdate>({ kind: "fetch", appSlug, userSlug });
   const [savingTitle, setSavingTitle] = useState(false);
-  const [savingChat, setSavingChat] = useState(false);
-  const [savingApp, setSavingApp] = useState(false);
+  const [savingCodegen, setSavingCodegen] = useState(false);
+  const [savingRuntime, setSavingRuntime] = useState(false);
   const [savingEnv, setSavingEnv] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -278,8 +278,8 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
     let alive = true;
 
     if (pending.kind === "title") setSavingTitle(true);
-    else if (pending.kind === "chat") setSavingChat(true);
-    else if (pending.kind === "app") setSavingApp(true);
+    else if (pending.kind === "codegen") setSavingCodegen(true);
+    else if (pending.kind === "runtime") setSavingRuntime(true);
     else if (pending.kind === "env") setSavingEnv(true);
     else setLoading(true);
 
@@ -287,10 +287,10 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
     const req =
       pending.kind === "title"
         ? { ...base, title: pending.title }
-        : pending.kind === "chat"
-          ? { ...base, chat: pending.chat }
-          : pending.kind === "app"
-            ? { ...base, app: pending.app }
+        : pending.kind === "codegen"
+          ? { ...base, codegen: pending.codegen }
+          : pending.kind === "runtime"
+            ? { ...base, runtime: pending.runtime }
             : pending.kind === "env"
               ? { ...base, env: toKVString(pending.env) }
               : base;
@@ -299,8 +299,8 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
       if (!alive) return;
 
       if (pending.kind === "title") setSavingTitle(false);
-      else if (pending.kind === "chat") setSavingChat(false);
-      else if (pending.kind === "app") setSavingApp(false);
+      else if (pending.kind === "codegen") setSavingCodegen(false);
+      else if (pending.kind === "runtime") setSavingRuntime(false);
       else if (pending.kind === "env") setSavingEnv(false);
       else setLoading(false);
 
@@ -310,10 +310,9 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
       }
 
       const s = res.Ok().settings;
-      console.log("Settings saved/fetched successfully:", s.entry.settings);
       setTitle(s.entry.settings.title ?? "");
-      setChatConfig(s.entry.settings.chat ?? {});
-      setAppConfig(s.entry.settings.app ?? {});
+      setCodegenConfig(s.entry.settings.codegen ?? {});
+      setRuntimeConfig(s.entry.settings.runtime ?? {});
       setEnv(fromKVString(s.entry.settings.env ?? []));
 
       if (pending.kind !== "fetch") toast.success("Saved");
@@ -355,19 +354,19 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
         </div>
       </Card>
 
-      <Card title="Chat Model">
+      <Card title="Codegen Model">
         <ModelSection
-          config={chatConfig}
-          saving={savingChat}
-          onSave={(cfg) => setPending({ kind: "chat", appSlug, userSlug, chat: cfg })}
+          config={codegenConfig}
+          saving={savingCodegen}
+          onSave={(cfg) => setPending({ kind: "codegen", appSlug, userSlug, codegen: cfg })}
         />
       </Card>
 
-      <Card title="App Model">
+      <Card title="Runtime Model">
         <ModelSection
-          config={appConfig}
-          saving={savingApp}
-          onSave={(cfg) => setPending({ kind: "app", appSlug, userSlug, app: cfg })}
+          config={runtimeConfig}
+          saving={savingRuntime}
+          onSave={(cfg) => setPending({ kind: "runtime", appSlug, userSlug, runtime: cfg })}
         />
       </Card>
 

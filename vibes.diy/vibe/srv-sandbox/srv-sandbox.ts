@@ -14,6 +14,7 @@ import {
   EventoHandler,
   Future,
   OnFunc,
+  URI,
 } from "@adviser/cement";
 import {
   isReqVibeRegisterFPDb,
@@ -293,7 +294,10 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
               ],
             });
           }
+          // Forward ?model= query param as runtime model override
+          const modelOverride = URI.from(window.location.href).getParam("model") || undefined;
           const rPrompt = await rChat.Ok().prompt({
+            ...(modelOverride ? { model: modelOverride } : {}),
             messages: [
               ...generateSchema,
               {

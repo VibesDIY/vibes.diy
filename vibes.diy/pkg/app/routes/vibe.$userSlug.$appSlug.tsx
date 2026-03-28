@@ -189,6 +189,10 @@ export default function VibeIframeWrapper() {
   if (ready && iframeUrlRef.current) {
     const myUrl = URI.from(window.location.href);
     const previewUrl = BuildURI.from(iframeUrlRef.current).port(myUrl.port).setParam("npmUrl", vctx.webVars.pkgRepos.workspace);
+    // Forward ?model= query param to iframe for end-user runtime model override
+    // Note: when an end user overrides the model via ?model=, they pay for those calls
+    const modelParam = URI.from(window.location.href).getParam("model");
+    if (modelParam) previewUrl.setParam("model", modelParam);
 
     // console.log(`previewUrl`, previewUrl.toString());
 

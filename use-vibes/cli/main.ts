@@ -152,7 +152,7 @@ async function main() {
             console.log("UserId: ", msg.userId);
             console.log("Setting:");
             for (const set of msg.settings) {
-              console.log(` Type:`, set.type, ` Grants:`, JSON.stringify(set.grants));
+              console.log(` Type:`, set.type, ` Data:`, JSON.stringify(set));
             }
             break;
           }

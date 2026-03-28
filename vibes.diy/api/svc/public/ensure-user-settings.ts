@@ -1,5 +1,6 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
 import {
+  isUserSettingModel,
   MsgBase,
   reqEnsureUserSettings,
   ReqEnsureUserSettings,
@@ -40,7 +41,17 @@ export async function ensureUserSettings(
   if (settingsArray instanceof type.errors) {
     return Result.Err(`Failed to parse existing user settings: ${settingsArray.summary}`);
   }
-  const settingsSet = new Map([...settingsArray, ...req.settings].map((item) => [item.type, item]));
+  // Normalize empty model strings by removing them at write time
+  const incomingSettings = req.settings.map((item) =>
+    isUserSettingModel(item)
+      ? {
+          type: "model" as const,
+          ...(item.codegenModel?.trim() && { codegenModel: item.codegenModel.trim() }),
+          ...(item.runtimeModel?.trim() && { runtimeModel: item.runtimeModel.trim() }),
+        }
+      : item
+  );
+  const settingsSet = new Map([...settingsArray, ...incomingSettings].map((item) => [item.type, item]));
   const settings = userSettingItem.array()(Array.from(settingsSet.values()));
   if (settings instanceof type.errors) {
     return Result.Err(`Failed to parse merged user settings: ${settings.summary}`);

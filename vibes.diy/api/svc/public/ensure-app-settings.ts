@@ -9,14 +9,14 @@ import {
   EnableRequest,
   EvtAppSetting,
   isActiveEnv,
-  isActiveModelSettingApp,
-  isActiveModelSettingChat,
+  isActiveModelSettingRuntime,
+  isActiveModelSettingCodegen,
   isActiveTitle,
   isEnablePublicAccess,
   isEnableRequest,
   isReqEnsureAppSettings,
-  isReqEnsureAppSettingsApp,
-  isReqEnsureAppSettingsChat,
+  isReqEnsureAppSettingsRuntime,
+  isReqEnsureAppSettingsCodegen,
   isReqEnsureAppSettingsEnv,
   isReqEnsureAppSettingsTitle,
   isReqPublicAccess,
@@ -77,11 +77,11 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
       case isActiveTitle(e):
         result.entry.settings.title = e.title;
         break;
-      case isActiveModelSettingChat(e):
-        result.entry.settings.chat = e.param;
+      case isActiveModelSettingCodegen(e):
+        result.entry.settings.codegen = e.param;
         break;
-      case isActiveModelSettingApp(e):
-        result.entry.settings.app = e.param;
+      case isActiveModelSettingRuntime(e):
+        result.entry.settings.runtime = e.param;
         break;
       case isActiveEnv(e):
         result.entry.settings.env.push(...e.env);
@@ -227,36 +227,36 @@ export async function ensureAppSettings(
           }) satisfies ActiveTitle
       );
       break;
-    case isReqEnsureAppSettingsApp(req):
+    case isReqEnsureAppSettingsRuntime(req):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
         settings,
-        isActiveModelSettingApp,
+        isActiveModelSettingRuntime,
         (prev: ActiveModelSetting) =>
           ({
             type: "active.model",
-            usage: "app",
+            usage: "runtime",
             param: {
               ...prev.param,
-              ...req.app,
+              ...req.runtime,
             },
           }) satisfies ActiveModelSetting
       );
       break;
-    case isReqEnsureAppSettingsChat(req):
+    case isReqEnsureAppSettingsCodegen(req):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
         settings,
-        isActiveModelSettingChat,
+        isActiveModelSettingCodegen,
         (prev: ActiveModelSetting) =>
           ({
             type: "active.model",
-            usage: "chat",
+            usage: "codegen",
             param: {
               ...prev.param,
-              ...req.chat,
+              ...req.codegen,
             },
           }) satisfies ActiveModelSetting
       );
@@ -285,7 +285,6 @@ function upsert<T extends ActiveEntry, R extends ActiveEntry>(settings: T[], mat
   const idx = settings.findIndex(match);
   if (idx >= 0) settings[idx] = fn(settings[idx] as unknown as R) as unknown as T;
   else settings.push(fn({} as unknown as R) as unknown as T);
-  console.log(">>>>", settings, idx, settings[idx]);
   return buildEnsureEntryResult(settings);
 }
 

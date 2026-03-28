@@ -24,6 +24,8 @@ import {
   ResPromptChatSection,
   SectionEvent,
   VibeFile,
+  isUserSettingModel,
+  UserSettingModel,
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
@@ -57,6 +59,7 @@ import {
 } from "@vibes.diy/call-ai-v2";
 import { makeBaseSystemPrompt } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
+import { ensureAppSettings } from "./ensure-app-settings.js";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
 
 interface AppendBlockEventParams {
@@ -515,22 +518,77 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           })
           .do();
 
-        // console.log(promptId, "Pre-System request for promptId:");
+        // Model resolution: query param > per-app > user/owner default > server config > default
+        // Empty strings normalized at write time (ensureUserSettings, ensureAppSettings, create-handler)
+        const resolvedModel = await scope
+          .evalResult(async () => {
+            const userId = req._auth.verifiedAuth.claims.userId;
+
+            function findModelSetting(settings: unknown): UserSettingModel | undefined {
+              return (Array.isArray(settings) ? settings : []).find(isUserSettingModel);
+            }
+
+            async function fetchUserModelSetting(uid: string): Promise<UserSettingModel | undefined> {
+              const row = await vctx.sql.db
+                .select()
+                .from(vctx.sql.tables.userSettings)
+                .where(eq(vctx.sql.tables.userSettings.userId, uid))
+                .limit(1)
+                .then((r) => r[0]);
+              return findModelSetting(row?.settings);
+            }
+
+            const userSettings = await fetchUserModelSetting(userId);
+
+            // Fetch app settings (read-only, returns owner userId + parsed settings)
+            const rAppSettings = await ensureAppSettings(vctx, {
+              type: "vibes.diy.req-ensure-app-settings",
+              appSlug: resChat.appSlug,
+              userSlug: resChat.userSlug,
+            });
+            const appEntry = rAppSettings.isOk() ? rAppSettings.Ok() : undefined;
+            const appSettings = appEntry?.settings?.entry?.settings;
+
+            // For application mode, fetch owner's model settings if owner ≠ requester
+            const appOwnerSettings =
+              req.mode === "application" && appEntry?.userId && appEntry.userId !== userId
+                ? await fetchUserModelSetting(appEntry.userId)
+                : undefined;
+
+            if (req.mode === "creation") {
+              return Result.Ok(
+                req.prompt.model ??
+                  appSettings?.codegen?.model ??
+                  userSettings?.codegenModel ??
+                  vctx.params.llm.runtimeModel ??
+                  vctx.params.llm.default.model
+              );
+            } else {
+              return Result.Ok(
+                req.prompt.model ??
+                  appSettings?.runtime?.model ??
+                  appOwnerSettings?.runtimeModel ??
+                  vctx.params.llm.runtimeModel ??
+                  vctx.params.llm.default.model
+              );
+            }
+          })
+          .do();
+
         const withSystemPrompt = await scope
           .evalResult(async () => {
-            let withSystemPrompt = Result.Ok({
-              model: req.prompt.model ?? vctx.params.llm.default.model,
-              messages: [] as ChatMessage[],
-            });
             if (req.mode === "creation") {
-              withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? vctx.params.llm.default.model);
+              return injectSystemPrompt(vctx, req.chatId, resolvedModel);
             } else if (req.mode === "application") {
-              withSystemPrompt = Result.Ok({
-                model: req.prompt.model ?? vctx.params.llm.appSchemaModel ?? vctx.params.llm.default.model,
+              return Result.Ok({
+                model: resolvedModel,
                 messages: req.prompt.messages,
               });
             }
-            return withSystemPrompt;
+            return Result.Ok({
+              model: resolvedModel,
+              messages: [] as ChatMessage[],
+            });
           })
           .do();
         // if (withSystemPrompt.isErr()) {

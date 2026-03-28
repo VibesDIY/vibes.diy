@@ -22,6 +22,7 @@ import {
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
   isResRequestAccessApproved,
+  isUserSettingModel,
   PromptAndBlockMsgs,
   ReqPromptChatSection,
   ReqWithVerifiedAuth,
@@ -571,10 +572,10 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       expect(x3.Ok().settings.entry.settings.title).toBe("My App1");
     });
 
-    it("ensureAppSettings update chat", async () => {
-      const x1 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: "x" } });
-      const x2 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: "x" } });
-      const x3 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: "x1", apiKey: "x" } });
+    it("ensureAppSettings update codegen", async () => {
+      const x1 = await api.ensureAppSettings({ appSlug, userSlug, codegen: { model: "x" } });
+      const x2 = await api.ensureAppSettings({ appSlug, userSlug, codegen: { model: "x" } });
+      const x3 = await api.ensureAppSettings({ appSlug, userSlug, codegen: { model: "x1", apiKey: "x" } });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entries).toEqual(
@@ -585,20 +586,20 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
               model: "x1",
             },
             type: "active.model",
-            usage: "chat",
+            usage: "codegen",
           }),
         ])
       );
-      expect(x3.Ok().settings.entry.settings.chat).toEqual({
+      expect(x3.Ok().settings.entry.settings.codegen).toEqual({
         model: "x1",
         apiKey: "x",
       });
     });
 
-    it("ensureAppSettings update app", async () => {
-      const x1 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: "x" } });
-      const x2 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: "x" } });
-      const x3 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: "x1", apiKey: "x" } });
+    it("ensureAppSettings update runtime", async () => {
+      const x1 = await api.ensureAppSettings({ appSlug, userSlug, runtime: { model: "x" } });
+      const x2 = await api.ensureAppSettings({ appSlug, userSlug, runtime: { model: "x" } });
+      const x3 = await api.ensureAppSettings({ appSlug, userSlug, runtime: { model: "x1", apiKey: "x" } });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entries).toEqual(
@@ -609,11 +610,11 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
               model: "x1",
             },
             type: "active.model",
-            usage: "app",
+            usage: "runtime",
           }),
         ])
       );
-      expect(x3.Ok().settings.entry.settings.app).toEqual({
+      expect(x3.Ok().settings.entry.settings.runtime).toEqual({
         model: "x1",
         apiKey: "x",
       });
@@ -695,6 +696,42 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entry.enableRequest).toBeDefined();
       expect(x3.Ok().settings.entry.enableRequest?.autoAcceptViewRequest).toBe(true);
+    });
+  });
+
+  describe("ensureUserSettings model", () => {
+    it("user settings model round-trip", async () => {
+      const res = await api.ensureUserSettings({
+        settings: [{ type: "model", codegenModel: "test/codegen-model", runtimeModel: "test/runtime-model" }],
+      });
+      expect(res.isOk()).toBe(true);
+      const modelSetting = res.Ok().settings.find(isUserSettingModel);
+      expect(modelSetting?.codegenModel).toBe("test/codegen-model");
+      expect(modelSetting?.runtimeModel).toBe("test/runtime-model");
+    });
+
+    it("user settings model partial update", async () => {
+      const res1 = await api.ensureUserSettings({
+        settings: [{ type: "model", codegenModel: "test/only-codegen" }],
+      });
+      expect(res1.isOk()).toBe(true);
+      const m1 = res1.Ok().settings.find(isUserSettingModel);
+      expect(m1?.codegenModel).toBe("test/only-codegen");
+      expect(m1?.runtimeModel).toBeUndefined();
+    });
+
+    it("user settings model empty string clears preference", async () => {
+      await api.ensureUserSettings({
+        settings: [{ type: "model", codegenModel: "test/will-clear", runtimeModel: "test/will-clear" }],
+      });
+      const res = await api.ensureUserSettings({
+        settings: [{ type: "model", codegenModel: "", runtimeModel: "" }],
+      });
+      expect(res.isOk()).toBe(true);
+      const m = res.Ok().settings.find(isUserSettingModel);
+      // Empty strings normalized to undefined at write time
+      expect(m?.codegenModel).toBeUndefined();
+      expect(m?.runtimeModel).toBeUndefined();
     });
   });
 

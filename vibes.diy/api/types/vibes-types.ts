@@ -42,7 +42,7 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
   // importMapProps: ImportMapProps;
   llm: {
     default: LLMDefault;
-    appSchemaModel?: string;
+    runtimeModel?: string;
     enforced: LLMEnforced;
     headers: LLMHeaders;
   };
