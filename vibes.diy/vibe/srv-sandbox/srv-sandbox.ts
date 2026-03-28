@@ -252,11 +252,9 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqCallAI, unknown>): Promise<Result<EventoResultType>> => {
-      console.log(`Handling vibe.callAI event with validated data`, ctx);
       await vibeDiyApi
         .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "application" })
         .then(async (rChat) => {
-          console.log(`openChat result in callAI handler`, rChat);
           if (rChat.isErr()) {
             return ctx.send.send(ctx, {
               tid: ctx.validated.tid,
@@ -265,16 +263,24 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
               message: rChat.Err().message,
             } satisfies ResErrorCallAI);
           }
-          getCodeBlock(rChat.Ok().sectionStream).then(({ code, sectionEvt: msg }) => {
-            ctx.send.send(ctx, {
-              tid: ctx.validated.tid,
-              type: "vibe.res.callAI",
-              status: "ok",
-              promptId: msg.promptId,
-              result: code,
-            } satisfies ResOkCallAI);
-          });
-          // console.log(`Sending prompt to chat`, ctx.validated.prompt);
+          getCodeBlock(rChat.Ok().sectionStream)
+            .then(({ code, sectionEvt: msg }) => {
+              ctx.send.send(ctx, {
+                tid: ctx.validated.tid,
+                type: "vibe.res.callAI",
+                status: "ok",
+                promptId: msg.promptId,
+                result: code,
+              } satisfies ResOkCallAI);
+            })
+            .catch((err) => {
+              ctx.send.send(ctx, {
+                tid: ctx.validated.tid,
+                type: "vibe.res.callAI",
+                status: "error",
+                message: err?.message ?? String(err),
+              } satisfies ResErrorCallAI);
+            });
           const generateSchema: ChatMessage[] = [];
           if (ctx.validated.schema) {
             generateSchema.push({
