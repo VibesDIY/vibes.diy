@@ -1,34 +1,13 @@
 import * as mod from "@vibes.diy/prompts";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { Result } from "@adviser/cement";
 import { createMockFetchFromPkgFiles } from "./helpers/load-mock-data.js";
-
-// Create a fetchText mock that delegates to the mock fetch helper
-const mockFetchImpl = createMockFetchFromPkgFiles();
-function mockFetchText(_pkg: string, path: string): Promise<Result<string>> {
-  console.log(`mockFetchText called with pkg: ${_pkg}, path: ${path}`);
-  return mockFetchImpl(path).then(async (res) => {
-    if (res.ok) return Result.Ok(await res.text());
-    return Result.Err(new Error(`fetch failed for path: ${path}`));
-  });
-}
 
 // Mock global fetch for the integration tests
 const mockFetch = vi.fn();
 globalThis.fetch = mockFetch;
 
-// Ensure real implementation
-// (vi as any).doUnmock?.("~/vibes.diy/app/prompts");
-//vi.unmock("~/vibes.diy/app/prompts.js");
-// vi.resetModules();
-
-// let makeBaseSystemPrompt: typeof mod.makeBaseSystemPrompt;
-// let preloadLlmsText: () => Promise<void>;
-
-beforeAll(async () => {
-  // const mod = await import("~/vibes.diy/app/prompts.js");
-  // makeBaseSystemPrompt = mod.makeBaseSystemPrompt;
-  // preloadLlmsText = mod.preloadLlmsText;
+beforeAll(() => {
+  // noop — kept for test lifecycle symmetry
 });
 
 beforeEach(() => {
@@ -38,27 +17,12 @@ beforeEach(() => {
   mockFetch.mockImplementation(createMockFetchFromPkgFiles());
 });
 
-const opts = {
-  fetchText: mockFetchText,
-  callAi: {
-    ModuleAndOptionsSelection: vi.fn().mockResolvedValue(
-      Result.Ok(
-        JSON.stringify({
-          choices: [{ message: { content: "Mocked response" } }],
-        })
-      )
-    ),
-  },
-};
-
 describe("makeBaseSystemPrompt dependency selection", () => {
-  it("when override is false/absent, uses schema-driven selection (test mode => all); includes core libs", async () => {
-    // await preloadLlmsText();
+  it("includes specified dependencies in the system prompt", async () => {
     const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4.5", {
-      ...opts,
-      _id: "user_settings",
+      dependencies: ["fireproof", "callai"],
     });
-    // Should include at least the core libs
+    // Should include the core libs
     expect(result.systemPrompt).toMatch(/<useFireproof-docs>/);
     expect(result.systemPrompt).toMatch(/<callAI-docs>/);
     // Should include corresponding import lines
@@ -66,13 +30,9 @@ describe("makeBaseSystemPrompt dependency selection", () => {
     expect(result.systemPrompt).toMatch(/import\s+\{\s*callAI\s*\}\s+from\s+"call-ai"/);
   });
 
-  it("honors explicit dependencies only when override=true", async () => {
-    // await preloadLlmsText();
+  it("only includes explicitly listed dependencies", async () => {
     const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4.5", {
-      _id: "user_settings",
       dependencies: ["fireproof"],
-      dependenciesUserOverride: true,
-      ...opts,
     });
     expect(result.systemPrompt).toMatch(/<useFireproof-docs>/);
     expect(result.systemPrompt).not.toMatch(/<callAI-docs>/);
@@ -81,16 +41,11 @@ describe("makeBaseSystemPrompt dependency selection", () => {
     expect(result.systemPrompt).not.toMatch(/from\s+"call-ai"/);
   });
 
-  it("ignores explicit dependencies when override=false (still schema-driven)", async () => {
-    // await preloadLlmsText();
+  it("handles empty dependencies list", async () => {
     const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4.5", {
-      _id: "user_settings",
-      dependencies: ["fireproof"],
-      dependenciesUserOverride: false,
-      ...opts,
+      dependencies: [],
     });
-    // Should include at least both core libs
-    expect(result.systemPrompt).toMatch(/<useFireproof-docs>/);
-    expect(result.systemPrompt).toMatch(/<callAI-docs>/);
+    expect(result.systemPrompt).not.toMatch(/<useFireproof-docs>/);
+    expect(result.systemPrompt).not.toMatch(/<callAI-docs>/);
   });
 });

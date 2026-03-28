@@ -21,7 +21,7 @@ export function defaultLLMRequest(
       throw new Error(`Invalid LLMRequest: ${stripLLMRequest.summary}`);
     }
     const body = JSON.stringify(stripLLMRequest);
-    // console.log(`Making LLM request to ${url} with body:`, apiKey);
+    console.log(`[llm] model=${stripLLMRequest.model} messages=${stripLLMRequest.messages?.length ?? 0}`);
     return fetch(url, {
       method: "POST",
       headers: {
@@ -30,6 +30,9 @@ export function defaultLLMRequest(
         "Content-Type": "application/json",
       },
       body,
+    }).then((res) => {
+      console.log(`[llm] model=${stripLLMRequest.model} response status=${res.status}`);
+      return res;
     });
   };
 }

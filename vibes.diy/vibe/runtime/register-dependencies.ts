@@ -278,7 +278,7 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
     });
   }
   const callAI = deps["call-ai"];
-  if (callAI && window.parent !== window) {
+  if (callAI) {
     runTimeReady.push("call-ai");
     registerCallAI(ctxVibeApi);
   }
