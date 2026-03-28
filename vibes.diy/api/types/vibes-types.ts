@@ -8,7 +8,7 @@ export interface PkgRepos {
 }
 
 export const LLMDefault = type({
-  model: "string = 'anthropic/claude-3-opus'",
+  model: "string = 'anthropic/claude-sonnet-4.6'",
 });
 export type LLMDefault = typeof LLMDefault.infer;
 
