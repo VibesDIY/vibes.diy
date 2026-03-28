@@ -114,6 +114,8 @@ export const quickSuggestions: Suggestion[] = [
 ];
 
 // Named exports for specific prompts used in the create page
-export const eventTrackerPrompt = "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.";
-export const historyQuestPrompt = "Create a history RPG where the AI writes a short scene set in a real era, then gives you 3 choices. Each choice leads to a new scene. Track your score.";
+export const eventTrackerPrompt =
+  "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.";
+export const historyQuestPrompt =
+  "Create a history RPG where the AI writes a short scene set in a real era, then gives you 3 choices. Each choice leads to a new scene. Track your score.";
 export const jamSessionPrompt = "Create a drum machine with tempo control, 8 pattern slots, and a step sequencer grid.";
