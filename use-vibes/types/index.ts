@@ -43,4 +43,3 @@ export interface RuntimeError {
 }
 
 export * from "./vibes-gen-types.js";
-export * from "./image-gen-types.js";
