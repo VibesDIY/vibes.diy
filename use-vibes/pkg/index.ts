@@ -7,17 +7,7 @@ export {
   toCloud,
   type Fireproof,
 
-  // AI integration
-  callAI,
-  callAi,
-  type CallAI,
-
-  // Consumer components
-  ImgGen,
-  type ImgGenProps,
-
-  // Vibes generation hook
-  useVibes,
+  // Types
   type UseVibesOptions,
   type UseVibesResult,
   type VibeDocument,
