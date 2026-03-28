@@ -36,6 +36,7 @@ import {
   isResHasAccessRequestRevoked,
   ClerkClaim,
   EvtRequestGrant,
+  Role,
 } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -227,17 +228,6 @@ export async function requestAccess(
   );
   if (rIns.isErr()) return Result.Err(rIns);
 
-  await sendUpdateEvent(vctx, {
-    cud: "create",
-    userId: record.userId,
-    appSlug: req.appSlug,
-    userSlug: req.userSlug,
-    foreignUserId: req.foreignUserId,
-    state: state as EvtRequestGrant["state"],
-    role: role as EvtRequestGrant["role"],
-    foreignInfo,
-  });
-
   const base = {
     type: "vibes.diy.res-request-access" as const,
     appSlug: req.appSlug,
@@ -249,9 +239,15 @@ export async function requestAccess(
   };
 
   if (autoApprove) {
-    return Result.Ok({ ...base, state: "approved" as const, role: "viewer" as const } satisfies ResRequestAccessApproved);
+    const r = { ...base, state: "approved" as const, role: "viewer" as const } satisfies ResRequestAccessApproved;
+
+    await sendUpdateEvent(vctx, { op: "upsert", userId: record.userId, grant: r });
+
+    return Result.Ok(r);
   }
-  return Result.Ok({ ...base, state: "pending" as const } satisfies ResRequestAccessPending);
+  const r = { ...base, state: "pending" as const } satisfies ResRequestAccessPending;
+  await sendUpdateEvent(vctx, { op: "upsert", userId: record.userId, grant: r });
+  return Result.Ok(r);
 }
 
 const DEFAULT_LIMIT = 20;
@@ -405,18 +401,7 @@ export const approveRequestEvento: EventoHandler<
       );
       if (rUpd.isErr()) return Result.Err(rUpd);
 
-      await sendUpdateEvent(vctx, {
-        cud: "update",
-        userId,
-        appSlug: req.appSlug,
-        userSlug: req.userSlug,
-        foreignUserId: req.foreignUserId,
-        state: "approved",
-        role: req.role as EvtRequestGrant["role"],
-        foreignInfo: existing[0].foreignInfo as EvtRequestGrant["foreignInfo"],
-      });
-
-      await ctx.send.send(ctx, {
+      const r = {
         type: "vibes.diy.res-approve-request",
         appSlug: req.appSlug,
         userSlug: req.userSlug,
@@ -424,7 +409,25 @@ export const approveRequestEvento: EventoHandler<
         role: req.role,
         state: "approved",
         updated: now,
-      } satisfies ResApproveRequest);
+      } satisfies ResApproveRequest;
+
+      await sendUpdateEvent(vctx, {
+        op: "upsert",
+        userId,
+        grant: {
+          type: "vibes.diy.res-request-access",
+          appSlug: req.appSlug,
+          userSlug: req.userSlug,
+          foreignUserId: req.foreignUserId,
+          role: req.role,
+          state: "approved",
+          foreignInfo: existing[0].foreignInfo as ForeignInfo,
+          updated: now,
+          created: now,
+        },
+      });
+
+      await ctx.send.send(ctx, r);
 
       return Result.Ok(EventoResult.Continue);
     }
@@ -467,9 +470,10 @@ export const requestSetRoleEvento: EventoHandler<
         })
         .from(vctx.sql.tables.requestGrants)
         .where(where)
-        .limit(1);
+        .limit(1)
+        .then((rows) => rows[0]);
 
-      if (!existing[0]) {
+      if (!existing) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.error",
           message: `request-set-role: not found ${req.userSlug}/${req.appSlug}/${req.foreignUserId}`,
@@ -483,24 +487,35 @@ export const requestSetRoleEvento: EventoHandler<
       );
       if (rUpd.isErr()) return Result.Err(rUpd);
 
-      await sendUpdateEvent(vctx, {
-        cud: "update",
-        userId,
-        appSlug: req.appSlug,
-        userSlug: req.userSlug,
-        foreignUserId: req.foreignUserId,
-        state: existing[0].state as EvtRequestGrant["state"],
-        role: req.role as EvtRequestGrant["role"],
-        foreignInfo: existing[0].foreignInfo as EvtRequestGrant["foreignInfo"],
-      });
-
-      await ctx.send.send(ctx, {
+      const r = {
         type: "vibes.diy.res-request-set-role",
         appSlug: req.appSlug,
         userSlug: req.userSlug,
         foreignUserId: req.foreignUserId,
         role: req.role,
-      } satisfies ResRequestSetRole);
+      } satisfies ResRequestSetRole;
+
+      await sendUpdateEvent(vctx, {
+        op: "upsert",
+        userId,
+        grant: {
+          type: "vibes.diy.res-request-access",
+          appSlug: req.appSlug,
+          userSlug: req.userSlug,
+          foreignUserId: req.foreignUserId,
+          role: req.role,
+          state: existing.state as ResRequestAccess["state"],
+          foreignInfo: existing.foreignInfo as ForeignInfo,
+          updated: now,
+          created: now,
+        },
+        // foreignUserId: req.foreignUserId,
+        // state: existing[0].state as EvtRequestGrant['grant']["state"],
+        // role: req.role as EvtRequestGrant['grant]["role"],
+        // foreignInfo: existing[0].foreignInfo as EvtRequestGrant["foreignInfo"],
+      });
+
+      await ctx.send.send(ctx, r);
 
       return Result.Ok(EventoResult.Continue);
     }
@@ -532,6 +547,7 @@ export const revokeRequestEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRe
 
       const prev = await vctx.sql.db
         .select({
+          created: vctx.sql.tables.requestGrants.created,
           state: vctx.sql.tables.requestGrants.state,
           role: vctx.sql.tables.requestGrants.role,
           foreignInfo: vctx.sql.tables.requestGrants.foreignInfo,
@@ -548,26 +564,38 @@ export const revokeRequestEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRe
       );
       if (rOp.isErr()) return Result.Err(rOp);
 
-      if (prev) {
-        await sendUpdateEvent(vctx, {
-          cud: req.delete ? "delete" : "update",
-          userId,
-          appSlug: req.appSlug,
-          userSlug: req.userSlug,
-          foreignUserId: req.foreignUserId,
-          state: (req.delete ? prev.state : "revoked") as EvtRequestGrant["state"],
-          role: prev.role as EvtRequestGrant["role"],
-          foreignInfo: prev.foreignInfo as EvtRequestGrant["foreignInfo"],
-        });
-      }
-
-      await ctx.send.send(ctx, {
+      const r = {
         type: "vibes.diy.res-revoke-request",
         appSlug: req.appSlug,
         userSlug: req.userSlug,
         foreignUserId: req.foreignUserId,
         deleted: req.delete ?? false,
-      } satisfies ResRevokeRequest);
+      } satisfies ResRevokeRequest;
+      if (prev) {
+        await sendUpdateEvent(vctx, {
+          op: req.delete ? "delete" : "upsert",
+          userId,
+          grant: {
+            type: "vibes.diy.res-request-access",
+            appSlug: req.appSlug,
+            userSlug: req.userSlug,
+            foreignUserId: req.foreignUserId,
+            role: Role.assert(prev.role),
+            state: "revoked",
+            foreignInfo: prev.foreignInfo as ForeignInfo,
+            updated: now,
+            created: prev.created,
+          },
+          // appSlug: req.appSlug,
+          // userSlug: req.userSlug,
+          // foreignUserId: req.foreignUserId,
+          // state: (req.delete ? prev.state : "revoked") as EvtRequestGrant["state"],
+          // role: prev.role as EvtRequestGrant["role"],
+          // foreignInfo: prev.foreignInfo as EvtRequestGrant["foreignInfo"],
+        });
+      }
+
+      await ctx.send.send(ctx, r);
 
       return Result.Ok(EventoResult.Continue);
     }

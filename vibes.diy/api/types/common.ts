@@ -1,0 +1,289 @@
+// Should be compatible with FP Dashboard's auth types
+import { Result } from "@adviser/cement";
+import { type } from "arktype";
+import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import { CoercedDate } from "@vibes.diy/call-ai-v2";
+
+export const ClerkClaimParams = type({
+  "nick?": "string",
+  email: "string",
+  email_verified: "boolean",
+  "external_id?": "string | null",
+  first: "string",
+  image_url: "string",
+  last: "string",
+  name: "string | null",
+  public_meta: "unknown",
+});
+
+export type ClerkClaimParams = typeof ClerkClaimParams.infer;
+
+export const ClerkClaim = type({
+  "azp?": "string",
+  "exp?": "number",
+  "iat?": "number",
+  "iss?": "string",
+  "jti?": "string",
+  "nbf?": "number",
+  params: ClerkClaimParams,
+  role: "string",
+  sub: "string",
+  userId: "string",
+  "aud?": "string | string[]",
+  "app_metadata?": "unknown",
+});
+export type ClerkClaim = typeof ClerkClaim.infer;
+
+export const FPCloudClaim = type({
+  "azp?": "string",
+  "iss?": "string",
+  "sub?": "string",
+  "aud?": "string | string[]",
+  "exp?": "number",
+  "nbf?": "number",
+  "iat?": "number",
+  "jti?": "string",
+  userId: "string",
+  email: "string.email",
+  "nickname?": "string",
+  "provider?": "'github' | 'google'",
+  created: CoercedDate,
+  tenants: type({
+    id: "string",
+    role: "'admin' | 'member' | 'owner'",
+  }).array(),
+  ledgers: type({
+    id: "string",
+    role: "'admin' | 'member' | 'owner'",
+    right: "'read' | 'write'",
+  }).array(),
+  selected: {
+    "appId?": "string",
+    tenant: "string",
+    ledger: "string",
+  },
+});
+export type FPCloudClaim = typeof FPCloudClaim.infer;
+
+// Runtime validator — must stay compatible with DashAuthType from @fireproof/core-types-protocols-dashboard
+export const dashAuthType = type({
+  type: "'clerk'|'device-id'|'ucan'",
+  token: "string",
+}) satisfies { infer: DashAuthType };
+
+export const vibeUserEnv = type("Record<string, string>");
+
+// Base file properties - used for composition
+const baseFileProps = type({
+  // including path within the filesystem - absolute from root, no .. or .
+  // must start with / and not contain .. or relative path segments
+  filename: type("string").narrow((s) => {
+    // Must start with /
+    if (!s.startsWith("/")) return false;
+    // Must not contain //
+    if (s.includes("//")) return false;
+    // Must not contain ..
+    if (s.includes("/../")) return false;
+    // Must not contain /./
+    if (s.includes("/./")) return false;
+    return true;
+  }),
+  "entryPoint?": "boolean" as const, // last wins should only set once per filesystem
+  "mimetype?": "string" as const, // derived from filename if not set
+});
+
+// Code types
+export const VibeCodeBlock = type({
+  type: "'code-block'",
+  // currently supported languages
+  lang: "string", // "'jsx'|'js'",
+  // the actual code content
+  content: "string",
+}).and(baseFileProps);
+
+export type VibeCodeBlock = typeof VibeCodeBlock.infer;
+
+export function isVibeCodeBlock(obj: unknown): obj is VibeCodeBlock {
+  return !(VibeCodeBlock(obj) instanceof type.errors);
+}
+
+export const VibeCodeRef = type({
+  type: "'code-ref'",
+  // reference id to code stored elsewhere
+  // if call-ai will store the result somewhere
+  refId: "string",
+}).and(baseFileProps);
+
+// Asset types - string content
+export const VibeStrAssetBlock = type({
+  type: "'str-asset-block'",
+  // the actual asset content as string
+  content: "string",
+}).and(baseFileProps);
+
+export const VibeStrAssetRef = type({
+  type: "'str-asset-ref'",
+  // reference id to asset stored elsewhere
+  refId: "string",
+}).and(baseFileProps);
+
+// Asset types - binary content
+export const VibeUint8AssetBlock = type({
+  type: "'uint8-asset-block'",
+  // the actual asset content as binary
+  content: type.instanceOf(Uint8Array),
+}).and(baseFileProps);
+
+export const VibeUint8AssetRef = type({
+  type: "'uint8-asset-ref'",
+  // reference id to asset stored elsewhere
+  refId: "string",
+}).and(baseFileProps);
+
+// Union of all file types
+export const vibeFile = type(
+  VibeCodeBlock.or(VibeCodeRef).or(VibeStrAssetBlock).or(VibeStrAssetRef).or(VibeUint8AssetBlock).or(VibeUint8AssetRef)
+);
+
+export type VibeFile = typeof vibeFile.infer;
+
+// Error types
+export const resError = type({
+  type: "'vibes.diy.error'",
+  message: "string",
+  "code?": "string",
+  "stack?": "string[]",
+});
+
+export type ResError = typeof resError.infer;
+
+// ID types
+export type CodeID = string;
+export type EnvID = string;
+
+export const FSMode = type("'production'|'dev'");
+
+export const AppSlugUserSlug = type({
+  appSlug: "string", // desired app slug
+  userSlug: "string", // desired user slug
+});
+export type AppSlugUserSlug = typeof AppSlugUserSlug.infer;
+
+export const OptAppSlugUserSlug = type({
+  "appSlug?": "string", // desired app slug
+  userSlug: "string", // desired user slug
+});
+export type OptAppSlugUserSlug = typeof OptAppSlugUserSlug.infer;
+
+export const AppSlugOptUserSlug = type({
+  appSlug: "string", // desired app slug
+  "userSlug?": "string", // desired user slug
+});
+export type AppSlugOptUserSlug = typeof AppSlugOptUserSlug.infer;
+
+export const OptAppSlugOptUserSlug = type({
+  "appSlug?": "string", // desired app slug
+  "userSlug?": "string", // desired user slug
+});
+export type OptAppSlugOptUserSlug = typeof OptAppSlugOptUserSlug.infer;
+
+export const NeedOneAppSlugUserSlug = AppSlugUserSlug.or(OptAppSlugUserSlug).or(AppSlugOptUserSlug).or(OptAppSlugOptUserSlug);
+
+export type NeedOneAppSlugUserSlug = typeof NeedOneAppSlugUserSlug.infer;
+
+export const msgBase = type({
+  tid: "string",
+  src: "string",
+  dst: "string",
+  ttl: "number",
+  payload: "unknown",
+});
+
+export type msgBaseType = typeof msgBase.infer;
+
+export function isMsgBase(obj: unknown): obj is msgBaseType {
+  return !(msgBase(obj) instanceof type.errors);
+}
+
+export interface MsgBase<T = unknown> extends Omit<msgBaseType, "payload"> {
+  payload: T;
+}
+
+export interface InMsgBase<T> {
+  readonly tid: string;
+  readonly src?: string;
+  readonly dst?: string;
+  readonly ttl?: number;
+  readonly payload: T;
+}
+
+export interface MsgBox<T = unknown> extends Omit<MsgBase, "payload"> {
+  payload: T;
+}
+
+export type MsgBaseCfg = Pick<MsgBase, "src" | "dst" | "ttl">;
+export type MsgBaseParam = Partial<MsgBaseCfg>;
+
+export type VibesDiyError = ResError & Error;
+
+export type ResultVibesDiy<T> = Result<T, VibesDiyError>;
+
+export const w3cMessageEventBox = type({
+  type: "'MessageEvent'",
+  event: type({
+    data: "unknown",
+    origin: "string|null",
+    lastEventId: "string",
+    source: "unknown",
+    ports: "unknown",
+  }).partial(),
+});
+
+export const w3cCloseEventBox = type({
+  type: "'CloseEvent'",
+  event: type({
+    wasClean: "boolean",
+    code: "number",
+    reason: "string",
+  }),
+});
+
+export const w3cErrorEventBox = type({
+  type: "'ErrorEvent'",
+  event: type({
+    message: "string",
+    filename: "string",
+    lineno: "number",
+    colno: "number",
+    error: "unknown",
+  }).partial(),
+});
+
+export const w3CWebSocketEvent = w3cMessageEventBox.or(w3cCloseEventBox).or(w3cErrorEventBox);
+export type W3CWebSocketEvent = typeof w3CWebSocketEvent.infer;
+export type W3CWebSocketErrorEvent = typeof w3cErrorEventBox.infer;
+export type W3CWebSocketMessageEvent = typeof w3cMessageEventBox.infer;
+export type W3CWebSocketCloseEvent = typeof w3cCloseEventBox.infer;
+
+export const Pager = type({
+  "limit?": "number",
+  "cursor?": "string", // ISO timestamp cursor for next page (exclusive)
+});
+export type Pager = typeof Pager.infer;
+
+export const ForeignInfo = type({ "givenEmail?": "string", "claims?": ClerkClaim });
+export type ForeignInfo = typeof ForeignInfo.infer;
+/** @deprecated use ForeignInfo */
+export const InviteForeignInfo = ForeignInfo;
+export type InviteForeignInfo = ForeignInfo;
+
+// shared identity for all key-grant messages (used by invite-flow and request-access)
+export const GrantListBase = type({
+  appSlug: "string",
+  userSlug: "string",
+  auth: dashAuthType,
+  pager: Pager,
+});
+
+export const Role = type("'editor' | 'viewer'");
+export type Role = typeof Role.infer;

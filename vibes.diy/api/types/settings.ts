@@ -1,0 +1,216 @@
+import { type } from "arktype";
+import { dashAuthType } from "./common.js";
+import { AIParams, ActiveEntry, EnablePublicAccess, EnableRequest, ActiveACL, KVString } from "./invite.js";
+
+export const userSettingShareing = type({
+  type: "'sharing'",
+  grants: type({
+    grant: "'allow' | 'deny'",
+    appSlug: "string",
+    userSlug: "string",
+    dbName: "string", // could be "*" for all databases
+  }).array(),
+});
+export function isUserSettingSharing(obj: unknown): obj is typeof userSettingShareing.infer {
+  return !(userSettingShareing(obj) instanceof type.errors);
+}
+
+export const userSettingItem = userSettingShareing;
+
+export type UserSettingItem = typeof userSettingItem.infer;
+
+export const reqEnsureUserSettings = type({
+  type: "'vibes.diy.req-ensure-user-settings'",
+  auth: dashAuthType,
+  settings: userSettingItem.array(),
+});
+export type ReqEnsureUserSettings = typeof reqEnsureUserSettings.infer;
+
+export const resEnsureUserSettings = type({
+  type: "'vibes.diy.res-ensure-user-settings'",
+  userId: "string",
+  settings: userSettingItem.array(),
+  updated: "string",
+  created: "string",
+});
+export type ResEnsureUserSettings = typeof resEnsureUserSettings.infer;
+export function isResEnsureUserSettings(obj: unknown): obj is ResEnsureUserSettings {
+  return !(resEnsureUserSettings(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsBase = type({
+  type: "'vibes.diy.req-ensure-app-settings'",
+  "auth?": dashAuthType,
+  appSlug: "string",
+  userSlug: "string",
+});
+
+export type ReqEnsureAppSettingsBase = typeof reqEnsureAppSettingsBase.infer;
+
+export function isReqEnsureAppSettingsBase(obj: unknown): obj is ReqEnsureAppSettingsBase {
+  return !(reqEnsureAppSettingsBase(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsAcl = type({
+  aclEntry: type({
+    entry: ActiveACL,
+    op: "'delete' | 'upsert'",
+  }),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsAcl = typeof reqEnsureAppSettingsAcl.infer;
+export function isReqEnsureAppSettingsAcl(obj: unknown): obj is ReqEnsureAppSettingsAcl {
+  return !(reqEnsureAppSettingsAcl(obj) instanceof type.errors);
+}
+
+export const reqPublicAccess = type({
+  publicAccess: {
+    enable: "boolean",
+  },
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqPublicAccess = typeof reqPublicAccess.infer;
+export function isReqPublicAccess(obj: unknown): obj is ReqPublicAccess {
+  return !(reqPublicAccess(obj) instanceof type.errors);
+}
+
+export const reqRequest = type({
+  request: {
+    enable: "boolean",
+    "autoAcceptViewRequest?": "boolean",
+  },
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqRequest = typeof reqRequest.infer;
+export function isReqRequest(obj: unknown): obj is ReqRequest {
+  return !(reqRequest(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsTitle = type({
+  title: "string",
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsTitle = typeof reqEnsureAppSettingsTitle.infer;
+export function isReqEnsureAppSettingsTitle(obj: unknown): obj is ReqEnsureAppSettingsTitle {
+  return !(reqEnsureAppSettingsTitle(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsApp = type({
+  app: AIParams.partial(),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsApp = typeof reqEnsureAppSettingsApp.infer;
+export function isReqEnsureAppSettingsApp(obj: unknown): obj is ReqEnsureAppSettingsApp {
+  return !(reqEnsureAppSettingsApp(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsChat = type({
+  chat: AIParams.partial(),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsChat = typeof reqEnsureAppSettingsChat.infer;
+export function isReqEnsureAppSettingsChat(obj: unknown): obj is ReqEnsureAppSettingsChat {
+  return !(reqEnsureAppSettingsChat(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsEnv = type({
+  env: KVString.array(),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsEnv = typeof reqEnsureAppSettingsEnv.infer;
+export function isReqEnsureAppSettingsEnv(obj: unknown): obj is ReqEnsureAppSettingsEnv {
+  return !(reqEnsureAppSettingsEnv(obj) instanceof type.errors);
+}
+
+export type ReqEnsureAppSettings =
+  // | ReqEnsureAppSettingsAcl
+  | ReqPublicAccess
+  | ReqRequest
+  | ReqEnsureAppSettingsTitle
+  | ReqEnsureAppSettingsApp
+  | ReqEnsureAppSettingsChat
+  | ReqEnsureAppSettingsEnv
+  | ReqEnsureAppSettingsBase;
+
+export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSettings {
+  return (
+    // isReqEnsureAppSettingsAcl(obj) ||
+    isReqEnsureAppSettingsTitle(obj) ||
+    isReqEnsureAppSettingsApp(obj) ||
+    isReqEnsureAppSettingsChat(obj) ||
+    isReqEnsureAppSettingsEnv(obj) ||
+    isReqEnsureAppSettingsBase(obj)
+  );
+}
+
+export const AppSettings = type({
+  entries: ActiveEntry.array(),
+  entry: type({
+    settings: {
+      "title?": "string",
+      "app?": AIParams.partial(),
+      "chat?": AIParams.partial(),
+      env: KVString.array(),
+    },
+    publicAccess: EnablePublicAccess.optional(),
+    enableRequest: EnableRequest.optional(),
+  }),
+});
+export type AppSettings = typeof AppSettings.infer;
+
+export const resEnsureAppSettings = type({
+  type: "'vibes.diy.res-ensure-app-settings'",
+  userId: "string",
+  appSlug: "string",
+  ledger: "string",
+  userSlug: "string",
+  tenant: "string",
+  "error?": "string",
+  settings: AppSettings,
+  updated: "string",
+  created: "string",
+});
+export type ResEnsureAppSettings = typeof resEnsureAppSettings.infer;
+export function isResEnsureAppSettings(obj: unknown): obj is ResEnsureAppSettings {
+  return !(resEnsureAppSettings(obj) instanceof type.errors);
+}
+
+export const reqListApplicationChats = type({
+  type: "'vibes.diy.req-list-application-chats'",
+  auth: dashAuthType,
+  "appSlug?": "string",
+  "userSlug?": "string",
+  "limit?": "number", // default 20, max 100
+  "cursor?": "string", // ISO timestamp cursor for next page (exclusive)
+});
+export type ReqListApplicationChats = typeof reqListApplicationChats.infer;
+
+export const resListApplicationChatsItem = type({
+  chatId: "string",
+  appSlug: "string",
+  userSlug: "string",
+  created: "string",
+});
+export type ResListApplicationChatsItem = typeof resListApplicationChatsItem.infer;
+
+export const resListApplicationChats = type({
+  type: "'vibes.diy.res-list-application-chats'",
+  items: resListApplicationChatsItem.array(),
+  "nextCursor?": "string", // present only when more pages exist
+});
+export type ResListApplicationChats = typeof resListApplicationChats.infer;
+export function isResListApplicationChats(obj: unknown): obj is ResListApplicationChats {
+  return !(resListApplicationChats(obj) instanceof type.errors);
+}
+
+export const evtAppSetting = type({
+  type: "'vibes.diy.evt-app-setting'",
+  userSlug: "string",
+  appSlug: "string",
+  settings: ActiveEntry.array(),
+});
+export type EvtAppSetting = typeof evtAppSetting.infer;
+
+export function isEvtAppSetting(obj: unknown): obj is EvtAppSetting {
+  return !(evtAppSetting(obj) instanceof type.errors);
+}

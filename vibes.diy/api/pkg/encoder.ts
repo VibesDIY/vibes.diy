@@ -1,4 +1,4 @@
-import { EventoEnDecoder, Result, JSONEnDecoderSingleton, top_uint8 } from "@adviser/cement";
+import { EventoEnDecoder, Result, JSONEnDecoderSingleton, top_uint8, exception2Result } from "@adviser/cement";
 import { w3CWebSocketEvent, W3CWebSocketEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
@@ -36,6 +36,22 @@ export class W3CWebSocketEventEventoEnDecoder implements EventoEnDecoder<W3CWebS
         console.error("Unknown WS Event:", arkMatch);
         return Result.Ok();
     }
+  }
+  decode(data: unknown): Promise<Result<string>> {
+    return Promise.resolve(Result.Ok(JSON.stringify(data)));
+  }
+}
+
+export class MsgBaseEventoEnDecoder implements EventoEnDecoder<unknown, string> {
+  async encode(args: unknown): Promise<Result<unknown>> {
+    if (typeof args === "string") {
+      const r = exception2Result(() => JSON.parse(args) as unknown);
+      if (r.isErr()) {
+        return Result.Ok();
+      }
+      return Result.Ok(r.Ok());
+    }
+    return Result.Ok(args);
   }
   decode(data: unknown): Promise<Result<string>> {
     return Promise.resolve(Result.Ok(JSON.stringify(data)));

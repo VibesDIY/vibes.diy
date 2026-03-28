@@ -31,7 +31,6 @@ import { type } from "arktype";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
-import type { SqlChatSection } from "../sql/vibes-diy-api-schema-sqlite.js";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import {
   createStatsCollector,
@@ -58,6 +57,7 @@ import {
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
+import { sqlite } from "@vibes.diy/api-sql";
 
 interface AppendBlockEventParams {
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -146,7 +146,7 @@ export async function handlePromptContext({
 }): Promise<Result<{ blockSeq: number; fsRef: Option<FileSystemRef> }>> {
   let fsRef: Option<FileSystemRef> = Option.None();
   const code: CodeBlocks[] = [];
-  const sections: SqlChatSection[] = [];
+  const sections: sqlite.SqlChatSection[] = [];
 
   // the collectedMsgs are Queue
   const collectedMsgs = [...iCollectedMsgs];
@@ -304,12 +304,16 @@ async function injectSystemPrompt(
       dependenciesUserOverride: true,
       dependencies: ["fireproof", "callai", "image-gen"],
       fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
+        console.log("Fetching asset for system prompt from URL:", url.toString(), vctx.params.pkgRepos.workspace);
+        const uri = URI.from(url);
+        if (uri.protocol === "file:") {
+          return fetch(url, _init);
+        }
         const promptTxtUrl = BuildURI.from(vctx.params.pkgRepos.workspace)
           .appendRelative("@vibes.diy/prompts")
           .appendRelative("llms")
           .appendRelative(pathOps.basename(URI.from(url).pathname))
           .toString();
-        // console.log("Fetching asset for system prompt from URL:", url, promptTxtUrl);
         const rRes = await vctx.fetchAsset(promptTxtUrl);
         if (rRes.isErr()) {
           console.error("Failed to fetch asset for system prompt from URL:", url.toString(), "with error:", rRes.Err());

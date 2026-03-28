@@ -78,7 +78,7 @@ export default {
       for (let tryPath of [path, `${path}/index.js`]) {
         tryPath = tryPath.replace(/\/+/g, "/");
         const assetUrl = BuildURI.from(request.url).pathname("/").appendRelative("/_vibe-pkg").appendRelative(tryPath).toString();
-        // console.log("Trying to fetch asset for package", assetUrl);
+        console.log("Trying to fetch asset for package", assetUrl);
         assetResponse = await env.ASSETS.fetch(new Request(assetUrl) as unknown as CFRequest);
         if (assetResponse.ok) {
           break;
@@ -101,6 +101,7 @@ export default {
         status: assetResponse.status,
         headers,
       }) as unknown as CFResponse;
+      console.log("Caching asset response for package", path, "with status", response.status, request.url);
       await cache.put(
         new Request(request.url, { method: "GET" }) as unknown as CFRequest,
         response.clone() as unknown as CFResponse

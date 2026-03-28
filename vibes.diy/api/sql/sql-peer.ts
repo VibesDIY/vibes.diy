@@ -1,10 +1,8 @@
 import { Option, URI, uint8array2stream, exception2Result, concatUint8, Result } from "@adviser/cement";
-import { VibesSqlite } from "../create-handler.js";
-import type { VibesApiTables } from "../types.js";
 import { eq } from "drizzle-orm/sql/expressions";
-import { Cider, PeerStreamWithCommit, PeerWithCommit } from "../intern/ensure-storage.js";
 import { FetchResult } from "@vibes.diy/api-types";
-import { DBFlavour } from "../sql/tables.js";
+import { DBFlavour, VibesApiTables, VibesSqlite } from "./tables.js";
+import { Cider, PeerFetch, PeerStreamWithCommit, PeerWithCommit, StoragePeer } from "@vibes.diy/api-pkg";
 
 // const SQLITE_PEER_PROTOCOL = "sqlite:";
 // const SQL_PEER_PROTOCOLS = ["sql:", SQLITE_PEER_PROTOCOL];
@@ -71,7 +69,7 @@ export class SQLPeer implements PeerWithCommit {
   }
 }
 
-export class SQLPeerFetch {
+export class SQLPeerFetch implements PeerFetch {
   readonly db: VibesSqlite;
   readonly assets: VibesApiTables["assets"];
   readonly flavour: DBFlavour;
@@ -117,5 +115,24 @@ export class SQLPeerFetch {
       url: url.toString(),
       data: uint8array2stream(asset.content as Uint8Array),
     });
+  }
+}
+
+export interface CreateSQLPeerParams {
+  flavour: DBFlavour;
+  db: VibesSqlite;
+  assets: VibesApiTables["assets"];
+}
+
+export function createSQLPeer(params: CreateSQLPeerParams): StoragePeer {
+  switch (params.flavour) {
+    case "sqlite":
+    case "pg":
+      return {
+        fetch: new SQLPeerFetch(params.flavour, params.db, params.assets),
+        factory: (cider: Cider) => new SQLPeer(params.flavour, params.db, params.assets, cider, 10 * 1024 * 1024),
+      };
+    default:
+      throw new Error(`Unsupported DB flavour: ${params.flavour}`);
   }
 }

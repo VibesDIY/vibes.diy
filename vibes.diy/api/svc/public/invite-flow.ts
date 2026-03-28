@@ -29,6 +29,7 @@ import {
   isResHasAccessInviteRevoke,
   ClerkClaim,
   EvtInviteGrant,
+  InviteGrantItem,
 } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -113,21 +114,26 @@ export const createInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqCre
       if (rIns.isErr()) {
         return Result.Err(rIns);
       }
-
-      await sendUpdateEvent(vctx, { ...value, state: "pending", role: req.role, cud: "create" });
-
-      await ctx.send.send(ctx, {
+      const val = {
         type: "vibes.diy.res-create-invite",
         appSlug: req.appSlug,
         userSlug: req.userSlug,
         emailKey,
-        state: "pending",
+        state: "pending" as const,
         role: req.role,
         tokenOrGrantUserId: token,
         foreignInfo,
         updated: now,
         created: now,
-      } satisfies ResCreateInvite);
+      } satisfies ResCreateInvite;
+
+      await sendUpdateEvent(vctx, {
+        userId,
+        grant: val,
+        op: "upsert" as const,
+      });
+
+      await ctx.send.send(ctx, val);
 
       return Result.Ok(EventoResult.Continue);
     }
@@ -174,15 +180,19 @@ export const revokeInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRev
           console.error("Failed to parse foreignInfo for invite grant", { error: foreignInfo, raw: prev.foreignInfo });
         } else {
           await sendUpdateEvent(vctx, {
-            cud: req.delete ? "delete" : "update",
+            op: req.delete ? "delete" : "upsert",
             userId,
-            appSlug: req.appSlug,
-            userSlug: req.userSlug,
-            emailKey: req.emailKey,
-            role: prev.role as EvtInviteGrant["role"],
-            state: prev.state as EvtInviteGrant["state"],
-            tokenOrGrantUserId: prev.tokenOrGrantUserId,
-            foreignInfo,
+            grant: {
+              appSlug: req.appSlug,
+              userSlug: req.userSlug,
+              emailKey: req.emailKey,
+              role: prev.role as EvtInviteGrant["grant"]["role"],
+              state: prev.state as EvtInviteGrant["grant"]["state"],
+              tokenOrGrantUserId: prev.tokenOrGrantUserId,
+              foreignInfo,
+              updated: prev.updated,
+              created: prev.created,
+            },
           });
         }
       }
@@ -236,6 +246,8 @@ export async function redeemInvite(
     claims: req.claims,
   };
 
+  const now = new Date().toISOString();
+
   const rUpd = await exception2Result(() =>
     vctx.sql.db
       .update(vctx.sql.tables.inviteGrants)
@@ -243,7 +255,7 @@ export async function redeemInvite(
         state: "accepted",
         tokenOrGrantUserId: req.redeemerId,
         foreignInfo,
-        updated: new Date().toISOString(),
+        updated: now,
       })
       .where(eq(vctx.sql.tables.inviteGrants.tokenOrGrantUserId, req.token))
   );
@@ -252,12 +264,19 @@ export async function redeemInvite(
   }
 
   await sendUpdateEvent(vctx, {
-    cud: "update",
-    ...row,
-    state: "accepted" as EvtInviteGrant["state"],
-    role: row.role as EvtInviteGrant["role"],
-    tokenOrGrantUserId: req.redeemerId,
-    foreignInfo,
+    op: "upsert",
+    userId: row.userId,
+    grant: {
+      appSlug: row.appSlug,
+      userSlug: row.userSlug,
+      emailKey: row.emailKey,
+      role: row.role as EvtInviteGrant["grant"]["role"],
+      state: "accepted" as EvtInviteGrant["grant"]["state"],
+      tokenOrGrantUserId: req.redeemerId,
+      foreignInfo,
+      updated: now,
+      created: row.created,
+    },
   });
 
   return Result.Ok(row);
@@ -430,27 +449,24 @@ export const inviteSetRoleEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqIn
         )
         .then((rows) => rows[0]);
       if (row) {
-        await sendUpdateEvent(vctx, {
-          userId,
-          userSlug: req.userSlug,
+        const grant = InviteGrantItem(row);
+        if (grant instanceof type.errors) {
+          console.error("Failed to parse invite grant after role update", { error: grant, raw: row });
+        } else {
+          await sendUpdateEvent(vctx, {
+            op: "upsert",
+            userId,
+            grant,
+          });
+        }
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-invite-set-role",
           appSlug: req.appSlug,
-          state: row.state as EvtInviteGrant["state"],
-          role: row.role as EvtInviteGrant["role"],
-          foreignInfo: row.foreignInfo as EvtInviteGrant["foreignInfo"],
-          emailKey: row.emailKey as EvtInviteGrant["emailKey"],
-          tokenOrGrantUserId: row.tokenOrGrantUserId as EvtInviteGrant["tokenOrGrantUserId"],
-          cud: "update",
-        });
+          userSlug: req.userSlug,
+          emailKey: req.emailKey,
+          role: req.role,
+        } satisfies ResInviteSetRole);
       }
-
-      await ctx.send.send(ctx, {
-        type: "vibes.diy.res-invite-set-role",
-        appSlug: req.appSlug,
-        userSlug: req.userSlug,
-        emailKey: req.emailKey,
-        role: req.role,
-      } satisfies ResInviteSetRole);
-
       return Result.Ok(EventoResult.Continue);
     }
   ),
@@ -495,6 +511,8 @@ export const listInviteGrantsEvento: EventoHandler<
 
       const rows = await vctx.sql.db
         .select({
+          appSlug: vctx.sql.tables.inviteGrants.appSlug,
+          userSlug: vctx.sql.tables.inviteGrants.userSlug,
           emailKey: vctx.sql.tables.inviteGrants.emailKey,
           state: vctx.sql.tables.inviteGrants.state,
           role: vctx.sql.tables.inviteGrants.role,
@@ -510,13 +528,15 @@ export const listInviteGrantsEvento: EventoHandler<
         .limit(limit + 1);
 
       const hasMore = rows.length > limit;
-      const items = hasMore ? rows.slice(0, limit) : rows;
-
+      const items = InviteGrantItem.array()(hasMore ? rows.slice(0, limit) : rows);
+      if (items instanceof type.errors) {
+        return Result.Err(`Failed to parse invite grants: ${items.summary}`);
+      }
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-list-invite-grants",
         appSlug: req.appSlug,
         userSlug: req.userSlug,
-        items: items as ResListInviteGrants["items"],
+        items,
         ...(hasMore ? { nextCursor: items[items.length - 1].created } : {}),
       } satisfies ResListInviteGrants);
 

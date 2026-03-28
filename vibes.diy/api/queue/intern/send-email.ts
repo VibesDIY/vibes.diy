@@ -1,8 +1,8 @@
 import { BuildURI, Result } from "@adviser/cement";
 import { EmailOps, isEmailOpsInvite, RawEmailWithoutFrom } from "@vibes.diy/api-types";
-import { VibesApiSQLCtx } from "../types.js";
+import { QueueCtx } from "../queue-ctx.js";
 
-export function sendEmailOpts(vctx: VibesApiSQLCtx, ops: EmailOps[]): Promise<Result<void>[]> {
+export function sendEmailOpts(vctx: QueueCtx, ops: EmailOps[]): Promise<Result<void>[]> {
   return Promise.all(
     ops.map((op) => {
       let raw!: RawEmailWithoutFrom;
@@ -15,8 +15,25 @@ export function sendEmailOpts(vctx: VibesApiSQLCtx, ops: EmailOps[]): Promise<Re
       if (isEmailOpsInvite(op)) {
         buri.setParam("token", op.token);
       }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(op.dst)) {
+        console.warn(`Invalid email address: ${op.dst}, skipping email sending for this operation.`);
+        return Result.Ok();
+      }
 
       switch (op.action) {
+        case "invite-revoked":
+          raw = {
+            to: op.dst,
+            subject: `Your invitation as ${op.role} to the Vibe App "${op.appSlug}" has been revoked`,
+            text: [
+              "Hello,",
+
+              `We wanted to inform you that your invitation as ${op.role} to the app "${op.appSlug}" on Vibes DIY has been revoked by ${op.userSlug}.`,
+
+              "If you have any questions or believe this was a mistake, please reach out to the app owner directly.",
+            ].join("\n\n"),
+          };
+          break;
         case "invite":
           raw = {
             to: op.dst,

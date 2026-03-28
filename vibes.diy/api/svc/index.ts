@@ -3,7 +3,6 @@ export * from "./entry-point-utils.js";
 // export { toEsmSh } from "./intern/import-map.js";
 export { cfServe } from "./cf-serve.js";
 export * from "./types.js";
-export { storeScreenshot } from "./intern/store-screenshot.js";
 export * from "./npm-package-version.js";
 export * from "./intern/import-map.js";
 export * from "./vibes-msg-evento.js";

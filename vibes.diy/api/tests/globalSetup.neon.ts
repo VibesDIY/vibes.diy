@@ -24,7 +24,7 @@ export async function setup(project: TestProject) {
     throw new Error("VIBES_DIY_TEST_NEON_URL env var is required for neon tests");
   }
 
-  const schemaFile = path.resolve(root, "node_modules/@vibes.diy/api-svc/sql/vibes-diy-api-schema-pg.ts");
+  const schemaFile = path.resolve(root, "node_modules/@vibes.diy/api-sql/vibes-diy-api-schema-pg.ts");
   const hashFile = path.join(root, "dist", ".neon-schema-hash");
 
   await fs.mkdir(path.dirname(hashFile), { recursive: true });

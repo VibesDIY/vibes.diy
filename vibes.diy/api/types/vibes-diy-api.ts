@@ -1,4 +1,5 @@
 import { Result } from "@adviser/cement";
+import { VibesDiyError, ResError, VibeFile } from "./common.js";
 import {
   ReqEnsureAppSlug,
   ResEnsureAppSlug,
@@ -8,23 +9,20 @@ import {
   ResGetChatDetails,
   ReqGetAppByFsId,
   ResGetAppByFsId,
-  ReqOpenChat,
-  VibesDiyError,
-  ResPromptChatSection,
-  ResError,
-  SectionEvent,
+  ReqSetModeFs,
+  ResSetModeFs,
+} from "./app.js";
+import { ReqOpenChat, ResPromptChatSection, SectionEvent, ResAddFS } from "./chat.js";
+import {
   ReqEnsureUserSettings,
   ResEnsureUserSettings,
   ReqListApplicationChats,
   ResListApplicationChats,
   ReqEnsureAppSettings,
   ResEnsureAppSettings,
-  ReqSetModeFs,
-  ResSetModeFs,
-  ReqFPCloudToken,
-  ResFPCloudToken,
-  VibeFile,
-  ResAddFS,
+} from "./settings.js";
+import { ReqFPCloudToken, ResFPCloudToken } from "./fpcloud-token.js";
+import {
   ReqCreateInvite,
   ResCreateInvite,
   ReqRevokeInvite,
@@ -37,6 +35,8 @@ import {
   ResInviteSetRole,
   ReqListInviteGrants,
   ResListInviteGrants,
+} from "./invite-flow.js";
+import {
   ReqListRequestGrants,
   ResListRequestGrants,
   ReqRequestAccess,
@@ -49,7 +49,7 @@ import {
   ResRevokeRequest,
   ReqHasAccessRequest,
   ResHasAccessRequest,
-} from "./msg-types.js";
+} from "./request-access.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";

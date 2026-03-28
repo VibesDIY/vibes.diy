@@ -1,28 +1,13 @@
 import { SuperThis } from "@fireproof/core-types-base";
 import { FPApiToken } from "@fireproof/core-types-protocols-dashboard";
-import { VibesSqlite } from "./create-handler.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { Logger, Result } from "@adviser/cement";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { FetchResult, LLMHeaders, MsgBase, RawEmailWithoutFrom, VibesFPApiParameters } from "@vibes.diy/api-types";
-import { VibesApiTables } from "./sql/tables.js";
+import { LLMHeaders, MsgBase, VibesAssetStorage, VibesFPApiParameters } from "@vibes.diy/api-types";
+import { VibesApiTables, VibesSqlite } from "@vibes.diy/api-sql";
 
 export type { VibesApiTables };
-
-export interface StorageResult {
-  cid: string;
-  getURL: string;
-  mode: "created" | "existing";
-  created: Date;
-  size: number;
-}
-
-export interface Storage {
-  fetch: (url: string) => Promise<FetchResult>;
-  ensure: (...items: ReadableStream<Uint8Array | string>[]) => Promise<Result<StorageResult>[]>;
-}
-
 export interface CfCacheIf {
   delete(request: RequestInfo | URL, options?: CacheQueryOptions): Promise<boolean>;
   match(request: RequestInfo | URL, options?: CacheQueryOptions): Promise<Response | undefined>;
@@ -46,17 +31,17 @@ export interface VibesApiSQLCtx {
   connections: Set<WSSendProvider>;
   deviceCA: DeviceIdCAIf;
   logger: Logger;
-  sendEmail: (email: RawEmailWithoutFrom) => Promise<
-    Result<{
-      result: unknown;
-    }>
-  >;
+  // sendEmail: (email: RawEmailWithoutFrom) => Promise<
+  //   Result<{
+  //     result: unknown;
+  //   }>
+  // >;
   postQueue(msg: MsgBase): Promise<void>;
   netHash(): string;
   params: VibesFPApiParameters;
   cache: CfCacheIf;
   fetchPkgVersion(pkg: string): Promise<Result<{ src: string; version: string }>>;
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
-  storage: Storage;
+  storage: VibesAssetStorage;
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
 }

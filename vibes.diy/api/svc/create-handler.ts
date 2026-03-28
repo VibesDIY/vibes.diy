@@ -1,12 +1,8 @@
 // import { auth } from "./better-auth.js";
-import { Result, param, AppContext, TriggerResult, EventoSendProvider, Logger, exception2Result } from "@adviser/cement";
+import { Result, param, AppContext, TriggerResult, EventoSendProvider, Logger } from "@adviser/cement";
 import { ensureLogger } from "@fireproof/core-runtime";
-import { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
-import { ResultSet } from "@libsql/client";
 // import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
-import { ensureStorage } from "./intern/ensure-storage.js";
-import type { D1Result } from "@cloudflare/workers-types";
 import { defaultFetchPkgVersion, ResolveFunction } from "./npm-package-version.js";
 import { vibesReqResEvento } from "./vibes-req-res-evento.js";
 import { HTTPSendProvider } from "./svc-http-send-provider.js";
@@ -14,21 +10,24 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { defaultLLMRequest } from "./default-llm-request.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
-import { LLMDefault, LLMEnforced, LLMHeaders, MsgBase, S3Api, VibesFPApiParameters } from "@vibes.diy/api-types";
-import { createVibesApiTables, DBFlavour } from "./sql/tables.js";
+import { LLMDefault, LLMEnforced, LLMHeaders, MsgBase, VibesFPApiParameters } from "@vibes.diy/api-types";
+import { createSQLPeer, CreateSQLPeerParams, createVibesApiTables, DBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { SuperThis } from "@fireproof/core-types-base";
+import { ensureStorage } from "@vibes.diy/api-pkg";
 
-export type VibesSqlite = BaseSQLiteDatabase<"async", ResultSet | D1Result, Record<string, never>>;
 export type BindPromise<T> = (promise: Promise<T>) => Promise<T>;
 
 export interface CreateHandlerParams<T extends VibesSqlite> {
   db: T;
-  s3Api: S3Api;
+  // s3Api: S3Api;
   sthis: SuperThis;
   logger?: Logger;
   cache: CfCacheIf;
   env: Record<string, string>; // | Env;
   connections: Set<WSSendProvider>;
+  storageSystems: {
+    sql: CreateSQLPeerParams;
+  };
   postQueue: (msg: MsgBase) => Promise<void>;
   netHash(): string;
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
@@ -231,38 +230,19 @@ export async function createAppContext<T extends VibesSqlite>(
       audience: "sandboxes.vibes.diy",
       validFor: parseInt(envVals.CLOUD_SESSION_TOKEN_VALID_SEC ?? "600", 10) ?? 600,
     },
-    sendEmail: async (rm) => {
-      const rRes = await exception2Result(() =>
-        fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${envVals.RESEND_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...rm,
-            from: envVals.VIBES_DIY_FROM_EMAIL,
-          }),
-        })
-      );
-      if (rRes.isErr()) {
-        return Result.Err(rRes);
-      }
-      const res = rRes.Ok();
-      if (!res.ok) {
-        return Result.Err(`Resend got an error: ${res.status}:${res.statusText}`);
-      }
-      const jsonTxt = await res.text();
-      const rJson = exception2Result(() => JSON.parse(jsonTxt));
-      return Result.Ok({ result: rJson.isOk() ? rJson.Ok() : jsonTxt });
-    },
+
     postQueue: params.postQueue,
     fetchAsset: params.fetchAsset,
     tokenApi: await tokenApi(sthis, {
       clockTolerance: 60,
       deviceIdCA: rDeviceIdCA.Ok(),
     }),
-    storage: ensureStorage(envVals.DB_FLAVOUR as DBFlavour, params.db, tables.assets, params.s3Api),
+    storage: ensureStorage(createSQLPeer(params.storageSystems.sql)),
+    //   envVals.DB_FLAVOUR as DBFlavour, params.db, tables.assets, [
+    //   param.storageSystem.sql,
+    //   param.storageSystem.s3
+    // ]),
+
     llmRequest: defaultLLMRequest(params.llmRequest, {
       url: envVals.LLM_BACKEND_URL,
       apiKey: envVals.LLM_BACKEND_API_KEY,

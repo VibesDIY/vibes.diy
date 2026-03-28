@@ -1,19 +1,17 @@
 import puppeteer from "@cloudflare/puppeteer";
-import { CFEnv, EvtNewFsId, isEvtNewFsId, isMsgBase, msgBase } from "@vibes.diy/api-types";
-import { R2ToS3Api, storeScreenshot } from "@vibes.diy/api-svc";
-import { cfDrizzle } from "@vibes.diy/api-svc/cf-serve.js";
-import { createVibesApiTables } from "@vibes.diy/api-svc/sql/tables.js";
-import { type } from "arktype";
-import { ensureSuperThis } from "@fireproof/core-runtime";
-import { LoggerImpl } from "@adviser/cement";
+import { EvtNewFsId } from "@vibes.diy/api-types";
+import { Result } from "@adviser/cement";
+import { storeScreenshot } from "./intern/store-screenshot.js";
+import { QueueCtx } from "./queue-ctx.js";
+import { Fetcher } from "@cloudflare/workers-types";
 
 /**
  * Takes a screenshot of a URL using Cloudflare Browser Rendering API
  */
-export async function takeScreenshot(event: EvtNewFsId, env: CFEnv): Promise<Uint8Array> {
+export async function takeScreenshot(event: EvtNewFsId, browserFetcher: Fetcher): Promise<Uint8Array> {
   console.log(`Taking screenshot for ${event.vibeUrl} (fsId: ${event.fsId})`);
 
-  const browser = await puppeteer.launch(env.BROWSER as never);
+  const browser = await puppeteer.launch(browserFetcher as never);
   try {
     const page = await browser.newPage();
 
@@ -43,48 +41,17 @@ export async function takeScreenshot(event: EvtNewFsId, env: CFEnv): Promise<Uin
 /**
  * Process a screenshot event from the queue
  */
-export async function processScreenShotEvent(message: unknown, env: CFEnv): Promise<void> {
-  if (!isMsgBase(message)) {
-    const x = msgBase(message);
-    if (x instanceof type.errors) {
-      console.error("Received message that is not MsgBase but matches MsgBase structure:", x.summary, message);
-    } else {
-      console.error("Received message that is not MsgBase:", message);
-    }
-    return;
+export async function processScreenShotEvent(qctx: QueueCtx, evt: EvtNewFsId): Promise<Result<void>> {
+  const screenshot = await takeScreenshot(evt, qctx.params.cf.BROWSER);
+  const screenshotData = new Uint8Array(screenshot);
+
+  console.log(`Screenshot taken for ${evt.fsId}: ${screenshotData.byteLength} bytes`);
+
+  const result = await storeScreenshot(qctx, evt.fsId, screenshotData);
+
+  if (result.isErr()) {
+    return Result.Err(`Failed to store screenshot: ${result.Err()}`);
   }
-  const payload = message.payload;
-  if (isEvtNewFsId(payload)) {
-    console.log("Processing ScreenShotEvent:", {
-      shotUrl: payload.vibeUrl,
-      fsId: payload.fsId,
-    });
-
-    const screenshot = await takeScreenshot(payload, env);
-    const screenshotData = new Uint8Array(screenshot);
-
-    console.log(`Screenshot taken for ${payload.fsId}: ${screenshotData.byteLength} bytes`);
-
-    const { db } = await cfDrizzle(env);
-    const sthis = ensureSuperThis({ logger: new LoggerImpl() });
-
-    const tables = createVibesApiTables((env.DB_FLAVOUR as "sqlite" | "pg") ?? "sqlite");
-    const result = await storeScreenshot(
-      {
-        sql: { dbFlavour: (env.DB_FLAVOUR as "sqlite" | "pg") ?? "sqlite", db, tables },
-        s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis),
-      },
-      payload.fsId,
-      screenshotData
-    );
-
-    if (result.isErr()) {
-      console.error(`Failed to store screenshot: ${result.Err()}`);
-      return;
-    }
-
-    console.log(`Screenshot stored with assetId: ${result.Ok().assetUrl}`);
-    return;
-  }
-  console.error("Received message with unrecognized payload:", payload);
+  console.log(`Screenshot stored with assetId: ${result.Ok().assetUrl}`);
+  return Result.Ok();
 }

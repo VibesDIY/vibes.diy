@@ -18,7 +18,7 @@ bucket_name = "vibes-diy-fs-ids"
 [[queues.consumers]]
 queue = "vibes-service"
 max_batch_size = 10
-max_batch_timeout = 30
+max_batch_timeout = 1
 
 [env.dev]
 name = "vibes-diy-v2-queue-consumer-dev"
@@ -38,7 +38,7 @@ bucket_name = "vibes-diy-fs-ids"
 [[env.dev.queues.consumers]]
 queue = "vibes-service-dev"
 max_batch_size = 10
-max_batch_timeout = 30
+max_batch_timeout = 1
 
 [env.prod]
 name = "vibes-diy-v2-queue-consumer-prod"
@@ -58,4 +58,4 @@ bucket_name = "vibes-diy-fs-ids"
 [[env.prod.queues.consumers]]
 queue = "vibes-service-prod"
 max_batch_size = 10
-max_batch_timeout = 30
+max_batch_timeout = 5

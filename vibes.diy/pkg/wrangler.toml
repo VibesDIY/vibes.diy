@@ -35,6 +35,37 @@ bucket_name = "vibes-diy-fs-ids"
 queue = "vibes-service"
 binding = "VIBES_SERVICE"
 
+[env.local]
+name = "vibes-diy-v2-local"
+vars = { ENVIRONMENT = "local" }
+routes = [
+  { pattern = "localhost.vibesdiy.net/*", zone_name = "vibesdiy.net" },
+  { pattern = "*.localhost.vibesdiy.net/*", zone_name = "vibesdiy.net" }
+]
+
+[env.local.browser]
+binding = "BROWSER"
+
+[env.local.durable_objects]
+bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+
+[[env.local.migrations]]
+tag = "v1"
+new_classes = ["ChatSessions"]
+
+[[env.local.d1_databases]]
+binding = "DB"
+database_name = "dev-vibes-diy-v2"
+database_id = "105530de-9900-435b-92f4-15347af604f6"
+
+[[env.local.r2_buckets]]
+binding = "FS_IDS_BUCKET"
+bucket_name = "vibes-diy-fs-ids"
+
+[[env.local.queues.producers]]
+queue = "vibes-service-local"
+binding = "VIBES_SERVICE"
+
 [env.dev]
 name = "vibes-diy-v2-dev"
 vars = { ENVIRONMENT = "dev" }

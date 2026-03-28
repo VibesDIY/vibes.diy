@@ -12,6 +12,7 @@ export const lockedVersions = {
   TAILWINDCSS: "4.1.18",
   REACT_ROUTER: "7.13.0",
   AG_GRID: "35.1.0",
+  EMOTION: "11.13.5",
 };
 
 export const lockedGroupsVersions = {
@@ -53,6 +54,7 @@ export const lockedGroupsVersions = {
     "@fireproof/vendor": "version:FP",
     "@fireproof/use-fireproof": "version:FP,deps:react",
     "use-fireproof": "version:FP,deps:react",
+    "@emotion/css": "version:EMOTION",
 
     // deps=react@19.2.1,react-dom@19.2.1
   },

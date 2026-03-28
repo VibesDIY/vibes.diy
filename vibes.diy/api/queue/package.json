@@ -17,6 +17,8 @@
     "@cloudflare/puppeteer": "^1.0.6",
     "@fireproof/core-runtime": "0.24.15",
     "@vibes.diy/api-svc": "workspace:*",
+    "@vibes.diy/api-sql": "workspace:*",
+    "@vibes.diy/api-pkg": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "arktype": "^2.2.0",
     "drizzle-orm": "^0.45.1"

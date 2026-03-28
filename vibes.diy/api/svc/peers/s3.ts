@@ -1,5 +1,5 @@
 import { Option, URI, Result, exception2Result } from "@adviser/cement";
-import { Cider, PeerStreamWithCommit, PeerWithCommit } from "../intern/ensure-storage.js";
+import { Cider, PeerStreamWithCommit, PeerWithCommit } from "@vibes.diy/api-pkg";
 import { FetchResult, S3Api } from "@vibes.diy/api-types";
 
 const S3_PEER_PROTOCOL = "s3:";
