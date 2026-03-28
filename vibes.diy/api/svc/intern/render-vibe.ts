@@ -8,7 +8,6 @@ import {
   vibeImportMap,
   vibeUserEnv,
 } from "@vibes.diy/api-types";
-import type { sqlApps } from "../sql/vibes-diy-api-schema-sqlite.js";
 import { NpmUrlCapture } from "../public/serv-entry-point.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { type } from "arktype";
@@ -20,10 +19,11 @@ import { serialize as cookieSerialize } from "cookie";
 import { Dependencies, render_esm_sh, resolveVersionRegistry } from "./import-map.js";
 import { lockedGroupsVersions, lockedVersions } from "./grouped-vibe-import-map.js";
 import { defaultFetchPkgVersion } from "../npm-package-version.js";
+import { sqlite } from "@vibes.diy/api-sql";
 
 export interface RenderVibesOpts {
   ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>;
-  fs: typeof sqlApps.$inferSelect;
+  fs: typeof sqlite.sqlApps.$inferSelect;
   fsItems: FileSystemItem[];
   pkgRepos: {
     private: NpmUrlCapture;

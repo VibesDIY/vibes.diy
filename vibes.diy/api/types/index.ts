@@ -2,7 +2,13 @@ import { Result } from "@adviser/cement";
 
 export * from "./types.js";
 export * from "./vibes-diy-serv-ctx.js";
-export * from "./msg-types.js";
+export * from "./common.js";
+export * from "./app.js";
+export * from "./chat.js";
+export * from "./settings.js";
+export * from "./fpcloud-token.js";
+export * from "./invite-flow.js";
+export * from "./request-access.js";
 export * from "./vibes-types.js";
 
 export * from "./screen-shotter.js";
@@ -45,4 +51,17 @@ export interface S3Api {
   get(iurl: string): Promise<FetchResult>;
   put(iurl: string): Promise<WritableStream<Uint8Array>>;
   rename(fromUrl: string, toUrl: string): Promise<Result<void>>;
+}
+
+export interface StorageResult {
+  cid: string;
+  getURL: string;
+  mode: "created" | "existing";
+  created: Date;
+  size: number;
+}
+
+export interface VibesAssetStorage {
+  fetch: (url: string) => Promise<FetchResult>;
+  ensure: (...items: ReadableStream<Uint8Array | string>[]) => Promise<Result<StorageResult>[]>;
 }

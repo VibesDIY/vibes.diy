@@ -1,11 +1,13 @@
 import { Result, uint8array2stream } from "@adviser/cement";
 import { eq } from "drizzle-orm/sql/expressions";
 import { type } from "arktype";
-import { VibesSqlite } from "../create-handler.js";
-import type { VibesApiTables } from "../types.js";
-import { isMetaScreenShot, MetaItem, S3Api } from "@vibes.diy/api-types";
-import { ensureStorage } from "./ensure-storage.js";
-import { DBFlavour } from "../sql/tables.js";
+// import { VibesSqlite } from "@vibes.diy/api-svc/create-handler.ts";
+import { createSQLPeer } from "@vibes.diy/api-sql";
+import { isMetaScreenShot, MetaItem } from "@vibes.diy/api-types";
+import { ensureStorage } from "@vibes.diy/api-pkg";
+import { QueueCtx } from "../queue-ctx.js";
+// import { ensureStorage } from "@vibes.diy/api-svc/intern/ensure-storage.ts";
+// import { DBFlavour } from "@vibes.diy/api-svc/sql/tables.ts";
 
 // Define MetaItem array type
 export interface StoreScreenshotResult {
@@ -21,17 +23,11 @@ export interface StoreScreenshotResult {
  * 4. Removes existing MetaScreenShot (if any) and adds new one
  */
 export async function storeScreenshot(
-  {
-    sql,
-    s3Api,
-  }: {
-    s3Api: S3Api;
-    sql: { dbFlavour: DBFlavour; db: VibesSqlite; tables: Pick<VibesApiTables, "apps" | "assets"> };
-  },
+  qctx: QueueCtx,
   fsId: string,
   screenshotData: Uint8Array
 ): Promise<Result<StoreScreenshotResult>> {
-  const { db, tables } = sql;
+  const { db, tables } = qctx.sql;
   // 1. Check if app with fsId exists
   const found = await db.select().from(tables.apps).where(eq(tables.apps.fsId, fsId)).limit(1);
 
@@ -51,7 +47,7 @@ export async function storeScreenshot(
   // const cidResult = await calcCid({ sthis }, screenshotData);
 
   // 3. Store screenshot using ensureStorage
-  const [storageResult] = await ensureStorage(sql.dbFlavour, db, tables.assets, s3Api).ensure(uint8array2stream(screenshotData));
+  const [storageResult] = await ensureStorage(createSQLPeer(qctx.storageSystems.sql)).ensure(uint8array2stream(screenshotData));
   if (!storageResult || storageResult.isErr()) {
     return Result.Err(`Failed to store screenshot: ${storageResult?.Err()}`);
   }

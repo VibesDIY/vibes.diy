@@ -16,7 +16,7 @@ if (!url) {
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./node_modules/@vibes.diy/api-svc/sql/vibes-diy-api-schema-pg.ts",
+  schema: "./node_modules/@vibes.diy/api-sql/vibes-diy-api-schema-pg.ts",
   out: "./dist",
   dbCredentials: { url },
 });

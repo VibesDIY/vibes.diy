@@ -1,4 +1,4 @@
-import { EventoResultType, HandleTriggerCtx, Result } from "@adviser/cement";
+import { EventoResult, EventoResultType, HandleTriggerCtx, Result } from "@adviser/cement";
 import {
   DashAuthType,
   VerifiedAuthResult,
@@ -9,6 +9,7 @@ import {
 import { ClerkClaimSchema } from "@fireproof/core-types-base";
 import { VibesApiSQLCtx } from "./types.js";
 import { MsgBase, ReqWithOptionalAuth, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
+import { wrapMsgBase } from "./unwrap-msg-base.js";
 
 export async function verifyExtractClaims(
   ctx: VibesApiSQLCtx,
@@ -116,8 +117,20 @@ export function checkAuth<IReq, TReq extends MsgBase<X>, TRes, X extends WithAut
   return optAuth<IReq, TReq, TRes, X>((async (ctx) => {
     const payload = ctx.validated.payload;
     if (!payload._auth) {
-      console.error("checkAuth: auth required but not verified");
-      return Result.Err("authentication required");
+      ctx.send.send(
+        ctx,
+        wrapMsgBase(ctx.validated, {
+          tid: ctx.validated.tid,
+          payload: {
+            type: "vibes.diy.res-error",
+            error: {
+              message: "Authentication required",
+              code: "authentication_required",
+            },
+          },
+        })
+      );
+      return Result.Ok(EventoResult.Stop);
     }
     return fn(ctx as unknown as HandleTriggerCtx<IReq, MsgBase<ReqWithVerifiedAuth<X>>, TRes>);
   }) as (ctx: HandleTriggerCtx<IReq, MsgBase<ReqWithOptionalAuth<X>>, TRes>) => Promise<Result<EventoResultType>>);

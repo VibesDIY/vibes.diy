@@ -5,10 +5,8 @@ import {
   WebSocket as CFWebSocket,
   CfProperties,
 } from "@cloudflare/workers-types";
-import { createAppContext, processRequest, VibesSqlite } from "./create-handler.js";
-import { drizzle as drizzleD1 } from "drizzle-orm/d1";
-import { drizzle as drizzleNeon } from "drizzle-orm/neon-serverless";
-import { Pool } from "@neondatabase/serverless";
+import { createAppContext, processRequest } from "./create-handler.js";
+
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -16,8 +14,8 @@ import { AppContext, Lazy, LoggerImpl, Result } from "@adviser/cement";
 import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf } from "./types.js";
 import { CFEnv, MsgBase } from "@vibes.diy/api-types";
-import { R2ToS3Api } from "./peers/r2-to-s3api.js";
 import { SuperThis } from "@fireproof/core-types-base";
+import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 
 // declare global {
 //   class WebSocketPair {
@@ -79,14 +77,6 @@ function netHashFn({
   });
 }
 
-export function cfDrizzle<T extends VibesSqlite>(env: CFEnv, ctxDrizzle?: T): { db: T } {
-  if (ctxDrizzle) return { db: ctxDrizzle };
-  if (env.DB_FLAVOUR === "pg" && env.NEON_DATABASE_URL) {
-    return { db: drizzleNeon(new Pool({ connectionString: env.NEON_DATABASE_URL })) as unknown as T };
-  }
-  return { db: drizzleD1(env.DB) as unknown as T };
-}
-
 export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
   const netHash = Lazy(() => netHashFn(request.cf as CfProperties));
   const sthis =
@@ -94,20 +84,38 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
     ensureSuperThis({
       logger: new LoggerImpl(),
     });
-  console.log("Creating app context with netHash:", netHash(), env.DB_FLAVOUR, env.NEON_DATABASE_URL);
+  // console.log("Creating app context with netHash:", netHash(), env.DB_FLAVOUR);
+  const drizzleDB = cfDrizzle(env, env.DB, ctx.drizzle).db;
+
   return createAppContext({
     sthis,
-    ...cfDrizzle(env, ctx.drizzle),
-    s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis),
+    db: drizzleDB,
+    // s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis),
     // db: ctx.drizzle ?? drizzle(env.DB),
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,
     cache: ctx.cache,
+
+    storageSystems: {
+      sql: {
+        flavour: toDBFlavour(env.DB_FLAVOUR),
+        db: drizzleDB,
+        assets: createVibesApiTables(toDBFlavour(env.DB_FLAVOUR)).assets,
+      },
+    },
 
     postQueue: async (msg: MsgBase) => {
       // console.log("Posting message to queue:", msg);
       await env.VIBES_SERVICE.send(JSON.stringify(msg));
     },
     fetchAsset: async (url: string) => {
+      // console.log("Fetching asset from URL:", url);
+      // const vibePkgUri = URI.from(url);
+      // if (vibePkgUri.protocol !== 'file:') {
+      //   if (vibePkgUri.pathname.startsWith("/vibe-pkg/")) {
+      //     url = vibePkgUri.build().pathname(vibePkgUri.pathname.replace("/vibe-pkg/", "/_vibe-pkg/")).toString();
+      //   }
+      //   console.log("Patched asset URL for fetchAsset:", url);
+      // }
       // const uri = URI.from(url);
       // const assetUrl = uri.build().pathname(uri.pathname.replace(/^\//, "/_")).toString();
       // const assetUrl = uri.toString();

@@ -60,6 +60,10 @@ export function isEmailOpsInvite(obj: unknown): obj is EmailOpsInvite {
   return !(EmailOpsInvite(obj) instanceof type.errors);
 }
 
+export const EmailOpsInviteRevoked = type({
+  action: "'invite-revoked'",
+}).and(EmailOpsBase);
+
 export const EmailOpsRequest = type({
   action: "'req-accepted' | 'req-rejected'",
 }).and(EmailOpsBase);
@@ -70,7 +74,7 @@ export function isEmailOpsRequest(obj: unknown): obj is EmailOpsRequest {
   return !(EmailOpsRequest(obj) instanceof type.errors);
 }
 
-export const EmailOps = EmailOpsInvite.or(EmailOpsRequest);
+export const EmailOps = EmailOpsInvite.or(EmailOpsInviteRevoked).or(EmailOpsRequest);
 export type EmailOps = typeof EmailOps.infer;
 
 export function isEmailOps(obj: unknown): obj is EmailOps {

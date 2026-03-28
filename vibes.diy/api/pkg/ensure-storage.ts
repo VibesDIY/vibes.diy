@@ -1,12 +1,7 @@
-import { Result, URI, teeWriter, processStream, Lazy, PeerStream, Peer, coerceStreamUint8 } from "@adviser/cement";
-import { StorageResult, Storage, VibesApiTables } from "../types.js";
-import { VibesSqlite } from "../create-handler.js";
+import { Result, Option, URI, teeWriter, processStream, Lazy, PeerStream, Peer, coerceStreamUint8 } from "@adviser/cement";
+import { StorageResult, VibesAssetStorage, FetchResult } from "@vibes.diy/api-types";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { base58btc } from "multiformats/bases/base58";
-import { S3PeerFetch } from "../peers/s3.js";
-import { FetchResult, S3Api } from "@vibes.diy/api-types";
-import { DBFlavour } from "../sql/tables.js";
-import { SQLPeer, SQLPeerFetch } from "../peers/sql.js";
 
 export interface CalcCidResult {
   cid: string;
@@ -19,6 +14,10 @@ export type PeerStreamWithCommit = PeerStream & {
 
 export interface PeerWithCommit extends Peer {
   begin: () => Promise<Result<PeerStreamWithCommit>>;
+}
+
+export interface PeerFetch {
+  fetch(url: URI): Promise<Option<FetchResult>>;
 }
 
 // const SHA2_256 = 0x12;
@@ -47,13 +46,18 @@ export class Cider {
   });
 }
 
-export function ensureStorage(flavour: DBFlavour, db: VibesSqlite, assets: VibesApiTables["assets"], s3: S3Api): Storage {
+export interface StoragePeer {
+  fetch: PeerFetch;
+  factory: (cider: Cider) => PeerWithCommit;
+}
+
+export function ensureStorage(...peers: StoragePeer[]): VibesAssetStorage {
   return {
     fetch: async (iurl: string): Promise<FetchResult> => {
-      const peers = [new SQLPeerFetch(flavour, db, assets), new S3PeerFetch(s3)];
+      // const peers = [new SQLPeerFetch(flavour, db, assets), new S3PeerFetch(s3)];
       const url = URI.from(iurl);
       for (const peer of peers) {
-        const res = await peer.fetch(url);
+        const res = await peer.fetch.fetch(url);
         if (res.IsSome()) {
           return res.unwrap();
         }
@@ -79,8 +83,12 @@ export function ensureStorage(flavour: DBFlavour, db: VibesSqlite, assets: Vibes
             const [lag1, lag2] = coerceStreamUint8(item).tee();
             const cider = new Cider(lag1);
             // console.log("Created Cider for item, waiting for teeWriter...");
-            const peers = [new SQLPeer(flavour, db, assets, cider, 10 * 1024 * 1024) /*, new S3Peer(s3, cider) */];
-            return teeWriter(peers, lag2).then(async (rTee) => {
+            // const peers = [
+            // new SQLPeer(flavour, db, assets, cider, 10 * 1024 * 1024) /*, new S3Peer(s3, cider) */];
+            return teeWriter(
+              peers.map((i) => i.factory(cider)),
+              lag2
+            ).then(async (rTee) => {
               if (rTee.isErr()) {
                 return Result.Err(rTee);
               }

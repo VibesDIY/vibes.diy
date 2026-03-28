@@ -1,8 +1,9 @@
-import { Result, loadAsset } from "@adviser/cement";
+import { loadAsset } from "@adviser/cement";
 import { DeviceIdCA } from "@fireproof/core-device-id";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
-import { createAppContext, noopCache, VibesSqlite } from "@vibes.diy/api-svc";
-import { S3Api, FetchResult, MsgBase } from "@vibes.diy/api-types";
+import { createAppContext, noopCache } from "@vibes.diy/api-svc";
+import { MsgBase } from "@vibes.diy/api-types";
+import { createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { createClient } from "@libsql/client/node";
 import { inject } from "vitest";
@@ -25,7 +26,7 @@ async function createDrizzleDB(): Promise<VibesSqlite> {
 }
 
 export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperThis>, deviceCA: DeviceIdCA) {
-  const flavour = (inject("DB_FLAVOUR" as never) as string) ?? "sqlite";
+  const flavour = toDBFlavour(inject("DB_FLAVOUR" as never) as string);
   const drizzleDB = await createDrizzleDB();
 
   const env = {
@@ -72,20 +73,14 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
 
   return createAppContext({
     sthis,
-    s3Api: new (class implements S3Api {
-      genId(): string {
-        throw new Error("Method not implemented.");
-      }
-      get(_iurl: string): Promise<FetchResult> {
-        throw new Error("Method not implemented.");
-      }
-      put(_iurl: string): Promise<WritableStream<Uint8Array>> {
-        throw new Error("Method not implemented.");
-      }
-      rename(_fromUrl: string, _toUrl: string): Promise<Result<void>> {
-        throw new Error("Method not implemented.");
-      }
-    })(),
+
+    storageSystems: {
+      sql: {
+        flavour,
+        db: drizzleDB,
+        assets: createVibesApiTables(flavour).assets,
+      },
+    },
     fetchAsset: async (url: string) => {
       throw new Error(`fetchAsset not implemented in test for url: ${url}`);
     },

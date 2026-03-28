@@ -48,15 +48,13 @@ async function writeUserSlugBinding(
         return Result.Err("maximum userSlug bindings reached for this userId");
       }
       const tenant = ctx.sthis.nextId(12).str;
-      await ctx.sql.db
-        .insert(ctx.sql.tables.userSlugBinding)
-        .values({
-          userId,
-          tenant,
-          userSlug,
-          created: new Date().toISOString(),
-        })
-        .onConflictDoNothing();
+      await ctx.sql.db.insert(ctx.sql.tables.userSlugBinding).values({
+        userId,
+        tenant,
+        userSlug,
+        created: new Date().toISOString(),
+      });
+      // .onConflictDoNothing();
       return Result.Ok({
         userSlug,
         tenant,

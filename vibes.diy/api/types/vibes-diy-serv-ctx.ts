@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { vibeUserEnv } from "./msg-types.js";
+import { vibeUserEnv } from "./common.js";
 
 export const vibesSvcEnv = type({
   CLERK_PUBLISHABLE_KEY: "string",

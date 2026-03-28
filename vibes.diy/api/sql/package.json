@@ -1,0 +1,33 @@
+{
+  "name": "@vibes.diy/api-sql",
+  "version": "0.0.0",
+  "private": "true",
+  "type": "module",
+  "scripts": {
+    "build": "core-cli tsc",
+    "pack": "core-cli build --doPack",
+    "publish": "core-cli build"
+  },
+  "dependencies": {
+    "@adviser/cement": "^0.5.34",
+    "@cloudflare/workers-types": "^4.20260317.1",
+    "@fireproof/core-protocols-dashboard": "0.24.13",
+    "@fireproof/core-runtime": "0.24.13",
+    "@fireproof/core-types-base": "0.24.13",
+    "@fireproof/core-types-protocols-dashboard": "0.24.13",
+    "@vibes.diy/api-pkg": "workspace:*",
+    "@vibes.diy/api-types": "workspace:*",
+    "@vibes.diy/call-ai-v2": "workspace:*",
+    "@libsql/client": "^0.17.0",
+    "@noble/hashes": "^2.0.1",
+    "multiformats": "^13.4.2",
+    "@neondatabase/serverless": "^1.0.2",
+    "arktype": "^2.2.0",
+    "drizzle-orm": "^0.45.1",
+    "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "@fireproof/core-cli": "0.24.13",
+    "@types/ws": "^8.18.1"
+  }
+}

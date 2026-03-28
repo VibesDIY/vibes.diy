@@ -1,5 +1,11 @@
 import * as sqlite from "./vibes-diy-api-schema-sqlite.js";
 import * as pg from "./vibes-diy-api-schema-pg.js";
+import { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
+import { ResultSet } from "@libsql/client";
+import type { D1Result } from "@cloudflare/workers-types";
+import { type } from "arktype";
+
+export type VibesSqlite = BaseSQLiteDatabase<"async", ResultSet | D1Result, Record<string, never>>;
 
 function createSqliteVibesApiTables() {
   return {
@@ -20,7 +26,15 @@ function createSqliteVibesApiTables() {
 
 export type VibesApiTables = ReturnType<typeof createSqliteVibesApiTables>;
 
-export type DBFlavour = "sqlite" | "pg";
+export const DBFlavour = type("'sqlite' | 'pg'");
+export type DBFlavour = typeof DBFlavour.infer;
+export function toDBFlavour(flavour: unknown): DBFlavour {
+  const res = DBFlavour(flavour);
+  if (res instanceof type.errors) {
+    return "sqlite";
+  }
+  return res;
+}
 
 export function createVibesApiTables(flavour: DBFlavour): VibesApiTables {
   if (flavour === "pg") {

@@ -6,6 +6,7 @@ import {
   VibeCodeBlock,
   ReqWithVerifiedAuth,
   ResEnsureAppSlugOk,
+  StorageResult,
 } from "@vibes.diy/api-types";
 import { exception2Result, Result, string2stream, to_uint8, toSortedObject } from "@adviser/cement";
 import { AppSlugBinding } from "./ensure-slug-binding.js";
@@ -15,7 +16,7 @@ import { and, eq, or } from "drizzle-orm/sql/expressions";
 import mime from "mime";
 import { transform } from "sucrase";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
-import { StorageResult, VibesApiSQLCtx } from "../types.js";
+import { VibesApiSQLCtx } from "../types.js";
 
 async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug: string): Promise<Result<number>> {
   const userApps = await ctx.sql.db

@@ -53,6 +53,18 @@ function blockDevVarsPlugin() {
   };
 }
 
+function preserveImportMetaUrlPlugin() {
+  return {
+    name: "preserve-import-meta-url",
+    resolveImportMeta(property: string | null) {
+      if (property === "url") {
+        return "import.meta.url";
+      }
+      return null;
+    },
+  };
+}
+
 function monacoTrimLanguagesPlugin() {
   return {
     name: "monaco-trim-languages",
@@ -151,6 +163,7 @@ function exposeDevServerInfo() {
 
 export default defineConfig(({ command }) => ({
   plugins: [
+    preserveImportMetaUrlPlugin(),
     blockDevVarsPlugin(),
     monacoTrimLanguagesPlugin(),
     setupSqlPlugin(),
@@ -190,6 +203,7 @@ export default defineConfig(({ command }) => ({
   build: {
     outDir: "build",
     manifest: true,
+    target: "esnext",
   },
   server: {
     host: "127.0.0.1",
