@@ -21,7 +21,9 @@ export function defaultLLMRequest(
       throw new Error(`Invalid LLMRequest: ${stripLLMRequest.summary}`);
     }
     const body = JSON.stringify(stripLLMRequest);
-    console.log(`[llm] model=${stripLLMRequest.model} messages=${stripLLMRequest.messages?.length ?? 0}`);
+    const msgLengths = stripLLMRequest.messages?.map((m: { content?: unknown }) => JSON.stringify(m.content).length) ?? [];
+    console.log(`[llm] model=${stripLLMRequest.model} messages=${stripLLMRequest.messages?.length ?? 0} lengths=[${msgLengths}]`);
+    console.log(`[llm-prompt]`, JSON.stringify(stripLLMRequest.messages, null, 2));
     return fetch(url, {
       method: "POST",
       headers: {
