@@ -5,11 +5,6 @@ export interface CallAIOpts {
   schema: JSONSchema;
 }
 
-export interface CallAIOpts {
-  schema: JSONSchema;
-}
-
-// know body known which is the correct one, export both for safety
 export let callAI: (prompt: string, opts: CallAIOpts) => Promise<string>;
 export let callAi: (prompt: string, opts: CallAIOpts) => Promise<string>;
 
