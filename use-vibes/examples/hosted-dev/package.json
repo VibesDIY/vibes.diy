@@ -17,7 +17,6 @@
     "serve": "serve -s dist"
   },
   "dependencies": {
-    "call-ai": "workspace:*",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "use-vibes": "workspace:*"

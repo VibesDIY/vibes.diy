@@ -23,7 +23,6 @@
     "@shikijs/monaco": "^4.0.2",
     "@tailwindcss/typography": "^0.5.19",
     "@vibes.diy/prompts": "workspace:*",
-    "call-ai": "workspace:*",
     "isbot": "^5.1.36",
     "jose": "^6.2.2",
     "multiformats": "^13.4.2",
