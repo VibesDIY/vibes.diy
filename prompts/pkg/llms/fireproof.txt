@@ -344,12 +344,13 @@ function handleSubmit(e) {
 
 ## Example React Application
 
-Code listing for todo tracker App.jsx:
+Code listing for todo tracker App.jsx. Note the code ordering: hooks, then handlers, then classNames right before JSX.
 ```js
 import React from "react";
 import { useFireproof } from "use-fireproof";
 
 export default function App() {
+  // 1. Hooks and document shapes
   const { useLiveQuery, useDocument, database } = useFireproof("todo-list-db");
 
   const {
@@ -363,11 +364,12 @@ export default function App() {
     createdAt: Date.now()
   });
 
-  const { docs: todos } = useLiveQuery("type", { 
+  const { docs: todos } = useLiveQuery("type", {
     key: "todo",
-    descending: true 
+    descending: true
   });
 
+  // 2. Event handlers
   const handleInputChange = (e) => {
     mergeNewTodo({ todo: e.target.value });
   };
@@ -377,13 +379,20 @@ export default function App() {
     submitNewTodo();
   };
 
+  // 3. ClassNames — right before JSX so colors stay consistent
+  const c = {
+    bg: "bg-white", card: "bg-gray-50", border: "border-gray-200",
+    accent: "bg-[#e63946]", text: "text-gray-500",
+  };
+
+  // 4. JSX return
   return (
-    <div className="max-w-md mx-auto p-4 bg-white shadow rounded">
+    <div className={`max-w-md mx-auto p-4 ${c.bg} shadow rounded`}>
       <h2 className="text-2xl font-bold mb-4">Todo List</h2>
       <form onSubmit={handleSubmit} className="mb-4">
         <label htmlFor="todo" className="block mb-2 font-semibold">Todo</label>
         <input
-          className="w-full border border-gray-300 rounded px-2 py-1"
+          className={`w-full ${c.border} border rounded px-2 py-1`}
           id="todo"
           type="text"
           onChange={handleInputChange}
@@ -392,7 +401,7 @@ export default function App() {
       </form>
       <ul className="space-y-3">
         {todos.map((doc) => (
-          <li className="flex flex-col items-start p-2 border border-gray-200 rounded bg-gray-50" key={doc._id}>
+          <li className={`flex flex-col items-start p-2 ${c.border} border rounded ${c.card}`} key={doc._id}>
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
                 <input
@@ -404,13 +413,13 @@ export default function App() {
                 <span className="font-medium">{doc.todo}</span>
               </div>
               <button
-                className="text-sm bg-red-500 text-white px-2 py-1 rounded"
+                className={`text-sm ${c.accent} text-white px-2 py-1 rounded`}
                 onClick={() => database.del(doc._id)}
               >
                 Delete
               </button>
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className={`text-xs ${c.text} mt-1`}>
               {new Date(doc.createdAt).toISOString()}
             </div>
           </li>
@@ -428,32 +437,53 @@ This React example shows a simple image uploader application that uses Fireproof
 Code listing for App.jsx:
 ```js
 import { useFireproof, ImgFile } from "use-fireproof";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function App() {
+  // 1. Hooks and document shapes
   const { useDocument, useLiveQuery } = useFireproof("image-uploads");
   const { doc, merge, submit } = useDocument({ _files: {}, description: "" });
   const { docs } = useLiveQuery("_id", { descending: true, limit: 5 });
   const [error, setError] = useState(false);
 
+  // 2. Event handlers
+  const handleFileChange = (e) => {
+    if (e.target.files[0]) merge({ _files: { uploaded: e.target.files[0] } });
+  };
+
+  const handleUpload = () => {
+    if (doc.description.trim()) {
+      submit();
+    } else {
+      setError(true);
+    }
+  };
+
+  // 3. ClassNames
+  const c = {
+    bg: "bg-white", card: "bg-gray-50",
+    accent: "bg-blue-500 hover:bg-blue-600", text: "text-gray-700",
+  };
+
+  // 4. JSX return
   return (
-    <div className="p-6 max-w-lg mx-auto bg-white shadow-lg rounded-lg">
+    <div className={`p-6 max-w-lg mx-auto ${c.bg} shadow-lg rounded-lg`}>
       <h2 className="text-2xl font-bold mb-4">Image Uploader</h2>
-      <input type="file" accept="image/*" onChange={e => e.target.files[0] && merge({ _files: { uploaded: e.target.files[0] } })} className="mb-2 border p-2 w-full rounded" />
-      <input 
-        type="text" 
-        placeholder="Enter description" 
-        value={doc.description} 
-        onChange={e => {setError(false); merge({ description: e.target.value });}}
+      <input type="file" accept="image/*" onChange={handleFileChange} className="mb-2 border p-2 w-full rounded" />
+      <input
+        type="text"
+        placeholder="Enter description"
+        value={doc.description}
+        onChange={e => { setError(false); merge({ description: e.target.value }); }}
         className={`w-full p-2 border rounded mb-4 ${error ? "border-red-500" : "border-gray-300"}`}
       />
-      <button onClick={() => doc.description.trim() ? submit() : setError(true)} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Upload</button>
+      <button onClick={handleUpload} className={`px-4 py-2 ${c.accent} text-white rounded`}>Upload</button>
       <h3 className="text-lg font-semibold mt-6">Recent Uploads</h3>
       <div className="grid grid-cols-2 gap-4 mt-2">
         {docs.map(doc => (
-          <div key={doc._id} className="border p-2 rounded shadow-sm bg-gray-50">
+          <div key={doc._id} className={`border p-2 rounded shadow-sm ${c.card}`}>
             {doc._files?.uploaded && <ImgFile file={doc._files.uploaded} alt="Uploaded Image" className="w-full h-auto rounded" />}
-            <p className="text-sm text-gray-700 mt-2">{doc.description || "No description"}</p>
+            <p className={`text-sm ${c.text} mt-2`}>{doc.description || "No description"}</p>
           </div>
         ))}
       </div>
