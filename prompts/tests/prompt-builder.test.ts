@@ -7,17 +7,7 @@ import {
   defaultStylePrompt,
 } from "@vibes.diy/prompts";
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
-import { Result } from "@adviser/cement";
 import { createMockFetchFromPkgFiles } from "./helpers/load-mock-data.js";
-
-// Create a fetchText mock that delegates to the mock fetch helper
-const mockFetchImpl = createMockFetchFromPkgFiles();
-function mockFetchText(_pkg: string, path: string): Promise<Result<string>> {
-  return mockFetchImpl(path).then(async (res) => {
-    if (res.ok) return Result.Ok(await res.text());
-    return Result.Err(new Error(`fetch failed for path: ${path}`));
-  });
-}
 
 // Mock global fetch for the tests
 const mockFetch = vi.fn();
@@ -83,23 +73,12 @@ let orderedLlms: LlmCatalogEntry[];
 // }
 
 const opts = {
-  fetchText: mockFetchText,
-  callAi: {
-    ModuleAndOptionsSelection: vi.fn().mockResolvedValue(
-      Result.Ok(
-        JSON.stringify({
-          selected: knownModuleNames,
-          instructionalText: true,
-          demoData: true,
-        })
-      )
-    ),
-  },
+  dependencies: knownModuleNames,
 };
 
 beforeAll(async () => {
   // Set up mock using the same mock fetch helper used by mockFetchText
-  mockFetch.mockImplementation(mockFetchImpl);
+  mockFetch.mockImplementation(createMockFetchFromPkgFiles());
 
   // Now load the data after mocks are set up
   llmsJsonModules = await getJsonDocs();
@@ -267,7 +246,6 @@ describe("prompt builder (real implementation)", () => {
     const result = await makeBaseSystemPrompt("test-model", {
       ...opts,
       dependencies: ["fireproof"],
-      dependenciesUserOverride: true,
     });
     expect(result.systemPrompt).toContain("<useFireproof-docs>");
     expect(result.systemPrompt).not.toContain("<callAI-docs>");
