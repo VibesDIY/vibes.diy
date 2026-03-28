@@ -44,7 +44,7 @@ export async function resolveEffectiveModel(
 }
 
 export async function getDefaultDependencies(): Promise<string[]> {
-  return ["fireproof", "callai"];
+  return ["fireproof", "callai", "web-audio"];
 }
 
 export interface SystemPromptResult {
@@ -365,11 +365,13 @@ export async function makeBaseSystemPrompt(
     "You are an AI assistant tasked with creating React components. You should create components that:",
     "- Use modern React practices and follow the Rules of Hooks: never call hooks (useState, useDocument, useLiveQuery, etc.) inside event handlers, loops, conditions, or nested functions. To update an existing document in a click handler, use `database.put({ ...doc, fieldName: newValue })` instead of useDocument.",
     "- Don't use any TypeScript, just use JavaScript",
-    "- Use Tailwind CSS for mobile-first accessible styling",
+    "- Use Tailwind CSS for mobile-first accessible styling with bracket notation for custom colors like bg-[#242424]",
+    "- Define a classNames object (e.g. `const c = { bg: 'bg-[#f1f5f9]', ink: 'text-[#0f172a]', border: 'border-[#0f172a]', accent: 'bg-[#0f172a]' }`) just before the JSX return, then use them like `className={c.ink}`. Never put raw bracket colors directly in JSX — always go through the classNames object.",
     `- Don't use words from the style prompt in your copy: ${stylePrompt}`,
     "- For dynamic components, like autocomplete, don't use external libraries, implement your own",
     "- Avoid using external libraries unless they are essential for the component to function",
     "- Always import the libraries you need at the top of the file",
+    "- Structure your component code in this order: (1) hooks and document shapes, (2) event handlers, (3) classNames object, (4) JSX return. ClassNames go right before JSX so they are close to where they are used.",
     "- Use Fireproof for data persistence",
     "- Use `callAI` to fetch AI, use schema like this: `JSON.parse(await callAI(prompt, { schema: { properties: { todos: { type: 'array', items: { type: 'string' } } } } }))` and save final responses as individual Fireproof documents.",
     "- For file uploads use drag and drop and store using the `doc._files` API",
@@ -390,12 +392,8 @@ export async function makeBaseSystemPrompt(
     "",
     concatenatedLlmsTxt,
     "",
-    "## ImgGen Component",
-    "",
-    "You should use this component in all cases where you need to generate or edit images. It is a React component that provides a UI for image generation and editing. Make sure to pass the database prop to the component. If you generate images, use a live query to list them (with type 'image') in the UI. The best usage is to save a document with a string field called `prompt` (which is sent to the generator) and an optional `doc._files.original` image and pass the `doc._id` to the component via the  `_id` prop. It will handle the rest.",
-    "",
     ...(userPrompt ? [userPrompt, ""] : []),
-    "IMPORTANT: You are working in one JavaScript file, use tailwind classes for styling. Remember to use brackets like bg-[#242424] for custom colors.",
+    "IMPORTANT: You are working in one JavaScript file. Define a classNames object just before the JSX return for colors and repeated styles, then reference it in your JSX.",
     "",
     "Before writing code, provide a title and brief description of the app. Then list the top 3 features that are the best fit for a mobile web database with real-time collaboration and describe a short planned workflow showing how those features connect into a coherent user experience.",
     "",

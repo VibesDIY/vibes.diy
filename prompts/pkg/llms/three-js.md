@@ -1050,6 +1050,16 @@ composer.addPass(new OutputPass());
 
 _This guide focuses on Three.js's most impressive capabilities. Each example demonstrates advanced techniques that create visually stunning results with minimal code complexity._
 
+### Code Structure for Three.js + React Apps
+
+Structure your component in this order:
+
+1. **Three.js helper functions** — scene setup, object creation, animation loops separate from React
+2. **Hooks and state** — useFireproof, useRef for canvas/scene, useState for UI controls
+3. **Effects** — useEffect to initialize scene on mount, update on parameter changes, cleanup on unmount
+4. **ClassNames object** — colors, sizes right before JSX so they stay consistent
+5. **JSX return** — canvas element with refs, UI controls referencing classNames
+
 # Real world example
 
 ```javascript
