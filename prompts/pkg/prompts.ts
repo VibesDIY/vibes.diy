@@ -1,12 +1,12 @@
 // import { callAI, type Message, type CallAIOptions, Mocks } from "call-ai";
 
-import type { LlmChatMessage, HistoryMessage, UserSettings } from "./settings.js";
+import type { HistoryMessage, UserSettings } from "./settings.js";
 import { exception2Result, loadAsset, Result, KeyedResolvOnce } from "@adviser/cement";
 import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.js";
 
 // import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
-// import { ChatMessage } from "@vibes.diy/call-ai-v2";
+import { ChatMessage } from "@vibes.diy/call-ai-v2";
 
 // Single source of truth for the default coding model used across the repo.
 export const DEFAULT_CODING_MODEL = "anthropic/claude-opus-4.5" as const;
@@ -108,7 +108,7 @@ interface LlmSelectionOptions {
   fetch?: typeof fetch;
 
   readonly callAi: {
-    ModuleAndOptionsSelection(msgs: LlmChatMessage[]): Promise<Result<string>>;
+    ModuleAndOptionsSelection(msgs: ChatMessage[]): Promise<Result<string>>;
   };
 
   // readonly getAuthToken?: () => Promise<string>;
@@ -153,7 +153,7 @@ async function selectLlmsAndOptions(
     history: history || [],
   };
 
-  const messages: LlmChatMessage[] = [
+  const messages: ChatMessage[] = [
     {
       role: "system",
       content: [
@@ -268,19 +268,6 @@ export function generateImportStatements(llms: LlmCatalogEntry[]) {
 }
 
 const keyedLoadAsset = new KeyedResolvOnce();
-
-export async function getSkillText(name: string): Promise<string> {
-  const rText = await keyedLoadAsset.get(name).once(async () => {
-    return loadAsset(`./llms/${name}.txt`, {
-      fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
-      basePath: () => import.meta.url,
-    });
-  });
-  if (rText.isErr()) {
-    return Promise.reject(rText.Err());
-  }
-  return rText.Ok();
-}
 
 // move this function to its own file along with generateImportStatements and selectLlmsAndOptions, and rexport from here
 export async function makeBaseSystemPrompt(
@@ -428,4 +415,17 @@ export async function makeBaseSystemPrompt(
     demoData: includeDemoData,
     model,
   };
+}
+
+export async function getSkillText(name: string): Promise<string> {
+  const rText = await keyedLoadAsset.get(name).once(async () => {
+    return loadAsset(`./llms/${name}.txt`, {
+      fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
+      basePath: () => import.meta.url,
+    });
+  });
+  if (rText.isErr()) {
+    return Promise.reject(rText.Err());
+  }
+  return rText.Ok();
 }
