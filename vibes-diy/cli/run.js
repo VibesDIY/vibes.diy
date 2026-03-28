@@ -24,7 +24,7 @@ function exec(cmd, args) {
 // import { fileURLToPath } from "url";
 // const runDirectory = path.dirname(fileURLToPath(import.meta.url));
 
-const idxRunIdx = process.argv.findIndex((i) => i.endsWith("run.js") || i.endsWith("core-cli"));
+const idxRunIdx = process.argv.findIndex((i) => i.endsWith("run.js") || i.endsWith("vibes-diy"));
 const runDirectory = path.dirname(fs.realpathSync(process.argv[idxRunIdx]));
 
 
