@@ -55,7 +55,7 @@ import {
   BlockEndMsg,
   isBlockStreamMsg,
 } from "@vibes.diy/call-ai-v2";
-import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
+import { makeBaseSystemPrompt } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
 
@@ -300,33 +300,19 @@ async function injectSystemPrompt(
     }
   }
   const systemPrompt = await exception2Result(async () =>
-    makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
-      dependenciesUserOverride: true,
-      dependencies: ["fireproof", "callai", "image-gen"],
+    makeBaseSystemPrompt(model, {
       fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
         const promptTxtUrl = BuildURI.from(vctx.params.pkgRepos.workspace)
           .appendRelative("@vibes.diy/prompts")
           .appendRelative("llms")
           .appendRelative(pathOps.basename(URI.from(url).pathname))
           .toString();
-        // console.log("Fetching asset for system prompt from URL:", url, promptTxtUrl);
         const rRes = await vctx.fetchAsset(promptTxtUrl);
         if (rRes.isErr()) {
           console.error("Failed to fetch asset for system prompt from URL:", url.toString(), "with error:", rRes.Err());
           return new Response(JSON.stringify({ error: rRes.Err() }), { status: 500 });
-          // return Result.Err(rRes);
         }
-        const res = new Response(rRes.Ok());
-        // res.clone().text().then((text) => {
-        //   console.log("Fetched asset for system prompt from URL:", url.toString(), "with content:", text);
-        // })
-        return res;
-        //   return Result.Ok(await new Response(rRes.Ok()).text());
-      },
-      callAi: {
-        ModuleAndOptionsSelection: async (_msgs: ChatMessage[]) => {
-          return Result.Err(`Module and options selection is not supported in system prompts at this time`);
-        },
+        return new Response(rRes.Ok());
       },
     })
   );
@@ -540,7 +526,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
               withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? vctx.params.llm.default.model);
             } else if (req.mode === "application") {
               withSystemPrompt = Result.Ok({
-                model: req.prompt.model ?? vctx.params.llm.default.model,
+                model: req.prompt.model ?? vctx.params.llm.appSchemaModel ?? vctx.params.llm.default.model,
                 messages: req.prompt.messages,
               });
             }
@@ -620,7 +606,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             if (!collectedMsgs) {
               return Result.Err(`Chat context not found for chatId: ${req.chatId}`);
             }
-            // const codeBlocks: CodeBlocks[] = [];
             while (true) {
               const { done, value } = await reader.read();
               if (done) {
@@ -630,7 +615,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
                 if (!isBlockStreamMsg(value)) {
                   continue;
                 }
-                // console.log(promptId, "Received chunk for promptId:", value);
                 collectedMsgs.push(value);
                 const r = await appendBlockEvent({
                   ctx,

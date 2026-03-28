@@ -67,6 +67,7 @@ export async function createAppContext<T extends VibesSqlite>(
     LLM_BACKEND_URL: param.REQUIRED,
     LLM_BACKEND_API_KEY: param.REQUIRED,
     LLM_BACKEND_MODEL: "anthropic/claude-sonnet-4.6",
+    LLM_APP_SCHEMA_MODEL: "openai/gpt-5.4-mini",
 
     WORKSPACE_NPM_URL: param.OPTIONAL,
     PUBLIC_NPM_URL: param.OPTIONAL,
@@ -197,6 +198,7 @@ export async function createAppContext<T extends VibesSqlite>(
       default: LLMDefault({
         ...(envVals.LLM_BACKEND_MODEL ? { model: envVals.LLM_BACKEND_MODEL } : {}),
       }) as LLMDefault,
+      appSchemaModel: envVals.LLM_APP_SCHEMA_MODEL?.trim() || undefined,
       enforced: LLMEnforced({}) as LLMEnforced,
       headers: LLMHeaders({}) as LLMHeaders,
     },
