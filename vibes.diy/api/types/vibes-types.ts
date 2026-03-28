@@ -8,7 +8,7 @@ export interface PkgRepos {
 }
 
 export const LLMDefault = type({
-  model: "string = 'anthropic/claude-3-opus'",
+  model: "string = 'anthropic/claude-sonnet-4'",
 });
 export type LLMDefault = typeof LLMDefault.infer;
 
@@ -42,6 +42,7 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
   // importMapProps: ImportMapProps;
   llm: {
     default: LLMDefault;
+    appSchemaModel: string;
     enforced: LLMEnforced;
     headers: LLMHeaders;
   };

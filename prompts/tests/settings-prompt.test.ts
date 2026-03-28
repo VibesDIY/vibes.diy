@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { makeBaseSystemPrompt, UserSettings } from "@vibes.diy/prompts";
+import { makeBaseSystemPrompt, type MakeBaseSystemPromptOpts } from "@vibes.diy/prompts";
 
 // Mock the import.meta.glob function
 vi.mock("@vibes.diy/prompts", async () => {
@@ -15,7 +15,7 @@ vi.mock("@vibes.diy/prompts", async () => {
 
   // Return the actual implementation with our mocked modules
   return {
-    makeBaseSystemPrompt: async (model: string, sessionDoc?: Partial<UserSettings>) => {
+    makeBaseSystemPrompt: async (model: string, opts?: MakeBaseSystemPromptOpts) => {
       let concatenatedLlmsTxt = "";
       const llmsList = Object.values(llmsModules).map((mod) => mod.default);
 
@@ -29,11 +29,10 @@ Mock documentation for ${llm.label}
       }
 
       // Get style prompt from session document if available
-      const stylePrompt = sessionDoc?.stylePrompt || "DIY zine";
+      const stylePrompt = opts?.stylePrompt || "DIY zine";
 
       // Get user prompt from session document if available
-      const userPrompt = sessionDoc?.userPrompt || "";
-      // evaluate removing this duplications AFTER you complete the refactor noted in prompts.ts
+      const userPrompt = opts?.userPrompt || "";
       const systemPrompt = `
 You are an AI assistant tasked with creating React components. You should create components that:
 - Use modern React practices and follow the rules of hooks
@@ -96,9 +95,7 @@ afterEach(() => {
 describe("Settings and Prompt Integration", () => {
   it("generates a base system prompt with default values when no settings provided", async () => {
     const model = "test-model";
-    const result = await makeBaseSystemPrompt(model, {
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
-    });
+    const result = await makeBaseSystemPrompt(model, {});
 
     // Check that the prompt includes the default style
     expect(result.systemPrompt).toContain("have a DIY zine vibe");
@@ -109,13 +106,9 @@ describe("Settings and Prompt Integration", () => {
 
   it("uses style prompt from settings document when provided", async () => {
     const model = "test-model";
-    const settingsDoc = {
-      _id: "user_settings",
+    const result = await makeBaseSystemPrompt(model, {
       stylePrompt: "synthwave (80s digital aesthetic)",
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
-    };
-
-    const result = await makeBaseSystemPrompt(model, settingsDoc);
+    });
 
     // Check that the prompt includes the custom style
     expect(result.systemPrompt).toContain("have a synthwave (80s digital aesthetic) vibe");
@@ -125,13 +118,9 @@ describe("Settings and Prompt Integration", () => {
   it("includes user prompt from settings document when provided", async () => {
     const model = "test-model";
     const userPromptText = "Always include a dark mode toggle in your components";
-    const settingsDoc = {
-      _id: "user_settings",
+    const result = await makeBaseSystemPrompt(model, {
       userPrompt: userPromptText,
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
-    };
-
-    const result = await makeBaseSystemPrompt(model, settingsDoc);
+    });
 
     // Check that the prompt includes the user prompt
     expect(result.systemPrompt).toContain(userPromptText);
@@ -141,14 +130,10 @@ describe("Settings and Prompt Integration", () => {
     const model = "test-model";
     const stylePromptText = "brutalist web (raw, grid-heavy)";
     const userPromptText = "Include accessibility features in all components";
-    const settingsDoc = {
-      _id: "user_settings",
+    const result = await makeBaseSystemPrompt(model, {
       stylePrompt: stylePromptText,
       userPrompt: userPromptText,
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
-    };
-
-    const result = await makeBaseSystemPrompt(model, settingsDoc);
+    });
 
     // Check that the prompt includes both custom settings
     expect(result.systemPrompt).toContain(`have a ${stylePromptText} vibe`);
@@ -158,12 +143,7 @@ describe("Settings and Prompt Integration", () => {
 
   it("handles empty settings document gracefully", async () => {
     const model = "test-model";
-    const settingsDoc = {
-      _id: "user_settings",
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
-    };
-
-    const result = await makeBaseSystemPrompt(model, settingsDoc);
+    const result = await makeBaseSystemPrompt(model, {});
 
     // Should fall back to defaults
     expect(result.systemPrompt).toContain("have a DIY zine vibe");
@@ -171,9 +151,7 @@ describe("Settings and Prompt Integration", () => {
 
   it("includes LLM documentation in the prompt", async () => {
     const model = "test-model";
-    const result = await makeBaseSystemPrompt(model, {
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
-    });
+    const result = await makeBaseSystemPrompt(model, {});
 
     // Check that the LLM documentation is included
     expect(result.systemPrompt).toContain("<llm1-docs>");

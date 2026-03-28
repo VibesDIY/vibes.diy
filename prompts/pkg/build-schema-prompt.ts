@@ -19,8 +19,10 @@ async function buildExample(schema: JsonSchema) {
 
 export async function buildSchemaSystemMessage(schema: object): Promise<string> {
   const example = await buildExample(schema as JsonSchema);
-  return `Return a JSON object conforming to this schema: ${JSON.stringify(schema)}
+  return `Return ONLY a JSON object inside a \`\`\`json code fence. Conform to this schema: ${JSON.stringify(schema)}
 
-Example of expected output shape:
-${JSON.stringify(example, null, 2)}`;
+Example of expected output:
+\`\`\`json
+${JSON.stringify(example, null, 2)}
+\`\`\``;
 }
