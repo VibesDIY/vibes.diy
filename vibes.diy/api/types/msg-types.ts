@@ -605,17 +605,23 @@ export function isUserSettingSharing(obj: unknown): obj is typeof userSettingSha
   return !(userSettingShareing(obj) instanceof type.errors);
 }
 
-export const userSettingModel = type({
-  type: "'model'",
-  "codegenModel?": "string",
-  "runtimeModel?": "string",
+export const userSettingModelCodegen = type({
+  type: "'model.codegen'",
+  model: "string",
 });
-export function isUserSettingModel(obj: unknown): obj is typeof userSettingModel.infer {
-  return !(userSettingModel(obj) instanceof type.errors);
+export function isUserSettingModelCodegen(obj: unknown): obj is typeof userSettingModelCodegen.infer {
+  return !(userSettingModelCodegen(obj) instanceof type.errors);
 }
-export type UserSettingModel = typeof userSettingModel.infer;
 
-export const userSettingItem = userSettingShareing.or(userSettingModel);
+export const userSettingModelRuntime = type({
+  type: "'model.runtime'",
+  model: "string",
+});
+export function isUserSettingModelRuntime(obj: unknown): obj is typeof userSettingModelRuntime.infer {
+  return !(userSettingModelRuntime(obj) instanceof type.errors);
+}
+
+export const userSettingItem = userSettingShareing.or(userSettingModelCodegen).or(userSettingModelRuntime);
 
 export type UserSettingItem = typeof userSettingItem.infer;
 

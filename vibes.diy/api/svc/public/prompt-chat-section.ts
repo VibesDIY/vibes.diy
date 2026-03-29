@@ -24,8 +24,10 @@ import {
   ResPromptChatSection,
   SectionEvent,
   VibeFile,
-  isUserSettingModel,
-  UserSettingModel,
+  isUserSettingModelCodegen,
+  isUserSettingModelRuntime,
+  type UserSettingItem,
+  userSettingItem,
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
@@ -60,6 +62,7 @@ import {
 import { makeBaseSystemPrompt } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
+import { resolveModel } from "./resolve-model.js";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
 
 interface AppendBlockEventParams {
@@ -524,21 +527,18 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           .evalResult(async () => {
             const userId = req._auth.verifiedAuth.claims.userId;
 
-            function findModelSetting(settings: unknown): UserSettingModel | undefined {
-              return (Array.isArray(settings) ? settings : []).find(isUserSettingModel);
-            }
-
-            async function fetchUserModelSetting(uid: string): Promise<UserSettingModel | undefined> {
+            async function fetchUserSettings(uid: string): Promise<UserSettingItem[]> {
               const row = await vctx.sql.db
                 .select()
                 .from(vctx.sql.tables.userSettings)
                 .where(eq(vctx.sql.tables.userSettings.userId, uid))
                 .limit(1)
                 .then((r) => r[0]);
-              return findModelSetting(row?.settings);
+              const parsed = userSettingItem.array()(row?.settings);
+              return parsed instanceof type.errors ? [] : parsed;
             }
 
-            const userSettings = await fetchUserModelSetting(userId);
+            const userSettings = await fetchUserSettings(userId);
 
             // Fetch app settings (read-only, returns owner userId + parsed settings)
             const rAppSettings = await ensureAppSettings(vctx, {
@@ -549,29 +549,25 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             const appEntry = rAppSettings.isOk() ? rAppSettings.Ok() : undefined;
             const appSettings = appEntry?.settings?.entry?.settings;
 
-            // For application mode, fetch owner's model settings if owner ≠ requester
-            const appOwnerSettings =
+            // In application mode, use the app owner's runtime model default.
+            // If owner === requester, userSettings already has their data.
+            const ownerSettings =
               req.mode === "application" && appEntry?.userId && appEntry.userId !== userId
-                ? await fetchUserModelSetting(appEntry.userId)
-                : undefined;
+                ? await fetchUserSettings(appEntry.userId)
+                : userSettings;
 
-            if (req.mode === "creation") {
-              return Result.Ok(
-                req.prompt.model ??
-                  appSettings?.codegen?.model ??
-                  userSettings?.codegenModel ??
-                  vctx.params.llm.runtimeModel ??
-                  vctx.params.llm.default.model
-              );
-            } else {
-              return Result.Ok(
-                req.prompt.model ??
-                  appSettings?.runtime?.model ??
-                  appOwnerSettings?.runtimeModel ??
-                  vctx.params.llm.runtimeModel ??
-                  vctx.params.llm.default.model
-              );
-            }
+            return Result.Ok(
+              resolveModel({
+                mode: req.mode,
+                promptModel: req.prompt.model,
+                appCodegenModel: appSettings?.codegen?.model,
+                appRuntimeModel: appSettings?.runtime?.model,
+                userCodegenModel: userSettings.find(isUserSettingModelCodegen)?.model,
+                ownerRuntimeModel: ownerSettings.find(isUserSettingModelRuntime)?.model,
+                serverRuntimeModel: vctx.params.llm.runtimeModel,
+                serverDefaultModel: vctx.params.llm.default.model,
+              })
+            );
           })
           .do();
 

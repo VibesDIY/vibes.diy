@@ -1,6 +1,7 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
 import {
-  isUserSettingModel,
+  isUserSettingModelCodegen,
+  isUserSettingModelRuntime,
   MsgBase,
   reqEnsureUserSettings,
   ReqEnsureUserSettings,
@@ -41,17 +42,13 @@ export async function ensureUserSettings(
   if (settingsArray instanceof type.errors) {
     return Result.Err(`Failed to parse existing user settings: ${settingsArray.summary}`);
   }
-  // Normalize empty model strings by removing them at write time
-  const incomingSettings = req.settings.map((item) =>
-    isUserSettingModel(item)
-      ? {
-          type: "model" as const,
-          ...(item.codegenModel?.trim() && { codegenModel: item.codegenModel.trim() }),
-          ...(item.runtimeModel?.trim() && { runtimeModel: item.runtimeModel.trim() }),
-        }
-      : item
-  );
-  const settingsSet = new Map([...settingsArray, ...incomingSettings].map((item) => [item.type, item]));
+  const settingsSet = new Map([...settingsArray, ...req.settings].map((item) => [item.type, item]));
+  // Remove model entries with empty/blank model (clears the preference)
+  for (const [key, item] of settingsSet) {
+    if ((isUserSettingModelCodegen(item) || isUserSettingModelRuntime(item)) && item.model.trim() === "") {
+      settingsSet.delete(key);
+    }
+  }
   const settings = userSettingItem.array()(Array.from(settingsSet.values()));
   if (settings instanceof type.errors) {
     return Result.Err(`Failed to parse merged user settings: ${settings.summary}`);

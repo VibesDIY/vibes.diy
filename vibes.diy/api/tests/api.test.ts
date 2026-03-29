@@ -22,7 +22,8 @@ import {
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
   isResRequestAccessApproved,
-  isUserSettingModel,
+  isUserSettingModelCodegen,
+  isUserSettingModelRuntime,
   PromptAndBlockMsgs,
   ReqPromptChatSection,
   ReqWithVerifiedAuth,
@@ -700,38 +701,47 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
   });
 
   describe("ensureUserSettings model", () => {
-    it("user settings model round-trip", async () => {
+    it("model.codegen round-trip", async () => {
       const res = await api.ensureUserSettings({
-        settings: [{ type: "model", codegenModel: "test/codegen-model", runtimeModel: "test/runtime-model" }],
+        settings: [{ type: "model.codegen", model: "test/codegen-model" }],
       });
       expect(res.isOk()).toBe(true);
-      const modelSetting = res.Ok().settings.find(isUserSettingModel);
-      expect(modelSetting?.codegenModel).toBe("test/codegen-model");
-      expect(modelSetting?.runtimeModel).toBe("test/runtime-model");
+      const cg = res.Ok().settings.find(isUserSettingModelCodegen);
+      expect(cg?.model).toBe("test/codegen-model");
     });
 
-    it("user settings model partial update", async () => {
-      const res1 = await api.ensureUserSettings({
-        settings: [{ type: "model", codegenModel: "test/only-codegen" }],
+    it("model.runtime round-trip", async () => {
+      const res = await api.ensureUserSettings({
+        settings: [{ type: "model.runtime", model: "test/runtime-model" }],
       });
-      expect(res1.isOk()).toBe(true);
-      const m1 = res1.Ok().settings.find(isUserSettingModel);
-      expect(m1?.codegenModel).toBe("test/only-codegen");
-      expect(m1?.runtimeModel).toBeUndefined();
+      expect(res.isOk()).toBe(true);
+      const rt = res.Ok().settings.find(isUserSettingModelRuntime);
+      expect(rt?.model).toBe("test/runtime-model");
     });
 
-    it("user settings model empty string clears preference", async () => {
+    it("model.runtime independent of model.codegen", async () => {
       await api.ensureUserSettings({
-        settings: [{ type: "model", codegenModel: "test/will-clear", runtimeModel: "test/will-clear" }],
+        settings: [{ type: "model.codegen", model: "test/cg" }],
       });
       const res = await api.ensureUserSettings({
-        settings: [{ type: "model", codegenModel: "", runtimeModel: "" }],
+        settings: [{ type: "model.runtime", model: "test/rt" }],
       });
       expect(res.isOk()).toBe(true);
-      const m = res.Ok().settings.find(isUserSettingModel);
-      // Empty strings normalized to undefined at write time
-      expect(m?.codegenModel).toBeUndefined();
-      expect(m?.runtimeModel).toBeUndefined();
+      const cg = res.Ok().settings.find(isUserSettingModelCodegen);
+      const rt = res.Ok().settings.find(isUserSettingModelRuntime);
+      expect(cg?.model).toBe("test/cg");
+      expect(rt?.model).toBe("test/rt");
+    });
+
+    it("empty model clears preference", async () => {
+      await api.ensureUserSettings({
+        settings: [{ type: "model.codegen", model: "test/will-clear" }],
+      });
+      const res = await api.ensureUserSettings({
+        settings: [{ type: "model.codegen", model: "" }],
+      });
+      expect(res.isOk()).toBe(true);
+      expect(res.Ok().settings.find(isUserSettingModelCodegen)).toBeUndefined();
     });
   });
 

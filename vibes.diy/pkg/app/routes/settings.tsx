@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import LoggedOutView from "../components/LoggedOutView.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
-import { isUserSettingSharing, isUserSettingModel } from "@vibes.diy/api-types";
+import { isUserSettingSharing, isUserSettingModelCodegen, isUserSettingModelRuntime } from "@vibes.diy/api-types";
 import { getModelOptions } from "../data/models.js";
 
 export function meta() {
@@ -180,9 +180,9 @@ function ModelSettings() {
     void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
       setLoading(false);
       if (res.isErr()) return;
-      const m = res.Ok().settings.find(isUserSettingModel);
-      setCodegenModel(m?.codegenModel ?? "");
-      setRuntimeModel(m?.runtimeModel ?? "");
+      const s = res.Ok().settings;
+      setCodegenModel(s.find(isUserSettingModelCodegen)?.model ?? "");
+      setRuntimeModel(s.find(isUserSettingModelRuntime)?.model ?? "");
     });
   }, [vibeDiyApi]);
 
@@ -190,14 +190,17 @@ function ModelSettings() {
     setSaving(true);
     void vibeDiyApi
       .ensureUserSettings({
-        settings: [{ type: "model", codegenModel: cg || undefined, runtimeModel: rt || undefined }],
+        settings: [
+          { type: "model.codegen" as const, model: cg },
+          { type: "model.runtime" as const, model: rt },
+        ],
       })
       .then((res) => {
         setSaving(false);
         if (res.isErr()) return;
-        const m = res.Ok().settings.find(isUserSettingModel);
-        setCodegenModel(m?.codegenModel ?? "");
-        setRuntimeModel(m?.runtimeModel ?? "");
+        const s = res.Ok().settings;
+        setCodegenModel(s.find(isUserSettingModelCodegen)?.model ?? "");
+        setRuntimeModel(s.find(isUserSettingModelRuntime)?.model ?? "");
       });
   }
 
