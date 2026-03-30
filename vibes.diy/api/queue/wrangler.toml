@@ -59,3 +59,23 @@ bucket_name = "vibes-diy-fs-ids"
 queue = "vibes-service-prod"
 max_batch_size = 10
 max_batch_timeout = 5
+
+[env.cli]
+name = "vibes-diy-v2-queue-consumer-cli"
+
+[env.cli.browser]
+binding = "BROWSER"
+
+[[env.cli.d1_databases]]
+binding = "DB"
+database_name = "prod-vibes-diy-v2"
+database_id = "0f783eae-91cf-49c4-a706-6e4d2498cb4a"
+
+[[env.cli.r2_buckets]]
+binding = "FS_IDS_BUCKET"
+bucket_name = "vibes-diy-fs-ids"
+
+[[env.cli.queues.consumers]]
+queue = "vibes-service-cli"
+max_batch_size = 10
+max_batch_timeout = 5

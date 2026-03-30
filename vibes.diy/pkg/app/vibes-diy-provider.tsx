@@ -63,6 +63,10 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
 
   realCtx.sthis = lazySuperThis();
 
+  if (typeof window === "undefined") {
+    return <VibesDiyContext.Provider value={realCtx}>{children}</VibesDiyContext.Provider>;
+  }
+
   const apiUrl =
     realCtx.webVars.env.VIBES_DIY_API_URL ??
     BuildURI.from(window.location.href)
