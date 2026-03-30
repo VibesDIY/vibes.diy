@@ -17,6 +17,7 @@ packages:
   - "vibes.diy/api/*"
   - "vibes.diy/tests/app"
   - "vibes.diy/tests/simple-chat"
+  - "vibes.diy/stable-entry"
   - "vibes.diy/failback-homepage"
   - "prompts/pkg"
   - "prompts/tests"

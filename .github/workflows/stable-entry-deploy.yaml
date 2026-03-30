@@ -1,0 +1,23 @@
+name: 'deploy stable-entry'
+on:
+  push:
+    tags:
+      - 'se@*'
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./actions/base
+
+      - uses: ./vibes.diy/actions/stable-entry-deploy
+        with:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          BACKEND: ${{ vars.STABLE_ENTRY_BACKEND }}
+          BACKEND_CFG: ${{ vars.STABLE_ENTRY_BACKEND_CFG }}

@@ -1,0 +1,36 @@
+name: "deploy-stable-entry"
+description: "Build and deploy the stable-entry routing proxy to Cloudflare Workers"
+inputs:
+  CLOUDFLARE_API_TOKEN:
+    description: "Cloudflare API token"
+    required: true
+  CLOUDFLARE_ACCOUNT_ID:
+    description: "Cloudflare account ID"
+    required: true
+  BACKEND:
+    description: "Fallback backend URL"
+    required: true
+  BACKEND_CFG:
+    description: "JSON routing config (path → group → target)"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build stable-entry
+      working-directory: vibes.diy/stable-entry
+      shell: bash
+      run: pnpm run build
+
+    - name: Deploy stable-entry
+      working-directory: vibes.diy/stable-entry
+      shell: bash
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
+        BACKEND: ${{ inputs.BACKEND }}
+        BACKEND_CFG: ${{ inputs.BACKEND_CFG }}
+      run: |
+        #pnpm exec wrangler deploy --var BACKEND:"$BACKEND" --var BACKEND_CFG:"$BACKEND_CFG"
+        # CF is the leading system for that both vars
+        pnpm exec wrangler deploy --keep-vars
