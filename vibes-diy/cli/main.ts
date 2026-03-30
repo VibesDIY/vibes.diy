@@ -25,6 +25,7 @@ import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd
 import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
+import { isCmdProgress as isCoreCmdProgress } from "@fireproof/core-cli";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
 
 async function vibesDiyApiFactory(sthis: SuperThis) {
@@ -143,16 +144,18 @@ async function main(): Promise<number> {
       processStream(outputSelector.outputStream, async (wmsg) => {
         const msg = wmsg.result;
         switch (true) {
-          case isCmdProgress(msg): {
-            switch (msg.level) {
+          case isCmdProgress(msg):
+          case isCoreCmdProgress(msg): {
+            const progress = msg as { level: string; message: string };
+            switch (progress.level) {
               case "warn":
-                console.warn(msg.message);
+                console.warn(progress.message);
                 break;
               case "error":
-                console.error(msg.message);
+                console.error(progress.message);
                 break;
               default:
-                console.log(msg.message);
+                console.log(progress.message);
                 break;
             }
             break;

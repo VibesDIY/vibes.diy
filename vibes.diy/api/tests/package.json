@@ -12,9 +12,9 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "@cloudflare/workers-types": "^4.20260317.1",
-    "@fireproof/core-device-id": "0.24.15",
-    "@fireproof/core-runtime": "0.24.15",
-    "@fireproof/core-types-device-id": "0.24.15",
+    "@fireproof/core-device-id": "0.24.16",
+    "@fireproof/core-runtime": "0.24.16",
+    "@fireproof/core-types-device-id": "0.24.16",
     "@libsql/client": "^0.17.0",
     "@neondatabase/serverless": "^1.0.2",
     "@vibes.diy/api-impl": "workspace:*",
@@ -28,7 +28,7 @@
     "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.15",
+    "@fireproof/core-cli": "0.24.16",
     "@vitest/ui": "~4.1.2",
     "vitest": "~4.1.2",
     "zx": "^8.8.5"
