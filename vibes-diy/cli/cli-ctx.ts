@@ -3,7 +3,7 @@ import { cmd_tsStream } from "./cmd-ts-stream.js";
 import { SuperThis } from "@fireproof/core";
 import { flag, option, string } from "cmd-ts";
 
-export const DEFAULT_API_URL = "https://dev-v2.vibesdiy.net/api";
+export const DEFAULT_API_URL = "https://cli-v2.vibesdiy.net/api";
 
 export function cmdTsDefaultArgs(ctx: CliCtx) {
   return {
