@@ -1,0 +1,30 @@
+{
+  "name": "@vibes.diy/stable-entry",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "core-cli tsc && vite build",
+    "dev": "echo 'dev mode is broken due to some resolve issues' ; vite",
+    "deploy": "core-cli tsc && vite build && wrangler deploy --keep-vars",
+    "pack": "echo core-cli build --doPack",
+    "publish": "echo core-cli build"
+  },
+  "dependencies": {
+    "@adviser/cement": "^0.5.34",
+    "@cloudflare/workers-types": "^4.20260317.1",
+    "@vibes.diy/base": "workspace:*",
+    "@tanstack/react-table": "^8.21.3",
+    "cookie": "^1.1.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/cookie": "^1.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.2",
+    "@cloudflare/vite-plugin": "^1.30.1",
+    "@vitejs/plugin-react": "^4.5.0",
+    "vite": "^7.3.1",
+    "wrangler": "^4.77.0"
+  }
+}
