@@ -15,14 +15,14 @@ export function defaultLLMRequest(
   if (fn) {
     return fn;
   }
-  return (req: LLMRequest & { headers: LLMHeaders }) => {
+  return async (req: LLMRequest & { headers: LLMHeaders }) => {
     const stripLLMRequest = type(LLMRequest).onDeepUndeclaredKey("delete")(req);
     if (stripLLMRequest instanceof type.errors) {
       throw new Error(`Invalid LLMRequest: ${stripLLMRequest.summary}`);
     }
     const body = JSON.stringify(stripLLMRequest);
-    // console.log(`Making LLM request to ${url} with body:`, apiKey);
-    return fetch(url, {
+    console.log(`LLM request to ${url} model=${stripLLMRequest.model} apiKey=${apiKey ? apiKey.slice(0, 12) + "..." : "MISSING"}`);
+    const res = await fetch(url, {
       method: "POST",
       headers: {
         ...req.headers,
@@ -31,5 +31,7 @@ export function defaultLLMRequest(
       },
       body,
     });
+    console.log(`LLM response status=${res.status} statusText=${res.statusText}`);
+    return res;
   };
 }
