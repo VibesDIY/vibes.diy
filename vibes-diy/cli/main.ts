@@ -1,14 +1,5 @@
 import { FPDeviceIDSession, SuperThis } from "@fireproof/core";
-import {
-  AppContext,
-  BuildURI,
-  EventoSendProvider,
-  exception2Result,
-  HandleTriggerCtx,
-  Lazy,
-  processStream,
-  Result,
-} from "@adviser/cement";
+import { AppContext, EventoSendProvider, exception2Result, HandleTriggerCtx, Lazy, processStream, Result } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { getKeyBag } from "@fireproof/core-keybag";
 import { DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
@@ -17,15 +8,15 @@ import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { dotenv } from "zx";
 import { cmd_tsStream } from "./cmd-ts-stream.js";
 import { runSafely, subcommands } from "cmd-ts";
-import { isResEnsureAppSlugOk, isResEnsureUserSettings, isUserSettingSharing } from "@vibes.diy/api-types";
+import { isResEnsureUserSettings, isUserSettingSharing } from "@vibes.diy/api-types";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
-import { loginCmd, isResLogin } from "./cmds/login-cmd.js";
+import { loginCmd } from "./cmds/login-cmd.js";
 import { pushCmd } from "./cmds/push-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
 import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
-import { isCmdProgress as isCoreCmdProgress } from "@fireproof/core-cli";
+import { isResDeviceIdRegister } from "@fireproof/core-cli";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
 
 async function vibesDiyApiFactory(sthis: SuperThis) {
@@ -136,26 +127,26 @@ async function main(): Promise<number> {
             request: msg,
           })
           .then((r) => {
-            if (r.isErr()) {
-              console.error("Error:", String(r.Err()));
+            const stepCtx = r.Ok();
+            if (stepCtx.error) {
+              console.error("Error:", String(stepCtx.error));
+              ctx.exitCode = 1;
             }
           });
       },
       processStream(outputSelector.outputStream, async (wmsg) => {
         const msg = wmsg.result;
         switch (true) {
-          case isCmdProgress(msg):
-          case isCoreCmdProgress(msg): {
-            const progress = msg as { level: string; message: string };
-            switch (progress.level) {
+          case isCmdProgress(msg): {
+            switch (msg.level) {
               case "warn":
-                console.warn(progress.message);
+                console.warn(msg.message);
                 break;
               case "error":
-                console.error(progress.message);
+                console.error(msg.message);
                 break;
               default:
-                console.log(progress.message);
+                console.log(msg.message);
                 break;
             }
             break;
@@ -182,18 +173,13 @@ async function main(): Promise<number> {
             console.log(msg.systemPrompt);
             break;
           }
-          case isResEnsureAppSlugOk(msg): {
-            const apiUrl = wmsg.cmdTs.apiUrl;
-            const apiOrigin = BuildURI.from(apiUrl).pathname("/").toString().replace(/\/$/, "");
-            const vibeUrl = `${apiOrigin}/vibe/${msg.userSlug}/${msg.appSlug}`;
-            console.log(`Deployed: ${msg.userSlug}/${msg.appSlug}`);
-            console.log(`URL: ${vibeUrl}`);
+          case isResDeviceIdRegister(msg): {
+            console.log(msg.output);
             break;
           }
-          case isResLogin(msg): {
-            console.log(msg.message);
+          default:
+            console.error("Unhandled:", JSON.stringify(msg, null, 2));
             break;
-          }
         }
       })
     ),

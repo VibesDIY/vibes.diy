@@ -9,6 +9,7 @@ import {
   W3CWebSocketEvent,
   msgBase,
   resError,
+  isResError,
   ResOpenChat,
   ReqPromptChatSection,
   ReqOpenChat,
@@ -265,22 +266,14 @@ export class VibesDiyApi implements VibesDiyApiIface<{
               // console.log("Invalid message received, ignoring:", msg, trigger.enRequest);
               return Result.Ok(Option.None());
             }
-            if (msg.tid === tid && msgParam.resMatch(msg.payload as S)) {
-              // console.log("Valid event matched for tid:", tid);
+            if (msg.tid === tid && (msgParam.resMatch(msg.payload) || isResError(msg.payload))) {
               return Result.Ok(Option.Some(trigger.enRequest));
             }
-            // const r = ResListRequestGrants(msg.payload);
-            // if (r instanceof type.errors) {
-            //   console.log("VibeDiyApi request not matched received message for tid:", JSON.stringify(msg, null, 2), tid, r.summary);
-            // }
             return Result.Ok(Option.None());
           },
           handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
-            // console.log("Handling incoming event for tid:", tid, trigger);
-            const isError = resError(trigger.validated.payload);
-            if (!(isError instanceof type.errors)) {
-              // console.log("Response message is an error for tid:", tid, isError);
-              waitForResponse.resolve(Result.Err<S, VibesDiyError>(isError as VibesDiyError));
+            if (isResError(trigger.validated.payload)) {
+              waitForResponse.resolve(Result.Err<S, VibesDiyError>(trigger.validated.payload as VibesDiyError));
             } else {
               waitForResponse.resolve(Result.Ok<S, VibesDiyError>(trigger.validated.payload as S));
             }
@@ -290,7 +283,6 @@ export class VibesDiyApi implements VibesDiyApiIface<{
         // console.log("Setting up onMessage handler for tid:", tid);
         const waitForResponse = new Future<Result<S, VibesDiyError>>();
         unreg = conn.onMessage((event) => {
-          // console.log("VibeDiyApi request onMessage received", tid);
           evento.trigger({
             request: event,
             send: (async (_ctx: TriggerCtx<W3CWebSocketEvent, unknown, unknown>, data: unknown) => {
@@ -300,10 +292,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
             }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
           });
         });
-        // console.log("Sending request with tid:", tid);
-        // console.log("VibeDiyApi request sending", req, tid);
         const rReq = await this.send(req, { tid });
-        // console.log("Sended request with tid:", tid, rReq);
         if (rReq.isErr()) {
           return Result.Err<S, VibesDiyError>(rReq.Err());
         }
