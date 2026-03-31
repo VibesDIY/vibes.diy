@@ -65,6 +65,13 @@ inputs:
   MAX_APP_SLUG_PER_USER_ID:
     description: "Maximum number of app slugs per user ID"
     required: false
+  LLM_BACKEND_URL:
+    description: "URL for LLM backend API endpoint"
+    required: false
+    default: "https://openrouter.ai/api/v1/chat/completions"
+  CLERK_PUB_JWT_URL:
+    description: "Clerk JWKS endpoint URL for JWT verification"
+    required: false
 
 runs:
   using: "composite"
@@ -97,6 +104,8 @@ runs:
         VIBES_SVC_HOSTNAME_BASE: ${{ inputs.VIBES_SVC_HOSTNAME_BASE }}
         VIBES_SVC_PROTOCOL: ${{ inputs.VIBES_SVC_PROTOCOL }}
         LLM_BACKEND_API_KEY: ${{ inputs.LLM_BACKEND_API_KEY }}
+        LLM_BACKEND_URL: ${{ inputs.LLM_BACKEND_URL }}
+        CLERK_PUB_JWT_URL: ${{ inputs.CLERK_PUB_JWT_URL }}
         DB_FLAVOUR: ${{ inputs.DB_FLAVOUR }}
         NEON_DATABASE_URL: ${{ inputs.NEON_DATABASE_URL }}
         NEON_DATABASE_ADMIN_URL: ${{ inputs.NEON_DATABASE_ADMIN_URL }}
@@ -122,6 +131,8 @@ runs:
           --fromEnv VIBES_SVC_HOSTNAME_BASE \
           --fromEnv VIBES_SVC_PROTOCOL \
           --fromEnv LLM_BACKEND_API_KEY \
+          --fromEnv LLM_BACKEND_URL \
+          --fromEnv CLERK_PUB_JWT_URL \
           --fromEnv DB_FLAVOUR \
           --fromEnv NEON_DATABASE_URL \
           --fromEnv MAX_APP_SLUG_PER_USER_ID | \
@@ -129,6 +140,7 @@ runs:
         pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
 
     - name: Deploy api-queue consumer
+      if: ${{ inputs.CLOUDFLARE_ENV == 'prod' }}
       working-directory: vibes.diy/api/queue
       shell: bash
       env:
@@ -149,6 +161,8 @@ runs:
         VIBES_SVC_HOSTNAME_BASE: ${{ inputs.VIBES_SVC_HOSTNAME_BASE }}
         VIBES_SVC_PROTOCOL: ${{ inputs.VIBES_SVC_PROTOCOL }}
         LLM_BACKEND_API_KEY: ${{ inputs.LLM_BACKEND_API_KEY }}
+        LLM_BACKEND_URL: ${{ inputs.LLM_BACKEND_URL }}
+        CLERK_PUB_JWT_URL: ${{ inputs.CLERK_PUB_JWT_URL }}
         DB_FLAVOUR: ${{ inputs.DB_FLAVOUR }}
         NEON_DATABASE_URL: ${{ inputs.NEON_DATABASE_URL }}
         MAX_APP_SLUG_PER_USER_ID: ${{ inputs.MAX_APP_SLUG_PER_USER_ID }}
@@ -168,6 +182,8 @@ runs:
           --fromEnv VIBES_SVC_HOSTNAME_BASE \
           --fromEnv VIBES_SVC_PROTOCOL \
           --fromEnv LLM_BACKEND_API_KEY \
+          --fromEnv LLM_BACKEND_URL \
+          --fromEnv CLERK_PUB_JWT_URL \
           --fromEnv DB_FLAVOUR \
           --fromEnv NEON_DATABASE_URL \
           --fromEnv MAX_APP_SLUG_PER_USER_ID | \
