@@ -16,6 +16,7 @@ import {
   isReqCreationPromptChatSection,
   isReqPromptApplicationChatSection,
   LLMHeaders,
+  type ModelSelector,
   MsgBase,
   PromptAndBlockMsgs,
   ReqPromptChatSection,
@@ -58,6 +59,7 @@ import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts"
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
 import { sqlite } from "@vibes.diy/api-sql";
+import { getModelDefaults } from "../intern/get-model-defaults.js";
 
 interface AppendBlockEventParams {
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -137,7 +139,7 @@ export async function handlePromptContext({
 }: {
   vctx: VibesApiSQLCtx;
   req: ReqWithVerifiedAuth<ReqPromptChatSection>;
-  resChat: { appSlug: string; userSlug: string; mode: "creation" | "application" };
+  resChat: { appSlug: string; userSlug: string; mode: "chat" | "app" | "img" };
   promptId: string;
   blockSeq: number;
   value: BlockEndMsg;
@@ -183,7 +185,7 @@ export async function handlePromptContext({
       }
     }
   }
-  if (code.length > 0 && resChat.mode === "creation") {
+  if (code.length > 0 && resChat.mode === "chat") {
     // here is where the music plays
     const rFs = await ensureAppSlugItem(vctx, {
       type: "vibes.diy.req-ensure-app-slug",
@@ -381,7 +383,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       const orig = (ctx.enRequest as MsgBase<ReqPromptChatSection>).payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      let resChat!: { appSlug: string; userSlug: string; mode: "creation" | "application" };
+      let resChat!: { appSlug: string; userSlug: string; mode: ModelSelector };
       if (isReqCreationPromptChatSection(orig)) {
         const iResChat = await vctx.sql.db
           .select()
@@ -397,7 +399,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         if (!iResChat) {
           return Result.Err(`Creation Chat ID ${req.chatId} not found`);
         }
-        resChat = { ...iResChat, mode: "creation" };
+        resChat = { ...iResChat, mode: "chat" };
       }
       if (isReqPromptApplicationChatSection(orig)) {
         const iResChat = await vctx.sql.db
@@ -414,7 +416,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         if (!iResChat) {
           return Result.Err(`Application Chat ID ${req.chatId} not found`);
         }
-        resChat = { ...iResChat, mode: "application" };
+        resChat = { ...iResChat, mode: "app" };
       }
       if (!resChat) {
         return Result.Err(
@@ -533,18 +535,37 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           })
           .do();
 
+        const modelId: string = await scope
+          .evalResult(async (): Promise<Result<string>> => {
+            const r = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
+            if (r.isErr()) {
+              return Result.Err(r);
+            }
+            switch (req.mode) {
+              case "chat":
+                return Result.Ok(req.prompt.model ?? r.Ok().chat.model.id);
+              case "app":
+                return Result.Ok(req.prompt.model ?? r.Ok().app.model.id);
+              case "img":
+                return Result.Ok(req.prompt.model ?? r.Ok().img.model.id);
+              default:
+                return Result.Err(`Unknown prompt mode: ${(req as { mode: string }).mode}`);
+            }
+          })
+          .do();
+
         // console.log(promptId, "Pre-System request for promptId:");
         const withSystemPrompt = await scope
           .evalResult(async () => {
             let withSystemPrompt = Result.Ok({
-              model: req.prompt.model ?? vctx.params.llm.default.model,
+              model: modelId,
               messages: [] as ChatMessage[],
             });
-            if (req.mode === "creation") {
-              withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? vctx.params.llm.default.model);
-            } else if (req.mode === "application") {
+            if (req.mode === "chat") {
+              withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? modelId);
+            } else if (req.mode === "app") {
               withSystemPrompt = Result.Ok({
-                model: req.prompt.model ?? vctx.params.llm.default.model,
+                model: req.prompt.model ?? modelId,
                 messages: req.prompt.messages,
               });
             }
@@ -556,7 +577,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         // }
         // console.log("Sending LLM request for promptId:", promptId);
         const llmReq: LLMRequest & { headers: LLMHeaders } = {
-          ...vctx.params.llm.default,
+          // ...vctx.params.llm.default,
+          // model,
           ...{
             ...req.prompt,
             messages: withSystemPrompt.messages,
@@ -573,8 +595,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         // console.log(promptId, "LLM request for promptId:");
         const res = await scope
           .evalResult<Response>(async () => {
+            console.log(promptId, "Sending LLM request:", llmReq.model);
             const res = await vctx.llmRequest(llmReq);
-
             if (!res.ok) {
               return Result.Err(`LLM request failed with status ${res.status} :${llmReq.model} : ${res.statusText}`);
             }

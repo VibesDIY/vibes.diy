@@ -41,10 +41,10 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       let chatPromise: Promise<Result<{ appSlug: string; userSlug: string; chatId: string }>>;
       switch (req.mode) {
-        case "creation":
+        case "chat":
           chatPromise = ensureChatId(vctx, req);
           break;
-        case "application":
+        case "app":
           chatPromise = ensureApplicationChatId({ ctx: vctx, req });
           break;
         default:

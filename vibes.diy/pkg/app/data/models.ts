@@ -1,12 +1,7 @@
+import { type } from "arktype";
 import modelsData from "./models.json" with { type: "json" };
-
-interface Model {
-  id: string;
-  name: string;
-  description: string;
-  featured?: boolean;
-}
+import { Model } from "@vibes.diy/api-types";
 
 export function getModelOptions(): Model[] {
-  return modelsData;
+  return Model.array()(modelsData).filter((m): m is Model => !(m instanceof type.errors));
 }

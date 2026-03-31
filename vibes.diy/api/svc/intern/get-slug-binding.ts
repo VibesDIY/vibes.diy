@@ -1,14 +1,13 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { eq, and } from "drizzle-orm/sql/expressions";
-import { VibesApiSQLCtx } from "../types.js";
-import { AppSlugBinding } from "./ensure-slug-binding.js";
+import { AppUserSlugBinding, VibesApiSQLCtx } from "../types.js";
 
 export interface GetSlugBinding {
   userSlug: string;
   appSlug: string;
 }
 
-export async function getSlugBinding(ctx: VibesApiSQLCtx, binding: GetSlugBinding): Promise<Result<AppSlugBinding>> {
+export async function getSlugBinding(ctx: VibesApiSQLCtx, binding: GetSlugBinding): Promise<Result<AppUserSlugBinding>> {
   const r = await exception2Result(() =>
     ctx.sql.db
       .select()
@@ -31,9 +30,22 @@ export async function getSlugBinding(ctx: VibesApiSQLCtx, binding: GetSlugBindin
     return Result.Err(`appSlug/userSlug not found ${binding.appSlug}:${binding.userSlug} not found`);
   }
   return Result.Ok({
-    ...binding,
-    tenant: sql.UserSlugBindings.tenant,
-    ledger: sql.AppSlugBindings.ledger,
-    userId: sql.UserSlugBindings.userId,
+    type: "vibes.diy-app-user-slug-binding",
+    userSlug: {
+      type: "vibes.diy-user-slug-binding",
+      userId: sql.UserSlugBindings.userId,
+      userSlug: sql.UserSlugBindings.userSlug,
+      tenant: sql.UserSlugBindings.tenant,
+    },
+    appSlug: {
+      type: "vibes.diy-app-slug-binding",
+      userId: sql.UserSlugBindings.userId,
+      appSlug: sql.AppSlugBindings.appSlug,
+      ledger: sql.AppSlugBindings.ledger,
+    },
+    // ...binding,
+    // tenant: sql.UserSlugBindings.tenant,
+    // ledger: sql.AppSlugBindings.ledger,
+    // userId: sql.UserSlugBindings.userId,
   });
 }

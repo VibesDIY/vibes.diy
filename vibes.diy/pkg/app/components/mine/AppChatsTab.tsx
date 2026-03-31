@@ -38,7 +38,7 @@ export function AppChatsTab({ userSlug, appSlug }: AppChatsTabProps) {
     setSelectedChatId(chatId);
     setChatDetail(null);
     setDetailLoading(true);
-    void vibeDiyApi.openChat({ chatId, mode: "application" }).then((rChat) => {
+    void vibeDiyApi.openChat({ chatId, mode: "app" }).then((rChat) => {
       if (rChat.isErr()) {
         setDetailLoading(false);
         return;

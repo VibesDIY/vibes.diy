@@ -17,7 +17,7 @@ import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { dotenv } from "zx";
 import { cmd_tsStream } from "./cmd-ts-stream.js";
 import { runSafely, subcommands } from "cmd-ts";
-import { isResEnsureAppSlugOk, isResEnsureUserSettings } from "@vibes.diy/api-types";
+import { isResEnsureAppSlugOk, isResEnsureUserSettings, isUserSettingSharing } from "@vibes.diy/api-types";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
 import { loginCmd, isResLogin } from "./cmds/login-cmd.js";
 import { pushCmd } from "./cmds/push-cmd.js";
@@ -160,7 +160,7 @@ async function main(): Promise<number> {
           case isResEnsureUserSettings(msg): {
             console.log("UserId: ", msg.userId);
             console.log("Setting:");
-            for (const set of msg.settings) {
+            for (const set of msg.settings.filter(isUserSettingSharing)) {
               console.log(` Type:`, set.type, ` Grants:`, JSON.stringify(set.grants));
             }
             break;

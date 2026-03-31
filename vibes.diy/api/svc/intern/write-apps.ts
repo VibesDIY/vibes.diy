@@ -5,43 +5,52 @@ import {
   isVibeCodeBlock,
   VibeCodeBlock,
   ReqWithVerifiedAuth,
-  ResEnsureAppSlugOk,
   StorageResult,
+  ResEnsureAppSlug,
+  ResEnsureAppSlugMaxAppsError,
+  isResEnsureAppSlugMaxAppsError,
 } from "@vibes.diy/api-types";
 import { exception2Result, Result, string2stream, to_uint8, toSortedObject } from "@adviser/cement";
-import { AppSlugBinding } from "./ensure-slug-binding.js";
 import { base58btc } from "multiformats/bases/base58";
 import { sha256 } from "multiformats/hashes/sha2";
-import { and, eq, or } from "drizzle-orm/sql/expressions";
+import { and, eq } from "drizzle-orm/sql/expressions";
 import mime from "mime";
 import { transform } from "sucrase";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
-import { VibesApiSQLCtx } from "../types.js";
+import { AppUserSlugBinding, VibesApiSQLCtx } from "../types.js";
 
-async function checkMaxAppsPerUser(ctx: VibesApiSQLCtx, userId: string, appSlug: string): Promise<Result<number>> {
+async function checkMaxAppsPerUser(
+  ctx: VibesApiSQLCtx,
+  userId: string,
+  appSlug: string
+): Promise<Result<number | ResEnsureAppSlugMaxAppsError>> {
   const userApps = await ctx.sql.db
     .select()
     .from(ctx.sql.tables.apps)
     .where(eq(ctx.sql.tables.apps.userId, userId))
     .orderBy(ctx.sql.tables.apps.created);
   if (userApps.length >= ctx.params.maxAppSlugPerUserId) {
-    const devApps = userApps.filter((app) => app.mode === "dev").slice(0, ~~(userApps.length / 10) + 1);
-    if (devApps.length === 0) {
-      return Result.Err(`user has reached max apps limit: ${ctx.params.maxAppSlugPerUserId}`);
-    }
-    await ctx.sql.db
-      .delete(ctx.sql.tables.apps)
-      .where(
-        or(
-          ...devApps.map((app) =>
-            and(
-              eq(ctx.sql.tables.apps.userId, userId),
-              eq(ctx.sql.tables.apps.releaseSeq, app.releaseSeq),
-              eq(ctx.sql.tables.apps.appSlug, app.appSlug)
-            )
-          )
-        )
-      );
+    return Result.Ok({
+      type: "vibes.diy.error",
+      message: `User has reached the maximum number of app slugs (${ctx.params.maxAppSlugPerUserId}). Please delete existing apps before creating new ones.`,
+      code: "max-app-slugs-reached",
+    } satisfies ResEnsureAppSlugMaxAppsError);
+    // const devApps = userApps.filter((app) => app.mode === "dev").slice(0, ~~(userApps.length / 10) + 1);
+    // if (devApps.length === 0) {
+    // }
+    // await ctx.sql.db
+    //   .delete(ctx.sql.tables.apps)
+    //   .where(
+    //     or(
+    //       ...devApps.map((app) =>
+    //         and(
+    //           eq(ctx.sql.tables.apps.userId, userId),
+    //           eq(ctx.sql.tables.apps.releaseSeq, app.releaseSeq),
+    //           eq(ctx.sql.tables.apps.appSlug, app.appSlug)
+    //         )
+    //       )
+    //     )
+    //   );
   }
   return Result.Ok(userApps.filter((app) => app.appSlug === appSlug).reduce((max, app) => Math.max(app.releaseSeq, max), 0));
 }
@@ -260,9 +269,9 @@ async function toFileSystemItems(
 export async function ensureApps(
   ctx: VibesApiSQLCtx,
   req: ReqWithVerifiedAuth<ReqEnsureAppSlug>,
-  binding: AppSlugBinding,
+  binding: AppUserSlugBinding,
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
-): Promise<Result<Omit<ResEnsureAppSlugOk, "type">>> {
+): Promise<Result<ResEnsureAppSlug>> {
   // console.log("0-ensureApps called with req:", req, "binding:", binding, "fs:", fs);
   const fsId = await computeFsId(req.env ?? {}, fs);
   const exist = await ctx.sql.db
@@ -270,10 +279,10 @@ export async function ensureApps(
     .from(ctx.sql.tables.apps)
     .where(
       and(
-        eq(ctx.sql.tables.apps.appSlug, binding.appSlug),
-        eq(ctx.sql.tables.apps.userSlug, binding.userSlug),
+        eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
+        eq(ctx.sql.tables.apps.userSlug, binding.userSlug.userSlug),
         eq(ctx.sql.tables.apps.fsId, fsId),
-        eq(ctx.sql.tables.apps.userId, binding.userId)
+        eq(ctx.sql.tables.apps.userId, binding.userSlug.userId)
       )
     )
     .limit(1)
@@ -287,10 +296,10 @@ export async function ensureApps(
         .set({ mode: req.mode })
         .where(
           and(
-            eq(ctx.sql.tables.apps.userId, binding.userId),
+            eq(ctx.sql.tables.apps.userId, binding.userSlug.userId),
             eq(ctx.sql.tables.apps.fsId, fsId),
-            eq(ctx.sql.tables.apps.appSlug, binding.appSlug),
-            eq(ctx.sql.tables.apps.userSlug, binding.userSlug)
+            eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
+            eq(ctx.sql.tables.apps.userSlug, binding.userSlug.userSlug)
           )
         );
     }
@@ -304,7 +313,9 @@ export async function ensureApps(
       );
     }
     return Result.Ok({
-      ...binding,
+      type: "vibes.diy.res-ensure-app-slug",
+      userSlug: binding.userSlug.userSlug,
+      appSlug: binding.appSlug.appSlug,
       mode: req.mode,
       fsId,
       env: req.env ?? {},
@@ -316,9 +327,16 @@ export async function ensureApps(
 
   // console.log("2-ensureApps called with req:", req, "binding:", binding, "fs:", fs);
   // transaction start
-  const rMaxSeq = await checkMaxAppsPerUser(ctx, req._auth.verifiedAuth.claims.userId, binding.appSlug);
+  const rMaxSeq = await checkMaxAppsPerUser(ctx, req._auth.verifiedAuth.claims.userId, binding.appSlug.appSlug);
   if (rMaxSeq.isErr()) {
     return Result.Err(rMaxSeq);
+  }
+  const maxSeq = rMaxSeq.Ok();
+  if (isResEnsureAppSlugMaxAppsError(maxSeq)) {
+    return Result.Ok(maxSeq);
+  }
+  if (typeof maxSeq !== "number") {
+    return Result.Err(`Unexpected result from checkMaxAppsPerUser: ${maxSeq}`);
   }
   const rFileSystems = await toFileSystemItems(ctx, req.mode, fs);
   if (rFileSystems.some((item) => item.isErr())) {
@@ -330,10 +348,10 @@ export async function ensureApps(
     );
   }
   const sqlVal = {
-    appSlug: binding.appSlug,
-    userId: binding.userId,
-    userSlug: binding.userSlug,
-    releaseSeq: rMaxSeq.Ok() + 1,
+    appSlug: binding.appSlug.appSlug,
+    userId: binding.userSlug.userId,
+    userSlug: binding.userSlug.userSlug,
+    releaseSeq: maxSeq + 1,
     fsId,
     env: req.env ?? {},
     fileSystem: rFileSystems.map((item) => item.Ok()),
@@ -347,7 +365,9 @@ export async function ensureApps(
     return Result.Err(rIns);
   }
   return Result.Ok({
-    ...binding,
+    type: "vibes.diy.res-ensure-app-slug",
+    appSlug: binding.appSlug.appSlug,
+    userSlug: binding.userSlug.userSlug,
     mode: req.mode,
     fsId,
     env: req.env ?? {},

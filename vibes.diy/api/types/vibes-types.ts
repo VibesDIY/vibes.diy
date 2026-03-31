@@ -7,10 +7,10 @@ export interface PkgRepos {
   readonly public: string;
 }
 
-export const LLMDefault = type({
-  model: "string = 'anthropic/claude-sonnet-4.6'",
-});
-export type LLMDefault = typeof LLMDefault.infer;
+// export const LLMDefault = type({
+//   model: "string = 'anthropic/claude-sonnet-4.6'",
+// });
+// export type LLMDefault = typeof LLMDefault.infer;
 
 export const LLMEnforced = type({
   debug: "boolean = false",
@@ -41,7 +41,7 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
   assetCacheUrl: string; // https://asset-cache.vibes.app/{assetId}
   // importMapProps: ImportMapProps;
   llm: {
-    default: LLMDefault;
+    // default: LLMDefault;
     enforced: LLMEnforced;
     headers: LLMHeaders;
   };

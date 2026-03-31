@@ -37,6 +37,7 @@ export async function ensureUserSettings(
     return ensureUserSettings(vctx, req);
   }
   const settingsArray = userSettingItem.array()(existing.settings);
+  // console.log("Existing settings from DB:", existing.settings, settingsArray);
   if (settingsArray instanceof type.errors) {
     return Result.Err(`Failed to parse existing user settings: ${settingsArray.summary}`);
   }

@@ -87,6 +87,15 @@ import {
   isResRequestAccessFlow,
   isResHasAccessRequestFlow,
   ResRequestAccess,
+  ReqListUserSlugBindings,
+  ResListUserSlugBindings,
+  isResListUserSlugBindings,
+  ReqCreateUserSlugBinding,
+  ResCreateUserSlugBinding,
+  isResCreateUserSlugBinding,
+  ReqDeleteUserSlugBinding,
+  ResDeleteUserSlugBinding,
+  isResDeleteUserSlugBinding,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -468,6 +477,18 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   hasAccessRequest(req: Req<ReqHasAccessRequest>): Promise<Result<ResHasAccessRequest, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-has-access-request" }, { resMatch: isResHasAccessRequestFlow });
+  }
+
+  listUserSlugBindings(req: Req<ReqListUserSlugBindings>): Promise<Result<ResListUserSlugBindings, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-user-slug-bindings" }, { resMatch: isResListUserSlugBindings });
+  }
+
+  createUserSlugBinding(req: Req<ReqCreateUserSlugBinding>): Promise<Result<ResCreateUserSlugBinding, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-create-user-slug-binding" }, { resMatch: isResCreateUserSlugBinding });
+  }
+
+  deleteUserSlugBinding(req: Req<ReqDeleteUserSlugBinding>): Promise<Result<ResDeleteUserSlugBinding, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-delete-user-slug-binding" }, { resMatch: isResDeleteUserSlugBinding });
   }
 }
 

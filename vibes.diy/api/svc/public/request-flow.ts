@@ -96,10 +96,10 @@ export async function hasAccessRequest(
           case isResHasAccessRequestPending(row):
           case isResHasAccessRequestApproved(row):
           case isResHasAccessRequestRevoked(row):
-            console.log(`hasAccessRequest: !not-found`, row);
+            // console.log(`hasAccessRequest: !not-found`, row);
             return row;
           default:
-            console.log(`hasAccessRequest: not-found`, row);
+            // console.log(`hasAccessRequest: not-found`, row);
             return {
               type: "vibes.diy.res-has-access-request" as const,
               state: "not-found" as const,

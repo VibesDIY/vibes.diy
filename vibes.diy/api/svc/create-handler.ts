@@ -10,7 +10,7 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { defaultLLMRequest } from "./default-llm-request.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
-import { LLMDefault, LLMEnforced, LLMHeaders, MsgBase, VibesFPApiParameters } from "@vibes.diy/api-types";
+import { LLMEnforced, LLMHeaders, MsgBase, VibesFPApiParameters } from "@vibes.diy/api-types";
 import { createSQLPeer, CreateSQLPeerParams, createVibesApiTables, DBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { SuperThis } from "@fireproof/core-types-base";
 import { ensureStorage } from "@vibes.diy/api-pkg";
@@ -193,9 +193,9 @@ export async function createAppContext<T extends VibesSqlite>(
       },
     },
     llm: {
-      default: LLMDefault({
-        ...(envVals.LLM_BACKEND_MODEL ? { model: envVals.LLM_BACKEND_MODEL } : {}),
-      }) as LLMDefault,
+      // default: LLMDefault({
+      //   ...(envVals.LLM_BACKEND_MODEL ? { model: envVals.LLM_BACKEND_MODEL } : {}),
+      // }) as LLMDefault,
       enforced: LLMEnforced({}) as LLMEnforced,
       headers: LLMHeaders({}) as LLMHeaders,
     },

@@ -253,7 +253,7 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqCallAI, unknown>): Promise<Result<EventoResultType>> => {
       await vibeDiyApi
-        .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "application" })
+        .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "app" })
         .then(async (rChat) => {
           if (rChat.isErr()) {
             return ctx.send.send(ctx, {
