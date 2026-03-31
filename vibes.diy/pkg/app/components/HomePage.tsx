@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ChatInput, { ChatInputRef } from "./ChatInput.js";
-import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
 import { eventTrackerPrompt, historyQuestPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
@@ -115,14 +114,6 @@ export default function HomePage() {
                 promptProcessing={false}
               />
             </BrutalistCard>
-
-            {/* Featured vibes section */}
-            <BrutalistCard size="lg">
-              <p>Enjoy our</p>
-              <h2 className="text-2xl font-bold">Featured vibes</h2>
-            </BrutalistCard>
-
-            <FeaturedVibes count={3} />
           </div>
         </div>
       </div>
