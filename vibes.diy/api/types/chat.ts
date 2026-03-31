@@ -2,13 +2,26 @@ import { type } from "arktype";
 import { BlockMsgs, CoercedDate, FileSystemRef, LLMRequest, PromptMsgs } from "@vibes.diy/call-ai-v2";
 import { dashAuthType, vibeFile } from "./common.js";
 
+export const ModelSelector = type("'chat' | 'app' | 'img'");
+export type ModelSelector = typeof ModelSelector.infer;
+
+export const Model = type({
+  id: "string",
+  name: "string",
+  description: "string",
+  "featured?": "boolean",
+  "preSelected?": ModelSelector.array(),
+});
+
+export type Model = typeof Model.infer;
+
 export const reqOpenChat = type({
   type: "'vibes.diy.req-open-chat'",
   auth: dashAuthType,
   "appSlug?": "string",
   "userSlug?": "string",
   "chatId?": "string",
-  mode: "'creation'|'application'",
+  mode: ModelSelector,
 });
 
 export type ReqOpenChat = typeof reqOpenChat.infer;
@@ -18,7 +31,7 @@ export const resOpenChat = type({
   appSlug: "string",
   userSlug: "string",
   chatId: "string",
-  mode: "'creation'|'application'",
+  mode: ModelSelector,
 });
 
 export type ResOpenChat = typeof resOpenChat.infer;
@@ -29,7 +42,7 @@ export function isResOpenChat(obj: unknown): obj is ResOpenChat {
 
 export const reqCreationPromptChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
-  mode: "'creation'",
+  mode: "'chat'",
   auth: dashAuthType,
   chatId: "string",
   outerTid: "string", // this is used to emit events to the current chat session
@@ -42,7 +55,7 @@ export function isReqCreationPromptChatSection(obj: unknown): obj is typeof reqC
 
 export const reqPromptApplicationChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
-  mode: "'application'",
+  mode: "'app'",
   auth: dashAuthType,
   chatId: "string",
   outerTid: "string", // this is used to emit events to the current chat session
@@ -53,13 +66,26 @@ export function isReqPromptApplicationChatSection(obj: unknown): obj is typeof r
   return !(reqPromptApplicationChatSection(obj) instanceof type.errors);
 }
 
-export const reqPromptChatSection = reqCreationPromptChatSection.or(reqPromptApplicationChatSection);
+export const reqPromptImageChatSection = type({
+  type: "'vibes.diy.req-prompt-chat-section'",
+  mode: "'img'",
+  auth: dashAuthType,
+  chatId: "string",
+  outerTid: "string", // this is used to emit events to the current chat session
+  prompt: LLMRequest,
+});
+
+export function isReqPromptImageChatSection(obj: unknown): obj is typeof reqPromptImageChatSection.infer {
+  return !(reqPromptImageChatSection(obj) instanceof type.errors);
+}
+
+export const reqPromptChatSection = reqCreationPromptChatSection.or(reqPromptApplicationChatSection).or(reqPromptImageChatSection);
 
 export type ReqPromptChatSection = typeof reqPromptChatSection.infer;
 
 export const resPromptChatSection = type({
   type: "'vibes.diy.res-prompt-chat-section'",
-  mode: "'creation'|'application'",
+  mode: ModelSelector,
   chatId: "string",
   userSlug: "string",
   appSlug: "string",
@@ -126,4 +152,21 @@ export type EvtNewFsId = typeof evtNewFsId.infer;
 
 export function isEvtNewFsId(obj: unknown): obj is EvtNewFsId {
   return !(evtNewFsId(obj) instanceof type.errors);
+}
+
+export const reqListModels = type({
+  type: "'vibes.diy.req-list-models'",
+});
+export type ReqListModels = typeof reqListModels.infer;
+export function isReqListModels(obj: unknown): obj is ReqListModels {
+  return !(reqListModels(obj) instanceof type.errors);
+}
+
+export const resListModels = type({
+  type: "'vibes.diy.res-list-models'",
+  models: Model.array(),
+});
+export type ResListModels = typeof resListModels.infer;
+export function isResListModels(obj: unknown): obj is ResListModels {
+  return !(resListModels(obj) instanceof type.errors);
 }

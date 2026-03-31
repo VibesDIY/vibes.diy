@@ -2,20 +2,44 @@ import { type } from "arktype";
 import { dashAuthType } from "./common.js";
 import { AIParams, ActiveEntry, EnablePublicAccess, EnableRequest, ActiveACL, KVString } from "./invite.js";
 
+export const sharingGrantItem = type({
+  grant: "'allow' | 'deny'",
+  appSlug: "string",
+  userSlug: "string",
+  dbName: "string", // could be "*" for all databases
+});
+export type SharingGrantItem = typeof sharingGrantItem.infer;
+
 export const userSettingShareing = type({
   type: "'sharing'",
-  grants: type({
-    grant: "'allow' | 'deny'",
-    appSlug: "string",
-    userSlug: "string",
-    dbName: "string", // could be "*" for all databases
-  }).array(),
+  grants: sharingGrantItem.array(),
 });
-export function isUserSettingSharing(obj: unknown): obj is typeof userSettingShareing.infer {
+export type UserSettingSharing = typeof userSettingShareing.infer;
+export function isUserSettingSharing(obj: unknown): obj is UserSettingSharing {
   return !(userSettingShareing(obj) instanceof type.errors);
 }
 
-export const userSettingItem = userSettingShareing;
+export const userSettingModelDefaults = type({
+  type: "'modelDefaults'",
+  "chat?": AIParams.partial(),
+  "app?": AIParams.partial(),
+  "img?": AIParams.partial(),
+});
+export type UserSettingModelDefaults = typeof userSettingModelDefaults.infer;
+export function isUserSettingModelDefaults(obj: unknown): obj is UserSettingModelDefaults {
+  return !(userSettingModelDefaults(obj) instanceof type.errors);
+}
+
+export const userSettingDefaultUserSlug = type({
+  type: "'defaultUserSlug'",
+  userSlug: "string",
+});
+export type UserSettingDefaultUserSlug = typeof userSettingDefaultUserSlug.infer;
+export function isUserSettingDefaultUserSlug(obj: unknown): obj is UserSettingDefaultUserSlug {
+  return !(userSettingDefaultUserSlug(obj) instanceof type.errors);
+}
+
+export const userSettingItem = userSettingShareing.or(userSettingModelDefaults).or(userSettingDefaultUserSlug);
 
 export type UserSettingItem = typeof userSettingItem.infer;
 
@@ -113,6 +137,15 @@ export function isReqEnsureAppSettingsChat(obj: unknown): obj is ReqEnsureAppSet
   return !(reqEnsureAppSettingsChat(obj) instanceof type.errors);
 }
 
+export const reqEnsureAppSettingsImg = type({
+  img: AIParams.partial(),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsImg = typeof reqEnsureAppSettingsImg.infer;
+export function isReqEnsureAppSettingsImg(obj: unknown): obj is ReqEnsureAppSettingsImg {
+  return !(reqEnsureAppSettingsImg(obj) instanceof type.errors);
+}
+
 export const reqEnsureAppSettingsEnv = type({
   env: KVString.array(),
 }).and(reqEnsureAppSettingsBase);
@@ -129,6 +162,7 @@ export type ReqEnsureAppSettings =
   | ReqEnsureAppSettingsTitle
   | ReqEnsureAppSettingsApp
   | ReqEnsureAppSettingsChat
+  | ReqEnsureAppSettingsImg
   | ReqEnsureAppSettingsEnv
   | ReqEnsureAppSettingsBase;
 
@@ -138,6 +172,7 @@ export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSetting
     isReqEnsureAppSettingsTitle(obj) ||
     isReqEnsureAppSettingsApp(obj) ||
     isReqEnsureAppSettingsChat(obj) ||
+    isReqEnsureAppSettingsImg(obj) ||
     isReqEnsureAppSettingsEnv(obj) ||
     isReqEnsureAppSettingsBase(obj)
   );
@@ -150,6 +185,7 @@ export const AppSettings = type({
       "title?": "string",
       "app?": AIParams.partial(),
       "chat?": AIParams.partial(),
+      "img?": AIParams.partial(),
       env: KVString.array(),
     },
     publicAccess: EnablePublicAccess.optional(),

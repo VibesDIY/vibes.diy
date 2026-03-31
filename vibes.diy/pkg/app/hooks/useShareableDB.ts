@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth, useClerk } from "@clerk/react";
 import { useVibesDiy } from "../vibes-diy-provider.js";
-import { isUserSettingSharing, type UserSettingItem } from "@vibes.diy/api-types";
+import { isUserSettingSharing, type UserSettingSharing } from "@vibes.diy/api-types";
 import type { ResOkVibeRegisterFPDb } from "@vibes.diy/vibe-types";
 import { toast } from "react-hot-toast";
 
@@ -22,7 +22,7 @@ export function useShareableDB() {
   const [pendingDbRef, setPendingDbRef] = useState<ReturnType<typeof srvVibeSandbox.shareableDBs.get> | null>(null);
   const pendingDbRefRef = useRef<ReturnType<typeof srvVibeSandbox.shareableDBs.get> | null>(null);
   const [sharingState, setSharingState] = useState<SharingState | null>(null);
-  const currentSharingRef = useRef<UserSettingItem | undefined>(undefined);
+  const currentSharingRef = useRef<UserSettingSharing | undefined>(undefined);
 
   // Keep ref in sync so onResult can read it without stale closure
   useEffect(() => {

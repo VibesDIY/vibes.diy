@@ -25,6 +25,11 @@ import {
   listInviteGrantsEvento,
 } from "./public/invite-flow.js";
 import {
+  listUserSlugBindingsEvento,
+  createUserSlugBindingEvento,
+  deleteUserSlugBindingEvento,
+} from "./public/user-slug-bindings.js";
+import {
   listRequestGrantsEvento,
   requestAccessEvento,
   approveRequestEvento,
@@ -62,6 +67,9 @@ export const vibesMsgEvento = Lazy(() => {
     setModeFsIdEvento,
     ensureUserSettingsEvento,
     listApplicationChats,
+    listUserSlugBindingsEvento,
+    createUserSlugBindingEvento,
+    deleteUserSlugBindingEvento,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",

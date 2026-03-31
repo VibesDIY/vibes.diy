@@ -54,15 +54,32 @@ export const resEnsureAppSlugInvalid = type({
 });
 export type ResEnsureAppSlugInvalid = typeof resEnsureAppSlugInvalid.infer;
 
+const resEnsureAppSlugMaxAppsError = type({
+  type: "'vibes.diy.error'",
+  message: "string",
+  code: "'max-app-slugs-reached'",
+});
+export type ResEnsureAppSlugMaxAppsError = typeof resEnsureAppSlugMaxAppsError.infer;
+
+export function isResEnsureAppSlugMaxAppsError(obj: unknown): obj is ResEnsureAppSlugMaxAppsError {
+  return !(resEnsureAppSlugMaxAppsError(obj) instanceof type.errors);
+}
+
 export function isResEnsureAppSlugInvalid(obj: unknown): obj is ResEnsureAppSlugInvalid {
   return !(resEnsureAppSlugInvalid(obj) instanceof type.errors);
 }
 
-export const resEnsureAppSlugError = resEnsureAppSlugRequireLogin.or(resEnsureAppSlugUserSlugInvalid).or(resEnsureAppSlugInvalid);
+export const resEnsureAppSlugError = resEnsureAppSlugRequireLogin
+  .or(resEnsureAppSlugUserSlugInvalid)
+  .or(resEnsureAppSlugInvalid)
+  .or(resEnsureAppSlugMaxAppsError);
 
 export const resEnsureAppSlug = resEnsureAppSlugOk.or(resEnsureAppSlugError);
 
 export type ResEnsureAppSlugError = typeof resEnsureAppSlugError.infer;
+export function isResEnsureAppSlugError(obj: unknown): obj is ResEnsureAppSlugError {
+  return !(resEnsureAppSlugError(obj) instanceof type.errors);
+}
 
 export type ResEnsureAppSlug = typeof resEnsureAppSlug.infer;
 export function isResEnsureAppSlug(obj: unknown): obj is ResEnsureAppSlug {
@@ -207,4 +224,74 @@ export const reqSetModeFs = ReqSetModeFs;
 export type ReqSetModeFs = typeof ReqSetModeFs.infer;
 export function isReqSetModeFs(obj: unknown): obj is ReqSetModeFs {
   return !(ReqSetModeFs(obj) instanceof type.errors);
+}
+
+// UserSlugBinding CRUD
+
+export const ReqListUserSlugBindings = type({
+  type: "'vibes.diy.req-list-user-slug-bindings'",
+  auth: dashAuthType,
+});
+export type ReqListUserSlugBindings = typeof ReqListUserSlugBindings.infer;
+export function isReqListUserSlugBindings(obj: unknown): obj is ReqListUserSlugBindings {
+  return !(ReqListUserSlugBindings(obj) instanceof type.errors);
+}
+
+export const UserSlugBindingItem = type({
+  userSlug: "string",
+  tenant: "string",
+  created: "string",
+  appSlugCount: "number",
+});
+export type UserSlugBindingItem = typeof UserSlugBindingItem.infer;
+
+export const ResListUserSlugBindings = type({
+  type: "'vibes.diy.res-list-user-slug-bindings'",
+  items: UserSlugBindingItem.array(),
+});
+export type ResListUserSlugBindings = typeof ResListUserSlugBindings.infer;
+export function isResListUserSlugBindings(obj: unknown): obj is ResListUserSlugBindings {
+  return !(ResListUserSlugBindings(obj) instanceof type.errors);
+}
+
+export const ReqCreateUserSlugBinding = type({
+  type: "'vibes.diy.req-create-user-slug-binding'",
+  auth: dashAuthType,
+  // if omitted, a random slug is generated; if provided it is sanitized via toRFC2822_32ByteLength
+  "userSlug?": "string",
+});
+export type ReqCreateUserSlugBinding = typeof ReqCreateUserSlugBinding.infer;
+export function isReqCreateUserSlugBinding(obj: unknown): obj is ReqCreateUserSlugBinding {
+  return !(ReqCreateUserSlugBinding(obj) instanceof type.errors);
+}
+
+export const ResCreateUserSlugBinding = type({
+  type: "'vibes.diy.res-create-user-slug-binding'",
+  userSlug: "string",
+  tenant: "string",
+  created: "string",
+});
+export type ResCreateUserSlugBinding = typeof ResCreateUserSlugBinding.infer;
+export function isResCreateUserSlugBinding(obj: unknown): obj is ResCreateUserSlugBinding {
+  return !(ResCreateUserSlugBinding(obj) instanceof type.errors);
+}
+
+export const ReqDeleteUserSlugBinding = type({
+  type: "'vibes.diy.req-delete-user-slug-binding'",
+  auth: dashAuthType,
+  userSlug: "string",
+});
+export type ReqDeleteUserSlugBinding = typeof ReqDeleteUserSlugBinding.infer;
+export function isReqDeleteUserSlugBinding(obj: unknown): obj is ReqDeleteUserSlugBinding {
+  return !(ReqDeleteUserSlugBinding(obj) instanceof type.errors);
+}
+
+export const ResDeleteUserSlugBinding = type({
+  type: "'vibes.diy.res-delete-user-slug-binding'",
+  userSlug: "string",
+  deleted: "boolean",
+});
+export type ResDeleteUserSlugBinding = typeof ResDeleteUserSlugBinding.infer;
+export function isResDeleteUserSlugBinding(obj: unknown): obj is ResDeleteUserSlugBinding {
+  return !(ResDeleteUserSlugBinding(obj) instanceof type.errors);
 }

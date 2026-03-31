@@ -30,6 +30,12 @@ import {
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { type } from "arktype";
+import type { Model } from "@vibes.diy/api-types";
+
+/** Minimal Model object for test fixtures */
+function m(id: string): Model {
+  return { id, name: id, description: id };
+}
 
 function toByPromptIds(calls: unknown[][]): Record<string, PromptAndBlockMsgs[]> {
   return calls.reduce(
@@ -166,45 +172,56 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
   });
 
-  it("warns about invalid appSlugs", async () => {
-    const rRes = await api.ensureAppSlug({
-      appSlug: "Invalid App Slug!",
-      mode: "dev",
-      fileSystem: [
-        {
-          type: "code-block",
-          lang: "jsx",
-          filename: "/App.jsx",
-          content: "console.log('hello world');",
-        },
-      ],
-    });
-    const res = rRes.Err();
-    if (!isResEnsureAppSlugInvalid(res)) {
-      assert.fail("Expected invalid appSlug to return a ResEnsureAppSlugInvalid");
+  it("make it a valid appSlug", async () => {
+    const id = sthis.nextId(8).str.toLocaleLowerCase();
+    let userSlug: string | undefined;
+    for (let i = 0; i < 3; i++) {
+      const rRes = await api.ensureAppSlug({
+        appSlug: `Invalid App Slug! ${id}`,
+        mode: "dev",
+        fileSystem: [
+          {
+            type: "code-block",
+            lang: "jsx",
+            filename: "/App.jsx",
+            content: "console.log('hello world');",
+          },
+        ],
+      });
+      const res = rRes.Ok();
+      if (!isResEnsureAppSlugOk(res)) {
+        assert.fail("Expected invalid appSlug to return a ResEnsureAppSlugOk");
+      }
+      expect(res.appSlug).toBe(`invalid-app-slug-${id}`);
+      if (!userSlug) {
+        userSlug = res.userSlug;
+      }
+      expect(res.userSlug).toBe(userSlug);
     }
-    expect(res.code).toBe("app-slug-invalid");
   });
 
-  it("warns about invalid userSlugs", async () => {
-    const rRes = await api.ensureAppSlug({
-      appSlug: "valid-app-slug",
-      userSlug: "Invalid App Slug!",
-      mode: "dev",
-      fileSystem: [
-        {
-          type: "code-block",
-          lang: "jsx",
-          filename: "/App.jsx",
-          content: "console.log('hello world');",
-        },
-      ],
-    });
-    const res = rRes.Err();
-    if (!isResEnsureAppSlugUserSlugInvalid(res)) {
-      assert.fail("Expected invalid userSlug to return a ResEnsureAppSlugUserSlugInvalid");
+  it("coerce invalid userSlugs", async () => {
+    const id = sthis.nextId(8).str.toLocaleLowerCase();
+    for (let i = 0; i < 3; i++) {
+      const rRes = await api.ensureAppSlug({
+        appSlug: `valid-app-slug-${id}`,
+        userSlug: `Invalid User Slug! ${id}`,
+        mode: "dev",
+        fileSystem: [
+          {
+            type: "code-block",
+            lang: "jsx",
+            filename: "/App.jsx",
+            content: "console.log('hello world');",
+          },
+        ],
+      });
+      const res = rRes.Ok();
+      if (!isResEnsureAppSlugOk(res)) {
+        assert.fail("Expected invalid appSlug to return a ResEnsureAppSlugOk");
+      }
+      expect(res.userSlug).toBe(`invalid-user-slug-${id}`);
     }
-    expect(res.code).toBe("user-slug-invalid");
   });
 
   it("does defaults", async () => {
@@ -243,7 +260,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     }
     expect(res.fsId).toBe(res1.fsId);
     expect(res.appSlug).not.toBe(res1.appSlug);
-    expect(res.userSlug).not.toBe(res1.userSlug);
+    expect(res.userSlug).toBe(res.userSlug);
   });
 
   it("render iframe content page", async () => {
@@ -372,7 +389,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
   it("can open chat", async () => {
     // console.log("Testing openChat");
     const rChatRes = await api.openChat({
-      mode: "creation",
+      mode: "chat",
     });
     // console.log("openChat res", rChatRes);
     expect(rChatRes.isOk()).toBe(true);
@@ -412,7 +429,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
     const rNext = await api.openChat({
       chatId: chat.chatId,
-      mode: "creation",
+      mode: "chat",
     });
     const nextFn = vi.fn();
     await processStream(rNext.Ok().sectionStream, (msg) => {
@@ -430,7 +447,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
   it("queries the llm", async () => {
     const rChatRes = await api.openChat({
-      mode: "creation",
+      mode: "chat",
     });
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
@@ -447,9 +464,9 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
     const rNext = await api.openChat({
       chatId: chat.chatId,
-      mode: "creation",
+      mode: "chat",
     });
-    console.log("pre-processStream");
+    // console.log("pre-processStream");
     const nextFn = vi.fn();
     Promise.all([
       firstStream,
@@ -572,9 +589,9 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
 
     it("ensureAppSettings update chat", async () => {
-      const x1 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: "x" } });
-      const x2 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: "x" } });
-      const x3 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: "x1", apiKey: "x" } });
+      const x1 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: m("x") } });
+      const x2 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: m("x") } });
+      const x3 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: m("x1"), apiKey: "x" } });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entries).toEqual(
@@ -582,7 +599,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
           expect.objectContaining({
             param: {
               apiKey: "x",
-              model: "x1",
+              model: m("x1"),
             },
             type: "active.model",
             usage: "chat",
@@ -590,15 +607,15 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         ])
       );
       expect(x3.Ok().settings.entry.settings.chat).toEqual({
-        model: "x1",
+        model: m("x1"),
         apiKey: "x",
       });
     });
 
     it("ensureAppSettings update app", async () => {
-      const x1 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: "x" } });
-      const x2 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: "x" } });
-      const x3 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: "x1", apiKey: "x" } });
+      const x1 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: m("x") } });
+      const x2 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: m("x") } });
+      const x3 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: m("x1"), apiKey: "x" } });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entries).toEqual(
@@ -606,7 +623,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
           expect.objectContaining({
             param: {
               apiKey: "x",
-              model: "x1",
+              model: m("x1"),
             },
             type: "active.model",
             usage: "app",
@@ -614,7 +631,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         ])
       );
       expect(x3.Ok().settings.entry.settings.app).toEqual({
-        model: "x1",
+        model: m("x1"),
         apiKey: "x",
       });
     });
@@ -709,7 +726,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         },
       },
       type: "vibes.diy.res-prompt-chat-section",
-      mode: "creation",
+      mode: "chat",
     } as unknown as ReqWithVerifiedAuth<ReqPromptChatSection>;
 
     const bp = BlockMsgs.or(PromptMsgs);
@@ -748,7 +765,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         resChat: {
           appSlug: "example-app",
           userSlug: "example-user",
-          mode: "creation",
+          mode: "chat",
         },
         promptId,
         blockSeq: collectedMsgs.length,

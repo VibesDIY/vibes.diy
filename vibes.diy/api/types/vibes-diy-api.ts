@@ -11,6 +11,12 @@ import {
   ResGetAppByFsId,
   ReqSetModeFs,
   ResSetModeFs,
+  ReqListUserSlugBindings,
+  ResListUserSlugBindings,
+  ReqCreateUserSlugBinding,
+  ResCreateUserSlugBinding,
+  ReqDeleteUserSlugBinding,
+  ResDeleteUserSlugBinding,
 } from "./app.js";
 import { ReqOpenChat, ResPromptChatSection, SectionEvent, ResAddFS } from "./chat.js";
 import {
@@ -114,4 +120,8 @@ export interface VibesDiyApiIface<_T = unknown> {
   revokeRequest(req: Req<ReqRevokeRequest>): Promise<Result<ResRevokeRequest, VibesDiyError>>;
   listRequestGrants(req: Req<ReqListRequestGrants>): Promise<Result<ResListRequestGrants, VibesDiyError>>;
   hasAccessRequest(req: Req<ReqHasAccessRequest>): Promise<Result<ResHasAccessRequest, VibesDiyError>>;
+
+  listUserSlugBindings(req: Req<ReqListUserSlugBindings>): Promise<Result<ResListUserSlugBindings, VibesDiyError>>;
+  createUserSlugBinding(req: Req<ReqCreateUserSlugBinding>): Promise<Result<ResCreateUserSlugBinding, VibesDiyError>>;
+  deleteUserSlugBinding(req: Req<ReqDeleteUserSlugBinding>): Promise<Result<ResDeleteUserSlugBinding, VibesDiyError>>;
 }

@@ -1,5 +1,6 @@
 import { type } from "arktype";
 import { CoercedDate } from "@vibes.diy/call-ai-v2";
+import { Model } from "./chat.js";
 
 export const KVString = type({ key: "string", value: "string" });
 export type KVString = typeof KVString.infer;
@@ -13,7 +14,7 @@ export function fromKVString(entries: KVString[]): Record<string, string> {
 }
 
 export const AIParams = type({
-  model: "string",
+  model: Model,
   "apiKey?": "string",
   // here we could add Endpoint url or backlink information
 });
@@ -314,7 +315,16 @@ export function isActiveModelSettingApp(obj: unknown): obj is typeof ActiveModel
   return !(ActiveModelSettingApp(obj) instanceof type.errors);
 }
 
-export const ActiveModelSetting = ActiveModelSettingChat.or(ActiveModelSettingApp);
+export const ActiveModelSettingImg = type({
+  usage: "'img'",
+}).and(ActiveModelSettingBase);
+
+export type ActiveModelSettingImg = typeof ActiveModelSettingImg.infer;
+export function isActiveModelSettingImg(obj: unknown): obj is ActiveModelSettingImg {
+  return !(ActiveModelSettingImg(obj) instanceof type.errors);
+}
+
+export const ActiveModelSetting = ActiveModelSettingChat.or(ActiveModelSettingApp).or(ActiveModelSettingImg);
 
 export type ActiveModelSetting = typeof ActiveModelSetting.infer;
 export function isActiveModelSetting(obj: unknown): obj is ActiveModelSetting {

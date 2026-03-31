@@ -1,4 +1,4 @@
-import { loadAsset } from "@adviser/cement";
+import { loadAsset, Result, string2stream } from "@adviser/cement";
 import { DeviceIdCA } from "@fireproof/core-device-id";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createAppContext, noopCache } from "@vibes.diy/api-svc";
@@ -82,6 +82,22 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
       },
     },
     fetchAsset: async (url: string) => {
+      if (url.endsWith("models.json")) {
+        return Result.Ok(
+          await string2stream(
+            JSON.stringify([
+              {
+                id: "anthropic/claude-opus-4.5",
+                name: "Claude Opus 4.5 (Default)",
+                description:
+                  "Claude Opus 4.5 is Anthropic's most powerful model, offering the best performance for complex reasoning, coding, and creative tasks",
+                featured: true,
+                preSelected: ["chat", "app", "img"],
+              },
+            ])
+          )
+        );
+      }
       throw new Error(`fetchAsset not implemented in test for url: ${url}`);
     },
     postQueue: async (_msg: MsgBase) => {

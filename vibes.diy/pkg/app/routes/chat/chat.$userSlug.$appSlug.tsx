@@ -197,7 +197,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       return; // Already opened or opening
     }
     openingRef.current = true;
-    vibeDiyApi.openChat({ userSlug, appSlug, mode: "creation" }).then((rChat) => {
+    vibeDiyApi.openChat({ userSlug, appSlug, mode: "chat" }).then((rChat) => {
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), userSlug, appSlug);
         return;

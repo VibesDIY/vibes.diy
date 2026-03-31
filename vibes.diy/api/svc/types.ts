@@ -6,6 +6,7 @@ import { Logger, Result } from "@adviser/cement";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { LLMHeaders, MsgBase, VibesAssetStorage, VibesFPApiParameters } from "@vibes.diy/api-types";
 import { VibesApiTables, VibesSqlite } from "@vibes.diy/api-sql";
+import { type } from "arktype";
 
 export type { VibesApiTables };
 export interface CfCacheIf {
@@ -44,4 +45,39 @@ export interface VibesApiSQLCtx {
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
   storage: VibesAssetStorage;
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
+}
+
+export const UserSlugBinding = type({
+  type: "'vibes.diy-user-slug-binding'",
+  userId: "string",
+  userSlug: "string",
+  tenant: "string",
+});
+export type UserSlugBinding = type.infer<typeof UserSlugBinding>;
+
+export function isUserSlugBinding(obj: unknown): obj is UserSlugBinding {
+  return !(UserSlugBinding(obj) instanceof type.errors);
+}
+
+export const AppSlugBinding = type({
+  type: "'vibes.diy-app-slug-binding'",
+  userId: "string",
+  appSlug: "string",
+  ledger: "string",
+});
+export type AppSlugBinding = type.infer<typeof AppSlugBinding>;
+
+export function isAppSlugBinding(obj: unknown): obj is AppSlugBinding {
+  return !(AppSlugBinding(obj) instanceof type.errors);
+}
+
+export const AppUserSlugBinding = type({
+  type: "'vibes.diy-app-user-slug-binding'",
+  userSlug: UserSlugBinding,
+  appSlug: AppSlugBinding,
+});
+export type AppUserSlugBinding = type.infer<typeof AppUserSlugBinding>;
+
+export function isAppUserSlugBinding(obj: unknown): obj is AppUserSlugBinding {
+  return !(AppUserSlugBinding(obj) instanceof type.errors);
 }

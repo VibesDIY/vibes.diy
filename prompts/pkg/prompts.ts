@@ -312,7 +312,7 @@ export async function makeBaseSystemPrompt(
         fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
         basePath: () => {
           const dir = import.meta.url;
-          console.log("Base path for loading LLM text asset:", llm, dir, import.meta);
+          // console.log("Base path for loading LLM text asset:", llm, dir, import.meta);
           return dir;
         },
         mock: {

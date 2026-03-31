@@ -10,11 +10,12 @@ import {
 } from "@adviser/cement";
 import {
   EvtNewFsId,
+  isResEnsureAppSlugError,
+  isResEnsureAppSlugOk,
   MsgBase,
   ReqEnsureAppSlug,
   ReqWithVerifiedAuth,
   ResEnsureAppSlug,
-  ResEnsureAppSlugError,
   VibeFile,
   VibesDiyError,
   W3CWebSocketEvent,
@@ -27,17 +28,6 @@ import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 
-function toRFC2822_32ByteLength(slug: string | undefined): string | undefined {
-  if (!slug) return undefined;
-
-  return slug
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 32);
-}
-
 // ReqWithVerifiedAuth<ReqEnsureAppSlug>
 export async function ensureAppSlugItem(
   vctx: VibesApiSQLCtx,
@@ -45,32 +35,8 @@ export async function ensureAppSlugItem(
 ): Promise<Result<ResEnsureAppSlug>> {
   // console.log("handle ensureAppSlugItem", ctx.validated);
 
-  const sanitizedAppSlug = toRFC2822_32ByteLength(req.appSlug);
-  const sanitizedUserSlug = toRFC2822_32ByteLength(req.userSlug);
-
-  if (sanitizedAppSlug !== req.appSlug) {
-    return Result.Ok({
-      type: "vibes.diy.error",
-      message: `appSlug "${req.appSlug}" is invalid. 
-        It must be 32 characters or less, contain only lowercase letters, 
-        numbers, and hyphens, and cannot start or end with a hyphen. 
-        Suggested slug: "${sanitizedAppSlug}"`,
-      code: "app-slug-invalid",
-    } satisfies ResEnsureAppSlugError);
-  }
-
-  if (sanitizedUserSlug !== req.userSlug) {
-    return Result.Ok({
-      type: "vibes.diy.error",
-      message: `userSlug "${req.userSlug}" is invalid. 
-        It must be 32 characters or less, contain only lowercase letters, 
-        numbers, and hyphens, and cannot start or end with a hyphen. 
-        Suggested slug: "${sanitizedUserSlug}"`,
-      code: "user-slug-invalid",
-    } satisfies ResEnsureAppSlugError);
-  }
-
   const rAppSlugBinding = await ensureSlugBinding(vctx, {
+    claims: req._auth.verifiedAuth.claims,
     userId: req._auth.verifiedAuth.claims.userId,
     appSlug: req.appSlug,
     userSlug: req.userSlug,
@@ -116,10 +82,18 @@ export async function ensureAppSlugItem(
     storage: op.Ok(),
   }));
 
-  const res = await ensureApps(vctx, req, rAppSlugBinding.Ok(), fullFileSystem);
-  if (res.isErr()) {
-    return Result.Err(res);
+  const rEnsure = await ensureApps(vctx, req, rAppSlugBinding.Ok(), fullFileSystem);
+  if (rEnsure.isErr()) {
+    return Result.Err(rEnsure);
   }
+  if (isResEnsureAppSlugError(rEnsure.Ok())) {
+    return Result.Ok(rEnsure.Ok());
+  }
+  const ensured = rEnsure.Ok();
+  if (!isResEnsureAppSlugOk(ensured)) {
+    return Result.Err(`Expected ensureApps to return ResEnsureAppSlugOk on success, got ${JSON.stringify(ensured)}`);
+  }
+
   // let wrapperUrl: string;
   // if (req.mode === "production") {
   //   wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
@@ -129,19 +103,19 @@ export async function ensureAppSlugItem(
   const entryPointUrl = calcEntryPointUrl({
     ...vctx.params.vibes.svc,
     bindings: {
-      userSlug: res.Ok().userSlug,
-      appSlug: res.Ok().appSlug,
-      fsId: res.Ok().fsId,
+      userSlug: ensured.userSlug,
+      appSlug: ensured.appSlug,
+      fsId: ensured.fsId,
     },
   });
-  if (res.Ok().fsId) {
-    // console.log(`Posting evt-new-fs-id for fsId ${res.Ok().fsId}, entryPointUrl: ${entryPointUrl}`);
+  if (ensured.fsId) {
+    // console.log(`Posting evt-new-fs-id for fsId ${ensured.fsId}, entryPointUrl: ${entryPointUrl}`);
     await vctx.postQueue({
       payload: {
         type: "vibes.diy.evt-new-fs-id",
-        userSlug: res.Ok().userSlug,
-        appSlug: res.Ok().appSlug,
-        fsId: res.Ok().fsId,
+        userSlug: ensured.userSlug,
+        appSlug: ensured.appSlug,
+        fsId: ensured.fsId,
         vibeUrl: entryPointUrl,
         sessionToken: "offline",
       },
@@ -153,14 +127,15 @@ export async function ensureAppSlugItem(
   }
   return Result.Ok({
     type: "vibes.diy.res-ensure-app-slug",
-    appSlug: rAppSlugBinding.Ok().appSlug,
-    userSlug: rAppSlugBinding.Ok().userSlug,
+    appSlug: ensured.appSlug,
+    userSlug: ensured.userSlug,
+    // userId: req._auth.verifiedAuth.claims.userId,
     // promptId: req.promptId,
     // chatId: req.chatId,
     mode: req.mode,
-    fsId: res.Ok().fsId,
+    fsId: ensured.fsId,
     env: req.env ?? {},
-    fileSystem: res.Ok().fileSystem,
+    fileSystem: ensured.fileSystem,
     // wrapperUrl,
     entryPointUrl,
   });
@@ -190,7 +165,6 @@ export const ensureAppSlugItemEvento: EventoHandler<
     async (
       ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqEnsureAppSlug>>, ResEnsureAppSlug | VibesDiyError>
     ): Promise<Result<EventoResultType>> => {
-      // console.log("handle ensureAppSlugItem", ctx.validated);
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
@@ -199,7 +173,11 @@ export const ensureAppSlugItemEvento: EventoHandler<
         return Result.Err(rAppSlugBinding);
       }
 
-      // console.log("ensureAppSlugItem res", res.Ok());
+      // const res = rAppSlugBinding.Ok();
+      // if (isResEnsureAppSlugOk(res)) {
+      // console.log("ensureAppSlugItem success", req.appSlug, '===', res.appSlug, req.userSlug, '===', res.userSlug);
+      // }
+
       await ctx.send.send(ctx, rAppSlugBinding.Ok());
       return Result.Ok(EventoResult.Continue);
     }

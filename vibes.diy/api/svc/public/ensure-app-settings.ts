@@ -11,6 +11,8 @@ import {
   isActiveEnv,
   isActiveModelSettingApp,
   isActiveModelSettingChat,
+  isActiveModelSettingImg,
+  isReqEnsureAppSettingsImg,
   isActiveTitle,
   isEnablePublicAccess,
   isEnableRequest,
@@ -33,6 +35,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
 import { eq, and } from "drizzle-orm/sql/expressions";
+import { getModelDefaults } from "../intern/get-model-defaults.js";
 // import { buildEnsureEntryResult } from "../intern/application-settings.js";
 
 export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
@@ -83,12 +86,26 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
       case isActiveModelSettingApp(e):
         result.entry.settings.app = e.param;
         break;
+      case isActiveModelSettingImg(e):
+        result.entry.settings.img = e.param;
+        break;
       case isActiveEnv(e):
         result.entry.settings.env.push(...e.env);
         break;
     }
   });
   return result;
+}
+
+async function withModelDefaults(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings): Promise<ResEnsureAppSettings> {
+  const rDefaults = await getModelDefaults(vctx, { appSlug: res.appSlug, userSlug: res.userSlug });
+  if (rDefaults.isErr()) return res;
+  const defaults = rDefaults.Ok();
+  const s = res.settings.entry.settings;
+  if (!s.chat) s.chat = defaults.chat;
+  if (!s.app) s.app = defaults.app;
+  if (!s.img) s.img = defaults.img;
+  return res;
 }
 
 export async function ensureAppSettings(
@@ -143,17 +160,19 @@ export async function ensureAppSettings(
     if (settings instanceof type.errors) {
       return Result.Err(settings.summary);
     }
-    return Result.Ok({
-      type: "vibes.diy.res-ensure-app-settings",
-      userId: record.UserSlugBindings.userId,
-      appSlug: req.appSlug,
-      ledger: record.AppSlugBindings.ledger,
-      userSlug: req.userSlug,
-      tenant: record.UserSlugBindings.tenant,
-      settings: buildEnsureEntryResult(settings || []),
-      updated: record.AppSettings?.updated ?? now,
-      created: record.AppSettings?.created ?? now,
-    } satisfies ResEnsureAppSettings);
+    return Result.Ok(
+      await withModelDefaults(vctx, {
+        type: "vibes.diy.res-ensure-app-settings",
+        userId: record.UserSlugBindings.userId,
+        appSlug: req.appSlug,
+        ledger: record.AppSlugBindings.ledger,
+        userSlug: req.userSlug,
+        tenant: record.UserSlugBindings.tenant,
+        settings: buildEnsureEntryResult(settings || []),
+        updated: record.AppSettings?.updated ?? now,
+        created: record.AppSettings?.created ?? now,
+      } satisfies ResEnsureAppSettings)
+    );
   }
   record.AppSettings = record.AppSettings ?? {
     settings: [],
@@ -261,6 +280,23 @@ export async function ensureAppSettings(
           }) satisfies ActiveModelSetting
       );
       break;
+    case isReqEnsureAppSettingsImg(req):
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
+        settings,
+        isActiveModelSettingImg,
+        (prev: ActiveModelSetting) =>
+          ({
+            type: "active.model",
+            usage: "img",
+            param: {
+              ...prev.param,
+              ...req.img,
+            },
+          }) satisfies ActiveModelSetting
+      );
+      break;
     case isReqEnsureAppSettingsEnv(req):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
@@ -278,14 +314,14 @@ export async function ensureAppSettings(
       );
       break;
   }
-  return Result.Ok(res);
+  return Result.Ok(await withModelDefaults(vctx, res));
 }
 
 function upsert<T extends ActiveEntry, R extends ActiveEntry>(settings: T[], match: (e: unknown) => boolean, fn: (prev: R) => R) {
   const idx = settings.findIndex(match);
   if (idx >= 0) settings[idx] = fn(settings[idx] as unknown as R) as unknown as T;
   else settings.push(fn({} as unknown as R) as unknown as T);
-  console.log(">>>>", settings, idx, settings[idx]);
+  // console.log(">>>>", settings, idx, settings[idx]);
   return buildEnsureEntryResult(settings);
 }
 
