@@ -11,28 +11,32 @@ import GtmNoScript from "./components/GtmNoScript.js";
 import { VibesDiyProvider, VibesDiyWebVars } from "./vibes-diy-provider.js";
 import { VibesFPApiParameters } from "@vibes.diy/api-types";
 import { getVibesGlobalCSS } from "@vibes.diy/base";
+import { BuildURI } from "@adviser/cement";
 import "./app.css";
 import { Toaster } from "react-hot-toast";
 
 // Loader for root route
-export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters } }) {
-  // const env = await fetch("/api/clientEnv")
-  // console.log(`loader-invoke from root.tsx`, loaderCtx.context.vibeDiyAppParams.vibes.env);
-  const params = loaderCtx.context.vibeDiyAppParams;
+export async function loader({ request, context }: { request: Request; context: { vibeDiyAppParams: VibesFPApiParameters } }) {
+  const params = context.vibeDiyAppParams;
+
+  const stableEntry = request.headers.get("x-stable-entry");
+  let workspace = params.pkgRepos.workspace;
+  if (stableEntry && stableEntry !== "*") {
+    workspace = BuildURI.from(workspace).setParam("@stable-entry@", stableEntry).toString();
+  }
+
   return new Response(
     JSON.stringify({
-      // pkgRepos: params.pkgRepos,
       env: {
         GTM_CONTAINER_ID: params.vibes.env.GTM_CONTAINER_ID,
         POSTHOG_KEY: params.vibes.env.POSTHOG_KEY,
         POSTHOG_HOST: params.vibes.env.POSTHOG_HOST,
 
-        // DASHBOARD_URL: params.vibes.env.DASHBOARD_URL,
         CLERK_PUBLISHABLE_KEY: params.clerkPublishableKey,
         VIBES_DIY_API_URL: params.vibes.env.VIBES_DIY_API_URL,
         VIBES_SVC_HOSTNAME_BASE: params.vibes.svc.hostnameBase,
       },
-      pkgRepos: params.pkgRepos,
+      pkgRepos: { ...params.pkgRepos, workspace },
     } satisfies VibesDiyWebVars),
     {
       headers: {
