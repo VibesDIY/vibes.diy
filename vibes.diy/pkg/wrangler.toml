@@ -138,7 +138,7 @@ binding = "VIBES_SERVICE"
 name = "vibes-diy-v2-prod"
 vars = { ENVIRONMENT = "prod" }
 routes = [
-  { pattern = "prod-v2.vibesdiy.net", zone_name = "vibesdiy.net" },
+  { pattern = "prod-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" },
   { pattern = "*.prod-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" }
 ]
 
@@ -168,6 +168,43 @@ binding = "FS_IDS_BUCKET"
 bucket_name = "vibes-diy-fs-ids"
 
 [[env.prod.queues.producers]]
+queue = "vibes-service-prod"
+binding = "VIBES_SERVICE"
+
+[env.cli]
+name = "vibes-diy-v2-cli"
+vars = { ENVIRONMENT = "cli" }
+routes = [
+  { pattern = "cli-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" },
+  { pattern = "*.cli-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" }
+]
+
+[env.cli.observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[env.cli.browser]
+binding = "BROWSER"
+
+[env.cli.durable_objects]
+bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+
+[[env.cli.migrations]]
+tag = "v1"
+new_classes = ["ChatSessions"]
+
+[[env.cli.d1_databases]]
+binding = "DB"
+database_name = "prod-vibes-diy-v2"
+database_id = "0f783eae-91cf-49c4-a706-6e4d2498cb4a"
+
+[[env.cli.r2_buckets]]
+binding = "FS_IDS_BUCKET"
+bucket_name = "vibes-diy-fs-ids"
+
+[[env.cli.queues.producers]]
 queue = "vibes-service-prod"
 binding = "VIBES_SERVICE"
 

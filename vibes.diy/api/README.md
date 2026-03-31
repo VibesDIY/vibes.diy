@@ -162,11 +162,26 @@ The API is bundled into the main vibes.diy Cloudflare Worker (not a separate dep
 
 ### Environments
 
-| Trigger                 | Environment | Domain                   |
-| ----------------------- | ----------- | ------------------------ |
-| Tag `vibes-diy@s*`      | staging     | `*.dev-v2.vibesdiy.net`  |
-| Tag `vibes-diy@p*`      | production  | `*.prod-v2.vibesdiy.net` |
-| Path push or other tags | dev         | `*.dev-v2.vibesdiy.net`  |
+| Trigger                 | GH Environment | CF Env | Domain                   |
+| ----------------------- | -------------- | ------ | ------------------------ |
+| Tag `vibes-diy@p*`      | prodv2         | prod   | `*.prod-v2.vibesdiy.net` |
+| Tag `vibes-diy@c*`      | cli            | cli    | `*.cli-v2.vibesdiy.net`  |
+| Tag `vibes-diy@s*`      | staging        | dev    | `*.dev-v2.vibesdiy.net`  |
+| Path push or other tags | dev            | dev    | `*.dev-v2.vibesdiy.net`  |
+
+CLI shares prodv2's D1 database and Neon DB but has its own worker, queue, and routes.
+
+### Secret Rotation
+
+To rotate session tokens and CA certs for prodv2/cli:
+
+```bash
+./vibes.diy/actions/deploy/gen-prod-secrets.sh
+```
+
+This regenerates keys, updates `.prod.vars`, and sets GH secrets — without exposing values in terminal output.
+
+For the remaining manual secrets (`LLM_BACKEND_API_KEY`, `RESEND_API_KEY`, `NEON_DATABASE_URL`), edit `.prod.vars` directly and run `gh secret set` from the repo root.
 
 ### Deploy Steps
 
