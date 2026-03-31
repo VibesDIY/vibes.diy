@@ -20,6 +20,7 @@
     "build:prod": "CLOUDFLARE_ENV=prod react-router build",
     "deploy:dev": "CLOUDFLARE_ENV=dev react-router build && wrangler deploy",
     "deploy:prod": "CLOUDFLARE_ENV=prod react-router build && wrangler deploy",
+    "deploy:cli": "CLOUDFLARE_ENV=cli react-router build && wrangler deploy",
     "format:write": "prettier --write ."
   },
   "dependencies": {
