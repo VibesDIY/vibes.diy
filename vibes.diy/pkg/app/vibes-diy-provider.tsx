@@ -8,7 +8,7 @@ import { vibesDiySrvSandbox, VibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sand
 import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { toast } from "react-hot-toast";
-// import { PkgRepos } from "@vibes.diy/api-types";
+import ClientOnly from "./components/ClientOnly.js";
 
 export interface VibesDiyWebVars {
   readonly pkgRepos: PkgRepos;
@@ -142,9 +142,11 @@ function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; 
 export function VibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
   return (
     <ClerkProvider publishableKey={webVars.env.CLERK_PUBLISHABLE_KEY}>
-      <LiveCycleVibesDiyProvider webVars={webVars}>
-        <ConditionalPostHog webVars={webVars}>{children}</ConditionalPostHog>
-      </LiveCycleVibesDiyProvider>
+      <ClientOnly fallback={<VibesDiyContext.Provider value={realCtx}>{children}</VibesDiyContext.Provider>}>
+        <LiveCycleVibesDiyProvider webVars={webVars}>
+          <ConditionalPostHog webVars={webVars}>{children}</ConditionalPostHog>
+        </LiveCycleVibesDiyProvider>
+      </ClientOnly>
     </ClerkProvider>
   );
 }
