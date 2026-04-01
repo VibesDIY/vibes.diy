@@ -2,7 +2,7 @@ import React, { Fragment, FunctionComponent } from "react";
 import { createRoot } from "react-dom/client";
 import { type } from "arktype";
 import { vibeMountParams } from "./vibe.js";
-import { VibeContextProvider } from "./VibeContext.jsx";
+import { VibeContextProvider } from "./VibeContext.js";
 // import { HiddenMenuWrapper, VibesPanel } from "@vibes.diy/base";
 
 // runs on client side
