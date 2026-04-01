@@ -51,6 +51,7 @@ function ModelSection({
   });
 
   useEffect(() => {
+    console.log("ModelSection useEffect triggered with usage:", usage, "and config:", config, viewState);
     if (viewState.current === "start") {
       viewState.current = "loading";
       vibeDiyApi.listModels({}).then((res) => {
@@ -70,6 +71,17 @@ function ModelSection({
       });
       return;
     }
+  }, [vibeDiyApi, usage]);
+
+  useEffect(() => {
+    setAIParam({
+      model: {
+        id: "loading-model",
+        name: "loading...",
+        description: "we wait for the models to load",
+      },
+      ...config,
+    });
   }, [config]);
 
   return (
@@ -78,39 +90,44 @@ function ModelSection({
         <label className="w-24 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Model</label>
         {viewState.current !== "loaded" && <div className="text-xs text-gray-400">Loading models...</div>}
         {viewState.current === "loaded" && (
-          <>
-            <select
-              value={aiParam?.model.id || ""}
-              onChange={(e) =>
-                setAIParam((prev) => (prev ? { ...prev, model: models.find((m) => m.id === e.target.value) || prev.model } : prev))
-              }
-              className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
-            >
-              {models.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.name}
-                </option>
-              ))}
-            </select>
-            {aiParam?.model.description && (
-              <p className="pl-[calc(1.5rem+6rem)] text-xs text-gray-400 dark:text-gray-500 italic">{aiParam?.model.description}</p>
-            )}
-            <div className="flex items-center gap-3">
-              <label className="w-24 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">API Key</label>
-              <input
-                type="password"
-                value={aiParam?.apiKey || ""}
-                onChange={(e) => setAIParam((prev) => ({ ...prev, apiKey: e.target.value }))}
-                placeholder="sk-…"
-                className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
-              />
-            </div>
-            <div className="flex justify-end">
-              <SaveBtn saving={saving} onClick={() => aiParam && onSave(aiParam)} />
-            </div>
-          </>
+          <select
+            value={aiParam?.model.id || ""}
+            onChange={(e) =>
+              setAIParam((prev) => (prev ? { ...prev, model: models.find((m) => m.id === e.target.value) || prev.model } : prev))
+            }
+            className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
+          >
+            {models.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.name}
+              </option>
+            ))}
+          </select>
         )}
       </div>
+      {viewState.current === "loaded" && (
+        <>
+          {aiParam?.model.description && (
+            <div className="flex items-center gap-3">
+              <div className="w-24 flex-shrink-0" />
+              <p className="flex-1 text-xs text-gray-400 dark:text-gray-500 italic truncate">{aiParam.model.description}</p>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <label className="w-24 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">API Key</label>
+            <input
+              type="password"
+              value={aiParam?.apiKey ?? ""}
+              onChange={(e) => setAIParam((prev) => ({ ...prev, apiKey: e.target.value }))}
+              placeholder="sk-…"
+              className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
+            />
+          </div>
+          <div className="flex justify-end">
+            <SaveBtn saving={saving} onClick={() => aiParam && onSave(aiParam)} />
+          </div>
+        </>
+      )}
     </div>
   );
 }
