@@ -7,7 +7,7 @@ import langTsx from "shiki/langs/tsx.mjs";
 import themeGithubDark from "shiki/themes/github-dark-default.mjs";
 import themeGithubLite from "shiki/themes/github-light-default.mjs";
 import { createOnigurumaEngine } from "shiki/engine/oniguruma";
-import type React from "react";
+// import type React from "react";
 import * as monaco from "monaco-editor";
 import { Monaco } from "@monaco-editor/react";
 
@@ -26,11 +26,11 @@ export interface MonacoDiagnosticsDefaults {
 }
 
 interface Options {
-  promptProcessing: boolean;
-  codeReady: boolean;
+  // promptProcessing: boolean;
+  // codeReady: boolean;
   isDarkMode: boolean;
   // userScrolledRef: React.MutableRefObject<boolean>;
-  disposablesRef: React.MutableRefObject<{ dispose: () => void }[]>;
+  // disposablesRef: React.MutableRefObject<{ dispose: () => void }[]>;
   // setRefs: (editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco) => void;
   setHighlighter: (highlighter: HighlighterCore) => void;
 }

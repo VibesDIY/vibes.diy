@@ -1,6 +1,7 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
 import {
   ActiveEntry,
+  parseArrayWarning,
   ActiveEnv,
   ActiveModelSetting,
   ActiveTitle,
@@ -30,7 +31,7 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
-import { type } from "arktype";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
@@ -156,9 +157,9 @@ export async function ensureAppSettings(
         created: now,
       } satisfies ResEnsureAppSettings);
     }
-    const settings = ActiveEntry.array()(record.AppSettings?.settings || []);
-    if (settings instanceof type.errors) {
-      return Result.Err(settings.summary);
+    const { filtered: settings, warning: settingsWarning } = parseArrayWarning(record.AppSettings?.settings || [], ActiveEntry);
+    if (settingsWarning.length > 0) {
+      ensureLogger(vctx.sthis, "ensureAppSettings").Warn().Any({ parseErrors: settingsWarning }).Msg("skip");
     }
     return Result.Ok(
       await withModelDefaults(vctx, {
@@ -183,9 +184,9 @@ export async function ensureAppSettings(
     appSlug: record.AppSlugBindings.appSlug,
   };
 
-  const settings = ActiveEntry.array()(record.AppSettings.settings || []);
-  if (settings instanceof type.errors) {
-    return Result.Err(settings.summary);
+  const { filtered: settings, warning: settingsWarning2 } = parseArrayWarning(record.AppSettings.settings || [], ActiveEntry);
+  if (settingsWarning2.length > 0) {
+    ensureLogger(vctx.sthis, "ensureAppSettings").Warn().Any({ parseErrors: settingsWarning2 }).Msg("skip");
   }
   const res = {
     type: "vibes.diy.res-ensure-app-settings",

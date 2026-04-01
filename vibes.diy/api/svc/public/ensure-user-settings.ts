@@ -5,15 +5,17 @@ import {
   ReqEnsureUserSettings,
   ReqWithVerifiedAuth,
   ResEnsureUserSettings,
+  parseArrayWarning,
   userSettingItem,
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
-import { type } from "arktype";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { eq } from "drizzle-orm/sql/expressions";
+import { type } from "arktype";
 
 export async function ensureUserSettings(
   vctx: VibesApiSQLCtx,
@@ -36,15 +38,15 @@ export async function ensureUserSettings(
     });
     return ensureUserSettings(vctx, req);
   }
-  const settingsArray = userSettingItem.array()(existing.settings);
+  const { filtered: settingsArray, warning: settingsArrayWarning } = parseArrayWarning(existing.settings, userSettingItem);
   // console.log("Existing settings from DB:", existing.settings, settingsArray);
-  if (settingsArray instanceof type.errors) {
-    return Result.Err(`Failed to parse existing user settings: ${settingsArray.summary}`);
+  if (settingsArrayWarning.length > 0) {
+    ensureLogger(vctx.sthis, "ensureUserSettings").Warn().Any({ parseErrors: settingsArrayWarning }).Msg("skip");
   }
   const settingsSet = new Map([...settingsArray, ...req.settings].map((item) => [item.type, item]));
-  const settings = userSettingItem.array()(Array.from(settingsSet.values()));
-  if (settings instanceof type.errors) {
-    return Result.Err(`Failed to parse merged user settings: ${settings.summary}`);
+  const { filtered: settings, warning: settingsWarning } = parseArrayWarning(Array.from(settingsSet.values()), userSettingItem);
+  if (settingsWarning.length > 0) {
+    ensureLogger(vctx.sthis, "ensureUserSettings").Warn().Any({ parseErrors: settingsWarning }).Msg("skip");
   }
   await vctx.sql.db
     .update(vctx.sql.tables.userSettings)

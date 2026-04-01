@@ -1,5 +1,3 @@
-// export type SettleState = "idle" | "codeGeneration-running" | "code-settle";
-
 import { type } from "arktype";
 
 export const AppCode = type({
@@ -7,70 +5,68 @@ export const AppCode = type({
   code: "string[]",
   complete: "boolean",
 });
-
 export type AppCode = typeof AppCode.infer;
 
-const CodeEventBase = type({
-  type: "'onCode'",
-  appCode: AppCode,
+export const EditorStateIdle = type({
+  state: "'idle'",
 });
-
-export const CodeEventOk = type({
-  codeState: "'ok'",
-  hasChanged: "boolean",
-}).and(CodeEventBase);
-export type CodeEventOk = typeof CodeEventOk.infer;
-
-export function isCodeEventOk(event: CodeEvent): event is CodeEventOk {
-  return !(CodeEventOk(event) instanceof type.errors);
+export type EditorStateIdle = typeof EditorStateIdle.infer;
+export function isEditorStateIdle(obj: unknown): obj is EditorStateIdle {
+  return !(EditorStateIdle(obj) instanceof type.errors);
 }
 
-export const CodeEventEdit = type({
-  codeState: "'edit'",
-}).and(CodeEventBase);
-
-export type CodeEventEdit = typeof CodeEventEdit.infer;
-export function isCodeEventEdit(event: CodeEvent): event is CodeEventEdit {
-  return !(CodeEventEdit(event) instanceof type.errors);
-}
-
-export const CodeEventInit = type({
-  codeState: "'init'",
-}).and(CodeEventBase);
-
-export type CodeEventInit = typeof CodeEventInit.infer;
-export function isCodeEventInit(event: CodeEvent): event is CodeEventInit {
-  return !(CodeEventInit(event) instanceof type.errors);
-}
-
-// function isCodeEventOk(event: CodeEvent): event is CodeEventOk {
-//   return !(CodeEventOk(event) instanceof type.errors);
-// }
-export const MonacoMarkerInfo = type({
-  message: "string",
-  startLineNumber: "number",
-  startColumn: "number",
-  endLineNumber: "number",
-  endColumn: "number",
-  severity: "number",
+export const EditorStateStartGenerating = type({
+  state: "'start-generating'",
+  lines: "string[]",
 });
-
-export const CodeEventError = type({
-  codeState: "'error'",
-  // error: "string",
-  markers: MonacoMarkerInfo.array(),
-}).and(CodeEventBase);
-
-export type CodeEventError = typeof CodeEventError.infer;
-
-export function isCodeEventError(event: CodeEvent): event is CodeEventError {
-  return !(CodeEventError(event) instanceof type.errors);
+export type EditorStateStartGenerating = typeof EditorStateStartGenerating.infer;
+export function isEditorStateStartGenerating(obj: unknown): obj is EditorStateStartGenerating {
+  return !(EditorStateStartGenerating(obj) instanceof type.errors);
 }
 
-// function isCodeEventError(event: CodeEvent): event is CodeEventError {
-//   return !(CodeEventError(event) instanceof type.errors);
-// }
+export const EditorStateMoreLines = type({
+  state: "'more-lines'",
+  lines: "string[]",
+  newLines: "string[]",
+});
+export type EditorStateMoreLines = typeof EditorStateMoreLines.infer;
+export function isEditorStateMoreLines(obj: unknown): obj is EditorStateMoreLines {
+  return !(EditorStateMoreLines(obj) instanceof type.errors);
+}
 
-export const CodeEvent = CodeEventOk.or(CodeEventError).or(CodeEventEdit).or(CodeEventInit);
+export const ArkEditorStateToEdit = type({
+  state: "'to-edit'",
+  buffer: "string",
+  hash: "bigint",
+});
+export type ArkEditorStateToEdit = typeof ArkEditorStateToEdit.infer;
+export type EditorStateToEdit = ArkEditorStateToEdit & {
+  onChange: (newCode?: string) => void;
+};
+export function isEditorStateToEdit(obj: unknown): obj is EditorStateToEdit {
+  return !(ArkEditorStateToEdit(obj) instanceof type.errors);
+}
 
-export type CodeEvent = typeof CodeEvent.infer;
+export const ArkEditorStateEdit = type({
+  state: "'edit'",
+  // toEdit: ArkEditorStateToEdit,
+  buffer: "string",
+  hash: "bigint",
+});
+export type ArkEditorStateEdit = typeof ArkEditorStateEdit.infer;
+export type EditorStateEdit = ArkEditorStateEdit & {
+  toEdit: EditorStateToEdit;
+};
+export function isEditorStateEdit(obj: unknown): obj is EditorStateEdit {
+  return !(ArkEditorStateEdit(obj) instanceof type.errors);
+}
+
+export const EditorState = EditorStateIdle.or(EditorStateStartGenerating)
+  .or(EditorStateMoreLines)
+  .or(ArkEditorStateToEdit)
+  .or(ArkEditorStateEdit);
+export type EditorState = EditorStateIdle | EditorStateStartGenerating | EditorStateMoreLines | EditorStateToEdit | EditorStateEdit;
+
+export function isEditorState(obj: unknown): obj is EditorState {
+  return !(EditorState(obj) instanceof type.errors);
+}

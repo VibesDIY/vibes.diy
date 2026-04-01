@@ -9,8 +9,10 @@ import {
   W3CWebSocketEvent,
   PromptAndBlockMsgs,
   ReqWithVerifiedAuth,
+  parseArrayWarning,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
@@ -97,9 +99,11 @@ export const getChatDetailsEvento: EventoHandler<
         const entry = seen.get(row.promptId);
         // Already found prompt text for this promptId, skip block parsing
         if (!entry || entry.prompt) continue;
-        const msgs = PromptAndBlockMsgs.array()(row.blocks);
-        if (msgs instanceof type.errors) continue;
-        for (const msg of msgs) {
+        const { filtered: rowMsgs, warning: rowWarning } = parseArrayWarning(row.blocks, PromptAndBlockMsgs);
+        if (rowWarning.length > 0) {
+          ensureLogger(vctx.sthis, "getChatDetails").Warn().Any({ parseErrors: rowWarning }).Msg("skip");
+        }
+        for (const msg of rowMsgs) {
           if (isPromptReq(msg)) {
             const userMsgs = msg.request.messages.filter((m) => m.role === "user");
             const lastUserMsg = userMsgs[userMsgs.length - 1];

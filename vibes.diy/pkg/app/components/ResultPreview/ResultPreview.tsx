@@ -2,15 +2,15 @@ import React, { Suspense, lazy } from "react";
 import { animationStyles } from "./ResultPreviewTemplates.js";
 import type { ResultPreviewProps } from "../../types/ResultPreviewTypes.js";
 import ClientOnly from "../ClientOnly.js";
-
-const CodeEditor = lazy(() => import("./CodeEditor.js"));
 import { PreviewApp } from "./PreviewApp.js";
 import { DataView } from "./DataView.js";
 import { SettingsTab } from "../mine/settings-tab/index.js";
 import { SharingTab } from "../mine/sharing-tab/SharingTab.js";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
-import { CodeEvent } from "../../types/code-editor.js";
+import { EditorState } from "../../types/code-editor.js";
 // import { useTheme } from "../../contexts/ThemeContext.js";
+
+const CodeEditor = lazy(() => import("./CodeEditor.js"));
 
 type SettingsSubTab = "settings" | "sharing";
 
@@ -44,7 +44,7 @@ function CodeEditorWrapper({
   onCode,
 }: {
   promptState: PromptState;
-  onCode: (event: CodeEvent) => void;
+  onCode: (event: EditorState) => void;
   currentView: string;
 }) {
   return (

@@ -18,6 +18,7 @@ import {
   LLMHeaders,
   type ModelSelector,
   MsgBase,
+  parseArrayWarning,
   PromptAndBlockMsgs,
   ReqPromptChatSection,
   reqPromptChatSection,
@@ -28,6 +29,7 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { type } from "arktype";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
@@ -291,11 +293,11 @@ async function injectSystemPrompt(
     .orderBy(vctx.sql.tables.chatSections.created);
   const userMessages: ChatMessage[] = [];
   for (const rowSection of sections) {
-    const msgs = PromptAndBlockMsgs.array()(rowSection.blocks);
-    if (msgs instanceof type.errors) {
-      return Result.Err(`Failed to parse blocks for section ${rowSection}, with error: ${msgs.summary}`);
+    const { filtered: sectionMsgs, warning: sectionWarning } = parseArrayWarning(rowSection.blocks, PromptAndBlockMsgs);
+    if (sectionWarning.length > 0) {
+      ensureLogger(vctx.sthis, "buildUserMessages").Warn().Any({ parseErrors: sectionWarning }).Msg("skip");
     }
-    for (const msg of msgs) {
+    for (const msg of sectionMsgs) {
       if (isPromptReq(msg)) {
         userMessages.push(...msg.request.messages.filter((m) => m.role === "user"));
       }

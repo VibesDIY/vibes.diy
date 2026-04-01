@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
-import { PromptAndBlockMsgs, ReqOpenChat, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
-import { type } from "arktype";
+import { ensureLogger } from "@fireproof/core-runtime";
+import { parseArrayWarning, PromptAndBlockMsgs, ReqOpenChat, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
 
 interface EnsureChatIdPResult {
   chatId: string;
@@ -49,9 +49,9 @@ export async function ensureApplicationChatId({
     if (!result) {
       return Result.Err("No existing application chat found");
     }
-    const blocks = PromptAndBlockMsgs.array()(result.ApplicationChats.blocks);
-    if (blocks instanceof type.errors) {
-      return Result.Err(`Failed to parse blocks for existing application chat: ${blocks.summary}`);
+    const { filtered: blocks, warning: blocksWarning } = parseArrayWarning(result.ApplicationChats.blocks, PromptAndBlockMsgs);
+    if (blocksWarning.length > 0) {
+      ensureLogger(ctx.sthis, "ensureApplicationChatId").Warn().Any({ parseErrors: blocksWarning }).Msg("skip");
     }
     return Result.Ok({
       appSlug: result.ApplicationChats.appSlug,

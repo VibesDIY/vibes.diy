@@ -287,3 +287,45 @@ export const GrantListBase = type({
 
 export const Role = type("'editor' | 'viewer'");
 export type Role = typeof Role.infer;
+
+/**
+ * Run each item through a validator, returning one Result per item.
+ * Valid items become Result.Ok(T), invalid items become Result.Err(string).
+ */
+export function parseArrayResult<T extends type>(items: unknown, match: T): Result<T["infer"]>[] {
+  if (!Array.isArray(items)) return [];
+  return items.map((item) => {
+    const r = match(item);
+    if (r instanceof type.errors) return Result.Err(r.summary);
+    return Result.Ok(r);
+  });
+}
+
+export interface ParseArrayWarningResult<T> {
+  filtered: T[];
+  warning: { idx: number; txt: string }[];
+}
+
+/**
+ * Run each item through a validator, collecting valid items and warnings for invalid ones.
+ */
+export function parseArrayWarning<T extends type>(items: unknown, match: T): ParseArrayWarningResult<T["infer"]> {
+  return parseArrayResult<T>(items, match).reduce(
+    (acc, r, idx) => {
+      if (r.isErr()) {
+        acc.warning.push({ idx, txt: r.Err().message });
+      } else {
+        acc.filtered.push(r.Ok() as never);
+      }
+      return acc;
+    },
+    { filtered: [], warning: [] } as ParseArrayWarningResult<T["infer"]>
+  );
+}
+
+/**
+ * Run each item in the array through an isXxx guard, returning only the valid ones.
+ */
+export function parseArray<T extends type>(items: unknown, match: T): T["infer"][] {
+  return parseArrayWarning(items, match).filtered;
+}

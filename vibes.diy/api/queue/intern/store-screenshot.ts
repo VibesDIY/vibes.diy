@@ -1,9 +1,9 @@
 import { Result, uint8array2stream } from "@adviser/cement";
 import { eq } from "drizzle-orm/sql/expressions";
-import { type } from "arktype";
 // import { VibesSqlite } from "@vibes.diy/api-svc/create-handler.ts";
 import { createSQLPeer } from "@vibes.diy/api-sql";
-import { isMetaScreenShot, MetaItem } from "@vibes.diy/api-types";
+import { isMetaScreenShot, MetaItem, parseArrayWarning } from "@vibes.diy/api-types";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { ensureStorage } from "@vibes.diy/api-pkg";
 import { QueueCtx } from "../queue-ctx.js";
 // import { ensureStorage } from "@vibes.diy/api-svc/intern/ensure-storage.ts";
@@ -38,9 +38,9 @@ export async function storeScreenshot(
   const app = found[0];
 
   // Parse meta using arktype
-  const meta = MetaItem.array()(app.meta);
-  if (meta instanceof type.errors) {
-    return Result.Err(`Invalid meta format: ${meta.summary}`);
+  const { filtered: meta, warning: metaWarning } = parseArrayWarning(app.meta, MetaItem);
+  if (metaWarning.length > 0) {
+    ensureLogger(qctx.sthis, "storeScreenshot").Warn().Any({ parseErrors: metaWarning }).Msg("skip");
   }
 
   // 2. Calculate CID for the screenshot

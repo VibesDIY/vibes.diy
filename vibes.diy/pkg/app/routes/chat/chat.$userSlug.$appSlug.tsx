@@ -20,8 +20,8 @@ import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
 import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 import { createPortal } from "react-dom";
-import { CodeEvent, isCodeEventEdit } from "../../types/code-editor.js";
 import { toast } from "react-hot-toast";
+import { EditorState, EditorStateEdit, isEditorStateEdit } from "../../types/code-editor.js";
 
 interface VibeAppContextMenuProps {
   x: number;
@@ -202,7 +202,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         console.error("CHAT-Error", rChat.Err(), userSlug, appSlug);
         return;
       }
-      console.log("Chat", rChat.Ok());
+      // console.log("Chat", rChat.Ok());
       setChat(rChat.Ok());
       // console.log(`dispatch-initChat`, rChat.Ok())
       dispatch({ type: "initChat", chat: rChat.Ok() });
@@ -259,11 +259,21 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   }, []);
 
   const [mobilePreviewShown, setMobilePreviewShown] = useState(false);
-  const { navigateToView, viewControls, currentView } = useViewState(promptState);
+  const { navigateToView, viewControls, currentView } = useViewState(promptState, [searchParams, setSearchParams]);
+
+  const currentViewRef = useRef(currentView);
+  currentViewRef.current = currentView;
 
   const fsIdClick = useCallback(
     ({ fsId: newFsId }: { fsId: string; appSlug: string; userSlug: string }) => {
-      navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: searchParams.toString() });
+      // navigateToView();
+      if (!["preview", "code"].includes(currentViewRef.current)) {
+        currentViewRef.current = "preview";
+      }
+      const sp = new URLSearchParams(searchParams);
+      sp.set("view", currentViewRef.current);
+      // console.log(`fsIdClick`, { newFsId, appSlug, userSlug, searchParams: sp.toString(), currentView: currentViewRef.current });
+      navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
     },
     [navigate, userSlug, appSlug, searchParams]
   );
@@ -294,10 +304,10 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     [promptState.blocks, chatInput]
   );
 
-  const [hasCodeChanges, setHasCodeChanges] = useState<CodeEvent | null>(null);
+  const [hasCodeChanges, setHasCodeChanges] = useState<EditorStateEdit | null>(null);
   const handleOnCode = useCallback(
-    (event: CodeEvent) => {
-      if (event.appCode.complete && isCodeEventEdit(event)) {
+    (event: EditorState) => {
+      if (isEditorStateEdit(event)) {
         console.log(`handleOnCode`, event);
         setHasCodeChanges(event);
       } else {
@@ -317,7 +327,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             type: "code-block",
             filename: "/App.jsx",
             lang: "jsx", // "'jsx'|'js'",
-            content: toSave.appCode.code.join("\n"),
+            content: toSave.buffer,
           },
         ])
         .then((r) => {

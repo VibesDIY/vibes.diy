@@ -2,8 +2,10 @@ import { exception2Result, Result } from "@adviser/cement";
 import { RawEmailWithoutFrom } from "@vibes.diy/api-types";
 import { D1Database, Fetcher } from "@cloudflare/workers-types";
 import { createVibesApiTables, cfDrizzle, CreateSQLPeerParams, toDBFlavour, VibesApiTables } from "@vibes.diy/api-sql";
+import { SuperThis } from "@fireproof/core-types-base";
 
 export interface QueueCtxParams {
+  sthis: SuperThis;
   cf: {
     BROWSER: Fetcher;
     D1: D1Database;
@@ -20,6 +22,7 @@ export interface QueueCtxParams {
 }
 
 export class QueueCtx {
+  readonly sthis: SuperThis;
   readonly params: QueueCtxParams;
   readonly storageSystems: {
     sql: CreateSQLPeerParams;
@@ -29,6 +32,7 @@ export class QueueCtx {
     tables: VibesApiTables;
   };
   constructor(params: QueueCtxParams) {
+    this.sthis = params.sthis;
     this.params = params;
     const { db } = cfDrizzle(this.params.vibes.env, this.params.cf.D1);
     const tables = createVibesApiTables(toDBFlavour(this.params.vibes.env.DB_FLAVOUR));
