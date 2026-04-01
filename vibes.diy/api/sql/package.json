@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "core-cli tsc"
+    "build": "core-cli tsc",
+    "pack": "echo core-cli build --doPack",
+    "publish": "echo core-cli build"
   },
   "dependencies": {
     "@adviser/cement": "^0.5.34",
