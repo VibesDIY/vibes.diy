@@ -1,7 +1,7 @@
 {
   "name": "@vibes.diy/api-sql",
   "version": "0.0.0",
-  "private": "true",
+  "private": true,
   "type": "module",
   "scripts": {
     "build": "core-cli tsc",
