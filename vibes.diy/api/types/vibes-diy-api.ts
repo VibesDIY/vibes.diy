@@ -18,7 +18,7 @@ import {
   ReqDeleteUserSlugBinding,
   ResDeleteUserSlugBinding,
 } from "./app.js";
-import { ReqOpenChat, ResPromptChatSection, SectionEvent, ResAddFS } from "./chat.js";
+import { ReqOpenChat, ResPromptChatSection, SectionEvent, ResAddFS, ReqListModels, ResListModels } from "./chat.js";
 import {
   ReqEnsureUserSettings,
   ResEnsureUserSettings,
@@ -124,4 +124,6 @@ export interface VibesDiyApiIface<_T = unknown> {
   listUserSlugBindings(req: Req<ReqListUserSlugBindings>): Promise<Result<ResListUserSlugBindings, VibesDiyError>>;
   createUserSlugBinding(req: Req<ReqCreateUserSlugBinding>): Promise<Result<ResCreateUserSlugBinding, VibesDiyError>>;
   deleteUserSlugBinding(req: Req<ReqDeleteUserSlugBinding>): Promise<Result<ResDeleteUserSlugBinding, VibesDiyError>>;
+
+  listModels(req: Req<ReqListModels>): Promise<Result<ResListModels, VibesDiyError>>;
 }

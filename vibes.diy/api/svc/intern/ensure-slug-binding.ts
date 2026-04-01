@@ -12,8 +12,9 @@ import {
   OptAppSlugUserSlug,
   isUserSettingDefaultUserSlug,
   userSettingItem,
+  parseArrayWarning,
 } from "@vibes.diy/api-types";
-import { type } from "arktype";
+import { ensureLogger } from "@fireproof/core-runtime";
 
 export type AppSlugBindingParam = Partial<NeedOneAppSlugUserSlug> & {
   userId: string;
@@ -242,10 +243,11 @@ export async function getDefaultUserSlug(ctx: VibesApiSQLCtx, userId: string): P
 
     if (!existing) return Result.Ok(undefined);
 
-    const settingsArray = userSettingItem.array()(existing.settings);
-    if (settingsArray instanceof type.errors) return Result.Ok(undefined);
-
-    const def = settingsArray.filter(isUserSettingDefaultUserSlug)[0];
+    const { filtered: parsedSettings, warning: parsedWarning } = parseArrayWarning(existing.settings, userSettingItem);
+    if (parsedWarning.length > 0) {
+      ensureLogger(ctx.sthis, "getDefaultUserSlug").Warn().Any({ parseErrors: parsedWarning }).Msg("skip");
+    }
+    const def = parsedSettings.filter(isUserSettingDefaultUserSlug)[0];
     if (!def) return Result.Ok(undefined);
 
     const binding = await ctx.sql.db
@@ -272,8 +274,11 @@ export async function persistDefaultUserSlug(ctx: VibesApiSQLCtx, userId: string
   if (!existing) {
     await ctx.sql.db.insert(ctx.sql.tables.userSettings).values({ userId, settings: [newSetting], updated: now, created: now });
   } else {
-    const settingsArray = userSettingItem.array()(existing.settings);
-    const current = settingsArray instanceof type.errors ? [] : settingsArray.filter((s) => s.type !== "defaultUserSlug");
+    const { filtered: currentParsed, warning: currentWarning } = parseArrayWarning(existing.settings, userSettingItem);
+    if (currentWarning.length > 0) {
+      ensureLogger(ctx.sthis, "persistDefaultUserSlug").Warn().Any({ parseErrors: currentWarning }).Msg("skip");
+    }
+    const current = currentParsed.filter((s) => s.type !== "defaultUserSlug");
     await ctx.sql.db
       .update(ctx.sql.tables.userSettings)
       .set({ settings: [...current, newSetting], updated: now })

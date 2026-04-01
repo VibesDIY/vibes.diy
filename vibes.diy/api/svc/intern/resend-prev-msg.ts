@@ -1,8 +1,8 @@
 import { Result, SendStatItem } from "@adviser/cement";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { VibesApiSQLCtx } from "../types.js";
 import { eq } from "drizzle-orm/sql/expressions";
-import { MsgBase, PromptAndBlockMsgs, SectionEvent } from "@vibes.diy/api-types";
-import { type } from "arktype";
+import { MsgBase, parseArrayWarning, PromptAndBlockMsgs, SectionEvent } from "@vibes.diy/api-types";
 import { BlockEndMsg, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
 
@@ -24,19 +24,9 @@ export async function resendChatSectionsPrevMsg(args: ResendChatSectionsPrevMsgA
     // .groupBy(vctx.sql.tables.chatSections.chatId, vctx.sql.tables.chatSections.promptId)
     .orderBy(vctx.sql.tables.chatSections.created, vctx.sql.tables.chatSections.promptId, vctx.sql.tables.chatSections.blockSeq);
   for (const section of sections) {
-    const blocks = PromptAndBlockMsgs.array()(section.blocks);
-    if (blocks instanceof type.errors) {
-      let idx = 0;
-      for (const block of section.blocks as []) {
-        const pabm = PromptAndBlockMsgs(block);
-        if (pabm instanceof type.errors) {
-          return Result.Err(
-            `Invalid block data for section ${idx} in chat ${section.chatId} - ${pabm.summary} - ${JSON.stringify(block)}`
-          );
-        }
-        idx++;
-      }
-      return Result.Err(`Invalid blocks data in chat ${section.chatId} - ${blocks.summary} - ${JSON.stringify(blocks)}`);
+    const { filtered: blocks, warning } = parseArrayWarning(section.blocks, PromptAndBlockMsgs);
+    if (warning.length > 0) {
+      ensureLogger(vctx.sthis, "resendChatSectionsPrevMsg").Warn().Any({ parseErrors: warning }).Msg("skip");
     }
 
     // Might be removed in future

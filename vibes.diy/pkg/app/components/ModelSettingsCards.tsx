@@ -1,0 +1,154 @@
+import React, { useState, useEffect, useRef } from "react";
+import type { AIParams } from "@vibes.diy/api-types";
+import { useVibesDiy } from "../vibes-diy-provider.js";
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <li className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
+      <div className="font-medium text-gray-700 dark:text-gray-300 mb-3">{title}</div>
+      {children}
+    </li>
+  );
+}
+
+function SaveBtn({ saving, onClick }: { saving: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      disabled={saving}
+      onClick={onClick}
+      className="rounded px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 disabled:opacity-50"
+    >
+      {saving ? "Saving…" : "Save"}
+    </button>
+  );
+}
+
+function ModelSection({
+  config,
+  usage,
+  saving,
+  onSave,
+}: {
+  config?: Partial<AIParams>;
+  usage: "chat" | "app" | "img";
+  saving: boolean;
+  onSave: (cfg: AIParams) => void;
+}) {
+  const { vibeDiyApi } = useVibesDiy();
+
+  const [models, setModels] = useState<AIParams["model"][]>([]);
+
+  const viewState = useRef<"start" | "loading" | "loaded">("start");
+
+  const [aiParam, setAIParam] = useState<AIParams>({
+    model: {
+      id: "loading-model",
+      name: "loading...",
+      description: "we wait for the models to load",
+    },
+    ...config,
+  });
+
+  useEffect(() => {
+    if (viewState.current === "start") {
+      viewState.current = "loading";
+      vibeDiyApi.listModels({}).then((res) => {
+        viewState.current = "loaded";
+        if (res.isOk()) {
+          setModels(res.Ok().models);
+          for (const model of res.Ok().models) {
+            if (model.preSelected?.includes(usage))
+              setAIParam((prev) => {
+                if (!prev?.model) {
+                  return { ...prev, model };
+                }
+                return prev;
+              });
+          }
+        }
+      });
+      return;
+    }
+  }, [config]);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-3">
+        <label className="w-24 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Model</label>
+        {viewState.current !== "loaded" && <div className="text-xs text-gray-400">Loading models...</div>}
+        {viewState.current === "loaded" && (
+          <>
+            <select
+              value={aiParam?.model.id || ""}
+              onChange={(e) =>
+                setAIParam((prev) => (prev ? { ...prev, model: models.find((m) => m.id === e.target.value) || prev.model } : prev))
+              }
+              className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
+            >
+              {models.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.name}
+                </option>
+              ))}
+            </select>
+            {aiParam?.model.description && (
+              <p className="pl-[calc(1.5rem+6rem)] text-xs text-gray-400 dark:text-gray-500 italic">{aiParam?.model.description}</p>
+            )}
+            <div className="flex items-center gap-3">
+              <label className="w-24 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">API Key</label>
+              <input
+                type="password"
+                value={aiParam?.apiKey || ""}
+                onChange={(e) => setAIParam((prev) => ({ ...prev, apiKey: e.target.value }))}
+                placeholder="sk-…"
+                className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
+              />
+            </div>
+            <div className="flex justify-end">
+              <SaveBtn saving={saving} onClick={() => aiParam && onSave(aiParam)} />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export interface ModelSettingsCardsProps {
+  chatConfig?: Partial<AIParams>;
+  appConfig?: Partial<AIParams>;
+  imgConfig?: Partial<AIParams>;
+  savingChat: boolean;
+  savingApp: boolean;
+  savingImg: boolean;
+  onSaveChat: (cfg: AIParams) => void;
+  onSaveApp: (cfg: AIParams) => void;
+  onSaveImg: (cfg: AIParams) => void;
+}
+
+export function ModelSettingsCards({
+  chatConfig,
+  appConfig,
+  imgConfig,
+  savingChat,
+  savingApp,
+  savingImg,
+  onSaveChat,
+  onSaveApp,
+  onSaveImg,
+}: ModelSettingsCardsProps) {
+  return (
+    <>
+      <Card title="Chat Model">
+        <ModelSection config={chatConfig} usage="chat" saving={savingChat} onSave={onSaveChat} />
+      </Card>
+      <Card title="App Model">
+        <ModelSection config={appConfig} usage="app" saving={savingApp} onSave={onSaveApp} />
+      </Card>
+      <Card title="Imaging Model">
+        <ModelSection config={imgConfig} usage="img" saving={savingImg} onSave={onSaveImg} />
+      </Card>
+    </>
+  );
+}

@@ -16,9 +16,7 @@ import {
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { BlockEndMsg, BlockMsgs, isBlockStreamMsg, isPromptBlockEnd, PromptMsgs } from "@vibes.diy/call-ai-v2";
 import {
-  isResEnsureAppSlugInvalid,
   isResEnsureAppSlugOk,
-  isResEnsureAppSlugUserSlugInvalid,
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
   isResRequestAccessApproved,

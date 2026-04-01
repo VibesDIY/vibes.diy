@@ -30,7 +30,9 @@ import {
   ClerkClaim,
   EvtInviteGrant,
   InviteGrantItem,
+  parseArrayWarning,
 } from "@vibes.diy/api-types";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
@@ -528,9 +530,9 @@ export const listInviteGrantsEvento: EventoHandler<
         .limit(limit + 1);
 
       const hasMore = rows.length > limit;
-      const items = InviteGrantItem.array()(hasMore ? rows.slice(0, limit) : rows);
-      if (items instanceof type.errors) {
-        return Result.Err(`Failed to parse invite grants: ${items.summary}`);
+      const { filtered: items, warning: itemsWarning } = parseArrayWarning(hasMore ? rows.slice(0, limit) : rows, InviteGrantItem);
+      if (itemsWarning.length > 0) {
+        ensureLogger(vctx.sthis, "listInviteGrants").Warn().Any({ parseErrors: itemsWarning }).Msg("skip");
       }
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-list-invite-grants",

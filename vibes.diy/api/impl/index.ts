@@ -96,6 +96,9 @@ import {
   ReqDeleteUserSlugBinding,
   ResDeleteUserSlugBinding,
   isResDeleteUserSlugBinding,
+  ReqListModels,
+  ResListModels,
+  isResListModels,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -109,6 +112,7 @@ import {
   HandleTriggerCtx,
   EventoResult,
   ValidateTriggerCtx,
+  Lazy,
 } from "@adviser/cement";
 import { ClerkClaim, SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
@@ -490,6 +494,13 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   deleteUserSlugBinding(req: Req<ReqDeleteUserSlugBinding>): Promise<Result<ResDeleteUserSlugBinding, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-delete-user-slug-binding" }, { resMatch: isResDeleteUserSlugBinding });
   }
+
+  listModels = Lazy(
+    (req: Req<ReqListModels>): Promise<Result<ResListModels, VibesDiyError>> => {
+      return this.request({ ...req, type: "vibes.diy.req-list-models" }, { resMatch: isResListModels });
+    },
+    { resetAfter: 10 * 60 * 1000 /* 10 minutes */ }
+  );
 }
 
 class LLMChatImpl implements LLMChat {

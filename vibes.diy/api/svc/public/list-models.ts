@@ -14,12 +14,13 @@ import {
   isReqListModels,
   Model,
   MsgBase,
+  parseArrayWarning,
   ReqListModels,
   ResListModels,
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
-import { type } from "arktype";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 
@@ -38,10 +39,10 @@ export const loadModels = Lazy(
     // console.log("Fetched models.json asset", { vibePkgModelsUrl, success: rAsset.isOk() });
     if (rAsset.isErr()) return Result.Err(rAsset);
     const raw = JSON.parse(await stream2string(rAsset.Ok()));
-    const models = Model.array()(raw);
+    const { filtered: models, warning: modelsWarning } = parseArrayWarning(raw, Model);
     // console.log("Loaded models:", models);
-    if (models instanceof type.errors) {
-      return Result.Err(`Failed to parse models: ${models.summary}`);
+    if (modelsWarning.length > 0) {
+      ensureLogger(vctx.sthis, "loadModels").Warn().Any({ parseErrors: modelsWarning }).Msg("skip");
     }
     return Result.Ok({ type: "vibes.diy.res-list-models", models } satisfies ResListModels);
   },

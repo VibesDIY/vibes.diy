@@ -8,8 +8,9 @@ import {
   isUserSettingModelDefaults,
   type ModelSelector,
   userSettingItem,
+  parseArrayWarning,
 } from "@vibes.diy/api-types";
-import { type } from "arktype";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { eq, and } from "drizzle-orm/sql/expressions";
 import { VibesApiSQLCtx } from "../types.js";
 import { loadModels } from "../public/list-models.js";
@@ -76,14 +77,15 @@ export async function getModelDefaults(
       if (rUser.isErr()) return Result.Err(rUser);
       const userRow = rUser.Ok();
       if (userRow) {
-        const settings = userSettingItem.array()(userRow.settings);
-        if (!(settings instanceof type.errors)) {
-          const modelDefaults = settings.find(isUserSettingModelDefaults);
-          if (modelDefaults) {
-            if (modelDefaults.chat?.model) result.chat = modelDefaults.chat as AIParams;
-            if (modelDefaults.app?.model) result.app = modelDefaults.app as AIParams;
-            if (modelDefaults.img?.model) result.img = modelDefaults.img as AIParams;
-          }
+        const { filtered: userSettings, warning: userSettingsWarning } = parseArrayWarning(userRow.settings, userSettingItem);
+        if (userSettingsWarning.length > 0) {
+          ensureLogger(ctx.sthis, "getModelDefaults").Warn().Any({ parseErrors: userSettingsWarning }).Msg("skip");
+        }
+        const modelDefaults = userSettings.find(isUserSettingModelDefaults);
+        if (modelDefaults) {
+          if (modelDefaults.chat?.model) result.chat = modelDefaults.chat as AIParams;
+          if (modelDefaults.app?.model) result.app = modelDefaults.app as AIParams;
+          if (modelDefaults.img?.model) result.img = modelDefaults.img as AIParams;
         }
       }
     }
@@ -102,13 +104,14 @@ export async function getModelDefaults(
     if (rApp.isErr()) return Result.Err(rApp);
     const appRow = rApp.Ok();
     if (appRow) {
-      const entries = ActiveEntry.array()(appRow.settings);
-      if (!(entries instanceof type.errors)) {
-        for (const e of entries) {
-          if (isActiveModelSettingChat(e)) result.chat = e.param;
-          else if (isActiveModelSettingApp(e)) result.app = e.param;
-          else if (isActiveModelSettingImg(e)) result.img = e.param;
-        }
+      const { filtered: appSettings, warning: appSettingsWarning } = parseArrayWarning(appRow.settings, ActiveEntry);
+      if (appSettingsWarning.length > 0) {
+        ensureLogger(ctx.sthis, "getModelDefaults").Warn().Any({ parseErrors: appSettingsWarning }).Msg("skip");
+      }
+      for (const e of appSettings) {
+        if (isActiveModelSettingChat(e)) result.chat = e.param;
+        else if (isActiveModelSettingApp(e)) result.app = e.param;
+        else if (isActiveModelSettingImg(e)) result.img = e.param;
       }
     }
   }
