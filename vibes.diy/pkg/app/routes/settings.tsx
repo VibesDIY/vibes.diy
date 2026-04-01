@@ -5,9 +5,16 @@ import { Link, useNavigate } from "react-router-dom";
 import LoggedOutView from "../components/LoggedOutView.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
-import { isUserSettingSharing, isUserSettingDefaultUserSlug, isUserSettingModelDefaults } from "@vibes.diy/api-types";
+import {
+  isUserSettingSharing,
+  isUserSettingDefaultUserSlug,
+  isUserSettingModelDefaults,
+  parseArray,
+  userSettingModelDefaults,
+} from "@vibes.diy/api-types";
 import type { SharingGrantItem, AIParams } from "@vibes.diy/api-types";
 import { ModelSettingsCards } from "../components/ModelSettingsCards.js";
+
 export function meta() {
   return [{ title: "Settings - Vibes DIY" }, { name: "description", content: "Settings for AI App Builder" }];
 }
@@ -331,7 +338,8 @@ function ModelDefaultsCard() {
         setError(`Failed to load: ${res.Err()}`);
         return;
       }
-      const def = res.Ok().settings.filter(isUserSettingModelDefaults)[0];
+      const def = parseArray(res.Ok().settings, userSettingModelDefaults)[0];
+      console.log("Loaded user settings:", res.Ok().settings, def);
       if (def) {
         setChatConfig(def.chat ?? {});
         setAppConfig(def.app ?? {});

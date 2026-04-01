@@ -37,6 +37,7 @@ import {
   revokeRequestEvento,
   hasAccessRequestEvento,
 } from "./public/request-flow.js";
+import { listModelsEvento } from "./public/list-models.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -63,6 +64,7 @@ export const vibesMsgEvento = Lazy(() => {
     revokeRequestEvento,
     listRequestGrantsEvento,
     getCertFromCsrEvento,
+    listModelsEvento,
     ensureAppSettingsEvento,
     setModeFsIdEvento,
     ensureUserSettingsEvento,
