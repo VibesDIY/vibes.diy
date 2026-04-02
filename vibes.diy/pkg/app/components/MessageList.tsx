@@ -317,10 +317,6 @@ function MessageList({
   selectedFsId,
   onClick,
   onRetry,
-  // setSelectedResponseId,
-  // selectedResponseId,
-  // setMobilePreviewShown,
-  // navigateToView,
 }: MessageListProps) {
   // console.log(
   //   "MessageList",
@@ -448,10 +444,10 @@ function MessageList({
     return acc;
   }, [] as React.ReactElement[]);
   useEffect(() => {
-    if (lastFsRef) {
-      onClick(lastFsRef);
-    }
-  }, [lastFsRef?.fsId]);
+    if (!lastFsRef) return;
+    if (selectedFsId && selectedFsId !== lastFsRef.fsId) return;
+    onClick(lastFsRef);
+  }, [lastFsRef?.fsId, selectedFsId]);
 
   // console.log("Render-React-C", messageElements.length)
 
