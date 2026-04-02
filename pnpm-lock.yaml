@@ -701,8 +701,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@fireproof/core-device-id':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-keybag':
         specifier: 0.24.15
         version: 0.24.15(typescript@6.0.2)
@@ -805,8 +805,8 @@ importers:
         specifier: ^0.5.34
         version: 0.5.34(typescript@6.0.2)
       '@fireproof/core-device-id':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.15
         version: 0.24.15(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
@@ -976,8 +976,8 @@ importers:
         specifier: ^4.20260317.1
         version: 4.20260317.1
       '@fireproof/core-device-id':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.15
         version: 0.24.15(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
@@ -1097,8 +1097,8 @@ importers:
         specifier: ^4.20260317.1
         version: 4.20260317.1
       '@fireproof/core-device-id':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.15
         version: 0.24.15(typescript@6.0.2)
