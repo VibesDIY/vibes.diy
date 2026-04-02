@@ -5,6 +5,7 @@ import React, { useMemo } from "react";
 import { BuildURI, URI } from "@adviser/cement";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
+import { applyStableEntry } from "../../lib/stable-entry.js";
 
 // function findApp(promptState: PromptState, sectionId?: string | null) {
 //   let lastBlock: BlockEndMsg | undefined;
@@ -40,7 +41,9 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         port: myUrl.port,
         bindings: { appSlug, userSlug, fsId },
       });
-      const previewUrl = BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
+      const previewUrl = applyStableEntry(
+        BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes")
+      );
       // console.log(`iframe src=`, previewUrl.asObj());
       return previewUrl;
     }
