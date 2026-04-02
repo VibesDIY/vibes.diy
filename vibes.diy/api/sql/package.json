@@ -17,7 +17,7 @@
     "@vibes.diy/api-pkg": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
-    "@libsql/client": "^0.17.0",
+    "@libsql/client": "^0.17.2",
     "@noble/hashes": "^2.0.1",
     "multiformats": "^13.4.2",
     "@neondatabase/serverless": "^1.0.2",
