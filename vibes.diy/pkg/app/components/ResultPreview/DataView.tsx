@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import { BuildURI, URI } from "@adviser/cement";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
+import { applyStableEntry } from "../../lib/stable-entry.js";
 
 export function DataView({ promptState: _p }: { promptState: PromptState }) {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
@@ -18,10 +19,12 @@ export function DataView({ promptState: _p }: { promptState: PromptState }) {
         port: myUrl.port,
         bindings: { appSlug, userSlug },
       });
-      const previewUrl = BuildURI.from(baseUrl)
-        .appendRelative(".db-explorer")
-        .setParam("npmUrl", svcVars.pkgRepos.workspace)
-        .setParam("preview", "yes");
+      const previewUrl = applyStableEntry(
+        BuildURI.from(baseUrl)
+          .appendRelative(".db-explorer")
+          .setParam("npmUrl", svcVars.pkgRepos.workspace)
+          .setParam("preview", "yes")
+      );
       return previewUrl;
     }
     return null;
