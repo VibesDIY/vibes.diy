@@ -32,8 +32,8 @@ importers:
         specifier: ^25.2.3
         version: 25.5.0
       '@typescript/native-preview':
-        specifier: 7.0.0-dev.20260325.1
-        version: 7.0.0-dev.20260325.1
+        specifier: 7.0.0-dev.20260401.1
+        version: 7.0.0-dev.20260401.1
       '@vitest/browser-playwright':
         specifier: ~4.1.2
         version: 4.1.2(bufferutil@4.1.0)(playwright@1.58.2)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
