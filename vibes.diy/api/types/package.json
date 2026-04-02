@@ -13,7 +13,7 @@
     "@ark/json-schema": "^0.0.4",
     "@cloudflare/workers-types": "^4.20260317.1",
     "@fireproof/core-runtime": "^0.24.15",
-    "@fireproof/core-types-base": "^0.24.15",
+    "@fireproof/core-types-base": "^0.24.16",
     "@fireproof/core-types-protocols-cloud": "^0.24.15",
     "@fireproof/core-types-protocols-dashboard": "^0.24.15",
     "@vibes.diy/call-ai-v2": "workspace:*",

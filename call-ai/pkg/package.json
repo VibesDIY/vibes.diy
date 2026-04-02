@@ -45,7 +45,7 @@
     "@fireproof/core": "0.24.15",
     "@fireproof/core-keybag": "0.24.15",
     "@fireproof/core-runtime": "0.24.15",
-    "@fireproof/core-types-base": "0.24.15",
+    "@fireproof/core-types-base": "0.24.16",
     "@fireproof/core-types-protocols-cloud": "0.24.15",
     "@fireproof/use-fireproof": "0.24.15",
     "mime": "^4.1.0"
