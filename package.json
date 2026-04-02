@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@fireproof/core-cli": "0.24.15",
+    "@fireproof/core-cli": "0.24.16",
     "@playwright/test": "^1.58.2",
     "@types/deno": "^2.5.0",
     "@types/node": "^25.2.3",

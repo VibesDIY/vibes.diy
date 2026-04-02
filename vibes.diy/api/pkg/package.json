@@ -27,7 +27,7 @@
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.15",
+    "@fireproof/core-cli": "0.24.16",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3"
   },
