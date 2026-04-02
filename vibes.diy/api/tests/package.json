@@ -14,7 +14,7 @@
     "@cloudflare/workers-types": "^4.20260317.1",
     "@fireproof/core-device-id": "0.24.16",
     "@fireproof/core-runtime": "0.24.16",
-    "@fireproof/core-types-device-id": "0.24.15",
+    "@fireproof/core-types-device-id": "0.24.16",
     "@libsql/client": "^0.17.2",
     "@neondatabase/serverless": "^1.0.2",
     "@vibes.diy/api-impl": "workspace:*",
