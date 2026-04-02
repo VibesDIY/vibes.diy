@@ -11,7 +11,7 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "@fireproof/core-device-id": "0.24.16",
-    "@fireproof/core-protocols-dashboard": "0.24.15",
+    "@fireproof/core-protocols-dashboard": "0.24.16",
     "@fireproof/core-runtime": "0.24.15",
     "@fireproof/core-types-base": "0.24.15",
     "@fireproof/core-types-device-id": "0.24.15",
