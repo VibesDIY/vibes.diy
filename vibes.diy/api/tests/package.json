@@ -28,7 +28,7 @@
     "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.15",
+    "@fireproof/core-cli": "0.24.16",
     "@vitest/ui": "~4.1.2",
     "vitest": "~4.1.2",
     "zx": "^8.8.5"

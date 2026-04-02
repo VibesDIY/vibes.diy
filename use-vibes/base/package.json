@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.1.0",
-    "@fireproof/core-cli": "0.24.15",
+    "@fireproof/core-cli": "0.24.16",
     "@storybook/addon-a11y": "^10.3.0",
     "@storybook/addon-docs": "^10.3.0",
     "@storybook/react": "^10.3.0",
