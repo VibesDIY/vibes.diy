@@ -21,7 +21,7 @@
     "ws": "^8.20.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.15",
+    "@fireproof/core-cli": "0.24.16",
     "@types/ws": "^8.18.1"
   },
   "repository": {

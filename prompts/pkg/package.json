@@ -41,7 +41,7 @@
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.15",
+    "@fireproof/core-cli": "0.24.16",
     "@vitest/browser-playwright": "~4.1.2",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.57.2",
