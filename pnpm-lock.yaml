@@ -89,8 +89,8 @@ importers:
         specifier: 0.24.15
         version: 0.24.15(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -185,8 +185,8 @@ importers:
         specifier: ^0.5.34
         version: 0.5.34(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       arktype:
         specifier: ^2.2.0
         version: 2.2.0
@@ -231,8 +231,8 @@ importers:
         specifier: 0.24.15
         version: 0.24.15(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -353,8 +353,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -536,8 +536,8 @@ importers:
         specifier: 0.24.15
         version: 0.24.15(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -658,8 +658,8 @@ importers:
         specifier: 0.24.15
         version: 0.24.15(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -710,8 +710,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -768,8 +768,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -811,8 +811,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -869,8 +869,8 @@ importers:
         specifier: ^1.0.6
         version: 1.0.6(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -918,8 +918,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.13
-        version: 0.24.13(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -982,8 +982,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -1100,8 +1100,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-device-id':
         specifier: 0.24.15
         version: 0.24.15(typescript@6.0.2)
@@ -1164,8 +1164,8 @@ importers:
         specifier: ^4.20260317.1
         version: 4.20260317.1
       '@fireproof/core-runtime':
-        specifier: ^0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: ^0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base':
         specifier: ^0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -1223,8 +1223,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
       '@fireproof/core-runtime':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-protocols-dashboard':
         specifier: 0.24.15
         version: 0.24.15(typescript@6.0.2)
@@ -3040,9 +3040,6 @@ packages:
 
   '@fireproof/core-protocols-dashboard@0.24.16':
     resolution: {integrity: sha512-u9Xufby2plIV5P7epa0aDf+TRnnn9decxEJ2l2ofnWxEBkxNBar5QCWOq4LT21EtHfK0/yHTd2buOtpdak5F7g==}
-
-  '@fireproof/core-runtime@0.24.13':
-    resolution: {integrity: sha512-gH+UcWLKiM/UJI5nuT/4kA6CodDW/z0aaelXL+kPMIgLjZijVEtUl2BhOm3FS/wROa5m1RgTbv0t+62/KN7VHQ==}
 
   '@fireproof/core-runtime@0.24.15':
     resolution: {integrity: sha512-tR2B+Q+bdY7yfwL4i7JSdaCyJoASmNcFdE3zuOve7mEj6AWcbK9ZSYCC8eu9Gd9WkDLDGPhqeXoBwYwy1cx03Q==}
@@ -7717,11 +7714,6 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.58.2:
-    resolution: {integrity: sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   playwright@1.59.1:
     resolution: {integrity: sha512-C8oWjPR3F81yljW9o5OxcWzfh6avkVwDD2VYdwIGqTkl+OGFISgypqzfu7dOe4QNLL2aqcWBmI3PMtLIK233lw==}
     engines: {node: '>=18'}
@@ -10608,22 +10600,6 @@ snapshots:
     transitivePeerDependencies:
       - react
       - react-dom
-      - typescript
-
-  '@fireproof/core-runtime@0.24.13(typescript@6.0.2)':
-    dependencies:
-      '@adviser/cement': 0.5.34(typescript@6.0.2)
-      '@adviser/ts-xxhash': 1.0.2
-      '@fireproof/core-types-base': 0.24.13(typescript@6.0.2)
-      '@fireproof/core-types-blockstore': 0.24.13(typescript@6.0.2)
-      '@fireproof/core-types-protocols-cloud': 0.24.13(typescript@6.0.2)
-      '@fireproof/core-types-runtime': 0.24.13(typescript@6.0.2)
-      '@fireproof/vendor': 0.24.13(typescript@6.0.2)
-      cborg: 4.5.8
-      jose: 6.2.2
-      multiformats: 13.4.2
-      zod: 4.3.6
-    transitivePeerDependencies:
       - typescript
 
   '@fireproof/core-runtime@0.24.15(typescript@6.0.2)':
@@ -16209,12 +16185,6 @@ snapshots:
   playwright-core@1.58.2: {}
 
   playwright-core@1.59.1: {}
-
-  playwright@1.58.2:
-    dependencies:
-      playwright-core: 1.58.2
-    optionalDependencies:
-      fsevents: 2.3.2
 
   playwright@1.59.1:
     dependencies:
