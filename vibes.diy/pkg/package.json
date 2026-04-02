@@ -29,7 +29,7 @@
     "@cloudflare/workers-types": "^4.20260317.1",
     "@fireproof/core": "0.24.15",
     "@fireproof/core-protocols-dashboard": "0.24.16",
-    "@fireproof/core-runtime": "0.24.15",
+    "@fireproof/core-runtime": "0.24.16",
     "@fireproof/core-types-protocols-dashboard": "0.24.15",
     "@fireproof/use-fireproof": "0.24.15",
     "@monaco-editor/react": "^4.7.0",
