@@ -4,7 +4,6 @@ import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
 import { SignIn, useAuth, useSession } from "@clerk/react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
-import { applyStableEntry } from "../lib/stable-entry.js";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
@@ -116,16 +115,12 @@ export default function VibeIframeWrapper() {
                 window.location.port && window.location.port !== "80" && window.location.port !== "443"
                   ? window.location.port
                   : undefined;
-              iframeUrlRef.current = applyStableEntry(
-                BuildURI.from(
-                  calcEntryPointUrl({
-                    hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
-                    protocol,
-                    bindings: { appSlug, userSlug, fsId: res.fsId },
-                    port,
-                  })
-                )
-              ).toString();
+              iframeUrlRef.current = calcEntryPointUrl({
+                hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
+                protocol,
+                bindings: { appSlug, userSlug, fsId: res.fsId },
+                port,
+              });
               setReady(true);
             }
             break;

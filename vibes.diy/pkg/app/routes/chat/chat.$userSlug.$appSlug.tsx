@@ -13,7 +13,6 @@ import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import type { ViewType } from "@vibes.diy/prompts";
 import { isCodeBegin, isPromptBlockBegin, isPromptBlockEnd, isPromptReq, PromptError } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
-import { applyStableEntry } from "../../lib/stable-entry.js";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
 import ChatInterface from "../../components/ChatInterface.js";
 import ResultPreviewHeaderContent from "../../components/ResultPreview/ResultPreviewHeaderContent.js";
@@ -237,18 +236,17 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     fsId && appSlug && userSlug
       ? (() => {
           const myUrl = URI.from(window.location.href);
-          return applyStableEntry(
-            BuildURI.from(
-              calcEntryPointUrl({
-                hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
-                protocol: myUrl.protocol as "http" | "",
-                port: myUrl.port,
-                bindings: { appSlug, userSlug, fsId },
-              })
-            )
-              .setParam("npmUrl", svcVars.pkgRepos.workspace)
-              .setParam("preview", "yes")
-          ).toString();
+          return BuildURI.from(
+            calcEntryPointUrl({
+              hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
+              protocol: myUrl.protocol as "http" | "",
+              port: myUrl.port,
+              bindings: { appSlug, userSlug, fsId },
+            })
+          )
+            .setParam("npmUrl", svcVars.pkgRepos.workspace)
+            .setParam("preview", "yes")
+            .toString();
         })()
       : undefined;
 
