@@ -89,7 +89,7 @@
     "rollup-plugin-visualizer": "^7.0.1",
     "shiki": "^4.0.2",
     "tailwindcss": "^4.2.2",
-    "toml": "^3.0.0",
+    "toml": "^4.1.1",
     "typescript": "^6.0.2",
     "vite": "^7.3.1",
     "vite-tsconfig-paths": "^6.1.1",
