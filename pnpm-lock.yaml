@@ -1398,8 +1398,8 @@ importers:
         specifier: ^4.2.2
         version: 4.2.2
       toml:
-        specifier: ^3.0.0
-        version: 3.0.0
+        specifier: ^4.1.1
+        version: 4.1.1
       typescript:
         specifier: ^6.0.2
         version: 6.0.2
@@ -8567,8 +8567,9 @@ packages:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
 
-  toml@3.0.0:
-    resolution: {integrity: sha512-y/mWCZinnvxjTKYhJ+pYxwD0mRLVvOtdS2Awbgxln6iEnt4rk0yBxeSBHkGJcPucRiG0e55mwWp+g/05rsrd6w==}
+  toml@4.1.1:
+    resolution: {integrity: sha512-EBJnVBr3dTXdA89WVFoAIPUqkBjxPMwRqsfuo1r240tKFHXv3zgca4+NJib/h6TyvGF7vOawz0jGuryJCdNHrw==}
+    engines: {node: '>=20'}
 
   totalist@3.0.1:
     resolution: {integrity: sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ==}
@@ -17472,7 +17473,7 @@ snapshots:
 
   toidentifier@1.0.1: {}
 
-  toml@3.0.0: {}
+  toml@4.1.1: {}
 
   totalist@3.0.1: {}
 
