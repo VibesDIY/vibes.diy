@@ -11,7 +11,7 @@ import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import type { ViewType } from "@vibes.diy/prompts";
-import { isCodeBegin, isPromptBlockBegin, isPromptBlockEnd, isPromptReq, PromptError } from "@vibes.diy/call-ai-v2";
+import { isBlockEnd, isCodeBegin, isPromptBlockBegin, isPromptBlockEnd, isPromptReq, PromptError } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
 import ChatInterface from "../../components/ChatInterface.js";
@@ -67,6 +67,7 @@ export interface PromptState {
   current?: PromptBlock;
   blocks: PromptBlock[];
   hasCode: boolean;
+  latestFsRef?: { fsId: string; appSlug: string; userSlug: string };
   title: string;
   searchParams: URLSearchParams;
   setSearchParams: SetURLSearchParams;
@@ -124,12 +125,20 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
         current: { ...state.current, msgs: [...state.current.msgs, block] },
         blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, msgs: [...b.msgs, block] } : b)),
       };
+    case isBlockEnd(block): {
+      if (!state.current) return state;
+      const updated = {
+        ...state,
+        current: { ...state.current, msgs: [...state.current.msgs, block] },
+        blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, msgs: [...b.msgs, block] } : b)),
+      };
+      if (block.fsRef) {
+        updated.latestFsRef = { fsId: block.fsRef.fsId, appSlug: block.fsRef.appSlug, userSlug: block.fsRef.userSlug };
+      }
+      return updated;
+    }
     default:
       if (!state.current) return state;
-      // console.log("reqs", state.current?.reqs)
-      // if (isBlockEnd(block)) {
-      //   console.log(`recv:`, block)
-      // }
       return {
         ...state,
         current: { ...state.current, msgs: [...state.current.msgs, block] },
@@ -165,11 +174,15 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     if (inConstruction) return;
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
-        const newSearch = new URLSearchParams(searchParams);
-        if (!newSearch.has("view")) {
-          newSearch.set("view", "code");
+        hadCodeBeforePromptRef.current = promptState.hasCode;
+        promptSentInSession.current = true;
+        if (!hadCodeBeforePromptRef.current) {
+          const newSearch = new URLSearchParams(searchParams);
+          if (!newSearch.has("view")) {
+            newSearch.set("view", "code");
+          }
+          navigate({ pathname: `/chat/${userSlug}/${appSlug}`, search: newSearch.toString() }, { replace: true });
         }
-        navigate({ pathname: `/chat/${userSlug}/${appSlug}`, search: newSearch.toString() }, { replace: true });
         console.log(`promptToSend:`);
         chat
           .prompt({
@@ -264,15 +277,24 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const currentViewRef = useRef(currentView);
   currentViewRef.current = currentView;
 
+  const hadCodeBeforePromptRef = useRef(false);
+  const promptSentInSession = useRef(false);
+  const runningRef = useRef(promptState.running);
+  runningRef.current = promptState.running;
+
   const fsIdClick = useCallback(
     ({ fsId: newFsId }: { fsId: string; appSlug: string; userSlug: string }) => {
-      // navigateToView();
-      if (!["preview", "code"].includes(currentViewRef.current)) {
-        currentViewRef.current = "preview";
+      if (runningRef.current) {
+        return;
+      }
+      let view = currentViewRef.current;
+      if (!hadCodeBeforePromptRef.current) {
+        view = "preview";
+      } else if (!["preview", "code"].includes(view)) {
+        view = "preview";
       }
       const sp = new URLSearchParams(searchParams);
-      sp.set("view", currentViewRef.current);
-      // console.log(`fsIdClick`, { newFsId, appSlug, userSlug, searchParams: sp.toString(), currentView: currentViewRef.current });
+      sp.set("view", view);
       navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
     },
     [navigate, userSlug, appSlug, searchParams]
@@ -348,10 +370,18 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     }
     if (!promptState.running && chatInput.current) {
       chatInput.current.setPrompt("");
-      return;
     }
-    // if (promptState.current)
-  }, [promptState.running]);
+    if (!promptSentInSession.current) return;
+    if (!promptState.running && promptState.hasCode && promptState.latestFsRef) {
+      const target = promptState.latestFsRef;
+      const view = !hadCodeBeforePromptRef.current ? "preview" : currentViewRef.current === "preview" ? "preview" : null;
+      if (view) {
+        const sp = new URLSearchParams(searchParams);
+        sp.set("view", view);
+        navigate({ pathname: `/chat/${userSlug}/${appSlug}/${target.fsId}`, search: sp.toString() }, { replace: true });
+      }
+    }
+  }, [promptState.running, promptState.latestFsRef]);
 
   // console.log(`Rendering Chat with state:`, { currentView, editorState: editorState.state });
 
