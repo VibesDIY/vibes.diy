@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -17,6 +17,7 @@ interface RowData {
 }
 
 const columnHelper = createColumnHelper<RowData>();
+const GROUPING = ["path"];
 
 async function fetchGroups(): Promise<ApiResponse> {
   const res = await fetch("/@stable-entry/api");
@@ -41,7 +42,7 @@ function flatten(data: ApiResponse): RowData[] {
 
 export function App() {
   const [apiData, setApiData] = useState<ApiResponse>({ routes: {}, cookie: {} });
-  const data = flatten(apiData);
+  const data = useMemo(() => flatten(apiData), [apiData]);
 
   const load = useCallback(() => fetchGroups().then(setApiData), []);
   useEffect(() => {
@@ -53,7 +54,7 @@ export function App() {
     setApiData(newData);
   }, []);
 
-  const columns = [
+  const columns = useMemo(() => [
     columnHelper.accessor("path", { header: "Path" }),
     columnHelper.accessor("desc", { header: "Group" }),
     columnHelper.accessor("active", {
@@ -72,12 +73,12 @@ export function App() {
         );
       },
     }),
-  ];
+  ], []);
 
   const table = useReactTable({
     data,
     columns,
-    state: { grouping: ["path"], expanded: true },
+    state: { grouping: GROUPING, expanded: true },
     getCoreRowModel: getCoreRowModel(),
     getGroupedRowModel: getGroupedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
