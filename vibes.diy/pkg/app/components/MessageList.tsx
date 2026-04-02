@@ -448,7 +448,7 @@ function MessageList({
     return acc;
   }, [] as React.ReactElement[]);
   useEffect(() => {
-    if (lastFsRef && !selectedFsId) {
+    if (lastFsRef) {
       onClick(lastFsRef);
     }
   }, [lastFsRef?.fsId]);

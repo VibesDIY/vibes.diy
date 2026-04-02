@@ -165,11 +165,15 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     if (inConstruction) return;
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
-        const newSearch = new URLSearchParams(searchParams);
-        if (!newSearch.has("view")) {
-          newSearch.set("view", "code");
+        hadCodeBeforePromptRef.current = promptState.hasCode;
+        pendingFsIdRef.current = null;
+        if (!hadCodeBeforePromptRef.current) {
+          const newSearch = new URLSearchParams(searchParams);
+          if (!newSearch.has("view")) {
+            newSearch.set("view", "code");
+          }
+          navigate({ pathname: `/chat/${userSlug}/${appSlug}`, search: newSearch.toString() }, { replace: true });
         }
-        navigate({ pathname: `/chat/${userSlug}/${appSlug}`, search: newSearch.toString() }, { replace: true });
         console.log(`promptToSend:`);
         chat
           .prompt({
@@ -264,15 +268,25 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const currentViewRef = useRef(currentView);
   currentViewRef.current = currentView;
 
+  const hadCodeBeforePromptRef = useRef(false);
+  const pendingFsIdRef = useRef<{ fsId: string; appSlug: string; userSlug: string } | null>(null);
+  const runningRef = useRef(promptState.running);
+  runningRef.current = promptState.running;
+
   const fsIdClick = useCallback(
     ({ fsId: newFsId }: { fsId: string; appSlug: string; userSlug: string }) => {
-      // navigateToView();
-      if (!["preview", "code"].includes(currentViewRef.current)) {
-        currentViewRef.current = "preview";
+      if (runningRef.current) {
+        pendingFsIdRef.current = { fsId: newFsId, appSlug, userSlug };
+        return;
+      }
+      let view = currentViewRef.current;
+      if (!hadCodeBeforePromptRef.current) {
+        view = "preview";
+      } else if (!["preview", "code"].includes(view)) {
+        view = "preview";
       }
       const sp = new URLSearchParams(searchParams);
-      sp.set("view", currentViewRef.current);
-      // console.log(`fsIdClick`, { newFsId, appSlug, userSlug, searchParams: sp.toString(), currentView: currentViewRef.current });
+      sp.set("view", view);
       navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
     },
     [navigate, userSlug, appSlug, searchParams]
@@ -348,9 +362,17 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     }
     if (!promptState.running && chatInput.current) {
       chatInput.current.setPrompt("");
-      return;
     }
-    // if (promptState.current)
+    if (!promptState.running && promptState.hasCode && pendingFsIdRef.current) {
+      const pending = pendingFsIdRef.current;
+      pendingFsIdRef.current = null;
+      const view = !hadCodeBeforePromptRef.current ? "preview" : currentViewRef.current === "preview" ? "preview" : null;
+      if (view) {
+        const sp = new URLSearchParams(searchParams);
+        sp.set("view", view);
+        navigate({ pathname: `/chat/${userSlug}/${appSlug}/${pending.fsId}`, search: sp.toString() }, { replace: true });
+      }
+    }
   }, [promptState.running]);
 
   // console.log(`Rendering Chat with state:`, { currentView, editorState: editorState.state });

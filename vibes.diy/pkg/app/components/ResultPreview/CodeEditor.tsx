@@ -139,7 +139,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
   // const userScrolledRef = useRef<boolean>(false);
   // const disposablesRef = useRef<{ dispose: () => void }[]>([]);
 
-  const appCodeGenerating = getCode(promptState, fsId);
+  const appCodeGenerating = getCode(promptState, promptState.running ? undefined : fsId);
   const prevAppCodeRef = useRef<AppCode>({
     code: [],
     complete: false,
