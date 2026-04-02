@@ -46,6 +46,7 @@ function ResultPreviewHeaderContent({
   openVibe,
   onContextMenu,
 }: React.PropsWithChildren<ResultPreviewHeaderContentProps>) {
+  // console.log("Rendering ResultPreviewHeaderContent with props:", currentView, hasCodeChanges)
   return (
     <div className="flex h-full w-full items-center px-2 py-4">
       <div className="flex w-1/4 items-center justify-start">

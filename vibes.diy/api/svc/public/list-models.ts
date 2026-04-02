@@ -44,7 +44,10 @@ export const loadModels = Lazy(
     if (modelsWarning.length > 0) {
       ensureLogger(vctx.sthis, "loadModels").Warn().Any({ parseErrors: modelsWarning }).Msg("skip");
     }
-    return Result.Ok({ type: "vibes.diy.res-list-models", models } satisfies ResListModels);
+    return Result.Ok({
+      type: "vibes.diy.res-list-models",
+      models: models.sort((a, b) => a.name.localeCompare(b.name)),
+    } satisfies ResListModels);
   },
   { resetAfter: 10000 }
 );

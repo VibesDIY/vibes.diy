@@ -34,17 +34,26 @@ export function isEditorStateMoreLines(obj: unknown): obj is EditorStateMoreLine
   return !(EditorStateMoreLines(obj) instanceof type.errors);
 }
 
+export const CursorPosition = type({
+  lineNumber: "number",
+  column: "number",
+});
+export type CursorPosition = typeof CursorPosition.infer;
+
 export const ArkEditorStateToEdit = type({
   state: "'to-edit'",
   buffer: "string",
   hash: "bigint",
+  cursorPosition: CursorPosition,
 });
 export type ArkEditorStateToEdit = typeof ArkEditorStateToEdit.infer;
 export type EditorStateToEdit = ArkEditorStateToEdit & {
   onChange: (newCode?: string) => void;
 };
-export function isEditorStateToEdit(obj: unknown): obj is EditorStateToEdit {
-  return !(ArkEditorStateToEdit(obj) instanceof type.errors);
+export function isEditorStateToEdit(obj: unknown, options?: { onlyType: boolean }): obj is EditorStateToEdit {
+  return (
+    (options?.onlyType && (obj as { state: string }).state === "to-edit") || !(ArkEditorStateToEdit(obj) instanceof type.errors)
+  );
 }
 
 export const ArkEditorStateEdit = type({
@@ -57,8 +66,8 @@ export type ArkEditorStateEdit = typeof ArkEditorStateEdit.infer;
 export type EditorStateEdit = ArkEditorStateEdit & {
   toEdit: EditorStateToEdit;
 };
-export function isEditorStateEdit(obj: unknown): obj is EditorStateEdit {
-  return !(ArkEditorStateEdit(obj) instanceof type.errors);
+export function isEditorStateEdit(obj: unknown, options?: { onlyType: boolean }): obj is EditorStateEdit {
+  return (options?.onlyType && (obj as { state: string }).state === "edit") || !(ArkEditorStateEdit(obj) instanceof type.errors);
 }
 
 export const EditorState = EditorStateIdle.or(EditorStateStartGenerating)

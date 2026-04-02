@@ -219,6 +219,7 @@ async function toFileSystemItems(
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
 ): Promise<Result<FileSystemItem>[]> {
   const givenFsItems = fs.map((f) => {
+    console.log("toFileSystemItems - processing file:", f.vibeFileItem.filename, (f.vibeFileItem as { lang: string }).lang);
     const ret: FileSystemItem = {
       fileName: f.vibeFileItem.filename,
       assetId: f.storage.cid,
@@ -232,20 +233,20 @@ async function toFileSystemItems(
       size: f.storage.size,
     };
     // console.log("toFileSystemItems - processing file:", f);
-    if (isVibeCodeBlock(f.vibeFileItem) && f.vibeFileItem.lang === "jsx") {
+    if (isVibeCodeBlock(f.vibeFileItem) && ["js", "jsx", "javascript"].includes(f.vibeFileItem.lang)) {
       // console.log("marking for jsx transform for file:", f.vibeFileItem.filename);
       ret.transform = {
         type: "jsx-to-js",
         transformedAssetId: "setAfterTransform",
       };
     }
-    if (isVibeCodeBlock(f.vibeFileItem) && f.vibeFileItem.lang == "js") {
-      // console.log("marking for import extraction for file:", f.vibeFileItem.filename);
-      ret.transform = {
-        type: "imports",
-        importMapAssetId: "setAfterTransform",
-      };
-    }
+    // if (isVibeCodeBlock(f.vibeFileItem) && f.vibeFileItem.lang == "js") {
+    //   // console.log("marking for import extraction for file:", f.vibeFileItem.filename);
+    //   ret.transform = {
+    //     type: "imports",
+    //     importMapAssetId: "setAfterTransform",
+    //   };
+    // }
     if (f.vibeFileItem.entryPoint) {
       ret.entryPoint = true;
     }

@@ -21,7 +21,7 @@ import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
-import { EditorState, EditorStateEdit, isEditorStateEdit } from "../../types/code-editor.js";
+import { EditorState, isEditorStateEdit, isEditorStateToEdit } from "../../types/code-editor.js";
 
 interface VibeAppContextMenuProps {
   x: number;
@@ -304,42 +304,42 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     [promptState.blocks, chatInput]
   );
 
-  const [hasCodeChanges, setHasCodeChanges] = useState<EditorStateEdit | null>(null);
-  const handleOnCode = useCallback(
-    (event: EditorState) => {
-      if (isEditorStateEdit(event)) {
-        console.log(`handleOnCode`, event);
-        setHasCodeChanges(event);
-      } else {
-        setHasCodeChanges(null);
-      }
-    },
-    [hasCodeChanges]
-  );
+  const [editorState, setEditorState] = useState<EditorState>({
+    state: "idle",
+  });
+  const handleOnCode = useCallback((event: EditorState) => {
+    console.log(`handleOnCode:`, event);
+    // if (isEditorStateEdit(event)) {
+    setEditorState({ ...event });
+    // } else {
+    // setEditorState({ state: "idle" });
+    // }
+  }, []);
 
   const handleOnCodeSave = useCallback(() => {
-    if (hasCodeChanges && chat) {
-      const toSave = hasCodeChanges;
-      setHasCodeChanges(null);
-      chat
-        .addFS([
-          {
-            type: "code-block",
-            filename: "/App.jsx",
-            lang: "jsx", // "'jsx'|'js'",
-            content: toSave.buffer,
-          },
-        ])
-        .then((r) => {
-          if (r.isErr()) {
-            toast.error(`Failed to save code changes: ${r.Err().message}`);
-            setHasCodeChanges(toSave); // restore unsaved state
-          } else {
-            toast.success(`Code changes saved`);
-          }
-        });
+    if (!chat) return;
+    if (!isEditorStateEdit(editorState)) {
+      return;
     }
-  }, [hasCodeChanges]);
+    setEditorState({ state: "idle" });
+    chat
+      .addFS([
+        {
+          type: "code-block",
+          filename: "/App.jsx",
+          lang: "jsx", // "'jsx'|'js'",
+          content: editorState.buffer,
+        },
+      ])
+      .then((r) => {
+        if (r.isErr()) {
+          toast.error(`Failed to save code changes: ${r.Err().message}`);
+          setEditorState(editorState); // restore unsaved state
+        } else {
+          toast.success(`Code changes saved`);
+        }
+      });
+  }, [EditorState, chat]);
 
   useEffect(() => {
     if (inConstruction) return;
@@ -352,6 +352,8 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     }
     // if (promptState.current)
   }, [promptState.running]);
+
+  // console.log(`Rendering Chat with state:`, { currentView, editorState: editorState.state });
 
   return (
     <>
@@ -375,7 +377,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             viewControls={viewControls}
             currentView={currentView}
             onCodeSave={handleOnCodeSave}
-            hasCodeChanges={!!hasCodeChanges}
+            hasCodeChanges={isEditorStateEdit(editorState) && editorState.buffer.trim().length > 0}
             openVibe={openVibe}
             onContextMenu={handleContextMenu}
           />
