@@ -817,8 +817,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-device-id':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.15
         version: 0.24.15(typescript@6.0.2)
@@ -988,8 +988,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-device-id':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.15
         version: 0.24.15(typescript@6.0.2)
@@ -1103,8 +1103,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-device-id':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@libsql/client':
         specifier: ^0.17.2
         version: 0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6)
