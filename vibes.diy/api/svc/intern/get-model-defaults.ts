@@ -6,7 +6,7 @@ import {
   isActiveModelSettingChat,
   isActiveModelSettingImg,
   isUserSettingModelDefaults,
-  type ModelSelector,
+  type PromptStyle,
   userSettingItem,
   parseArrayWarning,
 } from "@vibes.diy/api-types";
@@ -15,12 +15,12 @@ import { eq, and } from "drizzle-orm/sql/expressions";
 import { VibesApiSQLCtx } from "../types.js";
 import { loadModels } from "../public/list-models.js";
 
-async function loadPreSelectedDefaults(ctx: VibesApiSQLCtx): Promise<Result<Record<ModelSelector, AIParams>>> {
+async function loadPreSelectedDefaults(ctx: VibesApiSQLCtx): Promise<Result<Record<PromptStyle, AIParams>>> {
   const rModels = await loadModels(ctx);
   if (rModels.isErr()) return Result.Err(rModels);
   const models = rModels.Ok().models;
-  const usages: ModelSelector[] = ["chat", "app", "img"];
-  const defaults = {} as Record<ModelSelector, AIParams>;
+  const usages: PromptStyle[] = ["chat", "app", "img"];
+  const defaults = {} as Record<PromptStyle, AIParams>;
   for (const usage of usages) {
     const found = models.find((m) => m.preSelected?.includes(usage));
     if (!found) return Result.Err(`No preSelected model found for usage: ${usage}`);

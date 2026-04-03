@@ -11,19 +11,16 @@ import {
   isCodeBegin,
   isCodeEnd,
   isCodeLine,
-  isPromptError,
-  isPromptReq,
   isToplevelBegin,
   isToplevelEnd,
   isToplevelLine,
   LineMsg,
-  PromptError,
-  PromptReq,
   ToplevelBeginMsg,
   ToplevelEndMsg,
 } from "@vibes.diy/call-ai-v2";
 import { BrutalistCard } from "@vibes.diy/base";
 import ReactMarkdown from "react-markdown";
+import { PromptError, PromptReq, isPromptError, isPromptReq } from "@vibes.diy/api-types";
 
 interface MessageListProps {
   promptBlocks: PromptBlock[];
@@ -91,50 +88,10 @@ function PromptErrorMsg({ msg, onRetry }: { msg: PromptError; onRetry?: (msg: Pr
 }
 
 function CodeMsg({ lines, begin, end, onClick }: { begin: CodeBeginMsg; lines: LineMsg[]; end?: CodeEndMsg; onClick: () => void }) {
-  // const [searchParams, setSearchParam] = useSearchParams();
-
-  // const handleCodeClick = useCallback(() => {
-  //   setSearchParam((prev) => {
-  //     prev.set("sectionId", begin.sectionId);
-  //     if (!prev.has("view")) {
-  //       prev.set("view", "code");
-  //     }
-  //     return prev;
-  //   });
-  // }, [searchParams, begin.sectionId, setSearchParam]);
-
   const codeReady = !!end;
 
   return (
     <div className="mb-4 flex flex-row justify-start px-4" key={begin.sectionId}>
-      {/* <div className="mr-2 flex-shrink-0">
-        <div
-          className="bg-light-decorative-02 dark:bg-dark-decorative-02 flex h-8 w-8 items-center justify-center rounded-full shadow-sm"
-          title={begin.lang}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"
-            />
-          </svg>
-        </div>
-      </div> */}
       <div className="max-w-[85%]">
         <BrutalistCard
           size="sm"
@@ -192,8 +149,8 @@ function CodeMsg({ lines, begin, end, onClick }: { begin: CodeBeginMsg; lines: L
           <div
             className={`bg-light-background-02 dark:bg-dark-background-01 m-0 h-0 max-h-0 min-h-0 overflow-hidden rounded-sm border-0 p-0 font-mono text-sm opacity-0 shadow-inner transition-all`}
           >
-            {lines.slice(0, 3).map((line) => (
-              <div key={line.lineNr} className="text-light-primary dark:text-dark-secondary truncate">
+            {lines.slice(0, 3).map((line, idx) => (
+              <div key={`${begin.blockId}-${line.lineNr}-${idx}`} className="text-light-primary dark:text-dark-secondary truncate">
                 {line.line || " "}
               </div>
             ))}
@@ -363,10 +320,10 @@ function MessageList({
         // case isPromptBlockBegin(msg):
         // case isPromptBlockEnd(msg):
         case isPromptError(msg):
-          acc.push(<PromptErrorMsg key={msg.streamId} msg={msg} onRetry={onRetry} />);
+          acc.push(<PromptErrorMsg key={`error-${msg.streamId}`} msg={msg} onRetry={onRetry} />);
           break;
         case isPromptReq(msg):
-          acc.push(<Prompt key={msg.streamId} msg={msg} />);
+          acc.push(<Prompt key={`prompt-${msg.streamId}`} msg={msg} />);
           break;
 
         case isBlockBegin(msg):
@@ -374,7 +331,7 @@ function MessageList({
           break;
         case isBlockEnd(msg):
           // console.log(`Completed a Chat --- need to register the clicks`, msg);
-          for (const block of blockMsgs) {
+          blockMsgs.forEach((block, idx) => {
             // console.log(">>>>>", block.type, block.begin.sectionId, block.lines.length)
             if (block.type === "Code") {
               // console.log(`code rendered`, block.begin.sectionId, block.lines)
@@ -383,7 +340,7 @@ function MessageList({
               }
               acc.push(
                 <CodeMsg
-                  key={block.begin.sectionId}
+                  key={`code-${block.begin.sectionId}-${idx}`}
                   begin={block.begin}
                   lines={block.lines}
                   end={block.end}
@@ -404,9 +361,9 @@ function MessageList({
               // if (isNaN(msg.stats.code.bytes)) {
               // console.log(`toplevel rendered`, block.lines)
               // }
-              acc.push(<TopLevelMsg key={block.begin.sectionId} begin={block.begin} lines={block.lines} />);
+              acc.push(<TopLevelMsg key={`toplevel-${block.begin.sectionId}-${idx}`} begin={block.begin} lines={block.lines} />);
             }
-          }
+          });
           // blockMsgs.splice(0, blockMsgs.length);
           break;
 
@@ -466,8 +423,6 @@ function MessageList({
 
 export default memo(MessageList, (prevProps, nextProps) => {
   // console.log(`promptState:`, promptState.blocks.length, promptState.blocks.map(i => i.msgs.length))
-
-  // Reference equality check for promptProcessing flag
   const streamingStateEqual = prevProps.promptProcessing === nextProps.promptProcessing;
 
   const promptBlocks = nextProps.promptBlocks.length === prevProps.promptBlocks.length;
@@ -475,46 +430,5 @@ export default memo(MessageList, (prevProps, nextProps) => {
   const msgs =
     nextProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0) === prevProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0);
 
-  // console.log(">>>>>>>>",
-  //   nextProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0),
-  //   prevProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0)
-  // )
-
-  // // Check if setSelectedResponseId changed
-  // const setSelectedResponseIdEqual = prevProps.setSelectedResponseId === nextProps.setSelectedResponseId;
-
-  // // Check if selectedResponseId changed
-  // const selectedResponseIdEqual = prevProps.selectedResponseId === nextProps.selectedResponseId;
-
-  // // Check if setMobilePreviewShown changed
-  // const setMobilePreviewShownEqual = prevProps.setMobilePreviewShown === nextProps.setMobilePreviewShown;
-
-  // Content equality check for messages - must compare text content
-  // const messagesEqual =
-  //   prevProps.messages.length === nextProps.messages.length &&
-  //   prevProps.messages.every((msg, i) => {
-  //     const nextMsg = nextProps.messages[i];
-  //     // Check message ID and text content
-  //     return msg._id === nextMsg._id && msg.text === nextMsg.text;
-  //   });
-
-  // Check if navigateToView changed
-  // const navigateToViewEqual = prevProps.navigateToView === nextProps.navigateToView;
-
-  // if (!(streamingStateEqual && promptBlocks && msgs)) {
-  //   console.log("MessageList needs update", prevProps, nextProps, streamingStateEqual, promptBlocks, msgs);
-  // }
-  // console.log(`promptState:`, msgs,
-  //     prevProps.promptBlocks.length, prevProps.promptBlocks.map(i => i.msgs.length),
-  //     nextProps.promptBlocks.length, nextProps.promptBlocks.map(i => i.msgs.length)
-  //   )
-  return (
-    streamingStateEqual && promptBlocks && msgs
-
-    // messagesEqual &&
-    // setSelectedResponseIdEqual &&
-    // selectedResponseIdEqual &&
-    // setMobilePreviewShownEqual &&
-    // navigateToViewEqual
-  );
+  return streamingStateEqual && promptBlocks && msgs;
 });

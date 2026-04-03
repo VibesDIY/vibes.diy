@@ -2,9 +2,9 @@ import React, { useEffect, useRef } from "react";
 import { useParams } from "react-router";
 // import type { ChatInterfaceProps } from "@vibes.diy/prompts";
 import MessageList from "./MessageList.js";
-import type { PromptError } from "@vibes.diy/call-ai-v2";
 import WelcomeScreen from "./WelcomeScreen.js";
 import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
+import { PromptError } from "@vibes.diy/api-types";
 
 function ChatInterface({
   promptState,

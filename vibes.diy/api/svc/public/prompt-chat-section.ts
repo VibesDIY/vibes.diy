@@ -10,31 +10,42 @@ import {
   pathOps,
   URI,
 } from "@adviser/cement";
-import { scopey } from "@adviser/scopey";
+import { Scope, scopey } from "@adviser/scopey";
 import {
   InMsgBase,
   isReqCreationPromptChatSection,
   isReqPromptApplicationChatSection,
+  isReqPromptFSChatSection,
+  isReqPromptFSUpdateChatSection,
+  isReqPromptImageChatSection,
+  isReqPromptLLMChatSection,
   LLMHeaders,
-  type ModelSelector,
+  type PromptStyle,
   MsgBase,
   parseArrayWarning,
   PromptAndBlockMsgs,
   ReqPromptChatSection,
   reqPromptChatSection,
+  ReqPromptFSChatSection,
+  ReqPromptLLMChatSection,
   ReqWithVerifiedAuth,
   ResPromptChatSection,
   SectionEvent,
   VibeFile,
   VibesDiyError,
   W3CWebSocketEvent,
+  isPromptReq,
+  isReqPromptFSSetChatSection,
+  parseArray,
+  vibeFile,
+  isVibeCodeBlock,
 } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { type } from "arktype";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
-import { and, eq } from "drizzle-orm/sql/expressions";
+import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import {
   createStatsCollector,
   createLineStream,
@@ -48,7 +59,6 @@ import {
   isCodeLine,
   LLMRequest,
   ChatMessage,
-  isPromptReq,
   CodeMsg,
   CodeBeginMsg,
   CodeLineMsg,
@@ -56,6 +66,8 @@ import {
   PromptContextSql,
   BlockEndMsg,
   isBlockStreamMsg,
+  CodeEndMsg,
+  BlockBeginMsg,
 } from "@vibes.diy/call-ai-v2";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
@@ -141,7 +153,7 @@ export async function handlePromptContext({
 }: {
   vctx: VibesApiSQLCtx;
   req: ReqWithVerifiedAuth<ReqPromptChatSection>;
-  resChat: { appSlug: string; userSlug: string; mode: "chat" | "app" | "img" };
+  resChat: ResChat;
   promptId: string;
   blockSeq: number;
   value: BlockEndMsg;
@@ -363,6 +375,451 @@ async function injectSystemPrompt(
   });
 }
 
+interface ResChat {
+  appSlug: string;
+  userSlug: string;
+  mode: PromptStyle;
+}
+
+async function getResChatFromMode(
+  vctx: VibesApiSQLCtx,
+  req: ReqWithVerifiedAuth<ReqPromptChatSection>,
+  orig: ReqPromptChatSection
+): Promise<Result<ResChat>> {
+  // let resChat!: ResChat;
+  // if (isReqCreationPromptChatSection(orig) || isReqPromptApplicationChatSection(orig) || isReqPromptImageChatSection(orig)) {
+  const iResChat = await vctx.sql.db
+    .select()
+    .from(vctx.sql.tables.chatContexts)
+    .where(
+      and(
+        eq(vctx.sql.tables.chatContexts.userId, req._auth.verifiedAuth.claims.userId),
+        eq(vctx.sql.tables.chatContexts.chatId, req.chatId)
+      )
+    )
+    .limit(1)
+    .then((r) => r[0]);
+  if (!iResChat) {
+    if (isReqCreationPromptChatSection(orig)) {
+      return Result.Err(`Creation Chat ID ${req.chatId} not found`);
+    } else if (isReqPromptApplicationChatSection(orig)) {
+      return Result.Err(`Application Chat ID ${req.chatId} not found`);
+    } else if (isReqPromptImageChatSection(orig)) {
+      return Result.Err(`Image Chat ID ${req.chatId} not found`);
+    }
+  }
+  const resChat = { ...iResChat, mode: orig.mode };
+  // }
+  return Result.Ok(resChat);
+}
+
+async function handlerLlmRequest({
+  scope,
+  ctx,
+  vctx,
+  blockSeq,
+  req,
+  resChat,
+  promptId,
+}: {
+  scope: Scope;
+  ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
+  vctx: VibesApiSQLCtx;
+  req: ReqWithVerifiedAuth<ReqPromptLLMChatSection>;
+  resChat: ResChat;
+  promptId: string;
+  blockSeq: number;
+}): Promise<{ res: Response; blockSeq: number }> {
+  await scope
+    .evalResult(async () => {
+      const r = await appendBlockEvent({
+        ctx,
+        vctx,
+        req,
+        promptId,
+        blockSeq: blockSeq,
+        evt: {
+          type: "prompt.req",
+          streamId: promptId,
+          chatId: req.chatId,
+          seq: blockSeq,
+          request: req.prompt,
+          timestamp: new Date(),
+        },
+      });
+      blockSeq++;
+      return r;
+    })
+    .do();
+
+  const modelId: string = await scope
+    .evalResult(async (): Promise<Result<string>> => {
+      const r = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
+      if (r.isErr()) {
+        return Result.Err(r);
+      }
+      switch (req.mode) {
+        case "chat":
+          return Result.Ok(req.prompt.model ?? r.Ok().chat.model.id);
+        case "app":
+          return Result.Ok(req.prompt.model ?? r.Ok().app.model.id);
+        case "img":
+          return Result.Ok(req.prompt.model ?? r.Ok().img.model.id);
+        default:
+          return Result.Err(`Unknown prompt mode: ${(req as { mode: string }).mode}`);
+      }
+    })
+    .do();
+
+  // console.log(promptId, "Pre-System request for promptId:");
+  const withSystemPrompt = await scope
+    .evalResult(async () => {
+      let withSystemPrompt = Result.Ok({
+        model: modelId,
+        messages: [] as ChatMessage[],
+      });
+      if (req.mode === "chat") {
+        withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? modelId);
+      } else if (req.mode === "app") {
+        withSystemPrompt = Result.Ok({
+          model: req.prompt.model ?? modelId,
+          messages: req.prompt.messages,
+        });
+      }
+      return withSystemPrompt;
+    })
+    .do();
+  // if (withSystemPrompt.isErr()) {
+  //   return Result.Err(withSystemPrompt);
+  // }
+  // console.log("Sending LLM request for promptId:", promptId);
+  const llmReq: LLMRequest & { headers: LLMHeaders } = {
+    // ...vctx.params.llm.default,
+    // model,
+    ...{
+      ...req.prompt,
+      messages: withSystemPrompt.messages,
+    },
+    ...vctx.params.llm.enforced,
+    model: withSystemPrompt.model,
+    headers: vctx.params.llm.headers,
+    logprobs: true,
+    stream: true,
+  };
+
+  // add system prompt here
+
+  // console.log(promptId, "LLM request for promptId:");
+  const res = await scope
+    .evalResult<Response>(async () => {
+      console.log(promptId, "Sending LLM request:", llmReq.model);
+      const res = await vctx.llmRequest(llmReq);
+      if (!res.ok) {
+        return Result.Err(`LLM request failed with status ${res.status} :${llmReq.model} : ${res.statusText}`);
+      }
+      if (!res.body) {
+        return Result.Err(`LLM request returned no body`);
+      }
+      return Result.Ok(res);
+    })
+    .do();
+
+  return { res, blockSeq };
+}
+
+async function handleEndMsg({
+  collectedMsgs,
+  vctx,
+  req,
+  ctx,
+  resChat,
+  promptId,
+  value,
+  blockSeq,
+}: {
+  collectedMsgs: PromptAndBlockMsgs[];
+  vctx: VibesApiSQLCtx;
+  req: ReqWithVerifiedAuth<ReqPromptChatSection>;
+  ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
+  resChat: ResChat;
+  promptId: string;
+  value: BlockEndMsg;
+  blockSeq: number;
+}) {
+  const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
+  if (r.isErr()) {
+    return Result.Err(r);
+  }
+  blockSeq = r.Ok().blockSeq;
+  const rEvt = await appendBlockEvent({
+    ctx,
+    vctx,
+    req,
+    promptId,
+    blockSeq: blockSeq++,
+    evt: { ...value, fsRef: r.Ok().fsRef.toValue() },
+    emitMode: "emit-only",
+  });
+  for (const conn of vctx.connections) {
+    const chatCtx = conn.chatIds.get(req.chatId);
+    const promptIdCtx = chatCtx?.promptIds.get(promptId);
+    if (promptIdCtx && chatCtx) {
+      chatCtx.promptIds.delete(promptId);
+    }
+  }
+  if (rEvt.isErr()) {
+    return Result.Err(rEvt);
+  }
+  return Result.Ok(blockSeq);
+}
+
+async function handleLlmResponse({
+  scope,
+  vctx,
+  req,
+  ctx,
+  res,
+  resChat,
+  promptId,
+  blockSeq,
+}: {
+  scope: Scope;
+  ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
+  vctx: VibesApiSQLCtx;
+  req: ReqWithVerifiedAuth<ReqPromptLLMChatSection>;
+  resChat: ResChat;
+  res: Response;
+  promptId: string;
+  blockSeq: number;
+}): Promise<number> {
+  await scope
+    .evalResult(async () => {
+      // console.log(promptId, "LLM response received for promptId: with status:", res.status, "statusText:", res.statusText);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const pipeline = res
+        .body!.pipeThrough(createStatsCollector(promptId, 1000))
+        .pipeThrough(createLineStream(promptId))
+        .pipeThrough(createDataStream(promptId))
+        .pipeThrough(createSseStream(promptId))
+        .pipeThrough(createDeltaStream(promptId, () => vctx.sthis.nextId(12).str))
+        .pipeThrough(createSectionsStream(promptId, () => vctx.sthis.nextId(12).str));
+
+      const reader = pipeline.getReader();
+
+      // const collectedMsgs: BlockMsgs[] = [];
+      let collectedMsgs!: PromptAndBlockMsgs[];
+      let chatCtx!: ChatIdCtx;
+      for (const conn of vctx.connections) {
+        const tChatCtx = conn.chatIds.get(req.chatId);
+        if (tChatCtx) {
+          chatCtx = tChatCtx;
+          const promptIdCtx = chatCtx.promptIds.get(promptId);
+          if (!promptIdCtx) {
+            collectedMsgs = [];
+            chatCtx.promptIds.set(promptId, {
+              blocks: collectedMsgs,
+              promptId,
+              type: "vibes.diy.section-event",
+              chatId: req.chatId,
+              blockSeq: 0,
+              timestamp: new Date(),
+            });
+          } else {
+            collectedMsgs = promptIdCtx.blocks;
+          }
+        }
+      }
+
+      if (!collectedMsgs) {
+        return Result.Err(`Chat context not found for chatId: ${req.chatId}`);
+      }
+      // const codeBlocks: CodeBlocks[] = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        if (!isBlockEnd(value)) {
+          if (!isBlockStreamMsg(value)) {
+            continue;
+          }
+          // console.log(promptId, "Received chunk for promptId:", value);
+          collectedMsgs.push(value);
+          const r = await appendBlockEvent({
+            ctx,
+            vctx,
+            req,
+            promptId,
+            blockSeq: blockSeq++,
+            evt: value,
+            emitMode: "emit-only",
+          });
+          if (r.isErr()) {
+            return Result.Err(r);
+          }
+        } else {
+          // console.log(promptId, "BlockEnd", value, collectedMsgs.length, req.chatId);
+          collectedMsgs.push(value);
+          const x = await handleEndMsg({ collectedMsgs, vctx, req, ctx, resChat, promptId, value, blockSeq });
+          if (x.isErr()) {
+            return Result.Err(x);
+          }
+          collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
+        }
+      }
+      return Result.Ok();
+    })
+    .do();
+  return blockSeq;
+}
+
+export async function handleFSPrompt({
+  scope,
+  vctx,
+  resChat,
+  req,
+  ctx,
+  promptId,
+}: {
+  scope: Scope;
+  vctx: VibesApiSQLCtx;
+  req: ReqWithVerifiedAuth<ReqPromptFSChatSection>;
+  ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
+  resChat: ResChat;
+  promptId: string;
+  blockSeq: number;
+}): Promise<Result<void>> {
+  let fileSystem!: VibeFile[];
+  if (isReqPromptFSSetChatSection(req)) {
+    fileSystem = req.fsSet;
+  } else if (isReqPromptFSUpdateChatSection(req)) {
+    const refFS: VibeFile[] = [];
+    if (!req.refFsId) {
+      const lastestPrompt = await vctx.sql.db
+        .select()
+        .from(vctx.sql.tables.promptContexts)
+        .innerJoin(vctx.sql.tables.apps, eq(vctx.sql.tables.apps.fsId, vctx.sql.tables.promptContexts.fsId))
+        .where(and(eq(vctx.sql.tables.promptContexts.chatId, req.chatId), eq(vctx.sql.tables.promptContexts.promptId, promptId)))
+        .orderBy(desc(vctx.sql.tables.promptContexts.created))
+        .limit(1)
+        .then((r) => r[0]);
+      if (lastestPrompt) {
+        refFS.push(...parseArray(lastestPrompt.Apps.fileSystem, vibeFile));
+      }
+    }
+    const mapFS = refFS.reduce(
+      (acc, file) => {
+        acc.set(file.filename, file);
+        return acc;
+      },
+      {} as Map<string, VibeFile>
+    );
+    req.fsUpdate.update.forEach((update) => {
+      mapFS.set(update.filename, update);
+    });
+    req.fsUpdate.remove?.forEach((item) => {
+      mapFS.delete(item.filename);
+    });
+    fileSystem = Array.from(mapFS.values());
+  }
+  await scope
+    .evalResult(async () => {
+      const sectionId = vctx.sthis.nextId(12).str;
+      let blockNr = 0;
+      const blockId = vctx.sthis.nextId(12).str;
+      let blockSeq = 0;
+      let bytes = 0;
+      const collectedMsgs: PromptAndBlockMsgs[] = [
+        {
+          type: "block.begin",
+          blockId,
+          streamId: promptId,
+          seq: blockSeq++,
+          blockNr: blockNr++,
+          timestamp: new Date(),
+        } satisfies BlockBeginMsg,
+        ...fileSystem.flatMap((file) => {
+          if (!isVibeCodeBlock(file)) {
+            return [];
+          }
+          return [
+            {
+              type: "block.code.begin",
+              sectionId,
+              lang: file.lang,
+              blockId: blockId,
+              streamId: promptId,
+              seq: blockSeq++,
+              blockNr,
+              timestamp: new Date(),
+            } satisfies CodeBeginMsg,
+            ...file.content.split("\n").map((line, lineNr) => {
+              bytes += line.length + 1; // +1 for the newline character that was removed by split
+              return {
+                type: "block.code.line",
+                sectionId,
+                blockId,
+                line,
+                streamId: promptId,
+                seq: blockSeq++,
+                timestamp: new Date(),
+                lang: file.lang,
+                blockNr,
+                lineNr,
+              } satisfies CodeLineMsg;
+            }),
+            {
+              type: "block.code.end",
+              sectionId,
+              blockId,
+              streamId: promptId,
+              seq: blockSeq++,
+              timestamp: new Date(),
+              lang: file.lang,
+              blockNr,
+            } as CodeEndMsg,
+          ];
+        }),
+      ];
+      const value = {
+        type: "block.end",
+        stats: {
+          toplevel: { lines: 0, bytes: 0 },
+          code: { lines: blockSeq, bytes },
+          image: { lines: 0, bytes: 0 },
+          total: { lines: blockSeq, bytes },
+        },
+        usage: {
+          given: [],
+          calculated: {
+            prompt_tokens: 0,
+            completion_tokens: 0,
+            total_tokens: 0,
+          },
+        },
+        blockId: blockId,
+        streamId: promptId,
+        seq: blockSeq++,
+        blockNr: blockNr,
+        timestamp: new Date(),
+      } satisfies BlockEndMsg;
+      collectedMsgs.push(value);
+
+      return handleEndMsg({
+        collectedMsgs,
+        vctx,
+        req,
+        ctx,
+        resChat,
+        promptId,
+        value,
+        blockSeq,
+      });
+    })
+    .do();
+  return Result.Ok();
+}
+
 export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPromptChatSection>, never | VibesDiyError> = {
   hash: "prompt-chat-section-handler",
   validate: unwrapMsgBase(async (msg: MsgBase) => {
@@ -382,49 +839,59 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
   handle: checkAuth(
     async (ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>) => {
       const req = ctx.validated.payload;
+      // is need to determine the chat type and get the appSlug and userSlug based on the chatId and the authenticated user
       const orig = (ctx.enRequest as MsgBase<ReqPromptChatSection>).payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      let resChat!: { appSlug: string; userSlug: string; mode: ModelSelector };
-      if (isReqCreationPromptChatSection(orig)) {
-        const iResChat = await vctx.sql.db
-          .select()
-          .from(vctx.sql.tables.chatContexts)
-          .where(
-            and(
-              eq(vctx.sql.tables.chatContexts.chatId, req.chatId),
-              eq(vctx.sql.tables.chatContexts.userId, req._auth.verifiedAuth.claims.userId)
-            )
-          )
-          .limit(1)
-          .then((r) => r[0]);
-        if (!iResChat) {
-          return Result.Err(`Creation Chat ID ${req.chatId} not found`);
-        }
-        resChat = { ...iResChat, mode: "chat" };
+      const rResChat = await getResChatFromMode(vctx, req, orig);
+      if (rResChat.isErr()) {
+        return Result.Err(rResChat);
       }
-      if (isReqPromptApplicationChatSection(orig)) {
-        const iResChat = await vctx.sql.db
-          .select()
-          .from(vctx.sql.tables.applicationChats)
-          .where(
-            and(
-              eq(vctx.sql.tables.applicationChats.userId, req._auth.verifiedAuth.claims.userId),
-              eq(vctx.sql.tables.applicationChats.chatId, req.chatId)
-            )
-          )
-          .limit(1)
-          .then((r) => r[0]);
-        if (!iResChat) {
-          return Result.Err(`Application Chat ID ${req.chatId} not found`);
-        }
-        resChat = { ...iResChat, mode: "app" };
+      const resChat = rResChat.Ok();
+
+      let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<void>>;
+      if (isReqPromptLLMChatSection(orig)) {
+        prompSectionAction = async (scope: Scope, blockSeq: number) => {
+          const res = await handlerLlmRequest({
+            ctx,
+            blockSeq,
+            scope,
+            vctx,
+            req: req as ReqWithVerifiedAuth<ReqPromptLLMChatSection>,
+            resChat,
+            promptId,
+          });
+          await handleLlmResponse({
+            scope,
+            vctx,
+            req: req as ReqWithVerifiedAuth<ReqPromptLLMChatSection>,
+            ctx,
+            res: res.res,
+            resChat,
+            promptId,
+            blockSeq: res.blockSeq,
+          });
+          return Result.Ok();
+        };
       }
-      if (!resChat) {
-        return Result.Err(
-          `Chat ID ${req.chatId} not found: ${req.mode}: ${isReqCreationPromptChatSection(orig) ? "creation" : isReqPromptApplicationChatSection(orig) ? "application" : "unknown"}`
-        );
+      if (isReqPromptFSChatSection(orig)) {
+        prompSectionAction = async (scope: Scope, blockSeq: number) => {
+          return handleFSPrompt({
+            scope,
+            vctx,
+            req: req as ReqWithVerifiedAuth<ReqPromptFSChatSection>,
+            ctx,
+            resChat,
+            promptId,
+            blockSeq,
+          });
+        };
       }
+
+      if (!prompSectionAction) {
+        return Result.Err(`Unsupported prompt chat section mode: ${orig.mode}`);
+      }
+
       const promptId = vctx.sthis.nextId(96 / 8).str;
       // needs to be sent before any block events
       // to allow the client to associate incoming blocks with the promptId
@@ -515,195 +982,10 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           .do();
 
         // console.log(promptId, "Pre prompt.req for promptId:");
-        await scope
-          .evalResult(async () => {
-            const r = await appendBlockEvent({
-              ctx,
-              vctx,
-              req,
-              promptId,
-              blockSeq: blockSeq,
-              evt: {
-                type: "prompt.req",
-                streamId: promptId,
-                chatId: req.chatId,
-                seq: blockSeq,
-                request: req.prompt,
-                timestamp: new Date(),
-              },
-            });
-            blockSeq++;
-            return r;
-          })
-          .do();
+        await prompSectionAction(scope, blockSeq);
 
-        const modelId: string = await scope
-          .evalResult(async (): Promise<Result<string>> => {
-            const r = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
-            if (r.isErr()) {
-              return Result.Err(r);
-            }
-            switch (req.mode) {
-              case "chat":
-                return Result.Ok(req.prompt.model ?? r.Ok().chat.model.id);
-              case "app":
-                return Result.Ok(req.prompt.model ?? r.Ok().app.model.id);
-              case "img":
-                return Result.Ok(req.prompt.model ?? r.Ok().img.model.id);
-              default:
-                return Result.Err(`Unknown prompt mode: ${(req as { mode: string }).mode}`);
-            }
-          })
-          .do();
-
-        // console.log(promptId, "Pre-System request for promptId:");
-        const withSystemPrompt = await scope
-          .evalResult(async () => {
-            let withSystemPrompt = Result.Ok({
-              model: modelId,
-              messages: [] as ChatMessage[],
-            });
-            if (req.mode === "chat") {
-              withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? modelId);
-            } else if (req.mode === "app") {
-              withSystemPrompt = Result.Ok({
-                model: req.prompt.model ?? modelId,
-                messages: req.prompt.messages,
-              });
-            }
-            return withSystemPrompt;
-          })
-          .do();
-        // if (withSystemPrompt.isErr()) {
-        //   return Result.Err(withSystemPrompt);
-        // }
-        // console.log("Sending LLM request for promptId:", promptId);
-        const llmReq: LLMRequest & { headers: LLMHeaders } = {
-          // ...vctx.params.llm.default,
-          // model,
-          ...{
-            ...req.prompt,
-            messages: withSystemPrompt.messages,
-          },
-          ...vctx.params.llm.enforced,
-          model: withSystemPrompt.model,
-          headers: vctx.params.llm.headers,
-          logprobs: true,
-          stream: true,
-        };
-
-        // add system prompt here
-
-        // console.log(promptId, "LLM request for promptId:");
-        const res = await scope
-          .evalResult<Response>(async () => {
-            console.log(promptId, "Sending LLM request:", llmReq.model);
-            const res = await vctx.llmRequest(llmReq);
-            if (!res.ok) {
-              return Result.Err(`LLM request failed with status ${res.status} :${llmReq.model} : ${res.statusText}`);
-            }
-            if (!res.body) {
-              return Result.Err(`LLM request returned no body`);
-            }
-            return Result.Ok(res);
-          })
-          .do();
-        await scope
-          .evalResult(async () => {
-            // console.log(promptId, "LLM response received for promptId: with status:", res.status, "statusText:", res.statusText);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const pipeline = res
-              .body!.pipeThrough(createStatsCollector(promptId, 1000))
-              .pipeThrough(createLineStream(promptId))
-              .pipeThrough(createDataStream(promptId))
-              .pipeThrough(createSseStream(promptId))
-              .pipeThrough(createDeltaStream(promptId, () => vctx.sthis.nextId(12).str))
-              .pipeThrough(createSectionsStream(promptId, () => vctx.sthis.nextId(12).str));
-
-            const reader = pipeline.getReader();
-
-            // const collectedMsgs: BlockMsgs[] = [];
-            let collectedMsgs!: PromptAndBlockMsgs[];
-            let chatCtx!: ChatIdCtx;
-            for (const conn of vctx.connections) {
-              const tChatCtx = conn.chatIds.get(req.chatId);
-              if (tChatCtx) {
-                chatCtx = tChatCtx;
-                const promptIdCtx = chatCtx.promptIds.get(promptId);
-                if (!promptIdCtx) {
-                  collectedMsgs = [];
-                  chatCtx.promptIds.set(promptId, {
-                    blocks: collectedMsgs,
-                    promptId,
-                    type: "vibes.diy.section-event",
-                    chatId: req.chatId,
-                    blockSeq: 0,
-                    timestamp: new Date(),
-                  });
-                } else {
-                  collectedMsgs = promptIdCtx.blocks;
-                }
-              }
-            }
-            if (!collectedMsgs) {
-              return Result.Err(`Chat context not found for chatId: ${req.chatId}`);
-            }
-            // const codeBlocks: CodeBlocks[] = [];
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) {
-                break;
-              }
-              if (!isBlockEnd(value)) {
-                if (!isBlockStreamMsg(value)) {
-                  continue;
-                }
-                // console.log(promptId, "Received chunk for promptId:", value);
-                collectedMsgs.push(value);
-                const r = await appendBlockEvent({
-                  ctx,
-                  vctx,
-                  req,
-                  promptId,
-                  blockSeq: blockSeq++,
-                  evt: value,
-                  emitMode: "emit-only",
-                });
-                if (r.isErr()) {
-                  return Result.Err(r);
-                }
-              } else {
-                // console.log(promptId, "BlockEnd", value, collectedMsgs.length, req.chatId);
-                collectedMsgs.push(value);
-                const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
-                if (r.isErr()) {
-                  return Result.Err(r);
-                }
-                const promptIdCtx = chatCtx.promptIds.get(promptId);
-                if (promptIdCtx) {
-                  chatCtx.promptIds.delete(promptId);
-                }
-                blockSeq = r.Ok().blockSeq;
-                const rEvt = await appendBlockEvent({
-                  ctx,
-                  vctx,
-                  req,
-                  promptId,
-                  blockSeq: blockSeq++,
-                  evt: { ...value, fsRef: r.Ok().fsRef.toValue() },
-                  emitMode: "emit-only",
-                });
-                if (rEvt.isErr()) {
-                  return Result.Err(rEvt);
-                }
-                collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
-              }
-            }
-            return Result.Ok();
-          })
-          .do();
-
-        // console.log(promptId, "Finished processing promptChatSection for promptId: with total blocks:", blockSeq);
+        // const res = await handlerLlmRequest({ scope, vctx, req, resChat, promptId });
+        // await handleLlmResponse({ scope, vctx, req, ctx, res: res.res, resChat, promptId, blockSeq: res.blockSeq });
       });
       return Result.Ok(EventoResult.Continue);
     }

@@ -54,26 +54,29 @@ export function App() {
     setApiData(newData);
   }, []);
 
-  const columns = useMemo(() => [
-    columnHelper.accessor("path", { header: "Path" }),
-    columnHelper.accessor("desc", { header: "Group" }),
-    columnHelper.accessor("active", {
-      header: "Active",
-      cell: (info) => (info.getValue() ? "✓" : ""),
-    }),
-    columnHelper.display({
-      id: "action",
-      header: "",
-      cell: (info) => {
-        const { path, key, active } = info.row.original;
-        return (
-          <button disabled={active} onClick={() => onSelect(path, key)}>
-            {key === "*" ? "Reset" : "Select"}
-          </button>
-        );
-      },
-    }),
-  ], []);
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("path", { header: "Path" }),
+      columnHelper.accessor("desc", { header: "Group" }),
+      columnHelper.accessor("active", {
+        header: "Active",
+        cell: (info) => (info.getValue() ? "✓" : ""),
+      }),
+      columnHelper.display({
+        id: "action",
+        header: "",
+        cell: (info) => {
+          const { path, key, active } = info.row.original;
+          return (
+            <button disabled={active} onClick={() => onSelect(path, key)}>
+              {key === "*" ? "Reset" : "Select"}
+            </button>
+          );
+        },
+      }),
+    ],
+    []
+  );
 
   const table = useReactTable({
     data,

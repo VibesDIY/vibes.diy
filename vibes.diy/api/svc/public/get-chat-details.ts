@@ -10,6 +10,7 @@ import {
   PromptAndBlockMsgs,
   ReqWithVerifiedAuth,
   parseArrayWarning,
+  isPromptReq,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { ensureLogger } from "@fireproof/core-runtime";
@@ -17,7 +18,6 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { eq, and, desc } from "drizzle-orm/sql/expressions";
-import { isPromptReq } from "@vibes.diy/call-ai-v2";
 
 export const getChatDetailsEvento: EventoHandler<
   W3CWebSocketEvent,

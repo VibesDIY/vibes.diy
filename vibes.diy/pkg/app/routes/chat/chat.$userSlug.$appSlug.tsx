@@ -3,7 +3,16 @@ import React, { useEffect, useState, useReducer, useRef, useCallback } from "rea
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 // import { useClerk } from "@clerk/react";
 import { processStream, BuildURI, URI } from "@adviser/cement";
-import { LLMChat, LLMChatEntry, PromptAndBlockMsgs, sectionEvent } from "@vibes.diy/api-types";
+import {
+  isPromptBlockBegin,
+  isPromptBlockEnd,
+  isPromptReq,
+  LLMChat,
+  LLMChatEntry,
+  PromptAndBlockMsgs,
+  PromptError,
+  sectionEvent,
+} from "@vibes.diy/api-types";
 import { type } from "arktype";
 import AppLayout from "../../components/AppLayout.js";
 import { BrutalistCard } from "@vibes.diy/base";
@@ -11,7 +20,7 @@ import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import type { ViewType } from "@vibes.diy/prompts";
-import { isCodeBegin, isPromptBlockBegin, isPromptBlockEnd, isPromptReq, PromptError } from "@vibes.diy/call-ai-v2";
+import { isCodeBegin } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
 import ChatInterface from "../../components/ChatInterface.js";
@@ -21,7 +30,7 @@ import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
-import { EditorState, isEditorStateEdit, isEditorStateToEdit } from "../../types/code-editor.js";
+import { EditorState, isEditorStateEdit } from "../../types/code-editor.js";
 
 interface VibeAppContextMenuProps {
   x: number;
@@ -308,7 +317,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     state: "idle",
   });
   const handleOnCode = useCallback((event: EditorState) => {
-    console.log(`handleOnCode:`, event);
+    // console.log(`handleOnCode:`, event);
     // if (isEditorStateEdit(event)) {
     setEditorState({ ...event });
     // } else {
@@ -317,13 +326,14 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   }, []);
 
   const handleOnCodeSave = useCallback(() => {
+    console.log(`Saving code changes...`, editorState);
     if (!chat) return;
     if (!isEditorStateEdit(editorState)) {
       return;
     }
     setEditorState({ state: "idle" });
     chat
-      .addFS([
+      .promptFS([
         {
           type: "code-block",
           filename: "/App.jsx",
@@ -339,7 +349,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           toast.success(`Code changes saved`);
         }
       });
-  }, [EditorState, chat]);
+  }, [editorState, chat]);
 
   useEffect(() => {
     if (inConstruction) return;
