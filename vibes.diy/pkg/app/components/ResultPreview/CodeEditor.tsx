@@ -62,27 +62,6 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
   return { code: retCode, complete, streamId };
 }
 
-// function whyDiffers(a: string, b: string): string {
-//   if (a === b) return "equal";
-//   if (a.length !== b.length) return `length differs: ${a.length} vs ${b.length}`;
-//   for (let i = 0; i < a.length; i++) {
-//     if (a[i] !== b[i]) {
-//       return `first diff at [${i}]: '${a[i]}'(${a.charCodeAt(i)}) vs '${b[i]}'(${b.charCodeAt(i)}) — context: "${a.slice(Math.max(0, i - 10), i + 10)}" vs "${b.slice(Math.max(0, i - 10), i + 10)}"`;
-//     }
-//   }
-//   return "unknown";
-// }
-
-// interface EditorMountRefs {
-//   monacoEditorRef: React.RefObject<editor.IStandaloneCodeEditor | null>;
-//   monacoApiRef: React.RefObject<Monaco | null>;
-//   highlighterRef: React.RefObject<HighlighterGeneric<BundledLanguage, BundledTheme> | null>;
-//   errorMarkersRef: React.RefObject<editor.IMarker[]>;
-//   userScrolledRef: React.RefObject<boolean>;
-//   disposablesRef: React.RefObject<{ dispose: () => void }[]>;
-//   onMounted: () => void;
-// }
-
 function updateCursorPosition(
   ref: React.RefObject<{
     editor: editor.IStandaloneCodeEditor;
@@ -96,7 +75,7 @@ function updateCursorPosition(
   if (ref.current) {
     cursorPosition = ref.current.editor.getPosition() ?? cursorPosition;
   }
-  console.log(`Updating editor state with cursor position:`, cursorPosition, `for editorState:`, editorState.state);
+  // console.log(`Updating editor state with cursor position:`, cursorPosition, `for editorState:`, editorState.state);
   if (isEditorStateToEdit(editorState, { onlyType: true })) {
     const model = ref.current?.editor.getModel();
     ref.current?.editor.setValue(editorState.buffer);
@@ -105,19 +84,19 @@ function updateCursorPosition(
         lineNumber: cursorPosition.lineNumber,
         column: cursorPosition.column,
       });
-      console.log(`Setting cursor position in Monaco editor...`, validPosition);
+      // console.log(`Setting cursor position in Monaco editor...`, validPosition);
       ref.current?.editor.setPosition(validPosition);
       ref.current?.editor.focus();
     }
     return { ...editorState, cursorPosition };
   }
   if (isEditorStateEdit(editorState, { onlyType: true })) {
-    console.log(
-      `Edit Updating editor state with cursor position:`,
-      cursorPosition,
-      `for editorState:`,
-      editorState.toEdit.onChange
-    );
+    // console.log(
+    //   `Edit Updating editor state with cursor position:`,
+    //   cursorPosition,
+    //   `for editorState:`,
+    //   editorState.toEdit.onChange
+    // );
     ref.current?.editor.setPosition(cursorPosition);
     return { ...editorState, toEdit: { ...editorState.toEdit, cursorPosition } };
   }
@@ -153,7 +132,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
   // stateRef.current = state;
 
   function setState(newState: EditorState) {
-    console.log(`Setting new editor state:`, newState);
+    // console.log(`Setting new editor state:`, newState);
     stateRef.current = newState;
     onCode?.(newState);
   }
@@ -187,7 +166,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
       return;
     }
     if (appCodeGenerating.code.length !== prevAppCode.code.length) {
-      console.log(`New code lines received:`, appCodeGenerating.code, prevAppCode.code);
+      // console.log(`New code lines received:`, appCodeGenerating.code, prevAppCode.code);
       setState({
         state: "more-lines",
         lines: appCodeGenerating.code,
@@ -231,7 +210,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
           highlighterRef.current = h as HighlighterGeneric<BundledLanguage, BundledTheme>;
         },
       }).then(() => {
-        console.log("Monaco editor is ready");
+        // console.log("Monaco editor is ready");
         setMonacoReady(true);
         monacoReadyRef.current = { editor, api: monaco };
       });
@@ -245,9 +224,9 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
     const s = stateRef.current;
     const newHash = fnv1a(newCode ?? "");
     if (isEditorStateToEdit(s) && newHash !== s.hash) {
-      console.log(`toEdit-to-edit state - 
-          new code hash ${newHash}:${newCode?.length} differs from 
-          current state hash ${s.hash}:${s.buffer.length}`);
+      // console.log(`toEdit-to-edit state -
+      //     new code hash ${newHash}:${newCode?.length} differs from
+      //     current state hash ${s.hash}:${s.buffer.length}`);
       setState(updateCursorPosition(monacoReadyRef, { state: "edit", toEdit: s, buffer: newCode ?? "", hash: newHash }));
     } else if (isEditorStateEdit(s)) {
       if (newHash === s.toEdit.hash) {
@@ -286,7 +265,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
           text: prefix + stateRef.current.newLines.join("\n"),
         },
       ]);
-      console.log(`Appending new code lines...`, stateRef.current.newLines, endPos);
+      // console.log(`Appending new code lines...`, stateRef.current.newLines, endPos);
       editor.revealLineInCenter(model.getFullModelRange().endLineNumber);
     }
     // if (isEditorStateToEdit(state)) {

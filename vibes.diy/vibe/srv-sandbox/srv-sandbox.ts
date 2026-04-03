@@ -30,8 +30,15 @@ import {
   EvtRuntimeReady,
   EvtAttachFPDb,
 } from "@vibes.diy/vibe-types";
-import { isResFPCloudTokenGrant, isSectionEvent, SectionEvent, VibesDiyApiIface } from "@vibes.diy/api-types";
-import { ChatMessage, CodeEndMsg, isCodeBegin, isCodeEnd, isCodeLine, isPromptReq, PromptReq } from "@vibes.diy/call-ai-v2";
+import {
+  isPromptReq,
+  isResFPCloudTokenGrant,
+  isSectionEvent,
+  PromptReq,
+  SectionEvent,
+  VibesDiyApiIface,
+} from "@vibes.diy/api-types";
+import { ChatMessage, CodeEndMsg, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
 import { buildSchemaSystemMessage } from "@vibes.diy/prompts";
 
 export class MessageEventEventoEnDecoder implements EventoEnDecoder<MessageEvent, unknown> {

@@ -10,7 +10,6 @@ import {
   msgBase,
   resError,
   ResOpenChat,
-  ReqPromptChatSection,
   ReqOpenChat,
   sectionEvent,
   ResPromptChatSection,
@@ -47,9 +46,6 @@ import {
   ResFPCloudToken,
   isResFPCloudToken,
   VibeFile,
-  isResAddFS,
-  ReqAddFS,
-  ResAddFS,
   ReqCreateInvite,
   ResCreateInvite,
   isResCreateInvite,
@@ -99,6 +95,13 @@ import {
   ReqListModels,
   ResListModels,
   isResListModels,
+  isPromptLLMStyle,
+  ReqPromptLLMChatSection,
+  FSUpdate,
+  isFSUpdate,
+  vibeFile,
+  ReqPromptFSSetChatSection,
+  ReqPromptFSUpdateChatSection,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -624,26 +627,74 @@ class LLMChatImpl implements LLMChat {
     // this.#activePromptIds = activePromptIds;
   }
 
-  addFS(fs: VibeFile[]) {
-    console.log("LLMChat addFS called for chatId:", this.chatId, this.tid, fs);
-    return this.api.request<ReqType<ReqAddFS>, ResAddFS>(
-      {
-        type: "vibes.diy.req-add-fs",
-        chatId: this.chatId,
-        outerTid: this.tid,
-        fs,
-      },
-      {
-        resMatch: isResAddFS,
+  // addFS(fs: VibeFile[]) {
+  //   console.log("LLMChat addFS called for chatId:", this.chatId, this.tid, fs);
+  //   return this.api.request<ReqType<ReqAddFS>, ResAddFS>(
+  //     {
+  //       type: "vibes.diy.req-add-fs",
+  //       chatId: this.chatId,
+  //       outerTid: this.tid,
+  //       fs,
+  //     },
+  //     {
+  //       resMatch: isResAddFS,
+  //     }
+  //   );
+  // }
+
+  async promptFS(req: FSUpdate | VibeFile[]): Promise<Result<ResPromptChatSection, VibesDiyError>> {
+    if (isFSUpdate(req)) {
+      return this.api.request<ReqType<ReqPromptFSUpdateChatSection>, ResPromptChatSection>(
+        {
+          type: "vibes.diy.req-prompt-chat-section",
+          mode: "fs-update",
+          chatId: this.res.chatId,
+          outerTid: this.tid, //leaking but necessary streaming
+          fsUpdate: req,
+        },
+        {
+          resMatch: isResPromptChatSection,
+        }
+      );
+    } else {
+      const possibleArray = vibeFile.array()(req);
+      if (possibleArray instanceof type.errors) {
+        return Result.Err({
+          type: "vibes.diy.error",
+          name: "VibesDiyError",
+          message: `Invalid VibeFile array`,
+          code: "invalid-vibefile-array",
+        } as VibesDiyError);
       }
-    );
+      return this.api.request<ReqType<ReqPromptFSSetChatSection>, ResPromptChatSection>(
+        {
+          type: "vibes.diy.req-prompt-chat-section",
+          mode: "fs-set",
+          chatId: this.res.chatId,
+          outerTid: this.tid, //leaking but necessary streaming
+          fsSet: possibleArray,
+        },
+        {
+          resMatch: isResPromptChatSection,
+        }
+      );
+    }
   }
 
-  async prompt(msg: LLMRequest) {
-    const res = await this.api.request<ReqType<ReqPromptChatSection>, ResPromptChatSection>(
+  async prompt(msg: LLMRequest): Promise<Result<ResPromptChatSection, VibesDiyError>> {
+    const mode = this.res.mode;
+    if (!isPromptLLMStyle(mode)) {
+      return Result.Err({
+        type: "vibes.diy.error",
+        name: "VibesDiyError",
+        message: `Chat mode ${this.res.mode} does not support prompting`,
+        code: "unsupported-chat-mode",
+      } as VibesDiyError);
+    }
+    const res = await this.api.request<ReqType<ReqPromptLLMChatSection>, ResPromptChatSection>(
       {
         type: "vibes.diy.req-prompt-chat-section",
-        mode: this.res.mode,
+        mode,
         chatId: this.res.chatId,
         outerTid: this.tid, //leaking but necessary streaming
         prompt: msg,
@@ -659,25 +710,6 @@ class LLMChatImpl implements LLMChat {
   }
   async close(_force = false) {
     this.#writer.close();
-    // console.log("LLMChat close called for chatId:", this.chatId, this.tid);
-    // if (this.#activePromptIds.size === 0 || force) {
-    //   console.log("LLMChat close called, active prompts:", this.chatId, this.#activePromptIds.size, "force:", force);
-    //   this.#writer.close().catch((err) => {
-    //     console.error("Error closing LLMChat section stream writer:", err);
-    //   });
-    //   return;
-    // }
-    // return new Promise<void>((resolve) => {
-    //   this.#activePromptIds.onDelete(() => {
-    //     if (this.#activePromptIds.size <= 1) {
-    //       console.log("LLMChat prompt closed, remaining active prompts:", this.chatId, this.#activePromptIds.size, this.#writer);
-    //       this.#writer.close().catch((err) => {
-    //           console.error("Error Active closing LLMChat section stream writer:", err);
-    //         })
-    //       .finally(resolve)
-    //     }
-    //   })
-    // })
   }
 }
 

@@ -14,13 +14,15 @@ import {
   WSSendProvider,
 } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
-import { BlockEndMsg, BlockMsgs, isBlockStreamMsg, isPromptBlockEnd, PromptMsgs } from "@vibes.diy/call-ai-v2";
+import { BlockEndMsg, BlockMsgs, isBlockStreamMsg } from "@vibes.diy/call-ai-v2";
 import {
+  isPromptBlockEnd,
   isResEnsureAppSlugOk,
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
   isResRequestAccessApproved,
   PromptAndBlockMsgs,
+  PromptMsgs,
   ReqPromptChatSection,
   ReqWithVerifiedAuth,
   SectionEvent,
@@ -28,7 +30,7 @@ import {
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { type } from "arktype";
-import type { Model } from "@vibes.diy/api-types";
+import type { Model, VibeFile } from "@vibes.diy/api-types";
 
 /** Minimal Model object for test fixtures */
 function m(id: string): Model {
@@ -453,6 +455,52 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     const rPrompt = await chat.prompt({
       messages: [{ role: "user", content: [{ type: "text", text: `use fixture response` }] }],
     });
+    expect(rPrompt.isOk()).toBe(true);
+    console.log("post-chat.prompt");
+    const firstStream = processStream(chat.sectionStream, async () => {
+      await sleep(100);
+      // console.log("Received message in llm query test", msg);
+    });
+
+    const rNext = await api.openChat({
+      chatId: chat.chatId,
+      mode: "chat",
+    });
+    // console.log("pre-processStream");
+    const nextFn = vi.fn();
+    Promise.all([
+      firstStream,
+      await processStream(rNext.Ok().sectionStream, async (msg) => {
+        nextFn(msg);
+        const blocks = nextFn.mock.calls.reduce((acc, call) => acc + call[0].blocks.length, 0);
+        // console.log("Received message in llm query test", blocks, "blocks so far", msg);
+        if (blocks >= 44) {
+          await rNext.Ok().close();
+        }
+        // if (msg.type === "vibes.diy.section-event" && msg.promptId === rPrompt.Ok().promptId && isPromptBlockEnd(msg.blocks[0])) {
+        //   rNext.Ok().close();
+        // }
+      }),
+    ]);
+    // console.log("LLM query test, received blocks:", nextFn.mock.calls.flatMap((call) => call[0].blocks))
+    expect(nextFn.mock.calls.flatMap((call) => call[0].blocks).length).toEqual(44);
+  });
+
+  it("promptFS", async () => {
+    const rChatRes = await api.openChat({
+      mode: "chat",
+    });
+    expect(rChatRes.isOk()).toBe(true);
+    const chat = rChatRes.Ok();
+    console.log("pre-chat.prompt");
+    const rPrompt = await chat.promptFS([
+      {
+        type: "code-block",
+        filename: "/App.jsx",
+        lang: "jsx",
+        content: `export default function App() { return <div>Hello VibesDiy</div>; } console.log('hello world');`,
+      } satisfies VibeFile,
+    ]);
     expect(rPrompt.isOk()).toBe(true);
     console.log("post-chat.prompt");
     const firstStream = processStream(chat.sectionStream, async () => {
