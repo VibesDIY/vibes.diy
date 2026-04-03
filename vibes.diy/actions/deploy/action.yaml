@@ -75,6 +75,9 @@ inputs:
   WORKSPACE_NPM_URL:
     description: "URL for self-hosted workspace npm packages (e.g. https://prod-v2.vibesdiy.net/vibe-pkg/)"
     required: false
+  VIBES_DIY_API_URL:
+    description: "Public API URL for vibes.diy WebSocket connection (e.g. https://vibes.diy/api)"
+    required: false
 
 runs:
   using: "composite"
@@ -114,6 +117,7 @@ runs:
         NEON_DATABASE_ADMIN_URL: ${{ inputs.NEON_DATABASE_ADMIN_URL }}
         MAX_APP_SLUG_PER_USER_ID: ${{ inputs.MAX_APP_SLUG_PER_USER_ID }}
         WORKSPACE_NPM_URL: ${{ inputs.WORKSPACE_NPM_URL }}
+        VIBES_DIY_API_URL: ${{ inputs.VIBES_DIY_API_URL }}
       run: |
         if [ "$DB_FLAVOUR" = "pg" ]; then
           NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" pnpm run drizzle:neon
@@ -140,7 +144,8 @@ runs:
           --fromEnv DB_FLAVOUR \
           --fromEnv NEON_DATABASE_URL \
           --fromEnv MAX_APP_SLUG_PER_USER_ID \
-          --fromEnv WORKSPACE_NPM_URL | \
+          --fromEnv WORKSPACE_NPM_URL \
+          --fromEnv VIBES_DIY_API_URL | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
 
