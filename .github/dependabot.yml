@@ -24,4 +24,4 @@ updates:
       - dependency-name: "vite"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@vitejs/plugin-react"
-        versions: [">5.2.0"]
+        update-types: ["version-update:semver-major"]
