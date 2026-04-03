@@ -233,36 +233,40 @@ export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): P
         try {
           const codes = await buildPackage(pkgName);
           for (const [outputName, code] of codes) {
-            const jsFileName =
-              outputName === "index" ? `_vibe-pkg/${pkgName}/index.js` : `_vibe-pkg/${pkgName}/${outputName}/index.js`;
-            bundle[jsFileName] = {
-              type: "asset",
-              fileName: jsFileName,
-              name: outputName,
-              names: [outputName],
-              originalFileName: "",
-              originalFileNames: [],
-              source: code,
-            } as never;
-            console.log(`📦 Emitted ${jsFileName} (${code.length} bytes)`);
+            for (const prefix of ["_vibe-pkg", "vibe-pkg"]) {
+              const jsFileName =
+                outputName === "index" ? `${prefix}/${pkgName}/index.js` : `${prefix}/${pkgName}/${outputName}/index.js`;
+              bundle[jsFileName] = {
+                type: "asset",
+                fileName: jsFileName,
+                name: outputName,
+                names: [outputName],
+                originalFileName: "",
+                originalFileNames: [],
+                source: code,
+              } as never;
+            }
+            console.log(`📦 Emitted _vibe-pkg + vibe-pkg ${pkgName}/${outputName} (${code.length} bytes)`);
           }
 
           // Copy non-JS/TS asset files (txt, md, json, …) into the same directory
           const assetFiles = await getAssetFiles(pkgPath);
           for (const relativePath of assetFiles) {
-            const assetFileName = `_vibe-pkg/${pkgName}/${relativePath}`;
             const content = await readFile(join(pkgPath, relativePath));
-            bundle[assetFileName] = {
-              type: "asset",
-              fileName: assetFileName,
-              name: relativePath,
-              names: [relativePath],
-              originalFileName: join(pkgPath, relativePath),
-              originalFileNames: [join(pkgPath, relativePath)],
-              // needsCodeReference: false,
-              source: content,
-            } as never;
-            console.log(`📄 Emitted ${assetFileName} (${content.length} bytes)`);
+            for (const prefix of ["_vibe-pkg", "vibe-pkg"]) {
+              const assetFileName = `${prefix}/${pkgName}/${relativePath}`;
+              bundle[assetFileName] = {
+                type: "asset",
+                fileName: assetFileName,
+                name: relativePath,
+                names: [relativePath],
+                originalFileName: join(pkgPath, relativePath),
+                originalFileNames: [join(pkgPath, relativePath)],
+                // needsCodeReference: false,
+                source: content,
+              } as never;
+            }
+            console.log(`📄 Emitted _vibe-pkg + vibe-pkg ${pkgName}/${relativePath} (${content.length} bytes)`);
           }
         } catch {
           console.log(`⏭️ Skipped ${pkgName}`);
