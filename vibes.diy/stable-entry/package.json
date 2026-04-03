@@ -11,20 +11,20 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.34",
-    "@cloudflare/workers-types": "^4.20260317.1",
-    "@vibes.diy/base": "workspace:*",
+    "@cloudflare/workers-types": "^4.20260402.1",
     "@tanstack/react-table": "^8.21.3",
+    "@vibes.diy/base": "workspace:*",
     "cookie": "^1.1.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.30.1",
     "@types/cookie": "^1.0.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.2",
-    "@cloudflare/vite-plugin": "^1.30.1",
     "@vitejs/plugin-react": "^6.0.1",
     "vite": "^7.3.1",
-    "wrangler": "^4.79.0"
+    "wrangler": "^4.80.0"
   }
 }
