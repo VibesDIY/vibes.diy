@@ -57,11 +57,6 @@ const vibesDiyApis = new KeyedResolvOnce();
 const lazySuperThis = Lazy(() => ensureSuperThis());
 
 function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
-  if (typeof window === "undefined") {
-    realCtx.webVars = webVars;
-    return <VibesDiyContext.Provider value={realCtx}>{children}</VibesDiyContext.Provider>;
-  }
-
   const clerk = useClerk();
 
   realCtx.webVars = webVars;
