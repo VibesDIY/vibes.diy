@@ -99,27 +99,7 @@ async function main(): Promise<Result<void>> {
 
   const membershipSummaryPayload = unwrapInspect([
     "sql",
-    `with memberships as (
-        select
-          a."userId" as owner_user_id,
-          a."userSlug",
-          a."appSlug",
-          elem->>'state' as state,
-          elem->'request'->>'userId' as member_user_id
-        from public."AppSettings" a
-        cross join lateral jsonb_array_elements(a.settings) as elem
-        where elem->>'type' = 'app.acl.active.request'
-          and elem->>'state' = 'approved'
-      ),
-      deduped as (
-        select distinct owner_user_id, "userSlug", "appSlug", member_user_id
-        from memberships
-      )
-      select
-        count(*)::int as membership_count,
-        count(distinct ("userSlug", "appSlug"))::int as shared_app_count,
-        count(distinct member_user_id)::int as distinct_member_count
-      from deduped`,
+    `select count(*)::int as membership_count, count(distinct ("userSlug", "appSlug"))::int as shared_app_count, count(distinct "foreignUserId")::int as distinct_member_count from public."RequestGrants" where state = 'approved'`,
   ]);
   const membershipSummary = ((membershipSummaryPayload["rows"] as Record<string, unknown>[]) ?? [])[0] ?? {
     membership_count: 0,
@@ -129,66 +109,13 @@ async function main(): Promise<Result<void>> {
 
   const membershipsByAppPayload = unwrapInspect([
     "sql",
-    `with memberships as (
-        select
-          a."userId" as owner_user_id,
-          a."userSlug",
-          a."appSlug",
-          elem->'request'->>'userId' as member_user_id
-        from public."AppSettings" a
-        cross join lateral jsonb_array_elements(a.settings) as elem
-        where elem->>'type' = 'app.acl.active.request'
-          and elem->>'state' = 'approved'
-      )
-      select
-        owner_user_id,
-        "userSlug",
-        "appSlug",
-        count(distinct member_user_id)::int as memberships
-      from memberships
-      group by 1, 2, 3
-      order by memberships desc, "userSlug", "appSlug"
-      limit 200`,
+    `select "userId" as owner_user_id, "userSlug", "appSlug", count(distinct "foreignUserId")::int as memberships from public."RequestGrants" where state = 'approved' group by 1, 2, 3 order by memberships desc, "userSlug", "appSlug" limit 200`,
   ]);
   const membershipsByApp = (membershipsByAppPayload["rows"] as Record<string, unknown>[]) ?? [];
 
   const membershipTimeseriesPayload = unwrapInspect([
     "sql",
-    `with days as (
-        select generate_series(current_date - interval '29 days', current_date, interval '1 day')::date as day
-      ),
-      memberships as (
-        select
-          a."userId" as owner_user_id,
-          a."userSlug",
-          a."appSlug",
-          elem->'request'->>'userId' as member_user_id,
-          (elem->'grant'->>'on')::timestamptz as created_at
-        from public."AppSettings" a
-        cross join lateral jsonb_array_elements(a.settings) as elem
-        where elem->>'type' = 'app.acl.active.request'
-          and elem->>'state' = 'approved'
-          and elem->'grant'->>'on' is not null
-      ),
-      first_memberships as (
-        select
-          owner_user_id,
-          "userSlug",
-          "appSlug",
-          member_user_id,
-          min(created_at)::date as first_day
-        from memberships
-        group by 1, 2, 3, 4
-      )
-      select
-        to_char(day, 'YYYY-MM-DD') as day,
-        (
-          select count(*)::int
-          from first_memberships fm
-          where fm.first_day <= day
-        ) as membership_count
-      from days
-      order by day`,
+    `with days as (select generate_series(current_date - interval '29 days', current_date, interval '1 day')::date as day) select to_char(day, 'YYYY-MM-DD') as day, (select count(*)::int from public."RequestGrants" rg where rg.state = 'approved' and rg.created::date <= day) as membership_count from days order by day`,
   ]);
   const membershipTimeseries = (membershipTimeseriesPayload["rows"] as Record<string, unknown>[]) ?? [];
 
