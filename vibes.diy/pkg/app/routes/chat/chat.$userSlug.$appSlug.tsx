@@ -6,9 +6,9 @@ import { processStream, BuildURI, URI } from "@adviser/cement";
 import { LLMChat, LLMChatEntry, PromptAndBlockMsgs, sectionEvent } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import AppLayout from "../../components/AppLayout.js";
-import { BrutalistCard } from "@vibes.diy/base";
 import SessionSidebar from "../../components/SessionSidebar.js";
-import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
+import { ChatInputRef } from "../../components/ChatInput.js";
+import ChatInputEditor from "../../components/ChatInputEditor.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import type { ViewType } from "@vibes.diy/prompts";
 import { isCodeBegin, isPromptBlockBegin, isPromptBlockEnd, isPromptReq, PromptError } from "@vibes.diy/call-ai-v2";
@@ -373,10 +373,11 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} />}
         previewPanel={<ResultPreview promptState={promptState} currentView={currentView} onCode={handleOnCode} />}
         chatInput={
-          <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
-            <ChatInput ref={chatInput} onSubmit={sendPrompt} promptProcessing={promptState.running} />
-          </BrutalistCard>
+          <ChatInputEditor ref={chatInput} onSubmit={sendPrompt} promptProcessing={promptState.running} />
         }
+        currentView={currentView}
+        navigateToView={navigateToView}
+        title={promptState.title}
         suggestionsComponent={undefined}
         mobilePreviewShown={mobilePreviewShown}
       />

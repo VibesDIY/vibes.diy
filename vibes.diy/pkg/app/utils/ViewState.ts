@@ -113,7 +113,7 @@ export function useViewState(promptState: PromptState): ViewState {
     preview: {
       enabled: !promptState.running || promptState.hasCode /* || !!(sessionId && sessionId.length > 0) */,
       icon: "app-icon",
-      label: "App",
+      label: "Chat",
       // loading: props.isIframeFetching,
       loading: false,
     },

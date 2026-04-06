@@ -594,11 +594,11 @@ button:hover .bg-glimmer,
 
 /* Grid background pattern inspired by catalog title page */
 .grid-background {
-  background-color: #d4d4d4;
+  background-color: var(--vibes-menu-bg, #CCCDC8);
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-size: 32px 32px;
   background-attachment: scroll;
 }
 
@@ -623,11 +623,11 @@ button:hover .bg-glimmer,
 }
 
 body:has(.page-grid-background) {
-  background-color: #d4d4d4;
+  background-color: var(--vibes-menu-bg, #CCCDC8);
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-size: 32px 32px;
   background-attachment: scroll;
 }
 

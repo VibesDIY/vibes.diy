@@ -61,10 +61,8 @@ function ChatInterface({
           />
         </div>
       ) : (
-        <div className="flex flex-grow flex-col justify-between">
-          <div className="flex-grow pb-4">
-            <WelcomeScreen />
-          </div>
+        <div className="flex flex-grow items-center justify-center">
+          <WelcomeScreen />
         </div>
       )}
     </div>

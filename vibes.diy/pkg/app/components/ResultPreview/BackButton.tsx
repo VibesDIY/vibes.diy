@@ -7,13 +7,20 @@ interface BackButtonProps {
 
 export const BackButton: React.FC<BackButtonProps> = ({ onBackClick }) => {
   return (
-    <button
-      type="button"
-      onClick={onBackClick}
-      className="bg-light-decorative-00 dark:bg-dark-decorative-00 text-light-primary dark:text-dark-primary hover:bg-light-decorative-01 dark:hover:bg-dark-decorative-01 flex items-center justify-center rounded-md p-2 transition-colors md:hidden"
-      aria-label="Back to chat"
-    >
-      <BackArrowIcon />
-    </button>
+    <div className="navbar-button-wrapper md:hidden">
+      <button
+        type="button"
+        onClick={onBackClick}
+        style={{ background: "var(--vibes-cream)" }}
+        aria-label="Back to chat"
+      >
+        <div className="navbar-button-icon">
+          <BackArrowIcon />
+        </div>
+        <div className="navbar-button-label" style={{ color: "var(--vibes-near-black)" }}>
+          Back
+        </div>
+      </button>
+    </div>
   );
 };

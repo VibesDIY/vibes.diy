@@ -1,5 +1,4 @@
 import React, { memo } from "react";
-import { MenuIcon } from "./ChatHeaderIcons.js";
 
 interface ChatHeaderContentProps {
   onOpenSidebar: () => void;
@@ -9,27 +8,25 @@ interface ChatHeaderContentProps {
   remixOf?: string;
 }
 
-function ChatHeaderContent({ onOpenSidebar, title, promptProcessing, codeReady, remixOf }: ChatHeaderContentProps) {
+function ChatHeaderContent({ title, remixOf }: ChatHeaderContentProps) {
   return (
-    <div className="flex h-full w-full items-center justify-between p-2 py-4">
-      <div className="flex items-center">
-        <button
-          type="button"
-          onClick={onOpenSidebar}
-          className="text-light-primary dark:text-dark-primary hover:text-accent-02-light dark:hover:text-accent-02-dark mr-3 px-2 py-4"
-          aria-label="Open chat history"
-        >
-          <MenuIcon />
-        </button>
-      </div>
-      <div className="text-light-primary dark:text-dark-primary text-center text-sm">
+    <div className="vibes-chrome-url-bar">
+      <span className="vibes-chrome-url-bar-icon">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <circle cx="8" cy="8" r="6" />
+          <line x1="8" y1="5" x2="8" y2="8.5" />
+          <circle cx="8" cy="11" r="0.5" fill="currentColor" stroke="none" />
+        </svg>
+      </span>
+      <span className="vibes-app-name-display">
         {remixOf ? (
           <>
             <a
               href={`https://${remixOf}.vibesdiy.app/`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-02-light dark:text-accent-02-dark hover:underline"
+              className="hover:underline"
+              style={{ color: "var(--vibes-blue)" }}
             >
               🔀
             </a>{" "}
@@ -38,32 +35,12 @@ function ChatHeaderContent({ onOpenSidebar, title, promptProcessing, codeReady, 
         ) : (
           title
         )}
-      </div>
-
-      {(codeReady || promptProcessing || title) && (
-        <div className="relative px-2">
-          {/* <a
-            href="/"
-            className="peer bg-accent-02-light dark:bg-accent-02-dark hover:bg-accent-03-light dark:hover:bg-accent-03-dark flex cursor-pointer items-center justify-center rounded-full p-2.5 text-white transition-colors"
-            aria-label="New Vibe"
-            title="New Vibe"
-          >
-            <span className="sr-only">New Vibe</span>
-            <EditIcon />
-          </a> */}
-          <span className="bg-dark-background-01 pointer-events-none absolute top-full right-0 z-100 mt-1 rounded-sm px-2 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity peer-hover:opacity-100">
-            New Vibe
-          </span>
-        </div>
-      )}
+      </span>
     </div>
   );
 }
 
-// Use React.memo with a custom comparison function to ensure the component only
-// re-renders when its props actually change
 export default memo(ChatHeaderContent, (prevProps, nextProps) => {
-  // Only re-render if title or onOpenSidebar changes
   return (
     prevProps.remixOf === nextProps.remixOf &&
     prevProps.onOpenSidebar === nextProps.onOpenSidebar &&

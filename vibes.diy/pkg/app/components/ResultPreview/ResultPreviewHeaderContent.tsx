@@ -1,7 +1,5 @@
-import React /*useEffect,*/ from "react"; // useEffect no longer needed here
+import React from "react";
 import type { ViewControlsType, ViewType } from "@vibes.diy/prompts";
-// import { useViewState } from '../../utils/ViewState'; // useViewState is now lifted to home.tsx
-import { BackButton } from "./BackButton.js";
 import { SaveButton } from "./SaveButton.js";
 import { ViewControls } from "./ViewControls.js";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
@@ -15,25 +13,8 @@ interface ResultPreviewHeaderContentProps {
   onCodeSave: () => void;
   openVibe?: () => void;
   onContextMenu?: (view: ViewType, e: React.MouseEvent) => void;
-  // // Props from useViewState (lifted to home.tsx)
-  // displayView: ViewType;
-  // navigateToView: (view: ViewType) => void;
-  // viewControls: ViewControlsType;
-  // showViewControls: boolean;
-  // previewReady: boolean;
-  // setMobilePreviewShown: (shown: boolean) => void;
-  // setUserClickedBack?: (clicked: boolean) => void;
-
-  // // Props required by usePublish and useSession hooks, and for BackButton logic
-  // code: string; // for usePublish
-  // promptProcessing: boolean; // for BackButton logic
-  // sessionId?: string; // for useSession, usePublish
-  // title: TitleSrc; // for useSession, usePublish
-
-  // // Props for code editing
-  // hasCodeChanges?: boolean;
-  // onCodeSave?: () => void;
   syntaxErrorCount?: number;
+  onClose?: () => void;
 }
 
 function ResultPreviewHeaderContent({
@@ -45,41 +26,42 @@ function ResultPreviewHeaderContent({
   syntaxErrorCount,
   openVibe,
   onContextMenu,
+  onClose,
 }: React.PropsWithChildren<ResultPreviewHeaderContentProps>) {
   return (
-    <div className="flex h-full w-full items-center px-2 py-4">
-      <div className="flex w-1/4 items-center justify-start">
-        <BackButton
-          onBackClick={() => {
-            console.log("click-back");
-          }}
-        />
-        <div className="h-10" />
+    <div className="vibes-header">
+      <div className="vibes-header-left">
+        {onClose && (
+          <button
+            type="button"
+            className="vibes-modal-close-dot"
+            onClick={onClose}
+            aria-label="Close panel"
+            title="Close"
+          />
+        )}
       </div>
 
-      {/* Center - View controls */}
-      <div className="flex w-1/2 items-center justify-center">
+      <div className="vibes-header-center" />
+
+      <div className="vibes-header-right">
         <ViewControls
           viewControls={viewControls}
-          currentView={currentView} // Use displayView for the currently active button highlight
+          currentView={currentView}
           onClick={navigateToView}
           onDoubleClick={(view) => view == "preview" && openVibe?.()}
           onContextMenu={onContextMenu}
         />
-      </div>
-      {/* Right side - Save and Publish buttons */}
-      <div className="flex w-1/4 items-center justify-end">
-        <div className="flex items-center gap-2">
-          {/* Save button - show when in code view and has changes */}
-          {currentView === "code" && hasCodeChanges && (
+        {currentView === "code" && hasCodeChanges && (
+          <div className="navbar-button-wrapper">
             <SaveButton
               onClick={onCodeSave}
               hasChanges={hasCodeChanges}
               syntaxErrorCount={syntaxErrorCount}
               testId="header-save-button"
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

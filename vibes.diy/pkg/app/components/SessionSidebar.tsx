@@ -31,11 +31,9 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const userEmail = user?.primaryEmailAddress?.emailAddress;
   const [showSignIn, setShowSignIn] = useState(false);
 
-  // Clerk doesn't have polling state like the old auth system
   const isPolling = false;
   const pollError = null;
 
-  // Handle clicks outside the sidebar to close it
   useEffect(() => {
     if (!isVisible) return;
 
@@ -45,158 +43,130 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
       }
     }
 
-    // Add event listener
     document.addEventListener("mousedown", handleClickOutside);
-
-    // Clean up event listener
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isVisible, onClose]);
 
-  // Conditionally render content but keep animation classes
   return (
-    <div
-      ref={sidebarRef}
-      data-testid="session-sidebar"
-      className={`bg-light-background-00 dark:bg-dark-background-00 fixed top-0 left-0 z-10 h-full shadow-lg transition-all duration-300 ${
-        isVisible ? "w-64 translate-x-0" : "w-64 -translate-x-full"
-      }`}
-    >
-      <div className="flex h-full flex-col overflow-auto pt-32">
-        <nav className="flex-grow p-4">
-          <ul className="space-y-4">
-            <li>
-              <a
-                href="/"
-                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-              >
-                <HomeIcon className="text-accent-01 mr-3 h-5 w-5" />
-                <span>Home</span>
-              </a>
-            </li>
-            {devBox && (
+    <>
+      {/* Overlay */}
+      <div
+        className={`vibes-sidebar-overlay ${isVisible ? "active" : ""}`}
+        onClick={onClose}
+      />
+
+      {/* Sidebar panel */}
+      <div
+        ref={sidebarRef}
+        data-testid="session-sidebar"
+        className={`vibes-sidebar ${isVisible ? "active" : ""}`}
+      >
+        <div className="vibes-sidebar-inner">
+          <nav className="vibes-sidebar-nav">
+            <ul className="vibes-sidebar-list">
               <li>
-                <Link
-                  to={`/chat/${devBox.userSlug}/${devBox.appSlug}`}
-                  onClick={() => onClose()}
-                  className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-                >
-                  <DevBoxIcon className="text-accent-01 mr-3 h-5 w-5" />
-                  <span className="flex flex-col min-w-0">
-                    <span>DevBox</span>
-                    <span className="text-xs font-normal truncate opacity-60">
-                      {devBox.userSlug}/{devBox.appSlug}
+                <a href="/" className="vibes-sidebar-card">
+                  <HomeIcon className="vibes-sidebar-icon icon-home" />
+                  <span>Home</span>
+                </a>
+              </li>
+              {devBox && (
+                <li>
+                  <Link
+                    to={`/chat/${devBox.userSlug}/${devBox.appSlug}`}
+                    onClick={() => onClose()}
+                    className="vibes-sidebar-card"
+                  >
+                    <DevBoxIcon className="vibes-sidebar-icon icon-devbox" />
+                    <span className="vibes-sidebar-card-col">
+                      <span>DevBox</span>
+                      <span className="vibes-sidebar-card-meta">
+                        {devBox.userSlug}/{devBox.appSlug}
+                      </span>
                     </span>
-                  </span>
+                  </Link>
+                </li>
+              )}
+              <li>
+                <Link to="/vibes/mine" onClick={() => onClose()} className="vibes-sidebar-card">
+                  <StarIcon className="vibes-sidebar-icon icon-vibes" />
+                  <span>My Vibes</span>
                 </Link>
               </li>
-            )}
-            <li>
-              <Link
-                to="/vibes/mine"
-                onClick={() => onClose()}
-                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-              >
-                <StarIcon className="text-accent-01 mr-3 h-5 w-5" />
-                <span>My Vibes</span>
-              </Link>
-            </li>
-            <li>
-              {isAuthenticated ? (
-                // SETTINGS
-                <Link
-                  to="/settings"
-                  onClick={() => onClose()}
-                  className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-                >
-                  <GearIcon className="text-accent-01 mr-3 h-5 w-5" />
-                  <span>Settings</span>
-                </Link>
-              ) : null}
-            </li>
-            <li>
-              <Link
-                to="/about"
-                onClick={() => onClose()}
-                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-              >
-                <InfoIcon className="text-accent-01 mr-3 h-5 w-5" />
-                <span>About</span>
-              </Link>
-            </li>
-          </ul>
-        </nav>
-
-        {/* Login Status Indicator */}
-        <div className="mt-auto">
-          <nav className="flex-grow p-2">
-            <ul className="space-y-2">
-              {isLoading ? (
-                // LOADING
-                <li className="flex items-center rounded-md px-4 py-3 text-sm font-medium text-gray-400">
-                  <span className="animate-pulse">Loading...</span>
-                </li>
-              ) : isAuthenticated ? (
-                // AUTHENTICATED - Show "Logout {email}"
+              {isAuthenticated && (
                 <li>
+                  <Link to="/settings" onClick={() => onClose()} className="vibes-sidebar-card">
+                    <GearIcon className="vibes-sidebar-icon icon-settings" />
+                    <span>Settings</span>
+                  </Link>
+                </li>
+              )}
+              <li>
+                <Link to="/about" onClick={() => onClose()} className="vibes-sidebar-card">
+                  <InfoIcon className="vibes-sidebar-icon icon-about" />
+                  <span>About</span>
+                </Link>
+              </li>
+            </ul>
+          </nav>
+
+          {/* Auth section at bottom */}
+          <div className="vibes-sidebar-auth">
+            {isLoading ? (
+              <div className="vibes-sidebar-card" style={{ opacity: 0.5 }}>
+                <span className="animate-pulse">Loading...</span>
+              </div>
+            ) : isAuthenticated ? (
+              <>
+                <div className="vibes-sidebar-account">
+                  <div className="vibes-sidebar-account-email">{userEmail}</div>
                   <button
                     type="button"
+                    className="vibes-sidebar-signout"
                     onClick={async () => {
                       await clerk.signOut();
                       onClose();
                     }}
-                    className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-bold tracking-wide border-2 border-[var(--vibes-border-primary)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
                   >
-                    <span>Logout {userEmail}</span>
+                    Sign out
                   </button>
-                </li>
-              ) : isPolling ? (
-                <li>
-                  <div className="flex flex-col gap-1 px-4 py-3 text-sm font-medium">
-                    <span className="">Opening log in window...</span>
-                    <span className="font-small text-xs italic">
-                      Don't see it? Please check your browser for a blocked pop-up window
-                    </span>
-                  </div>
-                </li>
-              ) : (
-                <>
-                  <li>
-                    <div className="flex flex-col px-1 py-1 text-sm font-medium">
-                      {pollError && <span className="font-small text-xs text-gray-400 italic">{pollError}</span>}
-                    </div>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => setShowSignIn(true)}
-                      className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-bold tracking-wide border-2 border-[var(--vibes-border-primary)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-                    >
-                      <span>Log in</span>
-                    </button>
-                  </li>
-                </>
-              )}
-            </ul>
-          </nav>
+                </div>
+              </>
+            ) : isPolling ? (
+              <div className="vibes-sidebar-card" style={{ opacity: 0.7 }}>
+                <span>Opening log in window...</span>
+              </div>
+            ) : (
+              <>
+                {pollError && <div className="vibes-sidebar-card-meta">{pollError}</div>}
+                <button
+                  type="button"
+                  onClick={() => setShowSignIn(true)}
+                  className="vibes-sidebar-card vibes-sidebar-login-btn"
+                >
+                  <span>Log in</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
-      {showSignIn &&
-        createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowSignIn(false)}>
-            <div onClick={(e) => e.stopPropagation()}>
-              <SignIn routing="hash" forceRedirectUrl={window.location.href} />
-            </div>
-          </div>,
-          document.body
-        )}
-    </div>
+        {showSignIn &&
+          createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowSignIn(false)}>
+              <div onClick={(e) => e.stopPropagation()}>
+                <SignIn routing="hash" forceRedirectUrl={window.location.href} />
+              </div>
+            </div>,
+            document.body
+          )}
+      </div>
+    </>
   );
 }
 
-// Export a memoized version of the component to prevent unnecessary re-renders
 export default memo(SessionSidebar, (prevProps, nextProps) => {
   return (
     prevProps.isVisible === nextProps.isVisible &&

@@ -78,11 +78,11 @@
 
 /* Grid background pattern inspired by catalog title page */
 .grid-background {
-  background-color: #d4d4d4;
+  background-color: var(--vibes-menu-bg, #CCCDC8);
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-size: 32px 32px;
   background-attachment: scroll;
 }
 
@@ -107,11 +107,11 @@
 }
 
 body:has(.page-grid-background) {
-  background-color: #d4d4d4;
+  background-color: var(--vibes-menu-bg, #CCCDC8);
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-size: 32px 32px;
   background-attachment: scroll;
 }
 
@@ -170,4 +170,879 @@ body:has(.page-grid-background) {
     color: var(--color-dark-primary);
     border-color: var(--color-dark-primary);
   }
+}
+
+/* ============================================
+   VIBES BORDER WRAPPER - Editor-style inset layout
+   Matches vibes-cli editor.html black-border pattern
+   ============================================ */
+
+.vibes-border-inner {
+  height: calc(100% - 20px);
+  width: calc(100% - 20px);
+  margin: 10px;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--vibes-menu-bg, #CCCDC8);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 32px 32px;
+  border: 2px solid var(--vibes-near-black);
+}
+
+/* Floating modal animations */
+@keyframes vibes-modal-open {
+  from {
+    opacity: 0;
+    transform: translate(40%, 40%) scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes vibes-modal-close {
+  from {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(40%, 40%) scale(0.3);
+  }
+}
+
+/* Floating modal panel */
+.vibes-floating-modal {
+  position: absolute;
+  width: 480px;
+  height: 70%;
+  min-height: 300px;
+  max-height: calc(100% - 40px);
+  border-radius: 10px;
+  border: 2px solid var(--vibes-near-black);
+  background-color: var(--vibes-menu-bg, #CCCDC8);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 32px 32px;
+  box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: vibes-modal-open 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-origin: bottom right;
+}
+
+.vibes-floating-modal.closing {
+  animation: vibes-modal-close 0.25s ease-in both;
+  transform-origin: bottom right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vibes-floating-modal,
+  .vibes-floating-modal.closing {
+    animation: none !important;
+  }
+}
+
+.vibes-floating-modal-header {
+  flex-shrink: 0;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Mac-style red close dot */
+.vibes-modal-close-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ED6A5E;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin-left: 14px;
+  margin-top: -22px;
+  flex-shrink: 0;
+  transition: filter 0.15s ease;
+}
+
+.vibes-modal-close-dot:hover {
+  filter: brightness(1.15);
+}
+
+.vibes-modal-close-dot:active {
+  filter: brightness(0.85);
+}
+
+/* Pin/unpin button */
+.vibes-pin-btn {
+  width: 36px;
+  height: 36px;
+  align-self: center;
+  border: none;
+  background: transparent;
+  color: var(--vibes-near-black);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+.vibes-pin-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+
+.vibes-floating-modal-content {
+  flex: 1;
+  overflow: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .vibes-border-inner {
+    background-color: #2a2a2a;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    border-color: var(--vibes-gray-mid);
+  }
+  .vibes-floating-modal {
+    background-color: #2a2a2a;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    border-color: var(--vibes-gray-mid);
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 0.25);
+  }
+}
+
+
+/* ============================================
+   VIBES HEADER - Editor-style navbar
+   Matches vibes-cli editor.html header pattern
+   ============================================ */
+
+.vibes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  background: var(--vibes-cream);
+  border-bottom: 1px solid black;
+  height: 64px;
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0px 1px 0px 0px var(--vibes-cream);
+  width: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  .vibes-header {
+    background: var(--vibes-near-black);
+    border-bottom-color: var(--vibes-gray-mid);
+    box-shadow: 0px 1px 0px 0px var(--vibes-near-black);
+  }
+}
+
+.vibes-header-left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.vibes-header-center {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+}
+
+.vibes-header-right {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* Expand-on-hover navbar buttons */
+.navbar-button-wrapper {
+  display: flex;
+  align-items: center;
+  height: 63px;
+}
+
+.navbar-button-wrapper > button {
+  display: flex;
+  align-items: center;
+  height: 63px;
+  width: 64px;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+
+.navbar-button-wrapper > button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.navbar-button-icon {
+  width: 64px;
+  height: 63px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+}
+
+.navbar-button-label {
+  color: var(--vibes-cream);
+  font-size: 14px;
+  font-weight: bold;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0;
+  width: 0;
+  padding: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  display: inline-block;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.navbar-button-wrapper:hover > button:not(:disabled) {
+  width: 180px !important;
+  justify-content: flex-start !important;
+}
+
+.navbar-button-wrapper:hover > button:not(:disabled) > .navbar-button-label {
+  opacity: 1 !important;
+  width: auto !important;
+  max-width: 120px !important;
+  padding: 0 16px 0 4px !important;
+}
+
+.navbar-button-wrapper:hover > button:not(:disabled) > .navbar-button-icon {
+  animation: navbar-wiggle 0.6s ease-in-out infinite;
+}
+
+@keyframes navbar-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+/* Active button indicator — uses darkened version of the button color */
+.navbar-button-wrapper.active > button {
+  box-shadow: inset 0 -4px 0 0 var(--navbar-active-color, rgba(0,0,0,0.3));
+}
+
+/* Staggered entrance animation */
+@keyframes navbar-stagger-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.vibes-header-right.stagger-in > .navbar-button-wrapper {
+  animation: navbar-stagger-in 250ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  will-change: opacity, transform;
+}
+
+.vibes-header-right.stagger-in > .navbar-button-wrapper:nth-child(1) { animation-delay: 0ms; }
+.vibes-header-right.stagger-in > .navbar-button-wrapper:nth-child(2) { animation-delay: 60ms; }
+.vibes-header-right.stagger-in > .navbar-button-wrapper:nth-child(3) { animation-delay: 120ms; }
+.vibes-header-right.stagger-in > .navbar-button-wrapper:nth-child(4) { animation-delay: 180ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vibes-header-right.stagger-in > .navbar-button-wrapper { animation: none !important; }
+  .navbar-button-wrapper:hover > button:not(:disabled) > .navbar-button-icon { animation: none !important; }
+}
+
+/* ============================================
+   VIBES CHAT PANEL - Editor-style chat
+   Matches vibes-cli editor.html chat panel
+   ============================================ */
+
+/* Vibes pill wrap in header */
+.vibes-pill-fixed {
+  position: fixed;
+  top: -9px;
+  left: 4px;
+  z-index: 960;
+}
+
+.vibes-pill-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 63px;
+  margin-top: -31px;
+}
+
+/* Chat header button (menu) */
+.vibes-chat-header-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--vibes-near-black);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.vibes-chat-header-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  .vibes-chat-header-btn {
+    color: var(--vibes-cream);
+  }
+  .vibes-chat-header-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Chrome URL bar */
+.vibes-chrome-url-bar {
+  display: flex;
+  width: 100%;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.vibes-chrome-url-bar:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  .vibes-chrome-url-bar {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .vibes-chrome-url-bar:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+.vibes-chrome-url-bar-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vibes-chrome-url-bar-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.vibes-app-name-display {
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  text-align: center;
+  color: var(--vibes-near-black);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+  opacity: 0.7;
+}
+
+@media (prefers-color-scheme: dark) {
+  .vibes-app-name-display {
+    color: var(--vibes-cream);
+  }
+}
+
+/* ============================================
+   CHAT MESSAGES - Editor-style message area
+   ============================================ */
+
+.vibes-chat-messages {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 100%;
+}
+
+/* Base bubble */
+.vibes-chat-bubble {
+  max-width: 85%;
+  padding: 0.65rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  border: 2px solid var(--vibes-near-black);
+  position: relative;
+}
+
+/* User bubble */
+.vibes-chat-bubble-user {
+  align-self: flex-end;
+  background: var(--vibes-cream);
+  color: var(--vibes-near-black);
+  box-shadow: 4px 4px 0px 0px var(--vibes-blue), 4px 4px 0px 2px var(--vibes-near-black);
+  border-bottom-right-radius: 4px;
+}
+
+/* Assistant / AI bubble */
+.vibes-chat-bubble-assistant {
+  align-self: flex-start;
+  background: var(--vibes-cream);
+  color: var(--vibes-near-black);
+  box-shadow: 4px 4px 0px 0px var(--vibes-yellow), 4px 4px 0px 2px var(--vibes-near-black);
+  border-bottom-left-radius: 4px;
+}
+
+/* Error bubble */
+.vibes-chat-bubble-error {
+  align-self: center;
+  background: var(--vibes-cream);
+  color: var(--vibes-red);
+  box-shadow: 4px 4px 0px 0px var(--vibes-red), 4px 4px 0px 2px var(--vibes-near-black);
+  font-size: 0.75rem;
+}
+
+/* Retry button inside error bubble */
+.vibes-chat-retry-btn {
+  margin-top: 0.5rem;
+  background: var(--vibes-cream);
+  border: 2px solid var(--vibes-near-black);
+  color: var(--vibes-red);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 3px 3px 0px 0px var(--vibes-red), 3px 3px 0px 2px var(--vibes-near-black);
+}
+
+.vibes-chat-retry-btn:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px var(--vibes-red), 1px 1px 0px 2px var(--vibes-near-black);
+}
+
+.vibes-chat-retry-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+/* ============================================
+   CHAT COMPOSER - Editor-style dark input area
+   ============================================ */
+
+.vibes-chat-composer {
+  border-top: 2px solid var(--vibes-near-black);
+  background: var(--vibes-menu-bg, #CCCDC8);
+  padding: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .vibes-chat-composer {
+    background: var(--vibes-near-black);
+    border-top-color: var(--vibes-gray-mid);
+  }
+}
+
+.vibes-composer-box {
+  background: var(--vibes-near-black);
+  border-radius: 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.vibes-composer-inner {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.5rem;
+  transition: padding 0.2s ease;
+}
+
+/* Expanded state on focus */
+.vibes-composer-box:focus-within .vibes-composer-inner {
+  flex-wrap: wrap;
+  padding: 0.5rem;
+}
+
+.vibes-chat-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--vibes-cream);
+  padding: 0.35rem 0.25rem;
+  font-size: 0.875rem;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  min-height: 32px;
+  max-height: 140px;
+  line-height: 1.4;
+  transition: min-height 0.2s ease, font-size 0.2s ease;
+  order: 0;
+}
+
+.vibes-chat-input::placeholder {
+  color: #666;
+}
+
+.vibes-chat-input:focus {
+  box-shadow: none;
+}
+
+.vibes-composer-box:focus-within .vibes-chat-input {
+  width: 100%;
+  flex: none;
+  order: -1;
+  min-height: 56px;
+  font-size: 1rem;
+  padding: 0.25rem 0.25rem 0.35rem;
+}
+
+.vibes-composer-box:focus-within .vibes-chat-input::placeholder {
+  font-size: 1rem;
+}
+
+.vibes-chat-btn-spacer {
+  display: none;
+}
+
+.vibes-composer-box:focus-within .vibes-chat-btn-spacer {
+  display: block;
+  flex: 1;
+}
+
+/* Send button */
+.vibes-chat-send {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.vibes-chat-send:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.vibes-chat-send:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.vibes-chat-send svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ============================================
+   VIBES SIDEBAR - Editor-style side panel
+   ============================================ */
+
+.vibes-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 900;
+}
+
+.vibes-sidebar-overlay.active {
+  display: block;
+}
+
+.vibes-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  max-width: 90vw;
+  background: white;
+  border: 2px solid var(--vibes-near-black);
+  box-shadow: none;
+  z-index: 901;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vibes-sidebar.active {
+  transform: translateX(0);
+}
+
+.vibes-sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 6rem 1.5rem 1.5rem;
+}
+
+.vibes-sidebar-nav {
+  flex: 1;
+}
+
+.vibes-sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vibes-sidebar-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--vibes-cream);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: 3px solid transparent;
+  border-radius: 8px;
+  color: var(--vibes-near-black);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.vibes-sidebar-card:hover {
+  background: var(--vibes-cream);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.vibes-sidebar-card:active {
+  background: #f5f5e8;
+}
+
+/* Pastel right accent per item */
+.vibes-sidebar-card:has(.icon-home) { border-right-color: #a0c4a0; }
+.vibes-sidebar-card:has(.icon-devbox) { border-right-color: #8ca0b3; }
+.vibes-sidebar-card:has(.icon-vibes) { border-right-color: #d4a0d4; }
+.vibes-sidebar-card:has(.icon-settings) { border-right-color: #b3b08c; }
+.vibes-sidebar-card:has(.icon-about) { border-right-color: #a0b3c4; }
+
+.vibes-sidebar-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  color: var(--vibes-cream);
+  background: var(--vibes-near-black);
+  border-radius: 50%;
+  padding: 6px;
+}
+
+.vibes-sidebar-card-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.vibes-sidebar-card-meta {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--vibes-gray-mid);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Auth section */
+.vibes-sidebar-auth {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--vibes-near-black);
+}
+
+.vibes-sidebar-account {
+  padding: 0.75rem 0;
+}
+
+.vibes-sidebar-account-email {
+  font-size: 0.8125rem;
+  color: var(--vibes-gray-mid);
+  margin-bottom: 0.25rem;
+}
+
+.vibes-sidebar-signout {
+  font-size: 0.75rem;
+  color: var(--vibes-gray-mid);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
+}
+
+.vibes-sidebar-signout:hover {
+  color: var(--vibes-red);
+}
+
+.vibes-sidebar-login-btn {
+  width: 100%;
+  justify-content: center;
+  background: var(--vibes-near-black);
+  border: 2px solid var(--vibes-near-black) !important;
+  color: var(--vibes-cream);
+  box-shadow: 3px 3px 0 0 #8ca0b3;
+}
+
+.vibes-sidebar-login-btn:hover {
+  box-shadow: 1px 1px 0 0 #8ca0b3;
+  transform: translate(2px, 2px);
+  background: var(--vibes-near-black) !important;
+}
+
+/* ============================================
+   MOBILE / DESKTOP visibility
+   ============================================ */
+
+/* Mobile layout: visible only below 768px */
+.vibes-mobile-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 20px);
+  width: calc(100% - 20px);
+  margin: 10px;
+  border-radius: 10px;
+  border: 2px solid var(--vibes-near-black);
+  overflow: hidden;
+  background-color: var(--vibes-menu-bg, #CCCDC8);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Desktop layout: hidden below 768px */
+.vibes-desktop-layout {
+  display: contents;
+}
+
+@media (min-width: 768px) {
+  .vibes-mobile-layout { display: none; }
+}
+
+@media (max-width: 767px) {
+  .vibes-desktop-layout { display: none; }
+  .vibes-pill-fixed { display: none; }
+}
+
+.vibes-pill-fixed-mobile {
+  position: fixed;
+  top: 8px;
+  left: 18px;
+  z-index: 960;
+}
+
+@media (min-width: 768px) {
+  .vibes-pill-fixed-mobile { display: none; }
+}
+
+/* Mobile header uses .vibes-header shared styles */
+.vibes-mobile-title {
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--vibes-near-black);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* Mobile tab bar */
+.vibes-mobile-tabs {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  background: var(--vibes-cream);
+  border-bottom: 1px solid var(--vibes-near-black);
+}
+
+.vibes-mobile-tabs .navbar-button-wrapper {
+  height: 48px;
+}
+
+.vibes-mobile-tabs .navbar-button-wrapper > button {
+  height: 48px;
+  width: 48px;
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.vibes-mobile-tabs .navbar-button-icon {
+  width: 48px;
+  height: 48px;
+}
+
+/* Mobile content area */
+.vibes-mobile-content {
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile bottom input */
+.vibes-mobile-input {
+  flex-shrink: 0;
+  border-top: 2px solid var(--vibes-near-black);
+  background: var(--vibes-menu-bg, #CCCDC8);
+  padding: 0.5rem;
 }
