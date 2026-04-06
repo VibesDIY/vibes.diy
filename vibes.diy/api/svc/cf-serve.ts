@@ -108,28 +108,13 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
       await env.VIBES_SERVICE.send(JSON.stringify(msg));
     },
     fetchAsset: async (url: string) => {
-      // console.log("Fetching asset from URL:", url);
-      // const vibePkgUri = URI.from(url);
-      // if (vibePkgUri.protocol !== 'file:') {
-      //   if (vibePkgUri.pathname.startsWith("/vibe-pkg/")) {
-      //     url = vibePkgUri.build().pathname(vibePkgUri.pathname.replace("/vibe-pkg/", "/_vibe-pkg/")).toString();
-      //   }
-      //   console.log("Patched asset URL for fetchAsset:", url);
-      // }
-      // const uri = URI.from(url);
-      // const assetUrl = uri.build().pathname(uri.pathname.replace(/^\//, "/_")).toString();
-      // const assetUrl = uri.toString();
-      // console.log("Fetching asset from URL:", url, "assetUrl:", assetUrl);
-      const res = await env.ASSETS.fetch(url);
-      // console.log("Received response for asset fetch:", res);
+      const res = await fetch(url);
       if (!res.ok) {
         return Result.Err(`Failed to fetch asset from ${url}: ${res.status} ${res.statusText}`);
       }
       if (!res.body) {
         return Result.Err(`No body in response when fetching asset from ${url}`);
       }
-      // const text = await res.text();
-      // console.log("Fetching asset from URL:", assetUrl, '->', text);
       return Result.Ok(res.body as unknown as ReadableStream<Uint8Array>);
     },
     // this help to provide enough uniqueness
