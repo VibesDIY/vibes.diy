@@ -1,7 +1,7 @@
 // Static export of the quick suggestions data
 // This avoids issues with YAML parsing in test environments
 
-interface Suggestion {
+export interface Suggestion {
   label: string;
   text: string;
 }
@@ -114,6 +114,10 @@ export const quickSuggestions: Suggestion[] = [
 ];
 
 // Named exports for specific prompts used in the create page
+export const partyPlannerPrompt =
+  "Create a party planning app with guest list, RSVP tracking, and budget calculator.";
+export const progressTrackerPrompt =
+  "Create a random app idea and build it automatically.";
 export const eventTrackerPrompt =
   "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.";
 export const historyQuestPrompt =
