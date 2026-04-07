@@ -1,8 +1,9 @@
 import type { Env, RouteTarget } from "./types.js";
-import { getBackendConfig, SPA_PREFIX } from "./types.js";
+import { getBackendConfig, SPA_PREFIX, ROUTING_COOKIE } from "./types.js";
 import { isSpaApi, handleSpaApi, parseRoutingCookie } from "./spa-api.js";
 import type { Request as CFRequest } from "@cloudflare/workers-types";
 import { URI } from "@adviser/cement";
+import { serialize as serializeCookie } from "cookie";
 
 async function proxyRequest(
   request: Request,
@@ -68,6 +69,23 @@ export default {
     const routeTarget = groups[resolvedKey];
     const target = routeTarget?.target ?? env.BACKEND;
 
-    return proxyRequest(request, target, url.pathname, search, resolvedKey);
+    const response = await proxyRequest(request, target, url.pathname, search, resolvedKey);
+
+    // Persist routing choice as cookie when ?@stable-entry@ query param is present
+    if (paramKey && matchedPath !== undefined) {
+      if (resolvedKey === "*") {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete routingGroups[matchedPath];
+      } else {
+        routingGroups[matchedPath] = resolvedKey;
+      }
+      const hasSelections = Object.keys(routingGroups).length > 0;
+      const cookieHeader = hasSelections
+        ? serializeCookie(ROUTING_COOKIE, encodeURIComponent(JSON.stringify(routingGroups)), { path: "/" })
+        : serializeCookie(ROUTING_COOKIE, "", { maxAge: 0, path: "/" });
+      response.headers.append("set-cookie", cookieHeader);
+    }
+
+    return response;
   },
 };
