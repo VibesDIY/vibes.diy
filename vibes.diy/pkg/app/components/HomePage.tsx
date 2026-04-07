@@ -1,128 +1,222 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import ChatInput, { ChatInputRef } from "./ChatInput.js";
-import FeaturedVibes from "./FeaturedVibes.js";
 import SessionSidebar from "./SessionSidebar.js";
-import { eventTrackerPrompt, historyQuestPrompt, jamSessionPrompt } from "../data/quick-suggestions-data.js";
+import { quickSuggestions } from "../data/quick-suggestions-data.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useNavigate } from "react-router";
 import { BuildURI } from "@adviser/cement";
-import { VibesSwitch, BrutalistCard, VibesButton, gridBackground, cx } from "@vibes.diy/base";
+import { VibesSwitch, VibesButton, ArrowLeftIcon, ArrowRightIcon, gridBackground, cx } from "@vibes.diy/base";
+import { useIsMobile } from "../hooks/useIsMobile.js";
+import VibeGallery from "./NewSessionContent/VibeGallery.js";
+import {
+  getContainerStyle,
+  getCarouselWrapperStyle,
+  getCarouselNavButtonStyle,
+  getSuggestionsContainerStyle,
+  getSuggestionsInnerStyle,
+  getButtonStyle,
+  getChatInputContainerStyle,
+  getChatInputLabelStyle,
+  getTextareaWrapperStyle,
+  getTextareaStyle,
+  getSubmitButtonStyle,
+  getGalleryContainerStyle,
+  getGalleryLabelStyle,
+  getGalleryContentStyle,
+  getGalleryDescriptionStyle,
+  getTitle,
+} from "./NewSessionContent/NewSessionContent.styles.js";
 
 export default function HomePage() {
-  // Sidebar state
-  const [prompt, setPrompt] = useState<string | null>(null);
-
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
-  // Sidebar handler
-  const closeSidebar = useCallback(() => {
-    setIsSidebarVisible(false);
-  }, []);
+  const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
 
-  // const promptTextRef = useRef<HTMLTextAreaElement>(null)
-
-  const chatInput = useRef<ChatInputRef>(null);
-
-  // Handle suggestion selection
-  const handleSelectSuggestion = useCallback(
-    (suggestion: string) => {
-      if (!chatInput.current) {
-        return;
-      }
-      chatInput.current.setPrompt(suggestion);
-      // Focus the input and position cursor at the end
-      setTimeout(() => {
-        if (chatInput.current) {
-          chatInput.current.setFocus();
-          // Move cursor to end of text
-          chatInput.current.setSelection(suggestion.length, suggestion.length);
-        }
-      }, 0);
-    },
-    [chatInput]
-  );
+  const isMobile = useIsMobile();
+  const [input, setInput] = useState("");
+  const [prompt, setPrompt] = useState<string | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { sthis } = useVibesDiy();
   const navigate = useNavigate();
-  // const [chat, setChat] = useState<LLMChat | null>()
 
   useEffect(() => {
-    if (!prompt?.trim()) {
-      return;
-    }
+    if (!prompt?.trim()) return;
     navigate(
       BuildURI.from(window.location.href).pathname("/chat/prompt").setParam("prompt64", sthis.txt.base64.encode(prompt))
         .withoutHostAndSchema
     );
   }, [prompt]);
 
+  const handleSubmit = useCallback(() => {
+    if (input.trim()) {
+      setPrompt(input);
+    }
+  }, [input]);
+
+  const handleSelectSuggestion = useCallback((text: string) => {
+    setInput(text);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, []);
+
+  // Carousel state
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animationOffset, setAnimationOffset] = useState(0);
+  const [slideDistance, setSlideDistance] = useState(0);
+  const [buttonWidth, setButtonWidth] = useState(0);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const calculateDimensions = () => {
+      if (viewportRef.current) {
+        const viewportWidth = viewportRef.current.offsetWidth;
+        if (viewportWidth > 0) {
+          const gap = 20;
+          const horizontalPadding = 12;
+          const visibleButtons = isMobile ? 1 : 3;
+          const totalGaps = isMobile ? 0 : 2;
+          const calculatedButtonWidth = (viewportWidth - gap * totalGaps - horizontalPadding * 2) / visibleButtons;
+          setButtonWidth(calculatedButtonWidth);
+          setSlideDistance(calculatedButtonWidth + gap);
+        }
+      }
+    };
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (viewportRef.current) {
+      resizeObserver = new ResizeObserver(() => calculateDimensions());
+      resizeObserver.observe(viewportRef.current);
+    }
+    calculateDimensions();
+    window.addEventListener("resize", calculateDimensions);
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", calculateDimensions);
+    };
+  }, [isMobile]);
+
+  const handlePrevious = () => {
+    if (isAnimating || !slideDistance) return;
+    setIsAnimating(true);
+    setAnimationOffset(slideDistance);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev === 0 ? quickSuggestions.length - 1 : prev - 1));
+      setAnimationOffset(0);
+      setIsAnimating(false);
+    }, 400);
+  };
+
+  const handleNext = () => {
+    if (isAnimating || !slideDistance) return;
+    setIsAnimating(true);
+    setAnimationOffset(-slideDistance);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % quickSuggestions.length);
+      setAnimationOffset(0);
+      setIsAnimating(false);
+    }, 400);
+  };
+
+  const getSlidingWindow = () => {
+    const total = quickSuggestions.length;
+    if (isMobile) {
+      return [
+        { suggestion: quickSuggestions[(currentIndex - 1 + total) % total], originalIndex: (currentIndex - 1 + total) % total },
+        { suggestion: quickSuggestions[currentIndex], originalIndex: currentIndex },
+        { suggestion: quickSuggestions[(currentIndex + 1) % total], originalIndex: (currentIndex + 1) % total },
+      ];
+    }
+    return [
+      { suggestion: quickSuggestions[(currentIndex - 1 + total) % total], originalIndex: (currentIndex - 1 + total) % total },
+      { suggestion: quickSuggestions[currentIndex], originalIndex: currentIndex },
+      { suggestion: quickSuggestions[(currentIndex + 1) % total], originalIndex: (currentIndex + 1) % total },
+      { suggestion: quickSuggestions[(currentIndex + 2) % total], originalIndex: (currentIndex + 2) % total },
+      { suggestion: quickSuggestions[(currentIndex + 3) % total], originalIndex: (currentIndex + 3) % total },
+    ];
+  };
+
+  const slidingWindow = getSlidingWindow();
+  const baseOffset = slideDistance ? -(slideDistance + 8) : 0;
+  const totalOffset = baseOffset + animationOffset;
+  const buttonVariants = ["blue", "red", "yellow"] as const;
+
   return (
     <>
       <div className={cx(gridBackground, "page-grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full")}>
         <div className="px-8 pb-8 pt-0">
-          {/* Hamburger menu button - top left in normal flow with z-index */}
           <div className="mb-8 ml-6 relative z-20">
             <VibesSwitch size={75} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
           </div>
-          <div
-            style={{
-              maxWidth: "800px",
-              width: "100%",
-              display: "flex",
-              flexDirection: "column",
-              gap: "24px",
-              margin: "0 auto",
-            }}
-          >
-            <BrutalistCard size="lg">
-              <h1 className="text-4xl font-bold">Code is easy, now</h1>
-            </BrutalistCard>
 
-            {/* Prompt suggestions section */}
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <VibesButton variant="blue" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(eventTrackerPrompt)}>
-                Event Tracker
-              </VibesButton>
-              <VibesButton variant="red" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(historyQuestPrompt)}>
-                History Quest
-              </VibesButton>
-              <VibesButton variant="yellow" style={{ flex: "1" }} onClick={() => handleSelectSuggestion(jamSessionPrompt)}>
-                Jam Session
-              </VibesButton>
-            </div>
+          <div style={getContainerStyle(isMobile)}>
+            <h1 style={getTitle(isMobile)}>
+              What's the&nbsp;
+              <span style={{ textDecoration: "underline" }}>vibe</span>? Try it.
+            </h1>
 
             {/* Chat input form */}
-            <BrutalistCard
-              size="md"
-              style={{
-                width: "100%",
-                background: "var(--vibes-gray-lighter)",
-              }}
-            >
-              <div
-                style={{
-                  marginBottom: "12px",
-                  fontWeight: 700,
-                  fontSize: "1.125rem",
-                }}
-              >
-                Vibe code apps instantly
+            <div style={getChatInputContainerStyle(isMobile)}>
+              <div style={getChatInputLabelStyle(isMobile)}>Prompt</div>
+              <div style={getTextareaWrapperStyle()}>
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit();
+                    }
+                  }}
+                  placeholder="Describe your vibe to make it an app."
+                  style={getTextareaStyle()}
+                />
+                <button
+                  onClick={handleSubmit}
+                  disabled={!input.trim()}
+                  style={getSubmitButtonStyle()}
+                >
+                  ↑
+                </button>
               </div>
-              <ChatInput
-                ref={chatInput}
-                // promptTextRef={promptTextRef}
-                // globalModel={chatState.globalModel}
-                onSubmit={setPrompt}
-                promptProcessing={false}
-              />
-            </BrutalistCard>
+            </div>
 
-            {/* Featured vibes section */}
-            <BrutalistCard size="lg">
-              <p>Enjoy our</p>
-              <h2 className="text-2xl font-bold">Featured vibes</h2>
-            </BrutalistCard>
+            {/* Carousel */}
+            <div style={getCarouselWrapperStyle(isMobile)}>
+              <button style={getCarouselNavButtonStyle(isMobile)} onClick={handlePrevious} aria-label="Previous suggestions">
+                <ArrowRightIcon width={isMobile ? 20 : 24} height={isMobile ? 20 : 24} fill="var(--vibes-near-black)" />
+              </button>
 
-            <FeaturedVibes count={3} />
+              <div ref={viewportRef} style={getSuggestionsContainerStyle()}>
+                <div ref={containerRef} style={getSuggestionsInnerStyle(totalOffset, isAnimating)}>
+                  {slidingWindow.map(({ suggestion, originalIndex }, index) => (
+                    <VibesButton
+                      key={`${suggestion.label}-${currentIndex}-${index}`}
+                      variant={buttonVariants[originalIndex % 3]}
+                      style={{ ...getButtonStyle(), width: buttonWidth > 0 ? `${buttonWidth}px` : "33.333%" }}
+                      onClick={() => handleSelectSuggestion(suggestion.text)}
+                    >
+                      {suggestion.label}
+                    </VibesButton>
+                  ))}
+                </div>
+              </div>
+
+              <button style={getCarouselNavButtonStyle(isMobile)} onClick={handleNext} aria-label="Next suggestions">
+                <ArrowLeftIcon width={isMobile ? 20 : 24} height={isMobile ? 20 : 24} fill="var(--vibes-near-black)" />
+              </button>
+            </div>
+
+            {/* Gallery */}
+            <div style={getGalleryContainerStyle(isMobile)}>
+              <div style={getGalleryLabelStyle(isMobile)}>Gallery</div>
+              <div style={getGalleryContentStyle()}>
+                <VibeGallery count={4} isMobile={isMobile} />
+                <p style={getGalleryDescriptionStyle()}>
+                  The vibes are strong with these four top picks.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
