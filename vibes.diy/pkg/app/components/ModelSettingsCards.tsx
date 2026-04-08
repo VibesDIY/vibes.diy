@@ -17,7 +17,12 @@ function SaveBtn({ saving, onClick }: { saving: boolean; onClick: () => void }) 
       type="button"
       disabled={saving}
       onClick={onClick}
-      className="rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700/60 dark:text-gray-300 disabled:opacity-50"
+      className="rounded px-2 py-1 text-xs font-medium disabled:opacity-50"
+      style={{
+        background: "transparent",
+        color: "var(--vibes-card-text)",
+        border: "1px solid var(--vibes-card-border)",
+      }}
     >
       {saving ? "Saving…" : "Save"}
     </button>
@@ -95,7 +100,14 @@ function ModelSection({
             onChange={(e) =>
               setAIParam((prev) => (prev ? { ...prev, model: models.find((m) => m.id === e.target.value) || prev.model } : prev))
             }
-            className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-gray-400"
+            className="flex-1 rounded px-2 py-1 text-xs outline-none"
+            style={{
+              border: "1px solid var(--vibes-card-border)",
+              background: "var(--vibes-card-bg)",
+              color: "var(--vibes-card-text)",
+            }}
+            onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(128,128,128,0.3)"; }}
+            onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; }}
           >
             {models.map((opt) => (
               <option key={opt.id} value={opt.id}>
@@ -120,7 +132,14 @@ function ModelSection({
               value={aiParam?.apiKey ?? ""}
               onChange={(e) => setAIParam((prev) => ({ ...prev, apiKey: e.target.value }))}
               placeholder="sk-…"
-              className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-gray-400"
+              className="flex-1 rounded px-2 py-1 text-xs outline-none"
+              style={{
+                border: "1px solid var(--vibes-card-border)",
+                background: "var(--vibes-card-bg)",
+                color: "var(--vibes-card-text)",
+              }}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(128,128,128,0.3)"; }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; }}
             />
           </div>
           <div className="flex justify-end">
