@@ -83,8 +83,8 @@ importers:
         specifier: 0.24.15
         version: 0.24.15(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -225,8 +225,8 @@ importers:
         specifier: 0.24.15
         version: 0.24.15(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -344,8 +344,8 @@ importers:
         specifier: 0.24.15
         version: 0.24.15(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.16
         version: 0.24.16(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
@@ -530,8 +530,8 @@ importers:
         specifier: 0.24.15
         version: 0.24.15(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -649,8 +649,8 @@ importers:
         specifier: 0.24.15
         version: 0.24.15(bufferutil@4.1.0)(react@19.2.4)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -698,8 +698,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-keybag':
-        specifier: 0.24.15
-        version: 0.24.15(typescript@6.0.2)
+        specifier: 0.24.16
+        version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.16
         version: 0.24.16(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
