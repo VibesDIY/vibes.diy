@@ -17,6 +17,8 @@ import {
   ResCreateUserSlugBinding,
   ReqDeleteUserSlugBinding,
   ResDeleteUserSlugBinding,
+  ReqListRecentVibes,
+  ResListRecentVibes,
 } from "./app.js";
 import { ReqOpenChat, ResPromptChatSection, SectionEvent, ReqListModels, ResListModels, FSUpdate } from "./chat.js";
 import {
@@ -99,6 +101,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   ensureUserSettings(req: Req<ReqEnsureUserSettings>): Promise<Result<ResEnsureUserSettings, VibesDiyError>>;
   ensureAppSettings(req: Req<ReqEnsureAppSettings>): Promise<Result<ResEnsureAppSettings, VibesDiyError>>;
   listApplicationChats(req: Req<ReqListApplicationChats>): Promise<Result<ResListApplicationChats, VibesDiyError>>;
+  listRecentVibes(req: Req<ReqListRecentVibes>): Promise<Result<ResListRecentVibes, VibesDiyError>>;
 
   getTokenClaims(): Promise<Result<VerifiedClaimsResult & { claims: ClerkClaim }>>;
 
