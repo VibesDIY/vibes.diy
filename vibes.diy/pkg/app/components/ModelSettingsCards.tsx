@@ -17,7 +17,7 @@ function SaveBtn({ saving, onClick }: { saving: boolean; onClick: () => void }) 
       type="button"
       disabled={saving}
       onClick={onClick}
-      className="rounded px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 disabled:opacity-50"
+      className="rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700/60 dark:text-gray-300 disabled:opacity-50"
     >
       {saving ? "Saving…" : "Save"}
     </button>
@@ -95,7 +95,7 @@ function ModelSection({
             onChange={(e) =>
               setAIParam((prev) => (prev ? { ...prev, model: models.find((m) => m.id === e.target.value) || prev.model } : prev))
             }
-            className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
+            className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-gray-400"
           >
             {models.map((opt) => (
               <option key={opt.id} value={opt.id}>
@@ -120,7 +120,7 @@ function ModelSection({
               value={aiParam?.apiKey ?? ""}
               onChange={(e) => setAIParam((prev) => ({ ...prev, apiKey: e.target.value }))}
               placeholder="sk-…"
-              className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
+              className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-gray-400"
             />
           </div>
           <div className="flex justify-end">
