@@ -8,6 +8,7 @@ import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
 import { InfoIcon } from "./SessionSidebar/InfoIcon.js";
 import { StarIcon } from "./SessionSidebar/StarIcon.js";
 import { DevBoxIcon } from "./SessionSidebar/DevBoxIcon.js";
+import { RecentVibes } from "./RecentVibes.js";
 
 /**
  * Component that displays a navigation sidebar with menu items
@@ -92,6 +93,9 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                 </Link>
               </li>
             )}
+            <li>
+              <RecentVibes />
+            </li>
             <li>
               <Link
                 to="/vibes/mine"
