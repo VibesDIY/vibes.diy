@@ -32,7 +32,7 @@
     "@adviser/cement": "^0.5.34",
     "@fireproof/use-fireproof": "0.24.15",
     "@vibes.diy/base": "workspace:*",
-    "ag-grid-community": "^35.2.0",
+    "ag-grid-community": "^35.2.1",
     "ag-grid-react": "^35.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
