@@ -48,28 +48,27 @@ function ResultPreviewHeaderContent({
 }: React.PropsWithChildren<ResultPreviewHeaderContentProps>) {
   // console.log("Rendering ResultPreviewHeaderContent with props:", currentView, hasCodeChanges)
   return (
-    <div className="flex h-full w-full items-center px-2 py-4">
-      <div className="flex w-1/4 items-center justify-start">
+    <div className="flex h-full w-full items-center px-2 py-1">
+      <div className="flex shrink-0 items-center justify-start">
         <BackButton
           onBackClick={() => {
             console.log("click-back");
           }}
         />
-        <div className="h-10" />
       </div>
 
       {/* Center - View controls */}
-      <div className="flex w-1/2 items-center justify-center">
+      <div className="flex flex-1 items-center justify-center">
         <ViewControls
           viewControls={viewControls}
-          currentView={currentView} // Use displayView for the currently active button highlight
+          currentView={currentView}
           onClick={navigateToView}
           onDoubleClick={(view) => view == "preview" && openVibe?.()}
           onContextMenu={onContextMenu}
         />
       </div>
       {/* Right side - Save and Publish buttons */}
-      <div className="flex w-1/4 items-center justify-end">
+      <div className="flex shrink-0 items-center justify-end">
         <div className="flex items-center gap-2">
           {/* Save button - show when in code view and has changes */}
           {currentView === "code" && hasCodeChanges && (
