@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import type { AIParams } from "@vibes.diy/api-types";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 
+const cardControlClassName =
+  "flex-1 rounded border border-[color:var(--vibes-card-border)] bg-[var(--vibes-card-bg)] px-2 py-1 text-xs text-[color:var(--vibes-card-text)] outline-none focus-visible:ring-2 focus-visible:ring-[rgba(128,128,128,0.3)]";
+
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <li className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
@@ -17,12 +20,7 @@ function SaveBtn({ saving, onClick }: { saving: boolean; onClick: () => void }) 
       type="button"
       disabled={saving}
       onClick={onClick}
-      className="rounded px-2 py-1 text-xs font-medium disabled:opacity-50"
-      style={{
-        background: "transparent",
-        color: "var(--vibes-card-text)",
-        border: "1px solid var(--vibes-card-border)",
-      }}
+      className="rounded border border-[color:var(--vibes-card-border)] bg-transparent px-2 py-1 text-xs font-medium text-[color:var(--vibes-card-text)] outline-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-[rgba(128,128,128,0.3)]"
     >
       {saving ? "Saving…" : "Save"}
     </button>
@@ -56,7 +54,6 @@ function ModelSection({
   });
 
   useEffect(() => {
-    console.log("ModelSection useEffect triggered with usage:", usage, "and config:", config, viewState);
     if (viewState.current === "start") {
       viewState.current = "loading";
       vibeDiyApi.listModels({}).then((res) => {
@@ -100,14 +97,7 @@ function ModelSection({
             onChange={(e) =>
               setAIParam((prev) => (prev ? { ...prev, model: models.find((m) => m.id === e.target.value) || prev.model } : prev))
             }
-            className="flex-1 rounded px-2 py-1 text-xs outline-none"
-            style={{
-              border: "1px solid var(--vibes-card-border)",
-              background: "var(--vibes-card-bg)",
-              color: "var(--vibes-card-text)",
-            }}
-            onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(128,128,128,0.3)"; }}
-            onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; }}
+            className={cardControlClassName}
           >
             {models.map((opt) => (
               <option key={opt.id} value={opt.id}>
@@ -132,14 +122,7 @@ function ModelSection({
               value={aiParam?.apiKey ?? ""}
               onChange={(e) => setAIParam((prev) => ({ ...prev, apiKey: e.target.value }))}
               placeholder="sk-…"
-              className="flex-1 rounded px-2 py-1 text-xs outline-none"
-              style={{
-                border: "1px solid var(--vibes-card-border)",
-                background: "var(--vibes-card-bg)",
-                color: "var(--vibes-card-text)",
-              }}
-              onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(128,128,128,0.3)"; }}
-              onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; }}
+              className={cardControlClassName}
             />
           </div>
           <div className="flex justify-end">
