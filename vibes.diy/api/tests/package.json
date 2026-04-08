@@ -25,7 +25,7 @@
     "@vibes.diy/call-ai-v2": "workspace:*",
     "arktype": "^2.2.0",
     "drizzle-kit": "^0.31.8",
-    "drizzle-orm": "^0.45.1"
+    "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.16",
