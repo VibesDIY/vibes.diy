@@ -21,7 +21,7 @@
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "arktype": "^2.2.0",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "multiformats": "^13.4.2",
     "ws": "^8.20.0"
   },
