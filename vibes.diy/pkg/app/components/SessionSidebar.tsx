@@ -94,7 +94,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
               </li>
             )}
             <li>
-              <RecentVibes />
+              <RecentVibes onNavigate={onClose} />
             </li>
             <li>
               <Link
