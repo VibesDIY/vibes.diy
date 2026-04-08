@@ -22,7 +22,7 @@
     "@vibes.diy/api-svc": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "arktype": "^2.2.0",
-    "drizzle-orm": "^0.45.1"
+    "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260402.1",
