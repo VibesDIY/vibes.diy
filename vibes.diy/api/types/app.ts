@@ -211,34 +211,6 @@ export function isResSetModeFs(obj: unknown): obj is ResSetModeFs {
   return !(ResSetModeFs(obj) instanceof type.errors);
 }
 
-// Recent vibes (ordered by last prompt activity)
-
-export const reqListRecentVibes = type({
-  type: "'vibes.diy.req-list-recent-vibes'",
-  auth: dashAuthType,
-  "limit?": "number", // default 10, max 50
-});
-export type ReqListRecentVibes = typeof reqListRecentVibes.infer;
-export function isReqListRecentVibes(obj: unknown): obj is ReqListRecentVibes {
-  return !(reqListRecentVibes(obj) instanceof type.errors);
-}
-
-export const resListRecentVibesItem = type({
-  userSlug: "string",
-  appSlug: "string",
-  lastActive: "string", // ISO timestamp from MAX(ChatSections.created)
-});
-export type ResListRecentVibesItem = typeof resListRecentVibesItem.infer;
-
-export const resListRecentVibes = type({
-  type: "'vibes.diy.res-list-recent-vibes'",
-  items: resListRecentVibesItem.array(),
-});
-export type ResListRecentVibes = typeof resListRecentVibes.infer;
-export function isResListRecentVibes(obj: unknown): obj is ResListRecentVibes {
-  return !(resListRecentVibes(obj) instanceof type.errors);
-}
-
 export const ReqSetModeFs = type({
   type: "'vibes.diy.req-set-mode-fs'",
   auth: dashAuthType,
