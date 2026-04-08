@@ -72,7 +72,7 @@ export default {
     const response = await proxyRequest(request, target, url.pathname, search, resolvedKey);
 
     // Persist routing choice as cookie when ?.stable-entry. query param is present
-    if (paramKey && matchedPath !== undefined) {
+    if (paramKey != null && matchedPath !== undefined) {
       if (resolvedKey === "*") {
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete routingGroups[matchedPath];
