@@ -36,7 +36,7 @@
     "@fireproof/core-cli": "0.24.16",
     "@storybook/addon-a11y": "^10.3.5",
     "@storybook/addon-docs": "^10.3.0",
-    "@storybook/react": "^10.3.0",
+    "@storybook/react": "^10.3.5",
     "@storybook/react-vite": "^10.2.19",
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.14",
