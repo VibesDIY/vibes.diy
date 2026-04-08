@@ -57,10 +57,10 @@ which decodes to `{"/api":"dev","/":"prod"}`.
 You can also override routing for a single request with a query parameter — useful for testing without touching the cookie:
 
 ```
-https://example.com/some/page?@stable-entry@=dev
+https://example.com/some/page?.stable-entry.=dev
 ```
 
-The parameter is stripped before the request is forwarded upstream.
+The parameter is stripped before the request is forwarded upstream. When present, the routing choice is also persisted into the `se-group` cookie so subsequent requests continue routing to that backend.
 
 Every proxied response includes an `X-Stable-Entry` header with the resolved group key.
 
