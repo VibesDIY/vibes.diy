@@ -10,7 +10,7 @@ export const BackButton: React.FC<BackButtonProps> = ({ onBackClick }) => {
     <button
       type="button"
       onClick={onBackClick}
-      className="bg-light-decorative-00 dark:bg-dark-decorative-00 text-light-primary dark:text-dark-primary hover:bg-light-decorative-01 dark:hover:bg-dark-decorative-01 flex items-center justify-center rounded-md p-2 transition-colors md:hidden"
+      className="bg-light-decorative-00 dark:bg-dark-decorative-00 text-light-primary dark:text-dark-primary hover:bg-light-decorative-01 dark:hover:bg-dark-decorative-01 flex items-center justify-center rounded-md p-3 transition-colors md:hidden"
       aria-label="Back to chat"
     >
       <BackArrowIcon />
