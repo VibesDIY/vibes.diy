@@ -57,8 +57,8 @@ export default {
 
     const routingGroups = parseRoutingCookie(request.headers.get("cookie") ?? "");
     const uri = URI.from(request.url);
-    const paramKey = uri.getParam("@stable-entry@");
-    const search = uri.build().delParam("@stable-entry@").asURL().search;
+    const paramKey = uri.getParam(".stable-entry.");
+    const search = uri.build().delParam(".stable-entry.").asURL().search;
 
     // first path prefix match wins (longest-first order from parse)
     const pathEntry = Object.entries(cfg).find(([path]) => url.pathname.startsWith(path));
@@ -71,7 +71,7 @@ export default {
 
     const response = await proxyRequest(request, target, url.pathname, search, resolvedKey);
 
-    // Persist routing choice as cookie when ?@stable-entry@ query param is present
+    // Persist routing choice as cookie when ?.stable-entry. query param is present
     if (paramKey && matchedPath !== undefined) {
       if (resolvedKey === "*") {
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
