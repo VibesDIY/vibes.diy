@@ -31,7 +31,7 @@
     "@fireproof/core-runtime": "0.24.16",
     "@fireproof/core-types-base": "0.24.16",
     "@fireproof/core-types-protocols-cloud": "0.24.15",
-    "@fireproof/use-fireproof": "0.24.15",
+    "@fireproof/use-fireproof": "0.24.16",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "arktype": "^2.2.0",
