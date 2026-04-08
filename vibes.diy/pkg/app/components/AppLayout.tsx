@@ -71,7 +71,7 @@ export default function AppLayout({
         } relative z-10 transition-all duration-300 ease-in-out`}
       >
         <div
-          className={`flex items-center overflow-hidden p-2 ${fullWidthChat ? "h-0" : "h-[4rem]"} transition-all duration-300 ease-in-out`}
+          className={`flex items-center px-2 py-2 md:p-2 ${fullWidthChat && !mobilePreviewShown ? "h-0 overflow-hidden" : "md:h-[4rem] md:overflow-hidden"} transition-all duration-300 ease-in-out`}
         >
           {headerRight}
         </div>

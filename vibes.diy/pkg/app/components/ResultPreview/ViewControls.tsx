@@ -20,11 +20,10 @@ interface ViewControlsProps {
 
 export const ViewControls: React.FC<ViewControlsProps> = ({ viewControls, currentView, onClick, onDoubleClick, onContextMenu }) => {
   return (
-    <div className="bg-light-decorative-00 dark:bg-dark-decorative-00 flex justify-center gap-1 rounded-md p-1 shadow-sm">
+    <div className="bg-light-decorative-00 dark:bg-dark-decorative-00 flex justify-center gap-1 rounded-lg p-1.5 shadow-sm md:rounded-md md:p-1">
       {Object.entries(viewControls)
         .filter(([viewType]) => viewType !== "chat")
         .map(([viewType, control]) => {
-          // console.log(`ViewControls`, viewType, currentView )
           const viewTypeKey = viewType as ViewType;
           const isActive = currentView === viewTypeKey;
 
@@ -39,7 +38,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({ viewControls, curren
                 e.preventDefault();
                 onContextMenu?.(viewTypeKey, e);
               }}
-              className={`flex items-center justify-center space-x-1 rounded px-3 py-1.5 text-xs font-medium transition-colors sm:space-x-1.5 sm:px-4 sm:text-sm ${
+              className={`flex items-center justify-center space-x-1 rounded-md px-3 py-2 text-base font-medium transition-colors md:space-x-1.5 md:rounded md:px-4 md:py-1.5 md:text-sm ${
                 isActive
                   ? "bg-light-background-00 dark:bg-dark-background-00 text-light-primary dark:text-dark-primary shadow-sm"
                   : "text-light-primary/90 dark:text-dark-primary/90 hover:bg-light-decorative-01 dark:hover:bg-dark-decorative-01 hover:text-light-primary dark:hover:text-dark-primary"
@@ -48,16 +47,16 @@ export const ViewControls: React.FC<ViewControlsProps> = ({ viewControls, curren
             >
               {viewTypeKey === "preview" && (
                 <PreviewIcon
-                  className="h-4 w-4"
+                  className="h-5 w-5 md:h-4 md:w-4"
                   isLoading={!!control.loading}
                   title={control.loading ? "App is fetching data" : "Preview icon"}
                 />
               )}
               {viewTypeKey === "code" && (
-                <CodeIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" isLoading={currentView === "preview" && !!control.loading} />
+                <CodeIcon className="h-5 w-5 md:h-4 md:w-4" isLoading={currentView === "preview" && !!control.loading} />
               )}
-              {viewTypeKey === "data" && <DataIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-              {viewTypeKey === "settings" && <SettingsIcon className="h-4 w-4" />}
+              {viewTypeKey === "data" && <DataIcon className="h-5 w-5 md:h-4 md:w-4" />}
+              {viewTypeKey === "settings" && <SettingsIcon className="h-5 w-5 md:h-4 md:w-4" />}
               <span className="hidden min-[480px]:inline">{control.label}</span>
             </button>
           );
