@@ -9,10 +9,12 @@ on:
 
 jobs:
   cleanup-preview:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     environment: dev
     permissions:
       contents: read
+      issues: write
       pull-requests: write
 
     steps:
@@ -23,7 +25,7 @@ jobs:
         uses: ./actions/runtime
 
       - name: Install wrangler
-        run: pnpm install -g wrangler
+        run: pnpm add -g wrangler@4.80.0
 
       - name: Set PR info
         id: pr
