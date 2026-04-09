@@ -35,7 +35,7 @@
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "arktype": "^2.2.0",
-    "json-schema-faker": "^0.6.0"
+    "json-schema-faker": "^0.6.1"
   },
   "peerDependencies": {
     "react": ">=19.1.0"
