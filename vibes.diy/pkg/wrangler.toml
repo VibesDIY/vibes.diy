@@ -108,6 +108,12 @@ name = "vibes-diy-v2-preview"
 vars = { ENVIRONMENT = "preview" }
 # No routes — preview workers are accessed via workers.dev URLs only
 
+[env.preview.observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
 [env.preview.browser]
 binding = "BROWSER"
 
