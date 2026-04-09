@@ -68,7 +68,7 @@
     "tailwind-merge": "^3.5.0",
     "use-fireproof": "0.24.16",
     "use-vibes": "workspace:*",
-    "wrangler": "^4.80.0"
+    "wrangler": "^4.81.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.30.1",
