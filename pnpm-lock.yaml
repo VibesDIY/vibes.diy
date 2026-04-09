@@ -35,8 +35,8 @@ importers:
         specifier: 7.0.0-dev.20260401.1
         version: 7.0.0-dev.20260401.1
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       '@vitest/coverage-v8':
         specifier: ~4.1.2
         version: 4.1.2(@vitest/browser@4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2))(vitest@4.1.2)
@@ -69,7 +69,7 @@ importers:
         version: 8.57.2(eslint@10.1.0(jiti@2.6.1))(typescript@6.0.2)
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       wrangler:
         specifier: ^4.81.0
         version: 4.81.0(@cloudflare/workers-types@4.20260402.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -108,8 +108,8 @@ importers:
         specifier: ^25.2.3
         version: 25.5.2
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
       typescript:
         specifier: ^6.0.2
         version: 6.0.2
@@ -130,8 +130,8 @@ importers:
         specifier: ^25.2.3
         version: 25.5.2
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -140,7 +140,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       zx:
         specifier: ^8.8.4
         version: 8.8.5
@@ -158,8 +158,8 @@ importers:
         specifier: ^25.2.3
         version: 25.5.2
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       jest:
         specifier: ^30.3.0
         version: 30.3.0(@types/node@25.5.2)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.27.4))
@@ -171,7 +171,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       zx:
         specifier: ^8.8.4
         version: 8.8.5
@@ -201,8 +201,8 @@ importers:
         specifier: ~4.1.2
         version: 4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       eslint:
         specifier: ^9.39.2
         version: 9.39.4(jiti@2.6.1)
@@ -214,7 +214,7 @@ importers:
         version: 4.21.0
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   prompts/pkg:
     dependencies:
@@ -259,8 +259,8 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       typescript:
         specifier: ^6.0.2
         version: 6.0.2
@@ -269,7 +269,7 @@ importers:
         version: 8.57.2(eslint@10.2.0(jiti@2.6.1))(typescript@6.0.2)
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   prompts/tests:
     dependencies:
@@ -305,8 +305,8 @@ importers:
         specifier: ~4.1.2
         version: 4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       playwright:
         specifier: ^1.59.1
         version: 1.59.1
@@ -327,7 +327,7 @@ importers:
         version: 1.0.0(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       zx:
         specifier: ^8.8.4
         version: 8.8.5
@@ -414,8 +414,8 @@ importers:
         specifier: ^19.2.1
         version: 19.2.3(@types/react@19.2.14)
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       storybook:
         specifier: ^10.3.0
         version: 10.3.3(@testing-library/dom@10.4.1)(bufferutil@4.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6)
@@ -427,7 +427,7 @@ importers:
         version: 7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   use-vibes/examples/hosted-dev:
     dependencies:
@@ -454,8 +454,8 @@ importers:
         specifier: 5.2.0
         version: 5.2.0(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
@@ -470,7 +470,7 @@ importers:
         version: 7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   use-vibes/examples/react-example:
     dependencies:
@@ -497,8 +497,8 @@ importers:
         specifier: 5.2.0
         version: 5.2.0(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
       eslint:
         specifier: ^10.0.3
         version: 10.1.0(jiti@2.6.1)
@@ -555,11 +555,11 @@ importers:
         specifier: 0.24.16
         version: 0.24.16(@pnpm/logger@5.2.0)(typescript@6.0.2)
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   use-vibes/tests:
     dependencies:
@@ -589,7 +589,7 @@ importers:
         version: 6.1.1(typescript@6.0.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
     devDependencies:
       '@playwright/test':
         specifier: ^1.59.1
@@ -616,8 +616,8 @@ importers:
         specifier: ~4.1.2
         version: 4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
@@ -677,8 +677,8 @@ importers:
         specifier: ~19.2.13
         version: 19.2.14
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
       typescript:
         specifier: ^6.0.2
         version: 6.0.2
@@ -747,11 +747,11 @@ importers:
         specifier: ^8.18.1
         version: 8.18.1
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   vibes.diy/api/impl:
     dependencies:
@@ -1362,8 +1362,8 @@ importers:
         specifier: ~19.2.2
         version: 19.2.3(@types/react@19.2.14)
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
       arktype:
         specifier: ^2.2.0
         version: 2.2.0
@@ -1587,8 +1587,8 @@ importers:
         specifier: ~4.1.2
         version: 4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       vite:
         specifier: 7.3.1
         version: 7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -1597,7 +1597,7 @@ importers:
         version: 6.1.1(typescript@5.9.3)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   vibes.diy/tests/simple-chat:
     dependencies:
@@ -1687,8 +1687,8 @@ importers:
         specifier: ~4.1.2
         version: 4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       '@vitest/browser-playwright':
-        specifier: ~4.1.2
-        version: 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+        specifier: ~4.1.4
+        version: 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
       vite:
         specifier: 7.3.1
         version: 7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -1697,7 +1697,7 @@ importers:
         version: 6.1.1(typescript@5.9.3)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ~4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   vibes.diy/vibe/db-explorer:
     dependencies:
@@ -4937,10 +4937,21 @@ packages:
       playwright: '*'
       vitest: 4.1.2
 
+  '@vitest/browser-playwright@4.1.4':
+    resolution: {integrity: sha512-q3PchVhZINX23Pv+RERgAtDlp6wzVkID/smOPnZ5YGWpeWUe3jMNYppeVh15j4il3G7JIJty1d1Kicpm0HSMig==}
+    peerDependencies:
+      playwright: '*'
+      vitest: 4.1.4
+
   '@vitest/browser@4.1.2':
     resolution: {integrity: sha512-CwdIf90LNf1Zitgqy63ciMAzmyb4oIGs8WZ40VGYrWkssQKeEKr32EzO8MKUrDPPcPVHFI9oQ5ni2Hp24NaNRQ==}
     peerDependencies:
       vitest: 4.1.2
+
+  '@vitest/browser@4.1.4':
+    resolution: {integrity: sha512-TrNaY/yVOwxtrxNsDUC/wQ56xSwplpytTeRAqF/197xV/ZddxxulBsxR6TrhVMyniJmp9in8d5u0AcDaNRY30w==}
+    peerDependencies:
+      vitest: 4.1.4
 
   '@vitest/coverage-v8@4.1.2':
     resolution: {integrity: sha512-sPK//PHO+kAkScb8XITeB1bf7fsk85Km7+rt4eeuRR3VS1/crD47cmV5wicisJmjNdfeokTZwjMk4Mj2d58Mgg==}
@@ -12932,14 +12943,28 @@ snapshots:
       - msw
       - utf-8-validate
       - vite
+    optional: true
 
-  '@vitest/browser-playwright@4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)':
+  '@vitest/browser-playwright@4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)':
     dependencies:
-      '@vitest/browser': 4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
-      '@vitest/mocker': 4.1.2(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@vitest/browser': 4.1.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+      '@vitest/mocker': 4.1.4(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       playwright: 1.59.1
       tinyrainbow: 3.1.0
-      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/coverage-v8@4.1.2(@vitest/browser@4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2))(vitest@4.1.2))(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+    transitivePeerDependencies:
+      - bufferutil
+      - msw
+      - utf-8-validate
+      - vite
+
+  '@vitest/browser-playwright@4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)':
+    dependencies:
+      '@vitest/browser': 4.1.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
+      '@vitest/mocker': 4.1.4(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      playwright: 1.59.1
+      tinyrainbow: 3.1.0
+      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.2(@vitest/browser@4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2))(vitest@4.1.2))(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -12955,7 +12980,7 @@ snapshots:
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.1.0
-      vitest: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       ws: 8.20.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bufferutil
@@ -12963,16 +12988,33 @@ snapshots:
       - utf-8-validate
       - vite
 
-  '@vitest/browser@4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)':
+  '@vitest/browser@4.1.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)':
     dependencies:
       '@blazediff/core': 1.9.1
-      '@vitest/mocker': 4.1.2(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-      '@vitest/utils': 4.1.2
+      '@vitest/mocker': 4.1.4(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@vitest/utils': 4.1.4
       magic-string: 0.30.21
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.1.0
-      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/coverage-v8@4.1.2(@vitest/browser@4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2))(vitest@4.1.2))(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      ws: 8.20.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - bufferutil
+      - msw
+      - utf-8-validate
+      - vite
+
+  '@vitest/browser@4.1.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)':
+    dependencies:
+      '@blazediff/core': 1.9.1
+      '@vitest/mocker': 4.1.4(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@vitest/utils': 4.1.4
+      magic-string: 0.30.21
+      pngjs: 7.0.0
+      sirv: 3.0.2
+      tinyrainbow: 3.1.0
+      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.2(@vitest/browser@4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2))(vitest@4.1.2))(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       ws: 8.20.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bufferutil
@@ -12992,7 +13034,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.0.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
     optionalDependencies:
       '@vitest/browser': 4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
 
@@ -13091,7 +13133,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.1.0
-      vitest: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   '@vitest/utils@3.2.4':
     dependencies:
@@ -17775,7 +17817,37 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(@vitest/coverage-v8@4.1.2(@vitest/browser@4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2))(vitest@4.1.2))(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)):
+  vitest@4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)):
+    dependencies:
+      '@vitest/expect': 4.1.2
+      '@vitest/mocker': 4.1.2(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@vitest/pretty-format': 4.1.2
+      '@vitest/runner': 4.1.2
+      '@vitest/snapshot': 4.1.2
+      '@vitest/spy': 4.1.2
+      '@vitest/utils': 4.1.2
+      es-module-lexer: 2.0.0
+      expect-type: 1.3.0
+      magic-string: 0.30.21
+      obug: 2.1.1
+      pathe: 2.0.3
+      picomatch: 4.0.4
+      std-env: 4.0.0
+      tinybench: 2.9.0
+      tinyexec: 1.0.4
+      tinyglobby: 0.2.15
+      tinyrainbow: 3.1.0
+      vite: 7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.1
+      '@types/node': 25.5.2
+      '@vitest/browser-playwright': 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2)
+      '@vitest/ui': 4.1.2(vitest@4.1.2)
+    transitivePeerDependencies:
+      - msw
+
+  vitest@4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.2(@vitest/browser@4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2))(vitest@4.1.2))(@vitest/ui@4.1.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)):
     dependencies:
       '@vitest/expect': 4.1.4
       '@vitest/mocker': 4.1.4(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -17800,7 +17872,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       '@types/node': 25.5.2
-      '@vitest/browser-playwright': 4.1.2(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
+      '@vitest/browser-playwright': 4.1.4(bufferutil@4.1.0)(playwright@1.59.1)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.4)
       '@vitest/coverage-v8': 4.1.2(@vitest/browser@4.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2))(vitest@4.1.2)
       '@vitest/ui': 4.1.2(vitest@4.1.2)
     transitivePeerDependencies:
