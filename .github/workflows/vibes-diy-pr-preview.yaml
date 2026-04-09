@@ -97,7 +97,7 @@ jobs:
             --fromEnv MAX_APP_SLUG_PER_USER_ID \
             --fromEnv WORKSPACE_NPM_URL \
             --fromEnv VIBES_DIY_API_URL | \
-            pnpm exec wrangler -c ./wrangler.toml secret --env preview --name $WORKER_NAME bulk
+            pnpm exec wrangler secret --name $WORKER_NAME bulk
 
           # Deploy with custom worker name (preview env has no routes)
           pnpm exec wrangler deploy --env preview --name $WORKER_NAME
