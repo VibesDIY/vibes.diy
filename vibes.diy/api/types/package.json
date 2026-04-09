@@ -14,7 +14,7 @@
     "@cloudflare/workers-types": "^4.20260402.1",
     "@fireproof/core-runtime": "^0.24.16",
     "@fireproof/core-types-base": "^0.24.16",
-    "@fireproof/core-types-protocols-cloud": "^0.24.15",
+    "@fireproof/core-types-protocols-cloud": "^0.24.16",
     "@fireproof/core-types-protocols-dashboard": "^0.24.15",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "arktype": "^2.2.0"
