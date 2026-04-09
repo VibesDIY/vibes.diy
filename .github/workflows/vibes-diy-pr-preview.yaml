@@ -65,8 +65,8 @@ jobs:
           DB_FLAVOUR: ${{ vars.DB_FLAVOUR }}
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           MAX_APP_SLUG_PER_USER_ID: ${{ vars.MAX_APP_SLUG_PER_USER_ID }}
-          WORKSPACE_NPM_URL: ${{ vars.WORKSPACE_NPM_URL }}
-          VIBES_DIY_API_URL: ${{ vars.VIBES_DIY_API_URL }}
+          WORKSPACE_NPM_URL: ${{ steps.pr.outputs.preview_url }}/vibe-pkg/
+          VIBES_DIY_API_URL: ${{ steps.pr.outputs.preview_url }}/api
           WORKER_NAME: ${{ steps.pr.outputs.worker_name }}
         run: |
           set -e
