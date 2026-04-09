@@ -1,13 +1,17 @@
 # Environments
 
-Three deploy environments triggered by tag prefixes on `vibes-diy@*` tags:
+Four deploy environments:
 
-| Tag prefix     | Environment                   | Domain                                      |
+| Tag/trigger    | Environment                   | Domain                                      |
 | -------------- | ----------------------------- | ------------------------------------------- |
 | `vibes-diy@d*` | dev                           | `dev-v2.vibesdiy.net`                       |
 | `vibes-diy@p*` | prodv2                        | `prod-v2.vibesdiy.net` (behind `vibes.diy`) |
 | `vibes-diy@c*` | cli (**exact clone of prod**) | `cli-v2.vibesdiy.net`                       |
-| `vibes-diy@s*` | staging                       | staging environment                         |
+| PR open/push   | preview                       | `pr-{N}-vibes-diy-v2.{account}.workers.dev` |
+
+## PR preview
+
+PRs that touch `vibes.diy/**/*` automatically get a preview deployment. The workflow (`.github/workflows/vibes-diy-pr-preview.yaml`) builds with `CLOUDFLARE_ENV=preview` and deploys as `pr-{N}-vibes-diy-v2` on workers.dev. A bot comment posts the live URL on the PR. On PR close, a cleanup workflow deletes the worker. Preview uses `[env.preview]` in wrangler.toml — shares dev's D1/R2/DO/queue bindings but has no routes (workers.dev only). No schema migrations run on preview — merge to main first.
 
 ## CLI is a prod clone
 

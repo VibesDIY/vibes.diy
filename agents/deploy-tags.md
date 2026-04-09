@@ -7,7 +7,6 @@ Tag prefixes trigger different deploy jobs via `.github/workflows/vibes-diy-depl
 | `vibes-diy@p*` | prodv2      | compile_test | Yes (CLOUDFLARE_ENV=prod) |
 | `vibes-diy@c*` | cli         | deploy_cli   | No (shared prod queue)    |
 | `vibes-diy@d*` | dev         | compile_test | No                        |
-| `vibes-diy@s*` | staging     | compile_test | No                        |
 
 ## Tagging procedure
 
