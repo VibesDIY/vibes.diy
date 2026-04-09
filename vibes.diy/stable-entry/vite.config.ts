@@ -4,7 +4,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-const SPA_PREFIX = "/@stable-entry";
+const SPA_PREFIX = "/.stable-entry";
 
 // Vite-internal paths stay at root — never prefix these
 const VITE_INTERNAL = ["/node_modules/", "/@vite/", "/@fs/", "/__vite"];
@@ -13,7 +13,7 @@ function isViteInternal(p: string): boolean {
   return VITE_INTERNAL.some((prefix) => p.startsWith(prefix));
 }
 
-// Rewrite absolute app-module imports to include /@stable-entry prefix
+// Rewrite absolute app-module imports to include /.stable-entry prefix
 // so the browser routes them back through the worker → ASSETS → this middleware.
 // Vite-internal paths are left untouched.
 function rewriteImports(code: string): string {

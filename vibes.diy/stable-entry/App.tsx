@@ -20,12 +20,12 @@ const columnHelper = createColumnHelper<RowData>();
 const GROUPING = ["path"];
 
 async function fetchGroups(): Promise<ApiResponse> {
-  const res = await fetch("/@stable-entry/api");
+  const res = await fetch("/.stable-entry/api");
   return res.json() as Promise<ApiResponse>;
 }
 
 async function selectGroup(path: string, key: string): Promise<ApiResponse> {
-  const res = await fetch("/@stable-entry/api", {
+  const res = await fetch("/.stable-entry/api", {
     method: "PUT",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ path, key }),
