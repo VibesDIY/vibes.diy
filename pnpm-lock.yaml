@@ -1714,8 +1714,8 @@ importers:
         specifier: ^35.2.1
         version: 35.2.1
       ag-grid-react:
-        specifier: ^35.2.0
-        version: 35.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^35.2.1
+        version: 35.2.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -5082,20 +5082,14 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  ag-charts-types@13.2.0:
-    resolution: {integrity: sha512-O9TTqZmKwLpjylaxxfKqiQ3reWplCSkyB0yG/cRYKxyyIPxEIh312E/aFn63F0rqdY+yYvz/7xe4rmF6clL1gw==}
-
   ag-charts-types@13.2.1:
     resolution: {integrity: sha512-r7veb3QqJtIKlXmeUsLR4/oDPwmHxFI2tmbZra/203mdaz3uwQUrrgYNg628nrK+7L2YxXnwGc6L05tWjLLjNQ==}
-
-  ag-grid-community@35.2.0:
-    resolution: {integrity: sha512-YLprL+RsOLHbhgpCXN62MASHGhtR4g1z4bNTY4dnUqKU/RRts13TgHukOEA5JKjyDpeQic8JA17bY8hO/KZBfQ==}
 
   ag-grid-community@35.2.1:
     resolution: {integrity: sha512-ycmGI+1EbUT7i3eg/Kgi1owwnkdHXRufo10Xm6cfSsVPM3TMpvlbLgi28KIPt9DGHZWHq9fOBn7nxMNdv1Yaow==}
 
-  ag-grid-react@35.2.0:
-    resolution: {integrity: sha512-m+o5n49unv+/E86k6s2Gsvd0CVaOqvgdqv9KakuaR7SUd8ZWUEX2Us0j97lRI1DKIqus65cd8LjvcseYe6nIsw==}
+  ag-grid-react@35.2.1:
+    resolution: {integrity: sha512-UzdU15R6fyGJB+lBKEC458xacGoZged3Ra6Plqa7LvrJ/Mg0tWn1NH01UnuKyGEKPWMEAGvdXruOtOUywsPElA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -13369,21 +13363,15 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  ag-charts-types@13.2.0: {}
-
   ag-charts-types@13.2.1: {}
-
-  ag-grid-community@35.2.0:
-    dependencies:
-      ag-charts-types: 13.2.0
 
   ag-grid-community@35.2.1:
     dependencies:
       ag-charts-types: 13.2.1
 
-  ag-grid-react@35.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  ag-grid-react@35.2.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
-      ag-grid-community: 35.2.0
+      ag-grid-community: 35.2.1
       prop-types: 15.8.1
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
