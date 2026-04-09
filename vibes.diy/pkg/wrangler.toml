@@ -103,6 +103,34 @@ bucket_name = "vibes-diy-fs-ids"
 queue = "vibes-service-dev"
 binding = "VIBES_SERVICE"
 
+[env.preview]
+name = "vibes-diy-v2-preview"
+vars = { ENVIRONMENT = "preview" }
+# No routes — preview workers are accessed via workers.dev URLs only
+
+[env.preview.browser]
+binding = "BROWSER"
+
+[env.preview.durable_objects]
+bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+
+[[env.preview.migrations]]
+tag = "v1"
+new_classes = ["ChatSessions"]
+
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "dev-vibes-diy-v2"
+database_id = "105530de-9900-435b-92f4-15347af604f6"
+
+[[env.preview.r2_buckets]]
+binding = "FS_IDS_BUCKET"
+bucket_name = "vibes-diy-fs-ids"
+
+[[env.preview.queues.producers]]
+queue = "vibes-service-dev"
+binding = "VIBES_SERVICE"
+
 [env.prod]
 name = "vibes-diy-v2-prod"
 vars = { ENVIRONMENT = "prod" }
