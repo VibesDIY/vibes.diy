@@ -13,10 +13,12 @@ concurrency:
 
 jobs:
   deploy-preview:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     environment: dev
     permissions:
       contents: read
+      issues: write
       pull-requests: write
 
     steps:
@@ -51,7 +53,7 @@ jobs:
           FP_VERSION: ${{ vars.FP_VERSION }}
           FPCLOUD_URL: ${{ vars.FPCLOUD_URL }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          VIBES_DIY_PUBLIC_BASE_URL: ${{ vars.VIBES_DIY_PUBLIC_BASE_URL }}
+          VIBES_DIY_PUBLIC_BASE_URL: ${{ steps.pr.outputs.preview_url }}
           CLOUD_SESSION_TOKEN_SECRET: ${{ secrets.CLOUD_SESSION_TOKEN_SECRET }}
           CLOUD_SESSION_TOKEN_ISSUER: ${{ vars.CLOUD_SESSION_TOKEN_ISSUER }}
           VIBES_DIY_FROM_EMAIL: ${{ vars.VIBES_DIY_FROM_EMAIL }}
@@ -119,10 +121,11 @@ jobs:
 
             const botComment = comments.find(comment =>
               comment.user.type === 'Bot' &&
-              comment.body.includes('Preview Deployment')
+              comment.body.includes('<!-- vibes-diy-preview -->')
             );
 
-            const commentBody = `## Preview Deployment
+            const commentBody = `<!-- vibes-diy-preview -->
+            ## Preview Deployment
 
             **Preview URL:** ${previewUrl}
             **Worker:** \`${workerName}\`
