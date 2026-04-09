@@ -50,8 +50,16 @@ export async function writeUserSlugBinding(
       .where(eq(ctx.sql.tables.userSlugBinding.userSlug, userSlug))
       .limit(1)
       .then((r) => r[0]);
-    if (owner && owner.userId !== userId) {
-      return Result.Err(`userSlug "${userSlug}" is owned by another user`);
+    if (owner) {
+      if (owner.userId !== userId) {
+        return Result.Err(`userSlug "${userSlug}" is owned by another user`);
+      }
+      return Result.Ok({
+        type: "vibes.diy-user-slug-binding",
+        userId,
+        userSlug: owner.userSlug,
+        tenant: owner.tenant,
+      });
     }
 
     const tenant = ctx.sthis.nextId(12).str;
@@ -69,8 +77,16 @@ export async function writeUserSlugBinding(
         .where(eq(ctx.sql.tables.userSlugBinding.userSlug, userSlug))
         .limit(1)
         .then((r) => r[0]);
-      if (afterOwner && afterOwner.userId !== userId) {
-        return Result.Err(`userSlug "${userSlug}" is owned by another user`);
+      if (afterOwner) {
+        if (afterOwner.userId !== userId) {
+          return Result.Err(`userSlug "${userSlug}" is owned by another user`);
+        }
+        return Result.Ok({
+          type: "vibes.diy-user-slug-binding",
+          userId,
+          userSlug: afterOwner.userSlug,
+          tenant: afterOwner.tenant,
+        });
       }
       throw e;
     }
