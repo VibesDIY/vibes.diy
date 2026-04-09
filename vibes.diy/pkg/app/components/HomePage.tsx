@@ -211,7 +211,7 @@ export default function HomePage() {
             <div style={getGalleryContainerStyle(isMobile)}>
               <div style={getGalleryLabelStyle(isMobile)}>Gallery</div>
               <div style={getGalleryContentStyle()}>
-                <VibeGallery count={4} isMobile={isMobile} />
+                <VibeGallery count={4} isMobile={isMobile} onSelectPrompt={handleSelectSuggestion} />
                 <p style={getGalleryDescriptionStyle()}>
                   The vibes are strong with these four top picks.
                 </p>

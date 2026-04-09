@@ -1,110 +1,72 @@
-import React, { ReactElement, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  constructVibeIconUrl,
-  constructVibeScreenshotUrl,
-} from "../../utils/vibeUrls.js";
+import React, { ReactElement, useCallback, useState } from "react";
 import { TexturedPattern } from "@vibes.diy/base";
 import {
-  getVibeCardLinkStyle,
   getVibeCardWrapperStyle,
   getVibeCardIconContainerStyle,
   getVibeCardTexturedShadowStyle,
   getVibeCardMainIconContainerStyle,
-  getVibeCardIconImageStyle,
   getVibeCardNameStyle,
 } from "./NewSessionContent.styles.js";
 
 interface VibeGalleryCardProps {
-  slug: string;
-  name?: string;
+  category: string;
+  prompts: string[];
   IconComponent?: React.ComponentType<{
     width?: number;
     height?: number;
     fill?: string;
   }>;
   isMobile?: boolean;
+  onSelectPrompt?: (prompt: string) => void;
 }
 
 export default function VibeGalleryCard({
-  slug,
-  name,
+  category,
+  prompts,
   IconComponent,
   isMobile = false,
+  onSelectPrompt,
 }: VibeGalleryCardProps): ReactElement {
-  // Construct asset URLs
-  const baseUrl = "https://vibesdiy.app";
-  const screenshotUrl = useMemo(() => constructVibeScreenshotUrl(slug, baseUrl), [slug]);
-  const iconUrl = useMemo(() => constructVibeIconUrl(slug, baseUrl), [slug]);
-  const [imageSrc, setImageSrc] = useState(iconUrl);
-
-  // Reset to icon when slug changes
-  useEffect(() => {
-    setImageSrc(iconUrl);
-  }, [iconUrl]);
-
-  const handleImageError: React.ReactEventHandler<HTMLImageElement> = (
-    event,
-  ) => {
-    const failedSrc = event.currentTarget.src;
-
-    // If the screenshot also fails, don't loop between sources
-    if (failedSrc === screenshotUrl) {
-      return;
-    }
-
-    setImageSrc(screenshotUrl);
-  };
-
-  const linkUrl = `/vibe/${slug}`;
-  const vibeName = name || slug || "Vibe";
-
   const [isHovered, setIsHovered] = useState(false);
+
+  const handleClick = useCallback(() => {
+    const randomIndex = Math.floor(Math.random() * prompts.length);
+    onSelectPrompt?.(prompts[randomIndex]);
+  }, [prompts, onSelectPrompt]);
 
   const iconSize = isMobile ? 80 : 100;
   const iconInnerSize = isMobile ? 54 : 68;
   const borderRadius = isMobile ? 20 : 24;
 
   return (
-    <Link to={linkUrl} style={getVibeCardLinkStyle()}>
-      <div style={getVibeCardWrapperStyle()}>
-        {/* Icon container with textured shadow */}
-        <div
-          style={getVibeCardIconContainerStyle(isMobile)}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          {/* Textured shadow background */}
-          <div style={getVibeCardTexturedShadowStyle(isHovered, isMobile)}>
-            <TexturedPattern
-              width={iconSize}
-              height={iconSize}
-              borderRadius={borderRadius}
-            />
-          </div>
-
-          {/* Main icon container */}
-          <div style={getVibeCardMainIconContainerStyle(isHovered, isMobile)}>
-            {IconComponent ? (
-              <IconComponent
-                width={iconInnerSize}
-                height={iconInnerSize}
-                fill="var(--vibes-near-black)"
-              />
-            ) : (
-              <img
-                src={imageSrc}
-                alt={`Icon for ${vibeName}`}
-                style={getVibeCardIconImageStyle()}
-                loading="lazy"
-                onError={handleImageError}
-              />
-            )}
-          </div>
+    <div
+      style={{ ...getVibeCardWrapperStyle(), cursor: "pointer" }}
+      onClick={handleClick}
+    >
+      <div
+        style={getVibeCardIconContainerStyle(isMobile)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div style={getVibeCardTexturedShadowStyle(isHovered, isMobile)}>
+          <TexturedPattern
+            width={iconSize}
+            height={iconSize}
+            borderRadius={borderRadius}
+          />
         </div>
-        {/* Vibe name */}
-        <div style={getVibeCardNameStyle()}>{vibeName}</div>
+
+        <div style={getVibeCardMainIconContainerStyle(isHovered, isMobile)}>
+          {IconComponent && (
+            <IconComponent
+              width={iconInnerSize}
+              height={iconInnerSize}
+              fill="var(--vibes-near-black)"
+            />
+          )}
+        </div>
       </div>
-    </Link>
+      <div style={getVibeCardNameStyle()}>{category}</div>
+    </div>
   );
 }
