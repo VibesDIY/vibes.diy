@@ -2,7 +2,8 @@ import type { Fetcher } from "@cloudflare/workers-types";
 import { Result, exception2Result, Lazy } from "@adviser/cement";
 
 export const ROUTING_COOKIE = "se-group";
-export const SPA_PREFIX = "/@stable-entry";
+export const SPA_PREFIX = "/.stable-entry";
+export const OLD_SPA_PREFIX = "/@stable-entry";
 export const API_PATH = `${SPA_PREFIX}/api`;
 
 // ─── Input (raw from JSON) ────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 # stable-entry
 
-A Cloudflare Worker that proxies requests to different backends based on a per-path cookie. A small React SPA at `/@stable-entry/` lets you switch routes interactively.
+A Cloudflare Worker that proxies requests to different backends based on a per-path cookie. A small React SPA at `/.stable-entry/` lets you switch routes interactively.
 
 ## Environment variables
 
@@ -66,7 +66,7 @@ Every proxied response includes an `X-Stable-Entry` header with the resolved gro
 
 ## UI
 
-Visit `/@stable-entry/` to see all configured paths and groups, switch the active group per path, and copy a ready-to-use `curl` command with the current cookie.
+Visit `/.stable-entry/` to see all configured paths and groups, switch the active group per path, and copy a ready-to-use `curl` command with the current cookie.
 
 ## Deployment
 

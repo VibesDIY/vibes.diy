@@ -31,21 +31,23 @@ function handleGet(request: Request, env: Env): Response {
   return Response.json({ routes: buildRoutes(env, routingGroups), cookie: routingGroups } satisfies ApiResponse);
 }
 
-async function handlePut(request: Request, env: Env, origin: string): Promise<Response> {
-  const { path, key } = (await request.json()) as { path: string; key: string };
-  const routingGroups = parseRoutingCookie(request.headers.get("cookie") ?? "");
-
+export function updateRoutingCookie(routingGroups: Record<string, string>, path: string, key: string): string {
   if (key === "*") {
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete routingGroups[path];
   } else {
     routingGroups[path] = key;
   }
-
   const hasSelections = Object.keys(routingGroups).length > 0;
-  const cookieHeader = hasSelections
+  return hasSelections
     ? serializeCookie(ROUTING_COOKIE, encodeURIComponent(JSON.stringify(routingGroups)), { path: "/" })
     : serializeCookie(ROUTING_COOKIE, "", { maxAge: 0, path: "/" });
+}
+
+async function handlePut(request: Request, env: Env, origin: string): Promise<Response> {
+  const { path, key } = (await request.json()) as { path: string; key: string };
+  const routingGroups = parseRoutingCookie(request.headers.get("cookie") ?? "");
+  const cookieHeader = updateRoutingCookie(routingGroups, path, key);
 
   return new Response(null, {
     status: 303,
