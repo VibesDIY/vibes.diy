@@ -70,7 +70,7 @@ jobs:
           set -e
 
           # Build using preview env (no routes, workers.dev only)
-          CLOUDFLARE_ENV=preview react-router build
+          CLOUDFLARE_ENV=preview pnpm exec react-router build
 
           # No migrations — merge to main for schema changes
 
