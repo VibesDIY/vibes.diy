@@ -5,7 +5,7 @@ import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useNavigate } from "react-router";
 import { BuildURI } from "@adviser/cement";
 import { VibesSwitch, VibesButton, ArrowLeftIcon, ArrowRightIcon, gridBackground, cx } from "@vibes.diy/base";
-import { useIsMobile } from "../hooks/useIsMobile.js";
+import { isMobileViewport } from "../utils/ViewState.js";
 import VibeGallery from "./NewSessionContent/VibeGallery.js";
 import {
   getContainerStyle,
@@ -30,7 +30,14 @@ export default function HomePage() {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
 
-  const isMobile = useIsMobile();
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(isMobileViewport());
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [input, setInput] = useState("");
   const [prompt, setPrompt] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -44,7 +51,7 @@ export default function HomePage() {
       BuildURI.from(window.location.href).pathname("/chat/prompt").setParam("prompt64", sthis.txt.base64.encode(prompt))
         .withoutHostAndSchema
     );
-  }, [prompt]);
+  }, [prompt, navigate, sthis]);
 
   const handleSubmit = useCallback(() => {
     if (input.trim()) {
@@ -183,11 +190,7 @@ export default function HomePage() {
                   placeholder="Describe your vibe to make it an app."
                   style={getTextareaStyle()}
                 />
-                <button
-                  onClick={handleSubmit}
-                  disabled={!input.trim()}
-                  style={getSubmitButtonStyle()}
-                >
+                <button onClick={handleSubmit} disabled={!input.trim()} style={getSubmitButtonStyle()}>
                   ↑
                 </button>
               </div>
@@ -224,9 +227,7 @@ export default function HomePage() {
               <div style={getGalleryLabelStyle(mobile)}>Gallery</div>
               <div style={getGalleryContentStyle()}>
                 <VibeGallery count={4} isMobile={mobile} onSelectPrompt={handleSelectSuggestion} />
-                <p style={getGalleryDescriptionStyle()}>
-                  The vibes are strong with these four top picks.
-                </p>
+                <p style={getGalleryDescriptionStyle()}>The vibes are strong with these four top picks.</p>
               </div>
             </div>
           </div>
