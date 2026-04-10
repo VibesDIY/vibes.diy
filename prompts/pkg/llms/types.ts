@@ -6,5 +6,4 @@ export interface LlmConfig {
   importModule: string;
   importName: string;
   importType?: "named" | "namespace" | "default";
-  llmsTxtUrl?: string;
 }
