@@ -6,7 +6,7 @@
  */
 
 import { css } from "@emotion/css";
-import { colors, semantic } from "./tokens.js";
+import { semantic } from "./tokens.js";
 
 /** Animated loading stripes overlay */
 export const stripesOverlay = css`
@@ -42,11 +42,11 @@ export const stripesOverlay = css`
 
 /** Grid background pattern */
 export const gridBackground = css`
-  background-color: ${colors.grayLightest};
+  background-color: #CCCDC8;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-size: 32px 32px;
   background-attachment: scroll;
   @media (min-width: 768px) {
     background-attachment: fixed;
