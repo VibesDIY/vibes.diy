@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 interface TexturedPatternProps {
   width?: number;
@@ -11,6 +11,7 @@ export function TexturedPattern({
   height = 75.78,
   borderRadius = 20.08,
 }: TexturedPatternProps) {
+  const patternId = useId();
   return (
     <svg
       width={width}
@@ -21,7 +22,7 @@ export function TexturedPattern({
     >
       <defs>
         <pattern
-          id="textured-pattern"
+          id={patternId}
           x="0"
           y="0"
           width="9"
@@ -67,7 +68,7 @@ export function TexturedPattern({
         </pattern>
       </defs>
       <rect
-        fill="url(#textured-pattern)"
+        fill={`url(#${patternId})`}
         width="75.78"
         height="75.78"
         rx={borderRadius}
