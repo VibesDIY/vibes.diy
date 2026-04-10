@@ -6,7 +6,7 @@
  */
 
 import { css } from "@emotion/css";
-import { colors, semantic } from "./tokens.js";
+import { semantic } from "./tokens.js";
 
 /** Animated loading stripes overlay */
 export const stripesOverlay = css`
