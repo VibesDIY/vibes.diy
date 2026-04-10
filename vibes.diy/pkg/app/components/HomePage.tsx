@@ -155,7 +155,7 @@ export default function HomePage() {
   return (
     <>
       <div className={cx(gridBackground, "page-grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full")}>
-        <div className="px-4 md:px-8 pb-8 pt-0">
+        <div className="px-6 md:px-8 pb-8 pt-0">
           <div className="mb-4 md:mb-8 ml-2 md:ml-6 relative z-20">
             <VibesSwitch size={75} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
           </div>
@@ -196,7 +196,7 @@ export default function HomePage() {
             {/* Carousel */}
             <div style={getCarouselWrapperStyle(mobile)}>
               <button style={getCarouselNavButtonStyle(mobile)} onClick={handlePrevious} aria-label="Previous suggestions">
-                <ArrowRightIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
+                <ArrowLeftIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
               </button>
 
               <div ref={viewportRef} style={getSuggestionsContainerStyle()}>
@@ -215,7 +215,7 @@ export default function HomePage() {
               </div>
 
               <button style={getCarouselNavButtonStyle(mobile)} onClick={handleNext} aria-label="Next suggestions">
-                <ArrowLeftIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
+                <ArrowRightIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
               </button>
             </div>
 
