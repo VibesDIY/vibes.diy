@@ -4,9 +4,48 @@
 
 Never put HTML inside TypeScript code as template literal strings (code-in-code). Keep HTML in separate files and load/serve them.
 
-## No CSS imports across packages
+## @adviser/cement
 
-Never use `@import "@vibes.diy/base/theme.css"` or `import "@pkg/foo.css"` across packages. Non-JS/TS assets must be loaded via `loadAsset()` from `@adviser/cement` — use `loadAsset("./file.css", { fallBackUrl: "https://esm.sh/@pkg/", basePath: () => import.meta.url })` and inject as a `<style>` tag.
+The codebase uses `@adviser/cement` as a core utility library. Key exports:
+
+- **`loadAsset(path, opts)`** — load non-JS assets (text, CSS, markdown). See below.
+- **`Result` / `exception2Result()`** — no throwing, wrap errors in Result
+- **`URI` / `BuildURI`** — use instead of `new URL()` (URL is not stable)
+- **`ResolveOnce` / `KeyedResolvOnce` / `Lazy`** — use instead of singletons
+- **`Option`** — use instead of falsy checks
+- **`Evento`** — event/message system across packages
+
+### loadAsset
+
+Use `loadAsset()` for any non-JS/TS asset (CSS, text, markdown, fixtures). Never use raw `@import` or `import` for CSS across packages.
+
+**Server/build-time** (with CDN fallback):
+
+```ts
+const rText = await loadAsset("./llms/claude.txt", {
+  fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
+  basePath: () => import.meta.url,
+});
+```
+
+**Browser** (from origin):
+
+```ts
+loadAsset("/app/routes/legal/tos-notes.md", {
+  basePath: () => window.location.origin,
+}).then((r) => setContent(r.Ok()));
+```
+
+**Tests** (with `urlDirname`):
+
+```ts
+const r = await loadAsset(pathOps.join("tests", "fixtures", filename), {
+  basePath: () => urlDirname(import.meta.url).toString(),
+  fallBackUrl: urlDirname(import.meta.url).toString(),
+});
+```
+
+Returns a `Result` — use `.Ok()` for the value, `.isErr()` to check failure.
 
 ## Clickable links
 
