@@ -7,7 +7,7 @@ export const getContainerStyle = (isMobile: boolean): CSSProperties => ({
   display: "flex",
   flexDirection: "column",
   gap: isMobile ? "16px" : "24px",
-  margin: isMobile ? "40px" : "0 auto",
+  margin: isMobile ? "0" : "0 auto",
   justifyContent: "center",
   alignItems: isMobile ? "stretch" : "center",
   padding: isMobile ? "0" : "0",
@@ -68,14 +68,14 @@ export const getSuggestionsInnerStyle = (
 
 // Title style - responsive
 export const getTitle = (isMobile: boolean): CSSProperties => ({
-  fontSize: isMobile ? "36px" : "65px",
+  fontSize: isMobile ? "24px" : "65px",
   fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
   color: "var(--vibes-near-black)",
   display: "flex",
   justifyContent: "center",
   textAlign: "center",
-  width: isMobile ? "100%" : "auto",
-  padding: isMobile ? "0 16px" : "0",
+  width: "100%",
+  padding: isMobile ? "0 8px" : "0",
   boxSizing: "border-box",
 });
 
@@ -198,8 +198,7 @@ export const getSubmitButtonStyle = (): CSSProperties => ({
 export const getGalleryContainerStyle = (isMobile: boolean): CSSProperties => {
   if (isMobile) {
     return {
-      width: "calc(100% - 32px)",
-      margin: "0 16px",
+      width: "100%",
       position: "relative",
       display: "flex",
       flexDirection: "column",
@@ -207,6 +206,7 @@ export const getGalleryContainerStyle = (isMobile: boolean): CSSProperties => {
       backgroundColor: "#D3D3D3",
       borderRadius: "8px",
       boxSizing: "border-box",
+      overflow: "hidden",
     };
   }
   return {
@@ -278,12 +278,12 @@ export const getVibeGalleryWrapperStyle = (
   isMobile: boolean,
 ): CSSProperties => ({
   display: "flex",
+  flexWrap: "wrap",
   justifyContent: "center",
   alignItems: "center",
-  padding: isMobile ? "16px" : "24px",
+  padding: isMobile ? "12px" : "24px",
   width: "100%",
-  gap: isMobile ? "8px" : "10px",
-  flexWrap: isMobile ? "wrap" : "nowrap",
+  gap: isMobile ? "12px" : "10px",
 });
 
 // VibeGalleryCard styles
@@ -295,29 +295,30 @@ export const getVibeCardWrapperStyle = (): CSSProperties => ({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  gap: "12px",
+  gap: "8px",
+  flexShrink: 0,
 });
 
 export const getVibeCardIconContainerStyle = (
   isMobile: boolean,
 ): CSSProperties => ({
   position: "relative",
-  width: isMobile ? "80px" : "100px",
-  height: isMobile ? "80px" : "100px",
+  width: isMobile ? "64px" : "100px",
+  height: isMobile ? "64px" : "100px",
 });
 
 export const getVibeCardTexturedShadowStyle = (
   isHovered: boolean,
   isMobile: boolean,
 ): CSSProperties => {
-  const size = isMobile ? "80px" : "100px";
+  const size = isMobile ? "64px" : "100px";
   return {
     position: "absolute",
     top: "8px",
     left: isHovered ? "10px" : "8px",
     width: size,
     height: size,
-    borderRadius: isMobile ? "20px" : "24px",
+    borderRadius: isMobile ? "16px" : "24px",
     overflow: "hidden",
     transition: "top 0.2s ease, left 0.2s ease",
     zIndex: 0,
@@ -328,13 +329,13 @@ export const getVibeCardMainIconContainerStyle = (
   isHovered: boolean,
   isMobile: boolean,
 ): CSSProperties => {
-  const size = isMobile ? "80px" : "100px";
-  const padding = isMobile ? "12px" : "16px";
+  const size = isMobile ? "64px" : "100px";
+  const padding = isMobile ? "8px" : "16px";
   return {
     position: "relative",
     width: size,
     height: size,
-    borderRadius: isMobile ? "20px" : "24px",
+    borderRadius: isMobile ? "16px" : "24px",
     backgroundColor: "rgb(255, 254, 240)",
     border: "2px solid var(--vibes-near-black)",
     display: "flex",
