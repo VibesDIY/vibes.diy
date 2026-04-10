@@ -34,9 +34,9 @@ export default function VibeGalleryCard({
     onSelectPrompt?.(prompts[randomIndex]);
   }, [prompts, onSelectPrompt]);
 
-  const iconSize = isMobile ? 80 : 100;
-  const iconInnerSize = isMobile ? 54 : 68;
-  const borderRadius = isMobile ? 20 : 24;
+  const iconSize = isMobile ? 64 : 100;
+  const iconInnerSize = isMobile ? 40 : 68;
+  const borderRadius = isMobile ? 16 : 24;
 
   return (
     <div
