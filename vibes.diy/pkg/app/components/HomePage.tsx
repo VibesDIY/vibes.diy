@@ -140,6 +140,11 @@ export default function HomePage() {
   const totalOffset = baseOffset + animationOffset;
   const buttonVariants = ["blue", "red", "yellow"] as const;
 
+  if (isMobile === null) {
+    return <div className={cx(gridBackground, "page-grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full")} />;
+  }
+  const mobile = isMobile as boolean;
+
   return (
     <>
       <div className={cx(gridBackground, "page-grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full")}>
@@ -148,15 +153,15 @@ export default function HomePage() {
             <VibesSwitch size={75} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
           </div>
 
-          <div style={getContainerStyle(isMobile)}>
-            <h1 style={getTitle(isMobile)}>
+          <div style={getContainerStyle(mobile)}>
+            <h1 style={getTitle(mobile)}>
               What's the&nbsp;
               <span style={{ textDecoration: "underline" }}>vibe</span>? Try it.
             </h1>
 
             {/* Chat input form */}
-            <div style={getChatInputContainerStyle(isMobile)}>
-              <div style={getChatInputLabelStyle(isMobile)}>Prompt</div>
+            <div style={getChatInputContainerStyle(mobile)}>
+              <div style={getChatInputLabelStyle(mobile)}>Prompt</div>
               <div style={getTextareaWrapperStyle()}>
                 <textarea
                   ref={inputRef}
@@ -182,9 +187,9 @@ export default function HomePage() {
             </div>
 
             {/* Carousel */}
-            <div style={getCarouselWrapperStyle(isMobile)}>
-              <button style={getCarouselNavButtonStyle(isMobile)} onClick={handlePrevious} aria-label="Previous suggestions">
-                <ArrowRightIcon width={isMobile ? 20 : 24} height={isMobile ? 20 : 24} fill="var(--vibes-near-black)" />
+            <div style={getCarouselWrapperStyle(mobile)}>
+              <button style={getCarouselNavButtonStyle(mobile)} onClick={handlePrevious} aria-label="Previous suggestions">
+                <ArrowRightIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
               </button>
 
               <div ref={viewportRef} style={getSuggestionsContainerStyle()}>
@@ -202,16 +207,16 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <button style={getCarouselNavButtonStyle(isMobile)} onClick={handleNext} aria-label="Next suggestions">
-                <ArrowLeftIcon width={isMobile ? 20 : 24} height={isMobile ? 20 : 24} fill="var(--vibes-near-black)" />
+              <button style={getCarouselNavButtonStyle(mobile)} onClick={handleNext} aria-label="Next suggestions">
+                <ArrowLeftIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
               </button>
             </div>
 
             {/* Gallery */}
-            <div style={getGalleryContainerStyle(isMobile)}>
-              <div style={getGalleryLabelStyle(isMobile)}>Gallery</div>
+            <div style={getGalleryContainerStyle(mobile)}>
+              <div style={getGalleryLabelStyle(mobile)}>Gallery</div>
               <div style={getGalleryContentStyle()}>
-                <VibeGallery count={4} isMobile={isMobile} onSelectPrompt={handleSelectSuggestion} />
+                <VibeGallery count={4} isMobile={mobile} onSelectPrompt={handleSelectSuggestion} />
                 <p style={getGalleryDescriptionStyle()}>
                   The vibes are strong with these four top picks.
                 </p>
