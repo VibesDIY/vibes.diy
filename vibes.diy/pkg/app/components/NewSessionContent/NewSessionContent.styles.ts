@@ -59,7 +59,7 @@ export const getSuggestionsInnerStyle = (
   isAnimating: boolean,
 ): CSSProperties => ({
   display: "flex",
-  gap: "22px",
+  gap: "20px",
   transform: `translateX(${offset}px)`,
   transition: isAnimating
     ? "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
@@ -92,8 +92,7 @@ export const getChatInputContainerStyle = (
 ): CSSProperties => {
   if (isMobile) {
     return {
-      width: "calc(100% - 32px)",
-      margin: "0 16px",
+      width: "100%",
       position: "relative",
       display: "flex",
       flexDirection: "column",
