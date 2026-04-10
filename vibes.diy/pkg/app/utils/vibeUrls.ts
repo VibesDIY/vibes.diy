@@ -1,15 +1,15 @@
 import { BuildURI } from "@adviser/cement";
 
 export function getAppHostBaseUrl(): string {
-  if (typeof window !== "undefined") {
-    return window.location.origin;
-  }
-
   if (typeof process !== "undefined") {
     const baseUrl = process.env.VITE_APP_HOST_BASE_URL ?? process.env.APP_HOST_BASE_URL;
     if (baseUrl) {
       return baseUrl;
     }
+  }
+
+  if (typeof window !== "undefined") {
+    return window.location.origin;
   }
 
   return "https://vibesdiy.app";
