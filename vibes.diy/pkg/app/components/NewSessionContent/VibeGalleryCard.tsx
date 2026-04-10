@@ -39,9 +39,11 @@ export default function VibeGalleryCard({
   const borderRadius = isMobile ? 16 : 24;
 
   return (
-    <div
-      style={{ ...getVibeCardWrapperStyle(), cursor: "pointer" }}
+    <button
+      type="button"
+      style={{ ...getVibeCardWrapperStyle(), cursor: "pointer", background: "none", border: "none", padding: 0 }}
       onClick={handleClick}
+      aria-label={`Get a random ${category} prompt`}
     >
       <div
         style={getVibeCardIconContainerStyle(isMobile)}
@@ -67,6 +69,6 @@ export default function VibeGalleryCard({
         </div>
       </div>
       <div style={getVibeCardNameStyle()}>{category}</div>
-    </div>
+    </button>
   );
 }

@@ -76,59 +76,11 @@
   margin-bottom: 0.5rem;
 }
 
-/* Grid background pattern inspired by catalog title page */
-.grid-background {
-  background-color: var(--vibes-menu-bg, #CCCDC8);
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-attachment: scroll;
-}
-
-@media (min-width: 768px) {
-  .grid-background {
-    background-attachment: fixed;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .grid-background {
-    background-color: #2a2a2a;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
-  }
-}
-
-/* Page-specific body background for create page */
-.page-grid-background {
-  /* This class on a page root will apply grid to body for over-scroll areas */
-}
-
-body:has(.page-grid-background) {
-  background-color: var(--vibes-menu-bg, #CCCDC8);
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-attachment: scroll;
-}
-
-@media (min-width: 768px) {
-  body:has(.page-grid-background) {
-    background-attachment: fixed;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  body:has(.page-grid-background) {
-    background-color: #2a2a2a;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
-  }
-}
+/*
+ * Grid background is handled by the Emotion `gridBackground` export from @vibes.diy/base.
+ * The body overscroll pattern is in app.css via body:has(.page-grid-background).
+ * Do not duplicate grid styles here.
+ */
 
 /* Vibes Login Button - themed button with interactive states */
 .vibes-login-button {
