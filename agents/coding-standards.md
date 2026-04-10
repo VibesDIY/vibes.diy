@@ -14,7 +14,7 @@ Use: `loadAsset("./file.css", { fallBackUrl: "https://esm.sh/@pkg/", basePath: (
 
 ## Clickable links
 
-Always use full markdown links when referencing PRs, issues, commits, or URLs. Use `[PR #123](https://github.com/VibesDIY/vibes.diy/pull/123)` format. `owner/repo#123` shorthand is NOT clickable in VS Code or the terminal.
+Every link in responses must be clickable. Never output a bare reference without making it a proper link. `owner/repo#123` shorthand is NOT clickable in VS Code or the terminal — always use full markdown `[text](url)` links for PRs, issues, files, deployment URLs, and any other reference.
 
 ## Stable-entry param naming
 
