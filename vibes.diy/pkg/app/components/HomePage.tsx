@@ -60,6 +60,13 @@ export default function HomePage() {
   // Carousel state
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const animationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (animationTimer.current) clearTimeout(animationTimer.current);
+    };
+  }, []);
   const [animationOffset, setAnimationOffset] = useState(0);
   const [slideDistance, setSlideDistance] = useState(0);
   const [buttonWidth, setButtonWidth] = useState(0);
@@ -99,7 +106,7 @@ export default function HomePage() {
     if (isAnimating || !slideDistance) return;
     setIsAnimating(true);
     setAnimationOffset(slideDistance);
-    setTimeout(() => {
+    animationTimer.current = setTimeout(() => {
       setCurrentIndex((prev) => (prev === 0 ? quickSuggestions.length - 1 : prev - 1));
       setAnimationOffset(0);
       setIsAnimating(false);
@@ -110,7 +117,7 @@ export default function HomePage() {
     if (isAnimating || !slideDistance) return;
     setIsAnimating(true);
     setAnimationOffset(-slideDistance);
-    setTimeout(() => {
+    animationTimer.current = setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % quickSuggestions.length);
       setAnimationOffset(0);
       setIsAnimating(false);
