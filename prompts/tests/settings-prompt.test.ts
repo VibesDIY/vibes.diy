@@ -6,10 +6,10 @@ vi.mock("@vibes.diy/prompts", async () => {
   // Create a mock implementation that simulates the behavior of the original
   const llmsModules = {
     "./llms/module1.json": {
-      default: { llmsTxtUrl: "https://example.com/llm1.txt", label: "llm1" },
+      default: { label: "llm1" },
     },
     "./llms/module2.json": {
-      default: { llmsTxtUrl: "https://example.com/llm2.txt", label: "llm2" },
+      default: { label: "llm2" },
     },
   };
 
