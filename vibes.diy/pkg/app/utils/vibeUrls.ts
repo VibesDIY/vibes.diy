@@ -1,5 +1,9 @@
 import { BuildURI } from "@adviser/cement";
 
+export function getAppHostBaseUrl(): string {
+  return typeof window !== "undefined" ? window.location.origin : "https://vibesdiy.app";
+}
+
 /**
  * Construct URL for vibe code endpoint with query parameter
  */

@@ -2,7 +2,7 @@ import React, { ReactElement, useEffect, useMemo, useState } from "react";
 import { BrutalistCard } from "@vibes.diy/base";
 import { DocFileMeta } from "@fireproof/use-fireproof";
 import { ImgFile } from "./SessionSidebar/ImgFile.js";
-import { constructVibeIconUrl, constructVibeScreenshotUrl } from "../utils/vibeUrls.js";
+import { constructVibeIconUrl, constructVibeScreenshotUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";
 
 interface PublishedVibeCardProps {
   slug: string;
@@ -20,7 +20,7 @@ export default function PublishedVibeCard({
   children,
 }: PublishedVibeCardProps): ReactElement {
   // Construct asset URLs with query parameters
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://vibesdiy.app";
+  const baseUrl = getAppHostBaseUrl();
   const screenshotUrl = useMemo(() => constructVibeScreenshotUrl(slug, baseUrl), [slug, baseUrl]);
   const iconUrl = useMemo(() => constructVibeIconUrl(slug, baseUrl), [slug, baseUrl]);
   const [imageSrc, setImageSrc] = useState(iconUrl);
