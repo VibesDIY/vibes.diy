@@ -42,7 +42,7 @@ export default function NewSessionContent({
   chatState,
   handleSelectSuggestion,
 }: NewSessionContentProps) {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile() ?? false;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [animationOffset, setAnimationOffset] = useState(0);
