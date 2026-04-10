@@ -196,7 +196,7 @@ export default function HomePage() {
             {/* Carousel */}
             <div style={getCarouselWrapperStyle(mobile)}>
               <button style={getCarouselNavButtonStyle(mobile)} onClick={handlePrevious} aria-label="Previous suggestions">
-                <ArrowLeftIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
+                <ArrowRightIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
               </button>
 
               <div ref={viewportRef} style={getSuggestionsContainerStyle()}>
@@ -215,7 +215,7 @@ export default function HomePage() {
               </div>
 
               <button style={getCarouselNavButtonStyle(mobile)} onClick={handleNext} aria-label="Next suggestions">
-                <ArrowRightIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
+                <ArrowLeftIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
               </button>
             </div>
 
