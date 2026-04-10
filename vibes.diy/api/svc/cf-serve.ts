@@ -10,7 +10,7 @@ import { createAppContext, processRequest } from "./create-handler.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { AppContext, Lazy, LoggerImpl, Result } from "@adviser/cement";
+import { AppContext, Lazy, LoggerImpl, Result, URI } from "@adviser/cement";
 import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf } from "./types.js";
 import { CFEnv, MsgBase } from "@vibes.diy/api-types";
@@ -107,7 +107,7 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
       // console.log("Posting message to queue:", msg);
       await env.VIBES_SERVICE.send(JSON.stringify(msg));
     },
-    fetchAsset: async (url: string) => {
+    fetchAsset: async (iurl: string) => {
       // console.log("Fetching asset from URL:", url);
       // const vibePkgUri = URI.from(url);
       // if (vibePkgUri.protocol !== 'file:') {
@@ -120,7 +120,22 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
       // const assetUrl = uri.build().pathname(uri.pathname.replace(/^\//, "/_")).toString();
       // const assetUrl = uri.toString();
       // console.log("Fetching asset from URL:", url, "assetUrl:", assetUrl);
-      const res = await env.ASSETS.fetch(url);
+
+      const iuri = URI.from(iurl);
+      const urls = [iuri.toString()];
+      if (iuri.pathname.startsWith("/vibe-pkg/")) {
+        urls.push(iuri.build().pathname(iuri.pathname.replace("/vibe-pkg/", "/_vibe-pkg/")).toString());
+      }
+      let res!: CFResponse;
+      let url!: string;
+      // eslint-disable-next-line @typescript-eslint/prefer-for-of
+      for (let i = 0; i < urls.length; i++) {
+        url = urls[i];
+        res = await env.ASSETS.fetch(url);
+        if (res.ok) {
+          break;
+        }
+      }
       // console.log("Received response for asset fetch:", res);
       if (!res.ok) {
         return Result.Err(`Failed to fetch asset from ${url}: ${res.status} ${res.statusText}`);
