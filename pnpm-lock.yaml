@@ -96,7 +96,7 @@ importers:
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.16
-        version: 0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
+        version: 0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
       mime:
         specifier: ^4.1.0
         version: 4.1.0
@@ -238,7 +238,7 @@ importers:
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.16
-        version: 0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
+        version: 0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../call-ai/v2
@@ -291,7 +291,7 @@ importers:
         version: 6.9.1
       '@testing-library/react':
         specifier: ^16.3.2
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@types/node':
         specifier: ^25.2.3
         version: 25.5.2
@@ -543,7 +543,7 @@ importers:
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.16
-        version: 0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
+        version: 0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../base
@@ -662,7 +662,7 @@ importers:
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.16
-        version: 0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
+        version: 0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
@@ -702,7 +702,7 @@ importers:
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.16
-        version: 0.24.16(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@6.0.2)
+        version: 0.24.16(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -717,7 +717,7 @@ importers:
         version: 0.24.16(typescript@6.0.2)
       '@fireproof/use-fireproof':
         specifier: 0.24.16
-        version: 0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
+        version: 0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@vibes.diy/api-impl':
         specifier: workspace:*
         version: link:../vibes.diy/api/impl
@@ -760,7 +760,7 @@ importers:
         version: 0.5.34(typescript@6.0.2)
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.16
-        version: 0.24.16(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@6.0.2)
+        version: 0.24.16(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -910,7 +910,7 @@ importers:
         version: 4.20260402.1
       '@fireproof/core-protocols-dashboard':
         specifier: 0.24.16
-        version: 0.24.16(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@6.0.2)
+        version: 0.24.16(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)
       '@fireproof/core-runtime':
         specifier: 0.24.16
         version: 0.24.16(typescript@6.0.2)
@@ -1420,7 +1420,7 @@ importers:
         version: 4.20260402.1
       '@tanstack/react-table':
         specifier: ^8.21.3
-        version: 8.21.3(react-dom@19.2.4(react@19.2.5))(react@19.2.5)
+        version: 8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@vibes.diy/base':
         specifier: workspace:*
         version: link:../base
@@ -1431,8 +1431,8 @@ importers:
         specifier: ^19.2.4
         version: 19.2.5
       react-dom:
-        specifier: ^19.2.4
-        version: 19.2.4(react@19.2.5)
+        specifier: ^19.2.5
+        version: 19.2.5(react@19.2.5)
     devDependencies:
       '@cloudflare/vite-plugin':
         specifier: ^1.30.1
@@ -7868,6 +7868,11 @@ packages:
     peerDependencies:
       react: ^19.2.4
 
+  react-dom@19.2.5:
+    resolution: {integrity: sha512-J5bAZz+DXMMwW/wV3xzKke59Af6CHY7G4uYLN1OvBcKEsWOs4pQExj86BBKamxl/Ik5bx9whOrvBlSDfWzgSag==}
+    peerDependencies:
+      react: ^19.2.5
+
   react-ga4@2.1.0:
     resolution: {integrity: sha512-ZKS7PGNFqqMd3PJ6+C2Jtz/o1iU9ggiy8Y8nUeksgVuvNISbmrQtJiZNvC/TjDsqD0QlU5Wkgs7i+w9+OjHhhQ==}
 
@@ -9394,6 +9399,17 @@ snapshots:
       react: 19.2.5
       react-dom: 19.2.4(react@19.2.5)
 
+  '@clerk/shared@4.3.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+    dependencies:
+      '@tanstack/query-core': 5.90.16
+      dequal: 2.0.3
+      glob-to-regexp: 0.4.1
+      js-cookie: 3.0.5
+      std-env: 3.10.0
+    optionalDependencies:
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
+
   '@clerk/shared@4.6.0(react-dom@19.2.4(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@tanstack/query-core': 5.90.16
@@ -10523,6 +10539,24 @@ snapshots:
       - react-dom
       - typescript
 
+  '@fireproof/core-protocols-dashboard@0.24.16(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@clerk/shared': 4.3.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@fireproof/core-device-id': 0.24.16(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.16(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.16(typescript@6.0.2)
+      '@fireproof/core-types-device-id': 0.24.16(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.16(typescript@6.0.2)
+      '@fireproof/core-types-protocols-dashboard': 0.24.16(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.16(typescript@6.0.2)
+      jose: 6.2.2
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - react
+      - react-dom
+      - typescript
+
   '@fireproof/core-runtime@0.24.15(typescript@6.0.2)':
     dependencies:
       '@adviser/cement': 0.5.34(typescript@6.0.2)
@@ -10779,6 +10813,28 @@ snapshots:
       '@fireproof/core-gateways-cloud': 0.24.16(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@fireproof/core-keybag': 0.24.16(typescript@6.0.2)
       '@fireproof/core-protocols-dashboard': 0.24.16(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@6.0.2)
+      '@fireproof/core-runtime': 0.24.16(typescript@6.0.2)
+      '@fireproof/core-types-base': 0.24.16(typescript@6.0.2)
+      '@fireproof/core-types-blockstore': 0.24.16(typescript@6.0.2)
+      '@fireproof/core-types-protocols-cloud': 0.24.16(typescript@6.0.2)
+      '@fireproof/vendor': 0.24.16(typescript@6.0.2)
+      dompurify: 3.3.3
+      jose: 6.2.2
+      react: 19.2.5
+      ts-essentials: 10.1.1(typescript@6.0.2)
+    transitivePeerDependencies:
+      - bufferutil
+      - react-dom
+      - typescript
+      - utf-8-validate
+
+  '@fireproof/use-fireproof@0.24.16(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@adviser/cement': 0.5.34(typescript@6.0.2)
+      '@fireproof/core-base': 0.24.16(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-gateways-cloud': 0.24.16(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@fireproof/core-keybag': 0.24.16(typescript@6.0.2)
+      '@fireproof/core-protocols-dashboard': 0.24.16(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)
       '@fireproof/core-runtime': 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-base': 0.24.16(typescript@6.0.2)
       '@fireproof/core-types-blockstore': 0.24.16(typescript@6.0.2)
@@ -12223,6 +12279,12 @@ snapshots:
       react: 19.2.5
       react-dom: 19.2.4(react@19.2.5)
 
+  '@tanstack/react-table@8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+    dependencies:
+      '@tanstack/table-core': 8.21.3
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
+
   '@tanstack/table-core@8.21.3': {}
 
   '@testing-library/dom@10.4.1':
@@ -12251,6 +12313,16 @@ snapshots:
       '@testing-library/dom': 10.4.1
       react: 19.2.5
       react-dom: 19.2.4(react@19.2.5)
+    optionalDependencies:
+      '@types/react': 19.2.14
+      '@types/react-dom': 19.2.3(@types/react@19.2.14)
+
+  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+    dependencies:
+      '@babel/runtime': 7.29.2
+      '@testing-library/dom': 10.4.1
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -16186,6 +16258,11 @@ snapshots:
       - supports-color
 
   react-dom@19.2.4(react@19.2.5):
+    dependencies:
+      react: 19.2.5
+      scheduler: 0.27.0
+
+  react-dom@19.2.5(react@19.2.5):
     dependencies:
       react: 19.2.5
       scheduler: 0.27.0
