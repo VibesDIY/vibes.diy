@@ -1,56 +1,29 @@
 # Coding Standards
 
+Team-wide standards for agent behavior and code review.
+
 ## No inline HTML in TypeScript
 
-Never put HTML inside TypeScript code as template literal strings (code-in-code). Keep HTML in separate files and load/serve them.
+Never put HTML inside TypeScript code as template literal strings (code-in-code). Keep HTML in separate files and load/serve them. When a worker needs to serve HTML, put the HTML in a separate file (e.g. `ui.html`) and load it at build time or serve it as a static asset.
 
-## @adviser/cement
+## No CSS imports across packages
 
-The codebase uses `@adviser/cement` as a core utility library. Key exports:
+Never use `@import "@vibes.diy/base/theme.css"` or `import "@pkg/foo.css"` across packages. The import map infrastructure requires every cross-package reference to be resolvable without extra import map entries. Any non-JS/TS asset (CSS, text, etc.) must be loaded via `loadAsset()` from `@adviser/cement`.
 
-- **`loadAsset(path, opts)`** — load non-JS assets (text, CSS, markdown). See below.
-- **`Result` / `exception2Result()`** — no throwing, wrap errors in Result
-- **`URI` / `BuildURI`** — use instead of `new URL()` (URL is not stable)
-- **`ResolveOnce` / `KeyedResolvOnce` / `Lazy`** — use instead of singletons
-- **`Option`** — use instead of falsy checks
-- **`Evento`** — event/message system across packages
-
-### loadAsset
-
-Use `loadAsset()` for any non-JS/TS asset (CSS, text, markdown, fixtures). Never use raw `@import` or `import` for CSS across packages.
-
-**Server/build-time** (with CDN fallback):
-
-```ts
-const rText = await loadAsset("./llms/claude.txt", {
-  fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
-  basePath: () => import.meta.url,
-});
-```
-
-**Browser** (from origin):
-
-```ts
-loadAsset("/app/routes/legal/tos-notes.md", {
-  basePath: () => window.location.origin,
-}).then((r) => setContent(r.Ok()));
-```
-
-**Tests** (with `urlDirname`):
-
-```ts
-const r = await loadAsset(pathOps.join("tests", "fixtures", filename), {
-  basePath: () => urlDirname(import.meta.url).toString(),
-  fallBackUrl: urlDirname(import.meta.url).toString(),
-});
-```
-
-Returns a `Result` — use `.Ok()` for the value, `.isErr()` to check failure.
+Use: `loadAsset("./file.css", { fallBackUrl: "https://esm.sh/@pkg/", basePath: () => import.meta.url })` and inject the result as a `<style>` tag. This repo avoids package.json `exports` fields entirely.
 
 ## Clickable links
 
-Every link in responses must be clickable. Never output a bare reference without making it a proper link. `owner/repo#123` shorthand is NOT clickable in VS Code or the terminal — always use full markdown `[text](url)` links.
+Every link in responses must be clickable. Never output a bare reference without making it a proper link. `owner/repo#123` shorthand is NOT clickable in VS Code or the terminal — always use full markdown `[text](url)` links for PRs, issues, files, deployment URLs, and any other reference.
+
+## Stable-entry param naming
+
+Use dots (`.stable-entry.`) not `@` signs (`@stable-entry@`) for query parameter names. `@` gets URL-encoded to `%40` in browser address bars, making links ugly and hard to share.
+
+## Logs are append-only
+
+Never modify existing entries in setup logs or similar chronological docs — only append new information. Logs are a historical record; editing past entries destroys the timeline.
 
 ## Review commits before pushing
 
-Read every commit diff before pushing. Check each pattern against the rules-bag — no `instanceof`, no complex stringification chains, no casts. If something looks like a workaround, rethink the approach.
+Read every commit diff before pushing. Check each pattern against the rules-bag — no `instanceof`, no complex stringification chains, no casts. If something looks like a workaround, it probably is. Ask for guidance or rethink the approach.

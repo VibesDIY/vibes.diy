@@ -14,7 +14,7 @@
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/base": "workspace:*",
     "arktype": "^2.2.0",
-    "react": "^19.2.4",
+    "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "use-fireproof": "0.24.16"
   },
