@@ -5,6 +5,12 @@ export function getAppHostBaseUrl(): string {
     return window.location.origin;
   }
 
+  // Server-side: allow env override for worker contexts
+  const baseUrl = process.env.APP_HOST_BASE_URL;
+  if (baseUrl) {
+    return baseUrl;
+  }
+
   return "";
 }
 
