@@ -40,7 +40,7 @@
     "mime": "^4.1.0",
     "multiformats": "^13.4.2",
     "random-words": "^2.0.1",
-    "react": "^19.2.3",
+    "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "sucrase": "^3.35.1",
     "ws": "^8.20.0"

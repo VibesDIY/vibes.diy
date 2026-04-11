@@ -47,7 +47,7 @@
     "call-ai": "workspace:*",
     "playwright": "^1.59.1",
     "playwright-chromium": "^1.59.1",
-    "react": "^19.2.4",
+    "react": "^19.2.5",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "vite-plugin-devtools-json": "^1.0.0",
