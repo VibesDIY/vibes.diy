@@ -102,10 +102,8 @@ export default function HomePage() {
       resizeObserver.observe(viewportRef.current);
     }
     calculateDimensions();
-    window.addEventListener("resize", calculateDimensions);
     return () => {
       resizeObserver?.disconnect();
-      window.removeEventListener("resize", calculateDimensions);
     };
   }, [isMobile]);
 
