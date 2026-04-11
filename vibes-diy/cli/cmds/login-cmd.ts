@@ -10,7 +10,7 @@ import {
   BuildURI,
 } from "@adviser/cement";
 import { type } from "arktype";
-import { $ } from "zx";
+import { deviceIdRegisterEvento, type ReqDeviceIdRegister, type ResDeviceIdRegister } from "@fireproof/core-cli";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 
@@ -57,24 +57,29 @@ export const loginEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqLogin, ResLogi
     const caUrl = apiUrlToCaUrl(apiUrl);
     const commonName = rRaw.commonName === "" ? ectx.sthis.nextId().str : rRaw.commonName;
 
-    const args: string[] = [
-      "core-cli",
-      "deviceId",
-      "register",
-      "--ca-url",
-      caUrl,
-      "--common-name",
+    const registerReq: ReqDeviceIdRegister = {
+      type: "core-cli.device-id-register",
       commonName,
-      "--timeout",
-      rRaw.timeout,
-    ];
-    if (rRaw.force) {
-      args.push("--force-renew");
-    }
+      caUrl,
+      timeout: rRaw.timeout,
+      forceRenew: rRaw.force,
+      organization: "",
+      locality: "",
+      state: "",
+      country: "",
+      port: "",
+    };
 
-    const rRun = await exception2Result(() => $`${args}`);
-    if (rRun.isErr()) {
-      return Result.Err(`Login failed: ${rRun.Err().message}`);
+    const rRegister = await exception2Result(() =>
+      deviceIdRegisterEvento.handle({
+        ...ctx,
+        validated: registerReq,
+        request: { ...ctx.request, result: registerReq },
+        enRequest: registerReq,
+      } as unknown as HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqDeviceIdRegister, ResDeviceIdRegister>)
+    );
+    if (rRegister.isErr()) {
+      return Result.Err(`Login failed: ${rRegister.Err().message}`);
     }
     return sendMsg(ctx, {
       type: "use-vibes.cli.res-login",
