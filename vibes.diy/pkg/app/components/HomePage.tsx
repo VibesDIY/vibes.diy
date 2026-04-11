@@ -39,25 +39,18 @@ export default function HomePage() {
     return () => window.removeEventListener("resize", check);
   }, []);
   const [input, setInput] = useState("");
-  const [prompt, setPrompt] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { sthis } = useVibesDiy();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!prompt?.trim()) return;
+  const handleSubmit = useCallback(() => {
+    if (!input.trim()) return;
     navigate(
-      BuildURI.from(window.location.href).pathname("/chat/prompt").setParam("prompt64", sthis.txt.base64.encode(prompt))
+      BuildURI.from(window.location.href).pathname("/chat/prompt").setParam("prompt64", sthis.txt.base64.encode(input))
         .withoutHostAndSchema
     );
-  }, [prompt, navigate, sthis]);
-
-  const handleSubmit = useCallback(() => {
-    if (input.trim()) {
-      setPrompt(input);
-    }
-  }, [input]);
+  }, [input, navigate, sthis]);
 
   const handleSelectSuggestion = useCallback((text: string) => {
     setInput(text);
