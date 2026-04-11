@@ -9,9 +9,10 @@ import {
   EventoHandler,
   EventoResultType,
   exception2Result,
+  BuildURI,
 } from "@adviser/cement";
 import { type } from "arktype";
-import { resEnsureAppSlug, ResEnsureAppSlug } from "@vibes.diy/api-types";
+import { resEnsureAppSlug, isResEnsureAppSlugOk, ResEnsureAppSlug } from "@vibes.diy/api-types";
 import type { VibeFile } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
@@ -47,18 +48,16 @@ async function readProjectFiles(dir: string): Promise<VibeFile[]> {
 
 export const ReqPush = type({
   type: "'use-vibes.cli.push'",
+  mode: "string",
+  appSlug: "string",
+  autoAllow: "boolean",
+  apiUrl: "string",
 });
 export type ReqPush = typeof ReqPush.infer;
 
 export function isReqPush(obj: unknown): obj is ReqPush {
   return !(ReqPush(obj) instanceof type.errors);
 }
-
-// export function isResPush(obj: unknown): obj is ResEnsureAppSlug {
-//   return !(resEnsureAppSlug(obj) instanceof type.errors);
-// }
-
-const PushRawArgs = type({ mode: "string", appSlug: "string", autoAllow: "boolean" });
 
 export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsureAppSlug> = {
   hash: "use-vibes.cli.push",
@@ -73,15 +72,10 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
     if (ectx.vibesDiyApiFactory === undefined) {
       return Result.Err("Not logged in. Run 'use-vibes login' first.");
     }
-    const rRaw = PushRawArgs(ctx.request.cmdTs.raw);
-    if (rRaw instanceof type.errors) {
-      return Result.Err(`invalid args: ${rRaw.summary}`);
-    }
-    const apiUrl = ctx.request.cmdTs.apiUrl;
-    const api = ectx.vibesDiyApiFactory(apiUrl);
-
-    const mode = rRaw.mode === "dev" ? "dev" : "production";
-    const appSlug = rRaw.appSlug === "" ? basename(process.cwd()) : rRaw.appSlug;
+    const args = ctx.validated;
+    const api = ectx.vibesDiyApiFactory(args.apiUrl);
+    const mode = args.mode === "dev" ? "dev" : "production";
+    const appSlug = args.appSlug === "" ? basename(process.cwd()) : args.appSlug;
 
     // Resolve userSlug
     const rList = await api.listUserSlugAppSlug({});
@@ -105,7 +99,8 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
       fileSystem: files,
     });
     if (rResult.isErr()) {
-      return Result.Err(`Push failed: ${String(rResult.Err())}`);
+      const pushErr = rResult.Err();
+      return Result.Err(`Push failed: ${typeof pushErr === "object" ? JSON.stringify(pushErr) : String(pushErr)}`);
     }
 
     const result = resEnsureAppSlug(rResult.Ok());
@@ -118,14 +113,28 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
       const rSettings = await api.ensureAppSettings({
         appSlug,
         userSlug,
-        request: { enable: true, autoAcceptViewRequest: rRaw.autoAllow },
+        request: { enable: true, autoAcceptViewRequest: args.autoAllow },
       });
       if (rSettings.isErr()) {
-        await sendProgress(ctx, "warn", `Warning: failed to update app settings: ${String(rSettings.Err())}`);
+        const settErr = rSettings.Err();
+        await sendProgress(
+          ctx,
+          "warn",
+          `Warning: failed to update app settings: ${typeof settErr === "object" ? JSON.stringify(settErr) : String(settErr)}`
+        );
       } else {
         const autoAllow = rSettings.Ok().settings.entry.enableRequest?.autoAcceptViewRequest;
         await sendProgress(ctx, "info", `Requests enabled${autoAllow ? " (auto-allow)" : ""}`);
       }
+    }
+
+    if (isResEnsureAppSlugOk(result)) {
+      const publicUrl = BuildURI.from(args.apiUrl)
+        .pathname(`/vibe/${result.userSlug}/${result.appSlug}`)
+        .delParam("@stable-entry@")
+        .toString();
+      await sendProgress(ctx, "info", `Deployed: ${result.userSlug}/${result.appSlug}`);
+      await sendProgress(ctx, "info", `URL: ${publicUrl}`);
     }
 
     return sendMsg(ctx, result);
@@ -158,8 +167,8 @@ export function pushCmd(ctx: CliCtx) {
         description: "Auto-accept database sharing view requests",
       }),
     },
-    handler: ctx.cliStream.enqueue((_args) => {
-      return { type: "use-vibes.cli.push" } satisfies ReqPush;
+    handler: ctx.cliStream.enqueue((args) => {
+      return { type: "use-vibes.cli.push", ...args };
     }),
   });
 }
