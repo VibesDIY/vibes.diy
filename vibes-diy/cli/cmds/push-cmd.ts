@@ -129,9 +129,12 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
     }
 
     if (isResEnsureAppSlugOk(result)) {
-      const apiOrigin = BuildURI.from(args.apiUrl).pathname("/").toString().replace(/\/$/, "");
+      const publicUrl = BuildURI.from(args.apiUrl)
+        .pathname(`/vibe/${result.userSlug}/${result.appSlug}`)
+        .delParam("@stable-entry@")
+        .toString();
       await sendProgress(ctx, "info", `Deployed: ${result.userSlug}/${result.appSlug}`);
-      await sendProgress(ctx, "info", `URL: ${apiOrigin}/vibe/${result.userSlug}/${result.appSlug}`);
+      await sendProgress(ctx, "info", `URL: ${publicUrl}`);
     }
 
     return sendMsg(ctx, result);
