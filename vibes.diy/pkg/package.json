@@ -18,8 +18,9 @@
     "drizzle:neon": "drizzle-kit push --config ./drizzle.neon.config.ts",
     "build:dev": "CLOUDFLARE_ENV=dev react-router build",
     "build:prod": "CLOUDFLARE_ENV=prod react-router build",
-    "deploy:dev": "CLOUDFLARE_ENV=dev react-router build && wrangler deploy",
-    "deploy:prod": "CLOUDFLARE_ENV=prod react-router build && wrangler deploy",
+    "deploy:dev": "CLOUDFLARE_ENV=dev react-router build && wrangler deploy --env dev",
+    "deploy:prod": "CLOUDFLARE_ENV=prod react-router build && wrangler deploy --env prod",
+    "deploy:cli": "CLOUDFLARE_ENV=cli react-router build && wrangler deploy --env cli",
     "format:write": "prettier --write ."
   },
   "dependencies": {
@@ -57,9 +58,9 @@
     "monaco-editor": "^0.55.1",
     "multiformats": "^13.4.2",
     "posthog-js": "^1.365.5",
-    "react": "^19.2.4",
+    "react": "^19.2.5",
     "react-cookie-consent": "^10.0.1",
-    "react-dom": "^19.2.4",
+    "react-dom": "^19.2.5",
     "react-hook-form": "^7.72.1",
     "react-hot-toast": "^2.6.0",
     "react-markdown": "^10.1.0",
