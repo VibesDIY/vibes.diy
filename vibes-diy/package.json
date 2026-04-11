@@ -31,7 +31,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@adviser/cement": "^0.5.34",
-    "@fireproof/core": "0.24.15",
+    "@fireproof/core": "0.24.16",
     "@fireproof/core-cli": "0.24.16",
     "@fireproof/core-device-id": "0.24.16",
     "@fireproof/core-keybag": "0.24.16",

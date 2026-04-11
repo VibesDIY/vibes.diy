@@ -28,7 +28,7 @@
     "@clerk/react": "^6.2.1",
     "@cloudflare/puppeteer": "^1.0.6",
     "@cloudflare/workers-types": "^4.20260402.1",
-    "@fireproof/core": "0.24.15",
+    "@fireproof/core": "0.24.16",
     "@fireproof/core-protocols-dashboard": "0.24.16",
     "@fireproof/core-runtime": "0.24.16",
     "@fireproof/core-types-protocols-dashboard": "0.24.16",
