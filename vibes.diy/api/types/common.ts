@@ -149,13 +149,18 @@ export type VibeFile = typeof vibeFile.infer;
 
 // Error types
 export const resError = type({
-  type: "'vibes.diy.error'",
-  message: "string",
+  type: "'vibes.diy.error'|'vibes.diy.res-error'",
+  "message?": "string",
   "code?": "string",
   "stack?": "string[]",
+  "error?": type({ message: "string", "code?": "string" }),
 });
 
 export type ResError = typeof resError.infer;
+
+export function isResError(obj: unknown): obj is ResError {
+  return !(resError(obj) instanceof type.errors);
+}
 
 // ID types
 export type CodeID = string;
