@@ -11,54 +11,54 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
   return (iurl: CoerceURI) => {
     const url = URI.from(iurl).toString();
     // Mock text files - serve actual text file contents (abbreviated for tests)
-    if (url.includes("callai.txt")) {
+    if (url.includes("callai.md")) {
       return Promise.resolve({
         ok: true,
         text: () =>
           Promise.resolve(
-            "<callAI-docs>\n# CallAI Documentation\nReal callAI docs content from pkg/llms/callai.txt\n</callAI-docs>"
+            "<callAI-docs>\n# CallAI Documentation\nReal callAI docs content from pkg/llms/callai.md\n</callAI-docs>"
           ),
       } as Response);
     }
 
-    if (url.includes("fireproof.txt")) {
+    if (url.includes("fireproof.md")) {
       return Promise.resolve({
         ok: true,
         text: () =>
           Promise.resolve(
-            "<useFireproof-docs>\n# Fireproof Documentation\nReal Fireproof docs content from pkg/llms/fireproof.txt\n</useFireproof-docs>"
+            "<useFireproof-docs>\n# Fireproof Documentation\nReal Fireproof docs content from pkg/llms/fireproof.md\n</useFireproof-docs>"
           ),
       } as Response);
     }
 
-    if (url.includes("image-gen.txt")) {
+    if (url.includes("image-gen.md")) {
       return Promise.resolve({
         ok: true,
         text: () =>
           Promise.resolve(
-            "<imageGen-docs>\n# Image Generation Documentation\nReal ImageGen docs content from pkg/llms/image-gen.txt\n</imageGen-docs>"
+            "<imageGen-docs>\n# Image Generation Documentation\nReal ImageGen docs content from pkg/llms/image-gen.md\n</imageGen-docs>"
           ),
       } as Response);
     }
 
-    if (url.includes("web-audio.txt")) {
+    if (url.includes("web-audio.md")) {
       return Promise.resolve({
         ok: true,
         text: () =>
           Promise.resolve(
-            "<webAudio-docs>\n# Web Audio Documentation\nReal Web Audio docs content from pkg/llms/web-audio.txt\n</webAudio-docs>"
+            "<webAudio-docs>\n# Web Audio Documentation\nReal Web Audio docs content from pkg/llms/web-audio.md\n</webAudio-docs>"
           ),
       } as Response);
     }
 
-    if (url.includes("d3.txt") || url.includes("d3.md")) {
+    if (url.includes("d3.md")) {
       return Promise.resolve({
         ok: true,
         text: () => Promise.resolve("<D3.js-docs>\n# D3.js Documentation\nReal D3 docs content from pkg/llms/d3.md\n</D3.js-docs>"),
       } as Response);
     }
 
-    if (url.includes("three-js.txt") || url.includes("three-js.md")) {
+    if (url.includes("three-js.md")) {
       return Promise.resolve({
         ok: true,
         text: () =>

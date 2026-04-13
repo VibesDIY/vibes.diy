@@ -308,7 +308,7 @@ export async function makeBaseSystemPrompt(
   for (const llm of chosenLlms) {
     const rText = await keyedLoadAsset.get(llm.name).once(async () => {
       // console.log("Loading text asset for LLM:", llm.name, urlDirname(import.meta.url), import.meta.url);
-      return loadAsset(`./llms/${llm.name}.txt`, {
+      return loadAsset(`./llms/${llm.name}.md`, {
         fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
         basePath: () => {
           const dir = import.meta.url;
@@ -327,7 +327,7 @@ export async function makeBaseSystemPrompt(
         //         return new Response(null, { status: 404 });
         //       }
         //       console.log(`pre-Fetched text for LLM ${llm.name} with result:`, r);
-        //       const r = await sessionDoc.fetchText("prompts", `./llms/${llm.name}.txt`);
+        //       const r = await sessionDoc.fetchText("prompts", `./llms/${llm.name}.md`);
         //       console.log(`post-Fetched text for LLM ${llm.name} with result:`, r);
         //       if (r.isErr()) {
         //         return new Response(null, { status: 404 });
@@ -338,7 +338,7 @@ export async function makeBaseSystemPrompt(
       });
     });
     if (rText.isErr()) {
-      console.warn(`Failed to load text for LLM ${llm.name} at path ${import.meta.dirname}/./llms/${llm.name}.txt:`, rText.Err());
+      console.warn(`Failed to load text for LLM ${llm.name} at path ${import.meta.dirname}/./llms/${llm.name}.md:`, rText.Err());
       continue;
     }
     // const text = await getTexts(llm.name, sessionDoc.fallBackUrl);
@@ -419,7 +419,7 @@ export async function makeBaseSystemPrompt(
 
 export async function getSkillText(name: string): Promise<string> {
   const rText = await keyedLoadAsset.get(name).once(async () => {
-    return loadAsset(`./llms/${name}.txt`, {
+    return loadAsset(`./llms/${name}.md`, {
       fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
       basePath: () => import.meta.url,
     });
