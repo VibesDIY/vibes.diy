@@ -318,7 +318,7 @@ async function injectSystemPrompt(
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
       dependenciesUserOverride: true,
-      dependencies: ["fireproof", "callai", "image-gen"],
+      dependencies: ["fireproof", "callai", "web-audio"],
       fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
         console.log("Fetching asset for system prompt from URL:", url.toString(), vctx.params.pkgRepos.workspace);
         const uri = URI.from(url);
