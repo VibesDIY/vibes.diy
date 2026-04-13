@@ -386,6 +386,23 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     }
   });
 
+  it("can open app-mode chat", async () => {
+    const { appSlug, userSlug } = await createApp();
+    // First openChat creates the ApplicationChat entry
+    const rChat = await api.openChat({ mode: "app", appSlug, userSlug });
+    expect(rChat.isOk()).toBe(true);
+    const chat = rChat.Ok();
+    expect(chat.chatId).toBeTruthy();
+
+    // Second openChat with same chatId should find the existing entry
+    const rChat2 = await api.openChat({ mode: "app", appSlug, userSlug, chatId: chat.chatId });
+    expect(rChat2.isOk()).toBe(true);
+    expect(rChat2.Ok().chatId).toBe(chat.chatId);
+
+    await chat.close();
+    await rChat2.Ok().close();
+  });
+
   it("can open chat", async () => {
     // console.log("Testing openChat");
     const rChatRes = await api.openChat({

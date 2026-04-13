@@ -386,19 +386,32 @@ async function getResChatFromMode(
   req: ReqWithVerifiedAuth<ReqPromptChatSection>,
   orig: ReqPromptChatSection
 ): Promise<Result<ResChat>> {
-  // let resChat!: ResChat;
-  // if (isReqCreationPromptChatSection(orig) || isReqPromptApplicationChatSection(orig) || isReqPromptImageChatSection(orig)) {
-  const iResChat = await vctx.sql.db
-    .select()
-    .from(vctx.sql.tables.chatContexts)
-    .where(
-      and(
-        eq(vctx.sql.tables.chatContexts.userId, req._auth.verifiedAuth.claims.userId),
-        eq(vctx.sql.tables.chatContexts.chatId, req.chatId)
+  let iResChat;
+  if (isReqPromptApplicationChatSection(orig)) {
+    iResChat = await vctx.sql.db
+      .select()
+      .from(vctx.sql.tables.applicationChats)
+      .where(
+        and(
+          eq(vctx.sql.tables.applicationChats.userId, req._auth.verifiedAuth.claims.userId),
+          eq(vctx.sql.tables.applicationChats.chatId, req.chatId)
+        )
       )
-    )
-    .limit(1)
-    .then((r) => r[0]);
+      .limit(1)
+      .then((r) => r[0]);
+  } else {
+    iResChat = await vctx.sql.db
+      .select()
+      .from(vctx.sql.tables.chatContexts)
+      .where(
+        and(
+          eq(vctx.sql.tables.chatContexts.userId, req._auth.verifiedAuth.claims.userId),
+          eq(vctx.sql.tables.chatContexts.chatId, req.chatId)
+        )
+      )
+      .limit(1)
+      .then((r) => r[0]);
+  }
   if (!iResChat) {
     if (isReqCreationPromptChatSection(orig)) {
       return Result.Err(`Creation Chat ID ${req.chatId} not found`);
@@ -409,7 +422,6 @@ async function getResChatFromMode(
     }
   }
   const resChat = { ...iResChat, mode: orig.mode };
-  // }
   return Result.Ok(resChat);
 }
 
@@ -940,7 +952,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
         await scope
           .evalResult(async () => {
-            // console.log(promptId, "Block-Begin ", blockSeq, req.chatId)
             const res = await appendBlockEvent({
               ctx,
               vctx,
@@ -951,38 +962,33 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
                 type: "prompt.block-begin",
                 streamId: promptId,
                 chatId: req.chatId,
-                // streamId:
                 seq: blockSeq,
                 timestamp: new Date(),
               },
             });
             blockSeq++;
+
+            await prompSectionAction(scope, blockSeq);
+
             return res;
           })
           .finally(async () => {
-            console.log(promptId, "Finally ", blockSeq, req.chatId);
-            if (blockSeq > 1) {
-              await appendBlockEvent({
-                ctx,
-                vctx,
-                req,
-                promptId,
-                blockSeq: blockSeq,
-                evt: {
-                  type: "prompt.block-end",
-                  streamId: promptId,
-                  chatId: req.chatId,
-                  seq: blockSeq,
-                  timestamp: new Date(),
-                },
-              });
-              blockSeq++;
-            }
+            await appendBlockEvent({
+              ctx,
+              vctx,
+              req,
+              promptId,
+              blockSeq: blockSeq,
+              evt: {
+                type: "prompt.block-end",
+                streamId: promptId,
+                chatId: req.chatId,
+                seq: blockSeq,
+                timestamp: new Date(),
+              },
+            });
           })
           .do();
-
-        // console.log(promptId, "Pre prompt.req for promptId:");
-        await prompSectionAction(scope, blockSeq);
 
         // const res = await handlerLlmRequest({ scope, vctx, req, resChat, promptId });
         // await handleLlmResponse({ scope, vctx, req, ctx, res: res.res, resChat, promptId, blockSeq: res.blockSeq });
