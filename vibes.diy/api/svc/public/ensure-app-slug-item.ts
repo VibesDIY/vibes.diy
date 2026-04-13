@@ -7,6 +7,7 @@ import {
   EventoResult,
   uint8array2stream,
   to_uint8,
+  exception2Result,
 } from "@adviser/cement";
 import {
   EvtNewFsId,
@@ -92,6 +93,20 @@ export async function ensureAppSlugItem(
   const ensured = rEnsure.Ok();
   if (!isResEnsureAppSlugOk(ensured)) {
     return Result.Err(`Expected ensureApps to return ResEnsureAppSlugOk on success, got ${JSON.stringify(ensured)}`);
+  }
+
+  // Create a synthetic ApplicationChat entry for each push (version tracking)
+  const chatValue = {
+    userId: req._auth.verifiedAuth.claims.userId,
+    appSlug: ensured.appSlug,
+    userSlug: ensured.userSlug,
+    chatId: vctx.sthis.nextId(12).str,
+    blocks: [],
+    created: new Date().toISOString(),
+  };
+  const rChat = await exception2Result(async () => vctx.sql.db.insert(vctx.sql.tables.applicationChats).values(chatValue));
+  if (rChat.isErr()) {
+    console.warn(`Failed to create ApplicationChat for ${ensured.appSlug}: ${rChat.Err().message}`);
   }
 
   // let wrapperUrl: string;
