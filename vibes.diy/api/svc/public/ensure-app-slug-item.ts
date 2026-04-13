@@ -7,6 +7,7 @@ import {
   EventoResult,
   uint8array2stream,
   to_uint8,
+  exception2Result,
 } from "@adviser/cement";
 import {
   EvtNewFsId,
@@ -172,13 +173,68 @@ export const ensureAppSlugItemEvento: EventoHandler<
       if (rAppSlugBinding.isErr()) {
         return Result.Err(rAppSlugBinding);
       }
+      const res = rAppSlugBinding.Ok();
 
-      // const res = rAppSlugBinding.Ok();
-      // if (isResEnsureAppSlugOk(res)) {
-      // console.log("ensureAppSlugItem success", req.appSlug, '===', res.appSlug, req.userSlug, '===', res.userSlug);
-      // }
+      // Create a ChatContext for CLI pushes so the app appears in DevBox
+      if (isResEnsureAppSlugOk(res)) {
+        const chatId = vctx.sthis.nextId(12).str;
+        const promptId = vctx.sthis.nextId(12).str;
+        const now = new Date().toISOString();
+        const rChat = await exception2Result(async () => {
+          await vctx.sql.db.insert(vctx.sql.tables.chatContexts).values({
+            chatId,
+            userId: req._auth.verifiedAuth.claims.userId,
+            appSlug: res.appSlug,
+            userSlug: res.userSlug,
+            created: now,
+          });
+          await vctx.sql.db.insert(vctx.sql.tables.chatSections).values([
+            {
+              chatId,
+              promptId,
+              blockSeq: 0,
+              blocks: [
+                {
+                  seq: 0,
+                  type: "prompt.block-begin",
+                  chatId,
+                  streamId: promptId,
+                  timestamp: now,
+                },
+              ],
+              created: now,
+            },
+            {
+              chatId,
+              promptId,
+              blockSeq: 1,
+              blocks: [
+                {
+                  seq: 1,
+                  type: "prompt.req",
+                  chatId,
+                  request: {
+                    messages: [
+                      {
+                        role: "user",
+                        content: [{ text: `Deployed via CLI`, type: "text" }],
+                      },
+                    ],
+                  },
+                  streamId: promptId,
+                  timestamp: now,
+                },
+              ],
+              created: now,
+            },
+          ]);
+        });
+        if (rChat.isErr()) {
+          console.warn(`Failed to create ChatContext for ${res.appSlug}:`, rChat.Err());
+        }
+      }
 
-      await ctx.send.send(ctx, rAppSlugBinding.Ok());
+      await ctx.send.send(ctx, res);
       return Result.Ok(EventoResult.Continue);
     }
   ),
