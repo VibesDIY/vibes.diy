@@ -25,6 +25,10 @@
     "multiformats": "^13.4.2",
     "ws": "^8.20.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
+  },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.16",
     "@types/ws": "^8.18.1"
