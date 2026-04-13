@@ -1,12 +1,13 @@
 import { command } from "cmd-ts";
 import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType } from "@adviser/cement";
 import { type } from "arktype";
-import { resEnsureUserSettings, ResEnsureUserSettings } from "@vibes.diy/api-types";
+import type { ResEnsureUserSettings } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 
 export const ReqUserSettings = type({
   type: "'use-vibes.cli.user-settings'",
+  apiUrl: "string",
 });
 export type ReqUserSettings = typeof ReqUserSettings.infer;
 
@@ -18,12 +19,9 @@ export const userSettingsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqUserSet
   hash: "use-vibes.cli.user-settings",
   validate: (ctx: ValidateTriggerCtx<WrapCmdTSMsg<unknown>, ReqUserSettings, ResEnsureUserSettings>) => {
     if (isReqUserSettings(ctx.enRequest)) {
-      // console.log('validate-ok', ctx)
       return Promise.resolve(Result.Ok(Option.Some(ctx.enRequest)));
-    } else {
-      // console.log('none', ctx, (ReqUserSettings(ctx.enRequest) as type.errors).summary)
-      return Promise.resolve(Result.Ok(Option.None()));
     }
+    return Promise.resolve(Result.Ok(Option.None()));
   },
   handle: async (
     ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqUserSettings, ResEnsureUserSettings>
@@ -32,15 +30,11 @@ export const userSettingsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqUserSet
     if (!ectx.vibesDiyApiFactory) {
       return Result.Err("Not logged in. Run 'use-vibes login' first.");
     }
-    const rResult = await ectx.vibesDiyApiFactory(ctx.request.cmdTs.apiUrl).ensureUserSettings({ settings: [] });
-    if (rResult.isOk()) {
-      const result = resEnsureUserSettings(rResult.Ok());
-      if (result instanceof type.errors) {
-        return Result.Err(`type mismatch: ${result.summary}`);
-      }
-      return sendMsg(ctx, result);
+    const rResult = await ectx.vibesDiyApiFactory(ctx.validated.apiUrl).ensureUserSettings({ settings: [] });
+    if (rResult.isErr()) {
+      return Result.Err(rResult.Err());
     }
-    return Result.Err(rResult);
+    return sendMsg(ctx, rResult.Ok());
   },
 };
 
@@ -51,8 +45,8 @@ export function userSettingsCmd(ctx: CliCtx) {
     args: {
       ...cmdTsDefaultArgs(ctx),
     },
-    handler: ctx.cliStream.enqueue((_args) => {
-      return { type: "use-vibes.cli.user-settings" } satisfies ReqUserSettings;
+    handler: ctx.cliStream.enqueue((args) => {
+      return { type: "use-vibes.cli.user-settings", ...args };
     }),
   });
 }
