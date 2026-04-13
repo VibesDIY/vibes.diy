@@ -7,6 +7,7 @@ import {
   EventoResult,
   uint8array2stream,
   to_uint8,
+  exception2Result,
 } from "@adviser/cement";
 import {
   EvtNewFsId,
@@ -92,6 +93,38 @@ export async function ensureAppSlugItem(
   const ensured = rEnsure.Ok();
   if (!isResEnsureAppSlugOk(ensured)) {
     return Result.Err(`Expected ensureApps to return ResEnsureAppSlugOk on success, got ${JSON.stringify(ensured)}`);
+  }
+
+  // Create a ChatContexts entry for each push so the app appears in DevBox/builder
+  const chatId = vctx.sthis.nextId(12).str;
+  const promptId = vctx.sthis.nextId(12).str;
+  const now = new Date().toISOString();
+  const rChat = await exception2Result(async () => {
+    await vctx.sql.db.insert(vctx.sql.tables.chatContexts).values({
+      chatId,
+      userId: req._auth.verifiedAuth.claims.userId,
+      appSlug: ensured.appSlug,
+      userSlug: ensured.userSlug,
+      created: now,
+    });
+    await vctx.sql.db.insert(vctx.sql.tables.chatSections).values({
+      chatId,
+      promptId,
+      blockSeq: 0,
+      blocks: [
+        {
+          seq: 0,
+          type: "prompt.block-begin",
+          chatId,
+          streamId: promptId,
+          timestamp: now,
+        },
+      ],
+      created: now,
+    });
+  });
+  if (rChat.isErr()) {
+    console.warn(`Failed to create ChatContext for ${ensured.appSlug}: ${rChat.Err().message}`);
   }
 
   // let wrapperUrl: string;
