@@ -18,9 +18,9 @@
     "drizzle:neon": "drizzle-kit push --config ./drizzle.neon.config.ts",
     "build:dev": "CLOUDFLARE_ENV=dev react-router build",
     "build:prod": "CLOUDFLARE_ENV=prod react-router build",
-    "deploy:dev": "CLOUDFLARE_ENV=dev react-router build && wrangler deploy --env dev",
-    "deploy:prod": "CLOUDFLARE_ENV=prod react-router build && wrangler deploy --env prod",
-    "deploy:cli": "CLOUDFLARE_ENV=cli react-router build && wrangler deploy --env cli",
+    "deploy:dev": "CLOUDFLARE_ENV=dev react-router build && wrangler deploy",
+    "deploy:prod": "CLOUDFLARE_ENV=prod react-router build && wrangler deploy",
+    "deploy:cli": "CLOUDFLARE_ENV=cli react-router build && wrangler deploy",
     "format:write": "prettier --write ."
   },
   "dependencies": {
@@ -28,7 +28,7 @@
     "@clerk/react": "^6.2.1",
     "@cloudflare/puppeteer": "^1.0.6",
     "@cloudflare/workers-types": "^4.20260402.1",
-    "@fireproof/core": "0.24.15",
+    "@fireproof/core": "0.24.16",
     "@fireproof/core-protocols-dashboard": "0.24.16",
     "@fireproof/core-runtime": "0.24.16",
     "@fireproof/core-types-protocols-dashboard": "0.24.16",
