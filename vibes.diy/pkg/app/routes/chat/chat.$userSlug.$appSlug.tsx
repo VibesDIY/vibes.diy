@@ -173,6 +173,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   useEffect(() => {
     if (inConstruction) return;
+    let cancelled = false;
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
         const newSearch = new URLSearchParams(searchParams);
@@ -207,14 +208,14 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       return; // Already opened or opening
     }
     openingRef.current = true;
+    const basePath = `/chat/${userSlug}/${appSlug}`;
     vibeDiyApi.openChat({ userSlug, appSlug, mode: "chat" }).then((rChat) => {
+      if (cancelled) return;
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), userSlug, appSlug);
         return;
       }
-      // console.log("Chat", rChat.Ok());
       setChat(rChat.Ok());
-      // console.log(`dispatch-initChat`, rChat.Ok())
       dispatch({ type: "initChat", chat: rChat.Ok() });
       void processStream(rChat.Ok().sectionStream, (msg) => {
         const se = sectionEvent(msg);
@@ -223,12 +224,24 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           return;
         }
         for (const block of se.blocks) {
-          // console.log("recv-block", block)
           dispatch(block);
         }
       });
+      // For CLI-pushed apps with no chat history, look up the latest fsId
+      if (!fsId) {
+        void vibeDiyApi.getAppByFsId({ appSlug, userSlug }).then((rApp) => {
+          if (cancelled) return;
+          if (rApp.isErr() || !rApp.Ok().fsId) return;
+          // Only navigate if we're still on the fsId-less route
+          if (window.location.pathname !== basePath) return;
+          const sp = new URLSearchParams(searchParams);
+          if (!sp.has("view")) sp.set("view", "preview");
+          navigate({ pathname: `${basePath}/${rApp.Ok().fsId}`, search: sp.toString() }, { replace: true });
+        });
+      }
     });
     return () => {
+      cancelled = true;
       if (chat) {
         (chat as LLMChat).close();
       }

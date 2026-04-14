@@ -1,4 +1,5 @@
 import React, { Suspense, lazy } from "react";
+import { useParams } from "react-router";
 import { animationStyles } from "./ResultPreviewTemplates.js";
 import type { ResultPreviewProps } from "../../types/ResultPreviewTypes.js";
 import ClientOnly from "../ClientOnly.js";
@@ -72,7 +73,8 @@ function CodeEditorWrapper({
 // });
 
 function ResultPreview({ promptState, currentView, children, onCode }: ResultPreviewProps & { children?: React.ReactNode }) {
-  const showWelcome = !promptState.running && !promptState.hasCode;
+  const { fsId } = useParams<{ fsId?: string }>();
+  const showWelcome = !fsId && !promptState.running && !promptState.hasCode;
 
   const codeEditor = <CodeEditorWrapper promptState={promptState} onCode={onCode} currentView={currentView} />;
   let previewArea: React.ReactNode;
