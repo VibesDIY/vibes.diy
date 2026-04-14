@@ -1,0 +1,9 @@
+data: {"id":"fixture-stream","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1760000000,"choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"fixture-stream","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1760000000,"choices":[{"index":0,"delta":{"content":"# Fixture App\n\nGenerated fixture response for API streaming test.\n\n```jsx\nimport React from \"react\";\nexport default function App() {\n  const rows = [\n    \"alpha\",\n    \"beta\",\n    \"gamma\",\n    \"delta\",\n    \"epsilon\",\n  ];\n  return (\n    <main className=\"fixture-app\">\n      <h1>Fixture App</h1>\n      <p>Streaming response fixture.</p>\n      <ul>\n        {rows.map((row) => (\n          <li key={row}>{row}</li>\n        ))}\n      </ul>\n    </main>\n  );\n}\nfunction helper(value) {\n  return value.toUpperCase();\n}\nconsole.log(helper(\"done\"));\nconst footer = \"complete\";\nconst version = \"1.0.0\";\nexport function readMetadata() {\n  return { footer, version };\n}\n```"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
+
+data: {"id":"fixture-stream","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1760000000,"choices":[{"index":0,"delta":{"content":""},"finish_reason":"stop","native_finish_reason":"stop","logprobs":null}]}
+
+data: {"id":"fixture-stream","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1760000000,"choices":[{"index":0,"delta":{"content":""},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"usage":{"prompt_tokens":100,"completion_tokens":200,"total_tokens":300}}
+
+data: [DONE]
