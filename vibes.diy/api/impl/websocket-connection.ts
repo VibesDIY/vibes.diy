@@ -1,4 +1,4 @@
-import { BuildURI, Future, KeyedResolvOnce, OnFunc, runtimeFn, URI } from "@adviser/cement";
+import { BuildURI, Future, KeyedResolvOnce, OnFunc, Result, runtimeFn, URI } from "@adviser/cement";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { W3CWebSocketErrorEvent, W3CWebSocketMessageEvent, W3CWebSocketCloseEvent } from "@vibes.diy/api-types";
 
@@ -28,6 +28,8 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
     const onClose = OnFunc<(event: W3CWebSocketCloseEvent) => void>();
     // const ende = JSONEnDecoderSingleton();
 
+    const nativeClose = ws.close?.bind(ws) ?? (() => {});
+
     ws.onopen = () => {
       waitOpen.resolve(ws);
     };
@@ -35,9 +37,9 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
       onError.invoke({ type: "ErrorEvent", event: event as W3CWebSocketErrorEvent["event"] });
       waitOpen.reject(new Error(`WebSocket error: ${event}`));
     };
-    ws.close = (code, reason) => {
-      onClose.invoke({ type: "CloseEvent", event: { wasClean: true, code: code ?? 1000, reason: reason ?? "Closed by client" } });
+    ws.onclose = (event) => {
       vibesDiyApiPerConnection.delete(url);
+      onClose.invoke({ type: "CloseEvent", event: { wasClean: event.wasClean, code: event.code, reason: event.reason } });
     };
     ws.onmessage = (event) => {
       onMessage.invoke({ type: "MessageEvent", event });
@@ -51,12 +53,16 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
       onMessage,
       onClose,
       close: () => {
-        ws.close();
-        // console.log('ws-close', x)
+        nativeClose();
         return Promise.resolve();
       },
-      send: (data: Uint8Array<ArrayBuffer>) => {
+      send: (data: Uint8Array<ArrayBuffer>): Result<void> => {
+        if (ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) {
+          vibesDiyApiPerConnection.delete(url);
+          return Result.Err(`WebSocket is not open (readyState=${ws.readyState})`);
+        }
         ws.send(data);
+        return Result.Ok(undefined);
       },
     }));
   });

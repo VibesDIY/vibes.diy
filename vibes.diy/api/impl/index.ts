@@ -247,7 +247,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     const ende = JSONEnDecoderSingleton();
     const uint8ify = ende.uint8ify(msgBox);
     // console.log("Encoded message to Uint8Array:", msgParam.tid, uint8ify.length, conn.send.toString());
-    conn.send(uint8ify);
+    const rSend = conn.send(uint8ify);
+    if (rSend.isErr()) {
+      return Result.Err<MsgBox<WithAuth<T>>, VibesDiyError>({
+        type: "vibes.diy.error",
+        name: "VibesDiyError",
+        message: "Reconnecting, please retry",
+        code: "websocket-send-failed",
+      });
+    }
     return Result.Ok(msgBox as MsgBox<WithAuth<T>>);
   }
 
