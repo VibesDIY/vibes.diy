@@ -1,39 +1,20 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { SignIn, useAuth, useClerk, useUser } from "@clerk/react";
 import type { SessionSidebarProps } from "@vibes.diy/prompts";
 import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
-import { InfoIcon } from "./SessionSidebar/InfoIcon.js";
-import { StarIcon } from "./SessionSidebar/StarIcon.js";
-import { DevBoxIcon } from "./SessionSidebar/DevBoxIcon.js";
-
-/**
- * Component that displays a navigation sidebar with menu items
- */
-function parseDevBoxContext(pathname: string): { userSlug: string; appSlug: string; fsId?: string } | null {
-  const chat = pathname.match(/^\/chat\/([^/]+)\/([^/]+)(?:\/([^/]+))?/);
-  if (chat) return { userSlug: chat[1], appSlug: chat[2], fsId: chat[3] };
-  const vibe = pathname.match(/^\/vibe\/([^/]+)\/([^/]+)(?:\/([^/]+))?/);
-  if (vibe) return { userSlug: vibe[1], appSlug: vibe[2], fsId: vibe[3] };
-  return null;
-}
+import { RecentVibes } from "./RecentVibes.js";
 
 function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { isSignedIn: isAuthenticated, isLoaded } = useAuth();
-  const { pathname } = useLocation();
-  const devBox = parseDevBoxContext(pathname);
   const isLoading = !isLoaded;
   const clerk = useClerk();
   const { user } = useUser();
   const userEmail = user?.primaryEmailAddress?.emailAddress;
   const [showSignIn, setShowSignIn] = useState(false);
-
-  // Clerk doesn't have polling state like the old auth system
-  const isPolling = false;
-  const pollError = null;
 
   // Handle clicks outside the sidebar to close it
   useEffect(() => {
@@ -63,74 +44,37 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
         isVisible ? "w-64 translate-x-0" : "w-64 -translate-x-full"
       }`}
     >
-      <div className="flex h-full flex-col overflow-auto pt-32">
-        <nav className="flex-grow p-4">
-          <ul className="space-y-4">
+      <div className="flex h-full flex-col overflow-hidden pt-16">
+        <nav className="flex-1 overflow-y-auto min-h-0 p-4">
+          <ul>
             <li>
               <a
                 href="/"
-                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
+                className="flex items-center px-4 py-3 text-sm font-medium tracking-wide transition-colors duration-150 hover:bg-black/5 dark:hover:bg-white/10 border-b border-black/10 dark:border-white/10"
               >
                 <HomeIcon className="text-accent-01 mr-3 h-5 w-5" />
                 <span>Home</span>
               </a>
             </li>
-            {devBox && (
-              <li>
-                <Link
-                  to={`/chat/${devBox.userSlug}/${devBox.appSlug}`}
-                  onClick={() => onClose()}
-                  className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-                >
-                  <DevBoxIcon className="text-accent-01 mr-3 h-5 w-5" />
-                  <span className="flex flex-col min-w-0">
-                    <span>DevBox</span>
-                    <span className="text-xs font-normal truncate opacity-60">
-                      {devBox.userSlug}/{devBox.appSlug}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            )}
             <li>
-              <Link
-                to="/vibes/mine"
-                onClick={() => onClose()}
-                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-              >
-                <StarIcon className="text-accent-01 mr-3 h-5 w-5" />
-                <span>My Vibes</span>
-              </Link>
-            </li>
-            <li>
-              {isAuthenticated ? (
-                // SETTINGS
-                <Link
-                  to="/settings"
-                  onClick={() => onClose()}
-                  className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-                >
-                  <GearIcon className="text-accent-01 mr-3 h-5 w-5" />
-                  <span>Settings</span>
-                </Link>
-              ) : null}
-            </li>
-            <li>
-              <Link
-                to="/about"
-                onClick={() => onClose()}
-                className="flex items-center rounded-xl px-4 py-3 text-sm font-medium tracking-wide border-2 border-[var(--vibes-border-primary)] bg-[var(--vibes-card-bg)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-              >
-                <InfoIcon className="text-accent-01 mr-3 h-5 w-5" />
-                <span>About</span>
-              </Link>
+              <RecentVibes onNavigate={onClose} />
             </li>
           </ul>
         </nav>
 
-        {/* Login Status Indicator */}
-        <div className="mt-auto">
-          <nav className="flex-grow p-2">
+        {/* Bottom section — pinned */}
+        <div className="shrink-0 pb-6 px-4 space-y-3">
+          {isAuthenticated && (
+            <Link
+              to="/settings"
+              onClick={() => onClose()}
+              className="flex items-center px-4 py-3 text-sm font-medium tracking-wide transition-colors duration-150 hover:bg-black/5 dark:hover:bg-white/10 border-t border-black/10 dark:border-white/10"
+            >
+              <GearIcon className="text-accent-01 mr-3 h-5 w-5" />
+              <span>Settings</span>
+            </Link>
+          )}
+          <nav>
             <ul className="space-y-2">
               {isLoading ? (
                 // LOADING
@@ -146,37 +90,21 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
                       await clerk.signOut();
                       onClose();
                     }}
-                    className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-bold tracking-wide border-2 border-[var(--vibes-border-primary)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
+                    className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-bold tracking-wide border-2 border-[var(--vibes-border-primary)] transition-colors duration-150 hover:bg-black/20"
                   >
                     <span>Logout {userEmail}</span>
                   </button>
                 </li>
-              ) : isPolling ? (
-                <li>
-                  <div className="flex flex-col gap-1 px-4 py-3 text-sm font-medium">
-                    <span className="">Opening log in window...</span>
-                    <span className="font-small text-xs italic">
-                      Don't see it? Please check your browser for a blocked pop-up window
-                    </span>
-                  </div>
-                </li>
               ) : (
-                <>
-                  <li>
-                    <div className="flex flex-col px-1 py-1 text-sm font-medium">
-                      {pollError && <span className="font-small text-xs text-gray-400 italic">{pollError}</span>}
-                    </div>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => setShowSignIn(true)}
-                      className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-bold tracking-wide border-2 border-[var(--vibes-border-primary)] shadow-[4px_5px_0_var(--vibes-shadow-color)] transition-all duration-150 ease-in-out hover:shadow-[2px_3px_0_var(--vibes-shadow-color)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[5px]"
-                    >
-                      <span>Log in</span>
-                    </button>
-                  </li>
-                </>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setShowSignIn(true)}
+                    className="bg-light-decorative-02 dark:bg-dark-decorative-01 text-white dark:text-dark-primary flex w-full items-center rounded-xl px-4 py-3 text-left text-sm font-bold tracking-wide border-2 border-[var(--vibes-border-primary)] transition-colors duration-150 hover:bg-black/20"
+                  >
+                    <span>Log in</span>
+                  </button>
+                </li>
               )}
             </ul>
           </nav>

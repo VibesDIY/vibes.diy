@@ -4,7 +4,8 @@ import { quickSuggestions } from "../data/quick-suggestions-data.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useNavigate } from "react-router";
 import { BuildURI } from "@adviser/cement";
-import { VibesSwitch, VibesButton, ArrowLeftIcon, ArrowRightIcon, gridBackground, cx } from "@vibes.diy/base";
+import { VibesButton, ArrowLeftIcon, ArrowRightIcon, gridBackground, cx } from "@vibes.diy/base";
+import { PillPortal } from "./PillPortal.js";
 import { isMobileViewport } from "../utils/ViewState.js";
 import VibeGallery from "./NewSessionContent/VibeGallery.js";
 import {
@@ -152,11 +153,10 @@ export default function HomePage() {
 
   return (
     <>
+      <PillPortal isActive={isSidebarVisible} onToggle={setIsSidebarVisible} />
       <div className={cx(gridBackground, "page-grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full")}>
         <div className="px-6 md:px-8 pb-8 pt-0">
-          <div className="mb-4 md:mb-8 ml-2 md:ml-6 relative z-20">
-            <VibesSwitch size={75} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
-          </div>
+          <div style={{ height: 60 }} />
 
           <div style={getContainerStyle(mobile)}>
             <h1 style={getTitle(mobile)}>
