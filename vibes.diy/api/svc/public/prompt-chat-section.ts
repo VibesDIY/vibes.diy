@@ -277,7 +277,6 @@ export async function handlePromptContext({
     splitCondition: (secChunk) => secChunk.length >= 20,
     commit: async (secChunk) => {
       await exception2Result(() => vctx.sql.db.insert(vctx.sql.tables.chatSections).values(secChunk));
-      // console.log("Inserted block section into DB for promptId:", secChunk.reduce((acc, curr) => acc+curr.blocks.length, 0), res);
     },
   });
   // there is on disc and during phase we use the iCollectedMsgs as resendBuffer
@@ -557,7 +556,7 @@ async function handleEndMsg({
   promptId: string;
   value: BlockEndMsg;
   blockSeq: number;
-}) {
+}): Promise<Result<number>> {
   const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
   if (r.isErr()) {
     return Result.Err(r);
@@ -676,6 +675,7 @@ async function handleLlmResponse({
           if (x.isErr()) {
             return Result.Err(x);
           }
+          blockSeq = x.Ok();
           collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
         }
       }
@@ -700,7 +700,7 @@ export async function handleFSPrompt({
   resChat: ResChat;
   promptId: string;
   blockSeq: number;
-}): Promise<Result<void>> {
+}): Promise<Result<number>> {
   let fileSystem!: VibeFile[];
   if (isReqPromptFSSetChatSection(req)) {
     fileSystem = req.fsSet;
@@ -734,7 +734,7 @@ export async function handleFSPrompt({
     });
     fileSystem = Array.from(mapFS.values());
   }
-  await scope
+  const rEndMsg = await scope
     .evalResult(async () => {
       const sectionId = vctx.sthis.nextId(12).str;
       let blockNr = 0;
@@ -829,7 +829,7 @@ export async function handleFSPrompt({
       });
     })
     .do();
-  return Result.Ok();
+  return Result.Ok(rEndMsg);
 }
 
 export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPromptChatSection>, never | VibesDiyError> = {
@@ -897,7 +897,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             promptId,
             blockSeq,
           });
-          return r.isErr() ? (r as unknown as Result<number>) : Result.Ok(blockSeq);
+          return r;
         };
       }
 
@@ -933,17 +933,19 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
         scope.onCatch(async (e) => {
           console.error(promptId, "Error in promptChatSection scope for promptId: with error:", e);
+          const errorSeq = seq.val;
+          seq.val++;
           await appendBlockEvent({
             ctx,
             vctx,
             req,
             promptId,
-            blockSeq: seq.val++,
+            blockSeq: errorSeq,
             evt: {
               type: "prompt.error",
               streamId: promptId,
               chatId: req.chatId,
-              seq: seq.val,
+              seq: errorSeq,
               timestamp: new Date(),
               error: (e as Error).message,
             },
@@ -969,13 +971,13 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             seq.val++;
 
             const rAction = await prompSectionAction(scope, seq.val);
-            if (rAction.isOk()) {
-              seq.val = rAction.Ok();
-            }
+            if (rAction.isErr()) return rAction;
+            seq.val = rAction.Ok();
 
             return res;
           })
           .finally(async () => {
+            if (seq.val === 0) return;
             await appendBlockEvent({
               ctx,
               vctx,
