@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/react";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useVibesDiy } from "../vibes-diy-provider.js";
+import { useVibesDiy } from "../../vibes-diy-provider.js";
 
 interface RecentVibesProps {
   onNavigate?: () => void;

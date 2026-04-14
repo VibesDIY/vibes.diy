@@ -1,14 +1,14 @@
+import { SignIn, useAuth, useClerk, useUser } from "@clerk/react";
+import type { SessionSidebarProps } from "@vibes.diy/prompts";
 import React, { memo, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
-import { SignIn, useAuth, useClerk, useUser } from "@clerk/react";
-import type { SessionSidebarProps } from "@vibes.diy/prompts";
+import { DevBoxIcon } from "./SessionSidebar/DevBoxIcon.js";
 import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { HomeIcon } from "./SessionSidebar/HomeIcon.js";
 import { InfoIcon } from "./SessionSidebar/InfoIcon.js";
+import { RecentVibes } from "./SessionSidebar/RecentVibes.js";
 import { StarIcon } from "./SessionSidebar/StarIcon.js";
-import { DevBoxIcon } from "./SessionSidebar/DevBoxIcon.js";
-import { RecentVibes } from "./RecentVibes.js";
 
 /**
  * Component that displays a navigation sidebar with menu items
