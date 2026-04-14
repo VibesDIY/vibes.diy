@@ -493,6 +493,8 @@ async function handlerLlmRequest({
   //   return Result.Err(withSystemPrompt);
   // }
   // console.log("Sending LLM request for promptId:", promptId);
+  // "Initial turn" means we only have the current user message in the conversation history.
+  const isInitialTurn = withSystemPrompt.messages.filter((m) => m.role === "user").length <= 1;
   const llmReq: LLMRequest & { headers: LLMHeaders } = {
     // ...vctx.params.llm.default,
     // model,
@@ -505,6 +507,7 @@ async function handlerLlmRequest({
     headers: vctx.params.llm.headers,
     logprobs: true,
     stream: true,
+    ...(isInitialTurn ? { verbosity: "low" as const } : {}),
   };
 
   // add system prompt here
