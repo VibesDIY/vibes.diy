@@ -82,6 +82,7 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
                   to={`/chat/${item.userSlug}/${item.appSlug}`}
                   onClick={onNavigate}
                   className="flex items-center rounded-lg px-4 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                  reloadDocument // let's make it work first, then optimize navigation later
                 >
                   <span className="flex flex-col min-w-0">
                     <span className="truncate">{item.appSlug}</span>
