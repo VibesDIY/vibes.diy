@@ -545,7 +545,7 @@ async function handleEndMsg({
   promptId: string;
   value: BlockEndMsg;
   blockSeq: number;
-}) {
+}): Promise<Result<number>> {
   const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
   if (r.isErr()) {
     return Result.Err(r);
@@ -664,6 +664,7 @@ async function handleLlmResponse({
           if (x.isErr()) {
             return Result.Err(x);
           }
+          blockSeq = x.Ok();
           collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
         }
       }
@@ -688,7 +689,7 @@ export async function handleFSPrompt({
   resChat: ResChat;
   promptId: string;
   blockSeq: number;
-}): Promise<Result<void>> {
+}): Promise<Result<number>> {
   let fileSystem!: VibeFile[];
   if (isReqPromptFSSetChatSection(req)) {
     fileSystem = req.fsSet;
@@ -722,7 +723,7 @@ export async function handleFSPrompt({
     });
     fileSystem = Array.from(mapFS.values());
   }
-  await scope
+  const rEndMsg = await scope
     .evalResult(async () => {
       const sectionId = vctx.sthis.nextId(12).str;
       let blockNr = 0;
@@ -817,7 +818,7 @@ export async function handleFSPrompt({
       });
     })
     .do();
-  return Result.Ok();
+  return Result.Ok(rEndMsg);
 }
 
 export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPromptChatSection>, never | VibesDiyError> = {
@@ -849,7 +850,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       }
       const resChat = rResChat.Ok();
 
-      let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<void>>;
+      let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
       if (isReqPromptLLMChatSection(orig)) {
         prompSectionAction = async (scope: Scope, blockSeq: number) => {
           const res = await handlerLlmRequest({
@@ -861,7 +862,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             resChat,
             promptId,
           });
-          await handleLlmResponse({
+          const finalBlockSeq = await handleLlmResponse({
             scope,
             vctx,
             req: req as ReqWithVerifiedAuth<ReqPromptLLMChatSection>,
@@ -871,12 +872,12 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             promptId,
             blockSeq: res.blockSeq,
           });
-          return Result.Ok();
+          return Result.Ok(finalBlockSeq);
         };
       }
       if (isReqPromptFSChatSection(orig)) {
         prompSectionAction = async (scope: Scope, blockSeq: number) => {
-          return handleFSPrompt({
+          const r = await handleFSPrompt({
             scope,
             vctx,
             req: req as ReqWithVerifiedAuth<ReqPromptFSChatSection>,
@@ -885,6 +886,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             promptId,
             blockSeq,
           });
+          return r;
         };
       }
 
@@ -916,76 +918,71 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       // console.log(promptId, "Starting promptChatSection for promptId: with request:");
 
       await scopey(async (scope) => {
-        let blockSeq = 0;
+        const seq = { val: 0 };
 
         scope.onCatch(async (e) => {
           console.error(promptId, "Error in promptChatSection scope for promptId: with error:", e);
+          const errorSeq = seq.val;
+          seq.val++;
           await appendBlockEvent({
             ctx,
             vctx,
             req,
             promptId,
-            blockSeq: blockSeq++,
+            blockSeq: errorSeq,
             evt: {
               type: "prompt.error",
               streamId: promptId,
               chatId: req.chatId,
-              seq: blockSeq,
+              seq: errorSeq,
               timestamp: new Date(),
               error: (e as Error).message,
             },
           });
-          // console.error("Failed to append initial block event for promptId:", promptId, "with error:", e);
         }, 0);
 
         await scope
           .evalResult(async () => {
-            // console.log(promptId, "Block-Begin ", blockSeq, req.chatId)
             const res = await appendBlockEvent({
               ctx,
               vctx,
               req,
               promptId,
-              blockSeq: blockSeq,
+              blockSeq: seq.val,
               evt: {
                 type: "prompt.block-begin",
                 streamId: promptId,
                 chatId: req.chatId,
-                // streamId:
-                seq: blockSeq,
+                seq: seq.val,
                 timestamp: new Date(),
               },
             });
-            blockSeq++;
+            seq.val++;
+
+            const rAction = await prompSectionAction(scope, seq.val);
+            if (rAction.isErr()) return rAction;
+            seq.val = rAction.Ok();
+
             return res;
           })
           .finally(async () => {
-            console.log(promptId, "Finally ", blockSeq, req.chatId);
-            if (blockSeq > 1) {
-              await appendBlockEvent({
-                ctx,
-                vctx,
-                req,
-                promptId,
-                blockSeq: blockSeq,
-                evt: {
-                  type: "prompt.block-end",
-                  streamId: promptId,
-                  chatId: req.chatId,
-                  seq: blockSeq,
-                  timestamp: new Date(),
-                },
-              });
-              blockSeq++;
-            }
+            if (seq.val === 0) return;
+            await appendBlockEvent({
+              ctx,
+              vctx,
+              req,
+              promptId,
+              blockSeq: seq.val,
+              evt: {
+                type: "prompt.block-end",
+                streamId: promptId,
+                chatId: req.chatId,
+                seq: seq.val,
+                timestamp: new Date(),
+              },
+            });
           })
           .do();
-
-        // console.log(promptId, "Pre prompt.req for promptId:");
-        await prompSectionAction(scope, blockSeq);
-
-        // const res = await handlerLlmRequest({ scope, vctx, req, resChat, promptId });
-        // await handleLlmResponse({ scope, vctx, req, ctx, res: res.res, resChat, promptId, blockSeq: res.blockSeq });
       });
       return Result.Ok(EventoResult.Continue);
     }

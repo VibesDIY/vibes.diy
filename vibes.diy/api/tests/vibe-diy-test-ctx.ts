@@ -11,7 +11,7 @@ import { drizzle as drizzleLibsql } from "drizzle-orm/libsql";
 import { drizzle as drizzleNeon } from "drizzle-orm/neon-serverless";
 import { Pool } from "@neondatabase/serverless";
 
-async function createDrizzleDB(): Promise<VibesSqlite> {
+async function createDrizzleDB(sqlUrlOverride?: string): Promise<VibesSqlite> {
   const flavour = (inject("DB_FLAVOUR" as never) as string) ?? "sqlite";
 
   if (flavour === "pg") {
@@ -20,14 +20,31 @@ async function createDrizzleDB(): Promise<VibesSqlite> {
     return drizzleNeon(pool) as unknown as VibesSqlite;
   }
 
-  const url = inject("VIBES_DIY_TEST_SQL_URL" as never) as string;
+  const url = sqlUrlOverride ?? (inject("VIBES_DIY_TEST_SQL_URL" as never) as string);
   const client = createClient({ url });
   return drizzleLibsql(client) as unknown as VibesSqlite;
 }
 
-export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperThis>, deviceCA: DeviceIdCA) {
+export async function createVibeDiyTestCtx(
+  sthis: ReturnType<typeof ensureSuperThis>,
+  deviceCA: DeviceIdCA,
+  sqlUrlOverride?: string
+) {
   const flavour = toDBFlavour(inject("DB_FLAVOUR" as never) as string);
-  const drizzleDB = await createDrizzleDB();
+  const drizzleDB = await createDrizzleDB(sqlUrlOverride);
+
+  // Stepper for controlling fixture streaming from tests.
+  // Test calls fixtureStream.next() to release each SSE chunk.
+  let stepResolve: (() => void) | null = null;
+  const fixtureStream = {
+    next() {
+      if (stepResolve) {
+        const r = stepResolve;
+        stepResolve = null;
+        r();
+      }
+    },
+  };
 
   const env = {
     CLOUD_SESSION_TOKEN_PUBLIC:
@@ -71,7 +88,7 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
     DB_FLAVOUR: flavour,
   };
 
-  return createAppContext({
+  const appContext = await createAppContext({
     sthis,
 
     storageSystems: {
@@ -104,8 +121,43 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
       // throw new Error(`postQueue not implemented in test for msg: ${JSON.stringify(msg)}`);
     },
     llmRequest: async (prompt: LLMRequest) => {
-      // console.log("Received LLM request in test llmRequest handler with messages:", prompt.messages.filter((m) => m.content.some((c) => c.type === "text")).map((m) => m.content.filter((c) => c.type === "text").map((c) => c.text).join("\n")).join("\n---\n"));
-      if (prompt.messages[0]?.content?.some((c) => c.type === "text" && c.text.includes("use fixture response"))) {
+      if (
+        prompt.messages.some((m) =>
+          m.content?.some((c: { type: string; text: string }) => c.type === "text" && c.text.includes("trigger error"))
+        )
+      ) {
+        throw new Error("test-triggered-llm-error");
+      }
+      if (
+        prompt.messages.some((m) =>
+          m.content?.some((c: { type: string; text: string }) => c.type === "text" && c.text.includes("use stepped fixture"))
+        )
+      ) {
+        const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
+        const chunks = fixture.Ok().split("\n\n").filter(Boolean);
+        let chunkIndex = 0;
+        const stream = new ReadableStream({
+          pull(controller) {
+            return new Promise<void>((resolve) => {
+              if (chunkIndex >= chunks.length) {
+                controller.close();
+                resolve();
+                return;
+              }
+              stepResolve = () => {
+                controller.enqueue(new TextEncoder().encode(chunks[chunkIndex++] + "\n\n"));
+                resolve();
+              };
+            });
+          },
+        });
+        return new Response(stream, { status: 200 });
+      }
+      if (
+        prompt.messages.some((m) =>
+          m.content?.some((c: { type: string; text: string }) => c.type === "text" && c.text.includes("use fixture response"))
+        )
+      ) {
         const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
         return new Response(fixture.Ok(), { status: 200 });
       }
@@ -118,4 +170,5 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
     db: drizzleDB,
     cache: noopCache,
   });
+  return { ...appContext, fixtureStream };
 }
