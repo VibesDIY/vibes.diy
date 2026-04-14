@@ -30,6 +30,7 @@ export const LLMRequest = type({
   "frequency_penalty?": "number",
   "presence_penalty?": "number",
   "stop?": "string | string[]",
+  "verbosity?": "'low' | 'medium' | 'high' | 'max'",
 });
 
 export type LLMRequest = typeof LLMRequest.infer;
