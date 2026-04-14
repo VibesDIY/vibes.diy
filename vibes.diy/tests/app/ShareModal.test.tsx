@@ -163,37 +163,46 @@ describe("ShareModal", () => {
     expect(screen.getByText("Visitors can request access")).toBeInTheDocument();
   });
 
-  it("closes on Escape key", () => {
+  it("closes on Escape key via window listener", () => {
     const modal = createMockModal();
-    const { container } = render(<ShareModal modal={modal} />);
+    render(<ShareModal modal={modal} />);
 
-    const backdrop = container.querySelector(".fixed.inset-0");
-    expect(backdrop).toBeTruthy();
-    fireEvent.keyDown(backdrop as Element, { key: "Escape" });
+    // Escape is handled via window.addEventListener, not onKeyDown on the backdrop
+    fireEvent.keyDown(window, { key: "Escape" });
 
     expect(modal.close).toHaveBeenCalledTimes(1);
   });
 
   it("closes on backdrop click", () => {
     const modal = createMockModal();
-    const { container } = render(<ShareModal modal={modal} />);
+    render(<ShareModal modal={modal} />);
 
-    const backdrop = container.querySelector(".fixed.inset-0");
-    expect(backdrop).toBeTruthy();
-    fireEvent.click(backdrop as Element);
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(dialog);
 
     expect(modal.close).toHaveBeenCalledTimes(1);
   });
 
-  it("does not close when clicking inside modal", () => {
+  it("does not close when clicking inside modal content", () => {
     const modal = createMockModal();
-    const { container } = render(<ShareModal modal={modal} />);
+    render(<ShareModal modal={modal} />);
 
-    const content = container.querySelector(".w-80");
+    // Click on the inner panel (first child of dialog)
+    const dialog = screen.getByRole("dialog");
+    const content = dialog.firstElementChild as Element;
     expect(content).toBeTruthy();
-    fireEvent.click(content as Element);
+    fireEvent.click(content);
 
     expect(modal.close).not.toHaveBeenCalled();
+  });
+
+  it("has proper dialog accessibility attributes", () => {
+    const modal = createMockModal();
+    render(<ShareModal modal={modal} />);
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(dialog).toHaveAttribute("aria-label", "Share");
   });
 
   it("shows 'Up to date' when current fsId matches production", () => {
