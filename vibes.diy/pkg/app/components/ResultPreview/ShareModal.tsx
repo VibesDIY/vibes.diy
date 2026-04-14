@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../ui/button.js";
 import type { UseShareModalReturn } from "./useShareModal.js";
@@ -8,6 +8,16 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ modal }: ShareModalProps) {
+  // Window-level Escape listener (works regardless of focus)
+  useEffect(() => {
+    if (!modal.isOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") modal.close();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [modal.isOpen, modal]);
+
   if (!modal.isOpen || !modal.buttonRef.current) return null;
 
   const buttonRect = modal.buttonRef.current.getBoundingClientRect();
@@ -23,14 +33,14 @@ export function ShareModal({ modal }: ShareModalProps) {
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Escape") {
-      modal.close();
-    }
-  }
-
   return createPortal(
-    <div className="fixed inset-0 z-[9999] m-0 bg-black/25" onClick={handleBackdropClick} onKeyDown={handleKeyDown}>
+    <div
+      className="fixed inset-0 z-[9999] m-0 bg-black/25"
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Share"
+    >
       <div
         style={menuStyle}
         onClick={(e) => e.stopPropagation()}
