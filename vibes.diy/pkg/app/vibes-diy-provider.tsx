@@ -83,8 +83,10 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     return new VibesDiyApi({
       apiUrl,
       getToken: async () => {
+        if (!clerk.isSignedIn) {
+          return Result.Err("not signed in");
+        }
         if (clerkReady) {
-          console.log("getToken-wait-clerkReady");
           await clerkReady.asPromise();
           clerkReady = undefined;
         }
