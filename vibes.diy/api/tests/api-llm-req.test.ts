@@ -151,7 +151,7 @@ describe("API LLM Requests", { timeout: (inject("DB_FLAVOUR" as never) as string
     expect(rPrompt.isOk()).toBe(true);
 
     // Collect blocks on stream1 in background
-    const stream1Blocks: Array<{ type: string; blockSeq?: number }> = [];
+    const stream1Blocks: { type: string; blockSeq?: number }[] = [];
     const stream1Done = processStream(chat.sectionStream, async (msg) => {
       if (!("blocks" in msg)) return;
       for (const b of msg.blocks) {
@@ -177,7 +177,7 @@ describe("API LLM Requests", { timeout: (inject("DB_FLAVOUR" as never) as string
     const secondChat = rNext.Ok();
 
     // Collect blocks on stream2 in background
-    const stream2Blocks: Array<{ type: string; blockSeq?: number }> = [];
+    const stream2Blocks: { type: string; blockSeq?: number }[] = [];
     const stream2Done = processStream(secondChat.sectionStream, async (msg) => {
       if (!("blocks" in msg)) return;
       for (const b of msg.blocks) {

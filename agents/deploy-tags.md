@@ -8,6 +8,10 @@ Tag prefixes trigger different deploy jobs via `.github/workflows/vibes-diy-depl
 | `vibes-diy@c*` | cli         | deploy_cli   | No (shared prod queue)    |
 | `vibes-diy@d*` | dev         | compile_test | No                        |
 
+## Safety
+
+**Never push prod tags (`vibes-diy@p*`) without explicit user confirmation.** Prod tags trigger live deploys — always ask before creating and pushing them.
+
 ## Tagging procedure
 
 1. List existing tags by creation date:
