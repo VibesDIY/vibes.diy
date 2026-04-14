@@ -95,7 +95,7 @@ export function ShareModal({
                   </button>
                 </div>
                 <div className="mt-2 text-xs text-gray-600">
-                  Private by default; visitors can request access.
+                  Clean share link (no fsId).
                 </div>
               </div>
             )}
@@ -121,7 +121,7 @@ export function ShareModal({
               Auto-join
             </label>
             <div className="text-xs text-gray-600">
-              When off, visitors can request access.
+              When off, visitors may need to request access.
             </div>
           </div>
         </div>
