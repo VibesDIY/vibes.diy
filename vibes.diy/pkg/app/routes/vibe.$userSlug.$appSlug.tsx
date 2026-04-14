@@ -180,7 +180,7 @@ export default function VibeIframeWrapper() {
   const loginOverlay = showLoginOverlay
     ? createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <SignIn routing="hash" forceRedirectUrl={window.location.href} />
+          <SignIn routing="hash" fallbackRedirectUrl={window.location.pathname + window.location.search} />
         </div>,
         document.body
       )
