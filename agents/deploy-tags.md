@@ -1,12 +1,22 @@
 # Deploy Tags
 
-Tag prefixes trigger different deploy jobs via `.github/workflows/vibes-diy-deploy.yaml`:
+## Cloudflare deploy (`vibes-diy-deploy.yaml`)
 
 | Prefix         | Environment | Job          | Queue deploys?            |
 | -------------- | ----------- | ------------ | ------------------------- |
 | `vibes-diy@p*` | prodv2      | compile_test | Yes (CLOUDFLARE_ENV=prod) |
 | `vibes-diy@c*` | cli         | deploy_cli   | No (shared prod queue)    |
 | `vibes-diy@d*` | dev         | compile_test | No                        |
+
+## Package publish (`package-deploy.yaml`)
+
+| Prefix   | Environment | Workflow             |
+| -------- | ----------- | -------------------- |
+| `pkg@p*` | production  | CI Vibes.Diy Publish |
+| `pkg@s*` | staging     | CI Vibes.Diy Publish |
+| `pkg@d*` | dev         | CI Vibes.Diy Publish |
+
+Convention: `pkg@d2.0.0-dev-cli-<letter>` for dev CLI iterations.
 
 ## Tagging procedure
 
