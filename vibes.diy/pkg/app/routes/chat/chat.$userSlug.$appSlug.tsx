@@ -24,7 +24,8 @@ import { isCodeBegin } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
 import ChatInterface from "../../components/ChatInterface.js";
-import ResultPreviewHeaderContent from "../../components/ResultPreview/ResultPreviewHeaderContent.js";
+import { ResultPreviewHeaderContent } from "../../components/ResultPreview/ResultPreviewHeaderContent.js";
+import { useShareModal } from "../../components/ResultPreview/useShareModal.js";
 import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
 import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
@@ -155,7 +156,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const [chat, setChat] = useState<LLMChat | null>(null);
   const openingRef = useRef(false);
   const { vibeDiyApi, webVars: svcVars } = useVibesDiy();
-  // const clerk = useClerk();
+  const shareModal = useShareModal({ userSlug, appSlug, fsId, vibeDiyApi });
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
@@ -390,6 +391,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             hasCodeChanges={isEditorStateEdit(editorState) && editorState.buffer.trim().length > 0}
             openVibe={openVibe}
             onContextMenu={handleContextMenu}
+            shareModal={shareModal}
           />
         }
         chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} />}
