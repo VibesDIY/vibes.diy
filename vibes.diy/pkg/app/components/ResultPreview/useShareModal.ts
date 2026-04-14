@@ -25,6 +25,7 @@ interface UseShareModalReturn {
   urlCopied: boolean;
   handleCopyUrl: () => Promise<void>;
   canPublish: boolean;
+  settingsLoaded: boolean;
 }
 
 export type { UseShareModalReturn };
@@ -37,12 +38,21 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
   const [publishedUrl, setPublishedUrl] = useState<string | undefined>(undefined);
   const [productionFsId, setProductionFsId] = useState<string | undefined>(undefined);
   const [autoJoinEnabled, setAutoJoinEnabled] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [isTogglingAutoJoin, setIsTogglingAutoJoin] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const copyTimeoutRef = useRef<number | null>(null);
 
   const canPublish = fsId !== undefined && fsId !== "";
   const isUpToDate = isPublished && productionFsId === fsId;
+
+  function clearCopyTimeout() {
+    if (copyTimeoutRef.current !== null) {
+      window.clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = null;
+    }
+  }
 
   function open() {
     setIsOpen(true);
@@ -51,23 +61,29 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
   function close() {
     setIsOpen(false);
     setPublishError(undefined);
+    clearCopyTimeout();
   }
 
   // Fetch current production state and settings when modal opens
   useEffect(() => {
     if (!isOpen) return;
+    let cancelled = false;
 
-    // Reset state before fetching to avoid stale values across apps/opens
+    // Reset all derived state before fetching
     setIsPublished(false);
     setProductionFsId(undefined);
     setPublishedUrl(undefined);
     setUrlCopied(false);
     setPublishError(undefined);
+    setAutoJoinEnabled(false);
+    setSettingsLoaded(false);
+    clearCopyTimeout();
 
     // Check if app has a production version
     vibeDiyApi
       .getAppByFsId({ appSlug, userSlug })
       .then((res) => {
+        if (cancelled) return;
         if (res.isOk()) {
           const app = res.Ok();
           if (app.mode === "production" && app.fsId) {
@@ -85,17 +101,25 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     vibeDiyApi
       .ensureAppSettings({ appSlug, userSlug })
       .then((res) => {
+        if (cancelled) return;
         if (res.isOk()) {
           setAutoJoinEnabled(res.Ok().settings.entry.enableRequest?.autoAcceptViewRequest === true);
         }
       })
       .catch(() => {
         // New app with no settings yet — defaults apply
+      })
+      .finally(() => {
+        if (!cancelled) setSettingsLoaded(true);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, appSlug, userSlug, vibeDiyApi]);
 
   const handlePublish = useCallback(async () => {
-    if (!canPublish) return;
+    if (!canPublish || !settingsLoaded) return;
     setIsPublishing(true);
     setPublishError(undefined);
 
@@ -114,11 +138,16 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
       }
 
       // Ensure requests are enabled, preserving current auto-join setting
-      await vibeDiyApi.ensureAppSettings({
+      const settingsResult = await vibeDiyApi.ensureAppSettings({
         appSlug,
         userSlug,
         request: { enable: true, autoAcceptViewRequest: autoJoinEnabled },
       });
+
+      if (!settingsResult.isOk()) {
+        setPublishError("Published, but failed to update sharing settings.");
+        // Still show as published since the mode change succeeded
+      }
 
       const url = `${window.location.origin}/vibe/${userSlug}/${appSlug}/`;
       setPublishedUrl(url);
@@ -129,7 +158,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     } finally {
       setIsPublishing(false);
     }
-  }, [canPublish, fsId, appSlug, userSlug, vibeDiyApi, autoJoinEnabled]);
+  }, [canPublish, settingsLoaded, fsId, appSlug, userSlug, vibeDiyApi, autoJoinEnabled]);
 
   const handleToggleAutoJoin = useCallback(async () => {
     setIsTogglingAutoJoin(true);
@@ -153,7 +182,8 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     try {
       await navigator.clipboard.writeText(publishedUrl);
       setUrlCopied(true);
-      setTimeout(() => setUrlCopied(false), 2000);
+      clearCopyTimeout();
+      copyTimeoutRef.current = window.setTimeout(() => setUrlCopied(false), 2000);
     } catch {
       setPublishError("Could not copy link.");
     }
@@ -176,5 +206,6 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     urlCopied,
     handleCopyUrl,
     canPublish,
+    settingsLoaded,
   };
 }
