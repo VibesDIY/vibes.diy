@@ -28,7 +28,7 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
     const onClose = OnFunc<(event: W3CWebSocketCloseEvent) => void>();
     // const ende = JSONEnDecoderSingleton();
 
-    const nativeClose = ws.close?.bind(ws) ?? (() => {});
+    const nativeClose = ws.close?.bind(ws);
 
     ws.onopen = () => {
       waitOpen.resolve(ws);
@@ -53,7 +53,7 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
       onMessage,
       onClose,
       close: () => {
-        nativeClose();
+        nativeClose?.();
         return Promise.resolve();
       },
       send: (data: Uint8Array<ArrayBuffer>): Result<void> => {
