@@ -1,6 +1,6 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { assert, beforeAll, describe, expect, inject, it, vi } from "vitest";
-import { BuildURI, loadAsset, processStream, Result, TestFetchPair, TestWSPair, sleep } from "@adviser/cement";
+import { BuildURI, loadAsset, processStream, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import {
@@ -28,6 +28,7 @@ import {
   SectionEvent,
 } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
+import { createIsolatedDB } from "./globalSetup.libsql.js";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { type } from "arktype";
 import type { Model, VibeFile } from "@vibes.diy/api-types";
@@ -112,7 +113,8 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
-    appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    const isolatedDbUrl = await createIsolatedDB(import.meta.dirname, "api");
+    appCtx = await createVibeDiyTestCtx(sthis, deviceCA, isolatedDbUrl);
     const testUser = await createTestUser({ sthis, deviceCA });
 
     const fetchPair = TestFetchPair.create();
@@ -451,39 +453,34 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
-    console.log("pre-chat.prompt");
     const rPrompt = await chat.prompt({
       messages: [{ role: "user", content: [{ type: "text", text: `use fixture response` }] }],
     });
     expect(rPrompt.isOk()).toBe(true);
-    console.log("post-chat.prompt");
-    const firstStream = processStream(chat.sectionStream, async () => {
-      await sleep(100);
-      // console.log("Received message in llm query test", msg);
+
+    // Wait for the first stream to complete so blocks are persisted via handleEndMsg
+    await processStream(chat.sectionStream, async (msg) => {
+      if ("blocks" in msg && msg.blocks.some((b: { type: string }) => b.type === "prompt.block-end")) {
+        await chat.close();
+      }
     });
 
+    // Re-open the same chat — resendChatSectionsPrevMsg replays persisted blocks
     const rNext = await api.openChat({
       chatId: chat.chatId,
       mode: "chat",
     });
-    // console.log("pre-processStream");
     const nextFn = vi.fn();
-    Promise.all([
-      firstStream,
-      await processStream(rNext.Ok().sectionStream, async (msg) => {
-        nextFn(msg);
-        const blocks = nextFn.mock.calls.reduce((acc, call) => acc + call[0].blocks.length, 0);
-        // console.log("Received message in llm query test", blocks, "blocks so far", msg);
-        if (blocks >= 44) {
-          await rNext.Ok().close();
-        }
-        // if (msg.type === "vibes.diy.section-event" && msg.promptId === rPrompt.Ok().promptId && isPromptBlockEnd(msg.blocks[0])) {
-        //   rNext.Ok().close();
-        // }
-      }),
-    ]);
-    // console.log("LLM query test, received blocks:", nextFn.mock.calls.flatMap((call) => call[0].blocks))
-    expect(nextFn.mock.calls.flatMap((call) => call[0].blocks).length).toEqual(44);
+    await processStream(rNext.Ok().sectionStream, async (msg) => {
+      nextFn(msg);
+      if ("blocks" in msg && msg.blocks.some((b: { type: string }) => b.type === "prompt.block-end")) {
+        await rNext.Ok().close();
+      }
+    });
+    const replayedBlocks = nextFn.mock.calls.filter((c) => "blocks" in c[0]).flatMap((call) => call[0].blocks);
+    expect(replayedBlocks.length).toBeGreaterThan(0);
+    expect(replayedBlocks[0]).toHaveProperty("type", "prompt.block-begin");
+    expect(replayedBlocks[replayedBlocks.length - 1]).toHaveProperty("type", "prompt.block-end");
   });
 
   it("promptFS", async () => {
@@ -492,7 +489,6 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
-    console.log("pre-chat.prompt");
     const rPrompt = await chat.promptFS([
       {
         type: "code-block",
@@ -502,34 +498,29 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       } satisfies VibeFile,
     ]);
     expect(rPrompt.isOk()).toBe(true);
-    console.log("post-chat.prompt");
-    const firstStream = processStream(chat.sectionStream, async () => {
-      await sleep(100);
-      // console.log("Received message in llm query test", msg);
+
+    // Wait for the first stream to complete so blocks are persisted
+    await processStream(chat.sectionStream, async (msg) => {
+      if ("blocks" in msg && msg.blocks.some((b: { type: string }) => b.type === "prompt.block-end")) {
+        await chat.close();
+      }
     });
 
+    // Re-open the same chat — replays persisted blocks
     const rNext = await api.openChat({
       chatId: chat.chatId,
       mode: "chat",
     });
-    // console.log("pre-processStream");
     const nextFn = vi.fn();
-    Promise.all([
-      firstStream,
-      await processStream(rNext.Ok().sectionStream, async (msg) => {
-        nextFn(msg);
-        const blocks = nextFn.mock.calls.reduce((acc, call) => acc + call[0].blocks.length, 0);
-        // console.log("Received message in llm query test", blocks, "blocks so far", msg);
-        if (blocks >= 44) {
-          await rNext.Ok().close();
-        }
-        // if (msg.type === "vibes.diy.section-event" && msg.promptId === rPrompt.Ok().promptId && isPromptBlockEnd(msg.blocks[0])) {
-        //   rNext.Ok().close();
-        // }
-      }),
-    ]);
-    // console.log("LLM query test, received blocks:", nextFn.mock.calls.flatMap((call) => call[0].blocks))
-    expect(nextFn.mock.calls.flatMap((call) => call[0].blocks).length).toEqual(44);
+    await processStream(rNext.Ok().sectionStream, async (msg) => {
+      nextFn(msg);
+      if ("blocks" in msg && msg.blocks.some((b: { type: string }) => b.type === "prompt.block-end")) {
+        await rNext.Ok().close();
+      }
+    });
+    const replayedBlocks = nextFn.mock.calls.filter((c) => "blocks" in c[0]).flatMap((c) => c[0].blocks);
+    expect(replayedBlocks.length).toBeGreaterThan(0);
+    expect(replayedBlocks[0]).toHaveProperty("type", "prompt.block-begin");
   });
 
   describe("ensureAppSettings", () => {

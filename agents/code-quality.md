@@ -16,3 +16,14 @@ pnpm dedupe --check               # verify (must exit 0)
 
 Run vibes.diy tests: `cd vibes.diy/tests && pnpm test`
 Run vibes.diy tests (quiet): `cd vibes.diy/tests && pnpm test --reporter=dot`
+
+### Slow test workflow
+
+For slow tests (API tests take ~20s), capture output to a file and grep it instead of re-running:
+
+```bash
+pnpm --dir vibes.diy/api/tests test > /tmp/api-test-output.txt 2>&1
+grep -E '×|✓|Tests' /tmp/api-test-output.txt          # summary
+grep -A10 -E 'FAIL.*test-name' /tmp/api-test-output.txt   # specific failure
+grep -E 'SQLITE_BUSY|Error' /tmp/api-test-output.txt     # root causes
+```
