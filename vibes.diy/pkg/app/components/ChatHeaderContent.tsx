@@ -1,27 +1,16 @@
 import React, { memo } from "react";
-import { MenuIcon } from "./ChatHeaderIcons.js";
+import { PILL_CLEARANCE } from "./PillPortal.js";
 
 interface ChatHeaderContentProps {
-  onOpenSidebar: () => void;
   title: string;
   promptProcessing: boolean;
   codeReady: boolean;
   remixOf?: string;
 }
 
-function ChatHeaderContent({ onOpenSidebar, title, promptProcessing, codeReady, remixOf }: ChatHeaderContentProps) {
+function ChatHeaderContent({ title, promptProcessing, codeReady, remixOf }: ChatHeaderContentProps) {
   return (
-    <div className="flex h-full w-full items-center justify-between p-2 py-4">
-      <div className="flex items-center">
-        <button
-          type="button"
-          onClick={onOpenSidebar}
-          className="text-light-primary dark:text-dark-primary hover:text-accent-02-light dark:hover:text-accent-02-dark mr-3 px-2 py-4"
-          aria-label="Open chat history"
-        >
-          <MenuIcon />
-        </button>
-      </div>
+    <div className="flex h-full w-full items-center justify-between p-2 py-4" style={{ paddingLeft: PILL_CLEARANCE }}>
       <div className="text-light-primary dark:text-dark-primary text-center text-sm">
         {remixOf ? (
           <>
@@ -60,13 +49,9 @@ function ChatHeaderContent({ onOpenSidebar, title, promptProcessing, codeReady, 
   );
 }
 
-// Use React.memo with a custom comparison function to ensure the component only
-// re-renders when its props actually change
 export default memo(ChatHeaderContent, (prevProps, nextProps) => {
-  // Only re-render if title or onOpenSidebar changes
   return (
     prevProps.remixOf === nextProps.remixOf &&
-    prevProps.onOpenSidebar === nextProps.onOpenSidebar &&
     prevProps.title === nextProps.title &&
     prevProps.promptProcessing === nextProps.promptProcessing &&
     prevProps.codeReady === nextProps.codeReady

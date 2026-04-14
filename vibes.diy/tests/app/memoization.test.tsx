@@ -64,13 +64,6 @@ describe("Component Memoization", () => {
       // Create a wrapper component for testing
       const { Component: TrackedHeader, getRenderCount } = createRenderTracker(ChatHeader);
 
-      // Create stable callback functions outside the component
-      const onOpenSidebar = () => {
-        /* no-op */
-      };
-      // const onNewChat = () => {
-      //   /* no-op */
-      // };
       const isStreaming = false;
 
       function TestWrapper() {
@@ -85,13 +78,7 @@ describe("Component Memoization", () => {
               Force Re-render
             </button>
             {/* Pass required props */}
-            <TrackedHeader
-              onOpenSidebar={onOpenSidebar}
-              // onNewChat={onNewChat}
-              promptProcessing={isStreaming}
-              title={""}
-              codeReady={false}
-            />
+            <TrackedHeader promptProcessing={isStreaming} title={""} codeReady={false} />
           </div>
         );
       }

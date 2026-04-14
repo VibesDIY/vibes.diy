@@ -1,9 +1,10 @@
-import { VibesSwitch, gridBackground, cx } from "@vibes.diy/base";
+import { gridBackground, cx } from "@vibes.diy/base";
 import React from "react";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import type { ReactNode } from "react";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { AllowFireproofSharing } from "./AllowFireproofSharing.js";
+import { PillPortal, PILL_CLEARANCE } from "./PillPortal.js";
 
 interface AppLayoutProps {
   chatPanel: ReactNode;
@@ -37,6 +38,8 @@ export default function AppLayout({
 
   return (
     <div className={cx(gridBackground, "page-grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden")}>
+      <PillPortal isActive={isSidebarVisible} onToggle={setIsSidebarVisible} />
+
       {/* Content with relative positioning to appear above the background */}
       <div
         className={`flex w-full flex-col ${fullWidthChat ? "md:w-full" : "md:w-1/3"} ${
@@ -44,9 +47,7 @@ export default function AppLayout({
         } relative z-10 transition-all duration-300 ease-in-out`}
       >
         <div className="flex h-[4rem] items-center p-2">
-          <div className="mb-8 ml-6 relative z-20">
-            <VibesSwitch size={75} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
-          </div>
+          <div style={{ width: PILL_CLEARANCE }} />
           {headerLeft}
         </div>
 
