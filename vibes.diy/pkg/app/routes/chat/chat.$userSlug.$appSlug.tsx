@@ -212,9 +212,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         console.error("CHAT-Error", rChat.Err(), userSlug, appSlug);
         return;
       }
-      // console.log("Chat", rChat.Ok());
       setChat(rChat.Ok());
-      // console.log(`dispatch-initChat`, rChat.Ok())
       dispatch({ type: "initChat", chat: rChat.Ok() });
       void processStream(rChat.Ok().sectionStream, (msg) => {
         const se = sectionEvent(msg);
@@ -223,10 +221,19 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           return;
         }
         for (const block of se.blocks) {
-          // console.log("recv-block", block)
           dispatch(block);
         }
       });
+      // For CLI-pushed apps with no chat history, look up the latest fsId
+      if (!fsId) {
+        vibeDiyApi.getAppByFsId({ appSlug, userSlug }).then((rApp) => {
+          if (rApp.isOk() && rApp.Ok().fsId) {
+            const sp = new URLSearchParams(searchParams);
+            if (!sp.has("view")) sp.set("view", "preview");
+            navigate({ pathname: `/chat/${userSlug}/${appSlug}/${rApp.Ok().fsId}`, search: sp.toString() }, { replace: true });
+          }
+        });
+      }
     });
     return () => {
       if (chat) {
