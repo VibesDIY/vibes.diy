@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import type { VibesDiyApiIface, AppSettings } from "@vibes.diy/api-types";
+import type { VibesDiyApiIface } from "@vibes.diy/api-types";
 
 interface UseShareModalParams {
   userSlug: string;
@@ -39,7 +39,6 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
   const [autoJoinEnabled, setAutoJoinEnabled] = useState(false);
   const [isTogglingAutoJoin, setIsTogglingAutoJoin] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
-  const [_settings, setSettings] = useState<AppSettings | undefined>(undefined);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
   const canPublish = fsId !== undefined && fsId !== "";
@@ -58,6 +57,13 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
   useEffect(() => {
     if (!isOpen) return;
 
+    // Reset state before fetching to avoid stale values across apps/opens
+    setIsPublished(false);
+    setProductionFsId(undefined);
+    setPublishedUrl(undefined);
+    setUrlCopied(false);
+    setPublishError(undefined);
+
     // Check if app has a production version
     vibeDiyApi
       .getAppByFsId({ appSlug, userSlug })
@@ -72,7 +78,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
         }
       })
       .catch(() => {
-        // App may not exist yet — that's fine
+        // App may not exist yet — defaults apply
       });
 
     // Fetch sharing settings
@@ -80,13 +86,11 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
       .ensureAppSettings({ appSlug, userSlug })
       .then((res) => {
         if (res.isOk()) {
-          const s = res.Ok();
-          setSettings(s.settings);
-          setAutoJoinEnabled(s.settings.entry.enableRequest?.autoAcceptViewRequest === true);
+          setAutoJoinEnabled(res.Ok().settings.entry.enableRequest?.autoAcceptViewRequest === true);
         }
       })
       .catch(() => {
-        // New app with no settings yet — use defaults
+        // New app with no settings yet — defaults apply
       });
   }, [isOpen, appSlug, userSlug, vibeDiyApi]);
 
@@ -95,58 +99,64 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     setIsPublishing(true);
     setPublishError(undefined);
 
-    // Promote current fsId to production
-    const modeResult = await vibeDiyApi.setSetModeFs({
-      fsId: fsId as string,
-      appSlug,
-      userSlug,
-      mode: "production",
-    });
+    try {
+      // Promote current fsId to production
+      const modeResult = await vibeDiyApi.setSetModeFs({
+        fsId: fsId as string,
+        appSlug,
+        userSlug,
+        mode: "production",
+      });
 
-    if (!modeResult.isOk()) {
+      if (!modeResult.isOk()) {
+        setPublishError("Failed to publish. Please try again.");
+        return;
+      }
+
+      // Ensure requests are enabled, preserving current auto-join setting
+      await vibeDiyApi.ensureAppSettings({
+        appSlug,
+        userSlug,
+        request: { enable: true, autoAcceptViewRequest: autoJoinEnabled },
+      });
+
+      const url = `${window.location.origin}/vibe/${userSlug}/${appSlug}/`;
+      setPublishedUrl(url);
+      setProductionFsId(fsId);
+      setIsPublished(true);
+    } catch {
       setPublishError("Failed to publish. Please try again.");
+    } finally {
       setIsPublishing(false);
-      return;
     }
-
-    // Ensure requests are enabled (sharing model: requests on by default)
-    const settingsResult = await vibeDiyApi.ensureAppSettings({
-      appSlug,
-      userSlug,
-      request: { enable: true },
-    });
-
-    if (settingsResult.isOk()) {
-      setSettings(settingsResult.Ok().settings);
-    }
-
-    const url = `${window.location.origin}/vibe/${userSlug}/${appSlug}/`;
-    setPublishedUrl(url);
-    setProductionFsId(fsId);
-    setIsPublished(true);
-    setIsPublishing(false);
-  }, [canPublish, fsId, appSlug, userSlug, vibeDiyApi]);
+  }, [canPublish, fsId, appSlug, userSlug, vibeDiyApi, autoJoinEnabled]);
 
   const handleToggleAutoJoin = useCallback(async () => {
     setIsTogglingAutoJoin(true);
     const nextValue = !autoJoinEnabled;
-    const result = await vibeDiyApi.ensureAppSettings({
-      appSlug,
-      userSlug,
-      request: { enable: true, autoAcceptViewRequest: nextValue },
-    });
-    if (result.isOk()) {
-      setSettings(result.Ok().settings);
-      setAutoJoinEnabled(nextValue);
+    try {
+      const result = await vibeDiyApi.ensureAppSettings({
+        appSlug,
+        userSlug,
+        request: { enable: true, autoAcceptViewRequest: nextValue },
+      });
+      if (result.isOk()) {
+        setAutoJoinEnabled(nextValue);
+      }
+    } finally {
+      setIsTogglingAutoJoin(false);
     }
-    setIsTogglingAutoJoin(false);
   }, [autoJoinEnabled, appSlug, userSlug, vibeDiyApi]);
 
   const handleCopyUrl = useCallback(async () => {
     if (!publishedUrl) return;
-    await navigator.clipboard.writeText(publishedUrl);
-    setUrlCopied(true);
-    setTimeout(() => setUrlCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(publishedUrl);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    } catch {
+      setPublishError("Could not copy link.");
+    }
   }, [publishedUrl]);
 
   return {

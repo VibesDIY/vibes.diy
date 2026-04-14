@@ -64,7 +64,7 @@ function ResultPreviewHeaderContent({
               testId="header-save-button"
             />
           )}
-          <Button ref={shareModal.buttonRef} onClick={shareModal.open} variant="blue" size="default" title="Share">
+          <Button ref={shareModal.buttonRef} onClick={shareModal.open} variant="blue" size="default" aria-label="Share">
             <ShareIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Share</span>
           </Button>
