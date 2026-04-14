@@ -108,14 +108,14 @@ export default function VibesMine(): ReactElement {
   useEffect(() => {
     setAppHeadInfo(new Map());
     for (const item of vibeItems) {
-      for (const appSlug of item.appSlugs) {
-        vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug }).then((res) => {
+      for (const app of item.apps) {
+        vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug: app.appSlug }).then((res) => {
           if (res.isErr()) return;
-          const app = res.Ok();
+          const appData = res.Ok();
           setAppHeadInfo((prev) =>
-            new Map(prev).set(`${item.userSlug}/${appSlug}`, {
-              screenshot: app.meta.find(isMetaScreenShot),
-              mode: app.mode,
+            new Map(prev).set(`${item.userSlug}/${app.appSlug}`, {
+              screenshot: appData.meta.find(isMetaScreenShot),
+              mode: appData.mode,
             })
           );
         });
@@ -145,18 +145,18 @@ export default function VibesMine(): ReactElement {
           {vibeItems.map((item) => (
             <BrutalistCard key={item.userSlug} size="md">
               <h3 className="mb-4 text-lg font-bold">{item.userSlug}</h3>
-              {item.appSlugs.length === 0 ? (
+              {item.apps.length === 0 ? (
                 <p className="text-sm text-gray-500">No apps yet</p>
               ) : (
                 <div className="grid gap-3">
-                  {item.appSlugs.map((appSlug) => {
-                    const key = `${item.userSlug}/${appSlug}`;
-                    const isSelected = paramUserSlug === item.userSlug && paramAppSlug === appSlug;
+                  {item.apps.map((app) => {
+                    const key = `${item.userSlug}/${app.appSlug}`;
+                    const isSelected = paramUserSlug === item.userSlug && paramAppSlug === app.appSlug;
                     return (
                       <AppSlugItem
-                        key={appSlug}
+                        key={app.appSlug}
                         userSlug={item.userSlug}
-                        appSlug={appSlug}
+                        appSlug={app.appSlug}
                         isSelected={isSelected}
                         activeTab={isSelected ? paramTab : undefined}
                         isLoadingThis={loadingDetails === key}

@@ -54,12 +54,18 @@ export const listUserSlugAppSlugEvento: EventoHandler<
         conditions.push(eq(vctx.sql.tables.appSlugBinding.appSlug, req.appSlug));
       }
 
-      const rows = await vctx.sql.db
+      const orderBy =
+        req.order === "updated"
+          ? [desc(vctx.sql.tables.appSlugBinding.updated)]
+          : [desc(vctx.sql.tables.userSlugBinding.created), desc(vctx.sql.tables.appSlugBinding.created)];
+
+      let query = vctx.sql.db
         .select({
           userSlug: vctx.sql.tables.userSlugBinding.userSlug,
           userId: vctx.sql.tables.userSlugBinding.userId,
           appSlug: vctx.sql.tables.appSlugBinding.appSlug,
           appCreated: vctx.sql.tables.appSlugBinding.created,
+          appUpdated: vctx.sql.tables.appSlugBinding.updated,
           userCreated: vctx.sql.tables.userSlugBinding.created,
         })
         .from(vctx.sql.tables.userSlugBinding)
@@ -68,25 +74,52 @@ export const listUserSlugAppSlugEvento: EventoHandler<
           eq(vctx.sql.tables.appSlugBinding.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
         )
         .where(and(...conditions))
-        .orderBy(desc(vctx.sql.tables.userSlugBinding.created), desc(vctx.sql.tables.appSlugBinding.created));
+        .orderBy(...orderBy)
+        .$dynamic();
 
-      // Group by userSlug
-      const grouped = new Map<string, string[]>();
-      for (const row of rows) {
-        if (!grouped.has(row.userSlug)) {
-          grouped.set(row.userSlug, []);
-        }
-        if (row.appSlug) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          grouped.get(row.userSlug)!.push(row.appSlug);
-        }
+      if (req.limit) {
+        query = query.limit(req.limit);
       }
 
-      const items: ResListUserSlugAppSlugItem[] = Array.from(grouped.entries()).map(([userSlug, appSlugs]) => ({
-        userId,
-        userSlug,
-        appSlugs,
-      }));
+      const rows = await query;
+
+      let items: ResListUserSlugAppSlugItem[];
+      if (req.order === "updated") {
+        // Preserve SQL recency ordering: one item per app, no grouping
+        items = rows
+          .filter((row) => row.appSlug)
+          .map((row) => ({
+            userId,
+            userSlug: row.userSlug,
+            apps: [
+              {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                appSlug: row.appSlug!,
+                ...(row.appUpdated ? { updated: row.appUpdated } : {}),
+              },
+            ],
+          }));
+      } else {
+        // Group by userSlug (default)
+        const grouped = new Map<string, { appSlug: string; updated?: string }[]>();
+        for (const row of rows) {
+          if (!grouped.has(row.userSlug)) {
+            grouped.set(row.userSlug, []);
+          }
+          if (row.appSlug) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            grouped.get(row.userSlug)!.push({
+              appSlug: row.appSlug,
+              ...(row.appUpdated ? { updated: row.appUpdated } : {}),
+            });
+          }
+        }
+        items = Array.from(grouped.entries()).map(([userSlug, apps]) => ({
+          userId,
+          userSlug,
+          apps,
+        }));
+      }
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-list-user-slug-app-slug",

@@ -158,16 +158,24 @@ export const reqListUserSlugAppSlug = type({
   auth: dashAuthType,
   "userSlug?": "string",
   "appSlug?": "string",
+  "order?": "'updated'|'created'",
+  "limit?": "number",
 });
 export type ReqListUserSlugAppSlug = typeof reqListUserSlugAppSlug.infer;
 export function isReqListUserSlugAppSlug(obj: unknown): obj is ReqListUserSlugAppSlug {
   return !(reqListUserSlugAppSlug(obj) instanceof type.errors);
 }
 
+export const resListUserSlugAppSlugApp = type({
+  appSlug: "string",
+  "updated?": "string",
+});
+export type ResListUserSlugAppSlugApp = typeof resListUserSlugAppSlugApp.infer;
+
 export const resListUserSlugAppSlugItem = type({
   userId: "string",
   userSlug: "string",
-  appSlugs: type("string").array(),
+  apps: resListUserSlugAppSlugApp.array(),
 });
 export type ResListUserSlugAppSlugItem = typeof resListUserSlugAppSlugItem.infer;
 

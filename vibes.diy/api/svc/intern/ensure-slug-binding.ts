@@ -158,11 +158,13 @@ async function writeAppSlugBinding(
       return Result.Err("maximum appSlug bindings reached for this userId");
     }
     const ledger = ctx.sthis.nextId(12).str;
+    const now = new Date().toISOString();
     await ctx.sql.db.insert(ctx.sql.tables.appSlugBinding).values({
       appSlug,
       userSlug,
       ledger,
-      created: new Date().toISOString(),
+      created: now,
+      updated: now,
     });
     return Result.Ok({
       type: "vibes.diy-app-slug-binding",

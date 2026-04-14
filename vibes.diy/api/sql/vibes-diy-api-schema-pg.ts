@@ -36,6 +36,7 @@ export const sqlAppSlugBinding = pgTable(
     appSlug: text().notNull(), // human friendly app id
     ledger: text().notNull(), // cryptograhic Id
     created: text().notNull(),
+    updated: text(),
   },
   (table) => [
     primaryKey({ columns: [table.appSlug, table.userSlug] }),

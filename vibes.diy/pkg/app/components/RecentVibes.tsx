@@ -1,6 +1,5 @@
 import { useAuth } from "@clerk/react";
-import type { ResListApplicationChatsItem } from "@vibes.diy/api-types";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 
@@ -13,46 +12,36 @@ interface RecentVibeItem {
   appSlug: string;
 }
 
-function toRecentVibes(items: ResListApplicationChatsItem[], limit: number): RecentVibeItem[] {
-  const seen = new Set<string>();
-  const out: RecentVibeItem[] = [];
-  for (const item of items) {
-    const key = `${item.userSlug}/${item.appSlug}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ userSlug: item.userSlug, appSlug: item.appSlug });
-    if (out.length >= limit) break;
-  }
-  return out;
-}
-
 export function RecentVibes({ onNavigate }: RecentVibesProps) {
   const { isSignedIn } = useAuth();
   const { vibeDiyApi } = useVibesDiy();
-  const [chats, setChats] = useState<ResListApplicationChatsItem[]>([]);
+  const [items, setItems] = useState<RecentVibeItem[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const items = useMemo(() => {
-    const sorted = [...chats].sort((a, b) => (a.created < b.created ? 1 : a.created > b.created ? -1 : 0));
-    return toRecentVibes(sorted, 10);
-  }, [chats]);
 
   useEffect(() => {
     let cancelled = false;
 
     if (!isSignedIn) {
-      setChats([]);
+      setItems([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     vibeDiyApi
-      .listApplicationChats({ limit: 50 })
+      .listUserSlugAppSlug({ order: "updated", limit: 10 })
       .then((res) => {
         if (cancelled) return;
         if (res.isOk()) {
-          setChats(res.Ok().items);
+          const flat: RecentVibeItem[] = res
+            .Ok()
+            .items.flatMap((item) =>
+              item.apps.map((app) => ({
+                userSlug: item.userSlug,
+                appSlug: app.appSlug,
+              }))
+            );
+          setItems(flat);
         }
       })
       .finally(() => {

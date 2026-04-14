@@ -987,6 +987,17 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         // const res = await handlerLlmRequest({ scope, vctx, req, resChat, promptId });
         // await handleLlmResponse({ scope, vctx, req, ctx, res: res.res, resChat, promptId, blockSeq: res.blockSeq });
       });
+      if (resChat.appSlug && resChat.userSlug) {
+        await vctx.sql.db
+          .update(vctx.sql.tables.appSlugBinding)
+          .set({ updated: new Date().toISOString() })
+          .where(
+            and(
+              eq(vctx.sql.tables.appSlugBinding.appSlug, resChat.appSlug),
+              eq(vctx.sql.tables.appSlugBinding.userSlug, resChat.userSlug)
+            )
+          );
+      }
       return Result.Ok(EventoResult.Continue);
     }
   ),
