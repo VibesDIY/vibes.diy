@@ -260,10 +260,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         })()
       : undefined;
 
-  const openSidebar = useCallback(() => {
-    setIsSidebarVisible(true);
-  }, []);
-
   const closeSidebar = useCallback(() => {
     setIsSidebarVisible(false);
   }, []);
@@ -375,7 +371,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         headerLeft={
           <ChatHeaderContent
             remixOf={/*chatState.vibeDoc?.remixOf*/ undefined}
-            onOpenSidebar={openSidebar}
             promptProcessing={promptState.running}
             codeReady={promptState.hasCode}
             title={promptState.title}
