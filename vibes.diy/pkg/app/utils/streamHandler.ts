@@ -32,7 +32,9 @@ export async function streamAI(
 ): Promise<string> {
   // Stream process starts
 
-  const isInitialPrompt = !messageHistory.some((msg) => msg.role === "assistant");
+  const isInitialPrompt = !messageHistory.some(
+    (msg) => msg.role === "assistant",
+  );
 
   // Format messages for call-ai
   const messages: Message[] = [
@@ -49,7 +51,7 @@ export async function streamAI(
     transforms: ["middle-out"],
     stream: true,
     max_tokens: defaultMaxTokens,
-    ...(isInitialPrompt ? { verbosity: "low" as const } : {}),
+    ...(isInitialPrompt ? { verbosity: "low" } : {}),
     debug: false, // Disable debugging logs
     headers: {
       "HTTP-Referer": "https://vibes.diy",
