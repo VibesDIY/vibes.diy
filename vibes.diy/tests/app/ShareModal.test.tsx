@@ -37,6 +37,7 @@ function createMockModal(overrides: Partial<UseShareModalReturn> = {}): UseShare
     handleCopyUrl: vi.fn().mockResolvedValue(undefined),
     canPublish: true,
     isUpToDate: false,
+    settingsLoaded: true,
     ...overrides,
   };
 }
@@ -203,6 +204,21 @@ describe("ShareModal", () => {
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(dialog).toHaveAttribute("aria-label", "Share");
+  });
+
+  it("auto-join switch has accessible name via aria-labelledby", () => {
+    const modal = createMockModal();
+    render(<ShareModal modal={modal} />);
+
+    const toggle = screen.getByRole("switch");
+    expect(toggle).toHaveAttribute("aria-labelledby", "auto-join-label");
+  });
+
+  it("disables publish when settings not yet loaded", () => {
+    const modal = createMockModal({ settingsLoaded: false });
+    render(<ShareModal modal={modal} />);
+
+    expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
   });
 
   it("shows 'Up to date' when current fsId matches production", () => {

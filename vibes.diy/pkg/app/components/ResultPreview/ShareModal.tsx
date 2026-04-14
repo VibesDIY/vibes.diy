@@ -77,7 +77,7 @@ export function ShareModal({ modal }: ShareModalProps) {
               size="fixed"
               className="w-full"
               onClick={() => void modal.handlePublish()}
-              disabled={modal.isPublishing || !modal.canPublish || modal.isUpToDate}
+              disabled={modal.isPublishing || !modal.canPublish || modal.isUpToDate || !modal.settingsLoaded}
             >
               {modal.isPublishing ? "Updating..." : modal.isUpToDate ? "Up to date" : "Update"}
             </Button>
@@ -91,7 +91,7 @@ export function ShareModal({ modal }: ShareModalProps) {
               size="fixed"
               className="w-full"
               onClick={() => void modal.handlePublish()}
-              disabled={modal.isPublishing || !modal.canPublish}
+              disabled={modal.isPublishing || !modal.canPublish || !modal.settingsLoaded}
             >
               {modal.isPublishing ? "Publishing..." : "Publish"}
             </Button>
@@ -105,9 +105,11 @@ export function ShareModal({ modal }: ShareModalProps) {
         <hr className="my-3 border-gray-200 dark:border-gray-700" />
 
         {/* Auto-join toggle */}
-        <label className="flex cursor-pointer items-center justify-between gap-3">
+        <div className="flex cursor-pointer items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Auto-join</p>
+            <p id="auto-join-label" className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Auto-join
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {modal.autoJoinEnabled ? "Visitors join automatically" : "Visitors can request access"}
             </p>
@@ -115,6 +117,7 @@ export function ShareModal({ modal }: ShareModalProps) {
           <button
             type="button"
             role="switch"
+            aria-labelledby="auto-join-label"
             aria-checked={modal.autoJoinEnabled}
             disabled={modal.isTogglingAutoJoin}
             onClick={() => void modal.handleToggleAutoJoin()}
@@ -128,7 +131,7 @@ export function ShareModal({ modal }: ShareModalProps) {
               }`}
             />
           </button>
-        </label>
+        </div>
       </div>
     </div>,
     document.body
