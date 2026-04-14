@@ -99,6 +99,7 @@ vi.mock("~/vibes.diy/app/components/LoggedOutView", () => ({
 
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", () => ({
+  ClerkProvider: ({ children }: { children: React.ReactNode }) => children,
   useAuth: mocks.mockUseAuth,
   useClerk: () => ({
     redirectToSignIn: vi.fn(),

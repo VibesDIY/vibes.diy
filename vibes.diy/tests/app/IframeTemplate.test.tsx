@@ -31,10 +31,15 @@ vi.mock("~/vibes.diy/app/hooks/useApiKey", async () => {
 // Mock @clerk/clerk-react
 vi.mock("@clerk/clerk-react", async () => {
   return {
+    ClerkProvider: ({ children }: { children: React.ReactNode }) => children,
     useAuth: () => ({
       userId: "test-user-id",
       isLoaded: true,
       isSignedIn: true,
+    }),
+    useClerk: () => ({
+      redirectToSignIn: vi.fn(),
+      signOut: vi.fn(),
     }),
   };
 });

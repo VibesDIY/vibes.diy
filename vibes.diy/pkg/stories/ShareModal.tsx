@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ShareModal } from "../app/components/ResultPreview/ShareModal.js";
+import type { UseShareModalResult } from "../app/components/ResultPreview/useShareModal.js";
 
 interface MockShareModalProps {
   // Modal state
@@ -7,42 +8,37 @@ interface MockShareModalProps {
 
   // Publishing state
   isPublishing?: boolean;
-  publishedAppUrl?: string;
-  isFirehoseShared?: boolean;
+  publishedUrl?: string;
 
   // Configuration
   showCloseButton?: boolean;
 
   // Event handlers (for interactive demos)
   onClose?: () => void;
-  onPublish?: (shareToFirehose?: boolean) => Promise<void>;
+  onPublish?: () => Promise<void>;
 }
 
 export const MockShareModal: React.FC<MockShareModalProps> = ({
   isOpen = true,
   isPublishing = false,
-  publishedAppUrl = "",
-  isFirehoseShared = false,
+  publishedUrl = "",
   showCloseButton = true,
   onClose,
   onPublish,
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [internalIsOpen, setInternalIsOpen] = useState(isOpen);
+  const [autoJoinEnabled, setAutoJoinEnabled] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
 
-  // Mock publish functionality
-  const handlePublish = async (shareToFirehose?: boolean) => {
-    if (onPublish) {
-      await onPublish(shareToFirehose);
-    } else {
-      console.log("Mock publish called with shareToFirehose:", shareToFirehose);
-    }
-  };
+  useEffect(() => {
+    setInternalIsOpen(isOpen);
+  }, [isOpen]);
 
   const handleClose = () => {
+    setInternalIsOpen(false);
     if (onClose) {
       onClose();
-    } else {
-      console.log("Mock close called");
     }
   };
 
@@ -70,6 +66,35 @@ export const MockShareModal: React.FC<MockShareModalProps> = ({
     }
   }, []);
 
+  const props: UseShareModalResult = {
+    isOpen: internalIsOpen,
+    open: () => {
+      setInternalIsOpen(true);
+    },
+    close: handleClose,
+    buttonRef,
+    canPublish: true,
+    isPublished: publishedUrl.length > 0,
+    isPublishing,
+    publishError: undefined,
+    publishedUrl: publishedUrl || undefined,
+    handlePublish: async () => {
+      await onPublish?.();
+    },
+    autoJoinEnabled,
+    isTogglingAutoJoin: false,
+    handleToggleAutoJoin: async () => {
+      setAutoJoinEnabled((prev) => !prev);
+    },
+    urlCopied,
+    handleCopyUrl: async () => {
+      setUrlCopied(true);
+      window.setTimeout(() => {
+        setUrlCopied(false);
+      }, 1500);
+    },
+  };
+
   return (
     <div className="relative flex h-96 flex-col items-center pt-8">
       {/* Visible reference button for context */}
@@ -91,17 +116,7 @@ export const MockShareModal: React.FC<MockShareModalProps> = ({
         </button>
       )}
 
-      {isClient && (
-        <ShareModal
-          isOpen={isOpen}
-          onClose={handleClose}
-          buttonRef={buttonRef}
-          publishedAppUrl={publishedAppUrl}
-          onPublish={handlePublish}
-          isPublishing={isPublishing}
-          isFirehoseShared={isFirehoseShared}
-        />
-      )}
+      {isClient && <ShareModal {...props} />}
     </div>
   );
 };

@@ -1,14 +1,15 @@
-import React, { /*useEffect,*/ useRef } from "react"; // useEffect no longer needed here
+import React from "react";
 import { useParams } from "react-router";
 import { useSession } from "../../hooks/useSession.js";
 import type { ViewControlsType, ViewType } from "@vibes.diy/prompts";
 // import { useViewState } from '../../utils/ViewState'; // useViewState is now lifted to home.tsx
 import { BackButton } from "./BackButton.js";
 import { SaveButton } from "./SaveButton.js";
-import { ShareButton } from "./ShareButton.js";
 import { ShareModal } from "./ShareModal.js";
-import { usePublish } from "./usePublish.js";
+import { useShareModal } from "./useShareModal.js";
 import { ViewControls } from "./ViewControls.js";
+import { Button } from "../ui/button.js";
+import { ShareIcon } from "../HeaderContent/SvgIcons.js";
 
 interface ResultPreviewHeaderContentProps {
   // Props from useViewState (lifted to home.tsx)
@@ -48,7 +49,6 @@ const ResultPreviewHeaderContent: React.FC<ResultPreviewHeaderContentProps> = ({
   syntaxErrorCount,
 }) => {
   const { sessionId: urlSessionId, view: urlView } = useParams();
-  const publishButtonRef = useRef<HTMLButtonElement>(null);
 
   // Use props if provided, otherwise use params from the URL
   const sessionId = propSessionId || urlSessionId;
@@ -59,28 +59,17 @@ const ResultPreviewHeaderContent: React.FC<ResultPreviewHeaderContentProps> = ({
     session,
     docs: messages,
     updatePublishedUrl,
-    updateFirehoseShared,
   } = useSession(sessionId || "temp-session");
 
   // useViewState is now lifted, props like displayView, navigateToView, viewControls, showViewControls are passed in.
   // The useEffect syncing activeView with displayView is no longer needed.
 
-  // Use the custom hook for publish functionality
-  const {
-    isPublishing,
-    urlCopied,
-    publishedAppUrl,
-    handlePublish,
-    toggleShareModal,
-    isShareModalOpen,
-    setIsShareModalOpen,
-  } = usePublish({
+  const shareModal = useShareModal({
     sessionId,
     code,
     title,
     messages,
     updatePublishedUrl,
-    updateFirehoseShared,
     publishedUrl: session.publishedUrl,
   });
 
@@ -124,28 +113,18 @@ const ResultPreviewHeaderContent: React.FC<ResultPreviewHeaderContentProps> = ({
             />
           )}
 
-          <ShareButton
-            ref={publishButtonRef}
-            onClick={toggleShareModal}
-            isPublishing={isPublishing}
-            urlCopied={urlCopied}
-            hasPublishedUrl={!!publishedAppUrl}
-          />
+          <Button
+            ref={shareModal.buttonRef}
+            onClick={shareModal.open}
+            variant="blue"
+            size="default"
+          >
+            <ShareIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Share</span>
+          </Button>
         </div>
       </div>
-      {/* Share Modal */}
-      {isShareModalOpen && (
-        <ShareModal
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-          buttonRef={publishButtonRef}
-          publishedAppUrl={publishedAppUrl}
-          onPublish={handlePublish}
-          isPublishing={isPublishing}
-          isFirehoseShared={session.firehoseShared}
-          title={title}
-        />
-      )}
+      <ShareModal {...shareModal} />
     </div>
   );
 };
