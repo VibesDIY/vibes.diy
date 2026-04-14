@@ -430,6 +430,11 @@ function prepareRequestParams(
     requestParams.max_tokens = options.maxTokens;
   }
 
+  // OpenRouter effort / reasoning control
+  if (options.verbosity !== undefined) {
+    requestParams.verbosity = options.verbosity;
+  }
+
   // Add optional parameters if specified
   if (options.stop) {
     // Handle both single string and array of stop sequences

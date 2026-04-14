@@ -32,6 +32,8 @@ export async function streamAI(
 ): Promise<string> {
   // Stream process starts
 
+  const isInitialPrompt = !messageHistory.some((msg) => msg.role === "assistant");
+
   // Format messages for call-ai
   const messages: Message[] = [
     { role: "system", content: systemPrompt },
@@ -47,6 +49,7 @@ export async function streamAI(
     transforms: ["middle-out"],
     stream: true,
     max_tokens: defaultMaxTokens,
+    ...(isInitialPrompt ? { verbosity: "low" as const } : {}),
     debug: false, // Disable debugging logs
     headers: {
       "HTTP-Referer": "https://vibes.diy",

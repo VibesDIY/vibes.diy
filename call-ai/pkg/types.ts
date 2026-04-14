@@ -67,6 +67,8 @@ export interface ModelId {
   readonly id: string;
 }
 
+export type Verbosity = "low" | "medium" | "high" | "max";
+
 export interface Schema {
   /**
    * Optional schema name - will be sent to OpenRouter if provided
@@ -376,6 +378,14 @@ export interface CallAIOptions {
   readonly title?: string;
 
   readonly schemaStrategy?: SchemaStrategy;
+
+  /**
+   * OpenRouter reasoning effort control.
+   *
+   * OpenRouter exposes this as `verbosity`, which maps to Anthropic's
+   * `output_config.effort`.
+   */
+  readonly verbosity?: Verbosity;
 
   readonly maxTokens?: number;
   temperature?: number;

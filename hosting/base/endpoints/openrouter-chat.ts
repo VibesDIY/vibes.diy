@@ -11,6 +11,12 @@ export class OpenRouterChat extends OpenAPIRoute {
       body: contentJson(
         z.object({
           model: z.string().describe("ID of the model to use"),
+          verbosity: z
+            .enum(["low", "medium", "high", "max"])
+            .optional()
+            .describe(
+              "OpenRouter reasoning effort control (maps to Anthropic output_config.effort)",
+            ),
           messages: z
             .array(
               z.object({
