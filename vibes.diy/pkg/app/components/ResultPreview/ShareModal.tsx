@@ -56,6 +56,8 @@ export function ShareModal({
         style={menuStyle}
         onClick={(e) => e.stopPropagation()}
         className="ring-opacity-5 dark:bg-dark-background-01 w-80 rounded bg-white p-4 shadow-lg ring-1 ring-black"
+        role="dialog"
+        aria-modal="true"
         aria-label="Share modal"
       >
         <div className="flex flex-col gap-3">

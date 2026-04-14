@@ -38,6 +38,11 @@ export interface UseShareModalResult {
   handleCopyUrl: () => Promise<void>;
 }
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 function tryGetPublishedSlug(url: string): string | undefined {
   try {
     const parsed = new URL(url);
@@ -87,7 +92,7 @@ export function useShareModal({
   const [urlCopied, setUrlCopied] = useState(false);
   const resetCopyTimerRef = useRef<number | undefined>(undefined);
 
-  const canPublish = sessionId !== undefined;
+  const canPublish = !!sessionId;
 
   // Keep local state in sync with any upstream changes.
   useEffect(() => {
@@ -134,7 +139,7 @@ export function useShareModal({
     ) {
       return userMessages[1]?.text;
     }
-    return userMessages[0]?.text;
+    return (userMessages[0] ?? messages[0])?.text;
   }, [messages]);
 
   const handlePublish = useCallback(async () => {
@@ -145,40 +150,48 @@ export function useShareModal({
     setPublishError(undefined);
     setUrlCopied(false);
 
-    const token = await getToken();
-    if (!token) {
-      setPublishError("Please log in to publish.");
+    try {
+      if (!prompt) {
+        setPublishError("Can't publish yet: no prompt found.");
+        return;
+      }
+
+      const token = await getToken();
+      if (!token) {
+        setPublishError("Please log in to publish.");
+        return;
+      }
+
+      const appUrl = await publishApp({
+        sessionId,
+        code,
+        title,
+        prompt,
+        updatePublishedUrl,
+        token,
+        userId: userId || undefined,
+      });
+
+      if (!appUrl) {
+        setPublishError("Publish failed.");
+        return;
+      }
+
+      const slug = tryGetPublishedSlug(appUrl);
+      if (!slug) {
+        setPublishError(
+          "Publish succeeded, but the app URL was not recognized.",
+        );
+        return;
+      }
+
+      const cleanUrl = toCleanShareUrl(slug);
+      setPublishedUrl(cleanUrl);
+    } catch (error) {
+      setPublishError(getErrorMessage(error));
+    } finally {
       setIsPublishing(false);
-      return;
     }
-
-    const appUrl = await publishApp({
-      sessionId,
-      code,
-      title,
-      prompt,
-      updatePublishedUrl,
-      token,
-      userId: userId || undefined,
-    });
-
-    if (!appUrl) {
-      setPublishError("Publish failed.");
-      setIsPublishing(false);
-      return;
-    }
-
-    const slug = tryGetPublishedSlug(appUrl);
-    if (!slug) {
-      setPublishError("Publish succeeded, but the app URL was not recognized.");
-      setIsPublishing(false);
-      return;
-    }
-
-    const cleanUrl = toCleanShareUrl(slug);
-    setPublishedUrl(cleanUrl);
-
-    setIsPublishing(false);
   }, [
     sessionId,
     isPublishing,
