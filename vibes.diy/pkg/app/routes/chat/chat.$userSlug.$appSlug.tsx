@@ -28,6 +28,7 @@ import ResultPreviewHeaderContent from "../../components/ResultPreview/ResultPre
 import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
 import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
+import { useShareModal } from "../../components/ResultPreview/useShareModal.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { EditorState, isEditorStateEdit } from "../../types/code-editor.js";
@@ -156,6 +157,8 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const openingRef = useRef(false);
   const { vibeDiyApi, webVars: svcVars } = useVibesDiy();
   // const clerk = useClerk();
+
+  const shareModal = useShareModal({ userSlug, appSlug, fsId, vibeDiyApi });
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
@@ -388,6 +391,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             currentView={currentView}
             onCodeSave={handleOnCodeSave}
             hasCodeChanges={isEditorStateEdit(editorState) && editorState.buffer.trim().length > 0}
+            shareModal={shareModal}
             openVibe={openVibe}
             onContextMenu={handleContextMenu}
           />
