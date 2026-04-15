@@ -508,6 +508,16 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const { run, subcommands, command, string, option, positional, flag } =
     await import("cmd-ts");
 
+  type PackageCmdArgs = {
+    package: string;
+    pnpmLock: string;
+  };
+
+  type PkgJsonCmdArgs = {
+    path: string;
+    pnpmLock: string;
+  };
+
   const pnpmLockOption = option({
     type: string,
     long: "pnpmLock",
@@ -526,7 +536,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       }),
       pnpmLock: pnpmLockOption,
     },
-    handler: async ({ package: pkg, pnpmLock }) => {
+    handler: async ({ package: pkg, pnpmLock }: PackageCmdArgs) => {
       const version = await getPackageVersion(pkg, pnpmLock);
       if (version) {
         console.log(version);
@@ -548,7 +558,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       }),
       pnpmLock: pnpmLockOption,
     },
-    handler: async ({ package: pkg, pnpmLock }) => {
+    handler: async ({ package: pkg, pnpmLock }: PackageCmdArgs) => {
       const tree = await getPackageDependencyTree(pkg, pnpmLock);
       if (tree) {
         console.log(`${tree.name}@${tree.version}`);
@@ -574,7 +584,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       }),
       pnpmLock: pnpmLockOption,
     },
-    handler: async ({ package: pkg, pnpmLock }) => {
+    handler: async ({ package: pkg, pnpmLock }: PackageCmdArgs) => {
       const tree = await getPackageDependencyTree(pkg, pnpmLock);
       if (tree) {
         const flatList = flattenDependencyTree(tree);
@@ -599,7 +609,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       }),
       pnpmLock: pnpmLockOption,
     },
-    handler: async ({ path, pnpmLock }) => {
+    handler: async ({ path, pnpmLock }: PkgJsonCmdArgs) => {
       const deps = await getPackageJsonDependencies(path, pnpmLock);
       if (deps.length > 0) {
         console.log(`Total unique dependencies: ${deps.length}`);

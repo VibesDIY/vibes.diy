@@ -1,4 +1,4 @@
-import { Bool, OpenAPIRoute, contentJson } from "chanfana";
+import { OpenAPIRoute, contentJson } from "chanfana";
 
 import { Context } from "hono";
 import { z } from "zod";
@@ -70,7 +70,7 @@ export class AppCreate extends OpenAPIRoute {
         description: "Returns the created app",
         ...contentJson(
           z.object({
-            success: Bool(),
+            success: z.boolean(),
             app: App,
           }),
         ),

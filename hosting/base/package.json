@@ -20,7 +20,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@adviser/cement": "^0.5.33",
+    "@adviser/cement": "^0.5.34",
     "@fireproof/core-runtime": "0.24.13",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
@@ -28,7 +28,7 @@
     "chanfana": "^3.3.0",
     "hono": "^4.11.9",
     "unique-names-generator": "^4.7.1",
-    "zod": "^3.25.76"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.13",
