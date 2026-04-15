@@ -5,7 +5,7 @@ import { Result } from "@adviser/cement";
 import { renderHtmlReport } from "./inspect-db-report-template.jsx";
 import { Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { sql, count, countDistinct, eq, desc, asc } from "drizzle-orm";
+import { count, countDistinct, eq, lte, desc, asc, and, sql } from "drizzle-orm";
 import { pg } from "@vibes.diy/api-sql";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -77,20 +77,32 @@ function writeCsv(name: string, rows: readonly Record<string, unknown>[]): strin
   return outPath;
 }
 
-const allTables = [
-  { table_schema: "public", table_name: "Assets" },
-  { table_schema: "public", table_name: "UserSlugBindings" },
-  { table_schema: "public", table_name: "AppSlugBindings" },
-  { table_schema: "public", table_name: "Apps" },
-  { table_schema: "public", table_name: "ChatContexts" },
-  { table_schema: "public", table_name: "ChatSections" },
-  { table_schema: "public", table_name: "PromptContexts" },
-  { table_schema: "public", table_name: "ApplicationChats" },
-  { table_schema: "public", table_name: "UserSettings" },
-  { table_schema: "public", table_name: "AppSettings" },
-  { table_schema: "public", table_name: "RequestGrants" },
-  { table_schema: "public", table_name: "InviteGrants" },
-];
+function last30Days(): string[] {
+  const days: string[] = [];
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+// All schema tables for row counting
+const schemaTableMap = {
+  "public.Assets": pg.sqlAssets,
+  "public.UserSlugBindings": pg.sqlUserSlugBinding,
+  "public.AppSlugBindings": pg.sqlAppSlugBinding,
+  "public.Apps": pg.sqlApps,
+  "public.ChatContexts": pg.sqlChatContexts,
+  "public.ChatSections": pg.sqlChatSections,
+  "public.PromptContexts": pg.sqlPromptContexts,
+  "public.ApplicationChats": pg.sqlApplicationChats,
+  "public.UserSettings": pg.sqlUserSettings,
+  "public.AppSettings": pg.sqlAppSettings,
+  "public.RequestGrants": pg.sqlRequestGrants,
+  "public.InviteGrants": pg.sqlInviteGrants,
+} as const;
 
 async function main(): Promise<Result<void>> {
   loadDevVars();
@@ -105,26 +117,33 @@ async function main(): Promise<Result<void>> {
 
   fs.mkdirSync(outDir, { recursive: true });
 
-  // Database info
-  const infoRow = await db.execute<{ db: string; schema: string; usr: string; addr: string; port: number }>(
-    sql`select current_database() as db, current_schema() as schema, current_user as usr, inet_server_addr()::text as addr, inet_server_port() as port`
-  );
+  // Database info — system catalog functions have no schema table equivalent
+  const infoRows = await db
+    .select({
+      db: sql<string>`current_database()`,
+      schema: sql<string>`current_schema()`,
+      usr: sql<string>`current_user`,
+      addr: sql<string>`coalesce(inet_server_addr()::text, '')`,
+      port: sql<number>`coalesce(inet_server_port(), 0)`,
+    })
+    .from(pg.sqlAssets)
+    .limit(1);
+  // Fallback if Assets is empty
+  const infoRow = infoRows[0] ?? { db: "", schema: "", usr: "", addr: "", port: 0 };
   const info = {
-    database: infoRow.rows[0]?.db ?? "",
-    current_schema: infoRow.rows[0]?.schema ?? "",
-    current_user: infoRow.rows[0]?.usr ?? "",
-    server_addr: infoRow.rows[0]?.addr ?? "",
-    server_port: infoRow.rows[0]?.port ?? 0,
+    database: infoRow.db,
+    current_schema: infoRow.schema,
+    current_user: infoRow.usr,
+    server_addr: infoRow.addr,
+    server_port: infoRow.port,
     schemas: ["public"],
   };
 
-  // Table counts
+  // Table counts via Drizzle schema tables
   const tableCounts: { table: string; rowCount: number }[] = [];
-  for (const t of allTables) {
-    const result = await db.execute<{ rowCount: number }>(
-      sql.raw(`select count(*)::int as "rowCount" from "${t.table_schema}"."${t.table_name}"`)
-    );
-    tableCounts.push({ table: `${t.table_schema}.${t.table_name}`, rowCount: result.rows[0]?.rowCount ?? 0 });
+  for (const [name, table] of Object.entries(schemaTableMap)) {
+    const result = await db.select({ rowCount: count() }).from(table);
+    tableCounts.push({ table: name, rowCount: result[0]?.rowCount ?? 0 });
   }
 
   // Membership summary
@@ -150,45 +169,97 @@ async function main(): Promise<Result<void>> {
     .where(eq(pg.sqlRequestGrants.state, "approved"))
     .groupBy(pg.sqlRequestGrants.userId, pg.sqlRequestGrants.userSlug, pg.sqlRequestGrants.appSlug)
     .orderBy(
-      sql`count(distinct ${pg.sqlRequestGrants.foreignUserId}) desc`,
+      desc(countDistinct(pg.sqlRequestGrants.foreignUserId)),
       asc(pg.sqlRequestGrants.userSlug),
       asc(pg.sqlRequestGrants.appSlug)
     )
     .limit(200);
 
-  // Membership timeseries (uses generate_series, Postgres-specific)
-  const membershipTimeseriesResult = await db.execute<{ day: string; membership_count: number }>(
-    sql`with days as (select generate_series(current_date - interval '29 days', current_date, interval '1 day')::date as day) select to_char(day, 'YYYY-MM-DD') as day, (select count(*)::int from public."RequestGrants" rg where rg.state = 'approved' and rg.created::date <= day) as membership_count from days order by day`
-  );
-  const membershipTimeseries = membershipTimeseriesResult.rows;
+  // Timeseries: compute cumulative counts per day using Drizzle queries
+  const days = last30Days();
 
-  // Active vibes timeseries
-  const activeVibesTimeseriesResult = await db.execute<{ day: string; active_vibes_count: number }>(
-    sql`with days as (select generate_series(current_date - interval '29 days', current_date, interval '1 day')::date as day) select to_char(day, 'YYYY-MM-DD') as day, (select count(distinct ("userSlug", "appSlug"))::int from public."AppSlugBindings" where created::date <= day) as active_vibes_count from days order by day`
-  );
-  const activeVibesTimeseries = activeVibesTimeseriesResult.rows;
+  // Membership timeseries — cumulative approved RequestGrants per day
+  const membershipTimeseries: { day: string; membership_count: number }[] = [];
+  for (const day of days) {
+    const dayEnd = `${day}T23:59:59.999Z`;
+    const result = await db
+      .select({ cnt: count() })
+      .from(pg.sqlRequestGrants)
+      .where(and(eq(pg.sqlRequestGrants.state, "approved"), lte(pg.sqlRequestGrants.created, dayEnd)));
+    membershipTimeseries.push({ day, membership_count: result[0]?.cnt ?? 0 });
+  }
 
-  // User slug bindings timeseries
-  const userSlugBindingsTimeseriesResult = await db.execute<{ day: string; user_slug_bindings_count: number }>(
-    sql`with days as (select generate_series(current_date - interval '29 days', current_date, interval '1 day')::date as day),
-      bindings as (select created::timestamptz::date as created_day from public."UserSlugBindings")
-      select to_char(day, 'YYYY-MM-DD') as day,
-        (select count(*)::int from bindings b where b.created_day <= day) as user_slug_bindings_count
-      from days order by day`
-  );
-  const userSlugBindingsTimeseries = userSlugBindingsTimeseriesResult.rows;
+  // Active vibes timeseries — cumulative distinct userSlug+appSlug in AppSlugBindings per day
+  const activeVibesTimeseries: { day: string; active_vibes_count: number }[] = [];
+  for (const day of days) {
+    const dayEnd = `${day}T23:59:59.999Z`;
+    const result = await db
+      .select({ cnt: sql<number>`count(distinct (${pg.sqlAppSlugBinding.userSlug}, ${pg.sqlAppSlugBinding.appSlug}))::int` })
+      .from(pg.sqlAppSlugBinding)
+      .where(lte(pg.sqlAppSlugBinding.created, dayEnd));
+    activeVibesTimeseries.push({ day, active_vibes_count: result[0]?.cnt ?? 0 });
+  }
 
-  // User model settings (jsonb_array_elements is Postgres-specific)
-  const userModelResult = await db.execute<{ userId: string; setting: unknown; updated: string }>(
-    sql`select "userId", elem as setting, updated from ${pg.sqlUserSettings} cross join lateral jsonb_array_elements(settings) as elem where elem->>'type' = 'model' order by updated desc limit 200`
-  );
-  const userModelRows = userModelResult.rows;
+  // User slug bindings timeseries — cumulative per day
+  const userSlugBindingsTimeseries: { day: string; user_slug_bindings_count: number }[] = [];
+  for (const day of days) {
+    const dayEnd = `${day}T23:59:59.999Z`;
+    const result = await db.select({ cnt: count() }).from(pg.sqlUserSlugBinding).where(lte(pg.sqlUserSlugBinding.created, dayEnd));
+    userSlugBindingsTimeseries.push({ day, user_slug_bindings_count: result[0]?.cnt ?? 0 });
+  }
 
-  // App model settings
-  const appModelResult = await db.execute<{ userId: string; userSlug: string; appSlug: string; setting: unknown; updated: string }>(
-    sql`select "userId", "userSlug", "appSlug", elem as setting, updated from ${pg.sqlAppSettings} cross join lateral jsonb_array_elements(settings) as elem where elem->>'type' = 'active.model' order by updated desc limit 200`
-  );
-  const appModelRows = appModelResult.rows;
+  // User model settings — fetch all settings, filter/flatten in JS
+  const allUserSettings = await db
+    .select({
+      userId: pg.sqlUserSettings.userId,
+      settings: pg.sqlUserSettings.settings,
+      updated: pg.sqlUserSettings.updated,
+    })
+    .from(pg.sqlUserSettings)
+    .orderBy(desc(pg.sqlUserSettings.updated))
+    .limit(200);
+  const userModelRows: { userId: string; setting: unknown; updated: string }[] = [];
+  for (const row of allUserSettings) {
+    const settingsArray = Array.isArray(row.settings) ? row.settings : [];
+    for (const elem of settingsArray) {
+      if (typeof elem === "object" && elem !== null && "type" in elem && (elem as Record<string, unknown>)["type"] === "model") {
+        userModelRows.push({ userId: row.userId, setting: elem, updated: row.updated });
+      }
+    }
+  }
+
+  // App model settings — fetch all, filter in JS
+  const allAppSettings = await db
+    .select({
+      userId: pg.sqlAppSettings.userId,
+      userSlug: pg.sqlAppSettings.userSlug,
+      appSlug: pg.sqlAppSettings.appSlug,
+      settings: pg.sqlAppSettings.settings,
+      updated: pg.sqlAppSettings.updated,
+    })
+    .from(pg.sqlAppSettings)
+    .orderBy(desc(pg.sqlAppSettings.updated))
+    .limit(200);
+  const appModelRows: { userId: string; userSlug: string; appSlug: string; setting: unknown; updated: string }[] = [];
+  for (const row of allAppSettings) {
+    const settingsArray = Array.isArray(row.settings) ? row.settings : [];
+    for (const elem of settingsArray) {
+      if (
+        typeof elem === "object" &&
+        elem !== null &&
+        "type" in elem &&
+        (elem as Record<string, unknown>)["type"] === "active.model"
+      ) {
+        appModelRows.push({
+          userId: row.userId,
+          userSlug: row.userSlug,
+          appSlug: row.appSlug,
+          setting: elem,
+          updated: row.updated,
+        });
+      }
+    }
+  }
 
   // User settings sample
   const userSettingsSample = await db
@@ -219,11 +290,8 @@ async function main(): Promise<Result<void>> {
   const generatedAt = new Date().toISOString();
 
   const files = {
-    membershipsTimeseriesCsv: writeCsv("memberships-timeseries.csv", membershipTimeseries as unknown as Record<string, unknown>[]),
-    userSlugBindingsTimeseriesCsv: writeCsv(
-      "user-slug-bindings-timeseries.csv",
-      userSlugBindingsTimeseries as unknown as Record<string, unknown>[]
-    ),
+    membershipsTimeseriesCsv: writeCsv("memberships-timeseries.csv", membershipTimeseries),
+    userSlugBindingsTimeseriesCsv: writeCsv("user-slug-bindings-timeseries.csv", userSlugBindingsTimeseries),
     membershipsByAppCsv: writeCsv("memberships-by-app.csv", membershipsByApp),
     tableCountsCsv: writeCsv("table-counts.csv", tableCounts),
     userModelCsv: writeCsv("user-model-settings.csv", userModelRows as unknown as Record<string, unknown>[]),
@@ -241,9 +309,9 @@ async function main(): Promise<Result<void>> {
       shared_app_count: number;
       distinct_member_count: number;
     },
-    membershipTimeseries: membershipTimeseries as unknown as Record<string, unknown>[],
-    activeVibesTimeseries: activeVibesTimeseries as unknown as Record<string, unknown>[],
-    userSlugBindingsTimeseries: userSlugBindingsTimeseries as unknown as Record<string, unknown>[],
+    membershipTimeseries,
+    activeVibesTimeseries,
+    userSlugBindingsTimeseries,
     membershipsByApp,
     userModelRows: userModelRows as unknown as Record<string, unknown>[],
     appModelRows: appModelRows as unknown as Record<string, unknown>[],
