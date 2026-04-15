@@ -1,4 +1,4 @@
-import { BuildURI, Future, KeyedResolvOnce, OnFunc, runtimeFn, URI } from "@adviser/cement";
+import { BuildURI, exception2Result, Future, KeyedResolvOnce, OnFunc, Result, runtimeFn, URI } from "@adviser/cement";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { W3CWebSocketErrorEvent, W3CWebSocketMessageEvent, W3CWebSocketCloseEvent } from "@vibes.diy/api-types";
 
@@ -28,16 +28,24 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
     const onClose = OnFunc<(event: W3CWebSocketCloseEvent) => void>();
     // const ende = JSONEnDecoderSingleton();
 
+    const nativeClose = ws.close?.bind(ws);
+
     ws.onopen = () => {
       waitOpen.resolve(ws);
     };
     ws.onerror = (event) => {
       onError.invoke({ type: "ErrorEvent", event: event as W3CWebSocketErrorEvent["event"] });
+      vibesDiyApiPerConnection.delete(url);
       waitOpen.reject(new Error(`WebSocket error: ${event}`));
     };
-    ws.close = (code, reason) => {
-      onClose.invoke({ type: "CloseEvent", event: { wasClean: true, code: code ?? 1000, reason: reason ?? "Closed by client" } });
-      vibesDiyApiPerConnection.delete(url);
+    ws.onclose = (event) => {
+      // Only evict if this socket still owns the cache entry
+      const cached = vibesDiyApiPerConnection.get(url);
+      if (cached) {
+        vibesDiyApiPerConnection.delete(url);
+      }
+      onClose.invoke({ type: "CloseEvent", event: { wasClean: event.wasClean, code: event.code, reason: event.reason } });
+      waitOpen.reject(new Error(`WebSocket closed: code=${event.code} reason=${event.reason}`));
     };
     ws.onmessage = (event) => {
       onMessage.invoke({ type: "MessageEvent", event });
@@ -51,12 +59,21 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
       onMessage,
       onClose,
       close: () => {
-        ws.close();
-        // console.log('ws-close', x)
+        vibesDiyApiPerConnection.delete(url);
+        nativeClose?.();
         return Promise.resolve();
       },
-      send: (data: Uint8Array<ArrayBuffer>) => {
-        ws.send(data);
+      send: (data: Uint8Array<ArrayBuffer>): Result<void> => {
+        if (ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) {
+          vibesDiyApiPerConnection.delete(url);
+          return Result.Err(`WebSocket is not open (readyState=${ws.readyState})`);
+        }
+        const rSend = exception2Result(() => ws.send(data));
+        if (rSend.isErr()) {
+          vibesDiyApiPerConnection.delete(url);
+          return Result.Err(`WebSocket send failed: ${String(rSend.Err())}`);
+        }
+        return Result.Ok(undefined);
       },
     }));
   });
