@@ -386,19 +386,32 @@ async function getResChatFromMode(
   req: ReqWithVerifiedAuth<ReqPromptChatSection>,
   orig: ReqPromptChatSection
 ): Promise<Result<ResChat>> {
-  // let resChat!: ResChat;
-  // if (isReqCreationPromptChatSection(orig) || isReqPromptApplicationChatSection(orig) || isReqPromptImageChatSection(orig)) {
-  const iResChat = await vctx.sql.db
-    .select()
-    .from(vctx.sql.tables.chatContexts)
-    .where(
-      and(
-        eq(vctx.sql.tables.chatContexts.userId, req._auth.verifiedAuth.claims.userId),
-        eq(vctx.sql.tables.chatContexts.chatId, req.chatId)
+  let iResChat;
+  if (isReqPromptApplicationChatSection(orig)) {
+    iResChat = await vctx.sql.db
+      .select()
+      .from(vctx.sql.tables.applicationChats)
+      .where(
+        and(
+          eq(vctx.sql.tables.applicationChats.userId, req._auth.verifiedAuth.claims.userId),
+          eq(vctx.sql.tables.applicationChats.chatId, req.chatId)
+        )
       )
-    )
-    .limit(1)
-    .then((r) => r[0]);
+      .limit(1)
+      .then((r) => r[0]);
+  } else {
+    iResChat = await vctx.sql.db
+      .select()
+      .from(vctx.sql.tables.chatContexts)
+      .where(
+        and(
+          eq(vctx.sql.tables.chatContexts.userId, req._auth.verifiedAuth.claims.userId),
+          eq(vctx.sql.tables.chatContexts.chatId, req.chatId)
+        )
+      )
+      .limit(1)
+      .then((r) => r[0]);
+  }
   if (!iResChat) {
     if (isReqCreationPromptChatSection(orig)) {
       return Result.Err(`Creation Chat ID ${req.chatId} not found`);
@@ -409,7 +422,6 @@ async function getResChatFromMode(
     }
   }
   const resChat = { ...iResChat, mode: orig.mode };
-  // }
   return Result.Ok(resChat);
 }
 
