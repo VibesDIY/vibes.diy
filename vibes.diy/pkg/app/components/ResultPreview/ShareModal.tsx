@@ -108,10 +108,10 @@ export function ShareModal({ modal }: ShareModalProps) {
         <div className="flex cursor-pointer items-center justify-between gap-3">
           <div>
             <p id="auto-join-label" className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              Auto-join
+              Open access
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {modal.autoJoinEnabled ? "Visitors join automatically" : "Visitors can request access"}
+              {modal.autoJoinEnabled ? "Anyone with the link gets access" : "New users must be approved"}
             </p>
           </div>
           <button
