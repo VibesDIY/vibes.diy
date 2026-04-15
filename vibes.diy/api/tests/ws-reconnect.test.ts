@@ -1,4 +1,4 @@
-import { VibesDiyApi } from "@vibes.diy/api-impl";
+import { VibesDiyApi, VibesDiyApiParam } from "@vibes.diy/api-impl";
 import { assert, beforeAll, describe, expect, inject, it } from "vitest";
 import { Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
@@ -9,20 +9,33 @@ import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { createIsolatedDB } from "./globalSetup.libsql.js";
 
+function wireUpWsPair(wsPair: ReturnType<typeof TestWSPair.create>, appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>) {
+  const wsEvento = vibesMsgEvento();
+  const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+  appCtx.vibesCtx.connections.add(wsSendProvider);
+  wsPair.p2.onmessage = (event: MessageEvent) => {
+    wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+  };
+  return wsSendProvider;
+}
+
 describe("WebSocket disconnection", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 5000 }, () => {
   const sthis = ensureSuperThis();
 
   let api: VibesDiyApi;
   let wsPair: ReturnType<typeof TestWSPair.create>;
   let appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
+  let fetchPair: ReturnType<typeof TestFetchPair.create>;
+  let getToken: VibesDiyApiParam["getToken"];
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
     const isolatedDbUrl = await createIsolatedDB(import.meta.dirname, "ws-reconnect");
     appCtx = await createVibeDiyTestCtx(sthis, deviceCA, isolatedDbUrl);
     const testUser = await createTestUser({ sthis, deviceCA });
+    getToken = async () => Result.Ok(await testUser.getDashBoardToken());
 
-    const fetchPair = TestFetchPair.create();
+    fetchPair = TestFetchPair.create();
     wsPair = TestWSPair.create();
 
     fetchPair.server.onServe(async (req: Request) => {
@@ -43,22 +56,14 @@ describe("WebSocket disconnection", { timeout: (inject("DB_FLAVOUR" as never) as
       ) as unknown as Promise<Response>;
     });
 
-    const wsEvento = vibesMsgEvento();
-    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
-    appCtx.vibesCtx.connections.add(wsSendProvider);
-
-    wsPair.p2.onmessage = (event: MessageEvent) => {
-      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
-    };
+    wireUpWsPair(wsPair, appCtx);
 
     api = new VibesDiyApi({
       apiUrl: "http://localhost:9999/api",
       ws: wsPair.p1 as unknown as WebSocket,
       fetch: fetchPair.client.fetch,
       timeoutMs: 2000,
-      getToken: async () => {
-        return Result.Ok(await testUser.getDashBoardToken());
-      },
+      getToken,
     });
   });
 
@@ -110,20 +115,29 @@ describe("WebSocket disconnection", { timeout: (inject("DB_FLAVOUR" as never) as
     });
   });
 
-  it("reconnects after dead WebSocket when readyState recovers", async () => {
-    // Reset readyState to OPEN so the mock can send again
-    const ws = wsPair.p1 as unknown as WebSocket;
-    Object.defineProperty(ws, "readyState", { value: 1 /* WebSocket.OPEN */, writable: true, configurable: true });
+  it("reconnects with a fresh WebSocket after cache eviction", async () => {
+    // Previous test evicted the connection cache via send failure.
+    // Create a completely new WS pair + API instance on the same URL
+    // to prove the cached dead connection was removed.
+    const freshWsPair = TestWSPair.create();
+    wireUpWsPair(freshWsPair, appCtx);
 
-    // The previous test cleared the connection cache, so this should create a fresh connection
-    const rRes = await api.ensureAppSlug({
+    const freshApi = new VibesDiyApi({
+      apiUrl: "http://localhost:9999/api",
+      ws: freshWsPair.p1 as unknown as WebSocket,
+      fetch: fetchPair.client.fetch,
+      timeoutMs: 2000,
+      getToken,
+    });
+
+    const rRes = await freshApi.ensureAppSlug({
       mode: "dev",
       fileSystem: [
         {
           type: "code-block",
           lang: "jsx",
           filename: "/App.jsx",
-          content: "function App() { return <div>Recovered</div>; }",
+          content: "function App() { return <div>Reconnected</div>; }",
         },
       ],
     });
