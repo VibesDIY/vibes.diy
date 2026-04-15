@@ -93,17 +93,29 @@ const InitChat = type({
 });
 type InitChat = typeof InitChat.infer;
 
+interface SetTitle {
+  type: "setTitle";
+  title: string;
+}
+
 function isInitChat(msg: unknown): msg is InitChat {
   return !(InitChat(msg) instanceof type.errors);
 }
 
-type PromptAction = PromptAndBlockMsgs | InitChat;
+function isSetTitle(msg: unknown): msg is SetTitle {
+  return typeof msg === "object" && msg !== null && (msg as SetTitle).type === "setTitle";
+}
+
+type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle;
 
 function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
     case isInitChat(block):
       // console.log(`initChat`, block.chat)
       return { ...state, chat: block.chat };
+
+    case isSetTitle(block):
+      return { ...state, title: block.title };
 
     // case isPromptReq(block):
     //   if (!state.current) return state;
@@ -214,6 +226,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       }
       setChat(rChat.Ok());
       dispatch({ type: "initChat", chat: rChat.Ok() });
+      let firstPromptDone = false;
       void processStream(rChat.Ok().sectionStream, (msg) => {
         const se = sectionEvent(msg);
         if (se instanceof type.errors) {
@@ -222,6 +235,26 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         }
         for (const block of se.blocks) {
           dispatch(block);
+          // Stub: poll for title after first prompt completes.
+          // Replace with event delivery from the new domain model.
+          if (!firstPromptDone && isPromptBlockEnd(block)) {
+            firstPromptDone = true;
+            setTimeout(() => {
+              vibeDiyApi.ensureAppSettings({ appSlug, userSlug }).then((res) => {
+                if (res.isOk()) {
+                  const title = res.Ok().settings.entry.settings.title;
+                  if (title) dispatch({ type: "setTitle", title });
+                }
+              });
+            }, 3000);
+          }
+        }
+      });
+      // Load existing title from settings
+      vibeDiyApi.ensureAppSettings({ appSlug, userSlug }).then((res) => {
+        if (res.isOk()) {
+          const title = res.Ok().settings.entry.settings.title;
+          if (title) dispatch({ type: "setTitle", title });
         }
       });
       // For CLI-pushed apps with no chat history, look up the latest fsId

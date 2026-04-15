@@ -39,6 +39,7 @@ import {
   parseArray,
   vibeFile,
   isVibeCodeBlock,
+  EvtGenerateTitle,
 } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { type } from "arktype";
@@ -58,6 +59,7 @@ import {
   isCodeEnd,
   isCodeLine,
   isToplevelLine,
+  isToplevelEnd,
   LLMRequest,
   ChatMessage,
   CodeMsg,
@@ -464,7 +466,7 @@ async function handlerLlmRequest({
   resChat: ResChat;
   promptId: string;
   blockSeq: number;
-}): Promise<{ res: Response; blockSeq: number }> {
+}): Promise<{ res: Response; blockSeq: number; isInitialTurn: boolean }> {
   await scope
     .evalResult(async () => {
       const r = await appendBlockEvent({
@@ -562,7 +564,7 @@ async function handlerLlmRequest({
     })
     .do();
 
-  return { res, blockSeq };
+  return { res, blockSeq, isInitialTurn };
 }
 
 async function handleEndMsg({
@@ -620,6 +622,7 @@ async function handleLlmResponse({
   resChat,
   promptId,
   blockSeq,
+  isInitialTurn,
 }: {
   scope: Scope;
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -629,6 +632,7 @@ async function handleLlmResponse({
   res: Response;
   promptId: string;
   blockSeq: number;
+  isInitialTurn: boolean;
 }): Promise<number> {
   await scope
     .evalResult(async () => {
@@ -671,7 +675,35 @@ async function handleLlmResponse({
       if (!collectedMsgs) {
         return Result.Err(`Chat context not found for chatId: ${req.chatId}`);
       }
-      // const codeBlocks: CodeBlocks[] = [];
+
+      // Title generation: collect first markdown block + first 20 code lines mid-stream
+      const titleMarkdown: string[] = [];
+      const titleCodeLines: string[] = [];
+      let titleQueued = false;
+      let inFirstToplevel = true; // track if we're still in the first toplevel section
+      let inFirstCode = false;
+
+      const maybeQueueTitle = async () => {
+        if (titleQueued || !isInitialTurn) return;
+        if (titleMarkdown.length > 0 && titleCodeLines.length > 0) {
+          titleQueued = true;
+          await vctx.postQueue({
+            payload: {
+              type: "vibes.diy.evt-generate-title",
+              userSlug: resChat.userSlug,
+              appSlug: resChat.appSlug,
+              userId: req._auth.verifiedAuth.claims.userId,
+              markdownContent: titleMarkdown.join("\n"),
+              codePreview: titleCodeLines.slice(0, 20).join("\n"),
+            } satisfies EvtGenerateTitle,
+            tid: "queue-event",
+            src: "prompt-chat-section",
+            dst: "vibes-service",
+            ttl: 1,
+          });
+        }
+      };
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
@@ -681,6 +713,28 @@ async function handleLlmResponse({
           if (!isBlockStreamMsg(value)) {
             continue;
           }
+
+          // Collect content for title generation
+          if (isInitialTurn && !titleQueued) {
+            if (isToplevelLine(value) && inFirstToplevel) {
+              titleMarkdown.push(value.line);
+            } else if (isToplevelEnd(value) && inFirstToplevel) {
+              inFirstToplevel = false;
+              void maybeQueueTitle();
+            } else if (isCodeBegin(value) && !inFirstCode && titleCodeLines.length === 0) {
+              inFirstCode = true;
+            } else if (isCodeLine(value) && inFirstCode) {
+              titleCodeLines.push(value.line);
+              if (titleCodeLines.length >= 20) {
+                inFirstCode = false;
+                void maybeQueueTitle();
+              }
+            } else if (isCodeEnd(value) && inFirstCode) {
+              inFirstCode = false;
+              void maybeQueueTitle();
+            }
+          }
+
           // console.log(promptId, "Received chunk for promptId:", value);
           collectedMsgs.push(value);
           const r = await appendBlockEvent({
@@ -909,6 +963,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             resChat,
             promptId,
             blockSeq: res.blockSeq,
+            isInitialTurn: res.isInitialTurn,
           });
           return Result.Ok(finalBlockSeq);
         };

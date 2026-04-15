@@ -250,3 +250,17 @@ export type EvtAppSetting = typeof evtAppSetting.infer;
 export function isEvtAppSetting(obj: unknown): obj is EvtAppSetting {
   return !(evtAppSetting(obj) instanceof type.errors);
 }
+
+export const evtGenerateTitle = type({
+  type: "'vibes.diy.evt-generate-title'",
+  userSlug: "string",
+  appSlug: "string",
+  userId: "string",
+  markdownContent: "string",
+  codePreview: "string",
+});
+export type EvtGenerateTitle = typeof evtGenerateTitle.infer;
+
+export function isEvtGenerateTitle(obj: unknown): obj is EvtGenerateTitle {
+  return !(evtGenerateTitle(obj) instanceof type.errors);
+}
