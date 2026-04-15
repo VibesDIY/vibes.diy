@@ -86,7 +86,7 @@
     "concurrently": "^9.1.2",
     "drizzle-kit": "^0.31.8",
     "find-up": "^8.0.0",
-    "prettier": "^3.8.1",
+    "prettier": "^3.8.3",
     "rollup-plugin-visualizer": "^7.0.1",
     "shiki": "^4.0.2",
     "tailwindcss": "^4.2.2",
