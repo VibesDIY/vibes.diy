@@ -7,7 +7,6 @@ import { cfServe, CFInject, noopCache, vibesMsgEvento, WSSendProvider } from "@v
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
-import { createIsolatedDB } from "./globalSetup.libsql.js";
 
 describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 5000 }, () => {
   const sthis = ensureSuperThis();
@@ -18,8 +17,7 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
-    const isolatedDbUrl = await createIsolatedDB(import.meta.dirname, "get-app-by-fsid");
-    appCtx = await createVibeDiyTestCtx(sthis, deviceCA, isolatedDbUrl);
+    appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
     const testUser = await createTestUser({ sthis, deviceCA, seqUserId: 100 });
 
     const fetchPair = TestFetchPair.create();

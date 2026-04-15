@@ -10,8 +10,29 @@ import { inject } from "vitest";
 import { drizzle as drizzleLibsql } from "drizzle-orm/libsql";
 import { drizzle as drizzleNeon } from "drizzle-orm/neon-serverless";
 import { Pool } from "@neondatabase/serverless";
+import fs from "fs/promises";
+import path from "node:path";
+import { $ } from "zx";
 
-async function createDrizzleDB(sqlUrlOverride?: string): Promise<VibesSqlite> {
+let isolationCounter = 0;
+
+async function createIsolatedSqliteDB(): Promise<string> {
+  const root = path.dirname(new URL(import.meta.url).pathname);
+  const distDir = path.join(root, "dist");
+  await fs.mkdir(distDir, { recursive: true });
+  const name = `test-${process.pid}-${++isolationCounter}`;
+  const basePath = path.join(distDir, `dash-backend-${name}.sqlite`);
+  await Promise.all([
+    fs.rm(basePath, { force: true }),
+    fs.rm(`${basePath}-wal`, { force: true }),
+    fs.rm(`${basePath}-shm`, { force: true }),
+  ]);
+  const url = `file://${basePath}`;
+  await $`(cd ${root} && VIBES_DIY_TEST_SQL_URL=${url} pnpm exec drizzle-kit push --config ./drizzle.libsql.config.ts)`;
+  return url;
+}
+
+async function createDrizzleDB(): Promise<VibesSqlite> {
   const flavour = (inject("DB_FLAVOUR" as never) as string) ?? "sqlite";
 
   if (flavour === "pg") {
@@ -20,31 +41,14 @@ async function createDrizzleDB(sqlUrlOverride?: string): Promise<VibesSqlite> {
     return drizzleNeon(pool) as unknown as VibesSqlite;
   }
 
-  const url = sqlUrlOverride ?? (inject("VIBES_DIY_TEST_SQL_URL" as never) as string);
+  const url = await createIsolatedSqliteDB();
   const client = createClient({ url });
   return drizzleLibsql(client) as unknown as VibesSqlite;
 }
 
-export async function createVibeDiyTestCtx(
-  sthis: ReturnType<typeof ensureSuperThis>,
-  deviceCA: DeviceIdCA,
-  sqlUrlOverride?: string
-) {
+export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperThis>, deviceCA: DeviceIdCA) {
   const flavour = toDBFlavour(inject("DB_FLAVOUR" as never) as string);
-  const drizzleDB = await createDrizzleDB(sqlUrlOverride);
-
-  // Stepper for controlling fixture streaming from tests.
-  // Test calls fixtureStream.next() to release each SSE chunk.
-  let stepResolve: (() => void) | null = null;
-  const fixtureStream = {
-    next() {
-      if (stepResolve) {
-        const r = stepResolve;
-        stepResolve = null;
-        r();
-      }
-    },
-  };
+  const drizzleDB = await createDrizzleDB();
 
   const env = {
     CLOUD_SESSION_TOKEN_PUBLIC:
@@ -88,7 +92,7 @@ export async function createVibeDiyTestCtx(
     DB_FLAVOUR: flavour,
   };
 
-  const appContext = await createAppContext({
+  return createAppContext({
     sthis,
 
     storageSystems: {
@@ -121,43 +125,8 @@ export async function createVibeDiyTestCtx(
       // throw new Error(`postQueue not implemented in test for msg: ${JSON.stringify(msg)}`);
     },
     llmRequest: async (prompt: LLMRequest) => {
-      if (
-        prompt.messages.some((m) =>
-          m.content?.some((c: { type: string; text: string }) => c.type === "text" && c.text.includes("trigger error"))
-        )
-      ) {
-        throw new Error("test-triggered-llm-error");
-      }
-      if (
-        prompt.messages.some((m) =>
-          m.content?.some((c: { type: string; text: string }) => c.type === "text" && c.text.includes("use stepped fixture"))
-        )
-      ) {
-        const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
-        const chunks = fixture.Ok().split("\n\n").filter(Boolean);
-        let chunkIndex = 0;
-        const stream = new ReadableStream({
-          pull(controller) {
-            return new Promise<void>((resolve) => {
-              if (chunkIndex >= chunks.length) {
-                controller.close();
-                resolve();
-                return;
-              }
-              stepResolve = () => {
-                controller.enqueue(new TextEncoder().encode(chunks[chunkIndex++] + "\n\n"));
-                resolve();
-              };
-            });
-          },
-        });
-        return new Response(stream, { status: 200 });
-      }
-      if (
-        prompt.messages.some((m) =>
-          m.content?.some((c: { type: string; text: string }) => c.type === "text" && c.text.includes("use fixture response"))
-        )
-      ) {
+      // console.log("Received LLM request in test llmRequest handler with messages:", prompt.messages.filter((m) => m.content.some((c) => c.type === "text")).map((m) => m.content.filter((c) => c.type === "text").map((c) => c.text).join("\n")).join("\n---\n"));
+      if (prompt.messages[0]?.content?.some((c) => c.type === "text" && c.text.includes("use fixture response"))) {
         const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
         return new Response(fixture.Ok(), { status: 200 });
       }
@@ -170,5 +139,4 @@ export async function createVibeDiyTestCtx(
     db: drizzleDB,
     cache: noopCache,
   });
-  return { ...appContext, fixtureStream };
 }
