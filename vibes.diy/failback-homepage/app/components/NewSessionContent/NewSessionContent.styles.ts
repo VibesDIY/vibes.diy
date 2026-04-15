@@ -36,7 +36,7 @@ export const getCarouselNavButtonStyle = (
   fontSize: isMobile ? "32px" : "40px",
   cursor: "pointer",
   backgroundColor: "transparent",
-  color: "var(--vibes-near-black)",
+  color: "var(--vibes-text-primary)",
   transition: "all 0.2s ease",
   userSelect: "none",
   border: "none",
@@ -70,7 +70,7 @@ export const getSuggestionsInnerStyle = (
 export const getTitle = (isMobile: boolean): CSSProperties => ({
   fontSize: isMobile ? "36px" : "65px",
   fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
-  color: "var(--vibes-near-black)",
+  color: "var(--vibes-text-primary)",
   display: "flex",
   justifyContent: "center",
   textAlign: "center",

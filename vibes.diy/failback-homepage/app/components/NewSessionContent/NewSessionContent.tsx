@@ -235,7 +235,7 @@ export default function NewSessionContent({
           <ArrowRightIcon
             width={isMobile ? 20 : 24}
             height={isMobile ? 20 : 24}
-            fill="var(--vibes-near-black)"
+            fill="var(--vibes-text-primary)"
           />
         </button>
 
@@ -273,7 +273,7 @@ export default function NewSessionContent({
           <ArrowLeftIcon
             width={isMobile ? 20 : 24}
             height={isMobile ? 20 : 24}
-            fill="var(--vibes-near-black)"
+            fill="var(--vibes-text-primary)"
           />
         </button>
       </div>
