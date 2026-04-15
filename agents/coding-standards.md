@@ -24,6 +24,10 @@ Use dots (`.stable-entry.`) not `@` signs (`@stable-entry@`) for query parameter
 
 Never modify existing entries in setup logs or similar chronological docs — only append new information. Logs are a historical record; editing past entries destroys the timeline.
 
+## Say command timing
+
+Use `echo 'message' | say` after actions complete, not before long waits. The notification should signal completion — hearing "deployed" before validation has happened is misleading. Place `say` after the final command succeeds (e.g. after `git push`), not before a sleep or user validation step.
+
 ## Review commits before pushing
 
 Read every commit diff before pushing. Check each pattern against the rules-bag — no `instanceof`, no complex stringification chains, no casts. If something looks like a workaround, it probably is. Ask for guidance or rethink the approach.
