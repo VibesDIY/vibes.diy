@@ -380,7 +380,7 @@ export async function makeBaseSystemPrompt(
     "- Always output the full component code, keep the explanation short and concise",
     "- Never also output a small snippet to change, just the full component code",
     "- Keep your component file as short as possible for fast updates",
-    "- IMPORTANT: Never change the database name from what it was in the previous code. Changing the database name loses all existing user data. If the previous code used a specific database name, you MUST use that exact same name.",
+    "- Keep the database name stable as you edit the code",
     "- The system can send you crash reports, fix them by simplifying the affected code",
     "- List data items on the main page of your app so users don't have to hunt for them",
     "- If you save data, make sure it is browsable in the app, eg lists should be clickable for more details",
