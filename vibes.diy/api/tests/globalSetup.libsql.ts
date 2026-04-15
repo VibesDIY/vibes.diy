@@ -7,7 +7,7 @@ import type { TestProject } from "vitest/node";
  * Create an isolated SQLite DB with the given name under dist/.
  * Runs drizzle-kit push to apply the schema. Returns the file:// URL.
  */
-export async function createIsolatedDB(root: string, name: string): Promise<string> {
+async function createIsolatedDB(root: string, name: string): Promise<string> {
   const distDir = path.join(root, "dist");
   await fs.mkdir(distDir, { recursive: true });
   const basePath = path.join(distDir, `dash-backend-${name}.sqlite`);
