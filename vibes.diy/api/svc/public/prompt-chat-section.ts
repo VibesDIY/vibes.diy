@@ -289,6 +289,44 @@ export async function handlePromptContext({
   return Result.Ok({ blockSeq, fsRef });
 }
 
+/**
+ * Reconstruct conversation messages (user + assistant) from stored section blocks.
+ * Assistant responses are rebuilt from ToplevelLine and Code block messages.
+ */
+export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[]): ChatMessage[] {
+  const messages: ChatMessage[] = [];
+  const assistantLines: string[] = [];
+  for (const msg of sectionMsgs) {
+    if (isPromptReq(msg)) {
+      // Flush any accumulated assistant content before the next user message
+      if (assistantLines.length > 0) {
+        messages.push({
+          role: "assistant",
+          content: [{ type: "text", text: assistantLines.join("\n") }],
+        });
+        assistantLines.length = 0;
+      }
+      messages.push(...msg.request.messages.filter((m) => m.role === "user"));
+    } else if (isToplevelLine(msg)) {
+      assistantLines.push(msg.line);
+    } else if (isCodeBegin(msg)) {
+      assistantLines.push("```" + msg.lang);
+    } else if (isCodeLine(msg)) {
+      assistantLines.push(msg.line);
+    } else if (isCodeEnd(msg)) {
+      assistantLines.push("```");
+    }
+  }
+  // Flush any remaining assistant content
+  if (assistantLines.length > 0) {
+    messages.push({
+      role: "assistant",
+      content: [{ type: "text", text: assistantLines.join("\n") }],
+    });
+  }
+  return messages;
+}
+
 async function injectSystemPrompt(
   vctx: VibesApiSQLCtx,
   chatId: string,
@@ -310,36 +348,7 @@ async function injectSystemPrompt(
     if (sectionWarning.length > 0) {
       ensureLogger(vctx.sthis, "buildUserMessages").Warn().Any({ parseErrors: sectionWarning }).Msg("skip");
     }
-    // Reconstruct both user and assistant messages to preserve conversation context
-    const assistantLines: string[] = [];
-    for (const msg of sectionMsgs) {
-      if (isPromptReq(msg)) {
-        // Flush any accumulated assistant content before the next user message
-        if (assistantLines.length > 0) {
-          conversationMessages.push({
-            role: "assistant",
-            content: [{ type: "text", text: assistantLines.join("\n") }],
-          });
-          assistantLines.length = 0;
-        }
-        conversationMessages.push(...msg.request.messages.filter((m) => m.role === "user"));
-      } else if (isToplevelLine(msg)) {
-        assistantLines.push(msg.line);
-      } else if (isCodeBegin(msg)) {
-        assistantLines.push("```" + msg.lang);
-      } else if (isCodeLine(msg)) {
-        assistantLines.push(msg.line);
-      } else if (isCodeEnd(msg)) {
-        assistantLines.push("```");
-      }
-    }
-    // Flush any remaining assistant content from this section
-    if (assistantLines.length > 0) {
-      conversationMessages.push({
-        role: "assistant",
-        content: [{ type: "text", text: assistantLines.join("\n") }],
-      });
-    }
+    conversationMessages.push(...reconstructConversationMessages(sectionMsgs));
   }
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
