@@ -16,7 +16,7 @@
     "@fireproof/core-types-protocols-dashboard": "0.24.19",
     "@libsql/client": "^0.17.2",
     "@neondatabase/serverless": "^1.0.2",
-    "@noble/hashes": "^2.0.1",
+    "@noble/hashes": "^2.2.0",
     "@vibes.diy/api-pkg": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
