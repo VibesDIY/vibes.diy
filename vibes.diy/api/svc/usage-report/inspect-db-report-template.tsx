@@ -26,6 +26,7 @@ interface ReportData {
     readonly distinct_member_count: number;
   };
   readonly membershipTimeseries: readonly Record<string, unknown>[];
+  readonly activeVibesTimeseries: readonly Record<string, unknown>[];
   readonly userSlugBindingsTimeseries: readonly Record<string, unknown>[];
   readonly membershipsByApp: readonly Record<string, unknown>[];
   readonly userModelRows: readonly Record<string, unknown>[];
@@ -416,6 +417,7 @@ function ReportPage(data: ReportData): React.ReactElement {
     tableCounts,
     membershipSummary,
     membershipTimeseries,
+    activeVibesTimeseries,
     userSlugBindingsTimeseries,
     membershipsByApp,
     userModelRows,
@@ -463,6 +465,13 @@ function ReportPage(data: ReportData): React.ReactElement {
             description="Daily cumulative total of currently active memberships, where one membership is one non-owner user with durable access to one specific vibe by approved request or accepted invite."
             rows={membershipTimeseries}
             valueKey="membership_count"
+          />
+
+          <TrendSection
+            title="Vibes With Data"
+            description="Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct userSlug/appSlug pair in AppSlugBindings counts as one active vibe."
+            rows={activeVibesTimeseries}
+            valueKey="active_vibes_count"
           />
 
           <TrendSection

@@ -117,6 +117,12 @@ async function main(): Promise<Result<void>> {
     "sql",
     `with days as (select generate_series(current_date - interval '29 days', current_date, interval '1 day')::date as day) select to_char(day, 'YYYY-MM-DD') as day, (select count(*)::int from public."RequestGrants" rg where rg.state = 'approved' and rg.created::date <= day) as membership_count from days order by day`,
   ]);
+
+  const activeVibesTimeseriesPayload = unwrapInspect([
+    "sql",
+    `with days as (select generate_series(current_date - interval '29 days', current_date, interval '1 day')::date as day) select to_char(day, 'YYYY-MM-DD') as day, (select count(distinct ("userSlug", "appSlug"))::int from public."AppSlugBindings" where created::date <= day) as active_vibes_count from days order by day`,
+  ]);
+  const activeVibesTimeseries = (activeVibesTimeseriesPayload["rows"] as Record<string, unknown>[]) ?? [];
   const membershipTimeseries = (membershipTimeseriesPayload["rows"] as Record<string, unknown>[]) ?? [];
 
   const userSlugBindingsTimeseriesPayload = unwrapInspect([
@@ -193,6 +199,7 @@ async function main(): Promise<Result<void>> {
       distinct_member_count: number;
     },
     membershipTimeseries,
+    activeVibesTimeseries,
     userSlugBindingsTimeseries,
     membershipsByApp,
     userModelRows,
