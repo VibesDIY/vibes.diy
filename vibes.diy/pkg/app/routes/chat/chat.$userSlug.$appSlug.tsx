@@ -210,7 +210,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     openingRef.current = true;
     const basePath = `/chat/${userSlug}/${appSlug}`;
     vibeDiyApi.openChat({ userSlug, appSlug, mode: "chat" }).then((rChat) => {
-      if (cancelled) return;
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), userSlug, appSlug);
         return;
