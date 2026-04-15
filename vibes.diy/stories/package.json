@@ -16,7 +16,7 @@
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "^0.24.16",
+    "@fireproof/core-cli": "^0.24.19",
     "@storybook/addon-a11y": "^10.3.5",
     "@storybook/addon-docs": "^10.3.5",
     "@storybook/react-vite": "^10.3.5",

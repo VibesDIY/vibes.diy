@@ -12,8 +12,8 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "@cloudflare/workers-types": "^4.20260402.1",
-    "@fireproof/core-device-id": "0.24.16",
-    "@fireproof/core-runtime": "0.24.16",
+    "@fireproof/core-device-id": "0.24.19",
+    "@fireproof/core-runtime": "0.24.19",
     "@fireproof/core-types-device-id": "0.24.16",
     "@libsql/client": "^0.17.2",
     "@neondatabase/serverless": "^1.0.2",
@@ -28,7 +28,7 @@
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.16",
+    "@fireproof/core-cli": "0.24.19",
     "@vitest/ui": "~4.1.2",
     "vitest": "~4.1.2",
     "zx": "^8.8.5"
