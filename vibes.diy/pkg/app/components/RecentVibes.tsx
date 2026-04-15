@@ -72,14 +72,16 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
         </div>
       ) : items.length > 0 ? (
         <>
-          <h3 className="px-4 pb-2 text-xs font-semibold uppercase tracking-wider opacity-50">Recent</h3>
-          <ul>
+          <h3 className="sticky -top-3 bg-light-background-00 dark:bg-dark-background-00 px-4 pt-7 pb-2 text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50 z-10">
+            My Recent Vibes
+          </h3>
+          <ul className="ml-3">
             {items.map((item) => (
               <li key={`${item.userSlug}/${item.appSlug}`}>
                 <Link
                   to={`/chat/${item.userSlug}/${item.appSlug}`}
                   onClick={onNavigate}
-                  className="flex items-center px-4 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5 border-b border-black/5 dark:border-white/5"
+                  className="flex items-center pl-2 pr-4 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5 border-b border-black/5 dark:border-white/5"
                 >
                   <span className="flex flex-col min-w-0">
                     <span className="truncate">{item.appSlug}</span>
