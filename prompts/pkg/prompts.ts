@@ -418,6 +418,19 @@ export async function makeBaseSystemPrompt(
   };
 }
 
+export async function getCliFooter(): Promise<string> {
+  const rText = await keyedLoadAsset.get("cli-footer").once(async () => {
+    return loadAsset("./cli-footer.md", {
+      fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
+      basePath: () => import.meta.url,
+    });
+  });
+  if (rText.isErr()) {
+    return Promise.reject(rText.Err());
+  }
+  return rText.Ok();
+}
+
 export async function getSkillText(name: string): Promise<string> {
   const rText = await keyedLoadAsset.get(name).once(async () => {
     return loadAsset(`./llms/${name}.md`, {
