@@ -9,7 +9,7 @@ import {
   exception2Result,
 } from "@adviser/cement";
 import { type } from "arktype";
-import { makeBaseSystemPrompt } from "@vibes.diy/prompts";
+import { makeBaseSystemPrompt, getCliFooter } from "@vibes.diy/prompts";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 
@@ -55,9 +55,11 @@ export const systemEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqSystem, ResSy
     if (rPrompt.isErr()) {
       return Result.Err(`Failed to build system prompt: ${rPrompt.Err().message}`);
     }
+    const rFooter = await exception2Result(() => getCliFooter());
+    const footer = rFooter.isOk() ? "\n" + rFooter.Ok() : "";
     return sendMsg(ctx, {
       type: "use-vibes.cli.res-system",
-      systemPrompt: rPrompt.Ok().systemPrompt,
+      systemPrompt: rPrompt.Ok().systemPrompt + footer,
     } satisfies ResSystem);
   },
 };
