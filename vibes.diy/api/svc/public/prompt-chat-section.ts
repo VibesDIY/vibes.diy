@@ -57,6 +57,7 @@ import {
   isCodeBegin,
   isCodeEnd,
   isCodeLine,
+  isToplevelLine,
   LLMRequest,
   ChatMessage,
   CodeMsg,
@@ -303,16 +304,41 @@ async function injectSystemPrompt(
     .from(vctx.sql.tables.chatSections)
     .where(eq(vctx.sql.tables.chatSections.chatId, chatId))
     .orderBy(vctx.sql.tables.chatSections.created);
-  const userMessages: ChatMessage[] = [];
+  const conversationMessages: ChatMessage[] = [];
   for (const rowSection of sections) {
     const { filtered: sectionMsgs, warning: sectionWarning } = parseArrayWarning(rowSection.blocks, PromptAndBlockMsgs);
     if (sectionWarning.length > 0) {
       ensureLogger(vctx.sthis, "buildUserMessages").Warn().Any({ parseErrors: sectionWarning }).Msg("skip");
     }
+    // Reconstruct both user and assistant messages to preserve conversation context
+    const assistantLines: string[] = [];
     for (const msg of sectionMsgs) {
       if (isPromptReq(msg)) {
-        userMessages.push(...msg.request.messages.filter((m) => m.role === "user"));
+        // Flush any accumulated assistant content before the next user message
+        if (assistantLines.length > 0) {
+          conversationMessages.push({
+            role: "assistant",
+            content: [{ type: "text", text: assistantLines.join("\n") }],
+          });
+          assistantLines.length = 0;
+        }
+        conversationMessages.push(...msg.request.messages.filter((m) => m.role === "user"));
+      } else if (isToplevelLine(msg)) {
+        assistantLines.push(msg.line);
+      } else if (isCodeBegin(msg)) {
+        assistantLines.push("```" + msg.lang);
+      } else if (isCodeLine(msg)) {
+        assistantLines.push(msg.line);
+      } else if (isCodeEnd(msg)) {
+        assistantLines.push("```");
       }
+    }
+    // Flush any remaining assistant content from this section
+    if (assistantLines.length > 0) {
+      conversationMessages.push({
+        role: "assistant",
+        content: [{ type: "text", text: assistantLines.join("\n") }],
+      });
     }
   }
   const systemPrompt = await exception2Result(async () =>
@@ -354,14 +380,14 @@ async function injectSystemPrompt(
     console.error("Failed to create system prompt:", systemPrompt.Err());
     return Result.Err(systemPrompt);
   }
-  if (userMessages.length === 0) {
+  if (conversationMessages.length === 0) {
     return Result.Err(`No user messages found in the prompt`);
   }
 
   return Result.Ok({
     model,
     messages: [
-      ...userMessages,
+      ...conversationMessages,
       {
         role: "system",
         content: [
