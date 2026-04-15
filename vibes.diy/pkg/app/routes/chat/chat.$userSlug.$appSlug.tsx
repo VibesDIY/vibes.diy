@@ -155,6 +155,11 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const navigate = useNavigate();
   const [chat, setChat] = useState<LLMChat | null>(null);
   const openingRef = useRef(false);
+  const prevSlugsRef = useRef(`${userSlug}/${appSlug}`);
+  if (`${userSlug}/${appSlug}` !== prevSlugsRef.current) {
+    openingRef.current = false;
+    prevSlugsRef.current = `${userSlug}/${appSlug}`;
+  }
   const { vibeDiyApi, webVars: svcVars } = useVibesDiy();
   const shareModal = useShareModal({ userSlug, appSlug, fsId, vibeDiyApi });
 
@@ -239,7 +244,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       if (chat) {
         (chat as LLMChat).close();
       }
-      openingRef.current = false;
     };
   }, [userSlug, appSlug, chat, openingRef, vibeDiyApi, promptToSend]);
 
