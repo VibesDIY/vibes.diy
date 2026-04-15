@@ -10,10 +10,10 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "@cloudflare/workers-types": "^4.20260402.1",
-    "@fireproof/core-protocols-dashboard": "0.24.16",
-    "@fireproof/core-runtime": "0.24.16",
-    "@fireproof/core-types-base": "0.24.16",
-    "@fireproof/core-types-protocols-dashboard": "0.24.16",
+    "@fireproof/core-protocols-dashboard": "0.24.19",
+    "@fireproof/core-runtime": "0.24.19",
+    "@fireproof/core-types-base": "0.24.19",
+    "@fireproof/core-types-protocols-dashboard": "0.24.19",
     "@libsql/client": "^0.17.2",
     "@neondatabase/serverless": "^1.0.2",
     "@noble/hashes": "^2.0.1",
@@ -30,7 +30,7 @@
     "url": "git+https://github.com/VibesDIY/vibes.diy.git"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.16",
+    "@fireproof/core-cli": "0.24.19",
     "@types/ws": "^8.18.1"
   }
 }
