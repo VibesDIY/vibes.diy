@@ -303,6 +303,8 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                 const requestAccessRes = rRequestAccess.Ok();
                 if (isResRequestAccessApproved(requestAccessRes)) {
                   grant = grantedAccess(requestAccessRes.role);
+                } else {
+                  grant = "pending-request";
                 }
                 console.log(`requestAccessRes`, requestAccessRes, `grant`, grant);
               }
