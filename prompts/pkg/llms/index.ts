@@ -14,4 +14,4 @@ export { threeJsConfig } from "./three-js.js";
 export type { LlmConfig } from "./types.js";
 
 // Array of all configs for easy iteration
-export const allConfigs = [callaiConfig, fireproofConfig, imageGenConfig, webAudioConfig, d3Config, threeJsConfig] as const;
+export const allConfigs = [callaiConfig, imageGenConfig, webAudioConfig, d3Config, threeJsConfig, fireproofConfig] as const;
