@@ -133,7 +133,7 @@ describe("ShareModal", () => {
   it("shows auto-join toggle", () => {
     const modal = createMockModal();
     render(<ShareModal modal={modal} />);
-    expect(screen.getByText("Auto-join")).toBeInTheDocument();
+    expect(screen.getByText("Open access")).toBeInTheDocument();
     expect(screen.getByRole("switch")).toBeInTheDocument();
   });
 
@@ -153,7 +153,7 @@ describe("ShareModal", () => {
     render(<ShareModal modal={modal} />);
 
     expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByText("Visitors join automatically")).toBeInTheDocument();
+    expect(screen.getByText("Anyone with the link gets access")).toBeInTheDocument();
   });
 
   it("shows auto-join disabled state", () => {
@@ -161,7 +161,7 @@ describe("ShareModal", () => {
     render(<ShareModal modal={modal} />);
 
     expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "false");
-    expect(screen.getByText("Visitors can request access")).toBeInTheDocument();
+    expect(screen.getByText("New users must be approved")).toBeInTheDocument();
   });
 
   it("closes on Escape key via window listener", () => {
