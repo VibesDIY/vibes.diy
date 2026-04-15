@@ -75,20 +75,20 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   realCtx.vibeDiyApi = vibesDiyApis.get(apiUrl).once(() => {
     let clerkReady: undefined | Future<void> = new Future();
     clerk.addListener(() => {
-      if (clerk.isSignedIn) {
-        // console.log("clerk-evt", clerk.isSignedIn)
+      if (clerk.loaded) {
+        // console.log("clerk-evt", clerk.loaded, clerk.isSignedIn)
         clerkReady?.resolve(undefined);
       }
     });
     return new VibesDiyApi({
       apiUrl,
       getToken: async () => {
-        if (!clerk.isSignedIn) {
-          return Result.Err("not signed in");
-        }
         if (clerkReady) {
           await clerkReady.asPromise();
           clerkReady = undefined;
+        }
+        if (!clerk.isSignedIn) {
+          return Result.Err("not signed in");
         }
         const ot = await clerk.session?.getToken({ template: "with-email" });
         if (!ot) {
