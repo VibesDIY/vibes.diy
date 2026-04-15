@@ -173,7 +173,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   useEffect(() => {
     if (inConstruction) return;
-    let cancelled = false;
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
         const newSearch = new URLSearchParams(searchParams);
@@ -208,9 +207,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       return; // Already opened or opening
     }
     openingRef.current = true;
-    const basePath = `/chat/${userSlug}/${appSlug}`;
     vibeDiyApi.openChat({ userSlug, appSlug, mode: "chat" }).then((rChat) => {
-      if (cancelled) return;
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), userSlug, appSlug);
         return;
@@ -229,19 +226,16 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       });
       // For CLI-pushed apps with no chat history, look up the latest fsId
       if (!fsId) {
-        void vibeDiyApi.getAppByFsId({ appSlug, userSlug }).then((rApp) => {
-          if (cancelled) return;
-          if (rApp.isErr() || !rApp.Ok().fsId) return;
-          // Only navigate if we're still on the fsId-less route
-          if (window.location.pathname !== basePath) return;
-          const sp = new URLSearchParams(searchParams);
-          if (!sp.has("view")) sp.set("view", "preview");
-          navigate({ pathname: `${basePath}/${rApp.Ok().fsId}`, search: sp.toString() }, { replace: true });
+        vibeDiyApi.getAppByFsId({ appSlug, userSlug }).then((rApp) => {
+          if (rApp.isOk() && rApp.Ok().fsId) {
+            const sp = new URLSearchParams(searchParams);
+            if (!sp.has("view")) sp.set("view", "preview");
+            navigate({ pathname: `/chat/${userSlug}/${appSlug}/${rApp.Ok().fsId}`, search: sp.toString() }, { replace: true });
+          }
         });
       }
     });
     return () => {
-      cancelled = true;
       if (chat) {
         (chat as LLMChat).close();
       }
