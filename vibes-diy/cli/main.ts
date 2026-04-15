@@ -7,7 +7,8 @@ import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { dotenv } from "zx";
 import { cmd_tsStream } from "./cmd-ts-stream.js";
-import { runSafely, subcommands } from "cmd-ts";
+import { runSafely, subcommands, setDefaultHelpFormatter, defaultHelpFormatter } from "cmd-ts";
+import { getCliFooter } from "@vibes.diy/prompts";
 import { isResEnsureUserSettings, isUserSettingSharing, isResEnsureAppSlug } from "@vibes.diy/api-types";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
 import { loginCmd } from "./cmds/login-cmd.js";
@@ -92,6 +93,16 @@ async function main(): Promise<number> {
     vibesDiyApiFactory: rApiFactory.isOk() ? rApiFactory.Ok() : undefined,
     exitCode: 0,
   };
+  const rFooter = await exception2Result(() => getCliFooter());
+  const cliFooter = rFooter.isOk() ? rFooter.Ok() : "";
+  setDefaultHelpFormatter({
+    formatCommand: defaultHelpFormatter.formatCommand,
+    formatSubcommands(data, context) {
+      const base = defaultHelpFormatter.formatSubcommands(data, context);
+      return cliFooter ? base + "\n" + cliFooter : base;
+    },
+  });
+
   const rs = await runSafely(
     subcommands({
       name: "vibes-diy CLI",
