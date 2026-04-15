@@ -239,6 +239,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       if (chat) {
         (chat as LLMChat).close();
       }
+      openingRef.current = false;
     };
   }, [userSlug, appSlug, chat, openingRef, vibeDiyApi, promptToSend]);
 
