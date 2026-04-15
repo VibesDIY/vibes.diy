@@ -242,6 +242,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     });
     return () => {
       cancelled = true;
+      openingRef.current = false;
       if (chat) {
         (chat as LLMChat).close();
       }
