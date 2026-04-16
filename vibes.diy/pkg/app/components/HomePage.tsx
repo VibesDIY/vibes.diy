@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import SessionSidebar from "./SessionSidebar.js";
 import { quickSuggestions } from "../data/quick-suggestions-data.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
+import { useTheme } from "../contexts/ThemeContext.js";
 import { useNavigate } from "react-router";
 import { BuildURI } from "@adviser/cement";
 import { VibesButton, ArrowLeftIcon, ArrowRightIcon, gridBackground, cx } from "@vibes.diy/base";
@@ -44,6 +45,7 @@ export default function HomePage() {
 
   const { sthis } = useVibesDiy();
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
 
   const handleSubmit = useCallback(() => {
     if (!input.trim()) return;
@@ -159,7 +161,7 @@ export default function HomePage() {
           <div style={{ height: PILL_CLEARANCE_Y }} />
 
           <div style={getContainerStyle(mobile)}>
-            <h1 style={getTitle(mobile)}>
+            <h1 style={getTitle(mobile, isDarkMode)}>
               What's the&nbsp;
               <span style={{ textDecoration: "underline" }}>vibe</span>? Try it.
             </h1>
@@ -190,7 +192,11 @@ export default function HomePage() {
             {/* Carousel */}
             <div style={getCarouselWrapperStyle(mobile)}>
               <button style={getCarouselNavButtonStyle(mobile)} onClick={handlePrevious} aria-label="Previous suggestions">
-                <ArrowLeftIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
+                <ArrowLeftIcon
+                  width={mobile ? 20 : 24}
+                  height={mobile ? 20 : 24}
+                  fill={isDarkMode ? "var(--color-dark-primary)" : "var(--vibes-near-black)"}
+                />
               </button>
 
               <div ref={viewportRef} style={getSuggestionsContainerStyle()}>
@@ -209,7 +215,11 @@ export default function HomePage() {
               </div>
 
               <button style={getCarouselNavButtonStyle(mobile)} onClick={handleNext} aria-label="Next suggestions">
-                <ArrowRightIcon width={mobile ? 20 : 24} height={mobile ? 20 : 24} fill="var(--vibes-near-black)" />
+                <ArrowRightIcon
+                  width={mobile ? 20 : 24}
+                  height={mobile ? 20 : 24}
+                  fill={isDarkMode ? "var(--color-dark-primary)" : "var(--vibes-near-black)"}
+                />
               </button>
             </div>
 
