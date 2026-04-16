@@ -67,10 +67,15 @@ export const getSuggestionsInnerStyle = (
 });
 
 // Title style - responsive
-export const getTitle = (isMobile: boolean): CSSProperties => ({
+export const getTitle = (
+  isMobile: boolean,
+  isDarkMode: boolean,
+): CSSProperties => ({
   fontSize: isMobile ? "24px" : "65px",
   fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
-  color: "var(--vibes-near-black)",
+  color: isDarkMode
+    ? "var(--color-dark-primary)"
+    : "var(--vibes-near-black)",
   display: "flex",
   justifyContent: "center",
   textAlign: "center",
