@@ -5,6 +5,6 @@ export const imgVibesConfig: LlmConfig = {
   label: "Image Generation",
   module: "OpenAi",
   description: "Generate and edit images",
-  importModule: "use-vibes",
+  importModule: "img-vibes",
   importName: "ImgVibes",
 };

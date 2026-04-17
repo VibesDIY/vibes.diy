@@ -7,7 +7,7 @@ The ImgVibes component can be used in three ways:
 1. **With no props** - Shows a form UI for users to enter a prompt and/or upload images:
 
 ```jsx
-import { ImgVibes } from "use-vibes";
+import { ImgVibes } from "img-vibes";
 
 function MyComponent() {
   return <ImgVibes />; // Shows built-in form for prompt entry and image upload
@@ -17,7 +17,7 @@ function MyComponent() {
 2. **With a prompt prop** - Immediately generates an image (no form shown):
 
 ```jsx
-import { ImgVibes } from "use-vibes";
+import { ImgVibes } from "img-vibes";
 
 function MyComponent() {
   return <ImgVibes prompt="A sunset over mountains" />; // Direct generation, no form
@@ -27,7 +27,7 @@ function MyComponent() {
 3. **With images prop** - Edits or combines images with AI (no form shown):
 
 ```jsx
-import { ImgVibes } from "use-vibes";
+import { ImgVibes } from "img-vibes";
 
 function MyComponent() {
   const [files, setFiles] = useState([]);
@@ -45,7 +45,7 @@ function MyComponent() {
 If there is no image generated for the document yet, but it has a `prompt` field, it will generate a new image with the prompt. If there an images is stored, at doc.\_files.original, it will use that as the base image.
 
 ```jsx
-import { ImgVibes } from "use-vibes";
+import { ImgVibes } from "img-vibes";
 
 function MyComponent() {
   return <ImgVibes _id="my-image-id" />; // Loads specific image by ID
@@ -60,7 +60,7 @@ Display stored images by their ID. Ensure you do this, so users can find the ima
 
 ```jsx
 import { useFireproof } from "use-fireproof";
-import { ImgVibes } from "use-vibes";
+import { ImgVibes } from "img-vibes";
 
 function MyComponent() {
   const { database, useLiveQuery } = useFireproof("my-db-name");
