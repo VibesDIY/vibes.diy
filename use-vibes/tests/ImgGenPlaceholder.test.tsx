@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { render, screen, act } from "@testing-library/react";
-import { ImgGenDisplayPlaceholder } from "@vibes.diy/use-vibes-base";
+import { ImgGenDisplayPlaceholder } from "@vibes.diy/base";
 
 describe("ImgGenDisplayPlaceholder Component", () => {
   beforeEach(() => {

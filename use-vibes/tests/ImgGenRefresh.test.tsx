@@ -78,9 +78,9 @@ const generateImage = vi.fn(async ({ db, _id, prompt }) => {
   }
 });
 
-// Mock the use-vibes-base module
-vi.mock("@vibes.diy/use-vibes-base", async () => {
-  const actual = await vi.importActual("@vibes.diy/use-vibes-base");
+// Mock the @vibes.diy/base module
+vi.mock("@vibes.diy/base", async () => {
+  const actual = await vi.importActual("@vibes.diy/base");
   return {
     ...actual,
     addNewVersion: mockAddNewVersion,
@@ -90,7 +90,7 @@ vi.mock("@vibes.diy/use-vibes-base", async () => {
 });
 
 // Import after mocks
-import { ImageDocument } from "@vibes.diy/use-vibes-base";
+import { ImageDocument } from "@vibes.diy/base";
 
 describe("Image Generation Refresh Functionality", () => {
   beforeEach(() => {

@@ -69,7 +69,7 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 // });
 
 // Import after mocks
-import { ImgGen } from "@vibes.diy/use-vibes-base";
+import { ImgGen } from "@vibes.diy/base";
 
 describe("ImgGen ID Switching Behavior", () => {
   beforeEach(() => {

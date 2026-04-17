@@ -33,7 +33,7 @@ vi.mock("use-vibes", (actual) => ({
 }));
 
 // Import the components directly to test them individually
-import { ImageOverlay } from "@vibes.diy/use-vibes-base";
+import { ImageOverlay } from "@vibes.diy/base";
 
 describe("ImageOverlay Component Versions", () => {
   beforeEach(() => {

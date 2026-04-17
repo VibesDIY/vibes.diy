@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import React from "react";
 import { act, render, screen } from "@testing-library/react";
-import { ImgGen } from "@vibes.diy/use-vibes-base";
+import { ImgGen } from "@vibes.diy/base";
 
 // Use vi.hoisted to create mock data that can be safely used in vi.mock factories
 const mockData = vi.hoisted(() => {
@@ -75,7 +75,7 @@ vi.mock("call-ai", async () => {
   };
 });
 
-vi.mock("@vibes-diy/use-vibes-base", () => ({
+vi.mock("@vibes.diy/base", () => ({
   useFireproof: () => ({
     useDocument: () => [{ _id: "mock-doc" }, vi.fn()],
     useLiveQuery: () => [[]],

@@ -36,7 +36,7 @@ vi.mock("use-fireproof", async (importOriginal) => {
 });
 
 // Import the components directly to test them individually
-import { ControlsBar, ImageOverlay } from "@vibes.diy/use-vibes-base";
+import { ControlsBar, ImageOverlay } from "@vibes.diy/base";
 
 describe("ImageOverlay Component", () => {
   beforeEach(() => {

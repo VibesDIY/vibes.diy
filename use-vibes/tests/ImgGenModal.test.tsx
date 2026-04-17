@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
 import { render, fireEvent } from "@testing-library/react";
-import { ImgGenModal, ImgGenModalProps } from "@vibes.diy/use-vibes-base";
+import { ImgGenModal, ImgGenModalProps } from "@vibes.diy/base";
 import type { DocFileMeta } from "use-fireproof";
 
 // Mock AsyncImg component
-vi.mock("../base/components/ImgGenUtils/AsyncImg.js", () => ({
+vi.mock("@vibes.diy/base/components/ImgGenUtils/AsyncImg.js", () => ({
   AsyncImg: ({ alt, className, ...props }: { alt: string; file: unknown; className?: string }) => (
     <img data-testid="mock-async-img" alt={alt} className={className} {...props} />
   ),

@@ -87,8 +87,7 @@ export const lockedGroupsVersions = {
     "@vibes.diy/vibe-db-explorer/root": "privateNpm:",
     "@vibes.diy/vibe-db-explorer/start": "privateNpm:",
 
-    "@vibes.diy/use-vibes-base": "privateNpm:",
     "call-ai": "alias:@vibes.diy/vibe-runtime",
-    "use-vibes": "privateNpm:",
+    "use-vibes": "alias:@vibes.diy/vibe-runtime",
   },
 };

@@ -48,7 +48,7 @@ vi.mock("use-fireproof", async (importOriginal) => {
   };
 });
 
-import { ImgGenDisplay } from "@vibes.diy/use-vibes-base";
+import { ImgGenDisplay } from "@vibes.diy/base";
 
 // Type simplification for testing purposes
 interface TestDoc {

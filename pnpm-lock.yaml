@@ -361,6 +361,9 @@ importers:
       '@fireproof/use-fireproof':
         specifier: 0.24.19
         version: 0.24.19(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@vibes.diy/base':
+        specifier: workspace:*
+        version: link:../../vibes.diy/base
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -572,6 +575,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@7.3.1(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@vibes.diy/base':
+        specifier: workspace:*
+        version: link:../../vibes.diy/base
       '@vibes.diy/use-vibes-base':
         specifier: workspace:0.0.0
         version: link:../base
@@ -1191,13 +1197,31 @@ importers:
       '@emotion/css':
         specifier: ^11.13.5
         version: 11.13.5
+      '@fireproof/core-runtime':
+        specifier: 0.24.19
+        version: 0.24.19(typescript@6.0.2)
+      '@fireproof/use-fireproof':
+        specifier: 0.24.19
+        version: 0.24.19(@adviser/cement@0.5.34(typescript@6.0.2))(bufferutil@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.2)(utf-8-validate@6.0.6)
+      '@vibes.diy/use-vibes-types':
+        specifier: workspace:*
+        version: link:../../use-vibes/types
+      '@vibes.diy/vibe-runtime':
+        specifier: workspace:*
+        version: link:../vibe/runtime
       react:
         specifier: ^19.2.5
         version: 19.2.5
+      react-dom:
+        specifier: ^19.2.5
+        version: 19.2.5(react@19.2.5)
     devDependencies:
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
 
   vibes.diy/pkg:
     dependencies:
