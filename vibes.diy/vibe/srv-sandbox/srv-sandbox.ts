@@ -338,16 +338,21 @@ export function getImageUrls(stream: ReadableStream<unknown>): Promise<string[]>
   const urls: string[] = [];
   const done = new Future<string[]>();
   processStream(stream, (msg) => {
+    const msgType = (msg as Record<string, unknown>).type;
     if (isSectionEvent(msg)) {
       for (const block of msg.blocks) {
+        console.log("[vibeImgVibes] block:", block.type, "isImage:", isBlockImage(block));
         if (isBlockImage(block)) {
-          console.log("[vibeImageGen] Image URL from stream:", block.url);
+          console.log("[vibeImgVibes] got image URL, length:", block.url?.length);
           urls.push(block.url);
         }
         if (isPromptBlockEnd(block)) {
+          console.log("[vibeImgVibes] prompt.block-end, resolving with", urls.length, "urls");
           done.resolve(urls);
         }
       }
+    } else {
+      console.log("[vibeImgVibes] non-section msg:", msgType);
     }
   });
   return done.asPromise();
