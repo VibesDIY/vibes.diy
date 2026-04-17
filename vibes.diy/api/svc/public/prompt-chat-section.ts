@@ -9,6 +9,7 @@ import {
   BuildURI,
   pathOps,
   URI,
+  uint8array2stream,
 } from "@adviser/cement";
 import { Scope, scopey } from "@adviser/scopey";
 import {
@@ -102,14 +103,24 @@ async function appendBlockEvent({
   emitMode = "store",
 }: AppendBlockEventParams): Promise<Result<void>> {
   if (isBlockImage(evt)) {
-    console.log(
-      "[block.image] Server received temp URL:",
-      (evt as { url: string }).url,
-      "promptId:",
-      promptId,
-      "chatId:",
-      req.chatId
-    );
+    const imgEvt = evt as { url: string };
+    if (imgEvt.url.startsWith("data:")) {
+      // Store base64 image as asset to avoid WebSocket message size limits
+      const match = imgEvt.url.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        const mime = match[1];
+        const raw = Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0));
+        const [storageResult] = await vctx.storage.ensure(uint8array2stream(raw));
+        if (storageResult?.isOk()) {
+          imgEvt.url = `/assets/cid?url=${encodeURIComponent(storageResult.Ok().getURL)}&mime=${encodeURIComponent(mime)}`;
+          console.log("[block.image] Stored as asset:", imgEvt.url, "size:", raw.length);
+        } else {
+          console.error("[block.image] Failed to store asset:", storageResult?.Err());
+        }
+      }
+    } else {
+      console.log("[block.image] Server received URL:", imgEvt.url.substring(0, 100));
+    }
   }
   const now = new Date();
   const msgBase = wrapMsgBase(ctx.validated, {
