@@ -36,7 +36,7 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
         ok: true,
         text: () =>
           Promise.resolve(
-            "<imgVibes-docs>\n# Image Generation Documentation\nReal ImageGen docs content from pkg/llms/img-vibes.md\n</imgVibes-docs>"
+            "<imgVibes-docs>\n# Image Generation Documentation\nReal ImgVibes docs content from pkg/llms/img-vibes.md\n</imgVibes-docs>"
           ),
       } as Response);
     }

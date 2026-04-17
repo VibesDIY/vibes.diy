@@ -44,7 +44,7 @@ export async function resolveEffectiveModel(
 }
 
 export async function getDefaultDependencies(): Promise<string[]> {
-  return ["fireproof", "callai", "web-audio"];
+  return ["fireproof", "callai", "img-vibes", "web-audio"];
 }
 
 export interface SystemPromptResult {
