@@ -7,6 +7,9 @@ import {
   isResCallAI,
   ReqCallAI,
   ResCallAI,
+  isResImageGen,
+  ReqImageGen,
+  ResImageGen,
   ReqFetchCloudToken,
   ReqVibeRegisterFPDb,
   ResFetchCloudToken,
@@ -19,6 +22,7 @@ import { ToCloudOpts, TokenAndClaims, TokenStrategie } from "@fireproof/core-typ
 import { Ledger, SuperThis, toCloud } from "use-fireproof";
 import { type } from "arktype";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
+import { registerImageGen } from "./img-gen.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -90,6 +94,17 @@ export class VibeSandboxApi {
         schema: opts.schema,
       },
       { wait: isResCallAI, timeout: 60000 }
+    );
+  }
+
+  imageGen(prompt: string): Promise<Result<ResImageGen>> {
+    return this.request<ReqImageGen, ResImageGen>(
+      {
+        type: "vibe.req.imageGen",
+        prompt,
+        ...this.svc.vibeApp,
+      },
+      { wait: isResImageGen, timeout: 120000 }
     );
   }
 
@@ -281,6 +296,7 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
   if (callAI && window.parent !== window) {
     runTimeReady.push("call-ai");
     registerCallAI(ctxVibeApi);
+    registerImageGen(ctxVibeApi);
   }
   ctxVibeApi.sendRuntimeReady(runTimeReady);
   return;

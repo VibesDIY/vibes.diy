@@ -214,3 +214,49 @@ export function isResOkCallAI(x: unknown): x is ResOkCallAI {
 export function isResErrorCallAI(x: unknown): x is ResErrorCallAI {
   return !(ResErrorCallAI(x) instanceof type.errors);
 }
+
+// Image generation request/response types
+export const ReqImageGen = type({
+  type: "'vibe.req.imageGen'",
+  userSlug: "string",
+  appSlug: "string",
+  prompt: "string",
+}).and(Base);
+
+export type ReqImageGen = typeof ReqImageGen.infer;
+
+export function isReqImageGen(x: unknown): x is ReqImageGen {
+  return !(ReqImageGen(x) instanceof type.errors);
+}
+
+export const ResOkImageGen = type({
+  type: "'vibe.res.imageGen'",
+  status: "'ok'",
+  imageUrls: "string[]",
+}).and(Base);
+
+export type ResOkImageGen = typeof ResOkImageGen.infer;
+
+export const ResErrorImageGen = type({
+  type: "'vibe.res.imageGen'",
+  status: "'error'",
+  message: "string",
+}).and(Base);
+
+export type ResErrorImageGen = typeof ResErrorImageGen.infer;
+
+const ResImageGen = ResOkImageGen.or(ResErrorImageGen);
+
+export type ResImageGen = typeof ResImageGen.infer;
+
+export function isResImageGen(x: unknown): x is ResImageGen {
+  return !(ResImageGen(x) instanceof type.errors);
+}
+
+export function isResOkImageGen(x: unknown): x is ResOkImageGen {
+  return !(ResOkImageGen(x) instanceof type.errors);
+}
+
+export function isResErrorImageGen(x: unknown): x is ResErrorImageGen {
+  return !(ResErrorImageGen(x) instanceof type.errors);
+}

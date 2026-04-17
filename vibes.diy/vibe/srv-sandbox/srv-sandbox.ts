@@ -29,8 +29,13 @@ import {
   isEvtRuntimeReady,
   EvtRuntimeReady,
   EvtAttachFPDb,
+  isReqImageGen,
+  ReqImageGen,
+  ResOkImageGen,
+  ResErrorImageGen,
 } from "@vibes.diy/vibe-types";
 import {
+  isPromptBlockEnd,
   isPromptReq,
   isResFPCloudTokenGrant,
   isSectionEvent,
@@ -38,7 +43,7 @@ import {
   SectionEvent,
   VibesDiyApiIface,
 } from "@vibes.diy/api-types";
-import { ChatMessage, CodeEndMsg, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
+import { ChatMessage, CodeEndMsg, isBlockImage, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
 import { buildSchemaSystemMessage } from "@vibes.diy/prompts";
 
 export class MessageEventEventoEnDecoder implements EventoEnDecoder<MessageEvent, unknown> {
@@ -329,6 +334,92 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+export function getImageUrls(stream: ReadableStream<unknown>): Promise<string[]> {
+  const urls: string[] = [];
+  const done = new Future<string[]>();
+  processStream(stream, (msg) => {
+    if (isSectionEvent(msg)) {
+      for (const block of msg.blocks) {
+        if (isBlockImage(block)) {
+          console.log("[vibeImageGen] Image URL from stream:", block.url);
+          urls.push(block.url);
+        }
+        if (isPromptBlockEnd(block)) {
+          done.resolve(urls);
+        }
+      }
+    }
+  });
+  return done.asPromise();
+}
+
+function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.imageGen",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqImageGen(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqImageGen, unknown>): Promise<Result<EventoResultType>> => {
+      await vibeDiyApi
+        .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "img" })
+        .then(async (rChat) => {
+          if (rChat.isErr()) {
+            return ctx.send.send(ctx, {
+              tid: ctx.validated.tid,
+              type: "vibe.res.imageGen",
+              status: "error",
+              message: rChat.Err().message,
+            } satisfies ResErrorImageGen);
+          }
+          getImageUrls(rChat.Ok().sectionStream)
+            .then((imageUrls) => {
+              ctx.send.send(ctx, {
+                tid: ctx.validated.tid,
+                type: "vibe.res.imageGen",
+                status: "ok",
+                imageUrls,
+              } satisfies ResOkImageGen);
+            })
+            .catch((err) => {
+              ctx.send.send(ctx, {
+                tid: ctx.validated.tid,
+                type: "vibe.res.imageGen",
+                status: "error",
+                message: err?.message ?? String(err),
+              } satisfies ResErrorImageGen);
+            });
+          const rPrompt = await rChat.Ok().prompt({
+            messages: [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: ctx.validated.prompt,
+                  },
+                ],
+              },
+            ],
+          });
+          if (rPrompt.isErr()) {
+            return ctx.send.send(ctx, {
+              tid: ctx.validated.tid,
+              type: "vibe.res.imageGen",
+              status: "error",
+              message: rPrompt.Err().message,
+            } satisfies ResErrorImageGen);
+          }
+        });
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
@@ -350,7 +441,9 @@ export class vibesDiySrvSandbox implements Disposable {
   constructor(args: VibesDiySrvSandboxArgs) {
     this.args = args;
     this.evento = new Evento(new MessageEventEventoEnDecoder());
-    this.evento.push(...[vibeRuntimeReady(this), vibeRegisterFPDB(this), vibeCallAI(this), vibeFetchCloudToken(this)]);
+    this.evento.push(
+      ...[vibeRuntimeReady(this), vibeRegisterFPDB(this), vibeCallAI(this), vibeImageGen(this), vibeFetchCloudToken(this)]
+    );
     // console.log(`Adding event listener for vibesDiySrvSandbox`, this.handleMessage);
     this.args.eventListeners.addEventListener("message", this.handleMessage);
     this.removeEventListeners = this.args.eventListeners.removeEventListener;

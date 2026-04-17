@@ -226,7 +226,7 @@ export { ControlsBar } from "./components/ControlsBar.js";
 export { PromptBar } from "./components/PromptBar.js";
 
 // Export hooks
-export { hashInput, useImageGen } from "./hooks/image-gen/index.js";
+export { useImageGen } from "./hooks/image-gen/index.js";
 export { useThemeDetection } from "./hooks/useThemeDetection.js";
 export { useMobile } from "./hooks/useMobile.js";
 
@@ -246,7 +246,7 @@ export { ImgGenModal, type ImgGenModalProps } from "./components/ImgGenUtils/Img
 export { ImageOverlay } from "./components/ImgGenUtils/overlays/ImageOverlay.js";
 
 // Export internal utilities and constants
-export { addNewVersion, MODULE_STATE } from "./hooks/image-gen/utils.js";
+// addNewVersion and MODULE_STATE removed — old image-gen backend-interface code
 
 // Export types for testing and advanced usage
 export type { ImageDocument, PartialImageDocument, UseImageGenOptions, UseImageGenResult } from "@vibes.diy/use-vibes-types";

@@ -66,6 +66,7 @@ import {
   PromptContextSql,
   BlockEndMsg,
   isBlockStreamMsg,
+  isBlockImage,
   CodeEndMsg,
   BlockBeginMsg,
 } from "@vibes.diy/call-ai-v2";
@@ -100,8 +101,17 @@ async function appendBlockEvent({
   evt,
   emitMode = "store",
 }: AppendBlockEventParams): Promise<Result<void>> {
+  if (isBlockImage(evt)) {
+    console.log(
+      "[block.image] Server received temp URL:",
+      (evt as { url: string }).url,
+      "promptId:",
+      promptId,
+      "chatId:",
+      req.chatId
+    );
+  }
   const now = new Date();
-  // console.log("Appending block event:", { promptId, blockSeq, evt, timestamp: now });
   const msgBase = wrapMsgBase(ctx.validated, {
     payload: {
       type: "vibes.diy.section-event",
@@ -492,7 +502,7 @@ async function handlerLlmRequest({
       });
       if (req.mode === "chat") {
         withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? modelId);
-      } else if (req.mode === "app") {
+      } else if (req.mode === "app" || req.mode === "img") {
         withSystemPrompt = Result.Ok({
           model: req.prompt.model ?? modelId,
           messages: req.prompt.messages,

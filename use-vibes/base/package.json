@@ -22,6 +22,7 @@
     "@fireproof/use-fireproof": "0.24.19",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
+    "@vibes.diy/vibe-runtime": "workspace:*",
     "arktype": "^2.2.0",
     "call-ai": "workspace:*",
     "jose": "^6.2.2",
