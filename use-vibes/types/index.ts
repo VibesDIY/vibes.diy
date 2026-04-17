@@ -1,7 +1,7 @@
 /**
  * Type definitions for component classes props pattern
  */
-export interface ImgGenClasses {
+export interface ImgVibesClasses {
   /** Root container class */
   readonly root: string;
   /** Image container class */
@@ -43,4 +43,4 @@ export interface RuntimeError {
 }
 
 export * from "./vibes-gen-types.js";
-export * from "./image-gen-types.js";
+export * from "./img-vibes-types.js";

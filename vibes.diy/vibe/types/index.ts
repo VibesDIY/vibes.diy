@@ -2,7 +2,7 @@ import { FPCloudClaim } from "@vibes.diy/api-types";
 import { type } from "arktype";
 // import { FPCloudClaimSchema } from "@fireproof/core-types-protocols-cloud";
 
-export * from "./img-gen.js";
+export * from "./img-vibes.js";
 
 const Base = type({
   tid: "string",
@@ -216,47 +216,47 @@ export function isResErrorCallAI(x: unknown): x is ResErrorCallAI {
 }
 
 // Image generation request/response types
-export const ReqImageGen = type({
-  type: "'vibe.req.imageGen'",
+export const ReqImgVibes = type({
+  type: "'vibe.req.imgVibes'",
   userSlug: "string",
   appSlug: "string",
   prompt: "string",
 }).and(Base);
 
-export type ReqImageGen = typeof ReqImageGen.infer;
+export type ReqImgVibes = typeof ReqImgVibes.infer;
 
-export function isReqImageGen(x: unknown): x is ReqImageGen {
-  return !(ReqImageGen(x) instanceof type.errors);
+export function isReqImgVibes(x: unknown): x is ReqImgVibes {
+  return !(ReqImgVibes(x) instanceof type.errors);
 }
 
-export const ResOkImageGen = type({
-  type: "'vibe.res.imageGen'",
+export const ResOkImgVibes = type({
+  type: "'vibe.res.imgVibes'",
   status: "'ok'",
   imageUrls: "string[]",
 }).and(Base);
 
-export type ResOkImageGen = typeof ResOkImageGen.infer;
+export type ResOkImgVibes = typeof ResOkImgVibes.infer;
 
-export const ResErrorImageGen = type({
-  type: "'vibe.res.imageGen'",
+export const ResErrorImgVibes = type({
+  type: "'vibe.res.imgVibes'",
   status: "'error'",
   message: "string",
 }).and(Base);
 
-export type ResErrorImageGen = typeof ResErrorImageGen.infer;
+export type ResErrorImgVibes = typeof ResErrorImgVibes.infer;
 
-const ResImageGen = ResOkImageGen.or(ResErrorImageGen);
+const ResImgVibes = ResOkImgVibes.or(ResErrorImgVibes);
 
-export type ResImageGen = typeof ResImageGen.infer;
+export type ResImgVibes = typeof ResImgVibes.infer;
 
-export function isResImageGen(x: unknown): x is ResImageGen {
-  return !(ResImageGen(x) instanceof type.errors);
+export function isResImgVibes(x: unknown): x is ResImgVibes {
+  return !(ResImgVibes(x) instanceof type.errors);
 }
 
-export function isResOkImageGen(x: unknown): x is ResOkImageGen {
-  return !(ResOkImageGen(x) instanceof type.errors);
+export function isResOkImgVibes(x: unknown): x is ResOkImgVibes {
+  return !(ResOkImgVibes(x) instanceof type.errors);
 }
 
-export function isResErrorImageGen(x: unknown): x is ResErrorImageGen {
-  return !(ResErrorImageGen(x) instanceof type.errors);
+export function isResErrorImgVibes(x: unknown): x is ResErrorImgVibes {
+  return !(ResErrorImgVibes(x) instanceof type.errors);
 }

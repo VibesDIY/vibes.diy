@@ -3,21 +3,21 @@ export * from "./components/icons/index.js";
 export * from "./components/index.js";
 export { cx, colors, semantic, stripesOverlay, gridBackground, getVibesGlobalCSS } from "./theme/index.js";
 export type { SemanticTheme } from "./theme/index.js";
-export { default as ImgGen } from "./components/ImgGen.js";
-export type { ImgGenProps } from "./components/ImgGen.js";
-export { useImageGen } from "./hooks/image-gen/index.js";
+export { default as ImgVibes } from "./components/ImgVibes.js";
+export type { ImgVibesProps } from "./components/ImgVibes.js";
+export { useImgVibes } from "./hooks/img-vibes/index.js";
 export { ControlsBar } from "./components/ControlsBar.js";
 export { PromptBar } from "./components/PromptBar.js";
-export { ImgGenDisplay } from "./components/ImgGenUtils/ImgGenDisplay.js";
-export { ImgGenDisplayPlaceholder } from "./components/ImgGenUtils/ImgGenDisplayPlaceholder.js";
-export { ImgGenModal } from "./components/ImgGenUtils/ImgGenModal.js";
-export type { ImgGenModalProps } from "./components/ImgGenUtils/ImgGenModal.js";
-export { ImageOverlay } from "./components/ImgGenUtils/overlays/ImageOverlay.js";
+export { ImgVibesDisplay } from "./components/ImgVibesUtils/ImgVibesDisplay.js";
+export { ImgVibesDisplayPlaceholder } from "./components/ImgVibesUtils/ImgVibesDisplayPlaceholder.js";
+export { ImgVibesModal } from "./components/ImgVibesUtils/ImgVibesModal.js";
+export type { ImgVibesModalProps } from "./components/ImgVibesUtils/ImgVibesModal.js";
+export { ImageOverlay } from "./components/ImgVibesUtils/overlays/ImageOverlay.js";
 export { defaultClasses } from "./utils/style-utils.js";
 export type {
   ImageDocument,
   PartialImageDocument,
-  UseImageGenOptions,
-  UseImageGenResult,
-  ImgGenClasses,
+  UseImgVibesOptions,
+  UseImgVibesResult,
+  ImgVibesClasses,
 } from "@vibes.diy/use-vibes-types";

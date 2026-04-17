@@ -29,10 +29,10 @@ import {
   isEvtRuntimeReady,
   EvtRuntimeReady,
   EvtAttachFPDb,
-  isReqImageGen,
-  ReqImageGen,
-  ResOkImageGen,
-  ResErrorImageGen,
+  isReqImgVibes,
+  ReqImgVibes,
+  ResOkImgVibes,
+  ResErrorImgVibes,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -356,42 +356,42 @@ export function getImageUrls(stream: ReadableStream<unknown>): Promise<string[]>
 function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
   const { vibeDiyApi } = sandbox.args;
   return {
-    hash: "vibe.imageGen",
+    hash: "vibe.imgVibes",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
       const { request: req } = ctx;
-      if (isReqImageGen(req?.data)) {
+      if (isReqImgVibes(req?.data)) {
         return Promise.resolve(Result.Ok(Option.Some(req.data)));
       }
       return Promise.resolve(Result.Ok(Option.None()));
     },
-    handle: async (ctx: HandleTriggerCtx<Request, ReqImageGen, unknown>): Promise<Result<EventoResultType>> => {
+    handle: async (ctx: HandleTriggerCtx<Request, ReqImgVibes, unknown>): Promise<Result<EventoResultType>> => {
       await vibeDiyApi
         .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "img" })
         .then(async (rChat) => {
           if (rChat.isErr()) {
             return ctx.send.send(ctx, {
               tid: ctx.validated.tid,
-              type: "vibe.res.imageGen",
+              type: "vibe.res.imgVibes",
               status: "error",
               message: rChat.Err().message,
-            } satisfies ResErrorImageGen);
+            } satisfies ResErrorImgVibes);
           }
           getImageUrls(rChat.Ok().sectionStream)
             .then((imageUrls) => {
               ctx.send.send(ctx, {
                 tid: ctx.validated.tid,
-                type: "vibe.res.imageGen",
+                type: "vibe.res.imgVibes",
                 status: "ok",
                 imageUrls,
-              } satisfies ResOkImageGen);
+              } satisfies ResOkImgVibes);
             })
             .catch((err) => {
               ctx.send.send(ctx, {
                 tid: ctx.validated.tid,
-                type: "vibe.res.imageGen",
+                type: "vibe.res.imgVibes",
                 status: "error",
                 message: err?.message ?? String(err),
-              } satisfies ResErrorImageGen);
+              } satisfies ResErrorImgVibes);
             });
           const rPrompt = await rChat.Ok().prompt({
             messages: [
@@ -409,10 +409,10 @@ function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
           if (rPrompt.isErr()) {
             return ctx.send.send(ctx, {
               tid: ctx.validated.tid,
-              type: "vibe.res.imageGen",
+              type: "vibe.res.imgVibes",
               status: "error",
               message: rPrompt.Err().message,
-            } satisfies ResErrorImageGen);
+            } satisfies ResErrorImgVibes);
           }
         });
       return Result.Ok(EventoResult.Stop);

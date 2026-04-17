@@ -91,11 +91,11 @@ runs:
         mkdir -p dist
         echo "//registry.npmjs.org/:_authToken=${{ inputs.NPM_TOKEN }}" > dist/.npmrc
         pnpm run publish --registry https://registry.npmjs.org/
-    - name: publish-img-gen
-      id: img-gen
+    - name: publish-img-vibes
+      id: img-vibes
       if: success()
       shell: bash
-      working-directory: img-gen/pkg
+      working-directory: img-vibes/pkg
       env:
         NPM_TOKEN: ${{ inputs.NPM_TOKEN }}
       run: |

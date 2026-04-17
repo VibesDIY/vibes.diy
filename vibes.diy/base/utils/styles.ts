@@ -1,10 +1,10 @@
 /**
- * ImgGen Component Styling Constants
- * Extracted from ImgGen.css to enable inline styling and eliminate CSS dependencies
+ * ImgVibes Component Styling Constants
+ * Extracted from ImgVibes.css to enable inline styling and eliminate CSS dependencies
  */
 
 // CSS Custom Properties (Variables) as JavaScript constants
-export const imgGenTheme = {
+export const imgVibesTheme = {
   // Colors with dark mode support using light-dark() CSS function
   colors: {
     text: "#333",
@@ -56,7 +56,7 @@ export const imgGenTheme = {
 } as const;
 
 // Base style objects for core components
-export const imgGenStyles = {
+export const imgVibesStyles = {
   // Root container
   root: {
     position: "relative" as const,
@@ -91,11 +91,11 @@ export const imgGenStyles = {
     bottom: 0,
     left: 0,
     right: 0,
-    padding: imgGenTheme.dimensions.padding,
-    backgroundColor: imgGenTheme.colors.overlayBg,
-    backdropFilter: `blur(${imgGenTheme.effects.blurRadius})`,
-    WebkitBackdropFilter: `blur(${imgGenTheme.effects.blurRadius})`, // Safari support
-    transition: `opacity ${imgGenTheme.effects.transitionSpeed} ease`,
+    padding: imgVibesTheme.dimensions.padding,
+    backgroundColor: imgVibesTheme.colors.overlayBg,
+    backdropFilter: `blur(${imgVibesTheme.effects.blurRadius})`,
+    WebkitBackdropFilter: `blur(${imgVibesTheme.effects.blurRadius})`, // Safari support
+    transition: `opacity ${imgVibesTheme.effects.transitionSpeed} ease`,
     zIndex: 10,
     display: "flex" as const,
     flexDirection: "column" as const,
@@ -118,10 +118,10 @@ export const imgGenStyles = {
 
   // Prompt text styling
   promptText: {
-    color: imgGenTheme.colors.text,
+    color: imgVibesTheme.colors.text,
     width: "100%",
     textAlign: "center" as const,
-    fontWeight: imgGenTheme.typography.fontWeight,
+    fontWeight: imgVibesTheme.typography.fontWeight,
     padding: "2px",
     cursor: "pointer" as const,
   },
@@ -146,20 +146,20 @@ export const imgGenStyles = {
 
   // Base button styling
   button: {
-    background: imgGenTheme.colors.buttonBg,
+    background: imgVibesTheme.colors.buttonBg,
     borderRadius: "50%",
-    width: imgGenTheme.dimensions.buttonSize,
-    height: imgGenTheme.dimensions.buttonSize,
+    width: imgVibesTheme.dimensions.buttonSize,
+    height: imgVibesTheme.dimensions.buttonSize,
     display: "flex" as const,
     alignItems: "center" as const,
     justifyContent: "center" as const,
     border: "none",
     cursor: "pointer" as const,
     opacity: 0.5,
-    transition: `opacity ${imgGenTheme.effects.transitionSpeed} ease`,
+    transition: `opacity ${imgVibesTheme.effects.transitionSpeed} ease`,
     padding: 0,
-    fontSize: imgGenTheme.typography.fontSize,
-    color: imgGenTheme.colors.text,
+    fontSize: imgVibesTheme.typography.fontSize,
+    color: imgVibesTheme.colors.text,
   },
 
   // Progress bar container
@@ -176,8 +176,8 @@ export const imgGenStyles = {
     position: "absolute" as const,
     top: 0,
     left: 0,
-    height: imgGenTheme.dimensions.progressHeight,
-    backgroundColor: imgGenTheme.colors.accent,
+    height: imgVibesTheme.dimensions.progressHeight,
+    backgroundColor: imgVibesTheme.colors.accent,
     transition: "width 0.3s ease-in-out",
     zIndex: 11,
   },
@@ -186,7 +186,7 @@ export const imgGenStyles = {
   placeholder: {
     width: "100%",
     aspectRatio: "1 / 1",
-    backgroundColor: imgGenTheme.colors.background,
+    backgroundColor: imgVibesTheme.colors.background,
     position: "relative" as const,
     overflow: "hidden" as const,
     display: "flex" as const,
@@ -199,8 +199,8 @@ export const imgGenStyles = {
   statusText: {
     width: "100%",
     textAlign: "center" as const,
-    fontSize: imgGenTheme.typography.fontSize,
-    color: imgGenTheme.colors.text,
+    fontSize: imgVibesTheme.typography.fontSize,
+    color: imgVibesTheme.colors.text,
     opacity: 0.7,
     padding: "8px 0",
   },
@@ -215,18 +215,18 @@ export const imgGenStyles = {
     alignItems: "center" as const,
     padding: "1rem",
     width: "100%",
-    borderRadius: imgGenTheme.dimensions.borderRadius,
+    borderRadius: imgVibesTheme.dimensions.borderRadius,
     overflow: "hidden" as const,
   },
 
   // Error container
   error: {
     backgroundColor: "#000",
-    color: imgGenTheme.colors.errorText,
+    color: imgVibesTheme.colors.errorText,
     padding: "1.5rem",
-    borderRadius: imgGenTheme.dimensions.borderRadius,
-    border: `1px solid ${imgGenTheme.colors.errorBorder}`,
-    boxShadow: imgGenTheme.effects.shadow,
+    borderRadius: imgVibesTheme.dimensions.borderRadius,
+    border: `1px solid ${imgVibesTheme.colors.errorBorder}`,
+    boxShadow: imgVibesTheme.effects.shadow,
     maxWidth: "80%",
     display: "flex" as const,
     flexDirection: "column" as const,
@@ -237,7 +237,7 @@ export const imgGenStyles = {
 
   // Error title
   errorTitle: {
-    color: imgGenTheme.colors.errorText,
+    color: imgVibesTheme.colors.errorText,
     marginTop: 0,
     fontWeight: "bold",
     fontSize: "18px",
@@ -248,9 +248,9 @@ export const imgGenStyles = {
   // Error message
   errorMessage: {
     whiteSpace: "pre-wrap" as const,
-    color: imgGenTheme.colors.errorTextBody,
-    fontSize: imgGenTheme.typography.fontSize,
-    lineHeight: imgGenTheme.typography.lineHeight,
+    color: imgVibesTheme.colors.errorTextBody,
+    fontSize: imgVibesTheme.typography.fontSize,
+    lineHeight: imgVibesTheme.typography.lineHeight,
     textAlign: "left" as const,
     fontFamily: "monospace, sans-serif",
     marginBottom: 0,
@@ -258,7 +258,7 @@ export const imgGenStyles = {
 
   // Prompt input edit mode
   promptInputEditMode: {
-    border: `2px solid ${imgGenTheme.colors.accent}`,
+    border: `2px solid ${imgVibesTheme.colors.accent}`,
     padding: "6px 10px",
     borderRadius: "6px",
   },
@@ -271,9 +271,9 @@ export const imgGenStyles = {
     padding: "1rem",
     alignItems: "center" as const,
     textAlign: "center" as const,
-    backgroundColor: imgGenTheme.colors.inputBg,
-    borderRadius: imgGenTheme.dimensions.borderRadius,
-    border: `1px solid ${imgGenTheme.colors.inputBorder}`,
+    backgroundColor: imgVibesTheme.colors.inputBg,
+    borderRadius: imgVibesTheme.dimensions.borderRadius,
+    border: `1px solid ${imgVibesTheme.colors.inputBorder}`,
   },
 
   // Prompt form layout
@@ -290,18 +290,18 @@ export const imgGenStyles = {
     width: "100%",
     padding: "0.8rem",
     fontSize: "1rem",
-    border: `1px solid ${imgGenTheme.colors.inputBorder}`,
+    border: `1px solid ${imgVibesTheme.colors.inputBorder}`,
     borderRadius: "4px",
     boxSizing: "border-box" as const,
-    backgroundColor: imgGenTheme.colors.inputBg,
-    color: imgGenTheme.colors.inputText,
+    backgroundColor: imgVibesTheme.colors.inputBg,
+    color: imgVibesTheme.colors.inputText,
   },
 
   // Prompt submit button
   promptSubmit: {
     padding: "0.8rem",
     fontSize: "1rem",
-    backgroundColor: imgGenTheme.colors.accent,
+    backgroundColor: imgVibesTheme.colors.accent,
     color: "white",
     border: "none",
     borderRadius: "4px",
@@ -311,20 +311,20 @@ export const imgGenStyles = {
 
   // File drop zone base styling
   fileDrop: {
-    border: `2px dashed ${imgGenTheme.colors.dropZoneBorder}`,
+    border: `2px dashed ${imgVibesTheme.colors.dropZoneBorder}`,
     borderRadius: "8px",
     padding: "2rem",
     textAlign: "center" as const,
     cursor: "pointer" as const,
     transition: "border-color 0.3s, background-color 0.3s",
-    backgroundColor: imgGenTheme.colors.dropZoneBg,
+    backgroundColor: imgVibesTheme.colors.dropZoneBg,
     marginTop: "1rem",
   },
 
   // File drop active state (when dragging over)
   fileDropActive: {
-    borderColor: imgGenTheme.colors.accent,
-    backgroundColor: imgGenTheme.colors.dropZoneActiveBg,
+    borderColor: imgVibesTheme.colors.accent,
+    backgroundColor: imgVibesTheme.colors.dropZoneActiveBg,
   },
 
   // File drop disabled state
@@ -335,7 +335,7 @@ export const imgGenStyles = {
 
   // File drop message text
   fileDropMessage: {
-    color: imgGenTheme.colors.mutedText,
+    color: imgVibesTheme.colors.mutedText,
     fontSize: "1rem",
     fontWeight: "normal" as const,
   },
@@ -349,7 +349,7 @@ export const imgGenStyles = {
   // Upload count display
   uploadCount: {
     fontSize: "0.9rem",
-    color: imgGenTheme.colors.mutedText,
+    color: imgVibesTheme.colors.mutedText,
     marginBottom: "0.5rem",
     fontWeight: "bold" as const,
   },
@@ -368,7 +368,7 @@ export const imgGenStyles = {
     aspectRatio: "1 / 1",
     overflow: "hidden" as const,
     borderRadius: "4px",
-    border: `1px solid ${imgGenTheme.colors.thumbnailBorder}`,
+    border: `1px solid ${imgVibesTheme.colors.thumbnailBorder}`,
   },
 
   // Thumbnail image
@@ -383,8 +383,8 @@ export const imgGenStyles = {
     display: "flex" as const,
     alignItems: "center" as const,
     justifyContent: "center" as const,
-    backgroundColor: imgGenTheme.colors.lightBg,
-    color: imgGenTheme.colors.mutedText,
+    backgroundColor: imgVibesTheme.colors.lightBg,
+    color: imgVibesTheme.colors.mutedText,
     fontSize: "0.8rem",
     fontWeight: "bold" as const,
   },
@@ -423,7 +423,7 @@ export const styleUtils = {
   }),
 
   // Common transitions
-  transition: (properties: string[], duration: string = imgGenTheme.effects.transitionSpeed) => ({
+  transition: (properties: string[], duration: string = imgVibesTheme.effects.transitionSpeed) => ({
     transition: properties.map((prop) => `${prop} ${duration} ease`).join(", "),
   }),
 };

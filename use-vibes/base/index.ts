@@ -217,20 +217,20 @@ export { callAI, callAI as callAi };
 // Re-export all types under a namespace
 export type * as CallAI from "call-ai";
 
-// ImgGen and related components live in @vibes.diy/base
+// ImgVibes and related components live in @vibes.diy/base
 
 // Export hooks
 export { useThemeDetection } from "./hooks/useThemeDetection.js";
 export { useMobile } from "./hooks/useMobile.js";
 
-export type { ImgGenClasses } from "@vibes.diy/use-vibes-types";
+export type { ImgVibesClasses } from "@vibes.diy/use-vibes-types";
 
 // Export utility functions
 export { base64ToFile } from "./utils/base64.js";
 export { constructVibesDatabaseName } from "./utils/databaseName.js";
 
 // Export types for testing and advanced usage
-export type { ImageDocument, PartialImageDocument, UseImageGenOptions, UseImageGenResult } from "@vibes.diy/use-vibes-types";
+export type { ImageDocument, PartialImageDocument, UseImgVibesOptions, UseImgVibesResult } from "@vibes.diy/use-vibes-types";
 
 // Export useVibes hook and types
 export type { UseVibesOptions, UseVibesResult, VibeDocument } from "@vibes.diy/use-vibes-types";

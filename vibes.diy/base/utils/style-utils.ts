@@ -2,9 +2,9 @@
  * Utility functions for managing component styling
  */
 
-import type { ImgGenClasses } from "@vibes.diy/use-vibes-types";
+import type { ImgVibesClasses } from "@vibes.diy/use-vibes-types";
 
-export type { ImgGenClasses };
+export type { ImgVibesClasses };
 
 /**
  * Combines multiple class names into a single string, filtering out falsy values
@@ -19,21 +19,21 @@ export type { ImgGenClasses };
  * combineClasses('btn', condition && 'btn-primary', false && 'btn-large')
  *
  * @example
- * // Returns "imggen-root img-gen-container" (with legacy class name)
+ * // Returns "imggen-root img-vibes-container" (with legacy class name)
  * combineClasses('imggen-root', classes.root)
  */
 export function combineClasses(...classes: (string | boolean | null | undefined)[]): string {
   // Filter out falsy values
   const validClasses = classes.filter(Boolean) as string[];
 
-  // Add backward compatibility classes (img-gen-* format)
+  // Add backward compatibility classes (img-vibes-* format)
   const allClasses = [...validClasses];
 
-  // For each imggen-* class, add a corresponding img-gen-* class for backward compatibility
+  // For each imggen-* class, add a corresponding img-vibes-* class for backward compatibility
   validClasses.forEach((cls) => {
     if (cls.startsWith("imggen-")) {
-      // Convert imggen-root to img-gen-root, etc.
-      const legacyClass = cls.replace("imggen-", "img-gen-");
+      // Convert imggen-root to img-vibes-root, etc.
+      const legacyClass = cls.replace("imggen-", "img-vibes-");
       // Only add if not already present
       if (!allClasses.includes(legacyClass)) {
         allClasses.push(legacyClass);
@@ -47,4 +47,4 @@ export function combineClasses(...classes: (string | boolean | null | undefined)
 /**
  * Default empty classes object
  */
-export const defaultClasses: Partial<ImgGenClasses> = {};
+export const defaultClasses: Partial<ImgVibesClasses> = {};

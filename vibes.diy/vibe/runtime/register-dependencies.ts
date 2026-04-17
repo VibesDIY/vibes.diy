@@ -7,9 +7,9 @@ import {
   isResCallAI,
   ReqCallAI,
   ResCallAI,
-  isResImageGen,
-  ReqImageGen,
-  ResImageGen,
+  isResImgVibes,
+  ReqImgVibes,
+  ResImgVibes,
   ReqFetchCloudToken,
   ReqVibeRegisterFPDb,
   ResFetchCloudToken,
@@ -22,7 +22,7 @@ import { ToCloudOpts, TokenAndClaims, TokenStrategie } from "@fireproof/core-typ
 import { Ledger, SuperThis, toCloud } from "use-fireproof";
 import { type } from "arktype";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
-import { registerImageGen } from "./img-gen.js";
+import { registerImgVibes } from "./img-vibes.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -97,14 +97,14 @@ export class VibeSandboxApi {
     );
   }
 
-  imageGen(prompt: string): Promise<Result<ResImageGen>> {
-    return this.request<ReqImageGen, ResImageGen>(
+  imgVibes(prompt: string): Promise<Result<ResImgVibes>> {
+    return this.request<ReqImgVibes, ResImgVibes>(
       {
-        type: "vibe.req.imageGen",
+        type: "vibe.req.imgVibes",
         prompt,
         ...this.svc.vibeApp,
       },
-      { wait: isResImageGen, timeout: 120000 }
+      { wait: isResImgVibes, timeout: 120000 }
     );
   }
 
@@ -300,7 +300,7 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
   const imgVibes = deps["img-vibes"];
   if (imgVibes && window.parent !== window) {
     runTimeReady.push("img-vibes");
-    registerImageGen(ctxVibeApi);
+    registerImgVibes(ctxVibeApi);
   }
   ctxVibeApi.sendRuntimeReady(runTimeReady);
   return;

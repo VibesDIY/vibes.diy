@@ -1,8 +1,8 @@
 import * as React from "react";
 import { combineClasses, defaultClasses } from "../utils/style-utils.js";
-import { imgGenStyles, imgGenTheme } from "../utils/styles.js";
+import { imgVibesStyles, imgVibesTheme } from "../utils/styles.js";
 import { logDebug } from "../utils/debug.js";
-import { ImgGenClasses } from "@vibes.diy/use-vibes-types";
+import { ImgVibesClasses } from "@vibes.diy/use-vibes-types";
 
 interface ControlsBarProps {
   /** Handle delete confirmation */
@@ -13,7 +13,7 @@ interface ControlsBarProps {
   readonly versionIndex: number;
   readonly totalVersions: number;
   /** Custom CSS classes for styling component parts */
-  readonly classes?: Partial<ImgGenClasses>;
+  readonly classes?: Partial<ImgVibesClasses>;
   /** Show control buttons (defaults to true) */
   readonly showControls?: boolean;
   /** Edited prompt for highlighting regenerate button */
@@ -101,14 +101,14 @@ export function ControlsBar({
         <div
           className="imggen-progress"
           style={{
-            ...imgGenStyles.progress,
+            ...imgVibesStyles.progress,
             width: `${progress}%`,
           }}
         />
       )}
 
       {/* Bottom row with controls or status */}
-      <div className={combineClasses(classes.controls)} style={imgGenStyles.controls}>
+      <div className={combineClasses(classes.controls)} style={imgVibesStyles.controls}>
         {showControls ? (
           <>
             {/* Left side: Delete button */}
@@ -127,13 +127,13 @@ export function ControlsBar({
                     onClick={onDeleteClick}
                     className={combineClasses("imggen-button imggen-delete-button", classes.button)}
                     style={{
-                      ...imgGenStyles.button,
+                      ...imgVibesStyles.button,
                       position: "static", // Override CSS absolute positioning
                       top: "auto",
                       right: "auto",
-                      backgroundColor: isConfirming ? imgGenTheme.colors.errorBorder : imgGenStyles.button.background,
-                      color: isConfirming ? "white" : imgGenStyles.button.color,
-                      opacity: isConfirming ? 1 : imgGenStyles.button.opacity,
+                      backgroundColor: isConfirming ? imgVibesTheme.colors.errorBorder : imgVibesStyles.button.background,
+                      color: isConfirming ? "white" : imgVibesStyles.button.color,
+                      opacity: isConfirming ? 1 : imgVibesStyles.button.opacity,
                     }}
                   >
                     ✕
@@ -147,13 +147,13 @@ export function ControlsBar({
                         }}
                         aria-label="Confirm delete"
                         style={{
-                          fontSize: imgGenTheme.typography.fontSize,
+                          fontSize: imgVibesTheme.typography.fontSize,
                           fontWeight: "bold",
                           whiteSpace: "nowrap",
-                          border: `1px solid ${imgGenTheme.colors.errorBorder}`,
-                          background: imgGenTheme.colors.errorBorder,
+                          border: `1px solid ${imgVibesTheme.colors.errorBorder}`,
+                          background: imgVibesTheme.colors.errorBorder,
                           color: "white",
-                          borderRadius: imgGenTheme.dimensions.borderRadius,
+                          borderRadius: imgVibesTheme.dimensions.borderRadius,
                           cursor: "pointer",
                           padding: "2px 8px",
                         }}
@@ -170,11 +170,11 @@ export function ControlsBar({
                         }}
                         aria-label="Cancel delete"
                         style={{
-                          fontSize: imgGenTheme.typography.fontSize,
+                          fontSize: imgVibesTheme.typography.fontSize,
                           whiteSpace: "nowrap",
                           border: "none",
                           background: "none",
-                          color: imgGenTheme.colors.text,
+                          color: imgVibesTheme.colors.text,
                           cursor: "pointer",
                           padding: "0 4px",
                         }}
@@ -188,7 +188,7 @@ export function ControlsBar({
             </div>
 
             {/* Right side: Version controls */}
-            <div className="imggen-control-group" style={imgGenStyles.controlGroup}>
+            <div className="imggen-control-group" style={imgVibesStyles.controlGroup}>
               {/* Previous version button - only when multiple versions */}
               {totalVersions > 1 && (
                 <button
@@ -196,7 +196,7 @@ export function ControlsBar({
                   disabled={versionIndex === 0}
                   onClick={handlePrevVersion}
                   className={combineClasses("imggen-button", classes.button)}
-                  style={imgGenStyles.button}
+                  style={imgVibesStyles.button}
                 >
                   ◀︎
                 </button>
@@ -219,7 +219,7 @@ export function ControlsBar({
                   disabled={versionIndex >= totalVersions - 1}
                   onClick={handleNextVersion}
                   className={combineClasses("imggen-button", classes.button)}
-                  style={imgGenStyles.button}
+                  style={imgVibesStyles.button}
                 >
                   ▶︎
                 </button>
@@ -240,13 +240,13 @@ export function ControlsBar({
                   isRegenerating ? "imggen-button-disabled" : ""
                 )}
                 style={{
-                  ...imgGenStyles.button,
+                  ...imgVibesStyles.button,
                   backgroundColor:
                     editedPrompt !== null && editedPrompt.trim() !== promptText
-                      ? imgGenTheme.colors.accent
-                      : imgGenStyles.button.background,
-                  opacity: isRegenerating ? 0.3 : imgGenStyles.button.opacity,
-                  cursor: isRegenerating ? "not-allowed" : imgGenStyles.button.cursor,
+                      ? imgVibesTheme.colors.accent
+                      : imgVibesStyles.button.background,
+                  opacity: isRegenerating ? 0.3 : imgVibesStyles.button.opacity,
+                  cursor: isRegenerating ? "not-allowed" : imgVibesStyles.button.cursor,
                 }}
               >
                 <span className={isRegenerating ? "imggen-regen-spinning" : ""}>⟳</span>
@@ -254,7 +254,7 @@ export function ControlsBar({
             </div>
           </>
         ) : progress < 100 ? (
-          <div className="imggen-status-text" style={imgGenStyles.statusText}>
+          <div className="imggen-status-text" style={imgVibesStyles.statusText}>
             Generating...
           </div>
         ) : null}

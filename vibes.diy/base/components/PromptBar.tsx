@@ -1,6 +1,6 @@
 import * as React from "react";
-import { combineClasses, defaultClasses, ImgGenClasses } from "../utils/style-utils.js";
-import { imgGenStyles } from "../utils/styles.js";
+import { combineClasses, defaultClasses, ImgVibesClasses } from "../utils/style-utils.js";
+import { imgVibesStyles } from "../utils/styles.js";
 
 interface PromptBarProps {
   readonly promptText: string;
@@ -10,7 +10,7 @@ interface PromptBarProps {
 
   readonly handlePromptEdit: (prompt: string) => void;
   /** Custom CSS classes for styling component parts */
-  readonly classes?: Partial<ImgGenClasses>;
+  readonly classes?: Partial<ImgVibesClasses>;
 }
 
 /**
@@ -24,8 +24,8 @@ export function PromptBar({
   classes = defaultClasses,
 }: PromptBarProps) {
   return (
-    <div style={imgGenStyles.topLine}>
-      <div className={combineClasses(classes.prompt)} style={imgGenStyles.prompt}>
+    <div style={imgVibesStyles.topLine}>
+      <div className={combineClasses(classes.prompt)} style={imgVibesStyles.prompt}>
         {editedPrompt !== null ? (
           <input
             type="text"
@@ -42,8 +42,8 @@ export function PromptBar({
             // Removed onBlur handler to prevent edit mode from being exited when clicking buttons
             autoFocus
             style={{
-              ...imgGenStyles.promptInput,
-              ...imgGenStyles.promptInputEditMode,
+              ...imgVibesStyles.promptInput,
+              ...imgVibesStyles.promptInputEditMode,
             }}
             aria-label="Edit prompt"
           />
@@ -55,8 +55,8 @@ export function PromptBar({
               setEditedPrompt(promptText);
             }}
             style={{
-              ...imgGenStyles.promptText,
-              ...imgGenStyles.truncate,
+              ...imgVibesStyles.promptText,
+              ...imgVibesStyles.truncate,
             }}
             title="Click to edit prompt"
           >
