@@ -40,7 +40,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
     <div
       ref={sidebarRef}
       data-testid="session-sidebar"
-      className={`bg-light-background-00 dark:bg-dark-background-00 fixed top-0 left-0 z-10 h-full shadow-lg transition-all duration-300 ${
+      className={`bg-light-background-00 dark:bg-dark-background-00 fixed top-0 left-0 z-10 h-full shadow-lg transition-all duration-300 border-r-4 border-[var(--vibes-near-black)] ${
         isVisible ? "w-64 translate-x-0" : "w-64 -translate-x-full"
       }`}
     >
