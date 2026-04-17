@@ -19,6 +19,7 @@ packages:
   - "vibes.diy/tests/simple-chat"
   - "vibes.diy/stable-entry"
   - "vibes.diy/failback-homepage"
+  - "img-gen/pkg"
   - "prompts/pkg"
   - "prompts/tests"
   - "hosting/base"

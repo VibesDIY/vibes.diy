@@ -31,9 +31,9 @@
     "featured": true
   },
   {
-    "id": "nanobanana/nanobanana-img",
-    "name": "Nanobanana Image",
-    "description": "Nanobanana is a fast and efficient imaging model optimized for generating high-quality images",
+    "id": "google/gemini-3.1-flash-image-preview",
+    "name": "Gemini Flash Image",
+    "description": "Google's Gemini 3.1 Flash image generation model",
     "featured": false,
     "preSelected": ["img"]
   },

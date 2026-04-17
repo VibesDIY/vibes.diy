@@ -296,6 +296,10 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
   if (callAI && window.parent !== window) {
     runTimeReady.push("call-ai");
     registerCallAI(ctxVibeApi);
+  }
+  const imgVibes = deps["img-vibes"];
+  if (imgVibes && window.parent !== window) {
+    runTimeReady.push("img-vibes");
     registerImageGen(ctxVibeApi);
   }
   ctxVibeApi.sendRuntimeReady(runTimeReady);
