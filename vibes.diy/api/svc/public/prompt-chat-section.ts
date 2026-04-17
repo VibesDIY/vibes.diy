@@ -397,7 +397,7 @@ async function getResChatFromMode(
   orig: ReqPromptChatSection
 ): Promise<Result<ResChat>> {
   let iResChat;
-  if (isReqPromptApplicationChatSection(orig)) {
+  if (isReqPromptApplicationChatSection(orig) || isReqPromptImageChatSection(orig)) {
     iResChat = await vctx.sql.db
       .select()
       .from(vctx.sql.tables.applicationChats)
