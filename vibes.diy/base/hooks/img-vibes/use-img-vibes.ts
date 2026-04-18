@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useFireproof } from "@fireproof/use-fireproof";
+// import { useFireproof } from "@fireproof/use-fireproof";
 import type { UseImgVibesOptions, UseImgVibesResult } from "@vibes.diy/use-vibes-types";
 import { imgVibes } from "@vibes.diy/vibe-runtime";
 
@@ -7,13 +7,13 @@ import { imgVibes } from "@vibes.diy/vibe-runtime";
  * Hook for generating images via the vibes.diy service API.
  * Routes through the WebSocket bridge: sandbox → host → server mode='img' chat → block.image events.
  *
- * Stores image URLs (not blobs) in Fireproof for persistence.
+ * TODO: Re-enable Fireproof storage for persistence once the sandbox DB integration is working.
  */
 export function useImgVibes({
   prompt,
   _id,
   options = {},
-  database = "ImgVibes",
+  // database = "ImgVibes",
   skip = false,
   generationId,
 }: Partial<UseImgVibesOptions>): UseImgVibesResult {
@@ -23,7 +23,7 @@ export function useImgVibes({
   const [error, setError] = useState<Error | null>(null);
   const [document, setDocument] = useState<UseImgVibesResult["document"]>(null);
 
-  const { database: db } = useFireproof(typeof database === "string" ? database : database.name);
+  // const { database: db } = useFireproof(typeof database === "string" ? database : database.name);
 
   // Track the current generation to prevent duplicate requests
   const currentGenRef = useRef<string | null>(null);
@@ -37,21 +37,21 @@ export function useImgVibes({
     return undefined;
   })();
 
-  // Load existing document by _id
-  useEffect(() => {
-    if (!_id || skip) return;
-    db.get(_id)
-      .then((doc: unknown) => {
-        setDocument(doc as UseImgVibesResult["document"]);
-        const imgUrl = (doc as { imageUrl?: string }).imageUrl;
-        if (imgUrl) {
-          setImageData(imgUrl);
-        }
-      })
-      .catch((e: Error) => {
-        setError(new Error(`Failed to load image document: ${e.message}`));
-      });
-  }, [_id, db, skip]);
+  // TODO: Re-enable loading existing document by _id once Fireproof is integrated
+  // useEffect(() => {
+  //   if (!_id || skip) return;
+  //   db.get(_id)
+  //     .then((doc: unknown) => {
+  //       setDocument(doc as UseImgVibesResult["document"]);
+  //       const imgUrl = (doc as { imageUrl?: string }).imageUrl;
+  //       if (imgUrl) {
+  //         setImageData(imgUrl);
+  //       }
+  //     })
+  //     .catch((e: Error) => {
+  //       setError(new Error(`Failed to load image document: ${e.message}`));
+  //     });
+  // }, [_id, db, skip]);
 
   // Generate new image when prompt changes
   useEffect(() => {
@@ -78,26 +78,28 @@ export function useImgVibes({
         }
 
         setImageData(imageUrl);
-        setProgress(90);
-
-        // Store in Fireproof
-        const now = Date.now();
-        const doc = await db.put({
-          type: "image",
-          prompt,
-          imageUrl,
-          imageUrls: urls,
-          created: now,
-          currentVersion: 0,
-          versions: [{ id: "v1", created: now }],
-          currentPromptKey: "p1",
-          prompts: { p1: { text: prompt, created: now } },
-        });
-
-        const savedDoc = await db.get(doc.id);
-        setDocument(savedDoc as UseImgVibesResult["document"]);
         setProgress(100);
         setLoading(false);
+
+        // TODO: Re-enable Fireproof storage before merge
+        // try {
+        //   const now = Date.now();
+        //   const doc = await db.put({
+        //     type: "image",
+        //     prompt,
+        //     imageUrl,
+        //     imageUrls: urls,
+        //     created: now,
+        //     currentVersion: 0,
+        //     versions: [{ id: "v1", created: now }],
+        //     currentPromptKey: "p1",
+        //     prompts: { p1: { text: prompt, created: now } },
+        //   });
+        //   const savedDoc = await db.get(doc.id);
+        //   setDocument(savedDoc as UseImgVibesResult["document"]);
+        // } catch (dbErr) {
+        //   console.warn("[ImgVibes] Fireproof storage failed:", dbErr);
+        // }
       })
       .catch((err: unknown) => {
         console.error("[ImgVibes] Image generation failed:", err);
@@ -105,7 +107,7 @@ export function useImgVibes({
         setLoading(false);
         currentGenRef.current = null;
       });
-  }, [prompt, generationId, _id, skip, db]);
+  }, [prompt, generationId, _id, skip]);
 
   return {
     imageData,
