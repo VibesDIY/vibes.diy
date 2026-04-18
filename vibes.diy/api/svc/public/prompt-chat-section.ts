@@ -135,7 +135,7 @@ async function appendBlockEvent({
     tid: req.outerTid,
     src: "promptChatSection",
   } satisfies InMsgBase<SectionEvent>);
-  // console.log("Emitting block event for promptId:", promptId, "blockSeq:", blockSeq, "connections:", vctx.connections);
+  console.log("[appendBlockEvent] emitting:", evt.type, "connections:", vctx.connections.size, "chatId:", req.chatId);
   for (const conn of vctx.connections) {
     const chatCtx = conn.chatIds.get(req.chatId);
     if (chatCtx) {
