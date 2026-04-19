@@ -296,29 +296,35 @@ export async function handlePromptContext({
 export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[]): ChatMessage[] {
   const messages: ChatMessage[] = [];
   const assistantLines: string[] = [];
-  const flushAssistant = () => {
+  function flushAssistant() {
     if (assistantLines.length === 0) return;
     messages.push({
       role: "assistant",
       content: [{ type: "text", text: assistantLines.join("\n") }],
     });
     assistantLines.length = 0;
-  };
+  }
   for (const msg of sectionMsgs) {
-    if (isPromptReq(msg)) {
-      flushAssistant();
-      // Invariant: each stored prompt.req carries only the newest user turn
-      // (see handlePromptContext); full history is rebuilt across sections
-      // rather than duplicated per request.
-      messages.push(...msg.request.messages.filter((m) => m.role === "user"));
-    } else if (isToplevelLine(msg)) {
-      assistantLines.push(msg.line);
-    } else if (isCodeBegin(msg)) {
-      assistantLines.push("```" + msg.lang);
-    } else if (isCodeLine(msg)) {
-      assistantLines.push(msg.line);
-    } else if (isCodeEnd(msg)) {
-      assistantLines.push("```");
+    switch (true) {
+      case isPromptReq(msg):
+        flushAssistant();
+        // Invariant: each stored prompt.req carries only the newest user turn
+        // (see handlePromptContext); full history is rebuilt across sections
+        // rather than duplicated per request.
+        messages.push(...msg.request.messages.filter((m) => m.role === "user"));
+        break;
+      case isToplevelLine(msg):
+        assistantLines.push(msg.line);
+        break;
+      case isCodeBegin(msg):
+        assistantLines.push("```" + msg.lang);
+        break;
+      case isCodeLine(msg):
+        assistantLines.push(msg.line);
+        break;
+      case isCodeEnd(msg):
+        assistantLines.push("```");
+        break;
     }
   }
   flushAssistant();
