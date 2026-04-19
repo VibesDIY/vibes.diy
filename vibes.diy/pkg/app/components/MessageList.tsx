@@ -299,6 +299,7 @@ function MessageList({
     let collectedMsg: LineMsg[] = [];
     let codeBegin: CodeBeginMsg;
     let toplevelBegin: ToplevelBeginMsg;
+    let hasPromptReq = false;
     // let traceBlockId: BlockEndMsg | undefined
     const nprompt = fixCurrentStreaming(promptBlock);
     // if (promptBlock.msgs.length !== nprompt.msgs.length) {
@@ -323,6 +324,7 @@ function MessageList({
           acc.push(<PromptErrorMsg key={`error-${msg.streamId}`} msg={msg} onRetry={onRetry} />);
           break;
         case isPromptReq(msg):
+          hasPromptReq = true;
           acc.push(<Prompt key={`prompt-${msg.streamId}`} msg={msg} />);
           break;
 
@@ -330,7 +332,13 @@ function MessageList({
           blockMsgs.splice(0, blockMsgs.length);
           break;
         case isBlockEnd(msg):
-          // console.log(`Completed a Chat --- need to register the clicks`, msg);
+          if (!hasPromptReq && blockMsgs.some((b) => b.type === "Code")) {
+            acc.push(
+              <div key={`edited-${msg.blockId}`} className="mx-4 text-sm italic text-gray-400 dark:text-gray-500">
+                User edited code
+              </div>
+            );
+          }
           blockMsgs.forEach((block, idx) => {
             // console.log(">>>>>", block.type, block.begin.sectionId, block.lines.length)
             if (block.type === "Code") {

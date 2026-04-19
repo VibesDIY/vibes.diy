@@ -43,7 +43,9 @@ export function PromptsTab({ isLoading, chatDetails, screenshots, onToggleMode }
         const isToggling = toggling === p.fsId;
         return (
           <div key={i} className="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-3">
-            <p className="mb-2 text-sm text-gray-800 dark:text-gray-200">{p.prompt}</p>
+            <p className="mb-2 text-sm text-gray-800 dark:text-gray-200">
+              {p.prompt || <span className="italic text-gray-400 dark:text-gray-500">User edited code</span>}
+            </p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <a
