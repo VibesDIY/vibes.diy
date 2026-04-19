@@ -15,6 +15,7 @@ import {
   InMsgBase,
   isReqCreationPromptChatSection,
   isReqPromptApplicationChatSection,
+  isPromptFSStyle,
   isReqPromptFSChatSection,
   isReqPromptFSUpdateChatSection,
   isReqPromptImageChatSection,
@@ -200,7 +201,7 @@ export async function handlePromptContext({
       }
     }
   }
-  if (code.length > 0 && resChat.mode === "chat") {
+  if (code.length > 0 && (resChat.mode === "chat" || isPromptFSStyle(resChat.mode))) {
     // here is where the music plays
     const rFs = await ensureAppSlugItem(vctx, {
       type: "vibes.diy.req-ensure-app-slug",
@@ -836,7 +837,8 @@ export async function handleFSPrompt({
               timestamp: new Date(),
               lang: file.lang,
               blockNr,
-            } as CodeEndMsg,
+              stats: { lines: file.content.split("\n").length, bytes },
+            } satisfies CodeEndMsg,
           ];
         }),
       ];
@@ -863,6 +865,21 @@ export async function handleFSPrompt({
         timestamp: new Date(),
       } satisfies BlockEndMsg;
       collectedMsgs.push(value);
+
+      // Emit code blocks to WebSocket so the client can display them
+      for (const msg of collectedMsgs) {
+        if (!isBlockEnd(msg)) {
+          await appendBlockEvent({
+            ctx,
+            vctx,
+            req,
+            promptId,
+            blockSeq: blockSeq++,
+            evt: msg,
+            emitMode: "emit-only",
+          });
+        }
+      }
 
       return handleEndMsg({
         collectedMsgs,
