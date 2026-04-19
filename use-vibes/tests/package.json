@@ -62,7 +62,7 @@
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:0.0.0",
     "react-dom": "^19.2.5",
-    "use-fireproof": "0.24.16",
+    "use-fireproof": "0.24.19",
     "use-vibes": "workspace:0.0.0",
     "vite": "^7.3.1",
     "vite-tsconfig-paths": "^6.1.1",
