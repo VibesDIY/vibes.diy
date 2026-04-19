@@ -21,7 +21,7 @@
     "@vitejs/plugin-react": "5.2.0",
     "@vitest/browser-playwright": "~4.1.4",
     "eslint": "^10.0.3",
-    "eslint-plugin-react-hooks": "^7.0.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "typescript": "~6.0.2",
