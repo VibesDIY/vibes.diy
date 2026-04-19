@@ -5,7 +5,7 @@ import { useImgVibes } from "../hooks/img-vibes/use-img-vibes.js";
 export interface ImgVibesProps {
   prompt?: string;
   _id?: string;
-  inputImage?: File;
+  images?: File[];
   database?: string | Database;
   className?: string;
   alt?: string;
@@ -22,8 +22,9 @@ function promptToId(prompt: string): string {
   return `img-${(hash >>> 0).toString(36)}`;
 }
 
-export function ImgVibes({ prompt, _id: propId, inputImage, database, className, alt, style, showControls = true }: ImgVibesProps) {
-  const imageKey = inputImage ? `${inputImage.name}-${inputImage.lastModified}` : "";
+export function ImgVibes({ prompt, _id: propId, images, database, className, alt, style, showControls = true }: ImgVibesProps) {
+  const inputImage = images?.[0];
+  const imageKey = inputImage ? `${inputImage.name}-${inputImage.size}-${inputImage.lastModified}` : "";
   const stableId = useMemo(() => propId ?? (prompt ? promptToId(prompt + imageKey) : undefined), [propId, prompt, imageKey]);
   const [generationId, setGenerationId] = useState<string | undefined>(undefined);
   const [versionIndex, setVersionIndex] = useState<number | null>(null);
