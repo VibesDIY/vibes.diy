@@ -100,8 +100,8 @@ function setupSqlPlugin() {
       const isPg = process.env.DB_FLAVOUR === "pg" && !!process.env.NEON_DATABASE_URL;
 
       const schemaFile = isPg
-        ? join(import.meta.dirname, "node_modules/@vibes.diy/api-svc/sql/vibes-diy-api-schema-pg.ts")
-        : join(import.meta.dirname, "node_modules/@vibes.diy/api-svc/sql/vibes-diy-api-schema-sqlite.ts");
+        ? join(import.meta.dirname, "node_modules/@vibes.diy/api-sql/vibes-diy-api-schema-pg.ts")
+        : join(import.meta.dirname, "node_modules/@vibes.diy/api-sql/vibes-diy-api-schema-sqlite.ts");
       const hashFile = join(import.meta.dirname, "dist", isPg ? ".neon-schema-hash" : ".sqlite-schema-hash");
 
       const currentHash = await schemaHash(schemaFile);
