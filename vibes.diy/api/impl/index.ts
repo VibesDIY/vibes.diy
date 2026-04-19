@@ -668,7 +668,7 @@ class LLMChatImpl implements LLMChat {
     }
   }
 
-  async prompt(msg: LLMRequest): Promise<Result<ResPromptChatSection, VibesDiyError>> {
+  async prompt(msg: LLMRequest, opts?: { inputImageBase64?: string }): Promise<Result<ResPromptChatSection, VibesDiyError>> {
     const mode = this.res.mode;
     if (!isPromptLLMStyle(mode)) {
       return Result.Err({
@@ -685,6 +685,7 @@ class LLMChatImpl implements LLMChat {
         chatId: this.res.chatId,
         outerTid: this.tid, //leaking but necessary streaming
         prompt: msg,
+        ...(mode === "img" && opts?.inputImageBase64 ? { inputImageBase64: opts.inputImageBase64 } : {}),
       },
       {
         resMatch: isResPromptChatSection,
