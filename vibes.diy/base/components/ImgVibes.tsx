@@ -23,7 +23,8 @@ function promptToId(prompt: string): string {
 }
 
 export function ImgVibes({ prompt, _id: propId, inputImage, database, className, alt, style, showControls = true }: ImgVibesProps) {
-  const stableId = useMemo(() => propId ?? (prompt ? promptToId(prompt) : undefined), [propId, prompt]);
+  const imageKey = inputImage ? `${inputImage.name}-${inputImage.lastModified}` : "";
+  const stableId = useMemo(() => propId ?? (prompt ? promptToId(prompt + imageKey) : undefined), [propId, prompt, imageKey]);
   const [generationId, setGenerationId] = useState<string | undefined>(undefined);
   const [versionIndex, setVersionIndex] = useState<number | null>(null);
 

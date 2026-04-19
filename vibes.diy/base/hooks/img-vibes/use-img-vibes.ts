@@ -42,8 +42,8 @@ export function useImgVibes({
         // Doc doesn't exist yet
       }
 
-      // Cache hit: doc exists with versions, and this isn't a regen request
-      if (existingDoc?.versions?.length && !isRegen) {
+      // Cache hit: doc exists with versions, and this isn't a regen request or img2img
+      if (existingDoc?.versions?.length && !isRegen && !inputImage) {
         const ver = existingDoc.versions[existingDoc.currentVersion ?? 0];
         if (ver?.assetUrl) {
           setDocument(existingDoc);
