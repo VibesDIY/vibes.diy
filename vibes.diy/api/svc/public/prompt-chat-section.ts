@@ -590,7 +590,7 @@ async function handlerLlmRequest({
     headers: vctx.params.llm.headers,
     logprobs: req.mode !== "img",
     stream: true,
-    ...(isInitialTurn ? { verbosity: "low" as const } : {}),
+    ...(isInitialTurn && req.mode === "chat" ? { verbosity: "low" as const } : {}),
     ...(req.mode === "img" ? { modalities: ["text", "image"] } : {}),
   };
 
