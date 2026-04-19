@@ -86,6 +86,7 @@ export const reqPromptImageChatSection = type({
   chatId: "string",
   outerTid: "string", // this is used to emit events to the current chat session
   prompt: LLMRequest,
+  "inputImageBase64?": "string",
 });
 
 export function isReqPromptImageChatSection(obj: unknown): obj is typeof reqPromptImageChatSection.infer {

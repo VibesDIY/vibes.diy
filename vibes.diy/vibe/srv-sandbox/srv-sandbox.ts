@@ -398,13 +398,12 @@ function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
                 message: err?.message ?? String(err),
               } satisfies ResErrorImgVibes);
             });
-          const content: Array<{ type: "text"; text: string }> = [{ type: "text", text: ctx.validated.prompt }];
-          if (ctx.validated.inputImageBase64) {
-            content.push({ type: "text", text: `__img2img__:${ctx.validated.inputImageBase64}` });
-          }
-          const rPrompt = await rChat.Ok().prompt({
-            messages: [{ role: "user", content }],
-          });
+          const rPrompt = await rChat
+            .Ok()
+            .prompt(
+              { messages: [{ role: "user", content: [{ type: "text", text: ctx.validated.prompt }] }] },
+              ctx.validated.inputImageBase64 ? { inputImageBase64: ctx.validated.inputImageBase64 } : undefined
+            );
           if (rPrompt.isErr()) {
             return ctx.send.send(ctx, {
               tid: ctx.validated.tid,

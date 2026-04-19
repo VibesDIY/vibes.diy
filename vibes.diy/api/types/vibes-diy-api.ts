@@ -72,7 +72,7 @@ export type LLMChatEntry = typeof LLMChatEntry.infer;
 export type OnResponseTypes = ResError | SectionEvent;
 
 export interface LLMChat extends LLMChatEntry {
-  prompt(req: LLMRequest): Promise<Result<ResPromptChatSection, VibesDiyError>>;
+  prompt(req: LLMRequest, opts?: { inputImageBase64?: string }): Promise<Result<ResPromptChatSection, VibesDiyError>>;
   promptFS(req: FSUpdate | VibeFile[]): Promise<Result<ResPromptChatSection, VibesDiyError>>;
 
   readonly sectionStream: ReadableStream<OnResponseTypes>;
