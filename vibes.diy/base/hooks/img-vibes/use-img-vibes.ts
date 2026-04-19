@@ -26,7 +26,7 @@ export function useImgVibes({
   useEffect(() => {
     if (skip || !_id) return;
 
-    const genKey = `${_id}-${generationId ?? ""}`;
+    const genKey = `${_id}-${generationId ?? ""}-${inputImage?.name ?? ""}${inputImage?.lastModified ?? ""}`;
     if (currentGenRef.current === genKey) return;
     currentGenRef.current = genKey;
 
