@@ -20,6 +20,7 @@ import {
   isReqPromptFSChatSection,
   isReqPromptFSUpdateChatSection,
   isReqPromptImageChatSection,
+  reqPromptImageChatSection,
   isReqPromptLLMChatSection,
   LLMHeaders,
   type PromptStyle,
@@ -624,7 +625,7 @@ async function handleProdiaImageRequest({
   scope: Scope;
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
   vctx: VibesApiSQLCtx;
-  req: ReqWithVerifiedAuth<ReqPromptLLMChatSection>;
+  req: ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>;
   promptId: string;
   blockSeq: number;
 }): Promise<Result<number>> {
@@ -633,21 +634,14 @@ async function handleProdiaImageRequest({
     return Result.Err("PRODIA_TOKEN not configured");
   }
 
-  // Extract prompt text and optional input image from the last user message
+  // Extract prompt text from the last user message
   const userMessages = req.prompt.messages.filter((m) => m.role === "user");
   const lastUserMsg = userMessages[userMessages.length - 1];
-  let promptText = "";
-  let inputImageDataUrl: string | undefined;
-  for (const part of lastUserMsg?.content ?? []) {
-    if (part.text.startsWith("__img2img__:")) {
-      inputImageDataUrl = part.text.slice("__img2img__:".length);
-    } else if (!promptText) {
-      promptText = part.text;
-    }
-  }
+  const promptText = lastUserMsg?.content?.[0]?.text ?? "";
   if (!promptText) {
     return Result.Err("No prompt text found in user messages");
   }
+  const inputImageDataUrl = req.inputImageBase64;
 
   // Emit prompt.req
   await scope
@@ -1179,7 +1173,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             scope,
             ctx,
             vctx,
-            req: req as ReqWithVerifiedAuth<ReqPromptLLMChatSection>,
+            req: orig as ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>,
             promptId,
             blockSeq,
           });
