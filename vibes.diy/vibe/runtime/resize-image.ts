@@ -6,7 +6,8 @@ export async function resizeImageToBase64(file: File, maxDim = 1024, quality = 0
   const h = Math.round(height * scale);
 
   const canvas = new OffscreenCanvas(w, h);
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Failed to get 2d context from OffscreenCanvas");
   ctx.drawImage(bitmap, 0, 0, w, h);
   bitmap.close();
 
