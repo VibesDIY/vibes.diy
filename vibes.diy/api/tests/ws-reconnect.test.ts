@@ -7,7 +7,6 @@ import { cfServe, CFInject, noopCache, vibesMsgEvento, WSSendProvider } from "@v
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
-import { createIsolatedDB } from "./globalSetup.libsql.js";
 
 function wireUpWsPair(wsPair: ReturnType<typeof TestWSPair.create>, appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>) {
   const wsEvento = vibesMsgEvento();
@@ -30,8 +29,7 @@ describe("WebSocket disconnection", { timeout: (inject("DB_FLAVOUR" as never) as
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
-    const isolatedDbUrl = await createIsolatedDB(import.meta.dirname, "ws-reconnect");
-    appCtx = await createVibeDiyTestCtx(sthis, deviceCA, isolatedDbUrl);
+    appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
     const testUser = await createTestUser({ sthis, deviceCA });
     getToken = async () => Result.Ok(await testUser.getDashBoardToken());
 
