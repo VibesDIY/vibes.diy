@@ -20,7 +20,7 @@ import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import type { ViewType } from "@vibes.diy/prompts";
-import { isCodeBegin } from "@vibes.diy/call-ai-v2";
+import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
 import ChatInterface from "../../components/ChatInterface.js";
@@ -334,6 +334,8 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     // }
   }, []);
 
+  const pendingSavePromptIdRef = useRef<string | null>(null);
+
   const handleOnCodeSave = useCallback(() => {
     console.log(`Saving code changes...`, editorState);
     if (!chat) return;
@@ -356,9 +358,29 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           setEditorState(editorState); // restore unsaved state
         } else {
           toast.success(`Code changes saved`);
+          pendingSavePromptIdRef.current = r.Ok().promptId;
+          console.log(`[CodeSave] waiting for block.end with promptId: ${r.Ok().promptId}`);
         }
       });
   }, [editorState, chat]);
+
+  // Navigate to new fsId after save by watching promptState for the block.end matching the save's promptId
+  useEffect(() => {
+    if (!pendingSavePromptIdRef.current) return;
+    const targetPromptId = pendingSavePromptIdRef.current;
+    for (const block of [...promptState.blocks].reverse()) {
+      for (const msg of block.msgs) {
+        if (isBlockEnd(msg) && msg.streamId === targetPromptId && msg.fsRef) {
+          pendingSavePromptIdRef.current = null;
+          const sp = new URLSearchParams(searchParams);
+          if (!sp.has("view")) sp.set("view", "preview");
+          console.log(`[CodeSave] navigating to new fsId: ${msg.fsRef.fsId} (promptId: ${targetPromptId})`);
+          navigate({ pathname: `/chat/${userSlug}/${appSlug}/${msg.fsRef.fsId}`, search: sp.toString() }, { replace: true });
+          return;
+        }
+      }
+    }
+  }, [promptState.blocks, searchParams, navigate, userSlug, appSlug, fsId]);
 
   useEffect(() => {
     if (inConstruction) return;
