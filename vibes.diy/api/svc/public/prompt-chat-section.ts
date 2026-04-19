@@ -152,6 +152,7 @@ export async function handlePromptContext({
   value,
   collectedMsgs: iCollectedMsgs,
   blockChunks = 100,
+  fileSystem,
 }: {
   vctx: VibesApiSQLCtx;
   req: ReqWithVerifiedAuth<ReqPromptChatSection>;
@@ -161,6 +162,7 @@ export async function handlePromptContext({
   value: BlockEndMsg;
   collectedMsgs: PromptAndBlockMsgs[];
   blockChunks?: number;
+  fileSystem?: VibeFile[];
 }): Promise<Result<{ blockSeq: number; fsRef: Option<FileSystemRef> }>> {
   let fsRef: Option<FileSystemRef> = Option.None();
   const code: CodeBlocks[] = [];
@@ -203,13 +205,9 @@ export async function handlePromptContext({
   }
   if (code.length > 0 && (resChat.mode === "chat" || isPromptFSStyle(resChat.mode))) {
     // here is where the music plays
-    const rFs = await ensureAppSlugItem(vctx, {
-      type: "vibes.diy.req-ensure-app-slug",
-      mode: "dev",
-      // chatId: req.chatId,
-      appSlug: resChat.appSlug,
-      userSlug: resChat.userSlug,
-      fileSystem: code.reduce((acc, block, idx) => {
+    const resolvedFileSystem =
+      fileSystem ??
+      code.reduce((acc, block, idx) => {
         if (block.end) {
           const content = block.lines.map((l) => l.line).join("\n");
           // console.log("Code to add to file system:", content, block.begin.lang);
@@ -234,7 +232,14 @@ export async function handlePromptContext({
           });
         }
         return acc;
-      }, [] as VibeFile[]),
+      }, [] as VibeFile[]);
+    const rFs = await ensureAppSlugItem(vctx, {
+      type: "vibes.diy.req-ensure-app-slug",
+      mode: "dev",
+      // chatId: req.chatId,
+      appSlug: resChat.appSlug,
+      userSlug: resChat.userSlug,
+      fileSystem: resolvedFileSystem,
       auth: req.auth,
       _auth: req._auth,
     });
@@ -595,6 +600,7 @@ async function handleEndMsg({
   promptId,
   value,
   blockSeq,
+  fileSystem,
 }: {
   collectedMsgs: PromptAndBlockMsgs[];
   vctx: VibesApiSQLCtx;
@@ -604,8 +610,9 @@ async function handleEndMsg({
   promptId: string;
   value: BlockEndMsg;
   blockSeq: number;
+  fileSystem?: VibeFile[];
 }): Promise<Result<number>> {
-  const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs });
+  const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs, fileSystem });
   if (r.isErr()) {
     return Result.Err(r);
   }
@@ -890,6 +897,7 @@ export async function handleFSPrompt({
         promptId,
         value,
         blockSeq,
+        fileSystem,
       });
     })
     .do();
