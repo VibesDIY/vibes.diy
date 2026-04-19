@@ -50,6 +50,7 @@ jobs:
           MAX_APP_SLUG_PER_USER_ID: ${{ vars.MAX_APP_SLUG_PER_USER_ID }}
           WORKSPACE_NPM_URL: ${{ vars.WORKSPACE_NPM_URL }}
           VIBES_DIY_API_URL: ${{ vars.VIBES_DIY_API_URL }}
+          PRODIA_TOKEN: ${{ secrets.PRODIA_TOKEN }}
 
   deploy_cli:
     runs-on: ubuntu-latest
@@ -87,3 +88,4 @@ jobs:
           MAX_APP_SLUG_PER_USER_ID: ${{ vars.MAX_APP_SLUG_PER_USER_ID }}
           WORKSPACE_NPM_URL: ${{ vars.WORKSPACE_NPM_URL }}
           VIBES_DIY_API_URL: ${{ vars.VIBES_DIY_API_URL }}
+          PRODIA_TOKEN: ${{ secrets.PRODIA_TOKEN }}

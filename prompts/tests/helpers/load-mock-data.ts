@@ -31,12 +31,12 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
       } as Response);
     }
 
-    if (url.includes("image-gen.md")) {
+    if (url.includes("img-vibes.md")) {
       return Promise.resolve({
         ok: true,
         text: () =>
           Promise.resolve(
-            "<imageGen-docs>\n# Image Generation Documentation\nReal ImageGen docs content from pkg/llms/image-gen.md\n</imageGen-docs>"
+            "<imgVibes-docs>\n# Image Generation Documentation\nReal ImgVibes docs content from pkg/llms/img-vibes.md\n</imgVibes-docs>"
           ),
       } as Response);
     }

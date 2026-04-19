@@ -7,6 +7,9 @@ import {
   isResCallAI,
   ReqCallAI,
   ResCallAI,
+  isResImgVibes,
+  ReqImgVibes,
+  ResImgVibes,
   ReqFetchCloudToken,
   ReqVibeRegisterFPDb,
   ResFetchCloudToken,
@@ -19,6 +22,7 @@ import { ToCloudOpts, TokenAndClaims, TokenStrategie } from "@fireproof/core-typ
 import { Ledger, SuperThis, toCloud } from "use-fireproof";
 import { type } from "arktype";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
+import { registerImgVibes } from "./img-vibes.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -90,6 +94,17 @@ export class VibeSandboxApi {
         schema: opts.schema,
       },
       { wait: isResCallAI, timeout: 60000 }
+    );
+  }
+
+  imgVibes(prompt: string): Promise<Result<ResImgVibes>> {
+    return this.request<ReqImgVibes, ResImgVibes>(
+      {
+        type: "vibe.req.imgVibes",
+        prompt,
+        ...this.svc.vibeApp,
+      },
+      { wait: isResImgVibes, timeout: 120000 }
     );
   }
 
@@ -281,6 +296,11 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
   if (callAI && window.parent !== window) {
     runTimeReady.push("call-ai");
     registerCallAI(ctxVibeApi);
+  }
+  const imgVibes = deps["img-vibes"];
+  if (imgVibes && window.parent !== window) {
+    runTimeReady.push("img-vibes");
+    registerImgVibes(ctxVibeApi);
   }
   ctxVibeApi.sendRuntimeReady(runTimeReady);
   return;

@@ -12,8 +12,7 @@ export { callAi as callAI } from "./api.js";
 
 export { getMeta } from "./response-metadata.js";
 
-// Export image generation function
-export { imageGen } from "./image.js";
+// imgVibes removed — now routed through vibes.diy service (mode='img')
 
 export { entriesHeaders, joinUrlParts } from "./utils.js";
 export { callAiEnv } from "./env.js";

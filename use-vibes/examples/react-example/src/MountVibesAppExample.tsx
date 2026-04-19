@@ -3,7 +3,7 @@ import { mountVibesApp, type MountVibesAppResult } from "use-vibes";
 
 type ExampleKey =
   | "home"
-  | "image-generator"
+  | "img-vibeserator"
   | "todo-list"
   | "vibes-generator"
   | "vibe-control"

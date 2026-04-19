@@ -2,7 +2,7 @@ import { FPCloudClaim } from "@vibes.diy/api-types";
 import { type } from "arktype";
 // import { FPCloudClaimSchema } from "@fireproof/core-types-protocols-cloud";
 
-export * from "./img-gen.js";
+export * from "./img-vibes.js";
 
 const Base = type({
   tid: "string",
@@ -213,4 +213,50 @@ export function isResOkCallAI(x: unknown): x is ResOkCallAI {
 
 export function isResErrorCallAI(x: unknown): x is ResErrorCallAI {
   return !(ResErrorCallAI(x) instanceof type.errors);
+}
+
+// Image generation request/response types
+export const ReqImgVibes = type({
+  type: "'vibe.req.imgVibes'",
+  userSlug: "string",
+  appSlug: "string",
+  prompt: "string",
+}).and(Base);
+
+export type ReqImgVibes = typeof ReqImgVibes.infer;
+
+export function isReqImgVibes(x: unknown): x is ReqImgVibes {
+  return !(ReqImgVibes(x) instanceof type.errors);
+}
+
+export const ResOkImgVibes = type({
+  type: "'vibe.res.imgVibes'",
+  status: "'ok'",
+  imageUrls: "string[]",
+}).and(Base);
+
+export type ResOkImgVibes = typeof ResOkImgVibes.infer;
+
+export const ResErrorImgVibes = type({
+  type: "'vibe.res.imgVibes'",
+  status: "'error'",
+  message: "string",
+}).and(Base);
+
+export type ResErrorImgVibes = typeof ResErrorImgVibes.infer;
+
+const ResImgVibes = ResOkImgVibes.or(ResErrorImgVibes);
+
+export type ResImgVibes = typeof ResImgVibes.infer;
+
+export function isResImgVibes(x: unknown): x is ResImgVibes {
+  return !(ResImgVibes(x) instanceof type.errors);
+}
+
+export function isResOkImgVibes(x: unknown): x is ResOkImgVibes {
+  return !(ResOkImgVibes(x) instanceof type.errors);
+}
+
+export function isResErrorImgVibes(x: unknown): x is ResErrorImgVibes {
+  return !(ResErrorImgVibes(x) instanceof type.errors);
 }

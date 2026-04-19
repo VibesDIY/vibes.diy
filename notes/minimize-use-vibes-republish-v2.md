@@ -24,7 +24,7 @@
 - `HiddenMenuWrapper` - 275 lines, sliding menu ← MOVE TO APP
 - `BrutalistCard` - Styled card container ← MOVE TO APP
 - `LabelContainer` - Label wrapper ← MOVE TO APP
-- `ImgGen` - Image generation component ← KEEP (for user vibes)
+- `ImgVibes` - Image generation component ← KEEP (for user vibes)
 - `VibeControl` - Floating action button ← MOVE TO APP
 
 ### Current Usage Patterns
@@ -68,7 +68,7 @@ Since only the app uses mounting functions, and they depend on UI components, th
 use-vibes (consumer API ONLY)
 ├─ Core hooks: useFireproof
 ├─ AI integration: callAI
-└─ Consumer components: ImgGen (for user vibes)
+└─ Consumer components: ImgVibes (for user vibes)
 
 vibes.diy/pkg/app (all application code)
 ├─ All UI: VibesPanel, VibesButton, HiddenMenuWrapper, etc.
@@ -95,7 +95,7 @@ vibes.diy/pkg/app (all application code)
 **What Stays in use-vibes:**
 - `useFireproof` hook
 - `callAI` function
-- `ImgGen` component (for user vibes)
+- `ImgVibes` component (for user vibes)
 - Fireproof re-exports: `fireproof`, `ImgFile`, `toCloud`
 
 ## Implementation Approach
@@ -116,7 +116,7 @@ use-vibes/base/components/VibeControl.tsx
 ```
 
 **Keep in use-vibes:**
-- `use-vibes/base/components/ImgGen.tsx` - User-facing component
+- `use-vibes/base/components/ImgVibes.tsx` - User-facing component
 
 ### Phase 2: Move Mounting Functions ← NEW
 
@@ -174,8 +174,8 @@ export {
   callAI,
 
   // Consumer component
-  ImgGen,
-  type ImgGenProps,
+  ImgVibes,
+  type ImgVibesProps,
 
   // Fireproof re-exports
   fireproof,
@@ -229,7 +229,7 @@ import { mountVibeWithCleanup } from '../utils/vibeMount'
 This is a **major version bump** (0.19.0) with NO backward compatibility:
 - Removes ALL app UI component exports
 - **Removes ALL mounting function exports** ← NEW
-- Keeps ONLY consumer-facing API: `useFireproof`, `callAI`, `ImgGen`
+- Keeps ONLY consumer-facing API: `useFireproof`, `callAI`, `ImgVibes`
 - vibe-viewer must import mounting and UI locally
 - No migration path - clean architectural break
 
@@ -264,7 +264,7 @@ Also move associated styles and tests.
 - `use-vibes/pkg/index.ts` - Remove UI + mounting exports
 
 **Keep ONLY:**
-- `useFireproof`, `callAI`, `ImgGen`
+- `useFireproof`, `callAI`, `ImgVibes`
 - Fireproof re-exports: `fireproof`, `ImgFile`, `toCloud`
 
 ### Step 4: Update vibe-viewer.tsx
@@ -331,7 +331,7 @@ Files: LoggedOutView, NewSessionView, BrutalistLayout, settings, etc.
 
 ## Success Criteria (Updated)
 
-✅ use-vibes exports ONLY: `useFireproof`, `callAI`, `ImgGen`, fireproof utils
+✅ use-vibes exports ONLY: `useFireproof`, `callAI`, `ImgVibes`, fireproof utils
 ✅ ALL mounting logic lives in vibes.diy/pkg/app/utils/ ← NEW
 ✅ ALL UI components live in vibes.diy/pkg/app/components/vibes/
 ✅ use-vibes bundle size reduced by ~60% ← UPDATED

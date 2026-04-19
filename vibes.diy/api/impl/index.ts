@@ -541,9 +541,8 @@ class LLMChatImpl implements LLMChat {
         if (msg instanceof type.errors) {
           return Result.Ok(Option.None());
         }
-        // console.log("LLMChat validate received message for chatId:", msg, tid);
+        console.log("[LLMChatImpl] validate msg, tid match:", msg.tid === tid, "expected:", tid, "got:", msg.tid);
         if (msg.tid === tid) {
-          // console.log("Valid event matched for chatId:", req.chatId);
           return Result.Ok(Option.Some(msg));
         }
         return Result.Ok(Option.None());
@@ -556,20 +555,11 @@ class LLMChatImpl implements LLMChat {
         } else {
           const se = sectionEvent(trigger.validated.payload);
           if (!(se instanceof type.errors)) {
-            // console.log("send to Stream:", tid, trigger.validated.tid, se.type)
+            console.log("[LLMChatImpl] writing to stream:", se.type, "blocks:", se.blocks?.length);
             await sectionEventsWriter.write(se);
-            // const beginPrompt = se.blocks.find((b) => isPromptBlockBegin(b))
-            // if (beginPrompt) {
-            //   activePromptIds.set(se.promptId, undefined);
-            // }
-            // const closePrompt = se.blocks.find((b) => isPromptBlockEnd(b))
-            // if (closePrompt) {
-            //   activePromptIds.delete(se.promptId);
-            // }
+          } else {
+            console.log("[LLMChatImpl] sectionEvent parse FAILED:", se.summary?.substring(0, 200));
           }
-          // else {
-          //   console.log("LLMChat open succeeded for chatId:", se.summary, trigger.validated.payload);
-          // }
         }
         return Result.Ok(EventoResult.Continue);
       },

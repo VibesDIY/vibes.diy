@@ -27,7 +27,7 @@ globalThis.fetch = mockFetch;
 // import * as mod from "~/vibes.diy/app/prompts.js";
 
 // Use a known finite set for testing, excluding three-js to keep tests stable
-const knownModuleNames = ["callai", "fireproof", "image-gen", "web-audio"];
+const knownModuleNames = ["callai", "fireproof", "img-vibes", "web-audio"];
 
 // Ensure we use the real implementation of ../app/prompts in this file only
 // Some tests and the global setup mock this module; undo that here before importing it.
