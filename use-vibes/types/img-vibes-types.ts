@@ -34,6 +34,7 @@ export interface UseImgVibesOptions {
   readonly database: string | Database;
   readonly generationId: string;
   readonly skip: boolean;
+  readonly inputImage?: File;
 }
 
 export interface UseImgVibesResult {
