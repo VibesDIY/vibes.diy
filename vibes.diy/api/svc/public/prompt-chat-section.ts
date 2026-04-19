@@ -678,7 +678,7 @@ async function handleProdiaImageRequest({
     const formData = new FormData();
     formData.append(
       "job",
-      new Blob([JSON.stringify({ type: "inference.flux-2.klein.img2img.v1", config: { prompt: promptText } })], {
+      new Blob([JSON.stringify({ type: "inference.flux-2.klein.9b.img2img.v1", config: { prompt: promptText } })], {
         type: "application/json",
       }),
       "job.json"
