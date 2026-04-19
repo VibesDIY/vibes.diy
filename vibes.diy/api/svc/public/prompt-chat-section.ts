@@ -388,8 +388,6 @@ async function injectSystemPrompt(
   const conversationMessages = reconstructConversationMessages(allSectionMsgs);
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
-      dependenciesUserOverride: true,
-      dependencies: ["fireproof", "callai", "img-vibes", "web-audio"],
       fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
         console.log("Fetching asset for system prompt from URL:", url.toString(), vctx.params.pkgRepos.workspace);
         const uri = URI.from(url);
@@ -405,18 +403,31 @@ async function injectSystemPrompt(
         if (rRes.isErr()) {
           console.error("Failed to fetch asset for system prompt from URL:", url.toString(), "with error:", rRes.Err());
           return new Response(JSON.stringify({ error: rRes.Err() }), { status: 500 });
-          // return Result.Err(rRes);
         }
-        const res = new Response(rRes.Ok());
-        // res.clone().text().then((text) => {
-        //   console.log("Fetched asset for system prompt from URL:", url.toString(), "with content:", text);
-        // })
-        return res;
-        //   return Result.Ok(await new Response(rRes.Ok()).text());
+        return new Response(rRes.Ok());
       },
       callAi: {
-        ModuleAndOptionsSelection: async (_msgs: ChatMessage[]) => {
-          return Result.Err(`Module and options selection is not supported in system prompts at this time`);
+        ModuleAndOptionsSelection: async (msgs: ChatMessage[]) => {
+          try {
+            const res = await vctx.llmRequest({
+              model: "openai/gpt-4o",
+              messages: msgs,
+              stream: false,
+              max_tokens: 200,
+              headers: vctx.params.llm.headers,
+            });
+            if (!res.ok) {
+              return Result.Err(`RAG decision LLM call failed: ${res.status} ${res.statusText}`);
+            }
+            const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+            const content = body.choices?.[0]?.message?.content;
+            if (!content) {
+              return Result.Err("RAG decision LLM returned no content");
+            }
+            return Result.Ok(content);
+          } catch (e) {
+            return Result.Err(`RAG decision LLM call error: ${e}`);
+          }
         },
       },
     })
