@@ -12,10 +12,6 @@ export {
   callAi,
   type CallAI,
 
-  // Consumer components
-  ImgGen,
-  type ImgGenProps,
-
   // Vibes generation hook
   useVibes,
   type UseVibesOptions,

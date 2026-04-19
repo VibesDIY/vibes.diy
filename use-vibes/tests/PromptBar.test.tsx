@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { PromptBar } from "@vibes.diy/use-vibes-base";
+import { PromptBar } from "@vibes.diy/base";
 
 describe("PromptBar Component", () => {
   beforeEach(() => {

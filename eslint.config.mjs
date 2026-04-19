@@ -48,6 +48,7 @@ const opts = tseslint.config(
       "playwright.config.js",
       "**/tests-new/**",
       "**/examples/**",
+      "use-vibes/tests/**",
       "vitest.config.ts",
       "**/.storybook/**",
       "**/storybook-static/**",

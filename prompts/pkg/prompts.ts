@@ -44,7 +44,7 @@ export async function resolveEffectiveModel(
 }
 
 export async function getDefaultDependencies(): Promise<string[]> {
-  return ["fireproof", "callai", "web-audio"];
+  return ["fireproof", "callai", "img-vibes", "web-audio"];
 }
 
 export interface SystemPromptResult {
@@ -288,6 +288,7 @@ export async function makeBaseSystemPrompt(
     selectedNames = (sessionDoc.dependencies ?? [])
       .filter((v): v is string => typeof v === "string")
       .filter((name) => llmsCatalogNames.has(name));
+    console.log("[makeBaseSystemPrompt] user override dependencies:", selectedNames);
   } else {
     const decisions = await selectLlmsAndOptions(RAG_DECISION_MODEL, userPrompt, history, sessionDoc);
     includeDemoData = decisions.demoData;
@@ -296,6 +297,17 @@ export async function makeBaseSystemPrompt(
     const finalNames = new Set<string>([...decisions.selected, ...detected]);
     selectedNames = Array.from(finalNames);
 
+    console.log(
+      "[makeBaseSystemPrompt] RAG selected:",
+      decisions.selected,
+      "detected:",
+      [...detected],
+      "final:",
+      selectedNames,
+      "demoData:",
+      includeDemoData
+    );
+
     if (selectedNames.length === 0) selectedNames = [...(await getDefaultDependencies())];
   }
   if (typeof sessionDoc?.demoDataOverride === "boolean") {
@@ -303,6 +315,10 @@ export async function makeBaseSystemPrompt(
   }
 
   const chosenLlms = llmsCatalog.filter((l) => selectedNames.includes(l.name));
+  console.log(
+    "[makeBaseSystemPrompt] chosen modules:",
+    chosenLlms.map((l) => l.name)
+  );
 
   const concatenatedLlmsTxts: string[] = [];
   for (const llm of chosenLlms) {

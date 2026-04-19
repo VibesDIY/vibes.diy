@@ -16,7 +16,7 @@
     "arktype": "^2.2.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "use-fireproof": "0.24.16"
+    "use-fireproof": "0.24.19"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",

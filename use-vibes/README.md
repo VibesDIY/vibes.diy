@@ -11,14 +11,14 @@ pnpm add use-vibes
 ## Basic Usage
 
 ```jsx
-import { ImgGen } from "use-vibes";
+import { ImgVibes } from "use-vibes";
 
 function MyComponent() {
-  // You can use ImgGen without any props - it includes its own form UI
-  return <ImgGen />;
+  // You can use ImgVibes without any props - it includes its own form UI
+  return <ImgVibes />;
 
   // Or provide a prompt directly (bypasses the form UI completely)
-  // return <ImgGen prompt="A futuristic cityscape with flying cars" />;
+  // return <ImgVibes prompt="A futuristic cityscape with flying cars" />;
 }
 ```
 
@@ -41,7 +41,7 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
   {
     /* Includes a built-in form UI for prompt entry and image upload */
   }
-  <ImgGen />;
+  <ImgVibes />;
   ```
 
 - **One-line Implementation**: Directly specify a prompt for immediate generation (bypasses the form UI)
@@ -50,17 +50,17 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
   {
     /* Starts generating immediately, no form shown to the user */
   }
-  <ImgGen prompt="A sunset over mountains" />;
+  <ImgVibes prompt="A sunset over mountains" />;
   ```
 
 - **Automatic Database Integration**: All images are automatically stored in Fireproof database with version history
 
   ```jsx
   // Custom database name
-  <ImgGen prompt="Forest landscape" database="MyCustomDB" />
+  <ImgVibes prompt="Forest landscape" database="MyCustomDB" />
 
   // Or pass a database instance
-  <ImgGen prompt="Forest landscape" database={myDbInstance} />
+  <ImgVibes prompt="Forest landscape" database={myDbInstance} />
   ```
 
 ### Prompt Management
@@ -74,7 +74,7 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
   - Press Enter to submit and regenerate with new prompt
   - App receives updates via `onPromptEdit` callback
   ```jsx
-  <ImgGen
+  <ImgVibes
     prompt="Initial prompt"
     onPromptEdit={(id, newPrompt) => {
       console.log(`Document ${id} updated with new prompt: ${newPrompt}`);
@@ -91,18 +91,18 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
 - **Image Quality Control**: Set quality levels for output images
 
   ```jsx
-  <ImgGen prompt="Detailed artwork" options={{ quality: "high" }} />
+  <ImgVibes prompt="Detailed artwork" options={{ quality: "high" }} />
   ```
 
 - **Image Editing with Uploads**: Process existing images with AI
 
   ```jsx
-  <ImgGen prompt="Turn this photo into a watercolor painting" images={[myImageFile]} />
+  <ImgVibes prompt="Turn this photo into a watercolor painting" images={[myImageFile]} />
   ```
 
 - **Multiple Image Inputs**: Combine multiple images in one generation
   ```jsx
-  <ImgGen prompt="Create a collage of these photos" images={[photo1, photo2, photo3]} />
+  <ImgVibes prompt="Create a collage of these photos" images={[photo1, photo2, photo3]} />
   ```
 
 ### User Interface Components
@@ -115,7 +115,7 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
 
   ```jsx
   // Disable overlay for a minimal UI
-  <ImgGen prompt="Clean interface" overlay={false} />
+  <ImgVibes prompt="Clean interface" overlay={false} />
   ```
 
 - **Progress Visualization**: Shows generation progress with visual indicators
@@ -124,7 +124,7 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
 
 - **Error Handling UI**: Clean error states with informative messages
   ```jsx
-  <ImgGen
+  <ImgVibes
     prompt="Test error handling"
     onError={(error) => {
       console.error("Generation failed:", error.message);
@@ -154,7 +154,7 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
 
 - **Generation Lifecycle Events**: Track the complete generation process
   ```jsx
-  <ImgGen
+  <ImgVibes
     prompt="Track this generation"
     onComplete={() => console.log("Generation complete!")}
     onError={(error) => console.error("Generation failed:", error)}
@@ -193,7 +193,7 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
   - Custom classes for component-level styling
 
   ```jsx
-  <ImgGen
+  <ImgVibes
     prompt="Styled component"
     classes={{
       root: "my-custom-container",
@@ -211,19 +211,19 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
   ```jsx
   <div className="image-grid">
     {imageDocuments.map((doc) => (
-      <ImgGen key={doc._id} _id={doc._id} className="thumbnail" />
+      <ImgVibes key={doc._id} _id={doc._id} className="thumbnail" />
     ))}
   </div>
   ```
 
 - **Document Reuse**: Load existing documents by ID
   ```jsx
-  <ImgGen _id="existing-document-id" />
+  <ImgVibes _id="existing-document-id" />
   ```
 
 ## Implementation Modes
 
-The ImgGen component has several operational modes that it switches between automatically:
+The ImgVibes component has several operational modes that it switches between automatically:
 
 1. **Placeholder Mode**: Initial state when no prompt or document ID is provided
 2. **Upload Waiting Mode**: When files are uploaded but waiting for a prompt
@@ -240,7 +240,7 @@ The component automatically determines which mode to use based on the current st
 Enable debug mode to see detailed console logs about component state:
 
 ```jsx
-<ImgGen prompt="Debug this" options={{ debug: true }} />
+<ImgVibes prompt="Debug this" options={{ debug: true }} />
 ```
 
 ### Custom Image Sizing
@@ -248,12 +248,12 @@ Enable debug mode to see detailed console logs about component state:
 Control output image dimensions with the size option:
 
 ```jsx
-<ImgGen
+<ImgVibes
   prompt="Landscape format"
   options={{ size: '1536x1024' }} // Landscape
 />
 
-<ImgGen
+<ImgVibes
   prompt="Portrait format"
   options={{ size: '1024x1536' }} // Portrait
 />
@@ -261,7 +261,7 @@ Control output image dimensions with the size option:
 
 # Advanced Usage
 
-This guide covers the implementation, configuration, and best practices for using the ImgGen component from the use-vibes library.
+This guide covers the implementation, configuration, and best practices for using the ImgVibes component from the use-vibes library.
 
 ## Installation
 
@@ -271,7 +271,7 @@ pnpm add use-vibes
 
 ### Styling
 
-The ImgGen component uses inline styles with centralized theme constants, so **no separate CSS setup is required**. All styling is self-contained within the component.
+The ImgVibes component uses inline styles with centralized theme constants, so **no separate CSS setup is required**. All styling is self-contained within the component.
 
 ## Basic Usage
 
@@ -280,12 +280,12 @@ The ImgGen component uses inline styles with centralized theme constants, so **n
 Add AI image generation to any React app with minimal code:
 
 ```jsx
-import { ImgGen } from "use-vibes";
+import { ImgVibes } from "use-vibes";
 
 function MyComponent() {
   return (
     <div>
-      <ImgGen prompt="A sunset over mountains" />
+      <ImgVibes prompt="A sunset over mountains" />
     </div>
   );
 }
@@ -296,7 +296,7 @@ function MyComponent() {
 Configure image generation with the `options` prop:
 
 ```jsx
-<ImgGen
+<ImgVibes
   prompt="A detailed cityscape"
   options={{
     model: "gpt-image-1",
@@ -340,10 +340,10 @@ Configure image generation with the `options` prop:
 
 ### Prompt Management
 
-The ImgGen component tracks the history of different prompts used to generate an image:
+The ImgVibes component tracks the history of different prompts used to generate an image:
 
 ```jsx
-<ImgGen
+<ImgVibes
   prompt="Initial prompt"
   onPromptEdit={(id, newPrompt) => {
     console.log(`Document ${id} updated with new prompt: ${newPrompt}`);
@@ -369,7 +369,7 @@ The component supports one-click regeneration, preserving document history while
 Set quality levels for output images:
 
 ```jsx
-<ImgGen prompt="Detailed artwork" options={{ quality: "high" }} />
+<ImgVibes prompt="Detailed artwork" options={{ quality: "high" }} />
 ```
 
 #### Image Editing with Uploads
@@ -377,7 +377,7 @@ Set quality levels for output images:
 Process existing images with AI:
 
 ```jsx
-<ImgGen prompt="Turn this photo into a watercolor painting" images={[myImageFile]} />
+<ImgVibes prompt="Turn this photo into a watercolor painting" images={[myImageFile]} />
 ```
 
 #### Multiple Image Inputs
@@ -385,7 +385,7 @@ Process existing images with AI:
 Combine multiple images in one generation:
 
 ```jsx
-<ImgGen prompt="Create a collage of these photos" images={[photo1, photo2, photo3]} />
+<ImgVibes prompt="Create a collage of these photos" images={[photo1, photo2, photo3]} />
 ```
 
 ### Database Integration
@@ -394,10 +394,10 @@ All images are automatically stored in a Fireproof database with version history
 
 ```jsx
 // Custom database name
-<ImgGen prompt="Forest landscape" database="MyCustomDB" />
+<ImgVibes prompt="Forest landscape" database="MyCustomDB" />
 
 // Or pass a database instance
-<ImgGen prompt="Forest landscape" database={myDbInstance} />
+<ImgVibes prompt="Forest landscape" database={myDbInstance} />
 ```
 
 ### Event Callbacks
@@ -405,7 +405,7 @@ All images are automatically stored in a Fireproof database with version history
 Track the complete generation process with lifecycle events:
 
 ```jsx
-<ImgGen
+<ImgVibes
   prompt="Track this generation"
   onComplete={() => console.log("Generation complete!")}
   onError={(error) => console.error("Generation failed:", error)}
@@ -420,7 +420,7 @@ Toggle the information overlay and controls:
 
 ```jsx
 // Disable overlay for a minimal UI
-<ImgGen prompt="Clean interface" overlay={false} />
+<ImgVibes prompt="Clean interface" overlay={false} />
 ```
 
 The overlay includes:
@@ -447,14 +447,14 @@ const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
 
 ### CSS Variables
 
-The component uses centralized theme constants from `imgGenTheme` for consistent styling. All styles are applied inline using JavaScript objects, eliminating the need for external CSS files.
+The component uses centralized theme constants from `imgVibesTheme` for consistent styling. All styles are applied inline using JavaScript objects, eliminating the need for external CSS files.
 
 ### Custom Classes
 
 For more granular control, provide a `classes` object with custom CSS classes for specific component parts:
 
 ```jsx
-<ImgGen
+<ImgVibes
   prompt="Styled component"
   classes={{
     root: "my-custom-container",
@@ -491,7 +491,7 @@ Easily create image galleries using document IDs:
 ```jsx
 <div className="image-grid">
   {imageDocuments.map((doc) => (
-    <ImgGen key={doc._id} _id={doc._id} className="thumbnail" />
+    <ImgVibes key={doc._id} _id={doc._id} className="thumbnail" />
   ))}
 </div>
 ```
@@ -501,12 +501,12 @@ Easily create image galleries using document IDs:
 Load existing documents by `_id`:
 
 ```jsx
-<ImgGen _id="existing-document-id" />
+<ImgVibes _id="existing-document-id" />
 ```
 
 ## Operation Modes
 
-The ImgGen component has several operational modes that it switches between automatically:
+The ImgVibes component has several operational modes that it switches between automatically:
 
 1. **Placeholder Mode**: Initial state when no prompt or document ID is provided
 2. **Upload Waiting Mode**: When files are uploaded but waiting for a prompt
@@ -521,7 +521,7 @@ The ImgGen component has several operational modes that it switches between auto
 Enable debug mode to see detailed console logs about component state:
 
 ```jsx
-<ImgGen prompt="Debug this" options={{ debug: true }} />
+<ImgVibes prompt="Debug this" options={{ debug: true }} />
 ```
 
 ### Custom Image Sizing
@@ -529,12 +529,12 @@ Enable debug mode to see detailed console logs about component state:
 Control output image dimensions with the size option:
 
 ```jsx
-<ImgGen
+<ImgVibes
   prompt="Landscape format"
   options={{ size: '1536x1024' }} // Landscape
 />
 
-<ImgGen
+<ImgVibes
   prompt="Portrait format"
   options={{ size: '1024x1536' }} // Portrait
 />

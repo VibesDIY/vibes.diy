@@ -88,6 +88,8 @@ export async function createAppContext<T extends VibesSqlite>(
 
     VIBES_DIY_FROM_EMAIL: "no-reply@vibes.diy",
 
+    PRODIA_TOKEN: param.OPTIONAL,
+
     GTM_CONTAINER_ID: param.OPTIONAL,
     POSTHOG_KEY: param.OPTIONAL,
     POSTHOG_HOST: param.OPTIONAL,
@@ -247,6 +249,7 @@ export async function createAppContext<T extends VibesSqlite>(
       url: envVals.LLM_BACKEND_URL,
       apiKey: envVals.LLM_BACKEND_API_KEY,
     }),
+    prodiaToken: envVals.PRODIA_TOKEN,
     deviceCA: rDeviceIdCA.Ok(),
     params: svcParams,
   } satisfies VibesApiSQLCtx;

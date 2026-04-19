@@ -45,6 +45,7 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
           chatPromise = ensureChatId(vctx, req);
           break;
         case "app":
+        case "img":
           chatPromise = ensureApplicationChatId({ ctx: vctx, req });
           break;
         default:
