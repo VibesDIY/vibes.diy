@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import ImageGeneratorExample from "./ImageGeneratorExample";
+import ImgVibesExample from "./ImgVibesExample";
 import TodoListExample from "./TodoListExample";
 import VibesGeneratorExample from "./VibesGeneratorExample";
 import VibeControlExample from "./VibeControlExample";
@@ -9,7 +9,7 @@ import MountVibesAppExample from "./MountVibesAppExample";
 
 export type ExampleKey =
   | "home"
-  | "image-generator"
+  | "img-vibeserator"
   | "todo-list"
   | "vibes-generator"
   | "vibe-control"
@@ -66,10 +66,10 @@ function App() {
       component: <VibesGeneratorExample />,
     },
     {
-      key: "image-generator" as const,
+      key: "img-vibeserator" as const,
       title: "Image Generator",
-      description: "Generate and edit images with AI using the ImgGen component",
-      component: <ImageGeneratorExample />,
+      description: "Generate and edit images with AI using the ImgVibes component",
+      component: <ImgVibesExample />,
     },
     {
       key: "todo-list" as const,

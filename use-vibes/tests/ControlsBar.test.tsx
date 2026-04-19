@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
 import { render, fireEvent, act } from "@testing-library/react";
-import { ControlsBar } from "@vibes.diy/use-vibes-base";
+import { ControlsBar } from "@vibes.diy/base";
 
 describe("ControlsBar Component", () => {
   let defaultProps: {

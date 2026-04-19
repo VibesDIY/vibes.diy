@@ -1,6 +1,6 @@
 /**
  * VibeControl Component Styling Constants
- * Following the same pattern as ImgGen styles for consistency
+ * Following the same pattern as ImgVibes styles for consistency
  *
  * Dark mode support:
  * Override CSS variables in your stylesheet using:
@@ -255,7 +255,7 @@ export const createVibeControlStyles = (position: VibeControlPosition = "bottom-
   };
 };
 
-// Default classes structure similar to ImgGen
+// Default classes structure similar to ImgVibes
 export const defaultVibeControlClasses = {
   button: "",
   backdrop: "",

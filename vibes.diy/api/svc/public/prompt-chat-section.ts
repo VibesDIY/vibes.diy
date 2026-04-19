@@ -9,6 +9,7 @@ import {
   BuildURI,
   pathOps,
   URI,
+  uint8array2stream,
 } from "@adviser/cement";
 import { Scope, scopey } from "@adviser/scopey";
 import {
@@ -68,6 +69,7 @@ import {
   PromptContextSql,
   BlockEndMsg,
   isBlockStreamMsg,
+  isBlockImage,
   CodeEndMsg,
   BlockBeginMsg,
 } from "@vibes.diy/call-ai-v2";
@@ -102,8 +104,27 @@ async function appendBlockEvent({
   evt,
   emitMode = "store",
 }: AppendBlockEventParams): Promise<Result<void>> {
+  if (isBlockImage(evt)) {
+    const imgEvt = evt as { url: string };
+    if (imgEvt.url.startsWith("data:")) {
+      // Store base64 image as asset to avoid WebSocket message size limits
+      const match = imgEvt.url.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        const mime = match[1];
+        const raw = Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0));
+        const [storageResult] = await vctx.storage.ensure(uint8array2stream(raw));
+        if (storageResult?.isOk()) {
+          imgEvt.url = `/assets/cid?url=${encodeURIComponent(storageResult.Ok().getURL)}&mime=${encodeURIComponent(mime)}`;
+          console.log("[block.image] Stored as asset:", imgEvt.url, "size:", raw.length);
+        } else {
+          console.error("[block.image] Failed to store asset:", storageResult?.Err());
+        }
+      }
+    } else {
+      console.log("[block.image] Server received URL:", imgEvt.url.substring(0, 100));
+    }
+  }
   const now = new Date();
-  // console.log("Appending block event:", { promptId, blockSeq, evt, timestamp: now });
   const msgBase = wrapMsgBase(ctx.validated, {
     payload: {
       type: "vibes.diy.section-event",
@@ -116,7 +137,7 @@ async function appendBlockEvent({
     tid: req.outerTid,
     src: "promptChatSection",
   } satisfies InMsgBase<SectionEvent>);
-  // console.log("Emitting block event for promptId:", promptId, "blockSeq:", blockSeq, "connections:", vctx.connections);
+  console.log("[appendBlockEvent] emitting:", evt.type, "connections:", vctx.connections.size, "chatId:", req.chatId);
   for (const conn of vctx.connections) {
     const chatCtx = conn.chatIds.get(req.chatId);
     if (chatCtx) {
@@ -367,7 +388,7 @@ async function injectSystemPrompt(
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
       dependenciesUserOverride: true,
-      dependencies: ["fireproof", "callai", "web-audio"],
+      dependencies: ["fireproof", "callai", "img-vibes", "web-audio"],
       fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
         console.log("Fetching asset for system prompt from URL:", url.toString(), vctx.params.pkgRepos.workspace);
         const uri = URI.from(url);
@@ -436,7 +457,7 @@ async function getResChatFromMode(
   orig: ReqPromptChatSection
 ): Promise<Result<ResChat>> {
   let iResChat;
-  if (isReqPromptApplicationChatSection(orig)) {
+  if (isReqPromptApplicationChatSection(orig) || isReqPromptImageChatSection(orig)) {
     iResChat = await vctx.sql.db
       .select()
       .from(vctx.sql.tables.applicationChats)
@@ -541,7 +562,7 @@ async function handlerLlmRequest({
       });
       if (req.mode === "chat") {
         withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? modelId);
-      } else if (req.mode === "app") {
+      } else if (req.mode === "app" || req.mode === "img") {
         withSystemPrompt = Result.Ok({
           model: req.prompt.model ?? modelId,
           messages: req.prompt.messages,
@@ -566,9 +587,10 @@ async function handlerLlmRequest({
     ...vctx.params.llm.enforced,
     model: withSystemPrompt.model,
     headers: vctx.params.llm.headers,
-    logprobs: true,
+    logprobs: req.mode !== "img",
     stream: true,
     ...(isInitialTurn ? { verbosity: "low" as const } : {}),
+    ...(req.mode === "img" ? { modalities: ["text", "image"] } : {}),
   };
 
   // add system prompt here
@@ -589,6 +611,188 @@ async function handlerLlmRequest({
     .do();
 
   return { res, blockSeq };
+}
+
+async function handleProdiaImageRequest({
+  scope,
+  ctx,
+  vctx,
+  req,
+  promptId,
+  blockSeq,
+}: {
+  scope: Scope;
+  ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
+  vctx: VibesApiSQLCtx;
+  req: ReqWithVerifiedAuth<ReqPromptLLMChatSection>;
+  promptId: string;
+  blockSeq: number;
+}): Promise<Result<number>> {
+  const prodiaToken = vctx.prodiaToken;
+  if (!prodiaToken) {
+    return Result.Err("PRODIA_TOKEN not configured");
+  }
+
+  // Extract prompt text from the last user message
+  const userMessages = req.prompt.messages.filter((m) => m.role === "user");
+  const lastUserMsg = userMessages[userMessages.length - 1];
+  const promptText = lastUserMsg?.content?.[0]?.text ?? "";
+  if (!promptText) {
+    return Result.Err("No prompt text found in user messages");
+  }
+
+  // Emit prompt.req
+  await scope
+    .evalResult(async () => {
+      const r = await appendBlockEvent({
+        ctx,
+        vctx,
+        req,
+        promptId,
+        blockSeq,
+        evt: {
+          type: "prompt.req",
+          streamId: promptId,
+          chatId: req.chatId,
+          seq: blockSeq,
+          request: req.prompt,
+          timestamp: new Date(),
+        },
+      });
+      blockSeq++;
+      return r;
+    })
+    .do();
+
+  // Call Prodia API
+  const prodiaRes = await fetch("https://inference.prodia.com/v2/job", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${prodiaToken}`,
+      Accept: "image/png",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      type: "inference.flux-2.klein.9b.txt2img.v1",
+      config: { prompt: promptText },
+    }),
+  });
+
+  if (!prodiaRes.ok) {
+    const errorText = await prodiaRes.text().catch(() => "");
+    return Result.Err(`Prodia request failed: ${prodiaRes.status} ${prodiaRes.statusText} ${errorText}`);
+  }
+
+  // Store PNG bytes as asset
+  if (!prodiaRes.body) {
+    return Result.Err("Prodia response has no body");
+  }
+  const [storageResult] = await vctx.storage.ensure(prodiaRes.body);
+  if (!storageResult?.isOk()) {
+    return Result.Err(`Failed to store Prodia image: ${storageResult?.Err()}`);
+  }
+  const assetUrl = `/assets/cid?url=${encodeURIComponent(storageResult.Ok().getURL)}&mime=${encodeURIComponent("image/png")}`;
+  console.log("[block.image] Prodia stored as asset:", assetUrl);
+
+  const blockId = vctx.sthis.nextId(12).str;
+  const now = new Date();
+
+  // Emit block.begin
+  await appendBlockEvent({
+    ctx,
+    vctx,
+    req,
+    promptId,
+    blockSeq: blockSeq++,
+    evt: {
+      type: "block.begin",
+      blockId,
+      streamId: promptId,
+      seq: blockSeq,
+      blockNr: 0,
+      timestamp: now,
+    },
+  });
+
+  // Emit block.image
+  await appendBlockEvent({
+    ctx,
+    vctx,
+    req,
+    promptId,
+    blockSeq: blockSeq++,
+    evt: {
+      type: "block.image",
+      sectionId: vctx.sthis.nextId(12).str,
+      url: assetUrl,
+      blockId,
+      streamId: promptId,
+      seq: blockSeq,
+      blockNr: 1,
+      timestamp: now,
+      stats: { lines: 0, bytes: assetUrl.length, cnt: 1 },
+    },
+  });
+
+  const zeroStats = { lines: 0, bytes: 0 };
+  const imageStats = { lines: 0, bytes: assetUrl.length, cnt: 1 };
+
+  // Emit block.end
+  await appendBlockEvent({
+    ctx,
+    vctx,
+    req,
+    promptId,
+    blockSeq: blockSeq++,
+    evt: {
+      type: "block.end",
+      blockId,
+      streamId: promptId,
+      seq: blockSeq,
+      blockNr: 2,
+      timestamp: now,
+      stats: {
+        toplevel: zeroStats,
+        code: zeroStats,
+        image: imageStats,
+        total: imageStats,
+      },
+      usage: {
+        given: [],
+        calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+      },
+    },
+    emitMode: "emit-only",
+  });
+
+  // Store prompt context for the block.end
+  const promptContextSql: PromptContextSql = {
+    type: "prompt.usage.sql",
+    usage: {
+      given: [],
+      calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+    },
+  };
+  await exception2Result(() =>
+    vctx.sql.db.insert(vctx.sql.tables.chatSections).values({
+      chatId: req.chatId,
+      promptId,
+      blockSeq: blockSeq++,
+      blocks: [promptContextSql],
+      created: now.toISOString(),
+    })
+  );
+
+  // Clean up promptId tracking
+  for (const conn of vctx.connections) {
+    const chatCtx = conn.chatIds.get(req.chatId);
+    const promptIdCtx = chatCtx?.promptIds.get(promptId);
+    if (promptIdCtx && chatCtx) {
+      chatCtx.promptIds.delete(promptId);
+    }
+  }
+
+  return Result.Ok(blockSeq);
 }
 
 async function handleEndMsg({
@@ -934,7 +1138,18 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       const resChat = rResChat.Ok();
 
       let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
-      if (isReqPromptLLMChatSection(orig)) {
+      if (isReqPromptImageChatSection(orig) && vctx.prodiaToken) {
+        prompSectionAction = async (scope: Scope, blockSeq: number) => {
+          return handleProdiaImageRequest({
+            scope,
+            ctx,
+            vctx,
+            req: req as ReqWithVerifiedAuth<ReqPromptLLMChatSection>,
+            promptId,
+            blockSeq,
+          });
+        };
+      } else if (isReqPromptLLMChatSection(orig)) {
         prompSectionAction = async (scope: Scope, blockSeq: number) => {
           const res = await handlerLlmRequest({
             ctx,

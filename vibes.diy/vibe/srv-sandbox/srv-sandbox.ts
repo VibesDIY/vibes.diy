@@ -29,8 +29,13 @@ import {
   isEvtRuntimeReady,
   EvtRuntimeReady,
   EvtAttachFPDb,
+  isReqImgVibes,
+  ReqImgVibes,
+  ResOkImgVibes,
+  ResErrorImgVibes,
 } from "@vibes.diy/vibe-types";
 import {
+  isPromptBlockEnd,
   isPromptReq,
   isResFPCloudTokenGrant,
   isSectionEvent,
@@ -38,7 +43,7 @@ import {
   SectionEvent,
   VibesDiyApiIface,
 } from "@vibes.diy/api-types";
-import { ChatMessage, CodeEndMsg, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
+import { ChatMessage, CodeEndMsg, isBlockImage, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
 import { buildSchemaSystemMessage } from "@vibes.diy/prompts";
 
 export class MessageEventEventoEnDecoder implements EventoEnDecoder<MessageEvent, unknown> {
@@ -329,6 +334,97 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+export function getImageUrls(stream: ReadableStream<unknown>): Promise<string[]> {
+  const urls: string[] = [];
+  const done = new Future<string[]>();
+  processStream(stream, (msg) => {
+    const msgType = (msg as Record<string, unknown>).type;
+    if (isSectionEvent(msg)) {
+      for (const block of msg.blocks) {
+        console.log("[vibeImgVibes] block:", block.type, "isImage:", isBlockImage(block));
+        if (isBlockImage(block)) {
+          console.log("[vibeImgVibes] got image URL, length:", block.url?.length);
+          urls.push(block.url);
+        }
+        if (isPromptBlockEnd(block)) {
+          console.log("[vibeImgVibes] prompt.block-end, resolving with", urls.length, "urls");
+          done.resolve(urls);
+        }
+      }
+    } else {
+      console.log("[vibeImgVibes] non-section msg:", msgType);
+    }
+  });
+  return done.asPromise();
+}
+
+function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.imgVibes",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqImgVibes(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqImgVibes, unknown>): Promise<Result<EventoResultType>> => {
+      await vibeDiyApi
+        .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "img" })
+        .then(async (rChat) => {
+          if (rChat.isErr()) {
+            return ctx.send.send(ctx, {
+              tid: ctx.validated.tid,
+              type: "vibe.res.imgVibes",
+              status: "error",
+              message: rChat.Err().message,
+            } satisfies ResErrorImgVibes);
+          }
+          getImageUrls(rChat.Ok().sectionStream)
+            .then((imageUrls) => {
+              ctx.send.send(ctx, {
+                tid: ctx.validated.tid,
+                type: "vibe.res.imgVibes",
+                status: "ok",
+                imageUrls,
+              } satisfies ResOkImgVibes);
+            })
+            .catch((err) => {
+              ctx.send.send(ctx, {
+                tid: ctx.validated.tid,
+                type: "vibe.res.imgVibes",
+                status: "error",
+                message: err?.message ?? String(err),
+              } satisfies ResErrorImgVibes);
+            });
+          const rPrompt = await rChat.Ok().prompt({
+            messages: [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: ctx.validated.prompt,
+                  },
+                ],
+              },
+            ],
+          });
+          if (rPrompt.isErr()) {
+            return ctx.send.send(ctx, {
+              tid: ctx.validated.tid,
+              type: "vibe.res.imgVibes",
+              status: "error",
+              message: rPrompt.Err().message,
+            } satisfies ResErrorImgVibes);
+          }
+        });
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
@@ -350,7 +446,9 @@ export class vibesDiySrvSandbox implements Disposable {
   constructor(args: VibesDiySrvSandboxArgs) {
     this.args = args;
     this.evento = new Evento(new MessageEventEventoEnDecoder());
-    this.evento.push(...[vibeRuntimeReady(this), vibeRegisterFPDB(this), vibeCallAI(this), vibeFetchCloudToken(this)]);
+    this.evento.push(
+      ...[vibeRuntimeReady(this), vibeRegisterFPDB(this), vibeCallAI(this), vibeImageGen(this), vibeFetchCloudToken(this)]
+    );
     // console.log(`Adding event listener for vibesDiySrvSandbox`, this.handleMessage);
     this.args.eventListeners.addEventListener("message", this.handleMessage);
     this.removeEventListeners = this.args.eventListeners.removeEventListener;

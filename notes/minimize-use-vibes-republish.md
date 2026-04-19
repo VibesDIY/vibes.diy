@@ -22,7 +22,7 @@
 - `HiddenMenuWrapper` - 275 lines, complex sliding menu with animations
 - `BrutalistCard` - Styled card container (sm/md/lg sizes)
 - `LabelContainer` - Label wrapper with disappear animation
-- `ImgGen` - Image generation component
+- `ImgVibes` - Image generation component
 - `VibeControl` - Floating action button overlay
 
 ### Current Usage Patterns
@@ -37,7 +37,7 @@
 **In user vibe code:**
 - `useFireproof` - Data persistence
 - `callAI` - AI interactions
-- `ImgGen` - Optional image generation
+- `ImgVibes` - Optional image generation
 - **NOT USED**: VibesButton, VibesSwitch, VibesPanel (auto-wrapped by mount system)
 
 ### Key Architectural Insight
@@ -70,7 +70,7 @@ When `showVibesSwitch=true`, the mount system wraps user vibes with HiddenMenuWr
 
 ```
 use-vibes (minimal, stable)
-├─ Core hooks: useFireproof, callAI, ImgGen
+├─ Core hooks: useFireproof, callAI, ImgVibes
 ├─ Context: VibeContextProvider (metadata only)
 └─ Mounting: createVibeRoot (pure mounting, no UI)
 
@@ -83,7 +83,7 @@ vibes.diy/pkg/app (UI layer, iterates fast)
 ### Implementation Approach
 
 **Option A: Move Everything (Recommended)**
-- Move ALL UI components from use-vibes to vibes.diy/pkg/app except ImgGen
+- Move ALL UI components from use-vibes to vibes.diy/pkg/app except ImgVibes
 - Keep only hooks and pure mounting logic in use-vibes
 - vibe-viewer renders UI directly, doesn't use mountVibesApp
 - Inline vibes use lightweight mounting without UI wrapper
@@ -118,7 +118,7 @@ vibes.diy/pkg/app/components/vibes/
   └─ VibeControl.tsx         (from use-vibes)
 ```
 
-**Files to move (7 app UI components, NOT ImgGen):**
+**Files to move (7 app UI components, NOT ImgVibes):**
 1. use-vibes/base/components/VibesPanel.tsx → vibes.diy/pkg/app/components/vibes/
 2. use-vibes/base/components/VibesButton/ → vibes.diy/pkg/app/components/vibes/
 3. use-vibes/base/components/VibesSwitch/ → vibes.diy/pkg/app/components/vibes/
@@ -128,7 +128,7 @@ vibes.diy/pkg/app/components/vibes/
 7. use-vibes/base/components/VibeControl.tsx → vibes.diy/pkg/app/components/vibes/
 
 **Keep in use-vibes (for consumer vibes):**
-- use-vibes/base/components/ImgGen.tsx (STAYS - user-facing component)
+- use-vibes/base/components/ImgVibes.tsx (STAYS - user-facing component)
 
 ### Phase 3: Update vibe-viewer to Compose UI Directly
 
@@ -178,8 +178,8 @@ export {
   callAI,
 
   // Consumer-facing UI (for user vibes)
-  ImgGen,
-  type ImgGenProps,
+  ImgVibes,
+  type ImgVibesProps,
 
   // Type exports
   type Fireproof,
@@ -226,7 +226,7 @@ Files to update:
 
 This is a **major version bump** (0.19.0) with NO backward compatibility:
 - Removes app UI component exports (VibesPanel, VibesButton, Context, etc.)
-- Keeps only consumer-facing API (useFireproof, callAI, ImgGen, mounting)
+- Keeps only consumer-facing API (useFireproof, callAI, ImgVibes, mounting)
 - vibe-viewer must compose UI explicitly
 - No migration path - clean architectural break
 
@@ -234,7 +234,7 @@ This is a **major version bump** (0.19.0) with NO backward compatibility:
 
 ✅ **No backward compatibility** - Clean break, breaking changes accepted
 ✅ **Focus on vibe-viewer** - Compose UI directly, explicit control
-✅ **Keep ImgGen in use-vibes** - It's for consumers (user vibes), not app UI
+✅ **Keep ImgVibes in use-vibes** - It's for consumers (user vibes), not app UI
 ✅ **Big Bang approach** - Move all app UI components at once
 
 ## Implementation Steps (Ordered)
@@ -261,14 +261,14 @@ vibes.diy/pkg/app/components/vibes/
 
 ### Step 2: Update use-vibes Exports
 **Files:**
-- `use-vibes/base/index.ts` - Remove app UI exports, keep ImgGen
-- `use-vibes/pkg/index.ts` - Remove app UI exports, keep ImgGen
+- `use-vibes/base/index.ts` - Remove app UI exports, keep ImgVibes
+- `use-vibes/pkg/index.ts` - Remove app UI exports, keep ImgVibes
 
 **Verify exports are minimal:**
 - useFireproof, fireproof, ImgFile, toCloud
 - callAI
 - mountVibeCode, mountVibeWithCleanup
-- ImgGen (KEEP - for consumer vibes)
+- ImgVibes (KEEP - for consumer vibes)
 
 ### Step 3: Refactor vibe-viewer.tsx
 **File:** `vibes.diy/pkg/app/routes/vibe-viewer.tsx`

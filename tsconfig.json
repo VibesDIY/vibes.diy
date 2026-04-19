@@ -26,6 +26,7 @@
   },
   "include": [
     "call-ai/**/*",
+    "img-vibes/**/*",
     "vibes-diy/**/*",
     "use-vibes/**/*",
     "vibes.diy/**/*",
@@ -46,6 +47,7 @@
     "**/.react-router/**",
     "**/.netlify/**",
     "**/tests-new/**",
-    "hosting/tests/unit/**"
+    "hosting/tests/unit/**",
+    "use-vibes/tests/**"
   ]
 }

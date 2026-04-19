@@ -2,9 +2,9 @@
 
 This example demonstrates how to use the `use-vibes` library in a React + TypeScript + Vite application.
 
-## ImgGen Component Example
+## ImgVibes Component Example
 
-The main component showcased here is `ImgGen`, which generates AI images from text prompts. It provides:
+The main component showcased here is `ImgVibes`, which generates AI images from text prompts. It provides:
 
 - Automatic loading states
 - Progress indicators
@@ -23,10 +23,10 @@ pnpm dev
 
 ## Usage
 
-The example demonstrates how to use the ImgGen component from use-vibes:
+The example demonstrates how to use the ImgVibes component from use-vibes:
 
 ```tsx
-import { ImgGen } from "use-vibes";
+import { ImgVibes } from "use-vibes";
 
 function App() {
   const [prompt, setPrompt] = useState("");
@@ -46,7 +46,7 @@ function App() {
       </div>
 
       <div className="image-container">
-        <ImgGen prompt={prompt} />
+        <ImgVibes prompt={prompt} />
       </div>
     </div>
   );
