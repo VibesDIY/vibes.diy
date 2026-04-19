@@ -8,7 +8,7 @@ Vibes DIY apps are React components that combine Fireproof database, CallAI for 
 
 ```javascript
 import React from "react"
-import { callAI, useFireproof, toCloud, ImgGen } from "use-vibes"
+import { callAI, useFireproof, toCloud, ImgVibes } from "use-vibes"
 ```
 
 ## Fireproof Setup

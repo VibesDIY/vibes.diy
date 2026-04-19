@@ -1,0 +1,131 @@
+import React, { useState, useCallback, useMemo } from "react";
+import { useImgVibes } from "../hooks/img-vibes/use-img-vibes.js";
+
+export interface ImgVibesProps {
+  prompt?: string;
+  _id?: string;
+  className?: string;
+  alt?: string;
+  style?: React.CSSProperties;
+  showControls?: boolean;
+}
+
+function promptToId(prompt: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < prompt.length; i++) {
+    hash ^= prompt.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `img-${(hash >>> 0).toString(36)}`;
+}
+
+export function ImgVibes({ prompt, _id: propId, className, alt, style, showControls = true }: ImgVibesProps) {
+  const stableId = useMemo(() => propId ?? (prompt ? promptToId(prompt) : undefined), [propId, prompt]);
+  const [generationId, setGenerationId] = useState<string | undefined>(undefined);
+  const [versionIndex, setVersionIndex] = useState<number | null>(null);
+
+  const { assetUrl, loading, error, document } = useImgVibes({
+    prompt,
+    _id: stableId,
+    skip: !prompt && !stableId,
+    generationId,
+  });
+
+  const versions = document?.versions ?? [];
+  const currentVersion = versionIndex ?? document?.currentVersion ?? 0;
+  const displayUrl = versionIndex !== null ? versions[versionIndex]?.assetUrl : assetUrl;
+  const hasMultipleVersions = versions.length > 1;
+
+  const handleRegen = useCallback(() => {
+    setGenerationId(crypto.randomUUID());
+    setVersionIndex(null);
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    setVersionIndex((prev) => {
+      const cur = prev ?? document?.currentVersion ?? 0;
+      return cur > 0 ? cur - 1 : cur;
+    });
+  }, [document?.currentVersion]);
+
+  const handleNext = useCallback(() => {
+    setVersionIndex((prev) => {
+      const cur = prev ?? document?.currentVersion ?? 0;
+      return cur < versions.length - 1 ? cur + 1 : cur;
+    });
+  }, [document?.currentVersion, versions.length]);
+
+  if (!prompt && !stableId) {
+    return (
+      <div className={className} style={{ padding: 20, textAlign: "center", color: "#888" }}>
+        No prompt provided
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={className} style={{ padding: 20, textAlign: "center", color: "#e53e3e" }}>
+        <strong>Error</strong>
+        <div>{error.message}</div>
+      </div>
+    );
+  }
+
+  if (loading || !displayUrl) {
+    return (
+      <div className={className} style={{ padding: 20, textAlign: "center", color: "#888" }}>
+        <div>Generating image...</div>
+        <div style={{ fontSize: 14, marginTop: 8 }}>{prompt}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <img src={displayUrl} alt={alt || prompt || ""} className={className} style={style ?? { maxWidth: "100%", height: "auto" }} />
+      {showControls && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 8,
+            right: 8,
+            display: "flex",
+            gap: 4,
+            opacity: 0.8,
+          }}
+        >
+          {hasMultipleVersions && (
+            <>
+              <button onClick={handlePrev} disabled={currentVersion <= 0} style={btnStyle} title="Previous version">
+                ‹
+              </button>
+              <span style={{ ...btnStyle, cursor: "default", minWidth: 40, textAlign: "center" }}>
+                {currentVersion + 1}/{versions.length}
+              </span>
+              <button onClick={handleNext} disabled={currentVersion >= versions.length - 1} style={btnStyle} title="Next version">
+                ›
+              </button>
+            </>
+          )}
+          <button onClick={handleRegen} disabled={loading} style={btnStyle} title="Regenerate">
+            ↻
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const btnStyle: React.CSSProperties = {
+  background: "rgba(0,0,0,0.6)",
+  color: "#fff",
+  border: "none",
+  borderRadius: 4,
+  padding: "4px 8px",
+  fontSize: 14,
+  cursor: "pointer",
+  lineHeight: 1,
+};
+
+export default ImgVibes;

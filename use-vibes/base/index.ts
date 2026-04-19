@@ -217,39 +217,20 @@ export { callAI, callAI as callAi };
 // Re-export all types under a namespace
 export type * as CallAI from "call-ai";
 
-// Export ImgGen component - the primary export
-export { default as ImgGen } from "./components/ImgGen.js";
-export type { ImgGenProps } from "./components/ImgGen.js";
-
-// Export all components for testing and advanced usage
-export { ControlsBar } from "./components/ControlsBar.js";
-export { PromptBar } from "./components/PromptBar.js";
+// ImgVibes and related components live in @vibes.diy/base
 
 // Export hooks
-export { hashInput, useImageGen } from "./hooks/image-gen/index.js";
 export { useThemeDetection } from "./hooks/useThemeDetection.js";
 export { useMobile } from "./hooks/useMobile.js";
 
-// Export style utilities
-export { defaultClasses } from "./utils/style-utils.js";
-
-export type { ImgGenClasses } from "@vibes.diy/use-vibes-types";
+export type { ImgVibesClasses } from "@vibes.diy/use-vibes-types";
 
 // Export utility functions
 export { base64ToFile } from "./utils/base64.js";
 export { constructVibesDatabaseName } from "./utils/databaseName.js";
 
-// Export ImgGen sub-components
-export { ImgGenDisplay } from "./components/ImgGenUtils/ImgGenDisplay.js";
-export { ImgGenDisplayPlaceholder } from "./components/ImgGenUtils/ImgGenDisplayPlaceholder.js";
-export { ImgGenModal, type ImgGenModalProps } from "./components/ImgGenUtils/ImgGenModal.js";
-export { ImageOverlay } from "./components/ImgGenUtils/overlays/ImageOverlay.js";
-
-// Export internal utilities and constants
-export { addNewVersion, MODULE_STATE } from "./hooks/image-gen/utils.js";
-
 // Export types for testing and advanced usage
-export type { ImageDocument, PartialImageDocument, UseImageGenOptions, UseImageGenResult } from "@vibes.diy/use-vibes-types";
+export type { ImageDocument, PartialImageDocument, UseImgVibesOptions, UseImgVibesResult } from "@vibes.diy/use-vibes-types";
 
 // Export useVibes hook and types
 export type { UseVibesOptions, UseVibesResult, VibeDocument } from "@vibes.diy/use-vibes-types";

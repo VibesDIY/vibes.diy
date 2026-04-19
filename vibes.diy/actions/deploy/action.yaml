@@ -78,6 +78,9 @@ inputs:
   VIBES_DIY_API_URL:
     description: "Public API URL for vibes.diy WebSocket connection (e.g. https://vibes.diy/api)"
     required: false
+  PRODIA_TOKEN:
+    description: "Prodia API token for image generation"
+    required: false
 
 runs:
   using: "composite"
@@ -118,6 +121,7 @@ runs:
         MAX_APP_SLUG_PER_USER_ID: ${{ inputs.MAX_APP_SLUG_PER_USER_ID }}
         WORKSPACE_NPM_URL: ${{ inputs.WORKSPACE_NPM_URL }}
         VIBES_DIY_API_URL: ${{ inputs.VIBES_DIY_API_URL }}
+        PRODIA_TOKEN: ${{ inputs.PRODIA_TOKEN }}
       run: |
         if [ "$DB_FLAVOUR" = "pg" ]; then
           NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" pnpm run drizzle:neon
@@ -145,7 +149,8 @@ runs:
           --fromEnv NEON_DATABASE_URL \
           --fromEnv MAX_APP_SLUG_PER_USER_ID \
           --fromEnv WORKSPACE_NPM_URL \
-          --fromEnv VIBES_DIY_API_URL | \
+          --fromEnv VIBES_DIY_API_URL \
+          --fromEnv PRODIA_TOKEN | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
 

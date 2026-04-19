@@ -14,7 +14,7 @@ export interface JsonDocs {
   "callai.json": JsonDoc;
   "d3.json": JsonDoc;
   "fireproof.json": JsonDoc;
-  "image-gen.json": JsonDoc;
+  "img-vibes.json": JsonDoc;
   "three-js.json": JsonDoc;
   "web-audio.json": JsonDoc;
 

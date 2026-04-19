@@ -420,7 +420,7 @@ export interface ImageResponse {
 /**
  * Options for image generation
  */
-export interface ImageGenOptions {
+export interface ImgVibesOptions {
   /**
    * API key for authentication
    * Defaults to "VIBES_DIY"
@@ -475,6 +475,6 @@ export interface ImageGenOptions {
 }
 
 /**
- * @deprecated Use ImageGenOptions instead
+ * @deprecated Use ImgVibesOptions instead
  */
-export type ImageEditOptions = ImageGenOptions;
+export type ImageEditOptions = ImgVibesOptions;

@@ -14,7 +14,7 @@ export type SseUsage = typeof SseUsage.infer;
 
 export const SSeImage = type({
   type: "string",
-  index: "number",
+  "index?": "number",
   image_url: type({
     url: "string",
   }),

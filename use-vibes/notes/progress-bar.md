@@ -14,12 +14,12 @@ Restore the progress bar functionality during image generation to match previous
 
 2. **Implementation Locations**
 
-   - `ImgGen.tsx`: Main component with progress display during both generating and regenerating states
-   - `ImgGenDisplayPlaceholder.tsx`: Handles progress display during initial generation
-   - `ImgGenDisplay.tsx`: Handles progress display during regeneration
+   - `ImgVibes.tsx`: Main component with progress display during both generating and regenerating states
+   - `ImgVibesDisplayPlaceholder.tsx`: Handles progress display during initial generation
+   - `ImgVibesDisplay.tsx`: Handles progress display during regeneration
 
 3. **Testing**
-   - Tests in `ImgGenPlaceholder.test.tsx` verify correct progress bar implementation and positioning
+   - Tests in `ImgVibesPlaceholder.test.tsx` verify correct progress bar implementation and positioning
    - Progress animation timing adjusted to ensure smooth transitions
 
 ## Current Status

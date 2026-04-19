@@ -45,6 +45,7 @@ export interface VibesApiSQLCtx {
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
   storage: VibesAssetStorage;
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
+  prodiaToken?: string;
 }
 
 export const UserSlugBinding = type({

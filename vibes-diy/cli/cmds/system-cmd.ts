@@ -44,7 +44,7 @@ export const systemEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqSystem, ResSy
     const rPrompt = await exception2Result(() =>
       makeBaseSystemPrompt("cli", {
         dependenciesUserOverride: true,
-        dependencies: ["fireproof", "callai", "web-audio"],
+        dependencies: ["fireproof", "callai", "img-vibes", "web-audio"],
         callAi: {
           ModuleAndOptionsSelection() {
             return Promise.resolve(Result.Err("ModuleAndOptionsSelection is not used by CLI"));
