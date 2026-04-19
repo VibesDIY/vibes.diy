@@ -8,98 +8,6 @@ export interface Suggestion {
 
 export const quickSuggestions: Suggestion[] = [
   {
-    label: "Tasks",
-    text: "Create a task tracker with freeform textarea entry, that sends the text to AI to create task list items using json, and tag them into the selected list.",
-  },
-  {
-    label: "Photos",
-    text: "Image auto-tagger app that automatically saves, analyzes, tags, and describes images, displaying them in a list view as soon as they're dropped on the page, adding tags and descriptions as they come back.",
-  },
-  {
-    label: "Chat",
-    text: "Chat with legends, results are streamed and then queried by legendId.",
-  },
-  {
-    label: "Playlist",
-    text: "I send messages and AI responds with a playlist for me, with YouTube search links for each song.",
-  },
-  {
-    label: "Finance",
-    text: "Create a personal finance calculator with student loan and compound interest formulas, and retirement goal tracking.",
-  },
-  {
-    label: "Paint",
-    text: "Create a super simple full-screen painting app with only natural pigments on the palette and one humongous brush.",
-  },
-  {
-    label: "Cook",
-    text: "Make an AI receipe generator that uses emoji for ingredients. Give me an AI critic who will taste the recipes and score them.",
-  },
-  {
-    label: "Schedule",
-    text: "Two text areas, paste the availability for each person, and AI finds the best time to meet.",
-  },
-  {
-    label: "Weather API",
-    text: "Use the National Weather Service API to get the weather in Key West, Florida. Render a CSS gradient to represent the sky under those conditions.",
-  },
-  // {
-  //   label: 'Guitar',
-  //   text: "Create Hendrix-like guitar solos with Web Audio API: Set up oscillators (ctx.createOscillator()) with 'sawtooth' waveforms for guitar-like harmonics, use modulator.connect(modulationGain).connect(carrier.frequency) for expressive bends and feedback effects, create signature wah-wah with BiquadFilter (filter.frequency.setValueAtTime() + automated sweeps), simulate feedback using high modulationGain.gain values, achieve dramatic dives with carrier.frequency.exponentialRampToValueAtTime(), implement string bending/vibrato by modulating pitch with LFOs, create percussive attacks with gainNode.gain.linearRampToValueAtTime() for fast attack/sustain, and simulate whammy bar techniques with rapid frequency wobbles. Add distortion via WaveShaperNode with custom curves for that iconic fuzz tone, and schedule phrases with setTimeout()/Math.random() for human-like timing variations in pentatonic patterns. Average carrier wave around 1kHz, note density: rests are rare.",
-  // },
-  {
-    label: "Timer",
-    text: "Create a pomodoro timer app with multiple timers, work/break intervals, and session tracking. Save time start times so I can refresh the page with running timers.",
-  },
-  {
-    label: "Toggle",
-    text: "Put a checkbox on a blank page. When checked, the page is white. When unchecked, the page is black.",
-  },
-  {
-    label: "Color Picker",
-    text: "Give me a color picker specifically for maritime and ocean colors. When I'm happy with a color, use AI to name it. Also let me type in a color name and have AI pick an actual color.",
-  },
-  {
-    label: "Landscape",
-    text: "Show me three quotes of famous landscape descriptions from American literature. Give me the option to render those landscapes with images using AI.",
-  },
-  {
-    label: "Cat Portrait",
-    text: "Let me pick an emoji from a small board. Generate a photorealistic portrait of orange Persian tabby cat incorporating the selected emoji.",
-  },
-  {
-    label: "Music",
-    text: "A music loop composition tool that uses createOscillator to make an 8-step sequencer with distinct tones for each instrument.",
-  },
-  {
-    label: "Quiz",
-    text: "Trivia game show that lets me pick a topic, and uses AI to make questions and judge answers. Style like a board game.",
-  },
-  {
-    label: "Blocks",
-    text: "A full screen paddle-and-ball game where a horizontal paddle at the bottom of the screen follows the mouse or jumps to touch locations, and the goal is to bounce a ball upward. Use createOscillator for sound effects. The ball breaks a wall of bricks at the top, and the goal is to clear all bricks without letting the ball fall. Start slow and speed up each level. Power-ups drop from some bricks, adding effects like multiple balls, lasers, or a wider paddle.",
-  },
-  {
-    label: "Memory",
-    text: "Memory matching game with custom images and sound effects.",
-  },
-  {
-    label: "Flashcards",
-    text: "Flashcard study app that prompts for a topic.",
-  },
-  {
-    label: "Camera",
-    text: "Get live camera and convert it to ascii.",
-  },
-  {
-    label: "3D",
-    text: "Use three js to create a 3D scene of Paul Cézanne's The Basket of Apples.",
-  },
-  {
-    label: "Wildcard",
-    text: "Generate a wildcard app, something I wouldn't expect.",
-  },
-  {
     label: "Event Tracker",
     text: "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.",
   },
@@ -109,17 +17,108 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Jam Session",
-    text: "Create a drum machine with tempo control, 8 pattern slots, and a step sequencer grid.",
+    text: "Create a drum machine with tempo control, 8 pattern slots, and a step sequencer grid. Use createOscillator for hi-hats, kicks, and snares.",
+  },
+  {
+    label: "Brain Dump",
+    text: "Create a task tracker with freeform textarea entry, that sends the text to AI to create task list items using json, and tag them into the selected list.",
+  },
+  {
+    label: "Photo Wall",
+    text: "Image auto-tagger app that automatically saves, analyzes, tags, and describes images, displaying them in a masonry grid as soon as they're dropped on the page, adding tags and descriptions as they come back.",
+  },
+  {
+    label: "Legends Chat",
+    text: "Chat with historical legends — pick a figure and have a conversation. Results are streamed live.",
+  },
+  {
+    label: "DJ Playlist",
+    text: "Describe your mood and AI curates the perfect playlist with YouTube search links for each track.",
+  },
+  {
+    label: "Money Moves",
+    text: "Personal finance calculator with student loan payoff, compound interest, and retirement goal visualizations.",
+  },
+  {
+    label: "Pigment Studio",
+    text: "Full-screen painting app with only natural earth pigments on the palette and one gloriously oversized brush.",
+  },
+  {
+    label: "Emoji Chef",
+    text: "AI recipe generator that uses emoji for ingredients. An AI food critic tastes your creations and roasts them with scores.",
+  },
+  {
+    label: "Meet Up",
+    text: "Paste two people's availability and AI instantly finds the best overlapping times to meet.",
+  },
+  {
+    label: "Sky Gradient",
+    text: "Fetch real weather from the National Weather Service API for Key West, Florida and render the sky as a live CSS gradient.",
+  },
+  {
+    label: "Focus Timer",
+    text: "Pomodoro timer with multiple concurrent timers, work/break intervals, and session stats. Persists across page refreshes.",
+  },
+  {
+    label: "Zen Toggle",
+    text: "A single checkbox on a blank page. Checked: pure white. Unchecked: total darkness.",
+  },
+  {
+    label: "Ocean Palette",
+    text: "Color picker for maritime and ocean hues. Pick a color and AI names it, or type a poetic name and AI finds the shade.",
+  },
+  {
+    label: "Literary Vistas",
+    text: "Three famous landscape descriptions from American literature. Choose one and AI renders it as an image.",
+  },
+  {
+    label: "Cat Portrait",
+    text: "Pick an emoji from a board and AI generates a photorealistic portrait of an orange Persian tabby incorporating your choice.",
+  },
+  {
+    label: "Loop Machine",
+    text: "Music loop composition tool with an 8-step sequencer using createOscillator, with distinct tones per instrument track.",
+  },
+  {
+    label: "Trivia Night",
+    text: "Game show trivia — pick any topic, AI generates questions and judges your answers. Styled like a retro board game.",
+  },
+  {
+    label: "Brick Breaker",
+    text: "Full-screen paddle-and-ball game with sound effects via createOscillator. Break bricks, grab power-ups, survive the speed-up.",
+  },
+  {
+    label: "Memory Match",
+    text: "Flip-and-match card game with custom images and satisfying sound effects on every pair.",
+  },
+  {
+    label: "Flash Study",
+    text: "Flashcard app — pick any topic and AI generates a study deck you can flip through and shuffle.",
+  },
+  {
+    label: "ASCII Cam",
+    text: "Live camera feed converted to ASCII art in real time. Watch yourself rendered in characters.",
+  },
+  {
+    label: "Still Life 3D",
+    text: "Three.js scene recreating Paul Cézanne's The Basket of Apples in navigable 3D.",
+  },
+  {
+    label: "Guitar",
+    text: "Hendrix-style guitar solo machine using Web Audio API — sawtooth oscillators, wah-wah filter sweeps, feedback distortion, whammy bar dives, and pentatonic shredding with human-like timing. Crank the gain and let it rip.",
+  },
+  {
+    label: "Wildcard",
+    text: "Roll the dice — AI generates a completely unexpected app you didn't know you wanted.",
   },
 ];
 
 // Named exports for specific prompts used in the create page
-export const partyPlannerPrompt =
-  "Create a party planning app with guest list, RSVP tracking, and budget calculator.";
-export const progressTrackerPrompt =
-  "Create a random app idea and build it automatically.";
+export const partyPlannerPrompt = "Create a party planning app with guest list, RSVP tracking, and budget calculator.";
+export const progressTrackerPrompt = "Create a random app idea and build it automatically.";
 export const eventTrackerPrompt =
   "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.";
 export const historyQuestPrompt =
   "Create a history RPG where the AI writes a short scene set in a real era, then gives you 3 choices. Each choice leads to a new scene. Track your score.";
-export const jamSessionPrompt = "Create a drum machine with tempo control, 8 pattern slots, and a step sequencer grid.";
+export const jamSessionPrompt =
+  "Create a drum machine with tempo control, 8 pattern slots, and a step sequencer grid. Use createOscillator for hi-hats, kicks, and snares.";
