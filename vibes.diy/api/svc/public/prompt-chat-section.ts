@@ -296,16 +296,20 @@ export async function handlePromptContext({
 export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[]): ChatMessage[] {
   const messages: ChatMessage[] = [];
   const assistantLines: string[] = [];
+  const flushAssistant = () => {
+    if (assistantLines.length === 0) return;
+    messages.push({
+      role: "assistant",
+      content: [{ type: "text", text: assistantLines.join("\n") }],
+    });
+    assistantLines.length = 0;
+  };
   for (const msg of sectionMsgs) {
     if (isPromptReq(msg)) {
-      // Flush any accumulated assistant content before the next user message
-      if (assistantLines.length > 0) {
-        messages.push({
-          role: "assistant",
-          content: [{ type: "text", text: assistantLines.join("\n") }],
-        });
-        assistantLines.length = 0;
-      }
+      flushAssistant();
+      // Invariant: each stored prompt.req carries only the newest user turn
+      // (see handlePromptContext); full history is rebuilt across sections
+      // rather than duplicated per request.
       messages.push(...msg.request.messages.filter((m) => m.role === "user"));
     } else if (isToplevelLine(msg)) {
       assistantLines.push(msg.line);
@@ -317,13 +321,7 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
       assistantLines.push("```");
     }
   }
-  // Flush any remaining assistant content
-  if (assistantLines.length > 0) {
-    messages.push({
-      role: "assistant",
-      content: [{ type: "text", text: assistantLines.join("\n") }],
-    });
-  }
+  flushAssistant();
   return messages;
 }
 
@@ -342,14 +340,18 @@ async function injectSystemPrompt(
     .from(vctx.sql.tables.chatSections)
     .where(eq(vctx.sql.tables.chatSections.chatId, chatId))
     .orderBy(vctx.sql.tables.chatSections.created);
-  const conversationMessages: ChatMessage[] = [];
+  // A single assistant turn can span multiple chatSections rows (blockChunks
+  // boundary), so concat every section's parsed messages and reconstruct once —
+  // reconstructing per-row would flush mid-turn and fragment the assistant message.
+  const allSectionMsgs: PromptAndBlockMsgs[] = [];
   for (const rowSection of sections) {
     const { filtered: sectionMsgs, warning: sectionWarning } = parseArrayWarning(rowSection.blocks, PromptAndBlockMsgs);
     if (sectionWarning.length > 0) {
       ensureLogger(vctx.sthis, "buildUserMessages").Warn().Any({ parseErrors: sectionWarning }).Msg("skip");
     }
-    conversationMessages.push(...reconstructConversationMessages(sectionMsgs));
+    allSectionMsgs.push(...sectionMsgs);
   }
+  const conversationMessages = reconstructConversationMessages(allSectionMsgs);
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
       dependenciesUserOverride: true,
@@ -389,14 +391,13 @@ async function injectSystemPrompt(
     console.error("Failed to create system prompt:", systemPrompt.Err());
     return Result.Err(systemPrompt);
   }
-  if (conversationMessages.length === 0) {
+  if (!conversationMessages.some((m) => m.role === "user")) {
     return Result.Err(`No user messages found in the prompt`);
   }
 
   return Result.Ok({
     model,
     messages: [
-      ...conversationMessages,
       {
         role: "system",
         content: [
@@ -406,6 +407,7 @@ async function injectSystemPrompt(
           },
         ],
       },
+      ...conversationMessages,
     ],
   });
 }
