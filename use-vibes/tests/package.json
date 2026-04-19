@@ -57,7 +57,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@react-router/dev": "^7.14.0",
+    "@react-router/dev": "^7.14.1",
     "@tailwindcss/vite": "^4.2.2",
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:0.0.0",
