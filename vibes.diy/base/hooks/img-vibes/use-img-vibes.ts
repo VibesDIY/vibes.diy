@@ -10,6 +10,7 @@ export function useImgVibes({
   database = "ImgVibes",
   skip = false,
   generationId,
+  inputImage,
 }: Partial<UseImgVibesOptions>): UseImgVibesResult {
   const [assetUrl, setAssetUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -69,7 +70,7 @@ export function useImgVibes({
       setError(null);
 
       try {
-        const urls = await imgVibes(promptText);
+        const urls = await imgVibes(promptText, inputImage);
         const imageUrl = urls[0];
         if (!imageUrl) throw new Error("No image URL received from service");
 
@@ -111,7 +112,7 @@ export function useImgVibes({
     }
 
     run();
-  }, [_id, prompt, generationId, skip, db]);
+  }, [_id, prompt, generationId, skip, db, inputImage]);
 
   return { assetUrl, loading, progress, error, document };
 }

@@ -633,10 +633,18 @@ async function handleProdiaImageRequest({
     return Result.Err("PRODIA_TOKEN not configured");
   }
 
-  // Extract prompt text from the last user message
+  // Extract prompt text and optional input image from the last user message
   const userMessages = req.prompt.messages.filter((m) => m.role === "user");
   const lastUserMsg = userMessages[userMessages.length - 1];
-  const promptText = lastUserMsg?.content?.[0]?.text ?? "";
+  let promptText = "";
+  let inputImageDataUrl: string | undefined;
+  for (const part of lastUserMsg?.content ?? []) {
+    if (part.text.startsWith("__img2img__:")) {
+      inputImageDataUrl = part.text.slice("__img2img__:".length);
+    } else if (!promptText) {
+      promptText = part.text;
+    }
+  }
   if (!promptText) {
     return Result.Err("No prompt text found in user messages");
   }
@@ -664,19 +672,46 @@ async function handleProdiaImageRequest({
     })
     .do();
 
-  // Call Prodia API
-  const prodiaRes = await fetch("https://inference.prodia.com/v2/job", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${prodiaToken}`,
-      Accept: "image/png",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      type: "inference.flux-2.klein.9b.txt2img.v1",
-      config: { prompt: promptText },
-    }),
-  });
+  // Call Prodia API (img2img if input image provided, otherwise txt2img)
+  let prodiaRes: Response;
+  if (inputImageDataUrl) {
+    const base64Data = inputImageDataUrl.split(",")[1];
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const formData = new FormData();
+    formData.append(
+      "job",
+      new Blob([JSON.stringify({ type: "inference.flux-2.klein.img2img.v1", config: { prompt: promptText } })], {
+        type: "application/json",
+      }),
+      "job.json"
+    );
+    formData.append("input", new Blob([bytes], { type: "image/jpeg" }), "input.jpg");
+    prodiaRes = await fetch("https://inference.prodia.com/v2/job", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${prodiaToken}`,
+        Accept: "image/png",
+      },
+      body: formData,
+    });
+  } else {
+    prodiaRes = await fetch("https://inference.prodia.com/v2/job", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${prodiaToken}`,
+        Accept: "image/png",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "inference.flux-2.klein.9b.txt2img.v1",
+        config: { prompt: promptText },
+      }),
+    });
+  }
 
   if (!prodiaRes.ok) {
     const errorText = await prodiaRes.text().catch(() => "");
