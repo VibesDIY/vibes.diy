@@ -21,16 +21,27 @@ import { ImgVibes } from "img-vibes";
 
 function MyComponent() {
   const [file, setFile] = useState(null);
+  const [transformKey, setTransformKey] = useState(0);
+
+  const handleTransform = () => {
+    setTransformKey((k) => k + 1);
+  };
+
   return (
     <div>
       <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
-      {file && <ImgVibes prompt="Make it look like a watercolor painting" inputImage={file} />}
+      {file && (
+        <>
+          <button onClick={handleTransform}>Transform</button>
+          <ImgVibes key={transformKey} prompt="Make it look like a watercolor painting" inputImage={file} />
+        </>
+      )}
     </div>
   );
 }
 ```
 
-The input image is automatically resized (max 1024px) and compressed as JPEG before sending.
+Use `key={counter}` to force a fresh generation when the user re-triggers with the same prompt/file. The input image is automatically resized (max 1024px) and compressed as JPEG before sending.
 
 3. **With an \_id prop** - Loads a specific image from the database:
 
