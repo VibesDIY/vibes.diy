@@ -382,6 +382,11 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     }
   }, [promptState.blocks, searchParams, navigate, userSlug, appSlug, fsId]);
 
+  // Clear pending save when switching chats
+  useEffect(() => {
+    pendingSavePromptIdRef.current = null;
+  }, [userSlug, appSlug]);
+
   useEffect(() => {
     if (inConstruction) return;
     if (isMobileViewport()) {
