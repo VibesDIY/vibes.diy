@@ -127,4 +127,37 @@ describe("reconstructConversationMessages", () => {
   it("handles empty input", () => {
     expect(reconstructConversationMessages([])).toEqual([]);
   });
+
+  it("keeps one assistant turn when messages span a section boundary", () => {
+    // Simulates handlePromptContext splitting a single assistant response across
+    // two chatSections rows at the blockChunks boundary. injectSystemPrompt now
+    // concats both sections' messages before calling reconstruct, so the code
+    // block must stay paired into a single assistant message.
+    const section1: PromptAndBlockMsgs[] = [
+      makePromptReq("long request", 0),
+      makeToplevelLine("Working on it:", 1),
+      makeCodeBegin("jsx", 2),
+      makeCodeLine("line-a", "jsx", 3),
+    ];
+    const section2: PromptAndBlockMsgs[] = [
+      makeCodeLine("line-b", "jsx", 4),
+      makeCodeEnd("jsx", 5),
+      makeToplevelLine("Done.", 6),
+    ];
+    const result = reconstructConversationMessages([...section1, ...section2]);
+    expect(result).toHaveLength(2);
+    expect(result[0].role).toBe("user");
+    expect(result[1].role).toBe("assistant");
+    const text = result[1].content[0].text;
+    expect(text).toBe("Working on it:\n```jsx\nline-a\nline-b\n```\nDone.");
+    const fenceCount = (text.match(/```/g) ?? []).length;
+    expect(fenceCount).toBe(2);
+  });
+
+  it("produces no user message when input contains only assistant blocks", () => {
+    // Backs the injectSystemPrompt guard that rejects histories with no user turn.
+    const msgs = [makeToplevelLine("orphan assistant line", 0)];
+    const result = reconstructConversationMessages(msgs);
+    expect(result.some((m) => m.role === "user")).toBe(false);
+  });
 });
