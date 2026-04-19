@@ -24,7 +24,7 @@ function MyComponent() {
   return (
     <div>
       <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
-      {file && <ImgVibes prompt="Make it look like a watercolor painting" inputImage={file} />}
+      {file && <ImgVibes prompt="Make it look like a watercolor painting" images={[file]} />}
     </div>
   );
 }
@@ -110,7 +110,7 @@ ImgVibes supports custom styling through CSS variables or custom class names:
 #### Props
 
 - `prompt`: Text prompt for image generation (required unless `_id` is provided)
-- `inputImage`: A `File` object for img2img editing/transformation (optional)
+- `images`: Array of `File` objects for img2img editing/transformation (uses first image, optional)
 - `_id`: Document ID to load a specific image instead of generating a new one
 - `database`: Database name or instance to use for storing images (default: `'ImgVibes'`)
 - `className`: CSS class name for the image element (optional)
