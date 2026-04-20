@@ -77,7 +77,7 @@ const IframeVibesComponent: React.FC<IframeVibesComponentProps> = ({ code, sessi
 
   return (
     <div data-testid="placeholder">
-      <iframe ref={iframeRef} title="Vibes Component Preview" />
+      <iframe ref={iframeRef} title="Vibes Component Preview" allow="camera; microphone" />
       {!isReady && <div>Loading component...</div>}
     </div>
   );

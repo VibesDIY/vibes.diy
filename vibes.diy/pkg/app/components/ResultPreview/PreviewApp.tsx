@@ -66,6 +66,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         src={previewUrl.toString()}
         className="relative w-full h-full"
         sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+        allow="camera; microphone"
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
     </div>
