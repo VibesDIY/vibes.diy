@@ -1193,8 +1193,20 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       }
       const resChat = rResChat.Ok();
 
-      let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
+      // Resolved img model id picks the backend: "prodia/*" -> Prodia, else LLM handler.
+      let useProdia = false;
       if (isReqPromptImageChatSection(orig) && vctx.prodiaToken) {
+        const override = orig.prompt.model;
+        if (override) {
+          useProdia = override.startsWith("prodia/");
+        } else {
+          const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
+          useProdia = rDefaults.isOk() && rDefaults.Ok().img.model.id.startsWith("prodia/");
+        }
+      }
+
+      let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
+      if (isReqPromptImageChatSection(orig) && useProdia) {
         prompSectionAction = async (scope: Scope, blockSeq: number) => {
           return handleProdiaImageRequest({
             scope,
