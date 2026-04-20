@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { ensureUserSlug, ensureAppSlug, getDefaultUserSlug, persistDefaultUserSlug } from "./ensure-slug-binding.js";
 import { preAllocate } from "./pre-allocate.js";
 import { ActiveEntry, ActiveSkills, ActiveTitle, EvtAppSetting, MsgBase, ReqOpenChat, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
@@ -135,11 +136,11 @@ async function writePreAllocActiveEntries(
   if (title) {
     entries.push({ type: "active.title", title } satisfies ActiveTitle);
   }
-  if (skills) {
+  if (skills && skills.length > 0) {
     entries.push({ type: "active.skills", skills } satisfies ActiveSkills);
   }
   if (entries.length === 0) return;
-  await exception2Result(() =>
+  const rIns = await exception2Result(() =>
     ctx.sql.db.insert(ctx.sql.tables.appSettings).values({
       userId,
       userSlug,
@@ -149,6 +150,13 @@ async function writePreAllocActiveEntries(
       created: now,
     })
   );
+  if (rIns.isErr()) {
+    ensureLogger(ctx.sthis, "writePreAllocActiveEntries")
+      .Error()
+      .Any({ err: rIns.Err(), userSlug, appSlug })
+      .Msg("appSettings insert failed; skipping evt-app-setting");
+    return;
+  }
   await ctx.postQueue({
     payload: {
       type: "vibes.diy.evt-app-setting",
