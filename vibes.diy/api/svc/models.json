@@ -31,7 +31,7 @@
     "featured": true
   },
   {
-    "id": "prodia/flux-2-klein-9b",
+    "id": "prodia/flux-2.klein.9b",
     "name": "Prodia Flux 2 Klein 9B",
     "description": "Prodia's hosted Flux 2 Klein 9B image generation model (default image backend)",
     "featured": false,
