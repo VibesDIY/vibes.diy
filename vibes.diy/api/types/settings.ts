@@ -195,6 +195,7 @@ export const AppSettings = type({
     settings: {
       "title?": "string",
       "skills?": type("string").array(),
+      "icon?": type({ cid: "string", mime: "string" }),
       "app?": AIParams.partial(),
       "chat?": AIParams.partial(),
       "img?": AIParams.partial(),

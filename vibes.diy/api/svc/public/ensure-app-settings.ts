@@ -14,6 +14,7 @@ import {
   isActiveModelSettingApp,
   isActiveModelSettingChat,
   isActiveModelSettingImg,
+  isActiveIcon,
   isActiveSkills,
   isReqEnsureAppSettingsImg,
   isReqEnsureAppSettingsSkills,
@@ -86,6 +87,9 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
         break;
       case isActiveSkills(e):
         result.entry.settings.skills = e.skills;
+        break;
+      case isActiveIcon(e):
+        result.entry.settings.icon = { cid: e.cid, mime: e.mime };
         break;
       case isActiveModelSettingChat(e):
         result.entry.settings.chat = e.param;
