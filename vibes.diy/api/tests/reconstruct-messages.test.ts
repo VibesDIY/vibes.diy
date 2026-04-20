@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { reconstructConversationMessages } from "@vibes.diy/api-svc";
 import type { PromptAndBlockMsgs } from "@vibes.diy/api-types";
+import type { ChatMessage } from "@vibes.diy/call-ai-v2";
+
+function firstText(msg: ChatMessage): string {
+  const part = msg.content.find((c) => c.type === "text");
+  return part?.type === "text" ? part.text : "";
+}
 
 const base = {
   blockId: "b1",
@@ -96,7 +102,7 @@ describe("reconstructConversationMessages", () => {
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual({ role: "user", content: [{ type: "text", text: "make an app" }] });
     expect(result[1].role).toBe("assistant");
-    expect(result[1].content[0].text).toBe("Here is the code:\n```jsx\nfunction App() {\n  return <div>Hello</div>;\n}\n```");
+    expect(firstText(result[1])).toBe("Here is the code:\n```jsx\nfunction App() {\n  return <div>Hello</div>;\n}\n```");
   });
 
   it("preserves multi-turn conversation order", () => {
@@ -118,10 +124,10 @@ describe("reconstructConversationMessages", () => {
     expect(result).toHaveLength(4);
     expect(result[0]).toEqual({ role: "user", content: [{ type: "text", text: "build a todo app" }] });
     expect(result[1].role).toBe("assistant");
-    expect(result[1].content[0].text).toContain("```jsx");
+    expect(firstText(result[1])).toContain("```jsx");
     expect(result[2]).toEqual({ role: "user", content: [{ type: "text", text: "add a button" }] });
     expect(result[3].role).toBe("assistant");
-    expect(result[3].content[0].text).toContain("button");
+    expect(firstText(result[3])).toContain("button");
   });
 
   it("handles empty input", () => {
@@ -144,7 +150,7 @@ describe("reconstructConversationMessages", () => {
     expect(result).toHaveLength(2);
     expect(result[0].role).toBe("user");
     expect(result[1].role).toBe("assistant");
-    const text = result[1].content[0].text;
+    const text = firstText(result[1]);
     expect(text).toBe("Working on it:\n```jsx\nline-a\nline-b\n```\nDone.");
     const fenceCount = (text.match(/```/g) ?? []).length;
     expect(fenceCount).toBe(2);
