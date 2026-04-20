@@ -34,6 +34,7 @@ export const reqOpenChat = type({
   "appSlug?": "string",
   "userSlug?": "string",
   "chatId?": "string",
+  "prompt?": "string", // when present with no appSlug, triggers pre-allocation (LLM-driven title+slug+skills)
   mode: PromptStyle,
 });
 

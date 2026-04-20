@@ -119,6 +119,15 @@ export function isReqEnsureAppSettingsTitle(obj: unknown): obj is ReqEnsureAppSe
   return !(reqEnsureAppSettingsTitle(obj) instanceof type.errors);
 }
 
+export const reqEnsureAppSettingsSkills = type({
+  skills: type("string").array(),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsSkills = typeof reqEnsureAppSettingsSkills.infer;
+export function isReqEnsureAppSettingsSkills(obj: unknown): obj is ReqEnsureAppSettingsSkills {
+  return !(reqEnsureAppSettingsSkills(obj) instanceof type.errors);
+}
+
 export const reqEnsureAppSettingsApp = type({
   app: AIParams.partial(),
 }).and(reqEnsureAppSettingsBase);
@@ -160,6 +169,7 @@ export type ReqEnsureAppSettings =
   | ReqPublicAccess
   | ReqRequest
   | ReqEnsureAppSettingsTitle
+  | ReqEnsureAppSettingsSkills
   | ReqEnsureAppSettingsApp
   | ReqEnsureAppSettingsChat
   | ReqEnsureAppSettingsImg
@@ -170,6 +180,7 @@ export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSetting
   return (
     // isReqEnsureAppSettingsAcl(obj) ||
     isReqEnsureAppSettingsTitle(obj) ||
+    isReqEnsureAppSettingsSkills(obj) ||
     isReqEnsureAppSettingsApp(obj) ||
     isReqEnsureAppSettingsChat(obj) ||
     isReqEnsureAppSettingsImg(obj) ||
@@ -183,6 +194,7 @@ export const AppSettings = type({
   entry: type({
     settings: {
       "title?": "string",
+      "skills?": type("string").array(),
       "app?": AIParams.partial(),
       "chat?": AIParams.partial(),
       "img?": AIParams.partial(),
