@@ -150,7 +150,7 @@ ImgVibes supports custom styling through CSS variables or custom class names:
 - `alt`: Alt text for the image element (optional)
 - `style`: Inline styles for the image element (optional)
 - `showControls`: Toggle regenerate and version navigation buttons (default: `true`)
-- `model`: Override the image generation model for this component (optional). Use a catalog model id such as `"openai/gpt-5-image-mini"` or `"prodia/flux-2-klein-9b"`. When omitted, the app's configured default is used.
+- `model`: Override the image generation model for this component (optional). Use a catalog model id such as `"openai/gpt-5-image-mini"` or `"prodia/flux-2.klein.9b"`. When omitted, the app's configured default is used. Note: img2img (passing `images`) is only supported for `prodia/*` models today.
 
 ## Choosing a Model
 
