@@ -77,7 +77,7 @@ import { callAI } from "call-ai"
 
       return {
         systemPrompt,
-        dependencies: ["fireproof", "callai"],
+        skills: ["fireproof", "callai"],
         demoData: true,
         model,
       };
@@ -97,7 +97,7 @@ describe("Settings and Prompt Integration", () => {
   it("generates a base system prompt with default values when no settings provided", async () => {
     const model = "test-model";
     const result = await makeBaseSystemPrompt(model, {
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
+
     });
 
     // Check that the prompt includes the default style
@@ -112,7 +112,7 @@ describe("Settings and Prompt Integration", () => {
     const settingsDoc = {
       _id: "user_settings",
       stylePrompt: "synthwave (80s digital aesthetic)",
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
+
     };
 
     const result = await makeBaseSystemPrompt(model, settingsDoc);
@@ -128,7 +128,7 @@ describe("Settings and Prompt Integration", () => {
     const settingsDoc = {
       _id: "user_settings",
       userPrompt: userPromptText,
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
+
     };
 
     const result = await makeBaseSystemPrompt(model, settingsDoc);
@@ -145,7 +145,7 @@ describe("Settings and Prompt Integration", () => {
       _id: "user_settings",
       stylePrompt: stylePromptText,
       userPrompt: userPromptText,
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
+
     };
 
     const result = await makeBaseSystemPrompt(model, settingsDoc);
@@ -160,7 +160,7 @@ describe("Settings and Prompt Integration", () => {
     const model = "test-model";
     const settingsDoc = {
       _id: "user_settings",
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
+
     };
 
     const result = await makeBaseSystemPrompt(model, settingsDoc);
@@ -172,7 +172,7 @@ describe("Settings and Prompt Integration", () => {
   it("includes LLM documentation in the prompt", async () => {
     const model = "test-model";
     const result = await makeBaseSystemPrompt(model, {
-      callAi: { ModuleAndOptionsSelection: vi.fn() },
+
     });
 
     // Check that the LLM documentation is included

@@ -28,11 +28,9 @@ export default function ChatPrompt() {
           console.error("tokenClaims:", rClaims.Err());
           return Promise.reject();
         }
-        // const { params } = rClaims.Ok().claims;
-        // HERE we need to look in the userSettings
         return vibeDiyApi.openChat({
-          // userSlug: params.name ?? params.nick ?? params.email.replace(/@[^@]+$/, ""),
           mode: "chat",
+          prompt,
         });
       })
       .then((rChat) => {
