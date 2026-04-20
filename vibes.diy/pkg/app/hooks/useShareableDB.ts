@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth, useClerk } from "@clerk/react";
+import { useParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { isUserSettingSharing, type UserSettingSharing } from "@vibes.diy/api-types";
 import type { ResOkVibeRegisterFPDb } from "@vibes.diy/vibe-types";
@@ -18,6 +19,7 @@ export function useShareableDB() {
   const { srvVibeSandbox, vibeDiyApi } = useVibesDiy();
   const { isSignedIn, isLoaded } = useAuth();
   const clerk = useClerk();
+  const { userSlug: routeUserSlug, appSlug: routeAppSlug } = useParams<{ userSlug: string; appSlug: string }>();
 
   const [pendingDbRef, setPendingDbRef] = useState<ReturnType<typeof srvVibeSandbox.shareableDBs.get> | null>(null);
   const pendingDbRefRef = useRef<ReturnType<typeof srvVibeSandbox.shareableDBs.get> | null>(null);
@@ -39,13 +41,29 @@ export function useShareableDB() {
     });
   }, [srvVibeSandbox]);
 
+  // Auto-allow same-vibe DB registrations without prompting
+  const isSameVibe = pendingDbRef
+    ? pendingDbRef.data.appSlug === routeAppSlug && pendingDbRef.data.userSlug === routeUserSlug
+    : false;
+
   // Compute sharingState whenever pendingDbRef or auth status changes
   useEffect(() => {
-    // console.log(`Computing sharing state for pendingDbRef:`, pendingDbRef, isLoaded, isSignedIn);
     if (!pendingDbRef) {
       setSharingState(null);
       return;
     }
+
+    // Same-vibe DB: auto-allow without user prompt or settings check
+    if (isSameVibe) {
+      const v = pendingDbRefRef.current;
+      if (v) {
+        srvVibeSandbox.shareableDBs.set(v.key, { ...v, attachAction: "attach" });
+      }
+      setSharingState("allowed");
+      return;
+    }
+
+    // Cross-vibe DB: require authentication and explicit consent
     if (!isLoaded) {
       setSharingState("waiting");
       return;
@@ -78,7 +96,7 @@ export function useShareableDB() {
         setSharingState("ask");
       }
     });
-  }, [pendingDbRef, isLoaded, isSignedIn, vibeDiyApi]);
+  }, [pendingDbRef, isLoaded, isSignedIn, vibeDiyApi, isSameVibe]);
 
   // Auto-clear "allowed"/"denied" — existing grant, no dialog needed
   useEffect(() => {
