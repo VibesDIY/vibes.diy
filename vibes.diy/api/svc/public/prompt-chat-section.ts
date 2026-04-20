@@ -651,6 +651,7 @@ async function handleProdiaImageRequest({
   req,
   promptId,
   blockSeq,
+  resolvedModel,
 }: {
   scope: Scope;
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -658,10 +659,17 @@ async function handleProdiaImageRequest({
   req: ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>;
   promptId: string;
   blockSeq: number;
+  resolvedModel: string;
 }): Promise<Result<number>> {
   const prodiaToken = vctx.prodiaToken;
   if (!prodiaToken) {
     return Result.Err("PRODIA_TOKEN not configured");
+  }
+  // Prodia inference type is built from the model id stem (everything after "prodia/").
+  // e.g. "prodia/flux-2.klein.9b" -> "inference.flux-2.klein.9b.{txt2img|img2img}.v1"
+  const prodiaStem = resolvedModel.startsWith("prodia/") ? resolvedModel.slice("prodia/".length) : "";
+  if (!prodiaStem) {
+    return Result.Err(`Invalid Prodia model id: ${resolvedModel}`);
   }
 
   // Extract prompt text from the last user message
@@ -708,7 +716,7 @@ async function handleProdiaImageRequest({
     const formData = new FormData();
     formData.append(
       "job",
-      new Blob([JSON.stringify({ type: "inference.flux-2.klein.9b.img2img.v1", config: { prompt: promptText } })], {
+      new Blob([JSON.stringify({ type: `inference.${prodiaStem}.img2img.v1`, config: { prompt: promptText } })], {
         type: "application/json",
       }),
       "job.json"
@@ -731,7 +739,7 @@ async function handleProdiaImageRequest({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        type: "inference.flux-2.klein.9b.txt2img.v1",
+        type: `inference.${prodiaStem}.txt2img.v1`,
         config: { prompt: promptText },
       }),
     });
@@ -1197,15 +1205,29 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       const resChat = rResChat.Ok();
 
       // Resolved img model id picks the backend: "prodia/*" -> Prodia, else LLM handler.
-      let useProdia = false;
-      if (isReqPromptImageChatSection(orig) && vctx.prodiaToken) {
+      let resolvedImgModel: string | undefined;
+      if (isReqPromptImageChatSection(orig)) {
         const override = orig.prompt.model;
         if (override) {
-          useProdia = override.startsWith("prodia/");
+          resolvedImgModel = override;
         } else {
           const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
-          useProdia = rDefaults.isOk() && rDefaults.Ok().img.model.id.startsWith("prodia/");
+          if (rDefaults.isOk()) {
+            resolvedImgModel = rDefaults.Ok().img.model.id;
+          }
         }
+      }
+      const useProdia = !!(
+        isReqPromptImageChatSection(orig) &&
+        vctx.prodiaToken &&
+        resolvedImgModel?.startsWith("prodia/")
+      );
+
+      // LLM path doesn't forward inputImageBase64, so img2img is only supported via Prodia.
+      if (isReqPromptImageChatSection(orig) && orig.inputImageBase64 && !useProdia) {
+        return Result.Err(
+          `img2img (inputImageBase64) is not supported for model ${resolvedImgModel ?? "<unresolved>"}; only prodia/* models support image input today`
+        );
       }
 
       let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
@@ -1218,6 +1240,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             req: orig as ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>,
             promptId,
             blockSeq,
+            resolvedModel: resolvedImgModel as string,
           });
         };
       } else if (isReqPromptLLMChatSection(orig)) {
