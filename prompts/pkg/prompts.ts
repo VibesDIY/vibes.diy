@@ -41,6 +41,27 @@ export async function getDefaultSkills(): Promise<string[]> {
   return ["fireproof", "callai", "img-vibes", "web-audio"];
 }
 
+/**
+ * Builds the user-message body for the pre-allocation LLM call. Includes the
+ * skill catalog (name + one-line description per entry) so the model can pick
+ * valid skill names, plus the user's raw prompt. Invalid names returned by the
+ * model are filtered out at read time (`makeBaseSystemPrompt` → catalog guard),
+ * so name-misses fail silently.
+ */
+export async function makePreAllocUserMessage(userPrompt: string): Promise<string> {
+  const catalog = await getLlmCatalog();
+  const catalogText = catalog.map((l) => `- ${l.name}: ${l.description}`).join("\n");
+  return [
+    "Pick skills from this catalog that fit the user's app request, and propose 3 title/slug pairs for naming.",
+    "",
+    "Skill catalog:",
+    catalogText,
+    "",
+    "User request:",
+    userPrompt,
+  ].join("\n");
+}
+
 export interface SystemPromptResult {
   systemPrompt: string;
   skills: string[];

@@ -1,6 +1,7 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { callAI } from "call-ai";
 import { type } from "arktype";
+import { makePreAllocUserMessage } from "@vibes.diy/prompts";
 import { VibesApiSQLCtx } from "../types.js";
 import { loadModels } from "../public/list-models.js";
 
@@ -19,7 +20,7 @@ const preAllocSchema = {
   properties: {
     skills: {
       type: "array",
-      description: "Selected capability names from the catalog, appropriate for the app described by the prompt.",
+      description: "Selected skill names from the catalog above, appropriate for the app described by the user prompt. Only use names present in the catalog.",
       items: { type: "string" },
     },
     pairs: {
@@ -58,12 +59,14 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
   const appDefault = rModels.Ok().models.find((m) => m.preSelected?.includes("app"));
   if (!appDefault) return Result.Err("no preSelected app model in catalog");
 
+  const userMessage = await makePreAllocUserMessage(prompt);
+
   const timeout = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error(`pre-alloc LLM call timed out after ${PRE_ALLOC_TIMEOUT_MS}ms`)), PRE_ALLOC_TIMEOUT_MS)
   );
   const rCall = await exception2Result(() =>
     Promise.race([
-      callAI(prompt, {
+      callAI(userMessage, {
         model: appDefault.id,
         endpoint: vctx.params.llm.url,
         apiKey: vctx.params.llm.apiKey,
