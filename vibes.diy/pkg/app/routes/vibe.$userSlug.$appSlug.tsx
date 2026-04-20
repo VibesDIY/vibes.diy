@@ -7,7 +7,7 @@ import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
-import { VibesSwitch, VibesButton, BLUE, YELLOW, gridBackground, cx } from "@vibes.diy/base";
+import { VibesSwitch, VibesButton, BLUE, YELLOW, ExpandedVibesPill, gridBackground, cx } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
@@ -239,7 +239,12 @@ export default function VibeIframeWrapper() {
         {createPortal(
           <div className="fixed bottom-4 right-4 z-50">
             <Delayed ms={1000}>
-              <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
+              <ExpandedVibesPill
+                size={60}
+                onRemix={() => {
+                  window.location.href = `/chat/${userSlug}/${appSlug}`;
+                }}
+              />
             </Delayed>
           </div>,
           document.body
