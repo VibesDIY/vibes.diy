@@ -26,6 +26,9 @@ export interface CFEnv {
   RESEND_API_KEY: string;
   VIBES_DIY_FROM_EMAIL: string;
 
+  LLM_BACKEND_URL: string;
+  LLM_BACKEND_API_KEY: string;
+
   CHAT_SESSIONS: DurableObjectNamespace;
   VIBES_SERVICE: Queue;
   BROWSER: Fetcher; // screenshotter uses Cloudflare's Browser Rendering API, which is accessed via a Fetcher binding

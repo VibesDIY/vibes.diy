@@ -17,6 +17,8 @@ export interface QueueCtxParams {
       VIBES_DIY_FROM_EMAIL: string;
       DB_FLAVOUR: string;
       NEON_DATABASE_URL?: string;
+      LLM_BACKEND_URL: string;
+      LLM_BACKEND_API_KEY: string;
     };
   };
 }
