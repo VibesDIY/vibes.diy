@@ -31,9 +31,6 @@ export async function writeUserSlugBinding(
       .select()
       .from(ctx.sql.tables.userSlugBinding)
       .where(eq(ctx.sql.tables.userSlugBinding.userId, userId));
-    if (existing.length >= ctx.params.maxUserSlugPerUserId) {
-      return Result.Err("maximum userSlug bindings reached for this userId");
-    }
     const owned = existing.find((e) => e.userSlug === userSlug);
     if (owned) {
       return Result.Ok({
@@ -42,6 +39,9 @@ export async function writeUserSlugBinding(
         userSlug: owned.userSlug,
         tenant: owned.tenant,
       });
+    }
+    if (existing.length >= ctx.params.maxUserSlugPerUserId) {
+      return Result.Err("maximum userSlug bindings reached for this userId");
     }
     const tenant = ctx.sthis.nextId(12).str;
     await ctx.sql.db

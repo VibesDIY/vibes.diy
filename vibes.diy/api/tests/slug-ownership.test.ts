@@ -56,6 +56,26 @@ describe("slug ownership", () => {
     expect(rB2.Ok().tenant).toBe(rB.Ok().tenant);
   });
 
+  it("should return existing binding even at max quota", async () => {
+    const userId = "quota-user";
+    const slug = `quota-${sthis.nextId(8).str}`;
+
+    // Create the binding first
+    const r1 = await writeUserSlugBinding(vibesCtx, userId, slug);
+    expect(r1.isOk()).toBe(true);
+
+    // Temporarily lower the max to simulate being at quota
+    const original = vibesCtx.params.maxUserSlugPerUserId;
+    vibesCtx.params.maxUserSlugPerUserId = 1;
+
+    // Idempotent call should still succeed — owned slug, not a new one
+    const r2 = await writeUserSlugBinding(vibesCtx, userId, slug);
+    expect(r2.isOk()).toBe(true);
+    expect(r2.Ok().tenant).toBe(r1.Ok().tenant);
+
+    vibesCtx.params.maxUserSlugPerUserId = original;
+  });
+
   it("should handle concurrent claims to the same slug", async () => {
     const slug = `concurrent-${sthis.nextId(8).str}`;
 
