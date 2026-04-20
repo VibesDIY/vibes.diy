@@ -44,6 +44,7 @@ import {
   isVibeCodeBlock,
   ActiveEntry,
   isActiveSkills,
+  isActiveTitle,
 } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { type } from "arktype";
@@ -361,7 +362,10 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
   return messages;
 }
 
-async function loadActiveSkills(vctx: VibesApiSQLCtx, chatId: string): Promise<string[] | undefined> {
+async function loadActiveSettings(
+  vctx: VibesApiSQLCtx,
+  chatId: string
+): Promise<{ skills?: string[]; title?: string }> {
   const rChat = await exception2Result(() =>
     vctx.sql.db
       .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, userSlug: vctx.sql.tables.chatContexts.userSlug })
@@ -370,7 +374,7 @@ async function loadActiveSkills(vctx: VibesApiSQLCtx, chatId: string): Promise<s
       .limit(1)
       .then((r) => r[0])
   );
-  if (rChat.isErr() || !rChat.Ok()) return undefined;
+  if (rChat.isErr() || !rChat.Ok()) return {};
   const { appSlug, userSlug } = rChat.Ok();
   const rApp = await exception2Result(() =>
     vctx.sql.db
@@ -380,10 +384,12 @@ async function loadActiveSkills(vctx: VibesApiSQLCtx, chatId: string): Promise<s
       .limit(1)
       .then((r) => r[0])
   );
-  if (rApp.isErr() || !rApp.Ok()) return undefined;
+  if (rApp.isErr() || !rApp.Ok()) return {};
   const entries = (rApp.Ok().settings ?? []) as ActiveEntry[];
-  const skillsEntry = entries.find(isActiveSkills);
-  return skillsEntry?.skills;
+  return {
+    skills: entries.find(isActiveSkills)?.skills,
+    title: entries.find(isActiveTitle)?.title,
+  };
 }
 
 async function injectSystemPrompt(
@@ -414,14 +420,16 @@ async function injectSystemPrompt(
   }
   const conversationMessages = reconstructConversationMessages(allSectionMsgs);
 
-  // Resolve the app's ActiveSkills from app_settings. Pre-allocation seeds this
-  // on new chats; legacy rows without it fall back to makeBaseSystemPrompt's
-  // getDefaultSkills().
-  const skills = await loadActiveSkills(vctx, chatId);
+  // Resolve the app's ActiveSkills + ActiveTitle from app_settings. Pre-allocation
+  // seeds both on new chats; legacy rows without skills fall back to
+  // makeBaseSystemPrompt's getDefaultSkills(), and an unset title drops the
+  // title hint line entirely.
+  const { skills, title } = await loadActiveSettings(vctx, chatId);
 
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
       skills,
+      title,
       demoData: false,
       fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
         console.log("Fetching asset for system prompt from URL:", url.toString(), vctx.params.pkgRepos.workspace);

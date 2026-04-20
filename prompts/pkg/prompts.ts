@@ -273,11 +273,16 @@ export async function makeBaseSystemPrompt(
     demoDataLines,
   ];
 
+  const titleLines = sessionDoc?.title
+    ? [`The app is called "${sessionDoc.title}". Use this exact name in the app's heading and anywhere the app refers to itself.`, ""]
+    : [];
+
   const systemPrompt = [
     systemPromptLines.join("\n"),
     "",
     concatenatedLlmsTxt,
     "",
+    ...titleLines,
     ...(userPrompt ? [userPrompt, ""] : []),
     "IMPORTANT: You are working in one JavaScript file. Define a classNames object just before the JSX return for colors and repeated styles, then reference it in your JSX.",
     "",
