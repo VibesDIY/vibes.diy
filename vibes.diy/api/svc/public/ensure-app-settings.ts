@@ -4,6 +4,7 @@ import {
   parseArrayWarning,
   ActiveEnv,
   ActiveModelSetting,
+  ActiveSkills,
   ActiveTitle,
   AppSettings,
   EnablePublicAccess,
@@ -13,7 +14,9 @@ import {
   isActiveModelSettingApp,
   isActiveModelSettingChat,
   isActiveModelSettingImg,
+  isActiveSkills,
   isReqEnsureAppSettingsImg,
+  isReqEnsureAppSettingsSkills,
   isActiveTitle,
   isEnablePublicAccess,
   isEnableRequest,
@@ -80,6 +83,9 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
         break;
       case isActiveTitle(e):
         result.entry.settings.title = e.title;
+        break;
+      case isActiveSkills(e):
+        result.entry.settings.skills = e.skills;
         break;
       case isActiveModelSettingChat(e):
         result.entry.settings.chat = e.param;
@@ -245,6 +251,19 @@ export async function ensureAppSettings(
             type: "active.title",
             title: req.title,
           }) satisfies ActiveTitle
+      );
+      break;
+    case isReqEnsureAppSettingsSkills(req):
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
+        settings,
+        isActiveSkills,
+        () =>
+          ({
+            type: "active.skills",
+            skills: req.skills,
+          }) satisfies ActiveSkills
       );
       break;
     case isReqEnsureAppSettingsApp(req):
