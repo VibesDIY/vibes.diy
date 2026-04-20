@@ -46,7 +46,7 @@ export function AppChatsTab({ userSlug, appSlug }: AppChatsTabProps) {
       void getCodeBlock(rChat.Ok().sectionStream).then((res) => {
         const userPrompt = res.promptReq.request.messages
           .filter((m) => m.role === "user")
-          .flatMap((m) => m.content.map((c) => c.text))
+          .flatMap((m) => m.content.filter((c) => c.type === "text").map((c) => c.text))
           .join("\n");
         setChatDetail({ userPrompt, code: res.code });
         setDetailLoading(false);
