@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.34",
-    "@cloudflare/workers-types": "^4.20260402.1",
+    "@cloudflare/workers-types": "4.20260402.1",
     "@tanstack/react-table": "^8.21.3",
     "@vibes.diy/base": "workspace:*",
     "cookie": "^1.1.1",
