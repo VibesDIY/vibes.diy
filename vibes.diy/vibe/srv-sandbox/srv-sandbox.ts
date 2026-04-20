@@ -401,7 +401,10 @@ function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
           const rPrompt = await rChat
             .Ok()
             .prompt(
-              { messages: [{ role: "user", content: [{ type: "text", text: ctx.validated.prompt }] }] },
+              {
+                ...(ctx.validated.model ? { model: ctx.validated.model } : {}),
+                messages: [{ role: "user", content: [{ type: "text", text: ctx.validated.prompt }] }],
+              },
               ctx.validated.inputImageBase64 ? { inputImageBase64: ctx.validated.inputImageBase64 } : undefined
             );
           if (rPrompt.isErr()) {
