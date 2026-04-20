@@ -1,7 +1,14 @@
 [
   {
+    "id": "anthropic/claude-opus-4.6-fast",
+    "name": "Claude Opus 4.6 Fast",
+    "description": "Claude Opus 4.6 Fast is Anthropic's most capable model with faster output, ideal for complex coding and creative tasks",
+    "featured": true,
+    "preSelected": ["app"]
+  },
+  {
     "id": "anthropic/claude-opus-4.5",
-    "name": "Claude Opus 4.5 (Default)",
+    "name": "Claude Opus 4.5",
     "description": "Claude Opus 4.5 is Anthropic's most powerful model, offering the best performance for complex reasoning, coding, and creative tasks",
     "featured": true
   },
@@ -132,7 +139,7 @@
     "name": "GPT-5.4 Mini",
     "description": "GPT-5.4 Mini is OpenAI's latest compact model optimized for fast, cost-efficient structured output",
     "featured": false,
-    "preSelected": ["app"]
+    "featured": false
   },
   {
     "id": "z-ai/glm-4.5",
