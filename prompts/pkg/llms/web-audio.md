@@ -18,21 +18,23 @@ Examples
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 // Start/resume only in direct response to a user gesture (e.g., a Play button)
-document.querySelector('#start-audio')?.addEventListener('click', async () => {
-  if (audioCtx.state !== 'running') await audioCtx.resume();
+document.querySelector("#start-audio")?.addEventListener("click", async () => {
+  if (audioCtx.state !== "running") await audioCtx.resume();
   // now safe to create/start nodes
 });
 
 // 2) Simple tone
 const osc = audioCtx.createOscillator();
-osc.type = 'sine';
+osc.type = "sine";
 osc.frequency.value = 440;
 osc.connect(audioCtx.destination);
 osc.start();
 osc.stop(audioCtx.currentTime + 1);
 
 // 3) Load/decode and play a file
-const buf = await fetch('/path/audio.mp3').then(r => r.arrayBuffer()).then(b => audioCtx.decodeAudioData(b));
+const buf = await fetch("/path/audio.mp3")
+  .then((r) => r.arrayBuffer())
+  .then((b) => audioCtx.decodeAudioData(b));
 const src = audioCtx.createBufferSource();
 src.buffer = buf;
 src.connect(audioCtx.destination);
@@ -42,7 +44,7 @@ src.start();
 const gain = audioCtx.createGain();
 gain.gain.value = 0.5;
 const filter = audioCtx.createBiquadFilter();
-filter.type = 'lowpass';
+filter.type = "lowpass";
 filter.frequency.value = 1000;
 osc.disconnect();
 osc.connect(filter).connect(gain).connect(audioCtx.destination);
@@ -78,8 +80,8 @@ const wetGain = audioCtx.createGain();
 const dryGain = audioCtx.createGain();
 
 delay.delayTime.value = 0.35;
-feedbackGain.gain.value = 0.5;      // < 1.0
-filter.type = 'lowpass';
+feedbackGain.gain.value = 0.5; // < 1.0
+filter.type = "lowpass";
 filter.frequency.value = 8000;
 // distortion.curve = yourFloat32Curve;
 // reverb.buffer = yourImpulseResponseAudioBuffer;
@@ -103,13 +105,13 @@ Helper (load IR):
 
 ```js
 async function loadImpulseResponse(url) {
-  const res = await fetch(url, { mode: 'cors' });
+  const res = await fetch(url, { mode: "cors" });
   if (!res.ok) throw new Error(`Failed to fetch IR ${url}: ${res.status} ${res.statusText}`);
   const ab = await res.arrayBuffer();
   try {
     return await audioCtx.decodeAudioData(ab);
   } catch (err) {
-    console.error('decodeAudioData failed for IR', url, err);
+    console.error("decodeAudioData failed for IR", url, err);
     throw err; // Surface decoding/CORS-related failures clearly
   }
 }
@@ -132,7 +134,9 @@ micGain.connect(master);
 metronomeGain.connect(master);
 
 async function initMic() {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false },
+  });
   const micSrc = audioCtx.createMediaStreamSource(stream);
   micSrc.connect(micGain);
 }
@@ -140,7 +144,7 @@ async function initMic() {
 function scheduleClick(atTime, downbeat = false) {
   const osc = audioCtx.createOscillator();
   const env = audioCtx.createGain();
-  osc.type = 'square';
+  osc.type = "square";
   osc.frequency.setValueAtTime(downbeat ? 2000 : 1600, atTime);
   env.gain.setValueAtTime(0.0001, atTime);
   env.gain.exponentialRampToValueAtTime(1.0, atTime + 0.001);
@@ -150,8 +154,12 @@ function scheduleClick(atTime, downbeat = false) {
   osc.stop(atTime + 0.05);
   // Cleanup to avoid accumulating nodes during long sessions
   osc.onended = () => {
-    try { osc.disconnect(); } catch {}
-    try { env.disconnect(); } catch {}
+    try {
+      osc.disconnect();
+    } catch {}
+    try {
+      env.disconnect();
+    } catch {}
   };
 }
 
@@ -159,11 +167,13 @@ function startMetronome({ bpm = 120, beatsPerBar = 4 } = {}) {
   const spb = 60 / bpm; // seconds per beat
   let next = audioCtx.currentTime + 0.1;
   let beat = 0;
-  const lookaheadMs = 25, ahead = 0.2;
+  const lookaheadMs = 25,
+    ahead = 0.2;
   const id = setInterval(() => {
     while (next < audioCtx.currentTime + ahead) {
       scheduleClick(next, beat % beatsPerBar === 0);
-      next += spb; beat = (beat + 1) % beatsPerBar;
+      next += spb;
+      beat = (beat + 1) % beatsPerBar;
     }
   }, lookaheadMs);
   return () => clearInterval(id);

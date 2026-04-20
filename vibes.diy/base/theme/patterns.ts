@@ -42,7 +42,7 @@ export const stripesOverlay = css`
 
 /** Grid background pattern */
 export const gridBackground = css`
-  background-color: #CCCDC8;
+  background-color: #cccdc8;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);

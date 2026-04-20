@@ -139,11 +139,7 @@ describe("reconstructConversationMessages", () => {
       makeCodeBegin("jsx", 2),
       makeCodeLine("line-a", "jsx", 3),
     ];
-    const section2: PromptAndBlockMsgs[] = [
-      makeCodeLine("line-b", "jsx", 4),
-      makeCodeEnd("jsx", 5),
-      makeToplevelLine("Done.", 6),
-    ];
+    const section2: PromptAndBlockMsgs[] = [makeCodeLine("line-b", "jsx", 4), makeCodeEnd("jsx", 5), makeToplevelLine("Done.", 6)];
     const result = reconstructConversationMessages([...section1, ...section2]);
     expect(result).toHaveLength(2);
     expect(result[0].role).toBe("user");
