@@ -34,27 +34,41 @@ export async function writeUserSlugBinding(
     if (existing.length >= ctx.params.maxUserSlugPerUserId) {
       return Result.Err("maximum userSlug bindings reached for this userId");
     }
-    if (existing.find((e) => e.userSlug === userSlug)) {
+    const owned = existing.find((e) => e.userSlug === userSlug);
+    if (owned) {
       return Result.Ok({
         type: "vibes.diy-user-slug-binding",
         userId,
-        userSlug: existing[0].userSlug,
-        tenant: existing[0].tenant,
+        userSlug: owned.userSlug,
+        tenant: owned.tenant,
       });
     }
     const tenant = ctx.sthis.nextId(12).str;
-    await ctx.sql.db.insert(ctx.sql.tables.userSlugBinding).values({
-      userId,
-      tenant,
-      userSlug,
-      created: new Date().toISOString(),
-    });
-    // .onConflictDoNothing();
+    await ctx.sql.db
+      .insert(ctx.sql.tables.userSlugBinding)
+      .values({
+        userId,
+        tenant,
+        userSlug,
+        created: new Date().toISOString(),
+      })
+      .onConflictDoNothing();
+    // Post-insert verification: confirm our userId owns the row.
+    // If another user won the race, the insert was a no-op and we reject.
+    const owner = await ctx.sql.db
+      .select()
+      .from(ctx.sql.tables.userSlugBinding)
+      .where(eq(ctx.sql.tables.userSlugBinding.userSlug, userSlug))
+      .limit(1)
+      .then((r) => r[0]);
+    if (!owner || owner.userId !== userId) {
+      return Result.Err(`userSlug "${userSlug}" is owned by another user`);
+    }
     return Result.Ok({
       type: "vibes.diy-user-slug-binding",
       userId,
       userSlug,
-      tenant,
+      tenant: owner.tenant,
     });
   });
 }
