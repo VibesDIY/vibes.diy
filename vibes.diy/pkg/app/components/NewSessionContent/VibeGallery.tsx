@@ -67,6 +67,7 @@ const categories: Category[] = [
       "Emoji mosaic — drop in a photo and watch it rebuild itself entirely out of emoji.",
       "Font tester — type a phrase and preview it across 20 Google Fonts side by side.",
       "Mandala maker with radial symmetry — draw in one slice and it mirrors everywhere.",
+      "Sandwich artist — describe your dream sandwich in words and AI generates a mouthwatering image of it.",
     ],
   },
 ];

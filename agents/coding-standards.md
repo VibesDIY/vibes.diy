@@ -24,6 +24,10 @@ Use dots (`.stable-entry.`) not `@` signs (`@stable-entry@`) for query parameter
 
 Never modify existing entries in setup logs or similar chronological docs — only append new information. Logs are a historical record; editing past entries destroys the timeline.
 
+## Say command timing
+
+Only use `echo 'message' | say` after a waiting period completes or when a full work epic finishes — never at the beginning of a job or right after kicking something off. The point is to call the human back when something they're waiting on is done, not to announce the start of work.
+
 ## Review commits before pushing
 
 Read every commit diff before pushing. Check each pattern against the rules-bag — no `instanceof`, no complex stringification chains, no casts. If something looks like a workaround, it probably is. Ask for guidance or rethink the approach.
