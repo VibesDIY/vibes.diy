@@ -35,6 +35,7 @@ export interface UseImgVibesOptions {
   readonly generationId: string;
   readonly skip: boolean;
   readonly inputImage?: File;
+  readonly model?: string;
 }
 
 export interface UseImgVibesResult {
