@@ -11,8 +11,10 @@ import {
 } from "@adviser/cement";
 import {
   ActiveEntry,
+  EvtIconRepair,
   HttpResponseBodyType,
   HttpResponseJsonType,
+  MsgBase,
   isActiveIcon,
   isFetchErrResult,
   isFetchNotFoundResult,
@@ -62,13 +64,13 @@ export const vibesIcon: EventoHandler<Request, ValidatedIconReq, unknown> = {
         .then((r) => r[0])
     );
     if (rRow.isErr() || !rRow.Ok()) {
-      return notFound(ctx, userSlug, appSlug);
+      return notFound(vctx, ctx, userSlug, appSlug);
     }
 
     const { filtered: entries } = parseArrayWarning((rRow.Ok().settings as unknown[]) ?? [], ActiveEntry);
     const iconEntry = entries.find(isActiveIcon);
     if (!iconEntry) {
-      return notFound(ctx, userSlug, appSlug);
+      return notFound(vctx, ctx, userSlug, appSlug);
     }
 
     const rAsset = await vctx.storage.fetch(iconEntry.cid);
@@ -85,7 +87,7 @@ export const vibesIcon: EventoHandler<Request, ValidatedIconReq, unknown> = {
         } satisfies HttpResponseBodyType);
         break;
       case isFetchNotFoundResult(rAsset):
-        return notFound(ctx, userSlug, appSlug);
+        return notFound(vctx, ctx, userSlug, appSlug);
       case isFetchErrResult(rAsset):
       default:
         await ctx.send.send(ctx, {
@@ -99,10 +101,24 @@ export const vibesIcon: EventoHandler<Request, ValidatedIconReq, unknown> = {
 };
 
 async function notFound(
+  vctx: VibesApiSQLCtx,
   ctx: HandleTriggerCtx<Request, ValidatedIconReq, unknown>,
   userSlug: string,
   appSlug: string
 ): Promise<Result<EventoResultType>> {
+  // Lazy hydration: enqueue a repair event so the icon gets generated on a
+  // future load. The handler dedupes if ActiveIcon already landed between
+  // this call and its turn on the queue.
+  void vctx
+    .postQueue({
+      payload: { type: "vibes.diy.evt-icon-repair", userSlug, appSlug },
+      tid: "queue-event",
+      src: "vibesIcon",
+      dst: "vibes-service",
+      ttl: 1,
+    } satisfies MsgBase<EvtIconRepair>)
+    .catch(() => undefined);
+
   await ctx.send.send(ctx, {
     type: "http.Response.JSON",
     status: 404,
