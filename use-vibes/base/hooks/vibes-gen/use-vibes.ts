@@ -123,10 +123,10 @@ export function useVibes(
         } catch (error) {
           // Fallback to a simple but functional system prompt
           result = {
-            systemPrompt: `You are a React component generator. Generate a complete React component based on the user's prompt. 
+            systemPrompt: `You are a React component generator. Generate a complete React component based on the user's prompt.
 Use Fireproof for data persistence. Begin the component with the import statements.
 Return only the JSX code with a default export. Use modern React patterns with hooks if needed.`,
-            dependencies: options.dependencies || ["useFireproof"],
+            skills: options.dependencies || ["useFireproof"],
             demoData: false,
             model: options.model || "anthropic/claude-sonnet-4.5",
           };
@@ -134,8 +134,8 @@ Return only the JSX code with a default export. Use modern React patterns with h
 
         const systemPrompt = result.systemPrompt;
         const metadata = {
-          dependencies: result.dependencies,
-          aiSelectedDependencies: result.dependencies,
+          dependencies: result.skills,
+          aiSelectedDependencies: result.skills,
           demoData: result.demoData,
           model: result.model,
           timestamp: Date.now(),

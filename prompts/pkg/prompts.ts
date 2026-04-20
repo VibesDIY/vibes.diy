@@ -43,13 +43,13 @@ export async function resolveEffectiveModel(
   return defaultCodingModel();
 }
 
-export async function getDefaultDependencies(): Promise<string[]> {
+export async function getDefaultSkills(): Promise<string[]> {
   return ["fireproof", "callai", "img-vibes", "web-audio"];
 }
 
 export interface SystemPromptResult {
   systemPrompt: string;
-  dependencies: string[];
+  skills: string[];
   demoData: boolean;
   model: string;
 }
@@ -308,7 +308,7 @@ export async function makeBaseSystemPrompt(
       includeDemoData
     );
 
-    if (selectedNames.length === 0) selectedNames = [...(await getDefaultDependencies())];
+    if (selectedNames.length === 0) selectedNames = [...(await getDefaultSkills())];
   }
   if (typeof sessionDoc?.demoDataOverride === "boolean") {
     includeDemoData = sessionDoc.demoDataOverride;
@@ -428,7 +428,7 @@ export async function makeBaseSystemPrompt(
 
   return {
     systemPrompt,
-    dependencies: selectedNames,
+    skills: selectedNames,
     demoData: includeDemoData,
     model,
   };
