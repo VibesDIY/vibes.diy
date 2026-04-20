@@ -120,6 +120,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
 
   const handlePublish = useCallback(async () => {
     if (!canPublish || !settingsLoaded) return;
+    const isInitialPublish = !isPublished;
     setIsPublishing(true);
     setPublishError(undefined);
 
@@ -153,12 +154,16 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
       setPublishedUrl(url);
       setProductionFsId(fsId);
       setIsPublished(true);
+
+      if (isInitialPublish) {
+        window.open(url, "_blank");
+      }
     } catch {
       setPublishError("Failed to publish. Please try again.");
     } finally {
       setIsPublishing(false);
     }
-  }, [canPublish, settingsLoaded, fsId, appSlug, userSlug, vibeDiyApi, autoJoinEnabled]);
+  }, [canPublish, settingsLoaded, isPublished, fsId, appSlug, userSlug, vibeDiyApi, autoJoinEnabled]);
 
   const handleToggleAutoJoin = useCallback(async () => {
     setIsTogglingAutoJoin(true);
