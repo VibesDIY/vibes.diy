@@ -221,6 +221,7 @@ export const ReqImgVibes = type({
   appSlug: "string",
   prompt: "string",
   "inputImageBase64?": "string",
+  "model?": "string",
 }).and(Base);
 
 export type ReqImgVibes = typeof ReqImgVibes.infer;
