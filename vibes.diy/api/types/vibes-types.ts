@@ -44,5 +44,7 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
     // default: LLMDefault;
     enforced: LLMEnforced;
     headers: LLMHeaders;
+    url: string;
+    apiKey: string;
   };
 };
