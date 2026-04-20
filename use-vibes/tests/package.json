@@ -49,7 +49,7 @@
     "playwright-chromium": "^1.59.1",
     "react": "^19.2.5",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2",
+    "typescript": "^6.0.3",
     "vite-plugin-devtools-json": "^1.0.0",
     "zx": "^8.8.4"
   },
@@ -57,14 +57,14 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@react-router/dev": "^7.14.0",
+    "@react-router/dev": "^7.14.1",
     "@tailwindcss/vite": "^4.2.2",
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:0.0.0",
     "react-dom": "^19.2.5",
-    "use-fireproof": "0.24.16",
+    "use-fireproof": "0.24.19",
     "use-vibes": "workspace:0.0.0",
-    "vite": "^7.3.1",
+    "vite": "^7.3.2",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "~4.1.2"
   }

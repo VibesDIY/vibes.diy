@@ -73,12 +73,14 @@ export const preAllocSchema = {
   properties: {
     skills: {
       type: "array",
-      description: "Selected skill names from the catalog above, appropriate for the app described by the user prompt. Only use names present in the catalog.",
+      description:
+        "Selected skill names from the catalog above, appropriate for the app described by the user prompt. Only use names present in the catalog.",
       items: { type: "string" },
     },
     pairs: {
       type: "array",
-      description: "Exactly 3 title/slug pairs ranked by fit. Title in Title Case, 1-4 words. Slug in kebab-case derived from title.",
+      description:
+        "Exactly 3 title/slug pairs ranked by fit. Title in Title Case, 1-4 words. Slug in kebab-case derived from title.",
       items: {
         type: "object",
         properties: {
@@ -274,7 +276,10 @@ export async function makeBaseSystemPrompt(
   ];
 
   const titleLines = sessionDoc?.title
-    ? [`The app is called "${sessionDoc.title}". Use this exact name in the app's heading and anywhere the app refers to itself.`, ""]
+    ? [
+        `The app is called "${sessionDoc.title}". Use this exact name in the app's heading and anywhere the app refers to itself.`,
+        "",
+      ]
     : [];
 
   const systemPrompt = [

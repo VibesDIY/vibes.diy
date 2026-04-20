@@ -4,7 +4,15 @@ import { exception2Result, Result } from "@adviser/cement";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { ensureUserSlug, ensureAppSlug, getDefaultUserSlug, persistDefaultUserSlug } from "./ensure-slug-binding.js";
 import { preAllocate } from "./pre-allocate.js";
-import { ActiveEntry, ActiveSkills, ActiveTitle, EvtAppSetting, MsgBase, ReqOpenChat, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
+import {
+  ActiveEntry,
+  ActiveSkills,
+  ActiveTitle,
+  EvtAppSetting,
+  MsgBase,
+  ReqOpenChat,
+  ReqWithVerifiedAuth,
+} from "@vibes.diy/api-types";
 
 interface EnsureChatIdPResult {
   appSlug: string;
@@ -129,7 +137,13 @@ export async function ensureChatId(
 
 async function writePreAllocActiveEntries(
   ctx: VibesApiSQLCtx,
-  { userId, userSlug, appSlug, title, skills }: { userId: string; userSlug: string; appSlug: string; title?: string; skills?: string[] }
+  {
+    userId,
+    userSlug,
+    appSlug,
+    title,
+    skills,
+  }: { userId: string; userSlug: string; appSlug: string; title?: string; skills?: string[] }
 ): Promise<void> {
   const now = new Date().toISOString();
   const entries: ActiveEntry[] = [];

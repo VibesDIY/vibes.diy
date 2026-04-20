@@ -51,21 +51,11 @@ export default function VibeGalleryCard({
         onMouseLeave={() => setIsHovered(false)}
       >
         <div style={getVibeCardTexturedShadowStyle(isHovered, isMobile)}>
-          <TexturedPattern
-            width={iconSize}
-            height={iconSize}
-            borderRadius={borderRadius}
-          />
+          <TexturedPattern width={iconSize} height={iconSize} borderRadius={borderRadius} />
         </div>
 
         <div style={getVibeCardMainIconContainerStyle(isHovered, isMobile)}>
-          {IconComponent && (
-            <IconComponent
-              width={iconInnerSize}
-              height={iconInnerSize}
-              fill="var(--vibes-near-black)"
-            />
-          )}
+          {IconComponent && <IconComponent width={iconInnerSize} height={iconInnerSize} fill="var(--vibes-near-black)" />}
         </div>
       </div>
       <div style={getVibeCardNameStyle()}>{category}</div>

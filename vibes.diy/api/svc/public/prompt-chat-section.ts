@@ -362,10 +362,7 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
   return messages;
 }
 
-async function loadActiveSettings(
-  vctx: VibesApiSQLCtx,
-  chatId: string
-): Promise<{ skills?: string[]; title?: string }> {
+async function loadActiveSettings(vctx: VibesApiSQLCtx, chatId: string): Promise<{ skills?: string[]; title?: string }> {
   const rChat = await exception2Result(() =>
     vctx.sql.db
       .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, userSlug: vctx.sql.tables.chatContexts.userSlug })

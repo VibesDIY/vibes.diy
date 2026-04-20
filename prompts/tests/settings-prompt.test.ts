@@ -96,9 +96,7 @@ afterEach(() => {
 describe("Settings and Prompt Integration", () => {
   it("generates a base system prompt with default values when no settings provided", async () => {
     const model = "test-model";
-    const result = await makeBaseSystemPrompt(model, {
-
-    });
+    const result = await makeBaseSystemPrompt(model, {});
 
     // Check that the prompt includes the default style
     expect(result.systemPrompt).toContain("have a DIY zine vibe");
@@ -112,7 +110,6 @@ describe("Settings and Prompt Integration", () => {
     const settingsDoc = {
       _id: "user_settings",
       stylePrompt: "synthwave (80s digital aesthetic)",
-
     };
 
     const result = await makeBaseSystemPrompt(model, settingsDoc);
@@ -128,7 +125,6 @@ describe("Settings and Prompt Integration", () => {
     const settingsDoc = {
       _id: "user_settings",
       userPrompt: userPromptText,
-
     };
 
     const result = await makeBaseSystemPrompt(model, settingsDoc);
@@ -145,7 +141,6 @@ describe("Settings and Prompt Integration", () => {
       _id: "user_settings",
       stylePrompt: stylePromptText,
       userPrompt: userPromptText,
-
     };
 
     const result = await makeBaseSystemPrompt(model, settingsDoc);
@@ -160,7 +155,6 @@ describe("Settings and Prompt Integration", () => {
     const model = "test-model";
     const settingsDoc = {
       _id: "user_settings",
-
     };
 
     const result = await makeBaseSystemPrompt(model, settingsDoc);
@@ -171,9 +165,7 @@ describe("Settings and Prompt Integration", () => {
 
   it("includes LLM documentation in the prompt", async () => {
     const model = "test-model";
-    const result = await makeBaseSystemPrompt(model, {
-
-    });
+    const result = await makeBaseSystemPrompt(model, {});
 
     // Check that the LLM documentation is included
     expect(result.systemPrompt).toContain("<llm1-docs>");
