@@ -291,6 +291,15 @@ export function isActiveTitle(obj: unknown): obj is ActiveTitle {
   return !(ActiveTitle(obj) instanceof type.errors);
 }
 
+export const ActiveSkills = type({
+  type: "'active.skills'",
+  skills: type("string").array(),
+});
+export type ActiveSkills = typeof ActiveSkills.infer;
+export function isActiveSkills(obj: unknown): obj is ActiveSkills {
+  return !(ActiveSkills(obj) instanceof type.errors);
+}
+
 export const ActiveModelSettingBase = type({
   type: "'active.model'",
   param: AIParams,
@@ -344,6 +353,7 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(ActiveInvite)
   .or(EnableRequest)
   .or(ActiveTitle)
+  .or(ActiveSkills)
   .or(ActiveModelSetting)
   .or(ActiveEnv);
 
