@@ -130,15 +130,27 @@ describe("ShareModal", () => {
     expect(screen.getByText(/Generate some code first/)).toBeInTheDocument();
   });
 
-  it("shows auto-join toggle", () => {
-    const modal = createMockModal();
-    render(<ShareModal modal={modal} />);
+  it("shows auto-join toggle only when published", () => {
+    const unpublished = createMockModal();
+    render(<ShareModal modal={unpublished} />);
+    expect(screen.queryByText("Open access")).not.toBeInTheDocument();
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    cleanup();
+
+    const published = createMockModal({
+      isPublished: true,
+      publishedUrl: "https://vibes.diy/vibe/testuser/testapp/",
+    });
+    render(<ShareModal modal={published} />);
     expect(screen.getByText("Open access")).toBeInTheDocument();
     expect(screen.getByRole("switch")).toBeInTheDocument();
   });
 
   it("calls handleToggleAutoJoin when clicking toggle", async () => {
-    const modal = createMockModal();
+    const modal = createMockModal({
+      isPublished: true,
+      publishedUrl: "https://vibes.diy/vibe/testuser/testapp/",
+    });
     render(<ShareModal modal={modal} />);
 
     await act(async () => {
@@ -149,7 +161,11 @@ describe("ShareModal", () => {
   });
 
   it("shows auto-join enabled state", () => {
-    const modal = createMockModal({ autoJoinEnabled: true });
+    const modal = createMockModal({
+      isPublished: true,
+      publishedUrl: "https://vibes.diy/vibe/testuser/testapp/",
+      autoJoinEnabled: true,
+    });
     render(<ShareModal modal={modal} />);
 
     expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "true");
@@ -157,7 +173,11 @@ describe("ShareModal", () => {
   });
 
   it("shows auto-join disabled state", () => {
-    const modal = createMockModal({ autoJoinEnabled: false });
+    const modal = createMockModal({
+      isPublished: true,
+      publishedUrl: "https://vibes.diy/vibe/testuser/testapp/",
+      autoJoinEnabled: false,
+    });
     render(<ShareModal modal={modal} />);
 
     expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "false");
@@ -207,7 +227,10 @@ describe("ShareModal", () => {
   });
 
   it("auto-join switch has accessible name via aria-labelledby", () => {
-    const modal = createMockModal();
+    const modal = createMockModal({
+      isPublished: true,
+      publishedUrl: "https://vibes.diy/vibe/testuser/testapp/",
+    });
     render(<ShareModal modal={modal} />);
 
     const toggle = screen.getByRole("switch");

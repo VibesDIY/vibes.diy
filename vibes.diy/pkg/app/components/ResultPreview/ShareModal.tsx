@@ -81,6 +81,38 @@ export function ShareModal({ modal }: ShareModalProps) {
             >
               {modal.isPublishing ? "Updating..." : modal.isUpToDate ? "Up to date" : "Update"}
             </Button>
+
+            {/* Divider */}
+            <hr className="my-3 border-gray-200 dark:border-gray-700" />
+
+            {/* Auto-join toggle */}
+            <div className="flex cursor-pointer items-center justify-between gap-3">
+              <div>
+                <p id="auto-join-label" className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Open access
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {modal.autoJoinEnabled ? "Anyone with the link gets access" : "New users must be approved"}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-labelledby="auto-join-label"
+                aria-checked={modal.autoJoinEnabled}
+                disabled={modal.isTogglingAutoJoin}
+                onClick={() => void modal.handleToggleAutoJoin()}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-black transition-colors ${
+                  modal.autoJoinEnabled ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"
+                } ${modal.isTogglingAutoJoin ? "opacity-50" : ""}`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full border border-black bg-white shadow transition-transform ${
+                    modal.autoJoinEnabled ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-2">
@@ -100,38 +132,6 @@ export function ShareModal({ modal }: ShareModalProps) {
             ) : null}
           </div>
         )}
-
-        {/* Divider */}
-        <hr className="my-3 border-gray-200 dark:border-gray-700" />
-
-        {/* Auto-join toggle */}
-        <div className="flex cursor-pointer items-center justify-between gap-3">
-          <div>
-            <p id="auto-join-label" className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              Open access
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {modal.autoJoinEnabled ? "Anyone with the link gets access" : "New users must be approved"}
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-labelledby="auto-join-label"
-            aria-checked={modal.autoJoinEnabled}
-            disabled={modal.isTogglingAutoJoin}
-            onClick={() => void modal.handleToggleAutoJoin()}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-black transition-colors ${
-              modal.autoJoinEnabled ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"
-            } ${modal.isTogglingAutoJoin ? "opacity-50" : ""}`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full border border-black bg-white shadow transition-transform ${
-                modal.autoJoinEnabled ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </div>
       </div>
     </div>,
     document.body
