@@ -12,6 +12,10 @@ export const quickSuggestions: Suggestion[] = [
     text: "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.",
   },
   {
+    label: "Dream Job",
+    text: "Take my photo with the camera, ask me my dream job, then generate a fun caricature of me doing that job. Post it to a public gallery so everyone can see each other's dream jobs.",
+  },
+  {
     label: "History Quest",
     text: "Create a history RPG where the AI writes a short scene set in a real era, then gives you 3 choices. Each choice leads to a new scene. Track your score.",
   },
