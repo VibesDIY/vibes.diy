@@ -1,7 +1,8 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { callAI } from "call-ai";
 import { type } from "arktype";
-import { makePreAllocUserMessage, preAllocParsed, preAllocSchema } from "@vibes.diy/prompts";
+import { ensureLogger } from "@fireproof/core-runtime";
+import { getLlmCatalogNames, makePreAllocUserMessage, preAllocParsed, preAllocSchema } from "@vibes.diy/prompts";
 import { VibesApiSQLCtx } from "../types.js";
 import { loadModels } from "../public/list-models.js";
 
@@ -64,8 +65,18 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
   if (validated.pairs.length === 0) {
     return Result.Err("pre-alloc returned zero title/slug pairs");
   }
+
+  const catalogNames = await getLlmCatalogNames();
+  const validSkills = validated.skills.filter((s) => catalogNames.has(s));
+  if (validated.skills.length > 0 && validSkills.length === 0) {
+    ensureLogger(vctx.sthis, "preAllocate")
+      .Warn()
+      .Any({ rawSkills: validated.skills })
+      .Msg("all pre-alloc skills missed catalog");
+  }
+
   return Result.Ok({
-    skills: validated.skills,
+    skills: validSkills,
     pairs: validated.pairs.slice(0, 3),
   });
 }
