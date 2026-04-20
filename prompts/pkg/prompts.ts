@@ -1,6 +1,7 @@
 import type { UserSettings } from "./settings.js";
 import { loadAsset, KeyedResolvOnce } from "@adviser/cement";
 import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.js";
+import { type } from "arktype";
 
 // import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
@@ -61,6 +62,40 @@ export async function makePreAllocUserMessage(userPrompt: string): Promise<strin
     userPrompt,
   ].join("\n");
 }
+
+/**
+ * callAI schema for the pre-allocation call — the two halves of the pre-alloc
+ * contract (user message + schema) live together here so descriptions stay in
+ * sync with the message composition above.
+ */
+export const preAllocSchema = {
+  name: "pre_alloc",
+  properties: {
+    skills: {
+      type: "array",
+      description: "Selected skill names from the catalog above, appropriate for the app described by the user prompt. Only use names present in the catalog.",
+      items: { type: "string" },
+    },
+    pairs: {
+      type: "array",
+      description: "Exactly 3 title/slug pairs ranked by fit. Title in Title Case, 1-4 words. Slug in kebab-case derived from title.",
+      items: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          slug: { type: "string" },
+        },
+      },
+    },
+  },
+} as const;
+
+/** arktype validator for parsed pre-alloc responses. Matches preAllocSchema. */
+export const preAllocParsed = type({
+  skills: type("string").array(),
+  pairs: type({ title: "string", slug: "string" }).array(),
+});
+export type PreAllocParsed = typeof preAllocParsed.infer;
 
 export interface SystemPromptResult {
   systemPrompt: string;
