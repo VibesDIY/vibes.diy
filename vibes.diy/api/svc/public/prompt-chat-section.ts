@@ -591,9 +591,34 @@ async function handlerLlmRequest({
       if (req.mode === "chat") {
         withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? modelId);
       } else if (req.mode === "app" || req.mode === "img") {
+        let messages = req.prompt.messages;
+        if (req.mode === "img") {
+          const imgReq = req as ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>;
+          if (imgReq.inputImageBase64) {
+            // Forward the input image as an OpenAI/OpenRouter-compatible image_url content part
+            // on the last user message so providers like openai/gpt-5-image-mini actually see it.
+            const lastUserIdx = (() => {
+              for (let i = messages.length - 1; i >= 0; i--) {
+                if (messages[i].role === "user") return i;
+              }
+              return -1;
+            })();
+            if (lastUserIdx >= 0) {
+              const target = messages[lastUserIdx];
+              messages = [
+                ...messages.slice(0, lastUserIdx),
+                {
+                  ...target,
+                  content: [...target.content, { type: "image_url" as const, image_url: { url: imgReq.inputImageBase64 } }],
+                },
+                ...messages.slice(lastUserIdx + 1),
+              ];
+            }
+          }
+        }
         withSystemPrompt = Result.Ok({
           model: req.prompt.model ?? modelId,
-          messages: req.prompt.messages,
+          messages,
         });
       }
       return withSystemPrompt;
@@ -672,7 +697,8 @@ async function handleProdiaImageRequest({
   // Extract prompt text from the last user message
   const userMessages = req.prompt.messages.filter((m) => m.role === "user");
   const lastUserMsg = userMessages[userMessages.length - 1];
-  const promptText = lastUserMsg?.content?.[0]?.text ?? "";
+  const firstTextPart = lastUserMsg?.content?.find((c) => c.type === "text");
+  const promptText = firstTextPart?.type === "text" ? firstTextPart.text : "";
   if (!promptText) {
     return Result.Err("No prompt text found in user messages");
   }
@@ -1219,13 +1245,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         vctx.prodiaToken &&
         resolvedImgModel?.startsWith("prodia/")
       );
-
-      // LLM path doesn't forward inputImageBase64, so img2img is only supported via Prodia.
-      if (isReqPromptImageChatSection(orig) && orig.inputImageBase64 && !useProdia) {
-        return Result.Err(
-          `img2img (inputImageBase64) is not supported for model ${resolvedImgModel ?? "<unresolved>"}; only prodia/* models support image input today`
-        );
-      }
 
       let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
       if (isReqPromptImageChatSection(orig) && useProdia) {

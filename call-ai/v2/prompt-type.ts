@@ -10,10 +10,23 @@ export const TextContent = type({
 });
 export type TextContent = typeof TextContent.infer;
 
+// OpenAI/OpenRouter-compatible image content part (used for vision input and img2img).
+// The url may be a remote URL or a data URL (e.g. "data:image/jpeg;base64,...").
+export const ImageUrlContent = type({
+  type: "'image_url'",
+  image_url: type({
+    url: "string",
+  }),
+});
+export type ImageUrlContent = typeof ImageUrlContent.infer;
+
+export const MessageContent = TextContent.or(ImageUrlContent);
+export type MessageContent = typeof MessageContent.infer;
+
 // Chat message structure
 export const ChatMessage = type({
   role: MessageRole,
-  content: TextContent.array(),
+  content: MessageContent.array(),
 });
 export type ChatMessage = typeof ChatMessage.infer;
 
