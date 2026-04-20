@@ -11,6 +11,7 @@ export function useImgVibes({
   skip = false,
   generationId,
   inputImage,
+  model,
 }: Partial<UseImgVibesOptions>): UseImgVibesResult {
   const [assetUrl, setAssetUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,7 +27,7 @@ export function useImgVibes({
   useEffect(() => {
     if (skip || !_id) return;
 
-    const genKey = `${_id}-${generationId ?? ""}-${inputImage?.name ?? ""}${inputImage?.lastModified ?? ""}`;
+    const genKey = `${_id}-${generationId ?? ""}-${inputImage?.name ?? ""}${inputImage?.lastModified ?? ""}-${model ?? ""}`;
     if (currentGenRef.current === genKey) return;
     currentGenRef.current = genKey;
 
@@ -70,7 +71,7 @@ export function useImgVibes({
       setError(null);
 
       try {
-        const urls = await imgVibes(promptText, inputImage);
+        const urls = await imgVibes(promptText, inputImage, model);
         const imageUrl = urls[0];
         if (!imageUrl) throw new Error("No image URL received from service");
 
@@ -112,7 +113,7 @@ export function useImgVibes({
     }
 
     run();
-  }, [_id, prompt, generationId, skip, db, inputImage]);
+  }, [_id, prompt, generationId, skip, db, inputImage, model]);
 
   return { assetUrl, loading, progress, error, document };
 }
