@@ -20,6 +20,9 @@ export interface UserSettings {
   /** Pre-resolved skill names chosen for this app (from pre-allocation). */
   skills?: string[];
 
+  /** Human-readable app title (from pre-allocation or user edit). */
+  title?: string;
+
   /** Whether to include a demo-data button. Default false. */
   demoData?: boolean;
 }
