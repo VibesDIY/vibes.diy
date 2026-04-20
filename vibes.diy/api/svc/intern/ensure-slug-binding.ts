@@ -175,13 +175,35 @@ async function writeAppSlugBinding(
 
 export async function ensureAppSlug(
   ctx: VibesApiSQLCtx,
-  binding: (OptAppSlugUserSlug | AppSlugUserSlug) & { userId: string }
-): Promise<Result<AppSlugBinding>> {
-  return exception2Result(async (): Promise<Result<AppSlugBinding>> => {
+  binding: (OptAppSlugUserSlug | AppSlugUserSlug) & {
+    userId: string;
+    preferredPairs?: { title: string; slug: string }[];
+  }
+): Promise<Result<AppSlugBinding & { chosenTitle?: string }>> {
+  return exception2Result(async (): Promise<Result<AppSlugBinding & { chosenTitle?: string }>> => {
     let appSlug: string | undefined = undefined;
+    let chosenTitle: string | undefined = undefined;
     if (!binding.appSlug) {
+      // Walk LLM-provided preferred pairs first; each supplies its own title.
+      for (const pair of binding.preferredPairs ?? []) {
+        const sanitized = toRFC2822_32ByteLength(pair.slug);
+        if (!sanitized) continue;
+        const existing = await ctx.sql.db
+          .select()
+          .from(ctx.sql.tables.appSlugBinding)
+          .where(eq(ctx.sql.tables.appSlugBinding.appSlug, sanitized))
+          .limit(1)
+          .then((r) => r[0]);
+        if (!existing) {
+          appSlug = sanitized;
+          chosenTitle = pair.title;
+          break;
+        }
+      }
+      // Fall through to random-words for remaining attempts (5 total).
+      const randomAttempts = Math.max(0, 5 - (binding.preferredPairs?.length ?? 0));
       // should be a transaction but CF - oh well
-      for (let attempts = 0; attempts < 5; attempts++) {
+      for (let attempts = 0; !appSlug && attempts < randomAttempts; attempts++) {
         const tryAppSlug = generate({
           exactly: 1,
           wordsPerString: 3,
@@ -205,7 +227,9 @@ export async function ensureAppSlug(
       if (!appSlug) {
         return Result.Err("could not generate unique appSlug after 5 attempts");
       }
-      return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, appSlug);
+      const rWrite = await writeAppSlugBinding(ctx, binding.userId, binding.userSlug, appSlug);
+      if (rWrite.isErr()) return rWrite;
+      return Result.Ok({ ...rWrite.Ok(), chosenTitle });
     } else {
       const sanitizedAppSlug = toRFC2822_32ByteLength(binding.appSlug);
       const existing = await ctx.sql.db
