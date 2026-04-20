@@ -97,13 +97,26 @@ function isInitChat(msg: unknown): msg is InitChat {
   return !(InitChat(msg) instanceof type.errors);
 }
 
-type PromptAction = PromptAndBlockMsgs | InitChat;
+const SetTitle = type({
+  type: "'setTitle'",
+  title: "string",
+});
+type SetTitle = typeof SetTitle.infer;
+
+function isSetTitle(msg: unknown): msg is SetTitle {
+  return !(SetTitle(msg) instanceof type.errors);
+}
+
+type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle;
 
 function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
     case isInitChat(block):
       // console.log(`initChat`, block.chat)
       return { ...state, chat: block.chat };
+
+    case isSetTitle(block):
+      return { ...state, title: block.title };
 
     // case isPromptReq(block):
     //   if (!state.current) return state;
@@ -170,7 +183,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     chat: {} as LLMChatEntry,
     running: false,
     hasCode: false,
-    title: "Title-Feature-Missing",
+    title: appSlug,
     blocks: [],
     searchParams,
     setSearchParams,
@@ -219,6 +232,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       }
       setChat(rChat.Ok());
       dispatch({ type: "initChat", chat: rChat.Ok() });
+      vibeDiyApi.ensureAppSettings({ userSlug, appSlug }).then((rS) => {
+        if (rS.isOk()) {
+          const t = rS.Ok().settings.entry.settings.title;
+          if (t) dispatch({ type: "setTitle", title: t });
+        }
+      });
       void processStream(rChat.Ok().sectionStream, (msg) => {
         const se = sectionEvent(msg);
         if (se instanceof type.errors) {
