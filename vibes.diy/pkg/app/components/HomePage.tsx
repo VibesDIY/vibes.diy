@@ -180,7 +180,7 @@ export default function HomePage() {
                       handleSubmit();
                     }
                   }}
-                  placeholder="Describe your vibe to make it an app."
+                  placeholder="Describe your vibe to make it a sharable app."
                   style={getTextareaStyle()}
                 />
                 <button onClick={handleSubmit} disabled={!input.trim()} style={getSubmitButtonStyle()}>
