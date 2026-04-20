@@ -393,6 +393,7 @@ export async function makeBaseSystemPrompt(
     "- Use `callAI` to fetch AI, use schema like this: `JSON.parse(await callAI(prompt, { schema: { properties: { todos: { type: 'array', items: { type: 'string' } } } } }))` and save final responses as individual Fireproof documents.",
     "- For file uploads use drag and drop and store using the `doc._files` API",
     "- Don't try to generate png or base64 data, use placeholder image APIs instead, like https://picsum.photos/400 where 400 is the square size",
+    "- Never use emojis in the UI. Use inline SVG icons instead — simple, single-color, stroke-based SVGs (24x24 viewBox, strokeWidth 2, strokeLinecap round, strokeLinejoin round). Build icons directly in JSX, do not import icon libraries.",
     "- Consider and potentially reuse/extend code from previous responses if relevant",
     "- Always output the full component code, keep the explanation short and concise",
     "- Never also output a small snippet to change, just the full component code",
