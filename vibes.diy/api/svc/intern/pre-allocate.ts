@@ -1,7 +1,7 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { callAI } from "call-ai";
 import { type } from "arktype";
-import { makePreAllocUserMessage } from "@vibes.diy/prompts";
+import { makePreAllocUserMessage, preAllocParsed, preAllocSchema } from "@vibes.diy/prompts";
 import { VibesApiSQLCtx } from "../types.js";
 import { loadModels } from "../public/list-models.js";
 
@@ -9,33 +9,6 @@ export interface PreAllocateResult {
   skills: string[];
   pairs: { title: string; slug: string }[];
 }
-
-const preAllocParsed = type({
-  skills: type("string").array(),
-  pairs: type({ title: "string", slug: "string" }).array(),
-});
-
-const preAllocSchema = {
-  name: "pre_alloc",
-  properties: {
-    skills: {
-      type: "array",
-      description: "Selected skill names from the catalog above, appropriate for the app described by the user prompt. Only use names present in the catalog.",
-      items: { type: "string" },
-    },
-    pairs: {
-      type: "array",
-      description: "Exactly 3 title/slug pairs ranked by fit. Title in Title Case, 1-4 words. Slug in kebab-case derived from title.",
-      items: {
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          slug: { type: "string" },
-        },
-      },
-    },
-  },
-};
 
 const PRE_ALLOC_TIMEOUT_MS = 8000;
 
