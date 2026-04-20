@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.34",
-    "@cloudflare/workers-types": "4.20260402.1",
+    "@cloudflare/workers-types": "4.20260420.1",
     "@fireproof/core-device-id": "0.24.19",
     "@fireproof/core-runtime": "0.24.19",
     "@fireproof/core-types-device-id": "0.24.19",
