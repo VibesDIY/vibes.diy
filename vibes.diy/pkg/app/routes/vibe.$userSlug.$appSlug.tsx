@@ -199,6 +199,7 @@ export default function VibeIframeWrapper() {
             src={previewUrl.toString()}
             className="w-full h-full border-none"
             sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+            allow="camera; microphone"
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
           {!runtimeReady && (
