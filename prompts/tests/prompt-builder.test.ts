@@ -84,17 +84,6 @@ let orderedLlms: LlmCatalogEntry[];
 
 const opts = {
   fetchText: mockFetchText,
-  callAi: {
-    ModuleAndOptionsSelection: vi.fn().mockResolvedValue(
-      Result.Ok(
-        JSON.stringify({
-          selected: knownModuleNames,
-          instructionalText: true,
-          demoData: true,
-        })
-      )
-    ),
-  },
 };
 
 beforeAll(async () => {
@@ -262,50 +251,31 @@ describe("prompt builder (real implementation)", () => {
     expect(result.systemPrompt).toContain("hello");
   });
 
-  it("makeBaseSystemPrompt: honors explicit dependencies only when override=true", async () => {
-    // await preloadLlmsText();
+  it("makeBaseSystemPrompt: honors explicit skills", async () => {
     const result = await makeBaseSystemPrompt("test-model", {
       ...opts,
-      dependencies: ["fireproof"],
-      dependenciesUserOverride: true,
+      skills: ["fireproof"],
     });
     expect(result.systemPrompt).toContain("<useFireproof-docs>");
     expect(result.systemPrompt).not.toContain("<callAI-docs>");
   });
 
-  it("makeBaseSystemPrompt: includes demo-data guidance when selector enables it (test mode)", async () => {
-    // await preloadLlmsText();
+  it("makeBaseSystemPrompt: demoData=false (default) hides demo-data guidance", async () => {
     const result = await makeBaseSystemPrompt("test-model", {
       ...opts,
       stylePrompt: undefined,
       userPrompt: undefined,
-      history: [],
-    });
-    expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
-    expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
-  });
-
-  it("makeBaseSystemPrompt: respects demoDataOverride=false to disable demo data", async () => {
-    // await preloadLlmsText();
-    const result = await makeBaseSystemPrompt("test-model", {
-      ...opts,
-      stylePrompt: undefined,
-      userPrompt: undefined,
-      history: [],
-      demoDataOverride: false,
     });
     expect(result.systemPrompt).not.toMatch(/include a Demo Data button/i);
     expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
   });
 
-  it("makeBaseSystemPrompt: respects demoDataOverride=true to force demo data", async () => {
-    // await preloadLlmsText();
+  it("makeBaseSystemPrompt: demoData=true enables demo-data guidance", async () => {
     const result = await makeBaseSystemPrompt("test-model", {
       ...opts,
       stylePrompt: undefined,
       userPrompt: undefined,
-      history: [],
-      demoDataOverride: true,
+      demoData: true,
     });
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
     expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);

@@ -36,6 +36,8 @@ const preAllocSchema = {
   },
 };
 
+const PRE_ALLOC_TIMEOUT_MS = 8000;
+
 /**
  * Pre-allocation LLM call: takes the user's initial prompt and asks one
  * structured call for {skills, pairs}. The caller hands pairs to
@@ -45,6 +47,10 @@ const preAllocSchema = {
  * Model: resolved via loadModels → `preSelected: ["app"]` entry in
  * models.json (currently openai/gpt-5.4-mini). No user/app overrides;
  * pre-alloc stays deterministic across users.
+ *
+ * Timeout: racing against PRE_ALLOC_TIMEOUT_MS. On timeout or any error
+ * the caller (ensureChatId) falls through to random-words slug + default
+ * skills — the user sees a random slug instead of blocking.
  */
 export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: string }): Promise<Result<PreAllocateResult>> {
   const rModels = await loadModels(vctx);
@@ -52,13 +58,19 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
   const appDefault = rModels.Ok().models.find((m) => m.preSelected?.includes("app"));
   if (!appDefault) return Result.Err("no preSelected app model in catalog");
 
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`pre-alloc LLM call timed out after ${PRE_ALLOC_TIMEOUT_MS}ms`)), PRE_ALLOC_TIMEOUT_MS)
+  );
   const rCall = await exception2Result(() =>
-    callAI(prompt, {
-      model: appDefault.id,
-      endpoint: vctx.params.llm.url,
-      apiKey: vctx.params.llm.apiKey,
-      schema: preAllocSchema,
-    })
+    Promise.race([
+      callAI(prompt, {
+        model: appDefault.id,
+        endpoint: vctx.params.llm.url,
+        apiKey: vctx.params.llm.apiKey,
+        schema: preAllocSchema,
+      }),
+      timeout,
+    ])
   );
   if (rCall.isErr()) return Result.Err(rCall);
   const raw = rCall.Ok();

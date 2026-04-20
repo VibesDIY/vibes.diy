@@ -1,8 +1,3 @@
-export interface HistoryMessage {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
-
 /**
  * User settings for the application
  */
@@ -22,11 +17,9 @@ export interface UserSettings {
   /** Whether to show the per‑chat model picker in the chat UI */
   showModelPickerInChat?: boolean; // default false
 
-  history?: HistoryMessage[];
+  /** Pre-resolved skill names chosen for this app (from pre-allocation). */
+  skills?: string[];
 
-  dependenciesUserOverride?: boolean;
-
-  dependencies?: string[];
-
-  demoDataOverride?: boolean;
+  /** Whether to include a demo-data button. Default false. */
+  demoData?: boolean;
 }

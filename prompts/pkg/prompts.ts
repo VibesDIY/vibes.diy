@@ -1,18 +1,12 @@
-// import { callAI, type Message, type CallAIOptions, Mocks } from "call-ai";
-
-import type { HistoryMessage, UserSettings } from "./settings.js";
-import { exception2Result, loadAsset, Result, KeyedResolvOnce } from "@adviser/cement";
+import type { UserSettings } from "./settings.js";
+import { loadAsset, KeyedResolvOnce } from "@adviser/cement";
 import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.js";
 
 // import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
-import { ChatMessage } from "@vibes.diy/call-ai-v2";
 
 // Single source of truth for the default coding model used across the repo.
 export const DEFAULT_CODING_MODEL = "anthropic/claude-opus-4.5" as const;
-
-// Model used for RAG decisions (module selection)
-const RAG_DECISION_MODEL = "openai/gpt-4o" as const;
 
 async function defaultCodingModel() {
   return DEFAULT_CODING_MODEL;
@@ -82,164 +76,6 @@ export interface SystemPromptResult {
 //   );
 // });
 
-async function detectModulesInHistory(history: HistoryMessage[], _opts: LlmSelectionOptions): Promise<Set<string>> {
-  const detected = new Set<string>();
-  if (!Array.isArray(history)) return detected;
-  for (const msg of history) {
-    const content = msg?.content || "";
-    if (!content || typeof content !== "string") continue;
-    // for (const { name, named, def, namespace } of await llmImportRegexes()) {
-    //   if (named.test(content) || def.test(content) || namespace.test(content)) {
-    //     detected.add(name);
-    //   }
-    // }
-  }
-  return detected;
-}
-
-interface LlmSelectionDecisions {
-  selected: string[];
-  demoData: boolean;
-}
-
-interface LlmSelectionOptions {
-  readonly appMode?: "test" | "production";
-  // readonly callAiEndpoint?: CoerceURI;
-  fetch?: typeof fetch;
-
-  readonly callAi: {
-    ModuleAndOptionsSelection(msgs: ChatMessage[]): Promise<Result<string>>;
-  };
-
-  // readonly getAuthToken?: () => Promise<string>;
-  // readonly mock?: Mocks;
-}
-
-// type LlmSelectionWithoutGetTextUrl = Omit<LlmSelectionOptions, "getTextUrl" | "callAiEndpoint"> & {
-//   readonly fallBackUrl: CoerceURI;
-//   // readonly callAiEndpoint?: CoerceURI;
-// };
-
-// async function sleepReject<T>(ms: number) {
-//   return new Promise<T>((_, rj) => setTimeout(rj, ms));
-// }
-
-// move this to the other file along with referenced types
-async function selectLlmsAndOptions(
-  model: string,
-  userPrompt: string,
-  history: HistoryMessage[],
-  iopts: LlmSelectionOptions
-): Promise<LlmSelectionDecisions> {
-  const opts = {
-    ...iopts,
-    mode: iopts.appMode === "test" ? "test" : "production",
-  };
-  // const opts: LlmSelectionWithoutGetTextUrl = {
-  //   appMode: "production",
-  //   ...iopts,
-  //   callAiEndpoint: iopts.callAiEndpoint ? iopts.callAiEndpoint : undefined,
-  //   // fallBackUrl: URI.from(iopts.fallBackUrl ?? "https://esm.sh/use-vibes@0.18.9/prompt-catalog/llms").toString(),
-  //   // getAuthToken: iopts.getAuthToken,
-  // };
-  const llmsCatalog = await getLlmCatalog();
-  const catalog = llmsCatalog.map((l) => ({
-    name: l.name,
-    description: l.description || "",
-  }));
-  const payload = {
-    catalog,
-    userPrompt: userPrompt || "",
-    history: history || [],
-  };
-
-  const messages: ChatMessage[] = [
-    {
-      role: "system",
-      content: [
-        {
-          type: "text",
-          text: `You select which library modules from a catalog should 
-         be included AND whether to include a demo-data button. 
-         First analyze if the user prompt describes specific 
-         look & feel requirements. For demo data: include it 
-         only when asked for. Read the JSON payload and return 
-         JSON with properties: 
-         "selected" (array of catalog "name" strings) and "demoData" (boolean). 
-         Only choose modules from the catalog. Include any 
-         libraries already used in history. Respond with JSON only.`,
-        },
-      ],
-    },
-    { role: "user", content: [{ type: "text", text: JSON.stringify(payload) }] },
-  ];
-
-  // const options: CallAIOptions = {
-  //   chatUrl: opts.callAiEndpoint ? opts.callAiEndpoint.toString().replace(/\/+$/, "") : undefined,
-  //   apiKey: (await opts.getAuthToken?.()) || "",
-  //   model,
-  //   schema: {
-  //     name: "module_and_options_selection",
-  //     properties: {
-  //       selected: { type: "array", items: { type: "string" } },
-  //       demoData: { type: "boolean" },
-  //     },
-  //   },
-  //   max_tokens: 2000,
-  //   headers: {
-  //     "HTTP-Referer": "https://vibes.diy",
-  //     "X-Title": "Vibes DIY",
-  //   },
-  //   mock: opts.mock,
-  // };
-
-  const rRaw = await opts.callAi.ModuleAndOptionsSelection(messages);
-  if (rRaw.isErr()) {
-    console.warn("Module/options selection call failed:", rRaw.Err());
-    return { selected: [], demoData: true };
-  }
-
-  // try {
-  // const withTimeout = <T>(p: Promise<T>, ms = 4000): Promise<T> =>
-  //   Promise.race([
-  //     sleepReject<T>(ms).then((val) => {
-  //       console.warn("Module/options selection: API call timed out after", ms, "ms");
-  //       return val;
-  //     }),
-  //     p
-  //       .then((val) => {
-  //         return val;
-  //       })
-  //       .catch((err) => {
-  //         console.warn("Module/options selection: API call failed with error:", err);
-  //         throw err;
-  //       }),
-  //   ]);
-
-  // const raw = (await withTimeout((options.mock?.callAI || callAI)(messages, options))) as string;
-
-  // if (raw === undefined || raw === null) {
-  //   console.warn("Module/options selection: call-ai returned undefined with schema present");
-  //   console.warn("This is a known issue in the prompts package environment");
-  //   return { selected: [], demoData: true };
-  // }
-
-  const rParsed = exception2Result(() => JSON.parse(rRaw.Ok()) ?? {});
-  if (rParsed.isErr()) {
-    console.warn("Module/options selection: Failed to parse JSON response:", rRaw.Ok());
-    return { selected: [], demoData: true };
-  }
-  const parsed = rParsed.Ok();
-  const selected = Array.isArray(parsed?.selected) ? parsed.selected.filter((v: unknown) => typeof v === "string") : [];
-  const demoData = typeof parsed?.demoData === "boolean" ? parsed.demoData : true;
-
-  return { selected, demoData };
-  // } catch (err) {
-  //   console.warn("Module/options selection call failed:", err);
-  //   return { selected: [], demoData: true };
-  // }
-}
-
 export function generateImportStatements(llms: LlmCatalogEntry[]) {
   const seen = new Set<string>();
   return llms
@@ -269,50 +105,26 @@ export function generateImportStatements(llms: LlmCatalogEntry[]) {
 
 const keyedLoadAsset = new KeyedResolvOnce();
 
-// move this function to its own file along with generateImportStatements and selectLlmsAndOptions, and rexport from here
+export interface MakeBaseSystemPromptOptions {
+  fetch?: typeof fetch;
+}
+
 export async function makeBaseSystemPrompt(
   model: string,
-  sessionDoc: Partial<UserSettings> & LlmSelectionOptions
+  sessionDoc: Partial<UserSettings> & MakeBaseSystemPromptOptions
 ): Promise<SystemPromptResult> {
   const userPrompt = sessionDoc?.userPrompt || "";
-  const history: HistoryMessage[] = Array.isArray(sessionDoc?.history) ? sessionDoc.history : [];
-  const useOverride = !!sessionDoc?.dependenciesUserOverride;
-
-  let selectedNames: string[] = [];
-  let includeDemoData = true;
-
   const llmsCatalog = await getLlmCatalog();
   const llmsCatalogNames = await getLlmCatalogNames();
 
-  if (useOverride) {
-    selectedNames = (sessionDoc.dependencies ?? [])
-      .filter((v): v is string => typeof v === "string")
-      .filter((name) => llmsCatalogNames.has(name));
-    console.log("[makeBaseSystemPrompt] user override dependencies:", selectedNames);
-  } else {
-    const decisions = await selectLlmsAndOptions(RAG_DECISION_MODEL, userPrompt, history, sessionDoc);
-    includeDemoData = decisions.demoData;
-
-    const detected = await detectModulesInHistory(history, sessionDoc);
-    const finalNames = new Set<string>([...decisions.selected, ...detected]);
-    selectedNames = Array.from(finalNames);
-
-    console.log(
-      "[makeBaseSystemPrompt] RAG selected:",
-      decisions.selected,
-      "detected:",
-      [...detected],
-      "final:",
-      selectedNames,
-      "demoData:",
-      includeDemoData
-    );
-
-    if (selectedNames.length === 0) selectedNames = [...(await getDefaultSkills())];
+  const rawSkills = Array.isArray(sessionDoc?.skills) ? sessionDoc.skills : undefined;
+  let selectedNames = rawSkills
+    ? rawSkills.filter((v): v is string => typeof v === "string").filter((name) => llmsCatalogNames.has(name))
+    : [];
+  if (selectedNames.length === 0) {
+    selectedNames = [...(await getDefaultSkills())];
   }
-  if (typeof sessionDoc?.demoDataOverride === "boolean") {
-    includeDemoData = sessionDoc.demoDataOverride;
-  }
+  const includeDemoData = sessionDoc?.demoData === true;
 
   const chosenLlms = llmsCatalog.filter((l) => selectedNames.includes(l.name));
   console.log(

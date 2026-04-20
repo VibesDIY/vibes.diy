@@ -109,16 +109,8 @@ export function useVibes(
         try {
           result = await makeBaseSystemPrompt(options.model || "anthropic/claude-sonnet-4.5", {
             userPrompt: prompt,
-            history: [],
-            callAi: {
-              ModuleAndOptionsSelection: () => {
-                throw new Error("ModuleAndOptionsSelection not implemented in Cycle 1");
-              },
-            },
-            // fallBackUrl: "https://esm.sh/@vibes.diy/prompts/llms",
-            // Pass through any user overrides
-            dependencies: options.dependencies,
-            dependenciesUserOverride: !!options.dependencies,
+            skills: options.dependencies,
+            demoData: false,
           });
         } catch (error) {
           // Fallback to a simple but functional system prompt

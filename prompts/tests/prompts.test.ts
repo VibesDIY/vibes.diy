@@ -1,5 +1,4 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { Result } from "@adviser/cement";
 import { makeBaseSystemPrompt } from "@vibes.diy/prompts";
 
 // We need to mock the module properly, not test the real implementation yet
@@ -8,8 +7,8 @@ vi.mock("@vibes.diy/prompts", async () => {
   return {
     makeBaseSystemPrompt: vi.fn().mockResolvedValue({
       systemPrompt: "mocked system prompt",
-      dependencies: ["fireproof", "callai"],
-      demoData: true,
+      skills: ["fireproof", "callai"],
+      demoData: false,
       model: "test-model",
     }),
   };
@@ -17,9 +16,7 @@ vi.mock("@vibes.diy/prompts", async () => {
 
 describe("Prompts Utility", () => {
   const opts = {
-    callAi: {
-      ModuleAndOptionsSelection: vi.fn().mockResolvedValue(Result.Ok("{}")),
-    },
+    skills: ["fireproof", "callai"],
   };
   beforeEach(() => {
     vi.clearAllMocks();

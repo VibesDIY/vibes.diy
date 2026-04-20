@@ -42,6 +42,8 @@ import {
   parseArray,
   vibeFile,
   isVibeCodeBlock,
+  ActiveEntry,
+  isActiveSkills,
 } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { type } from "arktype";
@@ -359,6 +361,31 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
   return messages;
 }
 
+async function loadActiveSkills(vctx: VibesApiSQLCtx, chatId: string): Promise<string[] | undefined> {
+  const rChat = await exception2Result(() =>
+    vctx.sql.db
+      .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, userSlug: vctx.sql.tables.chatContexts.userSlug })
+      .from(vctx.sql.tables.chatContexts)
+      .where(eq(vctx.sql.tables.chatContexts.chatId, chatId))
+      .limit(1)
+      .then((r) => r[0])
+  );
+  if (rChat.isErr() || !rChat.Ok()) return undefined;
+  const { appSlug, userSlug } = rChat.Ok();
+  const rApp = await exception2Result(() =>
+    vctx.sql.db
+      .select({ settings: vctx.sql.tables.appSettings.settings })
+      .from(vctx.sql.tables.appSettings)
+      .where(and(eq(vctx.sql.tables.appSettings.appSlug, appSlug), eq(vctx.sql.tables.appSettings.userSlug, userSlug)))
+      .limit(1)
+      .then((r) => r[0])
+  );
+  if (rApp.isErr() || !rApp.Ok()) return undefined;
+  const entries = (rApp.Ok().settings ?? []) as ActiveEntry[];
+  const skillsEntry = entries.find(isActiveSkills);
+  return skillsEntry?.skills;
+}
+
 async function injectSystemPrompt(
   vctx: VibesApiSQLCtx,
   chatId: string,
@@ -386,10 +413,16 @@ async function injectSystemPrompt(
     allSectionMsgs.push(...sectionMsgs);
   }
   const conversationMessages = reconstructConversationMessages(allSectionMsgs);
+
+  // Resolve the app's ActiveSkills from app_settings. Pre-allocation seeds this
+  // on new chats; legacy rows without it fall back to makeBaseSystemPrompt's
+  // getDefaultSkills().
+  const skills = await loadActiveSkills(vctx, chatId);
+
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
-      dependenciesUserOverride: true,
-      dependencies: ["fireproof", "callai", "img-vibes", "web-audio"],
+      skills,
+      demoData: false,
       fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
         console.log("Fetching asset for system prompt from URL:", url.toString(), vctx.params.pkgRepos.workspace);
         const uri = URI.from(url);
@@ -405,19 +438,8 @@ async function injectSystemPrompt(
         if (rRes.isErr()) {
           console.error("Failed to fetch asset for system prompt from URL:", url.toString(), "with error:", rRes.Err());
           return new Response(JSON.stringify({ error: rRes.Err() }), { status: 500 });
-          // return Result.Err(rRes);
         }
-        const res = new Response(rRes.Ok());
-        // res.clone().text().then((text) => {
-        //   console.log("Fetched asset for system prompt from URL:", url.toString(), "with content:", text);
-        // })
-        return res;
-        //   return Result.Ok(await new Response(rRes.Ok()).text());
-      },
-      callAi: {
-        ModuleAndOptionsSelection: async (_msgs: ChatMessage[]) => {
-          return Result.Err(`Module and options selection is not supported in system prompts at this time`);
-        },
+        return new Response(rRes.Ok());
       },
     })
   );
