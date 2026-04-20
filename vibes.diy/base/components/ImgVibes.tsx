@@ -11,6 +11,7 @@ export interface ImgVibesProps {
   alt?: string;
   style?: React.CSSProperties;
   showControls?: boolean;
+  model?: string;
 }
 
 function promptToId(prompt: string): string {
@@ -22,10 +23,23 @@ function promptToId(prompt: string): string {
   return `img-${(hash >>> 0).toString(36)}`;
 }
 
-export function ImgVibes({ prompt, _id: propId, images, database, className, alt, style, showControls = true }: ImgVibesProps) {
+export function ImgVibes({
+  prompt,
+  _id: propId,
+  images,
+  database,
+  className,
+  alt,
+  style,
+  showControls = true,
+  model,
+}: ImgVibesProps) {
   const inputImage = images?.[0];
   const imageKey = inputImage ? `${inputImage.name}-${inputImage.size}-${inputImage.lastModified}` : "";
-  const stableId = useMemo(() => propId ?? (prompt ? promptToId(prompt + imageKey) : undefined), [propId, prompt, imageKey]);
+  const stableId = useMemo(
+    () => propId ?? (prompt ? promptToId(prompt + imageKey + (model ?? "")) : undefined),
+    [propId, prompt, imageKey, model]
+  );
   const [generationId, setGenerationId] = useState<string | undefined>(undefined);
   const [versionIndex, setVersionIndex] = useState<number | null>(null);
 
@@ -36,6 +50,7 @@ export function ImgVibes({ prompt, _id: propId, images, database, className, alt
     skip: !prompt && !stableId,
     generationId,
     inputImage,
+    model,
   });
 
   const versions = document?.versions ?? [];
