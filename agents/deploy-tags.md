@@ -36,6 +36,10 @@ Convention: `pkg@d2.0.0-dev-cli-<letter>` for dev CLI iterations.
 4. Push: `git push origin vibes-diy@p0.X.Y vibes-diy@c0.X.Y` (add `vibes-diy@d0.X.Y` if deploying dev too)
 5. Tags are immutable — never delete/move, bump the version instead
 
+## Say notification
+
+Use `echo 'message' | say` only **after** a deploy action completes (e.g. CI finishes, deploy confirmed working) — never right after `git push` or tagging. The `say` notification signals completion to the human, not the start of work.
+
 ## Queue architecture
 
 One shared prod queue consumer for all environments. CLI and prod main workers both produce to `vibes-service-prod`. Dev has its own queue `vibes-service-dev`.
