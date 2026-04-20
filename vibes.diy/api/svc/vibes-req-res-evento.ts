@@ -13,6 +13,7 @@ import { ReqResEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { HttpResponseJsonType } from "@vibes.diy/api-types";
 import { servEntryPoint } from "./public/serv-entry-point.js";
 import { cidAsset } from "./public/cid-asset.js";
+import { vibesIcon } from "./public/vibes-icon.js";
 
 export const vibesReqResEvento = Lazy(() => {
   const evento = new Evento(new ReqResEventoEnDecoder());
@@ -36,6 +37,7 @@ export const vibesReqResEvento = Lazy(() => {
       },
     },
     cidAsset,
+    vibesIcon,
     servEntryPoint,
     {
       type: EventoType.WildCard,
