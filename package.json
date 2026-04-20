@@ -65,7 +65,7 @@
     "@playwright/test": "^1.59.1",
     "@types/deno": "^2.5.0",
     "@types/node": "^25.2.3",
-    "@typescript/native-preview": "7.0.0-dev.20260419.1",
+    "@typescript/native-preview": "7.0.0-dev.20260420.1",
     "@vitest/browser-playwright": "~4.1.4",
     "@vitest/coverage-v8": "~4.1.4",
     "eslint": "^10.0.3",
