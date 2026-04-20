@@ -81,6 +81,39 @@ function MyComponent() {
 }
 ```
 
+## Passing User Images Through App State
+
+When your app captures or collects images earlier in the flow (camera, file picker, canvas), store the `File` object in React state and pass it to `ImgVibes` later. This is the most common pattern for img2img — don't discard the user's image before reaching ImgVibes:
+
+```jsx
+import { useState } from "react";
+import { ImgVibes } from "img-vibes";
+
+function App() {
+  const [photo, setPhoto] = useState(null);
+  const [prompt, setPrompt] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  return (
+    <div>
+      {!submitted ? (
+        <>
+          <input type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files[0])} />
+          <input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Transform into..." />
+          <button onClick={() => setSubmitted(true)} disabled={!photo || !prompt}>
+            Go
+          </button>
+        </>
+      ) : (
+        <ImgVibes prompt={prompt} images={[photo]} />
+      )}
+    </div>
+  );
+}
+```
+
+**Key rule**: Any time the user provides an image (camera capture, file upload, canvas export) and the app later generates an image based on it, the `File` must be kept in state and passed via the `images` prop. Never generate without the user's image when one was provided — that's the whole point of img2img.
+
 ## Caching and Versions
 
 - Same prompt generates a deterministic `_id` (hash-based), so results are cached across reloads
