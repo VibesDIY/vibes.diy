@@ -34,6 +34,7 @@
     "@vibes.diy/vibe-db-explorer": "workspace:*",
     "acorn": "^8.15.0",
     "arktype": "^2.2.0",
+    "call-ai": "workspace:*",
     "cookie": "^1.1.1",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.2",

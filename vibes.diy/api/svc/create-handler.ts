@@ -200,6 +200,8 @@ export async function createAppContext<T extends VibesSqlite>(
       // }) as LLMDefault,
       enforced: LLMEnforced({}) as LLMEnforced,
       headers: LLMHeaders({}) as LLMHeaders,
+      url: envVals.LLM_BACKEND_URL,
+      apiKey: envVals.LLM_BACKEND_API_KEY,
     },
     assetCacheUrl: "https://asset-cache.vibes.app/{assetId}",
     // importMapProps: {
