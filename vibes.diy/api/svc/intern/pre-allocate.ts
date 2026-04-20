@@ -67,12 +67,16 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
   }
 
   const catalogNames = await getLlmCatalogNames();
-  const validSkills = validated.skills.filter((s) => catalogNames.has(s));
-  if (validated.skills.length > 0 && validSkills.length === 0) {
+  const validSkills: string[] = [];
+  const droppedSkills: string[] = [];
+  for (const s of validated.skills) {
+    (catalogNames.has(s) ? validSkills : droppedSkills).push(s);
+  }
+  if (droppedSkills.length > 0) {
     ensureLogger(vctx.sthis, "preAllocate")
       .Warn()
-      .Any({ rawSkills: validated.skills })
-      .Msg("all pre-alloc skills missed catalog");
+      .Any({ droppedSkills, validSkills })
+      .Msg("pre-alloc skills missed catalog");
   }
 
   return Result.Ok({
