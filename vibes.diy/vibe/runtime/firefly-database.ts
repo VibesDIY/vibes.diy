@@ -106,6 +106,7 @@ export class FireflyDatabase {
   }
 
   async get<T extends DocTypes>(id: string): Promise<DocWithId<T>> {
+    console.log("[Firefly] get", id);
     const rRes = await this.vibeApi.getDoc(id);
     if (rRes.isErr()) {
       throw new Error(`Failed to get document: ${rRes.Err()}`);
@@ -121,6 +122,7 @@ export class FireflyDatabase {
   }
 
   async put<T extends DocTypes>(doc: T & { _id?: string }): Promise<DocResponse> {
+    console.log("[Firefly] put", doc._id, doc);
     const rRes = await this.vibeApi.putDoc(doc, doc._id);
     if (rRes.isErr()) {
       throw new Error(`Failed to put document: ${rRes.Err()}`);

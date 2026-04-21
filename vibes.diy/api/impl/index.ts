@@ -578,7 +578,6 @@ class LLMChatImpl implements LLMChat {
         if (msg instanceof type.errors) {
           return Result.Ok(Option.None());
         }
-        console.log("[LLMChatImpl] validate msg, tid match:", msg.tid === tid, "expected:", tid, "got:", msg.tid);
         if (msg.tid === tid) {
           return Result.Ok(Option.Some(msg));
         }
@@ -592,10 +591,9 @@ class LLMChatImpl implements LLMChat {
         } else {
           const se = sectionEvent(trigger.validated.payload);
           if (!(se instanceof type.errors)) {
-            console.log("[LLMChatImpl] writing to stream:", se.type, "blocks:", se.blocks?.length);
             await sectionEventsWriter.write(se);
           } else {
-            console.log("[LLMChatImpl] sectionEvent parse FAILED:", se.summary?.substring(0, 200));
+            // sectionEvent parse failed — skip silently
           }
         }
         return Result.Ok(EventoResult.Continue);

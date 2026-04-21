@@ -442,6 +442,7 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqPutDoc, unknown>): Promise<Result<EventoResultType>> => {
+      console.log("[Firefly srv-sandbox] putDoc", ctx.validated.appSlug, ctx.validated.docId);
       const rRes = await vibeDiyApi.putDoc({
         appSlug: ctx.validated.appSlug,
         doc: ctx.validated.doc,
@@ -455,7 +456,13 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
           message: rRes.Err().message,
         });
       } else {
-        await ctx.send.send(ctx, { tid: ctx.validated.tid, ...rRes.Ok() });
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibe.res.putDoc",
+          status: "ok",
+          id: res.id,
+        });
       }
       return Result.Ok(EventoResult.Stop);
     },
@@ -486,7 +493,12 @@ function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
           message: rRes.Err().message,
         });
       } else {
-        await ctx.send.send(ctx, { tid: ctx.validated.tid, ...rRes.Ok() });
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          ...res,
+          tid: ctx.validated.tid,
+          type: "vibe.res.getDoc",
+        });
       }
       return Result.Ok(EventoResult.Stop);
     },
@@ -516,7 +528,12 @@ function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
           message: rRes.Err().message,
         });
       } else {
-        await ctx.send.send(ctx, { tid: ctx.validated.tid, ...rRes.Ok() });
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          ...res,
+          tid: ctx.validated.tid,
+          type: "vibe.res.queryDocs",
+        });
       }
       return Result.Ok(EventoResult.Stop);
     },
@@ -547,7 +564,12 @@ function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
           message: rRes.Err().message,
         });
       } else {
-        await ctx.send.send(ctx, { tid: ctx.validated.tid, ...rRes.Ok() });
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          ...res,
+          tid: ctx.validated.tid,
+          type: "vibe.res.deleteDoc",
+        });
       }
       return Result.Ok(EventoResult.Stop);
     },
@@ -577,7 +599,11 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
           message: rRes.Err().message,
         });
       } else {
-        await ctx.send.send(ctx, { tid: ctx.validated.tid, ...rRes.Ok() });
+        await ctx.send.send(ctx, {
+          ...rRes.Ok(),
+          tid: ctx.validated.tid,
+          type: "vibe.res.subscribeDocs",
+        });
       }
       return Result.Ok(EventoResult.Stop);
     },

@@ -53,7 +53,7 @@ export const lockedGroupsVersions = {
     "@fireproof/core": "version:FP",
     "@fireproof/vendor": "version:FP",
     "@fireproof/use-fireproof": "version:FP,deps:react",
-    "use-fireproof": "version:FP,deps:react",
+    "use-fireproof": "alias:@vibes.diy/vibe-runtime",
     "@emotion/css": "version:EMOTION",
 
     // deps=react@19.2.1,react-dom@19.2.1

@@ -245,12 +245,14 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
   });
 
   const runTimeReady: string[] = [];
-  const useFireproofDep = deps["use-fireproof"];
+  // use-fireproof is aliased to vibe-runtime in the import map,
+  // so app code gets Firefly's useFireproof. Hooks are inlined — no dynamic import needed.
+  const useFireproofDep = deps["use-fireproof"] || deps["@fireproof/use-fireproof"];
   if (useFireproofDep && window.parent !== window) {
     runTimeReady.push("use-fireproof");
 
     // Firefly mode: route all database operations through the API via evento bridge
-    await registerFirefly(ctxVibeApi, useFireproofDep);
+    await registerFirefly(ctxVibeApi);
   }
   const callAI = deps["call-ai"];
   if (callAI && window.parent !== window) {
