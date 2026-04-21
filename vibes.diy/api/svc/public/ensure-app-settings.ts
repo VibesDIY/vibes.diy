@@ -244,11 +244,14 @@ export async function ensureAppSettings(
       );
 
       if (!res.error && !prevAutoAccept && nextAutoAccept) {
-        await approveAllPendingRequests(vctx, {
+        const drained = await approveAllPendingRequests(vctx, {
           userId: res.userId,
           appSlug: res.appSlug,
           userSlug: res.userSlug,
         });
+        if (drained.isErr()) {
+          res.error = drained.Err().message;
+        }
       }
       break;
     }
