@@ -15,6 +15,9 @@ interface RecentVibeItem {
 
 function VibeIconThumb({ userSlug, appSlug }: { userSlug: string; appSlug: string }) {
   const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+  }, [userSlug, appSlug]);
   if (failed) return <span className="h-6 w-6 flex-shrink-0 rounded-sm bg-black/10 dark:bg-white/10" aria-hidden />;
   return (
     <img

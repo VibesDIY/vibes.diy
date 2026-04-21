@@ -1,4 +1,4 @@
-import React, { memo, useState } from "react";
+import React, { memo, useEffect, useState } from "react";
 import { PILL_CLEARANCE } from "./PillPortal.js";
 
 interface ChatHeaderContentProps {
@@ -12,18 +12,16 @@ interface ChatHeaderContentProps {
 
 function ChatHeaderContent({ title, promptProcessing, codeReady, remixOf, userSlug, appSlug }: ChatHeaderContentProps) {
   const [iconFailed, setIconFailed] = useState(false);
+  useEffect(() => {
+    setIconFailed(false);
+  }, [userSlug, appSlug]);
   const iconSrc = userSlug && appSlug && !iconFailed ? `/vibes-icon/${userSlug}/${appSlug}` : undefined;
 
   return (
     <div className="flex h-full w-full items-center justify-between p-2 py-4" style={{ paddingLeft: PILL_CLEARANCE }}>
       <div className="text-light-primary dark:text-dark-primary flex items-center gap-2 text-center text-sm">
         {iconSrc ? (
-          <img
-            src={iconSrc}
-            alt=""
-            className="h-5 w-5 rounded-sm"
-            onError={() => setIconFailed(true)}
-          />
+          <img src={iconSrc} alt="" className="h-5 w-5 rounded-sm" onError={() => setIconFailed(true)} />
         ) : null}
         {remixOf ? (
           <span>
