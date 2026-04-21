@@ -127,9 +127,16 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
   const buttonsVisible = phase === "open";
   const creamSlid = phase !== "idle" && phase !== "shrinking";
 
-  // Bubble tray: starts as small oval behind pill, expands left to reveal buttons
-  const bubbleWidth = expanded ? 500 : 60; // SVG units
-  const bubbleX = expanded ? -bubbleWidth - 8 : -68; // Positioned to the left of the pill
+  // Tray sizing
+  const pillWidth = 600 * scale;          // pill SVG width in pixels
+  const btnWidth = height * 0.75;         // single button closed width
+  const btnExpandedWidth = height * 1.8;  // single button hover width
+  const visibleButtons = 1;               // number of buttons shown
+  const btnPadding = 10;                  // cream gap between buttons and pill
+  // space = one expanded + rest closed + padding
+  const trayExtra = btnExpandedWidth + (btnWidth * (visibleButtons - 1)) + btnPadding;
+  const trayCollapsed = pillWidth + 8;    // just covers the pill
+  const trayExpanded = pillWidth + trayExtra + 8;
 
   return (
     <div
@@ -140,11 +147,10 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
       <div
         style={{
           position: "absolute",
-          position: "absolute",
           top: (123 * scale - 4),
           right: -4,
           height: (175 * scale + 8),
-          width: expanded ? (600 * scale + 220 + 8) : (collapsing ? (600 * scale + 8) : (600 * scale + 8)),
+          width: expanded ? trayExpanded : trayCollapsed,
           zIndex: 1,
           background: "var(--vibes-cream, #FFFEF0)",
           border: "1px solid var(--vibes-near-black, #1a1a1a)",
@@ -190,7 +196,7 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
               </svg>
             }
           />
-          <PillActionButton
+          {/* <PillActionButton
             height={height}
             label="Share"
             bgColor="var(--vibes-green, #22c55e)"
@@ -209,6 +215,21 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
               </svg>
             }
           />
+          <PillActionButton
+            height={height}
+            label="Group"
+            bgColor="var(--vibes-blue, #3b82f6)"
+            labelColor="var(--vibes-cream, #FFFEF0)"
+            onClick={(e) => { e.stopPropagation(); }}
+            icon={
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                <path d="M16 3.13a4 4 0 010 7.75" />
+              </svg>
+            }
+          /> */}
         </div>
       </div>
 
