@@ -7,12 +7,9 @@ import {
   ReqWithVerifiedAuth,
   VibesDiyError,
   W3CWebSocketEvent,
-  FileSystemItem,
   MetaItem,
-  VibeFile,
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
-  isFetchOkResult,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { and, eq } from "drizzle-orm/sql/expressions";
@@ -29,115 +26,6 @@ import {
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
-
-async function streamToUint8(stream: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
-  const chunks: Uint8Array[] = [];
-  const reader = stream.getReader();
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    if (value) chunks.push(value);
-  }
-  const total = chunks.reduce((sum, c) => sum + c.byteLength, 0);
-  // Explicit ArrayBuffer (not SharedArrayBuffer) so the resulting Uint8Array
-  // matches VibeUint8AssetBlock.content's Uint8Array<ArrayBuffer> annotation.
-  const out = new Uint8Array(new ArrayBuffer(total));
-  let offset = 0;
-  for (const c of chunks) {
-    out.set(c, offset);
-    offset += c.byteLength;
-  }
-  return out;
-}
-
-function langFromFilename(fileName: string): string {
-  const ext = fileName.toLowerCase().match(/\.([^.]+)$/)?.[1];
-  if (ext === "jsx") return "jsx";
-  if (ext === "tsx") return "tsx";
-  if (ext === "ts") return "ts";
-  if (ext === "js") return "js";
-  if (ext === "css") return "css";
-  if (ext === "html" || ext === "htm") return "html";
-  if (ext === "json") return "json";
-  return ext ?? "txt";
-}
-
-function isOriginalCodeItem(item: FileSystemItem): boolean {
-  // Skip derived artifacts: compiled .js from jsx transform and generated import map.
-  if (item.fileName.startsWith("/~~")) return false;
-  if (item.transform?.type === "transformed") return false;
-  if (item.transform?.type === "import-map") return false;
-  return true;
-}
-
-const TEXTUAL_MIME_ALLOWLIST = new Set([
-  "application/json",
-  "application/javascript",
-  "application/typescript",
-  "application/xml",
-  "application/importmap+json",
-  "image/svg+xml",
-]);
-
-function isTextualMime(mimeType: string): boolean {
-  return mimeType.startsWith("text/") || TEXTUAL_MIME_ALLOWLIST.has(mimeType);
-}
-
-function isCodeFromItem(item: FileSystemItem): boolean {
-  // jsx-to-js marker is the only lossless signal that the source was a
-  // VibeCodeBlock with a jsx-transformable lang (js/jsx).
-  if (item.transform?.type === "jsx-to-js") return true;
-  // ts/tsx aren't transformed today but are still code-shaped source we want to
-  // round-trip as code-block so the chat editor treats them as editable code.
-  const ext = item.fileName.toLowerCase().match(/\.([^.]+)$/)?.[1];
-  return ext === "ts" || ext === "tsx";
-}
-
-// Exported for direct unit testing — the end-to-end path is covered separately.
-export async function reconstructSourceFiles(
-  vctx: VibesApiSQLCtx,
-  fileSystem: FileSystemItem[]
-): Promise<Result<VibeFile[]>> {
-  const originals = fileSystem.filter(isOriginalCodeItem);
-  const results = await Promise.all(
-    originals.map(async (item): Promise<Result<VibeFile>> => {
-      const rFetch = await vctx.storage.fetch(item.assetURI);
-      if (!isFetchOkResult(rFetch)) {
-        return Result.Err(`fork-fetch-failed: ${item.fileName} (${item.assetURI})`);
-      }
-      const bytes = await streamToUint8(rFetch.data);
-      let file: VibeFile;
-      if (isCodeFromItem(item)) {
-        file = {
-          type: "code-block",
-          lang: langFromFilename(item.fileName),
-          filename: item.fileName,
-          content: new TextDecoder().decode(bytes),
-          mimetype: item.mimeType,
-        };
-      } else if (isTextualMime(item.mimeType)) {
-        file = {
-          type: "str-asset-block",
-          filename: item.fileName,
-          content: new TextDecoder().decode(bytes),
-          mimetype: item.mimeType,
-        };
-      } else {
-        file = {
-          type: "uint8-asset-block",
-          filename: item.fileName,
-          content: bytes,
-          mimetype: item.mimeType,
-        };
-      }
-      if (item.entryPoint) (file as VibeFile & { entryPoint?: boolean }).entryPoint = true;
-      return Result.Ok(file);
-    })
-  );
-  const firstErr = results.find((r) => r.isErr());
-  if (firstErr) return Result.Err(firstErr.Err().message);
-  return Result.Ok(results.map((r) => r.Ok()));
-}
 
 export async function forkApp(
   vctx: VibesApiSQLCtx,
@@ -221,19 +109,7 @@ export async function forkApp(
     if (!granted) return Result.Err("not-grant");
   }
 
-  // 3. Reconstruct source VibeFile[] from the Apps row's storage refs.
-  //    This lets the client replay the code via the same promptFS path that
-  //    manual editor saves use, writing a fresh chat section + Apps row.
-  //    Fail the whole fork if any asset fetch fails — a partial file set would
-  //    seed a broken Apps row downstream.
-  const rFiles = await reconstructSourceFiles(vctx, src.fileSystem as FileSystemItem[]);
-  if (rFiles.isErr()) return Result.Err(rFiles.Err().message);
-  const sourceFiles = rFiles.Ok();
-  if (sourceFiles.length === 0) {
-    return Result.Err("fork-no-source-files");
-  }
-
-  // 4. Resolve caller's default userSlug; mirror ensureChatId.
+  // 3. Resolve caller's default userSlug; mirror ensureChatId.
   let destUserSlug: string;
   const rDefault = await getDefaultUserSlug(vctx, userId);
   if (rDefault.isErr()) return Result.Err(`Failed to get default userSlug: ${rDefault.Err().message}`);
@@ -247,9 +123,10 @@ export async function forkApp(
     await persistDefaultUserSlug(vctx, userId, destUserSlug);
   }
 
-  // 5. Allocate a fresh appSlug under the caller. Seed preferredPairs with
+  // 4. Allocate a fresh appSlug under the caller. Seed preferredPairs with
   //    `${srcAppSlug}-remix` using the source title when available.
-  const titleMeta = (src.meta as MetaItem[] | undefined)?.find((m) => m.type === "title") as { title?: string } | undefined;
+  const srcMeta = (src.meta as MetaItem[] | undefined) ?? [];
+  const titleMeta = srcMeta.find((m): m is Extract<MetaItem, { type: "title" }> => m.type === "title");
   const sourceTitle = titleMeta?.title ?? req.srcAppSlug;
   const rApp = await ensureAppSlug(vctx, {
     userId,
@@ -258,6 +135,31 @@ export async function forkApp(
   });
   if (rApp.isErr()) return Result.Err(`Failed to ensure appSlug: ${rApp.Err().message}`);
   const destAppSlug = rApp.Ok().appSlug;
+
+  // 5. Insert a new Apps row that shares the source's fileSystem/env refs.
+  //    Storage is content-addressed so the new owner points at the same
+  //    underlying assets with no copy. The `remix-of` meta entry carries
+  //    srcFsId as the immutable anchor; display slugs are resolved live on
+  //    read so renames of srcUserSlug/srcAppSlug are followed automatically.
+  const destMeta: MetaItem[] = [
+    ...srcMeta.filter((m) => m.type !== "remix-of" && m.type !== "screen-shot-ref"),
+    { type: "remix-of", srcFsId: src.fsId },
+  ];
+  const rIns = await exception2Result(() =>
+    vctx.sql.db.insert(vctx.sql.tables.apps).values({
+      appSlug: destAppSlug,
+      userId,
+      userSlug: destUserSlug,
+      releaseSeq: 1,
+      fsId: src.fsId,
+      env: src.env,
+      fileSystem: src.fileSystem,
+      meta: destMeta,
+      mode: "dev",
+      created: new Date().toISOString(),
+    })
+  );
+  if (rIns.isErr()) return Result.Err(`Failed to insert forked app: ${rIns.Err().message}`);
 
   // 6. Create the chat-context row so the client's openChat finds this pair.
   const chatId = vctx.sthis.nextId(12).str;
@@ -277,8 +179,9 @@ export async function forkApp(
     userSlug: destUserSlug,
     appSlug: destAppSlug,
     chatId,
-    remixOf: `${req.srcUserSlug}/${req.srcAppSlug}`,
-    sourceFiles,
+    srcFsId: src.fsId,
+    srcUserSlug: src.userSlug,
+    srcAppSlug: src.appSlug,
   } satisfies ResForkApp);
 }
 

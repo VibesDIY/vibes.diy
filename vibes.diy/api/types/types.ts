@@ -62,7 +62,20 @@ export function isMetaTitle(obj: unknown): obj is MetaTitle {
   return !(MetaTitle(obj) instanceof type.errors);
 }
 
-export const MetaItem = MetaScreenShotRef.or(MetaTitle);
+// srcFsId is the immutable anchor. Display slugs are resolved live from
+// the Apps/binding tables so slug renames follow the user.
+export const MetaRemixOf = type({
+  type: "'remix-of'",
+  srcFsId: "string",
+});
+
+export type MetaRemixOf = typeof MetaRemixOf.infer;
+
+export function isMetaRemixOf(obj: unknown): obj is MetaRemixOf {
+  return !(MetaRemixOf(obj) instanceof type.errors);
+}
+
+export const MetaItem = MetaScreenShotRef.or(MetaTitle).or(MetaRemixOf);
 
 export type MetaItem = typeof MetaItem.infer;
 
