@@ -22,6 +22,7 @@ import {
   parseArrayWarning,
 } from "@vibes.diy/api-types";
 import { and, eq } from "drizzle-orm/sql/expressions";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { VibesApiSQLCtx } from "../types.js";
 
 interface ValidatedIconReq {
@@ -63,12 +64,14 @@ export const vibesIcon: EventoHandler<Request, ValidatedIconReq, unknown> = {
         .limit(1)
         .then((r) => r[0])
     );
-    if (rRow.isErr() || !rRow.Ok()) {
-      return notFound(vctx, ctx, userSlug, appSlug);
+    if (rRow.isErr()) {
+      ensureLogger(vctx.sthis, "vibesIcon").Error().Any({ err: rRow.Err(), userSlug, appSlug }).Msg("appSettings read failed");
+      return serverError(ctx, userSlug, appSlug);
     }
-
-    const { filtered: entries } = parseArrayWarning((rRow.Ok().settings as unknown[]) ?? [], ActiveEntry);
+    const row = rRow.Ok();
+    const entries = row ? parseArrayWarning((row.settings as unknown[]) ?? [], ActiveEntry).filtered : [];
     const iconEntry = entries.find(isActiveIcon);
+
     if (!iconEntry) {
       return notFound(vctx, ctx, userSlug, appSlug);
     }
@@ -85,20 +88,55 @@ export const vibesIcon: EventoHandler<Request, ValidatedIconReq, unknown> = {
           },
           body: rAsset.data,
         } satisfies HttpResponseBodyType);
-        break;
+        return Result.Ok(EventoResult.Stop);
       case isFetchNotFoundResult(rAsset):
+        // Stale ActiveIcon — underlying storage blob was deleted or never
+        // landed. Clear the entry so the next repair event regenerates
+        // instead of short-circuiting on the dangling cid.
+        await clearStaleIcon(vctx, userSlug, appSlug, entries, iconEntry.cid);
         return notFound(vctx, ctx, userSlug, appSlug);
       case isFetchErrResult(rAsset):
       default:
-        await ctx.send.send(ctx, {
-          type: "http.Response.JSON",
-          status: 500,
-          json: { type: "error", message: `Failed to fetch icon asset for ${userSlug}/${appSlug}` },
-        } satisfies HttpResponseJsonType);
+        ensureLogger(vctx.sthis, "vibesIcon").Error().Any({ userSlug, appSlug, cid: iconEntry.cid }).Msg("storage.fetch failed");
+        return serverError(ctx, userSlug, appSlug);
     }
-    return Result.Ok(EventoResult.Stop);
   },
 };
+
+async function isKnownApp(vctx: VibesApiSQLCtx, userSlug: string, appSlug: string): Promise<boolean> {
+  const rBinding = await exception2Result(() =>
+    vctx.sql.db
+      .select({ appSlug: vctx.sql.tables.appSlugBinding.appSlug })
+      .from(vctx.sql.tables.appSlugBinding)
+      .where(and(eq(vctx.sql.tables.appSlugBinding.userSlug, userSlug), eq(vctx.sql.tables.appSlugBinding.appSlug, appSlug)))
+      .limit(1)
+      .then((r) => r[0])
+  );
+  return rBinding.isOk() && rBinding.Ok() !== undefined;
+}
+
+async function clearStaleIcon(
+  vctx: VibesApiSQLCtx,
+  userSlug: string,
+  appSlug: string,
+  entries: ActiveEntry[],
+  staleCid: string
+): Promise<void> {
+  const remaining = entries.filter((e) => !isActiveIcon(e) || e.cid !== staleCid);
+  const now = new Date().toISOString();
+  const rUp = await exception2Result(() =>
+    vctx.sql.db
+      .update(vctx.sql.tables.appSettings)
+      .set({ settings: remaining, updated: now })
+      .where(and(eq(vctx.sql.tables.appSettings.userSlug, userSlug), eq(vctx.sql.tables.appSettings.appSlug, appSlug)))
+  );
+  if (rUp.isErr()) {
+    ensureLogger(vctx.sthis, "vibesIcon")
+      .Error()
+      .Any({ err: rUp.Err(), userSlug, appSlug, staleCid })
+      .Msg("failed to clear stale ActiveIcon");
+  }
+}
 
 async function notFound(
   vctx: VibesApiSQLCtx,
@@ -106,23 +144,38 @@ async function notFound(
   userSlug: string,
   appSlug: string
 ): Promise<Result<EventoResultType>> {
-  // Lazy hydration: enqueue a repair event so the icon gets generated on a
-  // future load. The handler dedupes if ActiveIcon already landed between
-  // this call and its turn on the queue.
-  void vctx
-    .postQueue({
-      payload: { type: "vibes.diy.evt-icon-repair", userSlug, appSlug },
-      tid: "queue-event",
-      src: "vibesIcon",
-      dst: "vibes-service",
-      ttl: 1,
-    } satisfies MsgBase<EvtIconRepair>)
-    .catch(() => undefined);
+  // Lazy hydration: only enqueue repair when the app actually exists. Without
+  // this gate, /vibes-icon is a public endpoint that any visitor can hit with
+  // arbitrary slugs — unbounded queue churn otherwise.
+  if (await isKnownApp(vctx, userSlug, appSlug)) {
+    void vctx
+      .postQueue({
+        payload: { type: "vibes.diy.evt-icon-repair", userSlug, appSlug },
+        tid: "queue-event",
+        src: "vibesIcon",
+        dst: "vibes-service",
+        ttl: 1,
+      } satisfies MsgBase<EvtIconRepair>)
+      .catch(() => undefined);
+  }
 
   await ctx.send.send(ctx, {
     type: "http.Response.JSON",
     status: 404,
     json: { type: "error", message: `No icon for ${userSlug}/${appSlug}` },
+  } satisfies HttpResponseJsonType);
+  return Result.Ok(EventoResult.Stop);
+}
+
+async function serverError(
+  ctx: HandleTriggerCtx<Request, ValidatedIconReq, unknown>,
+  userSlug: string,
+  appSlug: string
+): Promise<Result<EventoResultType>> {
+  await ctx.send.send(ctx, {
+    type: "http.Response.JSON",
+    status: 500,
+    json: { type: "error", message: `Failed to serve icon for ${userSlug}/${appSlug}` },
   } satisfies HttpResponseJsonType);
   return Result.Ok(EventoResult.Stop);
 }
