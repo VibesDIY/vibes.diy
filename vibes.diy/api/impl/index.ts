@@ -113,6 +113,7 @@ import {
   ReqSubscribeDocs,
   ResSubscribeDocs,
   isResSubscribeDocs,
+  isEvtDocChanged,
   ReqPromptLLMChatSection,
   FSUpdate,
   isFSUpdate,
@@ -537,6 +538,21 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-subscribe-docs" }, { resMatch: isResSubscribeDocs });
+  }
+
+  onDocChanged(fn: (appSlug: string, docId: string) => void): void {
+    // Listen for doc-changed events pushed from the API over the WebSocket
+    this.getReadyConnection().then((conn) => {
+      conn.onMessage((event) => {
+        const data = event.type === "MessageEvent" ? event.event.data : undefined;
+        if (data && typeof data === "object" && "payload" in data) {
+          const payload = (data as { payload: unknown }).payload;
+          if (isEvtDocChanged(payload)) {
+            fn(payload.appSlug, payload.docId);
+          }
+        }
+      });
+    });
   }
 }
 

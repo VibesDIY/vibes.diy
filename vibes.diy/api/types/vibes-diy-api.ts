@@ -146,4 +146,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   queryDocs(req: Req<ReqQueryDocs>): Promise<Result<ResQueryDocs, VibesDiyError>>;
   deleteDoc(req: Req<ReqDeleteDoc>): Promise<Result<ResDeleteDoc, VibesDiyError>>;
   subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>>;
+
+  // Register a callback for document change events pushed from the API
+  onDocChanged(fn: (appSlug: string, docId: string) => void): void;
 }

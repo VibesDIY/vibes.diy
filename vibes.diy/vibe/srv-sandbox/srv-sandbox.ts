@@ -617,13 +617,28 @@ export class vibesDiySrvSandbox implements Disposable {
 
   readonly onRuntimeReady = OnFunc<(evt: EvtRuntimeReady) => void>();
 
+  // Captured iframe postMessage target — set on first message from iframe
+  private iframeSource: Window | undefined;
+  private iframeOrigin: string | undefined;
+
   readonly handleMessage = (event: MessageEvent): void => {
-    // console.log(`Received message event in vibesDiySrvSandbox`, event);
+    // Capture iframe window reference for forwarding API events
+    if (!this.iframeSource && event.source) {
+      this.iframeSource = event.source as Window;
+      this.iframeOrigin = event.origin;
+    }
     this.evento.trigger<MessageEvent, unknown, unknown>({
       request: event,
       send: new PostMsgSendProvider(window, event),
     });
   };
+
+  // Forward a doc-changed event from the API to the iframe
+  forwardDocChangedToIframe(appSlug: string, docId: string): void {
+    if (this.iframeSource && this.iframeOrigin) {
+      this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", appSlug, docId }, this.iframeOrigin);
+    }
+  }
 
   readonly removeEventListeners: typeof window.removeEventListener;
   readonly args: VibesDiySrvSandboxArgs;
@@ -645,9 +660,13 @@ export class vibesDiySrvSandbox implements Disposable {
         vibeSubscribeDocs(this),
       ]
     );
-    // console.log(`Adding event listener for vibesDiySrvSandbox`, this.handleMessage);
     this.args.eventListeners.addEventListener("message", this.handleMessage);
     this.removeEventListeners = this.args.eventListeners.removeEventListener;
+
+    // Forward doc-changed events from the API WebSocket to the iframe
+    this.args.vibeDiyApi.onDocChanged((appSlug, docId) => {
+      this.forwardDocChangedToIframe(appSlug, docId);
+    });
   }
 
   [Symbol.dispose](): void {

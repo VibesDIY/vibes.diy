@@ -67,7 +67,12 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         created: now,
       });
 
-      // TODO: broadcast vibes.diy.evt-doc-changed to subscribed connections
+      // Broadcast to connections subscribed to this appSlug
+      for (const conn of vctx.connections) {
+        if (conn.subscribedAppSlugs.has(req.appSlug)) {
+          conn.send(ctx, { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId });
+        }
+      }
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-put-doc",
@@ -220,7 +225,12 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
         created: now,
       });
 
-      // TODO: broadcast vibes.diy.evt-doc-changed to subscribed connections
+      // Broadcast to connections subscribed to this appSlug
+      for (const conn of vctx.connections) {
+        if (conn.subscribedAppSlugs.has(req.appSlug)) {
+          conn.send(ctx, { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId: req.docId });
+        }
+      }
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-delete-doc",
@@ -247,8 +257,15 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
     async (
       ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqSubscribeDocs>>, ResSubscribeDocs | VibesDiyError>
     ): Promise<Result<EventoResultType>> => {
-      // TODO: register this WebSocket connection in subscriptions Map<appSlug, Set<WSSendProvider>>
-      // For now, acknowledge the subscription
+      const req = ctx.validated.payload;
+
+      // Register this connection for document change notifications
+      // Uses the subscribedAppSlugs Set on WSSendProvider (same pattern as chatIds)
+      const conn = ctx.send;
+      if ("subscribedAppSlugs" in conn) {
+        (conn.subscribedAppSlugs as Set<string>).add(req.appSlug);
+      }
+
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-subscribe-docs",
         status: "ok",
