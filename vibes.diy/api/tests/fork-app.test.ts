@@ -3,7 +3,7 @@ import { assert, beforeAll, describe, expect, inject, it } from "vitest";
 import { processStream, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
-import { cfServe, CFInject, noopCache, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
+import { cfServe, CFInject, noopCache, reconstructSourceFiles, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { isPromptBlockEnd, isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
@@ -159,5 +159,83 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
   it("forking a non-existent app returns an error", async () => {
     const rFork = await api2.forkApp({ srcUserSlug: "no-such-user", srcAppSlug: "no-such-app" });
     expect(rFork.isErr()).toBe(true);
+  });
+});
+
+describe("reconstructSourceFiles classification", () => {
+  // Direct unit tests against the reconstruction helper with a stub storage.
+  // The end-to-end ingest path (ensureAppSlug → transformJSXAndImports) only
+  // retains js/jsx code-blocks today, so non-code VibeFiles can't round-trip
+  // through the public API — these tests exercise the classifier directly.
+
+  function makeStorage(table: Record<string, Uint8Array>) {
+    return {
+      fetch: async (url: string) => {
+        const bytes = table[url];
+        if (!bytes) return { type: "fetch.notfound" as const, url };
+        return {
+          type: "fetch.ok" as const,
+          url,
+          data: new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(bytes);
+              controller.close();
+            },
+          }),
+        };
+      },
+    };
+  }
+
+  it("classifies items by transform marker and mime", async () => {
+    const jsxBytes = new TextEncoder().encode("function App(){ return <div/>; }");
+    const cssBytes = new TextEncoder().encode(".x{color:red}");
+    const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0xff, 0x80, 0x01]);
+    const storage = makeStorage({
+      "mem://jsx": jsxBytes,
+      "mem://css": cssBytes,
+      "mem://png": pngBytes,
+    });
+    const rFiles = await reconstructSourceFiles(
+      { storage } as unknown as Parameters<typeof reconstructSourceFiles>[0],
+      [
+        {
+          fileName: "/App.jsx",
+          mimeType: "text/javascript",
+          assetId: "jsx",
+          assetURI: "mem://jsx",
+          size: jsxBytes.length,
+          transform: { type: "jsx-to-js", transformedAssetId: "tjsx" },
+          entryPoint: true,
+        },
+        { fileName: "/styles.css", mimeType: "text/css", assetId: "css", assetURI: "mem://css", size: cssBytes.length },
+        { fileName: "/logo.png", mimeType: "image/png", assetId: "png", assetURI: "mem://png", size: pngBytes.length },
+      ]
+    );
+    if (rFiles.isErr()) assert.fail(rFiles.Err().message);
+    const [jsx, css, png] = rFiles.Ok();
+    expect(jsx.type).toBe("code-block");
+    expect(jsx.filename).toBe("/App.jsx");
+    expect((jsx as { entryPoint?: boolean }).entryPoint).toBe(true);
+    expect(css.type).toBe("str-asset-block");
+    expect("content" in css && typeof css.content === "string" ? css.content : "").toBe(".x{color:red}");
+    expect(png.type).toBe("uint8-asset-block");
+    const pngContent = "content" in png ? png.content : undefined;
+    expect(pngContent).toBeInstanceOf(Uint8Array);
+    expect(Array.from(pngContent as Uint8Array)).toEqual(Array.from(pngBytes));
+  });
+
+  it("returns Err with filename when any asset fetch fails", async () => {
+    const storage = makeStorage({ "mem://ok": new TextEncoder().encode("ok") });
+    const rFiles = await reconstructSourceFiles(
+      { storage } as unknown as Parameters<typeof reconstructSourceFiles>[0],
+      [
+        { fileName: "/App.jsx", mimeType: "text/javascript", assetId: "ok", assetURI: "mem://ok", size: 2 },
+        { fileName: "/missing.css", mimeType: "text/css", assetId: "x", assetURI: "mem://missing", size: 0 },
+      ]
+    );
+    expect(rFiles.isErr()).toBe(true);
+    expect(rFiles.Err().message).toContain("/missing.css");
+    expect(rFiles.Err().message).toContain("mem://missing");
   });
 });

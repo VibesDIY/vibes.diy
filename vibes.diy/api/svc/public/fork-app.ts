@@ -68,24 +68,73 @@ function isOriginalCodeItem(item: FileSystemItem): boolean {
   return true;
 }
 
-async function reconstructSourceFiles(vctx: VibesApiSQLCtx, fileSystem: FileSystemItem[]): Promise<VibeFile[]> {
+const TEXTUAL_MIME_ALLOWLIST = new Set([
+  "application/json",
+  "application/javascript",
+  "application/typescript",
+  "application/xml",
+  "application/importmap+json",
+  "image/svg+xml",
+]);
+
+function isTextualMime(mimeType: string): boolean {
+  return mimeType.startsWith("text/") || TEXTUAL_MIME_ALLOWLIST.has(mimeType);
+}
+
+function isCodeFromItem(item: FileSystemItem): boolean {
+  // jsx-to-js marker is the only lossless signal that the source was a
+  // VibeCodeBlock with a jsx-transformable lang (js/jsx).
+  if (item.transform?.type === "jsx-to-js") return true;
+  // ts/tsx aren't transformed today but are still code-shaped source we want to
+  // round-trip as code-block so the chat editor treats them as editable code.
+  const ext = item.fileName.toLowerCase().match(/\.([^.]+)$/)?.[1];
+  return ext === "ts" || ext === "tsx";
+}
+
+// Exported for direct unit testing — the end-to-end path is covered separately.
+export async function reconstructSourceFiles(
+  vctx: VibesApiSQLCtx,
+  fileSystem: FileSystemItem[]
+): Promise<Result<VibeFile[]>> {
   const originals = fileSystem.filter(isOriginalCodeItem);
-  const out: VibeFile[] = [];
-  for (const item of originals) {
-    const rFetch = await vctx.storage.fetch(item.assetURI);
-    if (!isFetchOkResult(rFetch)) continue;
-    const bytes = await streamToUint8(rFetch.data);
-    const text = new TextDecoder().decode(bytes);
-    const file: VibeFile = {
-      type: "code-block",
-      lang: langFromFilename(item.fileName),
-      filename: item.fileName,
-      content: text,
-    };
-    if (item.entryPoint) (file as VibeFile & { entryPoint?: boolean }).entryPoint = true;
-    out.push(file);
-  }
-  return out;
+  const results = await Promise.all(
+    originals.map(async (item): Promise<Result<VibeFile>> => {
+      const rFetch = await vctx.storage.fetch(item.assetURI);
+      if (!isFetchOkResult(rFetch)) {
+        return Result.Err(`fork-fetch-failed: ${item.fileName} (${item.assetURI})`);
+      }
+      const bytes = await streamToUint8(rFetch.data);
+      let file: VibeFile;
+      if (isCodeFromItem(item)) {
+        file = {
+          type: "code-block",
+          lang: langFromFilename(item.fileName),
+          filename: item.fileName,
+          content: new TextDecoder().decode(bytes),
+          mimetype: item.mimeType,
+        };
+      } else if (isTextualMime(item.mimeType)) {
+        file = {
+          type: "str-asset-block",
+          filename: item.fileName,
+          content: new TextDecoder().decode(bytes),
+          mimetype: item.mimeType,
+        };
+      } else {
+        file = {
+          type: "uint8-asset-block",
+          filename: item.fileName,
+          content: bytes,
+          mimetype: item.mimeType,
+        };
+      }
+      if (item.entryPoint) (file as VibeFile & { entryPoint?: boolean }).entryPoint = true;
+      return Result.Ok(file);
+    })
+  );
+  const firstErr = results.find((r) => r.isErr());
+  if (firstErr) return Result.Err(firstErr.Err().message);
+  return Result.Ok(results.map((r) => r.Ok()));
 }
 
 export async function forkApp(
@@ -173,7 +222,11 @@ export async function forkApp(
   // 3. Reconstruct source VibeFile[] from the Apps row's storage refs.
   //    This lets the client replay the code via the same promptFS path that
   //    manual editor saves use, writing a fresh chat section + Apps row.
-  const sourceFiles = await reconstructSourceFiles(vctx, src.fileSystem as FileSystemItem[]);
+  //    Fail the whole fork if any asset fetch fails — a partial file set would
+  //    seed a broken Apps row downstream.
+  const rFiles = await reconstructSourceFiles(vctx, src.fileSystem as FileSystemItem[]);
+  if (rFiles.isErr()) return Result.Err(rFiles.Err().message);
+  const sourceFiles = rFiles.Ok();
   if (sourceFiles.length === 0) {
     return Result.Err("fork-no-source-files");
   }
