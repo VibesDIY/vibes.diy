@@ -7,8 +7,10 @@ interface ShareModalProps {
   modal: UseShareModalReturn;
 }
 
+const inlinePublishButton =
+  "inline-flex items-center px-2 py-0.5 mx-0.5 rounded-[5px] border-2 border-black bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 shadow-[2px_2px_0px_0px_black] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50 disabled:pointer-events-none";
+
 export function ShareModal({ modal }: ShareModalProps) {
-  // Window-level Escape listener (works regardless of focus)
   useEffect(() => {
     if (!modal.isOpen) return;
     function onKeyDown(e: KeyboardEvent) {
@@ -33,6 +35,8 @@ export function ShareModal({ modal }: ShareModalProps) {
     }
   }
 
+  const publishDisabled = modal.isPublishing || !modal.canPublish || !modal.settingsLoaded;
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] m-0 bg-black/25"
@@ -46,7 +50,6 @@ export function ShareModal({ modal }: ShareModalProps) {
         onClick={(e) => e.stopPropagation()}
         className="w-80 rounded-[5px] border-2 border-black bg-white p-4 shadow-[4px_4px_0px_0px_black] dark:bg-gray-900"
       >
-        {/* Published URL + copy (always visible once published) */}
         {modal.isPublished && modal.publishedUrl ? (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -67,7 +70,7 @@ export function ShareModal({ modal }: ShareModalProps) {
                     />
                   </svg>
                 ) : (
-                  <span className="text-xs">Copy</span>
+                  <span className="text-xs">Copy Link</span>
                 )}
               </Button>
             </div>
@@ -76,29 +79,23 @@ export function ShareModal({ modal }: ShareModalProps) {
               variant={modal.isUpToDate ? "cool" : "blue"}
               size="fixed"
               className="w-full"
-              onClick={() => void modal.handlePublish()}
+              onClick={() => void modal.handlePublish(modal.autoJoinEnabled)}
               disabled={modal.isPublishing || !modal.canPublish || modal.isUpToDate || !modal.settingsLoaded}
             >
               {modal.isPublishing ? "Updating..." : modal.isUpToDate ? "Up to date" : "Update"}
             </Button>
-
-            {/* Divider */}
-            <hr className="my-3 border-gray-200 dark:border-gray-700" />
-
-            {/* Auto-join toggle */}
-            <div className="flex cursor-pointer items-center justify-between gap-3">
-              <div>
-                <p id="auto-join-label" className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  Open access
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {modal.autoJoinEnabled ? "Anyone with the link gets access" : "New users must be approved"}
-                </p>
-              </div>
+            <p id="auto-join-desc" className="text-center text-xs text-gray-500 dark:text-gray-400">
+              {modal.autoJoinEnabled ? "Access open to everyone" : "Membership requires approval"}
+            </p>
+            <div className="flex items-center justify-between gap-3">
+              <span id="auto-join-label" className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                Auto-join
+              </span>
               <button
                 type="button"
                 role="switch"
                 aria-labelledby="auto-join-label"
+                aria-describedby="auto-join-desc"
                 aria-checked={modal.autoJoinEnabled}
                 disabled={modal.isTogglingAutoJoin}
                 onClick={() => void modal.handleToggleAutoJoin()}
@@ -116,17 +113,29 @@ export function ShareModal({ modal }: ShareModalProps) {
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Publish your app to get a shareable link.</p>
+            <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+              Publish your vibe to collaborate with{" "}
+              <button
+                type="button"
+                onClick={() => void modal.handlePublish(true)}
+                disabled={publishDisabled}
+                className={inlinePublishButton}
+              >
+                everyone
+              </button>{" "}
+              or{" "}
+              <button
+                type="button"
+                onClick={() => void modal.handlePublish(false)}
+                disabled={publishDisabled}
+                className={inlinePublishButton}
+              >
+                approved members
+              </button>
+              .
+            </p>
+            {modal.isPublishing ? <p className="text-xs text-gray-500 dark:text-gray-400">Publishing...</p> : null}
             {modal.publishError ? <p className="text-xs text-red-600 dark:text-red-400">{modal.publishError}</p> : null}
-            <Button
-              variant="blue"
-              size="fixed"
-              className="w-full"
-              onClick={() => void modal.handlePublish()}
-              disabled={modal.isPublishing || !modal.canPublish || !modal.settingsLoaded}
-            >
-              {modal.isPublishing ? "Publishing..." : "Publish"}
-            </Button>
             {!modal.canPublish ? (
               <p className="text-xs text-gray-500 dark:text-gray-500">Generate some code first to publish.</p>
             ) : null}

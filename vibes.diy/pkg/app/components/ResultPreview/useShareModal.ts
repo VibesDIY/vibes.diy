@@ -18,7 +18,7 @@ interface UseShareModalReturn {
   isUpToDate: boolean;
   publishError: string | undefined;
   publishedUrl: string | undefined;
-  handlePublish: () => Promise<void>;
+  handlePublish: (autoJoin: boolean) => Promise<void>;
   autoJoinEnabled: boolean;
   isTogglingAutoJoin: boolean;
   handleToggleAutoJoin: () => Promise<void>;
@@ -118,52 +118,54 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     };
   }, [isOpen, appSlug, userSlug, vibeDiyApi]);
 
-  const handlePublish = useCallback(async () => {
-    if (!canPublish || !settingsLoaded) return;
-    const isInitialPublish = !isPublished;
-    setIsPublishing(true);
-    setPublishError(undefined);
+  const handlePublish = useCallback(
+    async (autoJoin: boolean) => {
+      if (!canPublish || !settingsLoaded) return;
+      const isInitialPublish = !isPublished;
+      setIsPublishing(true);
+      setPublishError(undefined);
 
-    try {
-      // Promote current fsId to production
-      const modeResult = await vibeDiyApi.setSetModeFs({
-        fsId: fsId as string,
-        appSlug,
-        userSlug,
-        mode: "production",
-      });
+      try {
+        const modeResult = await vibeDiyApi.setSetModeFs({
+          fsId: fsId as string,
+          appSlug,
+          userSlug,
+          mode: "production",
+        });
 
-      if (!modeResult.isOk()) {
+        if (!modeResult.isOk()) {
+          setPublishError("Failed to publish. Please try again.");
+          return;
+        }
+
+        const settingsResult = await vibeDiyApi.ensureAppSettings({
+          appSlug,
+          userSlug,
+          request: { enable: true, autoAcceptViewRequest: autoJoin },
+        });
+
+        if (!settingsResult.isOk()) {
+          setPublishError("Published, but failed to update sharing settings.");
+        } else {
+          setAutoJoinEnabled(autoJoin);
+        }
+
+        const url = `${window.location.origin}/vibe/${userSlug}/${appSlug}/`;
+        setPublishedUrl(url);
+        setProductionFsId(fsId);
+        setIsPublished(true);
+
+        if (isInitialPublish) {
+          window.open(url, "_blank");
+        }
+      } catch {
         setPublishError("Failed to publish. Please try again.");
-        return;
+      } finally {
+        setIsPublishing(false);
       }
-
-      // Ensure requests are enabled, preserving current auto-join setting
-      const settingsResult = await vibeDiyApi.ensureAppSettings({
-        appSlug,
-        userSlug,
-        request: { enable: true, autoAcceptViewRequest: autoJoinEnabled },
-      });
-
-      if (!settingsResult.isOk()) {
-        setPublishError("Published, but failed to update sharing settings.");
-        // Still show as published since the mode change succeeded
-      }
-
-      const url = `${window.location.origin}/vibe/${userSlug}/${appSlug}/`;
-      setPublishedUrl(url);
-      setProductionFsId(fsId);
-      setIsPublished(true);
-
-      if (isInitialPublish) {
-        window.open(url, "_blank");
-      }
-    } catch {
-      setPublishError("Failed to publish. Please try again.");
-    } finally {
-      setIsPublishing(false);
-    }
-  }, [canPublish, settingsLoaded, isPublished, fsId, appSlug, userSlug, vibeDiyApi, autoJoinEnabled]);
+    },
+    [canPublish, settingsLoaded, isPublished, fsId, appSlug, userSlug, vibeDiyApi]
+  );
 
   const handleToggleAutoJoin = useCallback(async () => {
     setIsTogglingAutoJoin(true);
