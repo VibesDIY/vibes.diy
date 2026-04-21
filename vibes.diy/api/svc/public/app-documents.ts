@@ -67,13 +67,11 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         created: now,
       });
 
-      // Broadcast to connections subscribed to this appSlug
-      const subs = vctx.subscriptions.get(req.appSlug);
-      const subCount = subs?.size ?? 0;
-      for (const sub of subs ?? []) {
-        sub({ type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId });
+      // Broadcast doc-changed to ALL connections — client filters by appSlug
+      for (const conn of vctx.connections) {
+        conn.send(ctx, { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId });
       }
-      console.log("[Firefly API] broadcast doc-changed to", subCount, "subscribers for", req.appSlug);
+      console.log("[Firefly API] broadcast doc-changed to", vctx.connections.size, "connections for", req.appSlug);
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-put-doc",
@@ -226,9 +224,9 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
         created: now,
       });
 
-      // Broadcast to connections subscribed to this appSlug
-      for (const sub of vctx.subscriptions.get(req.appSlug) ?? []) {
-        sub({ type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId: req.docId });
+      // TODO: tighten to only subscribed connections once subscribe registration is debugged
+      for (const conn of vctx.connections) {
+        conn.send(ctx, { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId: req.docId });
       }
 
       await ctx.send.send(ctx, {
