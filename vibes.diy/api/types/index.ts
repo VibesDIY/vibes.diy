@@ -20,6 +20,7 @@ export * from "./cf-env.js";
 export * from "./auth.js";
 
 export * from "./prompt.js";
+export * from "./app-documents.js";
 
 export interface FetchOkResult {
   type: "fetch.ok";

@@ -56,6 +56,19 @@ import {
   ReqHasAccessRequest,
   ResHasAccessRequest,
 } from "./request-access.js";
+import {
+  ReqPutDoc,
+  ResPutDoc,
+  ReqGetDoc,
+  ResGetDoc,
+  ResGetDocNotFound,
+  ReqQueryDocs,
+  ResQueryDocs,
+  ReqDeleteDoc,
+  ResDeleteDoc,
+  ReqSubscribeDocs,
+  ResSubscribeDocs,
+} from "./app-documents.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
@@ -126,4 +139,11 @@ export interface VibesDiyApiIface<_T = unknown> {
   deleteUserSlugBinding(req: Req<ReqDeleteUserSlugBinding>): Promise<Result<ResDeleteUserSlugBinding, VibesDiyError>>;
 
   listModels(req: Req<ReqListModels>): Promise<Result<ResListModels, VibesDiyError>>;
+
+  // Firefly document operations
+  putDoc(req: Req<ReqPutDoc>): Promise<Result<ResPutDoc, VibesDiyError>>;
+  getDoc(req: Req<ReqGetDoc>): Promise<Result<ResGetDoc | ResGetDocNotFound, VibesDiyError>>;
+  queryDocs(req: Req<ReqQueryDocs>): Promise<Result<ResQueryDocs, VibesDiyError>>;
+  deleteDoc(req: Req<ReqDeleteDoc>): Promise<Result<ResDeleteDoc, VibesDiyError>>;
+  subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>>;
 }

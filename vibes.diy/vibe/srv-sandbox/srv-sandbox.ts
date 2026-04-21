@@ -33,6 +33,16 @@ import {
   ReqImgVibes,
   ResOkImgVibes,
   ResErrorImgVibes,
+  isReqPutDoc,
+  ReqPutDoc,
+  isReqGetDoc,
+  ReqGetDoc,
+  isReqQueryDocs,
+  ReqQueryDocs,
+  isReqDeleteDoc,
+  ReqDeleteDoc,
+  isReqSubscribeDocs,
+  ReqSubscribeDocs,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -418,6 +428,162 @@ function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+// ── Firefly document handlers ──────────────────────────────────────
+
+function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.putDoc",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqPutDoc(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqPutDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.putDoc({
+        appSlug: ctx.validated.appSlug,
+        doc: ctx.validated.doc,
+        docId: ctx.validated.docId,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibe.res.putDoc",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        await ctx.send.send(ctx, { tid: ctx.validated.tid, ...rRes.Ok() });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.getDoc",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqGetDoc(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqGetDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.getDoc({
+        appSlug: ctx.validated.appSlug,
+        docId: ctx.validated.docId,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibe.res.getDoc",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        await ctx.send.send(ctx, { tid: ctx.validated.tid, ...rRes.Ok() });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.queryDocs",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqQueryDocs(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqQueryDocs, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.queryDocs({
+        appSlug: ctx.validated.appSlug,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibe.res.queryDocs",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        await ctx.send.send(ctx, { tid: ctx.validated.tid, ...rRes.Ok() });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.deleteDoc",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqDeleteDoc(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqDeleteDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.deleteDoc({
+        appSlug: ctx.validated.appSlug,
+        docId: ctx.validated.docId,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibe.res.deleteDoc",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        await ctx.send.send(ctx, { tid: ctx.validated.tid, ...rRes.Ok() });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.subscribeDocs",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqSubscribeDocs(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqSubscribeDocs, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.subscribeDocs({
+        appSlug: ctx.validated.appSlug,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibe.res.subscribeDocs",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        await ctx.send.send(ctx, { tid: ctx.validated.tid, ...rRes.Ok() });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
@@ -440,7 +606,18 @@ export class vibesDiySrvSandbox implements Disposable {
     this.args = args;
     this.evento = new Evento(new MessageEventEventoEnDecoder());
     this.evento.push(
-      ...[vibeRuntimeReady(this), vibeRegisterFPDB(this), vibeCallAI(this), vibeImageGen(this), vibeFetchCloudToken(this)]
+      ...[
+        vibeRuntimeReady(this),
+        vibeRegisterFPDB(this),
+        vibeCallAI(this),
+        vibeImageGen(this),
+        vibeFetchCloudToken(this),
+        vibePutDoc(this),
+        vibeGetDoc(this),
+        vibeQueryDocs(this),
+        vibeDeleteDoc(this),
+        vibeSubscribeDocs(this),
+      ]
     );
     // console.log(`Adding event listener for vibesDiySrvSandbox`, this.handleMessage);
     this.args.eventListeners.addEventListener("message", this.handleMessage);

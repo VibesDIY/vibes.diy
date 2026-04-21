@@ -179,6 +179,23 @@ export const sqlRequestGrants = pgTable(
   ]
 );
 
+// Firefly — immutable append-only document store
+export const sqlAppDocuments = pgTable(
+  "AppDocuments",
+  {
+    appSlug: text().notNull(),
+    docId: text().notNull(),
+    seq: integer().notNull(), // monotonic per (appSlug, docId), starts at 1
+    data: jsonb().notNull(), // document JSON
+    deleted: integer().notNull().default(0), // 1 = tombstone
+    created: text().notNull(), // ISO timestamp of this revision
+  },
+  (table) => [
+    primaryKey({ columns: [table.appSlug, table.docId, table.seq] }),
+    index("AppDocuments_latest_idx").on(table.appSlug, table.docId, table.seq),
+  ]
+);
+
 export const sqlInviteGrants = pgTable(
   "InviteGrants",
   {

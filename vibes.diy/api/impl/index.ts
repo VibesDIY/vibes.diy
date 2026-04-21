@@ -97,6 +97,22 @@ import {
   ResListModels,
   isResListModels,
   isPromptLLMStyle,
+  ReqPutDoc,
+  ResPutDoc,
+  isResPutDoc,
+  ReqGetDoc,
+  ResGetDoc,
+  ResGetDocNotFound,
+  isResGetDoc,
+  ReqQueryDocs,
+  ResQueryDocs,
+  isResQueryDocs,
+  ReqDeleteDoc,
+  ResDeleteDoc,
+  isResDeleteDoc,
+  ReqSubscribeDocs,
+  ResSubscribeDocs,
+  isResSubscribeDocs,
   ReqPromptLLMChatSection,
   FSUpdate,
   isFSUpdate,
@@ -501,6 +517,27 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     },
     { resetAfter: 10 * 60 * 1000 /* 10 minutes */ }
   );
+
+  // Firefly document operations
+  putDoc(req: Req<ReqPutDoc>): Promise<Result<ResPutDoc, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-put-doc" }, { resMatch: isResPutDoc });
+  }
+
+  getDoc(req: Req<ReqGetDoc>): Promise<Result<ResGetDoc | ResGetDocNotFound, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-get-doc" }, { resMatch: isResGetDoc });
+  }
+
+  queryDocs(req: Req<ReqQueryDocs>): Promise<Result<ResQueryDocs, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-query-docs" }, { resMatch: isResQueryDocs });
+  }
+
+  deleteDoc(req: Req<ReqDeleteDoc>): Promise<Result<ResDeleteDoc, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-delete-doc" }, { resMatch: isResDeleteDoc });
+  }
+
+  subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-subscribe-docs" }, { resMatch: isResSubscribeDocs });
+  }
 }
 
 class LLMChatImpl implements LLMChat {

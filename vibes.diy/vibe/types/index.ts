@@ -261,3 +261,215 @@ export function isResOkImgVibes(x: unknown): x is ResOkImgVibes {
 export function isResErrorImgVibes(x: unknown): x is ResErrorImgVibes {
   return !(ResErrorImgVibes(x) instanceof type.errors);
 }
+
+// ── Firefly document operations ──────────────────────────────────────
+
+// putDoc
+export const ReqPutDoc = type({
+  type: "'vibe.req.putDoc'",
+  appSlug: "string",
+  userSlug: "string",
+  doc: "Record<string, unknown>",
+  "docId?": "string",
+}).and(Base);
+
+export type ReqPutDoc = typeof ReqPutDoc.infer;
+
+export function isReqPutDoc(x: unknown): x is ReqPutDoc {
+  return !(ReqPutDoc(x) instanceof type.errors);
+}
+
+export const ResOkPutDoc = type({
+  type: "'vibe.res.putDoc'",
+  status: "'ok'",
+  id: "string",
+}).and(Base);
+
+export type ResOkPutDoc = typeof ResOkPutDoc.infer;
+
+export function isResOkPutDoc(x: unknown): x is ResOkPutDoc {
+  return !(ResOkPutDoc(x) instanceof type.errors);
+}
+
+export const ResErrorPutDoc = type({
+  type: "'vibe.res.putDoc'",
+  status: "'error'",
+  message: "string",
+}).and(Base);
+
+export type ResErrorPutDoc = typeof ResErrorPutDoc.infer;
+
+export function isResErrorPutDoc(x: unknown): x is ResErrorPutDoc {
+  return !(ResErrorPutDoc(x) instanceof type.errors);
+}
+
+const ResPutDoc = ResOkPutDoc.or(ResErrorPutDoc);
+export type ResPutDoc = typeof ResPutDoc.infer;
+
+export function isResPutDoc(x: unknown): x is ResPutDoc {
+  return !(ResPutDoc(x) instanceof type.errors);
+}
+
+// getDoc
+export const ReqGetDoc = type({
+  type: "'vibe.req.getDoc'",
+  appSlug: "string",
+  userSlug: "string",
+  docId: "string",
+}).and(Base);
+
+export type ReqGetDoc = typeof ReqGetDoc.infer;
+
+export function isReqGetDoc(x: unknown): x is ReqGetDoc {
+  return !(ReqGetDoc(x) instanceof type.errors);
+}
+
+export const ResOkGetDoc = type({
+  type: "'vibe.res.getDoc'",
+  status: "'ok'",
+  id: "string",
+  doc: "Record<string, unknown>",
+}).and(Base);
+
+export type ResOkGetDoc = typeof ResOkGetDoc.infer;
+
+export function isResOkGetDoc(x: unknown): x is ResOkGetDoc {
+  return !(ResOkGetDoc(x) instanceof type.errors);
+}
+
+export const ResErrorGetDoc = type({
+  type: "'vibe.res.getDoc'",
+  status: "'error'",
+  message: "string",
+}).and(Base);
+
+export type ResErrorGetDoc = typeof ResErrorGetDoc.infer;
+
+export function isResErrorGetDoc(x: unknown): x is ResErrorGetDoc {
+  return !(ResErrorGetDoc(x) instanceof type.errors);
+}
+
+const ResGetDoc = ResOkGetDoc.or(ResErrorGetDoc);
+export type ResGetDoc = typeof ResGetDoc.infer;
+
+export function isResGetDoc(x: unknown): x is ResGetDoc {
+  return !(ResGetDoc(x) instanceof type.errors);
+}
+
+// queryDocs
+export const ReqQueryDocs = type({
+  type: "'vibe.req.queryDocs'",
+  appSlug: "string",
+  userSlug: "string",
+}).and(Base);
+
+export type ReqQueryDocs = typeof ReqQueryDocs.infer;
+
+export function isReqQueryDocs(x: unknown): x is ReqQueryDocs {
+  return !(ReqQueryDocs(x) instanceof type.errors);
+}
+
+export const ResOkQueryDocs = type({
+  type: "'vibe.res.queryDocs'",
+  status: "'ok'",
+  docs: type({ _id: "string" }).and(type("Record<string, unknown>")).array(),
+}).and(Base);
+
+export type ResOkQueryDocs = typeof ResOkQueryDocs.infer;
+
+export function isResOkQueryDocs(x: unknown): x is ResOkQueryDocs {
+  return !(ResOkQueryDocs(x) instanceof type.errors);
+}
+
+export const ResErrorQueryDocs = type({
+  type: "'vibe.res.queryDocs'",
+  status: "'error'",
+  message: "string",
+}).and(Base);
+
+export type ResErrorQueryDocs = typeof ResErrorQueryDocs.infer;
+
+const ResQueryDocs = ResOkQueryDocs.or(ResErrorQueryDocs);
+export type ResQueryDocs = typeof ResQueryDocs.infer;
+
+export function isResQueryDocs(x: unknown): x is ResQueryDocs {
+  return !(ResQueryDocs(x) instanceof type.errors);
+}
+
+// deleteDoc
+export const ReqDeleteDoc = type({
+  type: "'vibe.req.deleteDoc'",
+  appSlug: "string",
+  userSlug: "string",
+  docId: "string",
+}).and(Base);
+
+export type ReqDeleteDoc = typeof ReqDeleteDoc.infer;
+
+export function isReqDeleteDoc(x: unknown): x is ReqDeleteDoc {
+  return !(ReqDeleteDoc(x) instanceof type.errors);
+}
+
+export const ResOkDeleteDoc = type({
+  type: "'vibe.res.deleteDoc'",
+  status: "'ok'",
+  id: "string",
+}).and(Base);
+
+export type ResOkDeleteDoc = typeof ResOkDeleteDoc.infer;
+
+export function isResOkDeleteDoc(x: unknown): x is ResOkDeleteDoc {
+  return !(ResOkDeleteDoc(x) instanceof type.errors);
+}
+
+export const ResErrorDeleteDoc = type({
+  type: "'vibe.res.deleteDoc'",
+  status: "'error'",
+  message: "string",
+}).and(Base);
+
+export type ResErrorDeleteDoc = typeof ResErrorDeleteDoc.infer;
+
+const ResDeleteDoc = ResOkDeleteDoc.or(ResErrorDeleteDoc);
+export type ResDeleteDoc = typeof ResDeleteDoc.infer;
+
+export function isResDeleteDoc(x: unknown): x is ResDeleteDoc {
+  return !(ResDeleteDoc(x) instanceof type.errors);
+}
+
+// subscribeDocs
+export const ReqSubscribeDocs = type({
+  type: "'vibe.req.subscribeDocs'",
+  appSlug: "string",
+  userSlug: "string",
+}).and(Base);
+
+export type ReqSubscribeDocs = typeof ReqSubscribeDocs.infer;
+
+export function isReqSubscribeDocs(x: unknown): x is ReqSubscribeDocs {
+  return !(ReqSubscribeDocs(x) instanceof type.errors);
+}
+
+export const ResOkSubscribeDocs = type({
+  type: "'vibe.res.subscribeDocs'",
+  status: "'ok'",
+}).and(Base);
+
+export type ResOkSubscribeDocs = typeof ResOkSubscribeDocs.infer;
+
+export function isResSubscribeDocs(x: unknown): x is ResOkSubscribeDocs {
+  return !(ResOkSubscribeDocs(x) instanceof type.errors);
+}
+
+// docChanged event (pushed from parent to iframe on remote writes)
+export const EvtDocChanged = type({
+  type: "'vibe.evt.docChanged'",
+  appSlug: "string",
+  docId: "string",
+});
+
+export type EvtDocChanged = typeof EvtDocChanged.infer;
+
+export function isEvtDocChanged(x: unknown): x is EvtDocChanged {
+  return !(EvtDocChanged(x) instanceof type.errors);
+}

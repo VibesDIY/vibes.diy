@@ -1,8 +1,5 @@
 import {
-  FPDbData,
-  isResErrorVibeRegisterFPDb,
   isResFetchCloudToken,
-  isResOkVibeRegisterFPDb,
   isResVibeRegisterFPDb,
   isResCallAI,
   ReqCallAI,
@@ -15,14 +12,27 @@ import {
   ResFetchCloudToken,
   ResVibeRegisterFPDb,
   EvtVibeAttachStatusFPDb,
-  isEvtAttachFPDb,
+  isResPutDoc,
+  isResGetDoc,
+  isResQueryDocs,
+  isResDeleteDoc,
+  isResSubscribeDocs,
+  ReqPutDoc,
+  ResPutDoc,
+  ReqGetDoc,
+  ResGetDoc,
+  ReqQueryDocs,
+  ResQueryDocs,
+  ReqDeleteDoc,
+  ResDeleteDoc,
+  ReqSubscribeDocs,
+  ResOkSubscribeDocs,
 } from "@vibes.diy/vibe-types";
-import { Future, KeyedResolvOnce, Lazy, Logger, OnFunc, ResolveOnce, Result, timeouted } from "@adviser/cement";
-import { ToCloudOpts, TokenAndClaims, TokenStrategie } from "@fireproof/core-types-protocols-cloud";
-import { Ledger, SuperThis, toCloud } from "use-fireproof";
+import { Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
 import { registerImgVibes } from "./img-vibes.js";
+import { registerFirefly } from "./use-firefly.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -139,6 +149,62 @@ export class VibeSandboxApi {
       "*"
     );
   }
+  // ── Firefly document operations ──────────────────────────────────────
+
+  putDoc(doc: Record<string, unknown>, docId?: string): Promise<Result<ResPutDoc>> {
+    return this.request<ReqPutDoc, ResPutDoc>(
+      {
+        type: "vibe.req.putDoc",
+        ...this.svc.vibeApp,
+        doc,
+        ...(docId ? { docId } : {}),
+      },
+      { wait: isResPutDoc, timeout: 10000 }
+    );
+  }
+
+  getDoc(docId: string): Promise<Result<ResGetDoc>> {
+    return this.request<ReqGetDoc, ResGetDoc>(
+      {
+        type: "vibe.req.getDoc",
+        ...this.svc.vibeApp,
+        docId,
+      },
+      { wait: isResGetDoc, timeout: 10000 }
+    );
+  }
+
+  queryDocs(): Promise<Result<ResQueryDocs>> {
+    return this.request<ReqQueryDocs, ResQueryDocs>(
+      {
+        type: "vibe.req.queryDocs",
+        ...this.svc.vibeApp,
+      },
+      { wait: isResQueryDocs, timeout: 10000 }
+    );
+  }
+
+  deleteDoc(docId: string): Promise<Result<ResDeleteDoc>> {
+    return this.request<ReqDeleteDoc, ResDeleteDoc>(
+      {
+        type: "vibe.req.deleteDoc",
+        ...this.svc.vibeApp,
+        docId,
+      },
+      { wait: isResDeleteDoc, timeout: 10000 }
+    );
+  }
+
+  subscribeDocs(): Promise<Result<ResOkSubscribeDocs>> {
+    return this.request<ReqSubscribeDocs, ResOkSubscribeDocs>(
+      {
+        type: "vibe.req.subscribeDocs",
+        ...this.svc.vibeApp,
+      },
+      { wait: isResSubscribeDocs, timeout: 10000 }
+    );
+  }
+
   readonly tokenCache = new KeyedResolvOnce();
   fetchCloudToken(req: Omit<ReqFetchCloudToken, "type" | "tid">): Promise<Result<ResFetchCloudToken>> {
     const key = `vibe-${req.data.dbName}-${req.data.userSlug}-${req.data.appSlug}`;
@@ -168,48 +234,6 @@ export class VibeSandboxApi {
   }
 }
 
-class VibeTokenStrategie implements TokenStrategie {
-  readonly vibeApi: VibeSandboxApi;
-  readonly my: FPDbData;
-  constructor(vibeApi: VibeSandboxApi, my: FPDbData) {
-    this.vibeApi = vibeApi;
-    this.my = my;
-  }
-
-  hash(): string {
-    return "vibe-token-strategie";
-  }
-  open(_sthis: SuperThis, _logger: Logger, _deviceId: string, _opts: ToCloudOpts): void {
-    return;
-  }
-  tryToken(_sthis: SuperThis, _logger: Logger, _opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
-    return Promise.resolve(undefined);
-  }
-  async waitForToken(
-    _sthis: SuperThis,
-    _logger: Logger,
-    _deviceId: string,
-    _opts: ToCloudOpts
-  ): Promise<TokenAndClaims | undefined> {
-    const resToken = await this.vibeApi.fetchCloudToken({
-      data: this.my,
-    });
-    if (resToken.isErr()) {
-      console.error("Failed to fetch cloud token from vibe sandbox", resToken.Err());
-      return undefined;
-    }
-    const token = resToken.Ok();
-    return {
-      token: token.token.cloudToken,
-      claims: token.token.claims as unknown as TokenAndClaims["claims"],
-    };
-    return Promise.resolve(undefined);
-  }
-  stop(): void {
-    console.log("VibeTokenStrategie stop called");
-  }
-}
-
 export const vibeApi = Lazy((svc: VibeSandboxApiOptions) => new VibeSandboxApi(svc));
 
 export async function registerDependencies(vibeApp: VibeApp, deps: Record<string, string>): Promise<void> {
@@ -224,74 +248,9 @@ export async function registerDependencies(vibeApp: VibeApp, deps: Record<string
   const useFireproofDep = deps["use-fireproof"];
   if (useFireproofDep && window.parent !== window) {
     runTimeReady.push("use-fireproof");
-    const fp = (await import(useFireproofDep)) as typeof import("use-fireproof");
-    // const vibeApi = ({
-    //   addEventListener: window.addEventListener.bind(window),
-    //   postMessage: window.parent.postMessage.bind(window.parent),
-    // });
 
-    const attachables = new Map<
-      string,
-      {
-        key: string;
-        ledger: Ledger;
-        attach: ResolveOnce<void>;
-      }
-    >();
-    ctxVibeApi.onMsg((event) => {
-      // console.log("Received message event in vibeApi onMsg handler", event);
-      const { data: evt } = event;
-      if (isEvtAttachFPDb(evt)) {
-        const key = `${evt.data.dbName}-${evt.data.userSlug}-${evt.data.appSlug}`;
-        const attabable = attachables.get(key);
-        if (attabable) {
-          attabable.attach.once(async () => {
-            console.log("Attaching FPDb with key", evt.data);
-            const result = await attabable.ledger.attach(
-              toCloud({
-                name: `vibe-${evt.data.dbName}-${evt.data.userSlug}-${evt.data.appSlug}`,
-                strategy: new VibeTokenStrategie(ctxVibeApi, evt.data),
-                urls: {
-                  base: evt.data.fpcloudUrl,
-                },
-              })
-            );
-            ctxVibeApi.sendAttachStatusFPDbMessage({
-              data: evt.data,
-              status: result.status(),
-            });
-          });
-        }
-      }
-    });
-
-    fp.getLedgerSvc().onCreate((ledger) => {
-      ctxVibeApi
-        .sendRegisterFPDbMessage({
-          dbName: ledger.name,
-          appSlug: vibeApp.appSlug,
-          userSlug: vibeApp.userSlug,
-          fsId: vibeApp.fsId,
-        })
-        .then((rResMsg) => {
-          if (rResMsg.isErr()) {
-            console.error("Failed to register FPDb with vibe sandbox", rResMsg.Err());
-          }
-          const res = rResMsg.Ok();
-          if (isResErrorVibeRegisterFPDb(res)) {
-            console.error("Failed to register FPDb with vibe sandbox", res.message);
-          }
-          if (isResOkVibeRegisterFPDb(res)) {
-            console.log("Registered FPDb with vibe sandbox", res);
-            const key = `${res.data.dbName}-${res.data.userSlug}-${res.data.appSlug}`;
-            attachables.set(key, {
-              key,
-              ledger,
-              attach: new ResolveOnce<void>(),
-            });
-          }
-        });
-    });
+    // Firefly mode: route all database operations through the API via evento bridge
+    await registerFirefly(ctxVibeApi, useFireproofDep);
   }
   const callAI = deps["call-ai"];
   if (callAI && window.parent !== window) {
