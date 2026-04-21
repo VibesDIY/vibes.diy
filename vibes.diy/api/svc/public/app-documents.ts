@@ -68,11 +68,12 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       });
 
       // Broadcast to connections subscribed to this appSlug
-      for (const conn of vctx.connections) {
-        if (conn.subscribedAppSlugs.has(req.appSlug)) {
-          conn.send(ctx, { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId });
-        }
+      const subs = vctx.subscriptions.get(req.appSlug);
+      const subCount = subs?.size ?? 0;
+      for (const sub of subs ?? []) {
+        sub({ type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId });
       }
+      console.log("[Firefly API] broadcast doc-changed to", subCount, "subscribers for", req.appSlug);
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-put-doc",
@@ -226,10 +227,8 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       });
 
       // Broadcast to connections subscribed to this appSlug
-      for (const conn of vctx.connections) {
-        if (conn.subscribedAppSlugs.has(req.appSlug)) {
-          conn.send(ctx, { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId: req.docId });
-        }
+      for (const sub of vctx.subscriptions.get(req.appSlug) ?? []) {
+        sub({ type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId: req.docId });
       }
 
       await ctx.send.send(ctx, {
@@ -259,12 +258,27 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
     ): Promise<Result<EventoResultType>> => {
       const req = ctx.validated.payload;
 
-      // Register this connection for document change notifications
-      // Uses the subscribedAppSlugs Set on WSSendProvider (same pattern as chatIds)
-      const conn = ctx.send;
-      if ("subscribedAppSlugs" in conn) {
-        (conn.subscribedAppSlugs as Set<string>).add(req.appSlug);
+      // Register this connection for document change notifications.
+      // Store a closure that captures ctx.send.send — each call creates a unique closure
+      // so the Set won't deduplicate connections that share the same Evento wrapper.
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+      let subs = vctx.subscriptions.get(req.appSlug);
+      if (!subs) {
+        subs = new Set();
+        vctx.subscriptions.set(req.appSlug, subs);
       }
+      const sendFn = (data: unknown) => {
+        ctx.send.send(ctx, data);
+      };
+      subs.add(sendFn);
+      console.log(
+        "[Firefly API] registered subscription for",
+        req.appSlug,
+        "subs:",
+        subs.size,
+        "connections:",
+        vctx.connections.size
+      );
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-subscribe-docs",

@@ -76,7 +76,13 @@ export class FireflyDatabase {
     this.vibeApi.onMsg((event) => {
       const { data } = event;
       if (isEvtDocChanged(data) && data.appSlug === this.vibeApp.appSlug) {
-        // Notify all subscribers — they will re-query from the API
+        console.log(
+          "[Firefly] evt-doc-changed received, notifying",
+          this.listeners.size,
+          "listeners +",
+          this.updateListeners.size,
+          "update listeners"
+        );
         this.notifyListeners([]);
       }
     });
@@ -165,16 +171,20 @@ export class FireflyDatabase {
     } = {}
   ): Promise<QueryResponse<T>> {
     // Fetch all docs from the API
+    console.log("[Firefly] query called, fetching docs...");
     const rRes = await this.vibeApi.queryDocs();
     if (rRes.isErr()) {
+      console.log("[Firefly] query error:", rRes.Err());
       throw new Error(`Failed to query documents: ${rRes.Err()}`);
     }
     const res = rRes.Ok();
     if (!isResQueryDocs(res)) {
+      console.log("[Firefly] query response not matched, returning empty. res:", JSON.stringify(res).substring(0, 200));
       return { rows: [], docs: [] };
     }
 
     const allDocs = res.docs.map((d) => ({ ...d, _id: d._id }) as DocWithId<T>);
+    console.log("[Firefly] query returned", allDocs.length, "docs");
 
     // Build index entries based on mapFn
     let rows: IndexRow<T>[];
@@ -300,8 +310,10 @@ export class FireflyDatabase {
     const fn = listener as ListenerFn;
     if (updates) {
       this.updateListeners.add(fn);
+      console.log("[Firefly] subscribe (updates=true), total update listeners:", this.updateListeners.size);
     } else {
       this.listeners.add(fn);
+      console.log("[Firefly] subscribe, total listeners:", this.listeners.size);
     }
     return () => {
       this.listeners.delete(fn);

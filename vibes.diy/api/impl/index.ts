@@ -541,16 +541,28 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   }
 
   onDocChanged(fn: (appSlug: string, docId: string) => void): void {
-    // Listen for doc-changed events pushed from the API over the WebSocket
+    // Listen for doc-changed events pushed from the API over the WebSocket.
+    // Raw WebSocket data → JSON parse → MsgBase envelope → payload check.
     this.getReadyConnection().then((conn) => {
-      conn.onMessage((event) => {
-        const data = event.type === "MessageEvent" ? event.event.data : undefined;
-        if (data && typeof data === "object" && "payload" in data) {
-          const payload = (data as { payload: unknown }).payload;
-          if (isEvtDocChanged(payload)) {
-            fn(payload.appSlug, payload.docId);
-          }
-        }
+      conn.onMessage((wsEvent) => {
+        if (wsEvent.type !== "MessageEvent") return;
+        const raw = wsEvent.event.data;
+        // WebSocket data arrives as Blob in browser — decode async
+        const textPromise =
+          raw instanceof Blob
+            ? raw.text()
+            : Promise.resolve(typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array));
+        textPromise
+          .then((text) => {
+            const parsed = JSON.parse(text);
+            const msg = msgBase(parsed);
+            if (!(msg instanceof type.errors) && isEvtDocChanged(msg.payload)) {
+              fn(msg.payload.appSlug, msg.payload.docId);
+            }
+          })
+          .catch(() => {
+            // Not a valid message — ignore
+          });
       });
     });
   }

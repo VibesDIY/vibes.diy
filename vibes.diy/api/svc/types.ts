@@ -2,7 +2,7 @@ import { SuperThis } from "@fireproof/core-types-base";
 import { FPApiToken } from "@fireproof/core-types-protocols-dashboard";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
-import { Logger, Result } from "@adviser/cement";
+import { EventoSend, Logger, Result } from "@adviser/cement";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { LLMHeaders, MsgBase, VibesAssetStorage, VibesFPApiParameters } from "@vibes.diy/api-types";
 import { VibesApiTables, VibesSqlite } from "@vibes.diy/api-sql";
@@ -30,6 +30,10 @@ export interface VibesApiSQLCtx {
   };
   tokenApi: Record<string, FPApiToken>;
   connections: Set<WSSendProvider>;
+  // Firefly: appSlug → send closures for document change broadcasts.
+  // Each closure captures the ctx.send.send from the subscribe request.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  subscriptions: Map<string, Set<(data: unknown) => void>>;
   deviceCA: DeviceIdCAIf;
   logger: Logger;
   // sendEmail: (email: RawEmailWithoutFrom) => Promise<
