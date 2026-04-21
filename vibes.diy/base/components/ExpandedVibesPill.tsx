@@ -7,14 +7,16 @@ export interface ExpandedVibesPillProps {
   onRemix?: () => void;
 }
 
-function PillActionButton({ height, label, icon, onClick }: {
+function PillActionButton({ height, label, icon, bgColor, labelColor, onClick }: {
   height: number;
   label: string;
   icon: React.ReactNode;
+  bgColor: string;
+  labelColor?: string;
   onClick: (e: React.MouseEvent) => void;
 }) {
   const [hovered, setHovered] = useState(false);
-  const btnSize = height * 0.45;
+  const btnWidth = height * 0.55;
   return (
     <button
       type="button"
@@ -24,35 +26,50 @@ function PillActionButton({ height, label, icon, onClick }: {
       style={{
         display: "flex",
         alignItems: "center",
-        height: btnSize,
+        justifyContent: "center",
+        height: "100%",
         border: "none",
         cursor: "pointer",
         overflow: "hidden",
         padding: 0,
-        background: switchColors.secondary,
-        borderRadius: 6,
+        background: bgColor,
+        borderRadius: 0,
         transition: "width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        width: hovered ? height * 1.8 : btnSize,
+        width: hovered ? height * 2.2 : btnWidth,
         flexShrink: 0,
       }}
     >
-      <div style={{ width: btnSize, height: btnSize, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        {icon}
+      <div style={{
+        width: btnWidth,
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}>
+        <svg width={btnWidth * 0.55} height={btnWidth * 0.55} viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="17.5" cy="17.5" r="17.5" fill="var(--vibes-near-black, #1a1a1a)" />
+          <foreignObject x="7" y="7" width="21" height="21">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", color: "var(--vibes-cream, #FFFEF0)" }}>
+              {icon}
+            </div>
+          </foreignObject>
+        </svg>
       </div>
       <span style={{
-        color: switchColors.primary,
-        fontSize: height * 0.18,
+        color: labelColor || "var(--vibes-near-black, #1a1a1a)",
+        fontSize: height * 0.16,
         fontWeight: 700,
         whiteSpace: "nowrap",
         textTransform: "uppercase",
-        letterSpacing: "0.08em",
+        letterSpacing: "1.5px",
         opacity: hovered ? 1 : 0,
         width: hovered ? "auto" : 0,
         maxWidth: hovered ? 120 : 0,
-        padding: hovered ? "0 12px 0 4px" : 0,
+        padding: hovered ? "0 14px 0 4px" : 0,
         overflow: "hidden",
         transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+        fontFamily: "'Inter', sans-serif",
       }}>
         {label}
       </span>
@@ -129,7 +146,8 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
           height: (175 * scale + 8),
           width: expanded ? (600 * scale + 160 + 8) : (collapsing ? (600 * scale + 8) : (600 * scale + 8)),
           zIndex: 1,
-          background: "#000",
+          background: "var(--vibes-cream, #FFFEF0)",
+          border: "1px solid var(--vibes-near-black, #1a1a1a)",
           borderRadius: `${(87 * scale) + 4}px`,
           transformOrigin: `calc(100% - ${300 * scale}px) center`,
           transform: shrinking ? "scale(0)" : (showBubble ? "scale(1)" : "scale(0)"),
@@ -145,15 +163,16 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-start",
-          paddingLeft: expanded ? 20 : 0,
-          gap: 6,
+          padding: 0,
+          gap: 0,
           boxSizing: "border-box",
         }}
       >
         {/* Buttons inside the bubble */}
         <div style={{
           display: "flex",
-          gap: 6,
+          height: "100%",
+          gap: 0,
           opacity: buttonsVisible ? 1 : 0,
           transition: "opacity 0.3s ease",
           pointerEvents: buttonsVisible ? "auto" : "none",
@@ -161,9 +180,11 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
           <PillActionButton
             height={height}
             label="Remix"
+            bgColor="var(--vibes-yellow, #fedd00)"
+            labelColor="var(--vibes-near-black, #1a1a1a)"
             onClick={(e) => { e.stopPropagation(); onRemix?.(); }}
             icon={
-              <svg width={height * 0.22} height={height * 0.22} fill="none" viewBox="0 0 24 24" stroke={switchColors.primary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
@@ -172,12 +193,14 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
           <PillActionButton
             height={height}
             label="Share"
+            bgColor="var(--vibes-green, #22c55e)"
+            labelColor="var(--vibes-cream, #FFFEF0)"
             onClick={(e) => {
               e.stopPropagation();
               navigator.clipboard.writeText(window.location.href);
             }}
             icon={
-              <svg width={height * 0.22} height={height * 0.22} fill="none" viewBox="0 0 24 24" stroke={switchColors.primary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="18" cy="5" r="3" />
                 <circle cx="6" cy="12" r="3" />
                 <circle cx="18" cy="19" r="3" />
