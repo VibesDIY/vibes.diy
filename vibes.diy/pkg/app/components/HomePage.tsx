@@ -49,6 +49,7 @@ export default function HomePage() {
 
   const handleSubmit = useCallback(() => {
     if (!input.trim()) return;
+    sessionStorage.setItem("vibes.pendingPrompt", input);
     navigate(
       BuildURI.from(window.location.href).pathname("/chat/prompt").setParam("prompt64", sthis.txt.base64.encode(input))
         .withoutHostAndSchema
