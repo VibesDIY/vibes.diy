@@ -29,7 +29,7 @@ export function ImgVibes({ prompt, _id: propId, images, database, className, alt
   const [generationId, setGenerationId] = useState<string | undefined>(undefined);
   const [versionIndex, setVersionIndex] = useState<number | null>(null);
 
-  const { assetUrl, loading, error, document } = useImgVibes({
+  const { assetUrl, loading, progress, error, document } = useImgVibes({
     prompt,
     _id: stableId,
     database,
@@ -40,8 +40,10 @@ export function ImgVibes({ prompt, _id: propId, images, database, className, alt
 
   const versions = document?.versions ?? [];
   const currentVersion = versionIndex ?? document?.currentVersion ?? 0;
-  const displayUrl = versionIndex !== null ? versions[versionIndex]?.assetUrl : assetUrl;
+  const fallbackAssetUrl = versions[document?.currentVersion ?? 0]?.assetUrl;
+  const displayUrl = versionIndex !== null ? versions[versionIndex]?.assetUrl : (assetUrl ?? fallbackAssetUrl);
   const hasMultipleVersions = versions.length > 1;
+  const hasExistingImage = versions.length > 0 && !!displayUrl;
 
   const handleRegen = useCallback(() => {
     setGenerationId(crypto.randomUUID());
@@ -70,7 +72,7 @@ export function ImgVibes({ prompt, _id: propId, images, database, className, alt
     );
   }
 
-  if (error) {
+  if (error && !hasExistingImage) {
     return (
       <div className={className} style={{ padding: 20, textAlign: "center", color: "#e53e3e" }}>
         <strong>Error</strong>
@@ -79,7 +81,7 @@ export function ImgVibes({ prompt, _id: propId, images, database, className, alt
     );
   }
 
-  if (loading || !displayUrl) {
+  if (!hasExistingImage) {
     return (
       <div className={className} style={{ padding: 20, textAlign: "center", color: "#888" }}>
         <div>Generating image...</div>
@@ -91,6 +93,52 @@ export function ImgVibes({ prompt, _id: propId, images, database, className, alt
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
       <img src={displayUrl} alt={alt || prompt || ""} className={className} style={style ?? { maxWidth: "100%", height: "auto" }} />
+      {loading && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: 6,
+            overflow: "hidden",
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+            zIndex: 10,
+          }}
+          aria-hidden="true"
+        >
+          <div
+            style={{
+              width: `${progress ?? 0}%`,
+              height: "100%",
+              backgroundColor: "#0074d9",
+              transition: "width 0.5s ease-out",
+            }}
+          />
+        </div>
+      )}
+      {error && (
+        <div
+          title={error.message}
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            backgroundColor: "rgba(229, 62, 62, 0.9)",
+            color: "#fff",
+            padding: "4px 8px",
+            borderRadius: 4,
+            fontSize: 12,
+            zIndex: 11,
+            maxWidth: "80%",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Error: {error.message}
+        </div>
+      )}
       {showControls && (
         <div
           style={{
