@@ -20,6 +20,7 @@ interface ResultPreviewHeaderContentProps {
   onContextMenu?: (view: ViewType, e: React.MouseEvent) => void;
   shareModal: UseShareModalReturn;
   syntaxErrorCount?: number;
+  onBackClick?: () => void;
 }
 
 function ResultPreviewHeaderContent({
@@ -32,13 +33,14 @@ function ResultPreviewHeaderContent({
   openVibe,
   onContextMenu,
   shareModal,
+  onBackClick,
 }: React.PropsWithChildren<ResultPreviewHeaderContentProps>) {
   return (
     <div className="flex h-full w-full items-center px-2 py-1">
       <div className="flex shrink-0 items-center justify-start">
         <BackButton
           onBackClick={() => {
-            console.log("click-back");
+            onBackClick?.();
           }}
         />
       </div>
