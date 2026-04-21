@@ -30,7 +30,7 @@ import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
 
-async function streamToUint8(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+async function streamToUint8(stream: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
   const chunks: Uint8Array[] = [];
   const reader = stream.getReader();
   while (true) {
@@ -39,7 +39,9 @@ async function streamToUint8(stream: ReadableStream<Uint8Array>): Promise<Uint8A
     if (value) chunks.push(value);
   }
   const total = chunks.reduce((sum, c) => sum + c.byteLength, 0);
-  const out = new Uint8Array(total);
+  // Explicit ArrayBuffer (not SharedArrayBuffer) so the resulting Uint8Array
+  // matches VibeUint8AssetBlock.content's Uint8Array<ArrayBuffer> annotation.
+  const out = new Uint8Array(new ArrayBuffer(total));
   let offset = 0;
   for (const c of chunks) {
     out.set(c, offset);
