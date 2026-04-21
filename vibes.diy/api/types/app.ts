@@ -215,8 +215,14 @@ export const resForkApp = type({
   userSlug: "string",
   appSlug: "string",
   chatId: "string",
-  remixOf: "string",
-  sourceFiles: vibeFile.array(),
+  // Immutable anchor pointing at the source content. Stored server-side in
+  // the forked Apps row's meta as { type: 'remix-of', srcFsId }.
+  srcFsId: "string",
+  // Snapshot of the source slugs at fork time — used for immediate
+  // redirect/link rendering. Future renders re-resolve via srcFsId so
+  // slug renames are followed.
+  srcUserSlug: "string",
+  srcAppSlug: "string",
 });
 export type ResForkApp = typeof resForkApp.infer;
 export function isResForkApp(obj: unknown): obj is ResForkApp {
