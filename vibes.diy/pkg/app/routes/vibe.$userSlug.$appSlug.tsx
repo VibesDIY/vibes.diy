@@ -7,12 +7,13 @@ import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
-import { VibesSwitch, gridBackground, cx } from "@vibes.diy/base";
+import { VibesSwitch, VibesButton, YELLOW, gridBackground, cx } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { toast } from "react-hot-toast";
 import { getAppByFsIdEvento } from "@vibes.diy/api-svc/public/get-app-by-fsid.js";
+import { isMetaScreenShot, isMetaTitle } from "@vibes.diy/api-types";
 
 export default function VibeIframeWrapper() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
@@ -26,6 +27,8 @@ export default function VibeIframeWrapper() {
   const [reqAccess, setReqAccess] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(false);
   const [revokedAccess, setRevokedAccess] = useState(false);
+  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
+  const [appTitle, setAppTitle] = useState<string | null>(null);
   const [runtimeReady, setRuntimeReady] = useState(false);
   const { isSignedIn: authSignedIn, isLoaded } = useAuth();
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
@@ -77,6 +80,14 @@ export default function VibeIframeWrapper() {
         if (res.error) {
           setNotFound(true);
           return;
+        }
+        const shot = res.meta.find(isMetaScreenShot);
+        if (shot) {
+          setScreenshotUrl(`/assets/cid/?url=${encodeURIComponent(shot.assetUrl)}&mime=${encodeURIComponent(shot.mime)}`);
+        }
+        const titleMeta = res.meta.find(isMetaTitle);
+        if (titleMeta) {
+          setAppTitle(titleMeta.title);
         }
         const protocol = window.location.protocol === "https:" ? "https" : "http";
         console.log(`grant`, res.grant);
@@ -146,15 +157,28 @@ export default function VibeIframeWrapper() {
     setRetryCount((c) => c + 1);
   }
 
+  const vibeSlug = `${userSlug}/${appSlug}`;
+  const remixUrl = `/remix/${vibeSlug}`;
+
   const reqAccessOverlay = reqAccess
     ? createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="rounded-lg bg-white dark:bg-gray-800 p-6 max-w-sm w-full mx-4 shadow-xl space-y-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Request access</h2>
+          <div className="rounded-lg bg-white dark:bg-gray-800 p-6 max-w-md w-full mx-4 shadow-xl space-y-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{appTitle ?? appSlug}</h2>
+            {screenshotUrl && (
+              <img
+                src={screenshotUrl}
+                alt={`Screenshot of ${appTitle ?? appSlug}`}
+                className="w-full rounded border border-gray-200 dark:border-gray-700"
+              />
+            )}
             <p className="text-sm text-gray-600 dark:text-gray-400">
               This app is private. To request access, the owner <strong>{userSlug}</strong> will see your email and display name.
             </p>
             <div className="flex gap-3 justify-end">
+              <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
+                Remix
+              </VibesButton>
               <button
                 type="button"
                 onClick={() => setReqAccess(false)}
@@ -240,19 +264,51 @@ export default function VibeIframeWrapper() {
             <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
           </Delayed>
         </div>
-        {showLoginOverlay ? (
-          <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
-            Login required to view this page
-          </div>
-        ) : revokedAccess ? (
-          <div className="text-center space-y-2" style={{ color: "var(--vibes-text-primary)" }}>
-            <div className="text-lg font-semibold">Access revoked</div>
-            <div className="text-sm opacity-60">Your access to this app has been revoked by the owner.</div>
-          </div>
-        ) : pendingRequest ? (
-          <div className="text-center space-y-2" style={{ color: "var(--vibes-text-primary)" }}>
-            <div className="text-lg font-semibold">Access requested</div>
-            <div className="text-sm opacity-60">Your request has been sent. You'll get access once the owner approves it.</div>
+        {showLoginOverlay || revokedAccess || pendingRequest ? (
+          <div style={{ maxWidth: 500, width: "100%", margin: "0 16px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+            <div
+              style={{
+                height: 30,
+                width: "100%",
+                backgroundColor: "rgba(0, 154, 206, 0.4)",
+                border: "1px solid black",
+                marginBottom: 1,
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.38)",
+              }}
+            />
+            <div
+              style={{
+                backgroundColor: "rgb(255, 255, 240)",
+                color: "rgb(34, 31, 32)",
+                border: "1px solid black",
+                boxShadow: "0 0 0 1px white",
+                padding: "24px 24px",
+              }}
+            >
+              <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>{appTitle ?? appSlug}</h2>
+              <p style={{ marginTop: 10, fontSize: 15, opacity: 0.7 }}>
+                {showLoginOverlay
+                  ? "Login required to view this app."
+                  : revokedAccess
+                    ? "Your access to this app has been revoked by the owner."
+                    : "The owner of this vibe has received your access request. Please let them know to approve it."}
+              </p>
+              {screenshotUrl && (
+                <img
+                  src={screenshotUrl}
+                  alt={`Screenshot of ${appTitle ?? appSlug}`}
+                  style={{ width: "100%", marginTop: 16, border: "1px solid black" }}
+                />
+              )}
+              <p style={{ marginTop: 16, fontSize: 14, opacity: 0.6 }}>
+                While you wait you can remix to make your own version of this app. It will start empty — you won't get this copy's data or collaboration.
+              </p>
+              <div style={{ marginTop: 16, display: "flex", justifyContent: "center" }}>
+                <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
+                  Remix
+                </VibesButton>
+              </div>
+            </div>
           </div>
         ) : notFound ? (
           <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
