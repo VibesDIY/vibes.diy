@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
-import { ensureAppSlug, ensureUserSlug, writeUserSlugBinding, VibesApiSQLCtx } from "@vibes.diy/api-svc";
+import { ensureAppSlug, ensureUserSlug, writeAppSlugBinding, writeUserSlugBinding, VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import type { ClerkClaim } from "@vibes.diy/api-types";
 import { eq } from "drizzle-orm/sql/expressions";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
@@ -160,6 +160,37 @@ describe("slug ownership", () => {
     } finally {
       vibesCtx.params.maxUserSlugPerUserId = original;
     }
+  });
+
+  it("writeAppSlugBinding allows two users to claim the same appSlug under different userSlugs", async () => {
+    const uniq = sthis.nextId(6).str.toLowerCase();
+    const sharedAppSlug = `shared-${uniq}`;
+
+    const userIdA = `multi-owner-a-${uniq}`;
+    const userIdB = `multi-owner-b-${uniq}`;
+    const userSlugA = `owner-a-${uniq}`;
+    const userSlugB = `owner-b-${uniq}`;
+
+    const rSlugA = await writeUserSlugBinding(vibesCtx, userIdA, userSlugA);
+    expect(rSlugA.isOk()).toBe(true);
+    const rSlugB = await writeUserSlugBinding(vibesCtx, userIdB, userSlugB);
+    expect(rSlugB.isOk()).toBe(true);
+
+    const rAppA = await writeAppSlugBinding(vibesCtx, userIdA, userSlugA, sharedAppSlug);
+    expect(rAppA.isOk()).toBe(true);
+
+    const rAppB = await writeAppSlugBinding(vibesCtx, userIdB, userSlugB, sharedAppSlug);
+    expect(rAppB.isOk()).toBe(true);
+    expect(rAppB.Ok().appSlug).toBe(sharedAppSlug);
+    expect(rAppB.Ok().ledger).not.toBe(rAppA.Ok().ledger);
+
+    const rows = await vibesCtx.sql.db
+      .select()
+      .from(vibesCtx.sql.tables.appSlugBinding)
+      .where(eq(vibesCtx.sql.tables.appSlugBinding.appSlug, sharedAppSlug));
+    expect(rows).toHaveLength(2);
+    const userSlugs = rows.map((r) => r.userSlug).sort();
+    expect(userSlugs).toEqual([userSlugA, userSlugB].sort());
   });
 
   it("ensureAppSlug falls through to the next preferredPair when the first is taken", async () => {
