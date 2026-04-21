@@ -43,6 +43,9 @@ import {
   ReqSetModeFs,
   ResSetModeFs,
   isResSetModeFs,
+  ReqForkApp,
+  ResForkApp,
+  isResForkApp,
   ReqFPCloudToken,
   ResFPCloudToken,
   isResFPCloudToken,
@@ -406,6 +409,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-set-mode-fs" },
       {
         resMatch: isResSetModeFs,
+      }
+    );
+  }
+
+  forkApp(req: Req<ReqForkApp>): Promise<Result<ResForkApp, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-fork-app" },
+      {
+        resMatch: isResForkApp,
       }
     );
   }

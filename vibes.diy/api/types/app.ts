@@ -198,6 +198,31 @@ export function isResGetByUserSlugAppSlug(obj: unknown): obj is ResGetByUserSlug
   return !(resGetByUserSlugAppSlug(obj) instanceof type.errors);
 }
 
+export const reqForkApp = type({
+  type: "'vibes.diy.req-fork-app'",
+  auth: dashAuthType,
+  srcUserSlug: "string",
+  srcAppSlug: "string",
+  "srcFsId?": "string",
+});
+export type ReqForkApp = typeof reqForkApp.infer;
+export function isReqForkApp(obj: unknown): obj is ReqForkApp {
+  return !(reqForkApp(obj) instanceof type.errors);
+}
+
+export const resForkApp = type({
+  type: "'vibes.diy.res-fork-app'",
+  userSlug: "string",
+  appSlug: "string",
+  chatId: "string",
+  remixOf: "string",
+  sourceFiles: vibeFile.array(),
+});
+export type ResForkApp = typeof resForkApp.infer;
+export function isResForkApp(obj: unknown): obj is ResForkApp {
+  return !(resForkApp(obj) instanceof type.errors);
+}
+
 export const ResSetModeFs = type({
   type: "'vibes.diy.res-set-mode-fs'",
   fsId: "string",
