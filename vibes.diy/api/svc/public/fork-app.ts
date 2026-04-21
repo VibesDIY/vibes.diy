@@ -141,8 +141,11 @@ export async function forkApp(
   //    underlying assets with no copy. The `remix-of` meta entry carries
   //    srcFsId as the immutable anchor; display slugs are resolved live on
   //    read so renames of srcUserSlug/srcAppSlug are followed automatically.
+  //    Only the direct parent is stored — full lineage is reconstructed by
+  //    walking srcFsId pointers across Apps rows. Screenshot carries over as
+  //    a placeholder until the fork generates its own.
   const destMeta: MetaItem[] = [
-    ...srcMeta.filter((m) => m.type !== "remix-of" && m.type !== "screen-shot-ref"),
+    ...srcMeta.filter((m) => m.type !== "remix-of"),
     { type: "remix-of", srcFsId: src.fsId },
   ];
   const rIns = await exception2Result(() =>
