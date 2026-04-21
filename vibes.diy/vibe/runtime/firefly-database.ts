@@ -7,15 +7,8 @@
  */
 
 import type { VibeSandboxApi, VibeApp } from "./register-dependencies.js";
-import {
-  isResOkPutDoc,
-  isResOkGetDoc,
-  isResOkQueryDocs,
-  isResOkDeleteDoc,
-  isResErrorPutDoc,
-  isResErrorGetDoc,
-  isEvtDocChanged,
-} from "@vibes.diy/vibe-types";
+// Response validators + event — re-exported from api-types via vibe-types
+import { isResPutDoc, isResGetDoc, isResQueryDocs, isResDeleteDoc, isEvtDocChanged } from "@vibes.diy/vibe-types";
 
 // Minimal types matching what the use-fireproof hooks expect
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,13 +105,10 @@ export class FireflyDatabase {
       throw new Error(`Failed to get document: ${rRes.Err()}`);
     }
     const res = rRes.Ok();
-    if (isResErrorGetDoc(res)) {
-      throw new Error(res.message);
-    }
-    if (isResOkGetDoc(res)) {
+    if (isResGetDoc(res)) {
       return { ...res.doc, _id: res.id } as DocWithId<T>;
     }
-    throw new Error("Unexpected response from getDoc");
+    throw new Error(`Failed to get document: ${JSON.stringify(res)}`);
   }
 
   async put<T extends DocTypes>(doc: T & { _id?: string }): Promise<DocResponse> {
@@ -128,16 +118,12 @@ export class FireflyDatabase {
       throw new Error(`Failed to put document: ${rRes.Err()}`);
     }
     const res = rRes.Ok();
-    if (isResErrorPutDoc(res)) {
-      throw new Error(res.message);
-    }
-    if (isResOkPutDoc(res)) {
-      // Notify local subscribers
+    if (isResPutDoc(res)) {
       const savedDoc = { ...doc, _id: res.id } as DocWithId<T>;
       this.notifyListeners([savedDoc]);
       return { id: res.id, ok: true };
     }
-    throw new Error("Unexpected response from putDoc");
+    throw new Error(`Failed to put document: ${JSON.stringify(res)}`);
   }
 
   async del(id: string): Promise<DocResponse> {
@@ -146,11 +132,11 @@ export class FireflyDatabase {
       throw new Error(`Failed to delete document: ${rRes.Err()}`);
     }
     const res = rRes.Ok();
-    if (isResOkDeleteDoc(res)) {
+    if (isResDeleteDoc(res)) {
       this.notifyListeners([{ _id: res.id, _deleted: true } as DocWithId]);
       return { id: res.id, ok: true };
     }
-    throw new Error("Unexpected response from deleteDoc");
+    throw new Error(`Failed to delete document: ${JSON.stringify(res)}`);
   }
 
   async remove(id: string): Promise<DocResponse> {
@@ -184,7 +170,7 @@ export class FireflyDatabase {
       throw new Error(`Failed to query documents: ${rRes.Err()}`);
     }
     const res = rRes.Ok();
-    if (!isResOkQueryDocs(res)) {
+    if (!isResQueryDocs(res)) {
       return { rows: [], docs: [] };
     }
 
@@ -278,7 +264,7 @@ export class FireflyDatabase {
       throw new Error(`Failed to query documents: ${rRes.Err()}`);
     }
     const res = rRes.Ok();
-    if (!isResOkQueryDocs(res)) {
+    if (!isResQueryDocs(res)) {
       return { rows: [], docs: [] };
     }
 

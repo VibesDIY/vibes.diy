@@ -26,7 +26,7 @@ import {
   ReqDeleteDoc,
   ResDeleteDoc,
   ReqSubscribeDocs,
-  ResOkSubscribeDocs,
+  ResSubscribeDocs,
 } from "@vibes.diy/vibe-types";
 import { Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
@@ -154,7 +154,7 @@ export class VibeSandboxApi {
   putDoc(doc: Record<string, unknown>, docId?: string): Promise<Result<ResPutDoc>> {
     return this.request<ReqPutDoc, ResPutDoc>(
       {
-        type: "vibe.req.putDoc",
+        type: "vibes.diy.req-put-doc",
         ...this.svc.vibeApp,
         doc,
         ...(docId ? { docId } : {}),
@@ -166,7 +166,7 @@ export class VibeSandboxApi {
   getDoc(docId: string): Promise<Result<ResGetDoc>> {
     return this.request<ReqGetDoc, ResGetDoc>(
       {
-        type: "vibe.req.getDoc",
+        type: "vibes.diy.req-get-doc",
         ...this.svc.vibeApp,
         docId,
       },
@@ -177,7 +177,7 @@ export class VibeSandboxApi {
   queryDocs(): Promise<Result<ResQueryDocs>> {
     return this.request<ReqQueryDocs, ResQueryDocs>(
       {
-        type: "vibe.req.queryDocs",
+        type: "vibes.diy.req-query-docs",
         ...this.svc.vibeApp,
       },
       { wait: isResQueryDocs, timeout: 10000 }
@@ -187,7 +187,7 @@ export class VibeSandboxApi {
   deleteDoc(docId: string): Promise<Result<ResDeleteDoc>> {
     return this.request<ReqDeleteDoc, ResDeleteDoc>(
       {
-        type: "vibe.req.deleteDoc",
+        type: "vibes.diy.req-delete-doc",
         ...this.svc.vibeApp,
         docId,
       },
@@ -195,10 +195,10 @@ export class VibeSandboxApi {
     );
   }
 
-  subscribeDocs(): Promise<Result<ResOkSubscribeDocs>> {
-    return this.request<ReqSubscribeDocs, ResOkSubscribeDocs>(
+  subscribeDocs(): Promise<Result<ResSubscribeDocs>> {
+    return this.request<ReqSubscribeDocs, ResSubscribeDocs>(
       {
-        type: "vibe.req.subscribeDocs",
+        type: "vibes.diy.req-subscribe-docs",
         ...this.svc.vibeApp,
       },
       { wait: isResSubscribeDocs, timeout: 10000 }

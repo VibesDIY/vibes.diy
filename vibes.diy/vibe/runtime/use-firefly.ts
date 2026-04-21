@@ -58,7 +58,6 @@ export function useFireproof(name = "useFireproof", _config: any = {}) {
 
 // ── Inline React hooks (no Fireproof dependency) ────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createUseDocument(database: FireflyDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useDocument(initialDocOrFn?: any) {
@@ -119,8 +118,7 @@ function createUseDocument(database: FireflyDatabase) {
       updateHappenedRef.current = true;
       setDoc({ ...originalInitialDoc });
     }, [originalInitialDoc]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateDoc = useCallback(
+    const _updateDoc = useCallback(
       (newDoc?: Record<string, unknown>, opts = { replace: false, reset: false }) => {
         if (!newDoc) {
           return opts.reset ? reset() : refresh();
@@ -155,7 +153,6 @@ function createUseDocument(database: FireflyDatabase) {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createUseLiveQuery(database: FireflyDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useLiveQuery(mapFn: any, query: any = {}, initialRows: any[] = []) {
@@ -181,7 +178,6 @@ function createUseLiveQuery(database: FireflyDatabase) {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createUseAllDocs(database: FireflyDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useAllDocs(query: any = {}) {
@@ -207,7 +203,6 @@ function createUseAllDocs(database: FireflyDatabase) {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createUseChanges(database: FireflyDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useChanges(_since: any[] = [], opts: any = {}) {

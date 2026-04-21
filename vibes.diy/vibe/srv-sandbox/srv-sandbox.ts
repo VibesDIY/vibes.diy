@@ -451,7 +451,7 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
           tid: ctx.validated.tid,
-          type: "vibe.res.putDoc",
+          type: "vibes.diy.res-put-doc",
           status: "error",
           message: rRes.Err().message,
         });
@@ -459,7 +459,7 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
         const res = rRes.Ok();
         await ctx.send.send(ctx, {
           tid: ctx.validated.tid,
-          type: "vibe.res.putDoc",
+          type: "vibes.diy.res-put-doc",
           status: "ok",
           id: res.id,
         });
@@ -488,7 +488,7 @@ function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
           tid: ctx.validated.tid,
-          type: "vibe.res.getDoc",
+          type: "vibes.diy.res-get-doc",
           status: "error",
           message: rRes.Err().message,
         });
@@ -497,7 +497,7 @@ function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
         await ctx.send.send(ctx, {
           ...res,
           tid: ctx.validated.tid,
-          type: "vibe.res.getDoc",
+          type: "vibes.diy.res-get-doc",
         });
       }
       return Result.Ok(EventoResult.Stop);
@@ -523,7 +523,7 @@ function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
           tid: ctx.validated.tid,
-          type: "vibe.res.queryDocs",
+          type: "vibes.diy.res-query-docs",
           status: "error",
           message: rRes.Err().message,
         });
@@ -532,7 +532,7 @@ function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
         await ctx.send.send(ctx, {
           ...res,
           tid: ctx.validated.tid,
-          type: "vibe.res.queryDocs",
+          type: "vibes.diy.res-query-docs",
         });
       }
       return Result.Ok(EventoResult.Stop);
@@ -559,7 +559,7 @@ function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
           tid: ctx.validated.tid,
-          type: "vibe.res.deleteDoc",
+          type: "vibes.diy.res-delete-doc",
           status: "error",
           message: rRes.Err().message,
         });
@@ -568,7 +568,7 @@ function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
         await ctx.send.send(ctx, {
           ...res,
           tid: ctx.validated.tid,
-          type: "vibe.res.deleteDoc",
+          type: "vibes.diy.res-delete-doc",
         });
       }
       return Result.Ok(EventoResult.Stop);
@@ -594,7 +594,7 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
           tid: ctx.validated.tid,
-          type: "vibe.res.subscribeDocs",
+          type: "vibes.diy.res-subscribe-docs",
           status: "error",
           message: rRes.Err().message,
         });
@@ -602,7 +602,7 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
         await ctx.send.send(ctx, {
           ...rRes.Ok(),
           tid: ctx.validated.tid,
-          type: "vibe.res.subscribeDocs",
+          type: "vibes.diy.res-subscribe-docs",
         });
       }
       return Result.Ok(EventoResult.Stop);
