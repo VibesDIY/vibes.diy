@@ -1000,6 +1000,59 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       const listEditor = (await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok();
       expect(listEditor.items[0].role).toBe("editor");
     });
+
+    it("drains pending queue when auto-accept is enabled", async () => {
+      const { appSlug, userSlug } = await createApp();
+
+      await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
+
+      const pending = (await api2.requestAccess({ appSlug, userSlug })).Ok();
+      expect(pending.state).toBe("pending");
+
+      const before = (await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok();
+      expect(before.items).toHaveLength(1);
+      expect(before.items[0].state).toBe("pending");
+
+      await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        request: { enable: true, autoAcceptViewRequest: true },
+      });
+
+      const after = (await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok();
+      expect(after.items).toHaveLength(1);
+      expect(after.items[0].state).toBe("approved");
+      expect(after.items[0].role).toBe("viewer");
+
+      const access = (await api2.hasAccessRequest({ appSlug, userSlug })).Ok();
+      if (!isResHasAccessRequestApproved(access)) {
+        assert.fail("Expected hasAccessRequest to be approved, got: " + JSON.stringify(access));
+      }
+      expect(access.state).toBe("approved");
+      expect(access.role).toBe("viewer");
+    });
+
+    it("does not re-approve revoked requests when auto-accept is enabled", async () => {
+      const { appSlug, userSlug } = await createApp();
+
+      await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
+
+      const requested = (await api2.requestAccess({ appSlug, userSlug })).Ok();
+      const foreignUserId = requested.foreignUserId;
+
+      await api.approveRequest({ appSlug, userSlug, foreignUserId, role: "viewer" });
+      await api.revokeRequest({ appSlug, userSlug, foreignUserId });
+
+      await api.ensureAppSettings({
+        appSlug,
+        userSlug,
+        request: { enable: true, autoAcceptViewRequest: true },
+      });
+
+      const after = (await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok();
+      expect(after.items).toHaveLength(1);
+      expect(after.items[0].state).toBe("revoked");
+    });
   });
 
   describe("invite flow", () => {

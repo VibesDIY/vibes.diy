@@ -55,6 +55,66 @@ async function sendUpdateEvent(vctx: VibesApiSQLCtx, value: Omit<EvtRequestGrant
   } satisfies MsgBase<EvtRequestGrant>);
 }
 
+export async function approveAllPendingRequests(
+  vctx: VibesApiSQLCtx,
+  ref: { userId: string; appSlug: string; userSlug: string }
+): Promise<Result<number>> {
+  const now = new Date().toISOString();
+
+  const rows = await vctx.sql.db
+    .select({
+      foreignUserId: vctx.sql.tables.requestGrants.foreignUserId,
+      foreignInfo: vctx.sql.tables.requestGrants.foreignInfo,
+      created: vctx.sql.tables.requestGrants.created,
+    })
+    .from(vctx.sql.tables.requestGrants)
+    .where(
+      and(
+        eq(vctx.sql.tables.requestGrants.userId, ref.userId),
+        eq(vctx.sql.tables.requestGrants.appSlug, ref.appSlug),
+        eq(vctx.sql.tables.requestGrants.userSlug, ref.userSlug),
+        eq(vctx.sql.tables.requestGrants.state, "pending")
+      )
+    );
+
+  if (rows.length === 0) return Result.Ok(0);
+
+  const rUpd = await exception2Result(() =>
+    vctx.sql.db
+      .update(vctx.sql.tables.requestGrants)
+      .set({ state: "approved", role: "viewer", updated: now })
+      .where(
+        and(
+          eq(vctx.sql.tables.requestGrants.userId, ref.userId),
+          eq(vctx.sql.tables.requestGrants.appSlug, ref.appSlug),
+          eq(vctx.sql.tables.requestGrants.userSlug, ref.userSlug),
+          eq(vctx.sql.tables.requestGrants.state, "pending")
+        )
+      )
+  );
+  if (rUpd.isErr()) return Result.Err(rUpd);
+
+  for (const row of rows) {
+    await sendUpdateEvent(vctx, {
+      op: "upsert",
+      userId: ref.userId,
+      grant: {
+        type: "vibes.diy.res-request-access",
+        appSlug: ref.appSlug,
+        userSlug: ref.userSlug,
+        foreignUserId: row.foreignUserId,
+        foreignInfo: row.foreignInfo as ForeignInfo,
+        role: "viewer",
+        state: "approved",
+        updated: now,
+        created: row.created,
+      },
+    });
+  }
+
+  return Result.Ok(rows.length);
+}
+
 export async function hasAccessRequest(
   vctx: VibesApiSQLCtx,
   req: { foreignUserId: string; appSlug: string; userSlug: string }
