@@ -167,7 +167,7 @@ export async function ensureUserSlug(
   });
 }
 
-async function writeAppSlugBinding(
+export async function writeAppSlugBinding(
   ctx: VibesApiSQLCtx,
   userId: string,
   userSlug: string,
@@ -183,28 +183,16 @@ async function writeAppSlugBinding(
       return Result.Err("maximum appSlug bindings reached for this userId");
     }
     const ledger = ctx.sthis.nextId(12).str;
-    await ctx.sql.db
-      .insert(ctx.sql.tables.appSlugBinding)
-      .values({
-        appSlug,
-        userSlug,
-        ledger,
-        created: new Date().toISOString(),
-      })
-      .onConflictDoNothing();
-    const owner = await ctx.sql.db
-      .select()
-      .from(ctx.sql.tables.appSlugBinding)
-      .where(eq(ctx.sql.tables.appSlugBinding.appSlug, appSlug))
-      .limit(1)
-      .then((r) => r[0]);
-    if (!owner || owner.userSlug !== userSlug) {
-      return Result.Err(`appSlug "${appSlug}" is owned by another user`);
-    }
+    await ctx.sql.db.insert(ctx.sql.tables.appSlugBinding).values({
+      appSlug,
+      userSlug,
+      ledger,
+      created: new Date().toISOString(),
+    });
     return Result.Ok({
       type: "vibes.diy-app-slug-binding",
       userId,
-      ledger: owner.ledger,
+      ledger,
       appSlug,
     });
   });
