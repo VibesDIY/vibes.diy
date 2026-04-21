@@ -38,7 +38,7 @@ export default function AppLayout({
 
   return (
     <div className={cx(gridBackground, "page-grid-background relative flex h-dvh flex-col md:flex-row md:overflow-hidden")}>
-      <PillPortal isActive={isSidebarVisible} onToggle={setIsSidebarVisible} />
+      <PillPortal isActive={isSidebarVisible} onToggle={setIsSidebarVisible} mobilePreviewShown={mobilePreviewShown} />
 
       {/* Content with relative positioning to appear above the background */}
       <div
