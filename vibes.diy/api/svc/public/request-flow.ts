@@ -61,24 +61,6 @@ export async function approveAllPendingRequests(
 ): Promise<Result<number>> {
   const now = new Date().toISOString();
 
-  const rows = await vctx.sql.db
-    .select({
-      foreignUserId: vctx.sql.tables.requestGrants.foreignUserId,
-      foreignInfo: vctx.sql.tables.requestGrants.foreignInfo,
-      created: vctx.sql.tables.requestGrants.created,
-    })
-    .from(vctx.sql.tables.requestGrants)
-    .where(
-      and(
-        eq(vctx.sql.tables.requestGrants.userId, ref.userId),
-        eq(vctx.sql.tables.requestGrants.appSlug, ref.appSlug),
-        eq(vctx.sql.tables.requestGrants.userSlug, ref.userSlug),
-        eq(vctx.sql.tables.requestGrants.state, "pending")
-      )
-    );
-
-  if (rows.length === 0) return Result.Ok(0);
-
   const rUpd = await exception2Result(() =>
     vctx.sql.db
       .update(vctx.sql.tables.requestGrants)
@@ -91,10 +73,16 @@ export async function approveAllPendingRequests(
           eq(vctx.sql.tables.requestGrants.state, "pending")
         )
       )
+      .returning({
+        foreignUserId: vctx.sql.tables.requestGrants.foreignUserId,
+        foreignInfo: vctx.sql.tables.requestGrants.foreignInfo,
+        created: vctx.sql.tables.requestGrants.created,
+      })
   );
   if (rUpd.isErr()) return Result.Err(rUpd);
+  const updated = rUpd.Ok();
 
-  for (const row of rows) {
+  for (const row of updated) {
     await sendUpdateEvent(vctx, {
       op: "upsert",
       userId: ref.userId,
@@ -112,7 +100,7 @@ export async function approveAllPendingRequests(
     });
   }
 
-  return Result.Ok(rows.length);
+  return Result.Ok(updated.length);
 }
 
 export async function hasAccessRequest(
