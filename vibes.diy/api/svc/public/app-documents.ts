@@ -24,9 +24,17 @@ import {
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
+import { WSSendProvider } from "../svc-ws-send-provider.js";
 import { eq, and } from "drizzle-orm";
 import { sql, max } from "drizzle-orm/sql";
 import { type } from "arktype";
+
+// Access the raw WSSendProvider from Evento's wrapped ctx.send.
+// Evento wraps the send provider — the raw instance is at .provider.
+// Pattern from fireproof: qs-room-evento.ts clientWs()
+function clientWsSend(ctx: { send: unknown }): WSSendProvider {
+  return (ctx.send as { provider: WSSendProvider }).provider;
+}
 
 // ── putDoc ──────────────────────────────────────────────────────────
 
@@ -67,11 +75,27 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         created: now,
       });
 
-      // Broadcast doc-changed to ALL connections — client filters by appSlug
+      // Broadcast doc-changed to subscribed connections (fireproof pattern: direct ws.send)
+      const evt = { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId };
+      let notified = 0;
       for (const conn of vctx.connections) {
-        conn.send(ctx, { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId });
+        if (!conn.subscribedAppSlugs.has(req.appSlug)) continue;
+        try {
+          conn.ws.send(
+            conn.ende.uint8ify({
+              tid: crypto.randomUUID(),
+              src: "vibes.diy.api",
+              dst: "vibes.diy.client",
+              ttl: 10,
+              payload: evt,
+            })
+          );
+          notified++;
+        } catch (e) {
+          console.log("[Firefly API] failed to notify subscriber:", e);
+        }
       }
-      console.log("[Firefly API] broadcast doc-changed to", vctx.connections.size, "connections for", req.appSlug);
+      console.log("[Firefly API] broadcast doc-changed to", notified, "of", vctx.connections.size, "connections for", req.appSlug);
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-put-doc",
@@ -224,10 +248,27 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
         created: now,
       });
 
-      // TODO: tighten to only subscribed connections once subscribe registration is debugged
+      // Broadcast doc-changed to subscribed connections (fireproof pattern: direct ws.send)
+      const evt = { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId: req.docId };
+      let notified = 0;
       for (const conn of vctx.connections) {
-        conn.send(ctx, { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId: req.docId });
+        if (!conn.subscribedAppSlugs.has(req.appSlug)) continue;
+        try {
+          conn.ws.send(
+            conn.ende.uint8ify({
+              tid: crypto.randomUUID(),
+              src: "vibes.diy.api",
+              dst: "vibes.diy.client",
+              ttl: 10,
+              payload: evt,
+            })
+          );
+          notified++;
+        } catch (e) {
+          console.log("[Firefly API] failed to notify subscriber:", e);
+        }
       }
+      console.log("[Firefly API] broadcast doc-changed to", notified, "of", vctx.connections.size, "connections for", req.appSlug);
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-delete-doc",
@@ -255,28 +296,13 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqSubscribeDocs>>, ResSubscribeDocs | VibesDiyError>
     ): Promise<Result<EventoResultType>> => {
       const req = ctx.validated.payload;
-
-      // Register this connection for document change notifications.
-      // Store a closure that captures ctx.send.send — each call creates a unique closure
-      // so the Set won't deduplicate connections that share the same Evento wrapper.
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-      let subs = vctx.subscriptions.get(req.appSlug);
-      if (!subs) {
-        subs = new Set();
-        vctx.subscriptions.set(req.appSlug, subs);
-      }
-      const sendFn = (data: unknown) => {
-        ctx.send.send(ctx, data);
-      };
-      subs.add(sendFn);
-      console.log(
-        "[Firefly API] registered subscription for",
-        req.appSlug,
-        "subs:",
-        subs.size,
-        "connections:",
-        vctx.connections.size
-      );
+
+      // Store subscription on the connection object (fireproof pattern).
+      // Access raw WSSendProvider via Evento's .provider wrapper.
+      const wsSend = clientWsSend(ctx);
+      wsSend.subscribedAppSlugs.add(req.appSlug);
+      console.log("[Firefly API] registered subscription for", req.appSlug, "on connection, connections:", vctx.connections.size);
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-subscribe-docs",

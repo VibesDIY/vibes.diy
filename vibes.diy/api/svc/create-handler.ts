@@ -220,7 +220,6 @@ export async function createAppContext<T extends VibesSqlite>(
     netHash: params.netHash,
     cache: params.cache,
     connections: params.connections,
-    subscriptions: new Map(),
     fetchPkgVersion: defaultFetchPkgVersion({
       presetFn: params.fetchPkgVersion,
       defaults: {
