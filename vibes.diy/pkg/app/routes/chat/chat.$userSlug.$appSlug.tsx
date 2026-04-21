@@ -445,6 +445,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             openVibe={openVibe}
             onContextMenu={handleContextMenu}
             shareModal={shareModal}
+            onBackClick={() => setMobilePreviewShown(false)}
           />
         }
         chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} />}
