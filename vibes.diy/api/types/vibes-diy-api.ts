@@ -11,6 +11,8 @@ import {
   ResGetAppByFsId,
   ReqSetModeFs,
   ResSetModeFs,
+  ReqForkApp,
+  ResForkApp,
   ReqListUserSlugBindings,
   ResListUserSlugBindings,
   ReqCreateUserSlugBinding,
@@ -103,6 +105,8 @@ export interface VibesDiyApiIface<_T = unknown> {
   getTokenClaims(): Promise<Result<VerifiedClaimsResult & { claims: ClerkClaim }>>;
 
   setSetModeFs(req: Req<ReqSetModeFs>): Promise<Result<ResSetModeFs>>;
+
+  forkApp(req: Req<ReqForkApp>): Promise<Result<ResForkApp, VibesDiyError>>;
 
   getCertFromCsr(req: Req<ReqCertFromCsr>): Promise<Result<ResCertFromCsr>>;
 
