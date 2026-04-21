@@ -83,6 +83,20 @@ export function isMetaItem(obj: unknown): obj is MetaItem {
   return !(MetaItem(obj) instanceof type.errors);
 }
 
+// Meta entries that belong to the app (per appSlug+userSlug) rather than a
+// specific release (per fsId) — these carry forward when a new release is
+// inserted. `screen-shot-ref` is fsId-bound and is regenerated per release.
+// The exhaustive switch ensures future MetaItem variants must opt in or out.
+export function isCrossReleaseMetaItem(item: MetaItem): boolean {
+  switch (item.type) {
+    case "title":
+    case "remix-of":
+      return true;
+    case "screen-shot-ref":
+      return false;
+  }
+}
+
 // export interface ResponseType {
 //   type: "Response";
 //   payload: {

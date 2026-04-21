@@ -128,6 +128,41 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     expect(fork.srcAppSlug).toBe(src.appSlug);
   });
 
+  it("remix-of meta survives a code edit on the fork", async () => {
+    const src = await createProdApp("hello-carry-forward");
+
+    const rFork = await api.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug });
+    if (rFork.isErr()) assert.fail("forkApp failed: " + JSON.stringify(rFork.Err()));
+    const fork = rFork.Ok();
+
+    // Simulate a code edit on the fork — ensureAppSlug with different content
+    // produces a new fsId at the same (userSlug, appSlug).
+    const rEdit = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug: fork.appSlug,
+      userSlug: fork.userSlug,
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `function App() { return <div>edited-after-fork</div>; } App();`,
+        },
+      ],
+    });
+    if (rEdit.isErr()) assert.fail("edit ensureAppSlug failed: " + JSON.stringify(rEdit.Err()));
+    const edit = rEdit.Ok();
+    if (!isResEnsureAppSlugOk(edit)) assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
+    expect(edit.fsId).not.toBe(fork.srcFsId);
+
+    // The new release should have carried the remix-of meta forward.
+    const rApp = await api.getAppByFsId({ appSlug: fork.appSlug, userSlug: fork.userSlug, fsId: edit.fsId });
+    if (rApp.isErr()) assert.fail(`getAppByFsId failed: ${rApp.Err().message}`);
+    const remixMeta = rApp.Ok().meta.find((m) => m.type === "remix-of");
+    expect(remixMeta).toBeDefined();
+    expect(remixMeta && "srcFsId" in remixMeta ? remixMeta.srcFsId : "").toBe(src.fsId);
+  });
+
   it("non-owner cannot fork a private app (no grant)", async () => {
     const src = await createProdApp("hello-private");
 
