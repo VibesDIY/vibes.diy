@@ -16,7 +16,7 @@ function PillActionButton({ height, label, icon, bgColor, labelColor, onClick }:
   onClick: (e: React.MouseEvent) => void;
 }) {
   const [hovered, setHovered] = useState(false);
-  const btnWidth = height * 0.55;
+  const btnWidth = height * 0.75;
   return (
     <button
       type="button"
@@ -35,7 +35,7 @@ function PillActionButton({ height, label, icon, bgColor, labelColor, onClick }:
         background: bgColor,
         borderRadius: 0,
         transition: "width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        width: hovered ? height * 2.2 : btnWidth,
+        width: hovered ? height * 1.8 : btnWidth,
         flexShrink: 0,
       }}
     >
@@ -47,7 +47,7 @@ function PillActionButton({ height, label, icon, bgColor, labelColor, onClick }:
         justifyContent: "center",
         flexShrink: 0,
       }}>
-        <svg width={btnWidth * 0.55} height={btnWidth * 0.55} viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width={height * 0.55 * 0.75} height={height * 0.55 * 0.75} viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="17.5" cy="17.5" r="17.5" fill="var(--vibes-near-black, #1a1a1a)" />
           <foreignObject x="7" y="7" width="21" height="21">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", color: "var(--vibes-cream, #FFFEF0)" }}>
@@ -144,7 +144,7 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
           top: (123 * scale - 4),
           right: -4,
           height: (175 * scale + 8),
-          width: expanded ? (600 * scale + 160 + 8) : (collapsing ? (600 * scale + 8) : (600 * scale + 8)),
+          width: expanded ? (600 * scale + 220 + 8) : (collapsing ? (600 * scale + 8) : (600 * scale + 8)),
           zIndex: 1,
           background: "var(--vibes-cream, #FFFEF0)",
           border: "1px solid var(--vibes-near-black, #1a1a1a)",
