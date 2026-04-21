@@ -40,6 +40,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
 import { eq, and } from "drizzle-orm/sql/expressions";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
+import { approveAllPendingRequests } from "./request-flow.js";
 // import { buildEnsureEntryResult } from "../intern/application-settings.js";
 
 export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
@@ -225,7 +226,10 @@ export async function ensureAppSettings(
       );
       break;
 
-    case isReqRequest(req):
+    case isReqRequest(req): {
+      const prevAutoAccept = settings.find(isEnableRequest)?.autoAcceptViewRequest === true;
+      const nextAutoAccept = req.request.autoAcceptViewRequest === true;
+
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
@@ -238,7 +242,16 @@ export async function ensureAppSettings(
             autoAcceptViewRequest: req.request.autoAcceptViewRequest,
           }) satisfies EnableRequest
       );
+
+      if (!res.error && !prevAutoAccept && nextAutoAccept) {
+        await approveAllPendingRequests(vctx, {
+          userId: res.userId,
+          appSlug: res.appSlug,
+          userSlug: res.userSlug,
+        });
+      }
       break;
+    }
 
     case isReqEnsureAppSettingsTitle(req):
       [res.settings, res.error] = await sqlUpsert(
