@@ -309,7 +309,9 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       }
       const sp = new URLSearchParams(searchParams);
       sp.set("view", currentViewRef.current);
-      // console.log(`fsIdClick`, { newFsId, appSlug, userSlug, searchParams: sp.toString(), currentView: currentViewRef.current });
+      if (isMobileViewport()) {
+        setMobilePreviewShown(true);
+      }
       navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
     },
     [navigate, userSlug, appSlug, searchParams]
