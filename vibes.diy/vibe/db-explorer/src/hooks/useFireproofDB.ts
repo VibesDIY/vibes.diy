@@ -1,10 +1,9 @@
 import { useCallback, useMemo, useRef } from "react";
-import { useFireproof } from "@fireproof/use-fireproof";
-import type { DocBase } from "@fireproof/use-fireproof";
+import { useFireproof, type DocWithId } from "@vibes.diy/vibe-runtime";
 
 interface UseFireproofDBResult {
-  docs: DocBase[];
-  docById: Map<string, DocBase>;
+  docs: DocWithId[];
+  docById: Map<string, DocWithId>;
   loading: boolean;
   totalDocs: number;
   putDoc: (doc: Record<string, unknown>) => Promise<void>;
@@ -15,8 +14,8 @@ interface UseFireproofDBResult {
 
 export function useFireproofDB(dbName: string): UseFireproofDBResult {
   const { database, useLiveQuery } = useFireproof(dbName);
-  const { docs: allDocs, hydrated } = useLiveQuery("_id");
-  const loading = !hydrated;
+  const { docs: allDocs } = useLiveQuery("_id");
+  const loading = false;
 
   const dbRef = useRef(database);
   dbRef.current = database;
@@ -24,7 +23,7 @@ export function useFireproofDB(dbName: string): UseFireproofDBResult {
   const totalDocs = allDocs.length;
 
   const docById = useMemo(() => {
-    const map = new Map<string, DocBase>();
+    const map = new Map<string, DocWithId>();
     for (const d of allDocs) {
       if (d._id) map.set(d._id, d);
     }
@@ -32,7 +31,7 @@ export function useFireproofDB(dbName: string): UseFireproofDBResult {
   }, [allDocs]);
 
   const putDoc = useCallback(async (doc: Record<string, unknown>) => {
-    await dbRef.current.put(doc as unknown as DocBase);
+    await dbRef.current.put(doc);
   }, []);
 
   const deleteDoc = useCallback(async (id: string) => {
@@ -40,7 +39,7 @@ export function useFireproofDB(dbName: string): UseFireproofDBResult {
   }, []);
 
   const createDoc = useCallback(async (doc: Record<string, unknown>): Promise<string> => {
-    const res = await dbRef.current.put(doc as unknown as DocBase);
+    const res = await dbRef.current.put(doc);
     return res.id;
   }, []);
 
@@ -80,7 +79,7 @@ export function useFireproofDB(dbName: string): UseFireproofDBResult {
         },
         notes: rand(0, 1) ? `Some notes about item ${i + 1}` : null,
         createdAt: new Date(Date.now() - rand(0, 365) * 86400000).toISOString(),
-      } as unknown as DocBase);
+      });
     }
   }, []);
 
