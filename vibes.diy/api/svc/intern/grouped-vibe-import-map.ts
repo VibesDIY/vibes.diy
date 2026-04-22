@@ -31,8 +31,9 @@ export const lockedGroupsVersions = {
     jose: "version:JOSE",
     "jose/jwt/decode": "version:JOSE",
     dompurify: "version:DOMPURIFY",
-    // Firefly replaces Fireproof — use-fireproof aliases to vibe-runtime
+    // Firefly replaces Fireproof — both package names alias to vibe-runtime
     "use-fireproof": "alias:@vibes.diy/vibe-runtime",
+    "@fireproof/use-fireproof": "alias:@vibes.diy/vibe-runtime",
     "@emotion/css": "version:EMOTION",
 
     // deps=react@19.2.1,react-dom@19.2.1
