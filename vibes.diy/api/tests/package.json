@@ -16,7 +16,7 @@
     "@fireproof/core-runtime": "0.24.19",
     "@fireproof/core-types-device-id": "0.24.19",
     "@libsql/client": "^0.17.2",
-    "@neondatabase/serverless": "^1.0.2",
+    "@neondatabase/serverless": "^1.1.0",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-pkg": "workspace:*",
     "@vibes.diy/api-sql": "workspace:*",
