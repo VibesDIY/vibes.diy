@@ -25,9 +25,9 @@ import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
 
-// Pad a remix index so the suffix always carries a leading '0': `01..09`,
+// Pad a fork index so the suffix always carries a leading '0': `01..09`,
 // `010..099`, `0100..0999`, `01000..09999`, ...
-function padRemixIndex(n: number): string {
+function padForkIndex(n: number): string {
   return "0" + String(n);
 }
 
@@ -39,22 +39,22 @@ function sanitizeSlug(raw: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-// Build the n-th remix candidate for a source appSlug. Preference order
-// within the 32-byte RFC2822 budget:
-//   1. `${srcAppSlug}-remix`              (n === 0)
-//   2. `${srcAppSlug}-remix-${pad(n)}`    (n >= 1, if it fits)
-//   3. `${srcAppSlug}-${pad(n)}`          (fallback for long source slugs;
-//                                          drops the redundant `-remix`
-//                                          word rather than truncating it
-//                                          to a stub like `-r`)
-// Returns undefined if no candidate fits (source slug itself >= 32 bytes
-// with no room for a one-char suffix).
-function buildRemixCandidate(srcAppSlug: string, n: number): string | undefined {
+// Build the n-th fork candidate for a source appSlug. `word` is "remix" or
+// "clone" depending on the fork flavor. Preference order within the 32-byte
+// RFC2822 budget:
+//   1. `${srcAppSlug}-${word}`              (n === 0)
+//   2. `${srcAppSlug}-${word}-${pad(n)}`    (n >= 1, if it fits)
+//   3. `${srcAppSlug}-${pad(n)}`            (fallback for long source slugs;
+//                                            drops the redundant `-${word}`
+//                                            rather than truncating it to
+//                                            a stub like `-r` or `-c`)
+// Returns undefined if no candidate fits.
+function buildForkCandidate(srcAppSlug: string, word: string, n: number): string | undefined {
   const src = sanitizeSlug(srcAppSlug);
-  const suffix = n === 0 ? "" : `-${padRemixIndex(n)}`;
-  const withRemix = sanitizeSlug(`${src}-remix${suffix}`);
-  if (withRemix.length <= 32) return withRemix;
-  if (n === 0) return undefined; // no way to fit just `-remix` — skip; caller tries n>=1
+  const suffix = n === 0 ? "" : `-${padForkIndex(n)}`;
+  const withWord = sanitizeSlug(`${src}-${word}${suffix}`);
+  if (withWord.length <= 32) return withWord;
+  if (n === 0) return undefined; // no way to fit just `-${word}` — skip; caller tries n>=1
   const bare = sanitizeSlug(`${src}${suffix}`);
   if (bare.length <= 32 && bare !== src) return bare;
   return undefined;
@@ -156,16 +156,19 @@ export async function forkApp(
     await persistDefaultUserSlug(vctx, userId, destUserSlug);
   }
 
-  // 4. Allocate a fresh appSlug under the caller. Try `${srcAppSlug}-remix`
-  //    first, then `-remix-01`..`-99`, `-0100`..`-0999`, `-01000`.. etc. A
-  //    single `LIKE` prequery finds taken candidates so we pick the first
-  //    free deterministically; a handful of next candidates are passed
-  //    through to ensureAppSlug to absorb any race on the uniqueness check.
+  // 4. Allocate a fresh appSlug under the caller. Word depends on flavor:
+  //    `${srcAppSlug}-remix[-NN]` (default) or `${srcAppSlug}-clone[-NN]`
+  //    (skipChat). A single `LIKE` prequery finds taken candidates so we
+  //    pick the first free deterministically; a handful of next candidates
+  //    are passed through to ensureAppSlug to absorb any race on the
+  //    uniqueness check.
+  const skipChat = req.skipChat === true;
+  const word = skipChat ? "clone" : "remix";
   const srcMeta = (src.meta as MetaItem[] | undefined) ?? [];
   const titleMeta = srcMeta.find((m): m is Extract<MetaItem, { type: "title" }> => m.type === "title");
   const sourceTitle = titleMeta?.title ?? req.srcAppSlug;
   // Prequery: any appSlug that begins with the sanitized source covers
-  // both `${src}-remix*` and the `${src}-${pad}` fallback form.
+  // both `${src}-${word}*` and the `${src}-${pad}` fallback form.
   const srcSanitized = sanitizeSlug(req.srcAppSlug);
   const taken = await vctx.sql.db
     .select({ appSlug: vctx.sql.tables.appSlugBinding.appSlug })
@@ -174,7 +177,7 @@ export async function forkApp(
   const takenSet = new Set(taken.map((r) => r.appSlug));
   const candidates: string[] = [];
   for (let n = 0; candidates.length < 5 && n < 100_000; n++) {
-    const cand = buildRemixCandidate(req.srcAppSlug, n);
+    const cand = buildForkCandidate(req.srcAppSlug, word, n);
     if (!cand) continue;
     if (takenSet.has(cand)) continue;
     if (!candidates.includes(cand)) candidates.push(cand);
@@ -193,10 +196,10 @@ export async function forkApp(
   //    underlying assets with no copy. The `remix-of` meta entry carries
   //    srcFsId as the immutable anchor; display slugs are resolved live on
   //    read so renames of srcUserSlug/srcAppSlug are followed automatically.
-  //    Only the direct parent is stored — full lineage is reconstructed by
-  //    walking srcFsId pointers across Apps rows. Screenshot carries over as
-  //    a placeholder until the fork generates its own.
+  //    Mode: dev for classic remix (chat editor), production for clone
+  //    (lands straight on /vibe/ published URL).
   const destMeta: MetaItem[] = [...srcMeta.filter((m) => m.type !== "remix-of"), { type: "remix-of", srcFsId: src.fsId }];
+  const destMode = skipChat ? "production" : "dev";
   const rIns = await exception2Result(() =>
     vctx.sql.db.insert(vctx.sql.tables.apps).values({
       appSlug: destAppSlug,
@@ -207,7 +210,7 @@ export async function forkApp(
       env: src.env,
       fileSystem: src.fileSystem,
       meta: destMeta,
-      mode: "dev",
+      mode: destMode,
       created: new Date().toISOString(),
     })
   );
@@ -226,11 +229,49 @@ export async function forkApp(
   );
   if (rChat.isErr()) return Result.Err(`Failed to create chatContext: ${rChat.Err().message}`);
 
-  // 7. Seed a ChatSection that mirrors the structure of a real prompt turn:
-  //    a synthetic user message + the source /App.jsx rendered as an
-  //    assistant code block, block.end pinning fsRef to srcFsId. The chat
-  //    editor's sectionStream then hydrates the editor normally, and the
-  //    next LLM prompt sees the current code via reconstructConversationMessages.
+  // 7. Clone branches off here: no ChatSection seed (user lands on /vibe/
+  //    with the app already deployed), and AppSettings default to
+  //    request-access-required so non-owners can't auto-join.
+  if (skipChat) {
+    const rReqSet = await ensureAppSettings(
+      vctx,
+      {
+        type: "vibes.diy.req-ensure-app-settings",
+        appSlug: destAppSlug,
+        userSlug: destUserSlug,
+        request: { enable: true, autoAcceptViewRequest: false },
+      },
+      userId
+    );
+    if (rReqSet.isErr()) return Result.Err(`Failed to set clone access request: ${rReqSet.Err().message}`);
+    const rPubSet = await ensureAppSettings(
+      vctx,
+      {
+        type: "vibes.diy.req-ensure-app-settings",
+        appSlug: destAppSlug,
+        userSlug: destUserSlug,
+        publicAccess: { enable: false },
+      },
+      userId
+    );
+    if (rPubSet.isErr()) return Result.Err(`Failed to disable clone public access: ${rPubSet.Err().message}`);
+    return Result.Ok({
+      type: "vibes.diy.res-fork-app",
+      userSlug: destUserSlug,
+      appSlug: destAppSlug,
+      chatId,
+      srcFsId: src.fsId,
+      srcUserSlug: src.userSlug,
+      srcAppSlug: src.appSlug,
+    } satisfies ResForkApp);
+  }
+
+  // 8. Remix path: seed a ChatSection that mirrors the structure of a real
+  //    prompt turn — a synthetic user message + the source /App.jsx
+  //    rendered as an assistant code block, block.end pinning fsRef to
+  //    srcFsId. The chat editor's sectionStream then hydrates the editor
+  //    normally, and the next LLM prompt sees the current code via
+  //    reconstructConversationMessages.
   const fsItems = src.fileSystem as FileSystemItem[];
   const srcEntry = fsItems.find((f) => f.entryPoint && f.fileName === "/App.jsx") ?? fsItems.find((f) => f.fileName === "/App.jsx");
   if (srcEntry) {
@@ -289,7 +330,7 @@ export async function forkApp(
           total: { lines: lines.length, bytes: content.length },
         },
         usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
-        fsRef: { appSlug: destAppSlug, userSlug: destUserSlug, mode: "dev", fsId: src.fsId },
+        fsRef: { appSlug: destAppSlug, userSlug: destUserSlug, mode: destMode, fsId: src.fsId },
         ...baseBlock,
         seq: 5 + lines.length,
       },

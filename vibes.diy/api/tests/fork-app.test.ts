@@ -128,6 +128,32 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     expect(fork.srcAppSlug).toBe(src.appSlug);
   });
 
+  it("skipChat=true clones into production with -clone slug and request-access settings (no chat seed)", async () => {
+    const src = await createProdApp("hello-clone");
+
+    const rFork = await api.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug, skipChat: true });
+    if (rFork.isErr()) {
+      assert.fail("Expected forkApp(skipChat) to succeed: " + JSON.stringify(rFork.Err()));
+    }
+    const fork = rFork.Ok();
+    expect(fork.appSlug).toContain("clone");
+    expect(fork.srcFsId).toBe(src.fsId);
+
+    const rApp = await api.getAppByFsId({ appSlug: fork.appSlug, userSlug: fork.userSlug });
+    if (rApp.isErr()) assert.fail(`getAppByFsId failed: ${rApp.Err().message}`);
+    expect(rApp.Ok().mode).toBe("production");
+    expect(rApp.Ok().fsId).toBe(src.fsId);
+    const remixMeta = rApp.Ok().meta.find((m) => m.type === "remix-of");
+    expect(remixMeta).toBeDefined();
+
+    const rSettings = await api.ensureAppSettings({ appSlug: fork.appSlug, userSlug: fork.userSlug });
+    if (rSettings.isErr()) assert.fail(`ensureAppSettings failed: ${rSettings.Err().message}`);
+    const entry = rSettings.Ok().settings.entry;
+    expect(entry.enableRequest?.enable).toBe(true);
+    expect(entry.enableRequest?.autoAcceptViewRequest).toBe(false);
+    expect(entry.publicAccess?.enable).toBe(false);
+  });
+
   it("remix-of meta survives a code edit on the fork", async () => {
     const src = await createProdApp("hello-carry-forward");
 
