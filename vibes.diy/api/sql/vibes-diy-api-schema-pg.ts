@@ -186,6 +186,7 @@ export const sqlAppDocuments = pgTable(
     appSlug: text().notNull(),
     docId: text().notNull(),
     seq: integer().notNull(), // monotonic per (appSlug, docId), starts at 1
+    userId: text().notNull(), // authenticated user who made this change
     data: jsonb().notNull(), // document JSON
     deleted: integer().notNull().default(0), // 1 = tombstone
     created: text().notNull(), // ISO timestamp of this revision

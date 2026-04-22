@@ -181,6 +181,7 @@ export const sqlAppDocuments = sqliteTable(
     appSlug: text().notNull(),
     docId: text().notNull(),
     seq: int().notNull(), // monotonic per (appSlug, docId), starts at 1
+    userId: text().notNull(), // authenticated user who made this change
     data: text({ mode: "json" }).notNull(), // document JSON
     deleted: int().notNull().default(0), // 1 = tombstone
     created: text().notNull(), // ISO timestamp of this revision
