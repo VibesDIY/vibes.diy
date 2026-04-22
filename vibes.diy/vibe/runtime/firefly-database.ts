@@ -79,13 +79,6 @@ export class FireflyDatabase {
     this.vibeApi.onMsg((event) => {
       const { data } = event;
       if (isEvtDocChanged(data) && data.appSlug === this.vibeApp.appSlug) {
-        console.log(
-          "[Firefly] evt-doc-changed received, notifying",
-          this.listeners.size,
-          "listeners +",
-          this.updateListeners.size,
-          "update listeners"
-        );
         this.notifyListeners([]);
       }
     });
@@ -108,7 +101,6 @@ export class FireflyDatabase {
   }
 
   async get<T extends DocTypes>(id: string): Promise<DocWithId<T>> {
-    console.log("[Firefly] get", id);
     const rRes = await this.vibeApi.getDoc(id, this.name);
     if (rRes.isErr()) {
       throw new Error(`Failed to get document: ${rRes.Err()}`);
@@ -121,7 +113,6 @@ export class FireflyDatabase {
   }
 
   async put<T extends DocTypes>(doc: T & { _id?: string }): Promise<DocResponse> {
-    console.log("[Firefly] put", doc._id, doc);
     const rRes = await this.vibeApi.putDoc(doc, doc._id, this.name);
     if (rRes.isErr()) {
       throw new Error(`Failed to put document: ${rRes.Err()}`);
@@ -177,21 +168,16 @@ export class FireflyDatabase {
       limit?: number;
     } = {}
   ): Promise<QueryResponse<T>> {
-    // Fetch all docs from the API
-    console.log("[Firefly] query called, fetching docs...");
     const rRes = await this.vibeApi.queryDocs(this.name);
     if (rRes.isErr()) {
-      console.log("[Firefly] query error:", rRes.Err());
       throw new Error(`Failed to query documents: ${rRes.Err()}`);
     }
     const res = rRes.Ok();
     if (!isResQueryDocs(res)) {
-      console.log("[Firefly] query response not matched, returning empty. res:", JSON.stringify(res).substring(0, 200));
       return { rows: [], docs: [] };
     }
 
     const allDocs = res.docs.map((d) => ({ ...d, _id: d._id }) as DocWithId<T>);
-    console.log("[Firefly] query returned", allDocs.length, "docs");
 
     // Build index entries — keys stored as charwise-encoded strings for correct sort
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -342,10 +328,8 @@ export class FireflyDatabase {
     const fn = listener as ListenerFn;
     if (updates) {
       this.updateListeners.add(fn);
-      console.log("[Firefly] subscribe (updates=true), total update listeners:", this.updateListeners.size);
     } else {
       this.listeners.add(fn);
-      console.log("[Firefly] subscribe, total listeners:", this.listeners.size);
     }
     return () => {
       this.listeners.delete(fn);
