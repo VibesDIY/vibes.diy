@@ -306,6 +306,28 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     }
   });
 
+  it("rejects ensureAppSlug with no code files", async () => {
+    const res = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "str-asset-block", content: "body { color: red; }", filename: "/style.css" }],
+    });
+    expect(res.isErr()).toBe(true);
+    expect(res.Err()).toMatchObject({
+      code: "app-slug-invalid",
+    });
+  });
+
+  it("rejects ensureAppSlug with empty fileSystem", async () => {
+    const res = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [],
+    });
+    expect(res.isErr()).toBe(true);
+    expect(res.Err()).toMatchObject({
+      code: "app-slug-invalid",
+    });
+  });
+
   it("repeatable stable ensureAppSlug", async () => {
     const now = Date.now();
     for (let i = 0; i < 2; i++) {

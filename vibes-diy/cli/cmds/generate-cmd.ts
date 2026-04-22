@@ -16,6 +16,7 @@ import { resEnsureAppSlug, ResEnsureAppSlug, isSectionEvent } from "@vibes.diy/a
 import type { VibeFile, PromptAndBlockMsgs } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
+import { resolveUserSlug } from "../resolve-user-slug.js";
 
 export const ResGenerate = type({
   type: "'use-vibes.cli.res-generate'",
@@ -34,6 +35,7 @@ export const ReqGenerate = type({
   type: "'use-vibes.cli.generate'",
   prompt: "string",
   appSlug: "string",
+  userSlug: "string",
   instantJoin: "boolean",
   verbose: "boolean",
   apiUrl: "string",
@@ -62,9 +64,8 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
-    // Resolve userSlug
-    const rList = await api.listUserSlugAppSlug({});
-    const userSlug = rList.isOk() && rList.Ok().items.length > 0 ? rList.Ok().items[0].userSlug : undefined;
+    // Resolve userSlug: explicit flag > default setting > first from list
+    const userSlug = await resolveUserSlug(api, args.userSlug === "" ? undefined : args.userSlug);
 
     await sendProgress(ctx, "info", "Generating...");
 
@@ -231,6 +232,13 @@ export function generateCmd(ctx: CliCtx) {
         long: "app-slug",
         short: "a",
         description: "App slug (server generates one if omitted)",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
+      userSlug: option({
+        long: "user-slug",
+        description: "User slug to publish under (uses default if omitted)",
         type: string,
         defaultValue: () => "",
         defaultValueIsSerializable: true,

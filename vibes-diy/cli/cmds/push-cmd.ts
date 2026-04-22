@@ -16,6 +16,7 @@ import { resEnsureAppSlug, isResEnsureAppSlugOk, ResEnsureAppSlug } from "@vibes
 import type { VibeFile } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
+import { resolveUserSlug } from "../resolve-user-slug.js";
 
 const CODE_EXTENSIONS = new Set(["jsx", "js", "ts", "tsx"]);
 const ALLOWED_EXTENSIONS = new Set([...CODE_EXTENSIONS, "css", "html", "json", "md", "txt", "svg"]);
@@ -50,6 +51,7 @@ export const ReqPush = type({
   type: "'use-vibes.cli.push'",
   mode: "string",
   appSlug: "string",
+  userSlug: "string",
   instantJoin: "boolean",
   apiUrl: "string",
 });
@@ -77,9 +79,8 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
     const mode = args.mode === "dev" ? "dev" : "production";
     const appSlug = args.appSlug === "" ? basename(process.cwd()) : args.appSlug;
 
-    // Resolve userSlug
-    const rList = await api.listUserSlugAppSlug({});
-    const userSlug = rList.isOk() && rList.Ok().items.length > 0 ? rList.Ok().items[0].userSlug : undefined;
+    // Resolve userSlug: explicit flag > default setting > first from list
+    const userSlug = await resolveUserSlug(api, args.userSlug === "" ? undefined : args.userSlug);
 
     // Read files from CWD
     const rFiles = await exception2Result(() => readProjectFiles(process.cwd()));
@@ -89,6 +90,9 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
     const files = rFiles.Ok();
     if (files.length === 0) {
       return Result.Err("No files found in current directory. Expected at least App.jsx.");
+    }
+    if (!files.some((f) => f.type === "code-block")) {
+      return Result.Err("No code files (.jsx, .js, .ts, .tsx) found in current directory. Expected at least App.jsx.");
     }
 
     // Push to API
@@ -158,6 +162,13 @@ export function pushCmd(ctx: CliCtx) {
         long: "app-slug",
         short: "a",
         description: "App slug (defaults to directory name)",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
+      userSlug: option({
+        long: "user-slug",
+        description: "User slug to publish under (uses default if omitted)",
         type: string,
         defaultValue: () => "",
         defaultValueIsSerializable: true,
