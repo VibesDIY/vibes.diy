@@ -38,14 +38,14 @@ function sanitizeSlug(raw: string): string {
 //   1. `${srcAppSlug}-${word}` (preferred — keeps the source name visible)
 //   2. `${word}-${three-random-words}` (fallback — used when (1) is too long,
 //      already taken, or exactly equals the source slug after sanitation)
-// Collisions are resolved by ensureAppSlug walking the list; if every
-// preferred candidate is taken it will generate its own random fallbacks.
+// Keep the list short (≤3) so ensureAppSlug still has headroom to add its
+// own random fallbacks (it fills `5 - preferred.length` extra attempts).
 function buildForkCandidates(srcAppSlug: string, word: string): string[] {
   const src = sanitizeSlug(srcAppSlug);
   const out: string[] = [];
   const withSrc = sanitizeSlug(`${src}-${word}`);
   if (withSrc.length <= 32 && withSrc !== src) out.push(withSrc);
-  while (out.length < 5) {
+  while (out.length < 3) {
     const words = generate({ exactly: 1, wordsPerString: 3, separator: "-" })[0];
     const cand = sanitizeSlug(`${word}-${words}`);
     if (!cand || cand.length > 32) continue;
