@@ -104,6 +104,7 @@ import {
   ResGetDoc,
   ResGetDocNotFound,
   isResGetDoc,
+  isResGetDocNotFound,
   ReqQueryDocs,
   ResQueryDocs,
   isResQueryDocs,
@@ -525,7 +526,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   }
 
   getDoc(req: Req<ReqGetDoc>): Promise<Result<ResGetDoc | ResGetDocNotFound, VibesDiyError>> {
-    return this.request({ ...req, type: "vibes.diy.req-get-doc" }, { resMatch: isResGetDoc });
+    return this.request(
+      { ...req, type: "vibes.diy.req-get-doc" },
+      { resMatch: (obj: unknown) => isResGetDoc(obj) || isResGetDocNotFound(obj) }
+    );
   }
 
   queryDocs(req: Req<ReqQueryDocs>): Promise<Result<ResQueryDocs, VibesDiyError>> {
