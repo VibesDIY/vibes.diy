@@ -15,8 +15,9 @@ import {
   isFetchOkResult,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { and, eq, like } from "drizzle-orm/sql/expressions";
+import { and, eq } from "drizzle-orm/sql/expressions";
 import { max } from "drizzle-orm/sql";
+import { generate } from "random-words";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
@@ -24,12 +25,6 @@ import { ensureAppSlug, ensureUserSlug, getDefaultUserSlug, persistDefaultUserSl
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
-
-// Pad a fork index so the suffix always carries a leading '0': `01..09`,
-// `010..099`, `0100..0999`, `01000..09999`, ...
-function padForkIndex(n: number): string {
-  return "0" + String(n);
-}
 
 function sanitizeSlug(raw: string): string {
   return raw
@@ -39,25 +34,24 @@ function sanitizeSlug(raw: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-// Build the n-th fork candidate for a source appSlug. `word` is "remix" or
-// "clone" depending on the fork flavor. Preference order within the 32-byte
-// RFC2822 budget:
-//   1. `${srcAppSlug}-${word}`              (n === 0)
-//   2. `${srcAppSlug}-${word}-${pad(n)}`    (n >= 1, if it fits)
-//   3. `${srcAppSlug}-${pad(n)}`            (fallback for long source slugs;
-//                                            drops the redundant `-${word}`
-//                                            rather than truncating it to
-//                                            a stub like `-r` or `-c`)
-// Returns undefined if no candidate fits.
-function buildForkCandidate(srcAppSlug: string, word: string, n: number): string | undefined {
+// Build fork-slug candidates within the 32-byte RFC2822 budget:
+//   1. `${srcAppSlug}-${word}` (preferred — keeps the source name visible)
+//   2. `${word}-${three-random-words}` (fallback — used when (1) is too long,
+//      already taken, or exactly equals the source slug after sanitation)
+// Collisions are resolved by ensureAppSlug walking the list; if every
+// preferred candidate is taken it will generate its own random fallbacks.
+function buildForkCandidates(srcAppSlug: string, word: string): string[] {
   const src = sanitizeSlug(srcAppSlug);
-  const suffix = n === 0 ? "" : `-${padForkIndex(n)}`;
-  const withWord = sanitizeSlug(`${src}-${word}${suffix}`);
-  if (withWord.length <= 32) return withWord;
-  if (n === 0) return undefined; // no way to fit just `-${word}` — skip; caller tries n>=1
-  const bare = sanitizeSlug(`${src}${suffix}`);
-  if (bare.length <= 32 && bare !== src) return bare;
-  return undefined;
+  const out: string[] = [];
+  const withSrc = sanitizeSlug(`${src}-${word}`);
+  if (withSrc.length <= 32 && withSrc !== src) out.push(withSrc);
+  while (out.length < 5) {
+    const words = generate({ exactly: 1, wordsPerString: 3, separator: "-" })[0];
+    const cand = sanitizeSlug(`${word}-${words}`);
+    if (!cand || cand.length > 32) continue;
+    if (!out.includes(cand)) out.push(cand);
+  }
+  return out;
 }
 
 export async function forkApp(
@@ -174,22 +168,7 @@ export async function forkApp(
   const srcMeta = (src.meta as MetaItem[] | undefined) ?? [];
   const titleMeta = srcMeta.find((m): m is Extract<MetaItem, { type: "title" }> => m.type === "title");
   const sourceTitle = titleMeta?.title ?? req.srcAppSlug;
-  // Prequery: any appSlug that begins with the sanitized source covers
-  // both `${src}-${word}*` and the `${src}-${pad}` fallback form.
-  const srcSanitized = sanitizeSlug(req.srcAppSlug);
-  const taken = await vctx.sql.db
-    .select({ appSlug: vctx.sql.tables.appSlugBinding.appSlug })
-    .from(vctx.sql.tables.appSlugBinding)
-    .where(like(vctx.sql.tables.appSlugBinding.appSlug, `${srcSanitized}%`));
-  const takenSet = new Set(taken.map((r) => r.appSlug));
-  const candidates: string[] = [];
-  for (let n = 0; candidates.length < 5 && n < 100_000; n++) {
-    const cand = buildForkCandidate(req.srcAppSlug, word, n);
-    if (!cand) continue;
-    if (takenSet.has(cand)) continue;
-    if (!candidates.includes(cand)) candidates.push(cand);
-  }
-  if (candidates.length === 0) return Result.Err("fork-slug-exhausted");
+  const candidates = buildForkCandidates(req.srcAppSlug, word);
   const rApp = await ensureAppSlug(vctx, {
     userId,
     userSlug: destUserSlug,
