@@ -122,7 +122,6 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
   // States
   const showBubble = phase !== "idle";
   const expanded = phase === "expanding" || phase === "open";
-  const collapsing = phase === "collapsing" || phase === "shrinking";
   const shrinking = phase === "shrinking";
   const buttonsVisible = phase === "open";
   const creamSlid = phase !== "idle" && phase !== "shrinking";
