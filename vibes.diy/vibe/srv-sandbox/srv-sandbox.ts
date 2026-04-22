@@ -442,7 +442,6 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqPutDoc, unknown>): Promise<Result<EventoResultType>> => {
-      console.log("[Firefly srv-sandbox] putDoc", ctx.validated.appSlug, ctx.validated.docId);
       const rRes = await vibeDiyApi.putDoc({
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
@@ -592,12 +591,10 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqSubscribeDocs, unknown>): Promise<Result<EventoResultType>> => {
-      console.log("[Firefly srv-sandbox] subscribeDocs handler called for", ctx.validated.appSlug);
       const rRes = await vibeDiyApi.subscribeDocs({
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
       });
-      console.log("[Firefly srv-sandbox] subscribeDocs result:", rRes.isOk() ? "ok" : rRes.Err());
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
           tid: ctx.validated.tid,
@@ -642,7 +639,6 @@ export class vibesDiySrvSandbox implements Disposable {
 
   // Forward a doc-changed event from the API to the iframe
   forwardDocChangedToIframe(appSlug: string, docId: string): void {
-    console.log("[Firefly srv-sandbox] forwardDocChanged", appSlug, docId, "iframeSource:", !!this.iframeSource);
     if (this.iframeSource && this.iframeOrigin) {
       this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", appSlug, docId }, this.iframeOrigin);
     }
