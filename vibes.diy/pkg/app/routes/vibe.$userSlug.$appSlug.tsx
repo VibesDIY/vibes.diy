@@ -159,6 +159,7 @@ export default function VibeIframeWrapper() {
 
   const vibeSlug = `${userSlug}/${appSlug}`;
   const remixUrl = `/remix/${vibeSlug}`;
+  const cloneUrl = `/remix/${vibeSlug}?skipChat=true`;
 
   const reqAccessOverlay = reqAccess
     ? createPortal(
@@ -178,6 +179,9 @@ export default function VibeIframeWrapper() {
             <div className="flex gap-3 justify-end">
               <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
                 Remix
+              </VibesButton>
+              <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(cloneUrl)}>
+                Clone
               </VibesButton>
               <button
                 type="button"
@@ -303,9 +307,12 @@ export default function VibeIframeWrapper() {
               <p style={{ marginTop: 16, fontSize: 14, opacity: 0.6 }}>
                 While you wait you can remix to make your own version of this app. It will start empty — you won't get this copy's data or collaboration.
               </p>
-              <div style={{ marginTop: 16, display: "flex", justifyContent: "center" }}>
+              <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
                 <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
                   Remix
+                </VibesButton>
+                <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(cloneUrl)}>
+                  Clone
                 </VibesButton>
               </div>
             </div>

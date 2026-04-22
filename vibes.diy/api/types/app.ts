@@ -204,6 +204,11 @@ export const reqForkApp = type({
   srcUserSlug: "string",
   srcAppSlug: "string",
   "srcFsId?": "string",
+  // When true: slug uses `-clone` suffix, Apps.mode = 'production',
+  // no ChatSection is seeded, and AppSettings are configured so non-owners
+  // must request access (no auto-accept). Client is expected to redirect
+  // straight to /vibe/ instead of /chat/. Default false = classic remix.
+  "skipChat?": "boolean",
 });
 export type ReqForkApp = typeof reqForkApp.infer;
 export function isReqForkApp(obj: unknown): obj is ReqForkApp {
