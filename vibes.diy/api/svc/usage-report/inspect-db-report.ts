@@ -190,7 +190,8 @@ async function main(): Promise<Result<void>> {
   }
 
   // New membership slugs per day (for hover tooltips on the memberships chart)
-  const firstDay = days[0]!;
+  const firstDay = days[0] ?? "";
+  const lastDay = days[days.length - 1] ?? "";
   const newMembershipRows = await db
     .select({
       created: pg.sqlRequestGrants.created,
@@ -199,9 +200,7 @@ async function main(): Promise<Result<void>> {
     })
     .from(pg.sqlRequestGrants)
     .leftJoin(pg.sqlUserSlugBinding, eq(pg.sqlRequestGrants.foreignUserId, pg.sqlUserSlugBinding.userId))
-    .where(
-      and(eq(pg.sqlRequestGrants.state, "approved"), lte(pg.sqlRequestGrants.created, `${days[days.length - 1]!}T23:59:59.999Z`))
-    )
+    .where(and(eq(pg.sqlRequestGrants.state, "approved"), lte(pg.sqlRequestGrants.created, `${lastDay}T23:59:59.999Z`)))
     .orderBy(asc(pg.sqlRequestGrants.created));
 
   // Build a map of day -> new slugs that joined on that specific day
