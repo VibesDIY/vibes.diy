@@ -2,7 +2,9 @@ import { SetURLSearchParams, useNavigate, useParams, useSearchParams } from "rea
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 // import { useClerk } from "@clerk/react";
-import { processStream, BuildURI, URI } from "@adviser/cement";
+import { processStream, BuildURI, URI, exception2Result } from "@adviser/cement";
+import { fireproof } from "@fireproof/use-fireproof";
+import type { VibeDocument } from "@vibes.diy/prompts";
 import {
   isPromptBlockBegin,
   isPromptBlockEnd,
@@ -80,6 +82,11 @@ export interface PromptState {
   title: string;
   searchParams: URLSearchParams;
   setSearchParams: SetURLSearchParams;
+  // Source-of-truth code for a given fsId when no ChatSections exist for it
+  // (e.g. after a remix where the Apps row was pointer-copied without a
+  // replayed prompt). CodeEditor falls back to this when getCode returns no
+  // blocks for the current fsId.
+  hydratedSource?: { fsId: string; code: string[] };
 }
 
 export interface PromptBlock {
@@ -107,7 +114,18 @@ function isSetTitle(msg: unknown): msg is SetTitle {
   return !(SetTitle(msg) instanceof type.errors);
 }
 
-type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle;
+const SetHydratedSource = type({
+  type: "'setHydratedSource'",
+  fsId: "string",
+  code: "string[]",
+});
+type SetHydratedSource = typeof SetHydratedSource.infer;
+
+function isSetHydratedSource(msg: unknown): msg is SetHydratedSource {
+  return !(SetHydratedSource(msg) instanceof type.errors);
+}
+
+type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetHydratedSource;
 
 function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
@@ -117,6 +135,9 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 
     case isSetTitle(block):
       return { ...state, title: block.title };
+
+    case isSetHydratedSource(block):
+      return { ...state, hydratedSource: { fsId: block.fsId, code: block.code } };
 
     // case isPromptReq(block):
     //   if (!state.current) return state;
@@ -179,6 +200,25 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
 
+  // Read the local VibeDocument (seeded by the remix route) to show the
+  // "remix of" indicator in the header. Best-effort: if the doc is missing
+  // or malformed we just render the plain title.
+  const [remixOf, setRemixOf] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const r = await exception2Result(async () => {
+        const db = fireproof(`vibe-${appSlug}`);
+        return (await db.get("vibe")) as VibeDocument;
+      });
+      if (cancelled) return;
+      if (r.isOk() && r.Ok().remixOf) setRemixOf(r.Ok().remixOf);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [appSlug]);
+
   const [promptState, dispatch] = useReducer(promptReducer, {
     chat: {} as LLMChatEntry,
     running: false,
@@ -188,6 +228,34 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     searchParams,
     setSearchParams,
   });
+
+  // Hydrate the code editor from Apps.fileSystem when no ChatSections
+  // exist for this fsId (e.g. a freshly forked vibe). The fetch is
+  // content-addressed and HTTP-cacheable. Once a real prompt lands,
+  // getCode walks blocks first and this fallback is ignored.
+  const hydratedFsIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!fsId || !userSlug || !appSlug) return;
+    if (hydratedFsIdsRef.current.has(fsId)) return;
+    hydratedFsIdsRef.current.add(fsId);
+    (async () => {
+      const rApp = await vibeDiyApi.getAppByFsId({ appSlug, userSlug, fsId });
+      if (rApp.isErr()) return;
+      const app = rApp.Ok();
+      const appJsx =
+        app.fileSystem.find((f) => f.entryPoint && f.fileName === "/App.jsx") ??
+        app.fileSystem.find((f) => f.fileName === "/App.jsx");
+      if (!appJsx) return;
+      const rRes = await exception2Result(() =>
+        fetch(
+          `/assets/cid/?url=${encodeURIComponent(appJsx.assetURI)}&mime=${encodeURIComponent(appJsx.mimeType)}`
+        )
+      );
+      if (rRes.isErr() || !rRes.Ok().ok) return;
+      const text = await rRes.Ok().text();
+      dispatch({ type: "setHydratedSource", fsId, code: text.split("\n") });
+    })();
+  }, [fsId, userSlug, appSlug, vibeDiyApi]);
 
   useEffect(() => {
     if (inConstruction) return;
@@ -430,7 +498,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         fullWidthChat={isMobileViewport()}
         headerLeft={
           <ChatHeaderContent
-            remixOf={/*chatState.vibeDoc?.remixOf*/ undefined}
+            remixOf={remixOf}
             promptProcessing={promptState.running}
             codeReady={promptState.hasCode}
             title={promptState.title}
