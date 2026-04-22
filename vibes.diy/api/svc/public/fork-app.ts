@@ -20,12 +20,7 @@ import { max } from "drizzle-orm/sql";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
-import {
-  ensureAppSlug,
-  ensureUserSlug,
-  getDefaultUserSlug,
-  persistDefaultUserSlug,
-} from "../intern/ensure-slug-binding.js";
+import { ensureAppSlug, ensureUserSlug, getDefaultUserSlug, persistDefaultUserSlug } from "../intern/ensure-slug-binding.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
@@ -201,10 +196,7 @@ export async function forkApp(
   //    Only the direct parent is stored — full lineage is reconstructed by
   //    walking srcFsId pointers across Apps rows. Screenshot carries over as
   //    a placeholder until the fork generates its own.
-  const destMeta: MetaItem[] = [
-    ...srcMeta.filter((m) => m.type !== "remix-of"),
-    { type: "remix-of", srcFsId: src.fsId },
-  ];
+  const destMeta: MetaItem[] = [...srcMeta.filter((m) => m.type !== "remix-of"), { type: "remix-of", srcFsId: src.fsId }];
   const rIns = await exception2Result(() =>
     vctx.sql.db.insert(vctx.sql.tables.apps).values({
       appSlug: destAppSlug,
@@ -240,8 +232,7 @@ export async function forkApp(
   //    editor's sectionStream then hydrates the editor normally, and the
   //    next LLM prompt sees the current code via reconstructConversationMessages.
   const fsItems = src.fileSystem as FileSystemItem[];
-  const srcEntry =
-    fsItems.find((f) => f.entryPoint && f.fileName === "/App.jsx") ?? fsItems.find((f) => f.fileName === "/App.jsx");
+  const srcEntry = fsItems.find((f) => f.entryPoint && f.fileName === "/App.jsx") ?? fsItems.find((f) => f.fileName === "/App.jsx");
   if (srcEntry) {
     const rFetch = await vctx.storage.fetch(srcEntry.assetURI);
     if (!isFetchOkResult(rFetch)) {
@@ -348,7 +339,12 @@ export const forkAppEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqForkApp>
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      const rRes = await forkApp(vctx, req as unknown as ReqForkApp, req._auth.verifiedAuth.claims.userId, req._auth.verifiedAuth.claims);
+      const rRes = await forkApp(
+        vctx,
+        req as unknown as ReqForkApp,
+        req._auth.verifiedAuth.claims.userId,
+        req._auth.verifiedAuth.claims
+      );
       if (rRes.isErr()) {
         return Result.Err(rRes);
       }
