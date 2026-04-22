@@ -26,7 +26,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
 import { eq, and } from "drizzle-orm";
-import { sql } from "drizzle-orm/sql";
+import { sql, max } from "drizzle-orm/sql";
 import { type } from "arktype";
 
 // Access the raw WSSendProvider from Evento's wrapped ctx.send.
@@ -58,17 +58,25 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const dbName = req.dbName;
       const t = vctx.sql.tables.appDocuments;
 
-      // Atomic insert: seq = COALESCE(MAX(seq), 0) + 1 in a single statement
-      await vctx.sql.db.run(
-        sql`INSERT INTO ${t} (appSlug, dbName, docId, seq, userId, data, deleted, created)
-            SELECT ${req.appSlug}, ${dbName}, ${docId},
-                   COALESCE(MAX(${t.seq}), 0) + 1,
-                   ${req._auth.verifiedAuth.claims.userId},
-                   ${JSON.stringify(req.doc)},
-                   0, ${now}
-            FROM ${t}
-            WHERE ${t.appSlug} = ${req.appSlug} AND ${t.dbName} = ${dbName} AND ${t.docId} = ${docId}`
-      );
+      // Get current max seq for this doc
+      const maxSeqResult = await vctx.sql.db
+        .select({ maxSeq: max(t.seq) })
+        .from(t)
+        .where(and(eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
+        .then((r) => r[0]);
+
+      const nextSeq = (maxSeqResult?.maxSeq ?? 0) + 1;
+
+      await vctx.sql.db.insert(t).values({
+        appSlug: req.appSlug,
+        dbName,
+        docId,
+        seq: nextSeq,
+        userId: req._auth.verifiedAuth.claims.userId,
+        data: req.doc,
+        deleted: 0,
+        created: now,
+      });
 
       // Broadcast doc-changed to subscribed connections (fireproof pattern: direct ws.send)
       const evt = { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId };
@@ -226,17 +234,25 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
 
       const dbName = req.dbName;
 
-      // Atomic tombstone insert with seq = COALESCE(MAX(seq), 0) + 1
-      await vctx.sql.db.run(
-        sql`INSERT INTO ${t} (appSlug, dbName, docId, seq, userId, data, deleted, created)
-            SELECT ${req.appSlug}, ${dbName}, ${req.docId},
-                   COALESCE(MAX(${t.seq}), 0) + 1,
-                   ${req._auth.verifiedAuth.claims.userId},
-                   '{}',
-                   1, ${now}
-            FROM ${t}
-            WHERE ${t.appSlug} = ${req.appSlug} AND ${t.dbName} = ${dbName} AND ${t.docId} = ${req.docId}`
-      );
+      // Insert tombstone
+      const maxSeqResult = await vctx.sql.db
+        .select({ maxSeq: max(t.seq) })
+        .from(t)
+        .where(and(eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, req.docId)))
+        .then((r) => r[0]);
+
+      const nextSeq = (maxSeqResult?.maxSeq ?? 0) + 1;
+
+      await vctx.sql.db.insert(t).values({
+        appSlug: req.appSlug,
+        dbName,
+        docId: req.docId,
+        seq: nextSeq,
+        userId: req._auth.verifiedAuth.claims.userId,
+        data: {},
+        deleted: 1,
+        created: now,
+      });
 
       // Broadcast doc-changed to subscribed connections (fireproof pattern: direct ws.send)
       const evt = { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId: req.docId };
