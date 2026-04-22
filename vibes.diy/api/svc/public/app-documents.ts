@@ -54,7 +54,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const now = new Date().toISOString();
-      const docId = req.docId ?? crypto.randomUUID();
+      const docId = req.docId ?? vctx.sthis.nextId().str;
       const t = vctx.sql.tables.appDocuments;
 
       // Get current max seq for this doc

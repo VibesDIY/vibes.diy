@@ -21,6 +21,8 @@ export interface MockVibeApi {
   _docs: Map<string, Record<string, unknown>>;
 }
 
+let idCounter = 0;
+
 export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
   const docs = new Map<string, Record<string, unknown>>();
   const msgListeners: MsgListener[] = [];
@@ -29,7 +31,8 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
     svc: { vibeApp: { appSlug, userSlug: "test-user" } },
 
     putDoc: async (doc: Record<string, unknown>, docId?: string) => {
-      const id = docId ?? crypto.randomUUID();
+      // Time-sortable ID: hex timestamp + monotonic counter (mirrors sthis.nextId() behavior)
+      const id = docId ?? `${Date.now().toString(16)}-${(++idCounter).toString(16).padStart(8, "0")}`;
       docs.set(id, { ...doc, _id: id });
       return Result.Ok({ type: "vibes.diy.res-put-doc" as const, status: "ok" as const, id });
     },

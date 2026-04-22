@@ -26,9 +26,10 @@ describe("FireflyDatabase CRUD", () => {
     expect(mockApi._docs.has("my-id")).toBe(true);
   });
 
-  it("put without _id generates uuid", async () => {
+  it("put without _id generates time-sortable id", async () => {
     const res = await db.put({ title: "hello" });
-    expect(res.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(typeof res.id).toBe("string");
+    expect(res.id.length).toBeGreaterThan(0);
   });
 
   it("put notifies subscribers", async () => {
@@ -266,5 +267,138 @@ describe("FireflyDatabase cross-client sync", () => {
     // _simulateDocChanged sends appSlug="correct-app" — should trigger
     mockApi2._simulateDocChanged("doc-1");
     expect(listener2).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── Standalone async API (Node.js / Wrangler workflow) ──────────────
+// Exercises the same API surface documented in prompts/pkg/llms/fireproof.md
+// "Using Fireproof in JavaScript" section — no React hooks involved.
+
+describe("FireflyDatabase standalone async API", () => {
+  it("end-to-end workflow: put → get → query → subscribe → mutate → del → verify", async () => {
+    // ── 1. Put documents ──────────────────────────────────────────
+    const ok1 = await db.put({ text: "Buy milk", type: "todo", completed: false });
+    expect(ok1.id).toBeDefined();
+    expect(ok1.ok).toBe(true);
+
+    await db.put({ text: "Walk dog", type: "todo", completed: false });
+    const ok3 = await db.put({ text: "Meeting notes", type: "note" });
+
+    // ── 2. Get a document by id ───────────────────────────────────
+    const doc = await db.get(ok1.id);
+    expect(doc._id).toBe(ok1.id);
+    expect(doc.text).toBe("Buy milk");
+    expect(doc.completed).toBe(false);
+
+    // ── 3. Query with string field index ──────────────────────────
+    const todoQuery = await db.query("type", { key: "todo" });
+    expect(todoQuery.docs).toHaveLength(2);
+    expect(todoQuery.docs.map((d) => d.text)).toEqual(expect.arrayContaining(["Buy milk", "Walk dog"]));
+
+    // ── 4. Query with descending + limit (like the llms.md example) ──
+    const latest = await db.query("_id", { limit: 2, descending: true });
+    expect(latest.docs).toHaveLength(2);
+    // Descending by _id — last inserted first
+    expect(latest.docs[0]._id).toBe(ok3.id);
+
+    // ── 5. allDocs ────────────────────────────────────────────────
+    const all = await db.allDocs();
+    expect(all.docs).toHaveLength(3);
+
+    // ── 6. Subscribe for real-time updates ────────────────────────
+    const changes: unknown[][] = [];
+    const unsub = db.subscribe((docs) => {
+      changes.push(docs);
+    }, true);
+
+    // ── 7. Mutate: update a document (like database.put({...doc, completed: true})) ──
+    await db.put({ ...doc, completed: true });
+    expect(changes).toHaveLength(1);
+    expect(changes[0][0]).toEqual(expect.objectContaining({ _id: ok1.id, completed: true }));
+
+    // ── 8. Delete a document ──────────────────────────────────────
+    const delRes = await db.del(ok3.id);
+    expect(delRes.ok).toBe(true);
+    expect(changes).toHaveLength(2);
+
+    // Verify it's gone from queries
+    const afterDel = await db.allDocs();
+    expect(afterDel.docs).toHaveLength(2);
+    expect(afterDel.docs.find((d) => d._id === ok3.id)).toBeUndefined();
+
+    // ── 9. Query still works correctly after mutations ────────────
+    const todosAfter = await db.query("type", { key: "todo" });
+    expect(todosAfter.docs).toHaveLength(2);
+
+    // The updated doc should reflect the mutation
+    const updatedDoc = await db.get(ok1.id);
+    expect(updatedDoc.completed).toBe(true);
+
+    // ── 10. Unsubscribe stops notifications ───────────────────────
+    unsub();
+    await db.put({ text: "After unsub", type: "todo", completed: false });
+    expect(changes).toHaveLength(2); // No new entry
+
+    // ── 11. Bulk put ──────────────────────────────────────────────
+    const bulkRes = await db.bulk([
+      { text: "Bulk 1", type: "todo", completed: false },
+      { text: "Bulk 2", type: "todo", completed: false },
+    ]);
+    expect(bulkRes.ids).toHaveLength(2);
+    const afterBulk = await db.allDocs();
+    expect(afterBulk.docs).toHaveLength(5); // 2 original + 1 "After unsub" + 2 bulk
+
+    // ── 12. Changes (stub — returns empty) ────────────────────────
+    const changesResult = await db.changes();
+    expect(changesResult.rows).toEqual([]);
+  });
+
+  it("query with custom mapFn and emit", async () => {
+    await db.put({ _id: "t1", text: "Buy milk", type: "todo", priority: 1 });
+    await db.put({ _id: "t2", text: "Walk dog", type: "todo", priority: 3 });
+    await db.put({ _id: "n1", text: "Notes", type: "note", priority: 2 });
+
+    // Custom index: emit priority for todos only (like the llms.md custom index example)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await db.query(function (this: any, doc: Record<string, unknown>) {
+      if (doc.type === "todo") {
+        this.emit(doc.priority);
+      }
+    });
+    expect(result.docs).toHaveLength(2);
+    // Sorted ascending by key (priority)
+    expect(result.rows[0].key).toBe("1");
+    expect(result.rows[1].key).toBe("3");
+  });
+
+  it("query with array index and prefix (like llms.md date grouping)", async () => {
+    await db.put({ _id: "e1", date: "2024-11-15", title: "Nov event" });
+    await db.put({ _id: "e2", date: "2024-11-20", title: "Another Nov" });
+    await db.put({ _id: "e3", date: "2024-12-01", title: "Dec event" });
+
+    // Array index with prefix query — group by [year, month]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await db.query(function (this: any, doc: Record<string, unknown>) {
+      const d = new Date(doc.date as string);
+      if (!isNaN(d.getTime())) {
+        this.emit([d.getFullYear(), d.getMonth(), d.getDate()]);
+      }
+    });
+    // All 3 docs should be indexed
+    expect(result.docs).toHaveLength(3);
+  });
+
+  it("remove is alias for del", async () => {
+    const { id } = await db.put({ text: "remove me" });
+    const res = await db.remove(id);
+    expect(res.ok).toBe(true);
+    await expect(db.get(id)).rejects.toThrow();
+  });
+
+  it("ready/close/destroy are no-ops", async () => {
+    await expect(db.ready()).resolves.toBeUndefined();
+    await expect(db.close()).resolves.toBeUndefined();
+    await expect(db.destroy()).resolves.toBeUndefined();
+    await expect(db.compact()).resolves.toBeUndefined();
   });
 });
