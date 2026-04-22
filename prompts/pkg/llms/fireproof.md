@@ -260,7 +260,7 @@ console.log("Latest documents:", latest.docs);
 To subscribe to real-time updates, use the `subscribe` method. This is useful for building backend event handlers or other server-side logic. For instance to send an email when the user completes a todo:
 
 ```js
-import { fireproof } from "use-fireproof";
+import { fireproof } from "use-firproof";
 
 const database = fireproof("todo-list-db");
 
@@ -273,46 +273,6 @@ database.subscribe((changes) => {
   });
 }, true);
 ```
-
-### Working with Files
-
-Attach files to a document by adding them to the \_files property. For example:
-
-```html
-<input accept="image/*" title="save to Fireproof" type="file" id="files" multiple />
-```
-
-```js
-function handleFiles() {
-  const fileList = this.files;
-  const doc = {
-    type: "files",
-    _files: {},
-  };
-  for (const file of fileList) {
-    // Assign each File object to the document
-    doc._files[file.name] = file;
-  }
-  database.put(doc);
-}
-
-document.getElementById("files").addEventListener("change", handleFiles, false);
-```
-
-When loading a document with attachments, you can retrieve each attachment's actual File object by calling its .file() method. This returns a Promise that resolves with the File data, which you can display in your app:
-
-```js
-const doc = await database.get("my-doc-id");
-for (const fileName in doc._files) {
-  const meta = doc._files[fileName];
-  if (meta.file) {
-    const fileObj = await meta.file();
-    console.log("Loaded file:", fileObj.name);
-  }
-}
-```
-
-See the final example application in this file for a working example.
 
 ### Form Validation
 
@@ -420,76 +380,6 @@ export default function App() {
           </li>
         ))}
       </ul>
-    </div>
-  );
-}
-```
-
-### Example Image Uploader
-
-This React example shows a simple image uploader application that uses Fireproof to store and sort images by creation date. These APIs easily work with plain JavaScript also.
-
-Code listing for App.jsx:
-
-```js
-import { useFireproof, ImgFile } from "use-fireproof";
-import { useState } from "react";
-
-export default function App() {
-  // 1. Hooks and document shapes
-  const { useDocument, useLiveQuery } = useFireproof("image-uploads");
-  const { doc, merge, submit } = useDocument({ _files: {}, description: "" });
-  const { docs } = useLiveQuery("_id", { descending: true, limit: 5 });
-  const [error, setError] = useState(false);
-
-  // 2. Event handlers
-  const handleFileChange = (e) => {
-    if (e.target.files[0]) merge({ _files: { uploaded: e.target.files[0] } });
-  };
-
-  const handleUpload = () => {
-    if (doc.description.trim()) {
-      submit();
-    } else {
-      setError(true);
-    }
-  };
-
-  // 3. ClassNames
-  const c = {
-    bg: "bg-white",
-    card: "bg-gray-50",
-    accent: "bg-blue-500 hover:bg-blue-600",
-    text: "text-gray-700",
-  };
-
-  // 4. JSX return
-  return (
-    <div className={`p-6 max-w-lg mx-auto ${c.bg} shadow-lg rounded-lg`}>
-      <h2 className="text-2xl font-bold mb-4">Image Uploader</h2>
-      <input type="file" accept="image/*" onChange={handleFileChange} className="mb-2 border p-2 w-full rounded" />
-      <input
-        type="text"
-        placeholder="Enter description"
-        value={doc.description}
-        onChange={(e) => {
-          setError(false);
-          merge({ description: e.target.value });
-        }}
-        className={`w-full p-2 border rounded mb-4 ${error ? "border-red-500" : "border-gray-300"}`}
-      />
-      <button onClick={handleUpload} className={`px-4 py-2 ${c.accent} text-white rounded`}>
-        Upload
-      </button>
-      <h3 className="text-lg font-semibold mt-6">Recent Uploads</h3>
-      <div className="grid grid-cols-2 gap-4 mt-2">
-        {docs.map((doc) => (
-          <div key={doc._id} className={`border p-2 rounded shadow-sm ${c.card}`}>
-            {doc._files?.uploaded && <ImgFile file={doc._files.uploaded} alt="Uploaded Image" className="w-full h-auto rounded" />}
-            <p className={`text-sm ${c.text} mt-2`}>{doc.description || "No description"}</p>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
