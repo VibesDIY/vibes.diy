@@ -108,12 +108,13 @@ export class VibeSandboxApi {
     );
   }
 
-  imgVibes(prompt: string, inputImageBase64?: string): Promise<Result<ResImgVibes>> {
+  imgVibes(prompt: string, inputImageBase64?: string, model?: string): Promise<Result<ResImgVibes>> {
     return this.request<ReqImgVibes, ResImgVibes>(
       {
         type: "vibe.req.imgVibes",
         prompt,
         ...(inputImageBase64 ? { inputImageBase64 } : {}),
+        ...(model ? { model } : {}),
         ...this.svc.vibeApp,
       },
       { wait: isResImgVibes, timeout: 120000 }

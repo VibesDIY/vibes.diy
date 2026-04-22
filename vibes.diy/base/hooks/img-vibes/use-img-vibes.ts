@@ -11,6 +11,7 @@ export function useImgVibes({
   skip = false,
   generationId,
   inputImage,
+  model,
 }: Partial<UseImgVibesOptions>): UseImgVibesResult {
   const [assetUrl, setAssetUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,7 +27,7 @@ export function useImgVibes({
   useEffect(() => {
     if (skip || !_id) return;
 
-    const genKey = `${_id}-${generationId ?? ""}-${inputImage?.name ?? ""}${inputImage?.lastModified ?? ""}`;
+    const genKey = `${_id}-${generationId ?? ""}-${inputImage?.name ?? ""}${inputImage?.lastModified ?? ""}-${model ?? ""}`;
     if (currentGenRef.current === genKey) return;
     currentGenRef.current = genKey;
 
@@ -43,7 +44,10 @@ export function useImgVibes({
       }
 
       // Cache hit: doc exists with versions, and this isn't a regen request or img2img
-      if (existingDoc?.versions?.length && !isRegen && !inputImage) {
+      // Bypass cache when a specific model is requested that differs from the stored version
+      const currentVer = existingDoc?.versions?.[existingDoc?.currentVersion ?? 0];
+      const modelMatch = !model || currentVer?.model === model;
+      if (existingDoc?.versions?.length && !isRegen && !inputImage && modelMatch) {
         const ver = existingDoc.versions[existingDoc.currentVersion ?? 0];
         if (ver?.assetUrl) {
           setDocument(existingDoc);
@@ -70,7 +74,7 @@ export function useImgVibes({
       setError(null);
 
       try {
-        const urls = await imgVibes(promptText, inputImage);
+        const urls = await imgVibes(promptText, inputImage, model);
         const imageUrl = urls[0];
         if (!imageUrl) throw new Error("No image URL received from service");
 
@@ -80,7 +84,7 @@ export function useImgVibes({
         if (existingDoc?._id && isRegen) {
           // Regen: append version to existing doc
           const fresh = (await db.get(existingDoc._id)) as PartialImageDocument;
-          const updated = addNewVersion(fresh as Required<PartialImageDocument>, imageUrl, promptText);
+          const updated = addNewVersion(fresh as Required<PartialImageDocument>, imageUrl, promptText, model);
           await db.put(updated);
           const saved = (await db.get(existingDoc._id)) as PartialImageDocument;
           setDocument(saved);
@@ -93,7 +97,7 @@ export function useImgVibes({
             prompt: promptText,
             created: now,
             currentVersion: 0,
-            versions: [{ id: "v1", created: now, promptKey: "p1", assetUrl: imageUrl }],
+            versions: [{ id: "v1", created: now, promptKey: "p1", assetUrl: imageUrl, ...(model ? { model } : {}) }],
             currentPromptKey: "p1",
             prompts: { p1: { text: promptText, created: now } },
           });
@@ -112,7 +116,7 @@ export function useImgVibes({
     }
 
     run();
-  }, [_id, prompt, generationId, skip, db, inputImage]);
+  }, [_id, prompt, generationId, skip, db, inputImage, model]);
 
   return { assetUrl, loading, progress, error, document };
 }
