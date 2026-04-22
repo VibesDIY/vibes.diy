@@ -4,7 +4,7 @@ import { useVibesDiy } from "../../vibes-diy-provider.js";
 // import { useClerk } from "@clerk/react";
 import { processStream, BuildURI, URI, exception2Result } from "@adviser/cement";
 import { fireproof } from "@fireproof/use-fireproof";
-import type { VibeDocument } from "@vibes.diy/prompts";
+import type { VibeDocument, ViewType } from "@vibes.diy/prompts";
 import {
   isPromptBlockBegin,
   isPromptBlockEnd,
@@ -21,7 +21,6 @@ import { BrutalistCard } from "@vibes.diy/base";
 import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
-import type { ViewType } from "@vibes.diy/prompts";
 import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
@@ -247,9 +246,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         app.fileSystem.find((f) => f.fileName === "/App.jsx");
       if (!appJsx) return;
       const rRes = await exception2Result(() =>
-        fetch(
-          `/assets/cid/?url=${encodeURIComponent(appJsx.assetURI)}&mime=${encodeURIComponent(appJsx.mimeType)}`
-        )
+        fetch(`/assets/cid/?url=${encodeURIComponent(appJsx.assetURI)}&mime=${encodeURIComponent(appJsx.mimeType)}`)
       );
       if (rRes.isErr() || !rRes.Ok().ok) return;
       const text = await rRes.Ok().text();
