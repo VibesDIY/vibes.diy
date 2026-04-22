@@ -42,6 +42,14 @@ export async function registerFirefly(api: VibeSandboxApi): Promise<void> {
 }
 
 /**
+ * Standalone factory for non-React contexts (Node.js, Wrangler, scripts).
+ * Mirrors the fireproof("name") API from use-fireproof.
+ */
+export function fireproof(name: string): FireflyDatabase {
+  return getOrCreateDb(name);
+}
+
+/**
  * Drop-in replacement for useFireproof that uses FireflyDatabase.
  * Apps call: const { database, useLiveQuery, useDocument } = useFireproof("mydb")
  */

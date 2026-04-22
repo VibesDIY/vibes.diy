@@ -366,9 +366,9 @@ describe("FireflyDatabase standalone async API", () => {
       }
     });
     expect(result.docs).toHaveLength(2);
-    // Sorted ascending by key (priority)
-    expect(result.rows[0].key).toBe("1");
-    expect(result.rows[1].key).toBe("3");
+    // Sorted ascending by key (priority) — keys are original types, not strings
+    expect(result.rows[0].key).toBe(1);
+    expect(result.rows[1].key).toBe(3);
   });
 
   it("query with array index and prefix (like llms.md date grouping)", async () => {

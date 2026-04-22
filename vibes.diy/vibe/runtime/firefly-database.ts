@@ -9,6 +9,8 @@
 import type { VibeSandboxApi, VibeApp } from "./register-dependencies.js";
 // Response validators + event — re-exported from api-types via vibe-types
 import { isResPutDoc, isResGetDoc, isResQueryDocs, isResDeleteDoc, isEvtDocChanged } from "@vibes.diy/vibe-types";
+// @ts-expect-error "charwise" has no types
+import charwise from "charwise";
 
 // Minimal types matching what the use-fireproof hooks expect
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -159,13 +161,17 @@ export class FireflyDatabase {
   }
 
   async query<T extends DocTypes>(
-    mapFn: string | ((doc: DocWithId<T>) => void),
+    mapFn: string | ((doc: DocWithId<T>, emit?: (key: unknown, value?: unknown) => void) => unknown),
     opts: {
       includeDocs?: boolean;
-      key?: string;
-      keys?: string[];
-      range?: [string, string];
-      prefix?: string;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      key?: any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      keys?: any[];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      range?: [any, any];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prefix?: any;
       descending?: boolean;
       limit?: number;
     } = {}
@@ -186,37 +192,48 @@ export class FireflyDatabase {
     const allDocs = res.docs.map((d) => ({ ...d, _id: d._id }) as DocWithId<T>);
     console.log("[Firefly] query returned", allDocs.length, "docs");
 
-    // Build index entries based on mapFn
-    let rows: IndexRow<T>[];
+    // Build index entries — keys stored as charwise-encoded strings for correct sort
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let encodedRows: { encodedKey: string; decodedKey: any; value: DocWithId<T>; doc?: DocWithId<T> }[];
 
     if (typeof mapFn === "string") {
       // String field name — filter docs that have this field, key = field value
-      rows = allDocs
+      encodedRows = allDocs
         .filter((doc) => doc[mapFn] !== undefined)
         .map((doc) => ({
-          key: String(doc[mapFn]),
+          encodedKey: charwise.encode(doc[mapFn]) as string,
+          decodedKey: doc[mapFn],
           value: doc,
           doc: opts.includeDocs ? doc : undefined,
         }));
     } else if (typeof mapFn === "function") {
-      // MapFn — collect emitted entries
-      rows = [];
+      // MapFn — supports both emit() and return-value patterns (matches fireproof behavior)
+      encodedRows = [];
       for (const doc of allDocs) {
         try {
-          const emitted: { key: string; value: DocWithId<T> }[] = [];
-          const emit = (key: string) => {
-            emitted.push({ key: String(key), value: doc });
+          let emitCalled = false;
+          const emit = (key: unknown) => {
+            emitCalled = true;
+            if (typeof key === "undefined") return;
+            encodedRows.push({
+              encodedKey: charwise.encode(key) as string,
+              decodedKey: key,
+              value: doc,
+              doc: opts.includeDocs ? doc : undefined,
+            });
           };
-          mapFn.call({ emit }, doc);
-          // If mapFn didn't call emit, try calling it as (doc, emit)
-          if (emitted.length === 0) {
-            (mapFn as (doc: DocWithId<T>, emit: (key: string) => void) => void)(doc, emit);
-          }
-          for (const entry of emitted) {
-            rows.push({
-              key: entry.key,
-              value: entry.value,
-              doc: opts.includeDocs ? entry.value : undefined,
+          // Fireproof calls mapFn(doc, emit) — supports three patterns:
+          //   1. (doc, emit) => { emit(key) }     — explicit emit as arg
+          //   2. function(doc) { this.emit(key) }  — emit via this
+          //   3. (doc) => key                       — return value is the key
+          const mapReturn = mapFn.call({ emit }, doc, emit);
+          // If emit was never called and return value is defined, use return as key
+          if (!emitCalled && typeof mapReturn !== "undefined") {
+            encodedRows.push({
+              encodedKey: charwise.encode(mapReturn) as string,
+              decodedKey: mapReturn,
+              value: doc,
+              doc: opts.includeDocs ? doc : undefined,
             });
           }
         } catch {
@@ -224,41 +241,55 @@ export class FireflyDatabase {
         }
       }
     } else {
-      // No mapFn — return all docs
-      rows = allDocs.map((doc) => ({
-        key: doc._id,
+      // No mapFn — return all docs keyed by _id
+      encodedRows = allDocs.map((doc) => ({
+        encodedKey: charwise.encode(doc._id) as string,
+        decodedKey: doc._id,
         value: doc,
         doc: opts.includeDocs ? doc : undefined,
       }));
     }
 
-    // Apply query filters
+    // Apply query filters using charwise-encoded comparisons
     if (opts.key !== undefined) {
-      rows = rows.filter((r) => r.key === opts.key);
+      const encodedKey = charwise.encode(opts.key) as string;
+      encodedRows = encodedRows.filter((r) => r.encodedKey === encodedKey);
     }
     if (opts.keys !== undefined) {
-      const keySet = new Set(opts.keys);
-      rows = rows.filter((r) => keySet.has(r.key));
+      const encodedKeys = new Set(opts.keys.map((k: unknown) => charwise.encode(k) as string));
+      encodedRows = encodedRows.filter((r) => encodedKeys.has(r.encodedKey));
     }
     if (opts.range) {
-      const [start, end] = opts.range;
-      rows = rows.filter((r) => r.key >= start && r.key <= end);
+      const encodedStart = charwise.encode(opts.range[0]) as string;
+      const encodedEnd = charwise.encode(opts.range[1]) as string;
+      encodedRows = encodedRows.filter((r) => r.encodedKey >= encodedStart && r.encodedKey <= encodedEnd);
     }
-    if (opts.prefix) {
-      const prefix = opts.prefix;
-      rows = rows.filter((r) => r.key.startsWith(prefix));
+    if (opts.prefix !== undefined) {
+      // For array prefixes, strip the trailing "!" so [2024,11] matches [2024,11,15]
+      let encodedPrefix = charwise.encode(opts.prefix) as string;
+      if (Array.isArray(opts.prefix) && encodedPrefix.endsWith("!")) {
+        encodedPrefix = encodedPrefix.slice(0, -1);
+      }
+      encodedRows = encodedRows.filter((r) => r.encodedKey.startsWith(encodedPrefix));
     }
 
-    // Sort
-    rows.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+    // Sort by encoded key (charwise ensures correct type-aware ordering)
+    encodedRows.sort((a, b) => (a.encodedKey < b.encodedKey ? -1 : a.encodedKey > b.encodedKey ? 1 : 0));
     if (opts.descending) {
-      rows.reverse();
+      encodedRows.reverse();
     }
 
     // Limit
     if (opts.limit !== undefined) {
-      rows = rows.slice(0, opts.limit);
+      encodedRows = encodedRows.slice(0, opts.limit);
     }
+
+    // Decode keys back for output
+    const rows: IndexRow<T>[] = encodedRows.map((r) => ({
+      key: r.decodedKey,
+      value: r.value,
+      doc: r.doc,
+    }));
 
     return {
       rows,
