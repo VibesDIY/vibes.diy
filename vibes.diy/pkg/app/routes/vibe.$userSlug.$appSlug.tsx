@@ -7,7 +7,7 @@ import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
-import { VibesSwitch, VibesButton, YELLOW, gridBackground, cx } from "@vibes.diy/base";
+import { VibesSwitch, VibesButton, BLUE, YELLOW, gridBackground, cx } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
@@ -180,7 +180,7 @@ export default function VibeIframeWrapper() {
               <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
                 Remix
               </VibesButton>
-              <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(cloneUrl)}>
+              <VibesButton variant={BLUE} icon="remix" onClick={() => window.location.assign(cloneUrl)}>
                 Clone
               </VibesButton>
               <button
@@ -311,7 +311,7 @@ export default function VibeIframeWrapper() {
                 <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
                   Remix
                 </VibesButton>
-                <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(cloneUrl)}>
+                <VibesButton variant={BLUE} icon="remix" onClick={() => window.location.assign(cloneUrl)}>
                   Clone
                 </VibesButton>
               </div>
