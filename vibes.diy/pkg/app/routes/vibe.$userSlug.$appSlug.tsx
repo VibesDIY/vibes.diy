@@ -305,7 +305,8 @@ export default function VibeIframeWrapper() {
                 />
               )}
               <p style={{ marginTop: 16, fontSize: 14, opacity: 0.6 }}>
-                While you wait you can remix to make your own version of this app. It will start empty — you won't get this copy's data or collaboration.
+                While you wait you can remix to edit your own version, or clone to deploy a copy as-is. Either way it starts empty —
+                you won't get this copy's data or collaboration.
               </p>
               <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
                 <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
