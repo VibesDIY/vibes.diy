@@ -1,5 +1,5 @@
 import React from "react";
-import { Database, DocWithId } from "use-fireproof";
+import type { Database, DocWithId } from "@vibes.diy/vibe-runtime";
 
 export interface VersionInfo {
   readonly id: string; // Version identifier (e.g. "v1", "v2")

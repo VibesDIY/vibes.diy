@@ -1,6 +1,5 @@
 import { FPCloudClaim } from "@vibes.diy/api-types";
 import { type } from "arktype";
-// import { FPCloudClaimSchema } from "@fireproof/core-types-protocols-cloud";
 
 export * from "./img-vibes.js";
 

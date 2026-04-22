@@ -12,23 +12,24 @@ import { isResPutDoc, isResGetDoc, isResQueryDocs, isResDeleteDoc, isEvtDocChang
 // @ts-expect-error "charwise" has no types
 import charwise from "charwise";
 
-// Minimal types matching what the use-fireproof hooks expect
+// Types matching the use-fireproof Database interface.
+// Exported for use by consumers (img-vibes, db-explorer, etc.)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type DocTypes = Record<string, any>;
-type DocWithId<T extends DocTypes = DocTypes> = T & { _id: string };
-interface DocResponse {
+export type DocTypes = Record<string, any>;
+export type DocWithId<T extends DocTypes = DocTypes> = T & { _id: string };
+export interface DocResponse {
   id: string;
   ok: boolean;
 }
-type ListenerFn<T extends DocTypes = DocTypes> = (changes: DocWithId<T>[]) => void;
+export type ListenerFn<T extends DocTypes = DocTypes> = (changes: DocWithId<T>[]) => void;
 
-interface IndexRow<T extends DocTypes = DocTypes> {
+export interface IndexRow<T extends DocTypes = DocTypes> {
   key: string;
   value: DocWithId<T>;
   doc?: DocWithId<T>;
 }
 
-interface QueryResponse<T extends DocTypes = DocTypes> {
+export interface QueryResponse<T extends DocTypes = DocTypes> {
   rows: IndexRow<T>[];
   docs: DocWithId<T>[];
 }
