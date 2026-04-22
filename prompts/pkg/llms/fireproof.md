@@ -260,7 +260,7 @@ console.log("Latest documents:", latest.docs);
 To subscribe to real-time updates, use the `subscribe` method. This is useful for building backend event handlers or other server-side logic. For instance to send an email when the user completes a todo:
 
 ```js
-import { fireproof } from "use-firproof";
+import { fireproof } from "use-fireproof";
 
 const database = fireproof("todo-list-db");
 
