@@ -189,6 +189,33 @@ async function main(): Promise<Result<void>> {
     membershipTimeseries.push({ day, membership_count: result[0]?.cnt ?? 0 });
   }
 
+  // New membership slugs per day (for hover tooltips on the memberships chart)
+  const firstDay = days[0]!;
+  const newMembershipRows = await db
+    .select({
+      created: pg.sqlRequestGrants.created,
+      foreignUserId: pg.sqlRequestGrants.foreignUserId,
+      memberSlug: pg.sqlUserSlugBinding.userSlug,
+    })
+    .from(pg.sqlRequestGrants)
+    .leftJoin(pg.sqlUserSlugBinding, eq(pg.sqlRequestGrants.foreignUserId, pg.sqlUserSlugBinding.userId))
+    .where(
+      and(eq(pg.sqlRequestGrants.state, "approved"), lte(pg.sqlRequestGrants.created, `${days[days.length - 1]!}T23:59:59.999Z`))
+    )
+    .orderBy(asc(pg.sqlRequestGrants.created));
+
+  // Build a map of day -> new slugs that joined on that specific day
+  const newMemberSlugsByDay = new Map<string, string[]>();
+  for (const row of newMembershipRows) {
+    const day = row.created.slice(0, 10);
+    if (day < firstDay) continue;
+    const slug = row.memberSlug ?? row.foreignUserId;
+    const arr = newMemberSlugsByDay.get(day) ?? [];
+    if (!arr.includes(slug)) arr.push(slug);
+    newMemberSlugsByDay.set(day, arr);
+  }
+  const membershipSlugsByDay = days.map((day) => ({ day, slugs: newMemberSlugsByDay.get(day) ?? [] }));
+
   // Active vibes timeseries — cumulative distinct userSlug+appSlug in AppSlugBindings per day
   const activeVibesTimeseries: { day: string; active_vibes_count: number }[] = [];
   for (const day of days) {
@@ -310,6 +337,7 @@ async function main(): Promise<Result<void>> {
       distinct_member_count: number;
     },
     membershipTimeseries,
+    membershipSlugsByDay,
     activeVibesTimeseries,
     userSlugBindingsTimeseries,
     membershipsByApp,

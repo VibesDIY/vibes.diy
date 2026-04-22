@@ -26,6 +26,7 @@ interface ReportData {
     readonly distinct_member_count: number;
   };
   readonly membershipTimeseries: readonly Record<string, unknown>[];
+  readonly membershipSlugsByDay: readonly { readonly day: string; readonly slugs: readonly string[] }[];
   readonly activeVibesTimeseries: readonly Record<string, unknown>[];
   readonly userSlugBindingsTimeseries: readonly Record<string, unknown>[];
   readonly membershipsByApp: readonly Record<string, unknown>[];
@@ -87,12 +88,21 @@ function DataTable({ rows }: { readonly rows: readonly Record<string, unknown>[]
 function TrendChart({
   rows,
   valueKey,
+  slugsByDay,
 }: {
   readonly rows: readonly Record<string, unknown>[];
   readonly valueKey: string;
+  readonly slugsByDay?: readonly { readonly day: string; readonly slugs: readonly string[] }[];
 }): React.ReactElement | null {
   if (rows.length === 0) {
     return null;
+  }
+
+  const slugMap = new Map<string, readonly string[]>();
+  if (slugsByDay) {
+    for (const entry of slugsByDay) {
+      if (entry.slugs.length > 0) slugMap.set(entry.day, entry.slugs);
+    }
   }
 
   const values = rows.map((row) => Number(row[valueKey] ?? 0));
@@ -130,9 +140,19 @@ function TrendChart({
           <line x1={padding} y1={height / 2} x2={width - padding} y2={height / 2} />
         </g>
         <polyline fill="none" stroke="var(--ink)" strokeWidth="5" points={pointsStr} />
-        {pointCoords.map(({ x, y }, i) => (
-          <circle key={i} cx={x} cy={y} r="4" fill="var(--plate)" stroke="var(--ink)" strokeWidth="3" />
-        ))}
+        {pointCoords.map(({ x, y }, i) => {
+          const day = (rows[i]?.["day"] as string) ?? "";
+          const daySlugs = slugMap.get(day);
+          const lines = [`${day}: ${values[i]}`];
+          if (daySlugs && daySlugs.length > 0) {
+            lines.push(`New: ${daySlugs.join(", ")}`);
+          }
+          return (
+            <circle key={i} cx={x} cy={y} r="6" fill="var(--plate)" stroke="var(--ink)" strokeWidth="3" className="trend-point">
+              <title>{lines.join("\n")}</title>
+            </circle>
+          );
+        })}
       </svg>
     </div>
   );
@@ -143,17 +163,19 @@ function TrendSection({
   description,
   rows,
   valueKey,
+  slugsByDay,
 }: {
   readonly title: string;
   readonly description: string;
   readonly rows: readonly Record<string, unknown>[];
   readonly valueKey: string;
+  readonly slugsByDay?: readonly { readonly day: string; readonly slugs: readonly string[] }[];
 }): React.ReactElement {
   return (
     <section>
       <h2>{title}</h2>
       <p>{description}</p>
-      <TrendChart rows={rows} valueKey={valueKey} />
+      <TrendChart rows={rows} valueKey={valueKey} slugsByDay={slugsByDay} />
     </section>
   );
 }
@@ -388,6 +410,8 @@ td pre {
   background:
     repeating-linear-gradient(0deg, transparent 0 19px, rgba(148, 163, 184, 0.2) 19px 20px);
 }
+.trend-point { cursor: pointer; }
+.trend-point:hover { r: 8; }
 @media (max-width: 640px) {
   main {
     padding: 20px 12px 56px;
@@ -417,6 +441,7 @@ function ReportPage(data: ReportData): React.ReactElement {
     tableCounts,
     membershipSummary,
     membershipTimeseries,
+    membershipSlugsByDay,
     activeVibesTimeseries,
     userSlugBindingsTimeseries,
     membershipsByApp,
@@ -462,9 +487,10 @@ function ReportPage(data: ReportData): React.ReactElement {
 
           <TrendSection
             title="Memberships Over 30 Days"
-            description="Daily cumulative total of currently active memberships, where one membership is one non-owner user with durable access to one specific vibe by approved request or accepted invite."
+            description="Daily cumulative total of currently active memberships, where one membership is one non-owner user with durable access to one specific vibe by approved request or accepted invite. Hover points to see new members that day."
             rows={membershipTimeseries}
             valueKey="membership_count"
+            slugsByDay={membershipSlugsByDay}
           />
 
           <TrendSection
