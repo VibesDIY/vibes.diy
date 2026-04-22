@@ -133,7 +133,7 @@ export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): P
             fileName: outputName,
           },
           rollupOptions: {
-            external: (id) => !id.startsWith(".") && !id.startsWith("/"),
+            external: (id) => !id.startsWith(".") && !id.startsWith("/") && id !== "charwise",
           },
         },
         logLevel: "warn",
