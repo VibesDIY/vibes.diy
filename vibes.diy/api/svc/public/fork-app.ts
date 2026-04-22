@@ -119,7 +119,11 @@ export async function forkApp(
   }
 
   // 2. Grant check mirrors /vibe view rules: allow owner, public-access,
-  //    invite-accepted, or request-approved.
+  //    invite-accepted, request-approved, or enableRequest (the /vibe page's
+  //    "remix while you wait" affordance — matches vibe.$userSlug.$appSlug.tsx
+  //    showing REMIX/CLONE for pending-request viewers). Forks only copy
+  //    env into Apps.env (runtime-only); AppSettings.env is not seeded, so
+  //    the forker's admin UI does not expose src.env.
   const isOwner = userId === src.userId;
   if (!isOwner) {
     const rAppSet = await ensureAppSettings(vctx, {
@@ -130,7 +134,7 @@ export async function forkApp(
     if (rAppSet.isErr()) return Result.Err("app-settings-not-found");
     const settings = rAppSet.Ok().settings;
     const isPublic = settings.entry.publicAccess?.enable && src.mode === "production";
-    let granted = isPublic;
+    let granted = !!isPublic;
     if (!granted) {
       const rInvite = await hasAccessInvite(vctx, { appSlug: src.appSlug, userSlug: src.userSlug, grantUserId: userId });
       if (rInvite.isOk() && isResHasAccessInviteAccepted(rInvite.Ok())) granted = true;
@@ -138,6 +142,9 @@ export async function forkApp(
     if (!granted) {
       const rReq = await hasAccessRequest(vctx, { appSlug: src.appSlug, userSlug: src.userSlug, foreignUserId: userId });
       if (rReq.isOk() && isResHasAccessRequestApproved(rReq.Ok())) granted = true;
+    }
+    if (!granted && settings.entry.enableRequest?.enable && src.mode === "production") {
+      granted = true;
     }
     if (!granted) return Result.Err("not-grant");
   }

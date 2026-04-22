@@ -128,6 +128,30 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     expect(fork.srcAppSlug).toBe(src.appSlug);
   });
 
+  it("non-owner can fork an enableRequest app (matches /vibe 'remix while you wait' affordance)", async () => {
+    const src = await createProdApp("hello-request-enabled");
+    await api.ensureAppSettings({
+      appSlug: src.appSlug,
+      userSlug: src.userSlug,
+      request: { enable: true, autoAcceptViewRequest: false },
+    });
+
+    const rFork = await api2.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug });
+    if (rFork.isErr()) {
+      assert.fail("Expected forkApp to succeed for enableRequest app: " + JSON.stringify(rFork.Err()));
+    }
+    const fork = rFork.Ok();
+    expect(fork.userSlug).not.toBe(src.userSlug);
+    expect(fork.srcFsId).toBe(src.fsId);
+    expect(fork.srcUserSlug).toBe(src.userSlug);
+    expect(fork.srcAppSlug).toBe(src.appSlug);
+
+    // Forker's admin UI must NOT inherit src env entries from the source.
+    const rForkSettings = await api2.ensureAppSettings({ appSlug: fork.appSlug, userSlug: fork.userSlug });
+    if (rForkSettings.isErr()) assert.fail(`ensureAppSettings failed: ${rForkSettings.Err().message}`);
+    expect(rForkSettings.Ok().settings.entry.settings.env).toEqual([]);
+  });
+
   it("skipChat=true clones into production with -clone slug and request-access settings (no chat seed)", async () => {
     const src = await createProdApp("hello-clone");
 
