@@ -242,7 +242,7 @@ export default function VibeIframeWrapper() {
               <ExpandedVibesPill
                 size={60}
                 onRemix={() => {
-                  window.location.href = `/chat/${userSlug}/${appSlug}`;
+                  window.location.href = remixUrl;
                 }}
               />
             </Delayed>
