@@ -53,8 +53,9 @@ export default function RemixRoute() {
         // Non-fatal: local VibeDocument is best-effort header metadata.
       }
 
-      // The forked Apps row already points at the source's shared storage
-      // refs, so we can land straight on the preview with the source fsId.
+      // The forked Apps row shares the source's storage refs. The chat
+      // route hydrates the editor from Apps.fileSystem when no ChatSections
+      // exist, so landing on code view shows the source code ready to edit.
       navigate(`/chat/${fork.userSlug}/${fork.appSlug}/${fork.srcFsId}?view=code`);
     })();
   }, [isLoaded, isSignedIn, userSlug, appSlug, fsId, navigate, vibeDiyApi]);

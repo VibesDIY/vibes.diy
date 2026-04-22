@@ -59,6 +59,11 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
       return { code: retCode, complete, streamId };
     }
   }
+  // Fallback: when no ChatSections exist for this fsId (e.g. a freshly
+  // forked vibe), use the hydratedSource fetched from Apps.fileSystem.
+  if (fsId && promptState.hydratedSource?.fsId === fsId) {
+    return { code: promptState.hydratedSource.code, complete: true, streamId: `hydrate-${fsId}` };
+  }
   return { code: retCode, complete, streamId };
 }
 

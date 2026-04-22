@@ -15,10 +15,11 @@ function ChatHeaderContent({ title, promptProcessing, codeReady, remixOf }: Chat
         {remixOf ? (
           <>
             <a
-              href={`https://${remixOf}.vibesdiy.app/`}
+              href={`/vibe/${remixOf}/`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-accent-02-light dark:text-accent-02-dark hover:underline"
+              title={`Remix of ${remixOf}`}
             >
               🔀
             </a>{" "}
