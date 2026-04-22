@@ -33,6 +33,16 @@ import {
   ReqImgVibes,
   ResOkImgVibes,
   ResErrorImgVibes,
+  isReqPutDoc,
+  ReqPutDoc,
+  isReqGetDoc,
+  ReqGetDoc,
+  isReqQueryDocs,
+  ReqQueryDocs,
+  isReqDeleteDoc,
+  ReqDeleteDoc,
+  isReqSubscribeDocs,
+  ReqSubscribeDocs,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -418,6 +428,195 @@ function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+// ── Firefly document handlers ──────────────────────────────────────
+
+function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.putDoc",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqPutDoc(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqPutDoc, unknown>): Promise<Result<EventoResultType>> => {
+      console.log("[Firefly srv-sandbox] putDoc", ctx.validated.appSlug, ctx.validated.docId);
+      const rRes = await vibeDiyApi.putDoc({
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+        doc: ctx.validated.doc,
+        docId: ctx.validated.docId,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-put-doc",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-put-doc",
+          status: "ok",
+          id: res.id,
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.getDoc",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqGetDoc(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqGetDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.getDoc({
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+        docId: ctx.validated.docId,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-get-doc",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          ...res,
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-get-doc",
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.queryDocs",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqQueryDocs(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqQueryDocs, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.queryDocs({
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-query-docs",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          ...res,
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-query-docs",
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.deleteDoc",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqDeleteDoc(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqDeleteDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.deleteDoc({
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+        docId: ctx.validated.docId,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-delete-doc",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          ...res,
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-delete-doc",
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.subscribeDocs",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqSubscribeDocs(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqSubscribeDocs, unknown>): Promise<Result<EventoResultType>> => {
+      console.log("[Firefly srv-sandbox] subscribeDocs handler called for", ctx.validated.appSlug);
+      const rRes = await vibeDiyApi.subscribeDocs({
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+      });
+      console.log("[Firefly srv-sandbox] subscribeDocs result:", rRes.isOk() ? "ok" : rRes.Err());
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-subscribe-docs",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        await ctx.send.send(ctx, {
+          ...rRes.Ok(),
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-subscribe-docs",
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
@@ -425,13 +624,29 @@ export class vibesDiySrvSandbox implements Disposable {
 
   readonly onRuntimeReady = OnFunc<(evt: EvtRuntimeReady) => void>();
 
+  // Captured iframe postMessage target — set on first message from iframe
+  private iframeSource: Window | undefined;
+  private iframeOrigin: string | undefined;
+
   readonly handleMessage = (event: MessageEvent): void => {
-    // console.log(`Received message event in vibesDiySrvSandbox`, event);
+    // Capture iframe window reference for forwarding API events
+    if (!this.iframeSource && event.source) {
+      this.iframeSource = event.source as Window;
+      this.iframeOrigin = event.origin;
+    }
     this.evento.trigger<MessageEvent, unknown, unknown>({
       request: event,
       send: new PostMsgSendProvider(window, event),
     });
   };
+
+  // Forward a doc-changed event from the API to the iframe
+  forwardDocChangedToIframe(appSlug: string, docId: string): void {
+    console.log("[Firefly srv-sandbox] forwardDocChanged", appSlug, docId, "iframeSource:", !!this.iframeSource);
+    if (this.iframeSource && this.iframeOrigin) {
+      this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", appSlug, docId }, this.iframeOrigin);
+    }
+  }
 
   readonly removeEventListeners: typeof window.removeEventListener;
   readonly args: VibesDiySrvSandboxArgs;
@@ -440,11 +655,26 @@ export class vibesDiySrvSandbox implements Disposable {
     this.args = args;
     this.evento = new Evento(new MessageEventEventoEnDecoder());
     this.evento.push(
-      ...[vibeRuntimeReady(this), vibeRegisterFPDB(this), vibeCallAI(this), vibeImageGen(this), vibeFetchCloudToken(this)]
+      ...[
+        vibeRuntimeReady(this),
+        vibeRegisterFPDB(this),
+        vibeCallAI(this),
+        vibeImageGen(this),
+        vibeFetchCloudToken(this),
+        vibePutDoc(this),
+        vibeGetDoc(this),
+        vibeQueryDocs(this),
+        vibeDeleteDoc(this),
+        vibeSubscribeDocs(this),
+      ]
     );
-    // console.log(`Adding event listener for vibesDiySrvSandbox`, this.handleMessage);
     this.args.eventListeners.addEventListener("message", this.handleMessage);
     this.removeEventListeners = this.args.eventListeners.removeEventListener;
+
+    // Forward doc-changed events from the API WebSocket to the iframe
+    this.args.vibeDiyApi.onDocChanged((appSlug, docId) => {
+      this.forwardDocChangedToIframe(appSlug, docId);
+    });
   }
 
   [Symbol.dispose](): void {

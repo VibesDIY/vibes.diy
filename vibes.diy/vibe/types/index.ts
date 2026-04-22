@@ -1,6 +1,5 @@
 import { FPCloudClaim } from "@vibes.diy/api-types";
 import { type } from "arktype";
-// import { FPCloudClaimSchema } from "@fireproof/core-types-protocols-cloud";
 
 export * from "./img-vibes.js";
 
@@ -260,4 +259,99 @@ export function isResOkImgVibes(x: unknown): x is ResOkImgVibes {
 
 export function isResErrorImgVibes(x: unknown): x is ResErrorImgVibes {
   return !(ResErrorImgVibes(x) instanceof type.errors);
+}
+
+// ── Firefly document operations ──────────────────────────────────────
+// Same vibes.diy.* type strings as the API boundary (api-types/app-documents.ts).
+// Request types here are the iframe (postMessage) variants — they have tid, no auth.
+// Response types and events are shared — re-exported from api-types.
+
+// Response types + events: shared across boundaries (no auth, no tid)
+export {
+  type ResPutDoc,
+  type ResGetDoc,
+  type ResGetDocNotFound,
+  type ResQueryDocs,
+  type ResDeleteDoc,
+  type ResSubscribeDocs,
+  type EvtDocChanged,
+  isResPutDoc,
+  isResGetDoc,
+  isResGetDocNotFound,
+  isResQueryDocs,
+  isResDeleteDoc,
+  isResSubscribeDocs,
+  isEvtDocChanged,
+} from "@vibes.diy/api-types";
+
+// Request types: iframe boundary (postMessage) — has tid, no auth.
+// Same vibes.diy.* type strings as api-types, but different shape.
+
+export const ReqPutDoc = type({
+  type: "'vibes.diy.req-put-doc'",
+  appSlug: "string",
+  userSlug: "string",
+  dbName: "string",
+  doc: "Record<string, unknown>",
+  "docId?": "string",
+}).and(Base);
+
+export type ReqPutDoc = typeof ReqPutDoc.infer;
+
+export function isReqPutDoc(x: unknown): x is ReqPutDoc {
+  return !(ReqPutDoc(x) instanceof type.errors);
+}
+
+export const ReqGetDoc = type({
+  type: "'vibes.diy.req-get-doc'",
+  appSlug: "string",
+  userSlug: "string",
+  dbName: "string",
+  docId: "string",
+}).and(Base);
+
+export type ReqGetDoc = typeof ReqGetDoc.infer;
+
+export function isReqGetDoc(x: unknown): x is ReqGetDoc {
+  return !(ReqGetDoc(x) instanceof type.errors);
+}
+
+export const ReqQueryDocs = type({
+  type: "'vibes.diy.req-query-docs'",
+  appSlug: "string",
+  userSlug: "string",
+  dbName: "string",
+}).and(Base);
+
+export type ReqQueryDocs = typeof ReqQueryDocs.infer;
+
+export function isReqQueryDocs(x: unknown): x is ReqQueryDocs {
+  return !(ReqQueryDocs(x) instanceof type.errors);
+}
+
+export const ReqDeleteDoc = type({
+  type: "'vibes.diy.req-delete-doc'",
+  appSlug: "string",
+  userSlug: "string",
+  dbName: "string",
+  docId: "string",
+}).and(Base);
+
+export type ReqDeleteDoc = typeof ReqDeleteDoc.infer;
+
+export function isReqDeleteDoc(x: unknown): x is ReqDeleteDoc {
+  return !(ReqDeleteDoc(x) instanceof type.errors);
+}
+
+export const ReqSubscribeDocs = type({
+  type: "'vibes.diy.req-subscribe-docs'",
+  appSlug: "string",
+  userSlug: "string",
+  dbName: "string",
+}).and(Base);
+
+export type ReqSubscribeDocs = typeof ReqSubscribeDocs.infer;
+
+export function isReqSubscribeDocs(x: unknown): x is ReqSubscribeDocs {
+  return !(ReqSubscribeDocs(x) instanceof type.errors);
 }
