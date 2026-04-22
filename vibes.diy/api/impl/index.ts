@@ -100,6 +100,24 @@ import {
   ResListModels,
   isResListModels,
   isPromptLLMStyle,
+  ReqPutDoc,
+  ResPutDoc,
+  isResPutDoc,
+  ReqGetDoc,
+  ResGetDoc,
+  ResGetDocNotFound,
+  isResGetDoc,
+  isResGetDocNotFound,
+  ReqQueryDocs,
+  ResQueryDocs,
+  isResQueryDocs,
+  ReqDeleteDoc,
+  ResDeleteDoc,
+  isResDeleteDoc,
+  ReqSubscribeDocs,
+  ResSubscribeDocs,
+  isResSubscribeDocs,
+  isEvtDocChanged,
   ReqPromptLLMChatSection,
   FSUpdate,
   isFSUpdate,
@@ -513,6 +531,57 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     },
     { resetAfter: 10 * 60 * 1000 /* 10 minutes */ }
   );
+
+  // Firefly document operations
+  putDoc(req: Req<ReqPutDoc>): Promise<Result<ResPutDoc, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-put-doc" }, { resMatch: isResPutDoc });
+  }
+
+  getDoc(req: Req<ReqGetDoc>): Promise<Result<ResGetDoc | ResGetDocNotFound, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-get-doc" },
+      { resMatch: (obj: unknown) => isResGetDoc(obj) || isResGetDocNotFound(obj) }
+    );
+  }
+
+  queryDocs(req: Req<ReqQueryDocs>): Promise<Result<ResQueryDocs, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-query-docs" }, { resMatch: isResQueryDocs });
+  }
+
+  deleteDoc(req: Req<ReqDeleteDoc>): Promise<Result<ResDeleteDoc, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-delete-doc" }, { resMatch: isResDeleteDoc });
+  }
+
+  subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-subscribe-docs" }, { resMatch: isResSubscribeDocs });
+  }
+
+  onDocChanged(fn: (appSlug: string, docId: string) => void): void {
+    // Listen for doc-changed events pushed from the API over the WebSocket.
+    // Raw WebSocket data → JSON parse → MsgBase envelope → payload check.
+    this.getReadyConnection().then((conn) => {
+      conn.onMessage((wsEvent) => {
+        if (wsEvent.type !== "MessageEvent") return;
+        const raw = wsEvent.event.data;
+        // WebSocket data arrives as Blob in browser — decode async
+        const textPromise =
+          raw instanceof Blob
+            ? raw.text()
+            : Promise.resolve(typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array));
+        textPromise
+          .then((text) => {
+            const parsed = JSON.parse(text);
+            const msg = msgBase(parsed);
+            if (!(msg instanceof type.errors) && isEvtDocChanged(msg.payload)) {
+              fn(msg.payload.appSlug, msg.payload.docId);
+            }
+          })
+          .catch(() => {
+            // Not a valid message — ignore
+          });
+      });
+    });
+  }
 }
 
 class LLMChatImpl implements LLMChat {
@@ -553,7 +622,6 @@ class LLMChatImpl implements LLMChat {
         if (msg instanceof type.errors) {
           return Result.Ok(Option.None());
         }
-        console.log("[LLMChatImpl] validate msg, tid match:", msg.tid === tid, "expected:", tid, "got:", msg.tid);
         if (msg.tid === tid) {
           return Result.Ok(Option.Some(msg));
         }
@@ -567,10 +635,9 @@ class LLMChatImpl implements LLMChat {
         } else {
           const se = sectionEvent(trigger.validated.payload);
           if (!(se instanceof type.errors)) {
-            console.log("[LLMChatImpl] writing to stream:", se.type, "blocks:", se.blocks?.length);
             await sectionEventsWriter.write(se);
           } else {
-            console.log("[LLMChatImpl] sectionEvent parse FAILED:", se.summary?.substring(0, 200));
+            // sectionEvent parse failed — skip silently
           }
         }
         return Result.Ok(EventoResult.Continue);
