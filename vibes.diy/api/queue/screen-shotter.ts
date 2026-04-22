@@ -11,8 +11,12 @@ import { Fetcher } from "@cloudflare/workers-types";
 export async function takeScreenshot(event: EvtNewFsId, browserFetcher: Fetcher): Promise<Result<Uint8Array>> {
   console.log(`Taking screenshot for ${event.vibeUrl} (fsId: ${event.fsId})`);
 
-  return exception2Result(async () => {
-    const browser = await puppeteer.launch(browserFetcher as never);
+  const rBrowser = await exception2Result(() => puppeteer.launch(browserFetcher as never));
+  if (rBrowser.isErr()) {
+    return Result.Err(rBrowser.Err());
+  }
+  const browser = rBrowser.Ok();
+  const rScreenshot = await exception2Result(async () => {
     const page = await browser.newPage();
 
     await page.setViewport({
@@ -26,15 +30,14 @@ export async function takeScreenshot(event: EvtNewFsId, browserFetcher: Fetcher)
       timeout: 30000,
     });
 
-    const screenshot = await page.screenshot({
+    return page.screenshot({
       type: "jpeg",
       quality: 85,
       fullPage: false,
     });
-
-    await browser.close();
-    return screenshot;
   });
+  await browser.close();
+  return rScreenshot;
 }
 
 /**
