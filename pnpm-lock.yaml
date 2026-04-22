@@ -1740,12 +1740,12 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(typescript@6.0.3)
-      '@fireproof/use-fireproof':
-        specifier: 0.24.19
-        version: 0.24.19(@adviser/cement@0.5.34(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@vibes.diy/base':
         specifier: workspace:*
         version: link:../../base
+      '@vibes.diy/vibe-runtime':
+        specifier: workspace:*
+        version: link:../runtime
       ag-grid-community:
         specifier: ^35.2.1
         version: 35.2.1
