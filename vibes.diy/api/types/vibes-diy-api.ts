@@ -152,5 +152,5 @@ export interface VibesDiyApiIface<_T = unknown> {
   subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>>;
 
   // Register a callback for document change events pushed from the API
-  onDocChanged(fn: (appSlug: string, docId: string) => void): void;
+  onDocChanged(fn: (userSlug: string, appSlug: string, docId: string) => void): void;
 }

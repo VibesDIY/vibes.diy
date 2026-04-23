@@ -6,6 +6,7 @@ import { dashAuthType } from "./common.js";
 export const reqPutDoc = type({
   type: "'vibes.diy.req-put-doc'",
   auth: dashAuthType,
+  userSlug: "string",
   appSlug: "string",
   dbName: "string",
   doc: "Record<string, unknown>",
@@ -31,6 +32,7 @@ export function isResPutDoc(obj: unknown): obj is ResPutDoc {
 export const reqGetDoc = type({
   type: "'vibes.diy.req-get-doc'",
   auth: dashAuthType,
+  userSlug: "string",
   appSlug: "string",
   dbName: "string",
   docId: "string",
@@ -66,6 +68,7 @@ export function isResGetDocNotFound(obj: unknown): obj is ResGetDocNotFound {
 export const reqQueryDocs = type({
   type: "'vibes.diy.req-query-docs'",
   auth: dashAuthType,
+  userSlug: "string",
   appSlug: "string",
   dbName: "string",
 });
@@ -89,6 +92,7 @@ export function isResQueryDocs(obj: unknown): obj is ResQueryDocs {
 export const reqDeleteDoc = type({
   type: "'vibes.diy.req-delete-doc'",
   auth: dashAuthType,
+  userSlug: "string",
   appSlug: "string",
   dbName: "string",
   docId: "string",
@@ -113,6 +117,7 @@ export function isResDeleteDoc(obj: unknown): obj is ResDeleteDoc {
 export const reqSubscribeDocs = type({
   type: "'vibes.diy.req-subscribe-docs'",
   auth: dashAuthType,
+  userSlug: "string",
   appSlug: "string",
   dbName: "string",
 });
@@ -134,6 +139,7 @@ export function isResSubscribeDocs(obj: unknown): obj is ResSubscribeDocs {
 
 export const evtDocChanged = type({
   type: "'vibes.diy.evt-doc-changed'",
+  userSlug: "string",
   appSlug: "string",
   docId: "string",
 });

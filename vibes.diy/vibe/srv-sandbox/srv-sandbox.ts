@@ -443,6 +443,7 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqPutDoc, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.putDoc({
+        userSlug: ctx.validated.userSlug,
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
         doc: ctx.validated.doc,
@@ -482,6 +483,7 @@ function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqGetDoc, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.getDoc({
+        userSlug: ctx.validated.userSlug,
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
         docId: ctx.validated.docId,
@@ -519,6 +521,7 @@ function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqQueryDocs, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.queryDocs({
+        userSlug: ctx.validated.userSlug,
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
       });
@@ -555,6 +558,7 @@ function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqDeleteDoc, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.deleteDoc({
+        userSlug: ctx.validated.userSlug,
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
         docId: ctx.validated.docId,
@@ -592,6 +596,7 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqSubscribeDocs, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.subscribeDocs({
+        userSlug: ctx.validated.userSlug,
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
       });
@@ -638,9 +643,9 @@ export class vibesDiySrvSandbox implements Disposable {
   };
 
   // Forward a doc-changed event from the API to the iframe
-  forwardDocChangedToIframe(appSlug: string, docId: string): void {
+  forwardDocChangedToIframe(userSlug: string, appSlug: string, docId: string): void {
     if (this.iframeSource && this.iframeOrigin) {
-      this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", appSlug, docId }, this.iframeOrigin);
+      this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", userSlug, appSlug, docId }, this.iframeOrigin);
     }
   }
 
@@ -668,8 +673,8 @@ export class vibesDiySrvSandbox implements Disposable {
     this.removeEventListeners = this.args.eventListeners.removeEventListener;
 
     // Forward doc-changed events from the API WebSocket to the iframe
-    this.args.vibeDiyApi.onDocChanged((appSlug, docId) => {
-      this.forwardDocChangedToIframe(appSlug, docId);
+    this.args.vibeDiyApi.onDocChanged((userSlug, appSlug, docId) => {
+      this.forwardDocChangedToIframe(userSlug, appSlug, docId);
     });
   }
 
