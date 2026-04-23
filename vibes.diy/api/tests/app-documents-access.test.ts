@@ -434,3 +434,164 @@ describe("Firefly public access", { timeout: 15000 }, () => {
     expect(rRes.isErr()).toBe(true);
   });
 });
+
+describe("Firefly pending request on public app", { timeout: 15000 }, () => {
+  const sthis = ensureSuperThis();
+  let ownerApi: VibesDiyApi;
+  let pendingApi: VibesDiyApi;
+  let appSlug: string;
+  let userSlug: string;
+
+  beforeAll(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+
+    const ownerUser = await createTestUser({ sthis, deviceCA });
+    const pendingUser = await createTestUser({ sthis, deviceCA, seqUserId: 200 });
+
+    const wsPair = TestWSPair.create();
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+
+    ownerApi = new VibesDiyApi({
+      apiUrl: "http://localhost:8787/api",
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await ownerUser.getDashBoardToken()),
+    });
+
+    pendingApi = new VibesDiyApi({
+      apiUrl: "http://localhost:8787/api",
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await pendingUser.getDashBoardToken()),
+    });
+
+    const rRes = await ownerApi.ensureAppSlug({
+      mode: "production",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `function App() { return <div>Pending Public</div>; } App();`,
+        },
+      ],
+    });
+    const res = rRes.Ok();
+    if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
+    appSlug = res.appSlug;
+    userSlug = res.userSlug;
+
+    await ownerApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "seed" }, docId: "seed-doc" });
+
+    // Enable public access + requests (no auto-accept)
+    await ownerApi.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: true } });
+    await ownerApi.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
+
+    // Visitor requests access → stays pending
+    const rReq = await pendingApi.requestAccess({ appSlug, userSlug });
+    expect(rReq.Ok().state).toBe("pending");
+  });
+
+  it("pending user can still read public app docs", async () => {
+    const rRes = await pendingApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "seed-doc" });
+    expect(rRes.isOk()).toBe(true);
+    expect(rRes.Ok().status).toBe("ok");
+  });
+
+  it("pending user can query public app docs", async () => {
+    const rRes = await pendingApi.queryDocs({ appSlug, userSlug, dbName: "default" });
+    expect(rRes.isOk()).toBe(true);
+    expect(rRes.Ok().docs.length).toBeGreaterThan(0);
+  });
+
+  it("pending user cannot write to public app", async () => {
+    const rRes = await pendingApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "nope" } });
+    expect(rRes.isErr()).toBe(true);
+  });
+});
+
+describe("Firefly dev mode denies public reads", { timeout: 15000 }, () => {
+  const sthis = ensureSuperThis();
+  let ownerApi: VibesDiyApi;
+  let anonApi: VibesDiyApi;
+  let appSlug: string;
+  let userSlug: string;
+
+  beforeAll(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+
+    const ownerUser = await createTestUser({ sthis, deviceCA });
+
+    const wsPair = TestWSPair.create();
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+
+    ownerApi = new VibesDiyApi({
+      apiUrl: "http://localhost:8787/api",
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await ownerUser.getDashBoardToken()),
+    });
+
+    anonApi = new VibesDiyApi({
+      apiUrl: "http://localhost:8787/api",
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Err("no auth"),
+    });
+
+    // Create a DEV mode app with publicAccess enabled
+    const rRes = await ownerApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `function App() { return <div>Dev Public</div>; } App();`,
+        },
+      ],
+    });
+    const res = rRes.Ok();
+    if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
+    appSlug = res.appSlug;
+    userSlug = res.userSlug;
+
+    await ownerApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "dev-seed" }, docId: "dev-doc" });
+    await ownerApi.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: true } });
+  });
+
+  it("dev mode: anonymous getDoc denied despite publicAccess", async () => {
+    const rRes = await anonApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "dev-doc" });
+    expect(rRes.isErr()).toBe(true);
+  });
+
+  it("dev mode: anonymous queryDocs denied despite publicAccess", async () => {
+    const rRes = await anonApi.queryDocs({ appSlug, userSlug, dbName: "default" });
+    expect(rRes.isErr()).toBe(true);
+  });
+
+  it("dev mode: anonymous subscribeDocs denied despite publicAccess", async () => {
+    const rRes = await anonApi.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+    expect(rRes.isErr()).toBe(true);
+  });
+
+  it("dev mode: owner can still read their own docs", async () => {
+    const rRes = await ownerApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "dev-doc" });
+    expect(rRes.isOk()).toBe(true);
+    expect(rRes.Ok().status).toBe("ok");
+  });
+});
