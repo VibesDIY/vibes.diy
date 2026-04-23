@@ -205,17 +205,11 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      // Access check: authenticated user with read access, or public app
-      if (req._auth) {
-        const access = await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug);
-        if (!canRead(access)) {
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-error",
-            error: { message: "Access denied" },
-          } as unknown as VibesDiyError);
-          return Result.Ok(EventoResult.Continue);
-        }
-      } else {
+      // Access check: grant-based read, or public app (authed or not)
+      const access = req._auth
+        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
+        : "none";
+      if (!canRead(access)) {
         const pub = await isPublicReadable(vctx, req.appSlug, req.userSlug);
         if (!pub) {
           await ctx.send.send(ctx, {
@@ -275,17 +269,11 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      // Access check: authenticated user with read access, or public app
-      if (req._auth) {
-        const access = await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug);
-        if (!canRead(access)) {
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-error",
-            error: { message: "Access denied" },
-          } as unknown as VibesDiyError);
-          return Result.Ok(EventoResult.Continue);
-        }
-      } else {
+      // Access check: grant-based read, or public app (authed or not)
+      const access = req._auth
+        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
+        : "none";
+      if (!canRead(access)) {
         const pub = await isPublicReadable(vctx, req.appSlug, req.userSlug);
         if (!pub) {
           await ctx.send.send(ctx, {
@@ -426,17 +414,11 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      // Access check: authenticated user with read access, or public app
-      if (req._auth) {
-        const access = await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug);
-        if (!canRead(access)) {
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-error",
-            error: { message: "Access denied" },
-          } as unknown as VibesDiyError);
-          return Result.Ok(EventoResult.Continue);
-        }
-      } else {
+      // Access check: grant-based read, or public app (authed or not)
+      const access = req._auth
+        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
+        : "none";
+      if (!canRead(access)) {
         const pub = await isPublicReadable(vctx, req.appSlug, req.userSlug);
         if (!pub) {
           await ctx.send.send(ctx, {
