@@ -5,8 +5,11 @@
   "main": "./index.js",
   "scripts": {
     "build": "core-cli tsc",
-    "inspect:db": "tsx ./usage-report/inspect-db.ts",
-    "inspect:db-report": "tsx ./usage-report/inspect-db-report.ts",
+    "db:inspect": "tsx ./usage-report/inspect-db.ts",
+    "db:inspect-report": "tsx ./usage-report/inspect-db-report.ts",
+    "db:admin": "tsx ./usage-report/admin-db.ts",
+    "inspect:db": "echo 'DEPRECATED: use db:inspect instead' && tsx ./usage-report/inspect-db.ts",
+    "inspect:db-report": "echo 'DEPRECATED: use db:inspect-report instead' && tsx ./usage-report/inspect-db-report.ts",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build"
   },

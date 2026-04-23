@@ -20,7 +20,7 @@
     "build": "core-cli tsc",
     "build:prod": "pnpm --filter vibes-diy build",
     "serve:prod": "pnpm exec serve -s vibes.diy/pkg/build/client",
-    "growth-report": "pnpm --filter @vibes.diy/api-svc run inspect:db-report",
+    "growth-report": "pnpm --filter @vibes.diy/api-svc run db:inspect-report",
     "lint": "eslint .",
     "knip": "knip",
     "test": "vitest --run",
