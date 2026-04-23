@@ -2,6 +2,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
+    reporters: ["dot"],
     projects: [
       "vibes.diy/tests/app/vitest.config.ts",
       "vibes.diy/api/tests/vitest.config.ts",

@@ -170,7 +170,7 @@ describe("Firefly cross-user document isolation", { timeout: 10000 }, () => {
     const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
 
     // User A
-    const testUserA = await createTestUser({ sthis, deviceCA });
+    const testUserA = await createTestUser({ sthis, deviceCA, seqUserId: 100 });
     const wsPairA = TestWSPair.create();
     const wsEventoA = vibesMsgEvento();
     const wsSendProviderA = new WSSendProvider(wsPairA.p2 as unknown as WebSocket);
@@ -186,7 +186,7 @@ describe("Firefly cross-user document isolation", { timeout: 10000 }, () => {
     });
 
     // User B
-    const testUserB = await createTestUser({ sthis, deviceCA });
+    const testUserB = await createTestUser({ sthis, deviceCA, seqUserId: 200 });
     const wsPairB = TestWSPair.create();
     const wsEventoB = vibesMsgEvento();
     const wsSendProviderB = new WSSendProvider(wsPairB.p2 as unknown as WebSocket);
