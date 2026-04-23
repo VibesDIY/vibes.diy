@@ -28,19 +28,19 @@ function printUsage(): void {
   console.log(
     `
 Usage:
-  pnpm --dir vibes.diy/api/svc run inspect:db info
-  pnpm --dir vibes.diy/api/svc run inspect:db tables
-  pnpm --dir vibes.diy/api/svc run inspect:db table UserSettings --limit 20
-  pnpm --dir vibes.diy/api/svc run inspect:db sql "select * from \\"UserSettings\\" limit 5"
+  pnpm --dir vibes.diy/api/svc run db:inspect info
+  pnpm --dir vibes.diy/api/svc run db:inspect tables
+  pnpm --dir vibes.diy/api/svc run db:inspect table UserSettings --limit 20
+  pnpm --dir vibes.diy/api/svc run db:inspect sql "select * from \\"UserSettings\\" limit 5"
 
 Environment:
-  NEON_DATABASE_URL or DATABASE_URL must be set.
+  NEON_DATABASE_URL or DATABASE_URL must be set (in .dev.vars or env).
 
 Examples:
-  NEON_DATABASE_URL="$(pbpaste)" pnpm --dir vibes.diy/api/svc run inspect:db info
-  NEON_DATABASE_URL="$(pbpaste)" pnpm --dir vibes.diy/api/svc run inspect:db tables
-  NEON_DATABASE_URL="$(pbpaste)" pnpm --dir vibes.diy/api/svc run inspect:db table UserSettings --limit 5
-  NEON_DATABASE_URL="$(pbpaste)" pnpm --dir vibes.diy/api/svc run inspect:db sql "select userId, updated from \\"UserSettings\\" order by updated desc limit 5"
+  pnpm --dir vibes.diy/api/svc run db:inspect info
+  pnpm --dir vibes.diy/api/svc run db:inspect tables
+  pnpm --dir vibes.diy/api/svc run db:inspect table UserSettings --limit 5
+  pnpm --dir vibes.diy/api/svc run db:inspect sql "select userId, updated from \\"UserSettings\\" order by updated desc limit 5"
 `.trim()
   );
 }
