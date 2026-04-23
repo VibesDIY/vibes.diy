@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.19",
+    "@vibes.diy/api-types": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "~19.2.14",
