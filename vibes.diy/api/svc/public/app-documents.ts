@@ -92,16 +92,22 @@ async function isPublicReadable(vctx: VibesApiSQLCtx, appSlug: string, userSlug:
   if (rSettings.isErr()) return false;
   if (!rSettings.Ok().settings.entry.publicAccess?.enable) return false;
 
-  // Match get-app-by-fsid: only production apps are publicly readable
-  const app = await vctx.sql.db
+  // Match get-app-by-fsid: only apps with a production version are publicly readable.
+  // A newer dev draft must not shadow the production row.
+  const prodRow = await vctx.sql.db
     .select({ mode: vctx.sql.tables.apps.mode })
     .from(vctx.sql.tables.apps)
-    .where(and(eq(vctx.sql.tables.apps.appSlug, appSlug), eq(vctx.sql.tables.apps.userSlug, userSlug)))
-    .orderBy(sql`${vctx.sql.tables.apps.created} desc`)
+    .where(
+      and(
+        eq(vctx.sql.tables.apps.appSlug, appSlug),
+        eq(vctx.sql.tables.apps.userSlug, userSlug),
+        eq(vctx.sql.tables.apps.mode, "production")
+      )
+    )
     .limit(1)
     .then((r) => r[0]);
 
-  return app?.mode === "production";
+  return !!prodRow;
 }
 
 // ── putDoc ──────────────────────────────────────────────────────────
