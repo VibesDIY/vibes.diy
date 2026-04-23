@@ -74,7 +74,7 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
 
     _simulateDocChanged: (docId: string) => {
       for (const fn of msgListeners) {
-        fn({ data: { type: "vibes.diy.evt-doc-changed", appSlug, docId } });
+        fn({ data: { type: "vibes.diy.evt-doc-changed", userSlug: "test-user", appSlug, docId } });
       }
     },
 

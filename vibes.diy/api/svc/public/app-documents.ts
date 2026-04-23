@@ -62,12 +62,13 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const maxSeqResult = await vctx.sql.db
         .select({ maxSeq: max(t.seq) })
         .from(t)
-        .where(and(eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
+        .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
         .then((r) => r[0]);
 
       const nextSeq = (maxSeqResult?.maxSeq ?? 0) + 1;
 
       await vctx.sql.db.insert(t).values({
+        userSlug: req.userSlug,
         appSlug: req.appSlug,
         dbName,
         docId,
@@ -79,9 +80,10 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       });
 
       // Broadcast doc-changed to subscribed connections (fireproof pattern: direct ws.send)
-      const evt = { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId };
+      const evt = { type: "vibes.diy.evt-doc-changed", userSlug: req.userSlug, appSlug: req.appSlug, docId };
+      const subscriptionKey = `${req.userSlug}/${req.appSlug}`;
       for (const conn of vctx.connections) {
-        if (!conn.subscribedAppSlugs.has(req.appSlug)) continue;
+        if (!conn.subscribedAppSlugs.has(subscriptionKey)) continue;
         exception2Result(() =>
           conn.ws.send(
             conn.ende.uint8ify({
@@ -132,7 +134,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       const row = await vctx.sql.db
         .select()
         .from(t)
-        .where(and(eq(t.appSlug, req.appSlug), eq(t.dbName, req.dbName), eq(t.docId, req.docId)))
+        .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug), eq(t.dbName, req.dbName), eq(t.docId, req.docId)))
         .orderBy(sql`${t.seq} desc`)
         .limit(1)
         .then((r) => r[0]);
@@ -181,7 +183,7 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const rows = await vctx.sql.db
         .select()
         .from(t)
-        .where(and(eq(t.appSlug, req.appSlug), eq(t.dbName, req.dbName)))
+        .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug), eq(t.dbName, req.dbName)))
         .orderBy(sql`${t.docId}, ${t.seq} desc`);
 
       // Keep only the latest revision per docId, skip deleted
@@ -233,12 +235,13 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       const maxSeqResult = await vctx.sql.db
         .select({ maxSeq: max(t.seq) })
         .from(t)
-        .where(and(eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, req.docId)))
+        .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, req.docId)))
         .then((r) => r[0]);
 
       const nextSeq = (maxSeqResult?.maxSeq ?? 0) + 1;
 
       await vctx.sql.db.insert(t).values({
+        userSlug: req.userSlug,
         appSlug: req.appSlug,
         dbName,
         docId: req.docId,
@@ -250,9 +253,10 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       });
 
       // Broadcast doc-changed to subscribed connections (fireproof pattern: direct ws.send)
-      const evt = { type: "vibes.diy.evt-doc-changed", appSlug: req.appSlug, docId: req.docId };
+      const evt = { type: "vibes.diy.evt-doc-changed", userSlug: req.userSlug, appSlug: req.appSlug, docId: req.docId };
+      const subscriptionKey = `${req.userSlug}/${req.appSlug}`;
       for (const conn of vctx.connections) {
-        if (!conn.subscribedAppSlugs.has(req.appSlug)) continue;
+        if (!conn.subscribedAppSlugs.has(subscriptionKey)) continue;
         exception2Result(() =>
           conn.ws.send(
             conn.ende.uint8ify({
@@ -296,7 +300,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       // Store subscription on the connection object (fireproof pattern).
       // Access raw WSSendProvider via Evento's .provider wrapper.
       const wsSend = clientWsSend(ctx);
-      wsSend.subscribedAppSlugs.add(req.appSlug);
+      wsSend.subscribedAppSlugs.add(`${req.userSlug}/${req.appSlug}`);
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-subscribe-docs",

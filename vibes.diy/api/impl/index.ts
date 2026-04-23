@@ -556,7 +556,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.request({ ...req, type: "vibes.diy.req-subscribe-docs" }, { resMatch: isResSubscribeDocs });
   }
 
-  onDocChanged(fn: (appSlug: string, docId: string) => void): void {
+  onDocChanged(fn: (userSlug: string, appSlug: string, docId: string) => void): void {
     // Listen for doc-changed events pushed from the API over the WebSocket.
     // Raw WebSocket data → JSON parse → MsgBase envelope → payload check.
     this.getReadyConnection().then((conn) => {
@@ -573,7 +573,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
             const parsed = JSON.parse(text);
             const msg = msgBase(parsed);
             if (!(msg instanceof type.errors) && isEvtDocChanged(msg.payload)) {
-              fn(msg.payload.appSlug, msg.payload.docId);
+              fn(msg.payload.userSlug, msg.payload.appSlug, msg.payload.docId);
             }
           })
           .catch(() => {
