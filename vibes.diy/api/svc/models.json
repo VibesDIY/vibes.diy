@@ -48,7 +48,6 @@
     "name": "GPT-5 Image Mini",
     "description": "OpenAI's GPT-5 Image Mini model for fast image generation",
     "featured": false,
-    "preSelected": ["img"],
     "supports": ["img"]
   },
   {
@@ -267,5 +266,41 @@
     "description": "GPT-5.3 Codex is the newer specialized coding model in the GPT-5.3 family, optimized for software engineering workflows",
     "featured": false,
     "supports": ["chat", "app"]
+  },
+  {
+    "id": "openai/gpt-5.4-image-2",
+    "name": "GPT-5.4 Image 2",
+    "description": "GPT-5.4 Image 2 combines OpenAI's GPT-5.4 with state-of-the-art image generation, enabling multimodal workflows across reasoning, code, and visual output",
+    "featured": true,
+    "preSelected": ["img"],
+    "supports": ["img"]
+  },
+  {
+    "id": "google/gemini-3.1-flash-image-preview",
+    "name": "Nano Banana 2",
+    "description": "Google's latest image generation and editing model (Gemini 3.1 Flash Image Preview) delivering professional visual quality at fast speed",
+    "featured": true,
+    "supports": ["img"]
+  },
+  {
+    "id": "google/gemini-3-pro-image-preview",
+    "name": "Nano Banana Pro",
+    "description": "Google's Gemini 3 Pro Image Preview for highest-quality image generation and editing",
+    "featured": false,
+    "supports": ["img"]
+  },
+  {
+    "id": "openai/gpt-5-image",
+    "name": "GPT-5 Image",
+    "description": "OpenAI's GPT-5 Image model for high-quality image generation",
+    "featured": false,
+    "supports": ["img"]
+  },
+  {
+    "id": "google/gemini-2.5-flash-image",
+    "name": "Nano Banana",
+    "description": "Google's Gemini 2.5 Flash Image model for image generation and editing",
+    "featured": false,
+    "supports": ["img"]
   }
 ]
