@@ -260,7 +260,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       ...msgParam,
       payload: {
         ...req,
-        auth,
+        ...(auth ? { auth } : {}),
       },
     };
     // console.log("Prepared message box:", msgBox);
