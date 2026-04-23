@@ -30,9 +30,9 @@
     "supports": ["chat", "app"]
   },
   {
-    "id": "google/gemini-3-pro-preview",
-    "name": "Gemini 3 Pro",
-    "description": "Gemini 3 Pro is Google's state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks",
+    "id": "google/gemini-3.1-pro-preview",
+    "name": "Gemini 3.1 Pro",
+    "description": "Gemini 3.1 Pro is Google's frontier reasoning model for software engineering and agentic tasks",
     "featured": true,
     "supports": ["chat", "app"]
   },
@@ -210,13 +210,6 @@
     "name": "Kimi K2 0905",
     "description": "Kimi K2 0905 is the September update of Kimi K2 0711",
     "featured": true,
-    "supports": ["chat", "app"]
-  },
-  {
-    "id": "google/gemini-2.5-flash-lite-preview-06-17",
-    "name": "Gemini 2.5 Flash Lite Preview 06-17",
-    "description": "Gemini 2.5 Flash-Lite is a lightweight reasoning model in the Gemini 2.5 family, optimized for ultra-low latency and cost efficiency",
-    "featured": false,
     "supports": ["chat", "app"]
   }
 ]
