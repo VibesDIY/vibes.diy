@@ -9,6 +9,8 @@ interface UseShareModalParams {
 }
 
 interface UseShareModalReturn {
+  userSlug: string;
+  appSlug: string;
   isOpen: boolean;
   open: () => void;
   close: () => void;
@@ -18,7 +20,7 @@ interface UseShareModalReturn {
   isUpToDate: boolean;
   publishError: string | undefined;
   publishedUrl: string | undefined;
-  handlePublish: (autoJoin: boolean) => Promise<void>;
+  handlePublish: (autoJoin: boolean, role?: "editor" | "viewer") => Promise<void>;
   autoJoinEnabled: boolean;
   isTogglingAutoJoin: boolean;
   handleToggleAutoJoin: () => Promise<void>;
@@ -119,7 +121,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
   }, [isOpen, appSlug, userSlug, vibeDiyApi]);
 
   const handlePublish = useCallback(
-    async (autoJoin: boolean) => {
+    async (autoJoin: boolean, role: "editor" | "viewer" = "viewer") => {
       if (!canPublish || !settingsLoaded) return;
       const isInitialPublish = !isPublished;
       setIsPublishing(true);
@@ -141,7 +143,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
         const settingsResult = await vibeDiyApi.ensureAppSettings({
           appSlug,
           userSlug,
-          request: { enable: true, autoAcceptRole: autoJoin ? "viewer" : undefined },
+          request: { enable: true, autoAcceptRole: autoJoin ? role : undefined },
         });
 
         if (!settingsResult.isOk()) {
@@ -197,6 +199,8 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
   }, [publishedUrl]);
 
   return {
+    userSlug,
+    appSlug,
     isOpen,
     open,
     close,

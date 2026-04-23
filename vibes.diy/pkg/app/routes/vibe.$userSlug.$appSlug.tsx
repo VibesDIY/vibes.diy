@@ -9,6 +9,8 @@ import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
 import { VibesSwitch, VibesButton, BLUE, YELLOW, ExpandedVibesPill, gridBackground, cx } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
+import { useShareModal } from "../components/ResultPreview/useShareModal.js";
+import { ShareModal } from "../components/ResultPreview/ShareModal.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { toast } from "react-hot-toast";
@@ -163,6 +165,13 @@ export default function VibeIframeWrapper() {
 
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
 
+  const shareModal = useShareModal({
+    userSlug: userSlug ?? "",
+    appSlug: appSlug ?? "",
+    fsId,
+    vibeDiyApi: vctx.vibeDiyApi,
+  });
+
   function sendAccessRequest() {
     // TODO: call the real request-access API
     toast.success("Access request sent");
@@ -257,10 +266,13 @@ export default function VibeIframeWrapper() {
                 remixHref={remixUrl}
                 cloneHref={cloneUrl}
                 editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
+                onOwnerShare={isOwner ? shareModal.open : undefined}
+                shareButtonRef={isOwner ? shareModal.buttonRef : undefined}
                 onHome={() => {
                   window.open("https://vibes.diy", "_blank");
                 }}
               />
+              <ShareModal modal={shareModal} placement="above" />
             </Delayed>
           </div>,
           document.body

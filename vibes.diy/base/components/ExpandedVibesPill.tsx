@@ -13,20 +13,26 @@ export interface ExpandedVibesPillProps {
   /** Optional handler for the Thank Author share action. */
   onThankAuthor?: () => void;
   onHome?: () => void;
+  /** When provided, clicking Share opens the owner share modal instead of the Copy Link / Thank Author submenu. */
+  onOwnerShare?: () => void;
+  /** Ref to attach to the Share button (used by the owner share modal for positioning). */
+  shareButtonRef?: React.Ref<HTMLButtonElement>;
 }
 
-function PillActionButton({ height, label, icon, bgColor, labelColor, onClick }: {
+function PillActionButton({ height, label, icon, bgColor, labelColor, onClick, buttonRef }: {
   height: number;
   label: string;
   icon: React.ReactNode;
   bgColor: string;
   labelColor?: string;
   onClick: (e: React.MouseEvent) => void;
+  buttonRef?: React.Ref<HTMLButtonElement>;
 }) {
   const [hovered, setHovered] = useState(false);
   const btnWidth = height * 0.75;
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
@@ -166,7 +172,7 @@ const diyLetters = [
   { d: "M449.933,210.636c0.102-3.331,1.886-5.279,4.778-5.22c2.67,0.055,4.829,2.432,4.762,5.243c-0.073,3.021-2.404,5.36-5.242,5.261C451.606,215.829,449.84,213.657,449.933,210.636z" },
 ];
 
-export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, editHref, onThankAuthor, onHome }: ExpandedVibesPillProps) {
+export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, editHref, onThankAuthor, onHome, onOwnerShare, shareButtonRef }: ExpandedVibesPillProps) {
   // idle → bubble → expanding → open (click to close: open → collapsing → idle)
   const [phase, setPhase] = useState<"idle" | "bubble" | "expanding" | "open" | "collapsing" | "shrinking">("idle");
   const [subMode, setSubMode] = useState<"default" | "change" | "share">("default");
@@ -271,7 +277,15 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
             label="Share"
             bgColor="var(--vibes-green, #22c55e)"
             labelColor="var(--vibes-cream, #FFFEF0)"
-            onClick={(e) => { e.stopPropagation(); setSubMode((m) => m === "share" ? "default" : "share"); }}
+            buttonRef={shareButtonRef}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onOwnerShare) {
+                onOwnerShare();
+              } else {
+                setSubMode((m) => m === "share" ? "default" : "share");
+              }
+            }}
             icon={
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />

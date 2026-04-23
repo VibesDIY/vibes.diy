@@ -1,16 +1,68 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../ui/button.js";
+import { PendingRequestsCard } from "../mine/sharing-tab/PendingRequestsCard.js";
 import type { UseShareModalReturn } from "./useShareModal.js";
+
+const inlineSelect =
+  "rounded-[5px] border-2 border-black bg-white dark:bg-gray-800 text-sm font-medium px-1.5 py-0.5 mx-0.5 shadow-[2px_2px_0px_0px_black] focus:outline-none disabled:opacity-50 disabled:pointer-events-none";
+
+type Verb = "collaborate with" | "publish to";
+type Audience = "anyone" | "members I approve";
+
+function PublishForm({ modal, publishDisabled }: { modal: UseShareModalReturn; publishDisabled: boolean }) {
+  const [verb, setVerb] = useState<Verb>("collaborate with");
+  const [audience, setAudience] = useState<Audience>("anyone");
+  const autoAccept = audience === "anyone";
+  const role: "editor" | "viewer" = verb === "collaborate with" ? "editor" : "viewer";
+  return (
+    <div className="space-y-2">
+      <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+        Publish your vibe to{" "}
+        <select
+          value={verb}
+          onChange={(e) => setVerb(e.target.value as Verb)}
+          disabled={publishDisabled}
+          className={inlineSelect}
+        >
+          <option value="collaborate with">collaborate with</option>
+          <option value="publish to">publish to</option>
+        </select>{" "}
+        <select
+          value={audience}
+          onChange={(e) => setAudience(e.target.value as Audience)}
+          disabled={publishDisabled}
+          className={inlineSelect}
+        >
+          <option value="anyone">anyone</option>
+          <option value="members I approve">members I approve</option>
+        </select>
+        .
+      </p>
+      <Button
+        variant="blue"
+        size="fixed"
+        className="w-full"
+        disabled={publishDisabled}
+        onClick={() => void modal.handlePublish(autoAccept, role)}
+      >
+        {modal.isPublishing ? "Publishing..." : "Publish"}
+      </Button>
+      {modal.publishError ? <p className="text-xs text-red-600 dark:text-red-400">{modal.publishError}</p> : null}
+      {!modal.canPublish ? (
+        <p className="text-xs text-gray-500 dark:text-gray-500">Generate some code first to publish.</p>
+      ) : null}
+    </div>
+  );
+}
 
 interface ShareModalProps {
   modal: UseShareModalReturn;
+  /** Where to position the popover relative to the trigger button. Default "below". */
+  placement?: "below" | "above";
 }
 
-const inlinePublishButton =
-  "inline-flex items-center px-2 py-0.5 mx-0.5 rounded-[5px] border-2 border-black bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 shadow-[2px_2px_0px_0px_black] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50 disabled:pointer-events-none";
-
-export function ShareModal({ modal }: ShareModalProps) {
+export function ShareModal({ modal, placement = "below" }: ShareModalProps) {
   useEffect(() => {
     if (!modal.isOpen) return;
     function onKeyDown(e: KeyboardEvent) {
@@ -23,11 +75,18 @@ export function ShareModal({ modal }: ShareModalProps) {
   if (!modal.isOpen || !modal.buttonRef.current) return null;
 
   const buttonRect = modal.buttonRef.current.getBoundingClientRect();
-  const menuStyle = {
-    position: "fixed" as const,
-    top: `${buttonRect.bottom + 8}px`,
-    right: `${window.innerWidth - buttonRect.right}px`,
-  };
+  const menuStyle: React.CSSProperties =
+    placement === "above"
+      ? {
+          position: "fixed",
+          bottom: `${window.innerHeight - buttonRect.top + 8}px`,
+          right: `${window.innerWidth - buttonRect.right}px`,
+        }
+      : {
+          position: "fixed",
+          top: `${buttonRect.bottom + 8}px`,
+          right: `${window.innerWidth - buttonRect.right}px`,
+        };
 
   function handleBackdropClick(e: React.MouseEvent) {
     if (e.target === e.currentTarget) {
@@ -48,7 +107,7 @@ export function ShareModal({ modal }: ShareModalProps) {
       <div
         style={menuStyle}
         onClick={(e) => e.stopPropagation()}
-        className="w-80 rounded-[5px] border-2 border-black bg-white p-4 shadow-[4px_4px_0px_0px_black] dark:bg-gray-900"
+        className="w-max min-w-80 max-w-[min(42rem,calc(100vw-2rem))] rounded-[5px] border-2 border-black bg-white p-4 shadow-[4px_4px_0px_0px_black] dark:bg-gray-900"
       >
         {modal.isPublished && modal.publishedUrl ? (
           <div className="space-y-2">
@@ -89,7 +148,7 @@ export function ShareModal({ modal }: ShareModalProps) {
             </p>
             <div className="flex items-center justify-between gap-3">
               <span id="auto-join-label" className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                Auto-join
+                Auto-approve
               </span>
               <button
                 type="button"
@@ -110,36 +169,10 @@ export function ShareModal({ modal }: ShareModalProps) {
                 />
               </button>
             </div>
+            <PendingRequestsCard userSlug={modal.userSlug} appSlug={modal.appSlug} hideHeader />
           </div>
         ) : (
-          <div className="space-y-2">
-            <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-              Publish your vibe to collaborate with{" "}
-              <button
-                type="button"
-                onClick={() => void modal.handlePublish(true)}
-                disabled={publishDisabled}
-                className={inlinePublishButton}
-              >
-                everyone
-              </button>{" "}
-              or{" "}
-              <button
-                type="button"
-                onClick={() => void modal.handlePublish(false)}
-                disabled={publishDisabled}
-                className={inlinePublishButton}
-              >
-                approved members
-              </button>
-              .
-            </p>
-            {modal.isPublishing ? <p className="text-xs text-gray-500 dark:text-gray-400">Publishing...</p> : null}
-            {modal.publishError ? <p className="text-xs text-red-600 dark:text-red-400">{modal.publishError}</p> : null}
-            {!modal.canPublish ? (
-              <p className="text-xs text-gray-500 dark:text-gray-500">Generate some code first to publish.</p>
-            ) : null}
-          </div>
+          <PublishForm modal={modal} publishDisabled={publishDisabled} />
         )}
       </div>
     </div>,
