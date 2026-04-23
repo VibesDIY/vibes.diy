@@ -119,7 +119,7 @@ runs:
         NEON_DATABASE_URL: ${{ inputs.NEON_DATABASE_URL }}
         NEON_DATABASE_ADMIN_URL: ${{ inputs.NEON_DATABASE_ADMIN_URL }}
         MAX_APP_SLUG_PER_USER_ID: ${{ inputs.MAX_APP_SLUG_PER_USER_ID }}
-        WORKSPACE_NPM_URL: ${{ inputs.WORKSPACE_NPM_URL }}
+        WORKSPACE_NPM_URL: ${{ inputs.WORKSPACE_NPM_URL }}?v=${{ github.sha }}
         VIBES_DIY_API_URL: ${{ inputs.VIBES_DIY_API_URL }}
         PRODIA_TOKEN: ${{ inputs.PRODIA_TOKEN }}
       run: |
