@@ -629,9 +629,8 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         userSlug,
         request: {
           enable: true,
-          autoAcceptViewRequest: true,
+          autoAcceptRole: "viewer",
         },
-        // aclEntry: { op: "upsert", entry: { type: "app.acl.enable.request", autoAcceptViewRequest: true } },
       });
       expect(res.Ok().settings.entries).toEqual(ref.Ok().settings.entries);
     });
@@ -771,12 +770,12 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       const x3 = await api.ensureAppSettings({
         appSlug,
         userSlug,
-        request: { enable: true, autoAcceptViewRequest: true },
+        request: { enable: true, autoAcceptRole: "viewer" },
       });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entry.enableRequest).toBeDefined();
-      expect(x3.Ok().settings.entry.enableRequest?.autoAcceptViewRequest).toBe(true);
+      expect(x3.Ok().settings.entry.enableRequest?.autoAcceptRole).toBe("viewer");
     });
   });
 
@@ -986,7 +985,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       const { appSlug, userSlug } = await createApp();
 
       // enable request access with auto-approve
-      await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptViewRequest: true } });
+      await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "viewer" } });
 
       // api2 checks before requesting → not-found (request is possible)
       expect((await api2.hasAccessRequest({ appSlug, userSlug })).Ok().state).toBe("not-found");
@@ -1038,7 +1037,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       await api.ensureAppSettings({
         appSlug,
         userSlug,
-        request: { enable: true, autoAcceptViewRequest: true },
+        request: { enable: true, autoAcceptRole: "viewer" },
       });
 
       const after = (await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok();
@@ -1068,7 +1067,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       await api.ensureAppSettings({
         appSlug,
         userSlug,
-        request: { enable: true, autoAcceptViewRequest: true },
+        request: { enable: true, autoAcceptRole: "viewer" },
       });
 
       const after = (await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok();

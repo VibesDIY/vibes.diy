@@ -26,10 +26,12 @@ import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite, redeemInvite } from "./invite-flow.js";
 import { hasAccessRequest, requestAccess } from "./request-flow.js";
 
-function grantedAccess(role: "editor" | "viewer") {
+function grantedAccess(role: "editor" | "viewer" | "submitter") {
   switch (role) {
     case "editor":
       return "granted-access.editor";
+    case "submitter":
+      return "granted-access.submitter";
     case "viewer":
     default:
       return "granted-access.viewer";

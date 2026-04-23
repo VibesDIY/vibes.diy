@@ -290,7 +290,7 @@ export const GrantListBase = type({
   pager: Pager,
 });
 
-export const Role = type("'editor' | 'viewer'");
+export const Role = type("'editor' | 'viewer' | 'submitter'");
 export type Role = typeof Role.infer;
 
 /**

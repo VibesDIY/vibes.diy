@@ -107,15 +107,16 @@ export function SharingTab({ userSlug, appSlug }: SharingTabProps) {
     });
   }
 
-  async function toggleAutoAcceptViewRequest() {
+  async function toggleAutoAcceptRole() {
     if (!settings?.entry.enableRequest) return;
-    setToggling("autoAcceptViewRequest");
+    setToggling("autoAcceptRole");
+    const currentRole = settings.entry.enableRequest.autoAcceptRole;
     const res = await vibeDiyApi.ensureAppSettings({
       appSlug,
       userSlug,
       request: {
         enable: true,
-        autoAcceptViewRequest: !settings.entry.enableRequest.autoAcceptViewRequest,
+        autoAcceptRole: currentRole ? undefined : "viewer",
       },
     });
     setToggling(null);
@@ -160,7 +161,7 @@ export function SharingTab({ userSlug, appSlug }: SharingTabProps) {
         requests={requests}
         toggling={toggling}
         onToggle={() => void toggleEnableRequest(!!entry.enableRequest?.enable)}
-        onToggleAutoAccept={() => void toggleAutoAcceptViewRequest()}
+        onToggleAutoAccept={() => void toggleAutoAcceptRole()}
         onApprove={(r, role) => void approveRequest(r, role)}
         onRejectPending={(r) => void revokeRequest(r)}
         onRejectApproved={(r) => void revokeRequest(r)}

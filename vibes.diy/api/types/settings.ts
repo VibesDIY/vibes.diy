@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { dashAuthType } from "./common.js";
+import { dashAuthType, Role } from "./common.js";
 import { AIParams, ActiveEntry, EnablePublicAccess, EnableRequest, ActiveACL, KVString } from "./invite.js";
 
 export const sharingGrantItem = type({
@@ -101,7 +101,7 @@ export function isReqPublicAccess(obj: unknown): obj is ReqPublicAccess {
 export const reqRequest = type({
   request: {
     enable: "boolean",
-    "autoAcceptViewRequest?": "boolean",
+    "autoAcceptRole?": Role,
   },
 }).and(reqEnsureAppSettingsBase);
 
