@@ -24,6 +24,7 @@ export const Model = type({
   description: "string",
   "featured?": "boolean",
   "preSelected?": PromptStyle.array(),
+  "supports?": PromptLLMStyle.array(),
 });
 
 export type Model = typeof Model.infer;
