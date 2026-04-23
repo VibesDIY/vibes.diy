@@ -78,7 +78,7 @@ export class FireflyDatabase {
     // Listen for remote doc-changed events (cross-client sync)
     this.vibeApi.onMsg((event) => {
       const { data } = event;
-      if (isEvtDocChanged(data) && data.appSlug === this.vibeApp.appSlug) {
+      if (isEvtDocChanged(data) && data.userSlug === this.vibeApp.userSlug && data.appSlug === this.vibeApp.appSlug) {
         this.notifyListeners([]);
       }
     });
