@@ -133,7 +133,7 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     await api.ensureAppSettings({
       appSlug: src.appSlug,
       userSlug: src.userSlug,
-      request: { enable: true, autoAcceptViewRequest: false },
+      request: { enable: true },
     });
 
     const rFork = await api2.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug });
@@ -174,7 +174,7 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     if (rSettings.isErr()) assert.fail(`ensureAppSettings failed: ${rSettings.Err().message}`);
     const entry = rSettings.Ok().settings.entry;
     expect(entry.enableRequest?.enable).toBe(true);
-    expect(entry.enableRequest?.autoAcceptViewRequest).toBe(false);
+    expect(entry.enableRequest?.autoAcceptRole).toBeUndefined();
     expect(entry.publicAccess?.enable).toBe(false);
   });
 

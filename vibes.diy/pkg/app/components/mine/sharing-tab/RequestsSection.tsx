@@ -361,8 +361,8 @@ export function RequestsSection({
               <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={!!enableRequest.autoAcceptViewRequest}
-                  disabled={toggling === "autoAcceptViewRequest"}
+                  checked={!!enableRequest.autoAcceptRole}
+                  disabled={toggling === "autoAcceptRole"}
                   onChange={onToggleAutoAccept}
                   className="rounded border-gray-300 dark:border-gray-600 disabled:opacity-50"
                 />

@@ -103,7 +103,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
       .then((res) => {
         if (cancelled) return;
         if (res.isOk()) {
-          setAutoJoinEnabled(res.Ok().settings.entry.enableRequest?.autoAcceptViewRequest === true);
+          setAutoJoinEnabled(!!res.Ok().settings.entry.enableRequest?.autoAcceptRole);
         }
       })
       .catch(() => {
@@ -141,7 +141,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
         const settingsResult = await vibeDiyApi.ensureAppSettings({
           appSlug,
           userSlug,
-          request: { enable: true, autoAcceptViewRequest: autoJoin },
+          request: { enable: true, autoAcceptRole: autoJoin ? "viewer" : undefined },
         });
 
         if (!settingsResult.isOk()) {
@@ -174,7 +174,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
       const result = await vibeDiyApi.ensureAppSettings({
         appSlug,
         userSlug,
-        request: { enable: true, autoAcceptViewRequest: nextValue },
+        request: { enable: true, autoAcceptRole: nextValue ? "viewer" : undefined },
       });
       if (result.isOk()) {
         setAutoJoinEnabled(nextValue);

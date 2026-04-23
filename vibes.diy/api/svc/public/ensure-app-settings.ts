@@ -227,8 +227,8 @@ export async function ensureAppSettings(
       break;
 
     case isReqRequest(req): {
-      const prevAutoAccept = settings.find(isEnableRequest)?.autoAcceptViewRequest === true;
-      const nextAutoAccept = req.request.autoAcceptViewRequest === true;
+      const prevAutoAcceptRole = settings.find(isEnableRequest)?.autoAcceptRole;
+      const nextAutoAcceptRole = req.request.autoAcceptRole;
 
       [res.settings, res.error] = await sqlUpsert(
         vctx,
@@ -239,16 +239,20 @@ export async function ensureAppSettings(
           ({
             type: "app.request",
             enable: req.request.enable,
-            autoAcceptViewRequest: req.request.autoAcceptViewRequest,
+            autoAcceptRole: req.request.autoAcceptRole,
           }) satisfies EnableRequest
       );
 
-      if (!res.error && !prevAutoAccept && nextAutoAccept) {
-        const drained = await approveAllPendingRequests(vctx, {
-          userId: res.userId,
-          appSlug: res.appSlug,
-          userSlug: res.userSlug,
-        });
+      if (!res.error && !prevAutoAcceptRole && nextAutoAcceptRole) {
+        const drained = await approveAllPendingRequests(
+          vctx,
+          {
+            userId: res.userId,
+            appSlug: res.appSlug,
+            userSlug: res.userSlug,
+          },
+          nextAutoAcceptRole
+        );
         if (drained.isErr()) {
           res.error = drained.Err().message;
         }

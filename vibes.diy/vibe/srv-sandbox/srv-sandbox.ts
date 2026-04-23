@@ -445,6 +445,7 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       const rRes = await vibeDiyApi.putDoc({
         userSlug: ctx.validated.userSlug,
         appSlug: ctx.validated.appSlug,
+        userSlug: ctx.validated.userSlug,
         dbName: ctx.validated.dbName,
         doc: ctx.validated.doc,
         docId: ctx.validated.docId,
@@ -485,6 +486,7 @@ function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       const rRes = await vibeDiyApi.getDoc({
         userSlug: ctx.validated.userSlug,
         appSlug: ctx.validated.appSlug,
+        userSlug: ctx.validated.userSlug,
         dbName: ctx.validated.dbName,
         docId: ctx.validated.docId,
       });
@@ -523,6 +525,7 @@ function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
       const rRes = await vibeDiyApi.queryDocs({
         userSlug: ctx.validated.userSlug,
         appSlug: ctx.validated.appSlug,
+        userSlug: ctx.validated.userSlug,
         dbName: ctx.validated.dbName,
       });
       if (rRes.isErr()) {
@@ -560,6 +563,7 @@ function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       const rRes = await vibeDiyApi.deleteDoc({
         userSlug: ctx.validated.userSlug,
         appSlug: ctx.validated.appSlug,
+        userSlug: ctx.validated.userSlug,
         dbName: ctx.validated.dbName,
         docId: ctx.validated.docId,
       });
@@ -598,6 +602,7 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
       const rRes = await vibeDiyApi.subscribeDocs({
         userSlug: ctx.validated.userSlug,
         appSlug: ctx.validated.appSlug,
+        userSlug: ctx.validated.userSlug,
         dbName: ctx.validated.dbName,
       });
       if (rRes.isErr()) {

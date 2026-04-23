@@ -225,7 +225,7 @@ export async function forkApp(
         type: "vibes.diy.req-ensure-app-settings",
         appSlug: destAppSlug,
         userSlug: destUserSlug,
-        request: { enable: true, autoAcceptViewRequest: false },
+        request: { enable: true },
       },
       userId
     );

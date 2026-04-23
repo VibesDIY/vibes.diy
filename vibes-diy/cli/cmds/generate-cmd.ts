@@ -185,7 +185,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       const rSettings = await api.ensureAppSettings({
         appSlug: pushAppSlug,
         userSlug: pushUserSlug,
-        request: { enable: true, autoAcceptViewRequest: true },
+        request: { enable: true, autoAcceptRole: "viewer" },
       });
       if (rSettings.isErr()) {
         const settErr = rSettings.Err();

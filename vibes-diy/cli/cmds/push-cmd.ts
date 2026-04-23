@@ -117,7 +117,7 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
       const rSettings = await api.ensureAppSettings({
         appSlug,
         userSlug,
-        request: { enable: true, autoAcceptViewRequest: args.instantJoin },
+        request: { enable: true, autoAcceptRole: args.instantJoin ? "viewer" : undefined },
       });
       if (rSettings.isErr()) {
         const settErr = rSettings.Err();
@@ -127,7 +127,7 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
           `Warning: failed to update app settings: ${typeof settErr === "object" ? JSON.stringify(settErr) : String(settErr)}`
         );
       } else {
-        const instantJoin = rSettings.Ok().settings.entry.enableRequest?.autoAcceptViewRequest;
+        const instantJoin = rSettings.Ok().settings.entry.enableRequest?.autoAcceptRole;
         await sendProgress(ctx, "info", `Requests enabled${instantJoin ? " (instant-join)" : ""}`);
       }
     }

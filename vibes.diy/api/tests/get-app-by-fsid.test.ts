@@ -123,11 +123,11 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
     expect(rApp.Ok().grant).toBe("pending-request");
   });
 
-  it("getAppByFsId auto-approves and grants access when autoAcceptViewRequest is enabled", async () => {
+  it("getAppByFsId auto-approves and grants access when autoAcceptRole is enabled", async () => {
     const { appSlug, userSlug } = await createApp();
 
     // Enable request access with auto-approve
-    await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptViewRequest: true } });
+    await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "viewer" } });
 
     // Non-owner visits — should be auto-approved on first getAppByFsId
     const rApp = await api2.getAppByFsId({ appSlug, userSlug });

@@ -31,7 +31,7 @@ export function isResPutDoc(obj: unknown): obj is ResPutDoc {
 
 export const reqGetDoc = type({
   type: "'vibes.diy.req-get-doc'",
-  auth: dashAuthType,
+  "auth?": dashAuthType,
   userSlug: "string",
   appSlug: "string",
   dbName: "string",
@@ -67,7 +67,7 @@ export function isResGetDocNotFound(obj: unknown): obj is ResGetDocNotFound {
 
 export const reqQueryDocs = type({
   type: "'vibes.diy.req-query-docs'",
-  auth: dashAuthType,
+  "auth?": dashAuthType,
   userSlug: "string",
   appSlug: "string",
   dbName: "string",
@@ -116,7 +116,7 @@ export function isResDeleteDoc(obj: unknown): obj is ResDeleteDoc {
 
 export const reqSubscribeDocs = type({
   type: "'vibes.diy.req-subscribe-docs'",
-  auth: dashAuthType,
+  "auth?": dashAuthType,
   userSlug: "string",
   appSlug: "string",
   dbName: "string",
