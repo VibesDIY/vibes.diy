@@ -90,7 +90,18 @@ async function isPublicReadable(vctx: VibesApiSQLCtx, appSlug: string, userSlug:
     env: [],
   });
   if (rSettings.isErr()) return false;
-  return !!rSettings.Ok().settings.entry.publicAccess?.enable;
+  if (!rSettings.Ok().settings.entry.publicAccess?.enable) return false;
+
+  // Match get-app-by-fsid: only production apps are publicly readable
+  const app = await vctx.sql.db
+    .select({ mode: vctx.sql.tables.apps.mode })
+    .from(vctx.sql.tables.apps)
+    .where(and(eq(vctx.sql.tables.apps.appSlug, appSlug), eq(vctx.sql.tables.apps.userSlug, userSlug)))
+    .orderBy(sql`${vctx.sql.tables.apps.created} desc`)
+    .limit(1)
+    .then((r) => r[0]);
+
+  return app?.mode === "production";
 }
 
 // ── putDoc ──────────────────────────────────────────────────────────
