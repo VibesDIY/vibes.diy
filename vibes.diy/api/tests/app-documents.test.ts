@@ -161,9 +161,8 @@ describe("Firefly cross-user document isolation", { timeout: 10000 }, () => {
   const sthis = ensureSuperThis();
   let apiA: VibesDiyApi;
   let apiB: VibesDiyApi;
-  let appSlugA: string;
+  const sharedAppSlug = "same-slug-isolation-test";
   let userSlugA: string;
-  let appSlugB: string;
   let userSlugB: string;
 
   beforeAll(async () => {
@@ -202,8 +201,9 @@ describe("Firefly cross-user document isolation", { timeout: 10000 }, () => {
       getToken: async () => Result.Ok(await testUserB.getDashBoardToken()),
     });
 
-    // Both users create apps (will get different userSlugs but could have same appSlug pattern)
+    // Both users create apps with the SAME appSlug — this is the exact collision scenario
     const rResA = await apiA.ensureAppSlug({
+      appSlug: sharedAppSlug,
       mode: "dev",
       fileSystem: [
         { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return <div>A</div>; } App();` },
@@ -211,10 +211,10 @@ describe("Firefly cross-user document isolation", { timeout: 10000 }, () => {
     });
     const resA = rResA.Ok();
     if (!isResEnsureAppSlugOk(resA)) throw new Error("Failed to create app A");
-    appSlugA = resA.appSlug;
     userSlugA = resA.userSlug;
 
     const rResB = await apiB.ensureAppSlug({
+      appSlug: sharedAppSlug,
       mode: "dev",
       fileSystem: [
         { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return <div>B</div>; } App();` },
@@ -222,7 +222,6 @@ describe("Firefly cross-user document isolation", { timeout: 10000 }, () => {
     });
     const resB = rResB.Ok();
     if (!isResEnsureAppSlugOk(resB)) throw new Error("Failed to create app B");
-    appSlugB = resB.appSlug;
     userSlugB = resB.userSlug;
   });
 
@@ -230,22 +229,22 @@ describe("Firefly cross-user document isolation", { timeout: 10000 }, () => {
     const docId = "shared-doc-id";
 
     // User A writes
-    const rPutA = await apiA.putDoc({ userSlug: userSlugA, appSlug: appSlugA, dbName: "test", doc: { owner: "A" }, docId });
+    const rPutA = await apiA.putDoc({ userSlug: userSlugA, appSlug: sharedAppSlug, dbName: "test", doc: { owner: "A" }, docId });
     expect(rPutA.isOk()).toBe(true);
 
     // User B writes same docId
-    const rPutB = await apiB.putDoc({ userSlug: userSlugB, appSlug: appSlugB, dbName: "test", doc: { owner: "B" }, docId });
+    const rPutB = await apiB.putDoc({ userSlug: userSlugB, appSlug: sharedAppSlug, dbName: "test", doc: { owner: "B" }, docId });
     expect(rPutB.isOk()).toBe(true);
 
     // User A reads — should see their own
-    const rGetA = await apiA.getDoc({ userSlug: userSlugA, appSlug: appSlugA, dbName: "test", docId });
+    const rGetA = await apiA.getDoc({ userSlug: userSlugA, appSlug: sharedAppSlug, dbName: "test", docId });
     expect(rGetA.isOk()).toBe(true);
     const resA = rGetA.Ok();
     expect(resA.status).toBe("ok");
     expect((resA as { doc: Record<string, unknown> }).doc).toEqual(expect.objectContaining({ owner: "A" }));
 
     // User B reads — should see their own
-    const rGetB = await apiB.getDoc({ userSlug: userSlugB, appSlug: appSlugB, dbName: "test", docId });
+    const rGetB = await apiB.getDoc({ userSlug: userSlugB, appSlug: sharedAppSlug, dbName: "test", docId });
     expect(rGetB.isOk()).toBe(true);
     const resB = rGetB.Ok();
     expect(resB.status).toBe("ok");
@@ -254,16 +253,16 @@ describe("Firefly cross-user document isolation", { timeout: 10000 }, () => {
 
   it("queryDocs only returns docs for the querying user", async () => {
     const prefix = sthis.nextId(4).str;
-    await apiA.putDoc({ userSlug: userSlugA, appSlug: appSlugA, dbName: "test", doc: { v: "a1" }, docId: `${prefix}-a1` });
-    await apiB.putDoc({ userSlug: userSlugB, appSlug: appSlugB, dbName: "test", doc: { v: "b1" }, docId: `${prefix}-b1` });
+    await apiA.putDoc({ userSlug: userSlugA, appSlug: sharedAppSlug, dbName: "test", doc: { v: "a1" }, docId: `${prefix}-a1` });
+    await apiB.putDoc({ userSlug: userSlugB, appSlug: sharedAppSlug, dbName: "test", doc: { v: "b1" }, docId: `${prefix}-b1` });
 
-    const rQueryA = await apiA.queryDocs({ userSlug: userSlugA, appSlug: appSlugA, dbName: "test" });
+    const rQueryA = await apiA.queryDocs({ userSlug: userSlugA, appSlug: sharedAppSlug, dbName: "test" });
     expect(rQueryA.isOk()).toBe(true);
     const docsA = rQueryA.Ok().docs;
     expect(docsA.find((d) => d._id === `${prefix}-a1`)).toBeDefined();
     expect(docsA.find((d) => d._id === `${prefix}-b1`)).toBeUndefined();
 
-    const rQueryB = await apiB.queryDocs({ userSlug: userSlugB, appSlug: appSlugB, dbName: "test" });
+    const rQueryB = await apiB.queryDocs({ userSlug: userSlugB, appSlug: sharedAppSlug, dbName: "test" });
     expect(rQueryB.isOk()).toBe(true);
     const docsB = rQueryB.Ok().docs;
     expect(docsB.find((d) => d._id === `${prefix}-b1`)).toBeDefined();
@@ -273,18 +272,18 @@ describe("Firefly cross-user document isolation", { timeout: 10000 }, () => {
   it("deleteDoc by one user does not affect another user", async () => {
     const docId = `del-isolation-${sthis.nextId(4).str}`;
 
-    await apiA.putDoc({ userSlug: userSlugA, appSlug: appSlugA, dbName: "test", doc: { v: "a" }, docId });
-    await apiB.putDoc({ userSlug: userSlugB, appSlug: appSlugB, dbName: "test", doc: { v: "b" }, docId });
+    await apiA.putDoc({ userSlug: userSlugA, appSlug: sharedAppSlug, dbName: "test", doc: { v: "a" }, docId });
+    await apiB.putDoc({ userSlug: userSlugB, appSlug: sharedAppSlug, dbName: "test", doc: { v: "b" }, docId });
 
     // User A deletes
-    await apiA.deleteDoc({ userSlug: userSlugA, appSlug: appSlugA, dbName: "test", docId });
+    await apiA.deleteDoc({ userSlug: userSlugA, appSlug: sharedAppSlug, dbName: "test", docId });
 
     // User A sees not-found
-    const rGetA = await apiA.getDoc({ userSlug: userSlugA, appSlug: appSlugA, dbName: "test", docId });
+    const rGetA = await apiA.getDoc({ userSlug: userSlugA, appSlug: sharedAppSlug, dbName: "test", docId });
     expect(rGetA.Ok().status).toBe("not-found");
 
     // User B still sees their doc
-    const rGetB = await apiB.getDoc({ userSlug: userSlugB, appSlug: appSlugB, dbName: "test", docId });
+    const rGetB = await apiB.getDoc({ userSlug: userSlugB, appSlug: sharedAppSlug, dbName: "test", docId });
     expect(rGetB.Ok().status).toBe("ok");
     expect((rGetB.Ok() as { doc: Record<string, unknown> }).doc).toEqual(expect.objectContaining({ v: "b" }));
   });
