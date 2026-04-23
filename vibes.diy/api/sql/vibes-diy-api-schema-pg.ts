@@ -194,8 +194,8 @@ export const sqlAppDocuments = pgTable(
     created: text().notNull(), // ISO timestamp of this revision
   },
   (table) => [
-    primaryKey({ columns: [table.appSlug, table.dbName, table.docId, table.seq] }),
-    index("AppDocuments_latest_idx").on(table.appSlug, table.dbName, table.docId, table.seq),
+    primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId, table.seq] }),
+    index("AppDocuments_latest_idx").on(table.userSlug, table.appSlug, table.dbName, table.docId, table.seq),
   ]
 );
 
