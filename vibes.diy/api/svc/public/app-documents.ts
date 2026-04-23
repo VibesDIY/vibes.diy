@@ -408,18 +408,32 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
     }
     return Result.Ok(Option.Some({ ...msg, payload: ret }));
   }),
-  handle: checkAuth(
+  handle: optAuth(
     async (
-      ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqSubscribeDocs>>, ResSubscribeDocs | VibesDiyError>
+      ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithOptionalAuth<ReqSubscribeDocs>>, ResSubscribeDocs | VibesDiyError>
     ): Promise<Result<EventoResultType>> => {
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-      const userId = req._auth.verifiedAuth.claims.userId;
 
-      const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
-      if (!canRead(access)) {
-        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } as unknown as VibesDiyError);
-        return Result.Ok(EventoResult.Continue);
+      // Access check: authenticated user with read access, or public app
+      if (req._auth) {
+        const access = await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug);
+        if (!canRead(access)) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { message: "Access denied" },
+          } as unknown as VibesDiyError);
+          return Result.Ok(EventoResult.Continue);
+        }
+      } else {
+        const pub = await isPublicReadable(vctx, req.appSlug, req.userSlug);
+        if (!pub) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { message: "Access denied" },
+          } as unknown as VibesDiyError);
+          return Result.Ok(EventoResult.Continue);
+        }
       }
 
       // Store subscription on the connection object (fireproof pattern).
