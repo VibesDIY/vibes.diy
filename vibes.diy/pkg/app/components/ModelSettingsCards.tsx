@@ -42,8 +42,10 @@ function ModelSection({
   const { vibeDiyApi } = useVibesDiy();
 
   const [models, setModels] = useState<AIParams["model"][]>([]);
+  const [loadState, setLoadState] = useState<"loading" | "loaded" | "error">("loading");
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const viewState = useRef<"start" | "loading" | "loaded">("start");
+  const didStart = useRef(false);
 
   const [aiParam, setAIParam] = useState<AIParams>({
     model: {
@@ -55,13 +57,15 @@ function ModelSection({
   });
 
   useEffect(() => {
-    if (viewState.current === "start") {
-      viewState.current = "loading";
-      vibeDiyApi.listModels({}).then((res) => {
-        viewState.current = "loaded";
+    if (didStart.current) return;
+    didStart.current = true;
+    vibeDiyApi
+      .listModels({})
+      .then((res) => {
         if (res.isOk()) {
           const eligible = filterModelsByUsage(res.Ok().models, usage);
           setModels(eligible);
+          setLoadState("loaded");
           for (const model of eligible) {
             if (model.preSelected?.includes(usage))
               setAIParam((prev) => {
@@ -71,10 +75,17 @@ function ModelSection({
                 return prev;
               });
           }
+        } else {
+          const err = res.Err();
+          const message = typeof err === "object" && err !== null && "message" in err ? String((err as { message: unknown }).message) : String(err);
+          setLoadError(message);
+          setLoadState("error");
         }
+      })
+      .catch((err: unknown) => {
+        setLoadError(err instanceof Error ? err.message : String(err));
+        setLoadState("error");
       });
-      return;
-    }
   }, [vibeDiyApi, usage]);
 
   useEffect(() => {
@@ -92,8 +103,14 @@ function ModelSection({
     <div className="space-y-2">
       <div className="flex items-center gap-3">
         <label className="w-24 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Model</label>
-        {viewState.current !== "loaded" && <div className="text-xs text-gray-400">Loading models...</div>}
-        {viewState.current === "loaded" && (
+        {loadState === "loading" && <div className="text-xs text-gray-400">Loading models...</div>}
+        {loadState === "error" && (
+          <div className="flex-1 text-xs text-red-600 dark:text-red-400">Failed to load models: {loadError}</div>
+        )}
+        {loadState === "loaded" && models.length === 0 && (
+          <div className="flex-1 text-xs text-gray-500 dark:text-gray-400">No models available for this usage.</div>
+        )}
+        {loadState === "loaded" && models.length > 0 && (
           <select
             value={aiParam?.model.id || ""}
             onChange={(e) =>
@@ -109,7 +126,7 @@ function ModelSection({
           </select>
         )}
       </div>
-      {viewState.current === "loaded" && (
+      {loadState === "loaded" && models.length > 0 && (
         <>
           {aiParam?.model.description && (
             <div className="flex items-center gap-3">
