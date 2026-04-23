@@ -44,7 +44,7 @@ describe("Firefly public subscribeDocs", { timeout: 15000 }, () => {
     });
 
     const rRes = await ownerApi.ensureAppSlug({
-      mode: "dev",
+      mode: "production",
       fileSystem: [
         {
           type: "code-block",

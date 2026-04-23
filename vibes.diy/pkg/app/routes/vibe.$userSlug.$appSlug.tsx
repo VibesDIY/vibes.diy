@@ -119,6 +119,7 @@ export default function VibeIframeWrapper() {
           case "accepted-email-invite":
           case "granted-access.editor":
           case "granted-access.viewer":
+          case "granted-access.submitter":
           case "public-access":
           case "owner":
             {
