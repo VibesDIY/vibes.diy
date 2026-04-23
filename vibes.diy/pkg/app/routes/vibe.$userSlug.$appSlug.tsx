@@ -35,8 +35,20 @@ export default function VibeIframeWrapper() {
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
   const [searchParam] = useSearchParams();
   const [retryCount, setRetryCount] = useState(0);
+  const [isOwner, setIsOwner] = useState(false);
 
   const inGetAppByFsIdRef = useRef(false);
+
+  useEffect(() => {
+    if (!authSignedIn || !userSlug) {
+      setIsOwner(false);
+      return;
+    }
+    vctx.vibeDiyApi.listUserSlugBindings({}).then((res) => {
+      if (res.isErr()) return;
+      setIsOwner(res.Ok().items.some((item) => item.userSlug === userSlug));
+    });
+  }, [authSignedIn, userSlug, vctx.vibeDiyApi]);
 
   useEffect(() => {
     if (isLoaded && !authSignedIn && fsId && userSlug && appSlug) {
@@ -242,8 +254,11 @@ export default function VibeIframeWrapper() {
             <Delayed ms={1000}>
               <ExpandedVibesPill
                 size={60}
-                onRemix={() => {
-                  window.location.href = remixUrl;
+                remixHref={remixUrl}
+                cloneHref={cloneUrl}
+                editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
+                onHome={() => {
+                  window.open("https://vibes.diy", "_blank");
                 }}
               />
             </Delayed>

@@ -4,7 +4,15 @@ import { switchColors } from "./VibesSwitch.styles.js";
 export interface ExpandedVibesPillProps {
   size?: number | string;
   className?: string;
-  onRemix?: () => void;
+  /** Link target for Remix (renders as <a href>). */
+  remixHref?: string;
+  /** Link target for Clone (renders as <a href>). */
+  cloneHref?: string;
+  /** Link target for Edit — rendered only when the viewer owns the vibe. Omit to hide. */
+  editHref?: string;
+  /** Optional handler for the Thank Author share action. */
+  onThankAuthor?: () => void;
+  onHome?: () => void;
 }
 
 function PillActionButton({ height, label, icon, bgColor, labelColor, onClick }: {
@@ -77,6 +85,67 @@ function PillActionButton({ height, label, icon, bgColor, labelColor, onClick }:
   );
 }
 
+function VerticalActionButton({ height, label, icon, bgColor, labelColor, href, onClick }: {
+  height: number;
+  label: string;
+  icon: React.ReactNode;
+  bgColor: string;
+  labelColor?: string;
+  href?: string;
+  onClick?: () => void;
+}) {
+  const rowHeight = height * 0.55;
+  const iconSize = rowHeight * 0.55;
+  const sharedStyle: React.CSSProperties = {
+    textDecoration: "none",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    height: rowHeight,
+    padding: `0 14px 0 6px`,
+    border: "1px solid var(--vibes-near-black, #1a1a1a)",
+    borderRadius: rowHeight / 2,
+    background: bgColor,
+    color: labelColor || "var(--vibes-near-black, #1a1a1a)",
+    cursor: "pointer",
+    fontFamily: "'Inter', sans-serif",
+    fontSize: height * 0.16,
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "1.5px",
+    whiteSpace: "nowrap",
+  };
+  const inner = (
+    <>
+      <span style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: rowHeight - 8,
+        height: rowHeight - 8,
+        borderRadius: "50%",
+        background: "var(--vibes-near-black, #1a1a1a)",
+        color: "var(--vibes-cream, #FFFEF0)",
+      }}>
+        <span style={{ width: iconSize, height: iconSize, display: "flex", alignItems: "center", justifyContent: "center" }}>{icon}</span>
+      </span>
+      {label}
+    </>
+  );
+  if (href) {
+    return (
+      <a href={href} style={sharedStyle} onClick={(e) => e.stopPropagation()}>
+        {inner}
+      </a>
+    );
+  }
+  return (
+    <button type="button" style={sharedStyle} onClick={(e) => { e.stopPropagation(); onClick?.(); }}>
+      {inner}
+    </button>
+  );
+}
+
 const outerPath = "M293.353,298.09c-41.038,0-82.078,0.125-123.115-0.077c-11.993-0.06-24.011-0.701-35.964-1.703c-15.871-1.331-29.73-7.937-41.948-17.946c-16.769-13.736-27.207-31.417-30.983-52.7c-4.424-24.93,1.404-47.685,16.506-67.913c11.502-15.407,26.564-26.1,45.258-30.884c7.615-1.949,15.631-2.91,23.501-3.165c20.08-0.652,40.179-0.853,60.271-0.879c69.503-0.094,139.007-0.106,208.51,0.02c14.765,0.026,29.583,0.097,44.28,1.313c36.984,3.059,61.78,23.095,74.653,57.301c17.011,45.199-8.414,96.835-54.29,111.864c-7.919,2.595-16.165,3.721-24.434,3.871c-25.614,0.467-51.234,0.742-76.853,0.867C350.282,298.197,321.817,298.09,293.353,298.09z";
 const diyD = "M426.866,285.985c-7.999-0.416-19.597-0.733-31.141-1.687c-15.692-1.297-28.809-8.481-40.105-19.104c-12.77-12.008-20.478-26.828-22.714-44.177c-3.048-23.644,3.384-44.558,19.646-62.143c9.174-9.92,20.248-17.25,33.444-20.363c7.786-1.837,15.944-2.399,23.973-2.828c9.988-0.535,20.023-0.666,30.021-0.371c10.191,0.301,20.433,0.806,30.521,2.175c12.493,1.696,23.132,7.919,32.552,16.091c14.221,12.337,22.777,27.953,25.184,46.594c2.822,21.859-2.605,41.617-16.777,58.695c-9.494,11.441-21.349,19.648-35.722,23.502c-6.656,1.785-13.724,2.278-20.647,2.77C446.914,285.721,438.682,285.667,426.866,285.985z";
 const vibesD = "M165.866,285.985c-7.999-0.416-19.597-0.733-31.141-1.687c-15.692-1.297-28.809-8.481-40.105-19.104c-12.77-12.008-20.478-26.828-22.714-44.177c-3.048-23.644,3.384-44.558,19.646-62.143c9.174-9.92,20.248-17.25,33.444-20.363c7.786-1.837,15.944-2.399,23.973-2.828c9.988-0.535,111.023-0.666,121.021-0.371c10.191,0.301,20.433,0.806,30.521,2.175c12.493,1.696,23.132,7.919,32.552,16.091c14.221,12.337,22.777,27.953,25.184,46.594c2.822,21.859-2.605,41.617-16.777,58.695c-9.494,11.441-21.349,19.648-35.722,23.502c-6.656,1.785-13.724,2.278-20.647,2.77C276.914,285.721,177.682,285.667,165.866,285.985z";
@@ -97,9 +166,10 @@ const diyLetters = [
   { d: "M449.933,210.636c0.102-3.331,1.886-5.279,4.778-5.22c2.67,0.055,4.829,2.432,4.762,5.243c-0.073,3.021-2.404,5.36-5.242,5.261C451.606,215.829,449.84,213.657,449.933,210.636z" },
 ];
 
-export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVibesPillProps) {
+export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, editHref, onThankAuthor, onHome }: ExpandedVibesPillProps) {
   // idle → bubble → expanding → open (click to close: open → collapsing → idle)
   const [phase, setPhase] = useState<"idle" | "bubble" | "expanding" | "open" | "collapsing" | "shrinking">("idle");
+  const [subMode, setSubMode] = useState<"default" | "change" | "share">("default");
 
   const handleClick = () => {
     if (phase === "idle") setPhase("bubble");
@@ -112,6 +182,7 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
     else if (phase === "expanding") t = setTimeout(() => setPhase("open"), 500);
     else if (phase === "collapsing") t = setTimeout(() => setPhase("shrinking"), 400);
     else if (phase === "shrinking") t = setTimeout(() => setPhase("idle"), 300);
+    if (phase === "idle") setSubMode("default");
     return () => clearTimeout(t);
   }, [phase]);
 
@@ -130,7 +201,7 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
   const pillWidth = 600 * scale;          // pill SVG width in pixels
   const btnWidth = height * 0.75;         // single button closed width
   const btnExpandedWidth = height * 1.8;  // single button hover width
-  const visibleButtons = 1;               // number of buttons shown
+  const visibleButtons = 3;               // number of buttons shown
   const btnPadding = 10;                  // cream gap between buttons and pill
   // space = one expanded + rest closed + padding
   const trayExtra = btnExpandedWidth + (btnWidth * (visibleButtons - 1)) + btnPadding;
@@ -184,10 +255,10 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
         }}>
           <PillActionButton
             height={height}
-            label="Remix"
+            label="Vibe"
             bgColor="var(--vibes-yellow, #fedd00)"
             labelColor="var(--vibes-near-black, #1a1a1a)"
-            onClick={(e) => { e.stopPropagation(); onRemix?.(); }}
+            onClick={(e) => { e.stopPropagation(); setSubMode((m) => m === "change" ? "default" : "change"); }}
             icon={
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
@@ -195,31 +266,12 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
               </svg>
             }
           />
-          {/* <PillActionButton
+          <PillActionButton
             height={height}
             label="Share"
             bgColor="var(--vibes-green, #22c55e)"
             labelColor="var(--vibes-cream, #FFFEF0)"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigator.clipboard.writeText(window.location.href);
-            }}
-            icon={
-              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-              </svg>
-            }
-          />
-          <PillActionButton
-            height={height}
-            label="Group"
-            bgColor="var(--vibes-blue, #3b82f6)"
-            labelColor="var(--vibes-cream, #FFFEF0)"
-            onClick={(e) => { e.stopPropagation(); }}
+            onClick={(e) => { e.stopPropagation(); setSubMode((m) => m === "share" ? "default" : "share"); }}
             icon={
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
@@ -228,8 +280,153 @@ export function ExpandedVibesPill({ size = 75, className, onRemix }: ExpandedVib
                 <path d="M16 3.13a4 4 0 010 7.75" />
               </svg>
             }
-          /> */}
+          />
+          <PillActionButton
+            height={height}
+            label="Home"
+            bgColor="var(--vibes-blue, #3b82f6)"
+            labelColor="var(--vibes-cream, #FFFEF0)"
+            onClick={(e) => { e.stopPropagation(); onHome?.(); }}
+            icon={
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12l9-9 9 9" />
+                <path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
+              </svg>
+            }
+          />
         </div>
+      </div>
+
+      {/* Vertical sub-menu — opens above the pill, aligned with the Vibe button */}
+      <div
+        style={{
+          position: "absolute",
+          // Sit 4px above the top of the horizontal tray (closer to the button than the pill SVG top).
+          bottom: height - (123 * scale - 4) + 4,
+          // Align left edge with the leftmost (Change?) button in the horizontal tray.
+          // Tray's right edge is at wrapper.right + 4, tray width = trayExpanded.
+          left: pillWidth + 4 - trayExpanded,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+          gap: 6,
+          padding: 8,
+          background: "var(--vibes-cream, #FFFEF0)",
+          border: "1px solid var(--vibes-near-black, #1a1a1a)",
+          borderRadius: 12,
+          transformOrigin: "bottom left",
+          transform: subMode === "change" && buttonsVisible ? "scale(1)" : "scale(0)",
+          opacity: subMode === "change" && buttonsVisible ? 1 : 0,
+          transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease",
+          pointerEvents: subMode === "change" && buttonsVisible ? "auto" : "none",
+          zIndex: 3,
+          minWidth: height * 2.4,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {editHref && (
+          <VerticalActionButton
+            height={height}
+            label="Edit"
+            bgColor="var(--vibes-yellow, #fedd00)"
+            labelColor="var(--vibes-near-black, #1a1a1a)"
+            href={editHref}
+            icon={
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+            }
+          />
+        )}
+        {cloneHref && (
+          <VerticalActionButton
+            height={height}
+            label="Clone"
+            bgColor="var(--vibes-blue, #3b82f6)"
+            labelColor="var(--vibes-cream, #FFFEF0)"
+            href={cloneHref}
+            icon={
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+              </svg>
+            }
+          />
+        )}
+        {remixHref && (
+          <VerticalActionButton
+            height={height}
+            label="Remix"
+            bgColor="var(--vibes-green, #22c55e)"
+            labelColor="var(--vibes-cream, #FFFEF0)"
+            href={remixHref}
+            icon={
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            }
+          />
+        )}
+      </div>
+
+      {/* Share vertical sub-menu — opens above the Share button */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: height - (123 * scale - 4) + 4,
+          // Share is the 2nd button (offset by one btnWidth from the Vibe button's left).
+          left: pillWidth + 4 - trayExpanded + btnWidth,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+          gap: 6,
+          padding: 8,
+          background: "var(--vibes-cream, #FFFEF0)",
+          border: "1px solid var(--vibes-near-black, #1a1a1a)",
+          borderRadius: 12,
+          transformOrigin: "bottom left",
+          transform: subMode === "share" && buttonsVisible ? "scale(1)" : "scale(0)",
+          opacity: subMode === "share" && buttonsVisible ? 1 : 0,
+          transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease",
+          pointerEvents: subMode === "share" && buttonsVisible ? "auto" : "none",
+          zIndex: 3,
+          minWidth: height * 2.4,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <VerticalActionButton
+          height={height}
+          label="Copy Link"
+          bgColor="var(--vibes-yellow, #fedd00)"
+          labelColor="var(--vibes-near-black, #1a1a1a)"
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            setSubMode("default");
+          }}
+          icon={
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+            </svg>
+          }
+        />
+        <VerticalActionButton
+          height={height}
+          label="Thank Author"
+          bgColor="var(--vibes-green, #22c55e)"
+          labelColor="var(--vibes-cream, #FFFEF0)"
+          onClick={() => {
+            onThankAuthor?.();
+            setSubMode("default");
+          }}
+          icon={
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+            </svg>
+          }
+        />
       </div>
 
       {/* The pill SVG — always on top */}
