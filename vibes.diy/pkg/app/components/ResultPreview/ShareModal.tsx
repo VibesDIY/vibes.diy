@@ -10,6 +10,51 @@ const inlineSelect =
 type Verb = "collaborate with" | "publish to";
 type Audience = "anyone" | "members I approve";
 
+function verbForRole(role: "editor" | "viewer" | undefined): Verb {
+  return role === "viewer" ? "publish to" : "collaborate with";
+}
+
+function AccessSelects({
+  verb,
+  audience,
+  onChangeVerb,
+  onChangeAudience,
+  disabled,
+  prefix,
+}: {
+  verb: Verb;
+  audience: Audience;
+  onChangeVerb: (v: Verb) => void;
+  onChangeAudience: (a: Audience) => void;
+  disabled: boolean;
+  prefix: string;
+}) {
+  return (
+    <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+      {prefix}{" "}
+      <select
+        value={verb}
+        onChange={(e) => onChangeVerb(e.target.value as Verb)}
+        disabled={disabled}
+        className={inlineSelect}
+      >
+        <option value="collaborate with">collaborate with</option>
+        <option value="publish to">publish to</option>
+      </select>{" "}
+      <select
+        value={audience}
+        onChange={(e) => onChangeAudience(e.target.value as Audience)}
+        disabled={disabled}
+        className={inlineSelect}
+      >
+        <option value="anyone">anyone</option>
+        <option value="members I approve">members I approve</option>
+      </select>
+      .
+    </p>
+  );
+}
+
 function PublishForm({ modal, publishDisabled }: { modal: UseShareModalReturn; publishDisabled: boolean }) {
   const [verb, setVerb] = useState<Verb>("collaborate with");
   const [audience, setAudience] = useState<Audience>("anyone");
@@ -17,28 +62,14 @@ function PublishForm({ modal, publishDisabled }: { modal: UseShareModalReturn; p
   const role: "editor" | "viewer" = verb === "collaborate with" ? "editor" : "viewer";
   return (
     <div className="space-y-2">
-      <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-        Publish your vibe to{" "}
-        <select
-          value={verb}
-          onChange={(e) => setVerb(e.target.value as Verb)}
-          disabled={publishDisabled}
-          className={inlineSelect}
-        >
-          <option value="collaborate with">collaborate with</option>
-          <option value="publish to">publish to</option>
-        </select>{" "}
-        <select
-          value={audience}
-          onChange={(e) => setAudience(e.target.value as Audience)}
-          disabled={publishDisabled}
-          className={inlineSelect}
-        >
-          <option value="anyone">anyone</option>
-          <option value="members I approve">members I approve</option>
-        </select>
-        .
-      </p>
+      <AccessSelects
+        verb={verb}
+        audience={audience}
+        onChangeVerb={setVerb}
+        onChangeAudience={setAudience}
+        disabled={publishDisabled}
+        prefix="Publish your vibe to"
+      />
       <Button
         variant="blue"
         size="fixed"
@@ -53,6 +84,36 @@ function PublishForm({ modal, publishDisabled }: { modal: UseShareModalReturn; p
         <p className="text-xs text-gray-500 dark:text-gray-500">Generate some code first to publish.</p>
       ) : null}
     </div>
+  );
+}
+
+function PublishedAccessSelects({ modal }: { modal: UseShareModalReturn }) {
+  const audience: Audience = modal.autoJoinEnabled ? "anyone" : "members I approve";
+  // For "members I approve" we don't have a stored role — preserve the last
+  // chosen verb locally so toggling audience back to "anyone" remembers it.
+  const [verb, setVerb] = useState<Verb>(verbForRole(modal.autoAcceptRole));
+  // Keep verb in sync if the underlying role changes (e.g. from another UI).
+  useEffect(() => {
+    if (modal.autoAcceptRole) setVerb(verbForRole(modal.autoAcceptRole));
+  }, [modal.autoAcceptRole]);
+
+  function commit(nextVerb: Verb, nextAudience: Audience) {
+    const role: "editor" | "viewer" = nextVerb === "collaborate with" ? "editor" : "viewer";
+    void modal.handleSetAutoAccept(nextAudience === "anyone", role);
+  }
+
+  return (
+    <AccessSelects
+      verb={verb}
+      audience={audience}
+      onChangeVerb={(v) => {
+        setVerb(v);
+        commit(v, audience);
+      }}
+      onChangeAudience={(a) => commit(verb, a)}
+      disabled={modal.isTogglingAutoJoin}
+      prefix="I want to"
+    />
   );
 }
 
@@ -138,37 +199,12 @@ export function ShareModal({ modal, placement = "below" }: ShareModalProps) {
               variant={modal.isUpToDate ? "cool" : "blue"}
               size="fixed"
               className="w-full"
-              onClick={() => void modal.handlePublish(modal.autoJoinEnabled)}
+              onClick={() => void modal.handlePublish(modal.autoJoinEnabled, modal.autoAcceptRole ?? "viewer")}
               disabled={modal.isPublishing || !modal.canPublish || modal.isUpToDate || !modal.settingsLoaded}
             >
               {modal.isPublishing ? "Updating..." : modal.isUpToDate ? "Up to date" : "Update"}
             </Button>
-            <p id="auto-join-desc" className="text-center text-xs text-gray-500 dark:text-gray-400">
-              {modal.autoJoinEnabled ? "Access open to everyone" : "Membership requires approval"}
-            </p>
-            <div className="flex items-center justify-between gap-3">
-              <span id="auto-join-label" className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                Auto-approve
-              </span>
-              <button
-                type="button"
-                role="switch"
-                aria-labelledby="auto-join-label"
-                aria-describedby="auto-join-desc"
-                aria-checked={modal.autoJoinEnabled}
-                disabled={modal.isTogglingAutoJoin}
-                onClick={() => void modal.handleToggleAutoJoin()}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-black transition-colors ${
-                  modal.autoJoinEnabled ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"
-                } ${modal.isTogglingAutoJoin ? "opacity-50" : ""}`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 rounded-full border border-black bg-white shadow transition-transform ${
-                    modal.autoJoinEnabled ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </div>
+            <PublishedAccessSelects modal={modal} />
             <PendingRequestsCard userSlug={modal.userSlug} appSlug={modal.appSlug} hideHeader />
           </div>
         ) : (

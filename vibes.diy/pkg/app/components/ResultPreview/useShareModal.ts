@@ -22,8 +22,12 @@ interface UseShareModalReturn {
   publishedUrl: string | undefined;
   handlePublish: (autoJoin: boolean, role?: "editor" | "viewer") => Promise<void>;
   autoJoinEnabled: boolean;
+  /** Current auto-approve role, or undefined when auto-approve is off. */
+  autoAcceptRole: "editor" | "viewer" | undefined;
   isTogglingAutoJoin: boolean;
   handleToggleAutoJoin: () => Promise<void>;
+  /** Set both auto-approve on/off and the role granted when auto-approved. */
+  handleSetAutoAccept: (autoAccept: boolean, role: "editor" | "viewer") => Promise<void>;
   urlCopied: boolean;
   handleCopyUrl: () => Promise<void>;
   canPublish: boolean;
@@ -40,6 +44,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
   const [publishedUrl, setPublishedUrl] = useState<string | undefined>(undefined);
   const [productionFsId, setProductionFsId] = useState<string | undefined>(undefined);
   const [autoJoinEnabled, setAutoJoinEnabled] = useState(false);
+  const [autoAcceptRole, setAutoAcceptRoleState] = useState<"editor" | "viewer" | undefined>(undefined);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [isTogglingAutoJoin, setIsTogglingAutoJoin] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
@@ -78,6 +83,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     setUrlCopied(false);
     setPublishError(undefined);
     setAutoJoinEnabled(false);
+    setAutoAcceptRoleState(undefined);
     setSettingsLoaded(false);
     clearCopyTimeout();
 
@@ -105,7 +111,10 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
       .then((res) => {
         if (cancelled) return;
         if (res.isOk()) {
-          setAutoJoinEnabled(!!res.Ok().settings.entry.enableRequest?.autoAcceptRole);
+          const role = res.Ok().settings.entry.enableRequest?.autoAcceptRole;
+          const validRole = role === "editor" || role === "viewer" ? role : undefined;
+          setAutoJoinEnabled(!!validRole);
+          setAutoAcceptRoleState(validRole);
         }
       })
       .catch(() => {
@@ -150,6 +159,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
           setPublishError("Published, but failed to update sharing settings.");
         } else {
           setAutoJoinEnabled(autoJoin);
+          setAutoAcceptRoleState(autoJoin ? role : undefined);
         }
 
         const url = `${window.location.origin}/vibe/${userSlug}/${appSlug}/`;
@@ -180,11 +190,32 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
       });
       if (result.isOk()) {
         setAutoJoinEnabled(nextValue);
+        setAutoAcceptRoleState(nextValue ? "viewer" : undefined);
       }
     } finally {
       setIsTogglingAutoJoin(false);
     }
   }, [autoJoinEnabled, appSlug, userSlug, vibeDiyApi]);
+
+  const handleSetAutoAccept = useCallback(
+    async (autoAccept: boolean, role: "editor" | "viewer") => {
+      setIsTogglingAutoJoin(true);
+      try {
+        const result = await vibeDiyApi.ensureAppSettings({
+          appSlug,
+          userSlug,
+          request: { enable: true, autoAcceptRole: autoAccept ? role : undefined },
+        });
+        if (result.isOk()) {
+          setAutoJoinEnabled(autoAccept);
+          setAutoAcceptRoleState(autoAccept ? role : undefined);
+        }
+      } finally {
+        setIsTogglingAutoJoin(false);
+      }
+    },
+    [appSlug, userSlug, vibeDiyApi]
+  );
 
   const handleCopyUrl = useCallback(async () => {
     if (!publishedUrl) return;
@@ -212,8 +243,10 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     publishedUrl,
     handlePublish,
     autoJoinEnabled,
+    autoAcceptRole,
     isTogglingAutoJoin,
     handleToggleAutoJoin,
+    handleSetAutoAccept,
     urlCopied,
     handleCopyUrl,
     canPublish,
