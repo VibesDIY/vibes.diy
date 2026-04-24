@@ -19,6 +19,8 @@ import {
   HttpResponseJsonType,
   isFetchErrResult,
   isFetchOkResult,
+  isMetaScreenShot,
+  MetaItem,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { renderVibe } from "../intern/render-vibe.js";
@@ -279,6 +281,35 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         return sendFetchOk(ctx, selectedEntryPoint, entryPointPath);
       }
     }
+    // Serve screenshot from meta for social media cards
+    if (ctx.validated.path === "/screenshot.png" || ctx.validated.path === "/screenshot.jpg") {
+      const metaItems = (fs.meta as MetaItem[]) || [];
+      const shot = metaItems.find(isMetaScreenShot);
+      if (shot) {
+        const shotFetch = await vctx.storage.fetch(shot.assetUrl);
+        if (isFetchOkResult(shotFetch)) {
+          const assetRes = new Response(shotFetch.data);
+          const asset = await assetRes.arrayBuffer();
+          await ctx.send.send(ctx, {
+            type: "http.Response.Body",
+            status: 200,
+            headers: {
+              "Content-Type": shot.mime,
+              "Cache-Control": "public, max-age=86400",
+            },
+            body: asset,
+          } satisfies HttpResponseBodyType);
+          return Result.Ok(EventoResult.Stop);
+        }
+      }
+      await ctx.send.send(ctx, {
+        type: "http.Response.JSON",
+        status: 404,
+        json: { type: "error", message: "No screenshot available" },
+      } satisfies HttpResponseJsonType);
+      return Result.Ok(EventoResult.Stop);
+    }
+
     // console.log("-7servEntryPoint triggered with URL:", uri.toString())
     if (ctx.validated.path === "/" || ctx.validated.path === "/index.html") {
       const npmUrl = captureNpmUrl(vctx, ctx.request);
