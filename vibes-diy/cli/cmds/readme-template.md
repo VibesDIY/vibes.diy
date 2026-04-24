@@ -4,7 +4,7 @@
 
 Live at [{{VIBE_URL}}]({{VIBE_URL}})
 
-Single-file React app built with [vibes.diy](https://vibes.diy).
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
 
 ## Run it
 
