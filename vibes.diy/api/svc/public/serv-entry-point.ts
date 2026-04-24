@@ -270,17 +270,6 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         return sendFetchOk(ctx, selectedFsItem, possiblePath);
       }
     }
-    // console.log("-6servEntryPoint triggered with URL:", uri.toString())
-    const selectedEntryPoint = fileSystem.find((i) => i.entryPoint);
-    if (selectedEntryPoint) {
-      const entryPointPath = await vctx.storage.fetch(selectedEntryPoint.assetURI);
-      if (isFetchErrResult(entryPointPath)) {
-        return Result.Err(entryPointPath.error);
-      }
-      if (isFetchOkResult(entryPointPath)) {
-        return sendFetchOk(ctx, selectedEntryPoint, entryPointPath);
-      }
-    }
     // Serve screenshot from meta for social media cards
     if (ctx.validated.path === "/screenshot.png" || ctx.validated.path === "/screenshot.jpg") {
       const metaItems = (fs.meta as MetaItem[]) || [];
@@ -310,6 +299,17 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Ok(EventoResult.Stop);
     }
 
+    // console.log("-6servEntryPoint triggered with URL:", uri.toString())
+    const selectedEntryPoint = fileSystem.find((i) => i.entryPoint);
+    if (selectedEntryPoint) {
+      const entryPointPath = await vctx.storage.fetch(selectedEntryPoint.assetURI);
+      if (isFetchErrResult(entryPointPath)) {
+        return Result.Err(entryPointPath.error);
+      }
+      if (isFetchOkResult(entryPointPath)) {
+        return sendFetchOk(ctx, selectedEntryPoint, entryPointPath);
+      }
+    }
     // console.log("-7servEntryPoint triggered with URL:", uri.toString())
     if (ctx.validated.path === "/" || ctx.validated.path === "/index.html") {
       const npmUrl = captureNpmUrl(vctx, ctx.request);
