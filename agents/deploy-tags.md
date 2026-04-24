@@ -18,7 +18,11 @@
 
 Convention: `pkg@d2.0.0-dev-cli-<letter>` for dev CLI iterations.
 
+The `pkg` tags publish the CLI (`vibes-diy` / `use-vibes` npm packages) and related workspace packages. Use `pkg@p*` for production releases.
+
 ## Tagging procedure
+
+### Cloudflare deploys (`vibes-diy@*`)
 
 1. List existing tags by creation date:
    ```
@@ -29,12 +33,23 @@ Convention: `pkg@d2.0.0-dev-cli-<letter>` for dev CLI iterations.
 2. Pick next `0.x.y` — **use the same version number across all environments** when deploying the same code (e.g. `p0.2.16` and `c0.2.16`). Keep numbers sequential for easy ordering downstream
 3. Tag the ref (branch or commit):
    ```
-   git tag vibes-diy@p0.X.Y <ref> -m "description"
-   git tag vibes-diy@c0.X.Y <ref> -m "description"
-   git tag vibes-diy@d0.X.Y <ref> -m "description"
+   git tag -a vibes-diy@p0.X.Y <ref> -m "description"
+   git tag -a vibes-diy@c0.X.Y <ref> -m "description"
+   git tag -a vibes-diy@d0.X.Y <ref> -m "description"
    ```
 4. Push: `git push origin vibes-diy@p0.X.Y vibes-diy@c0.X.Y` (add `vibes-diy@d0.X.Y` if deploying dev too)
 5. Tags are immutable — never delete/move, bump the version instead
+
+### Package publishes (`pkg@*`)
+
+1. List existing tags: `git tag -l 'pkg@p*' --sort=-creatordate | head -5`
+2. Pick next sequential patch: e.g. `pkg@p2.0.8` → `pkg@p2.0.9`
+3. Tag and push:
+   ```
+   git tag -a pkg@p2.0.9 -m "description"
+   git push origin pkg@p2.0.9
+   ```
+4. Tags are immutable — never delete/move, bump the version instead
 
 ## Say notification
 
