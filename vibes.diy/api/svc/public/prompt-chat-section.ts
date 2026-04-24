@@ -1240,9 +1240,14 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           }
         }
       }
-      // Fallback to LLM image model when Prodia token is unavailable
+      // Fallback to LLM image model when Prodia token is unavailable.
+      // Inject into orig.prompt.model so handlerLlmRequest picks it up
+      // instead of re-resolving to the prodia/* default from models.json.
       if (resolvedImgModel?.startsWith("prodia/") && !vctx.prodiaToken) {
         resolvedImgModel = "openai/gpt-5-image-mini";
+        if (isReqPromptImageChatSection(orig) && !orig.prompt.model) {
+          (orig as { prompt: { model?: string } }).prompt.model = resolvedImgModel;
+        }
       }
       const useProdia = !!(isReqPromptImageChatSection(orig) && vctx.prodiaToken && resolvedImgModel?.startsWith("prodia/"));
 
