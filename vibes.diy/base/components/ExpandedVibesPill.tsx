@@ -17,6 +17,8 @@ export interface ExpandedVibesPillProps {
   onOwnerShare?: () => void;
   /** Ref to attach to the Share button (used by the owner share modal for positioning). */
   shareButtonRef?: React.Ref<HTMLButtonElement>;
+  /** When > 0, renders a numeric badge on the pill indicating pending access requests. Owner-only. */
+  shareBadgeCount?: number;
 }
 
 function PillActionButton({ height, label, icon, bgColor, labelColor, onClick, buttonRef }: {
@@ -172,7 +174,7 @@ const diyLetters = [
   { d: "M449.933,210.636c0.102-3.331,1.886-5.279,4.778-5.22c2.67,0.055,4.829,2.432,4.762,5.243c-0.073,3.021-2.404,5.36-5.242,5.261C451.606,215.829,449.84,213.657,449.933,210.636z" },
 ];
 
-export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, editHref, onThankAuthor, onHome, onOwnerShare, shareButtonRef }: ExpandedVibesPillProps) {
+export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, editHref, onThankAuthor, onHome, onOwnerShare, shareButtonRef, shareBadgeCount }: ExpandedVibesPillProps) {
   // idle → bubble → expanding → open (click to close: open → collapsing → idle)
   const [phase, setPhase] = useState<"idle" | "bubble" | "expanding" | "open" | "collapsing" | "shrinking">("idle");
   const [subMode, setSubMode] = useState<"default" | "change" | "share">("default");
@@ -467,6 +469,37 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
           <path key={`d${i}`} fillRule="evenodd" clipRule="evenodd" style={{ transition: "fill 1s ease", fill: creamSlid ? switchColors.secondary : switchColors.primary }} d={l.d} />
         ))}
       </svg>
+
+      {/* Pending access-request count badge — owner-only, visible in every phase */}
+      {shareBadgeCount && shareBadgeCount > 0 ? (
+        <div
+          aria-label={`${shareBadgeCount} pending access request${shareBadgeCount === 1 ? "" : "s"}`}
+          style={{
+            position: "absolute",
+            top: height * 0.15,
+            right: -6,
+            minWidth: height * 0.36,
+            height: height * 0.36,
+            padding: "0 6px",
+            borderRadius: height * 0.18,
+            border: "1px solid var(--vibes-near-black, #1a1a1a)",
+            background: "var(--vibes-orange-neon, #fb923c)",
+            color: "var(--vibes-cream, #FFFEF0)",
+            fontFamily: "'Inter', sans-serif",
+            fontSize: height * 0.2,
+            fontWeight: 700,
+            lineHeight: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+            pointerEvents: "none",
+            zIndex: 4,
+          }}
+        >
+          {shareBadgeCount > 99 ? "99+" : shareBadgeCount}
+        </div>
+      ) : null}
     </div>
   );
 }
