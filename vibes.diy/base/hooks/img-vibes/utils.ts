@@ -40,7 +40,7 @@ export function getPromptsFromDocument(document: Partial<ImageDocument>): {
   return { prompts: {}, currentPromptKey: "" };
 }
 
-export function addNewVersion(document: ImageDocument, assetUrl: string, newPrompt?: string): ImageDocument {
+export function addNewVersion(document: ImageDocument, assetUrl: string, newPrompt?: string, model?: string): ImageDocument {
   const { versions } = getVersionsFromDocument(document);
   const versionCount = versions.length + 1;
   const newVersionId = generateVersionId(versionCount);
@@ -61,7 +61,10 @@ export function addNewVersion(document: ImageDocument, assetUrl: string, newProm
   return {
     ...document,
     currentVersion: versionCount - 1,
-    versions: [...versions, { id: newVersionId, created: Date.now(), promptKey: updatedCurrentPromptKey, assetUrl }],
+    versions: [
+      ...versions,
+      { id: newVersionId, created: Date.now(), promptKey: updatedCurrentPromptKey, assetUrl, ...(model ? { model } : {}) },
+    ],
     prompts: updatedPrompts,
     currentPromptKey: updatedCurrentPromptKey,
   };

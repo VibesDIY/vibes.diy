@@ -1240,11 +1240,11 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           }
         }
       }
-      const useProdia = !!(
-        isReqPromptImageChatSection(orig) &&
-        vctx.prodiaToken &&
-        resolvedImgModel?.startsWith("prodia/")
-      );
+      // Fallback to LLM image model when Prodia token is unavailable
+      if (resolvedImgModel?.startsWith("prodia/") && !vctx.prodiaToken) {
+        resolvedImgModel = "openai/gpt-5-image-mini";
+      }
+      const useProdia = !!(isReqPromptImageChatSection(orig) && vctx.prodiaToken && resolvedImgModel?.startsWith("prodia/"));
 
       let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
       if (isReqPromptImageChatSection(orig) && useProdia) {
