@@ -470,36 +470,55 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
         ))}
       </svg>
 
-      {/* Pending access-request count badge — owner-only, visible in every phase */}
-      {shareBadgeCount && shareBadgeCount > 0 ? (
-        <div
-          aria-label={`${shareBadgeCount} pending access request${shareBadgeCount === 1 ? "" : "s"}`}
-          style={{
-            position: "absolute",
-            top: height * 0.15,
-            right: -6,
-            minWidth: height * 0.36,
-            height: height * 0.36,
-            padding: "0 6px",
-            borderRadius: height * 0.18,
-            border: "1px solid var(--vibes-near-black, #1a1a1a)",
-            background: "var(--vibes-orange-neon, #fb923c)",
-            color: "var(--vibes-cream, #FFFEF0)",
-            fontFamily: "'Inter', sans-serif",
-            fontSize: height * 0.2,
-            fontWeight: 700,
-            lineHeight: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
-            pointerEvents: "none",
-            zIndex: 4,
-          }}
-        >
-          {shareBadgeCount > 99 ? "99+" : shareBadgeCount}
-        </div>
-      ) : null}
+      {/* Pending access-request count badge — owner-only, visible in every phase.
+          Anchored top-right of the pill SVG when closed; translates onto the
+          Share button (2nd of 3 in the horizontal tray) when the switch opens. */}
+      {shareBadgeCount && shareBadgeCount > 0
+        ? (() => {
+            const badgeSize = height * 0.36;
+            // Closed: center sits at wrapper.right - 6 + badgeSize/2, height*0.15 + badgeSize/2
+            const closedCx = pillWidth + 6 - badgeSize / 2;
+            const closedCy = height * 0.15 + badgeSize / 2;
+            // Open: sit at the top-right corner of the Share button (2nd of 3 buttons).
+            const trayLeft = pillWidth + 4 - trayExpanded;
+            const trayTop = 123 * scale - 4;
+            const openCx = trayLeft + btnWidth * 2; // right edge of Share button
+            const openCy = trayTop; // top edge of the tray
+            const dx = expanded ? openCx - closedCx : 0;
+            const dy = expanded ? openCy - closedCy : 0;
+            return (
+              <div
+                aria-label={`${shareBadgeCount} pending access request${shareBadgeCount === 1 ? "" : "s"}`}
+                style={{
+                  position: "absolute",
+                  top: height * 0.15,
+                  right: -6,
+                  minWidth: badgeSize,
+                  height: badgeSize,
+                  padding: "0 6px",
+                  borderRadius: height * 0.18,
+                  border: "1px solid var(--vibes-near-black, #1a1a1a)",
+                  background: "var(--vibes-orange-neon, #fb923c)",
+                  color: "var(--vibes-cream, #FFFEF0)",
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: height * 0.2,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+                  pointerEvents: "none",
+                  zIndex: 4,
+                  transform: `translate(${dx}px, ${dy}px)`,
+                  transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}
+              >
+                {shareBadgeCount > 99 ? "99+" : shareBadgeCount}
+              </div>
+            );
+          })()
+        : null}
     </div>
   );
 }
