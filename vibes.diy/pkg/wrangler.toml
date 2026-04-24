@@ -119,7 +119,11 @@ persist = true
 binding = "BROWSER"
 
 [env.preview.durable_objects]
-bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions", script_name = "vibes-diy-v2-dev" }]
+bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+
+[[env.preview.migrations]]
+tag = "v1"
+new_classes = ["ChatSessions"]
 
 [[env.preview.d1_databases]]
 binding = "DB"
