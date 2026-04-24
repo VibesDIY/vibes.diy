@@ -519,7 +519,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         previewPanel={<ResultPreview promptState={promptState} currentView={currentView} onCode={handleOnCode} />}
         chatInput={
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
-            <ChatInput ref={chatInput} onSubmit={sendPrompt} promptProcessing={promptState.running} />
+            <ChatInput ref={chatInput} onSubmit={sendPrompt} promptProcessing={promptState.running} hasCode={promptState.hasCode} currentMsgCount={promptState.current?.msgs.length ?? 0} />
           </BrutalistCard>
         }
         suggestionsComponent={undefined}
