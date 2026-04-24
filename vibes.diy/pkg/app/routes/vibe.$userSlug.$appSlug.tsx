@@ -38,6 +38,8 @@ export default function VibeIframeWrapper() {
   const [searchParam] = useSearchParams();
   const [retryCount, setRetryCount] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingBump, setPendingBump] = useState(0);
 
   const inGetAppByFsIdRef = useRef(false);
 
@@ -51,6 +53,21 @@ export default function VibeIframeWrapper() {
       setIsOwner(res.Ok().items.some((item) => item.userSlug === userSlug));
     });
   }, [authSignedIn, userSlug, vctx.vibeDiyApi]);
+
+  useEffect(() => {
+    if (!isOwner || !userSlug || !appSlug) {
+      setPendingCount(0);
+      return;
+    }
+    let cancelled = false;
+    vctx.vibeDiyApi.listRequestGrants({ appSlug, userSlug, pager: { limit: 100 } }).then((res) => {
+      if (cancelled || res.isErr()) return;
+      setPendingCount(res.Ok().items.filter((r) => r.state === "pending").length);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwner, userSlug, appSlug, vctx.vibeDiyApi, pendingBump]);
 
   useEffect(() => {
     if (isLoaded && !authSignedIn && fsId && userSlug && appSlug) {
@@ -172,6 +189,14 @@ export default function VibeIframeWrapper() {
     vibeDiyApi: vctx.vibeDiyApi,
   });
 
+  const prevShareOpenRef = useRef(shareModal.isOpen);
+  useEffect(() => {
+    if (prevShareOpenRef.current && !shareModal.isOpen) {
+      setPendingBump((n) => n + 1);
+    }
+    prevShareOpenRef.current = shareModal.isOpen;
+  }, [shareModal.isOpen]);
+
   function sendAccessRequest() {
     // TODO: call the real request-access API
     toast.success("Access request sent");
@@ -268,6 +293,7 @@ export default function VibeIframeWrapper() {
                 editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
                 onOwnerShare={isOwner ? shareModal.open : undefined}
                 shareButtonRef={isOwner ? shareModal.buttonRef : undefined}
+                shareBadgeCount={isOwner ? pendingCount : 0}
                 onHome={() => {
                   window.open("https://vibes.diy", "_blank");
                 }}
