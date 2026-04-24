@@ -24,6 +24,7 @@ export interface VersionInfo {
   readonly created: number;
   readonly promptKey?: string; // e.g. "p1"
   readonly assetUrl: string; // "/assets/cid?url=...&mime=image/png"
+  readonly model?: string; // model used to generate this version
 }
 
 export type GenerationPhase = "idle" | "generating" | "complete" | "error";
