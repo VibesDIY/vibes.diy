@@ -10,6 +10,7 @@ import {
   EventoResultType,
   exception2Result,
   BuildURI,
+  loadAsset,
 } from "@adviser/cement";
 import { type } from "arktype";
 import { resEnsureAppSlug, ResEnsureAppSlug, isSectionEvent } from "@vibes.diy/api-types";
@@ -180,6 +181,13 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       await writeFile(join(dir, file.filename), file.content, "utf-8");
     }
 
+    // Generate a README and write to disk (not pushed to API)
+    const vibeUrl = BuildURI.from(args.apiUrl)
+      .pathname(`/vibe/${pushUserSlug}/${pushAppSlug}`)
+      .cleanParams("@stable-entry@", ".stable-entry.")
+      .toString();
+    await writeFile(join(dir, "README.md"), await generateReadme(pushAppSlug, args.prompt, vibeUrl), "utf-8");
+
     // Configure instant-join if flagged
     if (args.instantJoin && pushUserSlug) {
       const rSettings = await api.ensureAppSettings({
@@ -216,6 +224,21 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     } satisfies ResGenerate);
   },
 };
+
+async function generateReadme(appSlug: string, prompt: string, vibeUrl: string): Promise<string> {
+  const rTemplate = await loadAsset("./readme-template.md", {
+    basePath: () => import.meta.url,
+  });
+  if (rTemplate.isErr()) {
+    // Fallback: minimal README if template can't be loaded
+    return `# ${appSlug}\n\n> ${prompt}\n\nLive at [${vibeUrl}](${vibeUrl})\n`;
+  }
+  return rTemplate
+    .Ok()
+    .replace(/\{\{APP_SLUG\}\}/g, appSlug)
+    .replace(/\{\{PROMPT\}\}/g, prompt)
+    .replace(/\{\{VIBE_URL\}\}/g, vibeUrl);
+}
 
 export function generateCmd(ctx: CliCtx) {
   return command({
