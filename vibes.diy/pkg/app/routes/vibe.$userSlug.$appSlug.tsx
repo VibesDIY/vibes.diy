@@ -17,6 +17,27 @@ import { toast } from "react-hot-toast";
 import { getAppByFsIdEvento } from "@vibes.diy/api-svc/public/get-app-by-fsid.js";
 import { isMetaScreenShot, isMetaTitle } from "@vibes.diy/api-types";
 
+export function meta({ params, matches }: { params: Record<string, string>; matches: { data: unknown }[] }) {
+  const { userSlug, appSlug } = params;
+  const rootData = matches[0]?.data as { env?: { VIBES_SVC_HOSTNAME_BASE?: string } } | undefined;
+  const hostnameBase = rootData?.env?.VIBES_SVC_HOSTNAME_BASE?.replace(/^\./, "") ?? "vibes.diy";
+  const imageUrl = `https://${appSlug}--${userSlug}.${hostnameBase}/screenshot.jpg`;
+  const title = appSlug ?? "Vibe";
+
+  return [
+    { title: `${title} - vibes.diy` },
+    { name: "description", content: `${title} - built on vibes.diy` },
+    { property: "og:type", content: "website" },
+    { property: "og:title", content: title },
+    { property: "og:description", content: `${title} - built on vibes.diy` },
+    { property: "og:image", content: imageUrl },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: `${title} - built on vibes.diy` },
+    { name: "twitter:image", content: imageUrl },
+  ];
+}
+
 export default function VibeIframeWrapper() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
   useDocumentTitle(`${userSlug} - ${appSlug} - vibes.diy`);
