@@ -5,70 +5,62 @@ import { PendingRequestsCard } from "../mine/sharing-tab/PendingRequestsCard.js"
 import type { UseShareModalReturn } from "./useShareModal.js";
 
 const inlineSelect =
-  "rounded-[5px] border-2 border-black bg-white dark:bg-gray-800 text-sm font-medium px-1.5 py-0.5 mx-0.5 shadow-[2px_2px_0px_0px_black] focus:outline-none disabled:opacity-50 disabled:pointer-events-none";
+  "rounded-[5px] border-2 border-black bg-white dark:bg-gray-800 text-sm font-medium px-1.5 py-0.5 shadow-[2px_2px_0px_0px_black] focus:outline-none disabled:opacity-50 disabled:pointer-events-none";
 
-type Verb = "collaborate with" | "publish to";
-type Audience = "anyone" | "members I approve";
+type Role = "editor" | "viewer";
 
-function verbForRole(role: "editor" | "viewer" | undefined): Verb {
-  return role === "viewer" ? "publish to" : "collaborate with";
-}
-
-function AccessSelects({
-  verb,
-  audience,
-  onChangeVerb,
-  onChangeAudience,
+function AutoApproveControl({
+  enabled,
+  role,
+  onChange,
   disabled,
-  prefix,
 }: {
-  verb: Verb;
-  audience: Audience;
-  onChangeVerb: (v: Verb) => void;
-  onChangeAudience: (a: Audience) => void;
+  enabled: boolean;
+  role: Role;
+  onChange: (enabled: boolean, role: Role) => void;
   disabled: boolean;
-  prefix: string;
 }) {
   return (
-    <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-      {prefix}{" "}
-      <select
-        value={verb}
-        onChange={(e) => onChangeVerb(e.target.value as Verb)}
+    <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 flex-wrap">
+      <input
+        type="checkbox"
+        checked={enabled}
         disabled={disabled}
-        className={inlineSelect}
-      >
-        <option value="collaborate with">collaborate with</option>
-        <option value="publish to">publish to</option>
-      </select>{" "}
-      <select
-        value={audience}
-        onChange={(e) => onChangeAudience(e.target.value as Audience)}
-        disabled={disabled}
-        className={inlineSelect}
-      >
-        <option value="anyone">anyone</option>
-        <option value="members I approve">members I approve</option>
-      </select>
-      .
-    </p>
+        onChange={(e) => onChange(e.target.checked, role)}
+        className="rounded border-gray-300 dark:border-gray-600 disabled:opacity-50"
+      />
+      <span>Automatically approve new visitors</span>
+      {enabled && (
+        <>
+          <span>as</span>
+          <select
+            value={role}
+            disabled={disabled}
+            onChange={(e) => onChange(true, e.target.value as Role)}
+            className={inlineSelect}
+          >
+            <option value="viewer">readers</option>
+            <option value="editor">editors</option>
+          </select>
+        </>
+      )}
+    </label>
   );
 }
 
 function PublishForm({ modal, publishDisabled }: { modal: UseShareModalReturn; publishDisabled: boolean }) {
-  const [verb, setVerb] = useState<Verb>("collaborate with");
-  const [audience, setAudience] = useState<Audience>("anyone");
-  const autoAccept = audience === "anyone";
-  const role: "editor" | "viewer" = verb === "collaborate with" ? "editor" : "viewer";
+  const [autoAccept, setAutoAccept] = useState(true);
+  const [role, setRole] = useState<Role>("editor");
   return (
-    <div className="space-y-2">
-      <AccessSelects
-        verb={verb}
-        audience={audience}
-        onChangeVerb={setVerb}
-        onChangeAudience={setAudience}
+    <div className="space-y-3">
+      <AutoApproveControl
+        enabled={autoAccept}
+        role={role}
+        onChange={(nextEnabled, nextRole) => {
+          setAutoAccept(nextEnabled);
+          setRole(nextRole);
+        }}
         disabled={publishDisabled}
-        prefix="Publish your vibe to"
       />
       <Button
         variant="blue"
@@ -87,32 +79,23 @@ function PublishForm({ modal, publishDisabled }: { modal: UseShareModalReturn; p
   );
 }
 
-function PublishedAccessSelects({ modal }: { modal: UseShareModalReturn }) {
-  const audience: Audience = modal.autoJoinEnabled ? "anyone" : "members I approve";
-  // For "members I approve" we don't have a stored role — preserve the last
-  // chosen verb locally so toggling audience back to "anyone" remembers it.
-  const [verb, setVerb] = useState<Verb>(verbForRole(modal.autoAcceptRole));
-  // Keep verb in sync if the underlying role changes (e.g. from another UI).
+function PublishedAutoApproveControl({ modal }: { modal: UseShareModalReturn }) {
+  // When auto-approve is off there's no stored role — remember the last chosen
+  // role locally so toggling back on restores it.
+  const [role, setRole] = useState<Role>(modal.autoAcceptRole ?? "editor");
   useEffect(() => {
-    if (modal.autoAcceptRole) setVerb(verbForRole(modal.autoAcceptRole));
+    if (modal.autoAcceptRole) setRole(modal.autoAcceptRole);
   }, [modal.autoAcceptRole]);
 
-  function commit(nextVerb: Verb, nextAudience: Audience) {
-    const role: "editor" | "viewer" = nextVerb === "collaborate with" ? "editor" : "viewer";
-    void modal.handleSetAutoAccept(nextAudience === "anyone", role);
-  }
-
   return (
-    <AccessSelects
-      verb={verb}
-      audience={audience}
-      onChangeVerb={(v) => {
-        setVerb(v);
-        commit(v, audience);
+    <AutoApproveControl
+      enabled={modal.autoJoinEnabled}
+      role={role}
+      onChange={(nextEnabled, nextRole) => {
+        setRole(nextRole);
+        void modal.handleSetAutoAccept(nextEnabled, nextRole);
       }}
-      onChangeAudience={(a) => commit(verb, a)}
       disabled={modal.isTogglingAutoJoin}
-      prefix="I want to"
     />
   );
 }
@@ -204,7 +187,7 @@ export function ShareModal({ modal, placement = "below" }: ShareModalProps) {
             >
               {modal.isPublishing ? "Updating..." : modal.isUpToDate ? "Up to date" : "Update"}
             </Button>
-            <PublishedAccessSelects modal={modal} />
+            <PublishedAutoApproveControl modal={modal} />
             <PendingRequestsCard userSlug={modal.userSlug} appSlug={modal.appSlug} hideHeader />
           </div>
         ) : (
