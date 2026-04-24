@@ -1,35 +1,68 @@
-export type ApplyEditOk = { ok: true; content: string };
+export type ApplyEditOk = { ok: true; content: string; matchKind: "exact" | "trailing-ws" };
 export type ApplyEditErrReason = "no-match" | "multiple-match";
 export type ApplyEditErr = { ok: false; reason: ApplyEditErrReason; matchCount: number };
 export type ApplyEditResult = ApplyEditOk | ApplyEditErr;
 
-export function applyReplace(source: string, oldStr: string, newStr: string): ApplyEditResult {
-  if (oldStr.length === 0) {
+function rstripLines(s: string): string {
+  return s
+    .split("\n")
+    .map((l) => l.replace(/[ \t]+$/, ""))
+    .join("\n");
+}
+
+function findAllOccurrences(haystack: string, needle: string): number[] {
+  const hits: number[] = [];
+  if (needle.length === 0) return hits;
+  let from = 0;
+  while (true) {
+    const idx = haystack.indexOf(needle, from);
+    if (idx === -1) break;
+    hits.push(idx);
+    from = idx + needle.length;
+  }
+  return hits;
+}
+
+export function applyReplace(source: string, search: string, replace: string): ApplyEditResult {
+  if (search.length === 0) {
     return { ok: false, reason: "no-match", matchCount: 0 };
   }
-  let matchCount = 0;
-  let from = 0;
-  let firstIdx = -1;
-  while (true) {
-    const idx = source.indexOf(oldStr, from);
-    if (idx === -1) break;
-    if (matchCount === 0) firstIdx = idx;
-    matchCount += 1;
-    from = idx + oldStr.length;
-    if (matchCount > 1) break;
+
+  const exact = findAllOccurrences(source, search);
+  if (exact.length === 1) {
+    const idx = exact[0];
+    return {
+      ok: true,
+      matchKind: "exact",
+      content: source.slice(0, idx) + replace + source.slice(idx + search.length),
+    };
   }
-  if (matchCount === 0) return { ok: false, reason: "no-match", matchCount: 0 };
-  if (matchCount > 1) return { ok: false, reason: "multiple-match", matchCount };
-  return {
-    ok: true,
-    content: source.slice(0, firstIdx) + newStr + source.slice(firstIdx + oldStr.length),
-  };
+  if (exact.length > 1) {
+    return { ok: false, reason: "multiple-match", matchCount: exact.length };
+  }
+
+  const sourceTrimmed = rstripLines(source);
+  const searchTrimmed = rstripLines(search);
+  const tolerant = findAllOccurrences(sourceTrimmed, searchTrimmed);
+  if (tolerant.length === 1) {
+    const idx = tolerant[0];
+    return {
+      ok: true,
+      matchKind: "trailing-ws",
+      content: sourceTrimmed.slice(0, idx) + replace + sourceTrimmed.slice(idx + searchTrimmed.length),
+    };
+  }
+  if (tolerant.length > 1) {
+    return { ok: false, reason: "multiple-match", matchCount: tolerant.length };
+  }
+
+  return { ok: false, reason: "no-match", matchCount: 0 };
 }
 
 export interface ReplaceEdit {
   readonly op: "replace";
-  readonly old: string;
-  readonly new: string;
+  readonly search: string;
+  readonly replace: string;
 }
 
 export interface CreateEdit {
@@ -43,7 +76,7 @@ export interface ApplyEditsError {
   readonly index: number;
   readonly reason: ApplyEditErrReason;
   readonly matchCount: number;
-  readonly oldSnippet: string;
+  readonly search: string;
 }
 
 export interface ApplyEditsResult {
@@ -59,7 +92,7 @@ export function applyEdits(seed: string, edits: readonly Edit[]): ApplyEditsResu
       content = edit.content;
       return;
     }
-    const r = applyReplace(content, edit.old, edit.new);
+    const r = applyReplace(content, edit.search, edit.replace);
     if (r.ok) {
       content = r.content;
       return;
@@ -68,7 +101,7 @@ export function applyEdits(seed: string, edits: readonly Edit[]): ApplyEditsResu
       index,
       reason: r.reason,
       matchCount: r.matchCount,
-      oldSnippet: edit.old,
+      search: edit.search,
     });
   });
   return { content, errors };
