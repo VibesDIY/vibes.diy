@@ -254,3 +254,4 @@ bucket_name = "vibes-diy-fs-ids"
 queue = "vibes-service-prod"
 binding = "VIBES_SERVICE"
 
+
