@@ -103,7 +103,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     const snakeBorder = `conic-gradient(from var(--border-angle, 0deg), ${borderColor} 0deg 180deg, var(--vibes-red, #DA291C) 180deg 205deg, var(--vibes-yellow, #fedd00) 205deg 230deg, var(--vibes-green, #22c55e) 230deg 255deg, var(--vibes-blue, #3b82f6) 255deg 280deg, ${borderColor} 280deg 360deg)`;
     const neutralBorder = `linear-gradient(${borderColor}, ${borderColor})`;
     const focusBottomBar = "linear-gradient(90deg, var(--vibes-red, #DA291C) 0% 25%, var(--vibes-yellow, #fedd00) 25% 50%, var(--vibes-green, #22c55e) 50% 75%, var(--vibes-blue, #3b82f6) 75% 100%)";
-    const innerBg = "linear-gradient(var(--color-light-background-01, #fff), var(--color-light-background-01, #fff))";
+    const innerBg = "linear-gradient(var(--chat-input-bg), var(--chat-input-bg))";
 
     // Three states: processing (snake), focused (color bar at bottom), idle (neutral)
     const borderBackground = promptProcessing
@@ -117,6 +117,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
         <div className="space-y-1">
           {/* Textarea — border is the color bar, animates when processing */}
           <div
+            className="[--chat-input-bg:var(--color-light-background-01,#eee)] dark:[--chat-input-bg:var(--color-dark-background-01,#222)]"
             style={{
               position: "relative",
               borderRadius: 8,
@@ -157,28 +158,20 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           {/* Bottom row: model picker + button OR working message */}
           <div className="flex items-center justify-between gap-2">
             {promptProcessing ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+              <div className="flex items-center gap-2 py-1">
                 <div
+                  className="border-light-primary dark:border-dark-primary shrink-0"
                   style={{
                     width: 16,
                     height: 16,
-                    border: "3px solid var(--vibes-near-black, #1a1a1a)",
+                    borderWidth: 3,
+                    borderStyle: "solid",
                     borderTopColor: "transparent",
                     borderRadius: "50%",
                     animation: "vibes-spin 0.8s linear infinite",
-                    flexShrink: 0,
                   }}
                 />
-                <span
-                  style={{
-                    fontSize: "0.8rem",
-                    fontWeight: 600,
-                    color: "var(--vibes-near-black, #1a1a1a)",
-                    fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-                    letterSpacing: "0.02em",
-                    transition: "opacity 0.3s ease",
-                  }}
-                >
+                <span className="text-light-primary dark:text-dark-primary text-xs font-semibold tracking-wide">
                   {workingMessage}
                 </span>
               </div>
