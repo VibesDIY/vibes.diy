@@ -78,11 +78,11 @@ describe("ShareModal", () => {
       expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument();
     });
 
-    it("auto-approve defaults to enabled with role 'editors'", () => {
+    it("auto-approve defaults to enabled with role 'readers'", () => {
       const modal = createMockModal();
       render(<ShareModal modal={modal} />);
       expect(getAutoApproveCheckbox()).toBeChecked();
-      expect(screen.getByRole("combobox")).toHaveValue("editor");
+      expect(screen.getByRole("combobox")).toHaveValue("viewer");
     });
 
     it("publishes with autoJoin=true and the selected role", async () => {
@@ -94,7 +94,7 @@ describe("ShareModal", () => {
       });
 
       expect(modal.handlePublish).toHaveBeenCalledTimes(1);
-      expect(modal.handlePublish).toHaveBeenCalledWith(true, "editor");
+      expect(modal.handlePublish).toHaveBeenCalledWith(true, "viewer");
     });
 
     it("publishes with autoJoin=false when the checkbox is unchecked", async () => {
@@ -110,22 +110,22 @@ describe("ShareModal", () => {
       });
 
       expect(modal.handlePublish).toHaveBeenCalledTimes(1);
-      expect(modal.handlePublish).toHaveBeenCalledWith(false, "editor");
+      expect(modal.handlePublish).toHaveBeenCalledWith(false, "viewer");
     });
 
-    it("publishes with the selected role when role is changed to readers", async () => {
+    it("publishes with the selected role when role is changed to editors", async () => {
       const modal = createMockModal();
       render(<ShareModal modal={modal} />);
 
       await act(async () => {
-        fireEvent.change(screen.getByRole("combobox"), { target: { value: "viewer" } });
+        fireEvent.change(screen.getByRole("combobox"), { target: { value: "editor" } });
       });
 
       await act(async () => {
         fireEvent.click(screen.getByRole("button", { name: "Publish" }));
       });
 
-      expect(modal.handlePublish).toHaveBeenCalledWith(true, "viewer");
+      expect(modal.handlePublish).toHaveBeenCalledWith(true, "editor");
     });
 
     it("hides the role dropdown when auto-approve is off", async () => {
