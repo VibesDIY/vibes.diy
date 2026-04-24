@@ -155,7 +155,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     const pushAppSlug = chat.appSlug;
     const pushUserSlug = chat.userSlug;
     const rResult = await api.ensureAppSlug({
-      mode: "dev",
+      mode: "production",
       appSlug: pushAppSlug,
       userSlug: pushUserSlug,
       fileSystem: files,
