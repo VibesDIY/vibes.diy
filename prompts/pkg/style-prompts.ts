@@ -21,7 +21,9 @@ export const stylePrompts: StylePrompt[] = [
       `INTERACTION: Nothing eases slowly. All hovers/presses resolve in ≤0.2s. Hover lifts up-and-left; press slams down-and-right. Nothing uses soft blur. Every shadow is a discrete offset block. Rounded corners are tiny (4px) everywhere. Color use: --red is primary/danger; --yellow is highlight/warning; --green is success/status; --blue is informational. Don't tint surfaces — keep all cards --card-bg white.`,
       `ACCESSIBILITY: Body text ≥0.82rem, section labels ≥0.6rem. Strong contrast (text on red → white; text on yellow → ink; text on green → ink; text on blue → white). aria-hidden the decorative .hero-text-shadow.`,
       `RESPONSIVENESS: ≤700px: stat row collapses to 2 columns, form grid to 1 column. ≤500px: nav stacks vertically, stat row to single column.`,
-      `FONTS: Use Google Fonts for Space Grotesk (400,500,600,700) and JetBrains Mono (400,500,700). Apply this theme to the generated React component.`,
+      `FONTS: Use Google Fonts for Space Grotesk (400,500,600,700) and JetBrains Mono (400,500,700).`,
+      `LOADING STATES: Every button that triggers an async operation (callAI, fetch, database save) MUST show a loading state. Use a useState boolean \`isLoading\`. While loading: disable the button with \`disabled={isLoading}\`, replace its label with a spinning SVG (a 16x16 circle with 3px stroke, top quarter transparent, CSS animation rotate 0.8s linear infinite), and optionally add a short text like "Loading..." nearby. Pattern: \`setIsLoading(true); try { await callAI(...); } finally { setIsLoading(false); }\`. The spinner should match the theme: 3px stroke in var(--border) color, no blur, sharp edges. Never leave a button clickable with no feedback during an async call.`,
+      `Apply this theme to the generated React component.`,
     ].join("\n\n"),
   },
   {
