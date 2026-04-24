@@ -4,6 +4,9 @@ import {
   HttpResponseBodyType,
   isFetchErrResult,
   isFetchNotFoundResult,
+  isMetaScreenShot,
+  isMetaTitle,
+  MetaItem,
   VibesDiyServCtx,
   vibeImportMap,
   vibeUserEnv,
@@ -108,23 +111,35 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
   //   return Result.Err(env.toLocaleString());
   // }
 
+  const metaItems = (fs.meta as MetaItem[]) || [];
+  const metaTitle = metaItems.find(isMetaTitle);
+  const metaScreenShot = metaItems.find(isMetaScreenShot);
+
+  const requestUrl = new URL(ctx.request.url);
+  const canonicalUrl = `${requestUrl.protocol}//${requestUrl.host}/`;
+
+  let imageUrl: string | undefined;
+  if (metaScreenShot) {
+    const assetPath = `/assets/cid/?url=${encodeURIComponent(metaScreenShot.assetUrl)}&mime=${encodeURIComponent(metaScreenShot.mime)}`;
+    imageUrl = `${requestUrl.protocol}//${requestUrl.host}${assetPath}`;
+  }
+
+  const title = metaTitle?.title ?? fs.appSlug;
+
   const vsctx = {
     wrapper: {
       state: "waiting",
     },
-    // bindings: {
-    //   appSlug: fs.appSlug,
-    //   userSlug: fs.userSlug,
-    //   fsId: fs.fsId,
-    // },
     usrEnv,
     svcEnv: vctx.params.vibes.env,
     importMap: {
       imports: importMap,
     },
     metaProps: {
-      title: "we need a title",
-      description: "we need a description",
+      title,
+      description: `${title} - built on vibes.diy`,
+      imageUrl,
+      canonicalUrl,
     },
     mountJS: [
       `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
