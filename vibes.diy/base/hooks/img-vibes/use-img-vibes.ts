@@ -81,8 +81,8 @@ export function useImgVibes({
         setAssetUrl(imageUrl);
         setProgress(90);
 
-        if (existingDoc?._id && isRegen) {
-          // Regen: append version to existing doc
+        if (existingDoc?._id && (isRegen || !modelMatch)) {
+          // Regen or model change: append version to existing doc
           const fresh = (await db.get(existingDoc._id)) as PartialImageDocument;
           const updated = addNewVersion(fresh as Required<PartialImageDocument>, imageUrl, promptText, model);
           await db.put(updated);
