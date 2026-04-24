@@ -138,6 +138,7 @@ import {
   EventoResult,
   ValidateTriggerCtx,
   Lazy,
+  BuildURI,
 } from "@adviser/cement";
 import { ClerkClaim, SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
@@ -193,7 +194,9 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   constructor(cfg: VibesDiyApiParam) {
     const sthis = cfg.sthis ?? ensureSuperThis();
-    const apiUrl = cfg.apiUrl; // ?? "wss://api.vibes.diy/v1/ws";
+    // Each API instance gets its own DO shard to avoid CPU limits under concurrent load.
+    // When a preset WebSocket is provided (tests), skip sharding — tests bypass worker routing.
+    const apiUrl = cfg.ws ? cfg.apiUrl : BuildURI.from(cfg.apiUrl).setParam("shard", crypto.randomUUID()).toString();
     // const pkgRepos: PkgRepos = {
     //   private: cfg.pkgRepos?.private ?? "https://esm.sh/",
     //   public: cfg.pkgRepos?.public ?? BuildURI.from(window.location.origin).appendRelative("/dev-npm").toString(),

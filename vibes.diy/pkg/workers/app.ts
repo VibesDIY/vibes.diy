@@ -45,7 +45,8 @@ export default {
   async fetch(request: CFRequest, env: CFEnv, ctx: ExecutionContext): Promise<CFResponse> {
     const url = new URL(request.url);
     if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
-      const id = env.CHAT_SESSIONS.idFromName("global");
+      const shard = url.searchParams.get("shard") || crypto.randomUUID();
+      const id = env.CHAT_SESSIONS.idFromName(shard);
       const obj = env.CHAT_SESSIONS.get(id);
       return obj.fetch(request); // handle WebSocket upgrade and API requests in the chat sessions Durable Object
     }
