@@ -292,20 +292,21 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
 
       const t = vctx.sql.tables.appDocuments;
 
-      // Fetch all rows for this app, ordered by docId + seq desc
-      // Then deduplicate in JS to get the latest revision per docId
+      // Fetch all rows for this app, ordered by docId + seq asc (matches PK index)
+      // Then deduplicate in JS — last row per docId is the latest revision
       const rows = await vctx.sql.db
         .select()
         .from(t)
         .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug), eq(t.dbName, req.dbName)))
-        .orderBy(sql`${t.docId}, ${t.seq} desc`);
+        .orderBy(sql`${t.docId}, ${t.seq}`);
 
-      // Keep only the latest revision per docId, skip deleted
-      const seen = new Set<string>();
-      const docs: ({ _id: string } & Record<string, unknown>)[] = [];
+      // Last row per docId wins (highest seq), skip deleted
+      const latest = new Map<string, (typeof rows)[0]>();
       for (const row of rows) {
-        if (seen.has(row.docId)) continue;
-        seen.add(row.docId);
+        latest.set(row.docId, row);
+      }
+      const docs: ({ _id: string } & Record<string, unknown>)[] = [];
+      for (const row of latest.values()) {
         if (row.deleted === 1) continue;
         docs.push({
           _id: row.docId,

@@ -193,10 +193,7 @@ export const sqlAppDocuments = pgTable(
     deleted: integer().notNull().default(0), // 1 = tombstone
     created: text().notNull(), // ISO timestamp of this revision
   },
-  (table) => [
-    primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId, table.seq] }),
-    index("AppDocuments_latest_idx").on(table.userSlug, table.appSlug, table.dbName, table.docId, table.seq),
-  ]
+  (table) => [primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId, table.seq] })]
 );
 
 export const sqlInviteGrants = pgTable(

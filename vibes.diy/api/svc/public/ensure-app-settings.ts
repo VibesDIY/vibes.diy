@@ -133,8 +133,9 @@ export async function ensureAppSettings(
       .leftJoin(
         vctx.sql.tables.appSettings,
         and(
-          eq(vctx.sql.tables.appSettings.userSlug, vctx.sql.tables.userSlugBinding.userSlug),
-          eq(vctx.sql.tables.appSettings.appSlug, req.appSlug)
+          eq(vctx.sql.tables.appSettings.userId, vctx.sql.tables.userSlugBinding.userId),
+          eq(vctx.sql.tables.appSettings.appSlug, req.appSlug),
+          eq(vctx.sql.tables.appSettings.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
         )
       )
       .where(
