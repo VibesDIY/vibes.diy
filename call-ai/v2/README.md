@@ -179,6 +179,23 @@ Parses markdown structure from accumulated content, detecting code fences and im
 **Input:** `DeltaStreamMsg`
 **Messages:** `block.begin`, `block.toplevel.begin/line/end`, `block.code.begin/line/end`, `block.image`, `block.end`, `block.stats`
 
+`block.code.*` carries an optional `path` field, derived aider-style from the most-recent non-blank toplevel line preceding the fence (if it looks like a relative path with a recognized extension). Falls back to `App.jsx` otherwise.
+
+### fence-body-parser.ts
+
+Pure function that turns the lines inside a code fence into `Edit[]`. A body with no markers is a single `create`. A body with `<<<<<<< SEARCH` / `=======` / `>>>>>>> REPLACE` markers becomes one or more `replace` edits (multiple sections allowed in one fence).
+
+### apply-edits.ts
+
+Pure helpers `applyReplace` and `applyEdits`. `applyReplace` first tries an exact match; on failure it falls back to a trailing-whitespace-tolerant match. Result reports `matchKind` (`exact` | `trailing-ws`).
+
+### filesystem-stream.ts
+
+Aider-style virtual filesystem stage. Sits after `sections-stream`. Owns a `VirtualFS = Map<path, string>` for the life of one streamed turn, seeded from the caller-supplied `seed` (typically the saved `App.jsx`). Each `block.code.end` is parsed via `parseFenceBody`; the resulting edits are applied with `applyEdits`. On success, emits `fs.file.snapshot`. Failed sections (parse errors, missing or ambiguous SEARCH) emit `fs.apply.error` and leave the VFS unchanged. On `block.end`, emits `fs.turn.end` with the final files map.
+
+**Input:** `BlockStreamMsg`
+**Messages added:** `fs.file.snapshot`, `fs.apply.error`, `fs.turn.end`
+
 ## The Passthrough Pattern
 
 Streams use `passthrough()` to automatically forward all upstream messages while adding their own:
@@ -246,21 +263,46 @@ if (isDeltaStats(msg)) console.log("Delta stats:", msg.stats);
 if (isBlockStats(msg)) console.log("Block stats:", msg.stats);
 ```
 
+## Filesystem stage usage
+
+```typescript
+import {
+  createSectionsStream,
+  createFileSystemStream,
+  isFsFileSnapshot,
+  isFsTurnEnd,
+} from "call-ai/v2";
+
+const seed = new Map([["App.jsx", priorAppJsx]]);
+
+const pipeline = response.body
+  // …line/data/sse/delta stages…
+  .pipeThrough(createSectionsStream(streamId, createId))
+  .pipeThrough(createFileSystemStream({ streamId, createId, seed }));
+
+for await (const msg of pipeline) {
+  if (isFsFileSnapshot(msg)) {
+    // Update live preview with msg.content for msg.path
+  }
+  if (isFsTurnEnd(msg)) {
+    // Persist msg.files to the session doc
+  }
+}
+```
+
 ## Current Status
 
-Currently used by:
+Production: this pipeline is the live streaming path for vibes.diy chat
+([`prompt-chat-section.ts`](../../vibes.diy/api/svc/public/prompt-chat-section.ts)
+pipes the LLM response body through line → data → sse → delta → sections, and
+the client reducer consumes the typed block messages directly).
 
-- CLI tool (`cli.ts`) for testing and debugging
-- Unit tests
+Also used by:
 
-Integration plans (not part of this package):
-
-- vibes.diy chat using advanced API
-- Auth for vibes iframe runtime
-- Generated vibes legacy callAI wrapper
+- CLI tool (`cli.ts`) for replay/debugging captured SSE files
+- Unit tests across the v2 modules
 
 ## TODO
 
 - [ ] **Chunked image decoding**: Add `createImageDecodeStream` that fetches image URLs, decodes to bytes, and emits `image.begin`/`image.fragment`/`image.end` with shared `imageId` for streaming large images in fixed-size chunks
 - [ ] **Production worker**: Deploy pipeline to Cloudflare Worker with events as network transport, client consumes typed events directly instead of raw SSE
-- [ ] **Migrate vibes.diy chat**: Replace `call-ai` v1 + `segment-parser.ts` with v2 pipeline, consuming typed `isCodeLine`/`isToplevelLine` events instead of regex parsing
