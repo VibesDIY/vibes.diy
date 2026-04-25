@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { getCode } from "~/vibes.diy/app/components/ResultPreview/CodeEditor.js";
 import type { PromptState, PromptBlock } from "~/vibes.diy/app/routes/chat/chat.$userSlug.$appSlug.js";
-import type { PromptAndBlockMsgs } from "@vibes.diy/api-types";
+
+// Pull the message type via PromptBlock so we don't add a direct dep on
+// @vibes.diy/api-types here.
+type PromptAndBlockMsgs = PromptBlock["msgs"][number];
 
 const ts = new Date("2026-04-25T00:00:00Z");
 

@@ -101,14 +101,43 @@ interface CodeBlocks {
   end?: CodeMsg;
 }
 
+// Look up the most recent persisted fileSystem for a chat, across all prior
+// promptIds. Returns a Map<filename, content> usable as the seed for the
+// next turn's resolveCodeBlocksToFileSystem call. Empty map when the chat
+// has no prior persisted state.
+async function loadPriorFileSystem(vctx: VibesApiSQLCtx, chatId: string): Promise<ReadonlyMap<string, string>> {
+  const latestPrompt = await vctx.sql.db
+    .select()
+    .from(vctx.sql.tables.promptContexts)
+    .innerJoin(vctx.sql.tables.apps, eq(vctx.sql.tables.apps.fsId, vctx.sql.tables.promptContexts.fsId))
+    .where(eq(vctx.sql.tables.promptContexts.chatId, chatId))
+    .orderBy(desc(vctx.sql.tables.promptContexts.created))
+    .limit(1)
+    .then((r) => r[0]);
+  const seed = new Map<string, string>();
+  if (!latestPrompt) return seed;
+  const files = parseArray(latestPrompt.Apps.fileSystem, vibeFile);
+  for (const f of files) {
+    if (f.type !== "code-block") continue;
+    if (typeof f.content !== "string") continue;
+    seed.set(f.filename, f.content);
+  }
+  return seed;
+}
+
 // Resolve a sequence of streamed code blocks into a VibeFile[] by grouping
 // blocks by their `path` (aider-style), running parseFenceBody on each
 // block's body, and applying the resulting edits in order. A body with no
 // SEARCH markers is a `create`; bodies with markers are `replace` edits.
 //
+// `seed` carries prior-turn file content keyed by filename — required so
+// that a turn consisting only of `replace` blocks can compose against the
+// previously persisted state. Without it, SEARCH would run against an
+// empty buffer and produce a 0-byte App.jsx.
+//
 // Falls back to filename `/App.jsx` when a block has no `path` (back-compat
 // for blocks emitted before block-stream tracked path lines).
-function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[]): VibeFile[] {
+export function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[], seed?: ReadonlyMap<string, string>): VibeFile[] {
   const byPath = new Map<string, { lang: string; lines: string[][] }>();
   for (const block of blocks) {
     if (!block.end) continue;
@@ -121,19 +150,36 @@ function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[]): VibeFile[
   }
   const result: VibeFile[] = [];
   for (const [path, { lang, lines }] of byPath.entries()) {
-    let resolved = "";
+    const filename = path.startsWith("/") ? path : `/${path}`;
+    let resolved = seed?.get(filename) ?? seed?.get(path) ?? "";
     for (const blockLines of lines) {
       const parsed = parseFenceBody(blockLines);
       const r = applyEdits(resolved, parsed.edits);
       resolved = r.content;
     }
-    const filename = path.startsWith("/") ? path : `/${path}`;
     result.push({
       type: "code-block",
       filename,
       lang,
       content: resolved,
     });
+  }
+  // Carry forward seed entries for files this turn didn't touch.
+  if (seed) {
+    for (const [seededName, seededContent] of seed.entries()) {
+      const filename = seededName.startsWith("/") ? seededName : `/${seededName}`;
+      const path = filename.startsWith("/") ? filename.slice(1) : filename;
+      if (byPath.has(path) || byPath.has(filename)) continue;
+      // Determine lang from extension.
+      const ext = filename.match(/\.([^.]+)$/)?.[1] ?? "jsx";
+      const lang = ["js", "jsx"].includes(ext.toLowerCase()) ? "jsx" : ext.toLowerCase();
+      result.push({
+        type: "code-block",
+        filename,
+        lang,
+        content: seededContent,
+      });
+    }
   }
   return result;
 }
@@ -268,7 +314,17 @@ export async function handlePromptContext({
   }
   if (code.length > 0 && (resChat.mode === "chat" || isPromptFSStyle(resChat.mode))) {
     // here is where the music plays
-    const resolvedFileSystem = fileSystem ?? resolveCodeBlocksToFileSystem(code);
+    let resolvedFileSystem: VibeFile[];
+    if (fileSystem) {
+      resolvedFileSystem = fileSystem;
+    } else {
+      // Seed from the most recent persisted fileSystem for this chat so that
+      // replace-only turns compose against prior content rather than against
+      // an empty buffer. Without this, a `<<<<<<< SEARCH ... >>>>>>> REPLACE`
+      // block has nothing to match and the new fsId persists 0 bytes.
+      const seed = await loadPriorFileSystem(vctx, req.chatId);
+      resolvedFileSystem = resolveCodeBlocksToFileSystem(code, seed);
+    }
     const rFs = await ensureAppSlugItem(vctx, {
       type: "vibes.diy.req-ensure-app-slug",
       mode: "dev",
