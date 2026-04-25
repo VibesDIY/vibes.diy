@@ -1,35 +1,15 @@
 import { useParams } from "react-router";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
-import React, { useMemo } from "react";
-// import { BlockEndMsg, CodeEndMsg, isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
+import React, { useEffect, useMemo, useRef } from "react";
+import { isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { BuildURI, URI } from "@adviser/cement";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
-
-// function findApp(promptState: PromptState, sectionId?: string | null) {
-//   let lastBlock: BlockEndMsg | undefined;
-//   let foundCodeSection: CodeEndMsg | undefined;
-//   for (const block of promptState.blocks) {
-//     for (const msg of block.msgs) {
-//       if (isCodeEnd(msg)) {
-//         if (msg.sectionId === sectionId) {
-//           foundCodeSection = msg;
-//         }
-//       }
-//       if (isBlockEnd(msg)) {
-//         if (foundCodeSection) {
-//           return msg;
-//         }
-//         lastBlock = msg;
-//       }
-//     }
-//   }
-//   return lastBlock;
-// }
+import { getCode } from "./CodeEditor.js";
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
-  const { webVars: svcVars } = useVibesDiy();
+  const { webVars: svcVars, srvVibeSandbox } = useVibesDiy();
 
   const previewUrl = useMemo(() => {
     if (fsId && appSlug && userSlug) {
@@ -41,7 +21,6 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         bindings: { appSlug, userSlug, fsId },
       });
       const previewUrl = BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
-      // console.log(`iframe src=`, previewUrl.asObj());
       return previewUrl;
     }
     promptState.setSearchParams((prev) => {
@@ -52,6 +31,24 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     return null;
   }, [fsId, userSlug, appSlug]);
 
+  const lastSeenSeqRef = useRef<number>(-1);
+  useEffect(() => {
+    if (!srvVibeSandbox) return;
+    const last = promptState.blocks[promptState.blocks.length - 1];
+    if (!last) return;
+    let latestCodeEndSeq = -1;
+    for (const msg of last.msgs) {
+      if (isCodeEnd(msg) && msg.seq > latestCodeEndSeq) {
+        latestCodeEndSeq = msg.seq;
+      }
+    }
+    if (latestCodeEndSeq <= lastSeenSeqRef.current) return;
+    lastSeenSeqRef.current = latestCodeEndSeq;
+    const resolved = getCode(promptState, fsId).code.join("\n");
+    if (resolved.length === 0) return;
+    srvVibeSandbox.pushSource(resolved);
+  }, [promptState.blocks, fsId, srvVibeSandbox]);
+
   if (!previewUrl) {
     return <>No App Found</>;
   }
@@ -61,7 +58,6 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
       className="relative w-full h-full bg-gray-900 overflow-auto"
       style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
     >
-      {/* <pre>{JSON.stringify({ sectionId, ends: findApp(promptState)}, null, 2)}</pre> */}
       <iframe
         src={previewUrl.toString()}
         className="relative w-full h-full"

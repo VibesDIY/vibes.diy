@@ -14,6 +14,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [deploy-tags.md](agents/deploy-tags.md) — Tag naming and deploy runbook
 - [environments.md](agents/environments.md) — Dev/prod/cli/preview architecture, stable-entry routing
 - [vibe-pkg.md](agents/vibe-pkg.md) — Self-hosted package serving via /vibe-pkg/
+- [dev-state.md](agents/dev-state.md) — Which caches are safe to delete, and which destroy local dev data
 
 ## Quick Reference
 
