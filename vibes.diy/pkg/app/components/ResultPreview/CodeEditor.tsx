@@ -32,7 +32,13 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
   // full-file `create` or a SEARCH/REPLACE `replace` against the running
   // source. Backwards-compatible with create-only history: a fence with no
   // markers parses to a single `create` whose content overrides the source.
-  let source = "";
+  //
+  // Seed from the persisted file (hydratedSource) when the active fsId has a
+  // saved snapshot — this makes replace-only follow-up turns resolve against
+  // the prior state after a chat reload, not against an empty buffer.
+  const seedFromHydrate =
+    fsId && promptState.hydratedSource?.fsId === fsId ? promptState.hydratedSource.code.join("\n") : "";
+  let source = seedFromHydrate;
   let complete = false;
   let streamId: string | undefined;
   let foundAny = false;
@@ -83,8 +89,6 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
   if (foundAny) {
     return { code: source.split("\n"), complete, streamId };
   }
-  // Fallback: when no ChatSections exist for this fsId (e.g. a freshly
-  // forked vibe), use the hydratedSource fetched from Apps.fileSystem.
   if (fsId && promptState.hydratedSource?.fsId === fsId) {
     return { code: promptState.hydratedSource.code, complete: true, streamId: `hydrate-${fsId}` };
   }
