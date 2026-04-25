@@ -17,6 +17,7 @@ import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 
 export { ChatSessions } from "./chat-sessions.js";
+export { DocNotify } from "./doc-notify.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 

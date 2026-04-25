@@ -16,11 +16,18 @@ binding = "ASSETS"
 binding = "BROWSER"
 
 [durable_objects]
-bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+bindings = [
+  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
+  { name = "DOC_NOTIFY", class_name = "DocNotify" },
+]
 
 [[migrations]]
 tag = "v1"
 new_classes = ["ChatSessions"]
+
+[[migrations]]
+tag = "v2"
+new_classes = ["DocNotify"]
 
 [[d1_databases]]
 binding = "DB"
@@ -47,11 +54,18 @@ routes = [
 binding = "BROWSER"
 
 [env.local.durable_objects]
-bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+bindings = [
+  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
+  { name = "DOC_NOTIFY", class_name = "DocNotify" },
+]
 
 [[env.local.migrations]]
 tag = "v1"
 new_classes = ["ChatSessions"]
+
+[[env.local.migrations]]
+tag = "v2"
+new_classes = ["DocNotify"]
 
 [[env.local.d1_databases]]
 binding = "DB"
@@ -84,11 +98,18 @@ persist = true
 binding = "BROWSER"
 
 [env.dev.durable_objects]
-bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+bindings = [
+  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
+  { name = "DOC_NOTIFY", class_name = "DocNotify" },
+]
 
 [[env.dev.migrations]]
 tag = "v1"
 new_classes = ["ChatSessions"]
+
+[[env.dev.migrations]]
+tag = "v2"
+new_classes = ["DocNotify"]
 
 [[env.dev.d1_databases]]
 binding = "DB"
@@ -119,11 +140,18 @@ persist = true
 binding = "BROWSER"
 
 [env.preview.durable_objects]
-bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+bindings = [
+  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
+  { name = "DOC_NOTIFY", class_name = "DocNotify" },
+]
 
 [[env.preview.migrations]]
 tag = "v1"
 new_classes = ["ChatSessions"]
+
+[[env.preview.migrations]]
+tag = "v2"
+new_classes = ["DocNotify"]
 
 [[env.preview.d1_databases]]
 binding = "DB"
@@ -156,11 +184,18 @@ persist = true
 binding = "BROWSER"
 
 [env.prod.durable_objects]
-bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+bindings = [
+  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
+  { name = "DOC_NOTIFY", class_name = "DocNotify" },
+]
 
 [[env.prod.migrations]]
 tag = "v1"
 new_classes = ["ChatSessions"]
+
+[[env.prod.migrations]]
+tag = "v2"
+new_classes = ["DocNotify"]
 
 [[env.prod.d1_databases]]
 binding = "DB"
@@ -193,11 +228,18 @@ persist = true
 binding = "BROWSER"
 
 [env.cli.durable_objects]
-bindings = [{ name = "CHAT_SESSIONS", class_name = "ChatSessions" }]
+bindings = [
+  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
+  { name = "DOC_NOTIFY", class_name = "DocNotify" },
+]
 
 [[env.cli.migrations]]
 tag = "v1"
 new_classes = ["ChatSessions"]
+
+[[env.cli.migrations]]
+tag = "v2"
+new_classes = ["DocNotify"]
 
 [[env.cli.d1_databases]]
 binding = "DB"
