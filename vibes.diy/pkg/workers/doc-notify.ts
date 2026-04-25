@@ -55,10 +55,12 @@ export class DocNotify implements DurableObject {
     switch (body.action) {
       case "register":
         this.subscribers.add(body.shardId);
+        console.log("[DocNotify] register shard:", body.shardId.slice(0, 8), "| subscribers:", this.subscribers.size);
         return new Response("ok");
 
       case "deregister":
         this.subscribers.delete(body.shardId);
+        console.log("[DocNotify] deregister shard:", body.shardId.slice(0, 8), "| subscribers:", this.subscribers.size);
         return new Response("ok");
 
       case "notify":
@@ -74,9 +76,22 @@ export class DocNotify implements DurableObject {
     const stale: string[] = [];
     const promises: Promise<void>[] = [];
 
-    for (const shardId of this.subscribers) {
-      if (shardId === msg.senderShardId) continue;
+    const targets = [...this.subscribers].filter((id) => id !== msg.senderShardId);
+    console.log(
+      "[DocNotify] notify",
+      msg.evt.userSlug + "/" + msg.evt.appSlug,
+      "docId:",
+      msg.evt.docId.slice(0, 8),
+      "| sender:",
+      msg.senderShardId.slice(0, 8),
+      "| fan-out to",
+      targets.length,
+      "of",
+      this.subscribers.size,
+      "shards"
+    );
 
+    for (const shardId of targets) {
       promises.push(
         (async () => {
           const id = this.env.CHAT_SESSIONS.idFromName(shardId);
@@ -91,7 +106,10 @@ export class DocNotify implements DurableObject {
             )
           );
           if (rFetch.isErr()) {
+            console.log("[DocNotify] fan-out FAILED shard:", shardId.slice(0, 8), "removing");
             stale.push(shardId);
+          } else {
+            console.log("[DocNotify] fan-out OK shard:", shardId.slice(0, 8));
           }
         })()
       );
