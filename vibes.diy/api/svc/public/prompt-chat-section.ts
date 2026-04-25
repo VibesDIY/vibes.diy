@@ -53,6 +53,7 @@ import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
 import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import {
+  applyEdits,
   createStatsCollector,
   createLineStream,
   createDataStream,
@@ -67,6 +68,7 @@ import {
   LLMRequest,
   ChatMessage,
   CodeMsg,
+  parseFenceBody,
   CodeBeginMsg,
   CodeLineMsg,
   FileSystemRef,
@@ -97,6 +99,43 @@ interface CodeBlocks {
   begin: CodeBeginMsg;
   lines: CodeLineMsg[];
   end?: CodeMsg;
+}
+
+// Resolve a sequence of streamed code blocks into a VibeFile[] by grouping
+// blocks by their `path` (aider-style), running parseFenceBody on each
+// block's body, and applying the resulting edits in order. A body with no
+// SEARCH markers is a `create`; bodies with markers are `replace` edits.
+//
+// Falls back to filename `/App.jsx` when a block has no `path` (back-compat
+// for blocks emitted before block-stream tracked path lines).
+function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[]): VibeFile[] {
+  const byPath = new Map<string, { lang: string; lines: string[][] }>();
+  for (const block of blocks) {
+    if (!block.end) continue;
+    const path = block.begin.path ?? "App.jsx";
+    const langRaw = block.begin.lang.toLowerCase();
+    const lang = ["js", "jsx"].includes(langRaw) ? "jsx" : langRaw;
+    const acc = byPath.get(path) ?? { lang, lines: [] };
+    acc.lines.push(block.lines.map((l) => l.line));
+    byPath.set(path, acc);
+  }
+  const result: VibeFile[] = [];
+  for (const [path, { lang, lines }] of byPath.entries()) {
+    let resolved = "";
+    for (const blockLines of lines) {
+      const parsed = parseFenceBody(blockLines);
+      const r = applyEdits(resolved, parsed.edits);
+      resolved = r.content;
+    }
+    const filename = path.startsWith("/") ? path : `/${path}`;
+    result.push({
+      type: "code-block",
+      filename,
+      lang,
+      content: resolved,
+    });
+  }
+  return result;
 }
 
 async function appendBlockEvent({
@@ -229,34 +268,7 @@ export async function handlePromptContext({
   }
   if (code.length > 0 && (resChat.mode === "chat" || isPromptFSStyle(resChat.mode))) {
     // here is where the music plays
-    const resolvedFileSystem =
-      fileSystem ??
-      code.reduce((acc, block, idx) => {
-        if (block.end) {
-          const content = block.lines.map((l) => l.line).join("\n");
-          // console.log("Code to add to file system:", content, block.begin.lang);
-          let filename!: string;
-          if (idx === 0) {
-            filename = `/App`;
-          } else {
-            filename = `/File-${idx}`;
-          }
-          let llmLangFix = block.begin.lang.toLowerCase();
-          if (["js", "jsx"].includes(llmLangFix)) {
-            llmLangFix = "jsx";
-            filename += ".jsx";
-          } else {
-            filename += llmLangFix ? `.${llmLangFix}` : "";
-          }
-          acc.push({
-            type: "code-block",
-            filename,
-            lang: llmLangFix, // llm think between jsx and js is not a big deal
-            content,
-          });
-        }
-        return acc;
-      }, [] as VibeFile[]);
+    const resolvedFileSystem = fileSystem ?? resolveCodeBlocksToFileSystem(code);
     const rFs = await ensureAppSlugItem(vctx, {
       type: "vibes.diy.req-ensure-app-slug",
       mode: "dev",
