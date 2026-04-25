@@ -161,7 +161,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         created: now,
       });
 
-      // Broadcast doc-changed to subscribed connections (fireproof pattern: direct ws.send)
+      // Broadcast doc-changed to subscribed connections on this shard (fast path)
       const evt = { type: "vibes.diy.evt-doc-changed", userSlug: req.userSlug, appSlug: req.appSlug, docId };
       const subscriptionKey = `${req.userSlug}/${req.appSlug}`;
       for (const conn of vctx.connections) {
@@ -177,6 +177,13 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             })
           )
         );
+      }
+
+      // Notify DocNotify coordinator for cross-shard fan-out
+      if (vctx.notifyDocChanged) {
+        vctx
+          .notifyDocChanged({ userSlug: req.userSlug, appSlug: req.appSlug, docId })
+          .catch((e: unknown) => console.error("DocNotify error:", e));
       }
 
       await ctx.send.send(ctx, {
@@ -375,7 +382,7 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
         created: now,
       });
 
-      // Broadcast doc-changed to subscribed connections (fireproof pattern: direct ws.send)
+      // Broadcast doc-changed to subscribed connections on this shard (fast path)
       const evt = { type: "vibes.diy.evt-doc-changed", userSlug: req.userSlug, appSlug: req.appSlug, docId: req.docId };
       const subscriptionKey = `${req.userSlug}/${req.appSlug}`;
       for (const conn of vctx.connections) {
@@ -391,6 +398,13 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
             })
           )
         );
+      }
+
+      // Notify DocNotify coordinator for cross-shard fan-out
+      if (vctx.notifyDocChanged) {
+        vctx
+          .notifyDocChanged({ userSlug: req.userSlug, appSlug: req.appSlug, docId: req.docId })
+          .catch((e: unknown) => console.error("DocNotify error:", e));
       }
 
       await ctx.send.send(ctx, {
@@ -439,7 +453,13 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       // Store subscription on the connection object (fireproof pattern).
       // Access raw WSSendProvider via Evento's .provider wrapper.
       const wsSend = clientWsSend(ctx);
-      wsSend.subscribedAppSlugs.add(`${req.userSlug}/${req.appSlug}`);
+      const subscriptionKey = `${req.userSlug}/${req.appSlug}`;
+      wsSend.subscribedAppSlugs.add(subscriptionKey);
+
+      // Register this shard with DocNotify coordinator for cross-shard fan-out
+      if (vctx.registerDocSubscription) {
+        vctx.registerDocSubscription(subscriptionKey).catch((e: unknown) => console.error("DocNotify error:", e));
+      }
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-subscribe-docs",
