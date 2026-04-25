@@ -1,15 +1,18 @@
+import { applyEdits, parseFenceBody } from "@vibes.diy/call-ai-v2";
 import type { Segment } from "./chat.js";
 
-/**
- * Parse content into segments of markdown and code
- * This is a pure function that doesn't rely on any state
- */
-export function parseContent(text: string): {
-  segments: Segment[];
-} {
-  const segments: Segment[] = [];
+interface FoundBlock {
+  readonly fullBlock: string;
+  readonly content: string;
+  readonly startIdx: number;
+  readonly endIdx: number;
+  readonly length: number;
+  readonly incomplete?: boolean;
+}
 
-  // Extract dependencies from the beginning if they exist
+const SEARCH_MARKER = /^<{7}\s+SEARCH\s*$/m;
+
+function stripDependenciesPrefix(text: string): string {
   // Format 1: {"dependencies": {}}
   // Format 2: {"react": "^18.2.0", "react-dom": "^18.2.0"}}
   // Format 3: {"dependencies": {"react-modal": "^3.16.1", ...}}
@@ -17,175 +20,158 @@ export function parseContent(text: string): {
   const depsFormat1 = text.match(/^({"dependencies":\s*{}})/);
   const depsFormat2 = text.match(/^({(?:"[^"]+"\s*:\s*"[^"]+"(?:,\s*)?)+}})/);
   const depsFormat3 = text.match(/^({"dependencies":\s*{(?:"[^"]+"\s*:\s*"[^"]+"(?:,\s*)?)+}})/);
-  // Handle multi-line dependency format with nested structure
   const depsFormat4 = text.match(/^({"dependencies":\s*{[\s\S]*?^}})/m);
-
-  if (depsFormat1 && depsFormat1[1]) {
-    // Remove the dependencies part from the text
-    text = text.substring(text.indexOf(depsFormat1[1]) + depsFormat1[1].length).trim();
-  } else if (depsFormat2 && depsFormat2[1]) {
-    // Remove the dependencies part from the text
-    text = text.substring(text.indexOf(depsFormat2[1]) + depsFormat2[1].length).trim();
-  } else if (depsFormat3 && depsFormat3[1]) {
-    // Remove the dependencies part from the text
-    text = text.substring(text.indexOf(depsFormat3[1]) + depsFormat3[1].length).trim();
-  } else if (depsFormat4 && depsFormat4[1]) {
-    // Remove the dependencies part from the text
-    text = text.substring(text.indexOf(depsFormat4[1]) + depsFormat4[1].length).trim();
+  const match = depsFormat1 ?? depsFormat2 ?? depsFormat3 ?? depsFormat4;
+  if (match && match[1]) {
+    return text.substring(text.indexOf(match[1]) + match[1].length).trim();
   }
+  return text;
+}
 
-  // Find all complete code blocks
-  const codeBlockRegex = /(?:^|\n)[ \t]*```(?:js|jsx|javascript|)[ \t]*\n([\s\S]*?)(?:^|\n)[ \t]*```[ \t]*(?:\n|$)/g;
-  const codeBlocks = [];
-
-  // Get all matches
-  let match;
-
-  // Find all code blocks and their positions
+function findFencedBlocks(text: string): FoundBlock[] {
+  const blocks: FoundBlock[] = [];
+  // Match info-string of the form ```lang [path [op]] — fall back to plain ```
+  const codeBlockRegex = /(?:^|\n)[ \t]*```(?:\w+)?(?:[ \t]+\S+(?:[ \t]+\S+)?)?[ \t]*\n([\s\S]*?)(?:^|\n)[ \t]*```[ \t]*(?:\n|$)/g;
+  let match: RegExpExecArray | null;
   while ((match = codeBlockRegex.exec(text)) !== null) {
     const fullMatch = match[0];
-    const codeContent = match[1]?.trim() || "";
-    const startIdx = match.index;
-    const endIdx = startIdx + fullMatch.length;
-
-    codeBlocks.push({
+    const codeContent = (match[1] ?? "").trim();
+    blocks.push({
       fullBlock: fullMatch,
       content: codeContent,
-      startIdx,
-      endIdx,
+      startIdx: match.index,
+      endIdx: match.index + fullMatch.length,
       length: codeContent.length,
     });
   }
-
-  // Now check for incomplete code blocks at the end of the file
-  const incompleteCodeBlockMatch = text.match(/(?:^|\n)[ \t]*```(?:js|jsx|javascript|)[ \t]*\n([\s\S]*)$/s);
-  if (incompleteCodeBlockMatch && incompleteCodeBlockMatch.index !== undefined) {
-    // Check that this isn't just a duplicate of an already found block
-    const startIdx = incompleteCodeBlockMatch.index;
-    const isDuplicate = codeBlocks.some((block) => block.startIdx === startIdx);
-
-    if (!isDuplicate) {
-      const fullMatch = incompleteCodeBlockMatch[0];
-      const codeContent = incompleteCodeBlockMatch[1]?.trim() || "";
-      const endIdx = text.length;
-
-      codeBlocks.push({
-        fullBlock: fullMatch,
+  // Detect an incomplete trailing block (still streaming)
+  const incomplete = text.match(/(?:^|\n)[ \t]*```(?:\w+)?(?:[ \t]+\S+(?:[ \t]+\S+)?)?[ \t]*\n([\s\S]*)$/s);
+  if (incomplete && incomplete.index !== undefined) {
+    const startIdx = incomplete.index;
+    if (!blocks.some((b) => b.startIdx === startIdx)) {
+      const codeContent = (incomplete[1] ?? "").trim();
+      blocks.push({
+        fullBlock: incomplete[0],
         content: codeContent,
         startIdx,
-        endIdx,
+        endIdx: text.length,
         length: codeContent.length,
         incomplete: true,
       });
     }
   }
+  return blocks;
+}
 
-  // If there are no code blocks, treat the whole content as markdown
-  if (codeBlocks.length === 0) {
-    segments.push({
-      type: "markdown",
-      content: text,
-    });
-    return { segments };
-  }
-
-  // Find the longest code block
-  let longestBlockIndex = 0;
-  let maxLength = 0;
-
-  for (let i = 0; i < codeBlocks.length; i++) {
-    if (codeBlocks[i].length > maxLength) {
-      maxLength = codeBlocks[i].length;
-      longestBlockIndex = i;
+function legacyParse(stripped: string, blocks: FoundBlock[]): { segments: Segment[] } {
+  // Legacy semantics: longest block is the "real" code; other blocks fold into
+  // the surrounding markdown as illustration. Used for messages that contain
+  // no SEARCH markers (i.e. pre-aider-edits message format).
+  let longestIdx = 0;
+  let maxLen = 0;
+  for (let i = 0; i < blocks.length; i += 1) {
+    if (blocks[i].length > maxLen) {
+      maxLen = blocks[i].length;
+      longestIdx = i;
     }
   }
+  const sorted = [...blocks].sort((a, b) => a.startIdx - b.startIdx);
+  const longest = blocks[longestIdx];
 
-  // Sort code blocks by start index
-  codeBlocks.sort((a, b) => a.startIdx - b.startIdx);
-
-  // Get the longest block
-  const longestBlock = codeBlocks[longestBlockIndex];
-
-  // First markdown segment: text before the longest code block
-  let beforeContent = "";
-  if (longestBlock.startIdx > 0) {
-    // Include any other code blocks that appear before the longest one
-    let currentPos = 0;
-
-    for (const block of codeBlocks) {
-      if (block === longestBlock) {
-        // Add any text between the previous position and the longest block
-        beforeContent += text.substring(currentPos, block.startIdx);
+  let beforeText = "";
+  if (longest.startIdx > 0) {
+    let pos = 0;
+    let processed = false;
+    for (const b of sorted) {
+      if (b === longest) {
+        beforeText += stripped.substring(pos, b.startIdx);
         break;
-      } else if (block.startIdx >= currentPos && block.endIdx <= longestBlock.startIdx) {
-        // Add text between the current position and this block
-        beforeContent += text.substring(currentPos, block.startIdx);
-        // Add the code block itself to the markdown
-        beforeContent += block.fullBlock;
-        // Update current position
-        currentPos = block.endIdx;
+      }
+      if (b.startIdx >= pos && b.endIdx <= longest.startIdx) {
+        beforeText += stripped.substring(pos, b.startIdx);
+        beforeText += b.fullBlock;
+        pos = b.endIdx;
+        processed = true;
       }
     }
-
-    // If no blocks were processed, just include all text before the longest block
-    if (beforeContent === "") {
-      beforeContent = text.substring(0, longestBlock.startIdx);
+    if (!processed && beforeText.length === 0) {
+      beforeText = stripped.substring(0, longest.startIdx);
     }
   }
 
-  // Add the first markdown segment
-  if (beforeContent.trim().length > 0) {
-    segments.push({
-      type: "markdown",
-      content: beforeContent.trim(),
-    });
-  }
-
-  // Add the longest code block as its own segment
-  segments.push({
-    type: "code",
-    content: longestBlock.content,
-  });
-
-  // No special cases - just proceed with normal processing
-
-  // Last markdown segment: text after the longest code block
-  let afterContent = "";
-  if (longestBlock.endIdx < text.length) {
-    // Include any other code blocks that appear after the longest one
-    let currentPos = longestBlock.endIdx;
-    let processedBlocks = false;
-
-    for (const block of codeBlocks) {
-      if (block !== longestBlock && block.startIdx >= longestBlock.endIdx) {
-        // Add text between the current position and this block
-        afterContent += text.substring(currentPos, block.startIdx);
-        // Add the code block itself to the markdown
-        afterContent += block.fullBlock;
-        // Update current position
-        currentPos = block.endIdx;
-        processedBlocks = true;
+  let afterText = "";
+  if (longest.endIdx < stripped.length) {
+    let pos = longest.endIdx;
+    let processed = false;
+    for (const b of sorted) {
+      if (b !== longest && b.startIdx >= longest.endIdx) {
+        afterText += stripped.substring(pos, b.startIdx);
+        afterText += b.fullBlock;
+        pos = b.endIdx;
+        processed = true;
       }
     }
-
-    // Add any remaining text
-    if (currentPos < text.length) {
-      afterContent += text.substring(currentPos);
-    }
-
-    // If no blocks were processed, include all text after the longest block
-    if (!processedBlocks) {
-      afterContent = text.substring(longestBlock.endIdx);
-    }
+    if (pos < stripped.length) afterText += stripped.substring(pos);
+    if (!processed) afterText = stripped.substring(longest.endIdx);
   }
 
-  // Add the final markdown segment only if there is remaining content
-  if (afterContent.trim().length > 0) {
-    segments.push({
-      type: "markdown",
-      content: afterContent.trim(),
-    });
-  }
-
+  const segments: Segment[] = [];
+  if (beforeText.trim().length > 0) segments.push({ type: "markdown", content: beforeText.trim() });
+  segments.push({ type: "code", content: longest.content });
+  if (afterText.trim().length > 0) segments.push({ type: "markdown", content: afterText.trim() });
   return { segments };
+}
+
+function aiderParse(stripped: string, blocks: FoundBlock[]): { segments: Segment[] } {
+  // New semantics: all fenced blocks are file operations. Apply each in order
+  // via parseFenceBody + applyEdits to compute the final file content.
+  let resolved = "";
+  for (const block of blocks) {
+    const lines = block.content.split("\n");
+    const parsed = parseFenceBody(lines);
+    const result = applyEdits(resolved, parsed.edits);
+    resolved = result.content;
+  }
+
+  let cursor = 0;
+  let beforeText = "";
+  let afterText = "";
+  blocks.forEach((b, i) => {
+    const piece = stripped.substring(cursor, b.startIdx);
+    if (i === 0) beforeText = piece;
+    else afterText += piece;
+    cursor = b.endIdx;
+  });
+  afterText += stripped.substring(cursor);
+
+  const segments: Segment[] = [];
+  if (beforeText.trim().length > 0) segments.push({ type: "markdown", content: beforeText.trim() });
+  segments.push({ type: "code", content: resolved });
+  if (afterText.trim().length > 0) segments.push({ type: "markdown", content: afterText.trim() });
+  return { segments };
+}
+
+/**
+ * Parse content into segments of markdown and code.
+ *
+ * Two modes, selected by content:
+ * - **Legacy** (no SEARCH markers anywhere): longest fenced block is the
+ *   "real" code; other blocks fold into surrounding markdown. Preserves
+ *   pre-aider behavior for historical messages and messages with
+ *   illustration code alongside the real component.
+ * - **Aider edits** (any block contains `<<<<<<< SEARCH`): every fenced
+ *   block is a file operation; apply create + replace edits in order via
+ *   parseFenceBody + applyEdits, and emit the resolved content as the
+ *   single code segment.
+ */
+export function parseContent(text: string): { segments: Segment[] } {
+  const stripped = stripDependenciesPrefix(text);
+  const blocks = findFencedBlocks(stripped);
+
+  if (blocks.length === 0) {
+    return { segments: [{ type: "markdown", content: stripped }] };
+  }
+
+  const hasSearchMarker = blocks.some((b) => SEARCH_MARKER.test(b.content));
+  return hasSearchMarker ? aiderParse(stripped, blocks) : legacyParse(stripped, blocks);
 }
