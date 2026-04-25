@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { stream2array } from "@adviser/cement";
 import { createBlockStream, isCodeBegin, isCodeLine, isCodeEnd, type CodeBeginMsg, type CodeEndMsg } from "./block-stream.js";
 import type { LineStreamMsg } from "./line-stream.js";
@@ -35,8 +35,6 @@ async function runBlockStream(lines: string[]) {
 }
 
 describe("block-stream path-line tracking", () => {
-  beforeEach(() => {});
-
   it("attaches path 'App.jsx' (default) when no path line precedes the fence", async () => {
     const chunks = await runBlockStream(["Some intro prose.", "```jsx", "const x = 1;", "```"]);
     const begin = chunks.find((c) => isCodeBegin(c)) as CodeBeginMsg | undefined;

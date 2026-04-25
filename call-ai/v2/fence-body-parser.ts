@@ -25,7 +25,7 @@ type Mode = "plain" | "between" | "in-search" | "in-replace";
 
 export function parseFenceBody(lines: readonly string[]): ParsedFenceBody {
   let mode: Mode = "plain";
-  let plainLines: string[] = [];
+  const plainLines: string[] = [];
   let searchLines: string[] = [];
   let replaceLines: string[] = [];
   const edits: Edit[] = [];
