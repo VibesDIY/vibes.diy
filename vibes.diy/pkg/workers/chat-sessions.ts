@@ -57,6 +57,7 @@ export class ChatSessions implements DurableObject {
       }
       const evt = parsed;
       const subscriptionKey = `${evt.userSlug}/${evt.appSlug}`;
+      let delivered = 0;
       for (const conn of this.connections) {
         if (!conn.subscribedAppSlugs.has(subscriptionKey)) continue;
         exception2Result(() =>
@@ -70,7 +71,21 @@ export class ChatSessions implements DurableObject {
             })
           )
         );
+        delivered++;
       }
+      console.log(
+        "[ChatSessions] received notification",
+        subscriptionKey,
+        "docId:",
+        evt.docId.slice(0, 8),
+        "| shard:",
+        (this.shardId ?? "unknown").slice(0, 8),
+        "| delivered to",
+        delivered,
+        "of",
+        this.connections.size,
+        "connections"
+      );
       return new Response("ok");
     }
 
