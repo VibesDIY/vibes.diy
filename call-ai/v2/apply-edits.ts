@@ -4,17 +4,17 @@ export interface ApplyReplaceInput {
   readonly replace: string;
 }
 
-export type ApplyEditOk = {
+export interface ApplyEditOk {
   readonly ok: true;
   readonly content: string;
   readonly matchKind: "exact" | "trailing-ws";
-};
+}
 export type ApplyEditErrReason = "no-match" | "multiple-match";
-export type ApplyEditErr = {
+export interface ApplyEditErr {
   readonly ok: false;
   readonly reason: ApplyEditErrReason;
   readonly matchCount: number;
-};
+}
 export type ApplyEditResult = ApplyEditOk | ApplyEditErr;
 
 function rstripLines(s: string): string {
