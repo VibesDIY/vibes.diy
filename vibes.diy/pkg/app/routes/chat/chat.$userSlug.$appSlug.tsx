@@ -33,6 +33,8 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { EditorState, isEditorStateEdit } from "../../types/code-editor.js";
+import { getCode } from "../../components/ResultPreview/CodeEditor.js";
+import { shouldAgentAutosave } from "../../components/ResultPreview/agent-autosave.js";
 
 interface VibeAppContextMenuProps {
   x: number;
@@ -86,6 +88,12 @@ export interface PromptState {
   // replayed prompt). CodeEditor falls back to this when getCode returns no
   // blocks for the current fsId.
   hydratedSource?: { fsId: string; code: string[] };
+  // Block IDs whose save originated from the agent autosave (end-of-aider-
+  // turn) rather than a manual editor save. Populated only for the lifetime
+  // of an open chat session — chat reload loses these tags and the MessageList
+  // falls back to "User edited code" for old auto-saves. Acceptable: the
+  // alternative would require a wire-format change.
+  agentSavedBlockIds: ReadonlySet<string>;
 }
 
 export interface PromptBlock {
@@ -124,7 +132,17 @@ function isSetHydratedSource(msg: unknown): msg is SetHydratedSource {
   return !(SetHydratedSource(msg) instanceof type.errors);
 }
 
-type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetHydratedSource;
+const MarkAgentSaved = type({
+  type: "'markAgentSaved'",
+  blockId: "string",
+});
+type MarkAgentSaved = typeof MarkAgentSaved.infer;
+
+function isMarkAgentSaved(msg: unknown): msg is MarkAgentSaved {
+  return !(MarkAgentSaved(msg) instanceof type.errors);
+}
+
+type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetHydratedSource | MarkAgentSaved;
 
 function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
@@ -137,6 +155,12 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 
     case isSetHydratedSource(block):
       return { ...state, hydratedSource: { fsId: block.fsId, code: block.code } };
+
+    case isMarkAgentSaved(block): {
+      const next = new Set(state.agentSavedBlockIds);
+      next.add(block.blockId);
+      return { ...state, agentSavedBlockIds: next };
+    }
 
     // case isPromptReq(block):
     //   if (!state.current) return state;
@@ -226,6 +250,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     blocks: [],
     searchParams,
     setSearchParams,
+    agentSavedBlockIds: new Set<string>(),
   });
 
   // Hydrate the code editor from Apps.fileSystem when no ChatSections
@@ -472,6 +497,62 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   useEffect(() => {
     pendingSavePromptIdRef.current = null;
   }, [userSlug, appSlug]);
+
+  // Agent autosave: when an LLM turn that emitted SEARCH/REPLACE edits
+  // finishes streaming, persist the resolved buffer via the same promptFS
+  // path the manual save uses. Tag the resulting block so MessageList shows
+  // "Agent saved code" instead of "User edited code".
+  const wasRunningRef = useRef(false);
+  const agentSavePromptIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const wasRunning = wasRunningRef.current;
+    wasRunningRef.current = promptState.running;
+    if (!wasRunning || promptState.running) return;
+    if (!chat) return;
+    const last = promptState.blocks[promptState.blocks.length - 1];
+    if (!last || !shouldAgentAutosave(last.msgs)) return;
+    const resolved = getCode(promptState, fsId).code.join("\n");
+    if (resolved.length === 0) return;
+    chat
+      .promptFS([
+        {
+          type: "code-block",
+          filename: "/App.jsx",
+          lang: "jsx",
+          content: resolved,
+        },
+      ])
+      .then((r) => {
+        if (r.isErr()) {
+          console.warn("[agent-autosave] failed", r.Err());
+          return;
+        }
+        agentSavePromptIdRef.current = r.Ok().promptId;
+        console.log("[agent-autosave] saved", { promptId: r.Ok().promptId, len: resolved.length });
+      });
+  }, [promptState.running, promptState.blocks, chat, fsId]);
+
+  // After the agent autosave's block.end arrives, mark that block as agent-
+  // saved so the chat history label reads "Agent saved code", and navigate
+  // to the new fsId so the iframe loads the resolved file.
+  useEffect(() => {
+    const targetPromptId = agentSavePromptIdRef.current;
+    if (!targetPromptId) return;
+    for (const block of [...promptState.blocks].reverse()) {
+      const blockEnd = block.msgs.find((m) => isBlockEnd(m));
+      if (blockEnd && isBlockEnd(blockEnd) && blockEnd.streamId === targetPromptId && blockEnd.fsRef) {
+        agentSavePromptIdRef.current = null;
+        dispatch({ type: "markAgentSaved", blockId: blockEnd.blockId });
+        const sp = new URLSearchParams(searchParams);
+        if (!sp.has("view")) sp.set("view", "preview");
+        navigate(
+          { pathname: `/chat/${userSlug}/${appSlug}/${blockEnd.fsRef.fsId}`, search: sp.toString() },
+          { replace: true }
+        );
+        return;
+      }
+    }
+  }, [promptState.blocks, searchParams, navigate, userSlug, appSlug]);
 
   useEffect(() => {
     if (inConstruction) return;

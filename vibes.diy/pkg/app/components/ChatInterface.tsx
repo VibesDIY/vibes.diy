@@ -53,6 +53,7 @@ function ChatInterface({
             promptProcessing={running}
             chatId={promptState.chat.chatId}
             selectedFsId={fsId}
+            agentSavedBlockIds={promptState.agentSavedBlockIds}
 
             // setSelectedResponseId={setSelectedResponseId}
             // selectedResponseId={selectedResponseDoc?._id || ""}

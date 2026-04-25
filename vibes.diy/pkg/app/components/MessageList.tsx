@@ -29,6 +29,9 @@ interface MessageListProps {
   selectedFsId?: string;
   onClick: (fsRes: { userSlug: string; appSlug: string; fsId: string }) => void;
   onRetry?: (msg: PromptError) => void;
+  // Block IDs whose save originated from the agent autosave (end-of-aider-
+  // turn). Renders "Agent saved code" instead of "User edited code".
+  agentSavedBlockIds?: ReadonlySet<string>;
   // setSelectedResponseId: (id: string) => void;
   // selectedResponseId: string;
   // setMobilePreviewShown: (shown: boolean) => void;
@@ -274,6 +277,7 @@ function MessageList({
   selectedFsId,
   onClick,
   onRetry,
+  agentSavedBlockIds,
   // setSelectedResponseId,
   // selectedResponseId,
   // setMobilePreviewShown,
@@ -333,9 +337,10 @@ function MessageList({
           break;
         case isBlockEnd(msg):
           if (!hasPromptReq && blockMsgs.some((b) => b.type === "Code")) {
+            const label = agentSavedBlockIds?.has(msg.blockId) ? "Agent saved code" : "User edited code";
             acc.push(
               <div key={`edited-${msg.blockId}`} className="mx-4 text-sm italic text-gray-400 dark:text-gray-500">
-                User edited code
+                {label}
               </div>
             );
           }
