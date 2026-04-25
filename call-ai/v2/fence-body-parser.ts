@@ -32,7 +32,8 @@ export function parseFenceBody(lines: readonly string[]): ParsedFenceBody {
   const errors: FenceParseError[] = [];
   let sawAnyMarker = false;
 
-  lines.forEach((line, i) => {
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
     const lineNr = i + 1;
     const trimmed = line.replace(/[ \t]+$/, "");
 
@@ -44,16 +45,16 @@ export function parseFenceBody(lines: readonly string[]): ParsedFenceBody {
       mode = "in-search";
       searchLines = [];
       replaceLines = [];
-      return;
+      continue;
     }
 
     if (DIVIDER.test(trimmed)) {
       if (mode === "in-search") {
         mode = "in-replace";
-        return;
+        continue;
       }
       errors.push({ kind: "orphan-divider", lineNr });
-      return;
+      continue;
     }
 
     if (REPLACE_MARKER.test(trimmed)) {
@@ -66,31 +67,30 @@ export function parseFenceBody(lines: readonly string[]): ParsedFenceBody {
         searchLines = [];
         replaceLines = [];
         mode = "between";
-        return;
+        continue;
       }
       errors.push({ kind: "orphan-end", lineNr });
-      return;
+      continue;
     }
 
-    switch (mode) {
-      case "plain":
-        plainLines.push(line);
-        return;
-      case "in-search":
-        searchLines.push(line);
-        return;
-      case "in-replace":
-        replaceLines.push(line);
-        return;
-      case "between":
-        // Stray content between sections — treat as a content-before-search error
-        // unless blank, in which case ignore.
-        if (line.trim().length > 0) {
-          errors.push({ kind: "content-before-search", lineNr });
-        }
-        return;
+    if (mode === "plain") {
+      plainLines.push(line);
+      continue;
     }
-  });
+    if (mode === "in-search") {
+      searchLines.push(line);
+      continue;
+    }
+    if (mode === "in-replace") {
+      replaceLines.push(line);
+      continue;
+    }
+    // mode === "between": stray content between sections — treat as a
+    // content-before-search error unless blank, in which case ignore.
+    if (line.trim().length > 0) {
+      errors.push({ kind: "content-before-search", lineNr });
+    }
+  }
 
   if (mode === "in-search") {
     errors.push({ kind: "unterminated-search", lineNr: lines.length });
