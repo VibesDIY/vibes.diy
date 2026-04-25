@@ -1,6 +1,20 @@
-export type ApplyEditOk = { ok: true; content: string; matchKind: "exact" | "trailing-ws" };
+export interface ApplyReplaceInput {
+  readonly source: string;
+  readonly search: string;
+  readonly replace: string;
+}
+
+export type ApplyEditOk = {
+  readonly ok: true;
+  readonly content: string;
+  readonly matchKind: "exact" | "trailing-ws";
+};
 export type ApplyEditErrReason = "no-match" | "multiple-match";
-export type ApplyEditErr = { ok: false; reason: ApplyEditErrReason; matchCount: number };
+export type ApplyEditErr = {
+  readonly ok: false;
+  readonly reason: ApplyEditErrReason;
+  readonly matchCount: number;
+};
 export type ApplyEditResult = ApplyEditOk | ApplyEditErr;
 
 function rstripLines(s: string): string {
@@ -10,7 +24,7 @@ function rstripLines(s: string): string {
     .join("\n");
 }
 
-function findAllOccurrences(haystack: string, needle: string): number[] {
+function findAllOccurrences(haystack: string, needle: string): readonly number[] {
   const hits: number[] = [];
   if (needle.length === 0) return hits;
   let from = 0;
@@ -23,7 +37,8 @@ function findAllOccurrences(haystack: string, needle: string): number[] {
   return hits;
 }
 
-export function applyReplace(source: string, search: string, replace: string): ApplyEditResult {
+export function applyReplace(input: ApplyReplaceInput): ApplyEditResult {
+  const { source, search, replace } = input;
   if (search.length === 0) {
     return { ok: false, reason: "no-match", matchCount: 0 };
   }
@@ -92,7 +107,7 @@ export function applyEdits(seed: string, edits: readonly Edit[]): ApplyEditsResu
       content = edit.content;
       return;
     }
-    const r = applyReplace(content, edit.search, edit.replace);
+    const r = applyReplace({ source: content, search: edit.search, replace: edit.replace });
     if (r.ok) {
       content = r.content;
       return;

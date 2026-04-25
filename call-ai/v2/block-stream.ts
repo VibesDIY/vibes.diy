@@ -110,11 +110,13 @@ export const CodeBeginMsg = type({
   type: "'block.code.begin'",
   sectionId: "string",
   lang: "string",
+  "path?": "string",
 }).and(BlockBase);
 export const CodeLineMsg = type({
   type: "'block.code.line'",
   sectionId: "string",
   lang: "string",
+  "path?": "string",
 })
   .and(BlockBase)
   .and(BlockLine);
@@ -123,6 +125,7 @@ export const CodeEndMsg = type({
   type: "'block.code.end'",
   sectionId: "string",
   lang: "string",
+  "path?": "string",
 })
   .and(BlockBase)
   .and(BlockStatsBox);
@@ -205,6 +208,12 @@ const CODE_FENCE_START = /^```(\w*)$/;
 // Regex to match code fence end: just ```
 const CODE_FENCE_END = /^```$/;
 
+// Aider-style path line that may precede a fence (e.g. "App.jsx", "src/foo.ts").
+// Trimmed line must look like a relative path with a recognized extension.
+const PATH_LINE = /^[\w\-./]+\.(?:jsx?|tsx?|mjs|cjs|md|json|html|css)$/;
+
+const DEFAULT_PATH = "App.jsx";
+
 type Mode = "toplevel" | "code";
 
 function addStat(target: BlockStats, source: BlockStats) {
@@ -228,6 +237,8 @@ export function createBlockStream(
   let sectionStarted = false;
   let currentLang = "";
   let currentSectionId = "";
+  let currentPath = DEFAULT_PATH;
+  let lastToplevelLine = "";
   const toplevelStat = { lines: 0, bytes: 0, cnt: 0 };
   const codeStat = { lines: 0, bytes: 0, cnt: 0 };
   const imageStat = { lines: 0, bytes: 0, cnt: 0 };
@@ -340,6 +351,9 @@ export function createBlockStream(
             }
             mode = "code";
             currentLang = fenceStartMatch[1] || "";
+            const trimmedPath = lastToplevelLine.trim();
+            currentPath = PATH_LINE.test(trimmedPath) ? trimmedPath : DEFAULT_PATH;
+            lastToplevelLine = "";
 
             sectionStarted = true;
             currentSectionId = createId();
@@ -348,6 +362,7 @@ export function createBlockStream(
             controller.enqueue({
               type: "block.code.begin",
               lang: currentLang.toLowerCase(),
+              path: currentPath,
               timestamp: new Date(),
               sectionId: currentSectionId,
               blockId,
@@ -372,6 +387,8 @@ export function createBlockStream(
               });
             }
             blockStat.bytes += content.length;
+            // Track the most recent non-blank toplevel line as a path-line candidate.
+            if (content.trim().length > 0) lastToplevelLine = content;
             controller.enqueue({
               type: "block.toplevel.line",
               timestamp: new Date(),
@@ -402,6 +419,7 @@ export function createBlockStream(
               seq: seq++,
               blockNr: blockNr++,
               lang: currentLang.toLowerCase(),
+              path: currentPath,
               stats: blockStat,
             });
             mode = "toplevel";
@@ -412,6 +430,7 @@ export function createBlockStream(
             controller.enqueue({
               type: "block.code.line",
               lang: currentLang.toLowerCase(),
+              path: currentPath,
               timestamp: new Date(),
               sectionId: currentSectionId,
               lineNr: blockStat.lines++,
@@ -455,6 +474,7 @@ export function createBlockStream(
               blockId,
               streamId,
               lang: currentLang.toLowerCase(),
+              path: currentPath,
               sectionId: currentSectionId,
               seq: seq++,
               blockNr: blockNr++,

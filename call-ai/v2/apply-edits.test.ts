@@ -3,50 +3,51 @@ import { applyEdits, applyReplace } from "./apply-edits.js";
 
 describe("applyReplace", () => {
   it("replaces a unique exact match", () => {
-    const r = applyReplace("hello world", "world", "there");
+    const r = applyReplace({ source: "hello world", search: "world", replace: "there" });
     expect(r).toEqual({ ok: true, matchKind: "exact", content: "hello there" });
   });
 
   it("fails with no-match when search is absent", () => {
-    const r = applyReplace("hello world", "xyz", "abc");
+    const r = applyReplace({ source: "hello world", search: "xyz", replace: "abc" });
     expect(r).toEqual({ ok: false, reason: "no-match", matchCount: 0 });
   });
 
   it("fails with multiple-match when search appears twice", () => {
-    const r = applyReplace("ab ab", "ab", "cd");
+    const r = applyReplace({ source: "ab ab", search: "ab", replace: "cd" });
     expect(r.ok).toBe(false);
-    if (!r.ok) {
+    if (r.ok === false) {
       expect(r.reason).toBe("multiple-match");
       expect(r.matchCount).toBe(2);
     }
   });
 
   it("treats empty search as no-match", () => {
-    const r = applyReplace("hello", "", "x");
+    const r = applyReplace({ source: "hello", search: "", replace: "x" });
     expect(r).toEqual({ ok: false, reason: "no-match", matchCount: 0 });
   });
 
   it("preserves whitespace and indentation on exact match", () => {
-    const src = "line1\n  line2\nline3";
-    const r = applyReplace(src, "  line2", "  LINE2");
+    const r = applyReplace({
+      source: "line1\n  line2\nline3",
+      search: "  line2",
+      replace: "  LINE2",
+    });
     expect(r).toEqual({ ok: true, matchKind: "exact", content: "line1\n  LINE2\nline3" });
   });
 
   it("falls back to trailing-whitespace-tolerant match", () => {
-    const src = "foo   \nbar\nbaz";
-    const r = applyReplace(src, "foo\nbar", "FOO\nBAR");
+    const r = applyReplace({ source: "foo   \nbar\nbaz", search: "foo\nbar", replace: "FOO\nBAR" });
     expect(r.ok).toBe(true);
-    if (r.ok) {
+    if (r.ok === true) {
       expect(r.matchKind).toBe("trailing-ws");
       expect(r.content).toBe("FOO\nBAR\nbaz");
     }
   });
 
   it("tolerant fallback still reports multiple-match", () => {
-    const src = "foo  \nfoo\t\nend";
-    const r = applyReplace(src, "foo", "X");
+    const r = applyReplace({ source: "foo  \nfoo\t\nend", search: "foo", replace: "X" });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.reason).toBe("multiple-match");
+    if (r.ok === false) expect(r.reason).toBe("multiple-match");
   });
 });
 
