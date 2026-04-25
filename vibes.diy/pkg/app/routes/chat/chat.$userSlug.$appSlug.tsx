@@ -503,7 +503,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   // path the manual save uses. Tag the resulting block so MessageList shows
   // "Agent saved code" instead of "User edited code".
   const wasRunningRef = useRef(false);
-  const agentSavePromptIdRef = useRef<string | null>(null);
+  // Index of the first block we should consider "future" relative to an armed
+  // autosave. The matcher dispatches markAgentSaved on the first block.end
+  // with fsRef at or beyond this index. Avoids the streamId race we saw when
+  // chat.promptFS().then() resolved after the autosave's own block.end had
+  // already been ingested.
+  const agentAutosaveFromIdxRef = useRef<number | null>(null);
   useEffect(() => {
     const wasRunning = wasRunningRef.current;
     wasRunningRef.current = promptState.running;
@@ -513,6 +518,10 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     if (!last || !shouldAgentAutosave(last.msgs)) return;
     const resolved = getCode(promptState, fsId).code.join("\n");
     if (resolved.length === 0) return;
+    // Arm the matcher BEFORE the network call so the first block.end with
+    // fsRef that arrives on the autosave's stream is consumed regardless of
+    // when the promptFS promise resolves.
+    agentAutosaveFromIdxRef.current = promptState.blocks.length;
     chat
       .promptFS([
         {
@@ -525,23 +534,25 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       .then((r) => {
         if (r.isErr()) {
           console.warn("[agent-autosave] failed", r.Err());
+          agentAutosaveFromIdxRef.current = null;
           return;
         }
-        agentSavePromptIdRef.current = r.Ok().promptId;
         console.log("[agent-autosave] saved", { promptId: r.Ok().promptId, len: resolved.length });
       });
   }, [promptState.running, promptState.blocks, chat, fsId]);
 
-  // After the agent autosave's block.end arrives, mark that block as agent-
-  // saved so the chat history label reads "Agent saved code", and navigate
-  // to the new fsId so the iframe loads the resolved file.
+  // After the agent autosave fires we mark the first new block.end (with an
+  // fsRef) as agent-saved and navigate to its fsId so the iframe loads the
+  // resolved file. Matching by index rather than streamId avoids the race
+  // where promptFS's then() resolves after the block.end has been ingested.
   useEffect(() => {
-    const targetPromptId = agentSavePromptIdRef.current;
-    if (!targetPromptId) return;
-    for (const block of [...promptState.blocks].reverse()) {
+    const fromIdx = agentAutosaveFromIdxRef.current;
+    if (fromIdx === null) return;
+    for (let i = fromIdx; i < promptState.blocks.length; i += 1) {
+      const block = promptState.blocks[i];
       const blockEnd = block.msgs.find((m) => isBlockEnd(m));
-      if (blockEnd && isBlockEnd(blockEnd) && blockEnd.streamId === targetPromptId && blockEnd.fsRef) {
-        agentSavePromptIdRef.current = null;
+      if (blockEnd && isBlockEnd(blockEnd) && blockEnd.fsRef) {
+        agentAutosaveFromIdxRef.current = null;
         dispatch({ type: "markAgentSaved", blockId: blockEnd.blockId });
         const sp = new URLSearchParams(searchParams);
         if (!sp.has("view")) sp.set("view", "preview");
