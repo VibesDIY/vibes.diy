@@ -39,32 +39,30 @@ interface DebugSection {
   sourceLenAfter: number;
 }
 
-function getCode(promptState: PromptState, fsId?: string | null): AppCode {
-  // Walk blocks forward, applying each completed code section as either a
-  // full-file `create` or a SEARCH/REPLACE `replace` against the running
-  // source. Backwards-compatible with create-only history: a fence with no
-  // markers parses to a single `create` whose content overrides the source.
+export function getCode(promptState: PromptState, fsId?: string | null): AppCode {
+  // Walk every block in chat order, applying each completed code section as
+  // either a full-file `create` or one or more SEARCH/REPLACE edits against
+  // the running source. Track per-fsId snapshots: when a block.end carries an
+  // fsRef, capture the source state at that point as the snapshot for that
+  // fsId.
   //
-  // Seed from the persisted file (hydratedSource) when the active fsId has a
-  // saved snapshot — this makes replace-only follow-up turns resolve against
-  // the prior state after a chat reload, not against an empty buffer.
+  // Lookup order:
+  //   1. Snapshot for the requested fsId (if any block.end pinned that fsId).
+  //   2. Hydrated saved file for the requested fsId (after chat reload).
+  //   3. Latest running source (no historical match — typically the in-flight
+  //      turn before block.end has fired).
   const seedFromHydrate =
     fsId && promptState.hydratedSource?.fsId === fsId ? promptState.hydratedSource.code.join("\n") : "";
   let source = seedFromHydrate;
   let complete = false;
   let streamId: string | undefined;
   let foundAny = false;
+  const snapshotByFsId = new Map<string, string>();
 
   const debugSections: DebugSection[] = [];
 
   for (let blockIdx = 0; blockIdx < promptState.blocks.length; blockIdx += 1) {
     const block = promptState.blocks[blockIdx];
-    if (fsId) {
-      const blockEnd = block.msgs.find((msg) => isBlockEnd(msg));
-      if (!blockEnd || !isBlockEnd(blockEnd) || blockEnd.fsRef?.fsId !== fsId) {
-        continue;
-      }
-    }
     let codeLines: string[] = [];
     let inSection = false;
     let sectionClosed = false;
@@ -103,7 +101,7 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
         sectionClosed = true;
         debugSections.push({
           blockIdx,
-          fsRefId: fsId ?? undefined,
+          fsRefId: undefined,
           rawLines: codeLines,
           parsedEdits: parsed.edits.map((e) =>
             e.op === "create"
@@ -123,8 +121,8 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
         });
       }
     }
-    // For an in-flight section (no code.end yet), preview a tentative create
-    // — if the body has no SEARCH markers we can show the partial content.
+    // For an in-flight section (no code.end yet), preview a tentative create —
+    // if the body has no SEARCH markers we can show the partial content.
     if (inSection) {
       const parsed = parseFenceBody(codeLines);
       const onlyCreate = parsed.edits.length === 1 && parsed.edits[0].op === "create";
@@ -133,21 +131,32 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
       }
     }
     complete = sectionClosed;
+
+    // Snapshot the resolved source under this block's fsId (if pinned).
+    const blockEnd = block.msgs.find((msg) => isBlockEnd(msg));
+    if (blockEnd && isBlockEnd(blockEnd) && blockEnd.fsRef?.fsId) {
+      snapshotByFsId.set(blockEnd.fsRef.fsId, source);
+    }
   }
 
   // Expose debug snapshot for inspection from chrome devtools / tests.
   if (typeof window !== "undefined" && debugSections.length > 0) {
     const dbg = window as unknown as {
-      __aiderEditsDebug?: { fsId: string | null | undefined; seedLen: number; sections: DebugSection[]; finalLen: number };
+      __aiderEditsDebug?: {
+        fsId: string | null | undefined;
+        seedLen: number;
+        sections: DebugSection[];
+        finalLen: number;
+        snapshotFsIds: string[];
+      };
     };
     dbg.__aiderEditsDebug = {
       fsId,
       seedLen: seedFromHydrate.length,
       sections: debugSections,
       finalLen: source.length,
+      snapshotFsIds: [...snapshotByFsId.keys()],
     };
-    // Keep a concise breadcrumb in the console for visual inspection during
-    // dev. One log per resolution, no payload spam.
     if (debugSections.some((s) => s.applyErrors.length > 0 || s.parseErrors.length > 0)) {
       // eslint-disable-next-line no-console
       console.warn("[aider-edits] resolution had errors", dbg.__aiderEditsDebug);
@@ -159,15 +168,22 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
         sections: debugSections.length,
         matchKinds: debugSections.flatMap((s) => s.matchKinds),
         finalLen: source.length,
+        snapshotFsIds: [...snapshotByFsId.keys()],
       });
     }
   }
 
+  if (fsId) {
+    const snap = snapshotByFsId.get(fsId);
+    if (snap !== undefined) {
+      return { code: snap.split("\n"), complete: true, streamId };
+    }
+    if (promptState.hydratedSource?.fsId === fsId) {
+      return { code: promptState.hydratedSource.code, complete: true, streamId: `hydrate-${fsId}` };
+    }
+  }
   if (foundAny) {
     return { code: source.split("\n"), complete, streamId };
-  }
-  if (fsId && promptState.hydratedSource?.fsId === fsId) {
-    return { code: promptState.hydratedSource.code, complete: true, streamId: `hydrate-${fsId}` };
   }
   return { code: [], complete, streamId };
 }
