@@ -12,7 +12,7 @@ import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { AppContext, Lazy, LoggerImpl, Result, URI } from "@adviser/cement";
 import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
-import { CfCacheIf } from "./types.js";
+import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
 import { CFEnv, MsgBase } from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/core-types-base";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
@@ -32,6 +32,11 @@ import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibe
 //   return { client, server };
 // }
 
+export interface DocNotifyCtx {
+  readonly shardId: string;
+  readonly env: CFEnv;
+}
+
 export interface CFInjectMutable {
   sthis?: SuperThis;
   appCtx: AppContext;
@@ -44,6 +49,7 @@ export interface CFInjectMutable {
   // assetBucket: R2Bucket;
   wsResponse?: Response;
   llmRequest?: (prompt: LLMRequest) => Promise<Response>;
+  docNotify?: DocNotifyCtx;
   // readonly db?: D1Database;
 }
 export type CFInject = Readonly<CFInjectMutable>;
@@ -75,6 +81,36 @@ function netHashFn({
     regionCode,
     metroCode,
   });
+}
+
+function docNotifyCallbacks(dn: DocNotifyCtx) {
+  function fetchDocNotify(key: string, body: Record<string, unknown>): Promise<CFResponse> {
+    const id = dn.env.DOC_NOTIFY.idFromName(key);
+    const stub = dn.env.DOC_NOTIFY.get(id);
+    return stub.fetch(
+      new Request("https://internal/doc-notify", {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+      }) as unknown as CFRequest
+    );
+  }
+
+  return {
+    notifyDocChanged: async (evt: { userSlug: string; appSlug: string; docId: string }) => {
+      await fetchDocNotify(`${evt.userSlug}/${evt.appSlug}`, {
+        action: "notify",
+        senderShardId: dn.shardId,
+        evt: { type: "vibes.diy.evt-doc-changed", ...evt },
+      });
+    },
+    registerDocSubscription: async (subscriptionKey: string) => {
+      await fetchDocNotify(subscriptionKey, { action: "register", shardId: dn.shardId });
+    },
+    deregisterDocSubscription: async (subscriptionKey: string) => {
+      await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
+    },
+  };
 }
 
 export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
@@ -152,6 +188,7 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
     netHash,
     llmRequest: ctx.llmRequest,
     env: env as unknown as Record<string, string>,
+    ...(ctx.docNotify ? docNotifyCallbacks(ctx.docNotify) : {}),
   });
 }
 
@@ -182,12 +219,26 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
     console.log("WebSocket connection closed", ws.connections.size - 1);
     wsEvento.trigger({ ctx: appCtx, request: { type: "CloseEvent", event }, send: wsSendProvider });
     ws.connections.delete(wsSendProvider);
+    // Deregister from DocNotify coordinators for all subscribed apps
+    const vctx = appCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+    if (vctx.deregisterDocSubscription) {
+      for (const key of wsSendProvider.subscribedAppSlugs) {
+        vctx.deregisterDocSubscription(key).catch((e: unknown) => console.error("DocNotify deregister error:", e));
+      }
+    }
   });
 
   server.addEventListener("error", (event: Event) => {
     console.error("WebSocket error", event);
     wsEvento.trigger({ ctx: appCtx, request: { type: "ErrorEvent", event: event as ErrorEvent }, send: wsSendProvider });
     ws.connections.delete(wsSendProvider);
+    // Deregister from DocNotify coordinators for all subscribed apps
+    const vctx = appCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+    if (vctx.deregisterDocSubscription) {
+      for (const key of wsSendProvider.subscribedAppSlugs) {
+        vctx.deregisterDocSubscription(key).catch((e: unknown) => console.error("DocNotify deregister error:", e));
+      }
+    }
   });
   // cast wiredness don't ask me --- ask Cloudflare
   return (ctx.wsResponse ??
