@@ -33,9 +33,11 @@ import {
 } from "@vibes.diy/vibe-types";
 import { Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
+import { transform } from "sucrase";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
 import { registerImgVibes } from "./img-vibes.js";
 import { registerFirefly } from "./use-firefly.js";
+import { getActiveProps, mountVibe, unmountVibe } from "./mount-vibes.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -267,4 +269,42 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   registerImgVibes(ctxVibeApi);
 
   ctxVibeApi.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
+  registerHotSwapHandler();
+}
+
+let hotSwapRegistered = false;
+
+function registerHotSwapHandler(): void {
+  if (hotSwapRegistered) return;
+  hotSwapRegistered = true;
+  window.addEventListener("message", handleHotSwapMessage);
+}
+
+async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
+  const data = event.data as { type?: string; source?: unknown } | undefined;
+  if (!data || data.type !== "vibe.req.set-source" || typeof data.source !== "string") return;
+  const source = data.source;
+  let blobUrl: string | undefined;
+  try {
+    const { code } = transform(source, {
+      transforms: ["jsx"],
+      production: true,
+      jsxRuntime: "automatic",
+    });
+    const blob = new Blob([code], { type: "application/javascript" });
+    blobUrl = URL.createObjectURL(blob);
+    const mod = (await import(/* @vite-ignore */ blobUrl)) as { default?: unknown };
+    const App = mod.default;
+    if (typeof App !== "function") {
+      throw new Error("hot-swap: module has no default-exported component");
+    }
+    unmountVibe();
+    mountVibe([App as Parameters<typeof mountVibe>[0][number]], getActiveProps());
+  } catch (err) {
+    console.error("[hot-swap] failed", err);
+    // Iframe stays on the previous render; end-of-turn autosave will navigate
+    // to a fresh fsId and reload the iframe cleanly.
+  } finally {
+    if (blobUrl) URL.revokeObjectURL(blobUrl);
+  }
 }

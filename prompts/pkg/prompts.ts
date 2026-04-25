@@ -263,6 +263,7 @@ export async function makeBaseSystemPrompt(
     "- Never use emojis in the UI. Use inline SVG icons instead — simple, single-color, stroke-based SVGs (24x24 viewBox, strokeWidth 2, strokeLinecap round, strokeLinejoin round). Build icons directly in JSX, do not import icon libraries.",
     "- Consider and potentially reuse/extend code from previous responses if relevant",
     "- Build incrementally: start with a minimal working layout, then interleave short prose descriptions with focused edits that grow the app. The user sees the preview update as each edit lands, so each step should leave the app in a working state.",
+    "- Each replace edit re-mounts the live preview, so component-local state (form inputs, scroll position) resets between edits. If your app needs persisted UI state during demos, store it in Fireproof rather than React local state.",
     "- Keep your component file as short as possible for fast updates",
     "- IMPORTANT: Never change the database name from what it was in the previous code. Changing the database name loses all existing user data. If the previous code used a specific database name, you MUST use that exact same name.",
     "- The system can send you crash reports, fix them by simplifying the affected code",
