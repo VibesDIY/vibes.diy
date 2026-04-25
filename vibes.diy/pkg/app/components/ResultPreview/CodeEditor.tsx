@@ -6,7 +6,7 @@ import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { useTheme } from "../../contexts/ThemeContext.js";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import { useParams } from "react-router";
-import { isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
+import { applyEdits, isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine, parseFenceBody } from "@vibes.diy/call-ai-v2";
 import {
   AppCode,
   EditorState,
@@ -28,43 +28,67 @@ interface CodeEditorProps {
 }
 
 function getCode(promptState: PromptState, fsId?: string | null): AppCode {
-  const retCode: string[] = [];
+  // Walk blocks forward, applying each completed code section as either a
+  // full-file `create` or a SEARCH/REPLACE `replace` against the running
+  // source. Backwards-compatible with create-only history: a fence with no
+  // markers parses to a single `create` whose content overrides the source.
+  let source = "";
   let complete = false;
   let streamId: string | undefined;
-  for (const block of [...promptState.blocks].reverse()) {
+  let foundAny = false;
+
+  for (const block of promptState.blocks) {
     if (fsId) {
       const blockEnd = block.msgs.find((msg) => isBlockEnd(msg));
       if (!blockEnd || !isBlockEnd(blockEnd) || blockEnd.fsRef?.fsId !== fsId) {
         continue;
       }
     }
-    let foundCode = false;
+    let codeLines: string[] = [];
+    let inSection = false;
+    let sectionClosed = false;
     for (const msg of block.msgs) {
-      switch (true) {
-        case isCodeBegin(msg):
-          retCode.splice(0, retCode.length);
-          foundCode = true;
-          complete = false;
-          streamId = msg.streamId;
-          break;
-        case isCodeEnd(msg):
-          complete = true;
-          break;
-        case isCodeLine(msg):
-          retCode.push(msg.line);
-          break;
+      if (isCodeBegin(msg)) {
+        codeLines = [];
+        inSection = true;
+        sectionClosed = false;
+        streamId = msg.streamId;
+        foundAny = true;
+        continue;
+      }
+      if (isCodeLine(msg) && inSection) {
+        codeLines.push(msg.line);
+        continue;
+      }
+      if (isCodeEnd(msg) && inSection) {
+        const parsed = parseFenceBody(codeLines);
+        const result = applyEdits(source, parsed.edits);
+        source = result.content;
+        inSection = false;
+        sectionClosed = true;
       }
     }
-    if (foundCode) {
-      return { code: retCode, complete, streamId };
+    // For an in-flight section (no code.end yet), preview a tentative create
+    // — if the body has no SEARCH markers we can show the partial content.
+    if (inSection) {
+      const parsed = parseFenceBody(codeLines);
+      const onlyCreate = parsed.edits.length === 1 && parsed.edits[0].op === "create";
+      if (onlyCreate) {
+        source = (parsed.edits[0] as { content: string }).content;
+      }
     }
+    complete = sectionClosed;
+  }
+
+  if (foundAny) {
+    return { code: source.split("\n"), complete, streamId };
   }
   // Fallback: when no ChatSections exist for this fsId (e.g. a freshly
   // forked vibe), use the hydratedSource fetched from Apps.fileSystem.
   if (fsId && promptState.hydratedSource?.fsId === fsId) {
     return { code: promptState.hydratedSource.code, complete: true, streamId: `hydrate-${fsId}` };
   }
-  return { code: retCode, complete, streamId };
+  return { code: [], complete, streamId };
 }
 
 function updateCursorPosition(
