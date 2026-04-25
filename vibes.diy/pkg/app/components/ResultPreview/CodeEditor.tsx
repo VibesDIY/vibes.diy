@@ -6,7 +6,7 @@ import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { useTheme } from "../../contexts/ThemeContext.js";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import { useParams } from "react-router";
-import { applyEdits, isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine, parseFenceBody } from "@vibes.diy/call-ai-v2";
+import { applyEdits, applyReplace, isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine, parseFenceBody } from "@vibes.diy/call-ai-v2";
 import {
   AppCode,
   EditorState,
@@ -27,6 +27,18 @@ interface CodeEditorProps {
   onCode?: (event: EditorState) => void;
 }
 
+interface DebugSection {
+  blockIdx: number;
+  fsRefId: string | undefined;
+  rawLines: string[];
+  parsedEdits: { kind: string; preview: string }[];
+  parseErrors: { kind: string; lineNr: number }[];
+  applyErrors: { index: number; reason: string; matchCount: number; searchPreview: string }[];
+  matchKinds: string[];
+  sourceLenBefore: number;
+  sourceLenAfter: number;
+}
+
 function getCode(promptState: PromptState, fsId?: string | null): AppCode {
   // Walk blocks forward, applying each completed code section as either a
   // full-file `create` or a SEARCH/REPLACE `replace` against the running
@@ -43,7 +55,10 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
   let streamId: string | undefined;
   let foundAny = false;
 
-  for (const block of promptState.blocks) {
+  const debugSections: DebugSection[] = [];
+
+  for (let blockIdx = 0; blockIdx < promptState.blocks.length; blockIdx += 1) {
+    const block = promptState.blocks[blockIdx];
     if (fsId) {
       const blockEnd = block.msgs.find((msg) => isBlockEnd(msg));
       if (!blockEnd || !isBlockEnd(blockEnd) || blockEnd.fsRef?.fsId !== fsId) {
@@ -68,10 +83,44 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
       }
       if (isCodeEnd(msg) && inSection) {
         const parsed = parseFenceBody(codeLines);
+        const sourceLenBefore = source.length;
         const result = applyEdits(source, parsed.edits);
+        const matchKinds: string[] = [];
+        // Re-run per-edit so we can capture matchKind for telemetry.
+        let probeSource = source;
+        for (const edit of parsed.edits) {
+          if (edit.op === "create") {
+            matchKinds.push("create");
+            probeSource = edit.content;
+          } else {
+            const r = applyReplace({ source: probeSource, search: edit.search, replace: edit.replace });
+            matchKinds.push(r.ok ? r.matchKind : `error:${r.reason}`);
+            if (r.ok) probeSource = r.content;
+          }
+        }
         source = result.content;
         inSection = false;
         sectionClosed = true;
+        debugSections.push({
+          blockIdx,
+          fsRefId: fsId ?? undefined,
+          rawLines: codeLines,
+          parsedEdits: parsed.edits.map((e) =>
+            e.op === "create"
+              ? { kind: "create", preview: e.content.slice(0, 80) }
+              : { kind: "replace", preview: e.search.slice(0, 80) }
+          ),
+          parseErrors: parsed.errors.map((e) => ({ kind: e.kind, lineNr: e.lineNr })),
+          applyErrors: result.errors.map((e) => ({
+            index: e.index,
+            reason: e.reason,
+            matchCount: e.matchCount,
+            searchPreview: e.search.slice(0, 80),
+          })),
+          matchKinds,
+          sourceLenBefore,
+          sourceLenAfter: result.content.length,
+        });
       }
     }
     // For an in-flight section (no code.end yet), preview a tentative create
@@ -84,6 +133,34 @@ function getCode(promptState: PromptState, fsId?: string | null): AppCode {
       }
     }
     complete = sectionClosed;
+  }
+
+  // Expose debug snapshot for inspection from chrome devtools / tests.
+  if (typeof window !== "undefined" && debugSections.length > 0) {
+    const dbg = window as unknown as {
+      __aiderEditsDebug?: { fsId: string | null | undefined; seedLen: number; sections: DebugSection[]; finalLen: number };
+    };
+    dbg.__aiderEditsDebug = {
+      fsId,
+      seedLen: seedFromHydrate.length,
+      sections: debugSections,
+      finalLen: source.length,
+    };
+    // Keep a concise breadcrumb in the console for visual inspection during
+    // dev. One log per resolution, no payload spam.
+    if (debugSections.some((s) => s.applyErrors.length > 0 || s.parseErrors.length > 0)) {
+      // eslint-disable-next-line no-console
+      console.warn("[aider-edits] resolution had errors", dbg.__aiderEditsDebug);
+    } else {
+      // eslint-disable-next-line no-console
+      console.log("[aider-edits] resolved", {
+        fsId,
+        seedLen: seedFromHydrate.length,
+        sections: debugSections.length,
+        matchKinds: debugSections.flatMap((s) => s.matchKinds),
+        finalLen: source.length,
+      });
+    }
   }
 
   if (foundAny) {
