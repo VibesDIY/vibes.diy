@@ -45,6 +45,7 @@ import {
   ReqSubscribeDocs,
   isReqListDbNames,
   ReqListDbNames,
+  EvtVibeSetSource,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -691,16 +692,9 @@ export class vibesDiySrvSandbox implements Disposable {
   // hasn't sent its first message yet (no postMessage target captured). Caller
   // can ignore the false; end-of-turn autosave covers it via fsId navigation.
   pushSource(source: string): boolean {
-    if (!this.iframeSource || !this.iframeOrigin) {
-      console.warn("[parent-hot-swap] iframe not ready, drop", { sourceLen: source.length });
-      return false;
-    }
-    console.log("[parent-hot-swap] postMessage to iframe", {
-      origin: this.iframeOrigin,
-      sourceLen: source.length,
-      head: source.slice(0, 80),
-    });
-    this.iframeSource.postMessage({ type: "vibe.req.set-source", source }, this.iframeOrigin);
+    if (this.iframeSource === undefined || this.iframeOrigin === undefined) return false;
+    const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source };
+    this.iframeSource.postMessage(msg, this.iframeOrigin);
     return true;
   }
 
