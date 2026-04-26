@@ -29,12 +29,30 @@ const DocNotifyNotify = type({
 const DocNotifyMessage = DocNotifyRegister.or(DocNotifyDeregister).or(DocNotifyNotify);
 type DocNotifyMessage = typeof DocNotifyMessage.infer;
 
+const SUBSCRIBERS_KEY = "subscribers";
+
 export class DocNotify implements DurableObject {
-  private readonly subscribers = new Set<string>();
+  private subscribers: Set<string> | undefined;
+  private readonly state: DurableObjectState;
   private readonly env: CFEnv;
 
-  constructor(_state: DurableObjectState, env: CFEnv) {
+  constructor(state: DurableObjectState, env: CFEnv) {
+    this.state = state;
     this.env = env;
+  }
+
+  private async getSubscribers(): Promise<Set<string>> {
+    if (!this.subscribers) {
+      const stored = await this.state.storage.get<string[]>(SUBSCRIBERS_KEY);
+      this.subscribers = new Set(stored ?? []);
+    }
+    return this.subscribers;
+  }
+
+  private async saveSubscribers(): Promise<void> {
+    if (this.subscribers) {
+      await this.state.storage.put(SUBSCRIBERS_KEY, [...this.subscribers]);
+    }
   }
 
   async fetch(request: CFRequest): Promise<CFResponse> {
@@ -52,19 +70,23 @@ export class DocNotify implements DurableObject {
     }
     const body = parsed;
 
+    const subs = await this.getSubscribers();
+
     switch (body.action) {
       case "register":
-        this.subscribers.add(body.shardId);
-        console.log("[DocNotify] register shard:", body.shardId.slice(0, 8), "| subscribers:", this.subscribers.size);
+        subs.add(body.shardId);
+        await this.saveSubscribers();
+        console.log("[DocNotify] register shard:", body.shardId.slice(0, 8), "| subscribers:", subs.size);
         return new Response("ok");
 
       case "deregister":
-        this.subscribers.delete(body.shardId);
-        console.log("[DocNotify] deregister shard:", body.shardId.slice(0, 8), "| subscribers:", this.subscribers.size);
+        subs.delete(body.shardId);
+        await this.saveSubscribers();
+        console.log("[DocNotify] deregister shard:", body.shardId.slice(0, 8), "| subscribers:", subs.size);
         return new Response("ok");
 
       case "notify":
-        await this.fanOut(body);
+        await this.fanOut(body, subs);
         return new Response("ok");
 
       default:
@@ -72,11 +94,11 @@ export class DocNotify implements DurableObject {
     }
   }
 
-  private async fanOut(msg: typeof DocNotifyNotify.infer): Promise<void> {
+  private async fanOut(msg: typeof DocNotifyNotify.infer, subs: Set<string>): Promise<void> {
     const stale: string[] = [];
     const promises: Promise<void>[] = [];
 
-    const targets = [...this.subscribers].filter((id) => id !== msg.senderShardId);
+    const targets = [...subs].filter((id) => id !== msg.senderShardId);
     console.log(
       "[DocNotify] notify",
       msg.evt.userSlug + "/" + msg.evt.appSlug,
@@ -87,7 +109,7 @@ export class DocNotify implements DurableObject {
       "| fan-out to",
       targets.length,
       "of",
-      this.subscribers.size,
+      subs.size,
       "shards"
     );
 
@@ -118,8 +140,11 @@ export class DocNotify implements DurableObject {
     await Promise.all(promises);
 
     // Clean up stale subscribers that failed to receive
-    for (const shardId of stale) {
-      this.subscribers.delete(shardId);
+    if (stale.length > 0) {
+      for (const shardId of stale) {
+        subs.delete(shardId);
+      }
+      await this.saveSubscribers();
     }
   }
 }
