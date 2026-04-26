@@ -222,6 +222,11 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
+  // Hold latest fsId in a ref so the prompt-firing effect can preserve it in
+  // the navigation URL without retriggering on every autosave fsId change
+  // (which would re-fire the same prompt — classic loop).
+  const fsIdRef = useRef<string | undefined>(fsId);
+  fsIdRef.current = fsId;
 
   // Read the local VibeDocument (seeded by the remix route) to show the
   // "remix of" indicator in the header. Best-effort: if the doc is missing
@@ -284,22 +289,30 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
         const newSearch = new URLSearchParams(searchParams);
+        // Default to preview so the user sees the iframe hot-swap as edits
+        // stream. Brand-new vibes show a placeholder until end-of-turn
+        // autosave creates the first fsId; the iframe then mounts and hot-
+        // swap fills in subsequent edits.
         if (!newSearch.has("view")) {
-          newSearch.set("view", "code");
+          newSearch.set("view", "preview");
         }
-        navigate({ pathname: `/chat/${userSlug}/${appSlug}`, search: newSearch.toString() }, { replace: true });
-        console.log(`promptToSend:`);
+        // Preserve fsId on follow-ups so PreviewApp keeps the iframe mounted
+        // and the hot-swap useEffect has the prior buffer to resolve against.
+        // Read fsId from the ref so future autosave-driven fsId changes don't
+        // re-trigger this effect with the same promptToSend (loop bug).
+        const currentFsId = fsIdRef.current;
+        const pathname = currentFsId ? `/chat/${userSlug}/${appSlug}/${currentFsId}` : `/chat/${userSlug}/${appSlug}`;
+        navigate({ pathname, search: newSearch.toString() }, { replace: true });
+        const sentPrompt = promptToSend;
+        // Clear promptToSend BEFORE firing so any re-render of this effect
+        // (e.g. searchParams change) sees null and skips the branch.
+        sendPrompt(null);
         chat
           .prompt({
             messages: [
               {
                 role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: promptToSend,
-                  },
-                ],
+                content: [{ type: "text", text: sentPrompt }],
               },
             ],
           })
@@ -307,10 +320,9 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             if (r.isErr()) {
               console.error(`PromptSend failed`, r.Ok());
             } else {
-              console.log(`send prompt`, promptToSend);
+              console.log(`send prompt`, sentPrompt);
             }
           });
-        // .finally(() => sendPrompt(null) /* avoid double send */);
       }
       return; // Already opened or opening
     }
@@ -516,7 +528,10 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     if (!chat) return;
     const last = promptState.blocks[promptState.blocks.length - 1];
     if (!last || !shouldAgentAutosave(last.msgs)) return;
-    const resolved = getCode(promptState, fsId).code.join("\n");
+    // Pass undefined so getCode returns the live cumulative source after all
+    // streamed edits, not the snapshot pinned to the prior fsId (which would
+    // be the pre-edit version and persist nothing).
+    const resolved = getCode(promptState).code.join("\n");
     if (resolved.length === 0) return;
     // Arm the matcher BEFORE the network call so the first block.end with
     // fsRef that arrives on the autosave's stream is consumed regardless of

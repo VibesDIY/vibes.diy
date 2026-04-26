@@ -284,6 +284,7 @@ async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
   const data = event.data as { type?: string; source?: unknown } | undefined;
   if (!data || data.type !== "vibe.req.set-source" || typeof data.source !== "string") return;
   const source = data.source;
+  console.log("[iframe-hot-swap] received", { sourceLen: source.length, head: source.slice(0, 80) });
   let blobUrl: string | undefined;
   try {
     const { code } = transform(source, {
@@ -291,6 +292,7 @@ async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
       production: true,
       jsxRuntime: "automatic",
     });
+    console.log("[iframe-hot-swap] sucrase ok", { transformedLen: code.length });
     const blob = new Blob([code], { type: "application/javascript" });
     blobUrl = URL.createObjectURL(blob);
     const mod = (await import(/* @vite-ignore */ blobUrl)) as { default?: unknown };
@@ -298,10 +300,12 @@ async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
     if (typeof App !== "function") {
       throw new Error("hot-swap: module has no default-exported component");
     }
+    console.log("[iframe-hot-swap] module imported, default fn name:", (App as { name?: string }).name);
     unmountVibe();
     mountVibe([App as Parameters<typeof mountVibe>[0][number]], getActiveProps());
+    console.log("[iframe-hot-swap] mounted");
   } catch (err) {
-    console.error("[hot-swap] failed", err);
+    console.error("[iframe-hot-swap] failed", err);
     // Iframe stays on the previous render; end-of-turn autosave will navigate
     // to a fresh fsId and reload the iframe cleanly.
   } finally {
