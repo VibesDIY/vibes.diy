@@ -692,11 +692,14 @@ export class vibesDiySrvSandbox implements Disposable {
   // can ignore the false; end-of-turn autosave covers it via fsId navigation.
   pushSource(source: string): boolean {
     if (!this.iframeSource || !this.iframeOrigin) {
-      console.warn(
-        "[hot-swap] iframe not ready, drop; end-of-turn autosave will recover via fsId navigation. To address: buffer pending source in srv-sandbox and flush on first message from iframe."
-      );
+      console.warn("[parent-hot-swap] iframe not ready, drop", { sourceLen: source.length });
       return false;
     }
+    console.log("[parent-hot-swap] postMessage to iframe", {
+      origin: this.iframeOrigin,
+      sourceLen: source.length,
+      head: source.slice(0, 80),
+    });
     this.iframeSource.postMessage({ type: "vibe.req.set-source", source }, this.iframeOrigin);
     return true;
   }
