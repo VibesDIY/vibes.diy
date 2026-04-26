@@ -59,6 +59,19 @@ export function isEvtRuntimeReady(x: unknown): x is EvtRuntimeReady {
   return !(EvtRuntimeReady(x) instanceof type.errors);
 }
 
+// Parent → iframe live-preview hot-swap. Fire-and-forget (no response).
+// Carries the resolved App.jsx source after each block.code.end so the iframe
+// can sucrase-transform + remount in place, avoiding an iframe reload.
+export const EvtVibeSetSource = type({
+  type: "'vibe.evt.set-source'",
+  source: "string",
+});
+export type EvtVibeSetSource = typeof EvtVibeSetSource.infer;
+
+export function isEvtVibeSetSource(x: unknown): x is EvtVibeSetSource {
+  return !(EvtVibeSetSource(x) instanceof type.errors);
+}
+
 export const EvtVibeAttachStatusFPDb = type({
   type: "'vibe.evt.attach.status.fpdb'",
   data: FBDbDataWithUrl,

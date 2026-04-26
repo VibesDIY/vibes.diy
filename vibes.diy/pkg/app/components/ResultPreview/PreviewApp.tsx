@@ -49,67 +49,30 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // check would skip pushes from later blocks whose seq < previous block's max.
   const seenByBlockIdRef = useRef<Map<string, number>>(new Map());
   useEffect(() => {
-    const w = window as unknown as {
-      __hotSwapDebug?: { pushes: unknown[]; runs: number; lastReason?: string };
-    };
-    if (!w.__hotSwapDebug) w.__hotSwapDebug = { pushes: [], runs: 0 };
-    const dbg = w.__hotSwapDebug;
-    dbg.runs += 1;
-    if (!srvVibeSandbox) {
-      dbg.lastReason = "no srvVibeSandbox";
-      return;
-    }
+    if (srvVibeSandbox === undefined) return;
     const last = promptState.blocks[promptState.blocks.length - 1];
-    if (!last) {
-      dbg.lastReason = "no last block";
-      return;
-    }
+    if (last === undefined) return;
     // Find latest code.end in the latest block, keyed by blockId.
     let latestCodeEndSeq = -1;
     let latestBlockId: string | undefined;
     for (const msg of last.msgs) {
-      if (isCodeEnd(msg)) {
-        const m = msg as { seq: number; blockId: string };
-        if (m.seq > latestCodeEndSeq) {
-          latestCodeEndSeq = m.seq;
-          latestBlockId = m.blockId;
-        }
+      if (isCodeEnd(msg) && msg.seq > latestCodeEndSeq) {
+        latestCodeEndSeq = msg.seq;
+        latestBlockId = msg.blockId;
       }
     }
-    if (!latestBlockId) {
-      dbg.lastReason = "no code.end in last block yet";
-      return;
-    }
+    if (latestBlockId === undefined) return;
     const seenSeq = seenByBlockIdRef.current.get(latestBlockId) ?? -1;
-    if (latestCodeEndSeq <= seenSeq) {
-      dbg.lastReason = `no new code-end for block (blockId=${latestBlockId.slice(0, 8)} seenSeq=${seenSeq} latest=${latestCodeEndSeq})`;
-      return;
-    }
+    if (latestCodeEndSeq <= seenSeq) return;
     seenByBlockIdRef.current.set(latestBlockId, latestCodeEndSeq);
     const resolved = getCode(promptState).code.join("\n");
-    if (resolved.length === 0) {
-      dbg.lastReason = "empty resolved";
-      return;
-    }
-    // The aider parser sometimes emits tiny phantom sections when the model
-    // outputs the path-line + fence as standalone text. Those resolve to a
-    // few bytes and never form a valid module — skip pushes that obviously
-    // can't be a React component.
-    if (resolved.length < 200 || !resolved.includes("export default")) {
-      dbg.lastReason = `skip-suspicious resolved len=${resolved.length}`;
-      return;
-    }
-    const ok = srvVibeSandbox.pushSource(resolved);
-    dbg.pushes.push({
-      blockId: latestBlockId.slice(0, 8),
-      seq: latestCodeEndSeq,
-      len: resolved.length,
-      ok,
-      head: resolved.slice(0, 80),
-    });
-    dbg.lastReason = `pushed blockId=${latestBlockId.slice(0, 8)} seq=${latestCodeEndSeq} len=${resolved.length} ok=${ok}`;
-    // eslint-disable-next-line no-console
-    console.log("[hot-swap] push", { blockId: latestBlockId.slice(0, 8), seq: latestCodeEndSeq, len: resolved.length, ok });
+    if (resolved.length === 0) return;
+    // The aider parser occasionally emits tiny phantom sections when the
+    // model outputs the path-line + fence as standalone text. Those resolve
+    // to a few bytes and never form a valid module — skip pushes that
+    // obviously can't be a React component.
+    if (resolved.length < 200 || !resolved.includes("export default")) return;
+    srvVibeSandbox.pushSource(resolved);
   }, [promptState.blocks, srvVibeSandbox]);
 
   if (!previewUrl) {

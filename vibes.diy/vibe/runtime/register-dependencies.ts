@@ -12,6 +12,7 @@ import {
   ResFetchCloudToken,
   ResVibeRegisterFPDb,
   EvtVibeAttachStatusFPDb,
+  isEvtVibeSetSource,
   isResPutDoc,
   isResGetDoc,
   isResGetDocNotFound,
@@ -31,9 +32,10 @@ import {
   ResSubscribeDocs,
   ResListDbNames,
 } from "@vibes.diy/vibe-types";
-import { Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
+import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
 import { transform } from "sucrase";
+import { FunctionComponent } from "react";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
 import { registerImgVibes } from "./img-vibes.js";
 import { registerFirefly } from "./use-firefly.js";
@@ -281,34 +283,40 @@ function registerHotSwapHandler(): void {
 }
 
 async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
-  const data = event.data as { type?: string; source?: unknown } | undefined;
-  if (!data || data.type !== "vibe.req.set-source" || typeof data.source !== "string") return;
-  const source = data.source;
-  console.log("[iframe-hot-swap] received", { sourceLen: source.length, head: source.slice(0, 80) });
-  let blobUrl: string | undefined;
-  try {
-    const { code } = transform(source, {
+  if (!isEvtVibeSetSource(event.data)) return;
+  const result = await applyHotSwap(event.data.source);
+  if (result.isErr()) {
+    // Iframe stays on the previous render; end-of-turn autosave will navigate
+    // to a fresh fsId and reload the iframe cleanly.
+    console.error("[hot-swap] failed", result.Err());
+  }
+}
+
+async function applyHotSwap(source: string): Promise<Result<void>> {
+  const rTransform = exception2Result(() =>
+    transform(source, {
       transforms: ["jsx"],
       production: true,
       jsxRuntime: "automatic",
-    });
-    console.log("[iframe-hot-swap] sucrase ok", { transformedLen: code.length });
-    const blob = new Blob([code], { type: "application/javascript" });
-    blobUrl = URL.createObjectURL(blob);
-    const mod = (await import(/* @vite-ignore */ blobUrl)) as { default?: unknown };
-    const App = mod.default;
+    })
+  );
+  if (rTransform.isErr()) return Result.Err(rTransform.Err());
+  const blob = new Blob([rTransform.Ok().code], { type: "application/javascript" });
+  const blobUrl = URL.createObjectURL(blob);
+  try {
+    const rImport = await exception2Result<{ default?: unknown }>(() => import(/* @vite-ignore */ blobUrl));
+    if (rImport.isErr()) return Result.Err(rImport.Err());
+    const App = rImport.Ok().default;
     if (typeof App !== "function") {
-      throw new Error("hot-swap: module has no default-exported component");
+      return Result.Err("hot-swap module has no default-exported component");
     }
-    console.log("[iframe-hot-swap] module imported, default fn name:", (App as { name?: string }).name);
-    unmountVibe();
-    mountVibe([App as Parameters<typeof mountVibe>[0][number]], getActiveProps());
-    console.log("[iframe-hot-swap] mounted");
-  } catch (err) {
-    console.error("[iframe-hot-swap] failed", err);
-    // Iframe stays on the previous render; end-of-turn autosave will navigate
-    // to a fresh fsId and reload the iframe cleanly.
+    const rMount = exception2Result(() => {
+      unmountVibe();
+      mountVibe([App as FunctionComponent], getActiveProps());
+    });
+    if (rMount.isErr()) return Result.Err(rMount.Err());
+    return Result.Ok(undefined);
   } finally {
-    if (blobUrl) URL.revokeObjectURL(blobUrl);
+    URL.revokeObjectURL(blobUrl);
   }
 }
