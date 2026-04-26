@@ -23,6 +23,7 @@
     "@vibes.diy/api-svc": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
+    "@vibes.diy/vibe-srv-sandbox": "workspace:*",
     "arktype": "^2.2.0",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.2"

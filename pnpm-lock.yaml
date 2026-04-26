@@ -1141,6 +1141,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../../call-ai/v2
+      '@vibes.diy/vibe-srv-sandbox':
+        specifier: workspace:*
+        version: link:../../vibe/srv-sandbox
       arktype:
         specifier: ^2.2.0
         version: 2.2.0
