@@ -1,4 +1,4 @@
-import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
+import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
 import {
   MsgBase,
   reqPutDoc,
@@ -160,24 +160,6 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         deleted: 0,
         created: now,
       });
-
-      // Broadcast doc-changed to subscribed connections on this shard (fast path)
-      const evt = { type: "vibes.diy.evt-doc-changed", userSlug: req.userSlug, appSlug: req.appSlug, docId };
-      const subscriptionKey = `${req.userSlug}/${req.appSlug}`;
-      for (const conn of vctx.connections) {
-        if (!conn.subscribedAppSlugs.has(subscriptionKey)) continue;
-        exception2Result(() =>
-          conn.ws.send(
-            conn.ende.uint8ify({
-              tid: crypto.randomUUID(),
-              src: "vibes.diy.api",
-              dst: "vibes.diy.client",
-              ttl: 10,
-              payload: evt,
-            })
-          )
-        );
-      }
 
       // Notify DocNotify coordinator for cross-shard fan-out
       if (vctx.notifyDocChanged) {
@@ -380,24 +362,6 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
         deleted: 1,
         created: now,
       });
-
-      // Broadcast doc-changed to subscribed connections on this shard (fast path)
-      const evt = { type: "vibes.diy.evt-doc-changed", userSlug: req.userSlug, appSlug: req.appSlug, docId: req.docId };
-      const subscriptionKey = `${req.userSlug}/${req.appSlug}`;
-      for (const conn of vctx.connections) {
-        if (!conn.subscribedAppSlugs.has(subscriptionKey)) continue;
-        exception2Result(() =>
-          conn.ws.send(
-            conn.ende.uint8ify({
-              tid: crypto.randomUUID(),
-              src: "vibes.diy.api",
-              dst: "vibes.diy.client",
-              ttl: 10,
-              payload: evt,
-            })
-          )
-        );
-      }
 
       // Notify DocNotify coordinator for cross-shard fan-out
       if (vctx.notifyDocChanged) {
