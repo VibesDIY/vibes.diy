@@ -98,16 +98,20 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
 
   return {
     notifyDocChanged: async (evt: { userSlug: string; appSlug: string; docId: string }) => {
-      await fetchDocNotify(`${evt.userSlug}/${evt.appSlug}`, {
+      const key = `${evt.userSlug}/${evt.appSlug}`;
+      console.log("[docNotify] notifyDocChanged key:", key, "shard:", dn.shardId.slice(0, 8));
+      await fetchDocNotify(key, {
         action: "notify",
         senderShardId: dn.shardId,
         evt: { type: "vibes.diy.evt-doc-changed", ...evt },
       });
     },
     registerDocSubscription: async (subscriptionKey: string) => {
+      console.log("[docNotify] register key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
       await fetchDocNotify(subscriptionKey, { action: "register", shardId: dn.shardId });
     },
     deregisterDocSubscription: async (subscriptionKey: string) => {
+      console.log("[docNotify] deregister key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
       await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
     },
   };
