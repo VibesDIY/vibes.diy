@@ -191,6 +191,9 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 }> {
   readonly cfg: VibesDiyApiConfig;
   private readonly pendingRequests = new Map<string, PendingRequest<unknown>>();
+  private readonly docChangedListeners: ((userSlug: string, appSlug: string, docId: string) => void)[] = [];
+  private readonly docSubscriptions: { userSlug: string; appSlug: string; dbName: string }[] = [];
+  private currentConnection: VibeDiyApiConnection | undefined;
 
   constructor(cfg: VibesDiyApiParam) {
     const sthis = cfg.sthis ?? ensureSuperThis();
@@ -240,8 +243,26 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.getReadyConnection().then((conn) => conn.close());
   }
 
-  getReadyConnection(): Promise<VibeDiyApiConnection> {
-    return getVibesDiyWebSocketConnection(this.cfg.apiUrl, this.cfg.ws, this.cfg.ca);
+  async getReadyConnection(): Promise<VibeDiyApiConnection> {
+    const conn = await getVibesDiyWebSocketConnection(this.cfg.apiUrl, this.cfg.ws, this.cfg.ca);
+    if (conn !== this.currentConnection) {
+      this.currentConnection = conn;
+      // Re-attach all onDocChanged listeners to the new connection
+      for (const fn of this.docChangedListeners) {
+        this.attachDocChangedToConnection(conn, fn);
+      }
+      // Re-subscribe to all doc subscriptions (server needs to know again)
+      for (const sub of this.docSubscriptions) {
+        this.subscribeDocs(sub).catch((e: unknown) => console.error("Re-subscribe failed:", e));
+      }
+      // When this connection dies, clear so next call detects the change
+      conn.onClose(() => {
+        if (this.currentConnection === conn) {
+          this.currentConnection = undefined;
+        }
+      });
+    }
+    return conn;
   }
 
   async send<T extends { auth?: DashAuthType }>(
@@ -555,34 +576,50 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.request({ ...req, type: "vibes.diy.req-delete-doc" }, { resMatch: isResDeleteDoc });
   }
 
-  subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
-    return this.request({ ...req, type: "vibes.diy.req-subscribe-docs" }, { resMatch: isResSubscribeDocs });
+  async subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
+    const result: Result<ResSubscribeDocs, VibesDiyError> = await this.request(
+      { ...req, type: "vibes.diy.req-subscribe-docs" },
+      { resMatch: isResSubscribeDocs }
+    );
+    if (result.isOk()) {
+      const sub = { userSlug: req.userSlug, appSlug: req.appSlug, dbName: req.dbName };
+      const key = `${sub.userSlug}/${sub.appSlug}/${sub.dbName}`;
+      if (!this.docSubscriptions.some((s) => `${s.userSlug}/${s.appSlug}/${s.dbName}` === key)) {
+        this.docSubscriptions.push(sub);
+      }
+    }
+    return result;
+  }
+
+  private attachDocChangedToConnection(
+    conn: VibeDiyApiConnection,
+    fn: (userSlug: string, appSlug: string, docId: string) => void
+  ): void {
+    conn.onMessage((wsEvent) => {
+      if (wsEvent.type !== "MessageEvent") return;
+      const raw = wsEvent.event.data;
+      const textPromise =
+        raw instanceof Blob
+          ? raw.text()
+          : Promise.resolve(typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array));
+      textPromise
+        .then((text) => {
+          const parsed = JSON.parse(text);
+          const msg = msgBase(parsed);
+          if (!(msg instanceof type.errors) && isEvtDocChanged(msg.payload)) {
+            fn(msg.payload.userSlug, msg.payload.appSlug, msg.payload.docId);
+          }
+        })
+        .catch(() => {
+          // Not a valid message — ignore
+        });
+    });
   }
 
   onDocChanged(fn: (userSlug: string, appSlug: string, docId: string) => void): void {
-    // Listen for doc-changed events pushed from the API over the WebSocket.
-    // Raw WebSocket data → JSON parse → MsgBase envelope → payload check.
+    this.docChangedListeners.push(fn);
     this.getReadyConnection().then((conn) => {
-      conn.onMessage((wsEvent) => {
-        if (wsEvent.type !== "MessageEvent") return;
-        const raw = wsEvent.event.data;
-        // WebSocket data arrives as Blob in browser — decode async
-        const textPromise =
-          raw instanceof Blob
-            ? raw.text()
-            : Promise.resolve(typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array));
-        textPromise
-          .then((text) => {
-            const parsed = JSON.parse(text);
-            const msg = msgBase(parsed);
-            if (!(msg instanceof type.errors) && isEvtDocChanged(msg.payload)) {
-              fn(msg.payload.userSlug, msg.payload.appSlug, msg.payload.docId);
-            }
-          })
-          .catch(() => {
-            // Not a valid message — ignore
-          });
-      });
+      this.attachDocChangedToConnection(conn, fn);
     });
   }
 }
