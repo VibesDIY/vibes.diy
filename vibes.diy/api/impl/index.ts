@@ -194,6 +194,8 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   private readonly docChangedListeners: ((userSlug: string, appSlug: string, docId: string) => void)[] = [];
   private readonly docSubscriptions: { userSlug: string; appSlug: string; dbName: string }[] = [];
   private currentConnection: VibeDiyApiConnection | undefined;
+  private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  private closed = false;
 
   constructor(cfg: VibesDiyApiParam) {
     const sthis = cfg.sthis ?? ensureSuperThis();
@@ -240,40 +242,39 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   }
 
   close(): Promise<void> {
+    this.closed = true;
+    clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = undefined;
     return this.getReadyConnection().then((conn) => conn.close());
   }
 
   async getReadyConnection(): Promise<VibeDiyApiConnection> {
     const conn = await getVibesDiyWebSocketConnection(this.cfg.apiUrl, this.cfg.ws, this.cfg.ca);
     if (conn !== this.currentConnection) {
-      const isReconnect = this.currentConnection !== undefined || this.docSubscriptions.length > 0;
       this.currentConnection = conn;
-      if (isReconnect) {
-        console.log(
-          "[VibesDiyApi] reconnected, replaying",
-          this.docChangedListeners.length,
-          "listeners and",
-          this.docSubscriptions.length,
-          "subscriptions"
-        );
-      }
       // Re-attach all onDocChanged listeners to the new connection
       for (const fn of this.docChangedListeners) {
         this.attachDocChangedToConnection(conn, fn);
       }
       // Re-subscribe to all doc subscriptions (server needs to know again)
       for (const sub of this.docSubscriptions) {
-        this.subscribeDocs(sub).catch((e: unknown) => console.error("[VibesDiyApi] re-subscribe failed:", e));
+        this.subscribeDocs(sub).catch((_e: unknown) => {
+          /* re-subscribe best-effort; next reconnect will retry */
+        });
       }
-      // When this connection dies, clear and proactively reconnect
+      // When this connection dies, schedule proactive reconnect (unless explicitly closed)
       conn.onClose(() => {
         if (this.currentConnection === conn) {
           this.currentConnection = undefined;
-          console.log("[VibesDiyApi] connection closed, scheduling reconnect");
-          // Proactive reconnect so passive tabs (not writing) also replay
-          setTimeout(() => {
-            this.getReadyConnection().catch((e: unknown) => console.warn("[VibesDiyApi] reconnect failed:", e));
-          }, 1000);
+          if (!this.closed) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = setTimeout(() => {
+              this.reconnectTimer = undefined;
+              this.getReadyConnection().catch((_e: unknown) => {
+                /* reconnect best-effort; next activity will retry */
+              });
+            }, 1000);
+          }
         }
       });
     }
@@ -592,20 +593,16 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   }
 
   async subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
-    const key = `${req.userSlug}/${req.appSlug}/${req.dbName}`;
-    console.log("[VibesDiyApi] subscribeDocs", key);
     const result: Result<ResSubscribeDocs, VibesDiyError> = await this.request(
       { ...req, type: "vibes.diy.req-subscribe-docs" },
       { resMatch: isResSubscribeDocs }
     );
     if (result.isOk()) {
       const sub = { userSlug: req.userSlug, appSlug: req.appSlug, dbName: req.dbName };
+      const key = `${sub.userSlug}/${sub.appSlug}/${sub.dbName}`;
       if (!this.docSubscriptions.some((s) => `${s.userSlug}/${s.appSlug}/${s.dbName}` === key)) {
         this.docSubscriptions.push(sub);
-        console.log("[VibesDiyApi] subscribeDocs OK, stored for replay:", key);
       }
-    } else {
-      console.error("[VibesDiyApi] subscribeDocs FAILED:", key, result.Err());
     }
     return result;
   }
@@ -626,15 +623,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
           const parsed = JSON.parse(text);
           const msg = msgBase(parsed);
           if (!(msg instanceof type.errors) && isEvtDocChanged(msg.payload)) {
-            console.log(
-              "[VibesDiyApi] evt-doc-changed received:",
-              msg.payload.userSlug + "/" + msg.payload.appSlug,
-              msg.payload.docId
-            );
             fn(msg.payload.userSlug, msg.payload.appSlug, msg.payload.docId);
           }
         })
-        .catch(() => {
+        .catch((_e: unknown) => {
           // Not a valid message — ignore
         });
     });
@@ -645,6 +637,21 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     this.getReadyConnection().then((conn) => {
       this.attachDocChangedToConnection(conn, fn);
     });
+  }
+
+  /** @internal — test inspection only */
+  get _testInternals(): {
+    docSubscriptions: readonly { userSlug: string; appSlug: string; dbName: string }[];
+    docChangedListenerCount: number;
+    currentConnection: VibeDiyApiConnection | undefined;
+    reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  } {
+    return {
+      docSubscriptions: this.docSubscriptions,
+      docChangedListenerCount: this.docChangedListeners.length,
+      currentConnection: this.currentConnection,
+      reconnectTimer: this.reconnectTimer,
+    };
   }
 }
 
