@@ -86,6 +86,10 @@ export class ChatSessions implements DurableObject {
         this.connections.size,
         "connections"
       );
+      // Return 410 Gone if no live connections — tells DocNotify to remove this stale shard
+      if (delivered === 0) {
+        return new Response("no connections", { status: 410 });
+      }
       return new Response("ok");
     }
 
