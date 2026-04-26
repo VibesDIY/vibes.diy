@@ -219,30 +219,31 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
     wsEvento.trigger({ ctx: appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
   });
 
-  server.addEventListener("close", (event) => {
-    console.log("WebSocket connection closed", ws.connections.size - 1);
-    wsEvento.trigger({ ctx: appCtx, request: { type: "CloseEvent", event }, send: wsSendProvider });
-    ws.connections.delete(wsSendProvider);
-    // Deregister from DocNotify coordinators for all subscribed apps
+  // Only deregister from DocNotify if no other connection on this DO still subscribes to that key.
+  // This prevents the race where an old WS onclose deregisters a key that a new WS just registered.
+  function deregisterOrphanedKeys(closingConn: WSSendProvider): void {
     const vctx = appCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    if (vctx.deregisterDocSubscription) {
-      for (const key of wsSendProvider.subscribedAppSlugs) {
+    if (!vctx.deregisterDocSubscription) return;
+    for (const key of closingConn.subscribedAppSlugs) {
+      const stillSubscribed = [...ws.connections].some((conn) => conn !== closingConn && conn.subscribedAppSlugs.has(key));
+      if (!stillSubscribed) {
         vctx.deregisterDocSubscription(key).catch((e: unknown) => console.error("DocNotify deregister error:", e));
       }
     }
+  }
+
+  server.addEventListener("close", (event) => {
+    console.log("WebSocket connection closed", ws.connections.size - 1);
+    wsEvento.trigger({ ctx: appCtx, request: { type: "CloseEvent", event }, send: wsSendProvider });
+    deregisterOrphanedKeys(wsSendProvider);
+    ws.connections.delete(wsSendProvider);
   });
 
   server.addEventListener("error", (event: Event) => {
     console.error("WebSocket error", event);
     wsEvento.trigger({ ctx: appCtx, request: { type: "ErrorEvent", event: event as ErrorEvent }, send: wsSendProvider });
+    deregisterOrphanedKeys(wsSendProvider);
     ws.connections.delete(wsSendProvider);
-    // Deregister from DocNotify coordinators for all subscribed apps
-    const vctx = appCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    if (vctx.deregisterDocSubscription) {
-      for (const key of wsSendProvider.subscribedAppSlugs) {
-        vctx.deregisterDocSubscription(key).catch((e: unknown) => console.error("DocNotify deregister error:", e));
-      }
-    }
   });
   // cast wiredness don't ask me --- ask Cloudflare
   return (ctx.wsResponse ??
