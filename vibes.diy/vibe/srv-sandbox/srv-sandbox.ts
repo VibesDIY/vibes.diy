@@ -408,15 +408,13 @@ function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
                 message: err?.message ?? String(err),
               } satisfies ResErrorImgVibes);
             });
-          const rPrompt = await rChat
-            .Ok()
-            .prompt(
-              {
-                ...(ctx.validated.model ? { model: ctx.validated.model } : {}),
-                messages: [{ role: "user", content: [{ type: "text", text: ctx.validated.prompt }] }],
-              },
-              ctx.validated.inputImageBase64 ? { inputImageBase64: ctx.validated.inputImageBase64 } : undefined
-            );
+          const rPrompt = await rChat.Ok().prompt(
+            {
+              ...(ctx.validated.model ? { model: ctx.validated.model } : {}),
+              messages: [{ role: "user", content: [{ type: "text", text: ctx.validated.prompt }] }],
+            },
+            ctx.validated.inputImageBase64 ? { inputImageBase64: ctx.validated.inputImageBase64 } : undefined
+          );
           if (rPrompt.isErr()) {
             return ctx.send.send(ctx, {
               tid: ctx.validated.tid,
@@ -648,7 +646,10 @@ export class vibesDiySrvSandbox implements Disposable {
   // Forward a doc-changed event from the API to the iframe
   forwardDocChangedToIframe(userSlug: string, appSlug: string, docId: string): void {
     if (this.iframeSource && this.iframeOrigin) {
+      console.log("[srv-sandbox] forwarding to iframe:", userSlug + "/" + appSlug, docId, "origin:", this.iframeOrigin);
       this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", userSlug, appSlug, docId }, this.iframeOrigin);
+    } else {
+      console.warn("[srv-sandbox] iframe not ready, dropping:", userSlug + "/" + appSlug, docId);
     }
   }
 
