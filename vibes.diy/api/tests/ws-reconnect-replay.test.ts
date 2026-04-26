@@ -93,11 +93,9 @@ describe(
       const rSub2 = await api.subscribeDocs({ appSlug, userSlug, dbName: "default" });
       expect(rSub2.isOk()).toBe(true);
 
-      // Access internal state to verify deduplication
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const internal = api as any;
-      expect(internal.docSubscriptions).toHaveLength(1);
-      expect(internal.docSubscriptions[0]).toEqual({ userSlug, appSlug, dbName: "default" });
+      // Verify deduplication via test inspection getter
+      expect(api._testInternals.docSubscriptions).toHaveLength(1);
+      expect(api._testInternals.docSubscriptions[0]).toEqual({ userSlug, appSlug, dbName: "default" });
     });
 
     it("onDocChanged stores listeners for replay", () => {
@@ -121,11 +119,7 @@ describe(
       api.onDocChanged(cb1);
       api.onDocChanged(cb2);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const internal = api as any;
-      expect(internal.docChangedListeners).toHaveLength(2);
-      expect(internal.docChangedListeners[0]).toBe(cb1);
-      expect(internal.docChangedListeners[1]).toBe(cb2);
+      expect(api._testInternals.docChangedListenerCount).toBe(2);
     });
 
     it("getReadyConnection detects new connection and replays", async () => {
@@ -142,12 +136,61 @@ describe(
 
       // First connection
       const conn1 = await api.getReadyConnection();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((api as any).currentConnection).toBe(conn1);
+      expect(api._testInternals.currentConnection).toBe(conn1);
 
       // Second call returns same connection (cached)
       const conn2 = await api.getReadyConnection();
       expect(conn2).toBe(conn1);
+    });
+
+    it("close() cancels pending reconnect timer", async () => {
+      const wsPair1 = TestWSPair.create();
+      wireUpWsPair(wsPair1, appCtx);
+
+      const api = new VibesDiyApi({
+        apiUrl: `http://localhost:${8800 + Math.floor(Math.random() * 1000)}/api`,
+        ws: wsPair1.p1 as unknown as WebSocket,
+        fetch: fetchPair.client.fetch,
+        timeoutMs: 5000,
+        getToken,
+      });
+
+      // Establish a connection so onClose handler is installed
+      await api.getReadyConnection();
+
+      // Simulate WS close — triggers the 1s reconnect timer
+      const ws = wsPair1.p1 as unknown as WebSocket;
+      ws.onclose?.({ wasClean: true, code: 1000, reason: "" } as unknown as CloseEvent);
+
+      // Timer should be armed
+      expect(api._testInternals.reconnectTimer).toBeDefined();
+
+      // close() should cancel the pending timer
+      await api.close();
+      expect(api._testInternals.reconnectTimer).toBeUndefined();
+    });
+
+    it("close() suppresses reconnect from its own onClose", async () => {
+      const wsPair1 = TestWSPair.create();
+      wireUpWsPair(wsPair1, appCtx);
+
+      const api = new VibesDiyApi({
+        apiUrl: `http://localhost:${8800 + Math.floor(Math.random() * 1000)}/api`,
+        ws: wsPair1.p1 as unknown as WebSocket,
+        fetch: fetchPair.client.fetch,
+        timeoutMs: 5000,
+        getToken,
+      });
+
+      // Establish connection
+      await api.getReadyConnection();
+
+      // Explicit close — this calls conn.close() which fires onClose
+      await api.close();
+
+      // The onClose handler should NOT have armed a reconnect timer
+      // because close() set the closed flag before conn.close() fired
+      expect(api._testInternals.reconnectTimer).toBeUndefined();
     });
   }
 );

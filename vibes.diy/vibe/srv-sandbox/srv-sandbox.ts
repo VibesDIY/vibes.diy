@@ -637,7 +637,6 @@ export class vibesDiySrvSandbox implements Disposable {
     if (!this.iframeSource && event.source && typeof event.data?.type === "string" && event.data.type.startsWith("vibe.")) {
       this.iframeSource = event.source as Window;
       this.iframeOrigin = event.origin;
-      console.log("[srv-sandbox] captured iframeSource — origin:", event.origin, "type:", event.data.type);
     }
     this.evento.trigger<MessageEvent, unknown, unknown>({
       request: event,
@@ -648,10 +647,7 @@ export class vibesDiySrvSandbox implements Disposable {
   // Forward a doc-changed event from the API to the iframe
   forwardDocChangedToIframe(userSlug: string, appSlug: string, docId: string): void {
     if (this.iframeSource && this.iframeOrigin) {
-      console.log("[srv-sandbox] forwarding to iframe:", userSlug + "/" + appSlug, docId, "origin:", this.iframeOrigin);
       this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", userSlug, appSlug, docId }, this.iframeOrigin);
-    } else {
-      console.warn("[srv-sandbox] iframe not ready, dropping:", userSlug + "/" + appSlug, docId);
     }
   }
 
@@ -682,6 +678,11 @@ export class vibesDiySrvSandbox implements Disposable {
     this.args.vibeDiyApi.onDocChanged((userSlug, appSlug, docId) => {
       this.forwardDocChangedToIframe(userSlug, appSlug, docId);
     });
+  }
+
+  /** @internal — test inspection only */
+  get _testInternals(): { iframeSource: Window | undefined; iframeOrigin: string | undefined } {
+    return { iframeSource: this.iframeSource, iframeOrigin: this.iframeOrigin };
   }
 
   [Symbol.dispose](): void {
