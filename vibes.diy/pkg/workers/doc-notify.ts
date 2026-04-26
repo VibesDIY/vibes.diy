@@ -128,7 +128,11 @@ export class DocNotify implements DurableObject {
             )
           );
           if (rFetch.isErr()) {
-            console.log("[DocNotify] fan-out FAILED shard:", shardId.slice(0, 8), "removing");
+            console.log("[DocNotify] fan-out FAILED shard:", shardId.slice(0, 8), "removing (fetch error)");
+            stale.push(shardId);
+          } else if (!rFetch.Ok().ok) {
+            // 410 Gone = no live connections on that shard
+            console.log("[DocNotify] fan-out STALE shard:", shardId.slice(0, 8), "removing (status", rFetch.Ok().status + ")");
             stale.push(shardId);
           } else {
             console.log("[DocNotify] fan-out OK shard:", shardId.slice(0, 8));
