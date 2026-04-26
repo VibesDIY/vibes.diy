@@ -632,10 +632,12 @@ export class vibesDiySrvSandbox implements Disposable {
   private iframeOrigin: string | undefined;
 
   readonly handleMessage = (event: MessageEvent): void => {
-    // Capture iframe window reference for forwarding API events
-    if (!this.iframeSource && event.source) {
+    // Capture iframe window reference — only from sandbox messages (vibe.* prefix)
+    // to avoid capturing Clerk auth or analytics iframes that postMessage first
+    if (!this.iframeSource && event.source && typeof event.data?.type === "string" && event.data.type.startsWith("vibe.")) {
       this.iframeSource = event.source as Window;
       this.iframeOrigin = event.origin;
+      console.log("[srv-sandbox] captured iframeSource — origin:", event.origin, "type:", event.data.type);
     }
     this.evento.trigger<MessageEvent, unknown, unknown>({
       request: event,
