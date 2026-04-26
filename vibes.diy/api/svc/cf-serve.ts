@@ -12,7 +12,7 @@ import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { AppContext, Lazy, LoggerImpl, Result, URI } from "@adviser/cement";
 import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
-import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
+import { CfCacheIf } from "./types.js";
 import { CFEnv, MsgBase } from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/core-types-base";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
@@ -219,30 +219,18 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
     wsEvento.trigger({ ctx: appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
   });
 
-  // Only deregister from DocNotify if no other connection on this DO still subscribes to that key.
-  // This prevents the race where an old WS onclose deregisters a key that a new WS just registered.
-  function deregisterOrphanedKeys(closingConn: WSSendProvider): void {
-    const vctx = appCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    if (!vctx.deregisterDocSubscription) return;
-    for (const key of closingConn.subscribedAppSlugs) {
-      const stillSubscribed = [...ws.connections].some((conn) => conn !== closingConn && conn.subscribedAppSlugs.has(key));
-      if (!stillSubscribed) {
-        vctx.deregisterDocSubscription(key).catch((e: unknown) => console.error("DocNotify deregister error:", e));
-      }
-    }
-  }
-
+  // No deregister-on-close: with UUID sharding each DO has 1 connection, so the old WS onclose
+  // races with the new WS subscribeDocs and clobbers the fresh registration. Instead, stale shards
+  // self-clean via failed fan-out in DocNotify (which removes them from persistent storage).
   server.addEventListener("close", (event) => {
     console.log("WebSocket connection closed", ws.connections.size - 1);
     wsEvento.trigger({ ctx: appCtx, request: { type: "CloseEvent", event }, send: wsSendProvider });
-    deregisterOrphanedKeys(wsSendProvider);
     ws.connections.delete(wsSendProvider);
   });
 
   server.addEventListener("error", (event: Event) => {
     console.error("WebSocket error", event);
     wsEvento.trigger({ ctx: appCtx, request: { type: "ErrorEvent", event: event as ErrorEvent }, send: wsSendProvider });
-    deregisterOrphanedKeys(wsSendProvider);
     ws.connections.delete(wsSendProvider);
   });
   // cast wiredness don't ask me --- ask Cloudflare
