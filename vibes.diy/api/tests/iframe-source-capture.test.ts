@@ -5,12 +5,11 @@ import { VibesDiyApiIface } from "@vibes.diy/api-types";
 // PostMsgSendProvider references `window` — provide a minimal global
 beforeAll(() => {
   if (typeof globalThis.window === "undefined") {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (globalThis as any).window = globalThis;
+    (globalThis as unknown as Record<string, unknown>).window = globalThis;
   }
 });
 
-// Minimal mock — we only need handleMessage, not the full API
+// Minimal stub — we only need handleMessage, not the full API
 function createSandbox() {
   const listeners: ((event: MessageEvent) => void)[] = [];
   const sandbox = new vibesDiySrvSandbox({
@@ -45,10 +44,8 @@ describe("iframeSource capture filtering", () => {
 
     sandbox.handleMessage(fakeMessageEvent({ type: "vibe.runtime.ready" }, "https://app--user.example.com", fakeWindow));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const internal = sandbox as any;
-    expect(internal.iframeSource).toBe(fakeWindow);
-    expect(internal.iframeOrigin).toBe("https://app--user.example.com");
+    expect(sandbox._testInternals.iframeSource).toBe(fakeWindow);
+    expect(sandbox._testInternals.iframeOrigin).toBe("https://app--user.example.com");
   });
 
   it("ignores non-vibe messages (e.g. Clerk auth)", () => {
@@ -56,10 +53,8 @@ describe("iframeSource capture filtering", () => {
 
     sandbox.handleMessage(fakeMessageEvent({ type: "__clerk_handshake", payload: {} }, "https://vibes.diy", {} as Window));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const internal = sandbox as any;
-    expect(internal.iframeSource).toBeUndefined();
-    expect(internal.iframeOrigin).toBeUndefined();
+    expect(sandbox._testInternals.iframeSource).toBeUndefined();
+    expect(sandbox._testInternals.iframeOrigin).toBeUndefined();
   });
 
   it("ignores messages with no type field", () => {
@@ -67,9 +62,7 @@ describe("iframeSource capture filtering", () => {
 
     sandbox.handleMessage(fakeMessageEvent({ foo: "bar" }, "https://analytics.example.com", {} as Window));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const internal = sandbox as any;
-    expect(internal.iframeSource).toBeUndefined();
+    expect(sandbox._testInternals.iframeSource).toBeUndefined();
   });
 
   it("ignores messages with null source", () => {
@@ -77,9 +70,7 @@ describe("iframeSource capture filtering", () => {
 
     sandbox.handleMessage(fakeMessageEvent({ type: "vibe.runtime.ready" }, "https://example.com", null));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const internal = sandbox as any;
-    expect(internal.iframeSource).toBeUndefined();
+    expect(sandbox._testInternals.iframeSource).toBeUndefined();
   });
 
   it("once captured, iframeSource does not change", () => {
@@ -90,10 +81,8 @@ describe("iframeSource capture filtering", () => {
     sandbox.handleMessage(fakeMessageEvent({ type: "vibe.runtime.ready" }, "https://first.example.com", firstWindow));
     sandbox.handleMessage(fakeMessageEvent({ type: "vibe.req.callAI" }, "https://second.example.com", secondWindow));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const internal = sandbox as any;
-    expect(internal.iframeSource).toBe(firstWindow);
-    expect(internal.iframeOrigin).toBe("https://first.example.com");
+    expect(sandbox._testInternals.iframeSource).toBe(firstWindow);
+    expect(sandbox._testInternals.iframeOrigin).toBe("https://first.example.com");
   });
 
   it("forwardDocChangedToIframe delivers to captured source", () => {
@@ -126,8 +115,7 @@ describe("iframeSource capture filtering", () => {
     sandbox.forwardDocChangedToIframe("jchris", "quick-doc-saver", "doc123");
 
     // Should not throw — silently drops
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((sandbox as any).iframeSource).toBeUndefined();
+    expect(sandbox._testInternals.iframeSource).toBeUndefined();
   });
 
   it("Clerk-then-sandbox sequence captures sandbox correctly", () => {
@@ -141,9 +129,7 @@ describe("iframeSource capture filtering", () => {
     // Sandbox sends second (correct source)
     sandbox.handleMessage(fakeMessageEvent({ type: "vibe.runtime.ready" }, "https://app--user.vibesdiy.net", sandboxWindow));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const internal = sandbox as any;
-    expect(internal.iframeSource).toBe(sandboxWindow);
-    expect(internal.iframeOrigin).toBe("https://app--user.vibesdiy.net");
+    expect(sandbox._testInternals.iframeSource).toBe(sandboxWindow);
+    expect(sandbox._testInternals.iframeOrigin).toBe("https://app--user.vibesdiy.net");
   });
 });

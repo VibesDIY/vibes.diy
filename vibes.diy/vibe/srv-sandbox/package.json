@@ -3,6 +3,12 @@
   "version": "0.0.0",
   "type": "module",
   "main": "./index.js",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "import": "./index.js"
+    }
+  },
   "scripts": {
     "build": "core-cli tsc",
     "pack": "core-cli build --doPack",
