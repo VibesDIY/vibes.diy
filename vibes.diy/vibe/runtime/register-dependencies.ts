@@ -40,7 +40,7 @@ import { registerFirefly } from "./use-firefly.js";
 export interface VibeApp {
   readonly appSlug: string;
   readonly userSlug: string;
-  readonly fsId: string;
+  readonly fsId?: string;
 }
 
 export interface VibeSandboxApiOptions {
