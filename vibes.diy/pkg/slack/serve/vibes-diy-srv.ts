@@ -37,11 +37,19 @@ export async function fetchVibeCode(req: Request, appSlug: string): Promise<Resu
     return Result.Ok({ origin: "POST", code: body.code });
   }
   // Fetch vibe code from hosting subdomain App.jsx endpoint
-  const response = await fetch(`https://${appSlug}.vibesdiy.app/App.jsx`);
+  const fetchResult = await exception2Result(() => fetch(`https://${appSlug}.vibesdiy.app/App.jsx`));
+  if (fetchResult.isErr()) {
+    return Result.Err(`Failed to fetch vibe: ${fetchResult.Err().message}`);
+  }
+  const response = fetchResult.Ok();
   if (!response.ok) {
     return Result.Err(`Failed to fetch vibe: ${response.statusText}`);
   }
-  return Result.Ok({ origin: "FETCH", code: await response.text() });
+  const textResult = await exception2Result(() => response.text());
+  if (textResult.isErr()) {
+    return Result.Err(`Failed to read vibe response: ${textResult.Err().message}`);
+  }
+  return Result.Ok({ origin: "FETCH", code: textResult.Ok() });
 }
 
 const sessionVibes = new LRUMap<string, string>({
