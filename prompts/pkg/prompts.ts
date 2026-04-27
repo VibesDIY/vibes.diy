@@ -273,6 +273,7 @@ export async function makeBaseSystemPrompt(
     "- The system can send you crash reports, fix them by simplifying the affected code",
     "- List data items on the main page of your app so users don't have to hunt for them",
     "- If you save data, make sure it is browsable in the app, eg lists should be clickable for more details",
+    "- Add small AI-powered suggestion buttons next to form field groups and empty states. When tapped, use callAI to generate example ideas and fill them in, so users can see what's possible without typing from scratch. Use the same callAI calls the app already makes for real functionality — don't create separate AI functions just for suggestions.",
     demoDataLines,
   ];
 
