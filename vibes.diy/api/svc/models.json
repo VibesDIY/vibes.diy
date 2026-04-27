@@ -44,6 +44,14 @@
     "supports": ["chat", "app"]
   },
   {
+    "id": "prodia/flux-2.klein.9b",
+    "name": "Prodia Flux 2 Klein 9B",
+    "description": "Prodia's hosted Flux 2 Klein 9B image generation model (default image backend)",
+    "featured": false,
+    "preSelected": ["img"],
+    "supports": ["img"]
+  },
+  {
     "id": "openai/gpt-5-image-mini",
     "name": "GPT-5 Image Mini",
     "description": "OpenAI's GPT-5 Image Mini model for fast image generation",
@@ -279,7 +287,6 @@
     "name": "GPT-5.4 Image 2",
     "description": "GPT-5.4 Image 2 combines OpenAI's GPT-5.4 with state-of-the-art image generation, enabling multimodal workflows across reasoning, code, and visual output",
     "featured": true,
-    "preSelected": ["img"],
     "supports": ["img"]
   },
   {
