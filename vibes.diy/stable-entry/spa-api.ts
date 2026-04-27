@@ -45,7 +45,7 @@ export function updateRoutingCookie(routingGroups: Record<string, string>, path:
     : serializeCookie(ROUTING_COOKIE, "", { maxAge: 0, path: "/" });
 }
 
-async function handlePut(request: Request, env: Env, origin: string): Promise<Response> {
+export async function handlePut(request: Request, origin: string): Promise<Response> {
   const rawBody = await exception2Result(() => request.json());
   if (rawBody.isErr()) {
     return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400 });
@@ -71,6 +71,6 @@ export function isSpaApi(pathname: string): boolean {
 export async function handleSpaApi(request: Request, env: Env): Promise<Response> {
   const { origin } = new URL(request.url);
   if (request.method === "GET") return handleGet(request, env);
-  if (request.method === "PUT") return handlePut(request, env, origin);
+  if (request.method === "PUT") return handlePut(request, origin);
   return new Response("Method not allowed", { status: 405 });
 }
