@@ -51,8 +51,7 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
   //   2. Hydrated saved file for the requested fsId (after chat reload).
   //   3. Latest running source (no historical match — typically the in-flight
   //      turn before block.end has fired).
-  const seedFromHydrate =
-    fsId && promptState.hydratedSource?.fsId === fsId ? promptState.hydratedSource.code.join("\n") : "";
+  const seedFromHydrate = fsId && promptState.hydratedSource?.fsId === fsId ? promptState.hydratedSource.code.join("\n") : "";
   let source = seedFromHydrate;
   let complete = false;
   let streamId: string | undefined;
@@ -158,10 +157,8 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
       snapshotFsIds: [...snapshotByFsId.keys()],
     };
     if (debugSections.some((s) => s.applyErrors.length > 0 || s.parseErrors.length > 0)) {
-      // eslint-disable-next-line no-console
       console.warn("[aider-edits] resolution had errors", dbg.__aiderEditsDebug);
     } else {
-      // eslint-disable-next-line no-console
       console.log("[aider-edits] resolved", {
         fsId,
         seedLen: seedFromHydrate.length,
