@@ -195,6 +195,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
                 await renderDBExplorer({
                   base: "/.db-explorer",
                   vctx,
+                  vibeApp: { appSlug: ctx.validated.appSlug, userSlug: ctx.validated.userSlug, fsId: ctx.validated.fsId },
                   pkgRepos: {
                     private: npmUrl,
                   },
