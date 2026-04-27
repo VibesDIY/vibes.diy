@@ -1,5 +1,13 @@
 import React from "react";
 
+// Subset of VibeApp (vibe/runtime/register-dependencies.ts) — fsId is optional
+// because the db-explorer loads from the app subdomain without a versioned path.
+interface DBExplorerVibeApp {
+  readonly appSlug: string;
+  readonly userSlug: string;
+  readonly fsId?: string;
+}
+
 export function DBExplorerPage({
   importMap,
   base,
@@ -9,7 +17,7 @@ export function DBExplorerPage({
     imports: Record<string, string>;
   };
   base: string;
-  vibeApp: { appSlug: string; userSlug: string; fsId?: string };
+  vibeApp: DBExplorerVibeApp;
 }) {
   const mountCode = [
     "import { registerDependencies } from '@vibes.diy/vibe-runtime';",
