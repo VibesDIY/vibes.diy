@@ -50,7 +50,7 @@ function PillActionButton({ height, label, icon, bgColor, labelColor, onClick, b
         padding: 0,
         background: bgColor,
         borderRadius: 0,
-        transition: "width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        transition: "width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
         width: hovered ? height * 1.8 : btnWidth,
         flexShrink: 0,
       }}
@@ -84,7 +84,7 @@ function PillActionButton({ height, label, icon, bgColor, labelColor, onClick, b
         maxWidth: hovered ? 120 : 0,
         padding: hovered ? "0 14px 0 4px" : 0,
         overflow: "hidden",
-        transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
         fontFamily: "'Inter', sans-serif",
       }}>
         {label}
@@ -186,10 +186,10 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
 
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;
-    if (phase === "bubble") t = setTimeout(() => setPhase("expanding"), 250);
-    else if (phase === "expanding") t = setTimeout(() => setPhase("open"), 500);
-    else if (phase === "collapsing") t = setTimeout(() => setPhase("shrinking"), 400);
-    else if (phase === "shrinking") t = setTimeout(() => setPhase("idle"), 300);
+    if (phase === "bubble") t = setTimeout(() => setPhase("expanding"), 120);
+    else if (phase === "expanding") t = setTimeout(() => setPhase("open"), 250);
+    else if (phase === "collapsing") t = setTimeout(() => setPhase("shrinking"), 200);
+    else if (phase === "shrinking") t = setTimeout(() => setPhase("idle"), 150);
     if (phase === "idle") setSubMode("default");
     return () => clearTimeout(t);
   }, [phase]);
@@ -202,7 +202,7 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
   const showBubble = phase !== "idle";
   const expanded = phase === "expanding" || phase === "open";
   const shrinking = phase === "shrinking";
-  const buttonsVisible = phase === "open";
+  const buttonsVisible = phase === "expanding" || phase === "open";
   const creamSlid = phase !== "idle" && phase !== "shrinking";
 
   // Tray sizing
@@ -237,7 +237,7 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
           transform: shrinking ? "scale(0)" : (showBubble ? "scale(1)" : "scale(0)"),
           opacity: showBubble ? 1 : 0,
           transition: phase === "shrinking"
-            ? "transform 0.25s ease, opacity 0.01s ease 0.25s"
+            ? "transform 0.12s ease, opacity 0.01s ease 0.12s"
             : phase === "collapsing"
             ? "width 0.4s ease"
             : phase === "bubble"
@@ -257,9 +257,6 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
           display: "flex",
           height: "100%",
           gap: 0,
-          opacity: buttonsVisible ? 1 : 0,
-          transition: "opacity 0.3s ease",
-          pointerEvents: buttonsVisible ? "auto" : "none",
         }}>
           <PillActionButton
             height={height}
@@ -333,7 +330,7 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
           transformOrigin: "bottom left",
           transform: subMode === "change" && buttonsVisible ? "scale(1)" : "scale(0)",
           opacity: subMode === "change" && buttonsVisible ? 1 : 0,
-          transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease",
+          transition: "transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.08s ease",
           pointerEvents: subMode === "change" && buttonsVisible ? "auto" : "none",
           zIndex: 3,
           minWidth: height * 2.4,
@@ -405,7 +402,7 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
           transformOrigin: "bottom left",
           transform: subMode === "share" && buttonsVisible ? "scale(1)" : "scale(0)",
           opacity: subMode === "share" && buttonsVisible ? 1 : 0,
-          transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease",
+          transition: "transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.08s ease",
           pointerEvents: subMode === "share" && buttonsVisible ? "auto" : "none",
           zIndex: 3,
           minWidth: height * 2.4,
@@ -460,7 +457,7 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
           fillRule="evenodd"
           clipRule="evenodd"
           d={creamSlid ? vibesD : diyD}
-          style={{ transition: "d 0.4s ease, transform 0.4s ease", transform: creamSlid ? "translateX(3px)" : "none" }}
+          style={{ transition: "d 0.2s ease, transform 0.2s ease", transform: creamSlid ? "translateX(3px)" : "none" }}
         />
         {vibesLetters.map((l, i) => (
           <path key={`v${i}`} fillRule="evenodd" clipRule="evenodd" style={{ transition: `fill ${l.delay} ease`, fill: creamSlid ? switchColors.primary : switchColors.secondary }} d={l.d} />
@@ -511,7 +508,7 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
                   pointerEvents: "none",
                   zIndex: 4,
                   transform: `translate(${dx}px, ${dy}px)`,
-                  transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                  transition: "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
                 }}
               >
                 {shareBadgeCount > 99 ? "99+" : shareBadgeCount}
