@@ -634,9 +634,16 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   onDocChanged(fn: (userSlug: string, appSlug: string, docId: string) => void): void {
     this.docChangedListeners.push(fn);
-    this.getReadyConnection().then((conn) => {
+    const conn = this.currentConnection;
+    if (conn) {
+      // Connection already established — attach immediately
       this.attachDocChangedToConnection(conn, fn);
-    });
+    } else {
+      // Trigger connection — replay loop in getReadyConnection will attach all stored listeners
+      this.getReadyConnection().catch((_e: unknown) => {
+        /* best-effort; next activity will establish connection */
+      });
+    }
   }
 
   /** @internal — test inspection only */
