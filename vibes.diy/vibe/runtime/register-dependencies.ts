@@ -243,32 +243,16 @@ export class VibeSandboxApi {
 
 export const vibeApi = Lazy((svc: VibeSandboxApiOptions) => new VibeSandboxApi(svc));
 
-export async function registerDependencies(vibeApp: VibeApp, deps: Record<string, string>): Promise<void> {
-  // bind vibeApi to runtime
+export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   const ctxVibeApi = vibeApi({
     vibeApp,
     addEventListener: window.addEventListener.bind(window),
     postMessage: window.parent.postMessage.bind(window.parent),
   });
 
-  const runTimeReady: string[] = [];
-  // use-fireproof is aliased to vibe-runtime in the import map,
-  // so app code gets Firefly's useFireproof. Hooks are inlined — no dynamic import needed.
-  const useFireproofDep = deps["use-fireproof"] || deps["@fireproof/use-fireproof"];
-  if (useFireproofDep) {
-    runTimeReady.push("use-fireproof");
-    await registerFirefly(ctxVibeApi);
-  }
-  const callAI = deps["call-ai"];
-  if (callAI) {
-    runTimeReady.push("call-ai");
-    registerCallAI(ctxVibeApi);
-  }
-  const imgVibes = deps["img-vibes"];
-  if (imgVibes) {
-    runTimeReady.push("img-vibes");
-    registerImgVibes(ctxVibeApi);
-  }
-  ctxVibeApi.sendRuntimeReady(runTimeReady);
-  return;
+  await registerFirefly(ctxVibeApi);
+  registerCallAI(ctxVibeApi);
+  registerImgVibes(ctxVibeApi);
+
+  ctxVibeApi.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
 }

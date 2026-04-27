@@ -14,15 +14,13 @@ export function DBExplorerPage({
   const mountCode = [
     "import { registerDependencies } from '@vibes.diy/vibe-runtime';",
     "import { startDBExplorer } from '@vibes.diy/vibe-db-explorer/start';",
-    `registerDependencies(`,
-    `  ${JSON.stringify(vibeApp)},`,
-    `  JSON.parse(document.getElementById("vibe-import-map").textContent).imports`,
-    `).then(() => startDBExplorer(${JSON.stringify(base)}));`,
+    `registerDependencies(${JSON.stringify(vibeApp)})`,
+    `  .then(() => startDBExplorer(${JSON.stringify(base)}));`,
   ].join("\n");
   return (
     <html lang="en">
       <head>
-        <script id="vibe-import-map" type="importmap" dangerouslySetInnerHTML={{ __html: JSON.stringify(importMap, null, 2) }} />
+        <script type="importmap" dangerouslySetInnerHTML={{ __html: JSON.stringify(importMap, null, 2) }} />
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Fireproof DB Explorer</title>
