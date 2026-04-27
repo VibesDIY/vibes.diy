@@ -510,6 +510,26 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     pendingSavePromptIdRef.current = null;
   }, [userSlug, appSlug]);
 
+  // Brand-new app first-paint: when the server persists the first (create-only)
+  // scaffold block it emits block.end with fsRef.fsId. If we still have no fsId
+  // in the URL, navigate to it so the iframe can load immediately rather than
+  // waiting for end-of-turn autosave (which only fires for SEARCH/REPLACE
+  // turns). After navigation `fsId` is set, so the effect bails on subsequent
+  // blocks.
+  useEffect(() => {
+    if (fsId) return;
+    for (const block of promptState.blocks) {
+      for (const msg of block.msgs) {
+        if (isBlockEnd(msg) && msg.fsRef) {
+          const sp = new URLSearchParams(searchParams);
+          if (!sp.has("view")) sp.set("view", "preview");
+          navigate({ pathname: `/chat/${userSlug}/${appSlug}/${msg.fsRef.fsId}`, search: sp.toString() }, { replace: true });
+          return;
+        }
+      }
+    }
+  }, [promptState.blocks, fsId, searchParams, navigate, userSlug, appSlug]);
+
   // Agent autosave: when an LLM turn that emitted SEARCH/REPLACE edits
   // finishes streaming, persist the resolved buffer via the same promptFS
   // path the manual save uses. Tag the resulting block so MessageList shows
@@ -571,10 +591,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         dispatch({ type: "markAgentSaved", blockId: blockEnd.blockId });
         const sp = new URLSearchParams(searchParams);
         if (!sp.has("view")) sp.set("view", "preview");
-        navigate(
-          { pathname: `/chat/${userSlug}/${appSlug}/${blockEnd.fsRef.fsId}`, search: sp.toString() },
-          { replace: true }
-        );
+        navigate({ pathname: `/chat/${userSlug}/${appSlug}/${blockEnd.fsRef.fsId}`, search: sp.toString() }, { replace: true });
         return;
       }
     }
@@ -626,7 +643,13 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         previewPanel={<ResultPreview promptState={promptState} currentView={currentView} onCode={handleOnCode} />}
         chatInput={
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
-            <ChatInput ref={chatInput} onSubmit={sendPrompt} promptProcessing={promptState.running} hasCode={promptState.hasCode} currentMsgCount={promptState.current?.msgs.length ?? 0} />
+            <ChatInput
+              ref={chatInput}
+              onSubmit={sendPrompt}
+              promptProcessing={promptState.running}
+              hasCode={promptState.hasCode}
+              currentMsgCount={promptState.current?.msgs.length ?? 0}
+            />
           </BrutalistCard>
         }
         suggestionsComponent={undefined}
