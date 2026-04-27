@@ -1,7 +1,8 @@
 import { loadAndRenderTSX, VibesDiyServCtx, buildMountedApp } from "./render.js";
 // import { contentType } from "mime-types";
 import mime from "mime";
-import { LRUMap, uint8array2stream } from "@adviser/cement";
+import { exception2Result, LRUMap, Result, uint8array2stream } from "@adviser/cement";
+import { type } from "arktype";
 
 function respInit(status: number, contentType = "application/json"): ResponseInit {
   return {
@@ -16,26 +17,31 @@ function respInit(status: number, contentType = "application/json"): ResponseIni
   };
 }
 
-async function fetchVibeCode(
-  req: Request,
-  appSlug: string
-): Promise<{
-  origin: "POST" | "FETCH";
-  code: string;
-}> {
+interface VibeCode {
+  readonly origin: "POST" | "FETCH";
+  readonly code: string;
+}
+
+const postBody = type({ code: "string" });
+
+export async function fetchVibeCode(req: Request, appSlug: string): Promise<Result<VibeCode>> {
   if (req.method === "POST") {
-    const body = (await req.json()) as { code?: string };
-    if (!body.code) {
-      throw new Error("Missing code in request body");
+    const rawBody = await exception2Result(() => req.json());
+    if (rawBody.isErr()) {
+      return Result.Err("Invalid JSON body");
     }
-    return { origin: "POST", code: body.code };
+    const body = postBody(rawBody.Ok());
+    if (body instanceof type.errors) {
+      return Result.Err(body.summary);
+    }
+    return Result.Ok({ origin: "POST", code: body.code });
   }
   // Fetch vibe code from hosting subdomain App.jsx endpoint
   const response = await fetch(`https://${appSlug}.vibesdiy.app/App.jsx`);
   if (!response.ok) {
-    throw new Error(`Failed to fetch vibe: ${response.statusText}`);
+    return Result.Err(`Failed to fetch vibe: ${response.statusText}`);
   }
-  return { origin: "FETCH", code: await response.text() };
+  return Result.Ok({ origin: "FETCH", code: await response.text() });
 }
 
 const sessionVibes = new LRUMap<string, string>({
@@ -44,30 +50,37 @@ const sessionVibes = new LRUMap<string, string>({
 });
 
 async function handleVibeRequest(req: Request, ctx: VibesDiyServCtx): Promise<Response | null> {
-  try {
-    const key = `${ctx.vibesCtx.appSlug}-${ctx.vibesCtx.groupId}`;
-    if (req.method !== "POST" && sessionVibes.has(key)) {
-      const cachedHTML = sessionVibes.get(key);
-      console.log("Serving cached vibe for key:", key);
-      return new Response(cachedHTML, respInit(200, "text/html"));
-    }
-    console.log("handleVibeRequest for appSlug:", ctx.vibesCtx);
-    const vibeCode = await fetchVibeCode(req, ctx.vibesCtx.appSlug);
+  const key = `${ctx.vibesCtx.appSlug}-${ctx.vibesCtx.groupId}`;
+  if (req.method !== "POST" && sessionVibes.has(key)) {
+    const cachedHTML = sessionVibes.get(key);
+    console.log("Serving cached vibe for key:", key);
+    return new Response(cachedHTML, respInit(200, "text/html"));
+  }
+  console.log("handleVibeRequest for appSlug:", ctx.vibesCtx);
+  const vibeCodeResult = await fetchVibeCode(req, ctx.vibesCtx.appSlug);
+  if (vibeCodeResult.isErr()) {
+    const status = req.method === "POST" ? 400 : 502;
+    return new Response(JSON.stringify({ error: vibeCodeResult.Err().message }), respInit(status, "application/json"));
+  }
+  const vibeCode = vibeCodeResult.Ok();
 
-    // Transform JSX → JS (externalized imports)
-    const transformedJS = await buildMountedApp(ctx.vibesCtx, vibeCode.code);
-    // Render vibe.tsx template with transformed JS
-    const vibePath = `./vibe.tsx`;
-    const html = await loadAndRenderTSX(vibePath, {
+  const buildResult = await exception2Result(() => buildMountedApp(ctx.vibesCtx, vibeCode.code));
+  if (buildResult.isErr()) {
+    return new Response(JSON.stringify({ error: buildResult.Err().message }), respInit(500, "application/json"));
+  }
+  const renderResult = await exception2Result(() =>
+    loadAndRenderTSX(`./vibe.tsx`, {
       ...ctx,
       isSession: vibeCode.origin === "POST",
-      transformedJS,
-    });
-    sessionVibes.set(key, html);
-    return new Response(html, respInit(200, "text/html"));
-  } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), respInit(500, "application/json"));
+      transformedJS: buildResult.Ok(),
+    })
+  );
+  if (renderResult.isErr()) {
+    return new Response(JSON.stringify({ error: renderResult.Err().message }), respInit(500, "application/json"));
   }
+  const html = renderResult.Ok();
+  sessionVibes.set(key, html);
+  return new Response(html, respInit(200, "text/html"));
 }
 
 export function vibesDiyHandler(ctx: () => Promise<VibesDiyServCtx>): (req: Request) => Promise<Response | null> {
