@@ -100,8 +100,6 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     }, []);
 
     const borderColor = "#d4d4d8";
-    // Snake: 4-color segment starts at bottom (~180deg), rest is neutral
-    const snakeBorder = `conic-gradient(from var(--border-angle, 0deg), ${borderColor} 0deg 180deg, var(--vibes-red, #DA291C) 180deg 205deg, var(--vibes-yellow, #fedd00) 205deg 230deg, var(--vibes-green, #22c55e) 230deg 255deg, var(--vibes-blue, #3b82f6) 255deg 280deg, ${borderColor} 280deg 360deg)`;
     const neutralBorder = `linear-gradient(${borderColor}, ${borderColor})`;
     const focusBottomBar = "linear-gradient(90deg, var(--vibes-red, #DA291C) 0% 25%, var(--vibes-yellow, #fedd00) 25% 50%, var(--vibes-green, #22c55e) 50% 75%, var(--vibes-blue, #3b82f6) 75% 100%)";
     const innerBg = "linear-gradient(var(--chat-input-bg), var(--chat-input-bg))";
