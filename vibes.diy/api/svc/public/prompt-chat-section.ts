@@ -141,7 +141,6 @@ async function appendBlockEvent({
     tid: req.outerTid,
     src: "promptChatSection",
   } satisfies InMsgBase<SectionEvent>);
-  console.log("[appendBlockEvent] emitting:", evt.type, "connections:", vctx.connections.size, "chatId:", req.chatId);
   for (const conn of vctx.connections) {
     const chatCtx = conn.chatIds.get(req.chatId);
     if (chatCtx) {
@@ -651,7 +650,6 @@ async function handlerLlmRequest({
   // console.log(promptId, "LLM request for promptId:");
   const res = await scope
     .evalResult<Response>(async () => {
-      console.log(promptId, "Sending LLM request:", llmReq.model);
       const res = await vctx.llmRequest(llmReq);
       if (!res.ok) {
         return Result.Err(`LLM request failed with status ${res.status} :${llmReq.model} : ${res.statusText}`);

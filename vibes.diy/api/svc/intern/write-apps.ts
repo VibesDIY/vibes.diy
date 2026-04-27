@@ -223,7 +223,6 @@ async function toFileSystemItems(
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
 ): Promise<Result<FileSystemItem>[]> {
   const givenFsItems = fs.map((f) => {
-    console.log("toFileSystemItems - processing file:", f.vibeFileItem.filename, (f.vibeFileItem as { lang: string }).lang);
     const ret: FileSystemItem = {
       fileName: f.vibeFileItem.filename,
       assetId: f.storage.cid,

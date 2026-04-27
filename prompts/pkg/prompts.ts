@@ -185,10 +185,6 @@ export async function makeBaseSystemPrompt(
   const includeDemoData = sessionDoc?.demoData === true;
 
   const chosenLlms = llmsCatalog.filter((l) => selectedNames.includes(l.name));
-  console.log(
-    "[makeBaseSystemPrompt] chosen modules:",
-    chosenLlms.map((l) => l.name)
-  );
 
   const concatenatedLlmsTxts: string[] = [];
   for (const llm of chosenLlms) {

@@ -34,10 +34,8 @@ export function defaultFetchPkgVersion(
       .match(furl)
       .then((cachedRes) => {
         if (cachedRes) {
-          console.log(`[defaultFetchPkgVersion] cache hit for ${furl}`);
           return Promise.resolve(cachedRes);
         }
-        console.log(`[defaultFetchPkgVersion] cache miss for ${furl}, fetching...`);
         return opts.fetch(furl);
       })
       .then((res) => {

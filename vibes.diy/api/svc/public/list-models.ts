@@ -6,7 +6,6 @@ import {
   HandleTriggerCtx,
   EventoResult,
   Lazy,
-  urlDirname,
   stream2string,
   BuildURI,
 } from "@adviser/cement";
@@ -26,11 +25,6 @@ import { VibesApiSQLCtx } from "../types.js";
 
 export const loadModels = Lazy(
   async (vctx: VibesApiSQLCtx): Promise<Result<ResListModels>> => {
-    const modelsUrl = urlDirname(import.meta.url)
-      .build()
-      .appendRelative("../models.json")
-      .toString();
-    console.log("Fetching Models.json", modelsUrl, vctx.params.pkgRepos.workspace);
     const vibePkgModelsUrl = BuildURI.from(vctx.params.pkgRepos.workspace)
       .appendRelative("@vibes.diy/api-svc/models.json")
       .toString();

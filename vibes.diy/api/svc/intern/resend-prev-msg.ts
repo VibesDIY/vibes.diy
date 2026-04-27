@@ -77,7 +77,6 @@ export async function resendChatSectionsPrevMsg(args: ResendChatSectionsPrevMsgA
     }
   }
   for (const section of chatCtx.promptIds.values()) {
-    console.log(`from-connection`, section.blocks.length);
     // for (const collectedMsg of section.collectedMsgs) {
     const rSend = await send({
       payload: section,
