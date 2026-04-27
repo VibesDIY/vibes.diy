@@ -42,6 +42,20 @@ export async function registerFirefly(api: VibeSandboxApi): Promise<void> {
 }
 
 /**
+ * List all database names for the current app (owner only).
+ */
+export async function listDbNames(): Promise<string[]> {
+  if (!vibeApiRef) {
+    throw new Error("Firefly not initialized — registerFirefly() must be called before listDbNames()");
+  }
+  const rRes = await vibeApiRef.listDbNames();
+  if (rRes.isErr()) {
+    throw new Error(`Failed to list db names: ${rRes.Err()}`);
+  }
+  return rRes.Ok().dbNames;
+}
+
+/**
  * Standalone factory for non-React contexts (Node.js, Wrangler, scripts).
  * Mirrors the fireproof("name") API from use-fireproof.
  */

@@ -43,6 +43,8 @@ import {
   ReqDeleteDoc,
   isReqSubscribeDocs,
   ReqSubscribeDocs,
+  isReqListDbNames,
+  ReqListDbNames,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -620,6 +622,40 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+function vibeListDbNames(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.listDbNames",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqListDbNames(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqListDbNames, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.listDbNames({
+        userSlug: ctx.validated.userSlug,
+        appSlug: ctx.validated.appSlug,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-list-db-names",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        await ctx.send.send(ctx, {
+          ...rRes.Ok(),
+          tid: ctx.validated.tid,
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
@@ -669,6 +705,7 @@ export class vibesDiySrvSandbox implements Disposable {
         vibeQueryDocs(this),
         vibeDeleteDoc(this),
         vibeSubscribeDocs(this),
+        vibeListDbNames(this),
       ]
     );
     this.args.eventListeners.addEventListener("message", this.handleMessage);

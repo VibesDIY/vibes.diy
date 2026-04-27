@@ -117,6 +117,9 @@ import {
   ReqSubscribeDocs,
   ResSubscribeDocs,
   isResSubscribeDocs,
+  ReqListDbNames,
+  ResListDbNames,
+  isResListDbNames,
   isEvtDocChanged,
   ReqPromptLLMChatSection,
   FSUpdate,
@@ -605,6 +608,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       }
     }
     return result;
+  }
+
+  listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-db-names" }, { resMatch: isResListDbNames });
   }
 
   private attachDocChangedToConnection(

@@ -18,6 +18,7 @@ import {
   isResQueryDocs,
   isResDeleteDoc,
   isResSubscribeDocs,
+  isResListDbNames,
   ReqPutDoc,
   ResPutDoc,
   ReqGetDoc,
@@ -28,6 +29,7 @@ import {
   ResDeleteDoc,
   ReqSubscribeDocs,
   ResSubscribeDocs,
+  ResListDbNames,
 } from "@vibes.diy/vibe-types";
 import { Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
@@ -209,6 +211,16 @@ export class VibeSandboxApi {
         dbName,
       },
       { wait: isResSubscribeDocs, timeout: 10000 }
+    );
+  }
+
+  listDbNames(): Promise<Result<ResListDbNames>> {
+    return this.request<{ type: string; appSlug: string; userSlug: string }, ResListDbNames>(
+      {
+        type: "vibes.diy.req-list-db-names",
+        ...this.svc.vibeApp,
+      },
+      { wait: isResListDbNames, timeout: 10000 }
     );
   }
 

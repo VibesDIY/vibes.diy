@@ -275,6 +275,7 @@ export {
   type ResQueryDocs,
   type ResDeleteDoc,
   type ResSubscribeDocs,
+  type ResListDbNames,
   type EvtDocChanged,
   isResPutDoc,
   isResGetDoc,
@@ -282,6 +283,7 @@ export {
   isResQueryDocs,
   isResDeleteDoc,
   isResSubscribeDocs,
+  isResListDbNames,
   isEvtDocChanged,
 } from "@vibes.diy/api-types";
 
@@ -355,4 +357,16 @@ export type ReqSubscribeDocs = typeof ReqSubscribeDocs.infer;
 
 export function isReqSubscribeDocs(x: unknown): x is ReqSubscribeDocs {
   return !(ReqSubscribeDocs(x) instanceof type.errors);
+}
+
+export const ReqListDbNames = type({
+  type: "'vibes.diy.req-list-db-names'",
+  appSlug: "string",
+  userSlug: "string",
+}).and(Base);
+
+export type ReqListDbNames = typeof ReqListDbNames.infer;
+
+export function isReqListDbNames(x: unknown): x is ReqListDbNames {
+  return !(ReqListDbNames(x) instanceof type.errors);
 }
