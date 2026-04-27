@@ -46,13 +46,11 @@ export function updateRoutingCookie(routingGroups: Record<string, string>, path:
 }
 
 async function handlePut(request: Request, env: Env, origin: string): Promise<Response> {
-  let rawBody: unknown;
-  try {
-    rawBody = await request.json();
-  } catch {
+  const rawBody = await exception2Result(() => request.json());
+  if (rawBody.isErr()) {
     return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400 });
   }
-  const body = type({ path: "string", key: "string" })(rawBody);
+  const body = type({ path: "string", key: "string" })(rawBody.Ok());
   if (body instanceof type.errors) {
     return new Response(JSON.stringify({ error: body.summary }), { status: 400 });
   }
@@ -76,4 +74,3 @@ export async function handleSpaApi(request: Request, env: Env): Promise<Response
   if (request.method === "PUT") return handlePut(request, env, origin);
   return new Response("Method not allowed", { status: 405 });
 }
-

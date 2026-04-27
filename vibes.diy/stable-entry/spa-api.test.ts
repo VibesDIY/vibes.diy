@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { handleSpaApi } from "./spa-api.js";
+import type { Env } from "./types.js";
+
+// handlePut never reads env; the cast keeps the value typed without an `any`.
+const env = {} as unknown as Env;
 
 describe("handleSpaApi", () => {
   describe("handlePut", () => {
@@ -9,7 +13,7 @@ describe("handleSpaApi", () => {
         body: "not json",
         headers: { "Content-Type": "application/json" },
       });
-      const response = await handleSpaApi(request, {} as any);
+      const response = await handleSpaApi(request, env);
       expect(response.status).toBe(400);
     });
 
@@ -19,7 +23,7 @@ describe("handleSpaApi", () => {
         body: JSON.stringify({ key: "some-key" }),
         headers: { "Content-Type": "application/json" },
       });
-      const response = await handleSpaApi(request, {} as any);
+      const response = await handleSpaApi(request, env);
       expect(response.status).toBe(400);
     });
 
@@ -29,7 +33,7 @@ describe("handleSpaApi", () => {
         body: JSON.stringify({ path: "/some/path" }),
         headers: { "Content-Type": "application/json" },
       });
-      const response = await handleSpaApi(request, {} as any);
+      const response = await handleSpaApi(request, env);
       expect(response.status).toBe(400);
     });
 
@@ -39,7 +43,7 @@ describe("handleSpaApi", () => {
         body: JSON.stringify({}),
         headers: { "Content-Type": "application/json" },
       });
-      const response = await handleSpaApi(request, {} as any);
+      const response = await handleSpaApi(request, env);
       expect(response.status).toBe(400);
     });
 
@@ -49,9 +53,8 @@ describe("handleSpaApi", () => {
         body: JSON.stringify({ path: "/some/path", key: "some-key" }),
         headers: { "Content-Type": "application/json" },
       });
-      const response = await handleSpaApi(request, {} as any);
+      const response = await handleSpaApi(request, env);
       expect(response.status).toBe(303);
     });
   });
 });
-
