@@ -12,9 +12,10 @@ export interface RenderDBExplorerOps {
     public?: string; // default to esm.sh
   };
   base: string;
+  vibeApp: { appSlug: string; userSlug: string; fsId?: string };
 }
 
-export async function renderDBExplorer({ vctx, pkgRepos, base }: RenderDBExplorerOps) {
+export async function renderDBExplorer({ vctx, pkgRepos, base, vibeApp }: RenderDBExplorerOps) {
   const deps = Dependencies.from({
     ...lockedGroupsVersions,
   });
@@ -34,6 +35,7 @@ export async function renderDBExplorer({ vctx, pkgRepos, base }: RenderDBExplore
 
   return DBExplorerPage({
     base,
+    vibeApp,
     importMap: {
       imports: importMap,
     },
