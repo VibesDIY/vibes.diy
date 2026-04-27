@@ -236,6 +236,17 @@ export function isEvtNewFsId(obj: unknown): obj is EvtNewFsId {
   return !(evtNewFsId(obj) instanceof type.errors);
 }
 
+export const evtIconRepair = type({
+  type: "'vibes.diy.evt-icon-repair'",
+  userSlug: "string",
+  appSlug: "string",
+});
+export type EvtIconRepair = typeof evtIconRepair.infer;
+
+export function isEvtIconRepair(obj: unknown): obj is EvtIconRepair {
+  return !(evtIconRepair(obj) instanceof type.errors);
+}
+
 export const reqListModels = type({
   type: "'vibes.diy.req-list-models'",
 });

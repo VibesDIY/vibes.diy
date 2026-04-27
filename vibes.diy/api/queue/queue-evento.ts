@@ -3,12 +3,14 @@ import { evtNewFsIdEvento } from "./handlers/evt-new-fs-id.js";
 import { evtAppSettingEvento } from "./handlers/evt-app-setting.js";
 import { evtInviteGrantEvento } from "./handlers/evt-invite-grant.js";
 import { evtRequestGrantEvento } from "./handlers/evt-request-grant.js";
+import { evtIconGenEvento } from "./handlers/evt-icon-gen.js";
 import { MsgBaseEventoEnDecoder } from "@vibes.diy/api-pkg";
 
 export const vibesQueueEvento = Lazy(() => {
   const evento = new Evento(new MsgBaseEventoEnDecoder());
   evento.push(
     evtNewFsIdEvento,
+    evtIconGenEvento,
     evtAppSettingEvento,
     evtInviteGrantEvento,
     evtRequestGrantEvento,

@@ -301,6 +301,16 @@ export function isActiveSkills(obj: unknown): obj is ActiveSkills {
   return !(ActiveSkills(obj) instanceof type.errors);
 }
 
+export const ActiveIcon = type({
+  type: "'active.icon'",
+  cid: "string",
+  mime: "string",
+});
+export type ActiveIcon = typeof ActiveIcon.infer;
+export function isActiveIcon(obj: unknown): obj is ActiveIcon {
+  return !(ActiveIcon(obj) instanceof type.errors);
+}
+
 export const ActiveModelSettingBase = type({
   type: "'active.model'",
   param: AIParams,
@@ -355,6 +365,7 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(EnableRequest)
   .or(ActiveTitle)
   .or(ActiveSkills)
+  .or(ActiveIcon)
   .or(ActiveModelSetting)
   .or(ActiveEnv);
 

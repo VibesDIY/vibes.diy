@@ -499,6 +499,8 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             promptProcessing={promptState.running}
             codeReady={promptState.hasCode}
             title={promptState.title}
+            userSlug={userSlug}
+            appSlug={appSlug}
           />
         }
         headerRight={

@@ -13,6 +13,22 @@ interface RecentVibeItem {
   appSlug: string;
 }
 
+function VibeIconThumb({ userSlug, appSlug }: { userSlug: string; appSlug: string }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+  }, [userSlug, appSlug]);
+  if (failed) return <span className="h-6 w-6 flex-shrink-0 rounded-sm bg-black/10 dark:bg-white/10" aria-hidden />;
+  return (
+    <img
+      src={`/vibes-icon/${userSlug}/${appSlug}`}
+      alt=""
+      className="h-6 w-6 flex-shrink-0 rounded-sm bg-black/5 dark:bg-white/5"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export function toRecentVibes(items: ResListUserSlugAppSlugItem[], limit: number): RecentVibeItem[] {
   if (limit <= 0) return [];
   const out: RecentVibeItem[] = [];
@@ -81,8 +97,9 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
                 <Link
                   to={`/chat/${item.userSlug}/${item.appSlug}`}
                   onClick={onNavigate}
-                  className="flex items-center pl-2 pr-4 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5 border-b border-black/5 dark:border-white/5"
+                  className="flex items-center gap-2 pl-2 pr-4 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5 border-b border-black/5 dark:border-white/5"
                 >
+                  <VibeIconThumb userSlug={item.userSlug} appSlug={item.appSlug} />
                   <span className="flex flex-col min-w-0">
                     <span className="truncate">{item.appSlug}</span>
                     <span className="text-xs truncate opacity-50">{item.userSlug}</span>
