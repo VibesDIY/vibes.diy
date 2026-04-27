@@ -5,8 +5,7 @@ import { type } from "arktype";
 export class ReqResEventoEnDecoder implements EventoEnDecoder<Request, string> {
   async encode(args: Request): Promise<Result<unknown>> {
     if (args.method === "POST" || args.method === "PUT") {
-      const body = (await args.json()) as unknown;
-      return Result.Ok(body);
+      return exception2Result(() => args.json());
     }
     return Result.Ok();
   }
