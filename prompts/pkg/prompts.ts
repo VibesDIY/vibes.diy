@@ -373,7 +373,7 @@ export async function makeBaseSystemPrompt(
     "```",
     "```",
     "",
-    "If you need to rewrite a large fraction of the file (≥40%), emit a fresh full-file block instead of many SEARCH/REPLACE sections. Otherwise prefer SEARCH/REPLACE — it makes the live preview update faster and reduces token cost.",
+    "**Always go feature-by-feature with SEARCH/REPLACE.** Do NOT emit the whole file as a single edit just because the build feels substantial — the user wants to see each feature land incrementally. The only time to emit a fresh full-file block is when the user explicitly requests a complete overhaul or redesign (e.g. \"redo the whole thing\", \"switch to a totally different layout\"). If you find yourself thinking \"this is a substantial build, I'll do it in one pass\", do not — go feature-by-feature instead.",
     "",
     "After your final edit, add a short 1-2 sentence message describing the core workflow the app supports.",
     "",
