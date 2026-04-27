@@ -211,7 +211,7 @@ describe("prompt builder (real implementation)", () => {
     const importBlock = generateImportStatements(chosenLlms);
 
     expect(result.systemPrompt).toContain("```js");
-    expect(result.systemPrompt).toContain('import React, { ... } from "react"' + importBlock);
+    expect(result.systemPrompt).toContain('import React from "react"' + importBlock);
 
     for (const llm of chosenLlms) {
       expect(result.systemPrompt).toContain(`<${llm.label}-docs>`);
@@ -241,7 +241,7 @@ describe("prompt builder (real implementation)", () => {
 
     const chosenLlms = orderedLlms.filter((llm) => knownModuleNames.includes(llm.name)); // mocked AI call returns finite set
     const importBlock = generateImportStatements(chosenLlms);
-    expect(result.systemPrompt).toContain('import React, { ... } from "react"' + importBlock);
+    expect(result.systemPrompt).toContain('import React from "react"' + importBlock);
 
     // Custom stylePrompt line replaces default
     expect(result.systemPrompt).toContain("Don't use words from the style prompt in your copy: custom");
