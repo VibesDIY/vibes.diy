@@ -21,7 +21,7 @@
     "build:prod": "pnpm --filter vibes-diy build",
     "serve:prod": "pnpm exec serve -s vibes.diy/pkg/build/client",
     "growth-report": "pnpm --filter @vibes.diy/api-svc run db:inspect-report",
-    "lint": "eslint .",
+    "lint": "eslint . --cache",
     "knip": "knip",
     "test": "vitest --run",
     "test:coverage": "vitest run --coverage",
