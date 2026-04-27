@@ -38,7 +38,14 @@ import {
   hasAccessRequestEvento,
 } from "./public/request-flow.js";
 import { listModelsEvento } from "./public/list-models.js";
-import { putDocEvento, getDocEvento, queryDocsEvento, deleteDocEvento, subscribeDocsEvento } from "./public/app-documents.js";
+import {
+  putDocEvento,
+  getDocEvento,
+  queryDocsEvento,
+  deleteDocEvento,
+  subscribeDocsEvento,
+  listDbNamesEvento,
+} from "./public/app-documents.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -78,6 +85,7 @@ export const vibesMsgEvento = Lazy(() => {
     queryDocsEvento,
     deleteDocEvento,
     subscribeDocsEvento,
+    listDbNamesEvento,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",

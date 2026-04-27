@@ -17,6 +17,9 @@ import {
   reqSubscribeDocs,
   ReqSubscribeDocs,
   ResSubscribeDocs,
+  reqListDbNames,
+  ReqListDbNames,
+  ResListDbNames,
   ReqWithVerifiedAuth,
   ReqWithOptionalAuth,
   VibesDiyError,
@@ -29,8 +32,8 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
-import { eq, and } from "drizzle-orm";
-import { sql, max } from "drizzle-orm/sql";
+import { eq, and, sql } from "drizzle-orm";
+import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
@@ -429,6 +432,47 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
         type: "vibes.diy.res-subscribe-docs",
         status: "ok",
       } satisfies ResSubscribeDocs);
+      return Result.Ok(EventoResult.Continue);
+    }
+  ),
+};
+
+// ── listDbNames ────────────────────────────────────────────────────
+
+export const listDbNamesEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqListDbNames>, ResListDbNames | VibesDiyError> = {
+  hash: "list-db-names",
+  validate: unwrapMsgBase(async (msg: MsgBase) => {
+    const ret = reqListDbNames(msg.payload);
+    if (ret instanceof type.errors) {
+      return Result.Ok(Option.None());
+    }
+    return Result.Ok(Option.Some({ ...msg, payload: ret }));
+  }),
+  handle: checkAuth(
+    async (
+      ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqListDbNames>>, ResListDbNames | VibesDiyError>
+    ): Promise<Result<EventoResultType>> => {
+      const req = ctx.validated.payload;
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+      const userId = req._auth.verifiedAuth.claims.userId;
+
+      const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
+      if (access !== "owner") {
+        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } as unknown as VibesDiyError);
+        return Result.Ok(EventoResult.Continue);
+      }
+
+      const t = vctx.sql.tables.appDocuments;
+      const rows = await vctx.sql.db
+        .selectDistinct({ dbName: t.dbName })
+        .from(t)
+        .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug)));
+
+      await ctx.send.send(ctx, {
+        type: "vibes.diy.res-list-db-names",
+        status: "ok",
+        dbNames: rows.map((r) => r.dbName),
+      } satisfies ResListDbNames);
       return Result.Ok(EventoResult.Continue);
     }
   ),

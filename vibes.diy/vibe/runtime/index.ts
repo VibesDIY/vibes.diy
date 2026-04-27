@@ -3,7 +3,7 @@ export * from "./register-dependencies.js";
 export * from "./VibeContext.js";
 export * from "./call-ai.js";
 export * from "./img-vibes.js";
-export { useFireproof, fireproof } from "./use-firefly.js";
+export { useFireproof, fireproof, listDbNames } from "./use-firefly.js";
 export {
   FireflyDatabase,
   FireflyDatabase as Database,

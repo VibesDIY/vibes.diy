@@ -70,6 +70,8 @@ import {
   ResDeleteDoc,
   ReqSubscribeDocs,
   ResSubscribeDocs,
+  ReqListDbNames,
+  ResListDbNames,
 } from "./app-documents.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -150,6 +152,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   queryDocs(req: Req<ReqQueryDocs>): Promise<Result<ResQueryDocs, VibesDiyError>>;
   deleteDoc(req: Req<ReqDeleteDoc>): Promise<Result<ResDeleteDoc, VibesDiyError>>;
   subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>>;
+  listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>>;
 
   // Register a callback for document change events pushed from the API
   onDocChanged(fn: (userSlug: string, appSlug: string, docId: string) => void): void;

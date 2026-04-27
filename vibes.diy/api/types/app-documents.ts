@@ -135,6 +135,29 @@ export function isResSubscribeDocs(obj: unknown): obj is ResSubscribeDocs {
   return !(resSubscribeDocs(obj) instanceof type.errors);
 }
 
+// ── listDbNames ────────────────────────────────────────────────────
+
+export const reqListDbNames = type({
+  type: "'vibes.diy.req-list-db-names'",
+  auth: dashAuthType,
+  userSlug: "string",
+  appSlug: "string",
+});
+export type ReqListDbNames = typeof reqListDbNames.infer;
+export function isReqListDbNames(obj: unknown): obj is ReqListDbNames {
+  return !(reqListDbNames(obj) instanceof type.errors);
+}
+
+export const resListDbNames = type({
+  type: "'vibes.diy.res-list-db-names'",
+  status: "'ok'",
+  dbNames: "string[]",
+});
+export type ResListDbNames = typeof resListDbNames.infer;
+export function isResListDbNames(obj: unknown): obj is ResListDbNames {
+  return !(resListDbNames(obj) instanceof type.errors);
+}
+
 // ── docChanged event (server → client push) ─────────────────────────
 
 export const evtDocChanged = type({
