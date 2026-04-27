@@ -15,6 +15,7 @@ import { cfServe, CfCacheIf } from "@vibes.diy/api-svc";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
 import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
+import { getAppMetaTitle } from "@vibes.diy/api-svc";
 
 export { ChatSessions } from "./chat-sessions.js";
 // import { cfServe } from "@vibes.diy/api-svc";
@@ -141,9 +142,14 @@ export default {
       }) as unknown as CFResponse;
     }
 
+    // For /vibe/ routes, look up the real app title for OG meta tags
+    const vibeMatch = url.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/);
+    const vibeAppTitle = vibeMatch ? await getAppMetaTitle(cfCtx.vibesCtx, vibeMatch[1], vibeMatch[2]) : undefined;
+
     // Delegate to React Router for SSR
     return requestHandler(request as unknown as Parameters<typeof requestHandler>[0], {
       vibeDiyAppParams: cfCtx.vibesCtx.params,
+      vibeAppTitle,
     }) as unknown as CFResponse;
   },
 } satisfies ExportedHandler<CFEnv>;
