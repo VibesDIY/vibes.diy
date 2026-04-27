@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "./styles/global.css";
 
+/* Ensure spin animations are GPU-composited to avoid triggering CLS */
+.animate-spin {
+  will-change: transform;
+}
+
 @theme {
   /* Values from @vibes.diy/base tokens.ts — keep in sync */
 
