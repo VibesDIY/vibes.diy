@@ -30,6 +30,18 @@ interface ReportData {
   readonly activeVibesTimeseries: readonly Record<string, unknown>[];
   readonly userSlugBindingsTimeseries: readonly Record<string, unknown>[];
   readonly membershipsByApp: readonly Record<string, unknown>[];
+  readonly tableStats: readonly {
+    readonly table: string;
+    readonly total_size: string;
+    readonly table_size: string;
+    readonly total_bytes: number;
+    readonly index_count: number;
+  }[];
+  readonly indexStats: readonly {
+    readonly indexname: string;
+    readonly tablename: string;
+    readonly indexdef: string;
+  }[];
   readonly userModelRows: readonly Record<string, unknown>[];
   readonly appModelRows: readonly Record<string, unknown>[];
   readonly userSettingsSample: readonly Record<string, unknown>[];
@@ -445,12 +457,21 @@ function ReportPage(data: ReportData): React.ReactElement {
     activeVibesTimeseries,
     userSlugBindingsTimeseries,
     membershipsByApp,
+    tableStats,
+    indexStats,
     userModelRows,
     appModelRows,
     userSettingsSample,
     appSettingsSample,
   } = data;
   const totalRows = tableCounts.reduce((sum, row) => sum + Number(row.rowCount || 0), 0);
+  const totalDbBytes = tableStats.reduce((sum, row) => sum + Number(row.total_bytes || 0), 0);
+  const totalDbSize =
+    totalDbBytes >= 1024 * 1024 * 1024
+      ? `${(totalDbBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+      : totalDbBytes >= 1024 * 1024
+        ? `${(totalDbBytes / (1024 * 1024)).toFixed(0)} MB`
+        : `${(totalDbBytes / 1024).toFixed(0)} KB`;
   const lastBindingsCount = userSlugBindingsTimeseries[userSlugBindingsTimeseries.length - 1]?.["user_slug_bindings_count"] ?? 0;
 
   return (
@@ -481,6 +502,8 @@ function ReportPage(data: ReportData): React.ReactElement {
               <MetricCard label="User" value={info.current_user} />
               <MetricCard label="Tables" value={tableCounts.length} />
               <MetricCard label="Rows Counted" value={totalRows} />
+              <MetricCard label="DB Size" value={totalDbSize} />
+              <MetricCard label="Indexes" value={indexStats.length} />
               <MetricCard label="Model Rows" value={userModelRows.length + appModelRows.length} />
             </div>
           </div>
@@ -519,6 +542,25 @@ function ReportPage(data: ReportData): React.ReactElement {
           <section>
             <h2>Table Counts</h2>
             <DataTable rows={tableCounts} />
+          </section>
+
+          <section>
+            <h2>Schema Stats</h2>
+            <p>Table sizes (including TOAST and indexes) and index counts per table, sorted by total size descending.</p>
+            <DataTable
+              rows={tableStats.map(({ table, total_size, table_size, index_count }) => ({
+                table,
+                total_size,
+                table_size,
+                index_count,
+              }))}
+            />
+          </section>
+
+          <section>
+            <h2>Indexes</h2>
+            <p>All {indexStats.length} indexes on the public schema.</p>
+            <DataTable rows={indexStats} />
           </section>
 
           <section>

@@ -234,6 +234,38 @@ async function main(): Promise<Result<void>> {
     userSlugBindingsTimeseries.push({ day, user_slug_bindings_count: result[0]?.cnt ?? 0 });
   }
 
+  // Schema stats — table sizes and index counts from system catalogs
+  const tableSizeRows = await db.execute(sql`
+    SELECT
+      t.tablename AS table,
+      pg_size_pretty(pg_total_relation_size(quote_ident(t.tablename)::regclass)) AS total_size,
+      pg_size_pretty(pg_relation_size(quote_ident(t.tablename)::regclass)) AS table_size,
+      pg_total_relation_size(quote_ident(t.tablename)::regclass) AS total_bytes,
+      (SELECT count(*) FROM pg_indexes i WHERE i.tablename = t.tablename AND i.schemaname = 'public')::int AS index_count
+    FROM pg_tables t
+    WHERE t.schemaname = 'public'
+    ORDER BY pg_total_relation_size(quote_ident(t.tablename)::regclass) DESC
+  `);
+  const tableStats = tableSizeRows.rows as unknown as {
+    table: string;
+    total_size: string;
+    table_size: string;
+    total_bytes: number;
+    index_count: number;
+  }[];
+
+  const indexRows = await db.execute(sql`
+    SELECT indexname, tablename, indexdef
+    FROM pg_indexes
+    WHERE schemaname = 'public'
+    ORDER BY tablename, indexname
+  `);
+  const indexStats = indexRows.rows as unknown as {
+    indexname: string;
+    tablename: string;
+    indexdef: string;
+  }[];
+
   // User model settings — fetch all settings, filter/flatten in JS
   const allUserSettings = await db
     .select({
@@ -320,6 +352,8 @@ async function main(): Promise<Result<void>> {
     userSlugBindingsTimeseriesCsv: writeCsv("user-slug-bindings-timeseries.csv", userSlugBindingsTimeseries),
     membershipsByAppCsv: writeCsv("memberships-by-app.csv", membershipsByApp),
     tableCountsCsv: writeCsv("table-counts.csv", tableCounts),
+    tableStatsCsv: writeCsv("table-stats.csv", tableStats),
+    indexStatsCsv: writeCsv("index-stats.csv", indexStats),
     userModelCsv: writeCsv("user-model-settings.csv", userModelRows as unknown as Record<string, unknown>[]),
     appModelCsv: writeCsv("app-model-settings.csv", appModelRows as unknown as Record<string, unknown>[]),
     userSettingsCsv: writeCsv("user-settings-sample.csv", userSettingsSample as unknown as Record<string, unknown>[]),
@@ -340,6 +374,8 @@ async function main(): Promise<Result<void>> {
     activeVibesTimeseries,
     userSlugBindingsTimeseries,
     membershipsByApp,
+    tableStats,
+    indexStats,
     userModelRows: userModelRows as unknown as Record<string, unknown>[],
     appModelRows: appModelRows as unknown as Record<string, unknown>[],
     userSettingsSample: userSettingsSample as unknown as Record<string, unknown>[],
