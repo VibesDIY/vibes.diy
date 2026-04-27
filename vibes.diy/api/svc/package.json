@@ -25,7 +25,7 @@
     "@fireproof/core-types-protocols-cloud": "0.24.19",
     "@fireproof/core-types-protocols-dashboard": "0.24.19",
     "@libsql/client": "^0.17.2",
-    "@neondatabase/serverless": "^1.0.2",
+    "@neondatabase/serverless": "^1.1.0",
     "@noble/hashes": "^2.0.1",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-pkg": "workspace:*",
