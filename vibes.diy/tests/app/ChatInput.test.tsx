@@ -46,8 +46,8 @@ describe("ChatInput Component", () => {
       </MockThemeProvider>
     );
 
-    const textArea = screen.getByPlaceholderText("Continue coding...");
-    const sendButton = screen.getByLabelText("Generating");
+    const textArea = screen.getByPlaceholderText("I want to build...");
+    const sendButton = screen.getByLabelText("Processing");
 
     expect(textArea).toBeDisabled();
     expect(sendButton).toBeDisabled();
@@ -90,7 +90,7 @@ describe("ChatInput Component", () => {
       </MockThemeProvider>
     );
 
-    const textArea = screen.getByPlaceholderText("Continue coding...");
+    const textArea = screen.getByPlaceholderText("I want to build...");
     fireEvent.keyDown(textArea, { key: "Enter", shiftKey: false });
 
     expect(onSubmit).not.toHaveBeenCalled();
@@ -103,7 +103,7 @@ describe("ChatInput Component", () => {
       </MockThemeProvider>
     );
 
-    const sendButton = screen.getByLabelText("Generating");
+    const sendButton = screen.getByLabelText("Processing");
     fireEvent.click(sendButton);
 
     expect(onSubmit).not.toHaveBeenCalled();
