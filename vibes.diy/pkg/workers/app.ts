@@ -130,14 +130,15 @@ export default {
     // Hashed static assets (Vite fingerprinted) — cache immutably
     if (url.pathname.startsWith("/assets/") && !url.pathname.startsWith("/assets/cid")) {
       const assetResponse = await env.ASSETS.fetch(request);
-      if (assetResponse.ok) {
-        const headers = new Headers(Object.fromEntries(assetResponse.headers.entries()));
-        headers.set("Cache-Control", "public, max-age=31536000, immutable");
-        return new Response(assetResponse.body as unknown as BodyInit, {
-          status: assetResponse.status,
-          headers,
-        }) as unknown as CFResponse;
+      if (!assetResponse.ok) {
+        return assetResponse as unknown as CFResponse;
       }
+      const headers = new Headers(Object.fromEntries(assetResponse.headers.entries()));
+      headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      return new Response(assetResponse.body as unknown as BodyInit, {
+        status: assetResponse.status,
+        headers,
+      }) as unknown as CFResponse;
     }
 
     // Delegate to React Router for SSR
