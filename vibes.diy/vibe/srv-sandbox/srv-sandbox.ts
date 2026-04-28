@@ -721,9 +721,12 @@ export class vibesDiySrvSandbox implements Disposable {
   };
 
   // Forward a doc-changed event from the API to the iframe
-  forwardDocChangedToIframe(userSlug: string, appSlug: string, docId: string): void {
+  forwardDocChangedToIframe(userSlug: string, appSlug: string, dbName: string, docId: string): void {
     if (this.iframeSource && this.iframeOrigin) {
-      this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", userSlug, appSlug, docId }, this.iframeOrigin);
+      this.iframeSource.postMessage(
+        { type: "vibes.diy.evt-doc-changed", userSlug, appSlug, dbName, docId },
+        this.iframeOrigin
+      );
     }
   }
 
@@ -767,8 +770,8 @@ export class vibesDiySrvSandbox implements Disposable {
     this.removeEventListeners = this.args.eventListeners.removeEventListener;
 
     // Forward doc-changed events from the API WebSocket to the iframe
-    this.args.vibeDiyApi.onDocChanged((userSlug, appSlug, docId) => {
-      this.forwardDocChangedToIframe(userSlug, appSlug, docId);
+    this.args.vibeDiyApi.onDocChanged((userSlug, appSlug, dbName, docId) => {
+      this.forwardDocChangedToIframe(userSlug, appSlug, dbName, docId);
     });
   }
 

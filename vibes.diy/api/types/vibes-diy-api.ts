@@ -154,6 +154,9 @@ export interface VibesDiyApiIface<_T = unknown> {
   subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>>;
   listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>>;
 
-  // Register a callback for document change events pushed from the API
-  onDocChanged(fn: (userSlug: string, appSlug: string, docId: string) => void): void;
+  // Register a callback for document change events pushed from the API.
+  // dbName is included so consumers can filter to the specific db they care
+  // about — events arrive on this connection only for dbs the client has
+  // subscribed to via subscribeDocs.
+  onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): void;
 }

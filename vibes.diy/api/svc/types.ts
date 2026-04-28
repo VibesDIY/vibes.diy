@@ -46,7 +46,7 @@ export interface VibesApiSQLCtx {
   storage: VibesAssetStorage;
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
   prodiaToken?: string;
-  notifyDocChanged?(evt: { userSlug: string; appSlug: string; docId: string }): Promise<void>;
+  notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;
   deregisterDocSubscription?(subscriptionKey: string): Promise<void>;
 }
