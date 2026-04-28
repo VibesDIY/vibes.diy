@@ -10,15 +10,13 @@ export interface ExpandedVibesPillProps {
   cloneHref?: string;
   /** Link target for Edit — rendered only when the viewer owns the vibe. Omit to hide. */
   editHref?: string;
-  /** Optional handler for the Thank Author share action. */
-  onThankAuthor?: () => void;
   onHome?: () => void;
-  /** When provided, clicking Share opens the owner share modal instead of the Copy Link / Thank Author submenu. */
-  onOwnerShare?: () => void;
-  /** Ref to attach to the Share button (used by the owner share modal for positioning). */
-  shareButtonRef?: React.Ref<HTMLButtonElement>;
+  /** Handler invoked when the Community button is clicked — opens the Community panel. */
+  onCommunity?: () => void;
+  /** Ref to attach to the Community button (used for popover positioning). */
+  communityButtonRef?: React.Ref<HTMLButtonElement>;
   /** When > 0, renders a numeric badge on the pill indicating pending access requests. Owner-only. */
-  shareBadgeCount?: number;
+  communityBadgeCount?: number;
 }
 
 function PillActionButton({ height, label, icon, bgColor, labelColor, onClick, buttonRef }: {
@@ -174,10 +172,20 @@ const diyLetters = [
   { d: "M449.933,210.636c0.102-3.331,1.886-5.279,4.778-5.22c2.67,0.055,4.829,2.432,4.762,5.243c-0.073,3.021-2.404,5.36-5.242,5.261C451.606,215.829,449.84,213.657,449.933,210.636z" },
 ];
 
-export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, editHref, onThankAuthor, onHome, onOwnerShare, shareButtonRef, shareBadgeCount }: ExpandedVibesPillProps) {
+export function ExpandedVibesPill({
+  size = 75,
+  className,
+  remixHref,
+  cloneHref,
+  editHref,
+  onHome,
+  onCommunity,
+  communityButtonRef,
+  communityBadgeCount,
+}: ExpandedVibesPillProps) {
   // idle → bubble → expanding → open (click to close: open → collapsing → idle)
   const [phase, setPhase] = useState<"idle" | "bubble" | "expanding" | "open" | "collapsing" | "shrinking">("idle");
-  const [subMode, setSubMode] = useState<"default" | "change" | "share">("default");
+  const [subMode, setSubMode] = useState<"default" | "change">("default");
 
   const handleClick = () => {
     if (phase === "idle") setPhase("bubble");
@@ -273,17 +281,13 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
           />
           <PillActionButton
             height={height}
-            label="Share"
+            label="Community"
             bgColor="var(--vibes-green, #22c55e)"
             labelColor="var(--vibes-cream, #FFFEF0)"
-            buttonRef={shareButtonRef}
+            buttonRef={communityButtonRef}
             onClick={(e) => {
               e.stopPropagation();
-              if (onOwnerShare) {
-                onOwnerShare();
-              } else {
-                setSubMode((m) => m === "share" ? "default" : "share");
-              }
+              onCommunity?.();
             }}
             icon={
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -384,64 +388,6 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
         )}
       </div>
 
-      {/* Share vertical sub-menu — opens above the Share button */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: height - (123 * scale - 4) + 4,
-          // Share is the 2nd button (offset by one btnWidth from the Vibe button's left).
-          left: pillWidth + 4 - trayExpanded + btnWidth,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "stretch",
-          gap: 6,
-          padding: 8,
-          background: "var(--vibes-cream, #FFFEF0)",
-          border: "1px solid var(--vibes-near-black, #1a1a1a)",
-          borderRadius: 12,
-          transformOrigin: "bottom left",
-          transform: subMode === "share" && buttonsVisible ? "scale(1)" : "scale(0)",
-          opacity: subMode === "share" && buttonsVisible ? 1 : 0,
-          transition: "transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.08s ease",
-          pointerEvents: subMode === "share" && buttonsVisible ? "auto" : "none",
-          zIndex: 3,
-          minWidth: height * 2.4,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <VerticalActionButton
-          height={height}
-          label="Copy Link"
-          bgColor="var(--vibes-yellow, #fedd00)"
-          labelColor="var(--vibes-near-black, #1a1a1a)"
-          onClick={() => {
-            navigator.clipboard.writeText(window.location.href);
-            setSubMode("default");
-          }}
-          icon={
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-            </svg>
-          }
-        />
-        <VerticalActionButton
-          height={height}
-          label="Thank Author"
-          bgColor="var(--vibes-green, #22c55e)"
-          labelColor="var(--vibes-cream, #FFFEF0)"
-          onClick={() => {
-            onThankAuthor?.();
-            setSubMode("default");
-          }}
-          icon={
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-            </svg>
-          }
-        />
-      </div>
-
       {/* The pill SVG — always on top */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -469,23 +415,21 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
 
       {/* Pending access-request count badge — owner-only, visible in every phase.
           Anchored top-right of the pill SVG when closed; translates onto the
-          Share button (2nd of 3 in the horizontal tray) when the switch opens. */}
-      {shareBadgeCount && shareBadgeCount > 0
+          Community button (2nd of 3 in the horizontal tray) when the switch opens. */}
+      {communityBadgeCount && communityBadgeCount > 0
         ? (() => {
             const badgeSize = height * 0.36;
-            // Closed: center sits at wrapper.right - 6 + badgeSize/2, height*0.15 + badgeSize/2
             const closedCx = pillWidth + 6 - badgeSize / 2;
             const closedCy = height * 0.15 + badgeSize / 2;
-            // Open: sit at the top-right corner of the Share button (2nd of 3 buttons).
             const trayLeft = pillWidth + 4 - trayExpanded;
             const trayTop = 123 * scale - 4;
-            const openCx = trayLeft + btnWidth * 2; // right edge of Share button
-            const openCy = trayTop; // top edge of the tray
+            const openCx = trayLeft + btnWidth * 2;
+            const openCy = trayTop;
             const dx = expanded ? openCx - closedCx : 0;
             const dy = expanded ? openCy - closedCy : 0;
             return (
               <div
-                aria-label={`${shareBadgeCount} pending access request${shareBadgeCount === 1 ? "" : "s"}`}
+                aria-label={`${communityBadgeCount} pending access request${communityBadgeCount === 1 ? "" : "s"}`}
                 style={{
                   position: "absolute",
                   top: height * 0.15,
@@ -511,7 +455,7 @@ export function ExpandedVibesPill({ size = 75, className, remixHref, cloneHref, 
                   transition: "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
                 }}
               >
-                {shareBadgeCount > 99 ? "99+" : shareBadgeCount}
+                {communityBadgeCount > 99 ? "99+" : communityBadgeCount}
               </div>
             );
           })()

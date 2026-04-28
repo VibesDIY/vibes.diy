@@ -46,6 +46,7 @@ import {
   subscribeDocsEvento,
   listDbNamesEvento,
 } from "./public/app-documents.js";
+import { listMembersEvento } from "./public/list-members.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -86,6 +87,7 @@ export const vibesMsgEvento = Lazy(() => {
     deleteDocEvento,
     subscribeDocsEvento,
     listDbNamesEvento,
+    listMembersEvento,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",

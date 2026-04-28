@@ -59,6 +59,11 @@ export default function VibeIframeWrapper() {
   const [searchParam] = useSearchParams();
   const [retryCount, setRetryCount] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
+  // The viewer's grant on this vibe — used to decide whether the comments
+  // composer is enabled when the owner has flipped "Only collaborators can
+  // comment" on. Owner + editor stay enabled; viewer/submitter/public/none
+  // get the disabled hint.
+  const [myGrant, setMyGrant] = useState<"owner" | "editor" | "viewer" | "submitter" | "public" | "none">("none");
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingBump, setPendingBump] = useState(0);
 
@@ -186,6 +191,17 @@ export default function VibeIframeWrapper() {
                 port,
               });
               setReady(true);
+              setMyGrant(
+                res.grant === "owner"
+                  ? "owner"
+                  : res.grant === "granted-access.editor" || res.grant === "accepted-email-invite"
+                    ? "editor"
+                    : res.grant === "granted-access.viewer"
+                      ? "viewer"
+                      : res.grant === "granted-access.submitter"
+                        ? "submitter"
+                        : "public"
+              );
             }
             break;
           default:
@@ -312,14 +328,14 @@ export default function VibeIframeWrapper() {
                 remixHref={remixUrl}
                 cloneHref={cloneUrl}
                 editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
-                onOwnerShare={isOwner ? shareModal.open : undefined}
-                shareButtonRef={isOwner ? shareModal.buttonRef : undefined}
-                shareBadgeCount={isOwner ? pendingCount : 0}
+                onCommunity={shareModal.open}
+                communityButtonRef={shareModal.buttonRef}
+                communityBadgeCount={isOwner ? pendingCount : 0}
                 onHome={() => {
                   window.open("https://vibes.diy", "_blank");
                 }}
               />
-              <ShareModal modal={shareModal} placement="above" />
+              <ShareModal modal={shareModal} placement="above" isOwner={isOwner} myGrant={myGrant} />
             </Delayed>
           </div>,
           document.body
