@@ -177,6 +177,19 @@ describe("comments ACL: lazy default (members can write/delete)", { timeout: 200
     });
     expect(delRes.isErr()).toBe(true);
   });
+
+  it("listMembers returns approved members with display name + role only", async () => {
+    const res = await ctx.viewerApi.listMembers({ appSlug: ctx.appSlug, userSlug: ctx.userSlug });
+    expect(res.isOk()).toBe(true);
+    const members = res.Ok().members;
+    expect(members.length).toBeGreaterThan(0);
+    for (const m of members) {
+      expect(typeof m.displayName).toBe("string");
+      expect(["editor", "viewer", "submitter"]).toContain(m.role);
+      // No email/userId fields leaked
+      expect(Object.keys(m).sort()).toEqual(["displayName", "role"]);
+    }
+  });
 });
 
 describe("comments ACL: 'Only collaborators' (editors-only write/delete)", { timeout: 20000 }, () => {
