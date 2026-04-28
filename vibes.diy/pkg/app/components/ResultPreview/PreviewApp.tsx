@@ -18,9 +18,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // pinned URL becomes stale only when the user navigates to a different vibe
   // (different appSlug/userSlug) or reloads the page.
   const [pinnedFsId, setPinnedFsId] = useState<string | undefined>(fsId);
-  const [pinnedKey, setPinnedKey] = useState<string | undefined>(
-    fsId ? `${userSlug}/${appSlug}` : undefined
-  );
+  const [pinnedKey, setPinnedKey] = useState<string | undefined>(fsId ? `${userSlug}/${appSlug}` : undefined);
   useEffect(() => {
     if (!fsId) return;
     const key = `${userSlug}/${appSlug}`;
@@ -30,18 +28,21 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     }
   }, [fsId, userSlug, appSlug, pinnedKey, pinnedFsId]);
 
+  // Build the iframe URL as soon as we have slugs, even before any fsId. The
+  // server returns a "pending" entry shell when no apps row exists yet — the
+  // iframe loads, registerDependencies runs, the hot-swap listener registers
+  // BEFORE the first code streams. First pushSource then hits a live listener
+  // and the scaffold renders immediately.
   const previewUrl = useMemo(() => {
-    if (pinnedFsId && appSlug && userSlug) {
-      const myUrl = URI.from(window.location.href);
-      const baseUrl = calcEntryPointUrl({
-        hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
-        protocol: myUrl.protocol as "http" | "",
-        port: myUrl.port,
-        bindings: { appSlug, userSlug, fsId: pinnedFsId },
-      });
-      return BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
-    }
-    return null;
+    if (!appSlug || !userSlug) return null;
+    const myUrl = URI.from(window.location.href);
+    const baseUrl = calcEntryPointUrl({
+      hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
+      protocol: myUrl.protocol as "http" | "",
+      port: myUrl.port,
+      bindings: { appSlug, userSlug, ...(pinnedFsId ? { fsId: pinnedFsId } : {}) },
+    });
+    return BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
   }, [pinnedFsId, userSlug, appSlug]);
 
   // Track last-seen code.end seq per blockId so we push exactly once per

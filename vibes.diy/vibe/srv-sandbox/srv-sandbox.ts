@@ -667,13 +667,27 @@ export class vibesDiySrvSandbox implements Disposable {
   // Captured iframe postMessage target — set on first message from iframe
   private iframeSource: Window | undefined;
   private iframeOrigin: string | undefined;
+  // Last source pushed before the iframe was ready to receive — replayed once
+  // the iframe sends its first vibe.* message and we capture iframeSource.
+  // Without this, brand-new apps drop the first scaffold push (iframe is still
+  // loading) and the preview only updates on the next code.end.
+  private pendingSource: string | undefined;
 
   readonly handleMessage = (event: MessageEvent): void => {
     // Capture iframe window reference — only from sandbox messages (vibe.* prefix)
     // to avoid capturing Clerk auth or analytics iframes that postMessage first
-    if (!this.iframeSource && event.source && typeof event.data?.type === "string" && event.data.type.startsWith("vibe.")) {
+    const justCaptured =
+      !this.iframeSource && event.source && typeof event.data?.type === "string" && event.data.type.startsWith("vibe.");
+    if (justCaptured) {
       this.iframeSource = event.source as Window;
       this.iframeOrigin = event.origin;
+      // Replay the last buffered source so the iframe mounts the latest
+      // resolved App.jsx as soon as it's ready, not on the next code.end.
+      if (this.pendingSource !== undefined) {
+        const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source: this.pendingSource };
+        this.pendingSource = undefined;
+        this.iframeSource.postMessage(msg, this.iframeOrigin);
+      }
     }
     this.evento.trigger<MessageEvent, unknown, unknown>({
       request: event,
@@ -688,11 +702,14 @@ export class vibesDiySrvSandbox implements Disposable {
     }
   }
 
-  // Hot-swap the iframe's App.jsx with new source. Returns false if the iframe
-  // hasn't sent its first message yet (no postMessage target captured). Caller
-  // can ignore the false; end-of-turn autosave covers it via fsId navigation.
+  // Hot-swap the iframe's App.jsx with new source. If the iframe hasn't sent
+  // its first message yet (no postMessage target captured), buffer the source
+  // and replay it on iframeSource capture.
   pushSource(source: string): boolean {
-    if (this.iframeSource === undefined || this.iframeOrigin === undefined) return false;
+    if (this.iframeSource === undefined || this.iframeOrigin === undefined) {
+      this.pendingSource = source;
+      return false;
+    }
     const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source };
     this.iframeSource.postMessage(msg, this.iframeOrigin);
     return true;
