@@ -194,7 +194,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 }> {
   readonly cfg: VibesDiyApiConfig;
   private readonly pendingRequests = new Map<string, PendingRequest<unknown>>();
-  private readonly docChangedListeners: ((userSlug: string, appSlug: string, docId: string) => void)[] = [];
+  private readonly docChangedListeners: ((userSlug: string, appSlug: string, dbName: string, docId: string) => void)[] = [];
   private readonly docSubscriptions: { userSlug: string; appSlug: string; dbName: string }[] = [];
   private currentConnection: VibeDiyApiConnection | undefined;
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
@@ -616,7 +616,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   private attachDocChangedToConnection(
     conn: VibeDiyApiConnection,
-    fn: (userSlug: string, appSlug: string, docId: string) => void
+    fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void
   ): void {
     conn.onMessage((wsEvent) => {
       if (wsEvent.type !== "MessageEvent") return;
@@ -630,7 +630,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
           const parsed = JSON.parse(text);
           const msg = msgBase(parsed);
           if (!(msg instanceof type.errors) && isEvtDocChanged(msg.payload)) {
-            fn(msg.payload.userSlug, msg.payload.appSlug, msg.payload.docId);
+            fn(msg.payload.userSlug, msg.payload.appSlug, msg.payload.dbName, msg.payload.docId);
           }
         })
         .catch((_e: unknown) => {
@@ -639,7 +639,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     });
   }
 
-  onDocChanged(fn: (userSlug: string, appSlug: string, docId: string) => void): void {
+  onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): void {
     this.docChangedListeners.push(fn);
     const conn = this.currentConnection;
     if (conn) {

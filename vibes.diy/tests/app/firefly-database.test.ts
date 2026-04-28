@@ -265,8 +265,21 @@ describe("FireflyDatabase cross-client sync", () => {
     db2.subscribe(listener2);
 
     // _simulateDocChanged sends appSlug="correct-app" — should trigger
-    mockApi2._simulateDocChanged("doc-1");
+    mockApi2._simulateDocChanged("doc-1", "testdb2");
     expect(listener2).toHaveBeenCalledTimes(1);
+  });
+
+  it("evt-doc-changed filtered by dbName — sibling db on the same connection doesn't trigger", () => {
+    const listener = vi.fn();
+    db.subscribe(listener);
+
+    // Same userSlug + appSlug but a different dbName — must NOT fire here.
+    mockApi._simulateDocChanged("doc-other-db", "comments");
+    expect(listener).not.toHaveBeenCalled();
+
+    // Matching dbName fires.
+    mockApi._simulateDocChanged("doc-self-db", "testdb");
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });
 
