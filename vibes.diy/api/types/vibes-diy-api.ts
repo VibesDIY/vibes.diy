@@ -73,6 +73,7 @@ import {
   ReqListDbNames,
   ResListDbNames,
 } from "./app-documents.js";
+import { ReqListMembers, ResListMembers } from "./members.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
@@ -154,9 +155,14 @@ export interface VibesDiyApiIface<_T = unknown> {
   subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>>;
   listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>>;
 
+  // Approved members of a vibe — display name + role only, gated on read access
+  listMembers(req: Req<ReqListMembers>): Promise<Result<ResListMembers, VibesDiyError>>;
+
   // Register a callback for document change events pushed from the API.
   // dbName is included so consumers can filter to the specific db they care
   // about — events arrive on this connection only for dbs the client has
-  // subscribed to via subscribeDocs.
-  onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): void;
+  // subscribed to via subscribeDocs. Returns an unsubscribe function;
+  // callers (eg. React effects) MUST call it on cleanup, otherwise listeners
+  // accumulate per mount and each doc change fires N redundant callbacks.
+  onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): () => void;
 }

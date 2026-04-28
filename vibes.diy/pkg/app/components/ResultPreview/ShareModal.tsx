@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../ui/button.js";
 import { PendingRequestsCard } from "../mine/sharing-tab/PendingRequestsCard.js";
+import { MembersSection } from "./MembersSection.js";
+import { CommentsSection } from "./CommentsSection.js";
+import { useVibesDiy } from "../../vibes-diy-provider.js";
+import { COMMENTS_DB_NAME } from "@vibes.diy/api-types";
 import type { UseShareModalReturn } from "./useShareModal.js";
 
 const inlineSelect =
@@ -100,10 +104,85 @@ function PublishedAutoApproveControl({ modal }: { modal: UseShareModalReturn }) 
   );
 }
 
+// Read-only hook returning whether the comments dbAcl is pinned to "editors-only".
+// Returns null while the initial fetch is in flight or the modal is closed.
+function useCommentsEditorsOnly(userSlug: string, appSlug: string, isOpen: boolean): boolean | null {
+  const { vibeDiyApi } = useVibesDiy();
+  const [editorsOnly, setEditorsOnly] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    void vibeDiyApi.ensureAppSettings({ userSlug, appSlug }).then((res) => {
+      if (cancelled || res.isErr()) return;
+      const stored = res.Ok().settings.entry.dbAcls?.[COMMENTS_DB_NAME];
+      setEditorsOnly(stored?.write?.length === 1 && stored.write[0] === "editors");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [vibeDiyApi, userSlug, appSlug, isOpen]);
+  return editorsOnly;
+}
+
+// Owner-only toggle that flips the comments dbAcl between the lazy default
+// (members write/delete) and editors-only via the regular ensureAppSettings
+// flow. Toggling off removes the entry, falling back to the resolver default.
+function CommentsPolicyToggle({ userSlug, appSlug, isOpen }: { userSlug: string; appSlug: string; isOpen: boolean }) {
+  const { vibeDiyApi } = useVibesDiy();
+  const editorsOnlyInitial = useCommentsEditorsOnly(userSlug, appSlug, isOpen);
+  const [editorsOnly, setEditorsOnly] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (editorsOnlyInitial !== null) setEditorsOnly(editorsOnlyInitial);
+  }, [editorsOnlyInitial]);
+
+  async function toggle() {
+    if (editorsOnly === null || busy) return;
+    setBusy(true);
+    const next = !editorsOnly;
+    const res = await vibeDiyApi.ensureAppSettings(
+      next
+        ? {
+            userSlug,
+            appSlug,
+            dbAcl: { dbName: COMMENTS_DB_NAME, acl: { write: ["editors"], delete: ["editors"] } },
+          }
+        : { userSlug, appSlug, dbAclRemove: { dbName: COMMENTS_DB_NAME } }
+    );
+    setBusy(false);
+    if (res.isOk()) setEditorsOnly(next);
+  }
+
+  return (
+    <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+      <input
+        type="checkbox"
+        checked={editorsOnly === true}
+        disabled={editorsOnly === null || busy}
+        onChange={() => void toggle()}
+        className="rounded border-gray-300 dark:border-gray-600 disabled:opacity-50"
+      />
+      <span>Only collaborators can comment</span>
+    </label>
+  );
+}
+
 interface ShareModalProps {
   modal: UseShareModalReturn;
   /** Where to position the popover relative to the trigger button. Default "below". */
   placement?: "below" | "above";
+  /**
+   * When true, render the owner-only "Only collaborators can comment" toggle
+   * and treat the viewer as a moderator for comment deletion.
+   */
+  isOwner?: boolean;
+  /**
+   * Viewer's role on this vibe — used to disable the comments composer up
+   * front when the owner has set "Only collaborators can comment". Defaults
+   * to "none" so missing prop = no preemptive disable.
+   */
+  myGrant?: "owner" | "editor" | "viewer" | "submitter" | "public" | "none";
 }
 
 function useIsMobile(breakpoint = 640) {
@@ -120,8 +199,13 @@ function useIsMobile(breakpoint = 640) {
   return isMobile;
 }
 
-export function ShareModal({ modal, placement = "below" }: ShareModalProps) {
+export function ShareModal({ modal, placement = "below", isOwner = false, myGrant = "none" }: ShareModalProps) {
   const isMobile = useIsMobile();
+  const commentsEditorsOnly = useCommentsEditorsOnly(modal.userSlug, modal.appSlug, modal.isOpen);
+  // Composer is disabled when the owner has restricted commenting to editors
+  // and the viewer isn't owner or editor. Server is still the authority — this
+  // is a UX prefetch so non-collaborators don't see a server reject after submit.
+  const composerDisabled = commentsEditorsOnly === true && myGrant !== "owner" && myGrant !== "editor";
 
   useEffect(() => {
     if (!modal.isOpen) return;
@@ -248,6 +332,24 @@ export function ShareModal({ modal, placement = "below" }: ShareModalProps) {
             <PublishForm modal={modal} publishDisabled={publishDisabled} />
           </div>
         )}
+        {/* Community sections — additive, render below the publish controls
+            for everyone with read access to the vibe. */}
+        <div
+          className={
+            isMobile
+              ? "flex-1 min-h-0 overflow-auto border-t border-gray-200 dark:border-gray-700 p-4 space-y-3"
+              : "mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-3"
+          }
+        >
+          {isOwner ? <CommentsPolicyToggle userSlug={modal.userSlug} appSlug={modal.appSlug} isOpen={modal.isOpen} /> : null}
+          <MembersSection userSlug={modal.userSlug} appSlug={modal.appSlug} />
+          <CommentsSection
+            userSlug={modal.userSlug}
+            appSlug={modal.appSlug}
+            canModerate={isOwner}
+            composerDisabled={composerDisabled}
+          />
+        </div>
       </div>
     </div>,
     document.body
