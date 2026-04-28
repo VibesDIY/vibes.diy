@@ -19,6 +19,7 @@ const DocChangedEvt = type({
   type: "string",
   userSlug: "string",
   appSlug: "string",
+  dbName: "string",
   docId: "string",
 });
 
@@ -56,10 +57,10 @@ export class ChatSessions implements DurableObject {
         return new Response("Invalid notification", { status: 400 });
       }
       const evt = parsed;
-      const subscriptionKey = `${evt.userSlug}/${evt.appSlug}`;
+      const subscriptionKey = `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
       let delivered = 0;
       for (const conn of this.connections) {
-        if (!conn.subscribedAppSlugs.has(subscriptionKey)) continue;
+        if (!conn.subscribedDocKeys.has(subscriptionKey)) continue;
         exception2Result(() =>
           conn.ws.send(
             conn.ende.uint8ify({

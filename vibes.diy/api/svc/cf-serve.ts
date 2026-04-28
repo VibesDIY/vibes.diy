@@ -97,8 +97,8 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
   }
 
   return {
-    notifyDocChanged: async (evt: { userSlug: string; appSlug: string; docId: string }) => {
-      const key = `${evt.userSlug}/${evt.appSlug}`;
+    notifyDocChanged: async (evt: { userSlug: string; appSlug: string; dbName: string; docId: string }) => {
+      const key = `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
       console.log("[docNotify] notifyDocChanged key:", key, "shard:", dn.shardId.slice(0, 8));
       await fetchDocNotify(key, {
         action: "notify",

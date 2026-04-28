@@ -1,5 +1,6 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
 import {
+  ActiveDbAcl,
   ActiveEntry,
   parseArrayWarning,
   ActiveEnv,
@@ -10,6 +11,7 @@ import {
   EnablePublicAccess,
   EnableRequest,
   EvtAppSetting,
+  isActiveDbAcl,
   isActiveEnv,
   isActiveModelSettingApp,
   isActiveModelSettingChat,
@@ -23,6 +25,8 @@ import {
   isReqEnsureAppSettings,
   isReqEnsureAppSettingsApp,
   isReqEnsureAppSettingsChat,
+  isReqEnsureAppSettingsDbAcl,
+  isReqEnsureAppSettingsDbAclRemove,
   isReqEnsureAppSettingsEnv,
   isReqEnsureAppSettingsTitle,
   isReqPublicAccess,
@@ -99,6 +103,10 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
         break;
       case isActiveEnv(e):
         result.entry.settings.env.push(...e.env);
+        break;
+      case isActiveDbAcl(e):
+        result.entry.dbAcls = result.entry.dbAcls ?? {};
+        result.entry.dbAcls[e.dbName] = e.acl;
         break;
     }
   });
@@ -354,6 +362,30 @@ export async function ensureAppSettings(
           }) satisfies ActiveEnv
       );
       break;
+    case isReqEnsureAppSettingsDbAcl(req):
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
+        settings,
+        // Match per-(dbName) rather than the first ActiveDbAcl entry —
+        // each dbName gets its own row in the entries array.
+        (e) => isActiveDbAcl(e) && e.dbName === req.dbAcl.dbName,
+        () =>
+          ({
+            type: "active.db-acl",
+            dbName: req.dbAcl.dbName,
+            acl: req.dbAcl.acl,
+          }) satisfies ActiveDbAcl
+      );
+      break;
+    case isReqEnsureAppSettingsDbAclRemove(req):
+      [res.settings, res.error] = await sqlRemove(
+        vctx,
+        res,
+        settings,
+        (e) => isActiveDbAcl(e) && e.dbName === req.dbAclRemove.dbName
+      );
+      break;
   }
   return Result.Ok(await withModelDefaults(vctx, res));
 }
@@ -374,6 +406,25 @@ async function sqlUpsert<T extends ActiveEntry, R extends ActiveEntry>(
   fn: (prev: R) => R
 ): Promise<[AppSettings, string?]> {
   const entry = upsert(settings, match, fn);
+  const ret = await sqlUpdateSettings(vctx, res, entry.entries);
+  if (ret.isErr()) {
+    return [entry, ret.Err().message];
+  }
+  return [entry];
+}
+
+async function sqlRemove<T extends ActiveEntry>(
+  vctx: VibesApiSQLCtx,
+  res: ResEnsureAppSettings,
+  settings: T[],
+  match: (e: unknown) => boolean
+): Promise<[AppSettings, string?]> {
+  // Mutate in place so res.settings.entries (same reference) reflects the
+  // removal — sqlUpdateSettings's conflict path writes res.settings.entries.
+  for (let i = settings.length - 1; i >= 0; i--) {
+    if (match(settings[i])) settings.splice(i, 1);
+  }
+  const entry = buildEnsureEntryResult(settings);
   const ret = await sqlUpdateSettings(vctx, res, entry.entries);
   if (ret.isErr()) {
     return [entry, ret.Err().message];

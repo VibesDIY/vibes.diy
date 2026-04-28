@@ -16,7 +16,7 @@ export interface MockVibeApi {
   subscribeDocs(): Promise<Result<unknown>>;
   onMsg: (fn: MsgListener) => void;
   /** Test helper: simulate server-push evt-doc-changed */
-  _simulateDocChanged(docId: string): void;
+  _simulateDocChanged(docId: string, dbName?: string): void;
   /** Test helper: access raw doc store */
   _docs: Map<string, Record<string, unknown>>;
 }
@@ -72,9 +72,9 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
       msgListeners.push(fn);
     },
 
-    _simulateDocChanged: (docId: string) => {
+    _simulateDocChanged: (docId: string, dbName = "testdb") => {
       for (const fn of msgListeners) {
-        fn({ data: { type: "vibes.diy.evt-doc-changed", userSlug: "test-user", appSlug, docId } });
+        fn({ data: { type: "vibes.diy.evt-doc-changed", userSlug: "test-user", appSlug, dbName, docId } });
       }
     },
 
