@@ -15,6 +15,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [environments.md](agents/environments.md) — Dev/prod/cli/preview architecture, stable-entry routing
 - [vibe-pkg.md](agents/vibe-pkg.md) — Self-hosted package serving via /vibe-pkg/
 - [dev-state.md](agents/dev-state.md) — Which caches are safe to delete, and which destroy local dev data
+- [flaky-tests.md](agents/flaky-tests.md) — Rerun before treating a `pnpm check` failure as real; log to VibesDIY/vibes.diy#1515
 
 ## Quick Reference
 
