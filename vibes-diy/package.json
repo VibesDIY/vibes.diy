@@ -43,6 +43,7 @@
     "@fireproof/use-fireproof": "0.24.19",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
+    "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
     "arktype": "^2.2.0",
     "cmd-ts": "^0.15.0",
