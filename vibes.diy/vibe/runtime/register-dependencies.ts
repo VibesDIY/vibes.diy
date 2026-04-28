@@ -270,8 +270,10 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   registerCallAI(ctxVibeApi);
   registerImgVibes(ctxVibeApi);
 
-  ctxVibeApi.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
+  // Register the hot-swap listener BEFORE signalling ready, so any set-source
+  // the host posts in response to runtime.ready arrives at a live listener.
   registerHotSwapHandler();
+  ctxVibeApi.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
 }
 
 let hotSwapRegistered = false;
