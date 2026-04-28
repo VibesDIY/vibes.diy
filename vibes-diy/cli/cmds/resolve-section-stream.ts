@@ -9,6 +9,7 @@ import {
   type FsApplyErrorMsg,
   type FsFileSnapshotMsg,
 } from "@vibes.diy/call-ai-v2";
+import { isPromptBlockEnd } from "@vibes.diy/api-types";
 import type { SectionEvent } from "@vibes.diy/api-types";
 
 export interface ResolveSectionStreamOpts {
@@ -74,6 +75,13 @@ export function resolveSectionStream(opts: ResolveSectionStreamOpts): Promise<Re
         // Keep overwriting — the last one is the fully-resolved turn.
         files = value.files;
         continue;
+      }
+      // The source (chat.sectionStream) does not close at end-of-turn — it
+      // stays open until chat.close() is called. Break on prompt.block.end,
+      // which is the LLM-turn-complete signal. Without this, the read loop
+      // hangs after the model finishes streaming.
+      if (isPromptBlockEnd(value)) {
+        break;
       }
     }
     reader.releaseLock();
