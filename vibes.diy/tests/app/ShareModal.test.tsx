@@ -14,6 +14,30 @@ vi.mock("~/vibes.diy/app/components/mine/sharing-tab/PendingRequestsCard.js", ()
   PendingRequestsCard: () => <div data-testid="pending-requests-card" />,
 }));
 
+// Members + Comments sections call useVibesDiy / Clerk; stub them out — these
+// tests are focused on the publish/sharing flow.
+vi.mock("~/vibes.diy/app/components/ResultPreview/MembersSection.js", () => ({
+  MembersSection: () => <div data-testid="members-section" />,
+}));
+vi.mock("~/vibes.diy/app/components/ResultPreview/CommentsSection.js", () => ({
+  CommentsSection: () => <div data-testid="comments-section" />,
+}));
+// CommentsPolicyToggle (rendered when isOwner) calls useVibesDiy; mock the
+// provider so it can render without a wrapping VibesDiyProvider. The toggle
+// reads + writes the comments dbAcl via ensureAppSettings.
+vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
+  useVibesDiy: () => ({
+    vibeDiyApi: {
+      ensureAppSettings: () =>
+        Promise.resolve({
+          isOk: () => true,
+          isErr: () => false,
+          Ok: () => ({ settings: { entry: { dbAcls: undefined } } }),
+        }),
+    },
+  }),
+}));
+
 let mockButtonEl: HTMLButtonElement | undefined;
 
 function createMockModal(overrides: Partial<UseShareModalReturn> = {}): UseShareModalReturn {
@@ -65,7 +89,7 @@ describe("ShareModal", () => {
   describe("closed", () => {
     it("renders nothing when closed", () => {
       const modal = createMockModal({ isOpen: false });
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
   });
@@ -73,21 +97,21 @@ describe("ShareModal", () => {
   describe("unpublished view", () => {
     it("renders the auto-approve checkbox and Publish button", () => {
       const modal = createMockModal();
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
       expect(getAutoApproveCheckbox()).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument();
     });
 
     it("auto-approve defaults to enabled with role 'readers'", () => {
       const modal = createMockModal();
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
       expect(getAutoApproveCheckbox()).toBeChecked();
       expect(screen.getByRole("combobox")).toHaveValue("viewer");
     });
 
     it("publishes with autoJoin=true and the selected role", async () => {
       const modal = createMockModal();
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       await act(async () => {
         fireEvent.click(screen.getByRole("button", { name: "Publish" }));
@@ -99,7 +123,7 @@ describe("ShareModal", () => {
 
     it("publishes with autoJoin=false when the checkbox is unchecked", async () => {
       const modal = createMockModal();
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       await act(async () => {
         fireEvent.click(getAutoApproveCheckbox());
@@ -115,7 +139,7 @@ describe("ShareModal", () => {
 
     it("publishes with the selected role when role is changed to editors", async () => {
       const modal = createMockModal();
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       await act(async () => {
         fireEvent.change(screen.getByRole("combobox"), { target: { value: "editor" } });
@@ -130,7 +154,7 @@ describe("ShareModal", () => {
 
     it("hides the role dropdown when auto-approve is off", async () => {
       const modal = createMockModal();
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
       expect(screen.getByRole("combobox")).toBeInTheDocument();
 
       await act(async () => {
@@ -142,13 +166,13 @@ describe("ShareModal", () => {
 
     it("shows 'Publishing...' while publish is in flight and disables the button", () => {
       const modal = createMockModal({ isPublishing: true });
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
       expect(screen.getByRole("button", { name: "Publishing..." })).toBeDisabled();
     });
 
     it("disables the Publish button and shows the hint when canPublish is false", () => {
       const modal = createMockModal({ canPublish: false });
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
       expect(screen.getByText(/Generate some code first/)).toBeInTheDocument();
@@ -156,13 +180,13 @@ describe("ShareModal", () => {
 
     it("disables the Publish button when settings are not yet loaded", () => {
       const modal = createMockModal({ settingsLoaded: false });
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
       expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
     });
 
     it("shows the publish error", () => {
       const modal = createMockModal({ publishError: "Failed to publish" });
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
       expect(screen.getByText("Failed to publish")).toBeInTheDocument();
     });
   });
@@ -176,7 +200,7 @@ describe("ShareModal", () => {
       });
 
     it("shows the published URL, Copy Link, and Update button", () => {
-      render(<ShareModal modal={publishedModal()} />);
+      render(<ShareModal modal={publishedModal()} isOwner />);
 
       expect(screen.getByDisplayValue("https://vibes.diy/vibe/testuser/testapp/")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Update" })).toBeInTheDocument();
@@ -185,7 +209,7 @@ describe("ShareModal", () => {
 
     it("Update preserves autoJoinEnabled and the current role", async () => {
       const modal = publishedModal({ autoJoinEnabled: true, autoAcceptRole: "editor" });
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       await act(async () => {
         fireEvent.click(screen.getByRole("button", { name: "Update" }));
@@ -196,7 +220,7 @@ describe("ShareModal", () => {
 
     it("Update falls back to role=viewer when autoAcceptRole is undefined", async () => {
       const modal = publishedModal({ autoJoinEnabled: false, autoAcceptRole: undefined });
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       await act(async () => {
         fireEvent.click(screen.getByRole("button", { name: "Update" }));
@@ -205,42 +229,51 @@ describe("ShareModal", () => {
       expect(modal.handlePublish).toHaveBeenCalledWith(false, "viewer");
     });
 
-    it("calls handleCopyUrl when clicking Copy Link", async () => {
+    it("writes the published URL to the clipboard when clicking Copy Link", async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
       const modal = publishedModal();
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       await act(async () => {
         fireEvent.click(screen.getByText("Copy Link"));
       });
 
-      expect(modal.handleCopyUrl).toHaveBeenCalledTimes(1);
+      expect(writeText).toHaveBeenCalledWith(modal.publishedUrl);
     });
 
-    it("shows the copied checkmark when urlCopied is true", () => {
-      const modal = publishedModal({ urlCopied: true });
-      render(<ShareModal modal={modal} />);
-      expect(screen.getByTitle("Copied")).toBeInTheDocument();
+    it("flips the Copy Link button label to Copied after a successful copy", async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+      const modal = publishedModal();
+      render(<ShareModal modal={modal} isOwner />);
+
+      await act(async () => {
+        fireEvent.click(screen.getByText("Copy Link"));
+        await Promise.resolve();
+      });
+      expect(screen.getByText("Copied")).toBeInTheDocument();
     });
 
     it("reflects autoJoinEnabled on the auto-approve checkbox", () => {
-      render(<ShareModal modal={publishedModal({ autoJoinEnabled: true, autoAcceptRole: "viewer" })} />);
+      render(<ShareModal modal={publishedModal({ autoJoinEnabled: true, autoAcceptRole: "viewer" })} isOwner />);
       expect(getAutoApproveCheckbox()).toBeChecked();
     });
 
     it("hides the role dropdown when auto-approve is off", () => {
-      render(<ShareModal modal={publishedModal({ autoJoinEnabled: false })} />);
+      render(<ShareModal modal={publishedModal({ autoJoinEnabled: false })} isOwner />);
       expect(getAutoApproveCheckbox()).not.toBeChecked();
       expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     });
 
     it("shows the role dropdown reflecting the current autoAcceptRole", () => {
-      render(<ShareModal modal={publishedModal({ autoJoinEnabled: true, autoAcceptRole: "viewer" })} />);
+      render(<ShareModal modal={publishedModal({ autoJoinEnabled: true, autoAcceptRole: "viewer" })} isOwner />);
       expect(screen.getByRole("combobox")).toHaveValue("viewer");
     });
 
     it("calls handleSetAutoAccept when toggling the checkbox off", async () => {
       const modal = publishedModal({ autoJoinEnabled: true, autoAcceptRole: "editor" });
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       await act(async () => {
         fireEvent.click(getAutoApproveCheckbox());
@@ -251,7 +284,7 @@ describe("ShareModal", () => {
 
     it("calls handleSetAutoAccept when changing the role dropdown", async () => {
       const modal = publishedModal({ autoJoinEnabled: true, autoAcceptRole: "editor" });
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       await act(async () => {
         fireEvent.change(screen.getByRole("combobox"), { target: { value: "viewer" } });
@@ -261,22 +294,22 @@ describe("ShareModal", () => {
     });
 
     it("disables the checkbox while a toggle is in flight", () => {
-      render(<ShareModal modal={publishedModal({ isTogglingAutoJoin: true })} />);
+      render(<ShareModal modal={publishedModal({ isTogglingAutoJoin: true })} isOwner />);
       expect(getAutoApproveCheckbox()).toBeDisabled();
     });
 
     it("shows 'Up to date' when the current fsId matches production", () => {
-      render(<ShareModal modal={publishedModal({ isUpToDate: true })} />);
+      render(<ShareModal modal={publishedModal({ isUpToDate: true })} isOwner />);
       expect(screen.getByRole("button", { name: "Up to date" })).toBeDisabled();
     });
 
     it("shows an enabled 'Update' when the current fsId differs from production", () => {
-      render(<ShareModal modal={publishedModal({ isUpToDate: false })} />);
+      render(<ShareModal modal={publishedModal({ isUpToDate: false })} isOwner />);
       expect(screen.getByRole("button", { name: "Update" })).not.toBeDisabled();
     });
 
     it("renders the PendingRequestsCard", () => {
-      render(<ShareModal modal={publishedModal()} />);
+      render(<ShareModal modal={publishedModal()} isOwner />);
       expect(screen.getByTestId("pending-requests-card")).toBeInTheDocument();
     });
   });
@@ -284,7 +317,7 @@ describe("ShareModal", () => {
   describe("dialog behavior", () => {
     it("closes on Escape key via window listener", () => {
       const modal = createMockModal();
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       fireEvent.keyDown(window, { key: "Escape" });
 
@@ -293,7 +326,7 @@ describe("ShareModal", () => {
 
     it("closes on backdrop click", () => {
       const modal = createMockModal();
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       fireEvent.click(screen.getByRole("dialog"));
 
@@ -302,7 +335,7 @@ describe("ShareModal", () => {
 
     it("does not close when clicking inside the modal content", () => {
       const modal = createMockModal();
-      render(<ShareModal modal={modal} />);
+      render(<ShareModal modal={modal} isOwner />);
 
       const content = screen.getByRole("dialog").firstElementChild as Element;
       expect(content).toBeTruthy();
@@ -312,11 +345,11 @@ describe("ShareModal", () => {
     });
 
     it("has proper dialog accessibility attributes", () => {
-      render(<ShareModal modal={createMockModal()} />);
+      render(<ShareModal modal={createMockModal()} isOwner />);
 
       const dialog = screen.getByRole("dialog");
       expect(dialog).toHaveAttribute("aria-modal", "true");
-      expect(dialog).toHaveAttribute("aria-label", "Share");
+      expect(dialog).toHaveAttribute("aria-label", "Community");
     });
   });
 });
