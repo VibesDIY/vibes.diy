@@ -73,6 +73,7 @@ import {
   ReqListDbNames,
   ResListDbNames,
 } from "./app-documents.js";
+import { ReqSetDbPolicy, ResSetDbPolicy, ReqGetDbPolicy, ResGetDbPolicy } from "./db-policies.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
@@ -153,6 +154,10 @@ export interface VibesDiyApiIface<_T = unknown> {
   deleteDoc(req: Req<ReqDeleteDoc>): Promise<Result<ResDeleteDoc, VibesDiyError>>;
   subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>>;
   listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>>;
+
+  // Per-(userSlug, appSlug, dbName) access policy override (owner-gated)
+  setDbPolicy(req: Req<ReqSetDbPolicy>): Promise<Result<ResSetDbPolicy, VibesDiyError>>;
+  getDbPolicy(req: Req<ReqGetDbPolicy>): Promise<Result<ResGetDbPolicy, VibesDiyError>>;
 
   // Register a callback for document change events pushed from the API
   onDocChanged(fn: (userSlug: string, appSlug: string, docId: string) => void): void;

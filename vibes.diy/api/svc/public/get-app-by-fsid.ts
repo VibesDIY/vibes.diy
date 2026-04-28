@@ -25,6 +25,7 @@ import { max } from "drizzle-orm/sql";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite, redeemInvite } from "./invite-flow.js";
 import { hasAccessRequest, requestAccess } from "./request-flow.js";
+import { seedDefaultDbPolicies } from "./app-db-policies.js";
 
 function grantedAccess(role: "editor" | "viewer" | "submitter") {
   switch (role) {
@@ -119,6 +120,12 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           )
           .orderBy(vctx.sql.tables.apps.mode); // "dev" < "production" → last = production wins
         app = rows[rows.length - 1];
+      }
+
+      if (app) {
+        // Backfill default per-dbName policies (e.g. comments) on every load.
+        // Idempotent INSERT … ON CONFLICT DO NOTHING — costs one upsert per load.
+        await seedDefaultDbPolicies(vctx, app.userSlug, app.appSlug);
       }
 
       if (!app) {

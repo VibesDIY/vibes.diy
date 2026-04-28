@@ -120,6 +120,12 @@ import {
   ReqListDbNames,
   ResListDbNames,
   isResListDbNames,
+  ReqSetDbPolicy,
+  ResSetDbPolicy,
+  isResSetDbPolicy,
+  ReqGetDbPolicy,
+  ResGetDbPolicy,
+  isResGetDbPolicy,
   isEvtDocChanged,
   ReqPromptLLMChatSection,
   FSUpdate,
@@ -612,6 +618,14 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-list-db-names" }, { resMatch: isResListDbNames });
+  }
+
+  setDbPolicy(req: Req<ReqSetDbPolicy>): Promise<Result<ResSetDbPolicy, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-set-db-policy" }, { resMatch: isResSetDbPolicy });
+  }
+
+  getDbPolicy(req: Req<ReqGetDbPolicy>): Promise<Result<ResGetDbPolicy, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-get-db-policy" }, { resMatch: isResGetDbPolicy });
   }
 
   private attachDocChangedToConnection(

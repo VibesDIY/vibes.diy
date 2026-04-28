@@ -24,9 +24,6 @@ import {
   ReqWithOptionalAuth,
   VibesDiyError,
   W3CWebSocketEvent,
-  Role,
-  isResHasAccessInviteAccepted,
-  isResHasAccessRequestApproved,
 } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -35,82 +32,14 @@ import { WSSendProvider } from "../svc-ws-send-provider.js";
 import { eq, and, sql } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
-import { hasAccessInvite } from "./invite-flow.js";
-import { hasAccessRequest } from "./request-flow.js";
-import { ensureAppSettings } from "./ensure-app-settings.js";
+import { checkDocAccess, canRead, canWrite, isPublicReadable } from "./access-helpers.js";
+import { resolveDbPolicy, stampDoc } from "./app-db-policies.js";
 
 // Access the raw WSSendProvider from Evento's wrapped ctx.send.
 // Evento wraps the send provider — the raw instance is at .provider.
 // Pattern from fireproof: qs-room-evento.ts clientWs()
 function clientWsSend(ctx: { send: unknown }): WSSendProvider {
   return (ctx.send as { provider: WSSendProvider }).provider;
-}
-
-// ── Access control helpers ─────────────────────────────────────────
-
-type DocAccessLevel = Role | "owner" | "none";
-
-const canRead = (level: DocAccessLevel) => level === "owner" || level === "editor" || level === "viewer";
-const canWrite = (level: DocAccessLevel) => level === "owner" || level === "editor" || level === "submitter";
-
-async function checkDocAccess(vctx: VibesApiSQLCtx, userId: string, appSlug: string, userSlug: string): Promise<DocAccessLevel> {
-  // 1. Check ownership via UserSlugBinding
-  const binding = await vctx.sql.db
-    .select({ userId: vctx.sql.tables.userSlugBinding.userId })
-    .from(vctx.sql.tables.userSlugBinding)
-    .where(eq(vctx.sql.tables.userSlugBinding.userSlug, userSlug))
-    .limit(1)
-    .then((r) => r[0]);
-
-  if (binding?.userId === userId) return "owner";
-
-  // 2. Check invite grants
-  const rInvite = await hasAccessInvite(vctx, { grantUserId: userId, appSlug, userSlug });
-  if (rInvite.isOk()) {
-    const invite = rInvite.Ok();
-    if (isResHasAccessInviteAccepted(invite)) {
-      return invite.role;
-    }
-  }
-
-  // 3. Check request grants
-  const rReq = await hasAccessRequest(vctx, { foreignUserId: userId, appSlug, userSlug });
-  if (rReq.isOk()) {
-    const req = rReq.Ok();
-    if (isResHasAccessRequestApproved(req)) {
-      return req.role;
-    }
-  }
-
-  return "none";
-}
-
-async function isPublicReadable(vctx: VibesApiSQLCtx, appSlug: string, userSlug: string): Promise<boolean> {
-  const rSettings = await ensureAppSettings(vctx, {
-    type: "vibes.diy.req-ensure-app-settings",
-    appSlug,
-    userSlug,
-    env: [],
-  });
-  if (rSettings.isErr()) return false;
-  if (!rSettings.Ok().settings.entry.publicAccess?.enable) return false;
-
-  // Match get-app-by-fsid: only apps with a production version are publicly readable.
-  // A newer dev draft must not shadow the production row.
-  const prodRow = await vctx.sql.db
-    .select({ mode: vctx.sql.tables.apps.mode })
-    .from(vctx.sql.tables.apps)
-    .where(
-      and(
-        eq(vctx.sql.tables.apps.appSlug, appSlug),
-        eq(vctx.sql.tables.apps.userSlug, userSlug),
-        eq(vctx.sql.tables.apps.mode, "production")
-      )
-    )
-    .limit(1)
-    .then((r) => r[0]);
-
-  return !!prodRow;
 }
 
 // ── putDoc ──────────────────────────────────────────────────────────
@@ -130,10 +59,19 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
     ): Promise<Result<EventoResultType>> => {
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-      const userId = req._auth.verifiedAuth.claims.userId;
+      const claims = req._auth.verifiedAuth.claims;
+      const userId = claims.userId;
 
       const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
-      if (!canWrite(access)) {
+      const policy = await resolveDbPolicy(vctx, req.userSlug, req.appSlug, req.dbName);
+
+      let allowed: boolean;
+      if (policy.write === "any-reader") {
+        allowed = canRead(access) || (await isPublicReadable(vctx, req.appSlug, req.userSlug));
+      } else {
+        allowed = canWrite(access);
+      }
+      if (!allowed) {
         await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } as unknown as VibesDiyError);
         return Result.Ok(EventoResult.Continue);
       }
@@ -142,6 +80,8 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const docId = req.docId ?? vctx.sthis.nextId().str;
       const dbName = req.dbName;
       const t = vctx.sql.tables.appDocuments;
+
+      const stampedDoc = stampDoc(req.doc, policy, claims, now);
 
       // Get current max seq for this doc
       const maxSeqResult = await vctx.sql.db
@@ -158,8 +98,8 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         dbName,
         docId,
         seq: nextSeq,
-        userId: req._auth.verifiedAuth.claims.userId,
-        data: req.doc,
+        userId,
+        data: stampedDoc,
         deleted: 0,
         created: now,
       });
@@ -336,7 +276,25 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       const userId = req._auth.verifiedAuth.claims.userId;
 
       const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
-      if (!canWrite(access)) {
+      const policy = await resolveDbPolicy(vctx, req.userSlug, req.appSlug, req.dbName);
+
+      let allowed = canWrite(access);
+      if (!allowed && policy.delete === "author-or-writer") {
+        // Look up the existing doc's author
+        const t = vctx.sql.tables.appDocuments;
+        const existing = await vctx.sql.db
+          .select({ userId: t.userId })
+          .from(t)
+          .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug), eq(t.dbName, req.dbName), eq(t.docId, req.docId)))
+          .orderBy(sql`${t.seq} desc`)
+          .limit(1)
+          .then((r) => r[0]);
+        if (existing && existing.userId === userId) {
+          allowed = true;
+        }
+      }
+
+      if (!allowed) {
         await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } as unknown as VibesDiyError);
         return Result.Ok(EventoResult.Continue);
       }
@@ -384,7 +342,7 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
   ),
 };
 
-// ── subscribeDocs ───────────────────────────────────��───────────────
+// ── subscribeDocs ───────────────────────────────────────────────────
 
 export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSubscribeDocs>, ResSubscribeDocs | VibesDiyError> = {
   hash: "subscribe-docs",

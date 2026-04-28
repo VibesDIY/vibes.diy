@@ -21,6 +21,7 @@ export * from "./auth.js";
 
 export * from "./prompt.js";
 export * from "./app-documents.js";
+export * from "./db-policies.js";
 
 export interface FetchOkResult {
   type: "fetch.ok";

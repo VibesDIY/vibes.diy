@@ -46,6 +46,7 @@ import {
   subscribeDocsEvento,
   listDbNamesEvento,
 } from "./public/app-documents.js";
+import { setDbPolicyEvento, getDbPolicyEvento } from "./public/app-db-policies.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -86,6 +87,8 @@ export const vibesMsgEvento = Lazy(() => {
     deleteDocEvento,
     subscribeDocsEvento,
     listDbNamesEvento,
+    setDbPolicyEvento,
+    getDbPolicyEvento,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",
