@@ -196,6 +196,19 @@ export const sqlAppDocuments = pgTable(
   (table) => [primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId, table.seq] })]
 );
 
+export const sqlAppDbPolicies = pgTable(
+  "AppDbPolicies",
+  {
+    userSlug: text().notNull(),
+    appSlug: text().notNull(),
+    dbName: text().notNull(),
+    policy: jsonb().notNull(), // DbPolicy
+    updated: text().notNull(),
+    created: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName] })]
+);
+
 export const sqlInviteGrants = pgTable(
   "InviteGrants",
   {

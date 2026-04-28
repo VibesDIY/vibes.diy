@@ -191,6 +191,23 @@ export const sqlAppDocuments = sqliteTable(
   (table) => [primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId, table.seq] })]
 );
 
+// Per-(userSlug, appSlug, dbName) access policy overrides. When no row exists
+// for a (userSlug, appSlug, dbName) the resolver returns the strict default
+// (writers-only read/write/delete). The `comments` dbName is seeded with an
+// open-write/author-or-writer-delete policy on first ensureAppSettings touch.
+export const sqlAppDbPolicies = sqliteTable(
+  "AppDbPolicies",
+  {
+    userSlug: text().notNull(),
+    appSlug: text().notNull(),
+    dbName: text().notNull(),
+    policy: text({ mode: "json" }).notNull(), // DbPolicy
+    updated: text().notNull(),
+    created: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName] })]
+);
+
 export const sqlInviteGrants = sqliteTable(
   "InviteGrants",
   {
