@@ -282,29 +282,102 @@ export default function VibeIframeWrapper() {
       )
     : null;
 
-  if (ready && iframeUrlRef.current) {
-    const myUrl = URI.from(window.location.href);
-    const previewUrl = BuildURI.from(iframeUrlRef.current).port(myUrl.port).setParam("npmUrl", vctx.webVars.pkgRepos.workspace);
+  const showIframe = ready && iframeUrlRef.current;
+  const myUrl = showIframe ? URI.from(window.location.href) : null;
+  const previewUrl = showIframe
+    ? BuildURI.from(iframeUrlRef.current!).port(myUrl!.port).setParam("npmUrl", vctx.webVars.pkgRepos.workspace)
+    : null;
 
-    // console.log(`previewUrl`, previewUrl.toString());
-
-    return (
-      <>
-        <div className="fixed inset-0 bg-gray-900" style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
-          <iframe
-            src={previewUrl.toString()}
-            className="w-full h-full border-none"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
-            allow="camera; microphone"
-            style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
-          />
-          {!runtimeReady && (
-            <div className={cx(gridBackground, "absolute inset-0 flex h-full w-full items-center justify-center")}>
-              <div style={{ color: "var(--vibes-text-primary)" }}>Loading…</div>
-            </div>
+  // Overlay content shown while iframe loads or when access is restricted
+  const overlayContent =
+    showLoginOverlay || revokedAccess || pendingRequest ? (
+      <div style={{ maxWidth: 500, width: "100%", margin: "0 16px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+        <div
+          style={{
+            height: 30,
+            width: "100%",
+            backgroundColor: "rgba(0, 154, 206, 0.4)",
+            border: "1px solid black",
+            marginBottom: 1,
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.38)",
+          }}
+        />
+        <div
+          style={{
+            backgroundColor: "rgb(255, 255, 240)",
+            color: "rgb(34, 31, 32)",
+            border: "1px solid black",
+            boxShadow: "0 0 0 1px white",
+            padding: "24px 24px",
+          }}
+        >
+          <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>{appTitle ?? appSlug}</h2>
+          <p style={{ marginTop: 10, fontSize: 15, opacity: 0.7 }}>
+            {showLoginOverlay
+              ? "Login required to view this app."
+              : revokedAccess
+                ? "Your access to this app has been revoked by the owner."
+                : "The owner of this vibe has received your access request. Please let them know to approve it."}
+          </p>
+          {screenshotUrl && (
+            <img
+              src={screenshotUrl}
+              alt={`Screenshot of ${appTitle ?? appSlug}`}
+              style={{ width: "100%", marginTop: 16, border: "1px solid black" }}
+            />
           )}
+          <p style={{ marginTop: 16, fontSize: 14, opacity: 0.6 }}>
+            While you wait you can remix to edit your own version, or clone to deploy a copy as-is. Either way it starts empty — you
+            won't get this copy's data or collaboration.
+          </p>
+          <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
+            <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
+              Remix
+            </VibesButton>
+            <VibesButton variant={BLUE} icon="remix" onClick={() => window.location.assign(cloneUrl)}>
+              Clone
+            </VibesButton>
+          </div>
         </div>
-        {createPortal(
+      </div>
+    ) : notFound ? (
+      <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
+        App not available
+      </div>
+    ) : (
+      <div style={{ color: "var(--vibes-text-primary)" }}>{showIframe ? "Loading…" : "Preparing…"}</div>
+    );
+
+  return (
+    <>
+      {/* Stable outer container — never unmounted, so React reconciles instead of replacing */}
+      <div className="fixed inset-0" style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
+        {showIframe && previewUrl && (
+          <div className="absolute inset-0 bg-gray-900">
+            <iframe
+              src={previewUrl.toString()}
+              className="w-full h-full border-none"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+              allow="camera; microphone"
+              style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
+            />
+          </div>
+        )}
+        {(!showIframe || !runtimeReady) && (
+          <div className={cx(gridBackground, "absolute inset-0 flex h-full w-full items-center justify-center")}>
+            {!showIframe && (
+              <div className="fixed top-4 left-4 z-50">
+                <Delayed ms={1000}>
+                  <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
+                </Delayed>
+              </div>
+            )}
+            {overlayContent}
+          </div>
+        )}
+      </div>
+      {showIframe &&
+        createPortal(
           <div className="fixed bottom-4 right-4 z-50">
             <Delayed ms={1000}>
               <ExpandedVibesPill
@@ -324,88 +397,6 @@ export default function VibeIframeWrapper() {
           </div>,
           document.body
         )}
-        <Delayed ms={1000}>
-          <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
-        </Delayed>
-        {sharingState && (
-          <AllowFireproofSharing
-            state={sharingState}
-            dbRef={dbRef}
-            onResult={onResult}
-            onDismiss={onDismiss}
-            onLoginRedirect={onLoginRedirect}
-          />
-        )}
-      </>
-    );
-  }
-
-  return (
-    <>
-      <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
-        <div className="fixed top-4 left-4 z-50">
-          <Delayed ms={1000}>
-            <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
-          </Delayed>
-        </div>
-        {showLoginOverlay || revokedAccess || pendingRequest ? (
-          <div style={{ maxWidth: 500, width: "100%", margin: "0 16px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-            <div
-              style={{
-                height: 30,
-                width: "100%",
-                backgroundColor: "rgba(0, 154, 206, 0.4)",
-                border: "1px solid black",
-                marginBottom: 1,
-                boxShadow: "0 0 0 1px rgba(255,255,255,0.38)",
-              }}
-            />
-            <div
-              style={{
-                backgroundColor: "rgb(255, 255, 240)",
-                color: "rgb(34, 31, 32)",
-                border: "1px solid black",
-                boxShadow: "0 0 0 1px white",
-                padding: "24px 24px",
-              }}
-            >
-              <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>{appTitle ?? appSlug}</h2>
-              <p style={{ marginTop: 10, fontSize: 15, opacity: 0.7 }}>
-                {showLoginOverlay
-                  ? "Login required to view this app."
-                  : revokedAccess
-                    ? "Your access to this app has been revoked by the owner."
-                    : "The owner of this vibe has received your access request. Please let them know to approve it."}
-              </p>
-              {screenshotUrl && (
-                <img
-                  src={screenshotUrl}
-                  alt={`Screenshot of ${appTitle ?? appSlug}`}
-                  style={{ width: "100%", marginTop: 16, border: "1px solid black" }}
-                />
-              )}
-              <p style={{ marginTop: 16, fontSize: 14, opacity: 0.6 }}>
-                While you wait you can remix to edit your own version, or clone to deploy a copy as-is. Either way it starts empty —
-                you won't get this copy's data or collaboration.
-              </p>
-              <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
-                <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
-                  Remix
-                </VibesButton>
-                <VibesButton variant={BLUE} icon="remix" onClick={() => window.location.assign(cloneUrl)}>
-                  Clone
-                </VibesButton>
-              </div>
-            </div>
-          </div>
-        ) : notFound ? (
-          <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
-            App not available
-          </div>
-        ) : (
-          <div style={{ color: "var(--vibes-text-primary)" }}>Preparing…</div>
-        )}
-      </div>
       <Delayed ms={1000}>
         <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
       </Delayed>
