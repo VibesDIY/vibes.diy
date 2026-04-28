@@ -120,6 +120,9 @@ import {
   ReqListDbNames,
   ResListDbNames,
   isResListDbNames,
+  ReqListMembers,
+  ResListMembers,
+  isResListMembers,
   isEvtDocChanged,
   ReqPromptLLMChatSection,
   FSUpdate,
@@ -614,11 +617,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.request({ ...req, type: "vibes.diy.req-list-db-names" }, { resMatch: isResListDbNames });
   }
 
+  listMembers(req: Req<ReqListMembers>): Promise<Result<ResListMembers, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-members" }, { resMatch: isResListMembers });
+  }
+
   private attachDocChangedToConnection(
     conn: VibeDiyApiConnection,
     fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void
-  ): void {
-    conn.onMessage((wsEvent) => {
+  ): () => void {
+    const unsub = conn.onMessage((wsEvent) => {
       if (wsEvent.type !== "MessageEvent") return;
       const raw = wsEvent.event.data;
       const textPromise =
@@ -637,20 +644,29 @@ export class VibesDiyApi implements VibesDiyApiIface<{
           // Not a valid message — ignore
         });
     });
+    return () => {
+      unsub();
+    };
   }
 
-  onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): void {
+  onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): () => void {
     this.docChangedListeners.push(fn);
+    let detach: (() => void) | undefined;
     const conn = this.currentConnection;
     if (conn) {
       // Connection already established — attach immediately
-      this.attachDocChangedToConnection(conn, fn);
+      detach = this.attachDocChangedToConnection(conn, fn);
     } else {
       // Trigger connection — replay loop in getReadyConnection will attach all stored listeners
       this.getReadyConnection().catch((_e: unknown) => {
         /* best-effort; next activity will establish connection */
       });
     }
+    return () => {
+      const idx = this.docChangedListeners.indexOf(fn);
+      if (idx >= 0) this.docChangedListeners.splice(idx, 1);
+      detach?.();
+    };
   }
 
   /** @internal — test inspection only */
