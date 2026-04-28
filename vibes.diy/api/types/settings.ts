@@ -1,6 +1,7 @@
 import { type } from "arktype";
 import { dashAuthType, Role } from "./common.js";
 import { AIParams, ActiveEntry, EnablePublicAccess, EnableRequest, ActiveACL, KVString } from "./invite.js";
+import { dbAcl, DbAcl } from "./db-acls.js";
 
 export const sharingGrantItem = type({
   grant: "'allow' | 'deny'",
@@ -164,6 +165,32 @@ export function isReqEnsureAppSettingsEnv(obj: unknown): obj is ReqEnsureAppSett
   return !(reqEnsureAppSettingsEnv(obj) instanceof type.errors);
 }
 
+// Set or replace the ACL for a single dbName.
+export const reqEnsureAppSettingsDbAcl = type({
+  dbAcl: type({
+    dbName: "string",
+    acl: dbAcl,
+  }),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsDbAcl = typeof reqEnsureAppSettingsDbAcl.infer;
+export function isReqEnsureAppSettingsDbAcl(obj: unknown): obj is ReqEnsureAppSettingsDbAcl {
+  return !(reqEnsureAppSettingsDbAcl(obj) instanceof type.errors);
+}
+
+// Remove the ACL entry for a single dbName, falling back to the resolver
+// default (lazy COMMENTS_DEFAULT_ACL for "comments", undefined elsewhere).
+export const reqEnsureAppSettingsDbAclRemove = type({
+  dbAclRemove: type({
+    dbName: "string",
+  }),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsDbAclRemove = typeof reqEnsureAppSettingsDbAclRemove.infer;
+export function isReqEnsureAppSettingsDbAclRemove(obj: unknown): obj is ReqEnsureAppSettingsDbAclRemove {
+  return !(reqEnsureAppSettingsDbAclRemove(obj) instanceof type.errors);
+}
+
 export type ReqEnsureAppSettings =
   // | ReqEnsureAppSettingsAcl
   | ReqPublicAccess
@@ -174,6 +201,8 @@ export type ReqEnsureAppSettings =
   | ReqEnsureAppSettingsChat
   | ReqEnsureAppSettingsImg
   | ReqEnsureAppSettingsEnv
+  | ReqEnsureAppSettingsDbAcl
+  | ReqEnsureAppSettingsDbAclRemove
   | ReqEnsureAppSettingsBase;
 
 export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSettings {
@@ -185,6 +214,8 @@ export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSetting
     isReqEnsureAppSettingsChat(obj) ||
     isReqEnsureAppSettingsImg(obj) ||
     isReqEnsureAppSettingsEnv(obj) ||
+    isReqEnsureAppSettingsDbAcl(obj) ||
+    isReqEnsureAppSettingsDbAclRemove(obj) ||
     isReqEnsureAppSettingsBase(obj)
   );
 }
@@ -202,9 +233,13 @@ export const AppSettings = type({
     },
     publicAccess: EnablePublicAccess.optional(),
     enableRequest: EnableRequest.optional(),
+    "dbAcls?": type({ "[string]": dbAcl }),
   }),
 });
 export type AppSettings = typeof AppSettings.infer;
+export interface AppSettingsEntry extends Omit<AppSettings["entry"], "dbAcls"> {
+  dbAcls?: Record<string, DbAcl>;
+}
 
 export const resEnsureAppSettings = type({
   type: "'vibes.diy.res-ensure-app-settings'",

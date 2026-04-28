@@ -75,10 +75,17 @@ export class FireflyDatabase {
     this.vibeApi = vibeApi;
     this.vibeApp = vibeApi.svc.vibeApp;
 
-    // Listen for remote doc-changed events (cross-client sync)
+    // Listen for remote doc-changed events (cross-client sync). Filter on
+    // dbName so a sibling FireflyDatabase on the same connection (e.g. the
+    // comments db on the same vibe) doesn't trigger spurious reloads here.
     this.vibeApi.onMsg((event) => {
       const { data } = event;
-      if (isEvtDocChanged(data) && data.userSlug === this.vibeApp.userSlug && data.appSlug === this.vibeApp.appSlug) {
+      if (
+        isEvtDocChanged(data) &&
+        data.userSlug === this.vibeApp.userSlug &&
+        data.appSlug === this.vibeApp.appSlug &&
+        data.dbName === this.name
+      ) {
         this.notifyListeners([]);
       }
     });

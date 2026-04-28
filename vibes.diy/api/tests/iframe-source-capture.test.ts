@@ -96,13 +96,14 @@ describe("iframeSource capture filtering", () => {
 
     sandbox.handleMessage(fakeMessageEvent({ type: "vibe.runtime.ready" }, "https://app--user.example.com", fakeWindow));
 
-    sandbox.forwardDocChangedToIframe("jchris", "quick-doc-saver", "doc123");
+    sandbox.forwardDocChangedToIframe("jchris", "quick-doc-saver", "default", "doc123");
 
     expect(messages).toHaveLength(1);
     expect(messages[0].data).toEqual({
       type: "vibes.diy.evt-doc-changed",
       userSlug: "jchris",
       appSlug: "quick-doc-saver",
+      dbName: "default",
       docId: "doc123",
     });
     expect(messages[0].origin).toBe("https://app--user.example.com");
@@ -112,7 +113,7 @@ describe("iframeSource capture filtering", () => {
     const { sandbox } = createSandbox();
 
     // No messages sent yet — iframeSource is undefined
-    sandbox.forwardDocChangedToIframe("jchris", "quick-doc-saver", "doc123");
+    sandbox.forwardDocChangedToIframe("jchris", "quick-doc-saver", "default", "doc123");
 
     // Should not throw — silently drops
     expect(sandbox._testInternals.iframeSource).toBeUndefined();

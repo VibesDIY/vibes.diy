@@ -12,8 +12,10 @@ export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unk
   readonly ws: WebSocket;
   readonly ende: JSONEnDecoder;
   readonly chatIds = new Map<string, ChatIdCtx>();
-  // Firefly: appSlugs this connection is subscribed to for document change notifications
-  readonly subscribedAppSlugs = new Set<string>();
+  // Firefly: per-(userSlug/appSlug/dbName) subscription keys this connection
+  // is subscribed to for document change notifications. dbName-scoped so a
+  // tighter `read` ACL on one db doesn't leak via change events on another.
+  readonly subscribedDocKeys = new Set<string>();
   constructor(ws: WebSocket, ende?: JSONEnDecoder) {
     this.ws = ws;
     this.ende = ende ?? JSONEnDecoderSingleton();

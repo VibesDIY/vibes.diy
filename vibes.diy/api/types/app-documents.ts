@@ -164,6 +164,10 @@ export const evtDocChanged = type({
   type: "'vibes.diy.evt-doc-changed'",
   userSlug: "string",
   appSlug: "string",
+  // dbName carries the per-db ACL boundary out to subscribers — without it,
+  // a connection that subscribed to one readable db could observe change
+  // notifications from another db whose `read` ACL is tighter.
+  dbName: "string",
   docId: "string",
 });
 export type EvtDocChanged = typeof evtDocChanged.infer;
