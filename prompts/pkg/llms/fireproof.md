@@ -16,7 +16,7 @@ Fireproof enforces cryptographic causal consistency and ledger integrity using h
 The `use-fireproof` package provides both the core API and React hooks.
 
 ```js
-import { useFireproof } from "https://esm.sh/use-fireproof";
+import { useFireproof } from "use-fireproof";
 ```
 
 React hooks are the recommended way to use Fireproof in LLM code generation contexts.
