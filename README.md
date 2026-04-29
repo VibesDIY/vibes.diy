@@ -1,3 +1,6 @@
+ [![Join our
+  Discord](https://discord-badge.selem.workers.dev/i/tzMUkwFK.svg)](https://discord.gg/tzMUkwFK)
+
 # ✨ Build Mini Apps with AI Magic
 
 Turn your **ideas** into **interactive apps** instantly. [Try it now](https://vibes.diy/) or [fork on GitHub](https://github.com/VibesDIY/vibes.diy) to customize with your own AI account.
