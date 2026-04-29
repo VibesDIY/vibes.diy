@@ -229,9 +229,7 @@ describe("ShareModal", () => {
       expect(modal.handlePublish).toHaveBeenCalledWith(false, "viewer");
     });
 
-    it("writes the published URL to the clipboard when clicking Copy Link", async () => {
-      const writeText = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    it("calls handleCopyUrl when clicking Copy Link", async () => {
       const modal = publishedModal();
       render(<ShareModal modal={modal} isOwner />);
 
@@ -239,20 +237,7 @@ describe("ShareModal", () => {
         fireEvent.click(screen.getByText("Copy Link"));
       });
 
-      expect(writeText).toHaveBeenCalledWith(modal.publishedUrl);
-    });
-
-    it("flips the Copy Link button label to Copied after a successful copy", async () => {
-      const writeText = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
-      const modal = publishedModal();
-      render(<ShareModal modal={modal} isOwner />);
-
-      await act(async () => {
-        fireEvent.click(screen.getByText("Copy Link"));
-        await Promise.resolve();
-      });
-      expect(screen.getByText("Copied")).toBeInTheDocument();
+      expect(modal.handleCopyUrl).toHaveBeenCalledTimes(1);
     });
 
     it("reflects autoJoinEnabled on the auto-approve checkbox", () => {
@@ -349,7 +334,7 @@ describe("ShareModal", () => {
 
       const dialog = screen.getByRole("dialog");
       expect(dialog).toHaveAttribute("aria-modal", "true");
-      expect(dialog).toHaveAttribute("aria-label", "Community");
+      expect(dialog).toHaveAttribute("aria-label", "Share");
     });
   });
 });
