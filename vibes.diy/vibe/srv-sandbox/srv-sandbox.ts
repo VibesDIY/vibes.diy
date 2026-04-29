@@ -674,26 +674,36 @@ export class vibesDiySrvSandbox implements Disposable {
   private pendingSource: string | undefined;
 
   readonly handleMessage = (event: MessageEvent): void => {
-    // Capture iframe window reference — only from sandbox messages (vibe.* prefix)
-    // to avoid capturing Clerk auth or analytics iframes that postMessage first
-    const justCaptured =
-      !this.iframeSource && event.source && typeof event.data?.type === "string" && event.data.type.startsWith("vibe.");
-    if (justCaptured) {
+    // vibe.* prefix filters out Clerk auth / analytics iframes that postMessage first.
+    const isVibeMsg = event.source && typeof event.data?.type === "string" && event.data.type.startsWith("vibe.");
+    // runtime.ready signals the iframe just (re-)booted with the hot-swap listener
+    // registered. Always re-capture iframeSource here so HMR reloads, manual page
+    // reloads, etc. don't leave us posting to a stale (dead) Window reference.
+    const isRuntimeReady = isVibeMsg && (event.data as { type?: string } | undefined)?.type === "vibe.evt.runtime.ready";
+    if (isRuntimeReady) {
+      const prev = this.iframeSource;
       this.iframeSource = event.source as Window;
       this.iframeOrigin = event.origin;
-      console.log("[hot-swap] iframeSource captured", {
+      console.log("[hot-swap] iframeSource captured (runtime.ready)", {
         origin: this.iframeOrigin,
-        firstMsgType: (event.data as { type?: string } | undefined)?.type,
+        replaced: prev !== undefined && prev !== event.source,
         hasPending: this.pendingSource !== undefined,
       });
-      // Replay the last buffered source so the iframe mounts the latest
-      // resolved App.jsx as soon as it's ready, not on the next code.end.
       if (this.pendingSource !== undefined) {
         const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source: this.pendingSource };
         this.pendingSource = undefined;
         this.iframeSource.postMessage(msg, this.iframeOrigin);
         console.log("[hot-swap] replayed pendingSource", { len: msg.source.length });
       }
+    } else if (isVibeMsg && !this.iframeSource) {
+      // Edge case: a non-runtime.ready vibe.* message arriving before runtime.ready
+      // (shouldn't happen in normal flow, but capture defensively).
+      this.iframeSource = event.source as Window;
+      this.iframeOrigin = event.origin;
+      console.log("[hot-swap] iframeSource captured (other vibe.* msg)", {
+        origin: this.iframeOrigin,
+        firstMsgType: (event.data as { type?: string } | undefined)?.type,
+      });
     }
     this.evento.trigger<MessageEvent, unknown, unknown>({
       request: event,
