@@ -12,6 +12,7 @@ import {
   ResFetchCloudToken,
   ResVibeRegisterFPDb,
   EvtVibeAttachStatusFPDb,
+  EvtVibeHotSwapError,
   isEvtVibeSetSource,
   isResPutDoc,
   isResGetDoc,
@@ -290,9 +291,16 @@ async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
   console.log("[hot-swap iframe] received set-source", { len: event.data.source.length, origin: event.origin });
   const result = await applyHotSwap(event.data.source);
   if (result.isErr()) {
-    // Iframe stays on the previous render; end-of-turn autosave will navigate
-    // to a fresh fsId and reload the iframe cleanly.
+    // Iframe stays on the previous render (mountVibe re-renders into the
+    // existing root, so React rolls back failed commits). Notify the parent
+    // so it can surface a toast — without this, the user sees the iframe
+    // silently stop updating mid-stream and assumes the app broke.
     console.error("[hot-swap iframe] failed", result.Err());
+    const errMsg: EvtVibeHotSwapError = {
+      type: "vibe.evt.hot-swap-error",
+      message: String(result.Err()),
+    };
+    window.parent.postMessage(errMsg, "*");
   } else {
     console.log("[hot-swap iframe] applied successfully");
   }

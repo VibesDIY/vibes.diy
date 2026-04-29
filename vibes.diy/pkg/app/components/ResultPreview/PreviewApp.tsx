@@ -3,6 +3,7 @@ import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { BuildURI, URI } from "@adviser/cement";
+import { toast } from "react-hot-toast";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { getCode } from "./CodeEditor.js";
@@ -53,6 +54,11 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // code.end. seq counters reset per block, so a single global "must increase"
   // check would skip pushes from later blocks whose seq < previous block's max.
   const seenByBlockIdRef = useRef<Map<string, number>>(new Map());
+  // Cumulative count of failed fence sections seen via window.__aiderEditsDebug.
+  // We toast when this strictly increases — i.e., a fresh streamed block had
+  // an apply/parse failure — so the user knows the preview may be stale even
+  // though the resolver kept advancing.
+  const lastFailedSectionCountRef = useRef(0);
   useEffect(() => {
     if (srvVibeSandbox === undefined) return;
     const last = promptState.blocks[promptState.blocks.length - 1];
@@ -71,6 +77,27 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     if (latestCodeEndSeq <= seenSeq) return;
     seenByBlockIdRef.current.set(latestBlockId, latestCodeEndSeq);
     const resolved = getCode(promptState).code.join("\n");
+
+    // Surface resolver-side apply/parse errors as a toast. getCode populates
+    // window.__aiderEditsDebug.failedSectionCount on every walk; we react
+    // only to a strict increase so we don't re-toast a steady-state count.
+    const dbg = (
+      window as unknown as {
+        __aiderEditsDebug?: { failedSectionCount?: number };
+      }
+    ).__aiderEditsDebug;
+    if (dbg && typeof dbg.failedSectionCount === "number" && dbg.failedSectionCount > lastFailedSectionCountRef.current) {
+      const newFailed = dbg.failedSectionCount - lastFailedSectionCountRef.current;
+      lastFailedSectionCountRef.current = dbg.failedSectionCount;
+      // Warning, not error — the iframe keeps showing the prior good state
+      // and subsequent edits keep flowing. The user just needs to know that
+      // the preview may be a step behind the latest stream.
+      toast(`${newFailed} edit${newFailed === 1 ? "" : "s"} couldn't apply — preview may be stale`, {
+        id: "aider-resolve-error",
+        icon: "⚠️",
+      });
+    }
+
     if (resolved.length === 0) return;
     // The aider parser occasionally emits tiny phantom sections when the
     // model outputs the path-line + fence as standalone text. Those resolve
@@ -86,6 +113,22 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     const ok = srvVibeSandbox.pushSource(resolved);
     console.log("[hot-swap] pushSource", { ok, len: resolved.length, blockId: latestBlockId });
   }, [promptState.blocks, srvVibeSandbox]);
+
+  // Toast when the iframe rejects a hot-swap source (sucrase transform fail,
+  // dynamic import fail, mountVibe throw). The iframe keeps showing the
+  // previously-committed DOM — without this signal the user sees the preview
+  // silently stop updating mid-stream and assumes the app broke.
+  useEffect(() => {
+    if (srvVibeSandbox === undefined) return;
+    const unsubscribe = srvVibeSandbox.onHotSwapError(({ message }) => {
+      const firstLine = message.split("\n")[0];
+      // Warning, not error — mountVibe re-uses the React root, so the iframe
+      // keeps the previously-committed DOM. This is a "heads up the latest
+      // edit didn't paint", not a hard failure.
+      toast(`Hot-swap failed: ${firstLine}`, { id: "hot-swap-error", icon: "⚠️" });
+    }) as () => void;
+    return unsubscribe;
+  }, [srvVibeSandbox]);
 
   if (!previewUrl) {
     return <>No App Found</>;

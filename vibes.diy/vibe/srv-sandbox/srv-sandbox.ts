@@ -46,6 +46,7 @@ import {
   isReqListDbNames,
   ReqListDbNames,
   EvtVibeSetSource,
+  isEvtVibeHotSwapError,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -664,6 +665,11 @@ export class vibesDiySrvSandbox implements Disposable {
 
   readonly onRuntimeReady = OnFunc<(evt: EvtRuntimeReady) => void>();
 
+  // Iframe → parent hot-swap failure dispatch. Subscribers (PreviewApp) toast
+  // so the user sees that a streamed edit failed to compile/mount, instead of
+  // assuming the silently-stale preview is the latest state.
+  readonly onHotSwapError = OnFunc<(err: { readonly message: string }) => void>();
+
   // Captured iframe postMessage target — set on first message from iframe
   private iframeSource: Window | undefined;
   private iframeOrigin: string | undefined;
@@ -704,6 +710,9 @@ export class vibesDiySrvSandbox implements Disposable {
         origin: this.iframeOrigin,
         firstMsgType: (event.data as { type?: string } | undefined)?.type,
       });
+    }
+    if (isEvtVibeHotSwapError(event.data)) {
+      this.onHotSwapError.invoke({ message: event.data.message });
     }
     this.evento.trigger<MessageEvent, unknown, unknown>({
       request: event,
