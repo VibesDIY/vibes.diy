@@ -165,13 +165,21 @@ const keyedLoadAsset = new KeyedResolvOnce();
 
 export interface MakeBaseSystemPromptOptions {
   fetch?: typeof fetch;
+  // Override the package URL used as `loadAsset`'s `fallBackUrl` when the
+  // local basePath fails (worker bundles, esm.sh fallback). Defaults to
+  // esm.sh; the API worker passes `${WORKSPACE_NPM_URL}/@vibes.diy/prompts/`
+  // so assets resolve through the worker's own /vibe-pkg/ endpoint.
+  pkgBaseUrl?: string;
 }
+
+const DEFAULT_PKG_BASE_URL = "https://esm.sh/@vibes.diy/prompts/";
 
 export async function makeBaseSystemPrompt(
   model: string,
   sessionDoc: Partial<UserSettings> & MakeBaseSystemPromptOptions
 ): Promise<SystemPromptResult> {
   const userPrompt = sessionDoc?.userPrompt || "";
+  const pkgBaseUrl = sessionDoc?.pkgBaseUrl ?? DEFAULT_PKG_BASE_URL;
   const llmsCatalog = await getLlmCatalog();
   const llmsCatalogNames = await getLlmCatalogNames();
 
@@ -191,12 +199,8 @@ export async function makeBaseSystemPrompt(
     const rText = await keyedLoadAsset.get(llm.name).once(async () => {
       // console.log("Loading text asset for LLM:", llm.name, urlDirname(import.meta.url), import.meta.url);
       return loadAsset(`./llms/${llm.name}.md`, {
-        fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
-        basePath: () => {
-          const dir = import.meta.url;
-          // console.log("Base path for loading LLM text asset:", llm, dir, import.meta);
-          return dir;
-        },
+        fallBackUrl: pkgBaseUrl,
+        basePath: () => import.meta.url,
         mock: {
           fetch: sessionDoc.fetch,
         },
@@ -250,7 +254,7 @@ export async function makeBaseSystemPrompt(
 
   const importStatements = `import React from "react"${generateImportStatements(chosenLlms)}`;
 
-  const template = await getSystemPromptTemplate();
+  const template = await getSystemPromptTemplate(pkgBaseUrl, sessionDoc.fetch);
   const systemPrompt = template
     .replaceAll("{{STYLE_PROMPT}}", stylePrompt)
     .replaceAll("{{DEMO_DATA}}", demoDataLines)
@@ -267,11 +271,12 @@ export async function makeBaseSystemPrompt(
   };
 }
 
-async function getSystemPromptTemplate(): Promise<string> {
+async function getSystemPromptTemplate(pkgBaseUrl: string, fetchFn?: typeof fetch): Promise<string> {
   const rText = await keyedLoadAsset.get("system-prompt").once(async () => {
     return loadAsset("./system-prompt.md", {
-      fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
+      fallBackUrl: pkgBaseUrl,
       basePath: () => import.meta.url,
+      mock: { fetch: fetchFn },
     });
   });
   if (rText.isErr()) {
@@ -283,7 +288,7 @@ async function getSystemPromptTemplate(): Promise<string> {
 export async function getCliFooter(): Promise<string> {
   const rText = await keyedLoadAsset.get("cli-footer").once(async () => {
     return loadAsset("./cli-footer.md", {
-      fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
+      fallBackUrl: DEFAULT_PKG_BASE_URL,
       basePath: () => import.meta.url,
     });
   });
@@ -296,7 +301,7 @@ export async function getCliFooter(): Promise<string> {
 export async function getSkillText(name: string): Promise<string> {
   const rText = await keyedLoadAsset.get(name).once(async () => {
     return loadAsset(`./llms/${name}.md`, {
-      fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
+      fallBackUrl: DEFAULT_PKG_BASE_URL,
       basePath: () => import.meta.url,
     });
   });

@@ -7,7 +7,6 @@ import {
   exception2Result,
   chunkyAsync,
   BuildURI,
-  pathOps,
   URI,
   uint8array2stream,
 } from "@adviser/cement";
@@ -84,6 +83,33 @@ import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
+
+// Build the `fetch` override that makeBaseSystemPrompt uses to load asset
+// files (system-prompt.md, llms/*.md) from the worker's `/vibe-pkg/`
+// endpoint instead of esm.sh. With `pkgBaseUrl` passed into prompts.ts, the
+// URL we receive here is already the workspace URL — just delegate to
+// fetchAsset, no path math.
+export interface PromptAssetFetchDeps {
+  readonly fetchAsset: (url: string) => Promise<Result<ReadableStream<Uint8Array>>>;
+}
+
+export function createPromptAssetFetch(deps: PromptAssetFetchDeps): typeof fetch {
+  return async (url, _init) => {
+    const uri = URI.from(url);
+    if (uri.protocol === "file:") {
+      return fetch(url, _init);
+    }
+    const rRes = await deps.fetchAsset(uri.toString());
+    if (rRes.isErr()) {
+      return new Response(JSON.stringify({ error: rRes.Err() }), { status: 500 });
+    }
+    return new Response(rRes.Ok());
+  };
+}
+
+export function promptsPkgBaseUrl(workspace: string): string {
+  return BuildURI.from(workspace).appendRelative("@vibes.diy/prompts/").toString();
+}
 
 interface AppendBlockEventParams {
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -495,24 +521,8 @@ async function injectSystemPrompt(
       skills,
       title,
       demoData: false,
-      fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
-        console.log("Fetching asset for system prompt from URL:", url.toString(), vctx.params.pkgRepos.workspace);
-        const uri = URI.from(url);
-        if (uri.protocol === "file:") {
-          return fetch(url, _init);
-        }
-        const promptTxtUrl = BuildURI.from(vctx.params.pkgRepos.workspace)
-          .appendRelative("@vibes.diy/prompts")
-          .appendRelative("llms")
-          .appendRelative(pathOps.basename(URI.from(url).pathname))
-          .toString();
-        const rRes = await vctx.fetchAsset(promptTxtUrl);
-        if (rRes.isErr()) {
-          console.error("Failed to fetch asset for system prompt from URL:", url.toString(), "with error:", rRes.Err());
-          return new Response(JSON.stringify({ error: rRes.Err() }), { status: 500 });
-        }
-        return new Response(rRes.Ok());
-      },
+      pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
+      fetch: createPromptAssetFetch({ fetchAsset: vctx.fetchAsset }),
     })
   );
   if (systemPrompt.isErr()) {
