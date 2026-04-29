@@ -51,6 +51,7 @@ jobs:
           WORKSPACE_NPM_URL: ${{ vars.WORKSPACE_NPM_URL }}
           VIBES_DIY_API_URL: ${{ vars.VIBES_DIY_API_URL }}
           PRODIA_TOKEN: ${{ secrets.PRODIA_TOKEN }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
   deploy_cli:
     runs-on: ubuntu-latest
@@ -89,3 +90,4 @@ jobs:
           WORKSPACE_NPM_URL: ${{ vars.WORKSPACE_NPM_URL }}
           VIBES_DIY_API_URL: ${{ vars.VIBES_DIY_API_URL }}
           PRODIA_TOKEN: ${{ secrets.PRODIA_TOKEN }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

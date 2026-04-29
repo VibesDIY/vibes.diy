@@ -28,6 +28,7 @@ export default {
           VIBES_DIY_FROM_EMAIL: env.VIBES_DIY_FROM_EMAIL,
           DB_FLAVOUR: toDBFlavour(env.DB_FLAVOUR),
           NEON_DATABASE_URL: env.NEON_DATABASE_URL,
+          DISCORD_WEBHOOK_URL: env.DISCORD_WEBHOOK_URL,
         },
       },
     });

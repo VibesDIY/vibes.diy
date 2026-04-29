@@ -174,3 +174,18 @@ export type EvtDocChanged = typeof evtDocChanged.infer;
 export function isEvtDocChanged(obj: unknown): obj is EvtDocChanged {
   return !(evtDocChanged(obj) instanceof type.errors);
 }
+
+// ── commentPosted event (queue → Discord notification) ──────────────
+
+export const evtCommentPosted = type({
+  type: "'vibes.diy.evt-comment-posted'",
+  userId: "string",
+  userSlug: "string",
+  appSlug: "string",
+  docId: "string",
+  created: "string",
+});
+export type EvtCommentPosted = typeof evtCommentPosted.infer;
+export function isEvtCommentPosted(obj: unknown): obj is EvtCommentPosted {
+  return !(evtCommentPosted(obj) instanceof type.errors);
+}

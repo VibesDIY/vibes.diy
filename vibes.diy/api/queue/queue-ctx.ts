@@ -17,8 +17,28 @@ export interface QueueCtxParams {
       VIBES_DIY_FROM_EMAIL: string;
       DB_FLAVOUR: string;
       NEON_DATABASE_URL?: string;
+      DISCORD_WEBHOOK_URL?: string;
     };
   };
+}
+
+export interface DiscordEmbedField {
+  name: string;
+  value: string;
+  inline?: boolean;
+}
+
+export interface DiscordEmbed {
+  title?: string;
+  description?: string;
+  url?: string;
+  color?: number;
+  fields?: DiscordEmbedField[];
+}
+
+export interface DiscordWebhookBody {
+  content?: string;
+  embeds?: DiscordEmbed[];
 }
 
 export class QueueCtx {
@@ -48,6 +68,29 @@ export class QueueCtx {
         assets: tables.assets,
       },
     };
+  }
+
+  async postToDiscord(body: DiscordWebhookBody): Promise<Result<void>> {
+    const webhookUrl = this.params.vibes.env.DISCORD_WEBHOOK_URL;
+    if (webhookUrl === undefined) {
+      console.log("DISCORD_WEBHOOK_URL not set — skipping Discord notification");
+      return Result.Ok();
+    }
+    const rRes = await exception2Result(() =>
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+    );
+    if (rRes.isErr()) {
+      return Result.Err(rRes);
+    }
+    const res = rRes.Ok();
+    if (!res.ok) {
+      return Result.Err(`Discord webhook got an error: ${res.status}:${res.statusText}`);
+    }
+    return Result.Ok();
   }
 
   async sendEmail(rm: RawEmailWithoutFrom): Promise<Result<{ result: unknown }>> {
