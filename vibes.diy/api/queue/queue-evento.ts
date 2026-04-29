@@ -3,6 +3,7 @@ import { evtNewFsIdEvento } from "./handlers/evt-new-fs-id.js";
 import { evtAppSettingEvento } from "./handlers/evt-app-setting.js";
 import { evtInviteGrantEvento } from "./handlers/evt-invite-grant.js";
 import { evtRequestGrantEvento } from "./handlers/evt-request-grant.js";
+import { evtCommentPostedEvento } from "./handlers/evt-comment-posted.js";
 import { MsgBaseEventoEnDecoder } from "@vibes.diy/api-pkg";
 
 export const vibesQueueEvento = Lazy(() => {
@@ -12,6 +13,7 @@ export const vibesQueueEvento = Lazy(() => {
     evtAppSettingEvento,
     evtInviteGrantEvento,
     evtRequestGrantEvento,
+    evtCommentPostedEvento,
     // {
     //   type: EventoType.WildCard,
     //   hash: "not-queue-implemented-handler",

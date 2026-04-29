@@ -3,6 +3,7 @@ import { EvtRequestGrant, MsgBase, isEvtRequestGrant, msgBase } from "@vibes.diy
 import { type } from "arktype";
 import { QueueCtx } from "../queue-ctx.js";
 import { sendEmailOpts } from "../intern/send-email.js";
+import { buildRequestApprovedEmbed, buildRequestPendingEmbed, postEmbed } from "../intern/post-to-discord.js";
 
 export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGrant>, void> = {
   hash: "evt-request-grant",
@@ -19,6 +20,12 @@ export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGra
   handle: async (ctx: HandleTriggerCtx<unknown, MsgBase<EvtRequestGrant>, void>): Promise<Result<EventoResultType>> => {
     const qctx = ctx.ctx.getOrThrow<QueueCtx>("queueCtx");
     const payload = ctx.validated.payload;
+
+    if (payload.grant.state === "pending") {
+      await postEmbed(qctx, buildRequestPendingEmbed(qctx, payload));
+    } else if (payload.grant.state === "approved") {
+      await postEmbed(qctx, buildRequestApprovedEmbed(qctx, payload, payload.grant.role));
+    }
 
     // if (payload.grant.state === 'pending') {
     //   sendEmailOpts(qctx, [{

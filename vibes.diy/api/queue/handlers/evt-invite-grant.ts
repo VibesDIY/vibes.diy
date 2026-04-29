@@ -3,6 +3,7 @@ import { EvtInviteGrant, MsgBase, isEvtInviteGrant, msgBase } from "@vibes.diy/a
 import { type } from "arktype";
 import { QueueCtx } from "../queue-ctx.js";
 import { sendEmailOpts } from "../intern/send-email.js";
+import { buildInviteAcceptedEmbed, postEmbed } from "../intern/post-to-discord.js";
 
 export const evtInviteGrantEvento: EventoHandler<unknown, MsgBase<EvtInviteGrant>, void> = {
   hash: "evt-invite-grant",
@@ -25,8 +26,11 @@ export const evtInviteGrantEvento: EventoHandler<unknown, MsgBase<EvtInviteGrant
       // we skip on delete
       return Result.Ok(EventoResult.Continue);
     }
+    if (payload.grant.state === "accepted") {
+      await postEmbed(qctx, buildInviteAcceptedEmbed(qctx, payload));
+    }
     if (!payload.grant.foreignInfo.givenEmail) {
-      // if there is no email, we cannot send an email, so we skip
+      // if there is no email, we cannot send an email, so we skip the email-only side effects
       return Result.Ok(EventoResult.Continue);
     }
     if (payload.grant.state === "pending") {

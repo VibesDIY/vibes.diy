@@ -81,6 +81,9 @@ inputs:
   PRODIA_TOKEN:
     description: "Prodia API token for image generation"
     required: false
+  DISCORD_WEBHOOK_URL:
+    description: "Discord webhook URL for site-activity notifications (queue worker)"
+    required: false
 
 runs:
   using: "composite"
@@ -181,6 +184,7 @@ runs:
         DB_FLAVOUR: ${{ inputs.DB_FLAVOUR }}
         NEON_DATABASE_URL: ${{ inputs.NEON_DATABASE_URL }}
         MAX_APP_SLUG_PER_USER_ID: ${{ inputs.MAX_APP_SLUG_PER_USER_ID }}
+        DISCORD_WEBHOOK_URL: ${{ inputs.DISCORD_WEBHOOK_URL }}
       run: |
         pnpm exec core-cli writeEnv --out - --json \
           --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
@@ -201,6 +205,7 @@ runs:
           --fromEnv CLERK_PUB_JWT_URL \
           --fromEnv DB_FLAVOUR \
           --fromEnv NEON_DATABASE_URL \
-          --fromEnv MAX_APP_SLUG_PER_USER_ID | \
+          --fromEnv MAX_APP_SLUG_PER_USER_ID \
+          --fromEnv DISCORD_WEBHOOK_URL | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}}

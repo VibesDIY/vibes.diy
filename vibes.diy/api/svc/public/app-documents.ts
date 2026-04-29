@@ -25,6 +25,8 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
   DbAcl,
+  EvtCommentPosted,
+  COMMENTS_DB_NAME,
 } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -116,6 +118,23 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         deleted: 0,
         created: now,
       });
+
+      if (dbName === COMMENTS_DB_NAME && nextSeq === 1) {
+        await vctx.postQueue({
+          payload: {
+            type: "vibes.diy.evt-comment-posted",
+            userId,
+            userSlug: req.userSlug,
+            appSlug: req.appSlug,
+            docId,
+            created: now,
+          },
+          tid: "queue-event",
+          src: "putDoc",
+          dst: "vibes-service",
+          ttl: 1,
+        } satisfies MsgBase<EvtCommentPosted>);
+      }
 
       // Notify DocNotify coordinator for cross-shard fan-out
       if (vctx.notifyDocChanged) {
