@@ -1,56 +1,91 @@
 import { useParams } from "react-router";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
-import React, { useMemo } from "react";
-// import { BlockEndMsg, CodeEndMsg, isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { BuildURI, URI } from "@adviser/cement";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
-
-// function findApp(promptState: PromptState, sectionId?: string | null) {
-//   let lastBlock: BlockEndMsg | undefined;
-//   let foundCodeSection: CodeEndMsg | undefined;
-//   for (const block of promptState.blocks) {
-//     for (const msg of block.msgs) {
-//       if (isCodeEnd(msg)) {
-//         if (msg.sectionId === sectionId) {
-//           foundCodeSection = msg;
-//         }
-//       }
-//       if (isBlockEnd(msg)) {
-//         if (foundCodeSection) {
-//           return msg;
-//         }
-//         lastBlock = msg;
-//       }
-//     }
-//   }
-//   return lastBlock;
-// }
+import { getCode } from "./CodeEditor.js";
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
-  const { webVars: svcVars } = useVibesDiy();
+  const { webVars: svcVars, srvVibeSandbox } = useVibesDiy();
 
-  const previewUrl = useMemo(() => {
-    if (fsId && appSlug && userSlug) {
-      const myUrl = URI.from(window.location.href);
-      const baseUrl = calcEntryPointUrl({
-        hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
-        protocol: myUrl.protocol as "http" | "",
-        port: myUrl.port,
-        bindings: { appSlug, userSlug, fsId },
-      });
-      const previewUrl = BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
-      // console.log(`iframe src=`, previewUrl.asObj());
-      return previewUrl;
+  // Pin the iframe URL once per (userSlug,appSlug) for the lifetime of the
+  // mount. Two valid initial states:
+  //   1. URL has fsId at mount → pin to it; iframe loads that fsId.
+  //   2. URL has no fsId at mount → pinnedFsId stays undefined; iframe loads
+  //      the server's "pending" shell. Subsequent fsId arrivals (autosave) do
+  //      NOT update pinnedFsId — hot-swap has already mounted content into
+  //      the pending iframe, so reloading to the autosave fsId would discard
+  //      everything streamed in.
+  // Only cross-vibe navigation (different slug pair) re-pins.
+  const [pinnedFsId, setPinnedFsId] = useState<string | undefined>(fsId);
+  const [pinnedKey, setPinnedKey] = useState<string>(`${userSlug}/${appSlug}`);
+  useEffect(() => {
+    const key = `${userSlug}/${appSlug}`;
+    if (pinnedKey !== key) {
+      setPinnedFsId(fsId);
+      setPinnedKey(key);
     }
-    promptState.setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.set("view", "code");
-      return newParams;
+  }, [fsId, userSlug, appSlug, pinnedKey]);
+
+  // Build the iframe URL as soon as we have slugs, even before any fsId. The
+  // server returns a "pending" entry shell when no apps row exists yet — the
+  // iframe loads, registerDependencies runs, the hot-swap listener registers
+  // BEFORE the first code streams. First pushSource then hits a live listener
+  // and the scaffold renders immediately.
+  const previewUrl = useMemo(() => {
+    if (!appSlug || !userSlug) return null;
+    const myUrl = URI.from(window.location.href);
+    const baseUrl = calcEntryPointUrl({
+      hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
+      protocol: myUrl.protocol as "http" | "",
+      port: myUrl.port,
+      bindings: { appSlug, userSlug, ...(pinnedFsId ? { fsId: pinnedFsId } : {}) },
     });
-    return null;
-  }, [fsId, userSlug, appSlug]);
+    const url = BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
+    console.log("[hot-swap] previewUrl computed", { pinnedFsId, urlFsId: fsId, url: url.toString() });
+    return url;
+  }, [pinnedFsId, userSlug, appSlug, fsId]);
+
+  // Track last-seen code.end seq per blockId so we push exactly once per
+  // code.end. seq counters reset per block, so a single global "must increase"
+  // check would skip pushes from later blocks whose seq < previous block's max.
+  const seenByBlockIdRef = useRef<Map<string, number>>(new Map());
+  useEffect(() => {
+    if (srvVibeSandbox === undefined) return;
+    const last = promptState.blocks[promptState.blocks.length - 1];
+    if (last === undefined) return;
+    // Find latest code.end in the latest block, keyed by blockId.
+    let latestCodeEndSeq = -1;
+    let latestBlockId: string | undefined;
+    for (const msg of last.msgs) {
+      if (isCodeEnd(msg) && msg.seq > latestCodeEndSeq) {
+        latestCodeEndSeq = msg.seq;
+        latestBlockId = msg.blockId;
+      }
+    }
+    if (latestBlockId === undefined) return;
+    const seenSeq = seenByBlockIdRef.current.get(latestBlockId) ?? -1;
+    if (latestCodeEndSeq <= seenSeq) return;
+    seenByBlockIdRef.current.set(latestBlockId, latestCodeEndSeq);
+    const resolved = getCode(promptState).code.join("\n");
+    if (resolved.length === 0) return;
+    // The aider parser occasionally emits tiny phantom sections when the
+    // model outputs the path-line + fence as standalone text. Those resolve
+    // to a few bytes and never form a valid module — skip pushes that
+    // obviously can't be a React component.
+    if (resolved.length < 200 || !resolved.includes("export default")) {
+      console.log("[hot-swap] pushSource skipped (size/export gate)", {
+        len: resolved.length,
+        hasExport: resolved.includes("export default"),
+      });
+      return;
+    }
+    const ok = srvVibeSandbox.pushSource(resolved);
+    console.log("[hot-swap] pushSource", { ok, len: resolved.length, blockId: latestBlockId });
+  }, [promptState.blocks, srvVibeSandbox]);
 
   if (!previewUrl) {
     return <>No App Found</>;
@@ -61,7 +96,6 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
       className="relative w-full h-full bg-gray-900 overflow-auto"
       style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
     >
-      {/* <pre>{JSON.stringify({ sectionId, ends: findApp(promptState)}, null, 2)}</pre> */}
       <iframe
         src={previewUrl.toString()}
         className="relative w-full h-full"

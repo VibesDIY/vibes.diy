@@ -13,11 +13,13 @@ import {
   loadAsset,
 } from "@adviser/cement";
 import { type } from "arktype";
-import { resEnsureAppSlug, ResEnsureAppSlug, isSectionEvent } from "@vibes.diy/api-types";
-import type { VibeFile, PromptAndBlockMsgs } from "@vibes.diy/api-types";
+import { ResEnsureAppSlug, isSectionEvent } from "@vibes.diy/api-types";
+import type { SectionEvent } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveUserSlug } from "../resolve-user-slug.js";
+import { resolveSectionStream } from "./resolve-section-stream.js";
+import { pushFromDir } from "./push-from-dir.js";
 
 export const ResGenerate = type({
   type: "'use-vibes.cli.res-generate'",
@@ -91,135 +93,88 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       return Result.Err(`Failed to send prompt: ${JSON.stringify(rPrompt.Err())}`);
     }
 
-    // Consume section stream and collect code blocks until block.end
-    const codeBlocks: { lang: string; lines: string[] }[] = [];
-    let currentBlock: { lang: string; lines: string[] } | undefined;
-    let done = false;
+    // chat.sectionStream emits SectionEvent | ResError. Drop the error
+    // envelopes here so the resolver only sees structured section events.
+    const sectionOnly = chat.sectionStream.pipeThrough(
+      new TransformStream<unknown, SectionEvent>({
+        transform(msg, controller) {
+          if (isSectionEvent(msg)) controller.enqueue(msg);
+        },
+      })
+    );
 
-    const reader = chat.sectionStream.getReader();
-    while (!done) {
-      const { value: event, done: streamDone } = await reader.read();
-      if (streamDone) break;
-      if (!isSectionEvent(event)) continue;
-      for (const msg of event.blocks) {
-        const m = msg as PromptAndBlockMsgs & Record<string, unknown>;
-        switch (m.type) {
-          case "block.code.begin":
-            currentBlock = { lang: (m.lang as string) ?? "jsx", lines: [] };
-            if (args.verbose) process.stderr.write(`\n--- code block (${currentBlock.lang}) ---\n`);
-            break;
-          case "block.code.line":
-            if (currentBlock) {
-              currentBlock.lines.push(m.line as string);
-              if (args.verbose) process.stderr.write((m.line as string) + "\n");
-            }
-            break;
-          case "block.code.end":
-            if (currentBlock) {
-              codeBlocks.push(currentBlock);
-              currentBlock = undefined;
-              if (args.verbose) process.stderr.write("--- end code block ---\n");
-            }
-            break;
-          case "block.toplevel.line":
-            if (args.verbose) process.stderr.write((m.line as string) + "\n");
-            break;
-          case "block.end":
-            done = true;
-            break;
+    // Pipe the section stream through the same resolver the UI/server use,
+    // so Aider-style SEARCH/REPLACE edits compose correctly across blocks
+    // instead of being written verbatim to disk.
+    const rResolved = await resolveSectionStream({
+      sectionStream: sectionOnly,
+      streamId: rPrompt.Ok().promptId,
+      onSnapshot: (snap) => {
+        if (args.verbose) {
+          process.stderr.write(`[${snap.source}] ${snap.path} (${snap.content.length} chars, ${snap.appliedSections} sections)\n`);
         }
-        if (done) break;
-      }
-    }
-    reader.releaseLock();
+      },
+      onError: (err) => {
+        if (args.verbose) {
+          for (const fail of err.failures) {
+            process.stderr.write(`[error] ${err.path}: ${fail.reason}${fail.search ? ` near ${fail.search.slice(0, 40)}` : ""}\n`);
+          }
+        }
+      },
+    });
     await chat.close();
-
-    if (codeBlocks.length === 0) {
-      return Result.Err("No code blocks received from AI response.");
+    if (rResolved.isErr()) {
+      return Result.Err(`Failed to resolve generated stream: ${rResolved.Err().message}`);
+    }
+    const resolved = rResolved.Ok();
+    if (Object.keys(resolved.files).length === 0) {
+      const tail = resolved.errors.length > 0 ? ` (${resolved.errors.length} apply errors)` : "";
+      return Result.Err(`No files resolved from AI response${tail}.`);
+    }
+    if (resolved.errors.length > 0 && !args.verbose) {
+      await sendProgress(ctx, "warn", `Resolved with ${resolved.errors.length} apply error(s); rerun with --verbose for detail.`);
     }
 
-    // Build VibeFile array — first block is App.jsx
-    const files: VibeFile[] = codeBlocks.map((block, idx) => ({
-      type: "code-block" as const,
-      lang: block.lang,
-      content: block.lines.join("\n"),
-      filename: idx === 0 ? "/App.jsx" : `/File-${idx}.${block.lang}`,
-    }));
-
-    // Build content map for writing to disk
-    const fileContents = codeBlocks.map((block, idx) => ({
-      filename: idx === 0 ? "App.jsx" : `File-${idx}.${block.lang}`,
-      content: block.lines.join("\n"),
-    }));
-
-    // Push to API
     const pushAppSlug = chat.appSlug;
     const pushUserSlug = chat.userSlug;
-    const rResult = await api.ensureAppSlug({
-      mode: "production",
-      appSlug: pushAppSlug,
-      userSlug: pushUserSlug,
-      fileSystem: files,
-    });
-    if (rResult.isErr()) {
-      const pushErr = rResult.Err();
-      return Result.Err(`Push failed: ${typeof pushErr === "object" ? JSON.stringify(pushErr) : String(pushErr)}`);
-    }
 
-    const result = resEnsureAppSlug(rResult.Ok());
-    if (result instanceof type.errors) {
-      return Result.Err(`type mismatch: ${result.summary}`);
-    }
-
-    // Write files to local directory
+    // Write files to local directory, then push from there so generate uses
+    // the exact same lint+push path as `cli push`.
     const dir = join(process.cwd(), pushAppSlug);
     const rDir = await exception2Result(() => mkdir(dir, { recursive: true }));
     if (rDir.isErr()) {
       return Result.Err(`Failed to create directory: ${rDir.Err().message}`);
     }
-    for (const file of fileContents) {
-      await writeFile(join(dir, file.filename), file.content, "utf-8");
+    for (const [path, content] of Object.entries(resolved.files)) {
+      const filename = path.startsWith("/") ? path.slice(1) : path;
+      await writeFile(join(dir, filename), content, "utf-8");
     }
 
-    // Generate a README and write to disk (not pushed to API)
     const vibeUrl = BuildURI.from(args.apiUrl)
       .pathname(`/vibe/${pushUserSlug}/${pushAppSlug}`)
       .cleanParams("@stable-entry@", ".stable-entry.")
       .toString();
     await writeFile(join(dir, "README.md"), await generateReadme(pushAppSlug, args.prompt, vibeUrl), "utf-8");
 
-    // Configure instant-join if flagged
-    if (args.instantJoin && pushUserSlug) {
-      const rSettings = await api.ensureAppSettings({
-        appSlug: pushAppSlug,
-        userSlug: pushUserSlug,
-        request: { enable: true, autoAcceptRole: "viewer" },
-      });
-      if (rSettings.isErr()) {
-        const settErr = rSettings.Err();
-        await sendProgress(
-          ctx,
-          "warn",
-          `Warning: failed to update app settings: ${typeof settErr === "object" ? JSON.stringify(settErr) : String(settErr)}`
-        );
-      } else {
-        await sendProgress(ctx, "info", "Requests enabled (instant-join)");
-      }
-    }
-
-    const publicUrl = BuildURI.from(args.apiUrl)
-      .pathname(`/vibe/${pushUserSlug}/${pushAppSlug}`)
-      .cleanParams("@stable-entry@", ".stable-entry.")
-      .toString();
+    const rPush = await pushFromDir({
+      dir,
+      mode: "production",
+      appSlug: pushAppSlug,
+      userSlug: pushUserSlug,
+      instantJoin: args.instantJoin,
+      apiUrl: args.apiUrl,
+      api,
+      ctx,
+    });
+    if (rPush.isErr()) return Result.Err(rPush.Err());
 
     await sendProgress(ctx, "info", `Created: ${dir}`);
-    await sendProgress(ctx, "info", `URL: ${publicUrl}`);
 
     return sendMsg(ctx, {
       type: "use-vibes.cli.res-generate",
       appSlug: pushAppSlug,
       userSlug: pushUserSlug,
-      url: publicUrl,
+      url: rPush.Ok().publicUrl,
       directory: dir,
     } satisfies ResGenerate);
   },

@@ -1,22 +1,28 @@
 import React, { Fragment, FunctionComponent } from "react";
-import { createRoot } from "react-dom/client";
+import { type Root, createRoot } from "react-dom/client";
 import { type } from "arktype";
 import { vibeMountParams } from "./vibe.js";
 import { VibeContextProvider } from "./VibeContext.js";
-// import { HiddenMenuWrapper, VibesPanel } from "@vibes.diy/base";
+
+let activeRoot: Root | undefined;
+let activeProps: unknown;
+
+export function unmountVibe(): void {
+  if (activeRoot) {
+    activeRoot.unmount();
+    activeRoot = undefined;
+  }
+}
+
+export function getActiveProps(): unknown {
+  return activeProps;
+}
 
 // runs on client side
 export function mountVibe(
   comps: FunctionComponent[],
   iprops: unknown // should be VibesDiyMountParams
 ) {
-  // // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // (globalThis as any)[Symbol.for("FP_PRESET_ENV")] = {
-  //   FP_DEBUG: "*",
-  //   FP_STACK: "true",
-  // };
-  // console.log("mountVibe-1", comps);
-
   const props = vibeMountParams(iprops);
   if (props instanceof type.errors) {
     throw new Error(`Invalid mount params: ${props.summary}`);
@@ -25,18 +31,20 @@ export function mountVibe(
   if (!element || element.length !== 1) {
     throw new Error(`Can't find the dom element root`);
   }
-  const root = createRoot(element[0]);
-  // Wrap in VibeContextProvider if we have metadata
+  // Reuse the existing root when present so React can diff the new tree
+  // against the live one. If the new render fails (e.g. a component throws
+  // during initial render), React keeps the previously-committed DOM rather
+  // than blanking the iframe — important for hot-swap during streaming when
+  // the resolver may briefly produce broken intermediate code.
+  if (activeRoot === undefined) {
+    activeRoot = createRoot(element[0]);
+  }
+  activeProps = iprops;
 
   const vibeElement = React.createElement(Fragment, null, ...comps.map((Comp, index) => React.createElement(Comp, { key: index })));
-  // const wrappedVibe = React.createElement(HiddenMenuWrapper, {
-  //   menuContent: React.createElement(VibesPanel),
-  //   showVibesSwitch: false,
-  //   children: vibeElement,
-  // });
   const providerElement = React.createElement(VibeContextProvider, {
     mountParams: { ...props },
     children: vibeElement,
   });
-  root.render(providerElement);
+  activeRoot.render(providerElement);
 }

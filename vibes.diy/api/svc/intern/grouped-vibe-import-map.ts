@@ -13,6 +13,7 @@ export const lockedVersions = {
   REACT_ROUTER: "7.13.0",
   AG_GRID: "35.1.0",
   EMOTION: "11.13.5",
+  SUCRASE: "3.35.1",
 };
 
 export const lockedGroupsVersions = {
@@ -70,5 +71,7 @@ export const lockedGroupsVersions = {
     "call-ai": "alias:@vibes.diy/vibe-runtime",
     "img-vibes": "alias:@vibes.diy/vibe-runtime",
     "use-vibes": "alias:@vibes.diy/vibe-runtime",
+
+    sucrase: "version:SUCRASE",
   },
 };

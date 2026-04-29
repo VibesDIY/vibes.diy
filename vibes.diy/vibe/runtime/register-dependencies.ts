@@ -12,6 +12,7 @@ import {
   ResFetchCloudToken,
   ResVibeRegisterFPDb,
   EvtVibeAttachStatusFPDb,
+  isEvtVibeSetSource,
   isResPutDoc,
   isResGetDoc,
   isResGetDocNotFound,
@@ -31,11 +32,14 @@ import {
   ResSubscribeDocs,
   ResListDbNames,
 } from "@vibes.diy/vibe-types";
-import { Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
+import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
+import { transform } from "sucrase";
+import { FunctionComponent } from "react";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
 import { registerImgVibes } from "./img-vibes.js";
 import { registerFirefly } from "./use-firefly.js";
+import { getActiveProps, mountVibe } from "./mount-vibes.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -266,5 +270,61 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   registerCallAI(ctxVibeApi);
   registerImgVibes(ctxVibeApi);
 
+  // Register the hot-swap listener BEFORE signalling ready, so any set-source
+  // the host posts in response to runtime.ready arrives at a live listener.
+  registerHotSwapHandler();
   ctxVibeApi.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
+}
+
+let hotSwapRegistered = false;
+
+function registerHotSwapHandler(): void {
+  if (hotSwapRegistered) return;
+  hotSwapRegistered = true;
+  window.addEventListener("message", handleHotSwapMessage);
+  console.log("[hot-swap iframe] handler registered");
+}
+
+async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
+  if (!isEvtVibeSetSource(event.data)) return;
+  console.log("[hot-swap iframe] received set-source", { len: event.data.source.length, origin: event.origin });
+  const result = await applyHotSwap(event.data.source);
+  if (result.isErr()) {
+    // Iframe stays on the previous render; end-of-turn autosave will navigate
+    // to a fresh fsId and reload the iframe cleanly.
+    console.error("[hot-swap iframe] failed", result.Err());
+  } else {
+    console.log("[hot-swap iframe] applied successfully");
+  }
+}
+
+async function applyHotSwap(source: string): Promise<Result<void>> {
+  const rTransform = exception2Result(() =>
+    transform(source, {
+      transforms: ["jsx"],
+      production: true,
+      jsxRuntime: "automatic",
+    })
+  );
+  if (rTransform.isErr()) return Result.Err(rTransform.Err());
+  const blob = new Blob([rTransform.Ok().code], { type: "application/javascript" });
+  const blobUrl = URL.createObjectURL(blob);
+  try {
+    const rImport = await exception2Result<{ default?: unknown }>(() => import(/* @vite-ignore */ blobUrl));
+    if (rImport.isErr()) return Result.Err(rImport.Err());
+    const App = rImport.Ok().default;
+    if (typeof App !== "function") {
+      return Result.Err("hot-swap module has no default-exported component");
+    }
+    // Re-render into the existing React root rather than unmount+remount.
+    // If the new App throws on render, React keeps the previously-committed
+    // DOM in place — the iframe doesn't blank out on a misapplied edit.
+    const rMount = exception2Result(() => {
+      mountVibe([App as FunctionComponent], getActiveProps());
+    });
+    if (rMount.isErr()) return Result.Err(rMount.Err());
+    return Result.Ok(undefined);
+  } finally {
+    URL.revokeObjectURL(blobUrl);
+  }
 }

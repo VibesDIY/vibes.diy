@@ -23,6 +23,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
+    "@vibes.diy/vibe-runtime": "workspace:*",
     "call-ai": "workspace:*",
     "isbot": "^5.1.39",
     "jose": "^6.2.2",

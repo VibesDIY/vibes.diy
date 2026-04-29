@@ -23,7 +23,7 @@ import {
   MetaItem,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { renderVibe } from "../intern/render-vibe.js";
+import { renderVibe, renderPendingVibe } from "../intern/render-vibe.js";
 import { parse } from "cookie";
 import { renderToReadableStream } from "react-dom/server";
 import { renderDBExplorer } from "../intern/render-db-explorer.js";
@@ -241,7 +241,22 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     }
     // console.log("-3servEntryPoint triggered with URL:", uri.toString())
     if (!fs) {
-      // todo render 404 page
+      // No apps row yet for this slug pair. If the request is for the entry
+      // point HTML, return a "pending" iframe shell that boots the runtime
+      // and registers the hot-swap listener — so the chat UI can pre-warm
+      // the iframe and the first vibe.evt.set-source has a live listener.
+      // For asset paths, still 404.
+      if (ctx.validated.path === "/" || ctx.validated.path === "/index.html") {
+        const npmUrl = captureNpmUrl(vctx, ctx.request);
+        const rPending = await renderPendingVibe({
+          ctx,
+          appSlug: ctx.validated.appSlug,
+          userSlug: ctx.validated.userSlug,
+          pkgRepos: { private: npmUrl },
+        });
+        if (rPending.isErr()) return rPending;
+        return Result.Ok(EventoResult.Stop);
+      }
       await ctx.send.send(ctx, {
         type: "http.Response.JSON",
         status: 404,
