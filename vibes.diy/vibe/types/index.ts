@@ -72,6 +72,21 @@ export function isEvtVibeSetSource(x: unknown): x is EvtVibeSetSource {
   return !(EvtVibeSetSource(x) instanceof type.errors);
 }
 
+// Iframe → parent hot-swap failure signal. Fires when sucrase transform,
+// dynamic import, or mountVibe reject the source from a vibe.evt.set-source
+// envelope. The iframe keeps its previous DOM (mountVibe reuses the React
+// root); the parent surfaces a toast so the user knows that a streamed edit
+// didn't paint even though subsequent edits keep flowing.
+export const EvtVibeHotSwapError = type({
+  type: "'vibe.evt.hot-swap-error'",
+  message: "string",
+});
+export type EvtVibeHotSwapError = typeof EvtVibeHotSwapError.infer;
+
+export function isEvtVibeHotSwapError(x: unknown): x is EvtVibeHotSwapError {
+  return !(EvtVibeHotSwapError(x) instanceof type.errors);
+}
+
 export const EvtVibeAttachStatusFPDb = type({
   type: "'vibe.evt.attach.status.fpdb'",
   data: FBDbDataWithUrl,

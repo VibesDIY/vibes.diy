@@ -139,6 +139,11 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
   }
 
   // Expose debug snapshot for inspection from chrome devtools / tests.
+  // PreviewApp reads `failedSectionCount` to surface a toast when new failed
+  // fence blocks appear during streaming. We count distinct sections-with-
+  // errors (rather than summing parseErrors + applyErrors) because a single
+  // SEARCH/REPLACE failure can appear in both arrays — the parser flagging
+  // its body and the edit then failing to apply — which would double-count.
   if (typeof window !== "undefined" && debugSections.length > 0) {
     const dbg = window as unknown as {
       __aiderEditsDebug?: {
@@ -147,14 +152,20 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
         sections: DebugSection[];
         finalLen: number;
         snapshotFsIds: string[];
+        failedSectionCount: number;
       };
     };
+    const failedSectionCount = debugSections.reduce(
+      (acc, s) => acc + (s.applyErrors.length > 0 || s.parseErrors.length > 0 ? 1 : 0),
+      0
+    );
     dbg.__aiderEditsDebug = {
       fsId,
       seedLen: seedFromHydrate.length,
       sections: debugSections,
       finalLen: source.length,
       snapshotFsIds: [...snapshotByFsId.keys()],
+      failedSectionCount,
     };
     if (debugSections.some((s) => s.applyErrors.length > 0 || s.parseErrors.length > 0)) {
       console.warn("[aider-edits] resolution had errors", dbg.__aiderEditsDebug);
