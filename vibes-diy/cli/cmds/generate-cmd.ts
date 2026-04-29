@@ -13,12 +13,13 @@ import {
   loadAsset,
 } from "@adviser/cement";
 import { type } from "arktype";
-import { resEnsureAppSlug, ResEnsureAppSlug, isSectionEvent } from "@vibes.diy/api-types";
-import type { SectionEvent, VibeFile } from "@vibes.diy/api-types";
+import { ResEnsureAppSlug, isSectionEvent } from "@vibes.diy/api-types";
+import type { SectionEvent } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveUserSlug } from "../resolve-user-slug.js";
 import { resolveSectionStream } from "./resolve-section-stream.js";
+import { pushFromDir } from "./push-from-dir.js";
 
 export const ResGenerate = type({
   type: "'use-vibes.cli.res-generate'",
@@ -134,100 +135,50 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       await sendProgress(ctx, "warn", `Resolved with ${resolved.errors.length} apply error(s); rerun with --verbose for detail.`);
     }
 
-    // Build VibeFile array and disk-write list from resolved file map.
-    const files: VibeFile[] = Object.entries(resolved.files).map(([path, content]) => {
-      const filename = path.startsWith("/") ? path : `/${path}`;
-      return {
-        type: "code-block" as const,
-        lang: extLang(filename),
-        content,
-        filename,
-      };
-    });
-    const fileContents = Object.entries(resolved.files).map(([path, content]) => ({
-      filename: path.startsWith("/") ? path.slice(1) : path,
-      content,
-    }));
-
-    // Push to API
     const pushAppSlug = chat.appSlug;
     const pushUserSlug = chat.userSlug;
-    const rResult = await api.ensureAppSlug({
-      mode: "production",
-      appSlug: pushAppSlug,
-      userSlug: pushUserSlug,
-      fileSystem: files,
-    });
-    if (rResult.isErr()) {
-      const pushErr = rResult.Err();
-      return Result.Err(`Push failed: ${typeof pushErr === "object" ? JSON.stringify(pushErr) : String(pushErr)}`);
-    }
 
-    const result = resEnsureAppSlug(rResult.Ok());
-    if (result instanceof type.errors) {
-      return Result.Err(`type mismatch: ${result.summary}`);
-    }
-
-    // Write files to local directory
+    // Write files to local directory, then push from there so generate uses
+    // the exact same lint+push path as `cli push`.
     const dir = join(process.cwd(), pushAppSlug);
     const rDir = await exception2Result(() => mkdir(dir, { recursive: true }));
     if (rDir.isErr()) {
       return Result.Err(`Failed to create directory: ${rDir.Err().message}`);
     }
-    for (const file of fileContents) {
-      await writeFile(join(dir, file.filename), file.content, "utf-8");
+    for (const [path, content] of Object.entries(resolved.files)) {
+      const filename = path.startsWith("/") ? path.slice(1) : path;
+      await writeFile(join(dir, filename), content, "utf-8");
     }
 
-    // Generate a README and write to disk (not pushed to API)
     const vibeUrl = BuildURI.from(args.apiUrl)
       .pathname(`/vibe/${pushUserSlug}/${pushAppSlug}`)
       .cleanParams("@stable-entry@", ".stable-entry.")
       .toString();
     await writeFile(join(dir, "README.md"), await generateReadme(pushAppSlug, args.prompt, vibeUrl), "utf-8");
 
-    // Configure instant-join if flagged
-    if (args.instantJoin && pushUserSlug) {
-      const rSettings = await api.ensureAppSettings({
-        appSlug: pushAppSlug,
-        userSlug: pushUserSlug,
-        request: { enable: true, autoAcceptRole: "viewer" },
-      });
-      if (rSettings.isErr()) {
-        const settErr = rSettings.Err();
-        await sendProgress(
-          ctx,
-          "warn",
-          `Warning: failed to update app settings: ${typeof settErr === "object" ? JSON.stringify(settErr) : String(settErr)}`
-        );
-      } else {
-        await sendProgress(ctx, "info", "Requests enabled (instant-join)");
-      }
-    }
-
-    const publicUrl = BuildURI.from(args.apiUrl)
-      .pathname(`/vibe/${pushUserSlug}/${pushAppSlug}`)
-      .cleanParams("@stable-entry@", ".stable-entry.")
-      .toString();
+    const rPush = await pushFromDir({
+      dir,
+      mode: "production",
+      appSlug: pushAppSlug,
+      userSlug: pushUserSlug,
+      instantJoin: args.instantJoin,
+      apiUrl: args.apiUrl,
+      api,
+      ctx,
+    });
+    if (rPush.isErr()) return Result.Err(rPush.Err());
 
     await sendProgress(ctx, "info", `Created: ${dir}`);
-    await sendProgress(ctx, "info", `URL: ${publicUrl}`);
 
     return sendMsg(ctx, {
       type: "use-vibes.cli.res-generate",
       appSlug: pushAppSlug,
       userSlug: pushUserSlug,
-      url: publicUrl,
+      url: rPush.Ok().publicUrl,
       directory: dir,
     } satisfies ResGenerate);
   },
 };
-
-function extLang(filename: string): string {
-  const ext = filename.match(/\.([^.]+)$/)?.[1]?.toLowerCase();
-  if (ext === undefined) return "jsx";
-  if (ext === "js") return "jsx";
-  return ext;
-}
 
 async function generateReadme(appSlug: string, prompt: string, vibeUrl: string): Promise<string> {
   const rTemplate = await loadAsset("./readme-template.md", {
