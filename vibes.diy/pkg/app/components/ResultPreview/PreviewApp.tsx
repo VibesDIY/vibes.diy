@@ -11,22 +11,24 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
   const { webVars: svcVars, srvVibeSandbox } = useVibesDiy();
 
-  // Pin the iframe URL to the FIRST fsId we see for this (userSlug,appSlug)
-  // pair. Subsequent fsId changes (autosave navigation after each turn) don't
-  // re-render the iframe — hot-swap has already updated its contents in place,
-  // so reloading would just produce a black flash for the same render. The
-  // pinned URL becomes stale only when the user navigates to a different vibe
-  // (different appSlug/userSlug) or reloads the page.
+  // Pin the iframe URL once per (userSlug,appSlug) for the lifetime of the
+  // mount. Two valid initial states:
+  //   1. URL has fsId at mount → pin to it; iframe loads that fsId.
+  //   2. URL has no fsId at mount → pinnedFsId stays undefined; iframe loads
+  //      the server's "pending" shell. Subsequent fsId arrivals (autosave) do
+  //      NOT update pinnedFsId — hot-swap has already mounted content into
+  //      the pending iframe, so reloading to the autosave fsId would discard
+  //      everything streamed in.
+  // Only cross-vibe navigation (different slug pair) re-pins.
   const [pinnedFsId, setPinnedFsId] = useState<string | undefined>(fsId);
-  const [pinnedKey, setPinnedKey] = useState<string | undefined>(fsId ? `${userSlug}/${appSlug}` : undefined);
+  const [pinnedKey, setPinnedKey] = useState<string>(`${userSlug}/${appSlug}`);
   useEffect(() => {
-    if (!fsId) return;
     const key = `${userSlug}/${appSlug}`;
-    if (pinnedKey !== key || pinnedFsId === undefined) {
+    if (pinnedKey !== key) {
       setPinnedFsId(fsId);
       setPinnedKey(key);
     }
-  }, [fsId, userSlug, appSlug, pinnedKey, pinnedFsId]);
+  }, [fsId, userSlug, appSlug, pinnedKey]);
 
   // Build the iframe URL as soon as we have slugs, even before any fsId. The
   // server returns a "pending" entry shell when no apps row exists yet — the
@@ -42,8 +44,10 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
       port: myUrl.port,
       bindings: { appSlug, userSlug, ...(pinnedFsId ? { fsId: pinnedFsId } : {}) },
     });
-    return BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
-  }, [pinnedFsId, userSlug, appSlug]);
+    const url = BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
+    console.log("[hot-swap] previewUrl computed", { pinnedFsId, urlFsId: fsId, url: url.toString() });
+    return url;
+  }, [pinnedFsId, userSlug, appSlug, fsId]);
 
   // Track last-seen code.end seq per blockId so we push exactly once per
   // code.end. seq counters reset per block, so a single global "must increase"
@@ -72,8 +76,15 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     // model outputs the path-line + fence as standalone text. Those resolve
     // to a few bytes and never form a valid module — skip pushes that
     // obviously can't be a React component.
-    if (resolved.length < 200 || !resolved.includes("export default")) return;
-    srvVibeSandbox.pushSource(resolved);
+    if (resolved.length < 200 || !resolved.includes("export default")) {
+      console.log("[hot-swap] pushSource skipped (size/export gate)", {
+        len: resolved.length,
+        hasExport: resolved.includes("export default"),
+      });
+      return;
+    }
+    const ok = srvVibeSandbox.pushSource(resolved);
+    console.log("[hot-swap] pushSource", { ok, len: resolved.length, blockId: latestBlockId });
   }, [promptState.blocks, srvVibeSandbox]);
 
   if (!previewUrl) {

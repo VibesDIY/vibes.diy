@@ -681,12 +681,18 @@ export class vibesDiySrvSandbox implements Disposable {
     if (justCaptured) {
       this.iframeSource = event.source as Window;
       this.iframeOrigin = event.origin;
+      console.log("[hot-swap] iframeSource captured", {
+        origin: this.iframeOrigin,
+        firstMsgType: (event.data as { type?: string } | undefined)?.type,
+        hasPending: this.pendingSource !== undefined,
+      });
       // Replay the last buffered source so the iframe mounts the latest
       // resolved App.jsx as soon as it's ready, not on the next code.end.
       if (this.pendingSource !== undefined) {
         const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source: this.pendingSource };
         this.pendingSource = undefined;
         this.iframeSource.postMessage(msg, this.iframeOrigin);
+        console.log("[hot-swap] replayed pendingSource", { len: msg.source.length });
       }
     }
     this.evento.trigger<MessageEvent, unknown, unknown>({
@@ -708,10 +714,12 @@ export class vibesDiySrvSandbox implements Disposable {
   pushSource(source: string): boolean {
     if (this.iframeSource === undefined || this.iframeOrigin === undefined) {
       this.pendingSource = source;
+      console.log("[hot-swap] pushSource buffered (no iframeSource yet)", { len: source.length });
       return false;
     }
     const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source };
     this.iframeSource.postMessage(msg, this.iframeOrigin);
+    console.log("[hot-swap] pushSource posted", { len: source.length, origin: this.iframeOrigin });
     return true;
   }
 
