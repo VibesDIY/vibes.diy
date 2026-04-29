@@ -39,7 +39,7 @@ import { FunctionComponent } from "react";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
 import { registerImgVibes } from "./img-vibes.js";
 import { registerFirefly } from "./use-firefly.js";
-import { getActiveProps, mountVibe, unmountVibe } from "./mount-vibes.js";
+import { getActiveProps, mountVibe } from "./mount-vibes.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -316,8 +316,10 @@ async function applyHotSwap(source: string): Promise<Result<void>> {
     if (typeof App !== "function") {
       return Result.Err("hot-swap module has no default-exported component");
     }
+    // Re-render into the existing React root rather than unmount+remount.
+    // If the new App throws on render, React keeps the previously-committed
+    // DOM in place — the iframe doesn't blank out on a misapplied edit.
     const rMount = exception2Result(() => {
-      unmountVibe();
       mountVibe([App as FunctionComponent], getActiveProps());
     });
     if (rMount.isErr()) return Result.Err(rMount.Err());

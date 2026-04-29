@@ -31,10 +31,14 @@ export function mountVibe(
   if (!element || element.length !== 1) {
     throw new Error(`Can't find the dom element root`);
   }
-  if (activeRoot) {
-    activeRoot.unmount();
+  // Reuse the existing root when present so React can diff the new tree
+  // against the live one. If the new render fails (e.g. a component throws
+  // during initial render), React keeps the previously-committed DOM rather
+  // than blanking the iframe — important for hot-swap during streaming when
+  // the resolver may briefly produce broken intermediate code.
+  if (activeRoot === undefined) {
+    activeRoot = createRoot(element[0]);
   }
-  activeRoot = createRoot(element[0]);
   activeProps = iprops;
 
   const vibeElement = React.createElement(Fragment, null, ...comps.map((Comp, index) => React.createElement(Comp, { key: index })));
