@@ -81,6 +81,16 @@ export default function VibeIframeWrapper() {
   const matches = useMatches();
   const loaderData = matches[matches.length - 1]?.data as { iframeUrl?: string } | undefined;
   const [iframeUrl, setIframeUrl] = useState<string | null>(loaderData?.iframeUrl ?? null);
+  // Gate the post-iframe chrome (overlays, pill, sidebar) until after client
+  // hydration. The chrome uses createPortal(..., document.body), which calls
+  // document at parent render time — that throws on SSR. Hydration-safe: SSR
+  // and initial client render both see hasMounted=false (matching markup),
+  // then useEffect flips it true and chrome paints in.
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   const ssrIframeUrl = loaderData?.iframeUrl;
   useEffect(() => {
     if (ssrIframeUrl) return;
@@ -347,31 +357,38 @@ export default function VibeIframeWrapper() {
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
         </div>
-        {createPortal(
-          <div className="fixed bottom-4 right-4 z-50">
-            <Delayed ms={1000}>
-              <ExpandedVibesPill
-                size={60}
-                remixHref={remixUrl}
-                cloneHref={cloneUrl}
-                editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
-                onCommunity={shareModal.open}
-                communityButtonRef={shareModal.buttonRef}
-                communityBadgeCount={isOwner ? pendingCount : 0}
-                hasUnpublishedChanges={isOwner && shareModal.hasUnpublishedChanges}
-                onHome={() => {
-                  window.open("https://vibes.diy", "_blank");
-                }}
-              />
-              <ShareModal modal={shareModal} placement="above" isOwner={isOwner} myGrant={myGrant} />
-            </Delayed>
-          </div>,
-          document.body
+        {/* Chrome (overlays, pill, sidebar) is client-only because createPortal
+            references document.body, which throws under SSR. The iframe itself
+            ships in the first byte of HTML so the browser starts fetching it
+            immediately; chrome paints in after hydration. */}
+        {hasMounted &&
+          createPortal(
+            <div className="fixed bottom-4 right-4 z-50">
+              <Delayed ms={1000}>
+                <ExpandedVibesPill
+                  size={60}
+                  remixHref={remixUrl}
+                  cloneHref={cloneUrl}
+                  editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
+                  onCommunity={shareModal.open}
+                  communityButtonRef={shareModal.buttonRef}
+                  communityBadgeCount={isOwner ? pendingCount : 0}
+                  hasUnpublishedChanges={isOwner && shareModal.hasUnpublishedChanges}
+                  onHome={() => {
+                    window.open("https://vibes.diy", "_blank");
+                  }}
+                />
+                <ShareModal modal={shareModal} placement="above" isOwner={isOwner} myGrant={myGrant} />
+              </Delayed>
+            </div>,
+            document.body
+          )}
+        {hasMounted && (
+          <Delayed ms={1000}>
+            <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+          </Delayed>
         )}
-        <Delayed ms={1000}>
-          <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
-        </Delayed>
-        {sharingState && (
+        {hasMounted && sharingState && (
           <AllowFireproofSharing
             state={sharingState}
             dbRef={dbRef}
