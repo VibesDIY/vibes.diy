@@ -678,6 +678,9 @@ export class vibesDiySrvSandbox implements Disposable {
   // Without this, brand-new apps drop the first scaffold push (iframe is still
   // loading) and the preview only updates on the next code.end.
   private pendingSource: string | undefined;
+  // Buffered access decision — sent before iframe captured iframeSource.
+  // Same replay-on-runtime-ready pattern as pendingSource.
+  private pendingAccessDecision: boolean | undefined;
 
   readonly handleMessage = (event: MessageEvent): void => {
     // vibe.* prefix filters out Clerk auth / analytics iframes that postMessage first.
@@ -701,6 +704,12 @@ export class vibesDiySrvSandbox implements Disposable {
         this.iframeSource.postMessage(msg, this.iframeOrigin);
         console.log("[hot-swap] replayed pendingSource", { len: msg.source.length });
       }
+      if (this.pendingAccessDecision !== undefined) {
+        const allowed = this.pendingAccessDecision;
+        this.pendingAccessDecision = undefined;
+        this.iframeSource.postMessage({ type: "vibe.evt.access-decision", allowed }, this.iframeOrigin);
+        console.log("[access] replayed pendingAccessDecision", { allowed });
+      }
     } else if (isVibeMsg && !this.iframeSource) {
       // Edge case: a non-runtime.ready vibe.* message arriving before runtime.ready
       // (shouldn't happen in normal flow, but capture defensively).
@@ -723,10 +732,7 @@ export class vibesDiySrvSandbox implements Disposable {
   // Forward a doc-changed event from the API to the iframe
   forwardDocChangedToIframe(userSlug: string, appSlug: string, dbName: string, docId: string): void {
     if (this.iframeSource && this.iframeOrigin) {
-      this.iframeSource.postMessage(
-        { type: "vibes.diy.evt-doc-changed", userSlug, appSlug, dbName, docId },
-        this.iframeOrigin
-      );
+      this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", userSlug, appSlug, dbName, docId }, this.iframeOrigin);
     }
   }
 
@@ -742,6 +748,21 @@ export class vibesDiySrvSandbox implements Disposable {
     const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source };
     this.iframeSource.postMessage(msg, this.iframeOrigin);
     console.log("[hot-swap] pushSource posted", { len: source.length, origin: this.iframeOrigin });
+    return true;
+  }
+
+  // Tell the iframe whether the viewer has access to this vibe. Releases
+  // Firefly's gating promise inside the iframe; if the iframe hasn't sent its
+  // first message yet, buffer and replay on iframeSource capture (same
+  // pattern as pushSource).
+  sendAccessDecision(allowed: boolean): boolean {
+    if (this.iframeSource === undefined || this.iframeOrigin === undefined) {
+      this.pendingAccessDecision = allowed;
+      console.log("[access] sendAccessDecision buffered (no iframeSource yet)", { allowed });
+      return false;
+    }
+    this.iframeSource.postMessage({ type: "vibe.evt.access-decision", allowed }, this.iframeOrigin);
+    console.log("[access] sendAccessDecision posted", { allowed, origin: this.iframeOrigin });
     return true;
   }
 
