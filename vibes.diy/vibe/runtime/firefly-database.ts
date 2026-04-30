@@ -67,13 +67,15 @@ export class FireflyDatabase {
 
   private readonly vibeApi: VibeSandboxApi;
   private readonly vibeApp: VibeApp;
+  private readonly readyPromise: Promise<{ allowed: boolean }>;
   private readonly listeners = new Set<ListenerFn>();
   private readonly updateListeners = new Set<ListenerFn>();
 
-  constructor(name: string, vibeApi: VibeSandboxApi) {
+  constructor(name: string, vibeApi: VibeSandboxApi, readyPromise: Promise<{ allowed: boolean }>) {
     this.name = name;
     this.vibeApi = vibeApi;
     this.vibeApp = vibeApi.svc.vibeApp;
+    this.readyPromise = readyPromise;
 
     // Listen for remote doc-changed events (cross-client sync). Filter on
     // dbName so a sibling FireflyDatabase on the same connection (e.g. the
@@ -89,6 +91,16 @@ export class FireflyDatabase {
         this.notifyListeners([]);
       }
     });
+  }
+
+  // Block until the host has signalled an access decision. If denied, throw
+  // so the consumer's React effects propagate the error to the app's UI
+  // without ever sending a request over the WS.
+  private async ensureReady(): Promise<void> {
+    const r = await this.readyPromise;
+    if (!r.allowed) {
+      throw new Error("vibe access denied");
+    }
   }
 
   async ready(): Promise<void> {
@@ -108,6 +120,7 @@ export class FireflyDatabase {
   }
 
   async get<T extends DocTypes>(id: string): Promise<DocWithId<T>> {
+    await this.ensureReady();
     const rRes = await this.vibeApi.getDoc(id, this.name);
     if (rRes.isErr()) {
       throw new Error(`Failed to get document: ${rRes.Err()}`);
@@ -120,6 +133,7 @@ export class FireflyDatabase {
   }
 
   async put<T extends DocTypes>(doc: T & { _id?: string }): Promise<DocResponse> {
+    await this.ensureReady();
     const rRes = await this.vibeApi.putDoc(doc, doc._id, this.name);
     if (rRes.isErr()) {
       throw new Error(`Failed to put document: ${rRes.Err()}`);
@@ -134,6 +148,7 @@ export class FireflyDatabase {
   }
 
   async del(id: string): Promise<DocResponse> {
+    await this.ensureReady();
     const rRes = await this.vibeApi.deleteDoc(id, this.name);
     if (rRes.isErr()) {
       throw new Error(`Failed to delete document: ${rRes.Err()}`);
@@ -175,6 +190,7 @@ export class FireflyDatabase {
       limit?: number;
     } = {}
   ): Promise<QueryResponse<T>> {
+    await this.ensureReady();
     const rRes = await this.vibeApi.queryDocs(this.name);
     if (rRes.isErr()) {
       throw new Error(`Failed to query documents: ${rRes.Err()}`);
@@ -294,6 +310,7 @@ export class FireflyDatabase {
   async allDocs<T extends DocTypes>(
     opts: { limit?: number; offset?: number; descending?: boolean } = {}
   ): Promise<{ rows: IndexRow<T>[]; docs: DocWithId<T>[] }> {
+    await this.ensureReady();
     const rRes = await this.vibeApi.queryDocs(this.name);
     if (rRes.isErr()) {
       throw new Error(`Failed to query documents: ${rRes.Err()}`);

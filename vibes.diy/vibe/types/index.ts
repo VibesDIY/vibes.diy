@@ -59,6 +59,19 @@ export function isEvtRuntimeReady(x: unknown): x is EvtRuntimeReady {
   return !(EvtRuntimeReady(x) instanceof type.errors);
 }
 
+// Parent → iframe access decision. Fire-and-forget (no response). Releases
+// Firefly's gating promise so deferred document ops resolve. `allowed: false`
+// causes those ops to throw "vibe access denied" instead of hitting the wire.
+export const EvtVibeAccessDecision = type({
+  type: "'vibe.evt.access-decision'",
+  allowed: "boolean",
+});
+export type EvtVibeAccessDecision = typeof EvtVibeAccessDecision.infer;
+
+export function isEvtVibeAccessDecision(x: unknown): x is EvtVibeAccessDecision {
+  return !(EvtVibeAccessDecision(x) instanceof type.errors);
+}
+
 // Parent → iframe live-preview hot-swap. Fire-and-forget (no response).
 // Carries the resolved App.jsx source after each block.code.end so the iframe
 // can sucrase-transform + remount in place, avoiding an iframe reload.

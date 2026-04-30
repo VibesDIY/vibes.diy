@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
@@ -14,7 +14,6 @@ import { ShareModal } from "../components/ResultPreview/ShareModal.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { toast } from "react-hot-toast";
-import { getAppByFsIdEvento } from "@vibes.diy/api-svc/public/get-app-by-fsid.js";
 import { isMetaScreenShot, isMetaTitle } from "@vibes.diy/api-types";
 
 export function meta({ params, matches }: { params: Record<string, string>; matches: { data: unknown }[] }) {
@@ -43,8 +42,23 @@ export default function VibeIframeWrapper() {
   useDocumentTitle(`${userSlug} - ${appSlug} - vibes.diy`);
   // const [searchParam] = useSearchParams();
   const vctx = useVibesDiy();
-  const iframeUrlRef = useRef<string | null>(null);
-  const [ready, setReady] = useState(false);
+  // Iframe URL is computed synchronously from URL params — no need to wait on
+  // getAppByFsId. The entry-point worker on the iframe subdomain resolves
+  // `(userSlug, appSlug) → fsId` itself when fsId is omitted, then renders
+  // the same vibe HTML it would for an explicit fsId. Append `?suspended=true`
+  // so the iframe-runtime Firefly defers all db ops until access is decided.
+  const iframeUrl = useMemo(() => {
+    if (!appSlug || !userSlug) return null;
+    const myUrl = URI.from(window.location.href);
+    const port = myUrl.port && myUrl.port !== "80" && myUrl.port !== "443" ? myUrl.port : undefined;
+    const baseUrl = calcEntryPointUrl({
+      hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
+      protocol: myUrl.protocol === "https:" ? "https" : "http",
+      bindings: { appSlug, userSlug, ...(fsId ? { fsId } : {}) },
+      port,
+    });
+    return BuildURI.from(baseUrl).setParam("npmUrl", vctx.webVars.pkgRepos.workspace).setParam("suspended", "true").toString();
+  }, [appSlug, userSlug, fsId, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
   const [notFound, setNotFound] = useState(false);
   const [reqLogin, setReqLogin] = useState(false);
   const [reqAccess, setReqAccess] = useState(false);
@@ -52,7 +66,6 @@ export default function VibeIframeWrapper() {
   const [revokedAccess, setRevokedAccess] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [appTitle, setAppTitle] = useState<string | null>(null);
-  const [runtimeReady, setRuntimeReady] = useState(false);
   const { isSignedIn: authSignedIn, isLoaded } = useAuth();
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
@@ -108,10 +121,10 @@ export default function VibeIframeWrapper() {
   const session = useSession();
   // const auth = useAuth()
 
+  // Resolve grant + chrome data async. The iframe is already mounted from
+  // first paint; this just decides which (if any) overlay to layer on top
+  // and signals Firefly inside the iframe to release its gating promise.
   useEffect(() => {
-    if (iframeUrlRef.current) {
-      return;
-    }
     if (!(appSlug && userSlug)) {
       return;
     }
@@ -119,7 +132,7 @@ export default function VibeIframeWrapper() {
       return;
     }
     inGetAppByFsIdRef.current = true;
-    console.log(`call`, getAppByFsIdEvento);
+    toast.loading("Verifying access…", { id: "vibe-access" });
     vctx.vibeDiyApi
       .getAppByFsId({
         fsId,
@@ -130,12 +143,15 @@ export default function VibeIframeWrapper() {
       .then((rRes) => {
         inGetAppByFsIdRef.current = false;
         if (rRes.isErr()) {
-          toast.error(`getAppByFsId failed with: ${rRes.Err().message}`);
+          toast.error(`getAppByFsId failed with: ${rRes.Err().message}`, { id: "vibe-access" });
+          vctx.srvVibeSandbox.sendAccessDecision(false);
           return;
         }
         const res = rRes.Ok();
         if (res.error) {
           setNotFound(true);
+          toast.dismiss("vibe-access");
+          vctx.srvVibeSandbox.sendAccessDecision(false);
           return;
         }
         const shot = res.meta.find(isMetaScreenShot);
@@ -146,11 +162,11 @@ export default function VibeIframeWrapper() {
         if (titleMeta) {
           setAppTitle(titleMeta.title);
         }
-        const protocol = window.location.protocol === "https:" ? "https" : "http";
-        console.log(`grant`, res.grant);
         switch (res.grant) {
           case "not-found":
             setNotFound(true);
+            toast.dismiss("vibe-access");
+            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "req-login.request":
             if (authSignedIn) {
@@ -159,19 +175,29 @@ export default function VibeIframeWrapper() {
               setReqLogin(true);
               setIsSidebarVisible(true);
             }
+            toast.dismiss("vibe-access");
+            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "req-login.invite":
             setReqLogin(true);
             setIsSidebarVisible(true);
+            toast.dismiss("vibe-access");
+            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "pending-request":
             setPendingRequest(true);
+            toast.dismiss("vibe-access");
+            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "revoked-access":
             setRevokedAccess(true);
+            toast.dismiss("vibe-access");
+            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "not-grant":
             setNotFound(true);
+            toast.dismiss("vibe-access");
+            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "accepted-email-invite":
           case "granted-access.editor":
@@ -179,43 +205,26 @@ export default function VibeIframeWrapper() {
           case "granted-access.submitter":
           case "public-access":
           case "owner":
-            {
-              const port =
-                window.location.port && window.location.port !== "80" && window.location.port !== "443"
-                  ? window.location.port
-                  : undefined;
-              iframeUrlRef.current = calcEntryPointUrl({
-                hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
-                protocol,
-                bindings: { appSlug, userSlug, fsId: res.fsId },
-                port,
-              });
-              setReady(true);
-              setMyGrant(
-                res.grant === "owner"
-                  ? "owner"
-                  : res.grant === "granted-access.editor" || res.grant === "accepted-email-invite"
-                    ? "editor"
-                    : res.grant === "granted-access.viewer"
-                      ? "viewer"
-                      : res.grant === "granted-access.submitter"
-                        ? "submitter"
-                        : "public"
-              );
-            }
+            setMyGrant(
+              res.grant === "owner"
+                ? "owner"
+                : res.grant === "granted-access.editor" || res.grant === "accepted-email-invite"
+                  ? "editor"
+                  : res.grant === "granted-access.viewer"
+                    ? "viewer"
+                    : res.grant === "granted-access.submitter"
+                      ? "submitter"
+                      : "public"
+            );
+            toast.dismiss("vibe-access");
+            vctx.srvVibeSandbox.sendAccessDecision(true);
             break;
           default:
-            toast.error(`Unexpected grant: ${res.grant}`);
+            toast.error(`Unexpected grant: ${res.grant}`, { id: "vibe-access" });
+            vctx.srvVibeSandbox.sendAccessDecision(false);
         }
       });
   }, [userSlug, appSlug, fsId, session.isSignedIn, authSignedIn, retryCount]);
-
-  useEffect(() => {
-    if (!ready) return;
-    return vctx.srvVibeSandbox.onRuntimeReady(() => {
-      setRuntimeReady(true);
-    }) as () => void;
-  }, [ready, vctx.srvVibeSandbox]);
 
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
 
@@ -298,27 +307,17 @@ export default function VibeIframeWrapper() {
       )
     : null;
 
-  if (ready && iframeUrlRef.current) {
-    const myUrl = URI.from(window.location.href);
-    const previewUrl = BuildURI.from(iframeUrlRef.current).port(myUrl.port).setParam("npmUrl", vctx.webVars.pkgRepos.workspace);
-
-    // console.log(`previewUrl`, previewUrl.toString());
-
+  if (iframeUrl) {
     return (
       <>
         <div className="fixed inset-0 bg-gray-900" style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
           <iframe
-            src={previewUrl.toString()}
+            src={iframeUrl}
             className="w-full h-full border-none"
             sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
             allow="camera; microphone"
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
-          {!runtimeReady && (
-            <div className={cx(gridBackground, "absolute inset-0 flex h-full w-full items-center justify-center")}>
-              <div style={{ color: "var(--vibes-text-primary)" }}>Loading…</div>
-            </div>
-          )}
         </div>
         {createPortal(
           <div className="fixed bottom-4 right-4 z-50">
