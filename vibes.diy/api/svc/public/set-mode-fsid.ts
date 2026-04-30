@@ -1,5 +1,6 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
 import {
+  EvtNewFsId,
   MsgBase,
   ReqSetModeFs,
   reqSetModeFs,
@@ -12,6 +13,7 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
+import { calcEntryPointUrl } from "../entry-point-utils.js";
 import { eq, and } from "drizzle-orm/sql/expressions";
 
 export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userId: string): Promise<Result<ResSetModeFs>> {
@@ -49,6 +51,27 @@ export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userI
   );
   if (rUpdate.isErr()) {
     return Result.Err(rUpdate);
+  }
+  if (req.mode === "production") {
+    const entryPointUrl = calcEntryPointUrl({
+      ...vctx.params.vibes.svc,
+      bindings: { userSlug: req.userSlug, appSlug: req.appSlug, fsId: req.fsId },
+    });
+    await vctx.postQueue({
+      payload: {
+        type: "vibes.diy.evt-new-fs-id",
+        userSlug: req.userSlug,
+        appSlug: req.appSlug,
+        fsId: req.fsId,
+        vibeUrl: entryPointUrl,
+        sessionToken: "offline",
+        mode: "production",
+      },
+      tid: "queue-event",
+      src: "setModeFsId",
+      dst: "vibes-service",
+      ttl: 1,
+    } satisfies MsgBase<EvtNewFsId>);
   }
   return Result.Ok({
     type: "vibes.diy.res-set-mode-fs",

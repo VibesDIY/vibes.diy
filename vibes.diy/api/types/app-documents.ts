@@ -184,6 +184,9 @@ export const evtCommentPosted = type({
   appSlug: "string",
   docId: "string",
   created: "string",
+  // Commenter email from Clerk claims, when present. Optional for
+  // backward-compat with messages enqueued before this field existed.
+  "email?": "string",
 });
 export type EvtCommentPosted = typeof evtCommentPosted.infer;
 export function isEvtCommentPosted(obj: unknown): obj is EvtCommentPosted {
