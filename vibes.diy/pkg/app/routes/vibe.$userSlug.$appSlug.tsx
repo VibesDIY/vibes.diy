@@ -45,8 +45,9 @@ export default function VibeIframeWrapper() {
   // Iframe URL is computed synchronously from URL params — no need to wait on
   // getAppByFsId. The entry-point worker on the iframe subdomain resolves
   // `(userSlug, appSlug) → fsId` itself when fsId is omitted, then renders
-  // the same vibe HTML it would for an explicit fsId. Append `?suspended=true`
-  // so the iframe-runtime Firefly defers all db ops until access is decided.
+  // the same vibe HTML it would for an explicit fsId. Firefly inside the
+  // iframe auto-suspends whenever `window.parent !== window` and waits for
+  // this host to post vibe.evt.access-decision via srvVibeSandbox.
   // window.location isn't available during SSR — defer iframe URL computation
   // to a client-only effect so the server-rendered HTML doesn't crash. The
   // iframe still mounts on first client paint (no extra round-trip needed).
@@ -64,9 +65,7 @@ export default function VibeIframeWrapper() {
       bindings: { appSlug, userSlug, ...(fsId ? { fsId } : {}) },
       port,
     });
-    setIframeUrl(
-      BuildURI.from(baseUrl).setParam("npmUrl", vctx.webVars.pkgRepos.workspace).setParam("suspended", "true").toString()
-    );
+    setIframeUrl(BuildURI.from(baseUrl).setParam("npmUrl", vctx.webVars.pkgRepos.workspace).toString());
   }, [appSlug, userSlug, fsId, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
   const [notFound, setNotFound] = useState(false);
   const [reqLogin, setReqLogin] = useState(false);
