@@ -25,12 +25,12 @@ export async function loader(loaderCtx: {
   params: Record<string, string | undefined>;
   request: Request;
   context: { vibeDiyAppParams: VibesFPApiParameters };
-}) {
+}): Promise<{ iframeUrl: string | undefined }> {
   const { userSlug, appSlug, fsId } = loaderCtx.params;
   if (!userSlug || !appSlug) {
-    return { iframeUrl: null as string | null };
+    return { iframeUrl: undefined };
   }
-  const reqUrl = new URL(loaderCtx.request.url);
+  const reqUrl = URI.from(loaderCtx.request.url);
   const protocol = reqUrl.protocol === "https:" ? "https" : "http";
   const port = reqUrl.port && reqUrl.port !== "80" && reqUrl.port !== "443" ? reqUrl.port : undefined;
   const params = loaderCtx.context.vibeDiyAppParams;
@@ -80,7 +80,7 @@ export default function VibeIframeWrapper() {
   // must remain SSR-safe: no synchronous window access.
   const matches = useMatches();
   const loaderData = matches[matches.length - 1]?.data as { iframeUrl?: string } | undefined;
-  const [iframeUrl, setIframeUrl] = useState<string | null>(loaderData?.iframeUrl ?? null);
+  const [iframeUrl, setIframeUrl] = useState<string | undefined>(loaderData?.iframeUrl);
   // Gate the post-iframe chrome (overlays, pill, sidebar) until after client
   // hydration. The chrome uses createPortal(..., document.body), which calls
   // document at parent render time — that throws on SSR. Hydration-safe: SSR
@@ -95,7 +95,7 @@ export default function VibeIframeWrapper() {
   useEffect(() => {
     if (ssrIframeUrl) return;
     if (!appSlug || !userSlug) {
-      setIframeUrl(null);
+      setIframeUrl(undefined);
       return;
     }
     const myUrl = URI.from(window.location.href);

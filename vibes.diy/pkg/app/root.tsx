@@ -13,6 +13,7 @@ import { VibesFPApiParameters } from "@vibes.diy/api-types";
 import { getVibesGlobalCSS } from "@vibes.diy/base";
 import "./app.css";
 import { Toaster } from "react-hot-toast";
+import { exception2Result } from "@adviser/cement";
 
 // Decode the Clerk frontend API host from a publishable key (pk_<env>_<base64>).
 // Used to emit a <link rel="preconnect"> hint so the browser warms the TCP/TLS
@@ -22,13 +23,10 @@ function clerkFrontendHostFromKey(key: string | undefined): string | undefined {
   if (!key) return undefined;
   const parts = key.split("_");
   if (parts.length < 3) return undefined;
-  try {
-    const decoded = atob(parts[2]);
-    // Format is "<host>$" — strip the trailing terminator if present
-    return decoded.replace(/\$+$/, "") || undefined;
-  } catch {
-    return undefined;
-  }
+  const rDecoded = exception2Result(() => atob(parts[2]));
+  if (rDecoded.isErr()) return undefined;
+  // Format is "<host>$" — strip the trailing terminator if present
+  return rDecoded.Ok().replace(/\$+$/, "") || undefined;
 }
 
 // Loader for root route

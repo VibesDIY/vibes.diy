@@ -1,7 +1,8 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import React, { createContext, useContext } from "react";
 import { ClerkProvider, useClerk } from "@clerk/react";
-import { BuildURI, Future, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
+import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
+import { type } from "arktype";
 import { PostHogProvider } from "posthog-js/react";
 import { PkgRepos, VibesDiyApiIface } from "@vibes.diy/api-types";
 import { vibesDiySrvSandbox, VibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sandbox";
@@ -64,30 +65,37 @@ const lazySuperThis = Lazy(() => ensureSuperThis());
 const TOKEN_STORAGE_KEY = "vibes.diy.clerk-token";
 const EXP_MARGIN_SEC = 60;
 
-function readCachedClerkToken(): { token: string; exp: number } | undefined {
+const CachedClerkToken = type({
+  token: "string",
+  exp: "number",
+});
+type CachedClerkToken = typeof CachedClerkToken.infer;
+
+const JwtPayload = type({
+  exp: "number",
+  "+": "delete",
+});
+
+function readCachedClerkToken(): CachedClerkToken | undefined {
   if (typeof localStorage === "undefined") return undefined;
-  try {
-    const raw = localStorage.getItem(TOKEN_STORAGE_KEY);
-    if (!raw) return undefined;
-    const cached = JSON.parse(raw);
-    if (typeof cached?.token !== "string" || typeof cached?.exp !== "number") return undefined;
-    return cached;
-  } catch {
-    return undefined;
-  }
+  const raw = localStorage.getItem(TOKEN_STORAGE_KEY);
+  if (!raw) return undefined;
+  const rParsed = exception2Result(() => JSON.parse(raw));
+  if (rParsed.isErr()) return undefined;
+  const validated = CachedClerkToken(rParsed.Ok());
+  if (validated instanceof type.errors) return undefined;
+  return validated;
 }
 
 function writeCachedClerkToken(token: string): void {
   if (typeof localStorage === "undefined") return;
-  try {
-    const [, payloadB64] = token.split(".");
-    if (!payloadB64) return;
-    const payload = JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")));
-    if (typeof payload.exp !== "number") return;
-    localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ token, exp: payload.exp }));
-  } catch {
-    /* ignore — caching is best-effort */
-  }
+  const [, payloadB64] = token.split(".");
+  if (!payloadB64) return;
+  const rPayload = exception2Result(() => JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"))));
+  if (rPayload.isErr()) return;
+  const validated = JwtPayload(rPayload.Ok());
+  if (validated instanceof type.errors) return;
+  localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ token, exp: validated.exp } satisfies CachedClerkToken));
 }
 
 function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
