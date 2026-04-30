@@ -53,7 +53,14 @@ The `pkg` tags publish the CLI (`vibes-diy` / `use-vibes` npm packages) and rela
 
 ## Say notification
 
-Use `echo 'message' | say` only **after** a deploy action completes (e.g. CI finishes, deploy confirmed working) — never right after `git push` or tagging. The `say` notification signals completion to the human, not the start of work.
+`echo 'message' | say` is a **completion** signal — it must come after the deploy actually finishes, not after the action that kicks it off.
+
+- ❌ Wrong: `git push origin vibes-diy@c2.2.X && echo 'c2.2.X deploying' | say` — the deploy hasn't run yet, CI takes minutes, the user gets a false "done."
+- ✅ Right: push the tag → wait/poll `gh run list` until the run shows `completed success` → then `echo 'c2.2.X deployed' | say`.
+- Word it as past tense (`deployed`, `published`, `green`), not progressive (`deploying`, `publishing`). The audible signal exists to call the human back when something they were waiting on is *done*.
+- If the deploy fails, say something distinct (`deploy failed`) — never speak success on failure.
+
+The same rule applies to npm publishes, package releases, queue drains — anything where the action you triggered runs asynchronously somewhere else.
 
 ## Queue architecture
 
