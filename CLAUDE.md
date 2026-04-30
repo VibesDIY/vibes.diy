@@ -16,6 +16,8 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [vibe-pkg.md](agents/vibe-pkg.md) — Self-hosted package serving via /vibe-pkg/
 - [dev-state.md](agents/dev-state.md) — Which caches are safe to delete, and which destroy local dev data
 - [flaky-tests.md](agents/flaky-tests.md) — Rerun (or run the suite in isolation) before treating a `pnpm check` failure as real; log to VibesDIY/vibes.diy#1515
+- [iterate-and-validate.md](agents/iterate-and-validate.md) — End-to-end loop: local `pnpm dev` → `@c` cli deploy → Chrome MCP validation
+- [chrome-mcp-debug.md](agents/chrome-mcp-debug.md) — Bug-reproduction loop with the user driving the dev server
 
 ## Quick Reference
 
