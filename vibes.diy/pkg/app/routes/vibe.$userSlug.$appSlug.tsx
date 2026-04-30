@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { useMatches, useParams, useSearchParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
 import { SignIn, useAuth, useSession } from "@clerk/react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
+import type { VibesFPApiParameters } from "@vibes.diy/api-types";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
@@ -15,6 +16,33 @@ import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { toast } from "react-hot-toast";
 import { isMetaScreenShot, isMetaTitle } from "@vibes.diy/api-types";
+
+// Server-render the iframe URL so the <iframe src=...> ships in the very
+// first byte of HTML. Without this, the browser can't start fetching the
+// iframe document until React has hydrated and a useEffect has run — adding
+// hundreds of ms to perceived load time on viewer pages.
+export async function loader(loaderCtx: {
+  params: Record<string, string | undefined>;
+  request: Request;
+  context: { vibeDiyAppParams: VibesFPApiParameters };
+}) {
+  const { userSlug, appSlug, fsId } = loaderCtx.params;
+  if (!userSlug || !appSlug) {
+    return { iframeUrl: null as string | null };
+  }
+  const reqUrl = new URL(loaderCtx.request.url);
+  const protocol = reqUrl.protocol === "https:" ? "https" : "http";
+  const port = reqUrl.port && reqUrl.port !== "80" && reqUrl.port !== "443" ? reqUrl.port : undefined;
+  const params = loaderCtx.context.vibeDiyAppParams;
+  const baseUrl = calcEntryPointUrl({
+    hostnameBase: params.vibes.svc.hostnameBase,
+    protocol,
+    bindings: { appSlug, userSlug, ...(fsId ? { fsId } : {}) },
+    port,
+  });
+  const iframeUrl = BuildURI.from(baseUrl).setParam("npmUrl", params.pkgRepos.workspace).toString();
+  return { iframeUrl };
+}
 
 export function meta({ params, matches }: { params: Record<string, string>; matches: { data: unknown }[] }) {
   const { userSlug, appSlug } = params;
@@ -42,17 +70,20 @@ export default function VibeIframeWrapper() {
   useDocumentTitle(`${userSlug} - ${appSlug} - vibes.diy`);
   // const [searchParam] = useSearchParams();
   const vctx = useVibesDiy();
-  // Iframe URL is computed synchronously from URL params — no need to wait on
-  // getAppByFsId. The entry-point worker on the iframe subdomain resolves
-  // `(userSlug, appSlug) → fsId` itself when fsId is omitted, then renders
-  // the same vibe HTML it would for an explicit fsId. The server gates each
-  // Firefly op via checkDocAccess, so denied viewers see access errors at
-  // the per-op level — no iframe-side gating needed.
-  // window.location isn't available during SSR — defer iframe URL computation
-  // to a client-only effect so the server-rendered HTML doesn't crash. The
-  // iframe still mounts on first client paint (no extra round-trip needed).
-  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
+  // Iframe URL: prefer the SSR-computed value from the loader so the
+  // <iframe src=...> ships in the first byte of HTML and the browser can
+  // start fetching the iframe document without waiting for React hydration.
+  // Fall back to client-side computation when the loader didn't run — e.g.
+  // the SSR regression test (MemoryRouter with no data router) and any
+  // future client-only mount paths. Use useMatches instead of useLoaderData
+  // so this works in non-data routers (the test) without throwing. Render
+  // must remain SSR-safe: no synchronous window access.
+  const matches = useMatches();
+  const loaderData = matches[matches.length - 1]?.data as { iframeUrl?: string } | undefined;
+  const [iframeUrl, setIframeUrl] = useState<string | null>(loaderData?.iframeUrl ?? null);
+  const ssrIframeUrl = loaderData?.iframeUrl;
   useEffect(() => {
+    if (ssrIframeUrl) return;
     if (!appSlug || !userSlug) {
       setIframeUrl(null);
       return;
@@ -66,7 +97,7 @@ export default function VibeIframeWrapper() {
       port,
     });
     setIframeUrl(BuildURI.from(baseUrl).setParam("npmUrl", vctx.webVars.pkgRepos.workspace).toString());
-  }, [appSlug, userSlug, fsId, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
+  }, [ssrIframeUrl, appSlug, userSlug, fsId, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
   const [notFound, setNotFound] = useState(false);
   const [reqLogin, setReqLogin] = useState(false);
   const [reqAccess, setReqAccess] = useState(false);
