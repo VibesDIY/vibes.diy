@@ -230,6 +230,9 @@ export const evtNewFsId = type({
   fsId: "string",
   sessionToken: "string",
   vibeUrl: "string",
+  // Optional for backward-compat with in-flight messages enqueued before this field existed.
+  // "production" identifies a publish; "dev" is a working save.
+  "mode?": "'production'|'dev'",
 });
 export type EvtNewFsId = typeof evtNewFsId.infer;
 

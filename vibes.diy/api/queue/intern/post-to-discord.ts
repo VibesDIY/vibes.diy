@@ -16,8 +16,8 @@ function foreignLabel(foreignInfo: ForeignInfo | undefined): string {
   return foreignInfo?.claims?.params.email ?? foreignInfo?.givenEmail ?? "(unknown)";
 }
 
-export function buildPublishEmbed(payload: EvtNewFsId): DiscordWebhookBody {
-  const url = payload.vibeUrl;
+export function buildPublishEmbed(vctx: QueueCtx, payload: EvtNewFsId): DiscordWebhookBody {
+  const url = vibeUrl(vctx, payload.userSlug, payload.appSlug);
   return {
     content: `🎉 New Vibe published: **[${payload.userSlug}/${payload.appSlug}](${url})**`,
     embeds: [

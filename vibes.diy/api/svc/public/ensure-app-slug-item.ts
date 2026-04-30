@@ -127,6 +127,7 @@ export async function ensureAppSlugItem(
         fsId: ensured.fsId,
         vibeUrl: entryPointUrl,
         sessionToken: "offline",
+        mode: req.mode,
       },
       tid: "queue-event",
       src: "ensureAppSlugItem",

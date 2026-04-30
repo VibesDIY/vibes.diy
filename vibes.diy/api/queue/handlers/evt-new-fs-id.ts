@@ -25,7 +25,9 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
     if (res.isErr()) {
       console.error("Error processing screen shot event:", res.Err());
     }
-    await postEmbed(qctx, buildPublishEmbed(payload));
+    if (payload.mode === "production") {
+      await postEmbed(qctx, buildPublishEmbed(qctx, payload));
+    }
     return Result.Ok(EventoResult.Continue);
   },
 };
