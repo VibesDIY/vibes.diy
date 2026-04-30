@@ -46,7 +46,6 @@ vi.mock("../../../pkg/app/vibes-diy-provider.js", () => ({
     },
     srvVibeSandbox: {
       onRuntimeReady: () => () => undefined,
-      sendAccessDecision: () => false,
     },
   }),
 }));

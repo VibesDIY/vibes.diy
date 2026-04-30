@@ -32,7 +32,6 @@ import {
   ReqSubscribeDocs,
   ResSubscribeDocs,
   ResListDbNames,
-  isEvtVibeAccessDecision,
 } from "@vibes.diy/vibe-types";
 import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
@@ -40,7 +39,7 @@ import { transform } from "sucrase";
 import { FunctionComponent } from "react";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
 import { registerImgVibes } from "./img-vibes.js";
-import { registerFirefly, setReady } from "./use-firefly.js";
+import { registerFirefly } from "./use-firefly.js";
 import { getActiveProps, mountVibe } from "./mount-vibes.js";
 
 export interface VibeApp {
@@ -268,18 +267,7 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
     postMessage: window.parent.postMessage.bind(window.parent),
   });
 
-  // Auto-detect: if we're inside an iframe (window.parent !== window) the host
-  // is responsible for sending vibe.evt.access-decision when its grant data
-  // arrives, so Firefly stays gated until then. If we're loaded standalone
-  // (direct browser navigation, no host frame), there's no one to send the
-  // signal — auto-resolve to allowed=true and let the Fireproof layer handle
-  // any auth that data ops need.
-  const inIframe = typeof window !== "undefined" && window.parent !== window;
-  if (inIframe) {
-    registerAccessDecisionHandler();
-  }
-
-  await registerFirefly(ctxVibeApi, { initialSuspended: inIframe });
+  await registerFirefly(ctxVibeApi);
   registerCallAI(ctxVibeApi);
   registerImgVibes(ctxVibeApi);
 
@@ -287,17 +275,6 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   // the host posts in response to runtime.ready arrives at a live listener.
   registerHotSwapHandler();
   ctxVibeApi.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
-}
-
-let accessDecisionRegistered = false;
-
-function registerAccessDecisionHandler(): void {
-  if (accessDecisionRegistered) return;
-  accessDecisionRegistered = true;
-  window.addEventListener("message", (event: MessageEvent) => {
-    if (!isEvtVibeAccessDecision(event.data)) return;
-    setReady(event.data.allowed);
-  });
 }
 
 let hotSwapRegistered = false;

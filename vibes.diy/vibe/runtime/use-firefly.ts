@@ -12,27 +12,6 @@ import type { VibeSandboxApi } from "./register-dependencies.js";
 // Module-scoped state, set by registerFirefly()
 let vibeApiRef: VibeSandboxApi | undefined;
 
-// Gating promise for Firefly database operations. Each FireflyDatabase awaits
-// this before issuing a request. Pre-resolved by default so the builder side
-// (no `?suspended=true` URL param) never blocks. The viewer route opts in by
-// constructing the iframe URL with `suspended=true`, which keeps the promise
-// pending until the host posts `vibe.evt.access-decision`.
-let resolveReady!: (v: { allowed: boolean }) => void;
-const readyPromise = new Promise<{ allowed: boolean }>((r) => {
-  resolveReady = r;
-});
-let readyResolved = false;
-
-/**
- * Resolve the gating promise. Called by register-dependencies on
- * `vibe.evt.access-decision`. Idempotent — second + later calls are no-ops.
- */
-export function setReady(allowed: boolean): void {
-  if (readyResolved) return;
-  readyResolved = true;
-  resolveReady({ allowed });
-}
-
 // Cache FireflyDatabase instances by name so useMemo stability works
 const dbCache = new Map<string, FireflyDatabase>();
 
@@ -42,7 +21,7 @@ function getOrCreateDb(name: string): FireflyDatabase {
     if (!vibeApiRef) {
       throw new Error("Firefly not initialized — registerFirefly() must be called before useFireproof()");
     }
-    db = new FireflyDatabase(name, vibeApiRef, readyPromise);
+    db = new FireflyDatabase(name, vibeApiRef);
     dbCache.set(name, db);
   }
   return db;
@@ -50,17 +29,9 @@ function getOrCreateDb(name: string): FireflyDatabase {
 
 /**
  * Register the Firefly system. Called by registerDependencies().
- *
- * `initialSuspended=true` keeps the gating promise pending until the host
- * later calls setReady(). Default (false) auto-resolves so the builder side
- * keeps its current zero-gate behaviour.
  */
-export async function registerFirefly(api: VibeSandboxApi, opts: { initialSuspended?: boolean } = {}): Promise<void> {
+export async function registerFirefly(api: VibeSandboxApi): Promise<void> {
   vibeApiRef = api;
-
-  if (!opts.initialSuspended) {
-    setReady(true);
-  }
 
   // Subscribe to docs for cross-client sync (fire-and-forget)
   api.subscribeDocs().then((rRes) => {
