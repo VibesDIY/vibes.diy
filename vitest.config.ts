@@ -5,6 +5,7 @@ export default defineConfig({
     reporters: ["dot"],
     projects: [
       "vibes.diy/tests/app/vitest.config.ts",
+      "vibes.diy/tests/app/ssr/vitest.config.ts",
       "vibes.diy/api/tests/vitest.config.ts",
       "call-ai/v2/vitest.browser.config.ts",
       "call-ai/v2/vitest.node.config.ts",
