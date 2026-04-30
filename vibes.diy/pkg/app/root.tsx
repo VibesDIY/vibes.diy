@@ -14,6 +14,23 @@ import { getVibesGlobalCSS } from "@vibes.diy/base";
 import "./app.css";
 import { Toaster } from "react-hot-toast";
 
+// Decode the Clerk frontend API host from a publishable key (pk_<env>_<base64>).
+// Used to emit a <link rel="preconnect"> hint so the browser warms the TCP/TLS
+// connection to clerk before the SDK script even loads — shaves the first
+// Clerk request's setup off the critical path.
+function clerkFrontendHostFromKey(key: string | undefined): string | undefined {
+  if (!key) return undefined;
+  const parts = key.split("_");
+  if (parts.length < 3) return undefined;
+  try {
+    const decoded = atob(parts[2]);
+    // Format is "<host>$" — strip the trailing terminator if present
+    return decoded.replace(/\$+$/, "") || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 // Loader for root route
 export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters } }) {
   // const env = await fetch("/api/clientEnv")
@@ -47,11 +64,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   if (!svcEnv) {
     return <></>;
   }
+  const clerkHost = clerkFrontendHostFromKey(svcEnv.env.CLERK_PUBLISHABLE_KEY);
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {clerkHost && <link rel="preconnect" href={`https://${clerkHost}`} crossOrigin="anonymous" />}
         <style dangerouslySetInnerHTML={{ __html: getVibesGlobalCSS() }} />
         <Meta />
         <Links />
