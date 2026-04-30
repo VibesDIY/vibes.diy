@@ -104,8 +104,9 @@ export class ChatSessions implements DurableObject {
     this.shardId = uri.getParam("shard") ?? this.shardId;
 
     const wsPerfT0 = Date.now();
-    const wsPerfTag = (this.shardId ?? "no-shard").slice(0, 8);
-    console.log(`[wsperf] ${wsPerfTag} fetch-enter t=0`);
+    const entryT0 = Number(request.headers.get("x-wsperf-entry-t0")) || wsPerfT0;
+    const wsPerfTag = request.headers.get("x-wsperf-tag") ?? (this.shardId ?? "no-shard").slice(0, 8);
+    console.log(`[wsperf] ${wsPerfTag} fetch-enter t=0 entry-gap=${wsPerfT0 - entryT0}ms`);
 
     const cctx = {} as unknown as ExecutionContext & CFInjectMutable;
     cctx.cache = caches.default as unknown as CfCacheIf; // Use Cloudflare's default cache
