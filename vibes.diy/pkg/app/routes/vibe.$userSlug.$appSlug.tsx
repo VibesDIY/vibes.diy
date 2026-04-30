@@ -2,9 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useMatches, useParams, useSearchParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
-import { SignIn, useAuth, useSession } from "@clerk/react";
+import { SignIn, useAuth } from "@clerk/react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
-import type { VibesFPApiParameters } from "@vibes.diy/api-types";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
@@ -15,7 +14,7 @@ import { ShareModal } from "../components/ResultPreview/ShareModal.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { toast } from "react-hot-toast";
-import { isMetaScreenShot, isMetaTitle } from "@vibes.diy/api-types";
+import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
 
 // Server-render the iframe URL so the <iframe src=...> ships in the very
 // first byte of HTML. Without this, the browser can't start fetching the
@@ -130,6 +129,12 @@ export default function VibeIframeWrapper() {
   const [pendingBump, setPendingBump] = useState(0);
 
   const inGetAppByFsIdRef = useRef(false);
+  // Dedupe key + cached response: when only `authSignedIn` flips post-Clerk-hydration,
+  // we re-derive UI from the cached response instead of re-firing the API call.
+  // Without this, every viewer load fires getAppByFsId twice — once optimistically with
+  // the cached JWT (~73 ms cold), once after Clerk's useAuth/useSession finalize.
+  const lastFiredKeyRef = useRef<string>("");
+  const cachedResRef = useRef<ResGetAppByFsId | undefined>(undefined);
 
   useEffect(() => {
     if (!authSignedIn || !userSlug) {
@@ -166,103 +171,109 @@ export default function VibeIframeWrapper() {
     }
   }, [isLoaded, authSignedIn, fsId, userSlug, appSlug]);
 
-  // this is optional locked in
-  const session = useSession();
-  // const auth = useAuth()
-
   // Resolve grant + chrome data async. The iframe is already mounted from
   // first paint; this just decides which (if any) overlay to layer on top.
+  // Dedupes by params hash: if only `authSignedIn` flips (Clerk SDK finishing
+  // hydration after we already fired with the cached JWT), re-derive UI from
+  // the cached response instead of hitting the API again.
   useEffect(() => {
     if (!(appSlug && userSlug)) {
+      return;
+    }
+    const token = searchParam.get("token") ?? undefined;
+    const paramsKey = `${userSlug}|${appSlug}|${fsId ?? ""}|${token ?? ""}|${retryCount}`;
+
+    const applyResToUI = (res: ResGetAppByFsId, signedIn: boolean | undefined): void => {
+      if (res.error) {
+        setNotFound(true);
+        toast.dismiss("vibe-access");
+        return;
+      }
+      const shot = res.meta.find(isMetaScreenShot);
+      if (shot) {
+        setScreenshotUrl(`/assets/cid/?url=${encodeURIComponent(shot.assetUrl)}&mime=${encodeURIComponent(shot.mime)}`);
+      }
+      const titleMeta = res.meta.find(isMetaTitle);
+      if (titleMeta) {
+        setAppTitle(titleMeta.title);
+      }
+      switch (res.grant) {
+        case "not-found":
+          setNotFound(true);
+          toast.dismiss("vibe-access");
+          break;
+        case "req-login.request":
+          if (signedIn) {
+            setReqAccess(true);
+          } else {
+            setReqLogin(true);
+            setIsSidebarVisible(true);
+          }
+          toast.dismiss("vibe-access");
+          break;
+        case "req-login.invite":
+          setReqLogin(true);
+          setIsSidebarVisible(true);
+          toast.dismiss("vibe-access");
+          break;
+        case "pending-request":
+          setPendingRequest(true);
+          toast.dismiss("vibe-access");
+          break;
+        case "revoked-access":
+          setRevokedAccess(true);
+          toast.dismiss("vibe-access");
+          break;
+        case "not-grant":
+          setNotFound(true);
+          toast.dismiss("vibe-access");
+          break;
+        case "accepted-email-invite":
+        case "granted-access.editor":
+        case "granted-access.viewer":
+        case "granted-access.submitter":
+        case "public-access":
+        case "owner":
+          setMyGrant(
+            res.grant === "owner"
+              ? "owner"
+              : res.grant === "granted-access.editor" || res.grant === "accepted-email-invite"
+                ? "editor"
+                : res.grant === "granted-access.viewer"
+                  ? "viewer"
+                  : res.grant === "granted-access.submitter"
+                    ? "submitter"
+                    : "public"
+          );
+          toast.dismiss("vibe-access");
+          break;
+        default:
+          toast.error(`Unexpected grant: ${res.grant}`, { id: "vibe-access" });
+      }
+    };
+
+    // Auth-only flip: same params, already have a response — just re-render.
+    if (lastFiredKeyRef.current === paramsKey && cachedResRef.current) {
+      applyResToUI(cachedResRef.current, authSignedIn);
       return;
     }
     if (inGetAppByFsIdRef.current) {
       return;
     }
     inGetAppByFsIdRef.current = true;
+    lastFiredKeyRef.current = paramsKey;
     toast.loading("Verifying access…", { id: "vibe-access" });
-    vctx.vibeDiyApi
-      .getAppByFsId({
-        fsId,
-        appSlug,
-        userSlug,
-        token: searchParam.get("token") ?? undefined,
-      })
-      .then((rRes) => {
-        inGetAppByFsIdRef.current = false;
-        if (rRes.isErr()) {
-          toast.error(`getAppByFsId failed with: ${rRes.Err().message}`, { id: "vibe-access" });
-          return;
-        }
-        const res = rRes.Ok();
-        if (res.error) {
-          setNotFound(true);
-          toast.dismiss("vibe-access");
-          return;
-        }
-        const shot = res.meta.find(isMetaScreenShot);
-        if (shot) {
-          setScreenshotUrl(`/assets/cid/?url=${encodeURIComponent(shot.assetUrl)}&mime=${encodeURIComponent(shot.mime)}`);
-        }
-        const titleMeta = res.meta.find(isMetaTitle);
-        if (titleMeta) {
-          setAppTitle(titleMeta.title);
-        }
-        switch (res.grant) {
-          case "not-found":
-            setNotFound(true);
-            toast.dismiss("vibe-access");
-            break;
-          case "req-login.request":
-            if (authSignedIn) {
-              setReqAccess(true);
-            } else {
-              setReqLogin(true);
-              setIsSidebarVisible(true);
-            }
-            toast.dismiss("vibe-access");
-            break;
-          case "req-login.invite":
-            setReqLogin(true);
-            setIsSidebarVisible(true);
-            toast.dismiss("vibe-access");
-            break;
-          case "pending-request":
-            setPendingRequest(true);
-            toast.dismiss("vibe-access");
-            break;
-          case "revoked-access":
-            setRevokedAccess(true);
-            toast.dismiss("vibe-access");
-            break;
-          case "not-grant":
-            setNotFound(true);
-            toast.dismiss("vibe-access");
-            break;
-          case "accepted-email-invite":
-          case "granted-access.editor":
-          case "granted-access.viewer":
-          case "granted-access.submitter":
-          case "public-access":
-          case "owner":
-            setMyGrant(
-              res.grant === "owner"
-                ? "owner"
-                : res.grant === "granted-access.editor" || res.grant === "accepted-email-invite"
-                  ? "editor"
-                  : res.grant === "granted-access.viewer"
-                    ? "viewer"
-                    : res.grant === "granted-access.submitter"
-                      ? "submitter"
-                      : "public"
-            );
-            toast.dismiss("vibe-access");
-            break;
-          default:
-            toast.error(`Unexpected grant: ${res.grant}`, { id: "vibe-access" });
-        }
-      });
-  }, [userSlug, appSlug, fsId, session.isSignedIn, authSignedIn, retryCount]);
+    vctx.vibeDiyApi.getAppByFsId({ fsId, appSlug, userSlug, token }).then((rRes) => {
+      inGetAppByFsIdRef.current = false;
+      if (rRes.isErr()) {
+        toast.error(`getAppByFsId failed with: ${rRes.Err().message}`, { id: "vibe-access" });
+        return;
+      }
+      const res = rRes.Ok();
+      cachedResRef.current = res;
+      applyResToUI(res, authSignedIn);
+    });
+  }, [userSlug, appSlug, fsId, searchParam, authSignedIn, retryCount, vctx.vibeDiyApi]);
 
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
 
