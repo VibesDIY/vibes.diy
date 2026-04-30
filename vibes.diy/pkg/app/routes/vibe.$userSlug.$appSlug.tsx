@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
@@ -47,8 +47,15 @@ export default function VibeIframeWrapper() {
   // `(userSlug, appSlug) → fsId` itself when fsId is omitted, then renders
   // the same vibe HTML it would for an explicit fsId. Append `?suspended=true`
   // so the iframe-runtime Firefly defers all db ops until access is decided.
-  const iframeUrl = useMemo(() => {
-    if (!appSlug || !userSlug) return null;
+  // window.location isn't available during SSR — defer iframe URL computation
+  // to a client-only effect so the server-rendered HTML doesn't crash. The
+  // iframe still mounts on first client paint (no extra round-trip needed).
+  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!appSlug || !userSlug) {
+      setIframeUrl(null);
+      return;
+    }
     const myUrl = URI.from(window.location.href);
     const port = myUrl.port && myUrl.port !== "80" && myUrl.port !== "443" ? myUrl.port : undefined;
     const baseUrl = calcEntryPointUrl({
@@ -57,7 +64,9 @@ export default function VibeIframeWrapper() {
       bindings: { appSlug, userSlug, ...(fsId ? { fsId } : {}) },
       port,
     });
-    return BuildURI.from(baseUrl).setParam("npmUrl", vctx.webVars.pkgRepos.workspace).setParam("suspended", "true").toString();
+    setIframeUrl(
+      BuildURI.from(baseUrl).setParam("npmUrl", vctx.webVars.pkgRepos.workspace).setParam("suspended", "true").toString()
+    );
   }, [appSlug, userSlug, fsId, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
   const [notFound, setNotFound] = useState(false);
   const [reqLogin, setReqLogin] = useState(false);
