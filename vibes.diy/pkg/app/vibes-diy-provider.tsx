@@ -203,7 +203,7 @@ function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; 
 
 export function VibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
   return (
-    <ClerkProvider publishableKey={webVars.env.CLERK_PUBLISHABLE_KEY} prefetchUI={false}>
+    <ClerkProvider publishableKey={webVars.env.CLERK_PUBLISHABLE_KEY}>
       <LiveCycleVibesDiyProvider webVars={webVars}>
         <ConditionalPostHog webVars={webVars}>{children}</ConditionalPostHog>
       </LiveCycleVibesDiyProvider>
