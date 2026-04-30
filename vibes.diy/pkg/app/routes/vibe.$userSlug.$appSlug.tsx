@@ -348,7 +348,7 @@ export default function VibeIframeWrapper() {
   if (iframeUrl) {
     return (
       <>
-        <div className="fixed inset-0 bg-gray-900" style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
+        <div className={cx("fixed inset-0", gridBackground)} style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
           <iframe
             src={iframeUrl}
             className="w-full h-full border-none"
