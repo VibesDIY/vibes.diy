@@ -21,14 +21,14 @@ max_batch_size = 10
 max_batch_timeout = 1
 
 [observability.logs]
-enabled = false
+enabled = true
 invocation_logs = true
 
 [env.dev]
 name = "vibes-diy-v2-queue-consumer-dev"
 
 [env.dev.observability.logs]
-enabled = false
+enabled = true
 invocation_logs = true
 
 [env.dev.browser]
@@ -52,7 +52,7 @@ max_batch_timeout = 1
 name = "vibes-diy-v2-queue-consumer-prod"
 
 [env.prod.observability.logs]
-enabled = false
+enabled = true
 invocation_logs = true
 
 [env.prod.browser]
