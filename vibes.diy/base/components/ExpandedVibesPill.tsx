@@ -281,7 +281,7 @@ export function ExpandedVibesPill({
           />
           <PillActionButton
             height={height}
-            label="Community"
+            label="Group"
             bgColor="var(--vibes-green, #22c55e)"
             labelColor="var(--vibes-cream, #FFFEF0)"
             buttonRef={communityButtonRef}
