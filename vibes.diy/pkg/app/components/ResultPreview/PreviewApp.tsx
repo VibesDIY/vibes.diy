@@ -114,15 +114,6 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     console.log("[hot-swap] pushSource", { ok, len: resolved.length, blockId: latestBlockId });
   }, [promptState.blocks, srvVibeSandbox]);
 
-  // Builder always edits the user's own vibe — release Firefly immediately so
-  // useFireproof hooks inside the iframe resolve as soon as the runtime boots.
-  // Buffered by srv-sandbox if iframeSource isn't captured yet; replayed on
-  // runtime.ready capture.
-  useEffect(() => {
-    if (srvVibeSandbox === undefined) return;
-    srvVibeSandbox.sendAccessDecision(true);
-  }, [srvVibeSandbox, previewUrl]);
-
   // Toast when the iframe rejects a hot-swap source (sucrase transform fail,
   // dynamic import fail, mountVibe throw). The iframe keeps showing the
   // previously-committed DOM — without this signal the user sees the preview

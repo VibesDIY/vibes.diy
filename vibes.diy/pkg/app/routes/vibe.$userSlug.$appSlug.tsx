@@ -45,9 +45,9 @@ export default function VibeIframeWrapper() {
   // Iframe URL is computed synchronously from URL params — no need to wait on
   // getAppByFsId. The entry-point worker on the iframe subdomain resolves
   // `(userSlug, appSlug) → fsId` itself when fsId is omitted, then renders
-  // the same vibe HTML it would for an explicit fsId. Firefly inside the
-  // iframe auto-suspends whenever `window.parent !== window` and waits for
-  // this host to post vibe.evt.access-decision via srvVibeSandbox.
+  // the same vibe HTML it would for an explicit fsId. The server gates each
+  // Firefly op via checkDocAccess, so denied viewers see access errors at
+  // the per-op level — no iframe-side gating needed.
   // window.location isn't available during SSR — defer iframe URL computation
   // to a client-only effect so the server-rendered HTML doesn't crash. The
   // iframe still mounts on first client paint (no extra round-trip needed).
@@ -130,8 +130,7 @@ export default function VibeIframeWrapper() {
   // const auth = useAuth()
 
   // Resolve grant + chrome data async. The iframe is already mounted from
-  // first paint; this just decides which (if any) overlay to layer on top
-  // and signals Firefly inside the iframe to release its gating promise.
+  // first paint; this just decides which (if any) overlay to layer on top.
   useEffect(() => {
     if (!(appSlug && userSlug)) {
       return;
@@ -152,14 +151,12 @@ export default function VibeIframeWrapper() {
         inGetAppByFsIdRef.current = false;
         if (rRes.isErr()) {
           toast.error(`getAppByFsId failed with: ${rRes.Err().message}`, { id: "vibe-access" });
-          vctx.srvVibeSandbox.sendAccessDecision(false);
           return;
         }
         const res = rRes.Ok();
         if (res.error) {
           setNotFound(true);
           toast.dismiss("vibe-access");
-          vctx.srvVibeSandbox.sendAccessDecision(false);
           return;
         }
         const shot = res.meta.find(isMetaScreenShot);
@@ -174,7 +171,6 @@ export default function VibeIframeWrapper() {
           case "not-found":
             setNotFound(true);
             toast.dismiss("vibe-access");
-            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "req-login.request":
             if (authSignedIn) {
@@ -184,28 +180,23 @@ export default function VibeIframeWrapper() {
               setIsSidebarVisible(true);
             }
             toast.dismiss("vibe-access");
-            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "req-login.invite":
             setReqLogin(true);
             setIsSidebarVisible(true);
             toast.dismiss("vibe-access");
-            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "pending-request":
             setPendingRequest(true);
             toast.dismiss("vibe-access");
-            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "revoked-access":
             setRevokedAccess(true);
             toast.dismiss("vibe-access");
-            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "not-grant":
             setNotFound(true);
             toast.dismiss("vibe-access");
-            vctx.srvVibeSandbox.sendAccessDecision(false);
             break;
           case "accepted-email-invite":
           case "granted-access.editor":
@@ -225,11 +216,9 @@ export default function VibeIframeWrapper() {
                       : "public"
             );
             toast.dismiss("vibe-access");
-            vctx.srvVibeSandbox.sendAccessDecision(true);
             break;
           default:
             toast.error(`Unexpected grant: ${res.grant}`, { id: "vibe-access" });
-            vctx.srvVibeSandbox.sendAccessDecision(false);
         }
       });
   }, [userSlug, appSlug, fsId, session.isSignedIn, authSignedIn, retryCount]);

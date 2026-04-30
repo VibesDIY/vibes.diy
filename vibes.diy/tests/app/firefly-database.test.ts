@@ -5,14 +5,9 @@ import { createMockVibeApi, asSandboxApi, type MockVibeApi } from "./mock-vibe-a
 let mockApi: MockVibeApi;
 let db: FireflyDatabase;
 
-// Pre-resolved gate so existing CRUD tests behave as if access was already
-// granted at construction. The gating-specific tests below construct their
-// own FireflyDatabase instances with deferred promises.
-const grantedReady: Promise<{ allowed: boolean }> = Promise.resolve({ allowed: true });
-
 beforeEach(() => {
   mockApi = createMockVibeApi("test-app");
-  db = new FireflyDatabase("testdb", asSandboxApi(mockApi), grantedReady);
+  db = new FireflyDatabase("testdb", asSandboxApi(mockApi));
 });
 
 // ── CRUD ────────────────────────────────────────────────────────────
@@ -265,7 +260,7 @@ describe("FireflyDatabase cross-client sync", () => {
     // Wrong appSlug does NOT trigger — create a separate mock to test filtering.
     // FireflyDatabase constructor registers an onMsg listener that checks appSlug.
     const mockApi2 = createMockVibeApi("correct-app");
-    const db2 = new FireflyDatabase("testdb2", asSandboxApi(mockApi2), grantedReady);
+    const db2 = new FireflyDatabase("testdb2", asSandboxApi(mockApi2));
     const listener2 = vi.fn();
     db2.subscribe(listener2);
 
@@ -418,141 +413,5 @@ describe("FireflyDatabase standalone async API", () => {
     await expect(db.close()).resolves.toBeUndefined();
     await expect(db.destroy()).resolves.toBeUndefined();
     await expect(db.compact()).resolves.toBeUndefined();
-  });
-});
-
-// ── gating: ops issued before access decision ──────────────────────
-//
-// These cover the viewer-route flow where the iframe mounts (and the app's
-// useFireproof hooks fire) BEFORE the host has resolved access. Each op
-// must block on the readyPromise rather than hit the wire eagerly. Once
-// the gate releases, in-flight ops complete with the final auth context;
-// if denied, they reject with "vibe access denied" and never reach
-// vibeApi.
-
-describe("FireflyDatabase gating", () => {
-  it("get blocks until readyPromise resolves with allowed=true", async () => {
-    const localApi = createMockVibeApi("test-app");
-    let resolveReady!: (v: { allowed: boolean }) => void;
-    const ready = new Promise<{ allowed: boolean }>((r) => {
-      resolveReady = r;
-    });
-    const gated = new FireflyDatabase("gated", asSandboxApi(localApi), ready);
-
-    // Pre-seed via a granted db so we have something to read once gate opens.
-    const granted = new FireflyDatabase("gated", asSandboxApi(localApi), grantedReady);
-    const { id } = await granted.put({ _id: "doc-1", title: "hello" });
-
-    // Reset the spy so we can assert no calls occur while gated.
-    const getDocSpy = vi.spyOn(localApi, "getDoc");
-    getDocSpy.mockClear();
-
-    // Fire the get — must NOT call vibeApi.getDoc yet.
-    const pending = gated.get(id);
-    let resolved = false;
-    pending.then(() => {
-      resolved = true;
-    });
-    await Promise.resolve(); // let any synchronous reactions settle
-    expect(resolved).toBe(false);
-    expect(getDocSpy).not.toHaveBeenCalled();
-
-    // Release the gate.
-    resolveReady({ allowed: true });
-    const doc = await pending;
-
-    expect(doc.title).toBe("hello");
-    expect(getDocSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("put blocks until access granted, then completes normally", async () => {
-    const localApi = createMockVibeApi("test-app");
-    let resolveReady!: (v: { allowed: boolean }) => void;
-    const ready = new Promise<{ allowed: boolean }>((r) => {
-      resolveReady = r;
-    });
-    const gated = new FireflyDatabase("gated-put", asSandboxApi(localApi), ready);
-
-    const putDocSpy = vi.spyOn(localApi, "putDoc");
-    const pending = gated.put({ title: "buffered" });
-
-    await Promise.resolve();
-    expect(putDocSpy).not.toHaveBeenCalled();
-    expect(localApi._docs.size).toBe(0);
-
-    resolveReady({ allowed: true });
-    const res = await pending;
-
-    expect(res.ok).toBe(true);
-    expect(putDocSpy).toHaveBeenCalledTimes(1);
-    expect(localApi._docs.size).toBe(1);
-  });
-
-  it("queryDocs blocks until access granted", async () => {
-    const localApi = createMockVibeApi("test-app");
-    let resolveReady!: (v: { allowed: boolean }) => void;
-    const ready = new Promise<{ allowed: boolean }>((r) => {
-      resolveReady = r;
-    });
-    const gated = new FireflyDatabase("gated-q", asSandboxApi(localApi), ready);
-
-    // Pre-seed via a granted instance.
-    const granted = new FireflyDatabase("gated-q", asSandboxApi(localApi), grantedReady);
-    await granted.put({ _id: "x", flag: "yes" });
-
-    const querySpy = vi.spyOn(localApi, "queryDocs");
-    querySpy.mockClear();
-    const pending = gated.query("flag", { includeDocs: true });
-
-    await Promise.resolve();
-    expect(querySpy).not.toHaveBeenCalled();
-
-    resolveReady({ allowed: true });
-    const res = await pending;
-
-    expect(res.docs).toHaveLength(1);
-    expect(querySpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("op started while gated rejects when readyPromise resolves with allowed=false", async () => {
-    const localApi = createMockVibeApi("test-app");
-    let resolveReady!: (v: { allowed: boolean }) => void;
-    const ready = new Promise<{ allowed: boolean }>((r) => {
-      resolveReady = r;
-    });
-    const gated = new FireflyDatabase("denied", asSandboxApi(localApi), ready);
-
-    const getDocSpy = vi.spyOn(localApi, "getDoc");
-    const pending = gated.get("does-not-matter");
-
-    await Promise.resolve();
-    expect(getDocSpy).not.toHaveBeenCalled();
-
-    resolveReady({ allowed: false });
-
-    await expect(pending).rejects.toThrow("vibe access denied");
-    expect(getDocSpy).not.toHaveBeenCalled();
-  });
-
-  it("multiple ops issued before gate release all complete after grant", async () => {
-    const localApi = createMockVibeApi("test-app");
-    let resolveReady!: (v: { allowed: boolean }) => void;
-    const ready = new Promise<{ allowed: boolean }>((r) => {
-      resolveReady = r;
-    });
-    const gated = new FireflyDatabase("multi", asSandboxApi(localApi), ready);
-
-    const p1 = gated.put({ _id: "a", title: "A" });
-    const p2 = gated.put({ _id: "b", title: "B" });
-    const p3 = gated.put({ _id: "c", title: "C" });
-
-    await Promise.resolve();
-    expect(localApi._docs.size).toBe(0);
-
-    resolveReady({ allowed: true });
-    const results = await Promise.all([p1, p2, p3]);
-
-    expect(results.every((r) => r.ok)).toBe(true);
-    expect(localApi._docs.size).toBe(3);
   });
 });
