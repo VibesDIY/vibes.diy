@@ -51,10 +51,6 @@ export async function createAppContext<T extends VibesSqlite>(
   // const stream = new utils.ConsoleWriterStream();
   const { sthis } = params;
 
-  const wsPerfT0 = Date.now();
-  const wsPerfTag = crypto.randomUUID().slice(0, 8);
-  console.log(`[wsperf-create] ${wsPerfTag} enter t=0`);
-
   // console.log("createAppContext called with params:", params.env);
   sthis.env.sets(params.env as unknown as Record<string, string>);
   const rEnvVals = sthis.env.gets({
@@ -110,20 +106,17 @@ export async function createAppContext<T extends VibesSqlite>(
     throw rEnvVals.Err();
   }
   const envVals = rEnvVals.Ok();
-  console.log(`[wsperf-create] ${wsPerfTag} env-parsed t=${Date.now() - wsPerfT0}`);
 
   const rCloudPublicKey = await getCloudPubkeyFromEnv(envVals.CLOUD_SESSION_TOKEN_PUBLIC, sthis);
   if (rCloudPublicKey.isErr()) {
     throw rCloudPublicKey.Err();
   }
-  console.log(`[wsperf-create] ${wsPerfTag} cloud-pubkey t=${Date.now() - wsPerfT0}`);
 
   // Create DeviceIdCA from environment variables
   const rDeviceIdCA = await deviceIdCAFromEnv(sthis);
   if (rDeviceIdCA.isErr()) {
     throw rDeviceIdCA.Err();
   }
-  console.log(`[wsperf-create] ${wsPerfTag} device-ca t=${Date.now() - wsPerfT0}`);
 
   // const myUrl = globalThis.window ? URI.from(globalThis.window.location.origin) : URI.from("http://no-window");
   // const public_npm_url = this.env().get("PUBLIC_NPM_URL") ?? "https://esm.sh";
@@ -247,14 +240,10 @@ export async function createAppContext<T extends VibesSqlite>(
 
     postQueue: params.postQueue,
     fetchAsset: params.fetchAsset,
-    tokenApi: await (async () => {
-      const r = await tokenApi(sthis, {
-        clockTolerance: 60,
-        deviceIdCA: rDeviceIdCA.Ok(),
-      });
-      console.log(`[wsperf-create] ${wsPerfTag} token-api t=${Date.now() - wsPerfT0}`);
-      return r;
-    })(),
+    tokenApi: await tokenApi(sthis, {
+      clockTolerance: 60,
+      deviceIdCA: rDeviceIdCA.Ok(),
+    }),
     storage: ensureStorage(createSQLPeer(params.storageSystems.sql)),
     //   envVals.DB_FLAVOUR as DBFlavour, params.db, tables.assets, [
     //   param.storageSystem.sql,
@@ -273,7 +262,6 @@ export async function createAppContext<T extends VibesSqlite>(
     deregisterDocSubscription: params.deregisterDocSubscription,
   } satisfies VibesApiSQLCtx;
 
-  console.log(`[wsperf-create] ${wsPerfTag} done t=${Date.now() - wsPerfT0}`);
   return {
     appCtx: new AppContext().set("vibesApiCtx", vibesCtx),
     vibesCtx,
