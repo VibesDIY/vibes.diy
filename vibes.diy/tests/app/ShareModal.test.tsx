@@ -70,6 +70,7 @@ function createMockModal(overrides: Partial<UseShareModalReturn> = {}): UseShare
     handleCopyUrl: vi.fn().mockResolvedValue(undefined),
     canPublish: true,
     isUpToDate: false,
+    hasUnpublishedChanges: false,
     settingsLoaded: true,
     ...overrides,
   };

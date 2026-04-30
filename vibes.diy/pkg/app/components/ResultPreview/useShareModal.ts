@@ -18,6 +18,8 @@ interface UseShareModalReturn {
   isPublished: boolean;
   isPublishing: boolean;
   isUpToDate: boolean;
+  /** True when the app has a published version and the current fsId differs from it. */
+  hasUnpublishedChanges: boolean;
   publishError: string | undefined;
   publishedUrl: string | undefined;
   handlePublish: (autoJoin: boolean, role?: "editor" | "viewer") => Promise<void>;
@@ -53,6 +55,33 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
 
   const canPublish = fsId !== undefined && fsId !== "";
   const isUpToDate = isPublished && productionFsId === fsId;
+  const hasUnpublishedChanges = isPublished && productionFsId !== undefined && productionFsId !== fsId;
+
+  // Proactively fetch the production fsId on mount and whenever the local fsId
+  // changes, so the Share button can show an "unpublished changes" badge
+  // before the modal is ever opened. The modal-open effect below handles
+  // refresh-after-publish and the fuller settings load.
+  useEffect(() => {
+    let cancelled = false;
+    vibeDiyApi
+      .getAppByFsId({ appSlug, userSlug })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.isOk()) {
+          const app = res.Ok();
+          if (app.mode === "production" && app.fsId) {
+            setIsPublished(true);
+            setProductionFsId(app.fsId);
+          }
+        }
+      })
+      .catch(() => {
+        // App may not exist yet — defaults apply (badge stays hidden)
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [appSlug, userSlug, fsId, vibeDiyApi]);
 
   function clearCopyTimeout() {
     if (copyTimeoutRef.current !== null) {
@@ -239,6 +268,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     isPublished,
     isPublishing,
     isUpToDate,
+    hasUnpublishedChanges,
     publishError,
     publishedUrl,
     handlePublish,

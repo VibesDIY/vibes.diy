@@ -331,6 +331,7 @@ export default function VibeIframeWrapper() {
                 onCommunity={shareModal.open}
                 communityButtonRef={shareModal.buttonRef}
                 communityBadgeCount={isOwner ? pendingCount : 0}
+                hasUnpublishedChanges={isOwner && shareModal.hasUnpublishedChanges}
                 onHome={() => {
                   window.open("https://vibes.diy", "_blank");
                 }}
