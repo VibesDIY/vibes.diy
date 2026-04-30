@@ -11,7 +11,7 @@ export default defineConfig({
   test: {
     // setupFiles: ["./moduleSetup.ts", "./setup.ts"],
     name: "vibes.diy",
-    exclude: ["dist/**", "node_modules/**"],
+    exclude: ["dist/**", "node_modules/**", "ssr/**"],
     include: ["**/*test.?(c|m)[jt]s?(x)"],
     /*
     server: {
