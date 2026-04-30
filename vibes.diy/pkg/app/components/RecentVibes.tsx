@@ -1,8 +1,8 @@
 import { useAuth } from "@clerk/react";
 import type { ResListUserSlugAppSlugItem } from "@vibes.diy/api-types";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useVibesDiy } from "../vibes-diy-provider.js";
+import { useRecentVibesData } from "../contexts/RecentVibesContext.js";
 
 interface RecentVibesProps {
   onNavigate?: () => void;
@@ -27,40 +27,9 @@ export function toRecentVibes(items: ResListUserSlugAppSlugItem[], limit: number
 
 export function RecentVibes({ onNavigate }: RecentVibesProps) {
   const { isSignedIn } = useAuth();
-  const { vibeDiyApi } = useVibesDiy();
-  const [vibeItems, setVibeItems] = useState<ResListUserSlugAppSlugItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items: vibeItems, loading, error, refresh } = useRecentVibesData();
 
   const items = useMemo(() => toRecentVibes(vibeItems, 20), [vibeItems]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!isSignedIn) {
-      setVibeItems([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    vibeDiyApi
-      .listUserSlugAppSlug({})
-      .then((res) => {
-        if (cancelled) return;
-        if (res.isOk()) setVibeItems(res.Ok().items);
-        else setVibeItems([]);
-      })
-      .catch(() => {
-        if (!cancelled) setVibeItems([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isSignedIn, vibeDiyApi]);
 
   if (!isSignedIn) return null;
 
@@ -69,6 +38,17 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
       {loading ? (
         <div className="flex justify-center py-2">
           <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
+        </div>
+      ) : error && items.length === 0 ? (
+        <div className="px-4 pb-1 text-xs">
+          <p className="opacity-60">Couldn&apos;t load recent vibes.</p>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="mt-1 underline opacity-80 hover:opacity-100"
+          >
+            Retry
+          </button>
         </div>
       ) : items.length > 0 ? (
         <>
