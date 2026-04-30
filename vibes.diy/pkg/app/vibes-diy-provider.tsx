@@ -56,6 +56,40 @@ const vibesDiyApis = new KeyedResolvOnce();
 
 const lazySuperThis = Lazy(() => ensureSuperThis());
 
+// Cache the most recent Clerk session JWT so `getToken()` can return instantly
+// before the Clerk SDK finishes its deferred-bundle load (~2s on first paint).
+// We store {token, exp} under this key; exp is parsed from the JWT itself.
+// EXP_MARGIN_SEC is the safety window — any cached token expiring within this
+// many seconds is treated as stale and we fall through to the slow path.
+const TOKEN_STORAGE_KEY = "vibes.diy.clerk-token";
+const EXP_MARGIN_SEC = 60;
+
+function readCachedClerkToken(): { token: string; exp: number } | undefined {
+  if (typeof localStorage === "undefined") return undefined;
+  try {
+    const raw = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (!raw) return undefined;
+    const cached = JSON.parse(raw);
+    if (typeof cached?.token !== "string" || typeof cached?.exp !== "number") return undefined;
+    return cached;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeCachedClerkToken(token: string): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    const [, payloadB64] = token.split(".");
+    if (!payloadB64) return;
+    const payload = JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")));
+    if (typeof payload.exp !== "number") return;
+    localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ token, exp: payload.exp }));
+  } catch {
+    /* ignore — caching is best-effort */
+  }
+}
+
 function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
   const clerk = useClerk();
 
@@ -83,6 +117,14 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     return new VibesDiyApi({
       apiUrl,
       getToken: async () => {
+        // Fast path: a cached JWT from a prior page load that still has more
+        // than EXP_MARGIN_SEC seconds remaining. Lets the first WS message
+        // fire without waiting for Clerk's SDK to finish loading.
+        const cached = readCachedClerkToken();
+        const nowSec = Math.floor(Date.now() / 1000);
+        if (cached && cached.exp > nowSec + EXP_MARGIN_SEC) {
+          return Result.Ok({ type: "clerk", token: cached.token });
+        }
         if (clerkReady) {
           await clerkReady.asPromise();
           clerkReady = undefined;
@@ -94,6 +136,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
         if (!ot) {
           return Result.Err(`no token`);
         }
+        writeCachedClerkToken(ot);
         return Result.Ok({
           type: "clerk",
           token: ot,
@@ -143,7 +186,7 @@ function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; 
 
 export function VibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
   return (
-    <ClerkProvider publishableKey={webVars.env.CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider publishableKey={webVars.env.CLERK_PUBLISHABLE_KEY} prefetchUI={false}>
       <LiveCycleVibesDiyProvider webVars={webVars}>
         <ConditionalPostHog webVars={webVars}>{children}</ConditionalPostHog>
       </LiveCycleVibesDiyProvider>
