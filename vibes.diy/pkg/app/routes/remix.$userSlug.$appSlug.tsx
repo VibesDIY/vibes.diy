@@ -9,6 +9,7 @@ import { cx, gridBackground } from "@vibes.diy/base";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
+import { useRecentVibesData } from "../contexts/RecentVibesContext.js";
 
 export default function RemixRoute() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
@@ -17,6 +18,7 @@ export default function RemixRoute() {
   useDocumentTitle(`${skipChat ? "Clone" : "Remix"} ${userSlug}/${appSlug} - vibes.diy`);
   const { vibeDiyApi } = useVibesDiy();
   const { isSignedIn, isLoaded } = useAuth();
+  const { refresh: refreshRecentVibes } = useRecentVibesData();
   const navigate = useNavigate();
   const hasRun = useRef(false);
   const [statusLine] = useState(skipChat ? "Cloning vibe…" : "Forking vibe…");
@@ -35,6 +37,7 @@ export default function RemixRoute() {
         return;
       }
       const fork = rFork.Ok();
+      void refreshRecentVibes();
 
       // Seed the local Fireproof VibeDocument so ChatHeaderContent shows the
       // "remix of" link later if the user navigates into the chat editor.

@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { Chat } from "./chat.$userSlug.$appSlug.js";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/react";
+import { useRecentVibesData } from "../../contexts/RecentVibesContext.js";
 
 const PENDING_PROMPT_KEY = "vibes.pendingPrompt";
 
@@ -14,6 +15,7 @@ export default function ChatPrompt() {
   const navigate = useNavigate();
   const hasRun = useRef(false);
   const { isSignedIn, isLoaded } = useAuth();
+  const { refresh: refreshRecentVibes } = useRecentVibesData();
 
   const prompt64 = searchParams.get("prompt64");
 
@@ -67,6 +69,7 @@ export default function ChatPrompt() {
               toast.error(`sendPrompt failed: ${rPrompt.Err().message}`);
               return;
             }
+            void refreshRecentVibes();
             navigate(`/chat/${chat.userSlug}/${chat.appSlug}`);
           });
       });
