@@ -32,6 +32,7 @@ import {
   ReqSubscribeDocs,
   ResSubscribeDocs,
   ResListDbNames,
+  isEvtVibeAccessDecision,
 } from "@vibes.diy/vibe-types";
 import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
@@ -39,7 +40,7 @@ import { transform } from "sucrase";
 import { FunctionComponent } from "react";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
 import { registerImgVibes } from "./img-vibes.js";
-import { registerFirefly } from "./use-firefly.js";
+import { registerFirefly, setReady } from "./use-firefly.js";
 import { getActiveProps, mountVibe } from "./mount-vibes.js";
 
 export interface VibeApp {
@@ -267,7 +268,15 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
     postMessage: window.parent.postMessage.bind(window.parent),
   });
 
-  await registerFirefly(ctxVibeApi);
+  // Viewer route opts in via `?suspended=true` on the iframe URL: Firefly
+  // queues every db op until the host posts vibe.evt.access-decision. Builder
+  // (PreviewApp) omits the param so registerFirefly auto-resolves the gate.
+  const initialSuspended = new URLSearchParams(window.location.search).get("suspended") === "true";
+  if (initialSuspended) {
+    registerAccessDecisionHandler();
+  }
+
+  await registerFirefly(ctxVibeApi, { initialSuspended });
   registerCallAI(ctxVibeApi);
   registerImgVibes(ctxVibeApi);
 
@@ -275,6 +284,17 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   // the host posts in response to runtime.ready arrives at a live listener.
   registerHotSwapHandler();
   ctxVibeApi.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
+}
+
+let accessDecisionRegistered = false;
+
+function registerAccessDecisionHandler(): void {
+  if (accessDecisionRegistered) return;
+  accessDecisionRegistered = true;
+  window.addEventListener("message", (event: MessageEvent) => {
+    if (!isEvtVibeAccessDecision(event.data)) return;
+    setReady(event.data.allowed);
+  });
 }
 
 let hotSwapRegistered = false;
