@@ -73,12 +73,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       const callerUserId = req._auth?.verifiedAuth.claims.userId;
       // console.log(`getAppByFsIdEvento called with req`, req, `callerUserId`, callerUserId);
 
-      const apsPerfT0 = Date.now();
-      const apsPerfTag = crypto.randomUUID().slice(0, 8);
-      console.log(
-        `[appsPerf] ${apsPerfTag} enter t=0 user=${req.userSlug} app=${req.appSlug} fsId=${req.fsId ?? "-"} signedIn=${callerUserId ? "y" : "n"}`
-      );
-
       let app: typeof vctx.sql.tables.apps.$inferSelect | undefined;
       if (req.fsId) {
         app = await vctx.sql.db
@@ -93,7 +87,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           )
           .limit(1)
           .then((r) => r[0]);
-        console.log(`[appsPerf] ${apsPerfTag} apps-lookup-by-fsid t=${Date.now() - apsPerfT0}`);
       } else {
         const maxCreatedSub = vctx.sql.db
           .select({ mode: vctx.sql.tables.apps.mode, maxCreated: max(vctx.sql.tables.apps.created).as("max_created") })
@@ -126,11 +119,9 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           )
           .orderBy(vctx.sql.tables.apps.mode); // "dev" < "production" → last = production wins
         app = rows[rows.length - 1];
-        console.log(`[appsPerf] ${apsPerfTag} apps-lookup-latest t=${Date.now() - apsPerfT0}`);
       }
 
       if (!app) {
-        console.log(`[appsPerf] ${apsPerfTag} done t=${Date.now() - apsPerfT0} grant=not-found-app`);
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-get-app-by-fsid",
           error: "app-not-found",
@@ -160,7 +151,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           appSlug: app.appSlug,
           userSlug: app.userSlug,
         });
-        console.log(`[appsPerf] ${apsPerfTag} ensure-settings t=${Date.now() - apsPerfT0} ok=${rAppSet.isOk() ? "y" : "n"}`);
         if (rAppSet.isErr()) {
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-get-app-by-fsid",
@@ -188,7 +178,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         } else {
           // console.log(`-1`, settings.entry, settings.entries);
           const rHasInvite = await hasAccessInvite(vctx, { ...req, grantUserId: reqUserId });
-          console.log(`[appsPerf] ${apsPerfTag} has-invite t=${Date.now() - apsPerfT0} ok=${rHasInvite.isOk() ? "y" : "n"}`);
           // console.log(`-2`, rHasInvite);
           if (rHasInvite.isErr()) {
             await ctx.send.send(ctx, {
@@ -222,9 +211,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                   claims: req._auth!.verifiedAuth.claims,
                 });
-                console.log(
-                  `[appsPerf] ${apsPerfTag} redeem-invite t=${Date.now() - apsPerfT0} ok=${rRedeemInvite.isOk() ? "y" : "n"}`
-                );
                 if (rRedeemInvite.isErr()) {
                   await ctx.send.send(ctx, {
                     type: "vibes.diy.res-get-app-by-fsid",
@@ -254,7 +240,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                 userSlug: app.userSlug,
                 foreignUserId: reqUserId,
               });
-              console.log(`[appsPerf] ${apsPerfTag} has-request t=${Date.now() - apsPerfT0} ok=${rHasRequest.isOk() ? "y" : "n"}`);
               if (rHasRequest.isErr()) {
                 await ctx.send.send(ctx, {
                   type: "vibes.diy.res-get-app-by-fsid",
@@ -291,9 +276,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                   foreignUserId: reqUserId,
                   claims: req._auth?.verifiedAuth.claims,
                 });
-                console.log(
-                  `[appsPerf] ${apsPerfTag} request-access t=${Date.now() - apsPerfT0} ok=${rRequestAccess.isOk() ? "y" : "n"}`
-                );
                 if (rRequestAccess.isErr()) {
                   await ctx.send.send(ctx, {
                     type: "vibes.diy.res-get-app-by-fsid",
@@ -337,7 +319,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           } satisfies ResGetAppByFsId);
         }
       }
-      console.log(`[appsPerf] ${apsPerfTag} done t=${Date.now() - apsPerfT0} grant=${grant}`);
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-get-app-by-fsid",
         appSlug: app.appSlug,
