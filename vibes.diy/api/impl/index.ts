@@ -229,6 +229,13 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       },
       sthis,
     };
+    // Open the WebSocket eagerly. The handshake is unauthenticated (auth is
+    // per-message, not per-upgrade) so we don't need to wait for getToken().
+    // Overlapping the WS open with Clerk SDK loading shaves up to a full Clerk
+    // round-trip off time-to-first-message.
+    this.getReadyConnection().catch((_e: unknown) => {
+      /* best-effort eager connect; first send will retry */
+    });
   }
 
   async getTokenClaims(): Promise<Result<VerifiedClaimsResult & { claims: ClerkClaim }>> {
@@ -291,10 +298,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     req: T,
     msgParam: Partial<Omit<MsgBase, "tid">> & { tid: string }
   ): Promise<Result<MsgBox<WithAuth<T>>, VibesDiyError>> {
+    // getToken() can block on the browser's Clerk SDK loading; getReadyConnection()
+    // can block on the WS open. Run them in parallel — the WS handshake itself
+    // sends no auth, and auth is attached per-message below.
+    const tokenPromise = req.auth ? Promise.resolve(undefined) : this.cfg.getToken();
+    const connPromise = this.getReadyConnection();
     let auth = req.auth;
     if (!req.auth) {
-      const rDashAuth = await this.cfg.getToken();
-      if (rDashAuth.isOk()) {
+      const rDashAuth = await tokenPromise;
+      if (rDashAuth?.isOk()) {
         auth = rDashAuth.Ok();
       }
       // if getToken fails, proceed unauthenticated
@@ -310,7 +322,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       },
     };
     // console.log("Prepared message box:", msgBox);
-    const conn = await this.getReadyConnection();
+    const conn = await connPromise;
     // console.log("Got ready connection, sending message with tid:", msgParam.tid);
     const ende = JSONEnDecoderSingleton();
     const uint8ify = ende.uint8ify(msgBox);
