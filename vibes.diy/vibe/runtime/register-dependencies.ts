@@ -268,15 +268,18 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
     postMessage: window.parent.postMessage.bind(window.parent),
   });
 
-  // Viewer route opts in via `?suspended=true` on the iframe URL: Firefly
-  // queues every db op until the host posts vibe.evt.access-decision. Builder
-  // (PreviewApp) omits the param so registerFirefly auto-resolves the gate.
-  const initialSuspended = new URLSearchParams(window.location.search).get("suspended") === "true";
-  if (initialSuspended) {
+  // Auto-detect: if we're inside an iframe (window.parent !== window) the host
+  // is responsible for sending vibe.evt.access-decision when its grant data
+  // arrives, so Firefly stays gated until then. If we're loaded standalone
+  // (direct browser navigation, no host frame), there's no one to send the
+  // signal — auto-resolve to allowed=true and let the Fireproof layer handle
+  // any auth that data ops need.
+  const inIframe = typeof window !== "undefined" && window.parent !== window;
+  if (inIframe) {
     registerAccessDecisionHandler();
   }
 
-  await registerFirefly(ctxVibeApi, { initialSuspended });
+  await registerFirefly(ctxVibeApi, { initialSuspended: inIframe });
   registerCallAI(ctxVibeApi);
   registerImgVibes(ctxVibeApi);
 
