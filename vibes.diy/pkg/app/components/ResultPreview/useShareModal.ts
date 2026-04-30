@@ -55,12 +55,19 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
 
   const canPublish = fsId !== undefined && fsId !== "";
   const isUpToDate = isPublished && productionFsId === fsId;
-  const hasUnpublishedChanges = isPublished && productionFsId !== undefined && productionFsId !== fsId;
+  // Only flag as "unpublished changes" when there's a known local fsId to
+  // compare. Without that gate the badge would erroneously fire on /vibe/
+  // pages that lack an fsId URL param (productionFsId !== undefined would be
+  // trivially true).
+  const hasUnpublishedChanges =
+    isPublished && fsId !== undefined && fsId !== "" && productionFsId !== undefined && productionFsId !== fsId;
 
-  // Proactively fetch the production fsId on mount and whenever the local fsId
-  // changes, so the Share button can show an "unpublished changes" badge
-  // before the modal is ever opened. The modal-open effect below handles
-  // refresh-after-publish and the fuller settings load.
+  // Proactively fetch the production fsId once per (appSlug, userSlug) so the
+  // Share button can show an "unpublished changes" badge before the modal is
+  // ever opened. We intentionally do NOT depend on `fsId` here — a fresh save
+  // changes fsId on every keystroke and would otherwise re-trigger this fetch.
+  // The production fsId only changes when the user publishes (handled in
+  // handlePublish via setProductionFsId) or when the modal is reopened.
   useEffect(() => {
     let cancelled = false;
     vibeDiyApi
@@ -72,6 +79,9 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
           if (app.mode === "production" && app.fsId) {
             setIsPublished(true);
             setProductionFsId(app.fsId);
+          } else {
+            setIsPublished(false);
+            setProductionFsId(undefined);
           }
         }
       })
@@ -81,7 +91,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     return () => {
       cancelled = true;
     };
-  }, [appSlug, userSlug, fsId, vibeDiyApi]);
+  }, [appSlug, userSlug, vibeDiyApi]);
 
   function clearCopyTimeout() {
     if (copyTimeoutRef.current !== null) {
@@ -105,9 +115,10 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     if (!isOpen) return;
     let cancelled = false;
 
-    // Reset all derived state before fetching
-    setIsPublished(false);
-    setProductionFsId(undefined);
+    // Reset transient UI state before re-fetching. We intentionally do NOT
+    // reset isPublished / productionFsId here — those are sourced by both the
+    // proactive mount-effect (drives the badge) and this modal-open effect.
+    // Resetting them would cause the badge to flash off → on each open.
     setPublishedUrl(undefined);
     setUrlCopied(false);
     setPublishError(undefined);
@@ -116,7 +127,9 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     setSettingsLoaded(false);
     clearCopyTimeout();
 
-    // Check if app has a production version
+    // Check if app has a production version. Always normalize state from the
+    // fetch result (both branches) so a transition from "was published" to
+    // "no longer published" doesn't leave the badge state stale.
     vibeDiyApi
       .getAppByFsId({ appSlug, userSlug })
       .then((res) => {
@@ -127,6 +140,10 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
             setIsPublished(true);
             setProductionFsId(app.fsId);
             setPublishedUrl(`${window.location.origin}/vibe/${userSlug}/${appSlug}/`);
+          } else {
+            setIsPublished(false);
+            setProductionFsId(undefined);
+            setPublishedUrl(undefined);
           }
         }
       })
