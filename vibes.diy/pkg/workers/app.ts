@@ -23,10 +23,7 @@ export { DocNotify } from "./doc-notify.js";
 
 declare const caches: CacheStorage;
 // declare const import { meta: { env: Record<string, string> } }
-const moduleInitT0 = Date.now();
-console.log(`[wsperf-init] module-init at=${moduleInitT0}`);
 const requestHandler = createRequestHandler(serverBuild, import.meta.env.MODE);
-console.log(`[wsperf-init] react-router-built t=${Date.now() - moduleInitT0}`);
 
 // declare const WebSocketPair: typeof WebSocketPairType;
 
@@ -47,26 +44,12 @@ console.log(`[wsperf-init] react-router-built t=${Date.now() - moduleInitT0}`);
 
 export default {
   async fetch(request: CFRequest, env: CFEnv, ctx: ExecutionContext): Promise<CFResponse> {
-    const wsPerfT0 = Date.now();
-    const wsPerfTag = crypto.randomUUID().slice(0, 8);
     const url = new URL(request.url);
     if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
-      console.log(`[wsperf-entry] ${wsPerfTag} fetch-enter t=0 since-init=${wsPerfT0 - moduleInitT0}ms`);
       const shard = url.searchParams.get("shard") || crypto.randomUUID();
-      console.log(`[wsperf-entry] ${wsPerfTag} shard-parsed t=${Date.now() - wsPerfT0}`);
       const id = env.CHAT_SESSIONS.idFromName(shard);
-      console.log(`[wsperf-entry] ${wsPerfTag} do-id t=${Date.now() - wsPerfT0}`);
       const obj = env.CHAT_SESSIONS.get(id);
-      console.log(`[wsperf-entry] ${wsPerfTag} do-stub t=${Date.now() - wsPerfT0}`);
-      // Forward entry t0 + tag to DO so it can compute its gap from edge arrival.
-      // new Request(req, { headers }) replaces headers — merge with existing.
-      const headers = new Headers(request.headers as unknown as HeadersInit);
-      headers.set("x-wsperf-entry-t0", String(wsPerfT0));
-      headers.set("x-wsperf-tag", wsPerfTag);
-      const forwarded = new Request(request as unknown as Request, { headers }) as unknown as CFRequest;
-      const res = await obj.fetch(forwarded);
-      console.log(`[wsperf-entry] ${wsPerfTag} do-returned t=${Date.now() - wsPerfT0} status=${res.status}`);
-      return res;
+      return obj.fetch(request); // handle WebSocket upgrade and API requests in the chat sessions Durable Object
     }
 
     if (url.pathname.startsWith("/vibe-pkg/")) {

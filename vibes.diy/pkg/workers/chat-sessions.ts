@@ -103,11 +103,6 @@ export class ChatSessions implements DurableObject {
     const uri = URI.from(request.url);
     this.shardId = uri.getParam("shard") ?? this.shardId;
 
-    const wsPerfT0 = Date.now();
-    const entryT0 = Number(request.headers.get("x-wsperf-entry-t0")) || wsPerfT0;
-    const wsPerfTag = request.headers.get("x-wsperf-tag") ?? (this.shardId ?? "no-shard").slice(0, 8);
-    console.log(`[wsperf] ${wsPerfTag} fetch-enter t=0 entry-gap=${wsPerfT0 - entryT0}ms`);
-
     const cctx = {} as unknown as ExecutionContext & CFInjectMutable;
     cctx.cache = caches.default as unknown as CfCacheIf; // Use Cloudflare's default cache
     cctx.webSocket = {
@@ -120,11 +115,7 @@ export class ChatSessions implements DurableObject {
           env: this.env,
         }
       : undefined;
-    console.log(`[wsperf] ${wsPerfTag} pre-app-ctx t=${Date.now() - wsPerfT0}`);
     cctx.appCtx = (await cfServeAppCtx(request, this.env, cctx)).appCtx;
-    console.log(`[wsperf] ${wsPerfTag} post-app-ctx t=${Date.now() - wsPerfT0}`);
-    const res = await cfServe(request, cctx);
-    console.log(`[wsperf] ${wsPerfTag} cfserve-return t=${Date.now() - wsPerfT0}`);
-    return res;
+    return cfServe(request, cctx);
   }
 }
