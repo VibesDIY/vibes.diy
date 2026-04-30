@@ -167,6 +167,11 @@ export interface VibesDiyApiParam {
   readonly msg?: MsgBaseCfg;
   readonly sthis?: SuperThis;
   readonly timeoutMs?: number;
+  // Optional perf hint: pin this connection's DO shard to a stable value (e.g.
+  // "${userSlug}--${appSlug}" for a viewer route) so multiple visitors to the
+  // same vibe land on the same warm DO instead of each paying ~1s cold-start.
+  // Omit for codegen / load-balanced traffic — random UUID is used.
+  readonly shardKey?: string;
 }
 
 interface VibesDiyApiConfig {
@@ -207,7 +212,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     const sthis = cfg.sthis ?? ensureSuperThis();
     // Each API instance gets its own DO shard to avoid CPU limits under concurrent load.
     // When a preset WebSocket is provided (tests), skip sharding — tests bypass worker routing.
-    const apiUrl = cfg.ws ? cfg.apiUrl : BuildURI.from(cfg.apiUrl).setParam("shard", crypto.randomUUID()).toString();
+    // If shardKey is provided (e.g. a viewer landing on /vibe/<u>/<a>), pin to that
+    // stable value so all visitors of the same vibe land on the same warm DO.
+    const shard = cfg.shardKey ?? crypto.randomUUID();
+    const apiUrl = cfg.ws ? cfg.apiUrl : BuildURI.from(cfg.apiUrl).setParam("shard", shard).toString();
     // const pkgRepos: PkgRepos = {
     //   private: cfg.pkgRepos?.private ?? "https://esm.sh/",
     //   public: cfg.pkgRepos?.public ?? BuildURI.from(window.location.origin).appendRelative("/dev-npm").toString(),

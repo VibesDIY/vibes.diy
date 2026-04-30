@@ -107,6 +107,14 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   // console.log(`apiUrl`, apiUrl, realCtx.webVars.env.VIBES_DIY_API_URL)
 
   realCtx.vibeDiyApi = vibesDiyApis.get(apiUrl).once(() => {
+    // Perf hint: if the user is landing on a viewer route, pin this WS to a
+    // deterministic per-vibe DO shard so they join whatever DO is already warm
+    // for that vibe. The shard is decided once at construction; SPA navigation
+    // does not change it (the WS lives the lifetime of the page). For non-vibe
+    // routes (chat, explore, root) we omit shardKey so codegen traffic keeps
+    // its random-UUID load-balancing.
+    const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
+    const shardKey = vibeMatch ? `${vibeMatch[1]}--${vibeMatch[2]}` : undefined;
     let clerkReady: undefined | Future<void> = new Future();
     clerk.addListener(() => {
       if (clerk.loaded) {
@@ -116,6 +124,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     });
     return new VibesDiyApi({
       apiUrl,
+      shardKey,
       getToken: async () => {
         // Fast path: a cached JWT from a prior page load that still has more
         // than EXP_MARGIN_SEC seconds remaining. Lets the first WS message
