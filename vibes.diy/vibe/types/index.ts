@@ -59,6 +59,19 @@ export function isEvtRuntimeReady(x: unknown): x is EvtRuntimeReady {
   return !(EvtRuntimeReady(x) instanceof type.errors);
 }
 
+// Parent → iframe acknowledgement of `vibe.evt.runtime.ready`. The iframe
+// posts runtime.ready repeatedly until it sees this ack, to defeat the race
+// where a cached-assets iframe boots faster than the parent's React provider
+// attaches its message listener. Idempotent; first ack wins.
+export const EvtRuntimeAck = type({
+  type: "'vibe.evt.runtime.ack'",
+});
+export type EvtRuntimeAck = typeof EvtRuntimeAck.infer;
+
+export function isEvtRuntimeAck(x: unknown): x is EvtRuntimeAck {
+  return !(EvtRuntimeAck(x) instanceof type.errors);
+}
+
 // Parent → iframe live-preview hot-swap. Fire-and-forget (no response).
 // Carries the resolved App.jsx source after each block.code.end so the iframe
 // can sucrase-transform + remount in place, avoiding an iframe reload.

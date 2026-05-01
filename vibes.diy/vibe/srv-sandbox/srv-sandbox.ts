@@ -28,6 +28,7 @@ import {
   ResFetchCloudToken,
   isEvtRuntimeReady,
   EvtRuntimeReady,
+  EvtRuntimeAck,
   EvtAttachFPDb,
   isReqImgVibes,
   ReqImgVibes,
@@ -695,6 +696,10 @@ export class vibesDiySrvSandbox implements Disposable {
         replaced: prev !== undefined && prev !== event.source,
         hasPending: this.pendingSource !== undefined,
       });
+      // Acknowledge so the iframe can stop its retry loop. The iframe re-posts
+      // runtime.ready until it sees this ack, defeating the race where a
+      // cached-assets iframe boots before the parent's React provider mounts.
+      this.iframeSource.postMessage({ type: "vibe.evt.runtime.ack" } satisfies EvtRuntimeAck, this.iframeOrigin);
       if (this.pendingSource !== undefined) {
         const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source: this.pendingSource };
         this.pendingSource = undefined;
