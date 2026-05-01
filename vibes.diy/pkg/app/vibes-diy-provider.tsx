@@ -98,6 +98,11 @@ function writeCachedClerkToken(token: string): void {
   localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ token, exp: validated.exp } satisfies CachedClerkToken));
 }
 
+function clearCachedClerkToken(): void {
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
 function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
   const clerk = useClerk();
 
@@ -128,6 +133,15 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       if (clerk.loaded) {
         // console.log("clerk-evt", clerk.loaded, clerk.isSignedIn)
         clerkReady?.resolve(undefined);
+        // Wipe the cached JWT on sign-out so the next getToken() falls through
+        // to the live Clerk session (which is now empty) instead of returning
+        // a still-unexpired-but-stale-from-auth-perspective token. Without
+        // this, /vibe/... routes keep showing the user as signed-in to the
+        // API for the remaining JWT lifetime even after Clerk's UI says
+        // signed-out.
+        if (!clerk.isSignedIn) {
+          clearCachedClerkToken();
+        }
       }
     });
     return new VibesDiyApi({
@@ -137,9 +151,13 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
         // Fast path: a cached JWT from a prior page load that still has more
         // than EXP_MARGIN_SEC seconds remaining. Lets the first WS message
         // fire without waiting for Clerk's SDK to finish loading.
+        // If Clerk is already loaded and reports signed-out, skip the cache
+        // — covers the narrow window between sign-out and the listener
+        // firing the localStorage wipe.
         const cached = readCachedClerkToken();
         const nowSec = Math.floor(Date.now() / 1000);
-        if (cached && cached.exp > nowSec + EXP_MARGIN_SEC) {
+        const clerkSaysSignedOut = clerk.loaded && !clerk.isSignedIn;
+        if (!clerkSaysSignedOut && cached && cached.exp > nowSec + EXP_MARGIN_SEC) {
           return Result.Ok({ type: "clerk", token: cached.token });
         }
         if (clerkReady) {
@@ -147,6 +165,9 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
           clerkReady = undefined;
         }
         if (!clerk.isSignedIn) {
+          // Belt-and-suspenders: if we got here via the slow path with the
+          // user signed out, make sure no stale token survives in localStorage.
+          clearCachedClerkToken();
           return Result.Err("not signed in");
         }
         const ot = await clerk.session?.getToken({ template: "with-email" });
