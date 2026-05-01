@@ -275,7 +275,32 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   // Register the hot-swap listener BEFORE signalling ready, so any set-source
   // the host posts in response to runtime.ready arrives at a live listener.
   registerHotSwapHandler();
-  ctxVibeApi.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
+  // Send runtime.ready and retry on a bounded backoff until the host acks. The
+  // host's message listener is attached inside its React provider, which can
+  // mount AFTER the iframe boots when assets are 304-cached on a regular reload.
+  // Without retry, the first runtime.ready is lost and every host→iframe RPC
+  // that follows times out at 10s.
+  sendRuntimeReadyWithRetry(ctxVibeApi);
+}
+
+const RUNTIME_READY_RETRY_DELAYS_MS = [100, 300, 1000, 3000];
+
+function sendRuntimeReadyWithRetry(api: VibeSandboxApi): void {
+  let acked = false;
+  const onAck = (event: MessageEvent): void => {
+    if (!isEvtRuntimeAck(event.data)) return;
+    acked = true;
+    window.removeEventListener("message", onAck);
+  };
+  window.addEventListener("message", onAck);
+  const post = (): void => {
+    if (acked) return;
+    api.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
+  };
+  post();
+  for (const delay of RUNTIME_READY_RETRY_DELAYS_MS) {
+    setTimeout(post, delay);
+  }
 }
 
 let hotSwapRegistered = false;

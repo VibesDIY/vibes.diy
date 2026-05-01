@@ -119,6 +119,26 @@ describe("iframeSource capture filtering", () => {
     expect(sandbox._testInternals.iframeSource).toBeUndefined();
   });
 
+  it("posts vibe.evt.runtime.ack back to iframe on runtime.ready capture", () => {
+    const { sandbox } = createSandbox();
+    const messages: { data: unknown; origin: string }[] = [];
+    const fakeWindow = {
+      postMessage: (data: unknown, origin: string) => {
+        messages.push({ data, origin });
+      },
+    } as unknown as Window;
+
+    sandbox.handleMessage(
+      fakeMessageEvent({ type: "vibe.evt.runtime.ready", deps: ["use-fireproof"] }, "https://app--user.example.com", fakeWindow)
+    );
+
+    // The ack must be posted via event.source.postMessage with the matching
+    // origin. The iframe-side retry loop terminates on receipt of this ack.
+    expect(messages).toHaveLength(1);
+    expect(messages[0].data).toEqual({ type: "vibe.evt.runtime.ack" });
+    expect(messages[0].origin).toBe("https://app--user.example.com");
+  });
+
   it("Clerk-then-sandbox sequence captures sandbox correctly", () => {
     const { sandbox } = createSandbox();
     const clerkWindow = {} as Window;
