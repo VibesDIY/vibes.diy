@@ -63,11 +63,27 @@ interface RequestOpts {
 export class VibeSandboxApi {
   readonly svc: VibeSandboxApiOptions;
 
+  // Resolves the first time the host posts vibe.evt.runtime.ack — i.e. once
+  // we know the host's message listener is attached and will catch our posts.
+  // Every outgoing request awaits this before postMessage, so RPCs that fire
+  // during iframe boot (e.g. registerFirefly's subscribeDocs) don't get sent
+  // into a void when the host's React provider hasn't mounted yet.
+  readonly ackReady = new Future<void>();
+  acked = false;
+
   readonly handleMessage = (event: MessageEvent): void => {
+    if (!this.acked && isEvtRuntimeAck(event.data)) {
+      this.acked = true;
+      this.ackReady.resolve();
+    }
     this.onMsg.invoke(event);
   };
 
   async request<Q, S>(msg: Omit<Q, "tid">, opts: RequestOpts): Promise<Result<S>> {
+    // Gate every request on the host's ack so we don't send into a void
+    // before the parent's message listener exists. Once acked, this is a
+    // no-op (Future.asPromise() resolves immediately).
+    await this.ackReady.asPromise();
     const res = await timeouted(
       () => {
         const tid = crypto.randomUUID();
@@ -275,32 +291,30 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   // Register the hot-swap listener BEFORE signalling ready, so any set-source
   // the host posts in response to runtime.ready arrives at a live listener.
   registerHotSwapHandler();
-  // Send runtime.ready and retry on a bounded backoff until the host acks. The
-  // host's message listener is attached inside its React provider, which can
-  // mount AFTER the iframe boots when assets are 304-cached on a regular reload.
-  // Without retry, the first runtime.ready is lost and every host→iframe RPC
-  // that follows times out at 10s.
+  // Send runtime.ready and retry until the host acks. The host's message
+  // listener is attached inside its React provider, which can mount AFTER
+  // the iframe boots when assets are 304-cached on a regular reload. Without
+  // retry, the first runtime.ready is lost and the api.ackReady future never
+  // resolves — every queued RPC hangs.
   sendRuntimeReadyWithRetry(ctxVibeApi);
 }
 
-const RUNTIME_READY_RETRY_DELAYS_MS = [100, 300, 1000, 3000];
-
 function sendRuntimeReadyWithRetry(api: VibeSandboxApi): void {
-  let acked = false;
-  const onAck = (event: MessageEvent): void => {
-    if (!isEvtRuntimeAck(event.data)) return;
-    acked = true;
-    window.removeEventListener("message", onAck);
-  };
-  window.addEventListener("message", onAck);
-  const post = (): void => {
-    if (acked) return;
-    api.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
-  };
+  const post = (): void => api.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
   post();
-  for (const delay of RUNTIME_READY_RETRY_DELAYS_MS) {
-    setTimeout(post, delay);
-  }
+  // Retry every 500ms until acked. Posts are idempotent on the host side
+  // (re-capture of the same iframeSource is a no-op). Typical case: parent
+  // mounts within a few seconds → 0–6 extra posts before the interval clears.
+  const interval = setInterval(() => {
+    if (api.acked) {
+      clearInterval(interval);
+      return;
+    }
+    post();
+  }, 500);
+  // Belt-and-suspenders: also stop on ack via the future itself, in case the
+  // resolve happens between the timer ticks (avoids one extra post).
+  api.ackReady.asPromise().then(() => clearInterval(interval));
 }
 
 let hotSwapRegistered = false;
