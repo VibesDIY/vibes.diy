@@ -14,6 +14,7 @@ import {
   EvtVibeAttachStatusFPDb,
   EvtVibeHotSwapError,
   isEvtVibeSetSource,
+  isEvtRuntimeAck,
   isResPutDoc,
   isResGetDoc,
   isResGetDocNotFound,
