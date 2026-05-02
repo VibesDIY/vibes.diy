@@ -1,8 +1,5 @@
 import {
-  FPDbData,
-  isResErrorVibeRegisterFPDb,
   isResFetchCloudToken,
-  isResOkVibeRegisterFPDb,
   isResVibeRegisterFPDb,
   isResCallAI,
   ReqCallAI,
@@ -15,14 +12,36 @@ import {
   ResFetchCloudToken,
   ResVibeRegisterFPDb,
   EvtVibeAttachStatusFPDb,
-  isEvtAttachFPDb,
+  EvtVibeHotSwapError,
+  isEvtVibeSetSource,
+  isEvtRuntimeAck,
+  isResPutDoc,
+  isResGetDoc,
+  isResGetDocNotFound,
+  isResQueryDocs,
+  isResDeleteDoc,
+  isResSubscribeDocs,
+  isResListDbNames,
+  ReqPutDoc,
+  ResPutDoc,
+  ReqGetDoc,
+  ResGetDoc,
+  ReqQueryDocs,
+  ResQueryDocs,
+  ReqDeleteDoc,
+  ResDeleteDoc,
+  ReqSubscribeDocs,
+  ResSubscribeDocs,
+  ResListDbNames,
 } from "@vibes.diy/vibe-types";
-import { Future, KeyedResolvOnce, Lazy, Logger, OnFunc, ResolveOnce, Result, timeouted } from "@adviser/cement";
-import { ToCloudOpts, TokenAndClaims, TokenStrategie } from "@fireproof/core-types-protocols-cloud";
-import { Ledger, SuperThis, toCloud } from "use-fireproof";
+import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
+import { transform } from "sucrase";
+import { FunctionComponent } from "react";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
 import { registerImgVibes } from "./img-vibes.js";
+import { registerFirefly } from "./use-firefly.js";
+import { getActiveProps, mountVibe } from "./mount-vibes.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -44,11 +63,27 @@ interface RequestOpts {
 export class VibeSandboxApi {
   readonly svc: VibeSandboxApiOptions;
 
+  // Resolves the first time the host posts vibe.evt.runtime.ack — i.e. once
+  // we know the host's message listener is attached and will catch our posts.
+  // Every outgoing request awaits this before postMessage, so RPCs that fire
+  // during iframe boot (e.g. registerFirefly's subscribeDocs) don't get sent
+  // into a void when the host's React provider hasn't mounted yet.
+  readonly ackReady = new Future<void>();
+  acked = false;
+
   readonly handleMessage = (event: MessageEvent): void => {
+    if (!this.acked && isEvtRuntimeAck(event.data)) {
+      this.acked = true;
+      this.ackReady.resolve();
+    }
     this.onMsg.invoke(event);
   };
 
   async request<Q, S>(msg: Omit<Q, "tid">, opts: RequestOpts): Promise<Result<S>> {
+    // Gate every request on the host's ack so we don't send into a void
+    // before the parent's message listener exists. Once acked, this is a
+    // no-op (Future.asPromise() resolves immediately).
+    await this.ackReady.asPromise();
     const res = await timeouted(
       () => {
         const tid = crypto.randomUUID();
@@ -97,12 +132,13 @@ export class VibeSandboxApi {
     );
   }
 
-  imgVibes(prompt: string, inputImageBase64?: string): Promise<Result<ResImgVibes>> {
+  imgVibes(prompt: string, inputImageBase64?: string, model?: string): Promise<Result<ResImgVibes>> {
     return this.request<ReqImgVibes, ResImgVibes>(
       {
         type: "vibe.req.imgVibes",
         prompt,
         ...(inputImageBase64 ? { inputImageBase64 } : {}),
+        ...(model ? { model } : {}),
         ...this.svc.vibeApp,
       },
       { wait: isResImgVibes, timeout: 120000 }
@@ -139,6 +175,77 @@ export class VibeSandboxApi {
       "*"
     );
   }
+  // ── Firefly document operations ──────────────────────────────────────
+
+  putDoc(doc: Record<string, unknown>, docId?: string, dbName = "default"): Promise<Result<ResPutDoc>> {
+    return this.request<ReqPutDoc, ResPutDoc>(
+      {
+        type: "vibes.diy.req-put-doc",
+        ...this.svc.vibeApp,
+        dbName,
+        doc,
+        ...(docId ? { docId } : {}),
+      },
+      { wait: isResPutDoc, timeout: 10000 }
+    );
+  }
+
+  getDoc(docId: string, dbName = "default"): Promise<Result<ResGetDoc>> {
+    return this.request<ReqGetDoc, ResGetDoc>(
+      {
+        type: "vibes.diy.req-get-doc",
+        ...this.svc.vibeApp,
+        dbName,
+        docId,
+      },
+      { wait: (x: unknown) => isResGetDoc(x) || isResGetDocNotFound(x), timeout: 10000 }
+    );
+  }
+
+  queryDocs(dbName = "default"): Promise<Result<ResQueryDocs>> {
+    return this.request<ReqQueryDocs, ResQueryDocs>(
+      {
+        type: "vibes.diy.req-query-docs",
+        ...this.svc.vibeApp,
+        dbName,
+      },
+      { wait: isResQueryDocs, timeout: 10000 }
+    );
+  }
+
+  deleteDoc(docId: string, dbName = "default"): Promise<Result<ResDeleteDoc>> {
+    return this.request<ReqDeleteDoc, ResDeleteDoc>(
+      {
+        type: "vibes.diy.req-delete-doc",
+        ...this.svc.vibeApp,
+        dbName,
+        docId,
+      },
+      { wait: isResDeleteDoc, timeout: 10000 }
+    );
+  }
+
+  subscribeDocs(dbName = "default"): Promise<Result<ResSubscribeDocs>> {
+    return this.request<ReqSubscribeDocs, ResSubscribeDocs>(
+      {
+        type: "vibes.diy.req-subscribe-docs",
+        ...this.svc.vibeApp,
+        dbName,
+      },
+      { wait: isResSubscribeDocs, timeout: 10000 }
+    );
+  }
+
+  listDbNames(): Promise<Result<ResListDbNames>> {
+    return this.request<{ type: string; appSlug: string; userSlug: string }, ResListDbNames>(
+      {
+        type: "vibes.diy.req-list-db-names",
+        ...this.svc.vibeApp,
+      },
+      { wait: isResListDbNames, timeout: 10000 }
+    );
+  }
+
   readonly tokenCache = new KeyedResolvOnce();
   fetchCloudToken(req: Omit<ReqFetchCloudToken, "type" | "tid">): Promise<Result<ResFetchCloudToken>> {
     const key = `vibe-${req.data.dbName}-${req.data.userSlug}-${req.data.appSlug}`;
@@ -168,141 +275,104 @@ export class VibeSandboxApi {
   }
 }
 
-class VibeTokenStrategie implements TokenStrategie {
-  readonly vibeApi: VibeSandboxApi;
-  readonly my: FPDbData;
-  constructor(vibeApi: VibeSandboxApi, my: FPDbData) {
-    this.vibeApi = vibeApi;
-    this.my = my;
-  }
-
-  hash(): string {
-    return "vibe-token-strategie";
-  }
-  open(_sthis: SuperThis, _logger: Logger, _deviceId: string, _opts: ToCloudOpts): void {
-    return;
-  }
-  tryToken(_sthis: SuperThis, _logger: Logger, _opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
-    return Promise.resolve(undefined);
-  }
-  async waitForToken(
-    _sthis: SuperThis,
-    _logger: Logger,
-    _deviceId: string,
-    _opts: ToCloudOpts
-  ): Promise<TokenAndClaims | undefined> {
-    const resToken = await this.vibeApi.fetchCloudToken({
-      data: this.my,
-    });
-    if (resToken.isErr()) {
-      console.error("Failed to fetch cloud token from vibe sandbox", resToken.Err());
-      return undefined;
-    }
-    const token = resToken.Ok();
-    return {
-      token: token.token.cloudToken,
-      claims: token.token.claims as unknown as TokenAndClaims["claims"],
-    };
-    return Promise.resolve(undefined);
-  }
-  stop(): void {
-    console.log("VibeTokenStrategie stop called");
-  }
-}
-
 export const vibeApi = Lazy((svc: VibeSandboxApiOptions) => new VibeSandboxApi(svc));
 
-export async function registerDependencies(vibeApp: VibeApp, deps: Record<string, string>): Promise<void> {
-  // bind vibeApi to runtime
+export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   const ctxVibeApi = vibeApi({
     vibeApp,
     addEventListener: window.addEventListener.bind(window),
     postMessage: window.parent.postMessage.bind(window.parent),
   });
 
-  const runTimeReady: string[] = [];
-  const useFireproofDep = deps["use-fireproof"];
-  if (useFireproofDep && window.parent !== window) {
-    runTimeReady.push("use-fireproof");
-    const fp = (await import(useFireproofDep)) as typeof import("use-fireproof");
-    // const vibeApi = ({
-    //   addEventListener: window.addEventListener.bind(window),
-    //   postMessage: window.parent.postMessage.bind(window.parent),
-    // });
+  await registerFirefly(ctxVibeApi);
+  registerCallAI(ctxVibeApi);
+  registerImgVibes(ctxVibeApi);
 
-    const attachables = new Map<
-      string,
-      {
-        key: string;
-        ledger: Ledger;
-        attach: ResolveOnce<void>;
-      }
-    >();
-    ctxVibeApi.onMsg((event) => {
-      // console.log("Received message event in vibeApi onMsg handler", event);
-      const { data: evt } = event;
-      if (isEvtAttachFPDb(evt)) {
-        const key = `${evt.data.dbName}-${evt.data.userSlug}-${evt.data.appSlug}`;
-        const attabable = attachables.get(key);
-        if (attabable) {
-          attabable.attach.once(async () => {
-            console.log("Attaching FPDb with key", evt.data);
-            const result = await attabable.ledger.attach(
-              toCloud({
-                name: `vibe-${evt.data.dbName}-${evt.data.userSlug}-${evt.data.appSlug}`,
-                strategy: new VibeTokenStrategie(ctxVibeApi, evt.data),
-                urls: {
-                  base: evt.data.fpcloudUrl,
-                },
-              })
-            );
-            ctxVibeApi.sendAttachStatusFPDbMessage({
-              data: evt.data,
-              status: result.status(),
-            });
-          });
-        }
-      }
-    });
+  // Register the hot-swap listener BEFORE signalling ready, so any set-source
+  // the host posts in response to runtime.ready arrives at a live listener.
+  registerHotSwapHandler();
+  // Send runtime.ready and retry until the host acks. The host's message
+  // listener is attached inside its React provider, which can mount AFTER
+  // the iframe boots when assets are 304-cached on a regular reload. Without
+  // retry, the first runtime.ready is lost and the api.ackReady future never
+  // resolves — every queued RPC hangs.
+  sendRuntimeReadyWithRetry(ctxVibeApi);
+}
 
-    fp.getLedgerSvc().onCreate((ledger) => {
-      ctxVibeApi
-        .sendRegisterFPDbMessage({
-          dbName: ledger.name,
-          appSlug: vibeApp.appSlug,
-          userSlug: vibeApp.userSlug,
-          fsId: vibeApp.fsId,
-        })
-        .then((rResMsg) => {
-          if (rResMsg.isErr()) {
-            console.error("Failed to register FPDb with vibe sandbox", rResMsg.Err());
-          }
-          const res = rResMsg.Ok();
-          if (isResErrorVibeRegisterFPDb(res)) {
-            console.error("Failed to register FPDb with vibe sandbox", res.message);
-          }
-          if (isResOkVibeRegisterFPDb(res)) {
-            console.log("Registered FPDb with vibe sandbox", res);
-            const key = `${res.data.dbName}-${res.data.userSlug}-${res.data.appSlug}`;
-            attachables.set(key, {
-              key,
-              ledger,
-              attach: new ResolveOnce<void>(),
-            });
-          }
-        });
+function sendRuntimeReadyWithRetry(api: VibeSandboxApi): void {
+  const post = (): void => api.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
+  post();
+  // Retry every 500ms until acked. Posts are idempotent on the host side
+  // (re-capture of the same iframeSource is a no-op). Typical case: parent
+  // mounts within a few seconds → 0–6 extra posts before the interval clears.
+  const interval = setInterval(() => {
+    if (api.acked) {
+      clearInterval(interval);
+      return;
+    }
+    post();
+  }, 500);
+  // Belt-and-suspenders: also stop on ack via the future itself, in case the
+  // resolve happens between the timer ticks (avoids one extra post).
+  api.ackReady.asPromise().then(() => clearInterval(interval));
+}
+
+let hotSwapRegistered = false;
+
+function registerHotSwapHandler(): void {
+  if (hotSwapRegistered) return;
+  hotSwapRegistered = true;
+  window.addEventListener("message", handleHotSwapMessage);
+  console.log("[hot-swap iframe] handler registered");
+}
+
+async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
+  if (!isEvtVibeSetSource(event.data)) return;
+  console.log("[hot-swap iframe] received set-source", { len: event.data.source.length, origin: event.origin });
+  const result = await applyHotSwap(event.data.source);
+  if (result.isErr()) {
+    // Iframe stays on the previous render (mountVibe re-renders into the
+    // existing root, so React rolls back failed commits). Notify the parent
+    // so it can surface a toast — without this, the user sees the iframe
+    // silently stop updating mid-stream and assumes the app broke.
+    console.error("[hot-swap iframe] failed", result.Err());
+    const errMsg: EvtVibeHotSwapError = {
+      type: "vibe.evt.hot-swap-error",
+      message: String(result.Err()),
+    };
+    window.parent.postMessage(errMsg, "*");
+  } else {
+    console.log("[hot-swap iframe] applied successfully");
+  }
+}
+
+async function applyHotSwap(source: string): Promise<Result<void>> {
+  const rTransform = exception2Result(() =>
+    transform(source, {
+      transforms: ["jsx"],
+      production: true,
+      jsxRuntime: "automatic",
+    })
+  );
+  if (rTransform.isErr()) return Result.Err(rTransform.Err());
+  const blob = new Blob([rTransform.Ok().code], { type: "application/javascript" });
+  const blobUrl = URL.createObjectURL(blob);
+  try {
+    const rImport = await exception2Result<{ default?: unknown }>(() => import(/* @vite-ignore */ blobUrl));
+    if (rImport.isErr()) return Result.Err(rImport.Err());
+    const App = rImport.Ok().default;
+    if (typeof App !== "function") {
+      return Result.Err("hot-swap module has no default-exported component");
+    }
+    // Re-render into the existing React root rather than unmount+remount.
+    // If the new App throws on render, React keeps the previously-committed
+    // DOM in place — the iframe doesn't blank out on a misapplied edit.
+    const rMount = exception2Result(() => {
+      mountVibe([App as FunctionComponent], getActiveProps());
     });
+    if (rMount.isErr()) return Result.Err(rMount.Err());
+    return Result.Ok(undefined);
+  } finally {
+    URL.revokeObjectURL(blobUrl);
   }
-  const callAI = deps["call-ai"];
-  if (callAI && window.parent !== window) {
-    runTimeReady.push("call-ai");
-    registerCallAI(ctxVibeApi);
-  }
-  const imgVibes = deps["img-vibes"];
-  if (imgVibes && window.parent !== window) {
-    runTimeReady.push("img-vibes");
-    registerImgVibes(ctxVibeApi);
-  }
-  ctxVibeApi.sendRuntimeReady(runTimeReady);
-  return;
 }

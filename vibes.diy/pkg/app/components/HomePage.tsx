@@ -49,6 +49,7 @@ export default function HomePage() {
 
   const handleSubmit = useCallback(() => {
     if (!input.trim()) return;
+    sessionStorage.setItem("vibes.pendingPrompt", input);
     navigate(
       BuildURI.from(window.location.href).pathname("/chat/prompt").setParam("prompt64", sthis.txt.base64.encode(input))
         .withoutHostAndSchema
@@ -180,7 +181,7 @@ export default function HomePage() {
                       handleSubmit();
                     }
                   }}
-                  placeholder="Describe your vibe to make it a sharable app."
+                  placeholder="Describe your vibe to make it a shareable app."
                   style={getTextareaStyle()}
                 />
                 <button onClick={handleSubmit} disabled={!input.trim()} style={getSubmitButtonStyle()}>

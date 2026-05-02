@@ -16,6 +16,7 @@ import {
   ReqEnsureAppSlug,
   ReqWithVerifiedAuth,
   ResEnsureAppSlug,
+  ResEnsureAppSlugInvalid,
   VibeFile,
   VibesDiyError,
   W3CWebSocketEvent,
@@ -33,7 +34,15 @@ export async function ensureAppSlugItem(
   vctx: VibesApiSQLCtx,
   req: ReqWithVerifiedAuth<ReqEnsureAppSlug>
 ): Promise<Result<ResEnsureAppSlug>> {
-  // console.log("handle ensureAppSlugItem", ctx.validated);
+  // Reject if no code files provided — an app needs at least one .jsx/.js/.ts/.tsx
+  const hasCodeFile = req.fileSystem.some((f) => f.type === "code-block");
+  if (!hasCodeFile) {
+    return Result.Ok({
+      type: "vibes.diy.error",
+      message: "No code files (.jsx, .js, .ts, .tsx) in fileSystem. An app requires at least one code file.",
+      code: "app-slug-invalid",
+    } satisfies ResEnsureAppSlugInvalid);
+  }
 
   const rAppSlugBinding = await ensureSlugBinding(vctx, {
     claims: req._auth.verifiedAuth.claims,
@@ -118,6 +127,7 @@ export async function ensureAppSlugItem(
         fsId: ensured.fsId,
         vibeUrl: entryPointUrl,
         sessionToken: "offline",
+        mode: req.mode,
       },
       tid: "queue-event",
       src: "ensureAppSlugItem",

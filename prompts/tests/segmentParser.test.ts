@@ -171,16 +171,18 @@ Final markdown
       "prefix-easy.txt": ["markdown", "code"],
     };
 
-    for (const [filename, expectedTypes] of Object.entries(fixtureExpectations)) {
-      const content = await loadAsset(pathOps.join("tests", "fixtures", filename), {
-        basePath: () => urlDirname(import.meta.url).toString(),
-        fallBackUrl: urlDirname(import.meta.url).toString(),
-      });
-      const resolvedContent = await resolveContent(content.Ok());
-      const result = parseContent(resolvedContent);
-      const actualTypes = result.segments.map((segment) => segment.type);
-      expect([filename, ...actualTypes]).toEqual([filename, ...expectedTypes]);
-    }
+    await Promise.all(
+      Object.entries(fixtureExpectations).map(async ([filename, expectedTypes]) => {
+        const content = await loadAsset(pathOps.join("tests", "fixtures", filename), {
+          basePath: () => urlDirname(import.meta.url).toString(),
+          fallBackUrl: urlDirname(import.meta.url).toString(),
+        });
+        const resolvedContent = await resolveContent(content.Ok());
+        const result = parseContent(resolvedContent);
+        const actualTypes = result.segments.map((segment) => segment.type);
+        expect([filename, ...actualTypes]).toEqual([filename, ...expectedTypes]);
+      })
+    );
   });
 
   it("correctly parses dependencies from easy-message5.txt fixture", async () => {
@@ -227,4 +229,87 @@ it("correctly parses markdown and code from hard-message3.txt fixture", async ()
 
   // code should match Loading questions
   expect(result.segments[1].content).toMatch(/Loading questions/);
+});
+
+describe("segmentParser — aider-style create+replace messages", () => {
+  it("resolves a create followed by replace blocks into the final source", () => {
+    const text = [
+      "Building a counter.",
+      "",
+      "App.jsx",
+      "```jsx",
+      "const value = 1;",
+      "```",
+      "",
+      "Now bumping it.",
+      "",
+      "App.jsx",
+      "```jsx",
+      "<<<<<<< SEARCH",
+      "const value = 1;",
+      "=======",
+      "const value = 42;",
+      ">>>>>>> REPLACE",
+      "```",
+      "",
+      "Done.",
+    ].join("\n");
+    const result = parseContent(text);
+    const code = result.segments.find((s) => s.type === "code");
+    expect(code?.content).toBe("const value = 42;");
+  });
+
+  it("applies multiple SEARCH/REPLACE sections in one fence", () => {
+    const text = [
+      "App.jsx",
+      "```jsx",
+      "let a = 1;",
+      "let b = 2;",
+      "```",
+      "Tweaking both.",
+      "App.jsx",
+      "```jsx",
+      "<<<<<<< SEARCH",
+      "let a = 1;",
+      "=======",
+      "let a = 10;",
+      ">>>>>>> REPLACE",
+      "<<<<<<< SEARCH",
+      "let b = 2;",
+      "=======",
+      "let b = 20;",
+      ">>>>>>> REPLACE",
+      "```",
+    ].join("\n");
+    const result = parseContent(text);
+    const code = result.segments.find((s) => s.type === "code");
+    expect(code?.content).toBe("let a = 10;\nlet b = 20;");
+  });
+
+  it("falls back to legacy longest-block semantics when no SEARCH markers exist", () => {
+    // Two fenced blocks, no markers — legacy mode keeps the longest as the
+    // canonical code and folds the shorter one back into the markdown.
+    const text = [
+      "Demo of Foo:",
+      "",
+      "```jsx",
+      "console.log('demo')",
+      "```",
+      "",
+      "Real component:",
+      "",
+      "```jsx",
+      "function Foo() { return null; }",
+      "function Bar() { return null; }",
+      "```",
+      "",
+      "End.",
+    ].join("\n");
+    const result = parseContent(text);
+    const code = result.segments.find((s) => s.type === "code");
+    expect(code?.content).toContain("function Foo");
+    const markdownBefore = result.segments[0];
+    expect(markdownBefore.type).toBe("markdown");
+    expect(markdownBefore.content).toContain("console.log('demo')");
+  });
 });

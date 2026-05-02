@@ -1,6 +1,8 @@
 import { type } from "arktype";
 import { CoercedDate } from "@vibes.diy/call-ai-v2";
 import { Model } from "./chat.js";
+import { Role } from "./common.js";
+import { ActiveDbAcl } from "./db-acls.js";
 
 export const KVString = type({ key: "string", value: "string" });
 export type KVString = typeof KVString.infer;
@@ -45,7 +47,7 @@ export type RawEmail = typeof RawEmail.infer;
 
 export const EmailOpsBase = type({
   dst: "string",
-  role: "'editor'|'viewer'",
+  role: Role,
   appSlug: "string",
   userSlug: "string",
   "fsId?": "string",
@@ -97,7 +99,7 @@ export function isEnablePublicAccess(obj: unknown): obj is EnablePublicAccess {
 export const EnableRequest = type({
   type: "'app.request'",
   enable: "boolean",
-  "autoAcceptViewRequest?": "boolean | undefined | null",
+  "autoAcceptRole?": Role,
 });
 export type EnableRequest = typeof EnableRequest.infer;
 export function isEnableRequest(obj: unknown): obj is EnableRequest {
@@ -133,7 +135,7 @@ const grant = type({
 
 export const ActiveRequestApproved = type({
   type: "'app.acl.active.request'",
-  role: "'editor'|'viewer'",
+  role: Role,
   state: "'approved'",
   request: requestBase,
   tick: tick,
@@ -148,7 +150,7 @@ export function isActiveRequestApproved(obj: unknown): obj is typeof ActiveReque
 
 export const ActiveRequestRejected = type({
   type: "'app.acl.active.request'",
-  role: "'editor'|'viewer'",
+  role: Role,
   state: "'rejected'",
   request: requestBase,
   grant: grant,
@@ -355,7 +357,8 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(ActiveTitle)
   .or(ActiveSkills)
   .or(ActiveModelSetting)
-  .or(ActiveEnv);
+  .or(ActiveEnv)
+  .or(ActiveDbAcl);
 
 export function isActiveAcl(obj: unknown): obj is typeof ActiveACL.infer {
   return !(ActiveACL(obj) instanceof type.errors);

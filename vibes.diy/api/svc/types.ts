@@ -46,6 +46,9 @@ export interface VibesApiSQLCtx {
   storage: VibesAssetStorage;
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
   prodiaToken?: string;
+  notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }): Promise<void>;
+  registerDocSubscription?(subscriptionKey: string): Promise<void>;
+  deregisterDocSubscription?(subscriptionKey: string): Promise<void>;
 }
 
 export const UserSlugBinding = type({

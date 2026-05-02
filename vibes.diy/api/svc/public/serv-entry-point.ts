@@ -19,9 +19,11 @@ import {
   HttpResponseJsonType,
   isFetchErrResult,
   isFetchOkResult,
+  isMetaScreenShot,
+  MetaItem,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { renderVibe } from "../intern/render-vibe.js";
+import { renderVibe, renderPendingVibe } from "../intern/render-vibe.js";
 import { parse } from "cookie";
 import { renderToReadableStream } from "react-dom/server";
 import { renderDBExplorer } from "../intern/render-db-explorer.js";
@@ -193,6 +195,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
                 await renderDBExplorer({
                   base: "/.db-explorer",
                   vctx,
+                  vibeApp: { appSlug: ctx.validated.appSlug, userSlug: ctx.validated.userSlug, fsId: ctx.validated.fsId },
                   pkgRepos: {
                     private: npmUrl,
                   },
@@ -238,7 +241,22 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     }
     // console.log("-3servEntryPoint triggered with URL:", uri.toString())
     if (!fs) {
-      // todo render 404 page
+      // No apps row yet for this slug pair. If the request is for the entry
+      // point HTML, return a "pending" iframe shell that boots the runtime
+      // and registers the hot-swap listener — so the chat UI can pre-warm
+      // the iframe and the first vibe.evt.set-source has a live listener.
+      // For asset paths, still 404.
+      if (ctx.validated.path === "/" || ctx.validated.path === "/index.html") {
+        const npmUrl = captureNpmUrl(vctx, ctx.request);
+        const rPending = await renderPendingVibe({
+          ctx,
+          appSlug: ctx.validated.appSlug,
+          userSlug: ctx.validated.userSlug,
+          pkgRepos: { private: npmUrl },
+        });
+        if (rPending.isErr()) return rPending;
+        return Result.Ok(EventoResult.Stop);
+      }
       await ctx.send.send(ctx, {
         type: "http.Response.JSON",
         status: 404,
@@ -268,6 +286,35 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         return sendFetchOk(ctx, selectedFsItem, possiblePath);
       }
     }
+    // Serve screenshot from meta for social media cards
+    if (ctx.validated.path === "/screenshot.png" || ctx.validated.path === "/screenshot.jpg") {
+      const metaItems = (fs.meta as MetaItem[]) || [];
+      const shot = metaItems.find(isMetaScreenShot);
+      if (shot) {
+        const shotFetch = await vctx.storage.fetch(shot.assetUrl);
+        if (isFetchOkResult(shotFetch)) {
+          const assetRes = new Response(shotFetch.data);
+          const asset = await assetRes.arrayBuffer();
+          await ctx.send.send(ctx, {
+            type: "http.Response.Body",
+            status: 200,
+            headers: {
+              "Content-Type": shot.mime,
+              "Cache-Control": "public, max-age=86400",
+            },
+            body: asset,
+          } satisfies HttpResponseBodyType);
+          return Result.Ok(EventoResult.Stop);
+        }
+      }
+      await ctx.send.send(ctx, {
+        type: "http.Response.JSON",
+        status: 404,
+        json: { type: "error", message: "No screenshot available" },
+      } satisfies HttpResponseJsonType);
+      return Result.Ok(EventoResult.Stop);
+    }
+
     // console.log("-6servEntryPoint triggered with URL:", uri.toString())
     const selectedEntryPoint = fileSystem.find((i) => i.entryPoint);
     if (selectedEntryPoint) {

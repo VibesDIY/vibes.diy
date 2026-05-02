@@ -14,6 +14,13 @@ pnpm dedupe --check               # verify (must exit 0)
 
 ## Tests
 
+During development, use fast targeted commands:
+
+- `pnpm build` — fast typecheck/compile
+- `pnpm test <substring>` — run specific test files by pattern match (e.g. `pnpm test access.test`)
+
+Save `pnpm check` for the final gate before committing — it takes a long time and has occasional flaky failures.
+
 Run vibes.diy tests: `cd vibes.diy/tests && pnpm test`
 Run vibes.diy tests (quiet): `cd vibes.diy/tests && pnpm test --reporter=dot`
 

@@ -6,7 +6,9 @@ import path from "path";
 let url: string;
 if (process.env.VIBES_DIY_TEST_SQL_URL) {
   url = URI.from(process.env.VIBES_DIY_TEST_SQL_URL).pathname;
-  console.warn("VIBES_DIY_TEST_SQL_URL set to:", url);
+  if (!url.includes("tests/dist")) {
+    console.warn("VIBES_DIY_TEST_SQL_URL set to:", url);
+  }
 } else {
   url = "./dist/vibes-diy-backend.sqlite";
 }

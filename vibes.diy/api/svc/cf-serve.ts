@@ -32,6 +32,11 @@ import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibe
 //   return { client, server };
 // }
 
+export interface DocNotifyCtx {
+  readonly shardId: string;
+  readonly env: CFEnv;
+}
+
 export interface CFInjectMutable {
   sthis?: SuperThis;
   appCtx: AppContext;
@@ -44,6 +49,7 @@ export interface CFInjectMutable {
   // assetBucket: R2Bucket;
   wsResponse?: Response;
   llmRequest?: (prompt: LLMRequest) => Promise<Response>;
+  docNotify?: DocNotifyCtx;
   // readonly db?: D1Database;
 }
 export type CFInject = Readonly<CFInjectMutable>;
@@ -75,6 +81,40 @@ function netHashFn({
     regionCode,
     metroCode,
   });
+}
+
+function docNotifyCallbacks(dn: DocNotifyCtx) {
+  function fetchDocNotify(key: string, body: Record<string, unknown>): Promise<CFResponse> {
+    const id = dn.env.DOC_NOTIFY.idFromName(key);
+    const stub = dn.env.DOC_NOTIFY.get(id);
+    return stub.fetch(
+      new Request("https://internal/doc-notify", {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+      }) as unknown as CFRequest
+    );
+  }
+
+  return {
+    notifyDocChanged: async (evt: { userSlug: string; appSlug: string; dbName: string; docId: string }) => {
+      const key = `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
+      console.log("[docNotify] notifyDocChanged key:", key, "shard:", dn.shardId.slice(0, 8));
+      await fetchDocNotify(key, {
+        action: "notify",
+        senderShardId: dn.shardId,
+        evt: { type: "vibes.diy.evt-doc-changed", ...evt },
+      });
+    },
+    registerDocSubscription: async (subscriptionKey: string) => {
+      console.log("[docNotify] register key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
+      await fetchDocNotify(subscriptionKey, { action: "register", shardId: dn.shardId });
+    },
+    deregisterDocSubscription: async (subscriptionKey: string) => {
+      console.log("[docNotify] deregister key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
+      await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
+    },
+  };
 }
 
 export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
@@ -152,6 +192,7 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
     netHash,
     llmRequest: ctx.llmRequest,
     env: env as unknown as Record<string, string>,
+    ...(ctx.docNotify ? docNotifyCallbacks(ctx.docNotify) : {}),
   });
 }
 
@@ -178,6 +219,9 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
     wsEvento.trigger({ ctx: appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
   });
 
+  // No deregister-on-close: with UUID sharding each DO has 1 connection, so the old WS onclose
+  // races with the new WS subscribeDocs and clobbers the fresh registration. Instead, stale shards
+  // self-clean via failed fan-out in DocNotify (which removes them from persistent storage).
   server.addEventListener("close", (event) => {
     console.log("WebSocket connection closed", ws.connections.size - 1);
     wsEvento.trigger({ ctx: appCtx, request: { type: "CloseEvent", event }, send: wsSendProvider });

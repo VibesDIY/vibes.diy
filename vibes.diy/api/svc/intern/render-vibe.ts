@@ -4,6 +4,9 @@ import {
   HttpResponseBodyType,
   isFetchErrResult,
   isFetchNotFoundResult,
+  isMetaScreenShot,
+  isMetaTitle,
+  MetaItem,
   VibesDiyServCtx,
   vibeImportMap,
   vibeUserEnv,
@@ -108,30 +111,40 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
   //   return Result.Err(env.toLocaleString());
   // }
 
+  const metaItems = (fs.meta as MetaItem[]) || [];
+  const metaTitle = metaItems.find(isMetaTitle);
+  const metaScreenShot = metaItems.find(isMetaScreenShot);
+
+  const requestUrl = new URL(ctx.request.url);
+  const canonicalUrl = `${requestUrl.protocol}//${requestUrl.host}/`;
+
+  let imageUrl: string | undefined;
+  if (metaScreenShot) {
+    const assetPath = `/assets/cid/?url=${encodeURIComponent(metaScreenShot.assetUrl)}&mime=${encodeURIComponent(metaScreenShot.mime)}`;
+    imageUrl = `${requestUrl.protocol}//${requestUrl.host}${assetPath}`;
+  }
+
+  const title = metaTitle?.title ?? fs.appSlug;
+
   const vsctx = {
     wrapper: {
       state: "waiting",
     },
-    // bindings: {
-    //   appSlug: fs.appSlug,
-    //   userSlug: fs.userSlug,
-    //   fsId: fs.fsId,
-    // },
     usrEnv,
     svcEnv: vctx.params.vibes.env,
     importMap: {
       imports: importMap,
     },
     metaProps: {
-      title: "we need a title",
-      description: "we need a description",
+      title,
+      description: `${title} - built on vibes.diy`,
+      imageUrl,
+      canonicalUrl,
     },
     mountJS: [
       `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
       ...imports.map((i) => i.importStmt),
-      `registerDependencies(`,
-      `  ${JSON.stringify({ appSlug: fs.appSlug, userSlug: fs.userSlug, fsId: fs.fsId })}, `,
-      `  JSON.parse(document.getElementById("vibe-import-map").textContent).imports)`,
+      `registerDependencies(${JSON.stringify({ appSlug: fs.appSlug, userSlug: fs.userSlug, fsId: fs.fsId })})`,
       `  .then(() => mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({ usrEnv })}));`,
     ].join("\n"),
   } satisfies VibesDiyServCtx;
@@ -153,6 +166,90 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
         "Content-Type": "text/html",
         "Cache-Control": "public, max-age=86400",
         ETag: fs.fsId,
+        ...optionalHeader,
+      },
+      body: ctx.request.method === "HEAD" ? "" : ((await renderToReadableStream(VibePage(vsctx))) as BodyInit),
+    } satisfies HttpResponseBodyType)
+  );
+  if (res.isErr()) {
+    return Result.Err(res);
+  }
+  return Result.Ok(EventoResult.Stop);
+}
+
+export interface RenderPendingVibesOpts {
+  ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>;
+  appSlug: string;
+  userSlug: string;
+  pkgRepos: {
+    private: NpmUrlCapture;
+    public?: string;
+  };
+}
+
+/**
+ * Render a "pending" iframe shell when no apps row exists yet for this slug
+ * pair. Boots the runtime + hot-swap listener with no App mounted, so the
+ * first vibe.evt.set-source from the host posts the scaffold into a live
+ * listener (no race, no lost first push). Used by the chat UI to pre-warm the
+ * iframe before code starts streaming.
+ */
+export async function renderPendingVibe({
+  ctx,
+  appSlug,
+  userSlug,
+  pkgRepos,
+}: RenderPendingVibesOpts): Promise<Result<EventoResultType>> {
+  const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+
+  const deps = Dependencies.from({ ...lockedGroupsVersions });
+  const importMap = await deps.renderImportMap({
+    resolveFn: resolveVersionRegistry({
+      fetch: defaultFetchPkgVersion({ defaults: { cache: vctx.cache } }),
+      symbol2Version: lockedVersions,
+    }),
+    renderRHS: render_esm_sh({ privateUrl: pkgRepos.private.npmURL }),
+  });
+
+  const requestUrl = new URL(ctx.request.url);
+  const canonicalUrl = `${requestUrl.protocol}//${requestUrl.host}/`;
+  const title = appSlug;
+
+  const vsctx = {
+    wrapper: { state: "waiting" },
+    usrEnv: {},
+    svcEnv: vctx.params.vibes.env,
+    importMap: { imports: importMap },
+    metaProps: {
+      title,
+      description: `${title} - built on vibes.diy`,
+      imageUrl: undefined,
+      canonicalUrl,
+    },
+    mountJS: [
+      `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
+      `registerDependencies(${JSON.stringify({ appSlug, userSlug, fsId: "pending" })})`,
+      `  .then(() => mountVibe([], ${JSON.stringify({ usrEnv: {} })}));`,
+    ].join("\n"),
+  } satisfies VibesDiyServCtx;
+
+  const optionalHeader: Record<string, string> = {};
+  if (pkgRepos.private.fromURL) {
+    optionalHeader["Set-Cookie"] = cookieSerialize("Vibes-Npm-Url", pkgRepos.private.npmURL, {
+      httpOnly: true,
+      maxAge: 86400,
+      path: "/~.....~/",
+      sameSite: "lax",
+    });
+  }
+  const res = await exception2Result(async () =>
+    ctx.send.send(ctx, {
+      type: "http.Response.Body",
+      status: 200,
+      headers: {
+        "Content-Type": "text/html",
+        // Don't cache pending — once apps row exists, request should hit real entry
+        "Cache-Control": "no-store",
         ...optionalHeader,
       },
       body: ctx.request.method === "HEAD" ? "" : ((await renderToReadableStream(VibePage(vsctx))) as BodyInit),

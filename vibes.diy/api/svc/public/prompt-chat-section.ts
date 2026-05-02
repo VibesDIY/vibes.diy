@@ -7,7 +7,6 @@ import {
   exception2Result,
   chunkyAsync,
   BuildURI,
-  pathOps,
   URI,
   uint8array2stream,
 } from "@adviser/cement";
@@ -53,6 +52,7 @@ import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
 import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import {
+  applyEdits,
   createStatsCollector,
   createLineStream,
   createDataStream,
@@ -67,6 +67,7 @@ import {
   LLMRequest,
   ChatMessage,
   CodeMsg,
+  parseFenceBody,
   CodeBeginMsg,
   CodeLineMsg,
   FileSystemRef,
@@ -83,6 +84,33 @@ import { ChatIdCtx } from "../svc-ws-send-provider.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
 
+// Build the `fetch` override that makeBaseSystemPrompt uses to load asset
+// files (system-prompt.md, llms/*.md) from the worker's `/vibe-pkg/`
+// endpoint instead of esm.sh. With `pkgBaseUrl` passed into prompts.ts, the
+// URL we receive here is already the workspace URL — just delegate to
+// fetchAsset, no path math.
+export interface PromptAssetFetchDeps {
+  readonly fetchAsset: (url: string) => Promise<Result<ReadableStream<Uint8Array>>>;
+}
+
+export function createPromptAssetFetch(deps: PromptAssetFetchDeps): typeof fetch {
+  return async (url, _init) => {
+    const uri = URI.from(url);
+    if (uri.protocol === "file:") {
+      return fetch(url, _init);
+    }
+    const rRes = await deps.fetchAsset(uri.toString());
+    if (rRes.isErr()) {
+      return new Response(JSON.stringify({ error: rRes.Err() }), { status: 500 });
+    }
+    return new Response(rRes.Ok());
+  };
+}
+
+export function promptsPkgBaseUrl(workspace: string): string {
+  return BuildURI.from(workspace).appendRelative("@vibes.diy/prompts/").toString();
+}
+
 interface AppendBlockEventParams {
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
   vctx: VibesApiSQLCtx;
@@ -97,6 +125,89 @@ interface CodeBlocks {
   begin: CodeBeginMsg;
   lines: CodeLineMsg[];
   end?: CodeMsg;
+}
+
+// Look up the most recent persisted fileSystem for a chat, across all prior
+// promptIds. Returns a Map<filename, content> usable as the seed for the
+// next turn's resolveCodeBlocksToFileSystem call. Empty map when the chat
+// has no prior persisted state.
+async function loadPriorFileSystem(vctx: VibesApiSQLCtx, chatId: string): Promise<ReadonlyMap<string, string>> {
+  const latestPrompt = await vctx.sql.db
+    .select()
+    .from(vctx.sql.tables.promptContexts)
+    .innerJoin(vctx.sql.tables.apps, eq(vctx.sql.tables.apps.fsId, vctx.sql.tables.promptContexts.fsId))
+    .where(eq(vctx.sql.tables.promptContexts.chatId, chatId))
+    .orderBy(desc(vctx.sql.tables.promptContexts.created))
+    .limit(1)
+    .then((r) => r[0]);
+  const seed = new Map<string, string>();
+  if (!latestPrompt) return seed;
+  const files = parseArray(latestPrompt.Apps.fileSystem, vibeFile);
+  for (const f of files) {
+    if (f.type !== "code-block") continue;
+    if (typeof f.content !== "string") continue;
+    seed.set(f.filename, f.content);
+  }
+  return seed;
+}
+
+// Resolve a sequence of streamed code blocks into a VibeFile[] by grouping
+// blocks by their `path` (aider-style), running parseFenceBody on each
+// block's body, and applying the resulting edits in order. A body with no
+// SEARCH markers is a `create`; bodies with markers are `replace` edits.
+//
+// `seed` carries prior-turn file content keyed by filename — required so
+// that a turn consisting only of `replace` blocks can compose against the
+// previously persisted state. Without it, SEARCH would run against an
+// empty buffer and produce a 0-byte App.jsx.
+//
+// Falls back to filename `/App.jsx` when a block has no `path` (back-compat
+// for blocks emitted before block-stream tracked path lines).
+export function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[], seed?: ReadonlyMap<string, string>): VibeFile[] {
+  const byPath = new Map<string, { lang: string; lines: string[][] }>();
+  for (const block of blocks) {
+    if (!block.end) continue;
+    const path = block.begin.path ?? "App.jsx";
+    const langRaw = block.begin.lang.toLowerCase();
+    const lang = ["js", "jsx"].includes(langRaw) ? "jsx" : langRaw;
+    const acc = byPath.get(path) ?? { lang, lines: [] };
+    acc.lines.push(block.lines.map((l) => l.line));
+    byPath.set(path, acc);
+  }
+  const result: VibeFile[] = [];
+  for (const [path, { lang, lines }] of byPath.entries()) {
+    const filename = path.startsWith("/") ? path : `/${path}`;
+    let resolved = seed?.get(filename) ?? seed?.get(path) ?? "";
+    for (const blockLines of lines) {
+      const parsed = parseFenceBody(blockLines);
+      const r = applyEdits(resolved, parsed.edits);
+      resolved = r.content;
+    }
+    result.push({
+      type: "code-block",
+      filename,
+      lang,
+      content: resolved,
+    });
+  }
+  // Carry forward seed entries for files this turn didn't touch.
+  if (seed) {
+    for (const [seededName, seededContent] of seed.entries()) {
+      const filename = seededName.startsWith("/") ? seededName : `/${seededName}`;
+      const path = filename.startsWith("/") ? filename.slice(1) : filename;
+      if (byPath.has(path) || byPath.has(filename)) continue;
+      // Determine lang from extension.
+      const ext = filename.match(/\.([^.]+)$/)?.[1] ?? "jsx";
+      const lang = ["js", "jsx"].includes(ext.toLowerCase()) ? "jsx" : ext.toLowerCase();
+      result.push({
+        type: "code-block",
+        filename,
+        lang,
+        content: seededContent,
+      });
+    }
+  }
+  return result;
 }
 
 async function appendBlockEvent({
@@ -141,7 +252,6 @@ async function appendBlockEvent({
     tid: req.outerTid,
     src: "promptChatSection",
   } satisfies InMsgBase<SectionEvent>);
-  console.log("[appendBlockEvent] emitting:", evt.type, "connections:", vctx.connections.size, "chatId:", req.chatId);
   for (const conn of vctx.connections) {
     const chatCtx = conn.chatIds.get(req.chatId);
     if (chatCtx) {
@@ -230,34 +340,17 @@ export async function handlePromptContext({
   }
   if (code.length > 0 && (resChat.mode === "chat" || isPromptFSStyle(resChat.mode))) {
     // here is where the music plays
-    const resolvedFileSystem =
-      fileSystem ??
-      code.reduce((acc, block, idx) => {
-        if (block.end) {
-          const content = block.lines.map((l) => l.line).join("\n");
-          // console.log("Code to add to file system:", content, block.begin.lang);
-          let filename!: string;
-          if (idx === 0) {
-            filename = `/App`;
-          } else {
-            filename = `/File-${idx}`;
-          }
-          let llmLangFix = block.begin.lang.toLowerCase();
-          if (["js", "jsx"].includes(llmLangFix)) {
-            llmLangFix = "jsx";
-            filename += ".jsx";
-          } else {
-            filename += llmLangFix ? `.${llmLangFix}` : "";
-          }
-          acc.push({
-            type: "code-block",
-            filename,
-            lang: llmLangFix, // llm think between jsx and js is not a big deal
-            content,
-          });
-        }
-        return acc;
-      }, [] as VibeFile[]);
+    let resolvedFileSystem: VibeFile[];
+    if (fileSystem) {
+      resolvedFileSystem = fileSystem;
+    } else {
+      // Seed from the most recent persisted fileSystem for this chat so that
+      // replace-only turns compose against prior content rather than against
+      // an empty buffer. Without this, a `<<<<<<< SEARCH ... >>>>>>> REPLACE`
+      // block has nothing to match and the new fsId persists 0 bytes.
+      const seed = await loadPriorFileSystem(vctx, req.chatId);
+      resolvedFileSystem = resolveCodeBlocksToFileSystem(code, seed);
+    }
     const rFs = await ensureAppSlugItem(vctx, {
       type: "vibes.diy.req-ensure-app-slug",
       mode: "dev",
@@ -362,10 +455,7 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
   return messages;
 }
 
-async function loadActiveSettings(
-  vctx: VibesApiSQLCtx,
-  chatId: string
-): Promise<{ skills?: string[]; title?: string }> {
+async function loadActiveSettings(vctx: VibesApiSQLCtx, chatId: string): Promise<{ skills?: string[]; title?: string }> {
   const rChat = await exception2Result(() =>
     vctx.sql.db
       .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, userSlug: vctx.sql.tables.chatContexts.userSlug })
@@ -431,24 +521,8 @@ async function injectSystemPrompt(
       skills,
       title,
       demoData: false,
-      fetch: async (url: RequestInfo | URL, _init?: RequestInit) => {
-        console.log("Fetching asset for system prompt from URL:", url.toString(), vctx.params.pkgRepos.workspace);
-        const uri = URI.from(url);
-        if (uri.protocol === "file:") {
-          return fetch(url, _init);
-        }
-        const promptTxtUrl = BuildURI.from(vctx.params.pkgRepos.workspace)
-          .appendRelative("@vibes.diy/prompts")
-          .appendRelative("llms")
-          .appendRelative(pathOps.basename(URI.from(url).pathname))
-          .toString();
-        const rRes = await vctx.fetchAsset(promptTxtUrl);
-        if (rRes.isErr()) {
-          console.error("Failed to fetch asset for system prompt from URL:", url.toString(), "with error:", rRes.Err());
-          return new Response(JSON.stringify({ error: rRes.Err() }), { status: 500 });
-        }
-        return new Response(rRes.Ok());
-      },
+      pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
+      fetch: createPromptAssetFetch({ fetchAsset: vctx.fetchAsset }),
     })
   );
   if (systemPrompt.isErr()) {
@@ -594,9 +668,34 @@ async function handlerLlmRequest({
       if (req.mode === "chat") {
         withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? modelId);
       } else if (req.mode === "app" || req.mode === "img") {
+        let messages = req.prompt.messages;
+        if (req.mode === "img") {
+          const imgReq = req as ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>;
+          if (imgReq.inputImageBase64) {
+            // Forward the input image as an OpenAI/OpenRouter-compatible image_url content part
+            // on the last user message so providers like openai/gpt-5-image-mini actually see it.
+            const lastUserIdx = (() => {
+              for (let i = messages.length - 1; i >= 0; i--) {
+                if (messages[i].role === "user") return i;
+              }
+              return -1;
+            })();
+            if (lastUserIdx >= 0) {
+              const target = messages[lastUserIdx];
+              messages = [
+                ...messages.slice(0, lastUserIdx),
+                {
+                  ...target,
+                  content: [...target.content, { type: "image_url" as const, image_url: { url: imgReq.inputImageBase64 } }],
+                },
+                ...messages.slice(lastUserIdx + 1),
+              ];
+            }
+          }
+        }
         withSystemPrompt = Result.Ok({
           model: req.prompt.model ?? modelId,
-          messages: req.prompt.messages,
+          messages,
         });
       }
       return withSystemPrompt;
@@ -629,7 +728,6 @@ async function handlerLlmRequest({
   // console.log(promptId, "LLM request for promptId:");
   const res = await scope
     .evalResult<Response>(async () => {
-      console.log(promptId, "Sending LLM request:", llmReq.model);
       const res = await vctx.llmRequest(llmReq);
       if (!res.ok) {
         return Result.Err(`LLM request failed with status ${res.status} :${llmReq.model} : ${res.statusText}`);
@@ -651,6 +749,7 @@ async function handleProdiaImageRequest({
   req,
   promptId,
   blockSeq,
+  resolvedModel,
 }: {
   scope: Scope;
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -658,16 +757,24 @@ async function handleProdiaImageRequest({
   req: ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>;
   promptId: string;
   blockSeq: number;
+  resolvedModel: string;
 }): Promise<Result<number>> {
   const prodiaToken = vctx.prodiaToken;
   if (!prodiaToken) {
     return Result.Err("PRODIA_TOKEN not configured");
   }
+  // Prodia inference type is built from the model id stem (everything after "prodia/").
+  // e.g. "prodia/flux-2.klein.9b" -> "inference.flux-2.klein.9b.{txt2img|img2img}.v1"
+  const prodiaStem = resolvedModel.startsWith("prodia/") ? resolvedModel.slice("prodia/".length) : "";
+  if (!prodiaStem) {
+    return Result.Err(`Invalid Prodia model id: ${resolvedModel}`);
+  }
 
   // Extract prompt text from the last user message
   const userMessages = req.prompt.messages.filter((m) => m.role === "user");
   const lastUserMsg = userMessages[userMessages.length - 1];
-  const promptText = lastUserMsg?.content?.[0]?.text ?? "";
+  const firstTextPart = lastUserMsg?.content?.find((c) => c.type === "text");
+  const promptText = firstTextPart?.type === "text" ? firstTextPart.text : "";
   if (!promptText) {
     return Result.Err("No prompt text found in user messages");
   }
@@ -708,7 +815,7 @@ async function handleProdiaImageRequest({
     const formData = new FormData();
     formData.append(
       "job",
-      new Blob([JSON.stringify({ type: "inference.flux-2.klein.9b.img2img.v1", config: { prompt: promptText } })], {
+      new Blob([JSON.stringify({ type: `inference.${prodiaStem}.img2img.v1`, config: { prompt: promptText } })], {
         type: "application/json",
       }),
       "job.json"
@@ -731,7 +838,7 @@ async function handleProdiaImageRequest({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        type: "inference.flux-2.klein.9b.txt2img.v1",
+        type: `inference.${prodiaStem}.txt2img.v1`,
         config: { prompt: promptText },
       }),
     });
@@ -1196,8 +1303,32 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       }
       const resChat = rResChat.Ok();
 
+      // Resolved img model id picks the backend: "prodia/*" -> Prodia, else LLM handler.
+      let resolvedImgModel: string | undefined;
+      if (isReqPromptImageChatSection(orig)) {
+        const override = orig.prompt.model;
+        if (override) {
+          resolvedImgModel = override;
+        } else {
+          const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
+          if (rDefaults.isOk()) {
+            resolvedImgModel = rDefaults.Ok().img.model.id;
+          }
+        }
+      }
+      // Fallback to LLM image model when Prodia token is unavailable.
+      // Inject into orig.prompt.model so handlerLlmRequest picks it up
+      // instead of re-resolving to the prodia/* default from models.json.
+      if (resolvedImgModel?.startsWith("prodia/") && !vctx.prodiaToken) {
+        resolvedImgModel = "openai/gpt-5-image-mini";
+        if (isReqPromptImageChatSection(orig) && !orig.prompt.model) {
+          (orig as { prompt: { model?: string } }).prompt.model = resolvedImgModel;
+        }
+      }
+      const useProdia = !!(isReqPromptImageChatSection(orig) && vctx.prodiaToken && resolvedImgModel?.startsWith("prodia/"));
+
       let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
-      if (isReqPromptImageChatSection(orig) && vctx.prodiaToken) {
+      if (isReqPromptImageChatSection(orig) && useProdia) {
         prompSectionAction = async (scope: Scope, blockSeq: number) => {
           return handleProdiaImageRequest({
             scope,
@@ -1206,6 +1337,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             req: orig as ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>,
             promptId,
             blockSeq,
+            resolvedModel: resolvedImgModel as string,
           });
         };
       } else if (isReqPromptLLMChatSection(orig)) {

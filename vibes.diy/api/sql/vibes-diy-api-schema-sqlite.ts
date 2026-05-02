@@ -174,6 +174,23 @@ export const sqlRequestGrants = sqliteTable(
   (table) => [primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.foreignUserId] })]
 );
 
+// Firefly — immutable append-only document store
+export const sqlAppDocuments = sqliteTable(
+  "AppDocuments",
+  {
+    userSlug: text().notNull().default("unknown"),
+    appSlug: text().notNull(),
+    dbName: text().notNull().default("default"), // database namespace within app
+    docId: text().notNull(),
+    seq: int().notNull(), // monotonic per (userSlug, appSlug, dbName, docId), starts at 1
+    userId: text().notNull().default("unknown"), // authenticated user who made this change
+    data: text({ mode: "json" }).notNull(), // document JSON
+    deleted: int().notNull().default(0), // 1 = tombstone
+    created: text().notNull(), // ISO timestamp of this revision
+  },
+  (table) => [primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId, table.seq] })]
+);
+
 export const sqlInviteGrants = sqliteTable(
   "InviteGrants",
   {

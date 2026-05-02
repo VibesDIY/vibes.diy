@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.34",
-    "@cloudflare/workers-types": "^4.20260402.1",
+    "@cloudflare/workers-types": "4.20260402.1",
     "@fireproof/core-device-id": "0.24.19",
     "@fireproof/core-runtime": "0.24.19",
-    "@fireproof/core-types-device-id": "0.24.16",
+    "@fireproof/core-types-device-id": "0.24.19",
     "@libsql/client": "^0.17.2",
     "@neondatabase/serverless": "^1.0.2",
     "@vibes.diy/api-impl": "workspace:*",
@@ -23,13 +23,14 @@
     "@vibes.diy/api-svc": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
+    "@vibes.diy/vibe-srv-sandbox": "workspace:*",
     "arktype": "^2.2.0",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.19",
-    "@vitest/ui": "~4.1.2",
+    "@vitest/ui": "~4.1.4",
     "vitest": "~4.1.2",
     "zx": "^8.8.5"
   },

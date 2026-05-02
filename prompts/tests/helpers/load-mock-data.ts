@@ -2,6 +2,7 @@
 // JSON configs are imported directly as TypeScript modules
 
 import { CoerceURI, URI } from "@adviser/cement";
+import systemPromptTemplate from "../../pkg/system-prompt.md?raw";
 
 /**
  * Creates a mock fetch implementation that serves only text documentation files.
@@ -10,6 +11,14 @@ import { CoerceURI, URI } from "@adviser/cement";
 export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Response> {
   return (iurl: CoerceURI) => {
     const url = URI.from(iurl).toString();
+    // Serve the real system-prompt template so placeholder substitution works.
+    if (url.includes("system-prompt.md")) {
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(systemPromptTemplate),
+      } as Response);
+    }
+
     // Mock text files - serve actual text file contents (abbreviated for tests)
     if (url.includes("callai.md")) {
       return Promise.resolve({

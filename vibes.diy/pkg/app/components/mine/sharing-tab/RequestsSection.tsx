@@ -30,7 +30,7 @@ interface RequestTableProps {
   onRemove?: (r: RequestGrantItem) => void;
 }
 
-function RequestTable({
+export function RequestTable({
   requests,
   label,
   renderUser,
@@ -308,6 +308,20 @@ interface RequestsSectionProps {
   onSwitchRejectedRole: (r: RequestGrantItem, newRole: "editor" | "viewer") => void;
   onReApprove: (r: RequestGrantItem) => void;
   onRemove: (r: RequestGrantItem) => void;
+  /** When true, hides the "Requests" header, enable/disable toggle, and auto-accept checkbox. */
+  hideHeader?: boolean;
+}
+
+export function renderRequestUser(r: RequestGrantItem): React.ReactNode {
+  const params = r.foreignInfo?.claims?.params ?? ({} as Partial<ClerkClaimParams>);
+  return (
+    <>
+      {r.foreignInfo?.claims?.params?.image_url && (
+        <img src={r.foreignInfo.claims.params.image_url} alt="avatar" className="w-4 h-4 rounded-full object-cover mr-1" />
+      )}
+      {params.nick ?? params.name ?? params.email ?? name(params) ?? r.foreignUserId}
+    </>
+  );
 }
 
 function name(params: Partial<ClerkClaimParams>): string | null {
@@ -336,41 +350,38 @@ export function RequestsSection({
   onSwitchRejectedRole,
   onReApprove,
   onRemove,
+  hideHeader = false,
 }: RequestsSectionProps) {
-  function renderUser(r: RequestGrantItem): React.ReactNode {
-    // console.log(`renderUser`, r);
-    const params = r.foreignInfo?.claims?.params ?? ({} as Partial<ClerkClaimParams>);
-    return (
-      <>
-        {r.foreignInfo?.claims?.params?.image_url && (
-          <img src={r.foreignInfo.claims.params.image_url} alt="avatar" className="w-4 h-4 rounded-full object-cover mr-1" />
-        )}
-        {params.nick ?? params.name ?? params.email ?? name(params) ?? r.foreignUserId}
-      </>
-    );
-  }
+  const renderUser = renderRequestUser;
+
+  const Wrapper: React.ElementType = hideHeader ? "div" : "li";
+  const wrapperClass = hideHeader
+    ? ""
+    : "rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3";
 
   return (
-    <li className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
-      <div className="font-medium text-gray-700 dark:text-gray-300 mb-2">Requests</div>
-      <div className="space-y-3 mt-1">
+    <Wrapper className={wrapperClass}>
+      {!hideHeader && <div className="font-medium text-gray-700 dark:text-gray-300 mb-2">Requests</div>}
+      <div className={hideHeader ? "" : "space-y-3 mt-1"}>
         <div className="space-y-2">
-          <div className="flex items-center gap-4 flex-wrap">
-            <FlagToggle label="requests" enabled={!!enableRequest?.enable} toggling={toggling === "request"} onToggle={onToggle} />
-            {enableRequest?.enable && (
-              <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!!enableRequest.autoAcceptViewRequest}
-                  disabled={toggling === "autoAcceptViewRequest"}
-                  onChange={onToggleAutoAccept}
-                  className="rounded border-gray-300 dark:border-gray-600 disabled:opacity-50"
-                />
-                Auto-accept view requests
-              </label>
-            )}
-          </div>
-          {enableRequest?.enable && (
+          {!hideHeader && (
+            <div className="flex items-center gap-4 flex-wrap">
+              <FlagToggle label="requests" enabled={!!enableRequest?.enable} toggling={toggling === "request"} onToggle={onToggle} />
+              {enableRequest?.enable && (
+                <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!enableRequest.autoAcceptRole}
+                    disabled={toggling === "autoAcceptRole"}
+                    onChange={onToggleAutoAccept}
+                    className="rounded border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                  />
+                  Auto-accept view requests
+                </label>
+              )}
+            </div>
+          )}
+          {(hideHeader || enableRequest?.enable) && (
             <RequestList
               requests={requests}
               renderUser={renderUser}
@@ -385,6 +396,6 @@ export function RequestsSection({
           )}
         </div>
       </div>
-    </li>
+    </Wrapper>
   );
 }

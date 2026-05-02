@@ -62,12 +62,39 @@ export function isMetaTitle(obj: unknown): obj is MetaTitle {
   return !(MetaTitle(obj) instanceof type.errors);
 }
 
-export const MetaItem = MetaScreenShotRef.or(MetaTitle);
+// srcFsId is the immutable anchor. Display slugs are resolved live from
+// the Apps/binding tables so slug renames follow the user.
+export const MetaRemixOf = type({
+  type: "'remix-of'",
+  srcFsId: "string",
+});
+
+export type MetaRemixOf = typeof MetaRemixOf.infer;
+
+export function isMetaRemixOf(obj: unknown): obj is MetaRemixOf {
+  return !(MetaRemixOf(obj) instanceof type.errors);
+}
+
+export const MetaItem = MetaScreenShotRef.or(MetaTitle).or(MetaRemixOf);
 
 export type MetaItem = typeof MetaItem.infer;
 
 export function isMetaItem(obj: unknown): obj is MetaItem {
   return !(MetaItem(obj) instanceof type.errors);
+}
+
+// Meta entries that belong to the app (per appSlug+userSlug) rather than a
+// specific release (per fsId) — these carry forward when a new release is
+// inserted. `screen-shot-ref` is fsId-bound and is regenerated per release.
+// The exhaustive switch ensures future MetaItem variants must opt in or out.
+export function isCrossReleaseMetaItem(item: MetaItem): boolean {
+  switch (item.type) {
+    case "title":
+    case "remix-of":
+      return true;
+    case "screen-shot-ref":
+      return false;
+  }
 }
 
 // export interface ResponseType {

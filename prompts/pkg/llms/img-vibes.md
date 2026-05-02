@@ -150,3 +150,18 @@ ImgVibes supports custom styling through CSS variables or custom class names:
 - `alt`: Alt text for the image element (optional)
 - `style`: Inline styles for the image element (optional)
 - `showControls`: Toggle regenerate and version navigation buttons (default: `true`)
+- `model`: Override the image generation model for this component (optional). Use a catalog model id such as `"openai/gpt-5-image-mini"` or `"prodia/flux-2.klein.9b"`. When omitted, the app's configured default is used. Note: img2img (passing `images`) is only supported for `prodia/*` models today.
+
+## Choosing a Model
+
+By default, images are generated with the app's configured image model. Pass the `model` prop when you want a specific `<ImgVibes>` to use a different backend — for example, routing an OpenAI-family image model for one component while leaving the rest of the app on the default:
+
+```jsx
+import { ImgVibes } from "img-vibes";
+
+function MyComponent() {
+  return <ImgVibes prompt="An astronaut riding a horse" model="openai/gpt-5-image-mini" />;
+}
+```
+
+Model ids follow the `provider/model-name` form from the platform's model catalog. Unknown or unavailable ids surface as an error through the component's error UI.

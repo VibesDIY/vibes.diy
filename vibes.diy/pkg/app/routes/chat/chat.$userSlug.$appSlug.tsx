@@ -2,7 +2,9 @@ import { SetURLSearchParams, useNavigate, useParams, useSearchParams } from "rea
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 // import { useClerk } from "@clerk/react";
-import { processStream, BuildURI, URI } from "@adviser/cement";
+import { processStream, BuildURI, URI, exception2Result } from "@adviser/cement";
+import { fireproof } from "@fireproof/use-fireproof";
+import type { VibeDocument, ViewType } from "@vibes.diy/prompts";
 import {
   isPromptBlockBegin,
   isPromptBlockEnd,
@@ -19,7 +21,6 @@ import { BrutalistCard } from "@vibes.diy/base";
 import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
-import type { ViewType } from "@vibes.diy/prompts";
 import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
@@ -32,6 +33,8 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { EditorState, isEditorStateEdit } from "../../types/code-editor.js";
+import { getCode } from "../../components/ResultPreview/CodeEditor.js";
+import { shouldAgentAutosave } from "../../components/ResultPreview/agent-autosave.js";
 
 interface VibeAppContextMenuProps {
   x: number;
@@ -80,6 +83,17 @@ export interface PromptState {
   title: string;
   searchParams: URLSearchParams;
   setSearchParams: SetURLSearchParams;
+  // Source-of-truth code for a given fsId when no ChatSections exist for it
+  // (e.g. after a remix where the Apps row was pointer-copied without a
+  // replayed prompt). CodeEditor falls back to this when getCode returns no
+  // blocks for the current fsId.
+  hydratedSource?: { fsId: string; code: string[] };
+  // Block IDs whose save originated from the agent autosave (end-of-aider-
+  // turn) rather than a manual editor save. Populated only for the lifetime
+  // of an open chat session — chat reload loses these tags and the MessageList
+  // falls back to "User edited code" for old auto-saves. Acceptable: the
+  // alternative would require a wire-format change.
+  agentSavedBlockIds: ReadonlySet<string>;
 }
 
 export interface PromptBlock {
@@ -107,7 +121,28 @@ function isSetTitle(msg: unknown): msg is SetTitle {
   return !(SetTitle(msg) instanceof type.errors);
 }
 
-type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle;
+const SetHydratedSource = type({
+  type: "'setHydratedSource'",
+  fsId: "string",
+  code: "string[]",
+});
+type SetHydratedSource = typeof SetHydratedSource.infer;
+
+function isSetHydratedSource(msg: unknown): msg is SetHydratedSource {
+  return !(SetHydratedSource(msg) instanceof type.errors);
+}
+
+const MarkAgentSaved = type({
+  type: "'markAgentSaved'",
+  blockId: "string",
+});
+type MarkAgentSaved = typeof MarkAgentSaved.infer;
+
+function isMarkAgentSaved(msg: unknown): msg is MarkAgentSaved {
+  return !(MarkAgentSaved(msg) instanceof type.errors);
+}
+
+type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetHydratedSource | MarkAgentSaved;
 
 function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
@@ -117,6 +152,15 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 
     case isSetTitle(block):
       return { ...state, title: block.title };
+
+    case isSetHydratedSource(block):
+      return { ...state, hydratedSource: { fsId: block.fsId, code: block.code } };
+
+    case isMarkAgentSaved(block): {
+      const next = new Set(state.agentSavedBlockIds);
+      next.add(block.blockId);
+      return { ...state, agentSavedBlockIds: next };
+    }
 
     // case isPromptReq(block):
     //   if (!state.current) return state;
@@ -178,6 +222,30 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
+  // Hold latest fsId in a ref so the prompt-firing effect can preserve it in
+  // the navigation URL without retriggering on every autosave fsId change
+  // (which would re-fire the same prompt — classic loop).
+  const fsIdRef = useRef<string | undefined>(fsId);
+  fsIdRef.current = fsId;
+
+  // Read the local VibeDocument (seeded by the remix route) to show the
+  // "remix of" indicator in the header. Best-effort: if the doc is missing
+  // or malformed we just render the plain title.
+  const [remixOf, setRemixOf] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const r = await exception2Result(async () => {
+        const db = fireproof(`vibe-${appSlug}`);
+        return (await db.get("vibe")) as VibeDocument;
+      });
+      if (cancelled) return;
+      if (r.isOk() && r.Ok().remixOf) setRemixOf(r.Ok().remixOf);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [appSlug]);
 
   const [promptState, dispatch] = useReducer(promptReducer, {
     chat: {} as LLMChatEntry,
@@ -187,29 +255,64 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     blocks: [],
     searchParams,
     setSearchParams,
+    agentSavedBlockIds: new Set<string>(),
   });
+
+  // Hydrate the code editor from Apps.fileSystem when no ChatSections
+  // exist for this fsId (e.g. a freshly forked vibe). The fetch is
+  // content-addressed and HTTP-cacheable. Once a real prompt lands,
+  // getCode walks blocks first and this fallback is ignored.
+  const hydratedFsIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!fsId || !userSlug || !appSlug) return;
+    if (hydratedFsIdsRef.current.has(fsId)) return;
+    hydratedFsIdsRef.current.add(fsId);
+    (async () => {
+      const rApp = await vibeDiyApi.getAppByFsId({ appSlug, userSlug, fsId });
+      if (rApp.isErr()) return;
+      const app = rApp.Ok();
+      const appJsx =
+        app.fileSystem.find((f) => f.entryPoint && f.fileName === "/App.jsx") ??
+        app.fileSystem.find((f) => f.fileName === "/App.jsx");
+      if (!appJsx) return;
+      const rRes = await exception2Result(() =>
+        fetch(`/assets/cid/?url=${encodeURIComponent(appJsx.assetURI)}&mime=${encodeURIComponent(appJsx.mimeType)}`)
+      );
+      if (rRes.isErr() || !rRes.Ok().ok) return;
+      const text = await rRes.Ok().text();
+      dispatch({ type: "setHydratedSource", fsId, code: text.split("\n") });
+    })();
+  }, [fsId, userSlug, appSlug, vibeDiyApi]);
 
   useEffect(() => {
     if (inConstruction) return;
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
         const newSearch = new URLSearchParams(searchParams);
+        // Default to preview so the user sees the iframe hot-swap as edits
+        // stream. Brand-new vibes show a placeholder until end-of-turn
+        // autosave creates the first fsId; the iframe then mounts and hot-
+        // swap fills in subsequent edits.
         if (!newSearch.has("view")) {
-          newSearch.set("view", "code");
+          newSearch.set("view", "preview");
         }
-        navigate({ pathname: `/chat/${userSlug}/${appSlug}`, search: newSearch.toString() }, { replace: true });
-        console.log(`promptToSend:`);
+        // Preserve fsId on follow-ups so PreviewApp keeps the iframe mounted
+        // and the hot-swap useEffect has the prior buffer to resolve against.
+        // Read fsId from the ref so future autosave-driven fsId changes don't
+        // re-trigger this effect with the same promptToSend (loop bug).
+        const currentFsId = fsIdRef.current;
+        const pathname = currentFsId ? `/chat/${userSlug}/${appSlug}/${currentFsId}` : `/chat/${userSlug}/${appSlug}`;
+        navigate({ pathname, search: newSearch.toString() }, { replace: true });
+        const sentPrompt = promptToSend;
+        // Clear promptToSend BEFORE firing so any re-render of this effect
+        // (e.g. searchParams change) sees null and skips the branch.
+        sendPrompt(null);
         chat
           .prompt({
             messages: [
               {
                 role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: promptToSend,
-                  },
-                ],
+                content: [{ type: "text", text: sentPrompt }],
               },
             ],
           })
@@ -217,10 +320,9 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             if (r.isErr()) {
               console.error(`PromptSend failed`, r.Ok());
             } else {
-              console.log(`send prompt`, promptToSend);
+              console.log(`send prompt`, sentPrompt);
             }
           });
-        // .finally(() => sendPrompt(null) /* avoid double send */);
       }
       return; // Already opened or opening
     }
@@ -309,7 +411,9 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       }
       const sp = new URLSearchParams(searchParams);
       sp.set("view", currentViewRef.current);
-      // console.log(`fsIdClick`, { newFsId, appSlug, userSlug, searchParams: sp.toString(), currentView: currentViewRef.current });
+      if (isMobileViewport()) {
+        setMobilePreviewShown(true);
+      }
       navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
     },
     [navigate, userSlug, appSlug, searchParams]
@@ -406,6 +510,93 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     pendingSavePromptIdRef.current = null;
   }, [userSlug, appSlug]);
 
+  // Brand-new app first-paint: when the server persists the first (create-only)
+  // scaffold block it emits block.end with fsRef.fsId. If we still have no fsId
+  // in the URL, navigate to it so the iframe can load immediately rather than
+  // waiting for end-of-turn autosave (which only fires for SEARCH/REPLACE
+  // turns). After navigation `fsId` is set, so the effect bails on subsequent
+  // blocks.
+  useEffect(() => {
+    if (fsId) return;
+    for (const block of promptState.blocks) {
+      for (const msg of block.msgs) {
+        if (isBlockEnd(msg) && msg.fsRef) {
+          const sp = new URLSearchParams(searchParams);
+          if (!sp.has("view")) sp.set("view", "preview");
+          navigate({ pathname: `/chat/${userSlug}/${appSlug}/${msg.fsRef.fsId}`, search: sp.toString() }, { replace: true });
+          return;
+        }
+      }
+    }
+  }, [promptState.blocks, fsId, searchParams, navigate, userSlug, appSlug]);
+
+  // Agent autosave: when an LLM turn that emitted SEARCH/REPLACE edits
+  // finishes streaming, persist the resolved buffer via the same promptFS
+  // path the manual save uses. Tag the resulting block so MessageList shows
+  // "Agent saved code" instead of "User edited code".
+  const wasRunningRef = useRef(false);
+  // Index of the first block we should consider "future" relative to an armed
+  // autosave. The matcher dispatches markAgentSaved on the first block.end
+  // with fsRef at or beyond this index. Avoids the streamId race we saw when
+  // chat.promptFS().then() resolved after the autosave's own block.end had
+  // already been ingested.
+  const agentAutosaveFromIdxRef = useRef<number | null>(null);
+  useEffect(() => {
+    const wasRunning = wasRunningRef.current;
+    wasRunningRef.current = promptState.running;
+    if (!wasRunning || promptState.running) return;
+    if (!chat) return;
+    const last = promptState.blocks[promptState.blocks.length - 1];
+    if (!last || !shouldAgentAutosave(last.msgs)) return;
+    // Pass undefined so getCode returns the live cumulative source after all
+    // streamed edits, not the snapshot pinned to the prior fsId (which would
+    // be the pre-edit version and persist nothing).
+    const resolved = getCode(promptState).code.join("\n");
+    if (resolved.length === 0) return;
+    // Arm the matcher BEFORE the network call so the first block.end with
+    // fsRef that arrives on the autosave's stream is consumed regardless of
+    // when the promptFS promise resolves.
+    agentAutosaveFromIdxRef.current = promptState.blocks.length;
+    chat
+      .promptFS([
+        {
+          type: "code-block",
+          filename: "/App.jsx",
+          lang: "jsx",
+          content: resolved,
+        },
+      ])
+      .then((r) => {
+        if (r.isErr()) {
+          console.warn("[agent-autosave] failed", r.Err());
+          agentAutosaveFromIdxRef.current = null;
+          return;
+        }
+        console.log("[agent-autosave] saved", { promptId: r.Ok().promptId, len: resolved.length });
+      });
+  }, [promptState.running, promptState.blocks, chat, fsId]);
+
+  // After the agent autosave fires we mark the first new block.end (with an
+  // fsRef) as agent-saved and navigate to its fsId so the iframe loads the
+  // resolved file. Matching by index rather than streamId avoids the race
+  // where promptFS's then() resolves after the block.end has been ingested.
+  useEffect(() => {
+    const fromIdx = agentAutosaveFromIdxRef.current;
+    if (fromIdx === null) return;
+    for (let i = fromIdx; i < promptState.blocks.length; i += 1) {
+      const block = promptState.blocks[i];
+      const blockEnd = block.msgs.find((m) => isBlockEnd(m));
+      if (blockEnd && isBlockEnd(blockEnd) && blockEnd.fsRef) {
+        agentAutosaveFromIdxRef.current = null;
+        dispatch({ type: "markAgentSaved", blockId: blockEnd.blockId });
+        const sp = new URLSearchParams(searchParams);
+        if (!sp.has("view")) sp.set("view", "preview");
+        navigate({ pathname: `/chat/${userSlug}/${appSlug}/${blockEnd.fsRef.fsId}`, search: sp.toString() }, { replace: true });
+        return;
+      }
+    }
+  }, [promptState.blocks, searchParams, navigate, userSlug, appSlug]);
+
   useEffect(() => {
     if (inConstruction) return;
     if (isMobileViewport()) {
@@ -428,7 +619,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         fullWidthChat={isMobileViewport()}
         headerLeft={
           <ChatHeaderContent
-            remixOf={/*chatState.vibeDoc?.remixOf*/ undefined}
+            remixOf={remixOf}
             promptProcessing={promptState.running}
             codeReady={promptState.hasCode}
             title={promptState.title}
@@ -445,13 +636,20 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             openVibe={openVibe}
             onContextMenu={handleContextMenu}
             shareModal={shareModal}
+            onBackClick={() => setMobilePreviewShown(false)}
           />
         }
         chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} />}
         previewPanel={<ResultPreview promptState={promptState} currentView={currentView} onCode={handleOnCode} />}
         chatInput={
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
-            <ChatInput ref={chatInput} onSubmit={sendPrompt} promptProcessing={promptState.running} />
+            <ChatInput
+              ref={chatInput}
+              onSubmit={sendPrompt}
+              promptProcessing={promptState.running}
+              hasCode={promptState.hasCode}
+              currentMsgCount={promptState.current?.msgs.length ?? 0}
+            />
           </BrutalistCard>
         }
         suggestionsComponent={undefined}

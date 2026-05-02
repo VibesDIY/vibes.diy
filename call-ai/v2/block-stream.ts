@@ -110,11 +110,13 @@ export const CodeBeginMsg = type({
   type: "'block.code.begin'",
   sectionId: "string",
   lang: "string",
+  "path?": "string",
 }).and(BlockBase);
 export const CodeLineMsg = type({
   type: "'block.code.line'",
   sectionId: "string",
   lang: "string",
+  "path?": "string",
 })
   .and(BlockBase)
   .and(BlockLine);
@@ -123,6 +125,7 @@ export const CodeEndMsg = type({
   type: "'block.code.end'",
   sectionId: "string",
   lang: "string",
+  "path?": "string",
 })
   .and(BlockBase)
   .and(BlockStatsBox);
@@ -205,7 +208,22 @@ const CODE_FENCE_START = /^```(\w*)$/;
 // Regex to match code fence end: just ```
 const CODE_FENCE_END = /^```$/;
 
+// Aider-style path line that may precede a fence (e.g. "App.jsx", "src/foo.ts").
+// Trimmed line must look like a relative path with a recognized extension.
+const PATH_LINE = /^[\w\-./]+\.(?:jsx?|tsx?|mjs|cjs|md|json|html|css)$/;
+
+// Markdown horizontal-rule line; we suppress it only when it's the trailing
+// line of the stream so it doesn't render as a stray <hr> at message end.
+const HR_LINE = /^---+$/;
+
+const DEFAULT_PATH = "App.jsx";
+
 type Mode = "toplevel" | "code";
+
+interface PendingLine {
+  readonly content: string;
+  readonly kind: "path" | "hr";
+}
 
 function addStat(target: BlockStats, source: BlockStats) {
   target.lines += source.lines;
@@ -228,6 +246,11 @@ export function createBlockStream(
   let sectionStarted = false;
   let currentLang = "";
   let currentSectionId = "";
+  let currentPath = DEFAULT_PATH;
+  // A non-blank toplevel line whose role depends on what comes next:
+  //   path-shape line → consumed as path on fence open; flushed as prose otherwise
+  //   hr-shape line   → dropped at line.end (trailing); flushed as prose if any line follows
+  let pendingLine: PendingLine | undefined;
   const toplevelStat = { lines: 0, bytes: 0, cnt: 0 };
   const codeStat = { lines: 0, bytes: 0, cnt: 0 };
   const imageStat = { lines: 0, bytes: 0, cnt: 0 };
@@ -251,6 +274,42 @@ export function createBlockStream(
   }
 
   let beginBlock = Lazy(beginBlockAction);
+
+  function emitToplevelLine(controller: TransformStreamDefaultController<BlockStreamMsg>, content: string) {
+    if (!sectionStarted) {
+      sectionStarted = true;
+      currentSectionId = createId();
+      blockStat = { lines: 0, bytes: 0, cnt: 0 };
+      controller.enqueue({
+        type: "block.toplevel.begin",
+        streamId,
+        sectionId: currentSectionId,
+        timestamp: new Date(),
+        blockId,
+        seq: seq++,
+        blockNr: blockNr,
+      });
+    }
+    blockStat.bytes += content.length;
+    controller.enqueue({
+      type: "block.toplevel.line",
+      timestamp: new Date(),
+      lineNr: blockStat.lines++,
+      sectionId: currentSectionId,
+      line: content,
+      blockId,
+      seq: seq++,
+      streamId,
+      blockNr: blockNr,
+    });
+  }
+
+  function flushPendingAsToplevel(controller: TransformStreamDefaultController<BlockStreamMsg>) {
+    if (pendingLine === undefined) return;
+    const line = pendingLine.content;
+    pendingLine = undefined;
+    emitToplevelLine(controller, line);
+  }
 
   let currentUsageSSE: SseUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
   const givenUsageSSE: SseUsage[] = [];
@@ -321,7 +380,15 @@ export function createBlockStream(
 
         if (mode === "toplevel") {
           if (fenceStartMatch) {
-            // Entering code block
+            // Entering code block. Consume a buffered path-candidate as the
+            // path; flush any other buffered candidate as prose first.
+            let consumedPath: string | undefined;
+            if (pendingLine !== undefined && pendingLine.kind === "path") {
+              consumedPath = pendingLine.content.trim();
+              pendingLine = undefined;
+            } else {
+              flushPendingAsToplevel(controller);
+            }
             if (sectionStarted) {
               addStat(totalStat, blockStat);
               addStat(toplevelStat, blockStat);
@@ -340,6 +407,7 @@ export function createBlockStream(
             }
             mode = "code";
             currentLang = fenceStartMatch[1] || "";
+            currentPath = consumedPath ?? DEFAULT_PATH;
 
             sectionStarted = true;
             currentSectionId = createId();
@@ -348,6 +416,7 @@ export function createBlockStream(
             controller.enqueue({
               type: "block.code.begin",
               lang: currentLang.toLowerCase(),
+              path: currentPath,
               timestamp: new Date(),
               sectionId: currentSectionId,
               blockId,
@@ -356,33 +425,19 @@ export function createBlockStream(
               blockNr: blockNr,
             });
           } else {
-            // Regular toplevel line
-            if (!sectionStarted) {
-              sectionStarted = true;
-              currentSectionId = createId();
-              blockStat = { lines: 0, bytes: 0, cnt: 0 };
-              controller.enqueue({
-                type: "block.toplevel.begin",
-                streamId,
-                sectionId: currentSectionId,
-                timestamp: new Date(),
-                blockId,
-                seq: seq++,
-                blockNr: blockNr,
-              });
+            const trimmed = content.trim();
+            if (trimmed.length > 0 && PATH_LINE.test(trimmed)) {
+              // Path candidate: defer emission until we know if a fence follows.
+              flushPendingAsToplevel(controller);
+              pendingLine = { content, kind: "path" };
+            } else if (trimmed.length > 0 && HR_LINE.test(trimmed)) {
+              // HR candidate: drop only if it's the last line of the block.
+              flushPendingAsToplevel(controller);
+              pendingLine = { content, kind: "hr" };
+            } else {
+              flushPendingAsToplevel(controller);
+              emitToplevelLine(controller, content);
             }
-            blockStat.bytes += content.length;
-            controller.enqueue({
-              type: "block.toplevel.line",
-              timestamp: new Date(),
-              lineNr: blockStat.lines++,
-              sectionId: currentSectionId,
-              line: content,
-              blockId,
-              seq: seq++,
-              streamId,
-              blockNr: blockNr,
-            });
           }
         } else {
           // mode === "code"
@@ -402,6 +457,7 @@ export function createBlockStream(
               seq: seq++,
               blockNr: blockNr++,
               lang: currentLang.toLowerCase(),
+              path: currentPath,
               stats: blockStat,
             });
             mode = "toplevel";
@@ -412,6 +468,7 @@ export function createBlockStream(
             controller.enqueue({
               type: "block.code.line",
               lang: currentLang.toLowerCase(),
+              path: currentPath,
               timestamp: new Date(),
               sectionId: currentSectionId,
               lineNr: blockStat.lines++,
@@ -424,6 +481,14 @@ export function createBlockStream(
           }
         }
       } else if (isLineEnd(msg, innerStreamId)) {
+        // A buffered path-candidate at end-of-stream was prose; drop a buffered hr-candidate.
+        if (pendingLine !== undefined) {
+          if (pendingLine.kind === "path") {
+            flushPendingAsToplevel(controller);
+          } else {
+            pendingLine = undefined;
+          }
+        }
         // Close any open section
         if (sectionStarted) {
           if (mode === "toplevel") {
@@ -455,6 +520,7 @@ export function createBlockStream(
               blockId,
               streamId,
               lang: currentLang.toLowerCase(),
+              path: currentPath,
               sectionId: currentSectionId,
               seq: seq++,
               blockNr: blockNr++,

@@ -25,8 +25,10 @@ export interface CFEnv {
   VIBES_DIY_PUBLIC_BASE_URL: string;
   RESEND_API_KEY: string;
   VIBES_DIY_FROM_EMAIL: string;
+  DISCORD_WEBHOOK_URL?: string;
 
   CHAT_SESSIONS: DurableObjectNamespace;
+  DOC_NOTIFY: DurableObjectNamespace;
   VIBES_SERVICE: Queue;
   BROWSER: Fetcher; // screenshotter uses Cloudflare's Browser Rendering API, which is accessed via a Fetcher binding
 }

@@ -25,9 +25,9 @@
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260402.1",
+    "@cloudflare/workers-types": "4.20260402.1",
     "@fireproof/core-cli": "0.24.19",
-    "typescript": "^6.0.2",
+    "typescript": "^6.0.3",
     "wrangler": "^4.81.0"
   },
   "repository": {

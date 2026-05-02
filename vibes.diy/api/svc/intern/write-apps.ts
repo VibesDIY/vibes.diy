@@ -9,11 +9,15 @@ import {
   ResEnsureAppSlug,
   ResEnsureAppSlugMaxAppsError,
   isResEnsureAppSlugMaxAppsError,
+  MetaItem,
+  isCrossReleaseMetaItem,
+  parseArrayWarning,
 } from "@vibes.diy/api-types";
 import { exception2Result, Result, string2stream, to_uint8, toSortedObject } from "@adviser/cement";
+import { ensureLogger } from "@fireproof/core-runtime";
 import { base58btc } from "multiformats/bases/base58";
 import { sha256 } from "multiformats/hashes/sha2";
-import { and, eq } from "drizzle-orm/sql/expressions";
+import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import mime from "mime";
 import { transform } from "sucrase";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
@@ -219,7 +223,6 @@ async function toFileSystemItems(
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
 ): Promise<Result<FileSystemItem>[]> {
   const givenFsItems = fs.map((f) => {
-    console.log("toFileSystemItems - processing file:", f.vibeFileItem.filename, (f.vibeFileItem as { lang: string }).lang);
     const ret: FileSystemItem = {
       fileName: f.vibeFileItem.filename,
       assetId: f.storage.cid,
@@ -348,6 +351,29 @@ export async function ensureApps(
         .join(", ")}`
     );
   }
+  // Carry forward cross-release meta (title, remix-of) from the prior
+  // release at this (appSlug, userSlug, userId). fsId-bound entries like
+  // screen-shot-ref are excluded by the allow-list and get regenerated per
+  // release by the screenshot queue.
+  const priorRow = await ctx.sql.db
+    .select({ meta: ctx.sql.tables.apps.meta })
+    .from(ctx.sql.tables.apps)
+    .where(
+      and(
+        eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
+        eq(ctx.sql.tables.apps.userSlug, binding.userSlug.userSlug),
+        eq(ctx.sql.tables.apps.userId, binding.userSlug.userId)
+      )
+    )
+    .orderBy(desc(ctx.sql.tables.apps.releaseSeq))
+    .limit(1)
+    .then((r) => r[0]);
+  const { filtered: priorMeta, warning: metaWarning } = parseArrayWarning(priorRow?.meta ?? [], MetaItem);
+  if (metaWarning.length > 0) {
+    ensureLogger(ctx.sthis, "ensureApps").Warn().Any({ parseErrors: metaWarning }).Msg("skip");
+  }
+  const carriedMeta: MetaItem[] = priorMeta.filter(isCrossReleaseMetaItem);
+
   const sqlVal = {
     appSlug: binding.appSlug.appSlug,
     userId: binding.userSlug.userId,
@@ -356,7 +382,7 @@ export async function ensureApps(
     fsId,
     env: req.env ?? {},
     fileSystem: rFileSystems.map((item) => item.Ok()),
-    meta: [], // keep meta for existing apps, can be updated later by another API
+    meta: carriedMeta,
     mode: req.mode,
     created: new Date().toISOString(),
   };

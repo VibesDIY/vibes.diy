@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import type { AIParams } from "@vibes.diy/api-types";
 import { useVibesDiy } from "../vibes-diy-provider.js";
+import { filterModelsByUsage } from "./filterModelsByUsage.js";
+import { toastError } from "./mine/sharing-tab/shared.js";
 
 const cardControlClassName =
   "flex-1 rounded border border-[color:var(--vibes-card-border)] bg-[var(--vibes-card-bg)] px-2 py-1 text-xs text-[color:var(--vibes-card-text)] outline-none focus-visible:ring-2 focus-visible:ring-[rgba(128,128,128,0.3)]";
@@ -57,10 +59,11 @@ function ModelSection({
     if (viewState.current === "start") {
       viewState.current = "loading";
       vibeDiyApi.listModels({}).then((res) => {
-        viewState.current = "loaded";
-        if (res.isOk()) {
-          setModels(res.Ok().models);
-          for (const model of res.Ok().models) {
+        toastError(res, (data) => {
+          viewState.current = "loaded";
+          const eligible = filterModelsByUsage(data.models, usage);
+          setModels(eligible);
+          for (const model of eligible) {
             if (model.preSelected?.includes(usage))
               setAIParam((prev) => {
                 if (!prev?.model) {
@@ -69,7 +72,7 @@ function ModelSection({
                 return prev;
               });
           }
-        }
+        });
       });
       return;
     }

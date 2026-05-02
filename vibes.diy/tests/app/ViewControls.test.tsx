@@ -3,6 +3,30 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ViewControls } from "~/vibes.diy/app/components/ResultPreview/ViewControls.js";
 
+// Mock the SVG icons
+vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons", () => ({
+  PreviewIcon: ({ className }: { className: string; isLoading?: boolean; title?: string }) => (
+    <span data-testid="preview-icon" className={className}>
+      Preview Icon
+    </span>
+  ),
+  CodeIcon: ({ className }: { className: string; isLoading?: boolean }) => (
+    <span data-testid="code-icon" className={className}>
+      Code Icon
+    </span>
+  ),
+  DataIcon: ({ className }: { className: string }) => (
+    <span data-testid="data-icon" className={className}>
+      Data Icon
+    </span>
+  ),
+  SettingsIcon: ({ className }: { className: string }) => (
+    <span data-testid="settings-icon" className={className}>
+      Settings Icon
+    </span>
+  ),
+}));
+
 describe("ViewControls", () => {
   const mockViewControls = {
     preview: {
@@ -30,30 +54,6 @@ describe("ViewControls", () => {
       loading: false,
     },
   };
-
-  // Mock the SVG icons
-  vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons", () => ({
-    PreviewIcon: ({ className }: { className: string; isLoading?: boolean; title?: string }) => (
-      <span data-testid="preview-icon" className={className}>
-        Preview Icon
-      </span>
-    ),
-    CodeIcon: ({ className }: { className: string; isLoading?: boolean }) => (
-      <span data-testid="code-icon" className={className}>
-        Code Icon
-      </span>
-    ),
-    DataIcon: ({ className }: { className: string }) => (
-      <span data-testid="data-icon" className={className}>
-        Data Icon
-      </span>
-    ),
-    SettingsIcon: ({ className }: { className: string }) => (
-      <span data-testid="settings-icon" className={className}>
-        Settings Icon
-      </span>
-    ),
-  }));
 
   beforeEach(() => {
     globalThis.document.body.innerHTML = "";

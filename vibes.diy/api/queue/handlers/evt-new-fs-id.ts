@@ -3,6 +3,7 @@ import { EvtNewFsId, MsgBase, isEvtNewFsId, msgBase } from "@vibes.diy/api-types
 import { type } from "arktype";
 import { QueueCtx } from "../queue-ctx.js";
 import { processScreenShotEvent } from "../screen-shotter.js";
+import { buildPublishEmbed, postEmbed } from "../intern/post-to-discord.js";
 
 export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void> = {
   hash: "evt-new-fs-id",
@@ -23,6 +24,9 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
     const res = await processScreenShotEvent(qctx, payload);
     if (res.isErr()) {
       console.error("Error processing screen shot event:", res.Err());
+    }
+    if (payload.mode === "production") {
+      await postEmbed(qctx, buildPublishEmbed(qctx, payload));
     }
     return Result.Ok(EventoResult.Continue);
   },

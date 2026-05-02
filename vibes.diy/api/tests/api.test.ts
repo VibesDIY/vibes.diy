@@ -18,9 +18,6 @@ import { BlockEndMsg, BlockMsgs, isBlockStreamMsg } from "@vibes.diy/call-ai-v2"
 import {
   isPromptBlockEnd,
   isResEnsureAppSlugOk,
-  isResHasAccessInviteAccepted,
-  isResHasAccessRequestApproved,
-  isResRequestAccessApproved,
   PromptAndBlockMsgs,
   PromptMsgs,
   ReqPromptChatSection,
@@ -304,6 +301,28 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       const importText = await importFile.text();
       expect(importText).toContain(`console.log('hello world');`);
     }
+  });
+
+  it("rejects ensureAppSlug with no code files", async () => {
+    const res = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "str-asset-block", content: "body { color: red; }", filename: "/style.css" }],
+    });
+    expect(res.isErr()).toBe(true);
+    expect(res.Err()).toMatchObject({
+      code: "app-slug-invalid",
+    });
+  });
+
+  it("rejects ensureAppSlug with empty fileSystem", async () => {
+    const res = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [],
+    });
+    expect(res.isErr()).toBe(true);
+    expect(res.Err()).toMatchObject({
+      code: "app-slug-invalid",
+    });
   });
 
   it("repeatable stable ensureAppSlug", async () => {
@@ -607,9 +626,8 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         userSlug,
         request: {
           enable: true,
-          autoAcceptViewRequest: true,
+          autoAcceptRole: "viewer",
         },
-        // aclEntry: { op: "upsert", entry: { type: "app.acl.enable.request", autoAcceptViewRequest: true } },
       });
       expect(res.Ok().settings.entries).toEqual(ref.Ok().settings.entries);
     });
@@ -749,12 +767,12 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       const x3 = await api.ensureAppSettings({
         appSlug,
         userSlug,
-        request: { enable: true, autoAcceptViewRequest: true },
+        request: { enable: true, autoAcceptRole: "viewer" },
       });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entry.enableRequest).toBeDefined();
-      expect(x3.Ok().settings.entry.enableRequest?.autoAcceptViewRequest).toBe(true);
+      expect(x3.Ok().settings.entry.enableRequest?.autoAcceptRole).toBe("viewer");
     });
   });
 
@@ -892,189 +910,5 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
   });
 
-  describe("request flow", () => {
-    it("owner cannot requestAccess or hasAccessRequest own app", async () => {
-      const { appSlug, userSlug } = await createApp();
-      await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
-
-      const reqResult = await api.requestAccess({ appSlug, userSlug });
-      expect(reqResult.isErr()).toBe(true);
-      expect(reqResult.Err().code).toBe("owner-error");
-
-      const hasResult = await api.hasAccessRequest({ appSlug, userSlug });
-      expect(hasResult.isErr()).toBe(true);
-      expect(hasResult.Err().code).toBe("owner-error");
-    });
-
-    it("manual approval lifecycle", async () => {
-      const { appSlug, userSlug } = await createApp();
-
-      // enable request access (no auto-approve)
-      await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
-
-      // api2 requests access → pending
-      const rRequested = await api2.requestAccess({ appSlug, userSlug });
-      if (rRequested.isErr()) {
-        assert.fail("Expected requestAccess to succeed, got error: " + JSON.stringify(rRequested.Err()));
-      }
-      const requested = rRequested.Ok();
-      expect(requested.state).toBe("pending");
-      expect(requested.foreignUserId).toBeTruthy();
-      expect((requested.foreignInfo as { claims: { userId: string } }).claims.userId).toBe(requested.foreignUserId);
-      const foreignUserId = requested.foreignUserId;
-
-      // api2 checks own access → pending (not yet approved)
-      expect((await api2.hasAccessRequest({ appSlug, userSlug })).Ok().state).toBe("pending");
-
-      // owner lists → 1 pending item with foreignInfo.claims containing userId
-      const listPending = (await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok();
-      expect(listPending.items).toHaveLength(1);
-      expect(listPending.items[0].state).toBe("pending");
-      expect(listPending.items[0].foreignUserId).toBe(foreignUserId);
-      expect((listPending.items[0].foreignInfo as { claims: { userId: string } }).claims.userId).toBe(foreignUserId);
-
-      // owner approves
-      const approved = (await api.approveRequest({ appSlug, userSlug, foreignUserId, role: "viewer" })).Ok();
-      expect(approved.state).toBe("approved");
-      expect(approved.role).toBe("viewer");
-
-      // owner lists → approved
-      const listApproved = (await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok();
-      expect(listApproved.items[0].state).toBe("approved");
-
-      // api2 checks own access → approved with role
-      const access = (await api2.hasAccessRequest({ appSlug, userSlug })).Ok();
-      if (!isResHasAccessRequestApproved(access)) {
-        assert.fail("Expected hasAccessRequest to be approved, got: " + JSON.stringify(access));
-      }
-      expect(access.state).toBe("approved");
-      expect(access.role).toBe("viewer");
-
-      // owner revokes (no delete) → revoked
-      expect((await api.revokeRequest({ appSlug, userSlug, foreignUserId })).Ok().deleted).toBe(false);
-      expect((await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok().items[0].state).toBe("revoked");
-      expect((await api2.hasAccessRequest({ appSlug, userSlug })).Ok().state).toBe("revoked");
-
-      // owner revokes with delete → gone
-      expect((await api.revokeRequest({ appSlug, userSlug, foreignUserId, delete: true })).Ok().deleted).toBe(true);
-      expect((await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok().items).toEqual([]);
-    });
-
-    it("auto-approve lifecycle with role update", async () => {
-      const { appSlug, userSlug } = await createApp();
-
-      // enable request access with auto-approve
-      await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptViewRequest: true } });
-
-      // api2 checks before requesting → not-found (request is possible)
-      expect((await api2.hasAccessRequest({ appSlug, userSlug })).Ok().state).toBe("not-found");
-
-      // api2 requests access → auto-approved as viewer
-      const requested = (await api2.requestAccess({ appSlug, userSlug })).Ok();
-      if (!isResRequestAccessApproved(requested)) {
-        assert.fail("Expected requestAccess to be auto-approved, got: " + JSON.stringify(requested));
-      }
-      expect(requested.state).toBe("approved");
-      expect(requested.role).toBe("viewer");
-      const foreignUserId = requested.foreignUserId;
-
-      // owner lists → approved
-      const listApproved = (await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok();
-      expect(listApproved.items).toHaveLength(1);
-      expect(listApproved.items[0].state).toBe("approved");
-      expect(listApproved.items[0].role).toBe("viewer");
-
-      // api2 checks own access → approved
-      const access = (await api2.hasAccessRequest({ appSlug, userSlug })).Ok();
-      if (!isResHasAccessRequestApproved(access)) {
-        assert.fail("Expected hasAccessRequest to be approved, got: " + JSON.stringify(access));
-      }
-      expect(access.state).toBe("approved");
-      expect(access.role).toBe("viewer");
-
-      // owner updates role to editor
-      const roleUpdated = (await api.requestSetRole({ appSlug, userSlug, foreignUserId, role: "editor" })).Ok();
-      expect(roleUpdated.role).toBe("editor");
-
-      // owner lists → role is editor
-      const listEditor = (await api.listRequestGrants({ appSlug, userSlug, pager: {} })).Ok();
-      expect(listEditor.items[0].role).toBe("editor");
-    });
-  });
-
-  describe("invite flow", () => {
-    it("full invite lifecycle", async () => {
-      const now = sthis.nextId(8).str;
-      const appSlug = `test-app-invite-${now}`;
-      const userSlug = `test-user-invite-${now}`;
-      const invitedEmail = `Test.User+alias@Gmail.com`;
-      const canonicalEmail = `testuser@gmail.com`;
-
-      // list is empty
-      const rListEmpty = await api.listInviteGrants({ appSlug, userSlug, pager: {} });
-      if (rListEmpty.isErr()) {
-        assert.fail("Expected listInviteGrants to succeed, got error: " + JSON.stringify(rListEmpty.Err()));
-      }
-      expect(rListEmpty.Ok().items).toEqual([]);
-
-      // revoke on non-existent → deleted:false
-      expect((await api.revokeInvite({ appSlug, userSlug, emailKey: canonicalEmail })).Ok().deleted).toBe(false);
-
-      // create invite
-      const created = (await api.createInvite({ appSlug, userSlug, invitedEmail, role: "viewer" })).Ok();
-      expect(created.emailKey).toBe(canonicalEmail);
-      expect(created.state).toBe("pending");
-      expect(created.role).toBe("viewer");
-      expect(created.tokenOrGrantUserId).toBeTruthy();
-      expect(created.foreignInfo).toEqual({ givenEmail: invitedEmail });
-      const token = created.tokenOrGrantUserId;
-
-      // list shows pending with token
-      const listPending = (await api.listInviteGrants({ appSlug, userSlug, pager: {} })).Ok();
-      expect(listPending.items).toHaveLength(1);
-      expect(listPending.items[0].state).toBe("pending");
-      expect(listPending.items[0].tokenOrGrantUserId).toBe(token);
-
-      // hasAccess before redeem → not-found
-      expect((await api2.hasAccessInvite({ appSlug, userSlug })).Ok().state).toBe("not-found");
-
-      // set role to editor
-      expect((await api.inviteSetRole({ appSlug, userSlug, emailKey: canonicalEmail, role: "editor" })).Ok().role).toBe("editor");
-
-      // owner cannot redeem own invite
-      expect((await api.redeemInvite({ token })).isErr()).toBe(true);
-
-      // other user redeems
-      const redeemed = (await api2.redeemInvite({ token })).Ok();
-      expect(redeemed.state).toBe("accepted");
-      expect(redeemed.role).toBe("editor");
-      expect(redeemed.appSlug).toBe(appSlug);
-      expect(redeemed.userSlug).toBe(userSlug);
-
-      // list shows accepted with redeemer userId and claims
-      const listAccepted = (await api.listInviteGrants({ appSlug, userSlug, pager: {} })).Ok();
-      expect(listAccepted.items).toHaveLength(1);
-      expect(listAccepted.items[0].state).toBe("accepted");
-      expect(listAccepted.items[0].tokenOrGrantUserId).not.toBe(token);
-      expect((listAccepted.items[0].foreignInfo as { claims: unknown }).claims).toBeTruthy();
-
-      // hasAccess → accepted with role
-      const access = (await api2.hasAccessInvite({ appSlug, userSlug })).Ok();
-      if (!isResHasAccessInviteAccepted(access)) {
-        assert.fail("Expected hasAccessRequest to be approved, got: " + JSON.stringify(access));
-      }
-      expect(access.state).toBe("accepted");
-      expect(access.role).toBe("editor");
-
-      // revoke (state → revoked, no delete)
-      expect((await api.revokeInvite({ appSlug, userSlug, emailKey: canonicalEmail })).Ok().deleted).toBe(false);
-      expect((await api.listInviteGrants({ appSlug, userSlug, pager: {} })).Ok().items[0].state).toBe("revoked");
-      expect((await api2.hasAccessInvite({ appSlug, userSlug })).Ok().state).toBe("revoked");
-
-      // revoke with delete
-      expect((await api.revokeInvite({ appSlug, userSlug, emailKey: canonicalEmail, delete: true })).Ok().deleted).toBe(true);
-      expect((await api.listInviteGrants({ appSlug, userSlug, pager: {} })).Ok().items).toEqual([]);
-      expect((await api2.hasAccessInvite({ appSlug, userSlug })).Ok().state).toBe("not-found");
-    });
-  });
+  // request flow and invite flow tests moved to api-access-flow.test.ts
 });

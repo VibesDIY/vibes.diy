@@ -16,7 +16,7 @@ Fireproof enforces cryptographic causal consistency and ledger integrity using h
 The `use-fireproof` package provides both the core API and React hooks.
 
 ```js
-import { useFireproof } from "https://esm.sh/use-fireproof";
+import { useFireproof } from "use-fireproof";
 ```
 
 React hooks are the recommended way to use Fireproof in LLM code generation contexts.
@@ -55,25 +55,19 @@ const App = () => {
   return (
     <div>
       <form onSubmit={submit}>
-        <input
-          value={doc.text}
-          onChange={(e) => merge({ text: e.target.value })}
-          placeholder="New document"
-        />
+        <input value={doc.text} onChange={(e) => merge({ text: e.target.value })} placeholder="New document" />
         <button type="submit">Submit</button>
       </form>
 
       <h3>Recent Documents</h3>
       <ul>
         {docs.map((doc) => (
-          <li key={doc._id}>
-            {doc.text}
-          </li>
-        ))} 
+          <li key={doc._id}>{doc.text}</li>
+        ))}
       </ul>
     </div>
   );
-}
+};
 ```
 
 ### Editing Documents
@@ -87,12 +81,14 @@ const { doc, merge, submit, save, reset } = useDocument({ _id: "user-profile:abc
 ```
 
 The `useDocument` hook provides several methods:
+
 - `merge(updates)`: Update the document with new fields, without saving. Use this instead of keeping a `useState` for document data.
 - `submit(e)`: Handles form submission by preventing default, saving, and resetting
 - `save()`: Save the current document state
 - `reset()`: Reset to initial state
 
 For form-based creation flows, use `submit`:
+
 ```js
 <form onSubmit={submit}>
 ```
@@ -124,16 +120,18 @@ Here are other common patterns:
 #### Query by Key Range
 
 Passing a string to `useLiveQuery` will index by that field. You can use the key argument to filter by a specific value:
+
 ```js
-const { docs } = useLiveQuery("agentName", { 
-  key: "agent-1"  // all docs where doc.agentName === "agent-1", sorted by _id
+const { docs } = useLiveQuery("agentName", {
+  key: "agent-1", // all docs where doc.agentName === "agent-1", sorted by _id
 });
 ```
 
 You can also query a range within a key:
+
 ```js
-const { docs } = useLiveQuery("agentRating", { 
-  range: [3, 5]
+const { docs } = useLiveQuery("agentRating", {
+  range: [3, 5],
 });
 ```
 
@@ -141,23 +139,21 @@ const { docs } = useLiveQuery("agentRating", {
 
 Documents can be updated by multiple clients, and synced later. To create an event counter, don't increment a number on a single doc, instead write a small document per counted event, and query them with an index. Example:
 
-
 ```js
 const App = () => {
   const { useLiveQuery, database } = useFireproof("my-ledger");
 
-  const { docs } = useLiveQuery('counter', { key : 'my-event-name'});
-  const counterValue = docs.length
+  const { docs } = useLiveQuery("counter", { key: "my-event-name" });
+  const counterValue = docs.length;
 
   function countEvent() {
     database.put({
-      counter : 'my-event-name'
-    })
+      counter: "my-event-name",
+    });
   }
 
   // Call countEvent() to count each event, and render counterValue in the UI.
-
-}
+};
 ```
 
 This pattern ensures the count is accurate even during sync.
@@ -169,13 +165,14 @@ Use a custom index function to normalize and transform document data, for instan
 ```js
 const { docs } = useLiveQuery(
   (doc) => {
-    if (doc.type == 'listing_v1') {
+    if (doc.type == "listing_v1") {
       return doc.sellerId;
-    } else if (doc.type == 'listing') {
+    } else if (doc.type == "listing") {
       return doc.userId;
     }
-  }, 
-  { key : routeParams.sellerId });
+  },
+  { key: routeParams.sellerId }
+);
 ```
 
 #### Array Indexes and Prefix Queries
@@ -200,26 +197,23 @@ Sortable lists are a common pattern. Here's how to implement them using Fireproo
 ```js
 function App() {
   const { database, useLiveQuery } = useFireproof("my-ledger");
-  
+
   // Initialize list with evenly spaced positions
   async function initializeList() {
     await database.put({ list: "xyz", position: 1000 });
     await database.put({ list: "xyz", position: 2000 });
     await database.put({ list: "xyz", position: 3000 });
   }
-  
+
   // Query items on list xyz, sorted by position. Note that useLiveQuery('list', { key:'xyz' }) would be the same docs, sorted chronologically by _id
-  const queryResult = useLiveQuery(
-    (doc) => [doc.list, doc.position], 
-    { prefix: ["xyz"] }
-  );
+  const queryResult = useLiveQuery((doc) => [doc.list, doc.position], { prefix: ["xyz"] });
 
   // Insert between existing items using midpoint calculation
   async function insertBetween(beforeDoc, afterDoc) {
     const newPosition = (beforeDoc.position + afterDoc.position) / 2;
-    await database.put({ 
-      list: "xyz", 
-      position: newPosition 
+    await database.put({
+      list: "xyz",
+      position: newPosition,
     });
   }
 
@@ -227,7 +221,7 @@ function App() {
     <div>
       <h3>List xyz (Sorted)</h3>
       <ul>
-        {queryResult.docs.map(doc => (
+        {queryResult.docs.map((doc) => (
           <li key={doc._id}>
             {doc._id}: position {doc.position}
           </li>
@@ -280,46 +274,6 @@ database.subscribe((changes) => {
 }, true);
 ```
 
-### Working with Files
-
-Attach files to a document by adding them to the _files property. For example:
-
-```html
-<input accept="image/*" title="save to Fireproof" type="file" id="files" multiple>
-```
-
-```js
-function handleFiles() {
-  const fileList = this.files;
-  const doc = {
-    type: "files",
-    _files: {}
-  };
-  for (const file of fileList) {
-    // Assign each File object to the document
-    doc._files[file.name] = file; 
-  }
-  database.put(doc);
-}
-
-document.getElementById("files").addEventListener("change", handleFiles, false);
-```
-
-When loading a document with attachments, you can retrieve each attachment's actual File object by calling its .file() method. This returns a Promise that resolves with the File data, which you can display in your app:
-
-```js
-const doc = await database.get("my-doc-id");
-for (const fileName in doc._files) {
-  const meta = doc._files[fileName];
-  if (meta.file) {
-    const fileObj = await meta.file();
-    console.log("Loaded file:", fileObj.name);
-  }
-}
-```
-
-See the final example application in this file for a working example.
-
 ### Form Validation
 
 You can use React's `useState` to manage validation states and error messages. Validate inputs at the UI level before allowing submission.
@@ -345,6 +299,7 @@ function handleSubmit(e) {
 ## Example React Application
 
 Code listing for todo tracker App.jsx. Note the code ordering: hooks, then handlers, then classNames right before JSX.
+
 ```js
 import React from "react";
 import { useFireproof } from "use-fireproof";
@@ -356,17 +311,17 @@ export default function App() {
   const {
     doc: newTodo,
     merge: mergeNewTodo,
-    submit: submitNewTodo
+    submit: submitNewTodo,
   } = useDocument({
     todo: "",
     type: "todo",
     completed: false,
-    createdAt: Date.now()
+    createdAt: Date.now(),
   });
 
   const { docs: todos } = useLiveQuery("type", {
     key: "todo",
-    descending: true
+    descending: true,
   });
 
   // 2. Event handlers
@@ -381,8 +336,11 @@ export default function App() {
 
   // 3. ClassNames — right before JSX so colors stay consistent
   const c = {
-    bg: "bg-white", card: "bg-gray-50", border: "border-gray-200",
-    accent: "bg-[#e63946]", text: "text-gray-500",
+    bg: "bg-white",
+    card: "bg-gray-50",
+    border: "border-gray-200",
+    accent: "bg-[#e63946]",
+    text: "text-gray-500",
   };
 
   // 4. JSX return
@@ -390,7 +348,9 @@ export default function App() {
     <div className={`max-w-md mx-auto p-4 ${c.bg} shadow rounded`}>
       <h2 className="text-2xl font-bold mb-4">Todo List</h2>
       <form onSubmit={handleSubmit} className="mb-4">
-        <label htmlFor="todo" className="block mb-2 font-semibold">Todo</label>
+        <label htmlFor="todo" className="block mb-2 font-semibold">
+          Todo
+        </label>
         <input
           className={`w-full ${c.border} border rounded px-2 py-1`}
           id="todo"
@@ -412,81 +372,14 @@ export default function App() {
                 />
                 <span className="font-medium">{doc.todo}</span>
               </div>
-              <button
-                className={`text-sm ${c.accent} text-white px-2 py-1 rounded`}
-                onClick={() => database.del(doc._id)}
-              >
+              <button className={`text-sm ${c.accent} text-white px-2 py-1 rounded`} onClick={() => database.del(doc._id)}>
                 Delete
               </button>
             </div>
-            <div className={`text-xs ${c.text} mt-1`}>
-              {new Date(doc.createdAt).toISOString()}
-            </div>
+            <div className={`text-xs ${c.text} mt-1`}>{new Date(doc.createdAt).toISOString()}</div>
           </li>
         ))}
       </ul>
-    </div>
-  );
-}
-```
-
-### Example Image Uploader
-
-This React example shows a simple image uploader application that uses Fireproof to store and sort images by creation date. These APIs easily work with plain JavaScript also. 
-
-Code listing for App.jsx:
-```js
-import { useFireproof, ImgFile } from "use-fireproof";
-import { useState } from "react";
-
-export default function App() {
-  // 1. Hooks and document shapes
-  const { useDocument, useLiveQuery } = useFireproof("image-uploads");
-  const { doc, merge, submit } = useDocument({ _files: {}, description: "" });
-  const { docs } = useLiveQuery("_id", { descending: true, limit: 5 });
-  const [error, setError] = useState(false);
-
-  // 2. Event handlers
-  const handleFileChange = (e) => {
-    if (e.target.files[0]) merge({ _files: { uploaded: e.target.files[0] } });
-  };
-
-  const handleUpload = () => {
-    if (doc.description.trim()) {
-      submit();
-    } else {
-      setError(true);
-    }
-  };
-
-  // 3. ClassNames
-  const c = {
-    bg: "bg-white", card: "bg-gray-50",
-    accent: "bg-blue-500 hover:bg-blue-600", text: "text-gray-700",
-  };
-
-  // 4. JSX return
-  return (
-    <div className={`p-6 max-w-lg mx-auto ${c.bg} shadow-lg rounded-lg`}>
-      <h2 className="text-2xl font-bold mb-4">Image Uploader</h2>
-      <input type="file" accept="image/*" onChange={handleFileChange} className="mb-2 border p-2 w-full rounded" />
-      <input
-        type="text"
-        placeholder="Enter description"
-        value={doc.description}
-        onChange={e => { setError(false); merge({ description: e.target.value }); }}
-        className={`w-full p-2 border rounded mb-4 ${error ? "border-red-500" : "border-gray-300"}`}
-      />
-      <button onClick={handleUpload} className={`px-4 py-2 ${c.accent} text-white rounded`}>Upload</button>
-      <h3 className="text-lg font-semibold mt-6">Recent Uploads</h3>
-      <div className="grid grid-cols-2 gap-4 mt-2">
-        {docs.map(doc => (
-          <div key={doc._id} className={`border p-2 rounded shadow-sm ${c.card}`}>
-            {doc._files?.uploaded && <ImgFile file={doc._files.uploaded} alt="Uploaded Image" className="w-full h-auto rounded" />}
-            <p className={`text-sm ${c.text} mt-2`}>{doc.description || "No description"}</p>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { listDbNames } from "@vibes.diy/vibe-runtime";
 
 interface UseIndexedDBListResult {
   databases: string[];
@@ -12,28 +13,17 @@ export function useIndexedDBList(): UseIndexedDBListResult {
   useEffect(() => {
     let cancelled = false;
 
-    async function discover() {
-      try {
-        if (typeof indexedDB.databases !== "function") {
-          setLoading(false);
-          return;
-        }
-        const allDbs = await indexedDB.databases();
-        if (cancelled) return;
-        const filtered = allDbs
-          .map((db) => db.name)
-          .filter((name): name is string => typeof name === "string" && name.startsWith("fp.") && name !== "fp-keybag")
-          .map((name) => name.slice(3)) // strip "fp." prefix
-          .sort();
-        setDatabases(filtered);
-      } catch {
-        // indexedDB.databases() not supported or failed
-      } finally {
+    listDbNames()
+      .then((names) => {
+        if (!cancelled) setDatabases(names.sort());
+      })
+      .catch(() => {
+        // listDbNames failed (not owner, not initialized, etc.)
+      })
+      .finally(() => {
         if (!cancelled) setLoading(false);
-      }
-    }
+      });
 
-    discover();
     return () => {
       cancelled = true;
     };

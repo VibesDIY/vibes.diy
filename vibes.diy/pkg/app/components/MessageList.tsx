@@ -29,6 +29,9 @@ interface MessageListProps {
   selectedFsId?: string;
   onClick: (fsRes: { userSlug: string; appSlug: string; fsId: string }) => void;
   onRetry?: (msg: PromptError) => void;
+  // Block IDs whose save originated from the agent autosave (end-of-aider-
+  // turn). Renders "Agent saved code" instead of "User edited code".
+  agentSavedBlockIds?: ReadonlySet<string>;
   // setSelectedResponseId: (id: string) => void;
   // selectedResponseId: string;
   // setMobilePreviewShown: (shown: boolean) => void;
@@ -38,7 +41,7 @@ interface MessageListProps {
 function TopLevelMsg({ lines, begin }: { begin: ToplevelBeginMsg; lines: LineMsg[] }) {
   return (
     <div className="mb-4 flex flex-row justify-end px-4" key={begin.sectionId}>
-      <BrutalistCard size="md" messageType="ai" className="max-w-[85%]">
+      <BrutalistCard size="md" messageType="ai" className="mr-8 max-w-[85%]" style={{ fontSize: "0.8rem" }}>
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
           <ReactMarkdown>{lines.map((i) => i.line).join("\n")}</ReactMarkdown>
         </div>
@@ -50,7 +53,7 @@ function TopLevelMsg({ lines, begin }: { begin: ToplevelBeginMsg; lines: LineMsg
 function Prompt({ msg }: { msg: PromptReq }) {
   return (
     <div className="mb-4 flex flex-row justify-end px-4" key={msg.streamId}>
-      <BrutalistCard size="md" messageType="user" className="max-w-[85%]">
+      <BrutalistCard size="md" messageType="user" className="max-w-[85%]" style={{ fontSize: "0.8rem" }}>
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
           <ReactMarkdown>
             {msg.request.messages
@@ -70,7 +73,7 @@ function Prompt({ msg }: { msg: PromptReq }) {
 function PromptErrorMsg({ msg, onRetry }: { msg: PromptError; onRetry?: (msg: PromptError) => void }) {
   return (
     <div className="mb-4 flex flex-row justify-end px-4" key={msg.streamId}>
-      <BrutalistCard size="md" messageType="user" className="max-w-[85%]">
+      <BrutalistCard size="md" messageType="user" className="max-w-[85%]" style={{ fontSize: "0.8rem" }}>
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
           {`Error: ${msg.error}`}
         </div>
@@ -100,6 +103,8 @@ function CodeMsg({ lines, begin, end, onClick }: { begin: CodeBeginMsg; lines: L
             position: "sticky",
             top: "8px",
             zIndex: 10,
+            borderRadius: 0,
+            border: "1px solid var(--vibes-card-border)",
           }}
           className="sticky-active relative mx-3 my-4 cursor-pointer transition-all"
           onClick={onClick}
@@ -274,6 +279,7 @@ function MessageList({
   selectedFsId,
   onClick,
   onRetry,
+  agentSavedBlockIds,
   // setSelectedResponseId,
   // selectedResponseId,
   // setMobilePreviewShown,
@@ -333,9 +339,10 @@ function MessageList({
           break;
         case isBlockEnd(msg):
           if (!hasPromptReq && blockMsgs.some((b) => b.type === "Code")) {
+            const label = agentSavedBlockIds?.has(msg.blockId) ? "Agent saved code" : "User edited code";
             acc.push(
               <div key={`edited-${msg.blockId}`} className="mx-4 text-sm italic text-gray-400 dark:text-gray-500">
-                User edited code
+                {label}
               </div>
             );
           }

@@ -12,6 +12,7 @@ import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
 import { listApplicationChats } from "./public/list-application-chats.js";
 import { ensureAppSettingsEvento } from "./public/ensure-app-settings.js";
 import { setModeFsIdEvento } from "./public/set-mode-fsid.js";
+import { forkAppEvento } from "./public/fork-app.js";
 import { getCertFromCsrEvento } from "./public/get-cert-from-csr.js";
 import { getFPCloudTokenEvento } from "./public/get-fp-cloud-token.js";
 // import { listKeyGrantsEvento, upsertKeyGrantEvento, deleteKeyGrantEvento } from "./public/key-grant.js";
@@ -37,6 +38,15 @@ import {
   hasAccessRequestEvento,
 } from "./public/request-flow.js";
 import { listModelsEvento } from "./public/list-models.js";
+import {
+  putDocEvento,
+  getDocEvento,
+  queryDocsEvento,
+  deleteDocEvento,
+  subscribeDocsEvento,
+  listDbNamesEvento,
+} from "./public/app-documents.js";
+import { listMembersEvento } from "./public/list-members.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -65,11 +75,19 @@ export const vibesMsgEvento = Lazy(() => {
     listModelsEvento,
     ensureAppSettingsEvento,
     setModeFsIdEvento,
+    forkAppEvento,
     ensureUserSettingsEvento,
     listApplicationChats,
     listUserSlugBindingsEvento,
     createUserSlugBindingEvento,
     deleteUserSlugBindingEvento,
+    putDocEvento,
+    getDocEvento,
+    queryDocsEvento,
+    deleteDocEvento,
+    subscribeDocsEvento,
+    listDbNamesEvento,
+    listMembersEvento,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",

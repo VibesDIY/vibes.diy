@@ -33,6 +33,9 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
   fetchPkgVersion?: ResolveFunction;
   llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
+  notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }): Promise<void>;
+  registerDocSubscription?(subscriptionKey: string): Promise<void>;
+  deregisterDocSubscription?(subscriptionKey: string): Promise<void>;
   // waitUntil?<T>(promise: Promise<T>): void;
 }
 
@@ -254,6 +257,9 @@ export async function createAppContext<T extends VibesSqlite>(
     prodiaToken: envVals.PRODIA_TOKEN,
     deviceCA: rDeviceIdCA.Ok(),
     params: svcParams,
+    notifyDocChanged: params.notifyDocChanged,
+    registerDocSubscription: params.registerDocSubscription,
+    deregisterDocSubscription: params.deregisterDocSubscription,
   } satisfies VibesApiSQLCtx;
 
   return {

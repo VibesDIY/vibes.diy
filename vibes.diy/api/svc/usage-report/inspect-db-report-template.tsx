@@ -26,9 +26,22 @@ interface ReportData {
     readonly distinct_member_count: number;
   };
   readonly membershipTimeseries: readonly Record<string, unknown>[];
+  readonly membershipSlugsByDay: readonly { readonly day: string; readonly slugs: readonly string[] }[];
   readonly activeVibesTimeseries: readonly Record<string, unknown>[];
   readonly userSlugBindingsTimeseries: readonly Record<string, unknown>[];
   readonly membershipsByApp: readonly Record<string, unknown>[];
+  readonly tableStats: readonly {
+    readonly table: string;
+    readonly total_size: string;
+    readonly table_size: string;
+    readonly total_bytes: number;
+    readonly index_count: number;
+  }[];
+  readonly indexStats: readonly {
+    readonly indexname: string;
+    readonly tablename: string;
+    readonly indexdef: string;
+  }[];
   readonly userModelRows: readonly Record<string, unknown>[];
   readonly appModelRows: readonly Record<string, unknown>[];
   readonly userSettingsSample: readonly Record<string, unknown>[];
@@ -87,12 +100,21 @@ function DataTable({ rows }: { readonly rows: readonly Record<string, unknown>[]
 function TrendChart({
   rows,
   valueKey,
+  slugsByDay,
 }: {
   readonly rows: readonly Record<string, unknown>[];
   readonly valueKey: string;
+  readonly slugsByDay?: readonly { readonly day: string; readonly slugs: readonly string[] }[];
 }): React.ReactElement | null {
   if (rows.length === 0) {
     return null;
+  }
+
+  const slugMap = new Map<string, readonly string[]>();
+  if (slugsByDay) {
+    for (const entry of slugsByDay) {
+      if (entry.slugs.length > 0) slugMap.set(entry.day, entry.slugs);
+    }
   }
 
   const values = rows.map((row) => Number(row[valueKey] ?? 0));
@@ -130,9 +152,19 @@ function TrendChart({
           <line x1={padding} y1={height / 2} x2={width - padding} y2={height / 2} />
         </g>
         <polyline fill="none" stroke="var(--ink)" strokeWidth="5" points={pointsStr} />
-        {pointCoords.map(({ x, y }, i) => (
-          <circle key={i} cx={x} cy={y} r="4" fill="var(--plate)" stroke="var(--ink)" strokeWidth="3" />
-        ))}
+        {pointCoords.map(({ x, y }, i) => {
+          const day = (rows[i]?.["day"] as string) ?? "";
+          const daySlugs = slugMap.get(day);
+          const lines = [`${day}: ${values[i]}`];
+          if (daySlugs && daySlugs.length > 0) {
+            lines.push(`New: ${daySlugs.join(", ")}`);
+          }
+          return (
+            <circle key={i} cx={x} cy={y} r="6" fill="var(--plate)" stroke="var(--ink)" strokeWidth="3" className="trend-point">
+              <title>{lines.join("\n")}</title>
+            </circle>
+          );
+        })}
       </svg>
     </div>
   );
@@ -143,17 +175,19 @@ function TrendSection({
   description,
   rows,
   valueKey,
+  slugsByDay,
 }: {
   readonly title: string;
   readonly description: string;
   readonly rows: readonly Record<string, unknown>[];
   readonly valueKey: string;
+  readonly slugsByDay?: readonly { readonly day: string; readonly slugs: readonly string[] }[];
 }): React.ReactElement {
   return (
     <section>
       <h2>{title}</h2>
       <p>{description}</p>
-      <TrendChart rows={rows} valueKey={valueKey} />
+      <TrendChart rows={rows} valueKey={valueKey} slugsByDay={slugsByDay} />
     </section>
   );
 }
@@ -388,6 +422,8 @@ td pre {
   background:
     repeating-linear-gradient(0deg, transparent 0 19px, rgba(148, 163, 184, 0.2) 19px 20px);
 }
+.trend-point { cursor: pointer; }
+.trend-point:hover { r: 8; }
 @media (max-width: 640px) {
   main {
     padding: 20px 12px 56px;
@@ -417,15 +453,25 @@ function ReportPage(data: ReportData): React.ReactElement {
     tableCounts,
     membershipSummary,
     membershipTimeseries,
+    membershipSlugsByDay,
     activeVibesTimeseries,
     userSlugBindingsTimeseries,
     membershipsByApp,
+    tableStats,
+    indexStats,
     userModelRows,
     appModelRows,
     userSettingsSample,
     appSettingsSample,
   } = data;
   const totalRows = tableCounts.reduce((sum, row) => sum + Number(row.rowCount || 0), 0);
+  const totalDbBytes = tableStats.reduce((sum, row) => sum + Number(row.total_bytes || 0), 0);
+  const totalDbSize =
+    totalDbBytes >= 1024 * 1024 * 1024
+      ? `${(totalDbBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+      : totalDbBytes >= 1024 * 1024
+        ? `${(totalDbBytes / (1024 * 1024)).toFixed(0)} MB`
+        : `${(totalDbBytes / 1024).toFixed(0)} KB`;
   const lastBindingsCount = userSlugBindingsTimeseries[userSlugBindingsTimeseries.length - 1]?.["user_slug_bindings_count"] ?? 0;
 
   return (
@@ -456,15 +502,18 @@ function ReportPage(data: ReportData): React.ReactElement {
               <MetricCard label="User" value={info.current_user} />
               <MetricCard label="Tables" value={tableCounts.length} />
               <MetricCard label="Rows Counted" value={totalRows} />
+              <MetricCard label="DB Size" value={totalDbSize} />
+              <MetricCard label="Indexes" value={indexStats.length} />
               <MetricCard label="Model Rows" value={userModelRows.length + appModelRows.length} />
             </div>
           </div>
 
           <TrendSection
             title="Memberships Over 30 Days"
-            description="Daily cumulative total of currently active memberships, where one membership is one non-owner user with durable access to one specific vibe by approved request or accepted invite."
+            description="Daily cumulative total of currently active memberships, where one membership is one non-owner user with durable access to one specific vibe by approved request or accepted invite. Hover points to see new members that day."
             rows={membershipTimeseries}
             valueKey="membership_count"
+            slugsByDay={membershipSlugsByDay}
           />
 
           <TrendSection
@@ -493,6 +542,25 @@ function ReportPage(data: ReportData): React.ReactElement {
           <section>
             <h2>Table Counts</h2>
             <DataTable rows={tableCounts} />
+          </section>
+
+          <section>
+            <h2>Schema Stats</h2>
+            <p>Table sizes (including TOAST and indexes) and index counts per table, sorted by total size descending.</p>
+            <DataTable
+              rows={tableStats.map(({ table, total_size, table_size, index_count }) => ({
+                table,
+                total_size,
+                table_size,
+                index_count,
+              }))}
+            />
+          </section>
+
+          <section>
+            <h2>Indexes</h2>
+            <p>All {indexStats.length} indexes on the public schema.</p>
+            <DataTable rows={indexStats} />
           </section>
 
           <section>

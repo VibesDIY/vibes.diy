@@ -9,6 +9,7 @@ export default [
   layout("./routes/auth.tsx", [
     route("chat/prompt", "./routes/chat/prompt.tsx"),
     route("chat/:userSlug/:appSlug/:fsId?", "./routes/chat/chat.$userSlug.$appSlug.tsx"),
+    route("remix/:userSlug/:appSlug/:fsId?", "./routes/remix.$userSlug.$appSlug.tsx"),
     route("vibes/mine/:userSlug?/:appSlug?/:tab?", "./routes/vibes/mine.tsx"),
     route("settings", "./routes/settings.tsx", { id: "settings" }),
     route("settings/csr-to-cert", "./routes/settings/csr-to-cert.tsx", { id: "settings-csr-to-cert" }),

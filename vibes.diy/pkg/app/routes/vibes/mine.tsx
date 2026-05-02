@@ -4,10 +4,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
 import { BrutalistCard, VibesButton } from "@vibes.diy/base";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
-import type { ResListUserSlugAppSlugItem, ResGetChatDetails, MetaScreenShot } from "@vibes.diy/api-types";
+import type { ResGetChatDetails, MetaScreenShot } from "@vibes.diy/api-types";
 import { isMetaScreenShot } from "@vibes.diy/api-types";
 import { toast } from "react-hot-toast";
 import { AppSlugItem } from "../../components/mine/AppSlugItem.js";
+import { useRecentVibesData } from "../../contexts/RecentVibesContext.js";
 
 export function meta() {
   return [{ title: "My Vibes - Vibes DIY" }, { name: "description", content: "Your created vibes in Vibes DIY" }];
@@ -21,9 +22,8 @@ export default function VibesMine(): ReactElement {
     tab: paramTab,
   } = useParams<{ userSlug?: string; appSlug?: string; tab?: string }>();
   const { vibeDiyApi } = useVibesDiy();
+  const { items: vibeItems, loading: isLoading } = useRecentVibesData();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [vibeItems, setVibeItems] = useState<ResListUserSlugAppSlugItem[]>([]);
   const [chatDetails, setChatDetails] = useState<ResGetChatDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState<string | null>(null);
   const [screenshots, setScreenshots] = useState<Map<string, { screenshot?: MetaScreenShot; mode?: string }>>(new Map());
@@ -93,17 +93,6 @@ export default function VibesMine(): ReactElement {
       });
     }
   }, [chatDetails, vibeDiyApi]);
-
-  useEffect(() => {
-    vibeDiyApi
-      .listUserSlugAppSlug({})
-      .then((res) => {
-        if (res.isOk()) {
-          setVibeItems(res.Ok().items);
-        }
-      })
-      .finally(() => setIsLoading(false));
-  }, [vibeDiyApi]);
 
   useEffect(() => {
     setAppHeadInfo(new Map());

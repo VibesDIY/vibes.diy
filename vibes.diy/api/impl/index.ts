@@ -43,6 +43,9 @@ import {
   ReqSetModeFs,
   ResSetModeFs,
   isResSetModeFs,
+  ReqForkApp,
+  ResForkApp,
+  isResForkApp,
   ReqFPCloudToken,
   ResFPCloudToken,
   isResFPCloudToken,
@@ -97,6 +100,30 @@ import {
   ResListModels,
   isResListModels,
   isPromptLLMStyle,
+  ReqPutDoc,
+  ResPutDoc,
+  isResPutDoc,
+  ReqGetDoc,
+  ResGetDoc,
+  ResGetDocNotFound,
+  isResGetDoc,
+  isResGetDocNotFound,
+  ReqQueryDocs,
+  ResQueryDocs,
+  isResQueryDocs,
+  ReqDeleteDoc,
+  ResDeleteDoc,
+  isResDeleteDoc,
+  ReqSubscribeDocs,
+  ResSubscribeDocs,
+  isResSubscribeDocs,
+  ReqListDbNames,
+  ResListDbNames,
+  isResListDbNames,
+  ReqListMembers,
+  ResListMembers,
+  isResListMembers,
+  isEvtDocChanged,
   ReqPromptLLMChatSection,
   FSUpdate,
   isFSUpdate,
@@ -117,6 +144,7 @@ import {
   EventoResult,
   ValidateTriggerCtx,
   Lazy,
+  BuildURI,
 } from "@adviser/cement";
 import { ClerkClaim, SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
@@ -139,6 +167,11 @@ export interface VibesDiyApiParam {
   readonly msg?: MsgBaseCfg;
   readonly sthis?: SuperThis;
   readonly timeoutMs?: number;
+  // Optional perf hint: pin this connection's DO shard to a stable value (e.g.
+  // "${userSlug}--${appSlug}" for a viewer route) so multiple visitors to the
+  // same vibe land on the same warm DO instead of each paying ~1s cold-start.
+  // Omit for codegen / load-balanced traffic — random UUID is used.
+  readonly shardKey?: string;
 }
 
 interface VibesDiyApiConfig {
@@ -169,10 +202,20 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 }> {
   readonly cfg: VibesDiyApiConfig;
   private readonly pendingRequests = new Map<string, PendingRequest<unknown>>();
+  private readonly docChangedListeners: ((userSlug: string, appSlug: string, dbName: string, docId: string) => void)[] = [];
+  private readonly docSubscriptions: { userSlug: string; appSlug: string; dbName: string }[] = [];
+  private currentConnection: VibeDiyApiConnection | undefined;
+  private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  private closed = false;
 
   constructor(cfg: VibesDiyApiParam) {
     const sthis = cfg.sthis ?? ensureSuperThis();
-    const apiUrl = cfg.apiUrl; // ?? "wss://api.vibes.diy/v1/ws";
+    // Each API instance gets its own DO shard to avoid CPU limits under concurrent load.
+    // When a preset WebSocket is provided (tests), skip sharding — tests bypass worker routing.
+    // If shardKey is provided (e.g. a viewer landing on /vibe/<u>/<a>), pin to that
+    // stable value so all visitors of the same vibe land on the same warm DO.
+    const shard = cfg.shardKey ?? crypto.randomUUID();
+    const apiUrl = cfg.ws ? cfg.apiUrl : BuildURI.from(cfg.apiUrl).setParam("shard", shard).toString();
     // const pkgRepos: PkgRepos = {
     //   private: cfg.pkgRepos?.private ?? "https://esm.sh/",
     //   public: cfg.pkgRepos?.public ?? BuildURI.from(window.location.origin).appendRelative("/dev-npm").toString(),
@@ -194,6 +237,13 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       },
       sthis,
     };
+    // Open the WebSocket eagerly. The handshake is unauthenticated (auth is
+    // per-message, not per-upgrade) so we don't need to wait for getToken().
+    // Overlapping the WS open with Clerk SDK loading shaves up to a full Clerk
+    // round-trip off time-to-first-message.
+    this.getReadyConnection().catch((_e: unknown) => {
+      /* best-effort eager connect; first send will retry */
+    });
   }
 
   async getTokenClaims(): Promise<Result<VerifiedClaimsResult & { claims: ClerkClaim }>> {
@@ -213,21 +263,58 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   }
 
   close(): Promise<void> {
+    this.closed = true;
+    clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = undefined;
     return this.getReadyConnection().then((conn) => conn.close());
   }
 
-  getReadyConnection(): Promise<VibeDiyApiConnection> {
-    return getVibesDiyWebSocketConnection(this.cfg.apiUrl, this.cfg.ws, this.cfg.ca);
+  async getReadyConnection(): Promise<VibeDiyApiConnection> {
+    const conn = await getVibesDiyWebSocketConnection(this.cfg.apiUrl, this.cfg.ws, this.cfg.ca);
+    if (conn !== this.currentConnection) {
+      this.currentConnection = conn;
+      // Re-attach all onDocChanged listeners to the new connection
+      for (const fn of this.docChangedListeners) {
+        this.attachDocChangedToConnection(conn, fn);
+      }
+      // Re-subscribe to all doc subscriptions (server needs to know again)
+      for (const sub of this.docSubscriptions) {
+        this.subscribeDocs(sub).catch((_e: unknown) => {
+          /* re-subscribe best-effort; next reconnect will retry */
+        });
+      }
+      // When this connection dies, schedule proactive reconnect (unless explicitly closed)
+      conn.onClose(() => {
+        if (this.currentConnection === conn) {
+          this.currentConnection = undefined;
+          if (!this.closed) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = setTimeout(() => {
+              this.reconnectTimer = undefined;
+              this.getReadyConnection().catch((_e: unknown) => {
+                /* reconnect best-effort; next activity will retry */
+              });
+            }, 1000);
+          }
+        }
+      });
+    }
+    return conn;
   }
 
   async send<T extends { auth?: DashAuthType }>(
     req: T,
     msgParam: Partial<Omit<MsgBase, "tid">> & { tid: string }
   ): Promise<Result<MsgBox<WithAuth<T>>, VibesDiyError>> {
+    // getToken() can block on the browser's Clerk SDK loading; getReadyConnection()
+    // can block on the WS open. Run them in parallel — the WS handshake itself
+    // sends no auth, and auth is attached per-message below.
+    const tokenPromise = req.auth ? Promise.resolve(undefined) : this.cfg.getToken();
+    const connPromise = this.getReadyConnection();
     let auth = req.auth;
     if (!req.auth) {
-      const rDashAuth = await this.cfg.getToken();
-      if (rDashAuth.isOk()) {
+      const rDashAuth = await tokenPromise;
+      if (rDashAuth?.isOk()) {
         auth = rDashAuth.Ok();
       }
       // if getToken fails, proceed unauthenticated
@@ -239,11 +326,11 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       ...msgParam,
       payload: {
         ...req,
-        auth,
+        ...(auth ? { auth } : {}),
       },
     };
     // console.log("Prepared message box:", msgBox);
-    const conn = await this.getReadyConnection();
+    const conn = await connPromise;
     // console.log("Got ready connection, sending message with tid:", msgParam.tid);
     const ende = JSONEnDecoderSingleton();
     const uint8ify = ende.uint8ify(msgBox);
@@ -410,6 +497,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     );
   }
 
+  forkApp(req: Req<ReqForkApp>): Promise<Result<ResForkApp, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-fork-app" },
+      {
+        resMatch: isResForkApp,
+      }
+    );
+  }
+
   getFPCloudToken(req: Req<ReqFPCloudToken>): Promise<Result<ResFPCloudToken>> {
     return this.request(
       { ...req, type: "vibes.diy.req-fpcloud-token" },
@@ -501,6 +597,112 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     },
     { resetAfter: 10 * 60 * 1000 /* 10 minutes */ }
   );
+
+  // Firefly document operations
+  putDoc(req: Req<ReqPutDoc>): Promise<Result<ResPutDoc, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-put-doc" }, { resMatch: isResPutDoc });
+  }
+
+  getDoc(req: Req<ReqGetDoc>): Promise<Result<ResGetDoc | ResGetDocNotFound, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-get-doc" },
+      { resMatch: (obj: unknown) => isResGetDoc(obj) || isResGetDocNotFound(obj) }
+    );
+  }
+
+  queryDocs(req: Req<ReqQueryDocs>): Promise<Result<ResQueryDocs, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-query-docs" }, { resMatch: isResQueryDocs });
+  }
+
+  deleteDoc(req: Req<ReqDeleteDoc>): Promise<Result<ResDeleteDoc, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-delete-doc" }, { resMatch: isResDeleteDoc });
+  }
+
+  async subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
+    const result: Result<ResSubscribeDocs, VibesDiyError> = await this.request(
+      { ...req, type: "vibes.diy.req-subscribe-docs" },
+      { resMatch: isResSubscribeDocs }
+    );
+    if (result.isOk()) {
+      const sub = { userSlug: req.userSlug, appSlug: req.appSlug, dbName: req.dbName };
+      const key = `${sub.userSlug}/${sub.appSlug}/${sub.dbName}`;
+      if (!this.docSubscriptions.some((s) => `${s.userSlug}/${s.appSlug}/${s.dbName}` === key)) {
+        this.docSubscriptions.push(sub);
+      }
+    }
+    return result;
+  }
+
+  listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-db-names" }, { resMatch: isResListDbNames });
+  }
+
+  listMembers(req: Req<ReqListMembers>): Promise<Result<ResListMembers, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-members" }, { resMatch: isResListMembers });
+  }
+
+  private attachDocChangedToConnection(
+    conn: VibeDiyApiConnection,
+    fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void
+  ): () => void {
+    const unsub = conn.onMessage((wsEvent) => {
+      if (wsEvent.type !== "MessageEvent") return;
+      const raw = wsEvent.event.data;
+      const textPromise =
+        raw instanceof Blob
+          ? raw.text()
+          : Promise.resolve(typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array));
+      textPromise
+        .then((text) => {
+          const parsed = JSON.parse(text);
+          const msg = msgBase(parsed);
+          if (!(msg instanceof type.errors) && isEvtDocChanged(msg.payload)) {
+            fn(msg.payload.userSlug, msg.payload.appSlug, msg.payload.dbName, msg.payload.docId);
+          }
+        })
+        .catch((_e: unknown) => {
+          // Not a valid message — ignore
+        });
+    });
+    return () => {
+      unsub();
+    };
+  }
+
+  onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): () => void {
+    this.docChangedListeners.push(fn);
+    let detach: (() => void) | undefined;
+    const conn = this.currentConnection;
+    if (conn) {
+      // Connection already established — attach immediately
+      detach = this.attachDocChangedToConnection(conn, fn);
+    } else {
+      // Trigger connection — replay loop in getReadyConnection will attach all stored listeners
+      this.getReadyConnection().catch((_e: unknown) => {
+        /* best-effort; next activity will establish connection */
+      });
+    }
+    return () => {
+      const idx = this.docChangedListeners.indexOf(fn);
+      if (idx >= 0) this.docChangedListeners.splice(idx, 1);
+      detach?.();
+    };
+  }
+
+  /** @internal — test inspection only */
+  get _testInternals(): {
+    docSubscriptions: readonly { userSlug: string; appSlug: string; dbName: string }[];
+    docChangedListenerCount: number;
+    currentConnection: VibeDiyApiConnection | undefined;
+    reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  } {
+    return {
+      docSubscriptions: this.docSubscriptions,
+      docChangedListenerCount: this.docChangedListeners.length,
+      currentConnection: this.currentConnection,
+      reconnectTimer: this.reconnectTimer,
+    };
+  }
 }
 
 class LLMChatImpl implements LLMChat {
@@ -541,7 +743,6 @@ class LLMChatImpl implements LLMChat {
         if (msg instanceof type.errors) {
           return Result.Ok(Option.None());
         }
-        console.log("[LLMChatImpl] validate msg, tid match:", msg.tid === tid, "expected:", tid, "got:", msg.tid);
         if (msg.tid === tid) {
           return Result.Ok(Option.Some(msg));
         }
@@ -555,10 +756,9 @@ class LLMChatImpl implements LLMChat {
         } else {
           const se = sectionEvent(trigger.validated.payload);
           if (!(se instanceof type.errors)) {
-            console.log("[LLMChatImpl] writing to stream:", se.type, "blocks:", se.blocks?.length);
             await sectionEventsWriter.write(se);
           } else {
-            console.log("[LLMChatImpl] sectionEvent parse FAILED:", se.summary?.substring(0, 200));
+            // sectionEvent parse failed — skip silently
           }
         }
         return Result.Ok(EventoResult.Continue);

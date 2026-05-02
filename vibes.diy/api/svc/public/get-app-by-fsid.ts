@@ -26,10 +26,12 @@ import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite, redeemInvite } from "./invite-flow.js";
 import { hasAccessRequest, requestAccess } from "./request-flow.js";
 
-function grantedAccess(role: "editor" | "viewer") {
+function grantedAccess(role: "editor" | "viewer" | "submitter") {
   switch (role) {
     case "editor":
       return "granted-access.editor";
+    case "submitter":
+      return "granted-access.submitter";
     case "viewer":
     default:
       return "granted-access.viewer";
@@ -171,7 +173,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         const settings = rAppSet.Ok().settings;
 
         if (settings.entry.publicAccess?.enable && app.mode === "production") {
-          console.log(`grant-public`);
           grant = "public-access";
           // here we would could
         } else {
@@ -195,14 +196,11 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
             } satisfies ResGetAppByFsId);
             return Result.Ok(EventoResult.Continue);
           }
-          console.log(`rHasInvite`, rHasInvite);
           const hasInvite = rHasInvite.Ok();
           if (isResHasAccessInviteAccepted(hasInvite)) {
-            console.log(`-3`, rHasInvite);
             grant = grantedAccess(hasInvite.role);
           }
           if (!grant && req.token) {
-            console.log(`-4`, rHasInvite);
             if (isResHasAccessInvitePending(hasInvite) && hasInvite.tokenOrGrantUserId === req.token) {
               if (!reqUserId) {
                 grant = "req-login.invite";
@@ -234,7 +232,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
               }
             }
           } else if (settings.entry.enableRequest) {
-            console.log(`enableRequest`, reqUserId);
             if (!reqUserId) {
               grant = "req-login.request";
             } else {
@@ -243,7 +240,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                 userSlug: app.userSlug,
                 foreignUserId: reqUserId,
               });
-              console.log(`hasAccessRequest`, rHasRequest);
               if (rHasRequest.isErr()) {
                 await ctx.send.send(ctx, {
                   type: "vibes.diy.res-get-app-by-fsid",
@@ -262,7 +258,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                 return Result.Ok(EventoResult.Continue);
               }
               const hasRequest = rHasRequest.Ok();
-              console.log(`hasRequest`, hasRequest);
               switch (true) {
                 case isResHasAccessRequestApproved(hasRequest):
                   grant = grantedAccess(hasRequest.role);
@@ -274,9 +269,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                   grant = "revoked-access";
                   break;
               }
-              console.log(`grant after request check`, grant);
               if (!grant) {
-                console.log(`requestAccess`, hasRequest);
                 const rRequestAccess = await requestAccess(vctx, {
                   appSlug: app.appSlug,
                   userSlug: app.userSlug,
@@ -306,7 +299,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                 } else {
                   grant = "pending-request";
                 }
-                console.log(`requestAccessRes`, requestAccessRes, `grant`, grant);
               }
             }
           }

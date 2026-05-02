@@ -1,13 +1,15 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import React, { createContext, useContext } from "react";
 import { ClerkProvider, useClerk } from "@clerk/react";
-import { BuildURI, Future, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
+import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
+import { type } from "arktype";
 import { PostHogProvider } from "posthog-js/react";
 import { PkgRepos, VibesDiyApiIface } from "@vibes.diy/api-types";
 import { vibesDiySrvSandbox, VibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sandbox";
 import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { toast } from "react-hot-toast";
+import { RecentVibesProvider } from "./contexts/RecentVibesContext.js";
 // import { PkgRepos } from "@vibes.diy/api-types";
 
 export interface VibesDiyWebVars {
@@ -56,6 +58,52 @@ const vibesDiyApis = new KeyedResolvOnce();
 
 const lazySuperThis = Lazy(() => ensureSuperThis());
 
+// Cache the most recent Clerk session JWT so `getToken()` can return instantly
+// before the Clerk SDK finishes its deferred-bundle load (~2s on first paint).
+// We store {token, exp} under this key; exp is parsed from the JWT itself.
+// EXP_MARGIN_SEC is the safety window — any cached token expiring within this
+// many seconds is treated as stale and we fall through to the slow path.
+const TOKEN_STORAGE_KEY = "vibes.diy.clerk-token";
+const EXP_MARGIN_SEC = 60;
+
+const CachedClerkToken = type({
+  token: "string",
+  exp: "number",
+});
+type CachedClerkToken = typeof CachedClerkToken.infer;
+
+const JwtPayload = type({
+  exp: "number",
+  "+": "delete",
+});
+
+function readCachedClerkToken(): CachedClerkToken | undefined {
+  if (typeof localStorage === "undefined") return undefined;
+  const raw = localStorage.getItem(TOKEN_STORAGE_KEY);
+  if (!raw) return undefined;
+  const rParsed = exception2Result(() => JSON.parse(raw));
+  if (rParsed.isErr()) return undefined;
+  const validated = CachedClerkToken(rParsed.Ok());
+  if (validated instanceof type.errors) return undefined;
+  return validated;
+}
+
+function writeCachedClerkToken(token: string): void {
+  if (typeof localStorage === "undefined") return;
+  const [, payloadB64] = token.split(".");
+  if (!payloadB64) return;
+  const rPayload = exception2Result(() => JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"))));
+  if (rPayload.isErr()) return;
+  const validated = JwtPayload(rPayload.Ok());
+  if (validated instanceof type.errors) return;
+  localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ token, exp: validated.exp } satisfies CachedClerkToken));
+}
+
+function clearCachedClerkToken(): void {
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
 function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
   const clerk = useClerk();
 
@@ -73,27 +121,61 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   // console.log(`apiUrl`, apiUrl, realCtx.webVars.env.VIBES_DIY_API_URL)
 
   realCtx.vibeDiyApi = vibesDiyApis.get(apiUrl).once(() => {
+    // Perf hint: if the user is landing on a viewer route, pin this WS to a
+    // deterministic per-vibe DO shard so they join whatever DO is already warm
+    // for that vibe. The shard is decided once at construction; SPA navigation
+    // does not change it (the WS lives the lifetime of the page). For non-vibe
+    // routes (chat, explore, root) we omit shardKey so codegen traffic keeps
+    // its random-UUID load-balancing.
+    const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
+    const shardKey = vibeMatch ? `${vibeMatch[1]}--${vibeMatch[2]}` : undefined;
     let clerkReady: undefined | Future<void> = new Future();
     clerk.addListener(() => {
       if (clerk.loaded) {
         // console.log("clerk-evt", clerk.loaded, clerk.isSignedIn)
         clerkReady?.resolve(undefined);
+        // Wipe the cached JWT on sign-out so the next getToken() falls through
+        // to the live Clerk session (which is now empty) instead of returning
+        // a still-unexpired-but-stale-from-auth-perspective token. Without
+        // this, /vibe/... routes keep showing the user as signed-in to the
+        // API for the remaining JWT lifetime even after Clerk's UI says
+        // signed-out.
+        if (!clerk.isSignedIn) {
+          clearCachedClerkToken();
+        }
       }
     });
     return new VibesDiyApi({
       apiUrl,
+      shardKey,
       getToken: async () => {
+        // Fast path: a cached JWT from a prior page load that still has more
+        // than EXP_MARGIN_SEC seconds remaining. Lets the first WS message
+        // fire without waiting for Clerk's SDK to finish loading.
+        // If Clerk is already loaded and reports signed-out, skip the cache
+        // — covers the narrow window between sign-out and the listener
+        // firing the localStorage wipe.
+        const cached = readCachedClerkToken();
+        const nowSec = Math.floor(Date.now() / 1000);
+        const clerkSaysSignedOut = clerk.loaded && !clerk.isSignedIn;
+        if (!clerkSaysSignedOut && cached && cached.exp > nowSec + EXP_MARGIN_SEC) {
+          return Result.Ok({ type: "clerk", token: cached.token });
+        }
         if (clerkReady) {
           await clerkReady.asPromise();
           clerkReady = undefined;
         }
         if (!clerk.isSignedIn) {
+          // Belt-and-suspenders: if we got here via the slow path with the
+          // user signed out, make sure no stale token survives in localStorage.
+          clearCachedClerkToken();
           return Result.Err("not signed in");
         }
         const ot = await clerk.session?.getToken({ template: "with-email" });
         if (!ot) {
           return Result.Err(`no token`);
         }
+        writeCachedClerkToken(ot);
         return Result.Ok({
           type: "clerk",
           token: ot,
@@ -121,7 +203,11 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     eventListeners: globalThis.window,
   });
 
-  return <VibesDiyContext.Provider value={realCtx}>{children}</VibesDiyContext.Provider>;
+  return (
+    <VibesDiyContext.Provider value={realCtx}>
+      <RecentVibesProvider>{children}</RecentVibesProvider>
+    </VibesDiyContext.Provider>
+  );
 }
 
 function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {

@@ -24,9 +24,7 @@ export const getCarouselWrapperStyle = (isMobile: boolean): CSSProperties => ({
 });
 
 // Carousel navigation button style - responsive
-export const getCarouselNavButtonStyle = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const getCarouselNavButtonStyle = (isMobile: boolean): CSSProperties => ({
   width: isMobile ? "32px" : "40px",
   height: isMobile ? "32px" : "40px",
   minWidth: isMobile ? "32px" : "40px",
@@ -54,28 +52,18 @@ export const getSuggestionsContainerStyle = (): CSSProperties => ({
 });
 
 // Suggestions inner wrapper for animation (sliding strip)
-export const getSuggestionsInnerStyle = (
-  offset: number,
-  isAnimating: boolean,
-): CSSProperties => ({
+export const getSuggestionsInnerStyle = (offset: number, isAnimating: boolean): CSSProperties => ({
   display: "flex",
   gap: "20px",
   transform: `translateX(${offset}px)`,
-  transition: isAnimating
-    ? "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
-    : "none",
+  transition: isAnimating ? "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)" : "none",
 });
 
 // Title style - responsive
-export const getTitle = (
-  isMobile: boolean,
-  isDarkMode: boolean,
-): CSSProperties => ({
+export const getTitle = (isMobile: boolean, isDarkMode: boolean): CSSProperties => ({
   fontSize: isMobile ? "24px" : "65px",
   fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
-  color: isDarkMode
-    ? "var(--color-dark-primary)"
-    : "var(--vibes-near-black)",
+  color: isDarkMode ? "var(--color-dark-primary)" : "var(--vibes-near-black)",
   display: "flex",
   justifyContent: "center",
   textAlign: "center",
@@ -92,9 +80,7 @@ export const getButtonStyle = (): CSSProperties => ({
 });
 
 // Chat input container style - responsive
-export const getChatInputContainerStyle = (
-  isMobile: boolean,
-): CSSProperties => {
+export const getChatInputContainerStyle = (isMobile: boolean): CSSProperties => {
   if (isMobile) {
     return {
       width: "100%",
@@ -278,9 +264,7 @@ export const getGalleryDescriptionStyle = (): CSSProperties => ({
 });
 
 // VibeGallery styles - responsive
-export const getVibeGalleryWrapperStyle = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const getVibeGalleryWrapperStyle = (isMobile: boolean): CSSProperties => ({
   display: "flex",
   flexWrap: "wrap",
   justifyContent: "center",
@@ -303,18 +287,13 @@ export const getVibeCardWrapperStyle = (): CSSProperties => ({
   flexShrink: 0,
 });
 
-export const getVibeCardIconContainerStyle = (
-  isMobile: boolean,
-): CSSProperties => ({
+export const getVibeCardIconContainerStyle = (isMobile: boolean): CSSProperties => ({
   position: "relative",
   width: isMobile ? "64px" : "100px",
   height: isMobile ? "64px" : "100px",
 });
 
-export const getVibeCardTexturedShadowStyle = (
-  isHovered: boolean,
-  isMobile: boolean,
-): CSSProperties => {
+export const getVibeCardTexturedShadowStyle = (isHovered: boolean, isMobile: boolean): CSSProperties => {
   const size = isMobile ? "64px" : "100px";
   return {
     position: "absolute",
@@ -329,10 +308,7 @@ export const getVibeCardTexturedShadowStyle = (
   };
 };
 
-export const getVibeCardMainIconContainerStyle = (
-  isHovered: boolean,
-  isMobile: boolean,
-): CSSProperties => {
+export const getVibeCardMainIconContainerStyle = (isHovered: boolean, isMobile: boolean): CSSProperties => {
   const size = isMobile ? "64px" : "100px";
   const padding = isMobile ? "8px" : "16px";
   return {

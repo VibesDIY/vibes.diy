@@ -55,6 +55,55 @@ async function sendUpdateEvent(vctx: VibesApiSQLCtx, value: Omit<EvtRequestGrant
   } satisfies MsgBase<EvtRequestGrant>);
 }
 
+export async function approveAllPendingRequests(
+  vctx: VibesApiSQLCtx,
+  ref: { userId: string; appSlug: string; userSlug: string },
+  role: Role
+): Promise<Result<number>> {
+  const now = new Date().toISOString();
+
+  const rUpd = await exception2Result(() =>
+    vctx.sql.db
+      .update(vctx.sql.tables.requestGrants)
+      .set({ state: "approved", role, updated: now })
+      .where(
+        and(
+          eq(vctx.sql.tables.requestGrants.userId, ref.userId),
+          eq(vctx.sql.tables.requestGrants.appSlug, ref.appSlug),
+          eq(vctx.sql.tables.requestGrants.userSlug, ref.userSlug),
+          eq(vctx.sql.tables.requestGrants.state, "pending")
+        )
+      )
+      .returning({
+        foreignUserId: vctx.sql.tables.requestGrants.foreignUserId,
+        foreignInfo: vctx.sql.tables.requestGrants.foreignInfo,
+        created: vctx.sql.tables.requestGrants.created,
+      })
+  );
+  if (rUpd.isErr()) return Result.Err(rUpd);
+  const updated = rUpd.Ok();
+
+  for (const row of updated) {
+    await sendUpdateEvent(vctx, {
+      op: "upsert",
+      userId: ref.userId,
+      grant: {
+        type: "vibes.diy.res-request-access",
+        appSlug: ref.appSlug,
+        userSlug: ref.userSlug,
+        foreignUserId: row.foreignUserId,
+        foreignInfo: row.foreignInfo as ForeignInfo,
+        role,
+        state: "approved",
+        updated: now,
+        created: row.created,
+      },
+    });
+  }
+
+  return Result.Ok(updated.length);
+}
+
 export async function hasAccessRequest(
   vctx: VibesApiSQLCtx,
   req: { foreignUserId: string; appSlug: string; userSlug: string }
@@ -196,9 +245,9 @@ export async function requestAccess(
     } satisfies ResRequestAccessError);
   }
 
-  const autoApprove = enableRequest.autoAcceptViewRequest ?? false;
-  const state = autoApprove ? "approved" : "pending";
-  const role = autoApprove ? "viewer" : undefined;
+  const autoAcceptRole = enableRequest.autoAcceptRole;
+  const state = autoAcceptRole ? "approved" : "pending";
+  const role = autoAcceptRole ?? undefined;
   const foreignInfo: ForeignInfo = { claims: req.claims };
 
   const rIns = await exception2Result(() =>
@@ -238,8 +287,8 @@ export async function requestAccess(
     created: now,
   };
 
-  if (autoApprove) {
-    const r = { ...base, state: "approved" as const, role: "viewer" as const } satisfies ResRequestAccessApproved;
+  if (autoAcceptRole) {
+    const r = { ...base, state: "approved" as const, role: autoAcceptRole } satisfies ResRequestAccessApproved;
 
     await sendUpdateEvent(vctx, { op: "upsert", userId: record.userId, grant: r });
 

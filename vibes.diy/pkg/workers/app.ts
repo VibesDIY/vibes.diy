@@ -17,6 +17,7 @@ import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 
 export { ChatSessions } from "./chat-sessions.js";
+export { DocNotify } from "./doc-notify.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 
@@ -45,7 +46,8 @@ export default {
   async fetch(request: CFRequest, env: CFEnv, ctx: ExecutionContext): Promise<CFResponse> {
     const url = new URL(request.url);
     if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
-      const id = env.CHAT_SESSIONS.idFromName("global");
+      const shard = url.searchParams.get("shard") || crypto.randomUUID();
+      const id = env.CHAT_SESSIONS.idFromName(shard);
       const obj = env.CHAT_SESSIONS.get(id);
       return obj.fetch(request); // handle WebSocket upgrade and API requests in the chat sessions Durable Object
     }
@@ -127,7 +129,19 @@ export default {
       return res;
     }
 
-    // console.log("Handling request for", cfCtx.vibesCtx.params);
+    // Hashed static assets (Vite fingerprinted) — cache immutably
+    if (url.pathname.startsWith("/assets/") && !url.pathname.startsWith("/assets/cid")) {
+      const assetResponse = await env.ASSETS.fetch(request);
+      if (!assetResponse.ok) {
+        return assetResponse as unknown as CFResponse;
+      }
+      const headers = new Headers(Object.fromEntries(assetResponse.headers.entries()));
+      headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      return new Response(assetResponse.body as unknown as BodyInit, {
+        status: assetResponse.status,
+        headers,
+      }) as unknown as CFResponse;
+    }
 
     // Delegate to React Router for SSR
     return requestHandler(request as unknown as Parameters<typeof requestHandler>[0], {

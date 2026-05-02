@@ -20,6 +20,7 @@ interface ResultPreviewHeaderContentProps {
   onContextMenu?: (view: ViewType, e: React.MouseEvent) => void;
   shareModal: UseShareModalReturn;
   syntaxErrorCount?: number;
+  onBackClick?: () => void;
 }
 
 function ResultPreviewHeaderContent({
@@ -32,13 +33,14 @@ function ResultPreviewHeaderContent({
   openVibe,
   onContextMenu,
   shareModal,
+  onBackClick,
 }: React.PropsWithChildren<ResultPreviewHeaderContentProps>) {
   return (
     <div className="flex h-full w-full items-center px-2 py-1">
       <div className="flex shrink-0 items-center justify-start">
         <BackButton
           onBackClick={() => {
-            console.log("click-back");
+            onBackClick?.();
           }}
         />
       </div>
@@ -64,10 +66,18 @@ function ResultPreviewHeaderContent({
               testId="header-save-button"
             />
           )}
-          <Button ref={shareModal.buttonRef} onClick={shareModal.open} variant="blue" size="default" aria-label="Share">
-            <ShareIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Share</span>
-          </Button>
+          <div className="relative">
+            <Button ref={shareModal.buttonRef} onClick={shareModal.open} variant="blue" size="default" aria-label="Share">
+              <ShareIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Share</span>
+            </Button>
+            {shareModal.hasUnpublishedChanges && (
+              <span
+                aria-label="Unpublished changes"
+                className="pointer-events-none absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border border-black bg-orange-400 shadow"
+              />
+            )}
+          </div>
         </div>
       </div>
       <ShareModal modal={shareModal} />

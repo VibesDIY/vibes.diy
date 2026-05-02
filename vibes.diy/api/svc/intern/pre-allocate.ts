@@ -73,10 +73,7 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
     (catalogNames.has(s) ? validSkills : droppedSkills).push(s);
   }
   if (droppedSkills.length > 0) {
-    ensureLogger(vctx.sthis, "preAllocate")
-      .Warn()
-      .Any({ droppedSkills, validSkills })
-      .Msg("pre-alloc skills missed catalog");
+    ensureLogger(vctx.sthis, "preAllocate").Warn().Any({ droppedSkills, validSkills }).Msg("pre-alloc skills missed catalog");
   }
 
   return Result.Ok({

@@ -13,7 +13,7 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "arktype": "^2.2.0",
-    "@cloudflare/workers-types": "^4.20260402.1",
+    "@cloudflare/workers-types": "4.20260402.1",
     "@tanstack/react-table": "^8.21.3",
     "@vibes.diy/base": "workspace:*",
     "cookie": "^1.1.1",
@@ -25,9 +25,4 @@
     "@types/cookie": "^1.0.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.2",
-    "@vitejs/plugin-react": "^5.2.0",
-    "vite": "^7.3.1",
-    "vitest": "~4.1.2",
-    "wrangler": "^4.81.0"
-  }
-}
+    "@vitejs/plug

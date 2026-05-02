@@ -134,7 +134,7 @@ export const resGetAppByFsId = type({
   "fsId?": "string",
   mode: "'production'|'dev'",
   grant:
-    "'revoked-access'|'pending-request'| 'granted-access.editor'|'granted-access.viewer'|'owner'|'not-found'|'not-grant'|'public-access'|'accepted-email-invite'|'req-login.invite'|'req-login.request'",
+    "'revoked-access'|'pending-request'| 'granted-access.editor'|'granted-access.viewer'|'granted-access.submitter'|'owner'|'not-found'|'not-grant'|'public-access'|'accepted-email-invite'|'req-login.invite'|'req-login.request'",
   releaseSeq: "number",
   env: vibeUserEnv,
   fileSystem: [fileSystemItem, "[]"],
@@ -196,6 +196,42 @@ export function isResGetByUserSlugAppSlug(obj: unknown): obj is ResGetByUserSlug
     console.error(`Invalid resGetByUserSlugAppSlug:`, obj, res.summary);
   }
   return !(resGetByUserSlugAppSlug(obj) instanceof type.errors);
+}
+
+export const reqForkApp = type({
+  type: "'vibes.diy.req-fork-app'",
+  auth: dashAuthType,
+  srcUserSlug: "string",
+  srcAppSlug: "string",
+  "srcFsId?": "string",
+  // When true: slug uses `-clone` suffix, Apps.mode = 'production',
+  // no ChatSection is seeded, and AppSettings are configured so non-owners
+  // must request access (no auto-accept). Client is expected to redirect
+  // straight to /vibe/ instead of /chat/. Default false = classic remix.
+  "skipChat?": "boolean",
+});
+export type ReqForkApp = typeof reqForkApp.infer;
+export function isReqForkApp(obj: unknown): obj is ReqForkApp {
+  return !(reqForkApp(obj) instanceof type.errors);
+}
+
+export const resForkApp = type({
+  type: "'vibes.diy.res-fork-app'",
+  userSlug: "string",
+  appSlug: "string",
+  chatId: "string",
+  // Immutable anchor pointing at the source content. Stored server-side in
+  // the forked Apps row's meta as { type: 'remix-of', srcFsId }.
+  srcFsId: "string",
+  // Snapshot of the source slugs at fork time — used for immediate
+  // redirect/link rendering. Future renders re-resolve via srcFsId so
+  // slug renames are followed.
+  srcUserSlug: "string",
+  srcAppSlug: "string",
+});
+export type ResForkApp = typeof resForkApp.infer;
+export function isResForkApp(obj: unknown): obj is ResForkApp {
+  return !(resForkApp(obj) instanceof type.errors);
 }
 
 export const ResSetModeFs = type({

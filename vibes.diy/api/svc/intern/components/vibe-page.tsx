@@ -4,9 +4,7 @@ import { VibesDiyServCtx } from "@vibes.diy/api-types";
 import React from "react";
 
 export function ImportMap(prop: VibesDiyServCtx) {
-  return (
-    <script type="importmap" id="vibe-import-map" dangerouslySetInnerHTML={{ __html: JSON.stringify(prop.importMap, null, 2) }} />
-  );
+  return <script type="importmap" dangerouslySetInnerHTML={{ __html: JSON.stringify(prop.importMap, null, 2) }} />;
 }
 
 export function Links() {
@@ -29,6 +27,17 @@ export function Meta({ metaProps }: VibesDiyServCtx) {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <title>{metaProps.title}</title>
       <meta name="description" content={metaProps.description} />
+
+      <meta property="og:type" content="website" />
+      <meta property="og:title" content={metaProps.title} />
+      <meta property="og:description" content={metaProps.description} />
+      {metaProps.canonicalUrl && <meta property="og:url" content={metaProps.canonicalUrl} />}
+      {metaProps.imageUrl && <meta property="og:image" content={metaProps.imageUrl} />}
+
+      <meta name="twitter:card" content={metaProps.imageUrl ? "summary_large_image" : "summary"} />
+      <meta name="twitter:title" content={metaProps.title} />
+      <meta name="twitter:description" content={metaProps.description} />
+      {metaProps.imageUrl && <meta name="twitter:image" content={metaProps.imageUrl} />}
     </>
   );
 }

@@ -11,9 +11,10 @@ export const PILL_CLEARANCE_Y = 60;
 interface PillPortalProps {
   isActive: boolean;
   onToggle: (active: boolean) => void;
+  mobilePreviewShown?: boolean;
 }
 
-export function PillPortal({ isActive, onToggle }: PillPortalProps) {
+export function PillPortal({ isActive, onToggle, mobilePreviewShown = false }: PillPortalProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -21,6 +22,7 @@ export function PillPortal({ isActive, onToggle }: PillPortalProps) {
 
   return createPortal(
     <div
+      className={mobilePreviewShown ? "hidden md:block" : ""}
       style={{
         position: "fixed",
         top: -9,

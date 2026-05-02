@@ -5,6 +5,14 @@ import { VibesApiSQLCtx } from "../types.js";
 import { lockedGroupsVersions, lockedVersions } from "./grouped-vibe-import-map.js";
 import { NpmUrlCapture } from "../public/serv-entry-point.js";
 
+// Subset of VibeApp (vibe/runtime/register-dependencies.ts) — fsId is optional
+// because the db-explorer loads from the app subdomain without a versioned path.
+interface DBExplorerVibeApp {
+  readonly appSlug: string;
+  readonly userSlug: string;
+  readonly fsId?: string;
+}
+
 export interface RenderDBExplorerOps {
   vctx: VibesApiSQLCtx;
   pkgRepos: {
@@ -12,9 +20,10 @@ export interface RenderDBExplorerOps {
     public?: string; // default to esm.sh
   };
   base: string;
+  vibeApp: DBExplorerVibeApp;
 }
 
-export async function renderDBExplorer({ vctx, pkgRepos, base }: RenderDBExplorerOps) {
+export async function renderDBExplorer({ vctx, pkgRepos, base, vibeApp }: RenderDBExplorerOps) {
   const deps = Dependencies.from({
     ...lockedGroupsVersions,
   });
@@ -34,6 +43,7 @@ export async function renderDBExplorer({ vctx, pkgRepos, base }: RenderDBExplore
 
   return DBExplorerPage({
     base,
+    vibeApp,
     importMap: {
       imports: importMap,
     },

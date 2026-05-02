@@ -28,11 +28,26 @@ import {
   ResFetchCloudToken,
   isEvtRuntimeReady,
   EvtRuntimeReady,
+  EvtRuntimeAck,
   EvtAttachFPDb,
   isReqImgVibes,
   ReqImgVibes,
   ResOkImgVibes,
   ResErrorImgVibes,
+  isReqPutDoc,
+  ReqPutDoc,
+  isReqGetDoc,
+  ReqGetDoc,
+  isReqQueryDocs,
+  ReqQueryDocs,
+  isReqDeleteDoc,
+  ReqDeleteDoc,
+  isReqSubscribeDocs,
+  ReqSubscribeDocs,
+  isReqListDbNames,
+  ReqListDbNames,
+  EvtVibeSetSource,
+  isEvtVibeHotSwapError,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -398,12 +413,13 @@ function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
                 message: err?.message ?? String(err),
               } satisfies ResErrorImgVibes);
             });
-          const rPrompt = await rChat
-            .Ok()
-            .prompt(
-              { messages: [{ role: "user", content: [{ type: "text", text: ctx.validated.prompt }] }] },
-              ctx.validated.inputImageBase64 ? { inputImageBase64: ctx.validated.inputImageBase64 } : undefined
-            );
+          const rPrompt = await rChat.Ok().prompt(
+            {
+              ...(ctx.validated.model ? { model: ctx.validated.model } : {}),
+              messages: [{ role: "user", content: [{ type: "text", text: ctx.validated.prompt }] }],
+            },
+            ctx.validated.inputImageBase64 ? { inputImageBase64: ctx.validated.inputImageBase64 } : undefined
+          );
           if (rPrompt.isErr()) {
             return ctx.send.send(ctx, {
               tid: ctx.validated.tid,
@@ -418,6 +434,231 @@ function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+// ── Firefly document handlers ──────────────────────────────────────
+
+function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.putDoc",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqPutDoc(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqPutDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.putDoc({
+        userSlug: ctx.validated.userSlug,
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+        doc: ctx.validated.doc,
+        docId: ctx.validated.docId,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-put-doc",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-put-doc",
+          status: "ok",
+          id: res.id,
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.getDoc",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqGetDoc(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqGetDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.getDoc({
+        userSlug: ctx.validated.userSlug,
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+        docId: ctx.validated.docId,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-get-doc",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          ...res,
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-get-doc",
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.queryDocs",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqQueryDocs(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqQueryDocs, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.queryDocs({
+        userSlug: ctx.validated.userSlug,
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-query-docs",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          ...res,
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-query-docs",
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.deleteDoc",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqDeleteDoc(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqDeleteDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.deleteDoc({
+        userSlug: ctx.validated.userSlug,
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+        docId: ctx.validated.docId,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-delete-doc",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        const res = rRes.Ok();
+        await ctx.send.send(ctx, {
+          ...res,
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-delete-doc",
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.subscribeDocs",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqSubscribeDocs(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqSubscribeDocs, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.subscribeDocs({
+        userSlug: ctx.validated.userSlug,
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-subscribe-docs",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        await ctx.send.send(ctx, {
+          ...rRes.Ok(),
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-subscribe-docs",
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+function vibeListDbNames(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.listDbNames",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqListDbNames(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqListDbNames, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.listDbNames({
+        userSlug: ctx.validated.userSlug,
+        appSlug: ctx.validated.appSlug,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-list-db-names",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        await ctx.send.send(ctx, {
+          ...rRes.Ok(),
+          tid: ctx.validated.tid,
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
@@ -425,13 +666,86 @@ export class vibesDiySrvSandbox implements Disposable {
 
   readonly onRuntimeReady = OnFunc<(evt: EvtRuntimeReady) => void>();
 
+  // Iframe → parent hot-swap failure dispatch. Subscribers (PreviewApp) toast
+  // so the user sees that a streamed edit failed to compile/mount, instead of
+  // assuming the silently-stale preview is the latest state.
+  readonly onHotSwapError = OnFunc<(err: { readonly message: string }) => void>();
+
+  // Captured iframe postMessage target — set on first message from iframe
+  private iframeSource: Window | undefined;
+  private iframeOrigin: string | undefined;
+  // Last source pushed before the iframe was ready to receive — replayed once
+  // the iframe sends its first vibe.* message and we capture iframeSource.
+  // Without this, brand-new apps drop the first scaffold push (iframe is still
+  // loading) and the preview only updates on the next code.end.
+  private pendingSource: string | undefined;
+
   readonly handleMessage = (event: MessageEvent): void => {
-    // console.log(`Received message event in vibesDiySrvSandbox`, event);
+    // vibe.* prefix filters out Clerk auth / analytics iframes that postMessage first.
+    const isVibeMsg = event.source && typeof event.data?.type === "string" && event.data.type.startsWith("vibe.");
+    // runtime.ready signals the iframe just (re-)booted with the hot-swap listener
+    // registered. Always re-capture iframeSource here so HMR reloads, manual page
+    // reloads, etc. don't leave us posting to a stale (dead) Window reference.
+    const isRuntimeReady = isVibeMsg && (event.data as { type?: string } | undefined)?.type === "vibe.evt.runtime.ready";
+    if (isRuntimeReady) {
+      const prev = this.iframeSource;
+      this.iframeSource = event.source as Window;
+      this.iframeOrigin = event.origin;
+      console.log("[hot-swap] iframeSource captured (runtime.ready)", {
+        origin: this.iframeOrigin,
+        replaced: prev !== undefined && prev !== event.source,
+        hasPending: this.pendingSource !== undefined,
+      });
+      // Acknowledge so the iframe can stop its retry loop. The iframe re-posts
+      // runtime.ready until it sees this ack, defeating the race where a
+      // cached-assets iframe boots before the parent's React provider mounts.
+      this.iframeSource.postMessage({ type: "vibe.evt.runtime.ack" } satisfies EvtRuntimeAck, this.iframeOrigin);
+      if (this.pendingSource !== undefined) {
+        const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source: this.pendingSource };
+        this.pendingSource = undefined;
+        this.iframeSource.postMessage(msg, this.iframeOrigin);
+        console.log("[hot-swap] replayed pendingSource", { len: msg.source.length });
+      }
+    } else if (isVibeMsg && !this.iframeSource) {
+      // Edge case: a non-runtime.ready vibe.* message arriving before runtime.ready
+      // (shouldn't happen in normal flow, but capture defensively).
+      this.iframeSource = event.source as Window;
+      this.iframeOrigin = event.origin;
+      console.log("[hot-swap] iframeSource captured (other vibe.* msg)", {
+        origin: this.iframeOrigin,
+        firstMsgType: (event.data as { type?: string } | undefined)?.type,
+      });
+    }
+    if (isEvtVibeHotSwapError(event.data)) {
+      this.onHotSwapError.invoke({ message: event.data.message });
+    }
     this.evento.trigger<MessageEvent, unknown, unknown>({
       request: event,
       send: new PostMsgSendProvider(window, event),
     });
   };
+
+  // Forward a doc-changed event from the API to the iframe
+  forwardDocChangedToIframe(userSlug: string, appSlug: string, dbName: string, docId: string): void {
+    if (this.iframeSource && this.iframeOrigin) {
+      this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", userSlug, appSlug, dbName, docId }, this.iframeOrigin);
+    }
+  }
+
+  // Hot-swap the iframe's App.jsx with new source. If the iframe hasn't sent
+  // its first message yet (no postMessage target captured), buffer the source
+  // and replay it on iframeSource capture.
+  pushSource(source: string): boolean {
+    if (this.iframeSource === undefined || this.iframeOrigin === undefined) {
+      this.pendingSource = source;
+      console.log("[hot-swap] pushSource buffered (no iframeSource yet)", { len: source.length });
+      return false;
+    }
+    const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source };
+    this.iframeSource.postMessage(msg, this.iframeOrigin);
+    console.log("[hot-swap] pushSource posted", { len: source.length, origin: this.iframeOrigin });
+    return true;
+  }
 
   readonly removeEventListeners: typeof window.removeEventListener;
   readonly args: VibesDiySrvSandboxArgs;
@@ -440,11 +754,32 @@ export class vibesDiySrvSandbox implements Disposable {
     this.args = args;
     this.evento = new Evento(new MessageEventEventoEnDecoder());
     this.evento.push(
-      ...[vibeRuntimeReady(this), vibeRegisterFPDB(this), vibeCallAI(this), vibeImageGen(this), vibeFetchCloudToken(this)]
+      ...[
+        vibeRuntimeReady(this),
+        vibeRegisterFPDB(this),
+        vibeCallAI(this),
+        vibeImageGen(this),
+        vibeFetchCloudToken(this),
+        vibePutDoc(this),
+        vibeGetDoc(this),
+        vibeQueryDocs(this),
+        vibeDeleteDoc(this),
+        vibeSubscribeDocs(this),
+        vibeListDbNames(this),
+      ]
     );
-    // console.log(`Adding event listener for vibesDiySrvSandbox`, this.handleMessage);
     this.args.eventListeners.addEventListener("message", this.handleMessage);
     this.removeEventListeners = this.args.eventListeners.removeEventListener;
+
+    // Forward doc-changed events from the API WebSocket to the iframe
+    this.args.vibeDiyApi.onDocChanged((userSlug, appSlug, dbName, docId) => {
+      this.forwardDocChangedToIframe(userSlug, appSlug, dbName, docId);
+    });
+  }
+
+  /** @internal — test inspection only */
+  get _testInternals(): { iframeSource: Window | undefined; iframeOrigin: string | undefined } {
+    return { iframeSource: this.iframeSource, iframeOrigin: this.iframeOrigin };
   }
 
   [Symbol.dispose](): void {

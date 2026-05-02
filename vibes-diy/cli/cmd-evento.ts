@@ -3,6 +3,7 @@ import { userSettingsEvento } from "./cmds/user-settings-cmd.js";
 import { skillsEvento } from "./cmds/skills-cmd.js";
 import { systemEvento } from "./cmds/system-cmd.js";
 import { pushEvento } from "./cmds/push-cmd.js";
+import { generateEvento } from "./cmds/generate-cmd.js";
 import {
   deviceIdRegisterEvento,
   isCmdProgress,
@@ -37,6 +38,6 @@ export function cmdTsEvento() {
     },
     decode: (i) => Promise.resolve(Result.Ok(i)),
   });
-  evento.push([userSettingsEvento, skillsEvento, systemEvento, pushEvento, deviceIdRegisterEvento]);
+  evento.push([userSettingsEvento, skillsEvento, systemEvento, pushEvento, generateEvento, deviceIdRegisterEvento]);
   return evento;
 }

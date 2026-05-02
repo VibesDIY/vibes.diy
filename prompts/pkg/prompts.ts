@@ -73,12 +73,14 @@ export const preAllocSchema = {
   properties: {
     skills: {
       type: "array",
-      description: "Selected skill names from the catalog above, appropriate for the app described by the user prompt. Only use names present in the catalog.",
+      description:
+        "Selected skill names from the catalog above, appropriate for the app described by the user prompt. Only use names present in the catalog.",
       items: { type: "string" },
     },
     pairs: {
       type: "array",
-      description: "Exactly 3 title/slug pairs ranked by fit. Title in Title Case, 1-4 words. Slug in kebab-case derived from title.",
+      description:
+        "Exactly 3 title/slug pairs ranked by fit. Title in Title Case, 1-4 words. Slug in kebab-case derived from title.",
       items: {
         type: "object",
         properties: {
@@ -163,13 +165,21 @@ const keyedLoadAsset = new KeyedResolvOnce();
 
 export interface MakeBaseSystemPromptOptions {
   fetch?: typeof fetch;
+  // Override the package URL used as `loadAsset`'s `fallBackUrl` when the
+  // local basePath fails (worker bundles, esm.sh fallback). Defaults to
+  // esm.sh; the API worker passes `${WORKSPACE_NPM_URL}/@vibes.diy/prompts/`
+  // so assets resolve through the worker's own /vibe-pkg/ endpoint.
+  pkgBaseUrl?: string;
 }
+
+const DEFAULT_PKG_BASE_URL = "https://esm.sh/@vibes.diy/prompts/";
 
 export async function makeBaseSystemPrompt(
   model: string,
   sessionDoc: Partial<UserSettings> & MakeBaseSystemPromptOptions
 ): Promise<SystemPromptResult> {
   const userPrompt = sessionDoc?.userPrompt || "";
+  const pkgBaseUrl = sessionDoc?.pkgBaseUrl ?? DEFAULT_PKG_BASE_URL;
   const llmsCatalog = await getLlmCatalog();
   const llmsCatalogNames = await getLlmCatalogNames();
 
@@ -183,22 +193,14 @@ export async function makeBaseSystemPrompt(
   const includeDemoData = sessionDoc?.demoData === true;
 
   const chosenLlms = llmsCatalog.filter((l) => selectedNames.includes(l.name));
-  console.log(
-    "[makeBaseSystemPrompt] chosen modules:",
-    chosenLlms.map((l) => l.name)
-  );
 
   const concatenatedLlmsTxts: string[] = [];
   for (const llm of chosenLlms) {
     const rText = await keyedLoadAsset.get(llm.name).once(async () => {
       // console.log("Loading text asset for LLM:", llm.name, urlDirname(import.meta.url), import.meta.url);
       return loadAsset(`./llms/${llm.name}.md`, {
-        fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
-        basePath: () => {
-          const dir = import.meta.url;
-          // console.log("Base path for loading LLM text asset:", llm, dir, import.meta);
-          return dir;
-        },
+        fallBackUrl: pkgBaseUrl,
+        basePath: () => import.meta.url,
         mock: {
           fetch: sessionDoc.fetch,
         },
@@ -242,63 +244,24 @@ export async function makeBaseSystemPrompt(
   const stylePrompt = sessionDoc?.stylePrompt || defaultStylePrompt;
 
   const demoDataLines = includeDemoData
-    ? `- If your app has a function that uses callAI with a schema to save data, include a Demo Data button that calls that function with an example prompt. Don't write an extra function, use real app code so the data illustrates what it looks like to use the app.\n- Never have an instance of callAI that is only used to generate demo data, always use the same calls that are triggered by user actions in the app.\n`
+    ? "\n- If your app has a function that uses callAI with a schema to save data, include a Demo Data button that calls that function with an example prompt. Don't write an extra function, use real app code so the data illustrates what it looks like to use the app.\n- Never have an instance of callAI that is only used to generate demo data, always use the same calls that are triggered by user actions in the app."
     : "";
 
-  const systemPromptLines = [
-    "You are an AI assistant tasked with creating React components. You should create components that:",
-    "- Use modern React practices and follow the Rules of Hooks: never call hooks (useState, useDocument, useLiveQuery, etc.) inside event handlers, loops, conditions, or nested functions. To update an existing document in a click handler, use `database.put({ ...doc, fieldName: newValue })` instead of useDocument.",
-    "- Don't use any TypeScript, just use JavaScript",
-    "- Use Tailwind CSS for mobile-first accessible styling with bracket notation for custom colors like bg-[#242424]",
-    "- Define a classNames object (e.g. `const c = { bg: 'bg-[#f1f5f9]', ink: 'text-[#0f172a]', border: 'border-[#0f172a]', accent: 'bg-[#0f172a]' }`) just before the JSX return, then use them like `className={c.ink}`. Never put raw bracket colors directly in JSX — always go through the classNames object.",
-    `- Don't use words from the style prompt in your copy: ${stylePrompt}`,
-    "- For dynamic components, like autocomplete, don't use external libraries, implement your own",
-    "- Avoid using external libraries unless they are essential for the component to function",
-    '- Always use ES module imports at the top of the file (e.g. `import React, { useState } from "react"`). Never reference React or other libraries as globals.',
-    "- Your file MUST use `export default function App()` — the runtime loads it as an ES module and imports the default export.",
-    "- Structure your component code in this order: (1) hooks and document shapes, (2) event handlers, (3) classNames object, (4) JSX return. ClassNames go right before JSX so they are close to where they are used.",
-    "- Use Fireproof for data persistence",
-    "- Use `callAI` to fetch AI, use schema like this: `JSON.parse(await callAI(prompt, { schema: { properties: { todos: { type: 'array', items: { type: 'string' } } } } }))` and save final responses as individual Fireproof documents.",
-    "- For file uploads use drag and drop and store using the `doc._files` API",
-    "- Don't try to generate png or base64 data, use placeholder image APIs instead, like https://picsum.photos/400 where 400 is the square size",
-    "- Never use emojis in the UI. Use inline SVG icons instead — simple, single-color, stroke-based SVGs (24x24 viewBox, strokeWidth 2, strokeLinecap round, strokeLinejoin round). Build icons directly in JSX, do not import icon libraries.",
-    "- Consider and potentially reuse/extend code from previous responses if relevant",
-    "- Always output the full component code, keep the explanation short and concise",
-    "- Never also output a small snippet to change, just the full component code",
-    "- Keep your component file as short as possible for fast updates",
-    "- IMPORTANT: Never change the database name from what it was in the previous code. Changing the database name loses all existing user data. If the previous code used a specific database name, you MUST use that exact same name.",
-    "- The system can send you crash reports, fix them by simplifying the affected code",
-    "- List data items on the main page of your app so users don't have to hunt for them",
-    "- If you save data, make sure it is browsable in the app, eg lists should be clickable for more details",
-    demoDataLines,
-  ];
+  const titleSection = sessionDoc?.title
+    ? `The app is called "${sessionDoc.title}". Use this exact name in the app's heading and anywhere the app refers to itself.\n\n`
+    : "";
+  const userPromptSection = userPrompt ? `${userPrompt}\n\n` : "";
 
-  const titleLines = sessionDoc?.title
-    ? [`The app is called "${sessionDoc.title}". Use this exact name in the app's heading and anywhere the app refers to itself.`, ""]
-    : [];
+  const importStatements = `import React from "react"${generateImportStatements(chosenLlms)}`;
 
-  const systemPrompt = [
-    systemPromptLines.join("\n"),
-    "",
-    concatenatedLlmsTxt,
-    "",
-    ...titleLines,
-    ...(userPrompt ? [userPrompt, ""] : []),
-    "IMPORTANT: You are working in one JavaScript file. Define a classNames object just before the JSX return for colors and repeated styles, then reference it in your JSX.",
-    "",
-    "Before writing code, provide a title and brief description of the app. Then list the top 3 features that are the best fit for a mobile web database with real-time collaboration and describe a short planned workflow showing how those features connect into a coherent user experience.",
-    "",
-    "Then write the full component code block. After the code block, add a short message (1-2 sentences) describing the core workflow the app supports.",
-    "",
-    "Begin the component with the import statements. Use react and the following libraries:",
-    "",
-    "```js",
-    `import React, { ... } from "react"${generateImportStatements(chosenLlms)}`,
-    "",
-    "// other imports only when requested",
-    "```",
-    "",
-  ].join("\n");
+  const template = await getSystemPromptTemplate(pkgBaseUrl, sessionDoc.fetch);
+  const systemPrompt = template
+    .replaceAll("{{STYLE_PROMPT}}", stylePrompt)
+    .replaceAll("{{DEMO_DATA}}", demoDataLines)
+    .replaceAll("{{CONCATENATED_LLMS}}", concatenatedLlmsTxt)
+    .replaceAll("{{TITLE_SECTION}}", titleSection)
+    .replaceAll("{{USER_PROMPT}}", userPromptSection)
+    .replaceAll("{{IMPORT_STATEMENTS}}", importStatements);
 
   return {
     systemPrompt,
@@ -308,10 +271,24 @@ export async function makeBaseSystemPrompt(
   };
 }
 
+async function getSystemPromptTemplate(pkgBaseUrl: string, fetchFn?: typeof fetch): Promise<string> {
+  const rText = await keyedLoadAsset.get("system-prompt").once(async () => {
+    return loadAsset("./system-prompt.md", {
+      fallBackUrl: pkgBaseUrl,
+      basePath: () => import.meta.url,
+      mock: { fetch: fetchFn },
+    });
+  });
+  if (rText.isErr()) {
+    return Promise.reject(rText.Err());
+  }
+  return rText.Ok();
+}
+
 export async function getCliFooter(): Promise<string> {
   const rText = await keyedLoadAsset.get("cli-footer").once(async () => {
     return loadAsset("./cli-footer.md", {
-      fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
+      fallBackUrl: DEFAULT_PKG_BASE_URL,
       basePath: () => import.meta.url,
     });
   });
@@ -324,7 +301,7 @@ export async function getCliFooter(): Promise<string> {
 export async function getSkillText(name: string): Promise<string> {
   const rText = await keyedLoadAsset.get(name).once(async () => {
     return loadAsset(`./llms/${name}.md`, {
-      fallBackUrl: "https://esm.sh/@vibes.diy/prompts/",
+      fallBackUrl: DEFAULT_PKG_BASE_URL,
       basePath: () => import.meta.url,
     });
   });

@@ -32,6 +32,8 @@ export type VibesSvcEnv = typeof vibesSvcEnv.infer;
 const metaProps = type({
   title: "string",
   description: "string",
+  "imageUrl?": "string",
+  "canonicalUrl?": "string",
 });
 
 export type MetaProps = typeof metaProps.infer;

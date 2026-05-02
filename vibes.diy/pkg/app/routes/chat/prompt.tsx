@@ -1,10 +1,13 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { useNavigate, useSearchParams } from "react-router";
 import { Chat } from "./chat.$userSlug.$appSlug.js";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/react";
+import { useRecentVibesData } from "../../contexts/RecentVibesContext.js";
+
+const PENDING_PROMPT_KEY = "vibes.pendingPrompt";
 
 export default function ChatPrompt() {
   const { vibeDiyApi, sthis } = useVibesDiy();
@@ -12,15 +15,28 @@ export default function ChatPrompt() {
   const navigate = useNavigate();
   const hasRun = useRef(false);
   const { isSignedIn, isLoaded } = useAuth();
+  const { refresh: refreshRecentVibes } = useRecentVibesData();
 
   const prompt64 = searchParams.get("prompt64");
 
+  // Snapshot sessionStorage once on mount so the fallback survives a lost URL param
+  // (Clerk's OAuth round-trip can drop the query string before we get here).
+  const [sessionPrompt] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return sessionStorage.getItem(PENDING_PROMPT_KEY) ?? "";
+  });
+
+  const effectivePrompt = prompt64 ? sthis.txt.base64.decode(prompt64) : sessionPrompt;
+
   useEffect(() => {
-    if (!prompt64 || hasRun.current || !isLoaded || !isSignedIn) {
+    if (!effectivePrompt || hasRun.current || !isLoaded || !isSignedIn) {
       return;
     }
     hasRun.current = true;
-    const prompt = sthis.txt.base64.decode(prompt64);
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(PENDING_PROMPT_KEY);
+    }
+    const prompt = effectivePrompt;
     vibeDiyApi
       .getTokenClaims()
       .then((rClaims) => {
@@ -53,16 +69,17 @@ export default function ChatPrompt() {
               toast.error(`sendPrompt failed: ${rPrompt.Err().message}`);
               return;
             }
+            void refreshRecentVibes();
             navigate(`/chat/${chat.userSlug}/${chat.appSlug}`);
           });
       });
-  }, [prompt64, isLoaded, isSignedIn]);
+  }, [effectivePrompt, isLoaded, isSignedIn]);
 
   return (
     <>
       <Chat inConstruction />
       {isSignedIn &&
-        prompt64 &&
+        effectivePrompt &&
         createPortal(
           <div
             style={{
