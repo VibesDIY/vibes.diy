@@ -16,6 +16,7 @@ import { CfCacheIf } from "./types.js";
 import { CFEnv, MsgBase } from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/core-types-base";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
+import { R2ToS3Api } from "./peers/r2-to-s3api.js";
 
 // declare global {
 //   class WebSocketPair {
@@ -127,11 +128,11 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
   // console.log("Creating app context with netHash:", netHash(), env.DB_FLAVOUR);
   const drizzleDB = cfDrizzle(env, env.DB, ctx.drizzle).db;
 
+  const s3Api = env.FS_IDS_BUCKET ? new R2ToS3Api(env.FS_IDS_BUCKET, sthis) : undefined;
+
   return createAppContext({
     sthis,
     db: drizzleDB,
-    // s3Api: new R2ToS3Api(env.FS_IDS_BUCKET, sthis),
-    // db: ctx.drizzle ?? drizzle(env.DB),
     connections: ctx.webSocket?.connections ?? new Set() /* need no connections if not WS */,
     cache: ctx.cache,
 
@@ -141,6 +142,7 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
         db: drizzleDB,
         assets: createVibesApiTables(toDBFlavour(env.DB_FLAVOUR)).assets,
       },
+      ...(s3Api ? { s3: s3Api } : {}),
     },
 
     postQueue: async (msg: MsgBase) => {

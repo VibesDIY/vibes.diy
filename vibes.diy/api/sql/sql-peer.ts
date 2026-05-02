@@ -17,7 +17,7 @@ class SQLPeerStream implements PeerStreamWithCommit {
   write(chunk: Uint8Array): Promise<void> {
     this.chunks.push(chunk);
     if (this.chunks.reduce((acc, curr) => acc + curr.length, 0) > this.owner.cutoffSize) {
-      return Promise.reject(new Error("SQLitePeerStream: max size exceeded (4KB)"));
+      return Promise.reject(new Error(`SQL inline limit (${this.owner.cutoffSize}B) exceeded — content routes to S3`));
     }
     return Promise.resolve();
   }
@@ -130,7 +130,7 @@ export function createSQLPeer(params: CreateSQLPeerParams): StoragePeer {
     case "pg":
       return {
         fetch: new SQLPeerFetch(params.flavour, params.db, params.assets),
-        factory: (cider: Cider) => new SQLPeer(params.flavour, params.db, params.assets, cider, 10 * 1024 * 1024),
+        factory: (cider: Cider) => new SQLPeer(params.flavour, params.db, params.assets, cider, 4 * 1024),
       };
     default:
       throw new Error(`Unsupported DB flavour: ${params.flavour}`);

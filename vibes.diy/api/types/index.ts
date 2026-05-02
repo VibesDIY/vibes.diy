@@ -56,6 +56,9 @@ export interface S3Api {
   get(iurl: string): Promise<FetchResult>;
   put(iurl: string): Promise<WritableStream<Uint8Array>>;
   rename(fromUrl: string, toUrl: string): Promise<Result<void>>;
+  // Optional: await a pending put for the given URL. Implementations that don't
+  // track in-flight puts can omit this; callers must tolerate undefined.
+  awaitPut?(iurl: string): Promise<void>;
 }
 
 export interface StorageResult {
