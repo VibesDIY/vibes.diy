@@ -29,6 +29,8 @@ export default {
           DB_FLAVOUR: toDBFlavour(env.DB_FLAVOUR),
           NEON_DATABASE_URL: env.NEON_DATABASE_URL,
           DISCORD_WEBHOOK_URL: env.DISCORD_WEBHOOK_URL,
+          LLM_BACKEND_URL: env.LLM_BACKEND_URL,
+          LLM_BACKEND_API_KEY: env.LLM_BACKEND_API_KEY,
         },
       },
     });

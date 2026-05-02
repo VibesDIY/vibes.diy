@@ -18,6 +18,8 @@ export interface QueueCtxParams {
       DB_FLAVOUR: string;
       NEON_DATABASE_URL?: string;
       DISCORD_WEBHOOK_URL?: string;
+      LLM_BACKEND_URL: string;
+      LLM_BACKEND_API_KEY: string;
     };
   };
 }

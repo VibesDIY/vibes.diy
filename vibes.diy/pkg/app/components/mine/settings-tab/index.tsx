@@ -3,6 +3,7 @@ import { useVibesDiy } from "../../../vibes-diy-provider.js";
 import { fromKVString, toKVString, AIParams } from "@vibes.diy/api-types";
 import { toast } from "react-hot-toast";
 import { ModelSettingsCards } from "../../ModelSettingsCards.js";
+import { cidAssetUrl, getAppHostBaseUrl } from "../../../utils/vibeUrls.js";
 
 // ── card wrapper ─────────────────────────────────────────────────────────────
 
@@ -198,6 +199,8 @@ function EnvRow({
 type SettingsUpdate =
   | { kind: "fetch"; appSlug: string; userSlug: string }
   | { kind: "title"; appSlug: string; userSlug: string; title: string }
+  | { kind: "iconDescription"; appSlug: string; userSlug: string; iconDescription: string }
+  | { kind: "iconRegen"; appSlug: string; userSlug: string }
   | { kind: "chat"; appSlug: string; userSlug: string; chat: AIParams }
   | { kind: "app"; appSlug: string; userSlug: string; app: AIParams }
   | { kind: "img"; appSlug: string; userSlug: string; img: AIParams }
@@ -214,6 +217,8 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
   const { vibeDiyApi } = useVibesDiy();
 
   const [title, setTitle] = useState("");
+  const [iconDescription, setIconDescription] = useState("");
+  const [icon, setIcon] = useState<{ cid: string; mime: string } | undefined>(undefined);
   const [chatConfig, setChatConfig] = useState<Partial<AIParams>>({});
   const [appConfig, setAppConfig] = useState<Partial<AIParams>>({});
   const [imgConfig, setImgConfig] = useState<Partial<AIParams>>({});
@@ -226,6 +231,11 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
   const [savingImg, setSavingImg] = useState(false);
   const [savingEnv, setSavingEnv] = useState(false);
   const [loading, setLoading] = useState(true);
+  // CID we expect to be replaced by a fresh icon-gen. While set,
+  // the Save/Regenerate buttons are disabled and a poll watches for
+  // icon.cid to differ. `null` means "watch for any icon to appear"
+  // (when no icon existed at dispatch time).
+  const [iconWaitingFor, setIconWaitingFor] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     setPending({ kind: "fetch", appSlug, userSlug });
@@ -239,21 +249,29 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
     else if (pending.kind === "app") setSavingApp(true);
     else if (pending.kind === "img") setSavingImg(true);
     else if (pending.kind === "env") setSavingEnv(true);
-    else setLoading(true);
+    else if (pending.kind === "iconDescription" || pending.kind === "iconRegen") {
+      // Capture the current icon CID; the regen-poll effect waits for it
+      // to change. `null` sentinel means "no icon yet, watch for any".
+      setIconWaitingFor(icon?.cid ?? null);
+    } else setLoading(true);
 
     const base = { appSlug: pending.appSlug, userSlug: pending.userSlug };
     const req =
       pending.kind === "title"
         ? { ...base, title: pending.title }
-        : pending.kind === "chat"
-          ? { ...base, chat: pending.chat }
-          : pending.kind === "app"
-            ? { ...base, app: pending.app }
-            : pending.kind === "img"
-              ? { ...base, img: pending.img }
-              : pending.kind === "env"
-                ? { ...base, env: toKVString(pending.env) }
-                : base;
+        : pending.kind === "iconDescription"
+          ? { ...base, iconDescription: pending.iconDescription }
+          : pending.kind === "iconRegen"
+            ? { ...base, iconRegen: true }
+            : pending.kind === "chat"
+              ? { ...base, chat: pending.chat }
+              : pending.kind === "app"
+                ? { ...base, app: pending.app }
+                : pending.kind === "img"
+                  ? { ...base, img: pending.img }
+                  : pending.kind === "env"
+                    ? { ...base, env: toKVString(pending.env) }
+                    : base;
 
     void vibeDiyApi.ensureAppSettings(req).then((res) => {
       if (!alive) return;
@@ -263,15 +281,20 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
       else if (pending.kind === "app") setSavingApp(false);
       else if (pending.kind === "img") setSavingImg(false);
       else if (pending.kind === "env") setSavingEnv(false);
-      else setLoading(false);
+      else if (pending.kind !== "iconDescription" && pending.kind !== "iconRegen") setLoading(false);
 
       if (res.isErr()) {
         toast.error(res.Err().message);
+        if (pending.kind === "iconDescription" || pending.kind === "iconRegen") {
+          setIconWaitingFor(undefined);
+        }
         return;
       }
 
       const s = res.Ok().settings;
       setTitle(s.entry.settings.title ?? "");
+      setIconDescription(s.entry.settings.iconDescription ?? "");
+      setIcon(s.entry.settings.icon);
       setChatConfig(s.entry.settings.chat ?? {});
       setAppConfig(s.entry.settings.app ?? {});
       setImgConfig(s.entry.settings.img ?? {});
@@ -284,6 +307,45 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
       alive = false;
     };
   }, [pending, vibeDiyApi]);
+
+  // Icon-gen completion poll: when iconWaitingFor is set, re-fetch
+  // settings every 2s until the icon CID differs from the captured
+  // value (or 60s ceiling, then give up gracefully).
+  useEffect(() => {
+    if (iconWaitingFor === undefined) return;
+    let alive = true;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 30;
+    async function tick() {
+      if (!alive) return;
+      attempts += 1;
+      const res = await vibeDiyApi.ensureAppSettings({ appSlug, userSlug });
+      if (!alive) return;
+      if (res.isOk()) {
+        const s = res.Ok().settings;
+        const nextIcon = s.entry.settings.icon;
+        const settled =
+          (iconWaitingFor === null && nextIcon !== undefined) ||
+          (typeof iconWaitingFor === "string" && nextIcon !== undefined && nextIcon.cid !== iconWaitingFor);
+        if (settled) {
+          setIcon(nextIcon);
+          setIconDescription(s.entry.settings.iconDescription ?? "");
+          setIconWaitingFor(undefined);
+          return;
+        }
+      }
+      if (attempts >= MAX_ATTEMPTS) {
+        toast.error("Couldn't generate icon — try again.");
+        setIconWaitingFor(undefined);
+        return;
+      }
+      setTimeout(tick, 2000);
+    }
+    setTimeout(tick, 2000);
+    return () => {
+      alive = false;
+    };
+  }, [iconWaitingFor, vibeDiyApi, appSlug, userSlug]);
 
   function upsertEnv(key: string, value: string) {
     const updated = { ...env, [key]: value };
@@ -312,6 +374,52 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
           <Field label="Title" value={title} onChange={setTitle} placeholder={appSlug} />
           <div className="flex justify-end">
             <SaveBtn saving={savingTitle} onClick={() => setPending({ kind: "title", appSlug, userSlug, title })} />
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Icon">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 flex-shrink-0 rounded-full border border-gray-200 dark:border-gray-700 bg-white overflow-hidden flex items-center justify-center">
+              {icon ? (
+                <img
+                  src={cidAssetUrl(icon.cid, icon.mime, getAppHostBaseUrl())}
+                  alt=""
+                  className={"h-full w-full object-cover " + (iconWaitingFor !== undefined ? "opacity-50 animate-pulse" : "")}
+                />
+              ) : iconWaitingFor !== undefined ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
+              ) : (
+                <span className="text-xs text-gray-400">none</span>
+              )}
+            </div>
+            <div className="flex-1">
+              <Field
+                label="Description"
+                value={iconDescription}
+                onChange={setIconDescription}
+                placeholder='e.g. "a fox on a record player"'
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              disabled={iconWaitingFor !== undefined || !iconDescription.trim()}
+              onClick={() => setPending({ kind: "iconRegen", appSlug, userSlug })}
+              className="rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-50"
+            >
+              {iconWaitingFor !== undefined ? "Generating…" : "Regenerate"}
+            </button>
+            <button
+              type="button"
+              disabled={iconWaitingFor !== undefined}
+              onClick={() => setPending({ kind: "iconDescription", appSlug, userSlug, iconDescription })}
+              className="rounded px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 disabled:opacity-50"
+            >
+              {iconWaitingFor !== undefined ? "Generating…" : "Save"}
+            </button>
           </div>
         </div>
       </Card>

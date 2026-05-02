@@ -29,8 +29,18 @@ export function constructVibeScreenshotUrl(slug: string, appHostBaseUrl: string)
 }
 
 /**
- * Construct URL for vibe icon with query parameter
+ * Legacy stub from the removed hosting/ worker. The /icon.png endpoint never
+ * landed on the v2 stack, so PublishedVibeCard 404s on this URL and falls back
+ * to the screenshot. Retained to keep that fallback path working until
+ * PublishedVibeCard is migrated to the cidAsset-backed icon flow.
  */
 export function constructVibeIconUrl(slug: string, appHostBaseUrl: string): string {
   return BuildURI.from(appHostBaseUrl).pathname("/icon.png").setParam("slug", slug).toString();
+}
+
+/**
+ * Construct URL for a content-addressed asset served by the cidAsset endpoint.
+ */
+export function cidAssetUrl(cid: string, mime: string, appHostBaseUrl: string): string {
+  return BuildURI.from(appHostBaseUrl).pathname("/assets/cid").setParam("url", cid).setParam("mime", mime).toString();
 }

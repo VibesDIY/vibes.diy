@@ -53,7 +53,7 @@ export async function makePreAllocUserMessage(userPrompt: string): Promise<strin
   const catalog = await getLlmCatalog();
   const catalogText = catalog.map((l) => `- ${l.name}: ${l.description}`).join("\n");
   return [
-    "Pick skills from this catalog that fit the user's app request, and propose 3 title/slug pairs for naming.",
+    "Pick skills from this catalog that fit the user's app request, propose 3 title/slug pairs for naming, and propose a one-line icon subject.",
     "",
     "Skill catalog:",
     catalogText,
@@ -89,6 +89,11 @@ export const preAllocSchema = {
         },
       },
     },
+    iconDescription: {
+      type: "string",
+      description:
+        "A short, vivid one-line description of what an icon for this app should depict — what it shows, not how it's drawn. Examples: 'a fox on a record player', 'a sailboat on a calm lake', 'a chef whisking eggs'. Don't mention colors, line weights, letters, numbers, or framing — those are added separately by the renderer.",
+    },
   },
 } as const;
 
@@ -96,6 +101,7 @@ export const preAllocSchema = {
 export const preAllocParsed = type({
   skills: type("string").array(),
   pairs: type({ title: "string", slug: "string" }).array(),
+  iconDescription: "string",
 });
 export type PreAllocParsed = typeof preAllocParsed.infer;
 
