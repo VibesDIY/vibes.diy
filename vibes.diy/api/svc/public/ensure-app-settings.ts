@@ -2,6 +2,7 @@ import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, Even
 import {
   ActiveDbAcl,
   ActiveEntry,
+  ActiveIconDescription,
   parseArrayWarning,
   ActiveEnv,
   ActiveModelSetting,
@@ -11,12 +12,17 @@ import {
   EnablePublicAccess,
   EnableRequest,
   EvtAppSetting,
+  EvtIconGen,
   isActiveDbAcl,
   isActiveEnv,
+  isActiveIcon,
+  isActiveIconDescription,
   isActiveModelSettingApp,
   isActiveModelSettingChat,
   isActiveModelSettingImg,
   isActiveSkills,
+  isReqEnsureAppSettingsIconDescription,
+  isReqEnsureAppSettingsIconRegen,
   isReqEnsureAppSettingsImg,
   isReqEnsureAppSettingsSkills,
   isActiveTitle,
@@ -92,6 +98,16 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
       case isActiveSkills(e):
         result.entry.settings.skills = e.skills;
         break;
+      case isActiveIconDescription(e):
+        result.entry.settings.iconDescription = e.description;
+        break;
+      case isActiveIcon(e): {
+        const head = e.versions.find((v) => v.cid === e.currentCid);
+        if (head && head.cid.length > 0) {
+          result.entry.settings.icon = { cid: head.cid, mime: head.mime };
+        }
+        break;
+      }
       case isActiveModelSettingChat(e):
         result.entry.settings.chat = e.param;
         break;
@@ -122,6 +138,38 @@ async function withModelDefaults(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings
   if (!s.app) s.app = defaults.app;
   if (!s.img) s.img = defaults.img;
   return res;
+}
+
+async function postIconGen(
+  vctx: VibesApiSQLCtx,
+  args: { userSlug: string; appSlug: string; force: boolean }
+): Promise<void> {
+  await vctx.postQueue({
+    payload: {
+      type: "vibes.diy.evt-icon-gen",
+      userSlug: args.userSlug,
+      appSlug: args.appSlug,
+      ...(args.force ? { force: true } : {}),
+    },
+    tid: "queue-event",
+    src: "ensureAppSettings",
+    dst: "vibes-service",
+    ttl: 1,
+  } satisfies MsgBase<EvtIconGen>);
+}
+
+const ICON_REGEN_MIN_INTERVAL_MS = 10_000;
+
+// True if an ActiveIcon's head version was created within the last
+// ICON_REGEN_MIN_INTERVAL_MS — used to soft-no-op rapid Regenerate clicks.
+function recentlyRegenerated(entries: ActiveEntry[]): boolean {
+  const icon = entries.find(isActiveIcon);
+  if (!icon) return false;
+  const head = icon.versions.find((v) => v.cid === icon.currentCid);
+  if (!head) return false;
+  const headCreated = Date.parse(head.created);
+  if (Number.isNaN(headCreated)) return false;
+  return Date.now() - headCreated < ICON_REGEN_MIN_INTERVAL_MS;
 }
 
 export async function ensureAppSettings(
@@ -281,6 +329,29 @@ export async function ensureAppSettings(
             title: req.title,
           }) satisfies ActiveTitle
       );
+      break;
+    case isReqEnsureAppSettingsIconDescription(req):
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
+        settings,
+        isActiveIconDescription,
+        () =>
+          ({
+            type: "active.icon-description",
+            description: req.iconDescription,
+          }) satisfies ActiveIconDescription
+      );
+      if (!res.error) {
+        await postIconGen(vctx, { userSlug: res.userSlug, appSlug: res.appSlug, force: false });
+      }
+      break;
+    case isReqEnsureAppSettingsIconRegen(req):
+      // No entry mutation — pure regen request. Rate-limit on the head
+      // version's `created` to bound double-click cost.
+      if (!recentlyRegenerated(settings)) {
+        await postIconGen(vctx, { userSlug: res.userSlug, appSlug: res.appSlug, force: true });
+      }
       break;
     case isReqEnsureAppSettingsSkills(req):
       [res.settings, res.error] = await sqlUpsert(

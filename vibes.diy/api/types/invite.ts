@@ -302,6 +302,36 @@ export function isActiveSkills(obj: unknown): obj is ActiveSkills {
   return !(ActiveSkills(obj) instanceof type.errors);
 }
 
+export const IconVersion = type({
+  cid: "string",
+  mime: "string",
+  descriptionAt: "string",
+  created: "string",
+});
+export type IconVersion = typeof IconVersion.infer;
+export function isIconVersion(obj: unknown): obj is IconVersion {
+  return !(IconVersion(obj) instanceof type.errors);
+}
+
+export const ActiveIcon = type({
+  type: "'active.icon'",
+  versions: IconVersion.array(),
+  currentCid: "string",
+});
+export type ActiveIcon = typeof ActiveIcon.infer;
+export function isActiveIcon(obj: unknown): obj is ActiveIcon {
+  return !(ActiveIcon(obj) instanceof type.errors);
+}
+
+export const ActiveIconDescription = type({
+  type: "'active.icon-description'",
+  description: "string",
+});
+export type ActiveIconDescription = typeof ActiveIconDescription.infer;
+export function isActiveIconDescription(obj: unknown): obj is ActiveIconDescription {
+  return !(ActiveIconDescription(obj) instanceof type.errors);
+}
+
 export const ActiveModelSettingBase = type({
   type: "'active.model'",
   param: AIParams,
@@ -356,6 +386,8 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(EnableRequest)
   .or(ActiveTitle)
   .or(ActiveSkills)
+  .or(ActiveIcon)
+  .or(ActiveIconDescription)
   .or(ActiveModelSetting)
   .or(ActiveEnv)
   .or(ActiveDbAcl);
