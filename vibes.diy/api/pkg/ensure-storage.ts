@@ -54,13 +54,15 @@ export interface StoragePeer {
 export interface EnsureStorageOptions {
   // Per-operation ceiling (ms) on any single peer op (begin/write/close/cancel).
   // A hung peer gets dropped instead of wedging the whole pipeline.
-  // Defaults to 30s — generous for healthy R2 puts of multi-MB objects under
-  // load, bounded enough that any genuine hang trips well before Cloudflare's
-  // 30s CPU limit.
+  // Resets per chunk: a healthy multi-MB upload gets a fresh window for each
+  // write(), so total wall time is bounded by network throughput, not this.
+  // 5s is ~10x R2's healthy median latency; well under Cloudflare's 30s CPU
+  // ceiling so any genuine hang surfaces a clean error before the platform
+  // terminates the worker.
   readonly peerTimeout?: number;
 }
 
-const DEFAULT_PEER_TIMEOUT_MS = 30000;
+const DEFAULT_PEER_TIMEOUT_MS = 5000;
 
 export function ensureStorage(...peers: StoragePeer[]): VibesAssetStorage;
 export function ensureStorage(opts: EnsureStorageOptions, ...peers: StoragePeer[]): VibesAssetStorage;
