@@ -13,8 +13,8 @@ import {
   loadAsset,
 } from "@adviser/cement";
 import { type } from "arktype";
-import { ResEnsureAppSlug, isSectionEvent } from "@vibes.diy/api-types";
-import type { SectionEvent } from "@vibes.diy/api-types";
+import { ResEnsureAppSlug, isResError, isSectionEvent } from "@vibes.diy/api-types";
+import type { ResError, SectionEvent } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveUserSlug } from "../resolve-user-slug.js";
@@ -93,12 +93,24 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       return Result.Err(`Failed to send prompt: ${JSON.stringify(rPrompt.Err())}`);
     }
 
-    // chat.sectionStream emits SectionEvent | ResError. Drop the error
-    // envelopes here so the resolver only sees structured section events.
+    // chat.sectionStream emits SectionEvent | ResError. Capture error
+    // envelopes so we can surface upstream failures (e.g. provider quota,
+    // model errors) instead of bottoming out as "no files resolved."
+    const upstreamErrors: ResError[] = [];
     const sectionOnly = chat.sectionStream.pipeThrough(
       new TransformStream<unknown, SectionEvent>({
         transform(msg, controller) {
-          if (isSectionEvent(msg)) controller.enqueue(msg);
+          if (isSectionEvent(msg)) {
+            controller.enqueue(msg);
+            return;
+          }
+          if (isResError(msg)) {
+            upstreamErrors.push(msg);
+            if (args.verbose) {
+              const code = msg.error?.code ? ` [${msg.error.code}]` : "";
+              process.stderr.write(`[upstream-error]${code} ${msg.error?.message ?? "(no message)"}\n`);
+            }
+          }
         },
       })
     );
@@ -128,8 +140,19 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     }
     const resolved = rResolved.Ok();
     if (Object.keys(resolved.files).length === 0) {
+      if (upstreamErrors.length > 0) {
+        const detail = upstreamErrors
+          .map((e) => `${e.error?.code ? `[${e.error.code}] ` : ""}${e.error?.message ?? "(no message)"}`)
+          .join("; ");
+        return Result.Err(`AI provider error: ${detail}`);
+      }
       const tail = resolved.errors.length > 0 ? ` (${resolved.errors.length} apply errors)` : "";
       return Result.Err(`No files resolved from AI response${tail}.`);
+    }
+    if (upstreamErrors.length > 0 && !args.verbose) {
+      const first = upstreamErrors[0];
+      const code = first.error?.code ? ` [${first.error.code}]` : "";
+      await sendProgress(ctx, "warn", `Upstream warning${code}: ${first.error?.message ?? "(no message)"}`);
     }
     if (resolved.errors.length > 0 && !args.verbose) {
       await sendProgress(ctx, "warn", `Resolved with ${resolved.errors.length} apply error(s); rerun with --verbose for detail.`);
