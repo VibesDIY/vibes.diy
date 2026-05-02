@@ -28,6 +28,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   storageSystems: {
     sql: CreateSQLPeerParams;
     s3?: S3Api;
+    peerTimeout?: number;
   };
   postQueue: (msg: MsgBase) => Promise<void>;
   netHash(): string;
@@ -246,8 +247,12 @@ export async function createAppContext<T extends VibesSqlite>(
       deviceIdCA: rDeviceIdCA.Ok(),
     }),
     storage: params.storageSystems.s3
-      ? ensureStorage(createSQLPeer(params.storageSystems.sql), createS3Peer({ s3: params.storageSystems.s3 }))
-      : ensureStorage(createSQLPeer(params.storageSystems.sql)),
+      ? ensureStorage(
+          { peerTimeout: params.storageSystems.peerTimeout },
+          createSQLPeer(params.storageSystems.sql),
+          createS3Peer({ s3: params.storageSystems.s3 })
+        )
+      : ensureStorage({ peerTimeout: params.storageSystems.peerTimeout }, createSQLPeer(params.storageSystems.sql)),
 
     llmRequest: defaultLLMRequest(params.llmRequest, {
       url: envVals.LLM_BACKEND_URL,

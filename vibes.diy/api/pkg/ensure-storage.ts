@@ -51,7 +51,24 @@ export interface StoragePeer {
   factory: (cider: Cider) => PeerWithCommit;
 }
 
-export function ensureStorage(...peers: StoragePeer[]): VibesAssetStorage {
+export interface EnsureStorageOptions {
+  // Per-operation ceiling (ms) on any single peer op (begin/write/close/cancel).
+  // A hung peer gets dropped instead of wedging the whole pipeline.
+  // Defaults to 30s — generous for healthy R2 puts of multi-MB objects under
+  // load, bounded enough that any genuine hang trips well before Cloudflare's
+  // 30s CPU limit.
+  readonly peerTimeout?: number;
+}
+
+const DEFAULT_PEER_TIMEOUT_MS = 30000;
+
+export function ensureStorage(...peers: StoragePeer[]): VibesAssetStorage;
+export function ensureStorage(opts: EnsureStorageOptions, ...peers: StoragePeer[]): VibesAssetStorage;
+export function ensureStorage(...args: [EnsureStorageOptions | StoragePeer, ...StoragePeer[]] | StoragePeer[]): VibesAssetStorage {
+  const [first, ...rest] = args;
+  const opts: EnsureStorageOptions = first && !("fetch" in first) ? (first as EnsureStorageOptions) : {};
+  const peers: StoragePeer[] = first && !("fetch" in first) ? (rest as StoragePeer[]) : (args as StoragePeer[]);
+  const peerTimeout = opts.peerTimeout ?? DEFAULT_PEER_TIMEOUT_MS;
   return {
     fetch: async (iurl: string): Promise<FetchResult> => {
       // const peers = [new SQLPeerFetch(flavour, db, assets), new S3PeerFetch(s3)];
@@ -82,12 +99,10 @@ export function ensureStorage(...peers: StoragePeer[]): VibesAssetStorage {
           > => {
             const [lag1, lag2] = coerceStreamUint8(item).tee();
             const cider = new Cider(lag1);
-            // console.log("Created Cider for item, waiting for teeWriter...");
-            // const peers = [
-            // new SQLPeer(flavour, db, assets, cider, 10 * 1024 * 1024) /*, new S3Peer(s3, cider) */];
             return teeWriter(
               peers.map((i) => i.factory(cider)),
-              lag2
+              lag2,
+              { peerTimeout }
             ).then(async (rTee) => {
               if (rTee.isErr()) {
                 return Result.Err(rTee);
