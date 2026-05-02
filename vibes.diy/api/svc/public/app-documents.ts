@@ -94,7 +94,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       }
 
       const now = new Date().toISOString();
-      const docId = req.docId ?? vctx.sthis.nextId().str;
+      const docId = req.docId ?? vctx.sthis.timeOrderedNextId().str;
       const dbName = req.dbName;
       const t = vctx.sql.tables.appDocuments;
 

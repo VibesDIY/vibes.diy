@@ -62,6 +62,20 @@ describe("Firefly app-documents", { timeout: 10000 }, () => {
     expect(res.id).toBeDefined();
   });
 
+  it("putDoc auto-mints time-ordered docIds so _id sorts by creation order", async () => {
+    // Two puts spaced > 1ms apart should produce ids that sort
+    // lexicographically in creation order. Regression: previously used
+    // sthis.nextId() which is purely random base58 — sort was random.
+    const r1 = await api.putDoc({ userSlug, appSlug, dbName: "id-order", doc: { n: 1 } });
+    expect(r1.isOk()).toBe(true);
+    const id1 = r1.Ok().id;
+    await new Promise((r) => setTimeout(r, 5));
+    const r2 = await api.putDoc({ userSlug, appSlug, dbName: "id-order", doc: { n: 2 } });
+    expect(r2.isOk()).toBe(true);
+    const id2 = r2.Ok().id;
+    expect(id1 < id2).toBe(true);
+  });
+
   it("putDoc with explicit docId uses that id", async () => {
     const rRes = await api.putDoc({ userSlug, appSlug, dbName: "test", doc: { title: "explicit" }, docId: "my-doc-id" });
     expect(rRes.isOk()).toBe(true);
