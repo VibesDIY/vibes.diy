@@ -1,7 +1,7 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import React, { createContext, useContext } from "react";
 import { ClerkProvider, useClerk } from "@clerk/react";
-import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Result } from "@adviser/cement";
+import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Option, Result } from "@adviser/cement";
 import { type } from "arktype";
 import { PostHogProvider } from "posthog-js/react";
 import { PkgRepos, VibesDiyApiIface } from "@vibes.diy/api-types";
@@ -62,8 +62,8 @@ const lazySuperThis = Lazy(() => ensureSuperThis());
 // We store {token, exp} under this key; exp is parsed from the JWT itself.
 // EXP_MARGIN_SEC is the safety window — any cached token expiring within this
 // many seconds is treated as stale and we fall through to the slow path.
-const TOKEN_STORAGE_KEY = "vibes.diy.clerk-token";
-const EXP_MARGIN_SEC = 60;
+export const TOKEN_STORAGE_KEY = "vibes.diy.clerk-token";
+export const EXP_MARGIN_SEC = 60;
 
 const CachedClerkToken = type({
   token: "string",
@@ -76,7 +76,7 @@ const JwtPayload = type({
   "+": "delete",
 });
 
-function readCachedClerkToken(): CachedClerkToken | undefined {
+export function readCachedClerkToken(): CachedClerkToken | undefined {
   if (typeof localStorage === "undefined") return undefined;
   const raw = localStorage.getItem(TOKEN_STORAGE_KEY);
   if (!raw) return undefined;
@@ -87,7 +87,7 @@ function readCachedClerkToken(): CachedClerkToken | undefined {
   return validated;
 }
 
-function writeCachedClerkToken(token: string): void {
+export function writeCachedClerkToken(token: string): void {
   if (typeof localStorage === "undefined") return;
   const [, payloadB64] = token.split(".");
   if (!payloadB64) return;
@@ -98,9 +98,28 @@ function writeCachedClerkToken(token: string): void {
   localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ token, exp: validated.exp } satisfies CachedClerkToken));
 }
 
-function clearCachedClerkToken(): void {
+export function clearCachedClerkToken(): void {
   if (typeof localStorage === "undefined") return;
   localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
+// Single source of truth for "is the cache usable right now?". Returns the
+// token wrapped in Option.Some when usable; otherwise None — and self-clears
+// localStorage in the one case where a stale entry must not survive (Clerk
+// loaded + signed-out). Splitting this predicate across multiple call sites
+// is what produced the regression fixed by b61781c8.
+export function readUsableCachedToken(args: {
+  readonly clerkLoaded: boolean;
+  readonly clerkSignedIn: boolean;
+  readonly nowSec: number;
+}): Option<string> {
+  if (args.clerkLoaded && !args.clerkSignedIn) {
+    clearCachedClerkToken();
+    return Option.None();
+  }
+  const cached = readCachedClerkToken();
+  if (!cached || cached.exp <= args.nowSec + EXP_MARGIN_SEC) return Option.None();
+  return Option.Some(cached.token);
 }
 
 function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
@@ -133,12 +152,10 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       if (clerk.loaded) {
         // console.log("clerk-evt", clerk.loaded, clerk.isSignedIn)
         clerkReady?.resolve(undefined);
-        // Wipe the cached JWT on sign-out so the next getToken() falls through
-        // to the live Clerk session (which is now empty) instead of returning
-        // a still-unexpired-but-stale-from-auth-perspective token. Without
-        // this, /vibe/... routes keep showing the user as signed-in to the
-        // API for the remaining JWT lifetime even after Clerk's UI says
-        // signed-out.
+        // Proactive sign-out wipe: redundant with readUsableCachedToken's
+        // self-clear on read, but fires immediately so a parallel reader in
+        // another tab/component sees the empty cache without waiting for its
+        // next getToken().
         if (!clerk.isSignedIn) {
           clearCachedClerkToken();
         }
@@ -151,23 +168,19 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
         // Fast path: a cached JWT from a prior page load that still has more
         // than EXP_MARGIN_SEC seconds remaining. Lets the first WS message
         // fire without waiting for Clerk's SDK to finish loading.
-        // If Clerk is already loaded and reports signed-out, skip the cache
-        // — covers the narrow window between sign-out and the listener
-        // firing the localStorage wipe.
-        const cached = readCachedClerkToken();
-        const nowSec = Math.floor(Date.now() / 1000);
-        const clerkSaysSignedOut = clerk.loaded && !clerk.isSignedIn;
-        if (!clerkSaysSignedOut && cached && cached.exp > nowSec + EXP_MARGIN_SEC) {
-          return Result.Ok({ type: "clerk", token: cached.token });
+        const usable = readUsableCachedToken({
+          clerkLoaded: clerk.loaded,
+          clerkSignedIn: !!clerk.isSignedIn,
+          nowSec: Math.floor(Date.now() / 1000),
+        });
+        if (usable.IsSome()) {
+          return Result.Ok({ type: "clerk", token: usable.Unwrap() });
         }
         if (clerkReady) {
           await clerkReady.asPromise();
           clerkReady = undefined;
         }
         if (!clerk.isSignedIn) {
-          // Belt-and-suspenders: if we got here via the slow path with the
-          // user signed out, make sure no stale token survives in localStorage.
-          clearCachedClerkToken();
           return Result.Err("not signed in");
         }
         const ot = await clerk.session?.getToken({ template: "with-email" });
