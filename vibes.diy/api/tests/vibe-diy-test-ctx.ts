@@ -49,6 +49,9 @@ async function createDrizzleDB(): Promise<VibesSqlite> {
 
 export interface CreateVibeDiyTestCtxOpts {
   s3?: S3Api;
+  // Override teeWriter peerTimeout for tests (default 30s in production).
+  // Canary tests set this small (e.g. 200ms) so deadlines fire fast.
+  peerTimeout?: number;
 }
 
 export async function createVibeDiyTestCtx(
@@ -113,6 +116,7 @@ export async function createVibeDiyTestCtx(
       // Default to an in-memory S3 stub so >4KB content has somewhere to go.
       // Tests can pass a custom stub (e.g. with hangPut=true) to override.
       s3: opts.s3 ?? new StubS3Api(),
+      ...(opts.peerTimeout !== undefined ? { peerTimeout: opts.peerTimeout } : {}),
     },
     fetchAsset: async (url: string) => {
       if (url.endsWith("models.json")) {

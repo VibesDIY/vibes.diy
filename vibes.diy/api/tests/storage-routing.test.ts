@@ -11,12 +11,10 @@ async function withDeadline<T>(p: Promise<T>, ms: number): Promise<T | typeof TI
   return Promise.race([p, new Promise<typeof TIMEOUT_MARKER>((resolve) => setTimeout(() => resolve(TIMEOUT_MARKER), ms))]);
 }
 
-// The "cement-bug canary" cases (C, D) are expected to fail until the cement
-// teeWriter peerTimeout patch lands (plan Part 2). Set RUN_CEMENT_CANARY=1 to
-// run them locally and confirm the bug status; CI keeps them off by default so
-// the suite stays green while Part 2 work is in flight.
-const RUN_CANARY = process.env.RUN_CEMENT_CANARY === "1";
-const canaryIt = RUN_CANARY ? it : it.skip;
+// Cases C and D are regression guards for the cement teeWriter peerTimeout
+// patch (patches/@adviser__cement.patch). If a future cement upgrade drops
+// the patch, these will fire and surface the regression.
+const canaryIt = it;
 
 describe("storage routing — 4 KB SQL cutoff with S3 fallthrough", () => {
   function content(size: number, marker = "A"): string {
@@ -58,7 +56,9 @@ describe("storage routing — 4 KB SQL cutoff with S3 fallthrough", () => {
       const deviceCA = await createTestDeviceCA(sthis);
       const stub = new StubS3Api();
       stub.hangPut = true;
-      const { vibesCtx } = await createVibeDiyTestCtx(sthis, deviceCA, { s3: stub });
+      // 200ms peerTimeout — well under the 1.5s outer deadline so the
+      // cement timeout fires first and the test sees a clean resolution.
+      const { vibesCtx } = await createVibeDiyTestCtx(sthis, deviceCA, { s3: stub, peerTimeout: 200 });
 
       const winner = await withDeadline(vibesCtx.storage.ensure(string2stream(content(8192))), 1500);
       if (winner === TIMEOUT_MARKER) {
@@ -80,7 +80,9 @@ describe("storage routing — 4 KB SQL cutoff with S3 fallthrough", () => {
       const deviceCA = await createTestDeviceCA(sthis);
       const stub = new StubS3Api();
       stub.hangPut = true;
-      const { vibesCtx } = await createVibeDiyTestCtx(sthis, deviceCA, { s3: stub });
+      // 200ms peerTimeout — well under the 1.5s outer deadline so the
+      // cement timeout fires first and the test sees a clean resolution.
+      const { vibesCtx } = await createVibeDiyTestCtx(sthis, deviceCA, { s3: stub, peerTimeout: 200 });
 
       const winner = await withDeadline(vibesCtx.storage.ensure(string2stream(content(1024))), 1500);
       if (winner === TIMEOUT_MARKER) {
