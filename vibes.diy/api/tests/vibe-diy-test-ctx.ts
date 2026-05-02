@@ -2,7 +2,8 @@ import { loadAsset, Result, string2stream } from "@adviser/cement";
 import { DeviceIdCA } from "@fireproof/core-device-id";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createAppContext, noopCache } from "@vibes.diy/api-svc";
-import { MsgBase } from "@vibes.diy/api-types";
+import { MsgBase, S3Api } from "@vibes.diy/api-types";
+import { StubS3Api } from "./stub-s3-api.js";
 import { createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { createClient } from "@libsql/client/node";
@@ -46,7 +47,15 @@ async function createDrizzleDB(): Promise<VibesSqlite> {
   return drizzleLibsql(client) as unknown as VibesSqlite;
 }
 
-export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperThis>, deviceCA: DeviceIdCA) {
+export interface CreateVibeDiyTestCtxOpts {
+  s3?: S3Api;
+}
+
+export async function createVibeDiyTestCtx(
+  sthis: ReturnType<typeof ensureSuperThis>,
+  deviceCA: DeviceIdCA,
+  opts: CreateVibeDiyTestCtxOpts = {}
+) {
   const flavour = toDBFlavour(inject("DB_FLAVOUR" as never) as string);
   const drizzleDB = await createDrizzleDB();
 
@@ -101,6 +110,9 @@ export async function createVibeDiyTestCtx(sthis: ReturnType<typeof ensureSuperT
         db: drizzleDB,
         assets: createVibesApiTables(flavour).assets,
       },
+      // Default to an in-memory S3 stub so >4KB content has somewhere to go.
+      // Tests can pass a custom stub (e.g. with hangPut=true) to override.
+      s3: opts.s3 ?? new StubS3Api(),
     },
     fetchAsset: async (url: string) => {
       if (url.endsWith("models.json")) {

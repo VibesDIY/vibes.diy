@@ -856,7 +856,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         fileSystem: [
           {
             assetId: "z7s2pNqju7dRUpKYPc5AisTkM8TsK4PHp2suH9YzQxXvc",
-            assetURI: expect.stringContaining("//Assets/z7s2pNqju7dRUpKYPc5AisTkM8TsK4PHp2suH9YzQxXvc"),
+            assetURI: "s3://r2/z7s2pNqju7dRUpKYPc5AisTkM8TsK4PHp2suH9YzQxXvc",
             fileName: "/App.jsx",
             mimeType: "text/javascript",
             size: 5370,
@@ -867,7 +867,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
           },
           {
             assetId: "z9F292JVxJPpjFBsMz9pzP8rc7qTPecWCzYxkBQrnsPMm",
-            assetURI: expect.stringContaining("//Assets/z9F292JVxJPpjFBsMz9pzP8rc7qTPecWCzYxkBQrnsPMm"),
+            assetURI: "s3://r2/z9F292JVxJPpjFBsMz9pzP8rc7qTPecWCzYxkBQrnsPMm",
             fileName: "/~~transformed~~/z7s2pNqju7dRUpKYPc5AisTkM8TsK4PHp2suH9YzQxXvc",
             mimeType: "text/javascript",
             size: 9405,
