@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 #
-# r2-validate.sh — post-cli-deploy validation for the R2 storage activation.
+# r2-validate.sh — inspect storage routing for a vibes-diy push.
 #
 # Pushes a vibe with a controlled-size App.jsx, then queries the Apps table
 # to read each file's assetURI directly (CLI doesn't output JSON, so the DB
 # is the source of truth for routing decisions).
 #
 # Prerequisites:
-#   - cli env has the new code deployed (`vibes-diy@c<version>` tag pushed)
-#   - You are logged in: `npx vibes-diy login`
+#   - You are logged in to the target API: `npx vibes-diy login --api-url=<url>`
 #   - vibes.diy/api/svc/.dev.vars has NEON_DATABASE_URL set
 #   - From the repo root so `pnpm --dir vibes.diy/api/svc run db:inspect ...`
 #     works
 #
 # Usage:
 #   ./vibes.diy/api/svc/usage-report/r2-validate.sh [size_bytes]
+#
+#   VIBES_API_URL='https://...' ./vibes.diy/api/svc/usage-report/r2-validate.sh
 #
 # Default size 6144 (~6 KB) straddles the 4 KB cutoff so raw + transformed
 # JS route to R2 while the import map stays in SQL.
@@ -26,6 +27,11 @@ RUN_ID="$(date +%s)"
 SLUG="r2-validate-${RUN_ID}"
 DIR="$(mktemp -d -t r2-validate-XXXXXX)"
 SUCCESS=0
+
+PUSH_ARGS=(--mode dev --app-slug "${SLUG}")
+if [ -n "${VIBES_API_URL:-}" ]; then
+  PUSH_ARGS+=(--api-url "${VIBES_API_URL}")
+fi
 
 cleanup() {
   if [ "$SUCCESS" -eq 1 ]; then
@@ -47,13 +53,14 @@ trap cleanup EXIT
 ACTUAL_SIZE=$(wc -c < "$DIR/App.jsx" | tr -d ' ')
 
 echo "=== r2-validate ==="
-echo "  slug   : ${SLUG}"
-echo "  dir    : ${DIR}"
-echo "  size   : ${ACTUAL_SIZE} bytes (target ${SIZE})"
+echo "  slug    : ${SLUG}"
+echo "  dir     : ${DIR}"
+echo "  size    : ${ACTUAL_SIZE} bytes (target ${SIZE})"
+echo "  api-url : ${VIBES_API_URL:-<default>}"
 echo
 
-echo "=== vibes-diy push --mode dev --app-slug ${SLUG} ==="
-( cd "$DIR" && npx vibes-diy push --mode dev --app-slug "${SLUG}" ) | tee "$DIR/push.log"
+echo "=== vibes-diy push ${PUSH_ARGS[*]} ==="
+( cd "$DIR" && npx vibes-diy push "${PUSH_ARGS[@]}" ) | tee "$DIR/push.log"
 PUSH_EXIT=${PIPESTATUS[0]}
 echo
 if [ "$PUSH_EXIT" -ne 0 ]; then
@@ -133,34 +140,21 @@ if [ ${#CIDS_IN_R2[@]} -gt 0 ]; then
     "select count(*) as n from \"Assets\" where \"assetId\" in (${IDS_LIST})" \
     2>&1 | awk '/"n":/' | head -1)
   echo "    Assets count for R2 CIDs: ${R2_IN_SQL}"
-
-  echo "  R2 bucket lookup (npx wrangler):"
-  for cid in "${CIDS_IN_R2[@]}"; do
-    if npx wrangler r2 object get "vibes-diy-fs-ids/${cid}" -o /dev/null 2>/dev/null; then
-      echo "    OK in R2: ${cid}"
-    else
-      echo "    MISSING from R2: ${cid}"
-    fi
-  done
 fi
 echo
 
-echo "=== verdict ==="
-# We expect the import-map (small) to be SQL and the >4KB files to be R2
-# only when new code is deployed. Two named scenarios:
-EXPECTED_NEW="${TOTAL} total, S3>=2 (raw + transformed), SQL>=1 (import-map)"
-EXPECTED_OLD="${TOTAL} total, S3=0, SQL=${TOTAL} (everything inline)"
-
+echo "=== summary ==="
+# At a 6 KB source size: with the 4 KB SQL cutoff, raw + transformed JS go
+# to R2 and the small import map stays in SQL.
 if [ "$S3_COUNT" -ge 2 ] && [ "$SQL_COUNT" -ge 1 ]; then
-  echo "OK (NEW CODE): ${EXPECTED_NEW}"
+  echo "split routing: ${TOTAL} total, ${S3_COUNT} in R2, ${SQL_COUNT} in SQL"
   SUCCESS=1
   exit 0
 elif [ "$S3_COUNT" -eq 0 ] && [ "$SQL_COUNT" -ge "$TOTAL" ]; then
-  echo "BASELINE (OLD CODE): ${EXPECTED_OLD}"
-  echo "  -> all assets routed to SQL. Deploy new code to flip >4KB to R2."
+  echo "all-SQL routing: ${TOTAL} total, ${SQL_COUNT} in SQL, 0 in R2"
   SUCCESS=1
   exit 0
 else
-  echo "INCONCLUSIVE: ${TOTAL} total, ${S3_COUNT} R2, ${SQL_COUNT} SQL — review above"
+  echo "unexpected mix: ${TOTAL} total, ${S3_COUNT} in R2, ${SQL_COUNT} in SQL — review above"
   exit 2
 fi
