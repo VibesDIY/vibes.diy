@@ -45,6 +45,12 @@ export class R2ToS3Api implements S3Api {
     const putPromise = this.r2
       .put(key, readable as unknown as CFReadableStream)
       .then(() => undefined)
+      .catch((e: unknown) => {
+        // Investigation-only: capture the literal R2 error so we can read it
+        // in worker logs (independent of cement's "all peers failed" collapse).
+        console.error(`R2ToS3Api.put(${key}) [TransformStream form] rejected:`, e);
+        throw e;
+      })
       .finally(() => {
         this.pendingPuts.delete(key);
       });
