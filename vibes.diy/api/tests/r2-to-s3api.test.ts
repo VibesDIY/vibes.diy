@@ -240,7 +240,6 @@ describe("R2ToS3Api unified buffer + multipart", () => {
     const api = new R2ToS3Api(fake, stubSthis);
     const payload = makePayload(6 * 1024 * 1024, 23);
 
-    let writeError: Error | undefined;
     const writable = await api.put("s3://r2/temp/h.tmp");
     const writer = writable.getWriter();
     const chunkSize = 1024 * 1024;
@@ -248,14 +247,12 @@ describe("R2ToS3Api unified buffer + multipart", () => {
       await writer.write(payload.subarray(off, Math.min(off + chunkSize, payload.byteLength)));
     }
     await writer.close();
-    // close() returns fast; await the real put-promise. Failure here surfaces
-    // through awaitPut's settled tracking — we expect it to resolve (the map
-    // promise swallows the rejection) but the multipart should have been
-    // aborted in the background.
+    // close() returns fast; await the put-promise. The map promise swallows
+    // the rejection (rejection is observable via the writer-side promise per
+    // WritableStream contract — we don't surface it here).
     await api.awaitPut("s3://r2/temp/h.tmp");
     expect(fake.calls.abort).toBe(1);
     expect(fake.store.has("r2/temp/h.tmp")).toBe(false);
-    expect(writeError).toBeUndefined();
   });
 
   it("Case I: two concurrent puts of different keys both finalize", async () => {
