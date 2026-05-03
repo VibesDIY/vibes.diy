@@ -79,6 +79,11 @@ function CsrToCertContent() {
   return (
     <BrutalistLayout title="CSR to Certificate" subtitle="Submit a Certificate Signing Request to receive a signed certificate">
       <BrutalistCard size="md">
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+          This page usually runs itself — when you arrive here from another tool, your CSR is filled in and submitted automatically,
+          and you'll be redirected back when the signed certificate is ready. The <strong>Submit CSR</strong> button below sends
+          your Certificate Signing Request to be signed; you only need to use it manually if you're pasting a CSR by hand.
+        </div>
         <form onSubmit={handleSubmit(onSubmit)}>
           <label htmlFor="csr-input" className="block text-sm font-medium mb-2" style={{ color: "var(--vibes-text-secondary)" }}>
             Enter CSR content:
