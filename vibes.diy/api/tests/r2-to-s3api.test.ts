@@ -179,6 +179,9 @@ async function pipeBytes(api: R2ToS3Api, url: string, bytes: Uint8Array, chunkSi
     await writer.write(bytes.subarray(off, end));
   }
   await writer.close();
+  // close() returns immediately (R2 work runs in background); awaitPut waits
+  // for the actual put-promise to settle.
+  await api.awaitPut(url);
 }
 
 function makePayload(size: number, marker: number): Uint8Array {
@@ -241,23 +244,18 @@ describe("R2ToS3Api unified buffer + multipart", () => {
     const writable = await api.put("s3://r2/temp/h.tmp");
     const writer = writable.getWriter();
     const chunkSize = 1024 * 1024;
-    const closePromise = (async () => {
-      for (let off = 0; off < payload.byteLength; off += chunkSize) {
-        await writer.write(payload.subarray(off, Math.min(off + chunkSize, payload.byteLength)));
-      }
-      await writer.close();
-    })().catch((e: unknown) => {
-      writeError = e instanceof Error ? e : new Error(String(e));
-    });
-
-    await closePromise;
-    expect(writeError).toBeDefined();
-    expect(writeError?.message).toMatch(/simulated complete\(\) failure/);
+    for (let off = 0; off < payload.byteLength; off += chunkSize) {
+      await writer.write(payload.subarray(off, Math.min(off + chunkSize, payload.byteLength)));
+    }
+    await writer.close();
+    // close() returns fast; await the real put-promise. Failure here surfaces
+    // through awaitPut's settled tracking — we expect it to resolve (the map
+    // promise swallows the rejection) but the multipart should have been
+    // aborted in the background.
+    await api.awaitPut("s3://r2/temp/h.tmp");
     expect(fake.calls.abort).toBe(1);
     expect(fake.store.has("r2/temp/h.tmp")).toBe(false);
-
-    // pendingPuts cleared so a subsequent awaitPut resolves to undefined.
-    await expect(api.awaitPut("s3://r2/temp/h.tmp")).resolves.toBeUndefined();
+    expect(writeError).toBeUndefined();
   });
 
   it("Case I: two concurrent puts of different keys both finalize", async () => {

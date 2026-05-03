@@ -23,8 +23,10 @@ class S3PeerStream implements PeerStreamWithCommit {
   }
   async close(): Promise<void> {
     await this.writer.close();
-    // Ensure the underlying R2 put resolves before commit/rename runs.
-    await this.owner.s3.awaitPut?.(this.tmpUrl);
+    // We deliberately do NOT await awaitPut here. cement's teeWriter wraps
+    // peer.close() with a 5s peerTimeout; a multi-MB R2 multipart upload can
+    // exceed that. The actual put-promise is awaited inside rename() (via
+    // awaitPut), which runs OUTSIDE the teeWriter timeout.
   }
   async commit(): Promise<Result<{ url: string }>> {
     const { cid: assetID } = await this.owner.cider.getCID();
