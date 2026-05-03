@@ -56,7 +56,7 @@
   "license": "Apache-2.0",
   "pnpm": {
     "patchedDependencies": {
-      "drizzle-kit@0.31.8": "/Users/jchris/code/fp/vibes.diy/patches/drizzle-kit@0.31.8.patch",
+      "drizzle-kit@0.31.8": "patches/drizzle-kit@0.31.8.patch",
       "@adviser/cement": "patches/@adviser__cement.patch"
     }
   },
