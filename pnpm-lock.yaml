@@ -8,7 +8,7 @@ overrides:
   sharp: 0.33.5
 
 patchedDependencies:
-  '@adviser/cement':
+  '@adviser/cement@0.5.34':
     hash: 84d4506823a54453a80c359eff0066614932bb5cac81fcca51133da8127dcec1
     path: patches/@adviser__cement.patch
   drizzle-kit@0.31.8:
