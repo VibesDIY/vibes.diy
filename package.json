@@ -57,7 +57,7 @@
   "pnpm": {
     "patchedDependencies": {
       "drizzle-kit@0.31.8": "patches/drizzle-kit@0.31.8.patch",
-      "@adviser/cement": "patches/@adviser__cement.patch"
+      "@adviser/cement@0.5.34": "patches/@adviser__cement.patch"
     }
   },
   "devDependencies": {
