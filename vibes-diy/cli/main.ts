@@ -62,6 +62,11 @@ async function vibesDiyApiFactory(sthis: SuperThis) {
     return new VibesDiyApi({
       apiUrl,
       getToken,
+      // Idle timeout (resets on any incoming message). 30s leaves headroom
+      // for the server's R2 multipart upload of multi-MB pushes (the protocol
+      // currently doesn't emit progress events, so the entire request
+      // appears silent until the response comes back).
+      timeoutMs: 30000,
     });
   });
 }
