@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { switchColors } from "./VibesSwitch.styles.js";
 
 export interface ExpandedVibesPillProps {
@@ -29,6 +29,7 @@ function PillActionButton({
   labelColor,
   onClick,
   buttonRef,
+  open,
 }: {
   height: number;
   label: string;
@@ -37,16 +38,14 @@ function PillActionButton({
   labelColor?: string;
   onClick: (e: React.MouseEvent) => void;
   buttonRef?: React.Ref<HTMLButtonElement>;
+  open: boolean;
 }) {
-  const [hovered, setHovered] = useState(false);
   const btnWidth = height * 0.75;
   return (
     <button
       ref={buttonRef}
       type="button"
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
         display: "flex",
         alignItems: "center",
@@ -59,7 +58,7 @@ function PillActionButton({
         background: bgColor,
         borderRadius: 0,
         transition: "width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        width: hovered ? height * 1.8 : btnWidth,
+        width: open ? height * 1.8 : btnWidth,
         flexShrink: 0,
       }}
     >
@@ -105,10 +104,10 @@ function PillActionButton({
           whiteSpace: "nowrap",
           textTransform: "uppercase",
           letterSpacing: "1.5px",
-          opacity: hovered ? 1 : 0,
-          width: hovered ? "auto" : 0,
-          maxWidth: hovered ? 120 : 0,
-          padding: hovered ? "0 14px 0 4px" : 0,
+          opacity: open ? 1 : 0,
+          width: open ? "auto" : 0,
+          maxWidth: open ? 120 : 0,
+          padding: open ? "0 14px 0 4px" : 0,
           overflow: "hidden",
           transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
           fontFamily: "'Inter', sans-serif",
@@ -283,6 +282,19 @@ export function ExpandedVibesPill({
   const height = numericSize;
   const scale = height / 300; // SVG units to pixels
 
+  // On wide screens, keep all three horizontal action buttons fully open
+  // (label always visible). On narrow screens, retain the small→big hover
+  // behavior so the tray stays compact.
+  const [isWide, setIsWide] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 640 : true,
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onResize = () => setIsWide(window.innerWidth >= 640);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   // States
   const showBubble = phase !== "idle";
   const expanded = phase === "expanding" || phase === "open";
@@ -293,11 +305,14 @@ export function ExpandedVibesPill({
   // Tray sizing
   const pillWidth = 600 * scale; // pill SVG width in pixels
   const btnWidth = height * 0.75; // single button closed width
-  const btnExpandedWidth = height * 1.8; // single button hover width
+  const btnExpandedWidth = height * 1.8; // single button open width (with label)
   const visibleButtons = 3; // number of buttons shown
   const btnPadding = 10; // cream gap between buttons and pill
-  // space = one expanded + rest closed + padding
-  const trayExtra = btnExpandedWidth + btnWidth * (visibleButtons - 1) + btnPadding;
+  // On wide screens all buttons show their label; on narrow screens labels
+  // are hidden so the tray stays compact.
+  const trayExtra = isWide
+    ? btnExpandedWidth * visibleButtons + btnPadding
+    : btnWidth * visibleButtons + btnPadding;
   const trayCollapsed = pillWidth + 8; // just covers the pill
   const trayExpanded = pillWidth + trayExtra + 8;
 
@@ -335,22 +350,43 @@ export function ExpandedVibesPill({
           boxSizing: "border-box",
         }}
       >
-        {/* Buttons inside the bubble */}
+        {/* Hacky blue strip extending to the left of Home — when the bouncy
+            reveal overshoots, this fills the overshoot area with Home's blue
+            instead of cream. Clipped by the tray's overflow:hidden. */}
         <div
           style={{
-            display: "flex",
+            position: "absolute",
+            top: 0,
+            right: pillWidth + btnPadding + 8 + (isWide ? btnExpandedWidth : btnWidth) * visibleButtons,
+            width: 200,
             height: "100%",
+            background: "var(--vibes-blue, #3b82f6)",
+            pointerEvents: "none",
+          }}
+        />
+        {/* Buttons inside the bubble — positioned absolutely against the tray's
+            (stationary) right edge so the buttons stay fixed in page coords as
+            the tray width animates. The tray's overflow:hidden clips them, so
+            the bouncy width transition reveals the content without sliding it. */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: pillWidth + btnPadding + 8,
+            height: "100%",
+            display: "flex",
             gap: 0,
           }}
         >
           <PillActionButton
             height={height}
-            label="Vibe"
-            bgColor="var(--vibes-yellow, #fedd00)"
-            labelColor="var(--vibes-near-black, #1a1a1a)"
+            open={isWide}
+            label="Home"
+            bgColor="var(--vibes-blue, #3b82f6)"
+            labelColor="var(--vibes-cream, #FFFEF0)"
             onClick={(e) => {
               e.stopPropagation();
-              setSubMode((m) => (m === "change" ? "default" : "change"));
+              onHome?.();
             }}
             icon={
               <svg
@@ -363,13 +399,14 @@ export function ExpandedVibesPill({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                <path d="M3 12l9-9 9 9" />
+                <path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
               </svg>
             }
           />
           <PillActionButton
             height={height}
+            open={isWide}
             label="Group"
             bgColor="var(--vibes-green, #22c55e)"
             labelColor="var(--vibes-cream, #FFFEF0)"
@@ -398,12 +435,13 @@ export function ExpandedVibesPill({
           />
           <PillActionButton
             height={height}
-            label="Home"
-            bgColor="var(--vibes-blue, #3b82f6)"
-            labelColor="var(--vibes-cream, #FFFEF0)"
+            open={isWide}
+            label="Vibe"
+            bgColor="var(--vibes-yellow, #fedd00)"
+            labelColor="var(--vibes-near-black, #1a1a1a)"
             onClick={(e) => {
               e.stopPropagation();
-              onHome?.();
+              setSubMode((m) => (m === "change" ? "default" : "change"));
             }}
             icon={
               <svg
@@ -416,8 +454,8 @@ export function ExpandedVibesPill({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M3 12l9-9 9 9" />
-                <path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
             }
           />
@@ -430,9 +468,11 @@ export function ExpandedVibesPill({
           position: "absolute",
           // Sit 4px above the top of the horizontal tray (closer to the button than the pill SVG top).
           bottom: height - (123 * scale - 4) + 4,
-          // Align left edge with the leftmost (Change?) button in the horizontal tray.
-          // Tray's right edge is at wrapper.right + 4, tray width = trayExpanded.
-          left: pillWidth + 4 - trayExpanded,
+          // Align right edge with the Vibe button (rightmost of the 3 tray buttons).
+          // Buttons reveal to the left of the pill (tray flex-start), so Vibe's
+          // right edge sits btnPadding+4 px to the LEFT of the wrapper's left
+          // edge — i.e. pillWidth + btnPadding + 4 from the wrapper's right.
+          right: pillWidth + btnPadding + 4,
           display: "flex",
           flexDirection: "column",
           alignItems: "stretch",
@@ -441,7 +481,7 @@ export function ExpandedVibesPill({
           background: "var(--vibes-cream, #FFFEF0)",
           border: "1px solid var(--vibes-near-black, #1a1a1a)",
           borderRadius: 12,
-          transformOrigin: "bottom left",
+          transformOrigin: "bottom right",
           transform: subMode === "change" && buttonsVisible ? "scale(1)" : "scale(0)",
           opacity: subMode === "change" && buttonsVisible ? 1 : 0,
           transition: "transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.08s ease",
