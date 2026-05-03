@@ -1,5 +1,5 @@
 import { exception2Result, Result, URI } from "@adviser/cement";
-import type { R2MultipartUpload, R2Object, R2ObjectBody, R2UploadedPart } from "@cloudflare/workers-types";
+import type { R2GetOptions, R2MultipartUpload, R2Object, R2ObjectBody, R2UploadedPart } from "@cloudflare/workers-types";
 import type { SuperThis } from "@fireproof/core-types-base";
 import type { FetchResult, S3Api } from "@vibes.diy/api-types";
 
@@ -7,7 +7,7 @@ import type { FetchResult, S3Api } from "@vibes.diy/api-types";
 // R2Bucket (env.FS_IDS_BUCKET) which structurally satisfies this. Tests pass
 // a small in-memory fake that implements only this surface.
 export interface R2BucketSubset {
-  get(key: string): Promise<R2ObjectBody | null>;
+  get(key: string, options?: R2GetOptions): Promise<R2ObjectBody | null>;
   head(key: string): Promise<R2Object | null>;
   put(key: string, value: Uint8Array): Promise<R2Object>;
   delete(key: string): Promise<void>;
@@ -241,54 +241,56 @@ export class R2ToS3Api implements S3Api {
     }
   }
 
+  // Streaming copy via Range gets + multipart for objects > PART_SIZE.
+  // Memory bound: ~PART_SIZE in transit, regardless of source size.
+  // Small objects (<= PART_SIZE) take a single arrayBuffer + put round-trip.
+  //
+  // Future: R2's S3-compatible CopyObject is a true server-side copy with
+  // zero data transfer through the worker. Switching to it would make rename
+  // O(1) on object size but requires the AWS S3 SDK and R2 access keys/IAM
+  // (out of scope for the Workers binding we use here).
   async rename(fromUrl: string, toUrl: string): Promise<Result<void>> {
     const fromKey = this.toKey(fromUrl);
     const toKey = this.toKey(toUrl);
     // Wait for the source put to finish before reading.
     await this.awaitPut(fromUrl);
 
-    const rGet = await exception2Result(() => this.r2.get(fromKey));
-    if (rGet.isErr()) {
-      const err = rGet.Err();
-      console.error(`R2ToS3Api.rename(${fromUrl} -> ${toUrl}) get failed:`, err);
+    const rHead = await exception2Result(() => this.r2.head(fromKey));
+    if (rHead.isErr()) {
+      const err = rHead.Err();
+      console.error(`R2ToS3Api.rename(${fromUrl}) head failed:`, err);
       return Result.Err(err);
     }
-    const src = rGet.Ok();
-    if (src === null) {
+    const srcMeta = rHead.Ok();
+    if (srcMeta === null) {
       const err = new Error(`Object not found: ${fromUrl}`);
       console.error(`R2ToS3Api.rename: ${err.message}`);
       return Result.Err(err);
     }
+    const sourceSize = srcMeta.size;
 
-    const rBytes = await exception2Result(() => src.arrayBuffer());
-    if (rBytes.isErr()) {
-      const err = rBytes.Err();
-      console.error(`R2ToS3Api.rename(${fromUrl}) read failed:`, err);
-      return Result.Err(err);
-    }
-    const sourceBytes = new Uint8Array(rBytes.Ok());
-
-    const rPut = await exception2Result(() => this.r2.put(toKey, sourceBytes));
-    if (rPut.isErr()) {
-      const err = rPut.Err();
-      console.error(`R2ToS3Api.rename(${fromUrl} -> ${toUrl}) put failed:`, err);
-      return Result.Err(err);
+    if (sourceSize <= PART_SIZE) {
+      const rCopy = await this.copySmallObject(fromKey, toKey);
+      if (rCopy.isErr()) return rCopy;
+    } else {
+      const rCopy = await this.copyLargeObjectStreaming(fromKey, toKey, sourceSize);
+      if (rCopy.isErr()) return rCopy;
     }
 
-    const rHead = await exception2Result(() => this.r2.head(toKey));
-    if (rHead.isErr()) {
-      const err = rHead.Err();
-      console.error(`R2ToS3Api.rename(${toUrl}) head failed:`, err);
+    const rDestHead = await exception2Result(() => this.r2.head(toKey));
+    if (rDestHead.isErr()) {
+      const err = rDestHead.Err();
+      console.error(`R2ToS3Api.rename(${toUrl}) destination head failed:`, err);
       return Result.Err(err);
     }
-    const dest = rHead.Ok();
+    const dest = rDestHead.Ok();
     if (dest === null) {
       const err = new Error(`Destination put failed: ${toUrl}`);
       console.error(`R2ToS3Api.rename: ${err.message}`);
       return Result.Err(err);
     }
-    if (dest.size !== sourceBytes.length) {
-      const err = new Error(`Destination size mismatch: from=${sourceBytes.length} to=${dest.size}`);
+    if (dest.size !== sourceSize) {
+      const err = new Error(`Destination size mismatch: from=${sourceSize} to=${dest.size}`);
       console.error(`R2ToS3Api.rename: ${err.message}`);
       return Result.Err(err);
     }
@@ -300,5 +302,94 @@ export class R2ToS3Api implements S3Api {
       return Result.Err(err);
     }
     return Result.Ok(undefined);
+  }
+
+  private async copySmallObject(fromKey: string, toKey: string): Promise<Result<void>> {
+    const rGet = await exception2Result(() => this.r2.get(fromKey));
+    if (rGet.isErr()) {
+      const err = rGet.Err();
+      console.error(`R2ToS3Api.rename get(${fromKey}) failed:`, err);
+      return Result.Err(err);
+    }
+    const src = rGet.Ok();
+    if (src === null) {
+      const err = new Error(`Object disappeared during rename: ${fromKey}`);
+      console.error(`R2ToS3Api.rename: ${err.message}`);
+      return Result.Err(err);
+    }
+    const rBytes = await exception2Result(() => src.arrayBuffer());
+    if (rBytes.isErr()) {
+      const err = rBytes.Err();
+      console.error(`R2ToS3Api.rename arrayBuffer(${fromKey}) failed:`, err);
+      return Result.Err(err);
+    }
+    const rPut = await exception2Result(() => this.r2.put(toKey, new Uint8Array(rBytes.Ok())));
+    if (rPut.isErr()) {
+      const err = rPut.Err();
+      console.error(`R2ToS3Api.rename put(${toKey}) failed:`, err);
+      return Result.Err(err);
+    }
+    return Result.Ok(undefined);
+  }
+
+  private async copyLargeObjectStreaming(fromKey: string, toKey: string, sourceSize: number): Promise<Result<void>> {
+    const rMp = await exception2Result(() => this.r2.createMultipartUpload(toKey));
+    if (rMp.isErr()) {
+      const err = rMp.Err();
+      console.error(`R2ToS3Api.rename createMultipartUpload(${toKey}) failed:`, err);
+      return Result.Err(err);
+    }
+    const mp = rMp.Ok();
+
+    const completedParts: R2UploadedPart[] = [];
+    let partNumber = 1;
+    for (let offset = 0; offset < sourceSize; offset += PART_SIZE) {
+      const length = Math.min(PART_SIZE, sourceSize - offset);
+      const rGet = await exception2Result(() => this.r2.get(fromKey, { range: { offset, length } }));
+      if (rGet.isErr()) {
+        const err = rGet.Err();
+        console.error(`R2ToS3Api.rename range-get(${fromKey}, offset=${offset}) failed:`, err);
+        await this.abortQuiet(mp, toKey);
+        return Result.Err(err);
+      }
+      const part = rGet.Ok();
+      if (part === null) {
+        const err = new Error(`Range get returned null on ${fromKey} at offset=${offset}`);
+        console.error(`R2ToS3Api.rename: ${err.message}`);
+        await this.abortQuiet(mp, toKey);
+        return Result.Err(err);
+      }
+      const rBytes = await exception2Result(() => part.arrayBuffer());
+      if (rBytes.isErr()) {
+        const err = rBytes.Err();
+        console.error(`R2ToS3Api.rename arrayBuffer(${fromKey}, offset=${offset}) failed:`, err);
+        await this.abortQuiet(mp, toKey);
+        return Result.Err(err);
+      }
+      const bytes = new Uint8Array(rBytes.Ok());
+      const rUpload = await exception2Result(() => mp.uploadPart(partNumber, bytes));
+      if (rUpload.isErr()) {
+        const err = rUpload.Err();
+        console.error(`R2ToS3Api.rename uploadPart(${toKey}, part=${partNumber}) failed:`, err);
+        await this.abortQuiet(mp, toKey);
+        return Result.Err(err);
+      }
+      completedParts.push(rUpload.Ok());
+      partNumber += 1;
+    }
+
+    const rComplete = await exception2Result(() => mp.complete(completedParts).then(() => undefined));
+    if (rComplete.isErr()) {
+      const err = rComplete.Err();
+      console.error(`R2ToS3Api.rename complete(${toKey}) failed:`, err);
+      await this.abortQuiet(mp, toKey);
+      return Result.Err(err);
+    }
+    return Result.Ok(undefined);
+  }
+
+  private async abortQuiet(mp: R2MultipartUpload, key: string): Promise<void> {
+    const ar = await exception2Result(() => mp.abort());
+    if (ar.isErr()) console.error(`R2ToS3Api.rename abort(${key}) failed:`, ar.Err());
   }
 }

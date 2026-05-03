@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { R2MultipartUpload, R2Object, R2ObjectBody, R2UploadedPart } from "@cloudflare/workers-types";
+import type { R2GetOptions, R2MultipartUpload, R2Object, R2ObjectBody, R2UploadedPart } from "@cloudflare/workers-types";
 import { R2ToS3Api } from "@vibes.diy/api-svc";
 import type { R2BucketSubset } from "@vibes.diy/api-svc";
 
@@ -48,10 +48,22 @@ function makeFakeR2(): FakeR2Bucket {
       store.set(key, bytes);
       return makeFakeR2Object(key, bytes.byteLength);
     },
-    async get(key) {
+    async get(key, options) {
       calls.get += 1;
       const bytes = store.get(key);
       if (bytes === undefined) return null;
+      const range = (options as R2GetOptions | undefined)?.range;
+      if (range !== undefined && !(range instanceof Headers)) {
+        let start = 0;
+        let end = bytes.byteLength;
+        if ("offset" in range && range.offset !== undefined) start = range.offset;
+        if ("length" in range && range.length !== undefined) end = start + range.length;
+        if ("suffix" in range && range.suffix !== undefined) {
+          start = bytes.byteLength - range.suffix;
+          end = bytes.byteLength;
+        }
+        return makeFakeR2ObjectBody(key, bytes.subarray(start, end));
+      }
       return makeFakeR2ObjectBody(key, bytes);
     },
     async head(key) {
@@ -276,16 +288,49 @@ describe("R2ToS3Api unified buffer + multipart", () => {
     expect(sb?.[0]).toBe(b[0]);
   }, 15000);
 
-  it("Case J: rename copies temp object to final key (existing behavior)", async () => {
+  it("Case J: rename of small (<=PART_SIZE) object uses single-PUT", async () => {
     const fake = makeFakeR2();
     const api = new R2ToS3Api(fake, stubSthis);
     const payload = makePayload(8192, 41);
-    await pipeBytes(api, "s3://r2/temp/j.tmp", payload, 1024);
-    expect(fake.store.has("r2/temp/j.tmp")).toBe(true);
+    fake.store.set("r2/temp/j.tmp", payload);
+    // Reset call counters so we observe the rename in isolation.
+    Object.keys(fake.calls).forEach((k) => {
+      fake.calls[k as keyof FakeR2Calls] = 0;
+    });
 
     const r = await api.rename("s3://r2/temp/j.tmp", "s3://r2/zCidJ");
     expect(r.isOk()).toBe(true);
     expect(fake.store.has("r2/temp/j.tmp")).toBe(false);
     expect(fake.store.get("r2/zCidJ")).toEqual(payload);
+    expect(fake.calls.put).toBe(1);
+    expect(fake.calls.createMultipart).toBe(0);
   });
+
+  it("Case K: rename of large (>PART_SIZE) object uses multipart streaming copy", async () => {
+    const fake = makeFakeR2();
+    const api = new R2ToS3Api(fake, stubSthis);
+    const payload = makePayload(12 * 1024 * 1024, 53);
+    fake.store.set("r2/temp/k.tmp", payload);
+    Object.keys(fake.calls).forEach((k) => {
+      fake.calls[k as keyof FakeR2Calls] = 0;
+    });
+
+    const r = await api.rename("s3://r2/temp/k.tmp", "s3://r2/zCidK");
+    expect(r.isOk()).toBe(true);
+    expect(fake.store.has("r2/temp/k.tmp")).toBe(false);
+    const dest = fake.store.get("r2/zCidK");
+    expect(dest?.byteLength).toBe(payload.byteLength);
+    expect(dest?.[0]).toBe(payload[0]);
+    expect(dest?.[payload.byteLength >> 1]).toBe(payload[payload.byteLength >> 1]);
+    expect(dest?.[payload.byteLength - 1]).toBe(payload[payload.byteLength - 1]);
+
+    // Multipart streaming was used: createMultipart once, multiple uploadParts,
+    // one complete, no single-PUT.
+    expect(fake.calls.createMultipart).toBe(1);
+    expect(fake.calls.uploadPart).toBeGreaterThanOrEqual(2);
+    expect(fake.calls.complete).toBe(1);
+    expect(fake.calls.put).toBe(0);
+    // Source was read in chunks (range gets).
+    expect(fake.calls.get).toBeGreaterThanOrEqual(2);
+  }, 15000);
 });
