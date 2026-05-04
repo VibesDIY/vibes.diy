@@ -200,8 +200,6 @@ export const ensureAppSlugItemEvento: EventoHandler<
           ...(info.bytes === undefined ? {} : { bytes: info.bytes }),
           ...(info.partNumber === undefined ? {} : { partNumber: info.partNumber }),
         };
-        // TODO(verify): drop this log once preview confirms emission flows.
-        console.log("[progress-emit]", info.stage, "bytes=", info.bytes, "part=", info.partNumber);
         // Fire-and-forget: send returns a promise but we don't want to slow
         // the upload by awaiting it (and the caller is the storage layer).
         ctx.send.send(ctx, progress).catch((e: unknown) => {
