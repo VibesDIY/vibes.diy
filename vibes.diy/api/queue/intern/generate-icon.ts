@@ -6,19 +6,33 @@ const ICON_PROMPT_SUFFIX = `. Use clear, text-free imagery. Avoid letters or num
 export interface GenerateIconArgs {
   description: string;
   model: string;
+  fallbackModel: string;
   llmUrl: string;
   llmApiKey: string;
   prodiaToken?: string;
   fetch?: typeof fetch;
 }
 
-export async function generateIcon(args: GenerateIconArgs): Promise<Result<{ bytes: Uint8Array; mime: string }>> {
+export interface GenerateIconResult {
+  bytes: Uint8Array;
+  mime: string;
+  model: string;
+}
+
+export async function generateIcon(args: GenerateIconArgs): Promise<Result<GenerateIconResult>> {
   const prompt = `${ICON_PROMPT_PREFIX}${args.description}${ICON_PROMPT_SUFFIX}`;
   const doFetch = args.fetch ?? fetch;
 
   if (args.model.startsWith("prodia/")) {
     if (!args.prodiaToken) {
-      return Result.Err(`PRODIA_TOKEN not configured for model ${args.model}`);
+      console.warn(`PRODIA_TOKEN not configured for model ${args.model}; falling back to OpenRouter (${args.fallbackModel})`);
+      return generateIconOpenRouter({
+        prompt,
+        model: args.fallbackModel,
+        llmUrl: args.llmUrl,
+        llmApiKey: args.llmApiKey,
+        fetch: doFetch,
+      });
     }
     return generateIconProdia({ prompt, model: args.model, prodiaToken: args.prodiaToken, fetch: doFetch });
   }
@@ -36,7 +50,7 @@ async function generateIconProdia(args: {
   model: string;
   prodiaToken: string;
   fetch: typeof fetch;
-}): Promise<Result<{ bytes: Uint8Array; mime: string }>> {
+}): Promise<Result<GenerateIconResult>> {
   const stem = args.model.slice("prodia/".length);
   if (!stem) return Result.Err(`Invalid Prodia model id: ${args.model}`);
 
@@ -63,7 +77,7 @@ async function generateIconProdia(args: {
   }
   const rBuf = await exception2Result(() => res.arrayBuffer());
   if (rBuf.isErr()) return Result.Err(`prodia icon-gen body read failed: ${rBuf.Err()}`);
-  return Result.Ok({ bytes: new Uint8Array(rBuf.Ok()), mime: "image/png" });
+  return Result.Ok({ bytes: new Uint8Array(rBuf.Ok()), mime: "image/png", model: args.model });
 }
 
 async function generateIconOpenRouter(args: {
@@ -72,7 +86,7 @@ async function generateIconOpenRouter(args: {
   llmUrl: string;
   llmApiKey: string;
   fetch: typeof fetch;
-}): Promise<Result<{ bytes: Uint8Array; mime: string }>> {
+}): Promise<Result<GenerateIconResult>> {
   const rRes = await exception2Result(() =>
     args.fetch(args.llmUrl, {
       method: "POST",
@@ -106,7 +120,7 @@ async function generateIconOpenRouter(args: {
   const mime = match[1];
   const rBytes = exception2Result(() => Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0)));
   if (rBytes.isErr()) return Result.Err(`openrouter icon-gen base64 decode failed: ${rBytes.Err()}`);
-  return Result.Ok({ bytes: rBytes.Ok(), mime });
+  return Result.Ok({ bytes: rBytes.Ok(), mime, model: args.model });
 }
 
 function findFirstDataImageUrl(node: unknown): string | undefined {
