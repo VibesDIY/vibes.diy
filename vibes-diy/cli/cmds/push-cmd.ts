@@ -1,4 +1,4 @@
-import { command, flag, option, string } from "cmd-ts";
+import { command, flag, number, option, optional, string } from "cmd-ts";
 import { basename } from "path";
 import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType } from "@adviser/cement";
 import { type } from "arktype";
@@ -15,6 +15,7 @@ export const ReqPush = type({
   userSlug: "string",
   instantJoin: "boolean",
   apiUrl: "string",
+  "idleTimeoutMs?": "number | undefined",
 });
 export type ReqPush = typeof ReqPush.infer;
 
@@ -36,7 +37,7 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
       return Result.Err("Not logged in. Run 'use-vibes login' first.");
     }
     const args = ctx.validated;
-    const api = ectx.vibesDiyApiFactory(args.apiUrl);
+    const api = ectx.vibesDiyApiFactory(args.apiUrl, { idleTimeoutMs: args.idleTimeoutMs });
     const mode = args.mode === "dev" ? "dev" : "production";
     const appSlug = args.appSlug === "" ? basename(process.cwd()) : args.appSlug;
     const userSlug = await resolveUserSlug(api, args.userSlug === "" ? undefined : args.userSlug);
@@ -88,6 +89,12 @@ export function pushCmd(ctx: CliCtx) {
       instantJoin: flag({
         long: "instant-join",
         description: "Auto-accept database sharing view requests",
+      }),
+      idleTimeoutMs: option({
+        long: "idle-timeout",
+        description:
+          "Idle timeout in ms (resets on any incoming message). Defaults to api-impl's 10s; bump to e.g. 30000 for very large pushes that exceed post-storage DB-write windows.",
+        type: optional(number),
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
