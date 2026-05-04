@@ -241,12 +241,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     }
   }, [selectedTheme]);
 
-  const handleThemeSelect = useCallback((theme: VibesTheme) => {
-    setSelectedTheme(theme);
-    setThemeModalOpen(false);
-    const themePrompt = buildThemePrompt(theme);
-    sendPrompt(`${themePrompt}\n\n---\n\nRestyle the current app to match this theme. Keep all existing functionality intact.`);
-  }, []);
 
   // Read the local VibeDocument (seeded by the remix route) to show the
   // "remix of" indicator in the header. Best-effort: if the doc is missing
@@ -277,6 +271,15 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     setSearchParams,
     agentSavedBlockIds: new Set<string>(),
   });
+
+  const handleThemeSelect = useCallback((theme: VibesTheme) => {
+    setSelectedTheme(theme);
+    setThemeModalOpen(false);
+    if (promptState.hasCode) {
+      const themePrompt = buildThemePrompt(theme);
+      sendPrompt(`${themePrompt}\n\n---\n\nRestyle the current app to match this theme. Keep all existing functionality intact.`);
+    }
+  }, [promptState.hasCode]);
 
   // Hydrate the code editor from Apps.fileSystem when no ChatSections
   // exist for this fsId (e.g. a freshly forked vibe). The fetch is
