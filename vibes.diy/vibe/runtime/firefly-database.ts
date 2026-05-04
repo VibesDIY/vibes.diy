@@ -75,6 +75,19 @@ export class FireflyDatabase {
     this.vibeApi = vibeApi;
     this.vibeApp = vibeApi.svc.vibeApp;
 
+    // Subscribe to remote doc-changed events for THIS db (cross-client sync).
+    // The server's DocNotify DO is keyed on (userSlug, appSlug, dbName), so
+    // each FireflyDatabase must subscribe for its own name — otherwise apps
+    // using a non-"default" dbName get zero subscribers on the server side
+    // and never receive notifications. Fire-and-forget; the client-side
+    // subscribeDocs deduplicates by key, so reconnect replay stays safe.
+    this.vibeApi.subscribeDocs(this.name).then((rRes) => {
+      if (rRes.isErr()) {
+        // eslint-disable-next-line no-console
+        console.error(`Failed to subscribe to docs for db "${this.name}":`, rRes.Err());
+      }
+    });
+
     // Listen for remote doc-changed events (cross-client sync). Filter on
     // dbName so a sibling FireflyDatabase on the same connection (e.g. the
     // comments db on the same vibe) doesn't trigger spurious reloads here.

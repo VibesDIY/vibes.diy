@@ -29,16 +29,15 @@ function getOrCreateDb(name: string): FireflyDatabase {
 
 /**
  * Register the Firefly system. Called by registerDependencies().
+ *
+ * Per-dbName subscription happens in the FireflyDatabase constructor — see
+ * firefly-database.ts. The server's DocNotify DO is keyed on
+ * (userSlug, appSlug, dbName), so subscribing once here with a hardcoded
+ * dbName would only cover one channel; each useFireproof(name) call must
+ * trigger its own subscribe.
  */
 export async function registerFirefly(api: VibeSandboxApi): Promise<void> {
   vibeApiRef = api;
-
-  // Subscribe to docs for cross-client sync (fire-and-forget)
-  api.subscribeDocs().then((rRes) => {
-    if (rRes.isErr()) {
-      console.error("Failed to subscribe to docs:", rRes.Err());
-    }
-  });
 }
 
 /**
