@@ -1,6 +1,6 @@
 import { Option, URI, Result, exception2Result } from "@adviser/cement";
-import { Cider, PeerFetch, PeerStreamWithCommit, PeerWithCommit, StoragePeer } from "@vibes.diy/api-pkg";
-import { FetchResult, S3Api } from "@vibes.diy/api-types";
+import { Cider, PeerFetch, PeerFactoryOptions, PeerStreamWithCommit, PeerWithCommit, StoragePeer } from "@vibes.diy/api-pkg";
+import type { FetchResult, S3Api, StorageProgressFn } from "@vibes.diy/api-types";
 
 const S3_PEER_PROTOCOL = "s3:";
 const S3_PEER_HOST = "r2";
@@ -31,7 +31,7 @@ class S3PeerStream implements PeerStreamWithCommit {
   async commit(): Promise<Result<{ url: string }>> {
     const { cid: assetID } = await this.owner.cider.getCID();
     const url = `${S3_PEER_PROTOCOL}//${S3_PEER_HOST}/${assetID}`;
-    const res = await this.owner.s3.rename(this.tmpUrl, url);
+    const res = await this.owner.s3.rename(this.tmpUrl, url, { onProgress: this.owner.onProgress });
     if (res.isErr()) {
       return Result.Err(res);
     }
@@ -42,13 +42,17 @@ class S3PeerStream implements PeerStreamWithCommit {
 export class S3Peer implements PeerWithCommit {
   readonly s3: S3Api;
   readonly cider: Cider;
-  constructor(s3: S3Api, cider: Cider) {
+  readonly onProgress?: StorageProgressFn;
+  constructor(s3: S3Api, cider: Cider, onProgress?: StorageProgressFn) {
     this.s3 = s3;
     this.cider = cider;
+    this.onProgress = onProgress;
   }
   async begin(): Promise<Result<PeerStreamWithCommit>> {
     const tmpUrl = `${S3_PEER_PROTOCOL}//${S3_PEER_HOST}/temp/${this.s3.genId()}.tmp`;
-    const rWriter = await exception2Result(() => this.s3.put(tmpUrl).then((stream) => stream.getWriter()));
+    const rWriter = await exception2Result(() =>
+      this.s3.put(tmpUrl, { onProgress: this.onProgress }).then((stream) => stream.getWriter())
+    );
     if (rWriter.isErr()) {
       return Result.Err(rWriter.Err());
     }
@@ -76,6 +80,6 @@ export interface CreateS3PeerParams {
 export function createS3Peer(params: CreateS3PeerParams): StoragePeer {
   return {
     fetch: new S3PeerFetch(params.s3),
-    factory: (cider: Cider) => new S3Peer(params.s3, cider),
+    factory: (cider: Cider, fopts?: PeerFactoryOptions) => new S3Peer(params.s3, cider, fopts?.onProgress),
   };
 }

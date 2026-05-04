@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { R2GetOptions, R2MultipartUpload, R2Object, R2ObjectBody, R2UploadedPart } from "@cloudflare/workers-types";
 import { R2ToS3Api } from "@vibes.diy/api-svc";
 import type { R2BucketSubset } from "@vibes.diy/api-svc";
+import type { StorageProgressInfo } from "@vibes.diy/api-types";
 
 const PART_SIZE = 5 * 1024 * 1024;
 
@@ -332,5 +333,74 @@ describe("R2ToS3Api unified buffer + multipart", () => {
     expect(fake.calls.put).toBe(0);
     // Source was read in chunks (range gets).
     expect(fake.calls.get).toBeGreaterThanOrEqual(2);
+  }, 15000);
+
+  it("Case L: onProgress fires per uploadPart and once on asset-stored for multipart put", async () => {
+    const fake = makeFakeR2();
+    const api = new R2ToS3Api(fake, stubSthis);
+    const payload = makePayload(12 * 1024 * 1024, 61);
+    const events: StorageProgressInfo[] = [];
+
+    const writable = await api.put("s3://r2/temp/l.tmp", { onProgress: (info) => events.push(info) });
+    const writer = writable.getWriter();
+    const chunkSize = 1024 * 1024;
+    for (let off = 0; off < payload.byteLength; off += chunkSize) {
+      await writer.write(payload.subarray(off, Math.min(off + chunkSize, payload.byteLength)));
+    }
+    await writer.close();
+    await api.awaitPut("s3://r2/temp/l.tmp");
+
+    const partEvents = events.filter((e) => e.stage === "uploading-part");
+    const storedEvents = events.filter((e) => e.stage === "asset-stored");
+    expect(partEvents.length).toBe(fake.calls.uploadPart);
+    expect(partEvents.length).toBeGreaterThanOrEqual(2);
+    expect(storedEvents).toHaveLength(1);
+    expect(storedEvents[0].bytes).toBe(payload.byteLength);
+    // Part numbers strictly increase 1..N
+    partEvents.forEach((e, i) => expect(e.partNumber).toBe(i + 1));
+    // Cumulative bytes are monotonically non-decreasing.
+    let prev = 0;
+    for (const e of partEvents) {
+      expect(e.bytes ?? 0).toBeGreaterThanOrEqual(prev);
+      prev = e.bytes ?? prev;
+    }
+  }, 15000);
+
+  it("Case M: onProgress fires once with asset-stored for small (single-PUT) put", async () => {
+    const fake = makeFakeR2();
+    const api = new R2ToS3Api(fake, stubSthis);
+    const payload = makePayload(2048, 67);
+    const events: StorageProgressInfo[] = [];
+
+    const writable = await api.put("s3://r2/temp/m.tmp", { onProgress: (info) => events.push(info) });
+    const writer = writable.getWriter();
+    await writer.write(payload);
+    await writer.close();
+    await api.awaitPut("s3://r2/temp/m.tmp");
+
+    expect(events).toHaveLength(1);
+    expect(events[0].stage).toBe("asset-stored");
+    expect(events[0].bytes).toBe(payload.byteLength);
+    expect(events[0].partNumber).toBeUndefined();
+  });
+
+  it("Case N: rename of large object emits rename-part progress and final asset-renamed", async () => {
+    const fake = makeFakeR2();
+    const api = new R2ToS3Api(fake, stubSthis);
+    const payload = makePayload(12 * 1024 * 1024, 71);
+    fake.store.set("r2/temp/n.tmp", payload);
+    const events: StorageProgressInfo[] = [];
+
+    const r = await api.rename("s3://r2/temp/n.tmp", "s3://r2/zCidN", {
+      onProgress: (info) => events.push(info),
+    });
+    expect(r.isOk()).toBe(true);
+
+    const partEvents = events.filter((e) => e.stage === "rename-part");
+    const finalEvents = events.filter((e) => e.stage === "asset-renamed");
+    expect(partEvents.length).toBeGreaterThanOrEqual(2);
+    expect(finalEvents).toHaveLength(1);
+    expect(finalEvents[0].bytes).toBe(payload.byteLength);
+    partEvents.forEach((e, i) => expect(e.partNumber).toBe(i + 1));
   }, 15000);
 });

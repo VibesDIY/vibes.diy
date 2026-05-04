@@ -1,5 +1,5 @@
 import { Result, Option, URI, teeWriter, processStream, Lazy, PeerStream, Peer, coerceStreamUint8 } from "@adviser/cement";
-import { StorageResult, VibesAssetStorage, FetchResult } from "@vibes.diy/api-types";
+import type { EnsureCallOptions, StorageProgressFn, StorageResult, VibesAssetStorage, FetchResult } from "@vibes.diy/api-types";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { base58btc } from "multiformats/bases/base58";
 
@@ -46,9 +46,13 @@ export class Cider {
   });
 }
 
+export interface PeerFactoryOptions {
+  readonly onProgress?: StorageProgressFn;
+}
+
 export interface StoragePeer {
   fetch: PeerFetch;
-  factory: (cider: Cider) => PeerWithCommit;
+  factory: (cider: Cider, opts?: PeerFactoryOptions) => PeerWithCommit;
 }
 
 export interface EnsureStorageOptions {
@@ -86,7 +90,18 @@ export function ensureStorage(...args: [EnsureStorageOptions | StoragePeer, ...S
         url: url.toString(),
       };
     },
-    ensure: async (...items: ReadableStream<Uint8Array | string>[]): Promise<Result<StorageResult>[]> => {
+    ensure: (async (
+      ...args: ReadableStream<Uint8Array | string>[] | [EnsureCallOptions, ...ReadableStream<Uint8Array | string>[]]
+    ): Promise<Result<StorageResult>[]> => {
+      const [firstArg, ...restArgs] = args;
+      const isStream = (v: unknown): v is ReadableStream<Uint8Array | string> =>
+        !!v && typeof (v as { getReader?: unknown }).getReader === "function";
+      const firstIsOpts = firstArg !== undefined && !isStream(firstArg);
+      const callOpts: EnsureCallOptions = firstIsOpts ? (firstArg as EnsureCallOptions) : {};
+      const items: ReadableStream<Uint8Array | string>[] = firstIsOpts
+        ? (restArgs as ReadableStream<Uint8Array | string>[])
+        : (args as ReadableStream<Uint8Array | string>[]);
+      const factoryOpts: PeerFactoryOptions = { onProgress: callOpts.onProgress };
       // console.log("Ensuring storage for items, count:", items.length);
       const tees = await Promise.allSettled(
         items.map(
@@ -102,7 +117,7 @@ export function ensureStorage(...args: [EnsureStorageOptions | StoragePeer, ...S
             const [lag1, lag2] = coerceStreamUint8(item).tee();
             const cider = new Cider(lag1);
             return teeWriter(
-              peers.map((i) => i.factory(cider)),
+              peers.map((i) => i.factory(cider, factoryOpts)),
               lag2,
               { peerTimeout }
             ).then(async (rTee) => {
@@ -143,6 +158,6 @@ export function ensureStorage(...args: [EnsureStorageOptions | StoragePeer, ...S
           size,
         });
       });
-    },
+    }) as VibesAssetStorage["ensure"],
   };
 }

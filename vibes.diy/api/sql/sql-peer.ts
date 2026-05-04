@@ -130,7 +130,9 @@ export function createSQLPeer(params: CreateSQLPeerParams): StoragePeer {
     case "pg":
       return {
         fetch: new SQLPeerFetch(params.flavour, params.db, params.assets),
-        factory: (cider: Cider) => new SQLPeer(params.flavour, params.db, params.assets, cider, 4 * 1024),
+        factory: (cider: Cider) =>
+          // SQL peer ignores onProgress: writes are sync (DB insert at commit), nothing to report mid-flight.
+          new SQLPeer(params.flavour, params.db, params.assets, cider, 4 * 1024),
       };
     default:
       throw new Error(`Unsupported DB flavour: ${params.flavour}`);
