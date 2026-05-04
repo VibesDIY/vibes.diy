@@ -3,7 +3,8 @@ import { and, eq } from "drizzle-orm/sql/expressions";
 import { createSQLPeer } from "@vibes.diy/api-sql";
 import { ActiveEntry, ActiveIcon, IconVersion, isActiveIcon, parseArrayWarning } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
-import { ensureStorage } from "@vibes.diy/api-pkg";
+import { ensureStorage, StoragePeer } from "@vibes.diy/api-pkg";
+import { createS3Peer } from "@vibes.diy/api-svc";
 import { QueueCtx } from "../queue-ctx.js";
 
 export interface StoreIconResult {
@@ -33,7 +34,11 @@ export async function storeIcon(
     return Result.Err(`appSettings row not found for ${args.userSlug}/${args.appSlug}`);
   }
 
-  const [storageResult] = await ensureStorage(createSQLPeer(qctx.storageSystems.sql)).ensure(uint8array2stream(args.bytes));
+  const peers: StoragePeer[] = [createSQLPeer(qctx.storageSystems.sql)];
+  if (qctx.storageSystems.s3) {
+    peers.push(createS3Peer({ s3: qctx.storageSystems.s3 }));
+  }
+  const [storageResult] = await ensureStorage(...peers).ensure(uint8array2stream(args.bytes));
   if (!storageResult || storageResult.isErr()) {
     return Result.Err(`Failed to store icon: ${storageResult?.Err()}`);
   }
