@@ -54,8 +54,9 @@ async function generateIconProdia(args: {
   const stem = args.model.slice("prodia/".length);
   if (!stem) return Result.Err(`Invalid Prodia model id: ${args.model}`);
 
+  const doFetch = args.fetch;
   const rRes = await exception2Result(() =>
-    args.fetch("https://inference.prodia.com/v2/job", {
+    doFetch("https://inference.prodia.com/v2/job", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${args.prodiaToken}`,
@@ -87,8 +88,9 @@ async function generateIconOpenRouter(args: {
   llmApiKey: string;
   fetch: typeof fetch;
 }): Promise<Result<GenerateIconResult>> {
+  const doFetch = args.fetch;
   const rRes = await exception2Result(() =>
-    args.fetch(args.llmUrl, {
+    doFetch(args.llmUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${args.llmApiKey}`,
