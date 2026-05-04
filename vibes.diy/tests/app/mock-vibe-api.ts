@@ -13,12 +13,14 @@ export interface MockVibeApi {
   getDoc(docId: string): Promise<Result<unknown>>;
   queryDocs(): Promise<Result<unknown>>;
   deleteDoc(docId: string): Promise<Result<unknown>>;
-  subscribeDocs(): Promise<Result<unknown>>;
+  subscribeDocs(dbName?: string): Promise<Result<unknown>>;
   onMsg: (fn: MsgListener) => void;
   /** Test helper: simulate server-push evt-doc-changed */
   _simulateDocChanged(docId: string, dbName?: string): void;
   /** Test helper: access raw doc store */
   _docs: Map<string, Record<string, unknown>>;
+  /** Test helper: dbNames passed to every subscribeDocs() call (in order) */
+  _subscribeDocsCalls: string[];
 }
 
 let idCounter = 0;
@@ -26,6 +28,7 @@ let idCounter = 0;
 export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
   const docs = new Map<string, Record<string, unknown>>();
   const msgListeners: MsgListener[] = [];
+  const subscribeDocsCalls: string[] = [];
 
   return {
     svc: { vibeApp: { appSlug, userSlug: "test-user" } },
@@ -66,7 +69,10 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
       return Result.Ok({ type: "vibes.diy.res-delete-doc" as const, status: "ok" as const, id });
     },
 
-    subscribeDocs: async () => Result.Ok({ type: "vibes.diy.res-subscribe-docs" as const, status: "ok" as const }),
+    subscribeDocs: async (dbName = "default") => {
+      subscribeDocsCalls.push(dbName);
+      return Result.Ok({ type: "vibes.diy.res-subscribe-docs" as const, status: "ok" as const });
+    },
 
     onMsg: (fn: MsgListener) => {
       msgListeners.push(fn);
@@ -79,6 +85,7 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
     },
 
     _docs: docs,
+    _subscribeDocsCalls: subscribeDocsCalls,
   };
 }
 

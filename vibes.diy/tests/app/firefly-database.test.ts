@@ -283,6 +283,31 @@ describe("FireflyDatabase cross-client sync", () => {
   });
 });
 
+// ── server subscription (regression: VibesDIY/vibes.diy#1545) ───────
+// The server's DocNotify DO is keyed on (userSlug, appSlug, dbName) since
+// commit f7963074. Each FireflyDatabase corresponds to exactly one such
+// tuple, so the constructor must call subscribeDocs(this.name) — otherwise
+// any vibe using a non-"default" dbName gets zero subscribers on its
+// DocNotify DO and never receives cross-client notifications.
+
+describe("FireflyDatabase server subscription (regression: VibesDIY/vibes.diy#1545)", () => {
+  it("constructor calls subscribeDocs(this.name) so the per-dbName DocNotify DO has a subscriber", async () => {
+    const mock = createMockVibeApi("test-app");
+    new FireflyDatabase("comments", asSandboxApi(mock));
+    // subscribeDocs is fire-and-forget from the constructor — let microtasks run.
+    await Promise.resolve();
+    expect(mock._subscribeDocsCalls).toContain("comments");
+  });
+
+  it("each FireflyDatabase subscribes for its own dbName — multiple dbs on one connection", async () => {
+    const mock = createMockVibeApi("test-app");
+    new FireflyDatabase("todos", asSandboxApi(mock));
+    new FireflyDatabase("notes", asSandboxApi(mock));
+    await Promise.resolve();
+    expect(mock._subscribeDocsCalls).toEqual(expect.arrayContaining(["todos", "notes"]));
+  });
+});
+
 // ── Standalone async API (Node.js / Wrangler workflow) ──────────────
 // Exercises the same API surface documented in prompts/pkg/llms/fireproof.md
 // "Using Fireproof in JavaScript" section — no React hooks involved.
