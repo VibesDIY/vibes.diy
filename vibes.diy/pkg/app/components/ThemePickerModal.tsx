@@ -1,14 +1,3 @@
-/**
- * Theme Picker Modal
- *
- * Users can import custom themes using the DESIGN.md format
- * (https://github.com/google-labs-code/design.md).
- *
- * Community DESIGN.md collections:
- * - https://github.com/VoltAgent/awesome-design-md — brand-inspired design systems (Stripe, Spotify, etc.)
- * - https://github.com/VoltAgent/awesome-claude-design — 68 ready-to-use design systems
- * - https://github.com/google-labs-code/design.md/tree/main/examples — official examples
- */
 import React, { useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { VibesTheme } from "@vibes.diy/prompts";
