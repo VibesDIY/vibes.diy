@@ -37,7 +37,7 @@ import { calcEntryPointUrl } from "../entry-point-utils.js";
 // code-block (typically App.jsx), takes the first 50 lines, and labels
 // it with the filename so the LLM has enough context to summarize the app
 // for title / skills / icon-description.
-function derivePromptFromFileSystem(fileSystem: ReadonlyArray<VibeFile>): string | undefined {
+function derivePromptFromFileSystem(fileSystem: readonly VibeFile[]): string | undefined {
   const codeBlock = fileSystem.find(isVibeCodeBlock);
   if (!codeBlock) return undefined;
   const headLines = codeBlock.content.split("\n").slice(0, 50).join("\n");
