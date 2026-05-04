@@ -22,9 +22,9 @@ export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unk
   }
 
   async send<T>(ctx: HandleTriggerCtx<W3CWebSocketEvent, unknown, unknown>, res: unknown): Promise<Result<T>> {
-    // console.log("WSSendProvider preparing to send response:", res);
     const msg = msgBase(ctx.enRequest);
     if (msg instanceof type.errors) {
+      console.log("[wssend] enRequest is NOT msgBase — keys:", Object.keys((ctx.enRequest as object) ?? {}));
       this.ws.send(this.ende.uint8ify({ type: "error", message: "Invalid message incoming" }));
       return Result.Err("invalid incoming message");
     }
@@ -41,6 +41,7 @@ export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unk
     } else {
       sendMsg = outMsg;
     }
+    console.log("[wssend] tid=", sendMsg.tid, "payload.type=", (sendMsg.payload as { type?: string } | undefined)?.type);
     this.ws.send(this.ende.uint8ify(sendMsg));
     return Result.Ok(sendMsg as unknown as T);
   }
