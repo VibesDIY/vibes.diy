@@ -32,6 +32,7 @@ export default {
           DISCORD_WEBHOOK_URL: env.DISCORD_WEBHOOK_URL,
           LLM_BACKEND_URL: env.LLM_BACKEND_URL,
           LLM_BACKEND_API_KEY: env.LLM_BACKEND_API_KEY,
+          PRODIA_TOKEN: env.PRODIA_TOKEN,
         },
       },
     });

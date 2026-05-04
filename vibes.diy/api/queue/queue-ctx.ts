@@ -22,6 +22,7 @@ export interface QueueCtxParams {
       DISCORD_WEBHOOK_URL?: string;
       LLM_BACKEND_URL: string;
       LLM_BACKEND_API_KEY: string;
+      PRODIA_TOKEN?: string;
     };
   };
 }
