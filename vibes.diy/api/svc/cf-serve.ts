@@ -98,12 +98,13 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
   }
 
   return {
-    notifyDocChanged: async (evt: { userSlug: string; appSlug: string; dbName: string; docId: string }) => {
+    notifyDocChanged: async (evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string) => {
       const key = `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
-      console.log("[docNotify] notifyDocChanged key:", key, "shard:", dn.shardId.slice(0, 8));
+      console.log("[docNotify] notifyDocChanged key:", key, "shard:", dn.shardId.slice(0, 8), "conn:", senderConnId.slice(0, 8));
       await fetchDocNotify(key, {
         action: "notify",
         senderShardId: dn.shardId,
+        senderConnId,
         evt: { type: "vibes.diy.evt-doc-changed", ...evt },
       });
     },

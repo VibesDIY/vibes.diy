@@ -17,7 +17,10 @@ const DocNotifyDeregister = type({
 
 const DocNotifyNotify = type({
   action: "'notify'",
+  // senderShardId is informational (logging/diagnostics) — exclusion happens
+  // per-WebSocket via senderConnId so siblings on the same shard still fan out.
   senderShardId: "string",
+  senderConnId: "string",
   evt: {
     type: "string",
     userSlug: "string",
@@ -98,18 +101,22 @@ export class DocNotify implements DurableObject {
     const stale: string[] = [];
     const promises: Promise<void>[] = [];
 
-    const targets = [...subs].filter((id) => id !== msg.senderShardId);
+    // Fan out to ALL subscriber shards including the sender shard — the
+    // sender connection is excluded per-WebSocket inside chat-sessions via
+    // senderConnId, which lets sibling tabs/browsers on the same shard
+    // (warm-DO sharing per vibe) still receive the notification.
+    const targets = [...subs];
     console.log(
       "[DocNotify] notify",
       msg.evt.userSlug + "/" + msg.evt.appSlug,
       "docId:",
       msg.evt.docId.slice(0, 8),
-      "| sender:",
+      "| sender shard:",
       msg.senderShardId.slice(0, 8),
+      "conn:",
+      msg.senderConnId.slice(0, 8),
       "| fan-out to",
       targets.length,
-      "of",
-      subs.size,
       "shards"
     );
 
@@ -122,7 +129,7 @@ export class DocNotify implements DurableObject {
             stub.fetch(
               new Request("https://internal/doc-notify", {
                 method: "POST",
-                body: JSON.stringify(msg.evt),
+                body: JSON.stringify({ evt: msg.evt, senderConnId: msg.senderConnId }),
                 headers: { "Content-Type": "application/json" },
               }) as unknown as CFRequest
             )

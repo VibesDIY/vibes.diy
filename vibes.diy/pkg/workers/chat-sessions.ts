@@ -23,6 +23,14 @@ const DocChangedEvt = type({
   docId: "string",
 });
 
+// Internal POST body from DocNotify: the doc-changed event plus the
+// originating WebSocket's connId, so we can skip just that one connection
+// while still delivering to sibling tabs/browsers on the same shard.
+const DocNotifyDelivery = type({
+  evt: DocChangedEvt,
+  senderConnId: "string",
+});
+
 declare const caches: CacheStorage;
 declare const Response: typeof CFResponse;
 // declare const DurableObject: typeof DurableObject;
@@ -52,15 +60,23 @@ export class ChatSessions implements DurableObject {
       if (rJson.isErr()) {
         return new Response("Invalid JSON", { status: 400 });
       }
-      const parsed = DocChangedEvt(rJson.Ok());
+      const parsed = DocNotifyDelivery(rJson.Ok());
       if (parsed instanceof type.errors) {
         return new Response("Invalid notification", { status: 400 });
       }
-      const evt = parsed;
+      const { evt, senderConnId } = parsed;
       const subscriptionKey = `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
       let delivered = 0;
+      let skippedSender = 0;
       for (const conn of this.connections) {
         if (!conn.subscribedDocKeys.has(subscriptionKey)) continue;
+        // Skip the originating WebSocket — it already updated optimistically
+        // when the put/delete returned. Sibling connections on the same
+        // shard (other tabs/browsers under the same warm-DO) still receive.
+        if (conn.connId === senderConnId) {
+          skippedSender++;
+          continue;
+        }
         exception2Result(() =>
           conn.ws.send(
             conn.ende.uint8ify({
@@ -85,10 +101,13 @@ export class ChatSessions implements DurableObject {
         delivered,
         "of",
         this.connections.size,
-        "connections"
+        "connections (skipped sender:",
+        skippedSender + ")"
       );
-      // Return 410 Gone if no live connections — tells DocNotify to remove this stale shard
-      if (delivered === 0) {
+      // Return 410 Gone only if there are no live local connections at all.
+      // If the only matching connection was the sender (skipped), that's a
+      // legitimate fan-out — the shard still has subscribers, don't evict.
+      if (delivered === 0 && skippedSender === 0) {
         return new Response("no connections", { status: 410 });
       }
       return new Response("ok");
