@@ -20,6 +20,7 @@ export default {
       cf: {
         BROWSER: env.BROWSER,
         D1: env.DB,
+        FS_IDS_BUCKET: env.FS_IDS_BUCKET,
       },
       vibes: {
         env: {
