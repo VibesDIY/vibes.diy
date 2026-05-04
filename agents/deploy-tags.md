@@ -57,8 +57,21 @@ The `pkg` tags publish the CLI (`vibes-diy` / `use-vibes` npm packages) and rela
 
 - ❌ Wrong: `git push origin vibes-diy@c2.2.X && echo 'c2.2.X deploying' | say` — the deploy hasn't run yet, CI takes minutes, the user gets a false "done."
 - ✅ Right: push the tag → wait/poll `gh run list` until the run shows `completed success` → then `echo 'c2.2.X deployed' | say`.
-- Word it as past tense (`deployed`, `published`, `green`), not progressive (`deploying`, `publishing`). The audible signal exists to call the human back when something they were waiting on is *done*.
+- Word it as past tense (`deployed`, `published`, `green`), not progressive (`deploying`, `publishing`). The audible signal exists to call the human back when something they were waiting on is _done_.
 - If the deploy fails, say something distinct (`deploy failed`) — never speak success on failure.
+
+### Canonical "wait for the deploy" command
+
+For agents inside Claude Code: a deploy is a single completion event, so use **Bash with `run_in_background: true`** running an `until` loop that exits when the run lands on a terminal state. One notification, exits the moment it's done. Do **not** use the Monitor tool — Monitor is for streams and stays armed until timeout if the loop never exits.
+
+```bash
+TAG=vibes-diy@c2.2.X
+until gh run list --repo VibesDIY/vibes.diy --branch "$TAG" --limit 1 \
+  | grep -qE "completed[[:space:]]+(success|failure|cancelled|timed_out)"; do sleep 30; done
+gh run list --repo VibesDIY/vibes.diy --branch "$TAG" --limit 1
+```
+
+When the background-task notification fires, read the final `gh run list` output, then `say` with past-tense language matching the actual outcome (`deployed` / `deploy failed`).
 
 The same rule applies to npm publishes, package releases, queue drains — anything where the action you triggered runs asynchronously somewhere else.
 
