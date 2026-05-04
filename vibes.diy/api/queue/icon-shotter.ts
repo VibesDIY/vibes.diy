@@ -6,6 +6,8 @@ import { QueueCtx } from "./queue-ctx.js";
 import { generateIcon } from "./intern/generate-icon.js";
 import { storeIcon } from "./intern/store-icon.js";
 
+const ICON_MODEL = "prodia/flux-2.klein.9b";
+
 interface IconLookup {
   readonly description: string | undefined;
   readonly headDescriptionAt: string | undefined;
@@ -49,8 +51,10 @@ export async function processIconGenEvent(qctx: QueueCtx, evt: EvtIconGen): Prom
   const env = qctx.params.vibes.env;
   const rGen = await generateIcon({
     description: lookup.description,
+    model: ICON_MODEL,
     llmUrl: env.LLM_BACKEND_URL,
     llmApiKey: env.LLM_BACKEND_API_KEY,
+    prodiaToken: env.PRODIA_TOKEN,
   });
   if (rGen.isErr()) return Result.Err(rGen);
   const { bytes, mime } = rGen.Ok();
