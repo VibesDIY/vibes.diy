@@ -1,7 +1,7 @@
 import { exception2Result, Result, URI } from "@adviser/cement";
 import type { R2GetOptions, R2MultipartUpload, R2Object, R2ObjectBody, R2UploadedPart } from "@cloudflare/workers-types";
 import type { SuperThis } from "@fireproof/core-types-base";
-import type { FetchResult, S3Api } from "@vibes.diy/api-types";
+import type { FetchResult, S3Api, S3PutOptions, S3RenameOptions, StorageProgressFn } from "@vibes.diy/api-types";
 
 // Subset of R2Bucket actually used by R2ToS3Api. Production passes a real
 // R2Bucket (env.FS_IDS_BUCKET) which structurally satisfies this. Tests pass
@@ -84,16 +84,18 @@ export class R2ToS3Api implements S3Api {
   // 2026-05-03: TypeError "Provided readable stream must have a known
   // length"). We always pass Uint8Array — single PUT for small, per-part
   // for multipart.
-  async put(iurl: string): Promise<WritableStream<Uint8Array>> {
+  async put(iurl: string, opts?: S3PutOptions): Promise<WritableStream<Uint8Array>> {
     const key = this.toKey(iurl);
     const r2 = this.r2;
     const pendingPuts = this.pendingPuts;
+    const onProgress: StorageProgressFn | undefined = opts?.onProgress;
 
     let chunks: Uint8Array[] = [];
     let bufferedBytes = 0;
     let multipartPromise: Promise<Result<R2MultipartUpload>> | undefined = undefined;
     let nextPartNumber = 1;
     const inFlightParts: Promise<Result<R2UploadedPart>>[] = [];
+    let totalBytesUploaded = 0;
 
     let resolveDone!: () => void;
     let rejectDone!: (e: Error) => void;
@@ -128,11 +130,17 @@ export class R2ToS3Api implements S3Api {
       chunks = [];
       bufferedBytes = 0;
       const myPartNumber = nextPartNumber++;
+      const partBytes = merged.byteLength;
       return (async (): Promise<Result<R2UploadedPart>> => {
         const mpResult = await ensureMultipart();
         if (mpResult.isErr()) return Result.Err(mpResult.Err());
         const mp = mpResult.Ok();
-        return exception2Result(() => mp.uploadPart(myPartNumber, merged));
+        const r = await exception2Result(() => mp.uploadPart(myPartNumber, merged));
+        if (r.isOk() && onProgress) {
+          totalBytesUploaded += partBytes;
+          onProgress({ stage: "uploading-part", partNumber: myPartNumber, bytes: totalBytesUploaded });
+        }
+        return r;
       })();
     };
 
@@ -152,7 +160,12 @@ export class R2ToS3Api implements S3Api {
 
       if (multipartPromise === undefined) {
         // Small path: never crossed the threshold.
-        return exception2Result(() => r2.put(key, concatChunks(chunks, bufferedBytes)).then(() => undefined));
+        const small = concatChunks(chunks, bufferedBytes);
+        const rPut = await exception2Result(() => r2.put(key, small).then(() => undefined));
+        if (rPut.isOk() && onProgress) {
+          onProgress({ stage: "asset-stored", bytes: small.byteLength });
+        }
+        return rPut;
       }
 
       // Multipart path: flush any remaining chunks as the final part
@@ -179,6 +192,8 @@ export class R2ToS3Api implements S3Api {
       if (completeR.isErr()) {
         const ar = await exception2Result(() => mp.abort());
         if (ar.isErr()) console.error(`R2ToS3Api.put(${key}) abort after complete failure also failed:`, ar.Err());
+      } else if (onProgress) {
+        onProgress({ stage: "asset-stored", bytes: totalBytesUploaded });
       }
       return completeR;
     };
@@ -249,9 +264,10 @@ export class R2ToS3Api implements S3Api {
   // zero data transfer through the worker. Switching to it would make rename
   // O(1) on object size but requires the AWS S3 SDK and R2 access keys/IAM
   // (out of scope for the Workers binding we use here).
-  async rename(fromUrl: string, toUrl: string): Promise<Result<void>> {
+  async rename(fromUrl: string, toUrl: string, opts?: S3RenameOptions): Promise<Result<void>> {
     const fromKey = this.toKey(fromUrl);
     const toKey = this.toKey(toUrl);
+    const onProgress = opts?.onProgress;
     // Wait for the source put to finish before reading.
     await this.awaitPut(fromUrl);
 
@@ -272,8 +288,11 @@ export class R2ToS3Api implements S3Api {
     if (sourceSize <= PART_SIZE) {
       const rCopy = await this.copySmallObject(fromKey, toKey);
       if (rCopy.isErr()) return rCopy;
+      if (onProgress) {
+        onProgress({ stage: "asset-renamed", bytes: sourceSize });
+      }
     } else {
-      const rCopy = await this.copyLargeObjectStreaming(fromKey, toKey, sourceSize);
+      const rCopy = await this.copyLargeObjectStreaming(fromKey, toKey, sourceSize, onProgress);
       if (rCopy.isErr()) return rCopy;
     }
 
@@ -332,7 +351,12 @@ export class R2ToS3Api implements S3Api {
     return Result.Ok(undefined);
   }
 
-  private async copyLargeObjectStreaming(fromKey: string, toKey: string, sourceSize: number): Promise<Result<void>> {
+  private async copyLargeObjectStreaming(
+    fromKey: string,
+    toKey: string,
+    sourceSize: number,
+    onProgress?: StorageProgressFn
+  ): Promise<Result<void>> {
     const rMp = await exception2Result(() => this.r2.createMultipartUpload(toKey));
     if (rMp.isErr()) {
       const err = rMp.Err();
@@ -343,6 +367,7 @@ export class R2ToS3Api implements S3Api {
 
     const completedParts: R2UploadedPart[] = [];
     let partNumber = 1;
+    let totalCopied = 0;
     for (let offset = 0; offset < sourceSize; offset += PART_SIZE) {
       const length = Math.min(PART_SIZE, sourceSize - offset);
       const rGet = await exception2Result(() => this.r2.get(fromKey, { range: { offset, length } }));
@@ -375,6 +400,10 @@ export class R2ToS3Api implements S3Api {
         return Result.Err(err);
       }
       completedParts.push(rUpload.Ok());
+      totalCopied += bytes.byteLength;
+      if (onProgress) {
+        onProgress({ stage: "rename-part", partNumber, bytes: totalCopied });
+      }
       partNumber += 1;
     }
 
@@ -384,6 +413,9 @@ export class R2ToS3Api implements S3Api {
       console.error(`R2ToS3Api.rename complete(${toKey}) failed:`, err);
       await this.abortQuiet(mp, toKey);
       return Result.Err(err);
+    }
+    if (onProgress) {
+      onProgress({ stage: "asset-renamed", bytes: totalCopied });
     }
     return Result.Ok(undefined);
   }

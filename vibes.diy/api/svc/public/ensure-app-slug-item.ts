@@ -17,6 +17,8 @@ import {
   ReqWithVerifiedAuth,
   ResEnsureAppSlug,
   ResEnsureAppSlugInvalid,
+  ResProgress,
+  StorageProgressInfo,
   VibeFile,
   VibesDiyError,
   W3CWebSocketEvent,
@@ -29,10 +31,15 @@ import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 
+export interface EnsureAppSlugItemOptions {
+  readonly onProgress?: (info: StorageProgressInfo) => void;
+}
+
 // ReqWithVerifiedAuth<ReqEnsureAppSlug>
 export async function ensureAppSlugItem(
   vctx: VibesApiSQLCtx,
-  req: ReqWithVerifiedAuth<ReqEnsureAppSlug>
+  req: ReqWithVerifiedAuth<ReqEnsureAppSlug>,
+  opts?: EnsureAppSlugItemOptions
 ): Promise<Result<ResEnsureAppSlug>> {
   // Reject if no code files provided — an app needs at least one .jsx/.js/.ts/.tsx
   const hasCodeFile = req.fileSystem.some((f) => f.type === "code-block");
@@ -80,7 +87,10 @@ export async function ensureAppSlugItem(
         return Result.Err(`unsupported file system item type: ${fsItem.type}`);
     }
   }
-  const rStorageResults = await vctx.storage.ensure(...writeAppSlugsOp.map((op) => uint8array2stream(to_uint8(op.assetOp.data))));
+  const rStorageResults = await vctx.storage.ensure(
+    { onProgress: opts?.onProgress },
+    ...writeAppSlugsOp.map((op) => uint8array2stream(to_uint8(op.assetOp.data)))
+  );
   if (rStorageResults.some((r) => r.isErr())) {
     return Result.Err(
       `failed to store one or more assets: ${rStorageResults.map((r) => (r.isErr() ? r.Err().message : "ok")).join(", ")}`
@@ -178,7 +188,26 @@ export const ensureAppSlugItemEvento: EventoHandler<
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      const rAppSlugBinding = await ensureAppSlugItem(vctx, req);
+      // Emit a progress envelope back on the same connection per real
+      // R2 part-complete/asset-stored signal. The client doesn't match this
+      // to a `request()` waiter (no isResXxx hit), but receiving it resets
+      // the idle timeout — keeping multi-MB pushes alive without a fixed
+      // wall-clock bump.
+      function emitProgress(info: StorageProgressInfo): void {
+        const progress: ResProgress = {
+          type: "vibes.diy.res-progress",
+          stage: info.stage,
+          ...(info.bytes === undefined ? {} : { bytes: info.bytes }),
+          ...(info.partNumber === undefined ? {} : { partNumber: info.partNumber }),
+        };
+        // Fire-and-forget: send returns a promise but we don't want to slow
+        // the upload by awaiting it (and the caller is the storage layer).
+        ctx.send.send(ctx, progress).catch((e: unknown) => {
+          console.error("ensureAppSlugItem progress emit failed:", e);
+        });
+      }
+
+      const rAppSlugBinding = await ensureAppSlugItem(vctx, req, { onProgress: emitProgress });
       if (rAppSlugBinding.isErr()) {
         return Result.Err(rAppSlugBinding);
       }
