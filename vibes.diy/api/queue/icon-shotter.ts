@@ -58,6 +58,7 @@ export async function processIconGenEvent(qctx: QueueCtx, evt: EvtIconGen): Prom
   });
   if (rGen.isErr()) return Result.Err(rGen);
   const { bytes, mime } = rGen.Ok();
+  console.log(`Icon generated for ${evt.userSlug}/${evt.appSlug} via ${ICON_MODEL}: ${bytes.byteLength} bytes (${mime})`);
   const rStore = await storeIcon(qctx, {
     userSlug: evt.userSlug,
     appSlug: evt.appSlug,
