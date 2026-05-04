@@ -127,6 +127,7 @@ async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
     mode: "chat",
   });
   if (rChat.isErr()) {
+    await api.close().catch(() => {});
     await finalize("open-chat-failure", String(rChat.Err()));
     return;
   }
@@ -141,6 +142,7 @@ async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
   });
   if (rPrompt.isErr()) {
     await chat.close();
+    await api.close().catch(() => {});
     await finalize("prompt-failure", JSON.stringify(rPrompt.Err()));
     return;
   }
@@ -209,6 +211,7 @@ async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
     await turnWriter.close().catch(() => {});
     reader.releaseLock();
     await chat.close();
+    await api.close().catch(() => {});
     await writeErrors(archive, applyErrors);
     await writeUpstreamErrors(archive, upstreamErrors);
     await finalize("stream-error", e instanceof Error ? (e.stack ?? e.message) : String(e));
@@ -219,6 +222,7 @@ async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
   await resolverPromise;
   reader.releaseLock();
   await chat.close();
+  await api.close().catch(() => {});
 
   manifest.turns.push({
     index: 0,
