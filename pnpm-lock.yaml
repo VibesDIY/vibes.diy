@@ -219,6 +219,39 @@ importers:
         specifier: ~4.1.2
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.6.0)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(vite@7.3.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
+  eval/codegen-edit:
+    dependencies:
+      '@adviser/cement':
+        specifier: ^0.5.34
+        version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
+      '@fireproof/core':
+        specifier: 0.24.19
+        version: 0.24.19(bufferutil@4.1.0)(react@19.2.5)(typescript@6.0.3)(utf-8-validate@6.0.6)
+      '@fireproof/core-device-id':
+        specifier: 0.24.19
+        version: 0.24.19(typescript@6.0.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.19
+        version: 0.24.19(typescript@6.0.3)
+      '@fireproof/core-runtime':
+        specifier: 0.24.19
+        version: 0.24.19(typescript@6.0.3)
+      '@fireproof/core-types-protocols-dashboard':
+        specifier: 0.24.19
+        version: 0.24.19(typescript@6.0.3)
+      '@vibes.diy/api-impl':
+        specifier: workspace:*
+        version: link:../../vibes.diy/api/impl
+      '@vibes.diy/api-types':
+        specifier: workspace:*
+        version: link:../../vibes.diy/api/types
+      '@vibes.diy/call-ai-v2':
+        specifier: workspace:*
+        version: link:../../call-ai/v2
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+
   img-vibes/pkg:
     devDependencies:
       '@fireproof/core-cli':
@@ -6941,6 +6974,7 @@ packages:
 
   libsql@0.5.29:
     resolution: {integrity: sha512-8lMP8iMgiBzzoNbAPQ59qdVcj6UaE/Vnm+fiwX4doX4Narook0a4GPKWBEv+CR8a1OwbfkgL18uBfBjWdF0Fzg==}
+    cpu: [x64, arm64, wasm32, arm]
     os: [darwin, linux, win32]
 
   lightningcss-android-arm64@1.32.0:
