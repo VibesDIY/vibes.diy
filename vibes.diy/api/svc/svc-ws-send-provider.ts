@@ -16,6 +16,11 @@ export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unk
   // is subscribed to for document change notifications. dbName-scoped so a
   // tighter `read` ACL on one db doesn't leak via change events on another.
   readonly subscribedDocKeys = new Set<string>();
+  // Unique per-WebSocket id used to skip the originating connection when
+  // fanning out doc-changed notifications. Many connections share a shard
+  // (warm-DO sharing per (userSlug, appSlug)), so shard-level exclusion
+  // would mute sibling tabs/browsers — exclusion must be per-connection.
+  readonly connId: string = crypto.randomUUID();
   constructor(ws: WebSocket, ende?: JSONEnDecoder) {
     this.ws = ws;
     this.ende = ende ?? JSONEnDecoderSingleton();
