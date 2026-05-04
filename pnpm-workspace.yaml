@@ -27,6 +27,7 @@ packages:
   - "hosting/tests/unit"
   - "utils/pkg"
   - "utils/tests"
+  - "eval/codegen-edit"
 
 # Override sharp version to avoid build failures with 0.34.x
 overrides:
