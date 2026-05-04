@@ -46,24 +46,30 @@ export async function createArchive(rootDir: string, slug: string): Promise<Arch
 }
 
 export class JsonlWriter {
-  private stream: WriteStream;
-  private opened = false;
+  readonly #stream: WriteStream;
+  #opened = false;
 
-  constructor(private readonly path: string) {
-    this.stream = createWriteStream(this.path, { flags: "a" });
-    this.opened = true;
+  constructor(path: string) {
+    this.#stream = createWriteStream(path, { flags: "a" });
+    this.#opened = true;
   }
 
   write(obj: unknown): void {
-    if (!this.opened) throw new Error("JsonlWriter closed");
-    this.stream.write(JSON.stringify(obj) + "\n");
+    if (this.#opened === false) return;
+    this.#stream.write(JSON.stringify(obj) + "\n");
   }
 
   close(): Promise<void> {
-    if (!this.opened) return Promise.resolve();
-    this.opened = false;
-    return new Promise((resolve, reject) => {
-      this.stream.end((err: Error | null | undefined) => (err ? reject(err) : resolve()));
+    if (this.#opened === false) return Promise.resolve();
+    this.#opened = false;
+    return new Promise<void>((resolve, reject) => {
+      this.#stream.end((err: Error | null | undefined) => {
+        if (err === null || err === undefined) {
+          resolve();
+        } else {
+          reject(err);
+        }
+      });
     });
   }
 }
@@ -85,7 +91,7 @@ export async function writeResolvedFiles(dir: ArchiveDirs, files: Readonly<Recor
     const filename = path.startsWith("/") ? path.slice(1) : path;
     const dest = join(dir.resolvedDir, filename);
     const destDir = dest.slice(0, dest.lastIndexOf("/"));
-    if (destDir) await mkdir(destDir, { recursive: true });
+    if (destDir.length > 0) await mkdir(destDir, { recursive: true });
     await writeFile(dest, content, "utf-8");
   }
 }

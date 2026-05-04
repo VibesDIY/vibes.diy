@@ -248,6 +248,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../call-ai/v2
+      cmd-ts:
+        specifier: ^0.15.0
+        version: 0.15.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0

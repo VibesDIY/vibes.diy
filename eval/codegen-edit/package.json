@@ -20,6 +20,7 @@
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
+    "cmd-ts": "^0.15.0",
     "tsx": "^4.21.0"
   }
 }
