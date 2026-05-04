@@ -7,6 +7,7 @@ import { generateIcon } from "./intern/generate-icon.js";
 import { storeIcon } from "./intern/store-icon.js";
 
 const ICON_MODEL = "prodia/flux-2.klein.9b";
+const ICON_FALLBACK_MODEL = "openai/gpt-5-image-mini";
 
 interface IconLookup {
   readonly description: string | undefined;
@@ -52,13 +53,14 @@ export async function processIconGenEvent(qctx: QueueCtx, evt: EvtIconGen): Prom
   const rGen = await generateIcon({
     description: lookup.description,
     model: ICON_MODEL,
+    fallbackModel: ICON_FALLBACK_MODEL,
     llmUrl: env.LLM_BACKEND_URL,
     llmApiKey: env.LLM_BACKEND_API_KEY,
     prodiaToken: env.PRODIA_TOKEN,
   });
   if (rGen.isErr()) return Result.Err(rGen);
-  const { bytes, mime } = rGen.Ok();
-  console.log(`Icon generated for ${evt.userSlug}/${evt.appSlug} via ${ICON_MODEL}: ${bytes.byteLength} bytes (${mime})`);
+  const { bytes, mime, model } = rGen.Ok();
+  console.log(`Icon generated for ${evt.userSlug}/${evt.appSlug} via ${model}: ${bytes.byteLength} bytes (${mime})`);
   const rStore = await storeIcon(qctx, {
     userSlug: evt.userSlug,
     appSlug: evt.appSlug,
