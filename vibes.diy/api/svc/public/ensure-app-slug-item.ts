@@ -12,6 +12,7 @@ import {
   EvtNewFsId,
   isResEnsureAppSlugError,
   isResEnsureAppSlugOk,
+  isVibeCodeBlock,
   MsgBase,
   ReqEnsureAppSlug,
   ReqWithVerifiedAuth,
@@ -29,7 +30,19 @@ import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth as checkAuth } from "../check-auth.js";
 import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
+import { ensureAppMetadata } from "../intern/ensure-app-metadata.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
+
+// Build a preAllocate-friendly prompt from pushed code. Picks the first
+// code-block (typically App.jsx), takes the first 50 lines, and labels
+// it with the filename so the LLM has enough context to summarize the app
+// for title / skills / icon-description.
+function derivePromptFromFileSystem(fileSystem: ReadonlyArray<VibeFile>): string | undefined {
+  const codeBlock = fileSystem.find(isVibeCodeBlock);
+  if (!codeBlock) return undefined;
+  const headLines = codeBlock.content.split("\n").slice(0, 50).join("\n");
+  return `Generate metadata for this app. Source file: ${codeBlock.filename}\n\n${headLines}`;
+}
 
 export interface EnsureAppSlugItemOptions {
   readonly onProgress?: (info: StorageProgressInfo) => void;
@@ -144,6 +157,25 @@ export async function ensureAppSlugItem(
       dst: "vibes-service",
       ttl: 1,
     } satisfies MsgBase<EvtNewFsId>);
+  }
+
+  // First-push metadata invariant: derive a prompt from the pushed code
+  // and run preAllocate so cli-pushed apps get the same active.title /
+  // active.skills / active.icon-description / icon-gen as chat-created
+  // apps. Idempotent — re-pushes skip the LLM call when active.title
+  // already exists.
+  const metadataPrompt = derivePromptFromFileSystem(req.fileSystem);
+  if (metadataPrompt) {
+    const rMetadata = await ensureAppMetadata(vctx, {
+      userId: req._auth.verifiedAuth.claims.userId,
+      userSlug: ensured.userSlug,
+      appSlug: ensured.appSlug,
+      prompt: metadataPrompt,
+      src: "ensureAppSlugItem",
+    });
+    if (rMetadata.isErr()) {
+      console.warn(`ensureAppSlugItem: ensureAppMetadata failed for ${ensured.userSlug}/${ensured.appSlug}:`, rMetadata.Err());
+    }
   }
   return Result.Ok({
     type: "vibes.diy.res-ensure-app-slug",
