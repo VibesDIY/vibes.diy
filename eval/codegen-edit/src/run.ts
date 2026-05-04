@@ -2,6 +2,8 @@ import { argv, exit, stderr } from "node:process";
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { exception2Result } from "@adviser/cement";
+import { command, option, optional, positional, run, string } from "cmd-ts";
 import { isResError, isSectionEvent, isPromptBlockEnd } from "@vibes.diy/api-types";
 import type { ResError, SectionEvent } from "@vibes.diy/api-types";
 import {
@@ -22,6 +24,7 @@ import {
   writeUpstreamErrors,
   writeResolvedFiles,
   appendIndex,
+  type ArchiveDirs,
   type RunManifest,
 } from "./archive.js";
 
@@ -37,33 +40,12 @@ interface CorpusEntry {
   edits: string[];
 }
 
-interface CliArgs {
-  promptId?: string;
+interface RunArgs {
+  promptId: string | undefined;
   userSlug: string;
   apiUrl: string;
   archiveRoot: string;
   promptsPath: string;
-}
-
-function parseArgs(): CliArgs {
-  const args: CliArgs = {
-    userSlug: DEFAULT_USER_SLUG,
-    apiUrl: DEFAULT_API_URL,
-    archiveRoot: DEFAULT_ARCHIVE_ROOT,
-    promptsPath: DEFAULT_PROMPTS_PATH,
-  };
-  const rest = argv.slice(2);
-  for (let i = 0; i < rest.length; i++) {
-    const a = rest[i];
-    if (a === "--user-slug") args.userSlug = rest[++i];
-    else if (a === "--api-url") args.apiUrl = rest[++i];
-    else if (a === "--archive-root") args.archiveRoot = resolve(rest[++i]);
-    else if (a === "--prompts") args.promptsPath = resolve(rest[++i]);
-    else if (a === "--") continue;
-    else if (!a.startsWith("--")) args.promptId = a;
-    else throw new Error(`Unknown flag: ${a}`);
-  }
-  return args;
 }
 
 async function loadCorpus(path: string): Promise<CorpusEntry[]> {
@@ -74,7 +56,39 @@ async function loadCorpus(path: string): Promise<CorpusEntry[]> {
     .map((l) => JSON.parse(l) as CorpusEntry);
 }
 
-async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
+interface FinalizeOpts {
+  readonly archive: ArchiveDirs;
+  readonly archiveRoot: string;
+  readonly manifest: RunManifest;
+  readonly sectionsJsonl: JsonlWriter;
+  readonly promptEventsJsonl: JsonlWriter;
+  readonly promptId: string;
+  readonly startedAt: string;
+}
+
+async function finalizeRun(opts: FinalizeOpts, state: RunManifest["exitState"], detail?: string): Promise<void> {
+  opts.manifest.finishedAt = new Date().toISOString();
+  opts.manifest.exitState = state;
+  if (detail !== undefined) opts.manifest.exitDetail = detail;
+  await writeManifest(opts.archive, opts.manifest);
+  await opts.sectionsJsonl.close();
+  await opts.promptEventsJsonl.close();
+  await appendIndex(
+    opts.archiveRoot,
+    JSON.stringify({
+      promptId: opts.promptId,
+      archive: opts.archive.root,
+      startedAt: opts.startedAt,
+      finishedAt: opts.manifest.finishedAt,
+      exitState: state,
+      applyErrors: opts.manifest.turns[0]?.applyErrorCount ?? 0,
+      upstreamErrors: opts.manifest.turns[0]?.upstreamErrorCount ?? 0,
+      resolvedFiles: opts.manifest.turns[0]?.resolvedFileCount ?? 0,
+    })
+  );
+}
+
+async function runEntry(args: RunArgs, entry: CorpusEntry): Promise<void> {
   const archive = await createArchive(args.archiveRoot, entry.id);
   const sectionsJsonl = new JsonlWriter(archive.sectionsPath);
   const promptEventsJsonl = new JsonlWriter(archive.promptEventsPath);
@@ -89,36 +103,22 @@ async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
     turns: [],
   };
   await writeManifest(archive, manifest);
-
-  const finalize = async (state: RunManifest["exitState"], detail?: string) => {
-    manifest.finishedAt = new Date().toISOString();
-    manifest.exitState = state;
-    if (detail) manifest.exitDetail = detail;
-    await writeManifest(archive, manifest);
-    await sectionsJsonl.close();
-    await promptEventsJsonl.close();
-    await appendIndex(
-      args.archiveRoot,
-      JSON.stringify({
-        promptId: entry.id,
-        archive: archive.root,
-        startedAt,
-        finishedAt: manifest.finishedAt,
-        exitState: state,
-        applyErrors: manifest.turns[0]?.applyErrorCount ?? 0,
-        upstreamErrors: manifest.turns[0]?.upstreamErrorCount ?? 0,
-        resolvedFiles: manifest.turns[0]?.resolvedFileCount ?? 0,
-      })
-    );
+  const fin: FinalizeOpts = {
+    archive,
+    archiveRoot: args.archiveRoot,
+    manifest,
+    sectionsJsonl,
+    promptEventsJsonl,
+    promptId: entry.id,
+    startedAt,
   };
 
-  let auth;
-  try {
-    auth = await buildApiFactory();
-  } catch (e) {
-    await finalize("auth-failure", String(e));
-    throw e;
+  const rAuth = await buildApiFactory();
+  if (rAuth.isErr()) {
+    await finalizeRun(fin, "auth-failure", String(rAuth.Err()));
+    exit(1);
   }
+  const auth = rAuth.Ok();
 
   const api = auth.factory(args.apiUrl);
   const rChat = await api.openChat({
@@ -127,8 +127,8 @@ async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
     mode: "chat",
   });
   if (rChat.isErr()) {
-    await api.close().catch(() => {});
-    await finalize("open-chat-failure", String(rChat.Err()));
+    await api.close().catch(() => undefined);
+    await finalizeRun(fin, "open-chat-failure", String(rChat.Err()));
     return;
   }
   const chat = rChat.Ok();
@@ -142,8 +142,8 @@ async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
   });
   if (rPrompt.isErr()) {
     await chat.close();
-    await api.close().catch(() => {});
-    await finalize("prompt-failure", JSON.stringify(rPrompt.Err()));
+    await api.close().catch(() => undefined);
+    await finalizeRun(fin, "prompt-failure", JSON.stringify(rPrompt.Err()));
     return;
   }
   const promptId = rPrompt.Ok().promptId;
@@ -185,44 +185,44 @@ async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
   })();
 
   const reader = chat.sectionStream.getReader();
-  let sawTurnEnd = false;
-  try {
+  const rRead = await exception2Result<{ sawTurnEnd: boolean }>(async () => {
     for (;;) {
       const { value, done } = await reader.read();
-      if (done) break;
+      if (done) return { sawTurnEnd: false };
       sectionsJsonl.write({ turn: 0, msg: value });
       if (isResError(value)) {
         upstreamErrors.push(value);
         continue;
       }
-      if (!isSectionEvent(value)) continue;
+      if (isSectionEvent(value) === false) continue;
       const event = value as SectionEvent;
       let containsTurnEnd = false;
       for (const block of event.blocks) {
         await turnWriter.write(block as BlockStreamMsg);
         if (isPromptBlockEnd(block)) containsTurnEnd = true;
       }
-      if (containsTurnEnd) {
-        sawTurnEnd = true;
-        break;
-      }
+      if (containsTurnEnd === true) return { sawTurnEnd: true };
     }
-  } catch (e) {
-    await turnWriter.close().catch(() => {});
+  });
+
+  if (rRead.isErr()) {
+    await turnWriter.close().catch(() => undefined);
     reader.releaseLock();
     await chat.close();
-    await api.close().catch(() => {});
+    await api.close().catch(() => undefined);
     await writeErrors(archive, applyErrors);
     await writeUpstreamErrors(archive, upstreamErrors);
-    await finalize("stream-error", e instanceof Error ? (e.stack ?? e.message) : String(e));
-    throw e;
+    const err = rRead.Err();
+    await finalizeRun(fin, "stream-error", err.stack ?? err.message);
+    exit(1);
   }
+  const { sawTurnEnd } = rRead.Ok();
 
   await turnWriter.close();
   await resolverPromise;
   reader.releaseLock();
   await chat.close();
-  await api.close().catch(() => {});
+  await api.close().catch(() => undefined);
 
   manifest.turns.push({
     index: 0,
@@ -234,14 +234,14 @@ async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
     applyErrorCount: applyErrors.length,
     resolvedFileCount: Object.keys(resolvedFiles).length,
   });
-  if (!sawTurnEnd) {
+  if (sawTurnEnd === false) {
     manifest.exitDetail = "stream closed before prompt.block.end";
   }
 
   await writeResolvedFiles(archive, resolvedFiles);
   await writeErrors(archive, applyErrors);
   await writeUpstreamErrors(archive, upstreamErrors);
-  await finalize(sawTurnEnd ? "ok" : "stream-error", manifest.exitDetail);
+  await finalizeRun(fin, sawTurnEnd === true ? "ok" : "stream-error", manifest.exitDetail);
 
   stderr.write(
     `  resolved=${Object.keys(resolvedFiles).length} applyErrors=${applyErrors.length} upstreamErrors=${upstreamErrors.length}\n`
@@ -255,21 +255,66 @@ async function runEntry(args: CliArgs, entry: CorpusEntry): Promise<void> {
   }
 }
 
-async function main(): Promise<void> {
-  const args = parseArgs();
-  const corpus = await loadCorpus(args.promptsPath);
-  const entry = args.promptId ? corpus.find((e) => e.id === args.promptId) : corpus[0];
-  if (!entry) {
-    stderr.write(`Prompt id not found: ${args.promptId}\n`);
-    stderr.write(`Available: ${corpus.map((e) => e.id).join(", ")}\n`);
-    exit(2);
-  }
-  stderr.write(`Running ${entry.id} (single create turn)\n`);
-  await runEntry(args, entry);
-  stderr.write(`Done.\n`);
-}
-
-main().catch((e) => {
-  stderr.write(`Fatal: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}\n`);
-  exit(1);
+const cmd = command({
+  name: "codegen-edit-run",
+  description: "Drive a single CLI generation flow against the eval corpus and archive the section stream.",
+  version: "0.0.0",
+  args: {
+    promptId: positional({
+      type: optional(string),
+      displayName: "promptId",
+      description: "Corpus entry id (defaults to first entry)",
+    }),
+    userSlug: option({
+      long: "user-slug",
+      type: string,
+      defaultValue: () => DEFAULT_USER_SLUG,
+      defaultValueIsSerializable: true,
+    }),
+    apiUrl: option({
+      long: "api-url",
+      type: string,
+      defaultValue: () => DEFAULT_API_URL,
+      defaultValueIsSerializable: true,
+    }),
+    archiveRoot: option({
+      long: "archive-root",
+      type: string,
+      defaultValue: () => DEFAULT_ARCHIVE_ROOT,
+      defaultValueIsSerializable: true,
+    }),
+    promptsPath: option({
+      long: "prompts",
+      type: string,
+      defaultValue: () => DEFAULT_PROMPTS_PATH,
+      defaultValueIsSerializable: true,
+    }),
+  },
+  handler: async (args) => {
+    const corpus = await loadCorpus(args.promptsPath);
+    const entry = args.promptId === undefined ? corpus[0] : corpus.find((e) => e.id === args.promptId);
+    if (entry === undefined) {
+      stderr.write(`Prompt id not found: ${args.promptId ?? "(first entry)"}\n`);
+      stderr.write(`Available: ${corpus.map((e) => e.id).join(", ")}\n`);
+      exit(2);
+    }
+    stderr.write(`Running ${entry.id} (single create turn)\n`);
+    await runEntry(
+      {
+        promptId: args.promptId,
+        userSlug: args.userSlug,
+        apiUrl: args.apiUrl,
+        archiveRoot: args.archiveRoot,
+        promptsPath: args.promptsPath,
+      },
+      entry
+    );
+    stderr.write(`Done.\n`);
+  },
 });
+
+const rRun = await exception2Result(() => run(cmd, argv.slice(2)));
+if (rRun.isErr()) {
+  stderr.write(`Fatal: ${rRun.Err().stack ?? rRun.Err().message}\n`);
+  exit(1);
+}
