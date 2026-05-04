@@ -20,6 +20,8 @@ import AppLayout from "../../components/AppLayout.js";
 import { BrutalistCard } from "@vibes.diy/base";
 import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
+import ThemePickerModal from "../../components/ThemePickerModal.js";
+import { vibesThemes, buildThemePrompt, type VibesTheme } from "@vibes.diy/prompts";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
@@ -227,6 +229,24 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   // (which would re-fire the same prompt — classic loop).
   const fsIdRef = useRef<string | undefined>(fsId);
   fsIdRef.current = fsId;
+  const [selectedTheme, setSelectedTheme] = useState<VibesTheme | null>(null);
+  const [themeModalOpen, setThemeModalOpen] = useState(false);
+
+  const handleSubmitWithTheme = useCallback((userText: string) => {
+    if (selectedTheme) {
+      const themePrompt = buildThemePrompt(selectedTheme);
+      sendPrompt(`${themePrompt}\n\n---\n\n${userText}`);
+    } else {
+      sendPrompt(userText);
+    }
+  }, [selectedTheme]);
+
+  const handleThemeSelect = useCallback((theme: VibesTheme) => {
+    setSelectedTheme(theme);
+    setThemeModalOpen(false);
+    const themePrompt = buildThemePrompt(theme);
+    sendPrompt(`${themePrompt}\n\n---\n\nRestyle the current app to match this theme. Keep all existing functionality intact.`);
+  }, []);
 
   // Read the local VibeDocument (seeded by the remix route) to show the
   // "remix of" indicator in the header. Best-effort: if the doc is missing
@@ -645,10 +665,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
             <ChatInput
               ref={chatInput}
-              onSubmit={sendPrompt}
+              onSubmit={handleSubmitWithTheme}
               promptProcessing={promptState.running}
               hasCode={promptState.hasCode}
               currentMsgCount={promptState.current?.msgs.length ?? 0}
+              selectedTheme={selectedTheme}
+              onThemeButtonClick={() => setThemeModalOpen(true)}
             />
           </BrutalistCard>
         }
@@ -667,6 +689,13 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           onClose={() => setContextMenu(null)}
         />
       )}
+      <ThemePickerModal
+        open={themeModalOpen}
+        onClose={() => setThemeModalOpen(false)}
+        onSelect={handleThemeSelect}
+        selectedSlug={selectedTheme?.slug}
+        themes={vibesThemes}
+      />
     </>
   );
 }

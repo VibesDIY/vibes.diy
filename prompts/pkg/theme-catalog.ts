@@ -1,0 +1,482 @@
+// Auto-generated theme catalog — do not edit manually
+// Regenerate with: node scripts/convert-themes-to-designmd.mjs
+
+export interface VibesTheme {
+  slug: string;
+  name: string;
+  cssVars: string;
+  accentColor: string;
+  bgColor: string;
+  fontLink?: string;
+  bodyFont?: string;
+  designMd?: string;
+}
+
+const LOADING_STATES_INSTRUCTION = "LOADING STATES: Every button that triggers an async operation (callAI, fetch, database save) MUST show a loading state. Use a useState boolean \`isLoading\`. While loading: disable the button with \`disabled={isLoading}\`, replace its label with a spinning SVG (a 16x16 circle with 3px stroke, top quarter transparent, CSS animation rotate 0.8s linear infinite). Pattern: \`setIsLoading(true); try { await callAI(...); } finally { setIsLoading(false); }\`. Never leave a button clickable with no feedback during an async call.";
+
+export function buildThemePrompt(theme: VibesTheme): string {
+  if (theme.designMd) {
+    return `${theme.designMd}\n\n${LOADING_STATES_INSTRUCTION}\n\nApply this design system to the generated React component.`;
+  }
+  const sections = [
+    `THEME: ${theme.name} — Apply this complete design system to the generated React component.`,
+    `CSS DESIGN TOKENS:\n${theme.cssVars}`,
+  ];
+  if (theme.fontLink) sections.push(`FONTS: Load from ${theme.fontLink}. Use display=optional.`);
+  if (theme.bodyFont) sections.push(`TYPOGRAPHY: Primary body font: ${theme.bodyFont}.`);
+  sections.push(LOADING_STATES_INSTRUCTION);
+  sections.push("Apply this theme to the generated React component.");
+  return sections.join("\n\n");
+}
+
+export function parseDesignMd(content: string, slug?: string): VibesTheme {
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  const frontmatter = fmMatch ? fmMatch[1] : "";
+  const nameMatch = frontmatter.match(/^name:\s*(.+)$/m);
+  const name = nameMatch ? nameMatch[1].trim() : slug || "Custom Theme";
+  const colorBlock = frontmatter.match(/^colors:\n((?:\s+.+\n)*)/m);
+  const colors: Record<string, string> = {};
+  if (colorBlock) {
+    for (const line of colorBlock[1].split("\n")) {
+      const m = line.match(/^\s+([\w-]+):\s*"?([^"\n]+)"?$/);
+      if (m) colors[m[1]] = m[2].trim();
+    }
+  }
+  const accentColor = colors["primary"] || colors["accent"] || colors["tertiary"] || Object.values(colors)[2] || "#666";
+  const bgColor = colors["background"] || colors["surface"] || colors["neutral"] || Object.values(colors)[0] || "#fff";
+  const fontMatch = frontmatter.match(/fontFamily:\s*(.+)$/m);
+  const bodyFont = fontMatch ? fontMatch[1].trim() : undefined;
+  return {
+    slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
+    name,
+    cssVars: "",
+    accentColor,
+    bgColor,
+    bodyFont,
+    designMd: content,
+  };
+}
+
+export const vibesThemes: VibesTheme[] = [
+  {
+    slug: "aether",
+    name: "Aether Brass",
+    cssVars: "",
+    accentColor: "#cfa562",
+    bgColor: "#dcbfa6",
+    fontLink: "https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Homemade+Apple&family=Special+Elite&display=swap",
+    bodyFont: "'Special Elite', monospace",
+    designMd: "---\nname: Aether Brass\ncolors:\n  parchment: \"#dcbfa6\"\n  parchment-dark: \"#c4a482\"\n  ink: \"#3e2723\"\n  leather: \"#2a1d15\"\n  brass-light: \"#fdf5bb\"\n  brass-mid: \"#cfa562\"\n  brass-dark: \"#745428\"\n  amber: \"#ffaa00\"\ntypography:\n  body-md:\n    fontFamily: Special Elite\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nAether Brass design system. A clean, structured theme with Cinzel Decorative and Homemade Apple and Special Elite typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **parchment** (#dcbfa6): Use for backgrounds.\n- **parchment-dark** (#c4a482): Use for supporting UI elements.\n- **ink** (#3e2723): Use for text content.\n- **leather** (#2a1d15): Use for supporting UI elements.\n- **brass-light** (#fdf5bb): Use for supporting UI elements.\n- **brass-mid** (#cfa562): Use for supporting UI elements.\n- **brass-dark** (#745428): Use for supporting UI elements.\n- **amber** (#ffaa00): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Cinzel Decorative, Homemade Apple, Special Elite. Use display=optional.\nPrimary body font: 'Special Elite', monospace.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "archive",
+    name: "Archive",
+    cssVars: "",
+    accentColor: "oklch(0.35 0.04 50)",
+    bgColor: "oklch(0.95 0.01 70)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400;600&family=Inter:wght@400;500;600&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Archive\ncolors:\n  bg: \"oklch(0.95 0.01 70)\"\n  text: \"oklch(0.15 0.02 50)\"\n  border: \"oklch(0.20 0.02 50)\"\n  accent: \"oklch(0.35 0.04 50)\"\n  accent-text: \"oklch(0.95 0.01 70)\"\n  muted: \"oklch(0.55 0.02 50)\"\n  page-bg: \"oklch(0.92 0.01 65)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n  headline:\n    fontFamily: Playfair Display\n    fontSize: 2rem\n    fontWeight: \"700\"\n---\n\n## Brand & Style\n\nArchive design system. A clean, structured theme with Playfair Display and Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.95 0.01 70)): Use for backgrounds.\n- **text** (oklch(0.15 0.02 50)): Use for text content.\n- **border** (oklch(0.20 0.02 50)): Use for borders and dividers.\n- **accent** (oklch(0.35 0.04 50)): Use for primary actions and accents.\n- **accent-text** (oklch(0.95 0.01 70)): Use for text content.\n- **muted** (oklch(0.55 0.02 50)): Use for secondary/muted content.\n- **page-bg** (oklch(0.92 0.01 65)): Use for backgrounds.\n\n## Typography\n\nLoad fonts from Google Fonts: Playfair Display, Inter. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "atelier",
+    name: "Atelier Studio",
+    cssVars: "",
+    accentColor: "oklch(0.65 0.18 55)",
+    bgColor: "oklch(0.95 0.03 70)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Italianno&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap",
+    bodyFont: "'Playfair Display', serif",
+    designMd: "---\nname: Atelier Studio\ncolors:\n  comp-bg: \"oklch(0.95 0.03 70)\"\n  comp-text: \"oklch(0.25 0.04 30)\"\n  comp-border: \"oklch(0.25 0.04 30 / 0.15)\"\n  comp-accent: \"oklch(0.65 0.18 55)\"\n  comp-accent-text: \"oklch(1.00 0 0)\"\n  comp-muted: \"oklch(0.50 0.04 30)\"\n  color-background: \"oklch(0.96 0.03 70)\"\n  comp-accent-secondary: \"oklch(0.60 0.15 40)\"\n  comp-golden: \"oklch(0.72 0.15 80)\"\ntypography:\n  body-md:\n    fontFamily: Playfair Display\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nAtelier Studio design system. A clean, structured theme with Italianno and Playfair Display and Space Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **comp-bg** (oklch(0.95 0.03 70)): Use for backgrounds.\n- **comp-text** (oklch(0.25 0.04 30)): Use for text content.\n- **comp-border** (oklch(0.25 0.04 30 / 0.15)): Use for borders and dividers.\n- **comp-accent** (oklch(0.65 0.18 55)): Use for primary actions and accents.\n- **comp-accent-text** (oklch(1.00 0 0)): Use for text content.\n- **comp-muted** (oklch(0.50 0.04 30)): Use for secondary/muted content.\n- **color-background** (oklch(0.96 0.03 70)): Use for backgrounds.\n- **comp-accent-secondary** (oklch(0.60 0.15 40)): Use for primary actions and accents.\n\n## Typography\n\nLoad fonts from Google Fonts: Italianno, Playfair Display, Space Mono. Use display=optional.\nPrimary body font: 'Playfair Display', serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "atlas",
+    name: "Atlas Reference",
+    cssVars: "",
+    accentColor: "oklch(0.62 0.24 25)",
+    bgColor: "oklch(1.00 0 0)",
+    bodyFont: "var(--font-sans)",
+    designMd: "---\nname: Atlas Reference\ncolors:\n  comp-bg: \"oklch(1.00 0 0)\"\n  comp-text: \"oklch(0.13 0 0)\"\n  comp-border: \"oklch(0.93 0 0)\"\n  comp-accent: \"oklch(0.62 0.24 25)\"\n  comp-accent-text: \"oklch(0.13 0 0)\"\n  comp-muted: \"oklch(0.66 0 0)\"\n  color-background: \"oklch(1.00 0 0)\"\n  atlas-brand-bg: \"oklch(0.62 0.24 25)\"\n  atlas-brand-border: \"oklch(0 0 0 / 0.08)\"\n  atlas-brand-hover: \"oklch(0 0 0 / 0.05)\"\ntypography:\n  body-md:\n    fontFamily: var(--font-sans)\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nAtlas Reference design system. A clean, structured theme with system typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **comp-bg** (oklch(1.00 0 0)): Use for backgrounds.\n- **comp-text** (oklch(0.13 0 0)): Use for text content.\n- **comp-border** (oklch(0.93 0 0)): Use for borders and dividers.\n- **comp-accent** (oklch(0.62 0.24 25)): Use for primary actions and accents.\n- **comp-accent-text** (oklch(0.13 0 0)): Use for text content.\n- **comp-muted** (oklch(0.66 0 0)): Use for secondary/muted content.\n- **color-background** (oklch(1.00 0 0)): Use for backgrounds.\n- **atlas-brand-bg** (oklch(0.62 0.24 25)): Use for backgrounds.\n\n## Typography\n\nPrimary body font: var(--font-sans).\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "broadsheet",
+    name: "Broadsheet",
+    cssVars: "",
+    accentColor: "#666",
+    bgColor: "#fff",
+    bodyFont: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+    designMd: "---\nname: Broadsheet\ntypography:\n  body-md:\n    fontFamily: Helvetica Neue\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nBroadsheet design system. A clean, structured theme with system typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Typography\n\nPrimary body font: 'Helvetica Neue', Helvetica, Arial, sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "capsule",
+    name: "Capsule Split",
+    cssVars: "",
+    accentColor: "oklch(0.00 0 0)",
+    bgColor: "oklch(0.89 0.20 110)",
+    bodyFont: "var(--font-main)",
+    designMd: "---\nname: Capsule Split\ncolors:\n  comp-bg: \"oklch(0.89 0.20 110)\"\n  comp-text: \"oklch(0.00 0 0)\"\n  comp-border: \"oklch(0.00 0 0 / 0.10)\"\n  comp-accent: \"oklch(0.00 0 0)\"\n  comp-accent-text: \"oklch(1.00 0 0)\"\n  comp-muted: \"oklch(0.00 0 0 / 0.50)\"\n  color-background: \"oklch(0.00 0 0)\"\n  capsule-frame: \"oklch(1.00 0 0)\"\n  capsule-visual-bg: \"oklch(0.13 0 0)\"\n  capsule-visual-text: \"oklch(1.00 0 0)\"\n  capsule-visual-border: \"oklch(1.00 0 0 / 0.20)\"\ntypography:\n  body-md:\n    fontFamily: var(--font-main)\n    fontSize: 1rem\n    fontWeight: \"400\"\nrounded:\n  outer: 32px\n  inner: 24px\n  pill: 100px\n---\n\n## Brand & Style\n\nCapsule Split design system. A clean, structured theme with system typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **comp-bg** (oklch(0.89 0.20 110)): Use for backgrounds.\n- **comp-text** (oklch(0.00 0 0)): Use for text content.\n- **comp-border** (oklch(0.00 0 0 / 0.10)): Use for borders and dividers.\n- **comp-accent** (oklch(0.00 0 0)): Use for primary actions and accents.\n- **comp-accent-text** (oklch(1.00 0 0)): Use for text content.\n- **comp-muted** (oklch(0.00 0 0 / 0.50)): Use for secondary/muted content.\n- **color-background** (oklch(0.00 0 0)): Use for backgrounds.\n- **capsule-frame** (oklch(1.00 0 0)): Use for supporting UI elements.\n\n## Typography\n\nPrimary body font: var(--font-main).\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "carbon",
+    name: "Carbon Panel",
+    cssVars: "",
+    accentColor: "oklch(0.79 0.18 75)",
+    bgColor: "oklch(0.18 0.005 285)",
+    bodyFont: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    designMd: "---\nname: Carbon Panel\ncolors:\n  bg: \"oklch(0.18 0.005 285)\"\n  card: \"oklch(0.25 0.005 285)\"\n  border: \"oklch(0.31 0.005 285)\"\n  fg: \"oklch(1.00 0.000 0)\"\n  fg-muted: \"oklch(0.87 0.01 258)\"\n  fg-dim: \"oklch(0.71 0.02 261)\"\n  accent-amber: \"oklch(0.79 0.18 75)\"\n  accent-coral: \"oklch(0.68 0.20 35)\"\n  accent-red: \"oklch(0.63 0.24 25)\"\n  accent-green: \"oklch(0.77 0.22 145)\"\ntypography:\n  body-md:\n    fontFamily: -apple-system\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nCarbon Panel design system. A dark, atmospheric theme with system typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.18 0.005 285)): Use for backgrounds.\n- **card** (oklch(0.25 0.005 285)): Use for supporting UI elements.\n- **border** (oklch(0.31 0.005 285)): Use for borders and dividers.\n- **fg** (oklch(1.00 0.000 0)): Use for text content.\n- **fg-muted** (oklch(0.87 0.01 258)): Use for text content.\n- **fg-dim** (oklch(0.71 0.02 261)): Use for text content.\n- **accent-amber** (oklch(0.79 0.18 75)): Use for primary actions and accents.\n- **accent-coral** (oklch(0.68 0.20 35)): Use for primary actions and accents.\n\n## Typography\n\nPrimary body font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "chrome",
+    name: "Chrome Terminal",
+    cssVars: "",
+    accentColor: "#ff003c",
+    bgColor: "#000000",
+    fontLink: "https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap",
+    bodyFont: "'Rajdhani', sans-serif",
+    designMd: "---\nname: Chrome Terminal\ncolors:\n  bg: \"#000000\"\n  bg-surface: \"#171717\"\n  bg-panel: \"#2a0a18\"\n  bg-dark: \"#12050e\"\n  bg-footer: \"#1a050c\"\n  neon-red: \"#ff003c\"\n  neon-yellow: \"#fcee0a\"\n  neon-cyan: \"#00f0ff\"\n  border: \"#3d1326\"\n  border-red: \"rgba(255, 0, 60, 0.5)\"\n  text: \"#ffffff\"\n  text-dim: \"#d1d1d1\"\n  text-muted: \"#a3a3a3\"\ntypography:\n  body-md:\n    fontFamily: Rajdhani\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nChrome Terminal design system. A dark, atmospheric theme with Orbitron and Rajdhani and Share Tech Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (#000000): Use for backgrounds.\n- **bg-surface** (#171717): Use for backgrounds.\n- **bg-panel** (#2a0a18): Use for backgrounds.\n- **bg-dark** (#12050e): Use for backgrounds.\n- **bg-footer** (#1a050c): Use for backgrounds.\n- **neon-red** (#ff003c): Use for supporting UI elements.\n- **neon-yellow** (#fcee0a): Use for supporting UI elements.\n- **neon-cyan** (#00f0ff): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Orbitron, Rajdhani, Share Tech Mono. Use display=optional.\nPrimary body font: 'Rajdhani', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "chrono",
+    name: "Chrono",
+    cssVars: "",
+    accentColor: "#6c8ee6",
+    bgColor: "#dde1e7",
+    fontLink: "https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Chrono\ncolors:\n  bg: \"#dde1e7\"\n  text: \"#5a6270\"\n  text-dark: \"#3a3f4a\"\n  accent: \"#6c8ee6\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nChrono design system. A clean, structured theme with Space Mono and Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (#dde1e7): Use for backgrounds.\n- **text** (#5a6270): Use for text content.\n- **text-dark** (#3a3f4a): Use for text content.\n- **accent** (#6c8ee6): Use for primary actions and accents.\n\n## Typography\n\nLoad fonts from Google Fonts: Space Mono, Inter. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "codex",
+    name: "Elder Codex",
+    cssVars: "",
+    accentColor: "oklch(0.17 0.000 0)",
+    bgColor: "oklch(0.06 0.000 0)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;800&display=swap",
+    bodyFont: "'Cinzel', serif",
+    designMd: "---\nname: Elder Codex\ncolors:\n  bg: \"oklch(0.06 0.000 0)\"\n  stone-dark: \"oklch(0.17 0.000 0)\"\n  stone-light: \"oklch(0.30 0.000 0)\"\n  stone-border: \"oklch(0.40 0.000 0)\"\n  fg: \"oklch(0.90 0.000 0)\"\n  fg-muted: \"oklch(0.55 0.000 0)\"\n  gold-base: \"oklch(0.73 0.10 78)\"\n  gold-highlight: \"oklch(0.97 0.07 100)\"\n  crimson: \"oklch(0.32 0.10 25)\"\n  crimson-dark: \"oklch(0.20 0.07 22)\"\n  parchment: \"oklch(0.78 0.05 70)\"\n  parchment-ink: \"oklch(0.27 0.04 45)\"\ntypography:\n  body-md:\n    fontFamily: Cinzel\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nElder Codex design system. A dark, atmospheric theme with Cinzel Decorative and Cinzel typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.06 0.000 0)): Use for backgrounds.\n- **stone-dark** (oklch(0.17 0.000 0)): Use for supporting UI elements.\n- **stone-light** (oklch(0.30 0.000 0)): Use for supporting UI elements.\n- **stone-border** (oklch(0.40 0.000 0)): Use for borders and dividers.\n- **fg** (oklch(0.90 0.000 0)): Use for text content.\n- **fg-muted** (oklch(0.55 0.000 0)): Use for text content.\n- **gold-base** (oklch(0.73 0.10 78)): Use for supporting UI elements.\n- **gold-highlight** (oklch(0.97 0.07 100)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Cinzel Decorative, Cinzel. Use display=optional.\nPrimary body font: 'Cinzel', serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "computer-angel-heaven",
+    name: "Computer Angel Heaven",
+    cssVars: "",
+    accentColor: "oklch(0.78 0.12 85)",
+    bgColor: "oklch(0.96 0.008 80)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap",
+    bodyFont: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+    designMd: "---\nname: Computer Angel Heaven\ncolors:\n  comp-bg: \"oklch(0.96 0.008 80)\"\n  comp-text: \"oklch(0.30 0.03 250)\"\n  comp-text-secondary: \"oklch(0.55 0.04 260)\"\n  comp-heading: \"oklch(0.25 0.03 250)\"\n  comp-accent: \"oklch(0.78 0.12 85)\"\n  comp-accent-hover: \"oklch(0.72 0.14 80)\"\n  comp-accent-text: \"oklch(0.98 0.005 90)\"\n  comp-secondary: \"oklch(0.80 0.06 240)\"\n  comp-secondary-hover: \"oklch(0.74 0.08 240)\"\n  comp-tertiary: \"oklch(0.82 0.06 290)\"\n  comp-surface: \"oklch(0.97 0.005 240 / 0.55)\"\n  comp-surface-hover: \"oklch(0.97 0.005 240 / 0.70)\"\n  comp-surface-active: \"oklch(0.98 0.01 85 / 0.60)\"\n  comp-border: \"oklch(0.92 0.01 240 / 0.40)\"\n  comp-border-accent: \"oklch(0.78 0.12 85 / 0.50)\"\n  comp-sparkle: \"oklch(0.95 0.03 240 / 0.80)\"\n  comp-input-bg: \"oklch(0.98 0.003 240 / 0.45)\"\n  comp-input-border: \"oklch(0.90 0.01 240 / 0.35)\"\n  comp-danger: \"oklch(0.65 0.18 25)\"\n  comp-success: \"oklch(0.75 0.12 155)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\nrounded:\n  comp-DEFAULT: 16px\n  comp-sm: 10px\n  comp-pill: 999px\n---\n\n## Brand & Style\n\nComputer Angel Heaven design system. A clean, structured theme with Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **comp-bg** (oklch(0.96 0.008 80)): Use for backgrounds.\n- **comp-text** (oklch(0.30 0.03 250)): Use for text content.\n- **comp-text-secondary** (oklch(0.55 0.04 260)): Use for text content.\n- **comp-heading** (oklch(0.25 0.03 250)): Use for supporting UI elements.\n- **comp-accent** (oklch(0.78 0.12 85)): Use for primary actions and accents.\n- **comp-accent-hover** (oklch(0.72 0.14 80)): Use for primary actions and accents.\n- **comp-accent-text** (oklch(0.98 0.005 90)): Use for text content.\n- **comp-secondary** (oklch(0.80 0.06 240)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Inter. Use display=optional.\nPrimary body font: 'Inter', 'SF Pro Display', system-ui, sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "console",
+    name: "Console Rack",
+    cssVars: "",
+    accentColor: "oklch(0.58 0.20 35)",
+    bgColor: "oklch(0.93 0.003 265)",
+    bodyFont: "var(--font-ui)",
+    designMd: "---\nname: Console Rack\ncolors:\n  comp-bg: \"oklch(0.93 0.003 265)\"\n  comp-text: \"oklch(0.28 0 0)\"\n  comp-border: \"oklch(0.82 0.005 265)\"\n  comp-accent: \"oklch(0.58 0.20 35)\"\n  comp-accent-text: \"oklch(1.00 0 0)\"\n  comp-muted: \"oklch(0.55 0 0)\"\n  color-background: \"oklch(0.98 0 0)\"\n  console-cap-blue: \"oklch(0.28 0.05 240)\"\n  console-cap-ochre: \"oklch(0.66 0.10 75)\"\n  console-cap-grey: \"oklch(0.60 0 0)\"\n  console-cap-orange: \"oklch(0.58 0.20 35)\"\n  console-cap-white: \"oklch(0.95 0 0)\"\n  console-screen-bg: \"oklch(0.07 0 0)\"\n  console-led-green: \"oklch(0.85 0.30 140)\"\ntypography:\n  body-md:\n    fontFamily: var(--font-ui)\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nConsole Rack design system. A clean, structured theme with system typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **comp-bg** (oklch(0.93 0.003 265)): Use for backgrounds.\n- **comp-text** (oklch(0.28 0 0)): Use for text content.\n- **comp-border** (oklch(0.82 0.005 265)): Use for borders and dividers.\n- **comp-accent** (oklch(0.58 0.20 35)): Use for primary actions and accents.\n- **comp-accent-text** (oklch(1.00 0 0)): Use for text content.\n- **comp-muted** (oklch(0.55 0 0)): Use for secondary/muted content.\n- **color-background** (oklch(0.98 0 0)): Use for backgrounds.\n- **console-cap-blue** (oklch(0.28 0.05 240)): Use for supporting UI elements.\n\n## Typography\n\nPrimary body font: var(--font-ui).\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "default",
+    name: "Default",
+    cssVars: "",
+    accentColor: "oklch(0.72 0.18 70)",
+    bgColor: "oklch(0.18 0.04 60)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Default\ncolors:\n  bg: \"oklch(0.18 0.04 60)\"\n  card-bg: \"oklch(0.22 0.04 60)\"\n  text: \"oklch(0.95 0.01 80)\"\n  accent: \"oklch(0.72 0.18 70)\"\n  accent-text: \"oklch(0.12 0.04 60)\"\n  muted: \"oklch(0.55 0.03 60)\"\n  border: \"oklch(0.35 0.04 60)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\nrounded:\n  DEFAULT: 14px\n  sm: 8px\n---\n\n## Brand & Style\n\nDefault design system. A dark, atmospheric theme with Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.18 0.04 60)): Use for backgrounds.\n- **card-bg** (oklch(0.22 0.04 60)): Use for backgrounds.\n- **text** (oklch(0.95 0.01 80)): Use for text content.\n- **accent** (oklch(0.72 0.18 70)): Use for primary actions and accents.\n- **accent-text** (oklch(0.12 0.04 60)): Use for text content.\n- **muted** (oklch(0.55 0.03 60)): Use for secondary/muted content.\n- **border** (oklch(0.35 0.04 60)): Use for borders and dividers.\n\n## Typography\n\nLoad fonts from Google Fonts: Inter. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "desktop",
+    name: "Desktop Retro",
+    cssVars: "",
+    accentColor: "oklch(0.11 0.01 250)",
+    bgColor: "#fff",
+    fontLink: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap",
+    bodyFont: "'JetBrains Mono', monospace",
+    designMd: "---\nname: Desktop Retro\ncolors:\n  editor-bg: \"oklch(0.11 0.01 250)\"\n  chrome: \"oklch(0.18 0.000 0)\"\n  gutter: \"oklch(0.39 0.01 250)\"\n  code-text: \"oklch(0.75 0.02 240)\"\n  code-comment: \"oklch(0.59 0.000 0)\"\n  syn-keyword: \"oklch(0.62 0.14 55)\"\n  syn-string: \"oklch(0.57 0.08 140)\"\n  syn-prop: \"oklch(0.56 0.08 300)\"\n  syn-def: \"oklch(0.84 0.12 75)\"\n  syn-num: \"oklch(0.62 0.08 235)\"\n  win-silver: \"oklch(0.79 0.000 0)\"\n  win-title-dk: \"oklch(0.21 0.12 265)\"\n  win-title-lt: \"oklch(0.55 0.14 245)\"\n  win-highlight: \"oklch(1.00 0.000 0)\"\n  win-text: \"oklch(0.00 0.000 0)\"\n  heart: \"oklch(0.58 0.17 18)\"\ntypography:\n  body-md:\n    fontFamily: JetBrains Mono\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nDesktop Retro design system. A clean, structured theme with JetBrains Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **editor-bg** (oklch(0.11 0.01 250)): Use for backgrounds.\n- **chrome** (oklch(0.18 0.000 0)): Use for supporting UI elements.\n- **gutter** (oklch(0.39 0.01 250)): Use for supporting UI elements.\n- **code-text** (oklch(0.75 0.02 240)): Use for text content.\n- **code-comment** (oklch(0.59 0.000 0)): Use for supporting UI elements.\n- **syn-keyword** (oklch(0.62 0.14 55)): Use for supporting UI elements.\n- **syn-string** (oklch(0.57 0.08 140)): Use for supporting UI elements.\n- **syn-prop** (oklch(0.56 0.08 300)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: JetBrains Mono. Use display=optional.\nPrimary body font: 'JetBrains Mono', monospace.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "dial",
+    name: "Dial Apparatus",
+    cssVars: "",
+    accentColor: "oklch(0.62 0.24 28)",
+    bgColor: "oklch(0.24 0.01 260)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap",
+    bodyFont: "var(--font-ui)",
+    designMd: "---\nname: Dial Apparatus\ncolors:\n  comp-bg: \"oklch(0.24 0.01 260)\"\n  comp-text: \"oklch(0.64 0.02 250)\"\n  comp-border: \"oklch(0.19 0.01 260 / 0.5)\"\n  comp-accent: \"oklch(0.62 0.24 28)\"\n  comp-accent-text: \"oklch(0.10 0 0)\"\n  comp-muted: \"oklch(0.64 0.02 250 / 0.5)\"\n  color-background: \"oklch(0.00 0 0)\"\n  dial-chassis: \"oklch(0.24 0.01 260)\"\n  dial-chassis-dark: \"oklch(0.19 0.01 260)\"\n  dial-surface-matte: \"oklch(0.28 0.01 260)\"\n  dial-screen-bg: \"oklch(0.10 0 0)\"\n  dial-screen-glass: \"oklch(0.14 0.005 260)\"\n  dial-led-active: \"oklch(0.62 0.24 28)\"\ntypography:\n  body-md:\n    fontFamily: var(--font-ui)\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nDial Apparatus design system. A dark, atmospheric theme with Share Tech Mono and Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **comp-bg** (oklch(0.24 0.01 260)): Use for backgrounds.\n- **comp-text** (oklch(0.64 0.02 250)): Use for text content.\n- **comp-border** (oklch(0.19 0.01 260 / 0.5)): Use for borders and dividers.\n- **comp-accent** (oklch(0.62 0.24 28)): Use for primary actions and accents.\n- **comp-accent-text** (oklch(0.10 0 0)): Use for text content.\n- **comp-muted** (oklch(0.64 0.02 250 / 0.5)): Use for secondary/muted content.\n- **color-background** (oklch(0.00 0 0)): Use for backgrounds.\n- **dial-chassis** (oklch(0.24 0.01 260)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Share Tech Mono, Inter. Use display=optional.\nPrimary body font: var(--font-ui).\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "dossier",
+    name: "Dossier Card",
+    cssVars: "",
+    accentColor: "#666",
+    bgColor: "oklch(0.16 0.000 0)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@400;500&display=swap",
+    bodyFont: "'Roboto Mono', monospace",
+    designMd: "---\nname: Dossier Card\ncolors:\n  bg: \"oklch(0.16 0.000 0)\"\n  card: \"oklch(0.00 0.000 0)\"\n  fg: \"oklch(1.00 0.000 0)\"\n  border: \"oklch(0.28 0.03 257)\"\n  border-fg: \"oklch(1.00 0.000 0)\"\ntypography:\n  body-md:\n    fontFamily: Roboto Mono\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nDossier Card design system. A dark, atmospheric theme with Archivo Black and Roboto Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.16 0.000 0)): Use for backgrounds.\n- **card** (oklch(0.00 0.000 0)): Use for supporting UI elements.\n- **fg** (oklch(1.00 0.000 0)): Use for text content.\n- **border** (oklch(0.28 0.03 257)): Use for borders and dividers.\n- **border-fg** (oklch(1.00 0.000 0)): Use for text content.\n\n## Typography\n\nLoad fonts from Google Fonts: Archivo Black, Roboto Mono. Use display=optional.\nPrimary body font: 'Roboto Mono', monospace.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "edge",
+    name: "EDGE INTERFACE",
+    cssVars: "",
+    accentColor: "#ff0077",
+    bgColor: "#fff",
+    fontLink: "https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap",
+    bodyFont: "var(--font-body)",
+    designMd: "---\nname: EDGE INTERFACE\ncolors:\n  pink: \"#ff0077\"\n  yellow: \"#fcee0a\"\n  cyan: \"#00f0ff\"\n  void: \"#0a0205\"\n  vignette: \"#2a0a2e\"\n  panel-bg: \"rgba(15, 5, 20, 0.85)\"\n  panel-border: \"rgba(255, 0, 119, 0.6)\"\ntypography:\n  body-md:\n    fontFamily: var(--font-body)\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nEDGE INTERFACE design system. A clean, structured theme with Orbitron and Rajdhani and Share Tech Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **pink** (#ff0077): Use for text content.\n- **yellow** (#fcee0a): Use for supporting UI elements.\n- **cyan** (#00f0ff): Use for supporting UI elements.\n- **void** (#0a0205): Use for supporting UI elements.\n- **vignette** (#2a0a2e): Use for supporting UI elements.\n- **panel-bg** (rgba(15, 5, 20, 0.85)): Use for backgrounds.\n- **panel-border** (rgba(255, 0, 119, 0.6)): Use for borders and dividers.\n\n## Typography\n\nLoad fonts from Google Fonts: Orbitron, Rajdhani, Share Tech Mono. Use display=optional.\nPrimary body font: var(--font-body).\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "guild",
+    name: "Guild Ledger",
+    cssVars: "",
+    accentColor: "oklch(0.60 0.13 80)",
+    bgColor: "oklch(0.10 0.03 260)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap",
+    bodyFont: "'Cinzel', serif",
+    designMd: "---\nname: Guild Ledger\ncolors:\n  bg: \"oklch(0.10 0.03 260)\"\n  bg-highlight: \"oklch(0.18 0.04 255)\"\n  fg: \"oklch(0.90 0.000 0)\"\n  fg-muted: \"oklch(0.67 0.04 240)\"\n  gold-base: \"oklch(0.60 0.13 80)\"\n  gold-mid: \"oklch(0.78 0.13 88)\"\n  gold-light: \"oklch(0.96 0.08 100)\"\n  stone: \"oklch(0.15 0.000 0)\"\n  parchment: \"oklch(0.84 0.03 75)\"\n  wood: \"oklch(0.27 0.04 30)\"\n  iron: \"oklch(0.27 0.02 220)\"\ntypography:\n  body-md:\n    fontFamily: Cinzel\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nGuild Ledger design system. A dark, atmospheric theme with Cinzel typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.10 0.03 260)): Use for backgrounds.\n- **bg-highlight** (oklch(0.18 0.04 255)): Use for backgrounds.\n- **fg** (oklch(0.90 0.000 0)): Use for text content.\n- **fg-muted** (oklch(0.67 0.04 240)): Use for text content.\n- **gold-base** (oklch(0.60 0.13 80)): Use for supporting UI elements.\n- **gold-mid** (oklch(0.78 0.13 88)): Use for supporting UI elements.\n- **gold-light** (oklch(0.96 0.08 100)): Use for supporting UI elements.\n- **stone** (oklch(0.15 0.000 0)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Cinzel. Use display=optional.\nPrimary body font: 'Cinzel', serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "hearth",
+    name: "Hearth Sim",
+    cssVars: "",
+    accentColor: "oklch(0.38 0.17 295)",
+    bgColor: "#fff",
+    fontLink: "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Nunito:wght@400;600;700;800&display=swap",
+    bodyFont: "'Nunito', sans-serif",
+    designMd: "---\nname: Hearth Sim\ncolors:\n  bg-start: \"oklch(0.18 0.10 300)\"\n  bg-end: \"oklch(0.12 0.09 300)\"\n  primary: \"oklch(0.38 0.17 295)\"\n  primary-dark: \"oklch(0.30 0.15 295)\"\n  primary-light: \"oklch(0.47 0.18 295)\"\n  accent-green: \"oklch(0.70 0.15 155)\"\n  accent-gold: \"oklch(0.88 0.18 95)\"\n  danger: \"oklch(0.55 0.20 25)\"\n  text: \"oklch(1.00 0.000 0)\"\n  text-purple: \"oklch(0.25 0.16 295)\"\n  card-bg: \"oklch(0.38 0.17 295 / 0.4)\"\n  border: \"oklch(1.00 0.000 0 / 0.1)\"\ntypography:\n  body-md:\n    fontFamily: Nunito\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nHearth Sim design system. A clean, structured theme with Fredoka and Nunito typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg-start** (oklch(0.18 0.10 300)): Use for backgrounds.\n- **bg-end** (oklch(0.12 0.09 300)): Use for backgrounds.\n- **primary** (oklch(0.38 0.17 295)): Use for primary actions and accents.\n- **primary-dark** (oklch(0.30 0.15 295)): Use for primary actions and accents.\n- **primary-light** (oklch(0.47 0.18 295)): Use for primary actions and accents.\n- **accent-green** (oklch(0.70 0.15 155)): Use for primary actions and accents.\n- **accent-gold** (oklch(0.88 0.18 95)): Use for primary actions and accents.\n- **danger** (oklch(0.55 0.20 25)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Fredoka, Nunito. Use display=optional.\nPrimary body font: 'Nunito', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "industrial",
+    name: "Industrial",
+    cssVars: "",
+    accentColor: "oklch(0.90 0.20 110)",
+    bgColor: "oklch(0.88 0.01 90)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;700;900&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Industrial\ncolors:\n  bg: \"oklch(0.88 0.01 90)\"\n  text: \"oklch(0.05 0.01 0)\"\n  border: \"oklch(0.05 0.01 0)\"\n  accent: \"oklch(0.90 0.20 110)\"\n  accent-text: \"oklch(0.05 0.01 0)\"\n  muted: \"oklch(0.40 0.01 0)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nIndustrial design system. A clean, structured theme with Space Mono and Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.88 0.01 90)): Use for backgrounds.\n- **text** (oklch(0.05 0.01 0)): Use for text content.\n- **border** (oklch(0.05 0.01 0)): Use for borders and dividers.\n- **accent** (oklch(0.90 0.20 110)): Use for primary actions and accents.\n- **accent-text** (oklch(0.05 0.01 0)): Use for text content.\n- **muted** (oklch(0.40 0.01 0)): Use for secondary/muted content.\n\n## Typography\n\nLoad fonts from Google Fonts: Space Mono, Inter. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "matrix",
+    name: "Matrix Status",
+    cssVars: "",
+    accentColor: "oklch(0.79 0.21 152)",
+    bgColor: "oklch(0.16 0.000 0)",
+    fontLink: "https://fonts.googleapis.com/css2?family=VT323&display=swap",
+    bodyFont: "'VT323', monospace",
+    designMd: "---\nname: Matrix Status\ncolors:\n  bg: \"oklch(0.16 0.000 0)\"\n  card: \"oklch(0.00 0.000 0 / 0.5)\"\n  green: \"oklch(0.79 0.21 152)\"\n  green-border: \"oklch(0.72 0.22 150 / 0.3)\"\n  yellow: \"oklch(0.85 0.20 92)\"\n  red: \"oklch(0.70 0.19 22)\"\n  fg: \"oklch(1.00 0.000 0)\"\n  fg-muted: \"oklch(0.71 0.02 261)\"\ntypography:\n  body-md:\n    fontFamily: VT323\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nMatrix Status design system. A dark, atmospheric theme with VT323 typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.16 0.000 0)): Use for backgrounds.\n- **card** (oklch(0.00 0.000 0 / 0.5)): Use for supporting UI elements.\n- **green** (oklch(0.79 0.21 152)): Use for supporting UI elements.\n- **green-border** (oklch(0.72 0.22 150 / 0.3)): Use for borders and dividers.\n- **yellow** (oklch(0.85 0.20 92)): Use for supporting UI elements.\n- **red** (oklch(0.70 0.19 22)): Use for supporting UI elements.\n- **fg** (oklch(1.00 0.000 0)): Use for text content.\n- **fg-muted** (oklch(0.71 0.02 261)): Use for text content.\n\n## Typography\n\nLoad fonts from Google Fonts: VT323. Use display=optional.\nPrimary body font: 'VT323', monospace.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "mesh",
+    name: "Mesh Void",
+    cssVars: "",
+    accentColor: "oklch(0.87 0.28 145)",
+    bgColor: "#fff",
+    fontLink: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap",
+    bodyFont: "'Inter', -apple-system, sans-serif",
+    designMd: "---\nname: Mesh Void\ncolors:\n  void: \"oklch(0.07 0.000 0)\"\n  panel: \"oklch(0.10 0.000 0)\"\n  fg: \"oklch(1.00 0.000 0)\"\n  fg-muted: \"oklch(0.49 0.000 0)\"\n  fg-dim: \"oklch(0.30 0.000 0)\"\n  border: \"oklch(1.00 0.000 0 / 0.15)\"\n  hover: \"oklch(0.13 0.000 0)\"\n  accent: \"oklch(0.87 0.28 145)\"\n  ring: \"oklch(0.36 0.000 0)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nMesh Void design system. A clean, structured theme with Inter and JetBrains Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **void** (oklch(0.07 0.000 0)): Use for supporting UI elements.\n- **panel** (oklch(0.10 0.000 0)): Use for supporting UI elements.\n- **fg** (oklch(1.00 0.000 0)): Use for text content.\n- **fg-muted** (oklch(0.49 0.000 0)): Use for text content.\n- **fg-dim** (oklch(0.30 0.000 0)): Use for text content.\n- **border** (oklch(1.00 0.000 0 / 0.15)): Use for borders and dividers.\n- **hover** (oklch(0.13 0.000 0)): Use for supporting UI elements.\n- **accent** (oklch(0.87 0.28 145)): Use for primary actions and accents.\n\n## Typography\n\nLoad fonts from Google Fonts: Inter, JetBrains Mono. Use display=optional.\nPrimary body font: 'Inter', -apple-system, sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "neomario",
+    name: "NeoMario",
+    cssVars: "",
+    accentColor: "oklch(0.55 0.24 28)",
+    bgColor: "oklch(0.96 0.01 90)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap",
+    bodyFont: "'Space Grotesk', sans-serif",
+    designMd: "---\nname: NeoMario\ncolors:\n  bg: \"oklch(0.96 0.01 90)\"\n  card-bg: \"oklch(1.00 0 0)\"\n  text: \"oklch(0.15 0.02 280)\"\n  border: \"oklch(0.15 0.02 280)\"\n  accent: \"oklch(0.55 0.24 28)\"\n  accent-light: \"oklch(0.55 0.24 28 / 0.1)\"\n  muted: \"oklch(0.50 0.02 280)\"\n  yellow: \"oklch(0.85 0.18 85)\"\n  yellow-dark: \"oklch(0.75 0.16 85)\"\n  green: \"oklch(0.62 0.19 145)\"\n  blue: \"oklch(0.52 0.18 255)\"\n  red: \"oklch(0.55 0.24 28)\"\ntypography:\n  body-md:\n    fontFamily: Space Grotesk\n    fontSize: 1rem\n    fontWeight: \"400\"\nrounded:\n  DEFAULT: 4px\n---\n\n## Brand & Style\n\nNeoMario design system. A clean, structured theme with Space Grotesk and JetBrains Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.96 0.01 90)): Use for backgrounds.\n- **card-bg** (oklch(1.00 0 0)): Use for backgrounds.\n- **text** (oklch(0.15 0.02 280)): Use for text content.\n- **border** (oklch(0.15 0.02 280)): Use for borders and dividers.\n- **accent** (oklch(0.55 0.24 28)): Use for primary actions and accents.\n- **accent-light** (oklch(0.55 0.24 28 / 0.1)): Use for primary actions and accents.\n- **muted** (oklch(0.50 0.02 280)): Use for secondary/muted content.\n- **yellow** (oklch(0.85 0.18 85)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Space Grotesk, JetBrains Mono. Use display=optional.\nPrimary body font: 'Space Grotesk', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "neon",
+    name: "Neon Arcade",
+    cssVars: "",
+    accentColor: "#f93c94",
+    bgColor: "#fff",
+    fontLink: "https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap",
+    bodyFont: "'Rajdhani', sans-serif",
+    designMd: "---\nname: Neon Arcade\ncolors:\n  bg-gradient-start: \"#ff5bad\"\n  bg-gradient-mid: \"#ffc85c\"\n  bg-gradient-end: \"#fcee0a\"\n  panel-dark: \"#2a0a2e\"\n  panel-mid: \"#4d1558\"\n  neon-pink: \"#f93c94\"\n  neon-yellow: \"#fcee0a\"\n  neon-cyan: \"#00f0ff\"\n  text-dark: \"#2a0a2e\"\n  text-light: \"#ffffff\"\n  text-on-pink: \"#2a0a2e\"\ntypography:\n  body-md:\n    fontFamily: Rajdhani\n    fontSize: 1rem\n    fontWeight: \"400\"\n  headline:\n    fontFamily: Orbitron\n    fontSize: 2rem\n    fontWeight: \"700\"\n---\n\n## Brand & Style\n\nNeon Arcade design system. A clean, structured theme with Orbitron and Rajdhani and Share Tech Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg-gradient-start** (#ff5bad): Use for backgrounds.\n- **bg-gradient-mid** (#ffc85c): Use for backgrounds.\n- **bg-gradient-end** (#fcee0a): Use for backgrounds.\n- **panel-dark** (#2a0a2e): Use for supporting UI elements.\n- **panel-mid** (#4d1558): Use for supporting UI elements.\n- **neon-pink** (#f93c94): Use for text content.\n- **neon-yellow** (#fcee0a): Use for supporting UI elements.\n- **neon-cyan** (#00f0ff): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Orbitron, Rajdhani, Share Tech Mono. Use display=optional.\nPrimary body font: 'Rajdhani', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "nexus",
+    name: "Nexus Grid",
+    cssVars: "",
+    accentColor: "#D4FF00",
+    bgColor: "#000000",
+    bodyFont: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+    designMd: "---\nname: Nexus Grid\ncolors:\n  bg: \"#000000\"\n  text: \"#ffffff\"\n  accent-lime: \"#D4FF00\"\n  text-dim: \"#888888\"\n  text-body: \"#dddddd\"\n  separator: \"#666666\"\n  outline: \"rgba(255,255,255,0.3)\"\n  voxel: \"#ffffff\"\ntypography:\n  body-md:\n    fontFamily: Helvetica Neue\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nNexus Grid design system. A dark, atmospheric theme with system typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (#000000): Use for backgrounds.\n- **text** (#ffffff): Use for text content.\n- **accent-lime** (#D4FF00): Use for primary actions and accents.\n- **text-dim** (#888888): Use for text content.\n- **text-body** (#dddddd): Use for text content.\n- **separator** (#666666): Use for supporting UI elements.\n- **outline** (rgba(255,255,255,0.3)): Use for supporting UI elements.\n- **voxel** (#ffffff): Use for supporting UI elements.\n\n## Typography\n\nPrimary body font: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "opus",
+    name: "Opus Cabinet",
+    cssVars: "",
+    accentColor: "oklch(0.12 0.000 0)",
+    bgColor: "oklch(0.06 0.000 0)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@400;700&display=swap",
+    bodyFont: "'Cinzel', serif",
+    designMd: "---\nname: Opus Cabinet\ncolors:\n  bg: \"oklch(0.06 0.000 0)\"\n  bg-surface: \"oklch(0.12 0.000 0)\"\n  bg-card: \"oklch(0.13 0.000 0)\"\n  bg-elevated: \"oklch(0.15 0.000 0)\"\n  bg-header: \"oklch(0.18 0.000 0)\"\n  stripe-a: \"oklch(0.12 0.000 0)\"\n  stripe-b: \"oklch(0.14 0.000 0)\"\n  wood-frame: \"oklch(0.27 0.050 50)\"\n  wood-highlight: \"oklch(0.37 0.060 50)\"\n  gold: \"oklch(0.73 0.100 78)\"\n  gold-dim: \"oklch(0.55 0.090 75)\"\n  copper: \"oklch(0.47 0.030 195)\"\n  silver: \"oklch(0.70 0.000 0)\"\n  royal-blue: \"oklch(0.31 0.070 250)\"\n  parchment: \"oklch(0.78 0.060 70)\"\n  iron-dark: \"oklch(0.32 0.040 240)\"\n  iron-darker: \"oklch(0.16 0.010 240)\"\n  iron-border: \"oklch(0.43 0.030 230)\"\n  iron-text: \"oklch(0.83 0.020 240)\"\n  text: \"oklch(0.90 0.000 0)\"\n  text-dim: \"oklch(0.57 0.000 0)\"\n  text-muted: \"oklch(0.40 0.000 0)\"\n  border: \"oklch(0.27 0.000 0)\"\n  border-hover: \"oklch(0.55 0.090 75)\"\ntypography:\n  body-md:\n    fontFamily: Cinzel\n    fontSize: 1rem\n    fontWeight: \"400\"\n  headline:\n    fontFamily: Cinzel Decorative\n    fontSize: 2rem\n    fontWeight: \"700\"\n---\n\n## Brand & Style\n\nOpus Cabinet design system. A dark, atmospheric theme with Cinzel and Cinzel Decorative typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.06 0.000 0)): Use for backgrounds.\n- **bg-surface** (oklch(0.12 0.000 0)): Use for backgrounds.\n- **bg-card** (oklch(0.13 0.000 0)): Use for backgrounds.\n- **bg-elevated** (oklch(0.15 0.000 0)): Use for backgrounds.\n- **bg-header** (oklch(0.18 0.000 0)): Use for backgrounds.\n- **stripe-a** (oklch(0.12 0.000 0)): Use for supporting UI elements.\n- **stripe-b** (oklch(0.14 0.000 0)): Use for supporting UI elements.\n- **wood-frame** (oklch(0.27 0.050 50)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Cinzel, Cinzel Decorative. Use display=optional.\nPrimary body font: 'Cinzel', serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "orbit",
+    name: "Orbit Dashboard",
+    cssVars: "",
+    accentColor: "oklch(0.79 0.21 152)",
+    bgColor: "#fff",
+    fontLink: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap",
+    bodyFont: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    designMd: "---\nname: Orbit Dashboard\ncolors:\n  bg-gradient-from: \"oklch(0.56 0.29 302)\"\n  bg-gradient-to: \"oklch(0.44 0.22 304)\"\n  surface: \"oklch(0.00 0.000 0)\"\n  card: \"oklch(0.18 0.000 0 / 0.8)\"\n  card-solid: \"oklch(0.28 0.03 257)\"\n  border: \"oklch(0.37 0.03 260)\"\n  fg: \"oklch(1.00 0.000 0)\"\n  fg-muted: \"oklch(0.71 0.02 261)\"\n  fg-dim: \"oklch(0.55 0.03 264)\"\n  accent-green: \"oklch(0.79 0.21 152)\"\n  accent-blue: \"oklch(0.71 0.17 255)\"\n  accent-yellow: \"oklch(0.85 0.20 92)\"\n  accent-orange: \"oklch(0.75 0.18 56)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nOrbit Dashboard design system. A clean, structured theme with Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg-gradient-from** (oklch(0.56 0.29 302)): Use for backgrounds.\n- **bg-gradient-to** (oklch(0.44 0.22 304)): Use for backgrounds.\n- **surface** (oklch(0.00 0.000 0)): Use for supporting UI elements.\n- **card** (oklch(0.18 0.000 0 / 0.8)): Use for supporting UI elements.\n- **card-solid** (oklch(0.28 0.03 257)): Use for supporting UI elements.\n- **border** (oklch(0.37 0.03 260)): Use for borders and dividers.\n- **fg** (oklch(1.00 0.000 0)): Use for text content.\n- **fg-muted** (oklch(0.71 0.02 261)): Use for text content.\n\n## Typography\n\nLoad fonts from Google Fonts: Inter. Use display=optional.\nPrimary body font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "palate",
+    name: "Palate Notes",
+    cssVars: "",
+    accentColor: "oklch(0.93 0.006 265)",
+    bgColor: "oklch(0.17 0.000 0)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap",
+    bodyFont: "'Cormorant Garamond', serif",
+    designMd: "---\nname: Palate Notes\ncolors:\n  bg: \"oklch(0.17 0.000 0)\"\n  fg: \"oklch(0.93 0.006 265)\"\n  fg-muted: \"oklch(0.71 0.02 261)\"\n  border: \"oklch(0.37 0.03 260)\"\n  dot: \"oklch(0.93 0.006 265)\"\ntypography:\n  body-md:\n    fontFamily: Cormorant Garamond\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nPalate Notes design system. A dark, atmospheric theme with Cormorant Garamond typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.17 0.000 0)): Use for backgrounds.\n- **fg** (oklch(0.93 0.006 265)): Use for text content.\n- **fg-muted** (oklch(0.71 0.02 261)): Use for text content.\n- **border** (oklch(0.37 0.03 260)): Use for borders and dividers.\n- **dot** (oklch(0.93 0.006 265)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Cormorant Garamond. Use display=optional.\nPrimary body font: 'Cormorant Garamond', serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "pitch",
+    name: "Pitch",
+    cssVars: "",
+    accentColor: "oklch(0.86 0.18 90)",
+    bgColor: "oklch(0.22 0.05 163)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap",
+    bodyFont: "'Space Grotesk', sans-serif",
+    designMd: "---\nname: Pitch\ncolors:\n  bg: \"oklch(0.22 0.05 163)\"\n  card-bg: \"oklch(0.27 0.055 163)\"\n  text: \"oklch(0.95 0.01 100)\"\n  border: \"oklch(0.39 0.065 165)\"\n  accent: \"oklch(0.86 0.18 90)\"\n  accent-text: \"oklch(0.20 0.04 163)\"\n  muted: \"oklch(0.55 0.04 165)\"\ntypography:\n  body-md:\n    fontFamily: Space Grotesk\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nPitch design system. A dark, atmospheric theme with Space Grotesk and Space Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.22 0.05 163)): Use for backgrounds.\n- **card-bg** (oklch(0.27 0.055 163)): Use for backgrounds.\n- **text** (oklch(0.95 0.01 100)): Use for text content.\n- **border** (oklch(0.39 0.065 165)): Use for borders and dividers.\n- **accent** (oklch(0.86 0.18 90)): Use for primary actions and accents.\n- **accent-text** (oklch(0.20 0.04 163)): Use for text content.\n- **muted** (oklch(0.55 0.04 165)): Use for secondary/muted content.\n\n## Typography\n\nLoad fonts from Google Fonts: Space Grotesk, Space Mono. Use display=optional.\nPrimary body font: 'Space Grotesk', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "poster",
+    name: "Poster",
+    cssVars: "",
+    accentColor: "oklch(0.65 0.18 290)",
+    bgColor: "oklch(0.11 0.01 270)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Poster\ncolors:\n  bg: \"oklch(0.11 0.01 270)\"\n  card-bg: \"oklch(0.13 0.01 270)\"\n  text: \"oklch(0.93 0.01 270)\"\n  border: \"oklch(0.22 0.01 270)\"\n  accent: \"oklch(0.65 0.18 290)\"\n  accent-text: \"oklch(0.10 0.01 270)\"\n  muted: \"oklch(0.42 0.01 270)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nPoster design system. A dark, atmospheric theme with Bebas Neue and Inter and Space Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.11 0.01 270)): Use for backgrounds.\n- **card-bg** (oklch(0.13 0.01 270)): Use for backgrounds.\n- **text** (oklch(0.93 0.01 270)): Use for text content.\n- **border** (oklch(0.22 0.01 270)): Use for borders and dividers.\n- **accent** (oklch(0.65 0.18 290)): Use for primary actions and accents.\n- **accent-text** (oklch(0.10 0.01 270)): Use for text content.\n- **muted** (oklch(0.42 0.01 270)): Use for secondary/muted content.\n\n## Typography\n\nLoad fonts from Google Fonts: Bebas Neue, Inter, Space Mono. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "proof",
+    name: "Proof Sheet",
+    cssVars: "",
+    accentColor: "oklch(1.00 0.000 0 / 0.1)",
+    bgColor: "oklch(0.14 0.000 0)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap",
+    bodyFont: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    designMd: "---\nname: Proof Sheet\ncolors:\n  bg: \"oklch(0.14 0.000 0)\"\n  card: \"oklch(0.16 0.000 0)\"\n  border: \"oklch(0.28 0.03 257)\"\n  fg: \"oklch(1.00 0.000 0)\"\n  fg-muted: \"oklch(0.71 0.02 261)\"\n  fg-dim: \"oklch(1.00 0.000 0 / 0.6)\"\n  tag-bg: \"oklch(1.00 0.000 0 / 0.1)\"\n  card-hi: \"oklch(0.21 0.03 265)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nProof Sheet design system. A dark, atmospheric theme with Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.14 0.000 0)): Use for backgrounds.\n- **card** (oklch(0.16 0.000 0)): Use for supporting UI elements.\n- **border** (oklch(0.28 0.03 257)): Use for borders and dividers.\n- **fg** (oklch(1.00 0.000 0)): Use for text content.\n- **fg-muted** (oklch(0.71 0.02 261)): Use for text content.\n- **fg-dim** (oklch(1.00 0.000 0 / 0.6)): Use for text content.\n- **tag-bg** (oklch(1.00 0.000 0 / 0.1)): Use for backgrounds.\n- **card-hi** (oklch(0.21 0.03 265)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Inter. Use display=optional.\nPrimary body font: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "recon",
+    name: "Recon Grid",
+    cssVars: "",
+    accentColor: "oklch(0.64 0.24 25)",
+    bgColor: "oklch(0.00 0.000 0)",
+    bodyFont: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,\n                 'Liberation Mono', 'Courier New', monospace",
+    designMd: "---\nname: Recon Grid\ncolors:\n  bg: \"oklch(0.00 0.000 0)\"\n  card: \"oklch(0.00 0.000 0 / 0.8)\"\n  panel: \"oklch(0.21 0.03 265 / 0.8)\"\n  border: \"oklch(0.28 0.03 257)\"\n  fg: \"oklch(0.97 0.003 265)\"\n  fg-dim: \"oklch(0.55 0.03 264)\"\n  accent: \"oklch(0.64 0.24 25)\"\ntypography:\n  body-md:\n    fontFamily: ui-monospace\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nRecon Grid design system. A dark, atmospheric theme with system typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.00 0.000 0)): Use for backgrounds.\n- **card** (oklch(0.00 0.000 0 / 0.8)): Use for supporting UI elements.\n- **panel** (oklch(0.21 0.03 265 / 0.8)): Use for supporting UI elements.\n- **border** (oklch(0.28 0.03 257)): Use for borders and dividers.\n- **fg** (oklch(0.97 0.003 265)): Use for text content.\n- **fg-dim** (oklch(0.55 0.03 264)): Use for text content.\n- **accent** (oklch(0.64 0.24 25)): Use for primary actions and accents.\n\n## Typography\n\nPrimary body font: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,\n                 'Liberation Mono', 'Courier New', monospace.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "rift",
+    name: "Rift Portal",
+    cssVars: "",
+    accentColor: "oklch(0.88 0.27 128)",
+    bgColor: "oklch(0.07 0.02 280)",
+    bodyFont: "'Orbitron', sans-serif",
+    designMd: "---\nname: Rift Portal\ncolors:\n  bg: \"oklch(0.07 0.02 280)\"\n  surface: \"oklch(0.17 0.02 270 / 0.9)\"\n  card: \"oklch(0.13 0.000 0)\"\n  card-inner: \"oklch(0.21 0.02 255)\"\n  border: \"oklch(0.37 0.03 255)\"\n  border-frame: \"oklch(0.44 0.02 255)\"\n  fg: \"oklch(1.00 0.000 0)\"\n  fg-muted: \"oklch(0.70 0.02 260)\"\n  fg-dim: \"oklch(0.55 0.02 260)\"\n  accent-green: \"oklch(0.88 0.27 128)\"\n  accent-cyan: \"oklch(0.87 0.14 200)\"\n  accent-pink: \"oklch(0.58 0.32 320)\"\n  accent-yellow: \"oklch(0.87 0.18 90)\"\ntypography:\n  body-md:\n    fontFamily: Orbitron\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nRift Portal design system. A dark, atmospheric theme with system typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.07 0.02 280)): Use for backgrounds.\n- **surface** (oklch(0.17 0.02 270 / 0.9)): Use for supporting UI elements.\n- **card** (oklch(0.13 0.000 0)): Use for supporting UI elements.\n- **card-inner** (oklch(0.21 0.02 255)): Use for supporting UI elements.\n- **border** (oklch(0.37 0.03 255)): Use for borders and dividers.\n- **border-frame** (oklch(0.44 0.02 255)): Use for borders and dividers.\n- **fg** (oklch(1.00 0.000 0)): Use for text content.\n- **fg-muted** (oklch(0.70 0.02 260)): Use for text content.\n\n## Typography\n\nPrimary body font: 'Orbitron', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "rune",
+    name: "Rune Interface",
+    cssVars: "",
+    accentColor: "#020406",
+    bgColor: "#fff",
+    fontLink: "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap",
+    bodyFont: "'Cormorant Garamond', Georgia, serif",
+    designMd: "---\nname: Rune Interface\ncolors:\n  abyss: \"#020406\"\n  abyss-blue: \"#05101a\"\n  cyan-neon: \"#00ffcc\"\n  cyan-dim: \"#005f52\"\n  cyan-text: \"#ccfffa\"\n  purple-magic: \"#9d4eff\"\n  stone: \"#0d161f\"\n  stone-border: \"#1c2b38\"\n  stone-light: \"#162330\"\n  text: \"#b0c4cc\"\n  text-muted: \"#4a6070\"\ntypography:\n  body-md:\n    fontFamily: Cormorant Garamond\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nRune Interface design system. A clean, structured theme with Cinzel and Cormorant Garamond typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **abyss** (#020406): Use for supporting UI elements.\n- **abyss-blue** (#05101a): Use for supporting UI elements.\n- **cyan-neon** (#00ffcc): Use for supporting UI elements.\n- **cyan-dim** (#005f52): Use for secondary/muted content.\n- **cyan-text** (#ccfffa): Use for text content.\n- **purple-magic** (#9d4eff): Use for supporting UI elements.\n- **stone** (#0d161f): Use for supporting UI elements.\n- **stone-border** (#1c2b38): Use for borders and dividers.\n\n## Typography\n\nLoad fonts from Google Fonts: Cinzel, Cormorant Garamond. Use display=optional.\nPrimary body font: 'Cormorant Garamond', Georgia, serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "scrapbook",
+    name: "Scrapbook",
+    cssVars: "",
+    accentColor: "oklch(0.93 0.03 130)",
+    bgColor: "#fff",
+    fontLink: "https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Inter:wght@400;500;600&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Scrapbook\ncolors:\n  desk: \"oklch(0.93 0.03 130)\"\n  paper: \"oklch(0.97 0.01 80)\"\n  ink: \"oklch(0.12 0.01 0)\"\n  yellow: \"oklch(0.93 0.12 95)\"\n  pink: \"oklch(0.90 0.06 10)\"\n  blue: \"oklch(0.90 0.05 240)\"\n  muted: \"oklch(0.45 0.01 0)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n  headline:\n    fontFamily: Caveat\n    fontSize: 2rem\n    fontWeight: \"700\"\n---\n\n## Brand & Style\n\nScrapbook design system. A clean, structured theme with Caveat and Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **desk** (oklch(0.93 0.03 130)): Use for supporting UI elements.\n- **paper** (oklch(0.97 0.01 80)): Use for supporting UI elements.\n- **ink** (oklch(0.12 0.01 0)): Use for text content.\n- **yellow** (oklch(0.93 0.12 95)): Use for supporting UI elements.\n- **pink** (oklch(0.90 0.06 10)): Use for text content.\n- **blue** (oklch(0.90 0.05 240)): Use for supporting UI elements.\n- **muted** (oklch(0.45 0.01 0)): Use for secondary/muted content.\n\n## Typography\n\nLoad fonts from Google Fonts: Caveat, Inter. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "sensor",
+    name: "Sensor Dashboard",
+    cssVars: "",
+    accentColor: "oklch(0.53 0.22 25)",
+    bgColor: "oklch(0.10 0.003 264)",
+    fontLink: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Rajdhani:wght@600;700&display=swap",
+    bodyFont: "'IBM Plex Mono', ui-monospace, monospace",
+    designMd: "---\nname: Sensor Dashboard\ncolors:\n  bg: \"oklch(0.10 0.003 264)\"\n  panel: \"oklch(0.16 0.003 264)\"\n  panel-hi: \"oklch(0.19 0.003 264)\"\n  stroke: \"oklch(0.24 0.003 264)\"\n  bar-bg: \"oklch(0.20 0.005 264)\"\n  muted: \"oklch(0.63 0.008 264)\"\n  text: \"oklch(0.93 0.005 264)\"\n  accent: \"oklch(0.53 0.22 25)\"\n  accent-weak: \"oklch(0.45 0.19 25)\"\ntypography:\n  body-md:\n    fontFamily: IBM Plex Mono\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nSensor Dashboard design system. A dark, atmospheric theme with IBM Plex Mono and Rajdhani typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.10 0.003 264)): Use for backgrounds.\n- **panel** (oklch(0.16 0.003 264)): Use for supporting UI elements.\n- **panel-hi** (oklch(0.19 0.003 264)): Use for supporting UI elements.\n- **stroke** (oklch(0.24 0.003 264)): Use for borders and dividers.\n- **bar-bg** (oklch(0.20 0.005 264)): Use for backgrounds.\n- **muted** (oklch(0.63 0.008 264)): Use for secondary/muted content.\n- **text** (oklch(0.93 0.005 264)): Use for text content.\n- **accent** (oklch(0.53 0.22 25)): Use for primary actions and accents.\n\n## Typography\n\nLoad fonts from Google Fonts: IBM Plex Mono, Rajdhani. Use display=optional.\nPrimary body font: 'IBM Plex Mono', ui-monospace, monospace.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "signal",
+    name: "Signal",
+    cssVars: "",
+    accentColor: "#ffffff",
+    bgColor: "#030303",
+    fontLink: "https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Signal\ncolors:\n  bg: \"#030303\"\n  card-bg: \"#0a0a0a\"\n  text: \"#eaeaea\"\n  border: \"#1a1a1a\"\n  accent: \"#ffffff\"\n  muted: \"#666\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nSignal design system. A dark, atmospheric theme with Space Mono and Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (#030303): Use for backgrounds.\n- **card-bg** (#0a0a0a): Use for backgrounds.\n- **text** (#eaeaea): Use for text content.\n- **border** (#1a1a1a): Use for borders and dividers.\n- **accent** (#ffffff): Use for primary actions and accents.\n- **muted** (#666): Use for secondary/muted content.\n\n## Typography\n\nLoad fonts from Google Fonts: Space Mono, Inter. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "slab",
+    name: "Slab Concrete",
+    cssVars: "",
+    accentColor: "oklch(0.88 0.000 0)",
+    bgColor: "#fff",
+    fontLink: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800;900&family=JetBrains+Mono:wght@400;500&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Slab Concrete\ncolors:\n  concrete: \"oklch(0.88 0.000 0)\"\n  acid: \"oklch(0.94 0.23 110)\"\n  black: \"oklch(0.10 0.000 0)\"\n  ink: \"oklch(0.00 0.000 0)\"\n  list-hover: \"oklch(1.00 0.000 0 / 0.4)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nSlab Concrete design system. A clean, structured theme with Inter and JetBrains Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **concrete** (oklch(0.88 0.000 0)): Use for supporting UI elements.\n- **acid** (oklch(0.94 0.23 110)): Use for supporting UI elements.\n- **black** (oklch(0.10 0.000 0)): Use for supporting UI elements.\n- **ink** (oklch(0.00 0.000 0)): Use for text content.\n- **list-hover** (oklch(1.00 0.000 0 / 0.4)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Inter, JetBrains Mono. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "specimen",
+    name: "Specimen",
+    cssVars: "",
+    accentColor: "#666",
+    bgColor: "#fff",
+    fontLink: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Specimen\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nSpecimen design system. A clean, structured theme with Inter and Space Mono typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Typography\n\nLoad fonts from Google Fonts: Inter, Space Mono. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "terminal",
+    name: "Terminal CRT",
+    cssVars: "",
+    accentColor: "oklch(0.00 0.000 0 / 0.85)",
+    bgColor: "oklch(0.16 0.000 0)",
+    fontLink: "https://fonts.googleapis.com/css2?family=VT323&display=swap",
+    bodyFont: "'VT323', monospace",
+    designMd: "---\nname: Terminal CRT\ncolors:\n  bg: \"oklch(0.16 0.000 0)\"\n  terminal: \"oklch(0.00 0.000 0 / 0.85)\"\n  green: \"oklch(0.87 0.30 142)\"\n  green-dim: \"oklch(0.87 0.30 142 / 0.4)\"\n  green-border: \"oklch(0.87 0.30 142 / 0.3)\"\n  green-faint: \"oklch(0.87 0.30 142 / 0.1)\"\n  white: \"oklch(1.00 0.000 0)\"\ntypography:\n  body-md:\n    fontFamily: VT323\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nTerminal CRT design system. A dark, atmospheric theme with VT323 typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.16 0.000 0)): Use for backgrounds.\n- **terminal** (oklch(0.00 0.000 0 / 0.85)): Use for supporting UI elements.\n- **green** (oklch(0.87 0.30 142)): Use for supporting UI elements.\n- **green-dim** (oklch(0.87 0.30 142 / 0.4)): Use for secondary/muted content.\n- **green-border** (oklch(0.87 0.30 142 / 0.3)): Use for borders and dividers.\n- **green-faint** (oklch(0.87 0.30 142 / 0.1)): Use for supporting UI elements.\n- **white** (oklch(1.00 0.000 0)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: VT323. Use display=optional.\nPrimary body font: 'VT323', monospace.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "vault",
+    name: "Vault",
+    cssVars: "",
+    accentColor: "oklch(0.72 0.15 75)",
+    bgColor: "oklch(0.08 0.03 280)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Vault\ncolors:\n  bg: \"oklch(0.08 0.03 280)\"\n  card-bg: \"oklch(0.12 0.03 280 / 0.7)\"\n  text: \"oklch(0.93 0.02 80)\"\n  border: \"oklch(0.65 0.15 80 / 0.12)\"\n  accent: \"oklch(0.72 0.15 75)\"\n  accent-text: \"oklch(0.10 0.03 280)\"\n  muted: \"oklch(0.50 0.04 290)\"\n  purple: \"oklch(0.55 0.18 300)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nVault design system. A dark, atmospheric theme with Space Mono and Inter typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **bg** (oklch(0.08 0.03 280)): Use for backgrounds.\n- **card-bg** (oklch(0.12 0.03 280 / 0.7)): Use for backgrounds.\n- **text** (oklch(0.93 0.02 80)): Use for text content.\n- **border** (oklch(0.65 0.15 80 / 0.12)): Use for borders and dividers.\n- **accent** (oklch(0.72 0.15 75)): Use for primary actions and accents.\n- **accent-text** (oklch(0.10 0.03 280)): Use for text content.\n- **muted** (oklch(0.50 0.04 290)): Use for secondary/muted content.\n- **purple** (oklch(0.55 0.18 300)): Use for supporting UI elements.\n\n## Typography\n\nLoad fonts from Google Fonts: Space Mono, Inter. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "winter-sports",
+    name: "Winter Sports",
+    cssVars: "",
+    accentColor: "oklch(0.55 0.19 250)",
+    bgColor: "oklch(0.99 0.003 240)",
+    fontLink: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Nunito:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap",
+    bodyFont: "'Inter', sans-serif",
+    designMd: "---\nname: Winter Sports\ncolors:\n  comp-bg: \"oklch(0.99 0.003 240)\"\n  comp-text: \"oklch(0.22 0.025 250)\"\n  comp-border: \"oklch(0.88 0.012 235)\"\n  comp-accent: \"oklch(0.55 0.19 250)\"\n  comp-accent-text: \"oklch(0.99 0 0)\"\n  comp-muted: \"oklch(0.55 0.02 250)\"\n  color-background: \"oklch(0.95 0.015 230)\"\ntypography:\n  body-md:\n    fontFamily: Inter\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nWinter Sports design system. A clean, structured theme with Inter and Nunito and Space Grotesk typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **comp-bg** (oklch(0.99 0.003 240)): Use for backgrounds.\n- **comp-text** (oklch(0.22 0.025 250)): Use for text content.\n- **comp-border** (oklch(0.88 0.012 235)): Use for borders and dividers.\n- **comp-accent** (oklch(0.55 0.19 250)): Use for primary actions and accents.\n- **comp-accent-text** (oklch(0.99 0 0)): Use for text content.\n- **comp-muted** (oklch(0.55 0.02 250)): Use for secondary/muted content.\n- **color-background** (oklch(0.95 0.015 230)): Use for backgrounds.\n\n## Typography\n\nLoad fonts from Google Fonts: Inter, Nunito, Space Grotesk. Use display=optional.\nPrimary body font: 'Inter', sans-serif.\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+  {
+    slug: "zine",
+    name: "Zine Cut",
+    cssVars: "",
+    accentColor: "oklch(0.05 0 0)",
+    bgColor: "oklch(0.96 0.005 100)",
+    bodyFont: "var(--f-type)",
+    designMd: "---\nname: Zine Cut\ncolors:\n  comp-bg: \"oklch(0.96 0.005 100)\"\n  comp-text: \"oklch(0.05 0 0)\"\n  comp-border: \"oklch(0.05 0 0)\"\n  comp-accent: \"oklch(0.05 0 0)\"\n  comp-accent-text: \"oklch(0.96 0.005 100)\"\n  comp-muted: \"oklch(0.05 0 0 / 0.3)\"\n  zine-inverted-bg: \"oklch(0.05 0 0)\"\n  zine-inverted-text: \"oklch(0.96 0.005 100)\"\ntypography:\n  body-md:\n    fontFamily: var(--f-type)\n    fontSize: 1rem\n    fontWeight: \"400\"\n---\n\n## Brand & Style\n\nZine Cut design system. A clean, structured theme with system typography. Use this design system\\'s color tokens, spacing, and typographic choices consistently across all generated components.\n\n## Colors\n\n- **comp-bg** (oklch(0.96 0.005 100)): Use for backgrounds.\n- **comp-text** (oklch(0.05 0 0)): Use for text content.\n- **comp-border** (oklch(0.05 0 0)): Use for borders and dividers.\n- **comp-accent** (oklch(0.05 0 0)): Use for primary actions and accents.\n- **comp-accent-text** (oklch(0.96 0.005 100)): Use for text content.\n- **comp-muted** (oklch(0.05 0 0 / 0.3)): Use for secondary/muted content.\n- **zine-inverted-bg** (oklch(0.05 0 0)): Use for backgrounds.\n- **zine-inverted-text** (oklch(0.96 0.005 100)): Use for text content.\n\n## Typography\n\nPrimary body font: var(--f-type).\n\n## Components\n\nApply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.\n",
+  },
+];
