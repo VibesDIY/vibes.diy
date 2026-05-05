@@ -942,7 +942,7 @@ importers:
         version: 2.2.0
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260402.1)(@libsql/client@0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0)
+        version: 0.45.2(@cloudflare/workers-types@4.20260402.1)(@libsql/client@0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0)
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 4.20260402.1
@@ -981,8 +981,8 @@ importers:
         specifier: ^0.17.2
         version: 0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6)
       '@neondatabase/serverless':
-        specifier: ^1.0.2
-        version: 1.0.2
+        specifier: ^1.1.0
+        version: 1.1.0
       '@noble/hashes':
         specifier: ^2.0.1
         version: 2.0.1
@@ -1000,7 +1000,7 @@ importers:
         version: 2.2.0
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260402.1)(@libsql/client@0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0)
+        version: 0.45.2(@cloudflare/workers-types@4.20260402.1)(@libsql/client@0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0)
       multiformats:
         specifier: ^13.4.2
         version: 13.4.2
@@ -1051,8 +1051,8 @@ importers:
         specifier: ^0.17.2
         version: 0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6)
       '@neondatabase/serverless':
-        specifier: ^1.0.2
-        version: 1.0.2
+        specifier: ^1.1.0
+        version: 1.1.0
       '@noble/hashes':
         specifier: ^2.0.1
         version: 2.0.1
@@ -1094,7 +1094,7 @@ importers:
         version: 1.1.1
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260402.1)(@libsql/client@0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0)
+        version: 0.45.2(@cloudflare/workers-types@4.20260402.1)(@libsql/client@0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0)
       jose:
         specifier: ^6.2.2
         version: 6.2.2
@@ -1163,8 +1163,8 @@ importers:
         specifier: ^0.17.2
         version: 0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6)
       '@neondatabase/serverless':
-        specifier: ^1.0.2
-        version: 1.0.2
+        specifier: ^1.1.0
+        version: 1.1.0
       '@vibes.diy/api-impl':
         specifier: workspace:*
         version: link:../impl
@@ -1194,7 +1194,7 @@ importers:
         version: 0.31.8(patch_hash=8cc0d1f3504e73ec214d631a4a23b583be6c22b9361608b79684e930a682cbdb)
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260402.1)(@libsql/client@0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0)
+        version: 0.45.2(@cloudflare/workers-types@4.20260402.1)(@libsql/client@0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0)
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.19
@@ -3468,8 +3468,8 @@ packages:
   '@neon-rs/load@0.0.4':
     resolution: {integrity: sha512-kTPhdZyTQxB+2wpiRcFWrDcejc4JI6tkPuS7UZCG4l6Zvc5kU/gGQ/ozvHTh1XR5tS+UlfAfGuPajjzQjCiHCw==}
 
-  '@neondatabase/serverless@1.0.2':
-    resolution: {integrity: sha512-I5sbpSIAHiB+b6UttofhrN/UJXII+4tZPAq1qugzwCwLIL8EZLV7F/JyHUrEIiGgQpEXzpnjlJ+zwcEhheGvCw==}
+  '@neondatabase/serverless@1.1.0':
+    resolution: {integrity: sha512-r3ZZhRjEcfEdKIZnoB1RusNgvHuaBRqfCzV4Gi+5A9yUX0S4HTws/ASWqt13wL4y4I+0rqsWGdA2w7EQXHi3+Q==}
     engines: {node: '>=19.0.0'}
 
   '@noble/hashes@2.0.1':
@@ -4615,9 +4615,6 @@ packages:
 
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
-
-  '@types/node@22.19.15':
-    resolution: {integrity: sha512-F0R/h2+dsy5wJAUe3tAU6oqa2qbWY5TpNfL/RGmo1y38hiyO1w3x2jPtt76wmuaJI4DQnOBu21cNXQ2STIUUWg==}
 
   '@types/node@25.6.0':
     resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
@@ -8598,9 +8595,6 @@ packages:
   unbzip2-stream@1.4.3:
     resolution: {integrity: sha512-mlExGW4w71ebDJviH16lQLtZS32VKqsSfk80GCfUlwT/4/hNRFsoscrF/c++9xinkMzECL1uL9DDwXqFWkruPg==}
 
-  undici-types@6.21.0:
-    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
-
   undici-types@7.19.2:
     resolution: {integrity: sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg==}
 
@@ -11052,10 +11046,7 @@ snapshots:
 
   '@neon-rs/load@0.0.4': {}
 
-  '@neondatabase/serverless@1.0.2':
-    dependencies:
-      '@types/node': 22.19.15
-      '@types/pg': 8.20.0
+  '@neondatabase/serverless@1.1.0': {}
 
   '@noble/hashes@2.0.1': {}
 
@@ -12199,10 +12190,6 @@ snapshots:
 
   '@types/ms@2.1.0': {}
 
-  '@types/node@22.19.15':
-    dependencies:
-      undici-types: 6.21.0
-
   '@types/node@25.6.0':
     dependencies:
       undici-types: 7.19.2
@@ -12214,6 +12201,7 @@ snapshots:
       '@types/node': 25.6.0
       pg-protocol: 1.13.0
       pg-types: 2.2.0
+    optional: true
 
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:
@@ -13483,11 +13471,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260402.1)(@libsql/client@0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0):
+  drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260402.1)(@libsql/client@0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6))(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(gel@2.2.0):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20260402.1
       '@libsql/client': 0.17.2(bufferutil@4.1.0)(encoding@0.1.13)(utf-8-validate@6.0.6)
-      '@neondatabase/serverless': 1.0.2
+      '@neondatabase/serverless': 1.1.0
       '@opentelemetry/api': 1.9.1
       '@types/pg': 8.20.0
       gel: 2.2.0
@@ -15873,9 +15861,11 @@ snapshots:
 
   pend@1.2.0: {}
 
-  pg-int8@1.0.1: {}
+  pg-int8@1.0.1:
+    optional: true
 
-  pg-protocol@1.13.0: {}
+  pg-protocol@1.13.0:
+    optional: true
 
   pg-types@2.2.0:
     dependencies:
@@ -15884,6 +15874,7 @@ snapshots:
       postgres-bytea: 1.0.1
       postgres-date: 1.0.7
       postgres-interval: 1.2.0
+    optional: true
 
   picocolors@1.1.1: {}
 
@@ -15930,15 +15921,19 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  postgres-array@2.0.0: {}
+  postgres-array@2.0.0:
+    optional: true
 
-  postgres-bytea@1.0.1: {}
+  postgres-bytea@1.0.1:
+    optional: true
 
-  postgres-date@1.0.7: {}
+  postgres-date@1.0.7:
+    optional: true
 
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
+    optional: true
 
   posthog-js@1.369.3:
     dependencies:
@@ -17030,8 +17025,6 @@ snapshots:
       buffer: 5.7.1
       through: 2.3.8
 
-  undici-types@6.21.0: {}
-
   undici-types@7.19.2: {}
 
   undici@7.24.4: {}
@@ -17485,7 +17478,8 @@ snapshots:
       is-wsl: 3.1.1
       powershell-utils: 0.1.0
 
-  xtend@4.0.2: {}
+  xtend@4.0.2:
+    optional: true
 
   y18n@5.0.8: {}
 
