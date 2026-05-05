@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { switchColors } from "./VibesSwitch.styles.js";
 
 export interface ExpandedVibesPillProps {
@@ -263,8 +263,27 @@ export function ExpandedVibesPill({
   // idle → bubble → expanding → open (click to close: open → collapsing → idle)
   const [phase, setPhase] = useState<"idle" | "bubble" | "expanding" | "open" | "collapsing" | "shrinking">("idle");
   const [subMode, setSubMode] = useState<"default" | "change">("default");
+  const [hidden, setHidden] = useState(false);
+  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPressRef = useRef(false);
+
+  const handlePointerDown = useCallback(() => {
+    didLongPressRef.current = false;
+    longPressRef.current = setTimeout(() => {
+      didLongPressRef.current = true;
+      setHidden(true);
+    }, 500);
+  }, []);
+
+  const handlePointerUp = useCallback(() => {
+    if (longPressRef.current) {
+      clearTimeout(longPressRef.current);
+      longPressRef.current = null;
+    }
+  }, []);
 
   const handleClick = () => {
+    if (didLongPressRef.current) return;
     if (phase === "idle") setPhase("bubble");
     else if (phase === "open") setPhase("collapsing");
   };
@@ -302,7 +321,21 @@ export function ExpandedVibesPill({
   const trayExpanded = pillWidth + trayExtra + 8;
 
   return (
-    <div style={{ position: "relative", display: "inline-block", cursor: "pointer" }} onClick={handleClick}>
+    <div
+      style={{
+        position: "relative",
+        display: "inline-block",
+        cursor: "pointer",
+        opacity: hidden ? 0 : 1,
+        pointerEvents: hidden ? "none" : "auto",
+        transition: "opacity 0.3s ease",
+      }}
+      onClick={handleClick}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+    >
       {/* Bubble tray — sits behind/beside the pill */}
       <div
         style={{
