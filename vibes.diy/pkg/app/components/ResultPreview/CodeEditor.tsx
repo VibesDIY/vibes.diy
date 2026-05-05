@@ -378,7 +378,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
   // const scrollToBottomRef = useRef<{ lastScrollTime: Date; lastLine: number } | null>(null);
   const lastAppliedStateRef = useRef<EditorState | null>(null);
 
-useEffect(() => {
+  useEffect(() => {
     if (!monacoReadyRef.current) return;
     if (lastAppliedStateRef.current === stateRef.current) return;
     lastAppliedStateRef.current = stateRef.current;
@@ -405,8 +405,7 @@ useEffect(() => {
       ]);
       editor.revealLineInCenter(model.getFullModelRange().endLineNumber);
     }
-}, [monacoReady, stateRef.current]);
-
+  }, [monacoReady, stateRef.current]);
 
   const onChange = isEditorStateToEdit(stateRef.current)
     ? stateRef.current.onChange
