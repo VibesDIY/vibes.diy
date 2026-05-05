@@ -283,14 +283,14 @@ export function ExpandedVibesPill({
   const scale = height / 300; // SVG units to pixels
 
   // On wide screens, keep all three horizontal action buttons fully open
-  // (label always visible). On narrow screens, retain the small→big hover
-  // behavior so the tray stays compact.
-  const [isWide, setIsWide] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth >= 640 : true,
-  );
+  // (label always visible). On narrow screens, hide labels so the tray stays
+  // compact. Initialize with an SSR-safe constant and resolve the real value
+  // post-hydration to avoid SSR/client markup mismatches.
+  const [isWide, setIsWide] = useState(true);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onResize = () => setIsWide(window.innerWidth >= 640);
+    onResize();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
