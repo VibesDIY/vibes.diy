@@ -1,7 +1,11 @@
 import { Result, exception2Result } from "@adviser/cement";
 
-const ICON_PROMPT_PREFIX = `Minimal black icon on a white background, enclosed in a circle. ` + `Subject: `;
-const ICON_PROMPT_SUFFIX = `. Use clear, text-free imagery. Avoid letters or numbers.`;
+const ICON_PROMPT_PREFIX =
+  `Minimal black icon on a white background, enclosed in a circle. ` +
+  `The icon will be displayed at a very small size — only a little larger than a favicon — ` +
+  `so the design must prioritize legibility above all else: bold, simple shapes, ` +
+  `high contrast, no fine detail. Subject: `;
+const ICON_PROMPT_SUFFIX = `. Use clear, text-free imagery. Avoid letters, numbers, or thin lines.`;
 
 export interface GenerateIconArgs {
   description: string;
