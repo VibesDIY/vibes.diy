@@ -877,8 +877,8 @@ importers:
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
       '@noble/hashes':
-        specifier: ^2.0.1
-        version: 2.0.1
+        specifier: ^2.2.0
+        version: 2.2.0
       '@vibes.diy/api-types':
         specifier: workspace:*
         version: link:../types
@@ -984,8 +984,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       '@noble/hashes':
-        specifier: ^2.0.1
-        version: 2.0.1
+        specifier: ^2.2.0
+        version: 2.2.0
       '@vibes.diy/api-pkg':
         specifier: workspace:*
         version: link:../pkg
@@ -1054,8 +1054,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       '@noble/hashes':
-        specifier: ^2.0.1
-        version: 2.0.1
+        specifier: ^2.2.0
+        version: 2.2.0
       '@vibes.diy/api-impl':
         specifier: workspace:*
         version: link:../impl
@@ -3464,8 +3464,8 @@ packages:
     resolution: {integrity: sha512-r3ZZhRjEcfEdKIZnoB1RusNgvHuaBRqfCzV4Gi+5A9yUX0S4HTws/ASWqt13wL4y4I+0rqsWGdA2w7EQXHi3+Q==}
     engines: {node: '>=19.0.0'}
 
-  '@noble/hashes@2.0.1':
-    resolution: {integrity: sha512-XlOlEbQcE9fmuXxrVTXCTlG2nlRXa9Rj3rr5Ue/+tX+nmkgbX720YHh0VR3hBF9xDvwnb8D2shVGOwNx+ulArw==}
+  '@noble/hashes@2.2.0':
+    resolution: {integrity: sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==}
     engines: {node: '>= 20.19.0'}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -11015,7 +11015,7 @@ snapshots:
 
   '@neondatabase/serverless@1.1.0': {}
 
-  '@noble/hashes@2.0.1': {}
+  '@noble/hashes@2.2.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
