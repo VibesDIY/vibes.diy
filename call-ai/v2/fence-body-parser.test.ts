@@ -22,13 +22,7 @@ describe("parseFenceBody — create blocks", () => {
 
 describe("parseFenceBody — replace blocks", () => {
   it("parses a single SEARCH/REPLACE section", () => {
-    const r = parseFenceBody([
-      "<<<<<<< SEARCH",
-      "old line",
-      "=======",
-      "new line",
-      ">>>>>>> REPLACE",
-    ]);
+    const r = parseFenceBody(["<<<<<<< SEARCH", "old line", "=======", "new line", ">>>>>>> REPLACE"]);
     expect(r.errors).toEqual([]);
     expect(r.edits).toEqual([{ op: "replace", search: "old line", replace: "new line" }]);
   });
@@ -75,13 +69,7 @@ describe("parseFenceBody — replace blocks", () => {
   });
 
   it("tolerates trailing whitespace on marker lines", () => {
-    const r = parseFenceBody([
-      "<<<<<<< SEARCH   ",
-      "old",
-      "=======\t",
-      "new",
-      ">>>>>>> REPLACE  ",
-    ]);
+    const r = parseFenceBody(["<<<<<<< SEARCH   ", "old", "=======\t", "new", ">>>>>>> REPLACE  "]);
     expect(r.errors).toEqual([]);
     expect(r.edits).toHaveLength(1);
   });
@@ -130,14 +118,7 @@ describe("parseFenceBody — error cases", () => {
   });
 
   it("reports content-before-search when the body starts with non-blank prose then a SEARCH", () => {
-    const r = parseFenceBody([
-      "stray text before any marker",
-      "<<<<<<< SEARCH",
-      "old",
-      "=======",
-      "new",
-      ">>>>>>> REPLACE",
-    ]);
+    const r = parseFenceBody(["stray text before any marker", "<<<<<<< SEARCH", "old", "=======", "new", ">>>>>>> REPLACE"]);
     expect(r.errors).toContainEqual({ kind: "content-before-search", lineNr: 2 });
     // Section still parses successfully — we record the error but don't drop the edit
     expect(r.edits).toEqual([{ op: "replace", search: "old", replace: "new" }]);
@@ -159,5 +140,58 @@ describe("parseFenceBody — error cases", () => {
     ]);
     expect(r.errors).toContainEqual({ kind: "content-before-search", lineNr: 6 });
     expect(r.edits).toHaveLength(2);
+  });
+});
+
+describe("parseFenceBody — lenient divider-as-end recovery", () => {
+  // Models occasionally close a REPLACE block with `=======` instead of
+  // `>>>>>>> REPLACE`. Two distinct prompts in the eval/codegen-edit corpus
+  // (task-tracker and bookmarks) hit this pattern: a multi-line CSS
+  // classNames replace whose closer is a second divider followed by EOF.
+  // See eval/codegen-edit/PLAN-parser-fix.md for the archive references.
+  //
+  // The parser treats any divider in `in-replace` as an implicit end of
+  // the replace, emits the edit, and records a soft `divider-as-end`
+  // warning so consumers can distinguish lenient recovery from a hard
+  // parse failure.
+  it("recovers a REPLACE closed with ======= instead of >>>>>>> REPLACE", () => {
+    const r = parseFenceBody(["<<<<<<< SEARCH", "old", "=======", "new", "======="]);
+    expect(r.edits).toEqual([{ op: "replace", search: "old", replace: "new" }]);
+    expect(r.errors).toEqual([{ kind: "divider-as-end", lineNr: 5 }]);
+  });
+
+  it("recovers a multi-line REPLACE closed with ======= and trailing blank lines", () => {
+    // Mirrors the actual archive pattern: model emits a long REPLACE then
+    // closes with ======= and a trailing newline at EOF.
+    const r = parseFenceBody([
+      "<<<<<<< SEARCH",
+      "const classNames = {",
+      "  page: 'p-6',",
+      "};",
+      "=======",
+      "const classNames = {",
+      "  page: 'p-8 bg-cream',",
+      "  header: 'mb-6',",
+      "};",
+      "=======",
+      "",
+    ]);
+    expect(r.edits).toEqual([
+      {
+        op: "replace",
+        search: "const classNames = {\n  page: 'p-6',\n};",
+        replace: "const classNames = {\n  page: 'p-8 bg-cream',\n  header: 'mb-6',\n};",
+      },
+    ]);
+    expect(r.errors).toEqual([{ kind: "divider-as-end", lineNr: 10 }]);
+  });
+
+  it("preserves the original unterminated-replace error when no divider closes the section", () => {
+    // Regression guard: the existing "unterminated-replace" path stays
+    // intact when the model truly forgets to close at all (no second
+    // divider, no `>>>>>>> REPLACE`, just EOF mid-replace).
+    const r = parseFenceBody(["<<<<<<< SEARCH", "old", "=======", "new"]);
+    expect(r.errors).toEqual([{ kind: "unterminated-replace", lineNr: 4 }]);
+    expect(r.edits).toEqual([]);
   });
 });
