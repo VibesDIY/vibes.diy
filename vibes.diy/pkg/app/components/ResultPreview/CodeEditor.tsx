@@ -376,9 +376,13 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
   }, []);
 
   // const scrollToBottomRef = useRef<{ lastScrollTime: Date; lastLine: number } | null>(null);
+  const lastAppliedStateRef = useRef<EditorState | null>(null);
+
   useEffect(() => {
-    // console.log(`Editor state changed:`, state, monacoReadyRef.current ? "editor ready" : "editor not ready");
     if (!monacoReadyRef.current) return;
+    if (lastAppliedStateRef.current === stateRef.current) return;
+    lastAppliedStateRef.current = stateRef.current;
+
     const { editor, api } = monacoReadyRef.current;
 
     if (isEditorStateStartGenerating(stateRef.current)) {
@@ -399,15 +403,9 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
           text: prefix + stateRef.current.newLines.join("\n"),
         },
       ]);
-      // console.log(`Appending new code lines...`, stateRef.current.newLines, endPos);
       editor.revealLineInCenter(model.getFullModelRange().endLineNumber);
     }
-    // if (isEditorStateToEdit(state)) {
-    //   updateCursorPosition(monacoReadyRef, state);
-    // }
   }, [monacoReady, stateRef.current]);
-
-  // Reset manual scroll flag when streaming starts
 
   const onChange = isEditorStateToEdit(stateRef.current)
     ? stateRef.current.onChange

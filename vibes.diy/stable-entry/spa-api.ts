@@ -1,5 +1,6 @@
 import { parse as parseCookies, serialize as serializeCookie } from "cookie";
 import { exception2Result } from "@adviser/cement";
+import { type } from "arktype";
 import type { Env, ApiResponse } from "./types.js";
 import { getBackendConfig, ROUTING_COOKIE, API_PATH } from "./types.js";
 
@@ -45,7 +46,17 @@ export function updateRoutingCookie(routingGroups: Record<string, string>, path:
 }
 
 async function handlePut(request: Request, env: Env, origin: string): Promise<Response> {
-  const { path, key } = (await request.json()) as { path: string; key: string };
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400 });
+  }
+  const body = type({ path: "string", key: "string" })(rawBody);
+  if (body instanceof type.errors) {
+    return new Response(JSON.stringify({ error: body.summary }), { status: 400 });
+  }
+  const { path, key } = body;
   const routingGroups = parseRoutingCookie(request.headers.get("cookie") ?? "");
   const cookieHeader = updateRoutingCookie(routingGroups, path, key);
 
@@ -65,3 +76,4 @@ export async function handleSpaApi(request: Request, env: Env): Promise<Response
   if (request.method === "PUT") return handlePut(request, env, origin);
   return new Response("Method not allowed", { status: 405 });
 }
+
