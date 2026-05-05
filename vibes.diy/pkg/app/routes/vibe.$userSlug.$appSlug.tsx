@@ -43,12 +43,24 @@ export async function loader(loaderCtx: {
   return { iframeUrl };
 }
 
-export function meta({ params, matches }: { params: Record<string, string>; matches: { data: unknown }[] }) {
+export async function loader({ context }: { context: { vibeAppTitle?: string } }) {
+  return { vibeAppTitle: context.vibeAppTitle };
+}
+
+export function meta({
+  data,
+  params,
+  matches,
+}: {
+  data: { vibeAppTitle?: string };
+  params: Record<string, string>;
+  matches: { data: unknown }[];
+}) {
   const { userSlug, appSlug } = params;
   const rootData = matches[0]?.data as { env?: { VIBES_SVC_HOSTNAME_BASE?: string } } | undefined;
   const hostnameBase = rootData?.env?.VIBES_SVC_HOSTNAME_BASE?.replace(/^\./, "") ?? "vibes.diy";
   const imageUrl = `https://${appSlug}--${userSlug}.${hostnameBase}/screenshot.jpg`;
-  const title = appSlug ?? "Vibe";
+  const title = data?.vibeAppTitle ?? appSlug ?? "Vibe";
 
   return [
     { title: `${title} - vibes.diy` },

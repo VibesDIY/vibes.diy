@@ -14,3 +14,4 @@ export * from "./intern/application-settings.js";
 export * from "./public/prompt-chat-section.js";
 export * from "./noop-cache.js";
 export * from "./intern/ensure-slug-binding.js";
+export * from "./intern/get-app-meta-title.js";
