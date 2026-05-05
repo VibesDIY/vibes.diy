@@ -89,7 +89,7 @@
     "prettier": "^3.8.1",
     "rollup-plugin-visualizer": "^7.0.1",
     "shiki": "^4.0.2",
-    "tailwindcss": "^4.2.2",
+    "tailwindcss": "^4.2.4",
     "toml": "^4.1.1",
     "typescript": "^6.0.3",
     "vite": "^7.3.2",
