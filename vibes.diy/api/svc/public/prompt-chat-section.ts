@@ -86,6 +86,7 @@ import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
+import { applyOneBlockToVfs, tryConsumeRecovery } from "../intern/recovery.js";
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
 // files (system-prompt.md, llms/*.md) from the worker's `/vibe-pkg/`
@@ -1207,11 +1208,16 @@ async function handleLlmResponse({
       if (!collectedMsgs) {
         return Result.Err(`Chat context not found for chatId: ${req.chatId}`);
       }
-      // Per-block streaming resolver: runs parseFenceBody + applyEdits as
-      // each block.code.end arrives so we can log apply errors immediately.
-      // Authoritative VibeFile[] for storage is still produced by the
-      // end-of-turn resolveCodeBlocksToFileSystem in handleEndMsg; this
-      // observer never feeds back into the wire output.
+      // Per-block streaming resolver (from #1557): runs parseFenceBody +
+      // applyEdits as each block.code.end arrives so we can log apply errors
+      // immediately. Authoritative VibeFile[] for storage is still produced
+      // by the end-of-turn resolveCodeBlocksToFileSystem in handleEndMsg.
+      //
+      // Recovery (this PR): a parallel per-block apply against `vfs` decides
+      // whether to fire prompt.recovery.{start,end,exhausted} events,
+      // bounded by `recoveryCounter`. The vfs is seeded with the chat's
+      // last persisted fileSystem so that a replace-only turn composes
+      // against prior content rather than an empty buffer.
       const seedForResolver = await loadPriorFileSystem(vctx, req.chatId);
       const resolverLogger = ensureLogger(vctx.sthis, "streamingResolver");
       const streamingResolver = createStreamingResolver({
@@ -1221,6 +1227,8 @@ async function handleLlmResponse({
         onApplyError: (evt) => logApplyError(resolverLogger, evt),
       });
       const blockAcc = createBlockAccumulator();
+      const vfs = new Map<string, string>(seedForResolver);
+      let recoveryCounter = { attempts: 0 };
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
@@ -1245,6 +1253,91 @@ async function handleLlmResponse({
           });
           if (r.isErr()) {
             return Result.Err(r);
+          }
+          // When a code block has fully arrived (closed by code.end),
+          // run a parallel apply against `vfs` to decide whether to fire
+          // recovery events. `closed` here is the same `{begin, lines, end}`
+          // triple that streamingResolver.observeBlock got above; we just
+          // additionally consult `applyOneBlockToVfs` to get the apply
+          // outcome and gate recovery on it.
+          //
+          // TODO(recovery-orchestrator): between prompt.recovery.start and
+          // prompt.recovery.end, abort upstream via AbortController on
+          // defaultLLMRequest, build the continuation via
+          // buildRecoveryRequest({ ...vfs, failed: first }), pipe its blocks
+          // through the same parser chain, and forward them via
+          // appendBlockEvent. Tracked as the primary follow-up on this PR.
+          if (closed && closed.end) {
+            const step = applyOneBlockToVfs(vfs, closed);
+            if (step.errors.length > 0) {
+              const consumed = tryConsumeRecovery(recoveryCounter);
+              recoveryCounter = consumed.next;
+              const first = step.errors[0];
+              if (consumed.allowed) {
+                const startSeq = blockSeq++;
+                const startEvt = await appendBlockEvent({
+                  ctx,
+                  vctx,
+                  req,
+                  promptId,
+                  blockSeq: startSeq,
+                  evt: {
+                    type: "prompt.recovery.start",
+                    streamId: promptId,
+                    chatId: req.chatId,
+                    seq: startSeq,
+                    timestamp: new Date(),
+                    reason: "apply-error",
+                    failedSection: { path: step.path, search: first.search, reason: first.reason },
+                  },
+                  emitMode: "emit-only",
+                });
+                if (startEvt.isErr()) {
+                  return Result.Err(startEvt);
+                }
+                const endSeq = blockSeq++;
+                const endEvt = await appendBlockEvent({
+                  ctx,
+                  vctx,
+                  req,
+                  promptId,
+                  blockSeq: endSeq,
+                  evt: {
+                    type: "prompt.recovery.end",
+                    streamId: promptId,
+                    chatId: req.chatId,
+                    seq: endSeq,
+                    timestamp: new Date(),
+                  },
+                  emitMode: "emit-only",
+                });
+                if (endEvt.isErr()) {
+                  return Result.Err(endEvt);
+                }
+              } else {
+                const exhSeq = blockSeq++;
+                const exhEvt = await appendBlockEvent({
+                  ctx,
+                  vctx,
+                  req,
+                  promptId,
+                  blockSeq: exhSeq,
+                  evt: {
+                    type: "prompt.recovery.exhausted",
+                    streamId: promptId,
+                    chatId: req.chatId,
+                    seq: exhSeq,
+                    timestamp: new Date(),
+                    reason: "apply-error",
+                    attempts: recoveryCounter.attempts,
+                  },
+                  emitMode: "emit-only",
+                });
+                if (exhEvt.isErr()) {
+                  return Result.Err(exhEvt);
+                }
+              }
+            }
           }
         } else {
           // console.log(promptId, "BlockEnd", value, collectedMsgs.length, req.chatId);
