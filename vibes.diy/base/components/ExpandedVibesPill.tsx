@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { switchColors } from "./VibesSwitch.styles.js";
 
 export interface ExpandedVibesPillProps {
@@ -19,6 +19,10 @@ export interface ExpandedVibesPillProps {
   communityBadgeCount?: number;
   /** When true, shows a small dot indicating the current code has not been published yet. Owner-only. */
   hasUnpublishedChanges?: boolean;
+  /** When provided, the owner sees an inline textarea instead of Edit/Clone/Remix buttons. */
+  onPromptSubmit?: (prompt: string) => void;
+  /** Whether a prompt is currently being processed. */
+  promptProcessing?: boolean;
 }
 
 function PillActionButton({
@@ -259,7 +263,20 @@ export function ExpandedVibesPill({
   communityButtonRef,
   communityBadgeCount,
   hasUnpublishedChanges,
+  onPromptSubmit,
+  promptProcessing,
 }: ExpandedVibesPillProps) {
+  const [inlinePrompt, setInlinePrompt] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isOwnerMode = !!onPromptSubmit;
+
+  const handleInlineSubmit = useCallback(() => {
+    if (inlinePrompt.trim() && !promptProcessing) {
+      onPromptSubmit?.(inlinePrompt.trim());
+      setInlinePrompt("");
+    }
+  }, [inlinePrompt, promptProcessing, onPromptSubmit]);
+
   // idle → bubble → expanding → open (click to close: open → collapsing → idle)
   const [phase, setPhase] = useState<"idle" | "bubble" | "expanding" | "open" | "collapsing" | "shrinking">("idle");
   const [subMode, setSubMode] = useState<"default" | "change">("default");
@@ -288,6 +305,15 @@ export function ExpandedVibesPill({
   const expanded = phase === "expanding" || phase === "open";
   const shrinking = phase === "shrinking";
   const buttonsVisible = phase === "expanding" || phase === "open";
+
+  // Auto-focus textarea when owner sub-menu opens
+  useEffect(() => {
+    if (isOwnerMode && subMode === "change" && buttonsVisible) {
+      setTimeout(() => textareaRef.current?.focus(), 50);
+    }
+  }, [isOwnerMode, subMode, buttonsVisible]);
+
+  const subMenuRef = useRef<HTMLDivElement>(null);
   const creamSlid = phase !== "idle" && phase !== "shrinking";
 
   // Tray sizing
@@ -424,12 +450,21 @@ export function ExpandedVibesPill({
         </div>
       </div>
 
+      {/* Backdrop — closes sub-menu on click outside */}
+      {subMode === "change" && buttonsVisible && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 2 }}
+          onClick={(e) => { e.stopPropagation(); setSubMode("default"); }}
+        />
+      )}
+
       {/* Vertical sub-menu — opens above the pill, aligned with the Vibe button */}
       <div
+        ref={subMenuRef}
         style={{
           position: "absolute",
           // Sit 4px above the top of the horizontal tray (closer to the button than the pill SVG top).
-          bottom: height - (123 * scale - 4) + 4,
+          bottom: height - (123 * scale - 4) + 16,
           // Align left edge with the leftmost (Change?) button in the horizontal tray.
           // Tray's right edge is at wrapper.right + 4, tray width = trayExpanded.
           left: pillWidth + 4 - trayExpanded,
@@ -437,91 +472,141 @@ export function ExpandedVibesPill({
           flexDirection: "column",
           alignItems: "stretch",
           gap: 6,
-          padding: 8,
-          background: "var(--vibes-cream, #FFFEF0)",
-          border: "1px solid var(--vibes-near-black, #1a1a1a)",
-          borderRadius: 12,
+          padding: "10px 10px 12px",
+          background: "var(--color-light-background-01, #eee)",
+          border: "2px solid var(--vibes-near-black, #1a1a1a)",
+          borderRadius: 8,
+          boxShadow: "4px 4px 0px 0px var(--vibes-near-black, #1a1a1a)",
           transformOrigin: "bottom left",
           transform: subMode === "change" && buttonsVisible ? "scale(1)" : "scale(0)",
           opacity: subMode === "change" && buttonsVisible ? 1 : 0,
           transition: "transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.08s ease",
           pointerEvents: subMode === "change" && buttonsVisible ? "auto" : "none",
           zIndex: 3,
-          minWidth: height * 2.4,
+          minWidth: 320,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {editHref && (
-          <VerticalActionButton
-            height={height}
-            label="Edit"
-            bgColor="var(--vibes-yellow, #fedd00)"
-            labelColor="var(--vibes-near-black, #1a1a1a)"
-            href={editHref}
-            icon={
-              <svg
-                width="13"
-                height="13"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
+        {isOwnerMode ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%" }}>
+            {/* Textarea wrapper — same as ChatInput */}
+            <div style={{
+              position: "relative",
+              borderRadius: 8,
+              border: "3px solid #d4d4d8",
+              borderBottom: "none",
+              background: "#fff",
+              overflow: "hidden",
+            }}>
+              <textarea
+                ref={textareaRef}
+                value={inlinePrompt}
+                onChange={(e) => setInlinePrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleInlineSubmit();
+                  }
+                }}
+                disabled={promptProcessing}
+                placeholder="Change something..."
+                rows={2}
+                style={{
+                  width: "100%",
+                  minHeight: 60,
+                  maxHeight: 120,
+                  resize: "none",
+                  border: "none",
+                  borderRadius: 5,
+                  padding: "8px 10px",
+                  fontSize: 14,
+                  fontFamily: "'Inter', sans-serif",
+                  background: "transparent",
+                  color: "var(--vibes-near-black, #1a1a1a)",
+                  outline: "none",
+                  boxShadow: "none",
+                  opacity: promptProcessing ? 0.5 : 1,
+                }}
+              />
+              {/* 4-color bottom bar */}
+              <div style={{
+                height: 3,
+                background: "linear-gradient(90deg, var(--vibes-red, #DA291C) 0% 25%, var(--vibes-yellow, #fedd00) 25% 50%, var(--vibes-green, #22c55e) 50% 75%, var(--vibes-blue, #3b82f6) 75% 100%)",
+              }} />
+            </div>
+            {/* Bottom row — spacer + Code button */}
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleInlineSubmit(); }}
+                disabled={promptProcessing || !inlinePrompt.trim()}
+                style={{
+                  height: 34,
+                  padding: "0 16px",
+                  border: "2px solid var(--vibes-near-black, #1a1a1a)",
+                  borderRadius: 5,
+                  background: "var(--vibes-blue, #3b82f6)",
+                  color: "#fff",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: "'Inter', sans-serif",
+                  cursor: promptProcessing || !inlinePrompt.trim() ? "not-allowed" : "pointer",
+                  opacity: promptProcessing || !inlinePrompt.trim() ? 0.5 : 1,
+                  boxShadow: "3px 3px 0px 0px var(--vibes-near-black, #1a1a1a)",
+                }}
               >
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-              </svg>
-            }
-          />
-        )}
-        {cloneHref && (
-          <VerticalActionButton
-            height={height}
-            label="Clone"
-            bgColor="var(--vibes-blue, #3b82f6)"
-            labelColor="var(--vibes-cream, #FFFEF0)"
-            href={cloneHref}
-            icon={
-              <svg
-                width="13"
-                height="13"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-              </svg>
-            }
-          />
-        )}
-        {remixHref && (
-          <VerticalActionButton
-            height={height}
-            label="Remix"
-            bgColor="var(--vibes-green, #22c55e)"
-            labelColor="var(--vibes-cream, #FFFEF0)"
-            href={remixHref}
-            icon={
-              <svg
-                width="13"
-                height="13"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-            }
-          />
+                {promptProcessing ? "..." : "Code"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {editHref && (
+              <VerticalActionButton
+                height={height}
+                label="Edit"
+                bgColor="var(--vibes-yellow, #fedd00)"
+                labelColor="var(--vibes-near-black, #1a1a1a)"
+                href={editHref}
+                icon={
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                }
+              />
+            )}
+            {cloneHref && (
+              <VerticalActionButton
+                height={height}
+                label="Clone"
+                bgColor="var(--vibes-blue, #3b82f6)"
+                labelColor="var(--vibes-cream, #FFFEF0)"
+                href={cloneHref}
+                icon={
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                  </svg>
+                }
+              />
+            )}
+            {remixHref && (
+              <VerticalActionButton
+                height={height}
+                label="Remix"
+                bgColor="var(--vibes-green, #22c55e)"
+                labelColor="var(--vibes-cream, #FFFEF0)"
+                href={remixHref}
+                icon={
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                }
+              />
+            )}
+          </>
         )}
       </div>
 
