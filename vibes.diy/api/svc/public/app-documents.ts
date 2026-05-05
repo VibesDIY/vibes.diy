@@ -140,7 +140,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       // Notify DocNotify coordinator for cross-shard fan-out
       if (vctx.notifyDocChanged) {
         vctx
-          .notifyDocChanged({ userSlug: req.userSlug, appSlug: req.appSlug, dbName, docId })
+          .notifyDocChanged({ userSlug: req.userSlug, appSlug: req.appSlug, dbName, docId }, clientWsSend(ctx).connId)
           .catch((e: unknown) => console.error("DocNotify error:", e));
       }
 
@@ -340,7 +340,7 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       // Notify DocNotify coordinator for cross-shard fan-out
       if (vctx.notifyDocChanged) {
         vctx
-          .notifyDocChanged({ userSlug: req.userSlug, appSlug: req.appSlug, dbName, docId: req.docId })
+          .notifyDocChanged({ userSlug: req.userSlug, appSlug: req.appSlug, dbName, docId: req.docId }, clientWsSend(ctx).connId)
           .catch((e: unknown) => console.error("DocNotify error:", e));
       }
 

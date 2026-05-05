@@ -139,7 +139,6 @@ import {
   Result,
   Option,
   TriggerCtx,
-  timeouted,
   HandleTriggerCtx,
   EventoResult,
   ValidateTriggerCtx,
@@ -355,65 +354,78 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     }
   ): Promise<ResultVibesDiy<S>> {
     const tid = msgParam?.tid ?? this.cfg.sthis.nextId(12).str;
-    let unreg: (() => void) | undefined;
-    const rtRes = await timeouted(
-      async () => {
-        const conn = await this.getReadyConnection();
-        const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
-        evento.push({
-          hash: tid,
-          validate: async (trigger: ValidateTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
-            const msg = msgBase(trigger.enRequest);
-            if (msg instanceof type.errors) {
-              // console.log("Invalid message received, ignoring:", msg, trigger.enRequest);
-              return Result.Ok(Option.None());
-            }
-            if (msg.tid === tid && (msgParam.resMatch(msg.payload) || isResError(msg.payload))) {
-              return Result.Ok(Option.Some(trigger.enRequest));
-            }
-            return Result.Ok(Option.None());
-          },
-          handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
-            if (isResError(trigger.validated.payload)) {
-              waitForResponse.resolve(Result.Err<S, VibesDiyError>(trigger.validated.payload as VibesDiyError));
-            } else {
-              waitForResponse.resolve(Result.Ok<S, VibesDiyError>(trigger.validated.payload as S));
-            }
-            return Result.Ok(EventoResult.Stop);
-          },
-        });
-        // console.log("Setting up onMessage handler for tid:", tid);
-        const waitForResponse = new Future<Result<S, VibesDiyError>>();
-        unreg = conn.onMessage((event) => {
-          evento.trigger({
-            request: event,
-            send: (async (_ctx: TriggerCtx<W3CWebSocketEvent, unknown, unknown>, data: unknown) => {
-              // console.log("VibeDiyApi request sending from evento", data);
-              const res = await this.send(data as Parameters<this["send"]>[0], { tid });
-              return res;
-            }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
-          });
-        });
-        const rReq = await this.send(req, { tid });
-        if (rReq.isErr()) {
-          return Result.Err<S, VibesDiyError>(rReq.Err());
+    const idleMs = this.cfg.timeoutMs;
+    const conn = await this.getReadyConnection();
+    const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
+    const waitForResponse = new Future<Result<S, VibesDiyError>>();
+    evento.push({
+      hash: tid,
+      validate: async (trigger: ValidateTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
+        const msg = msgBase(trigger.enRequest);
+        if (msg instanceof type.errors) {
+          return Result.Ok(Option.None());
         }
-        return waitForResponse.asPromise();
+        if (msg.tid === tid && (msgParam.resMatch(msg.payload) || isResError(msg.payload))) {
+          return Result.Ok(Option.Some(trigger.enRequest));
+        }
+        return Result.Ok(Option.None());
       },
-      {
-        timeout: this.cfg.timeoutMs,
-      }
-    );
-    unreg?.();
-    if (!rtRes.isSuccess()) {
-      return Result.Err<S, VibesDiyError>({
-        type: "vibes.diy.error",
-        name: "VibesDiyError",
-        message: `Request timeout after ${this.cfg.timeoutMs}ms`,
-        code: "request-timeout",
+      handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
+        if (isResError(trigger.validated.payload)) {
+          waitForResponse.resolve(Result.Err<S, VibesDiyError>(trigger.validated.payload as VibesDiyError));
+        } else {
+          waitForResponse.resolve(Result.Ok<S, VibesDiyError>(trigger.validated.payload as S));
+        }
+        return Result.Ok(EventoResult.Stop);
+      },
+    });
+
+    // Idle timeout — resets on every incoming message, so a long-running
+    // request that streams progress events keeps the request alive. The
+    // idle window is `cfg.timeoutMs` (default 10s); silence longer than
+    // that is what trips the timeout, not absolute wall time.
+    let timer: ReturnType<typeof setTimeout> | undefined = undefined;
+    const resetIdleTimer = (): void => {
+      if (timer !== undefined) clearTimeout(timer);
+      timer = setTimeout(() => {
+        waitForResponse.resolve(
+          Result.Err<S, VibesDiyError>({
+            type: "vibes.diy.error",
+            name: "VibesDiyError",
+            message: `Request idle for ${idleMs}ms (no progress)`,
+            code: "request-timeout",
+          })
+        );
+      }, idleMs);
+    };
+    resetIdleTimer();
+
+    const unreg = conn.onMessage((event) => {
+      // Any incoming message — matching or not — keeps the request alive.
+      resetIdleTimer();
+      evento.trigger({
+        request: event,
+        send: (async (_ctx: TriggerCtx<W3CWebSocketEvent, unknown, unknown>, data: unknown) => {
+          const res = await this.send(data as Parameters<this["send"]>[0], { tid });
+          return res;
+        }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
       });
+    });
+
+    const cleanup = (): void => {
+      if (timer !== undefined) clearTimeout(timer);
+      unreg();
+    };
+
+    const rReq = await this.send(req, { tid });
+    if (rReq.isErr()) {
+      cleanup();
+      return Result.Err<S, VibesDiyError>(rReq.Err());
     }
-    return rtRes.value; // as ResultVibesDiy<S>;
+
+    const result = await waitForResponse.asPromise();
+    cleanup();
+    return result;
   }
 
   ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>> {

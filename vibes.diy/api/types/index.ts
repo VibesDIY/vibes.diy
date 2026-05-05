@@ -51,11 +51,34 @@ export function isFetchNotFoundResult(result: FetchResult): result is FetchNotFo
 
 export type FetchResult = FetchOkResult | FetchErrResult | FetchNotFoundResult;
 
+// Per-call progress signal emitted from where work physically happens
+// (S3-style multipart writes, multipart renames). Higher layers forward
+// these unchanged; the push handler turns them into wire-level
+// `vibes.diy.res-progress` messages.
+export interface StorageProgressInfo {
+  readonly stage: string;
+  readonly bytes?: number;
+  readonly partNumber?: number;
+}
+
+export type StorageProgressFn = (info: StorageProgressInfo) => void;
+
+export interface S3PutOptions {
+  readonly onProgress?: StorageProgressFn;
+}
+
+export interface S3RenameOptions {
+  readonly onProgress?: StorageProgressFn;
+}
+
 export interface S3Api {
   genId: () => string;
   get(iurl: string): Promise<FetchResult>;
-  put(iurl: string): Promise<WritableStream<Uint8Array>>;
-  rename(fromUrl: string, toUrl: string): Promise<Result<void>>;
+  put(iurl: string, opts?: S3PutOptions): Promise<WritableStream<Uint8Array>>;
+  rename(fromUrl: string, toUrl: string, opts?: S3RenameOptions): Promise<Result<void>>;
+  // Optional: await a pending put for the given URL. Implementations that don't
+  // track in-flight puts can omit this; callers must tolerate undefined.
+  awaitPut?(iurl: string): Promise<void>;
 }
 
 export interface StorageResult {
@@ -66,7 +89,14 @@ export interface StorageResult {
   size: number;
 }
 
+export interface EnsureCallOptions {
+  readonly onProgress?: StorageProgressFn;
+}
+
 export interface VibesAssetStorage {
   fetch: (url: string) => Promise<FetchResult>;
-  ensure: (...items: ReadableStream<Uint8Array | string>[]) => Promise<Result<StorageResult>[]>;
+  ensure: {
+    (...items: ReadableStream<Uint8Array | string>[]): Promise<Result<StorageResult>[]>;
+    (opts: EnsureCallOptions, ...items: ReadableStream<Uint8Array | string>[]): Promise<Result<StorageResult>[]>;
+  };
 }

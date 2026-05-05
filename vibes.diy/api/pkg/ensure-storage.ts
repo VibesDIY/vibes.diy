@@ -1,5 +1,5 @@
 import { Result, Option, URI, teeWriter, processStream, Lazy, PeerStream, Peer, coerceStreamUint8 } from "@adviser/cement";
-import { StorageResult, VibesAssetStorage, FetchResult } from "@vibes.diy/api-types";
+import type { EnsureCallOptions, StorageProgressFn, StorageResult, VibesAssetStorage, FetchResult } from "@vibes.diy/api-types";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { base58btc } from "multiformats/bases/base58";
 
@@ -46,12 +46,35 @@ export class Cider {
   });
 }
 
-export interface StoragePeer {
-  fetch: PeerFetch;
-  factory: (cider: Cider) => PeerWithCommit;
+export interface PeerFactoryOptions {
+  readonly onProgress?: StorageProgressFn;
 }
 
-export function ensureStorage(...peers: StoragePeer[]): VibesAssetStorage {
+export interface StoragePeer {
+  fetch: PeerFetch;
+  factory: (cider: Cider, opts?: PeerFactoryOptions) => PeerWithCommit;
+}
+
+export interface EnsureStorageOptions {
+  // Per-operation ceiling (ms) on any single peer op (begin/write/close/cancel).
+  // A hung peer gets dropped instead of wedging the whole pipeline.
+  // Resets per chunk: a healthy multi-MB upload gets a fresh window for each
+  // write(), so total wall time is bounded by network throughput, not this.
+  // 5s is ~10x R2's healthy median latency; well under Cloudflare's 30s CPU
+  // ceiling so any genuine hang surfaces a clean error before the platform
+  // terminates the worker.
+  readonly peerTimeout?: number;
+}
+
+const DEFAULT_PEER_TIMEOUT_MS = 5000;
+
+export function ensureStorage(...peers: StoragePeer[]): VibesAssetStorage;
+export function ensureStorage(opts: EnsureStorageOptions, ...peers: StoragePeer[]): VibesAssetStorage;
+export function ensureStorage(...args: [EnsureStorageOptions | StoragePeer, ...StoragePeer[]] | StoragePeer[]): VibesAssetStorage {
+  const [first, ...rest] = args;
+  const opts: EnsureStorageOptions = first && !("fetch" in first) ? (first as EnsureStorageOptions) : {};
+  const peers: StoragePeer[] = first && !("fetch" in first) ? (rest as StoragePeer[]) : (args as StoragePeer[]);
+  const peerTimeout = opts.peerTimeout ?? DEFAULT_PEER_TIMEOUT_MS;
   return {
     fetch: async (iurl: string): Promise<FetchResult> => {
       // const peers = [new SQLPeerFetch(flavour, db, assets), new S3PeerFetch(s3)];
@@ -67,7 +90,18 @@ export function ensureStorage(...peers: StoragePeer[]): VibesAssetStorage {
         url: url.toString(),
       };
     },
-    ensure: async (...items: ReadableStream<Uint8Array | string>[]): Promise<Result<StorageResult>[]> => {
+    ensure: (async (
+      ...args: ReadableStream<Uint8Array | string>[] | [EnsureCallOptions, ...ReadableStream<Uint8Array | string>[]]
+    ): Promise<Result<StorageResult>[]> => {
+      const [firstArg, ...restArgs] = args;
+      const isStream = (v: unknown): v is ReadableStream<Uint8Array | string> =>
+        !!v && typeof (v as { getReader?: unknown }).getReader === "function";
+      const firstIsOpts = firstArg !== undefined && !isStream(firstArg);
+      const callOpts: EnsureCallOptions = firstIsOpts ? (firstArg as EnsureCallOptions) : {};
+      const items: ReadableStream<Uint8Array | string>[] = firstIsOpts
+        ? (restArgs as ReadableStream<Uint8Array | string>[])
+        : (args as ReadableStream<Uint8Array | string>[]);
+      const factoryOpts: PeerFactoryOptions = { onProgress: callOpts.onProgress };
       // console.log("Ensuring storage for items, count:", items.length);
       const tees = await Promise.allSettled(
         items.map(
@@ -82,12 +116,10 @@ export function ensureStorage(...peers: StoragePeer[]): VibesAssetStorage {
           > => {
             const [lag1, lag2] = coerceStreamUint8(item).tee();
             const cider = new Cider(lag1);
-            // console.log("Created Cider for item, waiting for teeWriter...");
-            // const peers = [
-            // new SQLPeer(flavour, db, assets, cider, 10 * 1024 * 1024) /*, new S3Peer(s3, cider) */];
             return teeWriter(
-              peers.map((i) => i.factory(cider)),
-              lag2
+              peers.map((i) => i.factory(cider, factoryOpts)),
+              lag2,
+              { peerTimeout }
             ).then(async (rTee) => {
               if (rTee.isErr()) {
                 return Result.Err(rTee);
@@ -126,6 +158,6 @@ export function ensureStorage(...peers: StoragePeer[]): VibesAssetStorage {
           size,
         });
       });
-    },
+    }) as VibesAssetStorage["ensure"],
   };
 }

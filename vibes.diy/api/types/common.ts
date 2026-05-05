@@ -334,3 +334,25 @@ export function parseArrayWarning<T extends type>(items: unknown, match: T): Par
 export function parseArray<T extends type>(items: unknown, match: T): T["infer"][] {
   return parseArrayWarning(items, match).filtered;
 }
+
+/**
+ * Heartbeat / progress message any handler can emit during long-running work.
+ * Receiving this on the client doesn't resolve the request's waitForResponse
+ * (it's not an isResXxx match), but it does trigger onMessage which keeps the
+ * client's idle timeout alive. Handlers that take >5s should emit one every
+ * few seconds.
+ *
+ * `stage` is free-form (e.g. "uploading-part", "asset-stored", "rename-part").
+ * `bytes` is bytes durably stored so far for the current asset, when known.
+ * `partNumber` is set on multipart paths.
+ */
+export const resProgress = type({
+  type: "'vibes.diy.res-progress'",
+  "stage?": "string",
+  "bytes?": "number",
+  "partNumber?": "number",
+});
+export type ResProgress = typeof resProgress.infer;
+export function isResProgress(obj: unknown): obj is ResProgress {
+  return !(resProgress(obj) instanceof type.errors);
+}

@@ -32,6 +32,7 @@
     "vibes.diy/**/*",
     "prompts/**/*",
     "utils/**/*",
+    "eval/**/*",
     "xhosting/**/*",
     "vibes.diy/api/svc/public/.ts"
   ],

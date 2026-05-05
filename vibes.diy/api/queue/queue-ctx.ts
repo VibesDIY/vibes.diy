@@ -1,7 +1,8 @@
 import { exception2Result, Result } from "@adviser/cement";
-import { RawEmailWithoutFrom } from "@vibes.diy/api-types";
-import { D1Database, Fetcher } from "@cloudflare/workers-types";
+import { RawEmailWithoutFrom, S3Api } from "@vibes.diy/api-types";
+import { D1Database, Fetcher, R2Bucket } from "@cloudflare/workers-types";
 import { createVibesApiTables, cfDrizzle, CreateSQLPeerParams, toDBFlavour, VibesApiTables } from "@vibes.diy/api-sql";
+import { R2ToS3Api } from "@vibes.diy/api-svc";
 import { SuperThis } from "@fireproof/core-types-base";
 
 export interface QueueCtxParams {
@@ -9,6 +10,7 @@ export interface QueueCtxParams {
   cf: {
     BROWSER: Fetcher;
     D1: D1Database;
+    FS_IDS_BUCKET?: R2Bucket;
   };
   vibes: {
     env: {
@@ -18,6 +20,9 @@ export interface QueueCtxParams {
       DB_FLAVOUR: string;
       NEON_DATABASE_URL?: string;
       DISCORD_WEBHOOK_URL?: string;
+      LLM_BACKEND_URL: string;
+      LLM_BACKEND_API_KEY: string;
+      PRODIA_TOKEN?: string;
     };
   };
 }
@@ -46,6 +51,7 @@ export class QueueCtx {
   readonly params: QueueCtxParams;
   readonly storageSystems: {
     sql: CreateSQLPeerParams;
+    s3?: S3Api;
   };
   readonly sql: {
     db: ReturnType<typeof cfDrizzle>["db"];
@@ -67,6 +73,7 @@ export class QueueCtx {
         db,
         assets: tables.assets,
       },
+      s3: this.params.cf.FS_IDS_BUCKET ? new R2ToS3Api(this.params.cf.FS_IDS_BUCKET, this.sthis) : undefined,
     };
   }
 

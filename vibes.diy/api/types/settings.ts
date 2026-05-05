@@ -129,6 +129,28 @@ export function isReqEnsureAppSettingsSkills(obj: unknown): obj is ReqEnsureAppS
   return !(reqEnsureAppSettingsSkills(obj) instanceof type.errors);
 }
 
+export const reqEnsureAppSettingsIconDescription = type({
+  iconDescription: "string",
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsIconDescription = typeof reqEnsureAppSettingsIconDescription.infer;
+export function isReqEnsureAppSettingsIconDescription(obj: unknown): obj is ReqEnsureAppSettingsIconDescription {
+  return !(reqEnsureAppSettingsIconDescription(obj) instanceof type.errors);
+}
+
+// Trigger a fresh icon generation against the existing description.
+// No payload beyond the slug pair plus the literal-true discriminant
+// (which makes this union member identifiable). Server-side rate-limit
+// soft-no-ops within 10s of the previous generation.
+export const reqEnsureAppSettingsIconRegen = type({
+  iconRegen: "true",
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsIconRegen = typeof reqEnsureAppSettingsIconRegen.infer;
+export function isReqEnsureAppSettingsIconRegen(obj: unknown): obj is ReqEnsureAppSettingsIconRegen {
+  return !(reqEnsureAppSettingsIconRegen(obj) instanceof type.errors);
+}
+
 export const reqEnsureAppSettingsApp = type({
   app: AIParams.partial(),
 }).and(reqEnsureAppSettingsBase);
@@ -197,6 +219,8 @@ export type ReqEnsureAppSettings =
   | ReqRequest
   | ReqEnsureAppSettingsTitle
   | ReqEnsureAppSettingsSkills
+  | ReqEnsureAppSettingsIconDescription
+  | ReqEnsureAppSettingsIconRegen
   | ReqEnsureAppSettingsApp
   | ReqEnsureAppSettingsChat
   | ReqEnsureAppSettingsImg
@@ -210,6 +234,8 @@ export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSetting
     // isReqEnsureAppSettingsAcl(obj) ||
     isReqEnsureAppSettingsTitle(obj) ||
     isReqEnsureAppSettingsSkills(obj) ||
+    isReqEnsureAppSettingsIconDescription(obj) ||
+    isReqEnsureAppSettingsIconRegen(obj) ||
     isReqEnsureAppSettingsApp(obj) ||
     isReqEnsureAppSettingsChat(obj) ||
     isReqEnsureAppSettingsImg(obj) ||
@@ -226,6 +252,8 @@ export const AppSettings = type({
     settings: {
       "title?": "string",
       "skills?": type("string").array(),
+      "iconDescription?": "string",
+      "icon?": type({ cid: "string", mime: "string" }),
       "app?": AIParams.partial(),
       "chat?": AIParams.partial(),
       "img?": AIParams.partial(),

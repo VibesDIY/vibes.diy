@@ -36,6 +36,7 @@
     "pack": "echo skip pack",
     "publish": "echo skip publish",
     "check": "pnpm build && pnpm lint && pnpm test && pnpm --filter @vibes.diy/hosting-tests test",
+    "fast-check": "(git diff --name-only HEAD; git ls-files --others --exclude-standard) | xargs -r npx prettier --write --ignore-unknown && pnpm build",
     "storybook": "cd vibes.diy/pkg && pnpm run storybook",
     "storybook:use-vibes": "cd use-vibes/base && pnpm run storybook"
   },
@@ -56,7 +57,8 @@
   "license": "Apache-2.0",
   "pnpm": {
     "patchedDependencies": {
-      "drizzle-kit@0.31.8": "patches/drizzle-kit@0.31.8.patch"
+      "drizzle-kit@0.31.8": "patches/drizzle-kit@0.31.8.patch",
+      "@adviser/cement@0.5.34": "patches/@adviser__cement.patch"
     }
   },
   "devDependencies": {

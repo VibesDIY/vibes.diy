@@ -6,9 +6,11 @@ import { ensureUserSlug, ensureAppSlug, getDefaultUserSlug, persistDefaultUserSl
 import { preAllocate } from "./pre-allocate.js";
 import {
   ActiveEntry,
+  ActiveIconDescription,
   ActiveSkills,
   ActiveTitle,
   EvtAppSetting,
+  EvtIconGen,
   MsgBase,
   ReqOpenChat,
   ReqWithVerifiedAuth,
@@ -96,11 +98,13 @@ export async function ensureChatId(
       // pair's title and the skill list into app_settings below.
       let preferredPairs: { title: string; slug: string }[] | undefined;
       let preAllocSkills: string[] | undefined;
+      let preAllocIconDescription: string | undefined;
       if (req.prompt && !req.appSlug) {
         const rPre = await preAllocate(ctx, { prompt: req.prompt });
         if (rPre.isOk()) {
           preferredPairs = rPre.Ok().pairs;
           preAllocSkills = rPre.Ok().skills;
+          preAllocIconDescription = rPre.Ok().iconDescription;
         } else {
           console.warn("preAllocate failed; falling through to random-words:", rPre.Err());
         }
@@ -121,13 +125,14 @@ export async function ensureChatId(
         created: new Date().toISOString(),
       });
 
-      if (chosenTitle || preAllocSkills) {
+      if (chosenTitle || preAllocSkills || preAllocIconDescription) {
         await writePreAllocActiveEntries(ctx, {
           userId,
           userSlug,
           appSlug,
           title: chosenTitle,
           skills: preAllocSkills,
+          iconDescription: preAllocIconDescription,
         });
       }
     }
@@ -143,7 +148,8 @@ async function writePreAllocActiveEntries(
     appSlug,
     title,
     skills,
-  }: { userId: string; userSlug: string; appSlug: string; title?: string; skills?: string[] }
+    iconDescription,
+  }: { userId: string; userSlug: string; appSlug: string; title?: string; skills?: string[]; iconDescription?: string }
 ): Promise<void> {
   const now = new Date().toISOString();
   const entries: ActiveEntry[] = [];
@@ -152,6 +158,9 @@ async function writePreAllocActiveEntries(
   }
   if (skills && skills.length > 0) {
     entries.push({ type: "active.skills", skills } satisfies ActiveSkills);
+  }
+  if (iconDescription) {
+    entries.push({ type: "active.icon-description", description: iconDescription } satisfies ActiveIconDescription);
   }
   if (entries.length === 0) return;
   const rIns = await exception2Result(() =>
@@ -183,4 +192,17 @@ async function writePreAllocActiveEntries(
     dst: "vibes-service",
     ttl: 1,
   } satisfies MsgBase<EvtAppSetting>);
+  if (iconDescription) {
+    await ctx.postQueue({
+      payload: {
+        type: "vibes.diy.evt-icon-gen",
+        userSlug,
+        appSlug,
+      },
+      tid: "queue-event",
+      src: "ensureChatId",
+      dst: "vibes-service",
+      ttl: 1,
+    } satisfies MsgBase<EvtIconGen>);
+  }
 }

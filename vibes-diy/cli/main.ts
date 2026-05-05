@@ -58,12 +58,13 @@ async function vibesDiyApiFactory(sthis: SuperThis) {
     },
     { resetAfter: 60, skipUnref: true }
   );
-  return Lazy((apiUrl: string) => {
+  return (apiUrl: string, opts?: { idleTimeoutMs?: number }) => {
     return new VibesDiyApi({
       apiUrl,
       getToken,
+      ...(opts?.idleTimeoutMs !== undefined ? { timeoutMs: opts.idleTimeoutMs } : {}),
     });
-  });
+  };
 }
 
 class OutputSelector implements EventoSendProvider<unknown, unknown, unknown> {

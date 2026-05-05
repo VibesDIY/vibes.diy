@@ -10,16 +10,16 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { defaultLLMRequest } from "./default-llm-request.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
-import { LLMEnforced, LLMHeaders, MsgBase, VibesFPApiParameters } from "@vibes.diy/api-types";
+import { LLMEnforced, LLMHeaders, MsgBase, S3Api, VibesFPApiParameters } from "@vibes.diy/api-types";
 import { createSQLPeer, CreateSQLPeerParams, createVibesApiTables, DBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { SuperThis } from "@fireproof/core-types-base";
 import { ensureStorage } from "@vibes.diy/api-pkg";
+import { createS3Peer } from "./peers/s3.js";
 
 export type BindPromise<T> = (promise: Promise<T>) => Promise<T>;
 
 export interface CreateHandlerParams<T extends VibesSqlite> {
   db: T;
-  // s3Api: S3Api;
   sthis: SuperThis;
   logger?: Logger;
   cache: CfCacheIf;
@@ -27,13 +27,15 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   connections: Set<WSSendProvider>;
   storageSystems: {
     sql: CreateSQLPeerParams;
+    s3?: S3Api;
+    peerTimeout?: number;
   };
   postQueue: (msg: MsgBase) => Promise<void>;
   netHash(): string;
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
   fetchPkgVersion?: ResolveFunction;
   llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
-  notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }): Promise<void>;
+  notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;
   deregisterDocSubscription?(subscriptionKey: string): Promise<void>;
   // waitUntil?<T>(promise: Promise<T>): void;
@@ -244,11 +246,13 @@ export async function createAppContext<T extends VibesSqlite>(
       clockTolerance: 60,
       deviceIdCA: rDeviceIdCA.Ok(),
     }),
-    storage: ensureStorage(createSQLPeer(params.storageSystems.sql)),
-    //   envVals.DB_FLAVOUR as DBFlavour, params.db, tables.assets, [
-    //   param.storageSystem.sql,
-    //   param.storageSystem.s3
-    // ]),
+    storage: params.storageSystems.s3
+      ? ensureStorage(
+          { peerTimeout: params.storageSystems.peerTimeout },
+          createSQLPeer(params.storageSystems.sql),
+          createS3Peer({ s3: params.storageSystems.s3 })
+        )
+      : ensureStorage({ peerTimeout: params.storageSystems.peerTimeout }, createSQLPeer(params.storageSystems.sql)),
 
     llmRequest: defaultLLMRequest(params.llmRequest, {
       url: envVals.LLM_BACKEND_URL,

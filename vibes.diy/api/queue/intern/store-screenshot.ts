@@ -4,7 +4,8 @@ import { eq } from "drizzle-orm/sql/expressions";
 import { createSQLPeer } from "@vibes.diy/api-sql";
 import { isMetaScreenShot, MetaItem, parseArrayWarning } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
-import { ensureStorage } from "@vibes.diy/api-pkg";
+import { ensureStorage, StoragePeer } from "@vibes.diy/api-pkg";
+import { createS3Peer } from "@vibes.diy/api-svc";
 import { QueueCtx } from "../queue-ctx.js";
 // import { ensureStorage } from "@vibes.diy/api-svc/intern/ensure-storage.ts";
 // import { DBFlavour } from "@vibes.diy/api-svc/sql/tables.ts";
@@ -46,8 +47,14 @@ export async function storeScreenshot(
   // 2. Calculate CID for the screenshot
   // const cidResult = await calcCid({ sthis }, screenshotData);
 
-  // 3. Store screenshot using ensureStorage
-  const [storageResult] = await ensureStorage(createSQLPeer(qctx.storageSystems.sql)).ensure(uint8array2stream(screenshotData));
+  // 3. Store screenshot using ensureStorage. SQL peer rejects writes
+  // exceeding the 4 KB inline cap; S3 peer takes over for typical
+  // screenshot sizes (50-200 KB JPEGs).
+  const peers: StoragePeer[] = [createSQLPeer(qctx.storageSystems.sql)];
+  if (qctx.storageSystems.s3) {
+    peers.push(createS3Peer({ s3: qctx.storageSystems.s3 }));
+  }
+  const [storageResult] = await ensureStorage(...peers).ensure(uint8array2stream(screenshotData));
   if (!storageResult || storageResult.isErr()) {
     return Result.Err(`Failed to store screenshot: ${storageResult?.Err()}`);
   }

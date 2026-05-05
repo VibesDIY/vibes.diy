@@ -1,0 +1,373 @@
+diff --git a/cjs/utils/tee-writer.cjs b/cjs/utils/tee-writer.cjs
+index bce6f7bd8f791056e01c6e2cea99b85ffc593ce4..0b7a3ede411f8bdf478cad7311e2cc6c9d5051a9 100644
+--- a/cjs/utils/tee-writer.cjs
++++ b/cjs/utils/tee-writer.cjs
+@@ -2,39 +2,92 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.teeWriter = teeWriter;
+ const result_js_1 = require("../result.cjs");
+-async function teeWriter(peers, inStream) {
+-    let activeStreams = await Promise.allSettled(peers.map((p) => (0, result_js_1.exception2Result)(() => p.begin()))).then((r) => r.flatMap((r) => (r.status === "fulfilled" && r.value.isOk() ? [r.value.Ok()] : [])));
++function withTimeout(promise, ms) {
++    if (ms == null)
++        return promise;
++    return new Promise((resolve, reject) => {
++        const timer = setTimeout(() => reject(new Error(`peer timeout after ${ms}ms`)), ms);
++        promise.then((v) => {
++            clearTimeout(timer);
++            resolve(v);
++        }, (e) => {
++            clearTimeout(timer);
++            reject(e instanceof Error ? e : new Error(String(e)));
++        });
++    });
++}
++function settledToError(r) {
++    if (r.status === "rejected") {
++        return r.reason instanceof Error ? r.reason : new Error(String(r.reason));
++    }
++    if (r.value.isErr()) {
++        return r.value.Err();
++    }
++    return null;
++}
++async function teeWriter(peers, inStream, options) {
++    const timeout = options?.peerTimeout;
++    const beginResults = await Promise.allSettled(peers.map((p) => (0, result_js_1.exception2Result)(() => withTimeout(p.begin(), timeout))));
++    const peerErrorByIndex = new Map();
++    let activeStreams = [];
++    let activeIndices = [];
++    beginResults.forEach((r, i) => {
++        if (r.status === "fulfilled" && r.value.isOk()) {
++            activeStreams.push(r.value.Ok());
++            activeIndices.push(i);
++            return;
++        }
++        const err = r.status === "rejected" ? (r.reason instanceof Error ? r.reason : new Error(String(r.reason))) : r.value.Err();
++        peerErrorByIndex.set(i, err);
++    });
+     const reader = inStream.getReader();
+     while (activeStreams.length > 0) {
+         const rRead = await (0, result_js_1.exception2Result)(() => reader.read());
+         if (rRead.isErr()) {
+-            await Promise.allSettled(activeStreams.map((stream) => stream.cancel()));
++            await Promise.allSettled(activeStreams.map((stream) => (0, result_js_1.exception2Result)(() => withTimeout(stream.cancel(), timeout))));
+             return result_js_1.Result.Err(rRead.Err());
+         }
+         const { value, done } = rRead.Ok();
+         if (done)
+             break;
+-        const writeResults = await Promise.allSettled(activeStreams.map((stream) => (0, result_js_1.exception2Result)(() => stream.write(value))));
++        const writeResults = await Promise.allSettled(activeStreams.map((stream) => (0, result_js_1.exception2Result)(() => withTimeout(stream.write(value), timeout))));
++        writeResults.forEach((r, j) => {
++            const err = settledToError(r);
++            if (err)
++                peerErrorByIndex.set(activeIndices[j], err);
++        });
+         await Promise.allSettled(writeResults.flatMap((r, i) => {
+             if (r.status === "rejected" || r.value.isErr())
+-                return (0, result_js_1.exception2Result)(() => activeStreams[i].cancel());
++                return (0, result_js_1.exception2Result)(() => withTimeout(activeStreams[i].cancel(), timeout));
+             return [];
+         }));
+-        activeStreams = activeStreams.filter((_, i) => writeResults[i].status === "fulfilled" && writeResults[i].value.isOk());
++        const survives = writeResults.map((r) => r.status === "fulfilled" && r.value.isOk());
++        activeStreams = activeStreams.filter((_, i) => survives[i]);
++        activeIndices = activeIndices.filter((_, i) => survives[i]);
+     }
+     if (activeStreams.length === 0) {
+         await (0, result_js_1.exception2Result)(() => reader.cancel());
+-        return result_js_1.Result.Err(new Error("all peers failed"));
++        const sorted = [...peerErrorByIndex.entries()].sort(([a], [b]) => a - b);
++        const details = sorted.map(([i, e]) => `peer ${i}: ${e.message}`);
++        const causes = sorted.map(([, e]) => e);
++        const msg = details.length > 0 ? `all peers failed: [${details.join("; ")}]` : "all peers failed";
++        return result_js_1.Result.Err(causes.length > 0 ? new Error(msg, { cause: causes }) : new Error(msg));
+     }
++    const closeErrors = [];
+     while (activeStreams.length >= 1) {
+         const [winner, ...losers] = activeStreams;
+-        const rClose = await (0, result_js_1.exception2Result)(() => winner.close());
++        const rClose = await (0, result_js_1.exception2Result)(() => withTimeout(winner.close(), timeout));
+         if (rClose.isOk()) {
+-            await Promise.allSettled(losers.map((stream) => (0, result_js_1.exception2Result)(() => stream.cancel())));
++            await Promise.allSettled(losers.map((stream) => (0, result_js_1.exception2Result)(() => withTimeout(stream.cancel(), timeout))));
+             return result_js_1.Result.Ok({ peer: winner });
+         }
++        closeErrors.push(rClose.Err());
++        await (0, result_js_1.exception2Result)(() => withTimeout(winner.cancel(), timeout));
+         activeStreams = losers;
+     }
+-    return result_js_1.Result.Err("all peers failed to close successfully");
++    const closeMsg = closeErrors.length > 0
++        ? `all peers failed to close successfully: [${closeErrors.map((e) => e.message).join("; ")}]`
++        : "all peers failed to close successfully";
++    return result_js_1.Result.Err(closeErrors.length > 0 ? new Error(closeMsg, { cause: closeErrors }) : new Error(closeMsg));
+ }
+ //# sourceMappingURL=tee-writer.js.map
+\ No newline at end of file
+diff --git a/cjs/utils/tee-writer.d.ts b/cjs/utils/tee-writer.d.ts
+index b8b3d7097e29a7f7f01b9023d74aadb1eeaac3bd..d256f528d9ff279dce788aed16a40373e18d396b 100644
+--- a/cjs/utils/tee-writer.d.ts
++++ b/cjs/utils/tee-writer.d.ts
+@@ -10,5 +10,8 @@ export interface Peer<C = Uint8Array> {
+ export interface TeeWriterOk {
+     readonly peer: PeerStream;
+ }
+-export declare function teeWriter(peers: Peer[], inStream: ReadableStream<Uint8Array>): Promise<Result<TeeWriterOk>>;
++export interface TeeWriterOptions {
++    readonly peerTimeout?: number;
++}
++export declare function teeWriter(peers: Peer[], inStream: ReadableStream<Uint8Array>, options?: TeeWriterOptions): Promise<Result<TeeWriterOk>>;
+ //# sourceMappingURL=tee-writer.d.ts.map
+\ No newline at end of file
+diff --git a/esm/utils/tee-writer.d.ts b/esm/utils/tee-writer.d.ts
+index b8b3d7097e29a7f7f01b9023d74aadb1eeaac3bd..d256f528d9ff279dce788aed16a40373e18d396b 100644
+--- a/esm/utils/tee-writer.d.ts
++++ b/esm/utils/tee-writer.d.ts
+@@ -10,5 +10,8 @@ export interface Peer<C = Uint8Array> {
+ export interface TeeWriterOk {
+     readonly peer: PeerStream;
+ }
+-export declare function teeWriter(peers: Peer[], inStream: ReadableStream<Uint8Array>): Promise<Result<TeeWriterOk>>;
++export interface TeeWriterOptions {
++    readonly peerTimeout?: number;
++}
++export declare function teeWriter(peers: Peer[], inStream: ReadableStream<Uint8Array>, options?: TeeWriterOptions): Promise<Result<TeeWriterOk>>;
+ //# sourceMappingURL=tee-writer.d.ts.map
+\ No newline at end of file
+diff --git a/esm/utils/tee-writer.js b/esm/utils/tee-writer.js
+index c32abba23451e0847de80cb68fe92c18693a156c..b84a269b87d9bfd1700ce7199a0c3ab5b207baf3 100644
+--- a/esm/utils/tee-writer.js
++++ b/esm/utils/tee-writer.js
+@@ -1,37 +1,90 @@
+ import { exception2Result, Result } from "../result.js";
+-export async function teeWriter(peers, inStream) {
+-    let activeStreams = await Promise.allSettled(peers.map((p) => exception2Result(() => p.begin()))).then((r) => r.flatMap((r) => (r.status === "fulfilled" && r.value.isOk() ? [r.value.Ok()] : [])));
++function withTimeout(promise, ms) {
++    if (ms == null)
++        return promise;
++    return new Promise((resolve, reject) => {
++        const timer = setTimeout(() => reject(new Error(`peer timeout after ${ms}ms`)), ms);
++        promise.then((v) => {
++            clearTimeout(timer);
++            resolve(v);
++        }, (e) => {
++            clearTimeout(timer);
++            reject(e instanceof Error ? e : new Error(String(e)));
++        });
++    });
++}
++function settledToError(r) {
++    if (r.status === "rejected") {
++        return r.reason instanceof Error ? r.reason : new Error(String(r.reason));
++    }
++    if (r.value.isErr()) {
++        return r.value.Err();
++    }
++    return null;
++}
++export async function teeWriter(peers, inStream, options) {
++    const timeout = options?.peerTimeout;
++    const beginResults = await Promise.allSettled(peers.map((p) => exception2Result(() => withTimeout(p.begin(), timeout))));
++    const peerErrorByIndex = new Map();
++    let activeStreams = [];
++    let activeIndices = [];
++    beginResults.forEach((r, i) => {
++        if (r.status === "fulfilled" && r.value.isOk()) {
++            activeStreams.push(r.value.Ok());
++            activeIndices.push(i);
++            return;
++        }
++        const err = r.status === "rejected" ? (r.reason instanceof Error ? r.reason : new Error(String(r.reason))) : r.value.Err();
++        peerErrorByIndex.set(i, err);
++    });
+     const reader = inStream.getReader();
+     while (activeStreams.length > 0) {
+         const rRead = await exception2Result(() => reader.read());
+         if (rRead.isErr()) {
+-            await Promise.allSettled(activeStreams.map((stream) => stream.cancel()));
++            await Promise.allSettled(activeStreams.map((stream) => exception2Result(() => withTimeout(stream.cancel(), timeout))));
+             return Result.Err(rRead.Err());
+         }
+         const { value, done } = rRead.Ok();
+         if (done)
+             break;
+-        const writeResults = await Promise.allSettled(activeStreams.map((stream) => exception2Result(() => stream.write(value))));
++        const writeResults = await Promise.allSettled(activeStreams.map((stream) => exception2Result(() => withTimeout(stream.write(value), timeout))));
++        writeResults.forEach((r, j) => {
++            const err = settledToError(r);
++            if (err)
++                peerErrorByIndex.set(activeIndices[j], err);
++        });
+         await Promise.allSettled(writeResults.flatMap((r, i) => {
+             if (r.status === "rejected" || r.value.isErr())
+-                return exception2Result(() => activeStreams[i].cancel());
++                return exception2Result(() => withTimeout(activeStreams[i].cancel(), timeout));
+             return [];
+         }));
+-        activeStreams = activeStreams.filter((_, i) => writeResults[i].status === "fulfilled" && writeResults[i].value.isOk());
++        const survives = writeResults.map((r) => r.status === "fulfilled" && r.value.isOk());
++        activeStreams = activeStreams.filter((_, i) => survives[i]);
++        activeIndices = activeIndices.filter((_, i) => survives[i]);
+     }
+     if (activeStreams.length === 0) {
+         await exception2Result(() => reader.cancel());
+-        return Result.Err(new Error("all peers failed"));
++        const sorted = [...peerErrorByIndex.entries()].sort(([a], [b]) => a - b);
++        const details = sorted.map(([i, e]) => `peer ${i}: ${e.message}`);
++        const causes = sorted.map(([, e]) => e);
++        const msg = details.length > 0 ? `all peers failed: [${details.join("; ")}]` : "all peers failed";
++        return Result.Err(causes.length > 0 ? new Error(msg, { cause: causes }) : new Error(msg));
+     }
++    const closeErrors = [];
+     while (activeStreams.length >= 1) {
+         const [winner, ...losers] = activeStreams;
+-        const rClose = await exception2Result(() => winner.close());
++        const rClose = await exception2Result(() => withTimeout(winner.close(), timeout));
+         if (rClose.isOk()) {
+-            await Promise.allSettled(losers.map((stream) => exception2Result(() => stream.cancel())));
++            await Promise.allSettled(losers.map((stream) => exception2Result(() => withTimeout(stream.cancel(), timeout))));
+             return Result.Ok({ peer: winner });
+         }
++        closeErrors.push(rClose.Err());
++        await exception2Result(() => withTimeout(winner.cancel(), timeout));
+         activeStreams = losers;
+     }
+-    return Result.Err("all peers failed to close successfully");
++    const closeMsg = closeErrors.length > 0
++        ? `all peers failed to close successfully: [${closeErrors.map((e) => e.message).join("; ")}]`
++        : "all peers failed to close successfully";
++    return Result.Err(closeErrors.length > 0 ? new Error(closeMsg, { cause: closeErrors }) : new Error(closeMsg));
+ }
+ //# sourceMappingURL=tee-writer.js.map
+\ No newline at end of file
+diff --git a/src/utils/tee-writer.ts b/src/utils/tee-writer.ts
+index 2269e8c1800da96546f0f04f7cb14a03a0207fda..124172fcaab21d3e13be51d5e2e78382525b9b6f 100644
+--- a/src/utils/tee-writer.ts
++++ b/src/utils/tee-writer.ts
+@@ -15,43 +15,112 @@ export interface TeeWriterOk {
+   // readonly commit: () => Promise<void>;
+ }
+ 
+-export async function teeWriter(peers: Peer[], inStream: ReadableStream<Uint8Array>): Promise<Result<TeeWriterOk>> {
+-  let activeStreams = await Promise.allSettled(peers.map((p) => exception2Result(() => p.begin()))).then((r) =>
+-    r.flatMap((r) => (r.status === "fulfilled" && r.value.isOk() ? [r.value.Ok()] : [])),
+-  );
++export interface TeeWriterOptions {
++  readonly peerTimeout?: number; // ms — if a peer op exceeds this, treat as failure
++}
++
++function withTimeout<T>(promise: Promise<T>, ms?: number): Promise<T> {
++  if (ms == null) return promise;
++  return new Promise<T>((resolve, reject) => {
++    const timer = setTimeout((): void => reject(new Error(`peer timeout after ${ms}ms`)), ms);
++    promise.then(
++      (v) => {
++        clearTimeout(timer);
++        resolve(v);
++      },
++      (e: unknown) => {
++        clearTimeout(timer);
++        reject(e instanceof Error ? e : new Error(String(e)));
++      },
++    );
++  });
++}
++
++function settledToError(r: PromiseSettledResult<Result<void>>): Error | null {
++  if (r.status === "rejected") {
++    return r.reason instanceof Error ? r.reason : new Error(String(r.reason));
++  }
++  if (r.value.isErr()) {
++    return r.value.Err();
++  }
++  return null;
++}
++
++export async function teeWriter(
++  peers: Peer[],
++  inStream: ReadableStream<Uint8Array>,
++  options?: TeeWriterOptions,
++): Promise<Result<TeeWriterOk>> {
++  const timeout = options?.peerTimeout;
++
++  const beginResults = await Promise.allSettled(peers.map((p) => exception2Result(() => withTimeout(p.begin(), timeout))));
++  const peerErrorByIndex = new Map<number, Error>();
++  let activeStreams: PeerStream[] = [];
++  let activeIndices: number[] = [];
++  beginResults.forEach((r, i) => {
++    if (r.status === "fulfilled" && r.value.isOk()) {
++      activeStreams.push(r.value.Ok());
++      activeIndices.push(i);
++      return;
++    }
++    const err = r.status === "rejected" ? (r.reason instanceof Error ? r.reason : new Error(String(r.reason))) : r.value.Err();
++    peerErrorByIndex.set(i, err);
++  });
++
+   const reader = inStream.getReader();
+   while (activeStreams.length > 0) {
+     const rRead = await exception2Result(() => reader.read());
+     if (rRead.isErr()) {
+-      await Promise.allSettled(activeStreams.map((stream) => stream.cancel()));
++      await Promise.allSettled(activeStreams.map((stream) => exception2Result(() => withTimeout(stream.cancel(), timeout))));
+       return Result.Err(rRead.Err());
+     }
+     const { value, done } = rRead.Ok();
+     if (done) break;
+-    const writeResults = await Promise.allSettled(activeStreams.map((stream) => exception2Result(() => stream.write(value))));
++    const writeResults = await Promise.allSettled(
++      activeStreams.map((stream) => exception2Result(() => withTimeout(stream.write(value), timeout))),
++    );
++    writeResults.forEach((r, j) => {
++      const err = settledToError(r);
++      if (err) peerErrorByIndex.set(activeIndices[j], err);
++    });
+     await Promise.allSettled(
+       writeResults.flatMap((r, i) => {
+-        if (r.status === "rejected" || r.value.isErr()) return exception2Result(() => activeStreams[i].cancel());
++        if (r.status === "rejected" || r.value.isErr())
++          return exception2Result(() => withTimeout(activeStreams[i].cancel(), timeout));
+         return [];
+       }),
+     );
+-    activeStreams = activeStreams.filter((_, i) => writeResults[i].status === "fulfilled" && writeResults[i].value.isOk());
++    const survives = writeResults.map((r) => r.status === "fulfilled" && r.value.isOk());
++    activeStreams = activeStreams.filter((_, i) => survives[i]);
++    activeIndices = activeIndices.filter((_, i) => survives[i]);
+   }
+ 
+   if (activeStreams.length === 0) {
+     // abort the input stream to stop any further processing
+     await exception2Result(() => reader.cancel());
+-    return Result.Err(new Error("all peers failed"));
++    const sorted = [...peerErrorByIndex.entries()].sort(([a], [b]) => a - b);
++    const details = sorted.map(([i, e]) => `peer ${i}: ${e.message}`);
++    const causes = sorted.map(([, e]) => e);
++    const msg = details.length > 0 ? `all peers failed: [${details.join("; ")}]` : "all peers failed";
++    return Result.Err(causes.length > 0 ? new Error(msg, { cause: causes }) : new Error(msg));
+   }
+ 
++  const closeErrors: Error[] = [];
+   while (activeStreams.length >= 1) {
+     const [winner, ...losers] = activeStreams;
+-    const rClose = await exception2Result(() => winner.close());
++    const rClose = await exception2Result(() => withTimeout(winner.close(), timeout));
+     if (rClose.isOk()) {
+-      await Promise.allSettled(losers.map((stream) => exception2Result(() => stream.cancel())));
++      await Promise.allSettled(losers.map((stream) => exception2Result(() => withTimeout(stream.cancel(), timeout))));
+       return Result.Ok({ peer: winner });
+     }
++    closeErrors.push(rClose.Err());
++    // close failed — cancel this peer before moving on
++    await exception2Result(() => withTimeout(winner.cancel(), timeout));
+     activeStreams = losers;
+   }
+-  return Result.Err("all peers failed to close successfully");
++  const closeMsg =
++    closeErrors.length > 0
++      ? `all peers failed to close successfully: [${closeErrors.map((e) => e.message).join("; ")}]`
++      : "all peers failed to close successfully";
++  return Result.Err(closeErrors.length > 0 ? new Error(closeMsg, { cause: closeErrors }) : new Error(closeMsg));
+ }

@@ -94,6 +94,7 @@ export interface PromptState {
   // falls back to "User edited code" for old auto-saves. Acceptable: the
   // alternative would require a wire-format change.
   agentSavedBlockIds: ReadonlySet<string>;
+  icon?: { cid: string; mime: string };
 }
 
 export interface PromptBlock {
@@ -121,6 +122,16 @@ function isSetTitle(msg: unknown): msg is SetTitle {
   return !(SetTitle(msg) instanceof type.errors);
 }
 
+const SetIcon = type({
+  type: "'setIcon'",
+  icon: type({ cid: "string", mime: "string" }),
+});
+type SetIcon = typeof SetIcon.infer;
+
+function isSetIcon(msg: unknown): msg is SetIcon {
+  return !(SetIcon(msg) instanceof type.errors);
+}
+
 const SetHydratedSource = type({
   type: "'setHydratedSource'",
   fsId: "string",
@@ -142,7 +153,7 @@ function isMarkAgentSaved(msg: unknown): msg is MarkAgentSaved {
   return !(MarkAgentSaved(msg) instanceof type.errors);
 }
 
-type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetHydratedSource | MarkAgentSaved;
+type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetIcon | SetHydratedSource | MarkAgentSaved;
 
 function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
@@ -152,6 +163,9 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 
     case isSetTitle(block):
       return { ...state, title: block.title };
+
+    case isSetIcon(block):
+      return { ...state, icon: block.icon };
 
     case isSetHydratedSource(block):
       return { ...state, hydratedSource: { fsId: block.fsId, code: block.code } };
@@ -336,8 +350,9 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       dispatch({ type: "initChat", chat: rChat.Ok() });
       vibeDiyApi.ensureAppSettings({ userSlug, appSlug }).then((rS) => {
         if (rS.isOk()) {
-          const t = rS.Ok().settings.entry.settings.title;
-          if (t) dispatch({ type: "setTitle", title: t });
+          const s = rS.Ok().settings.entry.settings;
+          if (s.title) dispatch({ type: "setTitle", title: s.title });
+          if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
         }
       });
       void processStream(rChat.Ok().sectionStream, (msg) => {
@@ -623,6 +638,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             promptProcessing={promptState.running}
             codeReady={promptState.hasCode}
             title={promptState.title}
+            icon={promptState.icon}
           />
         }
         headerRight={

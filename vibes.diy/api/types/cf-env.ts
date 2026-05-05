@@ -27,6 +27,10 @@ export interface CFEnv {
   VIBES_DIY_FROM_EMAIL: string;
   DISCORD_WEBHOOK_URL?: string;
 
+  LLM_BACKEND_URL: string;
+  LLM_BACKEND_API_KEY: string;
+  PRODIA_TOKEN?: string;
+
   CHAT_SESSIONS: DurableObjectNamespace;
   DOC_NOTIFY: DurableObjectNamespace;
   VIBES_SERVICE: Queue;

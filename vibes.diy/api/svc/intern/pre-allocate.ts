@@ -9,6 +9,7 @@ import { loadModels } from "../public/list-models.js";
 export interface PreAllocateResult {
   skills: string[];
   pairs: { title: string; slug: string }[];
+  iconDescription: string;
 }
 
 const PRE_ALLOC_TIMEOUT_MS = 8000;
@@ -79,5 +80,6 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
   return Result.Ok({
     skills: validSkills,
     pairs: validated.pairs.slice(0, 3),
+    iconDescription: validated.iconDescription,
   });
 }

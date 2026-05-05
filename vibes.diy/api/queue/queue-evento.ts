@@ -1,6 +1,7 @@
 import { Evento, EventoResult, EventoType, Lazy, Result } from "@adviser/cement";
 import { evtNewFsIdEvento } from "./handlers/evt-new-fs-id.js";
 import { evtAppSettingEvento } from "./handlers/evt-app-setting.js";
+import { evtIconGenEvento } from "./handlers/evt-icon-gen.js";
 import { evtInviteGrantEvento } from "./handlers/evt-invite-grant.js";
 import { evtRequestGrantEvento } from "./handlers/evt-request-grant.js";
 import { evtCommentPostedEvento } from "./handlers/evt-comment-posted.js";
@@ -11,6 +12,7 @@ export const vibesQueueEvento = Lazy(() => {
   evento.push(
     evtNewFsIdEvento,
     evtAppSettingEvento,
+    evtIconGenEvento,
     evtInviteGrantEvento,
     evtRequestGrantEvento,
     evtCommentPostedEvento,
