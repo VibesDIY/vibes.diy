@@ -5,7 +5,8 @@ export type FenceParseErrorKind =
   | "orphan-end"
   | "unterminated-search"
   | "unterminated-replace"
-  | "content-before-search";
+  | "content-before-search"
+  | "divider-as-end";
 
 export interface FenceParseError {
   readonly kind: FenceParseErrorKind;
@@ -51,6 +52,22 @@ export function parseFenceBody(lines: readonly string[]): ParsedFenceBody {
     if (DIVIDER.test(trimmed)) {
       if (mode === "in-search") {
         mode = "in-replace";
+        continue;
+      }
+      if (mode === "in-replace") {
+        // Lenient recovery: the model closed the REPLACE with `=======`
+        // instead of `>>>>>>> REPLACE`. Treat the divider as the implicit
+        // end of replace, emit the edit, and surface a soft warning so
+        // consumers can count how often this fallback fires.
+        edits.push({
+          op: "replace",
+          search: searchLines.join("\n"),
+          replace: replaceLines.join("\n"),
+        });
+        searchLines = [];
+        replaceLines = [];
+        mode = "between";
+        errors.push({ kind: "divider-as-end", lineNr });
         continue;
       }
       errors.push({ kind: "orphan-divider", lineNr });
