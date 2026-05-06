@@ -26,6 +26,7 @@ export const sqlUserSlugBinding = pgTable(
     primaryKey({ columns: [table.userSlug, table.userId] }),
     // uniqueIndex("UserSlug_tenant").on(table.tenant),
     uniqueIndex("UserSlug_userSlug").on(table.userSlug),
+    index("UserSlug_userId_userSlug").on(table.userId, table.userSlug),
   ]
 );
 
@@ -36,10 +37,14 @@ export const sqlAppSlugBinding = pgTable(
     appSlug: text().notNull(), // human friendly app id
     ledger: text().notNull(), // cryptograhic Id
     created: text().notNull(),
+    // Bumped on every prompt-chat-section request (drives recent-vibes ordering).
+    // Existing-data deploys must run migrations/0001_appslugbindings_updated.pg.sql
+    // before pushing this schema, otherwise the SET NOT NULL fails on legacy rows.
+    updated: text().notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.appSlug, table.userSlug] }),
-    // uniqueIndex("AppSlug_ledger_idx").on(table.ledger)
+    index("AppSlug_userSlug_updated_appSlug").on(table.userSlug, table.updated, table.appSlug),
   ]
 );
 

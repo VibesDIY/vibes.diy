@@ -94,6 +94,7 @@ import {
   updateRecoveryCounter,
   type RecoveryCounter,
 } from "../intern/recovery.js";
+import { bumpAppRecency } from "../intern/bump-app-recency.js";
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
 // files (system-prompt.md, llms/*.md) from the worker's `/vibe-pkg/`
@@ -1904,6 +1905,16 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
       if (!prompSectionAction) {
         return Result.Err(`Unsupported prompt chat section mode: ${orig.mode}`);
+      }
+
+      // Bump recency BEFORE acknowledging the request so the client's
+      // notifyRecentVibesChanged() (which fires when prompt() resolves on
+      // res-prompt-chat-section below) reads a freshly-bumped row. Without
+      // this, the client refresh would race the LLM stream's eventual bump
+      // and surface stale ordering until the next page load.
+      const rBump = await bumpAppRecency(vctx, { userSlug: resChat.userSlug, appSlug: resChat.appSlug });
+      if (rBump.isErr()) {
+        vctx.logger.Warn().Err(rBump).Msg("bumpAppRecency failed");
       }
 
       const promptId = vctx.sthis.nextId(96 / 8).str;

@@ -20,6 +20,9 @@ import {
   ReqListUserSlugAppSlug,
   ResListUserSlugAppSlug,
   isResListUserSlugAppSlug,
+  ReqListRecentVibes,
+  ResListRecentVibes,
+  isResListRecentVibes,
   ReqGetChatDetails,
   ResGetChatDetails,
   isResGetChatDetails,
@@ -451,6 +454,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-list-user-slug-app-slug" },
       {
         resMatch: isResListUserSlugAppSlug,
+      }
+    );
+  }
+
+  listRecentVibes(req: Req<ReqListRecentVibes>): Promise<Result<ResListRecentVibes, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-list-recent-vibes" },
+      {
+        resMatch: isResListRecentVibes,
       }
     );
   }

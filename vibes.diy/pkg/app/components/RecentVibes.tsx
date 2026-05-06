@@ -1,27 +1,10 @@
 import { useAuth } from "@clerk/react";
-import type { ResListUserSlugAppSlugItem } from "@vibes.diy/api-types";
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { useRecentVibesData } from "../contexts/RecentVibesContext.js";
-import { useVibesDiy } from "../vibes-diy-provider.js";
+import { useRecentVibes } from "../hooks/useRecentVibes.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";
 
-function VibeIconThumb({ userSlug, appSlug }: { userSlug: string; appSlug: string }) {
-  const { vibeDiyApi } = useVibesDiy();
-  const [icon, setIcon] = useState<{ cid: string; mime: string } | undefined>(undefined);
-  useEffect(() => {
-    let cancelled = false;
-    vibeDiyApi.ensureAppSettings({ userSlug, appSlug }).then((rS) => {
-      if (cancelled) return;
-      if (rS.isOk()) {
-        const i = rS.Ok().settings.entry.settings.icon;
-        if (i) setIcon(i);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [userSlug, appSlug, vibeDiyApi]);
+function VibeIconThumb({ icon }: { icon?: { cid: string; mime: string } }) {
   if (!icon) return <span className="h-6 w-6 shrink-0" aria-hidden="true" />;
   return (
     <img
@@ -39,28 +22,9 @@ interface RecentVibesProps {
   onNavigate?: () => void;
 }
 
-interface RecentVibeItem {
-  userSlug: string;
-  appSlug: string;
-}
-
-export function toRecentVibes(items: ResListUserSlugAppSlugItem[], limit: number): RecentVibeItem[] {
-  if (limit <= 0) return [];
-  const out: RecentVibeItem[] = [];
-  for (const item of items) {
-    for (const appSlug of item.appSlugs) {
-      out.push({ userSlug: item.userSlug, appSlug });
-      if (out.length >= limit) return out;
-    }
-  }
-  return out;
-}
-
 export function RecentVibes({ onNavigate }: RecentVibesProps) {
   const { isSignedIn } = useAuth();
-  const { items: vibeItems, loading, error, refresh } = useRecentVibesData();
-
-  const items = useMemo(() => toRecentVibes(vibeItems, 20), [vibeItems]);
+  const { items, loading, error, refresh } = useRecentVibes(20);
 
   if (!isSignedIn) return null;
 
@@ -94,9 +58,9 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
                   onClick={onNavigate}
                   className="flex items-center gap-2 pl-2 pr-4 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5 border-b border-black/5 dark:border-white/5"
                 >
-                  <VibeIconThumb userSlug={item.userSlug} appSlug={item.appSlug} />
+                  <VibeIconThumb icon={item.icon} />
                   <span className="flex flex-col min-w-0">
-                    <span className="truncate">{item.appSlug}</span>
+                    <span className="truncate">{item.title || item.appSlug}</span>
                     <span className="text-xs truncate opacity-50">{item.userSlug}</span>
                   </span>
                 </Link>
