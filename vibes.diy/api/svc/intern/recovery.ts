@@ -39,11 +39,18 @@ export interface RecoveryRequestInput {
 // OpenRouter relays) reject back-to-back system messages with 400. If the
 // original request has no system message, a new one is prepended.
 //
+// The captured assistant partial (when present) is appended as a USER
+// message wrapped in "PARTIAL ASSISTANT OUTPUT" framing rather than as an
+// assistant prefill. Bedrock-routed Claude rejects conversations that end
+// in an assistant turn ("This model does not support assistant message
+// prefill. The conversation must end with a user message."), and this
+// framing works equally well on providers that DO support prefill.
+//
 // Shape:
 //   - original = [system, ...rest], no partial:    [system+recovery, ...rest]
-//   - original = [system, ...rest], with partial:  [system+recovery, ...rest, assistant-partial]
+//   - original = [system, ...rest], with partial:  [system+recovery, ...rest, user-partial]
 //   - original = [user, ...],       no partial:    [system-new, user, ...]
-//   - original = [user, ...],       with partial:  [system-new, user, ..., assistant-partial]
+//   - original = [user, ...],       with partial:  [system-new, user, ..., user-partial]
 //
 // The merged system message is `${original}\n\n${addendum}\n\n${CURRENT FILES}` —
 // no failure framing, no failed-search bytes, no SEARCH/REPLACE syntax.
@@ -64,9 +71,26 @@ export function buildRecoveryRequest({
   const recoverySuffix = `${recoveryAddendum}\n\n${filesBlock}`;
   const messages = mergeRecoveryIntoSystem(originalRequest.messages, recoverySuffix);
   if (assistantPartial !== undefined && assistantPartial.length > 0) {
-    messages.push({ role: "assistant", content: [{ type: "text", text: assistantPartial }] });
+    messages.push({
+      role: "user",
+      content: [{ type: "text", text: renderPartialResume(assistantPartial) }],
+    });
   }
   return Result.Ok({ ...originalRequest, messages });
+}
+
+// Wrap the captured partial in a user-framed resume message. The prose
+// makes it explicit that the bytes are the assistant's own prior output
+// (so the model picks up its narration where it stopped) without ending
+// the conversation on an assistant turn.
+function renderPartialResume(assistantPartial: string): string {
+  return [
+    "PARTIAL ASSISTANT OUTPUT (your own output so far this turn, truncated to the last clean code block):",
+    "",
+    assistantPartial,
+    "",
+    "Continue from where the partial output above stopped. Do not repeat any code block already shown above.",
+  ].join("\n");
 }
 
 function mergeRecoveryIntoSystem(messages: readonly ChatMessage[], recoverySuffix: string): ChatMessage[] {
