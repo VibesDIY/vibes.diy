@@ -22,6 +22,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { ensureAppSlug, ensureUserSlug, getDefaultUserSlug, persistDefaultUserSlug } from "../intern/ensure-slug-binding.js";
+import { bumpAppRecency } from "../intern/bump-app-recency.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
@@ -214,6 +215,11 @@ export async function forkApp(
     })
   );
   if (rChat.isErr()) return Result.Err(`Failed to create chatContext: ${rChat.Err().message}`);
+
+  const rBump = await bumpAppRecency(vctx, { userSlug: destUserSlug, appSlug: destAppSlug });
+  if (rBump.isErr()) {
+    vctx.logger.Warn().Err(rBump).Msg("bumpAppRecency failed");
+  }
 
   // 7. Clone branches off here: no ChatSection seed (user lands on /vibe/
   //    with the app already deployed), and AppSettings default to

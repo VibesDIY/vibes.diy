@@ -6,6 +6,7 @@ import { openChat } from "./public/open-chat.js";
 import { promptChatSection } from "./public/prompt-chat-section.js";
 // import { getByUserSlugAppSlugItemEvento } from "./public/get-user-slug-app-slug-item.js";
 import { listUserSlugAppSlugEvento } from "./public/list-user-slug-app-slug.js";
+import { listRecentVibesEvento } from "./public/list-recent-vibes.js";
 import { getChatDetailsEvento } from "./public/get-chat-details.js";
 import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
 import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
@@ -56,6 +57,7 @@ export const vibesMsgEvento = Lazy(() => {
     // getByUserSlugAppSlugItemEvento,
     getFPCloudTokenEvento,
     listUserSlugAppSlugEvento,
+    listRecentVibesEvento,
     getChatDetailsEvento,
     getAppByFsIdEvento,
     openChat,

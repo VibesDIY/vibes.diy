@@ -8,7 +8,7 @@ import type { ResGetChatDetails, MetaScreenShot } from "@vibes.diy/api-types";
 import { isMetaScreenShot } from "@vibes.diy/api-types";
 import { toast } from "react-hot-toast";
 import { AppSlugItem } from "../../components/mine/AppSlugItem.js";
-import { useRecentVibesData } from "../../contexts/RecentVibesContext.js";
+import { useRecentVibes } from "../../hooks/useRecentVibes.js";
 
 export function meta() {
   return [{ title: "My Vibes - Vibes DIY" }, { name: "description", content: "Your created vibes in Vibes DIY" }];
@@ -22,7 +22,7 @@ export default function VibesMine(): ReactElement {
     tab: paramTab,
   } = useParams<{ userSlug?: string; appSlug?: string; tab?: string }>();
   const { vibeDiyApi } = useVibesDiy();
-  const { items: vibeItems, loading: isLoading } = useRecentVibesData();
+  const { items: vibeItems, loading: isLoading, nextCursor, loadMore } = useRecentVibes(100);
 
   const [chatDetails, setChatDetails] = useState<ResGetChatDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState<string | null>(null);
@@ -97,24 +97,28 @@ export default function VibesMine(): ReactElement {
   useEffect(() => {
     setAppHeadInfo(new Map());
     for (const item of vibeItems) {
-      for (const appSlug of item.appSlugs) {
-        vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug }).then((res) => {
-          if (res.isErr()) return;
-          const app = res.Ok();
-          setAppHeadInfo((prev) =>
-            new Map(prev).set(`${item.userSlug}/${appSlug}`, {
-              screenshot: app.meta.find(isMetaScreenShot),
-              mode: app.mode,
-            })
-          );
-        });
-      }
+      vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug: item.appSlug }).then((res) => {
+        if (res.isErr()) return;
+        const app = res.Ok();
+        setAppHeadInfo((prev) =>
+          new Map(prev).set(`${item.userSlug}/${item.appSlug}`, {
+            screenshot: app.meta.find(isMetaScreenShot),
+            mode: app.mode,
+          })
+        );
+      });
     }
   }, [vibeItems, vibeDiyApi]);
 
+  // Only show the full-page spinner on the very first load (no items yet).
+  // During loadMore the hook flips `isLoading` true while keeping `items`
+  // populated; we keep rendering the existing list and just dim the
+  // "Load more" button so the page doesn't blank out mid-scroll.
+  const showFirstLoadSpinner = isLoading && vibeItems.length === 0;
+
   return (
     <BrutalistLayout title="My Vibes" subtitle="Your created vibes">
-      {isLoading ? (
+      {showFirstLoadSpinner ? (
         <BrutalistCard size="md">
           <div className="flex justify-center py-8">
             <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
@@ -130,37 +134,36 @@ export default function VibesMine(): ReactElement {
           </div>
         </BrutalistCard>
       ) : (
-        <div className="flex w-full flex-col gap-6">
-          {vibeItems.map((item) => (
-            <BrutalistCard key={item.userSlug} size="md">
-              <h3 className="mb-4 text-lg font-bold">{item.userSlug}</h3>
-              {item.appSlugs.length === 0 ? (
-                <p className="text-sm text-gray-500">No apps yet</p>
-              ) : (
-                <div className="grid gap-3">
-                  {item.appSlugs.map((appSlug) => {
-                    const key = `${item.userSlug}/${appSlug}`;
-                    const isSelected = paramUserSlug === item.userSlug && paramAppSlug === appSlug;
-                    return (
-                      <AppSlugItem
-                        key={appSlug}
-                        userSlug={item.userSlug}
-                        appSlug={appSlug}
-                        isSelected={isSelected}
-                        activeTab={isSelected ? paramTab : undefined}
-                        isLoadingThis={loadingDetails === key}
-                        headInfo={appHeadInfo.get(key)}
-                        chatDetails={isSelected ? (chatDetails ?? undefined) : undefined}
-                        screenshots={screenshots}
-                        onToggleMode={onToggleMode}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </BrutalistCard>
-          ))}
-        </div>
+        <BrutalistCard size="md">
+          <div className="grid gap-3">
+            {vibeItems.map((item) => {
+              const key = `${item.userSlug}/${item.appSlug}`;
+              const isSelected = paramUserSlug === item.userSlug && paramAppSlug === item.appSlug;
+              return (
+                <AppSlugItem
+                  key={key}
+                  userSlug={item.userSlug}
+                  appSlug={item.appSlug}
+                  title={item.title}
+                  isSelected={isSelected}
+                  activeTab={isSelected ? paramTab : undefined}
+                  isLoadingThis={loadingDetails === key}
+                  headInfo={appHeadInfo.get(key)}
+                  chatDetails={isSelected ? (chatDetails ?? undefined) : undefined}
+                  screenshots={screenshots}
+                  onToggleMode={onToggleMode}
+                />
+              );
+            })}
+          </div>
+          {nextCursor && (
+            <div className="mt-4 flex justify-center">
+              <VibesButton variant="blue" onClick={() => void loadMore()} disabled={isLoading}>
+                {isLoading ? "Loading..." : "Load more"}
+              </VibesButton>
+            </div>
+          )}
+        </BrutalistCard>
       )}
     </BrutalistLayout>
   );
