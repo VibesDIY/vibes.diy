@@ -291,6 +291,20 @@ async function getSystemPromptTemplate(pkgBaseUrl: string, fetchFn?: typeof fetc
   return rText.Ok();
 }
 
+export async function getRecoveryAddendum(pkgBaseUrl?: string, fetchFn?: typeof fetch): Promise<string> {
+  const rText = await keyedLoadAsset.get("recovery-addendum").once(async () => {
+    return loadAsset("./recovery-addendum.md", {
+      fallBackUrl: pkgBaseUrl ?? DEFAULT_PKG_BASE_URL,
+      basePath: () => import.meta.url,
+      mock: { fetch: fetchFn },
+    });
+  });
+  if (rText.isErr()) {
+    return Promise.reject(rText.Err());
+  }
+  return rText.Ok();
+}
+
 export async function getCliFooter(): Promise<string> {
   const rText = await keyedLoadAsset.get("cli-footer").once(async () => {
     return loadAsset("./cli-footer.md", {
