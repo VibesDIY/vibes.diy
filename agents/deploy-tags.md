@@ -78,3 +78,29 @@ The same rule applies to npm publishes, package releases, queue drains — anyth
 ## Queue architecture
 
 One shared prod queue consumer for all environments. CLI and prod main workers both produce to `vibes-service-prod`. Dev has its own queue `vibes-service-dev`.
+
+## Confirm before pushing prod tags
+
+Never push a `vibes-diy@p*` (prod) tag without explicit user confirmation in the same exchange. Prod deploys are user-visible and not trivially reversible — even when the change is "obviously safe," wait for the human to say "go." This applies whether you're tagging from main, a PR branch, or a hotfix commit. CLI tags (`vibes-diy@c*`) carry the same weight when prod and cli ship together.
+
+Tag language is also a deploy-tense rule: until CI confirms `completed success`, the work is **deploying**, not deployed. Use present tense (`deploying`, `shipping`) right after `git push origin <tag>`, switch to past tense only after the run reports success. See the "Say notification" section above for the full pattern.
+
+## Pre-deploy checklist (rollback / verify / tail / success-shape)
+
+Before tagging a prod deploy (or recommending one), articulate four things explicitly — don't ship a feature and stop at "PR is open":
+
+1. **Rollback plan** — what's the one-line revert? Is there a faster `wrangler rollback` path if the new version is hard-down? What's the user-visible blast radius during the gap (which features degrade, do retries cover it)?
+2. **Verification plan** — what concrete actions trigger the new code path? What do you check afterward (logs, DB rows, UI)? Include a "fallback path still works" check when the change is a dispatcher/router.
+3. **Log-tailing readiness** — name the exact `wrangler tail` command (worker name + env) before deploy, not after. Confirm `observability.logs` is enabled in `wrangler.toml` for that env.
+4. **Expected success shape** — what log lines land on the happy path? What error strings should you grep for on each known failure mode (auth, rate limit, missing secret, upstream-malformed)? If success is currently silent, add a structured Info log _before_ tagging — "no error" is a weak success signal in a queue worker.
+
+The queue consumer only deploys on `vibes-diy@p*` tags — there is no staging dress rehearsal. Apply this checklist to any change touching `vibes.diy/api/queue/`, the queue-consumer step in `actions/deploy/action.yaml`, any worker without a dev/staging deploy, and to critical-path workers (svc/public, hosting) even when staging exists. When the user asks "are you ready to deploy?" treat it as a request for these four sections, not a yes/no.
+
+## Don't guess Cloudflare account IDs
+
+When `wrangler` returns a multi-account ambiguity error or `Authentication error [code: 10000]`, do **not** retry with a different account ID — even one wrangler itself listed. Stop, report the auth failure, and hand off to the user.
+
+- Never swap `CLOUDFLARE_ACCOUNT_ID` between attempts to make a wrangler command succeed against prod.
+- If `wrangler whoami` shows only one authorized account and the worker isn't there, treat that as "I cannot tail prod from this session" — don't keep guessing.
+- Hand off: ask the user to run the tail locally, or point them at the Cloudflare dashboard live-logs UI for the worker.
+- Same rule applies to other shared-infra IDs (R2 bucket account scoping, Workers AI account routing, etc.) — don't guess to bypass auth.
