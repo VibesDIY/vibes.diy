@@ -63,6 +63,7 @@ import {
   isCodeBegin,
   isCodeEnd,
   isCodeLine,
+  isDeltaLine,
   isToplevelLine,
   LLMRequest,
   ChatMessage,
@@ -78,6 +79,7 @@ import {
   CodeEndMsg,
   BlockBeginMsg,
   type ApplyEditsError,
+  type DeltaStreamMsg,
   type FenceParseError,
 } from "@vibes.diy/call-ai-v2";
 import type { Logger } from "@adviser/cement";
@@ -86,7 +88,8 @@ import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
-import { tryConsumeRecovery } from "../intern/recovery.js";
+import { buildRecoveryRequest, tryConsumeRecovery } from "../intern/recovery.js";
+import { getRecoveryAddendum } from "@vibes.diy/prompts";
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
 // files (system-prompt.md, llms/*.md) from the worker's `/vibe-pkg/`
@@ -776,7 +779,7 @@ async function handlerLlmRequest({
   resChat: ResChat;
   promptId: string;
   blockSeq: number;
-}): Promise<{ res: Response; blockSeq: number }> {
+}): Promise<{ res: Response; blockSeq: number; llmReq: LLMRequest & { headers: LLMHeaders }; abort: AbortController }> {
   await scope
     .evalResult(async () => {
       const r = await appendBlockEvent({
@@ -886,9 +889,10 @@ async function handlerLlmRequest({
   // add system prompt here
 
   // console.log(promptId, "LLM request for promptId:");
+  const abort = new AbortController();
   const res = await scope
     .evalResult<Response>(async () => {
-      const res = await vctx.llmRequest(llmReq);
+      const res = await vctx.llmRequest(llmReq, { signal: abort.signal });
       if (!res.ok) {
         return Result.Err(`LLM request failed with status ${res.status} :${llmReq.model} : ${res.statusText}`);
       }
@@ -899,7 +903,7 @@ async function handlerLlmRequest({
     })
     .do();
 
-  return { res, blockSeq };
+  return { res, blockSeq, llmReq, abort };
 }
 
 async function handleProdiaImageRequest({
@@ -1178,6 +1182,8 @@ async function handleLlmResponse({
   resChat,
   promptId,
   blockSeq,
+  llmReq,
+  abort,
 }: {
   scope: Scope;
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -1187,32 +1193,21 @@ async function handleLlmResponse({
   res: Response;
   promptId: string;
   blockSeq: number;
+  llmReq: LLMRequest & { headers: LLMHeaders };
+  abort: AbortController;
 }): Promise<number> {
   await scope
     .evalResult(async () => {
-      // console.log(promptId, "LLM response received for promptId: with status:", res.status, "statusText:", res.statusText);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const pipeline = res
-        .body!.pipeThrough(createStatsCollector(promptId, 1000))
-        .pipeThrough(createLineStream(promptId))
-        .pipeThrough(createDataStream(promptId))
-        .pipeThrough(createSseStream(promptId))
-        .pipeThrough(createDeltaStream(promptId, () => vctx.sthis.nextId(12).str))
-        .pipeThrough(createSectionsStream(promptId, () => vctx.sthis.nextId(12).str));
-
-      const reader = pipeline.getReader();
-
-      // const collectedMsgs: BlockMsgs[] = [];
+      // Resolve chat connection context once; same collectedMsgs survives
+      // across original + recovery streams.
       let collectedMsgs!: PromptAndBlockMsgs[];
-      let chatCtx!: ChatIdCtx;
       for (const conn of vctx.connections) {
         const tChatCtx = conn.chatIds.get(req.chatId);
         if (tChatCtx) {
-          chatCtx = tChatCtx;
-          const promptIdCtx = chatCtx.promptIds.get(promptId);
+          const promptIdCtx = tChatCtx.promptIds.get(promptId);
           if (!promptIdCtx) {
             collectedMsgs = [];
-            chatCtx.promptIds.set(promptId, {
+            tChatCtx.promptIds.set(promptId, {
               blocks: collectedMsgs,
               promptId,
               type: "vibes.diy.section-event",
@@ -1225,21 +1220,14 @@ async function handleLlmResponse({
           }
         }
       }
-
       if (!collectedMsgs) {
         return Result.Err(`Chat context not found for chatId: ${req.chatId}`);
       }
-      // Per-block streaming resolver (from #1557): runs parseFenceBody +
-      // applyEdits as each block.code.end arrives so we can log apply errors
-      // immediately. Authoritative VibeFile[] for storage is still produced
-      // by the end-of-turn resolveCodeBlocksToFileSystem in handleEndMsg.
-      //
-      // Recovery orchestrator (this PR): consumes the same observeBlock
-      // result and logs structured `recovery-*` events. Server-internal —
-      // no wire-format change. The actual upstream-abort + continuation LLM
-      // call is the primary follow-up; it will read the resolver's vfs
-      // (TODO: expose) and splice ordinary block.code.* events into the
-      // outgoing stream so clients see one continuous turn.
+
+      // Per-turn state that survives across the original stream and any
+      // recovery continuation: streaming resolver vfs, block accumulator,
+      // and the recovery counter. Per-stream state (partial buffer + safe
+      // cut + reader + abort controller) is rebuilt each iteration.
       const seedForResolver = await loadPriorFileSystem(vctx, req.chatId);
       const resolverLogger = ensureLogger(vctx.sthis, "streamingResolver");
       const recoveryLogger = ensureLogger(vctx.sthis, "applyRecovery");
@@ -1251,87 +1239,199 @@ async function handleLlmResponse({
       });
       const blockAcc = createBlockAccumulator();
       let recoveryCounter = { attempts: 0 };
+
+      // Continue-mode recovery: each iteration consumes one upstream stream.
+      // On apply error within budget, the iteration returns a `recover` hint;
+      // we abort the upstream, build a continuation request via
+      // buildRecoveryRequest (using the resolver's vfs + the partial captured
+      // up to the last clean code.end), dispatch it through vctx.llmRequest,
+      // and loop. The model never sees the failure — just CURRENT FILES + its
+      // own captured voice + "continue."
+      let currentRes: Response = res;
+      let currentAbort: AbortController = abort;
       while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        if (!isBlockEnd(value)) {
-          if (!isBlockStreamMsg(value)) {
-            continue;
-          }
-          // console.log(promptId, "Received chunk for promptId:", value);
-          collectedMsgs.push(value);
-          const closed = blockAcc.ingest(value);
-          const applyResult = closed ? streamingResolver.observeBlock(closed) : undefined;
-          const r = await appendBlockEvent({
-            ctx,
-            vctx,
-            req,
-            promptId,
-            blockSeq: blockSeq++,
-            evt: value,
-            emitMode: "emit-only",
-          });
-          if (r.isErr()) {
-            return Result.Err(r);
-          }
-          // Recovery decision: when observeBlock reports apply errors, decide
-          // whether to fire a continuation call. Server-internal — no wire
-          // event today; clients see one continuous turn. The continuation
-          // call itself is the primary follow-up: between recovery-start and
-          // recovery-end, this branch will abort the upstream LLM stream
-          // (AbortController on defaultLLMRequest), build a continuation via
-          // buildRecoveryRequest using the resolver's vfs, pipe its tokens
-          // through the same parser chain, and emit ordinary block.code.*
-          // events on the outgoing stream so clients see a single virtual
-          // turn that includes the recovered output.
-          if (applyResult !== undefined && applyResult.errors.length > 0 && closed !== undefined) {
-            const consumed = tryConsumeRecovery(recoveryCounter);
-            recoveryCounter = consumed.next;
-            const first = applyResult.errors[0];
-            if (consumed.allowed) {
-              recoveryLogger
-                .Info()
-                .Any("event", {
-                  chatId: req.chatId,
-                  promptId,
-                  blockId: closed.end.blockId,
-                  sectionId: closed.end.sectionId,
-                  path: applyResult.path,
-                  reason: first.reason,
-                  kind: first.kind,
-                  errorCount: applyResult.errors.length,
-                })
-                .Msg("recovery-start");
-              // TODO(continuation): abort upstream + continuation call lands
-              // here. `recovery-end` will be logged when that work actually
-              // has something to bracket — emitting it now would just be a
-              // synchronous noise pair after every recovery-start.
-            } else {
-              recoveryLogger
-                .Info()
-                .Any("event", {
-                  chatId: req.chatId,
-                  promptId,
-                  blockId: closed.end.blockId,
-                  attempts: recoveryCounter.attempts,
-                })
-                .Msg("recovery-exhausted");
+        // Per-stream partial buffer: accumulates delta.line.content as the
+        // pipeline produces it. `safeCut` advances only on a clean code.end;
+        // see the truncation rule note above (intentionally NOT advanced on
+        // toplevel.line, so the partial never ends with prose announcing a
+        // completed-but-failed edit).
+        const partialBuffer = { text: "", safeCut: 0 };
+        const captureDeltas = new TransformStream<DeltaStreamMsg, DeltaStreamMsg>({
+          transform(msg, controller) {
+            if (isDeltaLine(msg)) partialBuffer.text += msg.content;
+            controller.enqueue(msg);
+          },
+        });
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const pipeline = currentRes
+          .body!.pipeThrough(createStatsCollector(promptId, 1000))
+          .pipeThrough(createLineStream(promptId))
+          .pipeThrough(createDataStream(promptId))
+          .pipeThrough(createSseStream(promptId))
+          .pipeThrough(createDeltaStream(promptId, () => vctx.sthis.nextId(12).str))
+          .pipeThrough(captureDeltas)
+          .pipeThrough(createSectionsStream(promptId, () => vctx.sthis.nextId(12).str));
+        const reader = pipeline.getReader();
+
+        // recoverHint is set when this stream should be replaced by a
+        // continuation; null means "this stream finished naturally."
+        let recoverHint: { partial: string; focusPath: string } | null = null;
+        let drainOnly = false;
+        readLoop: while (true) {
+          let readResult: ReadableStreamReadResult<unknown>;
+          try {
+            readResult = await reader.read();
+          } catch (err) {
+            // Aborted reads surface as TypeError "The user aborted a request"
+            // or AbortError depending on runtime. Treat as end-of-stream.
+            const name = (err as { name?: string } | undefined)?.name;
+            if (name === "AbortError" || (err instanceof TypeError && /abort/i.test(String(err)))) {
+              break readLoop;
             }
+            throw err;
           }
-        } else {
-          // console.log(promptId, "BlockEnd", value, collectedMsgs.length, req.chatId);
-          collectedMsgs.push(value);
-          const x = await handleEndMsg({ collectedMsgs, vctx, req, ctx, resChat, promptId, value, blockSeq });
-          if (x.isErr()) {
-            return Result.Err(x);
+          const { done, value } = readResult;
+          if (done) break readLoop;
+          if (drainOnly) continue; // recovery already triggered; drain to EOF/abort.
+          if (!isBlockEnd(value)) {
+            if (!isBlockStreamMsg(value)) continue;
+            collectedMsgs.push(value);
+            const closed = blockAcc.ingest(value);
+            const applyResult = closed ? streamingResolver.observeBlock(closed) : undefined;
+            const r = await appendBlockEvent({
+              ctx,
+              vctx,
+              req,
+              promptId,
+              blockSeq: blockSeq++,
+              evt: value,
+              emitMode: "emit-only",
+            });
+            if (r.isErr()) {
+              return Result.Err(r);
+            }
+            if (applyResult !== undefined && closed !== undefined) {
+              if (applyResult.errors.length === 0) {
+                // Clean code.end — advance safe cut so the partial captured
+                // up to here is a valid handoff for any later recovery.
+                partialBuffer.safeCut = partialBuffer.text.length;
+              } else {
+                const consumed = tryConsumeRecovery(recoveryCounter);
+                recoveryCounter = consumed.next;
+                const first = applyResult.errors[0];
+                if (consumed.allowed) {
+                  recoveryLogger
+                    .Info()
+                    .Any("event", {
+                      chatId: req.chatId,
+                      promptId,
+                      blockId: closed.end.blockId,
+                      sectionId: closed.end.sectionId,
+                      path: applyResult.path,
+                      reason: first.reason,
+                      kind: first.kind,
+                      errorCount: applyResult.errors.length,
+                    })
+                    .Msg("recovery-start");
+                  recoverHint = {
+                    partial: partialBuffer.text.slice(0, partialBuffer.safeCut),
+                    focusPath: applyResult.path,
+                  };
+                  // Abort upstream so the body stream wraps up; we'll loop
+                  // and dispatch the continuation. Continue draining until
+                  // the reader sees done, but skip event processing.
+                  currentAbort.abort();
+                  drainOnly = true;
+                } else {
+                  recoveryLogger
+                    .Info()
+                    .Any("event", {
+                      chatId: req.chatId,
+                      promptId,
+                      blockId: closed.end.blockId,
+                      attempts: recoveryCounter.attempts,
+                    })
+                    .Msg("recovery-exhausted");
+                }
+              }
+            }
+          } else {
+            collectedMsgs.push(value);
+            const x = await handleEndMsg({ collectedMsgs, vctx, req, ctx, resChat, promptId, value, blockSeq });
+            if (x.isErr()) return Result.Err(x);
+            blockSeq = x.Ok();
+            collectedMsgs.splice(0, collectedMsgs.length);
           }
-          blockSeq = x.Ok();
-          collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
         }
+
+        if (recoverHint === null) {
+          // Stream finished naturally and no recovery was triggered.
+          return Result.Ok();
+        }
+
+        // Build and dispatch the continuation. If anything goes wrong here we
+        // log and stop — partial result already in storage from any clean
+        // blocks produced before the error.
+        const pkgBaseUrl = promptsPkgBaseUrl(vctx.params.pkgRepos.workspace);
+        const fetchOverride = createPromptAssetFetch({ fetchAsset: vctx.fetchAsset });
+        const addendum = await exception2Result(() => getRecoveryAddendum(pkgBaseUrl, fetchOverride));
+        if (addendum.isErr()) {
+          recoveryLogger
+            .Info()
+            .Any("event", { chatId: req.chatId, promptId, err: String(addendum.Err()) })
+            .Msg("recovery-addendum-failed");
+          return Result.Ok();
+        }
+        const recReq = buildRecoveryRequest({
+          originalRequest: llmReq,
+          recoveryAddendum: addendum.Ok(),
+          vfs: streamingResolver.getVfs(),
+          focusPath: recoverHint.focusPath,
+          assistantPartial: recoverHint.partial,
+        });
+        if (recReq.isErr()) {
+          recoveryLogger
+            .Info()
+            .Any("event", { chatId: req.chatId, promptId, err: String(recReq.Err()) })
+            .Msg("recovery-build-failed");
+          return Result.Ok();
+        }
+        const nextAbort = new AbortController();
+        let nextRes: Response;
+        try {
+          nextRes = await vctx.llmRequest({ ...recReq.Ok(), headers: llmReq.headers }, { signal: nextAbort.signal });
+        } catch (err) {
+          recoveryLogger
+            .Info()
+            .Any("event", { chatId: req.chatId, promptId, err: String(err) })
+            .Msg("recovery-call-failed");
+          return Result.Ok();
+        }
+        if (!nextRes.ok || !nextRes.body) {
+          recoveryLogger
+            .Info()
+            .Any("event", {
+              chatId: req.chatId,
+              promptId,
+              status: nextRes.status,
+              statusText: nextRes.statusText,
+            })
+            .Msg("recovery-call-failed");
+          return Result.Ok();
+        }
+        recoveryLogger
+          .Info()
+          .Any("event", {
+            chatId: req.chatId,
+            promptId,
+            partialBytes: recoverHint.partial.length,
+            focusPath: recoverHint.focusPath,
+          })
+          .Msg("recovery-call-started");
+        currentRes = nextRes;
+        currentAbort = nextAbort;
+        // Loop: consume the recovery stream the same way.
       }
-      return Result.Ok();
     })
     .do();
   return blockSeq;
@@ -1587,6 +1687,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             resChat,
             promptId,
             blockSeq: res.blockSeq,
+            llmReq: res.llmReq,
+            abort: res.abort,
           });
           return Result.Ok(finalBlockSeq);
         };
