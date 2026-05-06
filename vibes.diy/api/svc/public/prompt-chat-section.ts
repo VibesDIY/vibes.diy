@@ -88,7 +88,7 @@ import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
-import { buildRecoveryRequest, tryConsumeRecovery } from "../intern/recovery.js";
+import { buildRecoveryRequest, shouldAttemptRecovery, updateRecoveryCounter, type RecoveryCounter } from "../intern/recovery.js";
 import { getRecoveryAddendum } from "@vibes.diy/prompts";
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
@@ -1238,18 +1238,25 @@ async function handleLlmResponse({
         onApplyError: (evt) => logApplyError(resolverLogger, evt),
       });
       const blockAcc = createBlockAccumulator();
-      let recoveryCounter = { attempts: 0 };
+      // Bounded by *consecutive fruitless* recoveries, not total. Any clean
+      // apply during a recovery stream resets this to 0; only the case where
+      // the model returns a malformed response that produces zero clean
+      // blocks N times in a row will trip the budget.
+      let recoveryCounter: RecoveryCounter = { consecutiveFruitless: 0 };
+      let isRecoveryStream = false;
 
       // Continue-mode recovery: each iteration consumes one upstream stream.
-      // On apply error within budget, the iteration returns a `recover` hint;
-      // we abort the upstream, build a continuation request via
-      // buildRecoveryRequest (using the resolver's vfs + the partial captured
-      // up to the last clean code.end), dispatch it through vctx.llmRequest,
-      // and loop. The model never sees the failure — just CURRENT FILES + its
-      // own captured voice + "continue."
+      // On apply error, the iteration sets a `recoverHint`, aborts upstream,
+      // and drains. After the inner loop exits we update the counter (only
+      // for recovery streams), check the budget, build a continuation via
+      // buildRecoveryRequest, and dispatch it. The model never sees the
+      // failure — just CURRENT FILES + its own captured voice + "continue."
       let currentRes: Response = res;
       let currentAbort: AbortController = abort;
       while (true) {
+        // Whether this stream produced any clean code.end. Used after the
+        // inner loop to update the recovery counter.
+        let streamMadeProgress = false;
         // Per-stream partial buffer: accumulates delta.line.content as the
         // pipeline produces it. `safeCut` advances only on a clean code.end;
         // see the truncation rule note above (intentionally NOT advanced on
@@ -1275,7 +1282,15 @@ async function handleLlmResponse({
 
         // recoverHint is set when this stream should be replaced by a
         // continuation; null means "this stream finished naturally."
-        let recoverHint: { partial: string; focusPath: string } | null = null;
+        let recoverHint: {
+          partial: string;
+          focusPath: string;
+          blockId: string;
+          sectionId: string;
+          reason: string;
+          kind: string;
+          errorCount: number;
+        } | null = null;
         let drainOnly = false;
         readLoop: while (true) {
           let readResult: ReadableStreamReadResult<unknown>;
@@ -1315,44 +1330,23 @@ async function handleLlmResponse({
                 // Clean code.end — advance safe cut so the partial captured
                 // up to here is a valid handoff for any later recovery.
                 partialBuffer.safeCut = partialBuffer.text.length;
+                streamMadeProgress = true;
               } else {
-                const consumed = tryConsumeRecovery(recoveryCounter);
-                recoveryCounter = consumed.next;
                 const first = applyResult.errors[0];
-                if (consumed.allowed) {
-                  recoveryLogger
-                    .Info()
-                    .Any("event", {
-                      chatId: req.chatId,
-                      promptId,
-                      blockId: closed.end.blockId,
-                      sectionId: closed.end.sectionId,
-                      path: applyResult.path,
-                      reason: first.reason,
-                      kind: first.kind,
-                      errorCount: applyResult.errors.length,
-                    })
-                    .Msg("recovery-start");
-                  recoverHint = {
-                    partial: partialBuffer.text.slice(0, partialBuffer.safeCut),
-                    focusPath: applyResult.path,
-                  };
-                  // Abort upstream so the body stream wraps up; we'll loop
-                  // and dispatch the continuation. Continue draining until
-                  // the reader sees done, but skip event processing.
-                  currentAbort.abort();
-                  drainOnly = true;
-                } else {
-                  recoveryLogger
-                    .Info()
-                    .Any("event", {
-                      chatId: req.chatId,
-                      promptId,
-                      blockId: closed.end.blockId,
-                      attempts: recoveryCounter.attempts,
-                    })
-                    .Msg("recovery-exhausted");
-                }
+                recoverHint = {
+                  partial: partialBuffer.text.slice(0, partialBuffer.safeCut),
+                  focusPath: applyResult.path,
+                  blockId: closed.end.blockId,
+                  sectionId: closed.end.sectionId,
+                  reason: first.reason,
+                  kind: first.kind,
+                  errorCount: applyResult.errors.length,
+                };
+                // Abort upstream so the body stream wraps up; we'll loop and
+                // dispatch the continuation after updating the counter and
+                // checking the budget. Drain until reader EOF, skip events.
+                currentAbort.abort();
+                drainOnly = true;
               }
             }
           } else {
@@ -1364,10 +1358,46 @@ async function handleLlmResponse({
           }
         }
 
+        // Update counter at the boundary between streams. Only recovery
+        // streams contribute to the budget — the original stream's progress
+        // (or lack of) is not counted: the first apply error is always
+        // worth one recovery attempt.
+        if (isRecoveryStream) {
+          recoveryCounter = updateRecoveryCounter(recoveryCounter, { madeProgress: streamMadeProgress });
+        }
+
         if (recoverHint === null) {
           // Stream finished naturally and no recovery was triggered.
           return Result.Ok();
         }
+
+        if (!shouldAttemptRecovery(recoveryCounter)) {
+          recoveryLogger
+            .Info()
+            .Any("event", {
+              chatId: req.chatId,
+              promptId,
+              blockId: recoverHint.blockId,
+              consecutiveFruitless: recoveryCounter.consecutiveFruitless,
+            })
+            .Msg("recovery-exhausted");
+          return Result.Ok();
+        }
+
+        recoveryLogger
+          .Info()
+          .Any("event", {
+            chatId: req.chatId,
+            promptId,
+            blockId: recoverHint.blockId,
+            sectionId: recoverHint.sectionId,
+            path: recoverHint.focusPath,
+            reason: recoverHint.reason,
+            kind: recoverHint.kind,
+            errorCount: recoverHint.errorCount,
+            consecutiveFruitless: recoveryCounter.consecutiveFruitless,
+          })
+          .Msg("recovery-start");
 
         // Build and dispatch the continuation. If anything goes wrong here we
         // log and stop — partial result already in storage from any clean
@@ -1430,6 +1460,7 @@ async function handleLlmResponse({
           .Msg("recovery-call-started");
         currentRes = nextRes;
         currentAbort = nextAbort;
+        isRecoveryStream = true;
         // Loop: consume the recovery stream the same way.
       }
     })
