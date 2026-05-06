@@ -32,3 +32,15 @@ Vite HMRs client-side TS, but Server-side TS imported via React-Router SSR may h
 ## Cleanup
 
 When the loop ends, remove temporary `console.log`/`console.warn` breadcrumbs and the `window.__*Debug` writer. Keep telemetry only if it's already in a structured `debug` namespace the project ships with.
+
+## Session management
+
+Initiate Chrome sessions yourself — open pages, navigate freely (`new_page`, `navigate_page`, etc.). But if Chrome needs to be restarted or quit, **ask the user to quit Chrome manually** rather than killing the process. Killing Chrome can lose tabs, state, or work in unrelated windows. If Chrome MCP can't connect or needs a fresh session, ask the user to "please quit and reopen Chrome" instead of running `pkill` or similar.
+
+## CLI routing — never hit cli-v2 directly
+
+When testing the cli env via Chrome MCP, **do not** navigate to `https://cli-v2.vibesdiy.net/...` directly. The user's Chrome session has cookies for `vibes.diy` only — Clerk auth, stable-entry `se-group` routing, etc. Going to the cli domain directly drops the session and the route does not behave like cli even when it loads.
+
+Stable-entry routing on `vibes.diy` reads the `se-group` cookie (or `.stable-entry.` query param) and proxies to the cli backend transparently when the user has been opted in. The user has already done that opt-in once and expects you to use it.
+
+Always use `https://vibes.diy/...` URLs in Chrome MCP for cli-targeted testing. If a request appears to miss the cli worker, debug the cookie / routing — don't reach for the `cli-v2.vibesdiy.net` domain as a workaround. Verify by listing cookies and checking for `se-group` before assuming the route. See [environments.md](environments.md) for the full stable-entry flow.

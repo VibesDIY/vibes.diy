@@ -31,3 +31,34 @@ Only use `echo 'message' | say` after a waiting period completes or when a full 
 ## Review commits before pushing
 
 Read every commit diff before pushing. Check each pattern against the rules-bag — no `instanceof`, no complex stringification chains, no casts. If something looks like a workaround, it probably is. Ask for guidance or rethink the approach.
+
+## App URL format
+
+When linking to a deployed app on vibes.diy, always use the canonical path form:
+
+```
+https://vibes.diy/vibe/{userSlug}/{appSlug}
+```
+
+Example: `https://vibes.diy/vibe/garden-gnome/meeting-picker`. Do not use the `https://{appSlug}.vibesdiy.app` subdomain form when surfacing links in chat or PR descriptions — the subdomain exists for internal fetches but is not the canonical user-facing link.
+
+## Tag GitHub issues on creation
+
+When creating issues in `VibesDIY/vibes.diy`, always apply labels via `--label` on `gh issue create` (or `gh issue edit --add-label` after the fact). Untagged issues require manual triage cleanup.
+
+Pick a type label + at least one area label. Add `agent-created` whenever an agent files the issue.
+
+Type labels: `bug`, `enhancement`, `documentation`.
+
+Area labels: `Creator DX` (builder/chat/publish), `Vibe Runner UX` (end-user of published vibes), `Vibe Runtime` (runtime/storage/hooks inside generated apps), `Vibe Virality` (notifications, sharing, comments, signups), `Published App`, `Fireproof`, `protocol` (wire format/message shapes), `mobile`.
+
+Other: `agent-created` (every agent-filed issue), `good first issue`, `duplicate`, `wontfix` (situational).
+
+## No rollback/emergency language in long-lived code
+
+When shipping work that has a soak/rollback window (activation of a new path, migration, feature flag rollout), it's fine to add temporary tooling — validation scripts, blast-radius probes, "BASELINE vs NEW" verdict logic. **After success, clean it up**:
+
+- **Repurpose** as a generic operational tool — strip activation-specific framing, keep the underlying inspection pattern.
+- **Delete** if the tool was purely emergency-focused.
+
+Future readers shouldn't have to mentally parse "wait, why is this script talking about a 2026 cement-bug canary?" Activation-specific language ages into noise. Git history captures the why; the working tree should reflect current state. Plan the cleanup phase from the start; rule of thumb is ~2 weeks of clean soak before stripping framing. Tests can stay as silent regression guards — rename them to describe what they assert, drop the "canary for X" naming. PR descriptions and commit messages are permanent; no action needed there.

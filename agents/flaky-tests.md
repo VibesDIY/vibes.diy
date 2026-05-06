@@ -20,4 +20,4 @@ Not a regression in the changes under test.
 - A test that fails consistently across reruns. That's a real failure — investigate.
 - A test whose failure mode matches your code change (e.g., you touched the resolver and resolver tests fail). Even if it's "usually" flaky, the change might be real.
 
-The issue exists so we can ignore known flakes during day-to-day work *and* periodically batch-fix them with full context.
+The issue exists so we can ignore known flakes during day-to-day work _and_ periodically batch-fix them with full context.
