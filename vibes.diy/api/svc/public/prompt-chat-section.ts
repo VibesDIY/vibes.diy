@@ -83,13 +83,11 @@ import {
   type FenceParseError,
 } from "@vibes.diy/call-ai-v2";
 import type { Logger } from "@adviser/cement";
-import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
+import { getRecoveryAddendum, makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
-import { ChatIdCtx } from "../svc-ws-send-provider.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
 import { buildRecoveryRequest, shouldAttemptRecovery, updateRecoveryCounter, type RecoveryCounter } from "../intern/recovery.js";
-import { getRecoveryAddendum } from "@vibes.diy/prompts";
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
 // files (system-prompt.md, llms/*.md) from the worker's `/vibe-pkg/`
