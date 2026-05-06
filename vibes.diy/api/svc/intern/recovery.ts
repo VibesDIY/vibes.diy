@@ -104,22 +104,25 @@ function orderForRecovery(vfs: ReadonlyMap<string, string>, focusPath: string): 
 }
 
 export interface RecoveryBudget {
-  readonly maxAttempts: number;
+  readonly maxConsecutiveFruitless: number;
 }
 
 export interface RecoveryCounter {
-  readonly attempts: number;
+  readonly consecutiveFruitless: number;
 }
 
-// Decide whether an additional recovery attempt is allowed. Recovery #1 is
-// allowed; #2+ exhausts. Returns the new counter; caller emits the
-// recovery-exhausted log event when `allowed` is false.
-export function tryConsumeRecovery(
-  counter: RecoveryCounter,
-  budget: RecoveryBudget = { maxAttempts: 1 }
-): { readonly allowed: boolean; readonly next: RecoveryCounter } {
-  if (counter.attempts >= budget.maxAttempts) {
-    return { allowed: false, next: counter };
-  }
-  return { allowed: true, next: { attempts: counter.attempts + 1 } };
+// Update the counter after a recovery stream finishes. The recovery prompt
+// is stateless for the LLM — as long as it's making progress on any
+// recovery turn (at least one clean apply), the counter resets. Only
+// stuck loops where the model returns a malformed response that applies
+// zero edits will increment the counter and eventually exhaust the budget.
+// The original (non-recovery) stream is never tracked through this helper.
+export function updateRecoveryCounter(counter: RecoveryCounter, outcome: { readonly madeProgress: boolean }): RecoveryCounter {
+  return outcome.madeProgress ? { consecutiveFruitless: 0 } : { consecutiveFruitless: counter.consecutiveFruitless + 1 };
+}
+
+// Decide whether to dispatch another recovery given the current counter.
+// Default budget: 3 consecutive fruitless recoveries before giving up.
+export function shouldAttemptRecovery(counter: RecoveryCounter, budget: RecoveryBudget = { maxConsecutiveFruitless: 3 }): boolean {
+  return counter.consecutiveFruitless < budget.maxConsecutiveFruitless;
 }

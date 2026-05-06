@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRecoveryRequest, tryConsumeRecovery } from "@vibes.diy/api-svc";
+import { buildRecoveryRequest, shouldAttemptRecovery, updateRecoveryCounter } from "@vibes.diy/api-svc";
 import type { LLMRequest } from "@vibes.diy/call-ai-v2";
 
 describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
@@ -171,22 +171,48 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
   });
 });
 
-describe("tryConsumeRecovery", () => {
-  it("allows the first attempt", () => {
-    const r = tryConsumeRecovery({ attempts: 0 });
-    expect(r.allowed).toBe(true);
-    expect(r.next.attempts).toBe(1);
+// Recovery is bounded by *consecutive fruitless* attempts, not total
+// attempts. The recovery prompt is stateless for the LLM — as long as the
+// model is making progress (any clean apply during a recovery stream),
+// the counter resets to 0. Only stuck loops where the model returns a
+// malformed first block over and over trip the budget.
+describe("updateRecoveryCounter", () => {
+  it("resets to 0 when the recovery stream made progress (any clean apply)", () => {
+    expect(updateRecoveryCounter({ consecutiveFruitless: 2 }, { madeProgress: true })).toEqual({
+      consecutiveFruitless: 0,
+    });
   });
 
-  it("rejects the second attempt by default", () => {
-    const r = tryConsumeRecovery({ attempts: 1 });
-    expect(r.allowed).toBe(false);
-    expect(r.next.attempts).toBe(1);
+  it("increments when the recovery stream produced no clean apply", () => {
+    expect(updateRecoveryCounter({ consecutiveFruitless: 0 }, { madeProgress: false })).toEqual({
+      consecutiveFruitless: 1,
+    });
+    expect(updateRecoveryCounter({ consecutiveFruitless: 1 }, { madeProgress: false })).toEqual({
+      consecutiveFruitless: 2,
+    });
   });
 
-  it("respects a larger budget", () => {
-    const r = tryConsumeRecovery({ attempts: 1 }, { maxAttempts: 2 });
-    expect(r.allowed).toBe(true);
-    expect(r.next.attempts).toBe(2);
+  it("treats progress as load-bearing — even a single clean apply resets", () => {
+    // Recovery stream emits one good block then a bad block — counter resets.
+    // The bad block triggers another recovery, but we start fresh from 0.
+    const after = updateRecoveryCounter({ consecutiveFruitless: 2 }, { madeProgress: true });
+    expect(after.consecutiveFruitless).toBe(0);
+  });
+});
+
+describe("shouldAttemptRecovery", () => {
+  it("allows when consecutive fruitless count is below the limit", () => {
+    expect(shouldAttemptRecovery({ consecutiveFruitless: 0 })).toBe(true);
+    expect(shouldAttemptRecovery({ consecutiveFruitless: 2 })).toBe(true);
+  });
+
+  it("rejects at and above the default limit (3)", () => {
+    expect(shouldAttemptRecovery({ consecutiveFruitless: 3 })).toBe(false);
+    expect(shouldAttemptRecovery({ consecutiveFruitless: 5 })).toBe(false);
+  });
+
+  it("respects a custom limit", () => {
+    expect(shouldAttemptRecovery({ consecutiveFruitless: 4 }, { maxConsecutiveFruitless: 5 })).toBe(true);
+    expect(shouldAttemptRecovery({ consecutiveFruitless: 5 }, { maxConsecutiveFruitless: 5 })).toBe(false);
   });
 });
