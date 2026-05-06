@@ -49,7 +49,7 @@ export interface CFInjectMutable {
   drizzle: VibesSqlite;
   // assetBucket: R2Bucket;
   wsResponse?: Response;
-  llmRequest?: (prompt: LLMRequest) => Promise<Response>;
+  llmRequest?: (prompt: LLMRequest, opts?: { readonly signal?: AbortSignal }) => Promise<Response>;
   docNotify?: DocNotifyCtx;
   // readonly db?: D1Database;
 }

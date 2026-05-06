@@ -3,7 +3,7 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { type } from "arktype";
 
 export function defaultLLMRequest(
-  fn: ((req: LLMRequest & { headers: LLMHeaders }) => Promise<Response>) | undefined,
+  fn: ((req: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }) => Promise<Response>) | undefined,
   {
     url,
     apiKey,
@@ -11,17 +11,16 @@ export function defaultLLMRequest(
     url: string;
     apiKey?: string;
   }
-): (req: LLMRequest & { headers: LLMHeaders }) => Promise<Response> {
+): (req: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }) => Promise<Response> {
   if (fn) {
     return fn;
   }
-  return (req: LLMRequest & { headers: LLMHeaders }) => {
+  return (req, opts) => {
     const stripLLMRequest = type(LLMRequest).onDeepUndeclaredKey("delete")(req);
     if (stripLLMRequest instanceof type.errors) {
       throw new Error(`Invalid LLMRequest: ${stripLLMRequest.summary}`);
     }
     const body = JSON.stringify(stripLLMRequest);
-    // console.log(`Making LLM request to ${url} with body:`, apiKey);
     return fetch(url, {
       method: "POST",
       headers: {
@@ -30,6 +29,7 @@ export function defaultLLMRequest(
         "Content-Type": "application/json",
       },
       body,
+      signal: opts?.signal,
     });
   };
 }

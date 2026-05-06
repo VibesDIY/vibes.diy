@@ -34,7 +34,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   netHash(): string;
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
   fetchPkgVersion?: ResolveFunction;
-  llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
+  llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }): Promise<Response>;
   notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;
   deregisterDocSubscription?(subscriptionKey: string): Promise<void>;

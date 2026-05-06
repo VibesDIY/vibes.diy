@@ -8,12 +8,14 @@ import { type ChatMessage, type LLMRequest } from "@vibes.diy/call-ai-v2";
 // Per-block apply lives in `createStreamingResolver` (in
 // `prompt-chat-section.ts`). The orchestrator consumes its return value;
 // nothing in this file re-runs parseFenceBody or applyEdits.
+//
+// Continue mode ("you were here, continue"): the recovery prompt does NOT
+// surface the failure to the model. It contains current file state plus
+// (optionally) the assistant's own captured partial output, truncated to
+// the last successful code.end. The model continues its own narration as
+// if it had not been interrupted; the failed edit is implicit in the
+// difference between what its narration announced and what's in vfs.
 
-// Maximum bytes of file content we splice into the recovery prompt. Recovery
-// happens after an apply error mid-turn; the original user prompt + system
-// prompt is already heavy. Larger files are truncated with a marker so the
-// model knows it's seeing a partial view. The failed file is rendered first
-// and gets the full byte budget; other files come after and may be elided.
 const MAX_RECOVERY_FILE_BYTES = 16_000;
 const MAX_RECOVERY_TOTAL_BYTES = 32_000;
 
@@ -21,55 +23,55 @@ export interface RecoveryRequestInput {
   readonly originalRequest: LLMRequest;
   readonly recoveryAddendum: string;
   readonly vfs: ReadonlyMap<string, string>;
-  readonly failedPath: string;
-  readonly failedSearch: string;
-  readonly failedReason: string;
+  // Path to render first in CURRENT FILES — usually the file the model was
+  // working on when the apply error occurred. Used purely for ordering;
+  // the prompt does not name it as "the failed file."
+  readonly focusPath: string;
+  // The model's own raw upstream output captured before the abort, truncated
+  // to the last successful block.code.end. Empty / omitted means we have no
+  // partial to inject (e.g. abort happened before any block closed cleanly).
+  readonly assistantPartial?: string;
 }
 
-// Compose the continuation LLM request. The original request's messages
-// are preserved (so the user message remains canonical); we append a
-// synthetic system message containing the recovery addendum, CURRENT FILES
-// (resolved-so-far, size-bounded), and FAILED (the failed search text +
-// reason). The model is instructed via the addendum to continue from the
-// shown state and not retry the failed search verbatim.
+// Compose the continuation LLM request. Shape:
+//   - assistantPartial empty/omitted: [...originalRequest.messages, system-recovery]
+//   - assistantPartial present:        [...originalRequest.messages, assistant-partial, system-recovery]
+//
+// The system-recovery message is `${addendum}\n\n${CURRENT FILES block}` —
+// no failure framing, no failed-search bytes, no SEARCH/REPLACE syntax.
 export function buildRecoveryRequest({
   originalRequest,
   recoveryAddendum,
   vfs,
-  failedPath,
-  failedSearch,
-  failedReason,
+  focusPath,
+  assistantPartial,
 }: RecoveryRequestInput): Result<LLMRequest> {
   if (recoveryAddendum.length === 0) {
     return Result.Err("recovery addendum is empty");
   }
-  if (failedPath.length === 0) {
-    return Result.Err("failed path is empty");
+  if (focusPath.length === 0) {
+    return Result.Err("focus path is empty");
   }
-  const filesBlock = renderCurrentFiles(vfs, failedPath);
-  const failedBlock = renderFailedSection({ failedPath, failedSearch, failedReason });
+  const filesBlock = renderCurrentFiles(vfs, focusPath);
   const recoverySystemMessage: ChatMessage = {
     role: "system",
-    content: [
-      {
-        type: "text",
-        text: `${recoveryAddendum}\n\n${filesBlock}\n\n${failedBlock}`,
-      },
-    ],
+    content: [{ type: "text", text: `${recoveryAddendum}\n\n${filesBlock}` }],
   };
-  return Result.Ok({
-    ...originalRequest,
-    messages: [...originalRequest.messages, recoverySystemMessage],
-  });
+  const messages: ChatMessage[] = [...originalRequest.messages];
+  if (assistantPartial !== undefined && assistantPartial.length > 0) {
+    messages.push({
+      role: "assistant",
+      content: [{ type: "text", text: assistantPartial }],
+    });
+  }
+  messages.push(recoverySystemMessage);
+  return Result.Ok({ ...originalRequest, messages });
 }
 
-function renderCurrentFiles(vfs: ReadonlyMap<string, string>, failedPath: string): string {
+function renderCurrentFiles(vfs: ReadonlyMap<string, string>, focusPath: string): string {
   const lines: string[] = ["CURRENT FILES (resolved so far this turn):"];
-  // Failed file rendered first with its own per-file byte budget so the model
-  // gets the most relevant context. Remaining files come after and share a
-  // single total budget; oversize ones get truncated with an explicit marker.
   let totalBudget = MAX_RECOVERY_TOTAL_BYTES;
-  const ordered = orderForRecovery(vfs, failedPath);
+  const ordered = orderForRecovery(vfs, focusPath);
   for (const [path, content] of ordered) {
     const cap = Math.min(MAX_RECOVERY_FILE_BYTES, totalBudget);
     if (cap <= 0) {
@@ -91,36 +93,14 @@ function renderCurrentFiles(vfs: ReadonlyMap<string, string>, failedPath: string
   return lines.join("\n");
 }
 
-function orderForRecovery(vfs: ReadonlyMap<string, string>, failedPath: string): [string, string][] {
+function orderForRecovery(vfs: ReadonlyMap<string, string>, focusPath: string): [string, string][] {
   const entries = Array.from(vfs.entries());
-  // Match by exact, leading-slash, or trailing-slash variants so the caller
-  // can pass the path in any normalization.
-  const failedEntry = entries.find(([p]) => p === failedPath || `/${p}` === failedPath || p === `/${failedPath}`);
-  if (failedEntry === undefined) {
+  const focusEntry = entries.find(([p]) => p === focusPath || `/${p}` === focusPath || p === `/${focusPath}`);
+  if (focusEntry === undefined) {
     return entries.sort((a, b) => a[0].localeCompare(b[0]));
   }
-  const others = entries.filter((e) => e !== failedEntry).sort((a, b) => a[0].localeCompare(b[0]));
-  return [failedEntry, ...others];
-}
-
-function renderFailedSection({
-  failedPath,
-  failedSearch,
-  failedReason,
-}: {
-  readonly failedPath: string;
-  readonly failedSearch: string;
-  readonly failedReason: string;
-}): string {
-  // Use a non-fence delimiter so the model isn't tempted to mirror the
-  // SEARCH/REPLACE marker syntax in this descriptive context. Fence markers
-  // are reserved for the model's actual edit output.
-  return [
-    `FAILED EDIT (path: ${failedPath}, reason: ${failedReason}):`,
-    "--- failed search text ---",
-    failedSearch,
-    "--- end failed search text ---",
-  ].join("\n");
+  const others = entries.filter((e) => e !== focusEntry).sort((a, b) => a[0].localeCompare(b[0]));
+  return [focusEntry, ...others];
 }
 
 export interface RecoveryBudget {

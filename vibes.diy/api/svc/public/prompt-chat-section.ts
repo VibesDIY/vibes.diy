@@ -252,6 +252,10 @@ export interface BlockApplyResult {
 
 export interface StreamingResolver {
   readonly observeBlock: (block: { begin: CodeBeginMsg; lines: readonly CodeLineMsg[]; end: CodeEndMsg }) => BlockApplyResult;
+  // Snapshot of the resolver's running per-path content. The recovery
+  // orchestrator passes this to buildRecoveryRequest as the CURRENT FILES
+  // section. Returns a fresh Map so callers cannot mutate internal state.
+  readonly getVfs: () => ReadonlyMap<string, string>;
 }
 
 function normalizeFilename(rawPath: string | undefined): string {
@@ -308,6 +312,9 @@ export function createStreamingResolver(deps: StreamingResolverDeps): StreamingR
       }
       vfs.set(filename, applied.content);
       return { path: filename, errors };
+    },
+    getVfs() {
+      return new Map(vfs);
     },
   };
 }
