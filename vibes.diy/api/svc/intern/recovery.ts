@@ -1,54 +1,21 @@
 import { Result } from "@adviser/cement";
-import {
-  applyEdits,
-  parseFenceBody,
-  type ChatMessage,
-  type CodeBeginMsg,
-  type CodeLineMsg,
-  type CodeEndMsg,
-  type LLMRequest,
-} from "@vibes.diy/call-ai-v2";
+import { type ChatMessage, type LLMRequest } from "@vibes.diy/call-ai-v2";
 
 // Pure helpers for the apply-error recovery orchestrator. The wire-level
 // orchestration (abort upstream + splice continuation events) lives in
 // prompt-chat-section.ts; everything testable lives here.
-
-export interface CodeBlock {
-  readonly begin: CodeBeginMsg;
-  readonly lines: readonly CodeLineMsg[];
-  readonly end?: CodeEndMsg;
-}
-
-// Snapshot of a per-block apply step. `errors` is empty when the block
-// applied cleanly. When non-empty, the caller can decide to abort + recover.
-export interface PerBlockResolveStep {
-  readonly path: string;
-  readonly content: string;
-  readonly errors: readonly { readonly reason: string; readonly search: string }[];
-}
-
-// Resolve a single just-finished code block against the running per-path
-// vfs. The vfs is mutated in-place (set of path -> content). Returns the
-// step record for caller diagnostics; the caller decides whether to abort.
 //
-// Mirrors the grouping logic in resolveCodeBlocksToFileSystem but runs once
-// per block so the server can react mid-stream rather than at end-of-turn.
-export function applyOneBlockToVfs(vfs: Map<string, string>, block: CodeBlock): PerBlockResolveStep {
-  if (block.end === undefined) {
-    return { path: block.begin.path ?? "App.jsx", content: "", errors: [] };
-  }
-  const path = block.begin.path ?? "App.jsx";
-  const filename = path.startsWith("/") ? path : `/${path}`;
-  const seed = vfs.get(filename) ?? vfs.get(path) ?? "";
-  const parsed = parseFenceBody(block.lines.map((l) => l.line));
-  const r = applyEdits(seed, parsed.edits);
-  vfs.set(filename, r.content);
-  return {
-    path: filename,
-    content: r.content,
-    errors: r.errors.map((e) => ({ reason: e.reason, search: e.search })),
-  };
-}
+// Per-block apply lives in `createStreamingResolver` (in
+// `prompt-chat-section.ts`). The orchestrator consumes its return value;
+// nothing in this file re-runs parseFenceBody or applyEdits.
+
+// Maximum bytes of file content we splice into the recovery prompt. Recovery
+// happens after an apply error mid-turn; the original user prompt + system
+// prompt is already heavy. Larger files are truncated with a marker so the
+// model knows it's seeing a partial view. The failed file is rendered first
+// and gets the full byte budget; other files come after and may be elided.
+const MAX_RECOVERY_FILE_BYTES = 16_000;
+const MAX_RECOVERY_TOTAL_BYTES = 32_000;
 
 export interface RecoveryRequestInput {
   readonly originalRequest: LLMRequest;
@@ -61,10 +28,10 @@ export interface RecoveryRequestInput {
 
 // Compose the continuation LLM request. The original request's messages
 // are preserved (so the user message remains canonical); we append a
-// synthetic system message with CURRENT FILES (resolved-so-far) + FAILED
-// (the search text + reason). The recovery-addendum is appended to any
-// existing system message via concatenation in the caller's system-prompt
-// path; here we just emit a `system` content block for the recovery hint.
+// synthetic system message containing the recovery addendum, CURRENT FILES
+// (resolved-so-far, size-bounded), and FAILED (the failed search text +
+// reason). The model is instructed via the addendum to continue from the
+// shown state and not retry the failed search verbatim.
 export function buildRecoveryRequest({
   originalRequest,
   recoveryAddendum,
@@ -79,7 +46,7 @@ export function buildRecoveryRequest({
   if (failedPath.length === 0) {
     return Result.Err("failed path is empty");
   }
-  const filesBlock = renderCurrentFiles(vfs);
+  const filesBlock = renderCurrentFiles(vfs, failedPath);
   const failedBlock = renderFailedSection({ failedPath, failedSearch, failedReason });
   const recoverySystemMessage: ChatMessage = {
     role: "system",
@@ -96,15 +63,44 @@ export function buildRecoveryRequest({
   });
 }
 
-function renderCurrentFiles(vfs: ReadonlyMap<string, string>): string {
+function renderCurrentFiles(vfs: ReadonlyMap<string, string>, failedPath: string): string {
   const lines: string[] = ["CURRENT FILES (resolved so far this turn):"];
-  // Stable order so the prompt doesn't churn between calls.
-  const sorted = Array.from(vfs.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  for (const [path, content] of sorted) {
-    lines.push(`--- ${path} ---`);
-    lines.push(content);
+  // Failed file rendered first with its own per-file byte budget so the model
+  // gets the most relevant context. Remaining files come after and share a
+  // single total budget; oversize ones get truncated with an explicit marker.
+  let totalBudget = MAX_RECOVERY_TOTAL_BYTES;
+  const ordered = orderForRecovery(vfs, failedPath);
+  for (const [path, content] of ordered) {
+    const cap = Math.min(MAX_RECOVERY_FILE_BYTES, totalBudget);
+    if (cap <= 0) {
+      lines.push(`--- ${path} (omitted: total context budget exhausted) ---`);
+      continue;
+    }
+    if (content.length <= cap) {
+      lines.push(`--- ${path} ---`, content);
+      totalBudget -= content.length;
+    } else {
+      lines.push(
+        `--- ${path} (truncated: ${content.length} bytes → first ${cap}) ---`,
+        content.slice(0, cap),
+        `--- ${path} (truncated above) ---`
+      );
+      totalBudget -= cap;
+    }
   }
   return lines.join("\n");
+}
+
+function orderForRecovery(vfs: ReadonlyMap<string, string>, failedPath: string): [string, string][] {
+  const entries = Array.from(vfs.entries());
+  // Match by exact, leading-slash, or trailing-slash variants so the caller
+  // can pass the path in any normalization.
+  const failedEntry = entries.find(([p]) => p === failedPath || `/${p}` === failedPath || p === `/${failedPath}`);
+  if (failedEntry === undefined) {
+    return entries.sort((a, b) => a[0].localeCompare(b[0]));
+  }
+  const others = entries.filter((e) => e !== failedEntry).sort((a, b) => a[0].localeCompare(b[0]));
+  return [failedEntry, ...others];
 }
 
 function renderFailedSection({
@@ -116,9 +112,15 @@ function renderFailedSection({
   readonly failedSearch: string;
   readonly failedReason: string;
 }): string {
-  return [`FAILED EDIT (path: ${failedPath}, reason: ${failedReason}):`, "<<<<<<< SEARCH", failedSearch, ">>>>>>> SEARCH"].join(
-    "\n"
-  );
+  // Use a non-fence delimiter so the model isn't tempted to mirror the
+  // SEARCH/REPLACE marker syntax in this descriptive context. Fence markers
+  // are reserved for the model's actual edit output.
+  return [
+    `FAILED EDIT (path: ${failedPath}, reason: ${failedReason}):`,
+    "--- failed search text ---",
+    failedSearch,
+    "--- end failed search text ---",
+  ].join("\n");
 }
 
 export interface RecoveryBudget {
@@ -131,7 +133,7 @@ export interface RecoveryCounter {
 
 // Decide whether an additional recovery attempt is allowed. Recovery #1 is
 // allowed; #2+ exhausts. Returns the new counter; caller emits the
-// `prompt.recovery.exhausted` event when `allowed` is false.
+// recovery-exhausted log event when `allowed` is false.
 export function tryConsumeRecovery(
   counter: RecoveryCounter,
   budget: RecoveryBudget = { maxAttempts: 1 }
