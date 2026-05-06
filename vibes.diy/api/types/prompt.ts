@@ -63,53 +63,7 @@ export const PromptBlockEnd = type({
 
 export type PromptBlockEnd = typeof PromptBlockEnd.infer;
 
-// Recovery orchestrator events. Emitted around a continuation LLM call when
-// the server detects a mid-stream apply error and re-prompts with the
-// resolved-so-far state. Both web and CLI clients see these inline in the
-// same outgoing block stream and can choose to render them.
-export const PromptRecoveryFailedSection = type({
-  path: "string",
-  search: "string",
-  reason: "string",
-});
-export type PromptRecoveryFailedSection = typeof PromptRecoveryFailedSection.infer;
-
-export const PromptRecoveryStart = type({
-  type: "'prompt.recovery.start'",
-  reason: "'apply-error'",
-  failedSection: PromptRecoveryFailedSection,
-}).and(PromptBase);
-export type PromptRecoveryStart = typeof PromptRecoveryStart.infer;
-
-export const PromptRecoveryEnd = type({
-  type: "'prompt.recovery.end'",
-}).and(PromptBase);
-export type PromptRecoveryEnd = typeof PromptRecoveryEnd.infer;
-
-export const PromptRecoveryExhausted = type({
-  type: "'prompt.recovery.exhausted'",
-  reason: "'apply-error'",
-  attempts: "number",
-}).and(PromptBase);
-export type PromptRecoveryExhausted = typeof PromptRecoveryExhausted.infer;
-
-export function isPromptRecoveryStart(msg: unknown): msg is PromptRecoveryStart {
-  return !(PromptRecoveryStart(msg) instanceof type.errors);
-}
-export function isPromptRecoveryEnd(msg: unknown): msg is PromptRecoveryEnd {
-  return !(PromptRecoveryEnd(msg) instanceof type.errors);
-}
-export function isPromptRecoveryExhausted(msg: unknown): msg is PromptRecoveryExhausted {
-  return !(PromptRecoveryExhausted(msg) instanceof type.errors);
-}
-
-export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd)
-  .or(PromptReq)
-  .or(PromptError)
-  .or(PromptFS)
-  .or(PromptRecoveryStart)
-  .or(PromptRecoveryEnd)
-  .or(PromptRecoveryExhausted);
+export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq).or(PromptError).or(PromptFS);
 export type PromptMsgs = typeof PromptMsgs.infer;
 
 // Type guard with optional streamId filter
