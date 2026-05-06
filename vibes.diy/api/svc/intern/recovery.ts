@@ -33,11 +33,19 @@ export interface RecoveryRequestInput {
   readonly assistantPartial?: string;
 }
 
-// Compose the continuation LLM request. Shape:
-//   - assistantPartial empty/omitted: [...originalRequest.messages, system-recovery]
-//   - assistantPartial present:        [...originalRequest.messages, assistant-partial, system-recovery]
+// Compose the continuation LLM request. The recovery addendum + CURRENT
+// FILES block is *merged into the original system message* rather than
+// appended as a second system message — many providers (including some
+// OpenRouter relays) reject back-to-back system messages with 400. If the
+// original request has no system message, a new one is prepended.
 //
-// The system-recovery message is `${addendum}\n\n${CURRENT FILES block}` —
+// Shape:
+//   - original = [system, ...rest], no partial:    [system+recovery, ...rest]
+//   - original = [system, ...rest], with partial:  [system+recovery, ...rest, assistant-partial]
+//   - original = [user, ...],       no partial:    [system-new, user, ...]
+//   - original = [user, ...],       with partial:  [system-new, user, ..., assistant-partial]
+//
+// The merged system message is `${original}\n\n${addendum}\n\n${CURRENT FILES}` —
 // no failure framing, no failed-search bytes, no SEARCH/REPLACE syntax.
 export function buildRecoveryRequest({
   originalRequest,
@@ -53,19 +61,26 @@ export function buildRecoveryRequest({
     return Result.Err("focus path is empty");
   }
   const filesBlock = renderCurrentFiles(vfs, focusPath);
-  const recoverySystemMessage: ChatMessage = {
-    role: "system",
-    content: [{ type: "text", text: `${recoveryAddendum}\n\n${filesBlock}` }],
-  };
-  const messages: ChatMessage[] = [...originalRequest.messages];
+  const recoverySuffix = `${recoveryAddendum}\n\n${filesBlock}`;
+  const messages = mergeRecoveryIntoSystem(originalRequest.messages, recoverySuffix);
   if (assistantPartial !== undefined && assistantPartial.length > 0) {
-    messages.push({
-      role: "assistant",
-      content: [{ type: "text", text: assistantPartial }],
-    });
+    messages.push({ role: "assistant", content: [{ type: "text", text: assistantPartial }] });
   }
-  messages.push(recoverySystemMessage);
   return Result.Ok({ ...originalRequest, messages });
+}
+
+function mergeRecoveryIntoSystem(messages: readonly ChatMessage[], recoverySuffix: string): ChatMessage[] {
+  const firstSystemIdx = messages.findIndex((m) => m.role === "system");
+  if (firstSystemIdx === -1) {
+    return [{ role: "system", content: [{ type: "text", text: recoverySuffix }] }, ...messages];
+  }
+  const original = messages[firstSystemIdx];
+  const originalText = original.content[0]?.type === "text" ? original.content[0].text : "";
+  const merged: ChatMessage = {
+    role: "system",
+    content: [{ type: "text", text: `${originalText}\n\n${recoverySuffix}` }],
+  };
+  return [...messages.slice(0, firstSystemIdx), merged, ...messages.slice(firstSystemIdx + 1)];
 }
 
 function renderCurrentFiles(vfs: ReadonlyMap<string, string>, focusPath: string): string {
