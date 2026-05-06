@@ -1356,6 +1356,15 @@ async function handleLlmResponse({
         // worth one recovery attempt.
         if (isRecoveryStream) {
           recoveryCounter = updateRecoveryCounter(recoveryCounter, { madeProgress: streamMadeProgress });
+          recoveryLogger
+            .Info()
+            .Any("event", {
+              chatId: req.chatId,
+              promptId,
+              madeProgress: streamMadeProgress,
+              consecutiveFruitless: recoveryCounter.consecutiveFruitless,
+            })
+            .Msg("recovery-stream-end");
         }
 
         if (recoverHint === null) {
@@ -1414,23 +1423,43 @@ async function handleLlmResponse({
         if (recReq.isErr()) {
           recoveryLogger
             .Info()
-            .Any("event", { chatId: req.chatId, promptId, err: String(recReq.Err()) })
+            .Any("event", {
+              chatId: req.chatId,
+              promptId,
+              err: String(recReq.Err()),
+              originalMessageCount: llmReq.messages.length,
+              originalRoles: llmReq.messages.map((m) => m.role),
+            })
             .Msg("recovery-build-failed");
           return Result.Ok();
         }
+        const recPayload = recReq.Ok();
+        const recMessageCount = recPayload.messages.length;
+        const recRoles = recPayload.messages.map((m) => m.role);
+        const recModel = recPayload.model;
         const nextAbort = new AbortController();
         const rNextRes = await exception2Result(() =>
-          vctx.llmRequest({ ...recReq.Ok(), headers: llmReq.headers }, { signal: nextAbort.signal })
+          vctx.llmRequest({ ...recPayload, headers: llmReq.headers }, { signal: nextAbort.signal })
         );
         if (rNextRes.isErr()) {
           recoveryLogger
             .Info()
-            .Any("event", { chatId: req.chatId, promptId, err: String(rNextRes.Err()) })
+            .Any("event", {
+              chatId: req.chatId,
+              promptId,
+              err: String(rNextRes.Err()),
+              model: recModel,
+              messageCount: recMessageCount,
+              roles: recRoles,
+            })
             .Msg("recovery-call-failed");
           return Result.Ok();
         }
         const nextRes = rNextRes.Ok();
         if (!nextRes.ok || !nextRes.body) {
+          const rBody = await exception2Result(() => nextRes.text());
+          const rawBody = rBody.isOk() ? rBody.Ok() : `<read-failed: ${String(rBody.Err())}>`;
+          const bodySnippet = rawBody.length > 2000 ? `${rawBody.slice(0, 2000)}…[+${rawBody.length - 2000}b]` : rawBody;
           recoveryLogger
             .Info()
             .Any("event", {
@@ -1438,6 +1467,10 @@ async function handleLlmResponse({
               promptId,
               status: nextRes.status,
               statusText: nextRes.statusText,
+              model: recModel,
+              messageCount: recMessageCount,
+              roles: recRoles,
+              bodySnippet,
             })
             .Msg("recovery-call-failed");
           return Result.Ok();
@@ -1449,6 +1482,9 @@ async function handleLlmResponse({
             promptId,
             partialBytes: recoverHint.partial.length,
             focusPath: recoverHint.focusPath,
+            model: recModel,
+            messageCount: recMessageCount,
+            roles: recRoles,
           })
           .Msg("recovery-call-started");
         currentRes = nextRes;
