@@ -11,6 +11,7 @@ import {
   isCodeBegin,
   isCodeEnd,
   isCodeLine,
+  isCodeTruncated,
   isToplevelBegin,
   isToplevelEnd,
   isToplevelLine,
@@ -207,8 +208,21 @@ function PromptErrorMsg({ msg, onRetry }: { msg: PromptError; onRetry?: (msg: Pr
   );
 }
 
-function CodeMsg({ lines, begin, end, onClick }: { begin: CodeBeginMsg; lines: LineMsg[]; end?: CodeEndMsg; onClick: () => void }) {
-  const codeReady = !!end;
+function CodeMsg({
+  lines,
+  begin,
+  end,
+  truncated,
+  onClick,
+}: {
+  begin: CodeBeginMsg;
+  lines: LineMsg[];
+  end?: CodeEndMsg;
+  truncated?: { reason: string; kind: string; truncatedAtLine: number };
+  onClick: () => void;
+}) {
+  const codeReady = end !== undefined;
+  const isTruncated = truncated !== undefined;
   const renderSeq = useChatDebug("CodeMsg", {
     sectionId: begin.sectionId,
     blockId: begin.blockId,
@@ -219,7 +233,20 @@ function CodeMsg({ lines, begin, end, onClick }: { begin: CodeBeginMsg; lines: L
     path: begin.path,
     lineCount: lines.length,
     codeReady,
+    truncated: isTruncated,
+    truncatedReason: truncated?.reason,
   });
+
+  // Dot color: green when ready, yellow when truncated (recovery in
+  // progress), orange when streaming. The truncated card stays in the
+  // chat as honest history; reload normalizes since the failed block
+  // was never persisted.
+  const dotClass = isTruncated
+    ? "text-yellow-500 dark:text-yellow-400"
+    : codeReady
+      ? "text-accent-01 dark:text-accent-02"
+      : "text-orange-500 dark:text-orange-400";
+  const dotGlyph = isTruncated ? "↻" : "•";
 
   return (
     <div
@@ -232,6 +259,8 @@ function CodeMsg({ lines, begin, end, onClick }: { begin: CodeBeginMsg; lines: L
       data-block-seq={begin.seq}
       data-block-nr={begin.blockNr}
       data-code-ready={codeReady ? "true" : "false"}
+      data-truncated={isTruncated ? "true" : "false"}
+      data-truncated-reason={truncated?.reason}
       data-line-count={lines.length}
       data-render-seq={renderSeq}
     >
@@ -249,20 +278,13 @@ function CodeMsg({ lines, begin, end, onClick }: { begin: CodeBeginMsg; lines: L
           className="sticky-active relative mx-3 my-4 cursor-pointer transition-all"
           onClick={onClick}
         >
-          <div
-            className={`absolute -top-1 left-1 text-lg ${
-              !codeReady
-                ? "text-orange-500 dark:text-orange-400"
-                : // : isSelected
-                  // ? "text-green-500 dark:text-green-400"
-                  "text-accent-01 dark:text-accent-02"
-            }`}
-          >
-            •
-          </div>
+          <div className={`absolute -top-1 left-1 text-lg ${dotClass}`}>{dotGlyph}</div>
           <div className="flex items-center justify-between rounded-sm p-2">
             <span className="text-accent-01 dark:text-accent-01 font-mono text-sm">
               {`${lines.length} line${lines.length !== 1 ? "s" : ""}`}
+              {isTruncated ? (
+                <span className="ml-2 text-yellow-600 dark:text-yellow-400 italic">{`↻ recovering · ${truncated.reason}`}</span>
+              ) : null}
             </span>
             <button
               onClick={(e: React.MouseEvent) => {
@@ -402,7 +424,12 @@ interface CodeBlock {
   type: "Code";
   begin: CodeBeginMsg;
   lines: LineMsg[];
-  end: CodeEndMsg;
+  // Either end or truncated will be present; never both. A truncated
+  // block means the server suppressed the failed code.end and emitted
+  // block.code.truncated in its place — the closure event is the
+  // truncate, not an end.
+  end?: CodeEndMsg;
+  truncated?: { reason: string; kind: string; truncatedAtLine: number };
 }
 interface TopLevelBlock {
   type: "TopLevel";
@@ -507,6 +534,7 @@ function MessageList({
                   begin={block.begin}
                   lines={block.lines}
                   end={block.end}
+                  truncated={block.truncated}
                   onClick={() => {
                     if (msg.fsRef) {
                       onClick({
@@ -551,6 +579,31 @@ function MessageList({
             lines: collectedMsg,
             end: msg,
           });
+          collectedMsg = [];
+          break;
+        case isCodeTruncated(msg):
+          // Render the truncated block IMMEDIATELY rather than pushing to
+          // blockMsgs. The recovery dispatches a new pipeline that will emit
+          // its own block.begin, which clears blockMsgs — so a truncated
+          // entry pushed here would be erased before block.end could trigger
+          // a render. Direct push to acc keeps the truncated card in the
+          // chat as honest history alongside the recovery's replacement.
+          //
+          // The truncated card has no block.end, so no fsRef and no nav
+          // target — onClick is a no-op.
+          acc.push(
+            <CodeMsg
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              key={`truncated-${codeBegin!.sectionId}`}
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              begin={codeBegin!}
+              lines={collectedMsg}
+              truncated={{ reason: msg.reason, kind: msg.kind, truncatedAtLine: msg.truncatedAtLine }}
+              onClick={() => {
+                /* no-op: truncated blocks have no navigable target */
+              }}
+            />
+          );
           collectedMsg = [];
           break;
         case isToplevelEnd(msg):
