@@ -16,6 +16,7 @@ function toTab(s: string | undefined): Tab {
 interface AppSlugItemProps {
   userSlug: string;
   appSlug: string;
+  title?: string;
   isSelected: boolean;
   activeTab?: string;
   isLoadingThis: boolean;
@@ -28,6 +29,7 @@ interface AppSlugItemProps {
 export function AppSlugItem({
   userSlug,
   appSlug,
+  title,
   isSelected,
   activeTab: activeTabProp,
   isLoadingThis,
@@ -70,10 +72,13 @@ export function AppSlugItem({
           <div className="h-10 w-16 flex-shrink-0 rounded bg-gray-100 dark:bg-gray-700" />
         )}
         <span className="flex flex-1 items-center gap-2 min-w-0">
-          <span
-            className={`truncate font-medium ${isSelected ? "text-blue-700 dark:text-blue-300" : "text-gray-800 dark:text-gray-200"}`}
-          >
-            {appSlug}
+          <span className="flex flex-col min-w-0">
+            <span
+              className={`truncate font-medium ${isSelected ? "text-blue-700 dark:text-blue-300" : "text-gray-800 dark:text-gray-200"}`}
+            >
+              {title || appSlug}
+            </span>
+            <span className="truncate text-xs text-gray-500 dark:text-gray-400">{userSlug}</span>
           </span>
           {headInfo?.mode && (
             <span

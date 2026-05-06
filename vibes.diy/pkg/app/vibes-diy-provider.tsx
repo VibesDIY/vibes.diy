@@ -9,7 +9,6 @@ import { vibesDiySrvSandbox, VibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sand
 import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { toast } from "react-hot-toast";
-import { RecentVibesProvider } from "./contexts/RecentVibesContext.js";
 import { ensureAssetSession, tearDownAssetSession } from "./lib/asset-session.js";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 // import { PkgRepos } from "@vibes.diy/api-types";
@@ -234,11 +233,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       : {}),
   });
 
-  return (
-    <VibesDiyContext.Provider value={realCtx}>
-      <RecentVibesProvider>{children}</RecentVibesProvider>
-    </VibesDiyContext.Provider>
-  );
+  return <VibesDiyContext.Provider value={realCtx}>{children}</VibesDiyContext.Provider>;
 }
 
 function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {

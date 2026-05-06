@@ -30,6 +30,7 @@ import { useShareModal } from "../../components/ResultPreview/useShareModal.js";
 import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
 import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
+import { notifyRecentVibesChanged } from "../../hooks/useRecentVibes.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { EditorState, isEditorStateEdit } from "../../types/code-editor.js";
@@ -335,6 +336,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
               console.error(`PromptSend failed`, r.Ok());
             } else {
               console.log(`send prompt`, sentPrompt);
+              notifyRecentVibesChanged();
             }
           });
       }
@@ -498,6 +500,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           toast.success(`Code changes saved`);
           pendingSavePromptIdRef.current = r.Ok().promptId;
           console.log(`[CodeSave] waiting for block.end with promptId: ${r.Ok().promptId}`);
+          notifyRecentVibesChanged();
         }
       });
   }, [editorState, chat]);
@@ -588,6 +591,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           return;
         }
         console.log("[agent-autosave] saved", { promptId: r.Ok().promptId, len: resolved.length });
+        notifyRecentVibesChanged();
       });
   }, [promptState.running, promptState.blocks, chat, fsId]);
 

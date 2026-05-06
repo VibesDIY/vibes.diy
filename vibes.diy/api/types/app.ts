@@ -180,6 +180,36 @@ export function isResListUserSlugAppSlug(obj: unknown): obj is ResListUserSlugAp
   return !(resListUserSlugAppSlug(obj) instanceof type.errors);
 }
 
+export const reqListRecentVibes = type({
+  type: "'vibes.diy.req-list-recent-vibes'",
+  auth: dashAuthType,
+  "limit?": "number",
+  "cursor?": "string",
+});
+export type ReqListRecentVibes = typeof reqListRecentVibes.infer;
+export function isReqListRecentVibes(obj: unknown): obj is ReqListRecentVibes {
+  return !(reqListRecentVibes(obj) instanceof type.errors);
+}
+
+export const resRecentVibesItem = type({
+  userSlug: "string",
+  appSlug: "string",
+  updated: "string",
+  "title?": "string",
+  "icon?": type({ cid: "string", mime: "string" }),
+});
+export type ResRecentVibesItem = typeof resRecentVibesItem.infer;
+
+export const resListRecentVibes = type({
+  type: "'vibes.diy.res-list-recent-vibes'",
+  items: resRecentVibesItem.array(),
+  "nextCursor?": "string",
+});
+export type ResListRecentVibes = typeof resListRecentVibes.infer;
+export function isResListRecentVibes(obj: unknown): obj is ResListRecentVibes {
+  return !(resListRecentVibes(obj) instanceof type.errors);
+}
+
 export type ReqGetByUserSlugAppSlug = typeof reqGetByUserSlugAppSlug.infer;
 export function isReqGetByUserSlugAppSlug(obj: unknown): obj is ReqGetByUserSlugAppSlug {
   return !(reqGetByUserSlugAppSlug(obj) instanceof type.errors);
