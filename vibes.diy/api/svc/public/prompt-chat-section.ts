@@ -1283,29 +1283,23 @@ async function handleLlmResponse({
         // recoverHint is set when this stream should be replaced by a
         // continuation; null means "this stream finished naturally."
         let recoverHint: {
-          partial: string;
-          focusPath: string;
-          blockId: string;
-          sectionId: string;
-          reason: string;
-          kind: string;
-          errorCount: number;
+          readonly partial: string;
+          readonly focusPath: string;
+          readonly blockId: string;
+          readonly sectionId: string;
+          readonly reason: string;
+          readonly kind: string;
+          readonly errorCount: number;
         } | null = null;
         let drainOnly = false;
         readLoop: while (true) {
-          let readResult: ReadableStreamReadResult<unknown>;
-          try {
-            readResult = await reader.read();
-          } catch (err) {
-            // Aborted reads surface as TypeError "The user aborted a request"
-            // or AbortError depending on runtime. Treat as end-of-stream.
-            const name = (err as { name?: string } | undefined)?.name;
-            if (name === "AbortError" || (err instanceof TypeError && /abort/i.test(String(err)))) {
-              break readLoop;
-            }
-            throw err;
-          }
-          const { done, value } = readResult;
+          // Any reader error here means the pipeline is done emitting —
+          // intentional abort (recovery dispatch) or a runtime-specific
+          // abort variant (AbortError, TypeError, etc.). Treat all as
+          // end-of-stream rather than discriminating by error shape.
+          const rRead = await exception2Result(() => reader.read());
+          if (rRead.isErr()) break readLoop;
+          const { done, value } = rRead.Ok();
           if (done) break readLoop;
           if (drainOnly) continue; // recovery already triggered; drain to EOF/abort.
           if (!isBlockEnd(value)) {
@@ -1427,16 +1421,17 @@ async function handleLlmResponse({
           return Result.Ok();
         }
         const nextAbort = new AbortController();
-        let nextRes: Response;
-        try {
-          nextRes = await vctx.llmRequest({ ...recReq.Ok(), headers: llmReq.headers }, { signal: nextAbort.signal });
-        } catch (err) {
+        const rNextRes = await exception2Result(() =>
+          vctx.llmRequest({ ...recReq.Ok(), headers: llmReq.headers }, { signal: nextAbort.signal })
+        );
+        if (rNextRes.isErr()) {
           recoveryLogger
             .Info()
-            .Any("event", { chatId: req.chatId, promptId, err: String(err) })
+            .Any("event", { chatId: req.chatId, promptId, err: String(rNextRes.Err()) })
             .Msg("recovery-call-failed");
           return Result.Ok();
         }
+        const nextRes = rNextRes.Ok();
         if (!nextRes.ok || !nextRes.body) {
           recoveryLogger
             .Info()
