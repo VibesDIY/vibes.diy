@@ -1297,8 +1297,10 @@ async function handleLlmResponse({
                   errorCount: applyResult.errors.length,
                 })
                 .Msg("recovery-start");
-              // TODO(continuation): abort upstream + continuation call lands here.
-              recoveryLogger.Info().Any("event", { chatId: req.chatId, promptId, blockId: closed.end.blockId }).Msg("recovery-end");
+              // TODO(continuation): abort upstream + continuation call lands
+              // here. `recovery-end` will be logged when that work actually
+              // has something to bracket — emitting it now would just be a
+              // synchronous noise pair after every recovery-start.
             } else {
               recoveryLogger
                 .Info()
