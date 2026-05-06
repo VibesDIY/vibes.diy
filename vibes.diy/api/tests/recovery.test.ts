@@ -135,7 +135,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       "```",
     ].join("\n");
 
-    it("appends the assistant partial as the last message", () => {
+    it("appends the partial as a user-role resume message (not assistant prefill)", () => {
       const r = buildRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
@@ -148,9 +148,13 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       expect(out.messages).toHaveLength(3);
       expect(out.messages[0].role).toBe("system");
       expect(out.messages[1].role).toBe("user");
-      expect(out.messages[2].role).toBe("assistant");
-      const assistantText = out.messages[2].content[0].type === "text" ? out.messages[2].content[0].text : "";
-      expect(assistantText).toBe(partial);
+      // The conversation must end with a user message — Bedrock-routed Claude
+      // rejects assistant-suffix conversations with 400.
+      expect(out.messages[2].role).toBe("user");
+      const lastText = out.messages[2].content[0].type === "text" ? out.messages[2].content[0].text : "";
+      expect(lastText).toContain("PARTIAL ASSISTANT OUTPUT");
+      expect(lastText).toContain(partial);
+      expect(lastText).toContain("Continue from where the partial output above stopped");
     });
 
     it("preserves the two-message shape when assistantPartial is omitted", () => {
