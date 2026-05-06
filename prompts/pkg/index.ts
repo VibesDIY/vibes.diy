@@ -5,6 +5,7 @@ export * from "./json-docs.js";
 // export * from "./txt-docs.js";
 export * from "./view-state.js";
 export * from "./style-prompts.js";
+export * from "./theme-catalog.js";
 export { parseContent } from "./segment-parser.js";
 
 // Explicitly export resolveEffectiveModel to ensure it's available

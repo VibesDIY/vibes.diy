@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeoMario — Theme Showcase</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: oklch(0.96 0.01 90);
+    --card-bg: oklch(1.00 0 0);
+    --text: oklch(0.15 0.02 280);
+    --border: oklch(0.15 0.02 280);
+    --accent: oklch(0.55 0.24 28);
+    --accent-light: oklch(0.55 0.24 28 / 0.1);
+    --muted: oklch(0.50 0.02 280);
+    --yellow: oklch(0.85 0.18 85);
+    --yellow-dark: oklch(0.75 0.16 85);
+    --green: oklch(0.62 0.19 145);
+    --blue: oklch(0.52 0.18 255);
+    --red: oklch(0.55 0.24 28);
+    --shadow: 4px 4px 0px var(--border);
+    --shadow-sm: 3px 3px 0px var(--border);
+    --radius: 4px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient grid */
+  .grid-bg {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(oklch(0.15 0.02 280 / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.15 0.02 280 / 0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Dynamic floating shapes */
+  .float-block {
+    position: fixed; border: 3px solid var(--border); pointer-events: none; z-index: 0;
+  }
+  .float-block-1 {
+    width: 80px; height: 80px; background: var(--yellow); top: 6%; right: 8%;
+    animation: drift-spin-1 8s ease-in-out infinite;
+    opacity: 0.3;
+  }
+  .float-block-2 {
+    width: 45px; height: 45px; background: var(--red); bottom: 15%; left: 5%;
+    border-radius: 50%;
+    animation: drift-bounce 6s ease-in-out infinite;
+    opacity: 0.25;
+  }
+  .float-block-3 {
+    width: 60px; height: 60px; background: var(--green); top: 50%; right: 4%;
+    animation: drift-spin-2 10s linear infinite;
+    opacity: 0.2;
+  }
+  .float-block-4 {
+    width: 35px; height: 35px; background: var(--blue); top: 20%; left: 6%;
+    animation: drift-diagonal 7s ease-in-out infinite;
+    opacity: 0.25;
+  }
+  .float-block-5 {
+    width: 55px; height: 55px; background: var(--yellow); bottom: 25%; right: 12%;
+    border-radius: 50%;
+    animation: drift-spin-1 9s ease-in-out infinite reverse;
+    opacity: 0.2;
+  }
+  .float-block-6 {
+    width: 25px; height: 25px; background: var(--red); top: 70%; left: 10%;
+    animation: drift-zigzag 5s ease-in-out infinite;
+    opacity: 0.3;
+  }
+  .float-block-7 {
+    width: 70px; height: 70px; background: var(--green); top: 10%; left: 15%;
+    border-radius: 50%;
+    animation: drift-pulse 8s ease-in-out infinite;
+    opacity: 0.15;
+  }
+  .float-block-8 {
+    width: 40px; height: 40px; background: var(--blue); bottom: 8%; right: 20%;
+    animation: drift-spin-2 6s linear infinite reverse;
+    opacity: 0.2;
+  }
+  /* Cross shape */
+  .float-cross {
+    position: fixed; pointer-events: none; z-index: 0;
+    width: 40px; height: 40px;
+  }
+  .float-cross::before, .float-cross::after {
+    content: ''; position: absolute; background: var(--border);
+  }
+  .float-cross::before {
+    width: 100%; height: 10px; top: 50%; left: 0; transform: translateY(-50%);
+  }
+  .float-cross::after {
+    width: 10px; height: 100%; left: 50%; top: 0; transform: translateX(-50%);
+  }
+  .float-cross-1 {
+    top: 35%; left: 3%;
+    animation: drift-spin-2 12s linear infinite;
+    opacity: 0.12;
+  }
+  .float-cross-2 {
+    bottom: 40%; right: 6%;
+    animation: drift-spin-2 9s linear infinite reverse;
+    opacity: 0.1;
+  }
+  /* Diamond shape */
+  .float-diamond {
+    position: fixed; pointer-events: none; z-index: 0;
+    width: 30px; height: 30px; background: var(--yellow);
+    border: 3px solid var(--border);
+    transform: rotate(45deg);
+  }
+  .float-diamond-1 {
+    top: 80%; left: 20%;
+    animation: drift-diamond 7s ease-in-out infinite;
+    opacity: 0.2;
+  }
+  .float-diamond-2 {
+    top: 15%; right: 25%;
+    animation: drift-diamond 10s ease-in-out infinite reverse;
+    opacity: 0.15;
+  }
+
+  @keyframes drift-spin-1 {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-20px, 30px) rotate(90deg); }
+    50% { transform: translate(10px, 50px) rotate(180deg); }
+    75% { transform: translate(-30px, 20px) rotate(270deg); }
+    100% { transform: translate(0, 0) rotate(360deg); }
+  }
+  @keyframes drift-spin-2 {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes drift-bounce {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(15px, -25px) scale(1.15); }
+    50% { transform: translate(-10px, -40px) scale(0.9); }
+    75% { transform: translate(20px, -15px) scale(1.1); }
+  }
+  @keyframes drift-diagonal {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    33% { transform: translate(25px, -35px) rotate(120deg); }
+    66% { transform: translate(-15px, -60px) rotate(240deg); }
+  }
+  @keyframes drift-zigzag {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(30px, -10px) rotate(72deg); }
+    40% { transform: translate(-10px, -30px) rotate(144deg); }
+    60% { transform: translate(25px, -50px) rotate(216deg); }
+    80% { transform: translate(-15px, -20px) rotate(288deg); }
+  }
+  @keyframes drift-pulse {
+    0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.15; }
+    50% { transform: scale(1.3) translate(20px, 30px); opacity: 0.25; }
+  }
+  @keyframes drift-diamond {
+    0%, 100% { transform: rotate(45deg) translate(0, 0); }
+    25% { transform: rotate(45deg) translate(20px, -30px) scale(1.2); }
+    50% { transform: rotate(135deg) translate(-10px, -50px); }
+    75% { transform: rotate(45deg) translate(15px, -20px) scale(0.8); }
+  }
+
+  .layout { max-width: 920px; margin: 0 auto; padding: 3rem 2rem; position: relative; z-index: 10; }
+
+  /* Nav */
+  .nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 2.5rem; padding: 1rem 1.25rem;
+    background: var(--card-bg); border: 3px solid var(--border);
+    box-shadow: var(--shadow); border-radius: var(--radius);
+  }
+  .nav-logo {
+    font-weight: 700; font-size: 1.1rem; text-transform: uppercase;
+    letter-spacing: 0.04em; display: flex; align-items: center; gap: 0.6rem;
+  }
+  .nav-logo-blocks {
+    display: flex; gap: 3px;
+  }
+  .nav-logo-blocks span {
+    width: 12px; height: 12px; border: 2px solid var(--border); display: block;
+  }
+  .nav-logo-blocks span:nth-child(1) { background: var(--red); }
+  .nav-logo-blocks span:nth-child(2) { background: var(--yellow); }
+  .nav-logo-blocks span:nth-child(3) { background: var(--green); }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.85rem; background: var(--green);
+    border: 2px solid var(--border); border-radius: var(--radius);
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .status-dot {
+    width: 7px; height: 7px; background: var(--border); border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .nav-links { display: flex; gap: 0.25rem; }
+  .nav-link {
+    padding: 0.4rem 0.85rem; font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    border: 2px solid var(--border); background: var(--card-bg);
+    cursor: pointer; transition: all 0.15s; border-radius: var(--radius);
+  }
+  .nav-link:hover { background: var(--yellow); box-shadow: var(--shadow-sm); transform: translate(-1px, -1px); }
+
+  /* Section label */
+  .section-label {
+    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em;
+    font-weight: 700; color: var(--muted); margin-bottom: 0.6rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 2px; background: var(--border); opacity: 0.15;
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center; margin-bottom: 2.5rem;
+    background: var(--card-bg); border: 3px solid var(--border);
+    box-shadow: var(--shadow); border-radius: var(--radius);
+    padding: 2.5rem 2rem 2rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-accent-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg, var(--red) 25%, var(--yellow) 25%, var(--yellow) 50%, var(--green) 50%, var(--green) 75%, var(--blue) 75%);
+  }
+  .hero-text {
+    font-size: clamp(2.8rem, 8vw, 5rem); font-weight: 700; line-height: 0.95;
+    text-transform: uppercase; letter-spacing: -0.02em;
+    position: relative; display: inline-block;
+  }
+  .hero-text-shadow {
+    position: absolute; top: 5px; left: 5px; color: var(--red); z-index: -1;
+    font-size: clamp(2.8rem, 8vw, 5rem); font-weight: 700; line-height: 0.95;
+    text-transform: uppercase; letter-spacing: -0.02em; opacity: 0.5;
+  }
+  .hero-sub {
+    color: var(--muted); font-size: 0.9rem; margin-top: 0.75rem; font-weight: 500;
+  }
+  .hero-tag {
+    display: inline-block; margin-top: 1rem;
+    font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--muted);
+    padding: 0.35rem 0.85rem; border: 2px solid var(--border);
+    border-radius: var(--radius); background: var(--bg);
+  }
+
+  /* Stat cards row */
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  @media (max-width: 700px) { .stat-row { grid-template-columns: 1fr 1fr; } }
+  .stat-card {
+    background: var(--card-bg); border: 3px solid var(--border);
+    box-shadow: var(--shadow); border-radius: var(--radius);
+    overflow: hidden; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .stat-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--border); }
+  .stat-header {
+    padding: 0.5rem 0.85rem; font-size: 0.6rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    border-bottom: 3px solid var(--border);
+  }
+  .stat-card:nth-child(1) .stat-header { background: var(--red); color: white; }
+  .stat-card:nth-child(2) .stat-header { background: var(--yellow); }
+  .stat-card:nth-child(3) .stat-header { background: var(--blue); color: white; }
+  .stat-card:nth-child(4) .stat-header { background: var(--green); }
+  .stat-body {
+    padding: 0.85rem; display: flex; align-items: baseline; gap: 0.4rem;
+  }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 700;
+  }
+  .stat-unit { font-size: 0.7rem; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+
+  /* Glass card — neobrutalist version */
+  .card {
+    background: var(--card-bg); border: 3px solid var(--border);
+    box-shadow: var(--shadow); border-radius: var(--radius);
+    padding: 1.5rem; margin-bottom: 1.5rem; position: relative;
+  }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 700px) { .card-grid { grid-template-columns: 1fr; } }
+
+  /* Table */
+  .card.table-card { padding: 0; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; font-size: 0.6rem; text-transform: uppercase;
+    letter-spacing: 0.1em; font-weight: 700; padding: 0.65rem 1rem;
+    border-bottom: 2px solid var(--border); background: oklch(0.96 0.01 90);
+  }
+  td {
+    padding: 0.65rem 1rem; font-size: 0.82rem;
+    border-bottom: 1px solid oklch(0.15 0.02 280 / 0.1);
+  }
+  td:nth-child(3), td:nth-child(4) { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+  tr:hover td { background: var(--yellow); transition: background 0.1s; }
+  .badge {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    padding: 0.15rem 0.55rem; border: 2px solid var(--border);
+    border-radius: var(--radius); display: inline-block;
+  }
+  .badge-active { background: var(--green); }
+  .badge-pending { background: var(--yellow); }
+  .badge-locked { background: oklch(0.90 0.01 280); }
+
+  /* Form */
+  .form-group { margin-bottom: 1rem; }
+  label {
+    display: block; font-size: 0.65rem; text-transform: uppercase;
+    letter-spacing: 0.1em; font-weight: 700; margin-bottom: 0.35rem;
+  }
+  input[type="text"], select {
+    width: 100%; padding: 0.65rem 0.85rem;
+    background: var(--card-bg); border: 3px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem;
+    outline: none; transition: box-shadow 0.15s, transform 0.15s;
+  }
+  input[type="text"]:focus, select:focus {
+    box-shadow: var(--shadow); transform: translate(-2px, -2px);
+  }
+  input[type="text"]::placeholder { color: var(--muted); }
+  select {
+    cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23222' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 0.85rem center;
+  }
+
+  /* Checkbox */
+  .check-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.65rem; cursor: pointer; }
+  .check-box {
+    width: 22px; height: 22px; border: 3px solid var(--border);
+    border-radius: var(--radius); display: grid; place-items: center; flex-shrink: 0;
+    transition: all 0.15s; background: var(--card-bg);
+  }
+  .check-box.checked { background: var(--green); box-shadow: 2px 2px 0px var(--border); }
+  .check-box svg { opacity: 0; transition: opacity 0.1s; }
+  .check-box.checked svg { opacity: 1; }
+  .check-label { font-size: 0.82rem; font-weight: 500; }
+
+  /* Toggle */
+  .toggle-row { display: flex; align-items: center; gap: 0.65rem; margin-top: 0.85rem; cursor: pointer; }
+  .toggle-track {
+    width: 48px; height: 26px; border-radius: 4px;
+    background: oklch(0.90 0.01 280); border: 3px solid var(--border);
+    position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .toggle-track.on { background: var(--yellow); }
+  .toggle-knob {
+    width: 16px; height: 16px; border-radius: 2px;
+    background: var(--card-bg); border: 2px solid var(--border);
+    position: absolute; top: 2px; left: 2px;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .toggle-track.on .toggle-knob { transform: translateX(22px); background: var(--card-bg); }
+
+  /* Buttons */
+  .btn-primary {
+    padding: 0.75rem 1.5rem; background: var(--red); color: white;
+    border: 3px solid var(--border); border-radius: var(--radius);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; cursor: pointer;
+    box-shadow: var(--shadow); transition: all 0.15s;
+  }
+  .btn-primary:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--border); }
+  .btn-primary:active { transform: translate(2px, 2px); box-shadow: none; }
+  .btn-secondary {
+    padding: 0.65rem 1.25rem; background: var(--yellow);
+    color: var(--text); border: 3px solid var(--border);
+    border-radius: var(--radius); font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+    cursor: pointer; box-shadow: var(--shadow-sm); transition: all 0.15s;
+  }
+  .btn-secondary:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px var(--border); }
+  .btn-secondary:active { transform: translate(2px, 2px); box-shadow: none; }
+  .btn-ghost {
+    padding: 0.65rem 1.25rem; background: var(--card-bg);
+    color: var(--text); border: 3px solid var(--border);
+    border-radius: var(--radius); font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover { background: oklch(0.94 0.01 90); box-shadow: var(--shadow-sm); transform: translate(-1px, -1px); }
+
+  /* Progress bar */
+  .progress-track {
+    width: 100%; height: 24px; background: oklch(0.92 0.01 90);
+    border: 3px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; position: relative;
+  }
+  .progress-fill {
+    height: 100%; background: repeating-linear-gradient(
+      -45deg, var(--green), var(--green) 8px,
+      oklch(0.68 0.19 145) 8px, oklch(0.68 0.19 145) 16px
+    );
+    transition: width 0.6s ease; position: relative;
+  }
+  .progress-fill::after {
+    content: attr(data-value); position: absolute; right: 8px; top: 50%;
+    transform: translateY(-50%); font-size: 0.65rem; font-weight: 700;
+    color: var(--text);
+  }
+
+  /* Tags */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+  .tag {
+    padding: 0.3rem 0.7rem; font-size: 0.65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    border: 2px solid var(--border); border-radius: var(--radius);
+    cursor: default; transition: all 0.15s;
+  }
+  .tag:hover { transform: translate(-1px, -1px); box-shadow: 2px 2px 0px var(--border); }
+  .tag-red { background: var(--red); color: white; }
+  .tag-yellow { background: var(--yellow); }
+  .tag-blue { background: var(--blue); color: white; }
+  .tag-green { background: var(--green); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: oklch(0.15 0.02 280 / 0.6);
+    display: none; place-items: center; z-index: 1000;
+  }
+  .modal-overlay.open { display: grid; }
+  .modal {
+    background: var(--card-bg); border: 3px solid var(--border);
+    box-shadow: 8px 8px 0px var(--border); border-radius: var(--radius);
+    padding: 2rem; width: 90%; max-width: 440px;
+    animation: modal-pop 0.2s ease;
+  }
+  @keyframes modal-pop { from { opacity: 0; transform: scale(0.95) translateY(10px); } }
+  .modal-bar {
+    background: var(--blue); color: white; margin: -2rem -2rem 1.5rem -2rem;
+    padding: 0.75rem 1.25rem; border-bottom: 3px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .modal h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase; }
+  .modal p { color: var(--muted); font-size: 0.82rem; line-height: 1.6; margin-bottom: 1.5rem; }
+  .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+
+  /* Divider */
+  .divider {
+    border: none; border-top: 3px solid var(--border); margin: 1.5rem 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .nav { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+    .nav-links { width: 100%; }
+    .stat-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <!-- Dynamic floating shapes -->
+  <div class="float-block float-block-1"></div>
+  <div class="float-block float-block-2"></div>
+  <div class="float-block float-block-3"></div>
+  <div class="float-block float-block-4"></div>
+  <div class="float-block float-block-5"></div>
+  <div class="float-block float-block-6"></div>
+  <div class="float-block float-block-7"></div>
+  <div class="float-block float-block-8"></div>
+  <div class="float-cross float-cross-1"></div>
+  <div class="float-cross float-cross-2"></div>
+  <div class="float-diamond float-diamond-1"></div>
+  <div class="float-diamond float-diamond-2"></div>
+
+  <div class="layout">
+    <!-- Nav -->
+    <nav class="nav">
+      <div class="nav-logo">
+        <div class="nav-logo-blocks"><span></span><span></span><span></span></div>
+        NeoMario
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div class="nav-links">
+          <div class="nav-link">Dashboard</div>
+          <div class="nav-link">Library</div>
+          <div class="nav-link">Settings</div>
+        </div>
+        <div class="status-badge">
+          <div class="status-dot"></div>
+          Online
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-accent-bar"></div>
+      <h1 class="hero-text">
+        <span class="hero-text-shadow" aria-hidden="true">Level Dashboard</span>
+        Level Dashboard
+      </h1>
+      <p class="hero-sub">Neobrutalist design system — hard edges, vivid blocks, unapologetically bold</p>
+      <span class="hero-tag">System v2.1 — Active</span>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="section-label">Live Metrics</div>
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-header">Power-Ups</div>
+        <div class="stat-body">
+          <span class="stat-value">243</span>
+          <span class="stat-unit">collected</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">Coins</div>
+        <div class="stat-body">
+          <span class="stat-value">1,500</span>
+          <span class="stat-unit">earned</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">Time Left</div>
+        <div class="stat-body">
+          <span class="stat-value">180</span>
+          <span class="stat-unit">seconds</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">Level</div>
+        <div class="stat-body">
+          <span class="stat-value">2-1</span>
+          <span class="stat-unit">world</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="section-label">Recent Activity</div>
+    <div class="card table-card">
+      <table>
+        <thead>
+          <tr><th>Event</th><th>Quantity</th><th>User</th><th>Value</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Item Found</td><td>1</td><td>user_a</td><td>+50</td><td><span class="badge badge-active">Active</span></td></tr>
+          <tr><td>Coin Deposit</td><td>100</td><td>user_b</td><td>+100</td><td><span class="badge badge-active">Active</span></td></tr>
+          <tr><td>Coin Deposit</td><td>100</td><td>user_a</td><td>+100</td><td><span class="badge badge-locked">Complete</span></td></tr>
+          <tr><td>Item Found</td><td>1</td><td>user_a</td><td>+75</td><td><span class="badge badge-active">Active</span></td></tr>
+          <tr><td>Bonus Claim</td><td>3</td><td>user_c</td><td>+250</td><td><span class="badge badge-pending">Pending</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Form + Controls -->
+    <div class="card-grid">
+      <div class="card">
+        <div class="section-label">Transfer</div>
+        <div class="form-group">
+          <label>Recipient</label>
+          <input type="text" placeholder="Enter address...">
+        </div>
+        <div class="form-group">
+          <label>Asset Type</label>
+          <select>
+            <option>Gold Coins (GC)</option>
+            <option>Power Stars (PS)</option>
+            <option>Fire Tokens (FT)</option>
+            <option>Shell Credits (SC)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Progress</label>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:72%" data-value="72%"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;margin-top:0.25rem;">
+          <button class="btn-primary" onclick="document.getElementById('modal').classList.add('open')">Execute</button>
+          <button class="btn-secondary">Preview</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Configuration</div>
+        <div class="check-row" onclick="this.querySelector('.check-box').classList.toggle('checked')">
+          <div class="check-box checked"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></div>
+          <span class="check-label">Two-factor auth</span>
+        </div>
+        <div class="check-row" onclick="this.querySelector('.check-box').classList.toggle('checked')">
+          <div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></div>
+          <span class="check-label">Notifications</span>
+        </div>
+        <div class="check-row" onclick="this.querySelector('.check-box').classList.toggle('checked')">
+          <div class="check-box checked"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></div>
+          <span class="check-label">Withdrawal limits</span>
+        </div>
+
+        <div style="margin-top:1rem;border-top:3px solid var(--border);padding-top:1rem;">
+          <div class="toggle-row" onclick="this.querySelector('.toggle-track').classList.toggle('on')">
+            <div class="toggle-track on"><div class="toggle-knob"></div></div>
+            <span class="check-label">Auto-compound</span>
+          </div>
+          <div class="toggle-row" onclick="this.querySelector('.toggle-track').classList.toggle('on')">
+            <div class="toggle-track"><div class="toggle-knob"></div></div>
+            <span class="check-label">Stealth mode</span>
+          </div>
+        </div>
+
+        <div class="tag-row">
+          <span class="tag tag-red">Priority</span>
+          <span class="tag tag-yellow">Queued</span>
+          <span class="tag tag-blue">System</span>
+          <span class="tag tag-green">Ready</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extra buttons row -->
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <span style="font-weight:700;text-transform:uppercase;font-size:0.85rem;">Actions</span>
+        <span style="color:var(--muted);font-size:0.78rem;margin-left:0.5rem;">Choose an operation</span>
+      </div>
+      <div style="display:flex;gap:0.65rem;flex-wrap:wrap;">
+        <button class="btn-primary">Start Level</button>
+        <button class="btn-secondary">View Achievements</button>
+        <button class="btn-ghost">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modal">
+      <div class="modal-bar">Confirm Action</div>
+      <h2>Execute Transfer</h2>
+      <p>This neobrutalist theme uses thick borders, hard drop shadows, vivid primary color blocks, and bold uppercase typography to create a raw, modern interface inspired by retro-game energy without any direct references.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" onclick="document.getElementById('modal').classList.remove('open')">Cancel</button>
+        <button class="btn-primary" onclick="document.getElementById('modal').classList.remove('open')">Confirm</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
