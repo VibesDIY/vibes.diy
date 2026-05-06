@@ -1,5 +1,12 @@
 import { Result } from "@adviser/cement";
-import { type ChatMessage, type LLMRequest } from "@vibes.diy/call-ai-v2";
+import {
+  type ChatMessage,
+  type CodeBeginMsg,
+  type CodeEndMsg,
+  type CodeLineMsg,
+  type CodeTruncatedMsg,
+  type LLMRequest,
+} from "@vibes.diy/call-ai-v2";
 
 // Pure helpers for the apply-error recovery orchestrator. The wire-level
 // orchestration (abort upstream + splice continuation events) lives in
@@ -164,4 +171,37 @@ export function updateRecoveryCounter(counter: RecoveryCounter, outcome: { reado
 // Default budget: 3 consecutive fruitless recoveries before giving up.
 export function shouldAttemptRecovery(counter: RecoveryCounter, budget: RecoveryBudget = { maxConsecutiveFruitless: 3 }): boolean {
   return counter.consecutiveFruitless < budget.maxConsecutiveFruitless;
+}
+
+// Construct the wire event the orchestrator emits IN PLACE OF a failed
+// block.code.end. Pure, deterministic, and testable in isolation — the
+// orchestrator just builds it and hands it to appendBlockEvent.
+//
+// Inputs are split so there's no "non-empty array" type gymnastics: the
+// orchestrator extracts the first error and the count separately.
+export interface BuildTruncatedEventInput {
+  readonly closed: { readonly begin: CodeBeginMsg; readonly lines: readonly CodeLineMsg[]; readonly end: CodeEndMsg };
+  readonly firstError: { readonly reason: string; readonly kind: string };
+  readonly errorCount: number;
+  readonly promptId: string;
+  readonly blockSeq: number;
+  readonly now: Date;
+}
+export function buildTruncatedEvent(input: BuildTruncatedEventInput): CodeTruncatedMsg {
+  const { closed, firstError, errorCount, promptId, blockSeq, now } = input;
+  return {
+    type: "block.code.truncated",
+    blockId: closed.end.blockId,
+    streamId: promptId,
+    sectionId: closed.end.sectionId,
+    seq: blockSeq,
+    blockNr: closed.end.blockNr,
+    lang: closed.begin.lang,
+    ...(closed.begin.path !== undefined ? { path: closed.begin.path } : {}),
+    reason: firstError.reason,
+    kind: firstError.kind,
+    truncatedAtLine: closed.lines.length,
+    errorCount,
+    timestamp: now,
+  };
 }
