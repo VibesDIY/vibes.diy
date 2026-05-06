@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from "react";
+import React, { memo, useEffect, useRef } from "react";
 // import type { ChatMessageDocument, ViewType } from "@vibes.diy/prompts";
 import { PromptBlock } from "../routes/chat/chat.$userSlug.$appSlug.js";
 import {
@@ -38,9 +38,112 @@ interface MessageListProps {
   // navigateToView: (view: ViewType) => void;
 }
 
+// Chat debug surface — three ways to inspect runtime evolution of the
+// rendered chat without giving the frontend its own state machine:
+//   1. data-* attributes on every bubble (chatId, promptId, sectionId,
+//      blockId, blockSeq, message-role, render-seq) → readable via
+//      Chrome MCP take_snapshot.
+//   2. console.log("[chat-debug]", { component, renderSeq, ...ctx }) on
+//      mount + every prop change → readable via Chrome MCP
+//      list_console_messages.
+//   3. window.__chatDebug ring buffer with the last 1000 events →
+//      readable via Chrome MCP evaluate_script. Survives across
+//      re-renders so you can dump after the fact.
+// The frontend never *changes* state from this — it only reflects the
+// backend events that flowed through. If something looks wrong here,
+// the bug is in the backend or the wire.
+interface ChatDebugEvent {
+  readonly component: string;
+  readonly renderSeq: number;
+  readonly at: string;
+  readonly [k: string]: unknown;
+}
+interface ChatDebugApi {
+  readonly buffer: ChatDebugEvent[];
+  readonly capacity: number;
+  push(event: ChatDebugEvent): void;
+  tail(n?: number): ChatDebugEvent[];
+  filter(pred: (e: ChatDebugEvent) => boolean): ChatDebugEvent[];
+  bySectionId(sectionId: string): ChatDebugEvent[];
+  byPromptId(promptId: string): ChatDebugEvent[];
+  clear(): void;
+  dump(): ChatDebugEvent[];
+}
+function installChatDebug(): ChatDebugApi {
+  const w = globalThis as unknown as { __chatDebug?: ChatDebugApi };
+  if (w.__chatDebug) return w.__chatDebug;
+  const capacity = 1000;
+  const buffer: ChatDebugEvent[] = [];
+  const api: ChatDebugApi = {
+    buffer,
+    capacity,
+    push(event) {
+      buffer.push(event);
+      if (buffer.length > capacity) buffer.splice(0, buffer.length - capacity);
+    },
+    tail(n = 20) {
+      return buffer.slice(-n);
+    },
+    filter(pred) {
+      return buffer.filter(pred);
+    },
+    bySectionId(sectionId) {
+      return buffer.filter((e) => e.sectionId === sectionId);
+    },
+    byPromptId(promptId) {
+      return buffer.filter((e) => e.promptId === promptId);
+    },
+    clear() {
+      buffer.splice(0, buffer.length);
+    },
+    dump() {
+      return [...buffer];
+    },
+  };
+  w.__chatDebug = api;
+  return api;
+}
+const chatDebug = installChatDebug();
+
+function useChatDebug(component: string, ctx: Record<string, unknown>): number {
+  const renderSeq = useRef(0);
+  renderSeq.current += 1;
+  useEffect(() => {
+    const event: ChatDebugEvent = {
+      component,
+      renderSeq: renderSeq.current,
+      at: new Date().toISOString(),
+      ...ctx,
+    };
+    chatDebug.push(event);
+    // eslint-disable-next-line no-console
+    console.log("[chat-debug]", event);
+    // ctx is a fresh object each render; deps below capture its values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [component, JSON.stringify(ctx)]);
+  return renderSeq.current;
+}
+
 function TopLevelMsg({ lines, begin }: { begin: ToplevelBeginMsg; lines: LineMsg[] }) {
+  const renderSeq = useChatDebug("TopLevelMsg", {
+    sectionId: begin.sectionId,
+    blockId: begin.blockId,
+    streamId: begin.streamId,
+    seq: begin.seq,
+    blockNr: begin.blockNr,
+    lineCount: lines.length,
+  });
   return (
-    <div className="mb-4 flex flex-row justify-end px-4" key={begin.sectionId}>
+    <div
+      className="mb-4 flex flex-row justify-end px-4"
+      key={begin.sectionId}
+      data-message-role="narration"
+      data-section-id={begin.sectionId}
+      data-block-id={begin.blockId}
+      data-prompt-id={begin.streamId}
+      data-block-seq={begin.seq}
+      data-render-seq={renderSeq}
+    >
       <BrutalistCard size="md" messageType="ai" className="mr-8 max-w-[85%]" style={{ fontSize: "0.8rem" }}>
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
           <ReactMarkdown>{lines.map((i) => i.line).join("\n")}</ReactMarkdown>
@@ -51,8 +154,15 @@ function TopLevelMsg({ lines, begin }: { begin: ToplevelBeginMsg; lines: LineMsg
 }
 
 function Prompt({ msg }: { msg: PromptReq }) {
+  const renderSeq = useChatDebug("Prompt", { streamId: msg.streamId });
   return (
-    <div className="mb-4 flex flex-row justify-end px-4" key={msg.streamId}>
+    <div
+      className="mb-4 flex flex-row justify-end px-4"
+      key={msg.streamId}
+      data-message-role="user-prompt"
+      data-prompt-id={msg.streamId}
+      data-render-seq={renderSeq}
+    >
       <BrutalistCard size="md" messageType="user" className="max-w-[85%]" style={{ fontSize: "0.8rem" }}>
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
           <ReactMarkdown>
@@ -71,8 +181,15 @@ function Prompt({ msg }: { msg: PromptReq }) {
 }
 
 function PromptErrorMsg({ msg, onRetry }: { msg: PromptError; onRetry?: (msg: PromptError) => void }) {
+  const renderSeq = useChatDebug("PromptErrorMsg", { streamId: msg.streamId, error: msg.error });
   return (
-    <div className="mb-4 flex flex-row justify-end px-4" key={msg.streamId}>
+    <div
+      className="mb-4 flex flex-row justify-end px-4"
+      key={msg.streamId}
+      data-message-role="prompt-error"
+      data-prompt-id={msg.streamId}
+      data-render-seq={renderSeq}
+    >
       <BrutalistCard size="md" messageType="user" className="max-w-[85%]" style={{ fontSize: "0.8rem" }}>
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
           {`Error: ${msg.error}`}
@@ -92,9 +209,32 @@ function PromptErrorMsg({ msg, onRetry }: { msg: PromptError; onRetry?: (msg: Pr
 
 function CodeMsg({ lines, begin, end, onClick }: { begin: CodeBeginMsg; lines: LineMsg[]; end?: CodeEndMsg; onClick: () => void }) {
   const codeReady = !!end;
+  const renderSeq = useChatDebug("CodeMsg", {
+    sectionId: begin.sectionId,
+    blockId: begin.blockId,
+    streamId: begin.streamId,
+    seq: begin.seq,
+    blockNr: begin.blockNr,
+    lang: begin.lang,
+    path: begin.path,
+    lineCount: lines.length,
+    codeReady,
+  });
 
   return (
-    <div className="mb-4 flex flex-row justify-start px-4" key={begin.sectionId}>
+    <div
+      className="mb-4 flex flex-row justify-start px-4"
+      key={begin.sectionId}
+      data-message-role="code"
+      data-section-id={begin.sectionId}
+      data-block-id={begin.blockId}
+      data-prompt-id={begin.streamId}
+      data-block-seq={begin.seq}
+      data-block-nr={begin.blockNr}
+      data-code-ready={codeReady ? "true" : "false"}
+      data-line-count={lines.length}
+      data-render-seq={renderSeq}
+    >
       <div className="max-w-[85%]">
         <BrutalistCard
           size="sm"
@@ -339,9 +479,17 @@ function MessageList({
           break;
         case isBlockEnd(msg):
           if (!hasPromptReq && blockMsgs.some((b) => b.type === "Code")) {
-            const label = agentSavedBlockIds?.has(msg.blockId) ? "Agent saved code" : "User edited code";
+            const isAgentSaved = agentSavedBlockIds?.has(msg.blockId) ?? false;
+            const label = isAgentSaved ? "Agent saved code" : "User edited code";
             acc.push(
-              <div key={`edited-${msg.blockId}`} className="mx-4 text-sm italic text-gray-400 dark:text-gray-500">
+              <div
+                key={`edited-${msg.blockId}`}
+                className="mx-4 text-sm italic text-gray-400 dark:text-gray-500"
+                data-message-role={isAgentSaved ? "agent-saved" : "user-edited"}
+                data-block-id={msg.blockId}
+                data-prompt-id={msg.streamId}
+                data-block-seq={msg.seq}
+              >
                 {label}
               </div>
             );
@@ -428,7 +576,7 @@ function MessageList({
   // console.log("Render-React-C", messageElements.length)
 
   return (
-    <div className="flex-1" key={chatId}>
+    <div className="flex-1" key={chatId} data-chat-id={chatId} data-chat-message-count={messageElements.length}>
       <div className="mx-auto flex min-h-full max-w-5xl flex-col py-4">
         <div className="flex flex-col space-y-4">{messageElements}</div>
       </div>
