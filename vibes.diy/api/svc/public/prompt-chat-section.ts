@@ -77,6 +77,7 @@ import {
   isBlockStreamMsg,
   isBlockImage,
   CodeEndMsg,
+  CodeTruncatedMsg,
   BlockBeginMsg,
   type ApplyEditsError,
   type DeltaStreamMsg,
@@ -87,7 +88,13 @@ import { getRecoveryAddendum, makeBaseSystemPrompt, resolveEffectiveModel } from
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
-import { buildRecoveryRequest, shouldAttemptRecovery, updateRecoveryCounter, type RecoveryCounter } from "../intern/recovery.js";
+import {
+  buildRecoveryRequest,
+  buildTruncatedEvent,
+  shouldAttemptRecovery,
+  updateRecoveryCounter,
+  type RecoveryCounter,
+} from "../intern/recovery.js";
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
 // files (system-prompt.md, llms/*.md) from the worker's `/vibe-pkg/`
@@ -1305,6 +1312,53 @@ async function handleLlmResponse({
             collectedMsgs.push(value);
             const closed = blockAcc.ingest(value);
             const applyResult = closed ? streamingResolver.observeBlock(closed) : undefined;
+            const isFailedCodeEnd = closed !== undefined && applyResult !== undefined && applyResult.errors.length > 0;
+
+            if (isFailedCodeEnd) {
+              // Suppress the failed block.code.end and emit block.code.truncated
+              // in its place. Wire then reads `begin, line, …, truncated` (no
+              // end) for this block. Live consumers treat truncate as the
+              // closure event; old clients (which ignore unknown types) see an
+              // orphaned begin/lines stream until the next block arrives —
+              // same final state since handleEndMsg never persists this block.
+              const first = applyResult.errors[0];
+              const truncateEvt = buildTruncatedEvent({
+                closed,
+                firstError: first,
+                errorCount: applyResult.errors.length,
+                promptId,
+                blockSeq,
+                now: new Date(),
+              });
+              const r = await appendBlockEvent({
+                ctx,
+                vctx,
+                req,
+                promptId,
+                blockSeq: blockSeq++,
+                evt: truncateEvt,
+                emitMode: "emit-only",
+              });
+              if (r.isErr()) {
+                return Result.Err(r);
+              }
+              recoverHint = {
+                partial: partialBuffer.text.slice(0, partialBuffer.safeCut),
+                focusPath: applyResult.path,
+                blockId: closed.end.blockId,
+                sectionId: closed.end.sectionId,
+                reason: first.reason,
+                kind: first.kind,
+                errorCount: applyResult.errors.length,
+              };
+              // Abort upstream so the body stream wraps up; we'll loop and
+              // dispatch the continuation after updating the counter and
+              // checking the budget. Drain until reader EOF, skip events.
+              currentAbort.abort();
+              drainOnly = true;
+              continue;
+            }
+
             const r = await appendBlockEvent({
               ctx,
               vctx,
@@ -1317,29 +1371,11 @@ async function handleLlmResponse({
             if (r.isErr()) {
               return Result.Err(r);
             }
-            if (applyResult !== undefined && closed !== undefined) {
-              if (applyResult.errors.length === 0) {
-                // Clean code.end — advance safe cut so the partial captured
-                // up to here is a valid handoff for any later recovery.
-                partialBuffer.safeCut = partialBuffer.text.length;
-                streamMadeProgress = true;
-              } else {
-                const first = applyResult.errors[0];
-                recoverHint = {
-                  partial: partialBuffer.text.slice(0, partialBuffer.safeCut),
-                  focusPath: applyResult.path,
-                  blockId: closed.end.blockId,
-                  sectionId: closed.end.sectionId,
-                  reason: first.reason,
-                  kind: first.kind,
-                  errorCount: applyResult.errors.length,
-                };
-                // Abort upstream so the body stream wraps up; we'll loop and
-                // dispatch the continuation after updating the counter and
-                // checking the budget. Drain until reader EOF, skip events.
-                currentAbort.abort();
-                drainOnly = true;
-              }
+            if (closed !== undefined && applyResult !== undefined && applyResult.errors.length === 0) {
+              // Clean code.end — advance safe cut so the partial captured
+              // up to here is a valid handoff for any later recovery.
+              partialBuffer.safeCut = partialBuffer.text.length;
+              streamMadeProgress = true;
             }
           } else {
             collectedMsgs.push(value);
