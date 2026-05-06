@@ -350,6 +350,7 @@ export function ExpandedVibesPill({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onPointerLeave={handlePointerUp}
+      onPointerMove={handlePointerUp}
     >
       {/* Bubble tray — sits behind/beside the pill */}
       <div
