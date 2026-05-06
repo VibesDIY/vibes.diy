@@ -130,6 +130,25 @@ export const CodeEndMsg = type({
   .and(BlockBase)
   .and(BlockStatsBox);
 
+// Code-block truncate event. Emitted by the server in place of the failed
+// block.code.end when streamingResolver detects an apply error mid-stream.
+// Live consumers (web UI, CLI) treat this as the closure event for the
+// block — accumulator is dropped, no edit is applied, no end event will
+// arrive for the same blockId. Wire-additive: clients that don't know
+// the type ignore it (the orchestrator simply doesn't forward the failed
+// code.end either, so old clients see an orphaned begin/lines stream
+// that's resolved when the next block arrives).
+export const CodeTruncatedMsg = type({
+  type: "'block.code.truncated'",
+  sectionId: "string",
+  lang: "string",
+  "path?": "string",
+  reason: "string",
+  kind: "string",
+  truncatedAtLine: "number",
+  errorCount: "number",
+}).and(BlockBase);
+
 // Image block events (raw URL, decoding happens in image-decode-stream)
 export const BlockImageMsg = type({
   type: "'block.image'",
@@ -153,7 +172,7 @@ export const BlockStatsMsg = type({
 
 // Union types
 export const ToplevelMsg = ToplevelBeginMsg.or(ToplevelLineMsg).or(ToplevelEndMsg);
-export const CodeMsg = CodeBeginMsg.or(CodeLineMsg).or(CodeEndMsg);
+export const CodeMsg = CodeBeginMsg.or(CodeLineMsg).or(CodeEndMsg).or(CodeTruncatedMsg);
 export const LineMsg = ToplevelLineMsg.or(CodeLineMsg);
 export const BeginMsg = ToplevelBeginMsg.or(CodeBeginMsg);
 export const BlockStreamMsg = BlockBeginMsg.or(BlockEndMsg).or(BlockStatsMsg).or(BlockImageMsg).or(CodeMsg).or(ToplevelMsg);
@@ -171,6 +190,7 @@ export type ToplevelEndMsg = typeof ToplevelEndMsg.infer;
 export type CodeBeginMsg = typeof CodeBeginMsg.infer;
 export type CodeLineMsg = typeof CodeLineMsg.infer;
 export type CodeEndMsg = typeof CodeEndMsg.infer;
+export type CodeTruncatedMsg = typeof CodeTruncatedMsg.infer;
 export type BlockImageMsg = typeof BlockImageMsg.infer;
 export type BlockStreamMsg = typeof BlockStreamMsg.infer;
 export type ToplevelMsg = typeof ToplevelMsg.infer;
@@ -198,6 +218,8 @@ export const isCodeLine = (msg: unknown, streamId?: string): msg is CodeLineMsg 
   !(CodeLineMsg(msg) instanceof type.errors) && (!streamId || (msg as CodeLineMsg).streamId === streamId);
 export const isCodeEnd = (msg: unknown, streamId?: string): msg is CodeEndMsg =>
   !(CodeEndMsg(msg) instanceof type.errors) && (!streamId || (msg as CodeEndMsg).streamId === streamId);
+export const isCodeTruncated = (msg: unknown, streamId?: string): msg is CodeTruncatedMsg =>
+  !(CodeTruncatedMsg(msg) instanceof type.errors) && (!streamId || (msg as CodeTruncatedMsg).streamId === streamId);
 export const isBlockImage = (msg: unknown, streamId?: string): msg is BlockImageMsg =>
   !(BlockImageMsg(msg) instanceof type.errors) && (!streamId || (msg as BlockImageMsg).streamId === streamId);
 export const isBlockStreamMsg = (msg: unknown, streamId?: string): msg is BlockStreamMsg =>
