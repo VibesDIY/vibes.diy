@@ -3,17 +3,30 @@ import { buildRecoveryRequest, shouldAttemptRecovery, updateRecoveryCounter } fr
 import type { LLMRequest } from "@vibes.diy/call-ai-v2";
 
 describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
+  // Original turn shape used in production: a system message (with the base
+  // system prompt) followed by user turns. Recovery merges its addendum +
+  // CURRENT FILES into that single system message rather than appending a
+  // second one — many providers reject back-to-back system messages.
+  const baseSystemText = "You are a Vibes app builder. Use SEARCH/REPLACE blocks for edits.";
   const baseReq: LLMRequest = {
     model: "test/model",
     messages: [
+      {
+        role: "system",
+        content: [{ type: "text", text: baseSystemText }],
+      },
       {
         role: "user",
         content: [{ type: "text", text: "make a button" }],
       },
     ],
   };
+  const userOnlyReq: LLMRequest = {
+    model: "test/model",
+    messages: [{ role: "user", content: [{ type: "text", text: "make a button" }] }],
+  };
 
-  it("appends a system message with CURRENT FILES and a continue prompt; says nothing about failure", () => {
+  it("merges addendum + CURRENT FILES into the original system message and says nothing about failure", () => {
     const vfs = new Map<string, string>([["/App.jsx", "function App() { return <h1>hi</h1>; }"]]);
     const r = buildRecoveryRequest({
       originalRequest: baseReq,
@@ -24,24 +37,50 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
     expect(r.isOk()).toBe(true);
     const out = r.Ok();
     expect(out.messages).toHaveLength(2);
-    const last = out.messages[1];
-    expect(last.role).toBe("system");
-    const text = last.content[0].type === "text" ? last.content[0].text : "";
-    expect(text).toContain("You were here. Continue.");
-    expect(text).toContain("CURRENT FILES");
-    expect(text).toContain("/App.jsx");
-    // Continue mode: no failure framing leaks into the prompt. The model
-    // doesn't see "FAILED" / "error" / "retry" / fence markers, and isn't
-    // told there was an interrupted edit to avoid.
-    expect(text).not.toMatch(/FAILED/i);
-    expect(text).not.toMatch(/\berror\b/i);
-    expect(text).not.toMatch(/\bretry\b/i);
-    expect(text).not.toContain("<<<<<<< SEARCH");
-    expect(text).not.toContain(">>>>>>> SEARCH");
-    expect(text).not.toContain(">>>>>>> REPLACE");
+    expect(out.messages[0].role).toBe("system");
+    expect(out.messages[1].role).toBe("user");
+    const sysText = out.messages[0].content[0].type === "text" ? out.messages[0].content[0].text : "";
+    expect(sysText).toContain(baseSystemText);
+    expect(sysText).toContain("You were here. Continue.");
+    expect(sysText).toContain("CURRENT FILES");
+    expect(sysText).toContain("/App.jsx");
+    // Continue mode: no failure framing leaks into the prompt.
+    expect(sysText).not.toMatch(/FAILED/i);
+    expect(sysText).not.toMatch(/\berror\b/i);
+    expect(sysText).not.toMatch(/\bretry\b/i);
+    expect(sysText).not.toContain("<<<<<<< SEARCH");
+    expect(sysText).not.toContain(">>>>>>> SEARCH");
+    expect(sysText).not.toContain(">>>>>>> REPLACE");
   });
 
-  it("renders the focus file first so the model sees its full contents under the per-file budget", () => {
+  it("preserves message count when merging — exactly one system message in the output", () => {
+    const r = buildRecoveryRequest({
+      originalRequest: baseReq,
+      recoveryAddendum: "You were here. Continue.",
+      vfs: new Map([["/App.jsx", "x"]]),
+      focusPath: "/App.jsx",
+    });
+    expect(r.isOk()).toBe(true);
+    const out = r.Ok();
+    const systemMessages = out.messages.filter((m) => m.role === "system");
+    expect(systemMessages).toHaveLength(1);
+  });
+
+  it("prepends a new system message when the original request has none", () => {
+    const r = buildRecoveryRequest({
+      originalRequest: userOnlyReq,
+      recoveryAddendum: "You were here. Continue.",
+      vfs: new Map([["/App.jsx", "x"]]),
+      focusPath: "/App.jsx",
+    });
+    expect(r.isOk()).toBe(true);
+    const out = r.Ok();
+    expect(out.messages).toHaveLength(2);
+    expect(out.messages[0].role).toBe("system");
+    expect(out.messages[1].role).toBe("user");
+  });
+
+  it("renders the focus file first under the per-file budget", () => {
     const vfs = new Map<string, string>([
       ["/aux.ts", "export const aux = 'irrelevant';"],
       ["/App.jsx", "function App() { return <h1>important</h1>; }"],
@@ -53,18 +92,18 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       focusPath: "/App.jsx",
     });
     expect(r.isOk()).toBe(true);
-    const text = (() => {
-      const last = r.Ok().messages[1];
-      return last.content[0].type === "text" ? last.content[0].text : "";
+    const sysText = (() => {
+      const sys = r.Ok().messages[0];
+      return sys.content[0].type === "text" ? sys.content[0].text : "";
     })();
-    const appIdx = text.indexOf("/App.jsx");
-    const auxIdx = text.indexOf("/aux.ts");
+    const appIdx = sysText.indexOf("/App.jsx");
+    const auxIdx = sysText.indexOf("/aux.ts");
     expect(appIdx).toBeGreaterThan(-1);
     expect(auxIdx).toBeGreaterThan(-1);
     expect(appIdx).toBeLessThan(auxIdx);
   });
 
-  it("truncates oversize files with an explicit marker rather than dropping them silently", () => {
+  it("truncates oversize files with an explicit marker", () => {
     const huge = "x".repeat(20_000);
     const vfs = new Map<string, string>([["/App.jsx", huge]]);
     const r = buildRecoveryRequest({
@@ -74,21 +113,19 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       focusPath: "/App.jsx",
     });
     expect(r.isOk()).toBe(true);
-    const text = (() => {
-      const last = r.Ok().messages[1];
-      return last.content[0].type === "text" ? last.content[0].text : "";
+    const sysText = (() => {
+      const sys = r.Ok().messages[0];
+      return sys.content[0].type === "text" ? sys.content[0].text : "";
     })();
-    expect(text).toContain("/App.jsx (truncated:");
-    expect(text).toContain("(truncated above)");
-    expect(text.length).toBeLessThan(20_000 + 2_000);
+    expect(sysText).toContain("/App.jsx (truncated:");
+    expect(sysText).toContain("(truncated above)");
+    expect(sysText.length).toBeLessThan(20_000 + 4_000);
   });
 
   // The orchestrator captures the upstream tokens emitted before the apply
-  // error, truncated to the last successful code.end (NOT the last line
-  // boundary — see notes), and injects them as an assistant message. The
-  // model sees its own voice ending at a clean code-block close, then a
-  // system "you were here, continue" prompt. The model has no signal that a
-  // failure occurred; it just continues from the visible state.
+  // error, truncated to the last successful code.end, and injects them as
+  // an assistant message after the user turn. The model sees its own voice
+  // ending at a clean code-block close and continues from the visible state.
   describe("assistantPartial (resume handoff)", () => {
     const partial = [
       "Building Quick Notes — top features:",
@@ -98,7 +135,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       "```",
     ].join("\n");
 
-    it("inserts the assistant partial between the original messages and the recovery system message", () => {
+    it("appends the assistant partial as the last message", () => {
       const r = buildRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
@@ -109,14 +146,14 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       expect(r.isOk()).toBe(true);
       const out = r.Ok();
       expect(out.messages).toHaveLength(3);
-      expect(out.messages[0].role).toBe("user");
-      expect(out.messages[1].role).toBe("assistant");
-      expect(out.messages[2].role).toBe("system");
-      const assistantText = out.messages[1].content[0].type === "text" ? out.messages[1].content[0].text : "";
+      expect(out.messages[0].role).toBe("system");
+      expect(out.messages[1].role).toBe("user");
+      expect(out.messages[2].role).toBe("assistant");
+      const assistantText = out.messages[2].content[0].type === "text" ? out.messages[2].content[0].text : "";
       expect(assistantText).toBe(partial);
     });
 
-    it("preserves the two-message shape when assistantPartial is omitted (no partial captured)", () => {
+    it("preserves the two-message shape when assistantPartial is omitted", () => {
       const r = buildRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
@@ -126,8 +163,8 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       expect(r.isOk()).toBe(true);
       const out = r.Ok();
       expect(out.messages).toHaveLength(2);
-      expect(out.messages[0].role).toBe("user");
-      expect(out.messages[1].role).toBe("system");
+      expect(out.messages[0].role).toBe("system");
+      expect(out.messages[1].role).toBe("user");
     });
 
     it("treats an empty-string assistantPartial as omitted", () => {
@@ -142,7 +179,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       expect(r.Ok().messages).toHaveLength(2);
     });
 
-    it("does not duplicate the partial text into the system message (assistant message is the canonical handoff)", () => {
+    it("does not duplicate the partial text into the system message", () => {
       const r = buildRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
@@ -151,12 +188,12 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
         assistantPartial: partial,
       });
       expect(r.isOk()).toBe(true);
-      const systemText = (() => {
-        const sys = r.Ok().messages[2];
+      const sysText = (() => {
+        const sys = r.Ok().messages[0];
         return sys.content[0].type === "text" ? sys.content[0].text : "";
       })();
-      expect(systemText).not.toContain("Building Quick Notes");
-      expect(systemText).not.toContain("Title field (done)");
+      expect(sysText).not.toContain("Building Quick Notes");
+      expect(sysText).not.toContain("Title field (done)");
     });
   });
 
@@ -193,8 +230,6 @@ describe("updateRecoveryCounter", () => {
   });
 
   it("treats progress as load-bearing — even a single clean apply resets", () => {
-    // Recovery stream emits one good block then a bad block — counter resets.
-    // The bad block triggers another recovery, but we start fresh from 0.
     const after = updateRecoveryCounter({ consecutiveFruitless: 2 }, { madeProgress: true });
     expect(after.consecutiveFruitless).toBe(0);
   });
