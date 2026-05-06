@@ -297,6 +297,47 @@ export function createStreamingResolver(deps: StreamingResolverDeps): StreamingR
   };
 }
 
+// Tracks open `block.code.*` messages by blockId and emits a closed
+// {begin, lines, end} triple as soon as the matching block.code.end arrives.
+// Used by both the streaming pipeline (handleLlmResponse) and the end-of-turn
+// replay (handlePromptContext) so the two paths agree on how lines map to
+// blocks. Keying by blockId is required for the streaming path because
+// nothing in the protocol guarantees code lines for different blocks don't
+// interleave; the end-of-turn path benefits from the same routing instead of
+// the older positional "latest open block" heuristic.
+export interface ClosedCodeBlock {
+  readonly begin: CodeBeginMsg;
+  readonly lines: readonly CodeLineMsg[];
+  readonly end: CodeEndMsg;
+}
+
+export interface BlockAccumulator {
+  readonly ingest: (msg: unknown) => ClosedCodeBlock | undefined;
+}
+
+export function createBlockAccumulator(): BlockAccumulator {
+  const open = new Map<string, { begin: CodeBeginMsg; lines: CodeLineMsg[] }>();
+  return {
+    ingest(msg) {
+      if (isCodeBegin(msg)) {
+        open.set(msg.blockId, { begin: msg, lines: [] });
+        return undefined;
+      }
+      if (isCodeLine(msg)) {
+        open.get(msg.blockId)?.lines.push(msg);
+        return undefined;
+      }
+      if (isCodeEnd(msg)) {
+        const acc = open.get(msg.blockId);
+        if (!acc) return undefined;
+        open.delete(msg.blockId);
+        return { begin: acc.begin, lines: acc.lines, end: msg };
+      }
+      return undefined;
+    },
+  };
+}
+
 // Adapter that builds an ApplyErrorEvent sink writing to a Logger. Kept
 // separate so tests can substitute a plain collector without going through
 // ensureLogger plumbing.
@@ -414,6 +455,7 @@ export async function handlePromptContext({
 
   // the collectedMsgs are Queue
   const collectedMsgs = [...iCollectedMsgs];
+  const blockAcc = createBlockAccumulator();
 
   for (const msg of collectedMsgs) {
     if (!isBlockStreamMsg(msg)) {
@@ -431,21 +473,8 @@ export async function handlePromptContext({
       sqlVal = sections[sections.length - 1];
     }
     sqlVal.blocks.push(msg);
-    if (isCodeBegin(msg)) {
-      code.push({ begin: msg, lines: [] });
-    } else if (isCodeLine(msg)) {
-      if (code.length === 0) {
-        console.warn("Received code line without a preceding code begin:", msg);
-      } else {
-        code[code.length - 1].lines.push(msg);
-      }
-    } else if (isCodeEnd(msg)) {
-      if (code.length === 0) {
-        console.warn("Received code end without a preceding code begin:", msg);
-      } else {
-        code[code.length - 1].end = msg;
-      }
-    }
+    const closed = blockAcc.ingest(msg);
+    if (closed) code.push({ begin: closed.begin, lines: [...closed.lines], end: closed.end });
   }
   if (code.length > 0 && (resChat.mode === "chat" || isPromptFSStyle(resChat.mode))) {
     // here is where the music plays
@@ -1191,11 +1220,7 @@ async function handleLlmResponse({
         seed: seedForResolver,
         onApplyError: (evt) => logApplyError(resolverLogger, evt),
       });
-      // Open-block accumulators keyed by blockId; closed and observed on
-      // each block.code.end. We rely on blockId rather than positional state
-      // because nothing in the protocol guarantees code lines for different
-      // blockIds don't interleave in the section pipeline.
-      const openBlocks = new Map<string, { begin: CodeBeginMsg; lines: CodeLineMsg[] }>();
+      const blockAcc = createBlockAccumulator();
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
@@ -1207,20 +1232,8 @@ async function handleLlmResponse({
           }
           // console.log(promptId, "Received chunk for promptId:", value);
           collectedMsgs.push(value);
-          if (isCodeBegin(value)) {
-            openBlocks.set(value.blockId, { begin: value, lines: [] });
-          } else if (isCodeLine(value)) {
-            const acc = openBlocks.get(value.blockId);
-            if (acc) {
-              acc.lines.push(value);
-            }
-          } else if (isCodeEnd(value)) {
-            const acc = openBlocks.get(value.blockId);
-            if (acc) {
-              streamingResolver.observeBlock({ begin: acc.begin, lines: acc.lines, end: value });
-              openBlocks.delete(value.blockId);
-            }
-          }
+          const closed = blockAcc.ingest(value);
+          if (closed) streamingResolver.observeBlock(closed);
           const r = await appendBlockEvent({
             ctx,
             vctx,
