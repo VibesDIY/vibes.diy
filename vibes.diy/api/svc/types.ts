@@ -44,7 +44,7 @@ export interface VibesApiSQLCtx {
   fetchPkgVersion(pkg: string): Promise<Result<{ src: string; version: string }>>;
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
   storage: VibesAssetStorage;
-  llmRequest(prompt: LLMRequest & { headers: LLMHeaders }): Promise<Response>;
+  llmRequest(prompt: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }): Promise<Response>;
   prodiaToken?: string;
   notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;

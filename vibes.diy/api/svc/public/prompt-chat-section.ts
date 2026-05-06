@@ -63,6 +63,7 @@ import {
   isCodeBegin,
   isCodeEnd,
   isCodeLine,
+  isDeltaLine,
   isToplevelLine,
   LLMRequest,
   ChatMessage,
@@ -77,12 +78,16 @@ import {
   isBlockImage,
   CodeEndMsg,
   BlockBeginMsg,
+  type ApplyEditsError,
+  type DeltaStreamMsg,
+  type FenceParseError,
 } from "@vibes.diy/call-ai-v2";
-import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
+import type { Logger } from "@adviser/cement";
+import { getRecoveryAddendum, makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
-import { ChatIdCtx } from "../svc-ws-send-provider.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
+import { buildRecoveryRequest, shouldAttemptRecovery, updateRecoveryCounter, type RecoveryCounter } from "../intern/recovery.js";
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
 // files (system-prompt.md, llms/*.md) from the worker's `/vibe-pkg/`
@@ -210,6 +215,174 @@ export function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[], see
   return result;
 }
 
+// Per-block streaming apply-error observer. Mirrors the parseFenceBody +
+// applyEdits work that resolveCodeBlocksToFileSystem performs at end-of-turn,
+// but runs against each block.code.end as it arrives so we can surface apply
+// errors the moment they happen. The end-of-turn resolver still produces the
+// authoritative VibeFile[] for storage — this path is observability only and
+// must not mutate any state visible to the wire output.
+//
+// Filename normalization mirrors resolveCodeBlocksToFileSystem so the running
+// vfs sees the same content the end-of-turn pass would compose against.
+export interface ApplyErrorEvent {
+  readonly chatId: string;
+  readonly promptId: string;
+  readonly blockId: string;
+  readonly sectionId: string;
+  // "fence-parse" → parseFenceBody flagged a structural problem before edits ran.
+  // "apply" → an individual SEARCH/REPLACE edit failed to match.
+  readonly kind: "fence-parse" | "apply";
+  readonly reason: string;
+  readonly searchPrefix?: string;
+}
+
+export interface StreamingResolverDeps {
+  readonly chatId: string;
+  readonly promptId: string;
+  readonly seed: ReadonlyMap<string, string>;
+  readonly onApplyError: (evt: ApplyErrorEvent) => void;
+}
+
+// Result of applying one closed block. Returned from observeBlock so a
+// caller (e.g. the recovery orchestrator) can decide what to do without
+// re-running parseFenceBody/applyEdits against a parallel vfs.
+export interface BlockApplyResult {
+  readonly path: string;
+  readonly errors: readonly ApplyErrorEvent[];
+}
+
+export interface StreamingResolver {
+  readonly observeBlock: (block: { begin: CodeBeginMsg; lines: readonly CodeLineMsg[]; end: CodeEndMsg }) => BlockApplyResult;
+  // Snapshot of the resolver's running per-path content. The recovery
+  // orchestrator passes this to buildRecoveryRequest as the CURRENT FILES
+  // section. Returns a fresh Map so callers cannot mutate internal state.
+  readonly getVfs: () => ReadonlyMap<string, string>;
+}
+
+function normalizeFilename(rawPath: string | undefined): string {
+  const path = rawPath ?? "App.jsx";
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+function searchPrefixOf(search: string): string {
+  // First non-empty line, capped to 80 chars — enough to identify the failing
+  // edit in logs without spilling an entire file body into the metric stream.
+  const firstLine = search.split("\n").find((l) => l.trim().length > 0) ?? "";
+  return firstLine.length > 80 ? `${firstLine.slice(0, 80)}…` : firstLine;
+}
+
+export function createStreamingResolver(deps: StreamingResolverDeps): StreamingResolver {
+  // Running per-path content. Seeded lazily on first touch of each path so
+  // create-only blocks don't read stale content from prior turns.
+  const vfs = new Map<string, string>();
+  const seedFor = (filename: string, rawPath: string): string => {
+    return deps.seed.get(filename) ?? deps.seed.get(rawPath) ?? "";
+  };
+  return {
+    observeBlock(block) {
+      const rawPath = block.begin.path ?? "App.jsx";
+      const filename = normalizeFilename(rawPath);
+      const current = vfs.has(filename) ? (vfs.get(filename) ?? "") : seedFor(filename, rawPath);
+      const parsed = parseFenceBody(block.lines.map((l) => l.line));
+      const errors: ApplyErrorEvent[] = [];
+      for (const fenceErr of parsed.errors) {
+        const evt: ApplyErrorEvent = {
+          chatId: deps.chatId,
+          promptId: deps.promptId,
+          blockId: block.end.blockId,
+          sectionId: block.end.sectionId,
+          kind: "fence-parse",
+          reason: fenceErr.kind,
+        };
+        deps.onApplyError(evt);
+        errors.push(evt);
+      }
+      const applied = applyEdits(current, parsed.edits);
+      for (const applyErr of applied.errors) {
+        const evt: ApplyErrorEvent = {
+          chatId: deps.chatId,
+          promptId: deps.promptId,
+          blockId: block.end.blockId,
+          sectionId: block.end.sectionId,
+          kind: "apply",
+          reason: applyErr.reason,
+          searchPrefix: searchPrefixOf(applyErr.search),
+        };
+        deps.onApplyError(evt);
+        errors.push(evt);
+      }
+      vfs.set(filename, applied.content);
+      return { path: filename, errors };
+    },
+    getVfs() {
+      return new Map(vfs);
+    },
+  };
+}
+
+// Tracks open `block.code.*` messages by blockId and emits a closed
+// {begin, lines, end} triple as soon as the matching block.code.end arrives.
+// Used by both the streaming pipeline (handleLlmResponse) and the end-of-turn
+// replay (handlePromptContext) so the two paths agree on how lines map to
+// blocks. Keying by blockId is required for the streaming path because
+// nothing in the protocol guarantees code lines for different blocks don't
+// interleave; the end-of-turn path benefits from the same routing instead of
+// the older positional "latest open block" heuristic.
+export interface ClosedCodeBlock {
+  readonly begin: CodeBeginMsg;
+  readonly lines: readonly CodeLineMsg[];
+  readonly end: CodeEndMsg;
+}
+
+export interface BlockAccumulator {
+  readonly ingest: (msg: unknown) => ClosedCodeBlock | undefined;
+}
+
+export function createBlockAccumulator(): BlockAccumulator {
+  const open = new Map<string, { begin: CodeBeginMsg; lines: CodeLineMsg[] }>();
+  return {
+    ingest(msg) {
+      if (isCodeBegin(msg)) {
+        open.set(msg.blockId, { begin: msg, lines: [] });
+        return undefined;
+      }
+      if (isCodeLine(msg)) {
+        open.get(msg.blockId)?.lines.push(msg);
+        return undefined;
+      }
+      if (isCodeEnd(msg)) {
+        const acc = open.get(msg.blockId);
+        if (!acc) return undefined;
+        open.delete(msg.blockId);
+        return { begin: acc.begin, lines: acc.lines, end: msg };
+      }
+      return undefined;
+    },
+  };
+}
+
+// Adapter that builds an ApplyErrorEvent sink writing to a Logger. Kept
+// separate so tests can substitute a plain collector without going through
+// ensureLogger plumbing.
+export function logApplyError(logger: Logger, evt: ApplyErrorEvent): void {
+  logger
+    .Info()
+    .Any({
+      chatId: evt.chatId,
+      promptId: evt.promptId,
+      blockId: evt.blockId,
+      sectionId: evt.sectionId,
+      kind: evt.kind,
+      reason: evt.reason,
+      ...(evt.searchPrefix === undefined ? {} : { searchPrefix: evt.searchPrefix }),
+    })
+    .Msg("apply-error");
+}
+
+// For consumers (tests, future recovery PR) that want the raw types without
+// reaching into apply-edits / fence-body-parser directly.
+export type { ApplyEditsError, FenceParseError };
+
 async function appendBlockEvent({
   ctx,
   vctx,
@@ -305,6 +478,7 @@ export async function handlePromptContext({
 
   // the collectedMsgs are Queue
   const collectedMsgs = [...iCollectedMsgs];
+  const blockAcc = createBlockAccumulator();
 
   for (const msg of collectedMsgs) {
     if (!isBlockStreamMsg(msg)) {
@@ -322,21 +496,8 @@ export async function handlePromptContext({
       sqlVal = sections[sections.length - 1];
     }
     sqlVal.blocks.push(msg);
-    if (isCodeBegin(msg)) {
-      code.push({ begin: msg, lines: [] });
-    } else if (isCodeLine(msg)) {
-      if (code.length === 0) {
-        console.warn("Received code line without a preceding code begin:", msg);
-      } else {
-        code[code.length - 1].lines.push(msg);
-      }
-    } else if (isCodeEnd(msg)) {
-      if (code.length === 0) {
-        console.warn("Received code end without a preceding code begin:", msg);
-      } else {
-        code[code.length - 1].end = msg;
-      }
-    }
+    const closed = blockAcc.ingest(msg);
+    if (closed) code.push({ begin: closed.begin, lines: [...closed.lines], end: closed.end });
   }
   if (code.length > 0 && (resChat.mode === "chat" || isPromptFSStyle(resChat.mode))) {
     // here is where the music plays
@@ -616,7 +777,7 @@ async function handlerLlmRequest({
   resChat: ResChat;
   promptId: string;
   blockSeq: number;
-}): Promise<{ res: Response; blockSeq: number }> {
+}): Promise<{ res: Response; blockSeq: number; llmReq: LLMRequest & { headers: LLMHeaders }; abort: AbortController }> {
   await scope
     .evalResult(async () => {
       const r = await appendBlockEvent({
@@ -726,9 +887,10 @@ async function handlerLlmRequest({
   // add system prompt here
 
   // console.log(promptId, "LLM request for promptId:");
+  const abort = new AbortController();
   const res = await scope
     .evalResult<Response>(async () => {
-      const res = await vctx.llmRequest(llmReq);
+      const res = await vctx.llmRequest(llmReq, { signal: abort.signal });
       if (!res.ok) {
         return Result.Err(`LLM request failed with status ${res.status} :${llmReq.model} : ${res.statusText}`);
       }
@@ -739,7 +901,7 @@ async function handlerLlmRequest({
     })
     .do();
 
-  return { res, blockSeq };
+  return { res, blockSeq, llmReq, abort };
 }
 
 async function handleProdiaImageRequest({
@@ -1018,6 +1180,8 @@ async function handleLlmResponse({
   resChat,
   promptId,
   blockSeq,
+  llmReq,
+  abort,
 }: {
   scope: Scope;
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -1027,32 +1191,21 @@ async function handleLlmResponse({
   res: Response;
   promptId: string;
   blockSeq: number;
+  llmReq: LLMRequest & { headers: LLMHeaders };
+  abort: AbortController;
 }): Promise<number> {
   await scope
     .evalResult(async () => {
-      // console.log(promptId, "LLM response received for promptId: with status:", res.status, "statusText:", res.statusText);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const pipeline = res
-        .body!.pipeThrough(createStatsCollector(promptId, 1000))
-        .pipeThrough(createLineStream(promptId))
-        .pipeThrough(createDataStream(promptId))
-        .pipeThrough(createSseStream(promptId))
-        .pipeThrough(createDeltaStream(promptId, () => vctx.sthis.nextId(12).str))
-        .pipeThrough(createSectionsStream(promptId, () => vctx.sthis.nextId(12).str));
-
-      const reader = pipeline.getReader();
-
-      // const collectedMsgs: BlockMsgs[] = [];
+      // Resolve chat connection context once; same collectedMsgs survives
+      // across original + recovery streams.
       let collectedMsgs!: PromptAndBlockMsgs[];
-      let chatCtx!: ChatIdCtx;
       for (const conn of vctx.connections) {
         const tChatCtx = conn.chatIds.get(req.chatId);
         if (tChatCtx) {
-          chatCtx = tChatCtx;
-          const promptIdCtx = chatCtx.promptIds.get(promptId);
+          const promptIdCtx = tChatCtx.promptIds.get(promptId);
           if (!promptIdCtx) {
             collectedMsgs = [];
-            chatCtx.promptIds.set(promptId, {
+            tChatCtx.promptIds.set(promptId, {
               blocks: collectedMsgs,
               promptId,
               type: "vibes.diy.section-event",
@@ -1065,46 +1218,244 @@ async function handleLlmResponse({
           }
         }
       }
-
       if (!collectedMsgs) {
         return Result.Err(`Chat context not found for chatId: ${req.chatId}`);
       }
-      // const codeBlocks: CodeBlocks[] = [];
+
+      // Per-turn state that survives across the original stream and any
+      // recovery continuation: streaming resolver vfs, block accumulator,
+      // and the recovery counter. Per-stream state (partial buffer + safe
+      // cut + reader + abort controller) is rebuilt each iteration.
+      const seedForResolver = await loadPriorFileSystem(vctx, req.chatId);
+      const resolverLogger = ensureLogger(vctx.sthis, "streamingResolver");
+      const recoveryLogger = ensureLogger(vctx.sthis, "applyRecovery");
+      const streamingResolver = createStreamingResolver({
+        chatId: req.chatId,
+        promptId,
+        seed: seedForResolver,
+        onApplyError: (evt) => logApplyError(resolverLogger, evt),
+      });
+      const blockAcc = createBlockAccumulator();
+      // Bounded by *consecutive fruitless* recoveries, not total. Any clean
+      // apply during a recovery stream resets this to 0; only the case where
+      // the model returns a malformed response that produces zero clean
+      // blocks N times in a row will trip the budget.
+      let recoveryCounter: RecoveryCounter = { consecutiveFruitless: 0 };
+      let isRecoveryStream = false;
+
+      // Continue-mode recovery: each iteration consumes one upstream stream.
+      // On apply error, the iteration sets a `recoverHint`, aborts upstream,
+      // and drains. After the inner loop exits we update the counter (only
+      // for recovery streams), check the budget, build a continuation via
+      // buildRecoveryRequest, and dispatch it. The model never sees the
+      // failure — just CURRENT FILES + its own captured voice + "continue."
+      let currentRes: Response = res;
+      let currentAbort: AbortController = abort;
       while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        if (!isBlockEnd(value)) {
-          if (!isBlockStreamMsg(value)) {
-            continue;
+        // Whether this stream produced any clean code.end. Used after the
+        // inner loop to update the recovery counter.
+        let streamMadeProgress = false;
+        // Per-stream partial buffer: accumulates delta.line.content as the
+        // pipeline produces it. `safeCut` advances only on a clean code.end;
+        // see the truncation rule note above (intentionally NOT advanced on
+        // toplevel.line, so the partial never ends with prose announcing a
+        // completed-but-failed edit).
+        const partialBuffer = { text: "", safeCut: 0 };
+        const captureDeltas = new TransformStream<DeltaStreamMsg, DeltaStreamMsg>({
+          transform(msg, controller) {
+            if (isDeltaLine(msg)) partialBuffer.text += msg.content;
+            controller.enqueue(msg);
+          },
+        });
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const pipeline = currentRes
+          .body!.pipeThrough(createStatsCollector(promptId, 1000))
+          .pipeThrough(createLineStream(promptId))
+          .pipeThrough(createDataStream(promptId))
+          .pipeThrough(createSseStream(promptId))
+          .pipeThrough(createDeltaStream(promptId, () => vctx.sthis.nextId(12).str))
+          .pipeThrough(captureDeltas)
+          .pipeThrough(createSectionsStream(promptId, () => vctx.sthis.nextId(12).str));
+        const reader = pipeline.getReader();
+
+        // recoverHint is set when this stream should be replaced by a
+        // continuation; null means "this stream finished naturally."
+        let recoverHint: {
+          readonly partial: string;
+          readonly focusPath: string;
+          readonly blockId: string;
+          readonly sectionId: string;
+          readonly reason: string;
+          readonly kind: string;
+          readonly errorCount: number;
+        } | null = null;
+        let drainOnly = false;
+        readLoop: while (true) {
+          // Any reader error here means the pipeline is done emitting —
+          // intentional abort (recovery dispatch) or a runtime-specific
+          // abort variant (AbortError, TypeError, etc.). Treat all as
+          // end-of-stream rather than discriminating by error shape.
+          const rRead = await exception2Result(() => reader.read());
+          if (rRead.isErr()) break readLoop;
+          const { done, value } = rRead.Ok();
+          if (done) break readLoop;
+          if (drainOnly) continue; // recovery already triggered; drain to EOF/abort.
+          if (!isBlockEnd(value)) {
+            if (!isBlockStreamMsg(value)) continue;
+            collectedMsgs.push(value);
+            const closed = blockAcc.ingest(value);
+            const applyResult = closed ? streamingResolver.observeBlock(closed) : undefined;
+            const r = await appendBlockEvent({
+              ctx,
+              vctx,
+              req,
+              promptId,
+              blockSeq: blockSeq++,
+              evt: value,
+              emitMode: "emit-only",
+            });
+            if (r.isErr()) {
+              return Result.Err(r);
+            }
+            if (applyResult !== undefined && closed !== undefined) {
+              if (applyResult.errors.length === 0) {
+                // Clean code.end — advance safe cut so the partial captured
+                // up to here is a valid handoff for any later recovery.
+                partialBuffer.safeCut = partialBuffer.text.length;
+                streamMadeProgress = true;
+              } else {
+                const first = applyResult.errors[0];
+                recoverHint = {
+                  partial: partialBuffer.text.slice(0, partialBuffer.safeCut),
+                  focusPath: applyResult.path,
+                  blockId: closed.end.blockId,
+                  sectionId: closed.end.sectionId,
+                  reason: first.reason,
+                  kind: first.kind,
+                  errorCount: applyResult.errors.length,
+                };
+                // Abort upstream so the body stream wraps up; we'll loop and
+                // dispatch the continuation after updating the counter and
+                // checking the budget. Drain until reader EOF, skip events.
+                currentAbort.abort();
+                drainOnly = true;
+              }
+            }
+          } else {
+            collectedMsgs.push(value);
+            const x = await handleEndMsg({ collectedMsgs, vctx, req, ctx, resChat, promptId, value, blockSeq });
+            if (x.isErr()) return Result.Err(x);
+            blockSeq = x.Ok();
+            collectedMsgs.splice(0, collectedMsgs.length);
           }
-          // console.log(promptId, "Received chunk for promptId:", value);
-          collectedMsgs.push(value);
-          const r = await appendBlockEvent({
-            ctx,
-            vctx,
-            req,
+        }
+
+        // Update counter at the boundary between streams. Only recovery
+        // streams contribute to the budget — the original stream's progress
+        // (or lack of) is not counted: the first apply error is always
+        // worth one recovery attempt.
+        if (isRecoveryStream) {
+          recoveryCounter = updateRecoveryCounter(recoveryCounter, { madeProgress: streamMadeProgress });
+        }
+
+        if (recoverHint === null) {
+          // Stream finished naturally and no recovery was triggered.
+          return Result.Ok();
+        }
+
+        if (!shouldAttemptRecovery(recoveryCounter)) {
+          recoveryLogger
+            .Info()
+            .Any("event", {
+              chatId: req.chatId,
+              promptId,
+              blockId: recoverHint.blockId,
+              consecutiveFruitless: recoveryCounter.consecutiveFruitless,
+            })
+            .Msg("recovery-exhausted");
+          return Result.Ok();
+        }
+
+        recoveryLogger
+          .Info()
+          .Any("event", {
+            chatId: req.chatId,
             promptId,
-            blockSeq: blockSeq++,
-            evt: value,
-            emitMode: "emit-only",
-          });
-          if (r.isErr()) {
-            return Result.Err(r);
-          }
-        } else {
-          // console.log(promptId, "BlockEnd", value, collectedMsgs.length, req.chatId);
-          collectedMsgs.push(value);
-          const x = await handleEndMsg({ collectedMsgs, vctx, req, ctx, resChat, promptId, value, blockSeq });
-          if (x.isErr()) {
-            return Result.Err(x);
-          }
-          blockSeq = x.Ok();
-          collectedMsgs.splice(0, collectedMsgs.length); // clear collected blocks after handling prompt context
+            blockId: recoverHint.blockId,
+            sectionId: recoverHint.sectionId,
+            path: recoverHint.focusPath,
+            reason: recoverHint.reason,
+            kind: recoverHint.kind,
+            errorCount: recoverHint.errorCount,
+            consecutiveFruitless: recoveryCounter.consecutiveFruitless,
+          })
+          .Msg("recovery-start");
+
+        // Build and dispatch the continuation. If anything goes wrong here we
+        // log and stop — partial result already in storage from any clean
+        // blocks produced before the error.
+        const pkgBaseUrl = promptsPkgBaseUrl(vctx.params.pkgRepos.workspace);
+        const fetchOverride = createPromptAssetFetch({ fetchAsset: vctx.fetchAsset });
+        const addendum = await exception2Result(() => getRecoveryAddendum(pkgBaseUrl, fetchOverride));
+        if (addendum.isErr()) {
+          recoveryLogger
+            .Info()
+            .Any("event", { chatId: req.chatId, promptId, err: String(addendum.Err()) })
+            .Msg("recovery-addendum-failed");
+          return Result.Ok();
         }
+        const recReq = buildRecoveryRequest({
+          originalRequest: llmReq,
+          recoveryAddendum: addendum.Ok(),
+          vfs: streamingResolver.getVfs(),
+          focusPath: recoverHint.focusPath,
+          assistantPartial: recoverHint.partial,
+        });
+        if (recReq.isErr()) {
+          recoveryLogger
+            .Info()
+            .Any("event", { chatId: req.chatId, promptId, err: String(recReq.Err()) })
+            .Msg("recovery-build-failed");
+          return Result.Ok();
+        }
+        const nextAbort = new AbortController();
+        const rNextRes = await exception2Result(() =>
+          vctx.llmRequest({ ...recReq.Ok(), headers: llmReq.headers }, { signal: nextAbort.signal })
+        );
+        if (rNextRes.isErr()) {
+          recoveryLogger
+            .Info()
+            .Any("event", { chatId: req.chatId, promptId, err: String(rNextRes.Err()) })
+            .Msg("recovery-call-failed");
+          return Result.Ok();
+        }
+        const nextRes = rNextRes.Ok();
+        if (!nextRes.ok || !nextRes.body) {
+          recoveryLogger
+            .Info()
+            .Any("event", {
+              chatId: req.chatId,
+              promptId,
+              status: nextRes.status,
+              statusText: nextRes.statusText,
+            })
+            .Msg("recovery-call-failed");
+          return Result.Ok();
+        }
+        recoveryLogger
+          .Info()
+          .Any("event", {
+            chatId: req.chatId,
+            promptId,
+            partialBytes: recoverHint.partial.length,
+            focusPath: recoverHint.focusPath,
+          })
+          .Msg("recovery-call-started");
+        currentRes = nextRes;
+        currentAbort = nextAbort;
+        isRecoveryStream = true;
+        // Loop: consume the recovery stream the same way.
       }
-      return Result.Ok();
     })
     .do();
   return blockSeq;
@@ -1360,6 +1711,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             resChat,
             promptId,
             blockSeq: res.blockSeq,
+            llmReq: res.llmReq,
+            abort: res.abort,
           });
           return Result.Ok(finalBlockSeq);
         };
