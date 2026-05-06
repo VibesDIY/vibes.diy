@@ -77,7 +77,10 @@ import {
   isBlockImage,
   CodeEndMsg,
   BlockBeginMsg,
+  type ApplyEditsError,
+  type FenceParseError,
 } from "@vibes.diy/call-ai-v2";
+import type { Logger } from "@adviser/cement";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { ChatIdCtx } from "../svc-ws-send-provider.js";
@@ -210,6 +213,153 @@ export function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[], see
   return result;
 }
 
+// Per-block streaming apply-error observer. Mirrors the parseFenceBody +
+// applyEdits work that resolveCodeBlocksToFileSystem performs at end-of-turn,
+// but runs against each block.code.end as it arrives so we can surface apply
+// errors the moment they happen. The end-of-turn resolver still produces the
+// authoritative VibeFile[] for storage — this path is observability only and
+// must not mutate any state visible to the wire output.
+//
+// Filename normalization mirrors resolveCodeBlocksToFileSystem so the running
+// vfs sees the same content the end-of-turn pass would compose against.
+export interface ApplyErrorEvent {
+  readonly chatId: string;
+  readonly promptId: string;
+  readonly blockId: string;
+  readonly sectionId: string;
+  // "fence-parse" → parseFenceBody flagged a structural problem before edits ran.
+  // "apply" → an individual SEARCH/REPLACE edit failed to match.
+  readonly kind: "fence-parse" | "apply";
+  readonly reason: string;
+  readonly searchPrefix?: string;
+}
+
+export interface StreamingResolverDeps {
+  readonly chatId: string;
+  readonly promptId: string;
+  readonly seed: ReadonlyMap<string, string>;
+  readonly onApplyError: (evt: ApplyErrorEvent) => void;
+}
+
+export interface StreamingResolver {
+  readonly observeBlock: (block: { begin: CodeBeginMsg; lines: readonly CodeLineMsg[]; end: CodeEndMsg }) => void;
+}
+
+function normalizeFilename(rawPath: string | undefined): string {
+  const path = rawPath ?? "App.jsx";
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+function searchPrefixOf(search: string): string {
+  // First non-empty line, capped to 80 chars — enough to identify the failing
+  // edit in logs without spilling an entire file body into the metric stream.
+  const firstLine = search.split("\n").find((l) => l.trim().length > 0) ?? "";
+  return firstLine.length > 80 ? `${firstLine.slice(0, 80)}…` : firstLine;
+}
+
+export function createStreamingResolver(deps: StreamingResolverDeps): StreamingResolver {
+  // Running per-path content. Seeded lazily on first touch of each path so
+  // create-only blocks don't read stale content from prior turns.
+  const vfs = new Map<string, string>();
+  const seedFor = (filename: string, rawPath: string): string => {
+    return deps.seed.get(filename) ?? deps.seed.get(rawPath) ?? "";
+  };
+  return {
+    observeBlock(block) {
+      const rawPath = block.begin.path ?? "App.jsx";
+      const filename = normalizeFilename(rawPath);
+      const current = vfs.has(filename) ? (vfs.get(filename) ?? "") : seedFor(filename, rawPath);
+      const parsed = parseFenceBody(block.lines.map((l) => l.line));
+      for (const fenceErr of parsed.errors) {
+        deps.onApplyError({
+          chatId: deps.chatId,
+          promptId: deps.promptId,
+          blockId: block.end.blockId,
+          sectionId: block.end.sectionId,
+          kind: "fence-parse",
+          reason: fenceErr.kind,
+        });
+      }
+      const applied = applyEdits(current, parsed.edits);
+      for (const applyErr of applied.errors) {
+        deps.onApplyError({
+          chatId: deps.chatId,
+          promptId: deps.promptId,
+          blockId: block.end.blockId,
+          sectionId: block.end.sectionId,
+          kind: "apply",
+          reason: applyErr.reason,
+          searchPrefix: searchPrefixOf(applyErr.search),
+        });
+      }
+      vfs.set(filename, applied.content);
+    },
+  };
+}
+
+// Tracks open `block.code.*` messages by blockId and emits a closed
+// {begin, lines, end} triple as soon as the matching block.code.end arrives.
+// Used by both the streaming pipeline (handleLlmResponse) and the end-of-turn
+// replay (handlePromptContext) so the two paths agree on how lines map to
+// blocks. Keying by blockId is required for the streaming path because
+// nothing in the protocol guarantees code lines for different blocks don't
+// interleave; the end-of-turn path benefits from the same routing instead of
+// the older positional "latest open block" heuristic.
+export interface ClosedCodeBlock {
+  readonly begin: CodeBeginMsg;
+  readonly lines: readonly CodeLineMsg[];
+  readonly end: CodeEndMsg;
+}
+
+export interface BlockAccumulator {
+  readonly ingest: (msg: unknown) => ClosedCodeBlock | undefined;
+}
+
+export function createBlockAccumulator(): BlockAccumulator {
+  const open = new Map<string, { begin: CodeBeginMsg; lines: CodeLineMsg[] }>();
+  return {
+    ingest(msg) {
+      if (isCodeBegin(msg)) {
+        open.set(msg.blockId, { begin: msg, lines: [] });
+        return undefined;
+      }
+      if (isCodeLine(msg)) {
+        open.get(msg.blockId)?.lines.push(msg);
+        return undefined;
+      }
+      if (isCodeEnd(msg)) {
+        const acc = open.get(msg.blockId);
+        if (!acc) return undefined;
+        open.delete(msg.blockId);
+        return { begin: acc.begin, lines: acc.lines, end: msg };
+      }
+      return undefined;
+    },
+  };
+}
+
+// Adapter that builds an ApplyErrorEvent sink writing to a Logger. Kept
+// separate so tests can substitute a plain collector without going through
+// ensureLogger plumbing.
+export function logApplyError(logger: Logger, evt: ApplyErrorEvent): void {
+  logger
+    .Info()
+    .Any({
+      chatId: evt.chatId,
+      promptId: evt.promptId,
+      blockId: evt.blockId,
+      sectionId: evt.sectionId,
+      kind: evt.kind,
+      reason: evt.reason,
+      ...(evt.searchPrefix === undefined ? {} : { searchPrefix: evt.searchPrefix }),
+    })
+    .Msg("apply-error");
+}
+
+// For consumers (tests, future recovery PR) that want the raw types without
+// reaching into apply-edits / fence-body-parser directly.
+export type { ApplyEditsError, FenceParseError };
+
 async function appendBlockEvent({
   ctx,
   vctx,
@@ -305,6 +455,7 @@ export async function handlePromptContext({
 
   // the collectedMsgs are Queue
   const collectedMsgs = [...iCollectedMsgs];
+  const blockAcc = createBlockAccumulator();
 
   for (const msg of collectedMsgs) {
     if (!isBlockStreamMsg(msg)) {
@@ -322,21 +473,8 @@ export async function handlePromptContext({
       sqlVal = sections[sections.length - 1];
     }
     sqlVal.blocks.push(msg);
-    if (isCodeBegin(msg)) {
-      code.push({ begin: msg, lines: [] });
-    } else if (isCodeLine(msg)) {
-      if (code.length === 0) {
-        console.warn("Received code line without a preceding code begin:", msg);
-      } else {
-        code[code.length - 1].lines.push(msg);
-      }
-    } else if (isCodeEnd(msg)) {
-      if (code.length === 0) {
-        console.warn("Received code end without a preceding code begin:", msg);
-      } else {
-        code[code.length - 1].end = msg;
-      }
-    }
+    const closed = blockAcc.ingest(msg);
+    if (closed) code.push({ begin: closed.begin, lines: [...closed.lines], end: closed.end });
   }
   if (code.length > 0 && (resChat.mode === "chat" || isPromptFSStyle(resChat.mode))) {
     // here is where the music plays
@@ -1069,7 +1207,20 @@ async function handleLlmResponse({
       if (!collectedMsgs) {
         return Result.Err(`Chat context not found for chatId: ${req.chatId}`);
       }
-      // const codeBlocks: CodeBlocks[] = [];
+      // Per-block streaming resolver: runs parseFenceBody + applyEdits as
+      // each block.code.end arrives so we can log apply errors immediately.
+      // Authoritative VibeFile[] for storage is still produced by the
+      // end-of-turn resolveCodeBlocksToFileSystem in handleEndMsg; this
+      // observer never feeds back into the wire output.
+      const seedForResolver = await loadPriorFileSystem(vctx, req.chatId);
+      const resolverLogger = ensureLogger(vctx.sthis, "streamingResolver");
+      const streamingResolver = createStreamingResolver({
+        chatId: req.chatId,
+        promptId,
+        seed: seedForResolver,
+        onApplyError: (evt) => logApplyError(resolverLogger, evt),
+      });
+      const blockAcc = createBlockAccumulator();
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
@@ -1081,6 +1232,8 @@ async function handleLlmResponse({
           }
           // console.log(promptId, "Received chunk for promptId:", value);
           collectedMsgs.push(value);
+          const closed = blockAcc.ingest(value);
+          if (closed) streamingResolver.observeBlock(closed);
           const r = await appendBlockEvent({
             ctx,
             vctx,
