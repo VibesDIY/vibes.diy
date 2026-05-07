@@ -23,6 +23,7 @@ export * from "./prompt.js";
 export * from "./app-documents.js";
 export * from "./db-acls.js";
 export * from "./members.js";
+export * from "./asset.js";
 
 export interface FetchOkResult {
   type: "fetch.ok";

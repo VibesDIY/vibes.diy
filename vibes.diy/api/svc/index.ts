@@ -15,3 +15,4 @@ export * from "./public/prompt-chat-section.js";
 export * from "./noop-cache.js";
 export * from "./intern/ensure-slug-binding.js";
 export * from "./intern/recovery.js";
+export * from "./asset-grant.js";
