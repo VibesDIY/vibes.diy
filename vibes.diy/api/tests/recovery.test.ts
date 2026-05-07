@@ -139,7 +139,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       "```",
     ].join("\n");
 
-    it("appends the partial as a user-role resume message with explicit failed-edit framing", () => {
+    it("appends a partial+placeholder resume message that names the failed edit slot", () => {
       const r = buildRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
@@ -158,11 +158,12 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       const lastText = out.messages[2].content[0].type === "text" ? out.messages[2].content[0].text : "";
       expect(lastText).toContain("PARTIAL ASSISTANT OUTPUT");
       expect(lastText).toContain(partial);
-      // Explicit failure framing — tells the model the edit failed,
-      // don't trust your own narration.
-      expect(lastText).toMatch(/failed edit/i);
-      expect(lastText).toMatch(/verify|scan/i);
-      expect(lastText).toContain("CURRENT FILES");
+      // Concrete placeholder where the failed edit was. The model should
+      // see its own partial, then a literal slot, then an instruction to
+      // redo *that* edit. No room to claim "it already landed."
+      expect(lastText).toContain("<<<FAILED EDIT HERE>>>");
+      // The instruction must point at the placeholder, not just "verify".
+      expect(lastText).toMatch(/redo (the |that )?failed edit|re-emit/i);
     });
 
     it("preserves the two-message shape when assistantPartial is omitted", () => {
