@@ -99,7 +99,7 @@ export function pushCmd(ctx: CliCtx) {
       idleTimeoutMs: option({
         long: "idle-timeout",
         description:
-          "Idle timeout in ms (resets on any incoming message). Defaults to api-impl's 10s; bump to e.g. 30000 for very large pushes that exceed post-storage DB-write windows.",
+          "Idle timeout in ms (resets on any incoming message). Defaults to api-impl's 30s; bump higher for very large pushes that exceed post-storage DB-write windows.",
         type: optional(number),
       }),
     },

@@ -256,7 +256,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       getToken: cfg.getToken,
       fetch: cfg.fetch ?? fetch.bind(globalThis),
       ws: cfg.ws,
-      timeoutMs: cfg.timeoutMs ?? 10000,
+      timeoutMs: cfg.timeoutMs ?? 30000,
       msg: {
         src: "vibes.diy.client",
         dst: "vibes.diy.server",
@@ -425,7 +425,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
     // Idle timeout — resets on every incoming message, so a long-running
     // request that streams progress events keeps the request alive. The
-    // idle window is `cfg.timeoutMs` (default 10s); silence longer than
+    // idle window is `cfg.timeoutMs` (default 30s); silence longer than
     // that is what trips the timeout, not absolute wall time.
     let timer: ReturnType<typeof setTimeout> | undefined = undefined;
     const resetIdleTimer = (): void => {
