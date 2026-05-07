@@ -99,7 +99,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       return () => resizeObserver.disconnect();
     }, []);
 
-    const borderColor = "#d4d4d8";
+    const borderColor = "var(--vibes-input-border, #d4d4d8)";
     const neutralBorder = `linear-gradient(${borderColor}, ${borderColor})`;
     const focusBottomBar = "linear-gradient(90deg, var(--vibes-red, #DA291C) 0% 25%, var(--vibes-yellow, #fedd00) 25% 50%, var(--vibes-green, #22c55e) 50% 75%, var(--vibes-blue, #3b82f6) 75% 100%)";
     const innerBg = "linear-gradient(var(--chat-input-bg), var(--chat-input-bg))";
@@ -178,7 +178,11 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 variant="blue"
                 size="fixed"
                 aria-label={promptProcessing ? "Processing" : "Send message"}
-                className={promptProcessing ? "!border-0 !shadow-none !bg-gray-300 !text-white" : ""}
+                className={
+                  promptProcessing
+                    ? "!border-0 !shadow-none !bg-[var(--vibes-submit-disabled-bg)] !text-[var(--vibes-submit-disabled-fg)]"
+                    : ""
+                }
                 style={promptProcessing ? { opacity: 1 } : undefined}
               >
                 {promptProcessing ? workingMessage : "Code"}
