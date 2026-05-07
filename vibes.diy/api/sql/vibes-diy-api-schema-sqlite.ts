@@ -211,3 +211,29 @@ export const sqlInviteGrants = sqliteTable(
     index("tokenOrGrantUserId_idx").on(table.tokenOrGrantUserId),
   ]
 );
+
+// Per-doc file uploads — audit + lookup table for `_files` reads. One row
+// per put-asset call. uploadId is the public handle the client puts into
+// doc._files.<key>; the server resolves uploadId → assetURI at read time
+// for vctx.storage.fetch. Bound to (userSlug, appSlug) at upload-grant time
+// so a foreign uploadId pasted into another user's doc fails put-doc
+// validation. size is recorded for future SUM-by-userSlug quota math.
+export const sqlAssetUploads = sqliteTable(
+  "AssetUploads",
+  {
+    uploadId: text().notNull().primaryKey(),
+    userId: text().notNull(), // Clerk userId of the uploader
+    userSlug: text().notNull(),
+    appSlug: text().notNull(),
+    cid: text().notNull(), // content hash (for dedup queries)
+    assetURI: text().notNull(), // full storage URI for vctx.storage.fetch (e.g. s3://r2/<cid>, pg://Assets/<cid>)
+    size: int().notNull(),
+    mimeType: text(),
+    created: text().notNull(),
+  },
+  (table) => [
+    index("AssetUploads_app_idx").on(table.userSlug, table.appSlug, table.created),
+    index("AssetUploads_user_idx").on(table.userId, table.created),
+    index("AssetUploads_cid_idx").on(table.cid),
+  ]
+);
