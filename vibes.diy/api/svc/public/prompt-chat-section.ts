@@ -1269,7 +1269,16 @@ async function handleLlmResponse({
         // see the truncation rule note above (intentionally NOT advanced on
         // toplevel.line, so the partial never ends with prose announcing a
         // completed-but-failed edit).
-        const partialBuffer = { text: "", safeCut: 0 };
+        const partialBuffer: {
+          text: string;
+          safeCut: number;
+          // File line count after the last successful SEARCH/REPLACE on the
+          // focus file, or undefined when the last successful block was a
+          // create. Used by the recovery wrapper as a "you were at line N"
+          // anchor so the model has a concrete in-file location to reason
+          // about instead of skim-reading partial narrative.
+          lastReplaceFileLines: number | undefined;
+        } = { text: "", safeCut: 0, lastReplaceFileLines: undefined };
         const captureDeltas = new TransformStream<DeltaStreamMsg, DeltaStreamMsg>({
           transform(msg, controller) {
             if (isDeltaLine(msg)) partialBuffer.text += msg.content;
@@ -1297,6 +1306,7 @@ async function handleLlmResponse({
           readonly reason: string;
           readonly kind: string;
           readonly errorCount: number;
+          readonly lastReplaceFileLines?: number;
         } | null = null;
         let drainOnly = false;
         readLoop: while (true) {
@@ -1366,6 +1376,7 @@ async function handleLlmResponse({
                 reason: first.reason,
                 kind: first.kind,
                 errorCount: applyResult.errors.length,
+                lastReplaceFileLines: partialBuffer.lastReplaceFileLines,
               };
               // Abort upstream so the body stream wraps up; we'll loop and
               // dispatch the continuation after updating the counter and
@@ -1393,6 +1404,18 @@ async function handleLlmResponse({
               // up to here is a valid handoff for any later recovery.
               partialBuffer.safeCut = partialBuffer.text.length;
               streamMadeProgress = true;
+              // SEARCH/REPLACE blocks contain `<<<<<<< SEARCH` markers in
+              // their lines; create blocks (full-file) don't. Capture the
+              // resolved file's line count after a replace so the recovery
+              // wrapper can cite "after that edit the file was N lines
+              // long" — only when the last successful block was a replace.
+              const wasReplace = closed.lines.some((l) => l.line.startsWith("<<<<<<< SEARCH"));
+              if (wasReplace) {
+                const resolvedText = streamingResolver.getVfs().get(applyResult.path);
+                partialBuffer.lastReplaceFileLines = resolvedText ? resolvedText.split("\n").length : undefined;
+              } else {
+                partialBuffer.lastReplaceFileLines = undefined;
+              }
             }
           } else {
             collectedMsgs.push(value);
@@ -1515,6 +1538,7 @@ async function handleLlmResponse({
           vfs: streamingResolver.getVfs(),
           focusPath: recoverHint.focusPath,
           assistantPartial: recoverHint.partial,
+          lastReplaceFileLines: recoverHint.lastReplaceFileLines,
         });
         if (recReq.isErr()) {
           recoveryLogger
