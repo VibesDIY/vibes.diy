@@ -135,10 +135,22 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
   return result;
 }
 
+// Bound the model-defaults augmentation so a slow/hung models.json fetch
+// (Lazy cache resets every 10s, asset fetch goes over the network) can't
+// stall the response *after* the actual D1 write has already succeeded.
+// On timeout we return res unchanged — the client already has the write
+// confirmation it needs; chat/app/img defaults are best-effort metadata.
+const MODEL_DEFAULTS_TIMEOUT_MS = 3000;
+
 async function withModelDefaults(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings): Promise<ResEnsureAppSettings> {
-  const rDefaults = await getModelDefaults(vctx, { appSlug: res.appSlug, userSlug: res.userSlug });
-  if (rDefaults.isErr()) return res;
-  const defaults = rDefaults.Ok();
+  const timeout = new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), MODEL_DEFAULTS_TIMEOUT_MS));
+  const raced = await Promise.race([getModelDefaults(vctx, { appSlug: res.appSlug, userSlug: res.userSlug }), timeout]);
+  if (raced === "timeout") {
+    ensureLogger(vctx.sthis, "ensureAppSettings").Warn().Msg("withModelDefaults timed out, returning res without defaults");
+    return res;
+  }
+  if (raced.isErr()) return res;
+  const defaults = raced.Ok();
   const s = res.settings.entry.settings;
   if (!s.chat) s.chat = defaults.chat;
   if (!s.app) s.app = defaults.app;
