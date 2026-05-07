@@ -77,7 +77,6 @@ import {
   isBlockStreamMsg,
   isBlockImage,
   CodeEndMsg,
-  CodeTruncatedMsg,
   BlockBeginMsg,
   type ApplyEditsError,
   type DeltaStreamMsg,

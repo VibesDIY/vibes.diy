@@ -47,8 +47,9 @@ describe("isCodeTruncated", () => {
       "errorCount",
     ];
     for (const k of required) {
-      const broken = { ...baseTruncated };
-      delete (broken as Record<string, unknown>)[k];
+      // Spread-and-omit to avoid a dynamically-computed delete (no-dynamic-delete).
+      const entries = Object.entries(baseTruncated as Record<string, unknown>).filter(([key]) => key !== k);
+      const broken = Object.fromEntries(entries);
       expect(isCodeTruncated(broken), `missing ${k} should reject`).toBe(false);
     }
   });

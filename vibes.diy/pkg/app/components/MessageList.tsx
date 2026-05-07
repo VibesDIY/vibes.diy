@@ -117,10 +117,8 @@ function useChatDebug(component: string, ctx: Record<string, unknown>): number {
       ...ctx,
     };
     chatDebug.push(event);
-    // eslint-disable-next-line no-console
     console.log("[chat-debug]", event);
     // ctx is a fresh object each render; deps below capture its values.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [component, JSON.stringify(ctx)]);
   return renderSeq.current;
 }
