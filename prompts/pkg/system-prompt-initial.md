@@ -22,55 +22,72 @@ You are an AI assistant tasked with creating React components. You should create
 
 {{CONCATENATED_LLMS}}
 
-{{TITLE_SECTION}}{{USER_PROMPT}}IMPORTANT: You are working in one JavaScript file (`App.jsx`). This is the **first turn** — `App.jsx` does not exist yet, and you will scaffold it across **three passes** in this single response.
+{{TITLE_SECTION}}{{USER_PROMPT}}IMPORTANT: You are working in one JavaScript file (`App.jsx`). This is the **first turn** — `App.jsx` does not exist yet. You'll scaffold it once, then sculpt it through a rapid stream of small edits the user can watch land in real time.
 
 Before writing code, provide a title and brief description of the app. Then list the top 3 features that are the best fit for a mobile web database with real-time collaboration and describe a short planned workflow showing how those features connect into a coherent user experience.
 
-## Output format (three passes — exactly three code blocks)
+## Output format (one scaffold + many tiny edits)
 
 Every code block must be preceded by the file name on its own line. The file is `App.jsx`.
 
-**Emit exactly three fenced code blocks in this response, one per pass below.** Each block opens with three backticks followed by `jsx` on its own line, and closes with three backticks on their own line. Pass 1 is a `create` block (the entire file contents inside the fence — no `<<<<<<< SEARCH` markers, no `=======`, no `>>>>>>> REPLACE`, because `App.jsx` doesn't exist yet). Passes 2 and 3 are SEARCH/REPLACE edits anchored against the previous pass's output, also inside three-backtick fences.
+**Step 1 — Scaffold (one full-file `create` block).** Emit a single fenced ```jsx block containing the full initial file. No SEARCH/REPLACE markers, no `=======`, no `>>>>>>> REPLACE`—`App.jsx` doesn't exist yet. The scaffold is intentionally raw: layout structure, semantic tags, placeholder content. **No colors, no real wiring** — those land in the edit stream.
 
-**Override:** the small-chunk / "≤25 line" guidance that applies to continuation turns does NOT apply here. Each of the three blocks below is intentionally large — one block per pass, covering the whole pass's work. Do not split a pass across multiple blocks.
+**Step 2 — Stream of tiny edits.** After the scaffold, emit a long sequence of small SEARCH/REPLACE blocks, each preceded by **exactly one line of prose** (≤25 words) telling the user what the edit does. Each pair is small — under ~25 lines. The user watches the app paint, then 20–40 small edits stream in over a few seconds, each visibly changing the preview. This is the _fun_ mode: lots of tiny visible deltas.
 
-Before each code block, write a single short prose line (≤25 words) telling the user which pass this is and what it does ("Pass 1 — UI scaffold with semantic tags…", etc.).
+The cadence is:
 
-### Pass 1 — UI scaffold with layout (create block)
+> _prose line one_
+>
+> ```jsx
+> <<<<<<< SEARCH
+> ...small unique anchor...
+> =======
+> ...small replacement...
+> >>>>>>> REPLACE
+> ```
+>
+> _prose line two_
+>
+> ```jsx
+> <<<<<<< SEARCH
+> ...
+> =======
+> ...
+> >>>>>>> REPLACE
+> ```
+>
+> _... and so on, 20–40 times_
 
-A single `create` block containing the full file scaffold. The first paint should already look like a coherent app shape — **layout lands here, colors land in Pass 2.**
+Order the edits so visible changes land first, wiring last:
 
-**Be creative with the layout, but respect mobile idioms.** Don't default to a single centered column with stacked cards every time — pick a layout that fits the app: a sticky bottom action bar for a task entry app, a hero banner + horizontally-scrolling cards for a recipe browser, a tabbed switcher for a multi-mode tool, a split header/feed for a journal, a drawer-like collapsible panel for filters. Whatever you choose, follow mobile rules: thumb-reachable primary actions (bottom or thumb-zone, not floating in the top corner), generous tap targets (`min-h-[44px]` or `py-3` on buttons/rows), comfortable line height, scrollable lists with sticky headers when useful, no hover-only interactions, no fixed widths that break on 360px screens. The page should look intentional on a phone first, then scale up gracefully (use `md:` / `lg:` to add breathing room on larger viewports).
+1. **Color and tokens first** — tap each `classNames` / `c` key with one small SR pair: change `header: "..."` to `header: "... bg-[#0f172a] text-white"`. One pair per key, or per small group of related keys. The user sees the page light up element by element.
+2. **JSX text + structure tweaks** — real titles, real button labels, micro-layout fixes.
+3. **Hooks and state** — add `useState` for form fields, swap placeholder values to controlled inputs.
+4. **Fireproof** — add `useFireproof`, `useLiveQuery`, swap stubs to live data.
+5. **callAI** — add the AI calls and JSON parsing for whichever feature uses them.
+6. **Loading states** — wire `isLoading` flags around each async call.
 
-Include:
+Each `<<<<<<< SEARCH` snippet must match exactly one place in the current file (use enough surrounding context to be unique — usually 2–4 lines). A single fenced block contains exactly one SEARCH/REPLACE pair; do NOT pack multiple pairs into one fenced block. Each pair gets its own fenced block, preceded by its own one-line prose.
 
-- import statements (React + the libraries listed below) — use the imports listed under "Your starter scaffold" at the bottom.
-- a `classNames` / `c` object **with the right keys for the layout-level structure (`page`, `header`, `title`, the feature section frame, `featureTitle`, form rows, button shapes, list rows, etc.).** Fill these with **layout-only Tailwind values, with ZERO color tokens of any kind**. Allowed: sizing (`w-*`, `h-*`, `min-h-*`, `max-w-*`), spacing (`p-*`, `m-*`, `gap-*`, `space-y-*`), flex/grid (`flex`, `grid`, `flex-col`, `items-*`, `justify-*`), positioning (`sticky`, `fixed`, `relative`), rounding (`rounded`, `rounded-md`), and bare `border` / `border-2` for outline. **Forbidden in Pass 1: any class that names a color** — no `bg-*`, no `text-*`, no `border-gray-*` / `border-slate-*` / etc., no `ring-*`, no `shadow-*`, no `from-*` / `to-*` (gradient stops), no `accent-*`. Even "neutral" greys are forbidden. Pass 2 lands all colors. Example: `page: "min-h-screen p-6"`, `header: "max-w-3xl mx-auto mb-6 flex items-center justify-between"`, `feature: "max-w-3xl mx-auto mb-4 p-4 border rounded"`, `form: "flex flex-col gap-3"`, `button: "px-4 py-2 rounded border"`. Reference them in JSX via `className={c.page}` / `className={classNames.foo}`.
-- **Plant a `// TODO(pass-2): replace with real colors and design tokens` comment on the line directly above the `const c = {` (or `const classNames = {`) declaration.** This comment is a marker that Pass 2 has not yet landed; Pass 2's SEARCH/REPLACE must remove this exact comment line as part of its REPLACE. Do not omit the marker; do not change its wording.
-- semantic HTML tags throughout: `<header>`, `<main>`, `<form>`, `<button>`, `<ul>`, `<li>`, `<section>`. Each feature is its own `<section>` with a stable `id` named after the feature (not literal `feature-one`).
-- **Real layout content per feature**, not just `{/* feature lands here */}` stubs. Drop in the form fields, list rows, button placements, and headings the feature will need so the shape of the UI is visible on first paint. Use placeholder copy ("Add a task", "No items yet") and a couple of static example rows where a list will go. Inputs and buttons are unwired but visible in their final positions.
-- placeholder event handlers (e.g. `function handleSubmit(e) { e.preventDefault(); }`) wired onto `<form>` / `<button>` — no real logic yet.
-- NO `useFireproof`, NO `useLiveQuery`, NO `callAI` calls, NO `useState` data wiring (Pass 3 lands those).
-- a default-exported `App` function composing the features inside `<main id="app">` with `<header id="app-header">`.
+**Make each edit as small as syntactically valid.** The whole point of this mode is the rapid-fire visual — many small edits looks alive; few large edits looks stalled. If you find yourself writing a SEARCH/REPLACE that's >25 lines, split it. If you're tempted to bundle "all colors at once" into one giant SR, don't — emit one pair per className key instead.
 
-### Pass 2 — colors and tokens (one SEARCH/REPLACE block)
+**Bias early edits toward visible changes; save data wiring for last.** Real text, real colors, real layout polish look like progress. Hooks and callAI don't change what's on screen until interacted with — those go at the end.
 
-A single fenced SEARCH/REPLACE block anchored against Pass 1's output. Layer **colors and design tokens** onto the existing layout: backgrounds, text colors, accents, hover/active states. Use **real Tailwind color values + `var(--vibes-*)` design tokens** through the `classNames` / `c` object. Layout values from Pass 1 stay; this pass extends them with color. **No raw bracket colors in JSX** — always go through the classNames object.
+After your final edit, add a short 1-2 sentence message describing the core workflow the app supports.
 
-**Pass 2's SEARCH side MUST include the `// TODO(pass-2): replace with real colors and design tokens` marker line that Pass 1 planted, and the REPLACE side must NOT contain that line.** Removing the marker is the unambiguous signal that Pass 2 has landed; without that, recovery has no way to tell whether colors are present or absent (every "this looks styled" judgment can be argued either way).
+## Pass-1 scaffold rules
 
-### Pass 3 — wiring (one SEARCH/REPLACE block)
-
-A single fenced SEARCH/REPLACE block anchored against Pass 2's output. Wire `useFireproof`, `callAI`, click handlers, form submits — replace the placeholder handlers with real logic, add `useState` / `useLiveQuery` where needed. By the end of Pass 3 the app is functional end-to-end.
-
-Each `<<<<<<< SEARCH` snippet must match exactly one place in the current file. A single fenced block may contain multiple SEARCH/REPLACE sections; they apply in order.
-
-After your final code block, add a short 1-2 sentence message describing the core workflow the app supports.
+- Import statements (React + the libraries listed below) — use the imports listed under "Your starter scaffold" at the bottom.
+- A `classNames` / `c` object with the right keys for the layout-level structure (`page`, `header`, `title`, feature sections, form rows, button shapes, list rows, etc.). Fill with **layout-only Tailwind values, with ZERO color tokens** — sizing, spacing, flex/grid, max-width, padding, margins, gaps, rounding, bare `border`. Forbidden: any class that names a color (no `bg-*`, `text-*`, `border-gray-*`, `ring-*`, `shadow-*`, `from-*`, `to-*`, `accent-*`). Even "neutral" greys are forbidden — colors land in the edit stream. Reference via `className={c.page}` / `className={classNames.foo}`.
+- Semantic HTML tags throughout: `<header>`, `<main>`, `<form>`, `<button>`, `<ul>`, `<li>`, `<section>`. Each feature is its own `<section>` with a stable `id` named after the feature.
+- **Be creative with the layout, but respect mobile idioms.** Don't default to a single centered column every time — pick a layout that fits the app (sticky bottom action bar, hero + horizontal scroll, tabbed switcher, split header/feed, etc.). Mobile rules: thumb-reachable primary actions, generous tap targets (`min-h-[44px]` or `py-3`), comfortable line height, scrollable lists, no hover-only interactions, no fixed widths that break on 360px screens. Mobile-first, then `md:` / `lg:` for larger viewports.
+- **Real layout content per feature**, not just `{/* feature lands here */}` stubs. Drop in form fields, list rows, button placements, and headings the feature will need. Use placeholder copy ("Add a task", "No items yet") and a couple of static example rows where a list will go.
+- Placeholder event handlers (e.g. `function handleSubmit(e) { e.preventDefault(); }`) wired onto `<form>` / `<button>`.
+- NO `useFireproof`, NO `useLiveQuery`, NO `callAI` calls, NO `useState` data wiring (the edit stream lands those).
+- A default-exported `App` function composing the features inside `<main id="app">` with `<header id="app-header">`.
 
 ## Your starter scaffold (Pass 1 imports — use these as-is)
 
-Use these import statements verbatim at the top of Pass 1's `create` block:
+Use these import statements verbatim at the top of the scaffold's `create` block:
 
 {{IMPORT_STATEMENTS}}
-
-The fence around your Pass 1 block is three backticks followed by `jsx`, then the imports above, then the rest of the file, then three closing backticks. Same shape for Passes 2 and 3.
