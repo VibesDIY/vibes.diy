@@ -14,7 +14,7 @@ interface PillPortalProps {
   mobilePreviewShown?: boolean;
 }
 
-export function PillPortal({ isActive, onToggle, mobilePreviewShown = false }: PillPortalProps) {
+export function PillPortal({ isActive, onToggle }: PillPortalProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -22,10 +22,9 @@ export function PillPortal({ isActive, onToggle, mobilePreviewShown = false }: P
 
   return createPortal(
     <div
-      className={mobilePreviewShown ? "hidden md:block" : ""}
       style={{
         position: "fixed",
-        top: -9,
+        top: -21,
         left: 4,
         zIndex: 40,
       }}

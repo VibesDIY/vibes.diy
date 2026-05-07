@@ -20,7 +20,7 @@ import AppLayout from "../../components/AppLayout.js";
 import { BrutalistCard } from "@vibes.diy/base";
 import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
-import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
+import { isMobileViewport, useIsMobileViewport, useViewState } from "../../utils/ViewState.js";
 import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
@@ -233,6 +233,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   }
   const { vibeDiyApi, webVars: svcVars } = useVibesDiy();
   const shareModal = useShareModal({ userSlug, appSlug, fsId, vibeDiyApi });
+  const isMobile = useIsMobileViewport();
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
@@ -631,7 +632,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       <AppLayout
         isSidebarVisible={isSidebarVisible}
         setIsSidebarVisible={setIsSidebarVisible}
-        fullWidthChat={isMobileViewport()}
+        fullWidthChat={isMobile}
         headerLeft={
           <ChatHeaderContent
             remixOf={remixOf}
@@ -644,7 +645,10 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         headerRight={
           <ResultPreviewHeaderContent
             promptState={promptState}
-            navigateToView={navigateToView}
+            navigateToView={(view) => {
+              if (isMobile) setMobilePreviewShown(true);
+              navigateToView(view);
+            }}
             viewControls={viewControls}
             currentView={currentView}
             onCodeSave={handleOnCodeSave}
@@ -653,6 +657,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             onContextMenu={handleContextMenu}
             shareModal={shareModal}
             onBackClick={() => setMobilePreviewShown(false)}
+            isChatActive={isMobile && !mobilePreviewShown}
           />
         }
         chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} />}

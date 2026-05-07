@@ -611,3 +611,55 @@ body:has(.page-grid-background) {
     border-color: var(--color-dark-primary);
   }
 }
+
+/* === Vibes-CLI editor navbar === */
+.vibes-navbar {
+  background: var(--vibes-cream, #fffef0);
+  border-bottom: 1px solid var(--vibes-near-black, #1a1a1a);
+  font-family: "Alte Haas Grotesk", "Inter", sans-serif;
+}
+
+/* Chrome-style URL bar (search bar look for app title) */
+.chrome-url-bar {
+  display: flex;
+  width: 100%;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.chrome-url-bar:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.chrome-url-bar-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chrome-url-bar-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.app-name-display {
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--vibes-near-black, #1a1a1a);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+  opacity: 0.7;
+}

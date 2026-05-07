@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { SetURLSearchParams } from "react-router";
 import { ViewControlsType, ViewType } from "@vibes.diy/prompts";
 import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
@@ -6,6 +7,19 @@ import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
 export const isMobileViewport = () => {
   return typeof window !== "undefined" && window.innerWidth < 768;
 };
+
+// Reactive version — re-renders when the viewport crosses the mobile breakpoint
+export function useIsMobileViewport() {
+  const [isMobile, setIsMobile] = useState(() => isMobileViewport());
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return isMobile;
+}
 
 // export interface ViewStateProps {
 //   // chatId: string;

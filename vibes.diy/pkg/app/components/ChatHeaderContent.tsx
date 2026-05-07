@@ -12,34 +12,49 @@ interface ChatHeaderContentProps {
 
 function ChatHeaderContent({ title, promptProcessing, codeReady, remixOf, icon }: ChatHeaderContentProps) {
   return (
-    <div className="flex h-full w-full items-center justify-between p-2 py-4" style={{ paddingLeft: PILL_CLEARANCE }}>
-      <div className="text-light-primary dark:text-dark-primary flex items-center gap-2 text-center text-sm">
-        {icon && (
-          <img
-            src={cidAssetUrl(icon.cid, icon.mime, getAppHostBaseUrl())}
-            alt=""
-            className="h-6 w-6 rounded-full"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        )}
-        {remixOf ? (
-          <span>
-            <a
-              href={`/vibe/${remixOf}/`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent-02-light dark:text-accent-02-dark hover:underline"
-              title={`Remix of ${remixOf}`}
-            >
-              🔀
-            </a>{" "}
-            {title}
-          </span>
-        ) : (
-          <span>{title}</span>
-        )}
+    <div className="flex h-full w-full items-center gap-2 px-2 py-2" style={{ paddingLeft: PILL_CLEARANCE + 40 }}>
+      {icon && (
+        <img
+          src={cidAssetUrl(icon.cid, icon.mime, getAppHostBaseUrl())}
+          alt=""
+          className="h-6 w-6 shrink-0 rounded-full"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+        />
+      )}
+      <div className="chrome-url-bar flex-1" title={title}>
+        <span className="chrome-url-bar-icon">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5}>
+            <circle cx="8" cy="8" r="6" />
+            <line x1="8" y1="5" x2="8" y2="8.5" />
+            <circle cx="8" cy="11" r="0.5" fill="currentColor" stroke="none" />
+          </svg>
+        </span>
+        <span className="app-name-display">
+          {remixOf ? (
+            <>
+              <a
+                href={`/vibe/${remixOf}/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent-02-light dark:text-accent-02-dark hover:underline"
+                title={`Remix of ${remixOf}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                🔀
+              </a>{" "}
+              {title}
+            </>
+          ) : (
+            title
+          )}
+        </span>
+        <span className="chrome-url-bar-icon" style={{ opacity: 0.3 }}>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5}>
+            <path d="M8 2l1.8 3.6L14 6.4l-3 2.9.7 4.1L8 11.4l-3.7 2 .7-4.1-3-2.9 4.2-.8z" />
+          </svg>
+        </span>
       </div>
 
       {(codeReady || promptProcessing || title) && (
