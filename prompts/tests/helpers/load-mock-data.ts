@@ -3,6 +3,9 @@
 
 import { CoerceURI, URI } from "@adviser/cement";
 import systemPromptTemplate from "../../pkg/system-prompt.md?raw";
+import systemPromptInitialTemplate from "../../pkg/system-prompt-initial.md?raw";
+import recoveryAddendumTemplate from "../../pkg/recovery-addendum.md?raw";
+import recoveryStitchAddendumTemplate from "../../pkg/recovery-stitch-addendum.md?raw";
 
 /**
  * Creates a mock fetch implementation that serves only text documentation files.
@@ -12,10 +15,28 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
   return (iurl: CoerceURI) => {
     const url = URI.from(iurl).toString();
     // Serve the real system-prompt template so placeholder substitution works.
+    if (url.includes("system-prompt-initial.md")) {
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(systemPromptInitialTemplate),
+      } as Response);
+    }
     if (url.includes("system-prompt.md")) {
       return Promise.resolve({
         ok: true,
         text: () => Promise.resolve(systemPromptTemplate),
+      } as Response);
+    }
+    if (url.includes("recovery-stitch-addendum.md")) {
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(recoveryStitchAddendumTemplate),
+      } as Response);
+    }
+    if (url.includes("recovery-addendum.md")) {
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(recoveryAddendumTemplate),
       } as Response);
     }
 
