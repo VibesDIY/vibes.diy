@@ -32,12 +32,12 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess, canRead, isPublicReadable, DocAccessLevel } from "./access-helpers.js";
 import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
-import { mintFilesUrls } from "./files-url-mint.js";
+import { mintFilesUrls, isFileMeta } from "./files-url-mint.js";
 
 // Read-side gate: if the ACL pins `read`, honor it exactly; otherwise fall
 // back to today's behavior (any reader role, or public-readable visitor).
@@ -58,6 +58,50 @@ async function readAllowed(
 // Pattern from fireproof: qs-room-evento.ts clientWs()
 function clientWsSend(ctx: { send: unknown }): WSSendProvider {
   return (ctx.send as { provider: WSSendProvider }).provider;
+}
+
+// Verify that every `_files.<key>.uploadId` referenced in the doc was minted
+// for THIS (userSlug, appSlug) pair. Defends against:
+//   - typos / stale uploadIds → reject so the doc never references a
+//     CID the read handler can't resolve.
+//   - foreign-uploadId paste attacks (user A's uploadId pasted into user
+//     B's doc) → reject so cross-user reads are impossible at write time,
+//     not just at read time. The read handler also checks userSlug/appSlug
+//     match (defense in depth at [files-asset.ts:178](./files-asset.ts#L178)).
+//
+// Single batched SELECT via `inArray` — N round-trips would scale badly
+// for docs with many files. `_files.<key>` entries that aren't in the
+// `{uploadId, type, size}` shape (per `isFileMeta`) are passed through;
+// validation only runs on the recognized shape.
+async function validateFilesUploads(
+  vctx: VibesApiSQLCtx,
+  doc: unknown,
+  userSlug: string,
+  appSlug: string
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const files = (doc as { _files?: Record<string, unknown> } | undefined)?._files;
+  if (!files || typeof files !== "object") return { ok: true };
+  const uploadIds: string[] = [];
+  for (const entry of Object.values(files)) {
+    if (isFileMeta(entry)) uploadIds.push(entry.uploadId);
+  }
+  if (uploadIds.length === 0) return { ok: true };
+
+  const t = vctx.sql.tables.assetUploads;
+  const rows = await vctx.sql.db
+    .select({ uploadId: t.uploadId, userSlug: t.userSlug, appSlug: t.appSlug })
+    .from(t)
+    .where(inArray(t.uploadId, uploadIds));
+
+  const found = new Map(rows.map((r) => [r.uploadId, r]));
+  for (const id of uploadIds) {
+    const row = found.get(id);
+    if (!row) return { ok: false, reason: `unknown uploadId: ${id}` };
+    if (row.userSlug !== userSlug || row.appSlug !== appSlug) {
+      return { ok: false, reason: `uploadId ${id} not minted for this app` };
+    }
+  }
+  return { ok: true };
 }
 
 // ── putDoc ──────────────────────────────────────────────────────────
@@ -91,6 +135,18 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
 
       if (!aclAllows(acl, "write", access)) {
         await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } as unknown as VibesDiyError);
+        return Result.Ok(EventoResult.Continue);
+      }
+
+      // Phase 3: validate every `_files.<key>.uploadId` references an
+      // AssetUploads row minted for this (userSlug, appSlug). See
+      // validateFilesUploads above.
+      const filesCheck = await validateFilesUploads(vctx, req.doc, req.userSlug, req.appSlug);
+      if (!filesCheck.ok) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-error",
+          error: { message: `Invalid file reference: ${filesCheck.reason}` },
+        } as unknown as VibesDiyError);
         return Result.Ok(EventoResult.Continue);
       }
 
