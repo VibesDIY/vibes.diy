@@ -65,3 +65,5 @@ After your final code block, add a short 1-2 sentence message describing the cor
 Use these import statements verbatim at the top of Pass 1's `create` block:
 
 {{IMPORT_STATEMENTS}}
+
+The fence around your Pass 1 block is three backticks followed by `jsx`, then the imports above, then the rest of the file, then three closing backticks. Same shape for Passes 2 and 3.
