@@ -3,13 +3,7 @@ import { CoercedDate } from "./types.js";
 import { passthrough } from "./passthrough.js";
 import { applyEdits, type Edit } from "./apply-edits.js";
 import { parseFenceBody, type FenceParseError } from "./fence-body-parser.js";
-import {
-  type BlockStreamMsg,
-  isBlockEnd,
-  isCodeBegin,
-  isCodeEnd,
-  isCodeLine,
-} from "./block-stream.js";
+import { type BlockStreamMsg, isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine, isCodeTruncated } from "./block-stream.js";
 
 const FsBase = type({
   blockId: "string",
@@ -94,6 +88,17 @@ export function createFileSystemStream(
       if (isCodeLine(msg, streamId)) {
         const acc = pending.get(msg.sectionId);
         if (acc !== undefined) acc.lines.push(msg.line);
+        return;
+      }
+
+      if (isCodeTruncated(msg, streamId)) {
+        // Server suppressed the failed code.end and emitted truncate in its
+        // place. Drop the in-flight accumulator without applying — there's
+        // no clean fence body to parse, and recovery's replacement block
+        // will arrive shortly with a different sectionId. No file write,
+        // no FsApplyErrorMsg (the upstream apply error already produced
+        // one server-side; emitting another here would double-count).
+        pending.delete(msg.sectionId);
         return;
       }
 

@@ -26,6 +26,7 @@ import {
   isCodeLine,
   isToplevelEnd,
   isCodeEnd,
+  isCodeTruncated,
   ToplevelLineMsg,
   CodeLineMsg,
   isBlockEnd,
@@ -283,6 +284,29 @@ const app = command({
                 timestamp: new Date(),
               })
             );
+          }
+          if (isCodeTruncated(value)) {
+            // Server suppressed the failed code.end and emitted truncate
+            // instead. Discreet status — operator sees why their stream
+            // paused. The recovery's replacement block streams in next.
+            console.log(
+              JSON.stringify({
+                type: "section.code.truncated",
+                sectionId: value.sectionId,
+                lang: value.lang,
+                ...(value.path !== undefined ? { path: value.path } : {}),
+                reason: value.reason,
+                truncatedAtLine: value.truncatedAtLine,
+                errorCount: value.errorCount,
+                timestamp: new Date(),
+              })
+            );
+            // Drop the buffered prefix — recovery's clean block.code.begin
+            // will reset sectionState.blocks anyway, but be explicit so
+            // anything inspecting state mid-stream sees the truth.
+            if (sectionState.sectionId === value.sectionId) {
+              sectionState.blocks = [];
+            }
           }
           if (isBlockImage(value)) {
             console.log(JSON.stringify(value));
