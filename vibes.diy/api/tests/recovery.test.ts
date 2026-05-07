@@ -161,6 +161,34 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       expect(lastText).not.toContain("Continue from where");
     });
 
+    it("pins provider preference to avoid Bedrock when prefilling", () => {
+      // Bedrock-routed Claude rejects assistant-suffix conversations with
+      // 400 ("This model does not support assistant message prefill").
+      // OpenRouter must route this recovery call to Anthropic-direct or
+      // Vertex instead. Observed live in chat zYFWaxhUAKSvVrzeL.
+      const r = buildRecoveryRequest({
+        originalRequest: baseReq,
+        recoveryAddendum: "You were here. Continue.",
+        vfs: new Map([["/App.jsx", "x"]]),
+        focusPath: "/App.jsx",
+        assistantPartial: partial,
+      });
+      expect(r.isOk()).toBe(true);
+      const out = r.Ok();
+      expect(out.provider?.ignore).toContain("amazon-bedrock");
+    });
+
+    it("does not pin provider preference when no prefill is appended", () => {
+      const r = buildRecoveryRequest({
+        originalRequest: baseReq,
+        recoveryAddendum: "You were here. Continue.",
+        vfs: new Map([["/App.jsx", "x"]]),
+        focusPath: "/App.jsx",
+      });
+      expect(r.isOk()).toBe(true);
+      expect(r.Ok().provider).toBeUndefined();
+    });
+
     it("preserves the two-message shape when assistantPartial is omitted", () => {
       const r = buildRecoveryRequest({
         originalRequest: baseReq,
