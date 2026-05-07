@@ -13,6 +13,7 @@ import { isResEnsureUserSettings, isUserSettingSharing, isResEnsureAppSlug } fro
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
 import { loginCmd } from "./cmds/login-cmd.js";
 import { pushCmd } from "./cmds/push-cmd.js";
+import { putAssetCmd, isResPutAssetCli } from "./cmds/put-asset-cmd.js";
 import { generateCmd, isResGenerate } from "./cmds/generate-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
 import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
@@ -114,6 +115,7 @@ async function main(): Promise<number> {
         generate: generateCmd(ctx),
         login: loginCmd(ctx),
         push: pushCmd(ctx),
+        "put-asset": putAssetCmd(ctx),
         skills: skillsCmd(ctx),
         system: systemCmd(ctx),
         "user-settings": userSettingsCmd(ctx),
@@ -202,6 +204,16 @@ async function main(): Promise<number> {
           }
           case isResGenerate(msg): {
             // Already reported via sendProgress in generate handler
+            break;
+          }
+          case isResPutAssetCli(msg): {
+            console.log(`cid=${msg.cid}`);
+            console.log(`getURL=${msg.getURL}`);
+            console.log(`size=${msg.size}`);
+            console.log(`uploadId=${msg.uploadId}`);
+            if (msg.verified !== undefined) {
+              console.log(`verified=${msg.verified}`);
+            }
             break;
           }
           default:
