@@ -176,6 +176,10 @@ export interface MakeBaseSystemPromptOptions {
   // esm.sh; the API worker passes `${WORKSPACE_NPM_URL}/@vibes.diy/prompts/`
   // so assets resolve through the worker's own /vibe-pkg/ endpoint.
   pkgBaseUrl?: string;
+  // "initial" selects the three-pass first-turn template; "continuation"
+  // (default) selects the small-chunk SEARCH/REPLACE template used for
+  // every subsequent turn.
+  variant?: "initial" | "continuation";
 }
 
 const DEFAULT_PKG_BASE_URL = "https://esm.sh/@vibes.diy/prompts/";
@@ -260,7 +264,8 @@ export async function makeBaseSystemPrompt(
 
   const importStatements = `import React from "react"${generateImportStatements(chosenLlms)}`;
 
-  const template = await getSystemPromptTemplate(pkgBaseUrl, sessionDoc.fetch);
+  const templateFilename = sessionDoc?.variant === "initial" ? "system-prompt-initial.md" : "system-prompt.md";
+  const template = await getSystemPromptTemplate(pkgBaseUrl, templateFilename, sessionDoc.fetch);
   const systemPrompt = template
     .replaceAll("{{STYLE_PROMPT}}", stylePrompt)
     .replaceAll("{{DEMO_DATA}}", demoDataLines)
@@ -277,9 +282,9 @@ export async function makeBaseSystemPrompt(
   };
 }
 
-async function getSystemPromptTemplate(pkgBaseUrl: string, fetchFn?: typeof fetch): Promise<string> {
-  const rText = await keyedLoadAsset.get("system-prompt").once(async () => {
-    return loadAsset("./system-prompt.md", {
+async function getSystemPromptTemplate(pkgBaseUrl: string, filename: string, fetchFn?: typeof fetch): Promise<string> {
+  const rText = await keyedLoadAsset.get(`system-prompt:${filename}`).once(async () => {
+    return loadAsset(`./${filename}`, {
       fallBackUrl: pkgBaseUrl,
       basePath: () => import.meta.url,
       mock: { fetch: fetchFn },
@@ -294,6 +299,20 @@ async function getSystemPromptTemplate(pkgBaseUrl: string, fetchFn?: typeof fetc
 export async function getRecoveryAddendum(pkgBaseUrl?: string, fetchFn?: typeof fetch): Promise<string> {
   const rText = await keyedLoadAsset.get("recovery-addendum").once(async () => {
     return loadAsset("./recovery-addendum.md", {
+      fallBackUrl: pkgBaseUrl ?? DEFAULT_PKG_BASE_URL,
+      basePath: () => import.meta.url,
+      mock: { fetch: fetchFn },
+    });
+  });
+  if (rText.isErr()) {
+    return Promise.reject(rText.Err());
+  }
+  return rText.Ok();
+}
+
+export async function getRecoveryStitchAddendum(pkgBaseUrl?: string, fetchFn?: typeof fetch): Promise<string> {
+  const rText = await keyedLoadAsset.get("recovery-stitch-addendum").once(async () => {
+    return loadAsset("./recovery-stitch-addendum.md", {
       fallBackUrl: pkgBaseUrl ?? DEFAULT_PKG_BASE_URL,
       basePath: () => import.meta.url,
       mock: { fetch: fetchFn },

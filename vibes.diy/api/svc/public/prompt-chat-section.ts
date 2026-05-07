@@ -83,7 +83,7 @@ import {
   type FenceParseError,
 } from "@vibes.diy/call-ai-v2";
 import type { Logger } from "@adviser/cement";
-import { getRecoveryAddendum, makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
+import { getRecoveryAddendum, getRecoveryStitchAddendum, makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
@@ -682,12 +682,15 @@ async function injectSystemPrompt(
   // makeBaseSystemPrompt's getDefaultSkills(), and an unset title drops the
   // title hint line entirely.
   const { skills, title } = await loadActiveSettings(vctx, chatId);
+  const priorFs = await loadPriorFileSystem(vctx, chatId);
+  const isInitial = priorFs.size === 0;
 
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
       skills,
       title,
       demoData: false,
+      variant: isInitial ? "initial" : "continuation",
       pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
       fetch: createPromptAssetFetch({ fetchAsset: vctx.fetchAsset }),
     })
@@ -1473,6 +1476,8 @@ async function handleLlmResponse({
           return Result.Ok();
         }
 
+        const stitchMode = recoveryCounter.consecutiveFruitless === 2;
+
         recoveryLogger
           .Info()
           .Any("event", {
@@ -1485,6 +1490,7 @@ async function handleLlmResponse({
             kind: recoverHint.kind,
             errorCount: recoverHint.errorCount,
             consecutiveFruitless: recoveryCounter.consecutiveFruitless,
+            mode: stitchMode ? "stitch" : "continue",
           })
           .Msg("recovery-start");
 
@@ -1493,7 +1499,9 @@ async function handleLlmResponse({
         // blocks produced before the error.
         const pkgBaseUrl = promptsPkgBaseUrl(vctx.params.pkgRepos.workspace);
         const fetchOverride = createPromptAssetFetch({ fetchAsset: vctx.fetchAsset });
-        const addendum = await exception2Result(() => getRecoveryAddendum(pkgBaseUrl, fetchOverride));
+        const addendum = await exception2Result(() =>
+          stitchMode ? getRecoveryStitchAddendum(pkgBaseUrl, fetchOverride) : getRecoveryAddendum(pkgBaseUrl, fetchOverride)
+        );
         if (addendum.isErr()) {
           recoveryLogger
             .Info()
