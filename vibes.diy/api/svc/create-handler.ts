@@ -15,6 +15,7 @@ import { createSQLPeer, CreateSQLPeerParams, createVibesApiTables, DBFlavour, Vi
 import { SuperThis } from "@fireproof/core-types-base";
 import { ensureStorage } from "@vibes.diy/api-pkg";
 import { createS3Peer } from "./peers/s3.js";
+import { createAssetGrantSigner } from "./asset-grant.js";
 
 export type BindPromise<T> = (promise: Promise<T>) => Promise<T>;
 
@@ -218,6 +219,11 @@ export async function createAppContext<T extends VibesSqlite>(
 
   const tables = createVibesApiTables(envVals.DB_FLAVOUR as DBFlavour);
 
+  const rAssetGrantSigner = await createAssetGrantSigner({ sthis, secret: envVals.CLOUD_SESSION_TOKEN_SECRET });
+  if (rAssetGrantSigner.isErr()) {
+    throw rAssetGrantSigner.Err();
+  }
+
   const vibesCtx = {
     sthis,
     logger: params.logger ?? ensureLogger(sthis, "VibesApiSQLCtx"),
@@ -253,6 +259,7 @@ export async function createAppContext<T extends VibesSqlite>(
           createS3Peer({ s3: params.storageSystems.s3 })
         )
       : ensureStorage({ peerTimeout: params.storageSystems.peerTimeout }, createSQLPeer(params.storageSystems.sql)),
+    assetGrantSigner: rAssetGrantSigner.Ok(),
 
     llmRequest: defaultLLMRequest(params.llmRequest, {
       url: envVals.LLM_BACKEND_URL,

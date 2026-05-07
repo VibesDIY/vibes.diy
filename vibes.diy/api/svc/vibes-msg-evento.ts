@@ -47,6 +47,7 @@ import {
   listDbNamesEvento,
 } from "./public/app-documents.js";
 import { listMembersEvento } from "./public/list-members.js";
+import { assetUploadGrantEvento } from "./public/asset-upload-grant.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -88,6 +89,7 @@ export const vibesMsgEvento = Lazy(() => {
     subscribeDocsEvento,
     listDbNamesEvento,
     listMembersEvento,
+    assetUploadGrantEvento,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",
