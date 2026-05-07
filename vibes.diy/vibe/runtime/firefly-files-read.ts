@@ -1,0 +1,58 @@
+/**
+ * Firefly `_files` read decoration.
+ *
+ * The server returns `_files.<key> = { type, size, lastModified, url }` —
+ * the URL is pre-built and points at the app-subdomain `/_files/...`
+ * handler. This helper just attaches a `meta.file()` shim so existing
+ * `await meta.file()` callers (transcoding, hashing, ML feeding) keep
+ * working byte-for-byte.
+ *
+ * The shim throws on non-OK HTTP responses (vs silently wrapping JSON
+ * error bodies in a fake File). UI consumers using `<img src={meta.url}>`
+ * skip the shim entirely.
+ */
+
+export interface PublicFileMeta {
+  readonly type: string;
+  readonly size: number;
+  readonly lastModified?: number;
+  readonly url: string;
+  file?: () => Promise<File>;
+}
+
+interface DocWithFiles {
+  _files?: Record<string, PublicFileMeta>;
+}
+
+/**
+ * Walk `doc._files` and attach `meta.file()` shim per entry. Returns a new
+ * doc; the input is not mutated. If `_files` is absent or empty, returns
+ * `doc` unchanged. Idempotent — re-decorating yields equivalent output.
+ */
+export function decorateFiles<T>(doc: T): T {
+  const candidate = doc as unknown as DocWithFiles;
+  const files = candidate?._files;
+  if (!files) return doc;
+  const keys = Object.keys(files);
+  if (keys.length === 0) return doc;
+
+  const next: Record<string, PublicFileMeta> = {};
+  for (const key of keys) {
+    const meta = files[key];
+    if (!meta || typeof meta.url !== "string") {
+      next[key] = meta;
+      continue;
+    }
+    next[key] = { ...meta, file: () => fetchAsFile(meta.url, key, meta.type, meta.lastModified) };
+  }
+  return { ...(doc as object), _files: next } as unknown as T;
+}
+
+async function fetchAsFile(url: string, name: string, type: string, lastModified: number | undefined): Promise<File> {
+  const r = await fetch(url);
+  if (!r.ok) {
+    throw new Error(`fetch _files ${url}: ${r.status} ${r.statusText}`);
+  }
+  const blob = await r.blob();
+  return new File([blob], name, { type, lastModified });
+}
