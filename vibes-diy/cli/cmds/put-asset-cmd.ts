@@ -91,8 +91,17 @@ function inferMimeType(filename: string): string {
 // URL, use it as-is.
 function resolveUploadUrl(uploadUrl: string, apiUrl: string): string {
   if (/^https?:\/\//i.test(uploadUrl)) return uploadUrl;
-  const base = apiUrl.replace(/\/+$/, "");
-  return `${base}${uploadUrl.startsWith("/") ? "" : "/"}${uploadUrl}`;
+  const u = new URL(apiUrl);
+  return `${u.protocol}//${u.host}${uploadUrl.startsWith("/") ? "" : "/"}${uploadUrl}`;
+}
+
+// `/assets` and `/assets/cid` live at the host root (not under `/api/`)
+// because /api/ is forwarded to the ChatSessions DO. Strip the api path
+// (and any query string like `?.stable-entry.=cli`) from --api-url to
+// build a clean host-root URL.
+function hostRoot(apiUrl: string): string {
+  const u = new URL(apiUrl);
+  return `${u.protocol}//${u.host}`;
 }
 
 export const putAssetEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPutAsset, ResPutAssetCli> = {
@@ -161,7 +170,7 @@ export const putAssetEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPutAsset, R
 
     let verified: boolean | undefined;
     if (args.verifyFetch) {
-      const fetchUrl = `${args.apiUrl.replace(/\/+$/, "")}/assets/cid?url=${encodeURIComponent(body.getURL)}`;
+      const fetchUrl = `${hostRoot(args.apiUrl)}/assets/cid?url=${encodeURIComponent(body.getURL)}`;
       const rGet = await exception2Result(() => fetch(fetchUrl));
       if (rGet.isErr() || !rGet.Ok().ok) {
         verified = false;

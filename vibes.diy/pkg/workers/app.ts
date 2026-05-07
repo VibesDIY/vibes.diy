@@ -15,6 +15,7 @@ import { cfServe, CfCacheIf } from "@vibes.diy/api-svc";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
 import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
+import { routeDecision } from "./route-decision.js";
 
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
@@ -45,14 +46,21 @@ const requestHandler = createRequestHandler(serverBuild, import.meta.env.MODE);
 export default {
   async fetch(request: CFRequest, env: CFEnv, ctx: ExecutionContext): Promise<CFResponse> {
     const url = new URL(request.url);
-    if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
+    const route = routeDecision({
+      hostname: url.hostname,
+      pathname: url.pathname,
+      method: request.method,
+      hostnameBase: env.VIBES_SVC_HOSTNAME_BASE,
+    });
+
+    if (route === "api-do") {
       const shard = url.searchParams.get("shard") || crypto.randomUUID();
       const id = env.CHAT_SESSIONS.idFromName(shard);
       const obj = env.CHAT_SESSIONS.get(id);
       return obj.fetch(request); // handle WebSocket upgrade and API requests in the chat sessions Durable Object
     }
 
-    if (url.pathname.startsWith("/vibe-pkg/")) {
+    if (route === "vibe-pkg") {
       // console.log("Handling package vibe-pkg request for", url.pathname);
       const cache = caches.default;
       if (request.method === "OPTIONS") {
@@ -118,19 +126,18 @@ export default {
     cctx.appCtx = cfCtx.appCtx;
 
     // console.log("Handling request for", url, "base", env.VIBES_SVC_HOSTNAME_BASE, Object.fromEntries(request.headers.entries()));
-    if (
-      (url.hostname.endsWith(env.VIBES_SVC_HOSTNAME_BASE) &&
-        url.hostname.slice(0, -env.VIBES_SVC_HOSTNAME_BASE.length).includes("--")) ||
-      url.pathname.startsWith("/assets/cid")
-    ) {
+    if (route === "cf-serve") {
       // console.log("Handling Hostname-based API request for", url.hostname, url.pathname);
       const res = await cfServe(request, cctx);
-      caches.default.put(request.url, res.clone() as unknown as CFResponse);
+      // Don't cache asset uploads — same URL, different content per request.
+      if (url.pathname !== "/assets") {
+        caches.default.put(request.url, res.clone() as unknown as CFResponse);
+      }
       return res;
     }
 
     // Hashed static assets (Vite fingerprinted) — cache immutably
-    if (url.pathname.startsWith("/assets/") && !url.pathname.startsWith("/assets/cid")) {
+    if (route === "static-asset") {
       const assetResponse = await env.ASSETS.fetch(request);
       if (!assetResponse.ok) {
         return assetResponse as unknown as CFResponse;
