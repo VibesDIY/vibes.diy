@@ -45,15 +45,6 @@ export const LLMRequest = type({
   "stop?": "string | string[]",
   "verbosity?": "'low' | 'medium' | 'high' | 'max'",
   "modalities?": "string[]",
-  // OpenRouter provider routing preference. Used by recovery requests to
-  // avoid Bedrock when sending assistant-prefill, since Bedrock-routed
-  // Claude rejects assistant-suffix conversations with 400.
-  "provider?": {
-    "ignore?": "string[]",
-    "order?": "string[]",
-    "require_parameters?": "boolean",
-    "allow_fallbacks?": "boolean",
-  },
 });
 
 export type LLMRequest = typeof LLMRequest.infer;

@@ -75,7 +75,7 @@ describe("recovery addenda", () => {
 
   it("getRecoveryAddendum returns continue-mode text", async () => {
     const text = await getRecoveryAddendum(pkgBaseUrl, fetchFn);
-    expect(text.toLowerCase()).toContain("continue");
+    expect(text.toLowerCase()).toContain("current files");
     expect(text.toLowerCase()).not.toContain("leave nothing out");
   });
 

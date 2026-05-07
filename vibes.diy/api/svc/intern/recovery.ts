@@ -19,8 +19,17 @@ import {
 // Continue mode ("you were here, continue"): the recovery prompt does NOT
 // surface the failure to the model. It contains current file state plus
 // (optionally) the assistant's own captured partial output, truncated to
-// the last successful code.end, appended as an assistant prefill. The
-// model literally continues its own message at the token level.
+// the last successful code.end, framed as a user-role resume message.
+//
+// Why user-framed and not assistant-prefill: extended-thinking Claude
+// models (anthropic/claude-opus-4.7 in our setup) reject prefill at the
+// model level — every provider in OpenRouter (Anthropic-direct, Bedrock,
+// Vertex) returned 400 with "This model does not support assistant
+// message prefill. The conversation must end with a user message."
+// (chats z4Jbr2Q3EFgWFUnsau, z2uDNqY3Nym7eE9q6e, zYFWaxhUAKSvVrzeL).
+// The user-framed wrapper works on every provider and every model.
+// The anti-gaslight ("verify partial against CURRENT FILES") guidance
+// lives in recovery-addendum.md instead.
 
 const MAX_RECOVERY_FILE_BYTES = 16_000;
 const MAX_RECOVERY_TOTAL_BYTES = 32_000;
@@ -45,26 +54,22 @@ export interface RecoveryRequestInput {
 // OpenRouter relays) reject back-to-back system messages with 400. If the
 // original request has no system message, a new one is prepended.
 //
-// The captured assistant partial (when present) is appended as an
-// ASSISTANT prefill message — the next sampled token is the literal
-// continuation of the model's own truncated output. This eliminates the
-// "you said this, now continue" framing that lets the model gaslight
-// itself into believing edits landed when they didn't (observed in
-// chat z9ahCzdQoLgg9va5K — the model read its own truncated "Pass 2"
-// narration and concluded "Pass 2 already landed inline").
-//
-// Provider note: assistant prefill works on Anthropic-direct and GCP
-// Vertex. AWS Bedrock historically rejects assistant-suffix
-// conversations. OpenRouter routes anthropic/claude-* to Anthropic-direct
-// by default; if a Bedrock 400 ever appears, set provider preference
-// (e.g. `provider: { ignore: ["amazon-bedrock"] }`) on the recovery
-// request specifically.
+// The captured assistant partial (when present) is appended as a USER
+// message wrapped in "PARTIAL ASSISTANT OUTPUT" framing rather than as
+// an assistant prefill. We tried prefill (commit 80260adb) and it was
+// rejected at the model level by anthropic/claude-opus-4.7 across every
+// provider in OpenRouter — Anthropic-direct, Bedrock, and Vertex all
+// returned 400 with "This model does not support assistant message
+// prefill. The conversation must end with a user message." The
+// anti-gaslight directive ("verify your partial against CURRENT FILES")
+// lives in recovery-addendum.md instead, where it does the same job
+// without depending on prefill being supported.
 //
 // Shape:
 //   - original = [system, ...rest], no partial:    [system+recovery, ...rest]
-//   - original = [system, ...rest], with partial:  [system+recovery, ...rest, assistant-partial]
+//   - original = [system, ...rest], with partial:  [system+recovery, ...rest, user-partial]
 //   - original = [user, ...],       no partial:    [system-new, user, ...]
-//   - original = [user, ...],       with partial:  [system-new, user, ..., assistant-partial]
+//   - original = [user, ...],       with partial:  [system-new, user, ..., user-partial]
 //
 // The merged system message is `${original}\n\n${addendum}\n\n${CURRENT FILES}` —
 // no failure framing, no failed-search bytes, no SEARCH/REPLACE syntax.
@@ -84,28 +89,29 @@ export function buildRecoveryRequest({
   const filesBlock = renderCurrentFiles(vfs, focusPath);
   const recoverySuffix = `${recoveryAddendum}\n\n${filesBlock}`;
   const messages = mergeRecoveryIntoSystem(originalRequest.messages, recoverySuffix);
-  const usePrefill = assistantPartial !== undefined && assistantPartial.length > 0;
-  if (usePrefill) {
+  if (assistantPartial !== undefined && assistantPartial.length > 0) {
     messages.push({
-      role: "assistant",
-      content: [{ type: "text", text: assistantPartial }],
+      role: "user",
+      content: [{ type: "text", text: renderPartialResume(assistantPartial) }],
     });
   }
-  // When prefilling, pin OpenRouter to Anthropic-direct only. Both
-  // Bedrock (chat zYFWaxhUAKSvVrzeL) and Google Vertex
-  // (chat z2uDNqY3Nym7eE9q6e) reject assistant-suffix conversations
-  // with 400: "This model does not support assistant message prefill.
-  // The conversation must end with a user message." Only Anthropic-
-  // direct supports prefill on these Claude models, so route there
-  // exclusively for the recovery call.
-  const provider = usePrefill
-    ? {
-        ...(originalRequest.provider ?? {}),
-        order: ["anthropic"],
-        allow_fallbacks: false,
-      }
-    : originalRequest.provider;
-  return Result.Ok({ ...originalRequest, messages, ...(provider ? { provider } : {}) });
+  return Result.Ok({ ...originalRequest, messages });
+}
+
+// Wrap the captured partial in a user-framed resume message. The prose
+// makes it explicit that the bytes are the assistant's own prior output
+// (so the model picks up its narration where it stopped) without ending
+// the conversation on an assistant turn.
+function renderPartialResume(assistantPartial: string): string {
+  return [
+    "Your previous message was the assistant output below — captured mid-stream and then **interrupted by a failed edit**. The edit you were working on did not apply, and CURRENT FILES (in the system message) reflects the actual file state right now, not what your partial narration claimed.",
+    "",
+    "PARTIAL ASSISTANT OUTPUT (your own output so far this turn, truncated to just before the start of the failed edit block):",
+    "",
+    assistantPartial,
+    "",
+    "Continue from where the partial output above stopped, but FIRST: scan CURRENT FILES and verify each edit your partial described actually landed. If your partial said you filled in colors, wired a handler, or finished a SEARCH/REPLACE but CURRENT FILES does not show that change, the edit FAILED mid-stream — re-emit it now. Do not skip ahead on the assumption it succeeded. Do not repeat any code block that already shows up in CURRENT FILES.",
+  ].join("\n");
 }
 
 function mergeRecoveryIntoSystem(messages: readonly ChatMessage[], recoverySuffix: string): ChatMessage[] {
