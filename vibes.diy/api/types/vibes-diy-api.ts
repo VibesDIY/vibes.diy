@@ -74,6 +74,7 @@ import {
   ResListDbNames,
 } from "./app-documents.js";
 import { ReqListMembers, ResListMembers } from "./members.js";
+import { ReqAssetUploadGrant, ResAssetUploadGrant } from "./asset.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
@@ -157,6 +158,10 @@ export interface VibesDiyApiIface<_T = unknown> {
 
   // Approved members of a vibe — display name + role only, gated on read access
   listMembers(req: Req<ReqListMembers>): Promise<Result<ResListMembers, VibesDiyError>>;
+
+  // Stage A put-asset producer — mints a short-lived signed grant for HTTP
+  // POST /assets. Auth attached automatically by send().
+  requestAssetUploadGrant(req: Req<ReqAssetUploadGrant>): Promise<Result<ResAssetUploadGrant, VibesDiyError>>;
 
   // Register a callback for document change events pushed from the API.
   // dbName is included so consumers can filter to the specific db they care

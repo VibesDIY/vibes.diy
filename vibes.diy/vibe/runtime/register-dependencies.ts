@@ -33,8 +33,11 @@ import {
   ReqSubscribeDocs,
   ResSubscribeDocs,
   ResListDbNames,
+  ReqVibePutAsset,
+  ResVibePutAsset,
+  isResVibePutAsset,
 } from "@vibes.diy/vibe-types";
-import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, Result, timeouted } from "@adviser/cement";
+import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, OnFuncReturn, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
 import { transform } from "sucrase";
 import { FunctionComponent } from "react";
@@ -57,6 +60,12 @@ export interface VibeSandboxApiOptions {
 
 interface RequestOpts {
   timeout?: number;
+  // When set, replaces the wall-clock `timeout`: the request fails after
+  // `idleTimeout` ms of NO incoming messages with a matching tid, but any
+  // matching message resets the timer. Used by long-running RPCs (e.g.
+  // putAsset for a 100 MiB upload) where the host emits periodic progress
+  // events to keep the request alive.
+  idleTimeout?: number;
   wait(x: unknown): boolean;
 }
 
@@ -84,6 +93,11 @@ export class VibeSandboxApi {
     // before the parent's message listener exists. Once acked, this is a
     // no-op (Future.asPromise() resolves immediately).
     await this.ackReady.asPromise();
+
+    if (opts.idleTimeout !== undefined) {
+      return this.requestIdle<Q, S>(msg, opts, opts.idleTimeout);
+    }
+
     const res = await timeouted(
       () => {
         const tid = crypto.randomUUID();
@@ -111,6 +125,38 @@ export class VibeSandboxApi {
       return Result.Err(res.error);
     }
     return Result.Err(`Request timed out`);
+  }
+
+  // Variant of request() with idle-reset semantics: the request fails only
+  // after `idleMs` of total silence on this tid. Any tid-matching message
+  // (whether a terminal `wait()`-match or a progress heartbeat) resets the
+  // timer. The host's vibePutAsset handler emits
+  // `vibe.evt.putAsset.progress` every few seconds while the upload is in
+  // flight to keep this alive across slow networks.
+  private async requestIdle<Q, S>(msg: Omit<Q, "tid">, opts: RequestOpts, idleMs: number): Promise<Result<S>> {
+    const tid = crypto.randomUUID();
+    const result = new Future<{ kind: "ok"; value: S } | { kind: "timeout" }>();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const reset = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => result.resolve({ kind: "timeout" }), idleMs);
+    };
+    this.onMsg((event: MessageEvent) => {
+      const data = event.data as { tid?: string } | undefined;
+      if (data?.tid !== tid) return;
+      reset();
+      if (opts.wait(event.data)) {
+        if (timer) clearTimeout(timer);
+        result.resolve({ kind: "ok", value: event.data as S });
+        return OnFuncReturn.UNREGISTER;
+      }
+    });
+    this.svc.postMessage({ tid, ...msg }, "*");
+    reset();
+    const res = await result.asPromise();
+    if (timer) clearTimeout(timer);
+    if (res.kind === "ok") return Result.Ok(res.value);
+    return Result.Err(`Request idle for ${idleMs}ms (no progress)`);
   }
 
   readonly onMsg = OnFunc<(event: MessageEvent) => void>();
@@ -243,6 +289,28 @@ export class VibeSandboxApi {
         ...this.svc.vibeApp,
       },
       { wait: isResListDbNames, timeout: 10000 }
+    );
+  }
+
+  // Stage B Phase 5: stream a Blob/File to the host, which mints a grant
+  // (Stage A WS handler) and POSTs to /assets. Returns
+  // { uploadId, cid, getURL, size } on success — Firefly's uploadFiles
+  // helper swaps the Blob for { uploadId, type, size, lastModified }
+  // before put-doc, so the doc serializes as JSON.
+  //
+  // 10s idle-reset timeout, not wall-clock: the host emits
+  // vibe.evt.putAsset.progress heartbeats every few seconds during the
+  // upload, so a slow 100 MiB push stays alive but a stuck connection
+  // dies in 10s.
+  putAsset(blob: Blob, mimeType?: string): Promise<Result<ResVibePutAsset>> {
+    return this.request<ReqVibePutAsset, ResVibePutAsset>(
+      {
+        type: "vibe.req.putAsset",
+        ...this.svc.vibeApp,
+        blob,
+        ...(mimeType ? { mimeType } : {}),
+      },
+      { wait: isResVibePutAsset, idleTimeout: 10000 }
     );
   }
 
