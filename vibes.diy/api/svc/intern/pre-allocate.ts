@@ -29,57 +29,59 @@ const PRE_ALLOC_TIMEOUT_MS = 8000;
  * skills — the user sees a random slug instead of blocking.
  */
 export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: string }): Promise<Result<PreAllocateResult>> {
-  const rModels = await loadModels(vctx);
-  if (rModels.isErr()) return Result.Err(rModels);
-  const appDefault = rModels.Ok().models.find((m) => m.preSelected?.includes("app"));
-  if (!appDefault) return Result.Err("no preSelected app model in catalog");
+  return exception2Result(async (): Promise<Result<PreAllocateResult>> => {
+    const rModels = await loadModels(vctx);
+    if (rModels.isErr()) return Result.Err(rModels);
+    const appDefault = rModels.Ok().models.find((m) => m.preSelected?.includes("app"));
+    if (!appDefault) return Result.Err("no preSelected app model in catalog");
 
-  const userMessage = await makePreAllocUserMessage(prompt);
+    const userMessage = await makePreAllocUserMessage(prompt);
 
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error(`pre-alloc LLM call timed out after ${PRE_ALLOC_TIMEOUT_MS}ms`)), PRE_ALLOC_TIMEOUT_MS)
-  );
-  const rCall = await exception2Result(() =>
-    Promise.race([
-      callAI(userMessage, {
-        model: appDefault.id,
-        endpoint: vctx.params.llm.url,
-        apiKey: vctx.params.llm.apiKey,
-        schema: preAllocSchema,
-      }),
-      timeout,
-    ])
-  );
-  if (rCall.isErr()) return Result.Err(rCall);
-  const raw = rCall.Ok();
-  if (typeof raw !== "string") {
-    return Result.Err("pre-alloc callAI returned non-string (streaming not requested)");
-  }
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`pre-alloc LLM call timed out after ${PRE_ALLOC_TIMEOUT_MS}ms`)), PRE_ALLOC_TIMEOUT_MS)
+    );
+    const rCall = await exception2Result(() =>
+      Promise.race([
+        callAI(userMessage, {
+          model: appDefault.id,
+          endpoint: vctx.params.llm.url,
+          apiKey: vctx.params.llm.apiKey,
+          schema: preAllocSchema,
+        }),
+        timeout,
+      ])
+    );
+    if (rCall.isErr()) return Result.Err(rCall);
+    const raw = rCall.Ok();
+    if (typeof raw !== "string") {
+      return Result.Err("pre-alloc callAI returned non-string (streaming not requested)");
+    }
 
-  const rParsed = exception2Result(() => JSON.parse(raw) as unknown);
-  if (rParsed.isErr()) return Result.Err(`pre-alloc JSON parse failed: ${rParsed.Err()}`);
+    const rParsed = exception2Result(() => JSON.parse(raw) as unknown);
+    if (rParsed.isErr()) return Result.Err(`pre-alloc JSON parse failed: ${rParsed.Err()}`);
 
-  const validated = preAllocParsed(rParsed.Ok());
-  if (validated instanceof type.errors) {
-    return Result.Err(`pre-alloc schema validation failed: ${validated.summary}`);
-  }
-  if (validated.pairs.length === 0) {
-    return Result.Err("pre-alloc returned zero title/slug pairs");
-  }
+    const validated = preAllocParsed(rParsed.Ok());
+    if (validated instanceof type.errors) {
+      return Result.Err(`pre-alloc schema validation failed: ${validated.summary}`);
+    }
+    if (validated.pairs.length === 0) {
+      return Result.Err("pre-alloc returned zero title/slug pairs");
+    }
 
-  const catalogNames = await getLlmCatalogNames();
-  const validSkills: string[] = [];
-  const droppedSkills: string[] = [];
-  for (const s of validated.skills) {
-    (catalogNames.has(s) ? validSkills : droppedSkills).push(s);
-  }
-  if (droppedSkills.length > 0) {
-    ensureLogger(vctx.sthis, "preAllocate").Warn().Any({ droppedSkills, validSkills }).Msg("pre-alloc skills missed catalog");
-  }
+    const catalogNames = await getLlmCatalogNames();
+    const validSkills: string[] = [];
+    const droppedSkills: string[] = [];
+    for (const s of validated.skills) {
+      (catalogNames.has(s) ? validSkills : droppedSkills).push(s);
+    }
+    if (droppedSkills.length > 0) {
+      ensureLogger(vctx.sthis, "preAllocate").Warn().Any({ droppedSkills, validSkills }).Msg("pre-alloc skills missed catalog");
+    }
 
-  return Result.Ok({
-    skills: validSkills,
-    pairs: validated.pairs.slice(0, 3),
-    iconDescription: validated.iconDescription,
+    return Result.Ok({
+      skills: validSkills,
+      pairs: validated.pairs.slice(0, 3),
+      iconDescription: validated.iconDescription,
+    });
   });
 }

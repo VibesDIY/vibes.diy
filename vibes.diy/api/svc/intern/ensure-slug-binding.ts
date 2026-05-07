@@ -210,7 +210,10 @@ export async function ensureAppSlug(
       const [{ count }] = await ctx.sql.db
         .select({ count: sql<number>`count(*)` })
         .from(ctx.sql.tables.userSlugBinding)
-        .innerJoin(ctx.sql.tables.appSlugBinding, eq(ctx.sql.tables.userSlugBinding.userSlug, ctx.sql.tables.appSlugBinding.userSlug))
+        .innerJoin(
+          ctx.sql.tables.appSlugBinding,
+          eq(ctx.sql.tables.userSlugBinding.userSlug, ctx.sql.tables.appSlugBinding.userSlug)
+        )
         .where(eq(ctx.sql.tables.userSlugBinding.userId, binding.userId));
       if (count >= ctx.params.maxAppSlugPerUserId) {
         return Result.Err("maximum appSlug bindings reached for this userId");
@@ -221,19 +224,37 @@ export async function ensureAppSlug(
         .fill(0)
         .map(() => ({ slug: generate({ exactly: 1, wordsPerString: 3, separator: "-" })[0] }));
       const candidates = [...preferred, ...random];
+      const attemptErrors: { slug: string; reason: string }[] = [];
       for (const candidate of candidates) {
         const sanitized = toRFC2822_32ByteLength(candidate.slug);
-        if (!sanitized) continue;
-        const existing = await ctx.sql.db
-          .select()
-          .from(ctx.sql.tables.appSlugBinding)
-          .where(eq(ctx.sql.tables.appSlugBinding.appSlug, sanitized))
-          .limit(1)
-          .then((r) => r[0]);
-        if (existing) continue;
+        if (!sanitized) {
+          attemptErrors.push({ slug: candidate.slug, reason: "empty-after-sanitize" });
+          continue;
+        }
+        const rExisting = await exception2Result(() =>
+          ctx.sql.db
+            .select()
+            .from(ctx.sql.tables.appSlugBinding)
+            .where(eq(ctx.sql.tables.appSlugBinding.appSlug, sanitized))
+            .limit(1)
+            .then((r) => r[0])
+        );
+        if (rExisting.isErr()) {
+          attemptErrors.push({ slug: sanitized, reason: `existing-check-err: ${rExisting.Err().message}` });
+          continue;
+        }
+        if (rExisting.Ok()) {
+          attemptErrors.push({ slug: sanitized, reason: "collision" });
+          continue;
+        }
         const rWrite = await writeAppSlugBinding(ctx, binding.userId, binding.userSlug, sanitized);
         if (rWrite.isOk()) return Result.Ok({ ...rWrite.Ok(), chosenTitle: candidate.title });
+        attemptErrors.push({ slug: sanitized, reason: `write-err: ${rWrite.Err().message}` });
       }
+      ensureLogger(ctx.sthis, "ensureAppSlug")
+        .Error()
+        .Any({ userId: binding.userId, userSlug: binding.userSlug, attempts: attemptErrors })
+        .Msg("all candidates failed");
       return Result.Err("could not generate unique appSlug after attempts");
     } else {
       const sanitizedAppSlug = toRFC2822_32ByteLength(binding.appSlug);
