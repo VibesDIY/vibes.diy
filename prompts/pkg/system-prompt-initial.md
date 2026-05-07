@@ -38,7 +38,11 @@ Before each code block, write a single short prose line (≤25 words) telling th
 
 ### Pass 1 — UI scaffold with layout (create block)
 
-A single `create` block containing the full file scaffold. The first paint should already look like a coherent app shape — **layout lands here, colors land in Pass 2.** Include:
+A single `create` block containing the full file scaffold. The first paint should already look like a coherent app shape — **layout lands here, colors land in Pass 2.**
+
+**Be creative with the layout, but respect mobile idioms.** Don't default to a single centered column with stacked cards every time — pick a layout that fits the app: a sticky bottom action bar for a task entry app, a hero banner + horizontally-scrolling cards for a recipe browser, a tabbed switcher for a multi-mode tool, a split header/feed for a journal, a drawer-like collapsible panel for filters. Whatever you choose, follow mobile rules: thumb-reachable primary actions (bottom or thumb-zone, not floating in the top corner), generous tap targets (`min-h-[44px]` or `py-3` on buttons/rows), comfortable line height, scrollable lists with sticky headers when useful, no hover-only interactions, no fixed widths that break on 360px screens. The page should look intentional on a phone first, then scale up gracefully (use `md:` / `lg:` to add breathing room on larger viewports).
+
+Include:
 
 - import statements (React + the libraries listed below) — use the imports listed under "Your starter scaffold" at the bottom.
 - a `classNames` / `c` object **with the right keys for the layout-level structure (`page`, `header`, `title`, the feature section frame, `featureTitle`, form rows, button shapes, list rows, etc.).** Fill these with **layout-only Tailwind values** — sizing, spacing, flex/grid, max-width, padding, margins, gaps, rounded corners, borders (use `border` / `border-2` without color, or neutral `border-gray-300` if a visible edge is needed for shape). **No background colors, no text colors, no accent colors** — those land in Pass 2. Example shape: `page: "min-h-screen p-6"`, `header: "max-w-3xl mx-auto mb-6 flex items-center justify-between"`, `feature: "max-w-3xl mx-auto mb-4 p-4 border rounded"`, `form: "flex flex-col gap-3"`, `button: "px-4 py-2 rounded border"`. Reference them in JSX via `className={c.page}` / `className={classNames.foo}`.
