@@ -411,3 +411,79 @@ export type ReqListDbNames = typeof ReqListDbNames.infer;
 export function isReqListDbNames(x: unknown): x is ReqListDbNames {
   return !(ReqListDbNames(x) instanceof type.errors);
 }
+
+// Sandbox → host: upload a Blob/File via put-asset, return CID + uploadId
+// + storage URL. Distinct from the WS / HTTP put-asset types in
+// `@vibes.diy/api-types` because this one carries a Blob across the
+// postMessage boundary (structured-cloned natively) and does NOT carry
+// the grant — the grant is host-side, hidden from sandbox code.
+//
+// Manual type guard: arktype can't validate Blob; we check the non-blob
+// fields with arktype and the blob with `instanceof Blob`.
+export interface ReqVibePutAsset {
+  readonly tid: string;
+  readonly type: "vibe.req.putAsset";
+  readonly userSlug: string;
+  readonly appSlug: string;
+  readonly blob: Blob;
+  readonly mimeType?: string;
+}
+
+export function isReqVibePutAsset(x: unknown): x is ReqVibePutAsset {
+  if (!x || typeof x !== "object") return false;
+  const r = x as Record<string, unknown>;
+  return (
+    r.type === "vibe.req.putAsset" &&
+    typeof r.tid === "string" &&
+    typeof r.userSlug === "string" &&
+    typeof r.appSlug === "string" &&
+    typeof Blob !== "undefined" &&
+    r.blob instanceof Blob &&
+    (r.mimeType === undefined || typeof r.mimeType === "string")
+  );
+}
+
+export const ResOkVibePutAsset = type({
+  type: "'vibe.res.putAsset'",
+  status: "'ok'",
+  cid: "string",
+  getURL: "string",
+  size: "number",
+  uploadId: "string",
+}).and(Base);
+
+export type ResOkVibePutAsset = typeof ResOkVibePutAsset.infer;
+
+export const ResErrorVibePutAsset = type({
+  type: "'vibe.res.putAsset'",
+  status: "'error'",
+  message: "string",
+}).and(Base);
+
+export type ResErrorVibePutAsset = typeof ResErrorVibePutAsset.infer;
+
+const ResVibePutAsset = ResOkVibePutAsset.or(ResErrorVibePutAsset);
+export type ResVibePutAsset = typeof ResVibePutAsset.infer;
+
+export function isResVibePutAsset(x: unknown): x is ResVibePutAsset {
+  return !(ResVibePutAsset(x) instanceof type.errors);
+}
+
+export function isResOkVibePutAsset(x: unknown): x is ResOkVibePutAsset {
+  return !(ResOkVibePutAsset(x) instanceof type.errors);
+}
+
+// Heartbeat emitted by the host while a put-asset upload is in flight.
+// Keeps the sandbox-side request's idle-reset timer alive across slow
+// uploads. Receivers reset their timer on any matching tid; only
+// `ResVibePutAsset` resolves the request.
+export const EvtVibePutAssetProgress = type({
+  type: "'vibe.evt.putAsset.progress'",
+  bytes: "number",
+}).and(Base);
+
+export type EvtVibePutAssetProgress = typeof EvtVibePutAssetProgress.infer;
+
+export function isEvtVibePutAssetProgress(x: unknown): x is EvtVibePutAssetProgress {
+  return !(EvtVibePutAssetProgress(x) instanceof type.errors);
+}

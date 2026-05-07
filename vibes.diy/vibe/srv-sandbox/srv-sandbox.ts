@@ -48,6 +48,11 @@ import {
   ReqListDbNames,
   EvtVibeSetSource,
   isEvtVibeHotSwapError,
+  isReqVibePutAsset,
+  ReqVibePutAsset,
+  ResOkVibePutAsset,
+  ResErrorVibePutAsset,
+  EvtVibePutAssetProgress,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -94,6 +99,9 @@ interface VibesDiySrvSandboxArgs {
     addEventListener: typeof window.addEventListener;
     removeEventListener: typeof window.removeEventListener;
   };
+  // Optional injected fetcher — defaults to globalThis.fetch. Tests pass
+  // a fake here to avoid mocking globals.
+  fetch?: typeof fetch;
 }
 
 interface ShareableDBInfo {
@@ -659,6 +667,98 @@ function vibeListDbNames(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+// Stage B Phase 5 host-side handler. Receives a Blob from the iframe,
+// mints a put-asset grant via the server WS, then POSTs the bytes to the
+// returned uploadUrl. Emits `vibe.evt.putAsset.progress` heartbeats every
+// 3s while the fetch is in flight so the sandbox-side request's idle
+// timer doesn't fire during a slow upload.
+//
+// Auth: the grant request goes through VibesDiyApi.send() which attaches
+// the dashboard auth token automatically. The HTTP POST carries
+// X-Asset-Grant; verifyAuth is NOT called server-side — the grant IS the
+// auth (see vibes.diy/api/svc/public/put-asset.ts).
+const PROGRESS_INTERVAL_MS = 3000;
+
+function vibePutAsset(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  const doFetch: typeof fetch = sandbox.args.fetch ?? ((...a) => fetch(...a));
+  return {
+    hash: "vibe.putAsset",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqVibePutAsset(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibePutAsset, unknown>): Promise<Result<EventoResultType>> => {
+      const { tid, blob, userSlug, appSlug, mimeType } = ctx.validated;
+      const sendErr = async (message: string) => {
+        await ctx.send.send(ctx, {
+          tid,
+          type: "vibe.res.putAsset",
+          status: "error",
+          message,
+        } satisfies ResErrorVibePutAsset);
+      };
+
+      const rGrant = await vibeDiyApi.requestAssetUploadGrant({
+        userSlug,
+        appSlug,
+        ...(mimeType ? { mimeType } : mimeType === undefined && blob.type ? { mimeType: blob.type } : {}),
+      });
+      if (rGrant.isErr()) {
+        await sendErr(`grant minting failed: ${rGrant.Err().message}`);
+        return Result.Ok(EventoResult.Stop);
+      }
+      const grant = rGrant.Ok();
+
+      // Heartbeat the iframe every 3s while the upload is in flight so
+      // its 10s idle-reset timer doesn't expire during slow networks.
+      const progressTimer = setInterval(() => {
+        ctx.send.send(ctx, {
+          tid,
+          type: "vibe.evt.putAsset.progress",
+          bytes: blob.size,
+        } satisfies EvtVibePutAssetProgress);
+      }, PROGRESS_INTERVAL_MS);
+
+      try {
+        const res = await doFetch(grant.uploadUrl, {
+          method: "POST",
+          headers: {
+            "X-Asset-Grant": grant.grant,
+            "Content-Type": blob.type || "application/octet-stream",
+          },
+          body: blob,
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          await sendErr(`POST ${grant.uploadUrl} returned ${res.status}: ${text}`);
+          return Result.Ok(EventoResult.Stop);
+        }
+        const body = (await res.json()) as { cid: string; getURL: string; size: number; uploadId: string };
+        await ctx.send.send(ctx, {
+          tid,
+          type: "vibe.res.putAsset",
+          status: "ok",
+          cid: body.cid,
+          getURL: body.getURL,
+          size: body.size,
+          uploadId: body.uploadId,
+        } satisfies ResOkVibePutAsset);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        await sendErr(`upload failed: ${msg}`);
+      } finally {
+        clearInterval(progressTimer);
+      }
+
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
@@ -766,6 +866,7 @@ export class vibesDiySrvSandbox implements Disposable {
         vibeDeleteDoc(this),
         vibeSubscribeDocs(this),
         vibeListDbNames(this),
+        vibePutAsset(this),
       ]
     );
     this.args.eventListeners.addEventListener("message", this.handleMessage);
