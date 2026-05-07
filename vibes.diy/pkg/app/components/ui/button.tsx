@@ -4,8 +4,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils.js";
 
 const baseClasses =
-  "inline-flex items-center justify-center whitespace-nowrap rounded-[--radius-base] text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-2 border-borde inline-flex items-center justify-center whitespace-nowrap rounded-[5px] text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-2 border-black";
-const shadowClasses = "shadow-[4px_4px_0px_0px_black]";
+  "inline-flex items-center justify-center whitespace-nowrap rounded-[--radius-base] text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-2 border-borde inline-flex items-center justify-center whitespace-nowrap rounded-[5px] text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-2 border-[var(--vibes-btn-border)]";
+const shadowClasses = "shadow-[4px_4px_0px_0px_var(--vibes-btn-shadow)]";
 const activeClasses = "active:translate-x-[4px] active:translate-y-[4px] active:shadow-none";
 
 const buttonVariants = cva(`${baseClasses} ${shadowClasses} ${activeClasses}`, {
