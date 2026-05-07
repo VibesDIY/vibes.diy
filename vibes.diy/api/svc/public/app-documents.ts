@@ -37,6 +37,7 @@ import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess, canRead, isPublicReadable, DocAccessLevel } from "./access-helpers.js";
 import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
+import { mintFilesUrls } from "./files-url-mint.js";
 
 // Read-side gate: if the ACL pins `read`, honor it exactly; otherwise fall
 // back to today's behavior (any reader role, or public-readable visitor).
@@ -209,11 +210,18 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
         return Result.Ok(EventoResult.Continue);
       }
 
+      const doc = mintFilesUrls(row.data as Record<string, unknown>, {
+        userSlug: req.userSlug,
+        appSlug: req.appSlug,
+        dbName: req.dbName,
+        docId: row.docId,
+        svc: vctx.params.vibes.svc,
+      });
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-get-doc",
         status: "ok",
         id: row.docId,
-        doc: row.data as Record<string, unknown>,
+        doc,
       } satisfies ResGetDoc);
       return Result.Ok(EventoResult.Continue);
     }
@@ -269,9 +277,16 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const docs: ({ _id: string } & Record<string, unknown>)[] = [];
       for (const row of latest.values()) {
         if (row.deleted === 1) continue;
+        const doc = mintFilesUrls(row.data as Record<string, unknown>, {
+          userSlug: req.userSlug,
+          appSlug: req.appSlug,
+          dbName: req.dbName,
+          docId: row.docId,
+          svc: vctx.params.vibes.svc,
+        });
         docs.push({
           _id: row.docId,
-          ...(row.data as Record<string, unknown>),
+          ...doc,
         });
       }
 
