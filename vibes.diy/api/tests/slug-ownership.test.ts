@@ -225,4 +225,47 @@ describe("slug ownership", () => {
     expect(rEnsure.Ok().appSlug).toBe(freeAppSlug);
     expect(rEnsure.Ok().chosenTitle).toBe("Second");
   });
+
+  it("ensureAppSlug writes a binding for the caller when the same appSlug is owned by another user", async () => {
+    const uniq = sthis.nextId(6).str.toLowerCase();
+    const ownerUserSlug = `branch-owner-${uniq}`;
+    const callerUserSlug = `branch-caller-${uniq}`;
+    const ownerUserId = `branch-owner-user-${uniq}`;
+    const callerUserId = `branch-caller-user-${uniq}`;
+    const sharedAppSlug = `branch-${uniq}`;
+
+    const rOwnerSlug = await writeUserSlugBinding(vibesCtx, ownerUserId, ownerUserSlug);
+    expect(rOwnerSlug.isOk()).toBe(true);
+    const rCallerSlug = await writeUserSlugBinding(vibesCtx, callerUserId, callerUserSlug);
+    expect(rCallerSlug.isOk()).toBe(true);
+
+    // Owner registers the appSlug under their own userSlug.
+    const rOwnerApp = await ensureAppSlug(vibesCtx, {
+      userId: ownerUserId,
+      userSlug: ownerUserSlug,
+      appSlug: sharedAppSlug,
+    });
+    expect(rOwnerApp.isOk()).toBe(true);
+
+    // Caller asks for the same appSlug under THEIR own userSlug.
+    // The else-branch lookup must filter by (appSlug, userSlug), not appSlug
+    // alone — otherwise the caller's binding is silently skipped and a
+    // downstream Apps insert produces an orphan row.
+    const rCallerApp = await ensureAppSlug(vibesCtx, {
+      userId: callerUserId,
+      userSlug: callerUserSlug,
+      appSlug: sharedAppSlug,
+    });
+    expect(rCallerApp.isOk()).toBe(true);
+    expect(rCallerApp.Ok().appSlug).toBe(sharedAppSlug);
+    expect(rCallerApp.Ok().userId).toBe(callerUserId);
+
+    const rows = await vibesCtx.sql.db
+      .select()
+      .from(vibesCtx.sql.tables.appSlugBinding)
+      .where(eq(vibesCtx.sql.tables.appSlugBinding.appSlug, sharedAppSlug));
+    expect(rows).toHaveLength(2);
+    const userSlugs = rows.map((r) => r.userSlug).sort();
+    expect(userSlugs).toEqual([ownerUserSlug, callerUserSlug].sort());
+  });
 });

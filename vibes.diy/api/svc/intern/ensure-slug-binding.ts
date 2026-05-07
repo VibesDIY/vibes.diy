@@ -258,6 +258,9 @@ export async function ensureAppSlug(
       return Result.Err("could not generate unique appSlug after attempts");
     } else {
       const sanitizedAppSlug = toRFC2822_32ByteLength(binding.appSlug);
+      // AppSlugBindings is keyed on (appSlug, userSlug); the same appSlug
+      // may live under multiple userSlugs. Filter on both so the caller's
+      // binding is created when only another user owns the same appSlug.
       const existing = await ctx.sql.db
         .select()
         .from(ctx.sql.tables.appSlugBinding)
@@ -265,13 +268,17 @@ export async function ensureAppSlug(
           ctx.sql.tables.userSlugBinding,
           eq(ctx.sql.tables.appSlugBinding.userSlug, ctx.sql.tables.userSlugBinding.userSlug)
         )
-        .where(and(eq(ctx.sql.tables.appSlugBinding.appSlug, sanitizedAppSlug)))
+        .where(
+          and(
+            eq(ctx.sql.tables.appSlugBinding.appSlug, sanitizedAppSlug),
+            eq(ctx.sql.tables.appSlugBinding.userSlug, binding.userSlug)
+          )
+        )
         .limit(1)
         .then((r) => r[0]);
       if (!existing) {
         return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, sanitizedAppSlug);
       }
-      // appSlug = binding.appSlug;
       return Result.Ok({
         type: "vibes.diy-app-slug-binding",
         userId: binding.userId,
