@@ -8,6 +8,7 @@ import {
   Lazy,
   stream2string,
   BuildURI,
+  exception2Result,
 } from "@adviser/cement";
 import {
   isReqListModels,
@@ -23,20 +24,36 @@ import { ensureLogger } from "@fireproof/core-runtime";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 
+// Lazy cache resets every 10s, so on a slow worker every 11th caller eats
+// the asset fetch latency. When that fetch is slow, every consumer of
+// withModelDefaults (ensureAppSettings, prompt-chat-section) stalls. Logging
+// the fetch path lets us see in `wrangler tail` how often we miss + how long
+// the network leg actually takes.
 export const loadModels = Lazy(
   async (vctx: VibesApiSQLCtx): Promise<Result<ResListModels>> => {
+    const logger = ensureLogger(vctx.sthis, "loadModels");
     const vibePkgModelsUrl = BuildURI.from(vctx.params.pkgRepos.workspace)
       .appendRelative("@vibes.diy/api-svc/models.json")
       .toString();
 
+    const startMs = Date.now();
     const rAsset = await vctx.fetchAsset(vibePkgModelsUrl);
-    // console.log("Fetched models.json asset", { vibePkgModelsUrl, success: rAsset.isOk() });
-    if (rAsset.isErr()) return Result.Err(rAsset);
-    const raw = JSON.parse(await stream2string(rAsset.Ok()));
-    const { filtered: models, warning: modelsWarning } = parseArrayWarning(raw, Model);
-    // console.log("Loaded models:", models);
+    const fetchMs = Date.now() - startMs;
+    if (rAsset.isErr()) {
+      logger.Warn().Any({ url: vibePkgModelsUrl, fetchMs, error: rAsset.Err() }).Msg("fetchAsset failed");
+      return Result.Err(rAsset);
+    }
+    const rRaw = await exception2Result(async () => JSON.parse(await stream2string(rAsset.Ok())));
+    if (rRaw.isErr()) {
+      logger.Warn().Any({ url: vibePkgModelsUrl, fetchMs, error: rRaw.Err() }).Msg("models.json parse failed");
+      return Result.Err(rRaw);
+    }
+    const { filtered: models, warning: modelsWarning } = parseArrayWarning(rRaw.Ok(), Model);
     if (modelsWarning.length > 0) {
-      ensureLogger(vctx.sthis, "loadModels").Warn().Any({ parseErrors: modelsWarning }).Msg("skip");
+      logger.Warn().Any({ parseErrors: modelsWarning }).Msg("skip");
+    }
+    if (fetchMs > 500) {
+      logger.Warn().Any({ url: vibePkgModelsUrl, fetchMs, count: models.length }).Msg("slow models.json fetch");
     }
     return Result.Ok({
       type: "vibes.diy.res-list-models",
