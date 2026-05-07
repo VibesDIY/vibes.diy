@@ -1308,18 +1308,18 @@ async function handleLlmResponse({
           if (drainOnly) continue; // recovery already triggered; drain to EOF/abort.
           if (!isBlockEnd(value)) {
             if (!isBlockStreamMsg(value)) continue;
-            collectedMsgs.push(value);
             const closed = blockAcc.ingest(value);
             const applyResult = closed ? streamingResolver.observeBlock(closed) : undefined;
             const isFailedCodeEnd = closed !== undefined && applyResult !== undefined && applyResult.errors.length > 0;
 
             if (isFailedCodeEnd) {
-              // Suppress the failed block.code.end and emit block.code.truncated
-              // in its place. Wire then reads `begin, line, …, truncated` (no
-              // end) for this block. Live consumers treat truncate as the
-              // closure event; old clients (which ignore unknown types) see an
-              // orphaned begin/lines stream until the next block arrives —
-              // same final state since handleEndMsg never persists this block.
+              // Suppress the failed block.code.end on the wire AND in
+              // collectedMsgs. Emit block.code.truncated in its place. The
+              // recovery's eventual block.end persists collectedMsgs, so the
+              // truncate event must replace the failed code.end in that
+              // record — otherwise reload would either miss the truncation
+              // entirely (no truncate persisted) or replay the malformed
+              // code.end through the renderer.
               const first = applyResult.errors[0];
               const truncateEvt = buildTruncatedEvent({
                 closed,
@@ -1329,6 +1329,7 @@ async function handleLlmResponse({
                 blockSeq,
                 now: new Date(),
               });
+              collectedMsgs.push(truncateEvt);
               const r = await appendBlockEvent({
                 ctx,
                 vctx,
@@ -1358,6 +1359,7 @@ async function handleLlmResponse({
               continue;
             }
 
+            collectedMsgs.push(value);
             const r = await appendBlockEvent({
               ctx,
               vctx,

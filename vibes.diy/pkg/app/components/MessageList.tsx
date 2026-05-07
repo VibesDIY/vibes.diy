@@ -580,15 +580,43 @@ function MessageList({
           collectedMsg = [];
           break;
         case isCodeTruncated(msg):
-          // Render the truncated block IMMEDIATELY rather than pushing to
-          // blockMsgs. The recovery dispatches a new pipeline that will emit
-          // its own block.begin, which clears blockMsgs — so a truncated
-          // entry pushed here would be erased before block.end could trigger
-          // a render. Direct push to acc keeps the truncated card in the
-          // chat as honest history alongside the recovery's replacement.
-          //
-          // The truncated card has no block.end, so no fsRef and no nav
-          // target — onClick is a no-op.
+          // The recovery's block.begin clears blockMsgs before the original
+          // stream's block.end can fire, so anything we want to keep visible
+          // from the failed turn must be drained to acc here. Drain order:
+          //   1. Any preceding clean blocks (Code or TopLevel) the model
+          //      wrote before the failure — flush blockMsgs.
+          //   2. The truncated block itself, rendered as a ↻ recovering card.
+          // After this, the recovery's block.begin will clear an empty
+          // blockMsgs and proceed normally.
+          blockMsgs.forEach((preBlock, preIdx) => {
+            if (preBlock.type === "Code") {
+              acc.push(
+                <CodeMsg
+                  key={`pre-truncate-code-${preBlock.begin.sectionId}-${preIdx}`}
+                  begin={preBlock.begin}
+                  lines={preBlock.lines}
+                  end={preBlock.end}
+                  truncated={preBlock.truncated}
+                  onClick={() => {
+                    /* no fsRef yet — the original block.end never fired */
+                  }}
+                />
+              );
+            } else {
+              acc.push(
+                <TopLevelMsg
+                  key={`pre-truncate-top-${preBlock.begin.sectionId}-${preIdx}`}
+                  begin={preBlock.begin}
+                  lines={preBlock.lines}
+                />
+              );
+            }
+          });
+          blockMsgs.splice(0, blockMsgs.length);
+
+          // Render the truncated block. Push to acc so the recovery's later
+          // block.begin doesn't erase it. The truncated card has no fsRef
+          // and onClick is a no-op (no navigable target).
           acc.push(
             <CodeMsg
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
