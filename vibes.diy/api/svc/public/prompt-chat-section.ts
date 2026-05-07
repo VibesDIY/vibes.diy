@@ -1532,13 +1532,22 @@ async function handleLlmResponse({
             .Msg("recovery-addendum-failed");
           return Result.Ok();
         }
+        // In stitch mode, do NOT pass the partial. The stitch addendum
+        // tells the model "Stop trying to continue from where you were
+        // left off mid-stream. Output the full app file in one single
+        // code block." If we also append a "Continue your turn from
+        // there" wrapper around the captured partial, the wrapper wins
+        // (more specific + later in the conversation) and the model
+        // ignores stitch — observed in chat z5Lf28PYADmjyhkt9s where
+        // stitch fired but the model still emitted SEARCH/REPLACE blocks
+        // and exhausted the budget.
         const recReq = buildRecoveryRequest({
           originalRequest: llmReq,
           recoveryAddendum: addendum.Ok(),
           vfs: streamingResolver.getVfs(),
           focusPath: recoverHint.focusPath,
-          assistantPartial: recoverHint.partial,
-          lastReplaceFileLines: recoverHint.lastReplaceFileLines,
+          assistantPartial: stitchMode ? undefined : recoverHint.partial,
+          lastReplaceFileLines: stitchMode ? undefined : recoverHint.lastReplaceFileLines,
         });
         if (recReq.isErr()) {
           recoveryLogger
