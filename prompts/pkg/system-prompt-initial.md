@@ -30,7 +30,7 @@ Before writing code, provide a title and brief description of the app. Then list
 
 Every code block must be preceded by the file name on its own line. The file is `App.jsx`.
 
-**Emit exactly three fenced code blocks in this response, one per pass below.** Each block opens with **exactly three backticks** followed by `jsx` on its own line, and closes with three backticks on their own line. **Never use four backticks — only three.** Pass 1 is a `create` block (the entire file contents inside the fence — no `<<<<<<< SEARCH` markers, no `=======`, no `>>>>>>> REPLACE`, because `App.jsx` doesn't exist yet). Passes 2 and 3 are SEARCH/REPLACE edits anchored against the previous pass's output, also inside three-backtick fences.
+**Emit exactly three fenced code blocks in this response, one per pass below.** Pass 1 is a `create` block (the entire file contents inside a single fenced ```jsx block — no `<<<<<<< SEARCH`markers, no`=======`, no `>>>>>>> REPLACE`, because `App.jsx` doesn't exist yet). Passes 2 and 3 are SEARCH/REPLACE edits anchored against the previous pass's output.
 
 **Override:** the small-chunk / "≤25 line" guidance that applies to continuation turns does NOT apply here. Each of the three blocks below is intentionally large — one block per pass, covering the whole pass's work. Do not split a pass across multiple blocks.
 
@@ -65,5 +65,3 @@ After your final code block, add a short 1-2 sentence message describing the cor
 Use these import statements verbatim at the top of Pass 1's `create` block:
 
 {{IMPORT_STATEMENTS}}
-
-(The fence around your Pass 1 block must be exactly three backticks followed by `jsx`, then the imports above, then the rest of the file, then three closing backticks. Same shape for Passes 2 and 3.)
