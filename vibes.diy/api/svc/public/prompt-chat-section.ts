@@ -371,8 +371,13 @@ export function createBlockAccumulator(): BlockAccumulator {
 // separate so tests can substitute a plain collector without going through
 // ensureLogger plumbing.
 export function logApplyError(logger: Logger, evt: ApplyErrorEvent): void {
+  // Debug, not Info: these fire on every parser hiccup (divider-as-end,
+  // no-match, content-before-search) which is routine in the
+  // tiny-edits design where 20–40 small SR pairs may have one or two
+  // hiccups. Recovery handles them. Failures that actually matter
+  // (recovery-exhausted, recovery-call-failed) stay at Info.
   logger
-    .Info()
+    .Debug()
     .Any({
       chatId: evt.chatId,
       promptId: evt.promptId,
@@ -1433,7 +1438,7 @@ async function handleLlmResponse({
         if (isRecoveryStream) {
           recoveryCounter = updateRecoveryCounter(recoveryCounter, { madeProgress: streamMadeProgress });
           recoveryLogger
-            .Info()
+            .Debug()
             .Any("event", {
               chatId: req.chatId,
               promptId,
@@ -1502,7 +1507,7 @@ async function handleLlmResponse({
         const stitchMode = recoveryCounter.consecutiveFruitless === 2;
 
         recoveryLogger
-          .Info()
+          .Debug()
           .Any("event", {
             chatId: req.chatId,
             promptId,
@@ -1605,7 +1610,7 @@ async function handleLlmResponse({
           return Result.Ok();
         }
         recoveryLogger
-          .Info()
+          .Debug()
           .Any("event", {
             chatId: req.chatId,
             promptId,
