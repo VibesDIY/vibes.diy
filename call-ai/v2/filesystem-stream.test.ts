@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { stream2array } from "@adviser/cement";
-import {
-  createBlockStream,
-  isCodeBegin,
-} from "./block-stream.js";
+import { createBlockStream, isCodeBegin, type BlockStreamMsg } from "./block-stream.js";
 import type { LineStreamMsg } from "./line-stream.js";
 import {
   createFileSystemStream,
@@ -33,10 +30,7 @@ function lineEvents(lines: readonly string[]): LineStreamMsg[] {
   return events;
 }
 
-async function runFs(
-  lines: readonly string[],
-  seed?: ReadonlyMap<string, string>
-) {
+async function runFs(lines: readonly string[], seed?: ReadonlyMap<string, string>) {
   const events = lineEvents(lines);
   let n = 0;
   const createId = () => `id-${++n}`;
@@ -54,13 +48,7 @@ async function runFs(
 
 describe("filesystem-stream — create blocks", () => {
   it("emits a create snapshot for a fence with no markers", async () => {
-    const chunks = await runFs([
-      "App.jsx",
-      "```jsx",
-      "const a = 1;",
-      "const b = 2;",
-      "```",
-    ]);
+    const chunks = await runFs(["App.jsx", "```jsx", "const a = 1;", "const b = 2;", "```"]);
     const snapshots = chunks.filter((c) => isFsFileSnapshot(c)) as FsFileSnapshotMsg[];
     expect(snapshots).toHaveLength(1);
     expect(snapshots[0]).toMatchObject({
@@ -159,16 +147,7 @@ describe("filesystem-stream — failures", () => {
   it("emits fs.apply.error and does not mutate VFS when SEARCH does not match", async () => {
     const seed = new Map([["App.jsx", "const x = 1;\n"]]);
     const chunks = await runFs(
-      [
-        "App.jsx",
-        "```jsx",
-        "<<<<<<< SEARCH",
-        "const y = 99;",
-        "=======",
-        "const y = 100;",
-        ">>>>>>> REPLACE",
-        "```",
-      ],
+      ["App.jsx", "```jsx", "<<<<<<< SEARCH", "const y = 99;", "=======", "const y = 100;", ">>>>>>> REPLACE", "```"],
       seed
     );
     const snapshots = chunks.filter((c) => isFsFileSnapshot(c));
@@ -183,16 +162,7 @@ describe("filesystem-stream — failures", () => {
   it("emits fs.apply.error for ambiguous (multi-match) SEARCH", async () => {
     const seed = new Map([["App.jsx", "let a = 1;\nlet a = 1;\n"]]);
     const chunks = await runFs(
-      [
-        "App.jsx",
-        "```jsx",
-        "<<<<<<< SEARCH",
-        "let a = 1;",
-        "=======",
-        "let a = 99;",
-        ">>>>>>> REPLACE",
-        "```",
-      ],
+      ["App.jsx", "```jsx", "<<<<<<< SEARCH", "let a = 1;", "=======", "let a = 99;", ">>>>>>> REPLACE", "```"],
       seed
     );
     const errors = chunks.filter((c) => isFsApplyError(c)) as FsApplyErrorMsg[];
@@ -200,13 +170,7 @@ describe("filesystem-stream — failures", () => {
   });
 
   it("reports parse-error failures from malformed bodies", async () => {
-    const chunks = await runFs([
-      "App.jsx",
-      "```jsx",
-      "<<<<<<< SEARCH",
-      "missing divider and end",
-      "```",
-    ]);
+    const chunks = await runFs(["App.jsx", "```jsx", "<<<<<<< SEARCH", "missing divider and end", "```"]);
     const errors = chunks.filter((c) => isFsApplyError(c)) as FsApplyErrorMsg[];
     expect(errors).toHaveLength(1);
     expect(errors[0].failures[0]).toMatchObject({ reason: "parse-error" });
@@ -238,5 +202,189 @@ describe("filesystem-stream — passthrough", () => {
     // Upstream block messages should still be present alongside fs.* messages.
     const codeBegins = chunks.filter((c) => isCodeBegin(c));
     expect(codeBegins).toHaveLength(1);
+  });
+});
+
+describe("filesystem-stream — block.code.truncated handling", () => {
+  // Drive raw BlockStreamMsg events directly (skip createBlockStream) so we
+  // can splice in a synthetic block.code.truncated. Mirrors what the server
+  // emits when streamingResolver detects an apply error mid-block.
+  async function runFsWithBlocks(blocks: readonly BlockStreamMsg[], seed?: ReadonlyMap<string, string>) {
+    let n = 0;
+    const createId = () => `id-${++n}`;
+    const input = new ReadableStream<BlockStreamMsg>({
+      start(controller) {
+        blocks.forEach((b) => controller.enqueue(b));
+        controller.close();
+      },
+    });
+    const piped = input.pipeThrough(createFileSystemStream({ streamId, createId, seed }));
+    return stream2array(piped);
+  }
+
+  const ts = new Date("2026-05-04T00:00:00Z");
+
+  it("drops the in-flight accumulator and never applies the partial edit when truncate fires", async () => {
+    const seed = new Map([["App.jsx", "before\n"]]);
+    const events: BlockStreamMsg[] = [
+      {
+        type: "block.code.begin",
+        blockId: "blk-A",
+        streamId,
+        seq: 0,
+        blockNr: 1,
+        timestamp: ts,
+        sectionId: "sec-A",
+        lang: "jsx",
+        path: "App.jsx",
+      },
+      {
+        type: "block.code.line",
+        blockId: "blk-A",
+        streamId,
+        seq: 1,
+        blockNr: 1,
+        timestamp: ts,
+        sectionId: "sec-A",
+        lang: "jsx",
+        path: "App.jsx",
+        lineNr: 1,
+        line: "<<<<<<< SEARCH",
+      },
+      {
+        type: "block.code.line",
+        blockId: "blk-A",
+        streamId,
+        seq: 2,
+        blockNr: 1,
+        timestamp: ts,
+        sectionId: "sec-A",
+        lang: "jsx",
+        path: "App.jsx",
+        lineNr: 2,
+        line: "before",
+      },
+      // Server emits truncate INSTEAD of code.end. The fence body would have
+      // applied (search matches "before") if it had gotten the rest, but the
+      // suppression means nothing should hit the vfs.
+      {
+        type: "block.code.truncated",
+        blockId: "blk-A",
+        streamId,
+        seq: 3,
+        blockNr: 1,
+        timestamp: ts,
+        sectionId: "sec-A",
+        lang: "jsx",
+        path: "App.jsx",
+        reason: "divider-as-end",
+        kind: "fence-parse",
+        truncatedAtLine: 2,
+        errorCount: 1,
+      },
+    ];
+    const chunks = await runFsWithBlocks(events, seed);
+
+    // No fs.file.snapshot — truncate suppressed the apply.
+    expect(chunks.filter((c) => isFsFileSnapshot(c))).toHaveLength(0);
+    // No fs.apply.error — the upstream apply error already produced the
+    // server-side log; the CLI does not re-emit one.
+    expect(chunks.filter((c) => isFsApplyError(c))).toHaveLength(0);
+    // The truncate event itself flows through (passthrough preserves it for
+    // any UX layer downstream that wants to render "↻ recovering").
+    const truncates = chunks.filter((c) => (c as { type?: string }).type === "block.code.truncated");
+    expect(truncates).toHaveLength(1);
+  });
+
+  it("the recovery's clean replacement block (different sectionId) applies normally after a truncate", async () => {
+    // Failed block A sec-A, then recovery block B sec-B both targeting App.jsx.
+    const seed = new Map([["App.jsx", "before\n"]]);
+    const events: BlockStreamMsg[] = [
+      {
+        type: "block.code.begin",
+        blockId: "blk-A",
+        streamId,
+        seq: 0,
+        blockNr: 1,
+        timestamp: ts,
+        sectionId: "sec-A",
+        lang: "jsx",
+        path: "App.jsx",
+      },
+      {
+        type: "block.code.line",
+        blockId: "blk-A",
+        streamId,
+        seq: 1,
+        blockNr: 1,
+        timestamp: ts,
+        sectionId: "sec-A",
+        lang: "jsx",
+        path: "App.jsx",
+        lineNr: 1,
+        line: "garbage",
+      },
+      {
+        type: "block.code.truncated",
+        blockId: "blk-A",
+        streamId,
+        seq: 2,
+        blockNr: 1,
+        timestamp: ts,
+        sectionId: "sec-A",
+        lang: "jsx",
+        path: "App.jsx",
+        reason: "divider-as-end",
+        kind: "fence-parse",
+        truncatedAtLine: 1,
+        errorCount: 1,
+      },
+      {
+        type: "block.code.begin",
+        blockId: "blk-B",
+        streamId,
+        seq: 3,
+        blockNr: 2,
+        timestamp: ts,
+        sectionId: "sec-B",
+        lang: "jsx",
+        path: "App.jsx",
+      },
+      ...["<<<<<<< SEARCH", "before", "=======", "after", ">>>>>>> REPLACE"].map(
+        (line, i) =>
+          ({
+            type: "block.code.line",
+            blockId: "blk-B",
+            streamId,
+            seq: 4 + i,
+            blockNr: 2,
+            timestamp: ts,
+            sectionId: "sec-B",
+            lang: "jsx",
+            path: "App.jsx",
+            lineNr: i + 1,
+            line,
+          }) satisfies BlockStreamMsg
+      ),
+      {
+        type: "block.code.end",
+        blockId: "blk-B",
+        streamId,
+        seq: 9,
+        blockNr: 2,
+        timestamp: ts,
+        sectionId: "sec-B",
+        lang: "jsx",
+        path: "App.jsx",
+        stats: { lines: 5, bytes: 50 },
+      },
+    ];
+    const chunks = await runFsWithBlocks(events, seed);
+    const snaps = chunks.filter((c) => isFsFileSnapshot(c)) as FsFileSnapshotMsg[];
+    expect(snaps).toHaveLength(1);
+    expect(snaps[0].sectionId).toBe("sec-B");
+    expect(snaps[0].content).toBe("after\n");
+    // Apply errors: zero (the truncate suppressed the broken block; recovery applied cleanly).
+    expect(chunks.filter((c) => isFsApplyError(c))).toHaveLength(0);
   });
 });
