@@ -36,20 +36,21 @@ Every code block must be preceded by the file name on its own line. The file is 
 
 Before each code block, write a single short prose line (≤25 words) telling the user which pass this is and what it does ("Pass 1 — UI scaffold with semantic tags…", etc.).
 
-### Pass 1 — UI scaffold (create block)
+### Pass 1 — UI scaffold with layout (create block)
 
-A single `create` block containing the full file scaffold. Include:
+A single `create` block containing the full file scaffold. The first paint should already look like a coherent app shape — **layout lands here, colors land in Pass 2.** Include:
 
 - import statements (React + the libraries listed below) — use the imports listed under "Your starter scaffold" at the bottom.
-- a `classNames` / `c` object **with the right keys for the layout-level structure (`page`, `header`, `title`, the feature section frame, `featureTitle`, etc.) but empty-string or placeholder values** — Pass 2 fills these in. Reference them in JSX via `className={c.page}` / `className={classNames.foo}`.
-- semantic HTML tags throughout: `<header>`, `<main>`, `<form>`, `<button>`, `<ul>`, `<section>`. Each feature is its own `<section>` with a stable `id` named after the feature (not literal `feature-one`).
+- a `classNames` / `c` object **with the right keys for the layout-level structure (`page`, `header`, `title`, the feature section frame, `featureTitle`, form rows, button shapes, list rows, etc.).** Fill these with **layout-only Tailwind values** — sizing, spacing, flex/grid, max-width, padding, margins, gaps, rounded corners, borders (use `border` / `border-2` without color, or neutral `border-gray-300` if a visible edge is needed for shape). **No background colors, no text colors, no accent colors** — those land in Pass 2. Example shape: `page: "min-h-screen p-6"`, `header: "max-w-3xl mx-auto mb-6 flex items-center justify-between"`, `feature: "max-w-3xl mx-auto mb-4 p-4 border rounded"`, `form: "flex flex-col gap-3"`, `button: "px-4 py-2 rounded border"`. Reference them in JSX via `className={c.page}` / `className={classNames.foo}`.
+- semantic HTML tags throughout: `<header>`, `<main>`, `<form>`, `<button>`, `<ul>`, `<li>`, `<section>`. Each feature is its own `<section>` with a stable `id` named after the feature (not literal `feature-one`).
+- **Real layout content per feature**, not just `{/* feature lands here */}` stubs. Drop in the form fields, list rows, button placements, and headings the feature will need so the shape of the UI is visible on first paint. Use placeholder copy ("Add a task", "No items yet") and a couple of static example rows where a list will go. Inputs and buttons are unwired but visible in their final positions.
 - placeholder event handlers (e.g. `function handleSubmit(e) { e.preventDefault(); }`) wired onto `<form>` / `<button>` — no real logic yet.
 - NO `useFireproof`, NO `useLiveQuery`, NO `callAI` calls, NO `useState` data wiring (Pass 3 lands those).
 - a default-exported `App` function composing the features inside `<main id="app">` with `<header id="app-header">`.
 
-### Pass 2 — styling (one SEARCH/REPLACE block)
+### Pass 2 — colors and tokens (one SEARCH/REPLACE block)
 
-A single fenced SEARCH/REPLACE block anchored against Pass 1's output. Fill in the `classNames` / `c` object with **real Tailwind values + `var(--vibes-*)` design tokens** for the layout-level keys (`page`, `header`, `title`, the feature section frame, `featureTitle`). Apply them across the JSX via `className={c.foo}` / `className={classNames.foo}`. **No raw bracket colors in JSX** — always go through the classNames object.
+A single fenced SEARCH/REPLACE block anchored against Pass 1's output. Layer **colors and design tokens** onto the existing layout: backgrounds, text colors, accents, hover/active states. Use **real Tailwind color values + `var(--vibes-*)` design tokens** through the `classNames` / `c` object. Layout values from Pass 1 stay; this pass extends them with color. **No raw bracket colors in JSX** — always go through the classNames object.
 
 ### Pass 3 — wiring (one SEARCH/REPLACE block)
 
