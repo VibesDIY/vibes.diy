@@ -7,6 +7,7 @@ import {
   Option,
   EventoResult,
   URI,
+  exception2Result,
 } from "@adviser/cement";
 import {
   HttpResponseBodyType,
@@ -21,6 +22,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { verifyAuth } from "../check-auth.js";
 import { checkDocAccess, isPublicReadable, type DocAccessLevel } from "./access-helpers.js";
 import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
+import { isFileMeta } from "./files-url-mint.js";
 
 // Handler for `/_files/<dbName>/<docId>/<key>` on the app subdomain
 // (`<appSlug>--<userSlug>.<host>`). Auth/ACL gate, doc lookup, AssetUploads
@@ -63,17 +65,6 @@ async function verifyAnyBearer(vctx: VibesApiSQLCtx, token: string): Promise<str
     }
   }
   return undefined;
-}
-
-interface StoredFileMetaShape {
-  readonly uploadId?: unknown;
-  readonly type?: unknown;
-}
-
-function isStoredFileMeta(v: unknown): v is { uploadId: string; type: string } {
-  if (!v || typeof v !== "object") return false;
-  const m = v as StoredFileMetaShape;
-  return typeof m.uploadId === "string" && typeof m.type === "string";
 }
 
 export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = {
@@ -136,36 +127,48 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
 
     // 3. Load the doc, extract the _files entry's uploadId.
     const t = vctx.sql.tables.appDocuments;
-    const row = await vctx.sql.db
-      .select()
-      .from(t)
-      .where(and(eq(t.userSlug, userSlug), eq(t.appSlug, appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
-      .orderBy(desc(t.seq))
-      .limit(1)
-      .then((r) => r[0]);
+    const rRow = await exception2Result(() =>
+      vctx.sql.db
+        .select()
+        .from(t)
+        .where(and(eq(t.userSlug, userSlug), eq(t.appSlug, appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
+        .orderBy(desc(t.seq))
+        .limit(1)
+        .then((r) => r[0])
+    );
+    if (rRow.isErr()) {
+      return sendErr(ctx, 500, `doc lookup failed: ${rRow.Err().message}`);
+    }
+    const row = rRow.Ok();
     if (!row || row.deleted === 1) {
       return sendErr(ctx, 404, `Document ${docId} not found`);
     }
     const data = row.data as Record<string, unknown> | null;
     const files = data && typeof data === "object" ? (data._files as Record<string, unknown> | undefined) : undefined;
     const meta = files?.[key];
-    if (!isStoredFileMeta(meta)) {
+    if (!isFileMeta(meta)) {
       return sendErr(ctx, 404, `_files.${key} not found on document ${docId}`);
     }
 
     // 4. Resolve uploadId → assetURI via the audit table.
     const uploadsT = vctx.sql.tables.assetUploads;
-    const upload = await vctx.sql.db
-      .select({
-        assetURI: uploadsT.assetURI,
-        userSlug: uploadsT.userSlug,
-        appSlug: uploadsT.appSlug,
-        mimeType: uploadsT.mimeType,
-      })
-      .from(uploadsT)
-      .where(eq(uploadsT.uploadId, meta.uploadId))
-      .limit(1)
-      .then((r) => r[0]);
+    const rUpload = await exception2Result(() =>
+      vctx.sql.db
+        .select({
+          assetURI: uploadsT.assetURI,
+          userSlug: uploadsT.userSlug,
+          appSlug: uploadsT.appSlug,
+          mimeType: uploadsT.mimeType,
+        })
+        .from(uploadsT)
+        .where(eq(uploadsT.uploadId, meta.uploadId))
+        .limit(1)
+        .then((r) => r[0])
+    );
+    if (rUpload.isErr()) {
+      return sendErr(ctx, 500, `upload lookup failed: ${rUpload.Err().message}`);
+    }
+    const upload = rUpload.Ok();
     if (!upload) {
       return sendErr(ctx, 404, `Upload ${meta.uploadId} not found`);
     }
