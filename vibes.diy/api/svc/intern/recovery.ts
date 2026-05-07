@@ -84,13 +84,24 @@ export function buildRecoveryRequest({
   const filesBlock = renderCurrentFiles(vfs, focusPath);
   const recoverySuffix = `${recoveryAddendum}\n\n${filesBlock}`;
   const messages = mergeRecoveryIntoSystem(originalRequest.messages, recoverySuffix);
-  if (assistantPartial !== undefined && assistantPartial.length > 0) {
+  const usePrefill = assistantPartial !== undefined && assistantPartial.length > 0;
+  if (usePrefill) {
     messages.push({
       role: "assistant",
       content: [{ type: "text", text: assistantPartial }],
     });
   }
-  return Result.Ok({ ...originalRequest, messages });
+  // When prefilling, pin OpenRouter's provider preference to skip Bedrock.
+  // Bedrock-routed Claude rejects assistant-suffix conversations with 400
+  // ("This model does not support assistant message prefill"). Anthropic-
+  // direct and Vertex both support prefill natively.
+  const provider = usePrefill
+    ? {
+        ...(originalRequest.provider ?? {}),
+        ignore: Array.from(new Set([...(originalRequest.provider?.ignore ?? []), "amazon-bedrock"])),
+      }
+    : originalRequest.provider;
+  return Result.Ok({ ...originalRequest, messages, ...(provider ? { provider } : {}) });
 }
 
 function mergeRecoveryIntoSystem(messages: readonly ChatMessage[], recoverySuffix: string): ChatMessage[] {
