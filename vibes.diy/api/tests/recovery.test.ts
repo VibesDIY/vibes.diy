@@ -124,9 +124,10 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
 
   // The orchestrator captures the upstream tokens emitted before the apply
   // error, truncated to the last successful code.end, and injects them as
-  // an assistant message after the user turn. The model sees its own voice
-  // ending at a clean code-block close and continues from the visible state.
-  describe("assistantPartial (resume handoff)", () => {
+  // an ASSISTANT prefill message after the user turn. The model continues
+  // its own message at the token level — there is no narrator step that
+  // can lie about what already landed.
+  describe("assistantPartial (assistant prefill)", () => {
     const partial = [
       "Building Quick Notes — top features:",
       "1. Title field (done)",
@@ -135,7 +136,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       "```",
     ].join("\n");
 
-    it("appends the partial as a user-role resume message (not assistant prefill)", () => {
+    it("appends the partial as an assistant prefill message (raw, no wrapper prose)", () => {
       const r = buildRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
@@ -148,13 +149,16 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       expect(out.messages).toHaveLength(3);
       expect(out.messages[0].role).toBe("system");
       expect(out.messages[1].role).toBe("user");
-      // The conversation must end with a user message — Bedrock-routed Claude
-      // rejects assistant-suffix conversations with 400.
-      expect(out.messages[2].role).toBe("user");
+      // Prefill: the conversation ends on an ASSISTANT turn whose content is
+      // literally the captured partial. The next sampled token is the model's
+      // continuation of its own message — no "you said this" narration.
+      expect(out.messages[2].role).toBe("assistant");
       const lastText = out.messages[2].content[0].type === "text" ? out.messages[2].content[0].text : "";
-      expect(lastText).toContain("PARTIAL ASSISTANT OUTPUT");
-      expect(lastText).toContain(partial);
-      expect(lastText).toContain("Continue from where the partial output above stopped");
+      expect(lastText).toBe(partial);
+      // No wrapper prose — that would re-introduce the meta-narration that
+      // the prefill design exists to eliminate.
+      expect(lastText).not.toContain("PARTIAL ASSISTANT OUTPUT");
+      expect(lastText).not.toContain("Continue from where");
     });
 
     it("preserves the two-message shape when assistantPartial is omitted", () => {
