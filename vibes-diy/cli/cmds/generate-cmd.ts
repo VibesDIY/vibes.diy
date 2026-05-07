@@ -20,6 +20,7 @@ import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveUserSlug } from "../resolve-user-slug.js";
 import { resolveSectionStream } from "./resolve-section-stream.js";
 import { pushFromDir } from "./push-from-dir.js";
+import { formatErr } from "./format-err.js";
 
 export const ResGenerate = type({
   type: "'use-vibes.cli.res-generate'",
@@ -81,7 +82,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       mode: "chat",
     });
     if (rChat.isErr()) {
-      return Result.Err(`Failed to open chat: ${rChat.Err()}`);
+      return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
     }
     const chat = rChat.Ok();
 
@@ -90,7 +91,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }],
     });
     if (rPrompt.isErr()) {
-      return Result.Err(`Failed to send prompt: ${JSON.stringify(rPrompt.Err())}`);
+      return Result.Err(`Failed to send prompt: ${formatErr(rPrompt.Err())}`);
     }
 
     // chat.sectionStream emits SectionEvent | ResError. Capture error
