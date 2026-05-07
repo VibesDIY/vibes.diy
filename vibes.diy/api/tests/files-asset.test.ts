@@ -89,10 +89,11 @@ function fileUrl(
   app: TestApp,
   dbName: string,
   docId: string,
-  key: string
+  key: string,
+  uploadId: string
 ): string {
   const port = ctx.svc.port && ctx.svc.port !== "80" && ctx.svc.port !== "443" ? `:${ctx.svc.port}` : "";
-  return `${ctx.svc.protocol}://${app.appSlug}--${app.userSlug}.${ctx.svc.hostnameBase.replace(/^\./, "")}${port}/_files/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}`;
+  return `${ctx.svc.protocol}://${app.appSlug}--${app.userSlug}.${ctx.svc.hostnameBase.replace(/^\./, "")}${port}/_files/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}?v=${encodeURIComponent(uploadId)}`;
 }
 
 describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
@@ -196,13 +197,17 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
         | Record<string, unknown>
         | undefined;
       expect(photo).toBeTruthy();
-      expect(photo?.uploadId).toBeUndefined();
+      // uploadId stays on the wire so read-modify-write cycles preserve it
+      // and put-doc validation can re-verify on save. cid / assetURI are
+      // server-only.
+      expect(photo?.uploadId).toBe(seeded.uploadId);
       expect(photo?.cid).toBeUndefined();
+      expect(photo?.assetURI).toBeUndefined();
       expect(typeof photo?.url).toBe("string");
       expect(photo?.type).toBe("text/plain");
       expect(photo?.size).toBe(seeded.size);
       expect(photo?.lastModified).toBe(1700000000);
-      expect(photo?.url).toBe(fileUrl({ svc }, owner, dbName, docId, "photo"));
+      expect(photo?.url).toBe(fileUrl({ svc }, owner, dbName, docId, "photo", seeded.uploadId));
 
       // Anonymous HTTP GET on the URL — public app, no cookie, expect 200.
       const url = photo?.url as string;
@@ -232,7 +237,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
         docId,
         doc: { _files: { secret: { uploadId: seeded.uploadId, type: "text/plain", size: seeded.size } } },
       });
-      const url = fileUrl({ svc }, { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug }, dbName, docId, "secret");
+      const url = fileUrl(
+        { svc },
+        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        dbName,
+        docId,
+        "secret",
+        seeded.uploadId
+      );
       const res = await processRequest(
         appCtx.appCtx,
         new Request(url, { method: "GET", headers: { Authorization: `Bearer ${owner.userToken}` } })
@@ -260,7 +272,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
         docId,
         doc: { _files: { hidden: { uploadId: seeded.uploadId, type: "text/plain", size: seeded.size } } },
       });
-      const url = fileUrl({ svc }, { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug }, dbName, docId, "hidden");
+      const url = fileUrl(
+        { svc },
+        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        dbName,
+        docId,
+        "hidden",
+        seeded.uploadId
+      );
       const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET" }));
       expect(res.status).toBe(401);
     });
@@ -281,7 +300,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
         docId,
         doc: { _files: { confidential: { uploadId: seeded.uploadId, type: "text/plain", size: seeded.size } } },
       });
-      const url = fileUrl({ svc }, { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug }, dbName, docId, "confidential");
+      const url = fileUrl(
+        { svc },
+        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        dbName,
+        docId,
+        "confidential",
+        seeded.uploadId
+      );
       const res = await processRequest(
         appCtx.appCtx,
         new Request(url, { method: "GET", headers: { Authorization: `Bearer ${stranger.userToken}` } })
@@ -305,7 +331,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
         docId,
         doc: { _files: { allowed: { uploadId: seeded.uploadId, type: "text/plain", size: seeded.size } } },
       });
-      const url = fileUrl({ svc }, { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug }, dbName, docId, "allowed");
+      const url = fileUrl(
+        { svc },
+        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        dbName,
+        docId,
+        "allowed",
+        seeded.uploadId
+      );
       const res = await processRequest(
         appCtx.appCtx,
         new Request(url, { method: "GET", headers: { Authorization: `Bearer ${viewer.userToken}` } })
@@ -315,9 +348,58 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     });
   });
 
+  describe("read-modify-write preserves _files", () => {
+    it("editing a sibling field does not break the file URL", async () => {
+      const seeded = await seedAssetUpload(
+        appCtx,
+        { userSlug: publicUserSlug, appSlug: publicAppSlug, userId: seededUserId },
+        "rmw-bytes",
+        "text/plain"
+      );
+      const dbName = "default";
+      const docId = "pub-doc-rmw";
+
+      // First put: doc with _files + a sibling field.
+      await owner.api.putDoc({
+        userSlug: publicUserSlug,
+        appSlug: publicAppSlug,
+        dbName,
+        docId,
+        doc: {
+          title: "v1",
+          _files: { photo: { uploadId: seeded.uploadId, type: "text/plain", size: seeded.size, lastModified: 1700000000 } },
+        },
+      });
+
+      // Read the doc back; client-shape includes uploadId so a verbatim
+      // re-put preserves the file reference.
+      const r1 = await owner.api.getDoc({ userSlug: publicUserSlug, appSlug: publicAppSlug, dbName, docId });
+      const doc1 = (r1.Ok() as unknown as { doc: Record<string, unknown> }).doc;
+      expect(doc1.title).toBe("v1");
+      const photoBefore = doc1._files as Record<string, Record<string, unknown>> | undefined;
+      expect(photoBefore?.photo.uploadId).toBe(seeded.uploadId);
+
+      // Edit a sibling field, put back verbatim.
+      const updated = { ...doc1, title: "v2" };
+      const putBack = await owner.api.putDoc({ userSlug: publicUserSlug, appSlug: publicAppSlug, dbName, docId, doc: updated });
+      expect(putBack.isOk()).toBe(true);
+
+      // Re-read; URL still resolvable, bytes still served.
+      const r2 = await owner.api.getDoc({ userSlug: publicUserSlug, appSlug: publicAppSlug, dbName, docId });
+      const doc2 = (r2.Ok() as unknown as { doc: Record<string, unknown> }).doc;
+      expect(doc2.title).toBe("v2");
+      const photoAfter = (doc2._files as Record<string, Record<string, unknown>>).photo;
+      expect(photoAfter.uploadId).toBe(seeded.uploadId);
+      const url = photoAfter.url as string;
+      const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET" }));
+      expect(res.status).toBe(200);
+      expect(await res.text()).toBe(seeded.bytes);
+    });
+  });
+
   describe("validation guards", () => {
     it("missing doc returns 404", async () => {
-      const url = fileUrl({ svc }, owner, "default", "ghost-doc-id", "photo");
+      const url = fileUrl({ svc }, owner, "default", "ghost-doc-id", "photo", "ghost-upl");
       const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET" }));
       expect(res.status).toBe(404);
     });
@@ -338,7 +420,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
         docId,
         doc: { _files: { actual: { uploadId: seeded.uploadId, type: "text/plain", size: seeded.size } } },
       });
-      const url = fileUrl({ svc }, owner, dbName, docId, "missing");
+      const url = fileUrl({ svc }, owner, dbName, docId, "missing", "ghost-upl");
       const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET" }));
       expect(res.status).toBe(404);
     });
