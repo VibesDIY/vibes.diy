@@ -139,7 +139,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       "```",
     ].join("\n");
 
-    it("appends a partial+placeholder resume message that names the failed edit slot", () => {
+    it("appends a quiet partial-resume message that just shows the partial and says continue", () => {
       const r = buildRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
@@ -156,14 +156,19 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       // (anthropic/claude-opus-4.7) refuses assistant-suffix conversations.
       expect(out.messages[2].role).toBe("user");
       const lastText = out.messages[2].content[0].type === "text" ? out.messages[2].content[0].text : "";
-      expect(lastText).toContain("PARTIAL ASSISTANT OUTPUT");
       expect(lastText).toContain(partial);
-      // Concrete placeholder where the failed edit was. The model should
-      // see its own partial, then a literal slot, then an instruction to
-      // redo *that* edit. No room to claim "it already landed."
-      expect(lastText).toContain("<<<FAILED EDIT HERE>>>");
-      // The instruction must point at the placeholder, not just "verify".
-      expect(lastText).toMatch(/redo (the |that )?failed edit|re-emit/i);
+      // Quiet framing: tell the model the partial ends at last good code
+      // block, hand off, point at CURRENT FILES. No placeholder, no
+      // "redo the failed edit" pressure, no "verify each described edit"
+      // — those instructions invited the gaslight pattern where the model
+      // used CURRENT FILES against itself to claim Pass 2 already landed
+      // (lineup-tracker, stuck-leather-prize).
+      expect(lastText).toMatch(/last successfully-applied code block/i);
+      expect(lastText).toMatch(/continue your turn/i);
+      expect(lastText).toContain("CURRENT FILES");
+      expect(lastText).not.toContain("<<<FAILED EDIT HERE>>>");
+      expect(lastText).not.toMatch(/redo (the |that )?failed/i);
+      expect(lastText).not.toMatch(/verify .* landed/i);
     });
 
     it("preserves the two-message shape when assistantPartial is omitted", () => {
