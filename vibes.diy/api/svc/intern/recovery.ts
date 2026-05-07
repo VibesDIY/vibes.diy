@@ -91,14 +91,18 @@ export function buildRecoveryRequest({
       content: [{ type: "text", text: assistantPartial }],
     });
   }
-  // When prefilling, pin OpenRouter's provider preference to skip Bedrock.
-  // Bedrock-routed Claude rejects assistant-suffix conversations with 400
-  // ("This model does not support assistant message prefill"). Anthropic-
-  // direct and Vertex both support prefill natively.
+  // When prefilling, pin OpenRouter to Anthropic-direct only. Both
+  // Bedrock (chat zYFWaxhUAKSvVrzeL) and Google Vertex
+  // (chat z2uDNqY3Nym7eE9q6e) reject assistant-suffix conversations
+  // with 400: "This model does not support assistant message prefill.
+  // The conversation must end with a user message." Only Anthropic-
+  // direct supports prefill on these Claude models, so route there
+  // exclusively for the recovery call.
   const provider = usePrefill
     ? {
         ...(originalRequest.provider ?? {}),
-        ignore: Array.from(new Set([...(originalRequest.provider?.ignore ?? []), "amazon-bedrock"])),
+        order: ["anthropic"],
+        allow_fallbacks: false,
       }
     : originalRequest.provider;
   return Result.Ok({ ...originalRequest, messages, ...(provider ? { provider } : {}) });
