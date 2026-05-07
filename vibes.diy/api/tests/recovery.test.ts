@@ -123,11 +123,14 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
   });
 
   // The orchestrator captures the upstream tokens emitted before the apply
-  // error, truncated to the last successful code.end, and injects them as
-  // an ASSISTANT prefill message after the user turn. The model continues
-  // its own message at the token level — there is no narrator step that
-  // can lie about what already landed.
-  describe("assistantPartial (assistant prefill)", () => {
+  // error, truncated to the start of the failed edit block, and injects
+  // them as a USER-role resume message after the user turn. We tried
+  // assistant-prefill (commit 80260adb) and it was rejected at the model
+  // level by anthropic/claude-opus-4.7 across every OpenRouter provider —
+  // so we keep the user-framed wrapper which works on every model. The
+  // anti-gaslight guidance ("verify partial against CURRENT FILES") lives
+  // in both the wrapper text and recovery-addendum.md.
+  describe("assistantPartial (user-framed resume handoff)", () => {
     const partial = [
       "Building Quick Notes — top features:",
       "1. Title field (done)",
@@ -136,7 +139,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       "```",
     ].join("\n");
 
-    it("appends the partial as an assistant prefill message (raw, no wrapper prose)", () => {
+    it("appends the partial as a user-role resume message with explicit failed-edit framing", () => {
       const r = buildRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
@@ -149,47 +152,17 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       expect(out.messages).toHaveLength(3);
       expect(out.messages[0].role).toBe("system");
       expect(out.messages[1].role).toBe("user");
-      // Prefill: the conversation ends on an ASSISTANT turn whose content is
-      // literally the captured partial. The next sampled token is the model's
-      // continuation of its own message — no "you said this" narration.
-      expect(out.messages[2].role).toBe("assistant");
+      // The conversation must end with a user message — the model
+      // (anthropic/claude-opus-4.7) refuses assistant-suffix conversations.
+      expect(out.messages[2].role).toBe("user");
       const lastText = out.messages[2].content[0].type === "text" ? out.messages[2].content[0].text : "";
-      expect(lastText).toBe(partial);
-      // No wrapper prose — that would re-introduce the meta-narration that
-      // the prefill design exists to eliminate.
-      expect(lastText).not.toContain("PARTIAL ASSISTANT OUTPUT");
-      expect(lastText).not.toContain("Continue from where");
-    });
-
-    it("pins provider to Anthropic-direct when prefilling", () => {
-      // Both AWS Bedrock (chat zYFWaxhUAKSvVrzeL) and Google Vertex
-      // (chat z2uDNqY3Nym7eE9q6e) reject assistant-suffix conversations
-      // with 400: "This model does not support assistant message prefill.
-      // The conversation must end with a user message." Only Anthropic-
-      // direct supports prefill on these Claude models, so pin OpenRouter
-      // to that provider with no fallback.
-      const r = buildRecoveryRequest({
-        originalRequest: baseReq,
-        recoveryAddendum: "You were here. Continue.",
-        vfs: new Map([["/App.jsx", "x"]]),
-        focusPath: "/App.jsx",
-        assistantPartial: partial,
-      });
-      expect(r.isOk()).toBe(true);
-      const out = r.Ok();
-      expect(out.provider?.order).toEqual(["anthropic"]);
-      expect(out.provider?.allow_fallbacks).toBe(false);
-    });
-
-    it("does not pin provider preference when no prefill is appended", () => {
-      const r = buildRecoveryRequest({
-        originalRequest: baseReq,
-        recoveryAddendum: "You were here. Continue.",
-        vfs: new Map([["/App.jsx", "x"]]),
-        focusPath: "/App.jsx",
-      });
-      expect(r.isOk()).toBe(true);
-      expect(r.Ok().provider).toBeUndefined();
+      expect(lastText).toContain("PARTIAL ASSISTANT OUTPUT");
+      expect(lastText).toContain(partial);
+      // Explicit failure framing — tells the model the edit failed,
+      // don't trust your own narration.
+      expect(lastText).toMatch(/failed edit/i);
+      expect(lastText).toMatch(/verify|scan/i);
+      expect(lastText).toContain("CURRENT FILES");
     });
 
     it("preserves the two-message shape when assistantPartial is omitted", () => {
