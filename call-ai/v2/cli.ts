@@ -301,12 +301,6 @@ const app = command({
                 timestamp: new Date(),
               })
             );
-            // Drop the buffered prefix — recovery's clean block.code.begin
-            // will reset sectionState.blocks anyway, but be explicit so
-            // anything inspecting state mid-stream sees the truth.
-            if (sectionState.sectionId === value.sectionId) {
-              sectionState.blocks = [];
-            }
           }
           if (isBlockImage(value)) {
             console.log(JSON.stringify(value));
