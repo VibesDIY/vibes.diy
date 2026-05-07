@@ -1,4 +1,4 @@
-import { EventoHandler, Result, HandleTriggerCtx, EventoResultType, Option, EventoResult, BuildURI } from "@adviser/cement";
+import { EventoHandler, Result, HandleTriggerCtx, EventoResultType, Option, EventoResult } from "@adviser/cement";
 import {
   MsgBase,
   VibesDiyError,
@@ -15,14 +15,16 @@ import { canWrite, checkDocAccess } from "./access-helpers.js";
 
 const GRANT_TTL_SEC = 60;
 
-// Build the absolute URL the client will POST bytes to. Prefer the
-// configured VIBES_DIY_API_URL (production / dev share this path); fall
-// back to the relative `/assets` when env is incomplete (tests). Either
-// way, the client's POST hits processRequest's `/assets` handler.
+// `POST /assets` lives at the host root (sibling of `/assets/cid`) — *not*
+// under `/api/` because that path goes to the ChatSessions DO which only
+// handles WS upgrades + a DocNotify POST shape. The host root is
+// VIBES_DIY_PUBLIC_BASE_URL, set in api-svc env. Tests fall back to the
+// relative path; they exercise the handler via `processRequest()` directly
+// and ignore uploadUrl.
 function buildUploadUrl(vctx: VibesApiSQLCtx): string {
-  const base = vctx.params.vibes.env.VIBES_DIY_API_URL;
+  const base = vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL;
   if (!base) return "/assets";
-  return BuildURI.from(base).appendRelative("/assets").toString();
+  return `${base.replace(/\/+$/, "")}/assets`;
 }
 
 export const assetUploadGrantEvento: EventoHandler<
