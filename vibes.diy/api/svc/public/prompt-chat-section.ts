@@ -1297,12 +1297,25 @@ async function handleLlmResponse({
         } | null = null;
         let drainOnly = false;
         readLoop: while (true) {
-          // Any reader error here means the pipeline is done emitting —
-          // intentional abort (recovery dispatch) or a runtime-specific
-          // abort variant (AbortError, TypeError, etc.). Treat all as
-          // end-of-stream rather than discriminating by error shape.
+          // Distinguish intentional aborts (recovery dispatch — drainOnly
+          // is set, currentAbort is signaling) from real transport/parser
+          // failures. Both end the loop, but the latter is surfaced via
+          // the recoveryLogger so it isn't silently swallowed as EOF.
           const rRead = await exception2Result(() => reader.read());
-          if (rRead.isErr()) break readLoop;
+          if (rRead.isErr()) {
+            const intentional = drainOnly || currentAbort.signal.aborted;
+            if (!intentional) {
+              recoveryLogger
+                .Info()
+                .Any("event", {
+                  chatId: req.chatId,
+                  promptId,
+                  err: String(rRead.Err()),
+                })
+                .Msg("upstream-read-failed");
+            }
+            break readLoop;
+          }
           const { done, value } = rRead.Ok();
           if (done) break readLoop;
           if (drainOnly) continue; // recovery already triggered; drain to EOF/abort.
@@ -1419,6 +1432,44 @@ async function handleLlmResponse({
               consecutiveFruitless: recoveryCounter.consecutiveFruitless,
             })
             .Msg("recovery-exhausted");
+          // Finalize the turn even though no clean stream produced a real
+          // block.end. Without this, the client never sees a completion
+          // event and the per-prompt context (chatCtx.promptIds) leaks. We
+          // synthesize a zero-stats block.end with the recovery's blockId
+          // so handleEndMsg's persistence + cleanup paths run normally.
+          // collectedMsgs already contains every truncate event and
+          // intermediate stream message, so the persisted record reflects
+          // exactly what the user saw before exhaustion.
+          const exhaustedEnd: BlockEndMsg = {
+            type: "block.end",
+            blockId: recoverHint.blockId,
+            streamId: promptId,
+            seq: blockSeq,
+            blockNr: 0,
+            timestamp: new Date(),
+            stats: {
+              toplevel: { lines: 0, bytes: 0 },
+              code: { lines: 0, bytes: 0 },
+              image: { lines: 0, bytes: 0 },
+              total: { lines: 0, bytes: 0 },
+            },
+            usage: {
+              given: [],
+              calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+            },
+          };
+          collectedMsgs.push(exhaustedEnd);
+          const xEnd = await handleEndMsg({
+            collectedMsgs,
+            vctx,
+            req,
+            ctx,
+            resChat,
+            promptId,
+            value: exhaustedEnd,
+            blockSeq,
+          });
+          if (xEnd.isErr()) return Result.Err(xEnd);
           return Result.Ok();
         }
 
