@@ -21,25 +21,28 @@ describe("system prompt templates", () => {
     }
   });
 
-  it("initial template has three-pass markers", () => {
-    expect(systemPromptInitialTemplate).toMatch(/three passes/i);
-    expect(systemPromptInitialTemplate).toContain("Pass 1");
-    expect(systemPromptInitialTemplate).toContain("Pass 2");
-    expect(systemPromptInitialTemplate).toContain("Pass 3");
-    expect(systemPromptInitialTemplate).toMatch(/exactly three.*code blocks/i);
+  it("initial template has scaffold + tiny-edits markers", () => {
+    // First-turn variant: one full-file scaffold (no SEARCH/REPLACE) then
+    // a long stream of small SEARCH/REPLACE edits with prose between.
+    expect(systemPromptInitialTemplate).toMatch(/scaffold/i);
+    expect(systemPromptInitialTemplate).toMatch(/tiny edits/i);
+    expect(systemPromptInitialTemplate).toMatch(/SEARCH\/REPLACE/);
+    expect(systemPromptInitialTemplate).toMatch(/first turn/i);
+    // Color-only-after-scaffold rule (zero color tokens in the create block).
+    expect(systemPromptInitialTemplate).toMatch(/ZERO color tokens/i);
   });
 
-  it("continuation template lacks three-pass markers", () => {
-    expect(systemPromptTemplate).not.toMatch(/exactly three.*code blocks/i);
-    expect(systemPromptTemplate).not.toMatch(/Pass 1 — UI scaffold/);
+  it("continuation template lacks first-turn-only markers", () => {
+    expect(systemPromptTemplate).not.toMatch(/first turn/i);
+    expect(systemPromptTemplate).not.toMatch(/tiny edits/i);
   });
 
-  it("continuation has 25-line chunk guidance; initial does not", () => {
+  it("both templates carry the small-chunk guidance", () => {
+    // Both modes recommend small SEARCH/REPLACE pairs (continuation always,
+    // initial after the scaffold). The "≤25 line" / "under ~25 lines"
+    // wording shows up in both.
     expect(systemPromptTemplate).toMatch(/25 lines/);
-    // Initial may explicitly override; ensure the small-chunk guidance is not active there.
-    if (systemPromptInitialTemplate.includes("25 lines")) {
-      expect(systemPromptInitialTemplate).toMatch(/Override|does NOT apply|override/);
-    }
+    expect(systemPromptInitialTemplate).toMatch(/25 lines/);
   });
 });
 
@@ -51,20 +54,23 @@ describe("makeBaseSystemPrompt variant routing", () => {
     pkgBaseUrl: "https://example.test/@vibes.diy/prompts/",
   };
 
-  it("variant=initial → output contains three-pass markers", async () => {
+  it("variant=initial → output contains first-turn scaffold + tiny-edits markers", async () => {
     const result = await makeBaseSystemPrompt("test-model", { ...baseOpts, variant: "initial" });
-    expect(result.systemPrompt).toContain("Pass 1");
-    expect(result.systemPrompt).toMatch(/exactly three.*code blocks/i);
+    expect(result.systemPrompt).toMatch(/first turn/i);
+    expect(result.systemPrompt).toMatch(/tiny edits/i);
+    expect(result.systemPrompt).toMatch(/ZERO color tokens/i);
   });
 
   it("variant=continuation → does not", async () => {
     const result = await makeBaseSystemPrompt("test-model", { ...baseOpts, variant: "continuation" });
-    expect(result.systemPrompt).not.toMatch(/exactly three.*code blocks/i);
+    expect(result.systemPrompt).not.toMatch(/first turn/i);
+    expect(result.systemPrompt).not.toMatch(/tiny edits/i);
   });
 
   it("no variant → defaults to continuation", async () => {
     const result = await makeBaseSystemPrompt("test-model", baseOpts);
-    expect(result.systemPrompt).not.toMatch(/exactly three.*code blocks/i);
+    expect(result.systemPrompt).not.toMatch(/first turn/i);
+    expect(result.systemPrompt).not.toMatch(/tiny edits/i);
   });
 });
 
