@@ -104,13 +104,17 @@ export function buildRecoveryRequest({
 // the conversation on an assistant turn.
 function renderPartialResume(assistantPartial: string): string {
   return [
-    "Your previous message was the assistant output below — captured mid-stream and then **interrupted by a failed edit**. The edit you were working on did not apply, and CURRENT FILES (in the system message) reflects the actual file state right now, not what your partial narration claimed.",
+    "Your previous message was the assistant output below — captured mid-stream. The next code block in your output was a SEARCH/REPLACE that **failed to apply** mid-stream and was discarded. We've replaced its slot with a `<<<FAILED EDIT HERE>>>` placeholder so you can see exactly where the gap is.",
     "",
     "PARTIAL ASSISTANT OUTPUT (your own output so far this turn, truncated to just before the start of the failed edit block):",
     "",
     assistantPartial,
     "",
-    "Continue from where the partial output above stopped, but FIRST: scan CURRENT FILES and verify each edit your partial described actually landed. If your partial said you filled in colors, wired a handler, or finished a SEARCH/REPLACE but CURRENT FILES does not show that change, the edit FAILED mid-stream — re-emit it now. Do not skip ahead on the assumption it succeeded. Do not repeat any code block that already shows up in CURRENT FILES.",
+    "<<<FAILED EDIT HERE>>>",
+    "",
+    "Redo the failed edit now: re-emit the SEARCH/REPLACE (or full-file block) that the prose just before the placeholder described. Do not assume it landed — it did not. Do not skip ahead to the next step in your plan; you owe the user the edit at the placeholder slot first. After re-emitting it, continue with the rest of your plan.",
+    "",
+    "CURRENT FILES (in the system message) reflects every edit that has actually landed. Anchor every SEARCH against text that appears there. Do not repeat any code block that already shows up in CURRENT FILES.",
   ].join("\n");
 }
 
