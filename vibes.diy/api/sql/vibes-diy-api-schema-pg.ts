@@ -36,6 +36,12 @@ export const sqlAppSlugBinding = pgTable(
     appSlug: text().notNull(), // human friendly app id
     ledger: text().notNull(), // cryptograhic Id
     created: text().notNull(),
+    // Bumped on every chat turn (drives recent-vibes ordering, see PR for the
+    // consumer). Default lets drizzle-kit push add this column on populated
+    // tables in one statement: PG fills existing rows with the sentinel and
+    // new code writes the real timestamp explicitly. Keeps every env (prod,
+    // dev, preview, cli) convergent under the standard schema-push flow.
+    updated: text().notNull().default("1970-01-01T00:00:00.000Z"),
   },
   (table) => [
     primaryKey({ columns: [table.appSlug, table.userSlug] }),
