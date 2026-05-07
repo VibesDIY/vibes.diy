@@ -46,6 +46,13 @@ export interface RecoveryRequestInput {
   // to the last successful block.code.end. Empty / omitted means we have no
   // partial to inject (e.g. abort happened before any block closed cleanly).
   readonly assistantPartial?: string;
+  // Line count in the focus file as of the last successful edit, included
+  // only when that edit was a SEARCH/REPLACE (not a `create`). Gives the
+  // model a concrete in-file anchor: "you were working on App.jsx and your
+  // last successful edit left the file at N lines." Skipped for `create`
+  // blocks because for them N is just the file's total length, not a
+  // useful continuation anchor.
+  readonly lastReplaceFileLines?: number;
 }
 
 // Compose the continuation LLM request. The recovery addendum + CURRENT
@@ -79,6 +86,7 @@ export function buildRecoveryRequest({
   vfs,
   focusPath,
   assistantPartial,
+  lastReplaceFileLines,
 }: RecoveryRequestInput): Result<LLMRequest> {
   if (recoveryAddendum.length === 0) {
     return Result.Err("recovery addendum is empty");
@@ -92,7 +100,7 @@ export function buildRecoveryRequest({
   if (assistantPartial !== undefined && assistantPartial.length > 0) {
     messages.push({
       role: "user",
-      content: [{ type: "text", text: renderPartialResume(assistantPartial) }],
+      content: [{ type: "text", text: renderPartialResume(assistantPartial, focusPath, lastReplaceFileLines) }],
     });
   }
   return Result.Ok({ ...originalRequest, messages });
@@ -102,9 +110,13 @@ export function buildRecoveryRequest({
 // makes it explicit that the bytes are the assistant's own prior output
 // (so the model picks up its narration where it stopped) without ending
 // the conversation on an assistant turn.
-function renderPartialResume(assistantPartial: string): string {
+function renderPartialResume(assistantPartial: string, focusPath: string, lastReplaceFileLines?: number): string {
+  const fileAnchor =
+    lastReplaceFileLines !== undefined
+      ? ` Your last successfully-applied edit was a SEARCH/REPLACE on ${focusPath}; after that edit the file was ${lastReplaceFileLines} lines long.`
+      : "";
   return [
-    "Your previous message was interrupted. Your own output so far this turn is reproduced below, truncated to the end of your last successfully-applied code block (every byte after that — any prose narrating the next edit, and any code that was being streamed when the interruption happened — has been dropped because it never landed).",
+    `Your previous message was interrupted. Your own output so far this turn is reproduced below, truncated to the end of your last successfully-applied code block (every byte after that — any prose narrating the next edit, and any code that was being streamed when the interruption happened — has been dropped because it never landed).${fileAnchor}`,
     "",
     assistantPartial,
     "",

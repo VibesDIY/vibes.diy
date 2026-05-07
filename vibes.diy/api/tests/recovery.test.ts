@@ -171,6 +171,45 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       expect(lastText).not.toMatch(/verify .* landed/i);
     });
 
+    it("cites the file line count after the last successful SEARCH/REPLACE", () => {
+      const r = buildRecoveryRequest({
+        originalRequest: baseReq,
+        recoveryAddendum: "You were here. Continue.",
+        vfs: new Map([["/App.jsx", "x"]]),
+        focusPath: "/App.jsx",
+        assistantPartial: partial,
+        lastReplaceFileLines: 142,
+      });
+      expect(r.isOk()).toBe(true);
+      const lastText = (() => {
+        const m = r.Ok().messages[2];
+        return m.content[0].type === "text" ? m.content[0].text : "";
+      })();
+      expect(lastText).toContain("142 lines");
+      expect(lastText).toContain("/App.jsx");
+      expect(lastText).toMatch(/SEARCH\/REPLACE/);
+    });
+
+    it("omits the line-count anchor when the last successful block was a create", () => {
+      // create blocks (full-file rewrites) don't have a meaningful "ended
+      // at line N" anchor — N is just the file's total line count, not
+      // an in-file position the model needs to reason about.
+      const r = buildRecoveryRequest({
+        originalRequest: baseReq,
+        recoveryAddendum: "You were here. Continue.",
+        vfs: new Map([["/App.jsx", "x"]]),
+        focusPath: "/App.jsx",
+        assistantPartial: partial,
+      });
+      expect(r.isOk()).toBe(true);
+      const lastText = (() => {
+        const m = r.Ok().messages[2];
+        return m.content[0].type === "text" ? m.content[0].text : "";
+      })();
+      expect(lastText).not.toMatch(/\bline(s)? long/);
+      expect(lastText).not.toMatch(/SEARCH\/REPLACE on /);
+    });
+
     it("preserves the two-message shape when assistantPartial is omitted", () => {
       const r = buildRecoveryRequest({
         originalRequest: baseReq,
