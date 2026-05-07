@@ -425,11 +425,47 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       expect(res.status).toBe(404);
     });
 
-    it("non-_files path on app subdomain falls through to 501", async () => {
+    it("non-_files path on app subdomain falls through to 501 (or close)", async () => {
       const url = `http://${owner.appSlug}--${owner.userSlug}.localhost.vibesdiy.net:8787/__not_files/x/y/z`;
       const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET" }));
-      // Either 404 (doc lookup fails) or 501 (wildcard) — assert it's not 200.
+      // Wildcard or doc-fallback — never 200, never 5xx.
+      expect([404, 501]).toContain(res.status);
+    });
+
+    it("malformed hostname (no `--`) falls through (no slug extraction)", async () => {
+      const url = `http://example.com/_files/db/doc/key`;
+      const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET" }));
+      // No `<app>--<user>` pattern, so the validate guard passes; wildcard
+      // or downstream handler responds — never 200 from our handler.
       expect(res.status).not.toBe(200);
+    });
+
+    it("encoded segments round-trip without double-decoding", async () => {
+      // Names with `+` and `.` are URL-safe but easy round-trip targets.
+      const seeded = await seedAssetUpload(
+        appCtx,
+        { userSlug: publicUserSlug, appSlug: publicAppSlug, userId: seededUserId },
+        "encoded-segments",
+        "text/plain"
+      );
+      const dbName = "default";
+      const docId = "doc.with-dots+plus";
+      const key = "key.png";
+      await owner.api.putDoc({
+        userSlug: publicUserSlug,
+        appSlug: publicAppSlug,
+        dbName,
+        docId,
+        doc: {
+          _files: {
+            [key]: { uploadId: seeded.uploadId, type: "text/plain", size: seeded.size, lastModified: 1700000000 },
+          },
+        },
+      });
+      const url = fileUrl({ svc }, owner, dbName, docId, key, seeded.uploadId);
+      const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET" }));
+      expect(res.status).toBe(200);
+      expect(await res.text()).toBe(seeded.bytes);
     });
   });
 });

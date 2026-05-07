@@ -31,12 +31,20 @@ export interface FilesUrlMintCtx {
   readonly svc: VibesFPApiParameters["vibes"]["svc"];
 }
 
-function isFileMeta(v: unknown): v is FileMeta {
+// Shared typeguard for the stored `_files.<key>` shape. Imported by both
+// the URL minter and the read handler — a partial entry (missing size or
+// uploadId) must be rejected at every layer that can encounter it.
+export function isFileMeta(v: unknown): v is FileMeta {
   if (!v || typeof v !== "object") return false;
   const m = v as Record<string, unknown>;
   return typeof m.uploadId === "string" && typeof m.type === "string" && typeof m.size === "number";
 }
 
+// Build the canonical `_files` URL for a (user, app, db, doc, key) tuple.
+// `?v=<uploadId>` is a CDN/browser cache-bust nonce so the URL changes
+// when a doc replaces its file. The handler ignores `?v=` at read time
+// and resolves uploadId from the doc itself — `?v=` is NOT an integrity
+// claim. Don't start trusting it as one.
 export function buildFileUrl(ctx: FilesUrlMintCtx, key: string, uploadId: string): string {
   const { svc, userSlug, appSlug, dbName, docId } = ctx;
   const hostname = `${appSlug}--${userSlug}.${svc.hostnameBase.replace(/^\./, "")}`;
