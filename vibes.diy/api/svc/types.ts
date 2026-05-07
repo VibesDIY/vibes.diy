@@ -7,6 +7,7 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { LLMHeaders, MsgBase, VibesAssetStorage, VibesFPApiParameters } from "@vibes.diy/api-types";
 import { VibesApiTables, VibesSqlite } from "@vibes.diy/api-sql";
 import { type } from "arktype";
+import type { AssetGrantSigner } from "./asset-grant.js";
 
 export type { VibesApiTables };
 export interface CfCacheIf {
@@ -44,6 +45,7 @@ export interface VibesApiSQLCtx {
   fetchPkgVersion(pkg: string): Promise<Result<{ src: string; version: string }>>;
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
   storage: VibesAssetStorage;
+  assetGrantSigner: AssetGrantSigner;
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }): Promise<Response>;
   prodiaToken?: string;
   notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string): Promise<void>;

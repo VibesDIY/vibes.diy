@@ -123,6 +123,9 @@ import {
   ReqListMembers,
   ResListMembers,
   isResListMembers,
+  ReqAssetUploadGrant,
+  ResAssetUploadGrant,
+  isResAssetUploadGrant,
   isEvtDocChanged,
   ReqPromptLLMChatSection,
   FSUpdate,
@@ -651,6 +654,12 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   listMembers(req: Req<ReqListMembers>): Promise<Result<ResListMembers, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-list-members" }, { resMatch: isResListMembers });
+  }
+
+  requestAssetUploadGrant(
+    req: Req<ReqAssetUploadGrant>
+  ): Promise<Result<ResAssetUploadGrant, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-asset-upload-grant" }, { resMatch: isResAssetUploadGrant });
   }
 
   private attachDocChangedToConnection(

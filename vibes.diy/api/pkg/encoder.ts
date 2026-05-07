@@ -5,7 +5,15 @@ import { type } from "arktype";
 export class ReqResEventoEnDecoder implements EventoEnDecoder<Request, string> {
   async encode(args: Request): Promise<Result<unknown>> {
     if (args.method === "POST" || args.method === "PUT") {
-      return exception2Result(() => args.json());
+      // Only auto-parse JSON bodies. Binary upload routes (e.g.
+      // POST /assets with application/octet-stream) need to read
+      // request.body themselves; consuming it here would leave the
+      // handler with an empty stream.
+      const contentType = args.headers.get("Content-Type") ?? "";
+      if (contentType.includes("json")) {
+        return exception2Result(() => args.json());
+      }
+      return Result.Ok();
     }
     return Result.Ok();
   }
