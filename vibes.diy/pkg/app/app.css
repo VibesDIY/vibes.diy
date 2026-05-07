@@ -39,3 +39,18 @@
   --font-sans:
     "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
+
+/* Chat input tokens — light originals preserved, dark mapped to existing decorative-01 */
+:root {
+  --vibes-input-border: #d4d4d8;
+  --vibes-submit-disabled-bg: #d1d5db;
+  --vibes-submit-disabled-fg: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --vibes-input-border: #444;
+    --vibes-submit-disabled-bg: #444;
+    --vibes-submit-disabled-fg: #e0e0e0;
+  }
+}
