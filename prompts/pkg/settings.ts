@@ -20,6 +20,9 @@ export interface UserSettings {
   /** Pre-resolved skill names chosen for this app (from pre-allocation). */
   skills?: string[];
 
+  /** Selected theme slug (from picker or pre-allocation). Validated against the theme catalog. */
+  theme?: string;
+
   /** Human-readable app title (from pre-allocation or user edit). */
   title?: string;
 

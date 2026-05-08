@@ -1,6 +1,7 @@
 import type { UserSettings } from "./settings.js";
 import { loadAsset, KeyedResolvOnce } from "@adviser/cement";
 import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.js";
+import { getThemeCatalogNames, vibesThemes } from "./themes/index.js";
 import { type } from "arktype";
 
 // import { getTexts } from "./txt-docs.js";
@@ -52,11 +53,17 @@ export async function getDefaultSkills(): Promise<string[]> {
 export async function makePreAllocUserMessage(userPrompt: string): Promise<string> {
   const catalog = await getLlmCatalog();
   const catalogText = catalog.map((l) => `- ${l.name}: ${l.description}`).join("\n");
+  const themeText = vibesThemes
+    .map((t) => `- ${t.slug}: ${t.name}${t.bodyFont ? ` (${t.bodyFont.replace(/['"]/g, "").split(",")[0].trim()})` : ""}`)
+    .join("\n");
   return [
-    "Pick skills from this catalog that fit the user's app request, propose 3 title/slug pairs for naming, and propose a one-line icon subject.",
+    "Pick skills from this catalog that fit the user's app request, propose 3 title/slug pairs for naming, propose a one-line icon subject, and optionally pick a theme if a clear visual style is implied.",
     "",
     "Skill catalog:",
     catalogText,
+    "",
+    "Theme catalog:",
+    themeText,
     "",
     "User request:",
     userPrompt,
@@ -94,6 +101,11 @@ export const preAllocSchema = {
       description:
         "A short, vivid one-line description of what an icon for this app should depict — what it shows, not how it's drawn. Examples: 'a fox on a record player', 'a sailboat on a calm lake', 'a chef whisking eggs'. Don't mention colors, line weights, letters, numbers, or framing — those are added separately by the renderer.",
     },
+    theme: {
+      type: "string",
+      description:
+        "Optional theme slug from the theme catalog above. Pick one only if the user's prompt clearly implies a visual style (retro, brutalist, dark terminal, magazine, etc.). Leave empty/omit if no strong style signal.",
+    },
   },
 } as const;
 
@@ -102,12 +114,14 @@ export const preAllocParsed = type({
   skills: type("string").array(),
   pairs: type({ title: "string", slug: "string" }).array(),
   iconDescription: "string",
+  "theme?": "string",
 });
 export type PreAllocParsed = typeof preAllocParsed.infer;
 
 export interface SystemPromptResult {
   systemPrompt: string;
   skills: string[];
+  theme?: string;
   demoData: boolean;
   model: string;
 }
@@ -249,6 +263,29 @@ export async function makeBaseSystemPrompt(
   }
   const concatenatedLlmsTxt = concatenatedLlmsTxts.join("\n");
 
+  // Theme: optional. Validate slug against catalog (drop unknown silently —
+  // same pattern as skills above). When present, load the DESIGN.md and wrap
+  // it in <theme-design-md>...</theme-design-md>. When absent, the placeholder
+  // collapses to empty.
+  const themeCatalogNames = getThemeCatalogNames();
+  const requestedTheme = typeof sessionDoc?.theme === "string" ? sessionDoc.theme : undefined;
+  const validatedTheme = requestedTheme && themeCatalogNames.has(requestedTheme) ? requestedTheme : undefined;
+  let themeDesignSection = "";
+  if (validatedTheme) {
+    const rTheme = await keyedLoadAsset.get(`theme:${validatedTheme}`).once(async () => {
+      return loadAsset(`./themes/${validatedTheme}.md`, {
+        fallBackUrl: pkgBaseUrl,
+        basePath: () => import.meta.url,
+        mock: { fetch: sessionDoc.fetch },
+      });
+    });
+    if (rTheme.isErr()) {
+      console.warn(`Failed to load theme ${validatedTheme}:`, rTheme.Err());
+    } else {
+      themeDesignSection = `<theme-design-md>\n${rTheme.Ok() ?? ""}\n</theme-design-md>`;
+    }
+  }
+
   // defaultStylePrompt is now imported from style-prompts.js
 
   const stylePrompt = sessionDoc?.stylePrompt || defaultStylePrompt;
@@ -270,6 +307,7 @@ export async function makeBaseSystemPrompt(
     .replaceAll("{{STYLE_PROMPT}}", stylePrompt)
     .replaceAll("{{DEMO_DATA}}", demoDataLines)
     .replaceAll("{{CONCATENATED_LLMS}}", concatenatedLlmsTxt)
+    .replaceAll("{{THEME_DESIGN}}", themeDesignSection)
     .replaceAll("{{TITLE_SECTION}}", titleSection)
     .replaceAll("{{USER_PROMPT}}", userPromptSection)
     .replaceAll("{{IMPORT_STATEMENTS}}", importStatements);
@@ -277,6 +315,7 @@ export async function makeBaseSystemPrompt(
   return {
     systemPrompt,
     skills: selectedNames,
+    theme: validatedTheme,
     demoData: includeDemoData,
     model,
   };
