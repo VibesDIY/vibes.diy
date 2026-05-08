@@ -20,7 +20,7 @@ interface ViewControlsProps {
   isChatActive?: boolean;
 }
 
-const NEUTRAL_BORDER = "#d4d4d8";
+const NEUTRAL_BORDER = "var(--vibes-input-border, #d4d4d8)";
 const NEUTRAL_BG = `linear-gradient(${NEUTRAL_BORDER}, ${NEUTRAL_BORDER})`;
 const INNER_BG = "linear-gradient(var(--vibes-tab-bg), var(--vibes-tab-bg))";
 

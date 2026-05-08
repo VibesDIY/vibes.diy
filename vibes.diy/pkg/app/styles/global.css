@@ -612,10 +612,28 @@ body:has(.page-grid-background) {
   }
 }
 
-/* === Vibes-CLI editor navbar === */
+/* === Vibes-CLI editor navbar — tokens preserve light originals, dark mapped to existing decorative-01 / dark-primary === */
+:root {
+  --vibes-navbar-bg: var(--vibes-cream, #fffef0);
+  --vibes-navbar-border: var(--vibes-near-black, #1a1a1a);
+  --vibes-navbar-text: var(--vibes-near-black, #1a1a1a);
+  --vibes-url-bar-bg: rgba(0, 0, 0, 0.04);
+  --vibes-url-bar-bg-hover: rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --vibes-navbar-bg: #1a1a1a; /* matches --color-dark-background-00 */
+    --vibes-navbar-border: #444; /* matches --color-dark-decorative-01 */
+    --vibes-navbar-text: #e0e0e0; /* matches --color-dark-primary */
+    --vibes-url-bar-bg: rgba(255, 255, 255, 0.06);
+    --vibes-url-bar-bg-hover: rgba(255, 255, 255, 0.12);
+  }
+}
+
 .vibes-navbar {
-  background: var(--vibes-cream, #fffef0);
-  border-bottom: 1px solid var(--vibes-near-black, #1a1a1a);
+  background: var(--vibes-navbar-bg);
+  border-bottom: 1px solid var(--vibes-navbar-border);
   font-family: "Alte Haas Grotesk", "Inter", sans-serif;
 }
 
@@ -624,7 +642,7 @@ body:has(.page-grid-background) {
   display: flex;
   width: 100%;
   height: 28px;
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--vibes-url-bar-bg);
   border-radius: 14px;
   align-items: center;
   padding: 0 10px;
@@ -634,7 +652,7 @@ body:has(.page-grid-background) {
 }
 
 .chrome-url-bar:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--vibes-url-bar-bg-hover);
 }
 
 .chrome-url-bar-icon {
@@ -645,6 +663,7 @@ body:has(.page-grid-background) {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--vibes-navbar-text);
 }
 
 .chrome-url-bar-icon svg {
@@ -656,7 +675,7 @@ body:has(.page-grid-background) {
   flex: 1;
   font-size: 0.8125rem;
   font-weight: 400;
-  color: var(--vibes-near-black, #1a1a1a);
+  color: var(--vibes-navbar-text);
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
