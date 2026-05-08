@@ -16,13 +16,12 @@ import {
   isFetchNotFoundResult,
   isFetchOkResult,
 } from "@vibes.diy/api-types";
-import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 import { and, desc, eq } from "drizzle-orm";
 import { VibesApiSQLCtx } from "../types.js";
-import { verifyAuth } from "../check-auth.js";
 import { checkDocAccess, isPublicReadable, type DocAccessLevel } from "./access-helpers.js";
 import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
 import { isFileMeta } from "./files-url-mint.js";
+import { ASSET_SESSION_COOKIE_NAME } from "./asset-session.js";
 
 // Handler for `/_files/<dbName>/<docId>/<key>` on the app subdomain
 // (`<appSlug>--<userSlug>.<host>`). Auth/ACL gate, doc lookup, AssetUploads
@@ -34,6 +33,13 @@ import { isFileMeta } from "./files-url-mint.js";
 // applied unconditionally by the send provider, so the URL is portable
 // into third-party CMS / WordPress-style embed contexts; the auth/ACL
 // gate (cookie + per-db ACL) is what actually controls visibility.
+//
+// Auth: cookie-only. The parent shell at vibes.diy POSTs its Clerk Bearer
+// to /_auth/session at iframe boot; we mint an HttpOnly cookie scoped to
+// the asset host, and browsers auto-attach it to every <img>/<video> sub-
+// resource fetch. Bearer-via-Authorization is no longer accepted —
+// browsers don't attach it to subresource requests anyway, so the path
+// could never have served images in practice.
 
 interface FilesAssetValidated {
   readonly userSlug: string;
@@ -41,27 +47,25 @@ interface FilesAssetValidated {
   readonly dbName: string;
   readonly docId: string;
   readonly key: string;
-  readonly bearer: string | undefined;
+  readonly cookie: string | undefined;
 }
 
 const HOSTNAME_RE = /^([a-zA-Z0-9][a-zA-Z0-9-]*?)--([a-zA-Z0-9][a-zA-Z0-9-]+)/;
 const PATH_RE = /^\/_files\/([^/]+)\/([^/]+)\/([^/?]+)\/?$/;
 
-function extractBearer(req: Request): string | undefined {
-  const header = req.headers.get("Authorization") ?? req.headers.get("authorization");
+// Read a single cookie value out of the Cookie header. Cookie names are
+// case-sensitive per RFC 6265; the value is everything between `=` and
+// the next `;`. We don't decode (cookie tokens are JWTs — base64url-safe).
+function extractAssetCookie(req: Request): string | undefined {
+  const header = req.headers.get("Cookie") ?? req.headers.get("cookie");
   if (!header) return undefined;
-  const m = /^Bearer\s+(.+)$/i.exec(header.trim());
-  return m ? m[1].trim() : undefined;
-}
-
-// Bearer headers carry no type marker, so probe each registered tokenApi
-// type until one verifies. JWT verification is cheap; with two registered
-// types (clerk, device-id) the worst case is two signature checks.
-async function verifyAnyBearer(vctx: VibesApiSQLCtx, token: string): Promise<string | undefined> {
-  for (const type of Object.keys(vctx.tokenApi)) {
-    const rAuth = await verifyAuth(vctx, { auth: { type, token } as DashAuthType });
-    if (rAuth.isOk() && rAuth.Ok().type === "VerifiedAuthResult") {
-      return rAuth.Ok().verifiedAuth.claims.userId;
+  for (const pair of header.split(";")) {
+    const trimmed = pair.trim();
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const name = trimmed.slice(0, eq);
+    if (name === ASSET_SESSION_COOKIE_NAME) {
+      return trimmed.slice(eq + 1);
     }
   }
   return undefined;
@@ -88,18 +92,24 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
           dbName: decodeURIComponent(pathMatch[1]),
           docId: decodeURIComponent(pathMatch[2]),
           key: decodeURIComponent(pathMatch[3]),
-          bearer: extractBearer(req),
+          cookie: extractAssetCookie(req),
         })
       )
     );
   },
   handle: async (ctx: HandleTriggerCtx<Request, FilesAssetValidated, unknown>): Promise<Result<EventoResultType>> => {
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    const { userSlug, appSlug, dbName, docId, key, bearer } = ctx.validated;
+    const { userSlug, appSlug, dbName, docId, key, cookie } = ctx.validated;
 
-    // 1. Resolve user identity (best-effort — anonymous reads are valid for
-    //    public-readable apps).
-    const userId = bearer ? await verifyAnyBearer(vctx, bearer) : undefined;
+    // 1. Resolve user identity from the asset-session cookie (best-effort —
+    //    anonymous reads are valid for public-readable apps).
+    let userId: string | undefined;
+    if (cookie) {
+      const rVerified = await vctx.assetSessionSigner.verify(cookie);
+      if (rVerified.isOk()) {
+        userId = rVerified.Ok().userId;
+      }
+    }
     const access: DocAccessLevel = userId ? await checkDocAccess(vctx, userId, appSlug, userSlug) : "none";
 
     // 2. ACL gate. If the db has an explicit dbAcl, use it. Otherwise allow

@@ -70,14 +70,23 @@ export class HTTPSendProvider implements EventoSendProvider<Request, unknown, un
       return Result.Ok(json as unknown as T);
     }
     if (!(body instanceof type.errors)) {
-      this.response = new Response(body.body as BodyInit, {
-        status: body.status,
-        headers: DefaultHttpHeaders({
+      // body.headers are *overrides*, not additions. cement's HttpHeader.Add
+      // is set-additive (and AsHeaderInit picks the first value), so a
+      // handler-supplied "Access-Control-Allow-Origin: https://vibes.diy"
+      // would otherwise get pinned behind the default "*". Build the
+      // Response with Headers.set() so handler values win.
+      const headers = new Headers(
+        DefaultHttpHeaders({
           "Content-Type": body.headers?.["Content-Type"] ?? "application/octet-stream",
           "Server-Timing": `total;dur=${(ctx.stats.request.doneTime.getTime() - ctx.stats.request.startTime.getTime()).toFixed(2)}`,
-          ...body.headers,
-        }),
-      });
+        })
+      );
+      if (body.headers) {
+        for (const [k, v] of Object.entries(body.headers)) {
+          headers.set(k, v);
+        }
+      }
+      this.response = new Response(body.body as BodyInit, { status: body.status, headers });
       ctx.send.send(ctx, this.response);
       return Result.Ok(body as unknown as T);
     }
