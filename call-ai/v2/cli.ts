@@ -310,7 +310,7 @@ const app = command({
           }
         }
 
-        if (image && isBlockImage(value)) {
+        if (image && isBlockImage(value) && value.url) {
           const response = await fetch(value.url);
           const blob = await response.blob();
           const mimetype = response.headers.get("content-type") || "application/octet-stream";

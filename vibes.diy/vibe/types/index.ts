@@ -1,7 +1,7 @@
 import { FPCloudClaim } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
-export * from "./img-vibes.js";
+export * from "./img-gen.js";
 
 const Base = type({
   tid: "string",
@@ -255,9 +255,11 @@ export function isResErrorCallAI(x: unknown): x is ResErrorCallAI {
   return !(ResErrorCallAI(x) instanceof type.errors);
 }
 
-// Image generation request/response types
-export const ReqImgVibes = type({
-  type: "'vibe.req.imgVibes'",
+// Image generation request/response types. The hook receives FileMeta
+// entries (uploadId/cid/type/size) and writes them to `_files.v<N>` —
+// Stage C's URL minter resolves the doc-side meta.url for display.
+export const ReqImgGen = type({
+  type: "'vibe.req.imgGen'",
   userSlug: "string",
   appSlug: "string",
   prompt: "string",
@@ -265,42 +267,51 @@ export const ReqImgVibes = type({
   "model?": "string",
 }).and(Base);
 
-export type ReqImgVibes = typeof ReqImgVibes.infer;
+export type ReqImgGen = typeof ReqImgGen.infer;
 
-export function isReqImgVibes(x: unknown): x is ReqImgVibes {
-  return !(ReqImgVibes(x) instanceof type.errors);
+export function isReqImgGen(x: unknown): x is ReqImgGen {
+  return !(ReqImgGen(x) instanceof type.errors);
 }
 
-export const ResOkImgVibes = type({
-  type: "'vibe.res.imgVibes'",
+export const ImgGenFile = type({
+  uploadId: "string",
+  cid: "string",
+  mimeType: "string",
+  size: "number",
+});
+
+export type ImgGenFile = typeof ImgGenFile.infer;
+
+export const ResOkImgGen = type({
+  type: "'vibe.res.imgGen'",
   status: "'ok'",
-  imageUrls: "string[]",
+  files: ImgGenFile.array(),
 }).and(Base);
 
-export type ResOkImgVibes = typeof ResOkImgVibes.infer;
+export type ResOkImgGen = typeof ResOkImgGen.infer;
 
-export const ResErrorImgVibes = type({
-  type: "'vibe.res.imgVibes'",
+export const ResErrorImgGen = type({
+  type: "'vibe.res.imgGen'",
   status: "'error'",
   message: "string",
 }).and(Base);
 
-export type ResErrorImgVibes = typeof ResErrorImgVibes.infer;
+export type ResErrorImgGen = typeof ResErrorImgGen.infer;
 
-const ResImgVibes = ResOkImgVibes.or(ResErrorImgVibes);
+const ResImgGen = ResOkImgGen.or(ResErrorImgGen);
 
-export type ResImgVibes = typeof ResImgVibes.infer;
+export type ResImgGen = typeof ResImgGen.infer;
 
-export function isResImgVibes(x: unknown): x is ResImgVibes {
-  return !(ResImgVibes(x) instanceof type.errors);
+export function isResImgGen(x: unknown): x is ResImgGen {
+  return !(ResImgGen(x) instanceof type.errors);
 }
 
-export function isResOkImgVibes(x: unknown): x is ResOkImgVibes {
-  return !(ResOkImgVibes(x) instanceof type.errors);
+export function isResOkImgGen(x: unknown): x is ResOkImgGen {
+  return !(ResOkImgGen(x) instanceof type.errors);
 }
 
-export function isResErrorImgVibes(x: unknown): x is ResErrorImgVibes {
-  return !(ResErrorImgVibes(x) instanceof type.errors);
+export function isResErrorImgGen(x: unknown): x is ResErrorImgGen {
+  return !(ResErrorImgGen(x) instanceof type.errors);
 }
 
 // ── Firefly document operations ──────────────────────────────────────
