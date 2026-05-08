@@ -21,6 +21,7 @@ import { resolveUserSlug } from "../resolve-user-slug.js";
 import { resolveSectionStream } from "./resolve-section-stream.js";
 import { pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
+import { formatNoFilesError } from "./format-no-files-error.js";
 
 export const ResGenerate = type({
   type: "'use-vibes.cli.res-generate'",
@@ -97,11 +98,19 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     // chat.sectionStream emits SectionEvent | ResError. Capture error
     // envelopes so we can surface upstream failures (e.g. provider quota,
     // model errors) instead of bottoming out as "no files resolved."
+    // Also tally activity counters so the bottom-out error can tell the user
+    // whether anything reached the CLI at all (issue #1626).
     const upstreamErrors: ResError[] = [];
+    let sectionEventCount = 0;
+    let blockCount = 0;
+    let streamedBytes = 0;
     const sectionOnly = chat.sectionStream.pipeThrough(
       new TransformStream<unknown, SectionEvent>({
         transform(msg, controller) {
           if (isSectionEvent(msg)) {
+            sectionEventCount += 1;
+            blockCount += msg.blocks.length;
+            streamedBytes += JSON.stringify(msg).length;
             controller.enqueue(msg);
             return;
           }
@@ -141,14 +150,18 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     }
     const resolved = rResolved.Ok();
     if (Object.keys(resolved.files).length === 0) {
-      if (upstreamErrors.length > 0) {
-        const detail = upstreamErrors
-          .map((e) => `${e.error?.code ? `[${e.error.code}] ` : ""}${e.error?.message ?? "(no message)"}`)
-          .join("; ");
-        return Result.Err(`AI provider error: ${detail}`);
-      }
-      const tail = resolved.errors.length > 0 ? ` (${resolved.errors.length} apply errors)` : "";
-      return Result.Err(`No files resolved from AI response${tail}.`);
+      return Result.Err(
+        formatNoFilesError({
+          sectionEventCount,
+          blockCount,
+          streamedBytes,
+          upstreamErrors: upstreamErrors.map((e) => ({
+            code: e.error?.code,
+            message: e.error?.message ?? "(no message)",
+          })),
+          applyErrors: resolved.errors,
+        })
+      );
     }
     if (upstreamErrors.length > 0 && !args.verbose) {
       const first = upstreamErrors[0];
