@@ -2,6 +2,7 @@ import type { ChangeEvent, KeyboardEvent } from "react";
 import React, { useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useState, useMemo } from "react";
 import ModelPicker, { type ModelOption } from "./ModelPicker.js";
 import { Button } from "./ui/button.js";
+import type { VibesTheme } from "@vibes.diy/prompts";
 
 interface ChatInputProps {
   promptProcessing: boolean;
@@ -12,6 +13,8 @@ interface ChatInputProps {
   showModelPickerInChat?: boolean;
   hasCode?: boolean;
   currentMsgCount?: number;
+  selectedTheme?: VibesTheme | null;
+  onThemeButtonClick?: () => void;
 }
 
 export interface ChatInputRef extends HTMLTextAreaElement {
@@ -40,6 +43,8 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       showModelPickerInChat,
       hasCode = false,
       currentMsgCount = 0,
+      selectedTheme,
+      onThemeButtonClick,
     },
     ref
   ) => {
@@ -50,24 +55,27 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     const [isFocused, setIsFocused] = useState(false);
     const realTextArea = useRef<HTMLTextAreaElement>(null);
 
-    const workingMessage = useMemo(
-      () => getWorkingMessage(hasCode, currentMsgCount),
-      [hasCode, currentMsgCount]
-    );
+    const workingMessage = useMemo(() => getWorkingMessage(hasCode, currentMsgCount), [hasCode, currentMsgCount]);
 
     useImperativeHandle(
       ref,
       () =>
         ({
-          setFocus: () => { realTextArea.current?.focus(); },
-          setPrompt: (v) => { setPrompt(v); },
+          setFocus: () => {
+            realTextArea.current?.focus();
+          },
+          setPrompt: (v) => {
+            setPrompt(v);
+          },
           setSelection: (s, e) => {
             if (realTextArea.current) {
               realTextArea.current.selectionStart = s;
               realTextArea.current.selectionEnd = e;
             }
           },
-          clickSubmit: () => { submitButtonRef.current?.click(); },
+          clickSubmit: () => {
+            submitButtonRef.current?.click();
+          },
         }) as ChatInputRef
     );
 
@@ -87,7 +95,9 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       }
     }, [ref]);
 
-    useEffect(() => { autoResizeTextarea(); }, [prompt, autoResizeTextarea]);
+    useEffect(() => {
+      autoResizeTextarea();
+    }, [prompt, autoResizeTextarea]);
 
     useEffect(() => {
       const container = containerRef.current;
@@ -101,19 +111,56 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 
     const borderColor = "var(--vibes-input-border, #d4d4d8)";
     const neutralBorder = `linear-gradient(${borderColor}, ${borderColor})`;
-    const focusBottomBar = "linear-gradient(90deg, var(--vibes-red, #DA291C) 0% 25%, var(--vibes-yellow, #fedd00) 25% 50%, var(--vibes-green, #22c55e) 50% 75%, var(--vibes-blue, #3b82f6) 75% 100%)";
+    const focusBottomBar =
+      "linear-gradient(90deg, var(--vibes-red, #DA291C) 0% 25%, var(--vibes-yellow, #fedd00) 25% 50%, var(--vibes-green, #22c55e) 50% 75%, var(--vibes-blue, #3b82f6) 75% 100%)";
     const innerBg = "linear-gradient(var(--chat-input-bg), var(--chat-input-bg))";
 
     const btnSnakeBorder = `conic-gradient(from var(--border-angle, 0deg), ${borderColor} 0deg 180deg, var(--vibes-red, #DA291C) 180deg 205deg, var(--vibes-yellow, #fedd00) 205deg 230deg, var(--vibes-green, #22c55e) 230deg 255deg, var(--vibes-blue, #3b82f6) 255deg 280deg, ${borderColor} 280deg 360deg)`;
 
     // Two states: focused (color bar at bottom), idle (neutral) — no animation on textarea
     const borderBackground = isFocused
-        ? `${innerBg} padding-box, ${focusBottomBar} center bottom / 100% 3px no-repeat border-box, ${neutralBorder} border-box`
-        : `${innerBg} padding-box, ${neutralBorder} border-box`;
+      ? `${innerBg} padding-box, ${focusBottomBar} center bottom / 100% 3px no-repeat border-box, ${neutralBorder} border-box`
+      : `${innerBg} padding-box, ${neutralBorder} border-box`;
 
     return (
       <div ref={containerRef} className="px-2 py-1">
         <div className="space-y-1">
+          {onThemeButtonClick && (
+            <button
+              type="button"
+              onClick={onThemeButtonClick}
+              className="inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs text-light-secondary dark:text-dark-secondary hover:bg-light-background-01 dark:hover:bg-dark-background-01 transition-colors"
+              aria-label={selectedTheme ? `Theme: ${selectedTheme.name}` : "Choose a theme"}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>
+              {selectedTheme ? (
+                <>
+                  <span
+                    className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: selectedTheme.accentColor }}
+                  />
+                  <span className="max-w-[100px] truncate">{selectedTheme.name}</span>
+                </>
+              ) : (
+                <span>Theme</span>
+              )}
+            </button>
+          )}
           {/* Textarea — border is the color bar, animates when processing */}
           <div
             className="[--chat-input-bg:var(--color-light-background-01,#eee)] dark:[--chat-input-bg:var(--color-dark-background-01,#222)]"
@@ -128,7 +175,9 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
               ref={realTextArea}
               value={prompt ?? ""}
               disabled={promptProcessing}
-              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => { setPrompt(e.target.value); }}
+              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
+                setPrompt(e.target.value);
+              }}
               onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
                 if (e.key === "Enter" && !e.shiftKey && !promptProcessing) {
                   e.preventDefault();
@@ -142,8 +191,12 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 border: "none",
                 borderRadius: 5,
               }}
-              onFocus={() => { if (!promptProcessing) setIsFocused(true); }}
-              onBlur={() => { setIsFocused(false); }}
+              onFocus={() => {
+                if (!promptProcessing) setIsFocused(true);
+              }}
+              onBlur={() => {
+                setIsFocused(false);
+              }}
               placeholder="I want to build..."
               rows={2}
             />
@@ -152,12 +205,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           {/* Bottom row: model picker + button (rainbow animation on button when processing) */}
           <div className="flex items-center justify-between gap-2">
             {showModelPickerInChat && Array.isArray(models) && models.length > 0 && onModelChange ? (
-              <ModelPicker
-                currentModel={currentModel}
-                onModelChange={onModelChange}
-                models={models}
-                compact={isCompact}
-              />
+              <ModelPicker currentModel={currentModel} onModelChange={onModelChange} models={models} compact={isCompact} />
             ) : (
               <span aria-hidden="true" />
             )}

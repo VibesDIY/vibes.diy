@@ -43,6 +43,7 @@ import {
   isVibeCodeBlock,
   ActiveEntry,
   isActiveSkills,
+  isActiveTheme,
   isActiveTitle,
 } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
@@ -628,7 +629,10 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
   return messages;
 }
 
-async function loadActiveSettings(vctx: VibesApiSQLCtx, chatId: string): Promise<{ skills?: string[]; title?: string }> {
+async function loadActiveSettings(
+  vctx: VibesApiSQLCtx,
+  chatId: string
+): Promise<{ skills?: string[]; theme?: string; title?: string }> {
   const rChat = await exception2Result(() =>
     vctx.sql.db
       .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, userSlug: vctx.sql.tables.chatContexts.userSlug })
@@ -651,6 +655,7 @@ async function loadActiveSettings(vctx: VibesApiSQLCtx, chatId: string): Promise
   const entries = (rApp.Ok().settings ?? []) as ActiveEntry[];
   return {
     skills: entries.find(isActiveSkills)?.skills,
+    theme: entries.find(isActiveTheme)?.theme,
     title: entries.find(isActiveTitle)?.title,
   };
 }
@@ -687,13 +692,14 @@ async function injectSystemPrompt(
   // seeds both on new chats; legacy rows without skills fall back to
   // makeBaseSystemPrompt's getDefaultSkills(), and an unset title drops the
   // title hint line entirely.
-  const { skills, title } = await loadActiveSettings(vctx, chatId);
+  const { skills, theme, title } = await loadActiveSettings(vctx, chatId);
   const priorFs = await loadPriorFileSystem(vctx, chatId);
   const isInitial = priorFs.size === 0;
 
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
       skills,
+      theme,
       title,
       demoData: false,
       variant: isInitial ? "initial" : "continuation",

@@ -302,6 +302,15 @@ export function isActiveSkills(obj: unknown): obj is ActiveSkills {
   return !(ActiveSkills(obj) instanceof type.errors);
 }
 
+export const ActiveTheme = type({
+  type: "'active.theme'",
+  theme: "string",
+});
+export type ActiveTheme = typeof ActiveTheme.infer;
+export function isActiveTheme(obj: unknown): obj is ActiveTheme {
+  return !(ActiveTheme(obj) instanceof type.errors);
+}
+
 export const IconVersion = type({
   cid: "string",
   mime: "string",
@@ -386,6 +395,7 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(EnableRequest)
   .or(ActiveTitle)
   .or(ActiveSkills)
+  .or(ActiveTheme)
   .or(ActiveIcon)
   .or(ActiveIconDescription)
   .or(ActiveModelSetting)
