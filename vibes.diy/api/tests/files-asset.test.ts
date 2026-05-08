@@ -272,14 +272,58 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       const cookie = await mintAssetCookie({ appCtx: appCtx.appCtx, svc }, owner.userToken);
       const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET", headers: { Cookie: cookie } }));
       expect(res.status).toBe(200);
-      // Private reads must be no-store — the cookie that authorizes this
-      // response can be cleared (logout) while the URL stays the same;
-      // a disk-cached copy would survive logout and leak to the next
-      // viewer of the same browser profile.
-      expect(res.headers.get("Cache-Control")).toBe("no-store");
+      // Private reads use a short max-age so the browser stops re-fetching
+      // on every refresh, but logout invalidates within the window. The
+      // cid-derived ETag lets the next read after expiry conditional-GET.
+      expect(res.headers.get("Cache-Control")).toBe("private, max-age=30");
+      const etag = res.headers.get("ETag");
+      expect(etag).toMatch(/^"[^"]+"$/);
       // CORS Access-Control-Allow-Origin is set globally by the send
       // provider — auth + ACL is what actually gates visibility.
       expect(await res.text()).toBe(seeded.bytes);
+
+      // If-None-Match with the matching ETag → 304 (auth + ACL still ran).
+      const res304 = await processRequest(
+        appCtx.appCtx,
+        new Request(url, { method: "GET", headers: { Cookie: cookie, "If-None-Match": etag ?? "" } })
+      );
+      expect(res304.status).toBe(304);
+      expect(res304.headers.get("ETag")).toBe(etag);
+      // 304 must not stream the body — bandwidth saved is the whole point.
+      expect(await res304.text()).toBe("");
+    });
+
+    it("If-None-Match without a cookie still 401s (no body, no leak)", async () => {
+      const seeded = await seedAssetUpload(
+        appCtx,
+        { userSlug: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
+        "private-anon-etag-probe",
+        "text/plain"
+      );
+      const dbName = "default";
+      const docId = "priv-doc-anon-etag";
+      await owner.api.putDoc({
+        userSlug: privateUserSlug,
+        appSlug: privateAppSlug,
+        dbName,
+        docId,
+        doc: { _files: { x: { uploadId: seeded.uploadId, type: "text/plain", size: seeded.size } } },
+      });
+      const url = fileUrl(
+        { svc },
+        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        dbName,
+        docId,
+        "x",
+        seeded.uploadId
+      );
+      // Anonymous + If-None-Match: must not 304 ("yes those bytes exist"),
+      // must 401 like any other anonymous private read.
+      const res = await processRequest(
+        appCtx.appCtx,
+        new Request(url, { method: "GET", headers: { "If-None-Match": '"any-cid"' } })
+      );
+      expect(res.status).toBe(401);
     });
 
     it("anonymous read returns 401", async () => {
