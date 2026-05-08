@@ -16,7 +16,7 @@
 // response body), so the next caller refetches transparently before the
 // browser would notice expiry.
 
-import { KeyedResolvOnce, Result } from "@adviser/cement";
+import { exception2Result, KeyedResolvOnce, Result } from "@adviser/cement";
 import { type } from "arktype";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 
@@ -60,28 +60,23 @@ export async function ensureAssetSession(deps: EnsureAssetSessionDeps): Promise<
       // so a public-readable view still works without churn.
       return Result.Ok(undefined);
     }
-    let res: Response;
-    try {
-      res = await fetcher(bridgeUrl(hostnameBase, "/_auth/session"), {
+    const rRes = await exception2Result(() =>
+      fetcher(bridgeUrl(hostnameBase, "/_auth/session"), {
         method: "POST",
         credentials: "include",
         headers: { Authorization: `Bearer ${auth.token}` },
-      });
-    } catch (e) {
-      return Result.Err(e instanceof Error ? e : new Error(String(e)));
-    }
+      })
+    );
+    if (rRes.isErr()) return Result.Err(rRes);
+    const res = rRes.Ok();
     if (!res.ok) {
-      return Result.Err(new Error(`/_auth/session ${res.status} ${res.statusText}`));
+      return Result.Err(`/_auth/session ${res.status} ${res.statusText}`);
     }
-    let body: unknown;
-    try {
-      body = await res.json();
-    } catch (e) {
-      return Result.Err(e instanceof Error ? e : new Error(String(e)));
-    }
-    const validated = ResAuthSession(body);
+    const rBody = await exception2Result(() => res.json());
+    if (rBody.isErr()) return Result.Err(rBody);
+    const validated = ResAuthSession(rBody.Ok());
     if (validated instanceof type.errors) {
-      return Result.Err(new Error(`/_auth/session response shape: ${validated.summary}`));
+      return Result.Err(`/_auth/session response shape: ${validated.summary}`);
     }
     // Refetch shortly before the cookie expires so callers always observe
     // a fresh session. 95% of Max-Age leaves a small margin for clock skew.
@@ -102,17 +97,15 @@ export async function tearDownAssetSession(deps: { hostnameBase: string; fetch?:
   const fetcher = deps.fetch ?? globalThis.fetch;
   // Drop the cached promise so the next ensureAssetSession refetches.
   sessionCache.unget(deps.hostnameBase);
-  // Best-effort logout — no exception escapes (Clerk listener already
-  // wiped the local token; the cookie matters more for server-side
-  // identity than for the client).
-  try {
-    await fetcher(bridgeUrl(deps.hostnameBase, "/_auth/logout"), {
+  // Best-effort logout — Clerk's listener already wiped the local token,
+  // and the cookie's Max-Age caps server-side staleness regardless. Any
+  // failure here is recoverable on next sign-in (which calls ensure again).
+  await exception2Result(() =>
+    fetcher(bridgeUrl(deps.hostnameBase, "/_auth/logout"), {
       method: "POST",
       credentials: "include",
-    });
-  } catch {
-    // intentionally swallowed — best effort
-  }
+    })
+  );
 }
 
 // Test seam: lets unit tests reset cross-test cache state without
