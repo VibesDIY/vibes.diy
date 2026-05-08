@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useMemo } from "react";
 import type { Database } from "@fireproof/use-fireproof";
-import { useImgVibes } from "../hooks/img-vibes/use-img-vibes.js";
+import type { FileMeta } from "@vibes.diy/vibe-types";
+import { useImgGen } from "../hooks/img-gen/use-img-gen.js";
 
-export interface ImgVibesProps {
+export interface ImgGenProps {
   prompt?: string;
   _id?: string;
   images?: File[];
@@ -23,17 +24,10 @@ function promptToId(prompt: string): string {
   return `img-${(hash >>> 0).toString(36)}`;
 }
 
-export function ImgVibes({
-  prompt,
-  _id: propId,
-  images,
-  database,
-  className,
-  alt,
-  style,
-  showControls = true,
-  model,
-}: ImgVibesProps) {
+// Display path is `<img src={meta.url}>` only — `_files.<versionId>.url`
+// is minted by Stage C's URL builder when the doc is read. No blob URLs,
+// no `<ImgFile>`, no `meta.file()`.
+export function ImgGen({ prompt, _id: propId, images, database, className, alt, style, showControls = true, model }: ImgGenProps) {
   const inputImage = images?.[0];
   const imageKey = inputImage ? `${inputImage.name}-${inputImage.size}-${inputImage.lastModified}` : "";
   const stableId = useMemo(
@@ -43,10 +37,10 @@ export function ImgVibes({
   const [generationId, setGenerationId] = useState<string | undefined>(undefined);
   const [versionIndex, setVersionIndex] = useState<number | null>(null);
 
-  const { assetUrl, loading, progress, error, document } = useImgVibes({
+  const { loading, progress, error, document } = useImgGen({
     prompt,
     _id: stableId,
-    database,
+    database: database as never,
     skip: !prompt && !stableId,
     generationId,
     inputImage,
@@ -55,8 +49,10 @@ export function ImgVibes({
 
   const versions = document?.versions ?? [];
   const currentVersion = versionIndex ?? document?.currentVersion ?? 0;
-  const fallbackAssetUrl = versions[document?.currentVersion ?? 0]?.assetUrl;
-  const displayUrl = versionIndex !== null ? versions[versionIndex]?.assetUrl : (assetUrl ?? fallbackAssetUrl);
+  const activeVersion = versions[currentVersion];
+  const activeFile: FileMeta | undefined =
+    activeVersion?.id && document?._files ? (document._files[activeVersion.id] as FileMeta) : undefined;
+  const displayUrl = activeFile?.url;
   const hasMultipleVersions = versions.length > 1;
   const hasExistingImage = versions.length > 0 && !!displayUrl;
 
@@ -198,4 +194,4 @@ const btnStyle: React.CSSProperties = {
   lineHeight: 1,
 };
 
-export default ImgVibes;
+export default ImgGen;

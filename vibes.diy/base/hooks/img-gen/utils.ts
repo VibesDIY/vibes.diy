@@ -1,4 +1,10 @@
-import type { ImageDocument, VersionInfo, PromptEntry } from "@vibes.diy/use-vibes-types";
+import type { FileMeta, VersionInfo, PromptEntry, PartialImageDocument } from "@vibes.diy/vibe-types";
+
+// Doc shape recap (Seam G4):
+//   versions[N].id IS the fileKey into _files (e.g. "v1" -> _files.v1).
+//   _files.v<N> = { uploadId, type, size, lastModified? } (FileMeta).
+//   prompts[promptKey] = { text, created }; currentPromptKey points
+//   into prompts. The platform's URL minter adds `meta.url` on read.
 
 export function generateVersionId(versionNumber: number): string {
   return `v${versionNumber}`;
@@ -8,7 +14,7 @@ export function generatePromptKey(promptNumber: number): string {
   return `p${promptNumber}`;
 }
 
-export function getVersionsFromDocument(document: Partial<ImageDocument>): {
+export function getVersionsFromDocument(document: PartialImageDocument | null | undefined): {
   versions: VersionInfo[];
   currentVersion: number;
 } {
@@ -21,7 +27,7 @@ export function getVersionsFromDocument(document: Partial<ImageDocument>): {
   return { versions: [], currentVersion: 0 };
 }
 
-export function getPromptsFromDocument(document: Partial<ImageDocument>): {
+export function getPromptsFromDocument(document: PartialImageDocument | null | undefined): {
   prompts: Record<string, PromptEntry>;
   currentPromptKey: string;
 } {
@@ -40,7 +46,16 @@ export function getPromptsFromDocument(document: Partial<ImageDocument>): {
   return { prompts: {}, currentPromptKey: "" };
 }
 
-export function addNewVersion(document: ImageDocument, assetUrl: string, newPrompt?: string, model?: string): ImageDocument {
+// Append a new version, writing the file ref into `_files.<versionId>`
+// rather than carrying a URL string on the version. The version's `id`
+// IS the fileKey — there's no separate fileKey field. Stage C's URL
+// minter resolves `_files.<versionId>.url` on read.
+export function addNewVersion(
+  document: PartialImageDocument,
+  fileMeta: FileMeta,
+  newPrompt?: string,
+  model?: string
+): PartialImageDocument & { _files: Record<string, FileMeta>; versions: VersionInfo[] } {
   const { versions } = getVersionsFromDocument(document);
   const versionCount = versions.length + 1;
   const newVersionId = generateVersionId(versionCount);
@@ -58,14 +73,21 @@ export function addNewVersion(document: ImageDocument, assetUrl: string, newProm
     updatedPrompts["p1"] = { text: document.prompt, created: document.created || Date.now() };
   }
 
+  const updatedFiles: Record<string, FileMeta> = {
+    ...(document._files ?? {}),
+    [newVersionId]: fileMeta,
+  };
+
   return {
     ...document,
+    type: "image",
     currentVersion: versionCount - 1,
     versions: [
       ...versions,
-      { id: newVersionId, created: Date.now(), promptKey: updatedCurrentPromptKey, assetUrl, ...(model ? { model } : {}) },
+      { id: newVersionId, created: Date.now(), promptKey: updatedCurrentPromptKey, ...(model ? { model } : {}) },
     ],
     prompts: updatedPrompts,
     currentPromptKey: updatedCurrentPromptKey,
+    _files: updatedFiles,
   };
 }
