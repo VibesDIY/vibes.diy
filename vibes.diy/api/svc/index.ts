@@ -18,3 +18,4 @@ export * from "./intern/recovery.js";
 export * from "./asset-grant.js";
 export * from "./asset-session.js";
 export * from "./public/store-and-audit-asset.js";
+export * from "./public/convert-image-evt.js";
