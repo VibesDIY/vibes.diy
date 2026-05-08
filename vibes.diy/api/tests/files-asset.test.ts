@@ -272,7 +272,11 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       const cookie = await mintAssetCookie({ appCtx: appCtx.appCtx, svc }, owner.userToken);
       const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET", headers: { Cookie: cookie } }));
       expect(res.status).toBe(200);
-      expect(res.headers.get("Cache-Control")).toContain("private");
+      // Private reads must be no-store — the cookie that authorizes this
+      // response can be cleared (logout) while the URL stays the same;
+      // a disk-cached copy would survive logout and leak to the next
+      // viewer of the same browser profile.
+      expect(res.headers.get("Cache-Control")).toBe("no-store");
       // CORS Access-Control-Allow-Origin is set globally by the send
       // provider — auth + ACL is what actually gates visibility.
       expect(await res.text()).toBe(seeded.bytes);

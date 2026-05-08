@@ -203,12 +203,18 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
     if (!isFetchOkResult(rAsset)) {
       return sendErr(ctx, 500, `Unexpected fetch result for ${upload.assetURI}`);
     }
+    // Cache policy:
+    //   - public-readable: immutable, year-long, shared CDN OK.
+    //   - private: `no-store`. The cookie that authorizes this read can be
+    //     cleared (logout) while the URL stays the same; if the browser
+    //     replayed from disk cache, previously-viewed private bytes would
+    //     leak across sessions/users sharing a profile. Pay the bandwidth.
     ctx.send.send(ctx, {
       type: "http.Response.Body",
       status: 200,
       headers: {
         "Content-Type": mime,
-        "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, max-age=31536000, immutable",
+        "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "no-store",
       },
       body: rAsset.data,
     } satisfies HttpResponseBodyType);
