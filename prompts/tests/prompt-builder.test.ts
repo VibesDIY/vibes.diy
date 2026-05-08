@@ -296,11 +296,10 @@ describe("prompt builder (real implementation)", () => {
     // The web-audio docs are concatenated into the prompt under the
     // "Web Audio API"-labeled tags, but no import statement is emitted.
     expect(result.systemPrompt).toContain("<Web Audio API-docs>");
-    // No emitted import statement — match the line shape, not any quoted
-    // "web-audio" text (which the anti-import directive itself contains).
+    // No emitted import statement — match the line shape.
     expect(result.systemPrompt).not.toMatch(/^\s*import\s.+from\s+["']web-audio["']/m);
-    // Anti-import directive from the docs round-trips through the builder.
-    expect(result.systemPrompt).toContain('Do not write `import ... from "web-audio"`');
+    // Steering directive from the docs round-trips through the builder.
+    expect(result.systemPrompt).toContain("Web Audio is a browser built-in");
     expect(result.systemPrompt).toContain("window.AudioContext");
   });
 });
