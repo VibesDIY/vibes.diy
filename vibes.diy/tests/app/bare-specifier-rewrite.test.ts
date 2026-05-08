@@ -33,10 +33,14 @@ describe("rewriteBareSpecifiers", () => {
     expect(out).toBe(code);
   });
 
-  it("rewrites dynamic import() with a string-literal specifier", () => {
-    const code = `const m = await import("chart.js");`;
-    const out = rewriteBareSpecifiers(code, {});
-    expect(out).toContain('import("https://esm.sh/chart.js")');
+  it("does not rewrite dynamic import() in the module body", () => {
+    // Dynamic imports in the body are intentionally out of scope — the
+    // rewriter only touches the top-of-file import region to keep clear of
+    // string literals and comments in user code.
+    const code = `import { useState } from "react";\nconst m = await import("chart.js");`;
+    const out = rewriteBareSpecifiers(code, { react: "https://esm.sh/react@19.2.1" });
+    expect(out).toContain(`import("chart.js")`);
+    expect(out).not.toContain("https://esm.sh/chart.js");
   });
 
   it("rewrites side-effect imports", () => {
@@ -45,10 +49,34 @@ describe("rewriteBareSpecifiers", () => {
     expect(out).toContain('import "https://esm.sh/tone"');
   });
 
-  it("rewrites export ... from bare specifier", () => {
-    const code = `export { default as Foo } from "some-pkg";`;
+  it("rewrites multi-line imports with line breaks inside braces", () => {
+    const code = [`import {`, `  Canvas,`, `  useFrame,`, `} from "@react-three/fiber";`, `export default () => null;`].join("\n");
     const out = rewriteBareSpecifiers(code, {});
-    expect(out).toContain('from "https://esm.sh/some-pkg"');
+    expect(out).toContain('from "https://esm.sh/@react-three/fiber"');
+    expect(out).not.toContain('from "@react-three/fiber"');
+  });
+
+  it("does not rewrite import-like text in the module body", () => {
+    const code = [
+      `import { useState } from "react";`,
+      ``,
+      `function App() {`,
+      `  // import "three" — this is just a comment`,
+      `  const msg = 'load from "three"';`,
+      `  return msg;`,
+      `}`,
+    ].join("\n");
+    const out = rewriteBareSpecifiers(code, { react: "https://esm.sh/react@19.2.1" });
+    expect(out).toContain('from "react"');
+    expect(out).not.toContain("https://esm.sh/three");
+    expect(out).toContain(`'load from "three"'`);
+    expect(out).toContain(`// import "three"`);
+  });
+
+  it("skips top-of-file block comments and rewrites the imports below", () => {
+    const code = [`/**`, ` * banner`, ` */`, `import * as THREE from "three";`, `export default () => null;`].join("\n");
+    const out = rewriteBareSpecifiers(code, {});
+    expect(out).toContain('from "https://esm.sh/three"');
   });
 
   it("preserves single-quote style", () => {
@@ -62,18 +90,14 @@ describe("rewriteBareSpecifiers", () => {
       `import { useState } from "react";`,
       `import * as THREE from "three";`,
       `import "./styles.css";`,
-      `const tone = await import("tone");`,
+      `import "tone";`,
+      `export default function App() { return null; }`,
     ].join("\n");
     const out = rewriteBareSpecifiers(code, { react: "https://esm.sh/react@19.2.1" });
     expect(out).toContain('from "react"');
     expect(out).toContain('from "https://esm.sh/three"');
     expect(out).toContain('import "./styles.css"');
-    expect(out).toContain('import("https://esm.sh/tone")');
-  });
-
-  it("does not rewrite dynamic import with a non-string-literal argument", () => {
-    const code = `const m = await import(name);`;
-    expect(rewriteBareSpecifiers(code, {})).toBe(code);
+    expect(out).toContain('import "https://esm.sh/tone"');
   });
 });
 
