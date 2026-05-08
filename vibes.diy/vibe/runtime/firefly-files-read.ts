@@ -15,7 +15,7 @@
  * shim is testable without monkey-patching globals.
  */
 
-export type Fetcher = (input: string) => Promise<Response>;
+export type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
 
 export interface PublicFileMeta {
   // uploadId is the doc-side cache key — required on every persisted
@@ -34,7 +34,7 @@ interface DocWithFiles {
   _files?: Record<string, PublicFileMeta>;
 }
 
-const defaultFetcher: Fetcher = (url) => fetch(url);
+const defaultFetcher: Fetcher = (url, init) => fetch(url, init);
 
 /**
  * Walk `doc._files` and attach `meta.file()` shim per entry. Returns a new
@@ -67,7 +67,12 @@ async function fetchAsFile(
   type: string,
   lastModified: number | undefined
 ): Promise<File> {
-  const r = await fetcher(url);
+  // `credentials: "include"` so the partitioned vibes-asset-session cookie
+  // attaches to cross-origin reads from the iframe (`<app>--<user>.<base>`)
+  // to the asset host (`assets.<base>`). Without this, private files 401.
+  // The asset host responds with credentialed CORS so the browser hands
+  // bytes back to JS instead of blocking the response.
+  const r = await fetcher(url, { credentials: "include" });
   if (!r.ok) {
     throw new Error(`fetch _files ${url}: ${r.status} ${r.statusText}`);
   }

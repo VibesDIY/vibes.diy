@@ -87,42 +87,23 @@ describe("decorateFiles — Firefly client shim", () => {
     expect((decorated._files.malformed as { file?: unknown }).file).toBeUndefined();
   });
 
-  // Stage C left this gap: `meta.file()` does a no-credentials fetch.
-  // Cross-origin from the iframe (`<app>--<user>.<env>.vibesdiy.net`) to
-  // the asset host (`assets.<env>.vibesdiy.net`) won't carry the
-  // vibes-asset-session cookie unless the request is `credentials: "include"`,
-  // so private files 401 when fetched via meta.file(). Browsers attach
-  // partitioned SameSite=None cookies to <img> subresource loads natively
-  // (the cookie still fires for `<img src={meta.url}>`), so this gap is
-  // invisible until a vibe author reaches for transcoding/hashing/ML and
-  // calls meta.file() directly.
-  //
-  // Two-part fix:
-  //   1. Widen `Fetcher` to `(input, init?: RequestInit) => Promise<Response>`
-  //      and have defaultFetcher pass `{ credentials: "include" }`.
-  //   2. Read handler at `assets.<base>/_files/...` reflects request Origin
-  //      + sets `Access-Control-Allow-Credentials: true` (mirroring what the
-  //      bridge endpoints already do) so the credentialed fetch isn't blocked
-  //      by CORS.
-  //
-  // `it.fails` so this passes today (gap exists) and starts failing once the
-  // fix lands — forcing whoever closes the gap to flip this back to `it()`.
-  it.fails(
-    "KNOWN GAP: meta.file() should pass credentials: 'include' so private cross-origin reads attach the cookie",
-    async () => {
-      const url = "https://assets.example.com/_files/u/a/db/doc-1/photo?v=upl-cred";
-      let observedCredentials: RequestCredentials | undefined;
-      const widenedFetcher: (input: string, init?: RequestInit) => Promise<Response> = async (_input, init) => {
-        observedCredentials = init?.credentials;
-        return new Response("ok", { status: 200, headers: { "Content-Type": "text/plain" } });
-      };
-      const decorated = decorateFiles(
-        { _files: { photo: { uploadId: "upl-cred", type: "text/plain", size: 2, url } } },
-        widenedFetcher as Fetcher
-      );
-      const meta = decorated._files.photo as unknown as { file: () => Promise<File> };
-      await meta.file();
-      expect(observedCredentials).toBe("include");
-    }
-  );
+  // meta.file() must pass `credentials: "include"` so the partitioned
+  // vibes-asset-session cookie attaches on cross-origin reads from the
+  // iframe (`<app>--<user>.<base>`) to the asset host (`assets.<base>`).
+  // Without this, private files 401 the moment a vibe reaches for
+  // transcoding/hashing/ML via meta.file(). The asset host's read handler
+  // pairs this with reflected Origin + Allow-Credentials so the response
+  // bytes hand back to JS instead of being blocked by CORS.
+  it("file() shim passes credentials: 'include' so the cookie attaches cross-origin", async () => {
+    const url = "https://assets.example.com/_files/u/a/db/doc-1/photo?v=upl-cred";
+    let observedCredentials: RequestCredentials | undefined;
+    const fetcher: Fetcher = async (_input, init) => {
+      observedCredentials = init?.credentials;
+      return new Response("ok", { status: 200, headers: { "Content-Type": "text/plain" } });
+    };
+    const decorated = decorateFiles({ _files: { photo: { uploadId: "upl-cred", type: "text/plain", size: 2, url } } }, fetcher);
+    const meta = decorated._files.photo as unknown as { file: () => Promise<File> };
+    await meta.file();
+    expect(observedCredentials).toBe("include");
+  });
 });

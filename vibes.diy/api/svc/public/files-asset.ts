@@ -9,13 +9,7 @@ import {
   URI,
   exception2Result,
 } from "@adviser/cement";
-import {
-  HttpResponseBodyType,
-  HttpResponseJsonType,
-  isFetchErrResult,
-  isFetchNotFoundResult,
-  isFetchOkResult,
-} from "@vibes.diy/api-types";
+import { HttpResponseBodyType, isFetchErrResult, isFetchNotFoundResult, isFetchOkResult } from "@vibes.diy/api-types";
 import { and, desc, eq } from "drizzle-orm";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkDocAccess, isPublicReadable, type DocAccessLevel } from "./access-helpers.js";
@@ -49,6 +43,21 @@ interface FilesAssetValidated {
   readonly key: string;
   readonly cookie: string | undefined;
   readonly ifNoneMatch: string | undefined;
+  readonly origin: string | undefined;
+}
+
+// Credentialed-CORS headers for cross-origin fetch() callers (e.g. an
+// iframe at `<app>--<user>.<base>` calling `meta.file()` against
+// `assets.<base>`). For `<img>`/`<video>` no-cors loads these are
+// ignored — the cookie attaches based on cookie attributes alone, the
+// browser doesn't enforce CORS on the response.
+function credentialedCors(origin: string | undefined): Record<string, string> {
+  if (!origin) return {};
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Credentials": "true",
+    Vary: "Origin",
+  };
 }
 
 const ASSETS_HOST_PREFIX = "assets.";
@@ -96,13 +105,15 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
           key: decodeURIComponent(pathMatch[5]),
           cookie: extractAssetCookie(req),
           ifNoneMatch: req.headers.get("If-None-Match") ?? req.headers.get("if-none-match") ?? undefined,
+          origin: req.headers.get("Origin") ?? req.headers.get("origin") ?? undefined,
         })
       )
     );
   },
   handle: async (ctx: HandleTriggerCtx<Request, FilesAssetValidated, unknown>): Promise<Result<EventoResultType>> => {
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    const { userSlug, appSlug, dbName, docId, key, cookie, ifNoneMatch } = ctx.validated;
+    const { userSlug, appSlug, dbName, docId, key, cookie, ifNoneMatch, origin } = ctx.validated;
+    const corsHeaders = credentialedCors(origin);
 
     // 1. Resolve user identity from the asset-session cookie (best-effort —
     //    anonymous reads are valid for public-readable apps).
@@ -208,6 +219,7 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
         headers: {
           ETag: etag,
           "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, max-age=30",
+          ...corsHeaders,
         },
       } satisfies HttpResponseBodyType);
       return Result.Ok(EventoResult.Stop);
@@ -240,6 +252,7 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
         "Content-Type": mime,
         "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, max-age=30",
         ETag: etag,
+        ...corsHeaders,
       },
       body: rAsset.data,
     } satisfies HttpResponseBodyType);
@@ -265,10 +278,20 @@ function sendErr(
   status: number,
   message: string
 ): Result<EventoResultType> {
+  // Use BodyType so we can attach credentialed CORS headers — the JSON
+  // type's headers field is currently dropped by the send provider.
+  // Without ACAO + ACAC matching the request Origin, a credentialed
+  // fetch caller (meta.file()) cannot read the error response from JS,
+  // which masks 401/403 as opaque network errors.
+  const origin = ctx.validated.origin;
   ctx.send.send(ctx, {
-    type: "http.Response.JSON",
+    type: "http.Response.Body",
     status,
-    json: { type: "error", message },
-  } satisfies HttpResponseJsonType);
+    body: JSON.stringify({ type: "error", message }),
+    headers: {
+      "Content-Type": "application/json",
+      ...credentialedCors(origin),
+    },
+  } satisfies HttpResponseBodyType);
   return Result.Ok(EventoResult.Stop);
 }
