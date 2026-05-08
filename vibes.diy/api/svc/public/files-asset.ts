@@ -48,6 +48,7 @@ interface FilesAssetValidated {
   readonly docId: string;
   readonly key: string;
   readonly cookie: string | undefined;
+  readonly ifNoneMatch: string | undefined;
 }
 
 const ASSETS_HOST_PREFIX = "assets.";
@@ -94,13 +95,14 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
           docId: decodeURIComponent(pathMatch[4]),
           key: decodeURIComponent(pathMatch[5]),
           cookie: extractAssetCookie(req),
+          ifNoneMatch: req.headers.get("If-None-Match") ?? req.headers.get("if-none-match") ?? undefined,
         })
       )
     );
   },
   handle: async (ctx: HandleTriggerCtx<Request, FilesAssetValidated, unknown>): Promise<Result<EventoResultType>> => {
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    const { userSlug, appSlug, dbName, docId, key, cookie } = ctx.validated;
+    const { userSlug, appSlug, dbName, docId, key, cookie, ifNoneMatch } = ctx.validated;
 
     // 1. Resolve user identity from the asset-session cookie (best-effort —
     //    anonymous reads are valid for public-readable apps).
@@ -170,6 +172,7 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
           userSlug: uploadsT.userSlug,
           appSlug: uploadsT.appSlug,
           mimeType: uploadsT.mimeType,
+          cid: uploadsT.cid,
         })
         .from(uploadsT)
         .where(eq(uploadsT.uploadId, meta.uploadId))
@@ -190,7 +193,27 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
       return sendErr(ctx, 403, "Access denied");
     }
 
-    // 5. Stream bytes via the existing storage abstraction. mimeType prefers
+    // 5. ETag conditional. Auth + ACL already passed above, so a 304 here
+    //    is safe — the response body is the same identity-gated bytes the
+    //    200 path would have streamed. cid is the content hash on the
+    //    AssetUploads row; quoted-string ETag per RFC 7232.
+    const etag = `"${upload.cid}"`;
+    if (ifNoneMatch && etagMatches(ifNoneMatch, etag)) {
+      // 304 must not carry a body — undici rejects `new Response("", {status:304})`.
+      // Pass null body; the send provider forwards it to Response unchanged.
+      ctx.send.send(ctx, {
+        type: "http.Response.Body",
+        status: 304,
+        body: null,
+        headers: {
+          ETag: etag,
+          "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, max-age=30",
+        },
+      } satisfies HttpResponseBodyType);
+      return Result.Ok(EventoResult.Stop);
+    }
+
+    // 6. Stream bytes via the existing storage abstraction. mimeType prefers
     //    the audit row's stored value, falls back to the doc-side type hint.
     const mime = upload.mimeType ?? meta.type ?? "application/octet-stream";
     const rAsset = await vctx.storage.fetch(upload.assetURI);
@@ -205,22 +228,37 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
     }
     // Cache policy:
     //   - public-readable: immutable, year-long, shared CDN OK.
-    //   - private: `no-store`. The cookie that authorizes this read can be
-    //     cleared (logout) while the URL stays the same; if the browser
-    //     replayed from disk cache, previously-viewed private bytes would
-    //     leak across sessions/users sharing a profile. Pay the bandwidth.
+    //   - private: `private, max-age=30`. Refresh within 30s = browser cache
+    //     hit (zero server cost). After 30s, browser sends If-None-Match
+    //     and we run auth + ACL + return 304 — logout invalidates within
+    //     a 30s window. ETag is the content cid so revalidation matches
+    //     even across replayed/cached requests.
     ctx.send.send(ctx, {
       type: "http.Response.Body",
       status: 200,
       headers: {
         "Content-Type": mime,
-        "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "no-store",
+        "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, max-age=30",
+        ETag: etag,
       },
       body: rAsset.data,
     } satisfies HttpResponseBodyType);
     return Result.Ok(EventoResult.Stop);
   },
 };
+
+// RFC 7232 If-None-Match accepts a comma-separated list of ETags or `*`.
+// Strong/weak prefix is ignored at our layer — we only mint strong ETags
+// (the content cid is a strong identity) so any match is a strong match.
+function etagMatches(ifNoneMatch: string, etag: string): boolean {
+  const trimmed = ifNoneMatch.trim();
+  if (trimmed === "*") return true;
+  for (const candidate of trimmed.split(",")) {
+    const c = candidate.trim().replace(/^W\//, "");
+    if (c === etag) return true;
+  }
+  return false;
+}
 
 function sendErr(
   ctx: HandleTriggerCtx<Request, FilesAssetValidated, unknown>,
