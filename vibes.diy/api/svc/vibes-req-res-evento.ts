@@ -15,10 +15,15 @@ import { servEntryPoint } from "./public/serv-entry-point.js";
 import { cidAsset } from "./public/cid-asset.js";
 import { filesAsset } from "./public/files-asset.js";
 import { putAsset } from "./public/put-asset.js";
+import { authSession, authLogout, authBridgePreflight } from "./public/asset-session.js";
 
 export const vibesReqResEvento = Lazy(() => {
   const evento = new Evento(new ReqResEventoEnDecoder());
   evento.push(
+    // Credentialed-CORS preflight for auth-bridge endpoints. Must register
+    // BEFORE the wildcard cors-preflight (which returns ACAO: * — fatal for
+    // credentialed requests).
+    authBridgePreflight,
     {
       hash: "cors-preflight",
       validate: (ctx: ValidateTriggerCtx<Request, unknown, unknown>) => {
@@ -40,6 +45,8 @@ export const vibesReqResEvento = Lazy(() => {
     cidAsset,
     filesAsset,
     putAsset,
+    authSession,
+    authLogout,
     servEntryPoint,
     {
       type: EventoType.WildCard,

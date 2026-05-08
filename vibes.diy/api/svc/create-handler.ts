@@ -16,6 +16,7 @@ import { SuperThis } from "@fireproof/core-types-base";
 import { ensureStorage } from "@vibes.diy/api-pkg";
 import { createS3Peer } from "./peers/s3.js";
 import { createAssetGrantSigner } from "./asset-grant.js";
+import { createAssetSessionSigner } from "./asset-session.js";
 
 export type BindPromise<T> = (promise: Promise<T>) => Promise<T>;
 
@@ -224,6 +225,11 @@ export async function createAppContext<T extends VibesSqlite>(
     throw rAssetGrantSigner.Err();
   }
 
+  const rAssetSessionSigner = await createAssetSessionSigner({ sthis, secret: envVals.CLOUD_SESSION_TOKEN_SECRET });
+  if (rAssetSessionSigner.isErr()) {
+    throw rAssetSessionSigner.Err();
+  }
+
   const vibesCtx = {
     sthis,
     logger: params.logger ?? ensureLogger(sthis, "VibesApiSQLCtx"),
@@ -260,6 +266,7 @@ export async function createAppContext<T extends VibesSqlite>(
         )
       : ensureStorage({ peerTimeout: params.storageSystems.peerTimeout }, createSQLPeer(params.storageSystems.sql)),
     assetGrantSigner: rAssetGrantSigner.Ok(),
+    assetSessionSigner: rAssetSessionSigner.Ok(),
 
     llmRequest: defaultLLMRequest(params.llmRequest, {
       url: envVals.LLM_BACKEND_URL,

@@ -96,6 +96,30 @@ function fileUrl(
   return `${ctx.svc.protocol}://${app.appSlug}--${app.userSlug}.${ctx.svc.hostnameBase.replace(/^\./, "")}${port}/_files/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}?v=${encodeURIComponent(uploadId)}`;
 }
 
+// Mint an asset-session cookie for a test user by hitting the bridge
+// endpoint /_auth/session with the user's Bearer. Returns the Cookie
+// header value the test will attach to subsequent /_files requests.
+async function mintAssetCookie(
+  ctx: {
+    appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>["appCtx"];
+    svc: { hostnameBase: string; protocol: string; port?: string };
+  },
+  bearer: string
+): Promise<string> {
+  const port = ctx.svc.port && ctx.svc.port !== "80" && ctx.svc.port !== "443" ? `:${ctx.svc.port}` : "";
+  const url = `${ctx.svc.protocol}://assets.${ctx.svc.hostnameBase.replace(/^\./, "")}${port}/_auth/session`;
+  const res = await processRequest(
+    ctx.appCtx,
+    new Request(url, { method: "POST", headers: { Authorization: `Bearer ${bearer}` } })
+  );
+  if (res.status !== 200) throw new Error(`mintAssetCookie failed: ${res.status} ${await res.text()}`);
+  const setCookie = res.headers.get("Set-Cookie");
+  if (!setCookie) throw new Error("mintAssetCookie: no Set-Cookie on response");
+  // Set-Cookie value is `name=value; flags`; the Cookie header sent back is just `name=value`.
+  const semi = setCookie.indexOf(";");
+  return semi > 0 ? setCookie.slice(0, semi) : setCookie;
+}
+
 describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
   let appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
   let owner: TestApp;
@@ -221,7 +245,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
   });
 
   describe("private app, default db", () => {
-    it("owner reads with bearer succeed", async () => {
+    it("owner reads with cookie succeed", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
         { userSlug: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
@@ -245,10 +269,8 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
         "secret",
         seeded.uploadId
       );
-      const res = await processRequest(
-        appCtx.appCtx,
-        new Request(url, { method: "GET", headers: { Authorization: `Bearer ${owner.userToken}` } })
-      );
+      const cookie = await mintAssetCookie({ appCtx: appCtx.appCtx, svc }, owner.userToken);
+      const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET", headers: { Cookie: cookie } }));
       expect(res.status).toBe(200);
       expect(res.headers.get("Cache-Control")).toContain("private");
       // CORS Access-Control-Allow-Origin is set globally by the send
@@ -284,7 +306,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       expect(res.status).toBe(401);
     });
 
-    it("stranger with bearer (no access invite) returns 403", async () => {
+    it("stranger with cookie (no access invite) returns 403", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
         { userSlug: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
@@ -308,14 +330,12 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
         "confidential",
         seeded.uploadId
       );
-      const res = await processRequest(
-        appCtx.appCtx,
-        new Request(url, { method: "GET", headers: { Authorization: `Bearer ${stranger.userToken}` } })
-      );
+      const cookie = await mintAssetCookie({ appCtx: appCtx.appCtx, svc }, stranger.userToken);
+      const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET", headers: { Cookie: cookie } }));
       expect(res.status).toBe(403);
     });
 
-    it("viewer with bearer (auto-approved) returns 200", async () => {
+    it("viewer with cookie (auto-approved) returns 200", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
         { userSlug: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
@@ -339,10 +359,8 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
         "allowed",
         seeded.uploadId
       );
-      const res = await processRequest(
-        appCtx.appCtx,
-        new Request(url, { method: "GET", headers: { Authorization: `Bearer ${viewer.userToken}` } })
-      );
+      const cookie = await mintAssetCookie({ appCtx: appCtx.appCtx, svc }, viewer.userToken);
+      const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET", headers: { Cookie: cookie } }));
       expect(res.status).toBe(200);
       expect(await res.text()).toBe(seeded.bytes);
     });
