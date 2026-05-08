@@ -10,6 +10,7 @@ import {
   URI,
 } from "@adviser/cement";
 import { storeAndAuditAsset } from "./store-and-audit-asset.js";
+import { convertImageEvtToFileRef } from "./convert-image-evt.js";
 import { Scope, scopey } from "@adviser/scopey";
 import {
   InMsgBase,
@@ -409,40 +410,28 @@ async function appendBlockEvent({
   emitMode = "store",
   resChat,
 }: AppendBlockEventParams): Promise<Result<void>> {
-  if (isBlockImage(evt)) {
-    const imgEvt = evt as {
-      url?: string;
-      uploadId?: string;
-      cid?: string;
-      mimeType?: string;
-      size?: number;
-    };
-    if (imgEvt.url?.startsWith("data:") && resChat) {
-      // LLM-streamed base64 image. Store via the shared helper so the
-      // AssetUploads audit row is created and the doc carries the file
-      // ref shape that Stage C's URL minter resolves to a meta.url.
-      const match = imgEvt.url.match(/^data:([^;]+);base64,(.+)$/);
-      if (match) {
-        const mime = match[1];
-        const raw = Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0));
-        const rStored = await storeAndAuditAsset(vctx, {
-          bytes: raw,
-          userId: req._auth.verifiedAuth.claims.userId,
-          userSlug: resChat.userSlug,
-          appSlug: resChat.appSlug,
-          mimeType: mime,
-        });
-        if (rStored.isOk()) {
-          const stored = rStored.Ok();
-          delete imgEvt.url;
-          imgEvt.uploadId = stored.uploadId;
-          imgEvt.cid = stored.cid;
-          imgEvt.mimeType = stored.mimeType ?? mime;
-          imgEvt.size = stored.size;
-        } else {
-          vctx.logger.Error().Err(rStored).Msg("[block.image] storeAndAuditAsset failed");
-        }
-      }
+  let processedEvt: PromptAndBlockMsgs = evt;
+  if (isBlockImage(evt) && evt.url && resChat) {
+    // Persist `block.image` events that carry a `url` (data: from LLM
+    // streaming, or remote http(s): from server-side image-gen
+    // providers like Prodia) by routing the bytes through
+    // `storeAndAuditAsset`. This keeps the wire contract uniform: every
+    // persisted `block.image` carries `{uploadId, cid, mimeType, size}`
+    // with no `url`, so the bridge in `srv-sandbox.ts` can rely on the
+    // file-ref shape and Stage C mints the display URL.
+    const rConv = await convertImageEvtToFileRef(vctx, {
+      evt,
+      userId: req._auth.verifiedAuth.claims.userId,
+      userSlug: resChat.userSlug,
+      appSlug: resChat.appSlug,
+    });
+    if (rConv.isOk()) {
+      processedEvt = rConv.Ok();
+    } else {
+      // Degraded path: log and let the original event flow through. The
+      // bridge will drop it (no file-ref fields) but the section stream
+      // stays intact for the rest of the prompt.
+      vctx.logger.Error().Err(rConv).Msg("[block.image] convert failed");
     }
   }
   const now = new Date();
@@ -452,7 +441,7 @@ async function appendBlockEvent({
       chatId: req.chatId,
       promptId,
       blockSeq,
-      blocks: [evt],
+      blocks: [processedEvt],
       timestamp: now,
     },
     tid: req.outerTid,
@@ -473,7 +462,7 @@ async function appendBlockEvent({
         chatId: req.chatId,
         promptId,
         blockSeq,
-        blocks: [evt],
+        blocks: [processedEvt],
         created: now.toISOString(),
       })
     );

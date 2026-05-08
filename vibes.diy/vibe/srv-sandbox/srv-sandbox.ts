@@ -377,9 +377,8 @@ export function getImageFiles(stream: ReadableStream<unknown>): Promise<ImgGenFi
     if (isSectionEvent(msg)) {
       for (const block of msg.blocks) {
         if (isBlockImage(block)) {
-          const b = block as { uploadId?: string; cid?: string; mimeType?: string; size?: number };
-          if (b.uploadId && b.cid && b.mimeType && typeof b.size === "number") {
-            files.push({ uploadId: b.uploadId, cid: b.cid, mimeType: b.mimeType, size: b.size });
+          if (block.uploadId && block.cid && block.mimeType && typeof block.size === "number") {
+            files.push({ uploadId: block.uploadId, cid: block.cid, mimeType: block.mimeType, size: block.size });
           }
         }
         if (isPromptBlockEnd(block)) {
