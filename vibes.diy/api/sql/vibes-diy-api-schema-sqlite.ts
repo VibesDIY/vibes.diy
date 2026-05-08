@@ -20,6 +20,7 @@ export const sqlUserSlugBinding = sqliteTable(
     primaryKey({ columns: [table.userSlug, table.userId] }),
     // uniqueIndex("UserSlug_tenant").on(table.tenant),
     uniqueIndex("UserSlug_userSlug").on(table.userSlug),
+    index("UserSlug_userId_userSlug").on(table.userId, table.userSlug),
   ]
 );
 
@@ -40,7 +41,7 @@ export const sqlAppSlugBinding = sqliteTable(
   },
   (table) => [
     primaryKey({ columns: [table.appSlug, table.userSlug] }),
-    // uniqueIndex("AppSlug_ledger_idx").on(table.ledger)
+    index("AppSlug_userSlug_updated_appSlug").on(table.userSlug, table.updated, table.appSlug),
   ]
 );
 
