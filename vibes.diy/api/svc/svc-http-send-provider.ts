@@ -6,7 +6,10 @@ const defaultHttpHeaders = Lazy(() =>
   HttpHeader.from({
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS,PUT,DELETE",
-    "Access-Control-Allow-Headers": "Origin, Content-Type, Accept",
+    // X-Asset-Grant is the put-asset write auth — without it in
+    // Allow-Headers, browser preflight blocks cross-origin POST /assets
+    // (e.g. iframe at vibes.diy → cli-v2.vibesdiy.net).
+    "Access-Control-Allow-Headers": "Origin, Content-Type, Accept, X-Asset-Grant",
     "Access-Control-Max-Age": "86400",
   })
 );
