@@ -7,10 +7,10 @@ import {
   Option,
   EventoResult,
   URI,
-  exception2Result,
 } from "@adviser/cement";
 import { HttpResponseJsonType } from "@vibes.diy/api-types";
 import { VibesApiSQLCtx } from "../types.js";
+import { storeAndAuditAsset } from "./store-and-audit-asset.js";
 
 // HTTP `POST /assets` upload endpoint. Auth comes from the X-Asset-Grant
 // header (a short-lived signed JWT minted by the WS asset-upload-grant
@@ -94,33 +94,18 @@ export const putAsset: EventoHandler<Request, PutAssetValidated, unknown> = {
       return sendErr(ctx, 400, "request body required");
     }
 
-    const rEnsure = await exception2Result(() => vctx.storage.ensure(body));
-    if (rEnsure.isErr()) {
-      return sendErr(ctx, 500, `storage.ensure failed: ${rEnsure.Err().message}`);
+    const rStored = await storeAndAuditAsset(vctx, {
+      bytes: body,
+      userId: claims.userId,
+      userSlug: claims.userSlug,
+      appSlug: claims.appSlug,
+      mimeType: claims.mimeType,
+      uploadId: claims.jti,
+    });
+    if (rStored.isErr()) {
+      return sendErr(ctx, 500, rStored.Err().message);
     }
-    const results = rEnsure.Ok();
-    if (results.length === 0 || results[0].isErr()) {
-      return sendErr(ctx, 500, `storage.ensure failed: ${results[0]?.Err()?.message ?? "no result"}`);
-    }
-    const stored = results[0].Ok();
-
-    const uploadsTable = vctx.sql.tables.assetUploads;
-    const rInsert = await exception2Result(() =>
-      vctx.sql.db.insert(uploadsTable).values({
-        uploadId: claims.jti,
-        userId: claims.userId,
-        userSlug: claims.userSlug,
-        appSlug: claims.appSlug,
-        cid: stored.cid,
-        assetURI: stored.getURL,
-        size: stored.size,
-        mimeType: claims.mimeType ?? null,
-        created: new Date().toISOString(),
-      })
-    );
-    if (rInsert.isErr()) {
-      return sendErr(ctx, 500, `audit insert failed: ${rInsert.Err().message}`);
-    }
+    const stored = rStored.Ok();
 
     await ctx.send.send(ctx, {
       type: "http.Response.JSON",
@@ -128,9 +113,9 @@ export const putAsset: EventoHandler<Request, PutAssetValidated, unknown> = {
       json: {
         type: "vibes.diy.res-put-asset",
         cid: stored.cid,
-        getURL: stored.getURL,
+        getURL: stored.assetURI,
         size: stored.size,
-        uploadId: claims.jti,
+        uploadId: stored.uploadId,
       },
     } satisfies HttpResponseJsonType);
     return Result.Ok(EventoResult.Stop);

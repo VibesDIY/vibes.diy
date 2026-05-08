@@ -17,3 +17,4 @@ export * from "./intern/ensure-slug-binding.js";
 export * from "./intern/recovery.js";
 export * from "./asset-grant.js";
 export * from "./asset-session.js";
+export * from "./public/store-and-audit-asset.js";

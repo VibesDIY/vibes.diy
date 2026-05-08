@@ -3,7 +3,7 @@ import { assert, beforeAll, describe, expect, it } from "vitest";
 import { Result, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
-import { processRequest, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
+import { processRequest, storeAndAuditAsset, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { isResAssetUploadGrant, isResEnsureAppSlugOk, isResRequestAccessApproved } from "@vibes.diy/api-types";
 import { eq } from "drizzle-orm";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
@@ -63,9 +63,7 @@ describe("put-asset / asset-upload-grant end-to-end", { timeout: 30000 }, () => 
     strangerApi = strangerSetup.api;
     const rApp = await ownerApi.ensureAppSlug({
       mode: "dev",
-      fileSystem: [
-        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return <div/>; } App();` },
-      ],
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return <div/>; } App();` }],
     });
     const res = rApp.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
@@ -149,15 +147,45 @@ describe("put-asset / asset-upload-grant end-to-end", { timeout: 30000 }, () => 
     expect(res.status).toBe(401);
   });
 
+  it("storeAndAuditAsset (server-mints uploadId, image-gen path)", async () => {
+    // Direct call to the shared helper without a grant — exercises the
+    // server-side image-gen branch where uploadId is freshly minted by
+    // sthis.nextId. Audit row shape must match the put-asset row shape.
+    const bytes = new TextEncoder().encode("server-minted bytes");
+    const rStored = await storeAndAuditAsset(appCtx.vibesCtx, {
+      bytes,
+      userId: "test-user-id",
+      userSlug,
+      appSlug,
+      mimeType: "image/png",
+    });
+    if (rStored.isErr()) assert.fail(`helper failed: ${rStored.Err().message}`);
+    const stored = rStored.Ok();
+    expect(typeof stored.uploadId).toBe("string");
+    expect(stored.uploadId.length).toBeGreaterThan(0);
+    expect(stored.size).toBe(bytes.byteLength);
+    expect(stored.mimeType).toBe("image/png");
+
+    const t = appCtx.vibesCtx.sql.tables.assetUploads;
+    const rows = await appCtx.vibesCtx.sql.db.select().from(t).where(eq(t.uploadId, stored.uploadId));
+    expect(rows).toHaveLength(1);
+    const row = rows[0];
+    expect(row.cid).toBe(stored.cid);
+    expect(row.assetURI).toBe(stored.assetURI);
+    expect(row.userSlug).toBe(userSlug);
+    expect(row.appSlug).toBe(appSlug);
+    expect(row.userId).toBe("test-user-id");
+    expect(row.mimeType).toBe("image/png");
+    expect(row.size).toBe(bytes.byteLength);
+  });
+
   it("auto-approved editor (write access) can also mint a grant", async () => {
     const { ctx: editorCtx, wsPair: editorWsPair, sthis: editorSthis, deviceCA: editorCA } = await setupCtx();
     const ownerEditorSetup = await mkUser(editorSthis, editorCA, editorWsPair, 410);
     const editorSetup = await mkUser(editorSthis, editorCA, editorWsPair, 420);
     const rApp = await ownerEditorSetup.api.ensureAppSlug({
       mode: "dev",
-      fileSystem: [
-        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return <div/>; } App();` },
-      ],
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return <div/>; } App();` }],
     });
     const appRes = rApp.Ok();
     if (!isResEnsureAppSlugOk(appRes)) assert.fail("Failed to create app");
