@@ -4,7 +4,8 @@ import { useVibesDiy } from "../../vibes-diy-provider.js";
 // import { useClerk } from "@clerk/react";
 import { processStream, BuildURI, URI, exception2Result } from "@adviser/cement";
 import { fireproof } from "@fireproof/use-fireproof";
-import type { VibeDocument, ViewType } from "@vibes.diy/prompts";
+import type { VibeDocument, ViewType, VibesTheme } from "@vibes.diy/prompts";
+import { vibesThemes, getThemeBySlug } from "@vibes.diy/prompts";
 import {
   isPromptBlockBegin,
   isPromptBlockEnd,
@@ -20,6 +21,7 @@ import AppLayout from "../../components/AppLayout.js";
 import { BrutalistCard } from "@vibes.diy/base";
 import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
+import ThemePickerModal from "../../components/ThemePickerModal.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
@@ -237,6 +239,23 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
+  const [selectedTheme, setSelectedTheme] = useState<VibesTheme | null>(null);
+  const [themeModalOpen, setThemeModalOpen] = useState(false);
+
+  const handleThemeSelect = useCallback(
+    (theme: VibesTheme) => {
+      setSelectedTheme(theme);
+      setThemeModalOpen(false);
+      // Persist on backend if the theme is in the catalog. Imported (custom)
+      // themes apply session-only — they're not in the catalog so the backend
+      // would drop them on validation.
+      const isCatalog = !!getThemeBySlug(theme.slug);
+      if (isCatalog && userSlug !== "preparing" && appSlug !== "session") {
+        void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, theme: theme.slug });
+      }
+    },
+    [vibeDiyApi, userSlug, appSlug]
+  );
   // Hold latest fsId in a ref so the prompt-firing effect can preserve it in
   // the navigation URL without retriggering on every autosave fsId change
   // (which would re-fire the same prompt — classic loop).
@@ -355,6 +374,10 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           const s = rS.Ok().settings.entry.settings;
           if (s.title) dispatch({ type: "setTitle", title: s.title });
           if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
+          if (s.theme) {
+            const t = getThemeBySlug(s.theme);
+            if (t) setSelectedTheme(t);
+          }
         }
       });
       void processStream(rChat.Ok().sectionStream, (msg) => {
@@ -669,6 +692,8 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
               promptProcessing={promptState.running}
               hasCode={promptState.hasCode}
               currentMsgCount={promptState.current?.msgs.length ?? 0}
+              selectedTheme={selectedTheme}
+              onThemeButtonClick={() => setThemeModalOpen(true)}
             />
           </BrutalistCard>
         }
@@ -687,6 +712,13 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           onClose={() => setContextMenu(null)}
         />
       )}
+      <ThemePickerModal
+        open={themeModalOpen}
+        onClose={() => setThemeModalOpen(false)}
+        onSelect={handleThemeSelect}
+        selectedSlug={selectedTheme?.slug}
+        themes={vibesThemes}
+      />
     </>
   );
 }

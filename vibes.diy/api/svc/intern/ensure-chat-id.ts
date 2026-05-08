@@ -8,6 +8,7 @@ import {
   ActiveEntry,
   ActiveIconDescription,
   ActiveSkills,
+  ActiveTheme,
   ActiveTitle,
   EvtAppSetting,
   EvtIconGen,
@@ -99,12 +100,14 @@ export async function ensureChatId(
       let preferredPairs: { title: string; slug: string }[] | undefined;
       let preAllocSkills: string[] | undefined;
       let preAllocIconDescription: string | undefined;
+      let preAllocTheme: string | undefined;
       if (req.prompt && !req.appSlug) {
         const rPre = await preAllocate(ctx, { prompt: req.prompt });
         if (rPre.isOk()) {
           preferredPairs = rPre.Ok().pairs;
           preAllocSkills = rPre.Ok().skills;
           preAllocIconDescription = rPre.Ok().iconDescription;
+          preAllocTheme = rPre.Ok().theme;
         } else {
           console.warn("preAllocate failed; falling through to random-words:", rPre.Err());
         }
@@ -125,7 +128,7 @@ export async function ensureChatId(
         created: new Date().toISOString(),
       });
 
-      if (chosenTitle || preAllocSkills || preAllocIconDescription) {
+      if (chosenTitle || preAllocSkills || preAllocIconDescription || preAllocTheme) {
         await writePreAllocActiveEntries(ctx, {
           userId,
           userSlug,
@@ -133,6 +136,7 @@ export async function ensureChatId(
           title: chosenTitle,
           skills: preAllocSkills,
           iconDescription: preAllocIconDescription,
+          theme: preAllocTheme,
         });
       }
     }
@@ -149,7 +153,16 @@ async function writePreAllocActiveEntries(
     title,
     skills,
     iconDescription,
-  }: { userId: string; userSlug: string; appSlug: string; title?: string; skills?: string[]; iconDescription?: string }
+    theme,
+  }: {
+    userId: string;
+    userSlug: string;
+    appSlug: string;
+    title?: string;
+    skills?: string[];
+    iconDescription?: string;
+    theme?: string;
+  }
 ): Promise<void> {
   const now = new Date().toISOString();
   const entries: ActiveEntry[] = [];
@@ -158,6 +171,9 @@ async function writePreAllocActiveEntries(
   }
   if (skills && skills.length > 0) {
     entries.push({ type: "active.skills", skills } satisfies ActiveSkills);
+  }
+  if (theme) {
+    entries.push({ type: "active.theme", theme } satisfies ActiveTheme);
   }
   if (iconDescription) {
     entries.push({ type: "active.icon-description", description: iconDescription } satisfies ActiveIconDescription);

@@ -7,6 +7,7 @@ import {
   ActiveEnv,
   ActiveModelSetting,
   ActiveSkills,
+  ActiveTheme,
   ActiveTitle,
   AppSettings,
   EnablePublicAccess,
@@ -21,10 +22,12 @@ import {
   isActiveModelSettingChat,
   isActiveModelSettingImg,
   isActiveSkills,
+  isActiveTheme,
   isReqEnsureAppSettingsIconDescription,
   isReqEnsureAppSettingsIconRegen,
   isReqEnsureAppSettingsImg,
   isReqEnsureAppSettingsSkills,
+  isReqEnsureAppSettingsTheme,
   isActiveTitle,
   isEnablePublicAccess,
   isEnableRequest,
@@ -98,6 +101,9 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
       case isActiveSkills(e):
         result.entry.settings.skills = e.skills;
         break;
+      case isActiveTheme(e):
+        result.entry.settings.theme = e.theme;
+        break;
       case isActiveIconDescription(e):
         result.entry.settings.iconDescription = e.description;
         break;
@@ -140,10 +146,7 @@ async function withModelDefaults(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings
   return res;
 }
 
-async function postIconGen(
-  vctx: VibesApiSQLCtx,
-  args: { userSlug: string; appSlug: string; force: boolean }
-): Promise<void> {
+async function postIconGen(vctx: VibesApiSQLCtx, args: { userSlug: string; appSlug: string; force: boolean }): Promise<void> {
   await vctx.postQueue({
     payload: {
       type: "vibes.diy.evt-icon-gen",
@@ -364,6 +367,19 @@ export async function ensureAppSettings(
             type: "active.skills",
             skills: req.skills,
           }) satisfies ActiveSkills
+      );
+      break;
+    case isReqEnsureAppSettingsTheme(req):
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
+        settings,
+        isActiveTheme,
+        () =>
+          ({
+            type: "active.theme",
+            theme: req.theme,
+          }) satisfies ActiveTheme
       );
       break;
     case isReqEnsureAppSettingsApp(req):

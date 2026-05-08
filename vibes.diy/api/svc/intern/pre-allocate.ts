@@ -2,7 +2,13 @@ import { Result, exception2Result } from "@adviser/cement";
 import { callAI } from "call-ai";
 import { type } from "arktype";
 import { ensureLogger } from "@fireproof/core-runtime";
-import { getLlmCatalogNames, makePreAllocUserMessage, preAllocParsed, preAllocSchema } from "@vibes.diy/prompts";
+import {
+  getLlmCatalogNames,
+  getThemeCatalogNames,
+  makePreAllocUserMessage,
+  preAllocParsed,
+  preAllocSchema,
+} from "@vibes.diy/prompts";
 import { VibesApiSQLCtx } from "../types.js";
 import { loadModels } from "../public/list-models.js";
 
@@ -10,6 +16,7 @@ export interface PreAllocateResult {
   skills: string[];
   pairs: { title: string; slug: string }[];
   iconDescription: string;
+  theme?: string;
 }
 
 const PRE_ALLOC_TIMEOUT_MS = 8000;
@@ -78,10 +85,21 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
       ensureLogger(vctx.sthis, "preAllocate").Warn().Any({ droppedSkills, validSkills }).Msg("pre-alloc skills missed catalog");
     }
 
+    const themeNames = getThemeCatalogNames();
+    let validatedTheme: string | undefined;
+    if (validated.theme) {
+      if (themeNames.has(validated.theme)) {
+        validatedTheme = validated.theme;
+      } else {
+        ensureLogger(vctx.sthis, "preAllocate").Warn().Any({ droppedTheme: validated.theme }).Msg("pre-alloc theme missed catalog");
+      }
+    }
+
     return Result.Ok({
       skills: validSkills,
       pairs: validated.pairs.slice(0, 3),
       iconDescription: validated.iconDescription,
+      theme: validatedTheme,
     });
   });
 }
