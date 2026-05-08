@@ -18,7 +18,11 @@
 export type Fetcher = (input: string) => Promise<Response>;
 
 export interface PublicFileMeta {
-  readonly uploadId?: string;
+  // uploadId is the doc-side cache key — required on every persisted
+  // _files entry. Stage B's uploadFiles helper guarantees presence by
+  // walking _files before put-doc; legacy data from before Stage B
+  // doesn't exist (Stage B is the only writer of this shape).
+  readonly uploadId: string;
   readonly type: string;
   readonly size: number;
   readonly lastModified?: number;

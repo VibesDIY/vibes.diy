@@ -32,13 +32,18 @@ export function routeDecision(req: RouteInput): Route {
   // App subdomain: hostname is `<app>--<user>.<base>`.
   const isAppSubdomain = hostname.endsWith(hostnameBase) && hostname.slice(0, -hostnameBase.length).includes("--");
 
+  // Asset host: hostname is `assets.<base>`. Singleton per env. Carries
+  // the /_files/<u>/<a>/<db>/<doc>/<key> read endpoint and the
+  // /_auth/session + /_auth/logout cookie-bridge endpoints.
+  const isAssetsHost = hostname.endsWith(hostnameBase) && hostname.slice(0, -hostnameBase.length).replace(/\.$/, "") === "assets";
+
   // /assets/cid is the read-side handler (any method, including HEAD).
   // POST /assets (and OPTIONS preflight) is the put-asset write endpoint.
   // Both live at host root because /api/* goes to the DO.
   const isAssetsCid = pathname.startsWith("/assets/cid");
   const isPutAsset = pathname === "/assets" && (method === "POST" || method === "OPTIONS");
 
-  if (isAppSubdomain || isAssetsCid || isPutAsset) {
+  if (isAppSubdomain || isAssetsHost || isAssetsCid || isPutAsset) {
     return "cf-serve";
   }
 
