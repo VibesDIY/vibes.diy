@@ -10,6 +10,37 @@ interface Category {
 
 const categories: Category[] = [
   {
+    label: "Creative",
+    prompts: [
+      "Pigment studio — full-screen painting with only earth-tone pigments and one gloriously oversized brush.",
+      "Ocean palette — pick maritime colors and AI gives them poetic names, or type a name and AI finds the hue.",
+      "ASCII cam — live camera feed rendered as scrolling characters in real time.",
+      "Three.js still life — navigate around Cézanne's Basket of Apples in explorable 3D.",
+      "Pixel art editor with a 16×16 grid, custom palette, and export to PNG.",
+      "Gradient lab — pick two colors, see every CSS gradient variant, copy the code.",
+      "Generative art machine — random geometric compositions you can tweak and save as SVG.",
+      "Emoji mosaic — drop in a photo and watch it rebuild itself entirely out of emoji.",
+      "Font tester — type a phrase and preview it across 20 Google Fonts side by side.",
+      "Mandala maker with radial symmetry — draw in one slice and it mirrors everywhere.",
+      "Sandwich artist — describe your dream sandwich in words and AI generates a mouthwatering image of it.",
+    ],
+  },
+  {
+    label: "Productive",
+    prompts: [
+      "Brain dump — type anything, AI parses it into tagged task items and sorts them into your lists.",
+      "Pomodoro dashboard with multiple concurrent timers, break reminders, and session stats that survive refresh.",
+      "Schedule smasher — paste two people's availability, AI instantly spots the best overlap.",
+      "Compound interest visualizer with student loan payoff curves and retirement countdown.",
+      "Habit streak tracker — daily check-ins, flame streaks, and a gentle nudge when you slip.",
+      "Kanban board with buttery drag-and-drop across To Do, Doing, and Done columns.",
+      "Meeting notes app — bullet-point capture during the call, AI summary at the end.",
+      "Goal tracker with milestones, a visual progress bar, and celebratory animations on completion.",
+      "Bookmark vault — save links, auto-tag by topic, search everything instantly.",
+      "Daily journal with a mood picker and AI-generated reflection prompts to end your day.",
+    ],
+  },
+  {
     label: "Music",
     prompts: [
       "Drum machine with tempo slider, 8 saveable patterns, and a step sequencer grid that lights up as it plays.",
@@ -37,37 +68,6 @@ const categories: Category[] = [
       "Speed typer — random sentences fly in, type them out, and watch your WPM climb.",
       "Rock-paper-scissors showdown against AI with animated throws and a win-streak counter.",
       "2048 puzzle — slide numbered tiles, merge them, and chase the elusive 2048 tile.",
-    ],
-  },
-  {
-    label: "Productive",
-    prompts: [
-      "Brain dump — type anything, AI parses it into tagged task items and sorts them into your lists.",
-      "Pomodoro dashboard with multiple concurrent timers, break reminders, and session stats that survive refresh.",
-      "Schedule smasher — paste two people's availability, AI instantly spots the best overlap.",
-      "Compound interest visualizer with student loan payoff curves and retirement countdown.",
-      "Habit streak tracker — daily check-ins, flame streaks, and a gentle nudge when you slip.",
-      "Kanban board with buttery drag-and-drop across To Do, Doing, and Done columns.",
-      "Meeting notes app — bullet-point capture during the call, AI summary at the end.",
-      "Goal tracker with milestones, a visual progress bar, and celebratory animations on completion.",
-      "Bookmark vault — save links, auto-tag by topic, search everything instantly.",
-      "Daily journal with a mood picker and AI-generated reflection prompts to end your day.",
-    ],
-  },
-  {
-    label: "Creative",
-    prompts: [
-      "Pigment studio — full-screen painting with only earth-tone pigments and one gloriously oversized brush.",
-      "Ocean palette — pick maritime colors and AI gives them poetic names, or type a name and AI finds the hue.",
-      "ASCII cam — live camera feed rendered as scrolling characters in real time.",
-      "Three.js still life — navigate around Cézanne's Basket of Apples in explorable 3D.",
-      "Pixel art editor with a 16×16 grid, custom palette, and export to PNG.",
-      "Gradient lab — pick two colors, see every CSS gradient variant, copy the code.",
-      "Generative art machine — random geometric compositions you can tweak and save as SVG.",
-      "Emoji mosaic — drop in a photo and watch it rebuild itself entirely out of emoji.",
-      "Font tester — type a phrase and preview it across 20 Google Fonts side by side.",
-      "Mandala maker with radial symmetry — draw in one slice and it mirrors everywhere.",
-      "Sandwich artist — describe your dream sandwich in words and AI generates a mouthwatering image of it.",
     ],
   },
 ];
