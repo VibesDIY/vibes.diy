@@ -110,13 +110,14 @@ describe("prompt builder (real implementation)", () => {
     const importBlock = generateImportStatements(orderedLlms);
     const lines = importBlock.trim().split("\n").filter(Boolean);
 
-    // One import per JSON config
-    expect(lines.length).toBe(orderedLlms.length);
+    // One import per importable config — skills like web-audio (browser
+    // built-in) intentionally omit importModule/importName and are skipped.
+    const modulesSorted = [...orderedLlms]
+      .filter((l): l is LlmCatalogEntry & { importModule: string; importName: string } => Boolean(l.importModule && l.importName))
+      .sort((a, b) => a.importModule.localeCompare(b.importModule));
+    expect(lines.length).toBe(modulesSorted.length);
 
     // Deterministic sort: by importModule ascending
-    const modulesSorted = [...orderedLlms]
-      .filter((l) => l.importModule && l.importName)
-      .sort((a, b) => a.importModule.localeCompare(b.importModule));
     const expectedOrder = modulesSorted.map((l) => l.importModule);
     const actualOrder = lines.map((l) => {
       const m = l.match(/from "([^"]+)"$/);
@@ -128,7 +129,7 @@ describe("prompt builder (real implementation)", () => {
     const withDup = [...orderedLlms, orderedLlms[0]];
     const importBlockWithDup = generateImportStatements(withDup);
     const linesWithDup = importBlockWithDup.trim().split("\n").filter(Boolean);
-    expect(linesWithDup.length).toBe(orderedLlms.length);
+    expect(linesWithDup.length).toBe(modulesSorted.length);
 
     // Each line is an ES import line
     for (const line of lines) {
@@ -279,5 +280,27 @@ describe("prompt builder (real implementation)", () => {
     });
     expect(result.systemPrompt).toMatch(/include a Demo Data button/i);
     expect(result.systemPrompt).not.toMatch(/vivid description of the app's purpose/i);
+  });
+
+  // Regression: web-audio is a browser built-in, not an importable npm package.
+  // The prompt builder must never emit an `import ... from "web-audio"` line
+  // and the web-audio docs must explicitly steer the model away from inventing
+  // one. See https://github.com/VibesDIY/vibes.diy/issues/1598.
+  it("makeBaseSystemPrompt: web-audio is docs-only — no phantom import line", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      ...opts,
+      stylePrompt: undefined,
+      userPrompt: undefined,
+      skills: ["web-audio"],
+    });
+    // The web-audio docs are concatenated into the prompt under the
+    // "Web Audio API"-labeled tags, but no import statement is emitted.
+    expect(result.systemPrompt).toContain("<Web Audio API-docs>");
+    // No emitted import statement — match the line shape, not any quoted
+    // "web-audio" text (which the anti-import directive itself contains).
+    expect(result.systemPrompt).not.toMatch(/^\s*import\s.+from\s+["']web-audio["']/m);
+    // Anti-import directive from the docs round-trips through the builder.
+    expect(result.systemPrompt).toContain('Do not write `import ... from "web-audio"`');
+    expect(result.systemPrompt).toContain("window.AudioContext");
   });
 });

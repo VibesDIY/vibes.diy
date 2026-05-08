@@ -143,9 +143,9 @@ export interface SystemPromptResult {
 export function generateImportStatements(llms: LlmCatalogEntry[]) {
   const seen = new Set<string>();
   return llms
+    .filter((l): l is LlmCatalogEntry & { importModule: string; importName: string } => Boolean(l.importModule && l.importName))
     .slice()
     .sort((a, b) => a.importModule.localeCompare(b.importModule))
-    .filter((l) => l.importModule && l.importName)
     .filter((l) => {
       const key = `${l.importModule}:${l.importName}`;
       if (seen.has(key)) return false;

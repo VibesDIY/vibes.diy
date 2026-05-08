@@ -2,6 +2,10 @@
 
 Authoritative source: Issue #228 research threads — comments 3192681700, 3192696052, 3192806626.
 
+> **Do not write `import ... from "web-audio"` (or any other audio-package import).**
+> Web Audio is a browser built-in. Use `window.AudioContext` (with the
+> `window.webkitAudioContext` fallback) directly, gated on a user gesture as shown below.
+
 ## 1) Fundamentals and Core Nodes
 
 - AudioContext — master interface and clock (`audioCtx.currentTime`). Resume on a user gesture.

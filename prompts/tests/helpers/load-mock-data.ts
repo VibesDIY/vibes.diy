@@ -76,7 +76,12 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
         ok: true,
         text: () =>
           Promise.resolve(
-            "<webAudio-docs>\n# Web Audio Documentation\nReal Web Audio docs content from pkg/llms/web-audio.md\n</webAudio-docs>"
+            // Mirrors the real anti-import directive from pkg/llms/web-audio.md
+            // so regression tests around #1598 see the steering language.
+            "<webAudio-docs>\n# Web Audio Documentation\n" +
+              '> Do not write `import ... from "web-audio"`. Web Audio is a browser built-in. ' +
+              "Use `window.AudioContext` (with the `window.webkitAudioContext` fallback) directly.\n" +
+              "</webAudio-docs>"
           ),
       } as Response);
     }
