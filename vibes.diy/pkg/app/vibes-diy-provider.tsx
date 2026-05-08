@@ -10,6 +10,8 @@ import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { toast } from "react-hot-toast";
 import { RecentVibesProvider } from "./contexts/RecentVibesContext.js";
+import { ensureAssetSession, tearDownAssetSession } from "./lib/asset-session.js";
+import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 // import { PkgRepos } from "@vibes.diy/api-types";
 
 export interface VibesDiyWebVars {
@@ -42,6 +44,7 @@ export interface VibesDiyCtx {
   vibeDiyApi: VibesDiyApiIface;
   webVars: VibesDiyWebVars;
   srvVibeSandbox: vibesDiySrvSandbox;
+  getToken?: () => Promise<Result<DashAuthType>>;
 }
 
 const realCtx: VibesDiyCtx = {
@@ -130,60 +133,76 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
     const shardKey = vibeMatch ? `${vibeMatch[1]}--${vibeMatch[2]}` : undefined;
     let clerkReady: undefined | Future<void> = new Future();
+    const hostnameBase = realCtx.webVars.env.VIBES_SVC_HOSTNAME_BASE;
+    const getToken = async (): Promise<Result<DashAuthType>> => {
+      // Fast path: a cached JWT from a prior page load that still has more
+      // than EXP_MARGIN_SEC seconds remaining. Lets the first WS message
+      // fire without waiting for Clerk's SDK to finish loading.
+      // If Clerk is already loaded and reports signed-out, skip the cache
+      // — covers the narrow window between sign-out and the listener
+      // firing the localStorage wipe.
+      const cached = readCachedClerkToken();
+      const nowSec = Math.floor(Date.now() / 1000);
+      const clerkSaysSignedOut = clerk.loaded && !clerk.isSignedIn;
+      if (!clerkSaysSignedOut && cached && cached.exp > nowSec + EXP_MARGIN_SEC) {
+        return Result.Ok({ type: "clerk", token: cached.token });
+      }
+      if (clerkReady) {
+        await clerkReady.asPromise();
+        clerkReady = undefined;
+      }
+      if (!clerk.isSignedIn) {
+        // Belt-and-suspenders: if we got here via the slow path with the
+        // user signed out, make sure no stale token survives in localStorage.
+        clearCachedClerkToken();
+        return Result.Err("not signed in");
+      }
+      const ot = await clerk.session?.getToken({ template: "with-email" });
+      if (!ot) {
+        return Result.Err(`no token`);
+      }
+      writeCachedClerkToken(ot);
+      return Result.Ok({
+        type: "clerk",
+        token: ot,
+      });
+    };
     clerk.addListener(() => {
       if (clerk.loaded) {
         // console.log("clerk-evt", clerk.loaded, clerk.isSignedIn)
         clerkReady?.resolve(undefined);
-        // Wipe the cached JWT on sign-out so the next getToken() falls through
-        // to the live Clerk session (which is now empty) instead of returning
-        // a still-unexpired-but-stale-from-auth-perspective token. Without
-        // this, /vibe/... routes keep showing the user as signed-in to the
-        // API for the remaining JWT lifetime even after Clerk's UI says
-        // signed-out.
         if (!clerk.isSignedIn) {
+          // Wipe the cached JWT on sign-out so the next getToken() falls through
+          // to the live Clerk session (which is now empty) instead of returning
+          // a still-unexpired-but-stale-from-auth-perspective token. Without
+          // this, /vibe/... routes keep showing the user as signed-in to the
+          // API for the remaining JWT lifetime even after Clerk's UI says
+          // signed-out.
           clearCachedClerkToken();
+          // Stage C: drop the asset-host session cookie too. Best-effort
+          // (network blip → cookie expires on its own per Max-Age).
+          if (hostnameBase) {
+            void tearDownAssetSession({ hostnameBase });
+          }
+        } else if (hostnameBase) {
+          // Stage C: prime/refresh the asset-host session cookie. Login OR
+          // silent token rotation both fire this listener; ensureAssetSession
+          // is idempotent + cached so redundant calls are no-ops. By the
+          // time the iframe boots and the srv-sandbox bridge gate runs,
+          // the cookie's already in the jar.
+          void ensureAssetSession({ getToken, hostnameBase });
         }
       }
     });
+    realCtx.getToken = getToken;
     return new VibesDiyApi({
       apiUrl,
       shardKey,
-      getToken: async () => {
-        // Fast path: a cached JWT from a prior page load that still has more
-        // than EXP_MARGIN_SEC seconds remaining. Lets the first WS message
-        // fire without waiting for Clerk's SDK to finish loading.
-        // If Clerk is already loaded and reports signed-out, skip the cache
-        // — covers the narrow window between sign-out and the listener
-        // firing the localStorage wipe.
-        const cached = readCachedClerkToken();
-        const nowSec = Math.floor(Date.now() / 1000);
-        const clerkSaysSignedOut = clerk.loaded && !clerk.isSignedIn;
-        if (!clerkSaysSignedOut && cached && cached.exp > nowSec + EXP_MARGIN_SEC) {
-          return Result.Ok({ type: "clerk", token: cached.token });
-        }
-        if (clerkReady) {
-          await clerkReady.asPromise();
-          clerkReady = undefined;
-        }
-        if (!clerk.isSignedIn) {
-          // Belt-and-suspenders: if we got here via the slow path with the
-          // user signed out, make sure no stale token survives in localStorage.
-          clearCachedClerkToken();
-          return Result.Err("not signed in");
-        }
-        const ot = await clerk.session?.getToken({ template: "with-email" });
-        if (!ot) {
-          return Result.Err(`no token`);
-        }
-        writeCachedClerkToken(ot);
-        return Result.Ok({
-          type: "clerk",
-          token: ot,
-        });
-      },
+      getToken,
     });
   });
 
+  const sandboxHostnameBase = realCtx.webVars.env.VIBES_SVC_HOSTNAME_BASE;
   realCtx.srvVibeSandbox = VibesDiySrvSandbox({
     errorLogger: (r) => {
       let txt = "unknown error";
@@ -201,6 +220,18 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     // dashApi: realCtx.dashApi as ReturnType<typeof clerkDashApi>,
     vibeDiyApi: realCtx.vibeDiyApi,
     eventListeners: globalThis.window,
+    // Stage C: bridge the asset-host cookie before the iframe gets ack.
+    // Reuses the same module-level cache as the Clerk listener — if login
+    // already primed the session, this resolves instantly.
+    ...(sandboxHostnameBase
+      ? {
+          ensureAssetSession: async () => {
+            const fn = realCtx.getToken;
+            if (!fn) return;
+            await ensureAssetSession({ getToken: fn, hostnameBase: sandboxHostnameBase });
+          },
+        }
+      : {}),
   });
 
   return (

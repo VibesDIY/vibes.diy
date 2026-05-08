@@ -102,6 +102,13 @@ interface VibesDiySrvSandboxArgs {
   // Optional injected fetcher — defaults to globalThis.fetch. Tests pass
   // a fake here to avoid mocking globals.
   fetch?: typeof fetch;
+  // Stage C: hook the asset-host cookie bridge into the iframe boot
+  // handshake. Called BEFORE we post vibe.evt.runtime.ack — the iframe
+  // gates every RPC on that ack, so any meta.url the iframe ever sees
+  // is already post-cookie. Idempotent + cached at the module level
+  // (see pkg/app/lib/asset-session.ts), so redundant calls are no-ops.
+  // Optional: tests omit it; production binds it via the provider.
+  ensureAssetSession?: () => Promise<void>;
 }
 
 interface ShareableDBInfo {
@@ -780,7 +787,7 @@ export class vibesDiySrvSandbox implements Disposable {
   // loading) and the preview only updates on the next code.end.
   private pendingSource: string | undefined;
 
-  readonly handleMessage = (event: MessageEvent): void => {
+  readonly handleMessage = async (event: MessageEvent): Promise<void> => {
     // vibe.* prefix filters out Clerk auth / analytics iframes that postMessage first.
     const isVibeMsg = event.source && typeof event.data?.type === "string" && event.data.type.startsWith("vibe.");
     // runtime.ready signals the iframe just (re-)booted with the hot-swap listener
@@ -796,6 +803,19 @@ export class vibesDiySrvSandbox implements Disposable {
         replaced: prev !== undefined && prev !== event.source,
         hasPending: this.pendingSource !== undefined,
       });
+      // Stage C: bridge the asset-host session cookie BEFORE acking the
+      // iframe. The iframe gates every RPC on this ack, so any meta.url
+      // the iframe ever sees comes back post-cookie. No race window for
+      // <img> requests. Bridge failures (signed-out user, network blip)
+      // still proceed to ack — public-readable vibes keep working;
+      // private vibes show broken-image, which is correct.
+      if (this.args.ensureAssetSession) {
+        try {
+          await this.args.ensureAssetSession();
+        } catch (e) {
+          console.warn("[stage-c] ensureAssetSession failed before runtime.ack", e);
+        }
+      }
       // Acknowledge so the iframe can stop its retry loop. The iframe re-posts
       // runtime.ready until it sees this ack, defeating the race where a
       // cached-assets iframe boots before the parent's React provider mounts.
