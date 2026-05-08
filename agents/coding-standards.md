@@ -24,9 +24,13 @@ Use dots (`.stable-entry.`) not `@` signs (`@stable-entry@`) for query parameter
 
 Never modify existing entries in setup logs or similar chronological docs — only append new information. Logs are a historical record; editing past entries destroys the timeline.
 
-## Say command timing
+## Say command timing & style
 
 Only use `echo 'message' | say` after a waiting period completes or when a full work epic finishes — never at the beginning of a job or right after kicking something off. The point is to call the human back when something they're waiting on is done, not to announce the start of work.
+
+**Style: every `say` must be funny and different.** Open with a playful nickname or vocative to grab attention — *captain*, *chief*, *boss*, *king*, *wizard*, *navigator*, *commodore*, *shipmate*, *legend*, *artisan*, *maestro*, *hot stuff*, *space cadet*, *deploy gremlin*, *king of the woods* — and never reuse the same opener twice. The body should be short, punchy, and hint at what's done in a goofy or unexpected way ("the bytes have crossed the rubicon," "your photo just round-tripped through the wormhole," "stage B has clocked in for its shift," "the regression vibe is no longer a hostage"). If the deploy or run failed, the `say` should be distinct *and* deflated — but still in character ("uh oh, captain, the rocket fizzled"). The voice cue exists because the user is doing something else; the goal is to make the alert worth coming back for.
+
+Forbidden patterns: bare `'<thing> deployed' | say`, `'<thing> done' | say`, anything that sounds like a CI bot. If you'd be embarrassed to read it out loud, rewrite.
 
 ## Review commits before pushing
 

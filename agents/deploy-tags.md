@@ -60,6 +60,13 @@ The `pkg` tags publish the CLI (`vibes-diy` / `use-vibes` npm packages) and rela
 - Word it as past tense (`deployed`, `published`, `green`), not progressive (`deploying`, `publishing`). The audible signal exists to call the human back when something they were waiting on is _done_.
 - If the deploy fails, say something distinct (`deploy failed`) — never speak success on failure.
 
+**Make it funny.** See [coding-standards.md § Say command timing & style](coding-standards.md). Every `say` opens with a different playful nickname (*captain*, *chief*, *king of the woods*, *deploy gremlin*, …) and lands the message in a goofy/unexpected way. Bare `'c2.2.X deployed' | say` is forbidden — that's a CI bot voice. Make the user chuckle. Examples:
+
+- ✅ `echo 'oi shipmate, c2.2.47 has clocked in on cli — kick the tires' | say`
+- ✅ `echo 'maestro, the bytes have crossed the rubicon, prod is green' | say`
+- ✅ `echo 'uh oh space cadet, the deploy fizzled — check the logs' | say`
+- ❌ `echo 'p2.2.47 deployed' | say`
+
 ### Canonical "wait for the deploy" command
 
 For agents inside Claude Code: a deploy is a single completion event, so use **Bash with `run_in_background: true`** running an `until` loop that exits when the run lands on a terminal state. One notification, exits the moment it's done. Do **not** use the Monitor tool — Monitor is for streams and stays armed until timeout if the loop never exits.
