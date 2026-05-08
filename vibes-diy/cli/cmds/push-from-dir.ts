@@ -39,6 +39,7 @@ export interface PushFromDirOptions {
   appSlug: string;
   userSlug: string | undefined;
   instantJoin: boolean;
+  publicAccess?: boolean;
   apiUrl: string;
   api: {
     ensureAppSlug: (req: {
@@ -50,8 +51,9 @@ export interface PushFromDirOptions {
     ensureAppSettings: (req: {
       appSlug: string;
       userSlug: string;
-      request: { enable: boolean; autoAcceptRole?: "viewer" };
-    }) => Promise<Result<{ settings: { entry: { enableRequest?: { autoAcceptRole?: string } } } }>>;
+      request?: { enable: boolean; autoAcceptRole?: "viewer" };
+      publicAccess?: { enable: boolean };
+    }) => Promise<Result<{ settings: { entry: { enableRequest?: { autoAcceptRole?: string }; publicAccess?: { enable?: boolean } } } }>>;
   };
   ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, unknown, unknown>;
 }
@@ -112,6 +114,27 @@ export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<Push
     } else {
       const instantJoin = rSettings.Ok().settings.entry.enableRequest?.autoAcceptRole;
       await sendProgress(opts.ctx, "info", `Requests enabled${instantJoin ? " (instant-join)" : ""}`);
+    }
+
+    // ensureAppSettings is one-slice-per-call (see api/svc/public/ensure-app-settings.ts
+    // switch on req shape) so publicAccess needs a separate call from the
+    // request-grant call above. Both are no-ops when already set, idempotent.
+    if (opts.publicAccess) {
+      const rPub = await opts.api.ensureAppSettings({
+        appSlug: opts.appSlug,
+        userSlug: opts.userSlug,
+        publicAccess: { enable: true },
+      });
+      if (rPub.isErr()) {
+        const pubErr = rPub.Err();
+        await sendProgress(
+          opts.ctx,
+          "warn",
+          `Warning: failed to enable publicAccess: ${typeof pubErr === "object" ? JSON.stringify(pubErr) : String(pubErr)}`
+        );
+      } else {
+        await sendProgress(opts.ctx, "info", "publicAccess enabled (anonymous reads allowed)");
+      }
     }
   }
 

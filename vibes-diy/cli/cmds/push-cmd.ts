@@ -14,6 +14,7 @@ export const ReqPush = type({
   appSlug: "string",
   userSlug: "string",
   instantJoin: "boolean",
+  publicAccess: "boolean",
   apiUrl: "string",
   "idleTimeoutMs?": "number | undefined",
 });
@@ -48,6 +49,7 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
       appSlug,
       userSlug,
       instantJoin: args.instantJoin,
+      publicAccess: args.publicAccess,
       apiUrl: args.apiUrl,
       api,
       ctx,
@@ -89,6 +91,10 @@ export function pushCmd(ctx: CliCtx) {
       instantJoin: flag({
         long: "instant-join",
         description: "Auto-accept database sharing view requests",
+      }),
+      publicAccess: flag({
+        long: "public",
+        description: "Enable anonymous public reads for this app (publicAccess.enable). Required for cross-origin <img>/<video> tags reading _files when the iframe can't share auth cookies with the file host.",
       }),
       idleTimeoutMs: option({
         long: "idle-timeout",
