@@ -440,3 +440,85 @@ describe("FireflyDatabase standalone async API", () => {
     await expect(db.compact()).resolves.toBeUndefined();
   });
 });
+
+// ── Stage B Phase 8: _files round-trip wiring ───────────────────────
+
+describe("FireflyDatabase _files (Stage B Phase 8)", () => {
+  it("put({ _files: { photo: <File> } }) calls putAsset and stores meta shape", async () => {
+    const file = new File(["hello bytes"], "hi.txt", { type: "text/plain", lastModified: 1700000000 });
+    const { id } = await db.put({ title: "with file", _files: { photo: file } });
+    expect(mockApi._putAssetCalls).toHaveLength(1);
+    expect(mockApi._putAssetCalls[0]).toMatchObject({ size: 11, type: "text/plain" });
+    // Stored doc has the meta shape, not the raw File.
+    const stored = mockApi._docs.get(id) as { _files?: { photo?: Record<string, unknown> } };
+    expect(stored._files?.photo).toMatchObject({
+      uploadId: expect.stringMatching(/^upl-mock-/),
+      type: "text/plain",
+      size: 11,
+      lastModified: 1700000000,
+    });
+    expect(stored._files?.photo).not.toBeInstanceOf(File);
+  });
+
+  it("put with no _files does NOT call putAsset", async () => {
+    await db.put({ title: "no file" });
+    expect(mockApi._putAssetCalls).toHaveLength(0);
+  });
+
+  it("get() decorates _files entries with a file() shim when url is present", async () => {
+    // Seed the mock with a server-shaped file entry (meta.url server-minted).
+    mockApi._docs.set("doc-with-file", {
+      _id: "doc-with-file",
+      title: "saved",
+      _files: {
+        photo: {
+          uploadId: "upl-prev",
+          type: "image/png",
+          size: 42,
+          lastModified: 1700000001,
+          url: "https://app--user.example.com/_files/testdb/doc-with-file/photo?v=upl-prev",
+        },
+      },
+    });
+    const doc = await db.get<{ _files?: { photo?: { file?: () => Promise<File>; url?: string } } }>("doc-with-file");
+    expect(doc._files?.photo?.url).toBe(
+      "https://app--user.example.com/_files/testdb/doc-with-file/photo?v=upl-prev"
+    );
+    expect(typeof doc._files?.photo?.file).toBe("function");
+  });
+
+  it("query() decorates _files on every returned doc", async () => {
+    mockApi._docs.set("q1", {
+      _id: "q1",
+      kind: "photo",
+      _files: { p: { uploadId: "u1", type: "image/png", size: 1, url: "https://h/_files/db/q1/p?v=u1" } },
+    });
+    mockApi._docs.set("q2", { _id: "q2", kind: "note" });
+    const res = await db.query("kind", { key: "photo" });
+    const photoDoc = res.docs[0] as { _files?: { p?: { file?: () => Promise<File> } } };
+    expect(typeof photoDoc._files?.p?.file).toBe("function");
+  });
+
+  it("allDocs() decorates _files on every returned doc", async () => {
+    mockApi._docs.set("a1", {
+      _id: "a1",
+      _files: { x: { uploadId: "u1", type: "text/plain", size: 1, url: "https://h/_files/db/a1/x?v=u1" } },
+    });
+    const res = await db.allDocs();
+    const decorated = res.docs.find((d) => d._id === "a1") as { _files?: { x?: { file?: () => Promise<File> } } };
+    expect(typeof decorated?._files?.x?.file).toBe("function");
+  });
+
+  it("round-trip: put a File, get back a doc with meta.url and meta.file()", async () => {
+    const file = new File(["roundtrip"], "rt.txt", { type: "text/plain" });
+    const { id } = await db.put({ _files: { photo: file } });
+    // Simulate what the server's mintFilesUrls would do — add `url`.
+    const stored = mockApi._docs.get(id) as { _files: { photo: Record<string, unknown> } };
+    stored._files.photo.url = `https://app--user.example.com/_files/testdb/${id}/photo?v=${stored._files.photo.uploadId}`;
+
+    const back = await db.get<{ _files?: { photo?: { uploadId?: string; url?: string; file?: () => Promise<File> } } }>(id);
+    expect(back._files?.photo?.uploadId).toMatch(/^upl-mock-/);
+    expect(back._files?.photo?.url).toContain("/_files/testdb/");
+    expect(typeof back._files?.photo?.file).toBe("function");
+  });
+});
