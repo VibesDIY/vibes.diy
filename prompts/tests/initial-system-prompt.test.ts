@@ -72,6 +72,15 @@ describe("makeBaseSystemPrompt variant routing", () => {
     expect(result.systemPrompt).not.toMatch(/first turn/i);
     expect(result.systemPrompt).not.toMatch(/tiny edits/i);
   });
+
+  it("image-gen skill picks up the ImgGen docs (not legacy ImgVibes)", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      ...baseOpts,
+      skills: ["fireproof", "callai", "image-gen"],
+    });
+    expect(result.systemPrompt).toMatch(/ImgGen/);
+    expect(result.systemPrompt).not.toMatch(/ImgVibes/);
+  });
 });
 
 describe("recovery addenda", () => {

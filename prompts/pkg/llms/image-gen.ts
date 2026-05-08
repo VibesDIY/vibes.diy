@@ -1,10 +1,10 @@
 import type { LlmConfig } from "./types.js";
 
-export const imgVibesConfig: LlmConfig = {
-  name: "img-vibes",
+export const imageGenConfig: LlmConfig = {
+  name: "image-gen",
   label: "Image Generation",
   module: "OpenAi",
   description: "Generate and edit images",
-  importModule: "img-vibes",
-  importName: "ImgVibes",
+  importModule: "img-gen",
+  importName: "ImgGen",
 };

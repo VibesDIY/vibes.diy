@@ -39,7 +39,7 @@ export async function resolveEffectiveModel(
 }
 
 export async function getDefaultSkills(): Promise<string[]> {
-  return ["fireproof", "callai", "img-vibes", "web-audio"];
+  return ["fireproof", "callai", "image-gen", "web-audio"];
 }
 
 /**
