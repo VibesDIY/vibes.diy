@@ -14,6 +14,7 @@ export interface MockVibeApi {
   queryDocs(): Promise<Result<unknown>>;
   deleteDoc(docId: string): Promise<Result<unknown>>;
   subscribeDocs(dbName?: string): Promise<Result<unknown>>;
+  putAsset(blob: Blob, mimeType?: string): Promise<Result<unknown>>;
   onMsg: (fn: MsgListener) => void;
   /** Test helper: simulate server-push evt-doc-changed */
   _simulateDocChanged(docId: string, dbName?: string): void;
@@ -21,6 +22,8 @@ export interface MockVibeApi {
   _docs: Map<string, Record<string, unknown>>;
   /** Test helper: dbNames passed to every subscribeDocs() call (in order) */
   _subscribeDocsCalls: string[];
+  /** Test helper: putAsset call log */
+  _putAssetCalls: { size: number; type: string; mimeType?: string }[];
 }
 
 let idCounter = 0;
@@ -29,6 +32,8 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
   const docs = new Map<string, Record<string, unknown>>();
   const msgListeners: MsgListener[] = [];
   const subscribeDocsCalls: string[] = [];
+  const putAssetCalls: { size: number; type: string; mimeType?: string }[] = [];
+  let nextUploadId = 0;
 
   return {
     svc: { vibeApp: { appSlug, userSlug: "test-user" } },
@@ -74,6 +79,24 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
       return Result.Ok({ type: "vibes.diy.res-subscribe-docs" as const, status: "ok" as const });
     },
 
+    putAsset: async (blob: Blob, mimeType?: string) => {
+      const call: { size: number; type: string; mimeType?: string } = {
+        size: blob.size,
+        type: blob.type,
+        ...(mimeType ? { mimeType } : {}),
+      };
+      putAssetCalls.push(call);
+      const uploadId = `upl-mock-${++nextUploadId}`;
+      return Result.Ok({
+        type: "vibe.res.putAsset" as const,
+        status: "ok" as const,
+        cid: `cid-mock-${nextUploadId}`,
+        getURL: `s3://r2/cid-mock-${nextUploadId}`,
+        size: blob.size,
+        uploadId,
+      });
+    },
+
     onMsg: (fn: MsgListener) => {
       msgListeners.push(fn);
     },
@@ -86,6 +109,7 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
 
     _docs: docs,
     _subscribeDocsCalls: subscribeDocsCalls,
+    _putAssetCalls: putAssetCalls,
   };
 }
 

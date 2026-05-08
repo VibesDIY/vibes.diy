@@ -9,6 +9,8 @@
 import type { VibeSandboxApi, VibeApp } from "./register-dependencies.js";
 // Response validators + event — re-exported from api-types via vibe-types
 import { isResPutDoc, isResGetDoc, isResQueryDocs, isResDeleteDoc, isEvtDocChanged } from "@vibes.diy/vibe-types";
+import { decorateFiles } from "./firefly-files-read.js";
+import { uploadFiles, type AssetUploader } from "./firefly-files-write.js";
 // @ts-expect-error "charwise" has no types
 import charwise from "charwise";
 
@@ -127,19 +129,31 @@ export class FireflyDatabase {
     }
     const res = rRes.Ok();
     if (isResGetDoc(res)) {
-      return { ...res.doc, _id: res.id } as DocWithId<T>;
+      // Stage B Phase 8: decorate _files entries with a meta.file() shim
+      // so consumers can `await meta.file()` for raw bytes. Pass-through
+      // when _files is absent. The server-minted meta.url is preserved.
+      const decorated = decorateFiles({ ...res.doc, _id: res.id });
+      return decorated as DocWithId<T>;
     }
     throw new Error(`Failed to get document: ${JSON.stringify(res)}`);
   }
 
   async put<T extends DocTypes>(doc: T & { _id?: string }): Promise<DocResponse> {
-    const rRes = await this.vibeApi.putDoc(doc, doc._id, this.name);
+    // Stage B Phase 8: walk _files, replace File/Blob entries with the
+    // {uploadId, type, size, lastModified} shape via put-asset round-trips
+    // BEFORE serializing the doc across postMessage. Without this, File
+    // becomes {} on JSON.stringify and the put silently drops the file
+    // (or, in the cement WS encoder, times out — the user-visible
+    // "Request idle for 10000ms" failure mode the og/files-regression
+    // demo gate exhibits today).
+    const docToPut = await uploadFiles(doc, this.vibeApi as unknown as AssetUploader);
+    const rRes = await this.vibeApi.putDoc(docToPut as Record<string, unknown>, doc._id, this.name);
     if (rRes.isErr()) {
       throw new Error(`Failed to put document: ${rRes.Err()}`);
     }
     const res = rRes.Ok();
     if (isResPutDoc(res)) {
-      const savedDoc = { ...doc, _id: res.id } as DocWithId<T>;
+      const savedDoc = { ...docToPut, _id: res.id } as DocWithId<T>;
       this.notifyListeners([savedDoc]);
       return { id: res.id, ok: true };
     }
@@ -197,7 +211,10 @@ export class FireflyDatabase {
       return { rows: [], docs: [] };
     }
 
-    const allDocs = res.docs.map((d) => ({ ...d, _id: d._id }) as DocWithId<T>);
+    // Stage B Phase 8: decorate every doc's _files entries with a
+    // meta.file() shim. URL is server-minted, so this only adds the
+    // shim — pass-through when _files is absent.
+    const allDocs = res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>);
 
     // Build index entries — keys stored as charwise-encoded strings for correct sort
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -316,7 +333,8 @@ export class FireflyDatabase {
       return { rows: [], docs: [] };
     }
 
-    let docs = res.docs.map((d) => ({ ...d, _id: d._id }) as DocWithId<T>);
+    // Stage B Phase 8: same _files decoration as in query().
+    let docs = res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>);
 
     // Sort by _id
     docs.sort((a, b) => (a._id < b._id ? -1 : a._id > b._id ? 1 : 0));

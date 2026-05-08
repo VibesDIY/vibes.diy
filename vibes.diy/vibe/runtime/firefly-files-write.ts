@@ -72,7 +72,10 @@ export async function uploadFiles<T>(doc: T, uploader: AssetUploader, opts: Uplo
 
   // Identify which entries actually need uploading. Order-preserving so the
   // resulting `_files` map keys come out in input order.
-  type Pending = { readonly key: string; readonly entry: File | Blob };
+  interface Pending {
+    readonly key: string;
+    readonly entry: File | Blob;
+  }
   const pending: Pending[] = [];
   const passthrough: Record<string, unknown> = {};
   for (const key of keys) {
