@@ -30,10 +30,11 @@ import {
   EvtRuntimeReady,
   EvtRuntimeAck,
   EvtAttachFPDb,
-  isReqImgVibes,
-  ReqImgVibes,
-  ResOkImgVibes,
-  ResErrorImgVibes,
+  isReqImgGen,
+  ReqImgGen,
+  ResOkImgGen,
+  ResErrorImgGen,
+  ImgGenFile,
   isReqPutDoc,
   ReqPutDoc,
   isReqGetDoc,
@@ -364,69 +365,71 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
-export function getImageUrls(stream: ReadableStream<unknown>): Promise<string[]> {
-  const urls: string[] = [];
-  const done = new Future<string[]>();
+// Walk the chat section stream and collect file refs from each `block.image`
+// event. Server-side image-gen writes bytes through `storeAndAuditAsset`
+// before emitting the block, so each entry already has an AssetUploads row.
+// The hook installs these as `_files.v<N>` on the doc; Stage C's URL minter
+// adds `meta.url` on read.
+export function getImageFiles(stream: ReadableStream<unknown>): Promise<ImgGenFile[]> {
+  const files: ImgGenFile[] = [];
+  const done = new Future<ImgGenFile[]>();
   processStream(stream, (msg) => {
-    const msgType = (msg as Record<string, unknown>).type;
     if (isSectionEvent(msg)) {
       for (const block of msg.blocks) {
-        console.log("[vibeImgVibes] block:", block.type, "isImage:", isBlockImage(block));
         if (isBlockImage(block)) {
-          console.log("[vibeImgVibes] got image URL, length:", block.url?.length);
-          urls.push(block.url);
+          const b = block as { uploadId?: string; cid?: string; mimeType?: string; size?: number };
+          if (b.uploadId && b.cid && b.mimeType && typeof b.size === "number") {
+            files.push({ uploadId: b.uploadId, cid: b.cid, mimeType: b.mimeType, size: b.size });
+          }
         }
         if (isPromptBlockEnd(block)) {
-          console.log("[vibeImgVibes] prompt.block-end, resolving with", urls.length, "urls");
-          done.resolve(urls);
+          done.resolve(files);
         }
       }
-    } else {
-      console.log("[vibeImgVibes] non-section msg:", msgType);
     }
   });
   return done.asPromise();
 }
 
-function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
+function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
   const { vibeDiyApi } = sandbox.args;
   return {
-    hash: "vibe.imgVibes",
+    hash: "vibe.imgGen",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
       const { request: req } = ctx;
-      if (isReqImgVibes(req?.data)) {
+      if (isReqImgGen(req?.data)) {
         return Promise.resolve(Result.Ok(Option.Some(req.data)));
       }
       return Promise.resolve(Result.Ok(Option.None()));
     },
-    handle: async (ctx: HandleTriggerCtx<Request, ReqImgVibes, unknown>): Promise<Result<EventoResultType>> => {
+    handle: async (ctx: HandleTriggerCtx<Request, ReqImgGen, unknown>): Promise<Result<EventoResultType>> => {
       await vibeDiyApi
         .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "img" })
         .then(async (rChat) => {
           if (rChat.isErr()) {
             return ctx.send.send(ctx, {
               tid: ctx.validated.tid,
-              type: "vibe.res.imgVibes",
+              type: "vibe.res.imgGen",
               status: "error",
               message: rChat.Err().message,
-            } satisfies ResErrorImgVibes);
+            } satisfies ResErrorImgGen);
           }
-          getImageUrls(rChat.Ok().sectionStream)
-            .then((imageUrls) => {
+          getImageFiles(rChat.Ok().sectionStream)
+            .then((files) => {
               ctx.send.send(ctx, {
                 tid: ctx.validated.tid,
-                type: "vibe.res.imgVibes",
+                type: "vibe.res.imgGen",
                 status: "ok",
-                imageUrls,
-              } satisfies ResOkImgVibes);
+                files,
+              } satisfies ResOkImgGen);
             })
             .catch((err) => {
               ctx.send.send(ctx, {
                 tid: ctx.validated.tid,
-                type: "vibe.res.imgVibes",
+                type: "vibe.res.imgGen",
                 status: "error",
                 message: err?.message ?? String(err),
-              } satisfies ResErrorImgVibes);
+              } satisfies ResErrorImgGen);
             });
           const rPrompt = await rChat.Ok().prompt(
             {
@@ -438,10 +441,10 @@ function vibeImageGen(sandbox: vibesDiySrvSandbox): EventoHandler {
           if (rPrompt.isErr()) {
             return ctx.send.send(ctx, {
               tid: ctx.validated.tid,
-              type: "vibe.res.imgVibes",
+              type: "vibe.res.imgGen",
               status: "error",
               message: rPrompt.Err().message,
-            } satisfies ResErrorImgVibes);
+            } satisfies ResErrorImgGen);
           }
         });
       return Result.Ok(EventoResult.Stop);
@@ -878,7 +881,7 @@ export class vibesDiySrvSandbox implements Disposable {
         vibeRuntimeReady(this),
         vibeRegisterFPDB(this),
         vibeCallAI(this),
-        vibeImageGen(this),
+        vibeImgGen(this),
         vibeFetchCloudToken(this),
         vibePutDoc(this),
         vibeGetDoc(this),

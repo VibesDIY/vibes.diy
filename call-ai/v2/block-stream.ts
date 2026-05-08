@@ -149,11 +149,20 @@ export const CodeTruncatedMsg = type({
   errorCount: "number",
 }).and(BlockBase);
 
-// Image block events (raw URL, decoding happens in image-decode-stream)
+// Image block events. Two payload shapes coexist:
+//   - LLM-streamed images carry `url` (raw data: URL or remote URL).
+//   - Server-side image-gen (Prodia, etc.) carries the file ref shape
+//     `{uploadId, cid, type, size}` — the asset has already been written
+//     through `storeAndAuditAsset`, and the hook turns this into
+//     `_files.v<N> = FileMeta` so display reads via Stage C's meta.url.
 export const BlockImageMsg = type({
   type: "'block.image'",
   sectionId: "string",
-  url: "string",
+  "url?": "string",
+  "uploadId?": "string",
+  "cid?": "string",
+  "mimeType?": "string",
+  "size?": "number",
 })
   .and(BlockBase)
   .and(BlockStatsBox);

@@ -4,9 +4,9 @@ import {
   isResCallAI,
   ReqCallAI,
   ResCallAI,
-  isResImgVibes,
-  ReqImgVibes,
-  ResImgVibes,
+  isResImgGen,
+  ReqImgGen,
+  ResImgGen,
   ReqFetchCloudToken,
   ReqVibeRegisterFPDb,
   ResFetchCloudToken,
@@ -42,7 +42,7 @@ import { type } from "arktype";
 import { transform } from "sucrase";
 import { FunctionComponent } from "react";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
-import { registerImgVibes } from "./img-vibes.js";
+import { registerImgGen } from "./img-gen.js";
 import { registerFirefly } from "./use-firefly.js";
 import { getActiveProps, mountVibe } from "./mount-vibes.js";
 import { getActiveImportMap, rewriteBareSpecifiers } from "./bare-specifier-rewrite.js";
@@ -179,16 +179,16 @@ export class VibeSandboxApi {
     );
   }
 
-  imgVibes(prompt: string, inputImageBase64?: string, model?: string): Promise<Result<ResImgVibes>> {
-    return this.request<ReqImgVibes, ResImgVibes>(
+  imgGen(prompt: string, inputImageBase64?: string, model?: string): Promise<Result<ResImgGen>> {
+    return this.request<ReqImgGen, ResImgGen>(
       {
-        type: "vibe.req.imgVibes",
+        type: "vibe.req.imgGen",
         prompt,
         ...(inputImageBase64 ? { inputImageBase64 } : {}),
         ...(model ? { model } : {}),
         ...this.svc.vibeApp,
       },
-      { wait: isResImgVibes, timeout: 120000 }
+      { wait: isResImgGen, timeout: 120000 }
     );
   }
 
@@ -355,7 +355,7 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
 
   await registerFirefly(ctxVibeApi);
   registerCallAI(ctxVibeApi);
-  registerImgVibes(ctxVibeApi);
+  registerImgGen(ctxVibeApi);
 
   // Register the hot-swap listener BEFORE signalling ready, so any set-source
   // the host posts in response to runtime.ready arrives at a live listener.
@@ -369,7 +369,7 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
 }
 
 function sendRuntimeReadyWithRetry(api: VibeSandboxApi): void {
-  const post = (): void => api.sendRuntimeReady(["use-fireproof", "call-ai", "img-vibes"]);
+  const post = (): void => api.sendRuntimeReady(["use-fireproof", "call-ai", "img-gen"]);
   post();
   // Retry every 500ms until acked. Posts are idempotent on the host side
   // (re-capture of the same iframeSource is a no-op). Typical case: parent

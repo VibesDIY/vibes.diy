@@ -8,8 +8,8 @@ import {
   chunkyAsync,
   BuildURI,
   URI,
-  uint8array2stream,
 } from "@adviser/cement";
+import { storeAndAuditAsset } from "./store-and-audit-asset.js";
 import { Scope, scopey } from "@adviser/scopey";
 import {
   InMsgBase,
@@ -131,6 +131,10 @@ interface AppendBlockEventParams {
   blockSeq: number;
   evt: PromptAndBlockMsgs;
   emitMode?: "store" | "emit-only";
+  // Required for the base64 image branch (LLM-streamed data: URLs) so the
+  // bytes go through storeAndAuditAsset with the right (userSlug, appSlug).
+  // Non-image events may omit this.
+  resChat?: ResChat;
 }
 
 interface CodeBlocks {
@@ -403,25 +407,42 @@ async function appendBlockEvent({
   blockSeq,
   evt,
   emitMode = "store",
+  resChat,
 }: AppendBlockEventParams): Promise<Result<void>> {
   if (isBlockImage(evt)) {
-    const imgEvt = evt as { url: string };
-    if (imgEvt.url.startsWith("data:")) {
-      // Store base64 image as asset to avoid WebSocket message size limits
+    const imgEvt = evt as {
+      url?: string;
+      uploadId?: string;
+      cid?: string;
+      mimeType?: string;
+      size?: number;
+    };
+    if (imgEvt.url?.startsWith("data:") && resChat) {
+      // LLM-streamed base64 image. Store via the shared helper so the
+      // AssetUploads audit row is created and the doc carries the file
+      // ref shape that Stage C's URL minter resolves to a meta.url.
       const match = imgEvt.url.match(/^data:([^;]+);base64,(.+)$/);
       if (match) {
         const mime = match[1];
         const raw = Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0));
-        const [storageResult] = await vctx.storage.ensure(uint8array2stream(raw));
-        if (storageResult?.isOk()) {
-          imgEvt.url = `/assets/cid?url=${encodeURIComponent(storageResult.Ok().getURL)}&mime=${encodeURIComponent(mime)}`;
-          console.log("[block.image] Stored as asset:", imgEvt.url, "size:", raw.length);
+        const rStored = await storeAndAuditAsset(vctx, {
+          bytes: raw,
+          userId: req._auth.verifiedAuth.claims.userId,
+          userSlug: resChat.userSlug,
+          appSlug: resChat.appSlug,
+          mimeType: mime,
+        });
+        if (rStored.isOk()) {
+          const stored = rStored.Ok();
+          delete imgEvt.url;
+          imgEvt.uploadId = stored.uploadId;
+          imgEvt.cid = stored.cid;
+          imgEvt.mimeType = stored.mimeType ?? mime;
+          imgEvt.size = stored.size;
         } else {
-          console.error("[block.image] Failed to store asset:", storageResult?.Err());
+          vctx.logger.Error().Err(rStored).Msg("[block.image] storeAndAuditAsset failed");
         }
       }
-    } else {
-      console.log("[block.image] Server received URL:", imgEvt.url.substring(0, 100));
     }
   }
   const now = new Date();
@@ -927,6 +948,7 @@ async function handleProdiaImageRequest({
   promptId,
   blockSeq,
   resolvedModel,
+  resChat,
 }: {
   scope: Scope;
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -935,6 +957,7 @@ async function handleProdiaImageRequest({
   promptId: string;
   blockSeq: number;
   resolvedModel: string;
+  resChat: ResChat;
 }): Promise<Result<number>> {
   const prodiaToken = vctx.prodiaToken;
   if (!prodiaToken) {
@@ -1026,16 +1049,23 @@ async function handleProdiaImageRequest({
     return Result.Err(`Prodia request failed: ${prodiaRes.status} ${prodiaRes.statusText} ${errorText}`);
   }
 
-  // Store PNG bytes as asset
+  // Store PNG bytes via the shared helper so AssetUploads owns the audit
+  // row and the doc serializes as a `_files` ref shape (no CID-URL string).
   if (!prodiaRes.body) {
     return Result.Err("Prodia response has no body");
   }
-  const [storageResult] = await vctx.storage.ensure(prodiaRes.body);
-  if (!storageResult?.isOk()) {
-    return Result.Err(`Failed to store Prodia image: ${storageResult?.Err()}`);
+  const rStored = await storeAndAuditAsset(vctx, {
+    bytes: prodiaRes.body,
+    userId: req._auth.verifiedAuth.claims.userId,
+    userSlug: resChat.userSlug,
+    appSlug: resChat.appSlug,
+    mimeType: "image/png",
+  });
+  if (rStored.isErr()) {
+    return Result.Err(`Failed to store Prodia image: ${rStored.Err().message}`);
   }
-  const assetUrl = `/assets/cid?url=${encodeURIComponent(storageResult.Ok().getURL)}&mime=${encodeURIComponent("image/png")}`;
-  console.log("[block.image] Prodia stored as asset:", assetUrl);
+  const stored = rStored.Ok();
+  const fileMimeType = stored.mimeType ?? "image/png";
 
   const blockId = vctx.sthis.nextId(12).str;
   const now = new Date();
@@ -1057,7 +1087,9 @@ async function handleProdiaImageRequest({
     },
   });
 
-  // Emit block.image
+  // Emit block.image carrying the file ref shape (uploadId/cid/type/size).
+  // The hook turns this into _files.v<N> = FileMeta on the doc, and Stage C
+  // mints meta.url for display.
   await appendBlockEvent({
     ctx,
     vctx,
@@ -1067,18 +1099,21 @@ async function handleProdiaImageRequest({
     evt: {
       type: "block.image",
       sectionId: vctx.sthis.nextId(12).str,
-      url: assetUrl,
+      uploadId: stored.uploadId,
+      cid: stored.cid,
+      mimeType: fileMimeType,
+      size: stored.size,
       blockId,
       streamId: promptId,
       seq: blockSeq,
       blockNr: 1,
       timestamp: now,
-      stats: { lines: 0, bytes: assetUrl.length, cnt: 1 },
+      stats: { lines: 0, bytes: stored.size, cnt: 1 },
     },
   });
 
   const zeroStats = { lines: 0, bytes: 0 };
-  const imageStats = { lines: 0, bytes: assetUrl.length, cnt: 1 };
+  const imageStats = { lines: 0, bytes: stored.size, cnt: 1 };
 
   // Emit block.end
   await appendBlockEvent({
@@ -1401,6 +1436,7 @@ async function handleLlmResponse({
               blockSeq: blockSeq++,
               evt: value,
               emitMode: "emit-only",
+              resChat,
             });
             if (r.isErr()) {
               return Result.Err(r);
@@ -1860,6 +1896,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             promptId,
             blockSeq,
             resolvedModel: resolvedImgModel as string,
+            resChat,
           });
         };
       } else if (isReqPromptLLMChatSection(orig)) {

@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useFireproof } from "@fireproof/use-fireproof";
-import { imgVibes } from "@vibes.diy/vibe-runtime";
+import { imgGen } from "@vibes.diy/vibe-runtime";
 import type { UseImgVibesOptions, UseImgVibesResult, PartialImageDocument } from "@vibes.diy/use-vibes-types";
 import { addNewVersion } from "./utils.js";
 
+// Legacy hook retained for the G2 seam only. Returns a placeholder
+// `assetUrl` derived from the doc — the G4 seam replaces this hook with
+// `useImgGen` and the `_files`-keyed display path.
 export function useImgVibes({
   prompt,
   _id,
@@ -64,8 +67,8 @@ export function useImgVibes({
         return;
       }
 
-      if (!imgVibes) {
-        setError(new Error("imgVibes not available — vibe-runtime not initialized"));
+      if (!imgGen) {
+        setError(new Error("imgGen not available — vibe-runtime not initialized"));
         return;
       }
 
@@ -74,9 +77,12 @@ export function useImgVibes({
       setError(null);
 
       try {
-        const urls = await imgVibes(promptText, inputImage, model);
-        const imageUrl = urls[0];
-        if (!imageUrl) throw new Error("No image URL received from service");
+        const files = await imgGen(promptText, inputImage, model);
+        const file = files[0];
+        if (!file) throw new Error("No image file received from service");
+        // Legacy synthetic URL — G4 replaces this with meta.url from the
+        // platform's URL minter.
+        const imageUrl = `/_files/cid/${file.cid}`;
 
         setAssetUrl(imageUrl);
         setProgress(90);
