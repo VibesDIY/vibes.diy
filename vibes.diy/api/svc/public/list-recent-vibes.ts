@@ -1,4 +1,13 @@
-import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
+import {
+  EventoHandler,
+  Result,
+  Option,
+  EventoResultType,
+  HandleTriggerCtx,
+  EventoResult,
+  exception2Result,
+  JSONEnDecoderSingleton,
+} from "@adviser/cement";
 import {
   ActiveEntry,
   isActiveIcon,
@@ -13,6 +22,7 @@ import {
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
+import { base58btc } from "multiformats/bases/base58";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
@@ -29,38 +39,24 @@ const cursorShape = type({
   appSlug: "string",
 });
 
-interface DecodedCursor {
-  updated: string;
-  userSlug: string;
-  appSlug: string;
-}
+type DecodedCursor = typeof cursorShape.infer;
+
+const jsonEnde = JSONEnDecoderSingleton();
 
 function encodeCursor(c: DecodedCursor): string {
-  const json = JSON.stringify(c);
-  if (typeof Buffer !== "undefined") {
-    return Buffer.from(json, "utf-8").toString("base64url");
-  }
-  return btoa(json).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return base58btc.encode(jsonEnde.uint8ify(c));
 }
 
 function decodeCursor(raw: string): Result<DecodedCursor> {
-  try {
-    let json: string;
-    if (typeof Buffer !== "undefined") {
-      json = Buffer.from(raw, "base64url").toString("utf-8");
-    } else {
-      const padded = raw.replace(/-/g, "+").replace(/_/g, "/");
-      json = atob(padded);
-    }
-    const parsed = JSON.parse(json) as unknown;
-    const checked = cursorShape(parsed);
-    if (checked instanceof type.errors) {
-      return Result.Err(`invalid cursor: ${checked.summary}`);
-    }
-    return Result.Ok(checked);
-  } catch (err) {
-    return Result.Err(err instanceof Error ? err : new Error(String(err)));
+  const rBytes = exception2Result(() => base58btc.decode(raw));
+  if (rBytes.isErr()) return Result.Err(rBytes.Err());
+  const rParsed = jsonEnde.parse<unknown>(rBytes.Ok());
+  if (rParsed.isErr()) return Result.Err(rParsed.Err());
+  const checked = cursorShape(rParsed.Ok());
+  if (checked instanceof type.errors) {
+    return Result.Err(`invalid cursor: ${checked.summary}`);
   }
+  return Result.Ok(checked);
 }
 
 // Clamp limit to [MIN_LIMIT, MAX_LIMIT] and reject NaN / non-finite / non-integer.
@@ -96,11 +92,7 @@ export const listRecentVibesEvento: EventoHandler<
   }),
   handle: checkAuth(
     async (
-      ctx: HandleTriggerCtx<
-        W3CWebSocketEvent,
-        MsgBase<ReqWithVerifiedAuth<ReqListRecentVibes>>,
-        ResListRecentVibes | VibesDiyError
-      >
+      ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqListRecentVibes>>, ResListRecentVibes | VibesDiyError>
     ): Promise<Result<EventoResultType>> => {
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
