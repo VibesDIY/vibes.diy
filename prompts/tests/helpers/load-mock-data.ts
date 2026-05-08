@@ -103,6 +103,17 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
       } as Response);
     }
 
+    // Theme markdown — serve a recognizable per-slug body so tests can assert
+    // both the wrapping XML tag and the theme content end up in the prompt.
+    const themeMatch = url.match(/themes\/([\w-]+)\.md/);
+    if (themeMatch) {
+      const slug = themeMatch[1];
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(`# Theme ${slug}\nMock design tokens for ${slug}.`),
+      } as Response);
+    }
+
     // Default response for other text files - fallback mock
     return Promise.resolve({
       ok: true,
