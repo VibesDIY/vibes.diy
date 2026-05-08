@@ -274,6 +274,80 @@ database.subscribe((changes) => {
 }, true);
 ```
 
+### Working with Files
+
+Fireproof documents carry attachments under `_files`. Save a `File` (or `Blob`) by assigning it to a key on `_files`, and Fireproof handles upload, durable storage, and URL minting for you.
+
+#### Attaching files on save
+
+```jsx
+const { useDocument } = useFireproof("photo-album");
+const { doc, merge, submit } = useDocument({ _files: {}, caption: "" });
+
+// In a file input change handler:
+const onPick = (e) => merge({ _files: { photo: e.target.files[0] } });
+```
+
+`File` and `Blob` are both accepted. Submit the document the normal way (`submit()` from `useDocument`, or `database.put(doc)`).
+
+For multi-file uploads (e.g. `<input multiple>`), build the `_files` map keyed by filename:
+
+```jsx
+const onPickMany = (e) => {
+  const next = {};
+  for (const f of e.target.files) next[f.name] = f;
+  merge({ _files: next });
+};
+```
+
+Iterate the map with `Object.entries(doc._files)` to render or process each entry (see "Displaying files" below).
+
+#### Displaying files
+
+After a doc round-trips through the database, each `_files.<key>` entry carries a stable `url` you can drop straight into any browser-native subresource — `<img>`, `<video>`, `<audio>`, CSS `background-image`, `@font-face`, `<a download>`, etc.
+
+```jsx
+{
+  doc._files.photo && <img src={doc._files.photo.url} alt={doc.caption} />;
+}
+```
+
+For galleries with arbitrary keys, iterate the map:
+
+```jsx
+{
+  Object.entries(doc._files ?? {}).map(([key, meta]) => <img key={key} src={meta.url} alt={key} />);
+}
+```
+
+The platform-minted `url` is stable for the lifetime of that file, so the browser cache works normally.
+
+#### Reading raw bytes
+
+When you need the bytes themselves (transcoding, hashing, ML features, custom downloads), call `meta.file()` on the entry — it returns a `Promise<File>`:
+
+```jsx
+const f = await doc._files.photo.file();
+const buf = await f.arrayBuffer();
+const hash = await crypto.subtle.digest("SHA-256", buf);
+```
+
+For plain `<img>` rendering, prefer `meta.url` — it skips one fetch and lets the browser handle cache and decoding.
+
+#### Each `_files.<key>` entry shape
+
+After save + round-trip, an entry has:
+
+```ts
+{
+  url: string;           // ready-to-use URL for <img>/<video>/etc.
+  type: string;          // MIME type
+  size: number;          // bytes
+  lastModified?: number; // epoch ms (for File only)
+  file: () => Promise<File>; // bytes on demand
+}
+```
+
 ### Form Validation
 
 You can use React's `useState` to manage validation states and error messages. Validate inputs at the UI level before allowing submission.
@@ -386,3 +460,77 @@ export default function App() {
 ```
 
 IMPORTANT: Don't use `useState()` on form data, instead use `merge()` and `submit()` from `useDocument`. Only use `useState` for ephemeral UI state (active tabs, open/closed panels, cursor positions). Keep your data model in Fireproof.
+
+## Example Image Uploader
+
+This pattern uses `_files` end-to-end: save a `File` directly, render thumbnails with `<img src={meta.url}>`.
+
+```jsx
+import React from "react";
+import { useFireproof } from "use-fireproof";
+
+export default function App() {
+  // 1. Hooks and document shapes
+  const { useDocument, useLiveQuery } = useFireproof("image-uploads");
+
+  const { doc, merge, submit } = useDocument({
+    _files: {},
+    caption: "",
+    type: "upload",
+    createdAt: Date.now(),
+  });
+
+  const { docs } = useLiveQuery("type", { key: "upload", descending: true, limit: 12 });
+
+  // 2. Event handlers
+  const onPickFile = (e) => {
+    const f = e.target.files?.[0];
+    if (f) merge({ _files: { photo: f } });
+  };
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    if (!doc._files?.photo) return;
+    submit();
+  };
+
+  // 3. ClassNames
+  const c = {
+    bg: "bg-white",
+    card: "bg-gray-50",
+    border: "border-gray-200",
+    accent: "bg-blue-500 hover:bg-blue-600",
+    text: "text-gray-700",
+  };
+
+  // 4. JSX return
+  return (
+    <div className={`p-6 max-w-lg mx-auto ${c.bg} shadow-lg rounded-lg`}>
+      <h2 className="text-2xl font-bold mb-4">Image Uploader</h2>
+      <form onSubmit={onSubmit} className="space-y-3">
+        <input type="file" accept="image/*" onChange={onPickFile} className={`w-full ${c.border} border rounded p-2`} />
+        <input
+          type="text"
+          placeholder="Caption"
+          value={doc.caption}
+          onChange={(e) => merge({ caption: e.target.value })}
+          className={`w-full ${c.border} border rounded p-2`}
+        />
+        <button type="submit" className={`px-4 py-2 ${c.accent} text-white rounded`}>
+          Upload
+        </button>
+      </form>
+
+      <h3 className="text-lg font-semibold mt-6">Recent Uploads</h3>
+      <div className="grid grid-cols-2 gap-4 mt-2">
+        {docs.map((d) => (
+          <div key={d._id} className={`${c.border} border p-2 rounded shadow-sm ${c.card}`}>
+            {d._files?.photo?.url && <img src={d._files.photo.url} alt={d.caption || "upload"} className="w-full h-auto rounded" />}
+            <p className={`text-sm ${c.text} mt-2`}>{d.caption || "No caption"}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
