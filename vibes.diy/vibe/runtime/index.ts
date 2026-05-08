@@ -1,5 +1,6 @@
 export * from "./mount-vibes.js";
 export * from "./register-dependencies.js";
+export { rewriteBareSpecifiers, getActiveImportMap } from "./bare-specifier-rewrite.js";
 export * from "./VibeContext.js";
 export * from "./call-ai.js";
 export * from "./img-vibes.js";

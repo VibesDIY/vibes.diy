@@ -45,6 +45,7 @@ import { CallAIOpts, registerCallAI } from "./call-ai.js";
 import { registerImgVibes } from "./img-vibes.js";
 import { registerFirefly } from "./use-firefly.js";
 import { getActiveProps, mountVibe } from "./mount-vibes.js";
+import { getActiveImportMap, rewriteBareSpecifiers } from "./bare-specifier-rewrite.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -423,7 +424,11 @@ async function applyHotSwap(source: string): Promise<Result<void>> {
     })
   );
   if (rTransform.isErr()) return Result.Err(rTransform.Err());
-  const blob = new Blob([rTransform.Ok().code], { type: "application/javascript" });
+  // Rewrite bare specifiers not present in the active import map to esm.sh
+  // URLs so hot-swap doesn't fail before the fsId-bound import map activates
+  // (issue #1595).
+  const rewritten = rewriteBareSpecifiers(rTransform.Ok().code, getActiveImportMap());
+  const blob = new Blob([rewritten], { type: "application/javascript" });
   const blobUrl = URL.createObjectURL(blob);
   try {
     const rImport = await exception2Result<{ default?: unknown }>(() => import(/* @vite-ignore */ blobUrl));
