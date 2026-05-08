@@ -23,16 +23,16 @@ import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { ASSET_SESSION_COOKIE_NAME } from "./asset-session.js";
 
-// Handler for `/_files/<dbName>/<docId>/<key>` on the app subdomain
-// (`<appSlug>--<userSlug>.<host>`). Auth/ACL gate, doc lookup, AssetUploads
-// resolution, vctx.storage.fetch, stream. CID and assetURI never leak to
-// the client.
+// Handler for `/_files/<userSlug>/<appSlug>/<dbName>/<docId>/<key>` on
+// the singleton asset host `assets.<base>`. Auth/ACL gate, doc lookup,
+// AssetUploads resolution, vctx.storage.fetch, stream. CID and assetURI
+// never leak to the client.
 //
 // Public-readable apps (`publicAccess.enable && mode === "production"`)
-// serve to anonymous viewers. CORS `Access-Control-Allow-Origin: *` is
-// applied unconditionally by the send provider, so the URL is portable
-// into third-party CMS / WordPress-style embed contexts; the auth/ACL
-// gate (cookie + per-db ACL) is what actually controls visibility.
+// serve to anonymous viewers. The auth/ACL gate (cookie + per-db ACL)
+// is what controls visibility; the URL itself is durable (Cool URIs
+// don't change) so the browser HTTP cache and Cache-Control headers
+// actually function.
 //
 // Auth: cookie-only. The parent shell at vibes.diy POSTs its Clerk Bearer
 // to /_auth/session at iframe boot; we mint an HttpOnly cookie scoped to
@@ -50,8 +50,8 @@ interface FilesAssetValidated {
   readonly cookie: string | undefined;
 }
 
-const HOSTNAME_RE = /^([a-zA-Z0-9][a-zA-Z0-9-]*?)--([a-zA-Z0-9][a-zA-Z0-9-]+)/;
-const PATH_RE = /^\/_files\/([^/]+)\/([^/]+)\/([^/?]+)\/?$/;
+const ASSETS_HOST_PREFIX = "assets.";
+const ASSETS_PATH_RE = /^\/_files\/([^/]+)\/([^/]+)\/([^/]+)\/([^/]+)\/([^/?]+)\/?$/;
 
 // Read a single cookie value out of the Cookie header. Cookie names are
 // case-sensitive per RFC 6265; the value is everything between `=` and
@@ -80,18 +80,19 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
       return Promise.resolve(Result.Ok(Option.None()));
     }
     const url = URI.from(req.url);
-    const hostMatch = HOSTNAME_RE.exec(url.hostname);
-    if (!hostMatch) return Promise.resolve(Result.Ok(Option.None()));
-    const pathMatch = PATH_RE.exec(url.pathname);
+    if (!url.hostname.startsWith(ASSETS_HOST_PREFIX)) {
+      return Promise.resolve(Result.Ok(Option.None()));
+    }
+    const pathMatch = ASSETS_PATH_RE.exec(url.pathname);
     if (!pathMatch) return Promise.resolve(Result.Ok(Option.None()));
     return Promise.resolve(
       Result.Ok(
         Option.Some({
-          appSlug: hostMatch[1].toLowerCase(),
-          userSlug: hostMatch[2].toLowerCase(),
-          dbName: decodeURIComponent(pathMatch[1]),
-          docId: decodeURIComponent(pathMatch[2]),
-          key: decodeURIComponent(pathMatch[3]),
+          userSlug: decodeURIComponent(pathMatch[1]).toLowerCase(),
+          appSlug: decodeURIComponent(pathMatch[2]).toLowerCase(),
+          dbName: decodeURIComponent(pathMatch[3]),
+          docId: decodeURIComponent(pathMatch[4]),
+          key: decodeURIComponent(pathMatch[5]),
           cookie: extractAssetCookie(req),
         })
       )

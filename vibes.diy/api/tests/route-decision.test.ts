@@ -69,6 +69,20 @@ describe("worker routeDecision", () => {
     expect(decide({ pathname: "/assets", method: "POST" })).not.toBe("api-do");
   });
 
+  it("assets host (assets.<base>) → cf-serve for /_files/* and /_auth/*", () => {
+    expect(decide({ hostname: "assets.vibesdiy.net", pathname: "/_files/u/a/db/doc/key" })).toBe("cf-serve");
+    expect(decide({ hostname: "assets.vibesdiy.net", pathname: "/_auth/session", method: "POST" })).toBe("cf-serve");
+    expect(decide({ hostname: "assets.vibesdiy.net", pathname: "/_auth/logout", method: "POST" })).toBe("cf-serve");
+  });
+
+  it("regression: assets-host match must be exact (no smuggled subdomains)", () => {
+    // `evilassets.vibesdiy.net` must not match — only the literal
+    // `assets.<base>` form. Defends against subdomain-takeover style
+    // shenanigans by requiring the segment to be exactly `assets`.
+    expect(decide({ hostname: "evilassets.vibesdiy.net", pathname: "/_files/u/a/db/doc/key" })).toBe("ssr");
+    expect(decide({ hostname: "assets-evil.vibesdiy.net", pathname: "/_files/u/a/db/doc/key" })).toBe("ssr");
+  });
+
   it("regression: app subdomain match requires '--' separator", () => {
     // Bare TLD-suffix match (e.g. "vibesdiy.net" itself) must not be
     // treated as an app subdomain.

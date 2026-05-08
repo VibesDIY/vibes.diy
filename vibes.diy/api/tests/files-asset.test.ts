@@ -93,7 +93,7 @@ function fileUrl(
   uploadId: string
 ): string {
   const port = ctx.svc.port && ctx.svc.port !== "80" && ctx.svc.port !== "443" ? `:${ctx.svc.port}` : "";
-  return `${ctx.svc.protocol}://${app.appSlug}--${app.userSlug}.${ctx.svc.hostnameBase.replace(/^\./, "")}${port}/_files/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}?v=${encodeURIComponent(uploadId)}`;
+  return `${ctx.svc.protocol}://assets.${ctx.svc.hostnameBase.replace(/^\./, "")}${port}/_files/${encodeURIComponent(app.userSlug)}/${encodeURIComponent(app.appSlug)}/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}?v=${encodeURIComponent(uploadId)}`;
 }
 
 // Mint an asset-session cookie for a test user by hitting the bridge

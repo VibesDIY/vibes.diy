@@ -41,18 +41,22 @@ export function isFileMeta(v: unknown): v is FileMeta {
 }
 
 // Build the canonical `_files` URL for a (user, app, db, doc, key) tuple.
-// `?v=<uploadId>` is a CDN/browser cache-bust nonce so the URL changes
-// when a doc replaces its file. The handler ignores `?v=` at read time
-// and resolves uploadId from the doc itself — `?v=` is NOT an integrity
-// claim. Don't start trusting it as one.
+// URL shape: `https://assets.<base>/_files/<u>/<a>/<db>/<doc>/<key>?v=<upl>`
+// — singleton asset host per env, path encodes everything else. `?v=` is a
+// CDN/browser cache-bust nonce so the URL changes when a doc replaces its
+// file. The handler ignores `?v=` at read time and resolves uploadId from
+// the doc itself — `?v=` is NOT an integrity claim. Don't start trusting
+// it as one.
 export function buildFileUrl(ctx: FilesUrlMintCtx, key: string, uploadId: string): string {
   const { svc, userSlug, appSlug, dbName, docId } = ctx;
-  const hostname = `${appSlug}--${userSlug}.${svc.hostnameBase.replace(/^\./, "")}`;
+  const hostname = `assets.${svc.hostnameBase.replace(/^\./, "")}`;
   const buri = BuildURI.from(`http://template`).protocol(svc.protocol).hostname(hostname);
   if (svc.port && svc.port !== "80" && svc.port !== "443") {
     buri.port(svc.port);
   }
-  buri.pathname(`/_files/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}`);
+  buri.pathname(
+    `/_files/${encodeURIComponent(userSlug)}/${encodeURIComponent(appSlug)}/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}`
+  );
   buri.setParam("v", uploadId);
   return buri.toString();
 }
