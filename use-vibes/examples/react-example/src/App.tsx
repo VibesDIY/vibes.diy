@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import ImgVibesExample from "./ImgVibesExample";
 import TodoListExample from "./TodoListExample";
 import VibesGeneratorExample from "./VibesGeneratorExample";
 import VibeControlExample from "./VibeControlExample";
@@ -7,14 +6,7 @@ import { ShareExample } from "./ShareExample";
 import "./App.css";
 import MountVibesAppExample from "./MountVibesAppExample";
 
-export type ExampleKey =
-  | "home"
-  | "img-vibeserator"
-  | "todo-list"
-  | "vibes-generator"
-  | "vibe-control"
-  | "share"
-  | "mount-vibes-app";
+export type ExampleKey = "home" | "todo-list" | "vibes-generator" | "vibe-control" | "share" | "mount-vibes-app";
 
 function App() {
   const [currentExample, setCurrentExample] = useState<ExampleKey>(() => {
@@ -64,12 +56,6 @@ function App() {
       title: "Vibes Generator",
       description: "Generate React components from text prompts using AI",
       component: <VibesGeneratorExample />,
-    },
-    {
-      key: "img-vibeserator" as const,
-      title: "Image Generator",
-      description: "Generate and edit images with AI using the ImgVibes component",
-      component: <ImgVibesExample />,
     },
     {
       key: "todo-list" as const,

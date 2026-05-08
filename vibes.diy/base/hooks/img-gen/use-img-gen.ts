@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useFireproof } from "@fireproof/use-fireproof";
 import { imgGen as defaultImgGen } from "@vibes.diy/vibe-runtime";
 import type { Database } from "@fireproof/use-fireproof";
-import type { FileMeta, ImgGenFile, UseImgGenOptions, UseImgGenResult } from "@vibes.diy/vibe-types";
+import type { FileMeta, ImgGenFile, PartialImageDocument, UseImgGenOptions, UseImgGenResult } from "@vibes.diy/vibe-types";
 import { addNewVersion } from "./utils.js";
-import type { PartialImageDocument } from "@vibes.diy/vibe-types";
 
 // Per-app Firefly-synced ImgGen hook. The runtime auto-attaches via
 // Stage B's `vibe.req.registerFPDb` so the doc lives on the per-(user,
