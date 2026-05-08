@@ -139,6 +139,69 @@ describe("iframeSource capture filtering", () => {
     expect(messages[0].origin).toBe("https://app--user.example.com");
   });
 
+  it("Stage C: ensureAssetSession is awaited BEFORE runtime.ack is posted", async () => {
+    const callOrder: string[] = [];
+    const messages: { data: unknown; origin: string }[] = [];
+    const fakeWindow = {
+      postMessage: (data: unknown, origin: string) => {
+        callOrder.push("ack");
+        messages.push({ data, origin });
+      },
+    } as unknown as Window;
+    const listeners: ((event: MessageEvent) => void)[] = [];
+    const sandbox = new vibesDiySrvSandbox({
+      vibeDiyApi: { onDocChanged: () => undefined } as unknown as VibesDiyApiIface,
+      errorLogger: () => undefined,
+      eventListeners: {
+        addEventListener: (_t: string, fn: EventListenerOrEventListenerObject) => {
+          listeners.push(fn as (event: MessageEvent) => void);
+        },
+        removeEventListener: () => undefined,
+      },
+      ensureAssetSession: async () => {
+        callOrder.push("bridge-start");
+        await Promise.resolve();
+        callOrder.push("bridge-end");
+      },
+    });
+
+    await sandbox.handleMessage(fakeMessageEvent({ type: "vibe.evt.runtime.ready" }, "https://app--user.vibesdiy.net", fakeWindow));
+
+    expect(callOrder).toEqual(["bridge-start", "bridge-end", "ack"]);
+    expect(messages).toHaveLength(1);
+    expect(messages[0].data).toEqual({ type: "vibe.evt.runtime.ack" });
+  });
+
+  it("Stage C: ack still posts when ensureAssetSession rejects (graceful degradation)", async () => {
+    const messages: { data: unknown; origin: string }[] = [];
+    const fakeWindow = {
+      postMessage: (data: unknown, origin: string) => {
+        messages.push({ data, origin });
+      },
+    } as unknown as Window;
+    const listeners: ((event: MessageEvent) => void)[] = [];
+    const sandbox = new vibesDiySrvSandbox({
+      vibeDiyApi: { onDocChanged: () => undefined } as unknown as VibesDiyApiIface,
+      errorLogger: () => undefined,
+      eventListeners: {
+        addEventListener: (_t: string, fn: EventListenerOrEventListenerObject) => {
+          listeners.push(fn as (event: MessageEvent) => void);
+        },
+        removeEventListener: () => undefined,
+      },
+      ensureAssetSession: async () => {
+        throw new Error("network down");
+      },
+    });
+
+    await sandbox.handleMessage(fakeMessageEvent({ type: "vibe.evt.runtime.ready" }, "https://app--user.vibesdiy.net", fakeWindow));
+
+    // Bridge failed but the iframe still gets ack — public-readable vibes work,
+    // private vibes 401 their <img> requests (correct).
+    expect(messages).toHaveLength(1);
+    expect(messages[0].data).toEqual({ type: "vibe.evt.runtime.ack" });
+  });
+
   it("Clerk-then-sandbox sequence captures sandbox correctly", () => {
     const { sandbox } = createSandbox();
     const clerkWindow = {} as Window;
