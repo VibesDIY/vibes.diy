@@ -36,22 +36,16 @@ export function useRecentVibes(limit: number): UseRecentVibes {
     const token = ++fetchTokenRef.current;
     setLoading(true);
     setError(null);
-    try {
-      const res = await vibeDiyApi.listRecentVibes({ limit });
-      if (token !== fetchTokenRef.current) return;
-      if (res.isOk()) {
-        const ok = res.Ok();
-        setItems(ok.items);
-        setNextCursor(ok.nextCursor);
-      } else {
-        setError(res.Err().message);
-      }
-    } catch (e) {
-      if (token !== fetchTokenRef.current) return;
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      if (token === fetchTokenRef.current) setLoading(false);
+    const res = await vibeDiyApi.listRecentVibes({ limit });
+    if (token !== fetchTokenRef.current) return;
+    if (res.isOk()) {
+      const ok = res.Ok();
+      setItems(ok.items);
+      setNextCursor(ok.nextCursor);
+    } else {
+      setError(res.Err().message);
     }
+    setLoading(false);
   }, [vibeDiyApi, limit]);
 
   const loadMore = useCallback(async () => {
@@ -59,22 +53,16 @@ export function useRecentVibes(limit: number): UseRecentVibes {
     const token = ++fetchTokenRef.current;
     setLoading(true);
     setError(null);
-    try {
-      const res = await vibeDiyApi.listRecentVibes({ limit, cursor: nextCursor });
-      if (token !== fetchTokenRef.current) return;
-      if (res.isOk()) {
-        const ok = res.Ok();
-        setItems((prev) => [...prev, ...ok.items]);
-        setNextCursor(ok.nextCursor);
-      } else {
-        setError(res.Err().message);
-      }
-    } catch (e) {
-      if (token !== fetchTokenRef.current) return;
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      if (token === fetchTokenRef.current) setLoading(false);
+    const res = await vibeDiyApi.listRecentVibes({ limit, cursor: nextCursor });
+    if (token !== fetchTokenRef.current) return;
+    if (res.isOk()) {
+      const ok = res.Ok();
+      setItems((prev) => [...prev, ...ok.items]);
+      setNextCursor(ok.nextCursor);
+    } else {
+      setError(res.Err().message);
     }
+    setLoading(false);
   }, [vibeDiyApi, limit, nextCursor]);
 
   useEffect(() => {
