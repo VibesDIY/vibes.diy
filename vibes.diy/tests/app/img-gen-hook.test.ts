@@ -66,6 +66,36 @@ describe("ImgGen doc shape (addNewVersion)", () => {
     expect(updated.versions[0].model).toBe("openai/gpt-5-image-mini");
   });
 
+  it("strips non-cloneable .file() accessors from existing _files entries", () => {
+    // Regression: when a doc round-trips through the FP bridge it gets a
+    // hydrated `.file()` closure on each `_files.<x>`. addNewVersion used
+    // to spread that into the next put, tripping DataCloneError when
+    // postMessage tried to structured-clone the closure.
+    const hydrated = {
+      _id: "doc-5",
+      type: "image" as const,
+      _files: {
+        selfie: {
+          uploadId: "upl-existing",
+          type: "image/jpeg",
+          size: 4096,
+          lastModified: 1700000000000,
+          url: "https://example.test/selfie",
+          file: () => Promise.resolve(new Blob()),
+        },
+      },
+    };
+    const updated = addNewVersion(hydrated, FAKE_FILE_META_V1, "next");
+    const carried = updated._files.selfie as Record<string, unknown>;
+    expect(carried.uploadId).toBe("upl-existing");
+    expect(carried.type).toBe("image/jpeg");
+    expect(carried.size).toBe(4096);
+    expect(carried.lastModified).toBe(1700000000000);
+    expect(carried.url).toBe("https://example.test/selfie");
+    expect(typeof carried.file).toBe("undefined");
+    expect(updated._files.v1).toEqual(FAKE_FILE_META_V1);
+  });
+
   it("ID generators stay stable", () => {
     expect(generateVersionId(1)).toBe("v1");
     expect(generateVersionId(7)).toBe("v7");
