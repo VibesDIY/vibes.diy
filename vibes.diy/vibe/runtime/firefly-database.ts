@@ -85,7 +85,6 @@ export class FireflyDatabase {
     // subscribeDocs deduplicates by key, so reconnect replay stays safe.
     this.vibeApi.subscribeDocs(this.name).then((rRes) => {
       if (rRes.isErr()) {
-        // eslint-disable-next-line no-console
         console.error(`Failed to subscribe to docs for db "${this.name}":`, rRes.Err());
       }
     });
