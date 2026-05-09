@@ -184,4 +184,30 @@ describe("tearDownAssetSession", () => {
     });
     await expect(tearDownAssetSession({ hostnameBase: "test-7.vibesdiy.net", fetch: spy.fetch })).resolves.toBeUndefined();
   });
+
+  it("logout URL reflects the runtime port (parity with /_auth/session)", async () => {
+    // Same port-derivation rule applies to both bridge endpoints. If a
+    // future regression made the two paths inconsistent (e.g. logout URL
+    // dropped the port while session kept it), the cookie path/origin
+    // mismatch would silently break sign-out cleanup in dev. Pin the
+    // invariant directly.
+    const spy = fakeFetcher(async () => new Response("{}", { status: 200 }));
+    await tearDownAssetSession({ hostnameBase: "test-8.vibesdiy.net", fetch: spy.fetch });
+    expect(spy.calls).toHaveLength(1);
+    const expectedPort = globalThis.location?.port ? `:${globalThis.location.port}` : "";
+    expect(spy.calls[0].url).toBe(`https://assets.test-8.vibesdiy.net${expectedPort}/_auth/logout`);
+  });
+
+  it("strips a leading dot from hostnameBase before prepending 'assets.'", async () => {
+    // The bridgeUrl `.replace(/^\./, "")` defends against a callsite that
+    // hands in a `.vibesdiy.net`-shaped value. Without the strip the URL
+    // becomes `https://assets..vibesdiy.net…` — DNS-resolvable on some
+    // setups but never matched by route-decision's exact `assets`-prefix
+    // check, so requests would silently 404.
+    const spy = fakeFetcher(async () => new Response("{}", { status: 200 }));
+    await tearDownAssetSession({ hostnameBase: ".test-9.vibesdiy.net", fetch: spy.fetch });
+    expect(spy.calls).toHaveLength(1);
+    const expectedPort = globalThis.location?.port ? `:${globalThis.location.port}` : "";
+    expect(spy.calls[0].url).toBe(`https://assets.test-9.vibesdiy.net${expectedPort}/_auth/logout`);
+  });
 });
