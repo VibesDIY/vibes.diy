@@ -15,19 +15,37 @@ export function registerImgGen(vibeApi: VibeSandboxApi): void {
     if (inputImage) {
       inputImageBase64 = await resizeImageToBase64(inputImage);
     }
+    const startedAt = Date.now();
     // eslint-disable-next-line no-console
     console.log("[img-gen] request", {
       model: model ?? "(default)",
       hasInputImage: !!inputImage,
       prompt,
     });
+    const log = (status: string, extra: Record<string, unknown>) => {
+      // eslint-disable-next-line no-console
+      console.log("[img-gen] " + status, {
+        model: model ?? "(default)",
+        durationMs: Date.now() - startedAt,
+        ...extra,
+      });
+    };
     const rResult = await vibeApi.imgGen(prompt, inputImageBase64, model);
-    if (rResult.isErr()) return Result.Err(rResult.Err());
+    if (rResult.isErr()) {
+      const err = rResult.Err();
+      log("error", { message: err.message });
+      return Result.Err(err);
+    }
     const res = rResult.Ok();
-    if (isResErrorImgGen(res)) return Result.Err(new Error(res.message));
+    if (isResErrorImgGen(res)) {
+      log("error", { message: res.message });
+      return Result.Err(new Error(res.message));
+    }
     if (!res.files || res.files.length === 0) {
+      log("error", { message: "Image service returned no files" });
       return Result.Err(new Error("Image service returned no files"));
     }
+    log("complete", { fileCount: res.files.length, files: res.files });
     return Result.Ok(res.files);
   };
 }
