@@ -253,6 +253,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       if (isCatalog && userSlug !== "preparing" && appSlug !== "session") {
         void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, theme: theme.slug });
       }
+      // Prefill the chat textarea with a default restyle prompt — only if
+      // it's empty, so we don't clobber a half-typed message. The user can
+      // edit before sending; the backend already has the new theme so the
+      // next prompt will pick it up regardless of wording.
+      chatInput.current?.setPromptIfEmpty("Please update the theme");
+      chatInput.current?.setFocus();
     },
     [vibeDiyApi, userSlug, appSlug]
   );
