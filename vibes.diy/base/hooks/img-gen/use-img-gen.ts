@@ -1,8 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useFireproof } from "@fireproof/use-fireproof";
 import { imgGen as defaultImgGen } from "@vibes.diy/vibe-runtime";
-import type { Database } from "@fireproof/use-fireproof";
-import type { FileMeta, ImgGenFile, PartialImageDocument, UseImgGenOptions, UseImgGenResult } from "@vibes.diy/vibe-types";
+import type { Database, DocSet } from "@fireproof/use-fireproof";
+import type {
+  FileMeta,
+  ImageDocumentPlain,
+  ImgGenFile,
+  PartialImageDocument,
+  UseImgGenOptions,
+  UseImgGenResult,
+} from "@vibes.diy/vibe-types";
+import { exception2Result } from "@adviser/cement";
 import { addNewVersion } from "./utils.js";
 
 // Per-app Firefly-synced ImgGen hook. The runtime auto-attaches via
@@ -38,12 +46,8 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
 
     async function run() {
       if (!_id) return;
-      let existingDoc: PartialImageDocument | null = null;
-      try {
-        existingDoc = (await db.get(_id)) as PartialImageDocument;
-      } catch {
-        // Doc does not yet exist
-      }
+      const rExisting = await exception2Result(() => db.get(_id) as Promise<PartialImageDocument>);
+      const existingDoc: PartialImageDocument | null = rExisting.isOk() ? rExisting.Ok() : null;
 
       const currentVer = existingDoc?.versions?.[existingDoc?.currentVersion ?? 0];
       const modelMatch = !model || currentVer?.model === model;
@@ -77,7 +81,7 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
       setProgress(10);
       setError(null);
 
-      try {
+      const rRun = await exception2Result(async () => {
         const files = await imgGen(promptText, inputImage, model);
         const file = files[0];
         if (!file) throw new Error("No image file returned from service");
@@ -96,15 +100,16 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
         if (existingDoc?._id && (isRegen || !modelMatch)) {
           const fresh = (await db.get(existingDoc._id)) as PartialImageDocument;
           const updated = addNewVersion(fresh, fileMeta, promptText, model);
-          // _files entries are the server-stored ref shape, not File/Blob
-          // — DocFiles' typing expects DocFileMeta (which carries `cid`).
-          // Cast through unknown to keep the put boundary honest.
-          await db.put(updated as unknown as Parameters<typeof db.put>[0]);
+          // `DocSet<ImageDocumentPlain>` requires `_files` entries to satisfy
+          // `DocFileMeta` (which requires `cid`); our wire `FileMeta` carries
+          // `uploadId` instead. Tracked upstream — see
+          // https://github.com/fireproof-storage/fireproof/issues/1812.
+          await db.put<ImageDocumentPlain>(updated as unknown as DocSet<ImageDocumentPlain>);
           const saved = (await db.get(existingDoc._id)) as PartialImageDocument;
           setDocument(saved);
         } else {
           const now = Date.now();
-          await db.put({
+          await db.put<ImageDocumentPlain>({
             _id,
             type: "image",
             prompt: promptText,
@@ -114,15 +119,16 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
             currentPromptKey: "p1",
             prompts: { p1: { text: promptText, created: now } },
             _files: { v1: fileMeta },
-          } as unknown as Parameters<typeof db.put>[0]);
+          } as unknown as DocSet<ImageDocumentPlain>);
           const saved = (await db.get(_id)) as PartialImageDocument;
           setDocument(saved);
         }
 
         setProgress(100);
         setLoading(false);
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err : new Error(String(err)));
+      });
+      if (rRun.isErr()) {
+        setError(rRun.Err());
         setLoading(false);
         currentGenRef.current = null;
       }
