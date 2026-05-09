@@ -21,6 +21,9 @@ interface ResultPreviewHeaderContentProps {
   shareModal: UseShareModalReturn;
   syntaxErrorCount?: number;
   onBackClick?: () => void;
+  /** Forwarded to ShareModal — owners get the full sharing trio; non-owners get Copy Link + Request Access. */
+  isOwner?: boolean;
+  myGrant?: "owner" | "editor" | "viewer" | "submitter" | "public" | "none";
 }
 
 function ResultPreviewHeaderContent({
@@ -34,6 +37,8 @@ function ResultPreviewHeaderContent({
   onContextMenu,
   shareModal,
   onBackClick,
+  isOwner,
+  myGrant,
 }: React.PropsWithChildren<ResultPreviewHeaderContentProps>) {
   return (
     <div className="flex h-full w-full items-center px-2 py-1">
@@ -80,7 +85,7 @@ function ResultPreviewHeaderContent({
           </div>
         </div>
       </div>
-      <ShareModal modal={shareModal} />
+      <ShareModal modal={shareModal} isOwner={isOwner} myGrant={myGrant} />
     </div>
   );
 }

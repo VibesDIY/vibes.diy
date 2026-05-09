@@ -1,7 +1,7 @@
 import { SetURLSearchParams, useNavigate, useParams, useSearchParams } from "react-router";
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
-// import { useClerk } from "@clerk/react";
+import { useAuth } from "@clerk/react";
 import { processStream, BuildURI, URI, exception2Result } from "@adviser/cement";
 import { fireproof } from "@fireproof/use-fireproof";
 import type { VibeDocument, ViewType, VibesTheme } from "@vibes.diy/prompts";
@@ -253,6 +253,18 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   }
   const { vibeDiyApi, webVars: svcVars } = useVibesDiy();
   const shareModal = useShareModal({ userSlug, appSlug, fsId, vibeDiyApi });
+  const { isSignedIn } = useAuth();
+  const [isOwner, setIsOwner] = useState(false);
+  useEffect(() => {
+    if (!isSignedIn || !userSlug) {
+      setIsOwner(false);
+      return;
+    }
+    void vibeDiyApi.listUserSlugBindings({}).then((res) => {
+      if (res.isErr()) return;
+      setIsOwner(res.Ok().items.some((item) => item.userSlug === userSlug));
+    });
+  }, [isSignedIn, userSlug, vibeDiyApi]);
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
@@ -704,6 +716,8 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             onContextMenu={handleContextMenu}
             shareModal={shareModal}
             onBackClick={() => setMobilePreviewShown(false)}
+            isOwner={isOwner}
+            myGrant={isOwner ? "owner" : "none"}
           />
         }
         chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} />}
