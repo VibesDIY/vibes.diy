@@ -41,19 +41,31 @@ export interface EnsureAssetSessionDeps {
 // don't interfere.
 const sessionCache = new KeyedResolvOnce<Result<void>>();
 
+function runtimePort(): string {
+  return typeof globalThis !== "undefined" && globalThis.location?.port ? globalThis.location.port : "";
+}
+
+function cacheKey(hostnameBase: string): string {
+  // Port is part of the bridge URL identity — same hostnameBase served on
+  // different ports (dev :8888 vs prod :443) must not alias to one cache
+  // entry. Defense in depth: today's callers use a stable port per page.
+  return `${hostnameBase}:${runtimePort()}`;
+}
+
 function bridgeUrl(hostnameBase: string, path: string): string {
   // Always https; the asset host is Secure-only (the cookie sets `Secure`).
   // In dev, every virtual host (`<app>--<user>.<base>`, `assets.<base>`) is
   // served by a single Vite listener on a non-standard port, so reuse the
   // current window port for the asset host. Empty in prod (default 443).
-  const port = typeof globalThis !== "undefined" && globalThis.location?.port ? `:${globalThis.location.port}` : "";
-  return `https://assets.${hostnameBase.replace(/^\./, "")}${port}${path}`;
+  const p = runtimePort();
+  return `https://assets.${hostnameBase.replace(/^\./, "")}${p ? `:${p}` : ""}${path}`;
 }
 
 export async function ensureAssetSession(deps: EnsureAssetSessionDeps): Promise<Result<void>> {
   const { getToken, hostnameBase } = deps;
   const fetcher = deps.fetch ?? globalThis.fetch;
-  const result = await sessionCache.get(hostnameBase).once(async (opts) => {
+  const key = cacheKey(hostnameBase);
+  const result = await sessionCache.get(key).once(async (opts) => {
     const rAuth = await getToken();
     if (rAuth.isErr()) {
       return Result.Err(rAuth);
@@ -92,7 +104,7 @@ export async function ensureAssetSession(deps: EnsureAssetSessionDeps): Promise<
   // because the timer fires asynchronously and a second caller can race past
   // it. unget() is synchronous + idempotent, which is what we want.
   if (result.isErr()) {
-    sessionCache.unget(hostnameBase);
+    sessionCache.unget(key);
   }
   return result;
 }
@@ -100,7 +112,7 @@ export async function ensureAssetSession(deps: EnsureAssetSessionDeps): Promise<
 export async function tearDownAssetSession(deps: { hostnameBase: string; fetch?: typeof fetch }): Promise<void> {
   const fetcher = deps.fetch ?? globalThis.fetch;
   // Drop the cached promise so the next ensureAssetSession refetches.
-  sessionCache.unget(deps.hostnameBase);
+  sessionCache.unget(cacheKey(deps.hostnameBase));
   // Best-effort logout — Clerk's listener already wiped the local token,
   // and the cookie's Max-Age caps server-side staleness regardless. Any
   // failure here is recoverable on next sign-in (which calls ensure again).
