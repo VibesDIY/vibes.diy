@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useVibesDiy } from "../../../vibes-diy-provider.js";
+import { notifyRecentVibesChanged } from "../../../hooks/useRecentVibes.js";
 import { fromKVString, toKVString, AIParams } from "@vibes.diy/api-types";
 import { toast } from "react-hot-toast";
 import { ModelSettingsCards } from "../../ModelSettingsCards.js";
@@ -308,6 +309,8 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
       setAppConfig(s.entry.settings.app ?? {});
       setImgConfig(s.entry.settings.img ?? {});
       setEnv(fromKVString(s.entry.settings.env ?? []));
+
+      if (pending.kind === "title") notifyRecentVibesChanged();
 
       if (pending.kind !== "fetch") toast.success("Saved");
     });
