@@ -1,6 +1,7 @@
 ---
 name: Neobrutalist
 colors:
+  # Light mode (canonical) — warm off-white canvas, near-black ink, vivid signal blocks.
   background: "#f5f0e0"
   card-background: "#ffffff"
   text: "#1a1a2e"
@@ -15,6 +16,23 @@ colors:
   info: "#3b82f6"
   on-info: "#ffffff"
   primary-light: "rgba(218, 41, 28, 0.1)"
+colorsDark:
+  # Dark mode — cool ink canvas, off-white strokes, same vivid signal blocks.
+  # Hard offset shadows flip to use the off-white border so they remain visible.
+  background: "oklch(0.18 0.02 280)"
+  card-background: "oklch(0.22 0.02 280)"
+  text: "oklch(0.96 0.01 80)"
+  border: "oklch(0.96 0.01 80)"
+  muted: "oklch(0.60 0.03 280)"
+  primary: "#DA291C"
+  on-primary: "#ffffff"
+  secondary: "#fedd00"
+  on-secondary: "#1a1a2e"
+  success: "#22c55e"
+  on-success: "#1a1a2e"
+  info: "#3b82f6"
+  on-info: "#ffffff"
+  primary-light: "rgba(218, 41, 28, 0.18)"
 typography:
   h1:
     fontFamily: Space Grotesk
@@ -110,20 +128,24 @@ components:
 
 ## Brand & Style
 
-Neobrutalist Design System. A bold, retro-arcade-inspired neobrutalist theme. Hard edges, chunky black borders, thick offset drop shadows, vivid primary color blocks, and uppercase display typography. The mood is playful and unapologetically loud — "level dashboard" energy: raw, graphic, readable, kinetic. Never pill-shaped, never blurred shadows, never gradients on strokes.
+Neobrutalist Design System. A bold, retro-arcade-inspired neobrutalist theme. Hard edges, chunky borders, thick offset drop shadows, vivid primary color blocks, and uppercase display typography. The mood is playful and unapologetically loud — "level dashboard" energy: raw, graphic, readable, kinetic. Never pill-shaped, never blurred shadows, never gradients on strokes.
+
+The theme **respects the visitor's system color scheme**: light is canonical (warm off-white canvas, near-black ink), and a dark variant auto-applies on `prefers-color-scheme: dark` (cool dark canvas, off-white ink + borders, same vivid signal colors). Apply via a `@media (prefers-color-scheme: dark)` block — never hard-code one mode only.
 
 ## Colors
 
-The palette is rooted in high-contrast ink on warm canvas with four vivid signal colors.
+The palette is rooted in high-contrast ink on warm canvas (light) or off-white strokes on cool dark canvas (dark), with four vivid signal colors that hold across both modes.
 
 - **Primary (#DA291C):** "Vibes Red" — primary actions, danger states, hero accents. Always white text on top.
 - **Secondary (#fedd00):** "Signal Yellow" — highlights, hover fills, warning states. Always dark ink text on top.
 - **Success (#22c55e):** Active/success states, status indicators, toggle-on. Dark ink text.
 - **Info (#3b82f6):** Informational accents, modal title bars. White text on top.
-- **Background (#f5f0e0):** Warm off-white canvas. Never pure white for the page.
-- **Card Background (#ffffff):** Pure white surfaces for cards. Don't tint surfaces.
-- **Text (#1a1a2e):** Near-black ink with cool undertone. Same as border — every stroke is bold.
-- **Muted (#6b6b80):** Secondary labels, metadata, captions.
+- **Background (light: #f5f0e0 / dark: oklch(0.18 0.02 280)):** Warm off-white canvas in light, cool dark canvas in dark. Never pure white in either mode.
+- **Card Background (light: #ffffff / dark: oklch(0.22 0.02 280)):** Solid surfaces for cards. Don't tint surfaces toward the signal colors.
+- **Text (light: #1a1a2e / dark: oklch(0.96 0.01 80)):** Near-black ink in light, off-white in dark. Same as border — every stroke is bold.
+- **Muted (light: #6b6b80 / dark: oklch(0.60 0.03 280)):** Secondary labels, metadata, captions.
+
+The four signal colors (red/yellow/green/blue) remain identical across both modes — they're already saturated enough to read on either canvas. The shadow color flips with the border (dark in light mode, off-white in dark mode), so the chunky offset shadow stays visible.
 
 ## Typography
 
