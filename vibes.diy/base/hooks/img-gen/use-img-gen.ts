@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useFireproof } from "@fireproof/use-fireproof";
 import { imgGen as defaultImgGen } from "@vibes.diy/vibe-runtime";
-import type { Database, DocSet } from "@fireproof/use-fireproof";
+import type { DocSet } from "@fireproof/use-fireproof";
 import type {
   FileMeta,
   ImageDocumentPlain,
