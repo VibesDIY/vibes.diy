@@ -103,8 +103,10 @@ export default function ThemePickerModal({ open, onClose, onSelect, selectedSlug
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
-        const content = reader.result as string;
-        const theme = parseDesignMd(content, file.name.replace(/\.md$/i, "").toLowerCase());
+        // FileReader.result is string | ArrayBuffer | null. We pass `readAsText`
+        // below so a string is what we expect, but be explicit instead of casting.
+        if (typeof reader.result !== "string") return;
+        const theme = parseDesignMd(reader.result, file.name.replace(/\.md$/i, "").toLowerCase());
         onSelect(theme);
       };
       reader.readAsText(file);

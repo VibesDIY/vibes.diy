@@ -245,10 +245,14 @@ export const vibesThemes: VibesTheme[] = [
   { slug: "zine", name: "Zine Cut", accentColor: "oklch(0.05 0 0)", bgColor: "oklch(0.96 0.005 100)", bodyFont: "var(--f-type)" },
 ];
 
-let _names: Set<string> | undefined;
-export function getThemeCatalogNames(): Set<string> {
-  if (!_names) _names = new Set(vibesThemes.map((t) => t.slug));
-  return _names;
+// Catalog slugs for sync membership checks. Computed once at module load
+// — the catalog is a static const so neither Lazy nor ResolveOnce is needed.
+// Callers should use the const directly; the function form is kept for API
+// parity with `getLlmCatalogNames` (which is async / Promise-returning).
+const themeCatalogNames: ReadonlySet<string> = new Set(vibesThemes.map((t) => t.slug));
+
+export function getThemeCatalogNames(): ReadonlySet<string> {
+  return themeCatalogNames;
 }
 
 export function getThemeBySlug(slug: string): VibesTheme | undefined {
