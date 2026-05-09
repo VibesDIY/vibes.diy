@@ -2,6 +2,13 @@
 
 Team-wide standards for agent behavior and code review.
 
+## Rules-bag scope and remediation
+
+Rules-bag is mandatory for repository-authored code.
+Prompt-generated `App.jsx` is exempt while it remains generated output.
+
+During PR review/remediation, auto-fix low-risk rules-bag violations without asking first. Ask clarifying questions before higher-risk fixes.
+
 ## No inline HTML in TypeScript
 
 Never put HTML inside TypeScript code as template literal strings (code-in-code). Keep HTML in separate files and load/serve them. When a worker needs to serve HTML, put the HTML in a separate file (e.g. `ui.html`) and load it at build time or serve it as a static asset.

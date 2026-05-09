@@ -39,6 +39,13 @@ This rule applies to any branch that other people / other agents pull from regul
 
 Read the full diff of every commit before `git push`. Check each pattern against the [rules-bag](rules-bag.md) — no `instanceof`, no complex stringification chains, no casts, no inline HTML. If something looks like a workaround, it probably is. Ask for guidance or rethink the approach rather than shipping a "cries for help" pattern.
 
+Rules-bag applies to repository-authored code; prompt-generated `App.jsx` is exempt while it remains generated output.
+
+During PR review/remediation of rules-bag findings:
+
+- Auto-fix low-risk violations without asking first.
+- Ask clarifying questions before higher-risk fixes (behavior changes, architecture changes, or unclear intent).
+
 PR reviews are fast and reviewers will catch rules-bag violations. Catching them yourself before submission keeps the review loop tight.
 
 ## Ask before merging PRs

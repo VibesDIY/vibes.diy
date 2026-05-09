@@ -1,5 +1,10 @@
 # Vibes.diy – Fireproof Rules-Bag
 
+## Scope
+
+Rules-bag applies to repository-authored code in this repo.
+Prompt-generated `App.jsx` is exempt while it remains generated output.
+
 Never use `export default`, nor `import X from 'y'`
 Every Never has an exception — but this has to be discussed and decided.
 
