@@ -86,7 +86,7 @@ describe("ImgGen doc shape (addNewVersion)", () => {
       },
     };
     const updated = addNewVersion(hydrated, FAKE_FILE_META_V1, "next");
-    const carried = updated._files.selfie as Record<string, unknown>;
+    const carried = updated._files.selfie as unknown as Record<string, unknown>;
     expect(carried.uploadId).toBe("upl-existing");
     expect(carried.type).toBe("image/jpeg");
     expect(carried.size).toBe(4096);
