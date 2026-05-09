@@ -15,6 +15,12 @@ export function registerImgGen(vibeApi: VibeSandboxApi): void {
     if (inputImage) {
       inputImageBase64 = await resizeImageToBase64(inputImage);
     }
+    // eslint-disable-next-line no-console
+    console.log("[img-gen] request", {
+      model: model ?? "(default)",
+      hasInputImage: !!inputImage,
+      prompt,
+    });
     const rResult = await vibeApi.imgGen(prompt, inputImageBase64, model);
     if (rResult.isErr()) return Result.Err(rResult.Err());
     const res = rResult.Ok();

@@ -1883,11 +1883,16 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
       if (isReqPromptImageChatSection(orig) && useProdia) {
         prompSectionAction = async (scope: Scope, blockSeq: number) => {
+          // `orig` carries the live model override (mutated above) but
+          // not `_auth`; `req` (the validated payload) carries `_auth`
+          // but is a separate object reference. Merge so the Prodia
+          // handler sees both.
+          const reqWithAuth = { ...orig, _auth: req._auth } as ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>;
           return handleProdiaImageRequest({
             scope,
             ctx,
             vctx,
-            req: orig as ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>,
+            req: reqWithAuth,
             promptId,
             blockSeq,
             resolvedModel: resolvedImgModel as string,
@@ -1976,7 +1981,9 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         const seq = { val: 0 };
 
         scope.onCatch(async (e) => {
-          console.error(promptId, "Error in promptChatSection scope for promptId: with error:", e);
+          // Silenced — error is propagated via the prompt.error event below
+          // and surfaced to the client. Re-enable for low-level debugging.
+          // console.error(promptId, "Error in promptChatSection scope for promptId: with error:", e);
           const errorSeq = seq.val;
           seq.val++;
           await appendBlockEvent({
