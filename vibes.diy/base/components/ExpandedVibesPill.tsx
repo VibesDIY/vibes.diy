@@ -19,6 +19,10 @@ export interface ExpandedVibesPillProps {
   communityBadgeCount?: number;
   /** When true, shows a small dot indicating the current code has not been published yet. Owner-only. */
   hasUnpublishedChanges?: boolean;
+  /** Public title shown in the metadata strip above the action buttons when expanded. */
+  appTitle?: string;
+  /** Icon/screenshot URL shown alongside the title in the metadata strip. */
+  appIconUrl?: string;
 }
 
 function PillActionButton({
@@ -258,6 +262,8 @@ export function ExpandedVibesPill({
   communityButtonRef,
   communityBadgeCount,
   hasUnpublishedChanges,
+  appTitle,
+  appIconUrl,
 }: ExpandedVibesPillProps) {
   // idle → bubble → expanding → open (click to close: open → collapsing → idle)
   const [phase, setPhase] = useState<"idle" | "bubble" | "expanding" | "open" | "collapsing" | "shrinking">("idle");
@@ -329,11 +335,18 @@ export function ExpandedVibesPill({
   const btnPadding = 10; // cream gap between buttons and pill
   // On wide screens all buttons show their label; on narrow screens labels
   // are hidden so the tray stays compact.
-  const trayExtra = isWide
-    ? btnExpandedWidth * visibleButtons + btnPadding
-    : btnWidth * visibleButtons + btnPadding;
+  const trayExtra = isWide ? btnExpandedWidth * visibleButtons + btnPadding : btnWidth * visibleButtons + btnPadding;
   const trayCollapsed = pillWidth + 8; // just covers the pill
   const trayExpanded = pillWidth + trayExtra + 8;
+
+  // Metadata strip — added on top of the bubble when expanded and metadata
+  // is available. Bottom/left/right of the bubble stay put; the top moves
+  // up by metaHeight so the buttons row keeps its original position.
+  const hasMetadata = !!(appTitle || appIconUrl);
+  const buttonsRowHeight = 175 * scale + 8;
+  const metaHeight = expanded && hasMetadata ? height * 0.7 : 0;
+  const bubbleTop = 123 * scale - 4 - metaHeight;
+  const bubbleHeight = buttonsRowHeight + metaHeight;
 
   return (
     <div
@@ -356,9 +369,9 @@ export function ExpandedVibesPill({
       <div
         style={{
           position: "absolute",
-          top: 123 * scale - 4,
+          top: bubbleTop,
           right: -4,
-          height: 175 * scale + 8,
+          height: bubbleHeight,
           width: expanded ? trayExpanded : trayCollapsed,
           zIndex: 1,
           background: "var(--vibes-cream, #FFFEF0)",
@@ -371,10 +384,10 @@ export function ExpandedVibesPill({
             phase === "shrinking"
               ? "transform 0.12s ease, opacity 0.01s ease 0.12s"
               : phase === "collapsing"
-                ? "width 0.4s ease"
+                ? "width 0.4s ease, top 0.4s ease, height 0.4s ease"
                 : phase === "bubble"
                   ? "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.01s ease"
-                  : "width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                  : "width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
           overflow: "hidden",
           display: "flex",
           alignItems: "center",
@@ -386,28 +399,87 @@ export function ExpandedVibesPill({
       >
         {/* Hacky blue strip extending to the left of Home — when the bouncy
             reveal overshoots, this fills the overshoot area with Home's blue
-            instead of cream. Clipped by the tray's overflow:hidden. */}
+            instead of cream. Clipped by the tray's overflow:hidden. Bottom-
+            anchored so it doesn't bleed into the metadata strip above. */}
         <div
           style={{
             position: "absolute",
-            top: 0,
+            bottom: 0,
             right: pillWidth + btnPadding + 8 + (isWide ? btnExpandedWidth : btnWidth) * visibleButtons,
             width: 200,
-            height: "100%",
+            height: buttonsRowHeight,
             background: "var(--vibes-blue, #3b82f6)",
             pointerEvents: "none",
           }}
         />
+        {/* Metadata strip — sits in the extra space added at the top of the
+            bubble when expanded. Right-anchored to align with the buttons row
+            below; clipped by the tray's overflow:hidden during the width
+            animation, just like the buttons. */}
+        {hasMetadata && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              right: pillWidth + btnPadding + 8,
+              height: metaHeight,
+              width: isWide ? btnExpandedWidth * visibleButtons : btnWidth * visibleButtons,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "0 14px 0 18px",
+              boxSizing: "border-box",
+              opacity: expanded ? 1 : 0,
+              transition: "opacity 0.2s ease",
+              pointerEvents: "none",
+            }}
+          >
+            {appIconUrl && (
+              <img
+                src={appIconUrl}
+                alt=""
+                style={{
+                  width: metaHeight - 12,
+                  height: metaHeight - 12,
+                  borderRadius: 6,
+                  border: "1px solid var(--vibes-near-black, #1a1a1a)",
+                  objectFit: "cover",
+                  flexShrink: 0,
+                  background: "var(--vibes-near-black, #1a1a1a)",
+                }}
+              />
+            )}
+            {appTitle && (
+              <span
+                style={{
+                  color: "var(--vibes-near-black, #1a1a1a)",
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: height * 0.18,
+                  fontWeight: 700,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  letterSpacing: "0.5px",
+                  minWidth: 0,
+                }}
+              >
+                {appTitle}
+              </span>
+            )}
+          </div>
+        )}
         {/* Buttons inside the bubble — positioned absolutely against the tray's
             (stationary) right edge so the buttons stay fixed in page coords as
             the tray width animates. The tray's overflow:hidden clips them, so
-            the bouncy width transition reveals the content without sliding it. */}
+            the bouncy width transition reveals the content without sliding it.
+            Bottom-anchored at a fixed height so growing the bubble upward (for
+            the metadata strip) doesn't stretch the buttons. */}
         <div
           style={{
             position: "absolute",
-            top: 0,
+            bottom: 0,
             right: pillWidth + btnPadding + 8,
-            height: "100%",
+            height: buttonsRowHeight,
             display: "flex",
             gap: 0,
           }}
