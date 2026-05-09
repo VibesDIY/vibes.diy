@@ -77,8 +77,8 @@ export const vibesThemes: VibesTheme[] = [
   {
     slug: "default",
     name: "Default",
-    accentColor: "oklch(0.72 0.18 70)",
-    bgColor: "oklch(0.18 0.04 60)",
+    accentColor: "oklch(0.62 0.18 65)",
+    bgColor: "oklch(0.97 0.01 80)",
     bodyFont: "'Inter', sans-serif",
   },
   {
