@@ -260,10 +260,18 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       setIsOwner(false);
       return;
     }
+    let cancelled = false;
     void vibeDiyApi.listUserSlugBindings({}).then((res) => {
-      if (res.isErr()) return;
+      if (cancelled) return;
+      if (res.isErr()) {
+        setIsOwner(false);
+        return;
+      }
       setIsOwner(res.Ok().items.some((item) => item.userSlug === userSlug));
     });
+    return () => {
+      cancelled = true;
+    };
   }, [isSignedIn, userSlug, vibeDiyApi]);
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
