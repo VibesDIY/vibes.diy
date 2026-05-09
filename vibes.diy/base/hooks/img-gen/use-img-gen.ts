@@ -32,7 +32,13 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
   const [error, setError] = useState<Error | null>(null);
   const [document, setDocument] = useState<PartialImageDocument | null>(null);
 
-  const { database: db } = useFireproof((database ?? "ImgGen") as string | Database);
+  // `database` may be either a name string or an already-instantiated Database
+  // (the documented prop type). `useFireproof` only accepts a name — passing an
+  // object turns it into the cache key, which then gets shipped through the
+  // sandbox postMessage bridge as `subscribeDocs(<object>)` and trips
+  // DataCloneError. Normalize to the name first.
+  const dbName = typeof database === "string" ? database : ((database as { name?: string } | undefined)?.name ?? "ImgGen");
+  const { database: db } = useFireproof(dbName);
   const currentGenRef = useRef<string | null>(null);
 
   useEffect(() => {
