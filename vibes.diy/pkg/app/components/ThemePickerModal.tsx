@@ -116,12 +116,21 @@ export default function ThemePickerModal({ open, onClose, onSelect, selectedSlug
                   }
                   aria-pressed={isSelected}
                 >
-                  <div
-                    className="flex aspect-[16/10] w-full items-end justify-start p-3"
-                    style={{ backgroundColor: theme.bgColor }}
-                  >
+                  <div className="relative aspect-[16/10] w-full overflow-hidden" style={{ backgroundColor: theme.bgColor }}>
+                    <iframe
+                      src={`/themes/${theme.slug}.html`}
+                      title={theme.name}
+                      sandbox="allow-same-origin"
+                      loading="lazy"
+                      className="pointer-events-none absolute left-1/2 top-1/2 border-0"
+                      style={{
+                        width: 1400,
+                        height: 900,
+                        transform: "translate(-50%, -50%) scale(0.18)",
+                      }}
+                    />
                     <span
-                      className="inline-block h-7 w-7 rounded-full border-2 border-black/30 dark:border-white/40"
+                      className="absolute bottom-2 left-2 inline-block h-7 w-7 rounded-full border-2 border-black/30 dark:border-white/40"
                       style={{ backgroundColor: theme.accentColor }}
                       aria-hidden
                     />
