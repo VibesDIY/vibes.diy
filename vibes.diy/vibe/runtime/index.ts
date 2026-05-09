@@ -4,6 +4,7 @@ export { rewriteBareSpecifiers, getActiveImportMap } from "./bare-specifier-rewr
 export * from "./VibeContext.js";
 export * from "./call-ai.js";
 export * from "./img-gen.js";
+export { resizeImageToBase64 } from "./resize-image.js";
 export { useFireproof, fireproof, listDbNames } from "./use-firefly.js";
 export {
   FireflyDatabase,
