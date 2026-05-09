@@ -73,10 +73,23 @@ export function addNewVersion(
     updatedPrompts["p1"] = { text: document.prompt, created: document.created || Date.now() };
   }
 
-  const updatedFiles: Record<string, FileMeta> = {
-    ...(document._files ?? {}),
-    [newVersionId]: fileMeta,
-  };
+  // Strip non-cloneable properties (e.g. Fireproof's hydrated `.file()`
+  // accessor) from existing `_files` entries before re-putting. The
+  // closure can't be structured-cloned across the iframe postMessage
+  // bridge — it surfaces as DataCloneError. Only carry the data fields.
+  const updatedFiles: Record<string, FileMeta> = {};
+  for (const [key, value] of Object.entries(document._files ?? {})) {
+    if (!value || typeof value !== "object") continue;
+    const v = value as Partial<FileMeta> & { cid?: string };
+    updatedFiles[key] = {
+      uploadId: v.uploadId ?? "",
+      type: v.type ?? "application/octet-stream",
+      size: v.size ?? 0,
+      ...(v.lastModified !== undefined ? { lastModified: v.lastModified } : {}),
+      ...(v.url !== undefined ? { url: v.url } : {}),
+    };
+  }
+  updatedFiles[newVersionId] = fileMeta;
 
   return {
     ...document,
