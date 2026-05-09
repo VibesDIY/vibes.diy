@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import type { VibesTheme } from "@vibes.diy/prompts";
 import { parseDesignMd } from "@vibes.diy/prompts";
@@ -12,8 +12,90 @@ interface ThemePickerModalProps {
   themes: VibesTheme[];
 }
 
+interface ThemeCardProps {
+  theme: VibesTheme;
+  isSelected: boolean;
+  fontLabel?: string;
+  scrollRoot: HTMLElement | null;
+  onSelect: (theme: VibesTheme) => void;
+}
+
+// Lazy-mount the iframe only when the card scrolls into the modal viewport.
+// We watch the card itself rather than the iframe, so the swatch shows
+// immediately and the iframe document fetch is deferred until the card is
+// near-visible. Once mounted we don't unmount — re-mounting on scroll-back
+// would re-fetch + flicker, and 43 tiny static HTMLs is well within budget.
+function ThemeCard({ theme, isSelected, fontLabel, scrollRoot, onSelect }: ThemeCardProps) {
+  const cardRef = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (mounted) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setMounted(true);
+            observer.disconnect();
+            return;
+          }
+        }
+      },
+      // 200px rootMargin = pre-mount cards just below the fold so they're
+      // ready by the time the user scrolls them into view.
+      { root: scrollRoot, rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [mounted, scrollRoot]);
+
+  return (
+    <button
+      ref={cardRef}
+      type="button"
+      onClick={() => onSelect(theme)}
+      className={
+        isSelected
+          ? "flex flex-col overflow-hidden rounded-[5px] border-2 border-blue-500 bg-white shadow-[3px_3px_0px_0px_#3b82f6] dark:bg-gray-800"
+          : "flex flex-col overflow-hidden rounded-[5px] border-2 border-gray-300 bg-white transition-transform hover:-translate-x-px hover:-translate-y-px hover:shadow-[2px_2px_0px_0px_black] dark:border-gray-700 dark:bg-gray-800 dark:hover:shadow-[2px_2px_0px_0px_white]"
+      }
+      aria-pressed={isSelected}
+    >
+      <div className="relative aspect-[16/10] w-full overflow-hidden" style={{ backgroundColor: theme.bgColor }}>
+        {mounted && (
+          <iframe
+            src={`/themes/${theme.slug}.html`}
+            title={theme.name}
+            sandbox="allow-same-origin"
+            loading="lazy"
+            className="pointer-events-none absolute left-1/2 top-1/2 border-0"
+            style={{
+              width: 1400,
+              height: 900,
+              transform: "translate(-50%, -50%) scale(0.18)",
+            }}
+          />
+        )}
+        <span
+          className="absolute bottom-2 left-2 inline-block h-7 w-7 rounded-full border-2 border-black/30 dark:border-white/40"
+          style={{ backgroundColor: theme.accentColor }}
+          aria-hidden
+        />
+      </div>
+      <div className="flex flex-col items-start gap-0.5 border-t border-gray-200 px-3 py-2 dark:border-gray-700">
+        <span className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">{theme.name}</span>
+        {fontLabel && <span className="truncate text-[0.65rem] text-gray-500 dark:text-gray-400">{fontLabel}</span>}
+      </div>
+    </button>
+  );
+}
+
 export default function ThemePickerModal({ open, onClose, onSelect, selectedSlug, themes }: ThemePickerModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollRoot, setScrollRoot] = useState<HTMLElement | null>(null);
 
   const handleFileImport = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,6 +121,17 @@ export default function ThemePickerModal({ open, onClose, onSelect, selectedSlug
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [open, onClose]);
+
+  // Track the scroll container as a ref-callback so cards can attach
+  // IntersectionObservers scoped to it. setState forces a re-render once
+  // the modal mounts, which is when ThemeCards subscribe.
+  useEffect(() => {
+    if (!open) {
+      setScrollRoot(null);
+      return;
+    }
+    setScrollRoot(scrollRef.current);
+  }, [open]);
 
   if (!open) return null;
 
@@ -93,10 +186,9 @@ export default function ThemePickerModal({ open, onClose, onSelect, selectedSlug
           </div>
         </div>
 
-        <div className="overflow-y-auto p-4">
+        <div ref={scrollRef} className="overflow-y-auto p-4">
           <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
             {themes.map((theme) => {
-              const isSelected = theme.slug === selectedSlug;
               const fontLabel = theme.bodyFont
                 ? theme.bodyFont
                     .replace(/['"]/g, "")
@@ -105,41 +197,14 @@ export default function ThemePickerModal({ open, onClose, onSelect, selectedSlug
                     .trim()
                 : undefined;
               return (
-                <button
+                <ThemeCard
                   key={theme.slug}
-                  type="button"
-                  onClick={() => onSelect(theme)}
-                  className={
-                    isSelected
-                      ? "flex flex-col overflow-hidden rounded-[5px] border-2 border-blue-500 bg-white shadow-[3px_3px_0px_0px_#3b82f6] dark:bg-gray-800"
-                      : "flex flex-col overflow-hidden rounded-[5px] border-2 border-gray-300 bg-white transition-transform hover:-translate-x-px hover:-translate-y-px hover:shadow-[2px_2px_0px_0px_black] dark:border-gray-700 dark:bg-gray-800 dark:hover:shadow-[2px_2px_0px_0px_white]"
-                  }
-                  aria-pressed={isSelected}
-                >
-                  <div className="relative aspect-[16/10] w-full overflow-hidden" style={{ backgroundColor: theme.bgColor }}>
-                    <iframe
-                      src={`/themes/${theme.slug}.html`}
-                      title={theme.name}
-                      sandbox="allow-same-origin"
-                      loading="lazy"
-                      className="pointer-events-none absolute left-1/2 top-1/2 border-0"
-                      style={{
-                        width: 1400,
-                        height: 900,
-                        transform: "translate(-50%, -50%) scale(0.18)",
-                      }}
-                    />
-                    <span
-                      className="absolute bottom-2 left-2 inline-block h-7 w-7 rounded-full border-2 border-black/30 dark:border-white/40"
-                      style={{ backgroundColor: theme.accentColor }}
-                      aria-hidden
-                    />
-                  </div>
-                  <div className="flex flex-col items-start gap-0.5 border-t border-gray-200 px-3 py-2 dark:border-gray-700">
-                    <span className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">{theme.name}</span>
-                    {fontLabel && <span className="truncate text-[0.65rem] text-gray-500 dark:text-gray-400">{fontLabel}</span>}
-                  </div>
-                </button>
+                  theme={theme}
+                  isSelected={theme.slug === selectedSlug}
+                  fontLabel={fontLabel}
+                  scrollRoot={scrollRoot}
+                  onSelect={onSelect}
+                />
               );
             })}
           </div>
