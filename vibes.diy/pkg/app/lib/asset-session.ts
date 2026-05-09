@@ -43,7 +43,11 @@ const sessionCache = new KeyedResolvOnce<Result<void>>();
 
 function bridgeUrl(hostnameBase: string, path: string): string {
   // Always https; the asset host is Secure-only (the cookie sets `Secure`).
-  return `https://assets.${hostnameBase.replace(/^\./, "")}${path}`;
+  // In dev, every virtual host (`<app>--<user>.<base>`, `assets.<base>`) is
+  // served by a single Vite listener on a non-standard port, so reuse the
+  // current window port for the asset host. Empty in prod (default 443).
+  const port = typeof globalThis !== "undefined" && globalThis.location?.port ? `:${globalThis.location.port}` : "";
+  return `https://assets.${hostnameBase.replace(/^\./, "")}${port}${path}`;
 }
 
 export async function ensureAssetSession(deps: EnsureAssetSessionDeps): Promise<Result<void>> {

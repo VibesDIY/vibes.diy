@@ -59,7 +59,11 @@ describe("ensureAssetSession", () => {
     });
     expect(r.isOk()).toBe(true);
     expect(spy.calls).toHaveLength(1);
-    expect(spy.calls[0].url).toBe("https://assets.cli-v2.vibesdiy.net/_auth/session");
+    // Port (when present) is reused from the runtime origin so dev hosts on
+    // a non-standard Vite port (e.g. :8888) bridge to assets.<base>:<port>.
+    // In a default-port runtime, no port is appended.
+    const expectedPort = globalThis.location?.port ? `:${globalThis.location.port}` : "";
+    expect(spy.calls[0].url).toBe(`https://assets.cli-v2.vibesdiy.net${expectedPort}/_auth/session`);
     const init = spy.calls[0].init;
     expect(init?.method).toBe("POST");
     expect(init?.credentials).toBe("include");

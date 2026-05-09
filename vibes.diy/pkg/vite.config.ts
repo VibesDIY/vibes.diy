@@ -211,5 +211,10 @@ export default defineConfig(({ command }) => ({
     allowedHosts: [".localhost.vibesdiy.net"],
     hmr: true,
     https: loadHttpsCerts(),
+    // Vite's built-in CORS middleware short-circuits OPTIONS preflights with
+    // generic ACAM/ACAH headers (no ACAO/credentials), which breaks the
+    // assets-host /_auth/session bridge. Pass OPTIONS through to the worker
+    // so authBridgePreflight can return the credentialed-CORS response.
+    cors: false,
   },
 }));
