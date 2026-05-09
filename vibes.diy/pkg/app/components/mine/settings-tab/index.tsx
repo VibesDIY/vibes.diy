@@ -4,6 +4,7 @@ import { fromKVString, toKVString, AIParams } from "@vibes.diy/api-types";
 import { toast } from "react-hot-toast";
 import { ModelSettingsCards } from "../../ModelSettingsCards.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../../../utils/vibeUrls.js";
+import { vibesThemes } from "@vibes.diy/prompts";
 
 // ── card wrapper ─────────────────────────────────────────────────────────────
 
@@ -199,6 +200,7 @@ function EnvRow({
 type SettingsUpdate =
   | { kind: "fetch"; appSlug: string; userSlug: string }
   | { kind: "title"; appSlug: string; userSlug: string; title: string }
+  | { kind: "theme"; appSlug: string; userSlug: string; theme: string }
   | { kind: "iconDescription"; appSlug: string; userSlug: string; iconDescription: string }
   | { kind: "iconRegen"; appSlug: string; userSlug: string }
   | { kind: "chat"; appSlug: string; userSlug: string; chat: AIParams }
@@ -217,6 +219,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
   const { vibeDiyApi } = useVibesDiy();
 
   const [title, setTitle] = useState("");
+  const [theme, setTheme] = useState("");
   const [iconDescription, setIconDescription] = useState("");
   const [icon, setIcon] = useState<{ cid: string; mime: string } | undefined>(undefined);
   const [chatConfig, setChatConfig] = useState<Partial<AIParams>>({});
@@ -226,6 +229,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
 
   const [pending, setPending] = useState<SettingsUpdate>({ kind: "fetch", appSlug, userSlug });
   const [savingTitle, setSavingTitle] = useState(false);
+  const [savingTheme, setSavingTheme] = useState(false);
   const [savingChat, setSavingChat] = useState(false);
   const [savingApp, setSavingApp] = useState(false);
   const [savingImg, setSavingImg] = useState(false);
@@ -245,6 +249,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
     let alive = true;
 
     if (pending.kind === "title") setSavingTitle(true);
+    else if (pending.kind === "theme") setSavingTheme(true);
     else if (pending.kind === "chat") setSavingChat(true);
     else if (pending.kind === "app") setSavingApp(true);
     else if (pending.kind === "img") setSavingImg(true);
@@ -259,24 +264,27 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
     const req =
       pending.kind === "title"
         ? { ...base, title: pending.title }
-        : pending.kind === "iconDescription"
-          ? { ...base, iconDescription: pending.iconDescription }
-          : pending.kind === "iconRegen"
-            ? { ...base, iconRegen: true }
-            : pending.kind === "chat"
-              ? { ...base, chat: pending.chat }
-              : pending.kind === "app"
-                ? { ...base, app: pending.app }
-                : pending.kind === "img"
-                  ? { ...base, img: pending.img }
-                  : pending.kind === "env"
-                    ? { ...base, env: toKVString(pending.env) }
-                    : base;
+        : pending.kind === "theme"
+          ? { ...base, theme: pending.theme }
+          : pending.kind === "iconDescription"
+            ? { ...base, iconDescription: pending.iconDescription }
+            : pending.kind === "iconRegen"
+              ? { ...base, iconRegen: true }
+              : pending.kind === "chat"
+                ? { ...base, chat: pending.chat }
+                : pending.kind === "app"
+                  ? { ...base, app: pending.app }
+                  : pending.kind === "img"
+                    ? { ...base, img: pending.img }
+                    : pending.kind === "env"
+                      ? { ...base, env: toKVString(pending.env) }
+                      : base;
 
     void vibeDiyApi.ensureAppSettings(req).then((res) => {
       if (!alive) return;
 
       if (pending.kind === "title") setSavingTitle(false);
+      else if (pending.kind === "theme") setSavingTheme(false);
       else if (pending.kind === "chat") setSavingChat(false);
       else if (pending.kind === "app") setSavingApp(false);
       else if (pending.kind === "img") setSavingImg(false);
@@ -293,6 +301,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
 
       const s = res.Ok().settings;
       setTitle(s.entry.settings.title ?? "");
+      setTheme(s.entry.settings.theme ?? "");
       setIconDescription(s.entry.settings.iconDescription ?? "");
       setIcon(s.entry.settings.icon);
       setChatConfig(s.entry.settings.chat ?? {});
@@ -374,6 +383,40 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
           <Field label="Title" value={title} onChange={setTitle} placeholder={appSlug} />
           <div className="flex justify-end">
             <SaveBtn saving={savingTitle} onClick={() => setPending({ kind: "title", appSlug, userSlug, title })} />
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Theme">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <label className="w-24 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Theme</label>
+            <select
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+              className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
+            >
+              <option value="">(none — auto-pick)</option>
+              {vibesThemes.map((t) => (
+                <option key={t.slug} value={t.slug}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            {theme && (
+              <a
+                href={`/vibe/theme/${theme}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                title="View this theme as an exemplar app"
+              >
+                preview
+              </a>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <SaveBtn saving={savingTheme} onClick={() => setPending({ kind: "theme", appSlug, userSlug, theme })} />
           </div>
         </div>
       </Card>
