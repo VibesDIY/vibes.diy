@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../ui/button.js";
-import { PendingRequestsCard } from "../mine/sharing-tab/PendingRequestsCard.js";
+import { PublicSharingSection } from "../mine/sharing-tab/PublicSharingSection.js";
+import { RequestsSection } from "../mine/sharing-tab/RequestsSection.js";
+import { EmailInvitationsSection } from "../mine/sharing-tab/EmailInvitationsSection.js";
+import { useSharingPanel } from "../mine/sharing-tab/useSharingPanel.js";
 import { MembersSection } from "./MembersSection.js";
 import { CommentsSection } from "./CommentsSection.js";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
@@ -76,9 +79,7 @@ function PublishForm({ modal, publishDisabled }: { modal: UseShareModalReturn; p
         {modal.isPublishing ? "Publishing..." : "Publish"}
       </Button>
       {modal.publishError ? <p className="text-xs text-red-600 dark:text-red-400">{modal.publishError}</p> : null}
-      {!modal.canPublish ? (
-        <p className="text-xs text-gray-500 dark:text-gray-500">Generate some code first to publish.</p>
-      ) : null}
+      {!modal.canPublish ? <p className="text-xs text-gray-500 dark:text-gray-500">Generate some code first to publish.</p> : null}
     </div>
   );
 }
@@ -101,6 +102,92 @@ function PublishedAutoApproveControl({ modal }: { modal: UseShareModalReturn }) 
       }}
       disabled={modal.isTogglingAutoJoin}
     />
+  );
+}
+
+function CopyLinkRow({ url, copied, onCopy }: { url: string; copied: boolean; onCopy: () => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="text"
+        readOnly
+        value={url}
+        className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+      />
+      <Button variant="blue" size="default" onClick={onCopy}>
+        {copied ? (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <title>Copied</title>
+            <path
+              fillRule="evenodd"
+              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+        ) : (
+          <span className="text-xs">Copy Link</span>
+        )}
+      </Button>
+    </div>
+  );
+}
+
+// Lightweight Request Access button for non-owners. Loads pending state from
+// hasAccessRequest on mount so a returning viewer sees "Request pending"
+// instead of being able to spam new requests.
+function RequestAccessButton({ userSlug, appSlug }: { userSlug: string; appSlug: string }) {
+  const { vibeDiyApi } = useVibesDiy();
+  const [state, setState] = useState<"unknown" | "none" | "pending" | "approved" | "revoked" | "submitting">("unknown");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void vibeDiyApi.hasAccessRequest({ appSlug, userSlug }).then((res) => {
+      if (cancelled) return;
+      if (res.isErr()) {
+        setState("none");
+        return;
+      }
+      const ok = res.Ok();
+      if (ok.state === "not-found") setState("none");
+      else setState(ok.state);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [vibeDiyApi, userSlug, appSlug]);
+
+  async function submit() {
+    setState("submitting");
+    setError(null);
+    const res = await vibeDiyApi.requestAccess({ appSlug, userSlug });
+    if (res.isErr()) {
+      setError(res.Err().message);
+      setState("none");
+      return;
+    }
+    setState(res.Ok().state);
+  }
+
+  const label =
+    state === "pending"
+      ? "Request pending"
+      : state === "approved"
+        ? "Access approved"
+        : state === "revoked"
+          ? "Access revoked — request again"
+          : state === "submitting"
+            ? "Requesting..."
+            : "Request Access";
+  const disabled = state === "pending" || state === "approved" || state === "submitting" || state === "unknown";
+
+  return (
+    <div className="space-y-1">
+      <Button variant="blue" size="fixed" className="w-full" disabled={disabled} onClick={() => void submit()}>
+        {label}
+      </Button>
+      {error ? <p className="text-xs text-red-600 dark:text-red-400">{error}</p> : null}
+    </div>
   );
 }
 
@@ -199,6 +286,48 @@ function useIsMobile(breakpoint = 640) {
   return isMobile;
 }
 
+// Owner-only sharing trio (Public toggle + Requests + Email invites) that
+// mirrors the App Settings → Sharing tab. Wraps useSharingPanel so neither
+// surface drifts.
+function OwnerSharingPanel({ userSlug, appSlug, enabled }: { userSlug: string; appSlug: string; enabled: boolean }) {
+  const panel = useSharingPanel({ userSlug, appSlug, enabled });
+  if (!panel.settings) return null;
+  const { entry } = panel.settings;
+  return (
+    <ol className="space-y-3 text-sm">
+      <PublicSharingSection
+        publicAccess={entry.publicAccess}
+        toggling={panel.toggling}
+        onToggle={() => void panel.togglePublicAccess(!!entry.publicAccess?.enable)}
+      />
+      <RequestsSection
+        enableRequest={entry.enableRequest}
+        requests={panel.requests}
+        toggling={panel.toggling}
+        onToggle={() => void panel.toggleEnableRequest(!!entry.enableRequest?.enable)}
+        onToggleAutoAccept={() => void panel.toggleAutoAcceptRole()}
+        onApprove={(r, role) => void panel.approveRequest(r, role)}
+        onRejectPending={(r) => void panel.revokeRequest(r)}
+        onRejectApproved={(r) => void panel.revokeRequest(r)}
+        onSwitchRole={(r, role) => void panel.switchRequestRole(r, role)}
+        onSwitchRejectedRole={(r, role) => void panel.switchRequestRole(r, role)}
+        onReApprove={(r) => void panel.approveRequest(r, (r.role ?? "viewer") as "editor" | "viewer")}
+        onRemove={(r) => void panel.removeRequest(r)}
+      />
+      <EmailInvitationsSection
+        inviteEmail={panel.inviteEmail}
+        inviting={panel.inviting}
+        invites={panel.invites}
+        onEmailChange={panel.setInviteEmail}
+        onSendInvite={(role) => void panel.sendInvite(role)}
+        onDelete={panel.deleteInvite}
+        onRevoke={panel.revokeInvite}
+        onChangeRole={panel.changeInviteRole}
+      />
+    </ol>
+  );
+}
+
 export function ShareModal({ modal, placement = "below", isOwner = false, myGrant = "none" }: ShareModalProps) {
   const isMobile = useIsMobile();
   const commentsEditorsOnly = useCommentsEditorsOnly(modal.userSlug, modal.appSlug, modal.isOpen);
@@ -245,6 +374,10 @@ export function ShareModal({ modal, placement = "below", isOwner = false, myGran
     ? "fixed inset-3 flex flex-col overflow-hidden rounded-[5px] border-2 border-black bg-white shadow-[4px_4px_0px_0px_black] dark:bg-gray-900"
     : "w-max min-w-80 max-w-[min(42rem,calc(100vw-2rem))] rounded-[5px] border-2 border-black bg-white p-4 shadow-[4px_4px_0px_0px_black] dark:bg-gray-900";
 
+  // Non-owner with read access can request to be added (unless they're already
+  // an editor — editors don't need to request). Hidden on unpublished vibes.
+  const showRequestAccess = !isOwner && myGrant !== "editor" && modal.isPublished && !!modal.publishedUrl;
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] m-0 bg-black/25"
@@ -253,11 +386,7 @@ export function ShareModal({ modal, placement = "below", isOwner = false, myGran
       aria-modal="true"
       aria-label="Share"
     >
-      <div
-        style={menuStyle}
-        onClick={(e) => e.stopPropagation()}
-        className={panelClassName}
-      >
+      <div style={menuStyle} onClick={(e) => e.stopPropagation()} className={panelClassName}>
         {isMobile && (
           <button
             type="button"
@@ -265,13 +394,7 @@ export function ShareModal({ modal, placement = "below", isOwner = false, myGran
             onClick={modal.close}
             className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border-2 border-black bg-white text-gray-700 hover:bg-gray-100 shadow-[2px_2px_0px_0px_black] dark:bg-gray-800 dark:text-gray-200"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-5 w-5"
-              aria-hidden="true"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden="true">
               <path
                 fillRule="evenodd"
                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -281,52 +404,32 @@ export function ShareModal({ modal, placement = "below", isOwner = false, myGran
           </button>
         )}
         {modal.isPublished && modal.publishedUrl ? (
-          <>
-            <div className={isMobile ? "flex-none space-y-2 p-4 pt-14" : "space-y-2"}>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={modal.publishedUrl}
-                  className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
-                />
-                <Button variant="blue" size="default" onClick={() => void modal.handleCopyUrl()}>
-                  {modal.urlCopied ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <title>Copied</title>
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  ) : (
-                    <span className="text-xs">Copy Link</span>
-                  )}
+          isOwner ? (
+            <>
+              <div className={isMobile ? "flex-none space-y-2 p-4 pt-14" : "space-y-2"}>
+                <CopyLinkRow url={modal.publishedUrl} copied={modal.urlCopied} onCopy={() => void modal.handleCopyUrl()} />
+                {modal.publishError ? <p className="text-xs text-red-600 dark:text-red-400">{modal.publishError}</p> : null}
+                <Button
+                  variant={modal.isUpToDate ? "cool" : "blue"}
+                  size="fixed"
+                  className="w-full"
+                  onClick={() => void modal.handlePublish(modal.autoJoinEnabled, modal.autoAcceptRole ?? "viewer")}
+                  disabled={modal.isPublishing || !modal.canPublish || modal.isUpToDate || !modal.settingsLoaded}
+                >
+                  {modal.isPublishing ? "Updating..." : modal.isUpToDate ? "Up to date" : "Update"}
                 </Button>
+                <PublishedAutoApproveControl modal={modal} />
               </div>
-              {modal.publishError ? <p className="text-xs text-red-600 dark:text-red-400">{modal.publishError}</p> : null}
-              <Button
-                variant={modal.isUpToDate ? "cool" : "blue"}
-                size="fixed"
-                className="w-full"
-                onClick={() => void modal.handlePublish(modal.autoJoinEnabled, modal.autoAcceptRole ?? "viewer")}
-                disabled={modal.isPublishing || !modal.canPublish || modal.isUpToDate || !modal.settingsLoaded}
-              >
-                {modal.isPublishing ? "Updating..." : modal.isUpToDate ? "Up to date" : "Update"}
-              </Button>
-              <PublishedAutoApproveControl modal={modal} />
+              <div className={isMobile ? "flex-1 min-h-0 overflow-auto border-t border-gray-200 dark:border-gray-700 p-4" : ""}>
+                <OwnerSharingPanel userSlug={modal.userSlug} appSlug={modal.appSlug} enabled={modal.isOpen} />
+              </div>
+            </>
+          ) : (
+            <div className={isMobile ? "flex-none space-y-2 p-4 pt-14" : "space-y-2"}>
+              <CopyLinkRow url={modal.publishedUrl} copied={modal.urlCopied} onCopy={() => void modal.handleCopyUrl()} />
+              {showRequestAccess ? <RequestAccessButton userSlug={modal.userSlug} appSlug={modal.appSlug} /> : null}
             </div>
-            <div
-              className={
-                isMobile
-                  ? "flex-1 min-h-0 overflow-auto border-t border-gray-200 dark:border-gray-700 p-4"
-                  : ""
-              }
-            >
-              <PendingRequestsCard userSlug={modal.userSlug} appSlug={modal.appSlug} hideHeader />
-            </div>
-          </>
+          )
         ) : (
           <div className={isMobile ? "p-4 pt-14" : ""}>
             <PublishForm modal={modal} publishDisabled={publishDisabled} />
