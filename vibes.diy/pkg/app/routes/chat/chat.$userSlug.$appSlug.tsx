@@ -98,6 +98,9 @@ export interface PromptState {
   // alternative would require a wire-format change.
   agentSavedBlockIds: ReadonlySet<string>;
   icon?: { cid: string; mime: string };
+  // The selected theme (catalog or imported). Sourced from app_settings
+  // alongside title/icon so a single dispatch updates all three.
+  theme?: VibesTheme | null;
 }
 
 export interface PromptBlock {
@@ -135,6 +138,17 @@ function isSetIcon(msg: unknown): msg is SetIcon {
   return !(SetIcon(msg) instanceof type.errors);
 }
 
+// SetTheme accepts a nullable theme so a single action can either set or clear
+// the selection. Imported (custom) .md themes use the same shape — they're not
+// in the catalog but the in-memory record is the same VibesTheme structure.
+interface SetTheme {
+  type: "setTheme";
+  theme: VibesTheme | null;
+}
+function isSetTheme(msg: unknown): msg is SetTheme {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setTheme";
+}
+
 const SetHydratedSource = type({
   type: "'setHydratedSource'",
   fsId: "string",
@@ -156,7 +170,7 @@ function isMarkAgentSaved(msg: unknown): msg is MarkAgentSaved {
   return !(MarkAgentSaved(msg) instanceof type.errors);
 }
 
-type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetIcon | SetHydratedSource | MarkAgentSaved;
+type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetIcon | SetTheme | SetHydratedSource | MarkAgentSaved;
 
 function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
@@ -169,6 +183,9 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 
     case isSetIcon(block):
       return { ...state, icon: block.icon };
+
+    case isSetTheme(block):
+      return { ...state, theme: block.theme };
 
     case isSetHydratedSource(block):
       return { ...state, hydratedSource: { fsId: block.fsId, code: block.code } };
@@ -239,29 +256,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
-  const [selectedTheme, setSelectedTheme] = useState<VibesTheme | null>(null);
   const [themeModalOpen, setThemeModalOpen] = useState(false);
-
-  const handleThemeSelect = useCallback(
-    (theme: VibesTheme) => {
-      setSelectedTheme(theme);
-      setThemeModalOpen(false);
-      // Persist on backend if the theme is in the catalog. Imported (custom)
-      // themes apply session-only — they're not in the catalog so the backend
-      // would drop them on validation.
-      const isCatalog = !!getThemeBySlug(theme.slug);
-      if (isCatalog && userSlug !== "preparing" && appSlug !== "session") {
-        void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, theme: theme.slug });
-      }
-      // Prefill the chat textarea with a default restyle prompt — only if
-      // it's empty, so we don't clobber a half-typed message. The user can
-      // edit before sending; the backend already has the new theme so the
-      // next prompt will pick it up regardless of wording.
-      chatInput.current?.setPromptIfEmpty("Please update the theme");
-      chatInput.current?.setFocus();
-    },
-    [vibeDiyApi, userSlug, appSlug]
-  );
   // Hold latest fsId in a ref so the prompt-firing effect can preserve it in
   // the navigation URL without retriggering on every autosave fsId change
   // (which would re-fire the same prompt — classic loop).
@@ -297,6 +292,29 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     setSearchParams,
     agentSavedBlockIds: new Set<string>(),
   });
+
+  const handleThemeSelect = useCallback(
+    (theme: VibesTheme) => {
+      // Update the picker state via the same reducer that title/icon ride —
+      // single source of truth, single re-render.
+      dispatch({ type: "setTheme", theme });
+      setThemeModalOpen(false);
+      // Persist on backend if the theme is in the catalog. Imported (custom)
+      // themes apply session-only — they're not in the catalog so the backend
+      // would drop them on validation.
+      const isCatalog = !!getThemeBySlug(theme.slug);
+      if (isCatalog && userSlug !== "preparing" && appSlug !== "session") {
+        void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, theme: theme.slug });
+      }
+      // Prefill the chat textarea with a default restyle prompt — only if
+      // it's empty, so we don't clobber a half-typed message. The user can
+      // edit before sending; the backend already has the new theme so the
+      // next prompt will pick it up regardless of wording.
+      chatInput.current?.setPromptIfEmpty("Please update the theme");
+      chatInput.current?.setFocus();
+    },
+    [vibeDiyApi, userSlug, appSlug]
+  );
 
   // Hydrate the code editor from Apps.fileSystem when no ChatSections
   // exist for this fsId (e.g. a freshly forked vibe). The fetch is
@@ -382,7 +400,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
           if (s.theme) {
             const t = getThemeBySlug(s.theme);
-            if (t) setSelectedTheme(t);
+            if (t) dispatch({ type: "setTheme", theme: t });
           }
         }
       });
@@ -698,7 +716,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
               promptProcessing={promptState.running}
               hasCode={promptState.hasCode}
               currentMsgCount={promptState.current?.msgs.length ?? 0}
-              selectedTheme={selectedTheme}
+              selectedTheme={promptState.theme ?? null}
               onThemeButtonClick={() => setThemeModalOpen(true)}
             />
           </BrutalistCard>
@@ -722,7 +740,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         open={themeModalOpen}
         onClose={() => setThemeModalOpen(false)}
         onSelect={handleThemeSelect}
-        selectedSlug={selectedTheme?.slug}
+        selectedSlug={promptState.theme?.slug}
         themes={vibesThemes}
       />
     </>
