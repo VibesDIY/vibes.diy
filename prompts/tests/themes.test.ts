@@ -132,3 +132,44 @@ describe("makeBaseSystemPrompt theme injection", () => {
     expect(result.systemPrompt).not.toContain("{{THEME_DESIGN}}");
   });
 });
+
+describe("theme replaces defaultStylePrompt", () => {
+  // The default style prompt is a baked-in neobrutalist palette. When a
+  // theme is selected, the theme markdown should govern — the default
+  // shouldn't also appear in the system prompt or it contradicts the theme.
+  // A user-supplied stylePrompt still wins (explicit override).
+
+  const DEFAULT_FINGERPRINT = "Neobrutalist Design System";
+
+  it("includes defaultStylePrompt when no theme and no user stylePrompt", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      skills: ["fireproof"],
+      fetch: fetchAsResponse,
+    });
+    expect(result.systemPrompt).toContain(DEFAULT_FINGERPRINT);
+  });
+
+  it("drops defaultStylePrompt when a theme is selected", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      skills: ["fireproof"],
+      theme: "atlas",
+      fetch: fetchAsResponse,
+    });
+    expect(result.theme).toBe("atlas");
+    expect(result.systemPrompt).toContain("<theme-design-md>");
+    expect(result.systemPrompt).not.toContain(DEFAULT_FINGERPRINT);
+  });
+
+  it("user-supplied stylePrompt wins over both default and theme", async () => {
+    const userStyle = "USER-CUSTOM-STYLE-MARKER-12345";
+    const result = await makeBaseSystemPrompt("test-model", {
+      skills: ["fireproof"],
+      theme: "atlas",
+      stylePrompt: userStyle,
+      fetch: fetchAsResponse,
+    });
+    expect(result.systemPrompt).toContain(userStyle);
+    expect(result.systemPrompt).toContain("<theme-design-md>");
+    expect(result.systemPrompt).not.toContain(DEFAULT_FINGERPRINT);
+  });
+});

@@ -286,9 +286,12 @@ export async function makeBaseSystemPrompt(
     }
   }
 
-  // defaultStylePrompt is now imported from style-prompts.js
-
-  const stylePrompt = sessionDoc?.stylePrompt || defaultStylePrompt;
+  // Style-prompt precedence: user-supplied wins. Otherwise, if a theme was
+  // validated and loaded, the theme markdown governs and we omit the default
+  // (the bundled defaultStylePrompt is itself an opinionated style and
+  // would contradict any picked theme). Fall back to defaultStylePrompt
+  // only when neither is in play.
+  const stylePrompt = sessionDoc?.stylePrompt || (themeDesignSection ? "" : defaultStylePrompt);
 
   const demoDataLines = includeDemoData
     ? "\n- If your app has a function that uses callAI with a schema to save data, include a Demo Data button that calls that function with an example prompt. Don't write an extra function, use real app code so the data illustrates what it looks like to use the app.\n- Never have an instance of callAI that is only used to generate demo data, always use the same calls that are triggered by user actions in the app."
