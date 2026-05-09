@@ -167,18 +167,21 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
       snapshotFsIds: [...snapshotByFsId.keys()],
       failedSectionCount,
     };
-    if (debugSections.some((s) => s.applyErrors.length > 0 || s.parseErrors.length > 0)) {
-      console.warn("[aider-edits] resolution had errors", dbg.__aiderEditsDebug);
-    } else {
-      console.log("[aider-edits] resolved", {
-        fsId,
-        seedLen: seedFromHydrate.length,
-        sections: debugSections.length,
-        matchKinds: debugSections.flatMap((s) => s.matchKinds),
-        finalLen: source.length,
-        snapshotFsIds: [...snapshotByFsId.keys()],
-      });
-    }
+    // Console mirror disabled — debug payload is still attached to
+    // `dbg.__aiderEditsDebug` for inspection. Re-enable for low-level
+    // edit-resolution tracing.
+    // if (debugSections.some((s) => s.applyErrors.length > 0 || s.parseErrors.length > 0)) {
+    //   console.warn("[aider-edits] resolution had errors", dbg.__aiderEditsDebug);
+    // } else {
+    //   console.log("[aider-edits] resolved", {
+    //     fsId,
+    //     seedLen: seedFromHydrate.length,
+    //     sections: debugSections.length,
+    //     matchKinds: debugSections.flatMap((s) => s.matchKinds),
+    //     finalLen: source.length,
+    //     snapshotFsIds: [...snapshotByFsId.keys()],
+    //   });
+    // }
   }
 
   if (fsId) {
