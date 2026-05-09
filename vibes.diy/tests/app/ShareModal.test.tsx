@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen, fireEvent, act, cleanup } from "@testing-library/react";
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, fireEvent, act, cleanup, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { ShareModal } from "~/vibes.diy/app/components/ResultPreview/ShareModal.js";
 import type { UseShareModalReturn } from "~/vibes.diy/app/components/ResultPreview/useShareModal.js";
 
@@ -8,10 +8,17 @@ vi.mock("react-dom", () => ({
   createPortal: (children: React.ReactNode) => children,
 }));
 
-// PendingRequestsCard uses the VibesDiy provider which isn't set up in these
-// unit tests; stub it out so the published view can render without a provider.
-vi.mock("~/vibes.diy/app/components/mine/sharing-tab/PendingRequestsCard.js", () => ({
-  PendingRequestsCard: () => <div data-testid="pending-requests-card" />,
+// Sharing-tab section components hit useSharingPanel under the hood and bring
+// in @tanstack/react-table; stub them so these tests stay focused on modal
+// wiring (we assert by testid that the owner trio renders).
+vi.mock("~/vibes.diy/app/components/mine/sharing-tab/PublicSharingSection.js", () => ({
+  PublicSharingSection: () => <div data-testid="public-sharing-section" />,
+}));
+vi.mock("~/vibes.diy/app/components/mine/sharing-tab/RequestsSection.js", () => ({
+  RequestsSection: () => <div data-testid="requests-section" />,
+}));
+vi.mock("~/vibes.diy/app/components/mine/sharing-tab/EmailInvitationsSection.js", () => ({
+  EmailInvitationsSection: () => <div data-testid="email-invitations-section" />,
 }));
 
 // Members + Comments sections call useVibesDiy / Clerk; stub them out — these
@@ -22,20 +29,46 @@ vi.mock("~/vibes.diy/app/components/ResultPreview/MembersSection.js", () => ({
 vi.mock("~/vibes.diy/app/components/ResultPreview/CommentsSection.js", () => ({
   CommentsSection: () => <div data-testid="comments-section" />,
 }));
-// CommentsPolicyToggle (rendered when isOwner) calls useVibesDiy; mock the
-// provider so it can render without a wrapping VibesDiyProvider. The toggle
-// reads + writes the comments dbAcl via ensureAppSettings.
+
+const okSettings = (entry: Record<string, unknown> = {}) =>
+  Promise.resolve({
+    isOk: () => true,
+    isErr: () => false,
+    Ok: () => ({ settings: { entry: { dbAcls: undefined, ...entry } } }),
+  });
+const okList = <T,>(items: T[]) =>
+  Promise.resolve({
+    isOk: () => true,
+    isErr: () => false,
+    Ok: () => ({ items }),
+  });
+const okHasAccess = (state: "not-found" | "pending" | "approved" | "revoked") =>
+  Promise.resolve({
+    isOk: () => true,
+    isErr: () => false,
+    Ok: () => ({ state }),
+  });
+
+const requestAccessMock = vi.fn().mockResolvedValue({
+  isOk: () => true,
+  isErr: () => false,
+  Ok: () => ({ state: "pending" }),
+});
+const hasAccessRequestMock = vi.fn().mockReturnValue(okHasAccess("not-found"));
+
+// Stable api reference — useSharingPanel's refetch callback depends on
+// vibeDiyApi identity; a fresh object per render causes an infinite re-render
+// loop in tests that mount OwnerSharingPanel.
+const vibeDiyApiStub = {
+  ensureAppSettings: () => okSettings(),
+  listInviteGrants: () => okList([]),
+  listRequestGrants: () => okList([]),
+  requestAccess: requestAccessMock,
+  hasAccessRequest: hasAccessRequestMock,
+};
+
 vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({
-    vibeDiyApi: {
-      ensureAppSettings: () =>
-        Promise.resolve({
-          isOk: () => true,
-          isErr: () => false,
-          Ok: () => ({ settings: { entry: { dbAcls: undefined } } }),
-        }),
-    },
-  }),
+  useVibesDiy: () => ({ vibeDiyApi: vibeDiyApiStub }),
 }));
 
 let mockButtonEl: HTMLButtonElement | undefined;
@@ -81,6 +114,17 @@ function getAutoApproveCheckbox() {
 }
 
 describe("ShareModal", () => {
+  beforeEach(() => {
+    requestAccessMock.mockReset();
+    requestAccessMock.mockResolvedValue({
+      isOk: () => true,
+      isErr: () => false,
+      Ok: () => ({ state: "pending" }),
+    });
+    hasAccessRequestMock.mockReset();
+    hasAccessRequestMock.mockReturnValue(okHasAccess("not-found"));
+  });
+
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
@@ -192,7 +236,7 @@ describe("ShareModal", () => {
     });
   });
 
-  describe("published view", () => {
+  describe("published owner view", () => {
     const publishedModal = (overrides: Partial<UseShareModalReturn> = {}) =>
       createMockModal({
         isPublished: true,
@@ -294,9 +338,66 @@ describe("ShareModal", () => {
       expect(screen.getByRole("button", { name: "Update" })).not.toBeDisabled();
     });
 
-    it("renders the PendingRequestsCard", () => {
+    it("renders the unified sharing trio (public toggle + requests + email invites)", async () => {
       render(<ShareModal modal={publishedModal()} isOwner />);
-      expect(screen.getByTestId("pending-requests-card")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId("public-sharing-section")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requests-section")).toBeInTheDocument();
+      expect(screen.getByTestId("email-invitations-section")).toBeInTheDocument();
+    });
+  });
+
+  describe("published non-owner view", () => {
+    const publishedModal = (overrides: Partial<UseShareModalReturn> = {}) =>
+      createMockModal({
+        isPublished: true,
+        publishedUrl: "https://vibes.diy/vibe/testuser/testapp/",
+        ...overrides,
+      });
+
+    it("shows Copy Link and a Request Access button (no publish controls)", async () => {
+      render(<ShareModal modal={publishedModal()} myGrant="none" />);
+
+      expect(screen.getByText("Copy Link")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Request Access" })).not.toBeDisabled();
+      });
+      expect(screen.queryByRole("button", { name: /Update|Publish/ })).not.toBeInTheDocument();
+      expect(screen.queryByTestId("public-sharing-section")).not.toBeInTheDocument();
+    });
+
+    it("submits a request and switches to 'Request pending' on success", async () => {
+      render(<ShareModal modal={publishedModal()} myGrant="none" />);
+
+      const button = await screen.findByRole("button", { name: "Request Access" });
+      await waitFor(() => expect(button).not.toBeDisabled());
+
+      await act(async () => {
+        fireEvent.click(button);
+      });
+
+      expect(requestAccessMock).toHaveBeenCalledTimes(1);
+      expect(requestAccessMock).toHaveBeenCalledWith({ appSlug: "testapp", userSlug: "testuser" });
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Request pending" })).toBeDisabled();
+      });
+    });
+
+    it("starts in 'Request pending' when hasAccessRequest already returns pending", async () => {
+      hasAccessRequestMock.mockReturnValueOnce(okHasAccess("pending"));
+      render(<ShareModal modal={publishedModal()} myGrant="none" />);
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Request pending" })).toBeDisabled();
+      });
+      expect(requestAccessMock).not.toHaveBeenCalled();
+    });
+
+    it("hides Request Access for editors", () => {
+      render(<ShareModal modal={publishedModal()} myGrant="editor" />);
+      expect(screen.queryByRole("button", { name: /Request Access|Request pending/ })).not.toBeInTheDocument();
+      expect(screen.getByText("Copy Link")).toBeInTheDocument();
     });
   });
 
