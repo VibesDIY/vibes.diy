@@ -117,7 +117,9 @@ function useChatDebug(component: string, ctx: Record<string, unknown>): number {
       ...ctx,
     };
     chatDebug.push(event);
-    console.log("[chat-debug]", event);
+    // Console mirror disabled — events still buffered and accessible via
+    // window.__chatDebug.dump(). Re-enable for low-level UI render tracing.
+    // console.log("[chat-debug]", event);
     // ctx is a fresh object each render; deps below capture its values.
   }, [component, JSON.stringify(ctx)]);
   return renderSeq.current;
