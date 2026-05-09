@@ -402,49 +402,57 @@ function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqImgGen, unknown>): Promise<Result<EventoResultType>> => {
+      // Single-flight response. The previous design raced
+      // `getImageFiles` and `prompt()` and let whichever resolved first
+      // call `ctx.send.send`. When the upstream provider errored, the
+      // section stream often resolved first with an empty `files`
+      // array, masking the real error as `ResOkImgGen { files: [] }`.
+      // We now wait for `prompt()` first and only emit OK once we have
+      // actual files to report.
+      const tid = ctx.validated.tid;
+      const sendErr = (message: string) =>
+        ctx.send.send(ctx, {
+          tid,
+          type: "vibe.res.imgGen",
+          status: "error",
+          message,
+        } satisfies ResErrorImgGen);
+      const sendOk = (files: ImgGenFile[]) =>
+        ctx.send.send(ctx, {
+          tid,
+          type: "vibe.res.imgGen",
+          status: "ok",
+          files,
+        } satisfies ResOkImgGen);
+
       await vibeDiyApi
         .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "img" })
         .then(async (rChat) => {
-          if (rChat.isErr()) {
-            return ctx.send.send(ctx, {
-              tid: ctx.validated.tid,
-              type: "vibe.res.imgGen",
-              status: "error",
-              message: rChat.Err().message,
-            } satisfies ResErrorImgGen);
-          }
-          getImageFiles(rChat.Ok().sectionStream)
-            .then((files) => {
-              ctx.send.send(ctx, {
-                tid: ctx.validated.tid,
-                type: "vibe.res.imgGen",
-                status: "ok",
-                files,
-              } satisfies ResOkImgGen);
-            })
-            .catch((err) => {
-              ctx.send.send(ctx, {
-                tid: ctx.validated.tid,
-                type: "vibe.res.imgGen",
-                status: "error",
-                message: err?.message ?? String(err),
-              } satisfies ResErrorImgGen);
-            });
-          const rPrompt = await rChat.Ok().prompt(
+          if (rChat.isErr()) return sendErr(rChat.Err().message);
+          const chat = rChat.Ok();
+          // Start consuming the section stream eagerly so file-block
+          // events aren't lost while `prompt()` runs.
+          const filesPromise = getImageFiles(chat.sectionStream).catch((err) =>
+            Promise.reject(err instanceof Error ? err : new Error(String(err)))
+          );
+          const rPrompt = await chat.prompt(
             {
               ...(ctx.validated.model ? { model: ctx.validated.model } : {}),
               messages: [{ role: "user", content: [{ type: "text", text: ctx.validated.prompt }] }],
             },
             ctx.validated.inputImageBase64 ? { inputImageBase64: ctx.validated.inputImageBase64 } : undefined
           );
-          if (rPrompt.isErr()) {
-            return ctx.send.send(ctx, {
-              tid: ctx.validated.tid,
-              type: "vibe.res.imgGen",
-              status: "error",
-              message: rPrompt.Err().message,
-            } satisfies ResErrorImgGen);
+          if (rPrompt.isErr()) return sendErr(rPrompt.Err().message);
+          let files: ImgGenFile[];
+          try {
+            files = await filesPromise;
+          } catch (err) {
+            return sendErr(err instanceof Error ? err.message : String(err));
           }
+          if (!files || files.length === 0) {
+            return sendErr("Image generation completed without producing a file");
+          }
+          return sendOk(files);
         });
       return Result.Ok(EventoResult.Stop);
     },
