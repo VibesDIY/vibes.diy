@@ -1,191 +1,224 @@
 import React, { useEffect, useState } from "react";
 
-// Theme: Opus Cabinet — elegant near-black, gold-leaf serifs (Cinzel).
-// Layout: side nav + asymmetric single content card with chapter list.
+// Theme: Opus Cabinet — auto-generated exemplar with prefers-color-scheme.
+// Canonical palette: bg oklch(0.06 0.000 0), accent oklch(0.12 0.000 0).
+// Inverse computed by flipping oklch/hex lightness; tune by hand if needed.
+
+const THEME_CSS = `
+  :root {
+    --bg: oklch(0.06 0.000 0);
+    --accent: oklch(0.12 0.000 0);
+    --text: rgba(255, 255, 255, 0.92);
+    --muted: rgba(255, 255, 255, 0.55);
+    --border: rgba(255, 255, 255, 0.18);
+    --raised: rgba(255, 255, 255, 0.06);
+    --card-bg: rgba(255, 255, 255, 0.04);
+    --accent-text: #0a0a0a;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: oklch(0.94 0.000 0);
+      --accent: oklch(0.88 0.000 0);
+      --text: rgba(20, 20, 20, 0.92);
+      --muted: rgba(20, 20, 20, 0.5);
+      --border: rgba(20, 20, 20, 0.14);
+      --raised: rgba(255, 255, 255, 0.55);
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --accent-text: #fafafa;
+    }
+  }
+  body { margin: 0; }
+`;
 
 export default function App() {
   useEffect(() => {
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href =
-      "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Cinzel+Decorative:wght@700;900&display=optional";
+    link.href = "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700&display=optional";
     document.head.appendChild(link);
     return () => link.remove();
   }, []);
 
-  const [chapter, setChapter] = useState(2);
   const [draft, setDraft] = useState("");
-
-  const p = {
-    bg: "oklch(0.06 0 0)",
-    panel: "oklch(0.12 0 0)",
-    border: "oklch(0.20 0 0)",
-    text: "oklch(0.90 0 0)",
-    muted: "oklch(0.55 0 0)",
-    gold: "oklch(0.73 0.10 78)",
-    goldHi: "oklch(0.97 0.07 100)",
-    crimson: "oklch(0.32 0.10 25)",
-  };
 
   const c = {
     page: {
       minHeight: "100vh",
-      background: p.bg,
-      color: p.text,
+      background: "var(--bg)",
+      color: "var(--text)",
       fontFamily: "'Cinzel', serif",
-      display: "grid",
-      gridTemplateColumns: "minmax(12rem, 16rem) 1fr",
-      gap: "0",
+      padding: "3rem 2rem 4rem",
     },
-    nav: {
-      borderRight: `1px solid ${p.border}`,
-      padding: "2.5rem 1.75rem",
-      background: p.panel,
-      display: "flex",
-      flexDirection: "column",
-      gap: "1rem",
-    },
-    navHeader: {
-      fontFamily: "'Cinzel Decorative', serif",
-      fontSize: "1.1rem",
-      letterSpacing: "0.15em",
-      color: p.gold,
-      textTransform: "uppercase",
-      borderBottom: `1px solid ${p.border}`,
-      paddingBottom: "0.75rem",
-      marginBottom: "0.5rem",
-    },
-    navItem: (active) => ({
-      cursor: "pointer",
-      fontSize: "0.95rem",
-      letterSpacing: "0.08em",
-      color: active ? p.goldHi : p.muted,
-      paddingLeft: active ? "0.7rem" : 0,
-      borderLeft: active ? `2px solid ${p.gold}` : "2px solid transparent",
-      transition: "all 0.15s",
-    }),
-    body: {
-      padding: "3rem 3rem 4rem",
-      maxWidth: "60rem",
-    },
+    container: { maxWidth: "56rem", margin: "0 auto" },
+    header: { display: "flex", flexDirection: "column", gap: "0.85rem", marginBottom: "2rem" },
     eyebrow: {
-      fontFamily: "'Cinzel Decorative', serif",
-      fontSize: "0.7rem",
-      letterSpacing: "0.45em",
-      color: p.gold,
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: "0.72rem",
+      letterSpacing: "0.25em",
       textTransform: "uppercase",
-      marginBottom: "1.25rem",
+      color: "var(--muted)",
     },
     title: {
-      fontFamily: "'Cinzel Decorative', serif",
-      fontSize: "clamp(3.5rem, 13vw, 10.5rem)",
-      fontWeight: 900,
-      lineHeight: 0.95,
+      fontSize: "clamp(3rem, 13vw, 10rem)",
+      fontWeight: 800,
+      letterSpacing: "-0.04em",
+      lineHeight: 0.9,
+      color: "var(--accent)",
       margin: 0,
-      letterSpacing: "0.02em",
-      background: `linear-gradient(180deg, ${p.goldHi} 0%, ${p.gold} 100%)`,
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
-      backgroundClip: "text",
     },
-    rule: {
-      width: "5rem",
-      borderTop: `2px solid ${p.gold}`,
-      marginTop: "1.5rem",
-    },
-    intro: {
-      marginTop: "1.5rem",
+    subtitle: {
       fontSize: "1.05rem",
-      lineHeight: 1.7,
-      color: p.text,
+      color: "var(--muted)",
       maxWidth: "32rem",
+      lineHeight: 1.5,
+      margin: 0,
     },
-    section: {
-      marginTop: "2.5rem",
-      borderTop: `1px solid ${p.border}`,
-      paddingTop: "1.5rem",
-    },
-    sectionTitle: {
-      fontFamily: "'Cinzel Decorative', serif",
-      fontSize: "0.78rem",
-      letterSpacing: "0.3em",
-      color: p.gold,
+    modeNote: {
+      marginTop: "0.5rem",
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: "0.7rem",
+      letterSpacing: "0.2em",
       textTransform: "uppercase",
-      marginBottom: "1rem",
+      color: "var(--muted)",
     },
-    inputRow: { display: "flex", gap: "0.75rem", marginTop: "0.75rem" },
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(18rem, 1fr))",
+      gap: "1.25rem",
+      marginTop: "2.5rem",
+    },
+    card: {
+      background: "var(--card-bg)",
+      border: "1px solid var(--border)",
+      borderRadius: 14,
+      padding: "1.5rem",
+    },
+    cardTitle: {
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: "0.7rem",
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+      color: "var(--muted)",
+      margin: "0 0 1rem",
+    },
+    list: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.55rem" },
+    listItem: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: "0.75rem",
+      padding: "0.7rem 0.85rem",
+      borderRadius: 10,
+      background: "var(--raised)",
+      border: "1px solid var(--border)",
+      fontSize: "0.95rem",
+    },
+    badge: {
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: "0.7rem",
+      padding: "0.18rem 0.6rem",
+      borderRadius: 999,
+      background: "var(--accent)",
+      color: "var(--accent-text)",
+      fontWeight: 600,
+      letterSpacing: "0.08em",
+      textTransform: "uppercase",
+    },
+    formRow: { display: "flex", gap: "0.5rem", marginTop: "0.5rem" },
     input: {
       flex: 1,
-      background: "transparent",
-      color: p.text,
-      border: `1px solid ${p.border}`,
-      borderRadius: 0,
-      padding: "0.7rem 0.85rem",
+      background: "var(--raised)",
+      color: "var(--text)",
+      border: "1px solid var(--border)",
+      borderRadius: 10,
+      padding: "0.7rem 0.9rem",
       fontFamily: "inherit",
       fontSize: "0.95rem",
-      letterSpacing: "0.05em",
       outline: "none",
     },
-    btnPrimary: {
-      background: p.gold,
-      color: p.bg,
+    button: {
+      background: "var(--accent)",
+      color: "var(--accent-text)",
       border: "none",
-      padding: "0.7rem 1.5rem",
-      fontFamily: "'Cinzel', serif",
+      borderRadius: 10,
+      padding: "0.7rem 1.1rem",
+      fontFamily: "inherit",
+      fontSize: "0.95rem",
       fontWeight: 600,
-      letterSpacing: "0.1em",
-      textTransform: "uppercase",
       cursor: "pointer",
     },
-    btnGhost: {
+    ghost: {
       background: "transparent",
-      color: p.gold,
-      border: `1px solid ${p.gold}`,
-      padding: "0.7rem 1.5rem",
-      fontFamily: "'Cinzel', serif",
-      letterSpacing: "0.1em",
-      textTransform: "uppercase",
+      color: "var(--text)",
+      border: "1px solid var(--border)",
+      borderRadius: 10,
+      padding: "0.7rem 1.1rem",
+      fontFamily: "inherit",
+      fontSize: "0.95rem",
       cursor: "pointer",
     },
+    buttonRow: { display: "flex", gap: "0.6rem", marginTop: "1.25rem", flexWrap: "wrap" },
   };
 
-  const chapters = ["Prelude", "First Movement", "Crescendo", "Coda", "Epilogue"];
+  const items = [
+    { id: 1, title: "Daily standup notes", tag: "active" },
+    { id: 2, title: "Q3 launch checklist", tag: "draft" },
+    { id: 3, title: "Reading list", tag: "synced" },
+  ];
 
   return (
-    <main id="app" style={c.page}>
-      <aside style={c.nav}>
-        <div style={c.navHeader}>Cabinet</div>
-        {chapters.map((ch, i) => (
-          <div key={ch} style={c.navItem(i === chapter)} onClick={() => setChapter(i)}>
-            {String(i + 1).padStart(2, "0")} · {ch}
-          </div>
-        ))}
-      </aside>
+    <>
+      <style>{THEME_CSS}</style>
+      <main id="app" style={c.page}>
+        <div style={c.container}>
+          <header style={c.header}>
+            <span style={c.eyebrow}>vibes.diy theme</span>
+            <h1 style={c.title}>Opus Cabinet</h1>
+            <p style={c.subtitle}>
+              An exemplar app on the Opus Cabinet theme — list, form, buttons rendered with the catalog tokens.
+            </p>
+            <div style={c.modeNote}>auto · dark + light via prefers-color-scheme</div>
+          </header>
 
-      <article style={c.body}>
-        <div style={c.eyebrow}>vibes.diy · cabinet of themes</div>
-        <h1 style={c.title}>Opus</h1>
-        <div style={c.rule} />
-        <p style={c.intro}>
-          A near-black canvas illuminated by gold leaf. Cinzel display, hand-set spacing, every divider engraved with intent.
-        </p>
+          <div style={c.grid}>
+            <section style={c.card}>
+              <h2 style={c.cardTitle}>Recent</h2>
+              <ul style={c.list}>
+                {items.map((it) => (
+                  <li key={it.id} style={c.listItem}>
+                    <span>{it.title}</span>
+                    <span style={c.badge}>{it.tag}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
 
-        <section style={c.section}>
-          <h2 style={c.sectionTitle}>{chapters[chapter]}</h2>
-          <p style={{ ...c.intro, marginTop: 0, fontSize: "0.98rem" }}>
-            Annotate the current movement. Notes are bound to this chapter and may be reviewed in the cabinet.
-          </p>
-          <div style={c.inputRow}>
-            <input style={c.input} placeholder="Annotation…" value={draft} onChange={(e) => setDraft(e.target.value)} />
-            <button type="button" style={c.btnPrimary}>
-              Inscribe
-            </button>
-            <button type="button" style={c.btnGhost}>
-              Discard
-            </button>
+            <section style={c.card}>
+              <h2 style={c.cardTitle}>New entry</h2>
+              <p style={{ ...c.subtitle, fontSize: "0.9rem", marginTop: "0.25rem" }}>Capture a quick thought.</p>
+              <div style={c.formRow}>
+                <input
+                  style={c.input}
+                  placeholder="What's on your mind?"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                />
+                <button style={c.button} type="button">
+                  Save
+                </button>
+              </div>
+              <div style={c.buttonRow}>
+                <button style={c.button} type="button">
+                  Primary
+                </button>
+                <button style={c.ghost} type="button">
+                  Secondary
+                </button>
+              </div>
+            </section>
           </div>
-        </section>
-      </article>
-    </main>
+        </div>
+      </main>
+    </>
   );
 }

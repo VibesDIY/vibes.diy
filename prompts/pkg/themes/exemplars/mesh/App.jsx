@@ -1,290 +1,222 @@
 import React, { useEffect, useState } from "react";
 
-// Theme: Mesh Void — neon-green-on-white modern dashboard.
-// Layout: pill nav + KPI tiles + activity table.
+// Theme: Mesh Void — auto-generated exemplar with prefers-color-scheme.
+// Canonical palette: bg #fff, accent oklch(0.87 0.28 145).
+// Inverse computed by flipping oklch/hex lightness; tune by hand if needed.
+
+const THEME_CSS = `
+  :root {
+    --bg: #fff;
+    --accent: oklch(0.87 0.28 145);
+    --text: rgba(20, 20, 20, 0.92);
+    --muted: rgba(20, 20, 20, 0.5);
+    --border: rgba(20, 20, 20, 0.14);
+    --raised: rgba(255, 255, 255, 0.55);
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --accent-text: #fafafa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f0f0f;
+      --accent: oklch(0.13 0.28 145);
+      --text: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.55);
+      --border: rgba(255, 255, 255, 0.18);
+      --raised: rgba(255, 255, 255, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --accent-text: #0a0a0a;
+    }
+  }
+  body { margin: 0; }
+`;
 
 export default function App() {
   useEffect(() => {
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=optional";
+    link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=optional";
     document.head.appendChild(link);
     return () => link.remove();
   }, []);
 
-  const [tab, setTab] = useState("Overview");
   const [draft, setDraft] = useState("");
-
-  const p = {
-    bg: "#fff",
-    panel: "#fafafa",
-    text: "#0a0a0a",
-    muted: "#6b6b80",
-    border: "#e5e5ea",
-    accent: "oklch(0.87 0.28 145)",
-    accentBg: "oklch(0.95 0.10 145)",
-    accentText: "oklch(0.20 0.20 145)",
-    danger: "#ef4444",
-    dangerBg: "#fee2e2",
-  };
 
   const c = {
     page: {
       minHeight: "100vh",
-      background: p.bg,
-      color: p.text,
+      background: "var(--bg)",
+      color: "var(--text)",
       fontFamily: "'Inter', -apple-system, sans-serif",
-      padding: "2rem 1.75rem 4rem",
+      padding: "3rem 2rem 4rem",
     },
-    container: { maxWidth: "64rem", margin: "0 auto" },
-    topBar: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: "2rem",
-    },
-    brand: {
-      fontSize: "0.75rem",
-      letterSpacing: "0.2em",
+    container: { maxWidth: "56rem", margin: "0 auto" },
+    header: { display: "flex", flexDirection: "column", gap: "0.85rem", marginBottom: "2rem" },
+    eyebrow: {
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: "0.72rem",
+      letterSpacing: "0.25em",
       textTransform: "uppercase",
-      color: p.muted,
+      color: "var(--muted)",
     },
-    pillNav: {
-      display: "inline-flex",
-      gap: "0.25rem",
-      padding: "0.25rem",
-      background: p.panel,
-      border: `1px solid ${p.border}`,
-      borderRadius: 999,
-    },
-    pill: (active) => ({
-      padding: "0.45rem 0.95rem",
-      borderRadius: 999,
-      fontSize: "0.85rem",
-      fontWeight: 500,
-      cursor: "pointer",
-      background: active ? p.accent : "transparent",
-      color: active ? p.accentText : p.muted,
-      border: "none",
-      transition: "all 0.15s",
-    }),
     title: {
-      fontSize: "clamp(3.5rem, 13vw, 10rem)",
+      fontSize: "clamp(3rem, 13vw, 10rem)",
       fontWeight: 800,
-      letterSpacing: "-0.05em",
+      letterSpacing: "-0.04em",
       lineHeight: 0.9,
+      color: "var(--accent)",
       margin: 0,
     },
-    titleAccent: {
-      background: `linear-gradient(120deg, ${p.accent} 0%, oklch(0.78 0.22 145) 100%)`,
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
-      backgroundClip: "text",
-    },
     subtitle: {
-      marginTop: "1rem",
       fontSize: "1.05rem",
-      color: p.muted,
+      color: "var(--muted)",
       maxWidth: "32rem",
       lineHeight: 1.5,
+      margin: 0,
     },
-    kpiRow: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(11rem, 1fr))",
-      gap: "0.85rem",
-      marginTop: "2rem",
-    },
-    kpi: {
-      background: p.panel,
-      border: `1px solid ${p.border}`,
-      borderRadius: 14,
-      padding: "1rem 1.1rem",
-    },
-    kpiLabel: {
+    modeNote: {
+      marginTop: "0.5rem",
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
       fontSize: "0.7rem",
-      letterSpacing: "0.12em",
+      letterSpacing: "0.2em",
       textTransform: "uppercase",
-      color: p.muted,
+      color: "var(--muted)",
     },
-    kpiValue: {
-      fontSize: "1.85rem",
-      fontWeight: 700,
-      letterSpacing: "-0.02em",
-      marginTop: "0.25rem",
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(18rem, 1fr))",
+      gap: "1.25rem",
+      marginTop: "2.5rem",
     },
-    kpiDelta: (positive) => ({
-      display: "inline-block",
-      marginTop: "0.35rem",
-      fontSize: "0.75rem",
-      fontWeight: 600,
-      padding: "0.1rem 0.45rem",
-      borderRadius: 999,
-      background: positive ? p.accentBg : p.dangerBg,
-      color: positive ? p.accentText : p.danger,
-    }),
-    section: {
-      marginTop: "2rem",
-      background: p.panel,
-      border: `1px solid ${p.border}`,
-      borderRadius: 16,
-      overflow: "hidden",
+    card: {
+      background: "var(--card-bg)",
+      border: "1px solid var(--border)",
+      borderRadius: 14,
+      padding: "1.5rem",
     },
-    sectionHeader: {
+    cardTitle: {
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: "0.7rem",
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+      color: "var(--muted)",
+      margin: "0 0 1rem",
+    },
+    list: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.55rem" },
+    listItem: {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      padding: "1rem 1.25rem",
-      borderBottom: `1px solid ${p.border}`,
+      gap: "0.75rem",
+      padding: "0.7rem 0.85rem",
+      borderRadius: 10,
+      background: "var(--raised)",
+      border: "1px solid var(--border)",
+      fontSize: "0.95rem",
     },
-    sectionTitle: { fontSize: "0.95rem", fontWeight: 600 },
-    table: { width: "100%", borderCollapse: "collapse" },
-    th: {
-      textAlign: "left",
-      padding: "0.6rem 1.25rem",
+    badge: {
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
       fontSize: "0.7rem",
-      letterSpacing: "0.12em",
-      textTransform: "uppercase",
-      color: p.muted,
-      borderBottom: `1px solid ${p.border}`,
+      padding: "0.18rem 0.6rem",
+      borderRadius: 999,
+      background: "var(--accent)",
+      color: "var(--accent-text)",
       fontWeight: 600,
+      letterSpacing: "0.08em",
+      textTransform: "uppercase",
     },
-    td: {
-      padding: "0.75rem 1.25rem",
-      fontSize: "0.9rem",
-      borderBottom: `1px solid ${p.border}`,
-    },
-    statusOk: {
-      display: "inline-block",
-      width: 8,
-      height: 8,
-      borderRadius: 999,
-      background: p.accent,
-      marginRight: "0.4rem",
-    },
-    statusErr: {
-      display: "inline-block",
-      width: 8,
-      height: 8,
-      borderRadius: 999,
-      background: p.danger,
-      marginRight: "0.4rem",
-    },
-    composer: {
-      padding: "1rem 1.25rem",
-      display: "flex",
-      gap: "0.5rem",
-      alignItems: "center",
-      borderTop: `1px solid ${p.border}`,
-      background: "#fff",
-    },
+    formRow: { display: "flex", gap: "0.5rem", marginTop: "0.5rem" },
     input: {
       flex: 1,
-      background: "#fff",
-      color: p.text,
-      border: `1px solid ${p.border}`,
-      borderRadius: 999,
-      padding: "0.55rem 1rem",
+      background: "var(--raised)",
+      color: "var(--text)",
+      border: "1px solid var(--border)",
+      borderRadius: 10,
+      padding: "0.7rem 0.9rem",
       fontFamily: "inherit",
-      fontSize: "0.9rem",
+      fontSize: "0.95rem",
       outline: "none",
     },
-    btn: {
-      background: p.accent,
-      color: p.accentText,
+    button: {
+      background: "var(--accent)",
+      color: "var(--accent-text)",
       border: "none",
-      borderRadius: 999,
-      padding: "0.55rem 1.2rem",
+      borderRadius: 10,
+      padding: "0.7rem 1.1rem",
       fontFamily: "inherit",
-      fontSize: "0.85rem",
+      fontSize: "0.95rem",
       fontWeight: 600,
       cursor: "pointer",
     },
+    ghost: {
+      background: "transparent",
+      color: "var(--text)",
+      border: "1px solid var(--border)",
+      borderRadius: 10,
+      padding: "0.7rem 1.1rem",
+      fontFamily: "inherit",
+      fontSize: "0.95rem",
+      cursor: "pointer",
+    },
+    buttonRow: { display: "flex", gap: "0.6rem", marginTop: "1.25rem", flexWrap: "wrap" },
   };
 
-  const tabs = ["Overview", "Activity", "Mesh", "Settings"];
-  const rows = [
-    { name: "alpha-node", status: "ok", load: "32%" },
-    { name: "beta-node", status: "ok", load: "11%" },
-    { name: "gamma-node", status: "err", load: "92%" },
-    { name: "delta-node", status: "ok", load: "47%" },
+  const items = [
+    { id: 1, title: "Daily standup notes", tag: "active" },
+    { id: 2, title: "Q3 launch checklist", tag: "draft" },
+    { id: 3, title: "Reading list", tag: "synced" },
   ];
 
   return (
-    <main id="app" style={c.page}>
-      <div style={c.container}>
-        <div style={c.topBar}>
-          <span style={c.brand}>vibes.diy · theme</span>
-          <nav style={c.pillNav}>
-            {tabs.map((t) => (
-              <button key={t} style={c.pill(t === tab)} onClick={() => setTab(t)} type="button">
-                {t}
-              </button>
-            ))}
-          </nav>
+    <>
+      <style>{THEME_CSS}</style>
+      <main id="app" style={c.page}>
+        <div style={c.container}>
+          <header style={c.header}>
+            <span style={c.eyebrow}>vibes.diy theme</span>
+            <h1 style={c.title}>Mesh Void</h1>
+            <p style={c.subtitle}>An exemplar app on the Mesh Void theme — list, form, buttons rendered with the catalog tokens.</p>
+            <div style={c.modeNote}>auto · light + dark via prefers-color-scheme</div>
+          </header>
+
+          <div style={c.grid}>
+            <section style={c.card}>
+              <h2 style={c.cardTitle}>Recent</h2>
+              <ul style={c.list}>
+                {items.map((it) => (
+                  <li key={it.id} style={c.listItem}>
+                    <span>{it.title}</span>
+                    <span style={c.badge}>{it.tag}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section style={c.card}>
+              <h2 style={c.cardTitle}>New entry</h2>
+              <p style={{ ...c.subtitle, fontSize: "0.9rem", marginTop: "0.25rem" }}>Capture a quick thought.</p>
+              <div style={c.formRow}>
+                <input
+                  style={c.input}
+                  placeholder="What's on your mind?"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                />
+                <button style={c.button} type="button">
+                  Save
+                </button>
+              </div>
+              <div style={c.buttonRow}>
+                <button style={c.button} type="button">
+                  Primary
+                </button>
+                <button style={c.ghost} type="button">
+                  Secondary
+                </button>
+              </div>
+            </section>
+          </div>
         </div>
-
-        <h1 style={c.title}>
-          <span style={c.titleAccent}>Mesh</span> Void
-        </h1>
-        <p style={c.subtitle}>Neon edges over a quiet white canvas. Crisp pills, soft surfaces, sharp data.</p>
-
-        <div style={c.kpiRow}>
-          <div style={c.kpi}>
-            <div style={c.kpiLabel}>Throughput</div>
-            <div style={c.kpiValue}>1.42M/s</div>
-            <span style={c.kpiDelta(true)}>+12.4%</span>
-          </div>
-          <div style={c.kpi}>
-            <div style={c.kpiLabel}>Latency p95</div>
-            <div style={c.kpiValue}>18ms</div>
-            <span style={c.kpiDelta(true)}>-3ms</span>
-          </div>
-          <div style={c.kpi}>
-            <div style={c.kpiLabel}>Errors</div>
-            <div style={c.kpiValue}>0.04%</div>
-            <span style={c.kpiDelta(false)}>+0.01%</span>
-          </div>
-          <div style={c.kpi}>
-            <div style={c.kpiLabel}>Active nodes</div>
-            <div style={c.kpiValue}>128</div>
-            <span style={c.kpiDelta(true)}>+4</span>
-          </div>
-        </div>
-
-        <section style={c.section}>
-          <div style={c.sectionHeader}>
-            <span style={c.sectionTitle}>Mesh nodes</span>
-            <span style={{ ...c.kpiLabel }}>{rows.length} active</span>
-          </div>
-          <table style={c.table}>
-            <thead>
-              <tr>
-                <th style={c.th}>Node</th>
-                <th style={c.th}>Status</th>
-                <th style={c.th}>Load</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.name}>
-                  <td style={c.td}>{r.name}</td>
-                  <td style={c.td}>
-                    <span style={r.status === "ok" ? c.statusOk : c.statusErr} />
-                    {r.status === "ok" ? "Healthy" : "Degraded"}
-                  </td>
-                  <td style={c.td}>{r.load}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div style={c.composer}>
-            <input style={c.input} placeholder="Add a node…" value={draft} onChange={(e) => setDraft(e.target.value)} />
-            <button type="button" style={c.btn}>
-              Provision
-            </button>
-          </div>
-        </section>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

@@ -1,226 +1,216 @@
 import React, { useEffect, useState } from "react";
 
-// Theme: Broadsheet — a daily newspaper. Helvetica, hairline rules, multi-column.
+// Theme: Broadsheet — auto-generated exemplar with prefers-color-scheme.
+// Canonical palette: bg #fff, accent #666.
+// Inverse computed by flipping oklch/hex lightness; tune by hand if needed.
+
+const THEME_CSS = `
+  :root {
+    --bg: #fff;
+    --accent: #666;
+    --text: rgba(20, 20, 20, 0.92);
+    --muted: rgba(20, 20, 20, 0.5);
+    --border: rgba(20, 20, 20, 0.14);
+    --raised: rgba(255, 255, 255, 0.55);
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --accent-text: #fafafa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f0f0f;
+      --accent: #999999;
+      --text: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.55);
+      --border: rgba(255, 255, 255, 0.18);
+      --raised: rgba(255, 255, 255, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --accent-text: #0a0a0a;
+    }
+  }
+  body { margin: 0; }
+`;
 
 export default function App() {
-  const [subscribe, setSubscribe] = useState("");
-
-  const p = {
-    bg: "#fff",
-    ink: "#111",
-    rule: "#111",
-    muted: "#666",
-    badge: "#000",
-    badgeText: "#fff",
-  };
+  const [draft, setDraft] = useState("");
 
   const c = {
     page: {
       minHeight: "100vh",
-      background: p.bg,
-      color: p.ink,
+      background: "var(--bg)",
+      color: "var(--text)",
       fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-      padding: "2rem 2.5rem 4rem",
+      padding: "3rem 2rem 4rem",
     },
-    container: { maxWidth: "70rem", margin: "0 auto" },
-    masthead: {
-      display: "flex",
-      alignItems: "flex-end",
-      justifyContent: "space-between",
-      borderTop: `4px double ${p.rule}`,
-      borderBottom: `1px solid ${p.rule}`,
-      padding: "0.85rem 0 0.6rem",
-      marginBottom: "1.25rem",
-      fontSize: "0.75rem",
-      letterSpacing: "0.05em",
-    },
-    edition: { textTransform: "uppercase" },
-    nameplate: {
-      fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-      fontSize: "clamp(4rem, 16vw, 13rem)",
-      fontWeight: 900,
-      letterSpacing: "-0.05em",
-      lineHeight: 0.85,
-      margin: "0.5rem 0 0.25rem",
-      textAlign: "center",
+    container: { maxWidth: "56rem", margin: "0 auto" },
+    header: { display: "flex", flexDirection: "column", gap: "0.85rem", marginBottom: "2rem" },
+    eyebrow: {
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: "0.72rem",
+      letterSpacing: "0.25em",
       textTransform: "uppercase",
+      color: "var(--muted)",
     },
-    tagline: {
-      textAlign: "center",
-      fontStyle: "italic",
-      letterSpacing: "0.08em",
-      borderTop: `1px solid ${p.rule}`,
-      borderBottom: `1px solid ${p.rule}`,
-      padding: "0.45rem 0",
-      fontSize: "0.85rem",
-      color: p.muted,
-    },
-    columns: {
-      marginTop: "2rem",
-      display: "grid",
-      gridTemplateColumns: "2fr 1fr",
-      gap: "2.5rem",
-    },
-    leadHeadline: {
-      fontSize: "2.5rem",
+    title: {
+      fontSize: "clamp(3rem, 13vw, 10rem)",
       fontWeight: 800,
-      letterSpacing: "-0.02em",
-      lineHeight: 1.05,
+      letterSpacing: "-0.04em",
+      lineHeight: 0.9,
+      color: "var(--accent)",
       margin: 0,
     },
-    leadKicker: {
-      fontSize: "0.7rem",
-      letterSpacing: "0.18em",
-      textTransform: "uppercase",
-      color: p.muted,
-      marginBottom: "0.5rem",
+    subtitle: {
+      fontSize: "1.05rem",
+      color: "var(--muted)",
+      maxWidth: "32rem",
+      lineHeight: 1.5,
+      margin: 0,
     },
-    leadBody: {
-      columnCount: 2,
-      columnGap: "1.5rem",
-      marginTop: "1rem",
-      fontSize: "0.95rem",
-      lineHeight: 1.55,
-      textAlign: "justify",
-    },
-    asideCard: {
-      borderTop: `2px solid ${p.rule}`,
-      paddingTop: "0.85rem",
-    },
-    asideTitle: {
-      fontSize: "0.65rem",
-      letterSpacing: "0.22em",
-      textTransform: "uppercase",
-      marginBottom: "0.85rem",
-    },
-    headlineList: { listStyle: "none", margin: 0, padding: 0 },
-    headline: {
-      borderBottom: `1px solid ${p.rule}`,
-      padding: "0.65rem 0",
-      fontSize: "0.95rem",
-      lineHeight: 1.3,
-      cursor: "pointer",
-    },
-    headlineKicker: {
-      fontSize: "0.6rem",
-      letterSpacing: "0.18em",
-      textTransform: "uppercase",
-      color: p.muted,
-      marginBottom: "0.15rem",
-    },
-    subscribeBox: {
-      marginTop: "1.5rem",
-      border: `2px solid ${p.rule}`,
-      padding: "0.85rem",
-    },
-    subTitle: {
-      fontSize: "0.7rem",
-      letterSpacing: "0.18em",
-      textTransform: "uppercase",
-      marginBottom: "0.5rem",
-    },
-    subInput: {
-      width: "100%",
-      padding: "0.55rem 0.7rem",
-      border: `1px solid ${p.rule}`,
-      fontFamily: "inherit",
-      fontSize: "0.85rem",
-      outline: "none",
-    },
-    subBtn: {
-      width: "100%",
+    modeNote: {
       marginTop: "0.5rem",
-      background: p.badge,
-      color: p.badgeText,
-      border: "none",
-      padding: "0.6rem",
-      fontFamily: "inherit",
-      fontWeight: 700,
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: "0.7rem",
+      letterSpacing: "0.2em",
+      textTransform: "uppercase",
+      color: "var(--muted)",
+    },
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(18rem, 1fr))",
+      gap: "1.25rem",
+      marginTop: "2.5rem",
+    },
+    card: {
+      background: "var(--card-bg)",
+      border: "1px solid var(--border)",
+      borderRadius: 14,
+      padding: "1.5rem",
+    },
+    cardTitle: {
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: "0.7rem",
       letterSpacing: "0.18em",
       textTransform: "uppercase",
-      fontSize: "0.7rem",
-      cursor: "pointer",
+      color: "var(--muted)",
+      margin: "0 0 1rem",
+    },
+    list: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.55rem" },
+    listItem: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: "0.75rem",
+      padding: "0.7rem 0.85rem",
+      borderRadius: 10,
+      background: "var(--raised)",
+      border: "1px solid var(--border)",
+      fontSize: "0.95rem",
     },
     badge: {
-      display: "inline-block",
-      background: p.badge,
-      color: p.badgeText,
-      padding: "0.15rem 0.45rem",
-      fontSize: "0.6rem",
-      fontWeight: 700,
-      letterSpacing: "0.15em",
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      fontSize: "0.7rem",
+      padding: "0.18rem 0.6rem",
+      borderRadius: 999,
+      background: "var(--accent)",
+      color: "var(--accent-text)",
+      fontWeight: 600,
+      letterSpacing: "0.08em",
       textTransform: "uppercase",
-      marginRight: "0.4rem",
     },
+    formRow: { display: "flex", gap: "0.5rem", marginTop: "0.5rem" },
+    input: {
+      flex: 1,
+      background: "var(--raised)",
+      color: "var(--text)",
+      border: "1px solid var(--border)",
+      borderRadius: 10,
+      padding: "0.7rem 0.9rem",
+      fontFamily: "inherit",
+      fontSize: "0.95rem",
+      outline: "none",
+    },
+    button: {
+      background: "var(--accent)",
+      color: "var(--accent-text)",
+      border: "none",
+      borderRadius: 10,
+      padding: "0.7rem 1.1rem",
+      fontFamily: "inherit",
+      fontSize: "0.95rem",
+      fontWeight: 600,
+      cursor: "pointer",
+    },
+    ghost: {
+      background: "transparent",
+      color: "var(--text)",
+      border: "1px solid var(--border)",
+      borderRadius: 10,
+      padding: "0.7rem 1.1rem",
+      fontFamily: "inherit",
+      fontSize: "0.95rem",
+      cursor: "pointer",
+    },
+    buttonRow: { display: "flex", gap: "0.6rem", marginTop: "1.25rem", flexWrap: "wrap" },
   };
 
-  const headlines = [
-    { kicker: "Local", title: "Five themes added to the morning index" },
-    { kicker: "Markets", title: "Brutalist makes a quiet comeback in dashboards" },
-    { kicker: "Tech", title: "Iframe pooling vs lazy mount, settled" },
-    { kicker: "Style", title: "Newspaper layouts return to product UIs" },
+  const items = [
+    { id: 1, title: "Daily standup notes", tag: "active" },
+    { id: 2, title: "Q3 launch checklist", tag: "draft" },
+    { id: 3, title: "Reading list", tag: "synced" },
   ];
 
   return (
-    <main id="app" style={c.page}>
-      <div style={c.container}>
-        <div style={c.masthead}>
-          <span style={c.edition}>Vol. I · No. 06 · vibes.diy</span>
-          <span style={c.edition}>{new Date().toUTCString().slice(0, 16)}</span>
-        </div>
-        <h1 style={c.nameplate}>The Broadsheet</h1>
-        <div style={c.tagline}>"All the themes that fit, in print"</div>
+    <>
+      <style>{THEME_CSS}</style>
+      <main id="app" style={c.page}>
+        <div style={c.container}>
+          <header style={c.header}>
+            <span style={c.eyebrow}>vibes.diy theme</span>
+            <h1 style={c.title}>Broadsheet</h1>
+            <p style={c.subtitle}>
+              An exemplar app on the Broadsheet theme — list, form, buttons rendered with the catalog tokens.
+            </p>
+            <div style={c.modeNote}>auto · light + dark via prefers-color-scheme</div>
+          </header>
 
-        <div style={c.columns}>
-          <article>
-            <div style={c.leadKicker}>
-              <span style={c.badge}>Feature</span>Today
-            </div>
-            <h2 style={c.leadHeadline}>A Theme System Returns to its Roots: Print, Paper, Patience</h2>
-            <div style={c.leadBody}>
-              <p>
-                The broadsheet layout, long thought retired in favor of feed-shaped product surfaces, has reasserted itself in the
-                latest crop of design systems. Editors found that hairline rules, justified columns, and centered nameplates
-                produced an unmistakable air of authority that pill-shaped buttons simply could not.
-              </p>
-              <p>
-                "Readers spent measurably longer on the page," reported one product team, "and they were noticeably calmer about
-                it." Few had expected such a result; fewer still had budget to redesign for it.
-              </p>
-              <p>
-                Whether the trend will outlast the present news cycle is a matter of some debate. Subscriptions are nonetheless
-                brisk.
-              </p>
-            </div>
-          </article>
-
-          <aside>
-            <div style={c.asideCard}>
-              <div style={c.asideTitle}>Inside</div>
-              <ul style={c.headlineList}>
-                {headlines.map((h, i) => (
-                  <li key={i} style={c.headline}>
-                    <div style={c.headlineKicker}>{h.kicker}</div>
-                    {h.title}
+          <div style={c.grid}>
+            <section style={c.card}>
+              <h2 style={c.cardTitle}>Recent</h2>
+              <ul style={c.list}>
+                {items.map((it) => (
+                  <li key={it.id} style={c.listItem}>
+                    <span>{it.title}</span>
+                    <span style={c.badge}>{it.tag}</span>
                   </li>
                 ))}
               </ul>
-            </div>
-            <div style={c.subscribeBox}>
-              <div style={c.subTitle}>Subscribe</div>
-              <input
-                style={c.subInput}
-                placeholder="email@daily.example"
-                value={subscribe}
-                onChange={(e) => setSubscribe(e.target.value)}
-              />
-              <button type="button" style={c.subBtn}>
-                Deliver Daily
-              </button>
-            </div>
-          </aside>
+            </section>
+
+            <section style={c.card}>
+              <h2 style={c.cardTitle}>New entry</h2>
+              <p style={{ ...c.subtitle, fontSize: "0.9rem", marginTop: "0.25rem" }}>Capture a quick thought.</p>
+              <div style={c.formRow}>
+                <input
+                  style={c.input}
+                  placeholder="What's on your mind?"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                />
+                <button style={c.button} type="button">
+                  Save
+                </button>
+              </div>
+              <div style={c.buttonRow}>
+                <button style={c.button} type="button">
+                  Primary
+                </button>
+                <button style={c.ghost} type="button">
+                  Secondary
+                </button>
+              </div>
+            </section>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

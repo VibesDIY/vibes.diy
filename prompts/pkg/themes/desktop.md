@@ -26,7 +26,7 @@ typography:
 
 ## Brand & Style
 
-Desktop Retro design system. A clean, structured theme with JetBrains Mono typography. Use this design system\'s color tokens, spacing, and typographic choices consistently across all generated components.
+Desktop Retro design system. A clean, structured theme with JetBrains Mono typography. Use this design system\'s color tokens, spacing, and typographic choices consistently across all generated components. This theme **respects the visitor's system color scheme** — light by default, with a dark variant that auto-applies on `@media (prefers-color-scheme: dark)`. Apply both color sets via CSS variables in a `<style>` block; never hard-code one mode only.
 
 ## Colors
 

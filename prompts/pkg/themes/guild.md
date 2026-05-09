@@ -21,7 +21,7 @@ typography:
 
 ## Brand & Style
 
-Guild Ledger design system. A dark, atmospheric theme with Cinzel typography. Use this design system\'s color tokens, spacing, and typographic choices consistently across all generated components.
+Guild Ledger design system. A dark, atmospheric theme with Cinzel typography. Use this design system\'s color tokens, spacing, and typographic choices consistently across all generated components. This theme **respects the visitor's system color scheme** — dark by default, with a light variant that auto-applies on `@media (prefers-color-scheme: light)`. Apply both color sets via CSS variables in a `<style>` block; never hard-code one mode only.
 
 ## Colors
 
