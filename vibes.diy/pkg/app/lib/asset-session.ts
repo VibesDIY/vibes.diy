@@ -16,7 +16,7 @@
 // response body), so the next caller refetches transparently before the
 // browser would notice expiry.
 
-import { exception2Result, KeyedResolvOnce, Result } from "@adviser/cement";
+import { BuildURI, exception2Result, KeyedResolvOnce, Result } from "@adviser/cement";
 import { type } from "arktype";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 
@@ -57,8 +57,10 @@ function bridgeUrl(hostnameBase: string, path: string): string {
   // In dev, every virtual host (`<app>--<user>.<base>`, `assets.<base>`) is
   // served by a single Vite listener on a non-standard port, so reuse the
   // current window port for the asset host. Empty in prod (default 443).
+  const buri = BuildURI.from("https://template").hostname(`assets.${hostnameBase.replace(/^\./, "")}`).pathname(path);
   const p = runtimePort();
-  return `https://assets.${hostnameBase.replace(/^\./, "")}${p ? `:${p}` : ""}${path}`;
+  if (p) buri.port(p);
+  return buri.toString();
 }
 
 export async function ensureAssetSession(deps: EnsureAssetSessionDeps): Promise<Result<void>> {
