@@ -21,6 +21,10 @@ export interface ChatInputRef extends HTMLTextAreaElement {
   clickSubmit: () => void;
   setFocus: () => void;
   setPrompt: (p: string) => void;
+  /** Set the textarea content only if it's currently empty. Used by the
+   * theme picker to prefill a default "Please update the theme" prompt
+   * without clobbering whatever the user had been typing. */
+  setPromptIfEmpty: (p: string) => void;
   setSelection: (start: number, end: number) => void;
 }
 
@@ -66,6 +70,9 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
           },
           setPrompt: (v) => {
             setPrompt(v);
+          },
+          setPromptIfEmpty: (v) => {
+            if (!prompt) setPrompt(v);
           },
           setSelection: (s, e) => {
             if (realTextArea.current) {
