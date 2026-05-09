@@ -12,6 +12,19 @@ export interface FileMeta {
   readonly url?: string;
 }
 
+// Either a raw Blob/File (from a file input) or a Fireproof
+// DocFileMeta-like object whose `.file()` resolves to one. ImgGen
+// resolves the latter at the runtime boundary so callers can pass
+// `doc._files.<name>` straight through.
+export type ImgGenInputImage =
+  | Blob
+  | {
+      readonly type?: string;
+      readonly size?: number;
+      readonly lastModified?: number;
+      readonly file: () => Promise<Blob>;
+    };
+
 export interface VersionInfo {
   // Version identifier doubles as the fileKey into _files. e.g. "v1"
   readonly id: string;
@@ -57,7 +70,7 @@ export interface UseImgGenOptions {
   readonly options?: Partial<ImgGenOptions>;
   readonly generationId?: string;
   readonly skip?: boolean;
-  readonly inputImage?: File;
+  readonly inputImage?: ImgGenInputImage;
   readonly model?: string;
   readonly editedPrompt?: string;
 }

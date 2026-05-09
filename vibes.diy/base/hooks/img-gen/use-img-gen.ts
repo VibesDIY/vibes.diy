@@ -6,11 +6,12 @@ import type {
   FileMeta,
   ImageDocumentPlain,
   ImgGenFile,
+  ImgGenInputImage,
   PartialImageDocument,
   UseImgGenOptions,
   UseImgGenResult,
 } from "@vibes.diy/vibe-types";
-import { exception2Result } from "@adviser/cement";
+import { exception2Result, Result } from "@adviser/cement";
 import { addNewVersion } from "./utils.js";
 
 // Per-app Firefly-synced ImgGen hook. The runtime auto-attaches via
@@ -22,7 +23,7 @@ import { addNewVersion } from "./utils.js";
 interface InjectedDeps {
   // Hook-test hatch: allow the test to swap in a synthetic generator
   // without reaching into the iframe runtime.
-  imgGen?: (prompt: string, inputImage?: File, model?: string) => Promise<ImgGenFile[]>;
+  imgGen?: (prompt: string, inputImage?: ImgGenInputImage, model?: string) => Promise<Result<ImgGenFile[]>>;
 }
 
 export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseImgGenResult {
@@ -44,7 +45,8 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
   useEffect(() => {
     if (skip || !_id) return;
 
-    const genKey = `${_id}-${generationId ?? ""}-${inputImage?.name ?? ""}${inputImage?.lastModified ?? ""}-${model ?? ""}`;
+    const inputMeta = inputImage as Partial<File> | undefined;
+    const genKey = `${_id}-${generationId ?? ""}-${inputMeta?.name ?? ""}${inputMeta?.lastModified ?? ""}-${model ?? ""}`;
     if (currentGenRef.current === genKey) return;
     currentGenRef.current = genKey;
 
@@ -87,11 +89,23 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
       setProgress(10);
       setError(null);
 
-      const rRun = await exception2Result(async () => {
-        const files = await imgGen(promptText, inputImage, model);
-        const file = files[0];
-        if (!file) throw new Error("No image file returned from service");
+      const rFiles = await imgGen(promptText, inputImage, model);
+      if (rFiles.isErr()) {
+        // Surface the upstream error message verbatim — this is the
+        // provider error (e.g. "Prodia request failed: 429"), not a
+        // generic "No image file returned" stand-in.
+        setError(rFiles.Err());
+        setLoading(false);
+        currentGenRef.current = null;
+        return;
+      }
+      const files = rFiles.Ok();
 
+      // Runtime guarantees `files` is non-empty when Ok — see
+      // vibes.diy/vibe/runtime/img-gen.tsx.
+      const file = files[0];
+
+      const rRun = await exception2Result(async () => {
         // ImgGenFile (uploadId, cid, mimeType, size) -> FileMeta on the doc.
         // The platform mints meta.url on read.
         const fileMeta: FileMeta = {

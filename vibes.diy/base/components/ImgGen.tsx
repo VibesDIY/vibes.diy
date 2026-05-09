@@ -1,12 +1,15 @@
 import React, { useState, useCallback, useMemo } from "react";
 import type { Database } from "@fireproof/use-fireproof";
-import type { FileMeta } from "@vibes.diy/vibe-types";
+import type { FileMeta, ImgGenInputImage } from "@vibes.diy/vibe-types";
 import { useImgGen } from "../hooks/img-gen/use-img-gen.js";
 
 export interface ImgGenProps {
   prompt?: string;
   _id?: string;
-  images?: File[];
+  // Accept raw File/Blob (file inputs) or Fireproof DocFileMeta-like
+  // ({ file: () => Promise<File> }) so apps can pass `doc._files.<name>`
+  // straight through.
+  images?: ImgGenInputImage[];
   database?: string | Database;
   className?: string;
   alt?: string;
@@ -29,7 +32,9 @@ function promptToId(prompt: string): string {
 // no `<ImgFile>`, no `meta.file()`.
 export function ImgGen({ prompt, _id: propId, images, database, className, alt, style, showControls = true, model }: ImgGenProps) {
   const inputImage = images?.[0];
-  const imageKey = inputImage ? `${inputImage.name}-${inputImage.size}-${inputImage.lastModified}` : "";
+  const imageKey = inputImage
+    ? `${(inputImage as Partial<File>).name ?? ""}-${inputImage.size ?? ""}-${(inputImage as Partial<File>).lastModified ?? ""}`
+    : "";
   const stableId = useMemo(
     () => propId ?? (prompt ? promptToId(prompt + imageKey + (model ?? "")) : undefined),
     [propId, prompt, imageKey, model]
