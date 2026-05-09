@@ -1,154 +1,224 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
-// Theme: Matrix Status — green-on-black terminal, VT323 monospace.
-// Layout: full-bleed terminal session with prompt at bottom and a tail.
+// Theme: Matrix Status — auto-generated exemplar with prefers-color-scheme.
+// Canonical palette: bg oklch(0.16 0.000 0), accent oklch(0.79 0.21 152).
+// Inverse computed by flipping oklch/hex lightness; tune by hand if needed.
+
+const THEME_CSS = `
+  :root {
+    --bg: oklch(0.16 0.000 0);
+    --accent: oklch(0.79 0.21 152);
+    --text: rgba(255, 255, 255, 0.92);
+    --muted: rgba(255, 255, 255, 0.55);
+    --border: rgba(255, 255, 255, 0.18);
+    --raised: rgba(255, 255, 255, 0.06);
+    --card-bg: rgba(255, 255, 255, 0.04);
+    --accent-text: #0a0a0a;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: oklch(0.84 0.000 0);
+      --accent: oklch(0.21 0.21 152);
+      --text: rgba(20, 20, 20, 0.92);
+      --muted: rgba(20, 20, 20, 0.5);
+      --border: rgba(20, 20, 20, 0.14);
+      --raised: rgba(255, 255, 255, 0.55);
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --accent-text: #fafafa;
+    }
+  }
+  body { margin: 0; }
+`;
 
 export default function App() {
   useEffect(() => {
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=VT323&display=optional";
+    link.href = "https://fonts.googleapis.com/css2?family=VT323:wght@400;500;700&display=optional";
     document.head.appendChild(link);
     return () => link.remove();
   }, []);
 
-  const [cmd, setCmd] = useState("");
-  const [tick, setTick] = useState(0);
-  const tailRef = useRef(null);
-
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const p = {
-    bg: "#000",
-    fg: "oklch(0.79 0.21 152)",
-    fgDim: "oklch(0.55 0.15 152)",
-    fgBright: "oklch(0.93 0.21 152)",
-    cursorBg: "oklch(0.79 0.21 152)",
-  };
+  const [draft, setDraft] = useState("");
 
   const c = {
     page: {
-      position: "fixed",
-      inset: 0,
-      background: p.bg,
-      color: p.fg,
+      minHeight: "100vh",
+      background: "var(--bg)",
+      color: "var(--text)",
       fontFamily: "'VT323', monospace",
-      display: "flex",
-      flexDirection: "column",
-      padding: "2rem 2.5rem",
-      gap: "1rem",
-      overflow: "hidden",
+      padding: "3rem 2rem 4rem",
     },
-    bar: {
+    container: { maxWidth: "56rem", margin: "0 auto" },
+    header: { display: "flex", flexDirection: "column", gap: "0.85rem", marginBottom: "2rem" },
+    eyebrow: {
+      fontFamily: "'VT323', monospace",
+      fontSize: "0.72rem",
+      letterSpacing: "0.25em",
+      textTransform: "uppercase",
+      color: "var(--muted)",
+    },
+    title: {
+      fontSize: "clamp(3rem, 13vw, 10rem)",
+      fontWeight: 800,
+      letterSpacing: "-0.04em",
+      lineHeight: 0.9,
+      color: "var(--accent)",
+      margin: 0,
+    },
+    subtitle: {
+      fontSize: "1.05rem",
+      color: "var(--muted)",
+      maxWidth: "32rem",
+      lineHeight: 1.5,
+      margin: 0,
+    },
+    modeNote: {
+      marginTop: "0.5rem",
+      fontFamily: "'VT323', monospace",
+      fontSize: "0.7rem",
+      letterSpacing: "0.2em",
+      textTransform: "uppercase",
+      color: "var(--muted)",
+    },
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(18rem, 1fr))",
+      gap: "1.25rem",
+      marginTop: "2.5rem",
+    },
+    card: {
+      background: "var(--card-bg)",
+      border: "1px solid var(--border)",
+      borderRadius: 14,
+      padding: "1.5rem",
+    },
+    cardTitle: {
+      fontFamily: "'VT323', monospace",
+      fontSize: "0.7rem",
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+      color: "var(--muted)",
+      margin: "0 0 1rem",
+    },
+    list: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.55rem" },
+    listItem: {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      borderBottom: `1px solid ${p.fgDim}`,
-      paddingBottom: "0.5rem",
-      fontSize: "1.1rem",
+      gap: "0.75rem",
+      padding: "0.7rem 0.85rem",
+      borderRadius: 10,
+      background: "var(--raised)",
+      border: "1px solid var(--border)",
+      fontSize: "0.95rem",
     },
-    title: {
-      fontSize: "clamp(3.5rem, 14vw, 11rem)",
-      lineHeight: 1,
-      margin: "1.5rem 0 0.25rem",
-      color: p.fgBright,
-      textShadow: "0 0 18px rgba(121, 232, 137, 0.55)",
-      letterSpacing: "0.05em",
+    badge: {
+      fontFamily: "'VT323', monospace",
+      fontSize: "0.7rem",
+      padding: "0.18rem 0.6rem",
+      borderRadius: 999,
+      background: "var(--accent)",
+      color: "var(--accent-text)",
+      fontWeight: 600,
+      letterSpacing: "0.08em",
+      textTransform: "uppercase",
     },
-    sub: { fontSize: "1.2rem", color: p.fgDim, marginBottom: "1rem" },
-    log: {
-      flex: 1,
-      overflow: "auto",
-      fontSize: "1.15rem",
-      lineHeight: 1.35,
-      borderTop: `1px solid ${p.fgDim}`,
-      borderBottom: `1px solid ${p.fgDim}`,
-      padding: "0.85rem 0",
-    },
-    promptRow: {
-      display: "flex",
-      alignItems: "center",
-      gap: "0.5rem",
-      fontSize: "1.2rem",
-    },
+    formRow: { display: "flex", gap: "0.5rem", marginTop: "0.5rem" },
     input: {
       flex: 1,
-      background: "transparent",
-      color: p.fgBright,
-      border: "none",
+      background: "var(--raised)",
+      color: "var(--text)",
+      border: "1px solid var(--border)",
+      borderRadius: 10,
+      padding: "0.7rem 0.9rem",
+      fontFamily: "inherit",
+      fontSize: "0.95rem",
       outline: "none",
-      fontFamily: "inherit",
-      fontSize: "1.2rem",
-      caretColor: p.fgBright,
     },
-    btn: {
-      background: "transparent",
-      color: p.fg,
-      border: `1px solid ${p.fg}`,
-      padding: "0.25rem 0.85rem",
+    button: {
+      background: "var(--accent)",
+      color: "var(--accent-text)",
+      border: "none",
+      borderRadius: 10,
+      padding: "0.7rem 1.1rem",
       fontFamily: "inherit",
-      fontSize: "1rem",
+      fontSize: "0.95rem",
+      fontWeight: 600,
       cursor: "pointer",
-      textTransform: "uppercase",
-      letterSpacing: "0.1em",
     },
-    cursor: {
-      display: "inline-block",
-      width: "0.55em",
-      height: "1em",
-      verticalAlign: "text-bottom",
-      background: p.cursorBg,
-      animation: "matrix-blink 1s steps(2,end) infinite",
-      marginLeft: "2px",
+    ghost: {
+      background: "transparent",
+      color: "var(--text)",
+      border: "1px solid var(--border)",
+      borderRadius: 10,
+      padding: "0.7rem 1.1rem",
+      fontFamily: "inherit",
+      fontSize: "0.95rem",
+      cursor: "pointer",
     },
+    buttonRow: { display: "flex", gap: "0.6rem", marginTop: "1.25rem", flexWrap: "wrap" },
   };
 
-  const lines = [
-    "[ok] uplink established",
-    "[..] decrypting cluster",
-    "[ok] payload-3.2 verified",
-    "[!!] anomaly @ sector 7",
-    "[ok] telemetry cached",
-    "[ok] mesh sync 18ms",
-    `[heartbeat] tick=${tick.toString().padStart(4, "0")}`,
+  const items = [
+    { id: 1, title: "Daily standup notes", tag: "active" },
+    { id: 2, title: "Q3 launch checklist", tag: "draft" },
+    { id: 3, title: "Reading list", tag: "synced" },
   ];
 
   return (
-    <main id="app" style={c.page}>
-      <style>{`@keyframes matrix-blink { 0%,100% { opacity: 1 } 50% { opacity: 0 } }`}</style>
-      <div style={c.bar}>
-        <span>vibes.diy ⏵ theme</span>
-        <span>OK · {new Date().toUTCString().slice(17, 22)} UTC</span>
-      </div>
-      <h1 style={c.title}>MATRIX</h1>
-      <div style={c.sub}>tail -f /var/log/cluster — ctrl-c to exit</div>
+    <>
+      <style>{THEME_CSS}</style>
+      <main id="app" style={c.page}>
+        <div style={c.container}>
+          <header style={c.header}>
+            <span style={c.eyebrow}>vibes.diy theme</span>
+            <h1 style={c.title}>Matrix Status</h1>
+            <p style={c.subtitle}>
+              An exemplar app on the Matrix Status theme — list, form, buttons rendered with the catalog tokens.
+            </p>
+            <div style={c.modeNote}>auto · dark + light via prefers-color-scheme</div>
+          </header>
 
-      <div ref={tailRef} style={c.log}>
-        {lines.map((l, i) => (
-          <div key={i}>{l}</div>
-        ))}
-      </div>
+          <div style={c.grid}>
+            <section style={c.card}>
+              <h2 style={c.cardTitle}>Recent</h2>
+              <ul style={c.list}>
+                {items.map((it) => (
+                  <li key={it.id} style={c.listItem}>
+                    <span>{it.title}</span>
+                    <span style={c.badge}>{it.tag}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
 
-      <form
-        style={c.promptRow}
-        onSubmit={(e) => {
-          e.preventDefault();
-          setCmd("");
-        }}
-      >
-        <span>root@cluster $</span>
-        <input style={c.input} value={cmd} onChange={(e) => setCmd(e.target.value)} placeholder="" autoFocus />
-        <span style={c.cursor} aria-hidden />
-        <button type="button" style={c.btn}>
-          Run
-        </button>
-        <button type="button" style={c.btn}>
-          Halt
-        </button>
-      </form>
-    </main>
+            <section style={c.card}>
+              <h2 style={c.cardTitle}>New entry</h2>
+              <p style={{ ...c.subtitle, fontSize: "0.9rem", marginTop: "0.25rem" }}>Capture a quick thought.</p>
+              <div style={c.formRow}>
+                <input
+                  style={c.input}
+                  placeholder="What's on your mind?"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                />
+                <button style={c.button} type="button">
+                  Save
+                </button>
+              </div>
+              <div style={c.buttonRow}>
+                <button style={c.button} type="button">
+                  Primary
+                </button>
+                <button style={c.ghost} type="button">
+                  Secondary
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </>
   );
 }
