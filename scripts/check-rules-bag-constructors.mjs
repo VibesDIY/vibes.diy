@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -28,30 +27,104 @@ function readAllowlist(filePath) {
   );
 }
 
-const rgArgs = ["--line-number", "--no-heading", "--color=never", "--fixed-strings"];
-
-for (const pattern of bannedPatterns) {
-  rgArgs.push("-e", pattern);
+function normalizeToPosixPath(filePath) {
+  return filePath.split("\\").join("/");
 }
 
-for (const glob of excludedGlobs) {
-  rgArgs.push("--glob", `!${glob}`);
+function globToRegex(globPattern) {
+  const escapedPattern = normalizeToPosixPath(globPattern)
+    .replace(/[|\\{}()[\]^$+?.]/g, "\\$&")
+    .replaceAll("**", "::DOUBLE_STAR::")
+    .replaceAll("*", "[^/]*")
+    .replaceAll("::DOUBLE_STAR::", ".*");
+
+  return new RegExp(`^${escapedPattern}$`);
 }
 
-rgArgs.push(...targetPaths);
+const excludedRegexes = excludedGlobs.map((globPattern) => globToRegex(globPattern));
 
-const rgResult = spawnSync("rg", rgArgs, {
-  cwd: repoRoot,
-  encoding: "utf8",
-});
-
-if (rgResult.status !== 0 && rgResult.status !== 1) {
-  process.stderr.write(rgResult.stderr || "Failed to run ripgrep for rules-bag constructor guardrail.\n");
-  process.exit(rgResult.status ?? 2);
+function isExcludedPath(relativePath) {
+  const posixPath = normalizeToPosixPath(relativePath);
+  return excludedRegexes.some((regex) => regex.test(posixPath));
 }
 
-const matches = (rgResult.stdout || "")
-  .split("\n")
+function collectFilesRecursively(absolutePath, relativePath, collector) {
+  let entries;
+  try {
+    entries = readdirSync(absolutePath, { withFileTypes: true });
+  } catch {
+    return;
+  }
+
+  for (const entry of entries) {
+    if (entry.name.startsWith(".")) {
+      continue;
+    }
+
+    const nextAbsolutePath = join(absolutePath, entry.name);
+    const nextRelativePath = normalizeToPosixPath(join(relativePath, entry.name));
+
+    if (isExcludedPath(nextRelativePath)) {
+      continue;
+    }
+
+    if (entry.isDirectory()) {
+      collectFilesRecursively(nextAbsolutePath, nextRelativePath, collector);
+      continue;
+    }
+
+    if (!entry.isFile()) {
+      continue;
+    }
+
+    collector.push({
+      absolutePath: nextAbsolutePath,
+      relativePath: nextRelativePath,
+    });
+  }
+}
+
+function lineContainsBannedPattern(line) {
+  return bannedPatterns.some((pattern) => line.includes(pattern));
+}
+
+function findMatchesInFile({ absolutePath, relativePath }) {
+  let fileBuffer;
+  try {
+    fileBuffer = readFileSync(absolutePath);
+  } catch {
+    return [];
+  }
+
+  if (fileBuffer.includes(0)) {
+    return [];
+  }
+
+  const fileContent = fileBuffer.toString("utf8");
+  const lines = fileContent.split("\n");
+  const matches = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].replace(/\r$/, "");
+
+    if (!lineContainsBannedPattern(line)) {
+      continue;
+    }
+
+    matches.push(`${relativePath}:${index + 1}:${line}`);
+  }
+
+  return matches;
+}
+
+const filesToScan = [];
+for (const targetPath of targetPaths) {
+  const absoluteTargetPath = resolve(repoRoot, targetPath);
+  collectFilesRecursively(absoluteTargetPath, targetPath, filesToScan);
+}
+
+const matches = filesToScan
+  .flatMap((file) => findMatchesInFile(file))
   .map((line) => line.trimEnd())
   .filter(Boolean)
   .sort();
