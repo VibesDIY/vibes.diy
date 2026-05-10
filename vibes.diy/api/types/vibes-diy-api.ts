@@ -79,6 +79,7 @@ import {
   ResListDbNames,
 } from "./app-documents.js";
 import { ReqListMembers, ResListMembers } from "./members.js";
+import { ReqVibeWhoAmI, ResVibeWhoAmI } from "@vibes.diy/vibe-types";
 import { ReqAssetUploadGrant, ResAssetUploadGrant } from "./asset.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -165,6 +166,9 @@ export interface VibesDiyApiIface<_T = unknown> {
 
   // Approved members of a vibe — display name + role only, gated on read access
   listMembers(req: Req<ReqListMembers>): Promise<Result<ResListMembers, VibesDiyError>>;
+
+  // Viewer identity — who is the caller, their access level, and db ACLs for this vibe
+  whoAmI(req: Req<ReqVibeWhoAmI>): Promise<Result<ResVibeWhoAmI, VibesDiyError>>;
 
   // Stage A put-asset producer — mints a short-lived signed grant for HTTP
   // POST /assets. Auth attached automatically by send().
