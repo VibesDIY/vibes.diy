@@ -668,9 +668,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.request({ ...req, type: "vibes.diy.req-list-members" }, { resMatch: isResListMembers });
   }
 
-  requestAssetUploadGrant(
-    req: Req<ReqAssetUploadGrant>
-  ): Promise<Result<ResAssetUploadGrant, VibesDiyError>> {
+  requestAssetUploadGrant(req: Req<ReqAssetUploadGrant>): Promise<Result<ResAssetUploadGrant, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-asset-upload-grant" }, { resMatch: isResAssetUploadGrant });
   }
 
@@ -935,3 +933,4 @@ class LLMChatImpl implements LLMChat {
 }
 
 export * from "./api-connection.js";
+export { FireflyApiAdapter } from "./firefly-api-adapter.js";
