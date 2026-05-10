@@ -52,7 +52,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
     userSlug: ownerUserSlug,
     env: [],
   });
-  if (rSettings.isErr()) return Result.Err(rSettings);
+  if (rSettings.isErr()) return Result.Err(rSettings.Err());
   const dbAcls = rSettings.Ok().settings.entry.dbAcls;
 
   if (!auth) {
