@@ -1092,6 +1092,9 @@ importers:
       '@vibes.diy/vibe-db-explorer':
         specifier: workspace:*
         version: link:../../vibe/db-explorer
+      '@vibes.diy/vibe-types':
+        specifier: workspace:*
+        version: link:../../vibe/types
       acorn:
         specifier: ^8.15.0
         version: 8.16.0
