@@ -3,6 +3,7 @@ import { vibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sandbox";
 import { VibesDiyApiIface, VibesDiyError } from "@vibes.diy/api-types";
 import { Result } from "@adviser/cement";
 import { ResVibeWhoAmI } from "@vibes.diy/vibe-types";
+import type { DbAcl } from "@vibes.diy/api-types";
 
 // Task 7 host-side bridge handler `vibeWhoAmI`. Dependencies are injected
 // (vibeDiyApi) so the handler is testable without stubbing globals or mocking
@@ -93,14 +94,14 @@ describe("vibeWhoAmI host handler", () => {
   });
 
   it("passes dbAcls through when present", async () => {
-    const dbAcls = { "notes-db": { read: true, write: true } };
+    const dbAcls: Record<string, DbAcl> = { "notes-db": { write: ["members"] } };
     const { sandbox, captured, iframe } = setupSandbox({
       whoAmIResult: Result.Ok({
         type: "vibe.res.whoAmI" as const,
         tid: "t2",
         viewer: { userSlug: "bob", displayName: "Bob" },
         access: "viewer",
-        dbAcls: dbAcls as unknown as ResVibeWhoAmI["dbAcls"],
+        dbAcls,
       } satisfies ResVibeWhoAmI),
     });
 
