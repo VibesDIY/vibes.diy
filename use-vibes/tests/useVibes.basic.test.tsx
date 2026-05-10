@@ -166,6 +166,54 @@ describe("useVibes - Basic Structure", () => {
     expect(result.current.code).toBe(null);
   });
 
+  it("should ignore stale generation results after regenerate", async () => {
+    const pendingResponses: Array<(code: string) => void> = [];
+    mockCallAI.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          pendingResponses.push(resolve);
+        })
+    );
+
+    const { result } = renderHook(() => useVibes("create a button", { dependencies: ["useFireproof"] }, mockCallAI));
+
+    await waitFor(() => expect(mockCallAI).toHaveBeenCalledTimes(1), {
+      timeout: 2000,
+      interval: 20,
+    });
+    expect(result.current.loading).toBe(true);
+
+    act(() => {
+      result.current.regenerate();
+    });
+
+    await waitFor(() => expect(mockCallAI).toHaveBeenCalledTimes(2), {
+      timeout: 2000,
+      interval: 20,
+    });
+
+    await act(async () => {
+      pendingResponses[0]("export default function StaleComponent() { return <div>stale</div>; }");
+      await Promise.resolve();
+    });
+
+    expect(result.current.loading).toBe(true);
+    expect(result.current.code).toBe(null);
+
+    await act(async () => {
+      pendingResponses[1]("export default function FreshComponent() { return <div>fresh</div>; }");
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+      interval: 20,
+    });
+
+    expect(result.current.code).toContain("fresh");
+    expect(result.current.code).not.toContain("stale");
+  });
+
   it("should handle errors from AI service", async () => {
     mockCallAI.mockRejectedValue(new Error("Service unavailable"));
 
