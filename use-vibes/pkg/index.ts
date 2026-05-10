@@ -3,6 +3,7 @@ export {
   // Core Fireproof integration
   useFireproof,
   fireproof,
+  type FireproofOpts,
   ImgFile,
   toCloud,
   type Fireproof,
