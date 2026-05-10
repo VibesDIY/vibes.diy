@@ -40,7 +40,20 @@ export function isUserSettingDefaultUserSlug(obj: unknown): obj is UserSettingDe
   return !(userSettingDefaultUserSlug(obj) instanceof type.errors);
 }
 
-export const userSettingItem = userSettingShareing.or(userSettingModelDefaults).or(userSettingDefaultUserSlug);
+export const userSettingProfile = type({
+  type: "'profile'",
+  "avatarCid?": "string",
+  "displayName?": "string",
+});
+export type UserSettingProfile = typeof userSettingProfile.infer;
+export function isUserSettingProfile(obj: unknown): obj is UserSettingProfile {
+  return !(userSettingProfile(obj) instanceof type.errors);
+}
+
+export const userSettingItem = userSettingShareing
+  .or(userSettingModelDefaults)
+  .or(userSettingDefaultUserSlug)
+  .or(userSettingProfile);
 
 export type UserSettingItem = typeof userSettingItem.infer;
 
