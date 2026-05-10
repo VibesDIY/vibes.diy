@@ -152,10 +152,81 @@ export function applyEdits(seed: string, edits: readonly Edit[]): ApplyEditsResu
   return { content, errors };
 }
 
+interface LineSpan {
+  readonly start: number;
+  readonly end: number;
+  readonly text: string;
+}
+
+function lineSpans(source: string): readonly LineSpan[] {
+  const spans: LineSpan[] = [];
+  let i = 0;
+  while (i <= source.length) {
+    const nl = source.indexOf("\n", i);
+    const end = nl === -1 ? source.length : nl;
+    spans.push({ start: i, end, text: source.slice(i, end) });
+    if (nl === -1) break;
+    i = nl + 1;
+  }
+  return spans;
+}
+
+function lineMatches(searchLine: ClassifiedLine, sourceText: string): boolean {
+  if (searchLine.kind === "anchor") {
+    const a = searchLine.text.replace(/[ \t]+$/, "");
+    const b = sourceText.replace(/[ \t]+$/, "");
+    return a === b;
+  }
+  if (searchLine.kind === "prefix") {
+    return sourceText.startsWith(searchLine.prefix);
+  }
+  return false;
+}
+
+function findSegmentMatches(
+  segment: readonly ClassifiedLine[],
+  sourceLines: readonly LineSpan[],
+  startFrom: number,
+): readonly number[] {
+  const hits: number[] = [];
+  if (segment.length === 0) return hits;
+  for (let i = startFrom; i + segment.length <= sourceLines.length; i++) {
+    let ok = true;
+    for (let j = 0; j < segment.length; j++) {
+      if (!lineMatches(segment[j], sourceLines[i + j].text)) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) hits.push(i);
+  }
+  return hits;
+}
+
 function applyReplaceEllipsis(
-  _source: string,
-  _search: string,
-  _replace: string,
+  source: string,
+  search: string,
+  replace: string,
 ): ApplyEditResult {
+  const searchLines = search.split("\n").map(classifyLine);
+  const sourceLines = lineSpans(source);
+
+  // No skips yet: treat the entire search as one segment.
+  if (searchLines.every((l) => l.kind !== "skip")) {
+    const hits = findSegmentMatches(searchLines, sourceLines, 0);
+    if (hits.length === 0) return { ok: false, reason: "no-match", matchCount: 0 };
+    if (hits.length > 1)
+      return { ok: false, reason: "multiple-match", matchCount: hits.length };
+    const start = sourceLines[hits[0]].start;
+    const lastIdx = hits[0] + searchLines.length - 1;
+    const end = sourceLines[lastIdx].end;
+    return {
+      ok: true,
+      matchKind: "ellipsis",
+      content: source.slice(0, start) + replace + source.slice(end),
+    };
+  }
+
+  // Skips not implemented yet — fall through to no-match.
   return { ok: false, reason: "no-match", matchCount: 0 };
 }
