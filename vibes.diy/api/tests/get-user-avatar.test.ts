@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
-import { writeUserSlugBinding } from "@vibes.diy/api-svc";
-import { VibesApiSQLCtx } from "@vibes.diy/api-svc";
-import { eq } from "drizzle-orm";
+import { writeUserSlugBinding, type VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import { string2stream } from "@adviser/cement";
 import { handleGetUserAvatar } from "../svc/public/get-user-avatar.js";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
