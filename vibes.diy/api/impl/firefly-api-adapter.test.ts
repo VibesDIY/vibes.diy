@@ -14,7 +14,7 @@ function fakeVibesDiyApi(overrides: Partial<Record<string, unknown>> = {}): Vibe
         created: "now",
       })
     ),
-    onDocChanged: vi.fn(() => () => {}),
+    onDocChanged: vi.fn(() => () => undefined),
     ...overrides,
   } as unknown as VibesDiyApi;
 }
@@ -130,7 +130,7 @@ describe("FireflyApiAdapter", () => {
   });
 
   it("multiple onMsg subscribers each receive events independently", () => {
-    const onDocChanged = vi.fn(() => () => {});
+    const onDocChanged = vi.fn(() => () => undefined);
     const api = fakeVibesDiyApi({ onDocChanged });
     const adapter = new FireflyApiAdapter(api, "my-app");
     const seenA: unknown[] = [];
@@ -144,7 +144,7 @@ describe("FireflyApiAdapter", () => {
     let captured: ((u: string, a: string, db: string, doc: string) => void) | undefined;
     const onDocChanged = vi.fn((fn: typeof captured) => {
       captured = fn;
-      return () => {};
+      return () => undefined;
     });
     const api = fakeVibesDiyApi({ onDocChanged });
     const adapter = new FireflyApiAdapter(api, "my-app");
