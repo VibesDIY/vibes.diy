@@ -6,7 +6,7 @@ import {
   isActiveModelSettingChat,
   isActiveModelSettingImg,
   isUserSettingModelDefaults,
-  type PromptStyle,
+  type ModelCapability,
   userSettingItem,
   parseArrayWarning,
 } from "@vibes.diy/api-types";
@@ -15,16 +15,23 @@ import { eq, and } from "drizzle-orm/sql/expressions";
 import { VibesApiSQLCtx } from "../types.js";
 import { loadModels } from "../public/list-models.js";
 
-async function loadPreSelectedDefaults(ctx: VibesApiSQLCtx): Promise<Result<Record<PromptStyle, AIParams>>> {
+async function loadPreSelectedDefaults(ctx: VibesApiSQLCtx): Promise<Result<Record<ModelCapability, AIParams>>> {
   const rModels = await loadModels(ctx);
   if (rModels.isErr()) return Result.Err(rModels);
   const models = rModels.Ok().models;
-  const usages: PromptStyle[] = ["chat", "app", "img"];
-  const defaults = {} as Record<PromptStyle, AIParams>;
-  for (const usage of usages) {
+  // img-edit is optional — when no model declares preSelected: ["img-edit"]
+  // callers fall back to the regular img default at the resolver layer
+  // (see prompt-chat-section.ts). The required defaults are chat/app/img.
+  const requiredUsages: ModelCapability[] = ["chat", "app", "img"];
+  const defaults = {} as Record<ModelCapability, AIParams>;
+  for (const usage of requiredUsages) {
     const found = models.find((m) => m.preSelected?.includes(usage));
     if (!found) return Result.Err(`No preSelected model found for usage: ${usage}`);
     defaults[usage] = { model: found } satisfies AIParams;
+  }
+  const imgEdit = models.find((m) => m.preSelected?.includes("img-edit"));
+  if (imgEdit) {
+    defaults["img-edit"] = { model: imgEdit } satisfies AIParams;
   }
   return Result.Ok(defaults);
 }
@@ -33,6 +40,9 @@ export interface ModelDefaults {
   chat: AIParams;
   app: AIParams;
   img: AIParams;
+  // Optional: only set when a model in the catalog declares
+  // preSelected: ["img-edit"]. Resolver falls back to `img` otherwise.
+  "img-edit"?: AIParams;
 }
 
 /**

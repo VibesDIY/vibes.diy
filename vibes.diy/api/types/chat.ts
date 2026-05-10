@@ -18,13 +18,20 @@ export function isPromptFSStyle(obj: unknown): obj is PromptFSStyle {
 export const PromptStyle = PromptLLMStyle.or(PromptFSStyle);
 export type PromptStyle = typeof PromptStyle.infer;
 
+// Model capability tag. Wider than `PromptStyle` because `img-edit`
+// (img2img) is not a chat-session mode — it's a per-request branch
+// driven by the presence of an input image, but models still declare
+// support and a preSelected default for it.
+export const ModelCapability = type("'chat' | 'app' | 'img' | 'img-edit'");
+export type ModelCapability = typeof ModelCapability.infer;
+
 export const Model = type({
   id: "string",
   name: "string",
   description: "string",
   "featured?": "boolean",
-  "preSelected?": PromptStyle.array(),
-  "supports?": PromptLLMStyle.array(),
+  "preSelected?": ModelCapability.array(),
+  "supports?": ModelCapability.array(),
 });
 
 export type Model = typeof Model.infer;

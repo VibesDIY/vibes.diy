@@ -12,6 +12,7 @@ import {
   LRUMap,
   processStream,
   EventoHandler,
+  exception2Result,
   Future,
   OnFunc,
 } from "@adviser/cement";
@@ -432,9 +433,7 @@ function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
           const chat = rChat.Ok();
           // Start consuming the section stream eagerly so file-block
           // events aren't lost while `prompt()` runs.
-          const filesPromise = getImageFiles(chat.sectionStream).catch((err) =>
-            Promise.reject(err instanceof Error ? err : new Error(String(err)))
-          );
+          const filesPromise = getImageFiles(chat.sectionStream);
           const rPrompt = await chat.prompt(
             {
               ...(ctx.validated.model ? { model: ctx.validated.model } : {}),
@@ -443,12 +442,9 @@ function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
             ctx.validated.inputImageBase64 ? { inputImageBase64: ctx.validated.inputImageBase64 } : undefined
           );
           if (rPrompt.isErr()) return sendErr(rPrompt.Err().message);
-          let files: ImgGenFile[];
-          try {
-            files = await filesPromise;
-          } catch (err) {
-            return sendErr(err instanceof Error ? err.message : String(err));
-          }
+          const rFiles = await exception2Result(() => filesPromise);
+          if (rFiles.isErr()) return sendErr(rFiles.Err().message);
+          const files = rFiles.Ok();
           if (!files || files.length === 0) {
             return sendErr("Image generation completed without producing a file");
           }
