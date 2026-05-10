@@ -13,7 +13,7 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { AppContext, Lazy, LoggerImpl, Result, URI } from "@adviser/cement";
 import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf } from "./types.js";
-import { CFEnv, MsgBase } from "@vibes.diy/api-types";
+import { CFEnv, type EvtRequestGrant, MsgBase } from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/core-types-base";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "./peers/r2-to-s3api.js";
@@ -114,6 +114,31 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
     },
     deregisterDocSubscription: async (subscriptionKey: string) => {
       console.log("[docNotify] deregister key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
+      await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
+    },
+    notifyRequestGrantChanged: async (evt: EvtRequestGrant, senderConnId: string) => {
+      const key = `${evt.grant.userSlug}/${evt.grant.appSlug}`;
+      console.log(
+        "[docNotify] notifyRequestGrantChanged key:",
+        key,
+        "shard:",
+        dn.shardId.slice(0, 8),
+        "conn:",
+        senderConnId.slice(0, 8)
+      );
+      await fetchDocNotify(key, {
+        action: "notify",
+        senderShardId: dn.shardId,
+        senderConnId,
+        evt,
+      });
+    },
+    registerRequestGrantSubscription: async (subscriptionKey: string) => {
+      console.log("[docNotify] register request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
+      await fetchDocNotify(subscriptionKey, { action: "register", shardId: dn.shardId });
+    },
+    deregisterRequestGrantSubscription: async (subscriptionKey: string) => {
+      console.log("[docNotify] deregister request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
       await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
     },
   };

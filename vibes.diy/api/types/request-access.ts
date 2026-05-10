@@ -268,6 +268,26 @@ export function isResListRequestGrants(obj: unknown): obj is ResListRequestGrant
   return !(x instanceof type.errors);
 }
 
+export const ReqSubscribeRequestGrants = type({
+  type: "'vibes.diy.req-subscribe-request-grants'",
+  auth: dashAuthType,
+  appSlug: "string",
+  userSlug: "string",
+});
+export type ReqSubscribeRequestGrants = typeof ReqSubscribeRequestGrants.infer;
+export function isReqSubscribeRequestGrants(obj: unknown): obj is ReqSubscribeRequestGrants {
+  return !(ReqSubscribeRequestGrants(obj) instanceof type.errors);
+}
+
+export const ResSubscribeRequestGrants = type({
+  type: "'vibes.diy.res-subscribe-request-grants'",
+  status: "'ok'",
+});
+export type ResSubscribeRequestGrants = typeof ResSubscribeRequestGrants.infer;
+export function isResSubscribeRequestGrants(obj: unknown): obj is ResSubscribeRequestGrants {
+  return !(ResSubscribeRequestGrants(obj) instanceof type.errors);
+}
+
 export const evtRequestGrant = type({
   op: "'upsert' | 'delete'",
   type: "'vibes.diy.evt-request-grant'",

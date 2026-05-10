@@ -255,6 +255,9 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const shareModal = useShareModal({ userSlug, appSlug, fsId, vibeDiyApi });
   const { isSignedIn } = useAuth();
   const [isOwner, setIsOwner] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingBump, setPendingBump] = useState(0);
+
   useEffect(() => {
     if (!isSignedIn || !userSlug) {
       setIsOwner(false);
@@ -273,6 +276,42 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       cancelled = true;
     };
   }, [isSignedIn, userSlug, vibeDiyApi]);
+
+  useEffect(() => {
+    if (!isOwner || !userSlug || !appSlug) {
+      setPendingCount(0);
+      return;
+    }
+    let cancelled = false;
+    void vibeDiyApi.listRequestGrants({ appSlug, userSlug, pager: { limit: 100 } }).then((res) => {
+      if (cancelled || res.isErr()) return;
+      setPendingCount(res.Ok().items.filter((r) => r.state === "pending").length);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwner, userSlug, appSlug, vibeDiyApi, pendingBump]);
+
+  useEffect(() => {
+    if (!isOwner || !userSlug || !appSlug) {
+      return;
+    }
+    void vibeDiyApi.subscribeRequestGrants({ appSlug, userSlug });
+    const unsubscribe = vibeDiyApi.onRequestGrant((evt) => {
+      if (evt.grant.userSlug === userSlug && evt.grant.appSlug === appSlug) {
+        setPendingBump((n) => n + 1);
+      }
+    });
+    return unsubscribe;
+  }, [isOwner, userSlug, appSlug, vibeDiyApi]);
+
+  const prevShareOpenRef = useRef(shareModal.isOpen);
+  useEffect(() => {
+    if (prevShareOpenRef.current && !shareModal.isOpen) {
+      setPendingBump((n) => n + 1);
+    }
+    prevShareOpenRef.current = shareModal.isOpen;
+  }, [shareModal.isOpen]);
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
@@ -723,6 +762,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             openVibe={openVibe}
             onContextMenu={handleContextMenu}
             shareModal={shareModal}
+            pendingRequestCount={isOwner ? pendingCount : 0}
             onBackClick={() => setMobilePreviewShown(false)}
             isOwner={isOwner}
             myGrant={isOwner ? "owner" : "none"}

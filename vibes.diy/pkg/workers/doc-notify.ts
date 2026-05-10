@@ -15,18 +15,33 @@ const DocNotifyDeregister = type({
   shardId: "string",
 });
 
+const DocChangedEvt = type({
+  type: "'vibes.diy.evt-doc-changed'",
+  userSlug: "string",
+  appSlug: "string",
+  dbName: "string",
+  docId: "string",
+});
+
+const RequestGrantEvt = type({
+  type: "'vibes.diy.evt-request-grant'",
+  op: "'upsert' | 'delete'",
+  userId: "string",
+  grant: type({
+    userSlug: "string",
+    appSlug: "string",
+  }).and(type("Record<string, unknown>")),
+}).and(type("Record<string, unknown>"));
+
+const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt);
+
 const DocNotifyNotify = type({
   action: "'notify'",
   // senderShardId is informational (logging/diagnostics) — exclusion happens
   // per-WebSocket via senderConnId so siblings on the same shard still fan out.
   senderShardId: "string",
   senderConnId: "string",
-  evt: {
-    type: "string",
-    userSlug: "string",
-    appSlug: "string",
-    docId: "string",
-  },
+  evt: DocNotifyEvt,
 });
 
 const DocNotifyMessage = DocNotifyRegister.or(DocNotifyDeregister).or(DocNotifyNotify);
@@ -105,12 +120,16 @@ export class DocNotify implements DurableObject {
     // sender connection is excluded per-WebSocket inside chat-sessions via
     // senderConnId, which lets sibling tabs/browsers on the same shard
     // (warm-DO sharing per vibe) still receive the notification.
+    const eventScope =
+      msg.evt.type === "vibes.diy.evt-request-grant"
+        ? `${msg.evt.grant.userSlug}/${msg.evt.grant.appSlug}`
+        : `${msg.evt.userSlug}/${msg.evt.appSlug}`;
+    const eventDetail = msg.evt.type === "vibes.diy.evt-request-grant" ? `op:${msg.evt.op}` : `docId:${msg.evt.docId.slice(0, 8)}`;
     const targets = [...subs];
     console.log(
       "[DocNotify] notify",
-      msg.evt.userSlug + "/" + msg.evt.appSlug,
-      "docId:",
-      msg.evt.docId.slice(0, 8),
+      eventScope,
+      eventDetail,
       "| sender shard:",
       msg.senderShardId.slice(0, 8),
       "conn:",

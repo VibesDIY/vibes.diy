@@ -4,7 +4,7 @@ import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { Logger, Result } from "@adviser/cement";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { LLMHeaders, MsgBase, VibesAssetStorage, VibesFPApiParameters } from "@vibes.diy/api-types";
+import { type EvtRequestGrant, LLMHeaders, MsgBase, VibesAssetStorage, VibesFPApiParameters } from "@vibes.diy/api-types";
 import { VibesApiTables, VibesSqlite } from "@vibes.diy/api-sql";
 import { type } from "arktype";
 import type { AssetGrantSigner } from "./asset-grant.js";
@@ -53,6 +53,9 @@ export interface VibesApiSQLCtx {
   notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;
   deregisterDocSubscription?(subscriptionKey: string): Promise<void>;
+  notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
+  registerRequestGrantSubscription?(subscriptionKey: string): Promise<void>;
+  deregisterRequestGrantSubscription?(subscriptionKey: string): Promise<void>;
 }
 
 export const UserSlugBinding = type({

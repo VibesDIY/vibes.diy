@@ -98,6 +98,28 @@ describe(
       expect(api._testInternals.docSubscriptions[0]).toEqual({ userSlug, appSlug, dbName: "default" });
     });
 
+    it("subscribeRequestGrants stores params for replay on reconnection", async () => {
+      const wsPair = TestWSPair.create();
+      wireUpWsPair(wsPair, appCtx);
+
+      const api = new VibesDiyApi({
+        apiUrl: `http://localhost:${8800 + Math.floor(Math.random() * 1000)}/api`,
+        ws: wsPair.p1 as unknown as WebSocket,
+        fetch: fetchPair.client.fetch,
+        timeoutMs: 5000,
+        getToken,
+      });
+
+      const rSub = await api.subscribeRequestGrants({ appSlug, userSlug });
+      expect(rSub.isOk()).toBe(true);
+
+      const rSub2 = await api.subscribeRequestGrants({ appSlug, userSlug });
+      expect(rSub2.isOk()).toBe(true);
+
+      expect(api._testInternals.requestGrantSubscriptions).toHaveLength(1);
+      expect(api._testInternals.requestGrantSubscriptions[0]).toEqual({ userSlug, appSlug });
+    });
+
     it("onDocChanged stores listeners for replay", () => {
       const wsPair = TestWSPair.create();
 
@@ -119,7 +141,13 @@ describe(
       api.onDocChanged(cb1);
       api.onDocChanged(cb2);
 
+      const requestGrantCb = () => {
+        /* request-grant listener */
+      };
+      api.onRequestGrant(requestGrantCb);
+
       expect(api._testInternals.docChangedListenerCount).toBe(2);
+      expect(api._testInternals.requestGrantListenerCount).toBe(1);
     });
 
     it("getReadyConnection detects new connection and replays", async () => {
