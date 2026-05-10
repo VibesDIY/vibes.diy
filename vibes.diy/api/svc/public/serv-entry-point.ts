@@ -27,6 +27,7 @@ import { renderVibe, renderPendingVibe } from "../intern/render-vibe.js";
 import { parse } from "cookie";
 import { renderToReadableStream } from "react-dom/server";
 import { renderDBExplorer } from "../intern/render-db-explorer.js";
+import { etagMatches, quoteEtag } from "./etag-utils.js";
 
 // function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
 //   return [new Request(URI.from(key).toString()), new Response(content as BodyInit, { headers })];
@@ -152,7 +153,7 @@ async function sendFetchOk(
         "Content-Type": item.mimeType,
         // "Content-Length": item.size.toString(),
         "Cache-Control": "public, max-age=31536000, immutable",
-        ETag: item.assetId,
+        ETag: quoteEtag(item.assetId),
       },
       body: asset,
     } satisfies HttpResponseBodyType);
@@ -177,6 +178,9 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
   },
   handle: async (ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>): Promise<Result<EventoResultType>> => {
     const uri = URI.from(ctx.request.url);
+    const requestedFsId = ctx.validated.fsId;
+    const isRootHtmlPath = ctx.validated.path === "/" || ctx.validated.path === "/index.html";
+    const ifNoneMatch = ctx.request.headers.get("If-None-Match") ?? undefined;
     if (uri.pathname.startsWith("/.db-explorer")) {
       // console.log('xxxxxxx', DBExplorer.toString())
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
@@ -267,6 +271,27 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       } satisfies HttpResponseJsonType);
       return Result.Ok(EventoResult.Stop);
     }
+
+    const rootHtmlEtag = quoteEtag(fs.fsId);
+    const isUnversionedPublishedRootHtml = !requestedFsId && isRootHtmlPath;
+    const rootHtmlCacheControl = isUnversionedPublishedRootHtml
+      ? "public, no-cache, must-revalidate"
+      : "public, max-age=86400";
+
+    // For unversioned published root HTML, validate before any expensive render.
+    if (isUnversionedPublishedRootHtml && ifNoneMatch && etagMatches(ifNoneMatch, rootHtmlEtag)) {
+      await ctx.send.send(ctx, {
+        type: "http.Response.Body",
+        status: 304,
+        body: null,
+        headers: {
+          "Cache-Control": rootHtmlCacheControl,
+          ETag: rootHtmlEtag,
+        },
+      } satisfies HttpResponseBodyType);
+      return Result.Ok(EventoResult.Stop);
+    }
+
     // console.log("-4servEntryPoint triggered with URL:", uri.toString())
     const fileSystem = type([fileSystemItem, "[]"])(fs.fileSystem);
     if (fileSystem instanceof type.errors) {
@@ -333,6 +358,8 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         ctx,
         fs,
         fsItems: fileSystem,
+        entryPointEtag: rootHtmlEtag,
+        entryPointCacheControl: rootHtmlCacheControl,
         pkgRepos: {
           private: npmUrl,
         },
