@@ -138,6 +138,7 @@ function CopyLinkRow({ url, copied, onCopy }: { url: string; copied: boolean; on
 function RequestAccessButton({ userSlug, appSlug }: { userSlug: string; appSlug: string }) {
   const { vibeDiyApi } = useVibesDiy();
   const [state, setState] = useState<"unknown" | "none" | "pending" | "approved" | "revoked" | "submitting">("unknown");
+  const [role, setRole] = useState<"editor" | "viewer" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -149,8 +150,12 @@ function RequestAccessButton({ userSlug, appSlug }: { userSlug: string; appSlug:
         return;
       }
       const ok = res.Ok();
-      if (ok.state === "not-found") setState("none");
-      else setState(ok.state);
+      if (ok.state === "not-found") {
+        setState("none");
+      } else {
+        setState(ok.state);
+        if (ok.state === "approved" || ok.state === "pending") setRole((ok.role as "editor" | "viewer") ?? null);
+      }
     });
     return () => {
       cancelled = true;
@@ -166,20 +171,29 @@ function RequestAccessButton({ userSlug, appSlug }: { userSlug: string; appSlug:
       setState("none");
       return;
     }
-    setState(res.Ok().state);
+    const ok = res.Ok();
+    setState(ok.state);
+    if (ok.state === "approved") setRole(ok.role as "editor" | "viewer");
+  }
+
+  if (state === "approved") {
+    const roleLabel = role === "editor" ? "Edit access" : "Read access";
+    return (
+      <div className="flex h-10 w-full items-center justify-center px-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+        {roleLabel}
+      </div>
+    );
   }
 
   const label =
     state === "pending"
       ? "Request pending"
-      : state === "approved"
-        ? "Access approved"
-        : state === "revoked"
-          ? "Access revoked — request again"
-          : state === "submitting"
-            ? "Requesting..."
-            : "Request Access";
-  const disabled = state === "pending" || state === "approved" || state === "submitting" || state === "unknown";
+      : state === "revoked"
+        ? "Access revoked — request again"
+        : state === "submitting"
+          ? "Requesting..."
+          : "Request Access";
+  const disabled = state === "pending" || state === "submitting" || state === "unknown";
 
   return (
     <div className="space-y-1">
