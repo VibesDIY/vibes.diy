@@ -36,6 +36,9 @@ import {
   ReqVibePutAsset,
   ResVibePutAsset,
   isResVibePutAsset,
+  ReqVibeWhoAmI,
+  ResVibeWhoAmI,
+  isResVibeWhoAmI,
 } from "@vibes.diy/vibe-types";
 import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, OnFuncReturn, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
@@ -290,6 +293,17 @@ export class VibeSandboxApi {
         ...this.svc.vibeApp,
       },
       { wait: isResListDbNames, timeout: 10000 }
+    );
+  }
+
+  whoAmI(): Promise<Result<ResVibeWhoAmI>> {
+    return this.request<ReqVibeWhoAmI, ResVibeWhoAmI>(
+      {
+        type: "vibe.req.whoAmI",
+        appSlug: this.svc.vibeApp.appSlug,
+        userSlug: this.svc.vibeApp.userSlug,
+      },
+      { wait: isResVibeWhoAmI, timeout: 10000 }
     );
   }
 
