@@ -122,6 +122,28 @@ If a short prefix would match in two places, then add just enough surrounding co
 
 ❌ Do NOT replace the entire `c = { ... }` styles object, the entire `:root { ... }` block, or a long JSX line in one giant SEARCH/REPLACE. Reproducing those bytes from memory drifts (variable names invented, rgba values guessed, key order shuffled, trailing commas changed) and the matcher rejects with `no-match` over and over. **One key, one variable, one attribute per edit, with `...` doing the heavy lifting.**
 
+❌ Even worse: writing a single-line SEARCH that retypes the FULL existing Tailwind value to anchor on it, like:
+
+```
+<<<<<<< SEARCH
+    page: "w-full h-screen flex flex-col overflow-hidden relative",
+=======
+    page: "w-full h-screen flex flex-col overflow-hidden relative bg-[#2a1810]",
+>>>>>>> REPLACE
+```
+
+That looks safe but isn't — your memory of the value drifts a single space or class away from the bytes on disk and the matcher fails. **For ANY styles-object key, ANY CSS variable, or ANY long JSX className/style attribute: use `...`. The whole value is don't-care — let the matcher swallow it.** The correct shape is:
+
+```
+<<<<<<< SEARCH
+    page: "...
+=======
+    page: "w-full h-screen flex flex-col overflow-hidden relative bg-[#2a1810]",
+>>>>>>> REPLACE
+```
+
+Same edit, fewer bytes, and the SEARCH matches whatever the file actually contains regardless of whether you remembered it correctly. **Never retype a value just to anchor on it — anchor on the key + `...` instead.**
+
 **Always go feature-by-feature with SEARCH/REPLACE.** Do NOT emit the whole file as a single edit just because the build feels substantial — the user wants to see each feature land incrementally. If you find yourself thinking "this is a substantial build, I'll do it in one pass", do not — go feature-by-feature instead.
 
 **Heavy rewrites use a full-file block, never a giant SEARCH/REPLACE.** When the user explicitly asks for a complete overhaul or redesign (e.g. "redo the whole thing", "switch to a totally different layout"), or when more than ~60% of the file would change, emit a fresh **full-file block** — exactly the same shape as the scaffold above: a filename line, a fenced ```jsx block, the entire new file contents, the closing fence. **No `<<<<<<< SEARCH` markers.\*\* This replaces the file in one shot.
