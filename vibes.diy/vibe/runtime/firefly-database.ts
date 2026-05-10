@@ -6,11 +6,42 @@
  * the use-fireproof React hooks (useDocument, useLiveQuery, useAllDocs) actually call.
  */
 
-import type { VibeSandboxApi, VibeApp } from "./register-dependencies.js";
+import type { VibeApp } from "./register-dependencies.js";
+import type { Result } from "@adviser/cement";
 // Response validators + event — re-exported from api-types via vibe-types
-import { isResPutDoc, isResGetDoc, isResQueryDocs, isResDeleteDoc, isEvtDocChanged } from "@vibes.diy/vibe-types";
+import {
+  isResPutDoc,
+  isResGetDoc,
+  isResQueryDocs,
+  isResDeleteDoc,
+  isEvtDocChanged,
+  type ResPutDoc,
+  type ResGetDoc,
+  type ResGetDocNotFound,
+  type ResQueryDocs,
+  type ResDeleteDoc,
+  type ResSubscribeDocs,
+} from "@vibes.diy/vibe-types";
 import { decorateFiles } from "./firefly-files-read.js";
 import { uploadFiles, type AssetUploader } from "./firefly-files-write.js";
+
+/**
+ * Structural subset of VibeSandboxApi that FireflyDatabase calls.
+ * Implementations: VibeSandboxApi (postMessage, in-iframe) and
+ * FireflyApiAdapter (WebSocket, Node/Wrangler). Both satisfy this
+ * interface structurally — FireflyDatabase has no knowledge of which
+ * transport is in use.
+ */
+export interface FireflyTransport {
+  readonly svc: { readonly vibeApp: VibeApp };
+  putDoc(doc: Record<string, unknown>, docId?: string, dbName?: string): Promise<Result<ResPutDoc>>;
+  getDoc(docId: string, dbName?: string): Promise<Result<ResGetDoc | ResGetDocNotFound>>;
+  queryDocs(dbName?: string): Promise<Result<ResQueryDocs>>;
+  deleteDoc(docId: string, dbName?: string): Promise<Result<ResDeleteDoc>>;
+  subscribeDocs(dbName?: string): Promise<Result<ResSubscribeDocs>>;
+  onMsg(fn: (event: { data: unknown }) => void): void;
+  putAsset(blob: Blob, mimeType?: string): Promise<Result<unknown>>;
+}
 // @ts-expect-error "charwise" has no types
 import charwise from "charwise";
 
@@ -67,12 +98,12 @@ export class FireflyDatabase {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly logger: any = fireflyLogger;
 
-  private readonly vibeApi: VibeSandboxApi;
+  private readonly vibeApi: FireflyTransport;
   private readonly vibeApp: VibeApp;
   private readonly listeners = new Set<ListenerFn>();
   private readonly updateListeners = new Set<ListenerFn>();
 
-  constructor(name: string, vibeApi: VibeSandboxApi) {
+  constructor(name: string, vibeApi: FireflyTransport) {
     this.name = name;
     this.vibeApi = vibeApi;
     this.vibeApp = vibeApi.svc.vibeApp;
