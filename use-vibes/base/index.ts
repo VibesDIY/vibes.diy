@@ -2,7 +2,6 @@ import type { ToCloudAttachable, TokenStrategie } from "@fireproof/core-types-pr
 import { useCallback, useEffect, useState } from "react";
 import {
   Attached,
-  fireproof,
   ImgFile,
   isDatabase,
   toCloud as originalToCloud,
@@ -20,7 +19,8 @@ import { type } from "arktype";
 
 export * from "./contexts/VibeContext.js";
 
-export { fireproof, ImgFile };
+export { ImgFile };
+export { fireproof, type FireproofOpts } from "./fireproof-node.js";
 
 // Re-export all types under a namespace
 export type * as Fireproof from "@fireproof/use-fireproof";
