@@ -159,6 +159,45 @@ describe("applyReplace ellipsis", () => {
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.content).toBe("qux");
   });
+
+  it("treats ... in the middle of a SEARCH line as literal anchor content", () => {
+    const source = 'console.log("a ... b");\nother';
+    const search = 'console.log("a ... b");';
+    const replace = 'console.log("done");';
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      // No ellipsis tokens involved → exact path, not "ellipsis".
+      expect(r.matchKind).toBe("exact");
+      expect(r.content).toBe('console.log("done");\nother');
+    }
+  });
+
+  it("does not match a SEARCH with mid-line ... against a source line missing the ...", () => {
+    const source = 'console.log("a b");\nother';
+    const search = 'console.log("a ... b");';
+    const r = applyReplace({ source, search, replace: "X" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe("no-match");
+  });
+
+  it("passes ... in REPLACE through verbatim", () => {
+    const source = "before\nplaceholder\nafter";
+    const search = "placeholder";
+    const replace = "now ... done";
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.content).toBe("before\nnow ... done\nafter");
+  });
+
+  it("passes ... in REPLACE through verbatim even when SEARCH uses ellipsis", () => {
+    const source = 'foo\n  <div className="long tail">\nbar';
+    const search = '  <div className="long...';
+    const replace = "  ...kept literal";
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.content).toBe('foo\n  ...kept literal\nbar');
+  });
 });
 
 describe("applyEdits", () => {
