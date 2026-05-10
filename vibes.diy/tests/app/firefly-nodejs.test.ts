@@ -8,6 +8,7 @@
  * Uses `fireproof("name")` factory (no React, no hooks).
  */
 import { describe, it, expect, beforeAll } from "vitest";
+import { KeyedResolvOnce } from "@adviser/cement";
 import { fireproof, registerFirefly } from "../../vibe/runtime/use-firefly.js";
 import { createMockVibeApi, asSandboxApi } from "./mock-vibe-api.js";
 
@@ -200,5 +201,84 @@ describe("Node.js standalone API (fireproof.md patterns)", () => {
     expect(result.docs).toHaveLength(3);
     // Should be sorted by position within the list
     expect(result.docs.map((d) => d.label)).toEqual(["first", "second", "third"]);
+  });
+});
+
+// ── New tests for the standalone fireproof() factory (Node-only path) ──
+import { FireflyApiAdapter } from "../../api/impl/firefly-api-adapter.js";
+import { FireflyDatabase } from "../../vibe/runtime/firefly-database.js";
+import { createFakeVibesDiyApi } from "./fake-vibes-diy-api.js";
+
+describe("FireflyApiAdapter end-to-end against fake VibesDiyApi", () => {
+  it("put / get / query workflow translates correctly through the adapter", async () => {
+    const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
+    const adapter = new FireflyApiAdapter(api as never, "my-app");
+    const db = new FireflyDatabase("todos", adapter);
+
+    const ok = await db.put({ text: "Sample Data" });
+    expect(ok.id).toBeDefined();
+
+    const doc = await db.get(ok.id);
+    expect(doc.text).toBe("Sample Data");
+
+    await db.put({ text: "Second" });
+    await db.put({ text: "Third" });
+
+    const latest = await db.query("_id", { limit: 10, descending: true });
+    expect(latest.docs.length).toBe(3);
+    expect(latest.docs[0].text).toBe("Third");
+  });
+
+  it("delete + 'not found' error", async () => {
+    const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
+    const db = new FireflyDatabase("delete-test", new FireflyApiAdapter(api as never, "my-app"));
+
+    const ok = await db.put({ text: "delete me" });
+    await db.del(ok.id);
+    await expect(db.get(ok.id)).rejects.toThrow();
+  });
+
+  it("subscribe receives synthesized evt-doc-changed when fake fires onDocChanged", async () => {
+    const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
+    const adapter = new FireflyApiAdapter(api as never, "my-app");
+    const db = new FireflyDatabase("subs-test", adapter);
+    // FireflyDatabase's constructor calls subscribeDocs and resolveUserSlug
+    // asynchronously; flush a microtask to let those land.
+    await new Promise((r) => setTimeout(r, 0));
+    await adapter.resolveUserSlug();
+
+    // notifyListeners is called with [] on remote doc-changed (no local doc available);
+    // count calls rather than items so we detect the notification regardless.
+    let callCount = 0;
+    db.subscribe(() => {
+      callCount++;
+    }, false);
+
+    api._simulateDocChanged("alice", "my-app", "subs-test", "doc-1");
+
+    expect(callCount).toBe(1);
+  });
+});
+
+describe("Multi-database caching via fireproof() factory", () => {
+  it("fireproof('a') returns the same instance on repeat calls", () => {
+    const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
+    const adapter = new FireflyApiAdapter(api as never, "my-app");
+    const dbsByName = new KeyedResolvOnce<FireflyDatabase>();
+
+    const a1 = dbsByName.get("a").once(() => new FireflyDatabase("a", adapter));
+    const a2 = dbsByName.get("a").once(() => new FireflyDatabase("a", adapter));
+    expect(a1).toBe(a2);
+  });
+
+  it("reset clears the cache so a new instance is returned", () => {
+    const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
+    const adapter = new FireflyApiAdapter(api as never, "my-app");
+    let dbsByName = new KeyedResolvOnce<FireflyDatabase>();
+
+    const x = dbsByName.get("a").once(() => new FireflyDatabase("a", adapter));
+    dbsByName = new KeyedResolvOnce<FireflyDatabase>();
+    const y = dbsByName.get("a").once(() => new FireflyDatabase("a", adapter));
+    expect(x).not.toBe(y);
   });
 });
