@@ -57,7 +57,7 @@ export async function makePreAllocUserMessage(userPrompt: string): Promise<strin
     .map((t) => `- ${t.slug}: ${t.name}${t.bodyFont ? ` (${t.bodyFont.replace(/['"]/g, "").split(",")[0].trim()})` : ""}`)
     .join("\n");
   return [
-    "Pick skills from this catalog that fit the user's app request, propose 3 title/slug pairs for naming, propose a one-line icon subject, and optionally pick a theme if a clear visual style is implied.",
+    "Pick skills from this catalog that fit the user's app request, propose 3 title/slug pairs for naming, propose a one-line icon subject, and pick a theme that matches the app's mood.",
     "",
     "Skill catalog:",
     catalogText,
@@ -104,7 +104,7 @@ export const preAllocSchema = {
     theme: {
       type: "string",
       description:
-        "Optional theme slug from the theme catalog above. Pick one only if the user's prompt clearly implies a visual style (retro, brutalist, dark terminal, magazine, etc.). Leave empty/omit if no strong style signal.",
+        "Theme slug from the theme catalog above. Pick the one whose mood best fits the app — playful apps lean playful themes, focus/utility apps lean clean themes, retro apps lean retro themes, etc. Always pick something rather than leaving empty; the catalog is broad enough to cover most app moods. Only omit if the request is so abstract that every theme would feel arbitrary.",
     },
   },
 } as const;
