@@ -82,7 +82,21 @@ function CardHeader() {
 
 The matcher still requires exactly one match in the file; if the `...` shortcuts make the SEARCH ambiguous, add a surrounding anchor line to disambiguate.
 
-**Editing a CSS variable inside a `THEME_CSS` template literal? Use the `...` prefix and target one variable per edit.** The exemplar themes live as multi-line indented `:root { ... }` blocks with `rgba(...)` values, media queries, and trailing whitespace. Reproducing those bytes from memory is fragile. Anchor on the variable name, let `...` consume the value:
+**The most common use of `...` is editing one key in a multi-line styles object.** Tailwind class strings, theme `:root { ... }` blocks, oklch/rgba color tokens — these lines are long and easy to misremember. Always edit ONE key per SEARCH/REPLACE, anchor on the key name, and let `...` consume the value:
+
+Tailwind classNames object — change the page background color only:
+
+```jsx
+<<<<<<< SEARCH
+  page: "min-h-screen flex flex-col max-w-lg mx-auto bg-[#000000]...
+=======
+  page: "min-h-screen flex flex-col max-w-lg mx-auto bg-[#1a0015]",
+>>>>>>> REPLACE
+```
+
+The `...` makes the SEARCH key-anchored — you don't have to retype the rest of the Tailwind chain or remember whether the line ends with a comma. Just match the key, the bit you're changing, then `...`.
+
+CSS variable inside `THEME_CSS` — change one variable, leave the rest:
 
 ```jsx
 <<<<<<< SEARCH
@@ -92,7 +106,17 @@ The matcher still requires exactly one match in the file; if the `...` shortcuts
 >>>>>>> REPLACE
 ```
 
-❌ Do NOT collapse the block into a one-line SEARCH like `:root { --bg:#030303; --card:#0a0a0a; ... }` — the file does not contain that shape, and the matcher will fail repeatedly. One variable per SEARCH/REPLACE pair, prefix-matched.
+Inline JSX attribute on a long element — change just one prop:
+
+```jsx
+<<<<<<< SEARCH
+        <button className="px-4 py-2 rounded bg-blue-500...
+=======
+        <button className="px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700">
+>>>>>>> REPLACE
+```
+
+❌ Do NOT replace the entire `c = { ... }` styles object, the entire `:root { ... }` block, or a long JSX line in one giant SEARCH/REPLACE. Reproducing those bytes from memory drifts (variable names invented, rgba values guessed, key order shuffled, trailing commas changed) and the matcher rejects with `no-match` over and over. **One key, one variable, one attribute per edit, with `...` doing the heavy lifting.**
 
 **Always go feature-by-feature with SEARCH/REPLACE.** Do NOT emit the whole file as a single edit just because the build feels substantial — the user wants to see each feature land incrementally. If you find yourself thinking "this is a substantial build, I'll do it in one pass", do not — go feature-by-feature instead.
 
