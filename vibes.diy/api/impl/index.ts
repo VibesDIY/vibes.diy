@@ -165,6 +165,7 @@ import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { ClerkApiToken } from "@fireproof/core-protocols-dashboard";
 import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
+import { ReqVibeWhoAmI, ResVibeWhoAmI, isResVibeWhoAmI } from "@vibes.diy/vibe-types";
 
 export interface VibesDiyApiParam {
   readonly apiUrl: string;
@@ -707,6 +708,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   listMembers(req: Req<ReqListMembers>): Promise<Result<ResListMembers, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-list-members" }, { resMatch: isResListMembers });
+  }
+
+  whoAmI(req: Req<ReqVibeWhoAmI>): Promise<Result<ResVibeWhoAmI, VibesDiyError>> {
+    return this.request({ ...req, type: "vibe.req.whoAmI" }, { resMatch: isResVibeWhoAmI });
   }
 
   requestAssetUploadGrant(req: Req<ReqAssetUploadGrant>): Promise<Result<ResAssetUploadGrant, VibesDiyError>> {

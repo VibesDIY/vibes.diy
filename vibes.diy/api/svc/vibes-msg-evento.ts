@@ -49,6 +49,7 @@ import {
   listDbNamesEvento,
 } from "./public/app-documents.js";
 import { listMembersEvento } from "./public/list-members.js";
+import { whoAmIEvento } from "./public/who-am-i.js";
 import { assetUploadGrantEvento } from "./public/asset-upload-grant.js";
 
 export const vibesMsgEvento = Lazy(() => {
@@ -93,6 +94,7 @@ export const vibesMsgEvento = Lazy(() => {
     subscribeDocsEvento,
     listDbNamesEvento,
     listMembersEvento,
+    whoAmIEvento,
     assetUploadGrantEvento,
     {
       type: EventoType.WildCard,
