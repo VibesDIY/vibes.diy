@@ -59,10 +59,14 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
     return Result.Ok({ viewer: null, access, dbAcls });
   }
 
+  if (!viewerUserId) {
+    return Result.Ok({ viewer: null, access, dbAcls });
+  }
+
   const userSettingsRow = await vctx.sql.db
     .select({ settings: vctx.sql.tables.userSettings.settings })
     .from(vctx.sql.tables.userSettings)
-    .where(eq(vctx.sql.tables.userSettings.userId, viewerUserId!))
+    .where(eq(vctx.sql.tables.userSettings.userId, viewerUserId))
     .limit(1)
     .then((r) => r[0]);
 
@@ -80,7 +84,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
     const binding = await vctx.sql.db
       .select({ userSlug: vctx.sql.tables.userSlugBinding.userSlug })
       .from(vctx.sql.tables.userSlugBinding)
-      .where(eq(vctx.sql.tables.userSlugBinding.userId, viewerUserId!))
+      .where(eq(vctx.sql.tables.userSlugBinding.userId, viewerUserId))
       .limit(1)
       .then((r) => r[0]);
     viewerSlug = binding?.userSlug;
