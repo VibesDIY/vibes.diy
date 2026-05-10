@@ -16,7 +16,7 @@ import type { VibesDiyApi } from "./index.js";
  * routing user).
  */
 export class FireflyApiAdapter {
-  readonly svc: { vibeApp: { userSlug: string; appSlug: string; fsId: string } };
+  readonly svc: { readonly vibeApp: { userSlug: string; appSlug: string; fsId: string } };
 
   private readonly api: VibesDiyApi;
   private readonly userSlugOverride: string | undefined;
