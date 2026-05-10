@@ -215,6 +215,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   private readonly docChangedListeners: ((userSlug: string, appSlug: string, dbName: string, docId: string) => void)[] = [];
   private readonly docSubscriptions: { userSlug: string; appSlug: string; dbName: string }[] = [];
   private readonly requestGrantListeners: ((evt: EvtRequestGrant) => void)[] = [];
+  private readonly requestGrantDetachers = new Map<(evt: EvtRequestGrant) => void, () => void>();
   private readonly requestGrantSubscriptions: { userSlug: string; appSlug: string }[] = [];
   private currentConnection: VibeDiyApiConnection | undefined;
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
@@ -291,7 +292,9 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       }
       // Re-attach all onRequestGrant listeners to the new connection
       for (const fn of this.requestGrantListeners) {
-        this.attachRequestGrantToConnection(conn, fn);
+        this.requestGrantDetachers.get(fn)?.();
+        const detach = this.attachRequestGrantToConnection(conn, fn);
+        this.requestGrantDetachers.set(fn, detach);
       }
       // Re-subscribe to all doc subscriptions (server needs to know again)
       for (const sub of this.docSubscriptions) {
@@ -779,11 +782,11 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   onRequestGrant(fn: (evt: EvtRequestGrant) => void): () => void {
     this.requestGrantListeners.push(fn);
-    let detach: (() => void) | undefined;
     const conn = this.currentConnection;
     if (conn) {
       // Connection already established — attach immediately
-      detach = this.attachRequestGrantToConnection(conn, fn);
+      const detach = this.attachRequestGrantToConnection(conn, fn);
+      this.requestGrantDetachers.set(fn, detach);
     } else {
       // Trigger connection — replay loop in getReadyConnection will attach all stored listeners
       this.getReadyConnection().catch((_e: unknown) => {
@@ -793,6 +796,8 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return () => {
       const idx = this.requestGrantListeners.indexOf(fn);
       if (idx >= 0) this.requestGrantListeners.splice(idx, 1);
+      const detach = this.requestGrantDetachers.get(fn);
+      this.requestGrantDetachers.delete(fn);
       detach?.();
     };
   }
