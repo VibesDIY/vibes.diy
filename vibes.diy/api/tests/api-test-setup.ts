@@ -8,6 +8,27 @@ import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-type
 import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
+let apiTestIdentityPartition = 0;
+
+export interface CreateApiTestCtxOpts {
+  /**
+   * Optional fixed base used to partition createTestUser identities.
+   *
+   * Explicit seqUserId values avoid flaky collisions from createTestUser's
+   * default seq derivation (which can produce NaN and alias owner/requester).
+   */
+  seqUserIdBase?: number;
+}
+
+function nextSeqUserIdBase(): number {
+  const workerIdRaw = process.env.VITEST_POOL_ID ?? process.env.VITEST_WORKER_ID ?? "0";
+  const workerId = Number.parseInt(workerIdRaw, 10);
+  const safeWorkerId = Number.isFinite(workerId) ? workerId : 0;
+
+  // Reserve a distinct 100-id block per context within a worker/process.
+  return process.pid * 1_000_000 + safeWorkerId * 10_000 + ++apiTestIdentityPartition * 100;
+}
+
 export interface ApiTestCtx {
   api: VibesDiyApi;
   api2: VibesDiyApi;
@@ -16,11 +37,12 @@ export interface ApiTestCtx {
   createApp: () => Promise<{ appSlug: string; userSlug: string }>;
 }
 
-export async function createApiTestCtx(): Promise<ApiTestCtx> {
+export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise<ApiTestCtx> {
   const sthis = ensureSuperThis();
   const deviceCA = await createTestDeviceCA(sthis);
   const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
-  const testUser = await createTestUser({ sthis, deviceCA });
+  const seqUserIdBase = opts.seqUserIdBase ?? nextSeqUserIdBase();
+  const testUser = await createTestUser({ sthis, deviceCA, seqUserId: seqUserIdBase + 1 });
 
   const fetchPair = TestFetchPair.create();
   const wsPair = TestWSPair.create();
@@ -62,7 +84,7 @@ export async function createApiTestCtx(): Promise<ApiTestCtx> {
     },
   });
 
-  const testUser2 = await createTestUser({ sthis, deviceCA });
+  const testUser2 = await createTestUser({ sthis, deviceCA, seqUserId: seqUserIdBase + 2 });
   const api2 = new VibesDiyApi({
     apiUrl: "http://localhost:8787/api",
     ws: wsPair.p1 as unknown as WebSocket,
