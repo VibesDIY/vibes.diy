@@ -1,4 +1,4 @@
-import { FPCloudClaim } from "@vibes.diy/api-types";
+import { FPCloudClaim, dbAcl } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
 export * from "./img-gen.js";
@@ -497,4 +497,69 @@ export type EvtVibePutAssetProgress = typeof EvtVibePutAssetProgress.infer;
 
 export function isEvtVibePutAssetProgress(x: unknown): x is EvtVibePutAssetProgress {
   return !(EvtVibePutAssetProgress(x) instanceof type.errors);
+}
+
+// ── Viewer identity & capabilities ───────────────────────────────────
+// Sandbox-facing surface for who is viewing this vibe and what they can
+// do. Sandbox sees only userSlug — never Clerk userId. Capabilities are
+// UX hints; every write still re-authorizes server-side at put-doc.
+
+export const viewerPayload = type({
+  userSlug: "string",
+  "displayName?": "string",
+});
+export type ViewerPayload = typeof viewerPayload.infer;
+
+export const docAccessLevel = type("'owner' | 'editor' | 'viewer' | 'submitter' | 'none'");
+export type DocAccessLevel = typeof docAccessLevel.infer;
+
+// Request: sandbox → host. Carries (appSlug, userSlug) so the host
+// handler can compute access against the right app — same pattern as
+// every other Req<*> in this file.
+export const ReqVibeWhoAmI = type({
+  type: "'vibe.req.whoAmI'",
+  appSlug: "string",
+  userSlug: "string",
+}).and(Base);
+
+export type ReqVibeWhoAmI = typeof ReqVibeWhoAmI.infer;
+
+export function isReqVibeWhoAmI(x: unknown): x is ReqVibeWhoAmI {
+  return !(ReqVibeWhoAmI(x) instanceof type.errors);
+}
+
+// Response: host → sandbox.
+//
+// `viewer: null` means anonymous. The arktype `null` literal matches
+// encoded JSON null.
+//
+// `access` is the app-scoped role. `dbAcls` carries any per-db overrides
+// configured for this app — missing entries fall back to the role gate
+// in the sandbox's `can()` helper.
+export const ResVibeWhoAmI = type({
+  type: "'vibe.res.whoAmI'",
+  viewer: viewerPayload.or("null"),
+  access: docAccessLevel,
+  "dbAcls?": type({ "[string]": dbAcl }),
+}).and(Base);
+
+export type ResVibeWhoAmI = typeof ResVibeWhoAmI.infer;
+
+export function isResVibeWhoAmI(x: unknown): x is ResVibeWhoAmI {
+  return !(ResVibeWhoAmI(x) instanceof type.errors);
+}
+
+// Event: identity changed (login/logout, future persona switch). Same
+// shape as the response minus tid semantics — no request to correlate.
+export const EvtVibeViewerChanged = type({
+  type: "'vibe.evt.viewerChanged'",
+  viewer: viewerPayload.or("null"),
+  access: docAccessLevel,
+  "dbAcls?": type({ "[string]": dbAcl }),
+});
+
+export type EvtVibeViewerChanged = typeof EvtVibeViewerChanged.infer;
+
+export function isEvtVibeViewerChanged(x: unknown): x is EvtVibeViewerChanged {
+  return !(EvtVibeViewerChanged(x) instanceof type.errors);
 }
