@@ -82,6 +82,18 @@ function CardHeader() {
 
 The matcher still requires exactly one match in the file; if the `...` shortcuts make the SEARCH ambiguous, add a surrounding anchor line to disambiguate.
 
+**Editing a CSS variable inside a `THEME_CSS` template literal? Use the `...` prefix and target one variable per edit.** The exemplar themes live as multi-line indented `:root { ... }` blocks with `rgba(...)` values, media queries, and trailing whitespace. Reproducing those bytes from memory is fragile. Anchor on the variable name, let `...` consume the value:
+
+```jsx
+<<<<<<< SEARCH
+    --bg: #030303...
+=======
+    --bg: #1a0510;
+>>>>>>> REPLACE
+```
+
+❌ Do NOT collapse the block into a one-line SEARCH like `:root { --bg:#030303; --card:#0a0a0a; ... }` — the file does not contain that shape, and the matcher will fail repeatedly. One variable per SEARCH/REPLACE pair, prefix-matched.
+
 **Always go feature-by-feature with SEARCH/REPLACE.** Do NOT emit the whole file as a single edit just because the build feels substantial — the user wants to see each feature land incrementally. If you find yourself thinking "this is a substantial build, I'll do it in one pass", do not — go feature-by-feature instead.
 
 **Heavy rewrites use a full-file block, never a giant SEARCH/REPLACE.** When the user explicitly asks for a complete overhaul or redesign (e.g. "redo the whole thing", "switch to a totally different layout"), or when more than ~60% of the file would change, emit a fresh **full-file block** — exactly the same shape as the scaffold above: a filename line, a fenced ```jsx block, the entire new file contents, the closing fence. **No `<<<<<<< SEARCH` markers.\*\* This replaces the file in one shot.
