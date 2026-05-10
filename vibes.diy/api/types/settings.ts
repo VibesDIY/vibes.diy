@@ -120,6 +120,15 @@ export function isReqEnsureAppSettingsTitle(obj: unknown): obj is ReqEnsureAppSe
   return !(reqEnsureAppSettingsTitle(obj) instanceof type.errors);
 }
 
+export const reqEnsureAppSettingsAppSlug = type({
+  nextAppSlug: "string",
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsAppSlug = typeof reqEnsureAppSettingsAppSlug.infer;
+export function isReqEnsureAppSettingsAppSlug(obj: unknown): obj is ReqEnsureAppSettingsAppSlug {
+  return !(reqEnsureAppSettingsAppSlug(obj) instanceof type.errors);
+}
+
 export const reqEnsureAppSettingsSkills = type({
   skills: type("string").array(),
 }).and(reqEnsureAppSettingsBase);
@@ -227,6 +236,7 @@ export type ReqEnsureAppSettings =
   | ReqPublicAccess
   | ReqRequest
   | ReqEnsureAppSettingsTitle
+  | ReqEnsureAppSettingsAppSlug
   | ReqEnsureAppSettingsSkills
   | ReqEnsureAppSettingsTheme
   | ReqEnsureAppSettingsIconDescription
@@ -243,6 +253,7 @@ export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSetting
   return (
     // isReqEnsureAppSettingsAcl(obj) ||
     isReqEnsureAppSettingsTitle(obj) ||
+    isReqEnsureAppSettingsAppSlug(obj) ||
     isReqEnsureAppSettingsSkills(obj) ||
     isReqEnsureAppSettingsTheme(obj) ||
     isReqEnsureAppSettingsIconDescription(obj) ||

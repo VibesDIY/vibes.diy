@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useVibesDiy } from "../../../vibes-diy-provider.js";
 import { notifyRecentVibesChanged } from "../../../hooks/useRecentVibes.js";
 import { fromKVString, toKVString, AIParams } from "@vibes.diy/api-types";
@@ -200,6 +201,7 @@ function EnvRow({
 
 type SettingsUpdate =
   | { kind: "fetch"; appSlug: string; userSlug: string }
+  | { kind: "slug"; appSlug: string; userSlug: string; nextAppSlug: string }
   | { kind: "title"; appSlug: string; userSlug: string; title: string }
   | { kind: "theme"; appSlug: string; userSlug: string; theme: string }
   | { kind: "iconDescription"; appSlug: string; userSlug: string; iconDescription: string }
@@ -218,7 +220,10 @@ interface SettingsTabProps {
 
 export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
   const { vibeDiyApi } = useVibesDiy();
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  const [slug, setSlug] = useState(appSlug);
   const [title, setTitle] = useState("");
   const [theme, setTheme] = useState("");
   const [iconDescription, setIconDescription] = useState("");
@@ -229,6 +234,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
   const [env, setEnv] = useState<Record<string, string>>({});
 
   const [pending, setPending] = useState<SettingsUpdate>({ kind: "fetch", appSlug, userSlug });
+  const [savingSlug, setSavingSlug] = useState(false);
   const [savingTitle, setSavingTitle] = useState(false);
   const [savingTheme, setSavingTheme] = useState(false);
   const [savingChat, setSavingChat] = useState(false);
@@ -242,14 +248,29 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
   // (when no icon existed at dispatch time).
   const [iconWaitingFor, setIconWaitingFor] = useState<string | null | undefined>(undefined);
 
+  function navigateToCanonicalAppSlug(nextAppSlug: string) {
+    if (!nextAppSlug || nextAppSlug === appSlug) return;
+    const segments = location.pathname.split("/");
+    for (let i = 0; i < segments.length - 1; i++) {
+      if (segments[i] === userSlug && segments[i + 1] === appSlug) {
+        segments[i + 1] = nextAppSlug;
+        const pathname = segments.join("/") || "/";
+        navigate({ pathname, search: location.search, hash: location.hash }, { replace: true, preventScrollReset: true });
+        return;
+      }
+    }
+  }
+
   useEffect(() => {
+    setSlug(appSlug);
     setPending({ kind: "fetch", appSlug, userSlug });
-  }, [appSlug, userSlug, vibeDiyApi]);
+  }, [appSlug, userSlug]);
 
   useEffect(() => {
     let alive = true;
 
-    if (pending.kind === "title") setSavingTitle(true);
+    if (pending.kind === "slug") setSavingSlug(true);
+    else if (pending.kind === "title") setSavingTitle(true);
     else if (pending.kind === "theme") setSavingTheme(true);
     else if (pending.kind === "chat") setSavingChat(true);
     else if (pending.kind === "app") setSavingApp(true);
@@ -263,28 +284,31 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
 
     const base = { appSlug: pending.appSlug, userSlug: pending.userSlug };
     const req =
-      pending.kind === "title"
-        ? { ...base, title: pending.title }
-        : pending.kind === "theme"
-          ? { ...base, theme: pending.theme }
-          : pending.kind === "iconDescription"
-            ? { ...base, iconDescription: pending.iconDescription }
-            : pending.kind === "iconRegen"
-              ? { ...base, iconRegen: true }
-              : pending.kind === "chat"
-                ? { ...base, chat: pending.chat }
-                : pending.kind === "app"
-                  ? { ...base, app: pending.app }
-                  : pending.kind === "img"
-                    ? { ...base, img: pending.img }
-                    : pending.kind === "env"
-                      ? { ...base, env: toKVString(pending.env) }
-                      : base;
+      pending.kind === "slug"
+        ? { ...base, nextAppSlug: pending.nextAppSlug }
+        : pending.kind === "title"
+          ? { ...base, title: pending.title }
+          : pending.kind === "theme"
+            ? { ...base, theme: pending.theme }
+            : pending.kind === "iconDescription"
+              ? { ...base, iconDescription: pending.iconDescription }
+              : pending.kind === "iconRegen"
+                ? { ...base, iconRegen: true }
+                : pending.kind === "chat"
+                  ? { ...base, chat: pending.chat }
+                  : pending.kind === "app"
+                    ? { ...base, app: pending.app }
+                    : pending.kind === "img"
+                      ? { ...base, img: pending.img }
+                      : pending.kind === "env"
+                        ? { ...base, env: toKVString(pending.env) }
+                        : base;
 
     void vibeDiyApi.ensureAppSettings(req).then((res) => {
       if (!alive) return;
 
-      if (pending.kind === "title") setSavingTitle(false);
+      if (pending.kind === "slug") setSavingSlug(false);
+      else if (pending.kind === "title") setSavingTitle(false);
       else if (pending.kind === "theme") setSavingTheme(false);
       else if (pending.kind === "chat") setSavingChat(false);
       else if (pending.kind === "app") setSavingApp(false);
@@ -300,7 +324,18 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
         return;
       }
 
-      const s = res.Ok().settings;
+      const ok = res.Ok();
+      if (ok.error) {
+        toast.error(ok.error);
+        setSlug(ok.appSlug);
+        if (pending.kind === "iconDescription" || pending.kind === "iconRegen") {
+          setIconWaitingFor(undefined);
+        }
+        return;
+      }
+
+      const s = ok.settings;
+      setSlug(ok.appSlug);
       setTitle(s.entry.settings.title ?? "");
       setTheme(s.entry.settings.theme ?? "");
       setIconDescription(s.entry.settings.iconDescription ?? "");
@@ -310,7 +345,11 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
       setImgConfig(s.entry.settings.img ?? {});
       setEnv(fromKVString(s.entry.settings.env ?? []));
 
-      if (pending.kind === "title") notifyRecentVibesChanged();
+      if (pending.kind === "title" || pending.kind === "slug") notifyRecentVibesChanged();
+
+      if (pending.kind === "slug") {
+        navigateToCanonicalAppSlug(ok.appSlug);
+      }
 
       if (pending.kind !== "fetch") toast.success("Saved");
     });
@@ -383,7 +422,12 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
     <ol className="space-y-5 text-sm">
       <Card title="General">
         <div className="space-y-2">
-          <Field label="Title" value={title} onChange={setTitle} placeholder={appSlug} />
+          <Field label="Slug" value={slug} onChange={setSlug} placeholder={appSlug} />
+          <div className="flex justify-end">
+            <SaveBtn saving={savingSlug} onClick={() => setPending({ kind: "slug", appSlug, userSlug, nextAppSlug: slug })} />
+          </div>
+
+          <Field label="Title" value={title} onChange={setTitle} placeholder={slug || appSlug} />
           <div className="flex justify-end">
             <SaveBtn saving={savingTitle} onClick={() => setPending({ kind: "title", appSlug, userSlug, title })} />
           </div>

@@ -14,6 +14,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { eq, and, lt, desc } from "drizzle-orm/sql/expressions";
 import type { SQL } from "drizzle-orm/sql";
+import { resolveCanonicalAppSlug } from "../intern/resolve-app-slug.js";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -49,9 +50,20 @@ export const listApplicationChats: EventoHandler<
       const userId = req._auth.verifiedAuth.claims.userId;
 
       const limit = Math.min(req.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
+      let resolvedAppSlug = req.appSlug;
+      if (req.userSlug && req.appSlug) {
+        const rCanonicalAppSlug = await resolveCanonicalAppSlug(vctx, {
+          userSlug: req.userSlug,
+          appSlug: req.appSlug,
+        });
+        if (rCanonicalAppSlug.isErr()) {
+          return Result.Err(rCanonicalAppSlug.Err());
+        }
+        resolvedAppSlug = rCanonicalAppSlug.Ok();
+      }
 
       const conditions: SQL[] = [eq(vctx.sql.tables.applicationChats.userId, userId)];
-      if (req.appSlug) conditions.push(eq(vctx.sql.tables.applicationChats.appSlug, req.appSlug));
+      if (resolvedAppSlug) conditions.push(eq(vctx.sql.tables.applicationChats.appSlug, resolvedAppSlug));
       if (req.userSlug) conditions.push(eq(vctx.sql.tables.applicationChats.userSlug, req.userSlug));
       if (req.cursor) conditions.push(lt(vctx.sql.tables.applicationChats.created, req.cursor));
 

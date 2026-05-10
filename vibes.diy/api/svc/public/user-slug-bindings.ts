@@ -215,7 +215,10 @@ export const deleteUserSlugBindingEvento: EventoHandler<
       // 9. AppSlugBindings
       await vctx.sql.db.delete(t.appSlugBinding).where(eq(t.appSlugBinding.userSlug, userSlug));
 
-      // 10. UserSlugBindings
+      // 10. AppSlugAliases
+      await vctx.sql.db.delete(t.appSlugAlias).where(eq(t.appSlugAlias.userSlug, userSlug));
+
+      // 11. UserSlugBindings
       await vctx.sql.db
         .delete(t.userSlugBinding)
         .where(and(eq(t.userSlugBinding.userId, userId), eq(t.userSlugBinding.userSlug, userSlug)));

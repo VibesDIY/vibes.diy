@@ -33,6 +33,7 @@ import {
   isEnableRequest,
   isReqEnsureAppSettings,
   isReqEnsureAppSettingsApp,
+  isReqEnsureAppSettingsAppSlug,
   isReqEnsureAppSettingsChat,
   isReqEnsureAppSettingsDbAcl,
   isReqEnsureAppSettingsDbAclRemove,
@@ -54,6 +55,8 @@ import { optAuth } from "../check-auth.js";
 import { eq, and } from "drizzle-orm/sql/expressions";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
 import { approveAllPendingRequests } from "./request-flow.js";
+import { toRFC2822_32ByteLength } from "../intern/ensure-slug-binding.js";
+import { resolveCanonicalAppSlug } from "../intern/resolve-app-slug.js";
 // import { buildEnsureEntryResult } from "../intern/application-settings.js";
 
 export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
@@ -175,11 +178,196 @@ function recentlyRegenerated(entries: ActiveEntry[]): boolean {
   return Date.now() - headCreated < ICON_REGEN_MIN_INTERVAL_MS;
 }
 
+async function renameAppSlug(
+  vctx: VibesApiSQLCtx,
+  args: {
+    userSlug: string;
+    fromAppSlug: string;
+    requestedNextAppSlug: string;
+  }
+): Promise<Result<{ appSlug: string }>> {
+  const nextAppSlug = toRFC2822_32ByteLength(args.requestedNextAppSlug);
+  if (!nextAppSlug) {
+    return Result.Err("Invalid app slug — use letters, numbers, and hyphens (max 32 chars)");
+  }
+  if (nextAppSlug === args.fromAppSlug) {
+    return Result.Ok({ appSlug: nextAppSlug });
+  }
+
+  const now = new Date().toISOString();
+  const rRename = await exception2Result(() =>
+    vctx.sql.db.transaction(async (tx) => {
+      const existingCurrent = await tx
+        .select({ appSlug: vctx.sql.tables.appSlugBinding.appSlug })
+        .from(vctx.sql.tables.appSlugBinding)
+        .where(
+          and(
+            eq(vctx.sql.tables.appSlugBinding.userSlug, args.userSlug),
+            eq(vctx.sql.tables.appSlugBinding.appSlug, args.fromAppSlug)
+          )
+        )
+        .limit(1)
+        .then((r) => r[0]);
+      if (!existingCurrent) {
+        throw new Error(`appSlug "${args.fromAppSlug}" not found`);
+      }
+
+      const existingTarget = await tx
+        .select({ appSlug: vctx.sql.tables.appSlugBinding.appSlug })
+        .from(vctx.sql.tables.appSlugBinding)
+        .where(
+          and(eq(vctx.sql.tables.appSlugBinding.userSlug, args.userSlug), eq(vctx.sql.tables.appSlugBinding.appSlug, nextAppSlug))
+        )
+        .limit(1)
+        .then((r) => r[0]);
+      if (existingTarget) {
+        throw new Error(`Slug "${nextAppSlug}" is already taken`);
+      }
+
+      await tx
+        .update(vctx.sql.tables.appSlugBinding)
+        .set({
+          appSlug: nextAppSlug,
+          updated: now,
+        })
+        .where(
+          and(
+            eq(vctx.sql.tables.appSlugBinding.userSlug, args.userSlug),
+            eq(vctx.sql.tables.appSlugBinding.appSlug, args.fromAppSlug)
+          )
+        );
+
+      await tx
+        .update(vctx.sql.tables.appSlugAlias)
+        .set({
+          appSlug: nextAppSlug,
+          updated: now,
+        })
+        .where(
+          and(eq(vctx.sql.tables.appSlugAlias.userSlug, args.userSlug), eq(vctx.sql.tables.appSlugAlias.appSlug, args.fromAppSlug))
+        );
+
+      await tx
+        .insert(vctx.sql.tables.appSlugAlias)
+        .values({
+          userSlug: args.userSlug,
+          aliasSlug: args.fromAppSlug,
+          appSlug: nextAppSlug,
+          created: now,
+          updated: now,
+        })
+        .onConflictDoUpdate({
+          target: [vctx.sql.tables.appSlugAlias.userSlug, vctx.sql.tables.appSlugAlias.aliasSlug],
+          set: {
+            appSlug: nextAppSlug,
+            updated: now,
+          },
+        });
+
+      // If this slug was previously an alias, remove that stale alias row now
+      // that it is canonical again.
+      await tx
+        .delete(vctx.sql.tables.appSlugAlias)
+        .where(
+          and(
+            eq(vctx.sql.tables.appSlugAlias.userSlug, args.userSlug),
+            eq(vctx.sql.tables.appSlugAlias.aliasSlug, nextAppSlug),
+            eq(vctx.sql.tables.appSlugAlias.appSlug, nextAppSlug)
+          )
+        );
+
+      await tx
+        .update(vctx.sql.tables.apps)
+        .set({ appSlug: nextAppSlug })
+        .where(and(eq(vctx.sql.tables.apps.userSlug, args.userSlug), eq(vctx.sql.tables.apps.appSlug, args.fromAppSlug)));
+
+      await tx
+        .update(vctx.sql.tables.chatContexts)
+        .set({ appSlug: nextAppSlug })
+        .where(
+          and(eq(vctx.sql.tables.chatContexts.userSlug, args.userSlug), eq(vctx.sql.tables.chatContexts.appSlug, args.fromAppSlug))
+        );
+
+      await tx
+        .update(vctx.sql.tables.applicationChats)
+        .set({ appSlug: nextAppSlug })
+        .where(
+          and(
+            eq(vctx.sql.tables.applicationChats.userSlug, args.userSlug),
+            eq(vctx.sql.tables.applicationChats.appSlug, args.fromAppSlug)
+          )
+        );
+
+      await tx
+        .update(vctx.sql.tables.appSettings)
+        .set({
+          appSlug: nextAppSlug,
+          updated: now,
+        })
+        .where(
+          and(eq(vctx.sql.tables.appSettings.userSlug, args.userSlug), eq(vctx.sql.tables.appSettings.appSlug, args.fromAppSlug))
+        );
+
+      await tx
+        .update(vctx.sql.tables.requestGrants)
+        .set({
+          appSlug: nextAppSlug,
+          updated: now,
+        })
+        .where(
+          and(
+            eq(vctx.sql.tables.requestGrants.userSlug, args.userSlug),
+            eq(vctx.sql.tables.requestGrants.appSlug, args.fromAppSlug)
+          )
+        );
+
+      await tx
+        .update(vctx.sql.tables.inviteGrants)
+        .set({
+          appSlug: nextAppSlug,
+          updated: now,
+        })
+        .where(
+          and(eq(vctx.sql.tables.inviteGrants.userSlug, args.userSlug), eq(vctx.sql.tables.inviteGrants.appSlug, args.fromAppSlug))
+        );
+
+      await tx
+        .update(vctx.sql.tables.appDocuments)
+        .set({ appSlug: nextAppSlug })
+        .where(
+          and(eq(vctx.sql.tables.appDocuments.userSlug, args.userSlug), eq(vctx.sql.tables.appDocuments.appSlug, args.fromAppSlug))
+        );
+
+      await tx
+        .update(vctx.sql.tables.assetUploads)
+        .set({ appSlug: nextAppSlug })
+        .where(
+          and(eq(vctx.sql.tables.assetUploads.userSlug, args.userSlug), eq(vctx.sql.tables.assetUploads.appSlug, args.fromAppSlug))
+        );
+    })
+  );
+
+  if (rRename.isErr()) return Result.Err(rRename.Err());
+  return Result.Ok({ appSlug: nextAppSlug });
+}
+
 export async function ensureAppSettings(
   vctx: VibesApiSQLCtx,
   req: ReqEnsureAppSettings,
   userId?: string
 ): Promise<Result<ResEnsureAppSettings>> {
+  const rCanonicalAppSlug = await resolveCanonicalAppSlug(vctx, {
+    userSlug: req.userSlug,
+    appSlug: req.appSlug,
+  });
+  if (rCanonicalAppSlug.isErr()) {
+    return Result.Err(rCanonicalAppSlug.Err());
+  }
+  const resolvedReq = {
+    ...req,
+    appSlug: rCanonicalAppSlug.Ok(),
+  } as ReqEnsureAppSettings;
+
   // find existing app settings
   const rPrev = await exception2Result(() =>
     vctx.sql.db
@@ -193,12 +381,15 @@ export async function ensureAppSettings(
         vctx.sql.tables.appSettings,
         and(
           eq(vctx.sql.tables.appSettings.userId, vctx.sql.tables.userSlugBinding.userId),
-          eq(vctx.sql.tables.appSettings.appSlug, req.appSlug),
+          eq(vctx.sql.tables.appSettings.appSlug, resolvedReq.appSlug),
           eq(vctx.sql.tables.appSettings.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
         )
       )
       .where(
-        and(eq(vctx.sql.tables.appSlugBinding.userSlug, req.userSlug), eq(vctx.sql.tables.appSlugBinding.appSlug, req.appSlug))
+        and(
+          eq(vctx.sql.tables.appSlugBinding.userSlug, resolvedReq.userSlug),
+          eq(vctx.sql.tables.appSlugBinding.appSlug, resolvedReq.appSlug)
+        )
       )
       .limit(1)
       .then((r) => r[0])
@@ -214,10 +405,10 @@ export async function ensureAppSettings(
       return Result.Ok({
         type: "vibes.diy.res-ensure-app-settings",
         userId: "------",
-        appSlug: req.appSlug,
-        ledger: req.appSlug,
-        userSlug: req.userSlug,
-        tenant: req.userSlug,
+        appSlug: resolvedReq.appSlug,
+        ledger: resolvedReq.appSlug,
+        userSlug: resolvedReq.userSlug,
+        tenant: resolvedReq.userSlug,
         error: "not-found",
         settings: buildEnsureEntryResult([]),
         updated: now,
@@ -232,9 +423,9 @@ export async function ensureAppSettings(
       await withModelDefaults(vctx, {
         type: "vibes.diy.res-ensure-app-settings",
         userId: record.UserSlugBindings.userId,
-        appSlug: req.appSlug,
+        appSlug: resolvedReq.appSlug,
         ledger: record.AppSlugBindings.ledger,
-        userSlug: req.userSlug,
+        userSlug: resolvedReq.userSlug,
         tenant: record.UserSlugBindings.tenant,
         settings: buildEnsureEntryResult(settings || []),
         updated: record.AppSettings?.updated ?? now,
@@ -258,9 +449,9 @@ export async function ensureAppSettings(
   const res = {
     type: "vibes.diy.res-ensure-app-settings",
     userId,
-    appSlug: req.appSlug,
+    appSlug: resolvedReq.appSlug,
     ledger: record.AppSlugBindings.ledger,
-    userSlug: req.userSlug,
+    userSlug: resolvedReq.userSlug,
     tenant: record.UserSlugBindings.tenant,
     error: undefined as string | undefined,
     settings: buildEnsureEntryResult(settings),
@@ -268,11 +459,11 @@ export async function ensureAppSettings(
     created: record.AppSettings.created,
   } satisfies ResEnsureAppSettings;
   switch (true) {
-    // case isReqEnsureAppSettingsAcl(req):
-    // await aclAction(vctx, req, res, settings);
+    // case isReqEnsureAppSettingsAcl(resolvedReq):
+    // await aclAction(vctx, resolvedReq, res, settings);
     // break;
 
-    case isReqPublicAccess(req):
+    case isReqPublicAccess(resolvedReq):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
@@ -281,14 +472,14 @@ export async function ensureAppSettings(
         () =>
           ({
             type: "app.public.access",
-            enable: req.publicAccess.enable,
+            enable: resolvedReq.publicAccess.enable,
           }) satisfies EnablePublicAccess
       );
       break;
 
-    case isReqRequest(req): {
+    case isReqRequest(resolvedReq): {
       const prevAutoAcceptRole = settings.find(isEnableRequest)?.autoAcceptRole;
-      const nextAutoAcceptRole = req.request.autoAcceptRole;
+      const nextAutoAcceptRole = resolvedReq.request.autoAcceptRole;
 
       [res.settings, res.error] = await sqlUpsert(
         vctx,
@@ -298,8 +489,8 @@ export async function ensureAppSettings(
         () =>
           ({
             type: "app.request",
-            enable: req.request.enable,
-            autoAcceptRole: req.request.autoAcceptRole,
+            enable: resolvedReq.request.enable,
+            autoAcceptRole: resolvedReq.request.autoAcceptRole,
           }) satisfies EnableRequest
       );
 
@@ -320,7 +511,7 @@ export async function ensureAppSettings(
       break;
     }
 
-    case isReqEnsureAppSettingsTitle(req):
+    case isReqEnsureAppSettingsTitle(resolvedReq):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
@@ -329,11 +520,32 @@ export async function ensureAppSettings(
         () =>
           ({
             type: "active.title",
-            title: req.title,
+            title: resolvedReq.title,
           }) satisfies ActiveTitle
       );
       break;
-    case isReqEnsureAppSettingsIconDescription(req):
+
+    case isReqEnsureAppSettingsAppSlug(resolvedReq): {
+      const rRenamed = await renameAppSlug(vctx, {
+        userSlug: res.userSlug,
+        fromAppSlug: res.appSlug,
+        requestedNextAppSlug: resolvedReq.nextAppSlug,
+      });
+      if (rRenamed.isErr()) {
+        const err = rRenamed.Err();
+        res.error = err instanceof Error ? err.message : `${err}`;
+        break;
+      }
+      res.appSlug = rRenamed.Ok().appSlug;
+      const rPersist = await sqlUpdateSettings(vctx, res, settings);
+      if (rPersist.isErr()) {
+        const err = rPersist.Err();
+        res.error = err instanceof Error ? err.message : `${err}`;
+      }
+      break;
+    }
+
+    case isReqEnsureAppSettingsIconDescription(resolvedReq):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
@@ -342,21 +554,21 @@ export async function ensureAppSettings(
         () =>
           ({
             type: "active.icon-description",
-            description: req.iconDescription,
+            description: resolvedReq.iconDescription,
           }) satisfies ActiveIconDescription
       );
       if (!res.error) {
         await postIconGen(vctx, { userSlug: res.userSlug, appSlug: res.appSlug, force: false });
       }
       break;
-    case isReqEnsureAppSettingsIconRegen(req):
+    case isReqEnsureAppSettingsIconRegen(resolvedReq):
       // No entry mutation — pure regen request. Rate-limit on the head
       // version's `created` to bound double-click cost.
       if (!recentlyRegenerated(settings)) {
         await postIconGen(vctx, { userSlug: res.userSlug, appSlug: res.appSlug, force: true });
       }
       break;
-    case isReqEnsureAppSettingsSkills(req):
+    case isReqEnsureAppSettingsSkills(resolvedReq):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
@@ -365,11 +577,11 @@ export async function ensureAppSettings(
         () =>
           ({
             type: "active.skills",
-            skills: req.skills,
+            skills: resolvedReq.skills,
           }) satisfies ActiveSkills
       );
       break;
-    case isReqEnsureAppSettingsTheme(req):
+    case isReqEnsureAppSettingsTheme(resolvedReq):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
@@ -378,11 +590,11 @@ export async function ensureAppSettings(
         () =>
           ({
             type: "active.theme",
-            theme: req.theme,
+            theme: resolvedReq.theme,
           }) satisfies ActiveTheme
       );
       break;
-    case isReqEnsureAppSettingsApp(req):
+    case isReqEnsureAppSettingsApp(resolvedReq):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
@@ -394,12 +606,12 @@ export async function ensureAppSettings(
             usage: "app",
             param: {
               ...prev.param,
-              ...req.app,
+              ...resolvedReq.app,
             },
           }) satisfies ActiveModelSetting
       );
       break;
-    case isReqEnsureAppSettingsChat(req):
+    case isReqEnsureAppSettingsChat(resolvedReq):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
@@ -411,12 +623,12 @@ export async function ensureAppSettings(
             usage: "chat",
             param: {
               ...prev.param,
-              ...req.chat,
+              ...resolvedReq.chat,
             },
           }) satisfies ActiveModelSetting
       );
       break;
-    case isReqEnsureAppSettingsImg(req):
+    case isReqEnsureAppSettingsImg(resolvedReq):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
@@ -428,12 +640,12 @@ export async function ensureAppSettings(
             usage: "img",
             param: {
               ...prev.param,
-              ...req.img,
+              ...resolvedReq.img,
             },
           }) satisfies ActiveModelSetting
       );
       break;
-    case isReqEnsureAppSettingsEnv(req):
+    case isReqEnsureAppSettingsEnv(resolvedReq):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
@@ -444,33 +656,33 @@ export async function ensureAppSettings(
             type: "active.env",
             env: [
               // ...prev.env,
-              ...req.env,
+              ...resolvedReq.env,
             ],
           }) satisfies ActiveEnv
       );
       break;
-    case isReqEnsureAppSettingsDbAcl(req):
+    case isReqEnsureAppSettingsDbAcl(resolvedReq):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
         settings,
         // Match per-(dbName) rather than the first ActiveDbAcl entry —
         // each dbName gets its own row in the entries array.
-        (e) => isActiveDbAcl(e) && e.dbName === req.dbAcl.dbName,
+        (e) => isActiveDbAcl(e) && e.dbName === resolvedReq.dbAcl.dbName,
         () =>
           ({
             type: "active.db-acl",
-            dbName: req.dbAcl.dbName,
-            acl: req.dbAcl.acl,
+            dbName: resolvedReq.dbAcl.dbName,
+            acl: resolvedReq.dbAcl.acl,
           }) satisfies ActiveDbAcl
       );
       break;
-    case isReqEnsureAppSettingsDbAclRemove(req):
+    case isReqEnsureAppSettingsDbAclRemove(resolvedReq):
       [res.settings, res.error] = await sqlRemove(
         vctx,
         res,
         settings,
-        (e) => isActiveDbAcl(e) && e.dbName === req.dbAclRemove.dbName
+        (e) => isActiveDbAcl(e) && e.dbName === resolvedReq.dbAclRemove.dbName
       );
       break;
   }

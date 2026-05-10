@@ -18,6 +18,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { eq, and, desc } from "drizzle-orm/sql/expressions";
+import { resolveCanonicalAppSlug } from "../intern/resolve-app-slug.js";
 
 export const getChatDetailsEvento: EventoHandler<
   W3CWebSocketEvent,
@@ -44,6 +45,14 @@ export const getChatDetailsEvento: EventoHandler<
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
+      const rCanonicalAppSlug = await resolveCanonicalAppSlug(vctx, {
+        userSlug: req.userSlug,
+        appSlug: req.appSlug,
+      });
+      if (rCanonicalAppSlug.isErr()) {
+        return Result.Err(rCanonicalAppSlug.Err());
+      }
+      const resolvedAppSlug = rCanonicalAppSlug.Ok();
 
       // Single query: verify ownership via UserSlugBinding, get chatId from ChatContexts,
       // fsId/created from PromptContexts, and blocks from ChatSections
@@ -72,7 +81,7 @@ export const getChatDetailsEvento: EventoHandler<
           and(
             eq(vctx.sql.tables.userSlugBinding.userId, userId),
             eq(vctx.sql.tables.chatContexts.userSlug, req.userSlug),
-            eq(vctx.sql.tables.chatContexts.appSlug, req.appSlug)
+            eq(vctx.sql.tables.chatContexts.appSlug, resolvedAppSlug)
           )
         )
         .orderBy(desc(vctx.sql.tables.promptContexts.created));
@@ -82,7 +91,7 @@ export const getChatDetailsEvento: EventoHandler<
           type: "vibes.diy.res-get-chat-details",
           chatId: "",
           userSlug: req.userSlug,
-          appSlug: req.appSlug,
+          appSlug: resolvedAppSlug,
           prompts: [],
         } satisfies ResGetChatDetails);
         return Result.Ok(EventoResult.Continue);
@@ -125,7 +134,7 @@ export const getChatDetailsEvento: EventoHandler<
         type: "vibes.diy.res-get-chat-details",
         chatId,
         userSlug: req.userSlug,
-        appSlug: req.appSlug,
+        appSlug: resolvedAppSlug,
         prompts: Array.from(seen.values()),
       } satisfies ResGetChatDetails);
       return Result.Ok(EventoResult.Continue);

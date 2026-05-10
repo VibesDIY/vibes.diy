@@ -17,6 +17,7 @@ import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { ASSET_SESSION_COOKIE_NAME } from "./asset-session.js";
 import { etagMatches, quoteEtag } from "./etag-utils.js";
+import { resolveCanonicalAppSlug } from "../intern/resolve-app-slug.js";
 
 // Handler for `/_files/<userSlug>/<appSlug>/<dbName>/<docId>/<key>` on
 // the singleton asset host `assets.<base>`. Auth/ACL gate, doc lookup,
@@ -113,7 +114,15 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
   },
   handle: async (ctx: HandleTriggerCtx<Request, FilesAssetValidated, unknown>): Promise<Result<EventoResultType>> => {
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    const { userSlug, appSlug, dbName, docId, key, cookie, ifNoneMatch, origin } = ctx.validated;
+    const { userSlug, appSlug: requestedAppSlug, dbName, docId, key, cookie, ifNoneMatch, origin } = ctx.validated;
+    const rCanonicalAppSlug = await resolveCanonicalAppSlug(vctx, {
+      userSlug,
+      appSlug: requestedAppSlug,
+    });
+    if (rCanonicalAppSlug.isErr()) {
+      return sendErr(ctx, 500, `slug resolution failed: ${rCanonicalAppSlug.Err()}`);
+    }
+    const appSlug = rCanonicalAppSlug.Ok();
     const corsHeaders = credentialedCors(origin);
 
     // 1. Resolve user identity from the asset-session cookie (best-effort —

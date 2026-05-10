@@ -3,6 +3,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { ensureUserSlug, ensureAppSlug, getDefaultUserSlug, persistDefaultUserSlug } from "./ensure-slug-binding.js";
+import { resolveCanonicalAppSlug } from "./resolve-app-slug.js";
 import { preAllocate } from "./pre-allocate.js";
 import {
   ActiveEntry,
@@ -31,6 +32,7 @@ export async function ensureChatId(
   let userSlug = "";
   let chatId: string | undefined;
   const userId = req._auth.verifiedAuth.claims.userId;
+  let requestedAppSlug = req.appSlug;
 
   if (req.chatId) {
     const reqChatId = req.chatId;
@@ -70,9 +72,20 @@ export async function ensureChatId(
       }
     }
 
+    if (requestedAppSlug) {
+      const rCanonicalAppSlug = await resolveCanonicalAppSlug(ctx, {
+        userSlug,
+        appSlug: requestedAppSlug,
+      });
+      if (rCanonicalAppSlug.isErr()) {
+        return Result.Err(`Failed to resolve appSlug: ${rCanonicalAppSlug.Err()}`);
+      }
+      requestedAppSlug = rCanonicalAppSlug.Ok();
+    }
+
     // Look up existing chat by userSlug+appSlug if appSlug provided
-    if (req.appSlug) {
-      const reqAppSlug = req.appSlug;
+    if (requestedAppSlug) {
+      const reqAppSlug = requestedAppSlug;
       const rResult = await exception2Result(() =>
         ctx.sql.db
           .select()
@@ -101,7 +114,7 @@ export async function ensureChatId(
       let preAllocSkills: string[] | undefined;
       let preAllocIconDescription: string | undefined;
       let preAllocTheme: string | undefined;
-      if (req.prompt && !req.appSlug) {
+      if (req.prompt && !requestedAppSlug) {
         const rPre = await preAllocate(ctx, { prompt: req.prompt });
         if (rPre.isOk()) {
           preferredPairs = rPre.Ok().pairs;
@@ -113,7 +126,7 @@ export async function ensureChatId(
         }
       }
 
-      const resApp = await ensureAppSlug(ctx, { userId, userSlug, appSlug: req.appSlug, preferredPairs });
+      const resApp = await ensureAppSlug(ctx, { userId, userSlug, appSlug: requestedAppSlug, preferredPairs });
       if (resApp.isErr()) {
         return Result.Err(`Failed to ensure appSlug: ${resApp.Err().message}`);
       }

@@ -28,6 +28,7 @@ import { parse } from "cookie";
 import { renderToReadableStream } from "react-dom/server";
 import { renderDBExplorer } from "../intern/render-db-explorer.js";
 import { etagMatches, quoteEtag } from "./etag-utils.js";
+import { resolveCanonicalAppSlug } from "../intern/resolve-app-slug.js";
 
 // function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
 //   return [new Request(URI.from(key).toString()), new Response(content as BodyInit, { headers })];
@@ -188,9 +189,18 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     const requestedFsId = ctx.validated.fsId;
     const isRootHtmlPath = ctx.validated.path === "/" || ctx.validated.path === "/index.html";
     const ifNoneMatch = ctx.request.headers.get("If-None-Match") ?? undefined;
+    const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+    const rCanonicalAppSlug = await resolveCanonicalAppSlug(vctx, {
+      userSlug: ctx.validated.userSlug,
+      appSlug: ctx.validated.appSlug,
+    });
+    if (rCanonicalAppSlug.isErr()) {
+      return Result.Err(rCanonicalAppSlug.Err());
+    }
+    const resolvedAppSlug = rCanonicalAppSlug.Ok();
+
     if (uri.pathname.startsWith("/.db-explorer")) {
       // console.log('xxxxxxx', DBExplorer.toString())
-      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const npmUrl = captureNpmUrl(vctx, ctx.request);
       await ctx.send.send(ctx, {
         type: "http.Response.Body",
@@ -206,7 +216,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
                 await renderDBExplorer({
                   base: "/.db-explorer",
                   vctx,
-                  vibeApp: { appSlug: ctx.validated.appSlug, userSlug: ctx.validated.userSlug, fsId: ctx.validated.fsId },
+                  vibeApp: { appSlug: resolvedAppSlug, userSlug: ctx.validated.userSlug, fsId: ctx.validated.fsId },
                   pkgRepos: {
                     private: npmUrl,
                   },
@@ -217,7 +227,6 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     }
 
     // console.log("-1servEntryPoint triggered with URL:", uri.toString())
-    const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
     // console.log("-2servEntryPoint triggered with URL:", uri.toString())
     let fs: typeof vctx.sql.tables.apps.$inferSelect | undefined;
     if (ctx.validated.fsId) {
@@ -227,7 +236,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         .where(
           and(
             eq(vctx.sql.tables.apps.userSlug, ctx.validated.userSlug),
-            eq(vctx.sql.tables.apps.appSlug, ctx.validated.appSlug),
+            eq(vctx.sql.tables.apps.appSlug, resolvedAppSlug),
             eq(vctx.sql.tables.apps.fsId, ctx.validated.fsId)
           )
         )
@@ -240,7 +249,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         .where(
           and(
             eq(vctx.sql.tables.apps.userSlug, ctx.validated.userSlug),
-            eq(vctx.sql.tables.apps.appSlug, ctx.validated.appSlug),
+            eq(vctx.sql.tables.apps.appSlug, resolvedAppSlug),
             eq(vctx.sql.tables.apps.mode, "production")
           )
         )
@@ -261,7 +270,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         const npmUrl = captureNpmUrl(vctx, ctx.request);
         const rPending = await renderPendingVibe({
           ctx,
-          appSlug: ctx.validated.appSlug,
+          appSlug: resolvedAppSlug,
           userSlug: ctx.validated.userSlug,
           pkgRepos: { private: npmUrl },
         });

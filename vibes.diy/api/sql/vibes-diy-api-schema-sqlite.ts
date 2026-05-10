@@ -45,6 +45,23 @@ export const sqlAppSlugBinding = sqliteTable(
   ]
 );
 
+// Backward-compatibility map for renamed app slugs. `aliasSlug` is an old
+// slug that resolves to the current canonical `appSlug` for the same user.
+export const sqlAppSlugAlias = sqliteTable(
+  "AppSlugAliases",
+  {
+    userSlug: text().notNull(),
+    aliasSlug: text().notNull(),
+    appSlug: text().notNull(),
+    created: text().notNull(),
+    updated: text().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userSlug, table.aliasSlug] }),
+    index("AppSlugAliases_userSlug_appSlug").on(table.userSlug, table.appSlug),
+  ]
+);
+
 export const sqlApps = sqliteTable(
   "Apps",
   {

@@ -665,6 +665,55 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       expect(res.Ok().error).toBeFalsy();
     });
 
+    it("ensureAppSettings renames appSlug and old slug still resolves", async () => {
+      const created = await createApp();
+      const rRename = await api.ensureAppSettings({
+        appSlug: created.appSlug,
+        userSlug: created.userSlug,
+        nextAppSlug: "My Renamed App!!!",
+      });
+      if (rRename.isErr()) {
+        assert.fail(`Expected rename to succeed: ${rRename.Err().message}`);
+      }
+      expect(rRename.Ok().error).toBeFalsy();
+      expect(rRename.Ok().appSlug).toBe("my-renamed-app");
+
+      const rViaOldSlug = await api.ensureAppSettings({ appSlug: created.appSlug, userSlug: created.userSlug });
+      if (rViaOldSlug.isErr()) {
+        assert.fail(`Expected old slug lookup to succeed: ${rViaOldSlug.Err().message}`);
+      }
+      expect(rViaOldSlug.Ok().error).toBeFalsy();
+      expect(rViaOldSlug.Ok().appSlug).toBe("my-renamed-app");
+
+      const rGetAppViaOldSlug = await api.getAppByFsId({ appSlug: created.appSlug, userSlug: created.userSlug });
+      if (rGetAppViaOldSlug.isErr()) {
+        assert.fail(`Expected getAppByFsId(old slug) to succeed: ${rGetAppViaOldSlug.Err().message}`);
+      }
+      expect(rGetAppViaOldSlug.Ok().grant).toBe("owner");
+      expect(rGetAppViaOldSlug.Ok().appSlug).toBe("my-renamed-app");
+    });
+
+    it("ensureAppSettings returns clear error when target appSlug is taken", async () => {
+      const a = await createApp();
+      const b = await createApp();
+      const res = await api.ensureAppSettings({
+        appSlug: a.appSlug,
+        userSlug: a.userSlug,
+        nextAppSlug: b.appSlug,
+      });
+      expect(res.Ok().error).toContain("taken");
+    });
+
+    it("ensureAppSettings returns clear error for invalid appSlug", async () => {
+      const created = await createApp();
+      const res = await api.ensureAppSettings({
+        appSlug: created.appSlug,
+        userSlug: created.userSlug,
+        nextAppSlug: "***",
+      });
+      expect(res.Ok().error).toContain("Invalid app slug");
+    });
+
     it("ensureAppSettings can't update if not owner", async () => {
       // need for parallel test isolation, as the following tests will update the settings
       const rTest = await api.ensureAppSlug({

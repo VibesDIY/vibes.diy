@@ -93,6 +93,7 @@ const schemaTableMap = {
   "public.Assets": pg.sqlAssets,
   "public.UserSlugBindings": pg.sqlUserSlugBinding,
   "public.AppSlugBindings": pg.sqlAppSlugBinding,
+  "public.AppSlugAliases": pg.sqlAppSlugAlias,
   "public.Apps": pg.sqlApps,
   "public.ChatContexts": pg.sqlChatContexts,
   "public.ChatSections": pg.sqlChatSections,

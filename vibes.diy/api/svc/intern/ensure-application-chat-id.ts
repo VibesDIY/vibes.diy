@@ -3,6 +3,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { parseArrayWarning, PromptAndBlockMsgs, ReqOpenChat, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
+import { resolveCanonicalAppSlug } from "./resolve-app-slug.js";
 
 interface EnsureChatIdPResult {
   chatId: string;
@@ -20,8 +21,17 @@ export async function ensureApplicationChatId({
   req: ReqWithVerifiedAuth<ReqOpenChat>;
 }): Promise<Result<EnsureChatIdPResult>> {
   const { chatId } = req;
-  const appSlug = req.appSlug;
+  let appSlug = req.appSlug;
   const userSlug = req.userSlug;
+
+  if (appSlug && userSlug) {
+    const rCanonicalAppSlug = await resolveCanonicalAppSlug(ctx, { userSlug, appSlug });
+    if (rCanonicalAppSlug.isErr()) {
+      return Result.Err(`Failed to resolve app slug: ${rCanonicalAppSlug.Err()}`);
+    }
+    appSlug = rCanonicalAppSlug.Ok();
+  }
+
   if (chatId) {
     const condition = [
       eq(ctx.sql.tables.applicationChats.userId, req._auth.verifiedAuth.claims.userId),
