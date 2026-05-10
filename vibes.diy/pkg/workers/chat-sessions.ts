@@ -16,18 +16,30 @@ import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 
 const DocChangedEvt = type({
-  type: "string",
+  type: "'vibes.diy.evt-doc-changed'",
   userSlug: "string",
   appSlug: "string",
   dbName: "string",
   docId: "string",
 });
 
+const RequestGrantEvt = type({
+  type: "'vibes.diy.evt-request-grant'",
+  op: "'upsert' | 'delete'",
+  userId: "string",
+  grant: type({
+    userSlug: "string",
+    appSlug: "string",
+  }).and(type("Record<string, unknown>")),
+}).and(type("Record<string, unknown>"));
+
+const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt);
+
 // Internal POST body from DocNotify: the doc-changed event plus the
 // originating WebSocket's connId, so we can skip just that one connection
 // while still delivering to sibling tabs/browsers on the same shard.
 const DocNotifyDelivery = type({
-  evt: DocChangedEvt,
+  evt: DocNotifyEvt,
   senderConnId: "string",
 });
 
@@ -65,11 +77,19 @@ export class ChatSessions implements DurableObject {
         return new Response("Invalid notification", { status: 400 });
       }
       const { evt, senderConnId } = parsed;
-      const subscriptionKey = `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
+      const subscriptionKey =
+        evt.type === "vibes.diy.evt-request-grant"
+          ? `${evt.grant.userSlug}/${evt.grant.appSlug}`
+          : `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
       let delivered = 0;
       let skippedSender = 0;
       for (const conn of this.connections) {
-        if (!conn.subscribedDocKeys.has(subscriptionKey)) continue;
+        const requestGrantKeys = (conn as WSSendProvider & { subscribedRequestGrantKeys?: Set<string> }).subscribedRequestGrantKeys;
+        const subscribed =
+          evt.type === "vibes.diy.evt-request-grant"
+            ? (requestGrantKeys?.has(subscriptionKey) ?? false)
+            : conn.subscribedDocKeys.has(subscriptionKey);
+        if (!subscribed) continue;
         // Skip the originating WebSocket — it already updated optimistically
         // when the put/delete returned. Sibling connections on the same
         // shard (other tabs/browsers under the same warm-DO) still receive.
@@ -90,11 +110,11 @@ export class ChatSessions implements DurableObject {
         );
         delivered++;
       }
+      const eventDetail = evt.type === "vibes.diy.evt-request-grant" ? `op:${evt.op}` : `docId:${evt.docId.slice(0, 8)}`;
       console.log(
         "[ChatSessions] received notification",
         subscriptionKey,
-        "docId:",
-        evt.docId.slice(0, 8),
+        eventDetail,
         "| shard:",
         (this.shardId ?? "unknown").slice(0, 8),
         "| delivered to",

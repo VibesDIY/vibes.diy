@@ -49,6 +49,8 @@ import {
 import {
   ReqListRequestGrants,
   ResListRequestGrants,
+  ReqSubscribeRequestGrants,
+  ResSubscribeRequestGrants,
   ReqRequestAccess,
   ResRequestAccess,
   ReqApproveRequest,
@@ -59,6 +61,7 @@ import {
   ResRevokeRequest,
   ReqHasAccessRequest,
   ResHasAccessRequest,
+  EvtRequestGrant,
 } from "./request-access.js";
 import {
   ReqPutDoc,
@@ -143,6 +146,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   requestSetRole(req: Req<ReqRequestSetRole>): Promise<Result<ResRequestSetRole, VibesDiyError>>;
   revokeRequest(req: Req<ReqRevokeRequest>): Promise<Result<ResRevokeRequest, VibesDiyError>>;
   listRequestGrants(req: Req<ReqListRequestGrants>): Promise<Result<ResListRequestGrants, VibesDiyError>>;
+  subscribeRequestGrants(req: Req<ReqSubscribeRequestGrants>): Promise<Result<ResSubscribeRequestGrants, VibesDiyError>>;
   hasAccessRequest(req: Req<ReqHasAccessRequest>): Promise<Result<ResHasAccessRequest, VibesDiyError>>;
 
   listUserSlugBindings(req: Req<ReqListUserSlugBindings>): Promise<Result<ResListUserSlugBindings, VibesDiyError>>;
@@ -173,4 +177,9 @@ export interface VibesDiyApiIface<_T = unknown> {
   // callers (eg. React effects) MUST call it on cleanup, otherwise listeners
   // accumulate per mount and each doc change fires N redundant callbacks.
   onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): () => void;
+
+  // Register a callback for request-grant updates pushed from the API.
+  // Events arrive only for apps this connection has subscribed to via
+  // subscribeRequestGrants. Returns an unsubscribe function.
+  onRequestGrant(fn: (evt: EvtRequestGrant) => void): () => void;
 }

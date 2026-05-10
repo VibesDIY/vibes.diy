@@ -10,7 +10,7 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { defaultLLMRequest } from "./default-llm-request.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
-import { LLMEnforced, LLMHeaders, MsgBase, S3Api, VibesFPApiParameters } from "@vibes.diy/api-types";
+import { type EvtRequestGrant, LLMEnforced, LLMHeaders, MsgBase, S3Api, VibesFPApiParameters } from "@vibes.diy/api-types";
 import { createSQLPeer, CreateSQLPeerParams, createVibesApiTables, DBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { SuperThis } from "@fireproof/core-types-base";
 import { ensureStorage } from "@vibes.diy/api-pkg";
@@ -40,6 +40,9 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;
   deregisterDocSubscription?(subscriptionKey: string): Promise<void>;
+  notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
+  registerRequestGrantSubscription?(subscriptionKey: string): Promise<void>;
+  deregisterRequestGrantSubscription?(subscriptionKey: string): Promise<void>;
   // waitUntil?<T>(promise: Promise<T>): void;
 }
 
@@ -278,6 +281,9 @@ export async function createAppContext<T extends VibesSqlite>(
     notifyDocChanged: params.notifyDocChanged,
     registerDocSubscription: params.registerDocSubscription,
     deregisterDocSubscription: params.deregisterDocSubscription,
+    notifyRequestGrantChanged: params.notifyRequestGrantChanged,
+    registerRequestGrantSubscription: params.registerRequestGrantSubscription,
+    deregisterRequestGrantSubscription: params.deregisterRequestGrantSubscription,
   } satisfies VibesApiSQLCtx;
 
   return {

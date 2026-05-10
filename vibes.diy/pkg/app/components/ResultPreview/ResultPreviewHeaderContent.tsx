@@ -19,6 +19,7 @@ interface ResultPreviewHeaderContentProps {
   openVibe?: () => void;
   onContextMenu?: (view: ViewType, e: React.MouseEvent) => void;
   shareModal: UseShareModalReturn;
+  pendingRequestCount?: number;
   syntaxErrorCount?: number;
   onBackClick?: () => void;
   /** Forwarded to ShareModal — owners get the full sharing trio; non-owners get Copy Link + Request Access. */
@@ -36,6 +37,7 @@ function ResultPreviewHeaderContent({
   openVibe,
   onContextMenu,
   shareModal,
+  pendingRequestCount = 0,
   onBackClick,
   isOwner,
   myGrant,
@@ -76,10 +78,20 @@ function ResultPreviewHeaderContent({
               <ShareIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Share</span>
             </Button>
+            {pendingRequestCount > 0 && (
+              <span
+                aria-label={`${pendingRequestCount} pending access request${pendingRequestCount === 1 ? "" : "s"}`}
+                className="pointer-events-none absolute -top-1.5 -right-1.5 min-w-4 h-4 rounded-full border border-black bg-cyan-400 px-1 text-[10px] font-semibold leading-none flex items-center justify-center shadow"
+              >
+                {pendingRequestCount > 9 ? "9+" : pendingRequestCount}
+              </span>
+            )}
             {shareModal.hasUnpublishedChanges && (
               <span
                 aria-label="Unpublished changes"
-                className="pointer-events-none absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border border-black bg-orange-400 shadow"
+                className={`pointer-events-none absolute -top-1 h-2.5 w-2.5 rounded-full border border-black bg-orange-400 shadow ${
+                  pendingRequestCount > 0 ? "-left-1" : "-right-1"
+                }`}
               />
             )}
           </div>

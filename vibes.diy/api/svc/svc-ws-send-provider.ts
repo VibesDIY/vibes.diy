@@ -16,6 +16,9 @@ export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unk
   // is subscribed to for document change notifications. dbName-scoped so a
   // tighter `read` ACL on one db doesn't leak via change events on another.
   readonly subscribedDocKeys = new Set<string>();
+  // Per-(userSlug/appSlug) subscription keys this connection is subscribed to
+  // for request-grant notifications (owner pending approvals).
+  readonly subscribedRequestGrantKeys = new Set<string>();
   // Unique per-WebSocket id used to skip the originating connection when
   // fanning out doc-changed notifications. Many connections share a shard
   // (warm-DO sharing per (userSlug, appSlug)), so shard-level exclusion

@@ -37,6 +37,16 @@ describe("request flow", { timeout: (inject("DB_FLAVOUR" as never) as string) ==
     expect(rRequested.Ok().state).toBe("pending");
   });
 
+  it("subscribeRequestGrants is owner-only", async () => {
+    const { appSlug, userSlug } = await ctx.createApp();
+
+    const rOwner = await ctx.api.subscribeRequestGrants({ appSlug, userSlug });
+    expect(rOwner.isOk()).toBe(true);
+
+    const rNonOwner = await ctx.api2.subscribeRequestGrants({ appSlug, userSlug });
+    expect(rNonOwner.isErr()).toBe(true);
+  });
+
   it("manual approval lifecycle", async () => {
     const { appSlug, userSlug } = await ctx.createApp();
 

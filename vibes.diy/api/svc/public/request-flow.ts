@@ -3,6 +3,8 @@ import {
   MsgBase,
   ReqListRequestGrants,
   ResListRequestGrants,
+  ReqSubscribeRequestGrants,
+  ResSubscribeRequestGrants,
   ReqRequestAccess,
   ResRequestAccess,
   ReqApproveRequest,
@@ -17,6 +19,7 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
   isReqListRequestGrants,
+  isReqSubscribeRequestGrants,
   isReqRequestAccess,
   isReqApproveRequest,
   isReqRequestSetRole,
@@ -44,15 +47,29 @@ import { checkAuth } from "../check-auth.js";
 import { eq, and, lt, desc } from "drizzle-orm/sql/expressions";
 import { type SQL } from "drizzle-orm/sql";
 import { type } from "arktype";
+import { WSSendProvider } from "../svc-ws-send-provider.js";
 
-async function sendUpdateEvent(vctx: VibesApiSQLCtx, value: Omit<EvtRequestGrant, "type">) {
+function clientWsSend(ctx: { send: unknown }): WSSendProvider {
+  return ctx.send as unknown as WSSendProvider;
+}
+
+async function sendUpdateEvent(vctx: VibesApiSQLCtx, value: Omit<EvtRequestGrant, "type">, senderConnId?: string) {
+  const evt = {
+    ...value,
+    type: "vibes.diy.evt-request-grant",
+  } satisfies EvtRequestGrant;
+
   await vctx.postQueue({
-    payload: { ...value, type: "vibes.diy.evt-request-grant" },
+    payload: evt,
     tid: "queue-event",
     src: "request-flow",
     dst: "vibes-service",
     ttl: 1,
   } satisfies MsgBase<EvtRequestGrant>);
+
+  if (vctx.notifyRequestGrantChanged) {
+    vctx.notifyRequestGrantChanged(evt, senderConnId ?? "").catch((e: unknown) => console.error("DocNotify error:", e));
+  }
 }
 
 export async function approveAllPendingRequests(
@@ -195,7 +212,8 @@ export const hasAccessRequestEvento: EventoHandler<
 
 export async function requestAccess(
   vctx: VibesApiSQLCtx,
-  req: { foreignUserId: string; appSlug: string; userSlug: string; claims: ClerkClaim }
+  req: { foreignUserId: string; appSlug: string; userSlug: string; claims: ClerkClaim },
+  senderConnId?: string
 ): Promise<Result<ResRequestAccess | ResRequestAccessError | ResFlowOwnerError>> {
   const now = new Date().toISOString();
 
@@ -290,12 +308,12 @@ export async function requestAccess(
   if (autoAcceptRole) {
     const r = { ...base, state: "approved" as const, role: autoAcceptRole } satisfies ResRequestAccessApproved;
 
-    await sendUpdateEvent(vctx, { op: "upsert", userId: record.userId, grant: r });
+    await sendUpdateEvent(vctx, { op: "upsert", userId: record.userId, grant: r }, senderConnId);
 
     return Result.Ok(r);
   }
   const r = { ...base, state: "pending" as const } satisfies ResRequestAccessPending;
-  await sendUpdateEvent(vctx, { op: "upsert", userId: record.userId, grant: r });
+  await sendUpdateEvent(vctx, { op: "upsert", userId: record.userId, grant: r }, senderConnId);
   return Result.Ok(r);
 }
 
@@ -319,7 +337,11 @@ export const requestAccessEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRe
       const foreignUserId = req._auth.verifiedAuth.claims.userId;
       const claims = req._auth.verifiedAuth.claims;
 
-      const rResult = await requestAccess(vctx, { foreignUserId, appSlug: req.appSlug, userSlug: req.userSlug, claims });
+      const rResult = await requestAccess(
+        vctx,
+        { foreignUserId, appSlug: req.appSlug, userSlug: req.userSlug, claims },
+        clientWsSend(ctx).connId
+      );
       if (rResult.isErr()) return Result.Err(rResult);
       await ctx.send.send(ctx, rResult.Ok());
 
@@ -399,6 +421,65 @@ export const listRequestGrantsEvento: EventoHandler<
   ),
 };
 
+export const subscribeRequestGrantsEvento: EventoHandler<
+  W3CWebSocketEvent,
+  MsgBase<ReqSubscribeRequestGrants>,
+  ResSubscribeRequestGrants | VibesDiyError
+> = {
+  hash: "subscribe-request-grants",
+  validate: unwrapMsgBase(async (msg: MsgBase) => {
+    if (isReqSubscribeRequestGrants(msg.payload)) {
+      return Result.Ok(Option.Some({ ...msg, payload: msg.payload as ReqSubscribeRequestGrants }));
+    }
+    return Result.Ok(Option.None());
+  }),
+  handle: checkAuth(
+    async (
+      ctx: HandleTriggerCtx<
+        W3CWebSocketEvent,
+        MsgBase<ReqWithVerifiedAuth<ReqSubscribeRequestGrants>>,
+        ResSubscribeRequestGrants | VibesDiyError
+      >
+    ): Promise<Result<EventoResultType>> => {
+      const req = ctx.validated.payload;
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+      const userId = req._auth.verifiedAuth.claims.userId;
+
+      const ownerBinding = await vctx.sql.db
+        .select({ userId: vctx.sql.tables.userSlugBinding.userId })
+        .from(vctx.sql.tables.userSlugBinding)
+        .where(and(eq(vctx.sql.tables.userSlugBinding.userSlug, req.userSlug), eq(vctx.sql.tables.userSlugBinding.userId, userId)))
+        .limit(1)
+        .then((rows) => rows[0]);
+
+      if (!ownerBinding) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-error",
+          error: { message: "Access denied" },
+        } as unknown as VibesDiyError);
+        return Result.Ok(EventoResult.Continue);
+      }
+
+      const wsSend = clientWsSend(ctx) as WSSendProvider & { subscribedRequestGrantKeys?: Set<string> };
+      const subscriptionKey = `${req.userSlug}/${req.appSlug}`;
+      if (!wsSend.subscribedRequestGrantKeys) {
+        wsSend.subscribedRequestGrantKeys = new Set<string>();
+      }
+      wsSend.subscribedRequestGrantKeys.add(subscriptionKey);
+
+      if (vctx.registerRequestGrantSubscription) {
+        vctx.registerRequestGrantSubscription(subscriptionKey).catch((e: unknown) => console.error("DocNotify error:", e));
+      }
+
+      await ctx.send.send(ctx, {
+        type: "vibes.diy.res-subscribe-request-grants",
+        status: "ok",
+      } satisfies ResSubscribeRequestGrants);
+      return Result.Ok(EventoResult.Continue);
+    }
+  ),
+};
+
 export const approveRequestEvento: EventoHandler<
   W3CWebSocketEvent,
   MsgBase<ReqApproveRequest>,
@@ -460,21 +541,25 @@ export const approveRequestEvento: EventoHandler<
         updated: now,
       } satisfies ResApproveRequest;
 
-      await sendUpdateEvent(vctx, {
-        op: "upsert",
-        userId,
-        grant: {
-          type: "vibes.diy.res-request-access",
-          appSlug: req.appSlug,
-          userSlug: req.userSlug,
-          foreignUserId: req.foreignUserId,
-          role: req.role,
-          state: "approved",
-          foreignInfo: existing[0].foreignInfo as ForeignInfo,
-          updated: now,
-          created: now,
+      await sendUpdateEvent(
+        vctx,
+        {
+          op: "upsert",
+          userId,
+          grant: {
+            type: "vibes.diy.res-request-access",
+            appSlug: req.appSlug,
+            userSlug: req.userSlug,
+            foreignUserId: req.foreignUserId,
+            role: req.role,
+            state: "approved",
+            foreignInfo: existing[0].foreignInfo as ForeignInfo,
+            updated: now,
+            created: now,
+          },
         },
-      });
+        clientWsSend(ctx).connId
+      );
 
       await ctx.send.send(ctx, r);
 
@@ -544,25 +629,29 @@ export const requestSetRoleEvento: EventoHandler<
         role: req.role,
       } satisfies ResRequestSetRole;
 
-      await sendUpdateEvent(vctx, {
-        op: "upsert",
-        userId,
-        grant: {
-          type: "vibes.diy.res-request-access",
-          appSlug: req.appSlug,
-          userSlug: req.userSlug,
-          foreignUserId: req.foreignUserId,
-          role: req.role,
-          state: existing.state as ResRequestAccess["state"],
-          foreignInfo: existing.foreignInfo as ForeignInfo,
-          updated: now,
-          created: now,
+      await sendUpdateEvent(
+        vctx,
+        {
+          op: "upsert",
+          userId,
+          grant: {
+            type: "vibes.diy.res-request-access",
+            appSlug: req.appSlug,
+            userSlug: req.userSlug,
+            foreignUserId: req.foreignUserId,
+            role: req.role,
+            state: existing.state as ResRequestAccess["state"],
+            foreignInfo: existing.foreignInfo as ForeignInfo,
+            updated: now,
+            created: now,
+          },
+          // foreignUserId: req.foreignUserId,
+          // state: existing[0].state as EvtRequestGrant['grant']["state"],
+          // role: req.role as EvtRequestGrant['grant]["role"],
+          // foreignInfo: existing[0].foreignInfo as EvtRequestGrant["foreignInfo"],
         },
-        // foreignUserId: req.foreignUserId,
-        // state: existing[0].state as EvtRequestGrant['grant']["state"],
-        // role: req.role as EvtRequestGrant['grant]["role"],
-        // foreignInfo: existing[0].foreignInfo as EvtRequestGrant["foreignInfo"],
-      });
+        clientWsSend(ctx).connId
+      );
 
       await ctx.send.send(ctx, r);
 
@@ -621,27 +710,31 @@ export const revokeRequestEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRe
         deleted: req.delete ?? false,
       } satisfies ResRevokeRequest;
       if (prev) {
-        await sendUpdateEvent(vctx, {
-          op: req.delete ? "delete" : "upsert",
-          userId,
-          grant: {
-            type: "vibes.diy.res-request-access",
-            appSlug: req.appSlug,
-            userSlug: req.userSlug,
-            foreignUserId: req.foreignUserId,
-            role: Role.assert(prev.role),
-            state: "revoked",
-            foreignInfo: prev.foreignInfo as ForeignInfo,
-            updated: now,
-            created: prev.created,
+        await sendUpdateEvent(
+          vctx,
+          {
+            op: req.delete ? "delete" : "upsert",
+            userId,
+            grant: {
+              type: "vibes.diy.res-request-access",
+              appSlug: req.appSlug,
+              userSlug: req.userSlug,
+              foreignUserId: req.foreignUserId,
+              role: Role.assert(prev.role),
+              state: "revoked",
+              foreignInfo: prev.foreignInfo as ForeignInfo,
+              updated: now,
+              created: prev.created,
+            },
+            // appSlug: req.appSlug,
+            // userSlug: req.userSlug,
+            // foreignUserId: req.foreignUserId,
+            // state: (req.delete ? prev.state : "revoked") as EvtRequestGrant["state"],
+            // role: prev.role as EvtRequestGrant["role"],
+            // foreignInfo: prev.foreignInfo as EvtRequestGrant["foreignInfo"],
           },
-          // appSlug: req.appSlug,
-          // userSlug: req.userSlug,
-          // foreignUserId: req.foreignUserId,
-          // state: (req.delete ? prev.state : "revoked") as EvtRequestGrant["state"],
-          // role: prev.role as EvtRequestGrant["role"],
-          // foreignInfo: prev.foreignInfo as EvtRequestGrant["foreignInfo"],
-        });
+          clientWsSend(ctx).connId
+        );
       }
 
       await ctx.send.send(ctx, r);

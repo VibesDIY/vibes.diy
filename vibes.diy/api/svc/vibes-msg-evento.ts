@@ -32,6 +32,7 @@ import {
 } from "./public/user-slug-bindings.js";
 import {
   listRequestGrantsEvento,
+  subscribeRequestGrantsEvento,
   requestAccessEvento,
   approveRequestEvento,
   requestSetRoleEvento,
@@ -74,6 +75,7 @@ export const vibesMsgEvento = Lazy(() => {
     requestSetRoleEvento,
     revokeRequestEvento,
     listRequestGrantsEvento,
+    subscribeRequestGrantsEvento,
     getCertFromCsrEvento,
     listModelsEvento,
     ensureAppSettingsEvento,

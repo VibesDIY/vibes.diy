@@ -74,6 +74,9 @@ import {
   ReqListRequestGrants,
   ResListRequestGrants,
   isResListRequestGrants,
+  ReqSubscribeRequestGrants,
+  ResSubscribeRequestGrants,
+  isResSubscribeRequestGrants,
   ReqRequestAccess,
   // ResRequestAccess,
   ReqApproveRequest,
@@ -130,6 +133,8 @@ import {
   ResAssetUploadGrant,
   isResAssetUploadGrant,
   isEvtDocChanged,
+  EvtRequestGrant,
+  isEvtRequestGrant,
   ReqPromptLLMChatSection,
   FSUpdate,
   isFSUpdate,
@@ -209,6 +214,8 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   private readonly pendingRequests = new Map<string, PendingRequest<unknown>>();
   private readonly docChangedListeners: ((userSlug: string, appSlug: string, dbName: string, docId: string) => void)[] = [];
   private readonly docSubscriptions: { userSlug: string; appSlug: string; dbName: string }[] = [];
+  private readonly requestGrantListeners: ((evt: EvtRequestGrant) => void)[] = [];
+  private readonly requestGrantSubscriptions: { userSlug: string; appSlug: string }[] = [];
   private currentConnection: VibeDiyApiConnection | undefined;
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   private closed = false;
@@ -282,9 +289,19 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       for (const fn of this.docChangedListeners) {
         this.attachDocChangedToConnection(conn, fn);
       }
+      // Re-attach all onRequestGrant listeners to the new connection
+      for (const fn of this.requestGrantListeners) {
+        this.attachRequestGrantToConnection(conn, fn);
+      }
       // Re-subscribe to all doc subscriptions (server needs to know again)
       for (const sub of this.docSubscriptions) {
         this.subscribeDocs(sub).catch((_e: unknown) => {
+          /* re-subscribe best-effort; next reconnect will retry */
+        });
+      }
+      // Re-subscribe to all request-grant subscriptions (server needs to know again)
+      for (const sub of this.requestGrantSubscriptions) {
+        this.subscribeRequestGrants(sub).catch((_e: unknown) => {
           /* re-subscribe best-effort; next reconnect will retry */
         });
       }
@@ -602,6 +619,21 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.request({ ...req, type: "vibes.diy.req-list-request-grants" }, { resMatch: isResListRequestGrants });
   }
 
+  async subscribeRequestGrants(req: Req<ReqSubscribeRequestGrants>): Promise<Result<ResSubscribeRequestGrants, VibesDiyError>> {
+    const result: Result<ResSubscribeRequestGrants, VibesDiyError> = await this.request(
+      { ...req, type: "vibes.diy.req-subscribe-request-grants" },
+      { resMatch: isResSubscribeRequestGrants }
+    );
+    if (result.isOk()) {
+      const sub = { userSlug: req.userSlug, appSlug: req.appSlug };
+      const key = `${sub.userSlug}/${sub.appSlug}`;
+      if (!this.requestGrantSubscriptions.some((s) => `${s.userSlug}/${s.appSlug}` === key)) {
+        this.requestGrantSubscriptions.push(sub);
+      }
+    }
+    return result;
+  }
+
   hasAccessRequest(req: Req<ReqHasAccessRequest>): Promise<Result<ResHasAccessRequest, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-has-access-request" }, { resMatch: isResHasAccessRequestFlow });
   }
@@ -668,9 +700,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.request({ ...req, type: "vibes.diy.req-list-members" }, { resMatch: isResListMembers });
   }
 
-  requestAssetUploadGrant(
-    req: Req<ReqAssetUploadGrant>
-  ): Promise<Result<ResAssetUploadGrant, VibesDiyError>> {
+  requestAssetUploadGrant(req: Req<ReqAssetUploadGrant>): Promise<Result<ResAssetUploadGrant, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-asset-upload-grant" }, { resMatch: isResAssetUploadGrant });
   }
 
@@ -722,16 +752,65 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     };
   }
 
+  private attachRequestGrantToConnection(conn: VibeDiyApiConnection, fn: (evt: EvtRequestGrant) => void): () => void {
+    const unsub = conn.onMessage((wsEvent) => {
+      if (wsEvent.type !== "MessageEvent") return;
+      const raw = wsEvent.event.data;
+      const textPromise =
+        raw instanceof Blob
+          ? raw.text()
+          : Promise.resolve(typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array));
+      textPromise
+        .then((text) => {
+          const parsed = JSON.parse(text);
+          const msg = msgBase(parsed);
+          if (!(msg instanceof type.errors) && isEvtRequestGrant(msg.payload)) {
+            fn(msg.payload);
+          }
+        })
+        .catch((_e: unknown) => {
+          // Not a valid message — ignore
+        });
+    });
+    return () => {
+      unsub();
+    };
+  }
+
+  onRequestGrant(fn: (evt: EvtRequestGrant) => void): () => void {
+    this.requestGrantListeners.push(fn);
+    let detach: (() => void) | undefined;
+    const conn = this.currentConnection;
+    if (conn) {
+      // Connection already established — attach immediately
+      detach = this.attachRequestGrantToConnection(conn, fn);
+    } else {
+      // Trigger connection — replay loop in getReadyConnection will attach all stored listeners
+      this.getReadyConnection().catch((_e: unknown) => {
+        /* best-effort; next activity will establish connection */
+      });
+    }
+    return () => {
+      const idx = this.requestGrantListeners.indexOf(fn);
+      if (idx >= 0) this.requestGrantListeners.splice(idx, 1);
+      detach?.();
+    };
+  }
+
   /** @internal — test inspection only */
   get _testInternals(): {
     docSubscriptions: readonly { userSlug: string; appSlug: string; dbName: string }[];
+    requestGrantSubscriptions: readonly { userSlug: string; appSlug: string }[];
     docChangedListenerCount: number;
+    requestGrantListenerCount: number;
     currentConnection: VibeDiyApiConnection | undefined;
     reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   } {
     return {
       docSubscriptions: this.docSubscriptions,
+      requestGrantSubscriptions: this.requestGrantSubscriptions,
       docChangedListenerCount: this.docChangedListeners.length,
+      requestGrantListenerCount: this.requestGrantListeners.length,
       currentConnection: this.currentConnection,
       reconnectTimer: this.reconnectTimer,
     };

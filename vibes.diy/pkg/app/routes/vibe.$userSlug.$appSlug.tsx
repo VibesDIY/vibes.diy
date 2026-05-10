@@ -163,6 +163,19 @@ export default function VibeIframeWrapper() {
   }, [isOwner, userSlug, appSlug, vctx.vibeDiyApi, pendingBump]);
 
   useEffect(() => {
+    if (!isOwner || !userSlug || !appSlug) {
+      return;
+    }
+    void vctx.vibeDiyApi.subscribeRequestGrants({ appSlug, userSlug });
+    const unsubscribe = vctx.vibeDiyApi.onRequestGrant((evt) => {
+      if (evt.grant.userSlug === userSlug && evt.grant.appSlug === appSlug) {
+        setPendingBump((n) => n + 1);
+      }
+    });
+    return unsubscribe;
+  }, [isOwner, userSlug, appSlug, vctx.vibeDiyApi]);
+
+  useEffect(() => {
     if (isLoaded && !authSignedIn && fsId && userSlug && appSlug) {
       setIsSidebarVisible(true);
     }
