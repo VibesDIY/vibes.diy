@@ -10,10 +10,9 @@
  * build a DeviceIdSignMsg signer, return a Lazy() getToken with a 60-second
  * resetAfter so the same JWT isn't re-minted on every WS request.
  */
-import type { SuperThis } from "@fireproof/core-types-base";
 import type { Result } from "@adviser/cement";
+import type { FPDeviceIDSession, SuperThis } from "@fireproof/core-types-base";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
-import type { FPDeviceIDSession } from "@fireproof/core-types-base";
 import { Lazy, Result as CementResult } from "@adviser/cement";
 import { getKeyBag } from "@fireproof/core-keybag";
 import { DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
