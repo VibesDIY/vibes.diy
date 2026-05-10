@@ -19,7 +19,7 @@ async function setupApp(seqOffset: number) {
   const deviceCA = await createTestDeviceCA(sthis);
   const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
 
-  const ownerUser = await createTestUser({ sthis, deviceCA });
+  const ownerUser = await createTestUser({ sthis, deviceCA, seqUserId: 100 + seqOffset });
   const viewerUser = await createTestUser({ sthis, deviceCA, seqUserId: 200 + seqOffset });
   const editorUser = await createTestUser({ sthis, deviceCA, seqUserId: 300 + seqOffset });
   const otherUser = await createTestUser({ sthis, deviceCA, seqUserId: 400 + seqOffset });

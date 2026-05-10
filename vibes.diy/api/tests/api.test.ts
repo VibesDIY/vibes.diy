@@ -110,7 +110,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
     appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
-    const testUser = await createTestUser({ sthis, deviceCA });
+    const testUser = await createTestUser({ sthis, deviceCA, seqUserId: 100 });
 
     const fetchPair = TestFetchPair.create();
     const wsPair = TestWSPair.create();
@@ -157,7 +157,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       },
     });
 
-    const testUser2 = await createTestUser({ sthis, deviceCA });
+    const testUser2 = await createTestUser({ sthis, deviceCA, seqUserId: 200 });
     api2 = new VibesDiyApi({
       apiUrl: "http://localhost:8787/api",
       ws: wsPair.p1 as unknown as WebSocket,

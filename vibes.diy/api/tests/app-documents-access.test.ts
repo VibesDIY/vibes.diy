@@ -18,7 +18,7 @@ describe("Firefly access control", { timeout: 15000 }, () => {
     const deviceCA = await createTestDeviceCA(sthis);
     const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
 
-    const ownerUser = await createTestUser({ sthis, deviceCA });
+    const ownerUser = await createTestUser({ sthis, deviceCA, seqUserId: 100 });
     const visitorUser = await createTestUser({ sthis, deviceCA, seqUserId: 200 });
 
     const wsPair = TestWSPair.create();
@@ -183,7 +183,7 @@ describe("Firefly viewer access", { timeout: 15000 }, () => {
     const deviceCA = await createTestDeviceCA(sthis);
     const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
 
-    const ownerUser = await createTestUser({ sthis, deviceCA });
+    const ownerUser = await createTestUser({ sthis, deviceCA, seqUserId: 100 });
     const visitorUser = await createTestUser({ sthis, deviceCA, seqUserId: 200 });
 
     const wsPair = TestWSPair.create();
@@ -273,7 +273,7 @@ describe("Firefly submitter access", { timeout: 15000 }, () => {
     const deviceCA = await createTestDeviceCA(sthis);
     const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
 
-    const ownerUser = await createTestUser({ sthis, deviceCA });
+    const ownerUser = await createTestUser({ sthis, deviceCA, seqUserId: 100 });
     const visitorUser = await createTestUser({ sthis, deviceCA, seqUserId: 200 });
 
     const wsPair = TestWSPair.create();
@@ -364,7 +364,7 @@ describe("Firefly public access", { timeout: 15000 }, () => {
     const deviceCA = await createTestDeviceCA(sthis);
     const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
 
-    const ownerUser = await createTestUser({ sthis, deviceCA });
+    const ownerUser = await createTestUser({ sthis, deviceCA, seqUserId: 100 });
 
     const wsPair = TestWSPair.create();
     const wsEvento = vibesMsgEvento();
@@ -446,7 +446,7 @@ describe("Firefly pending request on public app", { timeout: 15000 }, () => {
     const deviceCA = await createTestDeviceCA(sthis);
     const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
 
-    const ownerUser = await createTestUser({ sthis, deviceCA });
+    const ownerUser = await createTestUser({ sthis, deviceCA, seqUserId: 100 });
     const pendingUser = await createTestUser({ sthis, deviceCA, seqUserId: 200 });
 
     const wsPair = TestWSPair.create();
@@ -528,7 +528,7 @@ describe("Firefly dev mode denies public reads", { timeout: 15000 }, () => {
     const deviceCA = await createTestDeviceCA(sthis);
     const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
 
-    const ownerUser = await createTestUser({ sthis, deviceCA });
+    const ownerUser = await createTestUser({ sthis, deviceCA, seqUserId: 100 });
 
     const wsPair = TestWSPair.create();
     const wsEvento = vibesMsgEvento();
