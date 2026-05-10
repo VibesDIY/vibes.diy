@@ -136,6 +136,32 @@ describe("resolveSectionStream", () => {
     expect(ok.files["App.jsx"]).not.toContain(">>>>>>> REPLACE");
   });
 
+  it("composes a SEARCH/REPLACE edit against seeded file content", async () => {
+    const editLines = [
+      "<<<<<<< SEARCH",
+      "  return <h1>Hello</h1>;",
+      "=======",
+      "  return <h1>Hello from seed</h1>;",
+      ">>>>>>> REPLACE",
+    ];
+    const stream = sectionEventStream([
+      { blockId: "b1", blockNr: 1, sectionId: "s1", path: "App.jsx", lines: editLines },
+    ]);
+
+    const r = await resolveSectionStream({
+      sectionStream: stream,
+      streamId,
+      seed: new Map([
+        ["App.jsx", 'import React from "react";\n\nexport default function App() {\n  return <h1>Hello</h1>;\n}'],
+      ]),
+    });
+    expect(r.isOk()).toBe(true);
+    const ok = r.Ok();
+    expect(ok.errors).toEqual([]);
+    expect(ok.files["App.jsx"]).toContain("Hello from seed");
+    expect(ok.files["App.jsx"]).not.toContain("<<<<<<< SEARCH");
+  });
+
   it("captures apply errors when SEARCH does not match and keeps prior content", async () => {
     const scaffoldLines = ['import React from "react";', "export default function App() { return <h1>Hi</h1>; }"];
     const badEditLines = ["<<<<<<< SEARCH", "this string is not in the file", "=======", "replacement", ">>>>>>> REPLACE"];
