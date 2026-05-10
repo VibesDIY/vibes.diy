@@ -412,6 +412,9 @@ importers:
       '@fireproof/use-fireproof':
         specifier: 0.24.19
         version: 0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3)(utf-8-validate@6.0.6)
+      '@vibes.diy/api-impl':
+        specifier: workspace:*
+        version: link:../../vibes.diy/api/impl
       '@vibes.diy/base':
         specifier: workspace:*
         version: link:../../vibes.diy/base
