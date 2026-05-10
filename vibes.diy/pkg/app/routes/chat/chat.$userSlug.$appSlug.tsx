@@ -170,10 +170,34 @@ function isMarkAgentSaved(msg: unknown): msg is MarkAgentSaved {
   return !(MarkAgentSaved(msg) instanceof type.errors);
 }
 
-type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetIcon | SetTheme | SetHydratedSource | MarkAgentSaved;
+interface ClearChat {
+  type: "clearChat";
+  appSlug: string;
+}
+
+function isClearChat(msg: unknown): msg is ClearChat {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "clearChat";
+}
+
+type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetIcon | SetTheme | SetHydratedSource | MarkAgentSaved | ClearChat;
 
 function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
+    case isClearChat(block):
+      return {
+        ...state,
+        chat: {} as LLMChatEntry,
+        blocks: [],
+        running: false,
+        hasCode: false,
+        current: undefined,
+        title: block.appSlug,
+        icon: undefined,
+        theme: null,
+        agentSavedBlockIds: new Set<string>(),
+        hydratedSource: undefined,
+      };
+
     case isInitChat(block):
       // console.log(`initChat`, block.chat)
       return { ...state, chat: block.chat };
@@ -351,6 +375,17 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     setSearchParams,
     agentSavedBlockIds: new Set<string>(),
   });
+
+  // Clear stale messages immediately when navigating to a different chat so
+  // the old conversation is not visible while the new one loads.
+  const prevChatKeyRef = useRef(`${userSlug}/${appSlug}`);
+  useEffect(() => {
+    const key = `${userSlug}/${appSlug}`;
+    if (key !== prevChatKeyRef.current) {
+      prevChatKeyRef.current = key;
+      dispatch({ type: "clearChat", appSlug });
+    }
+  }, [userSlug, appSlug]);
 
   const handleThemeSelect = useCallback(
     (theme: VibesTheme) => {
