@@ -1878,6 +1878,22 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           (orig as { prompt: { model?: string } }).prompt.model = resolvedImgModel;
         }
       }
+      // img2img edits: route to the LLM image backend instead of the
+      // Prodia default. Prodia's img2img is a single-shot inference
+      // that doesn't preserve subject identity well; the LLM path
+      // attaches the input as `image_url` on the last user message
+      // (see line ~866) and produces edits faithful to the source.
+      // Only kicks in when the user didn't explicitly pick a model —
+      // an explicit `prodia/*` choice with an input image is honored.
+      if (
+        isReqPromptImageChatSection(orig) &&
+        !orig.prompt.model &&
+        (orig as { inputImageBase64?: string }).inputImageBase64 &&
+        resolvedImgModel?.startsWith("prodia/")
+      ) {
+        resolvedImgModel = "openai/gpt-5-image-mini";
+        (orig as { prompt: { model?: string } }).prompt.model = resolvedImgModel;
+      }
       const useProdia = !!(isReqPromptImageChatSection(orig) && vctx.prodiaToken && resolvedImgModel?.startsWith("prodia/"));
 
       let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
