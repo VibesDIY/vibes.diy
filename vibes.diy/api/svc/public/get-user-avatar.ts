@@ -8,9 +8,8 @@ import {
   EventoResult,
   URI,
 } from "@adviser/cement";
-import { HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
+import { HttpResponseBodyType, HttpResponseJsonType, isUserSettingProfile } from "@vibes.diy/api-types";
 import { eq } from "drizzle-orm";
-import { isUserSettingProfile } from "@vibes.diy/api-types";
 import { VibesApiSQLCtx } from "../types.js";
 
 export interface AvatarHttpResult {
