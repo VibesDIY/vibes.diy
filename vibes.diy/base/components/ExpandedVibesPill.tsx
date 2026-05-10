@@ -23,6 +23,8 @@ export interface ExpandedVibesPillProps {
   appTitle?: string;
   /** Icon/screenshot URL shown alongside the title in the metadata strip. */
   appIconUrl?: string;
+  /** Canonical slug (e.g. "userSlug/appSlug") shown as a secondary line under the title. */
+  appSlug?: string;
 }
 
 function PillActionButton({
@@ -264,6 +266,7 @@ export function ExpandedVibesPill({
   hasUnpublishedChanges,
   appTitle,
   appIconUrl,
+  appSlug,
 }: ExpandedVibesPillProps) {
   // idle → bubble → expanding → open (click to close: open → collapsing → idle)
   const [phase, setPhase] = useState<"idle" | "bubble" | "expanding" | "open" | "collapsing" | "shrinking">("idle");
@@ -342,9 +345,9 @@ export function ExpandedVibesPill({
   // Metadata strip — added on top of the bubble when expanded and metadata
   // is available. Bottom/left/right of the bubble stay put; the top moves
   // up by metaHeight so the buttons row keeps its original position.
-  const hasMetadata = !!(appTitle || appIconUrl);
+  const hasMetadata = !!(appTitle || appIconUrl || appSlug);
   const buttonsRowHeight = 175 * scale + 8;
-  const metaHeight = expanded && hasMetadata ? height * 0.7 : 0;
+  const metaHeight = expanded && hasMetadata ? height * 0.78 : 0;
   const bubbleTop = 123 * scale - 4 - metaHeight;
   const bubbleHeight = buttonsRowHeight + metaHeight;
 
@@ -449,22 +452,53 @@ export function ExpandedVibesPill({
                 }}
               />
             )}
-            {appTitle && (
-              <span
+            {(appTitle || appSlug) && (
+              <div
                 style={{
-                  color: "var(--vibes-near-black, #1a1a1a)",
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: height * 0.18,
-                  fontWeight: 700,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  letterSpacing: "0.5px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
                   minWidth: 0,
+                  flex: 1,
+                  gap: 1,
                 }}
               >
-                {appTitle}
-              </span>
+                {appTitle && (
+                  <span
+                    style={{
+                      color: "var(--vibes-near-black, #1a1a1a)",
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: height * 0.2,
+                      fontWeight: 700,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      letterSpacing: "0.5px",
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {appTitle}
+                  </span>
+                )}
+                {appSlug && (
+                  <span
+                    style={{
+                      color: "var(--vibes-near-black, #1a1a1a)",
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: height * 0.14,
+                      fontWeight: 500,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      letterSpacing: "0.3px",
+                      lineHeight: 1.1,
+                      opacity: 0.6,
+                    }}
+                  >
+                    {appSlug}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         )}

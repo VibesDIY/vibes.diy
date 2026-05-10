@@ -387,6 +387,7 @@ export default function VibeIframeWrapper() {
                   hasUnpublishedChanges={isOwner && shareModal.hasUnpublishedChanges}
                   appTitle={appTitle ?? appSlug}
                   appIconUrl={screenshotUrl ?? undefined}
+                  appSlug={vibeSlug}
                   onHome={() => {
                     window.open("https://vibes.diy", "_blank");
                   }}
