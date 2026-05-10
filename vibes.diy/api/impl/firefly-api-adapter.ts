@@ -1,5 +1,14 @@
-import { ResolveOnce } from "@adviser/cement";
-import { isUserSettingDefaultUserSlug } from "@vibes.diy/api-types";
+import { ResolveOnce, type Result } from "@adviser/cement";
+import {
+  isUserSettingDefaultUserSlug,
+  type ResPutDoc,
+  type ResGetDoc,
+  type ResGetDocNotFound,
+  type ResQueryDocs,
+  type ResDeleteDoc,
+  type ResSubscribeDocs,
+  type VibesDiyError,
+} from "@vibes.diy/api-types";
 import type { VibesDiyApi } from "./index.js";
 
 /**
@@ -52,5 +61,60 @@ export class FireflyApiAdapter {
       (this.svc.vibeApp as { userSlug: string }).userSlug = def.userSlug;
       return def.userSlug;
     });
+  }
+
+  // ── FireflyTransport methods ───────────────────────────────────────
+
+  async putDoc(doc: Record<string, unknown>, docId?: string, dbName = "default"): Promise<Result<ResPutDoc, VibesDiyError>> {
+    const userSlug = await this.resolveUserSlug();
+    return this.api.putDoc({
+      appSlug: this.svc.vibeApp.appSlug,
+      userSlug,
+      dbName,
+      doc,
+      ...(docId ? { docId } : {}),
+    });
+  }
+
+  async getDoc(docId: string, dbName = "default"): Promise<Result<ResGetDoc | ResGetDocNotFound, VibesDiyError>> {
+    const userSlug = await this.resolveUserSlug();
+    return this.api.getDoc({
+      appSlug: this.svc.vibeApp.appSlug,
+      userSlug,
+      dbName,
+      docId,
+    });
+  }
+
+  async queryDocs(dbName = "default"): Promise<Result<ResQueryDocs, VibesDiyError>> {
+    const userSlug = await this.resolveUserSlug();
+    return this.api.queryDocs({
+      appSlug: this.svc.vibeApp.appSlug,
+      userSlug,
+      dbName,
+    });
+  }
+
+  async deleteDoc(docId: string, dbName = "default"): Promise<Result<ResDeleteDoc, VibesDiyError>> {
+    const userSlug = await this.resolveUserSlug();
+    return this.api.deleteDoc({
+      appSlug: this.svc.vibeApp.appSlug,
+      userSlug,
+      dbName,
+      docId,
+    });
+  }
+
+  async subscribeDocs(dbName = "default"): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
+    const userSlug = await this.resolveUserSlug();
+    return this.api.subscribeDocs({
+      appSlug: this.svc.vibeApp.appSlug,
+      userSlug,
+      dbName,
+    });
+  }
+
+  async putAsset(_blob: Blob, _mimeType?: string): Promise<Result<unknown>> {
+    throw new Error("file uploads not supported in standalone fireproof — coming in a future release");
   }
 }
