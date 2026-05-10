@@ -147,7 +147,6 @@ vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
 let mockFetch = vi.fn();
 
 // Import the component AFTER all vi.mock() calls
-// eslint-disable-next-line import/first
 import Settings from "~/vibes.diy/app/routes/settings.js";
 
 // ---- tests ----

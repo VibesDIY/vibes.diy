@@ -1,7 +1,7 @@
 import React from "react";
 import { describe, it, expect } from "vitest";
 import { render, waitFor } from "@testing-library/react";
-import { VibeContextProvider, useVibeContext } from "@vibes.diy/vibe-runtime";
+import { VibeContextProvider, useVibeContext, type Vibe } from "@vibes.diy/vibe-runtime";
 
 function Probe({ onCtx }: { onCtx: (ctx: ReturnType<typeof useVibeContext>) => void }) {
   const ctx = useVibeContext();
@@ -11,7 +11,7 @@ function Probe({ onCtx }: { onCtx: (ctx: ReturnType<typeof useVibeContext>) => v
 
 describe("VibeContextProvider", () => {
   it("exposes mountParams.viewerEnv on the context", () => {
-    let captured: any;
+    let captured: Vibe | undefined;
     render(
       <VibeContextProvider
         mountParams={{
@@ -26,12 +26,12 @@ describe("VibeContextProvider", () => {
         <Probe onCtx={(c) => (captured = c)} />
       </VibeContextProvider>
     );
-    expect(captured.mountParams.viewerEnv?.viewer?.userSlug).toBe("alice");
-    expect(captured.mountParams.viewerEnv?.access).toBe("owner");
+    expect(captured?.mountParams.viewerEnv?.viewer?.userSlug).toBe("alice");
+    expect(captured?.mountParams.viewerEnv?.access).toBe("owner");
   });
 
   it("updates viewerEnv when vibe.evt.viewerChanged fires", async () => {
-    let captured: any;
+    let captured: Vibe | undefined;
     render(
       <VibeContextProvider
         mountParams={{
@@ -42,7 +42,7 @@ describe("VibeContextProvider", () => {
         <Probe onCtx={(c) => (captured = c)} />
       </VibeContextProvider>
     );
-    expect(captured.mountParams.viewerEnv?.viewer).toBeNull();
+    expect(captured?.mountParams.viewerEnv?.viewer).toBeNull();
 
     window.dispatchEvent(
       new MessageEvent("message", {
@@ -56,10 +56,10 @@ describe("VibeContextProvider", () => {
 
     // Wait for React state update to propagate.
     await waitFor(() => {
-      expect(captured.mountParams.viewerEnv?.viewer?.userSlug).toBe("alice");
+      expect(captured?.mountParams.viewerEnv?.viewer?.userSlug).toBe("alice");
     });
-    expect(captured.mountParams.viewerEnv?.access).toBe("viewer");
+    expect(captured?.mountParams.viewerEnv?.access).toBe("viewer");
     // apiBaseUrl preserved across the update.
-    expect(captured.mountParams.viewerEnv?.apiBaseUrl).toBe("https://api");
+    expect(captured?.mountParams.viewerEnv?.apiBaseUrl).toBe("https://api");
   });
 });

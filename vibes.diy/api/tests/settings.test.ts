@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { userSettingProfile, isUserSettingProfile, userSettingItem } from "@vibes.diy/api-types";
+import { isUserSettingProfile, userSettingItem } from "@vibes.diy/api-types";
 
 describe("userSettingProfile", () => {
   it("accepts both fields optional", () => {
