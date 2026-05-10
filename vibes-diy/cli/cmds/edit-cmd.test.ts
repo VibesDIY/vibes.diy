@@ -158,7 +158,7 @@ function buildApi(opts: {
       calls.prompt.push(req);
       return Result.Ok({ promptId: opts.promptId });
     },
-    close: async () => {},
+    close: async () => undefined,
   };
 
   const api = {
