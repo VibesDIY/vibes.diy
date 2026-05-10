@@ -50,13 +50,31 @@ export const userSettings = type({
 });
 ```
 
-The host, when building a whoAmI response, resolves `avatarCid` to a public URL via the existing cid-asset URL mint. If `avatarCid` is unset, the host falls back to the viewer's Clerk `imageUrl` claim. The sandbox always sees a plain URL string (or undefined) — never a CID.
-
 Display name: settings.displayName → Clerk `nick`/`name`/`first+last`/`email` (same precedence as `deriveAuthorDisplay` in [list-members.ts:22-29](../../../vibes.diy/api/svc/public/list-members.ts#L22-L29)).
+
+### 1a. Avatar URL: stable indirection by userSlug
+
+`whoAmI` does **not** return the CID's content-addressed URL. Content-addressed URLs are too stable — once embedded in an app (e.g. stamped on a comment doc) they freeze the avatar at the moment of embed. Instead the host serves a stable per-userSlug indirection route:
+
+```
+GET /u/:userSlug/avatar
+```
+
+Resolution order (server-side, at request time):
+
+1. If user-settings has `avatarCid`, redirect (302) to the cid-asset URL for that CID.
+2. Else if the viewer's Clerk profile has an `imageUrl`, redirect to that.
+3. Else 404 (the sandbox treats undefined as "no avatar"; up to the prompt/template to render initials or an identicon fallback in markup).
+
+`whoAmI` returns this stable URL as `viewer.avatarUrl`. The CID itself never crosses the bridge.
+
+**Caching:** `Cache-Control: max-age=0, must-revalidate` plus `ETag: "<cid-or-clerk-image-hash>"` on the redirect response. Browsers and CDN edges revalidate on every use but get a cheap `304 Not Modified` when nothing changed; new uploads land instantly. The CID-asset URL itself can carry a long TTL — it's content-addressed.
+
+**Why this matters for embedded use:** the existing `CommentsSection` stamps `authorImageUrl` into the comment doc at write time. With the stable indirection URL, when alice changes her avatar tomorrow, every comment alice ever wrote shows her new avatar — matching modern social UX. (Vibes that explicitly want a frozen-at-write-time avatar can opt in by stamping the CID URL instead, fetched separately; not the default.)
 
 ### 2. Settings view: avatar upload
 
-The host's user-settings page gains an "Avatar" section: file picker → put-asset → store returned CID into `avatarCid`. Same UX shell as any other asset upload in the app. Out-of-scope details (cropping, validation): match whatever the existing image-uploading widgets do.
+The host's user-settings page gains an "Avatar" section: file picker → put-asset → store returned CID into `avatarCid`. Same UX shell as any other asset upload in the app. After save, the user's stable `/u/:userSlug/avatar` URL serves the new image immediately (next request revalidates and gets the new ETag). Out-of-scope details (cropping, validation): match whatever the existing image-uploading widgets do.
 
 ### 3. Wire format: iframe message types
 
@@ -72,11 +90,12 @@ export const ReqVibeWhoAmI = type({
 export const ResVibeWhoAmI = type({
   type: "'vibe.res.whoAmI'",
   // null = anonymous (not signed in). Sandbox guards with `if (viewer)`.
+  // Avatar is NOT in the wire shape — sandbox derives the URL from
+  // userSlug at render time via avatarUrlFor() (§7).
   viewer:
     {
       userSlug: "string",
       "displayName?": "string",
-      "avatarUrl?": "string", // host-resolved (CID URL or Clerk fallback)
     } | "null",
   // App-scoped role for this viewer on this app.
   access: "'owner' | 'editor' | 'viewer' | 'submitter' | 'none'",
@@ -123,7 +142,7 @@ The host emits `vibe.evt.viewerChanged` (broadcast event, no tid) when:
 
 Sandbox consumers subscribe via a hook (see §7). Out of scope for v1: emitting on grant/ACL changes — these happen on the host side and would require a server-push channel into the iframe; the existing reply-to-tid pattern doesn't help here.
 
-### 7. Sandbox API: useViewer + can()
+### 7. Sandbox API: useViewer + can() + avatarUrlFor()
 
 Generated apps consume identity through a single hook in `@vibes.diy/vibe-runtime`:
 
@@ -132,7 +151,6 @@ Generated apps consume identity through a single hook in `@vibes.diy/vibe-runtim
 export interface Viewer {
   userSlug: string;
   displayName?: string;
-  avatarUrl?: string;
 }
 
 export interface UseViewerResult {
@@ -140,10 +158,17 @@ export interface UseViewerResult {
   access: DocAccessLevel;
   dbAcls: Record<string, DbAcl>;
   can: (action: "read" | "write" | "delete", dbName?: string) => boolean;
+  // Construct a stable avatar URL for any userSlug. Works for the viewer
+  // and for arbitrary userSlugs (e.g. comment authors) — no whoAmI roundtrip,
+  // no per-author avatar field stamped on docs. The URL resolves server-side
+  // to the current avatarCid (or Clerk imageUrl fallback). See §1a.
+  avatarUrlFor: (userSlug: string) => string;
 }
 
 export function useViewer(): UseViewerResult;
 ```
+
+`avatarUrlFor(slug)` returns `${apiBase}/u/${slug}/avatar`. The runtime already knows `apiBase` (it makes WebSocket / fetch calls to the same origin); no new mountParams needed beyond what's already there.
 
 Behaviour:
 
@@ -156,15 +181,26 @@ Example sandbox use:
 
 ```tsx
 function CommentForm() {
-  const { viewer, can } = useViewer();
+  const { viewer, can, avatarUrlFor } = useViewer();
   if (!viewer) return <p>Sign in to comment.</p>;
   if (!can("write", "comments")) return <p>Only editors can comment.</p>;
   return (
     <form>
-      <img src={viewer.avatarUrl} alt={viewer.userSlug} />
+      <img src={avatarUrlFor(viewer.userSlug)} alt={viewer.userSlug} />
       <textarea name="body" />
       <button>Post</button>
     </form>
+  );
+}
+
+// Rendering an arbitrary author's avatar — only userSlug needed:
+function CommentRow({ comment }: { comment: { authorUserSlug: string; body: string } }) {
+  const { avatarUrlFor } = useViewer();
+  return (
+    <li>
+      <img src={avatarUrlFor(comment.authorUserSlug)} alt={comment.authorUserSlug} />
+      {comment.body}
+    </li>
   );
 }
 ```
@@ -176,11 +212,10 @@ A new `whoAmI` handler in [vibes.diy/api/svc/public/](../../../vibes.diy/api/svc
 The handler:
 
 1. Reads the viewer's Clerk session from the request context (same pattern as `optAuth` in [list-members.ts:48](../../../vibes.diy/api/svc/public/list-members.ts#L48)). For anonymous, `viewer = null` and `userId` is absent.
-2. If signed in: looks up the viewer's active userSlug (binding) and ensures user-settings to source `avatarCid` and optional `displayName` override.
+2. If signed in: looks up the viewer's active userSlug (binding) and ensures user-settings to source the optional `displayName` override.
 3. Computes `access = checkDocAccess(viewerUserId, appSlug, ownerUserSlug)` ([access-helpers.ts:13-44](../../../vibes.diy/api/svc/public/access-helpers.ts#L13-L44)). For anonymous, `access = "none"`.
 4. Loads all configured `dbAcls` for `(ownerUserSlug, appSlug)` from app settings — same source `resolveDbAcl` reads ([db-acl-resolver.ts:39-56](../../../vibes.diy/api/svc/public/db-acl-resolver.ts#L39-L56)) but returns the whole map rather than per-db.
-5. Resolves `avatarCid` → URL via existing cid-asset mint; falls back to Clerk `imageUrl` if unset.
-6. Returns the assembled `ResVibeWhoAmI`.
+5. Returns the assembled `ResVibeWhoAmI`. (Avatar resolution is **not** part of this handler — see §1a; it lives on the separate `/u/:userSlug/avatar` HTTP route.)
 
 The same logic runs at iframe-mount time (to populate `mountParams.viewer`) and at request time (for `vibe.req.whoAmI`).
 
@@ -192,7 +227,7 @@ Capabilities sent to the sandbox are a **UX hint**. Every put-doc / put-asset / 
 
 The system prompt (or vibe template) gains a short stanza:
 
-> Use `useViewer()` from the vibe runtime. `viewer` is the signed-in user (or null). Render `viewer.avatarUrl` for avatars, `viewer.displayName ?? viewer.userSlug` for names. Gate write/delete UI on `can("write")` / `can("delete")`. For multi-db apps, pass the dbName: `can("write", "comments")`.
+> Use `useViewer()` from the vibe runtime. `viewer` is the signed-in user (or null). Render names with `viewer.displayName ?? viewer.userSlug`. Render avatars with `<img src={avatarUrlFor(slug)} />` — works for the viewer or any other userSlug (e.g. `comment.authorUserSlug`). Gate write/delete UI on `can("write")` / `can("delete")`. For multi-db apps, pass the dbName: `can("write", "comments")`.
 
 ## Components Summary
 
@@ -202,9 +237,10 @@ The system prompt (or vibe template) gains a short stanza:
 | `@vibes.diy/api-types` iframe types               | Add `ReqVibeWhoAmI`, `ResVibeWhoAmI`, `EvtVibeViewerChanged`, viewer payload schema |
 | `vibes.diy/vibe/runtime/vibe.ts`                  | Extend `vibeMountParams` with optional `viewer`                                     |
 | `vibes.diy/vibe/runtime/VibeContext.tsx`          | Plumb `viewer` into context, subscribe to `viewerChanged`                           |
-| `vibes.diy/vibe/runtime/use-viewer.ts` (new)      | `useViewer()` hook + `can()` helper, port of `aclAllows`                            |
+| `vibes.diy/vibe/runtime/use-viewer.ts` (new)      | `useViewer()` hook + `can()` helper (port of `aclAllows`) + `avatarUrlFor()`        |
 | `vibes.diy/vibe/runtime/register-dependencies.ts` | Wire up whoAmI request and viewerChanged event on the bridge                        |
-| `vibes.diy/api/svc/public/who-am-i.ts` (new)      | Host handler — auth, access, dbAcls, avatar resolution                              |
+| `vibes.diy/api/svc/public/who-am-i.ts` (new)      | Host handler — auth, access, dbAcls (no avatar work here)                           |
+| `vibes.diy/api/...` HTTP route (new)              | `GET /u/:userSlug/avatar` — 302 to current CID URL or Clerk `imageUrl`, ETag-cached |
 | `vibes.diy/pkg/app/components/...` settings page  | Avatar upload widget storing `avatarCid`                                            |
 | Host iframe mount caller                          | Compute initial viewer payload, pass into `VibeMountParams`                         |
 | Prompt template                                   | Document `useViewer()`                                                              |
@@ -215,11 +251,13 @@ The system prompt (or vibe template) gains a short stanza:
 - Unit: `can(action)` (no dbName) returns expected booleans for {empty dbAcls, one allowing override, one denying override, mixed}.
 - Integration: iframe mount with signed-in owner sees `access: "owner"`, anon sees `viewer: null` + `access: "none"`.
 - Integration: `vibe.req.whoAmI` after sign-in fires the event and returns the new viewer.
-- Integration: avatar upload flow — settings widget puts asset, whoAmI returns CID URL, sandbox renders it.
+- Integration: avatar upload flow — settings widget puts asset, `/u/:userSlug/avatar` 302s to the new CID URL, ETag changes; old ETag responses 304.
+- Integration: `avatarUrlFor(slug)` for a userSlug with no upload returns a URL that 302s to Clerk `imageUrl`; for an unknown slug returns one that 404s.
 - Server: write attempt with `can("write")` lying still 403s at put-doc.
 
 ## Open Questions for Implementation Plan
 
 - Exact wiring of the new whoAmI handler into the existing iframe bridge — does it follow the firefly handlers' pattern, or the put-asset host-shim pattern? (Both flow through `register-dependencies.ts` but have different shapes.)
 - Whether `dbAcls` in the response should include only configured entries (saving bytes) or also the comments-default fallback explicitly. Recommend "configured only" — sandbox `can()` knows the comments default via the same constant `COMMENTS_DEFAULT_ACL` exported from api-types.
-- Cache-headers / TTL on the cid-asset URL the host mints for `avatarUrl` — must outlive a typical iframe session so the sandbox doesn't see broken images mid-session.
+- Cache-headers / TTL on the cid-asset URL the `/u/:userSlug/avatar` endpoint redirects to — content-addressed so safe with a long TTL.
+- Origin question for `avatarUrlFor`: does the runtime know `apiBase` already (via the WS/fetch config), or do we need to pass it through `mountParams`? Implementation plan should pin this down.
