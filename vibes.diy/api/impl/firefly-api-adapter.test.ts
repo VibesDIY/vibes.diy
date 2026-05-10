@@ -129,6 +129,17 @@ describe("FireflyApiAdapter", () => {
     await expect(adapter.putAsset(new Blob(["x"]))).rejects.toThrow(/file uploads not supported/i);
   });
 
+  it("multiple onMsg subscribers each receive events independently", () => {
+    const onDocChanged = vi.fn(() => () => {});
+    const api = fakeVibesDiyApi({ onDocChanged });
+    const adapter = new FireflyApiAdapter(api, "my-app");
+    const seenA: unknown[] = [];
+    const seenB: unknown[] = [];
+    adapter.onMsg((e) => seenA.push(e.data));
+    adapter.onMsg((e) => seenB.push(e.data));
+    expect(onDocChanged).toHaveBeenCalledTimes(2);
+  });
+
   it("onMsg synthesizes evt-doc-changed events from VibesDiyApi.onDocChanged", () => {
     let captured: ((u: string, a: string, db: string, doc: string) => void) | undefined;
     const onDocChanged = vi.fn((fn: typeof captured) => {

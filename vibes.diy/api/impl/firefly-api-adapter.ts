@@ -121,8 +121,9 @@ export class FireflyApiAdapter {
   /**
    * Bridge VibesDiyApi.onDocChanged callbacks into the `{data: {type:
    * "vibes.diy.evt-doc-changed", ...}}` event shape FireflyDatabase's
-   * onMsg listener expects. Multiple onMsg subscribers are supported
-   * (each fan-outs from a single onDocChanged registration).
+   * onMsg listener expects. Multiple onMsg subscribers are supported —
+   * each call registers an independent listener via `onDocChanged`; all
+   * active subscribers receive each event.
    */
   onMsg(fn: (event: { data: unknown }) => void): void {
     this.api.onDocChanged((userSlug, appSlug, dbName, docId) => {
