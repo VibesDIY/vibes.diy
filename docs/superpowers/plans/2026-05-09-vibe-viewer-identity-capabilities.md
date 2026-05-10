@@ -18,9 +18,9 @@
 
 - `vibes.diy/api/svc/public/who-am-i.ts` — Evento handler that computes viewer identity, app-scoped access, and the per-db ACL map.
 - `vibes.diy/api/svc/public/get-user-avatar.ts` — HTTP route handler for `GET /u/:userSlug/avatar`.
-- `vibes.diy/vibe/runtime/use-viewer.ts` — `useViewer()` hook with `can()` and `avatarUrlFor()` helpers.
-- `vibes.diy/vibe/runtime/db-acl-allows.ts` — Client port of the host's `aclAllows` for sync sandbox-side gating.
-- `vibes.diy/api/svc/public/who-am-i.test.ts`, `vibes.diy/api/svc/public/get-user-avatar.test.ts`, `vibes.diy/vibe/runtime/use-viewer.test.tsx`, `vibes.diy/vibe/runtime/db-acl-allows.test.ts`.
+- `use-vibes/base/hooks/use-viewer.ts` — `useViewer()` hook with `can()` and `avatarUrlFor()` helpers. Lives in the public consumer package alongside `useVibes`/`useFireproof` so generated app code can `import { useViewer } from "use-vibes"` (same import path as `ImgGen`).
+- `vibes.diy/vibe/runtime/db-acl-allows.ts` — Client port of the host's `aclAllows` for sync sandbox-side gating. Pure logic, no React; lives in vibe-runtime since both use-vibes-base and any other consumer can depend on it.
+- `vibes.diy/api/svc/public/who-am-i.test.ts`, `vibes.diy/api/svc/public/get-user-avatar.test.ts`, `use-vibes/base/hooks/use-viewer.test.tsx`, `vibes.diy/vibe/runtime/db-acl-allows.test.ts`.
 
 **Modified files:**
 
@@ -33,6 +33,8 @@
 - `vibes.diy/vibe/runtime/register-dependencies.ts` — add `whoAmI()` method on `VibeSandboxApi`.
 - `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts` — add the host-side bridge handler that responds to `vibe.req.whoAmI` and emits `vibe.evt.viewerChanged`.
 - `vibes.diy/api/svc/intern/render-vibe.ts` — compute initial viewer at request time and embed into `mountJS`.
+- `use-vibes/base/index.ts` — re-export `useViewer` from `./hooks/use-viewer.js`.
+- `use-vibes/pkg/index.ts` — re-export `useViewer` from `@vibes.diy/use-vibes-base` so vibes can `import { useViewer } from "use-vibes"`.
 - `vibes.diy/pkg/app/...` settings page (whichever component owns user settings UI) — add Avatar upload + display-name fields.
 - HTTP router (wherever public routes register) — wire `GET /u/:userSlug/avatar`.
 
@@ -1131,12 +1133,22 @@ export function aclAllows(acl: DbAcl | undefined, cap: "read" | "write" | "delet
 }
 ```
 
-- [ ] **Step 4: Run test to verify pass**
+- [ ] **Step 4: Re-export from the runtime barrel**
+
+In `vibes.diy/vibe/runtime/index.ts`, add a line:
+
+```ts
+export * from "./db-acl-allows.js";
+```
+
+This makes `aclAllows`, `canRead`, `canWrite`, `inGroup` importable from `@vibes.diy/vibe-runtime` for downstream consumers (Task 11's `useViewer` reads it from there).
+
+- [ ] **Step 5: Run test to verify pass**
 
 Run: `cd vibes.diy/vibe/runtime && pnpm vitest run db-acl-allows.test.ts`
 Expected: PASS — all six cases.
 
-- [ ] **Step 5: Add a parity test against the host port**
+- [ ] **Step 6: Add a parity test against the host port**
 
 Create `vibes.diy/api/tests/db-acl-allows-parity.test.ts` (same level as other api tests). For a fixed table of (acl, cap, access) inputs, assert both functions return the same value. Pattern:
 
@@ -1169,11 +1181,11 @@ describe("aclAllows host/client parity", () => {
 Run: `cd vibes.diy && pnpm vitest run api/tests/db-acl-allows-parity.test.ts`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-npx prettier --write vibes.diy/vibe/runtime/db-acl-allows.ts vibes.diy/vibe/runtime/db-acl-allows.test.ts vibes.diy/api/tests/db-acl-allows-parity.test.ts
-git add vibes.diy/vibe/runtime/db-acl-allows.ts vibes.diy/vibe/runtime/db-acl-allows.test.ts vibes.diy/api/tests/db-acl-allows-parity.test.ts
+npx prettier --write vibes.diy/vibe/runtime/db-acl-allows.ts vibes.diy/vibe/runtime/db-acl-allows.test.ts vibes.diy/vibe/runtime/index.ts vibes.diy/api/tests/db-acl-allows-parity.test.ts
+git add vibes.diy/vibe/runtime/db-acl-allows.ts vibes.diy/vibe/runtime/db-acl-allows.test.ts vibes.diy/vibe/runtime/index.ts vibes.diy/api/tests/db-acl-allows-parity.test.ts
 git commit -m "feat(vibe-runtime): aclAllows client port + host parity test
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
@@ -1454,23 +1466,26 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 11: Implement `useViewer()` with `can()` and `avatarUrlFor()`
+### Task 11: Implement `useViewer()` with `can()` and `avatarUrlFor()` in `use-vibes/base`
+
+**Why this package:** generated app code imports from the public `use-vibes` package (`import { ImgGen } from "use-vibes"`), so `useViewer` must live alongside `useVibes`/`useFireproof` in `@vibes.diy/use-vibes-base` and be re-exported through `use-vibes/pkg/index.ts`. The hook reads `mountParams.viewerEnv` from the runtime's `VibeContext` (`@vibes.diy/vibe-runtime`), which use-vibes-base already depends on.
 
 **Files:**
 
-- Create: `vibes.diy/vibe/runtime/use-viewer.ts`
-- Test: `vibes.diy/vibe/runtime/use-viewer.test.tsx`
-- Modify: `vibes.diy/vibe/runtime/index.ts` (re-export `useViewer`)
+- Create: `use-vibes/base/hooks/use-viewer.ts`
+- Test: `use-vibes/base/hooks/use-viewer.test.tsx`
+- Modify: `use-vibes/base/index.ts` (re-export from `./hooks/use-viewer.js`)
+- Modify: `use-vibes/pkg/index.ts` (re-export from `@vibes.diy/use-vibes-base`)
 
 - [ ] **Step 1: Write the failing test**
 
-Create `vibes.diy/vibe/runtime/use-viewer.test.tsx`:
+Create `use-vibes/base/hooks/use-viewer.test.tsx`. Note: the test imports `VibeContextProvider` from `@vibes.diy/vibe-runtime` (the runtime context), not from `use-vibes-base` (which has its own larger context). The runtime context is what mountVibe wires up inside the iframe.
 
 ```tsx
 import React from "react";
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
-import { VibeContextProvider } from "./VibeContext.js";
+import { VibeContextProvider } from "@vibes.diy/vibe-runtime";
 import { useViewer } from "./use-viewer.js";
 
 function Probe({ onR }: { onR: (r: ReturnType<typeof useViewer>) => void }) {
@@ -1549,18 +1564,17 @@ describe("useViewer", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd vibes.diy/vibe/runtime && pnpm vitest run use-viewer.test.tsx`
+Run: `cd use-vibes/base && pnpm vitest run hooks/use-viewer.test.tsx`
 Expected: FAIL — `useViewer` not found.
 
 - [ ] **Step 3: Implement**
 
-Create `vibes.diy/vibe/runtime/use-viewer.ts`:
+Create `use-vibes/base/hooks/use-viewer.ts`. The runtime's `useVibeContext` returns the iframe's mountParams holder; rename it on import to disambiguate from use-vibes-base's own (richer, host-side) `useVibeContext`:
 
 ```ts
 import type { DbAcl } from "@vibes.diy/api-types";
 import type { DocAccessLevel, ViewerPayload } from "@vibes.diy/vibe-types";
-import { aclAllows } from "./db-acl-allows.js";
-import { useVibeContext } from "./VibeContext.js";
+import { aclAllows, useVibeContext as useRuntimeVibeContext } from "@vibes.diy/vibe-runtime";
 
 export interface UseViewerResult {
   readonly viewer: ViewerPayload | null;
@@ -1571,7 +1585,7 @@ export interface UseViewerResult {
 }
 
 export function useViewer(): UseViewerResult {
-  const { mountParams } = useVibeContext();
+  const { mountParams } = useRuntimeVibeContext();
   const env = mountParams.viewerEnv;
   const viewer = env?.viewer ?? null;
   const access: DocAccessLevel = env?.access ?? "none";
@@ -1601,28 +1615,44 @@ export function useViewer(): UseViewerResult {
 }
 ```
 
-In `vibes.diy/vibe/runtime/index.ts`, add:
+- [ ] **Step 4: Re-export from `use-vibes-base/index.ts`**
+
+In `use-vibes/base/index.ts`, after the existing hook exports (near `useVibes`), add:
 
 ```ts
-export * from "./use-viewer.js";
+export { useViewer, type UseViewerResult } from "./hooks/use-viewer.js";
 ```
 
-- [ ] **Step 4: Run test to verify pass**
+- [ ] **Step 5: Re-export from `use-vibes/pkg/index.ts`**
 
-Run: `cd vibes.diy/vibe/runtime && pnpm vitest run use-viewer.test.tsx`
+In `use-vibes/pkg/index.ts`, add `useViewer` and `UseViewerResult` to the existing re-export block:
+
+```ts
+export {
+  // ... existing exports
+  useViewer,
+  type UseViewerResult,
+} from "@vibes.diy/use-vibes-base";
+```
+
+This is what makes `import { useViewer } from "use-vibes"` work in generated app code — the same import shape as `import { ImgGen } from "use-vibes"`.
+
+- [ ] **Step 6: Run test to verify pass**
+
+Run: `cd use-vibes/base && pnpm vitest run hooks/use-viewer.test.tsx`
 Expected: PASS — all six cases.
 
-- [ ] **Step 5: Run repo type-check**
+- [ ] **Step 7: Run repo type-check**
 
 Run: `pnpm fast-check 2>&1 | tail -40`
-Expected: no new TS errors.
+Expected: no new TS errors. The use-vibes-base ↔ vibe-runtime dependency already exists ([use-vibes/base/package.json:23](../../../use-vibes/base/package.json#L23)).
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-npx prettier --write vibes.diy/vibe/runtime/use-viewer.ts vibes.diy/vibe/runtime/use-viewer.test.tsx vibes.diy/vibe/runtime/index.ts
-git add vibes.diy/vibe/runtime/use-viewer.ts vibes.diy/vibe/runtime/use-viewer.test.tsx vibes.diy/vibe/runtime/index.ts
-git commit -m "feat(vibe-runtime): useViewer() with can() and avatarUrlFor()
+npx prettier --write use-vibes/base/hooks/use-viewer.ts use-vibes/base/hooks/use-viewer.test.tsx use-vibes/base/index.ts use-vibes/pkg/index.ts
+git add use-vibes/base/hooks/use-viewer.ts use-vibes/base/hooks/use-viewer.test.tsx use-vibes/base/index.ts use-vibes/pkg/index.ts
+git commit -m "feat(use-vibes): useViewer() — public hook for vibe identity & capabilities
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ```
@@ -1815,36 +1845,135 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ## Phase 8 — Prompt template + Integration test
 
-### Task 14: Document `useViewer()` in the vibe template
+### Task 14: Document `useViewer()` in the system prompt and llms docs
 
 **Files:**
 
-- Modify: the template/system prompt that instructs the AI on how to write App.jsx (search `grep -rln "useFireproof\|@vibes.diy/vibe-runtime" prompts/ vibes.diy/api/svc/public/prompt-chat-section.ts vibes.diy/notes/vibes-app-jsx.md`).
+- Create: `prompts/pkg/llms/use-viewer.md` (parallel to `prompts/pkg/llms/image-gen.md`).
+- Modify: `prompts/pkg/system-prompt.md` and `prompts/pkg/system-prompt-initial.md` — one-line mention.
+- Modify: `notes/vibes-app-jsx.md` — full reference section.
 
-- [ ] **Step 1: Add the stanza**
+Public surface to document — only three names: `viewer`, `can(action, dbName?)`, `avatarUrlFor(userSlug)`. Hide `access` and `dbAcls` from the prompt even though the hook returns them; vibes shouldn't lean on raw ACL internals.
 
-Append to the `notes/vibes-app-jsx.md` file (or wherever the runtime API surface for vibes is documented) a section:
+- [ ] **Step 1: Create the llms doc**
 
-```markdown
-## Identity & capabilities (`useViewer`)
+Mirror the structure of [prompts/pkg/llms/image-gen.md](../../../prompts/pkg/llms/image-gen.md). Create `prompts/pkg/llms/use-viewer.md`:
 
-Import from `@vibes.diy/vibe-runtime`. Returns `{ viewer, access, dbAcls, can, avatarUrlFor }`.
+````markdown
+# useViewer Hook
 
-- `viewer` — `{ userSlug, displayName? } | null`. `null` means anonymous.
-- `access` — the viewer's app-scoped role: `"owner" | "editor" | "viewer" | "submitter" | "none"`.
-- `can(action, dbName?)` — whether the viewer can `"read" | "write" | "delete"`. With a `dbName`, checks that db's ACL; without, returns `true` iff allowed for every db (collapses to a role check for single-db apps).
-- `avatarUrlFor(userSlug)` — stable URL for any user's avatar. Use it for the viewer (`avatarUrlFor(viewer.userSlug)`) or any author you've stored a userSlug for (`avatarUrlFor(comment.authorUserSlug)`).
+Get the current viewer's identity and capabilities. Use it to render avatars, names, and gate UI on what the viewer can do.
 
-Render names with `viewer.displayName ?? viewer.userSlug`. Never look up user IDs — only userSlugs cross the iframe boundary.
+## Basic Usage
+
+```jsx
+import { useViewer } from "use-vibes";
+
+function App() {
+  const { viewer, can, avatarUrlFor } = useViewer();
+  if (!viewer) return <p>Sign in to use this app.</p>;
+  return (
+    <header>
+      <img src={avatarUrlFor(viewer.userSlug)} alt={viewer.userSlug} />
+      <span>{viewer.displayName ?? viewer.userSlug}</span>
+    </header>
+  );
+}
+```
+````
+
+## What you get
+
+- `viewer` — `{ userSlug, displayName? }` or `null` for anonymous visitors.
+- `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Pass a `dbName` for multi-db apps; omit for single-db apps. Use it to hide forms when the viewer can't post.
+- `avatarUrlFor(userSlug)` — stable image URL for any user. Updates automatically when a user changes their avatar.
+
+## Gating UI
+
+```jsx
+function CommentForm() {
+  const { viewer, can } = useViewer();
+  if (!viewer) return <p>Sign in to comment.</p>;
+  if (!can("write", "comments")) return <p>Only collaborators can post comments.</p>;
+  return <form>...</form>;
+}
 ```
 
-If there's a separate system prompt that gets fed to the AI for code generation, mirror the same content there.
+## Other users' avatars
 
-- [ ] **Step 2: Commit**
+Store the author's `userSlug` on each doc, not their `userId`. Render by passing the slug to `avatarUrlFor`:
+
+```jsx
+{
+  comments.map((c) => (
+    <li key={c._id}>
+      <img src={avatarUrlFor(c.authorUserSlug)} alt={c.authorUserSlug} />
+      {c.body}
+    </li>
+  ));
+}
+```
+
+## Notes
+
+- Never use Clerk user IDs. Only `userSlug` crosses into vibe code.
+- Avatar URLs are stable per userSlug — when a user changes their avatar, every reference updates automatically.
+
+````
+
+- [ ] **Step 2: Add the one-liner to the system prompts**
+
+In both `prompts/pkg/system-prompt.md` and `prompts/pkg/system-prompt-initial.md`, find the existing line referencing `<ImgGen prompt="..." />` (around line 16) and append a sibling bullet:
+
+```markdown
+- For viewer identity and capability gating use `const { viewer, can, avatarUrlFor } = useViewer();` from `"use-vibes"` — see use-viewer docs.
+````
+
+- [ ] **Step 3: Add the reference to notes/vibes-app-jsx.md**
+
+Append to `notes/vibes-app-jsx.md`:
+
+````markdown
+## Identity & capabilities (`useViewer`)
+
+```jsx
+import { useViewer } from "use-vibes";
+
+const { viewer, can, avatarUrlFor } = useViewer();
+```
+````
+
+- `viewer` — `{ userSlug, displayName? } | null`. `null` for anonymous visitors.
+- `can(action, dbName?)` — `"read" | "write" | "delete"`. With a `dbName`, checks that db; without, allowed-everywhere.
+- `avatarUrlFor(userSlug)` — stable image URL for any user. Works for the viewer or any author whose userSlug you stored.
+
+Render names with `viewer.displayName ?? viewer.userSlug`. Never look up user IDs — only userSlugs cross into vibe code.
+
+````
+
+- [ ] **Step 4: Run prompt tests**
+
+The repo has a test verifying that llms docs land in the system prompt:
 
 ```bash
-git add <docs/prompt-files>
-git commit -m "docs(vibes-app): document useViewer() and capability gating
+cd prompts && pnpm test
+````
+
+If a test like `image-gen` exists asserting `<imgGen-docs>` is included, add a parallel one for `<useViewer-docs>`. Pattern from `prompts/tests/initial-system-prompt.test.ts`:
+
+```ts
+it("useViewer skill picks up the doc", async () => {
+  // ... mirror the existing image-gen test
+  expect(result.systemPrompt).toMatch(/useViewer/);
+});
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+npx prettier --write prompts/pkg/llms/use-viewer.md prompts/pkg/system-prompt.md prompts/pkg/system-prompt-initial.md notes/vibes-app-jsx.md
+git add prompts/pkg/llms/use-viewer.md prompts/pkg/system-prompt.md prompts/pkg/system-prompt-initial.md notes/vibes-app-jsx.md prompts/tests/
+git commit -m "docs(prompts): document useViewer for code generation
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ```
