@@ -22,6 +22,7 @@
     "@vibes.diy/api-sql": "workspace:*",
     "@vibes.diy/api-svc": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
+    "@vibes.diy/vibe-runtime": "workspace:*",
     "@vibes.diy/vibe-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/vibe-srv-sandbox": "workspace:*",
