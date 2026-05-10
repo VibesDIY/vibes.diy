@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Use vi.hoisted to ensure mocks are available at the top level
@@ -124,6 +124,46 @@ describe("useVibes - Basic Structure", () => {
     expect(result.current.loading).toBe(false);
     expect(result.current.App).toBe(null);
     expect(result.current.error?.message).toContain("Prompt required");
+  });
+
+  it("should ignore stale generation results after prompt becomes invalid", async () => {
+    const pendingResponses: Array<(code: string) => void> = [];
+    mockCallAI.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          pendingResponses.push(resolve);
+        })
+    );
+
+    const { result, rerender } = renderHook(
+      ({ prompt }) => useVibes(prompt, { dependencies: ["useFireproof"] }, mockCallAI),
+      {
+        initialProps: { prompt: "create a button" },
+      }
+    );
+
+    await waitFor(() => expect(mockCallAI).toHaveBeenCalledTimes(1), {
+      timeout: 2000,
+      interval: 20,
+    });
+    expect(result.current.loading).toBe(true);
+
+    rerender({ prompt: "" });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error?.message).toContain("Prompt required");
+    expect(result.current.App).toBe(null);
+    expect(result.current.code).toBe(null);
+
+    await act(async () => {
+      pendingResponses[0]("export default function StaleComponent() { return <div>stale</div>; }");
+      await Promise.resolve();
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error?.message).toContain("Prompt required");
+    expect(result.current.App).toBe(null);
+    expect(result.current.code).toBe(null);
   });
 
   it("should handle errors from AI service", async () => {
