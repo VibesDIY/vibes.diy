@@ -53,7 +53,8 @@ export function useVibes(
 
   // Regenerate function
   const regenerate = useCallback(() => {
-    // Trigger regeneration by updating state
+    // Invalidate in-flight generations immediately, then trigger regeneration.
+    generationIdRef.current += 1;
     setRegenerationTrigger((prev) => prev + 1);
   }, []);
 
