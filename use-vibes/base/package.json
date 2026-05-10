@@ -22,6 +22,7 @@
     "@fireproof/core-types-protocols-cloud": "0.24.19",
     "@fireproof/core-types-protocols-dashboard": "0.24.19",
     "@fireproof/use-fireproof": "0.24.19",
+    "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
