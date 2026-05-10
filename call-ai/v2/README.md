@@ -187,7 +187,9 @@ Pure function that turns the lines inside a code fence into `Edit[]`. A body wit
 
 ### apply-edits.ts
 
-Pure helpers `applyReplace` and `applyEdits`. `applyReplace` first tries an exact match; on failure it falls back to a trailing-whitespace-tolerant match. Result reports `matchKind` (`exact` | `trailing-ws`).
+Pure helpers `applyReplace` and `applyEdits`. `applyReplace` first tries an exact match; on failure it falls back to a trailing-whitespace-tolerant match. Result reports `matchKind` (`exact` | `trailing-ws` | `ellipsis`).
+
+SEARCH blocks support `...` shortcuts: a line ending in `...` is a single-line prefix match, a line that is just `...` (or starts with `...`) is a multi-line skip, and `...` appearing mid-line is treated as literal text. REPLACE bodies are always literal — `...` carries no special meaning there.
 
 ### filesystem-stream.ts
 
