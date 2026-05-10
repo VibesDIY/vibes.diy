@@ -30,7 +30,7 @@ function App() {
 function CommentForm() {
   const { viewer, can } = useViewer();
   if (!viewer) return <p>Sign in to comment.</p>;
-  if (!can("write", "comments")) return <p>Only collaborators can post comments.</p>;
+  if (!can("write", "comments")) return <p>Contact the owner to request write access so you can post.</p>;
   return <form>...</form>;
 }
 ```
