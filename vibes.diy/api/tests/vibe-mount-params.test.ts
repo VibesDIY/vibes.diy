@@ -13,7 +13,6 @@ describe("vibeMountParams", () => {
       viewerEnv: {
         viewer: null,
         access: "none",
-        apiBaseUrl: "https://api.vibes.diy",
       },
     });
     expect(r instanceof type.errors).toBe(false);
@@ -23,10 +22,9 @@ describe("vibeMountParams", () => {
     const r = vibeMountParams({
       usrEnv: {},
       viewerEnv: {
-        viewer: { userSlug: "alice", displayName: "Alice" },
+        viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
         access: "owner",
         dbAcls: { comments: { write: ["members"] } },
-        apiBaseUrl: "https://api.vibes.diy",
       },
     });
     expect(r instanceof type.errors).toBe(false);
@@ -38,7 +36,17 @@ describe("vibeMountParams", () => {
       viewerEnv: {
         viewer: null,
         access: "superadmin",
-        apiBaseUrl: "https://api",
+      },
+    });
+    expect(r instanceof type.errors).toBe(true);
+  });
+
+  it("rejects viewer missing avatarUrl", () => {
+    const r = vibeMountParams({
+      usrEnv: {},
+      viewerEnv: {
+        viewer: { userSlug: "alice" },
+        access: "owner",
       },
     });
     expect(r instanceof type.errors).toBe(true);

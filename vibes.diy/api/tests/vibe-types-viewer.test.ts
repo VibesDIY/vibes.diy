@@ -29,11 +29,21 @@ describe("ResVibeWhoAmI", () => {
       isResVibeWhoAmI({
         type: "vibe.res.whoAmI",
         tid: "abc",
-        viewer: { userSlug: "alice", displayName: "Alice" },
+        viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
         access: "owner",
         dbAcls: { comments: { write: ["members"] } },
       })
     ).toBe(true);
+  });
+  it("rejects viewer missing avatarUrl", () => {
+    expect(
+      isResVibeWhoAmI({
+        type: "vibe.res.whoAmI",
+        tid: "abc",
+        viewer: { userSlug: "alice" },
+        access: "owner",
+      })
+    ).toBe(false);
   });
   it("rejects bad access value", () => {
     expect(
@@ -52,7 +62,7 @@ describe("EvtVibeViewerChanged", () => {
     expect(
       isEvtVibeViewerChanged({
         type: "vibe.evt.viewerChanged",
-        viewer: { userSlug: "alice" },
+        viewer: { userSlug: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
         access: "viewer",
       })
     ).toBe(true);
@@ -61,8 +71,17 @@ describe("EvtVibeViewerChanged", () => {
     expect(
       isEvtVibeViewerChanged({
         type: "vibe.evt.viewerChanged",
-        viewer: { userSlug: "alice" },
+        viewer: { userSlug: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
         access: "superadmin",
+      })
+    ).toBe(false);
+  });
+  it("rejects viewer missing avatarUrl", () => {
+    expect(
+      isEvtVibeViewerChanged({
+        type: "vibe.evt.viewerChanged",
+        viewer: { userSlug: "alice" },
+        access: "viewer",
       })
     ).toBe(false);
   });

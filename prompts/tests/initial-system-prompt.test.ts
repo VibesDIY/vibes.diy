@@ -88,7 +88,7 @@ describe("makeBaseSystemPrompt variant routing", () => {
       skills: ["fireproof", "callai", "use-viewer"],
     });
     expect(result.systemPrompt).toMatch(/useViewer/);
-    expect(result.systemPrompt).toMatch(/avatarUrlFor/);
+    expect(result.systemPrompt).toMatch(/avatarUrl/);
   });
 });
 

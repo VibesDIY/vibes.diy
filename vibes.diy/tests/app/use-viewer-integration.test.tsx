@@ -10,11 +10,11 @@ import { useViewer } from "@vibes.diy/use-vibes-base";
  *   mountParams.viewerEnv → VibeContextProvider → useViewer → DOM
  */
 function App() {
-  const { viewer, can, avatarUrlFor } = useViewer();
+  const { viewer, can } = useViewer();
   if (!viewer) return <div data-testid="state">Sign in</div>;
   return (
     <div data-testid="state">
-      <img src={avatarUrlFor(viewer.userSlug)} alt={viewer.userSlug} data-testid="avatar" />
+      <img src={viewer.avatarUrl} alt={viewer.userSlug} data-testid="avatar" />
       <span data-testid="name">{viewer.displayName ?? viewer.userSlug}</span>
       {can("write", "comments") ? <button data-testid="write">Post</button> : null}
     </div>
@@ -29,7 +29,7 @@ function App() {
  * rendered DOM or verify that a real component re-renders correctly after an event.
  * These tests cover that seam:
  *   - DOM reflects the correct signed-out/signed-in state
- *   - avatarUrlFor output lands in an <img src>
+ *   - viewer.avatarUrl lands in an <img src>
  *   - vibe.evt.viewerChanged causes the component to re-render with updated identity
  */
 describe("useViewer integration", () => {
@@ -52,9 +52,8 @@ describe("useViewer integration", () => {
         mountParams={{
           usrEnv: {},
           viewerEnv: {
-            viewer: { userSlug: "alice", displayName: "Alice" },
+            viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
             access: "owner",
-            apiBaseUrl: "https://api.example.com",
           },
         }}
       >
@@ -71,7 +70,7 @@ describe("useViewer integration", () => {
       <VibeContextProvider
         mountParams={{
           usrEnv: {},
-          viewerEnv: { viewer: null, access: "none", apiBaseUrl: "https://api.example.com" },
+          viewerEnv: { viewer: null, access: "none" },
         }}
       >
         <App />
@@ -83,7 +82,7 @@ describe("useViewer integration", () => {
       new MessageEvent("message", {
         data: {
           type: "vibe.evt.viewerChanged",
-          viewer: { userSlug: "alice", displayName: "Alice" },
+          viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
           access: "viewer",
         },
       })

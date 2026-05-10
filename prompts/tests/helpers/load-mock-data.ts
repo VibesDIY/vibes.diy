@@ -108,7 +108,7 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
         ok: true,
         text: () =>
           Promise.resolve(
-            "<Viewer Identity-docs>\n# useViewer Hook\nGet the current viewer's identity and capabilities.\nuseViewer avatarUrlFor can\n</Viewer Identity-docs>"
+            "<Viewer Identity-docs>\n# useViewer Hook\nGet the current viewer's identity and capabilities.\nuseViewer avatarUrl can\n</Viewer Identity-docs>"
           ),
       } as Response);
     }

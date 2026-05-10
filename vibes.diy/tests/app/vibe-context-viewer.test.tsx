@@ -17,9 +17,8 @@ describe("VibeContextProvider", () => {
         mountParams={{
           usrEnv: {},
           viewerEnv: {
-            viewer: { userSlug: "alice" },
+            viewer: { userSlug: "alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
             access: "owner",
-            apiBaseUrl: "https://api.example.com",
           },
         }}
       >
@@ -36,7 +35,7 @@ describe("VibeContextProvider", () => {
       <VibeContextProvider
         mountParams={{
           usrEnv: {},
-          viewerEnv: { viewer: null, access: "none", apiBaseUrl: "https://api" },
+          viewerEnv: { viewer: null, access: "none" },
         }}
       >
         <Probe onCtx={(c) => (captured = c)} />
@@ -48,7 +47,7 @@ describe("VibeContextProvider", () => {
       new MessageEvent("message", {
         data: {
           type: "vibe.evt.viewerChanged",
-          viewer: { userSlug: "alice", displayName: "Alice" },
+          viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
           access: "viewer",
         },
       })
@@ -59,7 +58,7 @@ describe("VibeContextProvider", () => {
       expect(captured?.mountParams.viewerEnv?.viewer?.userSlug).toBe("alice");
     });
     expect(captured?.mountParams.viewerEnv?.access).toBe("viewer");
-    // apiBaseUrl preserved across the update.
-    expect(captured?.mountParams.viewerEnv?.apiBaseUrl).toBe("https://api");
+    // avatarUrl is on the viewer object, not in viewerEnv root.
+    expect(captured?.mountParams.viewerEnv?.viewer?.avatarUrl).toBe("https://api.example.com/u/alice/avatar");
   });
 });

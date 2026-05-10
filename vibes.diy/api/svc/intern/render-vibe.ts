@@ -136,13 +136,13 @@ export async function renderVibe({
     auth: undefined,
     appSlug: fs.appSlug,
     ownerUserSlug: fs.userSlug,
+    apiBaseUrl: `${requestUrl.protocol}//${requestUrl.host}`,
   });
   const viewerEnv = rViewer.isOk()
     ? {
         viewer: rViewer.Ok().viewer,
         access: rViewer.Ok().access,
         ...(rViewer.Ok().dbAcls ? { dbAcls: rViewer.Ok().dbAcls } : {}),
-        apiBaseUrl: `${requestUrl.protocol}//${requestUrl.host}`,
       }
     : undefined;
 
@@ -252,13 +252,13 @@ export async function renderPendingVibe({
     auth: undefined,
     appSlug,
     ownerUserSlug: userSlug,
+    apiBaseUrl: `${requestUrl.protocol}//${requestUrl.host}`,
   });
   const viewerEnv = rViewer.isOk()
     ? {
         viewer: rViewer.Ok().viewer,
         access: rViewer.Ok().access,
         ...(rViewer.Ok().dbAcls ? { dbAcls: rViewer.Ok().dbAcls } : {}),
-        apiBaseUrl: `${requestUrl.protocol}//${requestUrl.host}`,
       }
     : undefined;
 
