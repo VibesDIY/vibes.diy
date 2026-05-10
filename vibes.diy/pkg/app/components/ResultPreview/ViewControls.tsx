@@ -72,7 +72,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
           }}
         >
           <ChatIcon className="h-5 w-5 md:h-4 md:w-4" />
-          <span className="inline">Chat</span>
+          <span className="hidden min-[480px]:inline">Chat</span>
         </button>
       )}
 
@@ -117,7 +117,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
               )}
               {viewTypeKey === "data" && <DataIcon className="h-5 w-5 md:h-4 md:w-4" />}
               {viewTypeKey === "settings" && <SettingsIcon className="h-5 w-5 md:h-4 md:w-4" />}
-              <span className="inline">{control.label}</span>
+              <span className="hidden min-[480px]:inline">{control.label}</span>
             </button>
           );
         })}
