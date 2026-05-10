@@ -385,7 +385,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       prevChatKeyRef.current = key;
       dispatch({ type: "clearChat", appSlug });
     }
-  }, [userSlug, appSlug]);
+  }, [userSlug, appSlug, dispatch]);
 
   const handleThemeSelect = useCallback(
     (theme: VibesTheme) => {
