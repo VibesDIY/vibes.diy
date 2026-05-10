@@ -9,10 +9,13 @@ import {
   isUserSettingSharing,
   isUserSettingDefaultUserSlug,
   isUserSettingModelDefaults,
+  isUserSettingProfile,
+  isResAssetUploadGrant,
   parseArray,
   userSettingModelDefaults,
 } from "@vibes.diy/api-types";
-import type { SharingGrantItem, AIParams } from "@vibes.diy/api-types";
+import type { SharingGrantItem, AIParams, UserSettingProfile } from "@vibes.diy/api-types";
+import { exception2Result } from "@adviser/cement";
 import { ModelSettingsCards } from "../components/ModelSettingsCards.js";
 
 export function meta() {
@@ -405,6 +408,181 @@ function ModelDefaultsCard() {
   );
 }
 
+function ProfileCard() {
+  const { vibeDiyApi } = useVibesDiy();
+  const [profile, setProfile] = useState<Omit<UserSettingProfile, "type">>({});
+  const [defaultUserSlug, setDefaultUserSlug] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [savingName, setSavingName] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
+      if (res.isErr()) {
+        setError(`Failed to load profile: ${res.Err()}`);
+        return;
+      }
+      const prof = res.Ok().settings.find(isUserSettingProfile);
+      if (prof) {
+        setProfile({ avatarCid: prof.avatarCid, displayName: prof.displayName });
+      }
+      const def = res.Ok().settings.find(isUserSettingDefaultUserSlug);
+      if (def) {
+        setDefaultUserSlug(def.userSlug);
+      }
+    });
+  }, [vibeDiyApi]);
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!defaultUserSlug) {
+      setError("No user slug set — create one in User Slugs first.");
+      return;
+    }
+    setUploading(true);
+    setError(null);
+
+    // Step 1: mint a short-lived upload grant via WS
+    const rGrant = await vibeDiyApi.requestAssetUploadGrant({
+      userSlug: defaultUserSlug,
+      appSlug: "_profile",
+      mimeType: file.type || "application/octet-stream",
+    });
+    if (rGrant.isErr()) {
+      setUploading(false);
+      setError(`Upload failed: ${rGrant.Err().message}`);
+      return;
+    }
+    const grantRes = rGrant.Ok();
+    if (!isResAssetUploadGrant(grantRes)) {
+      setUploading(false);
+      setError("Upload failed: unexpected grant response shape");
+      return;
+    }
+
+    // Step 2: POST the file bytes using the grant
+    const uploadUrl = /^https?:\/\//i.test(grantRes.uploadUrl)
+      ? grantRes.uploadUrl
+      : `${window.location.origin}${grantRes.uploadUrl}`;
+
+    const rUpload = await exception2Result(() =>
+      fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          "X-Asset-Grant": grantRes.grant,
+          "Content-Type": file.type || "application/octet-stream",
+        },
+        body: file,
+      })
+    );
+    setUploading(false);
+    if (rUpload.isErr()) {
+      setError(`Upload failed: ${rUpload.Err().message}`);
+      return;
+    }
+    const res = rUpload.Ok();
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      setError(`Upload failed: POST /assets returned ${res.status}: ${text}`);
+      return;
+    }
+    const body = (await res.json()) as { cid: string; getURL: string; size: number; uploadId: string };
+    const cid = body.cid;
+
+    const next = { ...profile, avatarCid: cid };
+    setProfile(next);
+    const rSave = await vibeDiyApi.ensureUserSettings({ settings: [{ type: "profile", ...next }] });
+    if (rSave.isErr()) {
+      setError(`Failed to save avatar: ${rSave.Err()}`);
+    }
+  };
+
+  const handleDisplayNameBlur = async () => {
+    setSavingName(true);
+    setError(null);
+    const rSave = await vibeDiyApi.ensureUserSettings({ settings: [{ type: "profile", ...profile }] });
+    setSavingName(false);
+    if (rSave.isErr()) {
+      setError(`Failed to save display name: ${rSave.Err()}`);
+    }
+  };
+
+  return (
+    <BrutalistCard size="md">
+      <h3 className="text-2xl font-bold mb-4">Profile</h3>
+      <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
+        Customize how you appear to others.
+      </p>
+      {error && <p className="text-red-600 font-medium mb-3">{error}</p>}
+
+      <div className="mb-6">
+        <h4 className="text-sm font-semibold mb-2">Avatar</h4>
+        <div className="flex items-center gap-4">
+          {profile.avatarCid && defaultUserSlug ? (
+            <img
+              src={`/u/${defaultUserSlug}/avatar`}
+              alt="Current avatar"
+              className="h-16 w-16 rounded-full object-cover border-2"
+              style={{ borderColor: "var(--vibes-border-primary)" }}
+            />
+          ) : (
+            <div
+              className="h-16 w-16 rounded-full flex items-center justify-center text-xs border-2"
+              style={{
+                borderColor: "var(--vibes-border-primary)",
+                color: "var(--vibes-text-secondary)",
+                background: "var(--vibes-bg-secondary, #f3f4f6)",
+              }}
+            >
+              None
+            </div>
+          )}
+          <div>
+            <label className="cursor-pointer inline-block" htmlFor="avatar-upload">
+              <VibesButton variant="blue" disabled={uploading} onClick={() => document.getElementById("avatar-upload")?.click()}>
+                {uploading ? "Uploading…" : "Upload image"}
+              </VibesButton>
+            </label>
+            <input
+              id="avatar-upload"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleAvatarUpload(f);
+              }}
+            />
+            <p className="text-xs mt-1" style={{ color: "var(--vibes-text-secondary)" }}>
+              PNG, JPG, or WebP. Displayed at /u/
+              {defaultUserSlug ?? "your-slug"}/avatar
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="text-sm font-semibold mb-2">Display name</h4>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={profile.displayName ?? ""}
+            placeholder="Your display name"
+            onChange={(e) => setProfile((p) => ({ ...p, displayName: e.target.value }))}
+            onBlur={() => void handleDisplayNameBlur()}
+            className="flex-1 border rounded px-3 py-1.5 text-sm"
+            style={{ borderColor: "var(--vibes-border-primary)" }}
+          />
+          {savingName && (
+            <span className="text-xs" style={{ color: "var(--vibes-text-secondary)" }}>
+              Saving…
+            </span>
+          )}
+        </div>
+      </div>
+    </BrutalistCard>
+  );
+}
+
 function SettingsContent() {
   const { signOut } = useClerk();
   const navigate = useNavigate();
@@ -417,6 +595,8 @@ function SettingsContent() {
   return (
     <BrutalistLayout title="Settings" subtitle="Manage your account and data sharing">
       <UserSlugsCard />
+
+      <ProfileCard />
 
       <ModelDefaultsCard />
 
