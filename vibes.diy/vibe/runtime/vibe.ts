@@ -16,13 +16,12 @@ const dbAcl = type({
 
 // Server-computed viewer info, embedded into the iframe's HTML by
 // render-vibe so the very first React render already has identity.
+// viewer.avatarUrl is the absolute URL for the viewer's avatar — opaque
+// to app code (just a string, not a function of userSlug).
 export const viewerEnv = type({
   viewer: viewerPayload.or("null"),
   access: docAccessLevel,
   "dbAcls?": type({ "[string]": dbAcl }),
-  // Absolute origin used by avatarUrlFor() to construct
-  // `${apiBaseUrl}/u/${slug}/avatar`. Server fills this in at render time.
-  apiBaseUrl: "string",
 });
 export type ViewerEnv = typeof viewerEnv.infer;
 

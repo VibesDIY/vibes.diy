@@ -80,6 +80,7 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
       auth: undefined,
       appSlug,
       ownerUserSlug: userSlug,
+      apiBaseUrl: "https://api.test",
     });
 
     expect(rViewer.isOk()).toBe(true);
@@ -88,14 +89,12 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
     expect(v.access).toBe("none");
   });
 
-  it("mountJS JSON fragment contains viewer:null, access:none, and apiBaseUrl", () => {
+  it("mountJS JSON fragment contains viewer:null and access:none", () => {
     // Simulate what renderVibe serialises into the mountJS inline script.
-    // We use a fake requestUrl matching the test server convention.
-    const requestUrl = new URL("http://test.localhost:8787/");
+    // viewer is null for unauthenticated renders — no avatarUrl needed.
     const viewerEnv = {
       viewer: null,
       access: "none" as const,
-      apiBaseUrl: `${requestUrl.protocol}//${requestUrl.host}`,
     };
 
     const mountParams = JSON.stringify({
@@ -106,7 +105,7 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
     // These are the assertions the spec requires for the rendered HTML.
     expect(mountParams).toContain('"viewer":null');
     expect(mountParams).toContain('"access":"none"');
-    expect(mountParams).toContain('"apiBaseUrl":"http://test.localhost:8787"');
+    expect(mountParams).not.toContain('"apiBaseUrl"');
   });
 
   it("viewerEnv is omitted from mountParams when resolveWhoAmI fails", () => {
@@ -117,7 +116,6 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
       ? {
           viewer: rViewer.Ok().viewer,
           access: rViewer.Ok().access,
-          apiBaseUrl: "http://test.localhost:8787",
         }
       : undefined;
 

@@ -24,20 +24,15 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
   useEffect(() => {
     const onMsg = (event: MessageEvent) => {
       if (!isEvtVibeViewerChanged(event.data)) return;
-      // Preserve apiBaseUrl from the seed; the event carries identity-only.
-      setViewerEnv((prev) => {
-        const apiBaseUrl = prev?.apiBaseUrl ?? mountParams.viewerEnv?.apiBaseUrl ?? "";
-        return {
-          viewer: event.data.viewer,
-          access: event.data.access,
-          ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
-          apiBaseUrl,
-        };
+      setViewerEnv({
+        viewer: event.data.viewer,
+        access: event.data.access,
+        ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
       });
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
-  }, [mountParams.viewerEnv?.apiBaseUrl]);
+  }, []);
 
   const ctx: Vibe = {
     mountParams: { ...mountParams, viewerEnv },

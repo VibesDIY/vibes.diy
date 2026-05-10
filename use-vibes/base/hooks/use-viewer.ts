@@ -9,7 +9,6 @@ export interface UseViewerResult {
   readonly access: DocAccessLevel;
   readonly dbAcls: Record<string, DbAcl>;
   readonly can: (action: "read" | "write" | "delete", dbName?: string) => boolean;
-  readonly avatarUrlFor: (userSlug: string) => string;
 }
 
 export function useViewer(): UseViewerResult {
@@ -18,7 +17,6 @@ export function useViewer(): UseViewerResult {
   const viewer = env?.viewer ?? null;
   const access: DocAccessLevel = env?.access ?? "none";
   const dbAcls: Record<string, DbAcl> = env?.dbAcls ?? {};
-  const apiBaseUrl = env?.apiBaseUrl ?? "";
 
   function can(action: "read" | "write" | "delete", dbName?: string): boolean {
     if (dbName !== undefined) {
@@ -35,9 +33,5 @@ export function useViewer(): UseViewerResult {
     return true;
   }
 
-  function avatarUrlFor(userSlug: string): string {
-    return `${apiBaseUrl}/u/${userSlug}/avatar`;
-  }
-
-  return { viewer, access, dbAcls, can, avatarUrlFor };
+  return { viewer, access, dbAcls, can };
 }

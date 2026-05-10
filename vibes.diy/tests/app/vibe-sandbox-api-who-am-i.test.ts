@@ -24,7 +24,7 @@ describe("VibeSandboxApi.whoAmI", () => {
         data: {
           type: "vibe.res.whoAmI",
           tid: sentTid,
-          viewer: { userSlug: "alice", displayName: "Alice" },
+          viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
           access: "owner",
         },
       } as MessageEvent)

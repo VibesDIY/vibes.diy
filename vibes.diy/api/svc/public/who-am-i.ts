@@ -32,6 +32,7 @@ export interface ResolveWhoAmIArgs {
   auth: VerifiedResult | undefined;
   appSlug: string;
   ownerUserSlug: string;
+  apiBaseUrl: string; // absolute origin, e.g. "https://vibes.diy" — used to build viewer.avatarUrl
 }
 
 export interface ResolvedWhoAmI {
@@ -41,7 +42,7 @@ export interface ResolvedWhoAmI {
 }
 
 export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArgs): Promise<Result<ResolvedWhoAmI>> {
-  const { auth, appSlug, ownerUserSlug } = args;
+  const { auth, appSlug, ownerUserSlug, apiBaseUrl } = args;
 
   const viewerUserId = auth?.verifiedAuth.claims.userId;
   const access: DocAccessLevel = viewerUserId ? await checkDocAccess(vctx, viewerUserId, appSlug, ownerUserSlug) : "none";
@@ -95,9 +96,10 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   }
 
   const displayName = displayOverride ?? deriveDisplayName(auth.verifiedAuth.claims);
+  const avatarUrl = `${apiBaseUrl}/u/${viewerSlug}/avatar`;
 
   return Result.Ok({
-    viewer: { userSlug: viewerSlug, displayName },
+    viewer: { userSlug: viewerSlug, displayName, avatarUrl },
     access,
     dbAcls,
   });
@@ -122,6 +124,7 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
         auth: req._auth,
         appSlug,
         ownerUserSlug,
+        apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
       });
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {

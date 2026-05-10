@@ -18,7 +18,7 @@
 
 - `vibes.diy/api/svc/public/who-am-i.ts` — Evento handler that computes viewer identity, app-scoped access, and the per-db ACL map.
 - `vibes.diy/api/svc/public/get-user-avatar.ts` — HTTP route handler for `GET /u/:userSlug/avatar`.
-- `use-vibes/base/hooks/use-viewer.ts` — `useViewer()` hook with `can()` and `avatarUrlFor()` helpers. Lives in the public consumer package alongside `useVibes`/`useFireproof` so generated app code can `import { useViewer } from "use-vibes"` (same import path as `ImgGen`).
+- `use-vibes/base/hooks/use-viewer.ts` — `useViewer()` hook with `can()` helper. Lives in the public consumer package alongside `useVibes`/`useFireproof` so generated app code can `import { useViewer } from "use-vibes"` (same import path as `ImgGen`). `viewer.avatarUrl` is an opaque string set by the server; `avatarUrlFor()` is removed.
 - `vibes.diy/vibe/runtime/db-acl-allows.ts` — Client port of the host's `aclAllows` for sync sandbox-side gating. Pure logic, no React; lives in vibe-runtime since both use-vibes-base and any other consumer can depend on it.
 - `vibes.diy/api/svc/public/who-am-i.test.ts`, `vibes.diy/api/svc/public/get-user-avatar.test.ts`, `use-vibes/base/hooks/use-viewer.test.tsx`, `vibes.diy/vibe/runtime/db-acl-allows.test.ts`.
 
@@ -28,7 +28,7 @@
 - `vibes.diy/api/types/index.ts` — re-export the new profile type.
 - `vibes.diy/vibe/types/index.ts` — add `viewerPayload`, `ReqVibeWhoAmI`, `ResVibeWhoAmI`, `EvtVibeViewerChanged`.
 - `vibes.diy/api/types/vibes-diy-api.ts` — add `whoAmI` method to the `VibesDiyApi` interface.
-- `vibes.diy/vibe/runtime/vibe.ts` — extend `vibeMountParams` with `viewerEnv?` (initial viewer + access + dbAcls + apiBaseUrl).
+- `vibes.diy/vibe/runtime/vibe.ts` — extend `vibeMountParams` with `viewerEnv?` (initial viewer + access + dbAcls). `viewer.avatarUrl` replaces the former `apiBaseUrl` field.
 - `vibes.diy/vibe/runtime/VibeContext.tsx` — populate context from `mountParams.viewerEnv`, subscribe to `viewerChanged`.
 - `vibes.diy/vibe/runtime/register-dependencies.ts` — add `whoAmI()` method on `VibeSandboxApi`.
 - `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts` — add the host-side bridge handler that responds to `vibe.req.whoAmI` and emits `vibe.evt.viewerChanged`.
@@ -1193,7 +1193,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 9: Extend `vibeMountParams` with `viewerEnv` and `apiBaseUrl`
+### Task 9: Extend `vibeMountParams` with `viewerEnv` (viewer includes `avatarUrl`)
 
 **Files:**
 
@@ -1466,7 +1466,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 11: Implement `useViewer()` with `can()` and `avatarUrlFor()` in `use-vibes/base`
+### Task 11: Implement `useViewer()` with `can()` in `use-vibes/base` (`viewer.avatarUrl` replaces `avatarUrlFor`)
 
 **Why this package:** generated app code imports from the public `use-vibes` package (`import { ImgGen } from "use-vibes"`), so `useViewer` must live alongside `useVibes`/`useFireproof` in `@vibes.diy/use-vibes-base` and be re-exported through `use-vibes/pkg/index.ts`. The hook reads `mountParams.viewerEnv` from the runtime's `VibeContext` (`@vibes.diy/vibe-runtime`), which use-vibes-base already depends on.
 
@@ -1853,7 +1853,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 - Modify: `prompts/pkg/system-prompt.md` and `prompts/pkg/system-prompt-initial.md` — one-line mention.
 - Modify: `notes/vibes-app-jsx.md` — full reference section.
 
-Public surface to document — only three names: `viewer`, `can(action, dbName?)`, `avatarUrlFor(userSlug)`. Hide `access` and `dbAcls` from the prompt even though the hook returns them; vibes shouldn't lean on raw ACL internals.
+Public surface to document — only two names: `viewer` (with `viewer.avatarUrl` as an opaque string), `can(action, dbName?)`. The `avatarUrlFor()` helper was removed — apps use `viewer.avatarUrl` directly and store it on docs for other users' avatars. Hide `access` and `dbAcls` from the prompt; vibes shouldn't lean on raw ACL internals.
 
 - [ ] **Step 1: Create the llms doc**
 
