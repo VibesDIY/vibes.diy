@@ -19,6 +19,10 @@ export {
   type UseVibesResult,
   type VibeDocument,
 
+  // Viewer identity & capabilities hook
+  useViewer,
+  type UseViewerResult,
+
   // Install ID generation
   generateInstallId,
 
