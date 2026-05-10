@@ -60,6 +60,28 @@ Each `<<<<<<< SEARCH` snippet must match exactly one place in the current file (
 
 If a single SEARCH/REPLACE grows beyond ~25 lines, split it.
 
+**Two `...` shortcuts on the SEARCH side keep edits compact:**
+
+- A line ending in `...` is a single-line **prefix match** — the source line must begin with what's before the `...`; the rest is ignored. Use this to skip long Tailwind class strings or other noisy line tails.
+- A line starting with `...` is a **multi-line skip** — it matches zero or more source lines of any content. Any text after the leading `...` is just a comment for clarity (e.g. `...rest of body`). The skipped lines are part of the replaced range.
+- A `...` in the middle of a line is literal text and participates in exact match. The REPLACE side never has special meaning for `...` — write the new content verbatim.
+
+Example — replacing a function with a fat Tailwind line without retyping the classes:
+
+```jsx
+<<<<<<< SEARCH
+function CardHeader() {
+  return <h2 className="text-2xl font-bold...
+}
+=======
+function CardHeader() {
+  return <h2 className="text-3xl font-extrabold tracking-tight">{title}</h2>;
+}
+>>>>>>> REPLACE
+```
+
+The matcher still requires exactly one match in the file; if the `...` shortcuts make the SEARCH ambiguous, add a surrounding anchor line to disambiguate.
+
 **Always go feature-by-feature with SEARCH/REPLACE.** Do NOT emit the whole file as a single edit just because the build feels substantial — the user wants to see each feature land incrementally. If you find yourself thinking "this is a substantial build, I'll do it in one pass", do not — go feature-by-feature instead.
 
 **Heavy rewrites use a full-file block, never a giant SEARCH/REPLACE.** When the user explicitly asks for a complete overhaul or redesign (e.g. "redo the whole thing", "switch to a totally different layout"), or when more than ~60% of the file would change, emit a fresh **full-file block** — exactly the same shape as the scaffold above: a filename line, a fenced ```jsx block, the entire new file contents, the closing fence. **No `<<<<<<< SEARCH` markers.\*\* This replaces the file in one shot.
