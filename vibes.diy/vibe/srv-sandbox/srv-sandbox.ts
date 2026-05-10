@@ -55,6 +55,9 @@ import {
   ResOkVibePutAsset,
   ResErrorVibePutAsset,
   EvtVibePutAssetProgress,
+  isReqVibeWhoAmI,
+  ReqVibeWhoAmI,
+  ResVibeWhoAmI,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -772,6 +775,43 @@ function vibePutAsset(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.whoAmI",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqVibeWhoAmI(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibeWhoAmI, unknown>): Promise<Result<EventoResultType>> => {
+      const { tid, appSlug, userSlug } = ctx.validated;
+      const rRes = await vibeDiyApi.whoAmI({ tid, appSlug, userSlug });
+
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid,
+          type: "vibe.res.whoAmI",
+          viewer: null,
+          access: "none",
+        } satisfies ResVibeWhoAmI);
+        return Result.Ok(EventoResult.Stop);
+      }
+      const r = rRes.Ok();
+      await ctx.send.send(ctx, {
+        tid,
+        type: "vibe.res.whoAmI",
+        viewer: r.viewer,
+        access: r.access,
+        ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
+      } satisfies ResVibeWhoAmI);
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
@@ -893,6 +933,7 @@ export class vibesDiySrvSandbox implements Disposable {
         vibeSubscribeDocs(this),
         vibeListDbNames(this),
         vibePutAsset(this),
+        vibeWhoAmI(this),
       ]
     );
     this.args.eventListeners.addEventListener("message", this.handleMessage);
