@@ -28,6 +28,7 @@ import { loginCmd } from "./cmds/login-cmd.js";
 import { pushCmd } from "./cmds/push-cmd.js";
 import { putAssetCmd, isResPutAssetCli } from "./cmds/put-asset-cmd.js";
 import { generateCmd, isResGenerate } from "./cmds/generate-cmd.js";
+import { editCmd, isResEdit } from "./cmds/edit-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
 import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
@@ -126,6 +127,7 @@ async function main(): Promise<number> {
       version: "1.0.0",
       cmds: {
         db: dbSubcommands(ctx),
+        edit: editCmd(ctx),
         generate: generateCmd(ctx),
         login: loginCmd(ctx),
         push: pushCmd(ctx),
@@ -240,6 +242,10 @@ async function main(): Promise<number> {
           }
           case isResGenerate(msg): {
             // Already reported via sendProgress in generate handler
+            break;
+          }
+          case isResEdit(msg): {
+            // Already reported via sendProgress in edit handler
             break;
           }
           case isResPutAssetCli(msg): {
