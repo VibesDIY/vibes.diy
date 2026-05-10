@@ -19,6 +19,8 @@ const buttonVariants = cva(`${baseClasses} ${shadowClasses} ${activeClasses}`, {
       cool: "bg-cyan-400 text-white hover:bg-cyan-500",
       dream: "bg-violet-400 text-white hover:bg-violet-500",
       danger: "bg-red-400 text-white hover:bg-red-500",
+      ghost:
+        "bg-transparent border-transparent shadow-none text-current hover:bg-transparent active:translate-x-0 active:translate-y-0 active:shadow-none",
     },
     size: {
       default: "h-10 w-10 sm:w-auto sm:px-4 sm:gap-2",
