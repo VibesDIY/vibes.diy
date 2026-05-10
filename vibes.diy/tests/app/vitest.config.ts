@@ -28,7 +28,7 @@ export default defineConfig({
         },
       ],
     },
-    maxWorkers: 1,
+    maxWorkers: 3,
     testTimeout: 30000,
     hookTimeout: 10000,
   },
