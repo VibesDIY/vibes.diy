@@ -103,6 +103,62 @@ describe("applyReplace ellipsis", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("multiple-match");
   });
+
+  it("matches with a skip line consuming intervening content", () => {
+    const source = "function foo() {\n  body1;\n  body2;\n}";
+    const search = "function foo() {\n  ...rest of body\n}";
+    const replace = "function foo() {\n  return 42;\n}";
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.matchKind).toBe("ellipsis");
+      expect(r.content).toBe(replace);
+    }
+  });
+
+  it("accepts skip = 0 between adjacent anchors", () => {
+    const source = "open\nclose";
+    const search = "open\n...\nclose";
+    const replace = "DONE";
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.content).toBe("DONE");
+  });
+
+  it("rejects ambiguous skip lengths as multiple-match", () => {
+    const source = "foo\nx\nbar\ny\nbar";
+    const search = "foo\n...\nbar";
+    const r = applyReplace({ source, search, replace: "Z" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe("multiple-match");
+  });
+
+  it("collapses adjacent skip lines", () => {
+    const source = "foo\na\nb\nc\nbar";
+    const search = "foo\n...\n...\nbar";
+    const replace = "BAZ";
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.content).toBe("BAZ");
+  });
+
+  it("ignores trailing comment text after leading ...", () => {
+    const source = "function foo() {\n  body;\n}";
+    const search = "function foo() {\n  ...rest of body\n}";
+    const replace = "function foo() {}";
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.content).toBe(replace);
+  });
+
+  it("middle skip consumes intervening lines into the replaced range", () => {
+    const source = "foo\nx\ny\nbar";
+    const search = "foo\n...\nbar";
+    const replace = "qux";
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.content).toBe("qux");
+  });
 });
 
 describe("applyEdits", () => {

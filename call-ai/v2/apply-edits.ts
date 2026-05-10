@@ -34,7 +34,7 @@ interface ClassifiedLine {
 
 function classifyLine(rawLine: string): ClassifiedLine {
   const trimmed = rawLine.replace(/[ \t]+$/, "");
-  if (trimmed.startsWith("...")) {
+  if (trimmed.replace(/^[ \t]+/, "").startsWith("...")) {
     return { kind: "skip", text: rawLine, prefix: "" };
   }
   if (trimmed.endsWith("...") && trimmed.length >= 3) {
@@ -203,6 +203,64 @@ function findSegmentMatches(
   return hits;
 }
 
+interface Segment {
+  readonly lines: readonly ClassifiedLine[];
+}
+
+function splitIntoSegments(searchLines: readonly ClassifiedLine[]): {
+  segments: readonly Segment[];
+  leadingSkip: boolean;
+  trailingSkip: boolean;
+} {
+  const segments: Segment[] = [];
+  let buf: ClassifiedLine[] = [];
+  let leadingSkip = false;
+  let trailingSkip = false;
+  let sawAnyNonSkip = false;
+  searchLines.forEach((l, idx) => {
+    if (l.kind === "skip") {
+      if (!sawAnyNonSkip && segments.length === 0 && buf.length === 0) leadingSkip = true;
+      if (buf.length > 0) {
+        segments.push({ lines: buf });
+        buf = [];
+      }
+      if (idx === searchLines.length - 1) trailingSkip = true;
+    } else {
+      sawAnyNonSkip = true;
+      buf.push(l);
+    }
+  });
+  if (buf.length > 0) segments.push({ lines: buf });
+  return { segments, leadingSkip, trailingSkip };
+}
+
+interface MatchTuple {
+  readonly starts: readonly number[]; // segment start line indexes
+}
+
+function enumerateTuples(
+  segments: readonly Segment[],
+  sourceLines: readonly LineSpan[],
+): readonly MatchTuple[] {
+  const tuples: MatchTuple[] = [];
+  if (segments.length === 0) return tuples;
+  const recurse = (segIdx: number, fromLine: number, acc: number[]): void => {
+    if (segIdx === segments.length) {
+      tuples.push({ starts: [...acc] });
+      return;
+    }
+    const seg = segments[segIdx];
+    const hits = findSegmentMatches(seg.lines, sourceLines, fromLine);
+    for (const h of hits) {
+      acc.push(h);
+      recurse(segIdx + 1, h + seg.lines.length, acc);
+      acc.pop();
+    }
+  };
+  recurse(0, 0, []);
+  return tuples;
+}
+
 function applyReplaceEllipsis(
   source: string,
   search: string,
@@ -210,23 +268,30 @@ function applyReplaceEllipsis(
 ): ApplyEditResult {
   const searchLines = search.split("\n").map(classifyLine);
   const sourceLines = lineSpans(source);
+  const { segments, leadingSkip, trailingSkip } = splitIntoSegments(searchLines);
 
-  // No skips yet: treat the entire search as one segment.
-  if (searchLines.every((l) => l.kind !== "skip")) {
-    const hits = findSegmentMatches(searchLines, sourceLines, 0);
-    if (hits.length === 0) return { ok: false, reason: "no-match", matchCount: 0 };
-    if (hits.length > 1)
-      return { ok: false, reason: "multiple-match", matchCount: hits.length };
-    const start = sourceLines[hits[0]].start;
-    const lastIdx = hits[0] + searchLines.length - 1;
-    const end = sourceLines[lastIdx].end;
-    return {
-      ok: true,
-      matchKind: "ellipsis",
-      content: source.slice(0, start) + replace + source.slice(end),
-    };
+  if (segments.length === 0) {
+    return { ok: false, reason: "no-match", matchCount: 0 };
   }
 
-  // Skips not implemented yet — fall through to no-match.
-  return { ok: false, reason: "no-match", matchCount: 0 };
+  const tuples = enumerateTuples(segments, sourceLines);
+  if (tuples.length === 0) return { ok: false, reason: "no-match", matchCount: 0 };
+  if (tuples.length > 1)
+    return { ok: false, reason: "multiple-match", matchCount: tuples.length };
+
+  const t = tuples[0];
+  const firstSegStart = t.starts[0];
+  const lastSegStart = t.starts[t.starts.length - 1];
+  const lastSegLen = segments[segments.length - 1].lines.length;
+
+  const startLine = leadingSkip ? 0 : firstSegStart;
+  const endLine = trailingSkip ? sourceLines.length - 1 : lastSegStart + lastSegLen - 1;
+  const startChar = sourceLines[startLine].start;
+  const endChar = sourceLines[endLine].end;
+
+  return {
+    ok: true,
+    matchKind: "ellipsis",
+    content: source.slice(0, startChar) + replace + source.slice(endChar),
+  };
 }
