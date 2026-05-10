@@ -128,4 +128,30 @@ describe("FireflyApiAdapter", () => {
     const adapter = new FireflyApiAdapter(fakeVibesDiyApi(), "my-app");
     await expect(adapter.putAsset(new Blob(["x"]))).rejects.toThrow(/file uploads not supported/i);
   });
+
+  it("onMsg synthesizes evt-doc-changed events from VibesDiyApi.onDocChanged", () => {
+    let captured: ((u: string, a: string, db: string, doc: string) => void) | undefined;
+    const onDocChanged = vi.fn((fn: typeof captured) => {
+      captured = fn;
+      return () => {};
+    });
+    const api = fakeVibesDiyApi({ onDocChanged });
+    const adapter = new FireflyApiAdapter(api, "my-app");
+
+    const seen: unknown[] = [];
+    adapter.onMsg((event) => seen.push(event.data));
+
+    expect(captured).toBeDefined();
+    captured?.("alice", "my-app", "todos", "doc-1");
+
+    expect(seen).toEqual([
+      {
+        type: "vibes.diy.evt-doc-changed",
+        userSlug: "alice",
+        appSlug: "my-app",
+        dbName: "todos",
+        docId: "doc-1",
+      },
+    ]);
+  });
 });
