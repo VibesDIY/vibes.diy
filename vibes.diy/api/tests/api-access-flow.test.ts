@@ -2,11 +2,14 @@ import { assert, beforeAll, describe, expect, inject, it } from "vitest";
 import { isResHasAccessInviteAccepted, isResHasAccessRequestApproved, isResRequestAccessApproved } from "@vibes.diy/api-types";
 import { createApiTestCtx, type ApiTestCtx } from "./api-test-setup.js";
 
+const REQUEST_FLOW_SEQ_BASE = 1_646_100;
+const INVITE_FLOW_SEQ_BASE = 1_646_200;
+
 describe("request flow", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 5000 }, () => {
   let ctx: ApiTestCtx;
 
   beforeAll(async () => {
-    ctx = await createApiTestCtx();
+    ctx = await createApiTestCtx({ seqUserIdBase: REQUEST_FLOW_SEQ_BASE });
   });
 
   it("owner cannot requestAccess or hasAccessRequest own app", async () => {
@@ -20,6 +23,18 @@ describe("request flow", { timeout: (inject("DB_FLAVOUR" as never) as string) ==
     const hasResult = await ctx.api.hasAccessRequest({ appSlug, userSlug });
     expect(hasResult.isErr()).toBe(true);
     expect(hasResult.Err().code).toBe("owner-error");
+  });
+
+  it("default fixture partition keeps requester distinct from owner", async () => {
+    const defaultCtx = await createApiTestCtx();
+    const { appSlug, userSlug } = await defaultCtx.createApp();
+    await defaultCtx.api.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
+
+    const rRequested = await defaultCtx.api2.requestAccess({ appSlug, userSlug });
+    if (rRequested.isErr()) {
+      assert.fail("Expected requestAccess to succeed with default fixture partition, got: " + JSON.stringify(rRequested.Err()));
+    }
+    expect(rRequested.Ok().state).toBe("pending");
   });
 
   it("manual approval lifecycle", async () => {
@@ -175,7 +190,7 @@ describe("invite flow", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
   let ctx: ApiTestCtx;
 
   beforeAll(async () => {
-    ctx = await createApiTestCtx();
+    ctx = await createApiTestCtx({ seqUserIdBase: INVITE_FLOW_SEQ_BASE });
   });
 
   it("full invite lifecycle", async () => {
