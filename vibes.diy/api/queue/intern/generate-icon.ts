@@ -1,7 +1,7 @@
 import { Result, exception2Result } from "@adviser/cement";
 
 const ICON_PROMPT_PREFIX =
-  `Minimal black icon on a white background, enclosed in a circle. ` +
+  `Minimal black icon on a white background, enclosed in a square with very rounded corners. ` +
   `The icon will be displayed at a very small size — only a little larger than a favicon — ` +
   `so the design must prioritize legibility above all else: bold, simple shapes, ` +
   `high contrast, no fine detail. Subject: `;
