@@ -49,6 +49,11 @@ describe("applyReplace", () => {
     expect(r.ok).toBe(false);
     if (r.ok === false) expect(r.reason).toBe("multiple-match");
   });
+
+  it("regression: no-ellipsis SEARCH uses exact path", () => {
+    const r = applyReplace({ source: "alpha\nbeta\ngamma", search: "beta", replace: "BETA" });
+    expect(r).toEqual({ ok: true, matchKind: "exact", content: "alpha\nBETA\ngamma" });
+  });
 });
 
 describe("applyEdits", () => {

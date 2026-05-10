@@ -7,7 +7,7 @@ export interface ApplyReplaceInput {
 export interface ApplyEditOk {
   readonly ok: true;
   readonly content: string;
-  readonly matchKind: "exact" | "trailing-ws";
+  readonly matchKind: "exact" | "trailing-ws" | "ellipsis";
 }
 export type ApplyEditErrReason = "no-match" | "multiple-match";
 export interface ApplyEditErr {
@@ -22,6 +22,32 @@ function rstripLines(s: string): string {
     .split("\n")
     .map((l) => l.replace(/[ \t]+$/, ""))
     .join("\n");
+}
+
+type LineKind = "anchor" | "prefix" | "skip";
+
+interface ClassifiedLine {
+  readonly kind: LineKind;
+  readonly text: string;
+  readonly prefix: string;
+}
+
+function classifyLine(rawLine: string): ClassifiedLine {
+  const trimmed = rawLine.replace(/[ \t]+$/, "");
+  if (trimmed.startsWith("...")) {
+    return { kind: "skip", text: rawLine, prefix: "" };
+  }
+  if (trimmed.endsWith("...") && trimmed.length >= 3) {
+    return { kind: "prefix", text: rawLine, prefix: trimmed.slice(0, -3) };
+  }
+  return { kind: "anchor", text: rawLine, prefix: "" };
+}
+
+function hasEllipsisToken(search: string): boolean {
+  return search.split("\n").some((l) => {
+    const k = classifyLine(l).kind;
+    return k === "prefix" || k === "skip";
+  });
 }
 
 function findAllOccurrences(haystack: string, needle: string): readonly number[] {
@@ -41,6 +67,10 @@ export function applyReplace(input: ApplyReplaceInput): ApplyEditResult {
   const { source, search, replace } = input;
   if (search.length === 0) {
     return { ok: false, reason: "no-match", matchCount: 0 };
+  }
+
+  if (hasEllipsisToken(search)) {
+    return applyReplaceEllipsis(source, search, replace);
   }
 
   const exact = findAllOccurrences(source, search);
@@ -120,4 +150,12 @@ export function applyEdits(seed: string, edits: readonly Edit[]): ApplyEditsResu
     });
   });
   return { content, errors };
+}
+
+function applyReplaceEllipsis(
+  _source: string,
+  _search: string,
+  _replace: string,
+): ApplyEditResult {
+  return { ok: false, reason: "no-match", matchCount: 0 };
 }
