@@ -45,8 +45,20 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
   useEffect(() => {
     if (skip || !_id) return;
 
-    const inputMeta = inputImage as Partial<File> | undefined;
-    const genKey = `${_id}-${generationId ?? ""}-${inputMeta?.name ?? ""}${inputMeta?.lastModified ?? ""}-${model ?? ""}`;
+    // Derive a stable identity for whatever shape `inputImage` is:
+    //   - File:        name + lastModified
+    //   - Blob:        size + type
+    //   - DocFileMeta: uploadId (preferred) or size
+    // Without this, distinct DocFileMeta objects collapse to the same
+    // genKey because Blob/DocFileMeta carry no `name`/`lastModified`,
+    // and `currentGenRef` would short-circuit a new image source.
+    const inputMeta = inputImage as
+      | (Partial<File> & { uploadId?: string; size?: number; type?: string })
+      | undefined;
+    const inputKey = inputMeta
+      ? `${inputMeta.uploadId ?? ""}|${inputMeta.name ?? ""}|${inputMeta.lastModified ?? ""}|${inputMeta.size ?? ""}|${inputMeta.type ?? ""}`
+      : "";
+    const genKey = `${_id}-${generationId ?? ""}-${inputKey}-${model ?? ""}`;
     if (currentGenRef.current === genKey) return;
     currentGenRef.current = genKey;
 
@@ -89,11 +101,17 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
       setProgress(10);
       setError(null);
 
-      const rFiles = await imgGen(promptText, inputImage, model);
+      // `exception2Result` here covers two failure modes uniformly:
+      //   - a thrown rejection inside `imgGen` (e.g. browser
+      //     image-decode failure in `resizeImageToBase64`, or a custom
+      //     injected `imgGen` that throws), and
+      //   - a returned `Result.Err` from the runtime imgGen (the
+      //     provider error path, e.g. "Prodia request failed: 429").
+      // Cement flattens `Promise<Result<T>>` so both collapse here. If
+      // we awaited `imgGen` outside this wrapper a thrown rejection
+      // would escape after `setLoading(true)` and leave the UI stuck.
+      const rFiles = await exception2Result(() => imgGen(promptText, inputImage, model));
       if (rFiles.isErr()) {
-        // Surface the upstream error message verbatim — this is the
-        // provider error (e.g. "Prodia request failed: 429"), not a
-        // generic "No image file returned" stand-in.
         setError(rFiles.Err());
         setLoading(false);
         currentGenRef.current = null;
