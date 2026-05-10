@@ -81,6 +81,15 @@ describe("makeBaseSystemPrompt variant routing", () => {
     expect(result.systemPrompt).toMatch(/ImgGen/);
     expect(result.systemPrompt).not.toMatch(/ImgVibes/);
   });
+
+  it("use-viewer skill picks up the useViewer docs", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      ...baseOpts,
+      skills: ["fireproof", "callai", "use-viewer"],
+    });
+    expect(result.systemPrompt).toMatch(/useViewer/);
+    expect(result.systemPrompt).toMatch(/avatarUrlFor/);
+  });
 });
 
 describe("recovery addenda", () => {

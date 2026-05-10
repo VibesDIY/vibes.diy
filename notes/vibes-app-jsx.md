@@ -103,3 +103,17 @@ const response = await callAI("Generate data", {
   }
 })
 ```
+
+## Identity & capabilities (`useViewer`)
+
+```jsx
+import { useViewer } from "use-vibes";
+
+const { viewer, can, avatarUrlFor } = useViewer();
+```
+
+- `viewer` — `{ userSlug, displayName? } | null`. `null` for anonymous visitors.
+- `can(action, dbName?)` — `"read" | "write" | "delete"`. With a `dbName`, checks that db; without, allowed-everywhere.
+- `avatarUrlFor(userSlug)` — stable image URL for any user. Works for the viewer or any author whose userSlug you stored.
+
+Render names with `viewer.displayName ?? viewer.userSlug`. Never look up user IDs — only userSlugs cross into vibe code.

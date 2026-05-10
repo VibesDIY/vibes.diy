@@ -103,6 +103,16 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
       } as Response);
     }
 
+    if (url.includes("use-viewer.md")) {
+      return Promise.resolve({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            "<Viewer Identity-docs>\n# useViewer Hook\nGet the current viewer's identity and capabilities.\nuseViewer avatarUrlFor can\n</Viewer Identity-docs>"
+          ),
+      } as Response);
+    }
+
     // Theme markdown — serve a recognizable per-slug body so tests can assert
     // both the wrapping XML tag and the theme content end up in the prompt.
     const themeMatch = url.match(/themes\/([\w-]+)\.md/);

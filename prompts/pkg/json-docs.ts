@@ -16,6 +16,7 @@ export interface JsonDocs {
   "fireproof.json": JsonDoc;
   "image-gen.json": JsonDoc;
   "three-js.json": JsonDoc;
+  "use-viewer.json": JsonDoc;
   "web-audio.json": JsonDoc;
 
   [key: string]: JsonDoc;
