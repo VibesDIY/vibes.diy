@@ -35,6 +35,7 @@
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
     "@vibes.diy/vibe-db-explorer": "workspace:*",
+    "@vibes.diy/vibe-types": "workspace:*",
     "acorn": "^8.15.0",
     "arktype": "^2.2.0",
     "call-ai": "workspace:*",
