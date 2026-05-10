@@ -40,7 +40,6 @@ export interface FireflyTransport {
   deleteDoc(docId: string, dbName?: string): Promise<Result<ResDeleteDoc>>;
   subscribeDocs(dbName?: string): Promise<Result<ResSubscribeDocs>>;
   onMsg(fn: (event: { data: unknown }) => void): void;
-  putAsset(blob: Blob, mimeType?: string): Promise<Result<unknown>>;
 }
 // @ts-expect-error "charwise" has no types
 import charwise from "charwise";

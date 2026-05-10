@@ -16,3 +16,4 @@ export {
   type IndexRow,
   type QueryResponse,
 } from "./firefly-database.js";
+export type { FireflyTransport } from "./firefly-database.js";
