@@ -106,7 +106,11 @@ export default {
       headers.set("Access-Control-Allow-Origin", "*");
       headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
       headers.set("Access-Control-Allow-Headers", "Content-Type");
-      headers.set("Cache-Control", "public, max-age=3600");
+      // 60s TTL: /vibe-pkg/ URLs aren't versioned, so a longer cache window
+      // strands prompt/package edits at the CDN edge for that long after
+      // each deploy. Until URLs carry a per-deploy version stamp, cap stale-
+      // ness at one minute so deploys propagate predictably.
+      headers.set("Cache-Control", "public, max-age=60");
       const response = new Response(assetResponse.body as unknown as BodyInit, {
         status: assetResponse.status,
         headers,
