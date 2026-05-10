@@ -14,6 +14,7 @@ import {
 import { NpmUrlCapture } from "../public/serv-entry-point.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { type } from "arktype";
+import { resolveWhoAmI } from "../public/who-am-i.js";
 // import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
 import { ExtractedHostToBindings } from "../entry-point-utils.js";
 import { VibePage } from "./components/vibe-page.js";
@@ -127,6 +128,24 @@ export async function renderVibe({
   const requestUrl = new URL(ctx.request.url);
   const canonicalUrl = `${requestUrl.protocol}//${requestUrl.host}/`;
 
+  // Compute initial viewerEnv so the iframe's first render has identity.
+  // auth is not available on this HTTP code path (render-vibe is a server-side
+  // renderer, not a websocket handler), so we pass undefined. The iframe will
+  // call vibe.req.whoAmI after boot to refresh identity when the viewer logs in.
+  const rViewer = await resolveWhoAmI(vctx, {
+    auth: undefined,
+    appSlug: fs.appSlug,
+    ownerUserSlug: fs.userSlug,
+  });
+  const viewerEnv = rViewer.isOk()
+    ? {
+        viewer: rViewer.Ok().viewer,
+        access: rViewer.Ok().access,
+        ...(rViewer.Ok().dbAcls ? { dbAcls: rViewer.Ok().dbAcls } : {}),
+        apiBaseUrl: `${requestUrl.protocol}//${requestUrl.host}`,
+      }
+    : undefined;
+
   let imageUrl: string | undefined;
   if (metaScreenShot) {
     const assetPath = `/assets/cid/?url=${encodeURIComponent(metaScreenShot.assetUrl)}&mime=${encodeURIComponent(metaScreenShot.mime)}`;
@@ -154,7 +173,10 @@ export async function renderVibe({
       `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
       ...imports.map((i) => i.importStmt),
       `registerDependencies(${JSON.stringify({ appSlug: fs.appSlug, userSlug: fs.userSlug, fsId: fs.fsId })})`,
-      `  .then(() => mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({ usrEnv })}));`,
+      `  .then(() => mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({
+        usrEnv,
+        ...(viewerEnv ? { viewerEnv } : {}),
+      })}));`,
     ].join("\n"),
   } satisfies VibesDiyServCtx;
   const optionalHeader: Record<string, string> = {};
@@ -222,6 +244,24 @@ export async function renderPendingVibe({
 
   const requestUrl = new URL(ctx.request.url);
   const canonicalUrl = `${requestUrl.protocol}//${requestUrl.host}/`;
+
+  // Compute initial viewerEnv for the pending shell as well, so identity is
+  // available from first paint. auth is not accessible on this HTTP code path;
+  // the iframe will call vibe.req.whoAmI after boot to refresh when needed.
+  const rViewer = await resolveWhoAmI(vctx, {
+    auth: undefined,
+    appSlug,
+    ownerUserSlug: userSlug,
+  });
+  const viewerEnv = rViewer.isOk()
+    ? {
+        viewer: rViewer.Ok().viewer,
+        access: rViewer.Ok().access,
+        ...(rViewer.Ok().dbAcls ? { dbAcls: rViewer.Ok().dbAcls } : {}),
+        apiBaseUrl: `${requestUrl.protocol}//${requestUrl.host}`,
+      }
+    : undefined;
+
   const title = appSlug;
 
   const vsctx = {
@@ -238,7 +278,10 @@ export async function renderPendingVibe({
     mountJS: [
       `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
       `registerDependencies(${JSON.stringify({ appSlug, userSlug, fsId: "pending" })})`,
-      `  .then(() => mountVibe([], ${JSON.stringify({ usrEnv: {} })}));`,
+      `  .then(() => mountVibe([], ${JSON.stringify({
+        usrEnv: {},
+        ...(viewerEnv ? { viewerEnv } : {}),
+      })}));`,
     ].join("\n"),
   } satisfies VibesDiyServCtx;
 
