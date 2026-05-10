@@ -84,23 +84,25 @@ The matcher still requires exactly one match in the file; if the `...` shortcuts
 
 **The most common use of `...` is editing one key in a multi-line styles object.** Tailwind class strings, theme `:root { ... }` blocks, oklch/rgba color tokens — these lines are long and easy to misremember. Always edit ONE key per SEARCH/REPLACE, anchor on the key name, and let `...` consume the value:
 
+**Keep the prefix as short as possible — just enough to be unique in the file.** For an object key, the key name alone is usually unique. You do NOT need to copy the existing value to anchor on it; the `...` does that.
+
 Tailwind classNames object — change the page background color only:
 
 ```jsx
 <<<<<<< SEARCH
-  page: "min-h-screen flex flex-col max-w-lg mx-auto bg-[#000000]...
+  page: "...
 =======
   page: "min-h-screen flex flex-col max-w-lg mx-auto bg-[#1a0015]",
 >>>>>>> REPLACE
 ```
 
-The `...` makes the SEARCH key-anchored — you don't have to retype the rest of the Tailwind chain or remember whether the line ends with a comma. Just match the key, the bit you're changing, then `...`.
+`  page: "` is unique inside the `c = { ... }` object, so that's the whole anchor needed. The `...` consumes whatever value is there now; the REPLACE writes the new one.
 
 CSS variable inside `THEME_CSS` — change one variable, leave the rest:
 
 ```jsx
 <<<<<<< SEARCH
-    --bg: #030303...
+    --bg:...
 =======
     --bg: #1a0510;
 >>>>>>> REPLACE
@@ -110,11 +112,13 @@ Inline JSX attribute on a long element — change just one prop:
 
 ```jsx
 <<<<<<< SEARCH
-        <button className="px-4 py-2 rounded bg-blue-500...
+        <button className="...
 =======
         <button className="px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700">
 >>>>>>> REPLACE
 ```
+
+If a short prefix would match in two places, then add just enough surrounding context to disambiguate — but don't pre-emptively copy the whole long line.
 
 ❌ Do NOT replace the entire `c = { ... }` styles object, the entire `:root { ... }` block, or a long JSX line in one giant SEARCH/REPLACE. Reproducing those bytes from memory drifts (variable names invented, rgba values guessed, key order shuffled, trailing commas changed) and the matcher rejects with `no-match` over and over. **One key, one variable, one attribute per edit, with `...` doing the heavy lifting.**
 
