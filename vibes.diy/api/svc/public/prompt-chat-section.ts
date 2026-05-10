@@ -1857,6 +1857,13 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       const resChat = rResChat.Ok();
 
       // Resolved img model id picks the backend: "prodia/*" -> Prodia, else LLM handler.
+      // When the request carries an input image (img2img edit) and the
+      // user didn't pick a model, prefer the catalog's `img-edit`
+      // default (typically the LLM image backend); fall back to the
+      // plain `img` default otherwise. The LLM path attaches the input
+      // as `image_url` on the last user message (see ~line 866) and
+      // produces edits faithful to the source — Prodia's img2img is a
+      // single-shot inference that doesn't preserve subject identity.
       let resolvedImgModel: string | undefined;
       if (isReqPromptImageChatSection(orig)) {
         const override = orig.prompt.model;
@@ -1865,34 +1872,25 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         } else {
           const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
           if (rDefaults.isOk()) {
-            resolvedImgModel = rDefaults.Ok().img.model.id;
+            const defaults = rDefaults.Ok();
+            const hasInputImage = !!(orig as { inputImageBase64?: string }).inputImageBase64;
+            const editDefault = hasInputImage ? defaults["img-edit"] : undefined;
+            resolvedImgModel = (editDefault ?? defaults.img).model.id;
+            // Mirror the resolution onto orig.prompt.model so the
+            // downstream LLM handler picks up the same choice instead
+            // of re-resolving from models.json (which would always
+            // pick the plain `img` default).
+            (orig as { prompt: { model?: string } }).prompt.model = resolvedImgModel;
           }
         }
       }
-      // Fallback to LLM image model when Prodia token is unavailable.
-      // Inject into orig.prompt.model so handlerLlmRequest picks it up
-      // instead of re-resolving to the prodia/* default from models.json.
+      // Last-resort fallback: prodia default selected but token missing.
+      // Switch to the LLM image backend so the request can complete.
       if (resolvedImgModel?.startsWith("prodia/") && !vctx.prodiaToken) {
-        resolvedImgModel = "openai/gpt-5-image-mini";
-        if (isReqPromptImageChatSection(orig) && !orig.prompt.model) {
+        resolvedImgModel = "openai/gpt-5.4-image-2";
+        if (isReqPromptImageChatSection(orig)) {
           (orig as { prompt: { model?: string } }).prompt.model = resolvedImgModel;
         }
-      }
-      // img2img edits: route to the LLM image backend instead of the
-      // Prodia default. Prodia's img2img is a single-shot inference
-      // that doesn't preserve subject identity well; the LLM path
-      // attaches the input as `image_url` on the last user message
-      // (see line ~866) and produces edits faithful to the source.
-      // Only kicks in when the user didn't explicitly pick a model —
-      // an explicit `prodia/*` choice with an input image is honored.
-      if (
-        isReqPromptImageChatSection(orig) &&
-        !orig.prompt.model &&
-        (orig as { inputImageBase64?: string }).inputImageBase64 &&
-        resolvedImgModel?.startsWith("prodia/")
-      ) {
-        resolvedImgModel = "openai/gpt-5-image-mini";
-        (orig as { prompt: { model?: string } }).prompt.model = resolvedImgModel;
       }
       const useProdia = !!(isReqPromptImageChatSection(orig) && vctx.prodiaToken && resolvedImgModel?.startsWith("prodia/"));
 
