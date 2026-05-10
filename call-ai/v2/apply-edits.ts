@@ -216,17 +216,15 @@ function splitIntoSegments(searchLines: readonly ClassifiedLine[]): {
   let buf: ClassifiedLine[] = [];
   let leadingSkip = false;
   let trailingSkip = false;
-  let sawAnyNonSkip = false;
   searchLines.forEach((l, idx) => {
     if (l.kind === "skip") {
-      if (!sawAnyNonSkip && segments.length === 0 && buf.length === 0) leadingSkip = true;
+      if (segments.length === 0 && buf.length === 0) leadingSkip = true;
       if (buf.length > 0) {
         segments.push({ lines: buf });
         buf = [];
       }
       if (idx === searchLines.length - 1) trailingSkip = true;
     } else {
-      sawAnyNonSkip = true;
       buf.push(l);
     }
   });
