@@ -56,6 +56,55 @@ describe("applyReplace", () => {
   });
 });
 
+describe("applyReplace ellipsis", () => {
+  it("matches a longer source line via trailing ... prefix", () => {
+    const source = 'before\n  <div className="foo bar baz qux">\nafter';
+    const search = '  <div className="foo...';
+    const replace = '  <div className="X">';
+    const r = applyReplace({ source, search, replace });
+    expect(r).toEqual({
+      ok: true,
+      matchKind: "ellipsis",
+      content: 'before\n  <div className="X">\nafter',
+    });
+  });
+
+  it("matches a block with a prefix line among anchors", () => {
+    const source = [
+      "function FeatureOne() {",
+      '  return <div className="rounded-lg bg-blue-500 p-4 shadow">',
+      "    Hello",
+      "  </div>;",
+      "}",
+    ].join("\n");
+    const search = [
+      "function FeatureOne() {",
+      '  return <div className="rounded...',
+      "    Hello",
+      "  </div>;",
+      "}",
+    ].join("\n");
+    const replace = "function FeatureOne() {\n  return <div>NEW</div>;\n}";
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.matchKind).toBe("ellipsis");
+      expect(r.content).toBe(replace);
+    }
+  });
+
+  it("reports multiple-match when a prefix matches in two places", () => {
+    const source = '<div className="foo a">\n<div className="foo b">';
+    const r = applyReplace({
+      source,
+      search: '<div className="foo...',
+      replace: "X",
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe("multiple-match");
+  });
+});
+
 describe("applyEdits", () => {
   it("applies a create then a sequence of replaces", () => {
     const edits = [
