@@ -11,8 +11,14 @@
  * Inside an iframe, the import map rewrites use-vibes -> vibe-runtime,
  * which exports its own fireproof("name") backed by VibeSandboxApi.
  * This module is only reached by Node / Wrangler consumers.
+ *
+ * **Browser-link safety.** This module is re-exported from `use-vibes`'s
+ * top-level entry, so browser bundles will *link* it even when they only
+ * use `useFireproof`/`useVibes`. Top-level imports MUST stay browser-safe;
+ * Node-only modules (keybag, device-id) live behind a dynamic import in
+ * `lazyKeybagGetToken`. Native `node:path` is replaced by inline basename
+ * logic so Vite/webpack don't fail at module-link time.
  */
-import path from "node:path";
 import { Lazy, KeyedResolvOnce, type Result } from "@adviser/cement";
 import { VibesDiyApi, FireflyApiAdapter } from "@vibes.diy/api-impl";
 import { FireflyDatabase } from "@vibes.diy/vibe-runtime";
@@ -40,9 +46,24 @@ const lazyKeybagGetToken = Lazy(async () => {
   return mod.loadDeviceIdGetToken(ensureSuperThis());
 });
 
+// Inlined `path.basename` so this module doesn't import `node:path` at the top
+// level (which would break browser bundles that only link the module without
+// calling fireproof()). Returns "" in non-Node environments — caller handles.
+function defaultAppSlugFromCwd(): string {
+  if (typeof process === "undefined" || typeof process.cwd !== "function") return "";
+  const cwd = process.cwd();
+  const idx = Math.max(cwd.lastIndexOf("/"), cwd.lastIndexOf("\\"));
+  return idx >= 0 ? cwd.slice(idx + 1) : cwd;
+}
+
+function envVar(name: string): string | undefined {
+  if (typeof process === "undefined" || !process.env) return undefined;
+  return process.env[name];
+}
+
 function resolveOptsSync(opts?: FireproofOpts): ResolvedOpts {
-  const apiUrl = opts?.apiUrl ?? process.env.VIBES_DIY_API_URL ?? DEFAULT_API_URL;
-  const appSlug = opts?.appSlug ?? process.env.VIBES_APP_SLUG ?? path.basename(process.cwd());
+  const apiUrl = opts?.apiUrl ?? envVar("VIBES_DIY_API_URL") ?? DEFAULT_API_URL;
+  const appSlug = opts?.appSlug ?? envVar("VIBES_APP_SLUG") ?? defaultAppSlugFromCwd();
   if (!appSlug) {
     throw new Error("Set VIBES_APP_SLUG or pass {appSlug} to fireproof()");
   }
