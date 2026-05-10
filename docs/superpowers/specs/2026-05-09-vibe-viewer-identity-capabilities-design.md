@@ -144,10 +144,16 @@ Sandbox consumers subscribe via a hook (see §7). Out of scope for v1: emitting 
 
 ### 7. Sandbox API: useViewer + can() + avatarUrlFor()
 
-Generated apps consume identity through a single hook in `@vibes.diy/vibe-runtime`:
+Generated apps consume identity through a single hook **imported from the public `use-vibes` package** — same import path as `ImgGen`/`useFireproof`/`useVibes`:
 
 ```ts
-// vibes.diy/vibe/runtime/use-viewer.ts (new file)
+import { useViewer } from "use-vibes";
+```
+
+Implementation lives in the workspace package `@vibes.diy/use-vibes-base` (`use-vibes/base/hooks/use-viewer.ts`) and is re-exported through `use-vibes/pkg/index.ts`. The hook reads `mountParams.viewerEnv` from the runtime's `VibeContext` (`@vibes.diy/vibe-runtime`), so the data flows: server → mountParams → runtime context → use-vibes hook → generated app.
+
+```ts
+// use-vibes/base/hooks/use-viewer.ts (new file)
 export interface Viewer {
   userSlug: string;
   displayName?: string;
@@ -227,23 +233,25 @@ Capabilities sent to the sandbox are a **UX hint**. Every put-doc / put-asset / 
 
 The system prompt (or vibe template) gains a short stanza:
 
-> Use `useViewer()` from the vibe runtime. `viewer` is the signed-in user (or null). Render names with `viewer.displayName ?? viewer.userSlug`. Render avatars with `<img src={avatarUrlFor(slug)} />` — works for the viewer or any other userSlug (e.g. `comment.authorUserSlug`). Gate write/delete UI on `can("write")` / `can("delete")`. For multi-db apps, pass the dbName: `can("write", "comments")`.
+> Use `useViewer()` from `"use-vibes"` (same package as `ImgGen` and `useFireproof`). `viewer` is the signed-in user (or null). Render names with `viewer.displayName ?? viewer.userSlug`. Render avatars with `<img src={avatarUrlFor(slug)} />` — works for the viewer or any other userSlug (e.g. `comment.authorUserSlug`). Gate write/delete UI on `can("write")` / `can("delete")`. For multi-db apps, pass the dbName: `can("write", "comments")`.
 
 ## Components Summary
 
-| Layer                                             | Change                                                                              |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `@vibes.diy/api-types` user settings              | Add `avatarCid?`, `displayName?`                                                    |
-| `@vibes.diy/api-types` iframe types               | Add `ReqVibeWhoAmI`, `ResVibeWhoAmI`, `EvtVibeViewerChanged`, viewer payload schema |
-| `vibes.diy/vibe/runtime/vibe.ts`                  | Extend `vibeMountParams` with optional `viewer`                                     |
-| `vibes.diy/vibe/runtime/VibeContext.tsx`          | Plumb `viewer` into context, subscribe to `viewerChanged`                           |
-| `vibes.diy/vibe/runtime/use-viewer.ts` (new)      | `useViewer()` hook + `can()` helper (port of `aclAllows`) + `avatarUrlFor()`        |
-| `vibes.diy/vibe/runtime/register-dependencies.ts` | Wire up whoAmI request and viewerChanged event on the bridge                        |
-| `vibes.diy/api/svc/public/who-am-i.ts` (new)      | Host handler — auth, access, dbAcls (no avatar work here)                           |
-| `vibes.diy/api/...` HTTP route (new)              | `GET /u/:userSlug/avatar` — 302 to current CID URL or Clerk `imageUrl`, ETag-cached |
-| `vibes.diy/pkg/app/components/...` settings page  | Avatar upload widget storing `avatarCid`                                            |
-| Host iframe mount caller                          | Compute initial viewer payload, pass into `VibeMountParams`                         |
-| Prompt template                                   | Document `useViewer()`                                                              |
+| Layer                                                | Change                                                                              |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `@vibes.diy/api-types` user settings                 | Add `avatarCid?`, `displayName?`                                                    |
+| `@vibes.diy/api-types` iframe types                  | Add `ReqVibeWhoAmI`, `ResVibeWhoAmI`, `EvtVibeViewerChanged`, viewer payload schema |
+| `vibes.diy/vibe/runtime/vibe.ts`                     | Extend `vibeMountParams` with optional `viewer`                                     |
+| `vibes.diy/vibe/runtime/VibeContext.tsx`             | Plumb `viewer` into context, subscribe to `viewerChanged`                           |
+| `vibes.diy/vibe/runtime/db-acl-allows.ts` (new)      | Client port of `aclAllows` — pure function, used by `useViewer`'s `can()`           |
+| `use-vibes/base/hooks/use-viewer.ts` (new)           | `useViewer()` hook + `can()` + `avatarUrlFor()` — reads runtime VibeContext         |
+| `use-vibes/base/index.ts` + `use-vibes/pkg/index.ts` | Re-export `useViewer` so vibes can `import { useViewer } from "use-vibes"`          |
+| `vibes.diy/vibe/runtime/register-dependencies.ts`    | Wire up whoAmI request and viewerChanged event on the bridge                        |
+| `vibes.diy/api/svc/public/who-am-i.ts` (new)         | Host handler — auth, access, dbAcls (no avatar work here)                           |
+| `vibes.diy/api/...` HTTP route (new)                 | `GET /u/:userSlug/avatar` — 302 to current CID URL or Clerk `imageUrl`, ETag-cached |
+| `vibes.diy/pkg/app/components/...` settings page     | Avatar upload widget storing `avatarCid`                                            |
+| Host iframe mount caller                             | Compute initial viewer payload, pass into `VibeMountParams`                         |
+| Prompt template                                      | Document `useViewer()`                                                              |
 
 ## Testing
 
