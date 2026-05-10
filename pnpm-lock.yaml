@@ -1201,6 +1201,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../../call-ai/v2
+      '@vibes.diy/vibe-runtime':
+        specifier: workspace:*
+        version: link:../../vibe/runtime
       '@vibes.diy/vibe-srv-sandbox':
         specifier: workspace:*
         version: link:../../vibe/srv-sandbox
