@@ -16,6 +16,7 @@ import { checkDocAccess, isPublicReadable, type DocAccessLevel } from "./access-
 import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { ASSET_SESSION_COOKIE_NAME } from "./asset-session.js";
+import { etagMatches, quoteEtag } from "./etag-utils.js";
 
 // Handler for `/_files/<userSlug>/<appSlug>/<dbName>/<docId>/<key>` on
 // the singleton asset host `assets.<base>`. Auth/ACL gate, doc lookup,
@@ -208,7 +209,7 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
     //    is safe — the response body is the same identity-gated bytes the
     //    200 path would have streamed. cid is the content hash on the
     //    AssetUploads row; quoted-string ETag per RFC 7232.
-    const etag = `"${upload.cid}"`;
+    const etag = quoteEtag(upload.cid);
     if (ifNoneMatch && etagMatches(ifNoneMatch, etag)) {
       // 304 must not carry a body — undici rejects `new Response("", {status:304})`.
       // Pass null body; the send provider forwards it to Response unchanged.
@@ -259,19 +260,6 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
     return Result.Ok(EventoResult.Stop);
   },
 };
-
-// RFC 7232 If-None-Match accepts a comma-separated list of ETags or `*`.
-// Strong/weak prefix is ignored at our layer — we only mint strong ETags
-// (the content cid is a strong identity) so any match is a strong match.
-function etagMatches(ifNoneMatch: string, etag: string): boolean {
-  const trimmed = ifNoneMatch.trim();
-  if (trimmed === "*") return true;
-  for (const candidate of trimmed.split(",")) {
-    const c = candidate.trim().replace(/^W\//, "");
-    if (c === etag) return true;
-  }
-  return false;
-}
 
 function sendErr(
   ctx: HandleTriggerCtx<Request, FilesAssetValidated, unknown>,

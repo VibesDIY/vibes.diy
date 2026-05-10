@@ -28,13 +28,22 @@ export interface RenderVibesOpts {
   ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>;
   fs: typeof sqlite.sqlApps.$inferSelect;
   fsItems: FileSystemItem[];
+  entryPointEtag: string;
+  entryPointCacheControl: string;
   pkgRepos: {
     private: NpmUrlCapture;
     public?: string; // default to esm.sh
   };
 }
 
-export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts): Promise<Result<EventoResultType>> {
+export async function renderVibe({
+  ctx,
+  fs,
+  fsItems,
+  entryPointEtag,
+  entryPointCacheControl,
+  pkgRepos,
+}: RenderVibesOpts): Promise<Result<EventoResultType>> {
   // console.log("renderVibe-8")
   const fsIportMap = fsItems.find((i) => i.transform?.type === "import-map");
   if (!fsIportMap) {
@@ -164,8 +173,8 @@ export async function renderVibe({ ctx, fs, fsItems, pkgRepos }: RenderVibesOpts
       status: 200,
       headers: {
         "Content-Type": "text/html",
-        "Cache-Control": "public, max-age=86400",
-        ETag: fs.fsId,
+        "Cache-Control": entryPointCacheControl,
+        ETag: entryPointEtag,
         ...optionalHeader,
       },
       body: ctx.request.method === "HEAD" ? "" : ((await renderToReadableStream(VibePage(vsctx))) as BodyInit),
