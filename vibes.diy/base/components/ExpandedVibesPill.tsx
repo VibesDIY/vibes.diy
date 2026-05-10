@@ -345,7 +345,9 @@ export function ExpandedVibesPill({
   // Metadata strip — added on top of the bubble when expanded and metadata
   // is available. Bottom/left/right of the bubble stay put; the top moves
   // up by metaHeight so the buttons row keeps its original position.
-  const hasMetadata = !!(appTitle || appIconUrl || appSlug);
+  const hasAppTitle = Boolean(appTitle?.trim());
+  const titleLineText = hasAppTitle ? appTitle ?? "\u00A0" : "\u00A0";
+  const hasMetadata = !!(hasAppTitle || appIconUrl || appSlug);
   const buttonsRowHeight = 175 * scale + 8;
   const metaHeight = expanded && hasMetadata ? height * 0.78 : 0;
   const bubbleTop = 123 * scale - 4 - metaHeight;
@@ -452,7 +454,7 @@ export function ExpandedVibesPill({
                 }}
               />
             )}
-            {(appTitle || appSlug) && (
+            {(hasAppTitle || appSlug) && (
               <div
                 style={{
                   display: "flex",
@@ -463,23 +465,21 @@ export function ExpandedVibesPill({
                   gap: 1,
                 }}
               >
-                {appTitle && (
-                  <span
-                    style={{
-                      color: "var(--vibes-near-black, #1a1a1a)",
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: height * 0.2,
-                      fontWeight: 700,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      letterSpacing: "0.5px",
-                      lineHeight: 1.1,
-                    }}
-                  >
-                    {appTitle}
-                  </span>
-                )}
+                <span
+                  style={{
+                    color: "var(--vibes-near-black, #1a1a1a)",
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: height * 0.2,
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    letterSpacing: "0.5px",
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {titleLineText}
+                </span>
                 {appSlug && (
                   <span
                     style={{
