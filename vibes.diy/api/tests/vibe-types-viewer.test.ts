@@ -57,4 +57,22 @@ describe("EvtVibeViewerChanged", () => {
       })
     ).toBe(true);
   });
+  it("rejects bad access value", () => {
+    expect(
+      isEvtVibeViewerChanged({
+        type: "vibe.evt.viewerChanged",
+        viewer: { userSlug: "alice" },
+        access: "superadmin",
+      })
+    ).toBe(false);
+  });
+  it("validates anon viewer (null)", () => {
+    expect(
+      isEvtVibeViewerChanged({
+        type: "vibe.evt.viewerChanged",
+        viewer: null,
+        access: "none",
+      })
+    ).toBe(true);
+  });
 });
