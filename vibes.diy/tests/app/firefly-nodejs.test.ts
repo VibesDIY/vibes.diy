@@ -205,6 +205,10 @@ describe("Node.js standalone API (fireproof.md patterns)", () => {
 });
 
 // ── New tests for the standalone fireproof() factory (Node-only path) ──
+// Imports use relative paths because the app-tests package runs in chromium
+// (Playwright) and `@vibes.diy/api-impl` is not symlinked into its
+// node_modules. The factory itself (use-vibes/base/fireproof-node.ts) is
+// covered separately by a Node-only test file in use-vibes/tests.
 import { FireflyApiAdapter } from "../../api/impl/firefly-api-adapter.js";
 import { FireflyDatabase } from "../../vibe/runtime/firefly-database.js";
 import { createFakeVibesDiyApi } from "./fake-vibes-diy-api.js";
@@ -260,7 +264,11 @@ describe("FireflyApiAdapter end-to-end against fake VibesDiyApi", () => {
   });
 });
 
-describe("Multi-database caching via fireproof() factory", () => {
+// The fireproof() factory itself is tested in use-vibes/tests/fireproof-node.node.test.ts.
+// These tests verify the underlying KeyedResolvOnce primitive behaves correctly when
+// composed with FireflyDatabase + FireflyApiAdapter — the same composition pattern
+// the factory uses, but without pulling in node:path (which Chromium can't load).
+describe("Multi-database caching via KeyedResolvOnce", () => {
   it("fireproof('a') returns the same instance on repeat calls", () => {
     const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
     const adapter = new FireflyApiAdapter(api as never, "my-app");
