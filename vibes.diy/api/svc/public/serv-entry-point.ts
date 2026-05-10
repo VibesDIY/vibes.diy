@@ -162,6 +162,13 @@ async function sendFetchOk(
   return Result.Ok(EventoResult.Continue);
 }
 
+async function rootHtmlValidatorTag(fsId: string, meta: unknown): Promise<string> {
+  const validatorInput = `${fsId}:${JSON.stringify(meta ?? null)}`;
+  const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(validatorInput));
+  const hashHex = Array.from(new Uint8Array(hashBuffer), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${fsId}.${hashHex}`;
+}
+
 export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unknown> = {
   hash: "serv-entry-point",
   validate: (ctx: ValidateTriggerCtx<Request, ExtractedHostToBindings, unknown>) => {
@@ -272,11 +279,10 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Ok(EventoResult.Stop);
     }
 
-    const rootHtmlEtag = quoteEtag(fs.fsId);
+    const rootHtmlTag = isRootHtmlPath ? await rootHtmlValidatorTag(fs.fsId, fs.meta) : fs.fsId;
+    const rootHtmlEtag = quoteEtag(rootHtmlTag);
     const isUnversionedPublishedRootHtml = !requestedFsId && isRootHtmlPath;
-    const rootHtmlCacheControl = isUnversionedPublishedRootHtml
-      ? "public, no-cache, must-revalidate"
-      : "public, max-age=86400";
+    const rootHtmlCacheControl = isUnversionedPublishedRootHtml ? "public, no-cache, must-revalidate" : "public, max-age=86400";
 
     // For unversioned published root HTML, validate before any expensive render.
     if (isUnversionedPublishedRootHtml && ifNoneMatch && etagMatches(ifNoneMatch, rootHtmlEtag)) {

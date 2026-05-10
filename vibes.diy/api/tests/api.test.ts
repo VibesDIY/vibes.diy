@@ -303,6 +303,81 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     }
   });
 
+  it("revalidates unversioned published root html when metadata changes for the same fsId", async () => {
+    const rRes = await api.ensureAppSlug({
+      mode: "production",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `export default function App() { return <div>Hello metadata validator</div>; } App();`,
+        },
+      ],
+    });
+    const res = rRes.Ok();
+    if (!isResEnsureAppSlugOk(res)) {
+      assert.fail("Expected ensureAppSlug to return a ResEnsureAppSlugOk");
+    }
+
+    const url = calcEntryPointUrl({
+      hostnameBase: ".nowhere",
+      protocol: "http",
+      port: "4711",
+      bindings: {
+        appSlug: res.appSlug,
+        userSlug: res.userSlug,
+      },
+    });
+
+    const firstRes = await api.cfg.fetch(url);
+    expect(firstRes.status).toBe(200);
+    expect(firstRes.headers.get("Cache-Control")).toBe("public, no-cache, must-revalidate");
+    const firstEtag = firstRes.headers.get("ETag");
+    expect(firstEtag).toBeTruthy();
+
+    const updatedTitle = `meta-title-${sthis.nextId(8).str.toLowerCase()}`;
+    await appCtx.vibesCtx.sql.db
+      .update(appCtx.vibesCtx.sql.tables.apps)
+      .set({
+        meta: [{ type: "title", title: updatedTitle }],
+      })
+      .where(
+        and(
+          eq(appCtx.vibesCtx.sql.tables.apps.appSlug, res.appSlug),
+          eq(appCtx.vibesCtx.sql.tables.apps.userSlug, res.userSlug),
+          eq(appCtx.vibesCtx.sql.tables.apps.fsId, res.fsId),
+          eq(appCtx.vibesCtx.sql.tables.apps.mode, "production")
+        )
+      );
+
+    const revalidatedRes = await api.cfg.fetch(
+      new Request(url, {
+        headers: {
+          "If-None-Match": firstEtag ?? "",
+        },
+      })
+    );
+
+    expect(revalidatedRes.status).toBe(200);
+    const secondEtag = revalidatedRes.headers.get("ETag");
+    expect(secondEtag).toBeTruthy();
+    expect(secondEtag).not.toBe(firstEtag);
+    const html = await revalidatedRes.text();
+    expect(html).toContain(`<title>${updatedTitle}</title>`);
+
+    const notModifiedRes = await api.cfg.fetch(
+      new Request(url, {
+        headers: {
+          "If-None-Match": secondEtag ?? "",
+        },
+      })
+    );
+
+    expect(notModifiedRes.status).toBe(304);
+    expect(notModifiedRes.headers.get("ETag")).toBe(secondEtag);
+  });
+
   it("rejects ensureAppSlug with no code files", async () => {
     const res = await api.ensureAppSlug({
       mode: "dev",
