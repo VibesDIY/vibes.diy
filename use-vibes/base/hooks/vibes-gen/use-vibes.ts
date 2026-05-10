@@ -24,38 +24,50 @@ export function useVibes(
   });
 
   // Track generation requests to handle concurrent calls
-  const generationIdRef = useRef<string | null>(null);
-  const mountedRef = useRef(true);
-  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const generationIdRef = useRef(0);
+  const progressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [regenerationTrigger, setRegenerationTrigger] = useState<number>(0);
 
+  const clearProgressTimer = useCallback(() => {
+    if (progressTimerRef.current) {
+      clearTimeout(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+  }, []);
+
   // Progress simulation for Cycle 1
-  const simulateProgress = useCallback((currentProgress = 0) => {
+  const simulateProgress = useCallback((generationId: number, currentProgress = 0) => {
+    if (generationIdRef.current !== generationId) {
+      return;
+    }
+
     const increment = Math.random() * 20 + 10; // 10-30% increments
     const newProgress = Math.min(currentProgress + increment, 90);
 
-    if (mountedRef.current) {
-      setState((prev) => ({ ...prev, progress: newProgress }));
+    setState((prev) => ({ ...prev, progress: newProgress }));
 
-      if (newProgress < 90) {
-        progressTimerRef.current = setTimeout(() => simulateProgress(newProgress), 100 + Math.random() * 200);
-      }
+    if (newProgress < 90 && generationIdRef.current === generationId) {
+      progressTimerRef.current = setTimeout(() => simulateProgress(generationId, newProgress), 100 + Math.random() * 200);
     }
   }, []);
 
   // Regenerate function
   const regenerate = useCallback(() => {
-    // Trigger regeneration by updating generation ID and state
-    generationIdRef.current = `regen-${Date.now()}`;
+    // Trigger regeneration by updating state
     setRegenerationTrigger((prev) => prev + 1);
   }, []);
 
   // Effect to start generation - only when prompt or options change
   useEffect(() => {
-    if (!mountedRef.current) return;
+    let isCurrentGeneration = true;
+    const generationId = generationIdRef.current + 1;
+    generationIdRef.current = generationId;
+
+    const isGenerationActive = () => isCurrentGeneration && generationIdRef.current === generationId;
 
     // Validate inputs - set error state instead of early return
     if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
+      clearProgressTimer();
       setState((prev) => ({
         ...prev,
         loading: false,
@@ -64,11 +76,15 @@ export function useVibes(
         code: null,
         progress: 0,
       }));
-      return;
+      return () => {
+        isCurrentGeneration = false;
+        clearProgressTimer();
+      };
     }
 
     // Skip processing if explicitly requested
     if (options.skip) {
+      clearProgressTimer();
       setState((prev) => ({
         ...prev,
         loading: false,
@@ -77,19 +93,16 @@ export function useVibes(
         code: null,
         progress: 0,
       }));
-      return;
+      return () => {
+        isCurrentGeneration = false;
+        clearProgressTimer();
+      };
     }
-
-    const generationId = Date.now().toString();
-    generationIdRef.current = generationId;
 
     const generateComponent = async () => {
       try {
         // Clear any existing progress timer
-        if (progressTimerRef.current) {
-          clearTimeout(progressTimerRef.current);
-          progressTimerRef.current = null;
-        }
+        clearProgressTimer();
 
         // Reset state for new generation
         setState((prev) => ({
@@ -102,7 +115,7 @@ export function useVibes(
         }));
 
         // Start progress simulation
-        simulateProgress(0);
+        simulateProgress(generationId, 0);
 
         // Use the full orchestrator for two-stage generation
         let result;
@@ -133,6 +146,10 @@ Return only the JSX code with a default export. Use modern React patterns with h
           timestamp: Date.now(),
         };
 
+        if (!isGenerationActive()) {
+          return;
+        }
+
         // Generate the actual component using the system prompt
         const messages = [
           { role: "system" as const, content: systemPrompt },
@@ -145,7 +162,7 @@ Return only the JSX code with a default export. Use modern React patterns with h
         });
 
         // Check if this request is still current (handle race conditions)
-        if (generationIdRef.current !== generationId || !mountedRef.current) {
+        if (!isGenerationActive()) {
           return;
         }
 
@@ -196,7 +213,7 @@ Return only the JSX code with a default export. Use modern React patterns with h
         }));
       } catch (error) {
         // Check if this request is still current
-        if (generationIdRef.current !== generationId || !mountedRef.current) {
+        if (!isGenerationActive()) {
           return;
         }
 
@@ -206,31 +223,21 @@ Return only the JSX code with a default export. Use modern React patterns with h
           error: error instanceof Error ? error : new Error("Generation failed"),
           progress: 0,
         }));
+      } finally {
+        if (generationIdRef.current === generationId) {
+          clearProgressTimer();
+        }
       }
     };
 
-    generateComponent();
+    void generateComponent();
 
     // Cleanup function
     return () => {
-      if (progressTimerRef.current) {
-        clearTimeout(progressTimerRef.current);
-        progressTimerRef.current = null;
-      }
+      isCurrentGeneration = false;
+      clearProgressTimer();
     };
-  }, [prompt, JSON.stringify(options), callAI, simulateProgress, regenerationTrigger]); // Include regeneration trigger
-
-  // Cleanup on unmount
-  useEffect(() => {
-    mountedRef.current = true;
-
-    return () => {
-      mountedRef.current = false;
-      if (progressTimerRef.current) {
-        clearTimeout(progressTimerRef.current);
-      }
-    };
-  }, []);
+  }, [prompt, JSON.stringify(options), callAI, clearProgressTimer, simulateProgress, regenerationTrigger]); // Include regeneration trigger
 
   return {
     App: state.App,
