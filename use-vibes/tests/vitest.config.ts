@@ -2,6 +2,9 @@ import { defineConfig } from "vitest/config";
 import { playwright } from "@vitest/browser-playwright";
 
 export default defineConfig({
+  optimizeDeps: {
+    include: ["react", "react-dom", "react/jsx-runtime", "@testing-library/react"],
+  },
   test: {
     name: "use-vibes",
     exclude: ["dist/**", "node_modules/**"],
