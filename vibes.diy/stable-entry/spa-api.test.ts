@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { handlePut } from "./spa-api.js";
+import { decodeApiResponse, handlePut } from "./spa-api.js";
 
 const ORIGIN = "https://example.com";
 
@@ -52,5 +52,38 @@ describe("handlePut", () => {
     });
     const response = await handlePut(request, ORIGIN);
     expect(response.status).toBe(303);
+  });
+});
+
+describe("decodeApiResponse", () => {
+  it("returns Ok for a valid ApiResponse", () => {
+    const result = decodeApiResponse({
+      routes: { "/foo": [{ key: "a", desc: "a-desc", active: true }] },
+      cookie: { "/foo": "a" },
+    });
+    expect(result.isOk()).toBe(true);
+  });
+
+  it("returns Ok for empty routes and cookie", () => {
+    const result = decodeApiResponse({ routes: {}, cookie: {} });
+    expect(result.isOk()).toBe(true);
+  });
+
+  it("returns Err when routes entry is wrong shape", () => {
+    const result = decodeApiResponse({
+      routes: { "/foo": [{ key: "a", desc: "a", active: "not-a-bool" }] },
+      cookie: {},
+    });
+    expect(result.isErr()).toBe(true);
+  });
+
+  it("returns Err when cookie value is not a string", () => {
+    const result = decodeApiResponse({ routes: {}, cookie: { "/foo": 42 } });
+    expect(result.isErr()).toBe(true);
+  });
+
+  it("returns Err for null and primitives", () => {
+    expect(decodeApiResponse(null).isErr()).toBe(true);
+    expect(decodeApiResponse("string").isErr()).toBe(true);
   });
 });
