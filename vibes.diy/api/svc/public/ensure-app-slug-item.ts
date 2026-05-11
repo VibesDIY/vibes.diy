@@ -31,6 +31,7 @@ import { checkAuth as checkAuth } from "../check-auth.js";
 import { ensureSlugBinding } from "../intern/ensure-slug-binding.js";
 import { ensureApps } from "../intern/write-apps.js";
 import { ensureAppMetadata } from "../intern/ensure-app-metadata.js";
+import { ensurePushSeededChat } from "../intern/ensure-push-seeded-chat.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 
 // Build a preAllocate-friendly prompt from pushed code. Picks the first
@@ -176,6 +177,25 @@ export async function ensureAppSlugItem(
     if (rMetadata.isErr()) {
       console.warn(`ensureAppSlugItem: ensureAppMetadata failed for ${ensured.userSlug}/${ensured.appSlug}:`, rMetadata.Err());
     }
+  }
+
+  // First-push chat invariant: create a ChatContext + seed a ChatSection
+  // carrying the pushed files as a synthetic assistant turn, so that any
+  // follow-up call (CLI `edit`, web continuation) opens the chat with
+  // file state already in the LLM-side conversation history. Without this,
+  // openChat-by-appSlug creates a fresh empty chat and the next prompt
+  // hits a context-free LLM (issue #1667). Idempotent — re-pushes find
+  // the existing chat and skip seeding.
+  const rSeed = await ensurePushSeededChat(vctx, {
+    userId: req._auth.verifiedAuth.claims.userId,
+    userSlug: ensured.userSlug,
+    appSlug: ensured.appSlug,
+    fsId: ensured.fsId,
+    mode: req.mode,
+    fileSystem: req.fileSystem,
+  });
+  if (rSeed.isErr()) {
+    console.warn(`ensureAppSlugItem: ensurePushSeededChat failed for ${ensured.userSlug}/${ensured.appSlug}:`, rSeed.Err());
   }
   return Result.Ok({
     type: "vibes.diy.res-ensure-app-slug",
