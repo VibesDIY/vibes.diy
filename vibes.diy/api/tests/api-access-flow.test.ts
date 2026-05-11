@@ -1,5 +1,10 @@
 import { assert, beforeAll, describe, expect, inject, it } from "vitest";
-import { isResHasAccessInviteAccepted, isResHasAccessRequestApproved, isResRequestAccessApproved } from "@vibes.diy/api-types";
+import {
+  type EvtRequestGrant,
+  isResHasAccessInviteAccepted,
+  isResHasAccessRequestApproved,
+  isResRequestAccessApproved,
+} from "@vibes.diy/api-types";
 import { createApiTestCtx, type ApiTestCtx } from "./api-test-setup.js";
 
 const REQUEST_FLOW_SEQ_BASE = 1_646_100;
@@ -45,6 +50,54 @@ describe("request flow", { timeout: (inject("DB_FLAVOUR" as never) as string) ==
 
     const rNonOwner = await ctx.api2.subscribeRequestGrants({ appSlug, userSlug });
     expect(rNonOwner.isErr()).toBe(true);
+  });
+
+  it("fires notifyRequestGrantChanged across request/approve/setRole/revoke lifecycle", async () => {
+    const events: EvtRequestGrant[] = [];
+    const dctx = await createApiTestCtx({
+      seqUserIdBase: REQUEST_FLOW_SEQ_BASE + 700,
+      apiUrlPort: 18651,
+      notifyRequestGrantChanged: async (evt) => {
+        events.push(evt);
+      },
+    });
+    const { appSlug, userSlug } = await dctx.createApp();
+    await dctx.api.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
+
+    events.length = 0;
+    const rRequested = await dctx.api2.requestAccess({ appSlug, userSlug });
+    if (rRequested.isErr()) assert.fail("requestAccess: " + JSON.stringify(rRequested.Err()));
+    const requested = rRequested.Ok();
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe("vibes.diy.evt-request-grant");
+    expect(events[0].op).toBe("upsert");
+    expect(events[0].grant.userSlug).toBe(userSlug);
+    expect(events[0].grant.appSlug).toBe(appSlug);
+    expect(events[0].grant.state).toBe("pending");
+
+    const foreignUserId = requested.foreignUserId;
+    events.length = 0;
+    await dctx.api.approveRequest({ appSlug, userSlug, foreignUserId, role: "viewer" });
+    expect(events).toHaveLength(1);
+    const approvedGrant = events[0].grant as { state: string; role?: string };
+    expect(approvedGrant.state).toBe("approved");
+    expect(approvedGrant.role).toBe("viewer");
+
+    events.length = 0;
+    await dctx.api.requestSetRole({ appSlug, userSlug, foreignUserId, role: "editor" });
+    expect(events).toHaveLength(1);
+    expect((events[0].grant as { role?: string }).role).toBe("editor");
+
+    events.length = 0;
+    await dctx.api.revokeRequest({ appSlug, userSlug, foreignUserId });
+    expect(events).toHaveLength(1);
+    expect(events[0].op).toBe("upsert");
+    expect(events[0].grant.state).toBe("revoked");
+
+    events.length = 0;
+    await dctx.api.revokeRequest({ appSlug, userSlug, foreignUserId, delete: true });
+    expect(events).toHaveLength(1);
+    expect(events[0].op).toBe("delete");
   });
 
   it("manual approval lifecycle", async () => {

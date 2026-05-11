@@ -5,7 +5,7 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { CFInject, cfServe, noopCache, vibesMsgEvento, WSSendProvider, VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
-import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
+import { type EvtRequestGrant, isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 let apiTestIdentityPartition = 0;
@@ -18,6 +18,12 @@ export interface CreateApiTestCtxOpts {
    * default seq derivation (which can produce NaN and alias owner/requester).
    */
   seqUserIdBase?: number;
+  notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
+  /**
+   * Override the apiUrl to avoid colliding with the module-level
+   * connection cache shared across tests that all use the default host.
+   */
+  apiUrlPort?: number;
 }
 
 function nextSeqUserIdBase(): number {
@@ -40,7 +46,9 @@ export interface ApiTestCtx {
 export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise<ApiTestCtx> {
   const sthis = ensureSuperThis();
   const deviceCA = await createTestDeviceCA(sthis);
-  const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+  const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, {
+    notifyRequestGrantChanged: opts.notifyRequestGrantChanged,
+  });
   const seqUserIdBase = opts.seqUserIdBase ?? nextSeqUserIdBase();
   const testUser = await createTestUser({ sthis, deviceCA, seqUserId: seqUserIdBase + 1 });
 
@@ -75,7 +83,7 @@ export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise
   };
 
   const api = new VibesDiyApi({
-    apiUrl: "http://localhost:8787/api",
+    apiUrl: `http://localhost:${opts.apiUrlPort ?? 8787}/api`,
     ws: wsPair.p1 as unknown as WebSocket,
     fetch: fetchPair.client.fetch,
     timeoutMs: 100000,
@@ -86,7 +94,7 @@ export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise
 
   const testUser2 = await createTestUser({ sthis, deviceCA, seqUserId: seqUserIdBase + 2 });
   const api2 = new VibesDiyApi({
-    apiUrl: "http://localhost:8787/api",
+    apiUrl: `http://localhost:${opts.apiUrlPort ?? 8787}/api`,
     ws: wsPair.p1 as unknown as WebSocket,
     fetch: fetchPair.client.fetch,
     timeoutMs: 100000,

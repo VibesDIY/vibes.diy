@@ -49,8 +49,10 @@ import { type SQL } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
 
+// Access the raw WSSendProvider from Evento's wrapped ctx.send.
+// Evento wraps the send provider — the raw instance is at .provider.
 function clientWsSend(ctx: { send: unknown }): WSSendProvider {
-  return ctx.send as unknown as WSSendProvider;
+  return (ctx.send as { provider: WSSendProvider }).provider;
 }
 
 async function sendUpdateEvent(vctx: VibesApiSQLCtx, value: Omit<EvtRequestGrant, "type">, senderConnId?: string) {
@@ -460,11 +462,8 @@ export const subscribeRequestGrantsEvento: EventoHandler<
         return Result.Ok(EventoResult.Continue);
       }
 
-      const wsSend = clientWsSend(ctx) as WSSendProvider & { subscribedRequestGrantKeys?: Set<string> };
+      const wsSend = clientWsSend(ctx);
       const subscriptionKey = `${req.userSlug}/${req.appSlug}`;
-      if (!wsSend.subscribedRequestGrantKeys) {
-        wsSend.subscribedRequestGrantKeys = new Set<string>();
-      }
       wsSend.subscribedRequestGrantKeys.add(subscriptionKey);
 
       if (vctx.registerRequestGrantSubscription) {
