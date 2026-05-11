@@ -81,6 +81,32 @@ describe("formatNoFilesError", () => {
     expect(out).not.toContain("No files resolved from AI response");
   });
 
+  it("noChanges — surfaces silent-no-op edit when turn ended without snapshots", () => {
+    const out = formatNoFilesError({
+      ...baseDiag,
+      sectionEventCount: 9,
+      blockCount: 561,
+      streamedBytes: 147439,
+      noChanges: true,
+    });
+    expect(out).toContain("Edit turn produced no file changes");
+    expect(out).toContain("SEARCH/REPLACE or create");
+    expect(out).toContain("section events received: 9 (561 blocks)");
+    expect(out).toContain("response bytes streamed: 147439");
+    expect(out).not.toContain("No files resolved from AI response");
+  });
+
+  it("noChanges yields to upstream-error headline when both present", () => {
+    const out = formatNoFilesError({
+      ...baseDiag,
+      sectionEventCount: 1,
+      noChanges: true,
+      upstreamErrors: [{ message: "rate limit hit" }],
+    });
+    expect(out).toContain("AI provider error: rate limit hit");
+    expect(out).not.toContain("Edit turn produced no file changes");
+  });
+
   it("never emits the bare original message", () => {
     const out = formatNoFilesError(baseDiag);
     // Issue #1626 — must always include diagnostic lines, never just the headline.

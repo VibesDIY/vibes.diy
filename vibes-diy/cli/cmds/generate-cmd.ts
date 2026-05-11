@@ -149,6 +149,11 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       return Result.Err(`Failed to resolve generated stream: ${rResolved.Err().message}`);
     }
     const resolved = rResolved.Ok();
+    if (args.verbose) {
+      process.stderr.write(
+        `[stream-summary] section-events=${sectionEventCount} blocks=${blockCount} bytes=${streamedBytes} snapshots=${resolved.snapshotCount} apply-errors=${resolved.applyErrorCount} turn-end=${resolved.turnEndSeen}\n`
+      );
+    }
     if (Object.keys(resolved.files).length === 0) {
       return Result.Err(
         formatNoFilesError({

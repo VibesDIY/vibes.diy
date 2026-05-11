@@ -26,13 +26,21 @@ export interface NoFilesDiagnostics {
   readonly upstreamErrors: readonly UpstreamErrorBrief[];
   /** Already-summarized apply errors of the shape `path: reason`. */
   readonly applyErrors: readonly string[];
+  /** True when the turn completed (`fs.turn.end` fired) but produced zero file
+   *  snapshots — i.e. the model returned without emitting any
+   *  successful SEARCH/REPLACE or create. With a non-empty disk seed this is
+   *  the "silent no-op" edit symptom; the alternative would be re-writing the
+   *  unchanged seed back to disk. */
+  readonly noChanges?: boolean;
 }
 
 export function formatNoFilesError(diag: NoFilesDiagnostics): string {
   const headline =
     diag.upstreamErrors.length > 0
       ? `AI provider error: ${diag.upstreamErrors.map((e) => `${e.code ? `[${e.code}] ` : ""}${e.message}`).join("; ")}`
-      : "No files resolved from AI response.";
+      : diag.noChanges
+        ? "Edit turn produced no file changes (model returned without emitting any successful SEARCH/REPLACE or create block)."
+        : "No files resolved from AI response.";
 
   const lines = [headline];
   lines.push(

@@ -111,6 +111,57 @@ describe("resolveSectionStream", () => {
     const ok = r.Ok();
     expect(ok.errors).toEqual([]);
     expect(ok.files["App.jsx"]).toBe('import React from "react";\n\nexport default function App() { return <h1>Hi</h1>; }');
+    expect(ok.snapshotCount).toBe(1);
+    expect(ok.applyErrorCount).toBe(0);
+    expect(ok.turnEndSeen).toBe(true);
+  });
+
+  it("flags a turn-end with no snapshots — silent no-op when seeded from disk", async () => {
+    // Reproduces the post-#1685 symptom: the new edit turn's block.end fires
+    // but no code blocks land, so fs.turn.end emits the seed unchanged and
+    // snapshotCount stays at zero. The CLI needs this signal to avoid a
+    // byte-identical re-push.
+    const seed = new Map([["App.jsx", "export default () => <h1>before</h1>;"]]);
+    const stream = new ReadableStream<SectionEvent>({
+      start(controller) {
+        controller.enqueue({
+          type: "vibes.diy.section-event",
+          chatId: "chat-1",
+          promptId: streamId,
+          blockSeq: 0,
+          timestamp: new Date(),
+          blocks: [
+            {
+              type: "block.end",
+              stats: {
+                toplevel: { lines: 0, bytes: 0 },
+                code: { lines: 0, bytes: 0 },
+                image: { lines: 0, bytes: 0 },
+                total: { lines: 0, bytes: 0 },
+              },
+              usage: {
+                given: [],
+                calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+              },
+              blockId: "b1",
+              streamId,
+              seq: 0,
+              blockNr: 1,
+              timestamp: new Date(),
+            },
+          ] as SectionEvent["blocks"],
+        });
+        controller.close();
+      },
+    });
+
+    const r = await resolveSectionStream({ sectionStream: stream, streamId, seed });
+    expect(r.isOk()).toBe(true);
+    const ok = r.Ok();
+    expect(ok.snapshotCount).toBe(0);
+    expect(ok.applyErrorCount).toBe(0);
+    expect(ok.turnEndSeen).toBe(true);
+    expect(ok.files["App.jsx"]).toBe("export default () => <h1>before</h1>;");
   });
 
   it("composes a SEARCH/REPLACE edit against the prior block", async () => {
@@ -172,6 +223,9 @@ describe("resolveSectionStream", () => {
     expect(ok.errors.length).toBeGreaterThan(0);
     expect(ok.errors[0]).toMatch(/no-match/);
     expect(ok.files["App.jsx"]).toBe(scaffoldLines.join("\n"));
+    expect(ok.applyErrorCount).toBe(1);
+    expect(ok.snapshotCount).toBe(1); // only the scaffold block applied
+    expect(ok.turnEndSeen).toBe(true);
   });
 
   it("tracks multiple paths independently", async () => {
