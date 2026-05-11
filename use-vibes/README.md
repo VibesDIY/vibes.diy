@@ -31,6 +31,73 @@ import { base64ToFile } from "use-vibes";
 const imageFile = base64ToFile(imageResponse.data[0].b64_json, "my-image.png");
 ```
 
+## Standalone Fireproof (Node.js / Wrangler)
+
+`use-vibes` exposes a standalone `fireproof()` factory for non-React contexts
+— Node scripts, Wrangler workers, anywhere you need to read/write Fireproof
+documents without the React hooks or the in-iframe postMessage bridge.
+
+The bare form Just Works if you've authenticated this device with the CLI:
+
+```bash
+npx vibes-diy login
+```
+
+```js
+import { fireproof } from "use-vibes";
+
+const db = fireproof("todos");
+
+const ok = await db.put({ text: "hello" });
+const doc = await db.get(ok.id);
+const { docs } = await db.query("type", { key: "todo" });
+
+db.subscribe((changes) => {
+  console.log("changed:", changes);
+}, true);
+```
+
+### How defaults resolve
+
+| Field      | Default source (when omitted)                                                       |
+| ---------- | ----------------------------------------------------------------------------------- |
+| `apiUrl`   | env `VIBES_DIY_API_URL`, then `https://vibes.diy/api`                               |
+| `appSlug`  | env `VIBES_APP_SLUG`, then `basename(process.cwd())`                                |
+| `getToken` | local device-id cert from the Fireproof keybag (populated by `npx vibes-diy login`) |
+| `userSlug` | lazy — looked up from your `defaultUserSlug` user setting on first request          |
+
+### Explicit overrides
+
+For Wrangler / CI / service-account contexts where the CLI flow doesn't apply:
+
+```js
+import { fireproof, type FireproofOpts } from "use-vibes";
+
+const db = fireproof("todos", {
+  apiUrl: "https://vibes.diy/api",
+  appSlug: "my-app",
+  userSlug: "alice", // optional — auto-derived from token otherwise
+  getToken: async () => ({
+    isOk: () => true,
+    Ok: () => ({ type: "device-id", token: myToken }),
+    // …a real @adviser/cement Result
+  }),
+});
+```
+
+### Caching semantics
+
+Calling `fireproof(name)` repeatedly is the supported pattern:
+
+- `fireproof("a") === fireproof("a")` — same name returns the same database instance.
+- `fireproof("a")` and `fireproof("b")` are distinct, but **share one WebSocket connection and one resolved userSlug**.
+- **First call's opts win.** If you need to talk to multiple `(apiUrl, appSlug)` pairs in one process, drop the sugar and construct `VibesDiyApi` + `FireflyApiAdapter` + `FireflyDatabase` directly.
+
+### v1 limitations
+
+- File uploads (docs with a `_files` field of `File`/`Blob` entries) are **not yet supported** — `db.put({_files: {...}})` will throw. Pure-doc workflows work end-to-end.
+- Inside a vibe iframe the import is rewritten to `@vibes.diy/vibe-runtime`, which has its own `fireproof("name")` form that uses the postMessage bridge instead. You don't need this Node factory in iframe code.
+
 ## Core Features
 
 ### Interactive Image Generation
