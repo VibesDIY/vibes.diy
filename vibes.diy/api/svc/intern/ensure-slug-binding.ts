@@ -174,28 +174,77 @@ export async function writeAppSlugBinding(
   appSlug: string
 ): Promise<Result<AppSlugBinding>> {
   return exception2Result(async (): Promise<Result<AppSlugBinding>> => {
-    const [{ count }] = await ctx.sql.db
-      .select({ count: sql<number>`count(*)` })
-      .from(ctx.sql.tables.userSlugBinding)
-      .innerJoin(ctx.sql.tables.appSlugBinding, eq(ctx.sql.tables.userSlugBinding.userSlug, ctx.sql.tables.appSlugBinding.userSlug))
-      .where(eq(ctx.sql.tables.userSlugBinding.userId, userId));
-    if (count >= ctx.params.maxAppSlugPerUserId) {
-      return Result.Err("maximum appSlug bindings reached for this userId");
-    }
-    const ledger = ctx.sthis.nextId(12).str;
     const now = new Date().toISOString();
-    await ctx.sql.db.insert(ctx.sql.tables.appSlugBinding).values({
-      appSlug,
-      userSlug,
-      ledger,
-      created: now,
-      updated: now,
+    const row = await ctx.sql.db.transaction(async (tx) => {
+      const existing = await tx
+        .select({ ledger: ctx.sql.tables.appSlugBinding.ledger, appSlug: ctx.sql.tables.appSlugBinding.appSlug })
+        .from(ctx.sql.tables.appSlugBinding)
+        .where(and(eq(ctx.sql.tables.appSlugBinding.userSlug, userSlug), eq(ctx.sql.tables.appSlugBinding.appSlug, appSlug)))
+        .limit(1)
+        .then((r) => r[0]);
+      if (existing) return existing;
+
+      const [{ count }] = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(ctx.sql.tables.userSlugBinding)
+        .innerJoin(ctx.sql.tables.appSlugBinding, eq(ctx.sql.tables.userSlugBinding.userSlug, ctx.sql.tables.appSlugBinding.userSlug))
+        .where(eq(ctx.sql.tables.userSlugBinding.userId, userId));
+      if (count >= ctx.params.maxAppSlugPerUserId) {
+        throw new Error("maximum appSlug bindings reached for this userId");
+      }
+
+      const preAlias = await tx
+        .select({ aliasSlug: ctx.sql.tables.appSlugAlias.aliasSlug })
+        .from(ctx.sql.tables.appSlugAlias)
+        .where(and(eq(ctx.sql.tables.appSlugAlias.userSlug, userSlug), eq(ctx.sql.tables.appSlugAlias.aliasSlug, appSlug)))
+        .limit(1)
+        .then((r) => r[0]);
+      if (preAlias) {
+        throw new Error(`Slug "${appSlug}" is already taken`);
+      }
+
+      const ledger = ctx.sthis.nextId(12).str;
+      await tx
+        .insert(ctx.sql.tables.appSlugBinding)
+        .values({
+          appSlug,
+          userSlug,
+          ledger,
+          created: now,
+          updated: now,
+        })
+        .onConflictDoNothing();
+
+      const inserted = await tx
+        .select({ ledger: ctx.sql.tables.appSlugBinding.ledger, appSlug: ctx.sql.tables.appSlugBinding.appSlug })
+        .from(ctx.sql.tables.appSlugBinding)
+        .where(and(eq(ctx.sql.tables.appSlugBinding.userSlug, userSlug), eq(ctx.sql.tables.appSlugBinding.appSlug, appSlug)))
+        .limit(1)
+        .then((r) => r[0]);
+      if (!inserted) {
+        throw new Error(`failed to create appSlug binding "${appSlug}"`);
+      }
+
+      // Post-insert verification mirrors writeUserSlugBinding's race-safety
+      // pattern: if a conflicting alias appeared before commit, abort.
+      const postAlias = await tx
+        .select({ aliasSlug: ctx.sql.tables.appSlugAlias.aliasSlug })
+        .from(ctx.sql.tables.appSlugAlias)
+        .where(and(eq(ctx.sql.tables.appSlugAlias.userSlug, userSlug), eq(ctx.sql.tables.appSlugAlias.aliasSlug, appSlug)))
+        .limit(1)
+        .then((r) => r[0]);
+      if (postAlias) {
+        throw new Error(`Slug "${appSlug}" is already taken`);
+      }
+
+      return inserted;
     });
+
     return Result.Ok({
       type: "vibes.diy-app-slug-binding",
       userId,
-      ledger,
-      appSlug,
+      ledger: row.ledger,
+      appSlug: row.appSlug,
     });
   });
 }
@@ -249,6 +298,29 @@ export async function ensureAppSlug(
           attemptErrors.push({ slug: sanitized, reason: "collision" });
           continue;
         }
+
+        const rAlias = await exception2Result(() =>
+          ctx.sql.db
+            .select({ aliasSlug: ctx.sql.tables.appSlugAlias.aliasSlug })
+            .from(ctx.sql.tables.appSlugAlias)
+            .where(
+              and(
+                eq(ctx.sql.tables.appSlugAlias.userSlug, binding.userSlug),
+                eq(ctx.sql.tables.appSlugAlias.aliasSlug, sanitized)
+              )
+            )
+            .limit(1)
+            .then((r) => r[0])
+        );
+        if (rAlias.isErr()) {
+          attemptErrors.push({ slug: sanitized, reason: `alias-check-err: ${rAlias.Err().message}` });
+          continue;
+        }
+        if (rAlias.Ok()) {
+          attemptErrors.push({ slug: sanitized, reason: "collision-alias" });
+          continue;
+        }
+
         const rWrite = await writeAppSlugBinding(ctx, binding.userId, binding.userSlug, sanitized);
         if (rWrite.isOk()) return Result.Ok({ ...rWrite.Ok(), chosenTitle: candidate.title });
         attemptErrors.push({ slug: sanitized, reason: `write-err: ${rWrite.Err().message}` });
@@ -260,6 +332,18 @@ export async function ensureAppSlug(
       return Result.Err("could not generate unique appSlug after attempts");
     } else {
       const sanitizedAppSlug = toRFC2822_32ByteLength(binding.appSlug);
+      const existingAlias = await ctx.sql.db
+        .select({ aliasSlug: ctx.sql.tables.appSlugAlias.aliasSlug })
+        .from(ctx.sql.tables.appSlugAlias)
+        .where(
+          and(
+            eq(ctx.sql.tables.appSlugAlias.userSlug, binding.userSlug),
+            eq(ctx.sql.tables.appSlugAlias.aliasSlug, sanitizedAppSlug)
+          )
+        )
+        .limit(1)
+        .then((r) => r[0]);
+
       // AppSlugBindings is keyed on (appSlug, userSlug); the same appSlug
       // may live under multiple userSlugs. Filter on both so the caller's
       // binding is created when only another user owns the same appSlug.
@@ -278,15 +362,20 @@ export async function ensureAppSlug(
         )
         .limit(1)
         .then((r) => r[0]);
-      if (!existing) {
-        return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, sanitizedAppSlug);
+      if (existing) {
+        return Result.Ok({
+          type: "vibes.diy-app-slug-binding",
+          userId: binding.userId,
+          ledger: existing.AppSlugBindings.ledger,
+          appSlug: sanitizedAppSlug,
+        });
       }
-      return Result.Ok({
-        type: "vibes.diy-app-slug-binding",
-        userId: binding.userId,
-        ledger: existing.AppSlugBindings.ledger,
-        appSlug: sanitizedAppSlug,
-      });
+
+      if (existingAlias) {
+        return Result.Err(`Slug "${sanitizedAppSlug}" is already taken`);
+      }
+
+      return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, sanitizedAppSlug);
     }
   });
 }

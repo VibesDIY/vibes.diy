@@ -693,6 +693,135 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       expect(rGetAppViaOldSlug.Ok().appSlug).toBe("my-renamed-app");
     });
 
+    it("ensureAppSettings preserves historical links across foo->bar->baz rename chain", async () => {
+      const created = await createApp();
+      const uniq = sthis.nextId(6).str.toLowerCase();
+      const midSlug = `mid-${uniq}`;
+      const finalSlug = `final-${uniq}`;
+
+      const rRename1 = await api.ensureAppSettings({
+        appSlug: created.appSlug,
+        userSlug: created.userSlug,
+        nextAppSlug: midSlug,
+      });
+      if (rRename1.isErr()) {
+        assert.fail(`Expected first rename to succeed: ${rRename1.Err().message}`);
+      }
+      expect(rRename1.Ok().error).toBeFalsy();
+      expect(rRename1.Ok().appSlug).toBe(midSlug);
+
+      const rRename2 = await api.ensureAppSettings({
+        appSlug: midSlug,
+        userSlug: created.userSlug,
+        nextAppSlug: finalSlug,
+      });
+      if (rRename2.isErr()) {
+        assert.fail(`Expected second rename to succeed: ${rRename2.Err().message}`);
+      }
+      expect(rRename2.Ok().error).toBeFalsy();
+      expect(rRename2.Ok().appSlug).toBe(finalSlug);
+
+      const rViaOriginal = await api.ensureAppSettings({ appSlug: created.appSlug, userSlug: created.userSlug });
+      if (rViaOriginal.isErr()) {
+        assert.fail(`Expected original slug lookup to succeed: ${rViaOriginal.Err().message}`);
+      }
+      expect(rViaOriginal.Ok().error).toBeFalsy();
+      expect(rViaOriginal.Ok().appSlug).toBe(finalSlug);
+
+      const rViaMid = await api.ensureAppSettings({ appSlug: midSlug, userSlug: created.userSlug });
+      if (rViaMid.isErr()) {
+        assert.fail(`Expected middle slug lookup to succeed: ${rViaMid.Err().message}`);
+      }
+      expect(rViaMid.Ok().error).toBeFalsy();
+      expect(rViaMid.Ok().appSlug).toBe(finalSlug);
+
+      const rGetViaOriginal = await api.getAppByFsId({ appSlug: created.appSlug, userSlug: created.userSlug });
+      if (rGetViaOriginal.isErr()) {
+        assert.fail(`Expected getAppByFsId(original slug) to succeed: ${rGetViaOriginal.Err().message}`);
+      }
+      expect(rGetViaOriginal.Ok().appSlug).toBe(finalSlug);
+
+      const rGetViaMid = await api.getAppByFsId({ appSlug: midSlug, userSlug: created.userSlug });
+      if (rGetViaMid.isErr()) {
+        assert.fail(`Expected getAppByFsId(mid slug) to succeed: ${rGetViaMid.Err().message}`);
+      }
+      expect(rGetViaMid.Ok().appSlug).toBe(finalSlug);
+    });
+
+    it("ensureAppSettings returns clear error when target appSlug is reserved by alias", async () => {
+      const created = await createApp();
+      const uniq = sthis.nextId(6).str.toLowerCase();
+      const reservedAliasSlug = `reserved-${uniq}`;
+      const now = new Date().toISOString();
+
+      await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.appSlugAlias).values({
+        userSlug: created.userSlug,
+        aliasSlug: reservedAliasSlug,
+        appSlug: `target-${uniq}`,
+        created: now,
+        updated: now,
+      });
+
+      const res = await api.ensureAppSettings({
+        appSlug: created.appSlug,
+        userSlug: created.userSlug,
+        nextAppSlug: reservedAliasSlug,
+      });
+      expect(res.Ok().error).toContain("taken");
+    });
+
+    it("ensureAppSettings resolver terminates on alias cycles", async () => {
+      const created = await createApp();
+      const uniq = sthis.nextId(6).str.toLowerCase();
+      const cycleA = `cycle-a-${uniq}`;
+      const cycleB = `cycle-b-${uniq}`;
+      const now = new Date().toISOString();
+
+      await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.appSlugAlias).values([
+        {
+          userSlug: created.userSlug,
+          aliasSlug: cycleA,
+          appSlug: cycleB,
+          created: now,
+          updated: now,
+        },
+        {
+          userSlug: created.userSlug,
+          aliasSlug: cycleB,
+          appSlug: cycleA,
+          created: now,
+          updated: now,
+        },
+      ]);
+
+      const rCycle = await api.ensureAppSettings({ appSlug: cycleA, userSlug: created.userSlug });
+      expect(rCycle.isOk()).toBe(true);
+      expect(rCycle.Ok().error).toContain("not-found");
+      expect(rCycle.Ok().appSlug).toBe(cycleA);
+    });
+
+    it("ensureAppSettings resolver stops after MAX_ALIAS_HOPS", async () => {
+      const created = await createApp();
+      const uniq = sthis.nextId(6).str.toLowerCase();
+      const slugs = new Array(10).fill(0).map((_, idx) => `hop-${idx}-${uniq}`);
+      const now = new Date().toISOString();
+
+      await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.appSlugAlias).values(
+        slugs.slice(0, 9).map((aliasSlug, idx) => ({
+          userSlug: created.userSlug,
+          aliasSlug,
+          appSlug: slugs[idx + 1],
+          created: now,
+          updated: now,
+        }))
+      );
+
+      const rHopLimit = await api.ensureAppSettings({ appSlug: slugs[0], userSlug: created.userSlug });
+      expect(rHopLimit.isOk()).toBe(true);
+      expect(rHopLimit.Ok().error).toContain("not-found");
+      expect(rHopLimit.Ok().appSlug).toBe(slugs[8]);
+    });
+
     it("ensureAppSettings returns clear error when target appSlug is taken", async () => {
       const a = await createApp();
       const b = await createApp();

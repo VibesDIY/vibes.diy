@@ -3,7 +3,7 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { ensureAppSlug, ensureUserSlug, writeAppSlugBinding, writeUserSlugBinding, VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import type { ClerkClaim } from "@vibes.diy/api-types";
-import { eq } from "drizzle-orm/sql/expressions";
+import { and, eq } from "drizzle-orm/sql/expressions";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 function makeClaims(partial: Partial<ClerkClaim["params"]>): ClerkClaim {
@@ -224,6 +224,92 @@ describe("slug ownership", () => {
     expect(rEnsure.isOk()).toBe(true);
     expect(rEnsure.Ok().appSlug).toBe(freeAppSlug);
     expect(rEnsure.Ok().chosenTitle).toBe("Second");
+  });
+
+  it("ensureAppSlug falls through when first preferredPair is reserved as an alias for the same userSlug", async () => {
+    const uniq = sthis.nextId(6).str.toLowerCase();
+    const userId = `alias-owner-user-${uniq}`;
+    const userSlug = `alias-owner-${uniq}`;
+    const canonicalAppSlug = `canonical-${uniq}`;
+    const reservedAliasSlug = `reserved-${uniq}`;
+    const freeAppSlug = `free-${uniq}`;
+
+    const rUserSlug = await writeUserSlugBinding(vibesCtx, userId, userSlug);
+    expect(rUserSlug.isOk()).toBe(true);
+
+    const rCanonical = await ensureAppSlug(vibesCtx, {
+      userId,
+      userSlug,
+      appSlug: canonicalAppSlug,
+    });
+    expect(rCanonical.isOk()).toBe(true);
+
+    const now = new Date().toISOString();
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSlugAlias).values({
+      userSlug,
+      aliasSlug: reservedAliasSlug,
+      appSlug: canonicalAppSlug,
+      created: now,
+      updated: now,
+    });
+
+    const rEnsure = await ensureAppSlug(vibesCtx, {
+      userId,
+      userSlug,
+      preferredPairs: [
+        { slug: reservedAliasSlug, title: "Reserved" },
+        { slug: freeAppSlug, title: "Free" },
+      ],
+    });
+    expect(rEnsure.isOk()).toBe(true);
+    expect(rEnsure.Ok().appSlug).toBe(freeAppSlug);
+    expect(rEnsure.Ok().chosenTitle).toBe("Free");
+  });
+
+  it("ensureAppSlug rejects an explicit appSlug reserved as alias for the same userSlug", async () => {
+    const uniq = sthis.nextId(6).str.toLowerCase();
+    const userId = `alias-reject-user-${uniq}`;
+    const userSlug = `alias-reject-${uniq}`;
+    const canonicalAppSlug = `canonical-${uniq}`;
+    const reservedAliasSlug = `reserved-${uniq}`;
+
+    const rUserSlug = await writeUserSlugBinding(vibesCtx, userId, userSlug);
+    expect(rUserSlug.isOk()).toBe(true);
+
+    const rCanonical = await ensureAppSlug(vibesCtx, {
+      userId,
+      userSlug,
+      appSlug: canonicalAppSlug,
+    });
+    expect(rCanonical.isOk()).toBe(true);
+
+    const now = new Date().toISOString();
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSlugAlias).values({
+      userSlug,
+      aliasSlug: reservedAliasSlug,
+      appSlug: canonicalAppSlug,
+      created: now,
+      updated: now,
+    });
+
+    const rEnsure = await ensureAppSlug(vibesCtx, {
+      userId,
+      userSlug,
+      appSlug: reservedAliasSlug,
+    });
+    expect(rEnsure.isErr()).toBe(true);
+    expect(rEnsure.Err().message).toMatch(/taken/i);
+
+    const rows = await vibesCtx.sql.db
+      .select()
+      .from(vibesCtx.sql.tables.appSlugBinding)
+      .where(
+        and(
+          eq(vibesCtx.sql.tables.appSlugBinding.userSlug, userSlug),
+          eq(vibesCtx.sql.tables.appSlugBinding.appSlug, reservedAliasSlug)
+        )
+      );
+    expect(rows).toHaveLength(0);
   });
 
   it("ensureAppSlug writes a binding for the caller when the same appSlug is owned by another user", async () => {

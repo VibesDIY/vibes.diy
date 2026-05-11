@@ -220,7 +220,13 @@ async function renameAppSlug(
         )
         .limit(1)
         .then((r) => r[0]);
-      if (existingTarget) {
+      const existingTargetAlias = await tx
+        .select({ aliasSlug: vctx.sql.tables.appSlugAlias.aliasSlug })
+        .from(vctx.sql.tables.appSlugAlias)
+        .where(and(eq(vctx.sql.tables.appSlugAlias.userSlug, args.userSlug), eq(vctx.sql.tables.appSlugAlias.aliasSlug, nextAppSlug)))
+        .limit(1)
+        .then((r) => r[0]);
+      if (existingTarget || existingTargetAlias) {
         throw new Error(`Slug "${nextAppSlug}" is already taken`);
       }
 
