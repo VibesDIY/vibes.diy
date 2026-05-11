@@ -73,6 +73,7 @@ export function isPromptBlockBegin(msg: unknown): msg is PromptBlockBegin {
   return !(PromptBlockBegin(msg) instanceof type.errors);
 }
 
-export function isPromptBlockEnd(msg: unknown): msg is PromptBlockEnd {
-  return !(PromptBlockEnd(msg) instanceof type.errors);
+export function isPromptBlockEnd(msg: unknown, streamId?: string): msg is PromptBlockEnd {
+  if (PromptBlockEnd(msg) instanceof type.errors) return false;
+  return !streamId || (msg as PromptBlockEnd).streamId === streamId;
 }

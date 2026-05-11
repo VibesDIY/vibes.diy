@@ -77,10 +77,14 @@ export function resolveSectionStream(opts: ResolveSectionStreamOpts): Promise<Re
         continue;
       }
       // The source (chat.sectionStream) does not close at end-of-turn — it
-      // stays open until chat.close() is called. Break on prompt.block.end,
-      // which is the LLM-turn-complete signal. Without this, the read loop
-      // hangs after the model finishes streaming.
-      if (isPromptBlockEnd(value)) {
+      // stays open until chat.close() is called. Break on prompt.block-end
+      // for THIS streamId — the LLM-turn-complete signal for the current
+      // turn. Filtering by streamId is essential when the server replays
+      // historical sections via resendChatSectionsPrevMsg on openChat (e.g.
+      // CLI `edit` against an existing chat): without it, the loop exits on
+      // the historical turn's terminator before the new response arrives
+      // (issue #1682).
+      if (isPromptBlockEnd(value, opts.streamId)) {
         break;
       }
     }
