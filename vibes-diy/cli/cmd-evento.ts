@@ -5,7 +5,7 @@ import { systemEvento } from "./cmds/system-cmd.js";
 import { pushEvento } from "./cmds/push-cmd.js";
 import { putAssetEvento } from "./cmds/put-asset-cmd.js";
 import { generateEvento } from "./cmds/generate-cmd.js";
-import { dbListEvento, dbGetEvento, dbPutEvento, dbDelEvento, dbQueryEvento } from "./cmds/db/index.js";
+import { dbListEvento, dbGetEvento, dbPutEvento, dbDelEvento, dbQueryEvento, dbSubscribeEvento } from "./cmds/db/index.js";
 import {
   deviceIdRegisterEvento,
   isCmdProgress,
@@ -53,6 +53,7 @@ export function cmdTsEvento() {
     dbPutEvento,
     dbDelEvento,
     dbQueryEvento,
+    dbSubscribeEvento,
   ]);
   return evento;
 }
