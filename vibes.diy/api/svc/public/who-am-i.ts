@@ -8,6 +8,8 @@ import {
   isUserSettingProfile,
   isUserSettingDefaultUserSlug,
   type DbAcl,
+  COMMENTS_DB_NAME,
+  COMMENTS_DEFAULT_ACL,
 } from "@vibes.diy/api-types";
 import { ReqVibeWhoAmI, ResVibeWhoAmI, ViewerPayload, DocAccessLevel, isReqVibeWhoAmI } from "@vibes.diy/vibe-types";
 import { eq } from "drizzle-orm";
@@ -54,7 +56,19 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
     env: [],
   });
   if (rSettings.isErr()) return Result.Err(rSettings.Err());
-  const dbAcls = rSettings.Ok().settings.entry.dbAcls;
+  const rawDbAcls = rSettings.Ok().settings.entry.dbAcls;
+
+  // Apply lazy defaults so client can() stays in lockstep with server resolveDbAcl.
+  // When no explicit comments override is stored, the server grants members write/delete
+  // via COMMENTS_DEFAULT_ACL. Mirror that here so can("write","comments") returns the
+  // same answer the server would reach.
+  // Note: COMMENTS_DEFAULT_ACL intentionally omits `read` — the server falls back to
+  // canRead||isPublicReadable; the client does the same via its own canRead logic.
+  const effectiveDbAcls: Record<string, DbAcl> = { ...rawDbAcls };
+  if (!effectiveDbAcls[COMMENTS_DB_NAME]) {
+    effectiveDbAcls[COMMENTS_DB_NAME] = COMMENTS_DEFAULT_ACL;
+  }
+  const dbAcls = effectiveDbAcls;
 
   if (!auth) {
     return Result.Ok({ viewer: null, access, dbAcls });
