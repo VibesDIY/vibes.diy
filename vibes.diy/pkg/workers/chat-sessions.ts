@@ -84,10 +84,9 @@ export class ChatSessions implements DurableObject {
       let delivered = 0;
       let skippedSender = 0;
       for (const conn of this.connections) {
-        const requestGrantKeys = (conn as WSSendProvider & { subscribedRequestGrantKeys?: Set<string> }).subscribedRequestGrantKeys;
         const subscribed =
           evt.type === "vibes.diy.evt-request-grant"
-            ? (requestGrantKeys?.has(subscriptionKey) ?? false)
+            ? conn.subscribedRequestGrantKeys.has(subscriptionKey)
             : conn.subscribedDocKeys.has(subscriptionKey);
         if (!subscribed) continue;
         // Skip the originating WebSocket — it already updated optimistically

@@ -213,6 +213,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   readonly cfg: VibesDiyApiConfig;
   private readonly pendingRequests = new Map<string, PendingRequest<unknown>>();
   private readonly docChangedListeners: ((userSlug: string, appSlug: string, dbName: string, docId: string) => void)[] = [];
+  private readonly docChangedDetachers = new Map<
+    (userSlug: string, appSlug: string, dbName: string, docId: string) => void,
+    () => void
+  >();
   private readonly docSubscriptions: { userSlug: string; appSlug: string; dbName: string }[] = [];
   private readonly requestGrantListeners: ((evt: EvtRequestGrant) => void)[] = [];
   private readonly requestGrantDetachers = new Map<(evt: EvtRequestGrant) => void, () => void>();
@@ -288,7 +292,9 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       this.currentConnection = conn;
       // Re-attach all onDocChanged listeners to the new connection
       for (const fn of this.docChangedListeners) {
-        this.attachDocChangedToConnection(conn, fn);
+        this.docChangedDetachers.get(fn)?.();
+        const detach = this.attachDocChangedToConnection(conn, fn);
+        this.docChangedDetachers.set(fn, detach);
       }
       // Re-attach all onRequestGrant listeners to the new connection
       for (const fn of this.requestGrantListeners) {
@@ -737,11 +743,11 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): () => void {
     this.docChangedListeners.push(fn);
-    let detach: (() => void) | undefined;
     const conn = this.currentConnection;
     if (conn) {
       // Connection already established — attach immediately
-      detach = this.attachDocChangedToConnection(conn, fn);
+      const detach = this.attachDocChangedToConnection(conn, fn);
+      this.docChangedDetachers.set(fn, detach);
     } else {
       // Trigger connection — replay loop in getReadyConnection will attach all stored listeners
       this.getReadyConnection().catch((_e: unknown) => {
@@ -751,6 +757,8 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return () => {
       const idx = this.docChangedListeners.indexOf(fn);
       if (idx >= 0) this.docChangedListeners.splice(idx, 1);
+      const detach = this.docChangedDetachers.get(fn);
+      this.docChangedDetachers.delete(fn);
       detach?.();
     };
   }
