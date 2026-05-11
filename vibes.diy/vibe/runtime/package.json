@@ -15,7 +15,7 @@
     "arktype": "^2.2.0",
     "charwise": "^3.0.1",
     "react": "^19.2.6",
-    "react-dom": "^19.2.5",
+    "react-dom": "^19.2.6",
     "sucrase": "^3.35.1"
   },
   "devDependencies": {
