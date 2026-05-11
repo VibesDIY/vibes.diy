@@ -227,19 +227,23 @@ persist = true
 [env.cli.browser]
 binding = "BROWSER"
 
+# cli keeps its own ChatSessions (per-env fan-out, scale isolation, future
+# divergence anchor for cli-specific prompts/rate-limits/auth). DocNotify is
+# cross-script-bound to env.prod so cli writes notify prod-side subscribers
+# (browsers, Node scripts on prod WS) — one shared pub/sub bus, no env
+# tagging needed in the DO itself. Cli-side subscribers (rare — CLI mostly
+# writes) won't receive cross-env notifications since prod's DocNotify can
+# only reach prod's ChatSessions; those shardIds get pruned via the normal
+# stale-fan-out path.
 [env.cli.durable_objects]
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
-  { name = "DOC_NOTIFY", class_name = "DocNotify" },
+  { name = "DOC_NOTIFY", class_name = "DocNotify", script_name = "vibes-diy-v2-prod" },
 ]
 
 [[env.cli.migrations]]
 tag = "v1"
 new_classes = ["ChatSessions"]
-
-[[env.cli.migrations]]
-tag = "v2"
-new_classes = ["DocNotify"]
 
 [[env.cli.d1_databases]]
 binding = "DB"
