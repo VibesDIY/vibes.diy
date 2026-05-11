@@ -144,16 +144,12 @@ describe("resolveSectionStream", () => {
       "  return <h1>Hello from seed</h1>;",
       ">>>>>>> REPLACE",
     ];
-    const stream = sectionEventStream([
-      { blockId: "b1", blockNr: 1, sectionId: "s1", path: "App.jsx", lines: editLines },
-    ]);
+    const stream = sectionEventStream([{ blockId: "b1", blockNr: 1, sectionId: "s1", path: "App.jsx", lines: editLines }]);
 
     const r = await resolveSectionStream({
       sectionStream: stream,
       streamId,
-      seed: new Map([
-        ["App.jsx", 'import React from "react";\n\nexport default function App() {\n  return <h1>Hello</h1>;\n}'],
-      ]),
+      seed: new Map([["App.jsx", 'import React from "react";\n\nexport default function App() {\n  return <h1>Hello</h1>;\n}']]),
     });
     expect(r.isOk()).toBe(true);
     const ok = r.Ok();
@@ -189,6 +185,126 @@ describe("resolveSectionStream", () => {
     const ok = r.Ok();
     expect(ok.files["App.jsx"]).toBe("// app");
     expect(ok.files["Helpers.jsx"]).toBe("// helpers");
+  });
+
+  it("ignores prompt.block-end from a different streamId (historical chat replay)", async () => {
+    // When `edit` opens an existing chat, the server replays prior section events
+    // via resendChatSectionsPrevMsg before the new turn's response arrives. Those
+    // historical sections carry the original prompt's streamId — including their
+    // own `prompt.block-end` terminator. The resolver must filter the break
+    // condition by streamId so it doesn't exit on the historical terminator and
+    // miss the new turn entirely. Regression test for #1682.
+    const newStreamId = "stream-new";
+    const historicalStreamId = "stream-historical";
+
+    const blockBaseFor = (streamIdFor: string, fields: BlockBaseFields) => ({
+      blockId: fields.blockId,
+      streamId: streamIdFor,
+      seq: fields.seq,
+      blockNr: fields.blockNr,
+      timestamp: new Date(),
+    });
+
+    const historicalBlocks: unknown[] = [
+      {
+        type: "block.code.begin",
+        sectionId: "hist-s1",
+        lang: "jsx",
+        path: "App.jsx",
+        ...blockBaseFor(historicalStreamId, { blockId: "hist-b1", seq: 0, blockNr: 1 }),
+      },
+      {
+        type: "block.code.line",
+        sectionId: "hist-s1",
+        lang: "jsx",
+        path: "App.jsx",
+        lineNr: 1,
+        line: "// historical content that must not become a file",
+        ...blockBaseFor(historicalStreamId, { blockId: "hist-b1", seq: 1, blockNr: 1 }),
+      },
+      {
+        type: "block.code.end",
+        sectionId: "hist-s1",
+        lang: "jsx",
+        path: "App.jsx",
+        stats: { lines: 1, bytes: 0 },
+        ...blockBaseFor(historicalStreamId, { blockId: "hist-b1", seq: 2, blockNr: 1 }),
+      },
+      {
+        type: "prompt.block-end",
+        chatId: "chat-1",
+        ...blockBaseFor(historicalStreamId, { blockId: "hist-pbe", seq: 3, blockNr: 1 }),
+      },
+    ];
+
+    const newBlocks: unknown[] = [
+      {
+        type: "block.code.begin",
+        sectionId: "new-s1",
+        lang: "jsx",
+        path: "App.jsx",
+        ...blockBaseFor(newStreamId, { blockId: "new-b1", seq: 0, blockNr: 1 }),
+      },
+      {
+        type: "block.code.line",
+        sectionId: "new-s1",
+        lang: "jsx",
+        path: "App.jsx",
+        lineNr: 1,
+        line: "// edited content from the new turn",
+        ...blockBaseFor(newStreamId, { blockId: "new-b1", seq: 1, blockNr: 1 }),
+      },
+      {
+        type: "block.code.end",
+        sectionId: "new-s1",
+        lang: "jsx",
+        path: "App.jsx",
+        stats: { lines: 1, bytes: 0 },
+        ...blockBaseFor(newStreamId, { blockId: "new-b1", seq: 2, blockNr: 1 }),
+      },
+      {
+        type: "block.end",
+        stats: {
+          toplevel: { lines: 0, bytes: 0 },
+          code: { lines: 1, bytes: 0 },
+          image: { lines: 0, bytes: 0 },
+          total: { lines: 1, bytes: 0 },
+        },
+        usage: {
+          given: [],
+          calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+        },
+        ...blockBaseFor(newStreamId, { blockId: "new-b1", seq: 3, blockNr: 1 }),
+      },
+    ];
+
+    const stream = new ReadableStream<SectionEvent>({
+      start(controller) {
+        controller.enqueue({
+          type: "vibes.diy.section-event",
+          chatId: "chat-1",
+          promptId: historicalStreamId,
+          blockSeq: 0,
+          timestamp: new Date(),
+          blocks: historicalBlocks as SectionEvent["blocks"],
+        });
+        controller.enqueue({
+          type: "vibes.diy.section-event",
+          chatId: "chat-1",
+          promptId: newStreamId,
+          blockSeq: 1,
+          timestamp: new Date(),
+          blocks: newBlocks as SectionEvent["blocks"],
+        });
+        controller.close();
+      },
+    });
+
+    const r = await resolveSectionStream({ sectionStream: stream, streamId: newStreamId });
+    expect(r.isOk()).toBe(true);
+    const ok = r.Ok();
+    expect(ok.errors).toEqual([]);
+    expect(ok.files["App.jsx"]).toBe("// edited content from the new turn");
   });
 
   it("invokes onSnapshot per code.end and onError per apply failure", async () => {
