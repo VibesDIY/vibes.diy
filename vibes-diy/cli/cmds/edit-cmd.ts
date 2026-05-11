@@ -57,12 +57,10 @@ export async function readSeedFilesFromDir(dir: string): Promise<Result<Readonly
   }
   return Result.Ok(
     new Map(
-      rFiles
-        .Ok()
-        .flatMap((file) => {
-          if (!("content" in file) || typeof file.content !== "string") return [];
-          return [[file.filename.startsWith("/") ? file.filename.slice(1) : file.filename, file.content] as const];
-        })
+      rFiles.Ok().flatMap((file) => {
+        if (!("content" in file) || typeof file.content !== "string") return [];
+        return [[file.filename.startsWith("/") ? file.filename.slice(1) : file.filename, file.content] as const];
+      })
     )
   );
 }
@@ -166,7 +164,17 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
       return Result.Err(`Failed to resolve edited stream: ${rResolved.Err().message}`);
     }
     const resolved = rResolved.Ok();
-    if (Object.keys(resolved.files).length === 0) {
+    if (args.verbose) {
+      process.stderr.write(
+        `[stream-summary] section-events=${sectionEventCount} blocks=${blockCount} bytes=${streamedBytes} snapshots=${resolved.snapshotCount} apply-errors=${resolved.applyErrorCount} turn-end=${resolved.turnEndSeen}\n`
+      );
+    }
+    // A turn that ended with zero successful snapshots is a silent no-op:
+    // `resolved.files` is the seed read from disk, so writing it back would
+    // produce a byte-identical update and a phantom redeploy. Surface it
+    // through the same diagnostics path as the empty-resolution case.
+    const noChanges = resolved.turnEndSeen && resolved.snapshotCount === 0;
+    if (Object.keys(resolved.files).length === 0 || noChanges) {
       return Result.Err(
         formatNoFilesError({
           sectionEventCount,
@@ -177,6 +185,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
             message: e.error?.message ?? "(no message)",
           })),
           applyErrors: resolved.errors,
+          noChanges,
         })
       );
     }

@@ -23,6 +23,16 @@ export interface ResolveSectionStreamOpts {
 export interface ResolveSectionStreamResult {
   readonly files: Readonly<Record<string, string>>;
   readonly errors: readonly string[];
+  /** Count of `fs.file.snapshot` events the new turn produced — i.e. blocks
+   *  whose SEARCH/REPLACE (or create) actually applied at least one section.
+   *  Zero with `turnEndSeen=true` means the model returned but didn't change
+   *  any file (silent no-op when `edit` seeds from disk: see issue #1626
+   *  follow-up). */
+  readonly snapshotCount: number;
+  /** Count of `fs.apply.error` events for the new turn. */
+  readonly applyErrorCount: number;
+  /** Whether at least one `fs.turn.end` fired for the new turn. */
+  readonly turnEndSeen: boolean;
 }
 
 /**
@@ -56,14 +66,19 @@ export function resolveSectionStream(opts: ResolveSectionStreamOpts): Promise<Re
     const reader = opts.sectionStream.pipeThrough(flatten).pipeThrough(fsStream).getReader();
     let files: Readonly<Record<string, string>> = {};
     const errors: string[] = [];
+    let snapshotCount = 0;
+    let applyErrorCount = 0;
+    let turnEndSeen = false;
     for (;;) {
       const { value, done } = await reader.read();
       if (done) break;
       if (isFsFileSnapshot(value)) {
+        snapshotCount += 1;
         opts.onSnapshot?.(value);
         continue;
       }
       if (isFsApplyError(value)) {
+        applyErrorCount += 1;
         opts.onError?.(value);
         for (const line of summarizeFailures(value.failures)) {
           errors.push(`${value.path}: ${line}`);
@@ -74,6 +89,7 @@ export function resolveSectionStream(opts: ResolveSectionStreamOpts): Promise<Re
         // fs.turn.end fires per block.end, each carrying the running vfs.
         // Keep overwriting — the last one is the fully-resolved turn.
         files = value.files;
+        turnEndSeen = true;
         continue;
       }
       // The source (chat.sectionStream) does not close at end-of-turn — it
@@ -89,6 +105,6 @@ export function resolveSectionStream(opts: ResolveSectionStreamOpts): Promise<Re
       }
     }
     reader.releaseLock();
-    return { files, errors };
+    return { files, errors, snapshotCount, applyErrorCount, turnEndSeen };
   });
 }

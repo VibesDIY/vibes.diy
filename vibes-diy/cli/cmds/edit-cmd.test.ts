@@ -137,12 +137,7 @@ function buildTrigger(args: ReqEdit, api: unknown, sent: unknown[]) {
   } as unknown as Parameters<typeof editEvento.handle>[0];
 }
 
-function buildApi(opts: {
-  sectionStream: ReadableStream<SectionEvent>;
-  promptId: string;
-  appSlug: string;
-  userSlug: string;
-}) {
+function buildApi(opts: { sectionStream: ReadableStream<SectionEvent>; promptId: string; appSlug: string; userSlug: string }) {
   const calls = {
     openChat: [] as unknown[],
     prompt: [] as unknown[],
@@ -247,13 +242,7 @@ describe("editEvento", () => {
           blockNr: 1,
           sectionId: "s1",
           path: "App.jsx",
-          lines: [
-            "<<<<<<< SEARCH",
-            "  return <h1>Hello</h1>;",
-            "=======",
-            "  return <h1>Hello, world</h1>;",
-            ">>>>>>> REPLACE",
-          ],
+          lines: ["<<<<<<< SEARCH", "  return <h1>Hello</h1>;", "=======", "  return <h1>Hello, world</h1>;", ">>>>>>> REPLACE"],
         },
       ]),
     });
@@ -317,13 +306,7 @@ describe("editEvento", () => {
           blockNr: 1,
           sectionId: "s1",
           path: "App.jsx",
-          lines: [
-            "<<<<<<< SEARCH",
-            "<h1>Target</h1>",
-            "=======",
-            "<h1>Target Updated</h1>",
-            ">>>>>>> REPLACE",
-          ],
+          lines: ["<<<<<<< SEARCH", "<h1>Target</h1>", "=======", "<h1>Target Updated</h1>", ">>>>>>> REPLACE"],
         },
       ]),
     });
@@ -357,5 +340,78 @@ describe("editEvento", () => {
       return maybe.result?.type === "use-vibes.cli.res-edit";
     }) as { result: { directory: string } };
     expect(resEdit.result.directory).toBe(target);
+  });
+
+  it("bails with a no-changes error when the edit turn ends without any successful snapshots", async () => {
+    // Repro for the silent-no-op symptom: dev.3 fixed the streamId filter so
+    // the resolver no longer errors out on the historical replay's
+    // prompt.block-end, but if the new edit turn produces a `block.end` with
+    // no code blocks, fs.turn.end carries the unchanged seed and the CLI would
+    // otherwise re-push a byte-identical app. We want a clear error instead.
+    const cwd = await mkdtemp(join(tmpdir(), "edit-cmd-noop-"));
+    tempDirs.push(cwd);
+    const original = ['import React from "react";', "", "export default function App() {", "  return <h1>Hello</h1>;", "}"].join(
+      "\n"
+    );
+    await writeFile(join(cwd, "App.jsx"), original, "utf-8");
+    vi.spyOn(process, "cwd").mockReturnValue(cwd);
+
+    const promptId = "prompt-noop";
+    const bareBlockEndStream = new ReadableStream<SectionEvent>({
+      start(controller) {
+        controller.enqueue({
+          type: "vibes.diy.section-event",
+          chatId: "chat-1",
+          promptId,
+          blockSeq: 0,
+          timestamp: new Date(),
+          blocks: [
+            {
+              type: "block.end",
+              stats: {
+                toplevel: { lines: 0, bytes: 0 },
+                code: { lines: 0, bytes: 0 },
+                image: { lines: 0, bytes: 0 },
+                total: { lines: 0, bytes: 0 },
+              },
+              usage: {
+                given: [],
+                calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+              },
+              ...blockBase({ blockId: "b1", seq: 0, blockNr: 1, streamId: promptId }),
+            },
+          ] as SectionEvent["blocks"],
+        });
+        controller.close();
+      },
+    });
+
+    const { api, calls } = buildApi({
+      promptId,
+      appSlug: "todo-app",
+      userSlug: "alice",
+      sectionStream: bareBlockEndStream,
+    });
+
+    const sent: unknown[] = [];
+    const args: ReqEdit = {
+      type: "use-vibes.cli.edit",
+      appSlug: "todo-app",
+      prompt: "Add a tea button",
+      userSlug: "alice",
+      instantJoin: false,
+      verbose: false,
+      dir: "",
+      apiUrl: "https://vibes.diy/api?.stable-entry.=cli",
+    };
+
+    const r = await editEvento.handle(buildTrigger(args, api, sent));
+    expect(r.isErr()).toBe(true);
+    expect(r.Err().message).toContain("Edit turn produced no file changes");
+
+    // Disk content must be untouched and no push must have been attempted.
+    const onDisk = await readFile(join(cwd, "App.jsx"), "utf-8");
+    expect(onDisk).toBe(original);
+    expect(calls.ensureAppSlug).toEqual([]);
   });
 });
