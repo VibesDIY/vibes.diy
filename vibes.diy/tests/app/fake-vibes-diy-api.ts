@@ -38,7 +38,7 @@ export function createFakeVibesDiyApi(opts: { defaultUserSlug?: string } = {}): 
 
   function dbStore(dbName: string): Map<string, Record<string, unknown>> {
     let store = docsByDb.get(dbName);
-    if (!store) {
+    if (store === undefined) {
       store = new Map();
       docsByDb.set(dbName, store);
     }
@@ -66,7 +66,7 @@ export function createFakeVibesDiyApi(opts: { defaultUserSlug?: string } = {}): 
 
     getDoc: async (req) => {
       const doc = dbStore(req.dbName).get(req.docId);
-      if (!doc) return Result.Err(`Document not found: ${req.docId}`);
+      if (doc === undefined) return Result.Err(`Document not found: ${req.docId}`);
       return Result.Ok({
         type: "vibes.diy.res-get-doc",
         status: "ok",

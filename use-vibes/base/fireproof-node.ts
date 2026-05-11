@@ -64,7 +64,7 @@ function envVar(name: string): string | undefined {
 function resolveOptsSync(opts?: FireproofOpts): ResolvedOpts {
   const apiUrl = opts?.apiUrl ?? envVar("VIBES_DIY_API_URL") ?? DEFAULT_API_URL;
   const appSlug = opts?.appSlug ?? envVar("VIBES_APP_SLUG") ?? defaultAppSlugFromCwd();
-  if (!appSlug) {
+  if (appSlug === "") {
     throw new Error("Set VIBES_APP_SLUG or pass {appSlug} to fireproof()");
   }
   const getToken =

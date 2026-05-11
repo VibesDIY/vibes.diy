@@ -47,14 +47,14 @@ export class FireflyApiAdapter {
   }
 
   async resolveUserSlug(): Promise<string> {
-    if (this.userSlugOverride) return this.userSlugOverride;
+    if (this.userSlugOverride !== undefined) return this.userSlugOverride;
     return this.userSlugOnce.once(async () => {
       const rRes = await this.api.ensureUserSettings({ settings: [] });
       if (rRes.isErr()) {
         throw new Error(`Failed to load user settings: ${rRes.Err()}`);
       }
       const def = rRes.Ok().settings.find(isUserSettingDefaultUserSlug);
-      if (!def) {
+      if (def === undefined) {
         throw new Error("No defaultUserSlug — pass {userSlug} or run 'npx vibes-diy login' first");
       }
       // Backfill svc.vibeApp.userSlug so FireflyDatabase's onMsg filter works.
