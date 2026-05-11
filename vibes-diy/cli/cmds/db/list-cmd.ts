@@ -1,6 +1,6 @@
 import { command } from "cmd-ts";
 import { type } from "arktype";
-import { Result, Option, EventoResult } from "@adviser/cement";
+import { Result, Option } from "@adviser/cement";
 import type { ValidateTriggerCtx, HandleTriggerCtx, EventoResultType, EventoHandler } from "@adviser/cement";
 import type { CliCtx } from "../../cli-ctx.js";
 import { cmdTsDefaultArgs } from "../../cli-ctx.js";
