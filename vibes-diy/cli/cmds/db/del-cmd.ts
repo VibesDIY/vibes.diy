@@ -84,7 +84,7 @@ export function dbDelCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      const docId = args.docIdFlag !== "" ? args.docIdFlag : (args.docIdPositional ?? "");
+      const docId = args.docIdPositional ?? args.docIdFlag;
       if (docId === "") {
         throw new Error("docId is required: pass as positional or --id");
       }
