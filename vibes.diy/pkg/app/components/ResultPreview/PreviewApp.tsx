@@ -41,7 +41,6 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // PreviewApp instance belongs to the previous vibe.
   useEffect(() => {
     srvVibeSandbox?.clearPendingSource();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only
   }, []);
 
   // Build the iframe URL as soon as we have slugs, even before any fsId. The
