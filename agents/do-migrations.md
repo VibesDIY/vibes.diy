@@ -19,7 +19,7 @@ This actually happened: commit `6d6fcfa8` dropped `[[env.cli.migrations]] tag = 
 
 ### Retire a local DO class (cross-script-bind instead)
 
-Cli was the example: local `DocNotify` → cross-script binding to prod's `DocNotify`.
+Cli was the example: local `DocNotify` → cross-script binding to prod's `DocNotify`. The local class becomes **dormant** — it stays in the cli script's class registry but nothing addresses it because the binding routes elsewhere via `script_name`.
 
 ```toml
 [env.cli.durable_objects]
@@ -31,18 +31,19 @@ bindings = [
 tag = "v1"
 new_classes = ["ChatSessions"]
 
-# Historical — leave in place even though DocNotify is no longer locally defined.
+# Historical — must stay. Removing this triggers 10074 (see below).
 [[env.cli.migrations]]
 tag = "v2"
 new_classes = ["DocNotify"]
-
-# Retires the local class. Storage on this script for DocNotify is deleted.
-[[env.cli.migrations]]
-tag = "v3"
-deleted_classes = ["DocNotify"]
 ```
 
-Caveat: `deleted_classes` deletes all DO instance storage for that class on that script. Confirm there's nothing on the cli-side DocNotify worth preserving (registrations, queues, etc.) before applying. For pub/sub coordinators where subscribers re-register on reconnect, this is acceptable.
+**Do not add `deleted_classes = ["DocNotify"]`.** Cloudflare blocks it with error 10061:
+
+> Cannot apply --delete-class migration to class 'DocNotify' without also removing the binding that references it.
+
+Cloudflare's validator counts the `class_name = "DocNotify"` field on the cross-script binding as a live reference to the local class, regardless of `script_name`. The class can't be both bound (even cross-script) and deleted in the same deploy.
+
+To actually delete the dormant class you'd need a three-step rollout — drop the `DOC_NOTIFY` binding entirely, deploy, append a `deleted_classes` migration, deploy, restore the binding with `script_name`, deploy — across three tagged releases. Almost never worth it. Leaving the class dormant is the canonical approach: zero new DO instances are created locally (the binding routes elsewhere), so the orphan never grows.
 
 ### Add a new DO class
 

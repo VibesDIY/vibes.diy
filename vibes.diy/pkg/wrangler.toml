@@ -245,21 +245,23 @@ bindings = [
 tag = "v1"
 new_classes = ["ChatSessions"]
 
-# v2 is historical: cli originally declared its own local DocNotify class.
-# This block must stay even though DocNotify is no longer locally defined —
-# wrangler refuses to deploy if the live worker has a migration tag that
-# isn't present in config (it tries to reset+reapply, which breaks on
-# already-existing classes — error 10074).
+# v2 is historical and must stay: cli originally declared its own local
+# DocNotify class, the live worker has v2 applied, and wrangler refuses
+# to deploy when a live tag is missing from config (10074 — tries to
+# reset+reapply and trips on existing classes).
+#
+# DocNotify is now cross-script-bound to vibes-diy-v2-prod (see
+# env.cli.durable_objects above). The local class registry entry stays
+# dormant — we can't `deleted_classes` it because Cloudflare counts the
+# DOC_NOTIFY binding (class_name = "DocNotify") as a live reference
+# even though script_name routes it elsewhere (10061 — "Cannot apply
+# --delete-class migration to class 'DocNotify' without also removing
+# the binding that references it"). Three-step retire (drop binding →
+# delete class → restore binding) is the only path to actually remove
+# the dormant class; not worth the deploy churn.
 [[env.cli.migrations]]
 tag = "v2"
 new_classes = ["DocNotify"]
-
-# v3 transitions DocNotify from a cli-local class to a cross-script binding
-# (see env.cli.durable_objects above — DocNotify now lives in vibes-diy-v2-prod).
-# `deleted_classes` retires the local DocNotify class registry on cli.
-[[env.cli.migrations]]
-tag = "v3"
-deleted_classes = ["DocNotify"]
 
 [[env.cli.d1_databases]]
 binding = "DB"
