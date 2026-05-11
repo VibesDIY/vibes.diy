@@ -11,6 +11,7 @@ import { runSafely, subcommands, setDefaultHelpFormatter, defaultHelpFormatter }
 import { getCliFooter } from "@vibes.diy/prompts";
 import { isResEnsureUserSettings, isUserSettingSharing, isResEnsureAppSlug } from "@vibes.diy/api-types";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
+import { dbSubcommands, isResDbList, type ResDbList } from "./cmds/db/index.js";
 import { loginCmd } from "./cmds/login-cmd.js";
 import { pushCmd } from "./cmds/push-cmd.js";
 import { putAssetCmd, isResPutAssetCli } from "./cmds/put-asset-cmd.js";
@@ -112,6 +113,7 @@ async function main(): Promise<number> {
       description: "vibes-diy cli",
       version: "1.0.0",
       cmds: {
+        db: dbSubcommands(ctx),
         generate: generateCmd(ctx),
         login: loginCmd(ctx),
         push: pushCmd(ctx),
@@ -200,6 +202,10 @@ async function main(): Promise<number> {
           }
           case isResEnsureAppSlug(msg): {
             // Already reported via sendProgress in push handler
+            break;
+          }
+          case isResDbList(msg): {
+            console.log((msg as ResDbList).dbNames.join("\n"));
             break;
           }
           case isResGenerate(msg): {
