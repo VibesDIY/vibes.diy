@@ -827,10 +827,13 @@ export class vibesDiySrvSandbox implements Disposable {
   // Captured iframe postMessage target — set on first message from iframe
   private iframeSource: Window | undefined;
   private iframeOrigin: string | undefined;
-  // Last source pushed before the iframe was ready to receive — replayed once
-  // the iframe sends its first vibe.* message and we capture iframeSource.
-  // Without this, brand-new apps drop the first scaffold push (iframe is still
-  // loading) and the preview only updates on the next code.end.
+  // Latest source we've ever attempted to push. Replayed on every runtime.ready
+  // so the iframe is rehydrated whether the ready fires from a brand-new boot,
+  // an HMR reload, or a cross-vibe navigation that destroyed the previous
+  // iframe Window (the prior reference would still look "alive" to a naive
+  // pushSource — postMessage to a detached Window is a silent no-op, so without
+  // replay the first chat-B push would be lost between the dead iframeSource
+  // and the new iframe's runtime.ready).
   private pendingSource: string | undefined;
 
   readonly handleMessage = async (event: MessageEvent): Promise<void> => {
@@ -868,7 +871,6 @@ export class vibesDiySrvSandbox implements Disposable {
       this.iframeSource.postMessage({ type: "vibe.evt.runtime.ack" } satisfies EvtRuntimeAck, this.iframeOrigin);
       if (this.pendingSource !== undefined) {
         const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source: this.pendingSource };
-        this.pendingSource = undefined;
         this.iframeSource.postMessage(msg, this.iframeOrigin);
         console.log("[hot-swap] replayed pendingSource", { len: msg.source.length });
       }
@@ -898,12 +900,14 @@ export class vibesDiySrvSandbox implements Disposable {
     }
   }
 
-  // Hot-swap the iframe's App.jsx with new source. If the iframe hasn't sent
-  // its first message yet (no postMessage target captured), buffer the source
-  // and replay it on iframeSource capture.
+  // Hot-swap the iframe's App.jsx with new source. Always cache the source in
+  // pendingSource so a subsequent runtime.ready (HMR reload, cross-vibe
+  // navigation, iframe replacement) can replay it — postMessage to a detached
+  // Window is a silent no-op, so without this cache the first push after the
+  // old iframe dies but before the new one acks would be lost.
   pushSource(source: string): boolean {
+    this.pendingSource = source;
     if (this.iframeSource === undefined || this.iframeOrigin === undefined) {
-      this.pendingSource = source;
       console.log("[hot-swap] pushSource buffered (no iframeSource yet)", { len: source.length });
       return false;
     }
