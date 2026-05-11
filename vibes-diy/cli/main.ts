@@ -219,7 +219,12 @@ async function main(): Promise<number> {
             break;
           }
           case isResDbList(msg): {
-            console.log((msg as ResDbList).dbNames.join("\n"));
+            const { dbNames } = msg as ResDbList;
+            if (dbNames.length === 0) {
+              console.log("(no databases yet — db is created on first put)");
+            } else {
+              console.log(dbNames.join("\n"));
+            }
             break;
           }
           case isResDbGet(msg): {
