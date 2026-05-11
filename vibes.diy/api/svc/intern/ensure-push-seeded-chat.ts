@@ -1,6 +1,7 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { isVibeCodeBlock, type VibeFile } from "@vibes.diy/api-types";
+import type { PromptContextSql } from "@vibes.diy/call-ai-v2";
 import type { VibesApiSQLCtx } from "../types.js";
 import { seedChatSection, type SeedFile } from "./seed-chat-section.js";
 
@@ -36,29 +37,48 @@ export interface EnsurePushSeededChatOpts {
 
 export interface EnsurePushSeededChatResult {
   readonly chatId: string;
-  /** "created" on first push (new ChatContext + seed section), "existing" on re-push. */
-  readonly state: "created" | "existing";
+  /**
+   * - `"created"`: brand new chat — fresh ChatContext, PromptContext, and ChatSection inserted.
+   * - `"repaired"`: ChatContext existed from a prior push whose section/context insert failed;
+   *   we reused the chatId and inserted the missing rows. Detected via absence of ChatSections
+   *   for the chatId.
+   * - `"existing"`: chat is fully seeded (or has user-edit history beyond the seed); nothing
+   *   inserted.
+   */
+  readonly state: "created" | "repaired" | "existing";
 }
 
 /**
  * Idempotent chat-seed for the `vibes-diy push` flow. If a ChatContext
- * already exists for (userId, userSlug, appSlug), return it untouched.
- * Otherwise create one and seed it with a synthetic prompt turn whose
- * assistant block is the pushed file set rendered as code blocks.
+ * already exists for (userId, userSlug, appSlug) AND a ChatSection is
+ * present for that chatId, return untouched — that chat is fully seeded
+ * or has accumulated real conversation history beyond the seed, either
+ * of which we must not overwrite.
  *
- * Why: openChat-by-appSlug rebuilds the LLM-side conversation history by
- * walking ChatSections via reconstructConversationMessages. Without a
- * seed, push-then-edit (or push-then-web-follow-up) hits a context-free
- * LLM and the model regenerates the app from scratch (see #1667 comment
- * thread). Seeding makes the first follow-up turn see the pushed files
- * just like a chat-originated turn would.
+ * If a ChatContext exists but the chatSections table has no row for it,
+ * a prior seed attempt failed between the ChatContext insert and the
+ * ChatSection insert. Recover by completing the missing inserts under
+ * the existing chatId. Without this repair the chat would be stuck in a
+ * half-seeded state forever — the caller logs and continues on failure,
+ * so a transient DB error during the first push would otherwise leave
+ * future pushes hitting the "existing" branch and skipping the seed.
  *
- * On re-push, we deliberately skip re-seeding even when the file set has
- * changed — the chat already has its own history beyond the initial
- * seed, and re-seeding would corrupt it. Re-pushes are a publish-only
- * operation; their file state lives in the `apps` table and is what the
- * runtime serves, but the chat history reflects the conversation that
- * produced those files.
+ * Seeded rows (all keyed off the same chatId / promptId):
+ *
+ * 1. ChatContexts: enables `openChat({mode:"chat"})` → `ensureChatId` to
+ *    resolve the (userSlug, appSlug) pair back to a chatId. CLI `edit`
+ *    (edit-cmd.ts) and the web continuation (chat.$userSlug.$appSlug.tsx)
+ *    both use mode "chat" and this table. (Mode "app"/"img" goes through
+ *    applicationChats via ensureApplicationChatId, but those are iframe
+ *    sandbox flows, not user-editing.)
+ * 2. PromptContexts: links chatId → fsId so `loadPriorFileSystem`
+ *    (prompt-chat-section.ts) seeds `resolveCodeBlocksToFileSystem` from
+ *    the pushed app. Without this row, the next turn's SEARCH/REPLACE
+ *    blocks compose against an empty buffer and persist 0-byte files.
+ * 3. ChatSections: carries the synthetic user-prompt + assistant code
+ *    blocks that `reconstructConversationMessages` replays into the LLM
+ *    history. Inserted LAST — its presence is what we use to detect
+ *    that a previous attempt finished, so it must be the final write.
  */
 export async function ensurePushSeededChat(
   vctx: VibesApiSQLCtx,
@@ -79,8 +99,25 @@ export async function ensurePushSeededChat(
   );
   if (rExisting.isErr()) return Result.Err(`Failed to look up chatContexts: ${rExisting.Err().message}`);
   const existing = rExisting.Ok();
+
+  let chatId: string;
+  let isRepair = false;
   if (existing.length > 0) {
-    return Result.Ok({ chatId: existing[0].chatId, state: "existing" });
+    chatId = existing[0].chatId;
+    const rSection = await exception2Result(() =>
+      vctx.sql.db
+        .select({ chatId: vctx.sql.tables.chatSections.chatId })
+        .from(vctx.sql.tables.chatSections)
+        .where(eq(vctx.sql.tables.chatSections.chatId, chatId))
+        .limit(1)
+    );
+    if (rSection.isErr()) return Result.Err(`Failed to look up chatSections: ${rSection.Err().message}`);
+    if (rSection.Ok().length > 0) {
+      return Result.Ok({ chatId, state: "existing" });
+    }
+    isRepair = true;
+  } else {
+    chatId = vctx.sthis.nextId(12).str;
   }
 
   const seedFiles: SeedFile[] = [];
@@ -92,21 +129,51 @@ export async function ensurePushSeededChat(
     return Result.Err("ensurePushSeededChat: no code files to seed from");
   }
 
-  const chatId = vctx.sthis.nextId(12).str;
   const promptId = vctx.sthis.nextId(12).str;
   const blockId = vctx.sthis.nextId(12).str;
   const now = new Date();
 
-  const rCtx = await exception2Result(() =>
-    vctx.sql.db.insert(vctx.sql.tables.chatContexts).values({
-      chatId,
-      userId: opts.userId,
+  if (!isRepair) {
+    const rCtx = await exception2Result(() =>
+      vctx.sql.db.insert(vctx.sql.tables.chatContexts).values({
+        chatId,
+        userId: opts.userId,
+        appSlug: opts.appSlug,
+        userSlug: opts.userSlug,
+        created: now.toISOString(),
+      })
+    );
+    if (rCtx.isErr()) return Result.Err(`Failed to insert chatContext: ${rCtx.Err().message}`);
+  }
+
+  if (opts.fsId) {
+    const fsRef = {
       appSlug: opts.appSlug,
       userSlug: opts.userSlug,
-      created: now.toISOString(),
-    })
-  );
-  if (rCtx.isErr()) return Result.Err(`Failed to insert chatContext: ${rCtx.Err().message}`);
+      mode: opts.mode,
+      fsId: opts.fsId,
+    };
+    const refValue: PromptContextSql = {
+      type: "prompt.usage.sql",
+      usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
+      fsRef,
+    };
+    const rPC = await exception2Result(() =>
+      vctx.sql.db.insert(vctx.sql.tables.promptContexts).values({
+        userId: opts.userId,
+        chatId,
+        promptId,
+        fsId: opts.fsId,
+        nethash: vctx.netHash(),
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        ref: refValue,
+        created: now.toISOString(),
+      })
+    );
+    if (rPC.isErr()) return Result.Err(`Failed to insert promptContext: ${rPC.Err().message}`);
+  }
 
   const userText = `Initial push from \`vibes-diy push\` (${seedFiles.length} file${seedFiles.length === 1 ? "" : "s"}).`;
   const rSeed = await seedChatSection(vctx, {
@@ -130,5 +197,5 @@ export async function ensurePushSeededChat(
   });
   if (rSeed.isErr()) return Result.Err(rSeed);
 
-  return Result.Ok({ chatId, state: "created" });
+  return Result.Ok({ chatId, state: isRepair ? "repaired" : "created" });
 }
