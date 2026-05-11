@@ -35,25 +35,71 @@ function CommentForm() {
 }
 ```
 
-## Other users' avatars
+## Tagging content with the viewer (write/render pattern)
 
-Store the author's `userSlug` and `avatarUrl` on each doc at write time. Render directly from the doc:
+When one user writes content others will see (comments, posts, messages), **stamp the viewer's identity onto the doc at write time**. Then any user can render the author info from the doc itself — no extra lookup. The `avatarUrl` is a stable indirection URL so it keeps working when the author later changes their avatar.
 
 ```jsx
-// On post:
-const { viewer } = useViewer();
-await db.put({ body, authorUserSlug: viewer.userSlug, authorAvatarUrl: viewer.avatarUrl });
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
 
-// On render:
-{
-  comments.map((c) => (
-    <li key={c._id}>
-      <img src={c.authorAvatarUrl} alt={c.authorUserSlug} />
-      {c.body}
-    </li>
-  ));
+function CommentThread() {
+  const { viewer, can } = useViewer();
+  const { useLiveQuery, database } = useFireproof("comments");
+  const { docs: comments } = useLiveQuery("createdAt");
+  const [body, setBody] = useState("");
+
+  async function post() {
+    if (!viewer || !body.trim()) return;
+    await database.put({
+      body: body.trim(),
+      createdAt: Date.now(),
+      // Stamp the viewer's identity at write time. Other users will
+      // render from these fields — no need to look anything up later.
+      authorUserSlug: viewer.userSlug,
+      authorDisplayName: viewer.displayName ?? viewer.userSlug,
+      authorAvatarUrl: viewer.avatarUrl,
+    });
+    setBody("");
+  }
+
+  return (
+    <div>
+      <ul>
+        {comments.map((c) => (
+          <li key={c._id}>
+            <img src={c.authorAvatarUrl} alt={c.authorUserSlug} className="avatar" />
+            <strong>{c.authorDisplayName}</strong>
+            <p>{c.body}</p>
+          </li>
+        ))}
+      </ul>
+
+      {!viewer ? (
+        <p>Sign in to comment.</p>
+      ) : !can("write", "comments") ? (
+        <p>Contact the owner to request write access so you can post.</p>
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            post();
+          }}
+        >
+          <input value={body} onChange={(e) => setBody(e.target.value)} />
+          <button type="submit">Post</button>
+        </form>
+      )}
+    </div>
+  );
 }
 ```
+
+Key points:
+
+- **Write-time stamping** — the doc carries the author info, not a foreign-key lookup. Old comments keep working even if the author later deletes their account.
+- **`avatarUrl` is stable** — if the author changes their avatar tomorrow, every historical comment shows the new image because the URL stays the same, the bytes change.
+- **One source of identity** — never store the viewer's user ID, only `userSlug` + `displayName` + `avatarUrl`. The trio is everything a renderer needs.
 
 ## Notes
 
