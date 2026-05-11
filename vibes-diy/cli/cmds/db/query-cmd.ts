@@ -4,6 +4,8 @@ import { Result, Option, exception2Result } from "@adviser/cement";
 import type { ValidateTriggerCtx, HandleTriggerCtx, EventoResultType, EventoHandler } from "@adviser/cement";
 import { FireflyApiAdapter } from "@vibes.diy/api-impl";
 import { isResQueryDocs } from "@vibes.diy/api-types";
+// @ts-expect-error "charwise" has no types
+import charwise from "charwise";
 import type { CliCtx } from "../../cli-ctx.js";
 import { cmdTsDefaultArgs } from "../../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../../cmd-evento.js";
@@ -62,59 +64,61 @@ export const dbQueryEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbQuery, Res
     }
 
     const field = ctx.validated.field;
-    // Filter docs that have the field set (field-name map fn)
-    let docs = res.docs.filter((doc) => doc[field] !== undefined);
+    // Encode each doc's field value as a charwise string for correct
+    // type-aware ordering (numeric keys sort numerically, arrays sort
+    // lexicographically by element, etc). Mirrors FireflyDatabase.query.
+    let rows = res.docs
+      .filter((doc) => doc[field] !== undefined)
+      .map((doc) => ({
+        doc,
+        encodedKey: charwise.encode(doc[field]) as string,
+      }));
 
-    // Apply --key filter
+    // Apply --key filter (exact match on encoded key)
     if (ctx.validated.key !== "") {
       const rKey = await exception2Result(() => JSON.parse(ctx.validated.key) as unknown);
       if (rKey.isErr()) return Result.Err(`Invalid --key JSON: ${rKey.Err()}`);
-      const keyVal = rKey.Ok();
-      docs = docs.filter((doc) => {
-        const dv = doc[field];
-        return JSON.stringify(dv) === JSON.stringify(keyVal);
-      });
+      const encodedKey = charwise.encode(rKey.Ok()) as string;
+      rows = rows.filter((r) => r.encodedKey === encodedKey);
     }
 
-    // Apply --prefix filter (prefix match on string representation)
+    // Apply --prefix filter. For array prefixes, charwise appends a trailing
+    // "!" separator; strip it so [2024, 11] matches [2024, 11, 15]. Scalar
+    // prefixes keep their full encoding intact.
     if (ctx.validated.prefix !== "") {
       const rPrefix = await exception2Result(() => JSON.parse(ctx.validated.prefix) as unknown);
       if (rPrefix.isErr()) return Result.Err(`Invalid --prefix JSON: ${rPrefix.Err()}`);
       const prefixVal = rPrefix.Ok();
-      const prefixStr = JSON.stringify(prefixVal);
-      docs = docs.filter((doc) => {
-        const dvStr = JSON.stringify(doc[field]);
-        return dvStr !== undefined && dvStr.startsWith(prefixStr.slice(0, -1));
-      });
+      let encodedPrefix = charwise.encode(prefixVal) as string;
+      if (Array.isArray(prefixVal) && encodedPrefix.endsWith("!")) {
+        encodedPrefix = encodedPrefix.slice(0, -1);
+      }
+      rows = rows.filter((r) => r.encodedKey.startsWith(encodedPrefix));
     }
 
-    // Apply --range filter [start, end] inclusive
+    // Apply --range [start, end] inclusive — charwise-encoded comparison
     if (ctx.validated.range !== "") {
       const rRange = await exception2Result(() => JSON.parse(ctx.validated.range) as [unknown, unknown]);
       if (rRange.isErr()) return Result.Err(`Invalid --range JSON: ${rRange.Err()}`);
       const [rangeStart, rangeEnd] = rRange.Ok();
-      const startStr = JSON.stringify(rangeStart);
-      const endStr = JSON.stringify(rangeEnd);
-      docs = docs.filter((doc) => {
-        const dvStr = JSON.stringify(doc[field]);
-        return dvStr !== undefined && dvStr >= startStr && dvStr <= endStr;
-      });
+      const encodedStart = charwise.encode(rangeStart) as string;
+      const encodedEnd = charwise.encode(rangeEnd) as string;
+      rows = rows.filter((r) => r.encodedKey >= encodedStart && r.encodedKey <= encodedEnd);
     }
 
-    // Sort by field value
-    docs.sort((a, b) => {
-      const av = JSON.stringify(a[field]);
-      const bv = JSON.stringify(b[field]);
-      return av < bv ? -1 : av > bv ? 1 : 0;
-    });
+    // Sort by charwise-encoded key (string compare on encoded form gives
+    // type-correct order: numeric, lexicographic, structured).
+    rows.sort((a, b) => (a.encodedKey < b.encodedKey ? -1 : a.encodedKey > b.encodedKey ? 1 : 0));
     if (ctx.validated.descending) {
-      docs.reverse();
+      rows.reverse();
     }
 
     // Apply --limit
     if (ctx.validated.limit > 0) {
-      docs = docs.slice(0, ctx.validated.limit);
+      rows = rows.slice(0, ctx.validated.limit);
     }
+
+    const docs = rows.map((r) => r.doc);
 
     return sendMsg(ctx, {
       type: "vibes-diy.cli.db.query-res",
