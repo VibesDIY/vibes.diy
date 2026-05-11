@@ -5,6 +5,7 @@ import { systemEvento } from "./cmds/system-cmd.js";
 import { pushEvento } from "./cmds/push-cmd.js";
 import { putAssetEvento } from "./cmds/put-asset-cmd.js";
 import { generateEvento } from "./cmds/generate-cmd.js";
+import { dbListEvento } from "./cmds/db/index.js";
 import {
   deviceIdRegisterEvento,
   isCmdProgress,
@@ -39,6 +40,15 @@ export function cmdTsEvento() {
     },
     decode: (i) => Promise.resolve(Result.Ok(i)),
   });
-  evento.push([userSettingsEvento, skillsEvento, systemEvento, pushEvento, putAssetEvento, generateEvento, deviceIdRegisterEvento]);
+  evento.push([
+    userSettingsEvento,
+    skillsEvento,
+    systemEvento,
+    pushEvento,
+    putAssetEvento,
+    generateEvento,
+    deviceIdRegisterEvento,
+    dbListEvento,
+  ]);
   return evento;
 }
