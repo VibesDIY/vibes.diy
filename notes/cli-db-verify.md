@@ -31,19 +31,14 @@ Setting:
 
 If `defaultUserSlug` is missing, run `vibes-diy login` again or visit the dashboard once to bind a slug.
 
-## Pick an app slug for this run
+## App slug for this run
 
-```bash
-export VIBES_APP_SLUG=verify-db-$(date +%s)
-echo "Using app slug: $VIBES_APP_SLUG"
-```
-
-(Alternative: `cd` into a directory of that name and skip the env var — the default is `basename(cwd)`.)
+Every command below passes `--app-slug=verify-db-1` inline. If you re-run the runbook on the same account, bump the number (`verify-db-2`, `verify-db-3`, ...) so each run gets a fresh app namespace.
 
 ## 1. `db put` — auto-creates db on first write
 
 ```bash
-npx vibes-diy db put '{"text": "hello", "type": "note"}'
+npx vibes-diy db put '{"text": "hello", "type": "note"}' --app-slug=verify-db-1
 ```
 
 Expected:
@@ -55,17 +50,17 @@ Expected:
 }
 ```
 
-Capture the id:
+Capture the id from a second put:
 
 ```bash
-DOC_ID=$(npx vibes-diy db put '{"text": "second", "type": "note"}' | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
+DOC_ID=$(npx vibes-diy db put '{"text": "second", "type": "note"}' --app-slug=verify-db-1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
 echo "Captured: $DOC_ID"
 ```
 
 ## 2. `db get` — round-trip
 
 ```bash
-npx vibes-diy db get "$DOC_ID"
+npx vibes-diy db get "$DOC_ID" --app-slug=verify-db-1
 ```
 
 Expected:
@@ -81,7 +76,7 @@ Expected:
 Negative case:
 
 ```bash
-npx vibes-diy db get nonexistent-id
+npx vibes-diy db get nonexistent-id --app-slug=verify-db-1
 ```
 
 Expected (non-zero exit + stderr):
@@ -95,16 +90,16 @@ Error: Document not found: nonexistent-id
 Add a couple more docs first:
 
 ```bash
-npx vibes-diy db put '{"type": "todo",  "rating": 3}'
-npx vibes-diy db put '{"type": "todo",  "rating": 7}'
-npx vibes-diy db put '{"type": "todo",  "rating": 10}'
-npx vibes-diy db put '{"type": "agent", "rating": 5}'
+npx vibes-diy db put '{"type": "todo",  "rating": 3}'  --app-slug=verify-db-1
+npx vibes-diy db put '{"type": "todo",  "rating": 7}'  --app-slug=verify-db-1
+npx vibes-diy db put '{"type": "todo",  "rating": 10}' --app-slug=verify-db-1
+npx vibes-diy db put '{"type": "agent", "rating": 5}'  --app-slug=verify-db-1
 ```
 
 ### Query by key
 
 ```bash
-npx vibes-diy db query type --key '"todo"'
+npx vibes-diy db query type --key '"todo"' --app-slug=verify-db-1
 ```
 
 Expected: array of 3 docs (rating 3, 7, 10).
@@ -112,13 +107,13 @@ Expected: array of 3 docs (rating 3, 7, 10).
 ### Query by range — the Codex P1 regression test
 
 ```bash
-npx vibes-diy db query rating --range '[3, 7]'
+npx vibes-diy db query rating --range '[3, 7]' --app-slug=verify-db-1
 ```
 
 Expected: 2 docs (rating 3 and 7). **The pre-fix bug would have excluded `rating: 10` only via lexical compare, but also incorrectly returned `10` if range was `[3, 20]`.** Verify with the latter:
 
 ```bash
-npx vibes-diy db query rating --range '[3, 20]'
+npx vibes-diy db query rating --range '[3, 20]' --app-slug=verify-db-1
 ```
 
 Expected: 3 docs (rating 3, 7, 10). If you see only 2, the charwise encoding regressed.
@@ -126,7 +121,7 @@ Expected: 3 docs (rating 3, 7, 10). If you see only 2, the charwise encoding reg
 ### Sort order — the other Codex P1 regression test
 
 ```bash
-npx vibes-diy db query rating
+npx vibes-diy db query rating --app-slug=verify-db-1
 ```
 
 Expected: docs ordered by rating numerically: 3, 5, 7, 10. **The pre-fix bug would have ordered `[10, 3, 5, 7]` lexically.**
@@ -134,7 +129,7 @@ Expected: docs ordered by rating numerically: 3, 5, 7, 10. **The pre-fix bug wou
 ### Limit + descending
 
 ```bash
-npx vibes-diy db query rating --descending --limit 2
+npx vibes-diy db query rating --descending --limit 2 --app-slug=verify-db-1
 ```
 
 Expected: top 2 by rating descending (rating 10, 7).
@@ -142,7 +137,7 @@ Expected: top 2 by rating descending (rating 10, 7).
 ## 4. `db list` — confirm db was created
 
 ```bash
-npx vibes-diy db list
+npx vibes-diy db list --app-slug=verify-db-1
 ```
 
 Expected: includes `default` (the implicit db all the above puts went to).
@@ -150,8 +145,8 @@ Expected: includes `default` (the implicit db all the above puts went to).
 Try a named db:
 
 ```bash
-npx vibes-diy db put '{"x": 1}' --db notes
-npx vibes-diy db list
+npx vibes-diy db put '{"x": 1}' --db notes --app-slug=verify-db-1
+npx vibes-diy db list --app-slug=verify-db-1
 ```
 
 Expected: includes both `default` and `notes`.
@@ -159,7 +154,7 @@ Expected: includes both `default` and `notes`.
 ## 5. `db del` — delete
 
 ```bash
-npx vibes-diy db del "$DOC_ID"
+npx vibes-diy db del "$DOC_ID" --app-slug=verify-db-1
 ```
 
 Expected:
@@ -174,7 +169,7 @@ Expected:
 Verify it's gone:
 
 ```bash
-npx vibes-diy db get "$DOC_ID"
+npx vibes-diy db get "$DOC_ID" --app-slug=verify-db-1
 ```
 
 Expected: `Error: Document not found: <DOC_ID>`.
@@ -186,22 +181,21 @@ Open two terminals.
 **Terminal A:**
 
 ```bash
-export VIBES_APP_SLUG=<same as above>
-npx vibes-diy db subscribe
+npx vibes-diy db subscribe --app-slug=verify-db-1
 ```
 
-Expected: prints `Subscribed to <app>/default — waiting for events (Ctrl+C to exit)` and blocks.
+Expected: prints `Subscribed to verify-db-1/default — waiting for events (Ctrl+C to exit)` and blocks.
 
-**Terminal B** (with the same `VIBES_APP_SLUG`):
+**Terminal B:**
 
 ```bash
-npx vibes-diy db put '{"text": "ping from terminal B"}'
+npx vibes-diy db put '{"text": "ping from terminal B"}' --app-slug=verify-db-1
 ```
 
 **Terminal A** should immediately print one JSON line like:
 
 ```json
-{"type":"vibes.diy.evt-doc-changed","userSlug":"<slug>","appSlug":"<slug>","dbName":"default","docId":"<id>"}
+{"type":"vibes.diy.evt-doc-changed","userSlug":"<slug>","appSlug":"verify-db-1","dbName":"default","docId":"<id>"}
 ```
 
 Then `Ctrl+C` Terminal A to exit cleanly.
@@ -209,7 +203,7 @@ Then `Ctrl+C` Terminal A to exit cleanly.
 ## 7. stdin pipe for `db put`
 
 ```bash
-echo '{"piped": true, "source": "stdin"}' | npx vibes-diy db put -
+echo '{"piped": true, "source": "stdin"}' | npx vibes-diy db put - --app-slug=verify-db-1
 ```
 
 Expected: same `{id, ok: true}` shape as inline JSON.
@@ -217,20 +211,14 @@ Expected: same `{id, ok: true}` shape as inline JSON.
 ## 8. `--user-slug` override
 
 ```bash
-npx vibes-diy db list --user-slug=someone-else-i-dont-own
+npx vibes-diy db list --user-slug=someone-else-i-dont-own --app-slug=verify-db-1
 ```
 
 Expected: server rejects with an access-denied or empty result. (No leak of other users' data.)
 
 ## Cleanup
 
-```bash
-# Delete every doc you created — easiest path is to delete the named dbs.
-# There's no `db drop` command yet; for a true wipe, delete docs one by one
-# via `db query` + `db del`, or just leave them — they're under a
-# disposable app slug.
-unset VIBES_APP_SLUG
-```
+There's no `db drop` command yet; for a true wipe, delete docs one by one via `db query` + `db del`, or just leave them — they're under a disposable app slug. Next runbook run, bump to `verify-db-2`.
 
 ## Summary checklist
 
