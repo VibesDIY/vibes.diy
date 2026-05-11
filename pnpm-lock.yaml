@@ -799,6 +799,9 @@ importers:
       arktype:
         specifier: ^2.2.0
         version: 2.2.0
+      charwise:
+        specifier: ^3.0.1
+        version: 3.0.1
       cmd-ts:
         specifier: ^0.15.0
         version: 0.15.0
