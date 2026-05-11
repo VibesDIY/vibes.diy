@@ -5,14 +5,7 @@ import { playwright } from "@vitest/browser-playwright";
 export default defineConfig({
   plugins: [tsconfigPaths({ configNames: ["tsconfig.test.json"] }) as never],
   optimizeDeps: {
-    include: [
-      "react",
-      "react-dom",
-      "react/jsx-runtime",
-      "@testing-library/react",
-      "react-markdown",
-      "react-router-dom",
-    ],
+    include: ["react", "react-dom", "react/jsx-runtime", "@testing-library/react", "react-markdown", "react-router-dom"],
     exclude: ["fsevents", "lightningcss"],
   },
   // cacheDir: "./node_modules/.vibes.diy-vite-cache",
@@ -37,6 +30,12 @@ export default defineConfig({
       ],
     },
     maxWorkers: 3,
+    sequence: {
+      // Unique groupOrder so vitest doesn't conflate this project's maxWorkers
+      // with sibling projects' defaults (vitest 4.1.5 errors if same groupOrder
+      // has different maxWorkers).
+      groupOrder: 1,
+    },
     testTimeout: 30000,
     hookTimeout: 10000,
   },
