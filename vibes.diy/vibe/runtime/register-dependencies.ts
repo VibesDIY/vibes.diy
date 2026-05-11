@@ -380,6 +380,16 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   // retry, the first runtime.ready is lost and the api.ackReady future never
   // resolves — every queued RPC hangs.
   sendRuntimeReadyWithRetry(ctxVibeApi);
+
+  // Fire-and-forget bootstrap whoAmI: render-vibe.ts ships viewer:null in
+  // mountParams because it can't reach Clerk session from the HTTP path.
+  // Once the WS bridge is live (ackReady) we ask the host for the real
+  // identity and dispatch a synthetic vibe.evt.viewerChanged into the same
+  // listener VibeContext uses for live updates. This is what makes signed-in
+  // viewers stop seeing themselves as anonymous on first render.
+  bootstrapViewer(ctxVibeApi).catch((e) => {
+    console.warn("[viewer] bootstrap whoAmI failed", e);
+  });
 }
 
 function sendRuntimeReadyWithRetry(api: VibeSandboxApi): void {
@@ -427,6 +437,22 @@ async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
   } else {
     console.log("[hot-swap iframe] applied successfully");
   }
+}
+
+export async function bootstrapViewer(api: VibeSandboxApi): Promise<void> {
+  const res = await api.whoAmI();
+  if (res.isErr()) return;
+  const r = res.Ok();
+  window.dispatchEvent(
+    new MessageEvent("message", {
+      data: {
+        type: "vibe.evt.viewerChanged",
+        viewer: r.viewer,
+        access: r.access,
+        ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
+      },
+    })
+  );
 }
 
 async function applyHotSwap(source: string): Promise<Result<void>> {

@@ -4,7 +4,7 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
-import { isResEnsureAppSlugOk, isResRequestAccessApproved } from "@vibes.diy/api-types";
+import { isResEnsureAppSlugOk, isResRequestAccessApproved, COMMENTS_DB_NAME, COMMENTS_DEFAULT_ACL } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { resolveWhoAmI } from "../svc/public/who-am-i.js";
 import type { VibesApiSQLCtx } from "@vibes.diy/api-svc";
@@ -163,6 +163,70 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     });
     expect(res.isOk()).toBe(true);
     expect(res.Ok().dbAcls?.comments?.write).toEqual(["members"]);
+  });
+
+  it("returns COMMENTS_DEFAULT_ACL for comments when no override is configured", async () => {
+    // The outer beforeAll configures an explicit comments override on `appSlug`.
+    // We need an app without any dbAcl override. Create a fresh isolated context.
+    const freshDeviceCA = await createTestDeviceCA(sthis);
+    const freshCtx = await createVibeDiyTestCtx(sthis, freshDeviceCA);
+    const freshSession = "who-am-i-no-override";
+    const freshUser = await createTestUser({ sthis, deviceCA: freshDeviceCA, session: freshSession, seqUserId: 1 });
+
+    const wsPair = TestWSPair.create();
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    freshCtx.vibesCtx.connections.add(wsSendProvider);
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: freshCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+    const freshApi = new VibesDiyApi({
+      apiUrl: "http://localhost:8787/api",
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await freshUser.getDashBoardToken()),
+    });
+    const rFresh = await freshApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `function App() { return <div>No-Override Test</div>; } App();`,
+        },
+      ],
+    });
+    const freshRes = rFresh.Ok();
+    if (!isResEnsureAppSlugOk(freshRes)) throw new Error("Failed to create no-override app");
+
+    const res = await resolveWhoAmI(freshCtx.vibesCtx, {
+      auth: undefined,
+      appSlug: freshRes.appSlug,
+      ownerUserSlug: freshRes.userSlug,
+      apiBaseUrl: "https://api.test",
+    });
+    expect(res.isOk()).toBe(true);
+    // When no explicit comments override is stored, the lazy default is injected.
+    expect(res.Ok().dbAcls?.[COMMENTS_DB_NAME]).toEqual(COMMENTS_DEFAULT_ACL);
+  });
+
+  it("explicit comments override is returned as-is (not replaced by COMMENTS_DEFAULT_ACL)", async () => {
+    // The beforeAll configures { write: ["members"] } for `appSlug` — without a
+    // `delete` key. Confirm that the stored value is returned verbatim, not merged
+    // with COMMENTS_DEFAULT_ACL (which has both write and delete).
+    const res = await resolveWhoAmI(vibesCtx, {
+      auth: undefined,
+      appSlug,
+      ownerUserSlug: userSlug,
+      apiBaseUrl: "https://api.test",
+    });
+    expect(res.isOk()).toBe(true);
+    const commentAcl = res.Ok().dbAcls?.[COMMENTS_DB_NAME];
+    expect(commentAcl).toBeDefined();
+    expect(commentAcl?.write).toEqual(["members"]);
+    // delete is absent because the explicit override didn't include it.
+    expect(commentAcl?.delete).toBeUndefined();
   });
 
   it("uses settings.displayName override when set", async () => {
