@@ -34,7 +34,7 @@
     "@vibes.diy/vibe-runtime": "workspace:*",
     "ag-grid-community": "^35.2.1",
     "ag-grid-react": "^35.2.1",
-    "react": "^19.2.5",
+    "react": "^19.2.6",
     "react-dom": "^19.2.5",
     "react-router": "^7.15.0",
     "react-router-dom": "^7.15.0"
