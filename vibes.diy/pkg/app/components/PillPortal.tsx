@@ -25,7 +25,7 @@ export function PillPortal({ isActive, onToggle, mobilePreviewShown = false }: P
       className={mobilePreviewShown ? "hidden md:block" : ""}
       style={{
         position: "fixed",
-        top: -9,
+        top: -21,
         left: 4,
         zIndex: 40,
       }}

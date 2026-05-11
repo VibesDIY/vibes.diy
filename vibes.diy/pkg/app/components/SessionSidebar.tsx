@@ -45,7 +45,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
       }`}
     >
       <div className="flex h-full flex-col overflow-hidden pt-16">
-        <div className="shrink-0 px-4 pt-4">
+        <div className="shrink-0 px-4">
           <Link
             to="/"
             onClick={() => onClose()}
