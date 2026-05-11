@@ -9,7 +9,6 @@ import {
   W3CWebSocketEvent,
   MetaItem,
   FileSystemItem,
-  PromptAndBlockMsgs,
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
   isFetchOkResult,
@@ -26,6 +25,7 @@ import { bumpAppRecency } from "../intern/bump-app-recency.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
+import { seedChatSection } from "../intern/seed-chat-section.js";
 
 function sanitizeSlug(raw: string): string {
   return raw
@@ -272,72 +272,18 @@ export async function forkApp(
       return Result.Err(`fork-fetch-app-jsx: ${srcEntry.fileName} (${srcEntry.assetURI})`);
     }
     const content = await new Response(rFetch.data as unknown as BodyInit).text();
-    const lines = content.split("\n");
     const promptId = vctx.sthis.nextId(12).str;
     const blockId = vctx.sthis.nextId(12).str;
-    const streamId = blockId;
-    const sectionId = promptId;
-    const now = new Date();
-    const baseBlock = { blockId, streamId, blockNr: 0, timestamp: now };
-    const userText = `Remix of ${src.userSlug}/${src.appSlug}`;
-    // Order matters: promptReducer only opens a PromptBlock on
-    // prompt.block-begin, so prompt.req MUST come after it or the chat
-    // renderer falls back to "User edited code" instead of showing the
-    // remix message.
-    const blocks: PromptAndBlockMsgs[] = [
-      { type: "prompt.block-begin", chatId, streamId, seq: 0, timestamp: now },
-      {
-        type: "prompt.req",
-        request: { messages: [{ role: "user", content: [{ type: "text", text: userText }] }] },
-        chatId,
-        streamId,
-        seq: 1,
-        timestamp: now,
-      },
-      { type: "block.begin", ...baseBlock, seq: 2 },
-      { type: "block.code.begin", sectionId, lang: "jsx", ...baseBlock, seq: 3 },
-      ...lines.map((line, i) => ({
-        type: "block.code.line" as const,
-        sectionId,
-        lang: "jsx",
-        line,
-        lineNr: i + 1,
-        ...baseBlock,
-        seq: 4 + i,
-      })),
-      {
-        type: "block.code.end",
-        sectionId,
-        lang: "jsx",
-        stats: { lines: lines.length, bytes: content.length },
-        ...baseBlock,
-        seq: 4 + lines.length,
-      },
-      {
-        type: "block.end",
-        stats: {
-          toplevel: { lines: 0, bytes: 0 },
-          code: { lines: lines.length, bytes: content.length },
-          image: { lines: 0, bytes: 0 },
-          total: { lines: lines.length, bytes: content.length },
-        },
-        usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
-        fsRef: { appSlug: destAppSlug, userSlug: destUserSlug, mode: destMode, fsId: src.fsId },
-        ...baseBlock,
-        seq: 5 + lines.length,
-      },
-      { type: "prompt.block-end", chatId, streamId, seq: 6 + lines.length, timestamp: now },
-    ];
-    const rSection = await exception2Result(() =>
-      vctx.sql.db.insert(vctx.sql.tables.chatSections).values({
-        chatId,
-        promptId,
-        blockSeq: 0,
-        blocks,
-        created: now.toISOString(),
-      })
-    );
-    if (rSection.isErr()) return Result.Err(`Failed to seed chatSection: ${rSection.Err().message}`);
+    const rSeed = await seedChatSection(vctx, {
+      chatId,
+      promptId,
+      blockId,
+      streamId: blockId,
+      userText: `Remix of ${src.userSlug}/${src.appSlug}`,
+      files: [{ path: srcEntry.fileName, lang: "jsx", content }],
+      fsRef: { appSlug: destAppSlug, userSlug: destUserSlug, mode: destMode, fsId: src.fsId },
+    });
+    if (rSeed.isErr()) return Result.Err(rSeed);
   }
 
   return Result.Ok({
