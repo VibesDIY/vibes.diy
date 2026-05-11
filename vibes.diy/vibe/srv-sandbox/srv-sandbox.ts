@@ -917,6 +917,18 @@ export class vibesDiySrvSandbox implements Disposable {
     return true;
   }
 
+  // Drop the cached source. PreviewApp calls this on cross-vibe navigation so
+  // a subsequent runtime.ready doesn't rehydrate the new iframe with the prior
+  // vibe's code — the new iframe's entry URL already loads the correct app,
+  // and a stale replay before chat B's processStream emits a qualifying push
+  // (or in the case where it never does — empty chats, sub-200-char buffers,
+  // missing `export default`) would overwrite it indefinitely.
+  clearPendingSource(): void {
+    if (this.pendingSource === undefined) return;
+    console.log("[hot-swap] pendingSource cleared", { hadLen: this.pendingSource.length });
+    this.pendingSource = undefined;
+  }
+
   readonly removeEventListeners: typeof window.removeEventListener;
   readonly args: VibesDiySrvSandboxArgs;
 

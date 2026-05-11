@@ -26,10 +26,23 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   useEffect(() => {
     const key = `${userSlug}/${appSlug}`;
     if (pinnedKey !== key) {
+      // Drop any cached hot-swap source from the prior vibe before pinning the
+      // new context — otherwise runtime.ready of the about-to-reload iframe
+      // would replay stale code on top of chat B's freshly-loaded entry URL.
+      srvVibeSandbox?.clearPendingSource();
       setPinnedFsId(fsId);
       setPinnedKey(key);
     }
-  }, [fsId, userSlug, appSlug, pinnedKey]);
+  }, [fsId, userSlug, appSlug, pinnedKey, srvVibeSandbox]);
+
+  // Also clear on first mount: when ResultPreview swaps the welcome empty-div
+  // for PreviewApp (showWelcome flips false during cross-chat nav), this is a
+  // fresh component instance and any pendingSource left over by the previous
+  // PreviewApp instance belongs to the previous vibe.
+  useEffect(() => {
+    srvVibeSandbox?.clearPendingSource();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only
+  }, []);
 
   // Build the iframe URL as soon as we have slugs, even before any fsId. The
   // server returns a "pending" entry shell when no apps row exists yet — the
