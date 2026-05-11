@@ -4,6 +4,30 @@ import { W3CWebSocketErrorEvent, W3CWebSocketMessageEvent, W3CWebSocketCloseEven
 
 const vibesDiyApiPerConnection = new KeyedResolvOnce<VibeDiyApiConnection>();
 
+/**
+ * Browser ErrorEvent / ws library Error / bare Event stringify to "[object Object]"
+ * with default coercion. Extract whatever useful detail is on the event before falling
+ * back to the type name — anything beats "[object Object]" in a CLI error message.
+ */
+export function formatWsEvent(event: unknown): string {
+  if (event === null || event === undefined) return String(event);
+  if (typeof event === "string") return event;
+  if (typeof event !== "object") return String(event);
+  const obj = event as { message?: unknown; error?: { message?: unknown }; type?: unknown; code?: unknown; reason?: unknown };
+  if (typeof obj.message === "string" && obj.message !== "") return obj.message;
+  if (obj.error && typeof obj.error === "object" && typeof obj.error.message === "string") return obj.error.message;
+  if (typeof obj.code === "string" || typeof obj.code === "number") {
+    const reason = typeof obj.reason === "string" && obj.reason !== "" ? ` ${obj.reason}` : "";
+    return `code=${obj.code}${reason}`;
+  }
+  if (typeof obj.type === "string" && obj.type !== "") return obj.type;
+  try {
+    return JSON.stringify(event);
+  } catch {
+    return Object.prototype.toString.call(event);
+  }
+}
+
 async function createWebSocket(url: string, ca?: string[]): Promise<WebSocket> {
   if (!runtimeFn().isBrowser) {
     // node env — pass https.globalAgent explicitly so ws uses its CA bundle
@@ -53,7 +77,7 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
       onError.invoke({ type: "ErrorEvent", event: event as W3CWebSocketErrorEvent["event"] });
       evictIfCurrent();
       if (!opened) {
-        waitOpen.reject(new Error(`WebSocket error: ${event}`));
+        waitOpen.reject(new Error(`WebSocket error: ${formatWsEvent(event)}`));
       }
     };
     ws.onclose = (event) => {

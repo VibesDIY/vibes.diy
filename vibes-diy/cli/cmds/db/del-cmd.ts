@@ -1,4 +1,4 @@
-import { command, positional, string } from "cmd-ts";
+import { command, option, optional, positional, string } from "cmd-ts";
 import { type } from "arktype";
 import { Result, Option } from "@adviser/cement";
 import type { ValidateTriggerCtx, HandleTriggerCtx, EventoResultType, EventoHandler } from "@adviser/cement";
@@ -70,19 +70,32 @@ export function dbDelCmd(ctx: CliCtx) {
     args: {
       ...cmdTsDefaultArgs(ctx),
       ...dbCommonArgs(ctx),
-      docId: positional({
-        type: string,
+      docIdPositional: positional({
+        type: optional(string),
         displayName: "docId",
-        description: "Document ID to delete",
+        description: "Document ID (or pass --id)",
+      }),
+      docIdFlag: option({
+        long: "id",
+        description: "Document ID — same as positional, kept for symmetry with `db put --id`",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
       }),
     },
-    handler: ctx.cliStream.enqueue((args) => ({
-      type: "vibes-diy.cli.db.del",
-      apiUrl: args.apiUrl,
-      appSlug: args.appSlug,
-      userSlug: args.userSlug,
-      dbName: args.dbName,
-      docId: args.docId,
-    })),
+    handler: ctx.cliStream.enqueue((args) => {
+      const docId = args.docIdFlag !== "" ? args.docIdFlag : (args.docIdPositional ?? "");
+      if (docId === "") {
+        throw new Error("docId is required: pass as positional or --id");
+      }
+      return {
+        type: "vibes-diy.cli.db.del",
+        apiUrl: args.apiUrl,
+        appSlug: args.appSlug,
+        userSlug: args.userSlug,
+        dbName: args.dbName,
+        docId,
+      };
+    }),
   });
 }

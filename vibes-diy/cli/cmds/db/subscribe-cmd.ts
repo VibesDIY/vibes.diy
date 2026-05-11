@@ -38,9 +38,15 @@ export const dbSubscribeEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbSubscr
     if (rUser.isErr()) return Result.Err(rUser.Err());
     const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userSlug: rUser.Ok() });
 
-    // Trigger server-side subscription
+    // Trigger server-side subscription. Auto-reconnect on transient network errors is
+    // not yet implemented at this layer — surface a clear, actionable error instead of
+    // letting the underlying WebSocket error bubble up as raw "[object Object]".
     const rSub = await adapter.subscribeDocs(ctx.validated.dbName);
-    if (rSub.isErr()) return Result.Err(rSub.Err());
+    if (rSub.isErr()) {
+      return Result.Err(
+        `Subscribe failed: ${rSub.Err()}. Check your network connection and retry — 'db subscribe' does not currently auto-reconnect.`
+      );
+    }
 
     // Notify user we're listening
     await sendProgress(
@@ -67,7 +73,8 @@ export const dbSubscribeEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbSubscr
 export function dbSubscribeCmd(ctx: CliCtx) {
   return command({
     name: "subscribe",
-    description: "Tail real-time doc-changed events for a database",
+    description:
+      "Tail real-time doc-changed events for a database (Ctrl+C to exit; no auto-reconnect on disconnect — restart the command).",
     args: {
       ...cmdTsDefaultArgs(ctx),
       ...dbCommonArgs(ctx),
