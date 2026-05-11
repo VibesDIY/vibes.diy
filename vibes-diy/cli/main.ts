@@ -11,7 +11,19 @@ import { runSafely, subcommands, setDefaultHelpFormatter, defaultHelpFormatter }
 import { getCliFooter } from "@vibes.diy/prompts";
 import { isResEnsureUserSettings, isUserSettingSharing, isResEnsureAppSlug } from "@vibes.diy/api-types";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
-import { dbSubcommands, isResDbList, type ResDbList } from "./cmds/db/index.js";
+import {
+  dbSubcommands,
+  isResDbList,
+  type ResDbList,
+  isResDbGet,
+  type ResDbGet,
+  isResDbPut,
+  type ResDbPut,
+  isResDbDel,
+  type ResDbDel,
+  isResDbQuery,
+  type ResDbQuery,
+} from "./cmds/db/index.js";
 import { loginCmd } from "./cmds/login-cmd.js";
 import { pushCmd } from "./cmds/push-cmd.js";
 import { putAssetCmd, isResPutAssetCli } from "./cmds/put-asset-cmd.js";
@@ -206,6 +218,24 @@ async function main(): Promise<number> {
           }
           case isResDbList(msg): {
             console.log((msg as ResDbList).dbNames.join("\n"));
+            break;
+          }
+          case isResDbGet(msg): {
+            console.log(JSON.stringify((msg as ResDbGet).doc, null, 2));
+            break;
+          }
+          case isResDbPut(msg): {
+            const r = msg as ResDbPut;
+            console.log(JSON.stringify({ id: r.id, ok: r.ok }, null, 2));
+            break;
+          }
+          case isResDbDel(msg): {
+            const r = msg as ResDbDel;
+            console.log(JSON.stringify({ id: r.id, ok: r.ok }, null, 2));
+            break;
+          }
+          case isResDbQuery(msg): {
+            console.log(JSON.stringify((msg as ResDbQuery).docs, null, 2));
             break;
           }
           case isResGenerate(msg): {
