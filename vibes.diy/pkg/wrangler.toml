@@ -245,6 +245,22 @@ bindings = [
 tag = "v1"
 new_classes = ["ChatSessions"]
 
+# v2 is historical: cli originally declared its own local DocNotify class.
+# This block must stay even though DocNotify is no longer locally defined —
+# wrangler refuses to deploy if the live worker has a migration tag that
+# isn't present in config (it tries to reset+reapply, which breaks on
+# already-existing classes — error 10074).
+[[env.cli.migrations]]
+tag = "v2"
+new_classes = ["DocNotify"]
+
+# v3 transitions DocNotify from a cli-local class to a cross-script binding
+# (see env.cli.durable_objects above — DocNotify now lives in vibes-diy-v2-prod).
+# `deleted_classes` retires the local DocNotify class registry on cli.
+[[env.cli.migrations]]
+tag = "v3"
+deleted_classes = ["DocNotify"]
+
 [[env.cli.d1_databases]]
 binding = "DB"
 database_name = "prod-vibes-diy-v2"
