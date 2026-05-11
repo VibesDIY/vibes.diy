@@ -16,7 +16,9 @@
 | `pkg@s*` | staging     | CI Vibes.Diy Publish |
 | `pkg@d*` | dev         | CI Vibes.Diy Publish |
 
-Convention: `pkg@d2.0.0-dev-cli-<letter>` for dev CLI iterations.
+Convention for dev iterations: `pkg@d<next-prod-ver>-dev.<N>` — e.g. with prod at `pkg@p2.2.12`, dev iterations are `pkg@d2.2.13-dev.1`, `pkg@d2.2.13-dev.2`, `pkg@d2.2.13-dev.3`, … staging the next `p2.2.13` cut. Increment `N` each push.
+
+⚠️ **Do not use `pkg@dev<ver>` (no dash, no `-dev.N`).** The workflow's catch-all routes it to the dev env so it appears to work, but it breaks the cadence and version-ordering convention. Several off-pattern tags exist in history (`pkg@dev2.2.13`, `pkg@dev2.2.14`) — don't follow them.
 
 The `pkg` tags publish the CLI (`vibes-diy` / `use-vibes` npm packages) and related workspace packages. Use `pkg@p*` for production releases.
 
@@ -42,12 +44,16 @@ The `pkg` tags publish the CLI (`vibes-diy` / `use-vibes` npm packages) and rela
 
 ### Package publishes (`pkg@*`)
 
-1. List existing tags: `git tag -l 'pkg@p*' --sort=-creatordate | head -5`
-2. Pick next sequential patch: e.g. `pkg@p2.0.8` → `pkg@p2.0.9`
+1. List existing tags: `git tag -l 'pkg@p*' --sort=-creatordate | head -5` (and `pkg@d*` for dev cadence)
+2. Pick next sequential patch:
+   - **prod:** e.g. `pkg@p2.0.8` → `pkg@p2.0.9`
+   - **dev:** look up the latest `pkg@d<ver>-dev.N` and bump `N` (or bump `<ver>` and reset to `-dev.1` if the prior dev series just landed in prod). Never use `pkg@dev<ver>`.
 3. Tag and push:
    ```
    git tag -a pkg@p2.0.9 -m "description"
+   git tag -a pkg@d2.2.13-dev.4 -m "description"
    git push origin pkg@p2.0.9
+   git push origin pkg@d2.2.13-dev.4
    ```
 4. Tags are immutable — never delete/move, bump the version instead
 
@@ -60,7 +66,7 @@ The `pkg` tags publish the CLI (`vibes-diy` / `use-vibes` npm packages) and rela
 - Word it as past tense (`deployed`, `published`, `green`), not progressive (`deploying`, `publishing`). The audible signal exists to call the human back when something they were waiting on is _done_.
 - If the deploy fails, say something distinct (`deploy failed`) — never speak success on failure.
 
-**Make it funny.** See [coding-standards.md § Say command timing & style](coding-standards.md). Every `say` opens with a different playful nickname (*captain*, *chief*, *king of the woods*, *deploy gremlin*, …) and lands the message in a goofy/unexpected way. Bare `'c2.2.X deployed' | say` is forbidden — that's a CI bot voice. Make the user chuckle. Examples:
+**Make it funny.** See [coding-standards.md § Say command timing & style](coding-standards.md). Every `say` opens with a different playful nickname (_captain_, _chief_, _king of the woods_, _deploy gremlin_, …) and lands the message in a goofy/unexpected way. Bare `'c2.2.X deployed' | say` is forbidden — that's a CI bot voice. Make the user chuckle. Examples:
 
 - ✅ `echo 'oi shipmate, c2.2.47 has clocked in on cli — kick the tires' | say`
 - ✅ `echo 'maestro, the bytes have crossed the rubicon, prod is green' | say`
