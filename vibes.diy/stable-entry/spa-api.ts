@@ -1,8 +1,23 @@
 import { parse as parseCookies, serialize as serializeCookie } from "cookie";
-import { exception2Result } from "@adviser/cement";
+import { Result, exception2Result } from "@adviser/cement";
 import { type } from "arktype";
 import type { Env, ApiResponse } from "./types.js";
 import { getBackendConfig, ROUTING_COOKIE, API_PATH } from "./types.js";
+
+const apiResponseSchema = type({
+  routes: {
+    "[string]": type({ key: "string", desc: "string", active: "boolean" }).array(),
+  },
+  cookie: { "[string]": "string" },
+});
+
+export function decodeApiResponse(raw: unknown): Result<ApiResponse> {
+  const parsed = apiResponseSchema(raw);
+  if (parsed instanceof type.errors) {
+    return Result.Err(parsed.summary);
+  }
+  return Result.Ok(parsed);
+}
 
 export function parseRoutingCookie(cookieHeader: string): Record<string, string> {
   const raw = parseCookies(cookieHeader)[ROUTING_COOKIE];

@@ -7,7 +7,9 @@ import {
   createColumnHelper,
   flexRender,
 } from "@tanstack/react-table";
+import { exception2Result } from "@adviser/cement";
 import type { ApiResponse } from "./types.js";
+import { decodeApiResponse } from "./spa-api.js";
 
 interface RowData {
   path: string;
@@ -19,9 +21,25 @@ interface RowData {
 const columnHelper = createColumnHelper<RowData>();
 const GROUPING = ["path"];
 
+const EMPTY_API_RESPONSE: ApiResponse = { routes: {}, cookie: {} };
+
+async function parseApiResponse(res: Response): Promise<ApiResponse> {
+  const body = await exception2Result(() => res.json());
+  if (body.isErr()) {
+    console.error("stable-entry: invalid JSON from api", body.Err());
+    return EMPTY_API_RESPONSE;
+  }
+  const decoded = decodeApiResponse(body.Ok());
+  if (decoded.isErr()) {
+    console.error("stable-entry: api response failed schema", decoded.Err());
+    return EMPTY_API_RESPONSE;
+  }
+  return decoded.Ok();
+}
+
 async function fetchGroups(): Promise<ApiResponse> {
   const res = await fetch("/.stable-entry/api");
-  return res.json() as Promise<ApiResponse>;
+  return parseApiResponse(res);
 }
 
 async function selectGroup(path: string, key: string): Promise<ApiResponse> {
@@ -31,7 +49,7 @@ async function selectGroup(path: string, key: string): Promise<ApiResponse> {
     body: JSON.stringify({ path, key }),
     redirect: "follow",
   });
-  return res.json() as Promise<ApiResponse>;
+  return parseApiResponse(res);
 }
 
 function flatten(data: ApiResponse): RowData[] {
