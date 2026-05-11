@@ -39,7 +39,11 @@ interface ResolvedOpts {
   getToken: () => Promise<Result<DashAuthType>>;
 }
 
-const DEFAULT_API_URL = "https://vibes.diy/api";
+// Match the vibes-diy CLI default (vibes-diy/cli/cli-ctx.ts:DEFAULT_API_URL) so
+// CLI writes and standalone fireproof() reads/writes/subscribes land on the
+// same env's DocNotify DO. Without this alignment, a CLI `db put` and a Node
+// `fireproof()` subscriber in the same process tree silently miss each other.
+const DEFAULT_API_URL = "https://vibes.diy/api?.stable-entry.=cli";
 
 const lazyKeybagGetToken = Lazy(async () => {
   const mod = await import("./firefly-defaults.node.js");

@@ -61,7 +61,7 @@ db.subscribe((changes) => {
 
 | Field      | Default source (when omitted)                                                       |
 | ---------- | ----------------------------------------------------------------------------------- |
-| `apiUrl`   | env `VIBES_DIY_API_URL`, then `https://vibes.diy/api`                               |
+| `apiUrl`   | env `VIBES_DIY_API_URL`, then `https://vibes.diy/api?.stable-entry.=cli`            |
 | `appSlug`  | env `VIBES_APP_SLUG`, then `basename(process.cwd())`                                |
 | `getToken` | local device-id cert from the Fireproof keybag (populated by `npx vibes-diy login`) |
 | `userSlug` | lazy — looked up from your `defaultUserSlug` user setting on first request          |
