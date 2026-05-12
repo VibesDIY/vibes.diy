@@ -186,7 +186,7 @@ function lineMatches(searchLine: ClassifiedLine, sourceText: string): boolean {
 function findSegmentMatches(
   segment: readonly ClassifiedLine[],
   sourceLines: readonly LineSpan[],
-  startFrom: number,
+  startFrom: number
 ): readonly number[] {
   const hits: number[] = [];
   if (segment.length === 0) return hits;
@@ -236,10 +236,7 @@ interface MatchTuple {
   readonly starts: readonly number[]; // segment start line indexes
 }
 
-function enumerateTuples(
-  segments: readonly Segment[],
-  sourceLines: readonly LineSpan[],
-): readonly MatchTuple[] {
+function enumerateTuples(segments: readonly Segment[], sourceLines: readonly LineSpan[]): readonly MatchTuple[] {
   const tuples: MatchTuple[] = [];
   if (segments.length === 0) return tuples;
   const recurse = (segIdx: number, fromLine: number, acc: number[]): void => {
@@ -259,11 +256,7 @@ function enumerateTuples(
   return tuples;
 }
 
-function applyReplaceEllipsis(
-  source: string,
-  search: string,
-  replace: string,
-): ApplyEditResult {
+function applyReplaceEllipsis(source: string, search: string, replace: string): ApplyEditResult {
   const searchLines = search.split("\n").map(classifyLine);
   const sourceLines = lineSpans(source);
   const { segments, leadingSkip, trailingSkip } = splitIntoSegments(searchLines);
@@ -274,8 +267,7 @@ function applyReplaceEllipsis(
 
   const tuples = enumerateTuples(segments, sourceLines);
   if (tuples.length === 0) return { ok: false, reason: "no-match", matchCount: 0 };
-  if (tuples.length > 1)
-    return { ok: false, reason: "multiple-match", matchCount: tuples.length };
+  if (tuples.length > 1) return { ok: false, reason: "multiple-match", matchCount: tuples.length };
 
   const t = tuples[0];
   const firstSegStart = t.starts[0];
@@ -287,9 +279,48 @@ function applyReplaceEllipsis(
   const startChar = sourceLines[startLine].start;
   const endChar = sourceLines[endLine].end;
 
+  // Pair each prefix-`...` SEARCH line with the source-line suffix it ate.
+  // Models reach for trailing-`...` on REPLACE expecting "keep the original
+  // tail" (a diff-`-p` intuition). Fighting that via prompt is whack-a-mole —
+  // mirror the SEARCH capture into REPLACE instead, so the natural emission
+  // does what they expect. Pairing is FIFO by prefix-`...` ordinal.
+  const prefixSuffixes: string[] = [];
+  segments.forEach((seg, segIdx) => {
+    const segStart = t.starts[segIdx];
+    seg.lines.forEach((line, lineIdx) => {
+      if (line.kind === "prefix") {
+        const sourceText = sourceLines[segStart + lineIdx].text;
+        prefixSuffixes.push(sourceText.slice(line.prefix.length));
+      }
+    });
+  });
+
+  const resolvedReplace = resolveReplaceEllipsis(replace, prefixSuffixes);
+
   return {
     ok: true,
     matchKind: "ellipsis",
-    content: source.slice(0, startChar) + replace + source.slice(endChar),
+    content: source.slice(0, startChar) + resolvedReplace + source.slice(endChar),
   };
+}
+
+function resolveReplaceEllipsis(replace: string, prefixSuffixes: readonly string[]): string {
+  if (prefixSuffixes.length === 0) return replace;
+  let cursor = 0;
+  return replace
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.replace(/[ \t]+$/, "");
+      if (trimmed.length >= 3 && trimmed.endsWith("...")) {
+        const leading = trimmed.replace(/^[ \t]+/, "");
+        // Leading-`...` (skip-marker on REPLACE) stays literal — we don't
+        // mirror leading-skip captures yet.
+        if (leading.startsWith("...")) return line;
+        if (cursor < prefixSuffixes.length) {
+          return trimmed.slice(0, -3) + prefixSuffixes[cursor++];
+        }
+      }
+      return line;
+    })
+    .join("\n");
 }
