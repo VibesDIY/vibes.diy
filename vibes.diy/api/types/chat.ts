@@ -62,6 +62,18 @@ export function isResOpenChat(obj: unknown): obj is ResOpenChat {
   return !(resOpenChat(obj) instanceof type.errors);
 }
 
+export const selectedSlotInput = type({
+  kind: "'version'",
+  fsId: "string",
+}).or(
+  type({
+    kind: "'draft'",
+    files: vibeFile.array(),
+  })
+);
+
+export type SelectedSlotInput = typeof selectedSlotInput.infer;
+
 export const reqCreationPromptChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
   mode: "'chat'",
@@ -74,6 +86,7 @@ export const reqCreationPromptChatSection = type({
   // PromptContexts/ChatSections writes, no LLM call, no billing. Chat
   // mode only; app/img dry-run is a follow-up.
   "dryRun?": "boolean",
+  "selected?": selectedSlotInput,
 });
 
 export function isReqCreationPromptChatSection(obj: unknown): obj is typeof reqCreationPromptChatSection.infer {
