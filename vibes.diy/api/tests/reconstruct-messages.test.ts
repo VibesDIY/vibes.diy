@@ -186,7 +186,7 @@ describe("reconstructConversationMessages", () => {
       makeCodeLine(">>>>>>> REPLACE", "jsx", 12),
       makeCodeEnd("jsx", 13, "App.jsx", { lines: 5, bytes: 80 }),
     ];
-    const result = reconstructConversationMessages([...msgsP1, ...msgsP2], { keepFullTurnPromptId: "P2" });
+    const result = reconstructConversationMessages([...msgsP1, ...msgsP2], { keepFullTurnStreamId: "P2" });
     expect(result).toHaveLength(4);
     // P1 assistant should be compacted
     const p1Text = firstText(result[1]);
@@ -213,7 +213,7 @@ describe("reconstructConversationMessages", () => {
     ];
     // Turn P2 (current)
     const msgsP2 = [makePromptReq("done?", 9, "P2")];
-    const result = reconstructConversationMessages([...msgsP1, ...msgsP2], { keepFullTurnPromptId: "P2" });
+    const result = reconstructConversationMessages([...msgsP1, ...msgsP2], { keepFullTurnStreamId: "P2" });
     const p1Text = firstText(result[1]);
     expect(p1Text).toContain("Paint the page pink.");
     expect(p1Text).toContain("[5-line edit to App.jsx]");
