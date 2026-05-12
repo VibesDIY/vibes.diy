@@ -1,8 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { buildRecoveryRequest, renderCurrentFiles, shouldAttemptRecovery, updateRecoveryCounter } from "@vibes.diy/api-svc";
-import type { LLMRequest } from "@vibes.diy/call-ai-v2";
+import {
+  buildFullRecoveryRequest,
+  buildRecoveryRequest,
+  renderCurrentFiles,
+  shouldAttemptRecovery,
+  updateRecoveryCounter,
+} from "@vibes.diy/api-svc";
+import type { ChatMessage, LLMRequest } from "@vibes.diy/call-ai-v2";
 
-describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
+describe("buildRecoveryRequest (slot-assembler consumer)", () => {
+  it("recovery payload puts recovery-partial as canonical slot, anti-gaslight stays in system", () => {
+    const baseMsgs: ChatMessage[] = [
+      { role: "system", content: [{ type: "text", text: "BASE-SYS" }] },
+      { role: "user", content: [{ type: "text", text: "u1" }] },
+    ];
+    const partialVfs = new Map([["/App.jsx", "in-flight"]]);
+    const result = buildRecoveryRequest({
+      messages: baseMsgs,
+      partialVfs,
+      focusPath: "App.jsx",
+    });
+    const texts = result.flatMap((m) => m.content.map((c) => (c.type === "text" ? c.text : "")));
+    const sys = result.find((m) => m.role === "system");
+    expect(sys?.content[0].text).toContain("verify your partial");
+    expect(texts.some((t) => t.includes("RECOVERY_PARTIAL"))).toBe(true);
+    expect(texts.some((t) => t.includes("in-flight"))).toBe(true);
+  });
+});
+
+describe("buildFullRecoveryRequest (continue mode: 'you were here')", () => {
   // Original turn shape used in production: a system message (with the base
   // system prompt) followed by user turns. Recovery merges its addendum +
   // CURRENT FILES into that single system message rather than appending a
@@ -28,7 +54,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
 
   it("merges addendum + CURRENT FILES into the original system message and says nothing about failure", () => {
     const vfs = new Map<string, string>([["/App.jsx", "function App() { return <h1>hi</h1>; }"]]);
-    const r = buildRecoveryRequest({
+    const r = buildFullRecoveryRequest({
       originalRequest: baseReq,
       recoveryAddendum: "You were here. Continue.",
       vfs,
@@ -54,7 +80,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
   });
 
   it("preserves message count when merging — exactly one system message in the output", () => {
-    const r = buildRecoveryRequest({
+    const r = buildFullRecoveryRequest({
       originalRequest: baseReq,
       recoveryAddendum: "You were here. Continue.",
       vfs: new Map([["/App.jsx", "x"]]),
@@ -67,7 +93,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
   });
 
   it("prepends a new system message when the original request has none", () => {
-    const r = buildRecoveryRequest({
+    const r = buildFullRecoveryRequest({
       originalRequest: userOnlyReq,
       recoveryAddendum: "You were here. Continue.",
       vfs: new Map([["/App.jsx", "x"]]),
@@ -85,7 +111,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       ["/aux.ts", "export const aux = 'irrelevant';"],
       ["/App.jsx", "function App() { return <h1>important</h1>; }"],
     ]);
-    const r = buildRecoveryRequest({
+    const r = buildFullRecoveryRequest({
       originalRequest: baseReq,
       recoveryAddendum: "You were here. Continue.",
       vfs,
@@ -106,7 +132,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
   it("truncates oversize files with an explicit marker", () => {
     const huge = "x".repeat(20_000);
     const vfs = new Map<string, string>([["/App.jsx", huge]]);
-    const r = buildRecoveryRequest({
+    const r = buildFullRecoveryRequest({
       originalRequest: baseReq,
       recoveryAddendum: "You were here. Continue.",
       vfs,
@@ -140,7 +166,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
     ].join("\n");
 
     it("appends a quiet partial-resume message that just shows the partial and says continue", () => {
-      const r = buildRecoveryRequest({
+      const r = buildFullRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
         vfs: new Map([["/App.jsx", "function App() { return null; }"]]),
@@ -172,7 +198,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
     });
 
     it("cites the file line count after the last successful SEARCH/REPLACE", () => {
-      const r = buildRecoveryRequest({
+      const r = buildFullRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
         vfs: new Map([["/App.jsx", "x"]]),
@@ -194,7 +220,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
       // create blocks (full-file rewrites) don't have a meaningful "ended
       // at line N" anchor — N is just the file's total line count, not
       // an in-file position the model needs to reason about.
-      const r = buildRecoveryRequest({
+      const r = buildFullRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
         vfs: new Map([["/App.jsx", "x"]]),
@@ -211,7 +237,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
     });
 
     it("preserves the two-message shape when assistantPartial is omitted", () => {
-      const r = buildRecoveryRequest({
+      const r = buildFullRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
         vfs: new Map([["/App.jsx", "x"]]),
@@ -225,7 +251,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
     });
 
     it("treats an empty-string assistantPartial as omitted", () => {
-      const r = buildRecoveryRequest({
+      const r = buildFullRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
         vfs: new Map([["/App.jsx", "x"]]),
@@ -237,7 +263,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
     });
 
     it("does not duplicate the partial text into the system message", () => {
-      const r = buildRecoveryRequest({
+      const r = buildFullRecoveryRequest({
         originalRequest: baseReq,
         recoveryAddendum: "You were here. Continue.",
         vfs: new Map([["/App.jsx", "x"]]),
@@ -255,7 +281,7 @@ describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
   });
 
   it("returns Err when addendum is empty", () => {
-    const r = buildRecoveryRequest({
+    const r = buildFullRecoveryRequest({
       originalRequest: baseReq,
       recoveryAddendum: "",
       vfs: new Map(),
