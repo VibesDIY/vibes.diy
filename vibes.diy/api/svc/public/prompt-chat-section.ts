@@ -46,6 +46,8 @@ import {
   isActiveSkills,
   isActiveTheme,
   isActiveTitle,
+  type SelectedSlotInput,
+  type SlotConfig,
 } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { type } from "arktype";
@@ -92,11 +94,12 @@ import { getModelDefaults } from "../intern/get-model-defaults.js";
 import {
   buildFullRecoveryRequest,
   buildTruncatedEvent,
-  renderCurrentFiles,
   shouldAttemptRecovery,
   updateRecoveryCounter,
   type RecoveryCounter,
 } from "../intern/recovery.js";
+import { loadVersionTimeline, selectSlotSources, loadLatestPromptId } from "../intern/version-timeline.js";
+import { assembleSlotMessages } from "../intern/slot-assembler.js";
 import { bumpAppRecency } from "../intern/bump-app-recency.js";
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
@@ -719,6 +722,13 @@ export interface AssemblePromptPayloadArgs {
   // the dispatch path (writes after assembly) and the dry-run path (no write).
   // Non-user roles are filtered.
   readonly newUserMessages: readonly ChatMessage[];
+  // Optional: the version or draft the user currently has selected in the UI.
+  // Drives the SELECTED_DRAFT or SELECTED_VERSION slot.
+  readonly selected?: SelectedSlotInput;
+  // Optional: per-slot mute configuration.
+  readonly slots?: SlotConfig;
+  // Optional: the file path to focus on in slot rendering. Defaults to "App.jsx".
+  readonly focusPath?: string;
 }
 
 export async function assemblePromptPayload(
@@ -747,9 +757,24 @@ export async function assemblePromptPayload(
     }
     allSectionMsgs.push(...sectionMsgs);
   }
-  const reconstructed = reconstructConversationMessages(allSectionMsgs);
+
+  // Load timeline and latest promptId for slot assembly + compaction.
+  // Both return Result<T>; on error we propagate the failure.
+  const timelineResult = await loadVersionTimeline(vctx, chatId);
+  if (timelineResult.isErr()) return Result.Err(timelineResult);
+
+  const latestPromptIdResult = await loadLatestPromptId(vctx, chatId);
+  if (latestPromptIdResult.isErr()) return Result.Err(latestPromptIdResult);
+
+  const timeline = timelineResult.Ok();
+  const latestPromptId = latestPromptIdResult.Ok();
+
+  // Reconstruct conversation history, compacting older turns when a latest
+  // promptId is available (keeps only the most recent turn in full fidelity).
+  const reconstructed = reconstructConversationMessages(allSectionMsgs, {
+    keepFullTurnPromptId: latestPromptId,
+  });
   const newUserOnly = newUserMessages.filter((m) => m.role === "user");
-  const conversationMessages = [...reconstructed, ...newUserOnly];
 
   // Resolve the app's ActiveSkills + ActiveTitle from app_settings. Pre-allocation
   // seeds both on new chats; legacy rows without skills fall back to
@@ -774,23 +799,41 @@ export async function assemblePromptPayload(
     console.error("Failed to create system prompt:", systemPrompt.Err());
     return Result.Err(systemPrompt);
   }
-  if (!conversationMessages.some((m) => m.role === "user")) {
+  if (![...reconstructed, ...newUserOnly].some((m) => m.role === "user")) {
     return Result.Err(`No user messages found in the prompt`);
   }
 
-  // Continuation turns: append the resolved file state as a CURRENT FILES
-  // block (same shape recovery uses). Without this, the model only sees its
-  // own reconstructed prior responses — which for a 30+-edit scaffold turn
-  // are a long chain of SEARCH/REPLACE patches the model has to mentally
-  // apply to know what the file actually looks like. SEARCH anchors emitted
-  // against that imagined state miss, server-side recovery exhausts after 3
-  // fruitless retries, and the turn finalizes with zero file snapshots —
-  // user sees a phantom redeploy. Surfacing CURRENT FILES on the first
-  // attempt lets SEARCH anchors land against actual bytes instead of the
-  // model's reconstruction of them.
-  const systemPromptText = isInitial
-    ? systemPrompt.Ok().systemPrompt
-    : `${systemPrompt.Ok().systemPrompt}\n\n${renderCurrentFiles(priorFs, "App.jsx")}`;
+  // Build slot messages from the version timeline. The PREVIOUS slot carries
+  // the current file state (replacing the old CURRENT FILES system-prompt append),
+  // ORIGINAL anchors to the scaffold, and LAST_EDIT provides the preceding diff.
+  const slotSources = selectSlotSources(timeline);
+
+  // Resolve a draft map if the caller supplied selected draft files.
+  // Only files with string content (code-block, str-asset-block) are included.
+  const selectedDraftMap: ReadonlyMap<string, string> | undefined =
+    args.selected?.kind === "draft"
+      ? new Map(
+          args.selected.files.flatMap((f) =>
+            f.type === "code-block" || f.type === "str-asset-block" ? [[f.filename, f.content]] : []
+          )
+        )
+      : undefined;
+
+  const slotMessages = assembleSlotMessages({
+    original: slotSources.original !== undefined ? { vfs: slotSources.original.vfs, turnsAgo: timeline.length - 1 } : undefined,
+    prev2: slotSources.prev2?.vfs,
+    previous: slotSources.previous?.vfs,
+    selectedVersion: undefined, // wired in Task 14
+    selectedDraft: selectedDraftMap,
+    focusPath: args.focusPath ?? "App.jsx",
+    config: args.slots ?? {},
+  });
+
+  // Build final message list: system → conversation history → slot messages → new user.
+  const slotChatMessages: ChatMessage[] = slotMessages.map((s) => ({
+    role: "user" as const,
+    content: [{ type: "text" as const, text: s.text }],
+  }));
 
   return Result.Ok({
     model,
@@ -800,11 +843,13 @@ export async function assemblePromptPayload(
         content: [
           {
             type: "text",
-            text: systemPromptText,
+            text: systemPrompt.Ok().systemPrompt,
           },
         ],
       },
-      ...conversationMessages,
+      ...reconstructed,
+      ...slotChatMessages,
+      ...newUserOnly,
     ],
   });
 }
