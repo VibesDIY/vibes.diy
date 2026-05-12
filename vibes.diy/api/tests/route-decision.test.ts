@@ -131,3 +131,36 @@ describe("worker routeDecision", () => {
     expect(decide({ pathname: "/reportsfoo" })).toBe("ssr");
   });
 });
+
+describe("worker routeDecision — PR preview base (pr-<N>.vibespreview.dev)", () => {
+  // The PR-preview workflow sets VIBES_SVC_HOSTNAME_BASE = pr-<N>.vibespreview.dev
+  // and attaches the matching routes to the PR worker. routeDecision must treat
+  // that base exactly like the prod/dev bases — no special-casing needed.
+  const BASE = "pr-7.vibespreview.dev";
+  const decidePreview = (opts: { pathname: string; method?: string; hostname?: string }) =>
+    routeDecision({
+      hostname: opts.hostname ?? BASE,
+      pathname: opts.pathname,
+      method: opts.method ?? "GET",
+      hostnameBase: BASE,
+    });
+
+  it("<app>--<user>.pr-<N>.vibespreview.dev → cf-serve (vibe iframe entry-point)", () => {
+    expect(decidePreview({ hostname: "myapp--alice.pr-7.vibespreview.dev", pathname: "/" })).toBe("cf-serve");
+    expect(decidePreview({ hostname: "myapp--alice.pr-7.vibespreview.dev", pathname: "/~zABCDEFGH~/.db-explorer" })).toBe(
+      "cf-serve"
+    );
+  });
+
+  it("pr-<N>.vibespreview.dev/vibe-pkg/* → vibe-pkg (npmUrl host)", () => {
+    expect(decidePreview({ pathname: "/vibe-pkg/foo.js" })).toBe("vibe-pkg");
+  });
+
+  it("pr-<N>.vibespreview.dev/ → ssr (no app subdomain, no special path)", () => {
+    expect(decidePreview({ pathname: "/" })).toBe("ssr");
+  });
+
+  it("assets.pr-<N>.vibespreview.dev → cf-serve (asset/auth host)", () => {
+    expect(decidePreview({ hostname: "assets.pr-7.vibespreview.dev", pathname: "/_files/u/a/db/doc/key" })).toBe("cf-serve");
+  });
+});
