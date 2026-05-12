@@ -383,7 +383,7 @@ export async function ensureAppSettings(
       );
       break;
     case isReqEnsureAppSettingsApp(req):
-      [res.settings, res.error] = await sqlUpsert(
+      [res.settings, res.error] = await sqlUpsertSingle(
         vctx,
         res,
         settings,
@@ -400,7 +400,7 @@ export async function ensureAppSettings(
       );
       break;
     case isReqEnsureAppSettingsChat(req):
-      [res.settings, res.error] = await sqlUpsert(
+      [res.settings, res.error] = await sqlUpsertSingle(
         vctx,
         res,
         settings,
@@ -417,7 +417,7 @@ export async function ensureAppSettings(
       );
       break;
     case isReqEnsureAppSettingsImg(req):
-      [res.settings, res.error] = await sqlUpsert(
+      [res.settings, res.error] = await sqlUpsertSingle(
         vctx,
         res,
         settings,
@@ -485,6 +485,20 @@ function upsert<T extends ActiveEntry, R extends ActiveEntry>(settings: T[], mat
   return buildEnsureEntryResult(settings);
 }
 
+function upsertSingle<T extends ActiveEntry, R extends ActiveEntry>(
+  settings: T[],
+  match: (e: unknown) => boolean,
+  fn: (prev: R) => R
+) {
+  // Canonicalize duplicates by replacing all matches with one updated entry.
+  const prev = [...settings].reverse().find(match) as unknown as R | undefined;
+  for (let i = settings.length - 1; i >= 0; i--) {
+    if (match(settings[i])) settings.splice(i, 1);
+  }
+  settings.push(fn(prev ?? ({} as unknown as R)) as unknown as T);
+  return buildEnsureEntryResult(settings);
+}
+
 async function sqlUpsert<T extends ActiveEntry, R extends ActiveEntry>(
   vctx: VibesApiSQLCtx,
   res: ResEnsureAppSettings,
@@ -493,6 +507,21 @@ async function sqlUpsert<T extends ActiveEntry, R extends ActiveEntry>(
   fn: (prev: R) => R
 ): Promise<[AppSettings, string?]> {
   const entry = upsert(settings, match, fn);
+  const ret = await sqlUpdateSettings(vctx, res, entry.entries);
+  if (ret.isErr()) {
+    return [entry, ret.Err().message];
+  }
+  return [entry];
+}
+
+async function sqlUpsertSingle<T extends ActiveEntry, R extends ActiveEntry>(
+  vctx: VibesApiSQLCtx,
+  res: ResEnsureAppSettings,
+  settings: T[],
+  match: (e: unknown) => boolean,
+  fn: (prev: R) => R
+): Promise<[AppSettings, string?]> {
+  const entry = upsertSingle(settings, match, fn);
   const ret = await sqlUpdateSettings(vctx, res, entry.entries);
   if (ret.isErr()) {
     return [entry, ret.Err().message];
