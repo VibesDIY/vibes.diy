@@ -67,6 +67,10 @@ export const lockedGroupsVersions = {
   "vibe-runtime": {
     "@vibes.diy/base": "privateNpm:",
     "@vibes.diy/vibe-runtime": "privateNpm:",
+    // Trailing-slash sibling needed so the fireproof group's `use-fireproof/`
+    // and `@fireproof/use-fireproof/` aliases have a target to resolve to.
+    // Without it `Dependencies.renderImportMap` throws `Alias target … not found`.
+    "@vibes.diy/vibe-runtime/": "privateNpm:",
     "@vibes.diy/vibe-types": "privateNpm:",
     "@vibes.diy/api-types": "privateNpm:",
     "@vibes.diy/call-ai-v2": "privateNpm:",
