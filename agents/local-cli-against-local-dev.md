@@ -86,6 +86,28 @@ showing `snapshots=0 apply-errors=0 turn-end=true` is the silent no-op:
 model emitted blocks, all SEARCH anchors missed, server retried 3× and gave
 up.
 
+## Local data plane: miniflare D1 SQLite, not Neon
+
+Local dev runs against a SQLite database via miniflare's D1 binding. The data is at:
+
+```
+vibes.diy/pkg/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite
+```
+
+Use `sqlite3` directly to read it:
+
+```sh
+DB=$(find vibes.diy/pkg/.wrangler/state/v3/d1/miniflare-D1DatabaseObject -name '*.sqlite' -not -name 'metadata.sqlite' | head -1)
+sqlite3 "$DB" ".tables"
+sqlite3 "$DB" "select chatId, userSlug, appSlug from ChatContexts where appSlug = 'foo'"
+```
+
+**Do not use `pnpm --dir vibes.diy/api/svc run db:inspect` to verify local state.** That tool reads `NEON_DATABASE_URL` from `vibes.diy/api/svc/.dev.vars` and goes to the prod Neon Postgres, not the local SQLite. Use it for prod investigations only — never for verifying a local test ran clean.
+
+Tables in local D1 mirror the prod schema: `ChatContexts`, `ChatSections`, `PromptContexts`, `Apps`, `AppSettings`, `AppSlugBindings`, `AssetUploads`, `Assets`, `UserSettings`, `UserSlugBindings`, etc. Same Drizzle ORM hits whichever binding the runtime hands it.
+
+Local chats have different `chatId` values than prod (they were created locally), so `--appSlug` is the stable cross-DB lookup key.
+
 ## 6. Reload after server changes
 
 HMR does not reliably reload worker code. After editing `api/svc/**`,
