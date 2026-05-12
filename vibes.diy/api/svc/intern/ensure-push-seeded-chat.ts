@@ -71,8 +71,8 @@ export interface EnsurePushSeededChatResult {
  *    both use mode "chat" and this table. (Mode "app"/"img" goes through
  *    applicationChats via ensureApplicationChatId, but those are iframe
  *    sandbox flows, not user-editing.)
- * 2. PromptContexts: links chatId → fsId so `loadPriorFileSystem`
- *    (prompt-chat-section.ts) seeds `resolveCodeBlocksToFileSystem` from
+ * 2. PromptContexts: links chatId → fsId so `loadVersionTimeline`
+ *    (version-timeline.ts) seeds `resolveCodeBlocksToFileSystem` from
  *    the pushed app. Without this row, the next turn's SEARCH/REPLACE
  *    blocks compose against an empty buffer and persist 0-byte files.
  * 3. ChatSections: carries the synthetic user-prompt + assistant code

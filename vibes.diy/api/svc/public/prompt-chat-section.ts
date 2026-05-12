@@ -149,30 +149,6 @@ interface CodeBlocks {
   end?: CodeMsg;
 }
 
-// Look up the most recent persisted fileSystem for a chat, across all prior
-// promptIds. Returns a Map<filename, content> usable as the seed for the
-// next turn's resolveCodeBlocksToFileSystem call. Empty map when the chat
-// has no prior persisted state.
-async function loadPriorFileSystem(vctx: VibesApiSQLCtx, chatId: string): Promise<ReadonlyMap<string, string>> {
-  const latestPrompt = await vctx.sql.db
-    .select()
-    .from(vctx.sql.tables.promptContexts)
-    .innerJoin(vctx.sql.tables.apps, eq(vctx.sql.tables.apps.fsId, vctx.sql.tables.promptContexts.fsId))
-    .where(eq(vctx.sql.tables.promptContexts.chatId, chatId))
-    .orderBy(desc(vctx.sql.tables.promptContexts.created))
-    .limit(1)
-    .then((r) => r[0]);
-  const seed = new Map<string, string>();
-  if (!latestPrompt) return seed;
-  const files = parseArray(latestPrompt.Apps.fileSystem, vibeFile);
-  for (const f of files) {
-    if (f.type !== "code-block") continue;
-    if (typeof f.content !== "string") continue;
-    seed.set(f.filename, f.content);
-  }
-  return seed;
-}
-
 // Resolve a sequence of streamed code blocks into a VibeFile[] by grouping
 // blocks by their `path` (aider-style), running parseFenceBody on each
 // block's body, and applying the resulting edits in order. A body with no
@@ -536,7 +512,10 @@ export async function handlePromptContext({
       // replace-only turns compose against prior content rather than against
       // an empty buffer. Without this, a `<<<<<<< SEARCH ... >>>>>>> REPLACE`
       // block has nothing to match and the new fsId persists 0 bytes.
-      const seed = await loadPriorFileSystem(vctx, req.chatId);
+      const timelineResult = await loadVersionTimeline(vctx, req.chatId);
+      if (timelineResult.isErr()) return Result.Err(timelineResult);
+      const timeline = timelineResult.Ok();
+      const seed = timeline.length > 0 ? timeline[timeline.length - 1].vfs : new Map<string, string>();
       resolvedFileSystem = resolveCodeBlocksToFileSystem(code, seed);
     }
     const rFs = await ensureAppSlugItem(vctx, {
@@ -784,8 +763,7 @@ export async function assemblePromptPayload(
   // makeBaseSystemPrompt's getDefaultSkills(), and an unset title drops the
   // title hint line entirely.
   const { skills, theme, title } = await loadActiveSettings(vctx, chatId);
-  const priorFs = await loadPriorFileSystem(vctx, chatId);
-  const isInitial = priorFs.size === 0;
+  const isInitial = timeline.length === 0;
 
   const systemPrompt = await exception2Result(async () =>
     makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
@@ -1409,7 +1387,10 @@ async function handleLlmResponse({
       // recovery continuation: streaming resolver vfs, block accumulator,
       // and the recovery counter. Per-stream state (partial buffer + safe
       // cut + reader + abort controller) is rebuilt each iteration.
-      const seedForResolver = await loadPriorFileSystem(vctx, req.chatId);
+      const seedTimelineResult = await loadVersionTimeline(vctx, req.chatId);
+      if (seedTimelineResult.isErr()) return Result.Err(seedTimelineResult);
+      const seedTimeline = seedTimelineResult.Ok();
+      const seedForResolver = seedTimeline.length > 0 ? seedTimeline[seedTimeline.length - 1].vfs : new Map<string, string>();
       const resolverLogger = ensureLogger(vctx.sthis, "streamingResolver");
       const recoveryLogger = ensureLogger(vctx.sthis, "applyRecovery");
       const streamingResolver = createStreamingResolver({
