@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderSlotsWithDedup, type SlotEntry } from "../svc/intern/slot-assembler.js";
+import { renderSlotsWithDedup, type SlotEntry, pickCanonicalHome } from "../svc/intern/slot-assembler.js";
 
 const m = (e: Record<string, string>) => new Map<string, string>(Object.entries(e));
 
@@ -42,5 +42,27 @@ describe("renderSlotsWithDedup", () => {
     const out = renderSlotsWithDedup(slots, "App.jsx");
     const labels = out.map((b) => b.label);
     expect(labels).toEqual(["PREVIOUS"]);
+  });
+});
+
+describe("pickCanonicalHome", () => {
+  it("returns 'recovery' when a recovery-partial slot is present", () => {
+    expect(pickCanonicalHome({ recoveryPartial: m({}), previous: m({}) })).toBe("recovery");
+  });
+
+  it("returns 'selected-draft' when CLI draft present and no recovery", () => {
+    expect(pickCanonicalHome({ selectedDraft: m({}), previous: m({}) })).toBe("selected-draft");
+  });
+
+  it("returns 'previous' otherwise", () => {
+    expect(pickCanonicalHome({ previous: m({}) })).toBe("previous");
+  });
+
+  it("returns 'selected-draft' even when previous absent (push-seeded case)", () => {
+    expect(pickCanonicalHome({ selectedDraft: m({}) })).toBe("selected-draft");
+  });
+
+  it("returns 'none' when nothing is present", () => {
+    expect(pickCanonicalHome({})).toBe("none");
   });
 });
