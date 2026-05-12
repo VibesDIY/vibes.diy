@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { exception2Result } from "@adviser/cement";
 import { createApiTestCtx, type ApiTestCtx } from "./api-test-setup.js";
 import { appendTurnToChat } from "../svc/intern/append-turn-to-chat.js";
-import { loadVersionTimeline } from "../svc/intern/version-timeline.js";
+import { loadVersionTimeline, selectSlotSources } from "../svc/intern/version-timeline.js";
 import type { PromptContextSql } from "@vibes.diy/call-ai-v2";
 
 const SEQ_BASE = 1_667_300;
@@ -174,5 +174,41 @@ describe("loadVersionTimeline", () => {
     expect(tl[1].vfs.get("/App.jsx")).toBe(DEDUP_CONTENT);
 
     await chat.close();
+  });
+});
+
+describe("selectSlotSources", () => {
+  const v = (fsId: string, file: string) => ({
+    fsId,
+    created: new Date(),
+    vfs: new Map<string, string>([["/App.jsx", file]]),
+  });
+
+  it("empty timeline: all slots undefined", () => {
+    const s = selectSlotSources([]);
+    expect(s.original).toBeUndefined();
+    expect(s.previous).toBeUndefined();
+    expect(s.prev2).toBeUndefined();
+  });
+
+  it("one version: original == previous, prev2 absent", () => {
+    const s = selectSlotSources([v("a", "v1")]);
+    expect(s.original?.fsId).toBe("a");
+    expect(s.previous?.fsId).toBe("a");
+    expect(s.prev2).toBeUndefined();
+  });
+
+  it("two versions: original=v1, previous=v2, prev2=v1", () => {
+    const s = selectSlotSources([v("a", "v1"), v("b", "v2")]);
+    expect(s.original?.fsId).toBe("a");
+    expect(s.previous?.fsId).toBe("b");
+    expect(s.prev2?.fsId).toBe("a");
+  });
+
+  it("three+ versions: prev2 is the one immediately before previous", () => {
+    const s = selectSlotSources([v("a", "v1"), v("b", "v2"), v("c", "v3")]);
+    expect(s.original?.fsId).toBe("a");
+    expect(s.previous?.fsId).toBe("c");
+    expect(s.prev2?.fsId).toBe("b");
   });
 });

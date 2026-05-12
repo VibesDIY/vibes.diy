@@ -88,3 +88,19 @@ export async function loadVersionTimeline(vctx: VibesApiSQLCtx, chatId: string):
     return out;
   });
 }
+
+export interface SlotSources {
+  readonly original?: TimelineEntry;
+  readonly previous?: TimelineEntry;
+  readonly prev2?: TimelineEntry; // used by last_edit diff
+}
+
+export function selectSlotSources(timeline: readonly TimelineEntry[]): SlotSources {
+  if (timeline.length === 0) return {};
+  if (timeline.length === 1) return { original: timeline[0], previous: timeline[0] };
+  return {
+    original: timeline[0],
+    previous: timeline[timeline.length - 1],
+    prev2: timeline[timeline.length - 2],
+  };
+}
