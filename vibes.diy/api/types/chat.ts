@@ -100,6 +100,8 @@ export const reqCreationPromptChatSection = type({
   "dryRun?": "boolean",
   "selected?": selectedSlotInput,
   "slots?": slotConfig,
+  // Optional: focus path for slot rendering. Defaults to "App.jsx" server-side.
+  "focusPath?": "string",
 });
 
 export function isReqCreationPromptChatSection(obj: unknown): obj is typeof reqCreationPromptChatSection.infer {

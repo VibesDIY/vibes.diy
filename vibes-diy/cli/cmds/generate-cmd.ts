@@ -1,4 +1,4 @@
-import { command, flag, option, positional, string } from "cmd-ts";
+import { command, flag, option, optional, positional, string } from "cmd-ts";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import {
@@ -44,6 +44,9 @@ export const ReqGenerate = type({
   instantJoin: "boolean",
   verbose: "boolean",
   apiUrl: "string",
+  // Optional: file path to focus first in slot rendering. Forwarded to the
+  // server as focusPath on the prompt request. Defaults to "App.jsx" server-side.
+  "focusPath?": "string",
 });
 export type ReqGenerate = typeof ReqGenerate.infer;
 
@@ -88,9 +91,10 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     const chat = rChat.Ok();
 
     // Send the user prompt
-    const rPrompt = await chat.prompt({
-      messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }],
-    });
+    const rPrompt = await chat.prompt(
+      { messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }] },
+      { ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}) }
+    );
     if (rPrompt.isErr()) {
       return Result.Err(`Failed to send prompt: ${formatErr(rPrompt.Err())}`);
     }
@@ -272,9 +276,14 @@ export function generateCmd(ctx: CliCtx) {
         short: "v",
         description: "Stream AI response to stderr as it arrives",
       }),
+      focus: option({
+        long: "focus",
+        description: "Path to focus first in slot rendering (e.g. Card.jsx for multi-file edits)",
+        type: optional(string),
+      }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      return { type: "use-vibes.cli.generate", ...args };
+      return { type: "use-vibes.cli.generate", ...args, focusPath: args.focus };
     }),
   });
 }

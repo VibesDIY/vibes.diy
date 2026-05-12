@@ -1,4 +1,4 @@
-import { command, flag, option, positional, string } from "cmd-ts";
+import { command, flag, option, optional, positional, string } from "cmd-ts";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import {
@@ -50,6 +50,9 @@ export const ReqEdit = type({
   // role-headed view of the assembled messages.
   dryRun: "boolean",
   transcript: "boolean",
+  // Optional: file path to focus first in slot rendering. Forwarded to the
+  // server as focusPath on the prompt request. Defaults to "App.jsx" server-side.
+  "focusPath?": "string",
 });
 export type ReqEdit = typeof ReqEdit.infer;
 
@@ -156,7 +159,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
       const chat = rChat.Ok();
       const rPrompt = await chat.prompt(
         { messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }] },
-        { dryRun: true }
+        { dryRun: true, ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}) }
       );
       if (rPrompt.isErr()) {
         await chat.close();
@@ -197,9 +200,10 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     }
     const chat = rChat.Ok();
 
-    const rPrompt = await chat.prompt({
-      messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }],
-    });
+    const rPrompt = await chat.prompt(
+      { messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }] },
+      { ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}) }
+    );
     if (rPrompt.isErr()) {
       return Result.Err(`Failed to send prompt: ${formatErr(rPrompt.Err())}`);
     }
@@ -371,9 +375,14 @@ export function editCmd(ctx: CliCtx) {
         long: "transcript",
         description: "With --dry-run, render the payload as a human-readable transcript instead of JSON",
       }),
+      focus: option({
+        long: "focus",
+        description: "Path to focus first in slot rendering (e.g. Card.jsx for multi-file edits)",
+        type: optional(string),
+      }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      return { type: "use-vibes.cli.edit", ...args };
+      return { type: "use-vibes.cli.edit", ...args, focusPath: args.focus };
     }),
   });
 }

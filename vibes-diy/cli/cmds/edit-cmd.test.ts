@@ -223,6 +223,29 @@ describe("editEvento", () => {
     });
   });
 
+  it("--focus flag is parsed and forwarded as focusPath in the request", async () => {
+    const cliStream = cmd_tsStream();
+    const ctx: CliCtx = {
+      sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
+      cliStream,
+      output: { stdout: () => undefined, stderr: () => undefined },
+      exitCode: 0,
+    };
+
+    const reader = cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(editCmd(ctx), ["todo-app", "Refine the UI", "--focus", "Card.jsx", "--api-url", "https://example.com/api"]);
+
+    const first = await firstRead;
+    await cliStream.close();
+    expect(first.done).toBe(false);
+    const request = (first.value as { result: ReqEdit }).result;
+    expect(request).toMatchObject({
+      type: "use-vibes.cli.edit",
+      focusPath: "Card.jsx",
+    });
+  });
+
   it("uses cwd by default and applies SEARCH/REPLACE against local seed files", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "edit-cmd-cwd-"));
     tempDirs.push(cwd);

@@ -1000,7 +1000,7 @@ class LLMChatImpl implements LLMChat {
 
   async prompt(
     msg: LLMRequest,
-    opts?: { inputImageBase64?: string; dryRun?: boolean }
+    opts?: { inputImageBase64?: string; dryRun?: boolean; focusPath?: string }
   ): Promise<Result<ResPromptChatSection, VibesDiyError>> {
     const mode = this.res.mode;
     if (!isPromptLLMStyle(mode)) {
@@ -1019,10 +1019,11 @@ class LLMChatImpl implements LLMChat {
         outerTid: this.tid, //leaking but necessary streaming
         prompt: msg,
         ...(mode === "img" && opts?.inputImageBase64 ? { inputImageBase64: opts.inputImageBase64 } : {}),
-        // dryRun is a chat-mode-only flag (per reqCreationPromptChatSection
-        // type). Forward it only when mode === "chat" — for app/img the
-        // server type won't carry it.
+        // dryRun and focusPath are chat-mode-only flags (per reqCreationPromptChatSection
+        // type). Forward them only when mode === "chat" — for app/img the
+        // server type won't carry them.
         ...(mode === "chat" && opts?.dryRun === true ? { dryRun: true } : {}),
+        ...(mode === "chat" && opts?.focusPath !== undefined ? { focusPath: opts.focusPath } : {}),
       },
       {
         resMatch: isResPromptChatSection,
