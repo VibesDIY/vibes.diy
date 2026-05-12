@@ -32,9 +32,16 @@ export const lockedGroupsVersions = {
     jose: "version:JOSE",
     "jose/jwt/decode": "version:JOSE",
     dompurify: "version:DOMPURIFY",
-    // Firefly replaces Fireproof — both package names alias to vibe-runtime
+    // Firefly replaces Fireproof — both package names alias to vibe-runtime.
+    // Trailing-slash siblings catch subpath imports (`use-fireproof/dist/x`,
+    // `@fireproof/use-fireproof/react`) via the import map's prefix rule so
+    // they don't fall through `shouldRewrite` and land on `https://esm.sh/use-fireproof/...`,
+    // which would load real fireproof CRDT inside the iframe and throw
+    // `CRDT is not ready`.
     "use-fireproof": "alias:@vibes.diy/vibe-runtime",
+    "use-fireproof/": "alias:@vibes.diy/vibe-runtime/",
     "@fireproof/use-fireproof": "alias:@vibes.diy/vibe-runtime",
+    "@fireproof/use-fireproof/": "alias:@vibes.diy/vibe-runtime/",
     "@emotion/css": "version:EMOTION",
 
     // deps=react@19.2.1,react-dom@19.2.1
