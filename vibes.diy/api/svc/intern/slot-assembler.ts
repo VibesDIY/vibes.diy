@@ -191,3 +191,16 @@ export function resolveSlotConfig(req: SlotConfig | undefined, env: Record<strin
     compaction: read("compaction", "SLOTS_COMPACTION"),
   };
 }
+
+import type { ChatMessage } from "@vibes.diy/call-ai-v2";
+
+// Renders assembled slot messages as either synthetic user messages (default)
+// or as a single concatenated system message, controlled by SLOT_DELIVERY_MODE env var.
+export function renderSlotMessagesAs(msgs: readonly AssembledMessage[], mode: "user" | "system"): ChatMessage[] {
+  if (mode === "user") {
+    return msgs.map((m) => ({ role: "user" as const, content: [{ type: "text" as const, text: m.text }] }));
+  }
+  const joined = msgs.map((m) => m.text).join("\n\n");
+  if (joined === "") return [];
+  return [{ role: "system" as const, content: [{ type: "text" as const, text: joined }] }];
+}
