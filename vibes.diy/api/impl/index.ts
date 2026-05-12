@@ -23,6 +23,9 @@ import {
   ReqListRecentVibes,
   ResListRecentVibes,
   isResListRecentVibes,
+  ReqPinRecentVibe,
+  ResPinRecentVibe,
+  isResPinRecentVibe,
   ReqGetChatDetails,
   ResGetChatDetails,
   isResGetChatDetails,
@@ -494,6 +497,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-list-recent-vibes" },
       {
         resMatch: isResListRecentVibes,
+      }
+    );
+  }
+
+  pinRecentVibe(req: Req<ReqPinRecentVibe>): Promise<Result<ResPinRecentVibe, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-pin-recent-vibe" },
+      {
+        resMatch: isResPinRecentVibe,
       }
     );
   }

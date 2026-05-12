@@ -38,10 +38,13 @@ export const sqlAppSlugBinding = sqliteTable(
     // and new code writes the real timestamp explicitly. Keeps every env
     // (prod, dev, preview, cli) convergent under the standard schema-push flow.
     updated: text().notNull().default("1970-01-01T00:00:00.000Z"),
+    // Empty = unpinned, ISO timestamp = pinned. Value also acts as the
+    // sort key (newest pin first) when multiple rows are pinned.
+    pinnedAt: text().notNull().default(""),
   },
   (table) => [
     primaryKey({ columns: [table.appSlug, table.userSlug] }),
-    index("AppSlug_userSlug_updated_appSlug").on(table.userSlug, table.updated, table.appSlug),
+    index("AppSlug_userSlug_pinnedAt_updated_appSlug").on(table.userSlug, table.pinnedAt, table.updated, table.appSlug),
   ]
 );
 
