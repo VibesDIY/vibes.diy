@@ -47,7 +47,14 @@ selected?:
 ```
 
 - **Web UI** passes `{kind: "version", fsId}` when the user is actively viewing a non-current version.
-- **CLI** reads disk vs `.undo` baseline; if they differ, packages disk content into `{kind: "draft", files}` and includes it on the request.
+- **CLI** packages disk content into `{kind: "draft", files}` whenever **either**:
+  - `.undo` is absent (push-seeded chats and freshly-cloned directories have no edit baseline — disk is the de-facto baseline), **or**
+  - `.undo` is present but disk content differs from it.
+
+  This is broader than "drift detection." A push-seeded chat — the exact failure mode the OP filed — has no `PromptContexts` row server-side, so `previous` is empty; without `selected.draft` carrying disk content the model has no ground truth at all. The "absent `.undo`" branch closes that hole.
+
+  (`.undo` is a sidecar file created by `vibes-diy edit` after a successful apply, recording the pre-edit content for revert. Absent on push-only or freshly-cloned directories; present after any successful local edit.)
+
 - Captions differ: version variant says "user is currently viewing this (N turns ago)"; draft variant says "current disk contents — may or may not be intended."
 
 ### Collision and dedup rules
@@ -58,7 +65,19 @@ selected?:
 - **Files dropped before PREVIOUS** appear full-bytes only in ORIGINAL (and other slots that still contained them).
 - **`selected` collision**: if `selected` resolves to one of `original`/`previous`, no extra slot — annotate the matching slot with `(currently viewed)` or `(on-disk draft)`.
 
-## Placement: interpolated, not jammed into system prompt
+## Placement: interpolated, with a canonical-home rule
+
+The **canonical home** is the slot whose bytes are ground truth for SEARCH anchoring in the upcoming turn. It must render closest to `user_N` so the model treats it as the operative state. Canonical home is chosen dynamically:
+
+| Condition                                    | Canonical home     |
+| -------------------------------------------- | ------------------ |
+| Recovery turn in progress                    | `recovery-partial` |
+| `selected.draft` present (CLI on-disk drift) | `selected.draft`   |
+| Otherwise                                    | `previous`         |
+
+The canonical-home slot always renders immediately before `user_N`. Non-canonical slots fall back to earlier positions, in their natural chronological order. `last_edit` renders immediately before the canonical home when it exists.
+
+### Non-recovery, no CLI drift (most common case)
 
 ```
 system    : base + skills              (no CURRENT FILES — supersedes #1690's placement)
@@ -70,14 +89,36 @@ assistant_2                            (compressed)
 …
 user_{N-1}
 assistant_{N-1}                        (compressed)
-[synthetic user] --- SELECTED / ON-DISK DRAFT --- (optional)
+[synthetic user] --- SELECTED / VERSION (currently viewed, N turns ago) --- (optional)
 [synthetic user] --- LAST EDIT (the diff that produced PREVIOUS) ---
 [synthetic user] --- PREVIOUS FILES (current state — anchor SEARCH here) ---
 user_N
 → model composes
 ```
 
-`last_edit` sits immediately before `previous` so the model reads "here's what changed → here's where it landed" without intervening content. The slot block is delivered as a `role: "user"` message with a header that identifies its kind unambiguously.
+### CLI on-disk drift
+
+`selected.draft` becomes canonical home. `previous` (the stale server-side bytes) demotes to a reference slot rendered before `last_edit`. The "you are anchoring SEARCH here" header lives on `selected.draft`, not `previous`.
+
+```
+system    : base + skills
+user_1 … assistant_{N-1}               (compressed)
+[synthetic user] --- PREVIOUS FILES (last server-side state — for reference; the user's disk has since changed) ---
+[synthetic user] --- LAST EDIT (the diff that produced PREVIOUS) ---
+[synthetic user] --- ON-DISK DRAFT (current disk contents — anchor SEARCH against these bytes) ---
+user_N
+→ model composes
+```
+
+Push-seeded chats with no server-side history degenerate further: `previous` is empty so its slot is omitted entirely, `last_edit` is omitted (no `prev2`), and `selected.draft` is the only file-state slot present — rendered immediately before `user_N`.
+
+### Long-chat ORIGINAL visibility
+
+On long chats, ORIGINAL sits far from `user_N`. To preserve scaffold-revert capability ("go back to the simpler version") without depending on attention reaching back ~20 messages, the canonical-home slot's caption includes a breadcrumb: `--- PREVIOUS FILES (current state — anchor SEARCH here; ORIGINAL scaffold is N turns earlier in this conversation) ---`. The C1–C6 A/B eval (below) gains a seventh scenario `C7: scaffold-revert` to detect any regression in this path before merge.
+
+### Slot block delivery
+
+Each slot is delivered as a `role: "user"` synthetic message with a header that identifies its kind unambiguously. The header text — "anchor SEARCH against these bytes" vs. "for reference" — is the contract that tells the model which slot is canonical.
 
 ### Why synthetic user, not system
 
@@ -91,9 +132,11 @@ Lives in `reconstructConversationMessages`. Add `opts: { keepFullTurnPromptId?: 
 
 - **Narration (toplevel lines)**: keep verbatim. Short, valuable for stylistic continuity ("Paint the page with the Hearth Sim gradient" tells the model the design language without re-shipping bytes).
 - **Code blocks (`block.code.begin … block.code.end`)**: replace with a summary line. Detection is structural, no body parse:
-  - First non-blank line of the body equals `<<<<<<< SEARCH` → edit. Summary: `[N-line edit to App.jsx]` where N is the count of `block.code.line` events in the block.
-  - Otherwise → create. Summary: `[Created App.jsx — 141 lines, 7554 bytes]` from `block.end.stats`.
+  - First non-blank line of the body equals `<<<<<<< SEARCH` → edit. Summary: `[N-line edit to <path>]` where `<path>` is `block.code.begin.path` and N is the count of `block.code.line` events in the block.
+  - Otherwise → create. Summary: `[Created <path> — <lines> lines, <bytes> bytes]` where `<path>` is `block.code.begin.path` and `<lines>`/`<bytes>` come from `block.end.stats`.
 - **Other event types**: passed through as today.
+
+`<path>` is never hardcoded — multi-file edits (e.g., `App.jsx` + `Card.jsx` in one turn) produce one summary per block with its own path.
 
 The most recent turn (`keepFullTurnPromptId` = latest `prompt.req.promptId`) is passed through verbatim. User messages are always verbatim.
 
@@ -105,7 +148,10 @@ Compute at slot-assembly time:
 2. **Coalesce** adjacent hunks separated by ≤3 unchanged lines into one block (standard `diff -U3` behavior).
 3. For each coalesced hunk, build `SEARCH` = (context + old content), `REPLACE` = (context + new content).
 4. **Verify SEARCH is unique** in `prev2_vfs[path]`. If not, expand context one line at a time. Cap expansion at 20 lines.
-5. **Degrade**: if expansion hits cap without uniqueness, or the file produces >20 hunks, emit `[App.jsx: wholesale rewrite, see PREVIOUS]` for that file only. Other files in the same turn keep their hunks.
+
+   This uniqueness check is **pedagogical**, not operational. The rendered SEARCH/REPLACE block is shown to the model as a template — example of "the kind of edit that just happened" — to prime its next-turn output. It is **never re-applied** by `applyEdits` server-side. A future reader should not try to enforce strict apply-ability on this output and complicate the algorithm to do so.
+
+5. **Degrade**: if expansion hits cap without uniqueness, or the file produces >20 hunks, emit `[<path>: wholesale rewrite, see PREVIOUS]` for that file only. Other files in the same turn keep their hunks.
 
 Special cases:
 
@@ -150,7 +196,11 @@ The single biggest open question is **synthetic-user vs mid-conversation system*
 
 Acceptance gate:
 
-> Run the C1–C6 fidelity scenarios from [the OP comment](https://github.com/VibesDIY/vibes.diy/issues/1667#issuecomment-4423934079) twice — once with slot blocks delivered as synthetic `role: "user"` messages, once as a single mid-conversation `role: "system"` message — against the same dry-run-captured baseline (via #1696). If the user-role variant shows >5% degradation on any individual scenario or >2% in aggregate, the design flips to system-message delivery despite the chronological awkwardness.
+> Run the C1–C7 fidelity scenarios twice — once with slot blocks delivered as synthetic `role: "user"` messages, once as a single mid-conversation `role: "system"` message — against the same dry-run-captured baseline (via #1696). If the user-role variant shows >5% degradation on any individual scenario or >2% in aggregate, the design flips to system-message delivery despite the chronological awkwardness.
+
+C1–C6 are from [the OP comment](https://github.com/VibesDIY/vibes.diy/issues/1667#issuecomment-4423934079) (additive, style, refactor, constraint-respect, multi-file, removal).
+
+**C7 (new, gates this design specifically)**: scaffold-revert. On a ≥15-turn chat with significant evolution from the original scaffold, prompt "go back to the simpler version we had at the start, then add X." The model must locate and use ORIGINAL despite its distance from `user_N` in the conversation timeline. Failure mode the scenario exists to catch: the model ignores ORIGINAL because it is buried too far back and instead riffs on PREVIOUS.
 
 This is the only gate. Other behavior (byte reduction, recovery exhaustion, fidelity on continuation chats) is measured post-merge against real traffic; we do not gate on hypothetical numbers.
 
@@ -174,12 +224,16 @@ This is the only gate. Other behavior (byte reduction, recovery exhaustion, fide
 1. **#1696** — dry-run + assembly/dispatch split. Merged-pending. Provides the measurement surface for everything below.
 2. **This issue (#1667)** — single PR covering:
    - Slot assembler that takes `Array<{label, caption, vfs, focusPath?}>` and renders each through `renderCurrentFiles`.
+   - Canonical-home selection rule (recovery > `selected.draft` > `previous`).
    - Slot interpolation in `injectSystemPrompt` (or its successor).
    - `reconstructConversationMessages` compaction via `keepFullTurnPromptId`.
    - `last_edit` generator (pure module).
    - Recovery unified as a slot consumer.
    - `--focus` CLI flag on `edit` and `generate --dry-run`.
-   - CLI on-disk-drift detection wiring `selected.draft`.
+   - CLI `selected.draft` wiring: send when `.undo` absent OR disk-vs-`.undo` drift detected.
+
+   **Internal flag for rollback granularity**: the slot assembler accepts `opts.compaction: "off" | "on"` (default `"on"`). When `"off"`, older turns are passed through verbatim and only the slot blocks are added — useful for A/B testing the slot interpolation in isolation from the compaction change, and for fast rollback if compaction regresses without having to revert the slot assembler. Tests cover both paths.
+
 3. **Pre-merge gate**: C1–C6 A/B via #1696's dry-run, two variants of slot delivery role.
 4. **Post-merge**: measure byte reduction, recovery exhaustion rate, edit fidelity against the recorded C1–C6 baseline.
 
