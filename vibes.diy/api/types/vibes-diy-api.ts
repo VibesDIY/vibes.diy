@@ -22,7 +22,15 @@ import {
   ReqDeleteUserSlugBinding,
   ResDeleteUserSlugBinding,
 } from "./app.js";
-import { ReqOpenChat, ResPromptChatSection, SectionEvent, ReqListModels, ResListModels, FSUpdate } from "./chat.js";
+import {
+  ReqOpenChat,
+  ResPromptChatSection,
+  ResInspectPromptChatSection,
+  SectionEvent,
+  ReqListModels,
+  ResListModels,
+  FSUpdate,
+} from "./chat.js";
 import {
   ReqEnsureUserSettings,
   ResEnsureUserSettings,
@@ -99,6 +107,7 @@ export type OnResponseTypes = ResError | SectionEvent;
 export interface LLMChat extends LLMChatEntry {
   prompt(req: LLMRequest, opts?: { inputImageBase64?: string }): Promise<Result<ResPromptChatSection, VibesDiyError>>;
   promptFS(req: FSUpdate | VibeFile[]): Promise<Result<ResPromptChatSection, VibesDiyError>>;
+  inspect(req: LLMRequest): Promise<Result<ResInspectPromptChatSection, VibesDiyError>>;
 
   readonly sectionStream: ReadableStream<OnResponseTypes>;
   // onResponse(fn: (msg: OnResponseTypes) => void): void;
