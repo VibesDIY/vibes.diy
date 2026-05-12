@@ -1,10 +1,8 @@
 import {
-  ReqEnsureAppSlug,
   VibeFile,
   FileSystemItem,
   isVibeCodeBlock,
   VibeCodeBlock,
-  ReqWithVerifiedAuth,
   StorageResult,
   ResEnsureAppSlug,
   ResEnsureAppSlugMaxAppsError,
@@ -270,14 +268,20 @@ async function toFileSystemItems(
   return transformed;
 }
 
+export interface EnsureAppsOpts {
+  readonly env: Record<string, string>;
+  readonly mode: "dev" | "production";
+  readonly userId: string;
+}
+
 export async function ensureApps(
   ctx: VibesApiSQLCtx,
-  req: ReqWithVerifiedAuth<ReqEnsureAppSlug>,
+  opts: EnsureAppsOpts,
   binding: AppUserSlugBinding,
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
 ): Promise<Result<ResEnsureAppSlug>> {
-  // console.log("0-ensureApps called with req:", req, "binding:", binding, "fs:", fs);
-  const fsId = await computeFsId(req.env ?? {}, fs);
+  // console.log("0-ensureApps called with opts:", opts, "binding:", binding, "fs:", fs);
+  const fsId = await computeFsId(opts.env ?? {}, fs);
   const exist = await ctx.sql.db
     .select()
     .from(ctx.sql.tables.apps)
@@ -292,12 +296,12 @@ export async function ensureApps(
     .limit(1)
     .then((r) => r[0]);
   if (exist) {
-    // console.log("1-ensureApps called with req:", req, "binding:", binding, "fs:", fs);
-    if (req.mode === "production" && exist.mode === "dev") {
+    // console.log("1-ensureApps called with opts:", opts, "binding:", binding, "fs:", fs);
+    if (opts.mode === "production" && exist.mode === "dev") {
       // upgrade dev to production
       await ctx.sql.db
         .update(ctx.sql.tables.apps)
-        .set({ mode: req.mode })
+        .set({ mode: opts.mode })
         .where(
           and(
             eq(ctx.sql.tables.apps.userId, binding.userSlug.userId),
@@ -307,7 +311,7 @@ export async function ensureApps(
           )
         );
     }
-    const rFileSystems = await toFileSystemItems(ctx, req.mode, fs);
+    const rFileSystems = await toFileSystemItems(ctx, opts.mode, fs);
     if (rFileSystems.some((item) => item.isErr())) {
       return Result.Err(
         `Failed to process file system items: ${rFileSystems
@@ -320,18 +324,18 @@ export async function ensureApps(
       type: "vibes.diy.res-ensure-app-slug",
       userSlug: binding.userSlug.userSlug,
       appSlug: binding.appSlug.appSlug,
-      mode: req.mode,
+      mode: opts.mode,
       fsId,
-      env: req.env ?? {},
+      env: opts.env,
       fileSystem: rFileSystems.map((item) => item.Ok()),
       // wrapperUrl: "string",
       // entryPointUrl: "string",
     });
   }
 
-  // console.log("2-ensureApps called with req:", req, "binding:", binding, "fs:", fs);
+  // console.log("2-ensureApps called with opts:", opts, "binding:", binding, "fs:", fs);
   // transaction start
-  const rMaxSeq = await checkMaxAppsPerUser(ctx, req._auth.verifiedAuth.claims.userId, binding.appSlug.appSlug);
+  const rMaxSeq = await checkMaxAppsPerUser(ctx, opts.userId, binding.appSlug.appSlug);
   if (rMaxSeq.isErr()) {
     return Result.Err(rMaxSeq);
   }
@@ -342,7 +346,7 @@ export async function ensureApps(
   if (typeof maxSeq !== "number") {
     return Result.Err(`Unexpected result from checkMaxAppsPerUser: ${maxSeq}`);
   }
-  const rFileSystems = await toFileSystemItems(ctx, req.mode, fs);
+  const rFileSystems = await toFileSystemItems(ctx, opts.mode, fs);
   if (rFileSystems.some((item) => item.isErr())) {
     return Result.Err(
       `Failed to process file system items: ${rFileSystems
@@ -380,10 +384,10 @@ export async function ensureApps(
     userSlug: binding.userSlug.userSlug,
     releaseSeq: maxSeq + 1,
     fsId,
-    env: req.env ?? {},
+    env: opts.env,
     fileSystem: rFileSystems.map((item) => item.Ok()),
     meta: carriedMeta,
-    mode: req.mode,
+    mode: opts.mode,
     created: new Date().toISOString(),
   };
   const rIns = await exception2Result(() => ctx.sql.db.insert(ctx.sql.tables.apps).values(sqlVal));
@@ -395,9 +399,9 @@ export async function ensureApps(
     type: "vibes.diy.res-ensure-app-slug",
     appSlug: binding.appSlug.appSlug,
     userSlug: binding.userSlug.userSlug,
-    mode: req.mode,
+    mode: opts.mode,
     fsId,
-    env: req.env ?? {},
+    env: opts.env,
     fileSystem: rFileSystems.map((item) => item.Ok()),
     wrapperUrl: "string",
     entryPointUrl: "string",

@@ -96,33 +96,8 @@ export async function appendTurnToChat(vctx: VibesApiSQLCtx, opts: AppendTurnOpt
   }));
 
   // Step 3: Upsert the Apps row using the production ensureApps function.
-  // Synthetic auth carries the userId through to checkMaxAppsPerUser.
-  const syntheticReq = {
-    type: "vibes.diy.req-ensure-app-slug" as const,
-    auth: { type: "device-id" as const, token: "synthetic" },
-    _auth: {
-      type: "VerifiedAuthResult" as const,
-      inDashAuth: { type: "device-id" as const, token: "synthetic" },
-      verifiedAuth: {
-        type: "clerk" as const,
-        claims: syntheticClaims,
-      },
-    },
-    mode,
-    env: {} as Record<string, string>,
-    fileSystem: opts.fileSystem as VibeFile[],
-    userSlug: opts.userSlug,
-    appSlug: opts.appSlug,
-  };
-
-  const rApps = await ensureApps(
-    vctx,
-    // The req shape satisfies ReqWithVerifiedAuth<ReqEnsureAppSlug>; cast needed
-    // because the synthetic auth token bypasses the real DashAuthType validator.
-    syntheticReq as Parameters<typeof ensureApps>[1],
-    binding,
-    fullFileSystem
-  );
+  // userId is passed directly; no auth envelope needed.
+  const rApps = await ensureApps(vctx, { env: {}, mode, userId: opts.userId }, binding, fullFileSystem);
   if (rApps.isErr()) return Result.Err(`appendTurnToChat: ensureApps failed: ${rApps.Err().message}`);
 
   const appsResult = rApps.Ok();
