@@ -66,7 +66,7 @@ export function pickCanonicalHome(inputs: CanonicalInputs): CanonicalKind {
 }
 
 import { generateLastEditBlock } from "./last-edit-diff.js";
-import type { SlotConfig } from "../../types/chat.js";
+import type { SlotConfig } from "@vibes.diy/api-types";
 
 export interface AssembleInputs {
   readonly original?: { readonly vfs: ReadonlyMap<string, string>; readonly turnsAgo: number };
