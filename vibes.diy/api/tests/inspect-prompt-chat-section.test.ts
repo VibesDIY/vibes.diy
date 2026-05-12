@@ -60,6 +60,22 @@ describe("inspectPromptChatSection", () => {
     await chat.close();
   });
 
+  it("round-trips through the typed chat.inspect helper", async () => {
+    const { appSlug, userSlug } = await ctx.createApp();
+    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    expect(rOpen.isOk()).toBe(true);
+    const chat = rOpen.Ok();
+
+    const r = await chat.inspect({
+      messages: [{ role: "user", content: [{ type: "text", text: "hi via chat.inspect" }] }],
+    });
+    expect(r.isOk()).toBe(true);
+    expect(r.Ok().chatId).toBe(chat.chatId);
+    expect(r.Ok().messages[0].role).toBe("system");
+    expect(firstText(r.Ok().messages[r.Ok().messages.length - 1])).toBe("hi via chat.inspect");
+    await chat.close();
+  });
+
   it("returns an error for a chat the caller does not own", async () => {
     const { appSlug, userSlug } = await ctx.createApp();
     const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });

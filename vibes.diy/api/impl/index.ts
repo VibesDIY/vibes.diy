@@ -136,6 +136,9 @@ import {
   EvtRequestGrant,
   isEvtRequestGrant,
   ReqPromptLLMChatSection,
+  ReqInspectPromptChatSection,
+  ResInspectPromptChatSection,
+  isResInspectPromptChatSection,
   FSUpdate,
   isFSUpdate,
   vibeFile,
@@ -996,6 +999,18 @@ class LLMChatImpl implements LLMChat {
         }
       );
     }
+  }
+
+  async inspect(msg: LLMRequest): Promise<Result<ResInspectPromptChatSection, VibesDiyError>> {
+    return this.api.request<ReqType<ReqInspectPromptChatSection>, ResInspectPromptChatSection>(
+      {
+        type: "vibes.diy.req-inspect-prompt-chat-section",
+        chatId: this.res.chatId,
+        mode: "chat",
+        prompt: msg,
+      },
+      { resMatch: isResInspectPromptChatSection }
+    );
   }
 
   async prompt(msg: LLMRequest, opts?: { inputImageBase64?: string }): Promise<Result<ResPromptChatSection, VibesDiyError>> {
