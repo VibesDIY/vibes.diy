@@ -598,13 +598,25 @@ export async function handlePromptContext({
   return Result.Ok({ blockSeq, fsRef });
 }
 
+export interface ReconstructOpts {
+  readonly keepFullTurnPromptId?: string;
+}
+
 /**
  * Reconstruct conversation messages (user + assistant) from stored section blocks.
  * Assistant responses are rebuilt from ToplevelLine and Code block messages.
+ *
+ * When opts.keepFullTurnPromptId is set, code blocks in older turns (identified
+ * by the prompt.req streamId) are compacted to summary lines instead of being
+ * emitted verbatim. The turn whose streamId matches keepFullTurnPromptId is
+ * kept in full.
  */
-export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[]): ChatMessage[] {
+export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[], opts: ReconstructOpts = {}): ChatMessage[] {
   const messages: ChatMessage[] = [];
   const assistantLines: string[] = [];
+  let currentStreamId: string | undefined;
+  let blockBuffer: { path: string; lineCount: number; firstNonBlank?: string } | null = null;
+
   function flushAssistant() {
     if (assistantLines.length === 0) return;
     messages.push({
@@ -613,6 +625,7 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
     });
     assistantLines.length = 0;
   }
+
   for (const msg of sectionMsgs) {
     switch (true) {
       case isPromptReq(msg):
@@ -620,19 +633,45 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
         // Invariant: each stored prompt.req carries only the newest user turn
         // (see handlePromptContext); full history is rebuilt across sections
         // rather than duplicated per request.
+        currentStreamId = msg.streamId;
         messages.push(...msg.request.messages.filter((m) => m.role === "user"));
         break;
       case isToplevelLine(msg):
         assistantLines.push(msg.line);
         break;
-      case isCodeBegin(msg):
-        assistantLines.push("```" + msg.lang);
+      case isCodeBegin(msg): {
+        const compact = opts.keepFullTurnPromptId !== undefined && currentStreamId !== opts.keepFullTurnPromptId;
+        if (compact) {
+          blockBuffer = { path: msg.path ?? "App.jsx", lineCount: 0 };
+        } else {
+          assistantLines.push("```" + msg.lang);
+        }
         break;
+      }
       case isCodeLine(msg):
-        assistantLines.push(msg.line);
+        if (blockBuffer) {
+          blockBuffer.lineCount++;
+          if (!blockBuffer.firstNonBlank && msg.line.trim().length > 0) {
+            blockBuffer.firstNonBlank = msg.line.trim();
+          }
+        } else {
+          assistantLines.push(msg.line);
+        }
         break;
       case isCodeEnd(msg):
-        assistantLines.push("```");
+        if (blockBuffer) {
+          const isEdit = blockBuffer.firstNonBlank === "<<<<<<< SEARCH";
+          if (isEdit) {
+            assistantLines.push(`[${blockBuffer.lineCount}-line edit to ${blockBuffer.path}]`);
+          } else {
+            const lines = msg.stats.lines !== 0 ? msg.stats.lines : blockBuffer.lineCount;
+            const bytes = msg.stats.bytes;
+            assistantLines.push(`[Created ${blockBuffer.path} — ${lines} lines, ${bytes} bytes]`);
+          }
+          blockBuffer = null;
+        } else {
+          assistantLines.push("```");
+        }
         break;
     }
   }
