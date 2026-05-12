@@ -3,9 +3,18 @@ import { assert } from "vitest";
 import { Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
-import { CFInject, cfServe, noopCache, vibesMsgEvento, WSSendProvider, VibesApiSQLCtx } from "@vibes.diy/api-svc";
+import {
+  CFInject,
+  cfServe,
+  noopCache,
+  vibesMsgEvento,
+  WSSendProvider,
+  VibesApiSQLCtx,
+  assemblePromptPayload,
+} from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
-import { type EvtRequestGrant, isResEnsureAppSlugOk } from "@vibes.diy/api-types";
+import { type EvtRequestGrant, isResEnsureAppSlugOk, type SelectedSlotInput, type SlotConfig } from "@vibes.diy/api-types";
+import type { ChatMessage } from "@vibes.diy/call-ai-v2";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 let apiTestIdentityPartition = 0;
@@ -35,12 +44,26 @@ function nextSeqUserIdBase(): number {
   return process.pid * 1_000_000 + safeWorkerId * 10_000 + ++apiTestIdentityPartition * 100;
 }
 
+export interface DryRunInput {
+  readonly chatId: string;
+  readonly promptText: string;
+  readonly selected?: SelectedSlotInput;
+  readonly slots?: SlotConfig;
+  readonly focusPath?: string;
+}
+
+export interface AssembledPayload {
+  readonly model: string;
+  readonly messages: ChatMessage[];
+}
+
 export interface ApiTestCtx {
   api: VibesDiyApi;
   api2: VibesDiyApi;
   appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
   sthis: ReturnType<typeof ensureSuperThis>;
   createApp: () => Promise<{ appSlug: string; userSlug: string }>;
+  dryRun: (input: DryRunInput) => Promise<AssembledPayload>;
 }
 
 export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise<ApiTestCtx> {
@@ -123,7 +146,20 @@ export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise
     return { appSlug: res.appSlug, userSlug: res.userSlug };
   }
 
-  return { api, api2, appCtx, sthis, createApp };
+  async function dryRun(input: DryRunInput): Promise<AssembledPayload> {
+    const r = await assemblePromptPayload(appCtx.vibesCtx, {
+      chatId: input.chatId,
+      model: "anthropic/claude-sonnet-4-6",
+      newUserMessages: [{ role: "user", content: [{ type: "text", text: input.promptText }] }],
+      selected: input.selected,
+      slots: input.slots,
+      focusPath: input.focusPath,
+    });
+    if (r.isOk() === false) throw new Error(`assemblePromptPayload failed: ${String(r.Err())}`);
+    return r.Ok();
+  }
+
+  return { api, api2, appCtx, sthis, createApp, dryRun };
 }
 
 export { type VibesApiSQLCtx };

@@ -1999,6 +1999,9 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           chatId: req.chatId,
           model: modelId,
           newUserMessages: orig.prompt.messages,
+          selected: orig.selected,
+          slots: orig.slots,
+          focusPath: orig.focusPath,
         });
         if (rAssembled.isErr()) return Result.Err(rAssembled);
         preAssembled = rAssembled.Ok();
