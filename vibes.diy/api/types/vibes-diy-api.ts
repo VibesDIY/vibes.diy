@@ -7,6 +7,8 @@ import {
   ResListUserSlugAppSlug,
   ReqListRecentVibes,
   ResListRecentVibes,
+  ReqPinRecentVibe,
+  ResPinRecentVibe,
   ReqGetChatDetails,
   ResGetChatDetails,
   ReqGetAppByFsId,
@@ -125,6 +127,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   // getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>>;
   listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>>;
   listRecentVibes(req: Req<ReqListRecentVibes>): Promise<Result<ResListRecentVibes, VibesDiyError>>;
+  pinRecentVibe(req: Req<ReqPinRecentVibe>): Promise<Result<ResPinRecentVibe, VibesDiyError>>;
   getChatDetails(req: Req<ReqGetChatDetails>): Promise<Result<ResGetChatDetails, VibesDiyError>>;
   getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>>;
   openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>>;

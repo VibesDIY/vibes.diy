@@ -33,13 +33,17 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 const MIN_LIMIT = 1;
 
+// Cursor includes pinnedAt as the leading sort key. Older cursors written
+// before pin support omit pinnedAt; we tolerate that by defaulting to empty
+// (unpinned) so an in-flight paginator keeps working through the rollout.
 const cursorShape = type({
+  "pinnedAt?": "string",
   updated: "string",
   userSlug: "string",
   appSlug: "string",
 });
 
-type DecodedCursor = typeof cursorShape.infer;
+type DecodedCursor = typeof cursorShape.infer & { pinnedAt: string };
 
 const jsonEnde = JSONEnDecoderSingleton();
 
@@ -56,7 +60,7 @@ function decodeCursor(raw: string): Result<DecodedCursor> {
   if (checked instanceof type.errors) {
     return Result.Err(`invalid cursor: ${checked.summary}`);
   }
-  return Result.Ok(checked);
+  return Result.Ok({ ...checked, pinnedAt: checked.pinnedAt ?? "" });
 }
 
 // Clamp limit to [MIN_LIMIT, MAX_LIMIT] and reject NaN / non-finite / non-integer.
@@ -116,10 +120,18 @@ export const listRecentVibesEvento: EventoHandler<
           return Result.Ok(EventoResult.Continue);
         }
         const c = rDecoded.Ok();
+        // Tuple predicate: rows that come strictly after the cursor under
+        // the order (pinnedAt DESC, updated DESC, userSlug DESC, appSlug DESC).
         const tuplePred = or(
-          lt(asb.updated, c.updated),
-          and(eq(asb.updated, c.updated), lt(asb.userSlug, c.userSlug)),
-          and(eq(asb.updated, c.updated), eq(asb.userSlug, c.userSlug), lt(asb.appSlug, c.appSlug))
+          lt(asb.pinnedAt, c.pinnedAt),
+          and(eq(asb.pinnedAt, c.pinnedAt), lt(asb.updated, c.updated)),
+          and(eq(asb.pinnedAt, c.pinnedAt), eq(asb.updated, c.updated), lt(asb.userSlug, c.userSlug)),
+          and(
+            eq(asb.pinnedAt, c.pinnedAt),
+            eq(asb.updated, c.updated),
+            eq(asb.userSlug, c.userSlug),
+            lt(asb.appSlug, c.appSlug)
+          )
         );
         if (tuplePred) conditions.push(tuplePred);
       }
@@ -129,6 +141,7 @@ export const listRecentVibesEvento: EventoHandler<
           userSlug: asb.userSlug,
           appSlug: asb.appSlug,
           updated: asb.updated,
+          pinnedAt: asb.pinnedAt,
           settings: settings.settings,
         })
         .from(usb)
@@ -138,7 +151,9 @@ export const listRecentVibesEvento: EventoHandler<
           and(eq(settings.userId, usb.userId), eq(settings.userSlug, usb.userSlug), eq(settings.appSlug, asb.appSlug))
         )
         .where(and(...conditions))
-        .orderBy(desc(asb.updated), desc(asb.userSlug), desc(asb.appSlug))
+        // Pinned rows float to the top: empty string sorts below any ISO
+        // timestamp under DESC, so unpinned rows fall through naturally.
+        .orderBy(desc(asb.pinnedAt), desc(asb.updated), desc(asb.userSlug), desc(asb.appSlug))
         .limit(limit + 1);
 
       const hasMore = rows.length > limit;
@@ -157,14 +172,17 @@ export const listRecentVibesEvento: EventoHandler<
         };
         if (titleEntry) item.title = titleEntry.title;
         if (icon) item.icon = icon;
+        if (row.pinnedAt) item.pinnedAt = row.pinnedAt;
         return item;
       });
 
-      const nextCursor = hasMore
+      const lastRow = hasMore ? slice[slice.length - 1] : undefined;
+      const nextCursor = lastRow
         ? encodeCursor({
-            updated: items[items.length - 1].updated,
-            userSlug: items[items.length - 1].userSlug,
-            appSlug: items[items.length - 1].appSlug,
+            pinnedAt: lastRow.pinnedAt ?? "",
+            updated: lastRow.updated,
+            userSlug: lastRow.userSlug,
+            appSlug: lastRow.appSlug,
           })
         : undefined;
 

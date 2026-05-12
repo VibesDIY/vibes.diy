@@ -197,6 +197,9 @@ export const resRecentVibesItem = type({
   updated: "string",
   "title?": "string",
   "icon?": type({ cid: "string", mime: "string" }),
+  // ISO timestamp when the row was pinned by this user; absent or empty
+  // string means unpinned. The server orders pinned rows first.
+  "pinnedAt?": "string",
 });
 export type ResRecentVibesItem = typeof resRecentVibesItem.infer;
 
@@ -208,6 +211,31 @@ export const resListRecentVibes = type({
 export type ResListRecentVibes = typeof resListRecentVibes.infer;
 export function isResListRecentVibes(obj: unknown): obj is ResListRecentVibes {
   return !(resListRecentVibes(obj) instanceof type.errors);
+}
+
+// Toggle pin state on a (userSlug, appSlug) row owned by the caller.
+export const reqPinRecentVibe = type({
+  type: "'vibes.diy.req-pin-recent-vibe'",
+  auth: dashAuthType,
+  userSlug: "string",
+  appSlug: "string",
+  pin: "boolean",
+});
+export type ReqPinRecentVibe = typeof reqPinRecentVibe.infer;
+export function isReqPinRecentVibe(obj: unknown): obj is ReqPinRecentVibe {
+  return !(reqPinRecentVibe(obj) instanceof type.errors);
+}
+
+export const resPinRecentVibe = type({
+  type: "'vibes.diy.res-pin-recent-vibe'",
+  userSlug: "string",
+  appSlug: "string",
+  // Empty string when unpinned, ISO timestamp when pinned.
+  pinnedAt: "string",
+});
+export type ResPinRecentVibe = typeof resPinRecentVibe.infer;
+export function isResPinRecentVibe(obj: unknown): obj is ResPinRecentVibe {
+  return !(resPinRecentVibe(obj) instanceof type.errors);
 }
 
 export type ReqGetByUserSlugAppSlug = typeof reqGetByUserSlugAppSlug.infer;

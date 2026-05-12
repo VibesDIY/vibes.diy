@@ -241,4 +241,54 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     const found = rList.Ok().items.find((it) => it.appSlug === app.appSlug);
     expect(found?.title).toBe("Pretty Name");
   });
+
+  it("pinning a vibe floats it above non-pinned rows ordered by updated", async () => {
+    const older = await createApp(api, "pin-older");
+    const newer = await createApp(api, "pin-newer");
+    await setUpdated(older.userSlug, older.appSlug, "2024-01-01T00:00:00.000Z");
+    await setUpdated(newer.userSlug, newer.appSlug, "2025-01-01T00:00:00.000Z");
+
+    // Sanity check: newer comes first under update-only sort.
+    {
+      const rList = await api.listRecentVibes({ limit: 100 });
+      if (rList.isErr()) assert.fail(rList.Err().message);
+      const items = rList.Ok().items.filter((it) => it.appSlug === older.appSlug || it.appSlug === newer.appSlug);
+      expect(items[0]?.appSlug).toBe(newer.appSlug);
+    }
+
+    const rPin = await api.pinRecentVibe({ userSlug: older.userSlug, appSlug: older.appSlug, pin: true });
+    if (rPin.isErr()) assert.fail(`pinRecentVibe failed: ${rPin.Err().message}`);
+    expect(rPin.Ok().pinnedAt.length).toBeGreaterThan(0);
+
+    const rList = await api.listRecentVibes({ limit: 100 });
+    if (rList.isErr()) assert.fail(rList.Err().message);
+    const items = rList.Ok().items.filter((it) => it.appSlug === older.appSlug || it.appSlug === newer.appSlug);
+    expect(items[0]?.appSlug).toBe(older.appSlug);
+    expect(items[0]?.pinnedAt).toBeTruthy();
+    expect(items[1]?.appSlug).toBe(newer.appSlug);
+    expect(items[1]?.pinnedAt).toBeFalsy();
+  });
+
+  it("unpinning clears pinnedAt and restores update-order placement", async () => {
+    const app = await createApp(api, "pin-toggle");
+    const rPin = await api.pinRecentVibe({ userSlug: app.userSlug, appSlug: app.appSlug, pin: true });
+    if (rPin.isErr()) assert.fail(rPin.Err().message);
+    expect(rPin.Ok().pinnedAt.length).toBeGreaterThan(0);
+
+    const rUnpin = await api.pinRecentVibe({ userSlug: app.userSlug, appSlug: app.appSlug, pin: false });
+    if (rUnpin.isErr()) assert.fail(rUnpin.Err().message);
+    expect(rUnpin.Ok().pinnedAt).toBe("");
+
+    const rList = await api.listRecentVibes({ limit: 100 });
+    if (rList.isErr()) assert.fail(rList.Err().message);
+    const found = rList.Ok().items.find((it) => it.appSlug === app.appSlug);
+    expect(found).toBeDefined();
+    expect(found?.pinnedAt).toBeFalsy();
+  });
+
+  it("rejects pin requests on apps owned by another user", async () => {
+    const otherApp = await createApp(api2, "pin-not-yours");
+    const r = await api.pinRecentVibe({ userSlug: otherApp.userSlug, appSlug: otherApp.appSlug, pin: true });
+    expect(r.isErr()).toBe(true);
+  });
 });

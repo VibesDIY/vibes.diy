@@ -10,6 +10,10 @@ export interface UseRecentVibes {
   error: string | null;
   refresh: () => Promise<void>;
   loadMore: () => Promise<void>;
+  // Local-only setter so callers can optimistically update items
+  // (pin/rename/soft-delete) before the server confirms; the next refresh
+  // overwrites with authoritative data.
+  mutate: (updater: (prev: ResRecentVibesItem[]) => ResRecentVibesItem[]) => void;
 }
 
 const recentVibesListeners = new Set<() => void>();
@@ -91,5 +95,9 @@ export function useRecentVibes(limit: number): UseRecentVibes {
     };
   }, [refresh]);
 
-  return { items, nextCursor, loading, error, refresh, loadMore };
+  const mutate = useCallback((updater: (prev: ResRecentVibesItem[]) => ResRecentVibesItem[]) => {
+    setItems(updater);
+  }, []);
+
+  return { items, nextCursor, loading, error, refresh, loadMore, mutate };
 }
