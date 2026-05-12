@@ -8,10 +8,4 @@ describe("cmdTsEvento", () => {
       .actions.map((h) => h.hash);
     expect(handlers).toContain("use-vibes.cli.edit");
   });
-  it("registers the inspect command handler", () => {
-    const handlers = cmdTsEvento()
-      .handlers()
-      .actions.map((h) => h.hash);
-    expect(handlers).toContain("use-vibes.cli.inspect");
-  });
 });

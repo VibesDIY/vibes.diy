@@ -22,15 +22,7 @@ import {
   ReqDeleteUserSlugBinding,
   ResDeleteUserSlugBinding,
 } from "./app.js";
-import {
-  ReqOpenChat,
-  ResPromptChatSection,
-  ResInspectPromptChatSection,
-  SectionEvent,
-  ReqListModels,
-  ResListModels,
-  FSUpdate,
-} from "./chat.js";
+import { ReqOpenChat, ResPromptChatSection, SectionEvent, ReqListModels, ResListModels, FSUpdate } from "./chat.js";
 import {
   ReqEnsureUserSettings,
   ResEnsureUserSettings,
@@ -105,9 +97,14 @@ export type LLMChatEntry = typeof LLMChatEntry.infer;
 export type OnResponseTypes = ResError | SectionEvent;
 
 export interface LLMChat extends LLMChatEntry {
-  prompt(req: LLMRequest, opts?: { inputImageBase64?: string }): Promise<Result<ResPromptChatSection, VibesDiyError>>;
+  // dryRun: when true, server emits a single prompt.dry-run-payload block on
+  // sectionStream and skips all dispatch side effects. Caller filters
+  // sectionStream blocks for the payload. Chat mode only.
+  prompt(
+    req: LLMRequest,
+    opts?: { inputImageBase64?: string; dryRun?: boolean }
+  ): Promise<Result<ResPromptChatSection, VibesDiyError>>;
   promptFS(req: FSUpdate | VibeFile[]): Promise<Result<ResPromptChatSection, VibesDiyError>>;
-  inspect(req: LLMRequest): Promise<Result<ResInspectPromptChatSection, VibesDiyError>>;
 
   readonly sectionStream: ReadableStream<OnResponseTypes>;
   // onResponse(fn: (msg: OnResponseTypes) => void): void;

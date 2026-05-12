@@ -828,6 +828,7 @@ async function handlerLlmRequest({
   req,
   resChat,
   promptId,
+  preAssembled,
 }: {
   scope: Scope;
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -836,6 +837,11 @@ async function handlerLlmRequest({
   resChat: ResChat;
   promptId: string;
   blockSeq: number;
+  // For chat mode, the top-level handler hoists the assembly call so dry-run
+  // and dispatch share one code path. When set, the assemble branch below is
+  // skipped. For app/img modes this is undefined and the inline image_url
+  // logic still runs.
+  preAssembled?: { model: string; messages: ChatMessage[] };
 }): Promise<{ res: Response; blockSeq: number; llmReq: LLMRequest & { headers: LLMHeaders }; abort: AbortController }> {
   const modelId: string = await scope
     .evalResult(async (): Promise<Result<string>> => {
@@ -856,24 +862,19 @@ async function handlerLlmRequest({
     })
     .do();
 
-  // console.log(promptId, "Pre-System request for promptId:");
-  // Assemble BEFORE writing prompt.req. The new user turn(s) come from
-  // req.prompt.messages and are passed to assemblePromptPayload explicitly,
-  // so reconstruction does not depend on a just-written prompt.req block.
-  // The prompt.req append happens after assembly so the next turn's
-  // reconstruction still sees this turn's user prompt.
+  // Assemble BEFORE writing prompt.req. Chat mode receives a pre-assembled
+  // payload from the top-level handler (single code path with dry-run);
+  // app/img modes still build their messages inline here. The prompt.req
+  // append happens after this block so reconstruction does not depend on
+  // it for the current turn.
   const withSystemPrompt = await scope
     .evalResult(async () => {
       let withSystemPrompt = Result.Ok({
         model: modelId,
         messages: [] as ChatMessage[],
       });
-      if (req.mode === "chat") {
-        withSystemPrompt = await assemblePromptPayload(vctx, {
-          chatId: req.chatId,
-          model: req.prompt.model ?? modelId,
-          newUserMessages: req.prompt.messages,
-        });
+      if (preAssembled !== undefined) {
+        withSystemPrompt = Result.Ok(preAssembled);
       } else if (req.mode === "app" || req.mode === "img") {
         let messages = req.prompt.messages;
         if (req.mode === "img") {
@@ -1896,6 +1897,96 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       }
       const resChat = rResChat.Ok();
 
+      // Chat-mode assembly hoisted from handlerLlmRequest. Computing the
+      // {model, messages} payload here keeps assembly on a single code
+      // path that both dispatch and dryRun consume — they cannot drift.
+      // For app/img/fs modes preAssembled stays undefined; handlerLlmRequest
+      // falls through to its existing inline message build.
+      let preAssembled: { model: string; messages: ChatMessage[] } | undefined;
+      if (isReqCreationPromptChatSection(orig)) {
+        if (!orig.prompt.messages.some((m) => m.role === "user")) {
+          return Result.Err(`prompt.messages must include at least one user message`);
+        }
+        const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
+        if (rDefaults.isErr()) return Result.Err(rDefaults);
+        const modelId = orig.prompt.model ?? rDefaults.Ok().chat.model.id;
+        const rAssembled = await assemblePromptPayload(vctx, {
+          chatId: req.chatId,
+          model: modelId,
+          newUserMessages: orig.prompt.messages,
+        });
+        if (rAssembled.isErr()) return Result.Err(rAssembled);
+        preAssembled = rAssembled.Ok();
+
+        // Dry-run branch — chat-mode only by type. Emits res-prompt-chat-section
+        // ack so the client's api.request resolves on tid, then emits a framed
+        // (begin → dry-run-payload → end) section event via emit-only. No
+        // bumpAppRecency, no DB writes, no LLM dispatch, no billing.
+        if (orig.dryRun === true) {
+          const dryRunPromptId = `dry-run-${vctx.sthis.nextId(12).str}`;
+          await ctx.send.send(
+            ctx,
+            wrapMsgBase(ctx.validated, {
+              payload: {
+                type: "vibes.diy.res-prompt-chat-section",
+                chatId: req.chatId,
+                userSlug: resChat.userSlug,
+                appSlug: resChat.appSlug,
+                promptId: dryRunPromptId,
+                outerTid: req.outerTid,
+                mode: req.mode,
+              },
+              tid: ctx.validated.tid,
+              src: "promptChatSection",
+            } satisfies InMsgBase<ResPromptChatSection>)
+          );
+          const now = () => new Date();
+          let seq = 0;
+          await appendBlockEvent({
+            ctx,
+            vctx,
+            req,
+            promptId: dryRunPromptId,
+            blockSeq: seq,
+            emitMode: "emit-only",
+            evt: { type: "prompt.block-begin", streamId: dryRunPromptId, chatId: req.chatId, seq, timestamp: now() },
+          });
+          seq++;
+          await appendBlockEvent({
+            ctx,
+            vctx,
+            req,
+            promptId: dryRunPromptId,
+            blockSeq: seq,
+            emitMode: "emit-only",
+            evt: {
+              type: "prompt.dry-run-payload",
+              streamId: dryRunPromptId,
+              chatId: req.chatId,
+              seq,
+              timestamp: now(),
+              // Same duck-type as PromptReq.request — tooling that walks
+              // block events by `msg.request.messages` reads dry-run and
+              // real turns identically. The contents are the assembled
+              // would-be-dispatched request (system + history + new turn),
+              // not the user's raw prompt.
+              request: { ...orig.prompt, model: preAssembled.model, messages: preAssembled.messages },
+            },
+          });
+          seq++;
+          await appendBlockEvent({
+            ctx,
+            vctx,
+            req,
+            promptId: dryRunPromptId,
+            blockSeq: seq,
+            emitMode: "emit-only",
+            evt: { type: "prompt.block-end", streamId: dryRunPromptId, chatId: req.chatId, seq, timestamp: now() },
+          });
+          return Result.Ok(EventoResult.Continue);
+        }
+      }
+
       // Resolved img model id picks the backend: "prodia/*" -> Prodia, else LLM handler.
       // When the request carries an input image (img2img edit) and the
       // user didn't pick a model, prefer the catalog's `img-edit`
@@ -1963,6 +2054,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             req: req as ReqWithVerifiedAuth<ReqPromptLLMChatSection>,
             resChat,
             promptId,
+            preAssembled,
           });
           const finalBlockSeq = await handleLlmResponse({
             scope,

@@ -136,9 +136,6 @@ import {
   EvtRequestGrant,
   isEvtRequestGrant,
   ReqPromptLLMChatSection,
-  ReqInspectPromptChatSection,
-  ResInspectPromptChatSection,
-  isResInspectPromptChatSection,
   FSUpdate,
   isFSUpdate,
   vibeFile,
@@ -1001,19 +998,10 @@ class LLMChatImpl implements LLMChat {
     }
   }
 
-  async inspect(msg: LLMRequest): Promise<Result<ResInspectPromptChatSection, VibesDiyError>> {
-    return this.api.request<ReqType<ReqInspectPromptChatSection>, ResInspectPromptChatSection>(
-      {
-        type: "vibes.diy.req-inspect-prompt-chat-section",
-        chatId: this.res.chatId,
-        mode: "chat",
-        prompt: msg,
-      },
-      { resMatch: isResInspectPromptChatSection }
-    );
-  }
-
-  async prompt(msg: LLMRequest, opts?: { inputImageBase64?: string }): Promise<Result<ResPromptChatSection, VibesDiyError>> {
+  async prompt(
+    msg: LLMRequest,
+    opts?: { inputImageBase64?: string; dryRun?: boolean }
+  ): Promise<Result<ResPromptChatSection, VibesDiyError>> {
     const mode = this.res.mode;
     if (!isPromptLLMStyle(mode)) {
       return Result.Err({
@@ -1031,6 +1019,10 @@ class LLMChatImpl implements LLMChat {
         outerTid: this.tid, //leaking but necessary streaming
         prompt: msg,
         ...(mode === "img" && opts?.inputImageBase64 ? { inputImageBase64: opts.inputImageBase64 } : {}),
+        // dryRun is a chat-mode-only flag (per reqCreationPromptChatSection
+        // type). Forward it only when mode === "chat" — for app/img the
+        // server type won't carry it.
+        ...(mode === "chat" && opts?.dryRun === true ? { dryRun: true } : {}),
       },
       {
         resMatch: isResPromptChatSection,

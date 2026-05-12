@@ -69,6 +69,11 @@ export const reqCreationPromptChatSection = type({
   chatId: "string",
   outerTid: "string", // this is used to emit events to the current chat session
   prompt: LLMRequest,
+  // When true: assemble the would-be-dispatched LLMRequest and emit it as
+  // a single prompt.dry-run-payload block on the section stream. No
+  // PromptContexts/ChatSections writes, no LLM call, no billing. Chat
+  // mode only; app/img dry-run is a follow-up.
+  "dryRun?": "boolean",
 });
 
 export function isReqCreationPromptChatSection(obj: unknown): obj is typeof reqCreationPromptChatSection.infer {
@@ -175,33 +180,6 @@ export const resPromptChatSection = type({
 export type ResPromptChatSection = typeof resPromptChatSection.infer;
 export function isResPromptChatSection(obj: unknown): obj is ResPromptChatSection {
   return !(resPromptChatSection(obj) instanceof type.errors);
-}
-
-export const reqInspectPromptChatSection = type({
-  type: "'vibes.diy.req-inspect-prompt-chat-section'",
-  auth: dashAuthType,
-  chatId: "string",
-  mode: "'chat'",
-  prompt: LLMRequest,
-});
-
-export type ReqInspectPromptChatSection = typeof reqInspectPromptChatSection.infer;
-
-export function isReqInspectPromptChatSection(obj: unknown): obj is ReqInspectPromptChatSection {
-  return !(reqInspectPromptChatSection(obj) instanceof type.errors);
-}
-
-export const resInspectPromptChatSection = type({
-  type: "'vibes.diy.res-inspect-prompt-chat-section'",
-  chatId: "string",
-  model: "string",
-  messages: LLMRequest.get("messages"),
-});
-
-export type ResInspectPromptChatSection = typeof resInspectPromptChatSection.infer;
-
-export function isResInspectPromptChatSection(obj: unknown): obj is ResInspectPromptChatSection {
-  return !(resInspectPromptChatSection(obj) instanceof type.errors);
 }
 
 // export const reqAddFS = type({

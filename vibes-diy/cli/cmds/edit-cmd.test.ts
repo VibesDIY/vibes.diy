@@ -218,6 +218,8 @@ describe("editEvento", () => {
       apiUrl: "https://example.com/api",
       instantJoin: false,
       verbose: false,
+      dryRun: false,
+      asText: false,
     });
   });
 
@@ -255,6 +257,8 @@ describe("editEvento", () => {
       userSlug: "alice",
       instantJoin: false,
       verbose: false,
+      dryRun: false,
+      asText: false,
       dir: "",
       apiUrl: "https://vibes.diy/api?.stable-entry.=cli",
     };
@@ -319,6 +323,8 @@ describe("editEvento", () => {
       userSlug: "alice",
       instantJoin: false,
       verbose: false,
+      dryRun: false,
+      asText: false,
       dir: target,
       apiUrl: "https://vibes.diy/api?.stable-entry.=cli",
     };
@@ -401,6 +407,8 @@ describe("editEvento", () => {
       userSlug: "alice",
       instantJoin: false,
       verbose: false,
+      dryRun: false,
+      asText: false,
       dir: "",
       apiUrl: "https://vibes.diy/api?.stable-entry.=cli",
     };
