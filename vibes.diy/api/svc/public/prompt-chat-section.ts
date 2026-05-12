@@ -99,7 +99,7 @@ import {
   type RecoveryCounter,
 } from "../intern/recovery.js";
 import { loadVersionTimeline, selectSlotSources, loadLatestPromptId } from "../intern/version-timeline.js";
-import { assembleSlotMessages } from "../intern/slot-assembler.js";
+import { assembleSlotMessages, resolveSlotConfig } from "../intern/slot-assembler.js";
 import { bumpAppRecency } from "../intern/bump-app-recency.js";
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
@@ -2000,7 +2000,13 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           model: modelId,
           newUserMessages: orig.prompt.messages,
           selected: orig.selected,
-          slots: orig.slots,
+          slots: resolveSlotConfig(orig.slots, {
+            SLOTS_ORIGINAL: vctx.sthis.env.get("SLOTS_ORIGINAL"),
+            SLOTS_SELECTED: vctx.sthis.env.get("SLOTS_SELECTED"),
+            SLOTS_LAST_EDIT: vctx.sthis.env.get("SLOTS_LAST_EDIT"),
+            SLOTS_PREVIOUS: vctx.sthis.env.get("SLOTS_PREVIOUS"),
+            SLOTS_COMPACTION: vctx.sthis.env.get("SLOTS_COMPACTION"),
+          }),
           focusPath: orig.focusPath,
         });
         if (rAssembled.isErr()) return Result.Err(rAssembled);
