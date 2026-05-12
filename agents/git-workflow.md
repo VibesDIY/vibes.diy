@@ -29,6 +29,14 @@ git rebase origin/<integration-branch>   # before pushing or creating a PR
 
 Never `git merge <integration-branch>` into a topic branch.
 
+## Topic branches are namespaced by the originating human
+
+Topic branches must be named `<github-account>/<topic>` after the human who originated the work — e.g. `jchris/dry-run-prompt-inspection`, `mabels/vibes-diy-api`. The github account prefix tells everyone at a glance who's driving the branch and prevents collisions when multiple humans + agents are pushing topic branches at the same time.
+
+Agents working on jchris's behalf use `jchris/<topic>`. Worktree tools that auto-generate names like `worktree-<topic>` or `issue-<n>-<topic>` are convenient but produce orphan-looking branches in `gh pr list` — rename before the first push, or push under the correct `<account>/<topic>` name from the start.
+
+Existing branches that already shipped under a different name stay as-is (don't churn history to rename). The rule applies to new branches.
+
 ## No amend / no force push on shared integration branches
 
 On any shared integration branch, **always create new commits** — never `git commit --amend`, never `git push --force-with-lease`. Amending or force-pushing rewrites history that others may have already pulled. New commits on top are always safe; rewrites are not.
