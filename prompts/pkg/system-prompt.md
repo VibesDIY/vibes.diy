@@ -66,7 +66,7 @@ If a single SEARCH/REPLACE grows beyond ~25 lines, split it.
 - A line ending in `...` is a single-line **prefix match** — the source line must begin with what's before the `...`; the rest is ignored. Use this to skip long Tailwind class strings or other noisy line tails.
 - A line starting with `...` is a **multi-line skip** — it matches zero or more source lines of any content. Any text after the leading `...` is just a comment for clarity (e.g. `...rest of body`). The skipped lines are part of the replaced range.
 - A `...` in the middle of a line is literal text and participates in exact match.
-- **On the REPLACE side, a line ending in `...` mirrors the SEARCH-side prefix-`...` it pairs with — the captured source-line tail is reused verbatim, so you don't need to retype it.** Pairing is by ordinal: 1st `...` on REPLACE pairs with 1st `...` on SEARCH, and so on. If a REPLACE line ends in `...` but no SEARCH prefix-`...` is available to pair, the `...` stays literal. Leading `...` on REPLACE stays literal; mid-line `...` always stays literal.
+- **On the REPLACE side, `...` mirrors the SEARCH-side `...` it pairs with — the captured source content is reused verbatim, so you don't need to retype it.** Trailing-`...` on REPLACE pairs by ordinal with trailing-`...` on SEARCH (1st with 1st, etc.) and reuses the captured source-line tail. A line that is just `...` on REPLACE pairs by ordinal with the multi-line skips on SEARCH (leading, inter-segment, trailing — in that order) and substitutes the source lines the SEARCH-side skip ate, so you can preserve a block of content between two anchors without retyping it. If a REPLACE `...` has no SEARCH-side counterpart to pair, it stays literal. Mid-line `...` always stays literal.
 
 Example — replacing a function with a fat Tailwind line without retyping the classes:
 
@@ -131,6 +131,22 @@ Mirror form — change one token mid-line and let `...` carry the tail through. 
 ```
 
 The trailing `...` on REPLACE reuses whatever the SEARCH-side `...` ate — so the rest of the rule lands intact without you having to retype it.
+
+Same idea with leading-`...` — change a few non-adjacent keys in a styles object while preserving everything in between:
+
+```jsx
+<<<<<<< SEARCH
+    title:    "old-title",
+...
+    feedTitle: "old-feed-title",
+=======
+    title:    "new-title",
+...
+    feedTitle: "new-feed-title",
+>>>>>>> REPLACE
+```
+
+The `...` on REPLACE substitutes the source lines the SEARCH-side `...` skipped — every key between `title:` and `feedTitle:` lands back unchanged.
 
 If a short prefix would match in two places, then add just enough surrounding context to disambiguate — but don't pre-emptively copy the whole long line.
 
