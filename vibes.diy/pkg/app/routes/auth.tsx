@@ -26,6 +26,8 @@ export default function AuthLayout() {
     return <div></div>;
   }
 
+  const redirectBack = location.pathname + location.search;
+
   return (
     <>
       <Outlet />
@@ -35,7 +37,7 @@ export default function AuthLayout() {
       {!isSignedIn &&
         createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <SignIn routing="hash" fallbackRedirectUrl={location.pathname + location.search} />
+            <SignIn routing="hash" fallbackRedirectUrl={redirectBack} signUpFallbackRedirectUrl={redirectBack} />
           </div>,
           document.body
         )}
