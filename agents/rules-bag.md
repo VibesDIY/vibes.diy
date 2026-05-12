@@ -26,6 +26,19 @@ Our implementation never throws — use `Result`.
 
 Avoid `if (!x)` // falsy check → Use Option `if (x.isSome())` → `if (x === true || x === "")` means you expected x to be a particular type; you are not looking for some falsy state.
 
+### Explicit comparisons that are rules-bag-correct
+
+The `if (!x)` rule forbids truthy/falsy coercion, not explicit value comparisons. The following are all correct and **should NOT** be flagged as falsy checks during review:
+
+- `if (x === undefined)` — checks specifically for undefined
+- `if (x !== undefined)` — checks for any non-undefined value
+- `if (x === false)` — checks specifically for false (e.g., `if (r.isOk() === false)`)
+- `if (x.length === 0)` — checks empty string/array
+- `if (idx >= 0)` — checks present (find/findIndex result)
+- `if (arr.find(...) !== undefined)` — checks find hit
+
+What the rule forbids is the type-ambiguous shortcut `if (!x)`, which collapses multiple "falsy" states (undefined, null, 0, "", false) into one branch. The explicit forms above declare exactly which state you mean. `??` (nullish coalescing) for defaults also handles `undefined` precisely — rules-bag-correct.
+
 Never use `try/catch` → `exception2Result()`
 
 Never implement a Singleton — use `ResolveOnce`/`Lazy`
