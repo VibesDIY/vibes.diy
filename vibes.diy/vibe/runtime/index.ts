@@ -8,6 +8,7 @@ export * from "./call-ai.js";
 export * from "./img-gen.js";
 export { resizeImageToBase64 } from "./resize-image.js";
 export { useFireproof, fireproof, listDbNames } from "./use-firefly.js";
+export { useViewer, type UseViewerResult } from "./use-viewer.js";
 export {
   FireflyDatabase,
   FireflyDatabase as Database,
