@@ -83,6 +83,68 @@ describe("assemblePromptPayload: slot interpolation", () => {
     await chat.close();
   });
 
+  it("selected:{kind:'version',fsId} loads that fsId's vfs into SELECTED_VERSION slot", async () => {
+    const { appSlug, userSlug } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, userSlug);
+    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    expect(rOpen.isOk()).toBe(true);
+    const chat = rOpen.Ok();
+    const vctx = ctx.appCtx.vibesCtx;
+
+    // Seed turn "fs-a": content "old"
+    const rTurnA = await appendTurnToChat(vctx, {
+      chatId: chat.chatId,
+      userId,
+      userSlug,
+      appSlug,
+      fileSystem: [
+        {
+          type: "code-block",
+          filename: "/App.jsx",
+          lang: "jsx",
+          content: "export default function App() { return <div>old</div>; } // version-a",
+        },
+      ],
+      userMessage: "version a",
+    });
+    expect(rTurnA.isOk(), `appendTurnToChat(a) failed: ${rTurnA.isErr() ? String(rTurnA.Err()) : ""}`).toBe(true);
+    const fsIdA = rTurnA.Ok().fsId;
+
+    // Seed turn "fs-b": content "new" (distinct content => distinct fsId)
+    const rTurnB = await appendTurnToChat(vctx, {
+      chatId: chat.chatId,
+      userId,
+      userSlug,
+      appSlug,
+      fileSystem: [
+        {
+          type: "code-block",
+          filename: "/App.jsx",
+          lang: "jsx",
+          content: "export default function App() { return <div>new</div>; } // version-b",
+        },
+      ],
+      userMessage: "version b",
+    });
+    expect(rTurnB.isOk(), `appendTurnToChat(b) failed: ${rTurnB.isErr() ? String(rTurnB.Err()) : ""}`).toBe(true);
+
+    // Request with selected pointing at the older fsId
+    const r = await assemblePromptPayload(vctx, {
+      chatId: chat.chatId,
+      model: "anthropic/claude-sonnet-4-6",
+      newUserMessages: [{ role: "user", content: [{ type: "text", text: "show me version a" }] }],
+      selected: { kind: "version", fsId: fsIdA },
+    });
+    expect(r.isOk(), `assemblePromptPayload failed: ${r.isErr() ? String(r.Err()) : ""}`).toBe(true);
+    const { messages } = r.Ok();
+    const allText = messages.map(firstText).join("\n");
+
+    expect(allText).toContain("SELECTED_VERSION");
+    expect(allText).toContain("currently viewing this");
+
+    await chat.close();
+  });
+
   it("system prompt no longer contains 'CURRENT FILES (resolved so far this turn):'", async () => {
     const { appSlug, userSlug } = await ctx.createApp();
     const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });

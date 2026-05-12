@@ -809,6 +809,16 @@ export async function assemblePromptPayload(
   // ORIGINAL anchors to the scaffold, and LAST_EDIT provides the preceding diff.
   const slotSources = selectSlotSources(timeline);
 
+  // Resolve a historical version if the caller specified selected:{kind:"version",fsId}.
+  let selectedVersion: { readonly vfs: ReadonlyMap<string, string>; readonly turnsAgo: number } | undefined;
+  const sel = args.selected;
+  if (sel?.kind === "version") {
+    const idx = timeline.findIndex((t) => t.fsId === sel.fsId);
+    if (idx >= 0) {
+      selectedVersion = { vfs: timeline[idx].vfs, turnsAgo: timeline.length - 1 - idx };
+    }
+  }
+
   // Resolve a draft map if the caller supplied selected draft files.
   // Only files with string content (code-block, str-asset-block) are included.
   const selectedDraftMap: ReadonlyMap<string, string> | undefined =
@@ -824,7 +834,7 @@ export async function assemblePromptPayload(
     original: slotSources.original !== undefined ? { vfs: slotSources.original.vfs, turnsAgo: timeline.length - 1 } : undefined,
     prev2: slotSources.prev2?.vfs,
     previous: slotSources.previous?.vfs,
-    selectedVersion: undefined, // wired in Task 14
+    selectedVersion,
     selectedDraft: selectedDraftMap,
     focusPath: args.focusPath ?? "App.jsx",
     config: args.slots ?? {},
