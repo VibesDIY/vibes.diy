@@ -7,6 +7,7 @@ import {
   type CodeTruncatedMsg,
   type LLMRequest,
 } from "@vibes.diy/call-ai-v2";
+import { assembleSlotMessages } from "./slot-assembler.js";
 
 // Pure helpers for the apply-error recovery orchestrator. The wire-level
 // orchestration (abort upstream + splice continuation events) lives in
@@ -55,7 +56,53 @@ export interface RecoveryRequestInput {
   readonly lastReplaceFileLines?: number;
 }
 
-// Compose the continuation LLM request. The recovery addendum + CURRENT
+export interface RecoverySlotInput {
+  readonly messages: readonly ChatMessage[];
+  readonly partialVfs: ReadonlyMap<string, string>;
+  readonly focusPath: string;
+}
+
+// Slot-assembler consumer: compose a ChatMessage[] for recovery by routing
+// `partialVfs` through assembleSlotMessages as a RECOVERY_PARTIAL canonical
+// slot. The anti-gaslight directive is merged into the first system message
+// (or prepended as a new one). The slot messages are appended as user turns.
+//
+// Shape:
+//   - [system, ...rest] → [system+directive, ...rest, ...slotMessages]
+//   - [user, ...]       → [system-new, user, ..., ...slotMessages]
+export function buildRecoveryRequest({ messages, partialVfs, focusPath }: RecoverySlotInput): ChatMessage[] {
+  const slotMessages = assembleSlotMessages({
+    recoveryPartial: partialVfs,
+    focusPath,
+    config: {},
+  });
+
+  const directive = "verify your partial against the RECOVERY_PARTIAL slot; anchor every SEARCH against text that appears there.";
+
+  const firstSystemIdx = messages.findIndex((m) => m.role === "system");
+  const withDirective: ChatMessage[] = (() => {
+    if (firstSystemIdx === -1) {
+      return [{ role: "system", content: [{ type: "text", text: directive }] }, ...messages];
+    }
+    const orig = messages[firstSystemIdx];
+    const origText = orig.content[0]?.type === "text" ? orig.content[0].text : "";
+    return [
+      ...messages.slice(0, firstSystemIdx),
+      { role: "system", content: [{ type: "text", text: `${origText}\n\n${directive}` }] },
+      ...messages.slice(firstSystemIdx + 1),
+    ];
+  })();
+
+  const slotUserMessages: ChatMessage[] = slotMessages.map((s) => ({
+    role: "user",
+    content: [{ type: "text", text: s.text }],
+  }));
+
+  return [...withDirective, ...slotUserMessages];
+}
+
+// Compose the full continuation LLM request with addendum, CURRENT FILES,
+// and optional assistant-partial framing. The recovery addendum + CURRENT
 // FILES block is *merged into the original system message* rather than
 // appended as a second system message — many providers (including some
 // OpenRouter relays) reject back-to-back system messages with 400. If the
@@ -80,7 +127,7 @@ export interface RecoveryRequestInput {
 //
 // The merged system message is `${original}\n\n${addendum}\n\n${CURRENT FILES}` —
 // no failure framing, no failed-search bytes, no SEARCH/REPLACE syntax.
-export function buildRecoveryRequest({
+export function buildFullRecoveryRequest({
   originalRequest,
   recoveryAddendum,
   vfs,

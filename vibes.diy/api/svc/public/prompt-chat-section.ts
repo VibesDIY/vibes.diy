@@ -90,7 +90,7 @@ import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
 import {
-  buildRecoveryRequest,
+  buildFullRecoveryRequest,
   buildTruncatedEvent,
   renderCurrentFiles,
   shouldAttemptRecovery,
@@ -1658,7 +1658,7 @@ async function handleLlmResponse({
         // ignores stitch — observed in chat z5Lf28PYADmjyhkt9s where
         // stitch fired but the model still emitted SEARCH/REPLACE blocks
         // and exhausted the budget.
-        const recReq = buildRecoveryRequest({
+        const recReq = buildFullRecoveryRequest({
           originalRequest: llmReq,
           recoveryAddendum: addendum.Ok(),
           vfs: streamingResolver.getVfs(),
