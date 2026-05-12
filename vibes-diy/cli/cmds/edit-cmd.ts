@@ -424,7 +424,13 @@ export function editCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      return { type: "use-vibes.cli.edit", ...args, focusPath: args.focus };
+      // ArkType's `focusPath?: "string"` allows the key to be ABSENT but rejects
+      // an explicit `undefined`. Spreading `focusPath: args.focus` when
+      // `--focus` isn't passed makes ReqEdit validation silently miss and the
+      // evento dispatcher drop the message with no error — a silent exit 0
+      // for every default-flag CLI edit. Only include the key when defined.
+      const base = { type: "use-vibes.cli.edit" as const, ...args };
+      return args.focus === undefined ? base : { ...base, focusPath: args.focus };
     }),
   });
 }
