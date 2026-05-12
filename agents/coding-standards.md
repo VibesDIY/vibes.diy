@@ -35,7 +35,7 @@ Never modify existing entries in setup logs or similar chronological docs — on
 
 Only use `echo 'message' | say` after a waiting period completes or when a full work epic finishes — never at the beginning of a job or right after kicking something off. The point is to call the human back when something they're waiting on is done, not to announce the start of work.
 
-**Style: every `say` must be funny and different.** Open with a playful nickname or vocative to grab attention — *captain*, *chief*, *boss*, *king*, *wizard*, *navigator*, *commodore*, *shipmate*, *legend*, *artisan*, *maestro*, *hot stuff*, *space cadet*, *deploy gremlin*, *king of the woods* — and never reuse the same opener twice. The body should be short, punchy, and hint at what's done in a goofy or unexpected way ("the bytes have crossed the rubicon," "your photo just round-tripped through the wormhole," "stage B has clocked in for its shift," "the regression vibe is no longer a hostage"). If the deploy or run failed, the `say` should be distinct *and* deflated — but still in character ("uh oh, captain, the rocket fizzled"). The voice cue exists because the user is doing something else; the goal is to make the alert worth coming back for.
+**Style: every `say` must be funny and different.** Open with a playful nickname or vocative to grab attention — _captain_, _chief_, _boss_, _king_, _wizard_, _navigator_, _commodore_, _shipmate_, _legend_, _artisan_, _maestro_, _hot stuff_, _space cadet_, _deploy gremlin_, _king of the woods_ — and never reuse the same opener twice. The body should be short, punchy, and hint at what's done in a goofy or unexpected way ("the bytes have crossed the rubicon," "your photo just round-tripped through the wormhole," "stage B has clocked in for its shift," "the regression vibe is no longer a hostage"). If the deploy or run failed, the `say` should be distinct _and_ deflated — but still in character ("uh oh, captain, the rocket fizzled"). The voice cue exists because the user is doing something else; the goal is to make the alert worth coming back for.
 
 Forbidden patterns: bare `'<thing> deployed' | say`, `'<thing> done' | say`, anything that sounds like a CI bot. If you'd be embarrassed to read it out loud, rewrite.
 
@@ -73,3 +73,11 @@ When shipping work that has a soak/rollback window (activation of a new path, mi
 - **Delete** if the tool was purely emergency-focused.
 
 Future readers shouldn't have to mentally parse "wait, why is this script talking about a 2026 cement-bug canary?" Activation-specific language ages into noise. Git history captures the why; the working tree should reflect current state. Plan the cleanup phase from the start; rule of thumb is ~2 weeks of clean soak before stripping framing. Tests can stay as silent regression guards — rename them to describe what they assert, drop the "canary for X" naming. PR descriptions and commit messages are permanent; no action needed there.
+
+## No eval theater in design proposals
+
+When a design decision is sound on its own merits, present it that way. Do not dress it up with manufactured numeric predictions ("~95% first-try landing", ">5% degradation threshold", "no regression expected") to score against post-merge. Pre-merge prediction language adds nothing for reviewers, pretends rigor we will not actually have, and frames commitments as bets.
+
+If something is obviously the right baseline, ship it as the baseline and say so directly. State the rationale (what mechanism makes it work, what failure mode it closes) — not the imagined eval outcome. Real evals, when they happen, speak for themselves. Prediction theater erodes credibility on the design itself: a reviewer reading "we hypothesize 95%" hears "the proposer is hedging." Drop it.
+
+Exception: when a reviewer explicitly proposes a numeric gate (e.g. ">5% degradation flips the decision"), echoing their threshold back is fine — that's coordination, not theater. Do not invent your own.
