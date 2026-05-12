@@ -6,8 +6,8 @@ import {
   isResInspectPromptChatSection,
   type ResInspectPromptChatSection,
   type ReqInspectPromptChatSection,
+  type Req,
 } from "@vibes.diy/api-types";
-import type { Req } from "@vibes.diy/api-types";
 import { createApiTestCtx, type ApiTestCtx } from "./api-test-setup.js";
 
 function firstText(msg: ChatMessage): string {
