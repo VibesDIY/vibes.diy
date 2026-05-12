@@ -178,7 +178,7 @@ describe("loadVersionTimeline", () => {
 
   it("loadLatestPromptId returns undefined for a chat with no turns", async () => {
     const { appSlug, userSlug } = await ctx.createApp();
-    const userId = await userIdForSlug(ctx, userSlug);
+    const _userId = await userIdForSlug(ctx, userSlug);
 
     const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
     const chat = rOpen.Ok();
@@ -207,7 +207,7 @@ describe("loadVersionTimeline", () => {
     const V1_CONTENT = "export default function App() { return null; } // v1";
     const V2_CONTENT = "export default function App() { return null; } // v2";
 
-    const r1 = (
+    const _r1 = (
       await appendTurnToChat(vctx, {
         chatId: chat.chatId,
         userId,
