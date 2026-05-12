@@ -116,3 +116,18 @@ export function generateFileLastEdit(path: string, before: string, after: string
   }
   return `${path}:\n${blocks.join("\n")}`;
 }
+
+export function generateLastEditBlock(prev2: ReadonlyMap<string, string>, prev: ReadonlyMap<string, string>): string {
+  const paths = new Set<string>();
+  for (const p of prev2.keys()) paths.add(p);
+  for (const p of prev.keys()) paths.add(p);
+  const sorted = Array.from(paths).sort();
+  const parts: string[] = [];
+  for (const path of sorted) {
+    const a = prev2.get(path) ?? "";
+    const b = prev.get(path) ?? "";
+    const rendered = generateFileLastEdit(path, a, b);
+    if (rendered) parts.push(rendered);
+  }
+  return parts.join("\n\n");
+}

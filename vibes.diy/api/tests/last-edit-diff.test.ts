@@ -44,7 +44,7 @@ describe("coalesceHunks", () => {
   });
 });
 
-import { renderHunkAsSearchReplace, generateFileLastEdit } from "../svc/intern/last-edit-diff.js";
+import { renderHunkAsSearchReplace, generateFileLastEdit, generateLastEditBlock } from "../svc/intern/last-edit-diff.js";
 
 describe("renderHunkAsSearchReplace", () => {
   it("emits SEARCH/REPLACE block for a unique anchor", () => {
@@ -109,5 +109,36 @@ describe("generateFileLastEdit", () => {
     expect(out).toContain("App.jsx:");
     expect(out).toContain("<<<<<<< SEARCH");
     expect(out).toContain(">>>>>>> REPLACE");
+  });
+});
+
+describe("generateLastEditBlock", () => {
+  const m = (entries: Record<string, string>) => new Map<string, string>(Object.entries(entries));
+
+  it("returns empty string when no files changed", () => {
+    expect(generateLastEditBlock(m({ "/App.jsx": "a" }), m({ "/App.jsx": "a" }))).toBe("");
+  });
+
+  it("renders one file's edit", () => {
+    const out = generateLastEditBlock(m({ "/App.jsx": "a\nb\nc" }), m({ "/App.jsx": "a\nB\nc" }));
+    expect(out).toContain("/App.jsx:");
+    expect(out).toContain("<<<<<<< SEARCH");
+  });
+
+  it("renders multiple files, one block per file", () => {
+    const prev2 = m({ "/App.jsx": "a", "/Card.jsx": "c" });
+    const prev = m({ "/App.jsx": "A", "/Card.jsx": "C" });
+    const out = generateLastEditBlock(prev2, prev);
+    expect(out).toContain("/App.jsx:");
+    expect(out).toContain("/Card.jsx:");
+  });
+
+  it("includes file deletion and creation markers", () => {
+    const prev2 = m({ "/A.jsx": "a", "/Gone.jsx": "g" });
+    const prev = m({ "/A.jsx": "a", "/New.jsx": "n" });
+    const out = generateLastEditBlock(prev2, prev);
+    expect(out).toContain("[DELETED: /Gone.jsx]");
+    expect(out).toContain("[NEW FILE: /New.jsx");
+    expect(out).not.toContain("/A.jsx:"); // unchanged → skipped
   });
 });
