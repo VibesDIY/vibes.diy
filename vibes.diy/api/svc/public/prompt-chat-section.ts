@@ -799,7 +799,8 @@ export async function assemblePromptPayload(
     console.error("Failed to create system prompt:", systemPrompt.Err());
     return Result.Err(systemPrompt);
   }
-  if (![...reconstructed, ...newUserOnly].some((m) => m.role === "user")) {
+  const hasUserMessage = [...reconstructed, ...newUserOnly].some((m) => m.role === "user");
+  if (hasUserMessage === false) {
     return Result.Err(`No user messages found in the prompt`);
   }
 
