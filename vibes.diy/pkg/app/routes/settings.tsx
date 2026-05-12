@@ -5,8 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import LoggedOutView from "../components/LoggedOutView.js";
 import BrutalistLayout from "../components/BrutalistLayout.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
+// To restore GrantsList: re-add `isUserSettingSharing` to the named import and `SharingGrantItem` to the type import below.
 import {
-  isUserSettingSharing,
   isUserSettingDefaultUserSlug,
   isUserSettingModelDefaults,
   isUserSettingProfile,
@@ -14,7 +14,7 @@ import {
   parseArray,
   userSettingModelDefaults,
 } from "@vibes.diy/api-types";
-import type { SharingGrantItem, AIParams, UserSettingProfile } from "@vibes.diy/api-types";
+import type { AIParams, UserSettingProfile } from "@vibes.diy/api-types";
 import { exception2Result } from "@adviser/cement";
 import { ModelSettingsCards } from "../components/ModelSettingsCards.js";
 
@@ -22,6 +22,7 @@ export function meta() {
   return [{ title: "Settings - Vibes DIY" }, { name: "description", content: "Settings for AI App Builder" }];
 }
 
+/* Hidden per VibesDIY/vibes.diy#1692 — restore alongside the JSX block in SettingsContent and the imports below.
 function GrantsList() {
   const { vibeDiyApi } = useVibesDiy();
   const [grants, setGrants] = useState<SharingGrantItem[]>([]);
@@ -110,6 +111,7 @@ function GrantsList() {
     </div>
   );
 }
+*/
 
 function UserSlugsCard() {
   const { vibeDiyApi } = useVibesDiy();
@@ -593,13 +595,14 @@ function SettingsContent() {
   };
 
   return (
-    <BrutalistLayout title="Settings" subtitle="Manage your account and data sharing">
+    <BrutalistLayout title="Settings" subtitle="Manage your account">
       <UserSlugsCard />
 
       <ProfileCard />
 
       <ModelDefaultsCard />
 
+      {/* Hidden per VibesDIY/vibes.diy#1692 — restore by uncommenting and reinstating the GrantsList function and imports.
       <BrutalistCard size="md">
         <h3 className="text-2xl font-bold mb-4">Data Sharing Grants</h3>
         <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
@@ -607,6 +610,7 @@ function SettingsContent() {
         </p>
         <GrantsList />
       </BrutalistCard>
+      */}
 
       <BrutalistCard size="md">
         <h3 className="text-2xl font-bold mb-4">Security</h3>
