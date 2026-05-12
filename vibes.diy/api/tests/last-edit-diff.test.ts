@@ -43,3 +43,71 @@ describe("coalesceHunks", () => {
     expect(merged).toHaveLength(2);
   });
 });
+
+import { renderHunkAsSearchReplace, generateFileLastEdit } from "../svc/intern/last-edit-diff.js";
+
+describe("renderHunkAsSearchReplace", () => {
+  it("emits SEARCH/REPLACE block for a unique anchor", () => {
+    const hunk = { oldStart: 1, oldLines: ["b"], newLines: ["B"] };
+    const out = renderHunkAsSearchReplace(hunk, ["a", "b", "c"], 20);
+    expect(out.ok).toBe(true);
+    expect(out.text).toContain("<<<<<<< SEARCH");
+    expect(out.text).toContain("b");
+    expect(out.text).toContain("=======");
+    expect(out.text).toContain("B");
+    expect(out.text).toContain(">>>>>>> REPLACE");
+  });
+
+  it("expands context until the SEARCH is unique", () => {
+    const hunk = { oldStart: 0, oldLines: ["x"], newLines: ["Y"] };
+    // "x" appears twice; needs neighbor context.
+    const oldArr = ["x", "next1", "ignore", "x", "next2"];
+    const out = renderHunkAsSearchReplace(hunk, oldArr, 20);
+    expect(out.ok).toBe(true);
+    expect(out.text).toContain("next1");
+  });
+
+  it("returns ok=false when 20 lines of context still don't disambiguate", () => {
+    const repetitive = Array.from({ length: 30 }, () => "x")
+      .join("\n")
+      .split("\n");
+    const hunk = { oldStart: 0, oldLines: ["x"], newLines: ["Y"] };
+    const out = renderHunkAsSearchReplace(hunk, repetitive, 20);
+    expect(out.ok).toBe(false);
+  });
+});
+
+describe("generateFileLastEdit", () => {
+  it("returns wholesale indicator on >20 hunks", () => {
+    const lines: string[] = [];
+    for (let i = 0; i < 150; i++) {
+      lines.push(`line${i}`);
+    }
+    const before = lines.join("\n");
+    // Create 25 scattered hunks by changing every 6th line (gap of 5 unchanged lines between)
+    const afterLines = lines.slice();
+    for (let i = 0; i < afterLines.length; i += 6) {
+      afterLines[i] = `CHANGED${i}`;
+    }
+    const after = afterLines.join("\n");
+    const out = generateFileLastEdit("App.jsx", before, after);
+    expect(out).toBe("[App.jsx: wholesale rewrite, see PREVIOUS]");
+  });
+
+  it("returns NEW FILE marker when before is empty", () => {
+    const out = generateFileLastEdit("Card.jsx", "", "<div/>");
+    expect(out).toBe("[NEW FILE: Card.jsx — see PREVIOUS]");
+  });
+
+  it("returns DELETED marker when after is empty", () => {
+    const out = generateFileLastEdit("Card.jsx", "<div/>", "");
+    expect(out).toBe("[DELETED: Card.jsx]");
+  });
+
+  it("returns SEARCH/REPLACE blocks for ≤20 small hunks", () => {
+    const out = generateFileLastEdit("App.jsx", "a\nb\nc", "a\nB\nc");
+    expect(out).toContain("App.jsx:");
+    expect(out).toContain("<<<<<<< SEARCH");
+    expect(out).toContain(">>>>>>> REPLACE");
+  });
+});

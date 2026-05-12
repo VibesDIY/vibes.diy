@@ -67,3 +67,52 @@ export function coalesceHunks(hunks: readonly DiffHunk[], oldArr: readonly strin
   out.push(cur);
   return out;
 }
+
+export interface RenderResult {
+  readonly ok: boolean;
+  readonly text: string;
+}
+
+export function renderHunkAsSearchReplace(hunk: DiffHunk, oldArr: readonly string[], maxExpand: number): RenderResult {
+  for (let ctx = 0; ctx <= maxExpand; ctx++) {
+    const start = Math.max(0, hunk.oldStart - ctx);
+    const end = Math.min(oldArr.length, hunk.oldStart + hunk.oldLines.length + ctx);
+    const before = oldArr.slice(start, hunk.oldStart);
+    const after = oldArr.slice(hunk.oldStart + hunk.oldLines.length, end);
+    const searchLines = [...before, ...hunk.oldLines, ...after];
+    const searchText = searchLines.join("\n");
+    const full = oldArr.join("\n");
+    const first = full.indexOf(searchText);
+    if (first >= 0 && full.indexOf(searchText, first + 1) === -1) {
+      const replaceText = [...before, ...hunk.newLines, ...after].join("\n");
+      return {
+        ok: true,
+        text: `<<<<<<< SEARCH\n${searchText}\n=======\n${replaceText}\n>>>>>>> REPLACE`,
+      };
+    }
+  }
+  return { ok: false, text: "" };
+}
+
+// The pedagogical contract: the rendered SEARCH/REPLACE primes the model's
+// next-turn output. It is never re-applied by applyEdits server-side. So
+// "ok=false" only means "we couldn't render a clean template" — it does NOT
+// mean the diff is unsafe. We degrade to wholesale in that case.
+export function generateFileLastEdit(path: string, before: string, after: string): string {
+  if (before === after) return "";
+  if (before.length === 0) return `[NEW FILE: ${path} — see PREVIOUS]`;
+  if (after.length === 0) return `[DELETED: ${path}]`;
+
+  const oldArr = before.split("\n");
+  const rawHunks = lineDiff(before, after);
+  const hunks = coalesceHunks(rawHunks, oldArr, 3);
+  if (hunks.length > 20) return `[${path}: wholesale rewrite, see PREVIOUS]`;
+
+  const blocks: string[] = [];
+  for (const h of hunks) {
+    const rendered = renderHunkAsSearchReplace(h, oldArr, 20);
+    if (!rendered.ok) return `[${path}: wholesale rewrite, see PREVIOUS]`;
+    blocks.push(rendered.text);
+  }
+  return `${path}:\n${blocks.join("\n")}`;
+}
