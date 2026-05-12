@@ -1,4 +1,4 @@
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, desc } from "drizzle-orm";
 import { parseArray, fileSystemItem, isFetchErrResult, isFetchNotFoundResult } from "@vibes.diy/api-types";
 import { Result, exception2Result, stream2uint8array } from "@adviser/cement";
 import type { FileSystemItem } from "@vibes.diy/api-types";
@@ -103,4 +103,21 @@ export function selectSlotSources(timeline: readonly TimelineEntry[]): SlotSourc
     previous: timeline[timeline.length - 1],
     prev2: timeline[timeline.length - 2],
   };
+}
+
+/**
+ * Load the promptId of the most recent turn in a chat, or undefined if the chat is empty.
+ * Used by compaction to identify the boundary turn (keep this turn, compact older ones).
+ */
+export async function loadLatestPromptId(vctx: VibesApiSQLCtx, chatId: string): Promise<Result<string | undefined>> {
+  return exception2Result(async () => {
+    const r = await vctx.sql.db
+      .select({ promptId: vctx.sql.tables.promptContexts.promptId, created: vctx.sql.tables.promptContexts.created })
+      .from(vctx.sql.tables.promptContexts)
+      .where(eq(vctx.sql.tables.promptContexts.chatId, chatId))
+      .orderBy(desc(vctx.sql.tables.promptContexts.created))
+      .limit(1)
+      .then((rs) => rs[0]);
+    return r?.promptId;
+  });
 }
