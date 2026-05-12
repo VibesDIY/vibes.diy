@@ -64,3 +64,113 @@ export function pickCanonicalHome(inputs: CanonicalInputs): CanonicalKind {
   if (inputs.previous) return "previous";
   return "none";
 }
+
+import { generateLastEditBlock } from "./last-edit-diff.js";
+import type { SlotConfig } from "../../types/chat.js";
+
+export interface AssembleInputs {
+  readonly original?: { readonly vfs: ReadonlyMap<string, string>; readonly turnsAgo: number };
+  readonly prev2?: ReadonlyMap<string, string>;
+  readonly previous?: ReadonlyMap<string, string>;
+  readonly selectedVersion?: { readonly vfs: ReadonlyMap<string, string>; readonly turnsAgo: number };
+  readonly selectedDraft?: ReadonlyMap<string, string>;
+  readonly recoveryPartial?: ReadonlyMap<string, string>;
+  readonly focusPath: string;
+  readonly config: SlotConfig;
+}
+
+export interface AssembledMessage {
+  readonly role: "user";
+  readonly label: string;
+  readonly text: string;
+}
+
+export function assembleSlotMessages(inputs: AssembleInputs): AssembledMessage[] {
+  const cfg = inputs.config;
+  const muted = (k: keyof SlotConfig) => cfg[k] === "off";
+  const canonical = pickCanonicalHome({
+    recoveryPartial: inputs.recoveryPartial,
+    selectedDraft: inputs.selectedDraft,
+    previous: inputs.previous,
+  });
+
+  // Snapshot entries flow through renderSlotsWithDedup. Order: ORIGINAL, SELECTED_VERSION,
+  // PREVIOUS-as-reference (when demoted), canonical home (rendered last).
+  const snapshotEntries: SlotEntry[] = [];
+
+  if (inputs.original && !muted("original")) {
+    snapshotEntries.push({
+      label: "ORIGINAL",
+      caption: `scaffold — first response, ${inputs.original.turnsAgo} turns ago`,
+      vfs: inputs.original.vfs,
+      canonical: false,
+    });
+  }
+
+  if (inputs.selectedVersion && !muted("selected")) {
+    snapshotEntries.push({
+      label: "SELECTED_VERSION",
+      caption: `user is currently viewing this, from ${inputs.selectedVersion.turnsAgo} turns ago`,
+      vfs: inputs.selectedVersion.vfs,
+      canonical: false,
+    });
+  }
+
+  if (inputs.previous && !muted("previous") && canonical !== "previous") {
+    snapshotEntries.push({
+      label: "PREVIOUS",
+      caption: "last server-side state — for reference; the disk/recovery state has since changed",
+      vfs: inputs.previous,
+      canonical: false,
+    });
+  }
+
+  if (canonical === "recovery" && inputs.recoveryPartial) {
+    snapshotEntries.push({
+      label: "RECOVERY_PARTIAL",
+      caption: "partial state captured during recovery; anchor SEARCH against this exact content",
+      vfs: inputs.recoveryPartial,
+      canonical: true,
+    });
+  } else if (canonical === "selected-draft" && inputs.selectedDraft && !muted("selected")) {
+    snapshotEntries.push({
+      label: "SELECTED_DRAFT",
+      caption: "current disk contents — anchor SEARCH against these bytes",
+      vfs: inputs.selectedDraft,
+      canonical: true,
+    });
+  } else if (canonical === "previous" && inputs.previous && !muted("previous")) {
+    const breadcrumb = inputs.original ? `; ORIGINAL scaffold is ${inputs.original.turnsAgo} turns earlier` : "";
+    snapshotEntries.push({
+      label: "PREVIOUS",
+      caption: `current state — anchor SEARCH here${breadcrumb}`,
+      vfs: inputs.previous,
+      canonical: true,
+    });
+  }
+
+  // LAST_EDIT body computed separately from snapshot rendering (it's a diff, not a vfs slot).
+  let lastEditText: string | undefined;
+  if (inputs.prev2 && inputs.previous && !muted("last_edit")) {
+    const block = generateLastEditBlock(inputs.prev2, inputs.previous);
+    if (block) {
+      lastEditText = `--- LAST_EDIT (the diff that produced the current PREVIOUS state) ---\n${block}`;
+    }
+  }
+
+  // Determine where LAST_EDIT inserts: immediately before the canonical label, or at the end if no canonical.
+  const canonicalLabel = snapshotEntries.find((e) => e.canonical)?.label;
+  const rendered = renderSlotsWithDedup(snapshotEntries, inputs.focusPath);
+  const out: AssembledMessage[] = [];
+  for (const r of rendered) {
+    if (lastEditText && canonicalLabel && r.label === canonicalLabel) {
+      out.push({ role: "user", label: "LAST_EDIT", text: lastEditText });
+      lastEditText = undefined;
+    }
+    out.push({ role: "user", label: r.label, text: r.text });
+  }
+  if (lastEditText) {
+    out.push({ role: "user", label: "LAST_EDIT", text: lastEditText });
+  }
+  return out;
+}
