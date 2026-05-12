@@ -135,7 +135,7 @@ export async function buildEditPromptRequest(input: {
     files: drift.files.map((f) => ({
       type: "code-block" as const,
       lang: f.lang,
-      filename: f.filename.startsWith("/") ? f.filename : `/${f.filename}`,
+      filename: f.filename,
       content: f.content,
     })),
   };
