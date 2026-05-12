@@ -188,10 +188,19 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     const requestedFsId = ctx.validated.fsId;
     const isRootHtmlPath = ctx.validated.path === "/" || ctx.validated.path === "/index.html";
     const ifNoneMatch = ctx.request.headers.get("If-None-Match") ?? undefined;
-    if (uri.pathname.startsWith("/.db-explorer")) {
+    // db-explorer SPA: served at /.db-explorer (and its BrowserRouter
+    // sub-routes /.db-explorer/dbexplore/...). With a versioned route the
+    // entry URL carries an /~<fsId>~ prefix, so the raw pathname becomes
+    // /~<fsId>~/.db-explorer[/...] — match on the host-binding-normalized
+    // path (extractHostToBindings has already stripped the /~<fsId>~ prefix
+    // off ctx.validated.path), then derive the BrowserRouter basename as the
+    // raw pathname up to and including /.db-explorer (sub-routes are
+    // client-side, so a deep-link reload still gets the same shell).
+    if (ctx.validated.path === "/.db-explorer" || ctx.validated.path.startsWith("/.db-explorer/")) {
       // console.log('xxxxxxx', DBExplorer.toString())
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const npmUrl = captureNpmUrl(vctx, ctx.request);
+      const dbExplorerBase = uri.pathname.slice(0, uri.pathname.indexOf("/.db-explorer") + "/.db-explorer".length);
       await ctx.send.send(ctx, {
         type: "http.Response.Body",
         status: 200,
@@ -204,7 +213,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
             ? ""
             : ((await renderToReadableStream(
                 await renderDBExplorer({
-                  base: "/.db-explorer",
+                  base: dbExplorerBase,
                   vctx,
                   vibeApp: { appSlug: ctx.validated.appSlug, userSlug: ctx.validated.userSlug, fsId: ctx.validated.fsId },
                   pkgRepos: {

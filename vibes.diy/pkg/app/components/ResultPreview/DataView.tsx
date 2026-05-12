@@ -16,7 +16,9 @@ export function DataView({ promptState: _p }: { promptState: PromptState }) {
         hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
         protocol: myUrl.protocol as "http" | "",
         port: myUrl.port,
-        bindings: { appSlug, userSlug },
+        // Carry the route's pinned fsId so the DB-explorer reflects the
+        // same snapshot the preview iframe is showing (not always-latest).
+        bindings: { appSlug, userSlug, fsId },
       });
       const previewUrl = BuildURI.from(baseUrl)
         .appendRelative(".db-explorer")

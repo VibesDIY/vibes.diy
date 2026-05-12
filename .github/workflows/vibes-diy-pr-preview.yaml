@@ -36,10 +36,61 @@ jobs:
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           WORKER_NAME="pr-${PR_NUMBER}-vibes-diy-v2"
+          # Builder SPA + API stay on the workers.dev URL (Clerk allowed-origins
+          # unchanged). The vibe iframe + /vibe-pkg/ move to a per-PR base on a
+          # separate zone so the iframe is served by THIS PR's worker and stays
+          # cross-origin from the builder, matching prod's isolation.
           PREVIEW_URL="https://${WORKER_NAME}.jchris.workers.dev"
+          PREVIEW_HOST="pr-${PR_NUMBER}.vibespreview.dev"
           echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
           echo "worker_name=${WORKER_NAME}" >> $GITHUB_OUTPUT
           echo "preview_url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+          echo "preview_host=${PREVIEW_HOST}" >> $GITHUB_OUTPUT
+
+      - name: Ensure preview DNS + TLS
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE_ID: ${{ vars.CLOUDFLARE_VIBESPREVIEW_ZONE_ID }}
+          PREVIEW_HOST: ${{ steps.pr.outputs.preview_host }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CF_ZONE_ID:-}" ]; then
+            echo "::error::CLOUDFLARE_VIBESPREVIEW_ZONE_ID repo var is unset — the vibespreview.dev zone + ACM prerequisites must be provisioned before PR previews can deploy (see vibes.diy/pkg/wrangler.toml [env.preview] and the PR-preview plan)."
+            exit 1
+          fi
+          api() { curl -sS -H "Authorization: Bearer ${CF_API_TOKEN}" -H "Content-Type: application/json" "$@"; }
+
+          # Proxied DNS for the per-PR deep wildcard (covers
+          # <app>--<user>.pr-<N>.vibespreview.dev and assets.pr-<N>...).
+          # The per-PR apex `pr-<N>.vibespreview.dev` is covered by the
+          # zone-wide static `*.vibespreview.dev` record provisioned once
+          # by hand (DNS wildcards match exactly one label and don't
+          # recurse, so the deep wildcard still needs its own record).
+          # 100:: is the conventional "proxied-only, no real origin" target.
+          NAME="*.${PREVIEW_HOST}"
+          EXISTING=$(api "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/dns_records?type=AAAA&name=${NAME}" | jq -r '.result[0].id // empty')
+          if [ -z "$EXISTING" ]; then
+            api -X POST "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/dns_records" \
+              --data "{\"type\":\"AAAA\",\"name\":\"${NAME}\",\"content\":\"100::\",\"proxied\":true}" | jq -e '.success' > /dev/null
+            echo "Created DNS record ${NAME}"
+          else
+            echo "DNS record ${NAME} already exists (${EXISTING})"
+          fi
+
+          # ACM advanced certificate covering the third-level wildcard
+          # (*.pr-<N>.vibespreview.dev) — free Universal SSL doesn't. Flat
+          # $10/mo per zone; one cert pack slot per open PR. DNS-validated
+          # automatically since the zone is on Cloudflare.
+          HAVE_CERT=$(api "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/ssl/certificate_packs?status=all" \
+            | jq -r --arg h "${PREVIEW_HOST}" '[.result[] | select(.type=="advanced") | select((.hosts // []) | index($h))] | length')
+          if [ "${HAVE_CERT:-0}" -eq 0 ]; then
+            api -X POST "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/ssl/certificate_packs/order" \
+              --data "{\"type\":\"advanced\",\"hosts\":[\"${PREVIEW_HOST}\",\"*.${PREVIEW_HOST}\"],\"validation_method\":\"txt\",\"validity_days\":90,\"certificate_authority\":\"google\",\"cloudflare_branding\":false}" \
+              | jq -e '.success' > /dev/null
+            echo "Ordered ACM advanced cert for ${PREVIEW_HOST}"
+          else
+            echo "ACM advanced cert for ${PREVIEW_HOST} already exists"
+          fi
 
       - name: Build and deploy preview
         working-directory: vibes.diy/pkg
@@ -57,17 +108,21 @@ jobs:
           CLOUD_SESSION_TOKEN_SECRET: ${{ secrets.CLOUD_SESSION_TOKEN_SECRET }}
           CLOUD_SESSION_TOKEN_ISSUER: ${{ vars.CLOUD_SESSION_TOKEN_ISSUER }}
           VIBES_DIY_FROM_EMAIL: ${{ vars.VIBES_DIY_FROM_EMAIL }}
-          VIBES_SVC_HOSTNAME_BASE: ${{ vars.VIBES_SVC_HOSTNAME_BASE }}
-          VIBES_SVC_PROTOCOL: ${{ vars.VIBES_SVC_PROTOCOL }}
+          # Iframe entry-point + /vibe-pkg/ are served by THIS PR's worker on
+          # its per-PR base (not the merged dev worker); cache-bust the package
+          # URL per deploy like prod/cli/dev do (actions/deploy/action.yaml).
+          VIBES_SVC_HOSTNAME_BASE: ${{ steps.pr.outputs.preview_host }}
+          VIBES_SVC_PROTOCOL: https
           LLM_BACKEND_API_KEY: ${{ secrets.LLM_BACKEND_API_KEY }}
           LLM_BACKEND_URL: ${{ vars.LLM_BACKEND_URL }}
           CLERK_PUB_JWT_URL: ${{ vars.CLERK_PUB_JWT_URL }}
           DB_FLAVOUR: ${{ vars.DB_FLAVOUR }}
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           MAX_APP_SLUG_PER_USER_ID: ${{ vars.MAX_APP_SLUG_PER_USER_ID }}
-          WORKSPACE_NPM_URL: ${{ steps.pr.outputs.preview_url }}/vibe-pkg/
+          WORKSPACE_NPM_URL: https://${{ steps.pr.outputs.preview_host }}/vibe-pkg/?v=${{ github.sha }}
           VIBES_DIY_API_URL: ${{ steps.pr.outputs.preview_url }}/api
           WORKER_NAME: ${{ steps.pr.outputs.worker_name }}
+          PREVIEW_HOST: ${{ steps.pr.outputs.preview_host }}
         run: |
           set -e
 
@@ -101,8 +156,13 @@ jobs:
             --fromEnv VIBES_DIY_API_URL | \
             pnpm exec wrangler secret --name $WORKER_NAME bulk
 
-          # Deploy with custom worker name (preview env has no routes)
-          pnpm exec wrangler deploy --env preview --name $WORKER_NAME
+          # Deploy with custom worker name + per-PR vibespreview.dev routes.
+          # [env.preview] keeps workers_dev=true (builder/API URL); CLI --route
+          # overrides the (empty) config routes, so the worker also answers on
+          # pr-<N>.vibespreview.dev and *.pr-<N>.vibespreview.dev.
+          pnpm exec wrangler deploy --env preview --name "$WORKER_NAME" \
+            --route "${PREVIEW_HOST}/*" \
+            --route "*.${PREVIEW_HOST}/*"
 
       - name: Comment on PR
         uses: actions/github-script@v7
@@ -110,6 +170,7 @@ jobs:
           script: |
             const prNumber = ${{ steps.pr.outputs.number }};
             const previewUrl = '${{ steps.pr.outputs.preview_url }}';
+            const previewHost = '${{ steps.pr.outputs.preview_host }}';
             const workerName = '${{ steps.pr.outputs.worker_name }}';
             const sha = context.sha.substring(0, 7);
 
@@ -128,11 +189,12 @@ jobs:
             ## Preview Deployment
 
             **Preview URL:** ${previewUrl}
+            **Vibe iframes / packages:** \`https://<app>--<user>.${previewHost}/…\` (served by this PR's worker)
             **Worker:** \`${workerName}\`
             **Commit:** ${sha}
 
             ---
-            <sub>Updated on each push to this PR. Worker is deleted when the PR closes.</sub>`;
+            <sub>Updated on each push to this PR. Worker, routes, DNS records and TLS cert are deleted when the PR closes.</sub>`;
 
             if (botComment) {
               await github.rest.issues.updateComment({

@@ -128,7 +128,11 @@ binding = "VIBES_SERVICE"
 name = "vibes-diy-v2-preview"
 workers_dev = true
 vars = { ENVIRONMENT = "preview" }
-# No routes — preview workers are accessed via workers.dev URLs only
+# No routes here — the builder SPA + API are served on the workers.dev URL.
+# The PR-preview workflow ALSO attaches per-PR routes on the CLI
+# (`wrangler deploy --route pr-<N>.vibespreview.dev/* --route *.pr-<N>.vibespreview.dev/*`)
+# so the vibe iframe is served from `<app>--<user>.pr-<N>.vibespreview.dev`
+# by the PR's own worker — see .github/workflows/vibes-diy-pr-preview.yaml.
 
 [env.preview.observability.logs]
 enabled = true

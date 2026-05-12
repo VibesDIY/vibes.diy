@@ -225,5 +225,40 @@ describe("entry-point-utils", () => {
         path: "/",
       });
     });
+
+    it("roundtrip: PR-preview base pr-<N>.vibespreview.dev (no special-casing)", () => {
+      const bindings = {
+        appSlug: "myapp",
+        userSlug: "alice",
+        fsId: "zabc12345678",
+      };
+
+      const url = calcEntryPointUrl({
+        hostnameBase: "pr-7.vibespreview.dev",
+        protocol: "https",
+        bindings,
+      });
+
+      expect(url).toBe("https://myapp--alice.pr-7.vibespreview.dev/~zabc12345678~");
+
+      expect(extractHostToBindings({ matchURL: url }).Unwrap()).toEqual({
+        url,
+        appSlug: "myapp",
+        userSlug: "alice",
+        fsId: "zabc12345678",
+        path: "/",
+      });
+
+      // ...and the db-explorer path under the versioned prefix normalizes to
+      // /.db-explorer (the prefix is stripped into fsId) — that's what
+      // servEntryPoint's `ctx.validated.path === "/.db-explorer"` guard reads.
+      expect(extractHostToBindings({ matchURL: `${url}/.db-explorer` }).Unwrap()).toEqual({
+        url: `${url}/.db-explorer`,
+        appSlug: "myapp",
+        userSlug: "alice",
+        fsId: "zabc12345678",
+        path: "/.db-explorer",
+      });
+    });
   });
 });
