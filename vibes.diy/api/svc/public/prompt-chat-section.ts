@@ -671,16 +671,27 @@ async function loadActiveSettings(
   };
 }
 
-async function injectSystemPrompt(
+export interface AssemblePromptPayloadArgs {
+  readonly chatId: string;
+  readonly model: string;
+  // Next user turn(s) appended to the reconstructed conversation. Callers
+  // pass these explicitly instead of writing a prompt.req block first and
+  // letting reconstruction pick it up — so the same function serves both
+  // the dispatch path (writes after assembly) and the dry-run path (no write).
+  // Non-user roles are filtered.
+  readonly newUserMessages: readonly ChatMessage[];
+}
+
+export async function assemblePromptPayload(
   vctx: VibesApiSQLCtx,
-  chatId: string,
-  model: string
+  args: AssemblePromptPayloadArgs
 ): Promise<
   Result<{
     model: string;
     messages: ChatMessage[];
   }>
 > {
+  const { chatId, model, newUserMessages } = args;
   const sections = await vctx.sql.db
     .select()
     .from(vctx.sql.tables.chatSections)
@@ -693,11 +704,13 @@ async function injectSystemPrompt(
   for (const rowSection of sections) {
     const { filtered: sectionMsgs, warning: sectionWarning } = parseArrayWarning(rowSection.blocks, PromptAndBlockMsgs);
     if (sectionWarning.length > 0) {
-      ensureLogger(vctx.sthis, "buildUserMessages").Warn().Any({ parseErrors: sectionWarning }).Msg("skip");
+      ensureLogger(vctx.sthis, "assemblePromptPayload").Warn().Any({ parseErrors: sectionWarning }).Msg("skip");
     }
     allSectionMsgs.push(...sectionMsgs);
   }
-  const conversationMessages = reconstructConversationMessages(allSectionMsgs);
+  const reconstructed = reconstructConversationMessages(allSectionMsgs);
+  const newUserOnly = newUserMessages.filter((m) => m.role === "user");
+  const conversationMessages = [...reconstructed, ...newUserOnly];
 
   // Resolve the app's ActiveSkills + ActiveTitle from app_settings. Pre-allocation
   // seeds both on new chats; legacy rows without skills fall back to
@@ -824,28 +837,6 @@ async function handlerLlmRequest({
   promptId: string;
   blockSeq: number;
 }): Promise<{ res: Response; blockSeq: number; llmReq: LLMRequest & { headers: LLMHeaders }; abort: AbortController }> {
-  await scope
-    .evalResult(async () => {
-      const r = await appendBlockEvent({
-        ctx,
-        vctx,
-        req,
-        promptId,
-        blockSeq: blockSeq,
-        evt: {
-          type: "prompt.req",
-          streamId: promptId,
-          chatId: req.chatId,
-          seq: blockSeq,
-          request: req.prompt,
-          timestamp: new Date(),
-        },
-      });
-      blockSeq++;
-      return r;
-    })
-    .do();
-
   const modelId: string = await scope
     .evalResult(async (): Promise<Result<string>> => {
       const r = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
@@ -866,6 +857,11 @@ async function handlerLlmRequest({
     .do();
 
   // console.log(promptId, "Pre-System request for promptId:");
+  // Assemble BEFORE writing prompt.req. The new user turn(s) come from
+  // req.prompt.messages and are passed to assemblePromptPayload explicitly,
+  // so reconstruction does not depend on a just-written prompt.req block.
+  // The prompt.req append happens after assembly so the next turn's
+  // reconstruction still sees this turn's user prompt.
   const withSystemPrompt = await scope
     .evalResult(async () => {
       let withSystemPrompt = Result.Ok({
@@ -873,7 +869,11 @@ async function handlerLlmRequest({
         messages: [] as ChatMessage[],
       });
       if (req.mode === "chat") {
-        withSystemPrompt = await injectSystemPrompt(vctx, req.chatId, req.prompt.model ?? modelId);
+        withSystemPrompt = await assemblePromptPayload(vctx, {
+          chatId: req.chatId,
+          model: req.prompt.model ?? modelId,
+          newUserMessages: req.prompt.messages,
+        });
       } else if (req.mode === "app" || req.mode === "img") {
         let messages = req.prompt.messages;
         if (req.mode === "img") {
@@ -911,6 +911,31 @@ async function handlerLlmRequest({
   // if (withSystemPrompt.isErr()) {
   //   return Result.Err(withSystemPrompt);
   // }
+  // Write prompt.req to chatSections AFTER assembly. The block is needed so
+  // the NEXT turn's reconstruction sees this turn's user prompt; it must NOT
+  // be a precondition of assembly so the dry-run handler (inspect) can reuse
+  // assemblePromptPayload without any DB writes.
+  await scope
+    .evalResult(async () => {
+      const r = await appendBlockEvent({
+        ctx,
+        vctx,
+        req,
+        promptId,
+        blockSeq: blockSeq,
+        evt: {
+          type: "prompt.req",
+          streamId: promptId,
+          chatId: req.chatId,
+          seq: blockSeq,
+          request: req.prompt,
+          timestamp: new Date(),
+        },
+      });
+      blockSeq++;
+      return r;
+    })
+    .do();
   // console.log("Sending LLM request for promptId:", promptId);
   // "Initial turn" means we only have the current user message in the conversation history.
   const isInitialTurn = withSystemPrompt.messages.filter((m) => m.role === "user").length <= 1;
