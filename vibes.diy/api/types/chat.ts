@@ -177,6 +177,33 @@ export function isResPromptChatSection(obj: unknown): obj is ResPromptChatSectio
   return !(resPromptChatSection(obj) instanceof type.errors);
 }
 
+export const reqInspectPromptChatSection = type({
+  type: "'vibes.diy.req-inspect-prompt-chat-section'",
+  auth: dashAuthType,
+  chatId: "string",
+  mode: "'chat'",
+  prompt: LLMRequest,
+});
+
+export type ReqInspectPromptChatSection = typeof reqInspectPromptChatSection.infer;
+
+export function isReqInspectPromptChatSection(obj: unknown): obj is ReqInspectPromptChatSection {
+  return !(reqInspectPromptChatSection(obj) instanceof type.errors);
+}
+
+export const resInspectPromptChatSection = type({
+  type: "'vibes.diy.res-inspect-prompt-chat-section'",
+  chatId: "string",
+  model: "string",
+  messages: LLMRequest.get("messages"),
+});
+
+export type ResInspectPromptChatSection = typeof resInspectPromptChatSection.infer;
+
+export function isResInspectPromptChatSection(obj: unknown): obj is ResInspectPromptChatSection {
+  return !(resInspectPromptChatSection(obj) instanceof type.errors);
+}
+
 // export const reqAddFS = type({
 //   type: "'vibes.diy.req-add-fs'",
 //   auth: dashAuthType,
