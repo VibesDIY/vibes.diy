@@ -92,6 +92,7 @@ import { getModelDefaults } from "../intern/get-model-defaults.js";
 import {
   buildRecoveryRequest,
   buildTruncatedEvent,
+  renderCurrentFiles,
   shouldAttemptRecovery,
   updateRecoveryCounter,
   type RecoveryCounter,
@@ -725,6 +726,20 @@ async function injectSystemPrompt(
     return Result.Err(`No user messages found in the prompt`);
   }
 
+  // Continuation turns: append the resolved file state as a CURRENT FILES
+  // block (same shape recovery uses). Without this, the model only sees its
+  // own reconstructed prior responses — which for a 30+-edit scaffold turn
+  // are a long chain of SEARCH/REPLACE patches the model has to mentally
+  // apply to know what the file actually looks like. SEARCH anchors emitted
+  // against that imagined state miss, server-side recovery exhausts after 3
+  // fruitless retries, and the turn finalizes with zero file snapshots —
+  // user sees a phantom redeploy. Surfacing CURRENT FILES on the first
+  // attempt lets SEARCH anchors land against actual bytes instead of the
+  // model's reconstruction of them.
+  const systemPromptText = isInitial
+    ? systemPrompt.Ok().systemPrompt
+    : `${systemPrompt.Ok().systemPrompt}\n\n${renderCurrentFiles(priorFs, "App.jsx")}`;
+
   return Result.Ok({
     model,
     messages: [
@@ -733,7 +748,7 @@ async function injectSystemPrompt(
         content: [
           {
             type: "text",
-            text: systemPrompt.Ok().systemPrompt,
+            text: systemPromptText,
           },
         ],
       },

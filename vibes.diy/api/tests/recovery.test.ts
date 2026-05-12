@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRecoveryRequest, shouldAttemptRecovery, updateRecoveryCounter } from "@vibes.diy/api-svc";
+import { buildRecoveryRequest, renderCurrentFiles, shouldAttemptRecovery, updateRecoveryCounter } from "@vibes.diy/api-svc";
 import type { LLMRequest } from "@vibes.diy/call-ai-v2";
 
 describe("buildRecoveryRequest (continue mode: 'you were here')", () => {
@@ -306,5 +306,35 @@ describe("shouldAttemptRecovery", () => {
   it("respects a custom limit", () => {
     expect(shouldAttemptRecovery({ consecutiveFruitless: 4 }, { maxConsecutiveFruitless: 5 })).toBe(true);
     expect(shouldAttemptRecovery({ consecutiveFruitless: 5 }, { maxConsecutiveFruitless: 5 })).toBe(false);
+  });
+});
+
+describe("renderCurrentFiles (re-used by continuation system prompt)", () => {
+  // The helper is exported because injectSystemPrompt for continuation turns
+  // appends the same CURRENT FILES block to the base system prompt. Without
+  // it the model sees only its own prior SEARCH/REPLACE patches replayed as
+  // text and has to mentally chain them to guess the file state — SEARCH
+  // anchors emitted against that guess miss, server-side recovery exhausts
+  // after 3 fruitless retries, and the turn finalizes with zero snapshots.
+  it("includes a CURRENT FILES header and renders each file under a path marker", () => {
+    const vfs = new Map<string, string>([
+      ["/App.jsx", "export default () => <h1>hi</h1>;"],
+      ["/Helpers.jsx", "export const greet = () => 'hi';"],
+    ]);
+    const out = renderCurrentFiles(vfs, "/App.jsx");
+    expect(out).toContain("CURRENT FILES");
+    expect(out).toContain("--- /App.jsx ---");
+    expect(out).toContain("export default () => <h1>hi</h1>;");
+    expect(out).toContain("--- /Helpers.jsx ---");
+    expect(out).toContain("export const greet = () => 'hi';");
+  });
+
+  it("orders the focus file first so the model's working file leads the context", () => {
+    const vfs = new Map<string, string>([
+      ["/Aux.jsx", "// aux"],
+      ["/App.jsx", "// app"],
+    ]);
+    const out = renderCurrentFiles(vfs, "/App.jsx");
+    expect(out.indexOf("--- /App.jsx ---")).toBeLessThan(out.indexOf("--- /Aux.jsx ---"));
   });
 });
