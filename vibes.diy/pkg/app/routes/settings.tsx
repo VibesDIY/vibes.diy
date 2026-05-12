@@ -22,7 +22,7 @@ export function meta() {
   return [{ title: "Settings - Vibes DIY" }, { name: "description", content: "Settings for AI App Builder" }];
 }
 
-/* Hidden per VibesDIY/vibes.diy#1692 — restore alongside the JSX block in SettingsContent and the imports below.
+/* Hidden per VibesDIY/vibes.diy#1692 — restore alongside the JSX block in SettingsContent and the imports above.
 function GrantsList() {
   const { vibeDiyApi } = useVibesDiy();
   const [grants, setGrants] = useState<SharingGrantItem[]>([]);
