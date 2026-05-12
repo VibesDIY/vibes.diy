@@ -27,7 +27,7 @@ export const c7Scenario = {
 
     // openChat gives us the chatId. createApp() seeds turn 0 (scaffold/original).
     const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
-    if (!rOpen.isOk()) throw new Error(`openChat failed: ${String(rOpen.Err())}`);
+    if (rOpen.isOk() === false) throw new Error(`openChat failed: ${String(rOpen.Err())}`);
     const chat = rOpen.Ok();
     const chatId = chat.chatId;
 
@@ -51,7 +51,7 @@ export const c7Scenario = {
         userMessage: `evolution turn ${i}`,
         promptId: `p${i}`,
       });
-      if (!rAppend.isOk()) throw new Error(`appendTurnToChat turn ${i} failed: ${String(rAppend.Err())}`);
+      if (rAppend.isOk() === false) throw new Error(`appendTurnToChat turn ${i} failed: ${String(rAppend.Err())}`);
     }
 
     await chat.close();
