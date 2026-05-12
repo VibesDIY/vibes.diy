@@ -22,7 +22,15 @@ import {
   ReqDeleteUserSlugBinding,
   ResDeleteUserSlugBinding,
 } from "./app.js";
-import { ReqOpenChat, ResPromptChatSection, SectionEvent, ReqListModels, ResListModels, FSUpdate } from "./chat.js";
+import {
+  ReqOpenChat,
+  ResPromptChatSection,
+  SectionEvent,
+  ReqListModels,
+  ResListModels,
+  FSUpdate,
+  SelectedSlotInput,
+} from "./chat.js";
 import {
   ReqEnsureUserSettings,
   ResEnsureUserSettings,
@@ -102,7 +110,7 @@ export interface LLMChat extends LLMChatEntry {
   // sectionStream blocks for the payload. Chat mode only.
   prompt(
     req: LLMRequest,
-    opts?: { inputImageBase64?: string; dryRun?: boolean; focusPath?: string }
+    opts?: { inputImageBase64?: string; dryRun?: boolean; focusPath?: string; selected?: SelectedSlotInput }
   ): Promise<Result<ResPromptChatSection, VibesDiyError>>;
   promptFS(req: FSUpdate | VibeFile[]): Promise<Result<ResPromptChatSection, VibesDiyError>>;
 

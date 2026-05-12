@@ -141,6 +141,7 @@ import {
   vibeFile,
   ReqPromptFSSetChatSection,
   ReqPromptFSUpdateChatSection,
+  SelectedSlotInput,
 } from "@vibes.diy/api-types";
 import {
   Evento,
@@ -1000,7 +1001,7 @@ class LLMChatImpl implements LLMChat {
 
   async prompt(
     msg: LLMRequest,
-    opts?: { inputImageBase64?: string; dryRun?: boolean; focusPath?: string }
+    opts?: { inputImageBase64?: string; dryRun?: boolean; focusPath?: string; selected?: SelectedSlotInput }
   ): Promise<Result<ResPromptChatSection, VibesDiyError>> {
     const mode = this.res.mode;
     if (!isPromptLLMStyle(mode)) {
@@ -1024,6 +1025,7 @@ class LLMChatImpl implements LLMChat {
         // server type won't carry them.
         ...(mode === "chat" && opts?.dryRun === true ? { dryRun: true } : {}),
         ...(mode === "chat" && opts?.focusPath !== undefined ? { focusPath: opts.focusPath } : {}),
+        ...(mode === "chat" && opts?.selected !== undefined ? { selected: opts.selected } : {}),
       },
       {
         resMatch: isResPromptChatSection,

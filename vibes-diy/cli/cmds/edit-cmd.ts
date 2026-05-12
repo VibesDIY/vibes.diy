@@ -13,10 +13,11 @@ import {
 import { type } from "arktype";
 import { ResEnsureAppSlug, isResError, isSectionEvent, isPromptDryRunPayload } from "@vibes.diy/api-types";
 import type { ChatMessage } from "@vibes.diy/call-ai-v2";
-import type { ResError, SectionEvent, PromptDryRunPayload } from "@vibes.diy/api-types";
+import type { ResError, SectionEvent, PromptDryRunPayload, SelectedSlotInput } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveUserSlug } from "../resolve-user-slug.js";
+import { collectDiskDraft } from "./disk-drift.js";
 import { resolveSectionStream } from "./resolve-section-stream.js";
 import { readProjectFiles, pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
@@ -113,6 +114,34 @@ export function formatDryRunAsText(payload: DryRunPayload): string {
   return lines.join("\n");
 }
 
+export interface PromptOpts {
+  readonly focusPath?: string;
+  readonly selected?: SelectedSlotInput;
+}
+
+export async function buildEditPromptRequest(input: {
+  readonly chatId: string;
+  readonly appSlug: string;
+  readonly userSlug: string;
+  readonly prompt: string;
+  readonly dir: string;
+  readonly focus: string | undefined;
+}): Promise<PromptOpts> {
+  const base: PromptOpts = input.focus !== undefined ? { focusPath: input.focus } : {};
+  const drift = await collectDiskDraft(input.dir);
+  if (drift === undefined) return base;
+  const files: SelectedSlotInput = {
+    kind: "draft",
+    files: drift.files.map((f) => ({
+      type: "code-block" as const,
+      lang: f.lang,
+      filename: f.filename.startsWith("/") ? f.filename : `/${f.filename}`,
+      content: f.content,
+    })),
+  };
+  return { ...base, selected: files };
+}
+
 export async function readSeedFilesFromDir(dir: string): Promise<Result<ReadonlyMap<string, string>>> {
   const rFiles = await exception2Result(() => readProjectFiles(dir));
   if (rFiles.isErr()) {
@@ -157,9 +186,17 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
         return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
       }
       const chat = rChat.Ok();
+      const dryRunOpts = await buildEditPromptRequest({
+        chatId: chat.chatId,
+        appSlug: chat.appSlug,
+        userSlug: chat.userSlug,
+        prompt: args.prompt,
+        dir,
+        focus: args.focusPath,
+      });
       const rPrompt = await chat.prompt(
         { messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }] },
-        { dryRun: true, ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}) }
+        { ...dryRunOpts, dryRun: true }
       );
       if (rPrompt.isErr()) {
         await chat.close();
@@ -200,10 +237,15 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     }
     const chat = rChat.Ok();
 
-    const rPrompt = await chat.prompt(
-      { messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }] },
-      { ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}) }
-    );
+    const promptOpts = await buildEditPromptRequest({
+      chatId: chat.chatId,
+      appSlug: chat.appSlug,
+      userSlug: chat.userSlug,
+      prompt: args.prompt,
+      dir,
+      focus: args.focusPath,
+    });
+    const rPrompt = await chat.prompt({ messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }] }, promptOpts);
     if (rPrompt.isErr()) {
       return Result.Err(`Failed to send prompt: ${formatErr(rPrompt.Err())}`);
     }

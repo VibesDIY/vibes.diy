@@ -7,7 +7,7 @@ import { run } from "cmd-ts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cmd_tsStream } from "../cmd-ts-stream.js";
 import type { CliCtx } from "../cli-ctx.js";
-import { ReqEdit, editCmd, editEvento } from "./edit-cmd.js";
+import { ReqEdit, buildEditPromptRequest, editCmd, editEvento } from "./edit-cmd.js";
 
 const tempDirs: string[] = [];
 
@@ -444,5 +444,44 @@ describe("editEvento", () => {
     const onDisk = await readFile(join(cwd, "App.jsx"), "utf-8");
     expect(onDisk).toBe(original);
     expect(calls.ensureAppSlug).toEqual([]);
+  });
+});
+
+describe("buildEditPromptRequest", () => {
+  it("includes selected.draft when .undo is absent and disk has source files", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "edit-req-draft-"));
+    tempDirs.push(dir);
+    await writeFile(join(dir, "App.jsx"), "function App(){}", "utf-8");
+
+    const req = await buildEditPromptRequest({
+      chatId: "c1",
+      appSlug: "x",
+      userSlug: "u",
+      prompt: "make it pink",
+      dir,
+      focus: undefined,
+    });
+
+    expect(req.selected).toEqual({ kind: "draft", files: expect.any(Array) });
+    const files = (req.selected as { kind: "draft"; files: unknown[] }).files;
+    expect(files.length).toBe(1);
+  });
+
+  it("omits selected when .undo matches disk content", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "edit-req-undo-"));
+    tempDirs.push(dir);
+    await writeFile(join(dir, "App.jsx"), "function App(){}", "utf-8");
+    await writeFile(join(dir, ".undo"), JSON.stringify([{ filename: "App.jsx", content: "function App(){}" }]), "utf-8");
+
+    const req = await buildEditPromptRequest({
+      chatId: "c1",
+      appSlug: "x",
+      userSlug: "u",
+      prompt: "go",
+      dir,
+      focus: undefined,
+    });
+
+    expect(req.selected).toBeUndefined();
   });
 });
