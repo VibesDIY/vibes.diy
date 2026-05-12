@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { lineDiff, coalesceHunks } from "../svc/intern/last-edit-diff.js";
+import {
+  lineDiff,
+  coalesceHunks,
+  renderHunkAsSearchReplace,
+  generateFileLastEdit,
+  generateLastEditBlock,
+} from "../svc/intern/last-edit-diff.js";
 
 describe("lineDiff", () => {
   it("returns empty hunks for identical inputs", () => {
@@ -43,8 +49,6 @@ describe("coalesceHunks", () => {
     expect(merged).toHaveLength(2);
   });
 });
-
-import { renderHunkAsSearchReplace, generateFileLastEdit, generateLastEditBlock } from "../svc/intern/last-edit-diff.js";
 
 describe("renderHunkAsSearchReplace", () => {
   it("emits SEARCH/REPLACE block for a unique anchor", () => {

@@ -1,4 +1,5 @@
 import {
+  ReqEnsureAppSlug,
   VibeFile,
   FileSystemItem,
   isVibeCodeBlock,

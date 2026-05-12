@@ -18,7 +18,9 @@ describe("renderSlotMessagesAs", () => {
     );
     expect(r).toHaveLength(1);
     expect(r[0].role).toBe("system");
-    expect(r[0].content[0].text).toContain("A");
-    expect(r[0].content[0].text).toContain("B");
+    const part = r[0].content[0];
+    const text = part.type === "text" ? part.text : "";
+    expect(text).toContain("A");
+    expect(text).toContain("B");
   });
 });

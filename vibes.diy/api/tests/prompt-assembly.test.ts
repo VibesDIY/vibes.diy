@@ -23,7 +23,6 @@ async function userIdForSlug(ctx: ApiTestCtx, userSlug: string): Promise<string>
 
 const SLOT_SEQ_BASE = 1_667_400;
 
-const V1_CONTENT = "export default function App() { return <div>v1</div>; } // original";
 const V2_CONTENT = "export default function App() { return <div>v2</div>; } // prev2";
 const V3_CONTENT = "export default function App() { return <div>v3</div>; } // previous";
 
@@ -162,7 +161,8 @@ describe("assemblePromptPayload: slot interpolation", () => {
 
     const systemMsg = messages.find((m) => m.role === "system");
     expect(systemMsg).toBeDefined();
-    expect(firstText(systemMsg!)).not.toContain("CURRENT FILES (resolved so far this turn):");
+    if (systemMsg === undefined) throw new Error("unreachable — assertion above failed");
+    expect(firstText(systemMsg)).not.toContain("CURRENT FILES (resolved so far this turn):");
 
     await chat.close();
   });

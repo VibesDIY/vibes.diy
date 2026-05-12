@@ -22,7 +22,9 @@ describe("buildRecoveryRequest (slot-assembler consumer)", () => {
     });
     const texts = result.flatMap((m) => m.content.map((c) => (c.type === "text" ? c.text : "")));
     const sys = result.find((m) => m.role === "system");
-    expect(sys?.content[0].text).toContain("verify your partial");
+    const sysPart = sys?.content[0];
+    const sysText = sysPart?.type === "text" ? sysPart.text : "";
+    expect(sysText).toContain("verify your partial");
     expect(texts.some((t) => t.includes("RECOVERY_PARTIAL"))).toBe(true);
     expect(texts.some((t) => t.includes("in-flight"))).toBe(true);
   });
