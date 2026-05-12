@@ -29,6 +29,7 @@ import { pushCmd } from "./cmds/push-cmd.js";
 import { putAssetCmd, isResPutAssetCli } from "./cmds/put-asset-cmd.js";
 import { generateCmd, isResGenerate } from "./cmds/generate-cmd.js";
 import { editCmd, isResEdit } from "./cmds/edit-cmd.js";
+import { inspectCmd, isResInspect } from "./cmds/inspect-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
 import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
@@ -129,6 +130,7 @@ async function main(): Promise<number> {
         db: dbSubcommands(ctx),
         edit: editCmd(ctx),
         generate: generateCmd(ctx),
+        inspect: inspectCmd(ctx),
         login: loginCmd(ctx),
         push: pushCmd(ctx),
         "put-asset": putAssetCmd(ctx),
@@ -251,6 +253,10 @@ async function main(): Promise<number> {
           }
           case isResEdit(msg): {
             // Already reported via sendProgress in edit handler
+            break;
+          }
+          case isResInspect(msg): {
+            process.stdout.write(msg.output + "\n");
             break;
           }
           case isResPutAssetCli(msg): {
