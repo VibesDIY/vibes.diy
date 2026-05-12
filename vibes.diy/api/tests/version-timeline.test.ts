@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { exception2Result } from "@adviser/cement";
 import { createApiTestCtx, type ApiTestCtx } from "./api-test-setup.js";
 import { appendTurnToChat } from "../svc/intern/append-turn-to-chat.js";
-import { loadVersionTimeline, selectSlotSources } from "../svc/intern/version-timeline.js";
+import { loadVersionTimeline, selectSlotSources, loadLatestPromptId } from "../svc/intern/version-timeline.js";
 import type { PromptContextSql } from "@vibes.diy/call-ai-v2";
 
 const SEQ_BASE = 1_667_300;
@@ -172,6 +172,64 @@ describe("loadVersionTimeline", () => {
 
     // Content must be resolvable from storage.
     expect(tl[1].vfs.get("/App.jsx")).toBe(DEDUP_CONTENT);
+
+    await chat.close();
+  });
+
+  it("loadLatestPromptId returns undefined for a chat with no turns", async () => {
+    const { appSlug, userSlug } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, userSlug);
+
+    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const chat = rOpen.Ok();
+    const vctx = ctx.appCtx.vibesCtx;
+
+    // Delete all promptContexts rows for this chat (including the seed)
+    await exception2Result(() =>
+      vctx.sql.db.delete(vctx.sql.tables.promptContexts).where(eq(vctx.sql.tables.promptContexts.chatId, chat.chatId))
+    );
+
+    const r = await loadLatestPromptId(vctx, chat.chatId);
+    expect(r.isOk()).toBe(true);
+    expect(r.Ok()).toBeUndefined();
+
+    await chat.close();
+  });
+
+  it("loadLatestPromptId returns the promptId of the most recent turn", async () => {
+    const { appSlug, userSlug } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, userSlug);
+
+    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const chat = rOpen.Ok();
+    const vctx = ctx.appCtx.vibesCtx;
+
+    const V1_CONTENT = "export default function App() { return null; } // v1";
+    const V2_CONTENT = "export default function App() { return null; } // v2";
+
+    const r1 = (
+      await appendTurnToChat(vctx, {
+        chatId: chat.chatId,
+        userId,
+        userSlug,
+        appSlug,
+        fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: V1_CONTENT }],
+      })
+    ).Ok();
+
+    const r2 = (
+      await appendTurnToChat(vctx, {
+        chatId: chat.chatId,
+        userId,
+        userSlug,
+        appSlug,
+        fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: V2_CONTENT }],
+      })
+    ).Ok();
+
+    const result = await loadLatestPromptId(vctx, chat.chatId);
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok()).toBe(r2.promptId);
 
     await chat.close();
   });
