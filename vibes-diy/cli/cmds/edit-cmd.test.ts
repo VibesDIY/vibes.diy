@@ -219,7 +219,7 @@ describe("editEvento", () => {
       instantJoin: false,
       verbose: false,
       dryRun: false,
-      asText: false,
+      transcript: false,
     });
   });
 
@@ -258,7 +258,7 @@ describe("editEvento", () => {
       instantJoin: false,
       verbose: false,
       dryRun: false,
-      asText: false,
+      transcript: false,
       dir: "",
       apiUrl: "https://vibes.diy/api?.stable-entry.=cli",
     };
@@ -324,7 +324,7 @@ describe("editEvento", () => {
       instantJoin: false,
       verbose: false,
       dryRun: false,
-      asText: false,
+      transcript: false,
       dir: target,
       apiUrl: "https://vibes.diy/api?.stable-entry.=cli",
     };
@@ -408,7 +408,7 @@ describe("editEvento", () => {
       instantJoin: false,
       verbose: false,
       dryRun: false,
-      asText: false,
+      transcript: false,
       dir: "",
       apiUrl: "https://vibes.diy/api?.stable-entry.=cli",
     };
