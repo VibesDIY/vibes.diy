@@ -74,6 +74,18 @@ export const selectedSlotInput = type({
 
 export type SelectedSlotInput = typeof selectedSlotInput.infer;
 
+export const slotMute = type("'on' | 'off'");
+
+export const slotConfig = type({
+  "original?": slotMute,
+  "selected?": slotMute,
+  "last_edit?": slotMute,
+  "previous?": slotMute,
+  "compaction?": slotMute,
+});
+
+export type SlotConfig = typeof slotConfig.infer;
+
 export const reqCreationPromptChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
   mode: "'chat'",
@@ -87,6 +99,7 @@ export const reqCreationPromptChatSection = type({
   // mode only; app/img dry-run is a follow-up.
   "dryRun?": "boolean",
   "selected?": selectedSlotInput,
+  "slots?": slotConfig,
 });
 
 export function isReqCreationPromptChatSection(obj: unknown): obj is typeof reqCreationPromptChatSection.infer {

@@ -51,4 +51,30 @@ describe("reqCreationPromptChatSection: selected wire shape", () => {
     });
     expect(r).toBeInstanceOf(type.errors);
   });
+
+  it("accepts slots config with per-slot mute flags", () => {
+    const r = reqCreationPromptChatSection({
+      type: "vibes.diy.req-prompt-chat-section",
+      mode: "chat",
+      auth: { type: "device-id", token: "t" },
+      chatId: "c1",
+      outerTid: "tid",
+      prompt: { messages: [] },
+      slots: { original: "off", selected: "on", last_edit: "on", previous: "on", compaction: "on" },
+    });
+    expect(r).not.toBeInstanceOf(type.errors);
+  });
+
+  it("rejects invalid slot value", () => {
+    const r = reqCreationPromptChatSection({
+      type: "vibes.diy.req-prompt-chat-section",
+      mode: "chat",
+      auth: { type: "device-id", token: "t" },
+      chatId: "c1",
+      outerTid: "tid",
+      prompt: { messages: [] },
+      slots: { original: "maybe" },
+    });
+    expect(r).toBeInstanceOf(type.errors);
+  });
 });
