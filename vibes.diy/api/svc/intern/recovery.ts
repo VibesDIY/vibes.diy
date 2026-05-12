@@ -138,7 +138,7 @@ function mergeRecoveryIntoSystem(messages: readonly ChatMessage[], recoverySuffi
   return [...messages.slice(0, firstSystemIdx), merged, ...messages.slice(firstSystemIdx + 1)];
 }
 
-function renderCurrentFiles(vfs: ReadonlyMap<string, string>, focusPath: string): string {
+export function renderCurrentFiles(vfs: ReadonlyMap<string, string>, focusPath: string): string {
   const lines: string[] = ["CURRENT FILES (resolved so far this turn):"];
   let totalBudget = MAX_RECOVERY_TOTAL_BYTES;
   const ordered = orderForRecovery(vfs, focusPath);
