@@ -17,7 +17,7 @@ async function userIdForSlug(ctx: ApiTestCtx, userSlug: string): Promise<string>
     .where(eq(ctx.appCtx.vibesCtx.sql.tables.userSlugBinding.userSlug, userSlug))
     .limit(1)
     .then((r) => r[0]);
-  if (!row) throw new Error(`No userSlugBinding found for userSlug=${userSlug}`);
+  if (row === undefined) throw new Error(`No userSlugBinding found for userSlug=${userSlug}`);
   return row.userId;
 }
 
