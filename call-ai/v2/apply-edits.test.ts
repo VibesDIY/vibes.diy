@@ -77,13 +77,7 @@ describe("applyReplace ellipsis", () => {
       "  </div>;",
       "}",
     ].join("\n");
-    const search = [
-      "function FeatureOne() {",
-      '  return <div className="rounded...',
-      "    Hello",
-      "  </div>;",
-      "}",
-    ].join("\n");
+    const search = ["function FeatureOne() {", '  return <div className="rounded...', "    Hello", "  </div>;", "}"].join("\n");
     const replace = "function FeatureOne() {\n  return <div>NEW</div>;\n}";
     const r = applyReplace({ source, search, replace });
     expect(r.ok).toBe(true);
@@ -196,7 +190,79 @@ describe("applyReplace ellipsis", () => {
     const replace = "  ...kept literal";
     const r = applyReplace({ source, search, replace });
     expect(r.ok).toBe(true);
-    if (r.ok) expect(r.content).toBe('foo\n  ...kept literal\nbar');
+    // Leading-`...` on REPLACE stays literal — we don't yet mirror leading-skip captures.
+    if (r.ok) expect(r.content).toBe("foo\n  ...kept literal\nbar");
+  });
+
+  it("trailing-... on REPLACE reuses the SEARCH-side captured suffix", () => {
+    const source = "  .btn { color: red; padding: 0.6rem 1.2rem; font-size: 0.78rem; cursor: pointer; }\nother";
+    const search = "  .btn { color: red; padding: 0.6rem 1.2rem; font-size: 0.78rem;...";
+    const replace = "  .btn { color: red; padding: 0.6rem 1.2rem; font-size: 0.92rem;...";
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.content).toBe("  .btn { color: red; padding: 0.6rem 1.2rem; font-size: 0.92rem; cursor: pointer; }\nother");
+    }
+  });
+
+  it("trailing-... mirror pairs prefix-... lines by ordinal", () => {
+    const source = [
+      "function CardHeader() {",
+      '  return <h2 className="text-2xl font-bold tracking-tight">{title}</h2>;',
+      "}",
+      "function CardBody() {",
+      '  return <div className="prose max-w-none mt-4">{children}</div>;',
+      "}",
+    ].join("\n");
+    const search = [
+      "function CardHeader() {",
+      '  return <h2 className="text-2xl...',
+      "}",
+      "function CardBody() {",
+      '  return <div className="prose...',
+      "}",
+    ].join("\n");
+    const replace = [
+      "function CardHeader() {",
+      '  return <h2 className="text-4xl...',
+      "}",
+      "function CardBody() {",
+      '  return <div className="prose-lg...',
+      "}",
+    ].join("\n");
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.content).toBe(
+        [
+          "function CardHeader() {",
+          '  return <h2 className="text-4xl font-bold tracking-tight">{title}</h2>;',
+          "}",
+          "function CardBody() {",
+          '  return <div className="prose-lg max-w-none mt-4">{children}</div>;',
+          "}",
+        ].join("\n")
+      );
+    }
+  });
+
+  it("trailing-... on REPLACE without a SEARCH counterpart stays literal", () => {
+    const source = "foo\nplain anchor line\nbar";
+    const search = "plain anchor line";
+    const replace = "literal ... tail\nliteral end...";
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    // No SEARCH prefix-`...` to capture from → REPLACE is verbatim, even trailing `...`.
+    if (r.ok) expect(r.content).toBe("foo\nliteral ... tail\nliteral end...\nbar");
+  });
+
+  it("mid-line ... on REPLACE stays literal even when SEARCH has trailing-...", () => {
+    const source = 'foo\n  log("debug", value, ctx);\nbar';
+    const search = '  log("debug",...';
+    const replace = '  log("info", a ... b, ctx);';
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.content).toBe('foo\n  log("info", a ... b, ctx);\nbar');
   });
 });
 
