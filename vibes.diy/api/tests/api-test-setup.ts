@@ -50,6 +50,7 @@ export interface DryRunInput {
   readonly selected?: SelectedSlotInput;
   readonly slots?: SlotConfig;
   readonly focusPath?: string;
+  readonly slotDeliveryMode?: "user" | "system";
 }
 
 export interface AssembledPayload {
@@ -154,6 +155,7 @@ export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise
       selected: input.selected,
       slots: input.slots,
       focusPath: input.focusPath,
+      slotDeliveryMode: input.slotDeliveryMode,
     });
     if (r.isOk() === false) throw new Error(`assemblePromptPayload failed: ${String(r.Err())}`);
     return r.Ok();

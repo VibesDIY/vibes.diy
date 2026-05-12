@@ -729,6 +729,9 @@ export interface AssemblePromptPayloadArgs {
   readonly slots?: SlotConfig;
   // Optional: the file path to focus on in slot rendering. Defaults to "App.jsx".
   readonly focusPath?: string;
+  // Optional: override which role slot messages are delivered as. When absent,
+  // falls back to the SLOT_DELIVERY_MODE env var (defaulting to "user").
+  readonly slotDeliveryMode?: "user" | "system";
 }
 
 export async function assemblePromptPayload(
@@ -841,7 +844,8 @@ export async function assemblePromptPayload(
   });
 
   // Build final message list: system → conversation history → slot messages → new user.
-  const slotDeliveryMode = vctx.sthis.env.get("SLOT_DELIVERY_MODE") === "system" ? "system" : "user";
+  const slotDeliveryMode: "user" | "system" =
+    args.slotDeliveryMode ?? (vctx.sthis.env.get("SLOT_DELIVERY_MODE") === "system" ? "system" : "user");
   const slotChatMessages = renderSlotMessagesAs(slotMessages, slotDeliveryMode);
 
   return Result.Ok({
