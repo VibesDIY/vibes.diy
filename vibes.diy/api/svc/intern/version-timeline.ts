@@ -27,7 +27,7 @@ function isSourceFile(fileName: string): boolean {
  * skipped).  Keys are normalised to "/{fileName}" (leading slash added if
  * absent) for consistency with the convention used by renderCurrentFiles.
  *
- * Exported so future callers (e.g. a fixed loadPriorFileSystem) can reuse it.
+ * Exported for callers that need to resolve a single FileSystemItem[] to content.
  */
 export async function resolveVfsFromFileSystem(
   vctx: VibesApiSQLCtx,
