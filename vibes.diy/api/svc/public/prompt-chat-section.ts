@@ -99,7 +99,7 @@ import {
   type RecoveryCounter,
 } from "../intern/recovery.js";
 import { loadVersionTimeline, selectSlotSources, loadLatestPromptId } from "../intern/version-timeline.js";
-import { assembleSlotMessages, resolveSlotConfig } from "../intern/slot-assembler.js";
+import { assembleSlotMessages, renderSlotMessagesAs, resolveSlotConfig } from "../intern/slot-assembler.js";
 import { bumpAppRecency } from "../intern/bump-app-recency.js";
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
@@ -841,10 +841,8 @@ export async function assemblePromptPayload(
   });
 
   // Build final message list: system → conversation history → slot messages → new user.
-  const slotChatMessages: ChatMessage[] = slotMessages.map((s) => ({
-    role: "user" as const,
-    content: [{ type: "text" as const, text: s.text }],
-  }));
+  const slotDeliveryMode = vctx.sthis.env.get("SLOT_DELIVERY_MODE") === "system" ? "system" : "user";
+  const slotChatMessages = renderSlotMessagesAs(slotMessages, slotDeliveryMode);
 
   return Result.Ok({
     model,
