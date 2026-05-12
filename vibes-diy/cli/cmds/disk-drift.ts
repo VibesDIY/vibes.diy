@@ -27,10 +27,10 @@ async function readDiskSourceFiles(dir: string): Promise<DiskFile[]> {
   const entries = entriesResult.Ok();
   const out: DiskFile[] = [];
   for (const e of entries) {
-    if (!e.isFile()) continue;
+    if (e.isFile() === false) continue;
     if (e.name.startsWith(".")) continue;
     const ext = path.extname(e.name).toLowerCase();
-    if (!SOURCE_EXT.has(ext)) continue;
+    if (SOURCE_EXT.has(ext) === false) continue;
     const content = await fs.readFile(path.join(dir, e.name), "utf8");
     out.push({ type: "code-block", filename: e.name, lang: langOf(e.name), content });
   }
@@ -54,7 +54,7 @@ export async function collectDiskDraft(dir: string): Promise<DiskDraft | undefin
     return { files: sourceFiles };
   }
 
-  const parsedResult = exception2Result(() => JSON.parse(undoTextResult.Ok()) as unknown);
+  const parsedResult = exception2Result(() => JSON.parse(undoTextResult.Ok()));
   if (parsedResult.isErr()) {
     return { files: sourceFiles };
   }
