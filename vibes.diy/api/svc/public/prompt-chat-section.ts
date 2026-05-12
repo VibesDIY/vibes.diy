@@ -602,16 +602,16 @@ export async function handlePromptContext({
 }
 
 export interface ReconstructOpts {
-  readonly keepFullTurnPromptId?: string;
+  readonly keepFullTurnStreamId?: string;
 }
 
 /**
  * Reconstruct conversation messages (user + assistant) from stored section blocks.
  * Assistant responses are rebuilt from ToplevelLine and Code block messages.
  *
- * When opts.keepFullTurnPromptId is set, code blocks in older turns (identified
+ * When opts.keepFullTurnStreamId is set, code blocks in older turns (identified
  * by the prompt.req streamId) are compacted to summary lines instead of being
- * emitted verbatim. The turn whose streamId matches keepFullTurnPromptId is
+ * emitted verbatim. The turn whose streamId matches keepFullTurnStreamId is
  * kept in full.
  */
 export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[], opts: ReconstructOpts = {}): ChatMessage[] {
@@ -643,7 +643,7 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
         assistantLines.push(msg.line);
         break;
       case isCodeBegin(msg): {
-        const compact = opts.keepFullTurnPromptId !== undefined && currentStreamId !== opts.keepFullTurnPromptId;
+        const compact = opts.keepFullTurnStreamId !== undefined && currentStreamId !== opts.keepFullTurnStreamId;
         if (compact) {
           blockBuffer = { path: msg.path ?? "App.jsx", lineCount: 0 };
         } else {
@@ -775,7 +775,7 @@ export async function assemblePromptPayload(
   // Reconstruct conversation history, compacting older turns when a latest
   // promptId is available (keeps only the most recent turn in full fidelity).
   const reconstructed = reconstructConversationMessages(allSectionMsgs, {
-    keepFullTurnPromptId: latestPromptId,
+    keepFullTurnStreamId: latestPromptId,
   });
   const newUserOnly = newUserMessages.filter((m) => m.role === "user");
 
