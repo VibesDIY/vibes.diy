@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { BuildURI, URI } from "@adviser/cement";
 import { toast } from "react-hot-toast";
+import { gridBackground, cx } from "@vibes.diy/base";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { getCode } from "./CodeEditor.js";
@@ -158,6 +159,14 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         allow="camera; microphone"
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
+      {promptState.running && (
+        <div
+          aria-hidden="true"
+          data-testid="preview-stream-overlay"
+          className={cx(gridBackground, "absolute inset-0")}
+          style={{ opacity: 0.9 }}
+        />
+      )}
     </div>
   );
 }
