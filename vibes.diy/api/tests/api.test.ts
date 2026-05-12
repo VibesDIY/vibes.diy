@@ -748,6 +748,63 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       });
     });
 
+    it("ensureAppSettings canonicalizes duplicate chat model entries on save", async () => {
+      const { appSlug, userSlug } = await createApp();
+      const seed = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: m("seed-chat"), apiKey: "seed-key" } });
+      const appSettings = appCtx.vibesCtx.sql.tables.appSettings;
+
+      await appCtx.vibesCtx.sql.db
+        .update(appSettings)
+        .set({
+          settings: [
+            {
+              type: "active.model",
+              usage: "chat",
+              param: { model: m("older-chat"), apiKey: "older-key" },
+            },
+            {
+              type: "active.model",
+              usage: "chat",
+              param: { model: m("claude-sonnet-4-6"), apiKey: "sonnet-key" },
+            },
+            {
+              type: "active.model",
+              usage: "app",
+              param: { model: m("app-model") },
+            },
+          ],
+        })
+        .where(
+          and(
+            eq(appSettings.userId, seed.Ok().userId),
+            eq(appSettings.appSlug, appSlug),
+            eq(appSettings.userSlug, userSlug)
+          )
+        );
+
+      const selectedChat = { model: m("saved-chat"), apiKey: "saved-key" };
+      const save = await api.ensureAppSettings({ appSlug, userSlug, chat: selectedChat });
+      const saveChatEntries = save.Ok().settings.entries.filter((entry) => entry.type === "active.model" && entry.usage === "chat");
+
+      expect(saveChatEntries).toHaveLength(1);
+      expect(save.Ok().settings.entry.settings.chat).toEqual(selectedChat);
+
+      const read = await api.ensureAppSettings({ appSlug, userSlug });
+      const readChatEntries = read.Ok().settings.entries.filter((entry) => entry.type === "active.model" && entry.usage === "chat");
+
+      expect(readChatEntries).toHaveLength(1);
+      expect(read.Ok().settings.entry.settings.chat).toEqual(selectedChat);
+      expect(read.Ok().settings.entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: "active.model",
+            usage: "app",
+            param: { model: m("app-model") },
+          }),
+        ])
+      );
+    });
+
     it("ensureAppSettings update app", async () => {
       const x1 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: m("x") } });
       const x2 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: m("x") } });
