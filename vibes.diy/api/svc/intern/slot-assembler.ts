@@ -174,3 +174,20 @@ export function assembleSlotMessages(inputs: AssembleInputs): AssembledMessage[]
   }
   return out;
 }
+
+export function resolveSlotConfig(req: SlotConfig | undefined, env: Record<string, string | undefined>): Required<SlotConfig> {
+  const read = (key: keyof SlotConfig, envKey: string): "on" | "off" => {
+    const r = req?.[key];
+    if (r === "on" || r === "off") return r;
+    const e = env[envKey];
+    if (e === "on" || e === "off") return e;
+    return "on";
+  };
+  return {
+    original: read("original", "SLOTS_ORIGINAL"),
+    selected: read("selected", "SLOTS_SELECTED"),
+    last_edit: read("last_edit", "SLOTS_LAST_EDIT"),
+    previous: read("previous", "SLOTS_PREVIOUS"),
+    compaction: read("compaction", "SLOTS_COMPACTION"),
+  };
+}
