@@ -184,13 +184,14 @@ describe("applyReplace ellipsis", () => {
     if (r.ok) expect(r.content).toBe("before\nnow ... done\nafter");
   });
 
-  it("passes ... in REPLACE through verbatim even when SEARCH uses ellipsis", () => {
+  it("leading-... on REPLACE stays literal when SEARCH has no inter-segment skip to mirror", () => {
     const source = 'foo\n  <div className="long tail">\nbar';
     const search = '  <div className="long...';
     const replace = "  ...kept literal";
     const r = applyReplace({ source, search, replace });
     expect(r.ok).toBe(true);
-    // Leading-`...` on REPLACE stays literal — we don't yet mirror leading-skip captures.
+    // SEARCH uses trailing-... only (no leading/inter-segment skip), so the
+    // leading-... line on REPLACE has no captured skip to substitute → literal.
     if (r.ok) expect(r.content).toBe("foo\n  ...kept literal\nbar");
   });
 
@@ -254,6 +255,44 @@ describe("applyReplace ellipsis", () => {
     expect(r.ok).toBe(true);
     // No SEARCH prefix-`...` to capture from → REPLACE is verbatim, even trailing `...`.
     if (r.ok) expect(r.content).toBe("foo\nliteral ... tail\nliteral end...\nbar");
+  });
+
+  it("leading-... on REPLACE mirrors the SEARCH-side inter-segment skip", () => {
+    const source = [
+      "const styles = {",
+      '  title: "old-title",',
+      '  middle1: "keep1",',
+      '  middle2: "keep2",',
+      '  footer: "old-footer",',
+      "};",
+    ].join("\n");
+    const search = ['  title: "old-title",', "...", '  footer: "old-footer",'].join("\n");
+    const replace = ['  title: "new-title",', "...", '  footer: "new-footer",'].join("\n");
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.content).toBe(
+        [
+          "const styles = {",
+          '  title: "new-title",',
+          '  middle1: "keep1",',
+          '  middle2: "keep2",',
+          '  footer: "new-footer",',
+          "};",
+        ].join("\n")
+      );
+    }
+  });
+
+  it("multiple leading-... on REPLACE pair by ordinal with multiple SEARCH skips", () => {
+    const source = ["  a: 1,", "  middleA: 2,", "  b: 3,", "  middleB1: 4,", "  middleB2: 5,", "  c: 6,"].join("\n");
+    const search = ["  a: 1,", "...", "  b: 3,", "...", "  c: 6,"].join("\n");
+    const replace = ["  a: 10,", "...", "  b: 30,", "...", "  c: 60,"].join("\n");
+    const r = applyReplace({ source, search, replace });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.content).toBe(["  a: 10,", "  middleA: 2,", "  b: 30,", "  middleB1: 4,", "  middleB2: 5,", "  c: 60,"].join("\n"));
+    }
   });
 
   it("mid-line ... on REPLACE stays literal even when SEARCH has trailing-...", () => {

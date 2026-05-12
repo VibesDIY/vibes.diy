@@ -295,7 +295,31 @@ function applyReplaceEllipsis(source: string, search: string, replace: string): 
     });
   });
 
-  const resolvedReplace = resolveReplaceEllipsis(replace, prefixSuffixes);
+  // Same intuition for leading-`...`: capture the source lines each skip ate
+  // (leading skip, between-segments skips, trailing skip — in order) so that
+  // a leading-`...` line on REPLACE can substitute the preserved content. The
+  // model emitting standalone `...` on REPLACE between named keys intends "keep
+  // the lines that were here"; Postel's law says accept that.
+  const skipContents: string[] = [];
+  const collectSkipLines = (startIdx: number, endIdx: number): string =>
+    sourceLines
+      .slice(startIdx, endIdx + 1)
+      .map((s) => s.text)
+      .join("\n");
+  if (leadingSkip) {
+    skipContents.push(collectSkipLines(0, firstSegStart - 1));
+  }
+  for (let i = 1; i < segments.length; i++) {
+    const prevSegEnd = t.starts[i - 1] + segments[i - 1].lines.length - 1;
+    const nextSegStart = t.starts[i];
+    skipContents.push(collectSkipLines(prevSegEnd + 1, nextSegStart - 1));
+  }
+  if (trailingSkip) {
+    const lastSegEnd = t.starts[segments.length - 1] + segments[segments.length - 1].lines.length - 1;
+    skipContents.push(collectSkipLines(lastSegEnd + 1, sourceLines.length - 1));
+  }
+
+  const resolvedReplace = resolveReplaceEllipsis(replace, prefixSuffixes, skipContents);
 
   return {
     ok: true,
@@ -304,23 +328,27 @@ function applyReplaceEllipsis(source: string, search: string, replace: string): 
   };
 }
 
-function resolveReplaceEllipsis(replace: string, prefixSuffixes: readonly string[]): string {
-  if (prefixSuffixes.length === 0) return replace;
-  let cursor = 0;
+function resolveReplaceEllipsis(replace: string, prefixSuffixes: readonly string[], skipContents: readonly string[]): string {
+  if (prefixSuffixes.length === 0 && skipContents.length === 0) return replace;
+  let prefixCursor = 0;
+  let skipCursor = 0;
   return replace
     .split("\n")
-    .map((line) => {
-      const trimmed = line.replace(/[ \t]+$/, "");
-      if (trimmed.length >= 3 && trimmed.endsWith("...")) {
-        const leading = trimmed.replace(/^[ \t]+/, "");
-        // Leading-`...` (skip-marker on REPLACE) stays literal — we don't
-        // mirror leading-skip captures yet.
-        if (leading.startsWith("...")) return line;
-        if (cursor < prefixSuffixes.length) {
-          return trimmed.slice(0, -3) + prefixSuffixes[cursor++];
+    .map((rawLine) => {
+      const classified = classifyLine(rawLine);
+      if (classified.kind === "skip") {
+        if (skipCursor < skipContents.length) {
+          return skipContents[skipCursor++];
         }
+        return rawLine; // no SEARCH-side counterpart — keep literal for back-compat
       }
-      return line;
+      if (classified.kind === "prefix") {
+        if (prefixCursor < prefixSuffixes.length) {
+          return classified.prefix + prefixSuffixes[prefixCursor++];
+        }
+        return rawLine; // no SEARCH-side counterpart — keep literal
+      }
+      return rawLine;
     })
     .join("\n");
 }
