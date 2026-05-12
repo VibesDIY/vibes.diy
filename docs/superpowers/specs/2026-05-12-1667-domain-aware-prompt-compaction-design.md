@@ -184,6 +184,34 @@ Result: one assembly pipeline, five slot variants (`original`, `selected.version
 
 No new caps. Each slot renders through existing `renderCurrentFiles` (16 KB/file, 32 KB total per slot). Per-slot, no cross-slot truncation, no shared pool. Adding limiters before we have measurement is premature; the dedup rules above already keep the common case small.
 
+## Slot configuration options
+
+The slot assembler accepts a config object that controls which slots render and whether compaction runs. Both for rollback granularity and for eval-driven A/B testing of "does this slot actually pull weight?":
+
+```ts
+interface SlotConfig {
+  // Per-slot mute flags. When "off", the slot is omitted from the rendered
+  // message stream entirely. Default "on" for all.
+  readonly original: "on" | "off";
+  readonly selected: "on" | "off"; // gates server-side rendering even when wire field present
+  readonly last_edit: "on" | "off";
+  readonly previous: "on" | "off"; // dangerous to mute; mainly for ablation eval
+
+  // Compaction of older assistant turns. "off" passes them through verbatim.
+  readonly compaction: "on" | "off";
+}
+```
+
+Defaults: every slot `"on"`, `compaction: "on"`. Set per-request via a new optional field on the prompt request (so dry-run can vary them) and per-deployment via env var (so a misbehaving slot can be muted in prod without a code change).
+
+Auto-collapse rule that does not need a flag: when `original_vfs == previous_vfs` content-hash-wise (chat has exactly one distinct file state), `original` is omitted automatically — it would be a pure duplicate. This is part of the dedup rules above, not a config knob.
+
+The slot mutes are the substrate for the post-merge ablation measurements below.
+
+## Pre-merge eval gate
+
+The single biggest open question is **synthetic-user vs mid-conversation system** for slot delivery. Both are reasonable; the right answer depends on model behavior we cannot predict from the design alone.
+
 ## CLI surface additions
 
 - `vibes-diy edit "<prompt>" --focus <path>` — sets the slot-rendering `focusPath` for this request so multi-file edits anchor on the right file. Default stays `App.jsx`.
@@ -202,7 +230,23 @@ C1–C6 are from [the OP comment](https://github.com/VibesDIY/vibes.diy/issues/1
 
 **C7 (new, gates this design specifically)**: scaffold-revert. On a ≥15-turn chat with significant evolution from the original scaffold, prompt "go back to the simpler version we had at the start, then add X." The model must locate and use ORIGINAL despite its distance from `user_N` in the conversation timeline. Failure mode the scenario exists to catch: the model ignores ORIGINAL because it is buried too far back and instead riffs on PREVIOUS.
 
-This is the only gate. Other behavior (byte reduction, recovery exhaustion, fidelity on continuation chats) is measured post-merge against real traffic; we do not gate on hypothetical numbers.
+This is the only gate. Other behavior — byte reduction, recovery exhaustion rate, per-slot necessity — is measured post-merge using the slot mute flags (below); we do not gate on hypothetical numbers.
+
+## Post-merge ablation measurements
+
+Each measurement varies one knob in `SlotConfig`, runs against the same C1–C7 baseline through the dry-run inspector, and compares fidelity / token cost against the all-on default. Goal: catch a slot that's pulling weight from byte budget without pulling weight on quality, so we can mute it.
+
+| Ablation                         | Config knob         | Scenarios with signal                                                                                                                                          |
+| -------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ORIGINAL pulls weight?**       | `original: "off"`   | C7 (scaffold-revert) and any chat where ORIGINAL has diverged significantly from PREVIOUS.                                                                     |
+| **LAST_EDIT pulls weight?**      | `last_edit: "off"`  | C2 (style — does stylistic continuity carry through PREVIOUS alone?), C3 (refactor consistency).                                                               |
+| **SELECTED.draft pulls weight?** | `selected: "off"`   | Push-seeded edit scenarios. Should regress to OP-bug-level failure when muted — sanity check.                                                                  |
+| **Compaction pulls weight?**     | `compaction: "off"` | Long-chat byte cost on ≥15-turn fixtures. Off path is the upper bound on tokens; on path is the saving.                                                        |
+| **All slots on, no compaction**  | `compaction: "off"` | Isolates the "did adding slots regress quality?" question from the "did compaction regress quality?" question. Useful if both ship and one needs to roll back. |
+
+The ORIGINAL ablation specifically: on chats where `original_vfs == previous_vfs` content-hash-wise, the slot already auto-collapses (per dedup rules) — no eval needed there. The ablation runs on chats where ORIGINAL is a distinct historical anchor. If muting ORIGINAL on those chats produces no measurable quality regression on C1–C6 and only regresses C7, that's evidence ORIGINAL only earns its keep on scaffold-revert prompts — and we could consider gating it on prompt-level heuristics later. If muting ORIGINAL regresses widely, it earns its always-on default.
+
+These are measurements, not gates. We ship with all slots on, then use the mute flags to learn which ones are load-bearing without re-deploying.
 
 ## Backwards compatibility
 
@@ -232,7 +276,7 @@ This is the only gate. Other behavior (byte reduction, recovery exhaustion, fide
    - `--focus` CLI flag on `edit` and `generate --dry-run`.
    - CLI `selected.draft` wiring: send when `.undo` absent OR disk-vs-`.undo` drift detected.
 
-   **Internal flag for rollback granularity**: the slot assembler accepts `opts.compaction: "off" | "on"` (default `"on"`). When `"off"`, older turns are passed through verbatim and only the slot blocks are added — useful for A/B testing the slot interpolation in isolation from the compaction change, and for fast rollback if compaction regresses without having to revert the slot assembler. Tests cover both paths.
+   **Slot mute flags and rollback**: the slot assembler accepts a `SlotConfig` (see § Slot configuration options above). All slots default to `"on"`; each can be individually muted per-request (via wire field) or per-deployment (via env var) without a code change. Tests cover the all-on default and the each-off variants used by the post-merge ablation measurements.
 
 3. **Pre-merge gate**: C1–C6 A/B via #1696's dry-run, two variants of slot delivery role.
 4. **Post-merge**: measure byte reduction, recovery exhaustion rate, edit fidelity against the recorded C1–C6 baseline.
