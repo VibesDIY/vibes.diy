@@ -56,78 +56,26 @@ export interface RecoveryRequestInput {
   readonly lastReplaceFileLines?: number;
 }
 
-export interface RecoverySlotInput {
-  readonly messages: readonly ChatMessage[];
-  readonly partialVfs: ReadonlyMap<string, string>;
-  readonly focusPath: string;
-}
-
-// Slot-assembler consumer: compose a ChatMessage[] for recovery by routing
-// `partialVfs` through assembleSlotMessages as a RECOVERY_PARTIAL canonical
-// slot. The anti-gaslight directive is merged into the first system message
-// (or prepended as a new one). The slot messages are appended as user turns.
+// Compose the full continuation LLM request. The recovery addendum is merged
+// into the original system message (many providers reject back-to-back system
+// messages with 400). File state is rendered as a RECOVERY_PARTIAL slot in a
+// user message — the slot architecture's canonical home for recovery turns —
+// rather than inlined into the system prompt. The captured assistant partial
+// (when present) is appended as a final user message wrapped in resume framing.
+//
+// We tried assistant-prefill (commit 80260adb) and it was rejected at the model
+// level by anthropic/claude-opus-4.7 across every OpenRouter provider —
+// Anthropic-direct, Bedrock, and Vertex all returned 400 with "This model does
+// not support assistant message prefill." The user-framed wrapper works on
+// every model. The anti-gaslight guidance ("verify your partial against
+// RECOVERY_PARTIAL") lives in recovery-addendum.md.
 //
 // Shape:
-//   - [system, ...rest] → [system+directive, ...rest, ...slotMessages]
-//   - [user, ...]       → [system-new, user, ..., ...slotMessages]
-export function buildRecoveryRequest({ messages, partialVfs, focusPath }: RecoverySlotInput): ChatMessage[] {
-  const slotMessages = assembleSlotMessages({
-    recoveryPartial: partialVfs,
-    focusPath,
-    config: {},
-  });
-
-  const directive = "verify your partial against the RECOVERY_PARTIAL slot; anchor every SEARCH against text that appears there.";
-
-  const firstSystemIdx = messages.findIndex((m) => m.role === "system");
-  const withDirective: ChatMessage[] = (() => {
-    if (firstSystemIdx === -1) {
-      return [{ role: "system", content: [{ type: "text", text: directive }] }, ...messages];
-    }
-    const orig = messages[firstSystemIdx];
-    const origText = orig.content[0]?.type === "text" ? orig.content[0].text : "";
-    return [
-      ...messages.slice(0, firstSystemIdx),
-      { role: "system", content: [{ type: "text", text: `${origText}\n\n${directive}` }] },
-      ...messages.slice(firstSystemIdx + 1),
-    ];
-  })();
-
-  const slotUserMessages: ChatMessage[] = slotMessages.map((s) => ({
-    role: "user",
-    content: [{ type: "text", text: s.text }],
-  }));
-
-  return [...withDirective, ...slotUserMessages];
-}
-
-// Compose the full continuation LLM request with addendum, CURRENT FILES,
-// and optional assistant-partial framing. The recovery addendum + CURRENT
-// FILES block is *merged into the original system message* rather than
-// appended as a second system message — many providers (including some
-// OpenRouter relays) reject back-to-back system messages with 400. If the
-// original request has no system message, a new one is prepended.
-//
-// The captured assistant partial (when present) is appended as a USER
-// message wrapped in "PARTIAL ASSISTANT OUTPUT" framing rather than as
-// an assistant prefill. We tried prefill (commit 80260adb) and it was
-// rejected at the model level by anthropic/claude-opus-4.7 across every
-// provider in OpenRouter — Anthropic-direct, Bedrock, and Vertex all
-// returned 400 with "This model does not support assistant message
-// prefill. The conversation must end with a user message." The
-// anti-gaslight directive ("verify your partial against CURRENT FILES")
-// lives in recovery-addendum.md instead, where it does the same job
-// without depending on prefill being supported.
-//
-// Shape:
-//   - original = [system, ...rest], no partial:    [system+recovery, ...rest]
-//   - original = [system, ...rest], with partial:  [system+recovery, ...rest, user-partial]
-//   - original = [user, ...],       no partial:    [system-new, user, ...]
-//   - original = [user, ...],       with partial:  [system-new, user, ..., user-partial]
-//
-// The merged system message is `${original}\n\n${addendum}\n\n${CURRENT FILES}` —
-// no failure framing, no failed-search bytes, no SEARCH/REPLACE syntax.
-export function buildFullRecoveryRequest({
+//   - original = [system, ...rest], no partial:    [system+addendum, ...rest, user-slot]
+//   - original = [system, ...rest], with partial:  [system+addendum, ...rest, user-slot, user-partial]
+//   - original = [user, ...],       no partial:    [system-new, user, ..., user-slot]
+//   - original = [user, ...],       with partial:  [system-new, user, ..., user-slot, user-partial]
+export function buildRecoveryRequest({
   originalRequest,
   recoveryAddendum,
   vfs,
@@ -141,9 +89,15 @@ export function buildFullRecoveryRequest({
   if (focusPath.length === 0) {
     return Result.Err("focus path is empty");
   }
-  const filesBlock = renderCurrentFiles(vfs, focusPath);
-  const recoverySuffix = `${recoveryAddendum}\n\n${filesBlock}`;
-  const messages = mergeRecoveryIntoSystem(originalRequest.messages, recoverySuffix);
+  const messages = mergeRecoveryIntoSystem(originalRequest.messages, recoveryAddendum);
+  const slotMessages = assembleSlotMessages({
+    recoveryPartial: vfs,
+    focusPath,
+    config: {},
+  });
+  for (const s of slotMessages) {
+    messages.push({ role: "user", content: [{ type: "text", text: s.text }] });
+  }
   if (assistantPartial !== undefined && assistantPartial.length > 0) {
     messages.push({
       role: "user",
