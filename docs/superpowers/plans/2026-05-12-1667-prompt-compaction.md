@@ -199,6 +199,261 @@ git commit -m "feat(types): add SlotConfig mute flags to req-prompt-chat-section
 
 ---
 
+## Phase 1.5 — Shared seed helper (drift-resistant)
+
+### Task 2.5: Extract `appendTurnToChat` from inline writes
+
+**Why:** Tests for the next several phases need chats with N persisted turns (precise `fsId` timelines, push-seeded chats with zero history, multi-turn fixtures). Hand-rolling INSERT statements in test code drifts from production. Production already factors most of this — `ensurePushSeededChat` + `ensureApps` cover the first-turn case. This task extracts a peer function that appends a second/third/Nth turn to an existing chat. Production handlers may later refactor to use it; tests use it now. Single shared definition prevents test/prod drift.
+
+**Files:**
+
+- Create: `vibes.diy/api/svc/intern/append-turn-to-chat.ts`
+- Test: `vibes.diy/api/tests/append-turn-to-chat.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+```ts
+// vibes.diy/api/tests/append-turn-to-chat.test.ts
+import { beforeAll, describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
+import { createApiTestCtx, type ApiTestCtx } from "./api-test-setup.js";
+import { appendTurnToChat } from "../svc/intern/append-turn-to-chat.js";
+
+describe("appendTurnToChat", () => {
+  let ctx: ApiTestCtx;
+  beforeAll(async () => {
+    ctx = await createApiTestCtx({ seqUserIdBase: 1_667_100 });
+  });
+
+  it("appends a PromptContexts row + ChatSections row + Apps row in one call", async () => {
+    const { appSlug, userSlug, userId } = await ctx.createApp();
+    const r1 = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const chat = r1.Ok();
+    const vctx = ctx.appCtx.vibesCtx;
+
+    const before = {
+      prompt: (
+        await vctx.sql.db
+          .select()
+          .from(vctx.sql.tables.promptContexts)
+          .where(eq(vctx.sql.tables.promptContexts.chatId, chat.chatId))
+      ).length,
+      section: (
+        await vctx.sql.db.select().from(vctx.sql.tables.chatSections).where(eq(vctx.sql.tables.chatSections.chatId, chat.chatId))
+      ).length,
+    };
+
+    const result = await appendTurnToChat(vctx, {
+      chatId: chat.chatId,
+      userId,
+      userSlug,
+      appSlug,
+      fileSystem: [{ type: "code-block", filename: "App.jsx", lang: "jsx", content: "v1" }],
+      userMessage: "make it",
+    });
+
+    expect(result.isOk()).toBe(true);
+    const { promptId, fsId } = result.Ok();
+    expect(typeof promptId).toBe("string");
+    expect(typeof fsId).toBe("string");
+
+    const after = {
+      prompt: (
+        await vctx.sql.db
+          .select()
+          .from(vctx.sql.tables.promptContexts)
+          .where(eq(vctx.sql.tables.promptContexts.chatId, chat.chatId))
+      ).length,
+      section: (
+        await vctx.sql.db.select().from(vctx.sql.tables.chatSections).where(eq(vctx.sql.tables.chatSections.chatId, chat.chatId))
+      ).length,
+    };
+    expect(after.prompt).toBe(before.prompt + 1);
+    expect(after.section).toBe(before.section + 1);
+    await chat.close();
+  });
+
+  it("appending two turns produces two distinct PromptContexts rows", async () => {
+    const { appSlug, userSlug, userId } = await ctx.createApp();
+    const r1 = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const chat = r1.Ok();
+    const vctx = ctx.appCtx.vibesCtx;
+
+    const t1 = (
+      await appendTurnToChat(vctx, {
+        chatId: chat.chatId,
+        userId,
+        userSlug,
+        appSlug,
+        fileSystem: [{ type: "code-block", filename: "App.jsx", lang: "jsx", content: "v1" }],
+      })
+    ).Ok();
+    const t2 = (
+      await appendTurnToChat(vctx, {
+        chatId: chat.chatId,
+        userId,
+        userSlug,
+        appSlug,
+        fileSystem: [{ type: "code-block", filename: "App.jsx", lang: "jsx", content: "v2" }],
+      })
+    ).Ok();
+    expect(t1.fsId).not.toBe(t2.fsId);
+    expect(t1.promptId).not.toBe(t2.promptId);
+
+    const rows = await vctx.sql.db
+      .select({ fsId: vctx.sql.tables.promptContexts.fsId, promptId: vctx.sql.tables.promptContexts.promptId })
+      .from(vctx.sql.tables.promptContexts)
+      .where(eq(vctx.sql.tables.promptContexts.chatId, chat.chatId));
+    const fsIds = rows.map((r) => r.fsId).filter(Boolean);
+    expect(fsIds).toContain(t1.fsId);
+    expect(fsIds).toContain(t2.fsId);
+    await chat.close();
+  });
+});
+```
+
+- [ ] **Step 2: Run, expect fail (module missing)**
+
+```
+cd vibes.diy/api/tests && pnpm vitest run append-turn-to-chat
+```
+
+- [ ] **Step 3: Implement**
+
+Create `vibes.diy/api/svc/intern/append-turn-to-chat.ts`:
+
+```ts
+import { Result, exception2Result } from "@adviser/cement";
+import type { VibesApiSQLCtx } from "../public/sql-ctx.js";
+import type { VibeFile } from "../../types/vibe-file.js";
+import type { PromptContextSql } from "../../types/prompt-context.js"; // verify path
+import { ensureApps } from "./write-apps.js";
+import { buildSeedSectionBlocks } from "./seed-chat-section.js";
+
+export interface AppendTurnOpts {
+  readonly chatId: string;
+  readonly userId: string;
+  readonly userSlug: string;
+  readonly appSlug: string;
+  readonly fileSystem: readonly VibeFile[];
+  readonly userMessage?: string;
+  readonly promptId?: string;
+  readonly fsId?: string;
+  readonly mode?: "dev" | "production";
+  readonly timestamp?: Date;
+}
+
+export interface AppendTurnResult {
+  readonly promptId: string;
+  readonly fsId: string;
+}
+
+// Appends one synthetic turn to an existing chat. Single shared implementation
+// for test seeding AND any future production caller that wants to seed a
+// turn without driving through the LLM dispatch loop.
+//
+// Inserts:
+//   1. Apps row (via ensureApps — same code production uses on push/edit).
+//   2. PromptContexts row (chatId → fsId pointer; zero tokens; synthetic ref).
+//   3. ChatSections row (blocks built by buildSeedSectionBlocks).
+//
+// Drift protection: ensureApps is the production write function; if the Apps
+// schema changes, this function breaks at the same point production does.
+// The PromptContexts insert mirrors the shape used by ensurePushSeededChat —
+// any drift between the two is a real bug in production seeding.
+export async function appendTurnToChat(vctx: VibesApiSQLCtx, opts: AppendTurnOpts): Promise<Result<AppendTurnResult>> {
+  const now = opts.timestamp ?? new Date();
+  const mode = opts.mode ?? "dev";
+  const promptId = opts.promptId ?? vctx.sthis.nextId().str;
+
+  // 1. Apps row via ensureApps (resolves fsId and binding/release seq).
+  const rApps = await ensureApps(vctx, {
+    type: "vibes.diy.req-ensure-app-slug",
+    auth: { kind: "device-id", token: "synthetic" } as never, // ensureApps needs the userId from vctx context; check actual signature
+    userSlug: opts.userSlug,
+    appSlug: opts.appSlug,
+    fsId: opts.fsId,
+    fileSystem: opts.fileSystem,
+    mode,
+    env: {},
+  } as never);
+  // NOTE: ensureApps's actual signature may differ. Match it. The point is:
+  // call the production "write Apps row" function — do not duplicate the
+  // insert(tables.apps) call here.
+  if (rApps.isErr()) return Result.Err(`appendTurnToChat: ensureApps failed: ${rApps.Err().message}`);
+  const fsId = rApps.Ok().fsId;
+
+  // 2. PromptContexts row.
+  const refValue: PromptContextSql = {
+    type: "prompt.usage.sql",
+    usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
+    fsRef: { fsId, mode, appSlug: opts.appSlug, userSlug: opts.userSlug },
+  };
+  const rPC = await exception2Result(() =>
+    vctx.sql.db.insert(vctx.sql.tables.promptContexts).values({
+      userId: opts.userId,
+      chatId: opts.chatId,
+      promptId,
+      fsId,
+      nethash: vctx.netHash(),
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      ref: refValue,
+      created: now.toISOString(),
+    })
+  );
+  if (rPC.isErr()) return Result.Err(`appendTurnToChat: promptContexts insert failed: ${rPC.Err().message}`);
+
+  // 3. ChatSections row with synthetic blocks (matches buildSeedSectionBlocks shape).
+  const blocks = buildSeedSectionBlocks({
+    chatId: opts.chatId,
+    promptId,
+    streamId: promptId,
+    userText: opts.userMessage ?? `synthetic turn @ ${now.toISOString()}`,
+    seedFiles: opts.fileSystem.flatMap((f) => {
+      if (f.type !== "code-block" || typeof f.content !== "string") return [];
+      return [{ path: f.filename, lang: f.lang ?? "jsx", content: f.content as string }];
+    }),
+    fsRef: { fsId, mode, appSlug: opts.appSlug, userSlug: opts.userSlug },
+    timestamp: now,
+  });
+  const rSec = await exception2Result(() =>
+    vctx.sql.db.insert(vctx.sql.tables.chatSections).values({
+      chatId: opts.chatId,
+      promptId,
+      blockSeq: 0,
+      blocks,
+      created: now.toISOString(),
+    })
+  );
+  if (rSec.isErr()) return Result.Err(`appendTurnToChat: chatSections insert failed: ${rSec.Err().message}`);
+
+  return Result.Ok({ promptId, fsId });
+}
+```
+
+**You must verify the actual signatures of `ensureApps` and `buildSeedSectionBlocks` and adapt the calls accordingly.** Look at `vibes.diy/api/svc/intern/write-apps.ts:273` for `ensureApps` and `vibes.diy/api/svc/intern/seed-chat-section.ts:32-43` for `buildSeedSectionBlocks`. The above code is a sketch — the implementer fills in the real argument shapes.
+
+- [ ] **Step 4: Tests pass**
+
+```
+cd vibes.diy/api/tests && pnpm vitest run append-turn-to-chat
+```
+
+Expected: 2 passed.
+
+- [ ] **Step 5: Commit**
+
+```
+git add vibes.diy/api/svc/intern/append-turn-to-chat.ts vibes.diy/api/tests/append-turn-to-chat.test.ts
+git commit -m "feat(api): appendTurnToChat — shared turn-seeding for tests and handlers"
+```
+
+**Drift-protection note**: this function uses `ensureApps` (production) and the same `tables.promptContexts.values({...})` shape as `ensurePushSeededChat`. Schema changes to either table will surface here at compile time. If `ensurePushSeededChat`'s PromptContext insert ever diverges from this function's insert, that's a real bug that this test will help catch.
+
+---
+
 ## Phase 2 — Version timeline lookups
 
 ### Task 3: `loadVersionTimeline(chatId)` returns ordered distinct fsIds
