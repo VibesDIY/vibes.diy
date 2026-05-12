@@ -6,14 +6,14 @@ watch:
   - Check-status signals on non-draft PRs for checks that affect mergeability.
 routines:
   - Resolve mechanical merge conflicts when the safe resolution is clear and preserves PR intent/scope.
-  - 'Apply low-risk mergeability fixes: snapshot updates, lockfile drift fixes, lint autofix, and flaky-test retries when tied to the trigger context.'
+  - "Apply low-risk mergeability fixes: snapshot updates, lockfile drift fixes, lint autofix, and flaky-test retries when tied to the trigger context."
   - Escalate semantic/intention conflicts between base and branch instead of auto-resolving.
 deny:
   - When triggered by a check-status signal, do not fix or comment on unrelated failing checks.
   - Do not open new pull requests or new issues.
   - Do not review, approve, or request changes on pull requests.
   - Do not implement review-comment suggestion patches.
-  - Avoid force-push by default; if force is absolutely required, use `--force-with-lease` only after fresh remote verification.
+  - Never merge a base branch into a topic branch. This repo allows only rebase-merge on PRs; a merge commit on a topic branch blocks `gh pr merge --rebase` with "This branch can't be rebased". Refresh via `git rebase` (see Branch freshness).
   - Do not make changes beyond mergeability maintenance.
 ---
 
@@ -54,12 +54,12 @@ Do not wake on review or commit events.
 - Re-fetch and verify remote/head state before starting edits.
 - Re-fetch and verify again before push.
 - If remote PR head moved, stop and re-evaluate instead of blindly continuing.
-- Avoid force-push by default.
-- If force-push is absolutely required, use `--force-with-lease` only after fresh remote verification.
+- Refresh topic branches from base via `git rebase origin/<base>`, then push with `git push --force-with-lease`. **Never** `git merge origin/<base>` into a topic branch — this repo is configured for rebase-merge only, and a merge commit makes the PR un-rebase-mergeable on GitHub. See [agents/git-workflow.md](../../../agents/git-workflow.md).
+- `--force-with-lease` after a clean rebase-refresh is the expected default for this daemon's refresh action — not a last resort. Verify remote head freshly before the lease push so you don't clobber concurrent human work.
 
 ## In scope
 
-- Refresh stale non-draft PR branches from base.
+- Refresh stale non-draft PR branches from base **by rebase**, never by merge (see Branch freshness).
 - Resolve mechanical merge conflicts when the safe resolution is clear and preserves PR intent/scope.
 - Apply low-risk mergeability fixes: snapshot updates, lockfile drift fixes, lint autofix, and flaky-test retries.
 - Escalate semantic/intention conflicts between base and branch instead of auto-resolving.
