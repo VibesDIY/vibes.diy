@@ -18,7 +18,7 @@ describe("collectDiskDraft", () => {
     const r = await collectDiskDraft(dir);
     expect(r).toBeDefined();
     if (r === undefined) throw new Error("unreachable — assertion above failed");
-    expect(r.files.map((f) => f.filename)).toContain("App.jsx");
+    expect(r.files.map((f) => f.filename)).toContain("/App.jsx");
   });
 
   it("returns undefined when .undo present and contents match disk", async () => {
