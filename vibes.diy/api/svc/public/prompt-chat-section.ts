@@ -753,8 +753,11 @@ export async function assemblePromptPayload(
 
   // Reconstruct conversation history, compacting older turns when a latest
   // promptId is available (keeps only the most recent turn in full fidelity).
+  // SLOTS_COMPACTION=off (or slots.compaction: "off") disables compaction
+  // entirely — all turns render verbatim. Kill-switch for rollback / A-B.
+  const compactionDisabled = args.slots?.compaction === "off";
   const reconstructed = reconstructConversationMessages(allSectionMsgs, {
-    keepFullTurnStreamId: latestPromptId,
+    keepFullTurnStreamId: compactionDisabled ? undefined : latestPromptId,
   });
   const newUserOnly = newUserMessages.filter((m) => m.role === "user");
 

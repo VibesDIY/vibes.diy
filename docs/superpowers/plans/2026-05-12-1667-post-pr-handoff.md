@@ -124,8 +124,7 @@ These came up during implementation, weren't blocking, and the answers may matte
 
 1. **Should the slot delivery mode default flip to `system` once the A/B settles?** Currently env-default is `user`. If `system` produces measurably better outputs in eval, change the default. The arg-override means tests don't need the env to flip first.
 2. **Should `LAST_EDIT` participate in per-file dedup?** Currently it doesn't (it's a delta, not a snapshot). If model behavior shows it duplicating PREVIOUS bytes for unchanged files, revisit.
-3. **`compaction: SlotConfig` env knob unused** — `resolveSlotConfig` has it for completeness, but `reconstructConversationMessages` doesn't honor it yet. Decide whether to wire it (controlled by `keepFullTurnStreamId` undefined) or remove the key.
-4. **Should `recoveryAddendum` move out of the system message?** Currently it merges into system. With the slot system carrying file state in user messages, the anti-gaslight directive could equally live as a user message right before the slot. Worth A/B-ing.
+3. **Should `recoveryAddendum` move out of the system message?** Currently it merges into system. With the slot system carrying file state in user messages, the anti-gaslight directive could equally live as a user message right before the slot. Worth A/B-ing.
 
 ## Where to look if something's off
 

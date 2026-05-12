@@ -144,6 +144,72 @@ describe("assemblePromptPayload: slot interpolation", () => {
     await chat.close();
   });
 
+  it("slots.compaction='off' disables turn compaction (older code blocks render verbatim)", async () => {
+    const { appSlug, userSlug } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, userSlug);
+    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    expect(rOpen.isOk()).toBe(true);
+    const chat = rOpen.Ok();
+    const vctx = ctx.appCtx.vibesCtx;
+
+    // Seed a unique code-block body in turn 2 (an "older" turn relative to
+    // turn 3). With compaction on, this body collapses to a "[Created … N
+    // lines, B bytes]" summary; with compaction off, it must appear verbatim.
+    const TURN2_MARKER = "compaction-off-verbatim-marker-7a3c";
+    const TURN2_CONTENT = `export default function App() { return <div>${TURN2_MARKER}</div>; }`;
+
+    await appendTurnToChat(vctx, {
+      chatId: chat.chatId,
+      userId,
+      userSlug,
+      appSlug,
+      fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: TURN2_CONTENT }],
+      userMessage: "turn 2",
+    });
+    await appendTurnToChat(vctx, {
+      chatId: chat.chatId,
+      userId,
+      userSlug,
+      appSlug,
+      fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: V3_CONTENT }],
+      userMessage: "turn 3",
+    });
+
+    const newUserMessages: ChatMessage[] = [{ role: "user", content: [{ type: "text", text: "next" }] }];
+
+    const assistantText = (msgs: readonly ChatMessage[]): string =>
+      msgs
+        .filter((m) => m.role === "assistant")
+        .map(firstText)
+        .join("\n");
+
+    const rOff = await assemblePromptPayload(vctx, {
+      chatId: chat.chatId,
+      model: "anthropic/claude-sonnet-4-6",
+      newUserMessages,
+      slots: { compaction: "off" },
+    });
+    expect(rOff.isOk(), `compaction off failed: ${rOff.isErr() ? String(rOff.Err()) : ""}`).toBe(true);
+    const offAssistant = assistantText(rOff.Ok().messages);
+
+    const rOn = await assemblePromptPayload(vctx, {
+      chatId: chat.chatId,
+      model: "anthropic/claude-sonnet-4-6",
+      newUserMessages,
+    });
+    expect(rOn.isOk()).toBe(true);
+    const onAssistant = assistantText(rOn.Ok().messages);
+
+    // Compaction off: older assistant turn carries the code-block body verbatim.
+    expect(offAssistant).toContain(TURN2_MARKER);
+    // Compaction on (default): older assistant turn collapses to a summary
+    // line and the unique body is absent from the assistant text.
+    expect(onAssistant).not.toContain(TURN2_MARKER);
+    expect(onAssistant).toContain("[Created /App.jsx");
+
+    await chat.close();
+  });
+
   it("system prompt no longer contains 'CURRENT FILES (resolved so far this turn):'", async () => {
     const { appSlug, userSlug } = await ctx.createApp();
     const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
