@@ -49,3 +49,18 @@ export function renderSlotsWithDedup(slots: readonly SlotEntry[], focusPath: str
   }
   return out;
 }
+
+export type CanonicalKind = "recovery" | "selected-draft" | "previous" | "none";
+
+export interface CanonicalInputs {
+  readonly recoveryPartial?: ReadonlyMap<string, string>;
+  readonly selectedDraft?: ReadonlyMap<string, string>;
+  readonly previous?: ReadonlyMap<string, string>;
+}
+
+export function pickCanonicalHome(inputs: CanonicalInputs): CanonicalKind {
+  if (inputs.recoveryPartial) return "recovery";
+  if (inputs.selectedDraft) return "selected-draft";
+  if (inputs.previous) return "previous";
+  return "none";
+}
