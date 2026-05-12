@@ -2599,3 +2599,37 @@ These are intentionally **not** implemented in this plan and are out-of-scope pe
 - Recovery-turn dry-run beyond attempt #1
 
 If the post-merge ablation measurements (spec § Post-merge ablation measurements) show ORIGINAL is only load-bearing on scaffold-revert prompts, consider a follow-up PR to gate ORIGINAL on prompt heuristics — file as a new issue, not a plan amendment.
+
+## Implementation deviations
+
+This plan is historical reference. The codebase is the source of truth for slot interpolation behavior. The deviations below record where the implemented system diverges from the plan-as-written, either because the plan contained errors, assumptions changed during implementation, or rules-bag conventions required adjustments.
+
+### Rules-bag-driven fixes
+
+- **Task 4 (`selectSlotSources`)** — Plan specified `(timeline, _selected: unknown)` signature; implemented as single-arg `(timeline)`. The `_selected` param was dead code throughout the plan. Commit `e970e33e`.
+- **Task 10 (`assembleSlotMessages`)** — Plan used `(entries[entries.length-1] as unknown as { __lastEditBody?: string }).__lastEditBody = block` (two casts through `unknown`). Implementation uses a local `lastEditText` variable + canonical-label lookup, per rules-bag avoidance of casts. Commit `f9fd9b9c`.
+- **Task 12 (`loadLatestPromptId`)** — Plan returned `Promise<string | undefined>`; implemented returns `Promise<Result<string | undefined>>` per DB-I/O rules-bag convention. Commit `ca85ecf4`.
+- **Task 18 (`collectDiskDraft`)** — Plan used `try/catch` + `JSON.parse() as DiskFile[]` cast + `null` returns. Replaced with `exception2Result`, arktype validation (`UndoFileArray = type({filename:"string",content:"string"}).array()`), and `undefined` returns per rules-bag. Commits `214c7fd5` + fixup `bea86f6a`.
+- **Task 21 (`SLOT_DELIVERY_MODE`)** — Plan's `return joined ? [...] : []` replaced with explicit `if (joined === "") return [];` per rules-bag (no falsy ternary). Commit `c1c99b05`.
+
+### Schema discoveries and narrowing
+
+- **Task 11 (`reconstructConversationMessages`)** — `PromptReq.streamId` is the discriminator, not `promptId`. Internal variable renamed `currentStreamId` for clarity. Public field `keepFullTurnPromptId` preserved (fixed in Task 3 of followup plan). Commit `3589bf96`.
+- **Task 13 (`assemblePromptPayload` integration)** — Fixed `selectSlotSources` call from two-arg to one-arg. Replaced `args.selected.files[i].content as string` cast with discriminator narrowing on `f.type === "code-block" || f.type === "str-asset-block"`. Verified `promptContexts.promptId === prompt.req.streamId`. Commits `a8c2a25f` + fixup `2594ff73`.
+- **Task 14 (`selected:{kind:version}`)** — Plan used `args.selected!.fsId` non-null assertion. Replaced with local `sel` variable to narrow without `!`. Commit `778c1bd9`.
+
+### Plan errors and refactored infrastructure
+
+- **Task 15 (recovery fold)** — Originally implemented as `buildRecoveryRequest` + `buildFullRecoveryRequest` to preserve `assistantPartial`/`recoveryAddendum`/`lastReplaceFileLines`. Task 1 of followup plan collapsed them back to `buildRecoveryRequest`. Commit `62486706` (split) → `e9f66353` (collapse).
+- **Task 16 (handler wire)** — Plan asserted "T13 already wired this"; T13 actually didn't pipe `selected`/`slots`/`focusPath` through to the assembler. T16 added real passthrough. Commit `e6ad52b0`.
+- **Task 22 (C7 fixture)** — Plan used nonexistent `ctx.seedChat`/`ctx.seedTurn`. Adapted to `createApiTestCtx` + `appendTurnToChat` + `ctx.api.openChat`. Uses `assemblePromptPayload` directly instead of nonexistent `ctx.dryRun`. Commits `94180c2a` + fixup `c76326d1`.
+- **Task 23 (A/B harness)** — Plan's per-call env override (`ctx.dryRun({ env: ... })`) conflicts with `vctx.sthis.env` being test-global. Added `slotDeliveryMode?: "user" | "system"` to `AssemblePromptPayloadArgs` for thread-through, env fallback when omitted. Commit `37fad2a9`.
+- **Task 24 (cleanup)** — Plan scoped to "remove `loadPriorFileSystem` if no callers remain"; verified 3 callers still exist (prompt-chat-section.ts lines 539, 784, 1408). Per plan instruction, T24 was a no-op. Task 2 of followup investigates if those callers use output. No commit.
+
+### Known non-existent helpers in plan
+
+Throughout the plan, fixtures reference `ctx.seedChat()` / `ctx.seedTurn()` (do not exist in test infrastructure). All implementations use `appendTurnToChat` per handoff warnings. No plan amendments needed; test code is correct.
+
+### Test infrastructure drift
+
+The `/` prefix mismatch in **Task 20** (`buildEditPromptRequest`) — plan's `selected.files` ignores the `/`-prefix difference between DiskFile and frontend paths. Helper prepends `/` as workaround. Task 4 of followup plan resolves the underlying schema mismatch cleanly. Commit `b855ffe4`.
