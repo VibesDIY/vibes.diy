@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { formatInspectAsText } from "./inspect-cmd.js";
+import { formatDryRunAsText } from "./edit-cmd.js";
 
-describe("formatInspectAsText", () => {
+describe("formatDryRunAsText", () => {
   it("renders role headers and concatenated text content", () => {
-    const out = formatInspectAsText({
-      type: "vibes.diy.res-inspect-prompt-chat-section",
-      chatId: "chat-1",
+    const out = formatDryRunAsText({
       model: "anthropic/claude-sonnet-4-6",
       messages: [
         { role: "system", content: [{ type: "text", text: "you are helpful" }] },
@@ -30,9 +28,7 @@ describe("formatInspectAsText", () => {
   });
 
   it("renders non-text parts as [type] placeholders", () => {
-    const out = formatInspectAsText({
-      type: "vibes.diy.res-inspect-prompt-chat-section",
-      chatId: "c",
+    const out = formatDryRunAsText({
       model: "m",
       messages: [
         {
