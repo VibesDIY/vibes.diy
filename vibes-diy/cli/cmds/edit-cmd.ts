@@ -46,9 +46,10 @@ export const ReqEdit = type({
   apiUrl: "string",
   // When true: skip file write/push, send dryRun:true to the server,
   // and print the would-be-dispatched LLMRequest from the section stream
-  // to stdout. JSON by default; asText renders a human-readable transcript.
+  // to stdout. JSON by default; transcript renders a human-readable
+  // role-headed view of the assembled messages.
   dryRun: "boolean",
-  asText: "boolean",
+  transcript: "boolean",
 });
 export type ReqEdit = typeof ReqEdit.infer;
 
@@ -166,7 +167,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
       if (!payload) {
         return Result.Err("Dry-run: no payload block received from server");
       }
-      const out = args.asText
+      const out = args.transcript
         ? formatDryRunAsText(payload)
         : JSON.stringify({ model: payload.model, messages: payload.messages }, null, 2);
       process.stdout.write(out + "\n");
@@ -366,8 +367,8 @@ export function editCmd(ctx: CliCtx) {
         long: "dry-run",
         description: "Inspect the prompt the server would dispatch; do not write files or push",
       }),
-      asText: flag({
-        long: "text",
+      transcript: flag({
+        long: "transcript",
         description: "With --dry-run, render the payload as a human-readable transcript instead of JSON",
       }),
     },
