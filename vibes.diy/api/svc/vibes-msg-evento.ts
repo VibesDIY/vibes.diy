@@ -4,6 +4,7 @@ import { ResError } from "@vibes.diy/api-types";
 import { ensureAppSlugItemEvento } from "./public/ensure-app-slug-item.js";
 import { openChat } from "./public/open-chat.js";
 import { promptChatSection } from "./public/prompt-chat-section.js";
+import { inspectPromptChatSection } from "./public/inspect-prompt-chat-section.js";
 // import { getByUserSlugAppSlugItemEvento } from "./public/get-user-slug-app-slug-item.js";
 import { listUserSlugAppSlugEvento } from "./public/list-user-slug-app-slug.js";
 import { listRecentVibesEvento } from "./public/list-recent-vibes.js";
@@ -64,6 +65,7 @@ export const vibesMsgEvento = Lazy(() => {
     getAppByFsIdEvento,
     openChat,
     promptChatSection,
+    inspectPromptChatSection,
     createInviteEvento,
     revokeInviteEvento,
     redeemInviteEvento,
