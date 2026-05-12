@@ -63,7 +63,24 @@ export const PromptBlockEnd = type({
 
 export type PromptBlockEnd = typeof PromptBlockEnd.infer;
 
-export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq).or(PromptError).or(PromptFS);
+// Single-block payload emitted on a dryRun:true request. Rides on the
+// section stream framed by the existing block-begin/-end pair so the
+// client narrows on msg.type just like any other event. Carries the
+// assembled LLMRequest under `request` — same shape as PromptReq.request
+// — so tooling that walks block events with `msg.request.messages` reads
+// real and dry-run turns identically. Discriminator is `type`.
+export const PromptDryRunPayload = type({
+  type: "'prompt.dry-run-payload'",
+  request: LLMRequest,
+}).and(PromptBase);
+
+export type PromptDryRunPayload = typeof PromptDryRunPayload.infer;
+
+export function isPromptDryRunPayload(msg: unknown): msg is PromptDryRunPayload {
+  return !(PromptDryRunPayload(msg) instanceof type.errors);
+}
+
+export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq).or(PromptError).or(PromptFS).or(PromptDryRunPayload);
 export type PromptMsgs = typeof PromptMsgs.infer;
 
 // Type guard with optional streamId filter
