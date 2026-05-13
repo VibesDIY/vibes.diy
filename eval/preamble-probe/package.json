@@ -1,0 +1,17 @@
+{
+  "name": "@vibes.diy/eval-preamble-probe",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fast-loop probe for pre-allocation user-message + schema variants. Bypasses the worker — calls OpenRouter directly with the same call-ai used in production.",
+  "scripts": {
+    "run": "tsx src/run.ts"
+  },
+  "dependencies": {
+    "@vibes.diy/prompts": "workspace:*",
+    "arktype": "^2.1.10",
+    "call-ai": "workspace:*",
+    "cmd-ts": "^0.15.0",
+    "tsx": "^4.21.0"
+  }
+}
