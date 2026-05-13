@@ -768,8 +768,8 @@ export async function assemblePromptPayload(
   const { skills, theme, title } = await loadActiveSettings(vctx, chatId);
   const isInitial = timeline.length === 0;
 
-  const systemPrompt = await exception2Result(async () =>
-    makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
+  const systemPrompt = await exception2Result(async () => {
+    return makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
       skills,
       theme,
       title,
@@ -777,8 +777,8 @@ export async function assemblePromptPayload(
       variant: isInitial ? "initial" : "continuation",
       pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
       fetch: createPromptAssetFetch({ fetchAsset: vctx.fetchAsset }),
-    })
-  );
+    });
+  });
   if (systemPrompt.isErr()) {
     console.error("Failed to create system prompt:", systemPrompt.Err());
     return Result.Err(systemPrompt);

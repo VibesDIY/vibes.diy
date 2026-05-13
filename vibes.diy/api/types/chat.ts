@@ -135,6 +135,7 @@ export function isReqPromptImageChatSection(obj: unknown): obj is typeof reqProm
   return !(reqPromptImageChatSection(obj) instanceof type.errors);
 }
 
+
 export const FSUpdate = type({
   // will update the existing by filename or add if filename doesn't exist
   update: vibeFile.array(), // array of fs to add

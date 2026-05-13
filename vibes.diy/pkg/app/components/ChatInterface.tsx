@@ -10,6 +10,7 @@ function ChatInterface({
   promptState,
   onClick,
   onRetry,
+  onSelectOption,
   // selectedResponseDoc,
   // setSelectedResponseId,
   // setMobilePreviewShown,
@@ -18,6 +19,7 @@ function ChatInterface({
   promptState: PromptState;
   onClick: (a: { fsId: string; appSlug: string; userSlug: string }) => void;
   onRetry?: (msg: PromptError) => void;
+  onSelectOption?: (option: string) => void;
 }) {
   const { fsId } = useParams<{ fsId?: string }>();
   const { running, blocks } = promptState;
@@ -49,6 +51,7 @@ function ChatInterface({
           <MessageList
             onClick={onClick}
             onRetry={onRetry}
+            onSelectOption={onSelectOption}
             promptBlocks={blocks}
             promptProcessing={running}
             chatId={promptState.chat.chatId}

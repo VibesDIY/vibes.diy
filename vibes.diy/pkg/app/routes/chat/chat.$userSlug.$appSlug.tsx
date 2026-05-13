@@ -338,6 +338,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   }, [shareModal.isOpen]);
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
+  const handleSelectOption = useCallback(
+    (option: string) => {
+      sendPrompt(option);
+    },
+    [sendPrompt]
+  );
   const chatInput = useRef<ChatInputRef>(null);
   const [themeModalOpen, setThemeModalOpen] = useState(false);
   // Hold latest fsId in a ref so the prompt-firing effect can preserve it in
@@ -435,6 +441,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       dispatch({ type: "setHydratedSource", fsId, code: text.split("\n") });
     })();
   }, [fsId, userSlug, appSlug, vibeDiyApi]);
+
 
   useEffect(() => {
     if (inConstruction) return;
@@ -803,7 +810,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             myGrant={isOwner ? "owner" : "none"}
           />
         }
-        chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} />}
+        chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} onSelectOption={handleSelectOption} />}
         previewPanel={<ResultPreview promptState={promptState} currentView={currentView} onCode={handleOnCode} />}
         chatInput={
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
