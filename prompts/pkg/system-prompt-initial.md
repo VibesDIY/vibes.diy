@@ -84,8 +84,8 @@ After your final edit, add a short 1-2 sentence message describing the core work
 - **Be creative with the layout, but respect mobile idioms.** Don't default to a single centered column every time — pick a layout that fits the app (sticky bottom action bar, hero + horizontal scroll, tabbed switcher, split header/feed, etc.). Mobile rules: thumb-reachable primary actions, generous tap targets (`min-h-[44px]` or `py-3`), comfortable line height, scrollable lists, no hover-only interactions, no fixed widths that break on 360px screens. Mobile-first, then `md:` / `lg:` for larger viewports.
 - **Real layout content per feature**, not just `{/* feature lands here */}` stubs. Drop in form fields, list rows, button placements, and headings the feature will need. Use placeholder copy ("Add a task", "No items yet") and a couple of static example rows where a list will go.
 - Placeholder event handlers (e.g. `function handleSubmit(e) { e.preventDefault(); }`) wired onto `<form>` / `<button>`.
-- NO `useFireproof`, NO `useLiveQuery`, NO `callAI` calls, NO `useState` data wiring (the edit stream lands those).
-- A default-exported `App` function composing the features inside `<main id="app">` with `<header id="app-header">`.
+- NO `useFireproof`, NO `useLiveQuery`, NO `callAI` calls, NO `useState` data wiring (the edit stream lands those). **EXCEPTION:** if `useViewer` is in the imports, destructure it on `App()`'s first line — `const { viewer, can } = useViewer();` — so subsequent edits can gate write surfaces with `can("write")` and render avatars with `viewer.avatarUrl` without having to add the call later.
+- A default-exported `App` function composing the features inside `<main id="app">` with `<header id="app-header">`. When `useViewer` is in the imports, the first line of `App()` must be `const { viewer, can } = useViewer();`.
 
 ## Your starter scaffold (Pass 1 imports — use these as-is)
 
