@@ -127,26 +127,36 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     if (ok) setHotSwapCount((c) => c + 1);
   }, [promptState.blocks, srvVibeSandbox]);
 
-  // Preview-blur ramp: only on the FIRST codegen after page mount. Starts at
-  // 50px and multiplies by 0.9 per hot-swap push (no floor, no rounding — can
+  // Preview-blur ramp: only on the first codegen of a brand-new chat or
+  // remix — i.e. the pinned chat mounted with no fsId in the URL. Starts at
+  // 50px and multiplies by 0.8 per hot-swap (no floor, no rounding — can
   // decay below 1px). Once that first stream finishes, the overlay never
-  // appears again for this page load.
+  // appears again for this pinning. Cross-vibe nav resets the gate.
   const [hotSwapCount, setHotSwapCount] = useState(0);
-  const [firstStreamLive, setFirstStreamLive] = useState(true);
+  const [firstStreamDone, setFirstStreamDone] = useState(false);
   const wasRunningRef = useRef(false);
+  const lastPinnedKeyRef = useRef(pinnedKey);
   useEffect(() => {
-    if (!promptState.running && wasRunningRef.current && firstStreamLive) {
-      setFirstStreamLive(false);
+    if (lastPinnedKeyRef.current !== pinnedKey) {
+      lastPinnedKeyRef.current = pinnedKey;
+      setHotSwapCount(0);
+      setFirstStreamDone(false);
+    }
+  }, [pinnedKey]);
+  useEffect(() => {
+    if (!promptState.running && wasRunningRef.current && !firstStreamDone) {
+      setFirstStreamDone(true);
     }
     wasRunningRef.current = promptState.running;
-  }, [promptState.running, firstStreamLive]);
+  }, [promptState.running, firstStreamDone]);
   const blurPx = useMemo(() => {
     let b = 50;
-    for (let i = 0; i < hotSwapCount; i++) b *= 0.9;
+    for (let i = 0; i < hotSwapCount; i++) b *= 0.8;
     return b;
   }, [hotSwapCount]);
   // 3 significant digits, e.g. "50.0", "36.5", "0.0200".
   const blurStr = blurPx.toPrecision(3);
+  const showBlur = promptState.running && pinnedFsId === undefined && !firstStreamDone;
 
   // Toast when the iframe rejects a hot-swap source (sucrase transform fail,
   // dynamic import fail, mountVibe throw). The iframe keeps showing the
@@ -180,7 +190,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         allow="camera; microphone"
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
-      {promptState.running && firstStreamLive && (
+      {showBlur && (
         <div
           aria-hidden="true"
           data-testid="preview-stream-overlay"
