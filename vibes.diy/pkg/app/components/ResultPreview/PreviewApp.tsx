@@ -127,8 +127,8 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   }, [promptState.blocks, srvVibeSandbox]);
 
   // Track the count of search/replace edits seen during the active stream so
-  // the preview-blur can ramp down: starts at 50px, multiplied by 0.75 (floor)
-  // per new edit, clamped at 2px. Resets on each running:false→true edge.
+  // the preview-blur can ramp down: starts at 100px, multiplied by 0.75 (floor)
+  // per new edit, clamped at 1px. Resets on each running:false→true edge.
   const [editSegCount, setEditSegCount] = useState(0);
   const wasRunningRef = useRef(false);
   useEffect(() => {
@@ -148,9 +148,9 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     setEditSegCount((prev) => (total > prev ? total : prev));
   }, [promptState.blocks, promptState.running]);
   const blurPx = useMemo(() => {
-    let b = 50;
+    let b = 100;
     for (let i = 0; i < editSegCount; i++) {
-      b = Math.max(2, Math.floor(b * 0.75));
+      b = Math.max(1, Math.floor(b * 0.75));
     }
     return b;
   }, [editSegCount]);
