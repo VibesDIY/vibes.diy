@@ -60,6 +60,31 @@ export const StarIcon: React.FC<SvgIconProps & { filled?: boolean }> = ({ filled
   );
 };
 
+export const PushpinIcon: React.FC<SvgIconProps> = ({ className = "h-4 w-4", title }) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      viewBox="0 0 8 8"
+      fill="none"
+      aria-hidden={title ? undefined : true}
+      role={title ? "img" : undefined}
+    >
+      {title ? <title>{title}</title> : null}
+      <path
+        fill="currentColor"
+        d="M7.154 2.225 5.774.845A.753.753 0 0 0 4.63.942L3.488 2.538a.77.77 0 0 1-.613.337h-.937c-.686 0-1.105.94-.607 1.439l2.355 2.355c.499.498 1.439.079 1.439-.606v-.938c0-.243.139-.471.337-.613l1.597-1.141a.753.753 0 0 0 .095-1.146"
+      />
+      <path
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M2.509 5.491.625 7.375m5.15-6.53 1.38 1.38c.329.33.283.875-.096 1.146L5.462 4.512a.77.77 0 0 0-.337.613v.938c0 .685-.94 1.104-1.439.606L1.331 4.314c-.498-.499-.079-1.439.607-1.439h.937a.77.77 0 0 0 .613-.337L4.629.941A.753.753 0 0 1 5.775.846"
+      />
+    </svg>
+  );
+};
+
 export const PreviewIcon: React.FC<SvgIconProps & { isLoading?: boolean }> = ({ className = "h-4 w-4", isLoading, title }) => {
   const spinClass = isLoading === true ? "animate-spin-slow" : "";
   return (

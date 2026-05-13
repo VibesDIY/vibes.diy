@@ -32,7 +32,7 @@ import { useShareModal } from "../../components/ResultPreview/useShareModal.js";
 import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
 import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
-import { notifyRecentVibesChanged } from "../../hooks/useRecentVibes.js";
+import { notifyRecentVibesChanged, subscribeRecentVibesChanged } from "../../hooks/useRecentVibes.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { EditorState, isEditorStateEdit } from "../../types/code-editor.js";
@@ -375,6 +375,13 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     setSearchParams,
     agentSavedBlockIds: new Set<string>(),
   });
+
+  useEffect(() => {
+    return subscribeRecentVibesChanged((change) => {
+      if (change?.userSlug !== userSlug || change.appSlug !== appSlug || change.title === undefined) return;
+      dispatch({ type: "setTitle", title: change.title || appSlug });
+    });
+  }, [userSlug, appSlug]);
 
   // Clear stale messages immediately when navigating to a different chat so
   // the old conversation is not visible while the new one loads.

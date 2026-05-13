@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useRecentVibes, notifyRecentVibesChanged } from "../hooks/useRecentVibes.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";
+import { PushpinIcon } from "./HeaderContent/SvgIcons.js";
 import { RecentVibeRowMenu } from "./RecentVibeRowMenu.js";
 
 function VibeIconThumb({ icon }: { icon?: { cid: string; mime: string } }) {
@@ -82,7 +83,7 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
       void refresh();
       return;
     }
-    notifyRecentVibesChanged();
+    notifyRecentVibesChanged({ userSlug: item.userSlug, appSlug: item.appSlug, title: trimmed });
   }
 
   return (
@@ -94,11 +95,7 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
       ) : error && items.length === 0 ? (
         <div className="px-4 pb-1 text-xs">
           <p className="opacity-60">Couldn&apos;t load recent vibes.</p>
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            className="mt-1 underline opacity-80 hover:opacity-100"
-          >
+          <button type="button" onClick={() => void refresh()} className="mt-1 underline opacity-80 hover:opacity-100">
             Retry
           </button>
         </div>
@@ -114,25 +111,17 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
               const menuOpen = openMenuId === key;
               return (
                 <li key={key} className="group relative border-b border-black/5 dark:border-white/5">
-                  <Link
-                    to={`/chat/${item.userSlug}/${item.appSlug}`}
-                    onClick={(e) => {
-                      if (isEditing) {
-                        e.preventDefault();
-                        return;
-                      }
-                      onNavigate?.();
-                    }}
-                    className="flex items-center gap-2 pl-2 pr-10 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-                  >
-                    <VibeIconThumb icon={item.icon} />
-                    <span className="flex flex-col min-w-0 flex-1">
-                      {isEditing ? (
+                  {isEditing ? (
+                    <div className="flex items-center gap-2 pl-2 pr-10 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5">
+                      <VibeIconThumb icon={item.icon} />
+                      <span className="flex min-w-0 flex-1 flex-col">
                         <input
                           type="text"
+                          name="title-editor"
+                          aria-label="Chat title"
                           value={pendingTitle}
                           autoFocus
-                          onClick={(e) => e.preventDefault()}
+                          onFocus={(e) => e.currentTarget.select()}
                           onChange={(e) => setPendingTitle(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
@@ -144,26 +133,29 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
                             }
                           }}
                           onBlur={() => void commitRename(item)}
-                          className="w-full rounded border border-black/20 bg-white px-1 text-sm dark:border-white/20 dark:bg-black"
+                          className="w-full min-w-0 truncate border-none bg-transparent p-0 text-sm focus:ring-0 focus-visible:!outline-none focus-visible:!outline-offset-0"
                         />
-                      ) : (
+                        <span className="truncate text-xs opacity-50">{item.userSlug}</span>
+                      </span>
+                    </div>
+                  ) : (
+                    <Link
+                      to={`/chat/${item.userSlug}/${item.appSlug}`}
+                      onClick={onNavigate}
+                      className="flex items-center gap-2 pl-2 pr-10 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                    >
+                      <VibeIconThumb icon={item.icon} />
+                      <span className="flex min-w-0 flex-1 flex-col">
                         <span className="truncate">
                           {item.pinnedAt ? (
-                            <svg
-                              aria-hidden="true"
-                              className="mr-1 inline-block h-3.5 w-3.5 -translate-y-px opacity-70"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                            >
-                              <path d="M14 2.5a1 1 0 0 1 .7 1.7L13.4 5.5l4.6 4.6 1.3-1.3a1 1 0 0 1 1.4 1.4l-6.4 6.4a1 1 0 0 1-1.4-1.4l1.3-1.3-3.5-3.5-4.5 4.5L4 17l1.6-2.6 4.5-4.5L6.5 6.4 5.2 7.7a1 1 0 0 1-1.4-1.4l6.4-6.4a1 1 0 0 1 1.4 0z" />
-                            </svg>
+                            <PushpinIcon className="mr-1 inline-block h-3.5 w-3.5 -translate-y-px opacity-70" />
                           ) : null}
                           {item.title || item.appSlug}
                         </span>
-                      )}
-                      <span className="text-xs truncate opacity-50">{item.userSlug}</span>
-                    </span>
-                  </Link>
+                        <span className="truncate text-xs opacity-50">{item.userSlug}</span>
+                      </span>
+                    </Link>
+                  )}
                   <button
                     type="button"
                     aria-haspopup="menu"

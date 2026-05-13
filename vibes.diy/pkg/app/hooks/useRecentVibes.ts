@@ -16,10 +16,25 @@ export interface UseRecentVibes {
   mutate: (updater: (prev: ResRecentVibesItem[]) => ResRecentVibesItem[]) => void;
 }
 
-const recentVibesListeners = new Set<() => void>();
+export interface RecentVibesChange {
+  userSlug?: string;
+  appSlug?: string;
+  title?: string;
+}
 
-export function notifyRecentVibesChanged(): void {
-  for (const fn of recentVibesListeners) fn();
+type RecentVibesListener = (change?: RecentVibesChange) => void;
+
+const recentVibesListeners = new Set<RecentVibesListener>();
+
+export function subscribeRecentVibesChanged(fn: RecentVibesListener): () => void {
+  recentVibesListeners.add(fn);
+  return () => {
+    recentVibesListeners.delete(fn);
+  };
+}
+
+export function notifyRecentVibesChanged(change?: RecentVibesChange): void {
+  for (const fn of recentVibesListeners) fn(change);
 }
 
 export function useRecentVibes(limit: number): UseRecentVibes {
@@ -89,10 +104,7 @@ export function useRecentVibes(limit: number): UseRecentVibes {
     const listener = () => {
       void refresh();
     };
-    recentVibesListeners.add(listener);
-    return () => {
-      recentVibesListeners.delete(listener);
-    };
+    return subscribeRecentVibesChanged(listener);
   }, [refresh]);
 
   const mutate = useCallback((updater: (prev: ResRecentVibesItem[]) => ResRecentVibesItem[]) => {

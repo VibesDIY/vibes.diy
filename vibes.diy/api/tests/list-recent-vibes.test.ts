@@ -162,11 +162,7 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     await setUpdated(b.userSlug, b.appSlug, sameTs);
     await setUpdated(c.userSlug, c.appSlug, sameTs);
 
-    const tieKeys = new Set([
-      `${a.userSlug}/${a.appSlug}`,
-      `${b.userSlug}/${b.appSlug}`,
-      `${c.userSlug}/${c.appSlug}`,
-    ]);
+    const tieKeys = new Set([`${a.userSlug}/${a.appSlug}`, `${b.userSlug}/${b.appSlug}`, `${c.userSlug}/${c.appSlug}`]);
     const seen = new Set<string>();
 
     let cursor: string | undefined;
@@ -289,6 +285,12 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
   it("rejects pin requests on apps owned by another user", async () => {
     const otherApp = await createApp(api2, "pin-not-yours");
     const r = await api.pinRecentVibe({ userSlug: otherApp.userSlug, appSlug: otherApp.appSlug, pin: true });
+    expect(r.isErr()).toBe(true);
+  });
+
+  it("rejects pin requests for missing apps under an owned slug", async () => {
+    const app = await createApp(api, "pin-missing-owner-slug");
+    const r = await api.pinRecentVibe({ userSlug: app.userSlug, appSlug: "missing-pin-target", pin: true });
     expect(r.isErr()).toBe(true);
   });
 });
