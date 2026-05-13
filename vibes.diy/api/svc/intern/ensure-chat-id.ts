@@ -6,6 +6,7 @@ import { ensureUserSlug, ensureAppSlug, getDefaultUserSlug, persistDefaultUserSl
 import { preAllocate } from "./pre-allocate.js";
 import {
   ActiveEntry,
+  ActiveEnrichedPrompt,
   ActiveIconDescription,
   ActiveSkills,
   ActiveTheme,
@@ -101,6 +102,7 @@ export async function ensureChatId(
       let preAllocSkills: string[] | undefined;
       let preAllocIconDescription: string | undefined;
       let preAllocTheme: string | undefined;
+      let preAllocEnrichedPrompt: string | undefined;
       if (req.prompt && !req.appSlug) {
         const rPre = await preAllocate(ctx, { prompt: req.prompt });
         if (rPre.isOk()) {
@@ -108,6 +110,7 @@ export async function ensureChatId(
           preAllocSkills = rPre.Ok().skills;
           preAllocIconDescription = rPre.Ok().iconDescription;
           preAllocTheme = rPre.Ok().theme;
+          preAllocEnrichedPrompt = rPre.Ok().enrichedPrompt;
         } else {
           console.warn("preAllocate failed; falling through to random-words:", rPre.Err());
         }
@@ -128,7 +131,7 @@ export async function ensureChatId(
         created: new Date().toISOString(),
       });
 
-      if (chosenTitle || preAllocSkills || preAllocIconDescription || preAllocTheme) {
+      if (chosenTitle || preAllocSkills || preAllocIconDescription || preAllocTheme || preAllocEnrichedPrompt) {
         await writePreAllocActiveEntries(ctx, {
           userId,
           userSlug,
@@ -137,6 +140,7 @@ export async function ensureChatId(
           skills: preAllocSkills,
           iconDescription: preAllocIconDescription,
           theme: preAllocTheme,
+          enrichedPrompt: preAllocEnrichedPrompt,
         });
       }
     }
@@ -154,6 +158,7 @@ async function writePreAllocActiveEntries(
     skills,
     iconDescription,
     theme,
+    enrichedPrompt,
   }: {
     userId: string;
     userSlug: string;
@@ -162,6 +167,7 @@ async function writePreAllocActiveEntries(
     skills?: string[];
     iconDescription?: string;
     theme?: string;
+    enrichedPrompt?: string;
   }
 ): Promise<void> {
   const now = new Date().toISOString();
@@ -177,6 +183,9 @@ async function writePreAllocActiveEntries(
   }
   if (iconDescription) {
     entries.push({ type: "active.icon-description", description: iconDescription } satisfies ActiveIconDescription);
+  }
+  if (enrichedPrompt) {
+    entries.push({ type: "active.enriched-prompt", enrichedPrompt } satisfies ActiveEnrichedPrompt);
   }
   if (entries.length === 0) return;
   const rIns = await exception2Result(() =>
