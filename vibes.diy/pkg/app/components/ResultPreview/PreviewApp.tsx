@@ -151,7 +151,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   }, [promptState.running, firstStreamDone]);
   const blurPx = useMemo(() => {
     let b = 50;
-    for (let i = 0; i < hotSwapCount; i++) b *= 0.8;
+    for (let i = 0; i < hotSwapCount; i++) b *= 0.75;
     return b;
   }, [hotSwapCount]);
   // 3 significant digits, e.g. "50.0", "36.5", "0.0200".
@@ -195,7 +195,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
           aria-hidden="true"
           data-testid="preview-stream-overlay"
           className="absolute inset-0"
-          style={{ backdropFilter: `blur(${blurStr}px)`, WebkitBackdropFilter: `blur(${blurStr}px)` }}
+          style={blurPx < 0.01 ? undefined : { backdropFilter: `blur(${blurStr}px)`, WebkitBackdropFilter: `blur(${blurStr}px)` }}
         />
       )}
     </div>
