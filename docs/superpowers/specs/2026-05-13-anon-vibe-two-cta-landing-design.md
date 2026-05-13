@@ -75,6 +75,8 @@ Invite and (future) auto-join share the same visual branch ("Join"). Differentia
 
 **Join** / **Request access** → call existing request-grant API. If the grant resolves immediately (invite / future auto-join), the page transitions to the iframe. If it's a pending request, the card transitions to the `pending-request` variant.
 
+**Persistence across visits**: after a successful **Join**, the grant is granted/accepted — subsequent visits resolve straight into the iframe (no card). After **Request access**, the grant is `pending-request` — subsequent visits show the `pending-request` card (Install-only) until the owner approves, at which point the grant flips and the iframe renders.
+
 ### What gets removed
 
 1. **Remix** button — removed from both the landing card and the running-app [ExpandedVibesPill](../../../vibes.diy/base/components/ExpandedVibesPill.tsx) on `/vibe/...` routes. Relocation is a separate decision (follow-up issue).
