@@ -1,5 +1,6 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
+import { isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { animationStyles } from "./ResultPreviewTemplates.js";
 import type { ResultPreviewProps } from "../../types/ResultPreviewTypes.js";
 import ClientOnly from "../ClientOnly.js";
@@ -74,43 +75,73 @@ function CodeEditorWrapper({
 
 function ResultPreview({ promptState, currentView, children, onCode }: ResultPreviewProps & { children?: React.ReactNode }) {
   const { fsId } = useParams<{ fsId?: string }>();
+
+  // Fresh-chat first-codegen experience. The preview area should:
+  //   1. stay empty until the first code-begin streams in
+  //   2. show the streaming code editor while the first code block is live
+  //   3. flip to the live app preview (with PreviewApp's blur ramp) as soon as
+  //      the first code-end fires
+  // The PreviewApp slot stays mounted (hidden behind the code editor) so the
+  // iframe pre-loads its pending shell — the flip on first code-end is instant
+  // instead of paying a cold-iframe load right after the user sees the code.
+  const slugKey = `${promptState.chat.userSlug}/${promptState.chat.appSlug}`;
+  const [keyedFresh, setKeyedFresh] = useState(() => ({ slugKey, fresh: fsId === undefined }));
+  useEffect(() => {
+    if (keyedFresh.slugKey !== slugKey) {
+      setKeyedFresh({ slugKey, fresh: fsId === undefined });
+    }
+  }, [slugKey, fsId, keyedFresh.slugKey]);
+  const firstCodeEndSeen = useMemo(() => {
+    for (const block of promptState.blocks) {
+      for (const msg of block.msgs) {
+        if (isCodeEnd(msg)) return true;
+      }
+    }
+    return false;
+  }, [promptState.blocks]);
+  const freshFirstCodegen = keyedFresh.fresh && !firstCodeEndSeen;
+  const overrideView = currentView === "preview" && freshFirstCodegen;
+
   const showWelcome = !fsId && !promptState.running && !promptState.hasCode;
 
   const codeEditor = <CodeEditorWrapper promptState={promptState} onCode={onCode} currentView={currentView} />;
-  let previewArea: React.ReactNode;
-  // console.log(`ResultPreview:`, currentView, promptState.searchParams.toString())
-  switch (true) {
-    case showWelcome:
-      previewArea = <div className="h-full">{/* empty div to prevent layout shift */}</div>;
-      break;
-    case currentView === "code":
-      previewArea = codeEditor;
-      // console.log(`ToRender:code`);
-      break;
-    case currentView === "preview":
-      // console.log(`PreviewApp`, currentView, promptState);
-      previewArea = <PreviewApp promptState={promptState} />;
-      break;
-    case currentView === "data":
-      previewArea = <DataView promptState={promptState} />;
-      break;
-    case currentView === "settings":
-      previewArea = (
+
+  // PreviewApp slot is mounted whenever the active view is "preview", whether
+  // visible or pre-warming. Visibility flips off during the override window.
+  const previewSlotVisible = currentView === "preview" && !overrideView;
+
+  let foreground: React.ReactNode = null;
+  if (overrideView) {
+    if (promptState.hasCode) foreground = codeEditor;
+  } else if (!showWelcome) {
+    if (currentView === "code") {
+      foreground = codeEditor;
+    } else if (currentView === "data") {
+      foreground = <DataView promptState={promptState} />;
+    } else if (currentView === "settings") {
+      foreground = (
         <div className="h-full overflow-y-auto p-6">
           <AppSettingsPanel userSlug={promptState.chat.userSlug} appSlug={promptState.chat.appSlug} />
         </div>
       );
-      break;
-    case currentView === "chat":
-    default:
-      previewArea = <div className="h-full" />;
-      break;
+    }
   }
 
   return (
     <div className="h-full" style={{ overflow: "hidden", position: "relative" }}>
       <style>{animationStyles}</style>
-      {previewArea}
+      {currentView === "preview" && (
+        <div
+          className="absolute inset-0"
+          style={{
+            visibility: previewSlotVisible ? "visible" : "hidden",
+            pointerEvents: previewSlotVisible ? "auto" : "none",
+          }}
+        >
+          <PreviewApp promptState={promptState} />
+        </div>
+      )}
+      {foreground !== null && <div className="absolute inset-0 h-full">{foreground}</div>}
       {children}
     </div>
   );
