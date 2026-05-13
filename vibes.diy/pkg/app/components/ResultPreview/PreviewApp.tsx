@@ -127,24 +127,26 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     if (ok) setHotSwapCount((c) => c + 1);
   }, [promptState.blocks, srvVibeSandbox]);
 
-  // Preview-blur ramp: starts at 100px and steps down 0.9× (floor, clamped at
-  // 1px) per hot-swap push during an active stream. Resets on each
-  // running:false→true edge so each prompt starts fully blurred.
+  // Preview-blur ramp: only on the FIRST codegen after page mount. Starts at
+  // 50px and multiplies by 0.9 per hot-swap push (no floor, no rounding — can
+  // decay below 1px). Once that first stream finishes, the overlay never
+  // appears again for this page load.
   const [hotSwapCount, setHotSwapCount] = useState(0);
+  const [firstStreamLive, setFirstStreamLive] = useState(true);
   const wasRunningRef = useRef(false);
   useEffect(() => {
-    if (promptState.running && !wasRunningRef.current) {
-      setHotSwapCount(0);
+    if (!promptState.running && wasRunningRef.current && firstStreamLive) {
+      setFirstStreamLive(false);
     }
     wasRunningRef.current = promptState.running;
-  }, [promptState.running]);
+  }, [promptState.running, firstStreamLive]);
   const blurPx = useMemo(() => {
-    let b = 100;
-    for (let i = 0; i < hotSwapCount; i++) {
-      b = Math.max(1, Math.floor(b * 0.9));
-    }
+    let b = 50;
+    for (let i = 0; i < hotSwapCount; i++) b *= 0.9;
     return b;
   }, [hotSwapCount]);
+  // 3 significant digits, e.g. "50.0", "36.5", "0.0200".
+  const blurStr = blurPx.toPrecision(3);
 
   // Toast when the iframe rejects a hot-swap source (sucrase transform fail,
   // dynamic import fail, mountVibe throw). The iframe keeps showing the
@@ -178,12 +180,12 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         allow="camera; microphone"
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
-      {promptState.running && (
+      {promptState.running && firstStreamLive && (
         <div
           aria-hidden="true"
           data-testid="preview-stream-overlay"
           className="absolute inset-0"
-          style={{ backdropFilter: `blur(${blurPx}px)`, WebkitBackdropFilter: `blur(${blurPx}px)` }}
+          style={{ backdropFilter: `blur(${blurStr}px)`, WebkitBackdropFilter: `blur(${blurStr}px)` }}
         />
       )}
     </div>
