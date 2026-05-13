@@ -21,16 +21,16 @@ describe("system prompt templates", () => {
     }
   });
 
-  it("initial template has scaffold + feature-pass markers", () => {
-    // First-turn variant: one full-file scaffold (no SEARCH/REPLACE) then
-    // 3–4 feature-complete SEARCH/REPLACE passes with prose between.
-    expect(systemPromptInitialTemplate).toMatch(/scaffold/i);
-    expect(systemPromptInitialTemplate).toMatch(/feature[- ]complete/i);
+  it("initial template has colored-shell + fill-then-wire markers", () => {
+    // First-turn variant: one full-file colored shell (no SEARCH/REPLACE)
+    // then 4–6 fill-then-wire SEARCH/REPLACE passes with prose between.
+    expect(systemPromptInitialTemplate).toMatch(/(?:colored shell|scaffold)/i);
     expect(systemPromptInitialTemplate).toMatch(/feature passes/i);
+    expect(systemPromptInitialTemplate).toMatch(/fill[- ]then[- ]wire/i);
     expect(systemPromptInitialTemplate).toMatch(/SEARCH\/REPLACE/);
     expect(systemPromptInitialTemplate).toMatch(/first turn/i);
-    // Color-only-after-scaffold rule (zero color tokens in the create block).
-    expect(systemPromptInitialTemplate).toMatch(/ZERO color tokens/i);
+    // Real-colors-in-shell rule (colors land in the create block, not later).
+    expect(systemPromptInitialTemplate).toMatch(/real[- ,]+final-ish Tailwind colors/i);
   });
 
   it("continuation template lacks first-turn-only markers", () => {
@@ -54,11 +54,12 @@ describe("makeBaseSystemPrompt variant routing", () => {
     pkgBaseUrl: "https://example.test/@vibes.diy/prompts/",
   };
 
-  it("variant=initial → output contains first-turn scaffold + feature-pass markers", async () => {
+  it("variant=initial → output contains first-turn colored-shell + fill-then-wire markers", async () => {
     const result = await makeBaseSystemPrompt("test-model", { ...baseOpts, variant: "initial" });
     expect(result.systemPrompt).toMatch(/first turn/i);
     expect(result.systemPrompt).toMatch(/feature passes/i);
-    expect(result.systemPrompt).toMatch(/ZERO color tokens/i);
+    expect(result.systemPrompt).toMatch(/fill[- ]then[- ]wire/i);
+    expect(result.systemPrompt).toMatch(/real[- ,]+final-ish Tailwind colors/i);
   });
 
   it("variant=continuation → does not", async () => {
