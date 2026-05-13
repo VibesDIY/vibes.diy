@@ -22,18 +22,18 @@
     "@vibes.diy/api-sql": "workspace:*",
     "@vibes.diy/api-svc": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
-    "@vibes.diy/vibe-runtime": "workspace:*",
-    "@vibes.diy/vibe-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
+    "@vibes.diy/vibe-runtime": "workspace:*",
     "@vibes.diy/vibe-srv-sandbox": "workspace:*",
+    "@vibes.diy/vibe-types": "workspace:*",
     "arktype": "^2.2.0",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.19",
-    "@vitest/ui": "~4.1.5",
-    "vitest": "~4.1.5",
+    "@vitest/ui": "~4.1.6",
+    "vitest": "~4.1.6",
     "zx": "^8.8.5"
   },
   "repository": {
