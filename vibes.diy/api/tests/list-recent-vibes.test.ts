@@ -9,6 +9,14 @@ import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { eq, and } from "drizzle-orm/sql/expressions";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
+interface RecentOrderRow {
+  appSlug: string;
+  userSlug: string;
+  fsId: string;
+  updated: string;
+  pinnedAt?: string;
+}
+
 describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 10000 }, () => {
   const sthis = ensureSuperThis();
 
@@ -93,6 +101,38 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
       .update(t)
       .set({ updated: isoTs })
       .where(and(eq(t.userSlug, userSlug), eq(t.appSlug, appSlug)));
+  }
+
+  function rowKey(row: { userSlug: string; appSlug: string }): string {
+    return `${row.userSlug}/${row.appSlug}`;
+  }
+
+  function seededShuffle<T>(items: readonly T[], seed: number): T[] {
+    let state = seed;
+    const ret = [...items];
+    for (let i = ret.length - 1; i > 0; i--) {
+      state = (state * 1664525 + 1013904223) >>> 0;
+      const j = state % (i + 1);
+      const tmp = ret[i];
+      ret[i] = ret[j];
+      ret[j] = tmp;
+    }
+    return ret;
+  }
+
+  function compareDesc(a: string, b: string): number {
+    if (a === b) return 0;
+    return a < b ? 1 : -1;
+  }
+
+  function compareRecentOrder(a: RecentOrderRow, b: RecentOrderRow): number {
+    const pinned = compareDesc(a.pinnedAt ?? "", b.pinnedAt ?? "");
+    if (pinned !== 0) return pinned;
+    const updated = compareDesc(a.updated, b.updated);
+    if (updated !== 0) return updated;
+    const userSlug = compareDesc(a.userSlug, b.userSlug);
+    if (userSlug !== 0) return userSlug;
+    return compareDesc(a.appSlug, b.appSlug);
   }
 
   it("returns the just-created app with a populated updated timestamp", async () => {
@@ -238,31 +278,50 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     expect(found?.title).toBe("Pretty Name");
   });
 
-  it("pinning a vibe floats it above non-pinned rows ordered by updated", async () => {
-    const older = await createApp(api, "pin-older");
-    const newer = await createApp(api, "pin-newer");
-    await setUpdated(older.userSlug, older.appSlug, "2024-01-01T00:00:00.000Z");
-    await setUpdated(newer.userSlug, newer.appSlug, "2025-01-01T00:00:00.000Z");
+  it("orders pinned vibes before unpinned vibes, with each group in recency order", async () => {
+    const appCount = 24;
+    const pinCount = 8;
+    const created = await Promise.all(
+      Array.from({ length: appCount }, (_, i) => createApp(api, `pin-recency-order-${i.toString().padStart(2, "0")}`))
+    );
+    const fixture: RecentOrderRow[] = created.map((app, i) => ({
+      ...app,
+      updated: new Date(Date.parse("2025-01-01T00:00:00.000Z") + i * 60_000).toISOString(),
+    }));
+    const fixtureByKey = new Map(fixture.map((row) => [rowKey(row), row]));
 
-    // Sanity check: newer comes first under update-only sort.
-    {
-      const rList = await api.listRecentVibes({ limit: 100 });
-      if (rList.isErr()) assert.fail(rList.Err().message);
-      const items = rList.Ok().items.filter((it) => it.appSlug === older.appSlug || it.appSlug === newer.appSlug);
-      expect(items[0]?.appSlug).toBe(newer.appSlug);
+    for (const i of seededShuffle(
+      Array.from({ length: appCount }, (_, index) => index),
+      0xdecafbad
+    )) {
+      const row = fixture[i];
+      await setUpdated(row.userSlug, row.appSlug, row.updated);
     }
 
-    const rPin = await api.pinRecentVibe({ userSlug: older.userSlug, appSlug: older.appSlug, pin: true });
-    if (rPin.isErr()) assert.fail(`pinRecentVibe failed: ${rPin.Err().message}`);
-    expect(rPin.Ok().pinnedAt.length).toBeGreaterThan(0);
+    const pinnedIndexes = seededShuffle(
+      Array.from({ length: appCount }, (_, index) => index),
+      0x51deba5e
+    ).slice(0, pinCount);
+    for (const i of pinnedIndexes) {
+      const row = fixture[i];
+      const rPin = await api.pinRecentVibe({ userSlug: row.userSlug, appSlug: row.appSlug, pin: true });
+      if (rPin.isErr()) assert.fail(`pinRecentVibe failed for ${rowKey(row)}: ${rPin.Err().message}`);
+      expect(rPin.Ok().pinnedAt.length).toBeGreaterThan(0);
+      const current = fixtureByKey.get(rowKey(row));
+      if (current === undefined) assert.fail(`missing fixture row for ${rowKey(row)}`);
+      current.pinnedAt = rPin.Ok().pinnedAt;
+    }
 
     const rList = await api.listRecentVibes({ limit: 100 });
     if (rList.isErr()) assert.fail(rList.Err().message);
-    const items = rList.Ok().items.filter((it) => it.appSlug === older.appSlug || it.appSlug === newer.appSlug);
-    expect(items[0]?.appSlug).toBe(older.appSlug);
-    expect(items[0]?.pinnedAt).toBeTruthy();
-    expect(items[1]?.appSlug).toBe(newer.appSlug);
-    expect(items[1]?.pinnedAt).toBeFalsy();
+    const fixtureKeys = new Set(fixture.map(rowKey));
+    const actual = rList.Ok().items.filter((it) => fixtureKeys.has(rowKey(it)));
+    const expected = [...fixture].sort(compareRecentOrder);
+
+    expect(actual.length).toBe(appCount);
+    expect(actual.map(rowKey)).toEqual(expected.map(rowKey));
+    expect(actual.slice(0, pinCount).every((it) => it.pinnedAt !== undefined && it.pinnedAt.length > 0)).toBe(true);
+    expect(actual.slice(pinCount).every((it) => it.pinnedAt === undefined)).toBe(true);
   });
 
   it("unpinning clears pinnedAt and restores update-order placement", async () => {
