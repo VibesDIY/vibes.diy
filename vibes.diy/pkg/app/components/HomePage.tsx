@@ -32,6 +32,11 @@ export default function HomePage() {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
 
+  useEffect(() => {
+    const t = setTimeout(() => setIsSidebarVisible(true), 1000);
+    return () => clearTimeout(t);
+  }, []);
+
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
   useEffect(() => {
