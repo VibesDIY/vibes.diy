@@ -554,7 +554,7 @@ function ProfileCard() {
                 if (f) void handleAvatarUpload(f);
               }}
             />
-            <p className="text-xs mt-1" style={{ color: "var(--vibes-text-secondary)" }}>
+            <p className="text-xs mt-3" style={{ color: "var(--vibes-text-secondary)" }}>
               PNG, JPG, or WebP. Displayed at /u/
               {defaultUserSlug ?? "your-slug"}/avatar
             </p>
