@@ -4,3 +4,5 @@
 {"id":"recipe-collection","prompt":"Build a recipe collection. Each recipe has a name, ingredient list, and steps. Persist in Fireproof."}
 {"id":"time-tracker","prompt":"Build a time tracker. Each entry has a task name, start time, end time, and notes. Show today's total minutes. Persist in Fireproof."}
 {"id":"poetry-owner-only","prompt":"Build a poetry app where only the owner can post new poems but anyone with the link can read them. Each poem has a title and body. Persist in Fireproof."}
+{"id":"ai-tagged-bookmarks","prompt":"Build a bookmark manager. Each bookmark has a URL, title, and notes. When a bookmark is added, use callAI to assign 2-3 topical tags. Persist in Fireproof."}
+{"id":"meal-card-images","prompt":"Build a meal card collection. Each meal has a name and a short description, plus a generated illustration card showing the meal. Persist in Fireproof."}

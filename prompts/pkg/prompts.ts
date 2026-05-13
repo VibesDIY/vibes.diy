@@ -44,7 +44,19 @@ export async function getDefaultSkills(): Promise<string[]> {
 }
 
 /**
- * Builds the user-message body for the pre-allocation LLM call. Includes the
+ * Single-paragraph description of the platform stack — Fireproof, callAI,
+ * useViewer, ImgGen — so the pre-allocation LLM has the platform vocabulary
+ * in hand when it writes the enrichedPrompt preamble. Lives next to the
+ * schema so the description's references to "Fireproof live sync" / "callAI"
+ * / "useViewer" / "ImgGen" stay anchored to a real definition the model has
+ * already read.
+ */
+const PRE_ALLOC_PLATFORM_PARAGRAPH =
+  "Platform stack: a vibe is a single-file React app that runs in the user's browser. Fireproof is a peer-replicated document database — `useFireproof(name)` returns a database handle and `useLiveQuery(field)` keeps every viewer's UI in lockstep with the underlying docs in real time, no separate sync layer. callAI is a typed call to a hosted LLM that returns JSON matching a schema the app declares; the JSON is saved as a Fireproof doc so it persists and shows up live for every viewer. useViewer is a read-only window into runtime-managed access control: the platform owns who can read and who can write, and `useViewer().can('write')` lets the app reflect that verdict in its UI without ever setting it. ImgGen renders a generated illustration tile when imagery is naturally part of the experience, not as decoration.";
+
+/**
+ * Builds the user-message body for the pre-allocation LLM call. Includes a
+ * platform-stack paragraph (so the model has core-feature vocabulary), the
  * skill catalog (name + one-line description per entry) so the model can pick
  * valid skill names, plus the user's raw prompt. Invalid names returned by the
  * model are filtered out at read time (`makeBaseSystemPrompt` → catalog guard),
@@ -57,6 +69,8 @@ export async function makePreAllocUserMessage(userPrompt: string): Promise<strin
     .map((t) => `- ${t.slug}: ${t.name}${t.bodyFont ? ` (${t.bodyFont.replace(/['"]/g, "").split(",")[0].trim()})` : ""}`)
     .join("\n");
   return [
+    PRE_ALLOC_PLATFORM_PARAGRAPH,
+    "",
     "Pick skills from this catalog that fit the user's app request, propose 3 title/slug pairs for naming, propose a one-line icon subject, pick a theme that matches the app's mood, and write a 3-sentence enriched-prompt preamble that grounds the build in our core platform features for THIS specific app.",
     "",
     "Skill catalog:",
@@ -109,8 +123,14 @@ export const preAllocSchema = {
     },
     enrichedPrompt: {
       type: "string",
-      description:
-        'REQUIRED. A 3-sentence preamble that grounds the build in our core platform features for THIS specific app. Access control (who can read, who can write) is decided OUTSIDE the app by the runtime — the platform owns the rules. `useViewer()` is the app\'s read-only window into that decision: `can("write")` returns true/false based on what the runtime already set, you cannot grant or override it from code. The app\'s only job is to reflect the runtime\'s answer in the UI — show forms / write buttons to viewers who `can("write")`, show a read-only state otherwise. This is universal: every app is potentially shared, so every write surface must consult `can("write")` no matter how single-user the prompt sounds. Sentence 1: name the Fireproof doc shapes that get written (each persisted thing = one doc shape with named fields) and that every viewer sees them live. Sentence 2: name the user action that triggers callAI, the exact JSON the callAI schema returns, and what gets saved from that. Sentence 3: name exactly which form or write button is hidden / disabled when `useViewer().can("write")` is false, and what non-owners see in its place (the read-only view) — pick the most central write surface in the app. If and only if generated imagery is naturally part of the experience, add a short clause about what `<ImgGen>` depicts (otherwise skip ImgGen entirely). Be concrete: real field names, real button labels. Never abstract. Never say "no useViewer needed" or "all users have write access" — those are the runtime\'s call, not yours; you just read the answer.',
+      description: [
+        "REQUIRED. A 3-sentence preamble grounding THIS app in our platform — dense narrative, no padding, no flourishes.",
+        "Sentence 1: what users see and do in this app, and that Fireproof's live sync shares the activity with every viewer in real time.",
+        "Sentence 2: name the callAI role that fits this app's central activity. Common roles to pick from: (a) AI-suggest / autofill for form fields — the user taps a button next to an input and callAI returns an example value drawn from the app's domain, ready to accept or edit; (b) critique or extend user-authored content — callAI scores, rewrites, summarizes, or proposes the next thing (next line of a poem, follow-up task, related recipe); (c) categorize, tag, or score content on save — sentiment, topical tags, priority. Pick ONE role that genuinely fits this app. Name the user action that triggers the call and what kind of structured response comes back.",
+        "Sentence 3: name the write actions in this app, and that non-owners see a read-only view because the runtime's access control hides the write surfaces — useViewer reflects that verdict, the app never sets it. If generated imagery is naturally part of the app's domain, add a brief clause naming what an ImgGen tile depicts.",
+        'Do NOT include code: no function names like `useLiveQuery` or `database.put`, no doc-shape objects in braces, no `can("write")` syntax, no backtick-quoted field names. Plain narrative, not a code spec.',
+        "Do NOT invent imagery features when the app's domain wouldn't naturally include them.",
+      ].join(" "),
     },
   },
 } as const;
