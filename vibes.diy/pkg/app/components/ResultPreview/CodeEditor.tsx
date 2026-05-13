@@ -382,19 +382,22 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
   // dep array below but refs aren't reactive — the effect can re-fire (StrictMode,
   // unrelated parent re-renders) with the same state and re-append `newLines`,
   // producing visible duplicate lines during streaming. Identity check is sufficient
-  // because every setState assigns a fresh object.
+  // because every setState assigns a fresh object. The marker is only set after the
+  // edit succeeds, so a transiently-null Monaco model lets the state be retried
+  // rather than silently dropped.
   const lastAppliedStateRef = useRef<EditorState | null>(null);
   useEffect(() => {
     if (!monacoReadyRef.current) return;
-    if (lastAppliedStateRef.current === stateRef.current) return;
-    lastAppliedStateRef.current = stateRef.current;
+    const current = stateRef.current;
+    if (lastAppliedStateRef.current === current) return;
 
     const { editor, api } = monacoReadyRef.current;
 
-    if (isEditorStateStartGenerating(stateRef.current)) {
-      editor.setValue(stateRef.current.lines.join("\n"));
-      editor.revealLineInCenter(stateRef.current.lines.length);
-    } else if (isEditorStateMoreLines(stateRef.current)) {
+    if (isEditorStateStartGenerating(current)) {
+      editor.setValue(current.lines.join("\n"));
+      editor.revealLineInCenter(current.lines.length);
+      lastAppliedStateRef.current = current;
+    } else if (isEditorStateMoreLines(current)) {
       const model = editor.getModel();
       if (!model) {
         toast.error("Monaco editor model not found");
@@ -406,10 +409,11 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
       model.applyEdits([
         {
           range: new api.Range(endPos.lineNumber, endPos.column, endPos.lineNumber, endPos.column),
-          text: prefix + stateRef.current.newLines.join("\n"),
+          text: prefix + current.newLines.join("\n"),
         },
       ]);
       editor.revealLineInCenter(model.getFullModelRange().endLineNumber);
+      lastAppliedStateRef.current = current;
     }
   }, [monacoReady, stateRef.current]);
 
