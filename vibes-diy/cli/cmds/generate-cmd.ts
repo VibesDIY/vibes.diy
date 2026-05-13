@@ -24,7 +24,7 @@ import { formatErr } from "./format-err.js";
 import { formatNoFilesError } from "./format-no-files-error.js";
 
 export const ResGenerate = type({
-  type: "'use-vibes.cli.res-generate'",
+  type: "'vibes-diy.cli.res-generate'",
   appSlug: "string",
   userSlug: "string",
   url: "string",
@@ -37,7 +37,7 @@ export function isResGenerate(obj: unknown): obj is ResGenerate {
 }
 
 export const ReqGenerate = type({
-  type: "'use-vibes.cli.generate'",
+  type: "'vibes-diy.cli.generate'",
   prompt: "string",
   appSlug: "string",
   userSlug: "string",
@@ -55,7 +55,7 @@ export function isReqGenerate(obj: unknown): obj is ReqGenerate {
 }
 
 export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, ResGenerate | ResEnsureAppSlug> = {
-  hash: "use-vibes.cli.generate",
+  hash: "vibes-diy.cli.generate",
   validate: (ctx: ValidateTriggerCtx<WrapCmdTSMsg<unknown>, ReqGenerate, ResGenerate | ResEnsureAppSlug>) => {
     if (isReqGenerate(ctx.enRequest)) {
       return Promise.resolve(Result.Ok(Option.Some(ctx.enRequest)));
@@ -67,7 +67,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
   ): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
     if (ectx.vibesDiyApiFactory === undefined) {
-      return Result.Err("Not logged in. Run 'use-vibes login' first.");
+      return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
@@ -217,7 +217,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     await sendProgress(ctx, "info", `Created: ${dir}`);
 
     return sendMsg(ctx, {
-      type: "use-vibes.cli.res-generate",
+      type: "vibes-diy.cli.res-generate",
       appSlug: pushAppSlug,
       userSlug: pushUserSlug,
       url: rPush.Ok().publicUrl,
@@ -286,7 +286,7 @@ export function generateCmd(ctx: CliCtx) {
       // Same silent-no-op gotcha as edit-cmd: ArkType validate trips on an
       // explicit `focusPath: undefined`, even though the ReqGenerate schema
       // doesn't declare focusPath. Only attach when defined.
-      const base = { type: "use-vibes.cli.generate" as const, ...args };
+      const base = { type: "vibes-diy.cli.generate" as const, ...args };
       return args.focus === undefined ? base : { ...base, focusPath: args.focus };
     }),
   });

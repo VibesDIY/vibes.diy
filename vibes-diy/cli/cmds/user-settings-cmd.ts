@@ -6,7 +6,7 @@ import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 
 export const ReqUserSettings = type({
-  type: "'use-vibes.cli.user-settings'",
+  type: "'vibes-diy.cli.user-settings'",
   apiUrl: "string",
 });
 export type ReqUserSettings = typeof ReqUserSettings.infer;
@@ -16,7 +16,7 @@ export function isReqUserSettings(obj: unknown): obj is ReqUserSettings {
 }
 
 export const userSettingsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqUserSettings, ResEnsureUserSettings> = {
-  hash: "use-vibes.cli.user-settings",
+  hash: "vibes-diy.cli.user-settings",
   validate: (ctx: ValidateTriggerCtx<WrapCmdTSMsg<unknown>, ReqUserSettings, ResEnsureUserSettings>) => {
     if (isReqUserSettings(ctx.enRequest)) {
       return Promise.resolve(Result.Ok(Option.Some(ctx.enRequest)));
@@ -28,7 +28,7 @@ export const userSettingsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqUserSet
   ): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
     if (!ectx.vibesDiyApiFactory) {
-      return Result.Err("Not logged in. Run 'use-vibes login' first.");
+      return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const rResult = await ectx.vibesDiyApiFactory(ctx.validated.apiUrl).ensureUserSettings({ settings: [] });
     if (rResult.isErr()) {
@@ -46,7 +46,7 @@ export function userSettingsCmd(ctx: CliCtx) {
       ...cmdTsDefaultArgs(ctx),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      return { type: "use-vibes.cli.user-settings", ...args };
+      return { type: "vibes-diy.cli.user-settings", ...args };
     }),
   });
 }

@@ -9,7 +9,7 @@ import { resolveUserSlug } from "../resolve-user-slug.js";
 import { pushFromDir } from "./push-from-dir.js";
 
 export const ReqPush = type({
-  type: "'use-vibes.cli.push'",
+  type: "'vibes-diy.cli.push'",
   mode: "string",
   appSlug: "string",
   userSlug: "string",
@@ -25,7 +25,7 @@ export function isReqPush(obj: unknown): obj is ReqPush {
 }
 
 export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsureAppSlug> = {
-  hash: "use-vibes.cli.push",
+  hash: "vibes-diy.cli.push",
   validate: (ctx: ValidateTriggerCtx<WrapCmdTSMsg<unknown>, ReqPush, ResEnsureAppSlug>) => {
     if (isReqPush(ctx.enRequest)) {
       return Promise.resolve(Result.Ok(Option.Some(ctx.enRequest)));
@@ -35,7 +35,7 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
   handle: async (ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqPush, ResEnsureAppSlug>): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
     if (ectx.vibesDiyApiFactory === undefined) {
-      return Result.Err("Not logged in. Run 'use-vibes login' first.");
+      return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl, { idleTimeoutMs: args.idleTimeoutMs });
@@ -104,7 +104,7 @@ export function pushCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      return { type: "use-vibes.cli.push", ...args };
+      return { type: "vibes-diy.cli.push", ...args };
     }),
   });
 }

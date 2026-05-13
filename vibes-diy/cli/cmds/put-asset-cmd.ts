@@ -29,7 +29,7 @@ import { resolveUserSlug } from "../resolve-user-slug.js";
 //    the response against the source file. Round-trip integrity check.
 
 export const ReqPutAsset = type({
-  type: "'use-vibes.cli.put-asset'",
+  type: "'vibes-diy.cli.put-asset'",
   file: "string",
   appSlug: "string",
   userSlug: "string",
@@ -44,7 +44,7 @@ export function isReqPutAsset(obj: unknown): obj is ReqPutAsset {
 }
 
 export const ResPutAssetCli = type({
-  type: "'use-vibes.cli.res-put-asset'",
+  type: "'vibes-diy.cli.res-put-asset'",
   cid: "string",
   getURL: "string",
   size: "number",
@@ -105,7 +105,7 @@ function hostRoot(apiUrl: string): string {
 }
 
 export const putAssetEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPutAsset, ResPutAssetCli> = {
-  hash: "use-vibes.cli.put-asset",
+  hash: "vibes-diy.cli.put-asset",
   validate: (ctx: ValidateTriggerCtx<WrapCmdTSMsg<unknown>, ReqPutAsset, ResPutAssetCli>) => {
     if (isReqPutAsset(ctx.enRequest)) {
       return Promise.resolve(Result.Ok(Option.Some(ctx.enRequest)));
@@ -183,7 +183,7 @@ export const putAssetEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPutAsset, R
     }
 
     return sendMsg(ctx, {
-      type: "use-vibes.cli.res-put-asset",
+      type: "vibes-diy.cli.res-put-asset",
       cid: body.cid,
       getURL: body.getURL,
       size: body.size,
@@ -234,7 +234,7 @@ export function putAssetCmd(ctx: CliCtx) {
     handler: ctx.cliStream.enqueue((args) => {
       const mimeType = args.mimeType === "" ? inferMimeType(args.file) : args.mimeType;
       return {
-        type: "use-vibes.cli.put-asset",
+        type: "vibes-diy.cli.put-asset",
         file: args.file,
         appSlug: args.appSlug,
         userSlug: args.userSlug,

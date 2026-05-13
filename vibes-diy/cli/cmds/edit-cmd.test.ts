@@ -183,7 +183,7 @@ function buildApi(opts: { sectionStream: ReadableStream<SectionEvent>; promptId:
 }
 
 describe("editEvento", () => {
-  it("maps CLI args into a use-vibes.cli.edit request", async () => {
+  it("maps CLI args into a vibes-diy.cli.edit request", async () => {
     const cliStream = cmd_tsStream();
     const ctx: CliCtx = {
       sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
@@ -210,7 +210,7 @@ describe("editEvento", () => {
     expect(first.done).toBe(false);
     const request = (first.value as { result: ReqEdit }).result;
     expect(request).toMatchObject({
-      type: "use-vibes.cli.edit",
+      type: "vibes-diy.cli.edit",
       appSlug: "todo-app",
       prompt: "Refine the UI",
       userSlug: "alice",
@@ -241,7 +241,7 @@ describe("editEvento", () => {
     expect(first.done).toBe(false);
     const request = (first.value as { result: ReqEdit }).result;
     expect(request).toMatchObject({
-      type: "use-vibes.cli.edit",
+      type: "vibes-diy.cli.edit",
       focusPath: "Card.jsx",
     });
   });
@@ -274,7 +274,7 @@ describe("editEvento", () => {
 
     const sent: unknown[] = [];
     const args: ReqEdit = {
-      type: "use-vibes.cli.edit",
+      type: "vibes-diy.cli.edit",
       appSlug: "todo-app",
       prompt: "Update the greeting",
       userSlug: "alice",
@@ -309,7 +309,7 @@ describe("editEvento", () => {
 
     const resEdit = sent.find((msg) => {
       const maybe = msg as { result?: { type?: string } };
-      return maybe.result?.type === "use-vibes.cli.res-edit";
+      return maybe.result?.type === "vibes-diy.cli.res-edit";
     }) as { result: { directory: string } };
     expect(resEdit.result.directory).toBe(cwd);
   });
@@ -340,7 +340,7 @@ describe("editEvento", () => {
 
     const sent: unknown[] = [];
     const args: ReqEdit = {
-      type: "use-vibes.cli.edit",
+      type: "vibes-diy.cli.edit",
       appSlug: "todo-app",
       prompt: "Edit in target dir",
       userSlug: "alice",
@@ -366,7 +366,7 @@ describe("editEvento", () => {
 
     const resEdit = sent.find((msg) => {
       const maybe = msg as { result?: { type?: string } };
-      return maybe.result?.type === "use-vibes.cli.res-edit";
+      return maybe.result?.type === "vibes-diy.cli.res-edit";
     }) as { result: { directory: string } };
     expect(resEdit.result.directory).toBe(target);
   });
@@ -424,7 +424,7 @@ describe("editEvento", () => {
 
     const sent: unknown[] = [];
     const args: ReqEdit = {
-      type: "use-vibes.cli.edit",
+      type: "vibes-diy.cli.edit",
       appSlug: "todo-app",
       prompt: "Add a tea button",
       userSlug: "alice",
