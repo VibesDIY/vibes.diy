@@ -135,13 +135,21 @@ export const preAllocSchema = {
   },
 } as const;
 
-/** arktype validator for parsed pre-alloc responses. Matches preAllocSchema. */
+/** arktype validator for parsed pre-alloc responses. Matches preAllocSchema.
+ *
+ * `enrichedPrompt` is marked required in the JSON schema (so the LLM is
+ * pressured to fill it) but optional here. Under Claude `tool_mode` the
+ * schema's `required` array isn't strictly enforced, so the model occasionally
+ * omits enrichedPrompt. When it does, we'd rather accept the response with
+ * just skills + pairs + iconDescription than reject the whole turn — losing
+ * `active.skills` (which carries `use-viewer`) means the generated app never
+ * imports `useViewer` and every viewer's `can("write")` defaults to false. */
 export const preAllocParsed = type({
   skills: type("string").array(),
   pairs: type({ title: "string", slug: "string" }).array(),
   iconDescription: "string",
   "theme?": "string",
-  enrichedPrompt: "string",
+  "enrichedPrompt?": "string",
 });
 export type PreAllocParsed = typeof preAllocParsed.infer;
 
