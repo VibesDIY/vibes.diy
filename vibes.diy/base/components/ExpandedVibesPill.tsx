@@ -346,7 +346,7 @@ export function ExpandedVibesPill({
   // is available. Bottom/left/right of the bubble stay put; the top moves
   // up by metaHeight so the buttons row keeps its original position.
   const hasAppTitle = Boolean(appTitle?.trim());
-  const titleLineText = hasAppTitle ? appTitle ?? "\u00A0" : "\u00A0";
+  const titleLineText = hasAppTitle ? (appTitle ?? "\u00A0") : "\u00A0";
   const hasMetadata = !!(hasAppTitle || appIconUrl || appSlug);
   const buttonsRowHeight = 175 * scale + 8;
   const metaHeight = expanded && hasMetadata ? height * 0.78 : 0;
@@ -752,7 +752,9 @@ export function ExpandedVibesPill({
             const closedCy = height * 0.15 + badgeSize / 2;
             const trayLeft = pillWidth + 4 - trayExpanded;
             const trayTop = 123 * scale - 4;
-            const openCx = trayLeft + btnWidth * 2;
+            // Center on Group (2nd of 3 buttons); use actual rendered width so it tracks both narrow and wide layouts.
+            const trayButtonWidth = isWide ? btnExpandedWidth : btnWidth;
+            const openCx = trayLeft + trayButtonWidth * 1.5;
             const openCy = trayTop;
             const dx = expanded ? openCx - closedCx : 0;
             const dy = expanded ? openCy - closedCy : 0;
