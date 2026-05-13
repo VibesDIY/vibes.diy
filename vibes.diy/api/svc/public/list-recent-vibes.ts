@@ -126,12 +126,7 @@ export const listRecentVibesEvento: EventoHandler<
           lt(asb.pinnedAt, c.pinnedAt),
           and(eq(asb.pinnedAt, c.pinnedAt), lt(asb.updated, c.updated)),
           and(eq(asb.pinnedAt, c.pinnedAt), eq(asb.updated, c.updated), lt(asb.userSlug, c.userSlug)),
-          and(
-            eq(asb.pinnedAt, c.pinnedAt),
-            eq(asb.updated, c.updated),
-            eq(asb.userSlug, c.userSlug),
-            lt(asb.appSlug, c.appSlug)
-          )
+          and(eq(asb.pinnedAt, c.pinnedAt), eq(asb.updated, c.updated), eq(asb.userSlug, c.userSlug), lt(asb.appSlug, c.appSlug))
         );
         if (tuplePred) conditions.push(tuplePred);
       }
@@ -172,7 +167,7 @@ export const listRecentVibesEvento: EventoHandler<
         };
         if (titleEntry) item.title = titleEntry.title;
         if (icon) item.icon = icon;
-        if (row.pinnedAt) item.pinnedAt = row.pinnedAt;
+        if (row.pinnedAt.length > 0) item.pinnedAt = row.pinnedAt;
         return item;
       });
 
