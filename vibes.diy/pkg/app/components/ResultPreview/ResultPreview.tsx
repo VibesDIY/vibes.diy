@@ -1,6 +1,6 @@
-import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import React, { Suspense, lazy } from "react";
 import { useParams } from "react-router";
-import { isCodeEnd } from "@vibes.diy/call-ai-v2";
+import { useFreshFirstCodegen } from "../../utils/freshFirstCodegen.js";
 import { animationStyles } from "./ResultPreviewTemplates.js";
 import type { ResultPreviewProps } from "../../types/ResultPreviewTypes.js";
 import ClientOnly from "../ClientOnly.js";
@@ -84,22 +84,7 @@ function ResultPreview({ promptState, currentView, children, onCode }: ResultPre
   // The PreviewApp slot stays mounted (hidden behind the code editor) so the
   // iframe pre-loads its pending shell — the flip on first code-end is instant
   // instead of paying a cold-iframe load right after the user sees the code.
-  const slugKey = `${promptState.chat.userSlug}/${promptState.chat.appSlug}`;
-  const [keyedFresh, setKeyedFresh] = useState(() => ({ slugKey, fresh: fsId === undefined }));
-  useEffect(() => {
-    if (keyedFresh.slugKey !== slugKey) {
-      setKeyedFresh({ slugKey, fresh: fsId === undefined });
-    }
-  }, [slugKey, fsId, keyedFresh.slugKey]);
-  const firstCodeEndSeen = useMemo(() => {
-    for (const block of promptState.blocks) {
-      for (const msg of block.msgs) {
-        if (isCodeEnd(msg)) return true;
-      }
-    }
-    return false;
-  }, [promptState.blocks]);
-  const freshFirstCodegen = keyedFresh.fresh && !firstCodeEndSeen;
+  const freshFirstCodegen = useFreshFirstCodegen(promptState, fsId);
   const overrideView = currentView === "preview" && freshFirstCodegen;
 
   const showWelcome = !fsId && !promptState.running && !promptState.hasCode;
