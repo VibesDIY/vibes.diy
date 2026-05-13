@@ -17,7 +17,14 @@ export interface PreAllocateResult {
   pairs: { title: string; slug: string }[];
   iconDescription: string;
   theme?: string;
+  enrichedPrompt?: string;
 }
+
+// Always thread useViewer's docs + import into every generated app. The LLM
+// picks `skills` from the catalog based on the user prompt, but identity /
+// `can("write")` gating is something every app should be able to reach for —
+// not gated on whether the model perceives "sharing" in the prompt.
+const ALWAYS_ON_SKILLS = ["use-viewer"] as const;
 
 const PRE_ALLOC_TIMEOUT_MS = 8000;
 
@@ -84,6 +91,9 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
     if (droppedSkills.length > 0) {
       ensureLogger(vctx.sthis, "preAllocate").Warn().Any({ droppedSkills, validSkills }).Msg("pre-alloc skills missed catalog");
     }
+    for (const s of ALWAYS_ON_SKILLS) {
+      if (catalogNames.has(s) && !validSkills.includes(s)) validSkills.push(s);
+    }
 
     const themeNames = getThemeCatalogNames();
     let validatedTheme: string | undefined;
@@ -95,11 +105,14 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
       }
     }
 
+    const enrichedPrompt = typeof validated.enrichedPrompt === "string" ? validated.enrichedPrompt.trim() : "";
+
     return Result.Ok({
       skills: validSkills,
       pairs: validated.pairs.slice(0, 3),
       iconDescription: validated.iconDescription,
       theme: validatedTheme,
+      enrichedPrompt: enrichedPrompt.length > 0 ? enrichedPrompt : undefined,
     });
   });
 }

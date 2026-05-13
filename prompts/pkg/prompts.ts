@@ -57,7 +57,7 @@ export async function makePreAllocUserMessage(userPrompt: string): Promise<strin
     .map((t) => `- ${t.slug}: ${t.name}${t.bodyFont ? ` (${t.bodyFont.replace(/['"]/g, "").split(",")[0].trim()})` : ""}`)
     .join("\n");
   return [
-    "Pick skills from this catalog that fit the user's app request, propose 3 title/slug pairs for naming, propose a one-line icon subject, and pick a theme that matches the app's mood.",
+    "Pick skills from this catalog that fit the user's app request, propose 3 title/slug pairs for naming, propose a one-line icon subject, pick a theme that matches the app's mood, and write a 3-sentence enriched-prompt preamble that grounds the build in our core platform features for THIS specific app.",
     "",
     "Skill catalog:",
     catalogText,
@@ -106,6 +106,11 @@ export const preAllocSchema = {
       description:
         "Theme slug from the theme catalog above. Pick the one whose mood best fits the app — playful apps lean playful themes, focus/utility apps lean clean themes, retro apps lean retro themes, etc. Always pick something rather than leaving empty; the catalog is broad enough to cover most app moods. Only omit if the request is so abstract that every theme would feel arbitrary.",
     },
+    enrichedPrompt: {
+      type: "string",
+      description:
+        'A 3-sentence preamble that grounds the build in our core platform features for THIS specific app. Sentence 1: name the Fireproof doc shapes that get written (each persisted thing = one doc shape with named fields) and who can see them across viewers. Sentence 2: name the user action that triggers callAI, the exact JSON the callAI schema returns, and what gets saved from that. Sentence 3: name what `useViewer().can("write")` gates (which form / button hides for non-owners) and — only when the app naturally renders generated imagery — what an ImgGen would depict. Be concrete: real field names, real button labels, real multi-user behavior. Never abstract or generic.',
+    },
   },
 } as const;
 
@@ -115,6 +120,7 @@ export const preAllocParsed = type({
   pairs: type({ title: "string", slug: "string" }).array(),
   iconDescription: "string",
   "theme?": "string",
+  "enrichedPrompt?": "string",
 });
 export type PreAllocParsed = typeof preAllocParsed.infer;
 
@@ -302,6 +308,9 @@ export async function makeBaseSystemPrompt(
     : "";
   const userPromptSection = userPrompt ? `${userPrompt}\n\n` : "";
 
+  const enrichedPromptRaw = typeof sessionDoc?.enrichedPrompt === "string" ? sessionDoc.enrichedPrompt.trim() : "";
+  const enrichedPromptSection = enrichedPromptRaw ? `<app-workflow>\n${enrichedPromptRaw}\n</app-workflow>\n\n` : "";
+
   const importStatements = `import React from "react"${generateImportStatements(chosenLlms)}`;
 
   const templateFilename = sessionDoc?.variant === "initial" ? "system-prompt-initial.md" : "system-prompt.md";
@@ -312,6 +321,7 @@ export async function makeBaseSystemPrompt(
     .replaceAll("{{CONCATENATED_LLMS}}", concatenatedLlmsTxt)
     .replaceAll("{{THEME_DESIGN}}", themeDesignSection)
     .replaceAll("{{TITLE_SECTION}}", titleSection)
+    .replaceAll("{{ENRICHED_PROMPT}}", enrichedPromptSection)
     .replaceAll("{{USER_PROMPT}}", userPromptSection)
     .replaceAll("{{IMPORT_STATEMENTS}}", importStatements);
 
@@ -378,7 +388,6 @@ export async function getCliFooter(): Promise<string> {
   }
   return rText.Ok();
 }
-
 
 export async function getSkillText(name: string): Promise<string> {
   const rText = await keyedLoadAsset.get(name).once(async () => {

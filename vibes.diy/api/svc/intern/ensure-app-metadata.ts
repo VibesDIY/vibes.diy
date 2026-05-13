@@ -2,6 +2,7 @@ import { exception2Result, Result } from "@adviser/cement";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { ensureLogger } from "@fireproof/core-runtime";
 import {
+  ActiveEnrichedPrompt,
   ActiveEntry,
   ActiveIconDescription,
   ActiveSkills,
@@ -74,12 +75,14 @@ export async function ensureAppMetadata(
   const title = pre.pairs[0]?.title;
   const skills = pre.skills;
   const iconDescription = pre.iconDescription;
+  const enrichedPrompt = pre.enrichedPrompt;
 
   const newEntries: ActiveEntry[] = [];
   if (title) newEntries.push({ type: "active.title", title } satisfies ActiveTitle);
   if (skills && skills.length > 0) newEntries.push({ type: "active.skills", skills } satisfies ActiveSkills);
   if (iconDescription)
     newEntries.push({ type: "active.icon-description", description: iconDescription } satisfies ActiveIconDescription);
+  if (enrichedPrompt) newEntries.push({ type: "active.enriched-prompt", enrichedPrompt } satisfies ActiveEnrichedPrompt);
 
   if (newEntries.length === 0) {
     return Result.Ok({ generated: false });

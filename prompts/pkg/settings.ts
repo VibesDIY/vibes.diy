@@ -26,6 +26,9 @@ export interface UserSettings {
   /** Human-readable app title (from pre-allocation or user edit). */
   title?: string;
 
+  /** Enriched 3-sentence preamble synthesized at pre-allocation. Threads into the system prompt as <app-workflow>. */
+  enrichedPrompt?: string;
+
   /** Whether to include a demo-data button. Default false. */
   demoData?: boolean;
 }
