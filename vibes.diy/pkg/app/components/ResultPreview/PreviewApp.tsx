@@ -12,15 +12,16 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
   const { webVars: svcVars, srvVibeSandbox } = useVibesDiy();
 
-  // Pin the iframe URL once per (userSlug,appSlug) for the lifetime of the
-  // mount. Two valid initial states:
+  // Pin the iframe URL per (userSlug,appSlug). Two valid initial states:
   //   1. URL has fsId at mount → pin to it; iframe loads that fsId.
   //   2. URL has no fsId at mount → pinnedFsId stays undefined; iframe loads
-  //      the server's "pending" shell. Subsequent fsId arrivals (autosave) do
-  //      NOT update pinnedFsId — hot-swap has already mounted content into
-  //      the pending iframe, so reloading to the autosave fsId would discard
-  //      everything streamed in.
-  // Only cross-vibe navigation (different slug pair) re-pins.
+  //      the server's "pending" shell, then hot-swap installs streamed code
+  //      into the live DOM.
+  // Mid-stream we deliberately do NOT touch pinnedFsId (it would reload the
+  // iframe and discard the hot-swapped DOM). At end-of-stream we DO repoint
+  // pinnedFsId for case (1) only — see the end-of-stream effect below — so
+  // an iteration on an existing chat picks up the server's canonical bundle.
+  // Cross-vibe navigation (different slug pair) re-pins from scratch.
   const [pinnedFsId, setPinnedFsId] = useState<string | undefined>(fsId);
   const [pinnedKey, setPinnedKey] = useState<string>(`${userSlug}/${appSlug}`);
   useEffect(() => {
@@ -144,17 +145,21 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     wasRunningRef.current = promptState.running;
   }, [promptState.running, firstStreamDone]);
 
-  // At end-of-stream, repoint the iframe at the server-side merged fsId. The
-  // hot-swap during streaming installs the client-resolved buffer in the live
-  // DOM; once the server-side resolver has stamped a new fsRef on the LLM
-  // turn's block.end, we want the iframe to reload from the canonical bundle
-  // so the iframe URL matches the URL navigation. Mid-stream we skip this —
-  // reloading would discard the in-progress hot-swapped DOM.
+  // At end-of-stream, repoint the iframe at the server-side merged fsId — but
+  // only when the iframe was already pinned to an fsId at mount (an iteration
+  // on an existing chat). For a fresh-chat first codegen (pinnedFsId === undefined)
+  // the iframe loaded the pending shell and has been hot-swapped with the
+  // resolved buffer; reloading it to the new fsId here would cause a visible
+  // flash to a blank iframe while the canonical bundle reloads cold. The URL
+  // navigation in chat.tsx still records the new fsId so reload behaves
+  // correctly. Mid-stream we always skip — a reload would discard the
+  // in-progress hot-swapped DOM.
   const streamingRef = useRef(false);
   useEffect(() => {
     const justEnded = streamingRef.current && !promptState.running;
     streamingRef.current = promptState.running;
     if (!justEnded) return;
+    if (pinnedFsId === undefined) return;
     for (let i = promptState.blocks.length - 1; i >= 0; i -= 1) {
       const block = promptState.blocks[i];
       for (const msg of block.msgs) {
@@ -220,7 +225,17 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
           style={
             showBlur && blurPx >= 0.01
               ? { backdropFilter: `blur(${blurStr}px)`, WebkitBackdropFilter: `blur(${blurStr}px)` }
-              : undefined
+              : {
+                  // No active blur ramp (subsequent regens, or first codegen
+                  // after the ramp decayed below 0.01px). Keep a faint
+                  // animated stripe so the user still sees an "updating"
+                  // affordance — fully transparent would land as silent
+                  // unclickability and defeat the watermark intent.
+                  backgroundImage:
+                    "repeating-linear-gradient(135deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 12px, transparent 12px, transparent 24px)",
+                  backgroundSize: "40px 40px",
+                  animation: "moving-stripes 1s linear infinite",
+                }
           }
         />
       )}
