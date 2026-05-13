@@ -1,7 +1,7 @@
 import { useParams } from "react-router";
 import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { isCodeEnd } from "@vibes.diy/call-ai-v2";
+import { isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { BuildURI, URI } from "@adviser/cement";
 import { toast } from "react-hot-toast";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
@@ -149,6 +149,28 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     }
     wasRunningRef.current = promptState.running;
   }, [promptState.running, firstStreamDone]);
+
+  // At end-of-stream, repoint the iframe at the server-side merged fsId. The
+  // hot-swap during streaming installs the client-resolved buffer in the live
+  // DOM; once the server-side resolver has stamped a new fsRef on the LLM
+  // turn's block.end, we want the iframe to reload from the canonical bundle
+  // so the iframe URL matches the URL navigation. Mid-stream we skip this —
+  // reloading would discard the in-progress hot-swapped DOM.
+  const streamingRef = useRef(false);
+  useEffect(() => {
+    const justEnded = streamingRef.current && !promptState.running;
+    streamingRef.current = promptState.running;
+    if (!justEnded) return;
+    for (let i = promptState.blocks.length - 1; i >= 0; i -= 1) {
+      const block = promptState.blocks[i];
+      for (const msg of block.msgs) {
+        if (isBlockEnd(msg) && msg.fsRef && msg.fsRef.fsId !== pinnedFsId) {
+          setPinnedFsId(msg.fsRef.fsId);
+          return;
+        }
+      }
+    }
+  }, [promptState.running, promptState.blocks, pinnedFsId]);
   const blurPx = useMemo(() => {
     let b = 50;
     for (let i = 0; i < hotSwapCount; i++) b *= 0.75;
