@@ -129,7 +129,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
 
   // Preview-blur ramp: only on the first codegen of a brand-new chat or
   // remix — i.e. the pinned chat mounted with no fsId in the URL. Starts at
-  // 50px and multiplies by 0.8 per hot-swap (no floor, no rounding — can
+  // 50px and multiplies by 0.75 per hot-swap (no floor, no rounding — can
   // decay below 1px). Once that first stream finishes, the overlay never
   // appears again for this pinning. Cross-vibe nav resets the gate.
   const [hotSwapCount, setHotSwapCount] = useState(0);
