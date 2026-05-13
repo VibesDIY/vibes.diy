@@ -58,7 +58,6 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
       bindings: { appSlug, userSlug, ...(pinnedFsId ? { fsId: pinnedFsId } : {}) },
     });
     const url = BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
-    console.log("[hot-swap] previewUrl computed", { pinnedFsId, urlFsId: fsId, url: url.toString() });
     return url;
   }, [pinnedFsId, userSlug, appSlug, fsId]);
 
@@ -116,14 +115,9 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     // to a few bytes and never form a valid module — skip pushes that
     // obviously can't be a React component.
     if (resolved.length < 200 || !resolved.includes("export default")) {
-      console.log("[hot-swap] pushSource skipped (size/export gate)", {
-        len: resolved.length,
-        hasExport: resolved.includes("export default"),
-      });
       return;
     }
     const ok = srvVibeSandbox.pushSource(resolved);
-    console.log("[hot-swap] pushSource", { ok, len: resolved.length, blockId: latestBlockId });
     if (ok) setHotSwapCount((c) => c + 1);
   }, [promptState.blocks, srvVibeSandbox]);
 
