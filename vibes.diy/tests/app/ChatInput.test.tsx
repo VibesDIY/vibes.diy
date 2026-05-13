@@ -39,7 +39,7 @@ describe("ChatInput Component", () => {
     expect(onSubmit).toHaveBeenCalledWith("Hello world");
   });
 
-  it("disables send button when promptProcessing is true", () => {
+  it("keeps textarea typeable but disables send while promptProcessing is true", () => {
     render(
       <MockThemeProvider>
         <ChatInput promptProcessing={true} onSubmit={onSubmit} />
@@ -49,7 +49,9 @@ describe("ChatInput Component", () => {
     const textArea = screen.getByPlaceholderText("I want to build...");
     const sendButton = screen.getByLabelText("Processing");
 
-    expect(textArea).toBeDisabled();
+    // Compose-only: user can type their next message while a stream runs, but
+    // the send path stays gated until processing ends.
+    expect(textArea).not.toBeDisabled();
     expect(sendButton).toBeDisabled();
 
     fireEvent.click(sendButton);
