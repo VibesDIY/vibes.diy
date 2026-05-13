@@ -124,44 +124,27 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     }
     const ok = srvVibeSandbox.pushSource(resolved);
     console.log("[hot-swap] pushSource", { ok, len: resolved.length, blockId: latestBlockId });
+    if (ok) setHotSwapCount((c) => c + 1);
   }, [promptState.blocks, srvVibeSandbox]);
 
-  // Track the count of search/replace edits seen during the active stream so
-  // the preview-blur can ramp down: starts at 100px, multiplied by 0.9 (floor)
-  // per new edit, clamped at 1px. Resets on each running:false→true edge.
-  // __aiderEditsDebug.sections accumulates across the whole session, so on a
-  // fresh stream we capture the current total as a baseline and only count
-  // edits past it — otherwise blur would stay stuck low after the first run.
-  const [editSegCount, setEditSegCount] = useState(0);
+  // Preview-blur ramp: starts at 100px and steps down 0.9× (floor, clamped at
+  // 1px) per hot-swap push during an active stream. Resets on each
+  // running:false→true edge so each prompt starts fully blurred.
+  const [hotSwapCount, setHotSwapCount] = useState(0);
   const wasRunningRef = useRef(false);
-  const baselineEditsRef = useRef(0);
-  const readTotalEdits = () => {
-    const dbg = (
-      window as unknown as {
-        __aiderEditsDebug?: { sections?: { parsedEdits: unknown[] }[] };
-      }
-    ).__aiderEditsDebug;
-    return dbg?.sections?.reduce((acc, s) => acc + s.parsedEdits.length, 0) ?? 0;
-  };
   useEffect(() => {
     if (promptState.running && !wasRunningRef.current) {
-      baselineEditsRef.current = readTotalEdits();
-      setEditSegCount(0);
+      setHotSwapCount(0);
     }
     wasRunningRef.current = promptState.running;
   }, [promptState.running]);
-  useEffect(() => {
-    if (!promptState.running) return;
-    const delta = Math.max(0, readTotalEdits() - baselineEditsRef.current);
-    setEditSegCount((prev) => (delta > prev ? delta : prev));
-  }, [promptState.blocks, promptState.running]);
   const blurPx = useMemo(() => {
     let b = 100;
-    for (let i = 0; i < editSegCount; i++) {
+    for (let i = 0; i < hotSwapCount; i++) {
       b = Math.max(1, Math.floor(b * 0.9));
     }
     return b;
-  }, [editSegCount]);
+  }, [hotSwapCount]);
 
   // Toast when the iframe rejects a hot-swap source (sucrase transform fail,
   // dynamic import fail, mountVibe throw). The iframe keeps showing the
