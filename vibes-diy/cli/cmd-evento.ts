@@ -1,6 +1,7 @@
 import { Evento, EventoResult, EventoResultType, HandleTriggerCtx, Result } from "@adviser/cement";
 import { userSettingsEvento } from "./cmds/user-settings-cmd.js";
 import { skillsEvento } from "./cmds/skills-cmd.js";
+import { themesEvento } from "./cmds/themes-cmd.js";
 import { systemEvento } from "./cmds/system-cmd.js";
 import { pushEvento } from "./cmds/push-cmd.js";
 import { putAssetEvento } from "./cmds/put-asset-cmd.js";
@@ -44,6 +45,7 @@ export function cmdTsEvento() {
   evento.push([
     userSettingsEvento,
     skillsEvento,
+    themesEvento,
     systemEvento,
     pushEvento,
     putAssetEvento,

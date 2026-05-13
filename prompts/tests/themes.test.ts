@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   getThemeBySlug,
   getThemeCatalogNames,
+  getThemeText,
   makeBaseSystemPrompt,
   parseDesignMd,
   preAllocParsed,
@@ -33,6 +34,14 @@ describe("theme catalog", () => {
   it("getThemeBySlug returns the theme or undefined", () => {
     expect(getThemeBySlug(vibesThemes[0].slug)?.slug).toBe(vibesThemes[0].slug);
     expect(getThemeBySlug("does-not-exist")).toBeUndefined();
+  });
+});
+
+describe("getThemeText", () => {
+  it("loads the markdown body for a known theme slug", async () => {
+    const text = await getThemeText("atlas");
+    expect(typeof text).toBe("string");
+    expect(text.trim().length).toBeGreaterThan(0);
   });
 });
 
