@@ -441,7 +441,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     })();
   }, [fsId, userSlug, appSlug, vibeDiyApi]);
 
-
   useEffect(() => {
     if (inConstruction) return;
     if (openingRef.current) {
@@ -717,17 +716,36 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     }
   }, [promptState.running, promptState.blocks, searchParams, navigate, userSlug, appSlug]);
 
+  // Clear the chat input when a stream ends so a new prompt starts blank.
   useEffect(() => {
     if (inConstruction) return;
+    if (!promptState.running && chatInput.current) {
+      chatInput.current.setPrompt("");
+    }
+  }, [promptState.running, inConstruction]);
+
+  // On mobile (chat and preview not visible simultaneously), stay on chat
+  // view while the LLM is planning so the user can watch the explanation
+  // stream in, then auto-flip to preview when the FIRST code block of the
+  // current stream begins. Resets per running cycle so follow-up prompts
+  // also see the chat→preview transition (hasCode would stay true forever
+  // once first set, and miss the second turn's code-begin entirely).
+  const sawCodeBeginThisRunRef = useRef(false);
+  useEffect(() => {
+    if (inConstruction) return;
+    if (!promptState.running) {
+      sawCodeBeginThisRunRef.current = false;
+      return;
+    }
+    if (sawCodeBeginThisRunRef.current) return;
+    const last = promptState.blocks[promptState.blocks.length - 1];
+    if (last === undefined) return;
+    if (!last.msgs.some((m) => isCodeBegin(m))) return;
+    sawCodeBeginThisRunRef.current = true;
     if (isMobileViewport()) {
       setMobilePreviewShown(true);
     }
-    if (!promptState.running && chatInput.current) {
-      chatInput.current.setPrompt("");
-      return;
-    }
-    // if (promptState.current)
-  }, [promptState.running]);
+  }, [promptState.running, promptState.blocks, inConstruction]);
 
   // console.log(`Rendering Chat with state:`, { currentView, editorState: editorState.state });
 
@@ -763,7 +781,9 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             myGrant={isOwner ? "owner" : "none"}
           />
         }
-        chatPanel={<ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} onSelectOption={handleSelectOption} />}
+        chatPanel={
+          <ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} onSelectOption={handleSelectOption} />
+        }
         previewPanel={<ResultPreview promptState={promptState} currentView={currentView} onCode={handleOnCode} />}
         chatInput={
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
