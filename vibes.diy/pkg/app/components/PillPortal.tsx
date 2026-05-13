@@ -22,6 +22,7 @@ export function PillPortal({ isActive, onToggle, mobilePreviewShown = false }: P
 
   return createPortal(
     <div
+      data-sidebar-toggle="true"
       className={mobilePreviewShown ? "hidden md:block" : ""}
       style={{
         position: "fixed",
