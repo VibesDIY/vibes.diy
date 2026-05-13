@@ -21,11 +21,12 @@ describe("system prompt templates", () => {
     }
   });
 
-  it("initial template has scaffold + tiny-edits markers", () => {
+  it("initial template has scaffold + feature-pass markers", () => {
     // First-turn variant: one full-file scaffold (no SEARCH/REPLACE) then
-    // a long stream of small SEARCH/REPLACE edits with prose between.
+    // 3–4 feature-complete SEARCH/REPLACE passes with prose between.
     expect(systemPromptInitialTemplate).toMatch(/scaffold/i);
-    expect(systemPromptInitialTemplate).toMatch(/tiny edits/i);
+    expect(systemPromptInitialTemplate).toMatch(/feature[- ]complete/i);
+    expect(systemPromptInitialTemplate).toMatch(/feature passes/i);
     expect(systemPromptInitialTemplate).toMatch(/SEARCH\/REPLACE/);
     expect(systemPromptInitialTemplate).toMatch(/first turn/i);
     // Color-only-after-scaffold rule (zero color tokens in the create block).
@@ -34,15 +35,14 @@ describe("system prompt templates", () => {
 
   it("continuation template lacks first-turn-only markers", () => {
     expect(systemPromptTemplate).not.toMatch(/first turn/i);
-    expect(systemPromptTemplate).not.toMatch(/tiny edits/i);
+    expect(systemPromptTemplate).not.toMatch(/feature passes/i);
   });
 
-  it("both templates carry the small-chunk guidance", () => {
-    // Both modes recommend small SEARCH/REPLACE pairs (continuation always,
-    // initial after the scaffold). The "≤25 line" / "under ~25 lines"
-    // wording shows up in both.
+  it("continuation template carries the small-chunk guidance", () => {
+    // Continuation mode recommends small SEARCH/REPLACE pairs (≤25 lines).
+    // Initial mode now uses section-sized passes instead, so the 25-line
+    // ceiling no longer applies there.
     expect(systemPromptTemplate).toMatch(/25 lines/);
-    expect(systemPromptInitialTemplate).toMatch(/25 lines/);
   });
 });
 
@@ -54,23 +54,23 @@ describe("makeBaseSystemPrompt variant routing", () => {
     pkgBaseUrl: "https://example.test/@vibes.diy/prompts/",
   };
 
-  it("variant=initial → output contains first-turn scaffold + tiny-edits markers", async () => {
+  it("variant=initial → output contains first-turn scaffold + feature-pass markers", async () => {
     const result = await makeBaseSystemPrompt("test-model", { ...baseOpts, variant: "initial" });
     expect(result.systemPrompt).toMatch(/first turn/i);
-    expect(result.systemPrompt).toMatch(/tiny edits/i);
+    expect(result.systemPrompt).toMatch(/feature passes/i);
     expect(result.systemPrompt).toMatch(/ZERO color tokens/i);
   });
 
   it("variant=continuation → does not", async () => {
     const result = await makeBaseSystemPrompt("test-model", { ...baseOpts, variant: "continuation" });
     expect(result.systemPrompt).not.toMatch(/first turn/i);
-    expect(result.systemPrompt).not.toMatch(/tiny edits/i);
+    expect(result.systemPrompt).not.toMatch(/feature passes/i);
   });
 
   it("no variant → defaults to continuation", async () => {
     const result = await makeBaseSystemPrompt("test-model", baseOpts);
     expect(result.systemPrompt).not.toMatch(/first turn/i);
-    expect(result.systemPrompt).not.toMatch(/tiny edits/i);
+    expect(result.systemPrompt).not.toMatch(/feature passes/i);
   });
 
   it("image-gen skill picks up the ImgGen docs (not legacy ImgVibes)", async () => {
