@@ -171,7 +171,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     }
   }, [promptState.running, promptState.blocks, pinnedFsId]);
   const blurPx = useMemo(() => {
-    let b = 50;
+    let b = 25;
     for (let i = 0; i < hotSwapCount; i++) b *= 0.75;
     return b;
   }, [hotSwapCount]);
