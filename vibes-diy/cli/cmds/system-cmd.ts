@@ -14,7 +14,7 @@ import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 
 export const ResSystem = type({
-  type: "'use-vibes.cli.res-system'",
+  type: "'vibes-diy.cli.res-system'",
   systemPrompt: "string",
 });
 export type ResSystem = typeof ResSystem.infer;
@@ -24,7 +24,7 @@ export function isResSystem(obj: unknown): obj is ResSystem {
 }
 
 export const ReqSystem = type({
-  type: "'use-vibes.cli.system'",
+  type: "'vibes-diy.cli.system'",
 });
 export type ReqSystem = typeof ReqSystem.infer;
 
@@ -33,7 +33,7 @@ export function isReqSystem(obj: unknown): obj is ReqSystem {
 }
 
 export const systemEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqSystem, ResSystem> = {
-  hash: "use-vibes.cli.system",
+  hash: "vibes-diy.cli.system",
   validate: (ctx: ValidateTriggerCtx<WrapCmdTSMsg<unknown>, ReqSystem, ResSystem>) => {
     if (isReqSystem(ctx.enRequest)) {
       return Promise.resolve(Result.Ok(Option.Some(ctx.enRequest)));
@@ -53,7 +53,7 @@ export const systemEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqSystem, ResSy
     const rFooter = await exception2Result(() => getCliFooter());
     const footer = rFooter.isOk() ? "\n" + rFooter.Ok() : "";
     return sendMsg(ctx, {
-      type: "use-vibes.cli.res-system",
+      type: "vibes-diy.cli.res-system",
       systemPrompt: rPrompt.Ok().systemPrompt + footer,
     } satisfies ResSystem);
   },
@@ -67,7 +67,7 @@ export function systemCmd(ctx: CliCtx) {
       ...cmdTsDefaultArgs(ctx),
     },
     handler: ctx.cliStream.enqueue((_args) => {
-      return { type: "use-vibes.cli.system" } satisfies ReqSystem;
+      return { type: "vibes-diy.cli.system" } satisfies ReqSystem;
     }),
   });
 }

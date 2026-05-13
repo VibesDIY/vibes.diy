@@ -24,7 +24,7 @@ import { formatErr } from "./format-err.js";
 import { formatNoFilesError } from "./format-no-files-error.js";
 
 export const ResEdit = type({
-  type: "'use-vibes.cli.res-edit'",
+  type: "'vibes-diy.cli.res-edit'",
   appSlug: "string",
   userSlug: "string",
   url: "string",
@@ -37,7 +37,7 @@ export function isResEdit(obj: unknown): obj is ResEdit {
 }
 
 export const ReqEdit = type({
-  type: "'use-vibes.cli.edit'",
+  type: "'vibes-diy.cli.edit'",
   appSlug: "string",
   prompt: "string",
   userSlug: "string",
@@ -158,7 +158,7 @@ export async function readSeedFilesFromDir(dir: string): Promise<Result<Readonly
 }
 
 export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit | ResEnsureAppSlug> = {
-  hash: "use-vibes.cli.edit",
+  hash: "vibes-diy.cli.edit",
   validate: (ctx: ValidateTriggerCtx<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit | ResEnsureAppSlug>) => {
     if (isReqEdit(ctx.enRequest)) {
       return Promise.resolve(Result.Ok(Option.Some(ctx.enRequest)));
@@ -170,7 +170,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
   ): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
     if (ectx.vibesDiyApiFactory === undefined) {
-      return Result.Err("Not logged in. Run 'use-vibes login' first.");
+      return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
@@ -212,7 +212,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
         : JSON.stringify({ model: payload.model, messages: payload.messages }, null, 2);
       process.stdout.write(out + "\n");
       return sendMsg(ctx, {
-        type: "use-vibes.cli.res-edit",
+        type: "vibes-diy.cli.res-edit",
         appSlug: chat.appSlug,
         userSlug: chat.userSlug,
         url: "",
@@ -361,7 +361,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     await sendProgress(ctx, "info", `Updated: ${dir}`);
 
     return sendMsg(ctx, {
-      type: "use-vibes.cli.res-edit",
+      type: "vibes-diy.cli.res-edit",
       appSlug: pushAppSlug,
       userSlug: pushUserSlug,
       url: rPush.Ok().publicUrl,
@@ -429,7 +429,7 @@ export function editCmd(ctx: CliCtx) {
       // `--focus` isn't passed makes ReqEdit validation silently miss and the
       // evento dispatcher drop the message with no error — a silent exit 0
       // for every default-flag CLI edit. Only include the key when defined.
-      const base = { type: "use-vibes.cli.edit" as const, ...args };
+      const base = { type: "vibes-diy.cli.edit" as const, ...args };
       return args.focus === undefined ? base : { ...base, focusPath: args.focus };
     }),
   });

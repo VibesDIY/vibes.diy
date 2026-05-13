@@ -288,7 +288,7 @@ async function main(): Promise<number> {
 
 main()
   .catch((e) => {
-    console.error("Error in use-vibes cli:", e);
+    console.error("Error in vibes-diy cli:", e);
     process.exit(1);
   })
   .then((code) => process.exit(code));

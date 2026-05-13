@@ -6,6 +6,6 @@ describe("cmdTsEvento", () => {
     const handlers = cmdTsEvento()
       .handlers()
       .actions.map((h) => h.hash);
-    expect(handlers).toContain("use-vibes.cli.edit");
+    expect(handlers).toContain("vibes-diy.cli.edit");
   });
 });
