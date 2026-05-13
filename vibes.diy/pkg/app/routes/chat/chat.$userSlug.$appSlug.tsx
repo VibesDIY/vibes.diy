@@ -37,8 +37,6 @@ import { notifyRecentVibesChanged } from "../../hooks/useRecentVibes.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { EditorState, isEditorStateEdit } from "../../types/code-editor.js";
-import { getCode } from "../../components/ResultPreview/CodeEditor.js";
-import { shouldAgentAutosave } from "../../components/ResultPreview/agent-autosave.js";
 
 interface VibeAppContextMenuProps {
   x: number;
@@ -682,85 +680,25 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   // in the URL, navigate to it so the iframe can load immediately rather than
   // waiting for end-of-turn autosave (which only fires for SEARCH/REPLACE
   // turns). After navigation `fsId` is set, so the effect bails on subsequent
-  // blocks.
+  // blocks. The server-side resolver merges and persists App.jsx on each LLM
+  // turn's block.end and stamps fsRef on that block, so we just point the URL
+  // at the most recent fsRef. Initial mount won't re-navigate to the URL's own
+  // fsId — the ref is seeded from it.
+  const lastNavigatedFsIdRef = useRef<string | undefined>(fsId);
   useEffect(() => {
-    if (fsId) return;
-    for (const block of promptState.blocks) {
+    for (let i = promptState.blocks.length - 1; i >= 0; i -= 1) {
+      const block = promptState.blocks[i];
       for (const msg of block.msgs) {
         if (isBlockEnd(msg) && msg.fsRef) {
-          const sp = new URLSearchParams(searchParams);
-          if (!sp.has("view")) sp.set("view", "preview");
-          navigate({ pathname: `/chat/${userSlug}/${appSlug}/${msg.fsRef.fsId}`, search: sp.toString() }, { replace: true });
+          const newFsId = msg.fsRef.fsId;
+          if (newFsId !== lastNavigatedFsIdRef.current) {
+            lastNavigatedFsIdRef.current = newFsId;
+            const sp = new URLSearchParams(searchParams);
+            if (!sp.has("view")) sp.set("view", "preview");
+            navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
+          }
           return;
         }
-      }
-    }
-  }, [promptState.blocks, fsId, searchParams, navigate, userSlug, appSlug]);
-
-  // Agent autosave: when an LLM turn that emitted SEARCH/REPLACE edits
-  // finishes streaming, persist the resolved buffer via the same promptFS
-  // path the manual save uses. Tag the resulting block so MessageList shows
-  // "Agent saved code" instead of "User edited code".
-  const wasRunningRef = useRef(false);
-  // Index of the first block we should consider "future" relative to an armed
-  // autosave. The matcher dispatches markAgentSaved on the first block.end
-  // with fsRef at or beyond this index. Avoids the streamId race we saw when
-  // chat.promptFS().then() resolved after the autosave's own block.end had
-  // already been ingested.
-  const agentAutosaveFromIdxRef = useRef<number | null>(null);
-  useEffect(() => {
-    const wasRunning = wasRunningRef.current;
-    wasRunningRef.current = promptState.running;
-    if (!wasRunning || promptState.running) return;
-    if (!chat) return;
-    const last = promptState.blocks[promptState.blocks.length - 1];
-    if (!last || !shouldAgentAutosave(last.msgs)) return;
-    // Pass undefined so getCode returns the live cumulative source after all
-    // streamed edits, not the snapshot pinned to the prior fsId (which would
-    // be the pre-edit version and persist nothing).
-    const resolved = getCode(promptState).code.join("\n");
-    if (resolved.length === 0) return;
-    // Arm the matcher BEFORE the network call so the first block.end with
-    // fsRef that arrives on the autosave's stream is consumed regardless of
-    // when the promptFS promise resolves.
-    agentAutosaveFromIdxRef.current = promptState.blocks.length;
-    chat
-      .promptFS([
-        {
-          type: "code-block",
-          filename: "/App.jsx",
-          lang: "jsx",
-          content: resolved,
-        },
-      ])
-      .then((r) => {
-        if (r.isErr()) {
-          console.warn("[agent-autosave] failed", r.Err());
-          agentAutosaveFromIdxRef.current = null;
-          return;
-        }
-        console.log("[agent-autosave] saved", { promptId: r.Ok().promptId, len: resolved.length });
-        notifyRecentVibesChanged();
-      });
-  }, [promptState.running, promptState.blocks, chat, fsId]);
-
-  // After the agent autosave fires we mark the first new block.end (with an
-  // fsRef) as agent-saved and navigate to its fsId so the iframe loads the
-  // resolved file. Matching by index rather than streamId avoids the race
-  // where promptFS's then() resolves after the block.end has been ingested.
-  useEffect(() => {
-    const fromIdx = agentAutosaveFromIdxRef.current;
-    if (fromIdx === null) return;
-    for (let i = fromIdx; i < promptState.blocks.length; i += 1) {
-      const block = promptState.blocks[i];
-      const blockEnd = block.msgs.find((m) => isBlockEnd(m));
-      if (blockEnd && isBlockEnd(blockEnd) && blockEnd.fsRef) {
-        agentAutosaveFromIdxRef.current = null;
-        dispatch({ type: "markAgentSaved", blockId: blockEnd.blockId });
-        const sp = new URLSearchParams(searchParams);
-        if (!sp.has("view")) sp.set("view", "preview");
-        navigate({ pathname: `/chat/${userSlug}/${appSlug}/${blockEnd.fsRef.fsId}`, search: sp.toString() }, { replace: true });
-        return;
       }
     }
   }, [promptState.blocks, searchParams, navigate, userSlug, appSlug]);
