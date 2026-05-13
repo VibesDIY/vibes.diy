@@ -679,13 +679,20 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   // scaffold block it emits block.end with fsRef.fsId. If we still have no fsId
   // in the URL, navigate to it so the iframe can load immediately rather than
   // waiting for end-of-turn autosave (which only fires for SEARCH/REPLACE
-  // turns). After navigation `fsId` is set, so the effect bails on subsequent
-  // blocks. The server-side resolver merges and persists App.jsx on each LLM
-  // turn's block.end and stamps fsRef on that block, so we just point the URL
-  // at the most recent fsRef. Initial mount won't re-navigate to the URL's own
-  // fsId — the ref is seeded from it.
+  // turns). The server-side resolver merges and persists App.jsx on each LLM
+  // turn's block.end and stamps fsRef on that block, so at end-of-stream we
+  // point the URL at the most recent fsRef.
+  //
+  // Only fires on a running:true→false transition. Without that gate, the
+  // effect would run for every promptState.blocks mutation — including the
+  // initial server-replay of an old chat — and yank the user off whatever
+  // historical fsId they intentionally opened.
   const lastNavigatedFsIdRef = useRef<string | undefined>(fsId);
+  const navWasRunningRef = useRef(false);
   useEffect(() => {
+    const justEnded = navWasRunningRef.current && !promptState.running;
+    navWasRunningRef.current = promptState.running;
+    if (!justEnded) return;
     for (let i = promptState.blocks.length - 1; i >= 0; i -= 1) {
       const block = promptState.blocks[i];
       for (const msg of block.msgs) {
@@ -701,7 +708,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         }
       }
     }
-  }, [promptState.blocks, searchParams, navigate, userSlug, appSlug]);
+  }, [promptState.running, promptState.blocks, searchParams, navigate, userSlug, appSlug]);
 
   useEffect(() => {
     if (inConstruction) return;
