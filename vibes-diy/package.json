@@ -5,7 +5,8 @@
   "main": "./index.js",
   "description": "Transform any DOM element into an AI-powered micro-app",
   "bin": {
-    "vibes-diy": "cli/run.js"
+    "vibes-diy": "cli/run.js",
+    "use-vibes": "cli/run.js"
   },
   "scripts": {
     "build": "core-cli tsc",
