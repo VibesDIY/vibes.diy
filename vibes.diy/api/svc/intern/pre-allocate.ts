@@ -60,7 +60,9 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
           model: appDefault.id,
           endpoint: vctx.params.llm.url,
           apiKey: vctx.params.llm.apiKey,
-          schema: preAllocSchema,
+          // preAllocSchema is `as const`, so its `required` is readonly. call-ai's
+          // Schema expects mutable string[] — copy at the boundary.
+          schema: { ...preAllocSchema, required: [...preAllocSchema.required] },
         }),
         timeout,
       ])
