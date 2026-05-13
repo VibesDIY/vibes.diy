@@ -103,6 +103,23 @@ describe("preAllocParsed", () => {
     });
     expect(ok instanceof type.errors).toBe(false);
   });
+
+  it("accepts a response missing enrichedPrompt", () => {
+    // Under Claude tool_mode the schema's `required: ["enrichedPrompt"]` is
+    // best-effort, not enforced. Validation must still accept the response so
+    // we keep skills (esp. use-viewer) — rejecting the whole turn over a
+    // missing preamble means the generated vibe never imports useViewer and
+    // every viewer's `can("write")` defaults to false. Regression caught:
+    // tightening this to required broke owner-write affordances in /chat/
+    // because the chat path runs pre-alloc anew on a fresh chat.
+    const ok = preAllocParsed({
+      skills: ["fireproof", "use-viewer"],
+      pairs: [{ title: "Test", slug: "test" }],
+      iconDescription: "a fox",
+      theme: "atlas",
+    });
+    expect(ok instanceof type.errors).toBe(false);
+  });
 });
 
 describe("makeBaseSystemPrompt theme injection", () => {
