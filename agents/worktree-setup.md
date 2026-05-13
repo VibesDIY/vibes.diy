@@ -63,3 +63,28 @@ ps -o pid,command -p "$PID"
 ```
 
 If the COMMAND points at the wrong checkout, you're testing the other branch. Don't trust the URL alone.
+
+## 5. Verify cwd before any git operation
+
+Long sessions in worktrees drift. A subshell `cd` for a single command, an earlier `cd /tmp/check-…` that you forgot about, a script that resets cwd — and suddenly `git tag`, `git commit`, or `git push` is operating against the canonical checkout (which may be on someone else's PR branch). The blast radius is largest with **tags and force-pushes**, both of which take effect immediately and globally:
+
+- **Tagging deploys (`vibes-diy@c*`, `vibes-diy@p*`):** `git tag -a` with no ref tags `HEAD`. A wrong HEAD means the tag points at unrelated code, the CLI/prod environment deploys that unrelated code, and (per the immutability rule) you cannot fix the tag — you bump and re-tag, leaving a wasted deploy in history.
+- **Force-pushes:** `git push --force-with-lease` from the wrong worktree can clobber the wrong remote branch.
+
+Before any tag or force-push, run a one-liner to confirm cwd + branch + HEAD:
+
+```sh
+echo "pwd: $(pwd)"
+echo "branch: $(git branch --show-current)"
+echo "HEAD: $(git rev-parse HEAD) — $(git log -1 --pretty=%s)"
+```
+
+Compare against your intent. If the branch or HEAD subject doesn't match what you expect to be tagging, **stop** — find the right worktree first (`git worktree list`), `cd` into it, re-verify, then tag.
+
+In practice the safest pattern is to always pass an explicit ref:
+
+```sh
+git tag -a vibes-diy@cX.Y.Z <full-sha-or-branch> -m "..."
+```
+
+That way an absentminded cwd can't tag the wrong commit even when HEAD has drifted.
