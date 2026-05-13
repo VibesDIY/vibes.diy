@@ -15,6 +15,7 @@ import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { toast } from "react-hot-toast";
 import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
+import { computeCardVariant } from "./vibe-card-variant.js";
 
 // Server-render the iframe URL so the <iframe src=...> ships in the very
 // first byte of HTML. Without this, the browser can't start fetching the
@@ -351,6 +352,15 @@ export default function VibeIframeWrapper() {
       )
     : null;
 
+  const cardVariant = computeCardVariant(cardGrant);
+  const showCard = cardVariant === "request" || cardVariant === "invite" || cardVariant === "pending" || cardVariant === "revoked";
+
+  // Replaced in Task 5
+  const onClickInstall = () => window.location.assign(cloneUrl);
+  const onClickJoin = () => {
+    // wired in Task 5
+  };
+
   if (iframeUrl) {
     return (
       <>
@@ -418,7 +428,7 @@ export default function VibeIframeWrapper() {
             <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
           </Delayed>
         </div>
-        {showLoginOverlay || revokedAccess || pendingRequest ? (
+        {showCard ? (
           <div style={{ maxWidth: 500, width: "100%", margin: "0 16px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
             <div
               style={{
@@ -441,11 +451,13 @@ export default function VibeIframeWrapper() {
             >
               <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>{appTitle ?? appSlug}</h2>
               <p style={{ marginTop: 10, fontSize: 15, opacity: 0.7 }}>
-                {showLoginOverlay
-                  ? "Login required to view this app."
-                  : revokedAccess
-                    ? "Your access to this app has been revoked by the owner."
-                    : "The owner of this vibe has received your access request. Please let them know to approve it."}
+                {cardVariant === "pending"
+                  ? "The owner has your request. Let them know to click approve on this URL."
+                  : cardVariant === "revoked"
+                    ? "Your access was revoked. You can still install your own copy."
+                    : cardVariant === "invite"
+                      ? "This is your friend's private app. Install your own copy, or join the collaboration."
+                      : "This is your friend's private app. Install your own copy to use it solo, or request access to collaborate with them."}
               </p>
               {screenshotUrl && (
                 <img
@@ -454,17 +466,20 @@ export default function VibeIframeWrapper() {
                   style={{ width: "100%", marginTop: 16, border: "1px solid black" }}
                 />
               )}
-              <p style={{ marginTop: 16, fontSize: 14, opacity: 0.6 }}>
-                While you wait you can remix to edit your own version, or clone to deploy a copy as-is. Either way it starts empty —
-                you won't get this copy's data or collaboration.
-              </p>
               <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
-                <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
-                  Remix
+                <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall}>
+                  Install your own copy
                 </VibesButton>
-                <VibesButton variant={BLUE} icon="remix" onClick={() => window.location.assign(cloneUrl)}>
-                  Clone
-                </VibesButton>
+                {cardVariant === "invite" && (
+                  <VibesButton variant={YELLOW} icon="remix" onClick={onClickJoin}>
+                    Join
+                  </VibesButton>
+                )}
+                {cardVariant === "request" && (
+                  <VibesButton variant={YELLOW} icon="remix" onClick={onClickJoin}>
+                    Request access
+                  </VibesButton>
+                )}
               </div>
             </div>
           </div>
