@@ -1,0 +1,5 @@
+{"id":"todo","create":"Build a simple todo list. Each todo has a title and a done flag. Tap to toggle done. Persist todos in Fireproof.","edits":[]}
+{"id":"inspection-report","create":"Build a property inspection report. Each inspection has an address, date, and a list of checklist items where each item has a label, a status (pass/fail/n-a), and a free-form note. Persist in Fireproof.","edits":[]}
+{"id":"shopping-list","create":"Build a shopping list. Each item has a name, quantity, and a bought flag. Tap to toggle bought. Persist in Fireproof.","edits":[]}
+{"id":"recipe-collection","create":"Build a recipe collection. Each recipe has a name, ingredient list, and steps. Persist in Fireproof.","edits":[]}
+{"id":"time-tracker","create":"Build a time tracker. Each entry has a task name, start time, end time, and notes. Show today's total minutes. Persist in Fireproof.","edits":[]}

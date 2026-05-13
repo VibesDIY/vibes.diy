@@ -341,6 +341,15 @@ export function isActiveIconDescription(obj: unknown): obj is ActiveIconDescript
   return !(ActiveIconDescription(obj) instanceof type.errors);
 }
 
+export const ActiveEnrichedPrompt = type({
+  type: "'active.enriched-prompt'",
+  enrichedPrompt: "string",
+});
+export type ActiveEnrichedPrompt = typeof ActiveEnrichedPrompt.infer;
+export function isActiveEnrichedPrompt(obj: unknown): obj is ActiveEnrichedPrompt {
+  return !(ActiveEnrichedPrompt(obj) instanceof type.errors);
+}
+
 export const ActiveModelSettingBase = type({
   type: "'active.model'",
   param: AIParams,
@@ -398,6 +407,7 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(ActiveTheme)
   .or(ActiveIcon)
   .or(ActiveIconDescription)
+  .or(ActiveEnrichedPrompt)
   .or(ActiveModelSetting)
   .or(ActiveEnv)
   .or(ActiveDbAcl);

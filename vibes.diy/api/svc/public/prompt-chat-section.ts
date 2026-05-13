@@ -43,6 +43,7 @@ import {
   vibeFile,
   isVibeCodeBlock,
   ActiveEntry,
+  isActiveEnrichedPrompt,
   isActiveSkills,
   isActiveTheme,
   isActiveTitle,
@@ -664,7 +665,7 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
 async function loadActiveSettings(
   vctx: VibesApiSQLCtx,
   chatId: string
-): Promise<{ skills?: string[]; theme?: string; title?: string }> {
+): Promise<{ skills?: string[]; theme?: string; title?: string; enrichedPrompt?: string }> {
   const rChat = await exception2Result(() =>
     vctx.sql.db
       .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, userSlug: vctx.sql.tables.chatContexts.userSlug })
@@ -689,6 +690,7 @@ async function loadActiveSettings(
     skills: entries.find(isActiveSkills)?.skills,
     theme: entries.find(isActiveTheme)?.theme,
     title: entries.find(isActiveTitle)?.title,
+    enrichedPrompt: entries.find(isActiveEnrichedPrompt)?.enrichedPrompt,
   };
 }
 
@@ -765,7 +767,7 @@ export async function assemblePromptPayload(
   // seeds both on new chats; legacy rows without skills fall back to
   // makeBaseSystemPrompt's getDefaultSkills(), and an unset title drops the
   // title hint line entirely.
-  const { skills, theme, title } = await loadActiveSettings(vctx, chatId);
+  const { skills, theme, title, enrichedPrompt } = await loadActiveSettings(vctx, chatId);
   const isInitial = timeline.length === 0;
 
   const systemPrompt = await exception2Result(async () => {
@@ -773,6 +775,7 @@ export async function assemblePromptPayload(
       skills,
       theme,
       title,
+      enrichedPrompt,
       demoData: false,
       variant: isInitial ? "initial" : "continuation",
       pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
