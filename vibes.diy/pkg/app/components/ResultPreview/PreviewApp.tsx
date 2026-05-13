@@ -126,6 +126,35 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     console.log("[hot-swap] pushSource", { ok, len: resolved.length, blockId: latestBlockId });
   }, [promptState.blocks, srvVibeSandbox]);
 
+  // Track the count of search/replace edits seen during the active stream so
+  // the preview-blur can ramp down: starts at 50px, multiplied by 0.75 (floor)
+  // per new edit, clamped at 2px. Resets on each running:false→true edge.
+  const [editSegCount, setEditSegCount] = useState(0);
+  const wasRunningRef = useRef(false);
+  useEffect(() => {
+    if (promptState.running && !wasRunningRef.current) {
+      setEditSegCount(0);
+    }
+    wasRunningRef.current = promptState.running;
+  }, [promptState.running]);
+  useEffect(() => {
+    if (!promptState.running) return;
+    const dbg = (
+      window as unknown as {
+        __aiderEditsDebug?: { sections?: { parsedEdits: unknown[] }[] };
+      }
+    ).__aiderEditsDebug;
+    const total = dbg?.sections?.reduce((acc, s) => acc + s.parsedEdits.length, 0) ?? 0;
+    setEditSegCount((prev) => (total > prev ? total : prev));
+  }, [promptState.blocks, promptState.running]);
+  const blurPx = useMemo(() => {
+    let b = 50;
+    for (let i = 0; i < editSegCount; i++) {
+      b = Math.max(2, Math.floor(b * 0.75));
+    }
+    return b;
+  }, [editSegCount]);
+
   // Toast when the iframe rejects a hot-swap source (sucrase transform fail,
   // dynamic import fail, mountVibe throw). The iframe keeps showing the
   // previously-committed DOM — without this signal the user sees the preview
@@ -163,7 +192,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
           aria-hidden="true"
           data-testid="preview-stream-overlay"
           className="absolute inset-0"
-          style={{ backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
+          style={{ backdropFilter: `blur(${blurPx}px)`, WebkitBackdropFilter: `blur(${blurPx}px)` }}
         />
       )}
     </div>
