@@ -14,11 +14,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 
-export const pinRecentVibeEvento: EventoHandler<
-  W3CWebSocketEvent,
-  MsgBase<ReqPinRecentVibe>,
-  ResPinRecentVibe | VibesDiyError
-> = {
+export const pinRecentVibeEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPinRecentVibe>, ResPinRecentVibe | VibesDiyError> = {
   hash: "pin-recent-vibe",
   validate: unwrapMsgBase(async (msg: MsgBase) => {
     const ret = reqPinRecentVibe(msg.payload);
@@ -38,20 +34,18 @@ export const pinRecentVibeEvento: EventoHandler<
       const usb = vctx.sql.tables.userSlugBinding;
       const asb = vctx.sql.tables.appSlugBinding;
 
-      // Ownership: the userSlug must be bound to the authenticated user.
-      // userSlugBinding has a (userSlug, userId) row per binding, so a row
-      // existing here proves ownership of the slug.
-      const ownerRow = await vctx.sql.db
-        .select({ userSlug: usb.userSlug })
-        .from(usb)
-        .where(and(eq(usb.userSlug, req.userSlug), eq(usb.userId, userId)))
+      const appRow = await vctx.sql.db
+        .select({ userSlug: asb.userSlug, appSlug: asb.appSlug })
+        .from(asb)
+        .innerJoin(usb, and(eq(usb.userSlug, asb.userSlug), eq(usb.userId, userId)))
+        .where(and(eq(asb.userSlug, req.userSlug), eq(asb.appSlug, req.appSlug)))
         .limit(1)
         .then((r) => r[0]);
-      if (!ownerRow) {
+      if (!appRow) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.error",
-          message: `not authorized to pin ${req.userSlug}/${req.appSlug}`,
-          code: "pin-recent-vibe-not-authorized",
+          message: `not found or not authorized to pin ${req.userSlug}/${req.appSlug}`,
+          code: "pin-recent-vibe-not-found",
         } as unknown as VibesDiyError);
         return Result.Ok(EventoResult.Continue);
       }

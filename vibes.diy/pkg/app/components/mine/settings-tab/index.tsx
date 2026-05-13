@@ -310,7 +310,13 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
       setImgConfig(s.entry.settings.img ?? {});
       setEnv(fromKVString(s.entry.settings.env ?? []));
 
-      if (pending.kind === "title") notifyRecentVibesChanged();
+      if (pending.kind === "title") {
+        notifyRecentVibesChanged({
+          userSlug: pending.userSlug,
+          appSlug: pending.appSlug,
+          title: s.entry.settings.title ?? "",
+        });
+      }
 
       if (pending.kind !== "fetch") toast.success("Saved");
     });
