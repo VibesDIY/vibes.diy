@@ -129,23 +129,31 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // Track the count of search/replace edits seen during the active stream so
   // the preview-blur can ramp down: starts at 100px, multiplied by 0.9 (floor)
   // per new edit, clamped at 1px. Resets on each running:false→true edge.
+  // __aiderEditsDebug.sections accumulates across the whole session, so on a
+  // fresh stream we capture the current total as a baseline and only count
+  // edits past it — otherwise blur would stay stuck low after the first run.
   const [editSegCount, setEditSegCount] = useState(0);
   const wasRunningRef = useRef(false);
+  const baselineEditsRef = useRef(0);
+  const readTotalEdits = () => {
+    const dbg = (
+      window as unknown as {
+        __aiderEditsDebug?: { sections?: { parsedEdits: unknown[] }[] };
+      }
+    ).__aiderEditsDebug;
+    return dbg?.sections?.reduce((acc, s) => acc + s.parsedEdits.length, 0) ?? 0;
+  };
   useEffect(() => {
     if (promptState.running && !wasRunningRef.current) {
+      baselineEditsRef.current = readTotalEdits();
       setEditSegCount(0);
     }
     wasRunningRef.current = promptState.running;
   }, [promptState.running]);
   useEffect(() => {
     if (!promptState.running) return;
-    const dbg = (
-      window as unknown as {
-        __aiderEditsDebug?: { sections?: { parsedEdits: unknown[] }[] };
-      }
-    ).__aiderEditsDebug;
-    const total = dbg?.sections?.reduce((acc, s) => acc + s.parsedEdits.length, 0) ?? 0;
-    setEditSegCount((prev) => (total > prev ? total : prev));
+    const delta = Math.max(0, readTotalEdits() - baselineEditsRef.current);
+    setEditSegCount((prev) => (delta > prev ? delta : prev));
   }, [promptState.blocks, promptState.running]);
   const blurPx = useMemo(() => {
     let b = 100;
