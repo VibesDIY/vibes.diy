@@ -124,7 +124,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
 
   // Preview-blur ramp: only on the first codegen of a brand-new chat or
   // remix — i.e. the pinned chat mounted with no fsId in the URL. Starts at
-  // 50px and multiplies by 0.75 per hot-swap (no floor, no rounding — can
+  // 25px and multiplies by 2/3 per hot-swap (no floor, no rounding — can
   // decay below 1px). Once that first stream finishes, the overlay never
   // appears again for this pinning. Cross-vibe nav resets the gate.
   const [hotSwapCount, setHotSwapCount] = useState(0);
@@ -172,7 +172,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   }, [promptState.running, promptState.blocks, pinnedFsId]);
   const blurPx = useMemo(() => {
     let b = 25;
-    for (let i = 0; i < hotSwapCount; i++) b *= 0.75;
+    for (let i = 0; i < hotSwapCount; i++) b *= 2 / 3;
     return b;
   }, [hotSwapCount]);
   // 3 significant digits, e.g. "50.0", "36.5", "0.0200".
