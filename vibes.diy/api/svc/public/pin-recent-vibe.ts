@@ -4,6 +4,7 @@ import {
   reqPinRecentVibe,
   ReqPinRecentVibe,
   ReqWithVerifiedAuth,
+  ResError,
   ResPinRecentVibe,
   VibesDiyError,
   W3CWebSocketEvent,
@@ -41,12 +42,12 @@ export const pinRecentVibeEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPi
         .where(and(eq(asb.userSlug, req.userSlug), eq(asb.appSlug, req.appSlug)))
         .limit(1)
         .then((r) => r[0]);
-      if (!appRow) {
+      if (appRow === undefined) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.error",
           message: `not found or not authorized to pin ${req.userSlug}/${req.appSlug}`,
           code: "pin-recent-vibe-not-found",
-        } as unknown as VibesDiyError);
+        } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 

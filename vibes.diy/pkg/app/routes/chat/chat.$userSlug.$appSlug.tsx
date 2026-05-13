@@ -379,7 +379,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   useEffect(() => {
     return subscribeRecentVibesChanged((change) => {
       if (change?.userSlug !== userSlug || change.appSlug !== appSlug || change.title === undefined) return;
-      dispatch({ type: "setTitle", title: change.title || appSlug });
+      dispatch({ type: "setTitle", title: change.title.length > 0 ? change.title : appSlug });
     });
   }, [userSlug, appSlug]);
 
