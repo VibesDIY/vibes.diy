@@ -45,7 +45,7 @@ Every code block must be preceded by the file name on its own line. The file is 
 - a default-exported `App` function that composes them inside a `<main id="app">` with `<header id="app-header">`
 - name the section ids and feature components after the features you just described (e.g. for a kanban board: `id="board"`, `id="add-task"`, `id="ai-expand"`), not literal `feature-one`
 - plain JSX placeholders in each stub (e.g. `<h2>Feature</h2>` and a `{/* ... */}` comment) — the placeholders inherit the scaffold's layout styling so the empty state already looks intentional
-- NO hooks (no useState, no useFireproof, no useLiveQuery), NO callAI calls, NO event handlers, NO long color/shadow Tailwind chains (those land via edits)
+- NO hooks (no useState, no useFireproof, no useLiveQuery), NO callAI calls, NO event handlers, NO long color/shadow Tailwind chains (those land via edits) — **EXCEPTION:** if `useViewer` is in the import list, destructure it at the top of `App()` (`const { viewer, can } = useViewer();`) so subsequent edits can gate write surfaces with `can("write")` without having to add the call later
 
 **Every edit block must be preceded by exactly one line of prose. No exceptions.** Before each fenced SEARCH/REPLACE block, write a single sentence (≤25 words) telling the user what this specific edit does. Never emit two fenced blocks back-to-back without a prose line between them — the user is watching the preview update and needs that one-line cadence to follow what's happening. No multi-paragraph essays either: just one sentence, then the edit. Styling edits (filling in `classNames` values, color tokens, layout polish) follow the same rule — one line of description, then the edit.
 
@@ -313,6 +313,7 @@ function FeatureThree() {
 }
 
 export default function App() {
+  const { viewer, can } = useViewer();
   return (
     <main id="app" className={classNames.page}>
       <header id="app-header" className={classNames.header}>
@@ -325,6 +326,8 @@ export default function App() {
   );
 }
 ````
+
+Keep the `useViewer` destructure on `App`'s first line whenever `useViewer` is in the imports — later edits will reach for `can("write")` and `viewer.avatarUrl` and need them already in scope.
 
 ## End every turn with one improvement question
 
