@@ -416,12 +416,10 @@ function registerHotSwapHandler(): void {
   if (hotSwapRegistered) return;
   hotSwapRegistered = true;
   window.addEventListener("message", handleHotSwapMessage);
-  console.log("[hot-swap iframe] handler registered");
 }
 
 async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
   if (!isEvtVibeSetSource(event.data)) return;
-  console.log("[hot-swap iframe] received set-source", { len: event.data.source.length, origin: event.origin });
   const result = await applyHotSwap(event.data.source);
   if (result.isErr()) {
     // Iframe stays on the previous render (mountVibe re-renders into the
@@ -434,8 +432,6 @@ async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
       message: String(result.Err()),
     };
     window.parent.postMessage(errMsg, "*");
-  } else {
-    console.log("[hot-swap iframe] applied successfully");
   }
 }
 

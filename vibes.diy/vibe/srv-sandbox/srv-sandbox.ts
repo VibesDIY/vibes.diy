@@ -844,14 +844,8 @@ export class vibesDiySrvSandbox implements Disposable {
     // reloads, etc. don't leave us posting to a stale (dead) Window reference.
     const isRuntimeReady = isVibeMsg && (event.data as { type?: string } | undefined)?.type === "vibe.evt.runtime.ready";
     if (isRuntimeReady) {
-      const prev = this.iframeSource;
       this.iframeSource = event.source as Window;
       this.iframeOrigin = event.origin;
-      console.log("[hot-swap] iframeSource captured (runtime.ready)", {
-        origin: this.iframeOrigin,
-        replaced: prev !== undefined && prev !== event.source,
-        hasPending: this.pendingSource !== undefined,
-      });
       // Stage C: bridge the asset-host session cookie BEFORE acking the
       // iframe. The iframe gates every RPC on this ack, so any meta.url
       // the iframe ever sees comes back post-cookie. No race window for
@@ -872,17 +866,12 @@ export class vibesDiySrvSandbox implements Disposable {
       if (this.pendingSource !== undefined) {
         const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source: this.pendingSource };
         this.iframeSource.postMessage(msg, this.iframeOrigin);
-        console.log("[hot-swap] replayed pendingSource", { len: msg.source.length });
       }
     } else if (isVibeMsg && !this.iframeSource) {
       // Edge case: a non-runtime.ready vibe.* message arriving before runtime.ready
       // (shouldn't happen in normal flow, but capture defensively).
       this.iframeSource = event.source as Window;
       this.iframeOrigin = event.origin;
-      console.log("[hot-swap] iframeSource captured (other vibe.* msg)", {
-        origin: this.iframeOrigin,
-        firstMsgType: (event.data as { type?: string } | undefined)?.type,
-      });
     }
     if (isEvtVibeHotSwapError(event.data)) {
       this.onHotSwapError.invoke({ message: event.data.message });
@@ -908,12 +897,10 @@ export class vibesDiySrvSandbox implements Disposable {
   pushSource(source: string): boolean {
     this.pendingSource = source;
     if (this.iframeSource === undefined || this.iframeOrigin === undefined) {
-      console.log("[hot-swap] pushSource buffered (no iframeSource yet)", { len: source.length });
       return false;
     }
     const msg: EvtVibeSetSource = { type: "vibe.evt.set-source", source };
     this.iframeSource.postMessage(msg, this.iframeOrigin);
-    console.log("[hot-swap] pushSource posted", { len: source.length, origin: this.iframeOrigin });
     return true;
   }
 
@@ -925,7 +912,6 @@ export class vibesDiySrvSandbox implements Disposable {
   // missing `export default`) would overwrite it indefinitely.
   clearPendingSource(): void {
     if (this.pendingSource === undefined) return;
-    console.log("[hot-swap] pendingSource cleared", { hadLen: this.pendingSource.length });
     this.pendingSource = undefined;
   }
 
