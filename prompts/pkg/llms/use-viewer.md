@@ -1,6 +1,8 @@
 # useViewer Hook
 
-Get the current viewer's identity and capabilities. Use it to render avatars, names, and gate UI on what the viewer can do.
+`useViewer()` is a **read-only window** into runtime-managed access control. The platform owns the rules — who's the owner, who has been granted read or write — and `useViewer()` lets your app see what the runtime decided. You cannot grant or revoke access from code; you can only reflect the runtime's verdict in your UI.
+
+The contract: **every write surface (form, submit button, edit input, delete button) must consult `can("write")`** and render a read-only fallback when it returns false. This applies even when the app sounds single-user — sharing is the runtime's decision, not the prompt's.
 
 ## Basic Usage
 
