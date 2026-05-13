@@ -26,6 +26,14 @@ function rowKey(item: { userSlug: string; appSlug: string }): string {
   return `${item.userSlug}/${item.appSlug}`;
 }
 
+function isPinned(pinnedAt: string | undefined): boolean {
+  return pinnedAt !== undefined && pinnedAt.length > 0;
+}
+
+function displayTitle(item: { title?: string; appSlug: string }): string {
+  return item.title !== undefined && item.title.length > 0 ? item.title : item.appSlug;
+}
+
 interface RecentVibesProps {
   onNavigate?: () => void;
 }
@@ -43,10 +51,12 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
 
   async function handlePinToggle(item: ResRecentVibesItem) {
     const key = rowKey(item);
-    const wasPinned = !!item.pinnedAt;
+    const wasPinned = isPinned(item.pinnedAt);
     const nextPinnedAt = wasPinned ? "" : new Date().toISOString();
     mutate((prev) => {
-      const updated = prev.map((row) => (rowKey(row) === key ? { ...row, pinnedAt: nextPinnedAt || undefined } : row));
+      const updated = prev.map((row) =>
+        rowKey(row) === key ? { ...row, pinnedAt: nextPinnedAt.length > 0 ? nextPinnedAt : undefined } : row
+      );
       // Re-sort to mirror server order: pinnedAt desc, then updated desc.
       return [...updated].sort((a, b) => {
         const ap = a.pinnedAt ?? "";
@@ -72,7 +82,8 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
     const key = rowKey(item);
     const trimmed = pendingTitle.trim();
     setEditingId(null);
-    if (!trimmed || trimmed === (item.title ?? "")) return;
+    if (trimmed.length === 0) return;
+    if (trimmed === (item.title ?? "")) return;
     mutate((prev) => prev.map((row) => (rowKey(row) === key ? { ...row, title: trimmed } : row)));
     const res = await vibeDiyApi.ensureAppSettings({
       userSlug: item.userSlug,
@@ -147,10 +158,10 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
                       <VibeIconThumb icon={item.icon} />
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="truncate">
-                          {item.pinnedAt ? (
+                          {isPinned(item.pinnedAt) ? (
                             <PushpinIcon className="mr-1 inline-block h-3.5 w-3.5 -translate-y-px opacity-70" />
                           ) : null}
-                          {item.title || item.appSlug}
+                          {displayTitle(item)}
                         </span>
                         <span className="truncate text-xs opacity-50">{item.userSlug}</span>
                       </span>
@@ -179,7 +190,7 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
                     </svg>
                   </button>
                   <RecentVibeRowMenu
-                    isPinned={!!item.pinnedAt}
+                    isPinned={isPinned(item.pinnedAt)}
                     open={menuOpen}
                     onClose={() => setOpenMenuId(null)}
                     onPinToggle={() => void handlePinToggle(item)}
