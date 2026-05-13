@@ -1,6 +1,6 @@
 import { useAuth } from "@clerk/react";
 import type { ResRecentVibesItem } from "@vibes.diy/api-types";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRecentVibes, notifyRecentVibesChanged } from "../hooks/useRecentVibes.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
@@ -46,6 +46,9 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [pendingTitle, setPendingTitle] = useState("");
+  // Set when Enter/Escape have already handled the edit so the synchronous
+  // blur fired by the input's unmount does not re-commit pendingTitle.
+  const skipBlurCommitRef = useRef(false);
 
   if (!isSignedIn) return null;
 
@@ -137,13 +140,21 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
                               e.preventDefault();
+                              skipBlurCommitRef.current = true;
                               void commitRename(item);
                             } else if (e.key === "Escape") {
                               e.preventDefault();
+                              skipBlurCommitRef.current = true;
                               setEditingId(null);
                             }
                           }}
-                          onBlur={() => void commitRename(item)}
+                          onBlur={() => {
+                            if (skipBlurCommitRef.current) {
+                              skipBlurCommitRef.current = false;
+                              return;
+                            }
+                            void commitRename(item);
+                          }}
                           className="w-full min-w-0 truncate border-none bg-transparent p-0 text-sm focus:ring-0 focus-visible:!outline-none focus-visible:!outline-offset-0"
                         />
                         <span className="truncate text-xs opacity-50">{item.userSlug}</span>
