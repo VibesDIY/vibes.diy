@@ -30,6 +30,7 @@ import { putAssetCmd, isResPutAssetCli } from "./cmds/put-asset-cmd.js";
 import { generateCmd, isResGenerate } from "./cmds/generate-cmd.js";
 import { editCmd, isResEdit } from "./cmds/edit-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
+import { themesCmd, isResThemesList, isResThemeContent } from "./cmds/themes-cmd.js";
 import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
@@ -133,6 +134,7 @@ async function main(): Promise<number> {
         push: pushCmd(ctx),
         "put-asset": putAssetCmd(ctx),
         skills: skillsCmd(ctx),
+        themes: themesCmd(ctx),
         system: systemCmd(ctx),
         "user-settings": userSettingsCmd(ctx),
       },
@@ -203,6 +205,16 @@ async function main(): Promise<number> {
             break;
           }
           case isResSkillContent(msg): {
+            console.log(msg.content);
+            break;
+          }
+          case isResThemesList(msg): {
+            for (const theme of msg.themes) {
+              console.log(`${theme.slug.padEnd(24)}${theme.name}`);
+            }
+            break;
+          }
+          case isResThemeContent(msg): {
             console.log(msg.content);
             break;
           }
