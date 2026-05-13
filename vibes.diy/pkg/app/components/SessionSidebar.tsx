@@ -16,22 +16,30 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const userEmail = user?.primaryEmailAddress?.emailAddress;
   const [showSignIn, setShowSignIn] = useState(false);
 
-  // Handle clicks outside the sidebar to close it
+  // Handle pointerdown outside the sidebar to close it. We listen for
+  // pointerdown rather than mousedown so a single event covers both mouse
+  // and touch — touch taps fire pointerdown at touchstart, and on touchend
+  // browsers synthesize a mousedown that lands on the same target as the
+  // touch. If we listened for mousedown, the tap on the pill that opened us
+  // would fire its synthetic mousedown on the pill, the handler would see
+  // the pill as outside the sidebar, and immediately close us. Pointerdown
+  // also lets us short-circuit on the toggle itself via [data-sidebar-toggle]
+  // so the same gesture that opened us cannot close us through a click-
+  // outside path.
   useEffect(() => {
     if (!isVisible) return;
 
-    function handleClickOutside(event: MouseEvent) {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
-        onClose();
-      }
+    function handleClickOutside(event: PointerEvent) {
+      const target = event.target as Element | null;
+      if (target === null) return;
+      if (sidebarRef.current?.contains(target)) return;
+      if (target.closest('[data-sidebar-toggle="true"]') !== null) return;
+      onClose();
     }
 
-    // Add event listener
-    document.addEventListener("mousedown", handleClickOutside);
-
-    // Clean up event listener
+    document.addEventListener("pointerdown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("pointerdown", handleClickOutside);
     };
   }, [isVisible, onClose]);
 
