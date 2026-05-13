@@ -77,6 +77,7 @@ export async function makePreAllocUserMessage(userPrompt: string): Promise<strin
  */
 export const preAllocSchema = {
   name: "pre_alloc",
+  required: ["skills", "pairs", "iconDescription", "enrichedPrompt"],
   properties: {
     skills: {
       type: "array",
@@ -109,7 +110,7 @@ export const preAllocSchema = {
     enrichedPrompt: {
       type: "string",
       description:
-        'A 3-sentence preamble that grounds the build in our core platform features for THIS specific app. Sentence 1: name the Fireproof doc shapes that get written (each persisted thing = one doc shape with named fields) and who can see them across viewers. Sentence 2: name the user action that triggers callAI, the exact JSON the callAI schema returns, and what gets saved from that. Sentence 3: name what `useViewer().can("write")` gates (which form / button hides for non-owners) and — only when the app naturally renders generated imagery — what an ImgGen would depict. Be concrete: real field names, real button labels, real multi-user behavior. Never abstract or generic.',
+        'REQUIRED. A 3-sentence preamble that grounds the build in our core platform features for THIS specific app. Access control (who can read, who can write) is decided OUTSIDE the app by the runtime — the platform owns the rules. `useViewer()` is the app\'s read-only window into that decision: `can("write")` returns true/false based on what the runtime already set, you cannot grant or override it from code. The app\'s only job is to reflect the runtime\'s answer in the UI — show forms / write buttons to viewers who `can("write")`, show a read-only state otherwise. This is universal: every app is potentially shared, so every write surface must consult `can("write")` no matter how single-user the prompt sounds. Sentence 1: name the Fireproof doc shapes that get written (each persisted thing = one doc shape with named fields) and that every viewer sees them live. Sentence 2: name the user action that triggers callAI, the exact JSON the callAI schema returns, and what gets saved from that. Sentence 3: name exactly which form or write button is hidden / disabled when `useViewer().can("write")` is false, and what non-owners see in its place (the read-only view) — pick the most central write surface in the app. If and only if generated imagery is naturally part of the experience, add a short clause about what `<ImgGen>` depicts (otherwise skip ImgGen entirely). Be concrete: real field names, real button labels. Never abstract. Never say "no useViewer needed" or "all users have write access" — those are the runtime\'s call, not yours; you just read the answer.',
     },
   },
 } as const;
@@ -120,7 +121,7 @@ export const preAllocParsed = type({
   pairs: type({ title: "string", slug: "string" }).array(),
   iconDescription: "string",
   "theme?": "string",
-  "enrichedPrompt?": "string",
+  enrichedPrompt: "string",
 });
 export type PreAllocParsed = typeof preAllocParsed.infer;
 

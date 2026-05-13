@@ -3,3 +3,4 @@
 {"id":"shopping-list","create":"Build a shopping list. Each item has a name, quantity, and a bought flag. Tap to toggle bought. Persist in Fireproof.","edits":[]}
 {"id":"recipe-collection","create":"Build a recipe collection. Each recipe has a name, ingredient list, and steps. Persist in Fireproof.","edits":[]}
 {"id":"time-tracker","create":"Build a time tracker. Each entry has a task name, start time, end time, and notes. Show today's total minutes. Persist in Fireproof.","edits":[]}
+{"id":"poetry-owner-only","create":"Build a poetry app where only the owner can post new poems but anyone with the link can read them. Each poem has a title and body. Persist in Fireproof.","edits":[]}
