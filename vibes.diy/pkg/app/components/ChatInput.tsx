@@ -181,7 +181,6 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             <textarea
               ref={realTextArea}
               value={prompt ?? ""}
-              disabled={promptProcessing}
               onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
                 setPrompt(e.target.value);
               }}
@@ -199,7 +198,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 borderRadius: 5,
               }}
               onFocus={() => {
-                if (!promptProcessing) setIsFocused(true);
+                setIsFocused(true);
               }}
               onBlur={() => {
                 setIsFocused(false);
