@@ -38,6 +38,8 @@ export function Meta({ metaProps }: VibesDiyServCtx) {
       <meta name="twitter:title" content={metaProps.title} />
       <meta name="twitter:description" content={metaProps.description} />
       {metaProps.imageUrl && <meta name="twitter:image" content={metaProps.imageUrl} />}
+
+      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     </>
   );
 }

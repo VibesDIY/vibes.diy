@@ -48,6 +48,7 @@ export function meta({ params, matches }: { params: Record<string, string>; matc
   const rootData = matches[0]?.data as { env?: { VIBES_SVC_HOSTNAME_BASE?: string } } | undefined;
   const hostnameBase = rootData?.env?.VIBES_SVC_HOSTNAME_BASE?.replace(/^\./, "") ?? "vibes.diy";
   const imageUrl = `https://${appSlug}--${userSlug}.${hostnameBase}/screenshot.jpg`;
+  const faviconUrl = `https://${appSlug}--${userSlug}.${hostnameBase}/favicon.svg`;
   const title = appSlug ?? "Vibe";
 
   return [
@@ -61,6 +62,7 @@ export function meta({ params, matches }: { params: Record<string, string>; matc
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: `${title} - built on vibes.diy` },
     { name: "twitter:image", content: imageUrl },
+    { tagName: "link", rel: "icon", type: "image/svg+xml", href: faviconUrl },
   ];
 }
 
