@@ -23,6 +23,7 @@ import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
 import ThemePickerModal from "../../components/ThemePickerModal.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
+import { useFreshFirstCodegen } from "../../utils/freshFirstCodegen.js";
 import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
@@ -565,6 +566,13 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const [mobilePreviewShown, setMobilePreviewShown] = useState(false);
   const { navigateToView, viewControls, currentView } = useViewState(promptState, [searchParams, setSearchParams]);
 
+  // During the first codegen of a brand-new chat or remix the UI shows the
+  // streaming code editor (with a hidden pre-warming iframe behind it). The
+  // displayView reflects what's actually on screen so the header tab
+  // highlights "Code" during that window instead of the URL-derived "App".
+  const freshFirstCodegen = useFreshFirstCodegen(promptState, fsId);
+  const displayView = currentView === "preview" && freshFirstCodegen && promptState.hasCode ? "code" : currentView;
+
   const currentViewRef = useRef(currentView);
   currentViewRef.current = currentView;
 
@@ -798,7 +806,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             promptState={promptState}
             navigateToView={navigateToView}
             viewControls={viewControls}
-            currentView={currentView}
+            currentView={displayView}
             onCodeSave={handleOnCodeSave}
             hasCodeChanges={isEditorStateEdit(editorState) && editorState.buffer.trim().length > 0}
             openVibe={openVibe}
