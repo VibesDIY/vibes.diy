@@ -302,4 +302,24 @@ describe("prompt builder (real implementation)", () => {
     expect(result.systemPrompt).toContain("Web Audio is a browser built-in");
     expect(result.systemPrompt).toContain("window.AudioContext");
   });
+
+  it("system-prompt.md ends every turn with one improvement question (escape hatch present)", async () => {
+    const r = await makeBaseSystemPrompt("anthropic/claude-opus-4.5", {
+      skills: ["fireproof"],
+      title: "X",
+      variant: "continuation",
+    });
+    expect(r.systemPrompt).toContain("▸ I'm done for now");
+    expect(r.systemPrompt).toContain("End every turn with one improvement question");
+  });
+
+  it("system-prompt-initial.md ends the first turn with one improvement question (escape hatch present)", async () => {
+    const r = await makeBaseSystemPrompt("anthropic/claude-opus-4.5", {
+      skills: ["fireproof"],
+      title: "X",
+      variant: "initial",
+    });
+    expect(r.systemPrompt).toContain("▸ I'm done for now");
+    expect(r.systemPrompt).toContain("End every turn with one improvement question");
+  });
 });

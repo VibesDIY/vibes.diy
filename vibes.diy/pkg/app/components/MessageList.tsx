@@ -1,6 +1,8 @@
 import React, { memo, useEffect, useRef } from "react";
 // import type { ChatMessageDocument, ViewType } from "@vibes.diy/prompts";
 import { PromptBlock } from "../routes/chat/chat.$userSlug.$appSlug.js";
+import { parseOptionLines } from "../utils/option-lines.js";
+import { OptionButtons } from "./OptionButtons.js";
 import {
   BlockBeginMsg,
   BlockEndMsg,
@@ -30,6 +32,7 @@ interface MessageListProps {
   selectedFsId?: string;
   onClick: (fsRes: { userSlug: string; appSlug: string; fsId: string }) => void;
   onRetry?: (msg: PromptError) => void;
+  onSelectOption?: (option: string) => void;
   // Block IDs whose save originated from the agent autosave (end-of-aider-
   // turn). Renders "Agent saved code" instead of "User edited code".
   agentSavedBlockIds?: ReadonlySet<string>;
@@ -125,7 +128,36 @@ function useChatDebug(component: string, ctx: Record<string, unknown>): number {
   return renderSeq.current;
 }
 
-function TopLevelMsg({ lines, begin }: { begin: ToplevelBeginMsg; lines: LineMsg[] }) {
+function TopLevelMsg({
+  lines,
+  begin,
+  isLast,
+  isFirstWithOptions,
+  streaming,
+  onSelectOption,
+}: {
+  begin: ToplevelBeginMsg;
+  lines: LineMsg[];
+  isLast: boolean;
+  /**
+   * True only for the first assistant message in the chat whose options are
+   * non-empty. Forwarded to OptionButtons to render a one-line explainer
+   * above the buttons. Set by MessageList's post-render epilogue (see the
+   * "first-with-options" scan pass near the bottom of this file).
+   */
+  isFirstWithOptions?: boolean;
+  /**
+   * True when this message is the most recent assistant turn AND the chat is
+   * currently streaming. Forwarded to parseOptionLines so the streaming guard
+   * (which keeps mid-word marker lines in prose to prevent flicker) only
+   * applies when the message is genuinely mid-stream. Default false.
+   */
+  streaming?: boolean;
+  onSelectOption?: (option: string) => void;
+}) {
+  const fullText = lines.map((i) => i.line).join("\n");
+  const { prose, options } = parseOptionLines(fullText, { streaming: streaming === true });
+
   const renderSeq = useChatDebug("TopLevelMsg", {
     sectionId: begin.sectionId,
     blockId: begin.blockId,
@@ -133,7 +165,10 @@ function TopLevelMsg({ lines, begin }: { begin: ToplevelBeginMsg; lines: LineMsg
     seq: begin.seq,
     blockNr: begin.blockNr,
     lineCount: lines.length,
+    optionCount: options.length,
+    isLast,
   });
+
   return (
     <div
       className="mb-4 flex flex-row justify-end px-4"
@@ -147,8 +182,14 @@ function TopLevelMsg({ lines, begin }: { begin: ToplevelBeginMsg; lines: LineMsg
     >
       <BrutalistCard size="md" messageType="ai" className="mr-8 max-w-[85%]" style={{ fontSize: "0.8rem" }}>
         <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
-          <ReactMarkdown>{lines.map((i) => i.line).join("\n")}</ReactMarkdown>
+          <ReactMarkdown>{prose}</ReactMarkdown>
         </div>
+        <OptionButtons
+          options={options}
+          disabled={!isLast}
+          isFirst={isFirstWithOptions}
+          onSelect={isLast ? onSelectOption : undefined}
+        />
       </BrutalistCard>
     </div>
   );
@@ -442,10 +483,12 @@ type BlockedMsg = CodeBlock | TopLevelBlock;
 
 function MessageList({
   promptBlocks,
+  promptProcessing,
   chatId,
   selectedFsId,
   onClick,
   onRetry,
+  onSelectOption,
   agentSavedBlockIds,
   // setSelectedResponseId,
   // selectedResponseId,
@@ -552,7 +595,15 @@ function MessageList({
               // if (isNaN(msg.stats.code.bytes)) {
               // console.log(`toplevel rendered`, block.lines)
               // }
-              acc.push(<TopLevelMsg key={`toplevel-${block.begin.sectionId}-${idx}`} begin={block.begin} lines={block.lines} />);
+              acc.push(
+                <TopLevelMsg
+                  key={`toplevel-${block.begin.sectionId}-${idx}`}
+                  begin={block.begin}
+                  lines={block.lines}
+                  isLast={false}
+                  onSelectOption={onSelectOption}
+                />
+              );
             }
           });
           // blockMsgs.splice(0, blockMsgs.length);
@@ -610,6 +661,8 @@ function MessageList({
                   key={`pre-truncate-top-${preBlock.begin.sectionId}-${preIdx}`}
                   begin={preBlock.begin}
                   lines={preBlock.lines}
+                  isLast={false}
+                  onSelectOption={undefined}
                 />
               );
             }
@@ -648,6 +701,50 @@ function MessageList({
     }
     return acc;
   }, [] as React.ReactElement[]);
+
+  // Mark the most recent TopLevelMsg's state. When the chat is settled,
+  // it gets isLast + onSelectOption so its buttons become interactive. When
+  // streaming, it gets streaming: true so parseOptionLines defers mid-word
+  // markers (flicker prevention).
+  for (let i = messageElements.length - 1; i >= 0; i--) {
+    const el = messageElements[i];
+    if (React.isValidElement(el) && el.type === TopLevelMsg) {
+      if (promptProcessing) {
+        messageElements[i] = React.cloneElement(
+          el as React.ReactElement<{ streaming?: boolean }>,
+          { streaming: true }
+        );
+      } else {
+        messageElements[i] = React.cloneElement(
+          el as React.ReactElement<{ isLast: boolean; onSelectOption?: (o: string) => void }>,
+          { isLast: true, onSelectOption }
+        );
+      }
+      break;
+    }
+  }
+
+  // Mark the FIRST TopLevelMsg with options as the chat's introductory
+  // interview turn — its OptionButtons render a one-line explainer above
+  // the buttons telling the user the options are optional. Only the first
+  // such message in chat order gets the helper; subsequent options-turns
+  // omit it (the user only needs to learn the affordance once).
+  for (let i = 0; i < messageElements.length; i++) {
+    const el = messageElements[i];
+    if (!React.isValidElement(el) || el.type !== TopLevelMsg) continue;
+    const elProps = el.props as { lines: LineMsg[] };
+    const fullText = elProps.lines.map((l) => l.line).join("\n");
+    const { options } = parseOptionLines(fullText);
+    if (options.length === 0) continue;
+    messageElements[i] = React.cloneElement(
+      el as React.ReactElement<{ isLast: boolean; isFirstWithOptions?: boolean; onSelectOption?: (o: string) => void }>,
+      {
+        isFirstWithOptions: true,
+      }
+    );
+    break;
+  }
+
   useEffect(() => {
     if (lastFsRef && !selectedFsId) {
       onClick(lastFsRef);
