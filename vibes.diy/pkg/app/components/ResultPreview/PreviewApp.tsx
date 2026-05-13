@@ -156,7 +156,13 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   }, [hotSwapCount]);
   // 3 significant digits, e.g. "50.0", "36.5", "0.0200".
   const blurStr = blurPx.toPrecision(3);
+  // The blur ramp only applies during the first codegen of a fresh chat.
+  // The overlay itself (which captures clicks so the user can't interact
+  // with a half-rendered app) renders whenever a stream is in flight —
+  // ResultPreview hides the whole PreviewApp slot during the code-override
+  // window, so this still no-ops when the iframe isn't actually visible.
   const showBlur = promptState.running && pinnedFsId === undefined && !firstStreamDone;
+  const showOverlay = promptState.running;
 
   // Toast when the iframe rejects a hot-swap source (sucrase transform fail,
   // dynamic import fail, mountVibe throw). The iframe keeps showing the
@@ -190,12 +196,16 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         allow="camera; microphone"
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
-      {showBlur && (
+      {showOverlay && (
         <div
           aria-hidden="true"
           data-testid="preview-stream-overlay"
           className="absolute inset-0"
-          style={blurPx < 0.01 ? undefined : { backdropFilter: `blur(${blurStr}px)`, WebkitBackdropFilter: `blur(${blurStr}px)` }}
+          style={
+            showBlur && blurPx >= 0.01
+              ? { backdropFilter: `blur(${blurStr}px)`, WebkitBackdropFilter: `blur(${blurStr}px)` }
+              : undefined
+          }
         />
       )}
     </div>
