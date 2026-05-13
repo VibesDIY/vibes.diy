@@ -112,6 +112,7 @@ export default function VibeIframeWrapper() {
   const [reqAccess, setReqAccess] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(false);
   const [revokedAccess, setRevokedAccess] = useState(false);
+  const [cardGrant, setCardGrant] = useState<ResGetAppByFsId["grant"] | undefined>(undefined);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [appTitle, setAppTitle] = useState<string | null>(null);
   const { isSignedIn: authSignedIn, isLoaded } = useAuth();
@@ -176,13 +177,10 @@ export default function VibeIframeWrapper() {
   }, [isOwner, userSlug, appSlug, vctx.vibeDiyApi]);
 
   useEffect(() => {
-    if (isLoaded && !authSignedIn && fsId && userSlug && appSlug) {
-      setIsSidebarVisible(true);
-    }
     if (authSignedIn) {
       setIsSidebarVisible(false);
     }
-  }, [isLoaded, authSignedIn, fsId, userSlug, appSlug]);
+  }, [authSignedIn]);
 
   // Resolve grant + chrome data async. The iframe is already mounted from
   // first paint; this just decides which (if any) overlay to layer on top.
@@ -196,7 +194,7 @@ export default function VibeIframeWrapper() {
     const token = searchParam.get("token") ?? undefined;
     const paramsKey = `${userSlug}|${appSlug}|${fsId ?? ""}|${token ?? ""}|${retryCount}`;
 
-    const applyResToUI = (res: ResGetAppByFsId, signedIn: boolean | undefined): void => {
+    const applyResToUI = (res: ResGetAppByFsId): void => {
       if (res.error) {
         setNotFound(true);
         toast.dismiss("vibe-access");
@@ -212,33 +210,16 @@ export default function VibeIframeWrapper() {
       }
       switch (res.grant) {
         case "not-found":
+        case "not-grant":
           setNotFound(true);
+          setCardGrant(res.grant);
           toast.dismiss("vibe-access");
           break;
         case "req-login.request":
-          if (signedIn) {
-            setReqAccess(true);
-          } else {
-            setReqLogin(true);
-            setIsSidebarVisible(true);
-          }
-          toast.dismiss("vibe-access");
-          break;
         case "req-login.invite":
-          setReqLogin(true);
-          setIsSidebarVisible(true);
-          toast.dismiss("vibe-access");
-          break;
         case "pending-request":
-          setPendingRequest(true);
-          toast.dismiss("vibe-access");
-          break;
         case "revoked-access":
-          setRevokedAccess(true);
-          toast.dismiss("vibe-access");
-          break;
-        case "not-grant":
-          setNotFound(true);
+          setCardGrant(res.grant);
           toast.dismiss("vibe-access");
           break;
         case "accepted-email-invite":
@@ -247,6 +228,7 @@ export default function VibeIframeWrapper() {
         case "granted-access.submitter":
         case "public-access":
         case "owner":
+          setCardGrant(undefined);
           setMyGrant(
             res.grant === "owner"
               ? "owner"
@@ -267,7 +249,7 @@ export default function VibeIframeWrapper() {
 
     // Auth-only flip: same params, already have a response — just re-render.
     if (lastFiredKeyRef.current === paramsKey && cachedResRef.current) {
-      applyResToUI(cachedResRef.current, authSignedIn);
+      applyResToUI(cachedResRef.current);
       return;
     }
     if (inGetAppByFsIdRef.current) {
@@ -284,9 +266,9 @@ export default function VibeIframeWrapper() {
       }
       const res = rRes.Ok();
       cachedResRef.current = res;
-      applyResToUI(res, authSignedIn);
+      applyResToUI(res);
     });
-  }, [userSlug, appSlug, fsId, searchParam, authSignedIn, retryCount, vctx.vibeDiyApi]);
+  }, [userSlug, appSlug, fsId, searchParam, retryCount, vctx.vibeDiyApi]);
 
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
 
@@ -359,7 +341,7 @@ export default function VibeIframeWrapper() {
       )
     : null;
 
-  const showLoginOverlay = !authSignedIn && isLoaded && (!!(fsId && userSlug && appSlug) || reqLogin);
+  const showLoginOverlay = !authSignedIn && isLoaded && reqLogin;
   const loginOverlay = showLoginOverlay
     ? createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
