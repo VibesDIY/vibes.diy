@@ -46,6 +46,7 @@ interface RunArgs {
   apiUrl: string;
   archiveRoot: string;
   promptsPath: string;
+  model: string | undefined;
 }
 
 async function loadCorpus(path: string): Promise<CorpusEntry[]> {
@@ -98,6 +99,7 @@ async function runEntry(args: RunArgs, entry: CorpusEntry): Promise<void> {
     userSlug: args.userSlug,
     appSlug: "(pending)",
     apiUrl: args.apiUrl,
+    ...(args.model !== undefined ? { model: args.model } : {}),
     startedAt,
     exitState: "in-progress",
     turns: [],
@@ -137,7 +139,12 @@ async function runEntry(args: RunArgs, entry: CorpusEntry): Promise<void> {
   await writeManifest(archive, manifest);
   stderr.write(`  appSlug: ${chat.appSlug}\n`);
 
+  if (args.model !== undefined) {
+    stderr.write(`  model: ${args.model}\n`);
+  }
+
   const rPrompt = await chat.prompt({
+    ...(args.model !== undefined ? { model: args.model } : {}),
     messages: [{ role: "user", content: [{ type: "text", text: entry.create }] }],
   });
   if (rPrompt.isErr()) {
@@ -289,6 +296,11 @@ const cmd = command({
       defaultValue: () => DEFAULT_PROMPTS_PATH,
       defaultValueIsSerializable: true,
     }),
+    model: option({
+      long: "model",
+      type: optional(string),
+      description: "Override the chat/app model id for this run (e.g. qwen/qwen3-coder-480b-a35b-instruct)",
+    }),
   },
   handler: async (args) => {
     const corpus = await loadCorpus(args.promptsPath);
@@ -306,6 +318,7 @@ const cmd = command({
         apiUrl: args.apiUrl,
         archiveRoot: args.archiveRoot,
         promptsPath: args.promptsPath,
+        model: args.model,
       },
       entry
     );
