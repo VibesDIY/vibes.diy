@@ -25,6 +25,9 @@ export interface ExpandedVibesPillProps {
   appIconUrl?: string;
   /** Canonical slug (e.g. "userSlug/appSlug") shown as a secondary line under the title. */
   appSlug?: string;
+  /** When true, the VIBES letters twinkle in opacity on a loop, reusing the
+   *  same staggered delays the fill transition uses. */
+  isTwinkling?: boolean;
 }
 
 function PillActionButton({
@@ -267,6 +270,7 @@ export function ExpandedVibesPill({
   appTitle,
   appIconUrl,
   appSlug,
+  isTwinkling = false,
 }: ExpandedVibesPillProps) {
   // idle → bubble → expanding → open (click to close: open → collapsing → idle)
   const [phase, setPhase] = useState<"idle" | "bubble" | "expanding" | "open" | "collapsing" | "shrinking">("idle");
@@ -714,6 +718,14 @@ export function ExpandedVibesPill({
         className={className}
         style={{ position: "relative", zIndex: 2 }}
       >
+        <defs>
+          <style>{`
+            @keyframes vibes-pill-letter-twinkle {
+              0%, 100% { opacity: 1; }
+              50%      { opacity: 0.25; }
+            }
+          `}</style>
+        </defs>
         <path fillRule="evenodd" clipRule="evenodd" fill="#000" d={outerPath} />
         <path
           fill={switchColors.secondary}
@@ -727,7 +739,11 @@ export function ExpandedVibesPill({
             key={`v${i}`}
             fillRule="evenodd"
             clipRule="evenodd"
-            style={{ transition: `fill ${l.delay} ease`, fill: creamSlid ? switchColors.primary : switchColors.secondary }}
+            style={{
+              transition: `fill ${l.delay} ease`,
+              fill: creamSlid ? switchColors.primary : switchColors.secondary,
+              animation: isTwinkling ? `vibes-pill-letter-twinkle ${l.delay} ease-in-out infinite` : undefined,
+            }}
             d={l.d}
           />
         ))}
