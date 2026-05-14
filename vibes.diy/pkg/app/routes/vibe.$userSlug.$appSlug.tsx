@@ -302,7 +302,6 @@ export default function VibeIframeWrapper() {
   }, [shareModal.isOpen]);
 
   const vibeSlug = `${userSlug}/${appSlug}`;
-  const remixUrl = `/remix/${vibeSlug}`;
   const cloneUrl = `/remix/${vibeSlug}?skipChat=true`;
 
   const showLoginOverlay = !authSignedIn && isLoaded && reqLogin;
@@ -375,7 +374,6 @@ export default function VibeIframeWrapper() {
               <Delayed ms={1000}>
                 <ExpandedVibesPill
                   size={60}
-                  remixHref={remixUrl}
                   cloneHref={cloneUrl}
                   editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
                   onCommunity={shareModal.open}
