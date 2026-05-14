@@ -138,6 +138,33 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         return Result.Ok(EventoResult.Continue);
       }
 
+      // Settings carry the displayable app title (active.title), which Apps.meta
+      // doesn't always include. Fetch once so both owner and non-owner branches
+      // can surface the real title to the viewer.
+      const rAppSet = await ensureAppSettings(vctx, {
+        type: "vibes.diy.req-ensure-app-settings",
+        appSlug: app.appSlug,
+        userSlug: app.userSlug,
+      });
+      if (rAppSet.isErr()) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-get-app-by-fsid",
+          error: "app-settings-not-found",
+          appSlug: req.appSlug,
+          userSlug: req.userSlug,
+          fsId: req.fsId,
+          grant: "not-found",
+          mode: "dev",
+          releaseSeq: -1,
+          env: {},
+          fileSystem: [],
+          meta: [],
+          created: new Date().toISOString(),
+        } satisfies ResGetAppByFsId);
+        return Result.Ok(EventoResult.Continue);
+      }
+      const settings = rAppSet.Ok().settings;
+
       let grant!: ResGetAppByFsId["grant"];
       // If not the owner, only return production apps
       const isOwner = callerUserId && callerUserId === app?.userId;
@@ -145,31 +172,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       if (isOwner) {
         grant = "owner";
       } else {
-        const rAppSet = await ensureAppSettings(vctx, {
-          type: "vibes.diy.req-ensure-app-settings",
-          appSlug: app.appSlug,
-          userSlug: app.userSlug,
-        });
-        if (rAppSet.isErr()) {
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-get-app-by-fsid",
-            error: "app-settings-not-found",
-            appSlug: req.appSlug,
-            userSlug: req.userSlug,
-            fsId: req.fsId,
-            grant: "not-found",
-            mode: "dev",
-            releaseSeq: -1,
-            env: {},
-            fileSystem: [],
-            meta: [],
-            created: new Date().toISOString(),
-          } satisfies ResGetAppByFsId);
-          return Result.Ok(EventoResult.Continue);
-        }
-
         const reqUserId = req._auth?.verifiedAuth?.claims.userId;
-        const settings = rAppSet.Ok().settings;
 
         if (settings.entry.publicAccess?.enable && app.mode === "production") {
           grant = "public-access";
@@ -295,6 +298,16 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           } satisfies ResGetAppByFsId);
         }
       }
+      // Inject the displayable title (from AppSettings.active.title) into the
+      // meta array if it isn't already there. Frontends read it via
+      // isMetaTitle(); previously they fell back to the slug because writes
+      // only persisted the title to settings, not to Apps.meta.
+      const baseMeta = app.meta as MetaItem[];
+      const titleStr = settings.entry.settings.title;
+      const meta: MetaItem[] =
+        titleStr !== undefined && baseMeta.some((m) => m.type === "title") === false
+          ? [...baseMeta, { type: "title", title: titleStr }]
+          : baseMeta;
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-get-app-by-fsid",
         appSlug: app.appSlug,
@@ -305,7 +318,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         releaseSeq: app.releaseSeq,
         env: app.env as Record<string, string>,
         fileSystem: app.fileSystem as FileSystemItem[],
-        meta: app.meta as MetaItem[],
+        meta,
         created: app.created,
       } satisfies ResGetAppByFsId);
       return Result.Ok(EventoResult.Continue);
