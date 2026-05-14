@@ -7,7 +7,7 @@ import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
-import { VibesSwitch, VibesButton, BLUE, YELLOW, ExpandedVibesPill, gridBackground, cx } from "@vibes.diy/base";
+import { VibesSwitch, ExpandedVibesPill, gridBackground, cx } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareModal } from "../components/ResultPreview/useShareModal.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
@@ -453,22 +453,18 @@ export default function VibeIframeWrapper() {
                   style={{ width: "100%", marginTop: 16, border: "1px solid black" }}
                 />
               )}
-              <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center", alignItems: "flex-start" }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                  <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall}>
-                    Install
-                  </VibesButton>
-                  <span style={{ fontSize: 12, opacity: 0.7 }}>your own copy</span>
-                </div>
+              <div style={{ marginTop: 20, display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+                <CardButton accent="primary" caption="your own copy" onClick={onClickInstall}>
+                  Install
+                </CardButton>
                 {(cardVariant === "request" || cardVariant === "invite") && (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                    <VibesButton variant={YELLOW} icon="remix" onClick={onClickJoin}>
-                      Collaborate
-                    </VibesButton>
-                    <span style={{ fontSize: 12, opacity: 0.7 }}>
-                      {cardVariant === "invite" ? "accept (open) invitation" : "request access"}
-                    </span>
-                  </div>
+                  <CardButton
+                    accent="secondary"
+                    caption={cardVariant === "invite" ? "accept invitation" : "request access"}
+                    onClick={onClickJoin}
+                  >
+                    Collaborate
+                  </CardButton>
                 )}
               </div>
             </div>
@@ -495,5 +491,71 @@ export default function VibeIframeWrapper() {
         />
       )}
     </>
+  );
+}
+
+// System 7-flavoured action button: cream chiclet, 1px black outline, hard
+// 2px offset shadow, presses down on active. Matches the surrounding card
+// chrome instead of the generic VibesButton tile.
+function CardButton({
+  accent,
+  caption,
+  onClick,
+  children,
+}: {
+  accent: "primary" | "secondary";
+  caption: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const fill = accent === "primary" ? "rgb(214, 235, 247)" : "rgb(255, 234, 178)";
+  const shadowOffset = pressed ? 0 : hovered ? 1 : 2;
+  const translate = pressed ? 2 : hovered ? 1 : 0;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, minWidth: 140 }}>
+      <button
+        type="button"
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => {
+          setHovered(false);
+          setPressed(false);
+        }}
+        onMouseDown={() => setPressed(true)}
+        onMouseUp={() => setPressed(false)}
+        style={{
+          fontFamily: '"Chicago", "ChicagoFLF", "Charcoal", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+          fontWeight: 700,
+          fontSize: 16,
+          letterSpacing: 0.6,
+          textTransform: "uppercase",
+          color: "rgb(34, 31, 32)",
+          background: fill,
+          border: "1px solid black",
+          borderRadius: 0,
+          padding: "10px 22px",
+          cursor: "pointer",
+          boxShadow: `${shadowOffset}px ${shadowOffset}px 0 0 black`,
+          transform: `translate(${translate}px, ${translate}px)`,
+          transition: "transform 70ms linear, box-shadow 70ms linear",
+          width: "100%",
+        }}
+      >
+        {children}
+      </button>
+      <span
+        style={{
+          fontFamily: '"Georgia", "Charter", "Iowan Old Style", serif',
+          fontStyle: "italic",
+          fontSize: 13,
+          opacity: 0.72,
+          letterSpacing: 0.2,
+        }}
+      >
+        {caption}
+      </span>
+    </div>
   );
 }
