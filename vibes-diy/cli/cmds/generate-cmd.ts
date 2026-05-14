@@ -294,13 +294,13 @@ export function generateCmd(ctx: CliCtx) {
         type: optional(string),
       }),
     },
-    handler: ctx.cliStream.enqueue((args) => {
+    handler: ctx.cliStream.enqueue(({ focus, model, ...rest }) => {
       // Same silent-no-op gotcha as edit-cmd: ArkType validate trips on an
-      // explicit `focusPath: undefined`, even though the ReqGenerate schema
-      // doesn't declare focusPath. Only attach when defined.
-      const base = { type: "vibes-diy.cli.generate" as const, ...args };
-      const withFocus = args.focus === undefined ? base : { ...base, focusPath: args.focus };
-      return args.model === undefined ? withFocus : { ...withFocus, model: args.model };
+      // explicit `focusPath: undefined` / `model: undefined`. Destructure
+      // both out of the spread and only attach when defined.
+      const base = { type: "vibes-diy.cli.generate" as const, ...rest };
+      const withFocus = focus === undefined ? base : { ...base, focusPath: focus };
+      return model === undefined ? withFocus : { ...withFocus, model };
     }),
   });
 }

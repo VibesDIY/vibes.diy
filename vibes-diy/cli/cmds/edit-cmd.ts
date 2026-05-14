@@ -441,15 +441,16 @@ export function editCmd(ctx: CliCtx) {
         type: optional(string),
       }),
     },
-    handler: ctx.cliStream.enqueue((args) => {
-      // ArkType's `focusPath?: "string"` allows the key to be ABSENT but rejects
-      // an explicit `undefined`. Spreading `focusPath: args.focus` when
-      // `--focus` isn't passed makes ReqEdit validation silently miss and the
-      // evento dispatcher drop the message with no error — a silent exit 0
-      // for every default-flag CLI edit. Only include the key when defined.
-      const base = { type: "vibes-diy.cli.edit" as const, ...args };
-      const withFocus = args.focus === undefined ? base : { ...base, focusPath: args.focus };
-      return args.model === undefined ? withFocus : { ...withFocus, model: args.model };
+    handler: ctx.cliStream.enqueue(({ focus, model, ...rest }) => {
+      // ArkType's optional-with-typed-value fields (`focusPath?: "string"`,
+      // `model?: "string"`) allow the key to be ABSENT but reject an explicit
+      // `undefined`. Spreading an `undefined` value when the flag isn't passed
+      // makes ReqEdit validation silently miss and the evento dispatcher drop
+      // the message with no error — a silent exit 0 for every default-flag
+      // CLI run. Destructure both out of the spread and only attach when defined.
+      const base = { type: "vibes-diy.cli.edit" as const, ...rest };
+      const withFocus = focus === undefined ? base : { ...base, focusPath: focus };
+      return model === undefined ? withFocus : { ...withFocus, model };
     }),
   });
 }
