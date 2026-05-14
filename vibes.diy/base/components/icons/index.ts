@@ -1,6 +1,7 @@
 export { LoginIcon } from "./LoginIcon.js";
 export { RemixIcon } from "./RemixIcon.js";
 export { InviteIcon } from "./InviteIcon.js";
+export { CollabIcon } from "./CollabIcon.js";
 export { SettingsIcon } from "./SettingsIcon.js";
 export { BackIcon } from "./BackIcon.js";
 export { FaceIcon1 } from "./FaceIcon1.js";
