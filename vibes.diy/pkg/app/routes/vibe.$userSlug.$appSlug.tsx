@@ -493,7 +493,7 @@ export default function VibeIframeWrapper() {
                       {cardVariant === "invite" ? "Join collab" : "Request access"}
                     </VibesButton>
                     <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
-                      {cardVariant === "invite" ? "You've been granted access." : "Ask to collaborate."}
+                      {cardVariant === "invite" ? "You've been granted access." : "Ask to join the collaboration."}
                     </span>
                   </div>
                 )}
