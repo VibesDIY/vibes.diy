@@ -468,7 +468,7 @@ export default function VibeIframeWrapper() {
                       {cardVariant === "invite" ? "Accept invitation" : "Request access"}
                     </VibesButton>
                     <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
-                      {cardVariant === "invite" ? "Collaborate with your friend." : "Ask to collaborate."}
+                      {cardVariant === "invite" ? "Jump right in." : "Ask to collaborate."}
                     </span>
                   </div>
                 )}
