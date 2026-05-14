@@ -280,8 +280,8 @@ export default function VibeIframeWrapper() {
     } else if (intent === "join") {
       void fireJoin();
     }
-    // Only re-run on auth flip; searchParam read at effect time is fine.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Only re-run on auth flip; searchParam is read at effect time, and we
+    // scrub the intent param before firing so subsequent renders early-return.
   }, [authSignedIn]);
 
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
