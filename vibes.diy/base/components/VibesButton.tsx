@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { VibesButtonStyles, bounceKeyframes } from "./VibesButton.styles.js";
-import { LoginIcon, RemixIcon, InviteIcon, SettingsIcon, BackIcon } from "./icons/index.js";
+import { LoginIcon, RemixIcon, InviteIcon, SettingsIcon, BackIcon, CollabIcon } from "./icons/index.js";
 import { useMobile } from "../hooks/useMobile.js";
 
 // Variant constants
@@ -10,7 +10,7 @@ export const YELLOW = "yellow" as const;
 export const GRAY = "gray" as const;
 
 type ButtonVariant = "blue" | "red" | "yellow" | "gray";
-type IconName = "login" | "remix" | "invite" | "settings" | "back";
+type IconName = "login" | "remix" | "invite" | "settings" | "back" | "collab";
 
 // Icon map - maps icon names to React components
 const iconMap: Record<
@@ -27,6 +27,7 @@ const iconMap: Record<
   invite: InviteIcon,
   settings: SettingsIcon,
   back: BackIcon,
+  collab: CollabIcon,
 };
 
 export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -41,12 +42,6 @@ export interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
   onUnhover?: () => void;
   icon?: IconName;
   /**
-   * Optional second icon rendered overlapping the primary icon. Use for actions
-   * that imply "more than one" — e.g. collaboration. Renders only when `icon`
-   * is also set.
-   */
-  secondIcon?: IconName;
-  /**
    * When true, button colors remain constant (cream/light) regardless of dark mode.
    * When false, button adapts to dark mode with darker background and lighter text.
    * @default true
@@ -60,7 +55,6 @@ export function VibesButton({
   onHover,
   onUnhover,
   icon,
-  secondIcon,
   style: customStyle,
   className = "",
   ignoreDarkMode = false,
@@ -80,7 +74,6 @@ export function VibesButton({
   }, [isHovered, onHover, onUnhover]);
 
   const IconComponent = icon ? iconMap[icon] : undefined;
-  const SecondIconComponent = secondIcon ? iconMap[secondIcon] : undefined;
 
   const baseStyle = VibesButtonStyles.getButtonStyle(buttonVariant, isHovered, isActive, isMobile, !!IconComponent);
   const mergedStyle = VibesButtonStyles.getMergedButtonStyle(baseStyle, ignoreDarkMode, customStyle);
@@ -106,31 +99,13 @@ export function VibesButton({
         {IconComponent ? (
           <div style={contentWrapperStyle}>
             <div style={iconContainerStyle}>
-              <div style={{ ...iconStyle, position: "relative" }}>
+              <div style={iconStyle}>
                 <IconComponent
                   bgFill="var(--vibes-button-icon-bg)"
                   fill="var(--vibes-button-icon-fill)"
                   width={isMobile ? 28 : 50}
                   height={isMobile ? 28 : 50}
                 />
-                {SecondIconComponent && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: isMobile ? 6 : 11,
-                      left: isMobile ? 9 : 16,
-                      width: isMobile ? 22 : 40,
-                      height: isMobile ? 22 : 40,
-                    }}
-                  >
-                    <SecondIconComponent
-                      bgFill="var(--vibes-button-icon-bg)"
-                      fill="var(--vibes-button-icon-fill)"
-                      width={isMobile ? 22 : 40}
-                      height={isMobile ? 22 : 40}
-                    />
-                  </div>
-                )}
               </div>
             </div>
             <span>{children}</span>

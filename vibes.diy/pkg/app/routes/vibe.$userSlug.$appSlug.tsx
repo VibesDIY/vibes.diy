@@ -468,13 +468,7 @@ export default function VibeIframeWrapper() {
                 </div>
                 {(cardVariant === "request" || cardVariant === "invite") && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
-                    <VibesButton
-                      variant={YELLOW}
-                      icon="remix"
-                      secondIcon={cardVariant === "invite" ? "remix" : undefined}
-                      onClick={onClickJoin}
-                      style={{ paddingLeft: 18, paddingRight: 18 }}
-                    >
+                    <VibesButton variant={YELLOW} icon="collab" onClick={onClickJoin} style={{ paddingLeft: 18, paddingRight: 18 }}>
                       {cardVariant === "invite" ? "Join collab" : "Request access"}
                     </VibesButton>
                     <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
