@@ -47,6 +47,10 @@ export const ReqGenerate = type({
   // Optional: file path to focus first in slot rendering. Forwarded to the
   // server as focusPath on the prompt request. Defaults to "App.jsx" server-side.
   "focusPath?": "string",
+  // Optional: ephemeral per-request model override. Forwarded as
+  // LLMRequest.model; server falls back to appSettings/userSettings/catalog
+  // defaults when omitted. Not persisted.
+  "model?": "string",
 });
 export type ReqGenerate = typeof ReqGenerate.infer;
 
@@ -92,7 +96,10 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
 
     // Send the user prompt
     const rPrompt = await chat.prompt(
-      { messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }] },
+      {
+        ...(args.model !== undefined ? { model: args.model } : {}),
+        messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }],
+      },
       { ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}) }
     );
     if (rPrompt.isErr()) {
@@ -281,13 +288,19 @@ export function generateCmd(ctx: CliCtx) {
         description: "Path to focus first in slot rendering (e.g. Card.jsx for multi-file edits)",
         type: optional(string),
       }),
+      model: option({
+        long: "model",
+        description: "Ephemeral model override for this run (e.g. qwen/qwen3-coder-480b-a35b-instruct); not persisted",
+        type: optional(string),
+      }),
     },
     handler: ctx.cliStream.enqueue((args) => {
       // Same silent-no-op gotcha as edit-cmd: ArkType validate trips on an
       // explicit `focusPath: undefined`, even though the ReqGenerate schema
       // doesn't declare focusPath. Only attach when defined.
       const base = { type: "vibes-diy.cli.generate" as const, ...args };
-      return args.focus === undefined ? base : { ...base, focusPath: args.focus };
+      const withFocus = args.focus === undefined ? base : { ...base, focusPath: args.focus };
+      return args.model === undefined ? withFocus : { ...withFocus, model: args.model };
     }),
   });
 }

@@ -54,6 +54,10 @@ export const ReqEdit = type({
   // Optional: file path to focus first in slot rendering. Forwarded to the
   // server as focusPath on the prompt request. Defaults to "App.jsx" server-side.
   "focusPath?": "string",
+  // Optional: ephemeral per-request model override. Forwarded as
+  // LLMRequest.model; server falls back to appSettings/userSettings/catalog
+  // defaults when omitted. Not persisted.
+  "model?": "string",
 });
 export type ReqEdit = typeof ReqEdit.infer;
 
@@ -195,7 +199,10 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
         focus: args.focusPath,
       });
       const rPrompt = await chat.prompt(
-        { messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }] },
+        {
+          ...(args.model !== undefined ? { model: args.model } : {}),
+          messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }],
+        },
         { ...dryRunOpts, dryRun: true }
       );
       if (rPrompt.isErr()) {
@@ -245,7 +252,13 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
       dir,
       focus: args.focusPath,
     });
-    const rPrompt = await chat.prompt({ messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }] }, promptOpts);
+    const rPrompt = await chat.prompt(
+      {
+        ...(args.model !== undefined ? { model: args.model } : {}),
+        messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }],
+      },
+      promptOpts
+    );
     if (rPrompt.isErr()) {
       return Result.Err(`Failed to send prompt: ${formatErr(rPrompt.Err())}`);
     }
@@ -422,6 +435,11 @@ export function editCmd(ctx: CliCtx) {
         description: "Path to focus first in slot rendering (e.g. Card.jsx for multi-file edits)",
         type: optional(string),
       }),
+      model: option({
+        long: "model",
+        description: "Ephemeral model override for this run (e.g. qwen/qwen3-coder-480b-a35b-instruct); not persisted",
+        type: optional(string),
+      }),
     },
     handler: ctx.cliStream.enqueue((args) => {
       // ArkType's `focusPath?: "string"` allows the key to be ABSENT but rejects
@@ -430,7 +448,8 @@ export function editCmd(ctx: CliCtx) {
       // evento dispatcher drop the message with no error — a silent exit 0
       // for every default-flag CLI edit. Only include the key when defined.
       const base = { type: "vibes-diy.cli.edit" as const, ...args };
-      return args.focus === undefined ? base : { ...base, focusPath: args.focus };
+      const withFocus = args.focus === undefined ? base : { ...base, focusPath: args.focus };
+      return args.model === undefined ? withFocus : { ...withFocus, model: args.model };
     }),
   });
 }

@@ -14,6 +14,7 @@ export interface RunManifest {
   userSlug: string;
   appSlug: string;
   apiUrl: string;
+  model?: string;
   startedAt: string;
   finishedAt?: string;
   exitState: "ok" | "auth-failure" | "open-chat-failure" | "prompt-failure" | "stream-error" | "in-progress";
