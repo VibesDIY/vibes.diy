@@ -108,28 +108,52 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
     expect(rApp.Ok().grant).toBe("pending-request");
   });
 
-  it("getAppByFsId returns pending-request on first visit (implicit requestAccess)", async () => {
+  it("getAppByFsId returns req-login.request on first visit (no implicit requestAccess)", async () => {
     const { appSlug, userSlug } = await createApp();
 
     // Enable request access (no auto-approve)
     await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
 
-    // Non-owner calls getAppByFsId without prior requestAccess — should create the
-    // request implicitly and return pending-request
+    // Non-owner calls getAppByFsId without prior requestAccess — must NOT create a
+    // request implicitly. The landing card needs to render so the visitor can choose
+    // to install vs request; only an explicit requestAccess click should fire the flow.
     const rApp = await api2.getAppByFsId({ appSlug, userSlug });
     if (rApp.isErr()) {
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
     }
-    expect(rApp.Ok().grant).toBe("pending-request");
+    expect(rApp.Ok().grant).toBe("req-login.request");
   });
 
-  it("getAppByFsId auto-approves and grants access when autoAcceptRole is enabled", async () => {
+  it("getAppByFsId returns req-login.auto-join on first visit when autoAcceptRole is enabled", async () => {
     const { appSlug, userSlug } = await createApp();
 
     // Enable request access with auto-approve
     await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "viewer" } });
 
-    // Non-owner visits — should be auto-approved on first getAppByFsId
+    // Non-owner visits — must see the landing card with auto-join copy. The page-load
+    // resolver must NOT silently auto-claim the grant; the visitor still consents via
+    // an explicit click that fires requestAccess.
+    const rApp = await api2.getAppByFsId({ appSlug, userSlug });
+    if (rApp.isErr()) {
+      assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
+    }
+    expect(rApp.Ok().grant).toBe("req-login.auto-join");
+  });
+
+  it("auto-accept resolves to granted access only after explicit requestAccess", async () => {
+    const { appSlug, userSlug } = await createApp();
+
+    // Enable request access with auto-approve
+    await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "viewer" } });
+
+    // Explicit requestAccess (what the Join button triggers) auto-approves immediately
+    const rRequested = await api2.requestAccess({ appSlug, userSlug });
+    if (rRequested.isErr()) {
+      assert.fail("Expected requestAccess to succeed: " + JSON.stringify(rRequested.Err()));
+    }
+    expect(rRequested.Ok().state).toBe("approved");
+
+    // Subsequent getAppByFsId now returns granted-access.viewer
     const rApp = await api2.getAppByFsId({ appSlug, userSlug });
     if (rApp.isErr()) {
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
