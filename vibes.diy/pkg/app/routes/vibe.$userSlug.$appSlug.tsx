@@ -352,7 +352,7 @@ export default function VibeIframeWrapper() {
   const cardVariant = computeCardVariant(cardGrant);
   const showCard = cardVariant === "request" || cardVariant === "invite" || cardVariant === "pending" || cardVariant === "revoked";
 
-  if (iframeUrl) {
+  if (iframeUrl && cardVariant === "iframe") {
     return (
       <>
         <div className={cx("fixed inset-0", gridBackground)} style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
