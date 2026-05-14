@@ -440,15 +440,12 @@ export default function VibeIframeWrapper() {
               }}
             >
               <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>{appTitle ?? appSlug}</h2>
-              <p style={{ marginTop: 10, fontSize: 15, opacity: 0.7 }}>
-                {cardVariant === "pending"
-                  ? "The owner has your request. Let them know to click approve on this URL."
-                  : cardVariant === "revoked"
-                    ? "Your access was revoked. You can still install your own copy."
-                    : cardVariant === "invite"
-                      ? "This is your friend's private app. Install your own copy, or join the collaboration."
-                      : "This is your friend's private app. Install your own copy to use it solo, or request access to collaborate with them."}
-              </p>
+              {cardVariant === "pending" && (
+                <p style={{ marginTop: 10, fontSize: 15, opacity: 0.7 }}>
+                  The owner has your request. Let them know to approve at this URL.
+                </p>
+              )}
+              {cardVariant === "revoked" && <p style={{ marginTop: 10, fontSize: 15, opacity: 0.7 }}>Your access was revoked.</p>}
               {screenshotUrl && (
                 <img
                   src={screenshotUrl}
@@ -456,19 +453,22 @@ export default function VibeIframeWrapper() {
                   style={{ width: "100%", marginTop: 16, border: "1px solid black" }}
                 />
               )}
-              <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
-                <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall}>
-                  Install your own copy
-                </VibesButton>
-                {cardVariant === "invite" && (
-                  <VibesButton variant={YELLOW} icon="remix" onClick={onClickJoin}>
-                    Join
+              <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center", alignItems: "flex-start" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                  <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall}>
+                    Install
                   </VibesButton>
-                )}
-                {cardVariant === "request" && (
-                  <VibesButton variant={YELLOW} icon="remix" onClick={onClickJoin}>
-                    Request access
-                  </VibesButton>
+                  <span style={{ fontSize: 12, opacity: 0.7 }}>your own copy</span>
+                </div>
+                {(cardVariant === "request" || cardVariant === "invite") && (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                    <VibesButton variant={YELLOW} icon="remix" onClick={onClickJoin}>
+                      Collaborate
+                    </VibesButton>
+                    <span style={{ fontSize: 12, opacity: 0.7 }}>
+                      {cardVariant === "invite" ? "you have an invite" : "request access"}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
