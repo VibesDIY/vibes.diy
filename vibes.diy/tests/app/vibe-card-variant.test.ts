@@ -8,6 +8,9 @@ describe("computeCardVariant", () => {
   it("returns 'invite' for req-login.invite", () => {
     expect(computeCardVariant("req-login.invite")).toBe("invite");
   });
+  it("returns 'invite' for req-login.auto-join (shared visual branch with invite)", () => {
+    expect(computeCardVariant("req-login.auto-join")).toBe("invite");
+  });
   it("returns 'pending' for pending-request", () => {
     expect(computeCardVariant("pending-request")).toBe("pending");
   });
