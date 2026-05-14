@@ -454,19 +454,21 @@ export default function VibeIframeWrapper() {
                 />
               )}
               <div style={{ marginTop: 20, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 140 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, maxWidth: 200 }}>
                   <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall}>
                     Install
                   </VibesButton>
-                  <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9 }}>your own copy</span>
+                  <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
+                    Run a new copy with your own data.
+                  </span>
                 </div>
                 {(cardVariant === "request" || cardVariant === "invite") && (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 140 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, maxWidth: 200 }}>
                     <VibesButton variant={YELLOW} icon="remix" onClick={onClickJoin}>
-                      Collaborate
+                      {cardVariant === "invite" ? "Accept invitation" : "Request access"}
                     </VibesButton>
-                    <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9 }}>
-                      {cardVariant === "invite" ? "accept invitation" : "request access"}
+                    <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
+                      {cardVariant === "invite" ? "Collaborate with your friend." : "Ask to collaborate."}
                     </span>
                   </div>
                 )}
