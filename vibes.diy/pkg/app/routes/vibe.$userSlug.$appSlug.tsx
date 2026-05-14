@@ -459,7 +459,12 @@ export default function VibeIframeWrapper() {
               )}
               <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
-                  <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall} style={{ paddingLeft: 18, paddingRight: 18 }}>
+                  <VibesButton
+                    variant={BLUE}
+                    icon="remix"
+                    onClick={onClickInstall}
+                    style={{ paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 14 }}
+                  >
                     Fresh Install
                   </VibesButton>
                   <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
@@ -468,7 +473,12 @@ export default function VibeIframeWrapper() {
                 </div>
                 {(cardVariant === "request" || cardVariant === "invite") && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
-                    <VibesButton variant={YELLOW} icon="collab" onClick={onClickJoin} style={{ paddingLeft: 18, paddingRight: 18 }}>
+                    <VibesButton
+                      variant={YELLOW}
+                      icon="collab"
+                      onClick={onClickJoin}
+                      style={{ paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 14 }}
+                    >
                       {cardVariant === "invite" ? "Join collab" : "Request access"}
                     </VibesButton>
                     <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>

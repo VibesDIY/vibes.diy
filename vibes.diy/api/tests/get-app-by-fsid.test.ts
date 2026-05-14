@@ -172,6 +172,20 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
     expect(rApp.Ok().grant).toBe("not-grant");
   });
 
+  it("getAppByFsId surfaces the displayable title via meta", async () => {
+    const { appSlug, userSlug } = await createApp();
+
+    // Owner sets a real title; the slug stays slug-shaped.
+    await api.ensureAppSettings({ appSlug, userSlug, title: "Friendly Title" });
+
+    const rApp = await api.getAppByFsId({ appSlug, userSlug });
+    if (rApp.isErr()) {
+      assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
+    }
+    const titleEntry = rApp.Ok().meta.find((m) => m.type === "title");
+    expect(titleEntry).toEqual({ type: "title", title: "Friendly Title" });
+  });
+
   it("getAppByFsId returns owner for app owner", async () => {
     const { appSlug, userSlug } = await createApp();
 
