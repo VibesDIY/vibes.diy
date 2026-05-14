@@ -12,7 +12,7 @@ interface CollabIconProps {
 // (RemixIcon, etc.) — same 44x44 viewBox, same two-color fill API.
 export function CollabIcon({ bgFill = "#fff", fill = "#2a2a2a", width = 44, height = 44 }: CollabIconProps) {
   const eyeR = 0.9;
-  const faces: Array<{ cx: number; cy: number }> = [
+  const faces: { cx: number; cy: number }[] = [
     { cx: 22, cy: 11 },
     { cx: 12, cy: 28 },
     { cx: 32, cy: 28 },
