@@ -463,7 +463,20 @@ export default function VibeIframeWrapper() {
                 />
               )}
               {(cardVariant === "request" || cardVariant === "invite") && (
-                <p style={{ marginTop: 20, fontSize: 17, fontWeight: 600 }}>How would you like to open {appTitle ?? appSlug}?</p>
+                <p
+                  style={{
+                    marginTop: 24,
+                    fontFamily: '"Georgia", "Charter", "Iowan Old Style", serif',
+                    fontStyle: "italic",
+                    fontWeight: 600,
+                    fontSize: 26,
+                    lineHeight: 1.15,
+                    textAlign: "right",
+                    textShadow: "3px 3px 0 rgba(0, 154, 206, 0.55)",
+                  }}
+                >
+                  How would you like to open {appTitle ?? appSlug}?
+                </p>
               )}
               <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
