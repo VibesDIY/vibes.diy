@@ -453,10 +453,13 @@ export default function VibeIframeWrapper() {
                   style={{ width: "100%", marginTop: 16, border: "1px solid black" }}
                 />
               )}
-              <div style={{ marginTop: 20, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+              {(cardVariant === "request" || cardVariant === "invite") && (
+                <p style={{ marginTop: 20, fontSize: 17, fontWeight: 600 }}>How would you like to open {appTitle ?? appSlug}?</p>
+              )}
+              <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
                   <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall}>
-                    Install
+                    Fresh Install
                   </VibesButton>
                   <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
                     Run a new copy with your own data.
