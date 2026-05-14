@@ -99,36 +99,44 @@ export class VibeSandboxApi {
     await this.ackReady.asPromise();
 
     if (opts.idleTimeout !== undefined) {
+      // Long-running idle-mode RPCs (e.g. subscribeDocs) intentionally stay
+      // open for the lifetime of the subscription — instrumenting them
+      // would pin the pill twinkle forever.
       return this.requestIdle<Q, S>(msg, opts, opts.idleTimeout);
     }
 
-    const res = await timeouted(
-      () => {
-        const tid = crypto.randomUUID();
-        const result = new Future<ResVibeRegisterFPDb>();
-        this.onMsg((event) => {
-          // console.log("Received message event in request", event);
-          if (opts.wait(event.data) && event.data.tid === tid) {
-            result.resolve(event.data);
-          }
-        });
-        this.svc.postMessage(
-          {
-            tid,
-            ...msg,
-          },
-          "*"
-        );
-        return result.asPromise();
-      },
-      { timeout: opts.timeout ?? 5000 }
-    );
-    if (res.isSuccess()) {
-      return Result.Ok(res.value as S);
-    } else if (res.isError()) {
-      return Result.Err(res.error);
+    beginNetworkActivity();
+    try {
+      const res = await timeouted(
+        () => {
+          const tid = crypto.randomUUID();
+          const result = new Future<ResVibeRegisterFPDb>();
+          this.onMsg((event) => {
+            // console.log("Received message event in request", event);
+            if (opts.wait(event.data) && event.data.tid === tid) {
+              result.resolve(event.data);
+            }
+          });
+          this.svc.postMessage(
+            {
+              tid,
+              ...msg,
+            },
+            "*"
+          );
+          return result.asPromise();
+        },
+        { timeout: opts.timeout ?? 5000 }
+      );
+      if (res.isSuccess()) {
+        return Result.Ok(res.value as S);
+      } else if (res.isError()) {
+        return Result.Err(res.error);
+      }
+      return Result.Err(`Request timed out`);
+    } finally {
+      endNetworkActivity();
     }
-    return Result.Err(`Request timed out`);
   }
 
   // Variant of request() with idle-reset semantics: the request fails only
@@ -371,6 +379,10 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   registerCallAI(ctxVibeApi);
   registerImgGen(ctxVibeApi);
 
+  // Surface generic fetch activity from the vibe app to the host so the
+  // VibesSwitch pill can twinkle while there's work in-flight.
+  installFetchActivityMonitor();
+
   // Register the hot-swap listener BEFORE signalling ready, so any set-source
   // the host posts in response to runtime.ready arrives at a live listener.
   registerHotSwapHandler();
@@ -408,6 +420,62 @@ function sendRuntimeReadyWithRetry(api: VibeSandboxApi): void {
   // Belt-and-suspenders: also stop on ack via the future itself, in case the
   // resolve happens between the timer ticks (avoids one extra post).
   api.ackReady.asPromise().then(() => clearInterval(interval));
+}
+
+// Shared in-flight counter — fed by both the globalThis.fetch monkey-patch
+// AND the bridge request() method, so the parent gets a single source of
+// truth via `vibe.evt.network.active` / `vibe.evt.network.idle`.
+let networkInFlight = 0;
+
+function postNetworkActivity(active: boolean): void {
+  try {
+    window.parent.postMessage(
+      active ? { type: "vibe.evt.network.active", count: networkInFlight } : { type: "vibe.evt.network.idle" },
+      "*"
+    );
+  } catch {
+    // postMessage can throw if the parent reference is gone (iframe being
+    // torn down). Safe to ignore — there's nothing to twinkle for.
+  }
+}
+
+export function beginNetworkActivity(): void {
+  networkInFlight += 1;
+  postNetworkActivity(true);
+}
+
+export function endNetworkActivity(): void {
+  networkInFlight = Math.max(0, networkInFlight - 1);
+  postNetworkActivity(networkInFlight > 0);
+}
+
+let fetchMonitorInstalled = false;
+
+/**
+ * Wraps globalThis.fetch so every in-flight request bumps the shared
+ * `networkInFlight` counter. Errors and cancellations both decrement, so a
+ * failed request never leaves the counter pinned > 0.
+ */
+function installFetchActivityMonitor(): void {
+  if (fetchMonitorInstalled) return;
+  fetchMonitorInstalled = true;
+  if (typeof globalThis.fetch !== "function") return;
+
+  const originalFetch = globalThis.fetch.bind(globalThis) as typeof globalThis.fetch;
+
+  globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+    beginNetworkActivity();
+    return originalFetch(input, init).then(
+      (res) => {
+        endNetworkActivity();
+        return res;
+      },
+      (err) => {
+        endNetworkActivity();
+        throw err;
+      }
+    );
+  }) as typeof globalThis.fetch;
 }
 
 let hotSwapRegistered = false;

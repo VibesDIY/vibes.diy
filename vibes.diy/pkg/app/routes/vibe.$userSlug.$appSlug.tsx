@@ -10,6 +10,7 @@ import { Delayed } from "../components/Delayed.js";
 import { VibesSwitch, VibesButton, BLUE, YELLOW, ExpandedVibesPill, gridBackground, cx, useMobile } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareModal } from "../components/ResultPreview/useShareModal.js";
+import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
 import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
@@ -82,6 +83,7 @@ export default function VibeIframeWrapper() {
   const matches = useMatches();
   const loaderData = matches[matches.length - 1]?.data as { iframeUrl?: string } | undefined;
   const [iframeUrl, setIframeUrl] = useState<string | undefined>(loaderData?.iframeUrl);
+  const isNetworkActive = useIframeApiInFlight();
   // Gate the post-iframe chrome (overlays, pill, sidebar) until after client
   // hydration. The chrome uses createPortal(..., document.body), which calls
   // document at parent render time — that throws on SSR. Hydration-safe: SSR
@@ -392,6 +394,7 @@ export default function VibeIframeWrapper() {
                   appTitle={appTitle ?? appSlug}
                   appIconUrl={screenshotUrl ?? undefined}
                   appSlug={vibeSlug}
+                  isTwinkling={isNetworkActive}
                   onHome={() => {
                     window.open("https://vibes.diy", "_blank");
                   }}

@@ -100,6 +100,28 @@ export function isEvtVibeHotSwapError(x: unknown): x is EvtVibeHotSwapError {
   return !(EvtVibeHotSwapError(x) instanceof type.errors);
 }
 
+// Iframe → parent network-activity heartbeat. The sandbox runtime
+// monkey-patches globalThis.fetch and emits these so the host can show a
+// twinkle on the VibesSwitch pill while any HTTP request is in flight.
+export const EvtVibeNetworkActive = type({
+  type: "'vibe.evt.network.active'",
+  count: "number",
+});
+export type EvtVibeNetworkActive = typeof EvtVibeNetworkActive.infer;
+
+export function isEvtVibeNetworkActive(x: unknown): x is EvtVibeNetworkActive {
+  return !(EvtVibeNetworkActive(x) instanceof type.errors);
+}
+
+export const EvtVibeNetworkIdle = type({
+  type: "'vibe.evt.network.idle'",
+});
+export type EvtVibeNetworkIdle = typeof EvtVibeNetworkIdle.infer;
+
+export function isEvtVibeNetworkIdle(x: unknown): x is EvtVibeNetworkIdle {
+  return !(EvtVibeNetworkIdle(x) instanceof type.errors);
+}
+
 export const EvtVibeAttachStatusFPDb = type({
   type: "'vibe.evt.attach.status.fpdb'",
   data: FBDbDataWithUrl,

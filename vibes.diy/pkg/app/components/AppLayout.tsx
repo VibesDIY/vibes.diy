@@ -3,6 +3,7 @@ import React from "react";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import type { ReactNode } from "react";
 import { useShareableDB } from "../hooks/useShareableDB.js";
+import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
 import { AllowFireproofSharing } from "./AllowFireproofSharing.js";
 import { PillPortal, PILL_CLEARANCE } from "./PillPortal.js";
 
@@ -34,11 +35,17 @@ export default function AppLayout({
   fullWidthChat = false,
 }: AppLayoutProps) {
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
+  const isNetworkActive = useIframeApiInFlight();
   useDocumentTitle("vibes.diy");
 
   return (
     <div className={cx(gridBackground, "page-grid-background relative flex h-dvh flex-col overflow-hidden md:flex-row")}>
-      <PillPortal isActive={isSidebarVisible} onToggle={setIsSidebarVisible} mobilePreviewShown={mobilePreviewShown} />
+      <PillPortal
+        isActive={isSidebarVisible}
+        onToggle={setIsSidebarVisible}
+        mobilePreviewShown={mobilePreviewShown}
+        isTwinkling={isNetworkActive}
+      />
 
       {/* Content with relative positioning to appear above the background */}
       <div

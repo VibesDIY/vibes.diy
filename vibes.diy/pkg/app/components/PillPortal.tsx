@@ -12,9 +12,10 @@ interface PillPortalProps {
   isActive: boolean;
   onToggle: (active: boolean) => void;
   mobilePreviewShown?: boolean;
+  isTwinkling?: boolean;
 }
 
-export function PillPortal({ isActive, onToggle, mobilePreviewShown = false }: PillPortalProps) {
+export function PillPortal({ isActive, onToggle, mobilePreviewShown = false, isTwinkling = false }: PillPortalProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -31,7 +32,7 @@ export function PillPortal({ isActive, onToggle, mobilePreviewShown = false }: P
         zIndex: 40,
       }}
     >
-      <VibesSwitch size={75} isActive={isActive} onToggle={onToggle} className="cursor-pointer" />
+      <VibesSwitch size={75} isActive={isActive} onToggle={onToggle} isTwinkling={isTwinkling} className="cursor-pointer" />
     </div>,
     document.body
   );
