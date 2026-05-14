@@ -426,7 +426,7 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
   // (ArkEditorStateEdit.or(ArkEditorStateToEdit)(state) as type.errors).summary)
 
   return (
-    <div data-testid="sandpack-provider" className="h-full">
+    <div data-testid="sandpack-provider" className="h-full" spellCheck={false}>
       <div
         style={{
           visibility: "visible",
