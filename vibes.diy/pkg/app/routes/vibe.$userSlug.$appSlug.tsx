@@ -216,6 +216,7 @@ export default function VibeIframeWrapper() {
           break;
         case "req-login.request":
         case "req-login.invite":
+        case "req-login.auto-join":
         case "pending-request":
         case "revoked-access":
           setCardGrant(res.grant);
