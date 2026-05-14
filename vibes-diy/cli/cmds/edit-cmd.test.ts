@@ -7,7 +7,7 @@ import { run } from "cmd-ts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cmd_tsStream } from "../cmd-ts-stream.js";
 import type { CliCtx } from "../cli-ctx.js";
-import { ReqEdit, buildEditPromptRequest, editCmd, editEvento } from "./edit-cmd.js";
+import { ReqEdit, buildEditPromptRequest, editCmd, editEvento, isReqEdit } from "./edit-cmd.js";
 
 const tempDirs: string[] = [];
 
@@ -221,6 +221,58 @@ describe("editEvento", () => {
       dryRun: false,
       transcript: false,
     });
+  });
+
+  it("omitted --model produces a request that passes isReqEdit (no model: undefined leak)", async () => {
+    const cliStream = cmd_tsStream();
+    const ctx: CliCtx = {
+      sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
+      cliStream,
+      output: { stdout: () => undefined, stderr: () => undefined },
+      exitCode: 0,
+    };
+
+    const reader = cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(editCmd(ctx), ["todo-app", "Refine the UI", "--api-url", "https://example.com/api"]);
+
+    const first = await firstRead;
+    await cliStream.close();
+    expect(first.done).toBe(false);
+    const request = (first.value as { result: ReqEdit }).result;
+    // ArkType `model?: "string"` rejects an explicit `undefined`; if the
+    // handler spread `model: undefined` into the payload, isReqEdit would
+    // return false and the evento dispatcher would silently drop the request.
+    expect(isReqEdit(request)).toBe(true);
+    expect("model" in request).toBe(false);
+  });
+
+  it("--model flag is parsed and forwarded as model in the request", async () => {
+    const cliStream = cmd_tsStream();
+    const ctx: CliCtx = {
+      sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
+      cliStream,
+      output: { stdout: () => undefined, stderr: () => undefined },
+      exitCode: 0,
+    };
+
+    const reader = cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(editCmd(ctx), [
+      "todo-app",
+      "Refine the UI",
+      "--model",
+      "qwen/qwen3-coder-480b-a35b-instruct",
+      "--api-url",
+      "https://example.com/api",
+    ]);
+
+    const first = await firstRead;
+    await cliStream.close();
+    expect(first.done).toBe(false);
+    const request = (first.value as { result: ReqEdit }).result;
+    expect(isReqEdit(request)).toBe(true);
+    expect(request).toMatchObject({ model: "qwen/qwen3-coder-480b-a35b-instruct" });
   });
 
   it("--focus flag is parsed and forwarded as focusPath in the request", async () => {
