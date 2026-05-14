@@ -454,7 +454,7 @@ export default function VibeIframeWrapper() {
                 />
               )}
               <div style={{ marginTop: 20, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, maxWidth: 200 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
                   <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall}>
                     Install
                   </VibesButton>
@@ -463,7 +463,7 @@ export default function VibeIframeWrapper() {
                   </span>
                 </div>
                 {(cardVariant === "request" || cardVariant === "invite") && (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, maxWidth: 200 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
                     <VibesButton variant={YELLOW} icon="remix" onClick={onClickJoin}>
                       {cardVariant === "invite" ? "Accept invitation" : "Request access"}
                     </VibesButton>
