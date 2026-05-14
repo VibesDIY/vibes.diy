@@ -7,7 +7,7 @@ import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
-import { VibesSwitch, VibesButton, BLUE, YELLOW, ExpandedVibesPill, gridBackground, cx } from "@vibes.diy/base";
+import { VibesSwitch, VibesButton, BLUE, YELLOW, ExpandedVibesPill, gridBackground, cx, useMobile } from "@vibes.diy/base";
 import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareModal } from "../components/ResultPreview/useShareModal.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
@@ -351,6 +351,14 @@ export default function VibeIframeWrapper() {
   }
 
   const cardVariant = computeCardVariant(cardGrant);
+  // Desktop landing buttons get extra vertical padding so the two-line labels
+  // ("FRESH \n INSTALL", "JOIN \n COLLAB") don't crowd the button edge. Mobile
+  // already sizes nicely via the base width:100% / minHeight:60px rules.
+  const isMobileViewport = useMobile();
+  const ctaStyle =
+    isMobileViewport === true
+      ? undefined
+      : { paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 18, height: "auto" };
   const showCard = cardVariant === "request" || cardVariant === "invite" || cardVariant === "pending" || cardVariant === "revoked";
 
   if (iframeUrl && cardVariant === "iframe") {
@@ -459,12 +467,7 @@ export default function VibeIframeWrapper() {
               )}
               <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
-                  <VibesButton
-                    variant={BLUE}
-                    icon="remix"
-                    onClick={onClickInstall}
-                    style={{ paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 26 }}
-                  >
+                  <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall} style={ctaStyle}>
                     Fresh Install
                   </VibesButton>
                   <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
@@ -473,12 +476,7 @@ export default function VibeIframeWrapper() {
                 </div>
                 {(cardVariant === "request" || cardVariant === "invite") && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
-                    <VibesButton
-                      variant={YELLOW}
-                      icon="collab"
-                      onClick={onClickJoin}
-                      style={{ paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 26 }}
-                    >
+                    <VibesButton variant={YELLOW} icon="collab" onClick={onClickJoin} style={ctaStyle}>
                       {cardVariant === "invite" ? "Join collab" : "Request access"}
                     </VibesButton>
                     <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
