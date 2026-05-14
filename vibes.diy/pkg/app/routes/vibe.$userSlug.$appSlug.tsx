@@ -16,6 +16,7 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { toast } from "react-hot-toast";
 import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
 import { computeCardVariant } from "./vibe-card-variant.js";
+import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
 
 // Server-render the iframe URL so the <iframe src=...> ships in the very
 // first byte of HTML. Without this, the browser can't start fetching the
@@ -110,9 +111,6 @@ export default function VibeIframeWrapper() {
   }, [ssrIframeUrl, appSlug, userSlug, fsId, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
   const [notFound, setNotFound] = useState(false);
   const [reqLogin, setReqLogin] = useState(false);
-  const [reqAccess, setReqAccess] = useState(false);
-  const [pendingRequest, setPendingRequest] = useState(false);
-  const [revokedAccess, setRevokedAccess] = useState(false);
   const [cardGrant, setCardGrant] = useState<ResGetAppByFsId["grant"] | undefined>(undefined);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [appTitle, setAppTitle] = useState<string | null>(null);
@@ -271,6 +269,21 @@ export default function VibeIframeWrapper() {
     });
   }, [userSlug, appSlug, fsId, searchParam, retryCount, vctx.vibeDiyApi]);
 
+  useEffect(() => {
+    if (authSignedIn !== true) return;
+    const intent = readIntent(searchParam);
+    if (intent === undefined) return;
+    // Scrub before firing so refresh/re-render doesn't repeat the action.
+    window.history.replaceState(null, "", withoutIntent(window.location.pathname + window.location.search));
+    if (intent === "install") {
+      fireInstall();
+    } else if (intent === "join") {
+      void fireJoin();
+    }
+    // Only re-run on auth flip; searchParam read at effect time is fine.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authSignedIn]);
+
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
 
   const shareModal = useShareModal({
@@ -288,59 +301,9 @@ export default function VibeIframeWrapper() {
     prevShareOpenRef.current = shareModal.isOpen;
   }, [shareModal.isOpen]);
 
-  function sendAccessRequest() {
-    // TODO: call the real request-access API
-    toast.success("Access request sent");
-    setReqAccess(false);
-    setRetryCount((c) => c + 1);
-  }
-
   const vibeSlug = `${userSlug}/${appSlug}`;
   const remixUrl = `/remix/${vibeSlug}`;
   const cloneUrl = `/remix/${vibeSlug}?skipChat=true`;
-
-  const reqAccessOverlay = reqAccess
-    ? createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="rounded-lg bg-white dark:bg-gray-800 p-6 max-w-md w-full mx-4 shadow-xl space-y-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{appTitle ?? appSlug}</h2>
-            {screenshotUrl && (
-              <img
-                src={screenshotUrl}
-                alt={`Screenshot of ${appTitle ?? appSlug}`}
-                className="w-full rounded border border-gray-200 dark:border-gray-700"
-              />
-            )}
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              This app is private. To request access, the owner <strong>{userSlug}</strong> will see your email and display name.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <VibesButton variant={YELLOW} icon="remix" onClick={() => window.location.assign(remixUrl)}>
-                Remix
-              </VibesButton>
-              <VibesButton variant={BLUE} icon="remix" onClick={() => window.location.assign(cloneUrl)}>
-                Clone
-              </VibesButton>
-              <button
-                type="button"
-                onClick={() => setReqAccess(false)}
-                className="rounded px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={sendAccessRequest}
-                className="rounded px-3 py-1.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Request access
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )
-    : null;
 
   const showLoginOverlay = !authSignedIn && isLoaded && reqLogin;
   const loginOverlay = showLoginOverlay
@@ -352,14 +315,43 @@ export default function VibeIframeWrapper() {
       )
     : null;
 
+  function fireInstall() {
+    window.location.assign(cloneUrl);
+  }
+
+  async function fireJoin() {
+    if (appSlug === undefined || userSlug === undefined) return;
+    const r = await vctx.vibeDiyApi.requestAccess({ appSlug, userSlug });
+    if (r.isErr()) {
+      toast.error(`Request failed: ${r.Err().message}`);
+      return;
+    }
+    toast.success("Request sent");
+    setRetryCount((c) => c + 1); // re-fetch grant; flips to pending-request
+  }
+
+  function onClickInstall() {
+    if (authSignedIn === true) {
+      fireInstall();
+      return;
+    }
+    const here = window.location.pathname + window.location.search;
+    window.history.replaceState(null, "", withIntent(here, "install"));
+    setReqLogin(true);
+  }
+
+  function onClickJoin() {
+    if (authSignedIn === true) {
+      void fireJoin();
+      return;
+    }
+    const here = window.location.pathname + window.location.search;
+    window.history.replaceState(null, "", withIntent(here, "join"));
+    setReqLogin(true);
+  }
+
   const cardVariant = computeCardVariant(cardGrant);
   const showCard = cardVariant === "request" || cardVariant === "invite" || cardVariant === "pending" || cardVariant === "revoked";
-
-  // Replaced in Task 5
-  const onClickInstall = () => window.location.assign(cloneUrl);
-  const onClickJoin = () => {
-    // wired in Task 5
-  };
 
   if (iframeUrl) {
     return (
@@ -495,7 +487,6 @@ export default function VibeIframeWrapper() {
         <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
       </Delayed>
       {loginOverlay}
-      {reqAccessOverlay}
       {sharingState && (
         <AllowFireproofSharing
           state={sharingState}
