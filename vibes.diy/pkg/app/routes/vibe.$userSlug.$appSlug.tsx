@@ -449,12 +449,6 @@ export default function VibeIframeWrapper() {
               }}
             >
               <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>{appTitle ?? appSlug}</h2>
-              {cardVariant === "pending" && (
-                <p style={{ marginTop: 10, fontSize: 15, opacity: 0.7 }}>
-                  The owner has your request. Let them know to approve at this URL.
-                </p>
-              )}
-              {cardVariant === "revoked" && <p style={{ marginTop: 10, fontSize: 15, opacity: 0.7 }}>Your access was revoked.</p>}
               {screenshotUrl && (
                 <img
                   src={screenshotUrl}
@@ -462,22 +456,20 @@ export default function VibeIframeWrapper() {
                   style={{ width: "100%", marginTop: 16, border: "1px solid black" }}
                 />
               )}
-              {(cardVariant === "request" || cardVariant === "invite") && (
-                <p
-                  style={{
-                    marginTop: 24,
-                    fontFamily: '"Georgia", "Charter", "Iowan Old Style", serif',
-                    fontStyle: "italic",
-                    fontWeight: 600,
-                    fontSize: 26,
-                    lineHeight: 1.15,
-                    textAlign: "right",
-                    textShadow: "3px 3px 0 rgba(0, 154, 206, 0.55)",
-                  }}
-                >
-                  How would you like to open {appTitle ?? appSlug}?
-                </p>
-              )}
+              <p
+                style={{
+                  marginTop: 24,
+                  fontFamily: '"Georgia", "Charter", "Iowan Old Style", serif',
+                  fontStyle: "italic",
+                  fontWeight: 600,
+                  fontSize: 26,
+                  lineHeight: 1.15,
+                  textAlign: "right",
+                  textShadow: "3px 3px 0 rgba(0, 154, 206, 0.55)",
+                }}
+              >
+                How would you like to open {appTitle ?? appSlug}?
+              </p>
               <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
                   <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall} style={ctaStyle}>
@@ -487,16 +479,36 @@ export default function VibeIframeWrapper() {
                     Run a new copy with your own data.
                   </span>
                 </div>
-                {(cardVariant === "request" || cardVariant === "invite") && (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
-                    <VibesButton variant={YELLOW} icon="collab" onClick={onClickJoin} style={ctaStyle}>
-                      {cardVariant === "invite" ? "Join collab" : "Request access"}
-                    </VibesButton>
-                    <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
-                      {cardVariant === "invite" ? "You've been granted access." : "Ask to join the collaboration."}
-                    </span>
-                  </div>
-                )}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
+                  <VibesButton
+                    variant={YELLOW}
+                    icon="collab"
+                    onClick={onClickJoin}
+                    style={
+                      cardVariant === "pending" || cardVariant === "revoked"
+                        ? { ...ctaStyle, opacity: 0.55, cursor: "not-allowed" }
+                        : ctaStyle
+                    }
+                    disabled={cardVariant === "pending" || cardVariant === "revoked"}
+                  >
+                    {cardVariant === "invite"
+                      ? "Join collab"
+                      : cardVariant === "pending"
+                        ? "Requested"
+                        : cardVariant === "revoked"
+                          ? "Revoked"
+                          : "Request access"}
+                  </VibesButton>
+                  <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
+                    {cardVariant === "invite"
+                      ? "You've been granted access."
+                      : cardVariant === "pending"
+                        ? "The owner has your request. Let them know to approve at this URL."
+                        : cardVariant === "revoked"
+                          ? "Your access was revoked."
+                          : "Ask to join the collaboration."}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
