@@ -463,7 +463,7 @@ export default function VibeIframeWrapper() {
                     variant={BLUE}
                     icon="remix"
                     onClick={onClickInstall}
-                    style={{ paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 14 }}
+                    style={{ paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 26 }}
                   >
                     Fresh Install
                   </VibesButton>
@@ -477,7 +477,7 @@ export default function VibeIframeWrapper() {
                       variant={YELLOW}
                       icon="collab"
                       onClick={onClickJoin}
-                      style={{ paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 14 }}
+                      style={{ paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 26 }}
                     >
                       {cardVariant === "invite" ? "Join collab" : "Request access"}
                     </VibesButton>
