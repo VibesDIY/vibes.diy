@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useClerk } from "@clerk/react";
 import { Result } from "@adviser/cement";
@@ -65,121 +64,80 @@ export function App({ getClerkToken }: AppProps) {
   }, [memberships, vibes]);
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 64px" }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          marginBottom: 24,
-          paddingBottom: 12,
-          borderBottom: "1px solid #1a2030",
-        }}
-      >
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: -0.2 }}>vibes.diy growth</h1>
-          <div style={{ marginTop: 4, color: "#8b95a5", fontSize: 12 }}>
-            {generatedAt === undefined ? "loading…" : `as of ${generatedAt}`}
+    <main>
+      <div className="hero">
+        <div className="hero-top">
+          <div className="hero-panel">
+            <div className="hero-kicker">Team Snapshot</div>
+            <h1>Vibes.diy Growth</h1>
+            <p>{generatedAt === undefined ? "Loading the latest counts…" : `Generated ${generatedAt}.`}</p>
           </div>
+          <button className="btn" onClick={() => void clerk.signOut()}>
+            Sign out
+          </button>
         </div>
-        <button
-          onClick={() => void clerk.signOut()}
-          style={{
-            background: "transparent",
-            color: "#8b95a5",
-            border: "1px solid #2a3142",
-            borderRadius: 6,
-            padding: "6px 12px",
-            cursor: "pointer",
-            fontSize: 12,
-          }}
-        >
-          sign out
-        </button>
-      </header>
-
-      <Section
-        title="Memberships Over 30 Days"
-        subtitle="Daily cumulative count. Approved request or accepted invite to one specific vibe = one membership. Hover any point for new members that day."
-      >
-        <MembershipsBody loadable={memberships} />
-      </Section>
-
-      <Section title="Vibes With Data" subtitle="Daily cumulative count of distinct (userSlug, appSlug) pairs in AppSlugBindings.">
-        <VibesWithDataBody loadable={vibes} />
-      </Section>
-    </div>
-  );
-}
-
-function MembershipsBody({ loadable }: { loadable: Loadable<ResReportGrowthMemberships> }) {
-  if (loadable.kind === "loading") return <Placeholder>loading…</Placeholder>;
-  if (loadable.kind === "err") return <ErrorBox msg={loadable.msg} />;
-  return (
-    <>
-      <Stat label="total" value={loadable.data.total} />
-      <MembershipsChart data={loadable.data} />
-    </>
-  );
-}
-
-function VibesWithDataBody({ loadable }: { loadable: Loadable<ResReportGrowthVibesWithData> }) {
-  if (loadable.kind === "loading") return <Placeholder>loading…</Placeholder>;
-  if (loadable.kind === "err") return <ErrorBox msg={loadable.msg} />;
-  return (
-    <>
-      <Stat label="total" value={loadable.data.total} />
-      <VibesWithDataChart data={loadable.data} />
-    </>
-  );
-}
-
-function Section({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
-  return (
-    <section style={{ marginTop: 32 }}>
-      <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{title}</h2>
-      <p style={{ margin: "4px 0 16px", color: "#8b95a5", fontSize: 12, maxWidth: 720 }}>{subtitle}</p>
-      <div
-        style={{
-          background: "#11151d",
-          border: "1px solid #1a2030",
-          borderRadius: 8,
-          padding: 20,
-        }}
-      >
-        {children}
+        <div className="meta">
+          <MetricCard label="Memberships" loadable={memberships} pick={(d) => d.total} />
+          <MetricCard label="Vibes With Data" loadable={vibes} pick={(d) => d.total} />
+        </div>
       </div>
-    </section>
+
+      <section>
+        <h2>Memberships Over 30 Days</h2>
+        <p>
+          Daily cumulative total of currently active memberships, where one membership is one non-owner user with durable access to
+          one specific vibe by approved request or accepted invite. Hover any point for new members that day.
+        </p>
+        {memberships.kind === "loading" ? (
+          <div className="empty">Loading…</div>
+        ) : memberships.kind === "err" ? (
+          <ErrorPanel msg={memberships.msg} />
+        ) : (
+          <MembershipsChart data={memberships.data} />
+        )}
+      </section>
+
+      <section>
+        <h2>Vibes With Data</h2>
+        <p>
+          Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct userSlug/appSlug pair in
+          AppSlugBindings counts as one active vibe.
+        </p>
+        {vibes.kind === "loading" ? (
+          <div className="empty">Loading…</div>
+        ) : vibes.kind === "err" ? (
+          <ErrorPanel msg={vibes.msg} />
+        ) : (
+          <VibesWithDataChart data={vibes.data} />
+        )}
+      </section>
+    </main>
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function MetricCard<T>({
+  label,
+  loadable,
+  pick,
+}: {
+  readonly label: string;
+  readonly loadable: Loadable<T>;
+  readonly pick: (data: T) => number;
+}) {
+  const text = loadable.kind === "ok" ? pick(loadable.data).toLocaleString() : loadable.kind === "err" ? "—" : "…";
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 16 }}>
-      <span style={{ fontSize: 28, fontWeight: 600, color: "#f4f6fa" }}>{value.toLocaleString()}</span>
-      <span style={{ fontSize: 12, color: "#8b95a5" }}>{label}</span>
+    <div className="card">
+      <div className="label">{label}</div>
+      <div className="value">{text}</div>
     </div>
   );
 }
 
-function Placeholder({ children }: { children: React.ReactNode }) {
-  return <div style={{ color: "#8b95a5", padding: 12 }}>{children}</div>;
-}
-
-function ErrorBox({ msg }: { msg: string }) {
+function ErrorPanel({ msg }: { msg: string }) {
   return (
-    <div
-      style={{
-        color: "#ff8a8a",
-        background: "#2a1518",
-        border: "1px solid #4a1f24",
-        borderRadius: 6,
-        padding: 12,
-        fontSize: 12,
-        whiteSpace: "pre-wrap",
-      }}
-    >
-      {msg}
+    <div className="err">
+      <div className="err-kicker">Error</div>
+      <div>{msg}</div>
     </div>
   );
 }
