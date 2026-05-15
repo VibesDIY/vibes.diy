@@ -8,6 +8,7 @@ const putDoc = vi.fn();
 const deleteDoc = vi.fn();
 const subscribeDocs = vi.fn();
 const onDocChanged = vi.fn();
+const whoAmI = vi.fn();
 
 let mockAuth: { isSignedIn: boolean; userId: string | null } = { isSignedIn: true, userId: "viewer-1" };
 let mockUser: {
@@ -36,6 +37,7 @@ vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
       deleteDoc,
       subscribeDocs,
       onDocChanged,
+      whoAmI,
     },
   }),
 }));
@@ -75,6 +77,16 @@ describe("CommentsSection avatar behavior", () => {
     deleteDoc.mockResolvedValue(Result.Ok({}));
     subscribeDocs.mockResolvedValue(Result.Ok({}));
     onDocChanged.mockReturnValue(() => undefined);
+    whoAmI.mockResolvedValue(
+      Result.Ok({
+        viewer: {
+          userSlug: "commenter-resolved-slug",
+          displayName: "Commenter",
+          avatarUrl: "https://api.test/u/commenter-resolved-slug/avatar",
+        },
+        access: "viewer",
+      })
+    );
   });
 
   it("renders comment avatars using /u/{slug}/avatar (not Clerk URLs)", async () => {
@@ -89,10 +101,20 @@ describe("CommentsSection avatar behavior", () => {
     expect(avatar?.getAttribute("src")?.includes("clerk")).toBe(false);
   });
 
-  it("posts comments without persisting authorImageUrl", async () => {
+  it("posts comments with the server-resolved viewer slug, not Clerk's username", async () => {
+    // Clerk username and the Vibes-resolved slug can diverge (sanitization,
+    // settings overrides, email-derived defaults). The component must trust
+    // whoAmI, not user.username.
+    mockUser = {
+      username: "clerk-username-that-isnt-the-vibes-slug",
+      fullName: "Commenter",
+      imageUrl: "https://img.clerk.com/avatar.png",
+    };
+
     render(<CommentsSection userSlug="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />);
 
     await screen.findByText("hello");
+    await waitFor(() => expect(whoAmI).toHaveBeenCalledTimes(1));
 
     fireEvent.change(screen.getByPlaceholderText("Write a comment…"), { target: { value: "new comment" } });
     fireEvent.click(screen.getByRole("button", { name: "Post" }));
@@ -100,7 +122,30 @@ describe("CommentsSection avatar behavior", () => {
     await waitFor(() => expect(putDoc).toHaveBeenCalledTimes(1));
 
     const request = putDoc.mock.calls[0][0] as { doc: Record<string, unknown> };
-    expect(request.doc.authorUserSlug).toBe("commenter-slug");
+    expect(request.doc.authorUserSlug).toBe("commenter-resolved-slug");
     expect(request.doc).not.toHaveProperty("authorImageUrl");
+  });
+
+  it("still posts a comment when Clerk has no username (whoAmI supplies the slug)", async () => {
+    // Codex P2 regression: previously authorUserSlug was derived from
+    // user.username, so signed-in users without a Clerk username got
+    // undefined and lost their avatar entirely.
+    mockUser = {
+      fullName: "No-Username User",
+      primaryEmailAddress: { emailAddress: "no-username@example.com" },
+    };
+
+    render(<CommentsSection userSlug="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />);
+
+    await screen.findByText("hello");
+    await waitFor(() => expect(whoAmI).toHaveBeenCalledTimes(1));
+
+    fireEvent.change(screen.getByPlaceholderText("Write a comment…"), { target: { value: "first comment" } });
+    fireEvent.click(screen.getByRole("button", { name: "Post" }));
+
+    await waitFor(() => expect(putDoc).toHaveBeenCalledTimes(1));
+
+    const request = putDoc.mock.calls[0][0] as { doc: Record<string, unknown> };
+    expect(request.doc.authorUserSlug).toBe("commenter-resolved-slug");
   });
 });

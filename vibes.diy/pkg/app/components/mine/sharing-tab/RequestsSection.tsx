@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from "@tanstack/react-table";
 import { FlagToggle, byNewest, requestDate, stateLabel, fmtDate, RequestGrantItem } from "./shared.js";
 import { AppSettings, ClerkClaimParams } from "@vibes.diy/api-types";
+import { avatarRouteForUserSlug } from "../../../utils/avatarUrl.js";
 
 const columnHelper = createColumnHelper<RequestGrantItem>();
 
@@ -312,16 +313,12 @@ interface RequestsSectionProps {
   hideHeader?: boolean;
 }
 
-function avatarRouteForUserSlug(userSlug?: string): string | undefined {
-  const slug = userSlug?.trim();
-  if (!slug) return undefined;
-  return `/u/${encodeURIComponent(slug)}/avatar`;
-}
-
 export function renderRequestUser(r: RequestGrantItem): React.ReactNode {
   const params = r.foreignInfo?.claims?.params ?? ({} as Partial<ClerkClaimParams>);
-  const avatarUserSlug = r.foreignUserSlug ?? params.nick;
-  const avatarUrl = avatarRouteForUserSlug(avatarUserSlug);
+  // Only the server-resolved Vibes slug points at a real avatar route.
+  // Clerk's `nick` may be sanitized away during slug derivation, so don't
+  // fall back to it — render no image rather than a 404.
+  const avatarUrl = avatarRouteForUserSlug(r.foreignUserSlug);
   return (
     <>
       {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-4 h-4 rounded-full object-cover mr-1" />}
@@ -361,9 +358,7 @@ export function RequestsSection({
   const renderUser = renderRequestUser;
 
   const Wrapper: React.ElementType = hideHeader ? "div" : "li";
-  const wrapperClass = hideHeader
-    ? ""
-    : "rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3";
+  const wrapperClass = hideHeader ? "" : "rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3";
 
   return (
     <Wrapper className={wrapperClass}>
@@ -372,7 +367,12 @@ export function RequestsSection({
         <div className="space-y-2">
           {!hideHeader && (
             <div className="flex items-center gap-4 flex-wrap">
-              <FlagToggle label="requests" enabled={!!enableRequest?.enable} toggling={toggling === "request"} onToggle={onToggle} />
+              <FlagToggle
+                label="requests"
+                enabled={!!enableRequest?.enable}
+                toggling={toggling === "request"}
+                onToggle={onToggle}
+              />
               {enableRequest?.enable && (
                 <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
                   <input

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { COMMENTS_DB_NAME } from "@vibes.diy/api-types";
+import { avatarRouteForUserSlug } from "../../utils/avatarUrl.js";
 
 // authorUserId / authorUserSlug / authorDisplay / authorIsOwner / createdAt
 // are stamped client-side at post time. The server writes the doc verbatim
@@ -55,18 +56,6 @@ function authorInitial(name?: string): string {
   return (name?.trim()[0] ?? "?").toUpperCase();
 }
 
-function avatarRouteForUserSlug(userSlug?: string): string | undefined {
-  const slug = userSlug?.trim();
-  if (!slug) return undefined;
-  return `/u/${encodeURIComponent(slug)}/avatar`;
-}
-
-function deriveAuthorUserSlug(user: ReturnType<typeof useUser>["user"]): string | undefined {
-  const username = user?.username?.trim();
-  if (username) return username;
-  return undefined;
-}
-
 export function CommentsSection({ userSlug, appSlug, canModerate, composerDisabled }: CommentsSectionProps) {
   const { vibeDiyApi } = useVibesDiy();
   const { isSignedIn, userId: viewerUserId } = useAuth();
@@ -76,6 +65,28 @@ export function CommentsSection({ userSlug, appSlug, canModerate, composerDisabl
   const [body, setBody] = useState("");
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
+  // Resolved Vibes slug for the signed-in viewer. The server may pick a slug
+  // distinct from Clerk's `user.username` (sanitization, settings overrides,
+  // email-derived defaults), so guessing client-side from Clerk produces
+  // /u/{wrong}/avatar 404s.
+  const [viewerUserSlug, setViewerUserSlug] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      setViewerUserSlug(undefined);
+      return;
+    }
+    let cancelled = false;
+    // tid is overwritten by the impl's request() — we just need to satisfy the
+    // type since ReqVibeWhoAmI extends the postMessage Base shape.
+    void vibeDiyApi.whoAmI({ tid: crypto.randomUUID(), userSlug, appSlug }).then((res) => {
+      if (cancelled) return;
+      if (res.isOk()) setViewerUserSlug(res.Ok().viewer?.userSlug);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [vibeDiyApi, isSignedIn, userSlug, appSlug]);
 
   const reload = useCallback(async () => {
     const res = await vibeDiyApi.queryDocs({ userSlug, appSlug, dbName: COMMENTS_DB_NAME });
@@ -122,7 +133,7 @@ export function CommentsSection({ userSlug, appSlug, canModerate, composerDisabl
       doc: {
         body: text,
         authorUserId: viewerUserId,
-        authorUserSlug: deriveAuthorUserSlug(user),
+        authorUserSlug: viewerUserSlug,
         authorDisplay: deriveAuthorDisplay(user),
         // Stamp `authorIsOwner` so any viewer can render a badge next to the
         // vibe owner's comments. This is purely a display hint — non-malicious
@@ -167,11 +178,7 @@ export function CommentsSection({ userSlug, appSlug, canModerate, composerDisabl
             return (
               <div key={c._id} className="flex items-start gap-2 text-sm">
                 {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt=""
-                    className="h-7 w-7 shrink-0 rounded-full object-cover mt-0.5"
-                  />
+                  <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover mt-0.5" />
                 ) : (
                   <div className="h-7 w-7 shrink-0 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center text-xs font-medium mt-0.5">
                     {authorInitial(display)}

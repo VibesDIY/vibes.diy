@@ -136,6 +136,7 @@ export async function renderVibe({
     auth: undefined,
     appSlug: fs.appSlug,
     ownerUserSlug: fs.userSlug,
+    apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
   });
   const viewerEnv = rViewer.isOk()
     ? {
@@ -251,6 +252,7 @@ export async function renderPendingVibe({
     auth: undefined,
     appSlug,
     ownerUserSlug: userSlug,
+    apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
   });
   const viewerEnv = rViewer.isOk()
     ? {

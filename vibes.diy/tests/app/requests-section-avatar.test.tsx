@@ -63,7 +63,10 @@ describe("renderRequestUser", () => {
     expect(avatar?.getAttribute("src")?.includes("clerk")).toBe(false);
   });
 
-  it("falls back to claims.params.nick when foreignUserSlug is missing", () => {
+  it("renders no avatar image when foreignUserSlug is missing, even if claims.nick is set", () => {
+    // Clerk's `nick` may not match the server-derived Vibes slug, so falling
+    // back to it would produce a 404 from /u/{nick}/avatar. Render nothing
+    // instead — the row still shows the display text.
     const item = makeRequestItem({
       foreignUserSlug: undefined,
       foreignInfo: {
@@ -86,9 +89,7 @@ describe("renderRequestUser", () => {
     });
 
     const { container } = render(<div>{renderRequestUser(item)}</div>);
-    const avatar = container.querySelector("img");
-
-    expect(avatar?.getAttribute("src")).toBe("/u/bob/avatar");
+    expect(container.querySelector("img")).toBeNull();
   });
 
   it("renders no avatar image when neither slug nor nick is available", () => {
