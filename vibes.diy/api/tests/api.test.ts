@@ -801,7 +801,9 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
     it("ensureAppSettings canonicalizes duplicates for every singleton entry type", async () => {
       const { appSlug, userSlug } = await createApp();
-      const seed = await api.ensureAppSettings({ appSlug, userSlug });
+      // Seed with any settings field to materialize the AppSettings row; the
+      // direct UPDATE below requires an existing row to target.
+      const seed = await api.ensureAppSettings({ appSlug, userSlug, title: "seed-title" });
       const appSettings = appCtx.vibesCtx.sql.tables.appSettings;
       const userId = seed.Ok().userId;
 
@@ -813,8 +815,8 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
           settings: [
             { type: "active.title", title: "old-title-1" },
             { type: "active.title", title: "old-title-2" },
-            { type: "active.theme", theme: { name: "old-theme-1" } },
-            { type: "active.theme", theme: { name: "old-theme-2" } },
+            { type: "active.theme", theme: "old-theme-1" },
+            { type: "active.theme", theme: "old-theme-2" },
             { type: "active.skills", skills: ["old-skill-1"] },
             { type: "active.skills", skills: ["old-skill-2"] },
             { type: "active.icon-description", description: "old-icon-desc-1" },
@@ -825,16 +827,16 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
             { type: "app.public.access", enable: true },
             { type: "app.request", enable: false },
             { type: "app.request", enable: true },
-            { type: "active.db-acl", dbName: "shared", acl: { read: ["public"] } },
+            { type: "active.db-acl", dbName: "shared", acl: { read: ["readers"] } },
             { type: "active.db-acl", dbName: "shared", acl: { read: ["members"] } },
-            { type: "active.db-acl", dbName: "private", acl: { read: ["owner"] } },
+            { type: "active.db-acl", dbName: "private", acl: { read: ["editors"] } },
           ],
         })
         .where(and(eq(appSettings.userId, userId), eq(appSettings.appSlug, appSlug), eq(appSettings.userSlug, userSlug)));
 
       // One save per entry type. Each save must canonicalize that type to one entry.
       await api.ensureAppSettings({ appSlug, userSlug, title: "new-title" });
-      await api.ensureAppSettings({ appSlug, userSlug, theme: { name: "new-theme" } });
+      await api.ensureAppSettings({ appSlug, userSlug, theme: "new-theme" });
       await api.ensureAppSettings({ appSlug, userSlug, skills: ["new-skill"] });
       await api.ensureAppSettings({ appSlug, userSlug, iconDescription: "new-icon-desc" });
       await api.ensureAppSettings({ appSlug, userSlug, env: [{ key: "NEW", value: "v" }] });
@@ -866,7 +868,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       // Read-path projection reflects most recent save — this is the #1707 symptom.
       const settings = final.Ok().settings.entry.settings;
       expect(settings.title).toBe("new-title");
-      expect(settings.theme).toEqual({ name: "new-theme" });
+      expect(settings.theme).toBe("new-theme");
       expect(settings.skills).toEqual(["new-skill"]);
       expect(settings.iconDescription).toBe("new-icon-desc");
       expect(settings.env).toEqual([{ key: "NEW", value: "v" }]);
