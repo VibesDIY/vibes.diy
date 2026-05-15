@@ -414,10 +414,14 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       }
       // Prefill the chat textarea with a default restyle prompt — only if
       // it's empty, so we don't clobber a half-typed message. The user can
-      // edit before sending; the backend already has the new theme so the
-      // next prompt will pick it up regardless of wording.
+      // edit before sending.
       chatInput.current?.setPromptIfEmpty("Please update the theme");
       chatInput.current?.setFocus();
+      // Kick off the same submit path as Enter/Code after the input state
+      // update is applied.
+      window.requestAnimationFrame(() => {
+        chatInput.current?.clickSubmit();
+      });
     },
     [vibeDiyApi, userSlug, appSlug]
   );
