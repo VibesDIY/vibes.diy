@@ -14,6 +14,7 @@ import { eq, inArray } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
+import { cachedReport } from "./report-cache.js";
 
 // Reports are gated on Clerk publicMetadata.reports — an array of report
 // keys (or ["*"] for all). The existing Clerk JWT template emits
@@ -153,7 +154,7 @@ export const reportGrowthMembershipsEvento: EventoHandler<
         return Result.Ok(EventoResult.Continue);
       }
 
-      const res = await computeMemberships(vctx);
+      const res = await cachedReport(vctx, "growth-memberships", () => computeMemberships(vctx));
       await ctx.send.send(ctx, res);
       return Result.Ok(EventoResult.Continue);
     }
