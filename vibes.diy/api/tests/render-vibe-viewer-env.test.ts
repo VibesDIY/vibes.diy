@@ -9,7 +9,7 @@
  *
  * 2. The JSON fragment that renderVibe/renderPendingVibe would inline in
  *    mountJS serialises to contain "viewer":null and "access":"none" and a
- *    sensible apiBaseUrl.
+*    sensible viewer payload shape.
  *
  * A full integration test exercising the rendered HTML body requires either
  * a live DB + an HTTP layer stub for cfServe, which is done by other test
@@ -80,7 +80,6 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
       auth: undefined,
       appSlug,
       ownerUserSlug: userSlug,
-      apiBaseUrl: "https://api.test",
     });
 
     expect(rViewer.isOk()).toBe(true);
