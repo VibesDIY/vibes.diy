@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useClerk } from "@clerk/react";
 import { Result } from "@adviser/cement";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
