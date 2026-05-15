@@ -4,6 +4,7 @@ import { Result } from "@adviser/cement";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import type { ResReportGrowthMemberships, ResReportGrowthVibesWithData } from "@vibes.diy/api-types";
 import { MembershipsChart, VibesWithDataChart } from "./Chart.js";
+import vibesDiyLogoUrl from "./vibes-diy-logo.svg";
 
 interface AppProps {
   readonly getClerkToken: () => Promise<string | null>;
@@ -131,45 +132,16 @@ export function App({ getClerkToken }: AppProps) {
   );
 }
 
-// Brand-canonical logo from landing-pages/vibes-diy-logo.svg. Inlined so
-// the report doesn't pay a network round-trip for the hero, and so colors
-// (--near-black / --cream) match the rest of the page's palette automatically.
+// Brand-canonical logo from landing-pages/vibes-diy-logo.svg. Copied
+// verbatim into src/ so the hero ships the same artwork as the marketing
+// site — no React reimplementation, no drift if marketing tweaks the file.
 function VibesDiyLogo() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 300 75"
-      role="img"
-      aria-label="Vibes DIY"
+    <img
+      src={vibesDiyLogoUrl}
+      alt="Vibes DIY"
       style={{ height: "clamp(64px, 11vw, 120px)", width: "auto", display: "block", marginTop: "0.25rem" }}
-    >
-      <rect x={0} y={0} width={300} height={75} rx={37.5} ry={37.5} fill="var(--near-black)" />
-      <rect x={4} y={4} width={160} height={67} rx={33.5} ry={33.5} fill="var(--cream)" />
-      <text
-        x={84}
-        y={50}
-        fontFamily='"Arial Rounded MT Bold", "Arial Black", sans-serif'
-        fontSize={34}
-        fontWeight={900}
-        fill="var(--near-black)"
-        textAnchor="middle"
-        letterSpacing={-2}
-      >
-        VIBES
-      </text>
-      <text
-        x={230}
-        y={48}
-        fontFamily="Arial, Helvetica, sans-serif"
-        fontSize={24}
-        fontWeight={400}
-        fill="var(--cream)"
-        textAnchor="middle"
-        letterSpacing={6}
-      >
-        D·I·Y
-      </text>
-    </svg>
+    />
   );
 }
 
