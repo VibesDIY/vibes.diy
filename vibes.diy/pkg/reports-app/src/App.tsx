@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useClerk } from "@clerk/react";
 import { Result } from "@adviser/cement";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
@@ -64,71 +64,113 @@ export function App({ getClerkToken }: AppProps) {
   }, [memberships, vibes]);
 
   return (
-    <main>
-      <div className="hero">
-        <div className="hero-top">
-          <div className="hero-panel">
-            <div className="hero-kicker">Team Snapshot</div>
-            <h1>Vibes.diy Growth</h1>
-            <p>{generatedAt === undefined ? "Loading the latest counts…" : `Generated ${generatedAt}.`}</p>
-          </div>
-          <button className="btn" onClick={() => void clerk.signOut()}>
-            Sign out
-          </button>
+    <div className="page">
+      <ColorStripe />
+
+      <div className="grid-2-1">
+        <div className="card card--hero hero">
+          <span className="section-label">Growth Report</span>
+          <h1>Vibes.diy growth.</h1>
+          <p className="hero-sub">
+            {generatedAt === undefined ? "Loading the latest counts…" : <>Snapshot generated {generatedAt}.</>}
+          </p>
         </div>
-        <div className="meta">
-          <MetricCard label="Memberships" loadable={memberships} pick={(d) => d.total} />
-          <MetricCard label="Vibes With Data" loadable={vibes} pick={(d) => d.total} />
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          <div className="card card--red" style={{ flex: 1 }}>
+            <span className="section-label" style={{ borderColor: "var(--cream)", color: "var(--cream)" }}>
+              Builders Joining
+            </span>
+            <Metric loadable={memberships} pick={(d) => d.total} accent="cream" />
+            <p style={{ fontSize: "0.95rem", lineHeight: 1.4, marginTop: "0.5rem", color: "rgba(255,255,255,0.85)" }}>
+              Non-owner users with durable access to one specific vibe.
+            </p>
+          </div>
+          <div className="card card--yellow" style={{ flex: 0 }}>
+            <span className="section-label" style={{ borderColor: "var(--black)", color: "var(--black)" }}>
+              Vibes With Data
+            </span>
+            <Metric loadable={vibes} pick={(d) => d.total} accent="black" />
+            <p style={{ fontSize: "0.95rem", lineHeight: 1.4, marginTop: "0.5rem", color: "var(--near-black)" }}>
+              Distinct userSlug/appSlug pairs in AppSlugBindings.
+            </p>
+          </div>
         </div>
       </div>
 
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1.5rem" }}>
+        <button className="btn" onClick={() => void clerk.signOut()}>
+          Sign out
+        </button>
+      </div>
+
       <section>
-        <h2>Memberships Over 30 Days</h2>
-        <p>
-          Daily cumulative total of currently active memberships, where one membership is one non-owner user with durable access to
-          one specific vibe by approved request or accepted invite. Hover any point for new members that day.
-        </p>
-        {memberships.kind === "loading" ? (
-          <div className="empty">Loading…</div>
-        ) : memberships.kind === "err" ? (
-          <ErrorPanel msg={memberships.msg} />
-        ) : (
-          <MembershipsChart data={memberships.data} />
-        )}
+        <div className="card">
+          <span className="section-label section-label--filled">30 Days</span>
+          <h2 className="section-title">Memberships over time</h2>
+          <p className="section-intro">
+            Daily cumulative total of currently active memberships. One non-owner user with durable access to one specific vibe by
+            approved request or accepted invite counts as one membership. Hover any point to see who joined that day.
+          </p>
+          {memberships.kind === "loading" ? (
+            <div className="empty">Loading…</div>
+          ) : memberships.kind === "err" ? (
+            <ErrorPanel msg={memberships.msg} />
+          ) : (
+            <MembershipsChart data={memberships.data} />
+          )}
+        </div>
       </section>
 
       <section>
-        <h2>Vibes With Data</h2>
-        <p>
-          Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct userSlug/appSlug pair in
-          AppSlugBindings counts as one active vibe.
-        </p>
-        {vibes.kind === "loading" ? (
-          <div className="empty">Loading…</div>
-        ) : vibes.kind === "err" ? (
-          <ErrorPanel msg={vibes.msg} />
-        ) : (
-          <VibesWithDataChart data={vibes.data} />
-        )}
+        <div className="card">
+          <span className="section-label section-label--filled">30 Days</span>
+          <h2 className="section-title">Vibes with data over time</h2>
+          <p className="section-intro">
+            Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct userSlug/appSlug pair in
+            AppSlugBindings counts as one active vibe.
+          </p>
+          {vibes.kind === "loading" ? (
+            <div className="empty">Loading…</div>
+          ) : vibes.kind === "err" ? (
+            <ErrorPanel msg={vibes.msg} />
+          ) : (
+            <VibesWithDataChart data={vibes.data} />
+          )}
+        </div>
       </section>
-    </main>
+
+      <ColorStripe />
+    </div>
   );
 }
 
-function MetricCard<T>({
-  label,
+function ColorStripe() {
+  return (
+    <div className="color-stripe">
+      <div style={{ background: "var(--red)" }} />
+      <div style={{ background: "var(--cyan)" }} />
+      <div style={{ background: "var(--yellow)" }} />
+      <div style={{ background: "var(--near-black)" }} />
+      <div style={{ background: "var(--red)" }} />
+      <div style={{ background: "var(--cyan)" }} />
+    </div>
+  );
+}
+
+function Metric<T>({
   loadable,
   pick,
+  accent,
 }: {
-  readonly label: string;
   readonly loadable: Loadable<T>;
   readonly pick: (data: T) => number;
+  readonly accent: "cream" | "black";
 }) {
   const text = loadable.kind === "ok" ? pick(loadable.data).toLocaleString() : loadable.kind === "err" ? "—" : "…";
+  const color = accent === "cream" ? "var(--cream)" : "var(--black)";
   return (
-    <div className="card">
-      <div className="label">{label}</div>
-      <div className="value">{text}</div>
+    <div className="hero-stat-number" style={{ color, marginTop: "0.5rem" }}>
+      {text}
     </div>
   );
 }
@@ -136,7 +178,7 @@ function MetricCard<T>({
 function ErrorPanel({ msg }: { msg: string }) {
   return (
     <div className="err">
-      <div className="err-kicker">Error</div>
+      <div className="err-label">Error</div>
       <div>{msg}</div>
     </div>
   );
