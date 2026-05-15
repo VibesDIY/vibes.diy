@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ResReportGrowthMemberships, ResReportGrowthVibesWithData } from "@vibes.diy/api-types";
 
-// Hand-rolled brand-matching chart: ink polyline, plate-filled circles,
-// chunky tooltips with offset shadow. Matches the printed-paper look of
-// the old inspect-db HTML report so the two share a visual language.
+// Chart styled to match the builders editorial brand: red/cyan polyline,
+// cream-filled circles with matching stroke, thin near-black axis lines.
 
 interface ChartPoint {
   readonly day: string;
@@ -14,14 +13,21 @@ interface ChartPoint {
 interface ChartProps {
   readonly points: readonly ChartPoint[];
   readonly current: number;
+  readonly stroke: string;
 }
 
-const WIDTH = 720;
-const HEIGHT = 220;
-const PADDING = 18;
+const WIDTH = 960;
+const HEIGHT = 260;
+const PADDING_L = 32;
+const PADDING_R = 16;
+const PADDING_T = 16;
+const PADDING_B = 28;
 
-function LineChart({ points, current }: ChartProps) {
+function LineChart({ points, current, stroke }: ChartProps) {
   const [hover, setHover] = useState<number | undefined>(undefined);
+
+  const innerW = WIDTH - PADDING_L - PADDING_R;
+  const innerH = HEIGHT - PADDING_T - PADDING_B;
 
   const yMax = useMemo(() => {
     let max = 0;
@@ -30,12 +36,12 @@ function LineChart({ points, current }: ChartProps) {
   }, [points]);
 
   function xFor(i: number): number {
-    if (points.length <= 1) return WIDTH / 2;
-    return PADDING + (i * (WIDTH - PADDING * 2)) / (points.length - 1);
+    if (points.length <= 1) return PADDING_L + innerW / 2;
+    return PADDING_L + (i * innerW) / (points.length - 1);
   }
 
   function yFor(v: number): number {
-    return HEIGHT - PADDING - (v / yMax) * (HEIGHT - PADDING * 2);
+    return PADDING_T + innerH - (innerH * v) / yMax;
   }
 
   const pointsStr = points.map((p, i) => `${xFor(i).toFixed(2)},${yFor(p.value).toFixed(2)}`).join(" ");
@@ -47,11 +53,10 @@ function LineChart({ points, current }: ChartProps) {
     <div className="trend-card">
       <div className="trend-meta">
         <div>
-          <div className="label">Current Total</div>
-          <div className="trend-value">{current.toLocaleString()}</div>
+          <div className="trend-current">{current.toLocaleString()}</div>
         </div>
         <div className="trend-range">
-          {firstDay} to {lastDay}
+          {firstDay} → {lastDay}
         </div>
       </div>
       <div style={{ position: "relative" }}>
@@ -62,34 +67,41 @@ function LineChart({ points, current }: ChartProps) {
           aria-label="30 day trend"
           onMouseLeave={() => setHover(undefined)}
         >
-          <rect x={0} y={0} width={WIDTH} height={HEIGHT} fill="transparent" />
-          <g stroke="rgba(15, 23, 42, 0.18)" strokeWidth={1}>
-            <line x1={PADDING} y1={PADDING} x2={PADDING} y2={HEIGHT - PADDING} />
-            <line x1={PADDING} y1={HEIGHT - PADDING} x2={WIDTH - PADDING} y2={HEIGHT - PADDING} />
-            <line x1={PADDING} y1={HEIGHT / 2} x2={WIDTH - PADDING} y2={HEIGHT / 2} />
+          <g stroke="var(--near-black)" strokeWidth={1}>
+            <line x1={PADDING_L} y1={PADDING_T} x2={PADDING_L} y2={HEIGHT - PADDING_B} />
+            <line x1={PADDING_L} y1={HEIGHT - PADDING_B} x2={WIDTH - PADDING_R} y2={HEIGHT - PADDING_B} />
           </g>
-          <polyline fill="none" stroke="var(--ink)" strokeWidth={5} points={pointsStr} />
+          <line
+            x1={PADDING_L}
+            y1={PADDING_T + innerH / 2}
+            x2={WIDTH - PADDING_R}
+            y2={PADDING_T + innerH / 2}
+            stroke="var(--gray-light)"
+            strokeWidth={1}
+            strokeDasharray="4 4"
+          />
+          <polyline fill="none" stroke={stroke} strokeWidth={3} points={pointsStr} />
           {points.map((p, i) => {
             const cx = xFor(i);
             const cy = yFor(p.value);
-            const colW = (WIDTH - PADDING * 2) / Math.max(1, points.length - 1);
+            const colW = innerW / Math.max(1, points.length - 1);
             return (
               <g key={p.day}>
                 <rect
                   x={cx - colW / 2}
-                  y={PADDING}
+                  y={PADDING_T}
                   width={colW}
-                  height={HEIGHT - PADDING * 2}
+                  height={innerH}
                   fill="transparent"
                   onMouseEnter={() => setHover(i)}
                 />
                 <circle
                   cx={cx}
                   cy={cy}
-                  r={hover === i ? 8 : 6}
-                  fill="var(--plate)"
-                  stroke="var(--ink)"
-                  strokeWidth={3}
+                  r={hover === i ? 7 : 5}
+                  fill="var(--cream)"
+                  stroke={stroke}
+                  strokeWidth={2.5}
                   className="trend-point"
                 />
               </g>
@@ -115,7 +127,7 @@ function Tooltip({ point, leftPct, topPct }: { point: ChartPoint; leftPct: numbe
       style={{
         left: `${leftPct}%`,
         top: `${topPct}%`,
-        transform: "translate(-50%, calc(-100% - 14px))",
+        transform: "translate(-50%, calc(-100% - 12px))",
       }}
     >
       <div className="tt-day">{point.day}</div>
@@ -135,7 +147,7 @@ export function MembershipsChart({ data }: { data: ResReportGrowthMemberships })
       })),
     [data]
   );
-  return <LineChart points={points} current={data.total} />;
+  return <LineChart points={points} current={data.total} stroke="var(--red)" />;
 }
 
 export function VibesWithDataChart({ data }: { data: ResReportGrowthVibesWithData }) {
@@ -143,5 +155,5 @@ export function VibesWithDataChart({ data }: { data: ResReportGrowthVibesWithDat
     () => data.days.map((d) => ({ day: d.day, value: d.vibes, tooltipLines: [] })),
     [data]
   );
-  return <LineChart points={points} current={data.total} />;
+  return <LineChart points={points} current={data.total} stroke="var(--cyan)" />;
 }
