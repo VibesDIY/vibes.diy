@@ -58,7 +58,26 @@ jobs:
             echo "::error::CLOUDFLARE_VIBESPREVIEW_ZONE_ID repo var is unset — the vibespreview.dev zone + ACM prerequisites must be provisioned before PR previews can deploy (see vibes.diy/pkg/wrangler.toml [env.preview] and the PR-preview plan)."
             exit 1
           fi
-          api() { curl -sS -H "Authorization: Bearer ${CF_API_TOKEN}" -H "Content-Type: application/json" "$@"; }
+          # Capture HTTP code + body separately so failures surface the
+          # actual CF error JSON (the previous pipe-to-/dev/null swallowed
+          # 4xx bodies and exited silently). Returns body on stdout when
+          # the call succeeded (HTTP < 400 and `.success != false`),
+          # echoes the response to stderr and returns 1 otherwise — so
+          # `set -euo pipefail` trips with an actionable message.
+          api() {
+            local tmp http
+            tmp=$(mktemp)
+            http=$(curl -sS -o "$tmp" -w '%{http_code}' \
+              -H "Authorization: Bearer ${CF_API_TOKEN}" \
+              -H "Content-Type: application/json" "$@")
+            if [ "$http" -ge 400 ] || [ "$(jq -r '.success // true' "$tmp" 2>/dev/null)" = "false" ]; then
+              echo "::error::CF API $* failed (HTTP $http): $(cat "$tmp")" >&2
+              rm -f "$tmp"
+              return 1
+            fi
+            cat "$tmp"
+            rm -f "$tmp"
+          }
 
           # Proxied DNS for the per-PR deep wildcard (covers
           # <app>--<user>.pr-<N>.vibespreview.dev and assets.pr-<N>...).
@@ -71,7 +90,7 @@ jobs:
           EXISTING=$(api "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/dns_records?type=AAAA&name=${NAME}" | jq -r '.result[0].id // empty')
           if [ -z "$EXISTING" ]; then
             api -X POST "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/dns_records" \
-              --data "{\"type\":\"AAAA\",\"name\":\"${NAME}\",\"content\":\"100::\",\"proxied\":true}" | jq -e '.success' > /dev/null
+              --data "{\"type\":\"AAAA\",\"name\":\"${NAME}\",\"content\":\"100::\",\"proxied\":true}" > /dev/null
             echo "Created DNS record ${NAME}"
           else
             echo "DNS record ${NAME} already exists (${EXISTING})"
@@ -86,7 +105,7 @@ jobs:
           if [ "${HAVE_CERT:-0}" -eq 0 ]; then
             api -X POST "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/ssl/certificate_packs/order" \
               --data "{\"type\":\"advanced\",\"hosts\":[\"${PREVIEW_HOST}\",\"*.${PREVIEW_HOST}\"],\"validation_method\":\"txt\",\"validity_days\":90,\"certificate_authority\":\"google\",\"cloudflare_branding\":false}" \
-              | jq -e '.success' > /dev/null
+              > /dev/null
             echo "Ordered ACM advanced cert for ${PREVIEW_HOST}"
           else
             echo "ACM advanced cert for ${PREVIEW_HOST} already exists"

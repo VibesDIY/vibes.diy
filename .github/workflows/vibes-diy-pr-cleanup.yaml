@@ -69,7 +69,24 @@ jobs:
             echo "CLOUDFLARE_VIBESPREVIEW_ZONE_ID unset — skipping DNS/TLS cleanup"
             exit 0
           fi
-          api() { curl -sS -H "Authorization: Bearer ${CF_API_TOKEN}" -H "Content-Type: application/json" "$@"; }
+          # Same surfacing helper as vibes-diy-pr-preview.yaml — print the
+          # CF error body to stderr on failure so cleanup doesn't die
+          # silently (silent cleanup failures = cert packs accumulating
+          # forever).
+          api() {
+            local tmp http
+            tmp=$(mktemp)
+            http=$(curl -sS -o "$tmp" -w '%{http_code}' \
+              -H "Authorization: Bearer ${CF_API_TOKEN}" \
+              -H "Content-Type: application/json" "$@")
+            if [ "$http" -ge 400 ] || [ "$(jq -r '.success // true' "$tmp" 2>/dev/null)" = "false" ]; then
+              echo "::error::CF API $* failed (HTTP $http): $(cat "$tmp")" >&2
+              rm -f "$tmp"
+              return 1
+            fi
+            cat "$tmp"
+            rm -f "$tmp"
+          }
 
           # ACM advanced cert pack(s) whose hosts include pr-<N>.vibespreview.dev
           for ID in $(api "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/ssl/certificate_packs?status=all" \
