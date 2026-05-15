@@ -136,7 +136,6 @@ export async function renderVibe({
     auth: undefined,
     appSlug: fs.appSlug,
     ownerUserSlug: fs.userSlug,
-    apiBaseUrl: `${requestUrl.protocol}//${requestUrl.host}`,
   });
   const viewerEnv = rViewer.isOk()
     ? {
@@ -252,7 +251,6 @@ export async function renderPendingVibe({
     auth: undefined,
     appSlug,
     ownerUserSlug: userSlug,
-    apiBaseUrl: `${requestUrl.protocol}//${requestUrl.host}`,
   });
   const viewerEnv = rViewer.isOk()
     ? {

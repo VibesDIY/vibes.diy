@@ -312,13 +312,19 @@ interface RequestsSectionProps {
   hideHeader?: boolean;
 }
 
+function avatarRouteForUserSlug(userSlug?: string): string | undefined {
+  const slug = userSlug?.trim();
+  if (!slug) return undefined;
+  return `/u/${encodeURIComponent(slug)}/avatar`;
+}
+
 export function renderRequestUser(r: RequestGrantItem): React.ReactNode {
   const params = r.foreignInfo?.claims?.params ?? ({} as Partial<ClerkClaimParams>);
+  const avatarUserSlug = r.foreignUserSlug ?? params.nick;
+  const avatarUrl = avatarRouteForUserSlug(avatarUserSlug);
   return (
     <>
-      {r.foreignInfo?.claims?.params?.image_url && (
-        <img src={r.foreignInfo.claims.params.image_url} alt="avatar" className="w-4 h-4 rounded-full object-cover mr-1" />
-      )}
+      {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-4 h-4 rounded-full object-cover mr-1" />}
       {params.nick ?? params.name ?? params.email ?? name(params) ?? r.foreignUserId}
     </>
   );

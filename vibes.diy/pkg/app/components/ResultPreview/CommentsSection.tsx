@@ -3,15 +3,15 @@ import { useAuth, useUser } from "@clerk/react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { COMMENTS_DB_NAME } from "@vibes.diy/api-types";
 
-// authorUserId / authorDisplay / authorImageUrl / authorIsOwner / createdAt
+// authorUserId / authorUserSlug / authorDisplay / authorIsOwner / createdAt
 // are stamped client-side at post time. The server writes the doc verbatim
 // under the new ACL model, so the client owns identity fields.
 interface CommentDoc {
   _id: string;
   body?: string;
   authorUserId?: string;
+  authorUserSlug?: string;
   authorDisplay?: string;
-  authorImageUrl?: string;
   authorIsOwner?: boolean;
   createdAt?: string;
 }
@@ -53,6 +53,18 @@ function formatTime(iso?: string): string {
 
 function authorInitial(name?: string): string {
   return (name?.trim()[0] ?? "?").toUpperCase();
+}
+
+function avatarRouteForUserSlug(userSlug?: string): string | undefined {
+  const slug = userSlug?.trim();
+  if (!slug) return undefined;
+  return `/u/${encodeURIComponent(slug)}/avatar`;
+}
+
+function deriveAuthorUserSlug(user: ReturnType<typeof useUser>["user"]): string | undefined {
+  const username = user?.username?.trim();
+  if (username) return username;
+  return undefined;
 }
 
 export function CommentsSection({ userSlug, appSlug, canModerate, composerDisabled }: CommentsSectionProps) {
@@ -110,8 +122,8 @@ export function CommentsSection({ userSlug, appSlug, canModerate, composerDisabl
       doc: {
         body: text,
         authorUserId: viewerUserId,
+        authorUserSlug: deriveAuthorUserSlug(user),
         authorDisplay: deriveAuthorDisplay(user),
-        authorImageUrl: user?.imageUrl,
         // Stamp `authorIsOwner` so any viewer can render a badge next to the
         // vibe owner's comments. This is purely a display hint — non-malicious
         // owners self-mark; the server doesn't enforce it.
@@ -151,11 +163,12 @@ export function CommentsSection({ userSlug, appSlug, canModerate, composerDisabl
           comments.map((c) => {
             const canDelete = canModerate || (viewerUserId && viewerUserId === c.authorUserId);
             const display = c.authorDisplay ?? "anonymous";
+            const avatarUrl = avatarRouteForUserSlug(c.authorUserSlug);
             return (
               <div key={c._id} className="flex items-start gap-2 text-sm">
-                {c.authorImageUrl ? (
+                {avatarUrl ? (
                   <img
-                    src={c.authorImageUrl}
+                    src={avatarUrl}
                     alt=""
                     className="h-7 w-7 shrink-0 rounded-full object-cover mt-0.5"
                   />

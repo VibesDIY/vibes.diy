@@ -44,7 +44,7 @@ import {
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
-import { eq, and, lt, desc } from "drizzle-orm/sql/expressions";
+import { eq, and, lt, desc, inArray } from "drizzle-orm/sql/expressions";
 import { type SQL } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
@@ -404,11 +404,35 @@ export const listRequestGrantsEvento: EventoHandler<
       const hasMore = rows.length > limit;
       const items = hasMore ? rows.slice(0, limit) : rows;
 
+      const foreignUserIds = Array.from(new Set(items.map((item) => item.foreignUserId)));
+      const slugByUserId = new Map<string, string>();
+      if (foreignUserIds.length > 0) {
+        const slugRows = await vctx.sql.db
+          .select({
+            userId: vctx.sql.tables.userSlugBinding.userId,
+            userSlug: vctx.sql.tables.userSlugBinding.userSlug,
+          })
+          .from(vctx.sql.tables.userSlugBinding)
+          .where(inArray(vctx.sql.tables.userSlugBinding.userId, foreignUserIds))
+          .orderBy(desc(vctx.sql.tables.userSlugBinding.created));
+
+        for (const row of slugRows) {
+          if (!slugByUserId.has(row.userId)) {
+            slugByUserId.set(row.userId, row.userSlug);
+          }
+        }
+      }
+
+      const itemsWithSlugs = items.map((item) => ({
+        ...item,
+        ...(slugByUserId.has(item.foreignUserId) ? { foreignUserSlug: slugByUserId.get(item.foreignUserId) } : {}),
+      })) as ResListRequestGrants["items"];
+
       const possible = ResListRequestGrants({
         type: "vibes.diy.res-list-request-grants",
         appSlug: req.appSlug,
         userSlug: req.userSlug,
-        items: items as ResListRequestGrants["items"],
+        items: itemsWithSlugs,
         ...(hasMore ? { nextCursor: items[items.length - 1].created } : {}),
       } satisfies ResListRequestGrants);
       if (possible instanceof type.errors) {
