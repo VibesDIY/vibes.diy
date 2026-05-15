@@ -79,6 +79,21 @@ jobs:
             rm -f "$tmp"
           }
 
+          # Diagnostic probe (remove once DNS+TLS reliably succeeds): show
+          # which token the runner actually sees and whether it can read
+          # the target zone. A clean error here pinpoints whether the
+          # problem is the token (verify fails / wrong id), an IP filter
+          # (verify passes but zone fetch 403s with a different message),
+          # or the zone scope (verify passes, zone fetch 403s with code
+          # 10000). Wrapped in `|| true` so a probe failure doesn't mask
+          # the real DNS/TLS call further down.
+          echo "::group::Token + zone probe"
+          api "https://api.cloudflare.com/client/v4/user/tokens/verify" \
+            | jq '{status:.result.status,id:.result.id,not_before:.result.not_before,expires_on:.result.expires_on}' || true
+          api "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}" \
+            | jq '{id:.result.id,name:.result.name,account:.result.account}' || true
+          echo "::endgroup::"
+
           # Proxied DNS for the per-PR deep wildcard (covers
           # <app>--<user>.pr-<N>.vibespreview.dev and assets.pr-<N>...).
           # The per-PR apex `pr-<N>.vibespreview.dev` is covered by the
