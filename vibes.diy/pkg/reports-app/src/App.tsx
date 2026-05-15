@@ -63,9 +63,29 @@ export function App({ getClerkToken }: AppProps) {
       <ColorStripe />
 
       <div className="grid-2-1">
-        <div className="card card--hero hero">
-          <span className="section-label">Growth Report</span>
+        <div
+          className="card card--hero hero"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            position: "relative",
+            gap: "1rem",
+          }}
+        >
+          <span className="section-label" style={{ marginBottom: 0 }}>
+            Growth Report
+          </span>
           <VibesDiyLogo />
+          <button
+            className="btn"
+            onClick={() => void clerk.signOut()}
+            style={{ position: "absolute", top: "1rem", right: "1rem" }}
+          >
+            Sign out
+          </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div className="card card--red callout">
@@ -83,12 +103,6 @@ export function App({ getClerkToken }: AppProps) {
             <p style={{ color: "var(--near-black)" }}>Distinct userSlug/appSlug pairs in AppSlugBindings.</p>
           </div>
         </div>
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1.5rem" }}>
-        <button className="btn" onClick={() => void clerk.signOut()}>
-          Sign out
-        </button>
       </div>
 
       <section>
@@ -140,7 +154,7 @@ function VibesDiyLogo() {
     <img
       src={vibesDiyLogoUrl}
       alt="Vibes DIY"
-      style={{ height: "clamp(64px, 11vw, 120px)", width: "auto", display: "block", marginTop: "0.25rem" }}
+      style={{ height: "clamp(96px, 16vw, 180px)", width: "auto", display: "block" }}
     />
   );
 }
