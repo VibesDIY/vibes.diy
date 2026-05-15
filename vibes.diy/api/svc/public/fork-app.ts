@@ -221,9 +221,37 @@ export async function forkApp(
     vctx.logger.Warn().Err(rBump).Msg("bumpAppRecency failed");
   }
 
-  // 7. Clone branches off here: no ChatSection seed (user lands on /vibe/
-  //    with the app already deployed), and AppSettings default to
-  //    request-access-required so non-owners can't auto-join.
+  // 7. Seed a ChatSection that mirrors a real prompt turn — a synthetic user
+  //    message + the source /App.jsx as an assistant code block, block.end
+  //    pinning fsRef to srcFsId. Runs for both remix and clone: a cloner who
+  //    later clicks Edit lands in the chat editor with the source in scope
+  //    (#1781), so the next LLM prompt sees the current code via
+  //    reconstructConversationMessages instead of starting from scratch.
+  const fsItems = src.fileSystem as FileSystemItem[];
+  const srcEntry = fsItems.find((f) => f.entryPoint && f.fileName === "/App.jsx") ?? fsItems.find((f) => f.fileName === "/App.jsx");
+  if (srcEntry) {
+    const rFetch = await vctx.storage.fetch(srcEntry.assetURI);
+    if (!isFetchOkResult(rFetch)) {
+      return Result.Err(`fork-fetch-app-jsx: ${srcEntry.fileName} (${srcEntry.assetURI})`);
+    }
+    const content = await new Response(rFetch.data as unknown as BodyInit).text();
+    const promptId = vctx.sthis.nextId(12).str;
+    const blockId = vctx.sthis.nextId(12).str;
+    const rSeed = await seedChatSection(vctx, {
+      chatId,
+      promptId,
+      blockId,
+      streamId: blockId,
+      userText: `${skipChat ? "Clone" : "Remix"} of ${src.userSlug}/${src.appSlug}`,
+      files: [{ path: srcEntry.fileName, lang: "jsx", content }],
+      fsRef: { appSlug: destAppSlug, userSlug: destUserSlug, mode: destMode, fsId: src.fsId },
+    });
+    if (rSeed.isErr()) return Result.Err(rSeed);
+  }
+
+  // 8. Clone-only: AppSettings default to request-access-required so
+  //    non-owners can't auto-join, and public access stays off until the
+  //    cloner explicitly enables it.
   if (skipChat) {
     const rReqSet = await ensureAppSettings(
       vctx,
@@ -247,43 +275,6 @@ export async function forkApp(
       userId
     );
     if (rPubSet.isErr()) return Result.Err(`Failed to disable clone public access: ${rPubSet.Err().message}`);
-    return Result.Ok({
-      type: "vibes.diy.res-fork-app",
-      userSlug: destUserSlug,
-      appSlug: destAppSlug,
-      chatId,
-      srcFsId: src.fsId,
-      srcUserSlug: src.userSlug,
-      srcAppSlug: src.appSlug,
-    } satisfies ResForkApp);
-  }
-
-  // 8. Remix path: seed a ChatSection that mirrors the structure of a real
-  //    prompt turn — a synthetic user message + the source /App.jsx
-  //    rendered as an assistant code block, block.end pinning fsRef to
-  //    srcFsId. The chat editor's sectionStream then hydrates the editor
-  //    normally, and the next LLM prompt sees the current code via
-  //    reconstructConversationMessages.
-  const fsItems = src.fileSystem as FileSystemItem[];
-  const srcEntry = fsItems.find((f) => f.entryPoint && f.fileName === "/App.jsx") ?? fsItems.find((f) => f.fileName === "/App.jsx");
-  if (srcEntry) {
-    const rFetch = await vctx.storage.fetch(srcEntry.assetURI);
-    if (!isFetchOkResult(rFetch)) {
-      return Result.Err(`fork-fetch-app-jsx: ${srcEntry.fileName} (${srcEntry.assetURI})`);
-    }
-    const content = await new Response(rFetch.data as unknown as BodyInit).text();
-    const promptId = vctx.sthis.nextId(12).str;
-    const blockId = vctx.sthis.nextId(12).str;
-    const rSeed = await seedChatSection(vctx, {
-      chatId,
-      promptId,
-      blockId,
-      streamId: blockId,
-      userText: `Remix of ${src.userSlug}/${src.appSlug}`,
-      files: [{ path: srcEntry.fileName, lang: "jsx", content }],
-      fsRef: { appSlug: destAppSlug, userSlug: destUserSlug, mode: destMode, fsId: src.fsId },
-    });
-    if (rSeed.isErr()) return Result.Err(rSeed);
   }
 
   return Result.Ok({

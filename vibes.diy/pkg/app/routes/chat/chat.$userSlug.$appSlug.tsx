@@ -24,7 +24,6 @@ import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
 import ThemePickerModal from "../../components/ThemePickerModal.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import { useFreshFirstCodegen } from "../../utils/freshFirstCodegen.js";
-import { buildClonedSourceSelected } from "../../utils/firstTurnClonePromptOpts.js";
 import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
@@ -472,23 +471,15 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         // Clear promptToSend BEFORE firing so any re-render of this effect
         // (e.g. searchParams change) sees null and skips the branch.
         sendPrompt(null);
-        // On the first turn of a freshly cloned/remixed chat (no prior
-        // blocks, but source hydrated from Apps.fileSystem), attach the
-        // cloned code as a SELECTED_DRAFT slot so the model edits the
-        // existing app instead of generating from scratch (#1781).
-        const clonedSelected = buildClonedSourceSelected(promptState, currentFsId);
         chat
-          .prompt(
-            {
-              messages: [
-                {
-                  role: "user",
-                  content: [{ type: "text", text: sentPrompt }],
-                },
-              ],
-            },
-            clonedSelected ? { selected: clonedSelected } : undefined
-          )
+          .prompt({
+            messages: [
+              {
+                role: "user",
+                content: [{ type: "text", text: sentPrompt }],
+              },
+            ],
+          })
           .then((r) => {
             if (r.isErr()) {
               console.error(`PromptSend failed`, r.Ok());
