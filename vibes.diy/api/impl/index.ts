@@ -133,6 +133,12 @@ import {
   ResListMembers,
   isResListMembers,
   ReqAssetUploadGrant,
+  ReqReportGrowthMemberships,
+  ResReportGrowthMemberships,
+  isResReportGrowthMemberships,
+  ReqReportGrowthVibesWithData,
+  ResReportGrowthVibesWithData,
+  isResReportGrowthVibesWithData,
   ResAssetUploadGrant,
   isResAssetUploadGrant,
   isEvtDocChanged,
@@ -729,6 +735,17 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   requestAssetUploadGrant(req: Req<ReqAssetUploadGrant>): Promise<Result<ResAssetUploadGrant, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-asset-upload-grant" }, { resMatch: isResAssetUploadGrant });
+  }
+
+  reportGrowthMemberships(req: Req<ReqReportGrowthMemberships>): Promise<Result<ResReportGrowthMemberships, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-report-growth-memberships" }, { resMatch: isResReportGrowthMemberships });
+  }
+
+  reportGrowthVibesWithData(req: Req<ReqReportGrowthVibesWithData>): Promise<Result<ResReportGrowthVibesWithData, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-report-growth-vibes-with-data" },
+      { resMatch: isResReportGrowthVibesWithData }
+    );
   }
 
   private attachDocChangedToConnection(

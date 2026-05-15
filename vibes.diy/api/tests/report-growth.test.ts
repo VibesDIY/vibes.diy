@@ -1,27 +1,18 @@
-import { beforeAll, describe, expect, it, inject } from "vitest";
+import { VibesDiyApi } from "@vibes.diy/api-impl";
+import { beforeAll, describe, expect, inject, it } from "vitest";
+import { Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
-import { processRequest } from "@vibes.diy/api-svc";
+import { cfServe, CFInject, noopCache, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
+import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { createTestUserWithPublicMeta } from "./create-test-user-with-public-meta.js";
 
-// Reports are gated on claims.params.public_meta.reports (an array of
-// report keys, or ["*"]). The asset-session-bridge test pattern (real
-// device-id token through processRequest) covers the auth wire-up; here
-// we vary the public_meta to exercise the gate and seed grant tables to
-// verify the per-day cumulative math.
-
 const TIMEOUT = (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 10000;
-
-function reportUrl(svc: { hostnameBase: string; protocol: string; port?: string }, path: string): string {
-  const port = svc.port && svc.port !== "80" && svc.port !== "443" ? `:${svc.port}` : "";
-  return `${svc.protocol}://${svc.hostnameBase.replace(/^\./, "")}${port}${path}`;
-}
 
 function daysAgoUTC(n: number): string {
   const now = new Date();
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - n));
-  // Use mid-day so per-day bucketing is unambiguous regardless of test runner's wallclock.
   d.setUTCHours(12, 0, 0, 0);
   return d.toISOString();
 }
@@ -32,18 +23,51 @@ function todayUTC(): string {
 
 describe("report-growth", { timeout: TIMEOUT }, () => {
   const sthis = ensureSuperThis();
-  let ctx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
-  let svc: { hostnameBase: string; protocol: string; port?: string };
-  let tokenWithGrowth: string;
-  let tokenWithStar: string;
-  let tokenWithEmpty: string;
-  let tokenWithWrongKey: string;
-  let tokenWithStringMeta: string;
+  let appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
+  let apiGrowth: VibesDiyApi;
+  let apiStar: VibesDiyApi;
+  let apiEmpty: VibesDiyApi;
+  let apiWrongKey: VibesDiyApi;
+  let apiStringMeta: VibesDiyApi;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
-    ctx = await createVibeDiyTestCtx(sthis, deviceCA);
-    svc = ctx.vibesCtx.params.vibes.svc;
+    appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+
+    const fetchPair = TestFetchPair.create();
+    const wsPair = TestWSPair.create();
+
+    fetchPair.server.onServe(async (req: Request) => {
+      return cfServe(
+        req as unknown as CFRequest,
+        {
+          appCtx: appCtx.appCtx,
+          cache: noopCache,
+          drizzle: appCtx.vibesCtx.sql.db,
+          webSocket: {
+            connections: new Set(),
+            webSocketPair: () => ({ client: wsPair.p1, server: wsPair.p2 }),
+          },
+        } as unknown as ExecutionContext & CFInject
+      ) as unknown as Promise<Response>;
+    });
+
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+
+    function makeApi(token: { type: "device-id"; token: string }): VibesDiyApi {
+      return new VibesDiyApi({
+        apiUrl: "http://localhost:8787/api",
+        ws: wsPair.p1 as unknown as WebSocket,
+        fetch: fetchPair.client.fetch,
+        timeoutMs: 100000,
+        getToken: async () => Result.Ok(token),
+      });
+    }
 
     const userGrowth = await createTestUserWithPublicMeta({
       sthis,
@@ -51,7 +75,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       userId: "tester-growth",
       publicMeta: { reports: ["growth", "scale"] },
     });
-    tokenWithGrowth = (await userGrowth.getDashBoardToken()).token;
+    apiGrowth = makeApi(await userGrowth.getDashBoardToken());
 
     const userStar = await createTestUserWithPublicMeta({
       sthis,
@@ -59,7 +83,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       userId: "tester-star",
       publicMeta: { reports: ["*"] },
     });
-    tokenWithStar = (await userStar.getDashBoardToken()).token;
+    apiStar = makeApi(await userStar.getDashBoardToken());
 
     const userEmpty = await createTestUserWithPublicMeta({
       sthis,
@@ -67,7 +91,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       userId: "tester-empty",
       publicMeta: { reports: [] },
     });
-    tokenWithEmpty = (await userEmpty.getDashBoardToken()).token;
+    apiEmpty = makeApi(await userEmpty.getDashBoardToken());
 
     const userWrong = await createTestUserWithPublicMeta({
       sthis,
@@ -75,36 +99,34 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       userId: "tester-wrong",
       publicMeta: { reports: ["billing"] },
     });
-    tokenWithWrongKey = (await userWrong.getDashBoardToken()).token;
+    apiWrongKey = makeApi(await userWrong.getDashBoardToken());
 
-    // Real shipped createTestUser hardcodes public_meta to a string; the
-    // gate must reject this shape rather than crash trying to read .reports.
+    // Shipped createTestUser hardcodes public_meta to a JSON-string sentinel
+    // (not an object). Gate must reject this shape, not crash on undefined.reports.
     const userString = await createTestUserWithPublicMeta({
       sthis,
       deviceCA,
       userId: "tester-string",
       publicMeta: `{ "role": "tester" }`,
     });
-    tokenWithStringMeta = (await userString.getDashBoardToken()).token;
+    apiStringMeta = makeApi(await userString.getDashBoardToken());
 
-    // Seed two memberships dated today (will appear in newMembers), one
-    // dated 5 days ago (cumulative-only), and one in the future (filtered).
-    // Plus a duplicate (request + invite for same triple) to exercise the
-    // dedupe path — should only count once with the earliest date.
-    const t = ctx.vibesCtx.sql.tables;
+    // Seed data: alice (request, day -5), bob (request+invite same vibe, today,
+    // dedupe-to-1), carol (invite, today, different vibe). Plus pending-request
+    // and pending-invite which must not count, and a future-dated approved
+    // which must be filtered from total and per-day buckets.
+    const t = appCtx.vibesCtx.sql.tables;
     const todayMid = daysAgoUTC(0);
     const fiveDaysAgo = daysAgoUTC(5);
     const futureDate = daysAgoUTC(-2);
 
-    // Member slug bindings — so tooltips show slugs, not bare userIds.
-    await ctx.vibesCtx.sql.db.insert(t.userSlugBinding).values([
+    await appCtx.vibesCtx.sql.db.insert(t.userSlugBinding).values([
       { userId: "member-alice", userSlug: "alice", tenant: "t-alice", created: fiveDaysAgo },
       { userId: "member-bob", userSlug: "bob", tenant: "t-bob", created: fiveDaysAgo },
       { userId: "member-carol", userSlug: "carol", tenant: "t-carol", created: todayMid },
     ]);
 
-    await ctx.vibesCtx.sql.db.insert(t.requestGrants).values([
-      // alice approved request on day -5
+    await appCtx.vibesCtx.sql.db.insert(t.requestGrants).values([
       {
         userId: "owner-1",
         appSlug: "vibe-x",
@@ -117,7 +139,6 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
         updated: fiveDaysAgo,
         created: fiveDaysAgo,
       },
-      // bob approved request today
       {
         userId: "owner-1",
         appSlug: "vibe-y",
@@ -130,9 +151,6 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
         updated: todayMid,
         created: todayMid,
       },
-      // bob also has an invite to same vibe-y → dedupe must collapse
-      // (same earliest date so newMembers list has bob once for today).
-      // duplicate-as-request: pending state should not count
       {
         userId: "owner-1",
         appSlug: "vibe-y",
@@ -145,7 +163,6 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
         updated: todayMid,
         created: todayMid,
       },
-      // future-dated approved — must be filtered out of total + days
       {
         userId: "owner-1",
         appSlug: "vibe-z",
@@ -160,8 +177,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       },
     ]);
 
-    await ctx.vibesCtx.sql.db.insert(t.inviteGrants).values([
-      // bob accepted invite to same (owner-slug-1, vibe-y) → dedupe collapse
+    await appCtx.vibesCtx.sql.db.insert(t.inviteGrants).values([
       {
         userId: "owner-1",
         appSlug: "vibe-y",
@@ -175,7 +191,6 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
         updated: todayMid,
         created: todayMid,
       },
-      // carol accepted invite today, different vibe → counts
       {
         userId: "owner-1",
         appSlug: "vibe-w",
@@ -189,7 +204,6 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
         updated: todayMid,
         created: todayMid,
       },
-      // pending invite → must not count
       {
         userId: "owner-1",
         appSlug: "vibe-p",
@@ -205,8 +219,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       },
     ]);
 
-    // AppSlugBindings — one today, one 5 days ago, one in the future.
-    await ctx.vibesCtx.sql.db.insert(t.appSlugBinding).values([
+    await appCtx.vibesCtx.sql.db.insert(t.appSlugBinding).values([
       { appSlug: "vibe-old", userSlug: "owner-slug-1", ledger: "led-1", created: fiveDaysAgo },
       { appSlug: "vibe-new", userSlug: "owner-slug-1", ledger: "led-2", created: todayMid },
       { appSlug: "vibe-future", userSlug: "owner-slug-1", ledger: "led-3", created: daysAgoUTC(-2) },
@@ -214,93 +227,58 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
   }, TIMEOUT);
 
   describe("auth gate", () => {
-    it.each([["/reports/growth/memberships"], ["/reports/growth/vibes-with-data"]])("%s — missing Bearer → 401", async (path) => {
-      const res = await processRequest(ctx.appCtx, new Request(reportUrl(svc, path), { method: "GET" }));
-      expect(res.status).toBe(401);
-    });
-
-    it.each([["/reports/growth/memberships"], ["/reports/growth/vibes-with-data"]])("%s — garbage Bearer → 401", async (path) => {
-      const res = await processRequest(
-        ctx.appCtx,
-        new Request(reportUrl(svc, path), { method: "GET", headers: { Authorization: "Bearer garbage" } })
-      );
-      expect(res.status).toBe(401);
-    });
-
-    it.each([["/reports/growth/memberships"], ["/reports/growth/vibes-with-data"]])(
-      "%s — valid token, empty reports → 403",
-      async (path) => {
-        const res = await processRequest(
-          ctx.appCtx,
-          new Request(reportUrl(svc, path), { method: "GET", headers: { Authorization: `Bearer ${tokenWithEmpty}` } })
-        );
-        expect(res.status).toBe(403);
+    it.each<["memberships" | "vibesWithData"]>([["memberships"], ["vibesWithData"]])(
+      "%s — empty reports array → not authorized",
+      async (kind) => {
+        const r =
+          kind === "memberships" ? await apiEmpty.reportGrowthMemberships({}) : await apiEmpty.reportGrowthVibesWithData({});
+        expect(r.isErr()).toBe(true);
+        const err = r.Err() as { code?: string };
+        expect(err.code).toBe("report-not-authorized");
       }
     );
 
-    it.each([["/reports/growth/memberships"], ["/reports/growth/vibes-with-data"]])(
-      "%s — valid token, wrong report key → 403",
-      async (path) => {
-        const res = await processRequest(
-          ctx.appCtx,
-          new Request(reportUrl(svc, path), { method: "GET", headers: { Authorization: `Bearer ${tokenWithWrongKey}` } })
-        );
-        expect(res.status).toBe(403);
+    it.each<["memberships" | "vibesWithData"]>([["memberships"], ["vibesWithData"]])(
+      "%s — wrong report key → not authorized",
+      async (kind) => {
+        const r =
+          kind === "memberships" ? await apiWrongKey.reportGrowthMemberships({}) : await apiWrongKey.reportGrowthVibesWithData({});
+        expect(r.isErr()).toBe(true);
+        const err = r.Err() as { code?: string };
+        expect(err.code).toBe("report-not-authorized");
       }
     );
 
-    it.each([["/reports/growth/memberships"], ["/reports/growth/vibes-with-data"]])(
-      "%s — public_meta as string (not object) → 403, no crash",
-      async (path) => {
-        const res = await processRequest(
-          ctx.appCtx,
-          new Request(reportUrl(svc, path), {
-            method: "GET",
-            headers: { Authorization: `Bearer ${tokenWithStringMeta}` },
-          })
-        );
-        expect(res.status).toBe(403);
+    it.each<["memberships" | "vibesWithData"]>([["memberships"], ["vibesWithData"]])(
+      "%s — public_meta string shape rejected, no crash",
+      async (kind) => {
+        const r =
+          kind === "memberships"
+            ? await apiStringMeta.reportGrowthMemberships({})
+            : await apiStringMeta.reportGrowthVibesWithData({});
+        expect(r.isErr()).toBe(true);
+        const err = r.Err() as { code?: string };
+        expect(err.code).toBe("report-not-authorized");
       }
     );
 
-    it.each([["/reports/growth/memberships"], ["/reports/growth/vibes-with-data"]])(
-      "%s — ['*'] grants access → 200",
-      async (path) => {
-        const res = await processRequest(
-          ctx.appCtx,
-          new Request(reportUrl(svc, path), { method: "GET", headers: { Authorization: `Bearer ${tokenWithStar}` } })
-        );
-        expect(res.status).toBe(200);
+    it.each<["memberships" | "vibesWithData"]>([["memberships"], ["vibesWithData"]])(
+      "%s — ['*'] grants access → ok",
+      async (kind) => {
+        const r = kind === "memberships" ? await apiStar.reportGrowthMemberships({}) : await apiStar.reportGrowthVibesWithData({});
+        expect(r.isOk()).toBe(true);
       }
     );
-
-    it("POST /reports/growth/memberships → not 200 (only GET handled)", async () => {
-      const res = await processRequest(
-        ctx.appCtx,
-        new Request(reportUrl(svc, "/reports/growth/memberships"), {
-          method: "POST",
-          headers: { Authorization: `Bearer ${tokenWithGrowth}` },
-        })
-      );
-      expect(res.status).not.toBe(200);
-    });
   });
 
   describe("memberships", () => {
-    it("counts approved requests + accepted invites, dedupes duplicates, filters by state", async () => {
-      const res = await processRequest(
-        ctx.appCtx,
-        new Request(reportUrl(svc, "/reports/growth/memberships"), {
-          method: "GET",
-          headers: { Authorization: `Bearer ${tokenWithGrowth}` },
-        })
-      );
-      expect(res.status).toBe(200);
-      const body = await res.json();
+    it("counts approved requests + accepted invites, dedupes, filters state and future", async () => {
+      const r = await apiGrowth.reportGrowthMemberships({});
+      expect(r.isOk()).toBe(true);
+      const body = r.Ok();
       expect(body.type).toBe("vibes.diy.res-report-growth-memberships");
       expect(body.days).toHaveLength(30);
-      // alice (request, day -5) + bob (request+invite, today, dedupe-to-1) + carol (invite, today) = 3
-      // pending + future-dated must be excluded
+      // alice + bob (dedupe) + carol = 3
       expect(body.total).toBe(3);
 
       const lastDay = body.days[body.days.length - 1];
@@ -309,37 +287,30 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       expect(lastDay.newMembers).toEqual(["bob", "carol"]);
 
       const fiveDaysAgoStr = daysAgoUTC(5).slice(0, 10);
-      const fiveBucket = body.days.find((d: { day: string }) => d.day === fiveDaysAgoStr);
+      const fiveBucket = body.days.find((d) => d.day === fiveDaysAgoStr);
       expect(fiveBucket?.newMembers).toEqual(["alice"]);
       expect(fiveBucket?.memberships).toBe(1);
     });
   });
 
   describe("vibes-with-data", () => {
-    it("counts distinct AppSlugBinding rows cumulatively, filters future", async () => {
-      const res = await processRequest(
-        ctx.appCtx,
-        new Request(reportUrl(svc, "/reports/growth/vibes-with-data"), {
-          method: "GET",
-          headers: { Authorization: `Bearer ${tokenWithGrowth}` },
-        })
-      );
-      expect(res.status).toBe(200);
-      const body = await res.json();
+    it("counts distinct AppSlugBindings cumulatively, filters future", async () => {
+      const r = await apiGrowth.reportGrowthVibesWithData({});
+      expect(r.isOk()).toBe(true);
+      const body = r.Ok();
       expect(body.type).toBe("vibes.diy.res-report-growth-vibes-with-data");
       expect(body.days).toHaveLength(30);
-      // vibe-old (day -5) + vibe-new (today) = 2; vibe-future filtered out
+      // vibe-old + vibe-new = 2; vibe-future filtered
       expect(body.total).toBe(2);
 
       const lastDay = body.days[body.days.length - 1];
       expect(lastDay.day).toBe(todayUTC());
       expect(lastDay.vibes).toBe(2);
 
-      const fiveBucket = body.days.find((d: { day: string }) => d.day === daysAgoUTC(5).slice(0, 10));
+      const fiveBucket = body.days.find((d) => d.day === daysAgoUTC(5).slice(0, 10));
       expect(fiveBucket?.vibes).toBe(1);
 
-      // Day before first seed — count is 0.
-      const tenBucket = body.days.find((d: { day: string }) => d.day === daysAgoUTC(10).slice(0, 10));
+      const tenBucket = body.days.find((d) => d.day === daysAgoUTC(10).slice(0, 10));
       expect(tenBucket?.vibes).toBe(0);
     });
   });
