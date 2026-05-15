@@ -857,11 +857,11 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       expect(countByType("app.request")).toBe(1);
 
       // dbAcl: per-dbName. "shared" collapses to 1, "private" stays as 1.
-      const dbAclEntries = entries.filter((e) => (e as { type: string }).type === "active.db-acl") as Array<{
+      const dbAclEntries = entries.filter((e) => (e as { type: string }).type === "active.db-acl") as {
         type: "active.db-acl";
         dbName: string;
         acl: unknown;
-      }>;
+      }[];
       expect(dbAclEntries.filter((e) => e.dbName === "shared")).toHaveLength(1);
       expect(dbAclEntries.filter((e) => e.dbName === "private")).toHaveLength(1);
 
