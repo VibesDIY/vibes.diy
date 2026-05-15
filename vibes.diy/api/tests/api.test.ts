@@ -774,13 +774,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
             },
           ],
         })
-        .where(
-          and(
-            eq(appSettings.userId, seed.Ok().userId),
-            eq(appSettings.appSlug, appSlug),
-            eq(appSettings.userSlug, userSlug)
-          )
-        );
+        .where(and(eq(appSettings.userId, seed.Ok().userId), eq(appSettings.appSlug, appSlug), eq(appSettings.userSlug, userSlug)));
 
       const selectedChat = { model: m("saved-chat"), apiKey: "saved-key" };
       const save = await api.ensureAppSettings({ appSlug, userSlug, chat: selectedChat });
@@ -803,6 +797,79 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
           }),
         ])
       );
+    });
+
+    it("ensureAppSettings canonicalizes duplicates for every singleton entry type", async () => {
+      const { appSlug, userSlug } = await createApp();
+      const seed = await api.ensureAppSettings({ appSlug, userSlug });
+      const appSettings = appCtx.vibesCtx.sql.tables.appSettings;
+      const userId = seed.Ok().userId;
+
+      // Seed duplicate entries for every singleton type via direct UPDATE so we
+      // can reproduce the broken-state shape that #1707 was triggered by.
+      await appCtx.vibesCtx.sql.db
+        .update(appSettings)
+        .set({
+          settings: [
+            { type: "active.title", title: "old-title-1" },
+            { type: "active.title", title: "old-title-2" },
+            { type: "active.theme", theme: { name: "old-theme-1" } },
+            { type: "active.theme", theme: { name: "old-theme-2" } },
+            { type: "active.skills", skills: ["old-skill-1"] },
+            { type: "active.skills", skills: ["old-skill-2"] },
+            { type: "active.icon-description", description: "old-icon-desc-1" },
+            { type: "active.icon-description", description: "old-icon-desc-2" },
+            { type: "active.env", env: [{ key: "OLD_1", value: "v1" }] },
+            { type: "active.env", env: [{ key: "OLD_2", value: "v2" }] },
+            { type: "app.public.access", enable: false },
+            { type: "app.public.access", enable: true },
+            { type: "app.request", enable: false },
+            { type: "app.request", enable: true },
+            { type: "active.db-acl", dbName: "shared", acl: { read: ["public"] } },
+            { type: "active.db-acl", dbName: "shared", acl: { read: ["members"] } },
+            { type: "active.db-acl", dbName: "private", acl: { read: ["owner"] } },
+          ],
+        })
+        .where(and(eq(appSettings.userId, userId), eq(appSettings.appSlug, appSlug), eq(appSettings.userSlug, userSlug)));
+
+      // One save per entry type. Each save must canonicalize that type to one entry.
+      await api.ensureAppSettings({ appSlug, userSlug, title: "new-title" });
+      await api.ensureAppSettings({ appSlug, userSlug, theme: { name: "new-theme" } });
+      await api.ensureAppSettings({ appSlug, userSlug, skills: ["new-skill"] });
+      await api.ensureAppSettings({ appSlug, userSlug, iconDescription: "new-icon-desc" });
+      await api.ensureAppSettings({ appSlug, userSlug, env: [{ key: "NEW", value: "v" }] });
+      await api.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: false } });
+      await api.ensureAppSettings({ appSlug, userSlug, request: { enable: false } });
+      await api.ensureAppSettings({ appSlug, userSlug, dbAcl: { dbName: "shared", acl: { read: ["members"] } } });
+
+      const final = await api.ensureAppSettings({ appSlug, userSlug });
+      const entries = final.Ok().settings.entries;
+
+      const countByType = (t: string) => entries.filter((e) => (e as { type: string }).type === t).length;
+      expect(countByType("active.title")).toBe(1);
+      expect(countByType("active.theme")).toBe(1);
+      expect(countByType("active.skills")).toBe(1);
+      expect(countByType("active.icon-description")).toBe(1);
+      expect(countByType("active.env")).toBe(1);
+      expect(countByType("app.public.access")).toBe(1);
+      expect(countByType("app.request")).toBe(1);
+
+      // dbAcl: per-dbName. "shared" collapses to 1, "private" stays as 1.
+      const dbAclEntries = entries.filter((e) => (e as { type: string }).type === "active.db-acl") as Array<{
+        type: "active.db-acl";
+        dbName: string;
+        acl: unknown;
+      }>;
+      expect(dbAclEntries.filter((e) => e.dbName === "shared")).toHaveLength(1);
+      expect(dbAclEntries.filter((e) => e.dbName === "private")).toHaveLength(1);
+
+      // Read-path projection reflects most recent save — this is the #1707 symptom.
+      const settings = final.Ok().settings.entry.settings;
+      expect(settings.title).toBe("new-title");
+      expect(settings.theme).toEqual({ name: "new-theme" });
+      expect(settings.skills).toEqual(["new-skill"]);
+      expect(settings.iconDescription).toBe("new-icon-desc");
+      expect(settings.env).toEqual([{ key: "NEW", value: "v" }]);
     });
 
     it("ensureAppSettings update app", async () => {
