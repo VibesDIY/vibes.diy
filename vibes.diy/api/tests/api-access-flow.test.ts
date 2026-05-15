@@ -1,6 +1,7 @@
 import { assert, beforeAll, describe, expect, inject, it } from "vitest";
 import {
   type EvtRequestGrant,
+  isResEnsureAppSlugOk,
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
   isResRequestAccessApproved,
@@ -103,6 +104,22 @@ describe("request flow", { timeout: (inject("DB_FLAVOUR" as never) as string) ==
   it("manual approval lifecycle", async () => {
     const { appSlug, userSlug } = await ctx.createApp();
 
+    const requesterApp = (await ctx.api2.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "function App(){ return <div>Requester</div>; } App();",
+        },
+      ],
+    })).Ok();
+    if (!isResEnsureAppSlugOk(requesterApp)) {
+      assert.fail("Expected requester ensureAppSlug to succeed");
+    }
+    const requesterUserSlug = requesterApp.userSlug;
+
     // enable request access (no auto-approve)
     await ctx.api.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
 
@@ -125,6 +142,7 @@ describe("request flow", { timeout: (inject("DB_FLAVOUR" as never) as string) ==
     expect(listPending.items).toHaveLength(1);
     expect(listPending.items[0].state).toBe("pending");
     expect(listPending.items[0].foreignUserId).toBe(foreignUserId);
+    expect(listPending.items[0].foreignUserSlug).toBe(requesterUserSlug);
     expect((listPending.items[0].foreignInfo as { claims: { userId: string } }).claims.userId).toBe(foreignUserId);
 
     // owner approves

@@ -248,6 +248,7 @@ export const ResListRequestGrants = type({
   userSlug: "string",
   items: type({
     foreignUserId: "string",
+    "foreignUserSlug?": "string",
     state: "'pending' | 'approved' | 'revoked'",
     role: Role.or("undefined | null"),
     foreignInfo: type({

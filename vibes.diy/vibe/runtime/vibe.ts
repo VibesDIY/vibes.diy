@@ -16,7 +16,7 @@ const dbAcl = type({
 
 // Server-computed viewer info, embedded into the iframe's HTML by
 // render-vibe so the very first React render already has identity.
-// viewer.avatarUrl is the absolute URL for the viewer's avatar — opaque
+// viewer.avatarUrl is a stable avatar route URL (absolute or relative) — opaque
 // to app code (just a string, not a function of userSlug).
 export const viewerEnv = type({
   viewer: viewerPayload.or("null"),
