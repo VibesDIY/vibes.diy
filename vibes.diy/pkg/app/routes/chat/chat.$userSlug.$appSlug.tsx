@@ -409,17 +409,27 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       // themes apply session-only — they're not in the catalog so the backend
       // would drop them on validation.
       const isCatalog = !!getThemeBySlug(theme.slug);
-      if (isCatalog && userSlug !== "preparing" && appSlug !== "session") {
-        void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, theme: theme.slug });
-      }
+      const canPersist = isCatalog && userSlug !== "preparing" && appSlug !== "session";
       // Prefill the chat textarea with a default restyle prompt — only if
       // it's empty, so we don't clobber a half-typed message. The user can
       // edit before sending.
-      chatInput.current?.setPromptIfEmpty("Please update the theme");
+      const prefilled = chatInput.current?.setPromptIfEmpty("Please update the theme") ?? false;
       chatInput.current?.setFocus();
-      // Kick off the same submit path as Enter/Code after the input state
-      // update is applied.
-      window.requestAnimationFrame(() => {
+      if (!canPersist || !prefilled) {
+        // Custom themes apply session-only (server still has the old theme),
+        // and an existing draft means the user is mid-thought — in either
+        // case let the user hit submit themselves.
+        if (canPersist) {
+          void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, theme: theme.slug });
+        }
+        return;
+      }
+      // Wait for the theme to land in app_settings before kicking off the
+      // restyle turn — the server builds the prompt by reading the active
+      // theme, so submitting while ensureAppSettings is in flight can
+      // process the turn against the previous theme.
+      void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, theme: theme.slug }).then((res) => {
+        if (res.isErr()) return;
         chatInput.current?.clickSubmit();
       });
     },
