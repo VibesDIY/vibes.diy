@@ -5,7 +5,7 @@ This directory contains the database inspection and usage-report tooling for tea
 Files:
 
 - `inspect-db.ts`: read-only database inspector for connection info, table listings, table samples, and ad hoc SQL.
-- `inspect-db-report.ts`: report generator that queries the database, writes CSV snapshots, and produces the HTML report.
+- `inspect-db-report.ts`: report generator that queries the database and produces the HTML report.
 - `inspect-db-report-template.ts`: HTML template/rendering module used by the report generator.
 
 Commands:
@@ -23,5 +23,6 @@ Local configuration:
 
 Generated output:
 
-- HTML and CSV files are written to `vibes.diy/api/svc/dist/inspect-db-report`
-- rerunning the report overwrites the same files in place
+- HTML is written to `vibes.diy/api/svc/dist/inspect-db-report/index.html`
+- the script prints that path on stdout
+- rerunning the report overwrites the same file in place
