@@ -75,10 +75,13 @@ export function App({ getClerkToken }: AppProps) {
             gap: "1rem",
           }}
         >
-          <span className="section-label" style={{ marginBottom: 0 }}>
+          <VibesDiyLogo />
+          <span
+            className="section-label"
+            style={{ position: "absolute", left: "1.25rem", bottom: "1.25rem", marginBottom: 0 }}
+          >
             Growth Report
           </span>
-          <VibesDiyLogo />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div className="card card--red callout">
