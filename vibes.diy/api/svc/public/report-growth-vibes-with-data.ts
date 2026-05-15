@@ -1,21 +1,37 @@
-import { EventoHandler, ValidateTriggerCtx, Result, HandleTriggerCtx, EventoResultType, Option, URI } from "@adviser/cement";
-import { HttpResponseJsonType } from "@vibes.diy/api-types";
+import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
+import {
+  MsgBase,
+  ReqReportGrowthVibesWithData,
+  ResReportGrowthVibesWithData,
+  ResError,
+  ReqWithVerifiedAuth,
+  VibesDiyError,
+  W3CWebSocketEvent,
+  reqReportGrowthVibesWithData,
+} from "@vibes.diy/api-types";
+import { type } from "arktype";
+import { unwrapMsgBase } from "../unwrap-msg-base.js";
+import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { authReport, extractBearer, last30DaysUTC, reportStop } from "./report-helpers.js";
 
-interface ReportValidated {
-  readonly bearer: string;
+function hasReport(claims: { params?: { public_meta?: unknown } }, name: string): boolean {
+  const pm = claims.params?.public_meta as { reports?: unknown } | undefined;
+  const list = pm?.reports;
+  return Array.isArray(list) && (list.includes("*") || list.includes(name));
 }
 
-const REPORT_PATH = "/reports/growth/vibes-with-data";
+function last30DaysUTC(): string[] {
+  const days: string[] = [];
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
 
-async function handleReport(vctx: VibesApiSQLCtx): Promise<{
-  generatedAt: string;
-  total: number;
-  days: { day: string; vibes: number }[];
-}> {
+async function computeVibesWithData(vctx: VibesApiSQLCtx): Promise<ResReportGrowthVibesWithData> {
   const t = vctx.sql.tables;
-
   // AppSlugBindings PK is (appSlug, userSlug), so each row is already a
   // distinct vibe. Cumulative count per day = rows where created <= dayEnd.
   const rows = await vctx.sql.db.select({ created: t.appSlugBinding.created }).from(t.appSlugBinding);
@@ -38,32 +54,47 @@ async function handleReport(vctx: VibesApiSQLCtx): Promise<{
   }
 
   return {
+    type: "vibes.diy.res-report-growth-vibes-with-data",
     generatedAt: new Date().toISOString(),
     total: createdSorted.length,
     days: result,
   };
 }
 
-export const reportGrowthVibesWithData: EventoHandler<Request, ReportValidated, unknown> = {
-  hash: "report-growth-vibes-with-data",
-  validate: (ctx: ValidateTriggerCtx<Request, ReportValidated, unknown>) => {
-    const { request: req } = ctx;
-    if (!req || req.method !== "GET") return Promise.resolve(Result.Ok(Option.None()));
-    const url = URI.from(req.url);
-    if (url.pathname !== REPORT_PATH) return Promise.resolve(Result.Ok(Option.None()));
-    return Promise.resolve(Result.Ok(Option.Some({ bearer: extractBearer(req) ?? "" })));
-  },
-  handle: async (ctx: HandleTriggerCtx<Request, ReportValidated, unknown>): Promise<Result<EventoResultType>> => {
-    const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    const verified = await authReport(ctx, vctx, ctx.validated.bearer, "growth");
-    if (!verified) return reportStop();
+export const reportGrowthVibesWithDataEvento: EventoHandler<
+  W3CWebSocketEvent,
+  MsgBase<ReqReportGrowthVibesWithData>,
+  ResReportGrowthVibesWithData | VibesDiyError
+> = {
+  hash: "vibes.diy.req-report-growth-vibes-with-data",
+  validate: unwrapMsgBase(async (msg: MsgBase) => {
+    const ret = reqReportGrowthVibesWithData(msg.payload);
+    if (ret instanceof type.errors) return Result.Ok(Option.None());
+    return Result.Ok(Option.Some({ ...msg, payload: ret }));
+  }),
+  handle: checkAuth(
+    async (
+      ctx: HandleTriggerCtx<
+        W3CWebSocketEvent,
+        MsgBase<ReqWithVerifiedAuth<ReqReportGrowthVibesWithData>>,
+        ResReportGrowthVibesWithData | VibesDiyError
+      >
+    ): Promise<Result<EventoResultType>> => {
+      const req = ctx.validated.payload;
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-    const data = await handleReport(vctx);
-    await ctx.send.send(ctx, {
-      type: "http.Response.JSON",
-      status: 200,
-      json: { type: "vibes.diy.res-report-growth-vibes-with-data", ...data },
-    } satisfies HttpResponseJsonType);
-    return reportStop();
-  },
+      if (!hasReport(req._auth.verifiedAuth.claims, "growth")) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.error",
+          message: "not authorized for growth report",
+          code: "report-not-authorized",
+        } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
+      }
+
+      const res = await computeVibesWithData(vctx);
+      await ctx.send.send(ctx, res);
+      return Result.Ok(EventoResult.Continue);
+    }
+  ),
 };

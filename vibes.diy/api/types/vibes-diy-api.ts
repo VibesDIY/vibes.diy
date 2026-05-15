@@ -91,6 +91,12 @@ import {
 import { ReqListMembers, ResListMembers } from "./members.js";
 import { ReqVibeWhoAmI, ResVibeWhoAmI } from "@vibes.diy/vibe-types";
 import { ReqAssetUploadGrant, ResAssetUploadGrant } from "./asset.js";
+import {
+  ReqReportGrowthMemberships,
+  ResReportGrowthMemberships,
+  ReqReportGrowthVibesWithData,
+  ResReportGrowthVibesWithData,
+} from "./report.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
@@ -190,6 +196,12 @@ export interface VibesDiyApiIface<_T = unknown> {
   // Stage A put-asset producer — mints a short-lived signed grant for HTTP
   // POST /assets. Auth attached automatically by send().
   requestAssetUploadGrant(req: Req<ReqAssetUploadGrant>): Promise<Result<ResAssetUploadGrant, VibesDiyError>>;
+
+  // Growth reports — gated on claims.params.public_meta.reports containing
+  // the report key (or "*"). Backed by Clerk publicMetadata; tag investors
+  // in the Clerk dashboard, no allowlist code to maintain.
+  reportGrowthMemberships(req: Req<ReqReportGrowthMemberships>): Promise<Result<ResReportGrowthMemberships, VibesDiyError>>;
+  reportGrowthVibesWithData(req: Req<ReqReportGrowthVibesWithData>): Promise<Result<ResReportGrowthVibesWithData, VibesDiyError>>;
 
   // Register a callback for document change events pushed from the API.
   // dbName is included so consumers can filter to the specific db they care
