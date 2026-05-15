@@ -131,6 +131,55 @@ function setupSqlPlugin() {
 
 const DEV_HOST = "vite.localhost.vibesdiy.net";
 
+// Dev-only middleware: serve /reports/* from build/client/reports/. In
+// dev, the worker's ASSETS binding is fed by Vite's publicDir (pkg/public/)
+// — not build/client/ — so a route like /reports/index.html that only
+// exists in the post-build dir would 404. Production is unaffected: the
+// react-router build copies pkg/public/* into build/client/, and the
+// reports-app vite build writes into build/client/reports/ which is what
+// wrangler.toml's [assets] directory points at.
+// Requires the reports-app to have been built at least once (`pnpm build`
+// in pkg/, or directly `vite build -c reports-app/vite.config.ts`).
+function devServeReportsPlugin() {
+  return {
+    name: "dev-serve-reports",
+    apply: "serve" as const,
+    configureServer(server: ViteDevServer) {
+      const root = join(import.meta.dirname, "build/client/reports");
+      server.middlewares.use("/reports", (req, res, next) => {
+        // Skip the config.json worker endpoint — the cloudflare plugin
+        // routes that to app.ts which serves it dynamically.
+        if (req.url === "/config.json" || req.url?.startsWith("/config.json?")) {
+          next();
+          return;
+        }
+        const reqUrl = req.url ?? "/";
+        const cleanPath = reqUrl.split("?")[0];
+        const candidate = cleanPath === "/" || cleanPath === "" ? "index.html" : cleanPath.replace(/^\//, "");
+        const filePath = join(root, candidate);
+        // Whitelist: only serve paths that resolve inside the reports
+        // build dir. fs.existsSync + the join() containment check together
+        // prevent ../ smuggling out of build/client/reports/.
+        if (!filePath.startsWith(root) || !fs.existsSync(filePath)) {
+          next();
+          return;
+        }
+        const ext = filePath.slice(filePath.lastIndexOf(".") + 1);
+        const ctype =
+          ext === "html"
+            ? "text/html; charset=utf-8"
+            : ext === "js"
+              ? "application/javascript; charset=utf-8"
+              : ext === "css"
+                ? "text/css; charset=utf-8"
+                : "application/octet-stream";
+        res.setHeader("Content-Type", ctype);
+        res.end(fs.readFileSync(filePath));
+      });
+    },
+  };
+}
+
 let viteDevServer: ViteDevServer | null = null;
 function exposeDevServerInfo() {
   return {
@@ -168,6 +217,7 @@ export default defineConfig(({ command }) => ({
     monacoTrimLanguagesPlugin(),
     setupSqlPlugin(),
     exposeDevServerInfo(),
+    devServeReportsPlugin(),
     workspacePackagesPlugin(), // { exclude: ["@vibes.diy/vibe-db-explorer"] }),
     tailwindcss(),
     tsconfigPaths({
