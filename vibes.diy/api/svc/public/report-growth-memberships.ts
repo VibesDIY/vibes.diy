@@ -8,22 +8,14 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
   reqReportGrowthMemberships,
+  resReportGrowthMemberships,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { eq, inArray } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { cachedReport } from "./report-cache.js";
-
-// Reports are gated on Clerk publicMetadata.reports — an array of report
-// keys (or ["*"] for all). The existing Clerk JWT template emits
-// publicMetadata as params.public_meta, so the check is a claims read.
-function hasReport(claims: { params?: { public_meta?: unknown } }, name: string): boolean {
-  const pm = claims.params?.public_meta as { reports?: unknown } | undefined;
-  const list = pm?.reports;
-  return Array.isArray(list) && (list.includes("*") || list.includes(name));
-}
+import { cachedReport, hasReport } from "./report-cache.js";
 
 function last30DaysUTC(): string[] {
   const days: string[] = [];
@@ -154,7 +146,7 @@ export const reportGrowthMembershipsEvento: EventoHandler<
         return Result.Ok(EventoResult.Continue);
       }
 
-      const res = await cachedReport(vctx, "growth-memberships", () => computeMemberships(vctx));
+      const res = await cachedReport(vctx, "growth-memberships", resReportGrowthMemberships, () => computeMemberships(vctx));
       await ctx.send.send(ctx, res);
       return Result.Ok(EventoResult.Continue);
     }
