@@ -6,6 +6,7 @@ import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { cfServe, CFInject, noopCache, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
+import { eq } from "drizzle-orm";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 5000 }, () => {
@@ -152,7 +153,7 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     expect(rForkSettings.Ok().settings.entry.settings.env).toEqual([]);
   });
 
-  it("skipChat=true clones into production with -clone slug and request-access settings (no chat seed)", async () => {
+  it("skipChat=true clones into production with -clone slug, request-access settings, and a seeded chat", async () => {
     const src = await createProdApp("hello-clone");
 
     const rFork = await api.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug, skipChat: true });
@@ -176,6 +177,18 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     expect(entry.enableRequest?.enable).toBe(true);
     expect(entry.enableRequest?.autoAcceptRole).toBeUndefined();
     expect(entry.publicAccess?.enable).toBe(false);
+
+    // A clone must seed the same ChatSection a remix does so that clicking
+    // Edit later lets the model edit the source rather than starting fresh
+    // (#1781). Verify by reading the chat sections for the new chatId.
+    const sections = await appCtx.vibesCtx.sql.db
+      .select()
+      .from(appCtx.vibesCtx.sql.tables.chatSections)
+      .where(eq(appCtx.vibesCtx.sql.tables.chatSections.chatId, fork.chatId));
+    expect(sections.length).toBe(1);
+    const blocks = sections[0].blocks as { type: string; line?: string }[];
+    const codeLines = blocks.filter((b) => b.type === "block.code.line").map((b) => b.line ?? "");
+    expect(codeLines.join("\n")).toContain("hello-clone");
   });
 
   it("remix-of meta survives a code edit on the fork", async () => {
