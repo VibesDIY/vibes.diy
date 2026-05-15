@@ -245,7 +245,6 @@ jobs:
           script: |
             const prNumber = ${{ steps.pr.outputs.number }};
             const previewUrl = '${{ steps.pr.outputs.preview_url }}';
-            const previewHost = '${{ steps.pr.outputs.preview_host }}';
             const workerName = '${{ steps.pr.outputs.worker_name }}';
             const sha = context.sha.substring(0, 7);
 
@@ -264,7 +263,6 @@ jobs:
             ## Preview Deployment
 
             **Preview URL:** ${previewUrl}
-            **Vibe iframes / packages:** \`https://<app>--<user>.${previewHost}/…\` (served by this PR's worker)
             **Worker:** \`${workerName}\`
             **Commit:** ${sha}
 
