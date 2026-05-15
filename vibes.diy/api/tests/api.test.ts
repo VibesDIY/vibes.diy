@@ -16,6 +16,14 @@ import {
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { BlockEndMsg, BlockMsgs, isBlockStreamMsg } from "@vibes.diy/call-ai-v2";
 import {
+  isActiveDbAcl,
+  isActiveEnv,
+  isActiveIconDescription,
+  isActiveSkills,
+  isActiveTheme,
+  isActiveTitle,
+  isEnablePublicAccess,
+  isEnableRequest,
   isPromptBlockEnd,
   isResEnsureAppSlugOk,
   PromptAndBlockMsgs,
@@ -847,21 +855,16 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       const final = await api.ensureAppSettings({ appSlug, userSlug });
       const entries = final.Ok().settings.entries;
 
-      const countByType = (t: string) => entries.filter((e) => (e as { type: string }).type === t).length;
-      expect(countByType("active.title")).toBe(1);
-      expect(countByType("active.theme")).toBe(1);
-      expect(countByType("active.skills")).toBe(1);
-      expect(countByType("active.icon-description")).toBe(1);
-      expect(countByType("active.env")).toBe(1);
-      expect(countByType("app.public.access")).toBe(1);
-      expect(countByType("app.request")).toBe(1);
+      expect(entries.filter(isActiveTitle)).toHaveLength(1);
+      expect(entries.filter(isActiveTheme)).toHaveLength(1);
+      expect(entries.filter(isActiveSkills)).toHaveLength(1);
+      expect(entries.filter(isActiveIconDescription)).toHaveLength(1);
+      expect(entries.filter(isActiveEnv)).toHaveLength(1);
+      expect(entries.filter(isEnablePublicAccess)).toHaveLength(1);
+      expect(entries.filter(isEnableRequest)).toHaveLength(1);
 
       // dbAcl: per-dbName. "shared" collapses to 1, "private" stays as 1.
-      const dbAclEntries = entries.filter((e) => (e as { type: string }).type === "active.db-acl") as {
-        type: "active.db-acl";
-        dbName: string;
-        acl: unknown;
-      }[];
+      const dbAclEntries = entries.filter(isActiveDbAcl);
       expect(dbAclEntries.filter((e) => e.dbName === "shared")).toHaveLength(1);
       expect(dbAclEntries.filter((e) => e.dbName === "private")).toHaveLength(1);
 
