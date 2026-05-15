@@ -48,8 +48,13 @@ jobs:
           echo "preview_host=${PREVIEW_HOST}" >> $GITHUB_OUTPUT
 
       - name: Ensure preview DNS + TLS
+        # Uses a dedicated zone-ops token (DNS:Edit + SSL:Edit, scoped to the
+        # vibespreview.dev zone only) — distinct from CLOUDFLARE_API_TOKEN
+        # which wrangler uses for the Workers deploy. Splitting them avoids
+        # widening the wrangler token's scope and isolates the zone API
+        # failure surface from the deploy.
         env:
-          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_VIBESPREVIEW_API_TOKEN }}
           CF_ZONE_ID: ${{ vars.CLOUDFLARE_VIBESPREVIEW_ZONE_ID }}
           PREVIEW_HOST: ${{ steps.pr.outputs.preview_host }}
         run: |
