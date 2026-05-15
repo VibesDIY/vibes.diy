@@ -33,6 +33,11 @@ export function App({ getClerkToken }: AppProps) {
   if (apiRef.current === undefined) {
     apiRef.current = new VibesDiyApi({
       apiUrl: deriveApiUrl(),
+      // Pin every reports session to the same DO shard so the colo's
+      // CF Cache stays warm across reloads / users. Without this, each
+      // page load mints a fresh shard UUID -> new DO -> potentially a
+      // different colo -> cold cache, defeating the 10-min TTL.
+      shardKey: "reports",
       getToken: async () => {
         const token = await getClerkToken();
         if (token === null) return Result.Err("no clerk token");
@@ -76,10 +81,7 @@ export function App({ getClerkToken }: AppProps) {
           }}
         >
           <VibesDiyLogo />
-          <span
-            className="section-label"
-            style={{ position: "absolute", left: "1.25rem", bottom: "1.25rem", marginBottom: 0 }}
-          >
+          <span className="section-label" style={{ position: "absolute", left: "1.25rem", bottom: "1.25rem", marginBottom: 0 }}>
             Growth Report
           </span>
         </div>
@@ -153,11 +155,7 @@ export function App({ getClerkToken }: AppProps) {
 // site — no React reimplementation, no drift if marketing tweaks the file.
 function VibesDiyLogo() {
   return (
-    <img
-      src={vibesDiyLogoUrl}
-      alt="Vibes DIY"
-      style={{ height: "clamp(96px, 16vw, 180px)", width: "auto", display: "block" }}
-    />
+    <img src={vibesDiyLogoUrl} alt="Vibes DIY" style={{ height: "clamp(96px, 16vw, 180px)", width: "auto", display: "block" }} />
   );
 }
 

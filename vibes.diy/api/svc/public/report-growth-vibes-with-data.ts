@@ -8,18 +8,13 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
   reqReportGrowthVibesWithData,
+  resReportGrowthVibesWithData,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
-import { cachedReport } from "./report-cache.js";
-
-function hasReport(claims: { params?: { public_meta?: unknown } }, name: string): boolean {
-  const pm = claims.params?.public_meta as { reports?: unknown } | undefined;
-  const list = pm?.reports;
-  return Array.isArray(list) && (list.includes("*") || list.includes(name));
-}
+import { cachedReport, hasReport } from "./report-cache.js";
 
 function last30DaysUTC(): string[] {
   const days: string[] = [];
@@ -93,7 +88,9 @@ export const reportGrowthVibesWithDataEvento: EventoHandler<
         return Result.Ok(EventoResult.Continue);
       }
 
-      const res = await cachedReport(vctx, "growth-vibes-with-data", () => computeVibesWithData(vctx));
+      const res = await cachedReport(vctx, "growth-vibes-with-data", resReportGrowthVibesWithData, () =>
+        computeVibesWithData(vctx)
+      );
       await ctx.send.send(ctx, res);
       return Result.Ok(EventoResult.Continue);
     }

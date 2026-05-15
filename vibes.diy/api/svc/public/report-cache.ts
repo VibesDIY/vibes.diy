@@ -1,4 +1,22 @@
+import { type, Type } from "arktype";
 import { VibesApiSQLCtx } from "../types.js";
+
+// Shared helpers for the growth-report handlers: the Clerk publicMetadata
+// gate and the CF Cache API wrapper.
+
+// publicMetadata.reports is an array of report keys (or ["*"] for all).
+// We arktype-validate so a malformed claim (e.g. publicMeta as a string
+// sentinel from the shipped createTestUser) just fails closed instead of
+// throwing on a runtime cast.
+const reportsClaim = type({ "reports?": "(string)[]" });
+
+export function hasReport(claims: { params?: { public_meta?: unknown } }, name: string): boolean {
+  const parsed = reportsClaim(claims.params?.public_meta);
+  if (parsed instanceof type.errors) return false;
+  const list = parsed.reports;
+  if (list === undefined) return false;
+  return list.includes("*") || list.includes(name);
+}
 
 // 10-minute CF Cache API wrapper for the report handlers. Returns the
 // cached payload when present, else computes fresh, stores, and returns.
@@ -9,17 +27,28 @@ import { VibesApiSQLCtx } from "../types.js";
 // generatedAt sticks to the *compute* time, not the read time, so callers
 // see when the snapshot was taken — not when the cache returned it.
 //
-// Cache key is a synthetic https:// URL (CF Cache API only accepts URL-shaped
-// keys) on a host we never deploy to; collisions with real traffic are
-// impossible.
+// schema validates on read: cache is a trust boundary, and a poisoned or
+// stale-shape entry falls through to recompute rather than handing the
+// caller a lying payload.
 const CACHE_TTL_SECONDS = 600;
 const CACHE_HOST = "reports-cache.internal";
 
-export async function cachedReport<T>(vctx: VibesApiSQLCtx, key: string, compute: () => Promise<T>): Promise<T> {
+export async function cachedReport<S extends Type<unknown>>(
+  vctx: VibesApiSQLCtx,
+  key: string,
+  schema: S,
+  compute: () => Promise<S["infer"]>
+): Promise<S["infer"]> {
   const url = `https://${CACHE_HOST}/${encodeURIComponent(key)}`;
   const hit = await vctx.cache.match(url);
   if (hit !== undefined) {
-    return (await hit.json()) as T;
+    const raw: unknown = await hit.json();
+    const parsed = schema(raw);
+    if (parsed instanceof type.errors) {
+      // Cache poisoned / shape changed — fall through to recompute.
+    } else {
+      return parsed;
+    }
   }
   const data = await compute();
   await vctx.cache.put(
