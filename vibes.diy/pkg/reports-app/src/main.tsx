@@ -17,15 +17,20 @@ const reportsConfig = type({
 type ReportsConfig = typeof reportsConfig.infer;
 
 function Loading({ msg }: { msg: string }) {
-  return <div style={{ padding: 32, color: "#8b95a5" }}>{msg}</div>;
+  return <div className="boot">{msg}</div>;
 }
 
 function FatalError({ msg }: { msg: string }) {
   return (
-    <div style={{ padding: 32, color: "#ff6b6b" }}>
-      <h2 style={{ margin: 0, fontSize: 16 }}>reports failed to load</h2>
-      <pre style={{ marginTop: 8, fontSize: 12, whiteSpace: "pre-wrap" }}>{msg}</pre>
-    </div>
+    <main>
+      <div className="hero">
+        <div className="hero-panel">
+          <div className="hero-kicker">Boot Error</div>
+          <h1>Reports failed to load</h1>
+          <p>{msg}</p>
+        </div>
+      </div>
+    </main>
   );
 }
 
@@ -42,15 +47,7 @@ function AuthedShell() {
   if (isLoaded === false) return <Loading msg="loading session…" />;
   if (isSignedIn === false) {
     return (
-      <div
-        style={{
-          display: "flex",
-          minHeight: "100vh",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 24,
-        }}
-      >
+      <div className="signin-wrap">
         <SignIn routing="hash" forceRedirectUrl="/reports/" />
       </div>
     );
