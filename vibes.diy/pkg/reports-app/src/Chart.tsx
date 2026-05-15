@@ -71,6 +71,28 @@ function LineChart({ points, current, stroke }: ChartProps) {
             <line x1={PADDING_L} y1={PADDING_T} x2={PADDING_L} y2={HEIGHT - PADDING_B} />
             <line x1={PADDING_L} y1={HEIGHT - PADDING_B} x2={WIDTH - PADDING_R} y2={HEIGHT - PADDING_B} />
           </g>
+          {/* x-axis date labels — first and last day only. The 30-day range
+              is implied; intermediate ticks would just be visual noise. */}
+          <text
+            x={PADDING_L}
+            y={HEIGHT - PADDING_B + 18}
+            fill="var(--gray-mid)"
+            fontSize={11}
+            textAnchor="start"
+            fontFamily="var(--font-main)"
+          >
+            {firstDay}
+          </text>
+          <text
+            x={WIDTH - PADDING_R}
+            y={HEIGHT - PADDING_B + 18}
+            fill="var(--gray-mid)"
+            fontSize={11}
+            textAnchor="end"
+            fontFamily="var(--font-main)"
+          >
+            {lastDay}
+          </text>
           <line
             x1={PADDING_L}
             y1={PADDING_T + innerH / 2}
