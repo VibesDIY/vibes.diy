@@ -58,9 +58,11 @@ jobs:
         # wrangler delete already removed the worker's routes; here we tear
         # down the per-PR DNS records and the ACM advanced cert pack so a
         # closed PR doesn't keep holding a zone cert slot. Tolerate "not
-        # found" for never-deployed PRs and re-runs.
+        # found" for never-deployed PRs and re-runs. Uses the dedicated
+        # zone-ops token (vibespreview.dev DNS:Edit + SSL:Edit), not the
+        # wrangler token — same split as vibes-diy-pr-preview.yaml.
         env:
-          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_VIBESPREVIEW_API_TOKEN }}
           CF_ZONE_ID: ${{ vars.CLOUDFLARE_VIBESPREVIEW_ZONE_ID }}
           PREVIEW_HOST: ${{ steps.pr.outputs.preview_host }}
         run: |
