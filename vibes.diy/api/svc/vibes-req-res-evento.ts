@@ -18,6 +18,7 @@ import { putAsset } from "./public/put-asset.js";
 import { authSession, authLogout, authBridgePreflight } from "./public/asset-session.js";
 import { userAvatar } from "./public/get-user-avatar.js";
 import { reportGrowthMemberships } from "./public/report-growth-memberships.js";
+import { reportGrowthVibesWithData } from "./public/report-growth-vibes-with-data.js";
 
 export const vibesReqResEvento = Lazy(() => {
   const evento = new Evento(new ReqResEventoEnDecoder());
@@ -51,6 +52,7 @@ export const vibesReqResEvento = Lazy(() => {
     authSession,
     authLogout,
     reportGrowthMemberships,
+    reportGrowthVibesWithData,
     servEntryPoint,
     {
       type: EventoType.WildCard,
