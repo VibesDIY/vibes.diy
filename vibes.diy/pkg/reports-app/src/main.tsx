@@ -22,15 +22,13 @@ function Loading({ msg }: { msg: string }) {
 
 function FatalError({ msg }: { msg: string }) {
   return (
-    <main>
-      <div className="hero">
-        <div className="hero-panel">
-          <div className="hero-kicker">Boot Error</div>
-          <h1>Reports failed to load</h1>
-          <p>{msg}</p>
-        </div>
+    <div className="page">
+      <div className="card card--hero hero">
+        <span className="section-label">Boot Error</span>
+        <h1>Reports failed to load.</h1>
+        <p className="hero-sub">{msg}</p>
       </div>
-    </main>
+    </div>
   );
 }
 
