@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useClerk } from "@clerk/react";
 import { Result } from "@adviser/cement";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
@@ -57,12 +57,6 @@ export function App({ getClerkToken }: AppProps) {
     return () => ac.abort();
   }, [api]);
 
-  const generatedAt = useMemo(() => {
-    if (memberships.kind === "ok") return memberships.data.generatedAt;
-    if (vibes.kind === "ok") return vibes.data.generatedAt;
-    return undefined;
-  }, [memberships, vibes]);
-
   return (
     <div className="page">
       <ColorStripe />
@@ -70,10 +64,7 @@ export function App({ getClerkToken }: AppProps) {
       <div className="grid-2-1">
         <div className="card card--hero hero">
           <span className="section-label">Growth Report</span>
-          <h1>Vibes.diy growth.</h1>
-          <p className="hero-sub">
-            {generatedAt === undefined ? "Loading the latest counts…" : <>Snapshot generated {generatedAt}.</>}
-          </p>
+          <VibesDiyLogo />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div className="card card--red callout">
@@ -137,6 +128,48 @@ export function App({ getClerkToken }: AppProps) {
 
       <ColorStripe />
     </div>
+  );
+}
+
+// Brand-canonical logo from landing-pages/vibes-diy-logo.svg. Inlined so
+// the report doesn't pay a network round-trip for the hero, and so colors
+// (--near-black / --cream) match the rest of the page's palette automatically.
+function VibesDiyLogo() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 300 75"
+      role="img"
+      aria-label="Vibes DIY"
+      style={{ height: "clamp(64px, 11vw, 120px)", width: "auto", display: "block", marginTop: "0.25rem" }}
+    >
+      <rect x={0} y={0} width={300} height={75} rx={37.5} ry={37.5} fill="var(--near-black)" />
+      <rect x={4} y={4} width={160} height={67} rx={33.5} ry={33.5} fill="var(--cream)" />
+      <text
+        x={84}
+        y={50}
+        fontFamily='"Arial Rounded MT Bold", "Arial Black", sans-serif'
+        fontSize={34}
+        fontWeight={900}
+        fill="var(--near-black)"
+        textAnchor="middle"
+        letterSpacing={-2}
+      >
+        VIBES
+      </text>
+      <text
+        x={230}
+        y={48}
+        fontFamily="Arial, Helvetica, sans-serif"
+        fontSize={24}
+        fontWeight={400}
+        fill="var(--cream)"
+        textAnchor="middle"
+        letterSpacing={6}
+      >
+        D·I·Y
+      </text>
+    </svg>
   );
 }
 
