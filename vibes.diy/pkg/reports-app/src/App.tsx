@@ -79,13 +79,6 @@ export function App({ getClerkToken }: AppProps) {
             Growth Report
           </span>
           <VibesDiyLogo />
-          <button
-            className="btn"
-            onClick={() => void clerk.signOut()}
-            style={{ position: "absolute", top: "1rem", right: "1rem" }}
-          >
-            Sign out
-          </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div className="card card--red callout">
@@ -103,6 +96,12 @@ export function App({ getClerkToken }: AppProps) {
             <p style={{ color: "var(--near-black)" }}>Distinct userSlug/appSlug pairs in AppSlugBindings.</p>
           </div>
         </div>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1.5rem" }}>
+        <button className="btn" onClick={() => void clerk.signOut()}>
+          Sign out
+        </button>
       </div>
 
       <section>
