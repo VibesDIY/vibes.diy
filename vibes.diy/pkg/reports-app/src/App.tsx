@@ -4,7 +4,7 @@ import { Result } from "@adviser/cement";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import type { ResReportGrowthMemberships, ResReportGrowthVibesWithData } from "@vibes.diy/api-types";
 import { MembershipsChart, VibesWithDataChart } from "./Chart.js";
-import vibesDiyLogoUrl from "./vibes-diy-logo.svg";
+import vibesDiyLogoUrl from "./vibes-diy-logo.png";
 
 interface AppProps {
   readonly getClerkToken: () => Promise<string | null>;
