@@ -88,6 +88,48 @@ When the background-task notification fires, read the final `gh run list` output
 
 The same rule applies to npm publishes, package releases, queue drains — anything where the action you triggered runs asynchronously somewhere else.
 
+## Pending changes
+
+"Pending changes" = commits on `origin/main` that have not yet been shipped via the relevant deploy tag. There are three independent pending-change sets, one per tag stream:
+
+- vs latest `vibes-diy@p*` — unshipped to prodv2
+- vs latest `vibes-diy@c*` — unshipped to cli
+- vs latest `pkg@p*` — unpublished to npm prod dist-tag (use-vibes / call-ai / vibes-diy CLI)
+
+Each stream advances on its own cadence, so the three lists differ. To enumerate them:
+
+```bash
+LATEST_P=$(git tag -l 'vibes-diy@p*' --sort=-creatordate | head -1)
+LATEST_C=$(git tag -l 'vibes-diy@c*' --sort=-creatordate | head -1)
+LATEST_PKG=$(git tag -l 'pkg@p*'      --sort=-creatordate | head -1)
+git log "$LATEST_P..origin/main"   --oneline   # pending → prodv2
+git log "$LATEST_C..origin/main"   --oneline   # pending → cli
+git log "$LATEST_PKG..origin/main" --oneline   # pending → npm
+```
+
+**Also factor the dev npm channel** when reporting on pkg. The latest `pkg@d*` tells us what's actually been exercised on npm short of prod — but only if it's an ancestor of `origin/main`. Dev tags are sometimes cut off-main (cherry-picks, pre-merge soaks) and later rebased in. Check explicitly:
+
+```bash
+LATEST_PKG_DEV=$(git tag -l 'pkg@d*' --sort=-creatordate | head -1)
+git merge-base --is-ancestor "$LATEST_PKG_DEV" origin/main \
+  && echo "ancestor — dev exercised everything up to $LATEST_PKG_DEV" \
+  || echo "DIVERGENT — dev only exercised the cherry-picked tip, not the merge-base..main gap"
+git log "$LATEST_PKG_DEV..origin/main" --oneline   # what's *not* yet on any npm channel
+```
+
+If the dev tag is divergent, the npm-exercised set is just the commits between its merge-base and its tip — not "everything up to that date." A divergent dev tag does **not** de-risk the rest of main; recommend cutting a fresh `pkg@d*` from current `origin/main` before promoting to `pkg@p*` if the gap is large or risky.
+
+Use the phrase "pending changes" in user-facing summaries when reporting what would ship on the next tag of each stream.
+
+**Always lead each commit list with a short narrative of the primary risks to shipping that stream now.** A pending-changes report is not just a `git log` dump — the value is the read on what could break. For each of the three streams, write a 1–3 sentence intro that calls out:
+
+- The biggest blast-radius changes (prompt/preamble edits, queue/svc changes, schema migrations, CLI rename, package rename)
+- WIP or revert-prone commits (`WIP …`, partial refactors, ones with follow-up fixes already in the list)
+- Cross-stream coupling (e.g. cli already has it and looks fine → lower prod risk; or npm hasn't shipped a dep the prod code now imports)
+- "Looks safe" is a valid risk verdict — say so explicitly when the diff is docs/spacing/comments only
+
+Then list the commits. The narrative goes _before_ the bullet list, not after.
+
 ## Queue architecture
 
 One shared prod queue consumer for all environments. CLI and prod main workers both produce to `vibes-service-prod`. Dev has its own queue `vibes-service-dev`.

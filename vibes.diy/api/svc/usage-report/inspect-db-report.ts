@@ -41,42 +41,6 @@ function loadDevVars(): void {
   }
 }
 
-function flattenValue(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return JSON.stringify(value);
-}
-
-function toCsv(rows: readonly Record<string, unknown>[]): string {
-  const keys = Array.from(
-    rows.reduce((set, row) => {
-      Object.keys(row).forEach((key) => set.add(key));
-      return set;
-    }, new Set<string>())
-  );
-
-  const escapeCell = (value: unknown): string => {
-    const text = flattenValue(value);
-    if (/[",\n]/.test(text)) {
-      return `"${text.replaceAll('"', '""')}"`;
-    }
-    return text;
-  };
-
-  const lines = [keys.join(",")];
-  for (const row of rows) {
-    lines.push(keys.map((key) => escapeCell(row[key])).join(","));
-  }
-  return `${lines.join("\n")}\n`;
-}
-
-function writeCsv(name: string, rows: readonly Record<string, unknown>[]): string {
-  const outPath = path.join(outDir, name);
-  fs.writeFileSync(outPath, toCsv(rows), "utf8");
-  return outPath;
-}
-
 function last30Days(): string[] {
   const days: string[] = [];
   const now = new Date();
@@ -347,19 +311,6 @@ async function main(): Promise<Result<void>> {
 
   const generatedAt = new Date().toISOString();
 
-  const files = {
-    membershipsTimeseriesCsv: writeCsv("memberships-timeseries.csv", membershipTimeseries),
-    userSlugBindingsTimeseriesCsv: writeCsv("user-slug-bindings-timeseries.csv", userSlugBindingsTimeseries),
-    membershipsByAppCsv: writeCsv("memberships-by-app.csv", membershipsByApp),
-    tableCountsCsv: writeCsv("table-counts.csv", tableCounts),
-    tableStatsCsv: writeCsv("table-stats.csv", tableStats),
-    indexStatsCsv: writeCsv("index-stats.csv", indexStats),
-    userModelCsv: writeCsv("user-model-settings.csv", userModelRows as unknown as Record<string, unknown>[]),
-    appModelCsv: writeCsv("app-model-settings.csv", appModelRows as unknown as Record<string, unknown>[]),
-    userSettingsCsv: writeCsv("user-settings-sample.csv", userSettingsSample as unknown as Record<string, unknown>[]),
-    appSettingsCsv: writeCsv("app-settings-sample.csv", appSettingsSample as unknown as Record<string, unknown>[]),
-  };
-
   const html = renderHtmlReport({
     generatedAt,
     info,
@@ -384,18 +335,7 @@ async function main(): Promise<Result<void>> {
   const htmlPath = path.join(outDir, "index.html");
   fs.writeFileSync(htmlPath, html, "utf8");
 
-  console.log(
-    JSON.stringify(
-      {
-        generatedAt,
-        outputDir: outDir,
-        htmlPath,
-        ...files,
-      },
-      null,
-      2
-    )
-  );
+  console.log(htmlPath);
 
   await pool.end();
   return Result.Ok(undefined);
