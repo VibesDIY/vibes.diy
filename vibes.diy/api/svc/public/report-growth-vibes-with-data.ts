@@ -83,7 +83,7 @@ export const reportGrowthVibesWithDataEvento: EventoHandler<
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      if (!hasReport(req._auth.verifiedAuth.claims, "growth")) {
+      if (hasReport(req._auth.verifiedAuth.claims, "growth") === false) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.error",
           message: "not authorized for growth report",

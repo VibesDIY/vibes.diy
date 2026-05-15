@@ -89,4 +89,28 @@ describe("worker routeDecision", () => {
     expect(decide({ hostname: "vibesdiy.net", pathname: "/" })).toBe("ssr");
     expect(decide({ hostname: "www.vibesdiy.net", pathname: "/" })).toBe("ssr");
   });
+
+  it("/reports/config.json → reports-config (worker endpoint, not asset)", () => {
+    expect(decide({ pathname: "/reports/config.json" })).toBe("reports-config");
+  });
+
+  it("/reports and /reports/* → reports-asset (ASSETS-served SPA)", () => {
+    expect(decide({ pathname: "/reports" })).toBe("reports-asset");
+    expect(decide({ pathname: "/reports/" })).toBe("reports-asset");
+    expect(decide({ pathname: "/reports/index.html" })).toBe("reports-asset");
+    expect(decide({ pathname: "/reports/assets/index-abc123.js" })).toBe("reports-asset");
+  });
+
+  it("regression: /reports must be matched before SSR fallthrough", () => {
+    // A naive impl might leak /reports* into SSR because React Router
+    // would 404 on it — but we serve a standalone SPA there.
+    expect(decide({ pathname: "/reports/anything" })).not.toBe("ssr");
+  });
+
+  it("regression: /reportsfoo (no /) does NOT match /reports", () => {
+    // The /reports prefix check uses startsWith("/reports/") not
+    // startsWith("/reports"), so unrelated paths like /reportsfoo
+    // (if anyone added a route) don't get redirected to the SPA.
+    expect(decide({ pathname: "/reportsfoo" })).toBe("ssr");
+  });
 });
