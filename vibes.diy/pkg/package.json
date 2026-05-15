@@ -6,7 +6,7 @@
   "scripts": {
     "tsc": "core-cli tsc",
     "typecheck": "core-cli tsc --noEmit",
-    "build": "core-cli tsc && react-router build",
+    "build": "core-cli tsc && react-router build && vite build -c reports-app/vite.config.ts",
     "dev": "react-router dev",
     "pack": "echo core-cli build --doPack",
     "publish": "echo core-cli build",
@@ -80,6 +80,7 @@
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.13",
     "@types/react-dom": "~19.2.2",
+    "@vitejs/plugin-react": "^5.2.0",
     "@vitest/browser-playwright": "~4.1.5",
     "arktype": "^2.2.0",
     "cmd-ts": "^0.15.0",

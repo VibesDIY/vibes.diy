@@ -9,6 +9,8 @@ export type Route =
   | "api-do" // /api/* → ChatSessions DO (WebSocket + DocNotify)
   | "vibe-pkg" // /vibe-pkg/* → npm package serving
   | "cf-serve" // app subdomain *--*.host, /assets/cid, POST/OPTIONS /assets
+  | "reports-config" // /reports/config.json → JSON of public env (Clerk pub key)
+  | "reports-asset" // /reports/* (everything else) → standalone SPA in build/client/reports/
   | "static-asset" // /assets/* (Vite hashed) — must NOT swallow /assets root
   | "ssr"; // everything else → React Router
 
@@ -51,6 +53,17 @@ export function routeDecision(req: RouteInput): Route {
   // /assets exactly (GET/HEAD) is not a real route — falls through to SSR.
   if (pathname.startsWith("/assets/") && !isAssetsCid) {
     return "static-asset";
+  }
+
+  // Growth-reports SPA. /reports/config.json is a tiny worker endpoint that
+  // exposes the Clerk publishable key to a static bundle; everything else
+  // under /reports/* (including /reports itself) is served from the
+  // independently-built bundle in build/client/reports/.
+  if (pathname === "/reports/config.json") {
+    return "reports-config";
+  }
+  if (pathname === "/reports" || pathname.startsWith("/reports/")) {
+    return "reports-asset";
   }
 
   return "ssr";

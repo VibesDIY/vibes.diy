@@ -140,6 +140,37 @@ export default {
       return res;
     }
 
+    // Reports SPA — static SPA bundled to build/client/reports/. The
+    // ASSETS binding serves it; the Vite build pins base to /reports/ so
+    // its hashed asset URLs resolve correctly.
+    if (route === "reports-asset") {
+      return env.ASSETS.fetch(request);
+    }
+
+    // Reports config.json — exposes the public env vars the static SPA
+    // needs at boot (Clerk publishable key). Kept minimal: anything that
+    // can be derived client-side (e.g. api URL from window.location) stays
+    // out of this payload.
+    if (route === "reports-config") {
+      // Type-tagged envelope so the SPA can arktype-validate at the
+      // env boundary (matches the rules-bag "every transferred object
+      // needs implicit type matching" pattern).
+      const body = JSON.stringify({
+        type: "vibes.diy.reports-config",
+        clerkPublishableKey: env.CLERK_PUBLISHABLE_KEY,
+      });
+      return new Response(body, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          // Short cache: rotating the Clerk key shouldn't require a worker
+          // redeploy + cache flush. 60s is enough to absorb tab refreshes
+          // without going stale on a real rotation.
+          "Cache-Control": "public, max-age=60",
+        },
+      }) as unknown as CFResponse;
+    }
+
     // Hashed static assets (Vite fingerprinted) — cache immutably
     if (route === "static-asset") {
       const assetResponse = await env.ASSETS.fetch(request);
