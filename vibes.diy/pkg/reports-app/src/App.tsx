@@ -75,24 +75,20 @@ export function App({ getClerkToken }: AppProps) {
             {generatedAt === undefined ? "Loading the latest counts…" : <>Snapshot generated {generatedAt}.</>}
           </p>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          <div className="card card--red" style={{ flex: 1 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div className="card card--red callout">
             <span className="section-label" style={{ borderColor: "var(--cream)", color: "var(--cream)" }}>
               Builders Joining
             </span>
             <Metric loadable={memberships} pick={(d) => d.total} accent="cream" />
-            <p style={{ fontSize: "0.95rem", lineHeight: 1.4, marginTop: "0.5rem", color: "rgba(255,255,255,0.85)" }}>
-              Non-owner users with durable access to one specific vibe.
-            </p>
+            <p style={{ color: "rgba(255,255,255,0.85)" }}>Non-owner users with durable access to one specific vibe.</p>
           </div>
-          <div className="card card--yellow" style={{ flex: 0 }}>
+          <div className="card card--yellow callout">
             <span className="section-label" style={{ borderColor: "var(--black)", color: "var(--black)" }}>
               Vibes With Data
             </span>
             <Metric loadable={vibes} pick={(d) => d.total} accent="black" />
-            <p style={{ fontSize: "0.95rem", lineHeight: 1.4, marginTop: "0.5rem", color: "var(--near-black)" }}>
-              Distinct userSlug/appSlug pairs in AppSlugBindings.
-            </p>
+            <p style={{ color: "var(--near-black)" }}>Distinct userSlug/appSlug pairs in AppSlugBindings.</p>
           </div>
         </div>
       </div>
@@ -169,7 +165,7 @@ function Metric<T>({
   const text = loadable.kind === "ok" ? pick(loadable.data).toLocaleString() : loadable.kind === "err" ? "—" : "…";
   const color = accent === "cream" ? "var(--cream)" : "var(--black)";
   return (
-    <div className="hero-stat-number" style={{ color, marginTop: "0.5rem" }}>
+    <div className="callout-stat" style={{ color }}>
       {text}
     </div>
   );
