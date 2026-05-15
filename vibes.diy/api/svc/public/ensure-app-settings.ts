@@ -383,7 +383,7 @@ export async function ensureAppSettings(
       );
       break;
     case isReqEnsureAppSettingsApp(req):
-      [res.settings, res.error] = await sqlUpsertSingle(
+      [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
         settings,
@@ -400,7 +400,7 @@ export async function ensureAppSettings(
       );
       break;
     case isReqEnsureAppSettingsChat(req):
-      [res.settings, res.error] = await sqlUpsertSingle(
+      [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
         settings,
@@ -417,7 +417,7 @@ export async function ensureAppSettings(
       );
       break;
     case isReqEnsureAppSettingsImg(req):
-      [res.settings, res.error] = await sqlUpsertSingle(
+      [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
         settings,
@@ -478,20 +478,11 @@ export async function ensureAppSettings(
 }
 
 function upsert<T extends ActiveEntry, R extends ActiveEntry>(settings: T[], match: (e: unknown) => boolean, fn: (prev: R) => R) {
-  const idx = settings.findIndex(match);
-  if (idx >= 0) settings[idx] = fn(settings[idx] as unknown as R) as unknown as T;
-  else settings.push(fn({} as unknown as R) as unknown as T);
-  // console.log(">>>>", settings, idx, settings[idx]);
-  return buildEnsureEntryResult(settings);
-}
-
-function upsertSingle<T extends ActiveEntry, R extends ActiveEntry>(
-  settings: T[],
-  match: (e: unknown) => boolean,
-  fn: (prev: R) => R
-) {
-  // Canonicalize duplicates by replacing all matches with one updated entry.
-  const prev = [...settings].reverse().find(match) as unknown as R | undefined;
+  // Canonicalize: a singleton entry type may have accumulated duplicates
+  // in storage (see #1707). Remove every match, push one updated entry
+  // whose `prev` is the most recent matching entry. ActiveDbAcl's
+  // per-dbName matcher means this still preserves entries for other dbNames.
+  const prev = settings.findLast(match) as unknown as R | undefined;
   for (let i = settings.length - 1; i >= 0; i--) {
     if (match(settings[i])) settings.splice(i, 1);
   }
@@ -507,21 +498,6 @@ async function sqlUpsert<T extends ActiveEntry, R extends ActiveEntry>(
   fn: (prev: R) => R
 ): Promise<[AppSettings, string?]> {
   const entry = upsert(settings, match, fn);
-  const ret = await sqlUpdateSettings(vctx, res, entry.entries);
-  if (ret.isErr()) {
-    return [entry, ret.Err().message];
-  }
-  return [entry];
-}
-
-async function sqlUpsertSingle<T extends ActiveEntry, R extends ActiveEntry>(
-  vctx: VibesApiSQLCtx,
-  res: ResEnsureAppSettings,
-  settings: T[],
-  match: (e: unknown) => boolean,
-  fn: (prev: R) => R
-): Promise<[AppSettings, string?]> {
-  const entry = upsertSingle(settings, match, fn);
   const ret = await sqlUpdateSettings(vctx, res, entry.entries);
   if (ret.isErr()) {
     return [entry, ret.Err().message];
