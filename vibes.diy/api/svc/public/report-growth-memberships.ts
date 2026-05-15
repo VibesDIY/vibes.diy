@@ -84,7 +84,7 @@ async function computeMemberships(vctx: VibesApiSQLCtx): Promise<ResReportGrowth
     if (day < firstDay) continue;
     const memberId = key.slice(0, key.indexOf(" "));
     let bucket = newByDay.get(day);
-    if (!bucket) {
+    if (bucket === undefined) {
       bucket = new Set();
       newByDay.set(day, bucket);
     }
@@ -144,7 +144,7 @@ export const reportGrowthMembershipsEvento: EventoHandler<
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      if (!hasReport(req._auth.verifiedAuth.claims, "growth")) {
+      if (hasReport(req._auth.verifiedAuth.claims, "growth") === false) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.error",
           message: "not authorized for growth report",
