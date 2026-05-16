@@ -20,8 +20,9 @@ import { ClerkClaimSchema } from "@fireproof/core-types-base";
 // through to safe defaults instead of erroring out. This test pins that
 // behavior so a future upstream bump can't silently drop it.
 
-function newUserClaim(omit: ReadonlyArray<string> = []): Record<string, unknown> {
-  const params: Record<string, unknown> = {
+function newUserClaim(omit: readonly string[] = []): Record<string, unknown> {
+  const omitSet = new Set(omit);
+  const full: Record<string, unknown> = {
     email: "newuser@example.com",
     email_verified: true,
     first: "Pat",
@@ -30,8 +31,11 @@ function newUserClaim(omit: ReadonlyArray<string> = []): Record<string, unknown>
     name: null,
     public_meta: {},
   };
-  for (const key of omit) {
-    delete params[key];
+  const params: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(full)) {
+    if (!omitSet.has(key)) {
+      params[key] = value;
+    }
   }
   return {
     azp: "https://vibes.diy",
