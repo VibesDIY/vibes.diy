@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import QRCode from "qrcode";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — no types for browser subpath; avoids server-only pngjs dep
+import QRCode from "qrcode/lib/browser";
 import { switchColors } from "./VibesSwitch.styles.js";
 
 export interface ExpandedVibesPillProps {
