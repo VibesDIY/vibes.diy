@@ -69,6 +69,23 @@ describe("worker routeDecision", () => {
     expect(decide({ pathname: "/assets", method: "POST" })).not.toBe("api-do");
   });
 
+  it("GET /u/<userSlug>/avatar → cf-serve (stable per-user avatar indirection)", () => {
+    expect(decide({ pathname: "/u/jchris/avatar" })).toBe("cf-serve");
+    expect(decide({ pathname: "/u/jchris/avatar", method: "HEAD" })).toBe("cf-serve");
+    // Non-GET methods are not avatar reads — let them fall through to SSR
+    // (or 405 from a later layer) so we don't accidentally accept writes here.
+    expect(decide({ pathname: "/u/jchris/avatar", method: "POST" })).toBe("ssr");
+  });
+
+  it("regression: /u/* paths other than /avatar stay on SSR (vibe pages)", () => {
+    // /u/<user>/<app> and friends are React Router routes — must not be
+    // hijacked by the avatar opener. Only the literal /avatar suffix wins.
+    expect(decide({ pathname: "/u/jchris" })).toBe("ssr");
+    expect(decide({ pathname: "/u/jchris/" })).toBe("ssr");
+    expect(decide({ pathname: "/u/jchris/myapp" })).toBe("ssr");
+    expect(decide({ pathname: "/u/jchris/avatar/extra" })).toBe("ssr");
+  });
+
   it("assets host (assets.<base>) → cf-serve for /_files/* and /_auth/*", () => {
     expect(decide({ hostname: "assets.vibesdiy.net", pathname: "/_files/u/a/db/doc/key" })).toBe("cf-serve");
     expect(decide({ hostname: "assets.vibesdiy.net", pathname: "/_auth/session", method: "POST" })).toBe("cf-serve");
