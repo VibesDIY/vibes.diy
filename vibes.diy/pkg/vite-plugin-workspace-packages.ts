@@ -134,7 +134,7 @@ export function workspacePackagesPlugin(options: { exclude?: string[] } = {}): P
           },
           rollupOptions: {
             external: (id) =>
-              !id.startsWith(".") && !id.startsWith("/") && id !== "charwise" && id !== "qrcode" && id !== "dijkstrajs",
+              !id.startsWith(".") && !id.startsWith("/") && id !== "charwise" && !id.startsWith("qrcode") && id !== "dijkstrajs",
           },
         },
         logLevel: "warn",
