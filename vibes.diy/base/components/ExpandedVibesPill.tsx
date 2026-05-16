@@ -339,7 +339,7 @@ export function ExpandedVibesPill({
     if (subMode !== "change" || typeof window === "undefined") return;
     setQrDataUri(null);
     const url = window.location.href;
-    QRCode.toDataURL(url, { width: 200, margin: 2 }).then((dataUri) => {
+    QRCode.toDataURL(url, { width: 200, margin: 2 }).then((dataUri: string) => {
       if (url === window.location.href) setQrDataUri(dataUri);
     });
   }, [subMode]);
