@@ -11,6 +11,7 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "@emotion/css": "^11.13.5",
+    "qrcode": "^1.5.4",
     "@fireproof/core-runtime": "0.24.19",
     "@fireproof/use-fireproof": "0.24.19",
     "@vibes.diy/use-vibes-types": "workspace:*",
@@ -20,6 +21,7 @@
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3"
   },

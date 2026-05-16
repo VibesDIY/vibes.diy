@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import QRCode from "qrcode";
 import { switchColors } from "./VibesSwitch.styles.js";
 
 export interface ExpandedVibesPillProps {
@@ -306,7 +307,10 @@ export function ExpandedVibesPill({
     else if (phase === "expanding") t = setTimeout(() => setPhase("open"), 250);
     else if (phase === "collapsing") t = setTimeout(() => setPhase("shrinking"), 200);
     else if (phase === "shrinking") t = setTimeout(() => setPhase("idle"), 150);
-    if (phase === "idle") setSubMode("default");
+    if (phase === "idle") {
+      setSubMode("default");
+      setShowQr(false);
+    }
     return () => clearTimeout(t);
   }, [phase]);
 
@@ -326,6 +330,13 @@ export function ExpandedVibesPill({
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  const [qrDataUri, setQrDataUri] = useState<string | null>(null);
+  const [showQr, setShowQr] = useState(false);
+  useEffect(() => {
+    if (subMode !== "change" || typeof window === "undefined") return;
+    QRCode.toDataURL(window.location.href, { width: 200, margin: 2 }).then(setQrDataUri);
+  }, [subMode]);
 
   // States
   const showBubble = phase !== "idle";
@@ -706,6 +717,41 @@ export function ExpandedVibesPill({
               </svg>
             }
           />
+        )}
+        <VerticalActionButton
+          height={height}
+          label="QR Code"
+          bgColor="var(--vibes-cream, #FFFEF0)"
+          labelColor="var(--vibes-near-black, #1a1a1a)"
+          onClick={() => setShowQr((v) => !v)}
+          icon={
+            <svg
+              width="13"
+              height="13"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01" />
+            </svg>
+          }
+        />
+        {showQr && qrDataUri && (
+          <div style={{ display: "flex", justifyContent: "center", padding: "4px 0" }}>
+            <img
+              src={qrDataUri}
+              alt="QR code for this vibe"
+              width={180}
+              height={180}
+              style={{ borderRadius: 4, border: "1px solid var(--vibes-near-black, #1a1a1a)" }}
+            />
+          </div>
         )}
       </div>
 
