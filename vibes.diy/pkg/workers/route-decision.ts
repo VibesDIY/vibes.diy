@@ -44,8 +44,13 @@ export function routeDecision(req: RouteInput): Route {
   // Both live at host root because /api/* goes to the DO.
   const isAssetsCid = pathname.startsWith("/assets/cid");
   const isPutAsset = pathname === "/assets" && (method === "POST" || method === "OPTIONS");
+  // /u/<userSlug>/avatar is the stable per-user avatar indirection, served
+  // by the userAvatar handler in vibesReqResEvento. Without this entry the
+  // path falls through to SSR and the SPA's catch-all returns a 200 HTML
+  // "Page Not Found" page, so every <img src="/u/{slug}/avatar"> 404s.
+  const isUserAvatar = (method === "GET" || method === "HEAD") && /^\/u\/[^/]+\/avatar$/.test(pathname);
 
-  if (isAppSubdomain || isAssetsHost || isAssetsCid || isPutAsset) {
+  if (isAppSubdomain || isAssetsHost || isAssetsCid || isPutAsset || isUserAvatar) {
     return "cf-serve";
   }
 
