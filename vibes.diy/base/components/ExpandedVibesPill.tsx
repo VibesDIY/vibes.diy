@@ -335,7 +335,11 @@ export function ExpandedVibesPill({
   const [showQr, setShowQr] = useState(false);
   useEffect(() => {
     if (subMode !== "change" || typeof window === "undefined") return;
-    QRCode.toDataURL(window.location.href, { width: 200, margin: 2 }).then(setQrDataUri);
+    setQrDataUri(null);
+    const url = window.location.href;
+    QRCode.toDataURL(url, { width: 200, margin: 2 }).then((dataUri) => {
+      if (url === window.location.href) setQrDataUri(dataUri);
+    });
   }, [subMode]);
 
   // States
