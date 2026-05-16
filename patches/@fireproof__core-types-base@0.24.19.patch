@@ -1,0 +1,19 @@
+diff --git a/fp-clerk-claim.zod.js b/fp-clerk-claim.zod.js
+index 3c40ad1..c783830 100644
+--- a/fp-clerk-claim.zod.js
++++ b/fp-clerk-claim.zod.js
+@@ -4,10 +4,10 @@ export const ClerkEmailTemplateClaimSchema = z.object({
+     email: z.string(),
+     email_verified: z.boolean(),
+     external_id: z.string().nullable().optional(),
+-    first: z.string(),
+-    image_url: z.string(),
+-    last: z.string(),
+-    name: z.string().nullable(),
++    first: z.string().catch(""),
++    image_url: z.string().catch(""),
++    last: z.string().catch(""),
++    name: z.string().nullable().catch(null),
+     public_meta: z.unknown(),
+ });
+ export const ClerkClaimSchema = z.object({
