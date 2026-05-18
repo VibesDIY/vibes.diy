@@ -19,7 +19,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 
 ## Team-shared skills
 
-Invokable Claude Code skills live in [`.claude/skills/README.md`](.claude/skills/README.md). Each skill is a directory with `SKILL.md` plus optional `references/`, `assets/`, and `scripts/`. Claude Code auto-discovers them.
+Invokable Claude Code skills live in [`.claude/skills/README.md`](.claude/skills/README.md). Each skill is a directory with `SKILL.md` plus optional `references/`, `assets/`, and `scripts/`. Claude Code looks for them when running in this repo.
 
 - [`qa-pr`](.claude/skills/qa-pr/SKILL.md) — agent-driven QA pass against a PR preview URL
 
