@@ -30,13 +30,15 @@ Verify the operator's environment can complete a run before starting one. Each c
 - `gh --version` — `gh` is installed and authenticated.
 - `node --version` — Node is available.
 - `test -f "${QA_GMAIL_CREDENTIALS:-$HOME/.config/vibes-qa/gmail-credentials.json}"` — Gmail credentials exist. If missing, instruct the operator to run `node .claude/skills/qa-pr/scripts/setup-gmail.mjs` and stop.
+- Parse the credentials JSON and confirm the `email` field is present. If missing, instruct the operator to re-run `setup-gmail.mjs` (older versions didn't capture it) and stop. The email's domain should be `vibes.diy` or `fireproof.storage` (the two domains on the team Workspace) — if it's anything else, abort: the wrong account is authorized.
 - `gh pr view <N> --json url,headRefOid,statusCheckRollup` — PR exists; extract the head commit SHA and locate the preview-URL deployment check (look for entries in `statusCheckRollup` whose `name` matches `*pr-preview*` and whose `targetUrl` is a `vibes.diy` URL). If no preview URL is ready, poll every 30 seconds for up to 10 minutes; if still not ready, abort with a clear message — do not post anything.
 - Read [`references/chrome-mcp-rules.md`](references/chrome-mcp-rules.md) and confirm via `evaluate_script` of `document.cookie` on the preview URL that the browser profile is clean (no `__session` or `vibes.diy` cookies). If the profile is dirty, abort and ask the operator to restart chrome-devtools MCP.
 
 ## Step 2 — Run setup
 
 - Derive `run_id = pr-{N}-{YYYYMMDD-HHmm}` from the current UTC time.
-- Derive the plus-alias: `vibes-qa+{run_id}@gmail.com`. (Adjust the local part if the team's dedicated mailbox is not `vibes-qa@gmail.com`; the alias is whatever the operator's Gmail account is, plus `+{run_id}`.)
+- Extract the operator's handle as the local part of the `email` field in gmail-credentials.json. Example: `marcus@vibes.diy` → handle = `marcus`; `marcus@fireproof.storage` → handle = `marcus`.
+- Derive the plus-alias on the `vibes.diy` domain regardless of which Workspace alias domain Google reports as canonical: `<handle>+test-{run_id}@vibes.diy`. Example: for the `marcus` handle on PR 1714, `marcus+test-pr-1714-20260518-1543@vibes.diy`. The mail lands in the operator's Workspace inbox via standard plus-aliasing.
 - Create `qa-reports/{run_id}/` (mkdir -p; do not commit).
 - Copy [`assets/triage-template.md`](assets/triage-template.md) to `qa-reports/{run_id}/triage.md`. This is the working file. Edit it incrementally as the run proceeds, filling in placeholders.
 - Append a line to `qa-reports/aliases.jsonl` (create if needed) of the form `{"run_id":"...","alias":"...","pr":N,"started_at":"..."}`.
