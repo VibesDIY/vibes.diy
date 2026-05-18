@@ -122,3 +122,4 @@ await writeFile(
   { mode: 0o600 },
 );
 stdout.write(`\nSaved credentials to ${CRED_PATH} (mode 0600).\n`);
+exit(0);
