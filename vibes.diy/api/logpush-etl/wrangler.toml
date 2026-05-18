@@ -1,0 +1,51 @@
+name = "vibes-diy-logpush-etl"
+main = "./worker.ts"
+compatibility_date = "2025-02-24"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[r2_buckets]]
+binding = "LOGS_BUCKET"
+bucket_name = "vibes-diy-workers-logs"
+
+# NEON_DATABASE_URL must be set as a secret:
+#   wrangler secret put NEON_DATABASE_URL --env <env>
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+
+[env.dev]
+name = "vibes-diy-logpush-etl-dev"
+
+[env.dev.observability.logs]
+enabled = true
+invocation_logs = true
+
+[[env.dev.r2_buckets]]
+binding = "LOGS_BUCKET"
+bucket_name = "vibes-diy-workers-logs-dev"
+
+[env.prod]
+name = "vibes-diy-logpush-etl-prod"
+
+[env.prod.observability.logs]
+enabled = true
+invocation_logs = true
+
+[[env.prod.r2_buckets]]
+binding = "LOGS_BUCKET"
+bucket_name = "vibes-diy-workers-logs"
+
+[env.cli]
+name = "vibes-diy-logpush-etl-cli"
+
+[env.cli.observability.logs]
+enabled = true
+invocation_logs = true
+
+[[env.cli.r2_buckets]]
+binding = "LOGS_BUCKET"
+bucket_name = "vibes-diy-workers-logs"
