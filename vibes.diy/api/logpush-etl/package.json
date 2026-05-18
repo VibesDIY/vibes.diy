@@ -1,0 +1,27 @@
+{
+  "name": "@vibes.diy/api-logpush-etl",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./worker.ts",
+  "scripts": {
+    "build": "core-cli tsc && wrangler build",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:prod": "wrangler deploy --env prod",
+    "deploy:cli": "wrangler deploy --env cli"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260402.1",
+    "@fireproof/core-cli": "0.24.19",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.88.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
+  }
+}
