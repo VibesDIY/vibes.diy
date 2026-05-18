@@ -228,6 +228,18 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
   const appCtx = ctx.appCtx;
   const upgradeHeader = request.headers.get("Upgrade");
   if (upgradeHeader !== "websocket") {
+    const referer = request.headers.get("Referer");
+    if (referer) {
+      try {
+        const refUrl = new URL(referer);
+        const reqUrl = new URL(request.url);
+        if (refUrl.hostname !== reqUrl.hostname) {
+          console.log("[referer]", refUrl.origin, request.method, reqUrl.pathname);
+        }
+      } catch {
+        console.log("[referer] malformed", referer, request.method, request.url);
+      }
+    }
     return processRequest(appCtx, request as unknown as Request) as unknown as Promise<CFResponse>;
   }
   if (!ctx.webSocket) {
