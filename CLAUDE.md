@@ -17,6 +17,14 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [dev-state.md](agents/dev-state.md) — Which caches are safe to delete, and which destroy local dev data
 - [flaky-tests.md](agents/flaky-tests.md) — Rerun (or run the suite in isolation) before treating a `pnpm check` failure as real; log to VibesDIY/vibes.diy#1515
 
+## Team-shared skills
+
+Invokable Claude Code skills live in [`.claude/skills/`](.claude/skills/README.md). Each skill is a directory with `SKILL.md` plus optional `references/`, `assets/`, and `scripts/`. Claude Code auto-discovers them.
+
+- [qa-pr](.claude/skills/qa-pr/SKILL.md) — agent-driven QA pass against a PR preview URL
+
+`agents/*.md` (above) documents *how we work*; `.claude/skills/` provides *things we invoke*. See [`.claude/skills/README.md`](.claude/skills/README.md) for the boundary.
+
 ## Quick Reference
 
 - Run checks: `pnpm check` (format + build + test + lint)

@@ -3,8 +3,12 @@ node_modules
 **/.vitest-attachments/
 **/build/
 **/dist/
-.claude/
+.claude/*
+!.claude/skills/
 .superpowers/
+
+# QA agent run artifacts (triage drafts, screenshots, alias log) — local-only.
+qa-reports/
 .worktrees/
 
 .env*
