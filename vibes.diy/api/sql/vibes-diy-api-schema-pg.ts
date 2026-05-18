@@ -228,6 +228,26 @@ export const sqlInviteGrants = pgTable(
   ]
 );
 
+export const sqlRefererEvents = pgTable(
+  "RefererEvents",
+  {
+    logKey: text().notNull(), // R2 object key (Logpush filename), part of dedup PK
+    lineIdx: integer().notNull(), // line index within the R2 object, part of dedup PK
+    ts: text().notNull(), // ISO timestamp from Logpush envelope
+    refHref: text().notNull(), // full referring URL (https://example.com/page)
+    refHost: text().notNull(), // hostname only (example.com)
+    refPath: text().notNull(), // path only (/page)
+    reqMethod: text().notNull(), // HTTP method of the incoming request
+    reqPath: text().notNull(), // path of the incoming request
+  },
+  (table) => [
+    primaryKey({ columns: [table.logKey, table.lineIdx] }),
+    index("RefererEvents_refHost_ts_idx").on(table.refHost, table.ts),
+    index("RefererEvents_reqPath_ts_idx").on(table.reqPath, table.ts),
+    index("RefererEvents_ts_idx").on(table.ts),
+  ]
+);
+
 // Per-doc file uploads — audit + lookup table for `_files` reads. One row
 // per put-asset call. uploadId is the public handle the client puts into
 // doc._files.<key>; the server resolves uploadId → assetURI at read time
