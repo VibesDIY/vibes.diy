@@ -234,7 +234,7 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
         const refUrl = new URL(referer);
         const reqUrl = new URL(request.url);
         if (refUrl.hostname !== reqUrl.hostname) {
-          console.log("[referer]", refUrl.origin, request.method, reqUrl.pathname);
+          console.log("[referer]", refUrl.href, request.method, reqUrl.pathname);
         }
       } catch {
         console.log("[referer] malformed", referer, request.method, request.url);
