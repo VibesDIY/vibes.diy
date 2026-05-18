@@ -353,6 +353,7 @@ export default function VibeIframeWrapper() {
   }
 
   const cardVariant = computeCardVariant(cardGrant);
+  const isAccessGranted = cardVariant === "iframe";
   // Desktop landing buttons get extra vertical padding so the two-line labels
   // ("FRESH \n INSTALL", "JOIN \n COLLAB") don't crowd the button edge. Mobile
   // already sizes nicely via the base width:100% / minHeight:60px rules.
@@ -363,10 +364,17 @@ export default function VibeIframeWrapper() {
       : { paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 18, height: "auto" };
   const showCard = cardVariant === "request" || cardVariant === "invite" || cardVariant === "pending" || cardVariant === "revoked";
 
-  if (iframeUrl && cardVariant === "iframe") {
-    return (
-      <>
-        <div className={cx("fixed inset-0", gridBackground)} style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}>
+  return (
+    <>
+      {/* Iframe — rendered as soon as iframeUrl is known. Hidden behind the grid
+          until the grant resolves to an access state, then revealed. This lets
+          the browser start fetching the iframe document from the SSR'd src
+          immediately while preventing the flash on non-public apps. */}
+      {iframeUrl && (
+        <div
+          className={cx("fixed inset-0", gridBackground)}
+          style={{ isolation: "isolate", transform: "translate3d(0,0,0)", visibility: isAccessGranted ? "visible" : "hidden" }}
+        >
           <iframe
             src={iframeUrl}
             className="w-full h-full border-none"
@@ -375,159 +383,144 @@ export default function VibeIframeWrapper() {
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
         </div>
-        {/* Chrome (overlays, pill, sidebar) is client-only because createPortal
-            references document.body, which throws under SSR. The iframe itself
-            ships in the first byte of HTML so the browser starts fetching it
-            immediately; chrome paints in after hydration. */}
-        {hasMounted &&
-          createPortal(
-            <div className="fixed bottom-4 right-4 z-50">
-              <Delayed ms={1000}>
-                <ExpandedVibesPill
-                  size={60}
-                  cloneHref={cloneUrl}
-                  editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
-                  onCommunity={shareModal.open}
-                  communityButtonRef={shareModal.buttonRef}
-                  communityBadgeCount={isOwner ? pendingCount : 0}
-                  hasUnpublishedChanges={isOwner && shareModal.hasUnpublishedChanges}
-                  appTitle={appTitle ?? appSlug}
-                  appIconUrl={screenshotUrl ?? undefined}
-                  appSlug={vibeSlug}
-                  isTwinkling={isNetworkActive}
-                  onHome={() => {
-                    window.open("https://vibes.diy", "_blank");
-                  }}
-                />
-                <ShareModal modal={shareModal} placement="above" isOwner={isOwner} myGrant={myGrant} />
-              </Delayed>
-            </div>,
-            document.body
-          )}
-        {hasMounted && (
-          <Delayed ms={1000}>
-            <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
-          </Delayed>
-        )}
-        {hasMounted && sharingState && (
-          <AllowFireproofSharing
-            state={sharingState}
-            dbRef={dbRef}
-            onResult={onResult}
-            onDismiss={onDismiss}
-            onLoginRedirect={onLoginRedirect}
-          />
-        )}
-      </>
-    );
-  }
-
-  return (
-    <>
-      <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
-        <div className="fixed top-4 left-4 z-50">
-          <Delayed ms={1000}>
-            <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
-          </Delayed>
-        </div>
-        {showCard ? (
-          <div style={{ maxWidth: 500, width: "100%", margin: "0 16px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-            <div
-              style={{
-                height: 30,
-                width: "100%",
-                backgroundColor: "rgba(0, 154, 206, 0.4)",
-                border: "1px solid black",
-                marginBottom: 1,
-                boxShadow: "0 0 0 1px rgba(255,255,255,0.38)",
-              }}
-            />
-            <div
-              style={{
-                backgroundColor: "rgb(255, 255, 240)",
-                color: "rgb(34, 31, 32)",
-                border: "1px solid black",
-                boxShadow: "0 0 0 1px white",
-                padding: "24px 24px",
-              }}
-            >
-              <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>{appTitle ?? appSlug}</h2>
-              {screenshotUrl && (
-                <img
-                  src={screenshotUrl}
-                  alt={`Screenshot of ${appTitle ?? appSlug}`}
-                  style={{ width: "100%", marginTop: 16, border: "1px solid black" }}
-                />
-              )}
-              <p
+      )}
+      {/* Grid overlay — shown while grant is resolving or for card/not-found states */}
+      {!isAccessGranted && (
+        <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
+          <div className="fixed top-4 left-4 z-50">
+            <Delayed ms={1000}>
+              <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
+            </Delayed>
+          </div>
+          {showCard ? (
+            <div style={{ maxWidth: 500, width: "100%", margin: "0 16px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+              <div
                 style={{
-                  marginTop: 24,
-                  fontFamily: '"Georgia", "Charter", "Iowan Old Style", serif',
-                  fontStyle: "italic",
-                  fontWeight: 600,
-                  fontSize: 26,
-                  lineHeight: 1.15,
-                  textAlign: "right",
-                  textShadow: "3px 3px 0 rgba(0, 154, 206, 0.55)",
+                  height: 30,
+                  width: "100%",
+                  backgroundColor: "rgba(0, 154, 206, 0.4)",
+                  border: "1px solid black",
+                  marginBottom: 1,
+                  boxShadow: "0 0 0 1px rgba(255,255,255,0.38)",
+                }}
+              />
+              <div
+                style={{
+                  backgroundColor: "rgb(255, 255, 240)",
+                  color: "rgb(34, 31, 32)",
+                  border: "1px solid black",
+                  boxShadow: "0 0 0 1px white",
+                  padding: "24px 24px",
                 }}
               >
-                How would you like to open {appTitle ?? appSlug}?
-              </p>
-              <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
-                  <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall} style={ctaStyle}>
-                    Fresh Install
-                  </VibesButton>
-                  <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
-                    Run a new copy with your own data.
-                  </span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
-                  <VibesButton
-                    variant={YELLOW}
-                    icon="collab"
-                    onClick={onClickJoin}
-                    style={
-                      cardVariant === "pending" || cardVariant === "revoked"
-                        ? { ...ctaStyle, opacity: 0.55, cursor: "not-allowed" }
-                        : ctaStyle
-                    }
-                    disabled={cardVariant === "pending" || cardVariant === "revoked"}
-                  >
-                    {cardVariant === "invite"
-                      ? "Join collab"
-                      : cardVariant === "pending"
-                        ? "Requested"
-                        : cardVariant === "revoked"
-                          ? "Revoked"
-                          : "Request access"}
-                  </VibesButton>
-                  <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
-                    {cardVariant === "invite"
-                      ? "You've been granted access."
-                      : cardVariant === "pending"
-                        ? "The owner has your request. Let them know to approve at this URL."
-                        : cardVariant === "revoked"
-                          ? "Your access was revoked."
-                          : "Ask to join the collaboration."}
-                  </span>
+                <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>{appTitle ?? appSlug}</h2>
+                {screenshotUrl && (
+                  <img
+                    src={screenshotUrl}
+                    alt={`Screenshot of ${appTitle ?? appSlug}`}
+                    style={{ width: "100%", marginTop: 16, border: "1px solid black" }}
+                  />
+                )}
+                <p
+                  style={{
+                    marginTop: 24,
+                    fontFamily: '"Georgia", "Charter", "Iowan Old Style", serif',
+                    fontStyle: "italic",
+                    fontWeight: 600,
+                    fontSize: 26,
+                    lineHeight: 1.15,
+                    textAlign: "right",
+                    textShadow: "3px 3px 0 rgba(0, 154, 206, 0.55)",
+                  }}
+                >
+                  How would you like to open {appTitle ?? appSlug}?
+                </p>
+                <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
+                    <VibesButton variant={BLUE} icon="remix" onClick={onClickInstall} style={ctaStyle}>
+                      Fresh Install
+                    </VibesButton>
+                    <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
+                      Run a new copy with your own data.
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: 200 }}>
+                    <VibesButton
+                      variant={YELLOW}
+                      icon="collab"
+                      onClick={onClickJoin}
+                      style={
+                        cardVariant === "pending" || cardVariant === "revoked"
+                          ? { ...ctaStyle, opacity: 0.55, cursor: "not-allowed" }
+                          : ctaStyle
+                      }
+                      disabled={cardVariant === "pending" || cardVariant === "revoked"}
+                    >
+                      {cardVariant === "invite"
+                        ? "Join collab"
+                        : cardVariant === "pending"
+                          ? "Requested"
+                          : cardVariant === "revoked"
+                            ? "Revoked"
+                            : "Request access"}
+                    </VibesButton>
+                    <span style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, textAlign: "center" }}>
+                      {cardVariant === "invite"
+                        ? "You've been granted access."
+                        : cardVariant === "pending"
+                          ? "The owner has your request. Let them know to approve at this URL."
+                          : cardVariant === "revoked"
+                            ? "Your access was revoked."
+                            : "Ask to join the collaboration."}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ) : notFound ? (
-          <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
-            App not available
-          </div>
-        ) : (
-          <div style={{ color: "var(--vibes-text-primary)" }}>Preparing…</div>
+          ) : notFound ? (
+            <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
+              App not available
+            </div>
+          ) : (
+            <div style={{ color: "var(--vibes-text-primary)" }}>Preparing…</div>
+          )}
+        </div>
+      )}
+      {/* Chrome (pill, share modal) — client-only, only shown when access is granted.
+          createPortal references document.body, which throws under SSR. */}
+      {isAccessGranted &&
+        hasMounted &&
+        createPortal(
+          <div className="fixed bottom-4 right-4 z-50">
+            <Delayed ms={1000}>
+              <ExpandedVibesPill
+                size={60}
+                cloneHref={cloneUrl}
+                editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
+                onCommunity={shareModal.open}
+                communityButtonRef={shareModal.buttonRef}
+                communityBadgeCount={isOwner ? pendingCount : 0}
+                hasUnpublishedChanges={isOwner && shareModal.hasUnpublishedChanges}
+                appTitle={appTitle ?? appSlug}
+                appIconUrl={screenshotUrl ?? undefined}
+                appSlug={vibeSlug}
+                isTwinkling={isNetworkActive}
+                onHome={() => {
+                  window.open("https://vibes.diy", "_blank");
+                }}
+              />
+              <ShareModal modal={shareModal} placement="above" isOwner={isOwner} myGrant={myGrant} />
+            </Delayed>
+          </div>,
+          document.body
         )}
-      </div>
-      <Delayed ms={1000}>
-        <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
-      </Delayed>
+      {hasMounted && (
+        <Delayed ms={1000}>
+          <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+        </Delayed>
+      )}
       {loginOverlay}
-      {sharingState && (
+      {hasMounted && sharingState && (
         <AllowFireproofSharing
           state={sharingState}
           dbRef={dbRef}

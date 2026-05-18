@@ -1,6 +1,6 @@
 import type { ResGetAppByFsId } from "@vibes.diy/api-types";
 
-export type VibeCardVariant = "request" | "invite" | "pending" | "revoked" | "not-found" | "iframe";
+export type VibeCardVariant = "request" | "invite" | "pending" | "revoked" | "not-found" | "iframe" | "loading";
 
 export function computeCardVariant(grant: ResGetAppByFsId["grant"] | undefined): VibeCardVariant {
   switch (grant) {
@@ -24,6 +24,6 @@ export function computeCardVariant(grant: ResGetAppByFsId["grant"] | undefined):
     case "owner":
       return "iframe";
     default:
-      return "iframe";
+      return "loading";
   }
 }
