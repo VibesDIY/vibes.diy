@@ -305,6 +305,7 @@ export default function VibeIframeWrapper() {
   }, [shareModal.isOpen]);
 
   const vibeSlug = `${userSlug}/${appSlug}`;
+  const remixUrl = `/remix/${vibeSlug}`;
   const cloneUrl = `/remix/${vibeSlug}?skipChat=true`;
 
   const showLoginOverlay = !authSignedIn && isLoaded && reqLogin;
@@ -385,8 +386,16 @@ export default function VibeIframeWrapper() {
               <Delayed ms={1000}>
                 <ExpandedVibesPill
                   size={60}
-                  cloneHref={cloneUrl}
+                  remixHref={isOwner ? undefined : remixUrl}
+                  cloneHref={isOwner ? undefined : cloneUrl}
                   editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
+                  onPromptSubmit={
+                    isOwner
+                      ? (prompt) => {
+                          window.location.assign(`/chat/${vibeSlug}?prompt=${encodeURIComponent(prompt)}`);
+                        }
+                      : undefined
+                  }
                   onCommunity={shareModal.open}
                   communityButtonRef={shareModal.buttonRef}
                   communityBadgeCount={isOwner ? pendingCount : 0}
