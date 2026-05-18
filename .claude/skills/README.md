@@ -14,7 +14,7 @@ Each skill lives in its own subdirectory:
 └── scripts/          # optional: executable helpers the skill invokes via Bash
 ````
 
-Claude Code auto-discovers skills under this path. Inside a session, the dev triggers a skill either by typing its slash-command form (`/<skill-name> ...`) or by describing the task in a way that matches the skill's `description` field.
+Claude Code looks for project-scoped skills under this path when running in this repo. Inside a session, the dev triggers a skill either by typing its slash-command form (`/<skill-name> ...`) or by describing the task in a way that matches the skill's `description` field. Step 5 of "Adding a new skill" below is the test that validates discovery for a freshly added skill before merging.
 
 ## Boundary with `agents/`
 
@@ -33,4 +33,4 @@ Claude Code auto-discovers skills under this path. Inside a session, the dev tri
 
 ## Existing skills
 
-- [`qa-pr/`](qa-pr/SKILL.md) — Agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP.
+- [`qa-pr/`](qa-pr/SKILL.md) — agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP.
