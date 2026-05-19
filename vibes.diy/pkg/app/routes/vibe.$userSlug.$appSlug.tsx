@@ -230,7 +230,7 @@ export default function VibeIframeWrapper() {
         case "granted-access.submitter":
         case "public-access":
         case "owner":
-          setCardGrant(undefined);
+          setCardGrant(res.grant);
           setMyGrant(
             res.grant === "owner"
               ? "owner"

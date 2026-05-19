@@ -29,7 +29,7 @@ describe("computeCardVariant", () => {
     expect(computeCardVariant("public-access")).toBe("iframe");
     expect(computeCardVariant("owner")).toBe("iframe");
   });
-  it("returns 'iframe' for undefined (no grant resolved yet)", () => {
-    expect(computeCardVariant(undefined)).toBe("iframe");
+  it("returns 'loading' for undefined (grant not yet resolved)", () => {
+    expect(computeCardVariant(undefined)).toBe("loading");
   });
 });
