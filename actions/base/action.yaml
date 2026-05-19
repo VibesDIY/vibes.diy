@@ -10,7 +10,6 @@ runs:
     - name: install
       shell: bash
       run: |
-        pnpm remove -r playwright-chromium
         pnpm install
         pnpm dedupe --check
 

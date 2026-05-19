@@ -43,7 +43,6 @@ onlyBuiltDependencies:
   - "esbuild"
   - "netlify"
   - "netlify-cli"
-  - "playwright-chromium"
   - "sharp"
   - "unix-dgram"
   - "unrs-resolver"
