@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
-import { BrutalistCard, VibesSwitch, gridBackground, cx } from "@vibes.diy/base";
+import { BrutalistCard, gridBackground, cx } from "@vibes.diy/base";
 import SessionSidebar from "./SessionSidebar.js";
+import { PillPortal, PILL_CLEARANCE_Y } from "./PillPortal.js";
 
 interface BrutalistLayoutProps {
   children: React.ReactNode;
@@ -25,11 +26,14 @@ export default function BrutalistLayout({ children, title, subtitle, headerActio
       {/* SessionSidebar */}
       <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} />
 
+      {/* Fixed pill — same top:-21/left:4 positioning the rest of the app uses
+          so it lines up optically with the navbar on every route. */}
+      <PillPortal isActive={isSidebarVisible} onToggle={setIsSidebarVisible} />
+
       <div className="px-8 pt-0">
-        {/* Hamburger menu button - top left in normal flow with z-index */}
-        <div className="mb-8 ml-0 relative z-20">
-          <VibesSwitch size={75} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
-        </div>
+        {/* Vertical clearance for the fixed pill so the page header card
+            doesn't sit under it. */}
+        <div aria-hidden="true" style={{ height: PILL_CLEARANCE_Y }} />
         <div
           style={{
             maxWidth: "1000px",
