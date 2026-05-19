@@ -103,6 +103,16 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
       } as Response);
     }
 
+    if (url.includes("webxr.md")) {
+      return Promise.resolve({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            "<Babylon.js WebXR-docs>\n# Babylon.js WebXR Documentation\nReal WebXR docs content from pkg/llms/webxr.md\n</Babylon.js WebXR-docs>"
+          ),
+      } as Response);
+    }
+
     if (url.includes("use-viewer.md")) {
       return Promise.resolve({
         ok: true,
