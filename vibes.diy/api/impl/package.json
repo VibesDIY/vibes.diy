@@ -19,7 +19,7 @@
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/vibe-types": "workspace:*",
     "arktype": "^2.2.0",
-    "ws": "^8.20.0"
+    "ws": "^8.20.1"
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.19",
