@@ -53,8 +53,8 @@ sun.intensity = 0.8;
 ```javascript
 // createDefaultXRExperienceAsync is async — always await it
 const xrHelper = await scene.createDefaultXRExperienceAsync({
-  floorMeshes: [ground],           // meshes user can teleport onto
-  disableTeleportation: false,     // set true to disable built-in teleport
+  floorMeshes: [ground], // meshes user can teleport onto
+  disableTeleportation: false, // set true to disable built-in teleport
 });
 
 // Access the base XR session
@@ -98,34 +98,31 @@ const xrHelper = await scene.createDefaultXRExperienceAsync({
     sessionMode: "immersive-ar",
     referenceSpaceType: "local-floor",
   },
-  optionalFeatures: true,        // enables hit-test, anchors if supported
+  optionalFeatures: true, // enables hit-test, anchors if supported
 });
 ```
 
 ### Hit Testing (Tap to Place)
 
 ```javascript
-const hitTest = xrHelper.featuresManager.enableFeature(
-  BABYLON.WebXRHitTest,
-  "latest",
-);
+const hitTest = xrHelper.featuresManager.enableFeature(BABYLON.WebXRHitTest, "latest");
 
 // Reusable indicator mesh (a thin ring)
-const indicator = BABYLON.MeshBuilder.CreateTorus("indicator", {
-  diameter: 0.3,
-  thickness: 0.01,
-  tessellation: 32,
-}, scene);
+const indicator = BABYLON.MeshBuilder.CreateTorus(
+  "indicator",
+  {
+    diameter: 0.3,
+    thickness: 0.01,
+    tessellation: 32,
+  },
+  scene
+);
 indicator.isPickable = false;
 
 hitTest.onHitTestResultObservable.add((results) => {
   if (results.length > 0) {
     indicator.isVisible = true;
-    results[0].transformationMatrix.decompose(
-      undefined,
-      indicator.rotationQuaternion,
-      indicator.position,
-    );
+    results[0].transformationMatrix.decompose(undefined, indicator.rotationQuaternion, indicator.position);
   } else {
     indicator.isVisible = false;
   }
@@ -135,28 +132,20 @@ hitTest.onHitTestResultObservable.add((results) => {
 ### Anchors (Persist Placed Objects)
 
 ```javascript
-const anchors = xrHelper.featuresManager.enableFeature(
-  BABYLON.WebXRAnchorSystem,
-  "latest",
-);
+const anchors = xrHelper.featuresManager.enableFeature(BABYLON.WebXRAnchorSystem, "latest");
 
 // Place an object anchored to a real-world surface
 async function placeAnchor(hitTestResult) {
-  const anchor = await anchors.addAnchorPointUsingHitTestResultAsync(
-    hitTestResult,
-  );
+  const anchor = await anchors.addAnchorPointUsingHitTestResultAsync(hitTestResult);
   const mesh = BABYLON.MeshBuilder.CreateSphere("orb", { diameter: 0.15 }, scene);
-  anchor.attachedNode = mesh;   // mesh follows the anchor
+  anchor.attachedNode = mesh; // mesh follows the anchor
 }
 ```
 
 ### Plane Detection
 
 ```javascript
-const planes = xrHelper.featuresManager.enableFeature(
-  BABYLON.WebXRPlaneDetector,
-  "latest",
-);
+const planes = xrHelper.featuresManager.enableFeature(BABYLON.WebXRPlaneDetector, "latest");
 
 planes.onPlaneAddedObservable.add((plane) => {
   // plane.xrPlane.polygon — array of DOMPointReadOnly vertices
@@ -175,12 +164,9 @@ planes.onPlaneAddedObservable.add((plane) => {
 const particles = new BABYLON.ParticleSystem("stars", 3000, scene);
 
 // Texture — use a built-in or a canvas texture
-particles.particleTexture = new BABYLON.Texture(
-  "https://playground.babylonjs.com/textures/flare.png",
-  scene,
-);
+particles.particleTexture = new BABYLON.Texture("https://playground.babylonjs.com/textures/flare.png", scene);
 
-particles.emitter = new BABYLON.Vector3(0, 1, 0);      // world position
+particles.emitter = new BABYLON.Vector3(0, 1, 0); // world position
 particles.minEmitBox = new BABYLON.Vector3(-5, -5, -5);
 particles.maxEmitBox = new BABYLON.Vector3(5, 5, 5);
 
@@ -208,7 +194,7 @@ Use `SolidParticleSystem` when you need 3D geometry (not billboards) for thousan
 ```javascript
 const sps = new BABYLON.SolidParticleSystem("sps", scene);
 const sphere = BABYLON.MeshBuilder.CreateSphere("tmp", { diameter: 0.1 }, scene);
-sps.addShape(sphere, 500);   // 500 sphere instances
+sps.addShape(sphere, 500); // 500 sphere instances
 sphere.dispose();
 
 const mesh = sps.buildMesh();
@@ -243,19 +229,19 @@ scene.onBeforeRenderObservable.add(() => {
 
 ```javascript
 // Primitives via MeshBuilder
-const box     = BABYLON.MeshBuilder.CreateBox("box", { size: 1 }, scene);
-const sphere  = BABYLON.MeshBuilder.CreateSphere("s", { diameter: 1, segments: 32 }, scene);
-const torus   = BABYLON.MeshBuilder.CreateTorus("t", { diameter: 2, thickness: 0.3 }, scene);
-const ribbon  = BABYLON.MeshBuilder.CreateRibbon("r", { pathArray: paths }, scene);
-const tube    = BABYLON.MeshBuilder.CreateTube("tube", { path: points, radius: 0.1 }, scene);
+const box = BABYLON.MeshBuilder.CreateBox("box", { size: 1 }, scene);
+const sphere = BABYLON.MeshBuilder.CreateSphere("s", { diameter: 1, segments: 32 }, scene);
+const torus = BABYLON.MeshBuilder.CreateTorus("t", { diameter: 2, thickness: 0.3 }, scene);
+const ribbon = BABYLON.MeshBuilder.CreateRibbon("r", { pathArray: paths }, scene);
+const tube = BABYLON.MeshBuilder.CreateTube("tube", { path: points, radius: 0.1 }, scene);
 
 // Custom vertex data
-const positions = new Float32Array([0, 0, 0,  1, 0, 0,  0, 1, 0]);
-const indices   = new Uint32Array([0, 1, 2]);
-const normals   = [];
+const positions = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]);
+const indices = new Uint32Array([0, 1, 2]);
+const normals = [];
 const vertexData = new BABYLON.VertexData();
 vertexData.positions = positions;
-vertexData.indices   = indices;
+vertexData.indices = indices;
 BABYLON.VertexData.ComputeNormals(positions, indices, normals);
 vertexData.normals = normals;
 const customMesh = new BABYLON.Mesh("custom", scene);
@@ -326,9 +312,7 @@ const xrInput = xrHelper.input;
 
 xrInput.onControllerAddedObservable.add((controller) => {
   controller.onMotionControllerInitObservable.add((motionController) => {
-    const triggerComponent = motionController.getComponent(
-      BABYLON.WebXRControllerComponent.TRIGGER_TYPE,
-    );
+    const triggerComponent = motionController.getComponent(BABYLON.WebXRControllerComponent.TRIGGER_TYPE);
     if (triggerComponent) {
       triggerComponent.onButtonStateChangedObservable.add((component) => {
         if (component.pressed) {
@@ -338,7 +322,7 @@ xrInput.onControllerAddedObservable.add((controller) => {
     }
 
     // Controller mesh position/rotation
-    const grip = controller.grip;   // the physical grip space
+    const grip = controller.grip; // the physical grip space
     // grip.position, grip.rotationQuaternion update every frame
   });
 });
@@ -347,11 +331,7 @@ xrInput.onControllerAddedObservable.add((controller) => {
 ### Hand Tracking
 
 ```javascript
-const handTracking = xrHelper.featuresManager.enableFeature(
-  BABYLON.WebXRHandTracking,
-  "latest",
-  { xrInput: xrHelper.input },
-);
+const handTracking = xrHelper.featuresManager.enableFeature(BABYLON.WebXRHandTracking, "latest", { xrInput: xrHelper.input });
 
 handTracking.onHandAddedObservable.add((hand) => {
   // Get index fingertip position every frame
@@ -409,11 +389,7 @@ source.isVisible = false;
 
 for (let i = 0; i < 200; i++) {
   const instance = source.createInstance(`orb_${i}`);
-  instance.position.set(
-    (Math.random() - 0.5) * 10,
-    (Math.random() - 0.5) * 10,
-    (Math.random() - 0.5) * 10,
-  );
+  instance.position.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
 }
 ```
 
@@ -459,21 +435,22 @@ function buildScene(canvas) {
 
 function buildGalaxy(scene) {
   const galaxy = new BABYLON.ParticleSystem("galaxy", 2000, scene);
-  galaxy.particleTexture = new BABYLON.Texture(
-    "https://playground.babylonjs.com/textures/flare.png", scene,
-  );
+  galaxy.particleTexture = new BABYLON.Texture("https://playground.babylonjs.com/textures/flare.png", scene);
   galaxy.emitter = new BABYLON.Vector3(0, 0, 0);
   galaxy.minEmitBox = new BABYLON.Vector3(-6, -0.5, -6);
   galaxy.maxEmitBox = new BABYLON.Vector3(6, 0.5, 6);
   galaxy.color1 = new BABYLON.Color4(0.4, 0.7, 1, 1);
   galaxy.color2 = new BABYLON.Color4(1, 0.4, 0.8, 0.6);
   galaxy.colorDead = new BABYLON.Color4(0, 0, 0, 0);
-  galaxy.minSize = 0.03; galaxy.maxSize = 0.12;
-  galaxy.minLifeTime = 4; galaxy.maxLifeTime = 10;
+  galaxy.minSize = 0.03;
+  galaxy.maxSize = 0.12;
+  galaxy.minLifeTime = 4;
+  galaxy.maxLifeTime = 10;
   galaxy.emitRate = 80;
   galaxy.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
   galaxy.gravity = new BABYLON.Vector3(0, 0, 0);
-  galaxy.minAngularSpeed = -0.5; galaxy.maxAngularSpeed = 0.5;
+  galaxy.minAngularSpeed = -0.5;
+  galaxy.maxAngularSpeed = 0.5;
   galaxy.start();
   return galaxy;
 }
@@ -541,15 +518,16 @@ export default function App() {
     enableVR(scene).then(() => {
       database.put({ type: "session", startedAt: Date.now() });
     });
-    return () => { scene.dispose(); engine.dispose(); };
+    return () => {
+      scene.dispose();
+      engine.dispose();
+    };
   }, []);
 
   return (
     <div className="relative w-full h-screen bg-black">
       <canvas ref={canvasRef} className="w-full h-full" />
-      <div className="absolute top-4 left-4 text-white text-sm opacity-70">
-        Sessions: {sessions.length}
-      </div>
+      <div className="absolute top-4 left-4 text-white text-sm opacity-70">Sessions: {sessions.length}</div>
     </div>
   );
 }
@@ -570,7 +548,7 @@ import { useFireproof } from "use-fireproof";
 function buildARScene(canvas) {
   const engine = new BABYLON.Engine(canvas, true, { alpha: true });
   const scene = new BABYLON.Scene(engine);
-  scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);   // transparent for AR
+  scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent for AR
 
   const camera = new BABYLON.FreeCamera("cam", new BABYLON.Vector3(0, 1.6, 0), scene);
   camera.minZ = 0.01;
@@ -629,8 +607,7 @@ async function enableAR(scene, onPlace) {
   const hitTest = xrHelper.featuresManager.enableFeature(BABYLON.WebXRHitTest, "latest");
 
   // Indicator ring
-  const indicator = BABYLON.MeshBuilder.CreateTorus("indicator",
-    { diameter: 0.25, thickness: 0.008, tessellation: 32 }, scene);
+  const indicator = BABYLON.MeshBuilder.CreateTorus("indicator", { diameter: 0.25, thickness: 0.008, tessellation: 32 }, scene);
   const indicatorMat = new BABYLON.StandardMaterial("indMat", scene);
   indicatorMat.emissiveColor = new BABYLON.Color3(0.4, 1, 0.8);
   indicatorMat.disableLighting = true;
@@ -645,7 +622,7 @@ async function enableAR(scene, onPlace) {
       results[0].transformationMatrix.decompose(
         undefined,
         indicator.rotationQuaternion || (indicator.rotationQuaternion = new BABYLON.Quaternion()),
-        indicator.position,
+        indicator.position
       );
     } else {
       indicator.isVisible = false;
@@ -655,10 +632,7 @@ async function enableAR(scene, onPlace) {
 
   // Tap to place
   scene.onPointerObservable.add((pointerInfo) => {
-    if (
-      pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN &&
-      latestHit
-    ) {
+    if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN && latestHit) {
       const pos = indicator.position.clone();
       onPlace(pos);
     }
@@ -699,18 +673,17 @@ export default function App() {
       await database.put({ type: "orb", x: pos.x, y: pos.y, z: pos.z, ts: Date.now() });
     });
 
-    return () => { scene.dispose(); engine.dispose(); };
+    return () => {
+      scene.dispose();
+      engine.dispose();
+    };
   }, []);
 
   // Restore saved orbs when scene is ready
   useEffect(() => {
     if (!sceneRef.current || !orbMatRef.current || savedOrbs.length === 0) return;
     savedOrbs.forEach((doc) => {
-      spawnOrb(
-        sceneRef.current,
-        new BABYLON.Vector3(doc.x, doc.y, doc.z),
-        orbMatRef.current,
-      );
+      spawnOrb(sceneRef.current, new BABYLON.Vector3(doc.x, doc.y, doc.z), orbMatRef.current);
     });
   }, [savedOrbs.length]);
 
