@@ -41,7 +41,7 @@
     "call-ai": "workspace:*",
     "cookie": "^1.1.1",
     "drizzle-orm": "^0.45.2",
-    "jose": "^6.2.2",
+    "jose": "^6.2.3",
     "mime": "^4.1.0",
     "multiformats": "^13.4.2",
     "random-words": "^2.0.1",

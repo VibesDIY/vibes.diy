@@ -29,7 +29,7 @@
     "@vibes.diy/vibe-runtime": "workspace:*",
     "arktype": "^2.2.0",
     "call-ai": "workspace:*",
-    "jose": "^6.2.2",
+    "jose": "^6.2.3",
     "react-dom": "19.2.5",
     "zod": "^4.1.12"
   },
