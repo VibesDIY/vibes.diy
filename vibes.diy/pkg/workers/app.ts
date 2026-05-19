@@ -24,7 +24,18 @@ export { DocNotify } from "./doc-notify.js";
 
 declare const caches: CacheStorage;
 // declare const import { meta: { env: Record<string, string> } }
-const requestHandler = createRequestHandler(serverBuild, import.meta.env.MODE);
+
+// Lazy-initialize to avoid exceeding CF Worker startup CPU limit (error 10021).
+// createRequestHandler processes the full React Router server build manifest;
+// running it at module level counts against the startup CPU budget before the
+// first fetch handler is even registered.
+let _requestHandler: ReturnType<typeof createRequestHandler> | undefined;
+function getRequestHandler() {
+  if (!_requestHandler) {
+    _requestHandler = createRequestHandler(serverBuild, import.meta.env.MODE);
+  }
+  return _requestHandler;
+}
 
 // declare const WebSocketPair: typeof WebSocketPairType;
 
@@ -186,7 +197,7 @@ export default {
     }
 
     // Delegate to React Router for SSR
-    return requestHandler(request as unknown as Parameters<typeof requestHandler>[0], {
+    return getRequestHandler()(request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0], {
       vibeDiyAppParams: cfCtx.vibesCtx.params,
     }) as unknown as CFResponse;
   },
