@@ -47,7 +47,7 @@ function MountVibe(props: VibesDiyServCtx) {
 }
 
 function vibesStyles(props: VibesDiyServCtx, path: string) {
-  return BuildURI.from(props.svcEnv.VIBES_DIY_STYLES_URL).appendRelative(path).toString();
+  return BuildURI.from(props.svcEnv.VIBES_DIY_PUBLIC_BASE_URL).appendRelative(path).toString();
 }
 
 export function VibePage(props: VibesDiyServCtx) {
@@ -58,7 +58,6 @@ export function VibePage(props: VibesDiyServCtx) {
         <ImportMap {...props} />
         <Meta {...props} />
         <Links />
-        <link rel="stylesheet" href={vibesStyles(props, "/app/app.css")} />
         <link rel="stylesheet" href={vibesStyles(props, "/vibes-controls/styles.css")} />
         <script type="module" src="https://esm.sh/@tailwindcss/browser@4" />
       </head>
