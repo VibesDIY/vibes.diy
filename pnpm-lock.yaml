@@ -379,6 +379,9 @@ importers:
       playwright:
         specifier: ^1.59.1
         version: 1.60.0
+      playwright-chromium:
+        specifier: ^1.59.1
+        version: 1.60.0
       react:
         specifier: ^19.2.5
         version: 19.2.5
@@ -712,6 +715,9 @@ importers:
         specifier: workspace:*
         version: link:../../call-ai/pkg
       playwright:
+        specifier: ^1.59.1
+        version: 1.60.0
+      playwright-chromium:
         specifier: ^1.59.1
         version: 1.60.0
       react:
@@ -7675,6 +7681,11 @@ packages:
 
   pkg-types@2.3.0:
     resolution: {integrity: sha512-SIqCzDRg0s9npO5XQ3tNZioRY1uK06lA41ynBC1YmFTmnY6FjUjVt6s4LoADmwoig1qqD0oK8h1p/8mlMx8Oig==}
+
+  playwright-chromium@1.60.0:
+    resolution: {integrity: sha512-xxz9pc2HIxQW/Qg9ijG2fZOHRT//KhLo0KfvJRa45YYRrcA7ZONoilgJR40SW5pmecb6HkuROaeViXoCaXTZyQ==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   playwright-core@1.59.1:
     resolution: {integrity: sha512-HBV/RJg81z5BiiZ9yPzIiClYV/QMsDCKUyogwH9p3MCP6IYjUFu/MActgYAvK0oWyV9NlwM3GLBjADyWgydVyg==}
@@ -15571,6 +15582,10 @@ snapshots:
       confbox: 0.2.4
       exsolve: 1.0.8
       pathe: 2.0.3
+
+  playwright-chromium@1.60.0:
+    dependencies:
+      playwright-core: 1.60.0
 
   playwright-core@1.59.1: {}
 
