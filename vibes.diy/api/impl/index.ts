@@ -139,6 +139,9 @@ import {
   ReqReportGrowthVibesWithData,
   ResReportGrowthVibesWithData,
   isResReportGrowthVibesWithData,
+  ReqReportAttributionReferrers,
+  ResReportAttributionReferrers,
+  isResReportAttributionReferrers,
   ResAssetUploadGrant,
   isResAssetUploadGrant,
   isEvtDocChanged,
@@ -745,6 +748,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.request(
       { ...req, type: "vibes.diy.req-report-growth-vibes-with-data" },
       { resMatch: isResReportGrowthVibesWithData }
+    );
+  }
+
+  reportAttributionReferrers(
+    req: Req<ReqReportAttributionReferrers>
+  ): Promise<Result<ResReportAttributionReferrers, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-report-attribution-referrers" },
+      { resMatch: isResReportAttributionReferrers }
     );
   }
 

@@ -247,3 +247,16 @@ export const sqlAssetUploads = sqliteTable(
     index("AssetUploads_cid_idx").on(table.cid),
   ]
 );
+
+// Referrer attribution events — written by ETL from Logpush NDJSON.
+// Empty in dev/SQLite; populated in prod/Neon by the logpush-etl cron worker.
+export const sqlRefererEvents = sqliteTable("RefererEvents", {
+  logKey: text().notNull(),
+  lineIdx: int().notNull(),
+  ts: text().notNull(),
+  refHref: text().notNull(),
+  refHost: text().notNull(),
+  refPath: text().notNull(),
+  reqMethod: text().notNull(),
+  reqPath: text().notNull(),
+});
