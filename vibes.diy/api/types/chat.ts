@@ -42,7 +42,7 @@ export const reqOpenChat = type({
   "appSlug?": "string",
   "userSlug?": "string",
   "chatId?": "string",
-  "prompt?": "string", // when present with no appSlug, triggers pre-allocation (LLM-driven title+slug+skills)
+  "prompt?": "string", // when present on a new chat, triggers pre-allocation (LLM-driven title+slug+skills+theme)
   mode: PromptStyle,
 });
 
@@ -134,7 +134,6 @@ export const reqPromptImageChatSection = type({
 export function isReqPromptImageChatSection(obj: unknown): obj is typeof reqPromptImageChatSection.infer {
   return !(reqPromptImageChatSection(obj) instanceof type.errors);
 }
-
 
 export const FSUpdate = type({
   // will update the existing by filename or add if filename doesn't exist
