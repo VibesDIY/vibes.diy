@@ -1,5 +1,8 @@
-import { R2Bucket, ScheduledEvent, ExecutionContext } from "@cloudflare/workers-types";
-import { neon, NeonQueryFunction } from "@neondatabase/serverless";
+import type { R2Bucket, ScheduledEvent, ExecutionContext } from "@cloudflare/workers-types";
+import { exception2Result, URI } from "@adviser/cement";
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
+import { integer, pgTable, text, primaryKey } from "drizzle-orm/pg-core";
 
 export interface Env {
   LOGS_BUCKET: R2Bucket;
@@ -27,23 +30,34 @@ interface RefererRow {
   reqPath: string;
 }
 
+// Inline minimal schema to avoid pulling in the full @vibes.diy/api-sql workspace dep.
+// Keep in sync with sqlRefererEvents in vibes-diy-api-schema-pg.ts.
+const refererEvents = pgTable(
+  "RefererEvents",
+  {
+    logKey: text().notNull(),
+    lineIdx: integer().notNull(),
+    ts: text().notNull(),
+    refHref: text().notNull(),
+    refHost: text().notNull(),
+    refPath: text().notNull(),
+    reqMethod: text().notNull(),
+    reqPath: text().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.logKey, t.lineIdx] })]
+);
+
 // Parsed [referer] log line: "[referer] <href> <method> <req-path>"
 const REFERER_RE = /^\[referer\] (\S+) (\S+) (\S+)$/;
 
 function parseRefererLine(message: string, ts: string, logKey: string, lineIdx: number): RefererRow | null {
   const m = REFERER_RE.exec(message);
-  if (!m) return null;
+  if (m === null) return null;
   const [, refHref, reqMethod, reqPath] = m;
-  let refHost = "";
-  let refPath = "/";
-  try {
-    const u = new URL(refHref);
-    refHost = u.hostname;
-    refPath = u.pathname;
-  } catch {
-    return null;
-  }
-  return { logKey, lineIdx, ts, refHref, refHost, refPath, reqMethod, reqPath };
+  const rUri = exception2Result(() => URI.from(refHref));
+  if (rUri.isErr()) return null;
+  const uri = rUri.Ok();
+  return { logKey, lineIdx, ts, refHref, refHost: uri.hostname, refPath: uri.pathname, reqMethod, reqPath };
 }
 
 async function listKeysForPrefix(bucket: R2Bucket, prefix: string): Promise<string[]> {
@@ -53,7 +67,7 @@ async function listKeysForPrefix(bucket: R2Bucket, prefix: string): Promise<stri
     const listed = await bucket.list({ prefix, cursor, limit: 1000 });
     for (const obj of listed.objects) keys.push(obj.key);
     cursor = listed.truncated ? listed.cursor : undefined;
-  } while (cursor);
+  } while (cursor !== undefined);
   return keys;
 }
 
@@ -69,29 +83,17 @@ function datePrefixes(): string[] {
   });
 }
 
-async function batchInsert(sql: NeonQueryFunction<false, false>, rows: RefererRow[]): Promise<number> {
+async function batchInsert(db: ReturnType<typeof drizzle>, rows: RefererRow[]): Promise<number> {
   if (rows.length === 0) return 0;
-  // Build a multi-row VALUES clause with positional parameters
-  const params: (string | number)[] = [];
-  const placeholders = rows.map((row) => {
-    const base = params.length + 1;
-    params.push(row.logKey, row.lineIdx, row.ts, row.refHref, row.refHost, row.refPath, row.reqMethod, row.reqPath);
-    return `($${base},$${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7})`;
-  });
-  const result = await sql(
-    `INSERT INTO "RefererEvents"
-       ("logKey","lineIdx","ts","refHref","refHost","refPath","reqMethod","reqPath")
-     VALUES ${placeholders.join(",")}
-     ON CONFLICT ("logKey","lineIdx") DO NOTHING
-     RETURNING "logKey"`,
-    params
-  );
+  const result = await db.insert(refererEvents).values(rows).onConflictDoNothing().returning({ logKey: refererEvents.logKey });
   return result.length;
 }
 
+// CF Workers require `export default` for scheduled handlers — rules-bag exception (framework constraint).
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     const sql = neon(env.NEON_DATABASE_URL);
+    const db = drizzle(sql);
 
     const allKeys: string[] = [];
     for (const prefix of datePrefixes()) {
@@ -103,7 +105,7 @@ export default {
 
     for (const key of allKeys) {
       const obj = await env.LOGS_BUCKET.get(key);
-      if (!obj) continue;
+      if (obj === null) continue;
 
       const text = await obj.text();
       const rows: RefererRow[] = [];
@@ -111,26 +113,25 @@ export default {
 
       for (const rawLine of text.split("\n")) {
         const trimmed = rawLine.trim();
-        if (!trimmed) continue;
-        let envelope: LogpushEnvelope;
-        try {
-          envelope = JSON.parse(trimmed) as LogpushEnvelope;
-        } catch {
+        if (trimmed.length === 0) continue;
+        const rEnvelope = exception2Result(() => JSON.parse(trimmed) as LogpushEnvelope);
+        if (rEnvelope.isErr()) {
           lineIdx++;
           continue;
         }
+        const envelope = rEnvelope.Ok();
         const fallbackTs = envelope.Timestamp ?? new Date().toISOString();
         for (const log of envelope.Logs ?? []) {
+          const idx = lineIdx++;
           const message = log.Message?.[0];
-          if (!message?.startsWith("[referer]")) continue;
+          if (message === undefined || !message.startsWith("[referer]")) continue;
           const ts = log.TimestampMs ? new Date(log.TimestampMs).toISOString() : fallbackTs;
-          const row = parseRefererLine(message, ts, key, lineIdx);
-          if (row) rows.push(row);
-          lineIdx++;
+          const row = parseRefererLine(message, ts, key, idx);
+          if (row !== null) rows.push(row);
         }
       }
 
-      const inserted = await batchInsert(sql, rows);
+      const inserted = await batchInsert(db, rows);
       totalInserted += inserted;
       totalSkipped += rows.length - inserted;
     }

@@ -12,7 +12,9 @@
     "deploy:cli": "wrangler deploy --env cli"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^0.10.4"
+    "@adviser/cement": "^0.5.34",
+    "@neondatabase/serverless": "^1.1.0",
+    "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20260402.1",
