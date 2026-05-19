@@ -54,6 +54,7 @@ import { whoAmIEvento } from "./public/who-am-i.js";
 import { assetUploadGrantEvento } from "./public/asset-upload-grant.js";
 import { reportGrowthMembershipsEvento } from "./public/report-growth-memberships.js";
 import { reportGrowthVibesWithDataEvento } from "./public/report-growth-vibes-with-data.js";
+import { reportAttributionReferrersEvento } from "./public/report-attribution-referrers.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -102,6 +103,7 @@ export const vibesMsgEvento = Lazy(() => {
     assetUploadGrantEvento,
     reportGrowthMembershipsEvento,
     reportGrowthVibesWithDataEvento,
+    reportAttributionReferrersEvento,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useClerk } from "@clerk/react";
 import { Result } from "@adviser/cement";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
-import type { ResReportGrowthMemberships, ResReportGrowthVibesWithData } from "@vibes.diy/api-types";
+import type { ResReportGrowthMemberships, ResReportGrowthVibesWithData, ResReportAttributionReferrers } from "@vibes.diy/api-types";
 import { MembershipsChart, VibesWithDataChart } from "./Chart.js";
 import vibesDiyLogoUrl from "./vibes-diy-logo.png";
 
@@ -49,16 +49,23 @@ export function App({ getClerkToken }: AppProps) {
 
   const [memberships, setMemberships] = useState<Loadable<ResReportGrowthMemberships>>({ kind: "loading" });
   const [vibes, setVibes] = useState<Loadable<ResReportGrowthVibesWithData>>({ kind: "loading" });
+  const [referrers, setReferrers] = useState<Loadable<ResReportAttributionReferrers>>({ kind: "loading" });
 
   useEffect(() => {
     const ac = new AbortController();
     void (async () => {
-      const [m, v] = await Promise.all([api.reportGrowthMemberships({}), api.reportGrowthVibesWithData({})]);
+      const [m, v, r] = await Promise.all([
+        api.reportGrowthMemberships({}),
+        api.reportGrowthVibesWithData({}),
+        api.reportAttributionReferrers({}),
+      ]);
       if (ac.signal.aborted) return;
       if (m.isOk()) setMemberships({ kind: "ok", data: m.Ok() });
       else setMemberships({ kind: "err", msg: m.Err().message });
       if (v.isOk()) setVibes({ kind: "ok", data: v.Ok() });
       else setVibes({ kind: "err", msg: v.Err().message });
+      if (r.isOk()) setReferrers({ kind: "ok", data: r.Ok() });
+      else setReferrers({ kind: "err", msg: r.Err().message });
     })();
     return () => ac.abort();
   }, [api]);
@@ -145,6 +152,26 @@ export function App({ getClerkToken }: AppProps) {
         </div>
       </section>
 
+      <section>
+        <div className="card">
+          <span className="section-label section-label--filled">All time</span>
+          <h2 className="section-title">Referrer attribution</h2>
+          <p className="section-intro">
+            External pages ranked by traffic to vibes.diy. Conversions = requests to <code>/api/</code>, <code>/new</code>, or{" "}
+            <code>/vibe/</code>. Browse = remaining hits.
+          </p>
+          {referrers.kind === "loading" ? (
+            <div className="empty">Loading…</div>
+          ) : referrers.kind === "err" ? (
+            <ErrorPanel msg={referrers.msg} />
+          ) : referrers.data.rows.length === 0 ? (
+            <div className="empty">No referrer data yet.</div>
+          ) : (
+            <ReferrersTable data={referrers.data} />
+          )}
+        </div>
+      </section>
+
       <ColorStripe />
     </div>
   );
@@ -195,6 +222,43 @@ function ErrorPanel({ msg }: { msg: string }) {
     <div className="err">
       <div className="err-label">Error</div>
       <div>{msg}</div>
+    </div>
+  );
+}
+
+function ReferrersTable({ data }: { readonly data: ResReportAttributionReferrers }) {
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
+        <thead>
+          <tr style={{ borderBottom: "2px solid var(--near-black)" }}>
+            <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Host</th>
+            <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Path</th>
+            <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Total</th>
+            <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Conversions</th>
+            <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Browse</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.rows.map((row, i) => (
+            <tr
+              key={`${row.refHost}${row.refPath}`}
+              style={{
+                borderBottom: "1px solid color-mix(in srgb, var(--near-black) 15%, transparent)",
+                background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--near-black) 4%, transparent)",
+              }}
+            >
+              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace" }}>{row.refHost}</td>
+              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace", color: "var(--red)" }}>{row.refPath}</td>
+              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.total.toLocaleString()}</td>
+              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", color: row.conversions > 0 ? "var(--red)" : "inherit" }}>
+                {row.conversions.toLocaleString()}
+              </td>
+              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.browse.toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
