@@ -30,4 +30,3 @@ vibes.diy/pkg/slack/serve/render.ts:72:  const transformed = new TextDecoder().d
 vibes.diy/pkg/slack/serve/vibes-diy-srv.ts:96:    const url = new URL(req.url);
 vibes.diy/pkg/slack/worker-sucrase.ts:55:      const cacheUrl = new URL(request.url);
 vibes.diy/pkg/slack/worker-sucrase.ts:5:  const encoder = new TextEncoder();
-vibes.diy/pkg/workers/app.ts:59:    const url = new URL(request.url);
