@@ -1,14 +1,11 @@
 # Babylon.js WebXR Reference for Coding Agents
 
-_Babylon.js is a full-featured 3D engine with first-class WebXR support. Load it from CDN — no build step required._
+_Babylon.js is a full-featured 3D engine with first-class WebXR support. Import it as a bare specifier — the platform resolves it via esm.sh._
 
-## CDN Setup (No Build Step)
+## Import
 
-```html
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
-<!-- Optional: physics, loaders, GUI -->
-<script src="https://cdn.babylonjs.com/cannon.js"></script>
-<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+```javascript
+import * as BABYLON from "@babylonjs/core";
 ```
 
 ## Core Setup
@@ -412,6 +409,7 @@ for (let i = 0; i < 200; i++) {
 A floating galaxy of 2000 particles with a custom-shader core sphere, navigable in VR. Session data stored in Fireproof.
 
 ```javascript
+import * as BABYLON from "@babylonjs/core";
 import React, { useEffect, useRef } from "react";
 import { useFireproof } from "use-fireproof";
 
@@ -540,6 +538,7 @@ export default function App() {
 Tap a real-world surface to plant a pulsing orb anchored in place. Orb positions are stored in Fireproof so they survive page reload.
 
 ```javascript
+import * as BABYLON from "@babylonjs/core";
 import React, { useEffect, useRef, useState } from "react";
 import { useFireproof } from "use-fireproof";
 

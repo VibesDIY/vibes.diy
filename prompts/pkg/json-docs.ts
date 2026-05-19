@@ -18,6 +18,7 @@ export interface JsonDocs {
   "three-js.json": JsonDoc;
   "use-viewer.json": JsonDoc;
   "web-audio.json": JsonDoc;
+  "webxr.json": JsonDoc;
 
   [key: string]: JsonDoc;
 }
