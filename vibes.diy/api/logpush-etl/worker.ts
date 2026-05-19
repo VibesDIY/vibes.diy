@@ -11,11 +11,11 @@ export interface Env {
 
 // Logpush NDJSON envelope (one object per Worker invocation)
 interface LogpushEnvelope {
-  Logs?: Array<{
+  Logs?: {
     Level: string;
     Message: string[];
     TimestampMs: number;
-  }>;
+  }[];
   Timestamp?: string;
 }
 
