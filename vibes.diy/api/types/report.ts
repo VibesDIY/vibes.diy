@@ -58,3 +58,33 @@ export type ResReportGrowthVibesWithData = typeof resReportGrowthVibesWithData.i
 export function isResReportGrowthVibesWithData(obj: unknown): obj is ResReportGrowthVibesWithData {
   return !(resReportGrowthVibesWithData(obj) instanceof type.errors);
 }
+
+// Attribution — referrer hostname + path ranked by traffic, with conversion count.
+// Populated from RefererEvents written by the logpush-etl cron worker.
+export const reqReportAttributionReferrers = type({
+  type: "'vibes.diy.req-report-attribution-referrers'",
+  auth: dashAuthType,
+});
+export type ReqReportAttributionReferrers = typeof reqReportAttributionReferrers.infer;
+export function isReqReportAttributionReferrers(obj: unknown): obj is ReqReportAttributionReferrers {
+  return !(reqReportAttributionReferrers(obj) instanceof type.errors);
+}
+
+export const resReportAttributionReferrersRow = type({
+  refHost: "string",
+  refPath: "string",
+  total: "number",
+  conversions: "number",
+  browse: "number",
+});
+export type ResReportAttributionReferrersRow = typeof resReportAttributionReferrersRow.infer;
+
+export const resReportAttributionReferrers = type({
+  type: "'vibes.diy.res-report-attribution-referrers'",
+  generatedAt: "string",
+  rows: resReportAttributionReferrersRow.array(),
+});
+export type ResReportAttributionReferrers = typeof resReportAttributionReferrers.infer;
+export function isResReportAttributionReferrers(obj: unknown): obj is ResReportAttributionReferrers {
+  return !(resReportAttributionReferrers(obj) instanceof type.errors);
+}
