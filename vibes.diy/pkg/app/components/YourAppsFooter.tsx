@@ -1,8 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { TexturedPattern } from "@vibes.diy/base";
+import { isMetaScreenShot, type MetaScreenShot } from "@vibes.diy/api-types";
 import { useRecentVibes } from "../hooks/useRecentVibes.js";
+import { useVibesDiy } from "../vibes-diy-provider.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";
+
+// Module-level cache so cards don't refetch the same app's screenshot every
+// time the panel re-mounts (e.g. switching sections).
+const screenshotCache = new Map<string, MetaScreenShot | null>();
+
+function screenshotSrc(shot: MetaScreenShot): string {
+  return `/assets/cid/?url=${encodeURIComponent(shot.assetUrl)}&mime=${encodeURIComponent(shot.mime)}`;
+}
 
 interface YourAppsFooterProps {
   /** True while the SessionSidebar is open — the footer slides right so it
@@ -352,10 +362,39 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
   const open = item !== null;
   const label = item?.title ?? item?.appSlug ?? "";
   const iconUrl = item?.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
+  const cacheKey = item ? `${item.userSlug}/${item.appSlug}` : "";
+  const [screenshot, setScreenshot] = useState<MetaScreenShot | null>(
+    item ? (screenshotCache.get(cacheKey) ?? null) : null
+  );
+  const { vibeDiyApi } = useVibesDiy();
+  const previewUrl = screenshot ? screenshotSrc(screenshot) : iconUrl;
   // Mock data for now — wire up real fields later.
   const mockCreator = "@amber-macias";
   const mockDescription =
     "Generated with vibes.diy. A shareable mini-app you can remix, fork, and make your own. (placeholder copy)";
+
+  useEffect(() => {
+    if (!item) return;
+    const cached = screenshotCache.get(cacheKey);
+    if (cached !== undefined) {
+      setScreenshot(cached);
+      return;
+    }
+    let cancelled = false;
+    vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug: item.appSlug }).then((res) => {
+      if (cancelled) return;
+      if (res.isErr()) {
+        screenshotCache.set(cacheKey, null);
+        return;
+      }
+      const shot = res.Ok().meta.find(isMetaScreenShot) ?? null;
+      screenshotCache.set(cacheKey, shot);
+      if (shot) setScreenshot(shot);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [item, cacheKey, vibeDiyApi]);
 
   return (
     <>
@@ -407,8 +446,12 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
               className="w-full bg-light-background-01 dark:bg-dark-background-01 border-b-2 border-[var(--vibes-near-black)] dark:border-[var(--color-dark-decorative-01)] flex items-center justify-center overflow-hidden"
               style={{ height: 200 }}
             >
-              {iconUrl ? (
-                <img src={iconUrl} alt="" className="w-full h-full object-cover dark:invert" />
+              {previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt=""
+                  className={`w-full h-full object-cover${screenshot ? "" : " dark:invert"}`}
+                />
               ) : (
                 <span className="text-light-primary/40 dark:text-dark-primary/40 text-xs uppercase tracking-widest">
                   No preview
