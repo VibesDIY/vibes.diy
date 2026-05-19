@@ -2,7 +2,7 @@ import type { R2Bucket, ScheduledEvent, ExecutionContext } from "@cloudflare/wor
 import { exception2Result, URI } from "@adviser/cement";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { integer, pgTable, text, primaryKey } from "drizzle-orm/pg-core";
+import { integer, pgTable, text, primaryKey, type AnyPgColumn } from "drizzle-orm/pg-core";
 
 export interface Env {
   LOGS_BUCKET: R2Bucket;
@@ -44,7 +44,7 @@ const refererEvents = pgTable(
     reqMethod: text().notNull(),
     reqPath: text().notNull(),
   },
-  (t) => [primaryKey({ columns: [t.logKey, t.lineIdx] })]
+  (t: Record<string, AnyPgColumn>) => [primaryKey({ columns: [t.logKey, t.lineIdx] })]
 );
 
 // Parsed [referer] log line: "[referer] <href> <method> <req-path>"

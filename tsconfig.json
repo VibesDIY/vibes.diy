@@ -37,6 +37,7 @@
     "vibes.diy/api/svc/public/.ts"
   ],
   "exclude": [
+    "vibes.diy/api/logpush-etl/**",
     "vibes.diy/tempo/**",
     "vibes.diy/**/slack/**",
     "vibes.diy/**/root.*",
