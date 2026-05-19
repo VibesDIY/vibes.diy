@@ -44,7 +44,10 @@ export const sqlAppSlugBinding = sqliteTable(
   },
   (table) => [
     primaryKey({ columns: [table.appSlug, table.userSlug] }),
-    index("AppSlug_userSlug_pinnedAt_updated_appSlug").on(table.userSlug, table.pinnedAt, table.updated, table.appSlug),
+    // updated is intentionally excluded: including it forces a non-HOT index update on every
+    // bumpAppRecency call (every chat turn). list-recent-vibes already does a filesort; keeping
+    // updated out of the index makes writes HOT-eligible without changing read correctness.
+    index("AppSlug_userSlug_pinnedAt_appSlug").on(table.userSlug, table.pinnedAt, table.appSlug),
   ]
 );
 
@@ -164,7 +167,10 @@ export const sqlAppSettings = sqliteTable(
     updated: text().notNull(),
     created: text().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] })]
+  (table) => [
+    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] }),
+    index("AppSettings_userSlug_appSlug_idx").on(table.userSlug, table.appSlug),
+  ]
 );
 
 export const sqlRequestGrants = sqliteTable(
