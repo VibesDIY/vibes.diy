@@ -119,6 +119,9 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+      vitest:
+        specifier: ~4.1.5
+        version: 4.1.6(@opentelemetry/api@1.9.1)(@types/node@25.9.0)(@vitest/browser-playwright@4.1.5(bufferutil@4.1.0)(playwright@1.60.0)(utf-8-validate@6.0.6)(vite@7.3.2(@types/node@25.9.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.6))(@vitest/coverage-v8@4.1.5(@vitest/browser@4.1.5)(vitest@4.1.6))(@vitest/ui@4.1.5)(vite@7.3.2(@types/node@25.9.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   call-ai/tests/integration:
     dependencies:
@@ -378,7 +381,7 @@ importers:
         version: 1.60.0
       playwright-chromium:
         specifier: ^1.59.1
-        version: 1.59.1
+        version: 1.60.0
       react:
         specifier: ^19.2.5
         version: 19.2.5
@@ -604,6 +607,9 @@ importers:
       vite-tsconfig-paths:
         specifier: ^6.1.1
         version: 6.1.1(typescript@6.0.3)(vite@7.3.2(@types/node@25.9.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ~4.1.5
+        version: 4.1.6(@opentelemetry/api@1.9.1)(@types/node@25.9.0)(@vitest/browser-playwright@4.1.5(bufferutil@4.1.0)(playwright@1.60.0)(utf-8-validate@6.0.6)(vite@7.3.2(@types/node@25.9.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.6))(@vitest/coverage-v8@4.1.5(@vitest/browser@4.1.5)(vitest@4.1.6))(@vitest/ui@4.1.5)(vite@7.3.2(@types/node@25.9.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   use-vibes/pkg:
     dependencies:
@@ -713,7 +719,7 @@ importers:
         version: 1.60.0
       playwright-chromium:
         specifier: ^1.59.1
-        version: 1.59.1
+        version: 1.60.0
       react:
         specifier: ^19.2.5
         version: 19.2.5
@@ -769,6 +775,9 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+      vitest:
+        specifier: ~4.1.5
+        version: 4.1.6(@opentelemetry/api@1.9.1)(@types/node@25.9.0)(@vitest/browser-playwright@4.1.5(bufferutil@4.1.0)(playwright@1.60.0)(utf-8-validate@6.0.6)(vite@7.3.2(@types/node@25.9.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.6))(@vitest/coverage-v8@4.1.5(@vitest/browser@4.1.5)(vitest@4.1.6))(@vitest/ui@4.1.5)(vite@7.3.2(@types/node@25.9.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   vibes-diy:
     dependencies:
@@ -1550,6 +1559,9 @@ importers:
       vite-tsconfig-paths:
         specifier: ^6.1.1
         version: 6.1.1(typescript@6.0.3)(vite@7.3.2(@types/node@25.9.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ~4.1.5
+        version: 4.1.6(@opentelemetry/api@1.9.1)(@types/node@25.9.0)(@vitest/browser-playwright@4.1.5(bufferutil@4.1.0)(playwright@1.60.0)(utf-8-validate@6.0.6)(vite@7.3.2(@types/node@25.9.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.6))(@vitest/coverage-v8@4.1.5(@vitest/browser@4.1.5)(vitest@4.1.6))(@vitest/ui@4.1.5)(vite@7.3.2(@types/node@25.9.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       yaml:
         specifier: ^2.8.3
         version: 2.8.3
@@ -7670,8 +7682,8 @@ packages:
   pkg-types@2.3.0:
     resolution: {integrity: sha512-SIqCzDRg0s9npO5XQ3tNZioRY1uK06lA41ynBC1YmFTmnY6FjUjVt6s4LoADmwoig1qqD0oK8h1p/8mlMx8Oig==}
 
-  playwright-chromium@1.59.1:
-    resolution: {integrity: sha512-aTsPenkxsr9np4vIHuMEND6comqepVvzbL0MwkozFNliwGZjTqrBUQ7TF6Ay1ZIU/e7rcUpGsCTUG+nqwxG2Xw==}
+  playwright-chromium@1.60.0:
+    resolution: {integrity: sha512-xxz9pc2HIxQW/Qg9ijG2fZOHRT//KhLo0KfvJRa45YYRrcA7ZONoilgJR40SW5pmecb6HkuROaeViXoCaXTZyQ==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -15571,9 +15583,9 @@ snapshots:
       exsolve: 1.0.8
       pathe: 2.0.3
 
-  playwright-chromium@1.59.1:
+  playwright-chromium@1.60.0:
     dependencies:
-      playwright-core: 1.59.1
+      playwright-core: 1.60.0
 
   playwright-core@1.59.1: {}
 
