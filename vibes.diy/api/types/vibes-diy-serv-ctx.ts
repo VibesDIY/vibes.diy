@@ -7,7 +7,6 @@ export const vibesSvcEnv = type({
   // CALLAI_API_KEY: "string",
   // CALLAI_CHAT_URL: "string",
   // CALLAI_IMG_URL: "string",
-  VIBES_DIY_STYLES_URL: "string",
   VIBES_DIY_API_URL: "string",
 
   "GTM_CONTAINER_ID?": "string",

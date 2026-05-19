@@ -79,7 +79,6 @@ export async function createAppContext<T extends VibesSqlite>(
 
     WORKSPACE_NPM_URL: param.OPTIONAL,
     PUBLIC_NPM_URL: param.OPTIONAL,
-    VIBES_DIY_STYLES_URL: param.OPTIONAL,
 
     VIBES_DIY_API_URL: param.OPTIONAL,
     DEV_SERVER_HOST: param.OPTIONAL,
@@ -139,10 +138,7 @@ export async function createAppContext<T extends VibesSqlite>(
 
   if (envVals.DEV) {
     if (!envVals.DEV_SERVER_HOST || !envVals.DEV_SERVER_PORT) {
-      throw new Error("DEV_SERVER_HOST and DEV_SERVER_PORT are required in development if VIBES_DIY_STYLES_URL is not set");
-    }
-    if (!envVals.VIBES_DIY_STYLES_URL) {
-      envVals.VIBES_DIY_STYLES_URL = `https://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/`;
+      throw new Error("DEV_SERVER_HOST and DEV_SERVER_PORT are required in development");
     }
     if (!envVals.WORKSPACE_NPM_URL) {
       envVals.WORKSPACE_NPM_URL = `https://${envVals.DEV_SERVER_HOST}:${envVals.DEV_SERVER_PORT}/vibe-pkg/`;
@@ -189,7 +185,6 @@ export async function createAppContext<T extends VibesSqlite>(
       },
       env: {
         CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
-        VIBES_DIY_STYLES_URL: envVals.VIBES_DIY_STYLES_URL,
         VIBES_DIY_API_URL: envVals.VIBES_DIY_API_URL,
 
         GTM_CONTAINER_ID: envVals.GTM_CONTAINER_ID,
