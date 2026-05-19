@@ -2,7 +2,6 @@ name = "vibes-diy-logpush-etl"
 main = "./worker.ts"
 compatibility_date = "2025-02-24"
 compatibility_flags = ["nodejs_compat"]
-account_id = "f031392067b661e91963881fb76b4ea3"
 
 [triggers]
 crons = ["*/5 * * * *"]
