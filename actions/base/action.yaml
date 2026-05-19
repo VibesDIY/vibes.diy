@@ -10,8 +10,7 @@ runs:
     - name: install
       shell: bash
       run: |
-        pnpm remove -r playwright-chromium
-        pnpm install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm install
         pnpm dedupe --check
 
     - name: format-check
