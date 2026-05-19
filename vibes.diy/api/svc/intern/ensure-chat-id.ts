@@ -18,6 +18,18 @@ import {
   ReqWithVerifiedAuth,
 } from "@vibes.diy/api-types";
 
+/**
+ * Returns true when a new-chat creation should trigger the pre-allocation LLM
+ * call (theme + skill + slug selection). Extracted for unit-testability.
+ * Acts as a type guard so callers get `prompt: string` narrowing for free.
+ */
+export function preAllocEligible(req: {
+  readonly prompt?: string;
+  readonly appSlug?: string;
+}): req is { readonly prompt: string; readonly appSlug?: string } {
+  return req.prompt !== undefined && req.prompt.length > 0;
+}
+
 interface EnsureChatIdPResult {
   appSlug: string;
   userSlug: string;
@@ -94,16 +106,16 @@ export async function ensureChatId(
     }
 
     if (!chatId) {
-      // Pre-allocation: when the caller passed a prompt and no appSlug, run one
-      // LLM call to pick {skills, pairs: [{title, slug}] × 3}. Feed pairs to
+      // Pre-allocation: when the caller passes a prompt, run one LLM call to
+      // pick {skills, pairs: [{title, slug}] × 3, theme}. Feed pairs to
       // ensureAppSlug so the URL slug reflects the prompt; persist the chosen
-      // pair's title and the skill list into app_settings below.
+      // pair's title, skills, and theme into app_settings below.
       let preferredPairs: { title: string; slug: string }[] | undefined;
       let preAllocSkills: string[] | undefined;
       let preAllocIconDescription: string | undefined;
       let preAllocTheme: string | undefined;
       let preAllocEnrichedPrompt: string | undefined;
-      if (req.prompt && !req.appSlug) {
+      if (preAllocEligible(req)) {
         const rPre = await preAllocate(ctx, { prompt: req.prompt });
         if (rPre.isOk()) {
           preferredPairs = rPre.Ok().pairs;
