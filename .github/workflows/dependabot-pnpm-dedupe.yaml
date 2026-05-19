@@ -38,4 +38,4 @@ jobs:
           git config user.name  "vibes-diy ci"
           git add pnpm-lock.yaml
           git commit -m "pnpm dedupe [dependabot skip]"
-          git push origin "HEAD:${GITHUB_HEAD_REF}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
