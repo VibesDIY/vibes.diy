@@ -16,7 +16,7 @@ const baseEnv = {
 };
 
 function renderWith(env: ViewerEnv | undefined): UseViewerResult {
-  let captured: UseViewerResult = { viewer: null, access: "none", dbAcls: {}, can: () => false };
+  let captured: UseViewerResult = { viewer: null, access: "none", dbAcls: {}, can: () => false, isViewerPending: true };
   render(
     <VibeContextProvider mountParams={{ usrEnv: {}, ...(env ? { viewerEnv: env } : {}) }}>
       <Probe onR={(r) => (captured = r)} />
@@ -72,5 +72,10 @@ describe("useViewer", () => {
   it("viewer.avatarUrl is exposed as an opaque string", () => {
     const r = renderWith(baseEnv);
     expect(r.viewer?.avatarUrl).toBe("https://api.example.com/u/alice/avatar");
+  });
+
+  it("isViewerPending is true when viewerEnv is undefined, false when set", () => {
+    expect(renderWith(undefined).isViewerPending).toBe(true);
+    expect(renderWith(baseEnv).isViewerPending).toBe(false);
   });
 });

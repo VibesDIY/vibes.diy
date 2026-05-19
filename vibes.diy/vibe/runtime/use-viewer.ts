@@ -10,11 +10,16 @@ export interface UseViewerResult {
   readonly access: DocAccessLevel;
   readonly dbAcls: Record<string, DbAcl>;
   readonly can: (action: "read" | "write" | "delete", dbName?: string) => boolean;
+  /** True while viewer identity has not yet been resolved (e.g. preview mode
+   *  before the parent pushes vibe.evt.viewerChanged). Gate access-gated UI
+   *  on !isViewerPending rather than rendering the anonymous fallback. */
+  readonly isViewerPending: boolean;
 }
 
 export function useViewer(): UseViewerResult {
   const { mountParams } = useVibeContext();
   const env = mountParams.viewerEnv;
+  const isViewerPending = env === undefined;
   const viewer = env?.viewer ?? null;
   const access: DocAccessLevel = env?.access ?? "none";
   const dbAcls: Record<string, DbAcl> = env?.dbAcls ?? {};
@@ -30,5 +35,5 @@ export function useViewer(): UseViewerResult {
     return true;
   }
 
-  return { viewer, access, dbAcls, can };
+  return { viewer, access, dbAcls, can, isViewerPending };
 }
