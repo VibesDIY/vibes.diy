@@ -50,7 +50,13 @@ export async function ensureAppMetadata(
     ctx.sql.db
       .select()
       .from(ctx.sql.tables.appSettings)
-      .where(and(eq(ctx.sql.tables.appSettings.userSlug, args.userSlug), eq(ctx.sql.tables.appSettings.appSlug, args.appSlug)))
+      .where(
+        and(
+          eq(ctx.sql.tables.appSettings.userId, args.userId),
+          eq(ctx.sql.tables.appSettings.userSlug, args.userSlug),
+          eq(ctx.sql.tables.appSettings.appSlug, args.appSlug)
+        )
+      )
       .limit(1)
       .then((r) => r[0])
   );
@@ -95,7 +101,13 @@ export async function ensureAppMetadata(
       ctx.sql.db
         .update(ctx.sql.tables.appSettings)
         .set({ settings: merged, updated: now })
-        .where(and(eq(ctx.sql.tables.appSettings.userSlug, args.userSlug), eq(ctx.sql.tables.appSettings.appSlug, args.appSlug)))
+        .where(
+          and(
+            eq(ctx.sql.tables.appSettings.userId, args.userId),
+            eq(ctx.sql.tables.appSettings.userSlug, args.userSlug),
+            eq(ctx.sql.tables.appSettings.appSlug, args.appSlug)
+          )
+        )
     );
     if (rUpd.isErr()) {
       return Result.Err(`appSettings update failed: ${rUpd.Err()}`);

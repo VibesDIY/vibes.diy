@@ -49,7 +49,10 @@ export const sqlAppSlugBinding = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.appSlug, table.userSlug] }),
-    index("AppSlug_userSlug_pinnedAt_updated_appSlug").on(table.userSlug, table.pinnedAt, table.updated, table.appSlug),
+    // updated is intentionally excluded: including it forces a non-HOT index update on every
+    // bumpAppRecency call (every chat turn). list-recent-vibes already does a filesort; keeping
+    // updated out of the index makes writes HOT-eligible without changing read correctness.
+    index("AppSlug_userSlug_pinnedAt_appSlug").on(table.userSlug, table.pinnedAt, table.appSlug),
   ]
 );
 
@@ -165,7 +168,13 @@ export const sqlAppSettings = pgTable(
     updated: text().notNull(),
     created: text().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] })]
+  (table) => [
+    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] }),
+    // Supports queries by (userSlug, appSlug) without userId — e.g. getModelDefaults, loadActiveSettings.
+    // PK is (userId, appSlug, userSlug) so those queries do a partial index scan (cost ~126)
+    // without this secondary index.
+    index("AppSettings_userSlug_appSlug_idx").on(table.userSlug, table.appSlug),
+  ]
 );
 
 export const sqlRequestGrants = pgTable(
