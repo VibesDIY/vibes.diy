@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { getCode } from "./CodeEditor.js";
+import type { EvtVibeViewerChanged } from "@vibes.diy/vibe-types";
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
@@ -184,6 +185,24 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // window, so this still no-ops when the iframe isn't actually visible.
   const showBlur = promptState.running && pinnedFsId === undefined && !firstStreamDone;
   const showOverlay = promptState.running;
+
+  // Push owner identity into the iframe as soon as the runtime is ready.
+  // render-vibe.ts omits viewerEnv for ?preview=yes (no Clerk session on the
+  // HTTP path), so without this push can("write") would be false until the
+  // bootstrapViewer WS roundtrip completes. Sending access:"owner" eagerly
+  // here eliminates the read-only flash. bootstrapViewer still fires after
+  // and fills in viewer.displayName / avatarUrl via the normal bridge path.
+  useEffect(() => {
+    if (!srvVibeSandbox || !userSlug || !appSlug) return;
+    return srvVibeSandbox.onRuntimeReady(() => {
+      const msg: EvtVibeViewerChanged = {
+        type: "vibe.evt.viewerChanged",
+        viewer: null,
+        access: "owner",
+      };
+      srvVibeSandbox.pushViewerChanged(msg);
+    }) as () => void;
+  }, [srvVibeSandbox, userSlug, appSlug]);
 
   // Toast when the iframe rejects a hot-swap source (sucrase transform fail,
   // dynamic import fail, mountVibe throw). The iframe keeps showing the

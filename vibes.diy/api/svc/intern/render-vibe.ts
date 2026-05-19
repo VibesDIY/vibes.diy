@@ -25,6 +25,13 @@ import { lockedGroupsVersions, lockedVersions } from "./grouped-vibe-import-map.
 import { defaultFetchPkgVersion } from "../npm-package-version.js";
 import { sqlite } from "@vibes.diy/api-sql";
 
+async function buildViewerEnvForRender(vctx: VibesApiSQLCtx, args: { appSlug: string; ownerUserSlug: string; apiBaseUrl: string }) {
+  const r = await resolveWhoAmI(vctx, { auth: undefined, ...args });
+  if (!r.isOk()) return undefined;
+  const { viewer, access, dbAcls } = r.Ok();
+  return { viewer, access, ...(dbAcls ? { dbAcls } : {}) };
+}
+
 export interface RenderVibesOpts {
   ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>;
   fs: typeof sqlite.sqlApps.$inferSelect;
@@ -128,23 +135,18 @@ export async function renderVibe({
   const requestUrl = new URL(ctx.request.url);
   const canonicalUrl = `${requestUrl.protocol}//${requestUrl.host}/`;
 
-  // Compute initial viewerEnv so the iframe's first render has identity.
-  // auth is not available on this HTTP code path (render-vibe is a server-side
-  // renderer, not a websocket handler), so we pass undefined. The iframe will
-  // call vibe.req.whoAmI after boot to refresh identity when the viewer logs in.
-  const rViewer = await resolveWhoAmI(vctx, {
-    auth: undefined,
-    appSlug: fs.appSlug,
-    ownerUserSlug: fs.userSlug,
-    apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
-  });
-  const viewerEnv = rViewer.isOk()
-    ? {
-        viewer: rViewer.Ok().viewer,
-        access: rViewer.Ok().access,
-        ...(rViewer.Ok().dbAcls ? { dbAcls: rViewer.Ok().dbAcls } : {}),
-      }
-    : undefined;
+  // Skip viewerEnv for preview: the parent page knows the viewer is the owner
+  // and pushes vibe.evt.viewerChanged eagerly after the sandbox is ready.
+  // Embedding access:"none" here would cause a read-only flash before the
+  // bridge resolves, since auth is unavailable on this HTTP path.
+  const viewerEnv =
+    requestUrl.searchParams.get("preview") === "yes"
+      ? undefined
+      : await buildViewerEnvForRender(vctx, {
+          appSlug: fs.appSlug,
+          ownerUserSlug: fs.userSlug,
+          apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
+        });
 
   let imageUrl: string | undefined;
   if (metaScreenShot) {
@@ -245,22 +247,16 @@ export async function renderPendingVibe({
   const requestUrl = new URL(ctx.request.url);
   const canonicalUrl = `${requestUrl.protocol}//${requestUrl.host}/`;
 
-  // Compute initial viewerEnv for the pending shell as well, so identity is
-  // available from first paint. auth is not accessible on this HTTP code path;
-  // the iframe will call vibe.req.whoAmI after boot to refresh when needed.
-  const rViewer = await resolveWhoAmI(vctx, {
-    auth: undefined,
-    appSlug,
-    ownerUserSlug: userSlug,
-    apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
-  });
-  const viewerEnv = rViewer.isOk()
-    ? {
-        viewer: rViewer.Ok().viewer,
-        access: rViewer.Ok().access,
-        ...(rViewer.Ok().dbAcls ? { dbAcls: rViewer.Ok().dbAcls } : {}),
-      }
-    : undefined;
+  // Same preview skip as renderVibe: omit viewerEnv when ?preview=yes so the
+  // parent's eager vibe.evt.viewerChanged is the first identity signal.
+  const viewerEnv =
+    requestUrl.searchParams.get("preview") === "yes"
+      ? undefined
+      : await buildViewerEnvForRender(vctx, {
+          appSlug,
+          ownerUserSlug: userSlug,
+          apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
+        });
 
   const title = appSlug;
 

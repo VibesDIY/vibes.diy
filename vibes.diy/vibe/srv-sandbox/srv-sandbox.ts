@@ -58,6 +58,7 @@ import {
   isReqVibeWhoAmI,
   ReqVibeWhoAmI,
   ResVibeWhoAmI,
+  EvtVibeViewerChanged,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -886,6 +887,16 @@ export class vibesDiySrvSandbox implements Disposable {
   forwardDocChangedToIframe(userSlug: string, appSlug: string, dbName: string, docId: string): void {
     if (this.iframeSource && this.iframeOrigin) {
       this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", userSlug, appSlug, dbName, docId }, this.iframeOrigin);
+    }
+  }
+
+  // Push viewer identity into the iframe. Called by PreviewApp on runtime.ready
+  // so the iframe has the correct access level before bootstrapViewer's WS
+  // roundtrip completes, avoiding the read-only flash caused by the HTTP render
+  // path embedding access:"none" (no Clerk session available there).
+  pushViewerChanged(msg: EvtVibeViewerChanged): void {
+    if (this.iframeSource && this.iframeOrigin) {
+      this.iframeSource.postMessage(msg, this.iframeOrigin);
     }
   }
 
