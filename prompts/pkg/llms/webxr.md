@@ -394,6 +394,7 @@ for (let i = 0; i < 200; i++) {
 
 ## Common Gotchas
 
+- **Import from `@babylonjs/core`, not `babylonjs`** — the legacy `babylonjs` package times out on esm.sh; the scoped package resolves correctly. `import * as BABYLON from "@babylonjs/core"` gives the same `BABYLON.*` namespace.
 - **`createDefaultXRExperienceAsync` is async** — always `await` it or chain `.then()`. Calling it without await silently skips XR setup.
 - **AR requires HTTPS** — `localhost` works for dev; plain `http://` will fail on device.
 - **Quest AR setting** — `immersive-ar` may require "WebXR Passthrough" enabled in Quest Browser settings (about://flags).
@@ -537,47 +538,55 @@ export default function App() {
 
 Tap a real-world surface to plant a pulsing orb anchored in place. Orb positions are stored in Fireproof so they survive page reload.
 
+On devices without AR support (desktop, unsupported browsers) the app automatically enters **fixture mode**: a background photo stands in for the passthrough feed, and mouse clicks place orbs via ray-picking. The 3D scene is identical in both modes — only the background source differs.
+
 ```javascript
 import * as BABYLON from "@babylonjs/core";
 import React, { useEffect, useRef, useState } from "react";
 import { useFireproof } from "use-fireproof";
 
+const FIXTURE_BG = "https://picsum.photos/seed/indoor-room/1456/816";
+
 // ── Pure Babylon functions ─────────────────────────────────────────────────
 
-function buildARScene(canvas) {
+// Always alpha:true so orbs composite over AR passthrough or fixture img
+function buildScene(canvas) {
   const engine = new BABYLON.Engine(canvas, true, { alpha: true });
   const scene = new BABYLON.Scene(engine);
-  scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent for AR
+  scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
 
   const camera = new BABYLON.FreeCamera("cam", new BABYLON.Vector3(0, 1.6, 0), scene);
   camera.minZ = 0.01;
+  camera.setTarget(new BABYLON.Vector3(0, 1.6, 3));
 
   window.addEventListener("resize", () => engine.resize());
   engine.runRenderLoop(() => scene.render());
-  return { engine, scene };
+  return { engine, scene, camera };
 }
 
 function makeOrbMaterial(scene) {
-  BABYLON.Effect.ShadersStore["orbVertexShader"] = `
-    precision highp float;
-    attribute vec3 position; attribute vec2 uv;
-    uniform mat4 worldViewProjection;
-    varying vec2 vUv;
-    void main() { vUv = uv; gl_Position = worldViewProjection * vec4(position, 1.0); }
-  `;
-  BABYLON.Effect.ShadersStore["orbFragmentShader"] = `
-    precision highp float;
-    varying vec2 vUv; uniform float time; uniform vec3 baseColor;
-    void main() {
-      vec2 p = vUv - 0.5;
-      float r = length(p);
-      float rim = smoothstep(0.5, 0.35, r) - smoothstep(0.35, 0.2, r);
-      float core = smoothstep(0.2, 0.0, r);
-      float pulse = 0.7 + 0.3 * sin(time * 3.0);
-      vec3 col = baseColor * (rim * 0.6 + core * 2.0) * pulse;
-      gl_FragColor = vec4(col, (rim + core) * 0.9);
-    }
-  `;
+  if (!BABYLON.Effect.ShadersStore["orbVertexShader"]) {
+    BABYLON.Effect.ShadersStore["orbVertexShader"] = `
+      precision highp float;
+      attribute vec3 position; attribute vec2 uv;
+      uniform mat4 worldViewProjection;
+      varying vec2 vUv;
+      void main() { vUv = uv; gl_Position = worldViewProjection * vec4(position, 1.0); }
+    `;
+    BABYLON.Effect.ShadersStore["orbFragmentShader"] = `
+      precision highp float;
+      varying vec2 vUv; uniform float time; uniform vec3 baseColor;
+      void main() {
+        vec2 p = vUv - 0.5;
+        float r = length(p);
+        float rim = smoothstep(0.5, 0.35, r) - smoothstep(0.35, 0.2, r);
+        float core = smoothstep(0.2, 0.0, r);
+        float pulse = 0.7 + 0.3 * sin(time * 3.0);
+        vec3 col = baseColor * (rim * 0.6 + core * 2.0) * pulse;
+        gl_FragColor = vec4(col, (rim + core) * 0.9);
+      }
+    `;
+  }
   const mat = new BABYLON.ShaderMaterial("orb", scene, "orb", {
     attributes: ["position", "uv"],
     uniforms: ["worldViewProjection", "time", "baseColor"],
@@ -597,6 +606,15 @@ function spawnOrb(scene, position, orbMat) {
   return mesh;
 }
 
+// Fixture mode: ray-pick through mouse click, place orb 3m along ray
+function enableFixtureClicks(scene, camera, onPlace) {
+  scene.onPointerObservable.add((pointerInfo) => {
+    if (pointerInfo.type !== BABYLON.PointerEventTypes.POINTERDOWN) return;
+    const ray = scene.createPickingRay(scene.pointerX, scene.pointerY, BABYLON.Matrix.Identity(), camera);
+    onPlace(ray.origin.add(ray.direction.scale(3)));
+  });
+}
+
 async function enableAR(scene, onPlace) {
   const xrHelper = await scene.createDefaultXRExperienceAsync({
     uiOptions: { sessionMode: "immersive-ar", referenceSpaceType: "local-floor" },
@@ -605,7 +623,6 @@ async function enableAR(scene, onPlace) {
 
   const hitTest = xrHelper.featuresManager.enableFeature(BABYLON.WebXRHitTest, "latest");
 
-  // Indicator ring
   const indicator = BABYLON.MeshBuilder.CreateTorus("indicator", { diameter: 0.25, thickness: 0.008, tessellation: 32 }, scene);
   const indicatorMat = new BABYLON.StandardMaterial("indMat", scene);
   indicatorMat.emissiveColor = new BABYLON.Color3(0.4, 1, 0.8);
@@ -629,11 +646,9 @@ async function enableAR(scene, onPlace) {
     }
   });
 
-  // Tap to place
   scene.onPointerObservable.add((pointerInfo) => {
     if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN && latestHit) {
-      const pos = indicator.position.clone();
-      onPlace(pos);
+      onPlace(indicator.position.clone());
     }
   });
 
@@ -648,37 +663,56 @@ export default function App() {
   const sceneRef = useRef(null);
   const orbMatRef = useRef(null);
   const [orbCount, setOrbCount] = useState(0);
+  const [mode, setMode] = useState("checking"); // checking | ar | fixture
+  const [arError, setArError] = useState(null);
   const { docs: savedOrbs } = useLiveQuery("type", { key: "orb" });
 
   useEffect(() => {
     if (!canvasRef.current) return;
-    const { engine, scene } = buildARScene(canvasRef.current);
-    sceneRef.current = scene;
-    orbMatRef.current = makeOrbMaterial(scene);
+    let engine, scene, camera;
 
-    const t0 = performance.now();
-    scene.onBeforeRenderObservable.add(() => {
-      const t = (performance.now() - t0) / 1000;
-      scene.meshes.forEach((m) => {
-        if (m.material?.getClassName?.() === "ShaderMaterial" && m.name.startsWith("orb")) {
-          m.material.setFloat("time", t);
-        }
+    async function init() {
+      const arSupported = await navigator.xr?.isSessionSupported("immersive-ar").catch(() => false);
+      ({ engine, scene, camera } = buildScene(canvasRef.current));
+      sceneRef.current = scene;
+      orbMatRef.current = makeOrbMaterial(scene);
+
+      const t0 = performance.now();
+      scene.onBeforeRenderObservable.add(() => {
+        const t = (performance.now() - t0) / 1000;
+        scene.meshes.forEach((m) => {
+          if (m.material?.getClassName?.() === "ShaderMaterial" && m.name.startsWith("orb")) {
+            m.material.setFloat("time", t);
+          }
+        });
       });
-    });
 
-    enableAR(scene, async (pos) => {
-      spawnOrb(scene, pos, orbMatRef.current);
-      setOrbCount((n) => n + 1);
-      await database.put({ type: "orb", x: pos.x, y: pos.y, z: pos.z, ts: Date.now() });
-    });
+      const handlePlace = async (pos) => {
+        spawnOrb(scene, pos, orbMatRef.current);
+        setOrbCount((n) => n + 1);
+        await database.put({ type: "orb", x: pos.x, y: pos.y, z: pos.z, ts: Date.now() });
+      };
 
+      if (arSupported) {
+        setMode("ar");
+        try {
+          await enableAR(scene, handlePlace);
+        } catch (e) {
+          setArError(e?.message ?? String(e));
+        }
+      } else {
+        setMode("fixture");
+        enableFixtureClicks(scene, camera, handlePlace);
+      }
+    }
+
+    init();
     return () => {
-      scene.dispose();
-      engine.dispose();
+      scene?.dispose();
+      engine?.dispose();
     };
   }, []);
 
-  // Restore saved orbs when scene is ready
   useEffect(() => {
     if (!sceneRef.current || !orbMatRef.current || savedOrbs.length === 0) return;
     savedOrbs.forEach((doc) => {
@@ -687,11 +721,19 @@ export default function App() {
   }, [savedOrbs.length]);
 
   return (
-    <div className="relative w-full h-screen">
-      <canvas ref={canvasRef} className="w-full h-full" />
+    <div className="relative w-full h-screen overflow-hidden">
+      {mode === "fixture" && <img src={FIXTURE_BG} className="absolute inset-0 w-full h-full object-cover" alt="" />}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" style={{ background: "transparent" }} />
       <div className="absolute top-4 left-4 bg-black/40 text-white px-3 py-2 rounded-lg text-sm">
-        Tap a surface to place an orb · {orbCount} placed this session
+        {mode === "checking" && "Checking AR support…"}
+        {mode === "ar" && `Tap a surface to place an orb · ${orbCount} placed`}
+        {mode === "fixture" && `Desktop preview — click to place orbs · ${orbCount} placed`}
       </div>
+      {arError && (
+        <div className="absolute bottom-4 left-4 right-4 bg-red-900/80 text-white px-3 py-2 rounded-lg text-sm">
+          AR error: {arError}
+        </div>
+      )}
     </div>
   );
 }
