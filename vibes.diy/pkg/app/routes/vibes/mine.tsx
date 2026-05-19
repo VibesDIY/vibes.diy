@@ -4,11 +4,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
 import { BrutalistCard, VibesButton } from "@vibes.diy/base";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
-import type { ResGetChatDetails, MetaScreenShot } from "@vibes.diy/api-types";
+import type { ResGetChatDetails, MetaScreenShot, ResRecentVibesItem } from "@vibes.diy/api-types";
 import { isMetaScreenShot } from "@vibes.diy/api-types";
 import { toast } from "react-hot-toast";
-import { AppSlugItem } from "../../components/mine/AppSlugItem.js";
 import { useRecentVibes } from "../../hooks/useRecentVibes.js";
+import { MineDetailPanel, toMineDetailTab } from "../../components/mine/MineDetailPanel.js";
 
 export function meta() {
   return [{ title: "My Vibes - Vibes DIY" }, { name: "description", content: "Your created vibes in Vibes DIY" }];
@@ -30,6 +30,14 @@ export default function VibesMine(): ReactElement {
   const [appHeadInfo, setAppHeadInfo] = useState<Map<string, { screenshot?: MetaScreenShot; mode?: string }>>(new Map());
   const cancelledRef = useRef(false);
 
+  const isPanelOpen = !!(paramUserSlug && paramAppSlug);
+  const activeTab = toMineDetailTab(paramTab);
+  const selectedKey = isPanelOpen ? `${paramUserSlug}/${paramAppSlug}` : "";
+  const selectedItem = isPanelOpen
+    ? vibeItems.find((v) => v.userSlug === paramUserSlug && v.appSlug === paramAppSlug)
+    : undefined;
+  const selectedHead = selectedKey ? appHeadInfo.get(selectedKey) : undefined;
+
   async function onToggleMode(fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) {
     const nextMode = currentMode === "production" ? "dev" : "production";
     const res = await vibeDiyApi.setSetModeFs({ fsId, appSlug, userSlug, mode: nextMode });
@@ -50,7 +58,7 @@ export default function VibesMine(): ReactElement {
     });
   }
 
-  // Fetch chat details whenever the URL params change
+  // Fetch chat details whenever the selected vibe changes.
   useEffect(() => {
     if (!paramUserSlug || !paramAppSlug) {
       setChatDetails(null);
@@ -74,6 +82,7 @@ export default function VibesMine(): ReactElement {
     };
   }, [paramUserSlug, paramAppSlug, vibeDiyApi]);
 
+  // Per-prompt screenshots for the Prompts tab.
   useEffect(() => {
     if (!chatDetails) {
       setScreenshots(new Map());
@@ -81,19 +90,22 @@ export default function VibesMine(): ReactElement {
     }
     setScreenshots(new Map());
     for (const p of chatDetails.prompts) {
-      vibeDiyApi.getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, userSlug: chatDetails.userSlug }).then((res) => {
-        if (res.isErr()) return;
-        const app = res.Ok();
-        setScreenshots((prev) =>
-          new Map(prev).set(p.fsId, {
-            screenshot: app.meta.find(isMetaScreenShot),
-            mode: app.mode,
-          })
-        );
-      });
+      vibeDiyApi
+        .getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, userSlug: chatDetails.userSlug })
+        .then((res) => {
+          if (res.isErr()) return;
+          const app = res.Ok();
+          setScreenshots((prev) =>
+            new Map(prev).set(p.fsId, {
+              screenshot: app.meta.find(isMetaScreenShot),
+              mode: app.mode,
+            })
+          );
+        });
     }
   }, [chatDetails, vibeDiyApi]);
 
+  // Head screenshot for each tile in the grid.
   useEffect(() => {
     setAppHeadInfo(new Map());
     for (const item of vibeItems) {
@@ -110,18 +122,22 @@ export default function VibesMine(): ReactElement {
     }
   }, [vibeItems, vibeDiyApi]);
 
-  // Only show the full-page spinner on the very first load (no items yet).
-  // During loadMore the hook flips `isLoading` true while keeping `items`
-  // populated; we keep rendering the existing list and just dim the
-  // "Load more" button so the page doesn't blank out mid-scroll.
   const showFirstLoadSpinner = isLoading && vibeItems.length === 0;
+
+  const openTile = (item: ResRecentVibesItem) =>
+    navigate(`/vibes/mine/${item.userSlug}/${item.appSlug}/prompts`, { replace: false, preventScrollReset: true });
+  const closePanel = () => navigate("/vibes/mine", { replace: false, preventScrollReset: true });
+  const changeTab = (tab: string) => {
+    if (!paramUserSlug || !paramAppSlug) return;
+    navigate(`/vibes/mine/${paramUserSlug}/${paramAppSlug}/${tab}`, { replace: true, preventScrollReset: true });
+  };
 
   return (
     <BrutalistLayout title="My Vibes" subtitle="Your created vibes">
       {showFirstLoadSpinner ? (
         <BrutalistCard size="md">
           <div className="flex justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+            <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
           </div>
         </BrutalistCard>
       ) : vibeItems.length === 0 ? (
@@ -134,37 +150,108 @@ export default function VibesMine(): ReactElement {
           </div>
         </BrutalistCard>
       ) : (
-        <BrutalistCard size="md">
-          <div className="grid gap-3">
+        <>
+          {/* Uniform grid — 16:9 hero on top of each card, title + slug + mode
+              underneath. Click opens the side panel with the 4 tabs. */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {vibeItems.map((item) => {
               const key = `${item.userSlug}/${item.appSlug}`;
-              const isSelected = paramUserSlug === item.userSlug && paramAppSlug === item.appSlug;
+              const head = appHeadInfo.get(key);
               return (
-                <AppSlugItem
+                <VibeCard
                   key={key}
-                  userSlug={item.userSlug}
-                  appSlug={item.appSlug}
-                  title={item.title}
-                  isSelected={isSelected}
-                  activeTab={isSelected ? paramTab : undefined}
-                  isLoadingThis={loadingDetails === key}
-                  headInfo={appHeadInfo.get(key)}
-                  chatDetails={isSelected ? (chatDetails ?? undefined) : undefined}
-                  screenshots={screenshots}
-                  onToggleMode={onToggleMode}
+                  item={item}
+                  head={head}
+                  isSelected={selectedKey === key}
+                  onOpen={() => openTile(item)}
                 />
               );
             })}
           </div>
           {nextCursor && (
-            <div className="mt-4 flex justify-center">
+            <div className="mt-6 flex justify-center">
               <VibesButton variant="blue" onClick={() => void loadMore()} disabled={isLoading}>
                 {isLoading ? "Loading..." : "Load more"}
               </VibesButton>
             </div>
           )}
-        </BrutalistCard>
+        </>
       )}
+
+      <MineDetailPanel
+        userSlug={paramUserSlug}
+        appSlug={paramAppSlug}
+        title={selectedItem?.title}
+        headScreenshot={selectedHead?.screenshot}
+        headMode={selectedHead?.mode}
+        activeTab={activeTab}
+        isLoading={loadingDetails === selectedKey}
+        chatDetails={chatDetails}
+        screenshots={screenshots}
+        onToggleMode={onToggleMode}
+        onTabChange={changeTab}
+        onClose={closePanel}
+      />
     </BrutalistLayout>
+  );
+}
+
+interface VibeCardProps {
+  item: ResRecentVibesItem;
+  head?: { screenshot?: MetaScreenShot; mode?: string };
+  isSelected: boolean;
+  onOpen: () => void;
+}
+
+function VibeCard({ item, head, isSelected, onOpen }: VibeCardProps) {
+  const label = item.title ?? item.appSlug;
+  const previewUrl = head?.screenshot
+    ? `/assets/cid/?url=${encodeURIComponent(head.screenshot.assetUrl)}&mime=${encodeURIComponent(head.screenshot.mime)}`
+    : null;
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`Open ${label}`}
+      className={`group flex flex-col text-left rounded-lg overflow-hidden border-2 bg-light-background-00 dark:bg-dark-background-01 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0_0_var(--vibes-near-black)] dark:hover:shadow-[4px_4px_0_0_var(--color-dark-decorative-01)] ${
+        isSelected
+          ? "border-blue-400 dark:border-blue-500 shadow-[4px_4px_0_0_var(--vibes-near-black)] dark:shadow-[4px_4px_0_0_var(--color-dark-decorative-01)]"
+          : "border-[var(--vibes-near-black)] dark:border-[var(--color-dark-decorative-01)]"
+      }`}
+    >
+      <div
+        className="w-full bg-light-background-02 dark:bg-dark-background-02 border-b-2 border-[var(--vibes-near-black)] dark:border-[var(--color-dark-decorative-01)] overflow-hidden flex items-center justify-center"
+        style={{ aspectRatio: "16 / 9" }}
+      >
+        {previewUrl ? (
+          <img src={previewUrl} alt="" className="w-full h-full object-cover block" />
+        ) : (
+          <span className="text-light-primary/40 dark:text-dark-primary/40 text-xs uppercase tracking-widest px-2 text-center">
+            No preview
+          </span>
+        )}
+      </div>
+
+      <div className="px-3 py-2 flex flex-col gap-0.5">
+        <div className="flex items-center gap-2">
+          <span className="flex-1 min-w-0 text-sm font-semibold text-light-primary dark:text-dark-primary truncate">
+            {label}
+          </span>
+          {head?.mode && (
+            <span
+              className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                head.mode === "production"
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
+                  : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300"
+              }`}
+            >
+              {head.mode}
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-light-primary/60 dark:text-dark-primary/60 truncate">{item.userSlug}</span>
+      </div>
+    </button>
   );
 }
