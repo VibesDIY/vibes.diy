@@ -108,7 +108,7 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
         ok: true,
         text: () =>
           Promise.resolve(
-            "<Babylon.js WebXR-docs>\n# Babylon.js WebXR Documentation\nReal WebXR docs content from pkg/llms/webxr.md\n</Babylon.js WebXR-docs>"
+            "<Babylon.js WebXR-docs>\n# Babylon.js WebXR Documentation\nMock WebXR docs stub for tests\n</Babylon.js WebXR-docs>"
           ),
       } as Response);
     }

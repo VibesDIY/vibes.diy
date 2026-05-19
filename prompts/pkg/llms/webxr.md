@@ -427,7 +427,6 @@ function buildScene(canvas) {
 
   new BABYLON.HemisphericLight("amb", new BABYLON.Vector3(0, 1, 0), scene).intensity = 0.1;
 
-  window.addEventListener("resize", () => engine.resize());
   engine.runRenderLoop(() => scene.render());
   return { engine, scene };
 }
@@ -455,6 +454,7 @@ function buildGalaxy(scene) {
 }
 
 function buildCoreShader(scene) {
+  if (!BABYLON.Effect.ShadersStore["galaxyCoreVertexShader"]) {
   BABYLON.Effect.ShadersStore["galaxyCoreVertexShader"] = `
     precision highp float;
     attribute vec3 position; attribute vec2 uv;
@@ -479,6 +479,7 @@ function buildCoreShader(scene) {
       gl_FragColor = vec4(col * glow * 2.0, min(glow, 1.0));
     }
   `;
+  }
   const mat = new BABYLON.ShaderMaterial("galaxyCore", scene, "galaxyCore", {
     attributes: ["position", "uv"],
     uniforms: ["worldViewProjection", "time"],
@@ -512,12 +513,15 @@ export default function App() {
   useEffect(() => {
     if (!canvasRef.current) return;
     const { engine, scene } = buildScene(canvasRef.current);
+    const onResize = () => engine.resize();
+    window.addEventListener("resize", onResize);
     buildGalaxy(scene);
     buildCoreShader(scene);
     enableVR(scene).then(() => {
       database.put({ type: "session", startedAt: Date.now() });
     });
     return () => {
+      window.removeEventListener("resize", onResize);
       scene.dispose();
       engine.dispose();
     };
@@ -559,7 +563,6 @@ function buildScene(canvas) {
   camera.minZ = 0.01;
   camera.setTarget(new BABYLON.Vector3(0, 1.6, 3));
 
-  window.addEventListener("resize", () => engine.resize());
   engine.runRenderLoop(() => scene.render());
   return { engine, scene, camera };
 }
@@ -662,6 +665,7 @@ export default function App() {
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const orbMatRef = useRef(null);
+  const spawnedIdsRef = useRef(new Set());
   const [orbCount, setOrbCount] = useState(0);
   const [mode, setMode] = useState("checking"); // checking | ar | fixture
   const [arError, setArError] = useState(null);
@@ -670,6 +674,9 @@ export default function App() {
   useEffect(() => {
     if (!canvasRef.current) return;
     let engine, scene, camera;
+
+    const onResize = () => engine?.resize();
+    window.addEventListener("resize", onResize);
 
     async function init() {
       const arSupported = await navigator.xr?.isSessionSupported("immersive-ar").catch(() => false);
@@ -690,7 +697,8 @@ export default function App() {
       const handlePlace = async (pos) => {
         spawnOrb(scene, pos, orbMatRef.current);
         setOrbCount((n) => n + 1);
-        await database.put({ type: "orb", x: pos.x, y: pos.y, z: pos.z, ts: Date.now() });
+        const { id } = await database.put({ type: "orb", x: pos.x, y: pos.y, z: pos.z, ts: Date.now() });
+        spawnedIdsRef.current.add(id);
       };
 
       if (arSupported) {
@@ -708,6 +716,7 @@ export default function App() {
 
     init();
     return () => {
+      window.removeEventListener("resize", onResize);
       scene?.dispose();
       engine?.dispose();
     };
@@ -716,6 +725,8 @@ export default function App() {
   useEffect(() => {
     if (!sceneRef.current || !orbMatRef.current || savedOrbs.length === 0) return;
     savedOrbs.forEach((doc) => {
+      if (spawnedIdsRef.current.has(doc._id)) return;
+      spawnedIdsRef.current.add(doc._id);
       spawnOrb(sceneRef.current, new BABYLON.Vector3(doc.x, doc.y, doc.z), orbMatRef.current);
     });
   }, [savedOrbs.length]);
