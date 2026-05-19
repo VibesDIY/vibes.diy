@@ -23,6 +23,8 @@ export { DocNotify } from "./doc-notify.js";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 
 declare const caches: CacheStorage;
+
+type WorkerCtx = Omit<ExecutionContext, "cache"> & CFInjectMutable;
 // declare const import { meta: { env: Record<string, string> } }
 
 // Lazy-initialize to avoid exceeding CF Worker startup CPU limit (error 10021).
@@ -134,7 +136,7 @@ export default {
       return response;
     }
 
-    const cctx = ctx as unknown as ExecutionContext & CFInjectMutable;
+    const cctx = ctx as unknown as WorkerCtx;
     // cctx.cache = new NoCache() as unknown as CfCacheIf; // Disable caching for now - can implement custom caching logic in the future if needed
     cctx.cache = caches.default as unknown as CfCacheIf; // Use Cloudflare's default cache
     const cfCtx = await cfServeAppCtx(request, env, cctx);

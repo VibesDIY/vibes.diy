@@ -144,7 +144,11 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
   };
 }
 
-export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
+export async function cfServeAppCtx(
+  request: CFRequest,
+  env: CFEnv,
+  ctx: Omit<ExecutionContext, "cache"> & Omit<CFInject, "appCtx">
+) {
   const netHash = Lazy(() => netHashFn(request.cf as CfProperties));
   const sthis =
     ctx.sthis ??

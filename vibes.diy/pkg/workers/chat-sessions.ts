@@ -15,6 +15,8 @@ import { CFEnv } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 
+type WorkerCtx = Omit<ExecutionContext, "cache"> & CFInjectMutable;
+
 const DocChangedEvt = type({
   type: "'vibes.diy.evt-doc-changed'",
   userSlug: "string",
@@ -141,7 +143,7 @@ export class ChatSessions implements DurableObject {
     const uri = URI.from(request.url);
     this.shardId = uri.getParam("shard") ?? this.shardId;
 
-    const cctx = {} as unknown as ExecutionContext & CFInjectMutable;
+    const cctx = {} as unknown as WorkerCtx;
     cctx.cache = caches.default as unknown as CfCacheIf; // Use Cloudflare's default cache
     cctx.webSocket = {
       connections: this.connections,
