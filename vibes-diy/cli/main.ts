@@ -270,8 +270,11 @@ async function main(): Promise<number> {
             break;
           }
           case isResPull(msg): {
-            if (wmsg.cmdTs.outputFormat !== "json") {
-              const { directory, files } = msg as ResPull;
+            const pullMsg = msg as ResPull;
+            if (wmsg.cmdTs.outputFormat === "json") {
+              console.log(JSON.stringify(pullMsg));
+            } else {
+              const { directory, files } = pullMsg;
               ctx.output.stdout(`Wrote ${files.length} file(s) to ${directory}\n`);
               for (const f of files) {
                 ctx.output.stdout(`  ${f.name}  (${f.size} B)\n`);
