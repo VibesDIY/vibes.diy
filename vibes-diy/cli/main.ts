@@ -32,6 +32,7 @@ import { editCmd, isResEdit } from "./cmds/edit-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
 import { themesCmd, isResThemesList, isResThemeContent } from "./cmds/themes-cmd.js";
 import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
+import { listCmd, isResVibesList, type ResVibesList } from "./cmds/list-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
 import { isResDeviceIdRegister } from "@fireproof/core-cli";
@@ -130,6 +131,7 @@ async function main(): Promise<number> {
         db: dbSubcommands(ctx),
         edit: editCmd(ctx),
         generate: generateCmd(ctx),
+        list: listCmd(ctx),
         login: loginCmd(ctx),
         push: pushCmd(ctx),
         "put-asset": putAssetCmd(ctx),
@@ -272,6 +274,20 @@ async function main(): Promise<number> {
             console.log(`uploadId=${msg.uploadId}`);
             if (msg.verified !== undefined) {
               console.log(`verified=${msg.verified}`);
+            }
+            break;
+          }
+          case isResVibesList(msg): {
+            const { items } = msg as ResVibesList;
+            if (wmsg.cmdTs.outputFormat === "json") {
+              for (const item of items) {
+                console.log(JSON.stringify(item));
+              }
+            } else {
+              for (const item of items) {
+                const label = item.title ? `  ${item.title}` : "";
+                console.log(`${item.userSlug}/${item.appSlug}${label}`);
+              }
             }
             break;
           }
