@@ -1,6 +1,6 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { assert, beforeAll, describe, expect, inject, it, vi } from "vitest";
-import { BuildURI, loadAsset, processStream, Result, TestFetchPair, TestWSPair, sleep } from "@adviser/cement";
+import { loadAsset, processStream, Result, TestFetchPair, TestWSPair, sleep } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import {
