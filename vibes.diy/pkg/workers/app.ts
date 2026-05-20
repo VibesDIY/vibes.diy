@@ -64,6 +64,44 @@ export default {
       hostnameBase: env.VIBES_SVC_HOSTNAME_BASE,
     });
 
+    // Landing page event beacon — public POST, no auth, fires before DO routing
+    if (url.pathname === "/api/lp-event") {
+      if (request.method === "OPTIONS") {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "https://good.vibes.diy",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+          },
+        }) as unknown as CFResponse;
+      }
+      if (request.method === "POST") {
+        try {
+          const body = (await request.json()) as Record<string, unknown>;
+          if (env.POSTHOG_KEY) {
+            const posthogHost = env.POSTHOG_HOST ?? "https://app.posthog.com";
+            await fetch(`${posthogHost}/capture/`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                api_key: env.POSTHOG_KEY,
+                event: body.event,
+                distinct_id: "lp_beacon_anonymous",
+                properties: body,
+              }),
+            });
+          }
+        } catch {
+          // swallow — beacon must never fail the page
+        }
+        return new Response(null, {
+          status: 204,
+          headers: { "Access-Control-Allow-Origin": "https://good.vibes.diy" },
+        }) as unknown as CFResponse;
+      }
+    }
+
     if (route === "api-do") {
       const shard = url.getParam("shard") ?? crypto.randomUUID();
       const id = env.CHAT_SESSIONS.idFromName(shard);
