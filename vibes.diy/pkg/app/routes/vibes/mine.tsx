@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
 import { VibesButton } from "@vibes.diy/base";
@@ -10,6 +10,7 @@ import { toast } from "react-hot-toast";
 import { useRecentVibes } from "../../hooks/useRecentVibes.js";
 import { MineDetailPanel, toMineDetailTab } from "../../components/mine/MineDetailPanel.js";
 import { VibesGrid, type GridHeadInfo } from "../../components/mine/VibesGrid.js";
+import { VibesSearchBar } from "../../components/mine/VibesSearchBar.js";
 
 export function meta() {
   return [{ title: "My Vibes - Vibes DIY" }, { name: "description", content: "Your created vibes in Vibes DIY" }];
@@ -23,12 +24,14 @@ export default function VibesMine(): ReactElement {
     tab: paramTab,
   } = useParams<{ userSlug?: string; appSlug?: string; tab?: string }>();
   const { vibeDiyApi } = useVibesDiy();
-  const { items: vibeItems, loading: isLoading, nextCursor, loadMore } = useRecentVibes(100);
+  const { items: vibeItems, loading: isLoading, nextCursor, loadMore } = useRecentVibes(30);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [chatDetails, setChatDetails] = useState<ResGetChatDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState<string | null>(null);
   const [screenshots, setScreenshots] = useState<Map<string, GridHeadInfo>>(new Map());
   const [appHeadInfo, setAppHeadInfo] = useState<Map<string, GridHeadInfo>>(new Map());
+  const requestedHeadKeysRef = useRef<Set<string>>(new Set());
   const cancelledRef = useRef(false);
 
   const isPanelOpen = !!(paramUserSlug && paramAppSlug);
@@ -102,22 +105,39 @@ export default function VibesMine(): ReactElement {
     }
   }, [chatDetails, vibeDiyApi]);
 
-  // Head screenshot for each tile in the grid.
+  // Head screenshot for each tile in the grid. We track requested keys in a
+  // ref so subsequent `loadMore` pages only fetch the new items and the
+  // already-resolved rows don't flash back to skeleton.
   useEffect(() => {
-    setAppHeadInfo(new Map());
     for (const item of vibeItems) {
+      const key = `${item.userSlug}/${item.appSlug}`;
+      if (requestedHeadKeysRef.current.has(key)) continue;
+      requestedHeadKeysRef.current.add(key);
       vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug: item.appSlug }).then((res) => {
-        if (res.isErr()) return;
-        const app = res.Ok();
-        setAppHeadInfo((prev) =>
-          new Map(prev).set(`${item.userSlug}/${item.appSlug}`, {
+        setAppHeadInfo((prev) => {
+          // Resolve the per-row skeleton even on failure by always seeding
+          // an entry (empty object) — otherwise the row would stay pulsing.
+          if (res.isErr()) return new Map(prev).set(key, {});
+          const app = res.Ok();
+          return new Map(prev).set(key, {
             screenshot: app.meta.find(isMetaScreenShot),
             mode: app.mode,
-          })
-        );
+          });
+        });
       });
     }
   }, [vibeItems, vibeDiyApi]);
+
+  const filteredItems = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return vibeItems;
+    return vibeItems.filter((item) => {
+      const title = (item.title ?? "").toLowerCase();
+      const slug = item.appSlug.toLowerCase();
+      const user = item.userSlug.toLowerCase();
+      return title.includes(q) || slug.includes(q) || user.includes(q);
+    });
+  }, [vibeItems, searchQuery]);
 
   const openTile = (item: ResRecentVibesItem) =>
     navigate(`/vibes/mine/${item.userSlug}/${item.appSlug}/prompts`, { replace: false, preventScrollReset: true });
@@ -129,38 +149,50 @@ export default function VibesMine(): ReactElement {
 
   return (
     <BrutalistLayout title="My Vibes" subtitle="Your created vibes">
-      <VibesGrid
-        items={vibeItems}
-        headInfoMap={appHeadInfo}
-        selectedKey={selectedKey}
-        onOpen={openTile}
-        isLoading={isLoading}
-        nextCursor={nextCursor}
-        onLoadMore={() => void loadMore()}
-        emptyState={{
-          message: "You don't have any vibes yet",
-          cta: (
-            <VibesButton variant="blue" onClick={() => navigate("/")}>
-              Create a Vibe
-            </VibesButton>
-          ),
-        }}
-      />
-
-      <MineDetailPanel
-        userSlug={paramUserSlug}
-        appSlug={paramAppSlug}
-        title={selectedItem?.title}
-        headScreenshot={selectedHead?.screenshot}
-        headMode={selectedHead?.mode}
-        activeTab={activeTab}
-        isLoading={loadingDetails === selectedKey}
-        chatDetails={chatDetails}
-        screenshots={screenshots}
-        onToggleMode={onToggleMode}
-        onTabChange={changeTab}
-        onClose={closePanel}
-      />
+      {isPanelOpen ? (
+        <MineDetailPanel
+          userSlug={paramUserSlug}
+          appSlug={paramAppSlug}
+          title={selectedItem?.title}
+          headScreenshot={selectedHead?.screenshot}
+          headMode={selectedHead?.mode}
+          activeTab={activeTab}
+          isLoading={loadingDetails === selectedKey}
+          chatDetails={chatDetails}
+          screenshots={screenshots}
+          onToggleMode={onToggleMode}
+          onTabChange={changeTab}
+          onClose={closePanel}
+        />
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-center">
+            <VibesSearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search your vibes…"
+              ariaLabel="Search your vibes"
+            />
+          </div>
+          <VibesGrid
+            items={filteredItems}
+            headInfoMap={appHeadInfo}
+            selectedKey={selectedKey}
+            onOpen={openTile}
+            isLoading={isLoading}
+            nextCursor={searchQuery ? undefined : nextCursor}
+            onLoadMore={() => void loadMore()}
+            emptyState={{
+              message: searchQuery ? `No vibes match "${searchQuery}"` : "You don't have any vibes yet",
+              cta: searchQuery ? undefined : (
+                <VibesButton variant="blue" onClick={() => navigate("/")}>
+                  Create a Vibe
+                </VibesButton>
+              ),
+            }}
+          />
+        </div>
+      )}
     </BrutalistLayout>
   );
 }
