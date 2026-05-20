@@ -50,25 +50,32 @@ export function App({ getClerkToken }: AppProps) {
   const [memberships, setMemberships] = useState<Loadable<ResReportGrowthMemberships>>({ kind: "loading" });
   const [vibes, setVibes] = useState<Loadable<ResReportGrowthVibesWithData>>({ kind: "loading" });
   const [referrers, setReferrers] = useState<Loadable<ResReportAttributionReferrers>>({ kind: "loading" });
+  const [referrerFilter, setReferrerFilter] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const ac = new AbortController();
     void (async () => {
-      const [m, v, r] = await Promise.all([
-        api.reportGrowthMemberships({}),
-        api.reportGrowthVibesWithData({}),
-        api.reportAttributionReferrers({}),
-      ]);
+      const [m, v] = await Promise.all([api.reportGrowthMemberships({}), api.reportGrowthVibesWithData({})]);
       if (ac.signal.aborted) return;
       if (m.isOk()) setMemberships({ kind: "ok", data: m.Ok() });
       else setMemberships({ kind: "err", msg: m.Err().message });
       if (v.isOk()) setVibes({ kind: "ok", data: v.Ok() });
       else setVibes({ kind: "err", msg: v.Err().message });
+    })();
+    return () => ac.abort();
+  }, [api]);
+
+  useEffect(() => {
+    const ac = new AbortController();
+    setReferrers({ kind: "loading" });
+    void (async () => {
+      const r = await api.reportAttributionReferrers(referrerFilter !== undefined ? { reqPath: referrerFilter } : {});
+      if (ac.signal.aborted) return;
       if (r.isOk()) setReferrers({ kind: "ok", data: r.Ok() });
       else setReferrers({ kind: "err", msg: r.Err().message });
     })();
     return () => ac.abort();
-  }, [api]);
+  }, [api, referrerFilter]);
 
   return (
     <div className="page">
@@ -158,8 +165,20 @@ export function App({ getClerkToken }: AppProps) {
           <h2 className="section-title">Referrer attribution</h2>
           <p className="section-intro">
             External pages ranked by traffic to vibes.diy. Conversions = requests to <code>/api/</code>, <code>/new</code>, or{" "}
-            <code>/vibe/</code>. Browse = remaining hits.
+            <code>/vibe/</code>. Browse = remaining hits. Click a landing-page path to drill down.
           </p>
+          {referrerFilter !== undefined && (
+            <div style={{ marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <span style={{ fontFamily: "monospace", fontSize: "0.875rem", color: "var(--red)" }}>{referrerFilter}</span>
+              <button
+                className="btn"
+                style={{ fontSize: "0.75rem", padding: "0.2rem 0.6rem" }}
+                onClick={() => setReferrerFilter(undefined)}
+              >
+                ← All traffic
+              </button>
+            </div>
+          )}
           {referrers.kind === "loading" ? (
             <div className="empty">Loading…</div>
           ) : referrers.kind === "err" ? (
@@ -167,7 +186,7 @@ export function App({ getClerkToken }: AppProps) {
           ) : referrers.data.rows.length === 0 ? (
             <div className="empty">No referrer data yet.</div>
           ) : (
-            <ReferrersTable data={referrers.data} />
+            <ReferrersTable data={referrers.data} onDrillDown={setReferrerFilter} activeFilter={referrerFilter} />
           )}
         </div>
       </section>
@@ -226,14 +245,23 @@ function ErrorPanel({ msg }: { msg: string }) {
   );
 }
 
-function ReferrersTable({ data }: { readonly data: ResReportAttributionReferrers }) {
+function ReferrersTable({
+  data,
+  onDrillDown,
+  activeFilter,
+}: {
+  readonly data: ResReportAttributionReferrers;
+  readonly onDrillDown: (reqPath: string) => void;
+  readonly activeFilter: string | undefined;
+}) {
   return (
     <div style={{ overflowX: "auto" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
         <thead>
           <tr style={{ borderBottom: "2px solid var(--near-black)" }}>
             <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Host</th>
-            <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Path</th>
+            <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Referrer path</th>
+            <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Landing page</th>
             <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Total</th>
             <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Conversions</th>
             <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Browse</th>
@@ -242,7 +270,7 @@ function ReferrersTable({ data }: { readonly data: ResReportAttributionReferrers
         <tbody>
           {data.rows.map((row, i) => (
             <tr
-              key={`${row.refHost}${row.refPath}`}
+              key={`${row.refHost}${row.refPath}${row.reqPath}`}
               style={{
                 borderBottom: "1px solid color-mix(in srgb, var(--near-black) 15%, transparent)",
                 background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--near-black) 4%, transparent)",
@@ -250,6 +278,28 @@ function ReferrersTable({ data }: { readonly data: ResReportAttributionReferrers
             >
               <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace" }}>{row.refHost}</td>
               <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace", color: "var(--red)" }}>{row.refPath}</td>
+              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace" }}>
+                {activeFilter === undefined ? (
+                  <button
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      fontFamily: "monospace",
+                      fontSize: "inherit",
+                      color: "var(--cyan)",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      textDecorationStyle: "dotted",
+                    }}
+                    onClick={() => onDrillDown(row.reqPath)}
+                  >
+                    {row.reqPath}
+                  </button>
+                ) : (
+                  row.reqPath
+                )}
+              </td>
               <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.total.toLocaleString()}</td>
               <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", color: row.conversions > 0 ? "var(--red)" : "inherit" }}>
                 {row.conversions.toLocaleString()}

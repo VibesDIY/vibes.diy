@@ -11,24 +11,30 @@ import {
   resReportAttributionReferrers,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { sql, desc } from "drizzle-orm";
+import { sql, desc, like } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { cachedReport, hasReport } from "./report-cache.js";
 
-async function computeAttributionReferrers(vctx: VibesApiSQLCtx): Promise<ResReportAttributionReferrers> {
+async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?: string): Promise<ResReportAttributionReferrers> {
   const t = vctx.sql.tables;
 
-  const rows = await vctx.sql.db
+  const baseQuery = vctx.sql.db
     .select({
       refHost: t.refererEvents.refHost,
       refPath: t.refererEvents.refPath,
+      reqPath: t.refererEvents.reqPath,
       total: sql<number>`cast(count(*) as int)`,
       conversions: sql<number>`cast(count(*) filter (where ${t.refererEvents.reqPath} like '/api/%' or ${t.refererEvents.reqPath} like '/new%' or ${t.refererEvents.reqPath} like '/vibe/%') as int)`,
     })
     .from(t.refererEvents)
-    .groupBy(t.refererEvents.refHost, t.refererEvents.refPath)
+    .$dynamic();
+
+  const filtered = reqPathFilter !== undefined ? baseQuery.where(like(t.refererEvents.reqPath, `${reqPathFilter}%`)) : baseQuery;
+
+  const rows = await filtered
+    .groupBy(t.refererEvents.refHost, t.refererEvents.refPath, t.refererEvents.reqPath)
     .orderBy(desc(sql`count(*)`))
     .limit(100);
 
@@ -70,8 +76,11 @@ export const reportAttributionReferrersEvento: EventoHandler<
         return Result.Ok(EventoResult.Continue);
       }
 
-      const res = await cachedReport(vctx, "attribution-referrers", resReportAttributionReferrers, () =>
-        computeAttributionReferrers(vctx)
+      const reqPathFilter = req.reqPath;
+      const cacheKey =
+        reqPathFilter !== undefined ? `attribution-referrers:${encodeURIComponent(reqPathFilter)}` : "attribution-referrers";
+      const res = await cachedReport(vctx, cacheKey, resReportAttributionReferrers, () =>
+        computeAttributionReferrers(vctx, reqPathFilter)
       );
       await ctx.send.send(ctx, res);
       return Result.Ok(EventoResult.Continue);
