@@ -9,6 +9,7 @@ import { generateEvento } from "./cmds/generate-cmd.js";
 import { dbListEvento, dbGetEvento, dbPutEvento, dbDelEvento, dbQueryEvento, dbSubscribeEvento } from "./cmds/db/index.js";
 import { editEvento } from "./cmds/edit-cmd.js";
 import { listEvento } from "./cmds/list-cmd.js";
+import { pullEvento } from "./cmds/pull-cmd.js";
 import {
   deviceIdRegisterEvento,
   isCmdProgress,
@@ -53,6 +54,7 @@ export function cmdTsEvento() {
     generateEvento,
     editEvento,
     listEvento,
+    pullEvento,
     deviceIdRegisterEvento,
     dbListEvento,
     dbGetEvento,

@@ -33,6 +33,7 @@ import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd
 import { themesCmd, isResThemesList, isResThemeContent } from "./cmds/themes-cmd.js";
 import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
 import { listCmd, isResVibesList, type ResVibesList } from "./cmds/list-cmd.js";
+import { pullCmd, isResPull, type ResPull } from "./cmds/pull-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
 import { isResDeviceIdRegister } from "@fireproof/core-cli";
@@ -133,6 +134,7 @@ async function main(): Promise<number> {
         generate: generateCmd(ctx),
         list: listCmd(ctx),
         login: loginCmd(ctx),
+        pull: pullCmd(ctx),
         push: pushCmd(ctx),
         "put-asset": putAssetCmd(ctx),
         skills: skillsCmd(ctx),
@@ -265,6 +267,16 @@ async function main(): Promise<number> {
           }
           case isResEdit(msg): {
             // Already reported via sendProgress in edit handler
+            break;
+          }
+          case isResPull(msg): {
+            if (wmsg.cmdTs.outputFormat !== "json") {
+              const { directory, files } = msg as ResPull;
+              ctx.output.stdout(`Wrote ${files.length} file(s) to ${directory}\n`);
+              for (const f of files) {
+                ctx.output.stdout(`  ${f.name}  (${f.size} B)\n`);
+              }
+            }
             break;
           }
           case isResPutAssetCli(msg): {
