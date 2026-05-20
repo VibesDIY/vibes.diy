@@ -14,7 +14,7 @@ function VibeIconThumb({ icon }: { icon?: { cid: string; mime: string } }) {
     <img
       src={cidAssetUrl(icon.cid, icon.mime, getAppHostBaseUrl())}
       alt=""
-      className="h-6 w-6 shrink-0 rounded-full"
+      className="h-6 w-6 shrink-0 rounded-full dark:invert"
       onError={(e) => {
         e.currentTarget.style.display = "none";
       }}
@@ -36,9 +36,15 @@ function displayTitle(item: { title?: string; appSlug: string }): string {
 
 interface RecentVibesProps {
   onNavigate?: () => void;
+  /** When true, skip the internal sticky "My Recent Vibes" title — the
+   *  caller is providing its own header (e.g. an accordion section). */
+  hideTitle?: boolean;
+  /** When true, skip the "See all vibes" link — the caller is rendering it
+   *  externally so it can be pinned somewhere else in the layout. */
+  hideSeeAll?: boolean;
 }
 
-export function RecentVibes({ onNavigate }: RecentVibesProps) {
+export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false }: RecentVibesProps) {
   const { isSignedIn } = useAuth();
   const { items, loading, error, refresh, mutate } = useRecentVibes(20);
   const { vibeDiyApi } = useVibesDiy();
@@ -115,9 +121,11 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
         </div>
       ) : items.length > 0 ? (
         <>
-          <h3 className="sticky -top-3 bg-light-background-00 dark:bg-dark-background-00 px-4 pt-7 pb-2 text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50 z-10">
-            My Recent Vibes
-          </h3>
+          {!hideTitle && (
+            <h3 className="sticky -top-3 bg-light-background-00 dark:bg-dark-background-00 px-4 pt-7 pb-2 text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50 z-10">
+              My Recent Vibes
+            </h3>
+          )}
           <ul className="ml-3">
             {items.map((item) => {
               const key = rowKey(item);
@@ -214,16 +222,18 @@ export function RecentVibes({ onNavigate }: RecentVibesProps) {
               );
             })}
           </ul>
-          <Link
-            to="/vibes/mine"
-            onClick={onNavigate}
-            className="flex items-center justify-center gap-2 px-4 py-3 text-xs font-medium opacity-60 transition-colors hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-            </svg>
-            <span>See all vibes</span>
-          </Link>
+          {!hideSeeAll && (
+            <Link
+              to="/vibes/mine"
+              onClick={onNavigate}
+              className="flex items-center justify-center gap-2 px-4 py-3 text-xs font-medium opacity-60 transition-colors hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              <span>See all vibes</span>
+            </Link>
+          )}
         </>
       ) : (
         <div className="px-4 pb-1 text-xs opacity-60">No recent vibes yet.</div>

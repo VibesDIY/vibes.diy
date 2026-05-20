@@ -5,7 +5,10 @@ import { SignIn, useAuth, useClerk, useUser } from "@clerk/react";
 import type { SessionSidebarProps } from "@vibes.diy/prompts";
 import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { InfoIcon } from "./SessionSidebar/InfoIcon.js";
+import { Memberships } from "./SessionSidebar/Memberships.js";
 import { RecentVibes } from "./RecentVibes.js";
+
+type SidebarSection = "apps" | "memberships";
 
 function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -15,6 +18,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
   const { user } = useUser();
   const userEmail = user?.primaryEmailAddress?.emailAddress;
   const [showSignIn, setShowSignIn] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<SidebarSection>("apps");
 
   // Handle pointerdown outside the sidebar to close it. We listen for
   // pointerdown rather than mousedown so a single event covers both mouse
@@ -74,8 +78,56 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
             <span>New Vibe</span>
           </Link>
         </div>
-        <nav className="flex-1 overflow-y-auto min-h-0 px-4">
-          <RecentVibes onNavigate={onClose} />
+        {/* Accordion: only one section expanded at a time. "My Apps" header
+            always sits at the top; "Memberships" header always sits below it
+            (either right after as the active header, or pinned at the bottom
+            as the inactive header). Each header is a toggle — clicking it
+            flips which section is active. */}
+        <nav className="flex-1 flex flex-col min-h-0 px-4">
+          {(() => {
+            const toggle = () => setExpandedSection((s) => (s === "apps" ? "memberships" : "apps"));
+            return (
+              <>
+                <SidebarSectionHeader label="My Apps" isActive={expandedSection === "apps"} onClick={toggle} />
+
+                {expandedSection === "apps" ? (
+                  <>
+                    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+                      <RecentVibes onNavigate={onClose} hideTitle hideSeeAll />
+                      <Link
+                        to="/vibes/mine"
+                        onClick={onClose}
+                        className="mt-auto flex items-center justify-center gap-2 px-4 py-3 text-xs font-medium opacity-60 transition-colors hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        <span>See all vibes</span>
+                      </Link>
+                    </div>
+                    <SidebarSectionHeader label="Memberships" isActive={false} onClick={toggle} />
+                  </>
+                ) : (
+                  <>
+                    <SidebarSectionHeader label="Memberships" isActive onClick={toggle} />
+                    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+                      <Memberships onNavigate={onClose} />
+                      <Link
+                        to="/memberships"
+                        onClick={onClose}
+                        className="mt-auto flex items-center justify-center gap-2 px-4 py-3 text-xs font-medium opacity-60 transition-colors hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        <span>See all memberships</span>
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </>
+            );
+          })()}
         </nav>
 
         {/* Bottom section — pinned */}
@@ -145,6 +197,41 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
           document.body
         )}
     </div>
+  );
+}
+
+interface SidebarSectionHeaderProps {
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+function SidebarSectionHeader({ label, isActive, onClick }: SidebarSectionHeaderProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={isActive}
+      className="sticky -top-3 z-10 flex w-full items-center justify-between bg-light-background-00 dark:bg-dark-background-00 px-4 pt-5 pb-2 text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors"
+    >
+      <span>{label}</span>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          transform: isActive ? "rotate(180deg)" : "rotate(0deg)",
+          transition: "transform 0.25s ease",
+        }}
+      >
+        <polyline points="18 15 12 9 6 15" />
+      </svg>
+    </button>
   );
 }
 

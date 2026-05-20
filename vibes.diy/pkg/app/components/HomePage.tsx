@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import SessionSidebar from "./SessionSidebar.js";
+import { MyAppsSection } from "./MyAppsSection.js";
 import { quickSuggestions } from "../data/quick-suggestions-data.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useTheme } from "../contexts/ThemeContext.js";
@@ -238,6 +239,10 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          {/* My Apps — full-width scrollable section (sibling of the centered
+              content container above) with infinite scroll inside. */}
+          <MyAppsSection />
         </div>
       </div>
       <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
