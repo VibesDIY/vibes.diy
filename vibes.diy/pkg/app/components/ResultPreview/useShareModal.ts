@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { VibesDiyApiIface } from "@vibes.diy/api-types";
+import { usePostHog } from "posthog-js/react";
+import { getLpRef } from "../../utils/lp-ref.js";
 
 interface UseShareModalParams {
   userSlug: string;
@@ -39,6 +41,7 @@ interface UseShareModalReturn {
 export type { UseShareModalReturn };
 
 export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareModalParams): UseShareModalReturn {
+  const posthog = usePostHog();
   const [isOpen, setIsOpen] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -212,6 +215,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
         setPublishedUrl(url);
         setProductionFsId(fsId);
         setIsPublished(true);
+        posthog?.capture("app_shared", { lp_ref: getLpRef(), published_url: url });
 
         if (isInitialPublish) {
           window.open(url, "_blank");

@@ -6,6 +6,8 @@ import { Chat } from "./chat.$userSlug.$appSlug.js";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/react";
 import { notifyRecentVibesChanged } from "../../hooks/useRecentVibes.js";
+import { usePostHog } from "posthog-js/react";
+import { getLpRef } from "../../utils/lp-ref.js";
 
 const PENDING_PROMPT_KEY = "vibes.pendingPrompt";
 
@@ -15,6 +17,7 @@ export default function ChatPrompt() {
   const navigate = useNavigate();
   const hasRun = useRef(false);
   const { isSignedIn, isLoaded } = useAuth();
+  const posthog = usePostHog();
 
   const prompt64 = searchParams.get("prompt64");
 
@@ -69,6 +72,7 @@ export default function ChatPrompt() {
               return;
             }
             notifyRecentVibesChanged();
+            posthog?.capture("vibe_created", { lp_ref: getLpRef() });
             navigate(`/chat/${chat.userSlug}/${chat.appSlug}`);
           });
       });
