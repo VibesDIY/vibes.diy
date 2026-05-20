@@ -226,7 +226,7 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
 
 const INTERNAL_REFERER_SUFFIXES = [".vibesdiy.net", ".workers.dev"];
 const INTERNAL_REFERER_EXACT = new Set(["vibes.diy"]);
-function isInternalReferer(hostname: string): boolean {
+export function isInternalReferer(hostname: string): boolean {
   return INTERNAL_REFERER_EXACT.has(hostname) || INTERNAL_REFERER_SUFFIXES.some((s) => hostname.endsWith(s));
 }
 

@@ -12,7 +12,7 @@ import { createRequestHandler } from "react-router";
 // @ts-expect-error - virtual module provided by React Router
 import * as serverBuild from "virtual:react-router/server-build";
 import { cfServe, CfCacheIf } from "@vibes.diy/api-svc";
-import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
+import { CFInjectMutable, cfServeAppCtx, isInternalReferer } from "@vibes.diy/api-svc/cf-serve.js";
 import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 import { routeDecision } from "./route-decision.js";
@@ -194,6 +194,22 @@ export default {
         status: assetResponse.status,
         headers,
       }) as unknown as CFResponse;
+    }
+
+    // Log external referers for attribution — this is where page navigations land
+    const referer = request.headers.get("Referer");
+    if (referer) {
+      const rRefUri = URI.fromResult(referer);
+      const rReqUri = URI.fromResult(request.url);
+      if (rRefUri.isErr() || rReqUri.isErr()) {
+        console.log("[referer] malformed", referer, request.method, request.url);
+      } else {
+        const refHostname = rRefUri.Ok().hostname;
+        const reqHostname = rReqUri.Ok().hostname;
+        if (!isInternalReferer(refHostname) && refHostname !== reqHostname) {
+          console.log("[referer]", rRefUri.Ok().toString(), request.method, rReqUri.Ok().pathname);
+        }
+      }
     }
 
     // Delegate to React Router for SSR
