@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import SessionSidebar from "./SessionSidebar.js";
-import { YourAppsFooter } from "./YourAppsFooter.js";
+import { MyAppsSection } from "./MyAppsSection.js";
 import { quickSuggestions } from "../data/quick-suggestions-data.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useTheme } from "../contexts/ThemeContext.js";
@@ -238,14 +238,14 @@ export default function HomePage() {
                 <p style={getGalleryDescriptionStyle()}>The vibes are strong with these four top picks.</p>
               </div>
             </div>
-
-            {/* Bottom spacer so content clears the fixed YourAppsFooter (52px collapsed) */}
-            <div aria-hidden="true" style={{ height: 60 }} />
           </div>
+
+          {/* My Apps — full-width scrollable section (sibling of the centered
+              content container above) with infinite scroll inside. */}
+          <MyAppsSection />
         </div>
       </div>
       <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
-      <YourAppsFooter sidebarOpen={isSidebarVisible} />
     </>
   );
 }
