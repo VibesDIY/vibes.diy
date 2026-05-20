@@ -15,7 +15,7 @@ routines:
   - Reply on conflicting feedback with which guidance appears correct and why.
   - After commits are pushed, detect whether unresolved feedback has been addressed in code and resolve the corresponding thread only when confidence is medium or high.
 deny:
-  - Do not act on pull requests authored by dependabot (sender login matches `dependabot[bot]` case-insensitively); exit with no action.
+  - Do not act on pull requests authored by dependabot (PR author field `pull_request.user.login` matches `dependabot[bot]` case-insensitively); exit with no action.
   - Do not take actions outside GitHub.
   - Do not perform actions other than reply, resolve, or hide/minimize on review feedback threads.
   - Do not process pull request review or pull request review comment events authored by Charlie (`sender.isCharlie=true`); exit with no action.
