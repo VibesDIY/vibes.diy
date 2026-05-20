@@ -224,20 +224,28 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
   });
 }
 
+const INTERNAL_REFERER_SUFFIXES = [".vibesdiy.net", ".workers.dev"];
+const INTERNAL_REFERER_EXACT = new Set(["vibes.diy"]);
+function isInternalReferer(hostname: string): boolean {
+  return INTERNAL_REFERER_EXACT.has(hostname) || INTERNAL_REFERER_SUFFIXES.some((s) => hostname.endsWith(s));
+}
+
 export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResponse> {
   const appCtx = ctx.appCtx;
   const upgradeHeader = request.headers.get("Upgrade");
   if (upgradeHeader !== "websocket") {
     const referer = request.headers.get("Referer");
     if (referer) {
-      try {
-        const refUrl = new URL(referer);
-        const reqUrl = new URL(request.url);
-        if (refUrl.hostname !== reqUrl.hostname) {
-          console.log("[referer]", refUrl.href, request.method, reqUrl.pathname);
-        }
-      } catch {
+      const rRefUri = URI.fromResult(referer);
+      const rReqUri = URI.fromResult(request.url);
+      if (rRefUri.isErr() || rReqUri.isErr()) {
         console.log("[referer] malformed", referer, request.method, request.url);
+      } else {
+        const refHostname = rRefUri.Ok().hostname;
+        const reqHostname = rReqUri.Ok().hostname;
+        if (!isInternalReferer(refHostname) && refHostname !== reqHostname) {
+          console.log("[referer]", rRefUri.Ok().toString(), request.method, rReqUri.Ok().pathname);
+        }
       }
     }
     return processRequest(appCtx, request as unknown as Request) as unknown as Promise<CFResponse>;
