@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
@@ -9,6 +9,7 @@ import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { ErrorBoundary as AppErrorBoundary } from "./ErrorBoundary.js";
 import GtmNoScript from "./components/GtmNoScript.js";
 import { VibesDiyProvider, VibesDiyWebVars } from "./vibes-diy-provider.js";
+import { captureLpRef } from "./utils/lp-ref.js";
 import { VibesFPApiParameters } from "@vibes.diy/api-types";
 import { getVibesGlobalCSS } from "@vibes.diy/base";
 import "./app.css";
@@ -59,6 +60,9 @@ export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPAp
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const svcEnv = useLoaderData<typeof loader>();
+  useEffect(() => {
+    captureLpRef();
+  }, []);
   if (!svcEnv) {
     return <></>;
   }

@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useMatches, useParams, useSearchParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
+import { usePostHog } from "posthog-js/react";
+import { getLpRef } from "../utils/lp-ref.js";
 import { BuildURI, URI } from "@adviser/cement";
 import { SignIn, useAuth } from "@clerk/react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
@@ -72,6 +74,7 @@ export default function VibeIframeWrapper() {
   useDocumentTitle(`${userSlug} - ${appSlug} - vibes.diy`);
   // const [searchParam] = useSearchParams();
   const vctx = useVibesDiy();
+  const posthog = usePostHog();
   // Iframe URL: prefer the SSR-computed value from the loader so the
   // <iframe src=...> ships in the first byte of HTML and the browser can
   // start fetching the iframe document without waiting for React hydration.
@@ -328,6 +331,7 @@ export default function VibeIframeWrapper() {
       toast.error(`Request failed: ${r.Err().message}`);
       return;
     }
+    posthog?.capture("vibe_joined", { lp_ref: getLpRef() });
     toast.success("Request sent");
     setRetryCount((c) => c + 1); // re-fetch grant; flips to pending-request
   }

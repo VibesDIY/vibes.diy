@@ -24,6 +24,7 @@
     "format:write": "prettier --write ."
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "@adviser/cement": "^0.5.34",
     "@clerk/react": "^6.6.0",
     "@cloudflare/puppeteer": "^1.1.0",

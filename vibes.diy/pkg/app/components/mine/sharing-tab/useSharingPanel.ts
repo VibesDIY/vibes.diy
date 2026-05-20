@@ -3,6 +3,8 @@ import { useVibesDiy } from "../../../vibes-diy-provider.js";
 import { toastError } from "./shared.jsx";
 import { type RequestGrantItem } from "./shared.js";
 import { AppSettings, InviteGrantItem } from "@vibes.diy/api-types";
+import { usePostHog } from "posthog-js/react";
+import { getLpRef, getLpSessionStart } from "../../../utils/lp-ref.js";
 
 const PAGER = { limit: 100 };
 
@@ -43,6 +45,7 @@ export interface UseSharingPanelReturn {
  */
 export function useSharingPanel({ userSlug, appSlug, enabled = true }: UseSharingPanelArgs): UseSharingPanelReturn {
   const { vibeDiyApi } = useVibesDiy();
+  const posthog = usePostHog();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [invites, setInvites] = useState<InviteGrantItem[]>([]);
   const [requests, setRequests] = useState<RequestGrantItem[]>([]);
@@ -79,6 +82,13 @@ export function useSharingPanel({ userSlug, appSlug, enabled = true }: UseSharin
       const res = await vibeDiyApi.createInvite({ appSlug, userSlug, invitedEmail: email, role });
       setInviting(false);
       toastError(res, () => {
+        const lpRef = getLpRef();
+        const sessionStart = getLpSessionStart();
+        const minutesElapsed = sessionStart ? Math.round((Date.now() - sessionStart) / 60000) : null;
+        posthog?.capture("vibe_invited", { lp_ref: lpRef });
+        if (minutesElapsed !== null) {
+          posthog?.capture("time_to_first_share", { lp_ref: lpRef, minutes_elapsed: minutesElapsed });
+        }
         setInviteEmail("");
         void vibeDiyApi
           .listInviteGrants({ appSlug, userSlug, pager: PAGER })

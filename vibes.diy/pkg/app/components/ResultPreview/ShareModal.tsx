@@ -10,6 +10,8 @@ import { CommentsSection } from "./CommentsSection.js";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { COMMENTS_DB_NAME } from "@vibes.diy/api-types";
 import type { UseShareModalReturn } from "./useShareModal.js";
+import { usePostHog } from "posthog-js/react";
+import { getLpRef } from "../../utils/lp-ref.js";
 
 const inlineSelect =
   "rounded-[5px] border-2 border-black bg-white dark:bg-gray-800 text-sm font-medium px-1.5 py-0.5 shadow-[2px_2px_0px_0px_black] focus:outline-none disabled:opacity-50 disabled:pointer-events-none";
@@ -137,6 +139,7 @@ function CopyLinkRow({ url, copied, onCopy }: { url: string; copied: boolean; on
 // instead of being able to spam new requests.
 function RequestAccessButton({ userSlug, appSlug }: { userSlug: string; appSlug: string }) {
   const { vibeDiyApi } = useVibesDiy();
+  const posthog = usePostHog();
   const [state, setState] = useState<"unknown" | "none" | "pending" | "approved" | "revoked" | "submitting">("unknown");
   const [role, setRole] = useState<"editor" | "viewer" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -173,6 +176,7 @@ function RequestAccessButton({ userSlug, appSlug }: { userSlug: string; appSlug:
     }
     const ok = res.Ok();
     setState(ok.state);
+    posthog?.capture("vibe_joined", { lp_ref: getLpRef() });
     if (ok.state === "approved") setRole(ok.role as "editor" | "viewer");
   }
 

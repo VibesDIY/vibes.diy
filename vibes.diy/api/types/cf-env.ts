@@ -35,4 +35,9 @@ export interface CFEnv {
   DOC_NOTIFY: DurableObjectNamespace;
   VIBES_SERVICE: Queue;
   BROWSER: Fetcher; // screenshotter uses Cloudflare's Browser Rendering API, which is accessed via a Fetcher binding
+
+  POSTHOG_KEY?: string;
+  POSTHOG_HOST?: string;
+
+  ADMIN_API_KEY?: string;
 }

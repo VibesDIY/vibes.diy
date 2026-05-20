@@ -16,6 +16,7 @@ import { CFInjectMutable, cfServeAppCtx, isInternalReferer } from "@vibes.diy/ap
 import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 import { routeDecision } from "./route-decision.js";
+import { neon } from "@neondatabase/serverless";
 
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
@@ -63,6 +64,61 @@ export default {
       method: request.method,
       hostnameBase: env.VIBES_SVC_HOSTNAME_BASE,
     });
+
+    // Admin referer attribution report — requires Authorization: Bearer <ADMIN_API_KEY>
+    if (url.pathname === "/api/admin/referer-report" && request.method === "GET") {
+      const authHeader = request.headers.get("Authorization") ?? "";
+      const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+      if (!env.ADMIN_API_KEY || token !== env.ADMIN_API_KEY) {
+        return new Response("Unauthorized", { status: 401 }) as unknown as CFResponse;
+      }
+      if (!env.NEON_DATABASE_URL) {
+        return new Response("NEON_DATABASE_URL not configured", { status: 503 }) as unknown as CFResponse;
+      }
+      try {
+        const sql = neon(env.NEON_DATABASE_URL);
+        const rows = await sql`
+          SELECT
+            REGEXP_REPLACE(ref_href, 'https://[^/]+', '') AS referrer_path,
+            COUNT(*)                                        AS total_hits,
+            COUNT(*) FILTER (
+              WHERE req_path ~ '^/(vibe|clone|remix|api/vibe|new)(/|$)'
+            )                                               AS conversion_hits,
+            COUNT(*) FILTER (
+              WHERE req_path !~ '^/(vibe|clone|remix|api/vibe|new)(/|$)'
+            )                                               AS browse_hits,
+            CASE
+              WHEN COUNT(*) >= 1000 AND COUNT(*) FILTER (WHERE req_path ~ '^/(vibe|clone|remix|api/vibe|new)(/|$)') >= 50
+                THEN 'proven'
+              WHEN COUNT(*) >= 200 AND COUNT(*) FILTER (WHERE req_path ~ '^/(vibe|clone|remix|api/vibe|new)(/|$)') >= 10
+                THEN 'promising'
+              WHEN COUNT(*) < 200
+                THEN 'under-sampled'
+              ELSE 'underperforming'
+            END                                             AS sample_tier
+          FROM referer_events
+          WHERE ts > NOW() - INTERVAL '30 days'
+          GROUP BY 1
+          ORDER BY conversion_hits DESC
+        `;
+        const result = rows.map((r) => ({
+          referrer_path: r.referrer_path,
+          total_hits: Number(r.total_hits),
+          conversion_hits: Number(r.conversion_hits),
+          browse_hits: Number(r.browse_hits),
+          conversion_rate:
+            Number(r.total_hits) > 0 ? Math.round((Number(r.conversion_hits) / Number(r.total_hits)) * 1000) / 1000 : 0,
+          sample_tier: r.sample_tier,
+        }));
+        return new Response(JSON.stringify(result), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }) as unknown as CFResponse;
+      } catch (err) {
+        console.error("[referer-report] query failed", err);
+        return new Response("Query failed", { status: 500 }) as unknown as CFResponse;
+      }
+    }
 
     if (route === "api-do") {
       const shard = url.getParam("shard") ?? crypto.randomUUID();
