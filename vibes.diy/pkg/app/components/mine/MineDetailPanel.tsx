@@ -12,7 +12,6 @@ export function toMineDetailTab(s: string | undefined): MineDetailTab {
   return "prompts";
 }
 
-const PANEL_WIDTH = 520;
 const TABS: { id: MineDetailTab; label: string }[] = [
   { id: "prompts", label: "Prompts" },
   { id: "chats", label: "Application Chats" },
@@ -65,124 +64,106 @@ export function MineDetailPanel({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  if (!open) return null;
+
   return (
-    <>
-      {open && (
-        <div
-          aria-hidden="true"
-          onClick={onClose}
-          className="fixed inset-0 z-50 bg-black/30 dark:bg-black/50 transition-opacity duration-300"
-        />
-      )}
-
-      <aside
-        aria-hidden={!open}
-        className="fixed top-0 right-0 h-full z-50 flex flex-col bg-[var(--vibes-cream)] dark:bg-dark-background-00 border-l-2 border-[var(--vibes-near-black)] dark:border-[var(--color-dark-decorative-01)] shadow-[-8px_0_24px_rgba(0,0,0,0.2)]"
-        style={{
-          width: PANEL_WIDTH,
-          maxWidth: "100vw",
-          transform: open ? "translateX(0)" : `translateX(${PANEL_WIDTH}px)`,
-          transition: "transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1)",
-        }}
+    <section className="flex flex-col">
+      {/* Back button */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="self-start inline-flex items-center gap-1.5 mb-4 text-light-primary dark:text-dark-primary text-sm font-medium hover:opacity-70 transition-opacity"
       >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close details"
-          className="absolute top-3 right-3 z-[1] w-8 h-8 flex items-center justify-center rounded-full bg-light-background-00/80 dark:bg-dark-background-00/80 hover:bg-light-background-00 dark:hover:bg-dark-background-00 transition-colors"
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
         >
-          <svg
-            className="text-light-primary dark:text-dark-primary"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back to vibes
+      </button>
 
-        {open && (
-          <div className="flex flex-col h-full">
-            {/* Hero screenshot */}
-            <div
-              className="w-full bg-light-background-01 dark:bg-dark-background-01 border-b-2 border-[var(--vibes-near-black)] dark:border-[var(--color-dark-decorative-01)] flex items-center justify-center overflow-hidden shrink-0"
-              style={{ height: 180 }}
-            >
-              {previewUrl ? (
-                <img src={previewUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-light-primary/40 dark:text-dark-primary/40 text-xs uppercase tracking-widest">
-                  No preview
-                </span>
-              )}
-            </div>
+      {/* Detail card */}
+      <div className="flex flex-col rounded-lg border-2 border-[var(--vibes-near-black)] dark:border-[var(--color-dark-decorative-01)] bg-light-background-00 dark:bg-dark-background-01 overflow-hidden">
+        {/* Hero screenshot */}
+        <div
+          className="w-full bg-light-background-01 dark:bg-dark-background-01 border-b-2 border-[var(--vibes-near-black)] dark:border-[var(--color-dark-decorative-01)] flex items-center justify-center overflow-hidden"
+          style={{ aspectRatio: "21 / 9", maxHeight: 320 }}
+        >
+          {previewUrl ? (
+            <img src={previewUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-light-primary/40 dark:text-dark-primary/40 text-xs uppercase tracking-widest">
+              No preview
+            </span>
+          )}
+        </div>
 
-            {/* Title + slug + mode strip */}
-            <div className="shrink-0 px-5 pt-4 pb-2 pr-12 flex items-center gap-2">
-              <div className="min-w-0 flex-1">
-                <h3 className="text-light-primary dark:text-dark-primary text-lg font-bold truncate">{label}</h3>
-                <p className="text-light-primary/60 dark:text-dark-primary/60 text-xs truncate">{userSlug}</p>
-              </div>
-              {headMode && (
-                <span
-                  className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${
-                    headMode === "production"
-                      ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
-                      : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300"
-                  }`}
-                >
-                  {headMode}
-                </span>
-              )}
-            </div>
-
-            {/* Tabs */}
-            <div className="shrink-0 flex gap-1 px-5 pt-2 pb-2 border-b border-black/10 dark:border-white/10 overflow-x-auto">
-              {TABS.map((t) => {
-                const isActive = activeTab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => onTabChange(t.id)}
-                    className={`shrink-0 rounded px-3 py-1 text-xs font-medium transition-colors ${
-                      isActive
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
-                        : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Tab content */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
-              {activeTab === "prompts" ? (
-                <PromptsTab
-                  isLoading={isLoading}
-                  chatDetails={chatDetails ?? undefined}
-                  screenshots={screenshots}
-                  onToggleMode={onToggleMode}
-                />
-              ) : activeTab === "chats" ? (
-                <AppChatsTab userSlug={userSlug ?? ""} appSlug={appSlug ?? ""} />
-              ) : activeTab === "sharing" ? (
-                <SharingTab userSlug={userSlug ?? ""} appSlug={appSlug ?? ""} />
-              ) : (
-                <SettingsTab userSlug={userSlug ?? ""} appSlug={appSlug ?? ""} />
-              )}
-            </div>
+        {/* Title + slug + mode strip */}
+        <div className="px-6 pt-5 pb-3 flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-light-primary dark:text-dark-primary text-2xl font-bold truncate">{label}</h3>
+            <p className="text-light-primary/60 dark:text-dark-primary/60 text-sm truncate">@{userSlug}</p>
           </div>
-        )}
-      </aside>
-    </>
+          {headMode && (
+            <span
+              className={`shrink-0 rounded px-2 py-1 text-xs font-medium ${
+                headMode === "production"
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
+                  : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300"
+              }`}
+            >
+              {headMode}
+            </span>
+          )}
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 px-6 pt-2 pb-0 border-b border-black/10 dark:border-white/10 overflow-x-auto">
+          {TABS.map((t) => {
+            const isActive = activeTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => onTabChange(t.id)}
+                className={`shrink-0 px-3 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                  isActive
+                    ? "border-blue-500 text-blue-700 dark:text-blue-300"
+                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab content */}
+        <div className="px-6 py-5">
+          {activeTab === "prompts" ? (
+            <PromptsTab
+              isLoading={isLoading}
+              chatDetails={chatDetails ?? undefined}
+              screenshots={screenshots}
+              onToggleMode={onToggleMode}
+            />
+          ) : activeTab === "chats" ? (
+            <AppChatsTab userSlug={userSlug ?? ""} appSlug={appSlug ?? ""} />
+          ) : activeTab === "sharing" ? (
+            <SharingTab userSlug={userSlug ?? ""} appSlug={appSlug ?? ""} />
+          ) : (
+            <SettingsTab userSlug={userSlug ?? ""} appSlug={appSlug ?? ""} />
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
