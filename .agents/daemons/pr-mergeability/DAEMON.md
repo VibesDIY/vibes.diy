@@ -9,6 +9,7 @@ routines:
   - "Apply low-risk mergeability fixes: snapshot updates, lockfile drift fixes, lint autofix, and flaky-test retries when tied to the trigger context."
   - Escalate semantic/intention conflicts between base and branch instead of auto-resolving.
 deny:
+  - Do not act on pull requests authored by dependabot (sender login matches `dependabot[bot]` case-insensitively); exit with no action.
   - When triggered by a check-status signal, do not fix or comment on unrelated failing checks.
   - Do not open new pull requests or new issues.
   - Do not review, approve, or request changes on pull requests.
