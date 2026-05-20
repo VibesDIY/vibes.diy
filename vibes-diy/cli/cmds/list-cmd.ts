@@ -8,7 +8,7 @@ import {
   EventoResultType,
 } from "@adviser/cement";
 import { type } from "arktype";
-import type { ResRecentVibesItem } from "@vibes.diy/api-types";
+import { resRecentVibesItem } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 
@@ -24,14 +24,7 @@ export function isReqVibesList(obj: unknown): obj is ReqVibesList {
 
 export const ResVibesList = type({
   type: "'vibes-diy.cli.res-list'",
-  items: type({
-    userSlug: "string",
-    appSlug: "string",
-    updated: "string",
-    "title?": "string",
-    "icon?": type({ cid: "string", mime: "string" }),
-    "pinnedAt?": "string",
-  }).array(),
+  items: resRecentVibesItem.array(),
 });
 export type ResVibesList = typeof ResVibesList.infer;
 
@@ -55,7 +48,7 @@ export const listEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqVibesList, ResV
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const items: ResRecentVibesItem[] = [];
+    const items: (typeof resRecentVibesItem.infer)[] = [];
     let cursor: string | undefined;
     do {
       const rPage = await api.listRecentVibes({ limit: 100, ...(cursor ? { cursor } : {}) });
