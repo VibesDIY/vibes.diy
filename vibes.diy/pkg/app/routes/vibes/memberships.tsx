@@ -2,15 +2,11 @@ import type { ReactElement } from "react";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
-import { VibesButton } from "@vibes.diy/base";
 import type { ResRecentVibesItem } from "@vibes.diy/api-types";
 import { VibesGrid, type GridHeadInfo } from "../../components/mine/VibesGrid.js";
 
 export function meta() {
-  return [
-    { title: "Memberships - Vibes DIY" },
-    { name: "description", content: "Apps you've joined as a member in Vibes DIY" },
-  ];
+  return [{ title: "Memberships - Vibes DIY" }, { name: "description", content: "Apps you've joined as a member in Vibes DIY" }];
 }
 
 // Mock memberships — placeholder until real subscription data is wired up.
@@ -66,8 +62,7 @@ function MembershipDetailPanel({ item, onClose }: MembershipDetailPanelProps) {
   const label = item?.title ?? item?.appSlug ?? "";
   // Mock data for now — wire up real fields later.
   const mockCreator = item ? `@${item.userSlug}` : "";
-  const mockDescription =
-    "Shared with you via Vibes DIY. A collaborative app you've joined as a member. (placeholder copy)";
+  const mockDescription = "Shared with you via Vibes DIY. A collaborative app you've joined as a member. (placeholder copy)";
 
   useEffect(() => {
     if (!open) return;

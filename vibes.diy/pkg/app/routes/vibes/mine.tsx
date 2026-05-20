@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
 import { VibesButton } from "@vibes.diy/base";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
-import type { ResGetChatDetails, MetaScreenShot, ResRecentVibesItem } from "@vibes.diy/api-types";
+import type { ResGetChatDetails, ResRecentVibesItem } from "@vibes.diy/api-types";
 import { isMetaScreenShot } from "@vibes.diy/api-types";
 import { toast } from "react-hot-toast";
 import { useRecentVibes } from "../../hooks/useRecentVibes.js";
@@ -34,9 +34,7 @@ export default function VibesMine(): ReactElement {
   const isPanelOpen = !!(paramUserSlug && paramAppSlug);
   const activeTab = toMineDetailTab(paramTab);
   const selectedKey = isPanelOpen ? `${paramUserSlug}/${paramAppSlug}` : "";
-  const selectedItem = isPanelOpen
-    ? vibeItems.find((v) => v.userSlug === paramUserSlug && v.appSlug === paramAppSlug)
-    : undefined;
+  const selectedItem = isPanelOpen ? vibeItems.find((v) => v.userSlug === paramUserSlug && v.appSlug === paramAppSlug) : undefined;
   const selectedHead = selectedKey ? appHeadInfo.get(selectedKey) : undefined;
 
   async function onToggleMode(fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) {
@@ -91,18 +89,16 @@ export default function VibesMine(): ReactElement {
     }
     setScreenshots(new Map());
     for (const p of chatDetails.prompts) {
-      vibeDiyApi
-        .getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, userSlug: chatDetails.userSlug })
-        .then((res) => {
-          if (res.isErr()) return;
-          const app = res.Ok();
-          setScreenshots((prev) =>
-            new Map(prev).set(p.fsId, {
-              screenshot: app.meta.find(isMetaScreenShot),
-              mode: app.mode,
-            })
-          );
-        });
+      vibeDiyApi.getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, userSlug: chatDetails.userSlug }).then((res) => {
+        if (res.isErr()) return;
+        const app = res.Ok();
+        setScreenshots((prev) =>
+          new Map(prev).set(p.fsId, {
+            screenshot: app.meta.find(isMetaScreenShot),
+            mode: app.mode,
+          })
+        );
+      });
     }
   }, [chatDetails, vibeDiyApi]);
 
