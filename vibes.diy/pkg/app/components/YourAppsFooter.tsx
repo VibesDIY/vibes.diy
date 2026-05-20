@@ -20,7 +20,12 @@ interface YourAppsFooterProps {
   sidebarOpen: boolean;
 }
 
-type AppItem = { userSlug: string; appSlug: string; title?: string; icon?: { cid: string; mime: string } };
+interface AppItem {
+  userSlug: string;
+  appSlug: string;
+  title?: string;
+  icon?: { cid: string; mime: string };
+}
 
 const SIDEBAR_WIDTH = 256; // matches SessionSidebar w-64
 const COLLAPSED_HEIGHT = 52;
@@ -68,10 +73,13 @@ export function YourAppsFooter({ sidebarOpen }: YourAppsFooterProps) {
   // hijacked. If a swipe is detected, suppress the click event that follows
   // so the card under the finger doesn't navigate to its chat route.
   const SWIPE_THRESHOLD = 60;
-  const onSwipeStart = useCallback((e: React.PointerEvent) => {
-    if (totalPages <= 1) return;
-    swipeStartRef.current = { x: e.clientX, y: e.clientY };
-  }, [totalPages]);
+  const onSwipeStart = useCallback(
+    (e: React.PointerEvent) => {
+      if (totalPages <= 1) return;
+      swipeStartRef.current = { x: e.clientX, y: e.clientY };
+    },
+    [totalPages]
+  );
   const onSwipeEnd = useCallback(
     (e: React.PointerEvent) => {
       const start = swipeStartRef.current;
@@ -81,9 +89,7 @@ export function YourAppsFooter({ sidebarOpen }: YourAppsFooterProps) {
       const dy = e.clientY - start.y;
       if (Math.abs(dx) >= SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5) {
         suppressNextClickRef.current = true;
-        setCurrentPage((p) =>
-          dx < 0 ? Math.min(totalPages - 1, p + 1) : Math.max(0, p - 1)
-        );
+        setCurrentPage((p) => (dx < 0 ? Math.min(totalPages - 1, p + 1) : Math.max(0, p - 1)));
       }
     },
     [totalPages]
@@ -168,9 +174,7 @@ export function YourAppsFooter({ sidebarOpen }: YourAppsFooterProps) {
           }`}
           style={{ height: COLLAPSED_HEIGHT }}
         >
-          <span className="text-light-primary dark:text-dark-primary text-sm font-bold tracking-[0.15em] uppercase">
-            Your apps
-          </span>
+          <span className="text-light-primary dark:text-dark-primary text-sm font-bold tracking-[0.15em] uppercase">Your apps</span>
           <svg
             className="text-light-primary dark:text-dark-primary"
             width="18"
@@ -219,10 +223,7 @@ export function YourAppsFooter({ sidebarOpen }: YourAppsFooterProps) {
               No matches for "{searchQuery.trim()}".
             </div>
           ) : (
-            <div
-              className="grid gap-4"
-              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}
-            >
+            <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
               {pagedItems.map((item) => (
                 <AppCard
                   key={`${item.userSlug}/${item.appSlug}`}
@@ -244,11 +245,7 @@ export function YourAppsFooter({ sidebarOpen }: YourAppsFooterProps) {
         )}
       </div>
 
-      <AppDetailPanel
-        item={detailItem}
-        appHostBaseUrl={appHostBaseUrl}
-        onClose={() => setDetailItem(null)}
-      />
+      <AppDetailPanel item={detailItem} appHostBaseUrl={appHostBaseUrl} onClose={() => setDetailItem(null)} />
     </>
   );
 }
@@ -363,9 +360,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
   const label = item?.title ?? item?.appSlug ?? "";
   const iconUrl = item?.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
   const cacheKey = item ? `${item.userSlug}/${item.appSlug}` : "";
-  const [screenshot, setScreenshot] = useState<MetaScreenShot | null>(
-    item ? (screenshotCache.get(cacheKey) ?? null) : null
-  );
+  const [screenshot, setScreenshot] = useState<MetaScreenShot | null>(item ? (screenshotCache.get(cacheKey) ?? null) : null);
   const { vibeDiyApi } = useVibesDiy();
   const previewUrl = screenshot ? screenshotSrc(screenshot) : iconUrl;
   // Mock data for now — wire up real fields later.
@@ -447,11 +442,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
               style={{ height: 200 }}
             >
               {previewUrl ? (
-                <img
-                  src={previewUrl}
-                  alt=""
-                  className={`w-full h-full object-cover${screenshot ? "" : " dark:invert"}`}
-                />
+                <img src={previewUrl} alt="" className={`w-full h-full object-cover${screenshot ? "" : " dark:invert"}`} />
               ) : (
                 <span className="text-light-primary/40 dark:text-dark-primary/40 text-xs uppercase tracking-widest">
                   No preview
@@ -508,7 +499,16 @@ function SearchBar({ value, onChange }: SearchBarProps) {
         aria-hidden="true"
         className="absolute left-3 top-1/2 -translate-y-1/2 text-light-primary/50 dark:text-dark-primary/50 pointer-events-none"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <circle cx="11" cy="11" r="7" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
@@ -528,7 +528,16 @@ function SearchBar({ value, onChange }: SearchBarProps) {
           aria-label="Clear search"
           className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-light-primary dark:text-dark-primary"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -559,8 +568,10 @@ function Pagination({ current, total, onChange }: PaginationProps) {
 
   const baseBtn =
     "min-w-8 h-8 px-2 flex items-center justify-center text-sm font-medium rounded-md border-2 border-[var(--vibes-near-black)] dark:border-[var(--color-dark-decorative-01)] transition-colors";
-  const inactive = "bg-[var(--vibes-cream)] dark:bg-dark-background-01 text-light-primary dark:text-dark-primary hover:bg-[#ebebd9] dark:hover:bg-[#2a2a2a]";
-  const active = "bg-[var(--vibes-near-black)] dark:bg-[var(--vibes-cream)] text-[var(--vibes-cream)] dark:text-[var(--vibes-near-black)]";
+  const inactive =
+    "bg-[var(--vibes-cream)] dark:bg-dark-background-01 text-light-primary dark:text-dark-primary hover:bg-[#ebebd9] dark:hover:bg-[#2a2a2a]";
+  const active =
+    "bg-[var(--vibes-near-black)] dark:bg-[var(--vibes-cream)] text-[var(--vibes-cream)] dark:text-[var(--vibes-near-black)]";
   const disabled = "opacity-40 cursor-not-allowed";
 
   return (
