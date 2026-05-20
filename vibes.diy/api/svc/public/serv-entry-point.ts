@@ -135,16 +135,9 @@ async function sendFetchOk(
   item: FileSystemItem,
   fRes: FetchResult
 ) {
-  console.log(
-    `Fetch ok for ${item.fileName} with MIME type ${item.mimeType} and size ${item.size}: fetch result type ${fRes.type}`
-  );
   if (isFetchOkResult(fRes)) {
-    console.log(`Fetch ok for ${item.fileName} with MIME type ${item.mimeType} and size ${item.size}`);
     const assetRes = new Response(fRes.data);
     const asset = await assetRes.arrayBuffer();
-    console.log(
-      `Fetch ok for ${item.fileName} with MIME type ${item.mimeType} and size ${item.size}, asset size: ${asset.byteLength}`
-    );
 
     await ctx.send.send(ctx, {
       type: "http.Response.Body",
@@ -313,17 +306,26 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Err(`Invalid filesystem data ${ctx.validated.fsId}`);
     }
 
-    // console.log("-5servEntryPoint triggered with URL:", uri.toString())
-    // console.log('fsId =>', fileSystem)
-
     const selectedFsItem = fileSystem.find((i) => i.fileName === ctx.validated.path);
     if (selectedFsItem) {
-      const possiblePath = await vctx.storage.fetch(selectedFsItem.assetURI);
+      // For JSX→JS source files, serve the transformed JavaScript instead of
+      // the raw source so that: (a) the browser can parse it, and (b) relative
+      // imports like `./helper.js` resolve correctly against the original
+      // filename path rather than the content-addressed ~~transformed~~ path.
+      let serveItem: FileSystemItem = selectedFsItem;
+      if (selectedFsItem.transform?.type === "jsx-to-js") {
+        const transformedId = selectedFsItem.transform.transformedAssetId;
+        const transformedFsItem = fileSystem.find((i) => i.transform?.type === "transformed" && i.assetId === transformedId);
+        if (transformedFsItem) {
+          serveItem = { ...transformedFsItem, fileName: selectedFsItem.fileName, mimeType: "text/javascript" };
+        }
+      }
+      const possiblePath = await vctx.storage.fetch(serveItem.assetURI);
       if (isFetchErrResult(possiblePath)) {
         return Result.Err(possiblePath.error);
       }
       if (isFetchOkResult(possiblePath)) {
-        return sendFetchOk(ctx, selectedFsItem, possiblePath);
+        return sendFetchOk(ctx, serveItem, possiblePath);
       }
     }
     // Serve screenshot from meta for social media cards
