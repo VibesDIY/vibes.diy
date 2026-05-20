@@ -1,3 +1,5 @@
+import { URI } from "@adviser/cement";
+
 export const LP_REF_KEY = "lp_ref";
 export const LP_SESSION_START_KEY = "lp_session_start";
 
@@ -5,7 +7,7 @@ export function captureLpRef(): void {
   if (typeof document === "undefined") return;
   try {
     if (document.referrer && document.referrer.includes("good.vibes.diy")) {
-      sessionStorage.setItem(LP_REF_KEY, new URL(document.referrer).pathname);
+      sessionStorage.setItem(LP_REF_KEY, URI.from(document.referrer).pathname);
       sessionStorage.setItem(LP_SESSION_START_KEY, Date.now().toString());
     }
   } catch {
