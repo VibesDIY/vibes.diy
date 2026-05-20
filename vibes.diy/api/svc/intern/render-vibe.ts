@@ -98,10 +98,12 @@ export async function renderVibe({
 
   const imports = fsItems.reduce(
     (acc, item, idx) => {
-      // console.log(`fsItem:`, item);
-      if (["text/javascript", "application/javascript"].includes(item.mimeType) && item.transform?.type !== "jsx-to-js") {
+      // Mount source files by original filename so that relative imports (e.g.
+      // `./helper.js`) resolve correctly via native browser module resolution.
+      // serv-entry-point serves the transformed content transparently when
+      // transform.type === "jsx-to-js".
+      if (["text/javascript", "application/javascript"].includes(item.mimeType) && item.transform?.type === "jsx-to-js") {
         acc.push({
-          // import relative to support prod and dev switching
           importStmt: `import V${idx} from ${JSON.stringify(`/~${fs.fsId}~${item.fileName}`)};`,
           var: `V${idx}`,
         });
