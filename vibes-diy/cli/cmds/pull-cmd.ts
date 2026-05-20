@@ -78,7 +78,7 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
     const userSlug = await resolveUserSlug(api, args.userSlug === "" ? undefined : args.userSlug);
-    if (!userSlug) {
+    if (userSlug === undefined) {
       return Result.Err("Could not resolve user slug. Run 'vibes-diy login' first.");
     }
 
