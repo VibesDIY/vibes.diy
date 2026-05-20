@@ -113,7 +113,7 @@ function ResultPreview({ promptState, currentView, children, onCode }: ResultPre
   }
 
   return (
-    <div className="h-full" style={{ overflow: "hidden", position: "relative" }}>
+    <div className="h-[calc(100%-24px)]" style={{ overflow: "hidden", position: "relative", margin: "12px", borderRadius: "12px" }}>
       <style>{animationStyles}</style>
       {currentView === "preview" && (
         <div
