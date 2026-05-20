@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
 import type { ResRecentVibesItem } from "@vibes.diy/api-types";
@@ -10,97 +10,49 @@ export function meta() {
   return [{ title: "Memberships - Vibes DIY" }, { name: "description", content: "Apps you've joined as a member in Vibes DIY" }];
 }
 
-// TEMP: mock memberships — replace with real subscription data when wired up.
-// Padded out so the lazy-load + search experience is visible during preview.
-const MOCK_MEMBERSHIPS: ResRecentVibesItem[] = [
+// Placeholder data — no real memberships endpoint yet. Replace with a real
+// hook (e.g. useMemberships) when the backend lands.
+const PLACEHOLDER_MEMBERSHIPS: ResRecentVibesItem[] = [
   { userSlug: "jchris", appSlug: "fireproof-todo", title: "Fireproof Todo", updated: "2026-05-12T10:00:00Z" },
   { userSlug: "jchris", appSlug: "vibe-radio", title: "Vibe Radio", updated: "2026-05-10T14:30:00Z" },
   { userSlug: "anya", appSlug: "color-lab", title: "Color Lab", updated: "2026-05-08T09:15:00Z" },
   { userSlug: "mabels", appSlug: "habit-streaks", title: "Habit Streaks", updated: "2026-05-05T18:42:00Z" },
   { userSlug: "selem", appSlug: "moodboard", title: "Moodboard", updated: "2026-04-30T12:00:00Z" },
   { userSlug: "team", appSlug: "shared-recipes", title: "Shared Recipes", updated: "2026-04-22T08:00:00Z" },
-  { userSlug: "lila", appSlug: "story-maker", title: "Story Maker", updated: "2026-04-18T11:20:00Z" },
-  { userSlug: "noor", appSlug: "trip-log", title: "Trip Log", updated: "2026-04-15T16:45:00Z" },
-  { userSlug: "kai", appSlug: "plant-care", title: "Plant Care", updated: "2026-04-12T08:10:00Z" },
-  { userSlug: "remy", appSlug: "voice-memo", title: "Voice Memo", updated: "2026-04-09T14:00:00Z" },
-  { userSlug: "sun", appSlug: "card-deck", title: "Card Deck", updated: "2026-04-05T19:30:00Z" },
-  { userSlug: "amir", appSlug: "dice-roller", title: "Dice Roller", updated: "2026-04-01T07:45:00Z" },
-  { userSlug: "vee", appSlug: "polls-now", title: "Polls Now", updated: "2026-03-28T13:15:00Z" },
-  { userSlug: "oki", appSlug: "idea-box", title: "Idea Box", updated: "2026-03-22T10:20:00Z" },
-  { userSlug: "zeke", appSlug: "bookmark-tower", title: "Bookmark Tower", updated: "2026-03-18T18:00:00Z" },
-  { userSlug: "noa", appSlug: "time-capsule", title: "Time Capsule", updated: "2026-03-15T09:35:00Z" },
-  { userSlug: "ben", appSlug: "sound-bath", title: "Sound Bath", updated: "2026-03-11T22:00:00Z" },
-  { userSlug: "izzy", appSlug: "snap-quiz", title: "Snap Quiz", updated: "2026-03-07T12:50:00Z" },
-  { userSlug: "rena", appSlug: "money-map", title: "Money Map", updated: "2026-03-03T15:25:00Z" },
-  { userSlug: "vik", appSlug: "stage-planner", title: "Stage Planner", updated: "2026-02-28T08:10:00Z" },
-  { userSlug: "tess", appSlug: "quote-wall", title: "Quote Wall", updated: "2026-02-22T17:40:00Z" },
-  { userSlug: "owen", appSlug: "workout-tracker", title: "Workout Tracker", updated: "2026-02-18T06:30:00Z" },
-  { userSlug: "ana", appSlug: "recipe-vault", title: "Recipe Vault", updated: "2026-02-14T20:00:00Z" },
-  { userSlug: "kim", appSlug: "mood-ring", title: "Mood Ring", updated: "2026-02-10T11:05:00Z" },
 ];
-
-const PAGE_SIZE = 8;
 
 export default function VibesMemberships(): ReactElement {
   const navigate = useNavigate();
   const { userSlug: paramUserSlug, appSlug: paramAppSlug } = useParams<{ userSlug?: string; appSlug?: string }>();
   const [searchQuery, setSearchQuery] = useState("");
-  const [headInfoMap, setHeadInfoMap] = useState<Map<string, GridHeadInfo>>(new Map());
 
-  // Simulated first-load delay so the skeleton rows are visible briefly.
-  const [initialLoading, setInitialLoading] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setInitialLoading(false), 500);
-    return () => clearTimeout(t);
+  // Seed the head-info map with an empty entry per item so VibesGrid shows
+  // the "No preview" placeholder instead of an indefinite thumbnail skeleton.
+  // When real memberships data lands, replace this with the same per-item
+  // getAppByFsId fetch loop used in /vibes/mine.
+  const headInfoMap = useMemo(() => {
+    const map = new Map<string, GridHeadInfo>();
+    for (const item of PLACEHOLDER_MEMBERSHIPS) {
+      map.set(`${item.userSlug}/${item.appSlug}`, {});
+    }
+    return map;
   }, []);
 
-  // Simulated paginated load: start with PAGE_SIZE visible and append more
-  // as the IntersectionObserver sentinel reaches the bottom.
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  // Per-item head info simulation: each membership "loads" with a small
-  // random delay so we see the per-row thumbnail skeleton swap to placeholder.
-  // Use a ref to track scheduled keys so re-renders don't restart timers.
-  const scheduledKeysRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    const visible = MOCK_MEMBERSHIPS.slice(0, visibleCount);
-    for (const item of visible) {
-      const key = `${item.userSlug}/${item.appSlug}`;
-      if (scheduledKeysRef.current.has(key)) continue;
-      scheduledKeysRef.current.add(key);
-      const delay = 250 + Math.random() * 700;
-      setTimeout(() => {
-        setHeadInfoMap((prev) => (prev.has(key) ? prev : new Map(prev).set(key, {})));
-      }, delay);
-    }
-  }, [visibleCount]);
-
   const filteredItems = useMemo(() => {
-    const visible = MOCK_MEMBERSHIPS.slice(0, visibleCount);
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return visible;
-    return visible.filter((item) => {
+    if (!q) return PLACEHOLDER_MEMBERSHIPS;
+    return PLACEHOLDER_MEMBERSHIPS.filter((item) => {
       const title = (item.title ?? "").toLowerCase();
       const slug = item.appSlug.toLowerCase();
       const user = item.userSlug.toLowerCase();
       return title.includes(q) || slug.includes(q) || user.includes(q);
     });
-  }, [visibleCount, searchQuery]);
-
-  const nextCursor: string | undefined = visibleCount < MOCK_MEMBERSHIPS.length ? "more" : undefined;
-  const loadMore = useCallback(async () => {
-    if (loadingMore || visibleCount >= MOCK_MEMBERSHIPS.length) return;
-    setLoadingMore(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setVisibleCount((c) => Math.min(c + PAGE_SIZE, MOCK_MEMBERSHIPS.length));
-    setLoadingMore(false);
-  }, [loadingMore, visibleCount]);
+  }, [searchQuery]);
 
   const isPanelOpen = !!(paramUserSlug && paramAppSlug);
   const selectedKey = isPanelOpen ? `${paramUserSlug}/${paramAppSlug}` : "";
   const selectedItem = isPanelOpen
-    ? MOCK_MEMBERSHIPS.find((v) => v.userSlug === paramUserSlug && v.appSlug === paramAppSlug)
+    ? PLACEHOLDER_MEMBERSHIPS.find((v) => v.userSlug === paramUserSlug && v.appSlug === paramAppSlug)
     : undefined;
 
   const openTile = (item: ResRecentVibesItem) =>
@@ -123,9 +75,7 @@ export default function VibesMemberships(): ReactElement {
           headInfoMap={headInfoMap}
           selectedKey={selectedKey}
           onOpen={openTile}
-          isLoading={initialLoading || loadingMore}
-          nextCursor={searchQuery ? undefined : nextCursor}
-          onLoadMore={() => void loadMore()}
+          isLoading={false}
           emptyState={{
             message: searchQuery
               ? `No memberships match "${searchQuery}"`
