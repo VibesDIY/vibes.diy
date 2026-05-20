@@ -35,7 +35,7 @@ export function cmd_tsStream(): CliStream<HandlerArgsType, HandlerReturnType> {
               type: "msg.cmd-ts",
               cmdTs: {
                 raw: args,
-                outputFormat: defaultArgs.json && !defaultArgs.text ? "json" : "text",
+                outputFormat: defaultArgs.json ? "json" : "text",
               },
               result,
             } satisfies WrapCmdTSMsg<unknown>;
