@@ -10,6 +10,7 @@ import {
   EventoHandler,
   EventoResultType,
   exception2Result,
+  URI,
 } from "@adviser/cement";
 import { type } from "arktype";
 import { isResAssetUploadGrant } from "@vibes.diy/api-types";
@@ -91,7 +92,7 @@ function inferMimeType(filename: string): string {
 // URL, use it as-is.
 function resolveUploadUrl(uploadUrl: string, apiUrl: string): string {
   if (/^https?:\/\//i.test(uploadUrl)) return uploadUrl;
-  const u = new URL(apiUrl);
+  const u = URI.from(apiUrl).asURL();
   return `${u.protocol}//${u.host}${uploadUrl.startsWith("/") ? "" : "/"}${uploadUrl}`;
 }
 
@@ -100,7 +101,7 @@ function resolveUploadUrl(uploadUrl: string, apiUrl: string): string {
 // (and any query string like `?.stable-entry.=cli`) from --api-url to
 // build a clean host-root URL.
 function hostRoot(apiUrl: string): string {
-  const u = new URL(apiUrl);
+  const u = URI.from(apiUrl).asURL();
   return `${u.protocol}//${u.host}`;
 }
 
