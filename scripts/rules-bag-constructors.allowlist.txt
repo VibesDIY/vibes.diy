@@ -19,8 +19,6 @@ call-ai/v2/line-stream.test.ts:169:      const encoder = new TextEncoder();
 call-ai/v2/line-stream.test.ts:185:      const encoder = new TextEncoder();
 call-ai/v2/line-stream.ts:133:  const decoder = new TextDecoder();
 call-ai/v2/line-stream.ts:81:  parser.totalBytes += new TextEncoder().encode(content).length;
-vibes-diy/cli/cmds/put-asset-cmd.ts:103:  const u = new URL(apiUrl);
-vibes-diy/cli/cmds/put-asset-cmd.ts:94:  const u = new URL(apiUrl);
 vibes.diy/pkg/app/lib/auth.ts:9:  const url = new URL(request.url);
 vibes.diy/pkg/app/routes/logout.tsx:43:    if (referrer && new URL(referrer).origin === window.location.origin) {
 vibes.diy/pkg/slack/scripts/bundle-fs.ts:281:  return new TextDecoder().decode(decompressed);

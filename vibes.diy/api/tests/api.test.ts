@@ -1,6 +1,6 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { assert, beforeAll, describe, expect, inject, it, vi } from "vitest";
-import { BuildURI, loadAsset, processStream, Result, TestFetchPair, TestWSPair, sleep } from "@adviser/cement";
+import { loadAsset, processStream, Result, TestFetchPair, TestWSPair, sleep } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import {
@@ -302,9 +302,14 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     const resIframe = await api.cfg.fetch(url);
     expect(resIframe.status).toBe(200);
     const iframeText = await resIframe.text();
-    const imports = [...iframeText.matchAll(/^import \* as V\d+ from "(~~transformed~~\/[^"]*)"/gm)];
-    for (const imp of imports || []) {
-      const importFile = await api.cfg.fetch(BuildURI.from(url).appendRelative(imp[1]).toString());
+    // Mount JS now imports by original filename (e.g. /~fsId~/App.jsx), and
+    // serv-entry-point serves the transformed JS transparently.
+    const imports = [...iframeText.matchAll(/import V\d+ from "([^"]*\/App\.jsx)"/gm)];
+    expect(imports.length).toBeGreaterThan(0);
+    for (const imp of imports) {
+      // imp[1] is an absolute path like "/~fsId~/App.jsx"; use native URL
+      // resolution so it replaces the base path rather than appending to it.
+      const importFile = await api.cfg.fetch(new URL(imp[1], url).toString());
       expect(importFile.status).toBe(200);
       const importText = await importFile.text();
       expect(importText).toContain(`console.log('hello world');`);

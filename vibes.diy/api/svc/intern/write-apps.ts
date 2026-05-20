@@ -131,6 +131,7 @@ async function transformJSXAndImports(
 
         const rImports = importsFromJS(jsStr);
         rImports.forEach((imp) => {
+          if (imp.startsWith("./") || imp.startsWith("../")) return;
           if (!imports.has(imp)) {
             imports.set(imp, []);
           }
@@ -172,6 +173,7 @@ async function transformJSXAndImports(
           return;
         }
         rImports.Ok().forEach((imp) => {
+          if (imp.startsWith("./") || imp.startsWith("../")) return;
           if (!imports.has(imp)) {
             imports.set(imp, []);
           }
