@@ -116,7 +116,7 @@ Controls whether visitors can submit access requests.
 
 **Enable requests toggle**
 
-- Off: visitors see the landing card but the "Request access" button is present (the toggle only controls whether requests are accepted server-side — the UI does not yet hide the button when requests are disabled).
+- Off: visitors who have no other grant (no invite, not public) receive `not-grant` from the server, which renders as "App not available" — **not** the landing card. The landing card with the "Request access" button only appears when requests are enabled (`enableRequest.enable = true`).
 - On: visitors can submit requests. The owner sees a badge count on the Share button in the pill when new requests arrive. Real-time updates via a WebSocket subscription.
 
 **Auto-accept view requests** (visible when Requests is enabled)
@@ -193,7 +193,7 @@ An optional toggle in the Share panel, visible to owners only:
 
 **Only collaborators can comment**
 
-- Off (default): anyone with access to the Vibe (including public viewers) can post comments.
+- Off (default): members (editors, viewers, submitters, and owner) can write and delete comments. The default ACL is `{ write: ["members"], delete: ["members"] }`. Public visitors — even on a public Vibe — are not members and cannot post comments by default.
 - On: only editors and the owner can post comments. The comment composer is disabled client-side for viewers and public users as a UX prefetch; the server enforces the restriction.
 
 This setting writes to the `dbAcls` field in app settings, specifically setting `write: ["editors"]` and `delete: ["editors"]` on the `comments` database. Toggling it off removes the entry and restores the default (members can write and delete).
