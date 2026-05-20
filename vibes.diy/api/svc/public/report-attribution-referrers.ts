@@ -11,7 +11,7 @@ import {
   resReportAttributionReferrers,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { sql, desc, like } from "drizzle-orm";
+import { sql, desc, eq } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -31,7 +31,7 @@ async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?:
     .from(t.refererEvents)
     .$dynamic();
 
-  const filtered = reqPathFilter !== undefined ? baseQuery.where(like(t.refererEvents.reqPath, `${reqPathFilter}%`)) : baseQuery;
+  const filtered = reqPathFilter !== undefined ? baseQuery.where(eq(t.refererEvents.reqPath, reqPathFilter)) : baseQuery;
 
   const rows = await filtered
     .groupBy(t.refererEvents.refHost, t.refererEvents.refPath, t.refererEvents.reqPath)

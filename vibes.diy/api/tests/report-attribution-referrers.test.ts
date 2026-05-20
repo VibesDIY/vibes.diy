@@ -72,9 +72,10 @@ describe("report-attribution-referrers", { timeout: TIMEOUT }, () => {
     apiEmpty = makeApi(await userEmpty.getDashBoardToken());
 
     // Seed referrer events:
-    //   app-a: 2 hits from example.com/page1, 1 hit from example.com/page2
-    //   app-b: 3 hits from example.com/page1
-    //   root /: 1 hit from example.com/page1
+    //   app-a:  2 hits from example.com/page1, 1 hit from example.com/page2
+    //   app-ab: 1 hit from example.com/page1 (slug that is a prefix of app-a — must NOT match app-a filter)
+    //   app-b:  3 hits from example.com/page1
+    //   root /:  1 hit from example.com/page1
     const t = appCtx.vibesCtx.sql.tables;
     await appCtx.vibesCtx.sql.db.insert(t.refererEvents).values([
       {
@@ -106,6 +107,16 @@ describe("report-attribution-referrers", { timeout: TIMEOUT }, () => {
         refPath: "/page2",
         reqMethod: "GET",
         reqPath: "/vibe/alice/app-a",
+      },
+      {
+        logKey: "log-1",
+        lineIdx: 7,
+        ts: "2025-01-01T00:07:00Z",
+        refHref: "https://example.com/page1",
+        refHost: "example.com",
+        refPath: "/page1",
+        reqMethod: "GET",
+        reqPath: "/vibe/alice/app-ab",
       },
       {
         logKey: "log-1",
@@ -165,12 +176,13 @@ describe("report-attribution-referrers", { timeout: TIMEOUT }, () => {
       expect(r.isOk()).toBe(true);
       const body = r.Ok();
       expect(body.type).toBe("vibes.diy.res-report-attribution-referrers");
-      // 4 distinct (refHost, refPath, reqPath) groups:
-      //   (example.com, /page1, /vibe/alice/app-a) → 2
-      //   (example.com, /page2, /vibe/alice/app-a) → 1
-      //   (example.com, /page1, /vibe/alice/app-b) → 3
-      //   (example.com, /page1, /)                 → 1
-      expect(body.rows).toHaveLength(4);
+      // 5 distinct (refHost, refPath, reqPath) groups:
+      //   (example.com, /page1, /vibe/alice/app-a)  → 2
+      //   (example.com, /page2, /vibe/alice/app-a)  → 1
+      //   (example.com, /page1, /vibe/alice/app-ab) → 1
+      //   (example.com, /page1, /vibe/alice/app-b)  → 3
+      //   (example.com, /page1, /)                  → 1
+      expect(body.rows).toHaveLength(5);
       for (const row of body.rows) {
         expect(typeof row.reqPath).toBe("string");
         expect(row.refHost).toBe("example.com");
@@ -186,11 +198,11 @@ describe("report-attribution-referrers", { timeout: TIMEOUT }, () => {
   });
 
   describe("filtered view (reqPath provided)", () => {
-    it("returns only rows matching the reqPath prefix", async () => {
+    it("returns only exact-match rows — does not bleed into prefix-sharing slugs", async () => {
       const r = await apiAttrib.reportAttributionReferrers({ reqPath: "/vibe/alice/app-a" });
       expect(r.isOk()).toBe(true);
       const body = r.Ok();
-      // 2 distinct groups for app-a:
+      // 2 distinct groups for app-a (app-ab must NOT appear):
       //   (example.com, /page1, /vibe/alice/app-a) → 2
       //   (example.com, /page2, /vibe/alice/app-a) → 1
       expect(body.rows).toHaveLength(2);
