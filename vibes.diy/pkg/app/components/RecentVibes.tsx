@@ -14,7 +14,7 @@ function VibeIconThumb({ icon }: { icon?: { cid: string; mime: string } }) {
     <img
       src={cidAssetUrl(icon.cid, icon.mime, getAppHostBaseUrl())}
       alt=""
-      className="h-6 w-6 shrink-0 rounded-full"
+      className="h-6 w-6 shrink-0 rounded-full dark:invert"
       onError={(e) => {
         e.currentTarget.style.display = "none";
       }}
