@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { MetaScreenShot, ResRecentVibesItem } from "@vibes.diy/api-types";
 import { isMetaScreenShot } from "@vibes.diy/api-types";
@@ -23,44 +23,8 @@ function screenshotSrc(shot: MetaScreenShot): string {
 
 type AppItem = Pick<ResRecentVibesItem, "userSlug" | "appSlug" | "title" | "icon">;
 
-// TEMP: 100 mock items so we can preview the grid + scroll + search at scale.
-// Remove before shipping.
-const MOCK_NAMES = [
-  "Dream Gig", "History Atlas", "Pixel Studio", "Beat Lab", "Color Mood", "Recipe Vault",
-  "Habit Streak", "Sketch Pad", "Stage Planner", "Voice Memo", "Quote Wall", "Trip Log",
-  "Plant Care", "Workout Tracker", "Mood Ring", "Story Maker", "Dice Roller", "Polls Now",
-  "Idea Box", "Bookmark Tower", "Time Capsule", "Sound Bath", "Card Deck", "Snap Quiz",
-  "Money Map",
-];
-const MOCK_APPS: AppItem[] = Array.from({ length: 100 }, (_, i) => {
-  const base = MOCK_NAMES[i % MOCK_NAMES.length];
-  const variant = Math.floor(i / MOCK_NAMES.length);
-  const title = variant === 0 ? base : `${base} ${variant + 1}`;
-  return {
-    userSlug: "amber",
-    appSlug: `${base.toLowerCase().replace(/\s+/g, "-")}${variant === 0 ? "" : `-${variant + 1}`}`,
-    title,
-  };
-});
-
 export function MyAppsSection() {
-  useRecentVibes(FETCH_PAGE_SIZE); // keep the real hook subscribed for later
-  // TEMP: simulate paginated loading from a 100-item mock pool so we can
-  // preview the infinite-scroll experience even with only a few real apps.
-  // First 30 visible up front; each loadMore appends 30 more after a brief
-  // delay to mimic the server round-trip. Remove this block before shipping.
-  const [mockVisibleCount, setMockVisibleCount] = useState(FETCH_PAGE_SIZE);
-  const [mockLoading, setMockLoading] = useState(false);
-  const items: AppItem[] = useMemo(() => MOCK_APPS.slice(0, mockVisibleCount), [mockVisibleCount]);
-  const loading = mockLoading;
-  const nextCursor: string | undefined = mockVisibleCount < MOCK_APPS.length ? "more" : undefined;
-  const loadMore = useCallback(async () => {
-    if (mockVisibleCount >= MOCK_APPS.length || mockLoading) return;
-    setMockLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setMockVisibleCount((c) => Math.min(c + FETCH_PAGE_SIZE, MOCK_APPS.length));
-    setMockLoading(false);
-  }, [mockVisibleCount, mockLoading]);
+  const { items, loading, nextCursor, loadMore } = useRecentVibes(FETCH_PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState("");
   const [detailItem, setDetailItem] = useState<AppItem | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -161,17 +125,6 @@ interface AppIconCardProps {
 function AppIconCard({ item, appHostBaseUrl, onOpenInfo }: AppIconCardProps) {
   const label = item.title ?? item.appSlug;
   const iconUrl = item.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
-  // TEMP: simulate per-card load latency so we can see the skeleton in action.
-  // Each card shows the skeleton for a random 250–950ms and then swaps to
-  // its real content. Remove this block (and the early-return below) once
-  // the section is wired to a real per-item loading source.
-  const [isLoadingInfo, setIsLoadingInfo] = useState(true);
-  useEffect(() => {
-    const delay = 250 + Math.random() * 700;
-    const t = setTimeout(() => setIsLoadingInfo(false), delay);
-    return () => clearTimeout(t);
-  }, []);
-  if (isLoadingInfo) return <AppIconCardSkeleton />;
   return (
     <div className="group relative flex flex-col items-center gap-1.5">
       <Link
@@ -215,15 +168,6 @@ function AppIconCard({ item, appHostBaseUrl, onOpenInfo }: AppIconCardProps) {
       <span className="w-full text-xs font-medium text-light-primary dark:text-dark-primary text-center truncate">
         {label}
       </span>
-    </div>
-  );
-}
-
-function AppIconCardSkeleton() {
-  return (
-    <div className="flex flex-col items-center gap-1.5" aria-hidden="true">
-      <div className="w-full aspect-square bg-light-background-02 dark:bg-dark-background-02 border-2 border-[var(--vibes-near-black)]/30 dark:border-[var(--color-dark-decorative-01)]/40 rounded-xl animate-pulse" />
-      <div className="h-3 w-3/4 rounded bg-light-background-02 dark:bg-dark-background-02 animate-pulse" />
     </div>
   );
 }
