@@ -1,6 +1,6 @@
 import { command, option, positional, string } from "cmd-ts";
 import { mkdir, writeFile } from "fs/promises";
-import { join, resolve } from "path";
+import { dirname, join, resolve } from "path";
 import {
   ValidateTriggerCtx,
   Result,
@@ -121,7 +121,9 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
         return Result.Err(`Failed to fetch ${fileName}: HTTP ${resp.status}`);
       }
       const content = await resp.text();
-      const rWrite = await exception2Result(() => writeFile(join(dir, fileName), content, "utf-8"));
+      const filePath = join(dir, fileName);
+      await mkdir(dirname(filePath), { recursive: true });
+      const rWrite = await exception2Result(() => writeFile(filePath, content, "utf-8"));
       if (rWrite.isErr()) {
         return Result.Err(`Failed to write ${fileName}: ${rWrite.Err().message}`);
       }
