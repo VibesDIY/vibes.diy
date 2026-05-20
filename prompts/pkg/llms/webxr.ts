@@ -9,7 +9,9 @@ export const webxrConfig: LlmConfig = {
     "hit-testing, surface anchors, particle systems, SolidParticleSystem, custom GLSL shaders, " +
     "controller and hand-tracking events, PBR materials, Quest performance patterns. " +
     "babylon, babylonjs, WebXR, VR, AR, spatial computing, immersive, mixed reality, xr, " +
-    "augmented reality, virtual reality, Quest, Vision Pro",
+    "augmented reality, virtual reality, Quest, Vision Pro. " +
+    "Note: for placing a single USDZ/reality file on iOS/macOS without a full 3D engine, " +
+    "prefer the ar-quicklook skill instead.",
   importModule: "@babylonjs/core",
   importName: "BABYLON",
   importType: "namespace",
