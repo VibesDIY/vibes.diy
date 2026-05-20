@@ -1,8 +1,8 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, inject, it, vi } from "vitest";
-import { TestFetchPair, TestWSPair } from "@adviser/cement";
+import { TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
-import { cfServe, CFInject, isInternalReferer, noopCache, WSSendProvider, vibesMsgEvento } from "@vibes.diy/api-svc";
+import { cfServe, CFInject, isInternalReferer, noopCache, WSSendProvider } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
@@ -73,7 +73,7 @@ describe("cfServe referer logging", { timeout: TIMEOUT }, () => {
     const req = new Request("https://vibes.diy/api/auth/session", {
       headers: { Referer: referer },
     }) as unknown as CFRequest;
-    await cfServe(req, serveCtx).catch(() => {});
+    await cfServe(req, serveCtx).catch((_e: unknown) => undefined);
   }
 
   it("logs an external referer", async () => {
