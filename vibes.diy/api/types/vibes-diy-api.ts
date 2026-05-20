@@ -96,6 +96,8 @@ import {
   ResReportGrowthMemberships,
   ReqReportGrowthVibesWithData,
   ResReportGrowthVibesWithData,
+  ReqReportAttributionReferrers,
+  ResReportAttributionReferrers,
 } from "./report.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -202,6 +204,9 @@ export interface VibesDiyApiIface<_T = unknown> {
   // in the Clerk dashboard, no allowlist code to maintain.
   reportGrowthMemberships(req: Req<ReqReportGrowthMemberships>): Promise<Result<ResReportGrowthMemberships, VibesDiyError>>;
   reportGrowthVibesWithData(req: Req<ReqReportGrowthVibesWithData>): Promise<Result<ResReportGrowthVibesWithData, VibesDiyError>>;
+  reportAttributionReferrers(
+    req: Req<ReqReportAttributionReferrers>
+  ): Promise<Result<ResReportAttributionReferrers, VibesDiyError>>;
 
   // Register a callback for document change events pushed from the API.
   // dbName is included so consumers can filter to the specific db they care

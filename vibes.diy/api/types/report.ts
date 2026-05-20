@@ -64,6 +64,7 @@ export function isResReportGrowthVibesWithData(obj: unknown): obj is ResReportGr
 export const reqReportAttributionReferrers = type({
   type: "'vibes.diy.req-report-attribution-referrers'",
   auth: dashAuthType,
+  "reqPath?": "string",
 });
 export type ReqReportAttributionReferrers = typeof reqReportAttributionReferrers.infer;
 export function isReqReportAttributionReferrers(obj: unknown): obj is ReqReportAttributionReferrers {
@@ -73,6 +74,7 @@ export function isReqReportAttributionReferrers(obj: unknown): obj is ReqReportA
 export const resReportAttributionReferrersRow = type({
   refHost: "string",
   refPath: "string",
+  reqPath: "string",
   total: "number",
   conversions: "number",
   browse: "number",
