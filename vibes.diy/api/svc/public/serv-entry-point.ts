@@ -12,17 +12,21 @@ import { ExtractedHostToBindings, extractHostToBindings } from "../entry-point-u
 import { VibesApiSQLCtx } from "../types.js";
 import { eq, and, desc } from "drizzle-orm/sql/expressions";
 import {
+  ActiveEntry,
   FetchResult,
   FileSystemItem,
   fileSystemItem,
   HttpResponseBodyType,
   HttpResponseJsonType,
+  isActiveIcon,
   isFetchErrResult,
   isFetchOkResult,
   isMetaScreenShot,
   MetaItem,
+  parseArrayWarning,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
+import { buildFaviconSvg } from "../intern/build-favicon-svg.js";
 import { renderVibe, renderPendingVibe } from "../intern/render-vibe.js";
 import { parse } from "cookie";
 import { renderToReadableStream } from "react-dom/server";
@@ -326,6 +330,48 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         return sendFetchOk(ctx, selectedFsItem, possiblePath);
       }
     }
+    // Per-app favicon: app icon clipped to a circle on the brand grey grid.
+    if (ctx.validated.path === "/favicon.svg") {
+      const settingsRow = await vctx.sql.db
+        .select()
+        .from(vctx.sql.tables.appSettings)
+        .where(
+          and(
+            eq(vctx.sql.tables.appSettings.userSlug, ctx.validated.userSlug),
+            eq(vctx.sql.tables.appSettings.appSlug, ctx.validated.appSlug)
+          )
+        )
+        .limit(1)
+        .then((r) => r[0]);
+      const entries = settingsRow ? parseArrayWarning(settingsRow.settings ?? [], ActiveEntry).filtered : [];
+      const iconEntry = entries.find(isActiveIcon);
+      const head = iconEntry?.versions.find((v) => v.cid === iconEntry.currentCid);
+      if (iconEntry && head && head.cid.length > 0) {
+        const iconFetch = await vctx.storage.fetch(head.cid);
+        if (isFetchOkResult(iconFetch)) {
+          const bytes = new Uint8Array(await new Response(iconFetch.data).arrayBuffer());
+          const svg = buildFaviconSvg({ bytes, mime: head.mime });
+          await ctx.send.send(ctx, {
+            type: "http.Response.Body",
+            status: 200,
+            headers: {
+              "Content-Type": "image/svg+xml",
+              "Cache-Control": "public, max-age=3600",
+              ETag: quoteEtag(head.cid),
+            },
+            body: svg,
+          } satisfies HttpResponseBodyType);
+          return Result.Ok(EventoResult.Stop);
+        }
+      }
+      await ctx.send.send(ctx, {
+        type: "http.Response.JSON",
+        status: 404,
+        json: { type: "error", message: "No icon available" },
+      } satisfies HttpResponseJsonType);
+      return Result.Ok(EventoResult.Stop);
+    }
+
     // Serve screenshot from meta for social media cards
     if (ctx.validated.path === "/screenshot.png" || ctx.validated.path === "/screenshot.jpg") {
       const metaItems = (fs.meta as MetaItem[]) || [];
