@@ -375,6 +375,58 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     expect(await badgeRes.text()).toContain("badge");
   });
 
+  it("bare specifiers in plain .js helpers land in the import map", async () => {
+    // Verifies the plain-JS branch in transformJSXAndImports (write-apps.ts:168) correctly
+    // extracts bare imports and adds them to the import map. A regression here would silently
+    // 404 in the browser since the import map entry would be missing.
+    const rRes = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `import { formatAge } from "./helpers.js"; export default function App() { return <div>{formatAge(Date.now())}</div>; }`,
+        },
+        {
+          type: "code-block",
+          lang: "js",
+          filename: "/helpers.js",
+          // bare specifier "ms" must be extracted and put in the import map
+          content: `import ms from "ms"; export function formatAge(ts) { return ms(Date.now() - ts); }`,
+        },
+      ],
+    });
+    const res = rRes.Ok();
+    if (!isResEnsureAppSlugOk(res)) {
+      assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+    const url = calcEntryPointUrl({
+      hostnameBase: ".nowhere",
+      protocol: "http",
+      port: "4711",
+      bindings: { appSlug: res.appSlug, userSlug: res.userSlug, fsId: res.fsId },
+    });
+    const resIframe = await api.cfg.fetch(url);
+    expect(resIframe.status).toBe(200);
+    const iframeText = await resIframe.text();
+
+    // The rendered HTML must contain an import map with an entry for "ms"
+    const importMapMatch = iframeText.match(/<script type="importmap">([\s\S]*?)<\/script>/);
+    expect(importMapMatch, "iframe HTML must contain an importmap script tag").toBeTruthy();
+    const importMap = JSON.parse(importMapMatch![1]);
+    expect(importMap.imports, `import map must have an entry for "ms"; got: ${JSON.stringify(importMap.imports)}`).toHaveProperty(
+      "ms"
+    );
+
+    // helpers.js must be served at its path (not 404) so relative imports resolve
+    const defaultImports = [...iframeText.matchAll(/^import V\d+ from "([^"]+)"/gm)];
+    const origin = new URL(defaultImports[0][1].replace(/App\.jsx$/, ""), url).toString();
+    const helpersRes = await api.cfg.fetch(new URL("helpers.js", origin).toString());
+    expect(helpersRes.status).toBe(200);
+    expect(await helpersRes.text()).toContain("formatAge");
+  });
+
   it("revalidates unversioned published root html when metadata changes for the same fsId", async () => {
     const rRes = await api.ensureAppSlug({
       mode: "production",
