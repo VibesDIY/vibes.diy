@@ -180,6 +180,10 @@ async function transformJSXAndImports(
           imports.get(imp)?.push(item.fsItem.assetId);
         });
         acc.push(Result.Ok(item.fsItem));
+      } else {
+        // Bare assets (str-asset-block, uint8-asset-block, etc.) — include as-is so
+        // serv-entry-point can serve them at their original filename path.
+        acc.push(Result.Ok(item.fsItem));
       }
     })
   );

@@ -316,6 +316,51 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     }
   });
 
+  it("multi-file app: only entry-point App.jsx is default-imported in mount JS, helper modules are served at their path", async () => {
+    const rRes = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `import { greet } from "./helpers.js"; export default function App() { return <div>{greet("world")}</div>; }`,
+        },
+        {
+          type: "str-asset-block",
+          filename: "/helpers.js",
+          content: `export function greet(name) { return "Hello, " + name + "!"; }`,
+        },
+      ],
+    });
+    const res = rRes.Ok();
+    if (!isResEnsureAppSlugOk(res)) {
+      assert.fail("Expected ensureAppSlug with multi-file to return a ResEnsureAppSlugOk");
+    }
+    const url = calcEntryPointUrl({
+      hostnameBase: ".nowhere",
+      protocol: "http",
+      port: "4711",
+      bindings: { appSlug: res.appSlug, userSlug: res.userSlug, fsId: res.fsId },
+    });
+    const resIframe = await api.cfg.fetch(url);
+    expect(resIframe.status).toBe(200);
+    const iframeText = await resIframe.text();
+
+    // Only App.jsx (jsx-to-js transform) should appear as a default import in mount JS
+    const defaultImports = [...iframeText.matchAll(/^import V\d+ from "([^"]+)"/gm)];
+    expect(defaultImports.length).toBe(1);
+    expect(defaultImports[0][1]).toContain("App.jsx");
+    expect(iframeText).not.toMatch(/import V\d+ from ".*helpers\.js"/);
+
+    // helpers.js (str-asset-block) must be served at its path so the browser can resolve the import
+    const helpersUrl = new URL(defaultImports[0][1].replace(/App\.jsx$/, "helpers.js"), url).toString();
+    const helpersRes = await api.cfg.fetch(helpersUrl);
+    expect(helpersRes.status).toBe(200);
+    const helpersText = await helpersRes.text();
+    expect(helpersText).toContain("greet");
+  });
+
   it("revalidates unversioned published root html when metadata changes for the same fsId", async () => {
     const rRes = await api.ensureAppSlug({
       mode: "production",
