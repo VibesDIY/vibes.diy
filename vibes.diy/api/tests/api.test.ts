@@ -316,7 +316,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     }
   });
 
-  it("multi-file app: only entry-point App.jsx is default-imported in mount JS, helper modules are served at their path", async () => {
+  it("multi-file app: only App.jsx is mounted, helper .js and .jsx modules are served but not default-imported", async () => {
     const rRes = await api.ensureAppSlug({
       mode: "dev",
       fileSystem: [
@@ -324,12 +324,21 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
           type: "code-block",
           lang: "jsx",
           filename: "/App.jsx",
-          content: `import { greet } from "./helpers.js"; export default function App() { return <div>{greet("world")}</div>; }`,
+          content: `import { greet } from "./utils.js"; import { Badge } from "./Badge.jsx"; export default function App() { return <div><Badge />{greet("world")}</div>; }`,
         },
+        // plain JS helper — no JSX transform needed, no default export
         {
-          type: "str-asset-block",
-          filename: "/helpers.js",
+          type: "code-block",
+          lang: "js",
+          filename: "/utils.js",
           content: `export function greet(name) { return "Hello, " + name + "!"; }`,
+        },
+        // JSX helper component — needs JSX transform to be served, but NOT mounted
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/Badge.jsx",
+          content: `export function Badge() { return <span>badge</span>; }`,
         },
       ],
     });
@@ -347,18 +356,23 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     expect(resIframe.status).toBe(200);
     const iframeText = await resIframe.text();
 
-    // Only App.jsx (jsx-to-js transform) should appear as a default import in mount JS
+    // Only App.jsx (the auto-detected entry point) should appear as a default import in mount JS
     const defaultImports = [...iframeText.matchAll(/^import V\d+ from "([^"]+)"/gm)];
     expect(defaultImports.length).toBe(1);
     expect(defaultImports[0][1]).toContain("App.jsx");
-    expect(iframeText).not.toMatch(/import V\d+ from ".*helpers\.js"/);
+    expect(iframeText).not.toMatch(/import V\d+ from ".*utils\.js"/);
+    expect(iframeText).not.toMatch(/import V\d+ from ".*Badge\.jsx"/);
 
-    // helpers.js (str-asset-block) must be served at its path so the browser can resolve the import
-    const helpersUrl = new URL(defaultImports[0][1].replace(/App\.jsx$/, "helpers.js"), url).toString();
-    const helpersRes = await api.cfg.fetch(helpersUrl);
-    expect(helpersRes.status).toBe(200);
-    const helpersText = await helpersRes.text();
-    expect(helpersText).toContain("greet");
+    // Both helpers must be reachable at their paths for relative imports to resolve
+    const origin = new URL(defaultImports[0][1].replace(/App\.jsx$/, ""), url).toString();
+    const utilsRes = await api.cfg.fetch(new URL("utils.js", origin).toString());
+    expect(utilsRes.status).toBe(200);
+    expect(await utilsRes.text()).toContain("greet");
+
+    const badgeRes = await api.cfg.fetch(new URL("Badge.jsx", origin).toString());
+    expect(badgeRes.status).toBe(200);
+    // Badge.jsx is served as transformed JS (JSX syntax removed)
+    expect(await badgeRes.text()).toContain("badge");
   });
 
   it("revalidates unversioned published root html when metadata changes for the same fsId", async () => {
