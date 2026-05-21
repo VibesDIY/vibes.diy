@@ -181,7 +181,7 @@ function TopLevelMsg({
       data-render-seq={renderSeq}
     >
       <BrutalistCard size="md" messageType="ai" className="mr-8 max-w-[85%]" style={{ fontSize: "0.8rem" }}>
-        <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
+        <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none [&_p]:my-3 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0">
           <ReactMarkdown>{prose}</ReactMarkdown>
         </div>
         <OptionButtons
