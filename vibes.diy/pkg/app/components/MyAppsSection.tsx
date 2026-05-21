@@ -2,16 +2,45 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { MetaScreenShot, ResRecentVibesItem } from "@vibes.diy/api-types";
 import { isMetaScreenShot } from "@vibes.diy/api-types";
+import { TexturedPattern } from "@vibes.diy/base";
 import { useRecentVibes } from "../hooks/useRecentVibes.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";
+import {
+  getGalleryContainerStyle,
+  getGalleryLabelStyle,
+  getGalleryContentStyle,
+  getGalleryDescriptionStyle,
+  getVibeCardWrapperStyle,
+  getVibeCardNameStyle,
+  getVibeCardIconContainerStyle,
+  getVibeCardTexturedShadowStyle,
+  getVibeCardMainIconContainerStyle,
+  getVibeCardIconImageStyle,
+} from "./NewSessionContent/NewSessionContent.styles.js";
 
 const FETCH_PAGE_SIZE = 30;
-// Fixed height = approx 3 rows of icon cards + padding + gaps. Cards scale
-// with viewport so this is a best-effort middle ground (3 rows on desktop,
-// roughly 2 rows on phone).
-const CONTAINER_HEIGHT = 420;
 const DETAIL_PANEL_WIDTH = 360;
+
+// Inject the settle keyframes once. A card starts tilted and waiting; when
+// it enters the viewport the animation plays once and the wobble decays
+// down to a still 0° — like a sticker that was just slapped on with the
+// scroll's inertia.
+if (typeof document !== "undefined" && !document.getElementById("my-apps-settle")) {
+  const styleEl = document.createElement("style");
+  styleEl.id = "my-apps-settle";
+  styleEl.textContent = `
+@keyframes my-apps-settle {
+  0%   { transform: rotate(-7deg); }
+  22%  { transform: rotate(5.5deg); }
+  44%  { transform: rotate(-3deg); }
+  64%  { transform: rotate(1.8deg); }
+  82%  { transform: rotate(-0.8deg); }
+  100% { transform: rotate(0deg); }
+}
+  `;
+  document.head.appendChild(styleEl);
+}
 
 // Module-level cache so re-opening the detail panel for the same app skips
 // the network round-trip.
@@ -23,12 +52,14 @@ function screenshotSrc(shot: MetaScreenShot): string {
 
 type AppItem = Pick<ResRecentVibesItem, "userSlug" | "appSlug" | "title" | "icon">;
 
-export function MyAppsSection() {
+interface MyAppsSectionProps {
+  isMobile: boolean;
+}
+
+export function MyAppsSection({ isMobile }: MyAppsSectionProps) {
   const { items, loading, nextCursor, loadMore } = useRecentVibes(FETCH_PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState("");
   const [detailItem, setDetailItem] = useState<AppItem | null>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const appHostBaseUrl = getAppHostBaseUrl();
 
   const filteredItems = useMemo(() => {
@@ -42,22 +73,21 @@ export function MyAppsSection() {
     );
   }, [items, searchQuery]);
 
-  // Infinite scroll — fire loadMore when the sentinel scrolls into the
-  // container's viewport. We still feed the next page from the server even
-  // while a search filter is active, so users can find older matches.
+  // Lazy-load trigger: sentinel near the bottom of the grid fires loadMore
+  // as the user scrolls the page (root: null = viewport).
+  const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const sentinel = sentinelRef.current;
-    const root = scrollContainerRef.current;
-    if (!sentinel || !root || !nextCursor) return;
+    const el = sentinelRef.current;
+    if (!el || !nextCursor || loading || searchQuery.trim().length > 0) return;
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting && !loading) void loadMore();
+        if (entries[0]?.isIntersecting) void loadMore();
       },
-      { root, rootMargin: "200px" }
+      { root: null, rootMargin: "300px" }
     );
-    io.observe(sentinel);
+    io.observe(el);
     return () => io.disconnect();
-  }, [nextCursor, loading, loadMore]);
+  }, [nextCursor, loading, loadMore, searchQuery]);
 
   // ESC closes the detail panel.
   useEffect(() => {
@@ -70,45 +100,62 @@ export function MyAppsSection() {
   }, [detailItem]);
 
   return (
-    <section className="mt-10">
-      <h2 className="px-1 mb-3 text-sm font-bold uppercase tracking-[0.15em] text-light-primary dark:text-dark-primary">
-        My Apps
-      </h2>
-
-      {/* Search — under the label, centered. */}
-      <div className="mb-3 flex justify-center">
-        <SearchBar value={searchQuery} onChange={setSearchQuery} />
-      </div>
-
-      <div
-        ref={scrollContainerRef}
-        className="rounded-lg border-2 border-[var(--vibes-near-black)] dark:border-[var(--color-dark-decorative-01)] bg-[var(--vibes-cream)] dark:bg-dark-background-01 overflow-y-auto"
-        style={{ height: CONTAINER_HEIGHT }}
-      >
-        {filteredItems.length === 0 && !loading ? (
-          <div className="py-12 text-center text-sm text-light-primary/60 dark:text-dark-primary/60">
-            {searchQuery.trim()
-              ? `No matches for "${searchQuery.trim()}".`
-              : "No vibes yet — describe one above to get started."}
+    <section className="mt-6">
+      {/* Gallery-style container: vertical "My Apps" label on the side
+          (desktop) or top (mobile). Matches the Gallery's 600px max-width
+          and shows 4 cards per row. The grid expands naturally with however
+          many apps have been loaded; the page itself scrolls. */}
+      <div style={getGalleryContainerStyle(isMobile)}>
+        <div style={getGalleryLabelStyle(isMobile)}>My Apps</div>
+        <div style={getGalleryContentStyle()}>
+          {/* Search lives inside the container, above the grid. */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: isMobile ? "12px 12px 0" : "16px 24px 0",
+            }}
+          >
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
           </div>
-        ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 p-4">
-            {filteredItems.map((item) => (
-              <AppIconCard
-                key={`${item.userSlug}/${item.appSlug}`}
-                item={item}
-                appHostBaseUrl={appHostBaseUrl}
-                onOpenInfo={() => setDetailItem(item)}
-              />
-            ))}
-            {nextCursor && <div ref={sentinelRef} className="col-span-full h-1" aria-hidden="true" />}
-            {loading && filteredItems.length > 0 && (
-              <div className="col-span-full flex justify-center py-3">
-                <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
-              </div>
-            )}
-          </div>
-        )}
+          {filteredItems.length === 0 && !loading ? (
+            <div className="py-12 text-center text-sm" style={{ color: "var(--vibes-near-black)", opacity: 0.6 }}>
+              {searchQuery.trim()
+                ? `No matches for "${searchQuery.trim()}".`
+                : "No vibes yet — describe one above to get started."}
+            </div>
+          ) : (
+            <div
+              className="grid grid-cols-4 justify-items-center"
+              style={{
+                padding: isMobile ? 12 : 24,
+                rowGap: isMobile ? 16 : 20,
+                columnGap: isMobile ? 12 : 10,
+                alignItems: "start",
+              }}
+            >
+              {filteredItems.map((item, index) => (
+                <AppIconCard
+                  key={`${item.userSlug}/${item.appSlug}`}
+                  item={item}
+                  appHostBaseUrl={appHostBaseUrl}
+                  isMobile={isMobile}
+                  index={index}
+                  onOpenInfo={() => setDetailItem(item)}
+                />
+              ))}
+              {nextCursor && !searchQuery.trim() && (
+                <div ref={sentinelRef} className="col-span-full h-1" aria-hidden="true" />
+              )}
+              {loading && filteredItems.length > 0 && (
+                <div className="col-span-full flex justify-center py-3">
+                  <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
+                </div>
+              )}
+            </div>
+          )}
+          <p style={getGalleryDescriptionStyle()}>Pick up where you left off.</p>
+        </div>
       </div>
 
       <AppDetailPanel item={detailItem} appHostBaseUrl={appHostBaseUrl} onClose={() => setDetailItem(null)} />
@@ -119,55 +166,114 @@ export function MyAppsSection() {
 interface AppIconCardProps {
   item: AppItem;
   appHostBaseUrl: string;
+  isMobile: boolean;
+  index: number;
   onOpenInfo: () => void;
 }
 
-function AppIconCard({ item, appHostBaseUrl, onOpenInfo }: AppIconCardProps) {
+function AppIconCard({ item, appHostBaseUrl, isMobile, index, onOpenInfo }: AppIconCardProps) {
   const label = item.title ?? item.appSlug;
   const iconUrl = item.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
+  const iconSize = isMobile ? 64 : 100;
+  const iconRadius = isMobile ? 16 : 24;
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Slight per-card jitter in duration so a row doesn't settle in perfect
+  // lockstep — feels more organic, like cards placed one-by-one.
+  const settleDuration = 650 + ((index * 13) % 9) * 25; // 650–850ms
+
+  // The card waits tilted while it's off-screen, settles when it enters,
+  // and re-tilts + replays the settle each time it re-enters the viewport.
+  const cardRef = useRef<HTMLDivElement>(null);
+  const iconBoxRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        setIsInView(entries[0]?.isIntersecting ?? false);
+      },
+      { root: null, threshold: 0 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => {
+    const box = iconBoxRef.current;
+    if (!box) return;
+    if (isInView) {
+      // Restart the CSS animation: clear, force reflow, re-apply.
+      box.style.animation = "none";
+      box.style.transform = "";
+      void box.offsetWidth;
+      box.style.animation = `my-apps-settle ${settleDuration}ms cubic-bezier(0.34, 1.2, 0.64, 1) forwards`;
+    } else {
+      box.style.animation = "none";
+      box.style.transform = "rotate(-7deg)";
+    }
+  }, [isInView, settleDuration]);
+
   return (
-    <div className="group relative flex flex-col items-center gap-1.5">
-      <Link
-        to={`/chat/${item.userSlug}/${item.appSlug}`}
-        className="w-full aspect-square bg-light-background-00 dark:bg-dark-background-00 border-2 border-[var(--vibes-near-black)] dark:border-[var(--color-dark-decorative-01)] rounded-xl overflow-hidden flex items-center justify-center transition-transform duration-150 group-hover:-translate-y-0.5 group-hover:shadow-[3px_3px_0_0_var(--vibes-near-black)] dark:group-hover:shadow-[3px_3px_0_0_var(--color-dark-decorative-01)]"
-        aria-label={`Open ${label}`}
-      >
-        {iconUrl ? (
-          <img
-            src={iconUrl}
-            alt=""
-            className="w-full h-full object-cover dark:invert"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        ) : (
-          <span className="text-light-primary/60 dark:text-dark-primary/60 text-[10px] font-bold uppercase tracking-wider px-1 text-center">
-            {item.appSlug.slice(0, 6)}
-          </span>
-        )}
-      </Link>
-
-      {/* Info button — top-right, fades in on hover; always faintly visible on
-          touch (no hover). */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onOpenInfo();
+    <div ref={cardRef} style={getVibeCardWrapperStyle()}>
+      <div
+        ref={iconBoxRef}
+        className="group"
+        style={{
+          ...getVibeCardIconContainerStyle(isMobile),
+          transformOrigin: "top center",
         }}
-        aria-label={`Info about ${label}`}
-        className="absolute -top-2 -right-2 z-[2] flex items-center justify-center w-6 h-6 rounded-full bg-[var(--vibes-near-black)] text-[var(--vibes-cream)] dark:bg-[var(--vibes-cream)] dark:text-[var(--vibes-near-black)] border-2 border-[var(--vibes-cream)] dark:border-[var(--color-dark-decorative-01)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 [@media(hover:none)]:opacity-60"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <span className="text-[11px] font-bold italic leading-none" style={{ fontFamily: "Georgia, serif" }}>
-          i
-        </span>
-      </button>
+        <div style={getVibeCardTexturedShadowStyle(isHovered, isMobile)}>
+          <TexturedPattern width={iconSize} height={iconSize} borderRadius={iconRadius} />
+        </div>
 
-      <span className="w-full text-xs font-medium text-light-primary dark:text-dark-primary text-center truncate">
-        {label}
-      </span>
+        <Link
+          to={`/chat/${item.userSlug}/${item.appSlug}`}
+          aria-label={`Open ${label}`}
+          style={getVibeCardMainIconContainerStyle(isHovered, isMobile)}
+        >
+          {iconUrl ? (
+            <img
+              src={iconUrl}
+              alt=""
+              style={getVibeCardIconImageStyle()}
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            <span
+              className="text-[10px] font-bold uppercase tracking-wider px-1 text-center"
+              style={{ color: "var(--vibes-near-black)", opacity: 0.6 }}
+            >
+              {item.appSlug.slice(0, 6)}
+            </span>
+          )}
+        </Link>
+
+        {/* Info button — top-right of the icon, fades in on hover; on touch
+            (no hover) stays faintly visible. */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onOpenInfo();
+          }}
+          aria-label={`Info about ${label}`}
+          style={{ top: -4, right: -6 }}
+          className="absolute z-[2] flex items-center justify-center w-6 h-6 rounded-full bg-[var(--vibes-near-black)] text-[var(--vibes-cream)] border-2 border-[var(--vibes-cream)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 [@media(hover:none)]:opacity-60"
+        >
+          <span className="text-[11px] font-bold italic leading-none" style={{ fontFamily: "Georgia, serif" }}>
+            i
+          </span>
+        </button>
+      </div>
+
+      <div style={getVibeCardNameStyle()}>{label}</div>
     </div>
   );
 }
