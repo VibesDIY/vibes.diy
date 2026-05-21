@@ -240,21 +240,13 @@ async function toFileSystemItems(
       assetURI: f.storage.getURL,
       size: f.storage.size,
     };
-    // console.log("toFileSystemItems - processing file:", f);
-    if (isVibeCodeBlock(f.vibeFileItem) && ["js", "jsx", "javascript"].includes(f.vibeFileItem.lang)) {
-      // console.log("marking for jsx transform for file:", f.vibeFileItem.filename);
+    // Only .jsx/.tsx files need the JSX→JS transform; plain .js files are valid ES modules as-is
+    if (isVibeCodeBlock(f.vibeFileItem) && ["jsx", "tsx"].includes(f.vibeFileItem.lang)) {
       ret.transform = {
         type: "jsx-to-js",
         transformedAssetId: "setAfterTransform",
       };
     }
-    // if (isVibeCodeBlock(f.vibeFileItem) && f.vibeFileItem.lang == "js") {
-    //   // console.log("marking for import extraction for file:", f.vibeFileItem.filename);
-    //   ret.transform = {
-    //     type: "imports",
-    //     importMapAssetId: "setAfterTransform",
-    //   };
-    // }
     if (f.vibeFileItem.entryPoint) {
       ret.entryPoint = true;
     }
