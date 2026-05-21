@@ -2,6 +2,8 @@
 
 > Source: [VibesDIY/vibes.diy#1694, comment by @kmikeym](https://github.com/VibesDIY/vibes.diy/issues/1694#issuecomment-4434611054). The "m" is for **manual** — this SOP was written for a human-driven walkthrough. The `qa-pr` skill applies the same spine and disciplines while driving the browser through `mcp__chrome-devtools__*`.
 
+> **Step 1 divergence (skill v0.2, 2026-05-21):** The original SOP requires "Cold account. Fresh email, never used on Vibes before." A skill dry-run on 2026-05-21 discovered Vibes' Clerk configuration is OAuth-only — no email sign-up form is exposed. The skill therefore signs in as the **operator's existing Vibes identity via Google OAuth**, and replaces the fresh-email discipline with two weaker disciplines: clean browser profile per run, and "click New Vibe before doing anything" to ensure a fresh project. The sign-up flow itself is no longer QA'd by the skill — it needs separate manual passes when auth changes. Steps 2–7 below apply as written.
+
 ## When to run it
 
 - A PR has a preview deploy and the first-time-user flow could plausibly be affected (or you just want eyes on it before approving).

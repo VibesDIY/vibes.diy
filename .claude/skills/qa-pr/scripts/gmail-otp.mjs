@@ -11,6 +11,13 @@
  * Requires credentials written by setup-gmail.mjs at
  * ~/.config/vibes-qa/gmail-credentials.json (override with
  * QA_GMAIL_CREDENTIALS).
+ *
+ * STATUS (2026-05-21): scaffolding only. The qa-pr skill no longer invokes
+ * this helper because Vibes' Clerk configuration is OAuth-only — there's
+ * no email sign-up flow to receive an OTP through. The script is retained
+ * intact so a future flow that does require an email round-trip (publish
+ * confirmation emails, share invites, password reset, etc.) can pick it up
+ * without re-implementing Gmail polling.
  */
 
 import { readFile } from "node:fs/promises";
