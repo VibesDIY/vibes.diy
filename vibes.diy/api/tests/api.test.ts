@@ -413,8 +413,10 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
     // The rendered HTML must contain an import map with an entry for "ms"
     const importMapMatch = iframeText.match(/<script type="importmap">([\s\S]*?)<\/script>/);
-    expect(importMapMatch, "iframe HTML must contain an importmap script tag").toBeTruthy();
-    const importMap = JSON.parse(importMapMatch![1]);
+    if (!importMapMatch) {
+      assert.fail("iframe HTML must contain an importmap script tag");
+    }
+    const importMap = JSON.parse(importMapMatch[1]);
     expect(importMap.imports, `import map must have an entry for "ms"; got: ${JSON.stringify(importMap.imports)}`).toHaveProperty(
       "ms"
     );
