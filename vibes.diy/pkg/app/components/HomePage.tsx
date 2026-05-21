@@ -238,11 +238,11 @@ export default function HomePage() {
                 <p style={getGalleryDescriptionStyle()}>The vibes are strong with these four top picks.</p>
               </div>
             </div>
-          </div>
 
-          {/* My Apps — full-width scrollable section (sibling of the centered
-              content container above) with infinite scroll inside. */}
-          <MyAppsSection />
+            {/* My Apps — Gallery-style box: 4 apps visible at a time, scrolls
+                vertically inside the container for older entries. */}
+            <MyAppsSection isMobile={mobile} />
+          </div>
         </div>
       </div>
       <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
