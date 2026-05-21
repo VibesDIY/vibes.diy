@@ -96,13 +96,19 @@ export async function renderVibe({
   });
   // console.log("renderVibe-1")
 
+  // Mount only the entry component (App.jsx / App.tsx by vibes.diy convention). Helper modules
+  // — whether plain .js or JSX — are served at their path for relative imports but must NOT
+  // be default-imported here; they rarely have a default export and would crash the runtime.
+  // Fall back to all jsx-to-js items only when no App.jsx/App.tsx is present (old single-file
+  // apps stored before this convention was enforced, which always only had App.jsx anyway).
+  const jsxToJsItems = fsItems.filter(
+    (i) => ["text/javascript", "application/javascript"].includes(i.mimeType) && i.transform?.type === "jsx-to-js"
+  );
+  const conventionEntries = jsxToJsItems.filter((i) => /\/App\.(jsx|tsx)$/.test(i.fileName));
+  const mountItems = new Set(conventionEntries.length > 0 ? conventionEntries : jsxToJsItems);
   const imports = fsItems.reduce(
     (acc, item, idx) => {
-      // Mount source files by original filename so that relative imports (e.g.
-      // `./helper.js`) resolve correctly via native browser module resolution.
-      // serv-entry-point serves the transformed content transparently when
-      // transform.type === "jsx-to-js".
-      if (["text/javascript", "application/javascript"].includes(item.mimeType) && item.transform?.type === "jsx-to-js") {
+      if (mountItems.has(item)) {
         acc.push({
           importStmt: `import V${idx} from ${JSON.stringify(`/~${fs.fsId}~${item.fileName}`)};`,
           var: `V${idx}`,
