@@ -30,6 +30,32 @@ What's **preserved**: steps 2–7 of the spine (first-prompt generation, in-app 
 
 **Operator identity (v0.3):** the operator's email comes from `git config user.email`, not a Gmail OAuth credential. The v0.1/v0.2 Gmail-API scaffolding (a Cloud project per engineer, `setup-gmail.mjs`, `gmail-otp.mjs`) was orphaned by the OAuth-only sign-in pivot and removed in v0.3 to drop ~30 minutes of per-engineer onboarding for a capability nothing currently uses. If a future Vibes flow needs the agent to read inbox messages (publish confirmations, share invites, password reset, etc.), the Gmail-API implementation can be revived from commits `7040276b`, `c1f15cab`, `bb29c0f1`, `26a591a7` on the original `popmechanic/qa-pr-skill-design` branch — substantially faster than reimplementing.
 
+## Per-engineer one-time setup (Google session in chrome-devtools profile)
+
+`chrome-devtools-mcp` launches Chrome against a persistent user-data-dir at `~/.cache/chrome-devtools-mcp/chrome-profile/` by default (verified with `npx chrome-devtools-mcp@latest --help`). The profile persists cookies, including Google sessions, across runs.
+
+For the OAuth sign-in in Step 4.1 to be a **one-click "Continue as &lt;you&gt;"** instead of a full email + password + 2FA round-trip, each engineer signs into Google **once** against that profile:
+
+1. Quit any Claude Code session whose tool list includes `mcp__chrome-devtools__*` (Chrome refuses to launch against a locked user-data-dir).
+2. From a terminal, launch Chrome against the profile:
+   ```bash
+   open -a "Google Chrome" --args \
+     --user-data-dir="$HOME/.cache/chrome-devtools-mcp/chrome-profile" \
+     --no-first-run --no-default-browser-check
+   ```
+3. In the launched Chrome window, sign in to Google as your `@vibes.diy` (or `@fireproof.storage`) Workspace account. Optionally visit <https://accounts.google.com> to confirm.
+4. **Do not** visit `vibes.diy` or any `*.workers.dev` Vibes preview in this Chrome window — that would seed Vibes/Clerk cookies the skill expects to be absent at preflight.
+5. Cmd-Q to fully quit Chrome.
+6. Done. Next chrome-devtools MCP launch reuses this profile with the Google session intact.
+
+If you ever need to redo the setup (e.g. you accidentally signed into the wrong Google account, or the profile got polluted), wipe it first:
+
+```bash
+rm -rf "$HOME/.cache/chrome-devtools-mcp/chrome-profile"
+```
+
+Then repeat steps 1–6.
+
 ## Read these first
 
 1. [`references/sop-v0.01m.md`](references/sop-v0.01m.md) — the spine, the disciplines, the output structure. Source of truth.
@@ -48,7 +74,8 @@ Verify the operator's environment can complete a run before starting one. Each c
 - `gh pr view <N> --json url,headRefOid,state` — confirm the PR exists, is `OPEN` (abort if `MERGED` or `CLOSED` — previews are torn down on close by `hosting-pr-cleanup.yaml`), and capture the head commit SHA.
 - Locate the preview URL by fetching the PR's comments with `gh api repos/VibesDIY/vibes.diy/issues/<N>/comments` and finding the most recent comment by `github-actions[bot]` containing the marker `<!-- vibes-diy-preview -->`. Extract the `**Preview URL:**` line — the URL will be on `*.workers.dev` (Cloudflare Workers per-PR deployment), e.g. `https://pr-1795-vibes-diy-v2.jchris.workers.dev`. That `workers.dev` host is the correct target for PR-preview QA; **do not** rewrite it to `vibes.diy`.
 - If no preview-URL comment exists, the deploy workflow probably hasn't finished. Poll the same `gh api ... /comments` endpoint every 30 seconds for up to 10 minutes. If still missing, abort with a clear message pointing the operator at `gh run list --branch <head-ref>` to investigate the deploy workflow — do not post anything.
-- Read [`references/chrome-mcp-rules.md`](references/chrome-mcp-rules.md) and confirm via `evaluate_script` of `document.cookie` on the preview URL that the browser profile is clean (no `__session` or `vibes.diy` cookies). If the profile is dirty, abort and ask the operator to restart chrome-devtools MCP.
+- Read [`references/chrome-mcp-rules.md`](references/chrome-mcp-rules.md) and confirm via `evaluate_script` of `document.cookie` on the preview URL that the browser profile is clean of Vibes session state (no `__session` cookie, no signed-in `__client_uat` value, no `vibes.diy`-scoped cookies). If the profile is dirty, abort and instruct the operator to either complete Step 7's sign-out cleanup from the previous run, or wipe the profile per the *Per-engineer one-time setup* section and resign-in to Google.
+- Verify the operator's Google session is persisted in the chrome-devtools profile: `new_page` to <https://accounts.google.com>, take a snapshot, and confirm a signed-in identity appears (look for the operator's address in the account chooser, or the heading "Welcome, &lt;name&gt;"). If no Google account is signed in, abort and point the operator at the *Per-engineer one-time setup* section above. The Step 4.1 OAuth sign-in will fail or stall without this.
 
 ## Step 2 — Run setup
 
@@ -68,7 +95,7 @@ If a degraded-upstream banner is visible, record it under `notable_conditions`.
 
 Walk the seven steps from [`references/sop-v0.01m.md`](references/sop-v0.01m.md), in order. The summary below is operational orchestration only — the SOP file is source of truth for *what to watch for* at each step.
 
-1. **Sign in from cold cache.** Type a prompt into the homepage form *before* signing in (note whether it gets eaten). Click submit; the page should redirect to the auth screen with the prompt preserved (`prompt64=` URL param). Note whether a brand-new visitor lands on a "Sign in" or "Sign up" tab by default — same observation as the kmikeym SOP. Click **"Sign in with Google"** and approve the OAuth consent if prompted (typically a one-click affirmation since the chrome-devtools MCP profile is on the operator's Google session). After landing back in the chat shell, **click "New Vibe"** to ensure you're starting from a fresh project, not landing on a prior session's app. See the *Sign-in model* section at the top of this file for why the skill no longer uses email + OTP.
+1. **Sign in from cold cache.** Type a prompt into the homepage form *before* signing in (note whether it gets eaten). Click submit; the page should redirect to the auth screen with the prompt preserved (`prompt64=` URL param). Note whether a brand-new visitor lands on a "Sign in" or "Sign up" tab by default — same observation as the kmikeym SOP. Click **"Sign in with Google"** — because the chrome-devtools profile has a persisted Google session (verified in preflight), this should be a one-click "Continue as &lt;you&gt;" with no password prompt. If Google asks for a password, the preflight check missed something — abort and rerun preflight. After landing back in the chat shell, **click "New Vibe"** to ensure you're starting from a fresh project, not landing on a prior session's app. See the *Sign-in model* section at the top of this file for why the skill no longer uses email + OTP.
 2. **First prompt → app generation.** Use the **Build** row from [`references/demo-prompts.md`](references/demo-prompts.md). Watch the build-in-progress feedback. Watch where the user lands when generation completes.
 3. **In-app exploration.** Click the generated app's core CTA. If the outcome is ambiguous (does it work or hang?), click it and wait at least 10 seconds before forming a conclusion — do not rely on the surrounding chat copy ("fully wired" claims are a known failure mode; see [#1704](https://github.com/VibesDIY/vibes.diy/issues/1704)).
 4. **Follow-up edit / theme change.** Use the **Edit** row from the prompt library. Watch the chrome, watch text repaint behavior on theme switches.
@@ -144,6 +171,7 @@ gh pr comment <PR-NUMBER> --body-file qa-reports/{run_id}/triage.md
 This is the single authorized GitHub write operation for the skill. Run it directly, without a confirmation prompt — the authorization is documented in this skill's *Authorization* section above.
 
 3. Print the comment URL (`gh` prints it on success) and a one-line summary of the verdict to the session.
+4. **Sign out of Vibes** to leave the chrome-devtools profile in a "Google signed in, Vibes signed out" state for the next run. Navigate to the account / settings area in the Vibes UI and click Sign out — or if a `/sign-out` route exists, navigate to it directly. Verify via `evaluate_script` that the `__session` cookie is gone (or set to expired). Skipping this leaves Vibes session state in the profile and the next run's preflight will abort on a dirty profile.
 
 ## Failure modes
 
