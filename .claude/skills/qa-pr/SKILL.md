@@ -15,7 +15,7 @@ This skill is explicitly authorized to perform exactly **one** GitHub write oper
 
 The skill is **not** authorized to: open issues, edit PR titles or descriptions, request review, merge, push commits, comment on other PRs, or perform any other GitHub write. If any of those would help, surface the suggestion in the triage body — do not act on it.
 
-## Sign-in model (v0.2 design note)
+## Sign-in model (v0.3 design note)
 
 The original v0.01m SOP from @kmikeym uses **a fresh email address per pass** for cold-account discipline. That assumption was invalidated on 2026-05-21 when a dry-run discovered Vibes' Clerk configuration is OAuth-only — no email sign-up form is exposed.
 
@@ -27,6 +27,8 @@ This skill therefore signs in as **the operator's existing Vibes identity via Go
 What's **lost** vs the original SOP: the sign-up flow itself is no longer QA'd by this skill (since we sign in as an existing user). That surface needs separate manual QA passes whenever the auth flow changes.
 
 What's **preserved**: steps 2–7 of the spine (first-prompt generation, in-app exploration, edit/theme, publish, live URL, remix) — the operator runs them against a freshly-generated app in a fresh browser profile.
+
+**Operator identity (v0.3):** the operator's email comes from `git config user.email`, not a Gmail OAuth credential. The v0.1/v0.2 Gmail-API scaffolding (a Cloud project per engineer, `setup-gmail.mjs`, `gmail-otp.mjs`) was orphaned by the OAuth-only sign-in pivot and removed in v0.3 to drop ~30 minutes of per-engineer onboarding for a capability nothing currently uses. If a future Vibes flow needs the agent to read inbox messages (publish confirmations, share invites, password reset, etc.), the Gmail-API implementation can be revived from commits `7040276b`, `c1f15cab`, `bb29c0f1`, `26a591a7` on the original `popmechanic/qa-pr-skill-design` branch — substantially faster than reimplementing.
 
 ## Read these first
 
@@ -42,8 +44,7 @@ Verify the operator's environment can complete a run before starting one. Each c
 
 - `gh --version` — `gh` is installed and authenticated.
 - `node --version` — Node is available.
-- `test -f "${QA_GMAIL_CREDENTIALS:-$HOME/.config/vibes-qa/gmail-credentials.json}"` — Gmail credentials exist. If missing, instruct the operator to run `node .claude/skills/qa-pr/scripts/setup-gmail.mjs` and stop.
-- Parse the credentials JSON and confirm the `email` field is present. If missing, instruct the operator to re-run `setup-gmail.mjs` (older versions didn't capture it) and stop. The email's domain should be `vibes.diy` or `fireproof.storage` (the two domains on the team Workspace) — if it's anything else, abort: the wrong account is authorized.
+- `git config user.email` — must return a non-empty address; used to identify the operator in the run log. If empty, instruct the operator to set it (`git config --global user.email "<your-address>"`) and stop. The address's domain *should* be `vibes.diy` or `fireproof.storage` (the team Workspace's domains). If it's something else, warn but do not abort — git identity and Vibes OAuth identity can legitimately differ (e.g. personal Gmail used for git but Workspace account used for Vibes); the run still completes, the warning surfaces in the triage's `notable_conditions`.
 - `gh pr view <N> --json url,headRefOid,state` — confirm the PR exists, is `OPEN` (abort if `MERGED` or `CLOSED` — previews are torn down on close by `hosting-pr-cleanup.yaml`), and capture the head commit SHA.
 - Locate the preview URL by fetching the PR's comments with `gh api repos/VibesDIY/vibes.diy/issues/<N>/comments` and finding the most recent comment by `github-actions[bot]` containing the marker `<!-- vibes-diy-preview -->`. Extract the `**Preview URL:**` line — the URL will be on `*.workers.dev` (Cloudflare Workers per-PR deployment), e.g. `https://pr-1795-vibes-diy-v2.jchris.workers.dev`. That `workers.dev` host is the correct target for PR-preview QA; **do not** rewrite it to `vibes.diy`.
 - If no preview-URL comment exists, the deploy workflow probably hasn't finished. Poll the same `gh api ... /comments` endpoint every 30 seconds for up to 10 minutes. If still missing, abort with a clear message pointing the operator at `gh run list --branch <head-ref>` to investigate the deploy workflow — do not post anything.
@@ -52,7 +53,7 @@ Verify the operator's environment can complete a run before starting one. Each c
 ## Step 2 — Run setup
 
 - Derive `run_id = pr-{N}-{YYYYMMDD-HHmm}` from the current UTC time.
-- Read the operator's email from `gmail-credentials.json` (the `email` field; e.g. `marcus@vibes.diy`). Used only to label the run and identify who triggered it — v0.2 does not need a plus-alias because the skill no longer drives email sign-up.
+- Read the operator's email via `git config user.email` (e.g. `marcus@vibes.diy`). Used to label the run and identify who triggered it in the run log.
 - Create `qa-reports/{run_id}/` (mkdir -p; do not commit).
 - Copy [`assets/triage-template.md`](assets/triage-template.md) to `qa-reports/{run_id}/triage.md`. This is the working file. Edit it incrementally as the run proceeds, filling in placeholders.
 - Append a line to `qa-reports/runs.jsonl` (create if needed) of the form `{"run_id":"...","operator_email":"...","pr":N,"started_at":"..."}`.
