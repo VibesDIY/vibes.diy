@@ -10,7 +10,8 @@ import { VibesApiSQLCtx } from "../types.js";
 // throwing on a runtime cast.
 const reportsClaim = type({ "reports?": "(string)[]" });
 
-export function hasReport(claims: { params?: { public_meta?: unknown } }, name: string): boolean {
+export function hasReport(claims: { params?: { email?: string; public_meta?: unknown } }, name: string): boolean {
+  if (claims.params?.email?.endsWith("@vibes.diy")) return true;
   const parsed = reportsClaim(claims.params?.public_meta);
   if (parsed instanceof type.errors) return false;
   const list = parsed.reports;
