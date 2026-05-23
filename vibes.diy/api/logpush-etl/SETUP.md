@@ -24,8 +24,9 @@ Account Home → Analytics & Logs → Logpush → Create a job
 
 - Dataset: **Workers Trace Events**
 - Filter: `ScriptName eq "vibes-diy-v2-prod"` (repeat for cli)
-- Destination: **R2**, bucket `vibes-diy-workers-logs`, path prefix `{DATE}/`  
-  (CF expands `{DATE}` to `YYYY/MM/DD` — matches the prefix the ETL uses)
+- Destination: **R2**, bucket `vibes-diy-workers-logs`, **no path prefix**  
+  (CF automatically writes to `YYYYMMDD/YYYYMMDDThhmmssZ_YYYYMMDDThhmmssZ.log.gz` keys.  
+  Do NOT set a path prefix — `{YEAR}/{MONTH}/{DAY}` and `{DATE}` are not valid R2 variables and cause silent delivery failures.)
 
 **REST API equivalent:**
 
@@ -38,7 +39,7 @@ curl -X POST "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/log
     "dataset": "workers_trace_events",
     "logpull_options": "fields=ScriptName,Outcome,Logs,Timestamp",
     "filter": "{\"where\":{\"key\":\"ScriptName\",\"operator\":\"eq\",\"value\":\"vibes-diy-v2-prod\"}}",
-    "destination_conf": "r2://vibes-diy-workers-logs/{DATE}?account-id='${CF_ACCOUNT_ID}'",
+    "destination_conf": "r2://vibes-diy-workers-logs?account-id=${CF_ACCOUNT_ID}",
     "enabled": true
   }'
 ```
