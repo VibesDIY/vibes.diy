@@ -10,6 +10,14 @@ function expectCapiPayload(result: CapiPayload | undefined): CapiPayload {
   return result;
 }
 
+function expectViewContentPayload(result: CapiPayload | undefined): CapiPayload {
+  expect(result).toBeDefined();
+  if (result === undefined) {
+    throw new Error("Expected ViewContent payload");
+  }
+  return result;
+}
+
 describe("buildCapiPayload", () => {
   it("returns undefined when no fbclid in URL", () => {
     const req = new Request("https://vibes.diy/");
@@ -111,8 +119,8 @@ describe("buildCapiViewContent", () => {
     });
     const nowAfter = Math.floor(Date.now() / 1000);
 
-    expect(result).toBeDefined();
-    const evt = result!.data[0];
+    const payload = expectViewContentPayload(result);
+    const evt = payload.data[0];
 
     expect(evt.event_name).toBe("ViewContent");
     expect(evt.action_source).toBe("website");
@@ -122,7 +130,7 @@ describe("buildCapiViewContent", () => {
     expect(evt.user_data.fbc).toMatch(/^fb\.1\.\d+\.TestFbclid123$/);
     expect(evt.user_data.client_ip_address).toBe("5.6.7.8");
     expect(evt.user_data.client_user_agent).toBe("Mozilla/5.0 TestAgent");
-    expect(result!.access_token).toBe("tok_secret");
+    expect(payload.access_token).toBe("tok_secret");
   });
 
   it("event_source_url comes from landingUrl param, not the relay request URL", () => {
@@ -133,15 +141,15 @@ describe("buildCapiViewContent", () => {
       capiToken: "tok",
       request: req,
     });
-    expect(result).toBeDefined();
-    expect(result!.data[0].event_source_url).toBe("https://vibes.diy/?fbclid=ABC");
+    const payload = expectViewContentPayload(result);
+    expect(payload.data[0].event_source_url).toBe("https://vibes.diy/?fbclid=ABC");
   });
 
   it("falls back to empty string for missing IP and UA headers", () => {
     const req = new Request("https://vibes.diy/capi/engaged", { method: "POST" });
     const result = buildCapiViewContent({ fbclid: "XYZ", landingUrl: "https://vibes.diy/", capiToken: "tok", request: req });
-    expect(result).toBeDefined();
-    expect(result!.data[0].user_data.client_ip_address).toBe("");
-    expect(result!.data[0].user_data.client_user_agent).toBe("");
+    const payload = expectViewContentPayload(result);
+    expect(payload.data[0].user_data.client_ip_address).toBe("");
+    expect(payload.data[0].user_data.client_user_agent).toBe("");
   });
 });

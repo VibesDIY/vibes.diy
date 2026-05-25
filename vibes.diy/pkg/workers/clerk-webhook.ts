@@ -1,7 +1,13 @@
-import { exception2Result, Result } from "@adviser/cement";
+import { exception2Result, Lazy, Result } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 
 const CAPI_ENDPOINT = "https://graph.facebook.com/v19.0/1027305316625975/events";
 const CAPI_SOURCE_URL = "https://vibes.diy/";
+const sthis = Lazy(() => ensureSuperThis());
+
+function encodeUtf8(value: string): Uint8Array {
+  return new Uint8Array(sthis().txt.encode(value));
+}
 
 interface CompleteRegistrationUserData {
   readonly em: string;
@@ -60,7 +66,7 @@ export async function verifyClerkWebhookSignature(params: VerifyParams): Promise
   if (rKey.isErr()) return Result.Err(rKey.Err());
   const key = rKey.Ok();
 
-  const toSign = new TextEncoder().encode(`${svixId}.${svixTimestamp}.${body}`);
+  const toSign = encodeUtf8(`${svixId}.${svixTimestamp}.${body}`);
   const rSig = await exception2Result(() => crypto.subtle.sign("HMAC", key, toSign));
   if (rSig.isErr()) return Result.Err(rSig.Err());
 
@@ -79,7 +85,7 @@ export async function verifyClerkWebhookSignature(params: VerifyParams): Promise
 export async function buildCapiCompleteRegistration(params: CompleteRegistrationParams): Promise<CapiCompleteRegistrationPayload> {
   const { email, capiToken } = params;
   const lower = email.toLowerCase();
-  const msgBuf = new TextEncoder().encode(lower);
+  const msgBuf = encodeUtf8(lower);
   const hashBuf = await crypto.subtle.digest("SHA-256", msgBuf);
   const em = Array.from(new Uint8Array(hashBuf))
     .map((b) => b.toString(16).padStart(2, "0"))

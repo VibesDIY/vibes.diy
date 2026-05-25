@@ -194,7 +194,7 @@ export default {
         }) as unknown as CFResponse;
       }
 
-      const evt = rEvt.Ok() as { type?: string; data?: { email_addresses?: Array<{ email_address?: string }> } };
+      const evt = rEvt.Ok() as { type?: string; data?: { email_addresses?: { email_address?: string }[] } };
       if (evt.type === "user.created") {
         const email = evt.data?.email_addresses?.[0]?.email_address;
         if (email !== undefined && email !== "") {
