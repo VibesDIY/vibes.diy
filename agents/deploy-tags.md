@@ -128,7 +128,7 @@ Use the phrase "pending changes" in user-facing summaries when reporting what wo
 - Cross-stream coupling (e.g. cli already has it and looks fine → lower prod risk; or npm hasn't shipped a dep the prod code now imports)
 - "Looks safe" is a valid risk verdict — say so explicitly when the diff is docs/spacing/comments only
 
-Then list the commits. The narrative goes _before_ the bullet list, not after.
+Then **group commits by feature** (e.g. "Meta CAPI tracking", "Discord screenshots", "Asset perf") with a heading per group, and list the commits under each. Don't dump a flat chronological list — the grouping makes the feature surface area legible at a glance. The risk narrative goes _before_ the feature groups, not after.
 
 ## Queue architecture
 
