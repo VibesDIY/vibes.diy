@@ -154,12 +154,14 @@ export default {
         }) as unknown as CFResponse;
       }
       if (env.META_CAPI_TOKEN !== undefined && env.META_PIXEL_ID !== undefined) {
-        const rBody = (await request.json().catch(() => undefined)) as {
-          fbclid?: string;
-          landingUrl?: string;
-          fbclidTs?: number;
-          eventId?: string;
-        } | undefined;
+        const rBody = (await request.json().catch(() => undefined)) as
+          | {
+              fbclid?: string;
+              landingUrl?: string;
+              fbclidTs?: number;
+              eventId?: string;
+            }
+          | undefined;
         if (rBody?.fbclid !== undefined && rBody.fbclid !== "" && rBody?.landingUrl !== undefined) {
           ctx.waitUntil(
             sendCapiViewContent({
@@ -180,8 +182,38 @@ export default {
       }) as unknown as CFResponse;
     }
 
+    if (route === "capi-complete-registration") {
+      if (request.method === "OPTIONS") {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "https://vibes.diy",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+          },
+        }) as unknown as CFResponse;
+      }
+      if (env.META_CAPI_TOKEN !== undefined && env.META_PIXEL_ID !== undefined) {
+        const rBody = (await request.json().catch(() => undefined)) as { fbclid?: string; email?: string } | undefined;
+        if (rBody?.fbclid !== undefined && rBody.fbclid !== "" && rBody?.email !== undefined && rBody.email !== "") {
+          ctx.waitUntil(
+            sendCapiCompleteRegistration({
+              email: rBody.email,
+              capiToken: env.META_CAPI_TOKEN,
+              pixelId: env.META_PIXEL_ID,
+              request: request as unknown as Request,
+            })
+          );
+        }
+      }
+      return new Response(JSON.stringify({ type: "ok" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://vibes.diy" },
+      }) as unknown as CFResponse;
+    }
+
     if (route === "clerk-webhook") {
-      if (env.CLERK_WEBHOOK_SECRET === undefined || env.META_CAPI_TOKEN === undefined || env.META_PIXEL_ID === undefined) {
+      if (env.CLERK_WEBHOOK_SECRET === undefined) {
         return new Response(JSON.stringify({ type: "error", message: "not configured" }), { status: 503 }) as unknown as CFResponse;
       }
       const body = await request.text();
@@ -200,14 +232,6 @@ export default {
         return new Response(JSON.stringify({ type: "error", message: "invalid signature" }), {
           status: 400,
         }) as unknown as CFResponse;
-      }
-
-      const evt = rEvt.Ok() as { type?: string; data?: { email_addresses?: { email_address?: string }[] } };
-      if (evt.type === "user.created") {
-        const email = evt.data?.email_addresses?.[0]?.email_address;
-        if (email !== undefined && email !== "") {
-          ctx.waitUntil(sendCapiCompleteRegistration({ email, capiToken: env.META_CAPI_TOKEN, pixelId: env.META_PIXEL_ID }));
-        }
       }
 
       return new Response(JSON.stringify({ type: "ok" }), {
