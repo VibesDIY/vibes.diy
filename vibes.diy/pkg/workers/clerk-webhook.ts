@@ -5,8 +5,8 @@ const CAPI_ENDPOINT = "https://graph.facebook.com/v19.0/1027305316625975/events"
 const CAPI_SOURCE_URL = "https://vibes.diy/";
 const sthis = Lazy(() => ensureSuperThis());
 
-function encodeUtf8(value: string): Uint8Array {
-  return new Uint8Array(sthis().txt.encode(value));
+function encodeUtf8(value: string): ArrayBuffer {
+  return Uint8Array.from(sthis().txt.encode(value)).buffer as ArrayBuffer;
 }
 
 interface CompleteRegistrationUserData {
@@ -40,9 +40,9 @@ export interface CompleteRegistrationParams {
 }
 
 // Svix signatures are prefixed "whsec_<base64>". We need the raw bytes.
-function decodeSecret(secret: string): Uint8Array {
+function decodeSecret(secret: string): ArrayBuffer {
   const b64 = secret.startsWith("whsec_") ? secret.slice("whsec_".length) : secret;
-  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)).buffer as ArrayBuffer;
 }
 
 export async function verifyClerkWebhookSignature(params: VerifyParams): Promise<Result<unknown>> {
@@ -61,7 +61,7 @@ export async function verifyClerkWebhookSignature(params: VerifyParams): Promise
 
   const rKey = await exception2Result(async () => {
     const secretBytes = decodeSecret(secret);
-    return crypto.subtle.importKey("raw", secretBytes.buffer as ArrayBuffer, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    return crypto.subtle.importKey("raw", secretBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   });
   if (rKey.isErr()) return Result.Err(rKey.Err());
   const key = rKey.Ok();
