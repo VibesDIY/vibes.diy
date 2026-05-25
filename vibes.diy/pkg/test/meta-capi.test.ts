@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CapiPayload } from "../workers/meta-capi.js";
-import { buildCapiPayload, sendCapiPageView } from "../workers/meta-capi.js";
+import { buildCapiPayload, buildCapiViewContent, sendCapiPageView } from "../workers/meta-capi.js";
 
 function expectCapiPayload(result: CapiPayload | undefined): CapiPayload {
   expect(result).toBeDefined();
@@ -84,5 +84,64 @@ describe("sendCapiPageView", () => {
     // No fbclid → buildCapiPayload returns undefined → early return before fetch
     const req = new Request("https://vibes.diy/");
     await expect(sendCapiPageView(req, "tok_test")).resolves.toBeUndefined();
+  });
+});
+
+describe("buildCapiViewContent", () => {
+  it("returns undefined when fbclid is empty string", () => {
+    const req = new Request("https://vibes.diy/capi/engaged", { method: "POST" });
+    const result = buildCapiViewContent({ fbclid: "", landingUrl: "https://vibes.diy/", capiToken: "tok", request: req });
+    expect(result).toBeUndefined();
+  });
+
+  it("builds a ViewContent event with fbc, ip, ua, and landing url", () => {
+    const req = new Request("https://vibes.diy/capi/engaged", {
+      method: "POST",
+      headers: {
+        "CF-Connecting-IP": "5.6.7.8",
+        "User-Agent": "Mozilla/5.0 TestAgent",
+      },
+    });
+    const nowBefore = Math.floor(Date.now() / 1000);
+    const result = buildCapiViewContent({
+      fbclid: "TestFbclid123",
+      landingUrl: "https://vibes.diy/?utm_source=meta",
+      capiToken: "tok_secret",
+      request: req,
+    });
+    const nowAfter = Math.floor(Date.now() / 1000);
+
+    expect(result).toBeDefined();
+    const evt = result!.data[0];
+
+    expect(evt.event_name).toBe("ViewContent");
+    expect(evt.action_source).toBe("website");
+    expect(evt.event_time).toBeGreaterThanOrEqual(nowBefore);
+    expect(evt.event_time).toBeLessThanOrEqual(nowAfter + 1);
+    expect(evt.event_source_url).toBe("https://vibes.diy/?utm_source=meta");
+    expect(evt.user_data.fbc).toMatch(/^fb\.1\.\d+\.TestFbclid123$/);
+    expect(evt.user_data.client_ip_address).toBe("5.6.7.8");
+    expect(evt.user_data.client_user_agent).toBe("Mozilla/5.0 TestAgent");
+    expect(result!.access_token).toBe("tok_secret");
+  });
+
+  it("event_source_url comes from landingUrl param, not the relay request URL", () => {
+    const req = new Request("https://vibes.diy/capi/engaged", { method: "POST" });
+    const result = buildCapiViewContent({
+      fbclid: "ABC",
+      landingUrl: "https://vibes.diy/?fbclid=ABC",
+      capiToken: "tok",
+      request: req,
+    });
+    expect(result).toBeDefined();
+    expect(result!.data[0].event_source_url).toBe("https://vibes.diy/?fbclid=ABC");
+  });
+
+  it("falls back to empty string for missing IP and UA headers", () => {
+    const req = new Request("https://vibes.diy/capi/engaged", { method: "POST" });
+    const result = buildCapiViewContent({ fbclid: "XYZ", landingUrl: "https://vibes.diy/", capiToken: "tok", request: req });
+    expect(result).toBeDefined();
+    expect(result!.data[0].user_data.client_ip_address).toBe("");
+    expect(result!.data[0].user_data.client_user_agent).toBe("");
   });
 });
