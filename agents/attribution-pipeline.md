@@ -6,16 +6,16 @@ ETLs Cloudflare Workers Trace Events from R2 into a `RefererEvents` Neon table, 
 
 Full setup instructions: [`vibes.diy/api/logpush-etl/SETUP.md`](../vibes.diy/api/logpush-etl/SETUP.md)
 
-## Status (2026-05-19)
+## Status (2026-05-25)
 
 | Step | Status |
 |---|---|
 | R2 buckets (`vibes-diy-workers-logs`, `vibes-diy-workers-logs-dev`) | ✅ Created |
 | `RefererEvents` schema in Neon | ✅ Landed via c2.2.97 `drizzle:neon` |
 | CI wiring (`vibes.diy/actions/deploy/action.yaml`) | ✅ commit 820e1f80 |
-| Logpush job in CF dashboard (Workers Trace Events → R2) | ❌ Needed |
-| `NEON_DATABASE_URL` secret on ETL worker | ❌ Needed |
-| Clerk `"attribution"` access grant | ❌ Needed |
+| Logpush job in CF dashboard (Workers Trace Events → R2) | ⚠️ Created (jobs 1672480/1672481) — no activity; check path prefix + Workers Logs enabled |
+| `NEON_DATABASE_URL` secret on ETL worker | ✅ In GH env |
+| Clerk `"attribution"` access grant | ✅ Skip=true for all @vibes.diy accounts |
 
 ## Remaining steps
 
