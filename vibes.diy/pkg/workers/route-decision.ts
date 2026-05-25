@@ -12,6 +12,8 @@ export type Route =
   | "reports-config" // /reports/config.json → JSON of public env (Clerk pub key)
   | "reports-asset" // /reports/* (everything else) → standalone SPA in build/client/reports/
   | "static-asset" // /assets/* (Vite hashed) — must NOT swallow /assets root
+  | "capi-relay" // POST|OPTIONS /capi/engaged → Meta CAPI EngagedVisit relay
+  | "clerk-webhook" // POST /webhooks/clerk → Clerk user.created → CAPI CompleteRegistration
   | "ssr"; // everything else → React Router
 
 export interface RouteInput {
@@ -69,6 +71,14 @@ export function routeDecision(req: RouteInput): Route {
   }
   if (pathname === "/reports" || pathname.startsWith("/reports/")) {
     return "reports-asset";
+  }
+
+  if (pathname === "/capi/engaged" && (method === "POST" || method === "OPTIONS")) {
+    return "capi-relay";
+  }
+
+  if (pathname === "/webhooks/clerk" && method === "POST") {
+    return "clerk-webhook";
   }
 
   return "ssr";
