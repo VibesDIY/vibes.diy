@@ -23,13 +23,14 @@ export interface CapiCompleteRegistrationPayload {
 export interface CompleteRegistrationParams {
   readonly fbclid: string;
   readonly fbclidTs?: number;
+  readonly landingUrl?: string;
   readonly capiToken: string;
   readonly pixelId: string;
   readonly request: Request;
 }
 
 export function buildCapiCompleteRegistration(params: CompleteRegistrationParams): CapiCompleteRegistrationPayload {
-  const { fbclid, fbclidTs, capiToken, request } = params;
+  const { fbclid, fbclidTs, landingUrl, capiToken, request } = params;
   const now = Date.now();
   const fbc = `fb.1.${fbclidTs ?? now}.${fbclid}`;
 
@@ -39,7 +40,7 @@ export function buildCapiCompleteRegistration(params: CompleteRegistrationParams
         event_name: "CompleteRegistration",
         action_source: "website",
         event_time: Math.floor(now / 1000),
-        event_source_url: request.url,
+        event_source_url: landingUrl ?? request.url,
         user_data: {
           fbc,
           client_ip_address: request.headers.get("CF-Connecting-IP") ?? "",
