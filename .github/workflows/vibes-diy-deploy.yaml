@@ -52,6 +52,9 @@ jobs:
           VIBES_DIY_API_URL: ${{ vars.VIBES_DIY_API_URL }}
           PRODIA_TOKEN: ${{ secrets.PRODIA_TOKEN }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          META_CAPI_TOKEN: ${{ secrets.META_CAPI_TOKEN }}
+          META_PIXEL_ID: ${{ vars.META_PIXEL_ID }}
+          CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}
 
   deploy_cli:
     runs-on: ubuntu-latest
@@ -91,3 +94,6 @@ jobs:
           VIBES_DIY_API_URL: ${{ vars.VIBES_DIY_API_URL }}
           PRODIA_TOKEN: ${{ secrets.PRODIA_TOKEN }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          META_CAPI_TOKEN: ${{ secrets.META_CAPI_TOKEN }}
+          META_PIXEL_ID: ${{ vars.META_PIXEL_ID }}
+          CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}

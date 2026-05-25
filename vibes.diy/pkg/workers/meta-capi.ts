@@ -19,12 +19,15 @@ export interface CapiPayload {
   readonly access_token: string;
 }
 
-const CAPI_ENDPOINT = "https://graph.facebook.com/v19.0/1027305316625975/events";
+function capiEndpoint(pixelId: string): string {
+  return `https://graph.facebook.com/v19.0/${pixelId}/events`;
+}
 
 export interface ViewContentParams {
   readonly fbclid: string;
   readonly landingUrl: string;
   readonly capiToken: string;
+  readonly pixelId: string;
   readonly request: Request;
 }
 
@@ -57,7 +60,7 @@ export async function sendCapiViewContent(params: ViewContentParams): Promise<vo
   if (payload === undefined) return;
 
   const rRes = await exception2Result(() =>
-    fetch(CAPI_ENDPOINT, {
+    fetch(capiEndpoint(params.pixelId), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -75,7 +78,7 @@ export async function sendCapiViewContent(params: ViewContentParams): Promise<vo
   }
 }
 
-export function buildCapiPayload(request: Request, capiToken: string): CapiPayload | undefined {
+export function buildCapiPayload(request: Request, capiToken: string, pixelId: string): CapiPayload | undefined {
   const url = URI.from(request.url);
   const fbclid = url.getParam("fbclid");
   if (fbclid === undefined) return undefined;
@@ -102,12 +105,12 @@ export function buildCapiPayload(request: Request, capiToken: string): CapiPaylo
   };
 }
 
-export async function sendCapiPageView(request: Request, capiToken: string): Promise<void> {
-  const payload = buildCapiPayload(request, capiToken);
+export async function sendCapiPageView(request: Request, capiToken: string, pixelId: string): Promise<void> {
+  const payload = buildCapiPayload(request, capiToken, pixelId);
   if (payload === undefined) return;
 
   const rRes = await exception2Result(() =>
-    fetch(CAPI_ENDPOINT, {
+    fetch(capiEndpoint(pixelId), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

@@ -1,12 +1,15 @@
 import { exception2Result, Lazy, Result } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 
-const CAPI_ENDPOINT = "https://graph.facebook.com/v19.0/1027305316625975/events";
 const CAPI_SOURCE_URL = "https://vibes.diy/";
 const sthis = Lazy(() => ensureSuperThis());
 
 function encodeUtf8(value: string): ArrayBuffer {
   return Uint8Array.from(sthis().txt.encode(value)).buffer as ArrayBuffer;
+}
+
+function capiEndpoint(pixelId: string): string {
+  return `https://graph.facebook.com/v19.0/${pixelId}/events`;
 }
 
 interface CompleteRegistrationUserData {
@@ -37,6 +40,7 @@ export interface VerifyParams {
 export interface CompleteRegistrationParams {
   readonly email: string;
   readonly capiToken: string;
+  readonly pixelId: string;
 }
 
 // Svix signatures are prefixed "whsec_<base64>". We need the raw bytes.
@@ -109,7 +113,7 @@ export async function sendCapiCompleteRegistration(params: CompleteRegistrationP
   const payload = await buildCapiCompleteRegistration(params);
 
   const rRes = await exception2Result(() =>
-    fetch(CAPI_ENDPOINT, {
+    fetch(capiEndpoint(params.pixelId), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

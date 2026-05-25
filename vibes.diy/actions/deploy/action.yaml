@@ -84,6 +84,15 @@ inputs:
   DISCORD_WEBHOOK_URL:
     description: "Discord webhook URL for site-activity notifications (queue worker)"
     required: false
+  META_CAPI_TOKEN:
+    description: "Meta Conversions API token for server-side pixel events"
+    required: false
+  META_PIXEL_ID:
+    description: "Meta pixel ID for CAPI endpoint construction"
+    required: false
+  CLERK_WEBHOOK_SECRET:
+    description: "Svix signing secret for Clerk webhook signature verification"
+    required: false
 
 runs:
   using: "composite"
@@ -125,6 +134,9 @@ runs:
         WORKSPACE_NPM_URL: ${{ inputs.WORKSPACE_NPM_URL }}?v=${{ github.sha }}
         VIBES_DIY_API_URL: ${{ inputs.VIBES_DIY_API_URL }}
         PRODIA_TOKEN: ${{ inputs.PRODIA_TOKEN }}
+        META_CAPI_TOKEN: ${{ inputs.META_CAPI_TOKEN }}
+        META_PIXEL_ID: ${{ inputs.META_PIXEL_ID }}
+        CLERK_WEBHOOK_SECRET: ${{ inputs.CLERK_WEBHOOK_SECRET }}
       run: |
         if [ "$DB_FLAVOUR" = "pg" ]; then
           NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" pnpm run drizzle:neon
@@ -153,7 +165,10 @@ runs:
           --fromEnv MAX_APP_SLUG_PER_USER_ID \
           --fromEnv WORKSPACE_NPM_URL \
           --fromEnv VIBES_DIY_API_URL \
-          --fromEnv PRODIA_TOKEN | \
+          --fromEnv PRODIA_TOKEN \
+          --fromEnv META_CAPI_TOKEN \
+          --fromEnv META_PIXEL_ID \
+          --fromEnv CLERK_WEBHOOK_SECRET | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
 

@@ -86,7 +86,7 @@ describe("verifyClerkWebhookSignature", () => {
 describe("buildCapiCompleteRegistration", () => {
   it("builds a CompleteRegistration event with SHA-256 hashed email", async () => {
     // SHA-256("user@example.com") = b4c9a289323b21a01c3e940f150eb9b8c542587f1abfd8f0e1cc1ffc5e475514
-    const result = await buildCapiCompleteRegistration({ email: "user@example.com", capiToken: "tok_reg" });
+    const result = await buildCapiCompleteRegistration({ email: "user@example.com", capiToken: "tok_reg", pixelId: "1310410873948425" });
     const evt = result.data[0];
 
     expect(evt.event_name).toBe("CompleteRegistration");
@@ -97,13 +97,13 @@ describe("buildCapiCompleteRegistration", () => {
 
   it("lowercases email before hashing", async () => {
     // "User@Example.COM" → lowercased → "user@example.com" → same hash
-    const result = await buildCapiCompleteRegistration({ email: "User@Example.COM", capiToken: "tok" });
+    const result = await buildCapiCompleteRegistration({ email: "User@Example.COM", capiToken: "tok", pixelId: "1310410873948425" });
     expect(result.data[0].user_data.em).toBe("b4c9a289323b21a01c3e940f150eb9b8c542587f1abfd8f0e1cc1ffc5e475514");
   });
 
   it("includes event_time and event_source_url", async () => {
     const nowBefore = Math.floor(Date.now() / 1000);
-    const result = await buildCapiCompleteRegistration({ email: "a@b.com", capiToken: "tok" });
+    const result = await buildCapiCompleteRegistration({ email: "a@b.com", capiToken: "tok", pixelId: "1310410873948425" });
     const nowAfter = Math.floor(Date.now() / 1000);
 
     expect(result.data[0].event_time).toBeGreaterThanOrEqual(nowBefore);
