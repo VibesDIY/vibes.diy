@@ -1,5 +1,13 @@
+import { Lazy } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 import { describe, expect, it } from "vitest";
 import { buildCapiCompleteRegistration, verifyClerkWebhookSignature } from "../workers/clerk-webhook.js";
+
+const sthis = Lazy(() => ensureSuperThis());
+
+function encodeUtf8(value: string): Uint8Array {
+  return new Uint8Array(sthis().txt.encode(value));
+}
 
 // Computes a valid Svix HMAC-SHA256 signature for use in tests.
 // Svix format: signed payload = "{svix-id}.{svix-timestamp}.{body}"
@@ -7,7 +15,7 @@ import { buildCapiCompleteRegistration, verifyClerkWebhookSignature } from "../w
 async function signSvix(rawSecretBase64: string, svixId: string, svixTimestamp: string, body: string): Promise<string> {
   const secretBytes = Uint8Array.from(atob(rawSecretBase64), (c) => c.charCodeAt(0));
   const key = await crypto.subtle.importKey("raw", secretBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const toSign = new TextEncoder().encode(`${svixId}.${svixTimestamp}.${body}`);
+  const toSign = encodeUtf8(`${svixId}.${svixTimestamp}.${body}`);
   const sig = await crypto.subtle.sign("HMAC", key, toSign);
   return `v1,${btoa(String.fromCharCode(...new Uint8Array(sig)))}`;
 }
