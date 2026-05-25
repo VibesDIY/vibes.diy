@@ -34,18 +34,38 @@ describe("buildCapiCompleteRegistration", () => {
     expect(ts).toBeLessThanOrEqual(nowAfter);
   });
 
-  it("includes event_time and event_source_url", () => {
+  it("uses landingUrl as event_source_url when provided", () => {
+    const result = buildCapiCompleteRegistration({
+      fbclid: "abc",
+      capiToken: "tok",
+      pixelId: "1310410873948425",
+      landingUrl: "https://vibes.diy/youtubers",
+      request: new Request("https://vibes.diy/capi/complete-registration"),
+    });
+    expect(result.data[0].event_source_url).toBe("https://vibes.diy/youtubers");
+  });
+
+  it("falls back to request.url when landingUrl is omitted", () => {
+    const result = buildCapiCompleteRegistration({
+      fbclid: "abc",
+      capiToken: "tok",
+      pixelId: "1310410873948425",
+      request: new Request("https://vibes.diy/capi/complete-registration"),
+    });
+    expect(result.data[0].event_source_url).toBe("https://vibes.diy/capi/complete-registration");
+  });
+
+  it("includes event_time", () => {
     const nowBefore = Math.floor(Date.now() / 1000);
     const result = buildCapiCompleteRegistration({
       fbclid: "abc",
       capiToken: "tok",
       pixelId: "1310410873948425",
-      request: new Request("https://vibes.diy/"),
+      request: new Request("https://vibes.diy/capi/complete-registration"),
     });
     const nowAfter = Math.floor(Date.now() / 1000);
 
     expect(result.data[0].event_time).toBeGreaterThanOrEqual(nowBefore);
     expect(result.data[0].event_time).toBeLessThanOrEqual(nowAfter + 1);
-    expect(result.data[0].event_source_url).toBe("https://vibes.diy/");
   });
 });
