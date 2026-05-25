@@ -8,6 +8,7 @@ interface CapiUserData {
 
 interface CapiEvent {
   readonly event_name: "PageView";
+  readonly action_source: "website";
   readonly event_time: number;
   readonly event_source_url: string;
   readonly user_data: CapiUserData;
@@ -33,6 +34,7 @@ export function buildCapiPayload(request: Request, capiToken: string): CapiPaylo
     data: [
       {
         event_name: "PageView",
+        action_source: "website",
         event_time: Math.floor(now / 1000),
         event_source_url: eventSourceUrl,
         user_data: {
