@@ -243,7 +243,7 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
       } else {
         const refHostname = rRefUri.Ok().hostname;
         const reqHostname = rReqUri.Ok().hostname;
-        if (!isInternalReferer(refHostname) && refHostname !== reqHostname) {
+        if (!isInternalReferer(refHostname) && refHostname !== reqHostname && !/\.[a-z]{1,4}$/i.test(rReqUri.Ok().pathname)) {
           console.log("[referer]", rRefUri.Ok().toString(), request.method, rReqUri.Ok().pathname);
         }
       }
