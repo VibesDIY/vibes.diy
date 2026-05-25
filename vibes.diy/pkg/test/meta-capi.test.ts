@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
+import type { CapiPayload } from "../workers/meta-capi.js";
 import { buildCapiPayload, sendCapiPageView } from "../workers/meta-capi.js";
+
+function expectCapiPayload(result: CapiPayload | undefined): CapiPayload {
+  expect(result).toBeDefined();
+  if (result === undefined) {
+    throw new Error("Expected CAPI payload");
+  }
+  return result;
+}
 
 describe("buildCapiPayload", () => {
   it("returns undefined when no fbclid in URL", () => {
@@ -24,11 +33,9 @@ describe("buildCapiPayload", () => {
       },
     });
     const nowBefore = Math.floor(Date.now() / 1000);
-    const result = buildCapiPayload(req, "tok_test_secret");
+    const payload = expectCapiPayload(buildCapiPayload(req, "tok_test_secret"));
     const nowAfter = Math.floor(Date.now() / 1000);
-
-    expect(result).toBeDefined();
-    const evt = result!.data[0];
+    const evt = payload.data[0];
 
     expect(evt.event_name).toBe("PageView");
     expect(evt.event_time).toBeGreaterThanOrEqual(nowBefore);
@@ -37,34 +44,30 @@ describe("buildCapiPayload", () => {
     expect(evt.user_data.client_ip_address).toBe("1.2.3.4");
     expect(evt.user_data.client_user_agent).toBe("Mozilla/5.0 TestAgent");
     expect(evt.user_data.fbc).toMatch(/^fb\.1\.\d+\.AbCdEfGh123$/);
-    expect(result!.access_token).toBe("tok_test_secret");
+    expect(payload.access_token).toBe("tok_test_secret");
   });
 
   it("strips fbclid from event_source_url but keeps other params", () => {
     const req = new Request("https://vibes.diy/?utm_source=meta&fbclid=XYZ123");
-    const result = buildCapiPayload(req, "tok_test");
+    const payload = expectCapiPayload(buildCapiPayload(req, "tok_test"));
 
-    expect(result).toBeDefined();
-    expect(result!.data[0].event_source_url).toContain("utm_source=meta");
-    expect(result!.data[0].event_source_url).not.toContain("fbclid");
+    expect(payload.data[0].event_source_url).toContain("utm_source=meta");
+    expect(payload.data[0].event_source_url).not.toContain("fbclid");
   });
 
   it("falls back to empty string for missing IP and UA headers", () => {
     const req = new Request("https://vibes.diy/?fbclid=Test456");
-    const result = buildCapiPayload(req, "tok_test");
+    const payload = expectCapiPayload(buildCapiPayload(req, "tok_test"));
 
-    expect(result).toBeDefined();
-    expect(result!.data[0].user_data.client_ip_address).toBe("");
-    expect(result!.data[0].user_data.client_user_agent).toBe("");
+    expect(payload.data[0].user_data.client_ip_address).toBe("");
+    expect(payload.data[0].user_data.client_user_agent).toBe("");
   });
 
   it("fbc timestamp is in milliseconds (not seconds)", () => {
     const req = new Request("https://vibes.diy/?fbclid=TimestampTest");
     const nowMs = Date.now();
-    const result = buildCapiPayload(req, "tok_test");
-
-    expect(result).toBeDefined();
-    const fbc = result!.data[0].user_data.fbc;
+    const payload = expectCapiPayload(buildCapiPayload(req, "tok_test"));
+    const fbc = payload.data[0].user_data.fbc;
     // fbc format: fb.1.<ms-timestamp>.<fbclid>
     const parts = fbc.split(".");
     expect(parts).toHaveLength(4);
