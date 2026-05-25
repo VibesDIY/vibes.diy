@@ -5,8 +5,8 @@ import { buildCapiCompleteRegistration, verifyClerkWebhookSignature } from "../w
 
 const sthis = Lazy(() => ensureSuperThis());
 
-function encodeUtf8(value: string): Uint8Array {
-  return new Uint8Array(sthis().txt.encode(value));
+function encodeUtf8(value: string): ArrayBuffer {
+  return Uint8Array.from(sthis().txt.encode(value)).buffer as ArrayBuffer;
 }
 
 // Computes a valid Svix HMAC-SHA256 signature for use in tests.
