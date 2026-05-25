@@ -11,6 +11,8 @@ function encodeUtf8(value: string): ArrayBuffer {
 
 interface CompleteRegistrationUserData {
   readonly em: string;
+  readonly client_ip_address: string;
+  readonly client_user_agent: string;
 }
 
 interface CompleteRegistrationEvent {
@@ -38,6 +40,7 @@ export interface CompleteRegistrationParams {
   readonly email: string;
   readonly capiToken: string;
   readonly pixelId: string;
+  readonly request: Request;
 }
 
 // Svix signatures are prefixed "whsec_<base64>". We need the raw bytes.
@@ -89,7 +92,7 @@ export async function verifyClerkWebhookSignature(params: VerifyParams): Promise
 }
 
 export async function buildCapiCompleteRegistration(params: CompleteRegistrationParams): Promise<CapiCompleteRegistrationPayload> {
-  const { email, capiToken } = params;
+  const { email, capiToken, request } = params;
   const lower = email.toLowerCase();
   const msgBuf = encodeUtf8(lower);
   const hashBuf = await crypto.subtle.digest("SHA-256", msgBuf);
@@ -104,7 +107,11 @@ export async function buildCapiCompleteRegistration(params: CompleteRegistration
         action_source: "website",
         event_time: Math.floor(Date.now() / 1000),
         event_source_url: CAPI_SOURCE_URL,
-        user_data: { em },
+        user_data: {
+          em,
+          client_ip_address: request.headers.get("CF-Connecting-IP") ?? "",
+          client_user_agent: request.headers.get("User-Agent") ?? "",
+        },
       },
     ],
     access_token: capiToken,

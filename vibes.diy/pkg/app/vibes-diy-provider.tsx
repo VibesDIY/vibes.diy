@@ -1,6 +1,7 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import React, { createContext, useContext } from "react";
 import { useEngagedVisit } from "./hooks/useEngagedVisit.js";
+import { useCapiCompleteRegistration } from "./hooks/useCapiCompleteRegistration.js";
 import { ClerkProvider, useClerk } from "@clerk/react";
 import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Option, Result } from "@adviser/cement";
 import { type } from "arktype";
@@ -248,6 +249,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   });
 
   useEngagedVisit();
+  useCapiCompleteRegistration();
   return <VibesDiyContext.Provider value={realCtx}>{children}</VibesDiyContext.Provider>;
 }
 

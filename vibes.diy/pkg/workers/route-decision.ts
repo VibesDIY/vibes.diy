@@ -13,7 +13,8 @@ export type Route =
   | "reports-asset" // /reports/* (everything else) → standalone SPA in build/client/reports/
   | "static-asset" // /assets/* (Vite hashed) — must NOT swallow /assets root
   | "capi-relay" // POST|OPTIONS /capi/engaged → Meta CAPI EngagedVisit relay
-  | "clerk-webhook" // POST /webhooks/clerk → Clerk user.created → CAPI CompleteRegistration
+  | "capi-complete-registration" // POST|OPTIONS /capi/complete-registration → Meta CAPI CompleteRegistration relay
+  | "clerk-webhook" // POST /webhooks/clerk → Clerk user.created (signature verification only)
   | "ssr"; // everything else → React Router
 
 export interface RouteInput {
@@ -75,6 +76,10 @@ export function routeDecision(req: RouteInput): Route {
 
   if (pathname === "/capi/engaged" && (method === "POST" || method === "OPTIONS")) {
     return "capi-relay";
+  }
+
+  if (pathname === "/capi/complete-registration" && (method === "POST" || method === "OPTIONS")) {
+    return "capi-complete-registration";
   }
 
   if (pathname === "/webhooks/clerk" && method === "POST") {
