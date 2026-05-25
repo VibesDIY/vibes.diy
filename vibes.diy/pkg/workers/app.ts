@@ -61,8 +61,8 @@ export default {
     const url = URI.from(request.url);
 
     const fbclid = url.getParam("fbclid");
-    if (fbclid !== undefined && env.META_CAPI_TOKEN !== undefined) {
-      ctx.waitUntil(sendCapiPageView(request as unknown as Request, env.META_CAPI_TOKEN));
+    if (fbclid !== undefined && env.META_CAPI_TOKEN !== undefined && env.META_PIXEL_ID !== undefined) {
+      ctx.waitUntil(sendCapiPageView(request as unknown as Request, env.META_CAPI_TOKEN, env.META_PIXEL_ID));
     }
 
     const route = routeDecision({
@@ -153,7 +153,7 @@ export default {
           },
         }) as unknown as CFResponse;
       }
-      if (env.META_CAPI_TOKEN !== undefined) {
+      if (env.META_CAPI_TOKEN !== undefined && env.META_PIXEL_ID !== undefined) {
         const rBody = (await request.json().catch(() => undefined)) as { fbclid?: string; landingUrl?: string } | undefined;
         if (rBody?.fbclid !== undefined && rBody.fbclid !== "" && rBody?.landingUrl !== undefined) {
           ctx.waitUntil(
@@ -161,6 +161,7 @@ export default {
               fbclid: rBody.fbclid,
               landingUrl: rBody.landingUrl,
               capiToken: env.META_CAPI_TOKEN,
+              pixelId: env.META_PIXEL_ID,
               request: request as unknown as Request,
             })
           );
@@ -173,7 +174,7 @@ export default {
     }
 
     if (route === "clerk-webhook") {
-      if (env.CLERK_WEBHOOK_SECRET === undefined || env.META_CAPI_TOKEN === undefined) {
+      if (env.CLERK_WEBHOOK_SECRET === undefined || env.META_CAPI_TOKEN === undefined || env.META_PIXEL_ID === undefined) {
         return new Response(JSON.stringify({ type: "error", message: "not configured" }), { status: 503 }) as unknown as CFResponse;
       }
       const body = await request.text();
@@ -198,7 +199,7 @@ export default {
       if (evt.type === "user.created") {
         const email = evt.data?.email_addresses?.[0]?.email_address;
         if (email !== undefined && email !== "") {
-          ctx.waitUntil(sendCapiCompleteRegistration({ email, capiToken: env.META_CAPI_TOKEN }));
+          ctx.waitUntil(sendCapiCompleteRegistration({ email, capiToken: env.META_CAPI_TOKEN, pixelId: env.META_PIXEL_ID }));
         }
       }
 

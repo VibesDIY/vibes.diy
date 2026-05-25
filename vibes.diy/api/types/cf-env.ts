@@ -36,5 +36,6 @@ export interface CFEnv {
   VIBES_SERVICE: Queue;
   BROWSER: Fetcher; // screenshotter uses Cloudflare's Browser Rendering API, which is accessed via a Fetcher binding
   META_CAPI_TOKEN?: string;
+  META_PIXEL_ID?: string;
   CLERK_WEBHOOK_SECRET?: string;
 }
