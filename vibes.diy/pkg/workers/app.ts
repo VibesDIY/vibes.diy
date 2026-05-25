@@ -269,7 +269,7 @@ export default {
         const refHostname = rRefUri.Ok().hostname;
         const reqHostname = rReqUri.Ok().hostname;
         if (!isInternalReferer(refHostname) && refHostname !== reqHostname) {
-          console.log("[referer]", rRefUri.Ok().toString(), request.method, rReqUri.Ok().pathname);
+          console.log("[referer]", referer, request.method, rReqUri.Ok().pathname);
         }
       }
     }
