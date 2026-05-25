@@ -116,6 +116,7 @@ export default function VibeIframeWrapper() {
   const [cardGrant, setCardGrant] = useState<ResGetAppByFsId["grant"] | undefined>(undefined);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [appTitle, setAppTitle] = useState<string | null>(null);
+  const [ownerDisplayName, setOwnerDisplayName] = useState<string | undefined>(undefined);
   const { isSignedIn: authSignedIn, isLoaded } = useAuth();
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
@@ -196,6 +197,8 @@ export default function VibeIframeWrapper() {
     const paramsKey = `${userSlug}|${appSlug}|${fsId ?? ""}|${token ?? ""}|${retryCount}`;
 
     const applyResToUI = (res: ResGetAppByFsId): void => {
+      const resolvedOwnerDisplayName = res.ownerDisplayName?.trim();
+      setOwnerDisplayName(resolvedOwnerDisplayName && resolvedOwnerDisplayName !== "" ? resolvedOwnerDisplayName : undefined);
       if (res.error) {
         setNotFound(true);
         toast.dismiss("vibe-access");
@@ -363,6 +366,7 @@ export default function VibeIframeWrapper() {
       ? undefined
       : { paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 18, height: "auto" };
   const showCard = cardVariant === "request" || cardVariant === "invite" || cardVariant === "pending" || cardVariant === "revoked";
+  const requestAccessSubtitle = ownerDisplayName ? `Ask to collab with ${ownerDisplayName}.` : "Ask to join the collaboration.";
 
   return (
     <>
@@ -471,7 +475,7 @@ export default function VibeIframeWrapper() {
                           ? "The owner has your request. Let them know to approve at this URL."
                           : cardVariant === "revoked"
                             ? "Your access was revoked."
-                            : "Ask to join the collaboration."}
+                            : requestAccessSubtitle}
                     </span>
                   </div>
                 </div>

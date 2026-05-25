@@ -131,6 +131,7 @@ export const resGetAppByFsId = type({
   "error?": "string",
   appSlug: "string",
   userSlug: "string",
+  "ownerDisplayName?": "string",
   "fsId?": "string",
   mode: "'production'|'dev'",
   grant:

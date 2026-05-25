@@ -4,11 +4,13 @@ import {
   reqGetAppByFsId,
   ReqGetAppByFsId,
   ResGetAppByFsId,
+  ClerkClaim,
   VibesDiyError,
   W3CWebSocketEvent,
   FileSystemItem,
   MetaItem,
   ReqWithOptionalAuth,
+  isUserSettingProfile,
   isResHasAccessInviteAccepted,
   isResHasAccessInvitePending,
   isResHasAccessRequestApproved,
@@ -35,6 +37,29 @@ function grantedAccess(role: "editor" | "viewer" | "submitter") {
     default:
       return "granted-access.viewer";
   }
+}
+
+// Keep precedence aligned with list-members.ts:deriveAuthorDisplay.
+function deriveAuthorDisplay(claims: ClerkClaim): string {
+  const p = claims.params;
+  if (p.nick !== undefined && p.nick.trim() !== "") return p.nick.trim();
+  if (p.name !== null && p.name.trim() !== "") return p.name.trim();
+  const composed = `${p.first} ${p.last}`.trim();
+  if (composed !== "") return composed;
+  return p.email;
+}
+
+function resolveOwnerDisplayName(ownerSettings: unknown[] | undefined, ownerClaims: ClerkClaim | undefined): string | undefined {
+  for (const item of ownerSettings ?? []) {
+    if (!isUserSettingProfile(item)) continue;
+    const displayName = item.displayName?.trim();
+    if (displayName) return displayName;
+  }
+  if (ownerClaims) {
+    const derived = deriveAuthorDisplay(ownerClaims).trim();
+    if (derived !== "") return derived;
+  }
+  return undefined;
 }
 
 // function getKeyFromAuth<T extends { type: string; auth?: DashAuthType | undefined }>(req: ReqWithOptionalAuth<T>) {
@@ -164,6 +189,17 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         return Result.Ok(EventoResult.Continue);
       }
       const settings = rAppSet.Ok().settings;
+
+      const ownerSettingsRow = await vctx.sql.db
+        .select({ settings: vctx.sql.tables.userSettings.settings })
+        .from(vctx.sql.tables.userSettings)
+        .where(eq(vctx.sql.tables.userSettings.userId, app.userId))
+        .limit(1)
+        .then((r) => r[0]);
+      const ownerDisplayName = resolveOwnerDisplayName(
+        ownerSettingsRow?.settings as unknown[] | undefined,
+        callerUserId === app.userId ? req._auth?.verifiedAuth.claims : undefined
+      );
 
       let grant!: ResGetAppByFsId["grant"];
       // If not the owner, only return production apps
@@ -312,6 +348,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         type: "vibes.diy.res-get-app-by-fsid",
         appSlug: app.appSlug,
         userSlug: app.userSlug,
+        ...(ownerDisplayName ? { ownerDisplayName } : {}),
         fsId: app.fsId,
         grant,
         mode: app.mode as "production" | "dev",
