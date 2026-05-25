@@ -16,6 +16,7 @@ import { CFInjectMutable, cfServeAppCtx, isInternalReferer } from "@vibes.diy/ap
 import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 import { routeDecision } from "./route-decision.js";
+import { sendCapiPageView } from "./meta-capi.js";
 
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
@@ -57,6 +58,12 @@ function getRequestHandler() {
 export default {
   async fetch(request: CFRequest, env: CFEnv, ctx: ExecutionContext): Promise<CFResponse> {
     const url = URI.from(request.url);
+
+    const fbclid = url.getParam("fbclid");
+    if (fbclid !== undefined && env.META_CAPI_TOKEN !== undefined) {
+      ctx.waitUntil(sendCapiPageView(request as unknown as Request, env.META_CAPI_TOKEN));
+    }
+
     const route = routeDecision({
       hostname: url.hostname,
       pathname: url.pathname,
