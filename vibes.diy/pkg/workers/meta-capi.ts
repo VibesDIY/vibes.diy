@@ -11,6 +11,7 @@ interface CapiEvent {
   readonly action_source: "website";
   readonly event_time: number;
   readonly event_source_url: string;
+  readonly event_id?: string;
   readonly user_data: CapiUserData;
 }
 
@@ -23,19 +24,24 @@ function capiEndpoint(pixelId: string): string {
   return `https://graph.facebook.com/v19.0/${pixelId}/events`;
 }
 
-export interface ViewContentParams {
+export interface BuildCapiViewContentParams {
   readonly fbclid: string;
   readonly landingUrl: string;
   readonly capiToken: string;
-  readonly pixelId: string;
   readonly request: Request;
+  readonly fbclidTs?: number;
+  readonly eventId?: string;
 }
 
-export function buildCapiViewContent({ fbclid, landingUrl, capiToken, request }: ViewContentParams): CapiPayload | undefined {
+export interface ViewContentParams extends BuildCapiViewContentParams {
+  readonly pixelId: string;
+}
+
+export function buildCapiViewContent({ fbclid, landingUrl, capiToken, request, fbclidTs, eventId }: BuildCapiViewContentParams): CapiPayload | undefined {
   if (fbclid === "") return undefined;
 
   const now = Date.now();
-  const fbc = `fb.1.${now}.${fbclid}`;
+  const fbc = `fb.1.${fbclidTs ?? now}.${fbclid}`;
 
   return {
     data: [
@@ -44,6 +50,7 @@ export function buildCapiViewContent({ fbclid, landingUrl, capiToken, request }:
         action_source: "website",
         event_time: Math.floor(now / 1000),
         event_source_url: landingUrl,
+        ...(eventId !== undefined ? { event_id: eventId } : {}),
         user_data: {
           fbc,
           client_ip_address: request.headers.get("CF-Connecting-IP") ?? "",

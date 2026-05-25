@@ -147,19 +147,26 @@ export default {
         return new Response(null, {
           status: 204,
           headers: {
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": "https://vibes.diy",
             "Access-Control-Allow-Methods": "POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type",
           },
         }) as unknown as CFResponse;
       }
       if (env.META_CAPI_TOKEN !== undefined && env.META_PIXEL_ID !== undefined) {
-        const rBody = (await request.json().catch(() => undefined)) as { fbclid?: string; landingUrl?: string } | undefined;
+        const rBody = (await request.json().catch(() => undefined)) as {
+          fbclid?: string;
+          landingUrl?: string;
+          fbclidTs?: number;
+          eventId?: string;
+        } | undefined;
         if (rBody?.fbclid !== undefined && rBody.fbclid !== "" && rBody?.landingUrl !== undefined) {
           ctx.waitUntil(
             sendCapiViewContent({
               fbclid: rBody.fbclid,
               landingUrl: rBody.landingUrl,
+              fbclidTs: rBody.fbclidTs,
+              eventId: rBody.eventId,
               capiToken: env.META_CAPI_TOKEN,
               pixelId: env.META_PIXEL_ID,
               request: request as unknown as Request,
@@ -169,7 +176,7 @@ export default {
       }
       return new Response(JSON.stringify({ type: "ok" }), {
         status: 200,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://vibes.diy" },
       }) as unknown as CFResponse;
     }
 

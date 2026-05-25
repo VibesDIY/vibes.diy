@@ -63,6 +63,11 @@ export async function verifyClerkWebhookSignature(params: VerifyParams): Promise
     return Result.Err(new Error("svix-signature header missing or malformed"));
   }
 
+  const tsSeconds = parseInt(svixTimestamp, 10);
+  if (isNaN(tsSeconds) || Math.abs(Date.now() / 1000 - tsSeconds) > 300) {
+    return Result.Err(new Error("svix-timestamp out of tolerance"));
+  }
+
   const rKey = await exception2Result(async () => {
     const secretBytes = decodeSecret(secret);
     return crypto.subtle.importKey("raw", secretBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
