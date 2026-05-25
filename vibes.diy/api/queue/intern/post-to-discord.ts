@@ -16,7 +16,12 @@ function foreignLabel(foreignInfo: ForeignInfo | undefined): string {
   return foreignInfo?.claims?.params.email ?? foreignInfo?.givenEmail ?? "(unknown)";
 }
 
-export function buildPublishEmbed(vctx: QueueCtx, payload: EvtNewFsId, publishCount?: number): DiscordWebhookBody {
+export function buildPublishEmbed(
+  vctx: QueueCtx,
+  payload: EvtNewFsId,
+  publishCount?: number,
+  screenshotUrl?: string
+): DiscordWebhookBody {
   const url = vibeUrl(vctx, payload.userSlug, payload.appSlug);
   const countLabel = publishCount !== undefined ? ` (update #${publishCount})` : "";
   const verb = publishCount === 1 ? "New Vibe published" : "Vibe updated";
@@ -32,6 +37,7 @@ export function buildPublishEmbed(vctx: QueueCtx, payload: EvtNewFsId, publishCo
           { name: "App", value: payload.appSlug, inline: true },
           { name: "fsId", value: payload.fsId, inline: false },
         ],
+        ...(screenshotUrl ? { image: { url: screenshotUrl } } : {}),
       },
     ],
   };

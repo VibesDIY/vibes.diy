@@ -26,6 +26,7 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
     if (res.isErr()) {
       console.error("Error processing screen shot event:", res.Err());
     }
+    const screenshotUrl = res.isOk() ? res.Ok().assetUrl : undefined;
     if (payload.mode === "production") {
       const rows = await qctx.sql.db
         .select({ releaseSeq: qctx.sql.tables.apps.releaseSeq })
@@ -40,7 +41,7 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
         .orderBy(desc(qctx.sql.tables.apps.releaseSeq))
         .limit(1);
       const publishCount = rows[0]?.releaseSeq;
-      await postEmbed(qctx, buildPublishEmbed(qctx, payload, publishCount));
+      await postEmbed(qctx, buildPublishEmbed(qctx, payload, publishCount, screenshotUrl));
     }
     return Result.Ok(EventoResult.Continue);
   },

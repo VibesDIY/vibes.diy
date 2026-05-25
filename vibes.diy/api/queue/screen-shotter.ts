@@ -43,7 +43,7 @@ export async function takeScreenshot(event: EvtNewFsId, browserFetcher: Fetcher)
 /**
  * Process a screenshot event from the queue
  */
-export async function processScreenShotEvent(qctx: QueueCtx, evt: EvtNewFsId): Promise<Result<void>> {
+export async function processScreenShotEvent(qctx: QueueCtx, evt: EvtNewFsId): Promise<Result<{ assetUrl: string }>> {
   const rScreenshot = await takeScreenshot(evt, qctx.params.cf.BROWSER);
   if (rScreenshot.isErr()) {
     return Result.Err(`Failed to take screenshot: ${rScreenshot.Err().message}`);
@@ -57,6 +57,7 @@ export async function processScreenShotEvent(qctx: QueueCtx, evt: EvtNewFsId): P
   if (result.isErr()) {
     return Result.Err(`Failed to store screenshot: ${result.Err()}`);
   }
-  console.log(`Screenshot stored with assetId: ${result.Ok().assetUrl}`);
-  return Result.Ok(undefined);
+  const { assetUrl } = result.Ok();
+  console.log(`Screenshot stored with assetId: ${assetUrl}`);
+  return Result.Ok({ assetUrl });
 }
