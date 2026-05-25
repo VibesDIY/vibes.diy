@@ -16,7 +16,8 @@ import { CFInjectMutable, cfServeAppCtx, isInternalReferer } from "@vibes.diy/ap
 import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 import { routeDecision } from "./route-decision.js";
-import { sendCapiPageView } from "./meta-capi.js";
+import { sendCapiPageView, sendCapiViewContent } from "./meta-capi.js";
+import { sendCapiCompleteRegistration, verifyClerkWebhookSignature } from "./clerk-webhook.js";
 
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
@@ -141,38 +142,90 @@ export default {
       return response;
     }
 
+    if (route === "capi-relay") {
+      if (request.method === "OPTIONS") {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+          },
+        }) as unknown as CFResponse;
+      }
+      if (env.META_CAPI_TOKEN !== undefined) {
+        const rBody = (await request.json().catch(() => undefined)) as { fbclid?: string; landingUrl?: string } | undefined;
+        if (rBody?.fbclid !== undefined && rBody.fbclid !== "" && rBody?.landingUrl !== undefined) {
+          ctx.waitUntil(
+            sendCapiViewContent({
+              fbclid: rBody.fbclid,
+              landingUrl: rBody.landingUrl,
+              capiToken: env.META_CAPI_TOKEN,
+              request: request as unknown as Request,
+            })
+          );
+        }
+      }
+      return new Response(JSON.stringify({ type: "ok" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      }) as unknown as CFResponse;
+    }
+
+    if (route === "clerk-webhook") {
+      if (env.CLERK_WEBHOOK_SECRET === undefined || env.META_CAPI_TOKEN === undefined) {
+        return new Response(JSON.stringify({ type: "error", message: "not configured" }), { status: 503 }) as unknown as CFResponse;
+      }
+      const body = await request.text();
+      const svixId = request.headers.get("svix-id") ?? "";
+      const svixTimestamp = request.headers.get("svix-timestamp") ?? "";
+      const svixSignature = request.headers.get("svix-signature") ?? "";
+
+      const rEvt = await verifyClerkWebhookSignature({
+        body,
+        svixId,
+        svixTimestamp,
+        svixSignature,
+        secret: env.CLERK_WEBHOOK_SECRET,
+      });
+      if (rEvt.isErr()) {
+        return new Response(JSON.stringify({ type: "error", message: "invalid signature" }), {
+          status: 400,
+        }) as unknown as CFResponse;
+      }
+
+      const evt = rEvt.Ok() as { type?: string; data?: { email_addresses?: Array<{ email_address?: string }> } };
+      if (evt.type === "user.created") {
+        const email = evt.data?.email_addresses?.[0]?.email_address;
+        if (email !== undefined && email !== "") {
+          ctx.waitUntil(sendCapiCompleteRegistration({ email, capiToken: env.META_CAPI_TOKEN }));
+        }
+      }
+
+      return new Response(JSON.stringify({ type: "ok" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }) as unknown as CFResponse;
+    }
+
     const cctx = ctx as unknown as ExecutionContext & CFInjectMutable;
-    // cctx.cache = new NoCache() as unknown as CfCacheIf; // Disable caching for now - can implement custom caching logic in the future if needed
-    cctx.cache = caches.default as unknown as CfCacheIf; // Use Cloudflare's default cache
+    cctx.cache = caches.default as unknown as CfCacheIf;
     const cfCtx = await cfServeAppCtx(request, env, cctx);
     cctx.appCtx = cfCtx.appCtx;
 
-    // console.log("Handling request for", url, "base", env.VIBES_SVC_HOSTNAME_BASE, Object.fromEntries(request.headers.entries()));
     if (route === "cf-serve") {
-      // console.log("Handling Hostname-based API request for", url.hostname, url.pathname);
       const res = await cfServe(request, cctx);
-      // Don't cache asset uploads — same URL, different content per request.
       if (url.pathname !== "/assets") {
         caches.default.put(request.url, res.clone() as unknown as CFResponse);
       }
       return res;
     }
 
-    // Reports SPA — static SPA bundled to build/client/reports/. The
-    // ASSETS binding serves it; the Vite build pins base to /reports/ so
-    // its hashed asset URLs resolve correctly.
     if (route === "reports-asset") {
       return env.ASSETS.fetch(request);
     }
 
-    // Reports config.json — exposes the public env vars the static SPA
-    // needs at boot (Clerk publishable key). Kept minimal: anything that
-    // can be derived client-side (e.g. api URL from window.location) stays
-    // out of this payload.
     if (route === "reports-config") {
-      // Type-tagged envelope so the SPA can arktype-validate at the
-      // env boundary (matches the rules-bag "every transferred object
-      // needs implicit type matching" pattern).
       const body = JSON.stringify({
         type: "vibes.diy.reports-config",
         clerkPublishableKey: env.CLERK_PUBLISHABLE_KEY,
@@ -181,9 +234,6 @@ export default {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          // Short cache: rotating the Clerk key shouldn't require a worker
-          // redeploy + cache flush. 60s is enough to absorb tab refreshes
-          // without going stale on a real rotation.
           "Cache-Control": "public, max-age=60",
         },
       }) as unknown as CFResponse;
