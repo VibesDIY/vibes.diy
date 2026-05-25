@@ -38,6 +38,7 @@ describe("buildCapiPayload", () => {
     const evt = payload.data[0];
 
     expect(evt.event_name).toBe("PageView");
+    expect(evt.action_source).toBe("website");
     expect(evt.event_time).toBeGreaterThanOrEqual(nowBefore);
     expect(evt.event_time).toBeLessThanOrEqual(nowAfter + 1);
     expect(evt.event_source_url).toBe("https://vibes.diy/");
