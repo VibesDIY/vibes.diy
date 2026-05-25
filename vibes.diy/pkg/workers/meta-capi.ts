@@ -92,7 +92,7 @@ export async function sendCapiViewContent(params: ViewContentParams): Promise<vo
   }
 }
 
-export function buildCapiPayload(request: Request, capiToken: string, pixelId: string): CapiPayload | undefined {
+export function buildCapiPayload(request: Request, capiToken: string, _pixelId: string): CapiPayload | undefined {
   const url = URI.from(request.url);
   const fbclid = url.getParam("fbclid");
   if (fbclid === undefined) return undefined;

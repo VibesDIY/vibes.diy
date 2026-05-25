@@ -80,6 +80,5 @@ export function useEngagedVisit(): void {
       window.clearTimeout(timerId);
       window.removeEventListener("scroll", onScroll);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
