@@ -194,12 +194,15 @@ export default {
         }) as unknown as CFResponse;
       }
       if (env.META_CAPI_TOKEN !== undefined && env.META_PIXEL_ID !== undefined) {
-        const rBody = (await request.json().catch(() => undefined)) as { fbclid?: string; fbclidTs?: number } | undefined;
+        const rBody = (await request.json().catch(() => undefined)) as
+          | { fbclid?: string; fbclidTs?: number; landingUrl?: string }
+          | undefined;
         if (rBody?.fbclid !== undefined && rBody.fbclid !== "") {
           ctx.waitUntil(
             sendCapiCompleteRegistration({
               fbclid: rBody.fbclid,
               fbclidTs: rBody.fbclidTs,
+              landingUrl: rBody.landingUrl,
               capiToken: env.META_CAPI_TOKEN,
               pixelId: env.META_PIXEL_ID,
               request: request as unknown as Request,

@@ -143,12 +143,16 @@ describe("worker routeDecision", () => {
     expect(decide({ pathname: "/capi/engaged", method: "GET" })).toBe("ssr");
   });
 
-  it("POST /webhooks/clerk → clerk-webhook (Clerk user.created webhook)", () => {
-    expect(decide({ pathname: "/webhooks/clerk", method: "POST" })).toBe("clerk-webhook");
+  it("POST /capi/complete-registration → capi-complete-registration", () => {
+    expect(decide({ pathname: "/capi/complete-registration", method: "POST" })).toBe("capi-complete-registration");
   });
 
-  it("GET /webhooks/clerk is NOT clerk-webhook — reject non-POST", () => {
-    expect(decide({ pathname: "/webhooks/clerk", method: "GET" })).toBe("ssr");
+  it("OPTIONS /capi/complete-registration → capi-complete-registration (CORS preflight)", () => {
+    expect(decide({ pathname: "/capi/complete-registration", method: "OPTIONS" })).toBe("capi-complete-registration");
+  });
+
+  it("GET /capi/complete-registration is NOT capi-complete-registration", () => {
+    expect(decide({ pathname: "/capi/complete-registration", method: "GET" })).toBe("ssr");
   });
 });
 
