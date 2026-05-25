@@ -39,6 +39,7 @@ export interface DiscordEmbed {
   url?: string;
   color?: number;
   fields?: DiscordEmbedField[];
+  image?: { url: string };
 }
 
 export interface DiscordWebhookBody {
