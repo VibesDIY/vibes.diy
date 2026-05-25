@@ -1,5 +1,4 @@
 import { Result, exception2Result, uint8array2stream } from "@adviser/cement";
-import { eq } from "drizzle-orm/sql/expressions";
 import { VibesApiSQLCtx } from "../types.js";
 
 // Shared helper for both `POST /assets` (user upload) and the server-side
@@ -70,44 +69,6 @@ export async function storeAndAuditAsset(
   );
   if (rInsert.isErr()) {
     return Result.Err(`audit insert failed: ${rInsert.Err().message}`);
-  }
-
-  // Verify the full read path is ready before we ack: fetch the asset
-  // by its cid-keyed URL and re-read the audit row by uploadId. We
-  // already await `storage.ensure` (which awaits commit → rename →
-  // dest HEAD) and the audit insert, so this is belt-and-suspenders —
-  // but it pins the contract: when this helper returns Ok, both the
-  // cid'd bytes and the audit pointer that resolves them are visible
-  // to a fresh read. Anything less and we'd risk acking the client
-  // for an asset that 404s on its first GET.
-  const rFetch = await exception2Result(() => vctx.storage.fetch(stored.getURL));
-  if (rFetch.isErr()) {
-    return Result.Err(`asset readback failed: ${rFetch.Err().message}`);
-  }
-  const fetched = rFetch.Ok();
-  if (fetched.type !== "fetch.ok") {
-    return Result.Err(`asset readback returned ${fetched.type} for ${stored.getURL}`);
-  }
-  // Drain and discard the body so the underlying stream is released
-  // promptly; we only needed to confirm fetchability.
-  if (fetched.data) {
-    const reader = fetched.data.getReader();
-    while (true) {
-      const r = await reader.read();
-      if (r.done) break;
-    }
-  }
-
-  const rAudit = await exception2Result(() =>
-    vctx.sql.db
-      .select({ uploadId: uploadsTable.uploadId })
-      .from(uploadsTable)
-      .where(eq(uploadsTable.uploadId, uploadId))
-      .limit(1)
-      .then((rows) => rows[0])
-  );
-  if (rAudit.isErr() || !rAudit.Ok()) {
-    return Result.Err(`audit readback failed for uploadId ${uploadId}`);
   }
 
   return Result.Ok({
