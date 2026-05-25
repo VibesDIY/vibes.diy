@@ -1,15 +1,12 @@
 import { exception2Result, Lazy, Result } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
+import { capiEndpoint } from "./meta-capi.js";
 
 const CAPI_SOURCE_URL = "https://vibes.diy/";
 const sthis = Lazy(() => ensureSuperThis());
 
 function encodeUtf8(value: string): ArrayBuffer {
   return Uint8Array.from(sthis().txt.encode(value)).buffer as ArrayBuffer;
-}
-
-function capiEndpoint(pixelId: string): string {
-  return `https://graph.facebook.com/v19.0/${pixelId}/events`;
 }
 
 interface CompleteRegistrationUserData {

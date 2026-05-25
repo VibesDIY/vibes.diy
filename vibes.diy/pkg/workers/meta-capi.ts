@@ -20,7 +20,7 @@ export interface CapiPayload {
   readonly access_token: string;
 }
 
-function capiEndpoint(pixelId: string): string {
+export function capiEndpoint(pixelId: string): string {
   return `https://graph.facebook.com/v19.0/${pixelId}/events`;
 }
 
@@ -37,7 +37,14 @@ export interface ViewContentParams extends BuildCapiViewContentParams {
   readonly pixelId: string;
 }
 
-export function buildCapiViewContent({ fbclid, landingUrl, capiToken, request, fbclidTs, eventId }: BuildCapiViewContentParams): CapiPayload | undefined {
+export function buildCapiViewContent({
+  fbclid,
+  landingUrl,
+  capiToken,
+  request,
+  fbclidTs,
+  eventId,
+}: BuildCapiViewContentParams): CapiPayload | undefined {
   if (fbclid === "") return undefined;
 
   const now = Date.now();
