@@ -17,7 +17,7 @@ import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 import { routeDecision } from "./route-decision.js";
 import { sendCapiPageView, sendCapiViewContent } from "./meta-capi.js";
-import { sendCapiCompleteRegistration, verifyClerkWebhookSignature } from "./clerk-webhook.js";
+import { sendCapiCompleteRegistration } from "./capi-complete-registration.js";
 
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
@@ -194,11 +194,12 @@ export default {
         }) as unknown as CFResponse;
       }
       if (env.META_CAPI_TOKEN !== undefined && env.META_PIXEL_ID !== undefined) {
-        const rBody = (await request.json().catch(() => undefined)) as { fbclid?: string; email?: string } | undefined;
-        if (rBody?.fbclid !== undefined && rBody.fbclid !== "" && rBody?.email !== undefined && rBody.email !== "") {
+        const rBody = (await request.json().catch(() => undefined)) as { fbclid?: string; fbclidTs?: number } | undefined;
+        if (rBody?.fbclid !== undefined && rBody.fbclid !== "") {
           ctx.waitUntil(
             sendCapiCompleteRegistration({
-              email: rBody.email,
+              fbclid: rBody.fbclid,
+              fbclidTs: rBody.fbclidTs,
               capiToken: env.META_CAPI_TOKEN,
               pixelId: env.META_PIXEL_ID,
               request: request as unknown as Request,
@@ -209,34 +210,6 @@ export default {
       return new Response(JSON.stringify({ type: "ok" }), {
         status: 200,
         headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://vibes.diy" },
-      }) as unknown as CFResponse;
-    }
-
-    if (route === "clerk-webhook") {
-      if (env.CLERK_WEBHOOK_SECRET === undefined) {
-        return new Response(JSON.stringify({ type: "error", message: "not configured" }), { status: 503 }) as unknown as CFResponse;
-      }
-      const body = await request.text();
-      const svixId = request.headers.get("svix-id") ?? "";
-      const svixTimestamp = request.headers.get("svix-timestamp") ?? "";
-      const svixSignature = request.headers.get("svix-signature") ?? "";
-
-      const rEvt = await verifyClerkWebhookSignature({
-        body,
-        svixId,
-        svixTimestamp,
-        svixSignature,
-        secret: env.CLERK_WEBHOOK_SECRET,
-      });
-      if (rEvt.isErr()) {
-        return new Response(JSON.stringify({ type: "error", message: "invalid signature" }), {
-          status: 400,
-        }) as unknown as CFResponse;
-      }
-
-      return new Response(JSON.stringify({ type: "ok" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
       }) as unknown as CFResponse;
     }
 
