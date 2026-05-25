@@ -81,6 +81,28 @@ describe("verifyClerkWebhookSignature", () => {
     });
     expect(result.isErr()).toBe(true);
   });
+
+  it("returns Err when svix-timestamp is more than 300s in the past", async () => {
+    const svixId = "msg_test_stale";
+    const staleTimestamp = String(Math.floor(Date.now() / 1000) - 301);
+    const body = JSON.stringify({ type: "user.created", data: {} });
+    const svixSignature = await signSvix(TEST_SECRET_B64, svixId, staleTimestamp, body);
+
+    const result = await verifyClerkWebhookSignature({ body, svixId, svixTimestamp: staleTimestamp, svixSignature, secret: TEST_SECRET });
+
+    expect(result.isErr()).toBe(true);
+  });
+
+  it("returns Err when svix-timestamp is non-numeric", async () => {
+    const result = await verifyClerkWebhookSignature({
+      body: "{}",
+      svixId: "msg_x",
+      svixTimestamp: "not-a-number",
+      svixSignature: "v1,abc",
+      secret: TEST_SECRET,
+    });
+    expect(result.isErr()).toBe(true);
+  });
 });
 
 describe("buildCapiCompleteRegistration", () => {

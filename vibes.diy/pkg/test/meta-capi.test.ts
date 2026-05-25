@@ -98,7 +98,7 @@ describe("sendCapiPageView", () => {
 describe("buildCapiViewContent", () => {
   it("returns undefined when fbclid is empty string", () => {
     const req = new Request("https://vibes.diy/capi/engaged", { method: "POST" });
-    const result = buildCapiViewContent({ fbclid: "", landingUrl: "https://vibes.diy/", capiToken: "tok", pixelId: "1310410873948425", request: req });
+    const result = buildCapiViewContent({ fbclid: "", landingUrl: "https://vibes.diy/", capiToken: "tok", request: req });
     expect(result).toBeUndefined();
   });
 
@@ -115,7 +115,6 @@ describe("buildCapiViewContent", () => {
       fbclid: "TestFbclid123",
       landingUrl: "https://vibes.diy/?utm_source=meta",
       capiToken: "tok_secret",
-      pixelId: "1310410873948425",
       request: req,
     });
     const nowAfter = Math.floor(Date.now() / 1000);
@@ -134,13 +133,48 @@ describe("buildCapiViewContent", () => {
     expect(payload.access_token).toBe("tok_secret");
   });
 
+  it("uses fbclidTs for fbc timestamp when provided", () => {
+    const req = new Request("https://vibes.diy/capi/engaged", { method: "POST" });
+    const landingTs = Date.now() - 15_000;
+    const result = buildCapiViewContent({
+      fbclid: "TsFbclid",
+      landingUrl: "https://vibes.diy/",
+      capiToken: "tok",
+      request: req,
+      fbclidTs: landingTs,
+    });
+    const payload = expectViewContentPayload(result);
+    const fbc = payload.data[0].user_data.fbc;
+    const tsInFbc = parseInt(fbc.split(".")[2], 10);
+    expect(tsInFbc).toBe(landingTs);
+  });
+
+  it("includes event_id in payload when provided", () => {
+    const req = new Request("https://vibes.diy/capi/engaged", { method: "POST" });
+    const result = buildCapiViewContent({
+      fbclid: "EvtFbclid",
+      landingUrl: "https://vibes.diy/",
+      capiToken: "tok",
+      request: req,
+      eventId: "test-uuid-1234",
+    });
+    const payload = expectViewContentPayload(result);
+    expect(payload.data[0].event_id).toBe("test-uuid-1234");
+  });
+
+  it("omits event_id from payload when not provided", () => {
+    const req = new Request("https://vibes.diy/capi/engaged", { method: "POST" });
+    const result = buildCapiViewContent({ fbclid: "XYZ", landingUrl: "https://vibes.diy/", capiToken: "tok", request: req });
+    const payload = expectViewContentPayload(result);
+    expect(payload.data[0].event_id).toBeUndefined();
+  });
+
   it("event_source_url comes from landingUrl param, not the relay request URL", () => {
     const req = new Request("https://vibes.diy/capi/engaged", { method: "POST" });
     const result = buildCapiViewContent({
       fbclid: "ABC",
       landingUrl: "https://vibes.diy/?fbclid=ABC",
       capiToken: "tok",
-      pixelId: "1310410873948425",
       request: req,
     });
     const payload = expectViewContentPayload(result);
@@ -149,7 +183,7 @@ describe("buildCapiViewContent", () => {
 
   it("falls back to empty string for missing IP and UA headers", () => {
     const req = new Request("https://vibes.diy/capi/engaged", { method: "POST" });
-    const result = buildCapiViewContent({ fbclid: "XYZ", landingUrl: "https://vibes.diy/", capiToken: "tok", pixelId: "1310410873948425", request: req });
+    const result = buildCapiViewContent({ fbclid: "XYZ", landingUrl: "https://vibes.diy/", capiToken: "tok", request: req });
     const payload = expectViewContentPayload(result);
     expect(payload.data[0].user_data.client_ip_address).toBe("");
     expect(payload.data[0].user_data.client_user_agent).toBe("");
