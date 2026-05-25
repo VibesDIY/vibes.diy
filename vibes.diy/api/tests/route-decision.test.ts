@@ -130,6 +130,26 @@ describe("worker routeDecision", () => {
     // (if anyone added a route) don't get redirected to the SPA.
     expect(decide({ pathname: "/reportsfoo" })).toBe("ssr");
   });
+
+  it("POST /capi/engaged → capi-relay (CAPI EngagedVisit relay endpoint)", () => {
+    expect(decide({ pathname: "/capi/engaged", method: "POST" })).toBe("capi-relay");
+  });
+
+  it("OPTIONS /capi/engaged → capi-relay (CORS preflight for relay)", () => {
+    expect(decide({ pathname: "/capi/engaged", method: "OPTIONS" })).toBe("capi-relay");
+  });
+
+  it("GET /capi/engaged is NOT capi-relay — only POST/OPTIONS", () => {
+    expect(decide({ pathname: "/capi/engaged", method: "GET" })).toBe("ssr");
+  });
+
+  it("POST /webhooks/clerk → clerk-webhook (Clerk user.created webhook)", () => {
+    expect(decide({ pathname: "/webhooks/clerk", method: "POST" })).toBe("clerk-webhook");
+  });
+
+  it("GET /webhooks/clerk is NOT clerk-webhook — reject non-POST", () => {
+    expect(decide({ pathname: "/webhooks/clerk", method: "GET" })).toBe("ssr");
+  });
 });
 
 describe("worker routeDecision — PR preview base (pr-<N>.vibespreview.dev)", () => {
