@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type { ResReportCampaignHealth, ResReportCampaignHealthCampaignRow } from "@vibes.diy/api-types";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
-
-type Loadable<T> =
-  | { readonly kind: "loading" }
-  | { readonly kind: "ok"; readonly data: T }
-  | { readonly kind: "err"; readonly msg: string };
+import type { Loadable } from "./types.js";
 
 function lpv(row: ResReportCampaignHealthCampaignRow): number {
   return Number(row.actions?.find((a) => a.action_type === "landing_page_view")?.value ?? 0);
@@ -206,7 +202,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
         <div className="card">
           <span className="section-label">Anomalies</span>
           <h2 className="section-title">Anomalies</h2>
-          {!hasAnomalies ? (
+          {hasAnomalies === false ? (
             <span
               className="section-label section-label--filled"
               style={{ background: "var(--cyan)", borderColor: "var(--cyan)", color: "var(--near-black)" }}
@@ -218,8 +214,8 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               {anomalies.duplicateNames.length > 0 && (
                 <li>
                   <strong>Duplicate names:</strong>{" "}
-                  {anomalies.duplicateNames.map((n, i) => (
-                    <span key={i} style={{ fontFamily: "monospace", marginRight: "0.5rem" }}>
+                  {anomalies.duplicateNames.map((n) => (
+                    <span key={n} style={{ fontFamily: "monospace", marginRight: "0.5rem" }}>
                       {n}
                     </span>
                   ))}
@@ -228,20 +224,20 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               {anomalies.zeroSpend.length > 0 && (
                 <li>
                   <strong>Zero spend:</strong>{" "}
-                  {anomalies.zeroSpend.map((n, i) => (
-                    <span key={i} style={{ fontFamily: "monospace", marginRight: "0.5rem" }}>
+                  {anomalies.zeroSpend.map((n) => (
+                    <span key={n} style={{ fontFamily: "monospace", marginRight: "0.5rem" }}>
                       {n}
                     </span>
                   ))}
                 </li>
               )}
-              {anomalies.budgetOutliers.map((o, i) => (
-                <li key={i}>
+              {anomalies.budgetOutliers.map((o) => (
+                <li key={o.name}>
                   <span style={{ fontFamily: "monospace" }}>{o.name}</span> spends ${o.spend} vs median ${o.medianSpend}
                 </li>
               ))}
-              {anomalies.lowLpvRatio.map((e, i) => (
-                <li key={i}>
+              {anomalies.lowLpvRatio.map((e) => (
+                <li key={e.name}>
                   <span style={{ fontFamily: "monospace" }}>{e.name}</span>: {e.clicks} clicks, {e.lpvs} LPVs ({e.ratio})
                 </li>
               ))}
