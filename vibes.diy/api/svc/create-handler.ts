@@ -98,6 +98,9 @@ export async function createAppContext<T extends VibesSqlite>(
     VIBES_DIY_FROM_EMAIL: "no-reply@vibes.diy",
 
     PRODIA_TOKEN: param.OPTIONAL,
+    META_ACCESS_TOKEN: param.OPTIONAL,
+    META_AD_ACCOUNT_ID: param.OPTIONAL,
+    META_PIXEL_ID: param.OPTIONAL,
 
     META_ACCESS_TOKEN: param.OPTIONAL,
     META_AD_ACCOUNT_ID: param.OPTIONAL,
