@@ -1,0 +1,15 @@
+# api/svc .dev.vars — copy to .dev.vars and fill in real values
+# .dev.vars is gitignored
+
+# Neon (required for db:inspect-report and the Drizzle ORM endpoints)
+NEON_DATABASE_URL=postgres://user:pass@host/db
+NEON_DATABASE_ADMIN_URL=postgres://user:pass@host/db
+
+# Meta Marketing API (required for /reports/campaign-health)
+# Long-lived user token with ads_read + ads_management permissions (~60-day expiry).
+# Refresh runbook: landing-pages/agents/meta-ads-setup.md
+META_ACCESS_TOKEN=
+# Ad account ID in act_XXXXXXXXXX format
+META_AD_ACCOUNT_ID=
+# Meta Pixel ID (numeric, not the act_ format)
+META_PIXEL_ID=

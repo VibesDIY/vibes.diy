@@ -17,6 +17,7 @@ import { filesAsset } from "./public/files-asset.js";
 import { putAsset } from "./public/put-asset.js";
 import { authSession, authLogout, authBridgePreflight } from "./public/asset-session.js";
 import { userAvatar } from "./public/get-user-avatar.js";
+import { campaignHealthReport } from "./campaign-health/campaign-health-report.js";
 
 export const vibesReqResEvento = Lazy(() => {
   const evento = new Evento(new ReqResEventoEnDecoder());
@@ -49,6 +50,7 @@ export const vibesReqResEvento = Lazy(() => {
     putAsset,
     authSession,
     authLogout,
+    campaignHealthReport,
     servEntryPoint,
     {
       type: EventoType.WildCard,
