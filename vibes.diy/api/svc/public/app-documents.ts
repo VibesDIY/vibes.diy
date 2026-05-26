@@ -23,6 +23,7 @@ import {
   ReqWithVerifiedAuth,
   ReqWithOptionalAuth,
   VibesDiyError,
+  ResError,
   W3CWebSocketEvent,
   DbAcl,
   EvtCommentPosted,
@@ -128,13 +129,13 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       // Fail closed: a settings-read error must not silently fall back to the
       // open default and re-open writes on a tightened ACL.
       if (rAcl.isErr()) {
-        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } as unknown as VibesDiyError);
+        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
       const acl = rAcl.Ok();
 
       if (!aclAllows(acl, "write", access)) {
-        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } as unknown as VibesDiyError);
+        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 
@@ -146,7 +147,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: { message: `Invalid file reference: ${filesCheck.reason}` },
-        } as unknown as VibesDiyError);
+        } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 
@@ -242,7 +243,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: { message: "Access denied" },
-        } as unknown as VibesDiyError);
+        } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 
@@ -311,7 +312,7 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: { message: "Access denied" },
-        } as unknown as VibesDiyError);
+        } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 
@@ -378,7 +379,7 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
       const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
       if (rAcl.isErr() || !aclAllows(rAcl.Ok(), "delete", access)) {
-        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } as unknown as VibesDiyError);
+        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 
@@ -452,7 +453,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: { message: "Access denied" },
-        } as unknown as VibesDiyError);
+        } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 
@@ -499,7 +500,7 @@ export const listDbNamesEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
 
       const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
       if (access !== "owner") {
-        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } as unknown as VibesDiyError);
+        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 

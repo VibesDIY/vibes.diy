@@ -107,9 +107,8 @@ export const reportAttributionReferrersEvento: EventoHandler<
 
       if (hasReport(req._auth.verifiedAuth.claims, "attribution") === false) {
         await ctx.send.send(ctx, {
-          type: "vibes.diy.error",
-          message: "not authorized for attribution report",
-          code: "report-not-authorized",
+          type: "vibes.diy.res-error",
+          error: { message: "not authorized for attribution report", code: "report-not-authorized" },
         } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }

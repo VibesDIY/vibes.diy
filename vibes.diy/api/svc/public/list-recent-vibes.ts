@@ -19,6 +19,7 @@ import {
   ResListRecentVibes,
   ResRecentVibesItem,
   VibesDiyError,
+  ResError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
@@ -113,10 +114,9 @@ export const listRecentVibesEvento: EventoHandler<
         const rDecoded = decodeCursor(req.cursor);
         if (rDecoded.isErr()) {
           await ctx.send.send(ctx, {
-            type: "vibes.diy.error",
-            message: `Invalid cursor: ${rDecoded.Err().message}`,
-            code: "list-recent-vibes-invalid-cursor",
-          } as unknown as VibesDiyError);
+            type: "vibes.diy.res-error",
+            error: { message: `Invalid cursor: ${rDecoded.Err().message}`, code: "list-recent-vibes-invalid-cursor" },
+          } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
         const c = rDecoded.Ok();

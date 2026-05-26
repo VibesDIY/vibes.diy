@@ -185,9 +185,8 @@ export function isResHasAccessRequest(obj: unknown): obj is ResHasAccessRequest 
 }
 
 export const ResFlowOwnerError = type({
-  type: "'vibes.diy.error'",
-  message: "string",
-  code: "'owner-error'",
+  type: "'vibes.diy.res-error'",
+  error: type({ message: "string", code: "'owner-error'" }),
   "stack?": "string[]",
 });
 export type ResFlowOwnerError = typeof ResFlowOwnerError.infer;
@@ -196,9 +195,8 @@ export function isResFlowOwnerError(obj: unknown): obj is ResFlowOwnerError {
 }
 
 export const ResRequestAccessError = type({
-  type: "'vibes.diy.error'",
-  message: "string",
-  code: "'request-access-app-not-found' | 'request-access-not-enabled'",
+  type: "'vibes.diy.res-error'",
+  error: type({ message: "string", code: "'request-access-app-not-found' | 'request-access-not-enabled'" }),
   "stack?": "string[]",
 });
 export type ResRequestAccessError = typeof ResRequestAccessError.infer;
@@ -207,17 +205,15 @@ export function isResRequestAccessError(obj: unknown): obj is ResRequestAccessEr
 }
 
 export const ResApproveRequestError = type({
-  type: "'vibes.diy.error'",
-  message: "string",
-  code: "'approve-request-not-found'",
+  type: "'vibes.diy.res-error'",
+  error: type({ message: "string", code: "'approve-request-not-found'" }),
   "stack?": "string[]",
 });
 export type ResApproveRequestError = typeof ResApproveRequestError.infer;
 
 export const ResRequestSetRoleError = type({
-  type: "'vibes.diy.error'",
-  message: "string",
-  code: "'request-set-role-not-found'",
+  type: "'vibes.diy.res-error'",
+  error: type({ message: "string", code: "'request-set-role-not-found'" }),
   "stack?": "string[]",
 });
 export type ResRequestSetRoleError = typeof ResRequestSetRoleError.infer;

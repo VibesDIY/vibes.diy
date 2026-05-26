@@ -23,9 +23,8 @@ export const resEnsureAppSlugOk = type({
 export type ResEnsureAppSlugOk = typeof resEnsureAppSlugOk.infer;
 
 export const resEnsureAppSlugRequireLogin = type({
-  type: "'vibes.diy.error'",
-  message: "string",
-  code: "'require-login'",
+  type: "'vibes.diy.res-error'",
+  error: type({ message: "string", code: "'require-login'" }),
   "stack?": "string[]",
 });
 export type ResEnsureAppSlugRequireLogin = typeof resEnsureAppSlugRequireLogin.infer;
@@ -35,9 +34,8 @@ export function isResEnsureAppSlugOk(obj: unknown): obj is ResEnsureAppSlugOk {
 }
 
 export const resEnsureAppSlugUserSlugInvalid = type({
-  type: "'vibes.diy.error'",
-  message: "string",
-  code: "'user-slug-invalid'",
+  type: "'vibes.diy.res-error'",
+  error: type({ message: "string", code: "'user-slug-invalid'" }),
   "stack?": "string[]",
 });
 export type ResEnsureAppSlugUserSlugInvalid = typeof resEnsureAppSlugUserSlugInvalid.infer;
@@ -47,17 +45,15 @@ export function isResEnsureAppSlugUserSlugInvalid(obj: unknown): obj is ResEnsur
 }
 
 export const resEnsureAppSlugInvalid = type({
-  type: "'vibes.diy.error'",
-  message: "string",
-  code: "'app-slug-invalid'",
+  type: "'vibes.diy.res-error'",
+  error: type({ message: "string", code: "'app-slug-invalid'" }),
   "stack?": "string[]",
 });
 export type ResEnsureAppSlugInvalid = typeof resEnsureAppSlugInvalid.infer;
 
 const resEnsureAppSlugMaxAppsError = type({
-  type: "'vibes.diy.error'",
-  message: "string",
-  code: "'max-app-slugs-reached'",
+  type: "'vibes.diy.res-error'",
+  error: type({ message: "string", code: "'max-app-slugs-reached'" }),
 });
 export type ResEnsureAppSlugMaxAppsError = typeof resEnsureAppSlugMaxAppsError.infer;
 

@@ -113,9 +113,8 @@ export const vibesMsgEvento = Lazy(() => {
       hash: "not-msg-implemented-handler",
       handle: async (ctx) => {
         await ctx.send.send(ctx, {
-          type: "vibes.diy.error",
-          message: `Not Implemented: ${JSON.stringify(ctx.enRequest)}`,
-          // input: ctx.enRequest,
+          type: "vibes.diy.res-error",
+          error: { message: `Not Implemented: ${JSON.stringify(ctx.enRequest)}` },
         } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       },
@@ -126,9 +125,8 @@ export const vibesMsgEvento = Lazy(() => {
       handle: async (ctx) => {
         console.error("vibesMsgEvento error-handler", ctx.error, (ctx.error as { cause?: unknown })?.cause);
         await ctx.send.send(ctx, {
-          type: "vibes.diy.error",
-          message: `Error: ${ctx.error?.message?.toString() || "Internal Server Error"}`,
-          // input: ctx.enRequest,
+          type: "vibes.diy.res-error",
+          error: { message: `Error: ${ctx.error?.message?.toString() || "Internal Server Error"}` },
         } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       },

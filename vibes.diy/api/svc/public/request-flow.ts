@@ -40,6 +40,7 @@ import {
   ClerkClaim,
   EvtRequestGrant,
   Role,
+  ResError,
 } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -135,9 +136,8 @@ export async function hasAccessRequest(
 
   if (ownerRows[0]?.userId === req.foreignUserId) {
     return Result.Ok({
-      type: "vibes.diy.error",
-      message: `owner cannot check own app access: ${req.userSlug}/${req.appSlug}`,
-      code: "owner-error",
+      type: "vibes.diy.res-error",
+      error: { message: `owner cannot check own app access: ${req.userSlug}/${req.appSlug}`, code: "owner-error" },
     } satisfies ResFlowOwnerError);
   }
 
@@ -241,17 +241,15 @@ export async function requestAccess(
   const record = rSettings.Ok();
   if (!record) {
     return Result.Ok({
-      type: "vibes.diy.error",
-      message: `app not found: ${req.userSlug}/${req.appSlug}`,
-      code: "request-access-app-not-found",
+      type: "vibes.diy.res-error",
+      error: { message: `app not found: ${req.userSlug}/${req.appSlug}`, code: "request-access-app-not-found" },
     } satisfies ResRequestAccessError);
   }
 
   if (record.userId === req.foreignUserId) {
     return Result.Ok({
-      type: "vibes.diy.error",
-      message: `owner cannot request access to own app: ${req.userSlug}/${req.appSlug}`,
-      code: "owner-error",
+      type: "vibes.diy.res-error",
+      error: { message: `owner cannot request access to own app: ${req.userSlug}/${req.appSlug}`, code: "owner-error" },
     } satisfies ResFlowOwnerError);
   }
 
@@ -259,9 +257,8 @@ export async function requestAccess(
   const enableRequest = settings.find(isEnableRequest);
   if (!enableRequest?.enable) {
     return Result.Ok({
-      type: "vibes.diy.error",
-      message: `access requests not enabled for ${req.userSlug}/${req.appSlug}`,
-      code: "request-access-not-enabled",
+      type: "vibes.diy.res-error",
+      error: { message: `access requests not enabled for ${req.userSlug}/${req.appSlug}`, code: "request-access-not-enabled" },
     } satisfies ResRequestAccessError);
   }
 
@@ -482,7 +479,7 @@ export const subscribeRequestGrantsEvento: EventoHandler<
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: { message: "Access denied" },
-        } as unknown as VibesDiyError);
+        } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 
@@ -542,9 +539,11 @@ export const approveRequestEvento: EventoHandler<
 
       if (!existing[0]) {
         await ctx.send.send(ctx, {
-          type: "vibes.diy.error",
-          message: `approve-request: not found ${req.userSlug}/${req.appSlug}/${req.foreignUserId}`,
-          code: "approve-request-not-found",
+          type: "vibes.diy.res-error",
+          error: {
+            message: `approve-request: not found ${req.userSlug}/${req.appSlug}/${req.foreignUserId}`,
+            code: "approve-request-not-found",
+          },
         } satisfies ResApproveRequestError);
         return Result.Ok(EventoResult.Continue);
       }
@@ -632,9 +631,11 @@ export const requestSetRoleEvento: EventoHandler<
 
       if (!existing) {
         await ctx.send.send(ctx, {
-          type: "vibes.diy.error",
-          message: `request-set-role: not found ${req.userSlug}/${req.appSlug}/${req.foreignUserId}`,
-          code: "request-set-role-not-found",
+          type: "vibes.diy.res-error",
+          error: {
+            message: `request-set-role: not found ${req.userSlug}/${req.appSlug}/${req.foreignUserId}`,
+            code: "request-set-role-not-found",
+          },
         } satisfies ResRequestSetRoleError);
         return Result.Ok(EventoResult.Continue);
       }
