@@ -13,7 +13,7 @@ Full setup instructions: [`vibes.diy/api/logpush-etl/SETUP.md`](../vibes.diy/api
 | R2 buckets (`vibes-diy-workers-logs`, `vibes-diy-workers-logs-dev`) | ✅ Created |
 | `RefererEvents` schema in Neon | ✅ Landed via c2.2.97 `drizzle:neon` |
 | CI wiring (`vibes.diy/actions/deploy/action.yaml`) | ✅ commit 820e1f80 |
-| Logpush job in CF dashboard (Workers Trace Events → R2) | ⚠️ Created (jobs 1672480/1672481) — no activity; check path prefix + Workers Logs enabled |
+| Logpush job in CF dashboard (Workers Trace Events → R2) | ✅ Delivering — `logpush = true` at env root in wrangler.toml (not inside observability.logs) |
 | `NEON_DATABASE_URL` secret on ETL worker | ✅ In GH env |
 | Clerk `"attribution"` access grant | ✅ Skip=true for all @vibes.diy accounts |
 
