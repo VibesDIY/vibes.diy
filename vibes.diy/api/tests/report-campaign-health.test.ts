@@ -85,13 +85,13 @@ describe("report-campaign-health", { timeout: TIMEOUT }, () => {
     it("wrong report key → report-not-authorized", async () => {
       const r = await apiNoAccess.reportCampaignHealth({});
       expect(r.isErr()).toBe(true);
-      expect((r.Err() as { code?: string }).code).toBe("report-not-authorized");
+      expect((r.Err() as { error?: { code?: string } }).error?.code).toBe("report-not-authorized");
     });
 
     it("['*'] permission + no Meta creds → meta-creds-missing", async () => {
       const r = await apiStar.reportCampaignHealth({});
       expect(r.isErr()).toBe(true);
-      expect((r.Err() as { code?: string }).code).toBe("meta-creds-missing");
+      expect((r.Err() as { error?: { code?: string } }).error?.code).toBe("meta-creds-missing");
     });
   });
 
@@ -99,19 +99,19 @@ describe("report-campaign-health", { timeout: TIMEOUT }, () => {
     it("campaign-health permission + no Meta creds → meta-creds-missing", async () => {
       const r = await apiCampaign.reportCampaignHealth({});
       expect(r.isErr()).toBe(true);
-      expect((r.Err() as { code?: string }).code).toBe("meta-creds-missing");
+      expect((r.Err() as { error?: { code?: string } }).error?.code).toBe("meta-creds-missing");
     });
 
     it("days param accepted alongside credential error", async () => {
       const r = await apiCampaign.reportCampaignHealth({ days: "30" });
       expect(r.isErr()).toBe(true);
-      expect((r.Err() as { code?: string }).code).toBe("meta-creds-missing");
+      expect((r.Err() as { error?: { code?: string } }).error?.code).toBe("meta-creds-missing");
     });
 
     it("since param accepted alongside credential error", async () => {
       const r = await apiCampaign.reportCampaignHealth({ since: "2026-01-01" });
       expect(r.isErr()).toBe(true);
-      expect((r.Err() as { code?: string }).code).toBe("meta-creds-missing");
+      expect((r.Err() as { error?: { code?: string } }).error?.code).toBe("meta-creds-missing");
     });
   });
 });
