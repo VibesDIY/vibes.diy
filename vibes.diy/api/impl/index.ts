@@ -139,6 +139,12 @@ import {
   ReqReportGrowthVibesWithData,
   ResReportGrowthVibesWithData,
   isResReportGrowthVibesWithData,
+  ReqReportActiveMembers,
+  ResReportActiveMembers,
+  isResReportActiveMembers,
+  ReqReportTopVibesByMembers,
+  ResReportTopVibesByMembers,
+  isResReportTopVibesByMembers,
   ReqReportAttributionReferrers,
   ResReportAttributionReferrers,
   isResReportAttributionReferrers,
@@ -749,6 +755,14 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-report-growth-vibes-with-data" },
       { resMatch: isResReportGrowthVibesWithData }
     );
+  }
+
+  reportActiveMembers(req: Req<ReqReportActiveMembers>): Promise<Result<ResReportActiveMembers, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-report-active-members" }, { resMatch: isResReportActiveMembers });
+  }
+
+  reportTopVibesByMembers(req: Req<ReqReportTopVibesByMembers>): Promise<Result<ResReportTopVibesByMembers, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-report-top-vibes-by-members" }, { resMatch: isResReportTopVibesByMembers });
   }
 
   reportAttributionReferrers(

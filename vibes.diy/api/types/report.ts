@@ -59,6 +59,62 @@ export function isResReportGrowthVibesWithData(obj: unknown): obj is ResReportGr
   return !(resReportGrowthVibesWithData(obj) instanceof type.errors);
 }
 
+// Active Members — daily non-cumulative count of distinct non-owner members who
+// wrote to any vibe that day (based on AppDocuments writes cross-referenced with
+// active grants).
+export const reqReportActiveMembers = type({
+  type: "'vibes.diy.req-report-active-members'",
+  auth: dashAuthType,
+});
+export type ReqReportActiveMembers = typeof reqReportActiveMembers.infer;
+export function isReqReportActiveMembers(obj: unknown): obj is ReqReportActiveMembers {
+  return !(reqReportActiveMembers(obj) instanceof type.errors);
+}
+
+export const resReportActiveMembersDay = type({
+  day: "string",
+  count: "number",
+});
+export type ResReportActiveMembersDay = typeof resReportActiveMembersDay.infer;
+
+export const resReportActiveMembers = type({
+  type: "'vibes.diy.res-report-active-members'",
+  generatedAt: "string",
+  days: resReportActiveMembersDay.array(),
+});
+export type ResReportActiveMembers = typeof resReportActiveMembers.infer;
+export function isResReportActiveMembers(obj: unknown): obj is ResReportActiveMembers {
+  return !(resReportActiveMembers(obj) instanceof type.errors);
+}
+
+// Top Vibes by Members — all-time leaderboard of vibes ranked by distinct member
+// count (deduped across RequestGrants and InviteGrants).
+export const reqReportTopVibesByMembers = type({
+  type: "'vibes.diy.req-report-top-vibes-by-members'",
+  auth: dashAuthType,
+});
+export type ReqReportTopVibesByMembers = typeof reqReportTopVibesByMembers.infer;
+export function isReqReportTopVibesByMembers(obj: unknown): obj is ReqReportTopVibesByMembers {
+  return !(reqReportTopVibesByMembers(obj) instanceof type.errors);
+}
+
+export const resReportTopVibesByMembersRow = type({
+  userSlug: "string",
+  appSlug: "string",
+  memberCount: "number",
+});
+export type ResReportTopVibesByMembersRow = typeof resReportTopVibesByMembersRow.infer;
+
+export const resReportTopVibesByMembers = type({
+  type: "'vibes.diy.res-report-top-vibes-by-members'",
+  generatedAt: "string",
+  rows: resReportTopVibesByMembersRow.array(),
+});
+export type ResReportTopVibesByMembers = typeof resReportTopVibesByMembers.infer;
+export function isResReportTopVibesByMembers(obj: unknown): obj is ResReportTopVibesByMembers {
+  return !(resReportTopVibesByMembers(obj) instanceof type.errors);
+}
+
 // Attribution — referrer hostname + path ranked by traffic, with conversion count.
 // Populated from RefererEvents written by the logpush-etl cron worker.
 export const reqReportAttributionReferrers = type({

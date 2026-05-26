@@ -5,10 +5,13 @@ import { VibesDiyApi } from "@vibes.diy/api-impl";
 import type {
   ResReportGrowthMemberships,
   ResReportGrowthVibesWithData,
+  ResReportActiveMembers,
+  ResReportTopVibesByMembers,
+  ResReportTopVibesByMembersRow,
   ResReportAttributionReferrers,
   ResReportAttributionReferrersLegacyRow,
 } from "@vibes.diy/api-types";
-import { MembershipsChart, VibesWithDataChart } from "./Chart.js";
+import { MembershipsChart, ActiveMembersChart, VibesWithDataChart } from "./Chart.js";
 import vibesDiyLogoUrl from "./vibes-diy-logo.png";
 
 interface AppProps {
@@ -53,19 +56,30 @@ export function App({ getClerkToken }: AppProps) {
   const api = apiRef.current;
 
   const [memberships, setMemberships] = useState<Loadable<ResReportGrowthMemberships>>({ kind: "loading" });
+  const [activeMembers, setActiveMembers] = useState<Loadable<ResReportActiveMembers>>({ kind: "loading" });
   const [vibes, setVibes] = useState<Loadable<ResReportGrowthVibesWithData>>({ kind: "loading" });
+  const [topVibes, setTopVibes] = useState<Loadable<ResReportTopVibesByMembers>>({ kind: "loading" });
   const [referrers, setReferrers] = useState<Loadable<ResReportAttributionReferrers>>({ kind: "loading" });
   const [referrerFilter, setReferrerFilter] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const ac = new AbortController();
     void (async () => {
-      const [m, v] = await Promise.all([api.reportGrowthMemberships({}), api.reportGrowthVibesWithData({})]);
+      const [m, a, v, tv] = await Promise.all([
+        api.reportGrowthMemberships({}),
+        api.reportActiveMembers({}),
+        api.reportGrowthVibesWithData({}),
+        api.reportTopVibesByMembers({}),
+      ]);
       if (ac.signal.aborted) return;
       if (m.isOk()) setMemberships({ kind: "ok", data: m.Ok() });
       else setMemberships({ kind: "err", msg: m.Err().message });
+      if (a.isOk()) setActiveMembers({ kind: "ok", data: a.Ok() });
+      else setActiveMembers({ kind: "err", msg: a.Err().message });
       if (v.isOk()) setVibes({ kind: "ok", data: v.Ok() });
       else setVibes({ kind: "err", msg: v.Err().message });
+      if (tv.isOk()) setTopVibes({ kind: "ok", data: tv.Ok() });
+      else setTopVibes({ kind: "err", msg: tv.Err().message });
     })();
     return () => ac.abort();
   }, [api]);
@@ -149,6 +163,24 @@ export function App({ getClerkToken }: AppProps) {
       <section>
         <div className="card">
           <span className="section-label section-label--filled">30 Days</span>
+          <h2 className="section-title">Active members per day</h2>
+          <p className="section-intro">
+            Distinct non-owner members who wrote data to any vibe each day. Non-cumulative — shows engagement, not acquisition. Peak
+            value shown above the chart.
+          </p>
+          {activeMembers.kind === "loading" ? (
+            <div className="empty">Loading…</div>
+          ) : activeMembers.kind === "err" ? (
+            <ErrorPanel msg={activeMembers.msg} />
+          ) : (
+            <ActiveMembersChart data={activeMembers.data} />
+          )}
+        </div>
+      </section>
+
+      <section>
+        <div className="card">
+          <span className="section-label section-label--filled">30 Days</span>
           <h2 className="section-title">Vibes with data over time</h2>
           <p className="section-intro">
             Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct userSlug/appSlug pair in
@@ -207,6 +239,23 @@ export function App({ getClerkToken }: AppProps) {
         </section>
       )}
 
+      <section>
+        <div className="card">
+          <span className="section-label section-label--filled">All time</span>
+          <h2 className="section-title">Top vibes by member count</h2>
+          <p className="section-intro">Vibes ranked by number of distinct non-owner members with durable access.</p>
+          {topVibes.kind === "loading" ? (
+            <div className="empty">Loading…</div>
+          ) : topVibes.kind === "err" ? (
+            <ErrorPanel msg={topVibes.msg} />
+          ) : topVibes.data.rows.length === 0 ? (
+            <div className="empty">No membership data yet.</div>
+          ) : (
+            <TopVibesTable rows={topVibes.data.rows} />
+          )}
+        </div>
+      </section>
+
       <ColorStripe />
     </div>
   );
@@ -257,6 +306,46 @@ function ErrorPanel({ msg }: { msg: string }) {
     <div className="err">
       <div className="err-label">Error</div>
       <div>{msg}</div>
+    </div>
+  );
+}
+
+function TopVibesTable({ rows }: { readonly rows: ResReportTopVibesByMembersRow[] }) {
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
+        <thead>
+          <tr style={{ borderBottom: "2px solid var(--near-black)" }}>
+            <th style={{ textAlign: "right", padding: "0.5rem 0.75rem", width: "3rem" }}>#</th>
+            <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Vibe</th>
+            <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Members</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr
+              key={`${row.userSlug}/${row.appSlug}`}
+              style={{
+                borderBottom: "1px solid color-mix(in srgb, var(--near-black) 15%, transparent)",
+                background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--near-black) 4%, transparent)",
+              }}
+            >
+              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", color: "var(--gray-mid)" }}>{i + 1}</td>
+              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace" }}>
+                <a
+                  href={`https://vibes.diy/vibe/${row.userSlug}/${row.appSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "var(--cyan)", textDecoration: "underline", textDecorationStyle: "dotted" }}
+                >
+                  {row.userSlug}/{row.appSlug}
+                </a>
+              </td>
+              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.memberCount.toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

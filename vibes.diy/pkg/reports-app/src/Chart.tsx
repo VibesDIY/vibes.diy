@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import type { ResReportGrowthMemberships, ResReportGrowthVibesWithData } from "@vibes.diy/api-types";
+import type { ResReportGrowthMemberships, ResReportGrowthVibesWithData, ResReportActiveMembers } from "@vibes.diy/api-types";
 
 // Chart styled to match the builders editorial brand: red/cyan polyline,
 // cream-filled circles with matching stroke, thin near-black axis lines.
@@ -170,6 +170,15 @@ export function MembershipsChart({ data }: { data: ResReportGrowthMemberships })
     [data]
   );
   return <LineChart points={points} current={data.total} stroke="var(--red)" />;
+}
+
+export function ActiveMembersChart({ data }: { data: ResReportActiveMembers }) {
+  const points = useMemo<readonly ChartPoint[]>(
+    () => data.days.map((d) => ({ day: d.day, value: d.count, tooltipLines: [] })),
+    [data]
+  );
+  const peak = useMemo(() => Math.max(...data.days.map((d) => d.count), 0), [data]);
+  return <LineChart points={points} current={peak} stroke="var(--cyan)" />;
 }
 
 export function VibesWithDataChart({ data }: { data: ResReportGrowthVibesWithData }) {
