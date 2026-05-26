@@ -8,7 +8,6 @@ import { useVibesDiy } from "../vibes-diy-provider.js";
 // To restore GrantsList: re-add `isUserSettingSharing` to the named import and `SharingGrantItem` to the type import below.
 import {
   isUserSettingDefaultUserSlug,
-  isUserSettingModelDefaults,
   isUserSettingProfile,
   isResAssetUploadGrant,
   parseArray,
@@ -366,13 +365,6 @@ function ModelDefaultsCard() {
       setSaving(false);
       if (res.isErr()) {
         setError(`Failed to save: ${res.Err()}`);
-        return;
-      }
-      const def = res.Ok().settings.filter(isUserSettingModelDefaults)[0];
-      if (def) {
-        setChatConfig(def.chat ?? {});
-        setAppConfig(def.app ?? {});
-        setImgConfig(def.img ?? {});
       }
     });
   };
