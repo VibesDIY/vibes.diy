@@ -2,7 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { useClerk } from "@clerk/react";
 import { Result } from "@adviser/cement";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
-import type { ResReportGrowthMemberships, ResReportGrowthVibesWithData, ResReportAttributionReferrers } from "@vibes.diy/api-types";
+import type {
+  ResReportGrowthMemberships,
+  ResReportGrowthVibesWithData,
+  ResReportAttributionReferrers,
+  ResReportAttributionReferrersLegacyRow,
+} from "@vibes.diy/api-types";
 import { MembershipsChart, VibesWithDataChart } from "./Chart.js";
 import vibesDiyLogoUrl from "./vibes-diy-logo.png";
 
@@ -163,9 +168,7 @@ export function App({ getClerkToken }: AppProps) {
         <div className="card">
           <span className="section-label section-label--filled">All time</span>
           <h2 className="section-title">Referrer attribution</h2>
-          <p className="section-intro">
-            External pages ranked by traffic to vibes.diy. Click a landing-page path to drill down.
-          </p>
+          <p className="section-intro">External pages ranked by traffic to vibes.diy. Click a landing-page path to drill down.</p>
           {referrerFilter !== undefined && (
             <div style={{ marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <span style={{ fontFamily: "monospace", fontSize: "0.875rem", color: "var(--red)" }}>{referrerFilter}</span>
@@ -189,6 +192,20 @@ export function App({ getClerkToken }: AppProps) {
           )}
         </div>
       </section>
+
+      {referrers.kind === "ok" && referrers.data.legacyVibeRows.length > 0 && referrerFilter === undefined && (
+        <section>
+          <div className="card">
+            <span className="section-label section-label--filled">Needs repair</span>
+            <h2 className="section-title">Legacy vibes needing repair</h2>
+            <p className="section-intro">
+              Old <code style={{ fontFamily: "monospace" }}>/vibe/&lt;slug&gt;</code> paths with inbound traffic that are
+              redirecting to dead paths. Sorted by traffic — fix the highest-traffic ones first.
+            </p>
+            <LegacyVibesTable rows={referrers.data.legacyVibeRows} />
+          </div>
+        </section>
+      )}
 
       <ColorStripe />
     </div>
@@ -240,6 +257,35 @@ function ErrorPanel({ msg }: { msg: string }) {
     <div className="err">
       <div className="err-label">Error</div>
       <div>{msg}</div>
+    </div>
+  );
+}
+
+function LegacyVibesTable({ rows }: { readonly rows: ResReportAttributionReferrersLegacyRow[] }) {
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
+        <thead>
+          <tr style={{ borderBottom: "2px solid var(--near-black)" }}>
+            <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Legacy path</th>
+            <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Total hits</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr
+              key={row.reqPath}
+              style={{
+                borderBottom: "1px solid color-mix(in srgb, var(--near-black) 15%, transparent)",
+                background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--near-black) 4%, transparent)",
+              }}
+            >
+              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace", color: "var(--cyan)" }}>{row.reqPath}</td>
+              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.total.toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

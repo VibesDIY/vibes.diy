@@ -79,10 +79,17 @@ export const resReportAttributionReferrersRow = type({
 });
 export type ResReportAttributionReferrersRow = typeof resReportAttributionReferrersRow.infer;
 
+export const resReportAttributionReferrersLegacyRow = type({
+  reqPath: "string",
+  total: "number",
+});
+export type ResReportAttributionReferrersLegacyRow = typeof resReportAttributionReferrersLegacyRow.infer;
+
 export const resReportAttributionReferrers = type({
   type: "'vibes.diy.res-report-attribution-referrers'",
   generatedAt: "string",
   rows: resReportAttributionReferrersRow.array(),
+  legacyVibeRows: resReportAttributionReferrersLegacyRow.array(),
 });
 export type ResReportAttributionReferrers = typeof resReportAttributionReferrers.infer;
 export function isResReportAttributionReferrers(obj: unknown): obj is ResReportAttributionReferrers {
