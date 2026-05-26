@@ -123,8 +123,8 @@ export default {
         const fallbackTs = envelope.Timestamp ?? new Date().toISOString();
         for (const log of envelope.Logs ?? []) {
           const idx = lineIdx++;
-          const message = log.Message?.[0];
-          if (message === undefined || !message.startsWith("[referer]")) continue;
+          const message = (log.Message ?? []).join(" ");
+          if (!message.startsWith("[referer]")) continue;
           const ts = log.TimestampMs ? new Date(log.TimestampMs).toISOString() : fallbackTs;
           const row = parseRefererLine(message, ts, key, idx);
           if (row !== null) rows.push(row);
