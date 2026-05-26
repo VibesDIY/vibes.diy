@@ -65,11 +65,20 @@ async function fetchCampaignHealth(
   const dateLabel = since ? `since ${since}` : `last ${days} days`;
 
   const fields = "campaign_name,campaign_id,impressions,clicks,spend,ctr,cpc,reach,actions";
-  const insights = await metaGet<{ data?: MetaInsightRow[]; error?: { message: string } }>(
-    `/${account}/insights?fields=${fields}&level=campaign&limit=100${dateParam}`,
-    token
-  );
-  const rows: MetaInsightRow[] = insights.data ?? [];
+  const rows: MetaInsightRow[] = [];
+  let after: string | undefined = undefined;
+  for (;;) {
+    const cursor = after !== undefined ? `&after=${encodeURIComponent(after)}` : "";
+    const page = await metaGet<{
+      data?: MetaInsightRow[];
+      paging?: { cursors?: { after?: string }; next?: string };
+      error?: { message: string };
+    }>(`/${account}/insights?fields=${fields}&level=campaign&limit=100${dateParam}${cursor}`, token);
+    rows.push(...(page.data ?? []));
+    if (page.paging?.next === undefined) break;
+    after = page.paging.cursors?.after;
+    if (after === undefined) break;
+  }
 
   let pixel: ResReportCampaignHealthPixelSummary | null = null;
   try {
