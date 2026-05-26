@@ -30,6 +30,13 @@ interface RefererRow {
   reqPath: string;
 }
 
+interface MissingVibeRow {
+  logKey: string;
+  lineIdx: number;
+  ts: string;
+  reqPath: string;
+}
+
 // Inline minimal schema to avoid pulling in the full @vibes.diy/api-sql workspace dep.
 // Keep in sync with sqlRefererEvents in vibes-diy-api-schema-pg.ts.
 const refererEvents = pgTable(
@@ -47,6 +54,18 @@ const refererEvents = pgTable(
   (t: Record<string, AnyPgColumn>) => [primaryKey({ columns: [t.logKey, t.lineIdx] })]
 );
 
+// Keep in sync with sqlMissingVibeEvents in vibes-diy-api-schema-pg.ts.
+const missingVibeEvents = pgTable(
+  "MissingVibeEvents",
+  {
+    logKey: text().notNull(),
+    lineIdx: integer().notNull(),
+    ts: text().notNull(),
+    reqPath: text().notNull(),
+  },
+  (t: Record<string, AnyPgColumn>) => [primaryKey({ columns: [t.logKey, t.lineIdx] })]
+);
+
 // Parsed [referer] log line: "[referer] <href> <method> <req-path>"
 const REFERER_RE = /^\[referer\] (\S+) (\S+) (\S+)$/;
 
@@ -58,6 +77,16 @@ function parseRefererLine(message: string, ts: string, logKey: string, lineIdx: 
   if (rUri.isErr()) return null;
   const uri = rUri.Ok();
   return { logKey, lineIdx, ts, refHref, refHost: uri.hostname, refPath: uri.pathname, reqMethod, reqPath };
+}
+
+// Parsed [missing-vibe] log line: "[missing-vibe] <req-path>"
+const MISSING_VIBE_RE = /^\[missing-vibe\] (\S+)$/;
+
+function parseMissingVibeLine(message: string, ts: string, logKey: string, lineIdx: number): MissingVibeRow | null {
+  const m = MISSING_VIBE_RE.exec(message);
+  if (m === null) return null;
+  const [, reqPath] = m;
+  return { logKey, lineIdx, ts, reqPath };
 }
 
 async function listKeysForPrefix(bucket: R2Bucket, prefix: string): Promise<string[]> {
@@ -83,9 +112,19 @@ function datePrefixes(): string[] {
   });
 }
 
-async function batchInsert(db: ReturnType<typeof drizzle>, rows: RefererRow[]): Promise<number> {
+async function batchInsertReferer(db: ReturnType<typeof drizzle>, rows: RefererRow[]): Promise<number> {
   if (rows.length === 0) return 0;
   const result = await db.insert(refererEvents).values(rows).onConflictDoNothing().returning({ logKey: refererEvents.logKey });
+  return result.length;
+}
+
+async function batchInsertMissingVibe(db: ReturnType<typeof drizzle>, rows: MissingVibeRow[]): Promise<number> {
+  if (rows.length === 0) return 0;
+  const result = await db
+    .insert(missingVibeEvents)
+    .values(rows)
+    .onConflictDoNothing()
+    .returning({ logKey: missingVibeEvents.logKey });
   return result.length;
 }
 
@@ -100,8 +139,10 @@ export default {
       allKeys.push(...(await listKeysForPrefix(env.LOGS_BUCKET, prefix)));
     }
 
-    let totalInserted = 0;
-    let totalSkipped = 0;
+    let refererInserted = 0;
+    let refererSkipped = 0;
+    let missingVibeInserted = 0;
+    let missingVibeSkipped = 0;
 
     for (const key of allKeys) {
       const obj = await env.LOGS_BUCKET.get(key);
@@ -116,7 +157,8 @@ export default {
       } else {
         text = await obj.text();
       }
-      const rows: RefererRow[] = [];
+      const refererRows: RefererRow[] = [];
+      const missingVibeRows: MissingVibeRow[] = [];
       let lineIdx = 0;
 
       for (const rawLine of text.split("\n")) {
@@ -132,20 +174,28 @@ export default {
         for (const log of envelope.Logs ?? []) {
           const idx = lineIdx++;
           const message = (log.Message ?? []).join(" ");
-          if (!message.startsWith("[referer]")) continue;
           const ts = log.TimestampMs ? new Date(log.TimestampMs).toISOString() : fallbackTs;
-          const row = parseRefererLine(message, ts, key, idx);
-          if (row !== null) rows.push(row);
+          if (message.startsWith("[referer]")) {
+            const row = parseRefererLine(message, ts, key, idx);
+            if (row !== null) refererRows.push(row);
+          } else if (message.startsWith("[missing-vibe]")) {
+            const row = parseMissingVibeLine(message, ts, key, idx);
+            if (row !== null) missingVibeRows.push(row);
+          }
         }
       }
 
-      const inserted = await batchInsert(db, rows);
-      totalInserted += inserted;
-      totalSkipped += rows.length - inserted;
+      const ri = await batchInsertReferer(db, refererRows);
+      refererInserted += ri;
+      refererSkipped += refererRows.length - ri;
+
+      const mi = await batchInsertMissingVibe(db, missingVibeRows);
+      missingVibeInserted += mi;
+      missingVibeSkipped += missingVibeRows.length - mi;
     }
 
     console.log(
-      `[logpush-etl] processed ${allKeys.length} objects — inserted ${totalInserted}, skipped ${totalSkipped} (already present)`
+      `[logpush-etl] processed ${allKeys.length} objects — referer: inserted ${refererInserted}, skipped ${refererSkipped} — missing-vibe: inserted ${missingVibeInserted}, skipped ${missingVibeSkipped} (already present)`
     );
   },
 };

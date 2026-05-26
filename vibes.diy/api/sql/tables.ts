@@ -24,6 +24,7 @@ function createSqliteVibesApiTables() {
     appDocuments: sqlite.sqlAppDocuments,
     assetUploads: sqlite.sqlAssetUploads,
     refererEvents: sqlite.sqlRefererEvents,
+    missingVibeEvents: sqlite.sqlMissingVibeEvents,
   };
 }
 
@@ -57,6 +58,7 @@ export function createVibesApiTables(flavour: DBFlavour): VibesApiTables {
       appDocuments: pg.sqlAppDocuments,
       assetUploads: pg.sqlAssetUploads,
       refererEvents: pg.sqlRefererEvents,
+      missingVibeEvents: pg.sqlMissingVibeEvents,
     } as unknown as VibesApiTables;
   }
   return createSqliteVibesApiTables();

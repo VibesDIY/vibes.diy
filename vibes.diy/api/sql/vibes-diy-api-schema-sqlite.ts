@@ -266,3 +266,12 @@ export const sqlRefererEvents = sqliteTable("RefererEvents", {
   reqMethod: text().notNull(),
   reqPath: text().notNull(),
 });
+
+// Missing vibe 404 events — written by ETL from Logpush NDJSON.
+// Empty in dev/SQLite; populated in prod/Neon by the logpush-etl cron worker.
+export const sqlMissingVibeEvents = sqliteTable("MissingVibeEvents", {
+  logKey: text().notNull(),
+  lineIdx: int().notNull(),
+  ts: text().notNull(),
+  reqPath: text().notNull(),
+});
