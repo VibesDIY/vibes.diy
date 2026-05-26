@@ -149,6 +149,9 @@ import {
   ReqReportAttributionReferrers,
   ResReportAttributionReferrers,
   isResReportAttributionReferrers,
+  ReqReportCampaignHealth,
+  ResReportCampaignHealth,
+  isResReportCampaignHealth,
   ResAssetUploadGrant,
   isResAssetUploadGrant,
   isEvtDocChanged,
@@ -766,6 +769,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-report-attribution-referrers" },
       { resMatch: isResReportAttributionReferrers }
     );
+  }
+
+  reportCampaignHealth(req: Req<ReqReportCampaignHealth>): Promise<Result<ResReportCampaignHealth, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-report-campaign-health" }, { resMatch: isResReportCampaignHealth });
   }
 
   private attachDocChangedToConnection(

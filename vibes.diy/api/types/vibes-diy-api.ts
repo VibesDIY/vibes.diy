@@ -102,6 +102,8 @@ import {
   ResReportTopVibesByMembers,
   ReqReportAttributionReferrers,
   ResReportAttributionReferrers,
+  ReqReportCampaignHealth,
+  ResReportCampaignHealth,
 } from "./report.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -213,6 +215,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   reportAttributionReferrers(
     req: Req<ReqReportAttributionReferrers>
   ): Promise<Result<ResReportAttributionReferrers, VibesDiyError>>;
+  reportCampaignHealth(req: Req<ReqReportCampaignHealth>): Promise<Result<ResReportCampaignHealth, VibesDiyError>>;
 
   // Register a callback for document change events pushed from the API.
   // dbName is included so consumers can filter to the specific db they care
