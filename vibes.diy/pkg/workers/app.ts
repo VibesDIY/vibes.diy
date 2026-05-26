@@ -293,7 +293,7 @@ export default {
     // Log missing vibe paths so the ETL pipeline can surface them for reanimation triage.
     // Only log /vibe/<user>/<slug> (and deeper) paths — the two-segment legacy form is
     // already handled by the 301 redirect above and never reaches SSR.
-    if (ssrResponse.status === 404 && /^\/vibe\/[^/]+\//.test(url.pathname)) {
+    if (ssrResponse.status === 404 && /^\/vibe\/[^/]+\/[^/]+/.test(url.pathname)) {
       console.log("[missing-vibe]", url.pathname);
     }
 
