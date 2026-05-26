@@ -107,7 +107,15 @@ export default {
       const obj = await env.LOGS_BUCKET.get(key);
       if (obj === null) continue;
 
-      const text = await obj.text();
+      const isGzip = obj.httpMetadata?.contentEncoding === "gzip";
+      let text: string;
+      if (isGzip) {
+        const buf = await obj.arrayBuffer();
+        const decompressed = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"));
+        text = await new Response(decompressed).text();
+      } else {
+        text = await obj.text();
+      }
       const rows: RefererRow[] = [];
       let lineIdx = 0;
 
