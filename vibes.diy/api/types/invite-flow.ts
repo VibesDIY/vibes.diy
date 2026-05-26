@@ -113,7 +113,6 @@ export function isResRedeemInviteOK(obj: unknown): obj is ResRedeemInviteOK {
 export const ResRedeemInviteError = type({
   type: "'vibes.diy.res-error'",
   error: type({ message: "string", code: "'redeem-invite-failed'" }),
-  "stack?": "string[]",
 });
 export type ResRedeemInviteError = typeof ResRedeemInviteError.infer;
 

@@ -422,7 +422,8 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       },
       handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
         if (isResError(trigger.validated.payload)) {
-          waitForResponse.resolve(Result.Err<S, VibesDiyError>(trigger.validated.payload as VibesDiyError));
+          const e = trigger.validated.payload;
+          waitForResponse.resolve(Result.Err<S, VibesDiyError>(mkResError(e.error.message, e.error.code)));
         } else {
           waitForResponse.resolve(Result.Ok<S, VibesDiyError>(trigger.validated.payload as S));
         }
@@ -931,7 +932,7 @@ class LLMChatImpl implements LLMChat {
         const isError = resError(trigger.validated.payload);
         if (!(isError instanceof type.errors)) {
           // console.log("Response message is an error for chatId:", req.chatId, isError);
-          return Result.Err(isError as VibesDiyError);
+          return Result.Err(mkResError(isError.error.message, isError.error.code));
         } else {
           const se = sectionEvent(trigger.validated.payload);
           if (!(se instanceof type.errors)) {
