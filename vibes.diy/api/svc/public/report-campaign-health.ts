@@ -68,12 +68,13 @@ async function fetchCampaignHealth(
   const rows: MetaInsightRow[] = [];
   let after: string | undefined = undefined;
   for (;;) {
-    const cursor = after !== undefined ? `&after=${encodeURIComponent(after)}` : "";
-    const page = await metaGet<{
-      data?: MetaInsightRow[];
-      paging?: { cursors?: { after?: string }; next?: string };
-      error?: { message: string };
-    }>(`/${account}/insights?fields=${fields}&level=campaign&limit=100${dateParam}${cursor}`, token);
+    const cursor: string = after !== undefined ? `&after=${encodeURIComponent(after)}` : "";
+    const page: { data?: MetaInsightRow[]; paging?: { cursors?: { after?: string }; next?: string }; error?: { message: string } } =
+      await metaGet<{
+        data?: MetaInsightRow[];
+        paging?: { cursors?: { after?: string }; next?: string };
+        error?: { message: string };
+      }>(`/${account}/insights?fields=${fields}&level=campaign&limit=100${dateParam}${cursor}`, token);
     rows.push(...(page.data ?? []));
     if (page.paging?.next === undefined) break;
     after = page.paging.cursors?.after;

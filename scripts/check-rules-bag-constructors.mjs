@@ -11,8 +11,8 @@ const allowlistPath = resolve(scriptDir, "rules-bag-constructors.allowlist.txt")
 const targetPaths = ["vibes.diy/pkg", "vibes-diy/cli", "call-ai/v2"];
 const bannedPatterns = ["new URL(", "new TextEncoder(", "new TextDecoder("];
 
-// Prompt-generated App.jsx output is intentionally exempt from this guardrail.
-const excludedGlobs = ["**/App.jsx"];
+// Prompt-generated App.jsx output and build artifacts are intentionally exempt from this guardrail.
+const excludedGlobs = ["**/App.jsx", "**/build/**", "**/dist/**"];
 
 function readAllowlist(filePath) {
   const contents = readFileSync(filePath, "utf8");
