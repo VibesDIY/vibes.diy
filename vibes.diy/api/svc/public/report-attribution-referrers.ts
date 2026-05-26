@@ -11,11 +11,27 @@ import {
   resReportAttributionReferrers,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { sql, desc, eq } from "drizzle-orm";
+import { sql, desc, eq, notInArray, and } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { cachedReport, hasReport } from "./report-cache.js";
+
+const OWNED_HOSTS = [
+  "vibesdiy.app",
+  "www.vibesdiy.app",
+  "vibesdiy.work",
+  "www.vibesdiy.work",
+  "vibing.cool",
+  "www.vibing.cool",
+  "vibecode.garden",
+  "www.vibecode.garden",
+  "www.justvibes.dev",
+  "www.vibrate.dev",
+  "www.realize.run",
+  "www.dreamcode.live",
+  "www.vibes.software",
+];
 
 async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?: string): Promise<ResReportAttributionReferrers> {
   const t = vctx.sql.tables;
@@ -30,7 +46,11 @@ async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?:
     .from(t.refererEvents)
     .$dynamic();
 
-  const filtered = reqPathFilter !== undefined ? baseQuery.where(eq(t.refererEvents.reqPath, reqPathFilter)) : baseQuery;
+  const ownedFilter = notInArray(t.refererEvents.refHost, OWNED_HOSTS);
+  const filtered =
+    reqPathFilter !== undefined
+      ? baseQuery.where(and(ownedFilter, eq(t.refererEvents.reqPath, reqPathFilter)))
+      : baseQuery.where(ownedFilter);
 
   const rows = await filtered
     .groupBy(t.refererEvents.refHost, t.refererEvents.refPath, t.refererEvents.reqPath)
