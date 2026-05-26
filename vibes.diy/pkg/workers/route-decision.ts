@@ -14,6 +14,7 @@ export type Route =
   | "static-asset" // /assets/* (Vite hashed) — must NOT swallow /assets root
   | "capi-relay" // POST|OPTIONS /capi/engaged → Meta CAPI EngagedVisit relay
   | "capi-complete-registration" // POST|OPTIONS /capi/complete-registration → Meta CAPI CompleteRegistration relay
+  | "legacy-vibe-redirect" // /vibe/<slug> (exactly two segments) → 301 to /vibe/og/<slug>
   | "ssr"; // everything else → React Router
 
 export interface RouteInput {
@@ -79,6 +80,12 @@ export function routeDecision(req: RouteInput): Route {
 
   if (pathname === "/capi/complete-registration" && (method === "POST" || method === "OPTIONS")) {
     return "capi-complete-registration";
+  }
+
+  // Legacy two-segment vibe paths: /vibe/<slug> → redirect to /vibe/og/<slug>.
+  // Must not match /vibe/og/… (three segments) or any deeper path.
+  if (/^\/vibe\/[^/]+$/.test(pathname)) {
+    return "legacy-vibe-redirect";
   }
 
   return "ssr";
