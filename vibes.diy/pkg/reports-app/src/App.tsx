@@ -280,7 +280,16 @@ function LegacyVibesTable({ rows }: { readonly rows: ResReportAttributionReferre
                 background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--near-black) 4%, transparent)",
               }}
             >
-              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace", color: "var(--cyan)" }}>{row.reqPath}</td>
+              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace", color: "var(--cyan)" }}>
+                <a
+                  href={`https://vibes.diy${row.reqPath}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit", textDecoration: "underline", textDecorationStyle: "dotted" }}
+                >
+                  {row.reqPath}
+                </a>
+              </td>
               <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.total.toLocaleString()}</td>
             </tr>
           ))}
@@ -319,8 +328,26 @@ function ReferrersTable({
                 background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--near-black) 4%, transparent)",
               }}
             >
-              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace" }}>{row.refHost}</td>
-              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace", color: "var(--red)" }}>{row.refPath}</td>
+              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace" }}>
+                <a
+                  href={`https://${row.refHost}${row.refPath}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit", textDecoration: "underline", textDecorationStyle: "dotted" }}
+                >
+                  {row.refHost}
+                </a>
+              </td>
+              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace", color: "var(--red)" }}>
+                <a
+                  href={`https://${row.refHost}${row.refPath}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit", textDecoration: "underline", textDecorationStyle: "dotted" }}
+                >
+                  {row.refPath}
+                </a>
+              </td>
               <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace" }}>
                 {activeFilter === undefined ? (
                   <button
