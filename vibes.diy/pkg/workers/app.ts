@@ -72,6 +72,14 @@ export default {
       hostnameBase: env.VIBES_SVC_HOSTNAME_BASE,
     });
 
+    if (route === "legacy-vibe-redirect") {
+      const slug = url.pathname.slice("/vibe/".length);
+      return new Response(null, {
+        status: 301,
+        headers: { Location: `/vibe/og/${slug}` },
+      }) as unknown as CFResponse;
+    }
+
     if (route === "api-do") {
       const shard = url.getParam("shard") ?? crypto.randomUUID();
       const id = env.CHAT_SESSIONS.idFromName(shard);

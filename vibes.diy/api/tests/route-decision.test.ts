@@ -154,6 +154,20 @@ describe("worker routeDecision", () => {
   it("GET /capi/complete-registration is NOT capi-complete-registration", () => {
     expect(decide({ pathname: "/capi/complete-registration", method: "GET" })).toBe("ssr");
   });
+
+  it("/vibe/<slug> (two segments) → legacy-vibe-redirect", () => {
+    expect(decide({ pathname: "/vibe/satie-trumpet-8293" })).toBe("legacy-vibe-redirect");
+    expect(decide({ pathname: "/vibe/some-app-slug" })).toBe("legacy-vibe-redirect");
+  });
+
+  it("/vibe/og/<slug> (three segments, og user) → ssr (no double-redirect)", () => {
+    expect(decide({ pathname: "/vibe/og/satie-trumpet-8293" })).toBe("ssr");
+  });
+
+  it("/vibe/<user>/<slug> (three segments, non-og user) → ssr (normal vibe path)", () => {
+    expect(decide({ pathname: "/vibe/alice/myapp" })).toBe("ssr");
+    expect(decide({ pathname: "/vibe/og/satie/more" })).toBe("ssr");
+  });
 });
 
 describe("worker routeDecision — PR preview base (pr-<N>.vibespreview.dev)", () => {
