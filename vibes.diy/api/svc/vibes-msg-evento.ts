@@ -57,6 +57,7 @@ import { reportGrowthVibesWithDataEvento } from "./public/report-growth-vibes-wi
 import { reportActiveMembersEvento } from "./public/report-active-members.js";
 import { reportTopVibesByMembersEvento } from "./public/report-top-vibes-by-members.js";
 import { reportAttributionReferrersEvento } from "./public/report-attribution-referrers.js";
+import { reportCampaignHealthEvento } from "./public/report-campaign-health.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -108,6 +109,7 @@ export const vibesMsgEvento = Lazy(() => {
     reportActiveMembersEvento,
     reportTopVibesByMembersEvento,
     reportAttributionReferrersEvento,
+    reportCampaignHealthEvento,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",

@@ -37,4 +37,6 @@ export interface CFEnv {
   BROWSER: Fetcher; // screenshotter uses Cloudflare's Browser Rendering API, which is accessed via a Fetcher binding
   META_CAPI_TOKEN?: string;
   META_PIXEL_ID?: string;
+  META_ACCESS_TOKEN?: string;
+  META_AD_ACCOUNT_ID?: string;
 }

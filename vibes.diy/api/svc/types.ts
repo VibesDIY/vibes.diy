@@ -50,6 +50,9 @@ export interface VibesApiSQLCtx {
   assetSessionSigner: AssetSessionSigner;
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }): Promise<Response>;
   prodiaToken?: string;
+  metaAccessToken?: string;
+  metaAdAccountId?: string;
+  metaPixelId?: string;
   notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;
   deregisterDocSubscription?(subscriptionKey: string): Promise<void>;
