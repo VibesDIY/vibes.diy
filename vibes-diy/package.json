@@ -53,8 +53,8 @@
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
-    "@vitest/browser-playwright": "~4.1.5",
-    "vitest": "~4.1.5"
+    "@vitest/browser-playwright": "~4.1.7",
+    "vitest": "~4.1.7"
   },
   "repository": {
     "type": "git",

@@ -42,10 +42,10 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.19",
-    "@vitest/browser-playwright": "~4.1.5",
+    "@vitest/browser-playwright": "~4.1.7",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.2",
-    "vitest": "~4.1.5"
+    "vitest": "~4.1.7"
   },
   "repository": {
     "type": "git",
