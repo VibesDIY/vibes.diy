@@ -76,7 +76,7 @@ export default {
       const slug = url.pathname.slice("/vibe/".length);
       return new Response(null, {
         status: 301,
-        headers: { Location: `/vibe/og/${slug}` },
+        headers: { Location: `/vibe/og/${slug}${url.search}` },
       }) as unknown as CFResponse;
     }
 
