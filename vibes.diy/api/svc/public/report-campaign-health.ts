@@ -37,8 +37,8 @@ async function metaGet<T>(path: string, token: string): Promise<T> {
   const sep = path.includes("?") ? "&" : "?";
   const res = await fetch(`${META_BASE}${path}${sep}access_token=${token}`);
   const json = (await res.json()) as T & { error?: { message: string } };
-  if ((json as { error?: { message: string } }).error) {
-    throw new Error(`Meta API: ${(json as { error: { message: string } }).error.message}`);
+  if (json.error) {
+    throw new Error(`Meta API: ${json.error.message}`);
   }
   return json;
 }
@@ -107,7 +107,9 @@ async function fetchCampaignHealth(
     .map((r) => ({ name: r.campaign_name, clicks: Number(r.clicks), lpvs: lpv(r), ratio: lpv(r) / Number(r.clicks) }))
     .filter((r) => r.ratio < 0.6 && r.clicks > 0);
 
-  const ranked = [...rows].sort((a, b) => costPerLpv(a) - costPerLpv(b)) as ResReportCampaignHealthCampaignRow[];
+  const ranked: ResReportCampaignHealthCampaignRow[] = [...rows]
+    .sort((a, b) => costPerLpv(a) - costPerLpv(b))
+    .map((r) => ({ ...r, actions: r.actions?.map((a) => ({ ...a })) }));
 
   const anomalies: ResReportCampaignHealthAnomalies = { duplicateNames, budgetOutliers, zeroSpend, lowLpvRatio, pixel };
 
