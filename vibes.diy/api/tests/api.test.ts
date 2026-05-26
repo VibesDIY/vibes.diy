@@ -665,48 +665,39 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
   });
 
-  // TODO: consistently times out at 5s waiting for 44 blocks from the fixture
-  // stream — broken since aa354215. Needs a rewrite of the block-count
-  // expectation to match current LLM fixture output.
-  it.skip("queries the llm", async () => {
+  it("queries the llm", async () => {
     const rChatRes = await api.openChat({
       mode: "chat",
     });
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
-    console.log("pre-chat.prompt");
     const rPrompt = await chat.prompt({
       messages: [{ role: "user", content: [{ type: "text", text: `use fixture response` }] }],
     });
     expect(rPrompt.isOk()).toBe(true);
-    console.log("post-chat.prompt");
-    const firstStream = processStream(chat.sectionStream, async () => {
-      await sleep(100);
-      // console.log("Received message in llm query test", msg);
+
+    // Wait for the first stream to complete so blocks are persisted
+    await processStream(chat.sectionStream, async (msg) => {
+      if ("blocks" in msg && msg.blocks.some((b: { type: string }) => b.type === "prompt.block-end")) {
+        await chat.close();
+      }
     });
 
+    // Re-open the same chat — replays persisted blocks
     const rNext = await api.openChat({
       chatId: chat.chatId,
       mode: "chat",
     });
-    // console.log("pre-processStream");
     const nextFn = vi.fn();
-    Promise.all([
-      firstStream,
-      await processStream(rNext.Ok().sectionStream, async (msg) => {
-        nextFn(msg);
-        const blocks = nextFn.mock.calls.reduce((acc, call) => acc + call[0].blocks.length, 0);
-        // console.log("Received message in llm query test", blocks, "blocks so far", msg);
-        if (blocks >= 44) {
-          await rNext.Ok().close();
-        }
-        // if (msg.type === "vibes.diy.section-event" && msg.promptId === rPrompt.Ok().promptId && isPromptBlockEnd(msg.blocks[0])) {
-        //   rNext.Ok().close();
-        // }
-      }),
-    ]);
-    // console.log("LLM query test, received blocks:", nextFn.mock.calls.flatMap((call) => call[0].blocks))
-    expect(nextFn.mock.calls.flatMap((call) => call[0].blocks).length).toEqual(44);
+    await processStream(rNext.Ok().sectionStream, async (msg) => {
+      nextFn(msg);
+      if ("blocks" in msg && msg.blocks.some((b: { type: string }) => b.type === "prompt.block-end")) {
+        await rNext.Ok().close();
+      }
+    });
+    const allBlocks = nextFn.mock.calls.filter((c) => "blocks" in c[0]).flatMap((c) => c[0].blocks);
+    expect(allBlocks.some((b: { type: string }) => b.type === "prompt.block-end")).toBe(true);
+    expect(allBlocks.length).toEqual(3);
   });
 
   it("promptFS", async () => {
