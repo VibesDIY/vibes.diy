@@ -30,7 +30,7 @@ interface MetaInsightRow {
   readonly ctr: string;
   readonly cpc: string;
   readonly reach: string;
-  readonly actions?: ReadonlyArray<{ readonly action_type: string; readonly value: string }>;
+  readonly actions?: readonly { readonly action_type: string; readonly value: string }[];
 }
 
 async function metaGet<T>(path: string, token: string): Promise<T> {
@@ -80,22 +80,23 @@ async function fetchCampaignHealth(
     if (after === undefined) break;
   }
 
-  let pixel: ResReportCampaignHealthPixelSummary | null = null;
-  try {
-    const px = await metaGet<{
-      last_fired_time?: string;
-      stats?: { data?: ReadonlyArray<{ data?: ReadonlyArray<{ value: string; count: string }> }> };
-      error?: { message: string };
-    }>(`/${pixelId}?fields=name,last_fired_time,stats`, token);
-    const events = px.stats?.data?.flatMap((h) => h.data ?? []) ?? [];
-    const sum: Record<string, number> = {};
-    for (const e of events) {
-      sum[e.value] = (sum[e.value] ?? 0) + Number(e.count);
+  const pixel: ResReportCampaignHealthPixelSummary = await (async () => {
+    try {
+      const px = await metaGet<{
+        last_fired_time?: string;
+        stats?: { data?: readonly { data?: readonly { value: string; count: string }[] }[] };
+        error?: { message: string };
+      }>(`/${pixelId}?fields=name,last_fired_time,stats`, token);
+      const events = px.stats?.data?.flatMap((h) => h.data ?? []) ?? [];
+      const sum: Record<string, number> = {};
+      for (const e of events) {
+        sum[e.value] = (sum[e.value] ?? 0) + Number(e.count);
+      }
+      return { lastFired: px.last_fired_time, counts: sum };
+    } catch (e) {
+      return { error: (e as Error).message };
     }
-    pixel = { lastFired: px.last_fired_time, counts: sum };
-  } catch (e) {
-    pixel = { error: (e as Error).message };
-  }
+  })();
 
   const nameCounts: Record<string, number> = {};
   for (const r of rows) nameCounts[r.campaign_name] = (nameCounts[r.campaign_name] ?? 0) + 1;
