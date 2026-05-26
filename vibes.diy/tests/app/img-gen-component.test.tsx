@@ -1,4 +1,3 @@
-// vibes.diy/tests/app/img-gen-component.test.tsx
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -7,30 +6,17 @@ import { Result } from "@adviser/cement";
 import { registerFirefly } from "../../vibe/runtime/use-firefly.js";
 import { createMockVibeApi, asSandboxApi, type MockVibeApi } from "./mock-vibe-api.js";
 
-// Swap @fireproof/use-fireproof with Firefly — mirrors the sandbox import-map behavior.
-// Must be declared before any imports that use it (vitest hoists vi.mock calls).
 vi.mock("@fireproof/use-fireproof", async () => {
   const { useFireproof } = await import("../../vibe/runtime/use-firefly.js");
   return { useFireproof };
 });
 
-// Control imgGen without hitting the real API.
-const mockImgGen = vi.hoisted(() => vi.fn());
-vi.mock("@vibes.diy/vibe-runtime", async (importOriginal) => ({
-  ...(await importOriginal<object>()),
-  imgGen: mockImgGen,
-}));
-
-// ── Test helpers ────────────────────────────────────────────────────
-
 let mockApi: MockVibeApi;
 let dbCounter = 0;
-/** Unique DB name per test — avoids Firefly dbCache cross-contamination. */
 function freshDb() {
   return `img-gen-test-${++dbCounter}`;
 }
 
-/** Pre-built image doc with a URL-bearing _files entry. */
 function makeImageDoc(id: string, url: string, versions = 1) {
   const versionList = Array.from({ length: versions }, (_, i) => ({
     id: `v${i + 1}`,
@@ -66,8 +52,6 @@ beforeEach(async () => {
   await registerFirefly(asSandboxApi(mockApi));
 });
 
-// ── Tests ───────────────────────────────────────────────────────────
-
 describe("ImgGen component", () => {
   it("shows 'No prompt provided' when neither prompt nor _id is given", () => {
     render(<ImgGen database={freshDb()} />);
@@ -75,16 +59,15 @@ describe("ImgGen component", () => {
   });
 
   it("shows generating state when prompt is given but no image exists yet", () => {
-    // imgGen is a never-resolving promise — component stays in generating state
-    mockImgGen.mockImplementation(() => new Promise(() => undefined));
-    render(<ImgGen prompt="mountain sunset" database={freshDb()} />);
+    const imgGen = vi.fn().mockImplementation(() => new Promise(() => undefined));
+    render(<ImgGen prompt="mountain sunset" database={freshDb()} imgGen={imgGen} />);
     expect(screen.getByText("Generating image...")).toBeInTheDocument();
     expect(screen.getByText("mountain sunset")).toBeInTheDocument();
   });
 
   it("shows error state when imgGen rejects", async () => {
-    mockImgGen.mockRejectedValue(new Error("Prodia API failed"));
-    render(<ImgGen prompt="test prompt" database={freshDb()} />);
+    const imgGen = vi.fn().mockRejectedValue(new Error("Prodia API failed"));
+    render(<ImgGen prompt="test prompt" database={freshDb()} imgGen={imgGen} />);
     await waitFor(() => {
       expect(screen.getByText("Prodia API failed")).toBeInTheDocument();
     });
@@ -92,12 +75,12 @@ describe("ImgGen component", () => {
 
   it("calls imgGen with the correct prompt and stores the result doc", async () => {
     const mockFile = { uploadId: "upl-abc", cid: "bafy-abc", mimeType: "image/png", size: 1024 };
-    mockImgGen.mockResolvedValue(Result.Ok([mockFile]));
+    const imgGen = vi.fn().mockResolvedValue(Result.Ok([mockFile]));
 
-    render(<ImgGen prompt="beautiful sunset" database={freshDb()} />);
+    render(<ImgGen prompt="beautiful sunset" database={freshDb()} imgGen={imgGen} />);
 
     await waitFor(() => {
-      expect(mockImgGen).toHaveBeenCalledWith("beautiful sunset", undefined, undefined);
+      expect(imgGen).toHaveBeenCalledWith("beautiful sunset", undefined, undefined);
     });
     await waitFor(() => {
       const stored = [...mockApi._docs.values()].find((d) => d.type === "image" && d.prompt === "beautiful sunset");
@@ -115,8 +98,8 @@ describe("ImgGen component", () => {
   });
 
   it("applies className to the root element in generating state", () => {
-    mockImgGen.mockImplementation(() => new Promise(() => undefined));
-    const { container } = render(<ImgGen prompt="test" className="my-custom-class" database={freshDb()} />);
+    const imgGen = vi.fn().mockImplementation(() => new Promise(() => undefined));
+    const { container } = render(<ImgGen prompt="test" className="my-custom-class" database={freshDb()} imgGen={imgGen} />);
     expect(container.firstChild).toHaveClass("my-custom-class");
   });
 
@@ -142,11 +125,11 @@ describe("ImgGen component", () => {
   });
 
   it("switches from generating state to image display when _id replaces prompt", async () => {
-    mockImgGen.mockImplementation(() => new Promise(() => undefined));
+    const imgGen = vi.fn().mockImplementation(() => new Promise(() => undefined));
     mockApi._docs.set("img-from-id", makeImageDoc("img-from-id", "https://example.com/from-id.png"));
     const db = freshDb();
 
-    const { rerender } = render(<ImgGen prompt="a sunset" database={db} />);
+    const { rerender } = render(<ImgGen prompt="a sunset" database={db} imgGen={imgGen} />);
     expect(screen.getByText("Generating image...")).toBeInTheDocument();
 
     rerender(<ImgGen _id="img-from-id" database={db} />);

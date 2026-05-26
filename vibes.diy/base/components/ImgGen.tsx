@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from "react";
 import type { Database } from "@fireproof/use-fireproof";
-import type { FileMeta, ImgGenInputImage } from "@vibes.diy/vibe-types";
+import type { FileMeta, ImgGenFile, ImgGenInputImage } from "@vibes.diy/vibe-types";
+import type { Result } from "@adviser/cement";
 import { useImgGen } from "../hooks/img-gen/use-img-gen.js";
 
 export interface ImgGenProps {
@@ -16,6 +17,7 @@ export interface ImgGenProps {
   style?: React.CSSProperties;
   showControls?: boolean;
   model?: string;
+  imgGen?: (prompt: string, inputImage?: ImgGenInputImage, model?: string) => Promise<Result<ImgGenFile[]>>;
 }
 
 function promptToId(prompt: string): string {
@@ -30,7 +32,18 @@ function promptToId(prompt: string): string {
 // Display path is `<img src={meta.url}>` only — `_files.<versionId>.url`
 // is minted by Stage C's URL builder when the doc is read. No blob URLs,
 // no `<ImgFile>`, no `meta.file()`.
-export function ImgGen({ prompt, _id: propId, images, database, className, alt, style, showControls = true, model }: ImgGenProps) {
+export function ImgGen({
+  prompt,
+  _id: propId,
+  images,
+  database,
+  className,
+  alt,
+  style,
+  showControls = true,
+  model,
+  imgGen,
+}: ImgGenProps) {
   const inputImage = images?.[0];
   const imageKey = inputImage
     ? `${(inputImage as Partial<File>).name ?? ""}-${inputImage.size ?? ""}-${(inputImage as Partial<File>).lastModified ?? ""}`
@@ -50,6 +63,7 @@ export function ImgGen({ prompt, _id: propId, images, database, className, alt, 
     generationId,
     inputImage,
     model,
+    imgGen,
   });
 
   const versions = document?.versions ?? [];
