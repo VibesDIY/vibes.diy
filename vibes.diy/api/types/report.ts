@@ -151,3 +151,74 @@ export type ResReportAttributionReferrers = typeof resReportAttributionReferrers
 export function isResReportAttributionReferrers(obj: unknown): obj is ResReportAttributionReferrers {
   return !(resReportAttributionReferrers(obj) instanceof type.errors);
 }
+
+// Campaign Health — Meta Ads campaign performance and pixel health.
+// Data is fetched server-side from the Meta Graph API; the WS handler
+// returns structured JSON so the SPA can render with the brand palette.
+
+export const campaignRow = type({
+  campaign_name: "string",
+  campaign_id: "string",
+  impressions: "string",
+  clicks: "string",
+  spend: "string",
+  ctr: "string",
+  cpc: "string",
+  reach: "string",
+  "actions?": type({ action_type: "string", value: "string" }).array(),
+});
+export type CampaignRow = typeof campaignRow.infer;
+
+export const pixelSummary = type({
+  "lastFired?": "string",
+  "counts?": type({ "[string]": "number" }),
+  "error?": "string",
+});
+export type PixelSummary = typeof pixelSummary.infer;
+
+export const budgetOutlier = type({
+  name: "string",
+  spend: "string",
+  medianSpend: "string",
+});
+export type BudgetOutlier = typeof budgetOutlier.infer;
+
+export const lowLpvEntry = type({
+  name: "string",
+  clicks: "number",
+  lpvs: "number",
+  ratio: "number",
+});
+export type LowLpvEntry = typeof lowLpvEntry.infer;
+
+export const campaignAnomalies = type({
+  duplicateNames: "string[]",
+  budgetOutliers: budgetOutlier.array(),
+  zeroSpend: "string[]",
+  lowLpvRatio: lowLpvEntry.array(),
+  pixel: pixelSummary.or("null"),
+});
+export type CampaignAnomalies = typeof campaignAnomalies.infer;
+
+export const reqReportCampaignHealth = type({
+  type: "'vibes.diy.req-report-campaign-health'",
+  auth: dashAuthType,
+  "days?": "string",
+  "since?": "string",
+});
+export type ReqReportCampaignHealth = typeof reqReportCampaignHealth.infer;
+export function isReqReportCampaignHealth(obj: unknown): obj is ReqReportCampaignHealth {
+  return !(reqReportCampaignHealth(obj) instanceof type.errors);
+}
+
+export const resReportCampaignHealth = type({
+  type: "'vibes.diy.res-report-campaign-health'",
+  generatedAt: "string",
+  dateLabel: "string",
+  ranked: campaignRow.array(),
+  anomalies: campaignAnomalies,
+});
+export type ResReportCampaignHealth = typeof resReportCampaignHealth.infer;
+export function isResReportCampaignHealth(obj: unknown): obj is ResReportCampaignHealth {
+  return !(resReportCampaignHealth(obj) instanceof type.errors);
+}
