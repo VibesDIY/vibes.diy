@@ -164,8 +164,7 @@ export function App({ getClerkToken }: AppProps) {
           <span className="section-label section-label--filled">All time</span>
           <h2 className="section-title">Referrer attribution</h2>
           <p className="section-intro">
-            External pages ranked by traffic to vibes.diy. Conversions = requests to <code>/api/</code>, <code>/new</code>, or{" "}
-            <code>/vibe/</code>. Browse = remaining hits. Click a landing-page path to drill down.
+            External pages ranked by traffic to vibes.diy. Click a landing-page path to drill down.
           </p>
           {referrerFilter !== undefined && (
             <div style={{ marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -263,8 +262,6 @@ function ReferrersTable({
             <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Referrer path</th>
             <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Landing page</th>
             <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Total</th>
-            <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Conversions</th>
-            <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Browse</th>
           </tr>
         </thead>
         <tbody>
@@ -301,10 +298,6 @@ function ReferrersTable({
                 )}
               </td>
               <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.total.toLocaleString()}</td>
-              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", color: row.conversions > 0 ? "var(--red)" : "inherit" }}>
-                {row.conversions.toLocaleString()}
-              </td>
-              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.browse.toLocaleString()}</td>
             </tr>
           ))}
         </tbody>

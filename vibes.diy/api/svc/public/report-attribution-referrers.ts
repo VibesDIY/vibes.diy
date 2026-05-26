@@ -26,7 +26,6 @@ async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?:
       refPath: t.refererEvents.refPath,
       reqPath: t.refererEvents.reqPath,
       total: sql<number>`cast(count(*) as int)`,
-      conversions: sql<number>`cast(count(*) filter (where ${t.refererEvents.reqPath} like '/api/%' or ${t.refererEvents.reqPath} like '/new%' or ${t.refererEvents.reqPath} like '/vibe/%') as int)`,
     })
     .from(t.refererEvents)
     .$dynamic();
@@ -41,7 +40,7 @@ async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?:
   return {
     type: "vibes.diy.res-report-attribution-referrers",
     generatedAt: new Date().toISOString(),
-    rows: rows.map((r) => ({ ...r, browse: r.total - r.conversions })),
+    rows,
   };
 }
 

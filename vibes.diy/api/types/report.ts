@@ -76,8 +76,6 @@ export const resReportAttributionReferrersRow = type({
   refPath: "string",
   reqPath: "string",
   total: "number",
-  conversions: "number",
-  browse: "number",
 });
 export type ResReportAttributionReferrersRow = typeof resReportAttributionReferrersRow.infer;
 
