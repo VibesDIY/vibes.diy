@@ -33,8 +33,13 @@ const OWNED_HOSTS = [
   "www.vibes.software",
 ];
 
+const LEGACY_VIBE_PATH_RE = sql`'^/vibe/[^/]+$'`;
+
 async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?: string): Promise<ResReportAttributionReferrers> {
   const t = vctx.sql.tables;
+
+  const ownedFilter = notInArray(t.refererEvents.refHost, OWNED_HOSTS);
+  const notLegacyVibeFilter = sql`${t.refererEvents.reqPath} !~ ${LEGACY_VIBE_PATH_RE}`;
 
   const baseQuery = vctx.sql.db
     .select({
@@ -46,21 +51,35 @@ async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?:
     .from(t.refererEvents)
     .$dynamic();
 
-  const ownedFilter = notInArray(t.refererEvents.refHost, OWNED_HOSTS);
   const filtered =
     reqPathFilter !== undefined
-      ? baseQuery.where(and(ownedFilter, eq(t.refererEvents.reqPath, reqPathFilter)))
-      : baseQuery.where(ownedFilter);
+      ? baseQuery.where(and(ownedFilter, notLegacyVibeFilter, eq(t.refererEvents.reqPath, reqPathFilter)))
+      : baseQuery.where(and(ownedFilter, notLegacyVibeFilter));
 
   const rows = await filtered
     .groupBy(t.refererEvents.refHost, t.refererEvents.refPath, t.refererEvents.reqPath)
     .orderBy(desc(sql`count(*)`))
     .limit(100);
 
+  const legacyVibeRows =
+    reqPathFilter === undefined
+      ? await vctx.sql.db
+          .select({
+            reqPath: t.refererEvents.reqPath,
+            total: sql<number>`cast(count(*) as int)`,
+          })
+          .from(t.refererEvents)
+          .where(sql`${t.refererEvents.reqPath} ~ ${LEGACY_VIBE_PATH_RE}`)
+          .groupBy(t.refererEvents.reqPath)
+          .orderBy(desc(sql`count(*)`))
+          .limit(200)
+      : [];
+
   return {
     type: "vibes.diy.res-report-attribution-referrers",
     generatedAt: new Date().toISOString(),
     rows,
+    legacyVibeRows,
   };
 }
 
