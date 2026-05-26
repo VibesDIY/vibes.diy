@@ -96,6 +96,10 @@ import {
   ResReportGrowthMemberships,
   ReqReportGrowthVibesWithData,
   ResReportGrowthVibesWithData,
+  ReqReportActiveMembers,
+  ResReportActiveMembers,
+  ReqReportTopVibesByMembers,
+  ResReportTopVibesByMembers,
   ReqReportAttributionReferrers,
   ResReportAttributionReferrers,
 } from "./report.js";
@@ -204,6 +208,8 @@ export interface VibesDiyApiIface<_T = unknown> {
   // in the Clerk dashboard, no allowlist code to maintain.
   reportGrowthMemberships(req: Req<ReqReportGrowthMemberships>): Promise<Result<ResReportGrowthMemberships, VibesDiyError>>;
   reportGrowthVibesWithData(req: Req<ReqReportGrowthVibesWithData>): Promise<Result<ResReportGrowthVibesWithData, VibesDiyError>>;
+  reportActiveMembers(req: Req<ReqReportActiveMembers>): Promise<Result<ResReportActiveMembers, VibesDiyError>>;
+  reportTopVibesByMembers(req: Req<ReqReportTopVibesByMembers>): Promise<Result<ResReportTopVibesByMembers, VibesDiyError>>;
   reportAttributionReferrers(
     req: Req<ReqReportAttributionReferrers>
   ): Promise<Result<ResReportAttributionReferrers, VibesDiyError>>;

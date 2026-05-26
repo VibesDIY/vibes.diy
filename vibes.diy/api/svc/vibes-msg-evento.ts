@@ -54,6 +54,8 @@ import { whoAmIEvento } from "./public/who-am-i.js";
 import { assetUploadGrantEvento } from "./public/asset-upload-grant.js";
 import { reportGrowthMembershipsEvento } from "./public/report-growth-memberships.js";
 import { reportGrowthVibesWithDataEvento } from "./public/report-growth-vibes-with-data.js";
+import { reportActiveMembersEvento } from "./public/report-active-members.js";
+import { reportTopVibesByMembersEvento } from "./public/report-top-vibes-by-members.js";
 import { reportAttributionReferrersEvento } from "./public/report-attribution-referrers.js";
 
 export const vibesMsgEvento = Lazy(() => {
@@ -103,6 +105,8 @@ export const vibesMsgEvento = Lazy(() => {
     assetUploadGrantEvento,
     reportGrowthMembershipsEvento,
     reportGrowthVibesWithDataEvento,
+    reportActiveMembersEvento,
+    reportTopVibesByMembersEvento,
     reportAttributionReferrersEvento,
     {
       type: EventoType.WildCard,
