@@ -14,6 +14,7 @@ import type {
 import { MembershipsChart, ActiveMembersChart, VibesWithDataChart } from "./Chart.js";
 import { CampaignHealth } from "./CampaignHealth.js";
 import vibesDiyLogoUrl from "./vibes-diy-logo.png";
+import type { Loadable } from "./types.js";
 
 interface AppProps {
   readonly getClerkToken: () => Promise<string | null>;
@@ -27,11 +28,6 @@ function deriveApiUrl(): string {
   const proto = window.location.protocol.startsWith("https") ? "wss" : "ws";
   return `${proto}://${window.location.host}/api`;
 }
-
-type Loadable<T> =
-  | { readonly kind: "loading" }
-  | { readonly kind: "ok"; readonly data: T }
-  | { readonly kind: "err"; readonly msg: string };
 
 export function App({ getClerkToken, report }: AppProps) {
   const clerk = useClerk();
