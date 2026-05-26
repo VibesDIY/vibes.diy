@@ -76,7 +76,7 @@ describe("ImgGen component", () => {
 
   it("shows generating state when prompt is given but no image exists yet", () => {
     // imgGen is a never-resolving promise — component stays in generating state
-    mockImgGen.mockImplementation(() => new Promise(() => {}));
+    mockImgGen.mockImplementation(() => new Promise(() => undefined));
     render(<ImgGen prompt="mountain sunset" database={freshDb()} />);
     expect(screen.getByText("Generating image...")).toBeInTheDocument();
     expect(screen.getByText("mountain sunset")).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe("ImgGen component", () => {
   });
 
   it("applies className to the root element in generating state", () => {
-    mockImgGen.mockImplementation(() => new Promise(() => {}));
+    mockImgGen.mockImplementation(() => new Promise(() => undefined));
     const { container } = render(<ImgGen prompt="test" className="my-custom-class" database={freshDb()} />);
     expect(container.firstChild).toHaveClass("my-custom-class");
   });
@@ -142,7 +142,7 @@ describe("ImgGen component", () => {
   });
 
   it("switches from generating state to image display when _id replaces prompt", async () => {
-    mockImgGen.mockImplementation(() => new Promise(() => {}));
+    mockImgGen.mockImplementation(() => new Promise(() => undefined));
     mockApi._docs.set("img-from-id", makeImageDoc("img-from-id", "https://example.com/from-id.png"));
     const db = freshDb();
 
