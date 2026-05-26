@@ -99,6 +99,10 @@ export async function createAppContext<T extends VibesSqlite>(
 
     PRODIA_TOKEN: param.OPTIONAL,
 
+    META_ACCESS_TOKEN: param.OPTIONAL,
+    META_AD_ACCOUNT_ID: param.OPTIONAL,
+    META_PIXEL_ID: param.OPTIONAL,
+
     GTM_CONTAINER_ID: param.OPTIONAL,
     POSTHOG_KEY: param.OPTIONAL,
     POSTHOG_HOST: param.OPTIONAL,
@@ -271,6 +275,9 @@ export async function createAppContext<T extends VibesSqlite>(
       apiKey: envVals.LLM_BACKEND_API_KEY,
     }),
     prodiaToken: envVals.PRODIA_TOKEN,
+    metaAccessToken: envVals.META_ACCESS_TOKEN,
+    metaAdAccountId: envVals.META_AD_ACCOUNT_ID,
+    metaPixelId: envVals.META_PIXEL_ID,
     deviceCA: rDeviceIdCA.Ok(),
     params: svcParams,
     notifyDocChanged: params.notifyDocChanged,
