@@ -233,8 +233,8 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
         const r =
           kind === "memberships" ? await apiEmpty.reportGrowthMemberships({}) : await apiEmpty.reportGrowthVibesWithData({});
         expect(r.isErr()).toBe(true);
-        const err = r.Err() as { code?: string };
-        expect(err.code).toBe("report-not-authorized");
+        const err = r.Err() as { error?: { code?: string } };
+        expect(err.error?.code).toBe("report-not-authorized");
       }
     );
 
@@ -244,8 +244,8 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
         const r =
           kind === "memberships" ? await apiWrongKey.reportGrowthMemberships({}) : await apiWrongKey.reportGrowthVibesWithData({});
         expect(r.isErr()).toBe(true);
-        const err = r.Err() as { code?: string };
-        expect(err.code).toBe("report-not-authorized");
+        const err = r.Err() as { error?: { code?: string } };
+        expect(err.error?.code).toBe("report-not-authorized");
       }
     );
 
@@ -257,8 +257,8 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
             ? await apiStringMeta.reportGrowthMemberships({})
             : await apiStringMeta.reportGrowthVibesWithData({});
         expect(r.isErr()).toBe(true);
-        const err = r.Err() as { code?: string };
-        expect(err.code).toBe("report-not-authorized");
+        const err = r.Err() as { error?: { code?: string } };
+        expect(err.error?.code).toBe("report-not-authorized");
       }
     );
 
