@@ -50,7 +50,8 @@ function AuthedShell() {
       </div>
     );
   }
-  return <App getClerkToken={() => getToken({ template: "with-email" })} />;
+  const report = new URLSearchParams(location.search).get("report") ?? "growth";
+  return <App getClerkToken={() => getToken({ template: "with-email" })} report={report} />;
 }
 
 async function loadConfig(): Promise<Result<ReportsConfig>> {
