@@ -24,11 +24,11 @@ describe("request flow", { timeout: (inject("DB_FLAVOUR" as never) as string) ==
 
     const reqResult = await ctx.api.requestAccess({ appSlug, userSlug });
     expect(reqResult.isErr()).toBe(true);
-    expect(reqResult.Err().code).toBe("owner-error");
+    expect(reqResult.Err().error.code).toBe("owner-error");
 
     const hasResult = await ctx.api.hasAccessRequest({ appSlug, userSlug });
     expect(hasResult.isErr()).toBe(true);
-    expect(hasResult.Err().code).toBe("owner-error");
+    expect(hasResult.Err().error.code).toBe("owner-error");
   });
 
   it("default fixture partition keeps requester distinct from owner", async () => {
@@ -104,17 +104,19 @@ describe("request flow", { timeout: (inject("DB_FLAVOUR" as never) as string) ==
   it("manual approval lifecycle", async () => {
     const { appSlug, userSlug } = await ctx.createApp();
 
-    const requesterApp = (await ctx.api2.ensureAppSlug({
-      mode: "dev",
-      fileSystem: [
-        {
-          type: "code-block",
-          lang: "jsx",
-          filename: "/App.jsx",
-          content: "function App(){ return <div>Requester</div>; } App();",
-        },
-      ],
-    })).Ok();
+    const requesterApp = (
+      await ctx.api2.ensureAppSlug({
+        mode: "dev",
+        fileSystem: [
+          {
+            type: "code-block",
+            lang: "jsx",
+            filename: "/App.jsx",
+            content: "function App(){ return <div>Requester</div>; } App();",
+          },
+        ],
+      })
+    ).Ok();
     if (!isResEnsureAppSlugOk(requesterApp)) {
       assert.fail("Expected requester ensureAppSlug to succeed");
     }

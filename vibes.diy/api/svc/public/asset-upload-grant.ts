@@ -2,6 +2,7 @@ import { EventoHandler, Result, HandleTriggerCtx, EventoResultType, Option, Even
 import {
   MsgBase,
   VibesDiyError,
+  ResError,
   W3CWebSocketEvent,
   ReqAssetUploadGrant,
   ResAssetUploadGrant,
@@ -58,7 +59,7 @@ export const assetUploadGrantEvento: EventoHandler<
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: { message: "Access denied" },
-        } as unknown as VibesDiyError);
+        } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 
@@ -77,7 +78,7 @@ export const assetUploadGrantEvento: EventoHandler<
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: { message: `Failed to mint grant: ${rSigned.Err().message}` },
-        } as unknown as VibesDiyError);
+        } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
       const { token, expiresAt } = rSigned.Ok();

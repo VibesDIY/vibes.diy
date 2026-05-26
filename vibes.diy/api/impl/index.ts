@@ -10,6 +10,7 @@ import {
   msgBase,
   resError,
   isResError,
+  mkResError,
   ResOpenChat,
   ReqOpenChat,
   sectionEvent,
@@ -388,12 +389,9 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     // console.log("Encoded message to Uint8Array:", msgParam.tid, uint8ify.length, conn.send.toString());
     const rSend = conn.send(uint8ify);
     if (rSend.isErr()) {
-      return Result.Err<MsgBox<WithAuth<T>>, VibesDiyError>({
-        type: "vibes.diy.error",
-        name: "VibesDiyError",
-        message: `Reconnecting, please retry (${String(rSend.Err())})`,
-        code: "websocket-send-failed",
-      });
+      return Result.Err<MsgBox<WithAuth<T>>, VibesDiyError>(
+        mkResError(`Reconnecting, please retry (${String(rSend.Err())})`, "websocket-send-failed")
+      );
     }
     return Result.Ok(msgBox as MsgBox<WithAuth<T>>);
   }
@@ -441,12 +439,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       if (timer !== undefined) clearTimeout(timer);
       timer = setTimeout(() => {
         waitForResponse.resolve(
-          Result.Err<S, VibesDiyError>({
-            type: "vibes.diy.error",
-            name: "VibesDiyError",
-            message: `Request idle for ${idleMs}ms (no progress)`,
-            code: "request-timeout",
-          })
+          Result.Err<S, VibesDiyError>(mkResError(`Request idle for ${idleMs}ms (no progress)`, "request-timeout"))
         );
       }, idleMs);
     };
@@ -964,11 +957,7 @@ class LLMChatImpl implements LLMChat {
           }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
         })
         .catch((err) => {
-          sectionEventsWriter.write({
-            type: "vibes.diy.error",
-            message: `LLMChat evento trigger error: ${err.message}`,
-            code: "llmchat-evento-error",
-          });
+          sectionEventsWriter.write(mkResError(`LLMChat evento trigger error: ${err.message}`, "llmchat-evento-error"));
           sectionEventsWriter.abort();
         });
     });
@@ -1032,12 +1021,7 @@ class LLMChatImpl implements LLMChat {
     } else {
       const possibleArray = vibeFile.array()(req);
       if (possibleArray instanceof type.errors) {
-        return Result.Err({
-          type: "vibes.diy.error",
-          name: "VibesDiyError",
-          message: `Invalid VibeFile array`,
-          code: "invalid-vibefile-array",
-        } as VibesDiyError);
+        return Result.Err(mkResError(`Invalid VibeFile array`, "invalid-vibefile-array"));
       }
       return this.api.request<ReqType<ReqPromptFSSetChatSection>, ResPromptChatSection>(
         {
@@ -1060,12 +1044,7 @@ class LLMChatImpl implements LLMChat {
   ): Promise<Result<ResPromptChatSection, VibesDiyError>> {
     const mode = this.res.mode;
     if (!isPromptLLMStyle(mode)) {
-      return Result.Err({
-        type: "vibes.diy.error",
-        name: "VibesDiyError",
-        message: `Chat mode ${this.res.mode} does not support prompting`,
-        code: "unsupported-chat-mode",
-      } as VibesDiyError);
+      return Result.Err(mkResError(`Chat mode ${this.res.mode} does not support prompting`, "unsupported-chat-mode"));
     }
     const res = await this.api.request<ReqType<ReqPromptLLMChatSection>, ResPromptChatSection>(
       {

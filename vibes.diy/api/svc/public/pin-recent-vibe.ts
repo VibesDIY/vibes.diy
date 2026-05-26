@@ -44,9 +44,11 @@ export const pinRecentVibeEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPi
         .then((r) => r[0]);
       if (appRow === undefined) {
         await ctx.send.send(ctx, {
-          type: "vibes.diy.error",
-          message: `not found or not authorized to pin ${req.userSlug}/${req.appSlug}`,
-          code: "pin-recent-vibe-not-found",
+          type: "vibes.diy.res-error",
+          error: {
+            message: `not found or not authorized to pin ${req.userSlug}/${req.appSlug}`,
+            code: "pin-recent-vibe-not-found",
+          },
         } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }

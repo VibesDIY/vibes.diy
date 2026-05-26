@@ -299,8 +299,8 @@ export async function processRequest(ctx: AppContext, req: Request): Promise<Res
     ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx").logger.Error().Err(res).Msg("processRequest-Error");
     return new Response(
       JSON.stringify({
-        type: "vibes.diy.error",
-        message: `Internal Server Error: ${res.Err().toString()}`,
+        type: "vibes.diy.res-error",
+        error: { message: `Internal Server Error: ${res.Err().toString()}` },
       }),
       { status: 500 }
     );

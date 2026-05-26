@@ -149,17 +149,26 @@ export type VibeFile = typeof vibeFile.infer;
 
 // Error types
 export const resError = type({
-  type: "'vibes.diy.error'|'vibes.diy.res-error'",
-  "message?": "string",
-  "code?": "string",
-  "stack?": "string[]",
-  "error?": type({ message: "string", "code?": "string" }),
+  type: "'vibes.diy.res-error'",
+  error: type({ message: "string", "code?": "string" }),
 });
 
 export type ResError = typeof resError.infer;
 
 export function isResError(obj: unknown): obj is ResError {
   return !(resError(obj) instanceof type.errors);
+}
+
+export function getResErrorMessage(e: ResError): string {
+  return e.error.message;
+}
+
+/** Build a properly-shaped VibesDiyError (ResError & Error) for use with Result.Err. */
+export function mkResError(message: string, code?: string): VibesDiyError {
+  return Object.assign(new Error(message), {
+    type: "vibes.diy.res-error" as const,
+    error: { message, ...(code !== undefined ? { code } : {}) },
+  }) as VibesDiyError;
 }
 
 // ID types

@@ -34,9 +34,11 @@ async function checkMaxAppsPerUser(
     .orderBy(ctx.sql.tables.apps.created);
   if (userApps.length >= ctx.params.maxAppSlugPerUserId) {
     return Result.Ok({
-      type: "vibes.diy.error",
-      message: `User has reached the maximum number of app slugs (${ctx.params.maxAppSlugPerUserId}). Please delete existing apps before creating new ones.`,
-      code: "max-app-slugs-reached",
+      type: "vibes.diy.res-error",
+      error: {
+        message: `User has reached the maximum number of app slugs (${ctx.params.maxAppSlugPerUserId}). Please delete existing apps before creating new ones.`,
+        code: "max-app-slugs-reached",
+      },
     } satisfies ResEnsureAppSlugMaxAppsError);
     // const devApps = userApps.filter((app) => app.mode === "dev").slice(0, ~~(userApps.length / 10) + 1);
     // if (devApps.length === 0) {

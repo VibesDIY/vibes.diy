@@ -304,9 +304,8 @@ export const redeemInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRed
       const rRedeem = await redeemInvite(vctx, { token: req.token, redeemerId, claims });
       if (rRedeem.isErr()) {
         await ctx.send.send(ctx, {
-          type: "vibes.diy.error",
-          message: "redeem-invite: token not found or redeemer is the owner",
-          code: "redeem-invite-failed",
+          type: "vibes.diy.res-error",
+          error: { message: "redeem-invite: token not found or redeemer is the owner", code: "redeem-invite-failed" },
         } satisfies ResRedeemInviteError);
         return Result.Ok(EventoResult.Continue);
       }

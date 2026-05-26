@@ -7,6 +7,7 @@ import {
   MemberItem,
   ReqWithOptionalAuth,
   VibesDiyError,
+  ResError,
   W3CWebSocketEvent,
   ClerkClaim,
   ForeignInfo,
@@ -62,7 +63,7 @@ export const listMembersEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-error",
             error: { message: "Access denied" },
-          } as unknown as VibesDiyError);
+          } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
       }

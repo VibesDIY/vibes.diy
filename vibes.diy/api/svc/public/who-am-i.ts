@@ -3,6 +3,7 @@ import {
   MsgBase,
   ReqWithOptionalAuth,
   VibesDiyError,
+  ResError,
   W3CWebSocketEvent,
   ClerkClaim,
   isUserSettingProfile,
@@ -147,7 +148,7 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: { message: rRes.Err().message },
-        } as unknown as VibesDiyError);
+        } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
       const r = rRes.Ok();

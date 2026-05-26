@@ -59,9 +59,11 @@ export async function ensureAppSlugItem(
   const hasCodeFile = req.fileSystem.some((f) => f.type === "code-block");
   if (!hasCodeFile) {
     return Result.Ok({
-      type: "vibes.diy.error",
-      message: "No code files (.jsx, .js, .ts, .tsx) in fileSystem. An app requires at least one code file.",
-      code: "app-slug-invalid",
+      type: "vibes.diy.res-error",
+      error: {
+        message: "No code files (.jsx, .js, .ts, .tsx) in fileSystem. An app requires at least one code file.",
+        code: "app-slug-invalid",
+      },
     } satisfies ResEnsureAppSlugInvalid);
   }
 

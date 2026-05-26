@@ -121,8 +121,8 @@ export const createUserSlugBindingEvento: EventoHandler<
         }
         if (!generated) {
           await ctx.send.send(ctx, {
-            type: "vibes.diy.error",
-            message: "could not generate unique userSlug after 5 attempts",
+            type: "vibes.diy.res-error",
+            error: { message: "could not generate unique userSlug after 5 attempts" },
           } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
@@ -132,8 +132,8 @@ export const createUserSlugBindingEvento: EventoHandler<
       const result = await writeUserSlugBinding(vctx, userId, userSlug);
       if (result.isErr()) {
         await ctx.send.send(ctx, {
-          type: "vibes.diy.error",
-          message: result.Err().message,
+          type: "vibes.diy.res-error",
+          error: { message: result.Err().message },
         } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
