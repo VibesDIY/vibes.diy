@@ -26,7 +26,7 @@ Account Home → Analytics & Logs → Logpush → Create a job
 - Filter: `ScriptName eq "vibes-diy-v2-prod"` (repeat for cli)
 - Destination: **R2**, bucket `vibes-diy-workers-logs`, **no path prefix**
 
-> **Required:** The main worker (`vibes.diy/pkg/wrangler.toml`) must have `logpush = true` inside `[env.prod.observability.logs]` (and `[env.cli.observability.logs]`). Without it the Logpush job shows "Pushing" but delivers nothing.  
+> **Required:** The main worker (`vibes.diy/pkg/wrangler.toml`) must have `logpush = true` at the **environment root** (directly under `[env.prod]` and `[env.cli]`, NOT inside `[env.prod.observability.logs]`). Without it the Logpush job shows "Pushing" but delivers nothing.  
   (CF automatically writes to `YYYYMMDD/YYYYMMDDThhmmssZ_YYYYMMDDThhmmssZ.log.gz` keys.  
   Do NOT set a path prefix — `{YEAR}/{MONTH}/{DAY}` and `{DATE}` are not valid R2 variables and cause silent delivery failures.)
 
