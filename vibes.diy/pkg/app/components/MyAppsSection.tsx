@@ -100,7 +100,7 @@ export function MyAppsSection({ isMobile }: MyAppsSectionProps) {
   }, [detailItem]);
 
   return (
-    <section className="mt-6">
+    <section className="mt-6" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
       {/* Gallery-style container: vertical "My Apps" label on the side
           (desktop) or top (mobile). Matches the Gallery's 600px max-width
           and shows 4 cards per row. The grid expands naturally with however
