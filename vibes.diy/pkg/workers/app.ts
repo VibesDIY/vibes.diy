@@ -286,8 +286,17 @@ export default {
     }
 
     // Delegate to React Router for SSR
-    return getRequestHandler()(request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0], {
+    const ssrResponse = (await getRequestHandler()(request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0], {
       vibeDiyAppParams: cfCtx.vibesCtx.params,
-    }) as unknown as CFResponse;
+    })) as unknown as CFResponse;
+
+    // Log missing vibe paths so the ETL pipeline can surface them for reanimation triage.
+    // Only log /vibe/<user>/<slug> (and deeper) paths — the two-segment legacy form is
+    // already handled by the 301 redirect above and never reaches SSR.
+    if (ssrResponse.status === 404 && /^\/vibe\/[^/]+\//.test(url.pathname)) {
+      console.log("[missing-vibe]", url.pathname);
+    }
+
+    return ssrResponse;
   },
 } satisfies ExportedHandler<CFEnv>;

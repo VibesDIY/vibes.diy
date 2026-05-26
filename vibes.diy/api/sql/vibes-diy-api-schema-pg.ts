@@ -257,6 +257,21 @@ export const sqlRefererEvents = pgTable(
   ]
 );
 
+export const sqlMissingVibeEvents = pgTable(
+  "MissingVibeEvents",
+  {
+    logKey: text().notNull(), // R2 object key (Logpush filename), part of dedup PK
+    lineIdx: integer().notNull(), // line index within the R2 object, part of dedup PK
+    ts: text().notNull(), // ISO timestamp from Logpush envelope
+    reqPath: text().notNull(), // /vibe/<user>/<slug> path that returned 404
+  },
+  (table) => [
+    primaryKey({ columns: [table.logKey, table.lineIdx] }),
+    index("MissingVibeEvents_reqPath_ts_idx").on(table.reqPath, table.ts),
+    index("MissingVibeEvents_ts_idx").on(table.ts),
+  ]
+);
+
 // Per-doc file uploads — audit + lookup table for `_files` reads. One row
 // per put-asset call. uploadId is the public handle the client puts into
 // doc._files.<key>; the server resolves uploadId → assetURI at read time
