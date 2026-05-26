@@ -10,7 +10,7 @@ export interface CampaignRow {
   readonly ctr: string;
   readonly cpc: string;
   readonly reach: string;
-  readonly actions?: ReadonlyArray<{ readonly action_type: string; readonly value: string }>;
+  readonly actions?: readonly { readonly action_type: string; readonly value: string }[];
 }
 
 export interface PixelSummary {

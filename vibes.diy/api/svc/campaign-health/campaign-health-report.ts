@@ -26,7 +26,7 @@ interface MetaInsightRow {
   ctr: string;
   cpc: string;
   reach: string;
-  actions?: Array<{ action_type: string; value: string }>;
+  actions?: { action_type: string; value: string }[];
 }
 
 interface MetaInsightsResponse {
@@ -37,7 +37,7 @@ interface MetaInsightsResponse {
 interface MetaPixelResponse {
   name?: string;
   last_fired_time?: string;
-  stats?: { data?: Array<{ data?: Array<{ value: string; count: string }> }> };
+  stats?: { data?: { data?: { value: string; count: string }[] }[] };
   error?: { message: string };
 }
 
@@ -80,7 +80,7 @@ async function fetchCampaignHealth(
   const rows: MetaInsightRow[] = insights.data ?? [];
 
   // Pixel stats
-  let pixel: PixelSummary | null = null;
+  let pixel: PixelSummary | null;
   try {
     const px = await metaGet<MetaPixelResponse>(`/${pixelId}?fields=name,last_fired_time,stats`, token);
     const events = px.stats?.data?.flatMap((h) => h.data ?? []) ?? [];
