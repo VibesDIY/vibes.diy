@@ -156,7 +156,7 @@ export function isResReportAttributionReferrers(obj: unknown): obj is ResReportA
 // Data is fetched server-side from the Meta Graph API; the WS handler
 // returns structured JSON so the SPA can render with the brand palette.
 
-export const campaignRow = type({
+export const resReportCampaignHealthCampaignRow = type({
   campaign_name: "string",
   campaign_id: "string",
   impressions: "string",
@@ -167,38 +167,38 @@ export const campaignRow = type({
   reach: "string",
   "actions?": type({ action_type: "string", value: "string" }).array(),
 });
-export type CampaignRow = typeof campaignRow.infer;
+export type ResReportCampaignHealthCampaignRow = typeof resReportCampaignHealthCampaignRow.infer;
 
-export const pixelSummary = type({
+export const resReportCampaignHealthPixelSummary = type({
   "lastFired?": "string",
   "counts?": type({ "[string]": "number" }),
   "error?": "string",
 });
-export type PixelSummary = typeof pixelSummary.infer;
+export type ResReportCampaignHealthPixelSummary = typeof resReportCampaignHealthPixelSummary.infer;
 
-export const budgetOutlier = type({
+export const resReportCampaignHealthBudgetOutlier = type({
   name: "string",
   spend: "string",
   medianSpend: "string",
 });
-export type BudgetOutlier = typeof budgetOutlier.infer;
+export type ResReportCampaignHealthBudgetOutlier = typeof resReportCampaignHealthBudgetOutlier.infer;
 
-export const lowLpvEntry = type({
+export const resReportCampaignHealthLowLpvEntry = type({
   name: "string",
   clicks: "number",
   lpvs: "number",
   ratio: "number",
 });
-export type LowLpvEntry = typeof lowLpvEntry.infer;
+export type ResReportCampaignHealthLowLpvEntry = typeof resReportCampaignHealthLowLpvEntry.infer;
 
-export const campaignAnomalies = type({
+export const resReportCampaignHealthAnomalies = type({
   duplicateNames: "string[]",
-  budgetOutliers: budgetOutlier.array(),
+  budgetOutliers: resReportCampaignHealthBudgetOutlier.array(),
   zeroSpend: "string[]",
-  lowLpvRatio: lowLpvEntry.array(),
-  pixel: pixelSummary.or("null"),
+  lowLpvRatio: resReportCampaignHealthLowLpvEntry.array(),
+  pixel: resReportCampaignHealthPixelSummary.or("null"),
 });
-export type CampaignAnomalies = typeof campaignAnomalies.infer;
+export type ResReportCampaignHealthAnomalies = typeof resReportCampaignHealthAnomalies.infer;
 
 export const reqReportCampaignHealth = type({
   type: "'vibes.diy.req-report-campaign-health'",
@@ -215,8 +215,8 @@ export const resReportCampaignHealth = type({
   type: "'vibes.diy.res-report-campaign-health'",
   generatedAt: "string",
   dateLabel: "string",
-  ranked: campaignRow.array(),
-  anomalies: campaignAnomalies,
+  ranked: resReportCampaignHealthCampaignRow.array(),
+  anomalies: resReportCampaignHealthAnomalies,
 });
 export type ResReportCampaignHealth = typeof resReportCampaignHealth.infer;
 export function isResReportCampaignHealth(obj: unknown): obj is ResReportCampaignHealth {
