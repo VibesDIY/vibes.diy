@@ -245,7 +245,7 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
         // even when fromResult() returns Ok. Guard with protocol check before accessing hostname.
         const refUri = rRefUri.Ok();
         const reqUri = rReqUri.Ok();
-        const HTTP_LIKE = /^(https?|wss?|fpcloud):$/;
+        const HTTP_LIKE = /^(https?|wss?):$/;
         if (HTTP_LIKE.test(refUri.protocol) && HTTP_LIKE.test(reqUri.protocol)) {
           const refHostname = refUri.hostname;
           const reqHostname = reqUri.hostname;
