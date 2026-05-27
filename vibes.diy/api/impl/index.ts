@@ -463,10 +463,22 @@ export class VibesDiyApi implements VibesDiyApiIface<{
         }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
       });
     });
+    const unregClose = conn.onClose(() => {
+      waitForResponse.resolve(
+        Result.Err<S, VibesDiyError>(mkResError("WebSocket closed before response (server disconnected)", "websocket-closed"))
+      );
+    });
+    const unregError = conn.onError(() => {
+      waitForResponse.resolve(
+        Result.Err<S, VibesDiyError>(mkResError("WebSocket error before response received", "websocket-error"))
+      );
+    });
 
     const cleanup = (): void => {
       if (timer !== undefined) clearTimeout(timer);
       unreg();
+      unregClose();
+      unregError();
     };
 
     const rReq = await this.send(req, { tid });
