@@ -32,9 +32,29 @@ export class W3CWebSocketEventEventoEnDecoder implements EventoEnDecoder<W3CWebS
     switch (arkMatch.type) {
       case "MessageEvent":
         if (!arkMatch.event.data) {
+          console.log("[encode] MessageEvent: no data");
           return Result.Ok();
         }
-        return this.jsEncoder.parse(await top_uint8(arkMatch.event.data as never));
+        {
+          const uint8 = await top_uint8(arkMatch.event.data as never);
+          console.log("[encode] MessageEvent: top_uint8 size=", uint8.length);
+          const parsed = this.jsEncoder.parse(uint8);
+          if (parsed.isErr()) {
+            console.error("[encode] jsEncoder.parse failed:", parsed.Err());
+          } else {
+            const val = parsed.Ok();
+            const preview = JSON.stringify(val);
+            console.log(
+              "[encode] jsEncoder.parse ok, type=",
+              (val as Record<string, unknown>)?.payload?.type,
+              "tid=",
+              (val as Record<string, unknown>)?.tid,
+              "preview=",
+              preview.slice(0, 120)
+            );
+          }
+          return parsed;
+        }
       case "CloseEvent":
       case "ErrorEvent":
         // console.warn("Not Impl WS Event:", arkMatch);
