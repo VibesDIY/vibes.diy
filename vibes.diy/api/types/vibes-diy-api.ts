@@ -87,6 +87,10 @@ import {
   ResSubscribeDocs,
   ReqListDbNames,
   ResListDbNames,
+  ReqListDmThreads,
+  ResListDmThreads,
+  ReqMarkDmRead,
+  ResMarkDmRead,
 } from "./app-documents.js";
 import { ReqListMembers, ResListMembers } from "./members.js";
 import { ReqListMemberships, ResListMemberships } from "./memberships.js";
@@ -195,6 +199,10 @@ export interface VibesDiyApiIface<_T = unknown> {
   deleteDoc(req: Req<ReqDeleteDoc>): Promise<Result<ResDeleteDoc, VibesDiyError>>;
   subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>>;
   listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>>;
+
+  // DM thread listing and read watermark
+  listDmThreads(req: Req<ReqListDmThreads>): Promise<Result<ResListDmThreads, VibesDiyError>>;
+  markDmRead(req: Req<ReqMarkDmRead>): Promise<Result<ResMarkDmRead, VibesDiyError>>;
 
   // Approved members of a vibe — display name + role only, gated on read access
   listMembers(req: Req<ReqListMembers>): Promise<Result<ResListMembers, VibesDiyError>>;
