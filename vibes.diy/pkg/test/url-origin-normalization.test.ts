@@ -11,6 +11,7 @@ import { URI } from "@adviser/cement";
 // so only port 80 is recognized as a default. An explicit :443 on an
 // https URL is NOT stripped from .host. Use .hostname (no port) when
 // doing same-origin checks via URI — logout.tsx does this.
+// Guardrail exception: these assertions intentionally use native WHATWG URL parsing to document origin normalization behavior.
 
 describe("URL.origin default-port normalization", () => {
   it("http :80 is stripped from origin", () => {
