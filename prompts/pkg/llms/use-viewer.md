@@ -107,3 +107,23 @@ Key points:
 
 - Never use Clerk user IDs. Only `userSlug` crosses into vibe code.
 - Avatar URLs are stable indirection URLs — when a user changes their avatar, the URL stays the same and the bytes update. Treat them as opaque strings.
+
+## ViewerTag
+
+`ViewerTag` is a ready-made inline user pill returned alongside `viewer` from `useViewer()`. It is not a separate import — you get it from the hook.
+
+```jsx
+const { viewer, ViewerTag } = useViewer();
+
+// Show the current viewer (edit ring appears — they can tap to change their avatar):
+<ViewerTag />
+
+// Show another user read-only (no edit affordance):
+<ViewerTag userSlug={comment.authorUserSlug} />
+```
+
+**Self-detection is automatic.** When `ViewerTag` renders the current viewer it shows a dashed indigo ring and pencil overlay on the avatar. Clicking it opens a file picker; the upload and profile save happen internally.
+
+**Undefined safety.** If `userSlug` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring. This prevents a broken data source from accidentally granting photo-edit access to an arbitrary pill.
+
+Use `<ViewerTag />` (no props) for the current user and `<ViewerTag userSlug={...} />` for others. That's the whole API.
