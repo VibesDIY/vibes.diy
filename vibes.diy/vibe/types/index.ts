@@ -572,6 +572,35 @@ export function isResVibeWhoAmI(x: unknown): x is ResVibeWhoAmI {
   return !(ResVibeWhoAmI(x) instanceof type.errors);
 }
 
+// Sandbox → host: persist a freshly-uploaded avatar CID to the viewer's
+// platform profile. The host enforces that the sandbox userSlug matches
+// the authenticated session before calling ensureUserSettings.
+export const ReqVibeUpdateAvatarCid = type({
+  type: "'vibe.req.updateAvatarCid'",
+  userSlug: "string",
+  appSlug: "string",
+  cid: "string",
+}).and(Base);
+
+export type ReqVibeUpdateAvatarCid = typeof ReqVibeUpdateAvatarCid.infer;
+
+export function isReqVibeUpdateAvatarCid(x: unknown): x is ReqVibeUpdateAvatarCid {
+  return !(ReqVibeUpdateAvatarCid(x) instanceof type.errors);
+}
+
+// Host → sandbox response.
+export const ResVibeUpdateAvatarCid = type({
+  type: "'vibe.res.updateAvatarCid'",
+  status: "'ok' | 'error'",
+  "message?": "string",
+}).and(Base);
+
+export type ResVibeUpdateAvatarCid = typeof ResVibeUpdateAvatarCid.infer;
+
+export function isResVibeUpdateAvatarCid(x: unknown): x is ResVibeUpdateAvatarCid {
+  return !(ResVibeUpdateAvatarCid(x) instanceof type.errors);
+}
+
 // Event: identity changed (login/logout, future persona switch). Same
 // shape as the response minus tid semantics — no request to correlate.
 export const EvtVibeViewerChanged = type({
