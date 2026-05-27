@@ -1,4 +1,4 @@
 export type Loadable<T> =
   | { readonly kind: "loading" }
   | { readonly kind: "ok"; readonly data: T }
-  | { readonly kind: "err"; readonly msg: string };
+  | { readonly kind: "err"; readonly msg: string; readonly code?: string };

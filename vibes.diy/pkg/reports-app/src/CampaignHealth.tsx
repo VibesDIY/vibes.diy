@@ -47,6 +47,13 @@ function fmtMoney(n: number): string {
 
 export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
   const [data, setData] = useState<Loadable<ResReportCampaignHealth>>({ kind: "loading" });
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (data.kind !== "loading") return;
+    const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(timer);
+  }, [data.kind]);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -54,25 +61,40 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
       const r = await api.reportCampaignHealth({});
       if (ac.signal.aborted) return;
       if (r.isOk()) setData({ kind: "ok", data: r.Ok() });
-      else setData({ kind: "err", msg: r.Err().message });
+      else setData({ kind: "err", msg: r.Err().message, code: r.Err().error?.code });
     })();
     return () => ac.abort();
   }, [api]);
 
   if (data.kind === "loading") {
+    const stage =
+      elapsed < 2 ? "Connecting…" : elapsed < 5 ? "Fetching from Meta Ads API…" : `Fetching from Meta Ads API… (${elapsed}s)`;
     return (
       <div className="page">
-        <div className="empty">Loading campaign health…</div>
+        <div className="empty">{stage}</div>
       </div>
     );
   }
 
   if (data.kind === "err") {
+    const title =
+      data.code === "report-not-authorized"
+        ? "Not Authorized"
+        : data.code === "meta-creds-missing"
+          ? "Configuration Error"
+          : data.code === "meta-api-error"
+            ? "Meta API Error"
+            : data.code === "request-timeout"
+              ? "Request Timed Out"
+              : data.code === "websocket-closed" || data.code === "websocket-error"
+                ? "Connection Error"
+                : "Error";
     return (
       <div className="page">
         <div className="err">
-          <div className="err-label">Error</div>
+          <div className="err-label">{title}</div>
           <div>{data.msg}</div>
+          {data.code && <div style={{ fontSize: "0.75rem", opacity: 0.6, marginTop: "0.5rem" }}>code: {data.code}</div>}
         </div>
       </div>
     );
