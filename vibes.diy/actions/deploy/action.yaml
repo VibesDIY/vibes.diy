@@ -93,6 +93,12 @@ inputs:
   META_PIXEL_ID:
     description: "Meta pixel ID for CAPI endpoint construction"
     required: false
+  META_ACCESS_TOKEN:
+    description: "Meta Graph API access token for campaign health report"
+    required: false
+  META_AD_ACCOUNT_ID:
+    description: "Meta Ad Account ID for campaign health report (e.g. act_123456)"
+    required: false
 
 runs:
   using: "composite"
@@ -136,6 +142,8 @@ runs:
         PRODIA_TOKEN: ${{ inputs.PRODIA_TOKEN }}
         META_CAPI_TOKEN: ${{ inputs.META_CAPI_TOKEN }}
         META_PIXEL_ID: ${{ inputs.META_PIXEL_ID }}
+        META_ACCESS_TOKEN: ${{ inputs.META_ACCESS_TOKEN }}
+        META_AD_ACCOUNT_ID: ${{ inputs.META_AD_ACCOUNT_ID }}
         DISCORD_WEBHOOK_URL: ${{ inputs.DISCORD_WEBHOOK_URL }}
         CLERK_WEBHOOK_SECRET: ${{ inputs.CLERK_WEBHOOK_SECRET }}
 
@@ -170,6 +178,8 @@ runs:
           --fromEnv PRODIA_TOKEN \
           --fromEnv META_CAPI_TOKEN \
           --fromEnv META_PIXEL_ID \
+          --fromEnv META_ACCESS_TOKEN \
+          --fromEnv META_AD_ACCOUNT_ID \
           --fromEnv DISCORD_WEBHOOK_URL \
           --fromEnv CLERK_WEBHOOK_SECRET | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
