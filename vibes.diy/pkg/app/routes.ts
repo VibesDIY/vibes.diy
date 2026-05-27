@@ -12,6 +12,8 @@ export default [
     route("remix/:userSlug/:appSlug/:fsId?", "./routes/remix.$userSlug.$appSlug.tsx"),
     route("vibes/mine/:userSlug?/:appSlug?/:tab?", "./routes/vibes/mine.tsx"),
     route("memberships/:userSlug?/:appSlug?", "./routes/vibes/memberships.tsx"),
+    route("messages", "./routes/messages.tsx"),
+    route("messages/:userSlugA/:userSlugB", "./routes/messages.$userSlugA.$userSlugB.tsx"),
     route("settings", "./routes/settings.tsx", { id: "settings" }),
     route("settings/csr-to-cert", "./routes/settings/csr-to-cert.tsx", { id: "settings-csr-to-cert" }),
   ]),
