@@ -271,7 +271,34 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
   const wsEvento = vibesMsgEvento();
 
   server.addEventListener("message", (event) => {
-    wsEvento.trigger({ ctx: appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    wsEvento.trigger({ ctx: appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider }).catch((err: unknown) => {
+      console.error("[ws-message] unhandled trigger rejection:", err);
+      // Try to send a targeted res-error (preserving the tid) so only the one
+      // failing request gets an immediate error rather than killing the connection.
+      // If we can't parse the tid, just log and leave the connection open — the
+      // one request times out at 30s while all other in-flight requests continue.
+      try {
+        const raw = (event as MessageEvent).data;
+        const text = typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array);
+        const msg = JSON.parse(text) as { tid?: string; src?: string; dst?: string };
+        if (msg.tid) {
+          wsSendProvider.ws.send(
+            wsSendProvider.ende.uint8ify({
+              tid: msg.tid,
+              src: msg.dst ?? "vibes.diy.server",
+              dst: msg.src ?? "vibes.diy.client",
+              ttl: 1,
+              payload: {
+                type: "vibes.diy.res-error",
+                error: { message: `Internal error: ${err instanceof Error ? err.message : String(err)}`, code: "internal-error" },
+              },
+            })
+          );
+        }
+      } catch (parseErr) {
+        console.error("[ws-message] failed to parse message for error response:", parseErr);
+      }
+    });
   });
 
   // No deregister-on-close: with UUID sharding each DO has 1 connection, so the old WS onclose
