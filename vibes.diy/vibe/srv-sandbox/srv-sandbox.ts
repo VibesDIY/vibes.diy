@@ -67,6 +67,8 @@ import {
   isReqVibeLogin,
   type ReqVibeLogin,
   EvtVibeColorOverride,
+  isReqOpenDmThread,
+  ReqOpenDmThread,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -924,6 +926,10 @@ export class vibesDiySrvSandbox implements Disposable {
   // assuming the silently-stale preview is the latest state.
   readonly onHotSwapError = OnFunc<(err: { readonly message: string }) => void>();
 
+  // Iframe → parent DM navigation request. Subscribers navigate the parent
+  // app to /messages/<myUserSlug>/<recipientUserSlug>.
+  readonly onOpenDmThread = OnFunc<(req: Pick<ReqOpenDmThread, "recipientUserSlug">) => void>();
+
   // Captured iframe postMessage target — set on first message from iframe
   private iframeSource: Window | undefined;
   private iframeOrigin: string | undefined;
@@ -975,6 +981,10 @@ export class vibesDiySrvSandbox implements Disposable {
     }
     if (isEvtVibeHotSwapError(event.data)) {
       this.onHotSwapError.invoke({ message: event.data.message });
+    }
+    if (isReqOpenDmThread(event.data)) {
+      this.onOpenDmThread.invoke({ recipientUserSlug: event.data.recipientUserSlug });
+      return;
     }
     this.evento.trigger<MessageEvent, unknown, unknown>({
       request: event,

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useMatches, useParams, useSearchParams } from "react-router";
+import { useMatches, useNavigate, useParams, useSearchParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
 import { SignIn, useAuth } from "@clerk/react";
@@ -87,6 +87,7 @@ export function meta({
 
 export default function VibeIframeWrapper() {
   const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
+  const navigate = useNavigate();
   useDocumentTitle(`${userSlug} - ${appSlug} - vibes.diy`);
   // const [searchParam] = useSearchParams();
   const vctx = useVibesDiy();
@@ -141,6 +142,7 @@ export default function VibeIframeWrapper() {
   const [searchParam] = useSearchParams();
   const [retryCount, setRetryCount] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
+  const [myUserSlug, setMyUserSlug] = useState<string | undefined>(undefined);
   // The viewer's grant on this vibe — used to decide whether the comments
   // composer is enabled when the owner has flipped "Only collaborators can
   // comment" on. Owner + editor stay enabled; viewer/submitter/public/none
@@ -161,11 +163,14 @@ export default function VibeIframeWrapper() {
   useEffect(() => {
     if (!authSignedIn || !userSlug) {
       setIsOwner(false);
+      setMyUserSlug(undefined);
       return;
     }
     vctx.vibeDiyApi.listUserSlugBindings({}).then((res) => {
       if (res.isErr()) return;
-      setIsOwner(res.Ok().items.some((item) => item.userSlug === userSlug));
+      const items = res.Ok().items;
+      setIsOwner(items.some((item) => item.userSlug === userSlug));
+      if (items.length > 0) setMyUserSlug(items[0].userSlug);
     });
   }, [authSignedIn, userSlug, vctx.vibeDiyApi]);
 
@@ -218,6 +223,16 @@ export default function VibeIframeWrapper() {
       setIsSidebarVisible(false);
     }
   }, [authSignedIn]);
+
+  // Subscribe to DM navigation requests from the iframe. A vibe posts
+  // ReqOpenDmThread to ask the parent to open a direct-message thread.
+  const srvVibeSandbox = vctx.srvVibeSandbox;
+  useEffect(() => {
+    if (!srvVibeSandbox || !myUserSlug) return;
+    return srvVibeSandbox.onOpenDmThread(({ recipientUserSlug }) => {
+      void navigate(`/messages/${myUserSlug}/${recipientUserSlug}`);
+    }) as () => void;
+  }, [srvVibeSandbox, myUserSlug, navigate]);
 
   // Resolve grant + chrome data async. The iframe is already mounted from
   // first paint; this just decides which (if any) overlay to layer on top.
