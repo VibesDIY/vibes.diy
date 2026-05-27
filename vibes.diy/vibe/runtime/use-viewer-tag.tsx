@@ -15,14 +15,12 @@ export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Undefined / empty guard — key present but value falsy
   const slugFromProp = "user" in props && props.user ? props.user.userSlug : "userSlug" in props ? props.userSlug : undefined;
 
   if (("userSlug" in props || "user" in props) && !slugFromProp) {
     return <span style={{ opacity: 0.4, fontStyle: "italic", fontSize: 13 }}>no user handle provided</span>;
   }
 
-  // Resolve final slug and avatar URL
   const resolvedSlug = slugFromProp ?? _viewer?.userSlug ?? "";
   const resolvedAvatarUrl =
     "user" in props && props.user?.avatarUrl
@@ -31,8 +29,7 @@ export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.
         ? `/u/${encodeURIComponent(resolvedSlug)}/avatar`
         : undefined;
 
-  // Self: no slug/user prop given, OR resolved slug matches the viewer.
-  // Never self if viewer is anonymous — guards the undefined === undefined case.
+  // _viewer !== null guard prevents undefined === undefined when viewer is anonymous.
   const isSelf = _viewer !== null && ((!("userSlug" in props) && !("user" in props)) || resolvedSlug === _viewer?.userSlug);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
