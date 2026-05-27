@@ -62,6 +62,7 @@ async function fetchCampaignHealth(
   days: string,
   since: string | undefined
 ): Promise<Result<ResReportCampaignHealth>> {
+  console.log("fetch-campaign-health: start");
   const dateParam = since
     ? `&time_range=${encodeURIComponent(JSON.stringify({ since, until: new Date().toISOString().slice(0, 10) }))}`
     : `&date_preset=last_${days}d`;
@@ -83,6 +84,7 @@ async function fetchCampaignHealth(
     after = page.paging.cursors?.after;
     if (after === undefined) break;
   }
+  console.log("fetch-campaign-health: campaigns done, count:", rows.length);
 
   const rPx = await metaGet<{
     last_fired_time?: string;
@@ -123,6 +125,7 @@ async function fetchCampaignHealth(
     .sort((a, b) => costPerLpv(a) - costPerLpv(b))
     .map((r) => ({ ...r, actions: r.actions?.map((a) => ({ ...a })) }));
 
+  console.log("fetch-campaign-health: pixel done");
   const anomalies: ResReportCampaignHealthAnomalies = { duplicateNames, budgetOutliers, zeroSpend, lowLpvRatio, pixel };
 
   return Result.Ok({
@@ -153,6 +156,7 @@ export const reportCampaignHealthEvento: EventoHandler<
         ResReportCampaignHealth | VibesDiyError
       >
     ): Promise<Result<EventoResultType>> => {
+      console.log("campaign-health: handler entered");
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
@@ -164,6 +168,7 @@ export const reportCampaignHealthEvento: EventoHandler<
         return Result.Ok(EventoResult.Continue);
       }
 
+      console.log("campaign-health: auth ok");
       const token = vctx.metaAccessToken;
       const account = vctx.metaAdAccountId;
       const pixelId = vctx.metaPixelId;
@@ -183,6 +188,7 @@ export const reportCampaignHealthEvento: EventoHandler<
       const since = req.since;
       const cacheKey = since ? `campaign-health:since:${since}` : `campaign-health:days:${days}`;
 
+      console.log("campaign-health: creds ok, calling cachedReport");
       const rRes = await exception2Result(() =>
         cachedReport(vctx, cacheKey, resReportCampaignHealth, async () => {
           const r = await fetchCampaignHealth(token, account, pixelId, days, since);
@@ -190,6 +196,7 @@ export const reportCampaignHealthEvento: EventoHandler<
           return r.Ok();
         })
       );
+      console.log("campaign-health: cachedReport returned", rRes.isErr() ? "err" : "ok");
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
