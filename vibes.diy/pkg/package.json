@@ -89,7 +89,7 @@
     "find-up": "^8.0.0",
     "prettier": "^3.8.1",
     "rollup-plugin-visualizer": "^7.0.1",
-    "shiki": "^4.0.2",
+    "shiki": "^4.1.0",
     "tailwindcss": "^4.2.4",
     "toml": "^4.1.1",
     "typescript": "^6.0.3",
