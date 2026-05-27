@@ -10,7 +10,7 @@ import { RecentVibes } from "./RecentVibes.js";
 
 type SidebarSection = "apps" | "memberships";
 
-function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
+function SessionSidebar({ isVisible, onClose, dmUnreadCount }: SessionSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { isSignedIn: isAuthenticated, isLoaded } = useAuth();
   const isLoading = !isLoaded;
@@ -76,6 +76,44 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
             <span>New Vibe</span>
+          </Link>
+          <Link
+            to="/messages"
+            onClick={() => onClose()}
+            className="flex items-center px-4 py-3 text-sm font-medium tracking-wide transition-colors duration-150 hover:bg-black/5 dark:hover:bg-white/10 border-b border-black/10 dark:border-white/10"
+          >
+            <svg
+              className="mr-3 h-5 w-5"
+              width="22"
+              height="22"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4z"
+              />
+            </svg>
+            <span className="flex-1">Messages</span>
+            {dmUnreadCount && dmUnreadCount > 0 ? (
+              <span
+                style={{
+                  background: "#3b82f6",
+                  color: "#fff",
+                  borderRadius: 9999,
+                  padding: "0 6px",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  minWidth: 20,
+                  textAlign: "center",
+                }}
+              >
+                {(dmUnreadCount ?? 0) > 99 ? "99+" : dmUnreadCount}
+              </span>
+            ) : null}
           </Link>
         </div>
         {/* Accordion: only one section expanded at a time. "My Apps" header
@@ -240,6 +278,7 @@ export default memo(SessionSidebar, (prevProps, nextProps) => {
   return (
     prevProps.isVisible === nextProps.isVisible &&
     prevProps.onClose === nextProps.onClose &&
-    prevProps.sessionId === nextProps.sessionId
+    prevProps.sessionId === nextProps.sessionId &&
+    prevProps.dmUnreadCount === nextProps.dmUnreadCount
   );
 });

@@ -20,6 +20,8 @@ export interface ExpandedVibesPillProps {
   communityButtonRef?: React.Ref<HTMLButtonElement>;
   /** When > 0, renders a numeric badge on the pill indicating pending access requests. Owner-only. */
   communityBadgeCount?: number;
+  /** When > 0, renders a blue numeric badge on the left side of the pill indicating unread DMs. */
+  dmUnreadCount?: number;
   /** When true, shows a small dot indicating the current code has not been published yet. Owner-only. */
   hasUnpublishedChanges?: boolean;
   /** Public title shown in the metadata strip above the action buttons when expanded. */
@@ -269,6 +271,7 @@ export function ExpandedVibesPill({
   onCommunity,
   communityButtonRef,
   communityBadgeCount,
+  dmUnreadCount,
   hasUnpublishedChanges,
   appTitle,
   appIconUrl,
@@ -855,6 +858,44 @@ export function ExpandedVibesPill({
                 }}
               >
                 {communityBadgeCount > 99 ? "99+" : communityBadgeCount}
+              </div>
+            );
+          })()
+        : null}
+
+      {/* DM unread count badge — shown on the left side of the pill when there
+          are unread direct messages. Blue to distinguish from the orange
+          community badge on the right. */}
+      {dmUnreadCount && dmUnreadCount > 0
+        ? (() => {
+            const badgeSize = height * 0.36;
+            return (
+              <div
+                aria-label={`${dmUnreadCount} unread message${dmUnreadCount === 1 ? "" : "s"}`}
+                style={{
+                  position: "absolute",
+                  top: height * 0.15,
+                  left: -6,
+                  minWidth: badgeSize,
+                  height: badgeSize,
+                  padding: "0 6px",
+                  borderRadius: height * 0.18,
+                  border: "1px solid var(--vibes-near-black, #1a1a1a)",
+                  background: "#3b82f6",
+                  color: "var(--vibes-cream, #FFFEF0)",
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: height * 0.2,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+                  pointerEvents: "none",
+                  zIndex: 4,
+                }}
+              >
+                {dmUnreadCount > 99 ? "99+" : dmUnreadCount}
               </div>
             );
           })()
