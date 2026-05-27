@@ -108,9 +108,40 @@ describe("WebSocket disconnection", { timeout: (inject("DB_FLAVOUR" as never) as
     expect(rRes.isErr()).toBe(true);
     const err = rRes.Err();
     expect(err).toMatchObject({
-      code: "websocket-send-failed",
+      error: { code: "websocket-send-failed" },
       message: expect.stringContaining("Reconnecting, please retry"),
     });
+  });
+
+  it("pending request fails fast when WebSocket closes before response", async () => {
+    // Use a distinct URL so the connection isn't shared with the other tests.
+    const closeFastWsPair = TestWSPair.create();
+    // Server receives the message but deliberately never sends a response.
+    closeFastWsPair.p2.onmessage = () => {
+      /* intentional no-op */
+    };
+
+    const closeFastApi = new VibesDiyApi({
+      apiUrl: "http://test-ws-close-before-response.local/api",
+      ws: closeFastWsPair.p1 as unknown as WebSocket,
+      fetch: fetchPair.client.fetch,
+      timeoutMs: 30000, // long — we must fail via close, not idle timeout
+      getToken,
+    });
+
+    // Fire the close event after the send completes (next event-loop tick).
+    setTimeout(() => {
+      const ws = closeFastWsPair.p1 as unknown as WebSocket;
+      ws.onclose?.({ wasClean: false, code: 1006, reason: "test-server-crash" } as unknown as CloseEvent);
+    }, 0);
+
+    const result = await closeFastApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: "function App() {}" }],
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect((result.Err() as { error?: { code?: string } }).error?.code).toBe("websocket-closed");
   });
 
   it("reconnects with a fresh WebSocket after cache eviction", async () => {
