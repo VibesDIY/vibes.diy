@@ -35,7 +35,7 @@ interface MetaInsightRow {
 
 async function metaGet<T>(path: string, token: string): Promise<T> {
   const sep = path.includes("?") ? "&" : "?";
-  const res = await fetch(`${META_BASE}${path}${sep}access_token=${token}`);
+  const res = await fetch(`${META_BASE}${path}${sep}access_token=${token}`, { signal: AbortSignal.timeout(15_000) });
   const json = (await res.json()) as T & { error?: { message: string } };
   if (json.error) {
     throw new Error(`Meta API: ${json.error.message}`);
