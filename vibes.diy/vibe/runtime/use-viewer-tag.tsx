@@ -4,21 +4,22 @@ import { getRegisteredVibeApi } from "./register-dependencies.js";
 
 type ViewerPayload = NonNullable<ViewerEnv["viewer"]>;
 
-export type ViewerTagProps =
+export type ViewerTagProps = { style?: React.CSSProperties } & (
   | { userSlug?: never; user?: never }
   | { userSlug: string; user?: never }
-  | { user: { userSlug: string; displayName?: string; avatarUrl?: string }; userSlug?: never };
+  | { user: { userSlug: string; displayName?: string; avatarUrl?: string }; userSlug?: never }
+);
 
 type ViewerTagImplProps = ViewerTagProps & { _viewer: ViewerPayload | null };
 
-export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.ReactElement {
+export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps): React.ReactElement {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const slugFromProp = "user" in props && props.user ? props.user.userSlug : "userSlug" in props ? props.userSlug : undefined;
 
   if (("userSlug" in props || "user" in props) && !slugFromProp) {
-    return <span style={{ opacity: 0.4, fontStyle: "italic", fontSize: 13 }}>no user handle provided</span>;
+    return <span style={{ color: "var(--muted, #888)", fontStyle: "italic", fontSize: 13 }}>no user handle provided</span>;
   }
 
   // Anonymous viewer with no explicit slug prop: show a login button.
@@ -31,14 +32,15 @@ export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.
           display: "inline-flex",
           alignItems: "center",
           gap: 6,
-          background: "rgba(99,102,241,0.15)",
-          border: "1px solid rgba(99,102,241,0.4)",
+          background: "transparent",
+          border: "1px solid var(--accent, #6366f1)",
           borderRadius: 999,
           padding: "5px 14px",
           fontSize: 14,
-          color: "#a5b4fc",
+          color: "var(--accent, #6366f1)",
           cursor: "pointer",
           fontWeight: 500,
+          ...style,
         }}
       >
         Sign in
@@ -84,12 +86,13 @@ export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.
         display: "inline-flex",
         alignItems: "center",
         gap: 8,
-        background: "rgba(255,255,255,0.07)",
-        border: "1px solid rgba(255,255,255,0.1)",
+        background: "var(--card-bg, rgba(255,255,255,0.07))",
+        border: "1px solid var(--border, rgba(255,255,255,0.15))",
         borderRadius: 999,
         padding: "5px 14px 5px 5px",
         fontSize: 14,
-        color: "#e0e0e0",
+        color: "var(--text, #e0e0e0)",
+        ...style,
       }}
     >
       <span
@@ -98,7 +101,7 @@ export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.
           width: 30,
           height: 30,
           borderRadius: "50%",
-          background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+          background: "var(--accent, #6366f1)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -110,7 +113,7 @@ export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.
           flexShrink: 0,
           cursor: isSelf ? "pointer" : "default",
           opacity: uploading ? 0.5 : 1,
-          ...(isSelf ? { outline: "2px dashed #818cf8", outlineOffset: 2 } : {}),
+          ...(isSelf ? { outline: "2px dashed var(--accent, #818cf8)", outlineOffset: 2 } : {}),
         }}
       >
         {resolvedAvatarUrl ? (
@@ -132,7 +135,7 @@ export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.
               alignItems: "center",
               justifyContent: "center",
               fontSize: 13,
-              color: "#a5b4fc",
+              color: "var(--accent-text, var(--accent, #a5b4fc))",
               borderRadius: "50%",
             }}
           >

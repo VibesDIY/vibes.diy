@@ -128,4 +128,12 @@ const { viewer, ViewerTag } = useViewer();
 
 **Anonymous safety.** `ViewerTag` is always safe to call regardless of login state — it never throws. When the viewer is anonymous and no `userSlug` prop is given, it renders a "Sign in" button that opens the platform login UI when clicked. Wrap it in a `{viewer && <ViewerTag />}` guard if you want to suppress it entirely for anonymous users.
 
+**Theming.** `ViewerTag` reads `--accent`, `--accent-text`, `--card-bg`, `--border`, `--text`, and `--muted` from the app's CSS variables with sensible fallbacks. If your app defines these on `:root` (which most generated themes do), `ViewerTag` inherits the theme automatically with no extra props.
+
+**Style override.** Pass a `style` prop to override the root element's appearance. Layout properties are preserved; your values win:
+
+```jsx
+<ViewerTag style={{ borderRadius: 8, fontSize: 12 }} />
+```
+
 Use `<ViewerTag />` (no props) for the current user and `<ViewerTag userSlug={...} />` for others. That's the whole API.
