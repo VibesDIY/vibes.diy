@@ -16,7 +16,14 @@ const baseEnv = {
 };
 
 function renderWith(env: ViewerEnv | undefined): UseViewerResult {
-  let captured: UseViewerResult = { viewer: null, access: "none", dbAcls: {}, can: () => false, isViewerPending: true };
+  let captured: UseViewerResult = {
+    viewer: null,
+    access: "none",
+    dbAcls: {},
+    can: () => false,
+    isViewerPending: true,
+    ViewerTag: () => null,
+  };
   render(
     <VibeContextProvider mountParams={{ usrEnv: {}, ...(env ? { viewerEnv: env } : {}) }}>
       <Probe onR={(r) => (captured = r)} />
