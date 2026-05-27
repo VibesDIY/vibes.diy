@@ -50,6 +50,7 @@ import {
   listDbNamesEvento,
 } from "./public/app-documents.js";
 import { listMembersEvento } from "./public/list-members.js";
+import { listMembershipsEvento } from "./public/list-memberships.js";
 import { whoAmIEvento } from "./public/who-am-i.js";
 import { assetUploadGrantEvento } from "./public/asset-upload-grant.js";
 import { reportGrowthMembershipsEvento } from "./public/report-growth-memberships.js";
@@ -102,6 +103,7 @@ export const vibesMsgEvento = Lazy(() => {
     subscribeDocsEvento,
     listDbNamesEvento,
     listMembersEvento,
+    listMembershipsEvento,
     whoAmIEvento,
     assetUploadGrantEvento,
     reportGrowthMembershipsEvento,
