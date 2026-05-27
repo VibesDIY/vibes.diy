@@ -20,6 +20,13 @@ import {
   reqListDbNames,
   ReqListDbNames,
   ResListDbNames,
+  reqListDmThreads,
+  ReqListDmThreads,
+  ResListDmThreads,
+  DmThreadItem,
+  reqMarkDmRead,
+  ReqMarkDmRead,
+  ResMarkDmRead,
   ReqWithVerifiedAuth,
   ReqWithOptionalAuth,
   VibesDiyError,
@@ -35,7 +42,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
-import { eq, and, sql, inArray } from "drizzle-orm";
+import { eq, and, sql, inArray, desc } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess, canRead, isPublicReadable, DocAccessLevel } from "./access-helpers.js";
@@ -644,6 +651,149 @@ export const listDbNamesEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
         status: "ok",
         dbNames: rows.map((r) => r.dbName),
       } satisfies ResListDbNames);
+      return Result.Ok(EventoResult.Continue);
+    }
+  ),
+};
+
+// ── listDmThreads ────────────────────────────────────────────────────
+
+export const listDmThreadsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqListDmThreads>, ResListDmThreads | VibesDiyError> = {
+  hash: "list-dm-threads",
+  validate: unwrapMsgBase(async (msg: MsgBase) => {
+    const ret = reqListDmThreads(msg.payload);
+    if (ret instanceof type.errors) return Result.Ok(Option.None());
+    return Result.Ok(Option.Some({ ...msg, payload: ret }));
+  }),
+  handle: checkAuth(
+    async (
+      ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqListDmThreads>>, ResListDmThreads | VibesDiyError>
+    ): Promise<Result<EventoResultType>> => {
+      const req = ctx.validated.payload;
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+      const userId = req._auth.verifiedAuth.claims.userId;
+
+      // Get all userSlugs for this user
+      const t_usb = vctx.sql.tables.userSlugBinding;
+      const mySlugRows = await vctx.sql.db.select({ userSlug: t_usb.userSlug }).from(t_usb).where(eq(t_usb.userId, userId));
+      const myUserSlugs = mySlugRows.map((r) => r.userSlug);
+
+      if (myUserSlugs.length === 0) {
+        await ctx.send.send(ctx, { type: "vibes.diy.res-list-dm-threads", status: "ok", items: [] } satisfies ResListDmThreads);
+        return Result.Ok(EventoResult.Continue);
+      }
+
+      // Get all channels where any of my slugs participates
+      const t_idx = vctx.sql.tables.directChannelIndex;
+      const channelRows = await vctx.sql.db
+        .select({ channelUserSlug: t_idx.channelUserSlug, userSlug: t_idx.userSlug })
+        .from(t_idx)
+        .where(inArray(t_idx.userSlug, myUserSlugs));
+
+      const t_docs = vctx.sql.tables.appDocuments;
+      const t_reads = vctx.sql.tables.directChannelReads;
+      const limit = req.pager?.limit ?? 50;
+
+      const items: DmThreadItem[] = await Promise.all(
+        channelRows.map(async ({ channelUserSlug, userSlug: myUserSlug }) => {
+          const otherUserSlug = (directChannelParticipants(channelUserSlug) ?? []).find((h) => h !== myUserSlug) ?? "";
+
+          const latestDoc = await vctx.sql.db
+            .select()
+            .from(t_docs)
+            .where(
+              and(
+                eq(t_docs.userSlug, channelUserSlug),
+                eq(t_docs.appSlug, "dm"),
+                eq(t_docs.dbName, "messages"),
+                eq(t_docs.deleted, 0)
+              )
+            )
+            .orderBy(desc(t_docs.seq))
+            .limit(1)
+            .then((r) => r[0]);
+
+          const readRow = await vctx.sql.db
+            .select({ lastSeenSeq: t_reads.lastSeenSeq })
+            .from(t_reads)
+            .where(and(eq(t_reads.channelUserSlug, channelUserSlug), eq(t_reads.userSlug, myUserSlug)))
+            .then((r) => r[0]);
+
+          const latestSeq = latestDoc?.seq ?? 0;
+          const lastSeen = readRow?.lastSeenSeq ?? 0;
+          const unreadCount = Math.max(0, latestSeq - lastSeen);
+
+          return {
+            channelUserSlug,
+            otherUserSlug,
+            latestSeq,
+            unreadCount,
+            latestMessage: latestDoc
+              ? {
+                  body: String((latestDoc.data as { body?: unknown }).body ?? ""),
+                  createdAt: latestDoc.created,
+                  authorUserSlug: String((latestDoc.data as { authorUserSlug?: unknown }).authorUserSlug ?? ""),
+                }
+              : undefined,
+          };
+        })
+      );
+
+      const sorted = items
+        .sort((a, b) => ((b.latestMessage?.createdAt ?? "") > (a.latestMessage?.createdAt ?? "") ? -1 : 1))
+        .slice(0, limit);
+
+      await ctx.send.send(ctx, { type: "vibes.diy.res-list-dm-threads", status: "ok", items: sorted } satisfies ResListDmThreads);
+      return Result.Ok(EventoResult.Continue);
+    }
+  ),
+};
+
+// ── markDmRead ───────────────────────────────────────────────────────
+
+export const markDmReadEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqMarkDmRead>, ResMarkDmRead | VibesDiyError> = {
+  hash: "mark-dm-read",
+  validate: unwrapMsgBase(async (msg: MsgBase) => {
+    const ret = reqMarkDmRead(msg.payload);
+    if (ret instanceof type.errors) return Result.Ok(Option.None());
+    return Result.Ok(Option.Some({ ...msg, payload: ret }));
+  }),
+  handle: checkAuth(
+    async (
+      ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqMarkDmRead>>, ResMarkDmRead | VibesDiyError>
+    ): Promise<Result<EventoResultType>> => {
+      const req = ctx.validated.payload;
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+      const userId = req._auth.verifiedAuth.claims.userId;
+
+      // Verify participant
+      const rAccess = await checkDirectChannelAccess(vctx, req.channelUserSlug, userId);
+      if (rAccess.isErr() || !rAccess.Ok()) {
+        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
+      }
+
+      // Resolve which of my slugs is in this channel
+      const participants = directChannelParticipants(req.channelUserSlug) ?? ["", ""];
+      const t_usb = vctx.sql.tables.userSlugBinding;
+      const slugRow = await vctx.sql.db
+        .select({ userSlug: t_usb.userSlug })
+        .from(t_usb)
+        .where(and(eq(t_usb.userId, userId), inArray(t_usb.userSlug, participants)))
+        .then((r) => r[0]);
+      const myUserSlug = slugRow?.userSlug ?? "";
+
+      const t_reads = vctx.sql.tables.directChannelReads;
+      await vctx.sql.db
+        .insert(t_reads)
+        .values({ channelUserSlug: req.channelUserSlug, userSlug: myUserSlug, lastSeenSeq: req.lastSeenSeq })
+        .onConflictDoUpdate({
+          target: [t_reads.channelUserSlug, t_reads.userSlug],
+          // MAX so a delayed call never regresses the watermark
+          set: { lastSeenSeq: sql`MAX(${t_reads.lastSeenSeq}, ${req.lastSeenSeq})` },
+        });
+
+      await ctx.send.send(ctx, { type: "vibes.diy.res-mark-dm-read", status: "ok" } satisfies ResMarkDmRead);
       return Result.Ok(EventoResult.Continue);
     }
   ),

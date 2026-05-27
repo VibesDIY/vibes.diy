@@ -130,6 +130,12 @@ import {
   ReqListDbNames,
   ResListDbNames,
   isResListDbNames,
+  ReqListDmThreads,
+  ResListDmThreads,
+  isResListDmThreads,
+  ReqMarkDmRead,
+  ResMarkDmRead,
+  isResMarkDmRead,
   ReqListMembers,
   ResListMembers,
   isResListMembers,
@@ -768,6 +774,14 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-list-db-names" }, { resMatch: isResListDbNames });
+  }
+
+  listDmThreads(req: Req<ReqListDmThreads>): Promise<Result<ResListDmThreads, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-dm-threads" }, { resMatch: isResListDmThreads });
+  }
+
+  markDmRead(req: Req<ReqMarkDmRead>): Promise<Result<ResMarkDmRead, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-mark-dm-read" }, { resMatch: isResMarkDmRead });
   }
 
   listMembers(req: Req<ReqListMembers>): Promise<Result<ResListMembers, VibesDiyError>> {

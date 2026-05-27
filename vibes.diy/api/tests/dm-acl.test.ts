@@ -163,3 +163,162 @@ describe("DM DirectChannelIndex", { timeout: 20000 }, () => {
     expect(slugs).toEqual([aliceUserSlug, bobUserSlug].sort());
   });
 });
+
+describe("listDmThreads", { timeout: 20000 }, () => {
+  const sthis = ensureSuperThis();
+  let aliceApi: VibesDiyApi;
+  let aliceUserSlug: string;
+  let bobApi: VibesDiyApi;
+  let bobUserSlug: string;
+
+  beforeAll(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+
+    const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 2001 });
+    const bobUser = await createTestUser({ sthis, deviceCA, seqUserId: 2002 });
+
+    const sharedApiUrl = uniqueApiUrl();
+    const wsPair = TestWSPair.create();
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+
+    aliceApi = new VibesDiyApi({
+      apiUrl: sharedApiUrl,
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await aliceUser.getDashBoardToken()),
+    });
+
+    bobApi = new VibesDiyApi({
+      apiUrl: sharedApiUrl,
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await bobUser.getDashBoardToken()),
+    });
+
+    const rAlice = await aliceApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+    });
+    if (rAlice.isErr()) throw new Error(`ensureAppSlug (alice) failed: ${rAlice.Err().message}`);
+    const aliceRes = rAlice.Ok();
+    if (!isResEnsureAppSlugOk(aliceRes)) throw new Error("ensureAppSlug (alice) not ok");
+    aliceUserSlug = aliceRes.userSlug;
+
+    const rBob = await bobApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+    });
+    if (rBob.isErr()) throw new Error(`ensureAppSlug (bob) failed: ${rBob.Err().message}`);
+    const bobRes = rBob.Ok();
+    if (!isResEnsureAppSlugOk(bobRes)) throw new Error("ensureAppSlug (bob) not ok");
+    bobUserSlug = bobRes.userSlug;
+  });
+
+  it("returns threads with unread counts", async () => {
+    const channel = directChannelUserSlug(aliceUserSlug, bobUserSlug);
+
+    await aliceApi.putDoc({
+      userSlug: channel,
+      appSlug: "dm",
+      dbName: "messages",
+      doc: { body: "hey bob!", authorUserSlug: aliceUserSlug, createdAt: new Date().toISOString() },
+    });
+
+    // Alice lists — should see 1 thread, unread=1 (no read record yet)
+    const aliceResult = await aliceApi.listDmThreads({});
+    expect(aliceResult.isErr()).toBe(false);
+    const aliceItems = aliceResult.Ok().items;
+    expect(aliceItems.length).toBe(1);
+    expect(aliceItems[0].channelUserSlug).toBe(channel);
+    expect(aliceItems[0].otherUserSlug).toBe(bobUserSlug);
+    expect(aliceItems[0].unreadCount).toBe(1); // seq=1, no read record → unread=1
+
+    // Bob lists — should see 1 thread, 1 unread (hasn't read)
+    const bobResult = await bobApi.listDmThreads({});
+    expect(bobResult.isErr()).toBe(false);
+    expect(bobResult.Ok().items[0].unreadCount).toBe(1);
+  });
+});
+
+describe("markDmRead", { timeout: 20000 }, () => {
+  const sthis = ensureSuperThis();
+  let aliceApi: VibesDiyApi;
+  let aliceUserSlug: string;
+  let bobApi: VibesDiyApi;
+  let bobUserSlug: string;
+
+  beforeAll(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+
+    const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 3001 });
+    const bobUser = await createTestUser({ sthis, deviceCA, seqUserId: 3002 });
+
+    const sharedApiUrl = uniqueApiUrl();
+    const wsPair = TestWSPair.create();
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+
+    aliceApi = new VibesDiyApi({
+      apiUrl: sharedApiUrl,
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await aliceUser.getDashBoardToken()),
+    });
+
+    bobApi = new VibesDiyApi({
+      apiUrl: sharedApiUrl,
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await bobUser.getDashBoardToken()),
+    });
+
+    const rAlice = await aliceApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+    });
+    if (rAlice.isErr()) throw new Error(`ensureAppSlug (alice) failed: ${rAlice.Err().message}`);
+    const aliceRes = rAlice.Ok();
+    if (!isResEnsureAppSlugOk(aliceRes)) throw new Error("ensureAppSlug (alice) not ok");
+    aliceUserSlug = aliceRes.userSlug;
+
+    const rBob = await bobApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+    });
+    if (rBob.isErr()) throw new Error(`ensureAppSlug (bob) failed: ${rBob.Err().message}`);
+    const bobRes = rBob.Ok();
+    if (!isResEnsureAppSlugOk(bobRes)) throw new Error("ensureAppSlug (bob) not ok");
+    bobUserSlug = bobRes.userSlug;
+  });
+
+  it("sets unreadCount to 0 after marking read", async () => {
+    const channel = directChannelUserSlug(aliceUserSlug, bobUserSlug);
+
+    await aliceApi.putDoc({
+      userSlug: channel,
+      appSlug: "dm",
+      dbName: "messages",
+      doc: { body: "unread msg", authorUserSlug: aliceUserSlug, createdAt: new Date().toISOString() },
+    });
+
+    // Bob marks it read at seq=1
+    const markResult = await bobApi.markDmRead({ channelUserSlug: channel, lastSeenSeq: 1 });
+    expect(markResult.isErr()).toBe(false);
+
+    // Bob now has 0 unread
+    const listResult = await bobApi.listDmThreads({});
+    expect(listResult.isErr()).toBe(false);
+    expect(listResult.Ok().items[0].unreadCount).toBe(0);
+  });
+});

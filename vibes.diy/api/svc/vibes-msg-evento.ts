@@ -48,6 +48,8 @@ import {
   deleteDocEvento,
   subscribeDocsEvento,
   listDbNamesEvento,
+  listDmThreadsEvento,
+  markDmReadEvento,
 } from "./public/app-documents.js";
 import { listMembersEvento } from "./public/list-members.js";
 import { listMembershipsEvento } from "./public/list-memberships.js";
@@ -103,6 +105,8 @@ export const vibesMsgEvento = Lazy(() => {
     deleteDocEvento,
     subscribeDocsEvento,
     listDbNamesEvento,
+    listDmThreadsEvento,
+    markDmReadEvento,
     listMembersEvento,
     listMembershipsEvento,
     whoAmIEvento,
