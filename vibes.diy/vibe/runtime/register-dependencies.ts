@@ -340,9 +340,6 @@ export class VibeSandboxApi {
     );
   }
 
-  /** Persist a freshly-uploaded avatar CID to the viewer's platform profile.
-   *  The host validates that the sandbox userSlug matches the authenticated
-   *  viewer before writing to user settings. */
   updateAvatarCid(cid: string): Promise<Result<ResVibeUpdateAvatarCid>> {
     return this.request<ReqVibeUpdateAvatarCid, ResVibeUpdateAvatarCid>(
       {
@@ -385,8 +382,6 @@ export class VibeSandboxApi {
 
 let _registeredApi: VibeSandboxApi | undefined;
 
-/** Returns the VibeSandboxApi instance registered by the current page's
- *  registerDependencies call. Undefined before registerDependencies runs. */
 export function getRegisteredVibeApi(): VibeSandboxApi | undefined {
   return _registeredApi;
 }
