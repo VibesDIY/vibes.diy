@@ -251,15 +251,15 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               ["Cost/Click", "Spend ÷ clicks (CPC). Cost of getting someone to click the ad and land on good.vibes.diy."],
               [
                 "Site Visits",
-                'CAPI server-side PageView (app.ts) — fires when a user clicks the "Join" CTA on good.vibes.diy and lands on the vibe page on vibes.diy with ?fbclid= in the URL. Step 2 of the funnel: good.vibes.diy → vibes.diy (counted here). The good.vibes.diy landing-page browser-pixel PageViews (step 1) are in Meta Ads Manager but not in this report.',
+                "Meta landing_page_view action — browser pixel firing on good.vibes.diy when someone clicks an ad and the landing page loads. Step 1: Ad → good.vibes.diy (counted here). The Pixel Health section below shows the vibes.diy CAPI PageViews (step 2, after the CTA click).",
               ],
               [
                 "Content Views",
-                "CAPI ViewContent (useEngagedVisit.ts) — fires after the user dwells 10 s or scrolls 25 % on the vibe page. Step 3: arrived on vibes.diy → engaged (counted here). See Pixel Health below for raw totals.",
+                "CAPI ViewContent (useEngagedVisit.ts) — fires after the user dwells 10 s or scrolls 25 % on the vibes.diy vibe page. Step 3: arrived on vibes.diy → engaged. Shows — when Meta's attribution window has expired. See Pixel Health below for raw totals.",
               ],
               [
                 "Registrations",
-                "CAPI CompleteRegistration — fires when a new Clerk account is created within 2 min of landing on vibes.diy with fbclid in the session. Step 4: engaged → signed up.",
+                "CAPI CompleteRegistration — fires when a new Clerk account is created within 2 min of the fbclid-attributed session on vibes.diy. Step 4: engaged → signed up.",
               ],
               ["Cost/Visit", "Spend ÷ site visits. Primary efficiency metric — drives row color coding."],
             ].map(([term, def]) => (
