@@ -20,3 +20,4 @@ export {
   type QueryResponse,
 } from "./firefly-database.js";
 export type { FireflyTransport } from "./firefly-database.js";
+export type { ViewerTagProps } from "./use-viewer-tag.js";

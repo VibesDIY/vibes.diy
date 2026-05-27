@@ -1,6 +1,8 @@
+import React from "react";
 import { aclAllows, type DbAcl } from "./db-acl-allows.js";
 import { useVibeContext } from "./VibeContext.js";
 import type { ViewerEnv } from "./vibe.js";
+import { ViewerTagImpl, type ViewerTagProps } from "./use-viewer-tag.js";
 
 type ViewerPayload = NonNullable<ViewerEnv["viewer"]>;
 type DocAccessLevel = ViewerEnv["access"];
@@ -14,6 +16,9 @@ export interface UseViewerResult {
    *  before the parent pushes vibe.evt.viewerChanged). Gate access-gated UI
    *  on !isViewerPending rather than rendering the anonymous fallback. */
   readonly isViewerPending: boolean;
+  /** Inline user pill. Renders the current viewer (editable) when called
+   *  with no props. Pass `userSlug` to render another user read-only. */
+  readonly ViewerTag: React.FC<ViewerTagProps>;
 }
 
 export function useViewer(): UseViewerResult {
@@ -35,5 +40,10 @@ export function useViewer(): UseViewerResult {
     return true;
   }
 
-  return { viewer, access, dbAcls, can, isViewerPending };
+  const ViewerTag: React.FC<ViewerTagProps> = React.useCallback(
+    (props: ViewerTagProps) => React.createElement(ViewerTagImpl, { ...props, _viewer: viewer }),
+    [viewer]
+  );
+
+  return { viewer, access, dbAcls, can, isViewerPending, ViewerTag };
 }
