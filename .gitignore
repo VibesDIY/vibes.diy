@@ -4,6 +4,7 @@ node_modules
 **/build/
 **/dist/
 .claude/
+.superpowers/
 .worktrees/
 
 .env*
