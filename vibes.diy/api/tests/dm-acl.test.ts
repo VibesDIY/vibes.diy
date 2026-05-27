@@ -1,14 +1,21 @@
 // vibes.diy/api/tests/dm-acl.test.ts
 import { VibesDiyApi } from "@vibes.diy/api-impl";
-import { describe, it, expect } from "vitest";
+import { beforeAll, describe, it, expect } from "vitest";
 import { Result, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { directChannelUserSlug, isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
+import { eq } from "drizzle-orm";
 
-type TestUserInstance = Awaited<ReturnType<typeof createTestUser>>;
+// Each unique apiUrl gets its own cached WS connection. Use a per-call
+// counter as a URL query param so each mkUser/test-setup gets an isolated
+// connection and therefore its own AppContext.
+let _connCounter = 0;
+function uniqueApiUrl(): string {
+  return `http://localhost:8787/api?conn=${++_connCounter}`;
+}
 
 async function mkUser(seqUserId: number) {
   const sthis = ensureSuperThis();
@@ -26,7 +33,7 @@ async function mkUser(seqUserId: number) {
   };
 
   const api = new VibesDiyApi({
-    apiUrl: "http://localhost:8787/api",
+    apiUrl: uniqueApiUrl(),
     ws: wsPair.p1 as unknown as WebSocket,
     timeoutMs: 10000,
     getToken: async () => Result.Ok(await user.getDashBoardToken()),
@@ -77,5 +84,82 @@ describe("DM ACL", { timeout: 20000 }, () => {
 
     expect(result.isErr()).toBe(false);
     expect(result.Ok().status).toBe("ok");
+  });
+});
+
+describe("DM DirectChannelIndex", { timeout: 20000 }, () => {
+  const sthis = ensureSuperThis();
+  let aliceApi: VibesDiyApi;
+  let aliceUserSlug: string;
+  let bobUserSlug: string;
+  let sharedVibesCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>["vibesCtx"];
+
+  beforeAll(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    sharedVibesCtx = appCtx.vibesCtx;
+
+    const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 1030 });
+    const bobUser = await createTestUser({ sthis, deviceCA, seqUserId: 1040 });
+
+    // Share ONE wsPair and ONE appCtx for both alice and bob.
+    // Both VibesDiyApi instances must use the same wsPair.p1 (same URL)
+    // so responses are routed back correctly.
+    const sharedApiUrl = uniqueApiUrl();
+    const wsPair = TestWSPair.create();
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+
+    aliceApi = new VibesDiyApi({
+      apiUrl: sharedApiUrl,
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await aliceUser.getDashBoardToken()),
+    });
+
+    const bobApi = new VibesDiyApi({
+      apiUrl: sharedApiUrl,
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await bobUser.getDashBoardToken()),
+    });
+
+    // Both alice and bob need ensureAppSlug to get their userSlugs
+    const rAlice = await aliceApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+    });
+    if (rAlice.isErr()) throw new Error(`ensureAppSlug (alice) failed: ${rAlice.Err().message}`);
+    const aliceRes = rAlice.Ok();
+    if (!isResEnsureAppSlugOk(aliceRes)) throw new Error("ensureAppSlug (alice) not ok");
+    aliceUserSlug = aliceRes.userSlug;
+
+    const rBob = await bobApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+    });
+    if (rBob.isErr()) throw new Error(`ensureAppSlug (bob) failed: ${rBob.Err().message}`);
+    const bobRes = rBob.Ok();
+    if (!isResEnsureAppSlugOk(bobRes)) throw new Error("ensureAppSlug (bob) not ok");
+    bobUserSlug = bobRes.userSlug;
+  });
+
+  it("sending a DM upserts DirectChannelIndex for both participants", async () => {
+    const channel = directChannelUserSlug(aliceUserSlug, bobUserSlug);
+    await aliceApi.putDoc({
+      userSlug: channel,
+      appSlug: "dm",
+      dbName: "messages",
+      doc: { body: "first message", createdAt: new Date().toISOString() },
+    });
+
+    const t = sharedVibesCtx.sql.tables.directChannelIndex;
+    const rows = await sharedVibesCtx.sql.db.select().from(t).where(eq(t.channelUserSlug, channel));
+    const slugs = rows.map((r) => r.userSlug).sort();
+    expect(slugs).toEqual([aliceUserSlug, bobUserSlug].sort());
   });
 });
