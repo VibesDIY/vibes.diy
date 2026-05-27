@@ -14,6 +14,7 @@ import {
   ResReportCampaignHealthPixelSummary,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
+import { eq, sql } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -55,18 +56,56 @@ function costPerLpv(row: MetaInsightRow): number {
   return l > 0 ? Number(row.spend) / l : Infinity;
 }
 
+async function fetchGoodVibesClickThroughs(vctx: VibesApiSQLCtx): Promise<Record<string, number>> {
+  const t = vctx.sql.tables;
+  const rows = await vctx.sql.db
+    .select({ refPath: t.refererEvents.refPath, total: sql<number>`cast(count(*) as int)` })
+    .from(t.refererEvents)
+    .where(eq(t.refererEvents.refHost, "good.vibes.diy"))
+    .groupBy(t.refererEvents.refPath);
+  const byPath: Record<string, number> = {};
+  for (const r of rows) byPath[r.refPath] = r.total;
+  return byPath;
+}
+
+async function fetchCampaignDestinationUrls(token: string, account: string): Promise<Record<string, string>> {
+  const rPage = await metaGet<{ data?: readonly { id: string; website_url?: string }[] }>(
+    `/${account}/campaigns?fields=id,website_url&limit=200`,
+    token
+  );
+  if (rPage.isErr()) return {};
+  const byId: Record<string, string> = {};
+  for (const c of rPage.Ok().data ?? []) {
+    if (c.website_url !== undefined) byId[c.id] = c.website_url;
+  }
+  return byId;
+}
+
 async function fetchCampaignHealth(
   token: string,
   account: string,
   pixelId: string,
   days: string,
-  since: string | undefined
+  since: string | undefined,
+  vctx: VibesApiSQLCtx
 ): Promise<Result<ResReportCampaignHealth>> {
   console.log("fetch-campaign-health: start");
   const dateParam = since
     ? `&time_range=${encodeURIComponent(JSON.stringify({ since, until: new Date().toISOString().slice(0, 10) }))}`
     : `&date_preset=last_${days}d`;
   const dateLabel = since ? `since ${since}` : `last ${days} days`;
+
+  // Fetch campaign destination URLs and referrer click-throughs in parallel with insights
+  const [destUrlsResult, clicksByPath] = await Promise.all([
+    fetchCampaignDestinationUrls(token, account),
+    fetchGoodVibesClickThroughs(vctx),
+  ]);
+  console.log(
+    "fetch-campaign-health: dest urls count:",
+    Object.keys(destUrlsResult).length,
+    "referrer paths:",
+    Object.keys(clicksByPath).length
+  );
 
   const fields = "campaign_name,campaign_id,impressions,clicks,spend,ctr,cpc,reach,actions";
   const rows: MetaInsightRow[] = [];
@@ -123,7 +162,22 @@ async function fetchCampaignHealth(
 
   const ranked: ResReportCampaignHealthCampaignRow[] = [...rows]
     .sort((a, b) => costPerLpv(a) - costPerLpv(b))
-    .map((r) => ({ ...r, actions: r.actions?.map((a) => ({ ...a })) }));
+    .map((r) => {
+      const websiteUrl = destUrlsResult[r.campaign_id];
+      let landingPath: string | undefined;
+      if (websiteUrl !== undefined) {
+        try {
+          const u = new URL(websiteUrl);
+          if (u.hostname === "good.vibes.diy") {
+            landingPath = u.pathname.replace(/\/$/, "") || "/";
+          }
+        } catch {
+          // malformed URL — skip
+        }
+      }
+      const ctaClicks = landingPath !== undefined ? (clicksByPath[landingPath] ?? 0) : undefined;
+      return { ...r, actions: r.actions?.map((a) => ({ ...a })), landingPath, ctaClicks };
+    });
 
   console.log("fetch-campaign-health: pixel done");
   const anomalies: ResReportCampaignHealthAnomalies = { duplicateNames, budgetOutliers, zeroSpend, lowLpvRatio, pixel };
@@ -191,7 +245,7 @@ export const reportCampaignHealthEvento: EventoHandler<
       console.log("campaign-health: creds ok, calling cachedReport");
       const rRes = await exception2Result(() =>
         cachedReport(vctx, cacheKey, resReportCampaignHealth, async () => {
-          const r = await fetchCampaignHealth(token, account, pixelId, days, since);
+          const r = await fetchCampaignHealth(token, account, pixelId, days, since, vctx);
           if (r.isErr()) throw r.Err();
           return r.Ok();
         })
