@@ -201,3 +201,73 @@ export type EvtCommentPosted = typeof evtCommentPosted.infer;
 export function isEvtCommentPosted(obj: unknown): obj is EvtCommentPosted {
   return !(evtCommentPosted(obj) instanceof type.errors);
 }
+
+// ── dmReceived event (queue → Discord notification) ─────────────────
+
+export const evtDmReceived = type({
+  type: "'vibes.diy.evt-dm-received'",
+  senderUserId: "string",
+  senderUserSlug: "string",
+  recipientUserSlug: "string",
+  channelUserSlug: "string", // "_d.alice.bob"
+  docId: "string",
+  created: "string",
+  "bodySnippet?": "string", // first 100 chars for notification preview
+});
+export type EvtDmReceived = typeof evtDmReceived.infer;
+export function isEvtDmReceived(obj: unknown): obj is EvtDmReceived {
+  return !(evtDmReceived(obj) instanceof type.errors);
+}
+
+// ── DM thread listing ────────────────────────────────────────────────
+
+export const reqListDmThreads = type({
+  type: "'vibes.diy.req-list-dm-threads'",
+  "pager?": type({ "limit?": "number", "cursor?": "string" }),
+});
+export type ReqListDmThreads = typeof reqListDmThreads.infer;
+export function isReqListDmThreads(obj: unknown): obj is ReqListDmThreads {
+  return !(reqListDmThreads(obj) instanceof type.errors);
+}
+
+export const dmThreadItem = type({
+  channelUserSlug: "string",
+  otherUserSlug: "string",
+  latestSeq: "number",
+  unreadCount: "number",
+  "latestMessage?": type({
+    body: "string",
+    createdAt: "string",
+    authorUserSlug: "string",
+  }),
+});
+export type DmThreadItem = typeof dmThreadItem.infer;
+
+export const resListDmThreads = type({
+  type: "'vibes.diy.res-list-dm-threads'",
+  status: "'ok'",
+  items: dmThreadItem.array(),
+});
+export type ResListDmThreads = typeof resListDmThreads.infer;
+export function isResListDmThreads(obj: unknown): obj is ResListDmThreads {
+  return !(resListDmThreads(obj) instanceof type.errors);
+}
+
+export const reqMarkDmRead = type({
+  type: "'vibes.diy.req-mark-dm-read'",
+  channelUserSlug: "string",
+  lastSeenSeq: "number",
+});
+export type ReqMarkDmRead = typeof reqMarkDmRead.infer;
+export function isReqMarkDmRead(obj: unknown): obj is ReqMarkDmRead {
+  return !(reqMarkDmRead(obj) instanceof type.errors);
+}
+
+export const resMarkDmRead = type({
+  type: "'vibes.diy.res-mark-dm-read'",
+  status: "'ok'",
+});
+export type ResMarkDmRead = typeof resMarkDmRead.infer;
+export function isResMarkDmRead(obj: unknown): obj is ResMarkDmRead {
+  return !(resMarkDmRead(obj) instanceof type.errors);
+}
