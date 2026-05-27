@@ -46,7 +46,7 @@ export class W3CWebSocketEventEventoEnDecoder implements EventoEnDecoder<W3CWebS
             const preview = JSON.stringify(val);
             console.log(
               "[encode] jsEncoder.parse ok, type=",
-              (val as Record<string, unknown>)?.payload?.type,
+              (val as Record<string, Record<string, unknown>>)?.payload?.type,
               "tid=",
               (val as Record<string, unknown>)?.tid,
               "preview=",
