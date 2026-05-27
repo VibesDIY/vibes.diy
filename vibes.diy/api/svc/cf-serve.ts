@@ -10,7 +10,7 @@ import { createAppContext, processRequest } from "./create-handler.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { AppContext, Lazy, LoggerImpl, Result, URI } from "@adviser/cement";
+import { AppContext, exception2Result, Lazy, LoggerImpl, Result, URI } from "@adviser/cement";
 import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf } from "./types.js";
 import { CFEnv, type EvtRequestGrant, MsgBase } from "@vibes.diy/api-types";
@@ -241,14 +241,14 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
       if (rRefUri.isErr() || rReqUri.isErr()) {
         console.log("[referer] malformed", referer, request.method, request.url);
       } else {
-        // cement URI.hostname throws for non-standard protocols (e.g. android-app:, fbrpc:)
-        // even when fromResult() returns Ok. Guard with protocol check before accessing hostname.
+        // cement URI.fromResult() returns Ok for non-standard protocols (e.g. android-app:,
+        // fbrpc:) but .hostname then throws because those protocols are not in
+        // hasHostPartProtocols. Use exception2Result so cement stays authoritative.
         const refUri = rRefUri.Ok();
         const reqUri = rReqUri.Ok();
-        const HTTP_LIKE = /^(https?|wss?):$/;
-        if (HTTP_LIKE.test(refUri.protocol) && HTTP_LIKE.test(reqUri.protocol)) {
-          const refHostname = refUri.hostname;
-          const reqHostname = reqUri.hostname;
+        const rHostnames = exception2Result(() => ({ ref: refUri.hostname, req: reqUri.hostname }));
+        if (rHostnames.isOk()) {
+          const { ref: refHostname, req: reqHostname } = rHostnames.Ok();
           if (!isInternalReferer(refHostname) && refHostname !== reqHostname && !/\.[a-z]{1,4}$/i.test(reqUri.pathname)) {
             console.log("[referer]", refUri.toString(), request.method, reqUri.pathname);
           }
