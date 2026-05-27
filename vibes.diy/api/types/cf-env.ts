@@ -39,4 +39,5 @@ export interface CFEnv {
   META_PIXEL_ID?: string;
   META_ACCESS_TOKEN?: string;
   META_AD_ACCOUNT_ID?: string;
+  CLERK_WEBHOOK_SECRET?: string;
 }
