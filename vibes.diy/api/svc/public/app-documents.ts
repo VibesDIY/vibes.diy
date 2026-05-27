@@ -241,6 +241,18 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             dst: "vibes-service",
             ttl: 1,
           } satisfies MsgBase<EvtDmReceived>);
+
+          // Auto-mark sender's own message as read so their unreadCount stays 0
+          if (senderUserSlug) {
+            const t_reads = vctx.sql.tables.directChannelReads;
+            await vctx.sql.db
+              .insert(t_reads)
+              .values({ channelUserSlug: req.userSlug, userSlug: senderUserSlug, lastSeenSeq: nextSeq })
+              .onConflictDoUpdate({
+                target: [t_reads.channelUserSlug, t_reads.userSlug],
+                set: { lastSeenSeq: sql`MAX(${t_reads.lastSeenSeq}, ${nextSeq})` },
+              });
+          }
         }
       }
 
@@ -740,7 +752,7 @@ export const listDmThreadsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqLi
       );
 
       const sorted = items
-        .sort((a, b) => ((b.latestMessage?.createdAt ?? "") > (a.latestMessage?.createdAt ?? "") ? -1 : 1))
+        .sort((a, b) => ((b.latestMessage?.createdAt ?? "") > (a.latestMessage?.createdAt ?? "") ? 1 : -1))
         .slice(0, limit);
 
       await ctx.send.send(ctx, { type: "vibes.diy.res-list-dm-threads", status: "ok", items: sorted } satisfies ResListDmThreads);
