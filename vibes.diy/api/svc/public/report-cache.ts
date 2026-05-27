@@ -41,7 +41,9 @@ export async function cachedReport<S extends Type<unknown>>(
   compute: () => Promise<S["infer"]>
 ): Promise<S["infer"]> {
   const url = `https://${CACHE_HOST}/${encodeURIComponent(key)}`;
+  console.log("report-cache: match start", key);
   const hit = await vctx.cache.match(url);
+  console.log("report-cache: match done, hit:", hit !== undefined);
   if (hit !== undefined) {
     const raw: unknown = await hit.json();
     const parsed = schema(raw);
@@ -51,7 +53,9 @@ export async function cachedReport<S extends Type<unknown>>(
       return parsed;
     }
   }
+  console.log("report-cache: computing");
   const data = await compute();
+  console.log("report-cache: compute done");
   // Fire-and-forget: do not await cache.put — in DO context the await can hang
   // indefinitely on first write. The response is already computed; background
   // the write so subsequent requests on this colo hit the cache.
@@ -66,5 +70,6 @@ export async function cachedReport<S extends Type<unknown>>(
       })
     )
     .catch((e: unknown) => console.error("report-cache: put failed", e));
+  console.log("report-cache: put queued");
   return data;
 }
