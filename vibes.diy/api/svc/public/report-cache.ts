@@ -52,14 +52,19 @@ export async function cachedReport<S extends Type<unknown>>(
     }
   }
   const data = await compute();
-  await vctx.cache.put(
-    url,
-    new Response(JSON.stringify(data), {
-      headers: {
-        "Cache-Control": `max-age=${CACHE_TTL_SECONDS}`,
-        "Content-Type": "application/json",
-      },
-    })
-  );
+  // Fire-and-forget: do not await cache.put — in DO context the await can hang
+  // indefinitely on first write. The response is already computed; background
+  // the write so subsequent requests on this colo hit the cache.
+  void vctx.cache
+    .put(
+      url,
+      new Response(JSON.stringify(data), {
+        headers: {
+          "Cache-Control": `max-age=${CACHE_TTL_SECONDS}`,
+          "Content-Type": "application/json",
+        },
+      })
+    )
+    .catch((e: unknown) => console.error("report-cache: put failed", e));
   return data;
 }
