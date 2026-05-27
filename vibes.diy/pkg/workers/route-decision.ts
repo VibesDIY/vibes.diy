@@ -14,6 +14,7 @@ export type Route =
   | "static-asset" // /assets/* (Vite hashed) — must NOT swallow /assets root
   | "capi-relay" // POST|OPTIONS /capi/engaged → Meta CAPI EngagedVisit relay
   | "capi-complete-registration" // POST|OPTIONS /capi/complete-registration → Meta CAPI CompleteRegistration relay
+  | "clerk-webhook" // POST /webhooks/clerk → Svix-verified Clerk event handler
   | "legacy-vibe-redirect" // /vibe/<slug> (exactly two segments) → 301 to /vibe/og/<slug>
   | "ssr"; // everything else → React Router
 
@@ -80,6 +81,10 @@ export function routeDecision(req: RouteInput): Route {
 
   if (pathname === "/capi/complete-registration" && (method === "POST" || method === "OPTIONS")) {
     return "capi-complete-registration";
+  }
+
+  if (pathname === "/webhooks/clerk" && method === "POST") {
+    return "clerk-webhook";
   }
 
   // Legacy two-segment vibe paths: /vibe/<slug> → redirect to /vibe/og/<slug>.

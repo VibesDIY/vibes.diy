@@ -84,6 +84,9 @@ inputs:
   DISCORD_WEBHOOK_URL:
     description: "Discord webhook URL for site-activity notifications (queue worker)"
     required: false
+  CLERK_WEBHOOK_SECRET:
+    description: "Svix signing secret for verifying Clerk webhook payloads (POST /webhooks/clerk)"
+    required: false
   META_CAPI_TOKEN:
     description: "Meta Conversions API token for server-side pixel events"
     required: false
@@ -197,6 +200,7 @@ runs:
         MAX_APP_SLUG_PER_USER_ID: ${{ inputs.MAX_APP_SLUG_PER_USER_ID }}
         PRODIA_TOKEN: ${{ inputs.PRODIA_TOKEN }}
         DISCORD_WEBHOOK_URL: ${{ inputs.DISCORD_WEBHOOK_URL }}
+        CLERK_WEBHOOK_SECRET: ${{ inputs.CLERK_WEBHOOK_SECRET }}
       run: |
         pnpm exec core-cli writeEnv --out - --json \
           --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
@@ -219,7 +223,8 @@ runs:
           --fromEnv NEON_DATABASE_URL \
           --fromEnv MAX_APP_SLUG_PER_USER_ID \
           --fromEnv PRODIA_TOKEN \
-          --fromEnv DISCORD_WEBHOOK_URL | \
+          --fromEnv DISCORD_WEBHOOK_URL \
+          --fromEnv CLERK_WEBHOOK_SECRET | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}}
 

@@ -18,6 +18,7 @@ import { CFEnv } from "@vibes.diy/api-types";
 import { routeDecision } from "./route-decision.js";
 import { sendCapiPageView, sendCapiViewContent } from "./meta-capi.js";
 import { sendCapiCompleteRegistration } from "./capi-complete-registration.js";
+import { verifyClerkWebhookSignature, postSignupToDiscord, ClerkUserCreatedData } from "./clerk-webhook.js";
 import { getVibeOgTitle, parseVibePathname } from "@vibes.diy/api-svc/intern/get-vibe-og-title.js";
 
 export { ChatSessions } from "./chat-sessions.js";
@@ -222,6 +223,37 @@ export default {
       return new Response(JSON.stringify({ type: "ok" }), {
         status: 200,
         headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://vibes.diy" },
+      }) as unknown as CFResponse;
+    }
+
+    if (route === "clerk-webhook") {
+      if (env.CLERK_WEBHOOK_SECRET === undefined) {
+        return new Response(JSON.stringify({ type: "error", message: "not configured" }), { status: 503 }) as unknown as CFResponse;
+      }
+      const body = await request.text();
+      const svixId = request.headers.get("svix-id") ?? "";
+      const svixTimestamp = request.headers.get("svix-timestamp") ?? "";
+      const svixSignature = request.headers.get("svix-signature") ?? "";
+      const rEvt = await verifyClerkWebhookSignature({
+        body,
+        svixId,
+        svixTimestamp,
+        svixSignature,
+        secret: env.CLERK_WEBHOOK_SECRET,
+      });
+      if (rEvt.isErr()) {
+        console.error("[clerk-webhook] verification failed:", rEvt.Err().message);
+        return new Response(JSON.stringify({ type: "error", message: "invalid signature" }), {
+          status: 401,
+        }) as unknown as CFResponse;
+      }
+      const evt = rEvt.Ok() as { type?: string; data?: ClerkUserCreatedData };
+      if (evt.type === "user.created" && evt.data !== undefined && env.DISCORD_WEBHOOK_URL !== undefined) {
+        ctx.waitUntil(postSignupToDiscord(env.DISCORD_WEBHOOK_URL, evt.data));
+      }
+      return new Response(JSON.stringify({ type: "ok" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
       }) as unknown as CFResponse;
     }
 
