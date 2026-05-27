@@ -28,3 +28,5 @@ vibes.diy/pkg/slack/serve/render.ts:72:  const transformed = new TextDecoder().d
 vibes.diy/pkg/slack/serve/vibes-diy-srv.ts:96:    const url = new URL(req.url);
 vibes.diy/pkg/slack/worker-sucrase.ts:55:      const cacheUrl = new URL(request.url);
 vibes.diy/pkg/slack/worker-sucrase.ts:5:  const encoder = new TextEncoder();
+# CF Worker module: no SuperThis context available; new TextEncoder() is correct here
+vibes.diy/pkg/workers/clerk-webhook.ts:3:const enc = new TextEncoder();
