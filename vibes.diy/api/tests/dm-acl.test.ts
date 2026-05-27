@@ -237,7 +237,7 @@ describe("listDmThreads", { timeout: 20000 }, () => {
     expect(aliceItems.length).toBe(1);
     expect(aliceItems[0].channelUserSlug).toBe(channel);
     expect(aliceItems[0].otherUserSlug).toBe(bobUserSlug);
-    expect(aliceItems[0].unreadCount).toBe(1); // seq=1, no read record → unread=1
+    expect(aliceItems[0].unreadCount).toBe(0); // sender auto-marked read on putDoc
 
     // Bob lists — should see 1 thread, 1 unread (hasn't read)
     const bobResult = await bobApi.listDmThreads({});
