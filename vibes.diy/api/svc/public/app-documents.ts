@@ -206,12 +206,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
               { userSlug: participants[1], channelUserSlug: req.userSlug },
             ])
             .onConflictDoNothing();
-        }
-      }
 
-      if (isDirectChannel(req.userSlug)) {
-        const participants = directChannelParticipants(req.userSlug);
-        if (participants) {
           // Look up which participant slug belongs to the sender
           const t_usb = vctx.sql.tables.userSlugBinding;
           const senderRow = await vctx.sql.db
@@ -706,50 +701,57 @@ export const listDmThreadsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqLi
       const t_reads = vctx.sql.tables.directChannelReads;
       const limit = req.pager?.limit ?? 50;
 
-      const items: DmThreadItem[] = await Promise.all(
-        channelRows.map(async ({ channelUserSlug, userSlug: myUserSlug }) => {
-          const otherUserSlug = (directChannelParticipants(channelUserSlug) ?? []).find((h) => h !== myUserSlug) ?? "";
+      const channelSlugs = channelRows.map((r) => r.channelUserSlug);
 
-          const latestDoc = await vctx.sql.db
-            .select()
-            .from(t_docs)
-            .where(
-              and(
-                eq(t_docs.userSlug, channelUserSlug),
-                eq(t_docs.appSlug, "dm"),
-                eq(t_docs.dbName, "messages"),
-                eq(t_docs.deleted, 0)
-              )
-            )
-            .orderBy(desc(t_docs.seq))
-            .limit(1)
-            .then((r) => r[0]);
+      // Batch query 1: latest doc per channel using subquery (avoids N+1)
+      const subq = vctx.sql.db
+        .select({ userSlug: t_docs.userSlug, maxSeq: max(t_docs.seq).as("maxSeq") })
+        .from(t_docs)
+        .where(
+          and(
+            inArray(t_docs.userSlug, channelSlugs),
+            eq(t_docs.appSlug, "dm"),
+            eq(t_docs.dbName, "messages"),
+            eq(t_docs.deleted, 0)
+          )
+        )
+        .groupBy(t_docs.userSlug)
+        .as("latest");
 
-          const readRow = await vctx.sql.db
-            .select({ lastSeenSeq: t_reads.lastSeenSeq })
-            .from(t_reads)
-            .where(and(eq(t_reads.channelUserSlug, channelUserSlug), eq(t_reads.userSlug, myUserSlug)))
-            .then((r) => r[0]);
+      const latestDocs = await vctx.sql.db
+        .select()
+        .from(t_docs)
+        .innerJoin(subq, and(eq(t_docs.userSlug, subq.userSlug), eq(t_docs.seq, subq.maxSeq)));
 
-          const latestSeq = latestDoc?.seq ?? 0;
-          const lastSeen = readRow?.lastSeenSeq ?? 0;
-          const unreadCount = Math.max(0, latestSeq - lastSeen);
+      const latestDocByChannel = new Map(latestDocs.map((row) => [row.AppDocuments.userSlug, row.AppDocuments]));
 
-          return {
-            channelUserSlug,
-            otherUserSlug,
-            latestSeq,
-            unreadCount,
-            latestMessage: latestDoc
-              ? {
-                  body: String((latestDoc.data as { body?: unknown }).body ?? ""),
-                  createdAt: latestDoc.created,
-                  authorUserSlug: String((latestDoc.data as { authorUserSlug?: unknown }).authorUserSlug ?? ""),
-                }
-              : undefined,
-          };
-        })
-      );
+      // Batch query 2: read rows for all channels at once
+      const readRows = await vctx.sql.db
+        .select({ channelUserSlug: t_reads.channelUserSlug, lastSeenSeq: t_reads.lastSeenSeq })
+        .from(t_reads)
+        .where(and(inArray(t_reads.channelUserSlug, channelSlugs), inArray(t_reads.userSlug, myUserSlugs)));
+      const lastSeenByChannel = new Map(readRows.map((r) => [r.channelUserSlug, r.lastSeenSeq]));
+
+      const items: DmThreadItem[] = channelRows.map(({ channelUserSlug, userSlug: mySlug }) => {
+        const otherUserSlug = (directChannelParticipants(channelUserSlug) ?? []).find((h) => h !== mySlug) ?? "";
+        const latestDoc = latestDocByChannel.get(channelUserSlug);
+        const latestSeq = latestDoc?.seq ?? 0;
+        const lastSeen = lastSeenByChannel.get(channelUserSlug) ?? 0;
+        const unreadCount = Math.max(0, latestSeq - lastSeen);
+        return {
+          channelUserSlug,
+          otherUserSlug,
+          latestSeq,
+          unreadCount,
+          latestMessage: latestDoc
+            ? {
+                body: String((latestDoc.data as { body?: unknown }).body ?? ""),
+                createdAt: latestDoc.created,
+                authorUserSlug: String((latestDoc.data as { authorUserSlug?: unknown }).authorUserSlug ?? ""),
+              }
+            : undefined,
+        };
+      });
 
       const sorted = items
         .sort((a, b) => ((b.latestMessage?.createdAt ?? "") > (a.latestMessage?.createdAt ?? "") ? 1 : -1))
@@ -793,7 +795,11 @@ export const markDmReadEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqMarkD
         .from(t_usb)
         .where(and(eq(t_usb.userId, userId), inArray(t_usb.userSlug, participants)))
         .then((r) => r[0]);
-      const myUserSlug = slugRow?.userSlug ?? "";
+      if (!slugRow) {
+        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
+      }
+      const myUserSlug = slugRow.userSlug;
 
       const t_reads = vctx.sql.tables.directChannelReads;
       await vctx.sql.db
