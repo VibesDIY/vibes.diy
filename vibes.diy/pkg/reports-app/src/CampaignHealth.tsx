@@ -250,6 +250,10 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               ],
               ["Cost/Click", "Spend ÷ clicks (CPC). Cost of getting someone to click the ad and land on good.vibes.diy."],
               [
+                "CTA Clicks",
+                "Outbound clicks from good.vibes.diy → vibes.diy, counted from the Referer header in our server logs (all-time). Bridges the gap between Site Visits (good.vibes.diy loads) and vibes.diy arrivals. Only shown when Meta reports a destination URL on the campaign.",
+              ],
+              [
                 "Site Visits",
                 "Meta landing_page_view action — browser pixel firing on good.vibes.diy when someone clicks an ad and the landing page loads. Step 1: Ad → good.vibes.diy (counted here). The Pixel Health section below shows the vibes.diy CAPI PageViews (step 2, after the CTA click).",
               ],
@@ -278,6 +282,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Click</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Spend</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Reach</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>CTA Clicks</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Site Visits</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Visit</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Content Views</th>
@@ -312,6 +317,9 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.cpc))}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.spend))}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{Number(row.reach).toLocaleString()}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
+                        {row.ctaClicks !== undefined ? (row.ctaClicks > 0 ? row.ctaClicks.toLocaleString() : "0") : "—"}
+                      </td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{lpv(row).toLocaleString() || "—"}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cplv)}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
