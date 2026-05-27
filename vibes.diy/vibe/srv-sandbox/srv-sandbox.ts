@@ -59,6 +59,9 @@ import {
   ReqVibeWhoAmI,
   ResVibeWhoAmI,
   EvtVibeViewerChanged,
+  type ReqVibeUpdateAvatarCid,
+  type ResVibeUpdateAvatarCid,
+  isReqVibeUpdateAvatarCid,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -813,6 +816,41 @@ function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+function vibeUpdateAvatarCid(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.updateAvatarCid",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqVibeUpdateAvatarCid(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibeUpdateAvatarCid, unknown>): Promise<Result<EventoResultType>> => {
+      const { tid, cid } = ctx.validated;
+      const rRes = await vibeDiyApi.ensureUserSettings({
+        settings: [{ type: "profile", avatarCid: cid }],
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid,
+          type: "vibe.res.updateAvatarCid",
+          status: "error",
+          message: rRes.Err().message,
+        } satisfies ResVibeUpdateAvatarCid);
+        return Result.Ok(EventoResult.Stop);
+      }
+      await ctx.send.send(ctx, {
+        tid,
+        type: "vibe.res.updateAvatarCid",
+        status: "ok",
+      } satisfies ResVibeUpdateAvatarCid);
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
@@ -947,6 +985,7 @@ export class vibesDiySrvSandbox implements Disposable {
         vibeListDbNames(this),
         vibePutAsset(this),
         vibeWhoAmI(this),
+        vibeUpdateAvatarCid(this),
       ]
     );
     this.args.eventListeners.addEventListener("message", this.handleMessage);
