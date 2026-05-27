@@ -11,20 +11,12 @@ function lpv(row: ResReportCampaignHealthCampaignRow): number {
   return actionVal(row, "landing_page_view");
 }
 
-function conversions(row: ResReportCampaignHealthCampaignRow): number {
-  const types = [
-    "purchase",
-    "offsite_conversion.fb_pixel_purchase",
-    "lead",
-    "offsite_conversion.fb_pixel_lead",
-    "complete_registration",
-    "offsite_conversion.fb_pixel_complete_registration",
-  ];
-  return types.reduce((sum, t) => sum + actionVal(row, t), 0);
+function contentViews(row: ResReportCampaignHealthCampaignRow): number {
+  return actionVal(row, "view_content") + actionVal(row, "offsite_conversion.fb_pixel_view_content");
 }
 
-function engagements(row: ResReportCampaignHealthCampaignRow): number {
-  return actionVal(row, "post_engagement");
+function registrations(row: ResReportCampaignHealthCampaignRow): number {
+  return actionVal(row, "complete_registration") + actionVal(row, "offsite_conversion.fb_pixel_complete_registration");
 }
 
 function costPerLpv(row: ResReportCampaignHealthCampaignRow): number {
@@ -32,9 +24,9 @@ function costPerLpv(row: ResReportCampaignHealthCampaignRow): number {
   return l > 0 ? Number(row.spend) / l : Infinity;
 }
 
-function costPerConv(row: ResReportCampaignHealthCampaignRow): number {
-  const c = conversions(row);
-  return c > 0 ? Number(row.spend) / c : Infinity;
+function costPerReg(row: ResReportCampaignHealthCampaignRow): number {
+  const r = registrations(row);
+  return r > 0 ? Number(row.spend) / r : Infinity;
 }
 
 function rowBg(cplv: number): string {
@@ -138,18 +130,18 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Click</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Spend</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Reach</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Engagements</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Site Visits</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Visit</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Conversions</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Conv</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Content Views</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Registrations</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Reg</th>
                 </tr>
               </thead>
               <tbody>
                 {d.ranked.map((row, i) => {
                   const cplv = costPerLpv(row);
-                  const conv = conversions(row);
-                  const cpc = costPerConv(row);
+                  const reg = registrations(row);
+                  const cpr = costPerReg(row);
                   return (
                     <tr
                       key={row.campaign_id}
@@ -170,11 +162,13 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.cpc))}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.spend))}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{Number(row.reach).toLocaleString()}</td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{engagements(row).toLocaleString() || "—"}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{lpv(row).toLocaleString() || "—"}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cplv)}</td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{conv > 0 ? conv.toLocaleString() : "—"}</td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cpc)}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
+                        {contentViews(row) > 0 ? contentViews(row).toLocaleString() : "—"}
+                      </td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{reg > 0 ? reg.toLocaleString() : "—"}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cpr)}</td>
                     </tr>
                   );
                 })}
