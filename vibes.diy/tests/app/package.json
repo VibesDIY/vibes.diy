@@ -54,7 +54,7 @@
     "@vibes.diy/api-types": "workspace:*",
     "@vitest/browser": "~4.1.7",
     "@vitest/browser-playwright": "~4.1.7",
-    "vite": "7.3.2",
+    "vite": "7.3.3",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "~4.1.7"
   },
