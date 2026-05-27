@@ -1,5 +1,13 @@
 import { BuildURI, Result } from "@adviser/cement";
-import { EvtCommentPosted, EvtInviteGrant, EvtNewFsId, EvtRequestGrant, ForeignInfo, Role } from "@vibes.diy/api-types";
+import {
+  EvtCommentPosted,
+  EvtDmReceived,
+  EvtInviteGrant,
+  EvtNewFsId,
+  EvtRequestGrant,
+  ForeignInfo,
+  Role,
+} from "@vibes.diy/api-types";
 import { DiscordWebhookBody, QueueCtx } from "../queue-ctx.js";
 
 const DISCORD_EMBED_COLOR = 11184810;
@@ -104,6 +112,23 @@ export function buildRequestApprovedEmbed(vctx: QueueCtx, payload: EvtRequestGra
         fields: [
           { name: "Member", value: foreignLabel(payload.grant.foreignInfo), inline: true },
           { name: "Role", value: role, inline: true },
+        ],
+      },
+    ],
+  };
+}
+
+export function buildDmEmbed(vctx: QueueCtx, payload: EvtDmReceived): DiscordWebhookBody {
+  return {
+    content: `💬 New DM from **${payload.senderUserSlug}** → **${payload.recipientUserSlug}**`,
+    embeds: [
+      {
+        title: `${payload.senderUserSlug} → ${payload.recipientUserSlug}`,
+        color: DISCORD_EMBED_COLOR,
+        fields: [
+          { name: "From", value: payload.senderUserSlug, inline: true },
+          { name: "To", value: payload.recipientUserSlug, inline: true },
+          ...(payload.bodySnippet ? [{ name: "Preview", value: payload.bodySnippet, inline: false }] : []),
         ],
       },
     ],
