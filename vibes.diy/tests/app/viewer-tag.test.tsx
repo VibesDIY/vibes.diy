@@ -54,9 +54,9 @@ describe("ViewerTag", () => {
     expect(document.querySelector('input[type="file"]')).toBeTruthy();
   });
 
-  it("does not show edit affordance when viewer is anonymous", () => {
+  it("shows a sign-in button when viewer is anonymous and no props given", () => {
     renderViewerTag(undefined);
-    // No viewer → no edit ring even with no userSlug prop
+    expect(screen.getByText("Sign in")).toBeTruthy();
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 

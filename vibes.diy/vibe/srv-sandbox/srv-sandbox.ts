@@ -62,6 +62,8 @@ import {
   type ReqVibeUpdateAvatarCid,
   type ResVibeUpdateAvatarCid,
   isReqVibeUpdateAvatarCid,
+  isReqVibeLogin,
+  type ReqVibeLogin,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -111,6 +113,9 @@ interface VibesDiySrvSandboxArgs {
   // Optional injected fetcher — defaults to globalThis.fetch. Tests pass
   // a fake here to avoid mocking globals.
   fetch?: typeof fetch;
+  // Called when the sandboxed app fires vibe.req.login. Opens the platform
+  // sign-in UI. Optional: if absent the request is silently ignored.
+  openSignIn?: () => void;
   // Stage C: hook the asset-host cookie bridge into the iframe boot
   // handshake. Called BEFORE we post vibe.evt.runtime.ack — the iframe
   // gates every RPC on that ack, so any meta.url the iframe ever sees
@@ -851,6 +856,23 @@ function vibeUpdateAvatarCid(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+function vibeRequestLogin(sandbox: vibesDiySrvSandbox): EventoHandler {
+  return {
+    hash: "vibe.requestLogin",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqVibeLogin(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (_ctx: HandleTriggerCtx<MessageEvent, ReqVibeLogin, unknown>): Promise<Result<EventoResultType>> => {
+      sandbox.args.openSignIn?.();
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
@@ -986,6 +1008,7 @@ export class vibesDiySrvSandbox implements Disposable {
         vibePutAsset(this),
         vibeWhoAmI(this),
         vibeUpdateAvatarCid(this),
+        vibeRequestLogin(this),
       ]
     );
     this.args.eventListeners.addEventListener("message", this.handleMessage);

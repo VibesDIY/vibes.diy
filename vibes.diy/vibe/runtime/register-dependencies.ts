@@ -42,6 +42,7 @@ import {
   type ReqVibeUpdateAvatarCid,
   type ResVibeUpdateAvatarCid,
   isResVibeUpdateAvatarCid,
+  type ReqVibeLogin,
 } from "@vibes.diy/vibe-types";
 import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, OnFuncReturn, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
@@ -338,6 +339,13 @@ export class VibeSandboxApi {
       },
       { wait: isResVibePutAsset, idleTimeout: 10000 }
     );
+  }
+
+  requestLogin(): void {
+    const tid = crypto.randomUUID();
+    void this.ackReady.asPromise().then(() => {
+      this.svc.postMessage({ tid, type: "vibe.req.login", ...this.svc.vibeApp } satisfies ReqVibeLogin, "*");
+    });
   }
 
   updateAvatarCid(cid: string): Promise<Result<ResVibeUpdateAvatarCid>> {

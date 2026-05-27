@@ -126,4 +126,6 @@ const { viewer, ViewerTag } = useViewer();
 
 **Undefined safety.** If `userSlug` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring. This prevents a broken data source from accidentally granting photo-edit access to an arbitrary pill.
 
+**Anonymous safety.** `ViewerTag` is always safe to call regardless of login state — it never throws. When the viewer is anonymous and no `userSlug` prop is given, it renders a "Sign in" button that opens the platform login UI when clicked. Wrap it in a `{viewer && <ViewerTag />}` guard if you want to suppress it entirely for anonymous users.
+
 Use `<ViewerTag />` (no props) for the current user and `<ViewerTag userSlug={...} />` for others. That's the whole API.

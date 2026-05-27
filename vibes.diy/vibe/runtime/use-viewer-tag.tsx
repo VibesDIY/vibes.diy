@@ -21,6 +21,31 @@ export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.
     return <span style={{ opacity: 0.4, fontStyle: "italic", fontSize: 13 }}>no user handle provided</span>;
   }
 
+  // Anonymous viewer with no explicit slug prop: show a login button.
+  const isAnonymousSelf = _viewer === null && !("userSlug" in props) && !("user" in props);
+  if (isAnonymousSelf) {
+    return (
+      <button
+        onClick={() => getRegisteredVibeApi()?.requestLogin()}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          background: "rgba(99,102,241,0.15)",
+          border: "1px solid rgba(99,102,241,0.4)",
+          borderRadius: 999,
+          padding: "5px 14px",
+          fontSize: 14,
+          color: "#a5b4fc",
+          cursor: "pointer",
+          fontWeight: 500,
+        }}
+      >
+        Sign in
+      </button>
+    );
+  }
+
   const resolvedSlug = slugFromProp ?? _viewer?.userSlug ?? "";
   const resolvedAvatarUrl =
     "user" in props && props.user?.avatarUrl

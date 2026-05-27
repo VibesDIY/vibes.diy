@@ -601,6 +601,19 @@ export function isResVibeUpdateAvatarCid(x: unknown): x is ResVibeUpdateAvatarCi
   return !(ResVibeUpdateAvatarCid(x) instanceof type.errors);
 }
 
+// Sandbox → host: open the platform login UI. Fire-and-forget — no response
+// expected; the viewer identity update arrives via vibe.evt.viewerChanged once
+// the user completes login.
+export const ReqVibeLogin = type({
+  type: "'vibe.req.login'",
+}).and(Base);
+
+export type ReqVibeLogin = typeof ReqVibeLogin.infer;
+
+export function isReqVibeLogin(x: unknown): x is ReqVibeLogin {
+  return !(ReqVibeLogin(x) instanceof type.errors);
+}
+
 // Event: identity changed (login/logout, future persona switch). Same
 // shape as the response minus tid semantics — no request to correlate.
 export const EvtVibeViewerChanged = type({

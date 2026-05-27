@@ -234,6 +234,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     // dashApi: realCtx.dashApi as ReturnType<typeof clerkDashApi>,
     vibeDiyApi: realCtx.vibeDiyApi,
     eventListeners: globalThis.window,
+    openSignIn: () => clerk.openSignIn(),
     // Stage C: bridge the asset-host cookie before the iframe gets ack.
     // Reuses the same module-level cache as the Clerk listener — if login
     // already primed the session, this resolves instantly.
