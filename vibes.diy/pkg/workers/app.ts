@@ -18,6 +18,7 @@ import { CFEnv } from "@vibes.diy/api-types";
 import { routeDecision } from "./route-decision.js";
 import { sendCapiPageView, sendCapiViewContent } from "./meta-capi.js";
 import { sendCapiCompleteRegistration } from "./capi-complete-registration.js";
+import { getVibeOgTitle, parseVibePathname } from "@vibes.diy/api-svc/intern/get-vibe-og-title.js";
 
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
@@ -285,15 +286,24 @@ export default {
       }
     }
 
+    // For /vibe/:userSlug/:appSlug routes, look up the real app title so SSR
+    // can embed it in OG/Twitter meta tags before the page reaches crawlers.
+    const vibeSlugPair = parseVibePathname(url.pathname);
+    const vibeOgTitle =
+      vibeSlugPair !== undefined
+        ? await getVibeOgTitle(cfCtx.vibesCtx, vibeSlugPair).then((r) => (r.isOk() ? r.Ok() : undefined))
+        : undefined;
+
     // Delegate to React Router for SSR
     const ssrResponse = (await getRequestHandler()(request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0], {
       vibeDiyAppParams: cfCtx.vibesCtx.params,
+      vibeOgTitle,
     })) as unknown as CFResponse;
 
     // Log missing vibe paths so the ETL pipeline can surface them for reanimation triage.
     // Only log /vibe/<user>/<slug> (and deeper) paths — the two-segment legacy form is
     // already handled by the 301 redirect above and never reaches SSR.
-    if (ssrResponse.status === 404 && /^\/vibe\/[^/]+\/[^/]+/.test(url.pathname)) {
+    if (ssrResponse.status === 404 && vibeSlugPair !== undefined) {
       console.log("[missing-vibe]", url.pathname);
     }
 

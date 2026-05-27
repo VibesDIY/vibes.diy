@@ -23,14 +23,24 @@ import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
 // first byte of HTML. Without this, the browser can't start fetching the
 // iframe document until React has hydrated and a useEffect has run — adding
 // hundreds of ms to perceived load time on viewer pages.
+interface VibeLoaderCtx {
+  readonly vibeDiyAppParams: VibesFPApiParameters;
+  readonly vibeOgTitle?: string;
+}
+
+interface VibeLoaderData {
+  readonly iframeUrl: string | undefined;
+  readonly vibeOgTitle: string | undefined;
+}
+
 export async function loader(loaderCtx: {
   params: Record<string, string | undefined>;
   request: Request;
-  context: { vibeDiyAppParams: VibesFPApiParameters };
-}): Promise<{ iframeUrl: string | undefined }> {
+  context: VibeLoaderCtx;
+}): Promise<VibeLoaderData> {
   const { userSlug, appSlug, fsId } = loaderCtx.params;
   if (!userSlug || !appSlug) {
-    return { iframeUrl: undefined };
+    return { iframeUrl: undefined, vibeOgTitle: undefined };
   }
   const reqUrl = URI.from(loaderCtx.request.url);
   const protocol = reqUrl.protocol === "https:" ? "https" : "http";
@@ -43,15 +53,23 @@ export async function loader(loaderCtx: {
     port,
   });
   const iframeUrl = BuildURI.from(baseUrl).setParam("npmUrl", params.pkgRepos.workspace).toString();
-  return { iframeUrl };
+  return { iframeUrl, vibeOgTitle: loaderCtx.context.vibeOgTitle };
 }
 
-export function meta({ params, matches }: { params: Record<string, string>; matches: { data: unknown }[] }) {
+export function meta({
+  data,
+  params,
+  matches,
+}: {
+  data: VibeLoaderData;
+  params: Record<string, string>;
+  matches: { data: unknown }[];
+}) {
   const { userSlug, appSlug } = params;
   const rootData = matches[0]?.data as { env?: { VIBES_SVC_HOSTNAME_BASE?: string } } | undefined;
   const hostnameBase = rootData?.env?.VIBES_SVC_HOSTNAME_BASE?.replace(/^\./, "") ?? "vibes.diy";
   const imageUrl = `https://${appSlug}--${userSlug}.${hostnameBase}/screenshot.jpg`;
-  const title = appSlug ?? "Vibe";
+  const title = data?.vibeOgTitle ?? appSlug ?? "Vibe";
 
   return [
     { title: `${title} - vibes.diy` },
