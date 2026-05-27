@@ -41,25 +41,6 @@ export const COMMENTS_DEFAULT_ACL: DbAcl = {
   delete: ["members"],
 };
 
-export const DIRECT_CHANNEL_PREFIX = "_d.";
-
-export function isDirectChannel(userSlug: string): boolean {
-  return userSlug.startsWith(DIRECT_CHANNEL_PREFIX);
-}
-
-export function directChannelUserSlug(a: string, b: string): string {
-  const [p, q] = [a, b].sort();
-  return `${DIRECT_CHANNEL_PREFIX}${p}.${q}`;
-}
-
-export function directChannelParticipants(channelUserSlug: string): [string, string] | undefined {
-  if (!channelUserSlug.startsWith(DIRECT_CHANNEL_PREFIX)) return undefined;
-  const rest = channelUserSlug.slice(DIRECT_CHANNEL_PREFIX.length);
-  const parts = rest.split(".");
-  if (parts.length !== 2) return undefined;
-  return [parts[0], parts[1]];
-}
-
 // ── ActiveEntry variant — one row per (dbName) inside AppSettings ──
 
 export const ActiveDbAcl = type({
