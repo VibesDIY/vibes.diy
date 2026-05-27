@@ -205,7 +205,9 @@ export const reportCampaignHealthEvento: EventoHandler<
         return Result.Ok(EventoResult.Continue);
       }
 
+      console.log("campaign-health: calling send");
       await ctx.send.send(ctx, rRes.Ok());
+      console.log("campaign-health: send complete");
       return Result.Ok(EventoResult.Continue);
     }
   ),
