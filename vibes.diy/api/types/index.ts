@@ -26,6 +26,7 @@ export * from "./members.js";
 export * from "./memberships.js";
 export * from "./asset.js";
 export * from "./report.js";
+export * from "./direct-channel.js";
 
 export interface FetchOkResult {
   type: "fetch.ok";
