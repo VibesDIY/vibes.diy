@@ -162,10 +162,13 @@ export const resReportCampaignHealthCampaignRow = type({
   impressions: "string",
   clicks: "string",
   spend: "string",
-  ctr: "string",
-  cpc: "string",
-  reach: "string",
+  "ctr?": "string",
+  "cpc?": "string",
+  "reach?": "string",
   "actions?": type({ action_type: "string", value: "string" }).array(),
+  // Meta API always returns these date range fields on insight rows
+  "date_start?": "string",
+  "date_stop?": "string",
 });
 export type ResReportCampaignHealthCampaignRow = typeof resReportCampaignHealthCampaignRow.infer;
 
@@ -220,5 +223,10 @@ export const resReportCampaignHealth = type({
 });
 export type ResReportCampaignHealth = typeof resReportCampaignHealth.infer;
 export function isResReportCampaignHealth(obj: unknown): obj is ResReportCampaignHealth {
-  return !(resReportCampaignHealth(obj) instanceof type.errors);
+  const result = resReportCampaignHealth(obj);
+  if (result instanceof type.errors) {
+    console.log("[isResReportCampaignHealth] validation FAILED:", result.summary);
+    return false;
+  }
+  return true;
 }

@@ -419,14 +419,50 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       validate: async (trigger: ValidateTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
         const msg = msgBase(trigger.enRequest);
         if (msg instanceof type.errors) {
+          console.log(
+            "[request:validate] msgBase failed:",
+            msg.summary,
+            "enRequest=",
+            JSON.stringify(trigger.enRequest)?.slice(0, 120)
+          );
           return Result.Ok(Option.None());
         }
-        if (msg.tid === tid && (msgParam.resMatch(msg.payload) || isResError(msg.payload))) {
+        const tidMatch = msg.tid === tid;
+        const resMatch = msgParam.resMatch(msg.payload);
+        const isErr = isResError(msg.payload);
+        console.log(
+          "[request:validate] tid match=",
+          tidMatch,
+          "resMatch=",
+          resMatch,
+          "isResError=",
+          isErr,
+          "payload.type=",
+          (msg.payload as Record<string, unknown>)?.type,
+          "tid=",
+          msg.tid
+        );
+        if (tidMatch && (resMatch || isErr)) {
           return Result.Ok(Option.Some(trigger.enRequest));
+        }
+        // Fail fast: tid matched but the response shape failed validation.
+        // A schema miss on our own response type should never silently time out.
+        if (tidMatch && !resMatch && !isErr) {
+          const payloadType = (msg.payload as Record<string, unknown>)?.type;
+          if (typeof payloadType === "string" && payloadType.startsWith("vibes.diy.res-")) {
+            waitForResponse.resolve(
+              Result.Err<S, VibesDiyError>(mkResError(`Response schema mismatch for ${payloadType}`, "response-schema-error"))
+            );
+            return Result.Ok(Option.None());
+          }
         }
         return Result.Ok(Option.None());
       },
       handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
+        console.log(
+          "[request:handle] resolving waitForResponse, payload.type=",
+          (trigger.validated.payload as Record<string, unknown>)?.type
+        );
         if (isResError(trigger.validated.payload)) {
           const e = trigger.validated.payload;
           waitForResponse.resolve(Result.Err<S, VibesDiyError>(mkResError(e.error.message, e.error.code)));
@@ -452,15 +488,20 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     };
     resetIdleTimer();
 
+    console.log("[request] starting, tid=", tid);
     const unreg = conn.onMessage((event) => {
       // Any incoming message — matching or not — keeps the request alive.
       resetIdleTimer();
-      evento.trigger({
+      console.log("[request:onMessage] firing evento.trigger, tid=", tid);
+      const triggerPromise = evento.trigger({
         request: event,
         send: (async (_ctx: TriggerCtx<W3CWebSocketEvent, unknown, unknown>, data: unknown) => {
           const res = await this.send(data as Parameters<this["send"]>[0], { tid });
           return res;
         }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
+      });
+      Promise.resolve(triggerPromise).catch((err: unknown) => {
+        console.error("[request:onMessage] evento.trigger threw:", err);
       });
     });
     const unregClose = conn.onClose(() => {
