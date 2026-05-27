@@ -39,6 +39,9 @@ import {
   ReqVibeWhoAmI,
   ResVibeWhoAmI,
   isResVibeWhoAmI,
+  type ReqVibeUpdateAvatarCid,
+  type ResVibeUpdateAvatarCid,
+  isResVibeUpdateAvatarCid,
 } from "@vibes.diy/vibe-types";
 import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, OnFuncReturn, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
@@ -337,6 +340,20 @@ export class VibeSandboxApi {
     );
   }
 
+  /** Persist a freshly-uploaded avatar CID to the viewer's platform profile.
+   *  The host validates that the sandbox userSlug matches the authenticated
+   *  viewer before writing to user settings. */
+  updateAvatarCid(cid: string): Promise<Result<ResVibeUpdateAvatarCid>> {
+    return this.request<ReqVibeUpdateAvatarCid, ResVibeUpdateAvatarCid>(
+      {
+        type: "vibe.req.updateAvatarCid",
+        ...this.svc.vibeApp,
+        cid,
+      },
+      { wait: isResVibeUpdateAvatarCid, timeout: 10000 }
+    );
+  }
+
   readonly tokenCache = new KeyedResolvOnce();
   fetchCloudToken(req: Omit<ReqFetchCloudToken, "type" | "tid">): Promise<Result<ResFetchCloudToken>> {
     const key = `vibe-${req.data.dbName}-${req.data.userSlug}-${req.data.appSlug}`;
@@ -366,6 +383,14 @@ export class VibeSandboxApi {
   }
 }
 
+let _registeredApi: VibeSandboxApi | undefined;
+
+/** Returns the VibeSandboxApi instance registered by the current page's
+ *  registerDependencies call. Undefined before registerDependencies runs. */
+export function getRegisteredVibeApi(): VibeSandboxApi | undefined {
+  return _registeredApi;
+}
+
 export const vibeApi = Lazy((svc: VibeSandboxApiOptions) => new VibeSandboxApi(svc));
 
 export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
@@ -374,6 +399,7 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
     addEventListener: window.addEventListener.bind(window),
     postMessage: window.parent.postMessage.bind(window.parent),
   });
+  _registeredApi = ctxVibeApi;
 
   await registerFirefly(ctxVibeApi);
   registerCallAI(ctxVibeApi);
