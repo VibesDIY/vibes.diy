@@ -1,11 +1,13 @@
 import type { ReactElement } from "react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
 import type { ResRecentVibesItem } from "@vibes.diy/api-types";
+import { isMetaScreenShot } from "@vibes.diy/api-types";
 import { VibesGrid, type GridHeadInfo } from "../../components/mine/VibesGrid.js";
 import { VibesSearchBar } from "../../components/mine/VibesSearchBar.js";
 import { useMemberships } from "../../hooks/useMemberships.js";
+import { useVibesDiy } from "../../vibes-diy-provider.js";
 
 export function meta() {
   return [{ title: "Memberships - Vibes DIY" }, { name: "description", content: "Apps you've joined as a member in Vibes DIY" }];
@@ -18,6 +20,7 @@ export default function VibesMemberships(): ReactElement {
   const { userSlug: paramUserSlug, appSlug: paramAppSlug } = useParams<{ userSlug?: string; appSlug?: string }>();
   const [searchQuery, setSearchQuery] = useState("");
 
+  const { vibeDiyApi } = useVibesDiy();
   const { items: rawItems, loading, nextCursor, loadMore } = useMemberships(PAGE_SIZE);
 
   // Map ResMembershipItem → ResRecentVibesItem for VibesGrid (activityAt drives updated display).
@@ -26,13 +29,23 @@ export default function VibesMemberships(): ReactElement {
     [rawItems]
   );
 
-  const headInfoMap = useMemo(() => {
-    const map = new Map<string, GridHeadInfo>();
+  const [appHeadInfo, setAppHeadInfo] = useState<Map<string, GridHeadInfo>>(new Map());
+  const requestedKeysRef = useRef(new Set<string>());
+
+  useEffect(() => {
     for (const item of items) {
-      map.set(`${item.userSlug}/${item.appSlug}`, {});
+      const key = `${item.userSlug}/${item.appSlug}`;
+      if (requestedKeysRef.current.has(key)) continue;
+      requestedKeysRef.current.add(key);
+      vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug: item.appSlug }).then((res) => {
+        setAppHeadInfo((prev) => {
+          if (res.isErr()) return new Map(prev).set(key, {});
+          const app = res.Ok();
+          return new Map(prev).set(key, { screenshot: app.meta.find(isMetaScreenShot) });
+        });
+      });
     }
-    return map;
-  }, [items]);
+  }, [items, vibeDiyApi]);
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -66,7 +79,7 @@ export default function VibesMemberships(): ReactElement {
         </div>
         <VibesGrid
           items={filteredItems}
-          headInfoMap={headInfoMap}
+          headInfoMap={appHeadInfo}
           selectedKey={selectedKey}
           onOpen={openTile}
           isLoading={loading}
@@ -167,7 +180,7 @@ function MembershipDetailPanel({ item, onClose }: MembershipDetailPanelProps) {
 
               <div className="flex flex-col gap-3 mt-auto pt-4">
                 <Link
-                  to={`/chat/${item.userSlug}/${item.appSlug}`}
+                  to={`/vibe/${item.userSlug}/${item.appSlug}`}
                   onClick={onClose}
                   className="flex items-center justify-center px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold uppercase tracking-widest border-2 border-[var(--vibes-near-black)] rounded-md shadow-[4px_4px_0_0_var(--vibes-near-black)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--vibes-near-black)] transition-all duration-150"
                 >
