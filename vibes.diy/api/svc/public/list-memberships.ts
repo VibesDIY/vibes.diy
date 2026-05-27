@@ -155,18 +155,21 @@ export const listMembershipsEvento: EventoHandler<
       if (merged.length > 0) {
         const appKeys = merged.map((m) => ({ userSlug: m.ownerUserSlug, appSlug: m.appSlug }));
         const conditions = appKeys.map((k) => and(eq(t.appDocuments.userSlug, k.userSlug), eq(t.appDocuments.appSlug, k.appSlug)));
-        const orCondition = conditions.length === 1 ? conditions[0]! : or(...conditions);
-        const docRows = await vctx.sql.db
-          .select({
-            ownerUserSlug: t.appDocuments.userSlug,
-            appSlug: t.appDocuments.appSlug,
-            lastWrite: sql<string>`MAX(${t.appDocuments.created})`,
-          })
-          .from(t.appDocuments)
-          .where(and(eq(t.appDocuments.userId, myUserId), orCondition))
-          .groupBy(t.appDocuments.userSlug, t.appDocuments.appSlug);
-        for (const row of docRows) {
-          if (row.lastWrite) lastWriteMap.set(`${row.ownerUserSlug}/${row.appSlug}`, row.lastWrite);
+        const [firstCondition, ...otherConditions] = conditions;
+        if (firstCondition) {
+          const orCondition = otherConditions.length === 0 ? firstCondition : or(firstCondition, ...otherConditions);
+          const docRows = await vctx.sql.db
+            .select({
+              ownerUserSlug: t.appDocuments.userSlug,
+              appSlug: t.appDocuments.appSlug,
+              lastWrite: sql<string>`MAX(${t.appDocuments.created})`,
+            })
+            .from(t.appDocuments)
+            .where(and(eq(t.appDocuments.userId, myUserId), orCondition))
+            .groupBy(t.appDocuments.userSlug, t.appDocuments.appSlug);
+          for (const row of docRows) {
+            if (row.lastWrite) lastWriteMap.set(`${row.ownerUserSlug}/${row.appSlug}`, row.lastWrite);
+          }
         }
       }
 
@@ -213,14 +216,18 @@ export const listMembershipsEvento: EventoHandler<
       const settingsMap = new Map<string, ActiveEntry[]>();
       if (page.length > 0) {
         const settingsConds = page.map((p) => and(eq(t.appSettings.userId, p.ownerUserId), eq(t.appSettings.appSlug, p.appSlug)));
-        const settingsOrCond = settingsConds.length === 1 ? settingsConds[0]! : or(...settingsConds);
-        const settingsRows = await vctx.sql.db
-          .select({ userId: t.appSettings.userId, appSlug: t.appSettings.appSlug, settings: t.appSettings.settings })
-          .from(t.appSettings)
-          .where(settingsOrCond);
-        for (const s of settingsRows) {
-          const entries = (s.settings as ActiveEntry[] | null) ?? [];
-          settingsMap.set(`${s.userId}/${s.appSlug}`, entries);
+        const [firstSettingsCond, ...otherSettingsConds] = settingsConds;
+        if (firstSettingsCond) {
+          const settingsOrCond =
+            otherSettingsConds.length === 0 ? firstSettingsCond : or(firstSettingsCond, ...otherSettingsConds);
+          const settingsRows = await vctx.sql.db
+            .select({ userId: t.appSettings.userId, appSlug: t.appSettings.appSlug, settings: t.appSettings.settings })
+            .from(t.appSettings)
+            .where(settingsOrCond);
+          for (const s of settingsRows) {
+            const entries = (s.settings as ActiveEntry[] | null) ?? [];
+            settingsMap.set(`${s.userId}/${s.appSlug}`, entries);
+          }
         }
       }
 
