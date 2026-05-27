@@ -241,10 +241,17 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
       if (rRefUri.isErr() || rReqUri.isErr()) {
         console.log("[referer] malformed", referer, request.method, request.url);
       } else {
-        const refHostname = rRefUri.Ok().hostname;
-        const reqHostname = rReqUri.Ok().hostname;
-        if (!isInternalReferer(refHostname) && refHostname !== reqHostname && !/\.[a-z]{1,4}$/i.test(rReqUri.Ok().pathname)) {
-          console.log("[referer]", rRefUri.Ok().toString(), request.method, rReqUri.Ok().pathname);
+        // cement URI.hostname throws for non-standard protocols (e.g. android-app:, fbrpc:)
+        // even when fromResult() returns Ok. Guard with protocol check before accessing hostname.
+        const refUri = rRefUri.Ok();
+        const reqUri = rReqUri.Ok();
+        const HTTP_LIKE = /^(https?|wss?|fpcloud):$/;
+        if (HTTP_LIKE.test(refUri.protocol) && HTTP_LIKE.test(reqUri.protocol)) {
+          const refHostname = refUri.hostname;
+          const reqHostname = reqUri.hostname;
+          if (!isInternalReferer(refHostname) && refHostname !== reqHostname && !/\.[a-z]{1,4}$/i.test(reqUri.pathname)) {
+            console.log("[referer]", refUri.toString(), request.method, reqUri.pathname);
+          }
         }
       }
     }
