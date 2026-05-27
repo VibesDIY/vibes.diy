@@ -215,6 +215,25 @@ export const sqlAppDocuments = pgTable(
   (table) => [primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId, table.seq] })]
 );
 
+export const sqlDirectChannelIndex = pgTable(
+  "DirectChannelIndex",
+  {
+    userSlug: text().notNull(),
+    channelUserSlug: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userSlug, table.channelUserSlug] })]
+);
+
+export const sqlDirectChannelReads = pgTable(
+  "DirectChannelReads",
+  {
+    channelUserSlug: text().notNull(),
+    userSlug: text().notNull(),
+    lastSeenSeq: integer().notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.channelUserSlug, table.userSlug] })]
+);
+
 export const sqlInviteGrants = pgTable(
   "InviteGrants",
   {
