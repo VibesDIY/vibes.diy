@@ -135,14 +135,55 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
         </p>
       </div>
 
+      {/* Legend */}
+      <div
+        style={{
+          display: "flex",
+          gap: "1.25rem",
+          alignItems: "center",
+          flexWrap: "wrap",
+          marginBottom: "1.5rem",
+          padding: "0.75rem 1.25rem",
+          background: "var(--paper)",
+          border: "1px solid color-mix(in srgb, var(--near-black) 15%, transparent)",
+          borderRadius: "var(--radius)",
+          fontSize: "0.8rem",
+        }}
+      >
+        <span style={{ fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.7rem", opacity: 0.5 }}>
+          Cost / site visit
+        </span>
+        {[
+          { bg: "rgba(0,200,100,0.25)", border: "rgba(0,200,100,0.6)", label: "< $0.30", desc: "efficient" },
+          { bg: "rgba(254,221,0,0.35)", border: "rgba(200,170,0,0.5)", label: "$0.30 – $0.50", desc: "watch" },
+          { bg: "rgba(218,41,28,0.18)", border: "rgba(218,41,28,0.4)", label: "> $0.50", desc: "expensive" },
+          { bg: "transparent", border: "color-mix(in srgb, var(--near-black) 20%, transparent)", label: "—", desc: "no visits" },
+        ].map(({ bg, border, label, desc }) => (
+          <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div
+              style={{
+                width: "1.25rem",
+                height: "1.25rem",
+                borderRadius: "3px",
+                background: bg,
+                border: `1px solid ${border}`,
+                flexShrink: 0,
+              }}
+            />
+            <span>
+              <strong>{label}</strong>
+              <span style={{ opacity: 0.55, marginLeft: "0.3rem" }}>{desc}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+
       {/* Campaigns table */}
       <section>
         <div className="card">
           <span className="section-label">Campaigns</span>
           <h2 className="section-title">Campaigns by Efficiency</h2>
-          <p className="section-intro">
-            Ranked by cost per site visit (ascending). Color-coded: green &lt; $0.30, yellow $0.30–$0.50, red &gt; $0.50.
-          </p>
+          <p className="section-intro">Ranked by cost per site visit (ascending).</p>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
               <thead>
