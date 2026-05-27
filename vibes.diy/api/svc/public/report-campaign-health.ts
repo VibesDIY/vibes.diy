@@ -1,4 +1,4 @@
-import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
+import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
 import {
   MsgBase,
   ReqReportCampaignHealth,
@@ -33,14 +33,17 @@ interface MetaInsightRow {
   readonly actions?: readonly { readonly action_type: string; readonly value: string }[];
 }
 
-async function metaGet<T>(path: string, token: string): Promise<T> {
+async function metaGet<T>(path: string, token: string): Promise<Result<T>> {
   const sep = path.includes("?") ? "&" : "?";
-  const res = await fetch(`${META_BASE}${path}${sep}access_token=${token}`, { signal: AbortSignal.timeout(15_000) });
-  const json = (await res.json()) as T & { error?: { message: string } };
-  if (json.error) {
-    throw new Error(`Meta API: ${json.error.message}`);
-  }
-  return json;
+  const rRes = await exception2Result(() =>
+    fetch(`${META_BASE}${path}${sep}access_token=${token}`, { signal: AbortSignal.timeout(15_000) })
+  );
+  if (rRes.isErr()) return Result.Err(rRes.Err());
+  const rJson = await exception2Result(() => rRes.Ok().json() as Promise<T & { error?: { message: string } }>);
+  if (rJson.isErr()) return Result.Err(rJson.Err());
+  const json = rJson.Ok();
+  if (json.error !== undefined) return Result.Err(new Error(`Meta API: ${json.error.message}`));
+  return Result.Ok(json as T);
 }
 
 function lpv(row: MetaInsightRow): number {
@@ -58,7 +61,7 @@ async function fetchCampaignHealth(
   pixelId: string,
   days: string,
   since: string | undefined
-): Promise<ResReportCampaignHealth> {
+): Promise<Result<ResReportCampaignHealth>> {
   const dateParam = since
     ? `&time_range=${encodeURIComponent(JSON.stringify({ since, until: new Date().toISOString().slice(0, 10) }))}`
     : `&date_preset=last_${days}d`;
@@ -69,35 +72,33 @@ async function fetchCampaignHealth(
   let after: string | undefined = undefined;
   for (;;) {
     const cursor: string = after !== undefined ? `&after=${encodeURIComponent(after)}` : "";
-    const page: { data?: MetaInsightRow[]; paging?: { cursors?: { after?: string }; next?: string }; error?: { message: string } } =
-      await metaGet<{
-        data?: MetaInsightRow[];
-        paging?: { cursors?: { after?: string }; next?: string };
-        error?: { message: string };
-      }>(`/${account}/insights?fields=${fields}&level=campaign&limit=100${dateParam}${cursor}`, token);
+    const rPage = await metaGet<{
+      data?: MetaInsightRow[];
+      paging?: { cursors?: { after?: string }; next?: string };
+    }>(`/${account}/insights?fields=${fields}&level=campaign&limit=100${dateParam}${cursor}`, token);
+    if (rPage.isErr()) return Result.Err(rPage.Err());
+    const page = rPage.Ok();
     rows.push(...(page.data ?? []));
     if (page.paging?.next === undefined) break;
     after = page.paging.cursors?.after;
     if (after === undefined) break;
   }
 
-  const pixel: ResReportCampaignHealthPixelSummary = await (async () => {
-    try {
-      const px = await metaGet<{
-        last_fired_time?: string;
-        stats?: { data?: readonly { data?: readonly { value: string; count: string }[] }[] };
-        error?: { message: string };
-      }>(`/${pixelId}?fields=name,last_fired_time,stats`, token);
-      const events = px.stats?.data?.flatMap((h) => h.data ?? []) ?? [];
-      const sum: Record<string, number> = {};
-      for (const e of events) {
-        sum[e.value] = (sum[e.value] ?? 0) + Number(e.count);
-      }
-      return { lastFired: px.last_fired_time, counts: sum };
-    } catch (e) {
-      return { error: (e as Error).message };
-    }
-  })();
+  const rPx = await metaGet<{
+    last_fired_time?: string;
+    stats?: { data?: readonly { data?: readonly { value: string; count: string }[] }[] };
+  }>(`/${pixelId}?fields=name,last_fired_time,stats`, token);
+  const pixel: ResReportCampaignHealthPixelSummary = rPx.isErr()
+    ? { error: String(rPx.Err()) }
+    : (() => {
+        const px = rPx.Ok();
+        const events = px.stats?.data?.flatMap((h) => h.data ?? []) ?? [];
+        const sum: Record<string, number> = {};
+        for (const e of events) {
+          sum[e.value] = (sum[e.value] ?? 0) + Number(e.count);
+        }
+        return { lastFired: px.last_fired_time, counts: sum };
+      })();
 
   const nameCounts: Record<string, number> = {};
   for (const r of rows) nameCounts[r.campaign_name] = (nameCounts[r.campaign_name] ?? 0) + 1;
@@ -124,13 +125,13 @@ async function fetchCampaignHealth(
 
   const anomalies: ResReportCampaignHealthAnomalies = { duplicateNames, budgetOutliers, zeroSpend, lowLpvRatio, pixel };
 
-  return {
+  return Result.Ok({
     type: "vibes.diy.res-report-campaign-health",
     generatedAt: new Date().toISOString(),
     dateLabel,
     ranked,
     anomalies,
-  } satisfies ResReportCampaignHealth;
+  } satisfies ResReportCampaignHealth);
 }
 
 export const reportCampaignHealthEvento: EventoHandler<
@@ -167,7 +168,7 @@ export const reportCampaignHealthEvento: EventoHandler<
       const account = vctx.metaAdAccountId;
       const pixelId = vctx.metaPixelId;
 
-      if (!token || !account || !pixelId) {
+      if (token === undefined || account === undefined || pixelId === undefined) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: {
@@ -182,20 +183,22 @@ export const reportCampaignHealthEvento: EventoHandler<
       const since = req.since;
       const cacheKey = since ? `campaign-health:since:${since}` : `campaign-health:days:${days}`;
 
-      let res: ResReportCampaignHealth;
-      try {
-        res = await cachedReport(vctx, cacheKey, resReportCampaignHealth, () =>
-          fetchCampaignHealth(token, account, pixelId, days, since)
-        );
-      } catch (e) {
+      const rRes = await exception2Result(() =>
+        cachedReport(vctx, cacheKey, resReportCampaignHealth, async () => {
+          const r = await fetchCampaignHealth(token, account, pixelId, days, since);
+          if (r.isErr()) throw r.Err();
+          return r.Ok();
+        })
+      );
+      if (rRes.isErr()) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
-          error: { message: `Meta API error: ${(e as Error).message}`, code: "meta-api-error" },
+          error: { message: `Meta API error: ${String(rRes.Err())}`, code: "meta-api-error" },
         } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
 
-      await ctx.send.send(ctx, res);
+      await ctx.send.send(ctx, rRes.Ok());
       return Result.Ok(EventoResult.Continue);
     }
   ),
