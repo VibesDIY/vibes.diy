@@ -102,10 +102,6 @@ export async function createAppContext<T extends VibesSqlite>(
     META_AD_ACCOUNT_ID: param.OPTIONAL,
     META_PIXEL_ID: param.OPTIONAL,
 
-    META_ACCESS_TOKEN: param.OPTIONAL,
-    META_AD_ACCOUNT_ID: param.OPTIONAL,
-    META_PIXEL_ID: param.OPTIONAL,
-
     GTM_CONTAINER_ID: param.OPTIONAL,
     POSTHOG_KEY: param.OPTIONAL,
     POSTHOG_HOST: param.OPTIONAL,
