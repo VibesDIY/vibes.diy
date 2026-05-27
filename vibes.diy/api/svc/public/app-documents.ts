@@ -38,7 +38,8 @@ import { eq, and, sql, inArray } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess, canRead, isPublicReadable, DocAccessLevel } from "./access-helpers.js";
-import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
+import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
+import { isDirectChannel } from "@vibes.diy/api-types";
 import { mintFilesUrls, isFileMeta } from "./files-url-mint.js";
 
 // Read-side gate: if the ACL pins `read`, honor it exactly; otherwise fall
@@ -125,19 +126,26 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
-      const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
-      // Fail closed: a settings-read error must not silently fall back to the
-      // open default and re-open writes on a tightened ACL.
-      if (rAcl.isErr()) {
-        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
-        return Result.Ok(EventoResult.Continue);
-      }
-      const acl = rAcl.Ok();
-
-      if (!aclAllows(acl, "write", access)) {
-        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
-        return Result.Ok(EventoResult.Continue);
+      if (isDirectChannel(req.userSlug)) {
+        const rAccess = await checkDirectChannelAccess(vctx, req.userSlug, userId);
+        if (rAccess.isErr() || !rAccess.Ok()) {
+          await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+      } else {
+        const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
+        const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
+        // Fail closed: a settings-read error must not silently fall back to the
+        // open default and re-open writes on a tightened ACL.
+        if (rAcl.isErr()) {
+          await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+        const acl = rAcl.Ok();
+        if (!aclAllows(acl, "write", access)) {
+          await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
       }
 
       // Phase 3: validate every `_files.<key>.uploadId` references an
@@ -341,16 +349,28 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
-      const access: DocAccessLevel = req._auth
-        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
-        : "none";
-      const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
-      if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.userSlug))) {
-        await ctx.send.send(ctx, {
-          type: "vibes.diy.res-error",
-          error: { message: "Access denied" },
-        } satisfies ResError);
-        return Result.Ok(EventoResult.Continue);
+      if (isDirectChannel(req.userSlug)) {
+        const userId = req._auth?.verifiedAuth.claims.userId;
+        const rAccess = userId ? await checkDirectChannelAccess(vctx, req.userSlug, userId) : Result.Ok(false);
+        if (rAccess.isErr() || !rAccess.Ok()) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { message: "Access denied" },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+      } else {
+        const access: DocAccessLevel = req._auth
+          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
+          : "none";
+        const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
+        if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.userSlug))) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { message: "Access denied" },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
       }
 
       const t = vctx.sql.tables.appDocuments;
@@ -414,11 +434,19 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
-      const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
-      if (rAcl.isErr() || !aclAllows(rAcl.Ok(), "delete", access)) {
-        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
-        return Result.Ok(EventoResult.Continue);
+      if (isDirectChannel(req.userSlug)) {
+        const rAccess = await checkDirectChannelAccess(vctx, req.userSlug, userId);
+        if (rAccess.isErr() || !rAccess.Ok()) {
+          await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+      } else {
+        const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
+        const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
+        if (rAcl.isErr() || !aclAllows(rAcl.Ok(), "delete", access)) {
+          await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
       }
 
       const now = new Date().toISOString();
@@ -483,16 +511,28 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
-      const access: DocAccessLevel = req._auth
-        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
-        : "none";
-      const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
-      if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.userSlug))) {
-        await ctx.send.send(ctx, {
-          type: "vibes.diy.res-error",
-          error: { message: "Access denied" },
-        } satisfies ResError);
-        return Result.Ok(EventoResult.Continue);
+      if (isDirectChannel(req.userSlug)) {
+        const userId = req._auth?.verifiedAuth.claims.userId;
+        const rAccess = userId ? await checkDirectChannelAccess(vctx, req.userSlug, userId) : Result.Ok(false);
+        if (rAccess.isErr() || !rAccess.Ok()) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { message: "Access denied" },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+      } else {
+        const access: DocAccessLevel = req._auth
+          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
+          : "none";
+        const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
+        if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.userSlug))) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { message: "Access denied" },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
       }
 
       // Store subscription on the connection object (fireproof pattern).

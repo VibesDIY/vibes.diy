@@ -1,8 +1,9 @@
 import { Result } from "@adviser/cement";
-import { COMMENTS_DB_NAME, COMMENTS_DEFAULT_ACL, DbAcl, DbAclSubject } from "@vibes.diy/api-types";
+import { COMMENTS_DB_NAME, COMMENTS_DEFAULT_ACL, DbAcl, DbAclSubject, directChannelParticipants } from "@vibes.diy/api-types";
 import { VibesApiSQLCtx } from "../types.js";
 import { DocAccessLevel, canRead, canWrite } from "./access-helpers.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
+import { and, eq, inArray } from "drizzle-orm";
 
 // Built-in groups projected from existing role grants.
 //
@@ -55,14 +56,35 @@ export async function resolveDbAcl(
   return Result.Ok(undefined);
 }
 
+// Check whether `userId` is a participant in a direct-channel userSlug.
+//
+// A direct-channel slug encodes exactly two participant userSlugs. This
+// function queries `userSlugBinding` to see if any of the caller's userSlugs
+// matches either participant — if it does, access is granted. No app
+// membership check is required; channel participation IS the gate.
+//
+// Returns Result<false> on parse failure or DB error so the caller can
+// fail-closed.
+export async function checkDirectChannelAccess(
+  vctx: VibesApiSQLCtx,
+  channelUserSlug: string,
+  userId: string
+): Promise<Result<boolean>> {
+  const participants = directChannelParticipants(channelUserSlug);
+  if (!participants) return Result.Ok(false);
+  const [userSlugA, userSlugB] = participants;
+  const t = vctx.sql.tables.userSlugBinding;
+  const matches = await vctx.sql.db
+    .select({ userSlug: t.userSlug })
+    .from(t)
+    .where(and(eq(t.userId, userId), inArray(t.userSlug, [userSlugA, userSlugB])));
+  return Result.Ok(matches.length > 0);
+}
+
 // Decide whether `access` may exercise `cap` against `acl`. When the ACL
 // does not list the capability, fall back to today's role gate (canRead for
 // reads, canWrite for writes/deletes).
-export function aclAllows(
-  acl: DbAcl | undefined,
-  cap: "read" | "write" | "delete",
-  access: DocAccessLevel
-): boolean {
+export function aclAllows(acl: DbAcl | undefined, cap: "read" | "write" | "delete", access: DocAccessLevel): boolean {
   const subjects = acl?.[cap];
   if (subjects === undefined) {
     return cap === "read" ? canRead(access) : canWrite(access);
