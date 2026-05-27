@@ -678,3 +678,15 @@ export type EvtVibeColorOverride = typeof EvtVibeColorOverride.infer;
 export function isEvtVibeColorOverride(x: unknown): x is EvtVibeColorOverride {
   return !(EvtVibeColorOverride(x) instanceof type.errors);
 }
+
+// Sandbox → host navigation request. A vibe posts this to ask the parent
+// app to open a DM conversation with a specific user. The parent navigates
+// to /messages/<myUserSlug>/<recipientUserSlug>. Fire-and-forget; no response.
+export const ReqOpenDmThread = type({
+  type: "'vibes.diy.req-open-dm-thread'",
+  recipientUserSlug: "string",
+}).and(Base);
+export type ReqOpenDmThread = typeof ReqOpenDmThread.infer;
+export function isReqOpenDmThread(x: unknown): x is ReqOpenDmThread {
+  return !(ReqOpenDmThread(x) instanceof type.errors);
+}
