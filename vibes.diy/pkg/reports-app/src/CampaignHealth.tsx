@@ -103,6 +103,13 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
   const d = data.data;
   const { anomalies } = d;
 
+  const totalSpend = d.ranked.reduce((sum, r) => sum + Number(r.spend), 0);
+  const totalClicks = d.ranked.reduce((sum, r) => sum + Number(r.clicks), 0);
+  const totalImpressions = d.ranked.reduce((sum, r) => sum + Number(r.impressions), 0);
+  const totalLpv = d.ranked.reduce((sum, r) => sum + lpv(r), 0);
+  const totalReg = d.ranked.reduce((sum, r) => sum + registrations(r), 0);
+  const overallCtr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+
   const hasAnomalies =
     anomalies.duplicateNames.length > 0 ||
     anomalies.zeroSpend.length > 0 ||
@@ -133,6 +140,48 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
         <p className="hero-sub">
           {d.dateLabel} &mdash; generated {d.generatedAt}
         </p>
+      </div>
+
+      {/* Summary stats */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+          gap: "0.75rem",
+          marginBottom: "1.5rem",
+        }}
+      >
+        {[
+          { label: "Total Spend", value: fmtMoney(totalSpend) },
+          { label: "Ad Clicks", value: totalClicks.toLocaleString() },
+          { label: "Click Rate", value: totalImpressions > 0 ? `${overallCtr.toFixed(2)}%` : "—" },
+          { label: "Site Visits", value: totalLpv.toLocaleString() },
+          { label: "Registrations", value: totalReg > 0 ? totalReg.toLocaleString() : "—" },
+        ].map(({ label, value }) => (
+          <div
+            key={label}
+            style={{
+              background: "var(--paper)",
+              border: "1px solid color-mix(in srgb, var(--near-black) 15%, transparent)",
+              borderRadius: "var(--radius)",
+              padding: "0.875rem 1rem",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: "1.4rem", fontWeight: 700, lineHeight: 1.1 }}>{value}</div>
+            <div
+              style={{
+                fontSize: "0.7rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                opacity: 0.5,
+                marginTop: "0.25rem",
+              }}
+            >
+              {label}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Legend */}
@@ -196,16 +245,21 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
           >
             {[
               [
+                "Click Rate",
+                "Ad click-through rate (CTR) — clicks ÷ impressions. How effectively the ad creative attracts clicks. Meta returns this per campaign.",
+              ],
+              ["Cost/Click", "Spend ÷ clicks (CPC). Cost of getting someone to click the ad and land on good.vibes.diy."],
+              [
                 "Site Visits",
-                "Meta landing_page_view action — fires server-side when a user who clicked an ad lands on vibes.diy (triggered at app.ts on every request carrying ?fbclid=).",
+                "Meta landing_page_view action — fires when someone clicked the ad and successfully loaded the good.vibes.diy landing page. Step 2 of the funnel: Ad → good.vibes.diy (counted here).",
               ],
               [
                 "Content Views",
-                "Meta ViewContent pixel — fires client-side in useEngagedVisit.ts after 10 s dwell or 25 % scroll on vibes.diy. Shows — when Meta's attribution window has expired. See Pixel Health below for raw totals.",
+                "CAPI ViewContent — fires server-side (relayed from vibes.diy client) after a user dwells 10 s or scrolls 25 % on vibes.diy. Step 3: good.vibes.diy → vibes.diy → engagement (counted here). See Pixel Health below for raw totals.",
               ],
               [
                 "Registrations",
-                "Meta CompleteRegistration pixel — fires in useCapiCompleteRegistration.ts when a new Clerk account is created within 2 min of arrival on the same session as the ad click.",
+                "CAPI CompleteRegistration — fires when a new Clerk account is created within 2 min of the user's fbclid-attributed session. Requires the user to sign up on vibes.diy in the same session as the ad click.",
               ],
               ["Cost/Visit", "Spend ÷ site visits. Primary efficiency metric — drives row color coding."],
             ].map(([term, def]) => (
@@ -252,7 +306,9 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                         </span>
                         {row.campaign_name}
                       </td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.ctr}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
+                        {row.ctr !== undefined ? `${Number(row.ctr).toFixed(2)}%` : "—"}
+                      </td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.cpc))}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.spend))}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{Number(row.reach).toLocaleString()}</td>
