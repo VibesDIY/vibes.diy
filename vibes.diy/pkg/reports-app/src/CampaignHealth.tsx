@@ -3,13 +3,30 @@ import type { ResReportCampaignHealth, ResReportCampaignHealthCampaignRow } from
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import type { Loadable } from "./types.js";
 
+function actionVal(row: ResReportCampaignHealthCampaignRow, type: string): number {
+  return Number(row.actions?.find((a) => a.action_type === type)?.value ?? 0);
+}
+
 function lpv(row: ResReportCampaignHealthCampaignRow): number {
-  return Number(row.actions?.find((a) => a.action_type === "landing_page_view")?.value ?? 0);
+  return actionVal(row, "landing_page_view");
+}
+
+function conversions(row: ResReportCampaignHealthCampaignRow): number {
+  return actionVal(row, "purchase") + actionVal(row, "lead") + actionVal(row, "complete_registration");
+}
+
+function engagements(row: ResReportCampaignHealthCampaignRow): number {
+  return actionVal(row, "post_engagement");
 }
 
 function costPerLpv(row: ResReportCampaignHealthCampaignRow): number {
   const l = lpv(row);
   return l > 0 ? Number(row.spend) / l : Infinity;
+}
+
+function costPerConv(row: ResReportCampaignHealthCampaignRow): number {
+  const c = conversions(row);
+  return c > 0 ? Number(row.spend) / c : Infinity;
 }
 
 function rowBg(cplv: number): string {
@@ -23,9 +40,9 @@ function fmt(n: number, decimals = 2): string {
   return n.toFixed(decimals);
 }
 
-function fmtCplv(cplv: number): string {
-  if (!isFinite(cplv)) return "—";
-  return `$${fmt(cplv)}`;
+function fmtMoney(n: number): string {
+  if (isFinite(n) === false) return "—";
+  return `$${fmt(n)}`;
 }
 
 export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
@@ -102,24 +119,29 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
           <span className="section-label">Campaigns</span>
           <h2 className="section-title">Campaigns by Efficiency</h2>
           <p className="section-intro">
-            Ranked by cost per landing page view (ascending). Color-coded: green &lt; $0.30, yellow $0.30–$0.50, red &gt; $0.50.
+            Ranked by cost per site visit (ascending). Color-coded: green &lt; $0.30, yellow $0.30–$0.50, red &gt; $0.50.
           </p>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid var(--near-black)" }}>
                   <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Campaign</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>CTR</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>CPC</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Click Rate</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Click</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Spend</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Reach</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>LPVs</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/LPV</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Engagements</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Site Visits</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Visit</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Conversions</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Conv</th>
                 </tr>
               </thead>
               <tbody>
                 {d.ranked.map((row, i) => {
                   const cplv = costPerLpv(row);
+                  const conv = conversions(row);
+                  const cpc = costPerConv(row);
                   return (
                     <tr
                       key={row.campaign_id}
@@ -137,11 +159,14 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                         {row.campaign_name}
                       </td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.ctr}</td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>${row.cpc}</td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>${row.spend}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.cpc))}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.spend))}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{Number(row.reach).toLocaleString()}</td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{lpv(row).toLocaleString()}</td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtCplv(cplv)}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{engagements(row).toLocaleString() || "—"}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{lpv(row).toLocaleString() || "—"}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cplv)}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{conv > 0 ? conv.toLocaleString() : "—"}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cpc)}</td>
                     </tr>
                   );
                 })}
