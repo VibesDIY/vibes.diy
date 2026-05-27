@@ -28,6 +28,7 @@ import {
   DbAcl,
   EvtCommentPosted,
   COMMENTS_DB_NAME,
+  EvtDmReceived,
 } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -38,7 +39,7 @@ import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess, canRead, isPublicReadable, DocAccessLevel } from "./access-helpers.js";
 import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
-import { isDirectChannel } from "@vibes.diy/api-types";
+import { isDirectChannel, directChannelParticipants } from "@vibes.diy/api-types";
 import { mintFilesUrls, isFileMeta } from "./files-url-mint.js";
 
 // Read-side gate: if the ACL pins `read`, honor it exactly; otherwise fall
@@ -184,6 +185,56 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         deleted: 0,
         created: now,
       });
+
+      // Upsert DirectChannelIndex so both participants appear in listDmThreads
+      if (isDirectChannel(req.userSlug)) {
+        const participants = directChannelParticipants(req.userSlug);
+        if (participants) {
+          const t_idx = vctx.sql.tables.directChannelIndex;
+          await vctx.sql.db
+            .insert(t_idx)
+            .values([
+              { userSlug: participants[0], channelUserSlug: req.userSlug },
+              { userSlug: participants[1], channelUserSlug: req.userSlug },
+            ])
+            .onConflictDoNothing();
+        }
+      }
+
+      if (isDirectChannel(req.userSlug)) {
+        const participants = directChannelParticipants(req.userSlug);
+        if (participants) {
+          // Look up which participant slug belongs to the sender
+          const t_usb = vctx.sql.tables.userSlugBinding;
+          const senderRow = await vctx.sql.db
+            .select({ userSlug: t_usb.userSlug })
+            .from(t_usb)
+            .where(and(eq(t_usb.userId, userId), inArray(t_usb.userSlug, participants)))
+            .then((r) => r[0]);
+          const senderUserSlug = senderRow?.userSlug ?? "";
+          const recipientUserSlug = participants.find((h) => h !== senderUserSlug) ?? participants[1];
+
+          await vctx.postQueue({
+            payload: {
+              type: "vibes.diy.evt-dm-received",
+              senderUserId: userId,
+              senderUserSlug,
+              recipientUserSlug,
+              channelUserSlug: req.userSlug,
+              docId,
+              created: now,
+              bodySnippet:
+                typeof (req.doc as { body?: unknown }).body === "string"
+                  ? (req.doc as { body: string }).body.slice(0, 100)
+                  : undefined,
+            },
+            tid: "queue-event",
+            src: "putDoc",
+            dst: "vibes-service",
+            ttl: 1,
+          } satisfies MsgBase<EvtDmReceived>);
+        }
+      }
 
       if (dbName === COMMENTS_DB_NAME && nextSeq === 1) {
         await vctx.postQueue({
