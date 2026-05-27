@@ -133,6 +133,9 @@ import {
   ReqListMembers,
   ResListMembers,
   isResListMembers,
+  ReqListMemberships,
+  ResListMemberships,
+  isResListMemberships,
   ReqAssetUploadGrant,
   ReqReportGrowthMemberships,
   ResReportGrowthMemberships,
@@ -733,6 +736,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   listMembers(req: Req<ReqListMembers>): Promise<Result<ResListMembers, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-list-members" }, { resMatch: isResListMembers });
+  }
+
+  listMemberships(req: Req<ReqListMemberships>): Promise<Result<ResListMemberships, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-memberships" }, { resMatch: isResListMemberships });
   }
 
   whoAmI(req: Req<ReqVibeWhoAmI>): Promise<Result<ResVibeWhoAmI, VibesDiyError>> {
