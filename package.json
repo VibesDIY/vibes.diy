@@ -80,7 +80,7 @@
     "prettier-plugin-tailwindcss": "^0.7.1",
     "serve": "^14.2.6",
     "typescript": "6.0.3",
-    "typescript-eslint": "^8.59.2",
+    "typescript-eslint": "^8.60.0",
     "vitest": "~4.1.7",
     "wrangler": "^4.88.0"
   }
