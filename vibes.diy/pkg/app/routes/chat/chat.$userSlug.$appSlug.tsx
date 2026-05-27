@@ -9,6 +9,7 @@ import { vibesThemes, getThemeBySlug } from "@vibes.diy/prompts";
 import {
   isPromptBlockBegin,
   isPromptBlockEnd,
+  isPromptError,
   isPromptReq,
   LLMChat,
   LLMChatEntry,
@@ -33,6 +34,7 @@ import { useShareModal } from "../../components/ResultPreview/useShareModal.js";
 import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
 import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
+import { useBuildCompletionNotifications } from "../../hooks/useBuildCompletionNotifications.js";
 import { notifyRecentVibesChanged, subscribeRecentVibesChanged } from "../../hooks/useRecentVibes.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
@@ -379,6 +381,15 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     searchParams,
     setSearchParams,
     agentSavedBlockIds: new Set<string>(),
+  });
+
+  const latestPromptFailed =
+    promptState.blocks.length > 0 ? promptState.blocks[promptState.blocks.length - 1].msgs.some((msg) => isPromptError(msg)) : false;
+
+  useBuildCompletionNotifications({
+    buildRunning: promptState.running,
+    buildFailed: latestPromptFailed,
+    appTitle: promptState.title,
   });
 
   useEffect(() => {
