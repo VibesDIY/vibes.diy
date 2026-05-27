@@ -148,6 +148,7 @@ export default function VibeIframeWrapper() {
   const [myGrant, setMyGrant] = useState<"owner" | "editor" | "viewer" | "submitter" | "public" | "none">("none");
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingBump, setPendingBump] = useState(0);
+  const [dmUnreadCount, setDmUnreadCount] = useState(0);
 
   const inGetAppByFsIdRef = useRef(false);
   // Dedupe key + cached response: when only `authSignedIn` flips post-Clerk-hydration,
@@ -195,6 +196,22 @@ export default function VibeIframeWrapper() {
     });
     return unsubscribe;
   }, [isOwner, userSlug, appSlug, vctx.vibeDiyApi]);
+
+  useEffect(() => {
+    if (!vctx.vibeDiyApi || !authSignedIn) {
+      setDmUnreadCount(0);
+      return;
+    }
+    let cancelled = false;
+    vctx.vibeDiyApi.listDmThreads({}).then((res) => {
+      if (cancelled || res.isErr()) return;
+      const total = res.Ok().items.reduce((sum, t) => sum + t.unreadCount, 0);
+      setDmUnreadCount(total);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [vctx.vibeDiyApi, authSignedIn]);
 
   useEffect(() => {
     if (authSignedIn) {
@@ -522,6 +539,7 @@ export default function VibeIframeWrapper() {
                 onCommunity={shareModal.open}
                 communityButtonRef={shareModal.buttonRef}
                 communityBadgeCount={isOwner ? pendingCount : 0}
+                dmUnreadCount={dmUnreadCount}
                 hasUnpublishedChanges={isOwner && shareModal.hasUnpublishedChanges}
                 appTitle={appTitle ?? appSlug}
                 appIconUrl={screenshotUrl ?? undefined}
@@ -538,7 +556,7 @@ export default function VibeIframeWrapper() {
         )}
       {hasMounted && (
         <Delayed ms={1000}>
-          <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
+          <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" dmUnreadCount={dmUnreadCount} />
         </Delayed>
       )}
       {loginOverlay}

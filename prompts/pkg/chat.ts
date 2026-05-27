@@ -215,4 +215,5 @@ export interface SessionSidebarProps {
   isVisible: boolean;
   onClose: () => void;
   sessionId?: string;
+  dmUnreadCount?: number;
 }
