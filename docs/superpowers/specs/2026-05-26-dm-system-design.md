@@ -172,9 +172,16 @@ New `dmUnreadCount` prop alongside existing `communityBadgeCount`. Distinct colo
 
 "Messages" nav entry with total unread badge. Navigates to `/messages`.
 
+### Forward path: multi-thread and groups (see #1949)
+
+The `_d.alice.bob/dm` app controls its own `dbAcls` like any vibe. Future extensions require no new namespaces:
+
+- **Multiple threads** — new `dbName` per thread (ULID). `listDmThreads` enumerates all dbNames under `_d.*/dm`.
+- **Group threads** — override a specific `dbName`'s ACL via `ensureAppSettings`, then invite via the existing access request system. One codebase.
+
 ### Comment on scoping evolution
 
-Currently comments are vibe-scoped: `(ownerHandle, appSlug, "comments")` lives under the vibe owner's handle. DMs establish the `_d.*` reserved-namespace pattern. In future, comments could migrate to a similar system namespace — e.g., `_vibe.alice.my-app/"comments"` — decoupling thread storage from vibe ownership. Not this PR.
+Currently comments are vibe-scoped: `(ownerHandle, appSlug, "comments")` lives under the vibe owner's handle. DMs establish the `_d.*` reserved-namespace pattern. In future, comments could migrate to a similar system namespace — decoupling thread storage from vibe ownership. Not this PR.
 
 ## Open Questions
 
