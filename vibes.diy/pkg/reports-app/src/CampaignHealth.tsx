@@ -155,7 +155,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
           { label: "Total Spend", value: fmtMoney(totalSpend) },
           { label: "Ad Clicks", value: totalClicks.toLocaleString() },
           { label: "Click Rate", value: totalImpressions > 0 ? `${overallCtr.toFixed(2)}%` : "—" },
-          { label: "Site Visits", value: totalLpv.toLocaleString() },
+          { label: "vibes.diy Arrivals", value: totalLpv.toLocaleString() },
           { label: "Registrations", value: totalReg > 0 ? totalReg.toLocaleString() : "—" },
         ].map(({ label, value }) => (
           <div
@@ -251,15 +251,15 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               ["Cost/Click", "Spend ÷ clicks (CPC). Cost of getting someone to click the ad and land on good.vibes.diy."],
               [
                 "Site Visits",
-                "Meta landing_page_view action — fires when someone clicked the ad and successfully loaded the good.vibes.diy landing page. Step 2 of the funnel: Ad → good.vibes.diy (counted here).",
+                'CAPI server-side PageView (app.ts) — fires when a user clicks the "Join" CTA on good.vibes.diy and lands on the vibe page on vibes.diy with ?fbclid= in the URL. Step 2 of the funnel: good.vibes.diy → vibes.diy (counted here). The good.vibes.diy landing-page browser-pixel PageViews (step 1) are in Meta Ads Manager but not in this report.',
               ],
               [
                 "Content Views",
-                "CAPI ViewContent — fires server-side (relayed from vibes.diy client) after a user dwells 10 s or scrolls 25 % on vibes.diy. Step 3: good.vibes.diy → vibes.diy → engagement (counted here). See Pixel Health below for raw totals.",
+                "CAPI ViewContent (useEngagedVisit.ts) — fires after the user dwells 10 s or scrolls 25 % on the vibe page. Step 3: arrived on vibes.diy → engaged (counted here). See Pixel Health below for raw totals.",
               ],
               [
                 "Registrations",
-                "CAPI CompleteRegistration — fires when a new Clerk account is created within 2 min of the user's fbclid-attributed session. Requires the user to sign up on vibes.diy in the same session as the ad click.",
+                "CAPI CompleteRegistration — fires when a new Clerk account is created within 2 min of landing on vibes.diy with fbclid in the session. Step 4: engaged → signed up.",
               ],
               ["Cost/Visit", "Spend ÷ site visits. Primary efficiency metric — drives row color coding."],
             ].map(([term, def]) => (
