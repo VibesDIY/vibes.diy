@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useClerk } from "@clerk/react";
+import { URI } from "@adviser/cement";
 import { VibesButtonStyles, useMobile, LabelContainer, gridBackground, cx } from "@vibes.diy/base";
 
 // Tornado/Wormhole icon for logout - similar to LoginIcon pattern
@@ -40,7 +41,15 @@ export function Logout() {
       referrer,
       origin: window.location.origin,
     });
-    if (referrer && new URL(referrer).origin === window.location.origin) {
+    const refUri = URI.fromResult(referrer);
+    const curUri = URI.fromResult(window.location.href);
+    if (
+      referrer &&
+      refUri.isOk() &&
+      curUri.isOk() &&
+      refUri.Ok().protocol === curUri.Ok().protocol &&
+      refUri.Ok().hostname === curUri.Ok().hostname
+    ) {
       console.log("Logout: will return to referrer", referrer);
       return referrer;
     }
