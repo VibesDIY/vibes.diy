@@ -207,6 +207,25 @@ export const sqlAppDocuments = sqliteTable(
   (table) => [primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId, table.seq] })]
 );
 
+export const sqlDirectChannelIndex = sqliteTable(
+  "DirectChannelIndex",
+  {
+    userSlug: text().notNull(),
+    channelUserSlug: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userSlug, table.channelUserSlug] })]
+);
+
+export const sqlDirectChannelReads = sqliteTable(
+  "DirectChannelReads",
+  {
+    channelUserSlug: text().notNull(),
+    userSlug: text().notNull(),
+    lastSeenSeq: int().notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.channelUserSlug, table.userSlug] })]
+);
+
 export const sqlInviteGrants = sqliteTable(
   "InviteGrants",
   {
