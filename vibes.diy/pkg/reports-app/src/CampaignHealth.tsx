@@ -12,7 +12,15 @@ function lpv(row: ResReportCampaignHealthCampaignRow): number {
 }
 
 function conversions(row: ResReportCampaignHealthCampaignRow): number {
-  return actionVal(row, "purchase") + actionVal(row, "lead") + actionVal(row, "complete_registration");
+  const types = [
+    "purchase",
+    "offsite_conversion.fb_pixel_purchase",
+    "lead",
+    "offsite_conversion.fb_pixel_lead",
+    "complete_registration",
+    "offsite_conversion.fb_pixel_complete_registration",
+  ];
+  return types.reduce((sum, t) => sum + actionVal(row, t), 0);
 }
 
 function engagements(row: ResReportCampaignHealthCampaignRow): number {
