@@ -184,6 +184,37 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
           <span className="section-label">Campaigns</span>
           <h2 className="section-title">Campaigns by Efficiency</h2>
           <p className="section-intro">Ranked by cost per site visit (ascending).</p>
+          <dl
+            style={{
+              display: "grid",
+              gridTemplateColumns: "max-content 1fr",
+              gap: "0.25rem 1rem",
+              fontSize: "0.8rem",
+              opacity: 0.65,
+              marginBottom: "1rem",
+            }}
+          >
+            {[
+              [
+                "Site Visits",
+                "Meta landing_page_view action — fires server-side when a user who clicked an ad lands on vibes.diy (triggered at app.ts on every request carrying ?fbclid=).",
+              ],
+              [
+                "Content Views",
+                "Meta ViewContent pixel — fires client-side in useEngagedVisit.ts after 10 s dwell or 25 % scroll on vibes.diy. Shows — when Meta's attribution window has expired. See Pixel Health below for raw totals.",
+              ],
+              [
+                "Registrations",
+                "Meta CompleteRegistration pixel — fires in useCapiCompleteRegistration.ts when a new Clerk account is created within 2 min of arrival on the same session as the ad click.",
+              ],
+              ["Cost/Visit", "Spend ÷ site visits. Primary efficiency metric — drives row color coding."],
+            ].map(([term, def]) => (
+              <React.Fragment key={term}>
+                <dt style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{term}</dt>
+                <dd style={{ margin: 0 }}>{def}</dd>
+              </React.Fragment>
+            ))}
+          </dl>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
               <thead>
@@ -246,6 +277,10 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
         <div className="card">
           <span className="section-label">Pixel</span>
           <h2 className="section-title">Pixel Health</h2>
+          <p className="section-intro" style={{ opacity: 0.7 }}>
+            Direct pixel event counts from the Meta Conversions API — not filtered by campaign attribution. Shows every event
+            received regardless of attribution window. <strong>Last fired</strong> = most recent pixel event of any type.
+          </p>
           {anomalies.pixel === null ? (
             <div className="empty">No pixel data.</div>
           ) : anomalies.pixel.error !== undefined ? (
@@ -292,6 +327,12 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
         <div className="card">
           <span className="section-label">Anomalies</span>
           <h2 className="section-title">Anomalies</h2>
+          <p className="section-intro" style={{ opacity: 0.7 }}>
+            Automatically flagged issues across all campaigns. <strong>Duplicate names</strong> = same name on multiple campaigns
+            (may split budget unintentionally). <strong>Zero spend</strong> = active campaign with no spend in period.{" "}
+            <strong>Budget outliers</strong> = spend &gt;2× the median. <strong>Low LPV ratio</strong> = high clicks but few landing
+            page views (possible landing page issue).
+          </p>
           {hasAnomalies === false ? (
             <span
               className="section-label section-label--filled"
