@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { URI } from "@adviser/cement";
 import { useClerk } from "@clerk/react";
 import { VibesButtonStyles, useMobile, LabelContainer, gridBackground, cx } from "@vibes.diy/base";
 
@@ -40,9 +41,25 @@ export function Logout() {
       referrer,
       origin: window.location.origin,
     });
-    if (referrer && new URL(referrer).origin === window.location.origin) {
-      console.log("Logout: will return to referrer", referrer);
-      return referrer;
+    if (referrer) {
+      const referrerUri = URI.from(referrer);
+      const currentUri = URI.from(window.location.href);
+      const normalizedReferrerOrigin =
+        referrerUri.port &&
+        ((referrerUri.protocol === "http:" && referrerUri.port === "80") ||
+          (referrerUri.protocol === "https:" && referrerUri.port === "443"))
+          ? `${referrerUri.protocol}//${referrerUri.hostname}`
+          : `${referrerUri.protocol}//${referrerUri.host}`;
+      const normalizedCurrentOrigin =
+        currentUri.port &&
+        ((currentUri.protocol === "http:" && currentUri.port === "80") ||
+          (currentUri.protocol === "https:" && currentUri.port === "443"))
+          ? `${currentUri.protocol}//${currentUri.hostname}`
+          : `${currentUri.protocol}//${currentUri.host}`;
+      if (normalizedReferrerOrigin === normalizedCurrentOrigin) {
+        console.log("Logout: will return to referrer", referrer);
+        return referrer;
+      }
     }
     console.log("Logout: will return to home /");
     return "/";
