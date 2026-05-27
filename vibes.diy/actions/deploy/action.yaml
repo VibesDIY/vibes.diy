@@ -136,6 +136,8 @@ runs:
         PRODIA_TOKEN: ${{ inputs.PRODIA_TOKEN }}
         META_CAPI_TOKEN: ${{ inputs.META_CAPI_TOKEN }}
         META_PIXEL_ID: ${{ inputs.META_PIXEL_ID }}
+        DISCORD_WEBHOOK_URL: ${{ inputs.DISCORD_WEBHOOK_URL }}
+        CLERK_WEBHOOK_SECRET: ${{ inputs.CLERK_WEBHOOK_SECRET }}
 
       run: |
         if [ "$DB_FLAVOUR" = "pg" ]; then
@@ -167,7 +169,9 @@ runs:
           --fromEnv VIBES_DIY_API_URL \
           --fromEnv PRODIA_TOKEN \
           --fromEnv META_CAPI_TOKEN \
-          --fromEnv META_PIXEL_ID | \
+          --fromEnv META_PIXEL_ID \
+          --fromEnv DISCORD_WEBHOOK_URL \
+          --fromEnv CLERK_WEBHOOK_SECRET | \
           pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
         pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
 
