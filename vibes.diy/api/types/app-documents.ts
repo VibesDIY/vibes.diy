@@ -223,6 +223,7 @@ export function isEvtDmReceived(obj: unknown): obj is EvtDmReceived {
 
 export const reqListDmThreads = type({
   type: "'vibes.diy.req-list-dm-threads'",
+  auth: dashAuthType,
   "pager?": type({ "limit?": "number", "cursor?": "string" }),
 });
 export type ReqListDmThreads = typeof reqListDmThreads.infer;
@@ -255,6 +256,7 @@ export function isResListDmThreads(obj: unknown): obj is ResListDmThreads {
 
 export const reqMarkDmRead = type({
   type: "'vibes.diy.req-mark-dm-read'",
+  auth: dashAuthType,
   channelUserSlug: "string",
   lastSeenSeq: "number",
 });
