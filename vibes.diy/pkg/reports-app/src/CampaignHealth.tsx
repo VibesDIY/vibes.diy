@@ -155,8 +155,8 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
           { label: "Total Spend", value: fmtMoney(totalSpend) },
           { label: "Ad Clicks", value: totalClicks.toLocaleString() },
           { label: "Click Rate", value: totalImpressions > 0 ? `${overallCtr.toFixed(2)}%` : "—" },
-          { label: "vibes.diy Arrivals", value: totalLpv.toLocaleString() },
-          { label: "Registrations", value: totalReg > 0 ? totalReg.toLocaleString() : "—" },
+          { label: "Landings", value: totalLpv.toLocaleString() },
+          { label: "Signups", value: totalReg > 0 ? totalReg.toLocaleString() : "—" },
         ].map(({ label, value }) => (
           <div
             key={label}
@@ -200,13 +200,13 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
         }}
       >
         <span style={{ fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.7rem", opacity: 0.5 }}>
-          Cost / site visit
+          Cost / landing
         </span>
         {[
           { bg: "rgba(0,200,100,0.25)", border: "rgba(0,200,100,0.6)", label: "< $0.30", desc: "efficient" },
           { bg: "rgba(254,221,0,0.35)", border: "rgba(200,170,0,0.5)", label: "$0.30 – $0.50", desc: "watch" },
           { bg: "rgba(218,41,28,0.18)", border: "rgba(218,41,28,0.4)", label: "> $0.50", desc: "expensive" },
-          { bg: "transparent", border: "color-mix(in srgb, var(--near-black) 20%, transparent)", label: "—", desc: "no visits" },
+          { bg: "transparent", border: "color-mix(in srgb, var(--near-black) 20%, transparent)", label: "—", desc: "no landings" },
         ].map(({ bg, border, label, desc }) => (
           <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <div
@@ -232,7 +232,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
         <div className="card">
           <span className="section-label">Campaigns</span>
           <h2 className="section-title">Campaigns by Efficiency</h2>
-          <p className="section-intro">Ranked by cost per site visit (ascending).</p>
+          <p className="section-intro">Ranked by cost per landing (ascending).</p>
           <dl
             style={{
               display: "grid",
@@ -251,21 +251,21 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               ["Cost/Click", "Spend ÷ clicks (CPC). Cost of getting someone to click the ad and land on good.vibes.diy."],
               [
                 "CTA Clicks",
-                "Outbound clicks from good.vibes.diy → vibes.diy, counted from the Referer header in our server logs (all-time). Bridges the gap between Site Visits (good.vibes.diy loads) and vibes.diy arrivals. Only shown when Meta reports a destination URL on the campaign.",
+                "Outbound clicks from good.vibes.diy → vibes.diy, counted from the Referer header in our server logs (all-time, not date-filtered). Bridges the gap between Landings (good.vibes.diy loads) and vibes.diy arrivals. Only shown when Meta reports a destination URL on the campaign.",
               ],
               [
-                "Site Visits",
-                "Meta landing_page_view action — browser pixel firing on good.vibes.diy when someone clicks an ad and the landing page loads. Step 1: Ad → good.vibes.diy (counted here). The Pixel Health section below shows the vibes.diy CAPI PageViews (step 2, after the CTA click).",
+                "Landings",
+                "Meta landing_page_view — browser pixel on good.vibes.diy confirming the ad destination page loaded. Step 1: Ad click → good.vibes.diy counted here.",
               ],
               [
-                "Content Views",
-                "CAPI ViewContent (useEngagedVisit.ts) — fires after the user dwells 10 s or scrolls 25 % on the vibes.diy vibe page. Step 3: arrived on vibes.diy → engaged. Shows — when Meta's attribution window has expired. See Pixel Health below for raw totals.",
+                "Stayed",
+                "CAPI ViewContent — fires after 10 s dwell or 25 % scroll on the vibes.diy vibe page, only for fbclid-attributed sessions. Step 3: arrived on vibes.diy and didn't immediately leave. Shows — when Meta's attribution window has expired.",
               ],
               [
-                "Registrations",
-                "CAPI CompleteRegistration — fires when a new Clerk account is created within 2 min of the fbclid-attributed session on vibes.diy. Step 4: engaged → signed up.",
+                "Signups",
+                "CAPI CompleteRegistration — fires when a new Clerk account is created within 2 min of the fbclid session. Step 4: stayed → signed up. Undercounts vs Ads Manager (2-min window vs Meta's 1-day attribution; requires fbclid in session).",
               ],
-              ["Cost/Visit", "Spend ÷ site visits. Primary efficiency metric — drives row color coding."],
+              ["Cost/Landing", "Spend ÷ landings. Primary efficiency metric — drives row color coding."],
             ].map(([term, def]) => (
               <React.Fragment key={term}>
                 <dt style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{term}</dt>
@@ -283,11 +283,11 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Spend</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Reach</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>CTA Clicks</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Site Visits</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Visit</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Content Views</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Registrations</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Reg</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Landings</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Landing</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Stayed</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Signups</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Signup</th>
                 </tr>
               </thead>
               <tbody>
@@ -394,8 +394,8 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
           <p className="section-intro" style={{ opacity: 0.7 }}>
             Automatically flagged issues across all campaigns. <strong>Duplicate names</strong> = same name on multiple campaigns
             (may split budget unintentionally). <strong>Zero spend</strong> = active campaign with no spend in period.{" "}
-            <strong>Budget outliers</strong> = spend &gt;2× the median. <strong>Low LPV ratio</strong> = high clicks but few landing
-            page views (possible landing page issue).
+            <strong>Budget outliers</strong> = spend &gt;2× the median. <strong>Low landing ratio</strong> = high clicks but few
+            landing page views (possible landing page issue).
           </p>
           {hasAnomalies === false ? (
             <span
@@ -433,7 +433,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               ))}
               {anomalies.lowLpvRatio.map((e) => (
                 <li key={e.name}>
-                  <span style={{ fontFamily: "monospace" }}>{e.name}</span>: {e.clicks} clicks, {e.lpvs} LPVs ({e.ratio})
+                  <span style={{ fontFamily: "monospace" }}>{e.name}</span>: {e.clicks} clicks, {e.lpvs} landings ({e.ratio})
                 </li>
               ))}
             </ul>
