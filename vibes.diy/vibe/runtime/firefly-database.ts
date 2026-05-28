@@ -21,6 +21,8 @@ import {
   type ResQueryDocs,
   type ResDeleteDoc,
   type ResSubscribeDocs,
+  type ResSetDbAcl,
+  type DbAcl,
 } from "@vibes.diy/vibe-types";
 import { decorateFiles } from "./firefly-files-read.js";
 import { uploadFiles, type AssetUploader } from "./firefly-files-write.js";
@@ -39,6 +41,7 @@ export interface FireflyTransport {
   queryDocs(dbName?: string): Promise<Result<ResQueryDocs>>;
   deleteDoc(docId: string, dbName?: string): Promise<Result<ResDeleteDoc>>;
   subscribeDocs(dbName?: string): Promise<Result<ResSubscribeDocs>>;
+  setDbAcl(dbName: string, acl: DbAcl): Promise<Result<ResSetDbAcl>>;
   onMsg(fn: (event: { data: unknown }) => void): void;
 }
 // @ts-expect-error "charwise" has no types

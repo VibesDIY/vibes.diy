@@ -43,6 +43,9 @@ import {
   type ResVibeUpdateAvatarCid,
   isResVibeUpdateAvatarCid,
   type ReqVibeLogin,
+  isResSetDbAcl,
+  type ResSetDbAcl,
+  type DbAcl,
 } from "@vibes.diy/vibe-types";
 import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, OnFuncReturn, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
@@ -295,6 +298,18 @@ export class VibeSandboxApi {
         dbName,
       },
       { wait: isResSubscribeDocs, timeout: 10000 }
+    );
+  }
+
+  setDbAcl(dbName: string, acl: DbAcl): Promise<Result<ResSetDbAcl>> {
+    return this.request<{ type: string; appSlug: string; userSlug: string; dbName: string; acl: DbAcl }, ResSetDbAcl>(
+      {
+        type: "vibes.diy.req-set-db-acl",
+        ...this.svc.vibeApp,
+        dbName,
+        acl,
+      },
+      { wait: isResSetDbAcl, timeout: 10000 }
     );
   }
 
