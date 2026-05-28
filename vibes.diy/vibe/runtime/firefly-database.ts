@@ -105,7 +105,7 @@ export class FireflyDatabase {
   private readonly listeners = new Set<ListenerFn>();
   private readonly updateListeners = new Set<ListenerFn>();
 
-  constructor(name: string, vibeApi: FireflyTransport) {
+  constructor(name: string, vibeApi: FireflyTransport, acl?: DbAcl) {
     this.name = name;
     this.vibeApi = vibeApi;
     this.vibeApp = vibeApi.svc.vibeApp;
@@ -122,6 +122,10 @@ export class FireflyDatabase {
       }
     });
 
+    if (acl) {
+      this.applyAcl(acl);
+    }
+
     // Listen for remote doc-changed events (cross-client sync). Filter on
     // dbName so a sibling FireflyDatabase on the same connection (e.g. the
     // comments db on the same vibe) doesn't trigger spurious reloads here.
@@ -134,6 +138,18 @@ export class FireflyDatabase {
         data.dbName === this.name
       ) {
         this.notifyListeners([]);
+      }
+    });
+  }
+
+  applyAcl(acl: DbAcl): void {
+    this.vibeApi.setDbAcl(this.name, acl).then((rRes) => {
+      if (rRes.isErr()) {
+        console.error(`setDbAcl request failed for db "${this.name}":`, rRes.Err());
+        return;
+      }
+      if (rRes.Ok().status === "error") {
+        console.error(`setDbAcl server error for db "${this.name}": ${rRes.Ok().message ?? "unknown"}`);
       }
     });
   }

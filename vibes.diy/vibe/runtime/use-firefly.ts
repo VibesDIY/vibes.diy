@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { FireflyDatabase } from "./firefly-database.js";
 import type { VibeSandboxApi } from "./register-dependencies.js";
+import type { DbAcl } from "@vibes.diy/vibe-types";
 
 // Module-scoped state, set by registerFirefly()
 let vibeApiRef: VibeSandboxApi | undefined;
@@ -15,14 +16,16 @@ let vibeApiRef: VibeSandboxApi | undefined;
 // Cache FireflyDatabase instances by name so useMemo stability works
 const dbCache = new Map<string, FireflyDatabase>();
 
-function getOrCreateDb(name: string): FireflyDatabase {
+function getOrCreateDb(name: string, acl?: DbAcl): FireflyDatabase {
   let db = dbCache.get(name);
   if (!db) {
     if (!vibeApiRef) {
       throw new Error("Firefly not initialized — registerFirefly() must be called before useFireproof()");
     }
-    db = new FireflyDatabase(name, vibeApiRef);
+    db = new FireflyDatabase(name, vibeApiRef, acl);
     dbCache.set(name, db);
+  } else if (acl) {
+    db.applyAcl(acl);
   }
   return db;
 }
@@ -66,9 +69,8 @@ export function fireproof(name: string): FireflyDatabase {
  * Drop-in replacement for useFireproof that uses FireflyDatabase.
  * Apps call: const { database, useLiveQuery, useDocument } = useFireproof("mydb")
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useFireproof(name = "useFireproof", _config: any = {}) {
-  const database = useMemo(() => getOrCreateDb(name), [name]);
+export function useFireproof(name = "useFireproof", config: { acl?: DbAcl; [key: string]: unknown } = {}) {
+  const database = useMemo(() => getOrCreateDb(name, config.acl), [name]);
   const useDocument = useMemo(() => createUseDocument(database), [database]);
   const useLiveQuery = useMemo(() => createUseLiveQuery(database), [database]);
   const useAllDocs = useMemo(() => createUseAllDocs(database), [database]);
