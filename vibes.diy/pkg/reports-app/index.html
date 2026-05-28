@@ -9,13 +9,14 @@
       @import url("https://fonts.cdnfonts.com/css/alte-haas-grotesk");
 
       :root {
-        color-scheme: light;
+        color-scheme: light dark;
         --black: #000000;
         --near-black: #231f20;
         --gray-dark: #333333;
         --gray-mid: #6b6b6b;
         --gray-light: #cccdc8;
         --cream: #fffff0;
+        --paper: #fffff0;
         --white: #ffffff;
         --red: #da291c;
         --red-soft: rgba(218, 41, 28, 0.608);
@@ -28,7 +29,40 @@
 
         --grid-size: 40px;
         --card-border: 2px solid var(--black);
+        --radius: 4px;
         --gutter: clamp(1rem, 4vw, 3rem);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --black: #f0f0e8;
+          --near-black: #d8d8d0;
+          --gray-dark: #a8a8a0;
+          --gray-mid: #686860;
+          --gray-light: #303028;
+          --cream: #1a1a18;
+          --paper: #242420;
+          --card-border: 1px solid rgba(240, 240, 232, 0.15);
+        }
+        body {
+          background-color: #111110;
+          background-image:
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+        .section-label--filled {
+          background: var(--near-black);
+          color: var(--cream);
+          border-color: var(--near-black);
+        }
+        .trend-tooltip {
+          background: var(--paper);
+          border-color: rgba(240, 240, 232, 0.2);
+        }
+        .err {
+          background: var(--paper);
+          border-color: rgba(240, 240, 232, 0.15);
+        }
       }
 
       *,

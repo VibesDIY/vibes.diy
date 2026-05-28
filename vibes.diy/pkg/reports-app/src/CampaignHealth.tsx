@@ -249,17 +249,19 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                 "Ad click-through rate (CTR) — clicks ÷ impressions. How effectively the ad creative attracts clicks. Meta returns this per campaign.",
               ],
               ["Cost/Click", "Spend ÷ clicks (CPC). Cost of getting someone to click the ad and land on good.vibes.diy."],
+              ["Spend", "Total ad spend in the selected date range, as reported by Meta."],
               [
                 "Ad Reach",
                 "Unique people who saw the ad at least once in the period, deduplicated by Meta account. One person seeing the same ad 3 times = 3 impressions, 1 reach.",
               ],
               [
-                "CTA Clicks",
-                "Outbound clicks from good.vibes.diy → vibes.diy, counted from the Referer header in our server logs (all-time, not date-filtered). Bridges the gap between Landings (good.vibes.diy loads) and vibes.diy arrivals. Only shown when Meta reports a destination URL on the campaign.",
-              ],
-              [
                 "Landings",
                 "Meta landing_page_view — browser pixel on good.vibes.diy confirming the ad destination page loaded. Step 1: Ad click → good.vibes.diy counted here.",
+              ],
+              ["Cost/Landing", "Spend ÷ landings. Primary efficiency metric — drives row color coding."],
+              [
+                "CTA Clicks",
+                "Outbound clicks from good.vibes.diy → vibes.diy, counted from the Referer header in our server logs (all-time, not date-filtered). Bridges the gap between Landings (good.vibes.diy loads) and vibes.diy arrivals. Only shown when Meta reports a destination URL on the campaign.",
               ],
               [
                 "Stayed",
@@ -269,7 +271,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                 "Signups",
                 "CAPI CompleteRegistration — fires when a new Clerk account is created within 2 min of the fbclid session. Step 4: stayed → signed up. Undercounts vs Ads Manager (2-min window vs Meta's 1-day attribution; requires fbclid in session).",
               ],
-              ["Cost/Landing", "Spend ÷ landings. Primary efficiency metric — drives row color coding."],
+              ["Cost/Signup", "Spend ÷ signups. End-to-end cost of acquiring one new registered user from this campaign."],
             ].map(([term, def]) => (
               <React.Fragment key={term}>
                 <dt style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{term}</dt>
