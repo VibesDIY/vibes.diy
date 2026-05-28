@@ -301,12 +301,14 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                   const cplv = costPerLpv(row);
                   const reg = registrations(row);
                   const cpr = costPerReg(row);
+                  const isPaused = row.effective_status !== undefined && row.effective_status !== "ACTIVE";
                   return (
                     <tr
                       key={row.campaign_id}
                       style={{
                         borderBottom: "1px solid color-mix(in srgb, var(--near-black) 15%, transparent)",
                         background: rowBg(cplv),
+                        opacity: isPaused ? 0.45 : 1,
                       }}
                     >
                       <td style={{ padding: "0.4rem 0.75rem" }}>
@@ -316,6 +318,20 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                           {i + 1}.
                         </span>
                         {row.campaign_name}
+                        {isPaused && (
+                          <span
+                            style={{
+                              marginLeft: "0.5rem",
+                              fontSize: "0.65rem",
+                              fontWeight: "bold",
+                              letterSpacing: "0.08em",
+                              textTransform: "uppercase",
+                              color: "var(--gray-mid)",
+                            }}
+                          >
+                            {row.effective_status}
+                          </span>
+                        )}
                       </td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
                         {row.ctr !== undefined ? `${Number(row.ctr).toFixed(2)}%` : "—"}
