@@ -48,7 +48,8 @@ export function Logout() {
       refUri.isOk() &&
       curUri.isOk() &&
       refUri.Ok().protocol === curUri.Ok().protocol &&
-      refUri.Ok().hostname === curUri.Ok().hostname
+      refUri.Ok().hostname === curUri.Ok().hostname &&
+      refUri.Ok().port === curUri.Ok().port
     ) {
       console.log("Logout: will return to referrer", referrer);
       return referrer;

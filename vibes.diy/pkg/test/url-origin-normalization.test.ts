@@ -10,7 +10,9 @@ import { URI } from "@adviser/cement";
 // URI.from quirk: internally it substitutes "http" as the parse protocol,
 // so only port 80 is recognized as a default. An explicit :443 on an
 // https URL is NOT stripped from .host. Use .hostname (no port) when
-// doing same-origin checks via URI — logout.tsx does this.
+// comparing hostnames — logout.tsx does this — but also compare .port
+// so that different non-default ports (e.g. localhost:5173 vs localhost:3000)
+// are correctly rejected as cross-origin.
 // Guardrail exception: these assertions intentionally use native WHATWG URL parsing to document origin normalization behavior.
 
 describe("URL.origin default-port normalization", () => {
@@ -58,5 +60,15 @@ describe("URI.from (cement) port behavior", () => {
   it("non-default port preserved in .host but not .hostname", () => {
     expect(URI.from("https://example.com:8080/path").host).toBe("example.com:8080");
     expect(URI.from("https://example.com:8080/path").hostname).toBe("example.com");
+  });
+
+  it("URI.from .port distinguishes non-default ports — used in logout same-origin check", () => {
+    expect(URI.from("https://localhost:5173/app").port).toBe("5173");
+    expect(URI.from("https://localhost:3000/app").port).toBe("3000");
+    expect(URI.from("https://localhost:5173/app").port).not.toBe(URI.from("https://localhost:3000/app").port);
+  });
+
+  it("URI.from .port is empty for no explicit port", () => {
+    expect(URI.from("https://vibes.diy/app").port).toBe("");
   });
 });
