@@ -14,7 +14,7 @@ import {
   ResReportCampaignHealthPixelSummary,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -56,12 +56,12 @@ function costPerLpv(row: MetaInsightRow): number {
   return l > 0 ? Number(row.spend) / l : Infinity;
 }
 
-async function fetchGoodVibesClickThroughs(vctx: VibesApiSQLCtx): Promise<Record<string, number>> {
+async function fetchGoodVibesClickThroughs(vctx: VibesApiSQLCtx, sinceIso: string): Promise<Record<string, number>> {
   const t = vctx.sql.tables;
   const rows = await vctx.sql.db
     .select({ refPath: t.refererEvents.refPath, total: sql<number>`cast(count(*) as int)` })
     .from(t.refererEvents)
-    .where(eq(t.refererEvents.refHost, "good.vibes.diy"))
+    .where(and(eq(t.refererEvents.refHost, "good.vibes.diy"), gte(t.refererEvents.ts, sinceIso)))
     .groupBy(t.refererEvents.refPath);
   const byPath: Record<string, number> = {};
   for (const r of rows) byPath[r.refPath] = r.total;
@@ -90,15 +90,17 @@ async function fetchCampaignHealth(
   vctx: VibesApiSQLCtx
 ): Promise<Result<ResReportCampaignHealth>> {
   console.log("fetch-campaign-health: start");
+  const today = new Date().toISOString().slice(0, 10);
+  const sinceIso = since ?? new Date(Date.now() - Number(days) * 86_400_000).toISOString().slice(0, 10);
   const dateParam = since
-    ? `&time_range=${encodeURIComponent(JSON.stringify({ since, until: new Date().toISOString().slice(0, 10) }))}`
+    ? `&time_range=${encodeURIComponent(JSON.stringify({ since, until: today }))}`
     : `&date_preset=last_${days}d`;
   const dateLabel = since ? `since ${since}` : `last ${days} days`;
 
   // Fetch campaign destination URLs and referrer click-throughs in parallel with insights
   const [destUrlsResult, clicksByPath] = await Promise.all([
     fetchCampaignDestinationUrls(token, account),
-    fetchGoodVibesClickThroughs(vctx),
+    fetchGoodVibesClickThroughs(vctx, sinceIso),
   ]);
   console.log(
     "fetch-campaign-health: dest urls count:",
