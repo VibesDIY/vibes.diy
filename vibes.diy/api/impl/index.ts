@@ -449,7 +449,11 @@ export class VibesDiyApi implements VibesDiyApiIface<{
         // A schema miss on our own response type should never silently time out.
         if (tidMatch && !resMatch && !isErr) {
           const payloadType = (msg.payload as Record<string, unknown>)?.type;
-          if (typeof payloadType === "string" && payloadType.startsWith("vibes.diy.res-")) {
+          if (
+            typeof payloadType === "string" &&
+            payloadType.startsWith("vibes.diy.res-") &&
+            payloadType !== "vibes.diy.res-progress"
+          ) {
             waitForResponse.resolve(
               Result.Err<S, VibesDiyError>(mkResError(`Response schema mismatch for ${payloadType}`, "response-schema-error"))
             );

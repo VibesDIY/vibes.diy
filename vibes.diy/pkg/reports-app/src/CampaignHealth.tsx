@@ -320,9 +320,13 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
                         {row.ctr !== undefined ? `${Number(row.ctr).toFixed(2)}%` : "—"}
                       </td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.cpc))}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
+                        {row.cpc !== undefined ? fmtMoney(Number(row.cpc)) : "—"}
+                      </td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.spend))}</td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{Number(row.reach).toLocaleString()}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
+                        {row.reach !== undefined ? Number(row.reach).toLocaleString() : "—"}
+                      </td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{lpv(row).toLocaleString() || "—"}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cplv)}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
