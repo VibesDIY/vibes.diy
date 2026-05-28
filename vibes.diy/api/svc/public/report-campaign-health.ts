@@ -127,9 +127,7 @@ async function fetchCampaignHealth(
     "fetch-campaign-health: campaign meta count:",
     Object.keys(campaignMeta).length,
     "referrer paths:",
-    Object.keys(clicksByPath).length,
-    "clicksByPath keys:",
-    JSON.stringify(Object.keys(clicksByPath))
+    Object.keys(clicksByPath).length
   );
 
   const fields = "campaign_name,campaign_id,impressions,clicks,spend,ctr,cpc,reach,actions";
@@ -203,18 +201,6 @@ async function fetchCampaignHealth(
         }
       }
       const ctaClicks = landingPath !== undefined ? (clicksByPath[landingPath] ?? 0) : undefined;
-      console.log(
-        "campaign-health join:",
-        r.campaign_name,
-        "| website_url:",
-        websiteUrl ?? "none",
-        "| landingPath:",
-        landingPath ?? "none",
-        "| ctaClicks:",
-        ctaClicks ?? "—",
-        "| status:",
-        effective_status ?? "unknown"
-      );
       return { ...r, actions: r.actions?.map((a) => ({ ...a })), landingPath, ctaClicks, effective_status };
     });
 
