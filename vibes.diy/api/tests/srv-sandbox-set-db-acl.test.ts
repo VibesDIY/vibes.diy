@@ -26,7 +26,7 @@ function setupSandbox() {
     postMessage: (data: unknown, origin: string) => captured.push({ data, origin }),
   } as unknown as Window;
 
-  const ensureAppSettingsCalls: Array<Req<ReqEnsureAppSettings>> = [];
+  const ensureAppSettingsCalls: Req<ReqEnsureAppSettings>[] = [];
   const fakeApi: Partial<VibesDiyApiIface> = {
     onDocChanged: () => () => {
       /* noop */
