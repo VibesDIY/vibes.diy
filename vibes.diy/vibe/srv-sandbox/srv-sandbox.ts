@@ -44,6 +44,8 @@ import {
   ReqQueryDocs,
   isReqDeleteDoc,
   ReqDeleteDoc,
+  isReqSetDbAcl,
+  ReqSetDbAcl,
   isReqSubscribeDocs,
   ReqSubscribeDocs,
   isReqListDbNames,
@@ -658,6 +660,42 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
   };
 }
 
+function vibeSetDbAcl(sandbox: vibesDiySrvSandbox): EventoHandler {
+  const { vibeDiyApi } = sandbox.args;
+  return {
+    hash: "vibe.setDbAcl",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqSetDbAcl(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqSetDbAcl, unknown>): Promise<Result<EventoResultType>> => {
+      const rRes = await vibeDiyApi.ensureAppSettings({
+        userSlug: ctx.validated.userSlug,
+        appSlug: ctx.validated.appSlug,
+        dbAcl: { dbName: ctx.validated.dbName, acl: ctx.validated.acl },
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-set-db-acl",
+          status: "error",
+          message: rRes.Err().message,
+        });
+      } else {
+        await ctx.send.send(ctx, {
+          tid: ctx.validated.tid,
+          type: "vibes.diy.res-set-db-acl",
+          status: "ok",
+        });
+      }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
 function vibeListDbNames(sandbox: vibesDiySrvSandbox): EventoHandler {
   const { vibeDiyApi } = sandbox.args;
   return {
@@ -1004,6 +1042,7 @@ export class vibesDiySrvSandbox implements Disposable {
         vibeQueryDocs(this),
         vibeDeleteDoc(this),
         vibeSubscribeDocs(this),
+        vibeSetDbAcl(this),
         vibeListDbNames(this),
         vibePutAsset(this),
         vibeWhoAmI(this),
