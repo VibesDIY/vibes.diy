@@ -18,7 +18,7 @@
     "@adviser/cement": "^0.5.34",
     "@monaco-editor/react": "^4.7.0",
     "@react-router/node": "^7.15.0",
-    "@react-router/serve": "^7.15.0",
+    "@react-router/serve": "^7.16.0",
     "@shikijs/monaco": "^4.1.0",
     "@tailwindcss/typography": "^0.5.19",
     "@vibes.diy/base": "workspace:*",
