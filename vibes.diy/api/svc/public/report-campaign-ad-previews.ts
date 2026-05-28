@@ -9,7 +9,6 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
   reqReportCampaignAdPreviews,
-  resReportCampaignAdPreviews,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
