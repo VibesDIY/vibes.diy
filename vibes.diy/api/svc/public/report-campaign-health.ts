@@ -68,15 +68,17 @@ async function fetchGoodVibesClickThroughs(vctx: VibesApiSQLCtx, sinceIso: strin
   return byPath;
 }
 
-async function fetchCampaignDestinationUrls(token: string, account: string): Promise<Record<string, string>> {
-  const rPage = await metaGet<{ data?: readonly { id: string; website_url?: string }[] }>(
-    `/${account}/campaigns?fields=id,website_url&limit=200`,
-    token
-  );
+async function fetchCampaignMeta(
+  token: string,
+  account: string
+): Promise<Record<string, { website_url?: string; effective_status?: string }>> {
+  const rPage = await metaGet<{
+    data?: readonly { id: string; website_url?: string; effective_status?: string }[];
+  }>(`/${account}/campaigns?fields=id,website_url,effective_status&limit=200`, token);
   if (rPage.isErr()) return {};
-  const byId: Record<string, string> = {};
+  const byId: Record<string, { website_url?: string; effective_status?: string }> = {};
   for (const c of rPage.Ok().data ?? []) {
-    if (c.website_url !== undefined) byId[c.id] = c.website_url;
+    byId[c.id] = { website_url: c.website_url, effective_status: c.effective_status };
   }
   return byId;
 }
@@ -97,16 +99,18 @@ async function fetchCampaignHealth(
     : `&date_preset=last_${days}d`;
   const dateLabel = since ? `since ${since}` : `last ${days} days`;
 
-  // Fetch campaign destination URLs and referrer click-throughs in parallel with insights
-  const [destUrlsResult, clicksByPath] = await Promise.all([
-    fetchCampaignDestinationUrls(token, account),
+  // Fetch campaign meta (URL + status) and referrer click-throughs in parallel with insights
+  const [campaignMeta, clicksByPath] = await Promise.all([
+    fetchCampaignMeta(token, account),
     fetchGoodVibesClickThroughs(vctx, sinceIso),
   ]);
   console.log(
-    "fetch-campaign-health: dest urls count:",
-    Object.keys(destUrlsResult).length,
+    "fetch-campaign-health: campaign meta count:",
+    Object.keys(campaignMeta).length,
     "referrer paths:",
-    Object.keys(clicksByPath).length
+    Object.keys(clicksByPath).length,
+    "clicksByPath keys:",
+    JSON.stringify(Object.keys(clicksByPath))
   );
 
   const fields = "campaign_name,campaign_id,impressions,clicks,spend,ctr,cpc,reach,actions";
@@ -165,7 +169,9 @@ async function fetchCampaignHealth(
   const ranked: ResReportCampaignHealthCampaignRow[] = [...rows]
     .sort((a, b) => costPerLpv(a) - costPerLpv(b))
     .map((r) => {
-      const websiteUrl = destUrlsResult[r.campaign_id];
+      const meta = campaignMeta[r.campaign_id];
+      const websiteUrl = meta?.website_url;
+      const effective_status = meta?.effective_status;
       let landingPath: string | undefined;
       if (websiteUrl !== undefined) {
         try {
@@ -178,7 +184,19 @@ async function fetchCampaignHealth(
         }
       }
       const ctaClicks = landingPath !== undefined ? (clicksByPath[landingPath] ?? 0) : undefined;
-      return { ...r, actions: r.actions?.map((a) => ({ ...a })), landingPath, ctaClicks };
+      console.log(
+        "campaign-health join:",
+        r.campaign_name,
+        "| website_url:",
+        websiteUrl ?? "none",
+        "| landingPath:",
+        landingPath ?? "none",
+        "| ctaClicks:",
+        ctaClicks ?? "—",
+        "| status:",
+        effective_status ?? "unknown"
+      );
+      return { ...r, actions: r.actions?.map((a) => ({ ...a })), landingPath, ctaClicks, effective_status };
     });
 
   console.log("fetch-campaign-health: pixel done");
