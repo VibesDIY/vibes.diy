@@ -272,100 +272,15 @@ Each capability (`read`, `write`, `delete`) is independent. Omitting one falls b
 
 ## Multi-Space Pattern: Owner Creates, Members Discover
 
-A common pattern: the owner defines a set of named databases (rooms, channels, boards), each with its own ACL, and members browse a shared registry to find the spaces they can access.
-
-**Key constraint:** `listDbNames()` is owner-only. Members cannot call it to discover databases. Instead, the owner writes a registry document into a shared database that members can query.
-
-### Step 1 — Owner creates spaces and registers them
+`listDbNames()` is owner-only — members can't enumerate databases by name. Instead, the owner writes registry documents into a shared database that all members can query to discover available spaces.
 
 ```jsx
 import { useFireproof, useViewer } from "use-vibes";
-import { fireproof } from "use-fireproof"; // non-hook factory — safe to call outside components
-
-function SpaceCreator() {
-  const viewer = useViewer();
-  // Registry has no explicit ACL — app-level defaults let members read, editors write
-  const { database: registry } = useFireproof("spaces-registry");
-
-  async function createSpace(name, slug, acl) {
-    // Register in the shared registry so members can discover it
-    await registry.put({ type: "space", name, slug, acl, userSlug: viewer.userSlug, createdAt: Date.now() });
-    // Declare the ACL for the space database (owner-only; silently ignored for non-owners)
-    fireproof(slug).applyAcl(acl);
-  }
-
-  return (
-    <div>
-      <button onClick={() => createSpace("General", "space-general", { write: ["members"] })}>Create General Space</button>
-      <button onClick={() => createSpace("Announcements", "space-announcements", { write: ["editors"], delete: ["editors"] })}>
-        Create Announcements Space
-      </button>
-    </div>
-  );
-}
-```
-
-### Step 2 — Members list available spaces
-
-Store `userSlug` on each registry document and index on `[userSlug, createdAt]` to support both "all spaces" and "spaces by a specific creator" queries.
-
-```jsx
-function SpaceList({ onSelectSpace, filterByUserSlug }) {
-  const { useLiveQuery } = useFireproof("spaces-registry");
-
-  // All spaces, sorted by creation time (most recent first)
-  const { docs: allSpaces } = useLiveQuery("type", { key: "space", descending: true });
-
-  // Or: spaces created by a specific user (prefix on [userSlug, createdAt])
-  const { docs: userSpaces } = useLiveQuery((doc) => (doc.type === "space" ? [doc.userSlug, doc.createdAt] : undefined), {
-    prefix: [filterByUserSlug],
-  });
-
-  const spaces = filterByUserSlug ? userSpaces : allSpaces;
-
-  return (
-    <ul>
-      {spaces.map((space) => (
-        <li key={space._id}>
-          <button onClick={() => onSelectSpace(space.slug)}>{space.name}</button>
-        </li>
-      ))}
-    </ul>
-  );
-}
-```
-
-### Step 3 — Members open a space database
-
-```jsx
-function SpaceView({ slug }) {
-  // Opening without acl is always safe for non-owners — acl option is ignored server-side
-  const { useLiveQuery, database } = useFireproof(slug);
-  const { docs } = useLiveQuery("_id", { descending: true, limit: 50 });
-
-  async function post(text) {
-    await database.put({ text, timestamp: Date.now(), type: "message" });
-  }
-
-  return (
-    <div>
-      {docs.map((d) => (
-        <p key={d._id}>{d.text}</p>
-      ))}
-      <button onClick={() => post("Hello!")}>Post</button>
-    </div>
-  );
-}
-```
-
-### Complete wired-together example
-
-```jsx
-import { useFireproof, useViewer } from "use-vibes";
+import { fireproof } from "use-fireproof";
+import { useState } from "react";
 
 export default function App() {
   const [activeSlug, setActiveSlug] = useState(null);
-
   return activeSlug ? (
     <SpaceView slug={activeSlug} onBack={() => setActiveSlug(null)} />
   ) : (
@@ -374,21 +289,19 @@ export default function App() {
 }
 
 function SpaceList({ onSelectSpace }) {
-  const { useLiveQuery } = useFireproof("spaces-registry");
   const viewer = useViewer();
+  // No explicit ACL on the registry — app-level defaults let all members read
+  const { database: registry, useLiveQuery } = useFireproof("spaces-registry");
+  const { docs: spaces } = useLiveQuery("type", { key: "space", descending: true });
 
-  // All spaces
-  const { docs: allSpaces } = useLiveQuery("type", { key: "space", descending: true });
-  // Spaces created by the current viewer
-  const { docs: mySpaces } = useLiveQuery((doc) => (doc.type === "space" ? [doc.userSlug, doc.createdAt] : undefined), {
-    prefix: [viewer?.userSlug],
-  });
-
-  const spaces = viewer ? mySpaces : allSpaces;
+  async function createSpace(name, slug, acl) {
+    await registry.put({ type: "space", name, slug, acl, userSlug: viewer?.userSlug, createdAt: Date.now() });
+    // Declares the ACL server-side — owner-only; silently ignored for non-owners
+    fireproof(slug).applyAcl(acl);
+  }
 
   return (
     <div>
-      <h2>Spaces</h2>
       <ul>
         {spaces.map((s) => (
           <li key={s._id}>
@@ -396,12 +309,15 @@ function SpaceList({ onSelectSpace }) {
           </li>
         ))}
       </ul>
+      <button onClick={() => createSpace("Announcements", "space-announcements", { write: ["editors"], delete: ["editors"] })}>
+        + Create Space
+      </button>
     </div>
   );
 }
 
 function SpaceView({ slug, onBack }) {
-  const { useLiveQuery, useDocument, database } = useFireproof(slug);
+  const { useLiveQuery, useDocument } = useFireproof(slug);
   const { doc, merge, submit } = useDocument({ text: "", type: "message" });
   const { docs } = useLiveQuery("_id", { descending: true, limit: 50 });
 
