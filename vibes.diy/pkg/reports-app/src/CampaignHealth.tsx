@@ -29,11 +29,103 @@ function costPerReg(row: ResReportCampaignHealthCampaignRow): number {
   return r > 0 ? Number(row.spend) / r : Infinity;
 }
 
+function ctaRate(row: ResReportCampaignHealthCampaignRow): number | null {
+  const l = lpv(row);
+  const c = row.ctaClicks;
+  return l > 0 && c !== undefined ? c / l : null;
+}
+
 function rowBg(cplv: number): string {
   if (cplv === Infinity) return "transparent";
   if (cplv < 0.3) return "rgba(0,200,100,0.15)";
   if (cplv <= 0.5) return "rgba(254,221,0,0.25)";
   return "rgba(218,41,28,0.15)";
+}
+
+type SortCol =
+  | "name"
+  | "ctr"
+  | "cpc"
+  | "spend"
+  | "reach"
+  | "landings"
+  | "costPerLanding"
+  | "ctaClicks"
+  | "ctaRate"
+  | "stayed"
+  | "signups"
+  | "costPerSignup";
+
+const naturalDir: Record<SortCol, "asc" | "desc"> = {
+  name: "asc",
+  ctr: "desc",
+  cpc: "asc",
+  spend: "desc",
+  reach: "desc",
+  landings: "desc",
+  costPerLanding: "asc",
+  ctaClicks: "desc",
+  ctaRate: "desc",
+  stayed: "desc",
+  signups: "desc",
+  costPerSignup: "asc",
+};
+
+function sortVal(row: ResReportCampaignHealthCampaignRow, col: SortCol): number | string | null {
+  switch (col) {
+    case "name":
+      return row.campaign_name;
+    case "ctr":
+      return row.ctr !== undefined ? Number(row.ctr) : null;
+    case "cpc":
+      return row.cpc !== undefined ? Number(row.cpc) : null;
+    case "spend":
+      return Number(row.spend);
+    case "reach":
+      return row.reach !== undefined ? Number(row.reach) : null;
+    case "landings": {
+      const v = lpv(row);
+      return v > 0 ? v : null;
+    }
+    case "costPerLanding": {
+      const v = costPerLpv(row);
+      return isFinite(v) ? v : null;
+    }
+    case "ctaClicks":
+      return row.ctaClicks ?? null;
+    case "ctaRate":
+      return ctaRate(row);
+    case "stayed": {
+      const v = contentViews(row);
+      return v > 0 ? v : null;
+    }
+    case "signups": {
+      const v = registrations(row);
+      return v > 0 ? v : null;
+    }
+    case "costPerSignup": {
+      const v = costPerReg(row);
+      return isFinite(v) ? v : null;
+    }
+  }
+}
+
+function sortRows(
+  rows: ResReportCampaignHealthCampaignRow[],
+  col: SortCol,
+  dir: "asc" | "desc"
+): ResReportCampaignHealthCampaignRow[] {
+  return [...rows].sort((a, b) => {
+    const va = sortVal(a, col);
+    const vb = sortVal(b, col);
+    if (va === null && vb === null) return 0;
+    if (va === null) return 1;
+    if (vb === null) return -1;
+    if (typeof va === "string" && typeof vb === "string") {
+      return dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+    }
+    return dir === "asc" ? (va as number) - (vb as number) : (vb as number) - (va as number);
+  });
 }
 
 function fmt(n: number, decimals = 2): string {
@@ -48,6 +140,17 @@ function fmtMoney(n: number): string {
 export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
   const [data, setData] = useState<Loadable<ResReportCampaignHealth>>({ kind: "loading" });
   const [elapsed, setElapsed] = useState(0);
+  const [sortCol, setSortCol] = useState<SortCol>("costPerLanding");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  function handleSort(col: SortCol) {
+    if (col === sortCol) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortCol(col);
+      setSortDir(naturalDir[col]);
+    }
+  }
 
   useEffect(() => {
     if (data.kind !== "loading") return;
@@ -102,6 +205,28 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
 
   const d = data.data;
   const { anomalies } = d;
+
+  const displayRows = sortRows(d.ranked, sortCol, sortDir);
+
+  function SortTh({ col, label, left }: { col: SortCol; label: string; left?: boolean }) {
+    const active = sortCol === col;
+    return (
+      <th
+        onClick={() => handleSort(col)}
+        style={{
+          textAlign: left ? "left" : "right",
+          padding: "0.5rem 0.75rem",
+          cursor: "pointer",
+          userSelect: "none",
+          whiteSpace: "nowrap",
+          color: active ? "var(--near-black)" : "var(--gray-mid)",
+        }}
+      >
+        {label}
+        {active && <span style={{ marginLeft: "0.3em", fontSize: "0.7em" }}>{sortDir === "asc" ? "▲" : "▼"}</span>}
+      </th>
+    );
+  }
 
   const totalSpend = d.ranked.reduce((sum, r) => sum + Number(r.spend), 0);
   const totalClicks = d.ranked.reduce((sum, r) => sum + Number(r.clicks), 0);
@@ -232,7 +357,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
         <div className="card">
           <span className="section-label">Campaigns</span>
           <h2 className="section-title">Campaigns by Efficiency</h2>
-          <p className="section-intro">Ranked by cost per landing (ascending).</p>
+          <p className="section-intro">Click any column header to sort. Default: cost per landing.</p>
           <dl
             style={{
               display: "grid",
@@ -261,7 +386,11 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               ["Cost/Landing", "Spend ÷ landings. Primary efficiency metric — drives row color coding."],
               [
                 "CTA Clicks",
-                "Outbound clicks from good.vibes.diy → vibes.diy, counted from the Referer header in our server logs (all-time, not date-filtered). Bridges the gap between Landings (good.vibes.diy loads) and vibes.diy arrivals. Only shown when Meta reports a destination URL on the campaign.",
+                "Outbound clicks from good.vibes.diy → vibes.diy, counted from the Referer header in our server logs (date-scoped to the report window). — means no destination URL is set for the campaign.",
+              ],
+              [
+                "CTA%",
+                "CTA Clicks ÷ Landings. What fraction of people who loaded the good.vibes.diy landing page then clicked through to vibes.diy. Key conversion metric for landing page effectiveness.",
               ],
               [
                 "Stayed",
@@ -283,21 +412,22 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid var(--near-black)" }}>
-                  <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Campaign</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Click Rate</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Click</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Spend</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Ad Reach</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Landings</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Landing</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>CTA Clicks</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Stayed</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Signups</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Signup</th>
+                  <SortTh col="name" label="Campaign" left />
+                  <SortTh col="ctr" label="Click Rate" />
+                  <SortTh col="cpc" label="Cost/Click" />
+                  <SortTh col="spend" label="Spend" />
+                  <SortTh col="reach" label="Ad Reach" />
+                  <SortTh col="landings" label="Landings" />
+                  <SortTh col="costPerLanding" label="Cost/Landing" />
+                  <SortTh col="ctaClicks" label="CTA Clicks" />
+                  <SortTh col="ctaRate" label="CTA%" />
+                  <SortTh col="stayed" label="Stayed" />
+                  <SortTh col="signups" label="Signups" />
+                  <SortTh col="costPerSignup" label="Cost/Signup" />
                 </tr>
               </thead>
               <tbody>
-                {d.ranked.map((row, i) => {
+                {displayRows.map((row, i) => {
                   const cplv = costPerLpv(row);
                   const reg = registrations(row);
                   const cpr = costPerReg(row);
@@ -347,6 +477,12 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cplv)}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
                         {row.ctaClicks !== undefined ? (row.ctaClicks > 0 ? row.ctaClicks.toLocaleString() : "0") : "—"}
+                      </td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
+                        {(() => {
+                          const r = ctaRate(row);
+                          return r !== null ? `${(r * 100).toFixed(1)}%` : "—";
+                        })()}
                       </td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
                         {contentViews(row) > 0 ? contentViews(row).toLocaleString() : "—"}
