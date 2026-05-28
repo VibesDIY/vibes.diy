@@ -169,10 +169,12 @@ export const resReportCampaignHealthCampaignRow = type({
   // Meta API always returns these date range fields on insight rows
   "date_start?": "string",
   "date_stop?": "string",
-  // good.vibes.diy → vibes.diy click-throughs from RefererEvents (all-time)
+  // good.vibes.diy → vibes.diy click-throughs from RefererEvents (date-scoped to report window)
   "ctaClicks?": "number",
   // good.vibes.diy path this campaign links to (extracted from destination URL)
   "landingPath?": "string",
+  // Meta effective_status: ACTIVE, PAUSED, DELETED, ARCHIVED, etc.
+  "effective_status?": "string",
 });
 export type ResReportCampaignHealthCampaignRow = typeof resReportCampaignHealthCampaignRow.infer;
 
