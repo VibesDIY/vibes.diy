@@ -4,6 +4,8 @@
 
 > **Step 1 divergence (skill v0.2, 2026-05-21):** The original SOP requires "Cold account. Fresh email, never used on Vibes before." A skill dry-run on 2026-05-21 discovered Vibes' Clerk configuration is OAuth-only — no email sign-up form is exposed. The skill therefore signs in as the **operator's existing Vibes identity via Google OAuth**, and replaces the fresh-email discipline with two weaker disciplines: clean browser profile per run, and "click New Vibe before doing anything" to ensure a fresh project. The sign-up flow itself is no longer QA'd by the skill — it needs separate manual passes when auth changes. Steps 2–7 below apply as written.
 
+> **Mobile divergence (skill, 2026-05-28):** This SOP lists mobile under "Not yet in scope" (below). The `qa-pr` skill now closes that gap: every run walks the desktop spine (Phase A) and then re-walks the same surfaces at 390×844 / iPhone 14 Pro (Phase B), so mobile-only responsive regressions are caught in the same pass. See the skill's *Step 4.5 — Phase B* section. The standalone `qa-pr-mobile` command was retired and folded into `qa-pr` on 2026-05-28.
+
 ## When to run it
 
 - A PR has a preview deploy and the first-time-user flow could plausibly be affected (or you just want eyes on it before approving).
