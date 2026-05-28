@@ -32,6 +32,19 @@ What's **preserved**: steps 2–7 of the spine (first-prompt generation, in-app 
 
 **Operator identity (v0.3):** the operator's email comes from `git config user.email`, not a Gmail OAuth credential. The v0.1/v0.2 Gmail-API scaffolding (a Cloud project per engineer, `setup-gmail.mjs`, `gmail-otp.mjs`) was orphaned by the OAuth-only sign-in pivot and removed in v0.3 to drop ~30 minutes of per-engineer onboarding for a capability nothing currently uses. If a future Vibes flow needs the agent to read inbox messages (publish confirmations, share invites, password reset, etc.), the Gmail-API implementation can be revived from commits `7040276b`, `c1f15cab`, `bb29c0f1`, `26a591a7` on the original `popmechanic/qa-pr-skill-design` branch — substantially faster than reimplementing.
 
+## First-run setup (once per machine)
+
+Before the skill can complete a run, the operator's machine needs a handful of tools and accounts in place. Most engineers working in this repo already have all of them; this checklist exists so the *first* run fails loudly with a fix instead of stalling halfway. The skill's Step 1 preflight verifies each of these automatically and tells you exactly what's missing — this section is the human-readable version of what it checks and how to satisfy each item.
+
+1. **Google Chrome** — `chrome-devtools-mcp` drives a real Chrome (not Chromium). Install it from <https://www.google.com/chrome/> if `open -Ra "Google Chrome"` errors.
+2. **Node.js** — needed to run the MCP server via `npx`. Any recent LTS is fine (`node --version`).
+3. **GitHub CLI, authenticated** — `gh --version` and `gh auth status`. The skill reads PR metadata and posts the triage comment through `gh`. Run `gh auth login` if not authenticated.
+4. **chrome-devtools MCP server** — provisioned for you by the repo's root [`.mcp.json`](../../../.mcp.json), which declares the `chrome-devtools` server (`npx -y chrome-devtools-mcp@latest`). When you open this repo in Claude Code, you'll be prompted to approve the project's MCP servers on repo-trust; approve it (or run `/mcp` and enable `chrome-devtools`), then the `mcp__chrome-devtools__*` tools appear in the tool list. If those tools are absent, the skill cannot drive a browser — Step 1 preflight catches this first.
+5. **A clone of this repo** — the skill is project-scoped (auto-discovered under `.claude/skills/` when Claude Code runs inside a clone of `vibes.diy`). Nothing to install beyond cloning; see [`README.md` › Distribution & upgrade path](../README.md).
+6. **git email set** — `git config user.email` must return a non-empty address; it labels the run in `qa-reports/runs.jsonl`. Ideally a `@vibes.diy` / `@fireproof.storage` Workspace address, but a personal address only triggers a warning, not an abort (see Step 1).
+7. **A Vibes account** — the skill signs in as *your existing* Vibes identity via Google OAuth; it does **not** create accounts. If you've never signed into vibes.diy, do that once in a normal browser first.
+8. **Google session seeded into the chrome-devtools profile** — the one genuinely non-obvious step. See *Per-engineer one-time setup* immediately below; without it the Step 4.1 OAuth sign-in stalls on a password prompt the agent can't complete.
+
 ## Per-engineer one-time setup (Google session in chrome-devtools profile)
 
 `chrome-devtools-mcp` launches Chrome against a persistent user-data-dir at `~/.cache/chrome-devtools-mcp/chrome-profile/` by default (verified with `npx chrome-devtools-mcp@latest --help`). The profile persists cookies, including Google sessions, across runs.
@@ -68,10 +81,12 @@ After reading those, follow the steps below in order.
 
 ## Step 1 — Preflight
 
-Verify the operator's environment can complete a run before starting one. Each check below must pass; if any fail, stop and tell the operator what to do.
+Verify the operator's environment can complete a run before starting one. Each check below must pass; if any fail, stop and tell the operator what to do (the *First-run setup* section above is the fix-it reference for the environment checks). Run the environment checks in the order listed — the MCP-availability check comes first because nothing else matters if the agent can't drive a browser.
 
-- `gh --version` — `gh` is installed and authenticated.
-- `node --version` — Node is available.
+- **chrome-devtools MCP available** — confirm `mcp__chrome-devtools__*` tools are present in the current tool list. If they're absent, the repo's root `.mcp.json` declares the server but it hasn't been approved/enabled in this session: stop and tell the operator to approve the project's MCP servers on repo-trust (or run `/mcp` and enable `chrome-devtools`), then restart the session. Without these tools the rest of the run is impossible — check this first.
+- **Google Chrome installed** — `open -Ra "Google Chrome"` (macOS) returns success. `chrome-devtools-mcp` drives Chrome specifically; if it errors, point the operator at <https://www.google.com/chrome/>.
+- `gh --version` **and** `gh auth status` — `gh` is installed *and* authenticated. A bare `--version` passing while auth is missing is a silent gap that only surfaces when the triage post fails at the very end; check both up front. If unauthenticated, instruct the operator to run `gh auth login`.
+- `node --version` — Node is available (needed for the `npx`-launched MCP server).
 - `git config user.email` — must return a non-empty address; used to identify the operator in the run log. If empty, instruct the operator to set it (`git config --global user.email "<your-address>"`) and stop. The address's domain *should* be `vibes.diy` or `fireproof.storage` (the team Workspace's domains). If it's something else, warn but do not abort — git identity and Vibes OAuth identity can legitimately differ (e.g. personal Gmail used for git but Workspace account used for Vibes); the run still completes, the warning surfaces in the triage's `notable_conditions`.
 - `gh pr view <N> --json url,headRefOid,state` — confirm the PR exists, is `OPEN` (abort if `MERGED` or `CLOSED` — previews are torn down on close by `hosting-pr-cleanup.yaml`), and capture the head commit SHA.
 - Locate the preview URL by fetching the PR's comments with `gh api repos/VibesDIY/vibes.diy/issues/<N>/comments` and finding the most recent comment by `github-actions[bot]` containing the marker `<!-- vibes-diy-preview -->`. Extract the `**Preview URL:**` line — the URL will be on `*.workers.dev` (Cloudflare Workers per-PR deployment), e.g. `https://pr-1795-vibes-diy-v2.jchris.workers.dev`. That `workers.dev` host is the correct target for PR-preview QA; **do not** rewrite it to `vibes.diy`.
