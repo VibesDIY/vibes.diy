@@ -246,7 +246,7 @@ export default function ColorsetPicker({
             style={{ top: pos.top, left: pos.left, width: Math.min(POPOVER_W, window.innerWidth - 16) }}
             className="fixed z-[10000] flex flex-col gap-2 rounded-md border-2 border-black bg-white p-3 shadow-[3px_3px_0px_0px_black] dark:border-gray-700 dark:bg-gray-900"
           >
-            <div className="flex items-baseline justify-between gap-3">
+            <div className="flex items-baseline justify-between gap-3 border-b-2 border-black pb-2 dark:border-gray-700">
               <span className="text-[0.65rem] font-bold uppercase tracking-wider text-gray-900 dark:text-gray-100">
                 Palette
               </span>
