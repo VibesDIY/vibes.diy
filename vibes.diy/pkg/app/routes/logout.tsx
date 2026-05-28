@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { URI } from "@adviser/cement";
 import { useClerk } from "@clerk/react";
 import { VibesButtonStyles, useMobile, LabelContainer, gridBackground, cx } from "@vibes.diy/base";
 
@@ -40,7 +41,18 @@ export function Logout() {
       referrer,
       origin: window.location.origin,
     });
-    if (referrer && new URL(referrer).origin === window.location.origin) {
+    const refUri = URI.fromResult(referrer);
+    const curUri = URI.fromResult(window.location.href);
+    const normPort = (protocol: string, port: string) =>
+      port === "80" && protocol === "http:" ? "" : port === "443" && protocol === "https:" ? "" : port;
+    if (
+      referrer &&
+      refUri.isOk() &&
+      curUri.isOk() &&
+      refUri.Ok().protocol === curUri.Ok().protocol &&
+      refUri.Ok().hostname === curUri.Ok().hostname &&
+      normPort(refUri.Ok().protocol, refUri.Ok().port) === normPort(curUri.Ok().protocol, curUri.Ok().port)
+    ) {
       console.log("Logout: will return to referrer", referrer);
       return referrer;
     }
