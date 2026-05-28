@@ -91,9 +91,8 @@ export const reportCampaignAdPreviewsEvento: EventoHandler<
       }
 
       const token = vctx.metaAccessToken;
-      const account = vctx.metaAdAccountId;
 
-      if (token === undefined || account === undefined) {
+      if (token === undefined) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: { message: "Meta API credentials not configured", code: "meta-creds-missing" },
