@@ -396,13 +396,16 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               ],
               ["Cost/Landing", "Spend ÷ landings. Primary efficiency metric — drives row color coding."],
               [
-                "CTA Clicks",
-                "Outbound clicks from good.vibes.diy → vibes.diy, counted from the Referer header in our server logs (date-scoped to the report window). — means no destination URL is set for the campaign.",
+                "Unique CTA Visitors",
+                "Distinct fbclid values from Meta-attributed sessions that clicked through from good.vibes.diy to vibes.diy (date-scoped to the report window). One user clicking multiple CTAs counts once. Organic visits without fbclid are excluded. — means no destination URL is set for the campaign.",
               ],
-              ["Cost/CTA Click", "Spend ÷ CTA Clicks. Cost of getting one person from the landing page to vibes.diy."],
               [
-                "CTA%",
-                "CTA Clicks ÷ Landings. What fraction of people who loaded the good.vibes.diy landing page then clicked through to vibes.diy. Key conversion metric for landing page effectiveness.",
+                "Cost/Visitor",
+                "Spend ÷ unique CTA visitors. Cost of getting one Meta-attributed user from the landing page to vibes.diy.",
+              ],
+              [
+                "Conversion Rate",
+                "Unique CTA Visitors ÷ Landings. What fraction of Meta landing page views converted to a vibes.diy click-through. Key conversion metric for landing page effectiveness.",
               ],
               [
                 "Stayed",
@@ -431,9 +434,9 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                   <SortTh col="reach" label="Ad Reach" />
                   <SortTh col="landings" label="Landings" />
                   <SortTh col="costPerLanding" label="Cost/Landing" />
-                  <SortTh col="ctaClicks" label="CTA Clicks" />
-                  <SortTh col="costPerCtaClick" label="Cost/CTA" />
-                  <SortTh col="ctaRate" label="CTA%" />
+                  <SortTh col="ctaClicks" label="CTA Visitors" />
+                  <SortTh col="costPerCtaClick" label="Cost/Visitor" />
+                  <SortTh col="ctaRate" label="Conv%" />
                   <SortTh col="stayed" label="Stayed" />
                   <SortTh col="signups" label="Signups" />
                   <SortTh col="costPerSignup" label="Cost/Signup" />
