@@ -1,7 +1,9 @@
-import { FPCloudClaim, dbAcl } from "@vibes.diy/api-types";
+import { FPCloudClaim, dbAcl, type DbAcl } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
 export * from "./img-gen.js";
+
+export type { DbAcl };
 
 const Base = type({
   tid: "string",
@@ -431,6 +433,35 @@ export type ReqSubscribeDocs = typeof ReqSubscribeDocs.infer;
 
 export function isReqSubscribeDocs(x: unknown): x is ReqSubscribeDocs {
   return !(ReqSubscribeDocs(x) instanceof type.errors);
+}
+
+export const ReqSetDbAcl = type({
+  type: "'vibes.diy.req-set-db-acl'",
+  appSlug: "string",
+  userSlug: "string",
+  dbName: "string",
+  acl: dbAcl,
+}).and(Base);
+
+export type ReqSetDbAcl = typeof ReqSetDbAcl.infer;
+
+export function isReqSetDbAcl(x: unknown): x is ReqSetDbAcl {
+  return !(ReqSetDbAcl(x) instanceof type.errors);
+}
+
+// Manual interface — matches both ok and error so the client resolves quickly
+// instead of timing out on server-side owner-only rejections.
+export interface ResSetDbAcl {
+  readonly tid: string;
+  readonly type: "vibes.diy.res-set-db-acl";
+  readonly status: "ok" | "error";
+  readonly message?: string;
+}
+
+export function isResSetDbAcl(x: unknown): x is ResSetDbAcl {
+  if (!x || typeof x !== "object") return false;
+  const r = x as Record<string, unknown>;
+  return r.type === "vibes.diy.res-set-db-acl" && typeof r.tid === "string" && (r.status === "ok" || r.status === "error");
 }
 
 export const ReqListDbNames = type({
