@@ -14,7 +14,7 @@ import {
   ResReportCampaignHealthPixelSummary,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { and, eq, gte, sql } from "drizzle-orm";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -56,12 +56,16 @@ function costPerLpv(row: MetaInsightRow): number {
   return l > 0 ? Number(row.spend) / l : Infinity;
 }
 
-async function fetchGoodVibesClickThroughs(vctx: VibesApiSQLCtx, sinceIso: string): Promise<Record<string, number>> {
+export async function fetchGoodVibesClickThroughs(
+  vctx: VibesApiSQLCtx,
+  sinceIso: string,
+  untilIso: string
+): Promise<Record<string, number>> {
   const t = vctx.sql.tables;
   const rows = await vctx.sql.db
     .select({ refPath: t.refererEvents.refPath, total: sql<number>`cast(count(*) as int)` })
     .from(t.refererEvents)
-    .where(and(eq(t.refererEvents.refHost, "good.vibes.diy"), gte(t.refererEvents.ts, sinceIso)))
+    .where(and(eq(t.refererEvents.refHost, "good.vibes.diy"), gte(t.refererEvents.ts, sinceIso), lte(t.refererEvents.ts, untilIso)))
     .groupBy(t.refererEvents.refPath);
   const byPath: Record<string, number> = {};
   for (const r of rows) byPath[r.refPath] = r.total;
@@ -113,15 +117,13 @@ async function fetchCampaignHealth(
   console.log("fetch-campaign-health: start");
   const today = new Date().toISOString().slice(0, 10);
   const sinceIso = since ?? new Date(Date.now() - Number(days) * 86_400_000).toISOString().slice(0, 10);
-  const dateParam = since
-    ? `&time_range=${encodeURIComponent(JSON.stringify({ since, until: today }))}`
-    : `&date_preset=last_${days}d`;
+  const dateParam = `&time_range=${encodeURIComponent(JSON.stringify({ since: sinceIso, until: today }))}`;
   const dateLabel = since ? `since ${since}` : `last ${days} days`;
 
   // Fetch campaign meta (URL + status) and referrer click-throughs in parallel with insights
   const [campaignMeta, clicksByPath] = await Promise.all([
     fetchCampaignMeta(token, account),
-    fetchGoodVibesClickThroughs(vctx, sinceIso),
+    fetchGoodVibesClickThroughs(vctx, sinceIso, today),
   ]);
   console.log(
     "fetch-campaign-health: campaign meta count:",
@@ -201,7 +203,8 @@ async function fetchCampaignHealth(
         }
       }
       const ctaClicks = landingPath !== undefined ? (clicksByPath[landingPath] ?? 0) : undefined;
-      return { ...r, actions: r.actions?.map((a) => ({ ...a })), landingPath, ctaClicks, effective_status };
+      const costPerCtaClick = ctaClicks !== undefined && ctaClicks > 0 ? Number(r.spend) / ctaClicks : undefined;
+      return { ...r, actions: r.actions?.map((a) => ({ ...a })), landingPath, ctaClicks, costPerCtaClick, effective_status };
     });
 
   console.log("fetch-campaign-health: pixel done");
