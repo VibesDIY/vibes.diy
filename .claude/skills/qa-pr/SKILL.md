@@ -1,6 +1,6 @@
 ---
 name: qa-pr
-description: Run an agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP. Drives chrome-devtools MCP through cold sign-up, first prompt, in-app exploration, edit/theme change, publish, live URL test, and remix the way a first-time user would. Writes a P0/P1/P2 triage with cross-cutting patterns and posts it as a PR comment. Trigger this whenever the user wants to QA a PR, validate a preview deploy, walk a preview URL, do a pre-merge browser review, or asks for an SOP-style QA pass — even if they don't explicitly say "qa-pr".
+description: Run an agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP. Drives chrome-devtools MCP through cold sign-up, first prompt, in-app exploration, edit/theme change, publish, live URL test, and remix the way a first-time user would — and every run covers BOTH desktop (default viewport) and mobile (390×844, iPhone 14 Pro) so mobile-only regressions get caught in the same pass. Writes a P0/P1/P2 triage with cross-cutting patterns and posts it as a PR comment. Trigger this whenever the user wants to QA a PR, validate a preview deploy, walk a preview URL, do a pre-merge browser review, check responsive/mobile behavior, or asks for an SOP-style QA pass — even if they don't explicitly say "qa-pr".
 ---
 
 # /qa-pr — agent-driven QA pass against a PR preview URL
@@ -8,6 +8,8 @@ description: Run an agent-driven QA pass against a PR preview URL using the kmik
 This skill walks the [QA v0.01m SOP](references/sop-v0.01m.md) against a PR's preview URL using only the `mcp__chrome-devtools__*` toolkit. It captures friction the way a first-time user would, writes a [P0/P1/P2 triage](assets/triage-template.md), and posts it as a comment on the PR.
 
 The skill is invoked as `/qa-pr <PR-number>` (for example, `/qa-pr 1714`).
+
+**Every run tests two viewports in one pass:** a desktop functional walkthrough (Phase A, default viewport) followed by a mobile responsive re-walk (Phase B, 390×844 — iPhone 14 Pro CSS pixels) against the same generated app. Functional behavior is viewport-independent, so it's exercised once at desktop; layout/responsive behavior is checked at both. One triage comment reports both, with each finding tagged by the viewport it surfaced at. There is no separate mobile command — this is it.
 
 ## Authorization
 
@@ -91,9 +93,9 @@ Open the preview URL via `mcp__chrome-devtools__navigate_page` (new page). Witho
 
 If a degraded-upstream banner is visible, record it under `notable_conditions`.
 
-## Step 4 — The spine
+## Step 4 — Phase A: Desktop spine
 
-Walk the seven steps from [`references/sop-v0.01m.md`](references/sop-v0.01m.md), in order. The summary below is operational orchestration only — the SOP file is source of truth for *what to watch for* at each step.
+Phase A runs at the **default (desktop) viewport** and is the functional walkthrough — it produces the functional findings and the desktop-layout findings. Do not resize during Phase A. Walk the seven steps from [`references/sop-v0.01m.md`](references/sop-v0.01m.md), in order. The summary below is operational orchestration only — the SOP file is source of truth for *what to watch for* at each step.
 
 1. **Sign in from cold cache.** Type a prompt into the homepage form *before* signing in (note whether it gets eaten). Click submit; the page should redirect to the auth screen with the prompt preserved (`prompt64=` URL param). Note whether a brand-new visitor lands on a "Sign in" or "Sign up" tab by default — same observation as the kmikeym SOP. Click **"Sign in with Google"** — because the chrome-devtools profile has a persisted Google session (verified in preflight), this should be a one-click "Continue as &lt;you&gt;" with no password prompt. If Google asks for a password, the preflight check missed something — abort and rerun preflight. **Clerk bot protection (Cloudflare Turnstile) was disabled for the QA flow on 2026-05-28**, so the OAuth callback should complete with no human-verification challenge — the sign-in is now fully hands-off. If a Turnstile / CAPTCHA / "verify you're human" challenge *does* appear, treat it as a Clerk config regression: the agent must **not** attempt to solve it (bot-detection challenges are never solved by the agent) — abort per the sign-in failure mode and flag it. After landing back in the chat shell, **click "New Vibe"** to ensure you're starting from a fresh project, not landing on a prior session's app. See the *Sign-in model* section at the top of this file for why the skill no longer uses email + OTP.
 2. **First prompt → app generation.** Use the **Build** row from [`references/demo-prompts.md`](references/demo-prompts.md). Watch the build-in-progress feedback. Watch where the user lands when generation completes.
@@ -103,7 +105,25 @@ Walk the seven steps from [`references/sop-v0.01m.md`](references/sop-v0.01m.md)
 6. **Live URL test.** Open the published URL in a new tab (cold load — this matters most for font/loading PRs). Walk the published-app action bar.
 7. **Remix.** Remix the published app. Use the **Remix** row from the prompt library. Try to publish the remix; confirm the live remix URL reflects the changes.
 
-At every step, before moving on, capture: a screenshot to `qa-reports/{run_id}/`, the current console messages (filtered to `["log","warn","error"]`), any failed network requests, and a one-line state note appended to the triage's working notes.
+At every step, before moving on, capture: a screenshot to `qa-reports/{run_id}/` (name it `{step}-desktop.png`), the current console messages (filtered to `["log","warn","error"]`), any failed network requests, and a one-line state note appended to the triage's working notes. Tag every Phase A finding `viewport: desktop`.
+
+## Step 4.5 — Phase B: Mobile re-walk
+
+After Phase A completes, resize the page to the mobile target and re-walk the surfaces Phase A produced, looking specifically for **responsive regressions**. Functional behavior was already exercised at desktop and is viewport-independent — Phase B is about layout, not re-testing logic.
+
+1. **Resize to 390×844.** Call `mcp__chrome-devtools__resize_page` with **width: 390, height: 844** (iPhone 14 / 13 / 12 Pro CSS pixels — the most common modern iOS viewport). `resize_page` applies to the currently selected page only, so **re-apply it to any new tab** you open during Phase B (e.g. the live published URL) — a freshly opened page starts at the default viewport. The viewport stays at 390×844 for the rest of the run. If `resize_page` fails or chrome-devtools won't honor the dimensions, **do not silently report desktop screenshots as a mobile pass** — finish and post the desktop verdict, mark mobile under `path_not_tested` as "mobile re-walk skipped: resize_page failed", and note it in the summary. (See the failure mode below.)
+
+2. **Re-visit each spine surface at 390×844**, reusing the app/publish/remix already created in Phase A — do **not** sign in again or regenerate. Walk, in order:
+   - **Auth / homepage** — reload the preview URL and look at the homepage build form / chat shell at narrow width.
+   - **Editor + generated app** — the app from Phase A step 2–3, viewed in the editor at mobile.
+   - **Edit / theme controls** — can you reach the chat input, send a message, and operate the theme switcher at mobile?
+   - **Publish controls** — is the Publish / Update / "Up to date" control reachable and legible?
+   - **Live published URL** — **mandatory and highest-value:** open the Phase A published URL in a fresh tab at 390×844 (true cold mobile load — this is what real mobile users hit). Walk the published-app action bar.
+   - **Remix** — the Phase A remix, viewed at mobile, plus its live remix URL at mobile.
+
+3. **At each surface, check the mobile failure categories:** horizontal overflow / unexpected sideways scroll; touch targets smaller than ~44×44 px; text that wraps awkwardly, clips, or overlaps; modals / menus / toasts that don't fit the viewport or can't be dismissed; fixed headers or footers that cover content. Capture a screenshot named `{surface}-mobile.png` at each surface and append a one-line note. Tag every Phase B finding `viewport: mobile`. A regression that is present at *both* viewports is tagged `viewport: both` and filed once.
+
+Apply the same discipline rules (Step 5) during Phase B — especially "reproduce before recording" (resize can momentarily reflow; reload and re-check before filing) and "after 3+ findings on one surface, write one cross-cutting pattern instead."
 
 ## Step 5 — Discipline rules
 
@@ -124,25 +144,27 @@ The triage's working file at `qa-reports/{run_id}/triage.md` is the agent's note
 type QAResult = {
   pr_number: number
   preview_url: string
-  summary: string               // one paragraph; the lead of the triage (kmikeym's "Summary" section)
-  pr_verdict: "pass" | "fail" | "pass-with-caveats"
-  pr_verdict_reasoning: string  // one paragraph
+  summary: string               // one paragraph; the lead of the triage (kmikeym's "Summary" section). MUST cover both desktop and mobile.
+  pr_verdict: "pass" | "fail" | "pass-with-caveats"  // single verdict over BOTH phases; if mobile-only regressions block, that lowers the verdict
+  pr_verdict_reasoning: string  // one paragraph; call out separately how the PR's change held up at desktop vs mobile
   test_scope: {
     account_alias: string
     browser_profile: "clean-chrome-devtools-mcp"
     build_commit_sha: string
+    viewports_tested: string[]  // always ["desktop (default)", "mobile 390×844 (iphone-14-pro)"] unless Phase B was skipped
     path_tested: string[]       // bullet strings
-    path_not_tested: string[]   // bullet strings; copy from the SOP "Not yet in scope" section
+    path_not_tested: string[]   // bullet strings; copy from the SOP "Not yet in scope" section. If Phase B was skipped, add the mobile re-walk here.
     models_in_play: { chat: string; app: string }
     notable_conditions: string[]
   }
   findings: Array<{
     severity: "P0" | "P1" | "P2"
+    viewport: "desktop" | "mobile" | "both"   // which viewport surfaced it; "both" = present at desktop and mobile, filed once
     title: string
     description: string
     why_it_matters: string
     repro_steps: string[]
-    screenshots: string[]   // file paths inside qa-reports/{run_id}/
+    screenshots: string[]   // file paths inside qa-reports/{run_id}/ (desktop shots end -desktop.png, mobile shots -mobile.png)
     related_existing_issues?: string[]   // gh issue numbers
   }>
   cross_cutting_patterns: Array<{
@@ -159,7 +181,7 @@ Keep the working file editable as you go — append findings into the relevant t
 
 ## Step 7 — Render and post
 
-When the spine is complete (or aborted under a documented failure mode):
+When both phases are complete (or aborted under a documented failure mode):
 
 1. Finalize all placeholders in `qa-reports/{run_id}/triage.md`. Verify by running `grep -oE '\{[A-Z0-9_]+\}' qa-reports/{run_id}/triage.md` — the output must be empty.
 2. Post the comment:
@@ -178,7 +200,8 @@ This is the single authorized GitHub write operation for the skill. Run it direc
 - **Preview URL never ready.** Polled `gh pr view` for 10 minutes without finding a `vibes.diy` URL in `statusCheckRollup`. Abort. Do not post anything. Tell the operator the deploy workflow may have failed; point them at `gh run list --branch <ref>`.
 - **OAuth sign-in fails or stalls.** Google consent returns an error, or the redirect never lands back in the Vibes app within 60 s of clicking "Sign in with Google". Set `pr_verdict = "fail"`, file a single P0 finding ("Sign-in flow blocked"), fill in the triage as far as it got, and post it. The signal that sign-in failed at all is itself a real QA finding.
 - **A bot-detection challenge appears at sign-in.** Clerk bot protection (Cloudflare Turnstile) was disabled for the QA flow on 2026-05-28, so a Turnstile / CAPTCHA / "verify you're human" challenge should never surface. If one does, the agent **cannot and must not solve it** — bot-detection challenges are out of scope by policy regardless of authorization. Treat it as a Clerk config regression: set `pr_verdict = "fail"`, file a P0 ("Sign-in blocked by re-enabled bot protection"), note it under `notable_conditions`, and post the partial triage. Tell the operator to re-disable bot protection in the Clerk dashboard before the skill can run hands-off again.
-- **Generation never completes (>5 min on step 2).** File a P0 finding, mark steps 3–7 as `unreached` in `path_not_tested`, post the partial triage.
+- **Generation never completes (>5 min on step 2).** File a P0 finding, mark steps 3–7 as `unreached` in `path_not_tested`, post the partial triage. (Phase B has nothing to re-walk — note mobile as not exercised.)
+- **`resize_page` fails or chrome-devtools won't honor 390×844 (Phase B).** Desktop already passed, so do **not** abort the whole run. Finish and post the desktop verdict; mark the mobile re-walk under `path_not_tested` ("mobile re-walk skipped: resize_page failed") and say so in the summary. Never relabel desktop screenshots as a mobile pass — that produces a misleading triage and is worse than no mobile coverage.
 - **Model degraded mid-run** (visible banner, 5xx response from model). Record under `notable_conditions` and continue (matches SOP discipline).
 - **chrome-devtools MCP crashes or returns persistent tool errors.** Stop. Surface the error to the operator. Do *not* post a partial triage — the data is not trustworthy.
 
