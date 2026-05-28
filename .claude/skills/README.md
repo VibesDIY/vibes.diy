@@ -33,4 +33,32 @@ Claude Code looks for project-scoped skills under this path when running in this
 
 ## Existing skills
 
-- [`qa-pr/`](qa-pr/SKILL.md) — agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP.
+- [`qa-pr/`](qa-pr/SKILL.md) — agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP. Every run covers desktop + mobile (390×844) in one pass.
+
+## Distribution & upgrade path
+
+**Current model: project-scoped skills.** These skills are *not* packaged as a plugin. Claude Code auto-discovers them under `.claude/skills/` whenever a session runs inside a clone of this repo, so the only "install" step for an engineer is cloning `vibes.diy`. They're invoked by their bare name (`/qa-pr`). This is a fully supported distribution method and is the right fit while the skills are used **inside this repo**.
+
+**When to upgrade to a plugin + marketplace.** A project skill can't be installed into *other* repos, has no explicit versioned releases (it tracks whatever commit you're on), and can't bundle commands/agents/hooks/MCP as one unit. Upgrade when any of these becomes true:
+
+1. You want a skill usable from **other repos or globally**, not just inside `vibes.diy`.
+2. You've accumulated **several team skills** worth presenting as a catalog.
+3. You need **versioned releases** or auto-update for the team.
+
+**Minimal migration (a repo can be its own marketplace).** Add four things at the repo root (the `.claude-plugin/` and `plugins/` dirs sit at root, *not* under `.claude/`, so the `.claude/*` gitignore rule doesn't touch them):
+
+````
+vibes.diy/
+├── .claude-plugin/marketplace.json      # catalog: { name, owner, plugins:[{name, source:"./plugins/qa-pr"}] }
+├── plugins/qa-pr/
+│   ├── .claude-plugin/plugin.json       # manifest: { name, description, version } (name + description required)
+│   └── skills/qa-pr/SKILL.md            # the skill moves here, content unchanged
+└── .claude/settings.json                # extraKnownMarketplaces + enabledPlugins (auto-enables for the team)
+````
+
+Two caveats to weigh before pulling the trigger:
+
+- **Invocation becomes namespaced** — `/qa-pr` turns into `/<plugin-name>:qa-pr`. Pick the plugin name with that in mind.
+- **`.claude/settings.json` needs its own gitignore carve-out** (`!.claude/settings.json`) to be team-shared, since `.claude/*` ignores it today. (`.claude/settings.local.json` stays local/ignored.)
+
+Then engineers run `/plugin marketplace add VibesDIY/vibes.diy` once (or get it automatically via the `extraKnownMarketplaces` entry on repo trust). Refs: [plugins](https://code.claude.com/docs/en/plugins.md), [plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces.md), [settings](https://code.claude.com/docs/en/settings.md).
