@@ -238,3 +238,35 @@ export function isResReportCampaignHealth(obj: unknown): obj is ResReportCampaig
   }
   return true;
 }
+
+// Campaign Ad Previews — on-demand iframe preview URLs for a single campaign's ads.
+
+export const reqReportCampaignAdPreviews = type({
+  type: "'vibes.diy.req-report-campaign-ad-previews'",
+  auth: dashAuthType,
+  campaign_id: "string",
+  "format?": "string",
+});
+export type ReqReportCampaignAdPreviews = typeof reqReportCampaignAdPreviews.infer;
+export function isReqReportCampaignAdPreviews(obj: unknown): obj is ReqReportCampaignAdPreviews {
+  return !(reqReportCampaignAdPreviews(obj) instanceof type.errors);
+}
+
+export const resReportCampaignAdPreviewsAd = type({
+  id: "string",
+  name: "string",
+  effective_status: "string",
+  "previewSrc?": "string",
+  "error?": "string",
+});
+export type ResReportCampaignAdPreviewsAd = typeof resReportCampaignAdPreviewsAd.infer;
+
+export const resReportCampaignAdPreviews = type({
+  type: "'vibes.diy.res-report-campaign-ad-previews'",
+  campaign_id: "string",
+  ads: resReportCampaignAdPreviewsAd.array(),
+});
+export type ResReportCampaignAdPreviews = typeof resReportCampaignAdPreviews.infer;
+export function isResReportCampaignAdPreviews(obj: unknown): obj is ResReportCampaignAdPreviews {
+  return !(resReportCampaignAdPreviews(obj) instanceof type.errors);
+}
