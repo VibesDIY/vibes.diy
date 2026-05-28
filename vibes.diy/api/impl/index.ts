@@ -155,6 +155,9 @@ import {
   ReqReportCampaignHealth,
   ResReportCampaignHealth,
   isResReportCampaignHealth,
+  ReqReportCampaignAdPreviews,
+  ResReportCampaignAdPreviews,
+  isResReportCampaignAdPreviews,
   ResAssetUploadGrant,
   isResAssetUploadGrant,
   isEvtDocChanged,
@@ -837,6 +840,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   reportCampaignHealth(req: Req<ReqReportCampaignHealth>): Promise<Result<ResReportCampaignHealth, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-report-campaign-health" }, { resMatch: isResReportCampaignHealth });
+  }
+
+  reportCampaignAdPreviews(req: Req<ReqReportCampaignAdPreviews>): Promise<Result<ResReportCampaignAdPreviews, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-report-campaign-ad-previews" }, { resMatch: isResReportCampaignAdPreviews });
   }
 
   private attachDocChangedToConnection(
