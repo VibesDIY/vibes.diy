@@ -6,7 +6,7 @@ import { BuildURI, URI } from "@adviser/cement";
 import { toast } from "react-hot-toast";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
-import { getCode } from "./CodeEditor.js";
+import { getCode } from "./get-code.js";
 import type { EvtVibeViewerChanged } from "@vibes.diy/vibe-types";
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
