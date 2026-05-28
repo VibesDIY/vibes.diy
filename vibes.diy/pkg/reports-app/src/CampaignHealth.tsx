@@ -29,6 +29,11 @@ function costPerReg(row: ResReportCampaignHealthCampaignRow): number {
   return r > 0 ? Number(row.spend) / r : Infinity;
 }
 
+function costPerCtaClick(row: ResReportCampaignHealthCampaignRow): number {
+  const c = row.ctaClicks;
+  return c !== undefined && c > 0 ? Number(row.spend) / c : Infinity;
+}
+
 function ctaRate(row: ResReportCampaignHealthCampaignRow): number | null {
   const l = lpv(row);
   const c = row.ctaClicks;
@@ -51,6 +56,7 @@ type SortCol =
   | "landings"
   | "costPerLanding"
   | "ctaClicks"
+  | "costPerCtaClick"
   | "ctaRate"
   | "stayed"
   | "signups"
@@ -65,6 +71,7 @@ const naturalDir: Record<SortCol, "asc" | "desc"> = {
   landings: "desc",
   costPerLanding: "asc",
   ctaClicks: "desc",
+  costPerCtaClick: "asc",
   ctaRate: "desc",
   stayed: "desc",
   signups: "desc",
@@ -93,6 +100,10 @@ function sortVal(row: ResReportCampaignHealthCampaignRow, col: SortCol): number 
     }
     case "ctaClicks":
       return row.ctaClicks ?? null;
+    case "costPerCtaClick": {
+      const v = costPerCtaClick(row);
+      return isFinite(v) ? v : null;
+    }
     case "ctaRate":
       return ctaRate(row);
     case "stayed": {
@@ -388,6 +399,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                 "CTA Clicks",
                 "Outbound clicks from good.vibes.diy → vibes.diy, counted from the Referer header in our server logs (date-scoped to the report window). — means no destination URL is set for the campaign.",
               ],
+              ["Cost/CTA Click", "Spend ÷ CTA Clicks. Cost of getting one person from the landing page to vibes.diy."],
               [
                 "CTA%",
                 "CTA Clicks ÷ Landings. What fraction of people who loaded the good.vibes.diy landing page then clicked through to vibes.diy. Key conversion metric for landing page effectiveness.",
@@ -420,6 +432,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                   <SortTh col="landings" label="Landings" />
                   <SortTh col="costPerLanding" label="Cost/Landing" />
                   <SortTh col="ctaClicks" label="CTA Clicks" />
+                  <SortTh col="costPerCtaClick" label="Cost/CTA" />
                   <SortTh col="ctaRate" label="CTA%" />
                   <SortTh col="stayed" label="Stayed" />
                   <SortTh col="signups" label="Signups" />
@@ -478,6 +491,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
                         {row.ctaClicks !== undefined ? (row.ctaClicks > 0 ? row.ctaClicks.toLocaleString() : "0") : "—"}
                       </td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(costPerCtaClick(row))}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
                         {(() => {
                           const r = ctaRate(row);
