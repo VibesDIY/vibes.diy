@@ -153,7 +153,7 @@ runs:
         else
           pnpm run drizzle:d1-remote
         fi
-        pnpm exec core-cli writeEnv --out - --json \
+        SECRETS=$(pnpm exec core-cli writeEnv --out - --json \
           --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
           --fromEnv CLERK_PUBLISHABLE_KEY \
           --fromEnv DEVICE_ID_CA_PRIV_KEY \
@@ -181,8 +181,13 @@ runs:
           --fromEnv META_ACCESS_TOKEN \
           --fromEnv META_AD_ACCOUNT_ID \
           --fromEnv DISCORD_WEBHOOK_URL \
-          --fromEnv CLERK_WEBHOOK_SECRET | \
-          pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
+          --fromEnv CLERK_WEBHOOK_SECRET)
+        for attempt in 1 2 3; do
+          echo "$SECRETS" | pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk && break
+          if [ "$attempt" -eq 3 ]; then echo "secret bulk failed after 3 attempts"; exit 1; fi
+          echo "secret bulk attempt $attempt failed (Cloudflare 10021?), retrying in 15s..."
+          sleep 15
+        done
         pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
 
     - name: Deploy api-queue consumer
@@ -216,7 +221,7 @@ runs:
         DISCORD_WEBHOOK_URL: ${{ inputs.DISCORD_WEBHOOK_URL }}
         CLERK_WEBHOOK_SECRET: ${{ inputs.CLERK_WEBHOOK_SECRET }}
       run: |
-        pnpm exec core-cli writeEnv --out - --json \
+        SECRETS=$(pnpm exec core-cli writeEnv --out - --json \
           --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
           --fromEnv CLERK_PUBLISHABLE_KEY \
           --fromEnv DEVICE_ID_CA_PRIV_KEY \
@@ -238,8 +243,13 @@ runs:
           --fromEnv MAX_APP_SLUG_PER_USER_ID \
           --fromEnv PRODIA_TOKEN \
           --fromEnv DISCORD_WEBHOOK_URL \
-          --fromEnv CLERK_WEBHOOK_SECRET | \
-          pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
+          --fromEnv CLERK_WEBHOOK_SECRET)
+        for attempt in 1 2 3; do
+          echo "$SECRETS" | pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk && break
+          if [ "$attempt" -eq 3 ]; then echo "secret bulk failed after 3 attempts"; exit 1; fi
+          echo "secret bulk attempt $attempt failed (Cloudflare 10021?), retrying in 15s..."
+          sleep 15
+        done
         pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}}
 
     - name: Deploy logpush-etl worker
@@ -252,7 +262,12 @@ runs:
         CLOUDFLARE_ENV: ${{ inputs.CLOUDFLARE_ENV }}
         NEON_DATABASE_URL: ${{ inputs.NEON_DATABASE_URL }}
       run: |
-        pnpm exec core-cli writeEnv --out - --json \
-          --fromEnv NEON_DATABASE_URL | \
-          pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk
+        SECRETS=$(pnpm exec core-cli writeEnv --out - --json \
+          --fromEnv NEON_DATABASE_URL)
+        for attempt in 1 2 3; do
+          echo "$SECRETS" | pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk && break
+          if [ "$attempt" -eq 3 ]; then echo "secret bulk failed after 3 attempts"; exit 1; fi
+          echo "secret bulk attempt $attempt failed (Cloudflare 10021?), retrying in 15s..."
+          sleep 15
+        done
         pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}}
