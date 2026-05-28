@@ -280,22 +280,29 @@ A common pattern: the owner defines a set of named databases (rooms, channels, b
 
 ```jsx
 import { useFireproof, useViewer } from "use-vibes";
+import { fireproof } from "use-fireproof"; // non-hook factory — safe to call outside components
 
-// The registry database — no ACL means it uses app-level role gates (members can read)
-const { database: registry } = useFireproof("spaces-registry");
+function SpaceCreator() {
+  const viewer = useViewer();
+  // Registry has no explicit ACL — app-level defaults let members read, editors write
+  const { database: registry } = useFireproof("spaces-registry");
 
-// The owner calls this to create a new space
-async function createSpace(name, slug, acl, userSlug) {
-  // Store userSlug so members can filter by creator later
-  await registry.put({ type: "space", name, slug, acl, userSlug, createdAt: Date.now() });
-  // Declare the ACL for the space database itself (owner-only write, persists server-side)
-  useFireproof(slug, { acl });
+  async function createSpace(name, slug, acl) {
+    // Register in the shared registry so members can discover it
+    await registry.put({ type: "space", name, slug, acl, userSlug: viewer.userSlug, createdAt: Date.now() });
+    // Declare the ACL for the space database (owner-only; silently ignored for non-owners)
+    fireproof(slug).applyAcl(acl);
+  }
+
+  return (
+    <div>
+      <button onClick={() => createSpace("General", "space-general", { write: ["members"] })}>Create General Space</button>
+      <button onClick={() => createSpace("Announcements", "space-announcements", { write: ["editors"], delete: ["editors"] })}>
+        Create Announcements Space
+      </button>
+    </div>
+  );
 }
-
-// Example: create two spaces with different ACLs
-const viewer = useViewer();
-createSpace("General", "space-general", { write: ["members"] }, viewer.userSlug);
-createSpace("Announcements", "space-announcements", { write: ["editors"], delete: ["editors"] }, viewer.userSlug);
 ```
 
 ### Step 2 — Members list available spaces
@@ -354,7 +361,7 @@ function SpaceView({ slug }) {
 ### Complete wired-together example
 
 ```jsx
-import { useFireproof } from "use-vibes";
+import { useFireproof, useViewer } from "use-vibes";
 
 export default function App() {
   const [activeSlug, setActiveSlug] = useState(null);
