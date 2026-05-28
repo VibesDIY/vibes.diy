@@ -215,24 +215,29 @@ export const listMembershipsEvento: EventoHandler<
       // Fetch AppSettings for this page to get title + icon.
       const settingsMap = new Map<string, ActiveEntry[]>();
       if (page.length > 0) {
-        const settingsConds = page.map((p) => and(eq(t.appSettings.userId, p.ownerUserId), eq(t.appSettings.appSlug, p.appSlug)));
+        const settingsConds = page.map((p) =>
+          and(
+            eq(t.appSettings.userId, p.ownerUserId),
+            eq(t.appSettings.userSlug, p.ownerUserSlug),
+            eq(t.appSettings.appSlug, p.appSlug)
+          )
+        );
         const [firstSettingsCond, ...otherSettingsConds] = settingsConds;
         if (firstSettingsCond) {
-          const settingsOrCond =
-            otherSettingsConds.length === 0 ? firstSettingsCond : or(firstSettingsCond, ...otherSettingsConds);
+          const settingsOrCond = otherSettingsConds.length === 0 ? firstSettingsCond : or(firstSettingsCond, ...otherSettingsConds);
           const settingsRows = await vctx.sql.db
-            .select({ userId: t.appSettings.userId, appSlug: t.appSettings.appSlug, settings: t.appSettings.settings })
+            .select({ userSlug: t.appSettings.userSlug, appSlug: t.appSettings.appSlug, settings: t.appSettings.settings })
             .from(t.appSettings)
             .where(settingsOrCond);
           for (const s of settingsRows) {
             const entries = (s.settings as ActiveEntry[] | null) ?? [];
-            settingsMap.set(`${s.userId}/${s.appSlug}`, entries);
+            settingsMap.set(`${s.userSlug}/${s.appSlug}`, entries);
           }
         }
       }
 
       const items: ResMembershipItem[] = page.map((p) => {
-        const entries = settingsMap.get(`${p.ownerUserId}/${p.appSlug}`) ?? [];
+        const entries = settingsMap.get(`${p.ownerUserSlug}/${p.appSlug}`) ?? [];
         const titleEntry = entries.find(isActiveTitle);
         const iconEntry = entries.find(isActiveIcon);
         const head = iconEntry?.versions.find((v) => v.cid === iconEntry.currentCid);

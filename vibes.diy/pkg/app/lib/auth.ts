@@ -1,4 +1,5 @@
 // app/lib/auth.ts
+import { URI } from "@adviser/cement";
 import { redirect } from "react-router";
 
 /**
@@ -6,7 +7,7 @@ import { redirect } from "react-router";
  * Redirects to login if not authenticated
  */
 export function requireAuth(request: Request) {
-  const url = new URL(request.url);
+  const url = URI.from(request.url);
   const cookies = request.headers.get("Cookie") || "";
 
   // Clerk stores session token in __session or __clerk_db_jwt cookie
