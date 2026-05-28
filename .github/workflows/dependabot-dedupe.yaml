@@ -1,0 +1,69 @@
+name: Auto-dedupe Dependabot PRs
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Dependabot branch to dedupe (e.g. dependabot/npm_and_yarn/yaml-2.9.0)"
+        required: true
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+  actions: write
+  pull-requests: read
+
+jobs:
+  dedupe:
+    if: github.event_name == 'workflow_dispatch' || github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: resolve branch
+        id: ref
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "branch=${{ github.event.inputs.branch }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "branch=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.ref.outputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - uses: ./actions/runtime
+
+      - name: install
+        run: |
+          pnpm remove -r playwright-chromium
+          pnpm install
+
+      - name: dedupe
+        id: dedupe
+        run: |
+          pnpm dedupe
+          if git diff --quiet pnpm-lock.yaml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: commit and push
+        if: steps.dedupe.outputs.changed == 'true'
+        run: |
+          git config user.name "dependabot-dedupe[bot]"
+          git config user.email "dependabot-dedupe[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "dedupe lockfile"
+          git push origin HEAD:"${{ steps.ref.outputs.branch }}"
+
+      - name: re-trigger compile_test
+        if: steps.dedupe.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run ci.yaml --ref "${{ steps.ref.outputs.branch }}"
