@@ -195,10 +195,10 @@ describe("colorset composer", () => {
     ].join("\n");
     const out = composeDesignMd(structural, parseColorsetYaml(colorsetYaml));
     // Frontmatter gets colors:/colorsDark: injected right after name.
-    expect(out).toMatch(/name: Structural\ncolors:\n  primary: "#ff0000"/);
-    expect(out).toMatch(/colorsDark:\n  primary: "#ff5555"/);
+    expect(out).toMatch(/name: Structural\ncolors:\n {2}primary: "#ff0000"/);
+    expect(out).toMatch(/colorsDark:\n {2}primary: "#ff5555"/);
     // Typography stays in place.
-    expect(out).toMatch(/typography:\n  body-md:\n    fontFamily: Inter/);
+    expect(out).toMatch(/typography:\n {2}body-md:\n {4}fontFamily: Inter/);
     // Prose placeholders are substituted with light-mode values.
     expect(out).toContain("Primary action uses `#ff0000` on `#fafafa`.");
   });
