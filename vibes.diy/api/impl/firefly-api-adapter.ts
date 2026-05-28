@@ -1,4 +1,4 @@
-import { ResolveOnce, type Result } from "@adviser/cement";
+import { ResolveOnce, Result } from "@adviser/cement";
 import {
   isUserSettingDefaultUserSlug,
   type ResPutDoc,
@@ -9,6 +9,7 @@ import {
   type ResSubscribeDocs,
   type VibesDiyError,
 } from "@vibes.diy/api-types";
+import { type DbAcl, type ResSetDbAcl } from "@vibes.diy/vibe-types";
 import type { VibesDiyApi } from "./index.js";
 
 /**
@@ -112,6 +113,11 @@ export class FireflyApiAdapter {
       userSlug,
       dbName,
     });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async setDbAcl(_dbName: string, _acl: DbAcl): Promise<Result<ResSetDbAcl>> {
+    return Result.Err("setDbAcl not supported in standalone fireproof adapter");
   }
 
   async putAsset(_blob: Blob, _mimeType?: string): Promise<Result<unknown>> {
