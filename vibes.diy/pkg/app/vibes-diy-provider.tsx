@@ -261,7 +261,7 @@ function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; 
         apiKey={webVars.env.POSTHOG_KEY}
         options={{
           api_host: webVars.env.POSTHOG_HOST,
-          opt_out_capturing_by_default: true,
+          opt_out_capturing_by_default: false,
         }}
       >
         {children}
