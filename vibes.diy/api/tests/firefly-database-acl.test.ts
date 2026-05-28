@@ -27,13 +27,15 @@ function makeFakeTransport(setDbAclFn?: (dbName: string, acl: DbAcl) => void): F
         })
       );
     },
-    onMsg: () => {},
+    onMsg: () => {
+      /* noop */
+    },
   };
 }
 
 describe("FireflyDatabase acl option", () => {
   it("calls setDbAcl on construction when acl is provided", async () => {
-    const calls: Array<{ dbName: string; acl: DbAcl }> = [];
+    const calls: { dbName: string; acl: DbAcl }[] = [];
     const transport = makeFakeTransport((dbName, acl) => calls.push({ dbName, acl }));
 
     const acl: DbAcl = { write: ["editors"], delete: ["editors"] };
@@ -46,7 +48,7 @@ describe("FireflyDatabase acl option", () => {
   });
 
   it("does NOT call setDbAcl when no acl is provided", async () => {
-    const calls: Array<{ dbName: string; acl: DbAcl }> = [];
+    const calls: { dbName: string; acl: DbAcl }[] = [];
     const transport = makeFakeTransport((dbName, acl) => calls.push({ dbName, acl }));
 
     new FireflyDatabase("default", transport);
@@ -57,7 +59,7 @@ describe("FireflyDatabase acl option", () => {
   });
 
   it("applyAcl calls setDbAcl with the new acl", async () => {
-    const calls: Array<{ dbName: string; acl: DbAcl }> = [];
+    const calls: { dbName: string; acl: DbAcl }[] = [];
     const transport = makeFakeTransport((dbName, acl) => calls.push({ dbName, acl }));
 
     const db = new FireflyDatabase("general", transport);
