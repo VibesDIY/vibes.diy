@@ -72,13 +72,32 @@ async function fetchCampaignMeta(
   token: string,
   account: string
 ): Promise<Record<string, { website_url?: string; effective_status?: string }>> {
-  const rPage = await metaGet<{
-    data?: readonly { id: string; website_url?: string; effective_status?: string }[];
-  }>(`/${account}/campaigns?fields=id,website_url,effective_status&limit=200`, token);
-  if (rPage.isErr()) return {};
+  // effective_status lives on campaigns; destination URL lives on ad creative link_data.link.
+  // website_url is not a valid campaign-level field — fetch ads with nested creative instead.
+  const [rCampaigns, rAds] = await Promise.all([
+    metaGet<{ data?: readonly { id: string; effective_status?: string }[] }>(
+      `/${account}/campaigns?fields=id,effective_status&limit=200`,
+      token
+    ),
+    metaGet<{
+      data?: readonly {
+        campaign_id: string;
+        creative?: { object_story_spec?: { link_data?: { link?: string } } };
+      }[];
+    }>(`/${account}/ads?fields=campaign_id,creative{object_story_spec{link_data{link}}}&limit=200`, token),
+  ]);
+
   const byId: Record<string, { website_url?: string; effective_status?: string }> = {};
-  for (const c of rPage.Ok().data ?? []) {
-    byId[c.id] = { website_url: c.website_url, effective_status: c.effective_status };
+
+  for (const c of rCampaigns.isOk() ? (rCampaigns.Ok().data ?? []) : []) {
+    byId[c.id] = { effective_status: c.effective_status };
+  }
+  // First ad per campaign wins; all ads for a campaign link to the same landing page
+  for (const ad of rAds.isOk() ? (rAds.Ok().data ?? []) : []) {
+    const link = ad.creative?.object_story_spec?.link_data?.link;
+    if (link !== undefined && byId[ad.campaign_id] !== undefined && byId[ad.campaign_id].website_url === undefined) {
+      byId[ad.campaign_id].website_url = link;
+    }
   }
   return byId;
 }
