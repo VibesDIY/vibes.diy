@@ -286,9 +286,9 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Click</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Spend</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Ad Reach</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>CTA Clicks</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Landings</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Landing</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>CTA Clicks</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Stayed</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Signups</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Signup</th>
@@ -321,11 +321,11 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.cpc))}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(Number(row.spend))}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{Number(row.reach).toLocaleString()}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{lpv(row).toLocaleString() || "—"}</td>
+                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cplv)}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
                         {row.ctaClicks !== undefined ? (row.ctaClicks > 0 ? row.ctaClicks.toLocaleString() : "0") : "—"}
                       </td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{lpv(row).toLocaleString() || "—"}</td>
-                      <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cplv)}</td>
                       <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
                         {contentViews(row) > 0 ? contentViews(row).toLocaleString() : "—"}
                       </td>
