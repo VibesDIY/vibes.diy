@@ -57,8 +57,6 @@ jobs:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
           META_AD_ACCOUNT_ID: ${{ vars.META_AD_ACCOUNT_ID }}
           CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}
-          POSTHOG_KEY: ${{ vars.POSTHOG_KEY }}
-          POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
 
   deploy_cli:
     runs-on: ubuntu-latest
@@ -103,5 +101,3 @@ jobs:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
           META_AD_ACCOUNT_ID: ${{ vars.META_AD_ACCOUNT_ID }}
           CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}
-          POSTHOG_KEY: ${{ vars.POSTHOG_KEY }}
-          POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
