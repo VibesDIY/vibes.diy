@@ -234,6 +234,169 @@ function App() {
 }
 ```
 
+## Per-Database Access Control (`acl` option)
+
+On vibes.diy, `useFireproof` accepts an optional `acl` argument that declares who can read, write, or delete documents in that database. The ACL is stored server-side and enforced on every operation — no separate API call needed.
+
+```jsx
+import { useFireproof } from "use-vibes";
+
+// Anyone with a grant can post; only editors can delete
+const { useLiveQuery, database } = useFireproof("announcements", {
+  acl: { write: ["members"], delete: ["editors"] },
+});
+
+// Editors-only space — viewers cannot read at all
+const { useLiveQuery, database } = useFireproof("drafts", {
+  acl: { read: ["editors"], write: ["editors"], delete: ["editors"] },
+});
+
+// No acl — falls back to app-level role gates (existing behavior, always safe)
+const { useLiveQuery, database } = useFireproof("public-notes");
+```
+
+**Subject groups** — who each name covers:
+
+| Group        | Who is included                                             |
+| ------------ | ----------------------------------------------------------- |
+| `members`    | owner + editor + viewer + submitter (anyone with any grant) |
+| `editors`    | owner + editor                                              |
+| `submitters` | owner + submitter                                           |
+| `readers`    | owner + editor + viewer                                     |
+
+Owner is always implicitly included — never list `owner` explicitly in an ACL.
+
+Each capability (`read`, `write`, `delete`) is independent. Omitting one falls back to the app-level role gate for that operation. The `acl` is sent once on first database open and persists across sessions (last-write-wins). Only the **app owner** can set ACLs; non-owner apps opening a database with an `acl` option have it silently ignored — the database still opens and works normally.
+
+---
+
+## Multi-Space Pattern: Owner Creates, Members Discover
+
+A common pattern: the owner defines a set of named databases (rooms, channels, boards), each with its own ACL, and members browse a shared registry to find the spaces they can access.
+
+**Key constraint:** `listDbNames()` is owner-only. Members cannot call it to discover databases. Instead, the owner writes a registry document into a shared database that members can query.
+
+### Step 1 — Owner creates spaces and registers them
+
+```jsx
+import { useFireproof } from "use-vibes";
+
+// The registry database — no ACL means it uses app-level role gates (members can read)
+const { database: registry } = useFireproof("spaces-registry");
+
+// The owner calls this to create a new space
+async function createSpace(name, slug, acl) {
+  // Register the space so members can discover it
+  await registry.put({ type: "space", name, slug, acl, createdAt: Date.now() });
+  // Declare the ACL for the space database itself (owner-only write, persists server-side)
+  const { database } = useFireproof(slug, { acl });
+}
+
+// Example: create two spaces with different ACLs
+createSpace("General", "space-general", { write: ["members"] });
+createSpace("Announcements", "space-announcements", { write: ["editors"], delete: ["editors"] });
+```
+
+### Step 2 — Members list available spaces
+
+```jsx
+function SpaceList({ onSelectSpace }) {
+  // Query the registry — works for any role that can read this database
+  const { useLiveQuery } = useFireproof("spaces-registry");
+  const { docs: spaces } = useLiveQuery("type", { key: "space" });
+
+  return (
+    <ul>
+      {spaces.map((space) => (
+        <li key={space._id}>
+          <button onClick={() => onSelectSpace(space.slug)}>{space.name}</button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Step 3 — Members open a space database
+
+```jsx
+function SpaceView({ slug }) {
+  // Opening without acl is always safe for non-owners — acl option is ignored server-side
+  const { useLiveQuery, database } = useFireproof(slug);
+  const { docs } = useLiveQuery("_id", { descending: true, limit: 50 });
+
+  async function post(text) {
+    await database.put({ text, timestamp: Date.now(), type: "message" });
+  }
+
+  return (
+    <div>
+      {docs.map((d) => (
+        <p key={d._id}>{d.text}</p>
+      ))}
+      <button onClick={() => post("Hello!")}>Post</button>
+    </div>
+  );
+}
+```
+
+### Complete wired-together example
+
+```jsx
+import { useFireproof } from "use-vibes";
+
+export default function App() {
+  const [activeSlug, setActiveSlug] = useState(null);
+
+  return activeSlug ? (
+    <SpaceView slug={activeSlug} onBack={() => setActiveSlug(null)} />
+  ) : (
+    <SpaceList onSelectSpace={setActiveSlug} />
+  );
+}
+
+function SpaceList({ onSelectSpace }) {
+  const { useLiveQuery } = useFireproof("spaces-registry");
+  const { docs: spaces } = useLiveQuery("type", { key: "space", descending: true });
+
+  return (
+    <div>
+      <h2>Spaces</h2>
+      <ul>
+        {spaces.map((s) => (
+          <li key={s._id}>
+            <button onClick={() => onSelectSpace(s.slug)}>{s.name}</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SpaceView({ slug, onBack }) {
+  const { useLiveQuery, useDocument, database } = useFireproof(slug);
+  const { doc, merge, submit } = useDocument({ text: "", type: "message" });
+  const { docs } = useLiveQuery("_id", { descending: true, limit: 50 });
+
+  return (
+    <div>
+      <button onClick={onBack}>← Back</button>
+      <ul>
+        {docs.map((d) => (
+          <li key={d._id}>{d.text}</li>
+        ))}
+      </ul>
+      <form onSubmit={submit}>
+        <input value={doc.text} onChange={(e) => merge({ text: e.target.value })} placeholder="Message…" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  );
+}
+```
+
+---
+
 ## Architecture: Where's My Data?
 
 Data is stored in the browser, and is automatically synced with all invited users.
