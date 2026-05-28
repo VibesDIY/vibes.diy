@@ -99,6 +99,12 @@ inputs:
   META_AD_ACCOUNT_ID:
     description: "Meta Ad Account ID for campaign health report (e.g. act_123456)"
     required: false
+  POSTHOG_KEY:
+    description: "PostHog project API key (client-side, public)"
+    required: false
+  POSTHOG_HOST:
+    description: "PostHog ingest host (e.g. https://us.i.posthog.com)"
+    required: false
 
 runs:
   using: "composite"
@@ -146,6 +152,8 @@ runs:
         META_AD_ACCOUNT_ID: ${{ inputs.META_AD_ACCOUNT_ID }}
         DISCORD_WEBHOOK_URL: ${{ inputs.DISCORD_WEBHOOK_URL }}
         CLERK_WEBHOOK_SECRET: ${{ inputs.CLERK_WEBHOOK_SECRET }}
+        POSTHOG_KEY: ${{ inputs.POSTHOG_KEY }}
+        POSTHOG_HOST: ${{ inputs.POSTHOG_HOST }}
 
       run: |
         if [ "$DB_FLAVOUR" = "pg" ]; then
@@ -181,7 +189,9 @@ runs:
           --fromEnv META_ACCESS_TOKEN \
           --fromEnv META_AD_ACCOUNT_ID \
           --fromEnv DISCORD_WEBHOOK_URL \
-          --fromEnv CLERK_WEBHOOK_SECRET)
+          --fromEnv CLERK_WEBHOOK_SECRET \
+          --fromEnv POSTHOG_KEY \
+          --fromEnv POSTHOG_HOST)
         for attempt in 1 2 3; do
           echo "$SECRETS" | pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk && break
           if [ "$attempt" -eq 3 ]; then echo "secret bulk failed after 3 attempts"; exit 1; fi
