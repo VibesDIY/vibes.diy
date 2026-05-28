@@ -250,6 +250,10 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               ],
               ["Cost/Click", "Spend ÷ clicks (CPC). Cost of getting someone to click the ad and land on good.vibes.diy."],
               [
+                "Ad Reach",
+                "Unique people who saw the ad at least once in the period, deduplicated by Meta account. One person seeing the same ad 3 times = 3 impressions, 1 reach.",
+              ],
+              [
                 "CTA Clicks",
                 "Outbound clicks from good.vibes.diy → vibes.diy, counted from the Referer header in our server logs (all-time, not date-filtered). Bridges the gap between Landings (good.vibes.diy loads) and vibes.diy arrivals. Only shown when Meta reports a destination URL on the campaign.",
               ],
@@ -281,7 +285,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Click Rate</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Click</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Spend</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Reach</th>
+                  <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Ad Reach</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>CTA Clicks</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Landings</th>
                   <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Cost/Landing</th>
