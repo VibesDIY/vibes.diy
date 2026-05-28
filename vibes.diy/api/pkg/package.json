@@ -21,7 +21,7 @@
     "@vibes.diy/api-types": "workspace:*",
     "acorn": "^8.15.0",
     "arktype": "^2.2.0",
-    "multiformats": "^13.4.2",
+    "multiformats": "^14.0.0",
     "random-words": "^2.0.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"

@@ -22,7 +22,7 @@
     "@vibes.diy/call-ai-v2": "workspace:*",
     "arktype": "^2.2.0",
     "drizzle-orm": "^0.45.2",
-    "multiformats": "^13.4.2",
+    "multiformats": "^14.0.0",
     "ws": "^8.20.0"
   },
   "repository": {
