@@ -14,7 +14,7 @@ import {
   ResReportCampaignHealthPixelSummary,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, eq, gte, lte } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -63,13 +63,23 @@ export async function fetchGoodVibesClickThroughs(
 ): Promise<Record<string, number>> {
   const t = vctx.sql.tables;
   const rows = await vctx.sql.db
-    .select({ refPath: t.refererEvents.refPath, total: sql<number>`cast(count(*) as int)` })
+    .select({ refPath: t.refererEvents.refPath, refHref: t.refererEvents.refHref })
     .from(t.refererEvents)
-    .where(and(eq(t.refererEvents.refHost, "good.vibes.diy"), gte(t.refererEvents.ts, sinceIso), lte(t.refererEvents.ts, untilIso)))
-    .groupBy(t.refererEvents.refPath);
-  const byPath: Record<string, number> = {};
-  for (const r of rows) byPath[r.refPath] = r.total;
-  return byPath;
+    .where(
+      and(eq(t.refererEvents.refHost, "good.vibes.diy"), gte(t.refererEvents.ts, sinceIso), lte(t.refererEvents.ts, untilIso))
+    );
+  const byPath: Record<string, Set<string>> = {};
+  for (const r of rows) {
+    let fbclid: string | null = null;
+    try {
+      fbclid = new URL(r.refHref).searchParams.get("fbclid");
+    } catch {
+      // malformed URL — skip
+    }
+    if (fbclid === null) continue;
+    (byPath[r.refPath] ??= new Set()).add(fbclid);
+  }
+  return Object.fromEntries(Object.entries(byPath).map(([path, ids]) => [path, ids.size]));
 }
 
 async function fetchCampaignMeta(
