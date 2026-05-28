@@ -29,10 +29,10 @@ vibes.diy/pkg/slack/worker-sucrase.ts:55:      const cacheUrl = new URL(request.
 vibes.diy/pkg/slack/worker-sucrase.ts:5:  const encoder = new TextEncoder();
 # CF Worker module: no SuperThis context available; new TextEncoder() is correct here
 vibes.diy/pkg/workers/clerk-webhook.ts:3:const enc = new TextEncoder();
-vibes.diy/pkg/test/url-origin-normalization.test.ts:18:    expect(new URL("http://example.com:80/path").origin).toBe("http://example.com");
-vibes.diy/pkg/test/url-origin-normalization.test.ts:22:    expect(new URL("https://example.com:443/path").origin).toBe("https://example.com");
-vibes.diy/pkg/test/url-origin-normalization.test.ts:26:    expect(new URL("https://example.com:8080/path").origin).toBe("https://example.com:8080");
-vibes.diy/pkg/test/url-origin-normalization.test.ts:30:    const referrer = new URL("http://vibes.diy:80/app");
-vibes.diy/pkg/test/url-origin-normalization.test.ts:31:    const current = new URL("http://vibes.diy/logout");
-vibes.diy/pkg/test/url-origin-normalization.test.ts:36:    const referrer = new URL("https://attacker.com/logout");
-vibes.diy/pkg/test/url-origin-normalization.test.ts:37:    const current = new URL("https://vibes.diy/logout");
+vibes.diy/pkg/test/url-origin-normalization.test.ts:20:    expect(new URL("http://example.com:80/path").origin).toBe("http://example.com");
+vibes.diy/pkg/test/url-origin-normalization.test.ts:24:    expect(new URL("https://example.com:443/path").origin).toBe("https://example.com");
+vibes.diy/pkg/test/url-origin-normalization.test.ts:28:    expect(new URL("https://example.com:8080/path").origin).toBe("https://example.com:8080");
+vibes.diy/pkg/test/url-origin-normalization.test.ts:32:    const referrer = new URL("http://vibes.diy:80/app");
+vibes.diy/pkg/test/url-origin-normalization.test.ts:33:    const current = new URL("http://vibes.diy/logout");
+vibes.diy/pkg/test/url-origin-normalization.test.ts:38:    const referrer = new URL("https://attacker.com/logout");
+vibes.diy/pkg/test/url-origin-normalization.test.ts:39:    const current = new URL("https://vibes.diy/logout");
