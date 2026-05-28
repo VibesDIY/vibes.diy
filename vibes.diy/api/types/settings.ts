@@ -151,6 +151,15 @@ export function isReqEnsureAppSettingsTheme(obj: unknown): obj is ReqEnsureAppSe
   return !(reqEnsureAppSettingsTheme(obj) instanceof type.errors);
 }
 
+export const reqEnsureAppSettingsColorTheme = type({
+  colorTheme: "string",
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsColorTheme = typeof reqEnsureAppSettingsColorTheme.infer;
+export function isReqEnsureAppSettingsColorTheme(obj: unknown): obj is ReqEnsureAppSettingsColorTheme {
+  return !(reqEnsureAppSettingsColorTheme(obj) instanceof type.errors);
+}
+
 export const reqEnsureAppSettingsIconDescription = type({
   iconDescription: "string",
 }).and(reqEnsureAppSettingsBase);
@@ -242,6 +251,7 @@ export type ReqEnsureAppSettings =
   | ReqEnsureAppSettingsTitle
   | ReqEnsureAppSettingsSkills
   | ReqEnsureAppSettingsTheme
+  | ReqEnsureAppSettingsColorTheme
   | ReqEnsureAppSettingsIconDescription
   | ReqEnsureAppSettingsIconRegen
   | ReqEnsureAppSettingsApp
@@ -258,6 +268,7 @@ export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSetting
     isReqEnsureAppSettingsTitle(obj) ||
     isReqEnsureAppSettingsSkills(obj) ||
     isReqEnsureAppSettingsTheme(obj) ||
+    isReqEnsureAppSettingsColorTheme(obj) ||
     isReqEnsureAppSettingsIconDescription(obj) ||
     isReqEnsureAppSettingsIconRegen(obj) ||
     isReqEnsureAppSettingsApp(obj) ||
@@ -277,6 +288,7 @@ export const AppSettings = type({
       "title?": "string",
       "skills?": type("string").array(),
       "theme?": "string",
+      "colorTheme?": "string",
       "iconDescription?": "string",
       "icon?": type({ cid: "string", mime: "string" }),
       "app?": AIParams.partial(),

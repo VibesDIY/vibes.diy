@@ -1,38 +1,5 @@
 ---
 name: Neobrutalist
-colors:
-  # Light mode (canonical) — warm off-white canvas, near-black ink, vivid signal blocks.
-  background: "#f5f0e0"
-  card-background: "#ffffff"
-  text: "#1a1a2e"
-  border: "#1a1a2e"
-  muted: "#6b6b80"
-  primary: "#DA291C"
-  on-primary: "#ffffff"
-  secondary: "#fedd00"
-  on-secondary: "#1a1a2e"
-  success: "#22c55e"
-  on-success: "#1a1a2e"
-  info: "#3b82f6"
-  on-info: "#ffffff"
-  primary-light: "rgba(218, 41, 28, 0.1)"
-colorsDark:
-  # Dark mode — cool ink canvas, off-white strokes, same vivid signal blocks.
-  # Hard offset shadows flip to use the off-white border so they remain visible.
-  background: "oklch(0.18 0.02 280)"
-  card-background: "oklch(0.22 0.02 280)"
-  text: "oklch(0.96 0.01 80)"
-  border: "oklch(0.96 0.01 80)"
-  muted: "oklch(0.60 0.03 280)"
-  primary: "#DA291C"
-  on-primary: "#ffffff"
-  secondary: "#fedd00"
-  on-secondary: "#1a1a2e"
-  success: "#22c55e"
-  on-success: "#1a1a2e"
-  info: "#3b82f6"
-  on-info: "#ffffff"
-  primary-light: "rgba(218, 41, 28, 0.18)"
 typography:
   h1:
     fontFamily: Space Grotesk
@@ -134,18 +101,18 @@ The theme **respects the visitor's system color scheme**: light is canonical (wa
 
 ## Colors
 
-The palette is rooted in high-contrast ink on warm canvas (light) or off-white strokes on cool dark canvas (dark), with four vivid signal colors that hold across both modes.
+The palette is rooted in high-contrast ink on the chosen canvas, with four vivid signal-color roles that hold across light and dark modes. Read the exact values from the `colors` and `colorsDark` frontmatter blocks — the prose below describes roles, not literal values.
 
-- **Primary (#DA291C):** "Vibes Red" — primary actions, danger states, hero accents. Always white text on top.
-- **Secondary (#fedd00):** "Signal Yellow" — highlights, hover fills, warning states. Always dark ink text on top.
-- **Success (#22c55e):** Active/success states, status indicators, toggle-on. Dark ink text.
-- **Info (#3b82f6):** Informational accents, modal title bars. White text on top.
-- **Background (light: #f5f0e0 / dark: oklch(0.18 0.02 280)):** Warm off-white canvas in light, cool dark canvas in dark. Never pure white in either mode.
-- **Card Background (light: #ffffff / dark: oklch(0.22 0.02 280)):** Solid surfaces for cards. Don't tint surfaces toward the signal colors.
-- **Text (light: #1a1a2e / dark: oklch(0.96 0.01 80)):** Near-black ink in light, off-white in dark. Same as border — every stroke is bold.
-- **Muted (light: #6b6b80 / dark: oklch(0.60 0.03 280)):** Secondary labels, metadata, captions.
+- **Primary (`{{primary}}`):** Primary actions, danger states, hero accents. Always uses `on-primary` for text on top.
+- **Secondary (`{{secondary}}`):** Highlights, hover fills, warning states. Always uses `on-secondary` for text on top.
+- **Success (`{{success}}`):** Active/success states, status indicators, toggle-on. Uses `on-success` for text.
+- **Info (`{{info}}`):** Informational accents, modal title bars. Uses `on-info` for text.
+- **Background (`{{background}}`):** Canvas. Never pure white in either mode — use the token, not a literal.
+- **Card Background (`{{card-background}}`):** Solid surfaces for cards. Don't tint surfaces toward the signal colors.
+- **Text (`{{text}}`):** Primary ink. Same value as `border` — every stroke is bold.
+- **Muted (`{{muted}}`):** Secondary labels, metadata, captions.
 
-The four signal colors (red/yellow/green/blue) remain identical across both modes — they're already saturated enough to read on either canvas. The shadow color flips with the border (dark in light mode, off-white in dark mode), so the chunky offset shadow stays visible.
+The four signal roles (primary/secondary/success/info) keep the same semantic meaning across both modes. The shadow color follows the `border` token, so the chunky offset shadow remains visible whichever mode is active.
 
 ## Typography
 
@@ -181,28 +148,28 @@ Tiny corner radius everywhere: 4px. Never pill-shaped. Every primary surface (na
 
 ### Action Elements
 
-Buttons are uppercase with letter-spacing. Primary button: red background, white text, 4x4 hard shadow. Secondary: yellow background, 3x3 shadow. Ghost: card background, no shadow, gains 3x3 on hover. All buttons lift on hover (translate -2px, -2px + larger shadow) and slam on press (translate 2px, 2px, no shadow). Transitions resolve in 0.15s.
+Buttons are uppercase with letter-spacing. Primary button: `primary` background, `on-primary` text, 4x4 hard shadow. Secondary: `secondary` background, `on-secondary` text, 3x3 shadow. Ghost: `card-background`, no shadow, gains 3x3 on hover. All buttons lift on hover (translate -2px, -2px + larger shadow) and slam on press (translate 2px, 2px, no shadow). Transitions resolve in 0.15s.
 
 ### Containers & Surfaces
 
-Cards have 3px borders, 4px radius, and hard offset shadows. Keep all card backgrounds pure white. Hero cards feature a 6px horizontal accent bar at the top split into four equal color segments: red 0-25%, yellow 25-50%, green 50-75%, blue 75-100%.
+Cards have 3px borders, 4px radius, and hard offset shadows. Keep card backgrounds as the `card-background` token (solid, untinted). Hero cards feature a 6px horizontal accent bar at the top split into four equal segments using the signal roles: `primary` 0-25%, `secondary` 25-50%, `success` 50-75%, `info` 75-100%.
 
 ### Inputs & Selection
 
-Inputs lift on focus with translate(-2px, -2px) + shadow. Checkboxes: 22x22, 3px border, green when checked. Toggles: 48x26, 3px border, 4px radius, yellow when on, knob translates with 0.2s cubic-bezier overshoot.
+Inputs lift on focus with translate(-2px, -2px) + shadow. Checkboxes: 22x22, 3px border, `success` fill when checked. Toggles: 48x26, 3px border, 4px radius, `secondary` fill when on, knob translates with 0.2s cubic-bezier overshoot.
 
 ### Tables
 
-Full-bleed inside bordered cards. Headers: 0.6rem uppercase, 2px bottom border. Cells: 0.82rem, thin separators. Numeric columns use JetBrains Mono. Row hover fills with yellow instantly.
+Full-bleed inside bordered cards. Headers: 0.6rem uppercase, 2px bottom border. Cells: 0.82rem, thin separators. Numeric columns use JetBrains Mono. Row hover fills with `secondary` instantly.
 
 ## Do's and Don'ts
 
 - DO use hard offset shadows on every elevated surface
 - DO keep all hovers/presses resolving in <=0.2s
 - DO use UPPERCASE for headings and labels
-- DO use the four-color system consistently: red=danger/primary, yellow=highlight/warning, green=success, blue=info
+- DO use the four-role signal system consistently: `primary`=danger/CTA, `secondary`=highlight/warning, `success`=on/active, `info`=informational
 - DON'T use blurred shadows ever
 - DON'T use pill-shaped elements (border-radius > 4px)
-- DON'T tint card surfaces — keep them white
+- DON'T tint card surfaces — keep them as the `card-background` token
 - DON'T use gradients on borders
 - DON'T ease slowly — everything snaps

@@ -6,6 +6,7 @@ import {
   parseArrayWarning,
   ActiveEnv,
   ActiveModelSetting,
+  ActiveColorTheme,
   ActiveSkills,
   ActiveTheme,
   ActiveTitle,
@@ -21,8 +22,10 @@ import {
   isActiveModelSettingApp,
   isActiveModelSettingChat,
   isActiveModelSettingImg,
+  isActiveColorTheme,
   isActiveSkills,
   isActiveTheme,
+  isReqEnsureAppSettingsColorTheme,
   isReqEnsureAppSettingsIconDescription,
   isReqEnsureAppSettingsIconRegen,
   isReqEnsureAppSettingsImg,
@@ -103,6 +106,9 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
         break;
       case isActiveTheme(e):
         result.entry.settings.theme = e.theme;
+        break;
+      case isActiveColorTheme(e):
+        result.entry.settings.colorTheme = e.colorTheme;
         break;
       case isActiveIconDescription(e):
         result.entry.settings.iconDescription = e.description;
@@ -392,6 +398,19 @@ export async function ensureAppSettings(
             type: "active.theme",
             theme: req.theme,
           }) satisfies ActiveTheme
+      );
+      break;
+    case isReqEnsureAppSettingsColorTheme(req):
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
+        settings,
+        isActiveColorTheme,
+        () =>
+          ({
+            type: "active.colorTheme",
+            colorTheme: req.colorTheme,
+          }) satisfies ActiveColorTheme
       );
       break;
     case isReqEnsureAppSettingsApp(req):

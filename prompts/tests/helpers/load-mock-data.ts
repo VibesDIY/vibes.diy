@@ -123,14 +123,32 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
       } as Response);
     }
 
+    // Colorset YAML — must be matched BEFORE the broader theme .md pattern.
+    // Serves a recognizable per-slug minimal colorset so composer code paths
+    // can run without filesystem access.
+    const colorsetMatch = url.match(/themes\/colors\/([\w-]+)\.yaml/);
+    if (colorsetMatch) {
+      const slug = colorsetMatch[1];
+      return Promise.resolve({
+        ok: true,
+        text: () =>
+          Promise.resolve(`name: ${slug}\ncolors:\n  primary: "#abc123"\n  background: "#fafafa"\n`),
+      } as Response);
+    }
+
     // Theme markdown — serve a recognizable per-slug body so tests can assert
     // both the wrapping XML tag and the theme content end up in the prompt.
+    // Includes a minimal YAML frontmatter so the colorset composer (which
+    // injects into the existing frontmatter) can run end-to-end in tests.
     const themeMatch = url.match(/themes\/([\w-]+)\.md/);
     if (themeMatch) {
       const slug = themeMatch[1];
       return Promise.resolve({
         ok: true,
-        text: () => Promise.resolve(`# Theme ${slug}\nMock design tokens for ${slug}.`),
+        text: () =>
+          Promise.resolve(
+            `---\nname: ${slug}\n---\n\n# Theme ${slug}\nMock design tokens for ${slug}.`
+          ),
       } as Response);
     }
 

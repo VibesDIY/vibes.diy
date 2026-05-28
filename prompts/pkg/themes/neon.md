@@ -1,17 +1,5 @@
 ---
 name: Neon Arcade
-colors:
-  bg-gradient-start: "#ff5bad"
-  bg-gradient-mid: "#ffc85c"
-  bg-gradient-end: "#fcee0a"
-  panel-dark: "#2a0a2e"
-  panel-mid: "#4d1558"
-  neon-pink: "#f93c94"
-  neon-yellow: "#fcee0a"
-  neon-cyan: "#00f0ff"
-  text-dark: "#2a0a2e"
-  text-light: "#ffffff"
-  text-on-pink: "#2a0a2e"
 typography:
   body-md:
     fontFamily: Rajdhani

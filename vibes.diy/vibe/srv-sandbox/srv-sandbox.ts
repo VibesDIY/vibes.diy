@@ -66,6 +66,7 @@ import {
   isReqVibeUpdateAvatarCid,
   isReqVibeLogin,
   type ReqVibeLogin,
+  EvtVibeColorOverride,
 } from "@vibes.diy/vibe-types";
 import {
   isPromptBlockEnd,
@@ -993,6 +994,16 @@ export class vibesDiySrvSandbox implements Disposable {
   // roundtrip completes, avoiding the read-only flash caused by the HTTP render
   // path embedding access:"none" (no Clerk session available there).
   pushViewerChanged(msg: EvtVibeViewerChanged): void {
+    if (this.iframeSource && this.iframeOrigin) {
+      this.iframeSource.postMessage(msg, this.iframeOrigin);
+    }
+  }
+
+  // Push a fresh palette to the running app so the user sees the recolor
+  // instantly — no codegen turn required. The runtime side injects a
+  // <style id="vibe-color-override"> that defines CSS custom properties
+  // for every token. Send empty `colors` to clear the override.
+  pushColorOverride(msg: EvtVibeColorOverride): void {
     if (this.iframeSource && this.iframeOrigin) {
       this.iframeSource.postMessage(msg, this.iframeOrigin);
     }

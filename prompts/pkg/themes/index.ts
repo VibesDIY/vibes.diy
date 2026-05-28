@@ -259,6 +259,24 @@ export function getThemeBySlug(slug: string): VibesTheme | undefined {
   return vibesThemes.find((t) => t.slug === slug);
 }
 
+// Colorset catalog — currently mirrors the structural theme catalog one-to-one
+// (every theme ships a default colorset with the same slug). Cross-pollinated
+// colorsets (matrix-green for any structural theme, etc.) can be added by
+// dropping new files into prompts/pkg/themes/colors/ and listing them here.
+const colorsetCatalogNames: ReadonlySet<string> = new Set(vibesThemes.map((t) => t.slug));
+
+export function getColorsetCatalogNames(): ReadonlySet<string> {
+  return colorsetCatalogNames;
+}
+
+// Re-export the composer so callers can import everything theme-related from
+// one module (`@vibes.diy/prompts/themes`).
+export { composeDesignMd, parseColorsetYaml, type Colorset } from "./colorsets.js";
+
+// Bundled colorsets — auto-generated. The frontend uses this to apply a
+// palette to the live preview without a backend roundtrip.
+export { vibesColorsets, getColorsetBySlug } from "./colorsets-bundle.js";
+
 /**
  * Parse a DESIGN.md file (YAML frontmatter + markdown body) into a VibesTheme.
  * Used by the picker modal to import user-supplied .md files. Imported themes

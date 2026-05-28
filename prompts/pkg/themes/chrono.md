@@ -1,10 +1,5 @@
 ---
 name: Chrono
-colors:
-  bg: "#dde1e7"
-  text: "#5a6270"
-  text-dark: "#3a3f4a"
-  accent: "#6c8ee6"
 typography:
   body-md:
     fontFamily: Inter

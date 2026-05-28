@@ -1,13 +1,5 @@
 ---
 name: Poster
-colors:
-  bg: "oklch(0.11 0.01 270)"
-  card-bg: "oklch(0.13 0.01 270)"
-  text: "oklch(0.93 0.01 270)"
-  border: "oklch(0.22 0.01 270)"
-  accent: "oklch(0.65 0.18 290)"
-  accent-text: "oklch(0.10 0.01 270)"
-  muted: "oklch(0.42 0.01 270)"
 typography:
   body-md:
     fontFamily: Inter

@@ -1,12 +1,5 @@
 ---
 name: Signal
-colors:
-  bg: "#030303"
-  card-bg: "#0a0a0a"
-  text: "#eaeaea"
-  border: "#1a1a1a"
-  accent: "#ffffff"
-  muted: "#666"
 typography:
   body-md:
     fontFamily: Inter

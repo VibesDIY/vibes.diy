@@ -1,11 +1,5 @@
 ---
 name: Palate Notes
-colors:
-  bg: "oklch(0.17 0.000 0)"
-  fg: "oklch(0.93 0.006 265)"
-  fg-muted: "oklch(0.71 0.02 261)"
-  border: "oklch(0.37 0.03 260)"
-  dot: "oklch(0.93 0.006 265)"
 typography:
   body-md:
     fontFamily: Cormorant Garamond

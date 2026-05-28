@@ -1,16 +1,5 @@
 ---
 name: Carbon Panel
-colors:
-  bg: "oklch(0.18 0.005 285)"
-  card: "oklch(0.25 0.005 285)"
-  border: "oklch(0.31 0.005 285)"
-  fg: "oklch(1.00 0.000 0)"
-  fg-muted: "oklch(0.87 0.01 258)"
-  fg-dim: "oklch(0.71 0.02 261)"
-  accent-amber: "oklch(0.79 0.18 75)"
-  accent-coral: "oklch(0.68 0.20 35)"
-  accent-red: "oklch(0.63 0.24 25)"
-  accent-green: "oklch(0.77 0.22 145)"
 typography:
   body-md:
     fontFamily: -apple-system

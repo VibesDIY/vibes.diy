@@ -1,18 +1,5 @@
 ---
 name: NeoMario
-colors:
-  bg: "oklch(0.96 0.01 90)"
-  card-bg: "oklch(1.00 0 0)"
-  text: "oklch(0.15 0.02 280)"
-  border: "oklch(0.15 0.02 280)"
-  accent: "oklch(0.55 0.24 28)"
-  accent-light: "oklch(0.55 0.24 28 / 0.1)"
-  muted: "oklch(0.50 0.02 280)"
-  yellow: "oklch(0.85 0.18 85)"
-  yellow-dark: "oklch(0.75 0.16 85)"
-  green: "oklch(0.62 0.19 145)"
-  blue: "oklch(0.52 0.18 255)"
-  red: "oklch(0.55 0.24 28)"
 typography:
   body-md:
     fontFamily: Space Grotesk

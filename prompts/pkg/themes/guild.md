@@ -1,17 +1,5 @@
 ---
 name: Guild Ledger
-colors:
-  bg: "oklch(0.10 0.03 260)"
-  bg-highlight: "oklch(0.18 0.04 255)"
-  fg: "oklch(0.90 0.000 0)"
-  fg-muted: "oklch(0.67 0.04 240)"
-  gold-base: "oklch(0.60 0.13 80)"
-  gold-mid: "oklch(0.78 0.13 88)"
-  gold-light: "oklch(0.96 0.08 100)"
-  stone: "oklch(0.15 0.000 0)"
-  parchment: "oklch(0.84 0.03 75)"
-  wood: "oklch(0.27 0.04 30)"
-  iron: "oklch(0.27 0.02 220)"
 typography:
   body-md:
     fontFamily: Cinzel

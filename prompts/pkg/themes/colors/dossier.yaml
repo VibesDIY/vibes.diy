@@ -1,0 +1,7 @@
+name: Dossier Card
+colors:
+  bg: "oklch(0.16 0.000 0)"
+  card: "oklch(0.00 0.000 0)"
+  fg: "oklch(1.00 0.000 0)"
+  border: "oklch(0.28 0.03 257)"
+  border-fg: "oklch(1.00 0.000 0)"

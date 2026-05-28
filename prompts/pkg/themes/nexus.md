@@ -1,14 +1,5 @@
 ---
 name: Nexus Grid
-colors:
-  bg: "#000000"
-  text: "#ffffff"
-  accent-lime: "#D4FF00"
-  text-dim: "#888888"
-  text-body: "#dddddd"
-  separator: "#666666"
-  outline: "rgba(255,255,255,0.3)"
-  voxel: "#ffffff"
 typography:
   body-md:
     fontFamily: Helvetica Neue

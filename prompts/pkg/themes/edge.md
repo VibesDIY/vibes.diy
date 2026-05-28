@@ -1,13 +1,5 @@
 ---
 name: EDGE INTERFACE
-colors:
-  pink: "#ff0077"
-  yellow: "#fcee0a"
-  cyan: "#00f0ff"
-  void: "#0a0205"
-  vignette: "#2a0a2e"
-  panel-bg: "rgba(15, 5, 20, 0.85)"
-  panel-border: "rgba(255, 0, 119, 0.6)"
 typography:
   body-md:
     fontFamily: var(--font-body)

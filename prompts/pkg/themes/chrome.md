@@ -1,20 +1,5 @@
 ---
 name: Chrome Terminal
-colors:
-  # Dark mode (canonical) — black canvas, neon-red display.
-  bg: "#000000"
-  bg-surface: "#171717"
-  bg-panel: "#2a0a18"
-  bg-dark: "#12050e"
-  bg-footer: "#1a050c"
-  neon-red: "#ff003c"
-  neon-yellow: "#fcee0a"
-  neon-cyan: "#00f0ff"
-  border: "#3d1326"
-  border-red: "rgba(255, 0, 60, 0.5)"
-  text: "#ffffff"
-  text-dim: "#d1d1d1"
-  text-muted: "#a3a3a3"
 colorsLight:
   # Light mode — "chrome at dawn". Same fonts, same red accent role,
   # darker for legibility on white. Glow text-shadow drops to a faint
