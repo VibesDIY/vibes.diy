@@ -28,7 +28,7 @@
     "@vitest/browser-playwright": "~4.1.7",
     "eslint": "^10.0.3",
     "playwright": "^1.59.1",
-    "tsx": "^4.21.0",
+    "tsx": "^4.22.3",
     "vitest": "~4.1.7"
   },
   "repository": {
