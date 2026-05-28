@@ -1,0 +1,10 @@
+name: Proof Sheet
+colors:
+  bg: "oklch(0.14 0.000 0)"
+  card: "oklch(0.16 0.000 0)"
+  border: "oklch(0.28 0.03 257)"
+  fg: "oklch(1.00 0.000 0)"
+  fg-muted: "oklch(0.71 0.02 261)"
+  fg-dim: "oklch(1.00 0.000 0 / 0.6)"
+  tag-bg: "oklch(1.00 0.000 0 / 0.1)"
+  card-hi: "oklch(0.21 0.03 265)"

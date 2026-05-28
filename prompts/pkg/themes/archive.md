@@ -1,13 +1,5 @@
 ---
 name: Archive
-colors:
-  bg: "oklch(0.95 0.01 70)"
-  text: "oklch(0.15 0.02 50)"
-  border: "oklch(0.20 0.02 50)"
-  accent: "oklch(0.35 0.04 50)"
-  accent-text: "oklch(0.95 0.01 70)"
-  muted: "oklch(0.55 0.02 50)"
-  page-bg: "oklch(0.92 0.01 65)"
 typography:
   body-md:
     fontFamily: Inter

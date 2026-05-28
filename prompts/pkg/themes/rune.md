@@ -1,17 +1,5 @@
 ---
 name: Rune Interface
-colors:
-  abyss: "#020406"
-  abyss-blue: "#05101a"
-  cyan-neon: "#00ffcc"
-  cyan-dim: "#005f52"
-  cyan-text: "#ccfffa"
-  purple-magic: "#9d4eff"
-  stone: "#0d161f"
-  stone-border: "#1c2b38"
-  stone-light: "#162330"
-  text: "#b0c4cc"
-  text-muted: "#4a6070"
 typography:
   body-md:
     fontFamily: Cormorant Garamond

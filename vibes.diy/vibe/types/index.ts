@@ -661,3 +661,20 @@ export type EvtVibeViewerChanged = typeof EvtVibeViewerChanged.infer;
 export function isEvtVibeViewerChanged(x: unknown): x is EvtVibeViewerChanged {
   return !(EvtVibeViewerChanged(x) instanceof type.errors);
 }
+
+// Event: parent posts a fresh colorset palette so the running app can re-skin
+// without a codegen roundtrip. Runtime injects a <style> on document.head
+// that sets CSS variables for every key in `colors` (and mirrors `colorsDark`
+// inside a prefers-color-scheme: dark media query). When `colors` is empty
+// the runtime removes the override (i.e. revert to the embedded palette).
+export const EvtVibeColorOverride = type({
+  type: "'vibe.evt.color-override'",
+  colors: type({ "[string]": "string" }),
+  "colorsDark?": type({ "[string]": "string" }),
+});
+
+export type EvtVibeColorOverride = typeof EvtVibeColorOverride.infer;
+
+export function isEvtVibeColorOverride(x: unknown): x is EvtVibeColorOverride {
+  return !(EvtVibeColorOverride(x) instanceof type.errors);
+}

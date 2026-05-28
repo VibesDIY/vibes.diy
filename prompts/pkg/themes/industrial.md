@@ -1,12 +1,5 @@
 ---
 name: Industrial
-colors:
-  bg: "oklch(0.88 0.01 90)"
-  text: "oklch(0.05 0.01 0)"
-  border: "oklch(0.05 0.01 0)"
-  accent: "oklch(0.90 0.20 110)"
-  accent-text: "oklch(0.05 0.01 0)"
-  muted: "oklch(0.40 0.01 0)"
 typography:
   body-md:
     fontFamily: Inter

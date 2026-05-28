@@ -1,0 +1,7 @@
+name: Specimen
+colors:
+  background: "#ffffff"
+  text: "#111111"
+  muted: "#666666"
+  accent: "#666666"
+  rule: "#dddddd"

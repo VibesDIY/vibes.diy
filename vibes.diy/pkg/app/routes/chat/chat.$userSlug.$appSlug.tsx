@@ -100,6 +100,10 @@ export interface PromptState {
   // The selected theme (catalog or imported). Sourced from app_settings
   // alongside title/icon so a single dispatch updates all three.
   theme?: VibesTheme | null;
+  // Optional colorset slug. When set, the codegen pipeline composes this
+  // colorset's palette with the structural `theme`. Defaults to the same
+  // slug as `theme` (matching today's behavior).
+  colorTheme?: string | null;
 }
 
 export interface PromptBlock {
@@ -148,6 +152,18 @@ function isSetTheme(msg: unknown): msg is SetTheme {
   return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setTheme";
 }
 
+// SetColorTheme stores just the slug — the colorset is composed at codegen
+// time on the backend, so the frontend doesn't need the full color values
+// in state. Nullable so the same action can clear the override (falling back
+// to the colorset matching the structural theme's slug).
+interface SetColorTheme {
+  type: "setColorTheme";
+  colorTheme: string | null;
+}
+function isSetColorTheme(msg: unknown): msg is SetColorTheme {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setColorTheme";
+}
+
 const SetHydratedSource = type({
   type: "'setHydratedSource'",
   fsId: "string",
@@ -178,7 +194,16 @@ function isClearChat(msg: unknown): msg is ClearChat {
   return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "clearChat";
 }
 
-type PromptAction = PromptAndBlockMsgs | InitChat | SetTitle | SetIcon | SetTheme | SetHydratedSource | MarkAgentSaved | ClearChat;
+type PromptAction =
+  | PromptAndBlockMsgs
+  | InitChat
+  | SetTitle
+  | SetIcon
+  | SetTheme
+  | SetColorTheme
+  | SetHydratedSource
+  | MarkAgentSaved
+  | ClearChat;
 
 function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
@@ -193,6 +218,7 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
         title: block.appSlug,
         icon: undefined,
         theme: null,
+        colorTheme: null,
         agentSavedBlockIds: new Set<string>(),
         hydratedSource: undefined,
       };
@@ -209,6 +235,9 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 
     case isSetTheme(block):
       return { ...state, theme: block.theme };
+
+    case isSetColorTheme(block):
+      return { ...state, colorTheme: block.colorTheme };
 
     case isSetHydratedSource(block):
       return { ...state, hydratedSource: { fsId: block.fsId, code: block.code } };
@@ -274,7 +303,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     openingRef.current = false;
     prevSlugsRef.current = `${userSlug}/${appSlug}`;
   }
-  const { vibeDiyApi, webVars: svcVars } = useVibesDiy();
+  const { vibeDiyApi, webVars: svcVars, srvVibeSandbox } = useVibesDiy();
   const shareModal = useShareModal({ userSlug, appSlug, fsId, vibeDiyApi });
   const { isSignedIn } = useAuth();
   const [isOwner, setIsOwner] = useState(false);
@@ -436,6 +465,76 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     [vibeDiyApi, userSlug, appSlug]
   );
 
+  // Persist a palette choice (slug only) so future codegen turns and page
+  // reloads honor it. Live recolor is handled separately by handleApplyLive
+  // — the picker calls both on swatch click so the user sees the swap and
+  // the choice survives a refresh.
+  const handlePaletteSelect = useCallback(
+    (colorTheme: string) => {
+      dispatch({ type: "setColorTheme", colorTheme });
+      if (userSlug !== "preparing" && appSlug !== "session") {
+        void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, colorTheme });
+      }
+    },
+    [vibeDiyApi, userSlug, appSlug]
+  );
+
+  // Live-only push: postMessage to the iframe so the runtime injects CSS
+  // variable overrides. Used for both palette selection and per-token edits
+  // (edits are session-only — they don't persist, so the page reload shows
+  // the palette's pristine values).
+  const handleApplyLivePalette = useCallback(
+    (colors: Record<string, string>, colorsDark?: Record<string, string>) => {
+      if (!srvVibeSandbox) return;
+      srvVibeSandbox.pushColorOverride({
+        type: "vibe.evt.color-override",
+        colors,
+        ...(colorsDark ? { colorsDark } : {}),
+      });
+    },
+    [srvVibeSandbox]
+  );
+
+  // Regenerate-with-palette: persists the slug, then prefills the chat
+  // textarea with a prompt that nudges the LLM to wire CSS variables to
+  // the new palette tokens. Auto-submits so the user gets the regenerated
+  // app without an extra click. Mirrors the structural-theme restyle flow.
+  const handlePaletteRegenerate = useCallback(
+    (paletteSlug: string, paletteName: string) => {
+      dispatch({ type: "setColorTheme", colorTheme: paletteSlug });
+      const canPersist = userSlug !== "preparing" && appSlug !== "session";
+      const prompt = `Update the styles to use the "${paletteName}" palette. Apply the palette's colors via CSS variables on :root (and inside @media (prefers-color-scheme: dark) for dark-mode tokens), then reference them as var(--token) everywhere instead of inline hex values.`;
+      const prefilled = chatInput.current?.setPromptIfEmpty(prompt) ?? false;
+      chatInput.current?.setFocus();
+      if (!canPersist || !prefilled) {
+        if (canPersist) {
+          void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, colorTheme: paletteSlug });
+        }
+        return;
+      }
+      void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, colorTheme: paletteSlug }).then((res) => {
+        if (res.isErr()) return;
+        chatInput.current?.clickSubmit();
+      });
+    },
+    [vibeDiyApi, userSlug, appSlug]
+  );
+
+  // Reset reverts the override: pushing empty `colors` tells the runtime to
+  // drop the injected <style>, and persisting the theme's own slug as
+  // colorTheme returns the backend to "no override" without needing a clear
+  // verb in the schema.
+  const handlePaletteReset = useCallback(() => {
+    const themeSlug = promptState.theme?.slug;
+    dispatch({ type: "setColorTheme", colorTheme: null });
+    if (srvVibeSandbox) {
+      srvVibeSandbox.pushColorOverride({ type: "vibe.evt.color-override", colors: {} });
+    }
+    if (themeSlug && userSlug !== "preparing" && appSlug !== "session") {
+      void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, colorTheme: themeSlug });
+    }
+  }, [vibeDiyApi, userSlug, appSlug, srvVibeSandbox, promptState.theme]);
+
   // Hydrate the code editor from Apps.fileSystem when no ChatSections
   // exist for this fsId (e.g. a freshly forked vibe). The fetch is
   // content-addressed and HTTP-cacheable. Once a real prompt lands,
@@ -521,6 +620,9 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           if (s.theme) {
             const t = getThemeBySlug(s.theme);
             if (t) dispatch({ type: "setTheme", theme: t });
+          }
+          if (s.colorTheme) {
+            dispatch({ type: "setColorTheme", colorTheme: s.colorTheme });
           }
         }
       });
@@ -816,6 +918,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
               currentMsgCount={promptState.current?.msgs.length ?? 0}
               selectedTheme={promptState.theme ?? null}
               onThemeButtonClick={() => setThemeModalOpen(true)}
+              paletteOptions={vibesThemes}
+              selectedPaletteSlug={promptState.colorTheme ?? promptState.theme?.slug ?? undefined}
+              onSelectPalette={handlePaletteSelect}
+              onApplyLivePalette={handleApplyLivePalette}
+              onResetPalette={handlePaletteReset}
+              onRegeneratePalette={handlePaletteRegenerate}
             />
           </BrutalistCard>
         }

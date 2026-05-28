@@ -311,6 +311,15 @@ export function isActiveTheme(obj: unknown): obj is ActiveTheme {
   return !(ActiveTheme(obj) instanceof type.errors);
 }
 
+export const ActiveColorTheme = type({
+  type: "'active.colorTheme'",
+  colorTheme: "string",
+});
+export type ActiveColorTheme = typeof ActiveColorTheme.infer;
+export function isActiveColorTheme(obj: unknown): obj is ActiveColorTheme {
+  return !(ActiveColorTheme(obj) instanceof type.errors);
+}
+
 export const IconVersion = type({
   cid: "string",
   mime: "string",
@@ -405,6 +414,7 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(ActiveTitle)
   .or(ActiveSkills)
   .or(ActiveTheme)
+  .or(ActiveColorTheme)
   .or(ActiveIcon)
   .or(ActiveIconDescription)
   .or(ActiveEnrichedPrompt)

@@ -1,6 +1,37 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { VibeMountParams, ViewerEnv } from "./vibe.js";
-import { isEvtVibeViewerChanged } from "@vibes.diy/vibe-types";
+import { isEvtVibeColorOverride, isEvtVibeViewerChanged } from "@vibes.diy/vibe-types";
+
+// Style element id used to install/replace the parent-pushed palette override.
+// Kept stable so multiple overrides replace each other rather than stacking.
+const COLOR_OVERRIDE_STYLE_ID = "vibe-color-override";
+
+function renderTokens(map: Record<string, string>): string {
+  return Object.entries(map)
+    .map(([k, v]) => `  --${k}: ${v};`)
+    .join("\n");
+}
+
+function applyColorOverride(colors: Record<string, string>, colorsDark?: Record<string, string>): void {
+  if (typeof document === "undefined") return;
+  // Empty colors → revert to embedded palette by removing the override.
+  if (Object.keys(colors).length === 0) {
+    document.getElementById(COLOR_OVERRIDE_STYLE_ID)?.remove();
+    return;
+  }
+  const light = `:root {\n${renderTokens(colors)}\n}`;
+  const dark = colorsDark
+    ? `@media (prefers-color-scheme: dark) {\n  :root {\n${renderTokens(colorsDark).replace(/^/gm, "  ")}\n  }\n}`
+    : "";
+  const css = `${light}\n${dark}`;
+  let el = document.getElementById(COLOR_OVERRIDE_STYLE_ID) as HTMLStyleElement | null;
+  if (!el) {
+    el = document.createElement("style");
+    el.id = COLOR_OVERRIDE_STYLE_ID;
+    document.head.appendChild(el);
+  }
+  el.textContent = css;
+}
 
 export interface Vibe {
   readonly mountParams: VibeMountParams;
@@ -29,6 +60,19 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
         access: event.data.access,
         ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
       });
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  // Listen for parent-pushed palette overrides so the running app can re-skin
+  // without a codegen turn. Lives next to the viewerChanged listener because
+  // they share the same message bridge — separating to a dedicated effect
+  // keeps the concerns visually distinct.
+  useEffect(() => {
+    const onMsg = (event: MessageEvent) => {
+      if (!isEvtVibeColorOverride(event.data)) return;
+      applyColorOverride(event.data.colors, event.data.colorsDark);
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);

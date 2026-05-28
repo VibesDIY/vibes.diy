@@ -23,6 +23,9 @@ export interface UserSettings {
   /** Selected theme slug (from picker or pre-allocation). Validated against the theme catalog. */
   theme?: string;
 
+  /** Selected colorset slug. Defaults to `theme` (every theme ships a same-slug default colorset). Enables theme×color combinatorics — see ticket #1853. */
+  colorTheme?: string;
+
   /** Human-readable app title (from pre-allocation or user edit). */
   title?: string;
 

@@ -1,0 +1,34 @@
+name: Neobrutalist
+colors:
+  # Light mode (canonical) — warm off-white canvas, near-black ink, vivid signal blocks.
+  background: "#f5f0e0"
+  card-background: "#ffffff"
+  text: "#1a1a2e"
+  border: "#1a1a2e"
+  muted: "#6b6b80"
+  primary: "#DA291C"
+  on-primary: "#ffffff"
+  secondary: "#fedd00"
+  on-secondary: "#1a1a2e"
+  success: "#22c55e"
+  on-success: "#1a1a2e"
+  info: "#3b82f6"
+  on-info: "#ffffff"
+  primary-light: "rgba(218, 41, 28, 0.1)"
+colorsDark:
+  # Dark mode — cool ink canvas, off-white strokes, same vivid signal blocks.
+  # Hard offset shadows flip to use the off-white border so they remain visible.
+  background: "oklch(0.18 0.02 280)"
+  card-background: "oklch(0.22 0.02 280)"
+  text: "oklch(0.96 0.01 80)"
+  border: "oklch(0.96 0.01 80)"
+  muted: "oklch(0.60 0.03 280)"
+  primary: "#DA291C"
+  on-primary: "#ffffff"
+  secondary: "#fedd00"
+  on-secondary: "#1a1a2e"
+  success: "#22c55e"
+  on-success: "#1a1a2e"
+  info: "#3b82f6"
+  on-info: "#ffffff"
+  primary-light: "rgba(218, 41, 28, 0.18)"

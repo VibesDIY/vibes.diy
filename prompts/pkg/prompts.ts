@@ -1,7 +1,7 @@
 import type { UserSettings } from "./settings.js";
 import { loadAsset, KeyedResolvOnce } from "@adviser/cement";
 import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.js";
-import { getThemeCatalogNames, vibesThemes } from "./themes/index.js";
+import { composeDesignMd, getColorsetCatalogNames, getThemeCatalogNames, parseColorsetYaml, vibesThemes } from "./themes/index.js";
 import { type } from "arktype";
 
 // import { getTexts } from "./txt-docs.js";
@@ -149,6 +149,7 @@ export const preAllocParsed = type({
   pairs: type({ title: "string", slug: "string" }).array(),
   iconDescription: "string",
   "theme?": "string",
+  "colorTheme?": "string",
   "enrichedPrompt?": "string",
 });
 export type PreAllocParsed = typeof preAllocParsed.infer;
@@ -157,6 +158,7 @@ export interface SystemPromptResult {
   systemPrompt: string;
   skills: string[];
   theme?: string;
+  colorTheme?: string;
   demoData: boolean;
   model: string;
 }
@@ -298,13 +300,23 @@ export async function makeBaseSystemPrompt(
   }
   const concatenatedLlmsTxt = concatenatedLlmsTxts.join("\n");
 
-  // Theme: optional. Validate slug against catalog (drop unknown silently —
-  // same pattern as skills above). When present, load the DESIGN.md and wrap
-  // it in <theme-design-md>...</theme-design-md>. When absent, the placeholder
-  // collapses to empty.
+  // Theme + colorset: both optional, both validated against their catalogs.
+  // The structural theme markdown lives at themes/<theme>.md; the colorset
+  // (light + dark token values) lives at themes/colors/<colorTheme>.yaml.
+  // Default colorTheme is the same slug as theme — preserving today's
+  // behavior when only `theme` is supplied. The two are composed at codegen
+  // time into a complete design.md, wrapped in <theme-design-md>.
   const themeCatalogNames = getThemeCatalogNames();
+  const colorsetCatalogNames = getColorsetCatalogNames();
   const requestedTheme = typeof sessionDoc?.theme === "string" ? sessionDoc.theme : undefined;
   const validatedTheme = requestedTheme && themeCatalogNames.has(requestedTheme) ? requestedTheme : undefined;
+  const requestedColorTheme = typeof sessionDoc?.colorTheme === "string" ? sessionDoc.colorTheme : undefined;
+  const validatedColorTheme =
+    requestedColorTheme && colorsetCatalogNames.has(requestedColorTheme)
+      ? requestedColorTheme
+      : validatedTheme && colorsetCatalogNames.has(validatedTheme)
+        ? validatedTheme
+        : undefined;
   let themeDesignSection = "";
   if (validatedTheme) {
     const rTheme = await keyedLoadAsset.get(`theme:${validatedTheme}`).once(async () => {
@@ -317,7 +329,22 @@ export async function makeBaseSystemPrompt(
     if (rTheme.isErr()) {
       console.warn(`Failed to load theme ${validatedTheme}:`, rTheme.Err());
     } else {
-      themeDesignSection = `<theme-design-md>\n${rTheme.Ok() ?? ""}\n</theme-design-md>`;
+      let designMd = rTheme.Ok() ?? "";
+      if (validatedColorTheme) {
+        const rColorset = await keyedLoadAsset.get(`colorset:${validatedColorTheme}`).once(async () => {
+          return loadAsset(`./themes/colors/${validatedColorTheme}.yaml`, {
+            fallBackUrl: pkgBaseUrl,
+            basePath: () => import.meta.url,
+            mock: { fetch: sessionDoc.fetch },
+          });
+        });
+        if (rColorset.isErr()) {
+          console.warn(`Failed to load colorset ${validatedColorTheme}:`, rColorset.Err());
+        } else {
+          designMd = composeDesignMd(designMd, parseColorsetYaml(rColorset.Ok() ?? ""));
+        }
+      }
+      themeDesignSection = `<theme-design-md>\n${designMd}\n</theme-design-md>`;
     }
   }
 
@@ -358,6 +385,7 @@ export async function makeBaseSystemPrompt(
     systemPrompt,
     skills: selectedNames,
     theme: validatedTheme,
+    colorTheme: validatedColorTheme,
     demoData: includeDemoData,
     model,
   };

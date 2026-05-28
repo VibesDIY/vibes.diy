@@ -1,13 +1,5 @@
 ---
 name: Pitch
-colors:
-  bg: "oklch(0.22 0.05 163)"
-  card-bg: "oklch(0.27 0.055 163)"
-  text: "oklch(0.95 0.01 100)"
-  border: "oklch(0.39 0.065 165)"
-  accent: "oklch(0.86 0.18 90)"
-  accent-text: "oklch(0.20 0.04 163)"
-  muted: "oklch(0.55 0.04 165)"
 typography:
   body-md:
     fontFamily: Space Grotesk

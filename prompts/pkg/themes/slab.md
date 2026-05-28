@@ -1,11 +1,5 @@
 ---
 name: Slab Concrete
-colors:
-  concrete: "oklch(0.88 0.000 0)"
-  acid: "oklch(0.94 0.23 110)"
-  black: "oklch(0.10 0.000 0)"
-  ink: "oklch(0.00 0.000 0)"
-  list-hover: "oklch(1.00 0.000 0 / 0.4)"
 typography:
   body-md:
     fontFamily: Inter

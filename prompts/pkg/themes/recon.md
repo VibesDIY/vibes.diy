@@ -1,13 +1,5 @@
 ---
 name: Recon Grid
-colors:
-  bg: "oklch(0.00 0.000 0)"
-  card: "oklch(0.00 0.000 0 / 0.8)"
-  panel: "oklch(0.21 0.03 265 / 0.8)"
-  border: "oklch(0.28 0.03 257)"
-  fg: "oklch(0.97 0.003 265)"
-  fg-dim: "oklch(0.55 0.03 264)"
-  accent: "oklch(0.64 0.24 25)"
 typography:
   body-md:
     fontFamily: ui-monospace

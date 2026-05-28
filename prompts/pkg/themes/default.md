@@ -1,23 +1,5 @@
 ---
 name: Default
-colors:
-  # Light mode (the canonical "default" — calm warm canvas, dark ink, golden action color)
-  bg: "oklch(0.97 0.01 80)"
-  card-bg: "oklch(1.00 0 0)"
-  text: "oklch(0.20 0.02 60)"
-  accent: "oklch(0.62 0.18 65)"
-  accent-text: "oklch(1.00 0 0)"
-  muted: "oklch(0.50 0.02 60)"
-  border: "oklch(0.88 0.01 70)"
-colorsDark:
-  # Dark mode (auto-applied via @media (prefers-color-scheme: dark))
-  bg: "oklch(0.18 0.04 60)"
-  card-bg: "oklch(0.22 0.04 60)"
-  text: "oklch(0.95 0.01 80)"
-  accent: "oklch(0.72 0.18 70)"
-  accent-text: "oklch(0.12 0.04 60)"
-  muted: "oklch(0.55 0.03 60)"
-  border: "oklch(0.35 0.04 60)"
 typography:
   body-md:
     fontFamily: Inter
@@ -38,23 +20,17 @@ The default theme defines two color sets, light (top-level `colors`) and dark (`
 
 ### Light tokens
 
-- **bg** (oklch(0.97 0.01 80)): Page background — warm off-white.
-- **card-bg** (oklch(1.00 0 0)): Card / surface — pure white.
-- **text** (oklch(0.20 0.02 60)): Primary text — near-black with warm undertone.
-- **accent** (oklch(0.62 0.18 65)): Primary actions and accents — saturated golden.
-- **accent-text** (oklch(1.00 0 0)): Text on accent fills — pure white.
-- **muted** (oklch(0.50 0.02 60)): Secondary / muted content.
-- **border** (oklch(0.88 0.01 70)): Borders and dividers — soft warm gray.
+- **bg** (`{{bg}}`): Page background — warm off-white.
+- **card-bg** (`{{card-bg}}`): Card / surface — pure white.
+- **text** (`{{text}}`): Primary text — near-black with warm undertone.
+- **accent** (`{{accent}}`): Primary actions and accents — saturated golden.
+- **accent-text** (`{{accent-text}}`): Text on accent fills — pure white.
+- **muted** (`{{muted}}`): Secondary / muted content.
+- **border** (`{{border}}`): Borders and dividers — soft warm gray.
 
 ### Dark tokens
 
-- **bg** (oklch(0.18 0.04 60)): Page background — warm dark canvas.
-- **card-bg** (oklch(0.22 0.04 60)): Card / surface — slightly lifted.
-- **text** (oklch(0.95 0.01 80)): Primary text — warm off-white.
-- **accent** (oklch(0.72 0.18 70)): Primary actions and accents — softer golden for dark.
-- **accent-text** (oklch(0.12 0.04 60)): Text on accent fills — near-black.
-- **muted** (oklch(0.55 0.03 60)): Secondary / muted content.
-- **border** (oklch(0.35 0.04 60)): Borders and dividers.
+Read the dark-mode values from the `colorsDark` block in the frontmatter and wire them inside a `@media (prefers-color-scheme: dark)` rule. Each light token has a corresponding dark counterpart with the same role; only the value shifts.
 
 ## Typography
 
@@ -63,34 +39,6 @@ Primary body font: `'Inter', sans-serif`.
 
 ## Components
 
-Apply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors in **both modes**. The accent color is the same role in both modes (golden); only its lightness shifts.
+Apply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors in **both modes**. The accent color is the same role in both modes; only its lightness/value shifts.
 
-The recommended pattern for inline-styled components:
-
-```js
-// CSS variables that flip with prefers-color-scheme — set once on :root.
-const themeStyle = `
-  :root {
-    --bg: oklch(0.97 0.01 80);
-    --card-bg: oklch(1.00 0 0);
-    --text: oklch(0.20 0.02 60);
-    --accent: oklch(0.62 0.18 65);
-    --accent-text: oklch(1.00 0 0);
-    --muted: oklch(0.50 0.02 60);
-    --border: oklch(0.88 0.01 70);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: oklch(0.18 0.04 60);
-      --card-bg: oklch(0.22 0.04 60);
-      --text: oklch(0.95 0.01 80);
-      --accent: oklch(0.72 0.18 70);
-      --accent-text: oklch(0.12 0.04 60);
-      --muted: oklch(0.55 0.03 60);
-      --border: oklch(0.35 0.04 60);
-    }
-  }
-`;
-```
-
-Then reference `var(--bg)`, `var(--text)`, etc. in inline styles or className-driven CSS.
+The recommended pattern for inline-styled components: emit a `<style>` block (or CSS-in-JS) that defines CSS custom properties for every token in `colors` on `:root`, then mirrors the `colorsDark` values inside `@media (prefers-color-scheme: dark) { :root { ... } }`. Reference the tokens as `var(--bg)`, `var(--text)`, etc. in your component styles. Drive the actual values from the frontmatter — never inline literal hex/oklch in component code.

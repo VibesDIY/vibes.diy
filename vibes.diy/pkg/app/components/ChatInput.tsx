@@ -3,6 +3,7 @@ import React, { useEffect, useCallback, useRef, forwardRef, useImperativeHandle,
 import ModelPicker, { type ModelOption } from "./ModelPicker.js";
 import { Button } from "./ui/button.js";
 import type { VibesTheme } from "@vibes.diy/prompts";
+import ColorsetPicker from "./ColorsetPicker.js";
 
 interface ChatInputProps {
   promptProcessing: boolean;
@@ -15,6 +16,17 @@ interface ChatInputProps {
   currentMsgCount?: number;
   selectedTheme?: VibesTheme | null;
   onThemeButtonClick?: () => void;
+  // Palette picker — separate from the structural theme picker because
+  // swapping the palette is a no-LLM, instant-apply action. The picker
+  // owns its draft state (the currently-shown palette + per-token edits)
+  // and emits two signals: onSelectPalette persists a slug choice;
+  // onApplyLive pushes the composed colors to the iframe without saving.
+  paletteOptions?: VibesTheme[];
+  selectedPaletteSlug?: string;
+  onSelectPalette?: (slug: string) => void;
+  onApplyLivePalette?: (colors: Record<string, string>, colorsDark?: Record<string, string>) => void;
+  onResetPalette?: () => void;
+  onRegeneratePalette?: (paletteSlug: string, paletteName: string) => void;
 }
 
 export interface ChatInputRef extends HTMLTextAreaElement {
@@ -50,6 +62,12 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       currentMsgCount = 0,
       selectedTheme,
       onThemeButtonClick,
+      paletteOptions,
+      selectedPaletteSlug,
+      onSelectPalette,
+      onApplyLivePalette,
+      onResetPalette,
+      onRegeneratePalette,
     },
     ref
   ) => {
@@ -135,6 +153,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     return (
       <div ref={containerRef} className="px-2 py-1">
         <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-1">
           {onThemeButtonClick && (
             <button
               type="button"
@@ -171,6 +190,18 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
               )}
             </button>
           )}
+          {paletteOptions && onSelectPalette && onApplyLivePalette && onResetPalette && (
+            <ColorsetPicker
+              options={paletteOptions}
+              selectedSlug={selectedPaletteSlug}
+              themeSlug={selectedTheme?.slug}
+              onSelectPalette={onSelectPalette}
+              onApplyLive={onApplyLivePalette}
+              onReset={onResetPalette}
+              onRegenerate={onRegeneratePalette}
+            />
+          )}
+          </div>
           {/* Textarea — border is the color bar, animates when processing */}
           <div
             className="[--chat-input-bg:var(--color-light-background-01,#eee)] dark:[--chat-input-bg:var(--color-dark-background-01,#222)]"

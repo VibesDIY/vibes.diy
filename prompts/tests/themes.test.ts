@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
+  composeDesignMd,
+  getColorsetCatalogNames,
   getThemeBySlug,
   getThemeCatalogNames,
   getThemeText,
   makeBaseSystemPrompt,
+  parseColorsetYaml,
   parseDesignMd,
   preAllocParsed,
   vibesThemes,
@@ -156,6 +159,98 @@ describe("makeBaseSystemPrompt theme injection", () => {
     expect(result.theme).toBeUndefined();
     expect(result.systemPrompt).not.toContain("<theme-design-md>");
     expect(result.systemPrompt).not.toContain("{{THEME_DESIGN}}");
+  });
+});
+
+describe("colorset composer", () => {
+  // Same shape as the YAML we ship in prompts/pkg/themes/colors/.
+  const colorsetYaml = [
+    "name: Sample",
+    "colors:",
+    '  primary: "#ff0000"',
+    '  background: "#fafafa"',
+    "colorsDark:",
+    '  primary: "#ff5555"',
+    '  background: "#111111"',
+  ].join("\n");
+
+  it("parseColorsetYaml extracts name + light + dark maps", () => {
+    const cs = parseColorsetYaml(colorsetYaml);
+    expect(cs.name).toBe("Sample");
+    expect(cs.colors.primary).toBe("#ff0000");
+    expect(cs.colors.background).toBe("#fafafa");
+    expect(cs.colorsDark?.primary).toBe("#ff5555");
+  });
+
+  it("composeDesignMd injects colors into frontmatter and substitutes {{token}}", () => {
+    const structural = [
+      "---",
+      "name: Structural",
+      "typography:",
+      "  body-md:",
+      "    fontFamily: Inter",
+      "---",
+      "",
+      "Primary action uses `{{primary}}` on `{{background}}`.",
+    ].join("\n");
+    const out = composeDesignMd(structural, parseColorsetYaml(colorsetYaml));
+    // Frontmatter gets colors:/colorsDark: injected right after name.
+    expect(out).toMatch(/name: Structural\ncolors:\n  primary: "#ff0000"/);
+    expect(out).toMatch(/colorsDark:\n  primary: "#ff5555"/);
+    // Typography stays in place.
+    expect(out).toMatch(/typography:\n  body-md:\n    fontFamily: Inter/);
+    // Prose placeholders are substituted with light-mode values.
+    expect(out).toContain("Primary action uses `#ff0000` on `#fafafa`.");
+  });
+
+  it("composeDesignMd leaves unknown tokens as {{token}} for visibility", () => {
+    const structural = "---\nname: T\n---\n\nUses `{{nonexistent}}`.";
+    const out = composeDesignMd(structural, parseColorsetYaml(colorsetYaml));
+    expect(out).toContain("`{{nonexistent}}`");
+  });
+
+  it("getColorsetCatalogNames mirrors the structural theme catalog", () => {
+    const themeNames = getThemeCatalogNames();
+    const colorNames = getColorsetCatalogNames();
+    expect(colorNames.size).toBe(themeNames.size);
+    for (const slug of themeNames) expect(colorNames.has(slug)).toBe(true);
+  });
+});
+
+describe("makeBaseSystemPrompt colorTheme injection", () => {
+  it("wires colorTheme through validation + into the result", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      skills: ["fireproof"],
+      theme: "atlas",
+      colorTheme: "matrix",
+      fetch: fetchAsResponse,
+    });
+    expect(result.theme).toBe("atlas");
+    expect(result.colorTheme).toBe("matrix");
+    // The <theme-design-md> wrapper must be present — the composer's actual
+    // output is covered by the unit tests in the `colorset composer` block,
+    // which don't depend on file I/O.
+    expect(result.systemPrompt).toContain("<theme-design-md>");
+  });
+
+  it("defaults colorTheme to theme when omitted", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      skills: ["fireproof"],
+      theme: "atlas",
+      fetch: fetchAsResponse,
+    });
+    expect(result.theme).toBe("atlas");
+    expect(result.colorTheme).toBe("atlas");
+  });
+
+  it("drops unknown colorTheme slugs silently and falls back to theme", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      skills: ["fireproof"],
+      theme: "atlas",
+      colorTheme: "not-real",
+      fetch: fetchAsResponse,
+    });
+    expect(result.colorTheme).toBe("atlas");
   });
 });
 
