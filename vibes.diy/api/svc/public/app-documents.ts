@@ -302,7 +302,7 @@ export function applyQueryFilter(
   if (range !== undefined) {
     const [lo, hi] = range;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return docs.filter((doc) => doc[field] !== undefined && (doc[field] as any) >= lo && (doc[field] as any) <= hi);
+    return docs.filter((doc) => doc[field] !== undefined && (doc[field] as any) >= (lo as any) && (doc[field] as any) <= (hi as any));
   }
   return docs;
 }
