@@ -25,6 +25,7 @@ import ThemePickerModal from "../../components/ThemePickerModal.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import { useIframeCurrentTokens } from "../../hooks/useIframeCurrentTokens.js";
 import { useFreshFirstCodegen } from "../../utils/freshFirstCodegen.js";
+import { shouldAcceptPrompt } from "../../utils/submit-guard.js";
 import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
@@ -407,12 +408,10 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   }, [shareModal.isOpen]);
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
-  const handleSelectOption = useCallback(
-    (option: string) => {
-      sendPrompt(option);
-    },
-    [sendPrompt]
-  );
+  // True from the moment a turn is accepted until the stream's first block
+  // flips promptState.running true (or the send settles/errors). Closes the
+  // click→first-block window where neither promptToSend nor running is truthy.
+  const [submitting, setSubmitting] = useState(false);
   const chatInput = useRef<ChatInputRef>(null);
   const [themeModalOpen, setThemeModalOpen] = useState(false);
   // Hold latest fsId in a ref so the prompt-firing effect can preserve it in
@@ -452,6 +451,22 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   });
 
   useBuildCompletionNotifications();
+
+  const submitPrompt = useCallback(
+    (text: string) => {
+      if (!shouldAcceptPrompt({ text, submitting, running: promptState.running })) return;
+      setSubmitting(true);
+      sendPrompt(text);
+    },
+    [submitting, promptState.running, sendPrompt]
+  );
+
+  const handleSelectOption = useCallback((option: string) => submitPrompt(option), [submitPrompt]);
+
+  // Primary reset: once the stream starts, `running` carries the busy signal.
+  useEffect(() => {
+    if (promptState.running) setSubmitting(false);
+  }, [promptState.running]);
 
   useEffect(() => {
     return subscribeRecentVibesChanged((change) => {
@@ -678,6 +693,12 @@ ${rootCssBlock}
               console.log(`send prompt`, sentPrompt);
               notifyRecentVibesChanged();
             }
+          })
+          .catch((err) => {
+            console.error(`PromptSend threw`, err);
+          })
+          .finally(() => {
+            setSubmitting(false);
           });
       }
       return; // Already opened or opening
@@ -1027,8 +1048,8 @@ ${rootCssBlock}
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
             <ChatInput
               ref={chatInput}
-              onSubmit={sendPrompt}
-              promptProcessing={promptState.running}
+              onSubmit={submitPrompt}
+              promptProcessing={submitting || promptState.running}
               hasCode={promptState.hasCode}
               currentMsgCount={promptState.current?.msgs.length ?? 0}
               selectedTheme={promptState.theme ?? null}
