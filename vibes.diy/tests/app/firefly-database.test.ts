@@ -154,6 +154,34 @@ describe("FireflyDatabase query", () => {
     const res = await db.query("type", { limit: 1 });
     expect(res.rows).toHaveLength(1);
   });
+
+  it("non-primitive key (array): no hint sent, client charwise comparison still filters correctly", async () => {
+    await db.put({ _id: "obj-a", nested: [1, 2] });
+    await db.put({ _id: "obj-b", nested: [3, 4] });
+    const targetKey = [1, 2];
+    mockApi._queryDocsFilterHints.length = 0;
+    const res = await db.query("nested", { key: targetKey });
+    expect(mockApi._queryDocsFilterHints[0]).toBeUndefined();
+    expect(res.rows).toHaveLength(1);
+    expect(res.rows[0].value._id).toBe("obj-a");
+  });
+
+  it("non-primitive key (object): no hint sent, client charwise comparison still filters correctly", async () => {
+    await db.put({ _id: "obj-c", tag: { color: "red" } });
+    await db.put({ _id: "obj-d", tag: { color: "blue" } });
+    const targetKey = { color: "red" };
+    mockApi._queryDocsFilterHints.length = 0;
+    const res = await db.query("tag", { key: targetKey });
+    expect(mockApi._queryDocsFilterHints[0]).toBeUndefined();
+    expect(res.rows).toHaveLength(1);
+    expect(res.rows[0].value._id).toBe("obj-c");
+  });
+
+  it("primitive key: hint IS sent to queryDocs", async () => {
+    mockApi._queryDocsFilterHints.length = 0;
+    await db.query("type", { key: "todo" });
+    expect(mockApi._queryDocsFilterHints[0]).toEqual({ field: "type", key: "todo" });
+  });
 });
 
 // ── allDocs ─────────────────────────────────────────────────────────
@@ -481,9 +509,7 @@ describe("FireflyDatabase _files (Stage B Phase 8)", () => {
       },
     });
     const doc = await db.get<{ _files?: { photo?: { file?: () => Promise<File>; url?: string } } }>("doc-with-file");
-    expect(doc._files?.photo?.url).toBe(
-      "https://app--user.example.com/_files/testdb/doc-with-file/photo?v=upl-prev"
-    );
+    expect(doc._files?.photo?.url).toBe("https://app--user.example.com/_files/testdb/doc-with-file/photo?v=upl-prev");
     expect(typeof doc._files?.photo?.file).toBe("function");
   });
 

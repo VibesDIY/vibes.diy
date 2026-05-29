@@ -11,7 +11,7 @@ export interface MockVibeApi {
   svc: { vibeApp: { appSlug: string; userSlug: string } };
   putDoc(doc: Record<string, unknown>, docId?: string): Promise<Result<unknown>>;
   getDoc(docId: string): Promise<Result<unknown>>;
-  queryDocs(): Promise<Result<unknown>>;
+  queryDocs(dbName?: string, filter?: unknown): Promise<Result<unknown>>;
   deleteDoc(docId: string): Promise<Result<unknown>>;
   subscribeDocs(dbName?: string): Promise<Result<unknown>>;
   putAsset(blob: Blob, mimeType?: string): Promise<Result<unknown>>;
@@ -24,6 +24,8 @@ export interface MockVibeApi {
   _subscribeDocsCalls: string[];
   /** Test helper: putAsset call log */
   _putAssetCalls: { size: number; type: string; mimeType?: string }[];
+  /** Test helper: filter hints passed to queryDocs (in order) */
+  _queryDocsFilterHints: unknown[];
 }
 
 let idCounter = 0;
@@ -34,6 +36,7 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
   const subscribeDocsCalls: string[] = [];
   const putAssetCalls: { size: number; type: string; mimeType?: string }[] = [];
   let nextUploadId = 0;
+  const queryDocsFilterHints: unknown[] = [];
 
   return {
     svc: { vibeApp: { appSlug, userSlug: "test-user" } },
@@ -60,7 +63,8 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
       });
     },
 
-    queryDocs: async () => {
+    queryDocs: async (_dbName?: string, filter?: unknown) => {
+      queryDocsFilterHints.push(filter);
       const allDocs = [...docs.values()].map((d) => ({ ...d, _id: d._id as string }));
       return Result.Ok({
         type: "vibes.diy.res-query-docs" as const,
@@ -110,6 +114,7 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
     _docs: docs,
     _subscribeDocsCalls: subscribeDocsCalls,
     _putAssetCalls: putAssetCalls,
+    _queryDocsFilterHints: queryDocsFilterHints,
   };
 }
 
