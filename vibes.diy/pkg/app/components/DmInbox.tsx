@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import type { DmThreadItem } from "@vibes.diy/api-types";
-import type { VibesDiyApiIface } from "@vibes.diy/api-types";
+import type { DmThreadItem, VibesDiyApiIface } from "@vibes.diy/api-types";
 
 interface DmInboxProps {
   vibeDiyApi?: VibesDiyApiIface | null;
