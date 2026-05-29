@@ -190,8 +190,8 @@ runs:
           --fromEnv META_AD_ACCOUNT_ID \
           --fromEnv DISCORD_WEBHOOK_URL \
           --fromEnv CLERK_WEBHOOK_SECRET \
-          --fromEnv POSTHOG_KEY \
-          --fromEnv POSTHOG_HOST)
+          ${POSTHOG_KEY:+--fromEnv POSTHOG_KEY} \
+          ${POSTHOG_HOST:+--fromEnv POSTHOG_HOST})
         for attempt in 1 2 3; do
           echo "$SECRETS" | pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk && break
           if [ "$attempt" -eq 3 ]; then echo "secret bulk failed after 3 attempts"; exit 1; fi
