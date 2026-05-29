@@ -17,9 +17,13 @@ export default function MessageThreadRoute() {
     vibeDiyApi.listUserSlugBindings({}).then((res) => {
       if (res.isErr()) return;
       const items = res.Ok().items;
-      if (items.length > 0) setMyUserSlug(items[0].userSlug);
+      if (items.length === 0) return;
+      // A user may have multiple slugs. Find which one appears in the URL so we
+      // correctly identify the current user even if items[0] is not the URL param.
+      const matchInUrl = items.find((i) => i.userSlug === userSlugA || i.userSlug === userSlugB);
+      setMyUserSlug(matchInUrl?.userSlug ?? items[0].userSlug);
     });
-  }, [vibeDiyApi]);
+  }, [vibeDiyApi, userSlugA, userSlugB]);
 
   const vibeRef = (location.state as { vibeRef?: { userSlug: string; appSlug: string } } | null)?.vibeRef;
 
