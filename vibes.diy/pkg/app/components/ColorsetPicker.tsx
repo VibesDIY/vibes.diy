@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Colorset, VibesTheme } from "@vibes.diy/prompts";
-import { getColorsetBySlug } from "@vibes.diy/prompts";
 
 interface ColorsetPickerProps {
   options: VibesTheme[];
@@ -136,6 +135,20 @@ export default function ColorsetPicker({
   // recompute on open + on window resize/scroll so the popover stays
   // anchored when the layout shifts.
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [lookupColorset, setLookupColorset] = useState<((slug: string) => Colorset | undefined) | null>(null);
+
+  useEffect(() => {
+    if (!open || lookupColorset || typeof window === "undefined") return;
+    let cancelled = false;
+    void import("../../../../prompts/pkg/themes/colorsets-bundle.js")
+      .then((mod) => {
+        if (!cancelled) setLookupColorset(() => mod.getColorsetBySlug);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [open, lookupColorset]);
 
   useEffect(() => {
     if (!open) setDraftSlug(selectedSlug ?? themeSlug);
@@ -202,9 +215,15 @@ export default function ColorsetPicker({
   }, [open]);
 
   const draftColorset: Colorset | undefined = useMemo(
-    () => (draftSlug ? getColorsetBySlug(draftSlug) : undefined),
-    [draftSlug]
+    () => (draftSlug && lookupColorset ? lookupColorset(draftSlug) : undefined),
+    [draftSlug, lookupColorset]
   );
+
+  useEffect(() => {
+    if (!open || !draftColorset) return;
+    const nextColors = { ...draftColorset.colors, ...edits };
+    onApplyLive(nextColors, draftColorset.colorsDark);
+  }, [draftColorset, edits, onApplyLive, open]);
 
   const resetTheme = themeSlug ? options.find((t) => t.slug === themeSlug) : undefined;
   const isOverridden = selectedSlug !== undefined && selectedSlug !== themeSlug;
@@ -213,8 +232,6 @@ export default function ColorsetPicker({
   function handleSwatchClick(slug: string) {
     setDraftSlug(slug);
     setEdits({});
-    const cs = getColorsetBySlug(slug);
-    if (cs) onApplyLive(cs.colors, cs.colorsDark);
     onSelectPalette(slug);
   }
 
@@ -226,10 +243,7 @@ export default function ColorsetPicker({
 
   function handleTokenEdit(token: string, value: string) {
     if (!draftColorset) return;
-    const nextEdits = { ...edits, [token]: value };
-    setEdits(nextEdits);
-    const nextColors = { ...draftColorset.colors, ...nextEdits };
-    onApplyLive(nextColors, draftColorset.colorsDark);
+    setEdits((current) => ({ ...current, [token]: value }));
   }
 
   function handleRegenerate() {

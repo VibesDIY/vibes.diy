@@ -273,9 +273,11 @@ export function getColorsetCatalogNames(): ReadonlySet<string> {
 // one module (`@vibes.diy/prompts/themes`).
 export { composeDesignMd, parseColorsetYaml, type Colorset } from "./colorsets.js";
 
-// Bundled colorsets — auto-generated. The frontend uses this to apply a
-// palette to the live preview without a backend roundtrip.
-export { vibesColorsets, getColorsetBySlug } from "./colorsets-bundle.js";
+// Bundled colorsets live in `./colorsets-bundle.js`, but we intentionally do
+// not re-export them from this shared module. `prompts.ts` is imported by the
+// API worker during startup; keeping the client-only colorset table off this
+// path avoids loading the large generated palette object on every worker boot.
+// Frontend code that needs palette data should import the bundle directly.
 
 /**
  * Parse a DESIGN.md file (YAML frontmatter + markdown body) into a VibesTheme.
