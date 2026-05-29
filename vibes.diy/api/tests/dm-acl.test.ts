@@ -288,8 +288,10 @@ describe("DM sender identification with multi-slug user", { timeout: 20000 }, ()
         { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return <div>app1</div>; } App();` },
       ],
     });
-    if (rAlice1.isErr() || !isResEnsureAppSlugOk(rAlice1.Ok())) throw new Error("alice ensureAppSlug 1 failed");
-    const aliceSlug1 = rAlice1.Ok().userSlug;
+    if (rAlice1.isErr()) throw new Error("alice ensureAppSlug 1 failed");
+    const aliceRes1 = rAlice1.Ok();
+    if (!isResEnsureAppSlugOk(aliceRes1)) throw new Error("alice ensureAppSlug 1 failed");
+    const aliceSlug1 = aliceRes1.userSlug;
 
     const rAlice2 = await aliceApi.ensureAppSlug({
       mode: "dev",
@@ -297,15 +299,19 @@ describe("DM sender identification with multi-slug user", { timeout: 20000 }, ()
         { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return <div>app2</div>; } App();` },
       ],
     });
-    if (rAlice2.isErr() || !isResEnsureAppSlugOk(rAlice2.Ok())) throw new Error("alice ensureAppSlug 2 failed");
-    const _aliceSlug2 = rAlice2.Ok().userSlug;
+    if (rAlice2.isErr()) throw new Error("alice ensureAppSlug 2 failed");
+    const aliceRes2 = rAlice2.Ok();
+    if (!isResEnsureAppSlugOk(aliceRes2)) throw new Error("alice ensureAppSlug 2 failed");
+    const _aliceSlug2 = aliceRes2.userSlug;
 
     const rBob = await bobApi.ensureAppSlug({
       mode: "dev",
       fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
     });
-    if (rBob.isErr() || !isResEnsureAppSlugOk(rBob.Ok())) throw new Error("bob ensureAppSlug failed");
-    const bobSlug = rBob.Ok().userSlug;
+    if (rBob.isErr()) throw new Error("bob ensureAppSlug failed");
+    const bobRes = rBob.Ok();
+    if (!isResEnsureAppSlugOk(bobRes)) throw new Error("bob ensureAppSlug failed");
+    const bobSlug = bobRes.userSlug;
 
     // Alice sends using her first slug; if sender identification is broken and
     // picks aliceSlug2 as sender, listDmThreads would report aliceSlug2 as
