@@ -77,6 +77,7 @@ export class ChatSessions implements DurableObject {
         return new Response("Invalid notification", { status: 400 });
       }
       const { evt, senderConnId } = parsed;
+      const shouldLogVerbose = this.env.ENVIRONMENT !== "prod";
       const subscriptionKey =
         evt.type === "vibes.diy.evt-request-grant"
           ? `${evt.grant.userSlug}/${evt.grant.appSlug}`
@@ -110,19 +111,21 @@ export class ChatSessions implements DurableObject {
         delivered++;
       }
       const eventDetail = evt.type === "vibes.diy.evt-request-grant" ? `op:${evt.op}` : `docId:${evt.docId.slice(0, 8)}`;
-      console.log(
-        "[ChatSessions] received notification",
-        subscriptionKey,
-        eventDetail,
-        "| shard:",
-        (this.shardId ?? "unknown").slice(0, 8),
-        "| delivered to",
-        delivered,
-        "of",
-        this.connections.size,
-        "connections (skipped sender:",
-        skippedSender + ")"
-      );
+      if (shouldLogVerbose) {
+        console.log(
+          "[ChatSessions] received notification",
+          subscriptionKey,
+          eventDetail,
+          "| shard:",
+          (this.shardId ?? "unknown").slice(0, 8),
+          "| delivered to",
+          delivered,
+          "of",
+          this.connections.size,
+          "connections (skipped sender:",
+          skippedSender + ")"
+        );
+      }
       // Return 410 Gone only if there are no live local connections at all.
       // If the only matching connection was the sender (skipped), that's a
       // legitimate fan-out — the shard still has subscribers, don't evict.

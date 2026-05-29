@@ -89,18 +89,23 @@ export class DocNotify implements DurableObject {
     const body = parsed;
 
     const subs = await this.getSubscribers();
+    const shouldLogVerbose = this.env.ENVIRONMENT !== "prod";
 
     switch (body.action) {
       case "register":
         subs.add(body.shardId);
         await this.saveSubscribers();
-        console.log("[DocNotify] register shard:", body.shardId.slice(0, 8), "| subscribers:", subs.size);
+        if (shouldLogVerbose) {
+          console.log("[DocNotify] register shard:", body.shardId.slice(0, 8), "| subscribers:", subs.size);
+        }
         return new Response("ok");
 
       case "deregister":
         subs.delete(body.shardId);
         await this.saveSubscribers();
-        console.log("[DocNotify] deregister shard:", body.shardId.slice(0, 8), "| subscribers:", subs.size);
+        if (shouldLogVerbose) {
+          console.log("[DocNotify] deregister shard:", body.shardId.slice(0, 8), "| subscribers:", subs.size);
+        }
         return new Response("ok");
 
       case "notify":
@@ -126,18 +131,21 @@ export class DocNotify implements DurableObject {
         : `${msg.evt.userSlug}/${msg.evt.appSlug}`;
     const eventDetail = msg.evt.type === "vibes.diy.evt-request-grant" ? `op:${msg.evt.op}` : `docId:${msg.evt.docId.slice(0, 8)}`;
     const targets = [...subs];
-    console.log(
-      "[DocNotify] notify",
-      eventScope,
-      eventDetail,
-      "| sender shard:",
-      msg.senderShardId.slice(0, 8),
-      "conn:",
-      msg.senderConnId.slice(0, 8),
-      "| fan-out to",
-      targets.length,
-      "shards"
-    );
+    const shouldLogVerbose = this.env.ENVIRONMENT !== "prod";
+    if (shouldLogVerbose) {
+      console.log(
+        "[DocNotify] notify",
+        eventScope,
+        eventDetail,
+        "| sender shard:",
+        msg.senderShardId.slice(0, 8),
+        "conn:",
+        msg.senderConnId.slice(0, 8),
+        "| fan-out to",
+        targets.length,
+        "shards"
+      );
+    }
 
     for (const shardId of targets) {
       promises.push(
@@ -154,14 +162,16 @@ export class DocNotify implements DurableObject {
             )
           );
           if (rFetch.isErr()) {
-            console.log("[DocNotify] fan-out FAILED shard:", shardId.slice(0, 8), "removing (fetch error)");
+            console.error("[DocNotify] fan-out FAILED shard:", shardId.slice(0, 8), "removing (fetch error)");
             stale.push(shardId);
           } else if (!rFetch.Ok().ok) {
             // 410 Gone = no live connections on that shard
-            console.log("[DocNotify] fan-out STALE shard:", shardId.slice(0, 8), "removing (status", rFetch.Ok().status + ")");
+            console.warn("[DocNotify] fan-out STALE shard:", shardId.slice(0, 8), "removing (status", rFetch.Ok().status + ")");
             stale.push(shardId);
           } else {
-            console.log("[DocNotify] fan-out OK shard:", shardId.slice(0, 8));
+            if (shouldLogVerbose) {
+              console.log("[DocNotify] fan-out OK shard:", shardId.slice(0, 8));
+            }
           }
         })()
       );
