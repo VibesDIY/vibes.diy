@@ -21,7 +21,7 @@ export const evtInviteGrantEvento: EventoHandler<unknown, MsgBase<EvtInviteGrant
     const qctx = ctx.ctx.getOrThrow<QueueCtx>("queueCtx");
     const payload = ctx.validated.payload;
     // TODO: implement invite-grant handler
-    console.log("Handling evt-invite-grant event with payload:", payload);
+    console.info("Handling evt-invite-grant event with payload:", payload);
     if (payload.op === "delete") {
       // we skip on delete
       return Result.Ok(EventoResult.Continue);

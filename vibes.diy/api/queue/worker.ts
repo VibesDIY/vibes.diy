@@ -41,7 +41,7 @@ export default {
     const evento = vibesQueueEvento();
 
     for (const message of batch.messages) {
-      console.log("message", message);
+      console.info("message", message);
       const rTrigger = await evento.trigger({ ctx, send, request: message.body });
       if (rTrigger.isErr()) {
         console.error("Failed to process queue message:", message.id, rTrigger.Err());

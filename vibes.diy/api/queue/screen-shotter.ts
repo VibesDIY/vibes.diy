@@ -9,7 +9,7 @@ import { Fetcher } from "@cloudflare/workers-types";
  * Takes a screenshot of a URL using Cloudflare Browser Rendering API
  */
 export async function takeScreenshot(event: EvtNewFsId, browserFetcher: Fetcher): Promise<Result<Uint8Array>> {
-  console.log(`Taking screenshot for ${event.vibeUrl} (fsId: ${event.fsId})`);
+  console.info(`Taking screenshot for ${event.vibeUrl} (fsId: ${event.fsId})`);
 
   const rBrowser = await exception2Result(() => puppeteer.launch(browserFetcher as never));
   if (rBrowser.isErr()) {
@@ -50,7 +50,7 @@ export async function processScreenShotEvent(qctx: QueueCtx, evt: EvtNewFsId): P
   }
   const screenshotData = new Uint8Array(rScreenshot.Ok());
 
-  console.log(`Screenshot taken for ${evt.fsId}: ${screenshotData.byteLength} bytes`);
+  console.info(`Screenshot taken for ${evt.fsId}: ${screenshotData.byteLength} bytes`);
 
   const result = await storeScreenshot(qctx, evt.fsId, screenshotData);
 
@@ -58,6 +58,6 @@ export async function processScreenShotEvent(qctx: QueueCtx, evt: EvtNewFsId): P
     return Result.Err(`Failed to store screenshot: ${result.Err()}`);
   }
   const { assetUrl } = result.Ok();
-  console.log(`Screenshot stored with assetId: ${assetUrl}`);
+  console.info(`Screenshot stored with assetId: ${assetUrl}`);
   return Result.Ok({ assetUrl });
 }

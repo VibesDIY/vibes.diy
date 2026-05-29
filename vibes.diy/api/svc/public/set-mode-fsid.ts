@@ -88,7 +88,7 @@ export const setModeFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSetM
     const ret = reqSetModeFs(msg.payload);
     if (ret instanceof type.errors) {
       if ((msg.payload as { type: string }).type === "vibes.diy.req-set-mode-fs") {
-        console.log(`set-mode-fsid`, msg.payload, ret.summary);
+        console.warn(`set-mode-fsid`, msg.payload, ret.summary);
       }
       return Result.Ok(Option.None());
     }
