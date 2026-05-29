@@ -103,6 +103,28 @@ describe("FireflyApiAdapter", () => {
     expect(queryDocs).toHaveBeenCalledWith({ appSlug: "my-app", userSlug: "alice", dbName: "todos" });
   });
 
+  it("queryDocs passes filter hint to VibesDiyApi.queryDocs when provided", async () => {
+    const queryDocs = vi.fn(async () => Result.Ok({ type: "vibes.diy.res-query-docs", status: "ok", docs: [] }));
+    const api = fakeVibesDiyApi({ queryDocs });
+    const adapter = new FireflyApiAdapter(api, "my-app");
+    const filter = { field: "status", key: "active" };
+    await adapter.queryDocs("todos", filter);
+    expect(queryDocs).toHaveBeenCalledWith({
+      appSlug: "my-app",
+      userSlug: "alice",
+      dbName: "todos",
+      filter,
+    });
+  });
+
+  it("queryDocs omits filter key when filter is undefined", async () => {
+    const queryDocs = vi.fn(async () => Result.Ok({ type: "vibes.diy.res-query-docs", status: "ok", docs: [] }));
+    const api = fakeVibesDiyApi({ queryDocs });
+    const adapter = new FireflyApiAdapter(api, "my-app");
+    await adapter.queryDocs("todos");
+    expect(queryDocs).toHaveBeenCalledWith({ appSlug: "my-app", userSlug: "alice", dbName: "todos" });
+  });
+
   it("deleteDoc routes through VibesDiyApi.deleteDoc", async () => {
     const deleteDoc = vi.fn(async () => Result.Ok({ type: "vibes.diy.res-delete-doc", status: "ok", id: "doc-1" }));
     const api = fakeVibesDiyApi({ deleteDoc });
