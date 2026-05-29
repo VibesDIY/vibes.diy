@@ -237,6 +237,7 @@ function App() {
 ## Per-Database Access Control (`acl` option)
 
 On vibes.diy, `useFireproof` accepts an optional `acl` argument that declares who can read, write, or delete documents in that database. The ACL is stored server-side and enforced on every operation — no separate API call needed.
+Only use the `acl` option when the user explicitly asks for fine-grained access control (or equivalent permission constraints).
 
 ```jsx
 import { useFireproof } from "use-vibes";
