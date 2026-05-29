@@ -65,12 +65,21 @@ export function isResGetDocNotFound(obj: unknown): obj is ResGetDocNotFound {
 
 // ── queryDocs ───────────────────────────────────────────────────────
 
+export const queryFilter = type({
+  field: "string",
+  "key?": "unknown",
+  "keys?": type("unknown").array(),
+  "range?": type(["unknown", "unknown"]),
+});
+export type QueryFilter = typeof queryFilter.infer;
+
 export const reqQueryDocs = type({
   type: "'vibes.diy.req-query-docs'",
   "auth?": dashAuthType,
   userSlug: "string",
   appSlug: "string",
   dbName: "string",
+  "filter?": queryFilter,
 });
 export type ReqQueryDocs = typeof reqQueryDocs.infer;
 export function isReqQueryDocs(obj: unknown): obj is ReqQueryDocs {
