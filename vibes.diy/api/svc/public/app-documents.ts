@@ -29,6 +29,7 @@ import {
   EvtCommentPosted,
   COMMENTS_DB_NAME,
 } from "@vibes.diy/api-types";
+import type { QueryFilter } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
@@ -285,6 +286,27 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
   ),
 };
 
+export function applyQueryFilter(
+  docs: ({ _id: string } & Record<string, unknown>)[],
+  filter: QueryFilter | undefined,
+): ({ _id: string } & Record<string, unknown>)[] {
+  if (!filter) return docs;
+  const { field, key, keys, range } = filter;
+  if (key !== undefined) {
+    return docs.filter((doc) => doc[field] === key);
+  }
+  if (keys !== undefined) {
+    const keySet = new Set(keys);
+    return docs.filter((doc) => keySet.has(doc[field]));
+  }
+  if (range !== undefined) {
+    const [lo, hi] = range;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return docs.filter((doc) => doc[field] !== undefined && (doc[field] as any) >= lo && (doc[field] as any) <= hi);
+  }
+  return docs;
+}
+
 // ── queryDocs ───────────────────────────────────────────────────────
 
 export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryDocs>, ResQueryDocs | VibesDiyError> = {
@@ -347,10 +369,11 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
         });
       }
 
+      const filteredDocs = applyQueryFilter(docs, req.filter);
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-query-docs",
         status: "ok",
-        docs,
+        docs: filteredDocs,
       } satisfies ResQueryDocs);
       return Result.Ok(EventoResult.Continue);
     }
