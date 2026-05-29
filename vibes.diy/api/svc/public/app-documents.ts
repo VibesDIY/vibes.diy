@@ -288,7 +288,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
 
 export function applyQueryFilter(
   docs: ({ _id: string } & Record<string, unknown>)[],
-  filter: QueryFilter | undefined,
+  filter: QueryFilter | undefined
 ): ({ _id: string } & Record<string, unknown>)[] {
   if (!filter) return docs;
   const { field, key, keys, range } = filter;
@@ -302,7 +302,9 @@ export function applyQueryFilter(
   if (range !== undefined) {
     const [lo, hi] = range;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return docs.filter((doc) => doc[field] !== undefined && (doc[field] as any) >= (lo as any) && (doc[field] as any) <= (hi as any));
+    return docs.filter(
+      (doc) => doc[field] !== undefined && (doc[field] as any) >= (lo as any) && (doc[field] as any) <= (hi as any)
+    );
   }
   return docs;
 }
