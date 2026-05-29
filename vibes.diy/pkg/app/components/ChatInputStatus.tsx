@@ -22,9 +22,12 @@ const btnSnakeBorder =
 
 /**
  * The streaming-driven half of the chat composer: the send button and its
- * "working…" label. Split out of ChatInput and memoized so per-block prop
- * churn (currentMsgCount/hasCode) re-renders only this small subtree, not the
- * textarea the user is typing into.
+ * "working…" label. Split out and memoized so that (a) the per-keystroke
+ * re-render of ChatInput's textarea does not also re-render the button
+ * subtree, and (b) the per-block "working…" label updates are localized
+ * here. (Note: ChatInput's shell is not memoized, so the textarea itself
+ * still reconciles on parent re-renders — that reconcile commits no DOM
+ * changes and is cheap.)
  */
 function ChatInputStatusImpl({ promptProcessing, hasCode, currentMsgCount, onSend, buttonRef }: ChatInputStatusProps) {
   const workingMessage = getWorkingMessage(hasCode, currentMsgCount);
