@@ -521,19 +521,18 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   );
 
   // Reset reverts the override: pushing empty `colors` tells the runtime to
-  // drop the injected <style>, and persisting the theme's own slug as
-  // colorTheme returns the backend to "no override" without needing a clear
-  // verb in the schema.
+  // drop the injected <style>, and sending colorTheme: null removes the
+  // active.colorTheme entry so future codegen falls back to the structural
+  // theme's default palette.
   const handlePaletteReset = useCallback(() => {
-    const themeSlug = promptState.theme?.slug;
     dispatch({ type: "setColorTheme", colorTheme: null });
     if (srvVibeSandbox) {
       srvVibeSandbox.pushColorOverride({ type: "vibe.evt.color-override", colors: {} });
     }
-    if (themeSlug && userSlug !== "preparing" && appSlug !== "session") {
-      void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, colorTheme: themeSlug });
+    if (userSlug !== "preparing" && appSlug !== "session") {
+      void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, colorTheme: null });
     }
-  }, [vibeDiyApi, userSlug, appSlug, srvVibeSandbox, promptState.theme]);
+  }, [vibeDiyApi, userSlug, appSlug, srvVibeSandbox]);
 
   // Hydrate the code editor from Apps.fileSystem when no ChatSections
   // exist for this fsId (e.g. a freshly forked vibe). The fetch is

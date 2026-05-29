@@ -152,7 +152,7 @@ export function isReqEnsureAppSettingsTheme(obj: unknown): obj is ReqEnsureAppSe
 }
 
 export const reqEnsureAppSettingsColorTheme = type({
-  colorTheme: "string",
+  colorTheme: "string | null",
 }).and(reqEnsureAppSettingsBase);
 
 export type ReqEnsureAppSettingsColorTheme = typeof reqEnsureAppSettingsColorTheme.infer;
