@@ -251,15 +251,21 @@ export class FireflyDatabase {
       limit?: number;
     } = {}
   ): Promise<QueryResponse<T>> {
-    const hint: QueryFilter | undefined =
-      typeof mapFn === "string" && (opts.key !== undefined || opts.keys !== undefined || opts.range !== undefined)
-        ? {
-            field: mapFn,
-            ...(opts.key !== undefined ? { key: opts.key } : {}),
-            ...(opts.keys !== undefined ? { keys: opts.keys } : {}),
-            ...(opts.range !== undefined ? { range: opts.range as [unknown, unknown] } : {}),
-          }
-        : undefined;
+    const isPrimitive = (v: unknown): v is string | number | boolean | null =>
+      v === null || typeof v === "string" || typeof v === "number" || typeof v === "boolean";
+    let hint: QueryFilter | undefined;
+    if (typeof mapFn === "string") {
+      const keyHint = opts.key !== undefined && isPrimitive(opts.key) ? { key: opts.key } : {};
+      const keysHint =
+        opts.keys !== undefined && opts.keys.every(isPrimitive) ? { keys: opts.keys as (string | number | boolean | null)[] } : {};
+      const rangeHint =
+        opts.range !== undefined && isPrimitive(opts.range[0]) && isPrimitive(opts.range[1])
+          ? { range: opts.range as [unknown, unknown] }
+          : {};
+      if (keyHint.key !== undefined || keysHint.keys !== undefined || rangeHint.range !== undefined) {
+        hint = { field: mapFn, ...keyHint, ...keysHint, ...rangeHint };
+      }
+    }
 
     const rRes = await this.vibeApi.queryDocs(this.name, hint);
     if (rRes.isErr()) {
