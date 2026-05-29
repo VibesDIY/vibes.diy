@@ -46,6 +46,7 @@ import {
   isResSetDbAcl,
   type ResSetDbAcl,
   type DbAcl,
+  type QueryFilter,
 } from "@vibes.diy/vibe-types";
 import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, OnFuncReturn, Result, timeouted } from "@adviser/cement";
 import { type } from "arktype";
@@ -267,12 +268,13 @@ export class VibeSandboxApi {
     );
   }
 
-  queryDocs(dbName = "default"): Promise<Result<ResQueryDocs>> {
+  queryDocs(dbName = "default", filter?: QueryFilter): Promise<Result<ResQueryDocs>> {
     return this.request<ReqQueryDocs, ResQueryDocs>(
       {
         type: "vibes.diy.req-query-docs",
         ...this.svc.vibeApp,
         dbName,
+        ...(filter !== undefined ? { filter } : {}),
       },
       { wait: isResQueryDocs, timeout: 10000 }
     );

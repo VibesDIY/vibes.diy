@@ -8,6 +8,7 @@ import {
   type ResDeleteDoc,
   type ResSubscribeDocs,
   type VibesDiyError,
+  type QueryFilter,
 } from "@vibes.diy/api-types";
 import { type DbAcl, type ResSetDbAcl } from "@vibes.diy/vibe-types";
 import type { VibesDiyApi } from "./index.js";
@@ -87,12 +88,13 @@ export class FireflyApiAdapter {
     });
   }
 
-  async queryDocs(dbName = "default"): Promise<Result<ResQueryDocs, VibesDiyError>> {
+  async queryDocs(dbName = "default", filter?: QueryFilter): Promise<Result<ResQueryDocs, VibesDiyError>> {
     const userSlug = await this.resolveUserSlug();
     return this.api.queryDocs({
       appSlug: this.svc.vibeApp.appSlug,
       userSlug,
       dbName,
+      ...(filter !== undefined ? { filter } : {}),
     });
   }
 
