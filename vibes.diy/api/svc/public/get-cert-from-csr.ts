@@ -45,7 +45,7 @@ export const getCertFromCsrEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqC
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       const res = await getCertFromCsr(vctx, req);
-      console.log("getCertFromCsr result:", res);
+      console.info("getCertFromCsr result:", res);
       if (res.isErr()) {
         return Result.Err(res);
       }

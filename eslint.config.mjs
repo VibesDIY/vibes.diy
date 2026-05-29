@@ -86,6 +86,22 @@ const opts = tseslint.config(
     rules: {
       "no-restricted-globals": ["error"], //, "URL", "TextDecoder", "TextEncoder"],
     },
+  },
+  // Guard rail: ban bare console.log in shipping paths — use console.info,
+  // console.warn, or console.error instead. Keeps debug noise out of prod.
+  {
+    files: ["vibes.diy/api/**/*.{ts,tsx}", "vibes.diy/vibe/runtime/**/*.{ts,tsx}", "call-ai/v2/**/*.ts"],
+    ignores: [
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/*.test-*.ts",
+      "**/tests/**",
+      "vibes.diy/api/svc/usage-report/**",
+      "call-ai/v2/cli.ts",
+    ],
+    rules: {
+      "no-console": ["error", { allow: ["error", "warn", "info"] }],
+    },
   }
 );
 

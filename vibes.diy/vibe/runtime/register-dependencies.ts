@@ -380,7 +380,7 @@ export class VibeSandboxApi {
   fetchCloudToken(req: Omit<ReqFetchCloudToken, "type" | "tid">): Promise<Result<ResFetchCloudToken>> {
     const key = `vibe-${req.data.dbName}-${req.data.userSlug}-${req.data.appSlug}`;
     return this.tokenCache.get(key).once(async (opts) => {
-      console.log("Fetching cloud token with key", key);
+      console.info("Fetching cloud token with key", key);
       const rRes = await this.request<ReqFetchCloudToken, ResFetchCloudToken>(
         {
           type: "vibe.req.fetchCloudToken",

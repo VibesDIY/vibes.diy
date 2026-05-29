@@ -103,7 +103,7 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
     notifyDocChanged: async (evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string) => {
       const key = `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
       if (shouldLogDocNotify) {
-        console.log("[docNotify] notifyDocChanged key:", key, "shard:", dn.shardId.slice(0, 8), "conn:", senderConnId.slice(0, 8));
+        console.info("[docNotify] notifyDocChanged key:", key, "shard:", dn.shardId.slice(0, 8), "conn:", senderConnId.slice(0, 8));
       }
       await fetchDocNotify(key, {
         action: "notify",
@@ -114,20 +114,20 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
     },
     registerDocSubscription: async (subscriptionKey: string) => {
       if (shouldLogDocNotify) {
-        console.log("[docNotify] register key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
+        console.info("[docNotify] register key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
       }
       await fetchDocNotify(subscriptionKey, { action: "register", shardId: dn.shardId });
     },
     deregisterDocSubscription: async (subscriptionKey: string) => {
       if (shouldLogDocNotify) {
-        console.log("[docNotify] deregister key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
+        console.info("[docNotify] deregister key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
       }
       await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
     },
     notifyRequestGrantChanged: async (evt: EvtRequestGrant, senderConnId: string) => {
       const key = `${evt.grant.userSlug}/${evt.grant.appSlug}`;
       if (shouldLogDocNotify) {
-        console.log(
+        console.info(
           "[docNotify] notifyRequestGrantChanged key:",
           key,
           "shard:",
@@ -145,13 +145,13 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
     },
     registerRequestGrantSubscription: async (subscriptionKey: string) => {
       if (shouldLogDocNotify) {
-        console.log("[docNotify] register request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
+        console.info("[docNotify] register request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
       }
       await fetchDocNotify(subscriptionKey, { action: "register", shardId: dn.shardId });
     },
     deregisterRequestGrantSubscription: async (subscriptionKey: string) => {
       if (shouldLogDocNotify) {
-        console.log("[docNotify] deregister request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
+        console.info("[docNotify] deregister request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
       }
       await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
     },
@@ -266,7 +266,7 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
       const rReqUri = URI.fromResult(request.url);
       if (rRefUri.isErr() || rReqUri.isErr()) {
         if (shouldLog) {
-          console.log("[referer] malformed", referer, request.method, request.url);
+          console.info("[referer] malformed", referer, request.method, request.url);
         }
       } else {
         // cement URI.fromResult() returns Ok for non-standard protocols (e.g. android-app:,
@@ -279,7 +279,7 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
           const { ref: refHostname, req: reqHostname } = rHostnames.Ok();
           if (!isInternalReferer(refHostname) && refHostname !== reqHostname && !/\.[a-z]{1,4}$/i.test(reqUri.pathname)) {
             if (shouldLog) {
-              console.log("[referer]", refUri.toString(), request.method, reqUri.pathname);
+              console.info("[referer]", refUri.toString(), request.method, reqUri.pathname);
             }
           }
         }
@@ -297,7 +297,7 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
   const wsSendProvider = new WSSendProvider(server as unknown as WebSocket);
   ws.connections.add(wsSendProvider);
   if (shouldLog) {
-    console.log("New WebSocket connection accepted", ws.connections.size);
+    console.info("New WebSocket connection accepted", ws.connections.size);
   }
 
   const wsEvento = vibesMsgEvento();
@@ -338,7 +338,7 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
   // self-clean via failed fan-out in DocNotify (which removes them from persistent storage).
   server.addEventListener("close", (event) => {
     if (shouldLog) {
-      console.log("WebSocket connection closed", ws.connections.size - 1);
+      console.info("WebSocket connection closed", ws.connections.size - 1);
     }
     wsEvento.trigger({ ctx: appCtx, request: { type: "CloseEvent", event }, send: wsSendProvider });
     ws.connections.delete(wsSendProvider);

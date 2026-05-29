@@ -233,7 +233,7 @@ export type ResReportCampaignHealth = typeof resReportCampaignHealth.infer;
 export function isResReportCampaignHealth(obj: unknown): obj is ResReportCampaignHealth {
   const result = resReportCampaignHealth(obj);
   if (result instanceof type.errors) {
-    console.log("[isResReportCampaignHealth] validation FAILED:", result.summary);
+    console.warn("[isResReportCampaignHealth] validation FAILED:", result.summary);
     return false;
   }
   return true;

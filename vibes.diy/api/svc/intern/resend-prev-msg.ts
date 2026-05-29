@@ -45,7 +45,7 @@ export async function resendChatSectionsPrevMsg(args: ResendChatSectionsPrevMsgA
     }
     // Might be removed in future
     if (toSplice.length > 0) {
-      console.log(
+      console.info(
         `sql-resend`,
         sections.reduce((acc, s) => acc + (s.blocks as PromptAndBlockMsgs[]).length, 0),
         blocks.length,

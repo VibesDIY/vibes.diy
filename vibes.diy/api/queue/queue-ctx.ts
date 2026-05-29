@@ -81,7 +81,7 @@ export class QueueCtx {
   async postToDiscord(body: DiscordWebhookBody): Promise<Result<void>> {
     const webhookUrl = this.params.vibes.env.DISCORD_WEBHOOK_URL;
     if (webhookUrl === undefined) {
-      console.log("DISCORD_WEBHOOK_URL not set — skipping Discord notification");
+      console.warn("DISCORD_WEBHOOK_URL not set — skipping Discord notification");
       return Result.Ok();
     }
     const rRes = await exception2Result(() =>

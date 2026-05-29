@@ -194,7 +194,7 @@ export default {
       missingVibeSkipped += missingVibeRows.length - mi;
     }
 
-    console.log(
+    console.info(
       `[logpush-etl] processed ${allKeys.length} objects — referer: inserted ${refererInserted}, skipped ${refererSkipped} — missing-vibe: inserted ${missingVibeInserted}, skipped ${missingVibeSkipped} (already present)`
     );
   },
