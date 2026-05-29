@@ -1,4 +1,4 @@
-import { FPCloudClaim, dbAcl, type DbAcl } from "@vibes.diy/api-types";
+import { FPCloudClaim, dbAcl, queryFilter, type DbAcl } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
 export * from "./img-gen.js";
@@ -353,6 +353,7 @@ export {
   type ResSubscribeDocs,
   type ResListDbNames,
   type EvtDocChanged,
+  type QueryFilter,
   isResPutDoc,
   isResGetDoc,
   isResGetDocNotFound,
@@ -400,6 +401,7 @@ export const ReqQueryDocs = type({
   appSlug: "string",
   userSlug: "string",
   dbName: "string",
+  "filter?": queryFilter,
 }).and(Base);
 
 export type ReqQueryDocs = typeof ReqQueryDocs.infer;
