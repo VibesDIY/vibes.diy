@@ -24,7 +24,6 @@ export const cidAsset: EventoHandler<Request, { url: string; mime: string }, unk
     if (req) {
       const url = URI.from(req.url);
       if ((req.method === "GET" || req.method === "HEAD") && url.pathname.startsWith("/assets/cid") && url.getParam("url")) {
-        console.log("Validating request for cid-asset with URL:", url.toString());
         return Promise.resolve(
           Result.Ok(
             Option.Some({
@@ -40,7 +39,6 @@ export const cidAsset: EventoHandler<Request, { url: string; mime: string }, unk
   },
   handle: async (ctx: HandleTriggerCtx<Request, { url: string; mime: string }, unknown>): Promise<Result<EventoResultType>> => {
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    console.log("asset/cid triggered with URL:", ctx.validated.url);
     const rAsset = await vctx.storage.fetch(ctx.validated.url);
     switch (true) {
       case isFetchErrResult(rAsset):
