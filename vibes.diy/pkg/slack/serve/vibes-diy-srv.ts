@@ -1,7 +1,7 @@
 import { loadAndRenderTSX, VibesDiyServCtx, buildMountedApp } from "./render.js";
 // import { contentType } from "mime-types";
 import mime from "mime";
-import { exception2Result, LRUMap, Result, uint8array2stream } from "@adviser/cement";
+import { exception2Result, LRUMap, Result, URI, uint8array2stream } from "@adviser/cement";
 import { type } from "arktype";
 
 function respInit(status: number, contentType = "application/json"): ResponseInit {
@@ -93,7 +93,7 @@ async function handleVibeRequest(req: Request, ctx: VibesDiyServCtx): Promise<Re
 
 export function vibesDiyHandler(ctx: () => Promise<VibesDiyServCtx>): (req: Request) => Promise<Response | null> {
   return async (req: Request) => {
-    const url = new URL(req.url);
+    const url = URI.from(req.url);
     const requestedPath = url.pathname;
 
     if (req.method === "OPTIONS") {

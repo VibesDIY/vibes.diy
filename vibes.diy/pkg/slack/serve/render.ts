@@ -2,7 +2,7 @@ import { renderToString } from "react-dom/server";
 import React from "react";
 import { build } from "esbuild-wasm";
 import type { MountVibeParams } from "@vibes.diy/use-vibes-base";
-import { pathOps } from "@adviser/cement";
+import { pathOps, stream2string, uint8array2stream } from "@adviser/cement";
 
 export interface VibesDiyServCtx {
   readonly versions: { readonly FP: string };
@@ -69,7 +69,7 @@ export async function buildMountedApp(ctx: MountVibeParams, code: string, wrappe
       },
     ],
   });
-  const transformed = new TextDecoder().decode(result.outputFiles[0].contents);
+  const transformed = await stream2string(uint8array2stream(result.outputFiles[0].contents));
   return transformed;
 }
 
@@ -97,7 +97,7 @@ export async function loadAndRenderTSX(filePath: string, ctx: VibesDiyServCtx): 
       platform: "neutral",
     });
 
-    const transformed = new TextDecoder().decode(result.outputFiles[0].contents);
+    const transformed = await stream2string(uint8array2stream(result.outputFiles[0].contents));
     return await renderScript(transformed, ctx);
   } catch (error) {
     throw new Error(`Failed to load and render TSX: ${(error as Error).message}`);
@@ -136,7 +136,7 @@ export async function loadAndRenderJSX(code: string): Promise<string> {
       platform: "browser",
     });
 
-    const transformed = new TextDecoder().decode(result.outputFiles[0].contents);
+    const transformed = await stream2string(uint8array2stream(result.outputFiles[0].contents));
 
     return transformed; // Return transformed JS, not rendered HTML
   } catch (error) {
