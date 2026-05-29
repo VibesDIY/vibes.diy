@@ -23,6 +23,7 @@ import {
   type ResSubscribeDocs,
   type ResSetDbAcl,
   type DbAcl,
+  type QueryFilter,
 } from "@vibes.diy/vibe-types";
 import { decorateFiles } from "./firefly-files-read.js";
 import { uploadFiles, type AssetUploader } from "./firefly-files-write.js";
@@ -38,7 +39,7 @@ export interface FireflyTransport {
   readonly svc: { readonly vibeApp: VibeApp };
   putDoc(doc: Record<string, unknown>, docId?: string, dbName?: string): Promise<Result<ResPutDoc>>;
   getDoc(docId: string, dbName?: string): Promise<Result<ResGetDoc | ResGetDocNotFound>>;
-  queryDocs(dbName?: string): Promise<Result<ResQueryDocs>>;
+  queryDocs(dbName?: string, filter?: QueryFilter): Promise<Result<ResQueryDocs>>;
   deleteDoc(docId: string, dbName?: string): Promise<Result<ResDeleteDoc>>;
   subscribeDocs(dbName?: string): Promise<Result<ResSubscribeDocs>>;
   setDbAcl(dbName: string, acl: DbAcl): Promise<Result<ResSetDbAcl>>;
@@ -250,7 +251,17 @@ export class FireflyDatabase {
       limit?: number;
     } = {}
   ): Promise<QueryResponse<T>> {
-    const rRes = await this.vibeApi.queryDocs(this.name);
+    const hint: QueryFilter | undefined =
+      typeof mapFn === "string" && (opts.key !== undefined || opts.keys !== undefined || opts.range !== undefined)
+        ? {
+            field: mapFn,
+            ...(opts.key !== undefined ? { key: opts.key } : {}),
+            ...(opts.keys !== undefined ? { keys: opts.keys } : {}),
+            ...(opts.range !== undefined ? { range: opts.range as [unknown, unknown] } : {}),
+          }
+        : undefined;
+
+    const rRes = await this.vibeApi.queryDocs(this.name, hint);
     if (rRes.isErr()) {
       throw new Error(`Failed to query documents: ${rRes.Err()}`);
     }
