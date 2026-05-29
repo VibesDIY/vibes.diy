@@ -46,7 +46,8 @@ describe("directChannelParticipants", () => {
     const slug = directChannelUserSlug("alice", "bob");
     const parts = directChannelParticipants(slug);
     expect(parts).not.toBeNull();
-    expect(parts!.sort()).toEqual(["alice", "bob"]);
+    if (parts === null) throw new Error("Expected participants for a valid direct-channel slug");
+    expect(parts.sort()).toEqual(["alice", "bob"]);
   });
 
   it("returns null for non-channel slugs", () => {
@@ -64,6 +65,7 @@ describe("directChannelParticipants", () => {
     const slug = directChannelUserSlug("garden-gnome", "jchris");
     const parts = directChannelParticipants(slug);
     expect(parts).not.toBeNull();
-    expect(parts!.sort()).toEqual(["garden-gnome", "jchris"]);
+    if (parts === null) throw new Error("Expected participants for a valid direct-channel slug");
+    expect(parts.sort()).toEqual(["garden-gnome", "jchris"]);
   });
 });

@@ -298,7 +298,7 @@ describe("DM sender identification with multi-slug user", { timeout: 20000 }, ()
       ],
     });
     if (rAlice2.isErr() || !isResEnsureAppSlugOk(rAlice2.Ok())) throw new Error("alice ensureAppSlug 2 failed");
-    const aliceSlug2 = rAlice2.Ok().userSlug;
+    const _aliceSlug2 = rAlice2.Ok().userSlug;
 
     const rBob = await bobApi.ensureAppSlug({
       mode: "dev",
@@ -335,7 +335,8 @@ describe("DM sender identification with multi-slug user", { timeout: 20000 }, ()
     // The thread for the channel with bob must show bob, not aliceSlug2
     const threadWithBob = aliceItems.find((t) => t.channelUserSlug === channel);
     expect(threadWithBob).toBeDefined();
-    expect(threadWithBob!.otherUserSlug).toBe(bobSlug);
+    if (threadWithBob === undefined) throw new Error("Expected Alice to have a DM thread with Bob");
+    expect(threadWithBob.otherUserSlug).toBe(bobSlug);
   });
 });
 
