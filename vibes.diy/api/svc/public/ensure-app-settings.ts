@@ -401,17 +401,18 @@ export async function ensureAppSettings(
       );
       break;
     case isReqEnsureAppSettingsColorTheme(req):
-      [res.settings, res.error] = await sqlUpsert(
-        vctx,
-        res,
-        settings,
-        isActiveColorTheme,
-        () =>
-          ({
-            type: "active.colorTheme",
-            colorTheme: req.colorTheme,
-          }) satisfies ActiveColorTheme
-      );
+      if (req.colorTheme === null) {
+        [res.settings, res.error] = await sqlRemove(vctx, res, settings, isActiveColorTheme);
+      } else {
+        const colorTheme = req.colorTheme;
+        [res.settings, res.error] = await sqlUpsert(
+          vctx,
+          res,
+          settings,
+          isActiveColorTheme,
+          () => ({ type: "active.colorTheme", colorTheme }) satisfies ActiveColorTheme
+        );
+      }
       break;
     case isReqEnsureAppSettingsApp(req):
       [res.settings, res.error] = await sqlUpsert(
