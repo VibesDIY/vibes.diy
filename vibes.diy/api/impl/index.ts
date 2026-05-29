@@ -422,29 +422,11 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       validate: async (trigger: ValidateTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
         const msg = msgBase(trigger.enRequest);
         if (msg instanceof type.errors) {
-          console.log(
-            "[request:validate] msgBase failed:",
-            msg.summary,
-            "enRequest=",
-            JSON.stringify(trigger.enRequest)?.slice(0, 120)
-          );
           return Result.Ok(Option.None());
         }
         const tidMatch = msg.tid === tid;
         const resMatch = msgParam.resMatch(msg.payload);
         const isErr = isResError(msg.payload);
-        console.log(
-          "[request:validate] tid match=",
-          tidMatch,
-          "resMatch=",
-          resMatch,
-          "isResError=",
-          isErr,
-          "payload.type=",
-          (msg.payload as Record<string, unknown>)?.type,
-          "tid=",
-          msg.tid
-        );
         if (tidMatch && (resMatch || isErr)) {
           return Result.Ok(Option.Some(trigger.enRequest));
         }
@@ -466,10 +448,6 @@ export class VibesDiyApi implements VibesDiyApiIface<{
         return Result.Ok(Option.None());
       },
       handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
-        console.log(
-          "[request:handle] resolving waitForResponse, payload.type=",
-          (trigger.validated.payload as Record<string, unknown>)?.type
-        );
         if (isResError(trigger.validated.payload)) {
           const e = trigger.validated.payload;
           waitForResponse.resolve(Result.Err<S, VibesDiyError>(mkResError(e.error.message, e.error.code)));
@@ -495,11 +473,9 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     };
     resetIdleTimer();
 
-    console.log("[request] starting, tid=", tid);
     const unreg = conn.onMessage((event) => {
       // Any incoming message — matching or not — keeps the request alive.
       resetIdleTimer();
-      console.log("[request:onMessage] firing evento.trigger, tid=", tid);
       const triggerPromise = evento.trigger({
         request: event,
         send: (async (_ctx: TriggerCtx<W3CWebSocketEvent, unknown, unknown>, data: unknown) => {
