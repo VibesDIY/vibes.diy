@@ -36,18 +36,19 @@ import {
   EvtCommentPosted,
   COMMENTS_DB_NAME,
   EvtDmReceived,
+  type QueryFilter,
+  isDirectChannel,
+  directChannelParticipants,
 } from "@vibes.diy/api-types";
-import type { QueryFilter } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
-import { eq, and, sql, inArray, desc } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess, canRead, isPublicReadable, DocAccessLevel } from "./access-helpers.js";
 import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
-import { isDirectChannel, directChannelParticipants } from "@vibes.diy/api-types";
 import { mintFilesUrls, isFileMeta } from "./files-url-mint.js";
 
 // Read-side gate: if the ACL pins `read`, honor it exactly; otherwise fall
