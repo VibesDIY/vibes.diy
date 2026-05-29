@@ -9,4 +9,5 @@ export { useImgGen } from "./hooks/img-gen/index.js";
 export { ControlsBar } from "./components/ControlsBar.js";
 export { PromptBar } from "./components/PromptBar.js";
 export { defaultClasses } from "./utils/style-utils.js";
+export { isDebug, logDebug } from "./utils/debug.js";
 export type { ImageDocument, PartialImageDocument } from "@vibes.diy/vibe-types";

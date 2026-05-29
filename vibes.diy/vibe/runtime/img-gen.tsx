@@ -3,6 +3,8 @@ import { VibeSandboxApi } from "./register-dependencies.js";
 import { ImgGenFile, ImgGenInputImage, isResErrorImgGen } from "@vibes.diy/vibe-types";
 import { resizeImageToBase64 } from "./resize-image.js";
 
+import { logDebug } from "@vibes.diy/base";
+
 // Re-export ImgGen component from @vibes.diy/base so sandbox apps can
 // `import { ImgGen } from "use-vibes"`.
 export { ImgGen, useImgGen } from "@vibes.diy/base";
@@ -16,15 +18,13 @@ export function registerImgGen(vibeApi: VibeSandboxApi): void {
       inputImageBase64 = await resizeImageToBase64(inputImage);
     }
     const startedAt = Date.now();
-    // eslint-disable-next-line no-console
-    console.log("[img-gen] request", {
+    logDebug("[img-gen] request", {
       model: model ?? "(default)",
       hasInputImage: !!inputImage,
       prompt,
     });
     const log = (status: string, extra: Record<string, unknown>) => {
-      // eslint-disable-next-line no-console
-      console.log("[img-gen] " + status, {
+      logDebug("[img-gen] " + status, {
         model: model ?? "(default)",
         durationMs: Date.now() - startedAt,
         ...extra,
@@ -45,7 +45,7 @@ export function registerImgGen(vibeApi: VibeSandboxApi): void {
       log("error", { message: "Image service returned no files" });
       return Result.Err(new Error("Image service returned no files"));
     }
-    log("complete", { fileCount: res.files.length, files: res.files });
+    log("complete", { fileCount: res.files.length });
     return Result.Ok(res.files);
   };
 }
