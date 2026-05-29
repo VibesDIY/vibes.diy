@@ -246,6 +246,99 @@ describe("listDmThreads", { timeout: 20000 }, () => {
   });
 });
 
+describe("DM sender identification with multi-slug user", { timeout: 20000 }, () => {
+  // Regression test for: user with multiple slugs sends a DM — server must
+  // identify the sender as the slug that appears in the channel, not a
+  // different slug belonging to the same userId.
+  it("listDmThreads shows the correct otherUserSlug when sender has multiple slugs", async () => {
+    const sthis = ensureSuperThis();
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+
+    const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 4001 });
+    const bobUser = await createTestUser({ sthis, deviceCA, seqUserId: 4002 });
+
+    const sharedApiUrl = uniqueApiUrl();
+    const wsPair = TestWSPair.create();
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+
+    const aliceApi = new VibesDiyApi({
+      apiUrl: sharedApiUrl,
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await aliceUser.getDashBoardToken()),
+    });
+
+    const bobApi = new VibesDiyApi({
+      apiUrl: sharedApiUrl,
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await bobUser.getDashBoardToken()),
+    });
+
+    // Alice gets two slugs by creating two separate apps
+    const rAlice1 = await aliceApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return <div>app1</div>; } App();` },
+      ],
+    });
+    if (rAlice1.isErr() || !isResEnsureAppSlugOk(rAlice1.Ok())) throw new Error("alice ensureAppSlug 1 failed");
+    const aliceSlug1 = rAlice1.Ok().userSlug;
+
+    const rAlice2 = await aliceApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return <div>app2</div>; } App();` },
+      ],
+    });
+    if (rAlice2.isErr() || !isResEnsureAppSlugOk(rAlice2.Ok())) throw new Error("alice ensureAppSlug 2 failed");
+    const aliceSlug2 = rAlice2.Ok().userSlug;
+
+    const rBob = await bobApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+    });
+    if (rBob.isErr() || !isResEnsureAppSlugOk(rBob.Ok())) throw new Error("bob ensureAppSlug failed");
+    const bobSlug = rBob.Ok().userSlug;
+
+    // Alice sends using her first slug; if sender identification is broken and
+    // picks aliceSlug2 as sender, listDmThreads would report aliceSlug2 as
+    // otherUserSlug instead of bobSlug.
+    const channel = directChannelUserSlug(aliceSlug1, bobSlug);
+    const putResult = await aliceApi.putDoc({
+      userSlug: channel,
+      appSlug: "dm",
+      dbName: "messages",
+      doc: { body: "hey bob", authorUserSlug: aliceSlug1, createdAt: new Date().toISOString() },
+    });
+    expect(putResult.isErr()).toBe(false);
+
+    // Bob's thread should show aliceSlug1 as the other participant
+    const bobThreads = await bobApi.listDmThreads({});
+    expect(bobThreads.isErr()).toBe(false);
+    const bobItems = bobThreads.Ok().items;
+    expect(bobItems.length).toBeGreaterThan(0);
+    expect(bobItems[0].otherUserSlug).toBe(aliceSlug1);
+    expect(bobItems[0].channelUserSlug).toBe(channel);
+
+    // Alice's thread (using slug1) should show bob as the other participant
+    const aliceThreads = await aliceApi.listDmThreads({});
+    expect(aliceThreads.isErr()).toBe(false);
+    const aliceItems = aliceThreads.Ok().items;
+    expect(aliceItems.length).toBeGreaterThan(0);
+    // The thread for the channel with bob must show bob, not aliceSlug2
+    const threadWithBob = aliceItems.find((t) => t.channelUserSlug === channel);
+    expect(threadWithBob).toBeDefined();
+    expect(threadWithBob!.otherUserSlug).toBe(bobSlug);
+  });
+});
+
 describe("markDmRead", { timeout: 20000 }, () => {
   const sthis = ensureSuperThis();
   let aliceApi: VibesDiyApi;
