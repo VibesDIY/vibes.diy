@@ -286,6 +286,22 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
   ),
 };
 
+function isInInclusiveRange(value: unknown, lo: unknown, hi: unknown): boolean {
+  if (typeof value === "string" && typeof lo === "string" && typeof hi === "string") {
+    return value >= lo && value <= hi;
+  }
+  if (typeof value === "number" && typeof lo === "number" && typeof hi === "number") {
+    return value >= lo && value <= hi;
+  }
+  if (typeof value === "bigint" && typeof lo === "bigint" && typeof hi === "bigint") {
+    return value >= lo && value <= hi;
+  }
+  if (typeof value === "boolean" && typeof lo === "boolean" && typeof hi === "boolean") {
+    return Number(value) >= Number(lo) && Number(value) <= Number(hi);
+  }
+  return false;
+}
+
 export function applyQueryFilter(
   docs: ({ _id: string } & Record<string, unknown>)[],
   filter: QueryFilter | undefined
@@ -301,10 +317,7 @@ export function applyQueryFilter(
   }
   if (range !== undefined) {
     const [lo, hi] = range;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return docs.filter(
-      (doc) => doc[field] !== undefined && (doc[field] as any) >= (lo as any) && (doc[field] as any) <= (hi as any)
-    );
+    return docs.filter((doc) => isInInclusiveRange(doc[field], lo, hi));
   }
   return docs;
 }
