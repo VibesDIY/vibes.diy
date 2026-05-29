@@ -20,13 +20,6 @@ call-ai/v2/line-stream.test.ts:185:      const encoder = new TextEncoder();
 call-ai/v2/line-stream.ts:133:  const decoder = new TextDecoder();
 call-ai/v2/line-stream.ts:81:  parser.totalBytes += new TextEncoder().encode(content).length;
 vibes.diy/pkg/slack/scripts/bundle-fs.ts:281:  return new TextDecoder().decode(decompressed);
-vibes.diy/pkg/slack/serve/render.ts:100:    const transformed = new TextDecoder().decode(result.outputFiles[0].contents);
-vibes.diy/pkg/slack/serve/render.ts:139:    const transformed = new TextDecoder().decode(result.outputFiles[0].contents);
-vibes.diy/pkg/slack/serve/render.ts:72:  const transformed = new TextDecoder().decode(result.outputFiles[0].contents);
-vibes.diy/pkg/slack/serve/vibes-diy-srv.ts:96:    const url = new URL(req.url);
-vibes.diy/pkg/slack/worker-sucrase.ts:55:      const cacheUrl = new URL(request.url);
-vibes.diy/pkg/slack/worker-sucrase.ts:5:  const encoder = new TextEncoder();
-# CF Worker module: no SuperThis context available; new TextEncoder() is correct here
 vibes.diy/pkg/workers/clerk-webhook.ts:3:const enc = new TextEncoder();
 vibes.diy/pkg/test/url-origin-normalization.test.ts:20:    expect(new URL("http://example.com:80/path").origin).toBe("http://example.com");
 vibes.diy/pkg/test/url-origin-normalization.test.ts:24:    expect(new URL("https://example.com:443/path").origin).toBe("https://example.com");

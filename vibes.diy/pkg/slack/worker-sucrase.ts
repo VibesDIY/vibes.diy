@@ -1,9 +1,9 @@
 import { transformString, extractImports } from "./transform-sucrase.js";
+import { BuildURI, to_uint8 } from "@adviser/cement";
 
 // Helper function to create a hash of the code for cache key
 async function hashCode(code: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(code);
+  const data = to_uint8(code);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -52,9 +52,8 @@ export default {
 
       // Create cache key based on code content
       const codeHash = await hashCode(code);
-      const cacheUrl = new URL(request.url);
-      cacheUrl.pathname = `/transform/${codeHash}`;
-      const cacheKey = new Request(cacheUrl.toString());
+      const cacheUrl = BuildURI.from(request.url).pathname(`/transform/${codeHash}`).toString();
+      const cacheKey = new Request(cacheUrl);
 
       const cache = await caches.open("v1");
       let response = await cache.match(cacheKey);
