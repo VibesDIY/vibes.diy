@@ -454,11 +454,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   const submitPrompt = useCallback(
     (text: string) => {
+      if (inConstruction) return;
       if (!shouldAcceptPrompt({ text, submitting, running: promptState.running })) return;
       setSubmitting(true);
       sendPrompt(text);
     },
-    [submitting, promptState.running, sendPrompt]
+    [inConstruction, submitting, promptState.running, sendPrompt]
   );
 
   const handleSelectOption = useCallback((option: string) => submitPrompt(option), [submitPrompt]);
