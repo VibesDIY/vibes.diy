@@ -169,6 +169,77 @@ describe("Firefly app-documents", { timeout: 10000 }, () => {
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
+
+  describe("queryDocs with filter hint", () => {
+    beforeAll(async () => {
+      const p = sthis.nextId(4).str;
+      await api.putDoc({ userSlug, appSlug, dbName: "filter-test", doc: { status: "active", score: 10 }, docId: `${p}-a1` });
+      await api.putDoc({ userSlug, appSlug, dbName: "filter-test", doc: { status: "active", score: 20 }, docId: `${p}-a2` });
+      await api.putDoc({ userSlug, appSlug, dbName: "filter-test", doc: { status: "inactive", score: 5 }, docId: `${p}-i1` });
+      await api.putDoc({ userSlug, appSlug, dbName: "filter-test", doc: { status: "pending", score: 15 }, docId: `${p}-p1` });
+      const del = `${p}-del`;
+      await api.putDoc({ userSlug, appSlug, dbName: "filter-test", doc: { status: "active", score: 99 }, docId: del });
+      await api.deleteDoc({ userSlug, appSlug, dbName: "filter-test", docId: del });
+    });
+
+    it("no filter returns all non-deleted docs for the db (baseline)", async () => {
+      const rRes = await api.queryDocs({ userSlug, appSlug, dbName: "filter-test" });
+      expect(rRes.isOk()).toBe(true);
+      expect(rRes.Ok().docs).toHaveLength(4);
+    });
+
+    it("key filter: only docs where status === 'active'", async () => {
+      const rRes = await api.queryDocs({ userSlug, appSlug, dbName: "filter-test", filter: { field: "status", key: "active" } });
+      expect(rRes.isOk()).toBe(true);
+      const docs = rRes.Ok().docs;
+      expect(docs).toHaveLength(2);
+      expect(docs.every((d) => d["status"] === "active")).toBe(true);
+    });
+
+    it("keys filter: docs where status is in ['active', 'pending']", async () => {
+      const rRes = await api.queryDocs({
+        userSlug,
+        appSlug,
+        dbName: "filter-test",
+        filter: { field: "status", keys: ["active", "pending"] },
+      });
+      expect(rRes.isOk()).toBe(true);
+      expect(rRes.Ok().docs).toHaveLength(3);
+    });
+
+    it("range filter: docs where score is in [10, 20]", async () => {
+      const rRes = await api.queryDocs({
+        userSlug,
+        appSlug,
+        dbName: "filter-test",
+        filter: { field: "score", range: [10, 20] },
+      });
+      expect(rRes.isOk()).toBe(true);
+      expect(rRes.Ok().docs).toHaveLength(3);
+    });
+
+    it("deleted doc excluded even when field matches filter", async () => {
+      const rRes = await api.queryDocs({ userSlug, appSlug, dbName: "filter-test", filter: { field: "status", key: "active" } });
+      expect(rRes.isOk()).toBe(true);
+      expect(rRes.Ok().docs).toHaveLength(2);
+    });
+
+    it("dedup: latest revision value is what the filter sees", async () => {
+      const p = sthis.nextId(4).str;
+      const docId = `${p}-dedup`;
+      await api.putDoc({ userSlug, appSlug, dbName: "filter-test", doc: { status: "active" }, docId });
+      await api.putDoc({ userSlug, appSlug, dbName: "filter-test", doc: { status: "inactive" }, docId });
+      const rActive = await api.queryDocs({ userSlug, appSlug, dbName: "filter-test", filter: { field: "status", key: "active" } });
+      expect(rActive.Ok().docs.find((d) => d._id === docId)).toBeUndefined();
+      const rInactive = await api.queryDocs({
+        userSlug,
+        appSlug,
+        dbName: "filter-test",
+        filter: { field: "status", key: "inactive" },
+      });
+      expect(rInactive.Ok().docs.find((d) => d._id === docId)).toBeDefined();
+    });
+  });
 });
 
 describe("Firefly cross-user document isolation", { timeout: 10000 }, () => {
