@@ -19,6 +19,7 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "DOC_NOTIFY", class_name = "DocNotify" },
+  { name = "USER_NOTIFY", class_name = "UserNotify" },
 ]
 
 [[migrations]]
@@ -28,6 +29,10 @@ new_classes = ["ChatSessions"]
 [[migrations]]
 tag = "v2"
 new_classes = ["DocNotify"]
+
+[[migrations]]
+tag = "v3"
+new_classes = ["UserNotify"]
 
 [[d1_databases]]
 binding = "DB"
@@ -57,6 +62,7 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "DOC_NOTIFY", class_name = "DocNotify" },
+  { name = "USER_NOTIFY", class_name = "UserNotify" },
 ]
 
 [[env.local.migrations]]
@@ -66,6 +72,10 @@ new_classes = ["ChatSessions"]
 [[env.local.migrations]]
 tag = "v2"
 new_classes = ["DocNotify"]
+
+[[env.local.migrations]]
+tag = "v3"
+new_classes = ["UserNotify"]
 
 [[env.local.d1_databases]]
 binding = "DB"
@@ -101,6 +111,7 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "DOC_NOTIFY", class_name = "DocNotify" },
+  { name = "USER_NOTIFY", class_name = "UserNotify" },
 ]
 
 [[env.dev.migrations]]
@@ -110,6 +121,10 @@ new_classes = ["ChatSessions"]
 [[env.dev.migrations]]
 tag = "v2"
 new_classes = ["DocNotify"]
+
+[[env.dev.migrations]]
+tag = "v3"
+new_classes = ["UserNotify"]
 
 [[env.dev.d1_databases]]
 binding = "DB"
@@ -147,6 +162,7 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "DOC_NOTIFY", class_name = "DocNotify" },
+  { name = "USER_NOTIFY", class_name = "UserNotify" },
 ]
 
 [[env.preview.migrations]]
@@ -156,6 +172,10 @@ new_classes = ["ChatSessions"]
 [[env.preview.migrations]]
 tag = "v2"
 new_classes = ["DocNotify"]
+
+[[env.preview.migrations]]
+tag = "v3"
+new_classes = ["UserNotify"]
 
 [[env.preview.d1_databases]]
 binding = "DB"
@@ -192,6 +212,7 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "DOC_NOTIFY", class_name = "DocNotify" },
+  { name = "USER_NOTIFY", class_name = "UserNotify" },
 ]
 
 [[env.prod.migrations]]
@@ -201,6 +222,10 @@ new_classes = ["ChatSessions"]
 [[env.prod.migrations]]
 tag = "v2"
 new_classes = ["DocNotify"]
+
+[[env.prod.migrations]]
+tag = "v3"
+new_classes = ["UserNotify"]
 
 [[env.prod.d1_databases]]
 binding = "DB"
@@ -245,6 +270,7 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "DOC_NOTIFY", class_name = "DocNotify", script_name = "vibes-diy-v2-prod" },
+  { name = "USER_NOTIFY", class_name = "UserNotify", script_name = "vibes-diy-v2-prod" },
 ]
 
 [[env.cli.migrations]]
@@ -268,6 +294,10 @@ new_classes = ["ChatSessions"]
 [[env.cli.migrations]]
 tag = "v2"
 new_classes = ["DocNotify"]
+
+[[env.cli.migrations]]
+tag = "v3"
+new_classes = ["UserNotify"]
 
 [[env.cli.d1_databases]]
 binding = "DB"

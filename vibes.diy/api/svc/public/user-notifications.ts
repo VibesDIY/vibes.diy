@@ -12,6 +12,7 @@ import {
   ResSetUserNotificationPreferences,
   UserNotificationPreferences,
   defaultUserNotificationPreferences,
+  ResError,
   isReqSubscribeUserNotifications,
   isReqGetUserNotificationPreferences,
   isReqSetUserNotificationPreferences,
@@ -107,13 +108,23 @@ export const subscribeUserNotificationsEvento: EventoHandler<
     ): Promise<Result<EventoResultType>> => {
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-      const userId = req._auth.verifiedAuth.claims.userId;
+      const authUserId = req._auth.verifiedAuth.claims.userId;
+
+      if (req.userId !== authUserId) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-error",
+          error: { message: "Access denied" },
+        } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
+      }
+
+      const userId = req.userId;
 
       const wsSend = clientWsSend(ctx);
-      wsSend.subscribedUserKeys.add(userNotificationSubscriptionKey(userId));
+      wsSend.subscribedUserNotificationKeys.add(userNotificationSubscriptionKey(userId));
 
       if (vctx.registerUserSubscription) {
-        vctx.registerUserSubscription(userId).catch((e: unknown) => console.error("DocNotify error:", e));
+        vctx.registerUserSubscription(userId).catch((e: unknown) => console.error("UserNotify error:", e));
       }
 
       await ctx.send.send(ctx, {

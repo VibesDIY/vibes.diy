@@ -178,10 +178,16 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       });
 
       if (dbName === COMMENTS_DB_NAME && nextSeq === 1) {
+        const ownerUserId = await vctx.sql.db
+          .select({ userId: vctx.sql.tables.userSlugBinding.userId })
+          .from(vctx.sql.tables.userSlugBinding)
+          .where(eq(vctx.sql.tables.userSlugBinding.userSlug, req.userSlug))
+          .then((rows) => rows[0]?.userId ?? userId);
+
         await vctx.postQueue({
           payload: {
             type: "vibes.diy.evt-comment-posted",
-            userId,
+            userId: ownerUserId,
             userSlug: req.userSlug,
             appSlug: req.appSlug,
             docId,

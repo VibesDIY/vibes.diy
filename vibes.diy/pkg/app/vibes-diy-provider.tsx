@@ -250,17 +250,18 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       : {}),
   });
 
-  const notificationsEnabled = clerk.loaded && !!clerk.isSignedIn;
+  const notificationUserId = clerk.user?.id;
+  const notificationsEnabled = clerk.loaded && !!clerk.isSignedIn && !!notificationUserId;
 
   useEffect(() => {
-    if (!notificationsEnabled) return;
+    if (!notificationsEnabled || !notificationUserId) return;
 
-    void realCtx.vibeDiyApi.subscribeUserNotifications({}).then((rSub) => {
+    void realCtx.vibeDiyApi.subscribeUserNotifications({ userId: notificationUserId }).then((rSub) => {
       if (rSub.isErr()) {
         console.warn("Failed to subscribe user-level notifications", rSub.Err());
       }
     });
-  }, [notificationsEnabled, realCtx.vibeDiyApi]);
+  }, [notificationUserId, notificationsEnabled, realCtx.vibeDiyApi]);
 
   useBuildCompletionNotifications({
     vibeDiyApi: realCtx.vibeDiyApi,

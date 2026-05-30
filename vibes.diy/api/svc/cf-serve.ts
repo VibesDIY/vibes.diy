@@ -18,7 +18,6 @@ import {
   type EvtRequestGrant,
   type UserNotificationEvent,
   MsgBase,
-  userNotificationSubscriptionKey,
 } from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/core-types-base";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
@@ -103,6 +102,18 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
     );
   }
 
+  function fetchUserNotify(userId: string, body: Record<string, unknown>): Promise<CFResponse> {
+    const id = dn.env.USER_NOTIFY.idFromName(userId);
+    const stub = dn.env.USER_NOTIFY.get(id);
+    return stub.fetch(
+      new Request("https://internal/user-notify", {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+      }) as unknown as CFRequest
+    );
+  }
+
   async function notifyByKey(
     key: string,
     evt: Record<string, unknown>,
@@ -152,19 +163,22 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
       await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
     },
     notifyUserNotification: async (userId: string, evt: UserNotificationEvent, senderConnId = "") => {
-      const key = userNotificationSubscriptionKey(userId);
-      console.log("[docNotify] notifyUserNotification key:", key, "shard:", dn.shardId.slice(0, 8));
-      await notifyByKey(key, evt, { senderConnId });
+      console.log("[userNotify] notify userId:", userId, "shard:", dn.shardId.slice(0, 8));
+      await fetchUserNotify(userId, {
+        action: "notify",
+        userId,
+        senderShardId: dn.shardId,
+        senderConnId,
+        evt,
+      });
     },
     registerUserSubscription: async (userId: string) => {
-      const key = userNotificationSubscriptionKey(userId);
-      console.log("[docNotify] register user key:", key, "shard:", dn.shardId.slice(0, 8));
-      await fetchDocNotify(key, { action: "register", shardId: dn.shardId });
+      console.log("[userNotify] register userId:", userId, "shard:", dn.shardId.slice(0, 8));
+      await fetchUserNotify(userId, { action: "register", userId, shardId: dn.shardId });
     },
     deregisterUserSubscription: async (userId: string) => {
-      const key = userNotificationSubscriptionKey(userId);
-      console.log("[docNotify] deregister user key:", key, "shard:", dn.shardId.slice(0, 8));
-      await fetchDocNotify(key, { action: "deregister", shardId: dn.shardId });
+      console.log("[userNotify] deregister userId:", userId, "shard:", dn.shardId.slice(0, 8));
+      await fetchUserNotify(userId, { action: "deregister", userId, shardId: dn.shardId });
     },
   };
 }

@@ -7,6 +7,7 @@ import { cfServe, CFInject, noopCache, vibesMsgEvento, WSSendProvider } from "@v
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
+import { eq } from "drizzle-orm";
 
 function wireUpWsPair(wsPair: ReturnType<typeof TestWSPair.create>, appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>) {
   const wsEvento = vibesMsgEvento();
@@ -118,6 +119,37 @@ describe(
 
       expect(api._testInternals.requestGrantSubscriptions).toHaveLength(1);
       expect(api._testInternals.requestGrantSubscriptions[0]).toEqual({ userSlug, appSlug });
+    });
+
+    it("subscribeUserNotifications stores params for replay on reconnection", async () => {
+      const wsPair = TestWSPair.create();
+      wireUpWsPair(wsPair, appCtx);
+
+      const api = new VibesDiyApi({
+        apiUrl: `http://localhost:${8800 + Math.floor(Math.random() * 1000)}/api`,
+        ws: wsPair.p1 as unknown as WebSocket,
+        fetch: fetchPair.client.fetch,
+        timeoutMs: 5000,
+        getToken,
+      });
+
+      const owner = await appCtx.vibesCtx.sql.db
+        .select({ userId: appCtx.vibesCtx.sql.tables.userSlugBinding.userId })
+        .from(appCtx.vibesCtx.sql.tables.userSlugBinding)
+        .where(eq(appCtx.vibesCtx.sql.tables.userSlugBinding.userSlug, userSlug))
+        .then((rows) => rows[0]);
+      if (!owner) assert.fail(`No owner found for userSlug ${userSlug}`);
+      const userId = owner.userId;
+
+      const rSub = await api.subscribeUserNotifications({ userId });
+      expect(rSub.isOk()).toBe(true);
+
+      const rSub2 = await api.subscribeUserNotifications({ userId });
+      expect(rSub2.isOk()).toBe(true);
+
+      expect(api._testInternals.userNotificationSubscriptions).toHaveLength(1);
+      expect(api._testInternals.userNotificationSubscriptions[0]).toEqual({ userId });
+      expect(api._testInternals.userNotificationSubscriptionActive).toBe(true);
     });
 
     it("onDocChanged stores listeners for replay", () => {

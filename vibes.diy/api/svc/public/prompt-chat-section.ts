@@ -47,7 +47,6 @@ import {
   isActiveSkills,
   isActiveTheme,
   isActiveTitle,
-  EvtBuildComplete,
   type SelectedSlotInput,
   type SlotConfig,
 } from "@vibes.diy/api-types";
@@ -2215,16 +2214,12 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         } satisfies InMsgBase<ResPromptChatSection>)
       );
 
-      const buildStartedAt = Date.now();
-      let buildStatus: EvtBuildComplete["status"] = "success";
-
       // console.log(promptId, "Starting promptChatSection for promptId: with request:");
 
       await scopey(async (scope) => {
         const seq = { val: 0 };
 
         scope.onCatch(async (e) => {
-          buildStatus = "failed";
           // Silenced — error is propagated via the prompt.error event below
           // and surfaced to the client. Re-enable for low-level debugging.
           // console.error(promptId, "Error in promptChatSection scope for promptId: with error:", e);
@@ -2267,7 +2262,6 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
 
             const rAction = await prompSectionAction(scope, seq.val);
             if (rAction.isErr()) {
-              buildStatus = "failed";
               return rAction;
             }
             seq.val = rAction.Ok();
@@ -2276,35 +2270,36 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           })
           .finally(async () => {
             if (seq.val === 0) return;
-            try {
-              await appendBlockEvent({
-                ctx,
-                vctx,
-                req,
+            const blockEndTimestamp = new Date();
+            const promptBlockEndEvt = {
+              type: "prompt.block-end" as const,
+              streamId: promptId,
+              chatId: req.chatId,
+              seq: seq.val,
+              timestamp: blockEndTimestamp,
+            };
+
+            await appendBlockEvent({
+              ctx,
+              vctx,
+              req,
+              promptId,
+              blockSeq: seq.val,
+              evt: promptBlockEndEvt,
+            });
+
+            if (vctx.notifyUserNotification) {
+              const evt: SectionEvent = {
+                type: "vibes.diy.section-event",
+                chatId: req.chatId,
                 promptId,
                 blockSeq: seq.val,
-                evt: {
-                  type: "prompt.block-end",
-                  streamId: promptId,
-                  chatId: req.chatId,
-                  seq: seq.val,
-                  timestamp: new Date(),
-                },
+                blocks: [promptBlockEndEvt],
+                timestamp: blockEndTimestamp,
+              };
+              vctx.notifyUserNotification(req._auth.verifiedAuth.claims.userId, evt, "").catch((e: unknown) => {
+                console.error("UserNotify error:", e);
               });
-            } finally {
-              if (vctx.notifyUserNotification) {
-                const evt: EvtBuildComplete = {
-                  type: "vibes.diy.evt-build-complete",
-                  userSlug: resChat.userSlug,
-                  appSlug: resChat.appSlug,
-                  promptId,
-                  status: buildStatus,
-                  durationMs: Date.now() - buildStartedAt,
-                };
-                vctx
-                  .notifyUserNotification(req._auth.verifiedAuth.claims.userId, evt, "")
-                  .catch((e: unknown) => console.error("DocNotify error:", e));
-              }
             }
           })
           .do();

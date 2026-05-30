@@ -21,7 +21,7 @@ export default {
         BROWSER: env.BROWSER,
         D1: env.DB,
         FS_IDS_BUCKET: env.FS_IDS_BUCKET,
-        DOC_NOTIFY: env.DOC_NOTIFY,
+        USER_NOTIFY: env.USER_NOTIFY,
       },
       vibes: {
         env: {

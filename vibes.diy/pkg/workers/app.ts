@@ -23,6 +23,7 @@ import { getVibeOgTitle, parseVibePathname } from "@vibes.diy/api-svc/intern/get
 
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
+export { UserNotify } from "./user-notify.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 

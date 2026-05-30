@@ -179,6 +179,7 @@ export function isEvtDocChanged(obj: unknown): obj is EvtDocChanged {
 
 export const evtCommentPosted = type({
   type: "'vibes.diy.evt-comment-posted'",
+  // Owner userId (recipient for owner-level notifications).
   userId: "string",
   userSlug: "string",
   appSlug: "string",

@@ -22,6 +22,22 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
     const qctx = ctx.ctx.getOrThrow<QueueCtx>("queueCtx");
     const payload = ctx.validated.payload;
     // console.log("Handling evt-new-fs-id event with payload:", payload);
+
+    if (payload.mode !== "dev") {
+      const owner = await qctx.sql.db
+        .select({ userId: qctx.sql.tables.userSlugBinding.userId })
+        .from(qctx.sql.tables.userSlugBinding)
+        .where(eq(qctx.sql.tables.userSlugBinding.userSlug, payload.userSlug))
+        .then((rows) => rows[0]);
+
+      if (owner) {
+        const rNotify = await qctx.notifyUserNotification(owner.userId, payload);
+        if (rNotify.isErr()) {
+          console.warn("Failed to fan out new-fs-id websocket notification", rNotify.Err());
+        }
+      }
+    }
+
     const res = await processScreenShotEvent(qctx, payload);
     if (res.isErr()) {
       console.error("Error processing screen shot event:", res.Err());

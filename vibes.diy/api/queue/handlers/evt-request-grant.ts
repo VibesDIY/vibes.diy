@@ -21,9 +21,11 @@ export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGra
     const qctx = ctx.ctx.getOrThrow<QueueCtx>("queueCtx");
     const payload = ctx.validated.payload;
 
-    const rNotify = await qctx.notifyUserNotification(payload.userId, payload);
-    if (rNotify.isErr()) {
-      console.warn("Failed to fan out request-grant websocket notification", rNotify.Err());
+    if (payload.grant.state === "approved" || payload.grant.state === "revoked") {
+      const rNotify = await qctx.notifyUserNotification(payload.grant.foreignUserId, payload);
+      if (rNotify.isErr()) {
+        console.warn("Failed to fan out request-grant websocket notification", rNotify.Err());
+      }
     }
 
     if (payload.grant.state === "pending") {

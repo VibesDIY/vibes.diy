@@ -3,6 +3,7 @@ import { dashAuthType } from "./common.js";
 import { evtCommentPosted } from "./app-documents.js";
 import { evtRequestGrant } from "./request-access.js";
 import { evtInviteGrant } from "./invite-flow.js";
+import { evtNewFsId, sectionEvent } from "./chat.js";
 
 export const userNotificationPreferences = type({
   buildCompleteSuccess: "boolean",
@@ -30,6 +31,7 @@ export type UserNotificationPreferencesPatch = typeof userNotificationPreference
 export const reqSubscribeUserNotifications = type({
   type: "'vibes.diy.req-subscribe-user-notifications'",
   auth: dashAuthType,
+  userId: "string",
 });
 export type ReqSubscribeUserNotifications = typeof reqSubscribeUserNotifications.infer;
 export function isReqSubscribeUserNotifications(obj: unknown): obj is ReqSubscribeUserNotifications {
@@ -102,8 +104,11 @@ export function isEvtBuildComplete(obj: unknown): obj is EvtBuildComplete {
   return !(evtBuildComplete(obj) instanceof type.errors);
 }
 
-export const userNotificationEvent = evtBuildComplete.or(evtCommentPosted).or(evtRequestGrant).or(evtInviteGrant);
+export const userNotificationEvent = sectionEvent.or(evtNewFsId).or(evtCommentPosted).or(evtRequestGrant).or(evtInviteGrant);
 export type UserNotificationEvent = typeof userNotificationEvent.infer;
+export function isUserNotificationEvent(obj: unknown): obj is UserNotificationEvent {
+  return !(userNotificationEvent(obj) instanceof type.errors);
+}
 
 export function userNotificationSubscriptionKey(userId: string): string {
   return `user/${userId}`;

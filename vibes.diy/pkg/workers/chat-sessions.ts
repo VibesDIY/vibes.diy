@@ -11,7 +11,7 @@ import {
 import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
-import { CFEnv } from "@vibes.diy/api-types";
+import { CFEnv, isUserNotificationEvent, UserNotificationEvent, userNotificationSubscriptionKey } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 
@@ -33,36 +33,7 @@ const RequestGrantEvt = type({
   }).and(type("Record<string, unknown>")),
 }).and(type("Record<string, unknown>"));
 
-const BuildCompleteEvt = type({
-  type: "'vibes.diy.evt-build-complete'",
-  userSlug: "string",
-  appSlug: "string",
-  promptId: "string",
-  status: "'success' | 'failed'",
-  "durationMs?": "number",
-});
-
-const CommentPostedEvt = type({
-  type: "'vibes.diy.evt-comment-posted'",
-  userId: "string",
-  userSlug: "string",
-  appSlug: "string",
-  docId: "string",
-  created: "string",
-  "email?": "string",
-});
-
-const InviteGrantEvt = type({
-  type: "'vibes.diy.evt-invite-grant'",
-  op: "'upsert' | 'delete'",
-  userId: "string",
-  grant: type({
-    userSlug: "string",
-    appSlug: "string",
-  }).and(type("Record<string, unknown>")),
-}).and(type("Record<string, unknown>"));
-
-const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt).or(BuildCompleteEvt).or(CommentPostedEvt).or(InviteGrantEvt);
+const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt);
 
 // Internal POST body from DocNotify: the doc-changed event plus the
 // originating WebSocket's connId, so we can skip just that one connection
@@ -71,6 +42,12 @@ const DocNotifyDelivery = type({
   evt: DocNotifyEvt,
   senderConnId: "string",
   "subscriptionKey?": "string",
+});
+
+const UserNotifyDelivery = type({
+  evt: type("Record<string, unknown>"),
+  senderConnId: "string",
+  userId: "string",
 });
 
 declare const caches: CacheStorage;
@@ -101,10 +78,6 @@ export class ChatSessions implements DurableObject {
         return `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
       case "vibes.diy.evt-request-grant":
         return `${evt.grant.userSlug}/${evt.grant.appSlug}`;
-      case "vibes.diy.evt-build-complete":
-      case "vibes.diy.evt-comment-posted":
-      case "vibes.diy.evt-invite-grant":
-        return undefined;
     }
   }
 
@@ -115,12 +88,29 @@ export class ChatSessions implements DurableObject {
       if (rJson.isErr()) {
         return new Response("Invalid JSON", { status: 400 });
       }
-      const parsed = DocNotifyDelivery(rJson.Ok());
-      if (parsed instanceof type.errors) {
+      const raw = rJson.Ok();
+      const parsedDoc = DocNotifyDelivery(raw);
+      const parsedUser = UserNotifyDelivery(raw);
+
+      let evt: typeof DocNotifyEvt.infer | UserNotificationEvent;
+      let senderConnId: string;
+      let subscriptionKey: string | undefined;
+
+      if (!(parsedDoc instanceof type.errors)) {
+        evt = parsedDoc.evt;
+        senderConnId = parsedDoc.senderConnId;
+        subscriptionKey = parsedDoc.subscriptionKey ?? this.subscriptionKeyFromEvent(parsedDoc.evt);
+      } else if (!(parsedUser instanceof type.errors)) {
+        if (!isUserNotificationEvent(parsedUser.evt)) {
+          return new Response("Invalid notification", { status: 400 });
+        }
+        evt = parsedUser.evt;
+        senderConnId = parsedUser.senderConnId;
+        subscriptionKey = userNotificationSubscriptionKey(parsedUser.userId);
+      } else {
         return new Response("Invalid notification", { status: 400 });
       }
-      const { evt, senderConnId } = parsed;
-      const subscriptionKey = parsed.subscriptionKey ?? this.subscriptionKeyFromEvent(evt);
+
       if (!subscriptionKey) {
         return new Response("Missing subscriptionKey", { status: 400 });
       }
@@ -130,7 +120,7 @@ export class ChatSessions implements DurableObject {
         const subscribed =
           conn.subscribedDocKeys.has(subscriptionKey) ||
           conn.subscribedRequestGrantKeys.has(subscriptionKey) ||
-          conn.subscribedUserKeys.has(subscriptionKey);
+          conn.subscribedUserNotificationKeys.has(subscriptionKey);
         if (!subscribed) continue;
         // Skip the originating WebSocket — it already updated optimistically
         // when the put/delete returned. Sibling connections on the same

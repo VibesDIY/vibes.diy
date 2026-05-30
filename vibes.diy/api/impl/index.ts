@@ -172,6 +172,8 @@ import {
   isResAssetUploadGrant,
   EvtBuildComplete,
   isEvtBuildComplete,
+  UserNotificationEvent,
+  isUserNotificationEvent,
   isEvtDocChanged,
   EvtRequestGrant,
   isEvtRequestGrant,
@@ -264,12 +266,14 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   private readonly requestGrantDetachers = new Map<(evt: EvtRequestGrant) => void, () => void>();
   private readonly buildCompleteListeners: ((evt: EvtBuildComplete) => void)[] = [];
   private readonly buildCompleteDetachers = new Map<(evt: EvtBuildComplete) => void, () => void>();
+  private readonly userNotificationListeners: ((evt: UserNotificationEvent) => void)[] = [];
+  private readonly userNotificationDetachers = new Map<(evt: UserNotificationEvent) => void, () => void>();
   private readonly commentPostedListeners: ((evt: EvtCommentPosted) => void)[] = [];
   private readonly commentPostedDetachers = new Map<(evt: EvtCommentPosted) => void, () => void>();
   private readonly inviteGrantListeners: ((evt: EvtInviteGrant) => void)[] = [];
   private readonly inviteGrantDetachers = new Map<(evt: EvtInviteGrant) => void, () => void>();
   private readonly requestGrantSubscriptions: { userSlug: string; appSlug: string }[] = [];
-  private userNotificationSubscriptionActive = false;
+  private readonly userNotificationSubscriptions: { userId: string }[] = [];
   private currentConnection: VibeDiyApiConnection | undefined;
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   private closed = false;
@@ -356,6 +360,11 @@ export class VibesDiyApi implements VibesDiyApiIface<{
         const detach = this.attachBuildCompleteToConnection(conn, fn);
         this.buildCompleteDetachers.set(fn, detach);
       }
+      for (const fn of this.userNotificationListeners) {
+        this.userNotificationDetachers.get(fn)?.();
+        const detach = this.attachUserNotificationToConnection(conn, fn);
+        this.userNotificationDetachers.set(fn, detach);
+      }
       for (const fn of this.commentPostedListeners) {
         this.commentPostedDetachers.get(fn)?.();
         const detach = this.attachCommentPostedToConnection(conn, fn);
@@ -378,8 +387,8 @@ export class VibesDiyApi implements VibesDiyApiIface<{
           /* re-subscribe best-effort; next reconnect will retry */
         });
       }
-      if (this.userNotificationSubscriptionActive) {
-        this.subscribeUserNotifications({}).catch((_e: unknown) => {
+      for (const sub of this.userNotificationSubscriptions) {
+        this.subscribeUserNotifications(sub).catch((_e: unknown) => {
           /* re-subscribe best-effort; next reconnect will retry */
         });
       }
@@ -602,7 +611,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { resMatch: isResSubscribeUserNotifications }
     )) as Result<ResSubscribeUserNotifications, VibesDiyError>;
     if (result.isOk()) {
-      this.userNotificationSubscriptionActive = true;
+      const sub = { userId: req.userId };
+      if (!this.userNotificationSubscriptions.some((s) => s.userId === sub.userId)) {
+        this.userNotificationSubscriptions.push(sub);
+      }
     }
     return result;
   }
@@ -945,6 +957,30 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.attachTypedEventToConnection(conn, isEvtBuildComplete, fn);
   }
 
+  private attachUserNotificationToConnection(conn: VibeDiyApiConnection, fn: (evt: UserNotificationEvent) => void): () => void {
+    return this.attachTypedEventToConnection(conn, isUserNotificationEvent, fn);
+  }
+
+  onUserNotification(fn: (evt: UserNotificationEvent) => void): () => void {
+    this.userNotificationListeners.push(fn);
+    const conn = this.currentConnection;
+    if (conn) {
+      const detach = this.attachUserNotificationToConnection(conn, fn);
+      this.userNotificationDetachers.set(fn, detach);
+    } else {
+      this.getReadyConnection().catch((_e: unknown) => {
+        /* best-effort; next activity will establish connection */
+      });
+    }
+    return () => {
+      const idx = this.userNotificationListeners.indexOf(fn);
+      if (idx >= 0) this.userNotificationListeners.splice(idx, 1);
+      const detach = this.userNotificationDetachers.get(fn);
+      this.userNotificationDetachers.delete(fn);
+      detach?.();
+    };
+  }
+
   onBuildComplete(fn: (evt: EvtBuildComplete) => void): () => void {
     this.buildCompleteListeners.push(fn);
     const conn = this.currentConnection;
@@ -1017,9 +1053,11 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   get _testInternals(): {
     docSubscriptions: readonly { userSlug: string; appSlug: string; dbName: string }[];
     requestGrantSubscriptions: readonly { userSlug: string; appSlug: string }[];
+    userNotificationSubscriptions: readonly { userId: string }[];
     docChangedListenerCount: number;
     requestGrantListenerCount: number;
     buildCompleteListenerCount: number;
+    userNotificationListenerCount: number;
     commentPostedListenerCount: number;
     inviteGrantListenerCount: number;
     userNotificationSubscriptionActive: boolean;
@@ -1029,12 +1067,14 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return {
       docSubscriptions: this.docSubscriptions,
       requestGrantSubscriptions: this.requestGrantSubscriptions,
+      userNotificationSubscriptions: this.userNotificationSubscriptions,
       docChangedListenerCount: this.docChangedListeners.length,
       requestGrantListenerCount: this.requestGrantListeners.length,
       buildCompleteListenerCount: this.buildCompleteListeners.length,
+      userNotificationListenerCount: this.userNotificationListeners.length,
       commentPostedListenerCount: this.commentPostedListeners.length,
       inviteGrantListenerCount: this.inviteGrantListeners.length,
-      userNotificationSubscriptionActive: this.userNotificationSubscriptionActive,
+      userNotificationSubscriptionActive: this.userNotificationSubscriptions.length > 0,
       currentConnection: this.currentConnection,
       reconnectTimer: this.reconnectTimer,
     };

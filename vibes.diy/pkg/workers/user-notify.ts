@@ -1,56 +1,36 @@
 import { DurableObject, DurableObjectState, Request as CFRequest, Response as CFResponse } from "@cloudflare/workers-types";
-import { CFEnv } from "@vibes.diy/api-types";
+import { CFEnv, isUserNotificationEvent, UserNotificationEvent } from "@vibes.diy/api-types";
 import { exception2Result } from "@adviser/cement";
 import { type } from "arktype";
 
 declare const Response: typeof CFResponse;
 
-const DocNotifyRegister = type({
+const UserNotifyRegister = type({
   action: "'register'",
   shardId: "string",
+  userId: "string",
 });
 
-const DocNotifyDeregister = type({
+const UserNotifyDeregister = type({
   action: "'deregister'",
   shardId: "string",
-});
-
-const DocChangedEvt = type({
-  type: "'vibes.diy.evt-doc-changed'",
-  userSlug: "string",
-  appSlug: "string",
-  dbName: "string",
-  docId: "string",
-});
-
-const RequestGrantEvt = type({
-  type: "'vibes.diy.evt-request-grant'",
-  op: "'upsert' | 'delete'",
   userId: "string",
-  grant: type({
-    userSlug: "string",
-    appSlug: "string",
-  }).and(type("Record<string, unknown>")),
-}).and(type("Record<string, unknown>"));
+});
 
-const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt);
-
-const DocNotifyNotify = type({
+const UserNotifyNotify = type({
   action: "'notify'",
-  // senderShardId is informational (logging/diagnostics) — exclusion happens
-  // per-WebSocket via senderConnId so siblings on the same shard still fan out.
+  userId: "string",
   senderShardId: "string",
   senderConnId: "string",
-  "subscriptionKey?": "string",
-  evt: DocNotifyEvt,
+  evt: type("Record<string, unknown>"),
 });
 
-const DocNotifyMessage = DocNotifyRegister.or(DocNotifyDeregister).or(DocNotifyNotify);
-type DocNotifyMessage = typeof DocNotifyMessage.infer;
+const UserNotifyMessage = UserNotifyRegister.or(UserNotifyDeregister).or(UserNotifyNotify);
+type UserNotifyMessage = typeof UserNotifyMessage.infer;
 
 const SUBSCRIBERS_KEY = "subscribers";
 
-export class DocNotify implements DurableObject {
+export class UserNotify implements DurableObject {
   private subscribers: Set<string> | undefined;
   private readonly state: DurableObjectState;
   private readonly env: CFEnv;
@@ -74,15 +54,6 @@ export class DocNotify implements DurableObject {
     }
   }
 
-  private subscriptionKeyFromEvt(evt: typeof DocNotifyEvt.infer): string | undefined {
-    switch (evt.type) {
-      case "vibes.diy.evt-doc-changed":
-        return `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
-      case "vibes.diy.evt-request-grant":
-        return `${evt.grant.userSlug}/${evt.grant.appSlug}`;
-    }
-  }
-
   async fetch(request: CFRequest): Promise<CFResponse> {
     if (request.method !== "POST") {
       return new Response("Expected POST", { status: 400 });
@@ -92,7 +63,8 @@ export class DocNotify implements DurableObject {
     if (rJson.isErr()) {
       return new Response("Invalid JSON", { status: 400 });
     }
-    const parsed = DocNotifyMessage(rJson.Ok());
+
+    const parsed = UserNotifyMessage(rJson.Ok());
     if (parsed instanceof type.errors) {
       return new Response("Invalid message", { status: 400 });
     }
@@ -104,29 +76,33 @@ export class DocNotify implements DurableObject {
       case "register":
         subs.add(body.shardId);
         await this.saveSubscribers();
-        console.log("[DocNotify] register shard:", body.shardId.slice(0, 8), "| subscribers:", subs.size);
+        console.log("[UserNotify] register shard:", body.shardId.slice(0, 8), "| subscribers:", subs.size, "| user:", body.userId);
         return new Response("ok");
 
       case "deregister":
         subs.delete(body.shardId);
         await this.saveSubscribers();
-        console.log("[DocNotify] deregister shard:", body.shardId.slice(0, 8), "| subscribers:", subs.size);
+        console.log(
+          "[UserNotify] deregister shard:",
+          body.shardId.slice(0, 8),
+          "| subscribers:",
+          subs.size,
+          "| user:",
+          body.userId
+        );
         return new Response("ok");
 
       case "notify":
-        {
-          const subscriptionKey = body.subscriptionKey ?? this.subscriptionKeyFromEvt(body.evt);
-          if (!subscriptionKey) {
-            return new Response("Missing subscriptionKey", { status: 400 });
-          }
-          await this.fanOut(
-            {
-              ...body,
-              subscriptionKey,
-            },
-            subs
-          );
+        if (!isUserNotificationEvent(body.evt)) {
+          return new Response("Invalid user notification event", { status: 400 });
         }
+        await this.fanOut(
+          {
+            ...body,
+            evt: body.evt,
+          },
+          subs
+        );
         return new Response("ok");
 
       default:
@@ -134,21 +110,18 @@ export class DocNotify implements DurableObject {
     }
   }
 
-  private async fanOut(msg: typeof DocNotifyNotify.infer & { subscriptionKey: string }, subs: Set<string>): Promise<void> {
+  private async fanOut(
+    msg: Omit<typeof UserNotifyNotify.infer, "evt"> & { evt: UserNotificationEvent },
+    subs: Set<string>
+  ): Promise<void> {
     const stale: string[] = [];
     const promises: Promise<void>[] = [];
 
-    // Fan out to ALL subscriber shards including the sender shard — the
-    // sender connection is excluded per-WebSocket inside chat-sessions via
-    // senderConnId, which lets sibling tabs/browsers on the same shard
-    // (warm-DO sharing per vibe) still receive the notification.
-    const eventScope = msg.subscriptionKey;
-    const eventDetail = `type:${msg.evt.type}`;
     const targets = [...subs];
     console.log(
-      "[DocNotify] notify",
-      eventScope,
-      eventDetail,
+      "[UserNotify] notify user:",
+      msg.userId,
+      `type:${msg.evt.type}`,
       "| sender shard:",
       msg.senderShardId.slice(0, 8),
       "conn:",
@@ -165,22 +138,25 @@ export class DocNotify implements DurableObject {
           const stub = this.env.CHAT_SESSIONS.get(id);
           const rFetch = await exception2Result(() =>
             stub.fetch(
-              new Request("https://internal/doc-notify", {
+              new Request("https://internal/user-notify", {
                 method: "POST",
-                body: JSON.stringify({ evt: msg.evt, senderConnId: msg.senderConnId, subscriptionKey: msg.subscriptionKey }),
+                body: JSON.stringify({
+                  evt: msg.evt,
+                  senderConnId: msg.senderConnId,
+                  userId: msg.userId,
+                }),
                 headers: { "Content-Type": "application/json" },
               }) as unknown as CFRequest
             )
           );
           if (rFetch.isErr()) {
-            console.log("[DocNotify] fan-out FAILED shard:", shardId.slice(0, 8), "removing (fetch error)");
+            console.log("[UserNotify] fan-out FAILED shard:", shardId.slice(0, 8), "removing (fetch error)");
             stale.push(shardId);
           } else if (!rFetch.Ok().ok) {
-            // 410 Gone = no live connections on that shard
-            console.log("[DocNotify] fan-out STALE shard:", shardId.slice(0, 8), "removing (status", rFetch.Ok().status + ")");
+            console.log("[UserNotify] fan-out STALE shard:", shardId.slice(0, 8), "removing (status", rFetch.Ok().status + ")");
             stale.push(shardId);
           } else {
-            console.log("[DocNotify] fan-out OK shard:", shardId.slice(0, 8));
+            console.log("[UserNotify] fan-out OK shard:", shardId.slice(0, 8));
           }
         })()
       );
@@ -188,7 +164,6 @@ export class DocNotify implements DurableObject {
 
     await Promise.all(promises);
 
-    // Clean up stale subscribers that failed to receive
     if (stale.length > 0) {
       for (const shardId of stale) {
         subs.delete(shardId);

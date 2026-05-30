@@ -49,6 +49,7 @@ import {
   ReqSetUserNotificationPreferences,
   ResSetUserNotificationPreferences,
   EvtBuildComplete,
+  UserNotificationEvent,
 } from "./notifications.js";
 import { ReqFPCloudToken, ResFPCloudToken } from "./fpcloud-token.js";
 import {
@@ -253,6 +254,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   onRequestGrant(fn: (evt: EvtRequestGrant) => void): () => void;
 
   // Register callbacks for server-driven user-level notifications.
+  onUserNotification(fn: (evt: UserNotificationEvent) => void): () => void;
   onBuildComplete(fn: (evt: EvtBuildComplete) => void): () => void;
   onCommentPosted(fn: (evt: EvtCommentPosted) => void): () => void;
   onInviteGrant(fn: (evt: EvtInviteGrant) => void): () => void;

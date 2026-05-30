@@ -41,7 +41,7 @@ export function buildPublishEmbed(vctx: QueueCtx, payload: EvtNewFsId, publishCo
 
 export function buildCommentEmbed(vctx: QueueCtx, payload: EvtCommentPosted): DiscordWebhookBody {
   const url = vibeUrl(vctx, payload.userSlug, payload.appSlug);
-  const commenter = payload.email ?? payload.userId;
+  const commenter = payload.email ?? "(unknown)";
   return {
     content: `🗨️ New comment on **[${payload.userSlug}/${payload.appSlug}](${url})**`,
     embeds: [
@@ -51,7 +51,7 @@ export function buildCommentEmbed(vctx: QueueCtx, payload: EvtCommentPosted): Di
         color: DISCORD_EMBED_COLOR,
         fields: [
           { name: "Commenter", value: commenter, inline: true },
-          { name: "User ID", value: payload.userId, inline: true },
+          { name: "Owner ID", value: payload.userId, inline: true },
           { name: "Doc", value: payload.docId, inline: true },
         ],
       },
