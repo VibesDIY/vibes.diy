@@ -10,10 +10,11 @@ import {
   isUserSettingDefaultUserSlug,
   isUserSettingProfile,
   isResAssetUploadGrant,
+  isUserSettingNotifications,
   parseArray,
   userSettingModelDefaults,
 } from "@vibes.diy/api-types";
-import type { AIParams, UserSettingProfile } from "@vibes.diy/api-types";
+import type { AIParams, UserSettingProfile, UserSettingNotifications } from "@vibes.diy/api-types";
 import { exception2Result } from "@adviser/cement";
 import { ModelSettingsCards } from "../components/ModelSettingsCards.js";
 
@@ -577,6 +578,70 @@ function ProfileCard() {
   );
 }
 
+function NotificationSettingsCard() {
+  const { vibeDiyApi } = useVibesDiy();
+  const [prefs, setPrefs] = useState<UserSettingNotifications>({
+    type: "notifications",
+    buildComplete: true,
+    buildFailed: true,
+    vibePublished: true,
+    commentPosted: true,
+    requestApproved: true,
+    requestRevoked: true,
+  });
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
+      if (res.isOk()) {
+        const saved = res.Ok().settings.find(isUserSettingNotifications);
+        if (saved) setPrefs(saved);
+      }
+      setLoaded(true);
+    });
+  }, [vibeDiyApi]);
+
+  function toggle(key: keyof Omit<UserSettingNotifications, "type">) {
+    const updated = { ...prefs, [key]: !prefs[key] };
+    setPrefs(updated);
+    void vibeDiyApi.ensureUserSettings({ settings: [updated] }).then((res) => {
+      if (res.isErr()) {
+        setError(`Failed to save: ${res.Err()}`);
+      }
+    });
+  }
+
+  if (!loaded) return null;
+
+  const items: { key: keyof Omit<UserSettingNotifications, "type">; label: string }[] = [
+    { key: "buildComplete", label: "Build completed" },
+    { key: "buildFailed", label: "Build failed" },
+    { key: "vibePublished", label: "Vibe published" },
+    { key: "commentPosted", label: "New comment on my vibe" },
+    { key: "requestApproved", label: "Access request approved" },
+    { key: "requestRevoked", label: "Access request revoked" },
+  ];
+
+  return (
+    <BrutalistCard size="md">
+      <h3 className="text-2xl font-bold mb-4">Browser Notifications</h3>
+      <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
+        Choose which events trigger browser notifications.
+      </p>
+      {error && <p className="text-red-600 font-medium mb-3">{error}</p>}
+      <div className="space-y-3 text-sm">
+        {items.map(({ key, label }) => (
+          <label key={key} className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={prefs[key] !== false} onChange={() => toggle(key)} className="w-4 h-4" />
+            <span>{label}</span>
+          </label>
+        ))}
+      </div>
+    </BrutalistCard>
+  );
+}
+
 function SettingsContent() {
   const { signOut } = useClerk();
   const navigate = useNavigate();
@@ -593,6 +658,8 @@ function SettingsContent() {
       <ProfileCard />
 
       <ModelDefaultsCard />
+
+      <NotificationSettingsCard />
 
       {/* Hidden per VibesDIY/vibes.diy#1692 — restore by uncommenting and reinstating the GrantsList function and imports.
       <BrutalistCard size="md">
