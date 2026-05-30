@@ -431,14 +431,17 @@ export class VibesDiyApi implements VibesDiyApiIface<{
           return Result.Ok(Option.None());
         }
         const tidMatch = msg.tid === tid;
+        if (!tidMatch) {
+          return Result.Ok(Option.None());
+        }
         const resMatch = msgParam.resMatch(msg.payload);
         const isErr = isResError(msg.payload);
-        if (tidMatch && (resMatch || isErr)) {
+        if (resMatch || isErr) {
           return Result.Ok(Option.Some(trigger.enRequest));
         }
         // Fail fast: tid matched but the response shape failed validation.
         // A schema miss on our own response type should never silently time out.
-        if (tidMatch && !resMatch && !isErr) {
+        if (!resMatch && !isErr) {
           const payloadType = (msg.payload as Record<string, unknown>)?.type;
           if (
             typeof payloadType === "string" &&
