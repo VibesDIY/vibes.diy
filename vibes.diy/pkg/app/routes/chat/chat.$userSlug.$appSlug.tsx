@@ -9,7 +9,6 @@ import { vibesThemes, getThemeBySlug } from "@vibes.diy/prompts";
 import {
   isPromptBlockBegin,
   isPromptBlockEnd,
-  isPromptError,
   isPromptReq,
   LLMChat,
   LLMChatEntry,
@@ -412,14 +411,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     agentSavedBlockIds: new Set<string>(),
   });
 
-  const latestPromptFailed =
-    promptState.blocks.length > 0 ? promptState.blocks[promptState.blocks.length - 1].msgs.some((msg) => isPromptError(msg)) : false;
-
-  useBuildCompletionNotifications({
-    buildRunning: promptState.running,
-    buildFailed: latestPromptFailed,
-    appTitle: promptState.title,
-  });
+  useBuildCompletionNotifications();
 
   useEffect(() => {
     return subscribeRecentVibesChanged((change) => {
