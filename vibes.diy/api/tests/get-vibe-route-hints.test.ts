@@ -2,7 +2,12 @@ import { beforeAll, describe, expect, inject, it } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import type { VibesApiSQLCtx } from "@vibes.diy/api-svc";
-import { deriveIsWorldReadable, getVibeRouteHints, parseVibePathname } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
+import {
+  deriveIsWorldReadable,
+  getVibeRouteHints,
+  parseVibePathname,
+  vibePathnameHasFsId,
+} from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 describe("deriveIsWorldReadable", () => {
@@ -191,5 +196,23 @@ describe("parseVibePathname", () => {
     expect(parseVibePathname("/vibe/")).toBeUndefined();
     expect(parseVibePathname("/vibe/jchris")).toBeUndefined();
     expect(parseVibePathname("/vibe/jchris/")).toBeUndefined();
+  });
+});
+
+describe("vibePathnameHasFsId", () => {
+  it("returns false for canonical 3-segment vibe paths", () => {
+    expect(vibePathnameHasFsId("/vibe/jchris/my-app")).toBe(false);
+  });
+
+  it("returns true when a 4th (fsId) segment is present", () => {
+    expect(vibePathnameHasFsId("/vibe/jchris/my-app/bafyabc123")).toBe(true);
+  });
+
+  it("returns false for non-vibe paths even with 4+ segments", () => {
+    expect(vibePathnameHasFsId("/api/foo/bar/baz")).toBe(false);
+  });
+
+  it("returns false when 4th segment is empty", () => {
+    expect(vibePathnameHasFsId("/vibe/jchris/my-app/")).toBe(false);
   });
 });
