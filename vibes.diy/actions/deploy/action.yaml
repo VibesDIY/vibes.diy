@@ -200,6 +200,15 @@ runs:
         done
         pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
 
+    - name: Upload startup profile (on failure)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: worker-startup-profile
+        path: vibes.diy/pkg/.wrangler/tmp/startup-profile-*/
+        if-no-files-found: ignore
+        retention-days: 7
+
     - name: Deploy api-queue consumer
       if: ${{ inputs.CLOUDFLARE_ENV == 'prod' }}
       working-directory: vibes.diy/api/queue
