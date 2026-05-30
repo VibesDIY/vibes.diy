@@ -50,10 +50,24 @@ export function isUserSettingProfile(obj: unknown): obj is UserSettingProfile {
   return !(userSettingProfile(obj) instanceof type.errors);
 }
 
+export const userSettingNotifications = type({
+  type: "'notifications'",
+  "buildComplete?": "boolean",
+  "buildFailed?": "boolean",
+  "vibePublished?": "boolean",
+  "commentPosted?": "boolean",
+  "accessRequestPending?": "boolean",
+});
+export type UserSettingNotifications = typeof userSettingNotifications.infer;
+export function isUserSettingNotifications(obj: unknown): obj is UserSettingNotifications {
+  return !(userSettingNotifications(obj) instanceof type.errors);
+}
+
 export const userSettingItem = userSettingShareing
   .or(userSettingModelDefaults)
   .or(userSettingDefaultUserSlug)
-  .or(userSettingProfile);
+  .or(userSettingProfile)
+  .or(userSettingNotifications);
 
 export type UserSettingItem = typeof userSettingItem.infer;
 

@@ -12,11 +12,11 @@ import {
   isResAssetUploadGrant,
   parseArray,
   userSettingModelDefaults,
-  defaultUserNotificationPreferences,
 } from "@vibes.diy/api-types";
-import type { AIParams, UserSettingProfile, UserNotificationPreferences } from "@vibes.diy/api-types";
+import type { AIParams, UserSettingProfile } from "@vibes.diy/api-types";
 import { exception2Result } from "@adviser/cement";
 import { ModelSettingsCards } from "../components/ModelSettingsCards.js";
+import { defaultNotificationSettings, getNotificationSettings, type NotificationSettings } from "../lib/notification-settings.js";
 
 export function meta() {
   return [{ title: "Settings - Vibes DIY" }, { name: "description", content: "Settings for AI App Builder" }];
@@ -578,18 +578,19 @@ function ProfileCard() {
   );
 }
 
-type NotificationPreferenceKey = keyof UserNotificationPreferences;
+type NotificationPreferenceKey = keyof NotificationSettings;
 
 const notificationPreferenceLabels: Record<NotificationPreferenceKey, string> = {
-  buildCompleteSuccess: "Build complete (success)",
-  buildCompleteFailed: "Build failed",
+  buildComplete: "Build completed",
+  buildFailed: "Build failed",
+  vibePublished: "Vibe published",
   commentPosted: "New comment on my vibe",
-  accessRequestPending: "Access request pending",
+  accessRequestPending: "Access request updates",
 };
 
 function NotificationPreferencesCard() {
   const { vibeDiyApi } = useVibesDiy();
-  const [prefs, setPrefs] = useState<UserNotificationPreferences>(defaultUserNotificationPreferences);
+  const [prefs, setPrefs] = useState<NotificationSettings>(defaultNotificationSettings);
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<NotificationPreferenceKey | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -597,33 +598,41 @@ function NotificationPreferencesCard() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    void vibeDiyApi.getUserNotificationPreferences({}).then((res) => {
+    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
       setLoading(false);
       if (res.isErr()) {
-        setError(`Failed to load notification preferences: ${res.Err()}`);
+        setError(`Failed to load notification settings: ${res.Err()}`);
         return;
       }
-      setPrefs(res.Ok().preferences);
+      setPrefs(getNotificationSettings(res.Ok().settings));
     });
   }, [vibeDiyApi]);
 
   const toggle = (key: NotificationPreferenceKey) => {
-    const nextValue = !prefs[key];
+    const nextPrefs = {
+      ...prefs,
+      [key]: !prefs[key],
+    } satisfies NotificationSettings;
+
     setSavingKey(key);
     setError(null);
     void vibeDiyApi
-      .setUserNotificationPreferences({
-        preferences: {
-          [key]: nextValue,
-        },
+      .ensureUserSettings({
+        settings: [
+          {
+            type: "notifications",
+            ...nextPrefs,
+          },
+        ],
       })
       .then((res) => {
         setSavingKey(null);
         if (res.isErr()) {
-          setError(`Failed to save notification preferences: ${res.Err()}`);
+          setError(`Failed to save notification settings: ${res.Err()}`);
           return;
         }
-        setPrefs(res.Ok().preferences);
+
+        setPrefs(getNotificationSettings(res.Ok().settings));
       });
   };
 

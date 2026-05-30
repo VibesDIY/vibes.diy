@@ -455,6 +455,30 @@ async function appendBlockEvent({
   return Result.Ok();
 }
 
+function notifyPromptLifecycleEvent(args: {
+  vctx: VibesApiSQLCtx;
+  req: ReqWithVerifiedAuth<ReqPromptChatSection>;
+  promptId: string;
+  blockSeq: number;
+  evt: PromptAndBlockMsgs;
+  timestamp: Date;
+}): void {
+  if (!args.vctx.notifyUserNotification) return;
+
+  const evt: SectionEvent = {
+    type: "vibes.diy.section-event",
+    chatId: args.req.chatId,
+    promptId: args.promptId,
+    blockSeq: args.blockSeq,
+    blocks: [args.evt],
+    timestamp: args.timestamp,
+  };
+
+  args.vctx.notifyUserNotification(args.req._auth.verifiedAuth.claims.userId, evt, "").catch((e: unknown) => {
+    console.error("UserNotify error:", e);
+  });
+}
+
 export async function handlePromptContext({
   vctx,
   req,
@@ -2225,39 +2249,63 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           // console.error(promptId, "Error in promptChatSection scope for promptId: with error:", e);
           const errorSeq = seq.val;
           seq.val++;
+
+          const promptErrorEvt = {
+            type: "prompt.error" as const,
+            streamId: promptId,
+            chatId: req.chatId,
+            seq: errorSeq,
+            timestamp: new Date(),
+            error: (e as Error).message,
+          };
+
           await appendBlockEvent({
             ctx,
             vctx,
             req,
             promptId,
             blockSeq: errorSeq,
-            evt: {
-              type: "prompt.error",
-              streamId: promptId,
-              chatId: req.chatId,
-              seq: errorSeq,
-              timestamp: new Date(),
-              error: (e as Error).message,
-            },
+            evt: promptErrorEvt,
+          });
+
+          notifyPromptLifecycleEvent({
+            vctx,
+            req,
+            promptId,
+            blockSeq: errorSeq,
+            evt: promptErrorEvt,
+            timestamp: promptErrorEvt.timestamp,
           });
         }, 0);
 
         await scope
           .evalResult(async () => {
+            const promptBlockBeginEvt = {
+              type: "prompt.block-begin" as const,
+              streamId: promptId,
+              chatId: req.chatId,
+              seq: seq.val,
+              timestamp: new Date(),
+            };
+
             const res = await appendBlockEvent({
               ctx,
               vctx,
               req,
               promptId,
               blockSeq: seq.val,
-              evt: {
-                type: "prompt.block-begin",
-                streamId: promptId,
-                chatId: req.chatId,
-                seq: seq.val,
-                timestamp: new Date(),
-              },
+              evt: promptBlockBeginEvt,
             });
+
+            notifyPromptLifecycleEvent({
+              vctx,
+              req,
+              promptId,
+              blockSeq: seq.val,
+              evt: promptBlockBeginEvt,
+              timestamp: promptBlockBeginEvt.timestamp,
+            });
+
             seq.val++;
 
             const rAction = await prompSectionAction(scope, seq.val);
@@ -2288,19 +2336,14 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
               evt: promptBlockEndEvt,
             });
 
-            if (vctx.notifyUserNotification) {
-              const evt: SectionEvent = {
-                type: "vibes.diy.section-event",
-                chatId: req.chatId,
-                promptId,
-                blockSeq: seq.val,
-                blocks: [promptBlockEndEvt],
-                timestamp: blockEndTimestamp,
-              };
-              vctx.notifyUserNotification(req._auth.verifiedAuth.claims.userId, evt, "").catch((e: unknown) => {
-                console.error("UserNotify error:", e);
-              });
-            }
+            notifyPromptLifecycleEvent({
+              vctx,
+              req,
+              promptId,
+              blockSeq: seq.val,
+              evt: promptBlockEndEvt,
+              timestamp: blockEndTimestamp,
+            });
           })
           .do();
       });

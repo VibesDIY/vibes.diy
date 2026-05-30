@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { defaultUserNotificationPreferences, UserNotificationPreferences, VibesDiyApiIface } from "@vibes.diy/api-types";
+import type { VibesDiyApiIface } from "@vibes.diy/api-types";
+import { defaultNotificationSettings, getNotificationSettings, type NotificationSettings } from "../lib/notification-settings.js";
 
 interface UseQueueNotificationsArgs {
   vibeDiyApi: VibesDiyApiIface;
@@ -15,16 +16,24 @@ function canNotifyNow(): boolean {
   );
 }
 
+function openNotificationForPath(notification: Notification, path: string): void {
+  notification.onclick = () => {
+    window.focus();
+    window.location.assign(path);
+    notification.close();
+  };
+}
+
 export function useQueueNotifications({ vibeDiyApi, enabled = true }: UseQueueNotificationsArgs): void {
-  const prefsRef = useRef<UserNotificationPreferences>(defaultUserNotificationPreferences);
+  const notificationSettingsRef = useRef<NotificationSettings>(defaultNotificationSettings);
 
   useEffect(() => {
     if (!enabled) return;
 
     let cancelled = false;
-    void vibeDiyApi.getUserNotificationPreferences({}).then((rPrefs) => {
-      if (cancelled || rPrefs.isErr()) return;
-      prefsRef.current = rPrefs.Ok().preferences;
+    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((rSettings) => {
+      if (cancelled || rSettings.isErr()) return;
+      notificationSettingsRef.current = getNotificationSettings(rSettings.Ok().settings);
     });
 
     return () => {
@@ -39,33 +48,56 @@ export function useQueueNotifications({ vibeDiyApi, enabled = true }: UseQueueNo
     const unsubs: (() => void)[] = [];
 
     unsubs.push(
-      vibeDiyApi.onCommentPosted((evt) => {
-        if (!prefsRef.current.commentPosted || !canNotifyNow()) return;
-        const n = new Notification("New comment on your vibe", {
-          body: `${evt.userSlug}/${evt.appSlug}`,
-          tag: `vibes-comment-${evt.userSlug}-${evt.appSlug}-${evt.docId}`,
-        });
-        n.onclick = () => {
-          window.focus();
-          window.location.assign(`/chat/${evt.userSlug}/${evt.appSlug}`);
-          n.close();
-        };
+      vibeDiyApi.onUserNotification((evt) => {
+        if (!canNotifyNow()) return;
+
+        if (evt.type === "vibes.diy.evt-new-fs-id") {
+          if (!notificationSettingsRef.current.vibePublished) return;
+          if (evt.mode === "dev") return;
+          const path = `/chat/${evt.userSlug}/${evt.appSlug}`;
+          const n = new Notification("Vibe published", {
+            body: `${evt.userSlug}/${evt.appSlug}`,
+            tag: `vibes-publish-${evt.userSlug}-${evt.appSlug}-${evt.fsId}`,
+          });
+          openNotificationForPath(n, path);
+          return;
+        }
+
+        if (evt.type === "vibes.diy.evt-comment-posted") {
+          if (!notificationSettingsRef.current.commentPosted) return;
+          const path = `/chat/${evt.userSlug}/${evt.appSlug}`;
+          const n = new Notification("New comment on your vibe", {
+            body: `${evt.userSlug}/${evt.appSlug}`,
+            tag: `vibes-comment-${evt.userSlug}-${evt.appSlug}-${evt.docId}`,
+          });
+          openNotificationForPath(n, path);
+          return;
+        }
+
+        if (evt.type === "vibes.diy.evt-request-grant") {
+          if (!notificationSettingsRef.current.accessRequestPending) return;
+          if (evt.grant.state !== "approved" && evt.grant.state !== "revoked") return;
+
+          const title = evt.grant.state === "approved" ? "Access request approved" : "Access request updated";
+          const path = `/chat/${evt.grant.userSlug}/${evt.grant.appSlug}`;
+          const n = new Notification(title, {
+            body: `${evt.grant.userSlug}/${evt.grant.appSlug}`,
+            tag: `vibes-request-${evt.grant.userSlug}-${evt.grant.appSlug}-${evt.grant.foreignUserId}-${evt.grant.state}`,
+          });
+          openNotificationForPath(n, path);
+        }
       })
     );
 
     unsubs.push(
       vibeDiyApi.onRequestGrant((evt) => {
         if (evt.grant.state !== "pending") return;
-        if (!prefsRef.current.accessRequestPending || !canNotifyNow()) return;
+        if (!notificationSettingsRef.current.accessRequestPending || !canNotifyNow()) return;
         const n = new Notification("New access request", {
           body: `${evt.grant.userSlug}/${evt.grant.appSlug}`,
           tag: `vibes-request-${evt.grant.userSlug}-${evt.grant.appSlug}-${evt.grant.foreignUserId}`,
         });
-        n.onclick = () => {
-          window.focus();
-          window.location.assign(`/chat/${evt.grant.userSlug}/${evt.grant.appSlug}`);
-          n.close();
-        };
+        openNotificationForPath(n, `/chat/${evt.grant.userSlug}/${evt.grant.appSlug}`);
       })
     );
 
@@ -76,11 +108,7 @@ export function useQueueNotifications({ vibeDiyApi, enabled = true }: UseQueueNo
           body: `${evt.grant.userSlug}/${evt.grant.appSlug}`,
           tag: `vibes-invite-${evt.grant.userSlug}-${evt.grant.appSlug}-${evt.grant.tokenOrGrantUserId}`,
         });
-        n.onclick = () => {
-          window.focus();
-          window.location.assign(`/chat/${evt.grant.userSlug}/${evt.grant.appSlug}`);
-          n.close();
-        };
+        openNotificationForPath(n, `/chat/${evt.grant.userSlug}/${evt.grant.appSlug}`);
       })
     );
 

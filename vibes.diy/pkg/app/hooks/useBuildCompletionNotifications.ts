@@ -1,10 +1,6 @@
 import { useEffect, useRef } from "react";
-import {
-  defaultUserNotificationPreferences,
-  EvtBuildComplete,
-  UserNotificationPreferences,
-  VibesDiyApiIface,
-} from "@vibes.diy/api-types";
+import type { VibesDiyApiIface } from "@vibes.diy/api-types";
+import { defaultNotificationSettings, getNotificationSettings, type NotificationSettings } from "../lib/notification-settings.js";
 
 interface UseBuildCompletionNotificationsArgs {
   vibeDiyApi: VibesDiyApiIface;
@@ -12,9 +8,13 @@ interface UseBuildCompletionNotificationsArgs {
   thresholdMs?: number;
 }
 
-const DISMISSED_KEY = "vibes.buildNotifications.dismissed";
-const PERMISSION_PROMPTED_KEY = "vibes.buildNotifications.permissionPrompted";
+interface PromptLifecycleState {
+  startedAtMs: number;
+  failed: boolean;
+}
+
 const DEFAULT_THRESHOLD_MS = 15_000;
+const MAX_TRACKED_COMPLETIONS = 500;
 
 function isPageVisibleAndFocused(): boolean {
   return document.visibilityState === "visible" && document.hasFocus();
@@ -24,59 +24,21 @@ function isNotificationApiAvailable(): boolean {
   return typeof window !== "undefined" && typeof Notification !== "undefined";
 }
 
-function wasDismissed(): boolean {
-  try {
-    return window.localStorage.getItem(DISMISSED_KEY) === "1";
-  } catch {
-    return false;
-  }
+function toTimestampMs(value: Date | string): number {
+  const ts = value instanceof Date ? value.getTime() : new Date(value).getTime();
+  return Number.isFinite(ts) ? ts : Date.now();
 }
 
-function markDismissed(): void {
-  try {
-    window.localStorage.setItem(DISMISSED_KEY, "1");
-  } catch {
-    // no-op
-  }
-}
-
-function hasPromptedBefore(): boolean {
-  try {
-    return window.localStorage.getItem(PERMISSION_PROMPTED_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function markPrompted(): void {
-  try {
-    window.localStorage.setItem(PERMISSION_PROMPTED_KEY, "1");
-  } catch {
-    // no-op
-  }
-}
-
-async function ensureNotificationPermission(): Promise<NotificationPermission> {
+async function ensureNotificationPermission(promptedRef: { current: boolean }): Promise<NotificationPermission> {
   if (!isNotificationApiAvailable()) return "denied";
 
   const current = Notification.permission;
   if (current === "granted" || current === "denied") return current;
 
-  if (wasDismissed() || hasPromptedBefore()) return "default";
+  if (promptedRef.current) return "default";
 
-  markPrompted();
-  const next = await Notification.requestPermission();
-  if (next === "default") {
-    markDismissed();
-  }
-  return next;
-}
-
-function isBuildTypeMuted(evt: EvtBuildComplete, prefs: UserNotificationPreferences): boolean {
-  if (evt.status === "failed") {
-    return !prefs.buildCompleteFailed;
-  }
-  return !prefs.buildCompleteSuccess;
+  promptedRef.current = true;
+  return Notification.requestPermission();
 }
 
 export function useBuildCompletionNotifications({
@@ -84,15 +46,18 @@ export function useBuildCompletionNotifications({
   enabled = true,
   thresholdMs = DEFAULT_THRESHOLD_MS,
 }: UseBuildCompletionNotificationsArgs): void {
-  const prefsRef = useRef<UserNotificationPreferences>(defaultUserNotificationPreferences);
+  const notificationSettingsRef = useRef<NotificationSettings>(defaultNotificationSettings);
+  const promptStateRef = useRef<Map<string, PromptLifecycleState>>(new Map());
+  const completionKeysRef = useRef<Set<string>>(new Set());
+  const permissionPromptedRef = useRef(false);
 
   useEffect(() => {
     if (!enabled) return;
 
     let cancelled = false;
-    void vibeDiyApi.getUserNotificationPreferences({}).then((rPrefs) => {
-      if (cancelled || rPrefs.isErr()) return;
-      prefsRef.current = rPrefs.Ok().preferences;
+    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((rSettings) => {
+      if (cancelled || rSettings.isErr()) return;
+      notificationSettingsRef.current = getNotificationSettings(rSettings.Ok().settings);
     });
 
     return () => {
@@ -105,39 +70,79 @@ export function useBuildCompletionNotifications({
     if (typeof window === "undefined") return;
     if (!isNotificationApiAvailable()) return;
 
-    const unsubscribe = vibeDiyApi.onBuildComplete((evt) => {
-      if (typeof evt.durationMs === "number" && evt.durationMs < thresholdMs) {
-        return;
+    const unsubscribe = vibeDiyApi.onUserNotification((evt) => {
+      if (evt.type !== "vibes.diy.section-event") return;
+
+      for (const block of evt.blocks) {
+        if (block.type === "prompt.block-begin") {
+          promptStateRef.current.set(evt.promptId, {
+            startedAtMs: toTimestampMs(block.timestamp),
+            failed: false,
+          });
+          continue;
+        }
+
+        if (block.type === "prompt.error") {
+          const existing = promptStateRef.current.get(evt.promptId);
+          promptStateRef.current.set(evt.promptId, {
+            startedAtMs: existing?.startedAtMs ?? toTimestampMs(block.timestamp),
+            failed: true,
+          });
+          continue;
+        }
+
+        if (block.type !== "prompt.block-end") {
+          continue;
+        }
+
+        const completionKey = `${evt.promptId}:${evt.blockSeq}:${block.seq}`;
+        if (completionKeysRef.current.has(completionKey)) {
+          continue;
+        }
+        completionKeysRef.current.add(completionKey);
+        if (completionKeysRef.current.size > MAX_TRACKED_COMPLETIONS) {
+          completionKeysRef.current.clear();
+          completionKeysRef.current.add(completionKey);
+        }
+
+        const promptState = promptStateRef.current.get(evt.promptId);
+        promptStateRef.current.delete(evt.promptId);
+        if (!promptState) {
+          continue;
+        }
+
+        const durationMs = toTimestampMs(block.timestamp) - promptState.startedAtMs;
+        if (durationMs < thresholdMs) {
+          continue;
+        }
+
+        const isFailed = promptState.failed;
+        const settings = notificationSettingsRef.current;
+        if (isFailed ? !settings.buildFailed : !settings.buildComplete) {
+          continue;
+        }
+
+        if (isPageVisibleAndFocused()) {
+          continue;
+        }
+
+        void (async () => {
+          const permission = await ensureNotificationPermission(permissionPromptedRef);
+          if (permission !== "granted") return;
+
+          const title = isFailed ? "Build failed" : "Build complete";
+          const notification = new Notification(title, {
+            body: "Click to return to Vibes DIY",
+            tag: `vibes-build-${evt.promptId}`,
+            requireInteraction: isFailed,
+          });
+
+          notification.onclick = () => {
+            window.focus();
+            notification.close();
+          };
+        })();
       }
-
-      if (isBuildTypeMuted(evt, prefsRef.current)) {
-        return;
-      }
-
-      if (isPageVisibleAndFocused()) {
-        return;
-      }
-
-      void (async () => {
-        const permission = await ensureNotificationPermission();
-        if (permission !== "granted") return;
-
-        const title = evt.status === "failed" ? "Build failed" : "Build complete";
-        const notification = new Notification(title, {
-          body: `${evt.userSlug}/${evt.appSlug}`,
-          tag: `vibes-build-${evt.promptId}`,
-          requireInteraction: evt.status === "failed",
-        });
-
-        notification.onclick = () => {
-          window.focus();
-          const targetPath = `/chat/${evt.userSlug}/${evt.appSlug}`;
-          if (window.location.pathname !== targetPath) {
-            window.location.assign(targetPath);
-          }
-          notification.close();
-        };
-      })();
     });
 
     return () => {
