@@ -54,7 +54,11 @@ export async function loader(loaderCtx: {
     bindings: { appSlug, userSlug, ...(fsId ? { fsId } : {}) },
     port,
   });
-  const iframeUrl = BuildURI.from(baseUrl).setParam("npmUrl", params.pkgRepos.workspace).toString();
+  const reqParams = Object.fromEntries(reqUrl.getParams);
+  const iframeUrl = BuildURI.from(baseUrl)
+    .searchParams(reqParams, "merge")
+    .setParam("npmUrl", params.pkgRepos.workspace)
+    .toString();
   return {
     iframeUrl,
     vibeOgTitle: loaderCtx.context.vibeOgTitle,
@@ -135,7 +139,10 @@ export default function VibeIframeWrapper() {
       bindings: { appSlug, userSlug, ...(fsId ? { fsId } : {}) },
       port,
     });
-    setIframeUrl(BuildURI.from(baseUrl).setParam("npmUrl", vctx.webVars.pkgRepos.workspace).toString());
+    const myParams = Object.fromEntries(myUrl.getParams);
+    setIframeUrl(
+      BuildURI.from(baseUrl).searchParams(myParams, "merge").setParam("npmUrl", vctx.webVars.pkgRepos.workspace).toString()
+    );
   }, [ssrIframeUrl, appSlug, userSlug, fsId, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
   const [notFound, setNotFound] = useState(false);
   const [reqLogin, setReqLogin] = useState(false);
