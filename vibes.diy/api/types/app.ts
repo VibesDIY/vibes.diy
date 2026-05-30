@@ -128,7 +128,7 @@ export const resGetAppByFsId = type({
   "fsId?": "string",
   mode: "'production'|'dev'",
   grant:
-    "'revoked-access'|'pending-request'| 'granted-access.editor'|'granted-access.viewer'|'granted-access.submitter'|'owner'|'not-found'|'not-grant'|'public-access'|'accepted-email-invite'|'req-login.invite'|'req-login.request'|'req-login.auto-join'",
+    "'revoked-access'|'pending-request'| 'granted-access.editor'|'granted-access.viewer'|'granted-access.submitter'|'owner'|'not-found'|'not-grant'|'public-access'|'accepted-email-invite'|'req-login.invite'|'req-login.request'",
   releaseSeq: "number",
   env: vibeUserEnv,
   fileSystem: [fileSystemItem, "[]"],

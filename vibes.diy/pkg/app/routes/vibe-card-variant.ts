@@ -7,7 +7,6 @@ export function computeCardVariant(grant: ResGetAppByFsId["grant"] | undefined):
     case "req-login.request":
       return "request";
     case "req-login.invite":
-    case "req-login.auto-join":
       return "invite";
     case "pending-request":
       return "pending";
