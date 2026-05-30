@@ -13,7 +13,7 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { AppContext, exception2Result, Lazy, LoggerImpl, Result, URI } from "@adviser/cement";
 import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf, type VibesApiSQLCtx } from "./types.js";
-import { CFEnv, type EvtRequestGrant, MsgBase } from "@vibes.diy/api-types";
+import { CFEnv, type EvtRequestGrant, type EvtUserNotification, MsgBase } from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/core-types-base";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "./peers/r2-to-s3api.js";
@@ -158,6 +158,37 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
   };
 }
 
+function userNotifyCallbacks(dn: DocNotifyCtx) {
+  function fetchUserNotify(userId: string, body: Record<string, unknown>): Promise<CFResponse> {
+    const id = dn.env.USER_NOTIFY.idFromName(userId);
+    const stub = dn.env.USER_NOTIFY.get(id);
+    return stub.fetch(
+      new Request("https://internal/user-notify", {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+      }) as unknown as CFRequest
+    );
+  }
+
+  return {
+    notifyUser: async (userId: string, evt: EvtUserNotification, senderConnId: string): Promise<void> => {
+      await fetchUserNotify(userId, {
+        action: "notify",
+        senderShardId: dn.shardId,
+        senderConnId,
+        evt,
+      });
+    },
+    registerUserSubscription: async (userId: string): Promise<void> => {
+      await fetchUserNotify(userId, { action: "register", shardId: dn.shardId });
+    },
+    deregisterUserSubscription: async (userId: string): Promise<void> => {
+      await fetchUserNotify(userId, { action: "deregister", shardId: dn.shardId });
+    },
+  };
+}
+
 export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
   const netHash = Lazy(() => netHashFn(request.cf as CfProperties));
   const sthis =
@@ -235,6 +266,7 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
     llmRequest: ctx.llmRequest,
     env: env as unknown as Record<string, string>,
     ...(ctx.docNotify ? docNotifyCallbacks(ctx.docNotify) : {}),
+    ...(ctx.docNotify ? userNotifyCallbacks(ctx.docNotify) : {}),
   });
 }
 
