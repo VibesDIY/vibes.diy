@@ -206,6 +206,7 @@ runs:
       with:
         name: worker-startup-profile
         path: vibes.diy/pkg/.wrangler/tmp/startup-profile-*/
+        include-hidden-files: true
         if-no-files-found: ignore
         retention-days: 7
 
