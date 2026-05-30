@@ -19,7 +19,7 @@ import { routeDecision } from "./route-decision.js";
 import { sendCapiPageView, sendCapiViewContent } from "./meta-capi.js";
 import { sendCapiCompleteRegistration } from "./capi-complete-registration.js";
 import { verifyClerkWebhookSignature, postSignupToDiscord, ClerkUserCreatedData } from "./clerk-webhook.js";
-import { getVibeOgTitle, parseVibePathname } from "@vibes.diy/api-svc/intern/get-vibe-og-title.js";
+import { getVibeRouteHints, parseVibePathname } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
 
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
@@ -322,15 +322,18 @@ export default {
     // For /vibe/:userSlug/:appSlug routes, look up the real app title so SSR
     // can embed it in OG/Twitter meta tags before the page reaches crawlers.
     const vibeSlugPair = parseVibePathname(url.pathname);
-    const vibeOgTitle =
+    const vibeHints =
       vibeSlugPair !== undefined
-        ? await getVibeOgTitle(cfCtx.vibesCtx, vibeSlugPair).then((r) => (r.isOk() ? r.Ok() : undefined))
-        : undefined;
+        ? await getVibeRouteHints(cfCtx.vibesCtx, vibeSlugPair).then((r) =>
+            r.isOk() ? r.Ok() : { ogTitle: undefined, isWorldReadable: false }
+          )
+        : { ogTitle: undefined, isWorldReadable: false };
 
     // Delegate to React Router for SSR
     const ssrResponse = (await getRequestHandler()(request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0], {
       vibeDiyAppParams: cfCtx.vibesCtx.params,
-      vibeOgTitle,
+      vibeOgTitle: vibeHints.ogTitle,
+      isWorldReadable: vibeHints.isWorldReadable,
     })) as unknown as CFResponse;
 
     // Log missing vibe paths so the ETL pipeline can surface them for reanimation triage.
