@@ -107,6 +107,7 @@ export default function VibeIframeWrapper() {
   // must remain SSR-safe: no synchronous window access.
   const matches = useMatches();
   const loaderData = matches[matches.length - 1]?.data as { iframeUrl?: string; isWorldReadable?: boolean } | undefined;
+  const isWorldReadable = (loaderData as { isWorldReadable?: boolean } | undefined)?.isWorldReadable ?? false;
   const [iframeUrl, setIframeUrl] = useState<string | undefined>(loaderData?.iframeUrl);
   const isNetworkActive = useIframeApiInFlight();
   // Gate the post-iframe chrome (overlays, pill, sidebar) until after client
@@ -433,7 +434,11 @@ export default function VibeIframeWrapper() {
       {iframeUrl && (
         <div
           className={cx("fixed inset-0", gridBackground)}
-          style={{ isolation: "isolate", transform: "translate3d(0,0,0)", visibility: isAccessGranted ? "visible" : "hidden" }}
+          style={{
+            isolation: "isolate",
+            transform: "translate3d(0,0,0)",
+            visibility: isWorldReadable || isAccessGranted ? "visible" : "hidden",
+          }}
         >
           <iframe
             src={iframeUrl}
@@ -443,6 +448,9 @@ export default function VibeIframeWrapper() {
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
         </div>
+      )}
+      {isWorldReadable && cardGrant === undefined && (
+        <div className="fixed inset-0 z-40" style={{ pointerEvents: "all" }} aria-hidden />
       )}
       {/* Grid overlay — shown while grant is resolving or for card/not-found states */}
       {!isAccessGranted && (
