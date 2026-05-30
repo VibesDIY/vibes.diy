@@ -77,9 +77,14 @@ export default {
 
     if (route === "legacy-vibe-redirect") {
       const slug = url.pathname.slice("/vibe/".length);
+      // Known slug remaps: legacy single-segment slugs that belong to a different user/appSlug.
+      const VIBE_SLUG_OVERRIDES: Record<string, string> = {
+        "cosmic-anansi-3972": "/vibe/og/pickathon-picker",
+      };
+      const destination = VIBE_SLUG_OVERRIDES[slug] ?? `/vibe/og/${slug}`;
       return new Response(null, {
         status: 301,
-        headers: { Location: `/vibe/og/${slug}${url.search}` },
+        headers: { Location: `${destination}${url.search}` },
       }) as unknown as CFResponse;
     }
 
