@@ -1031,7 +1031,6 @@ async function handlerLlmRequest({
     ...vctx.params.llm.enforced,
     model: withSystemPrompt.model,
     headers: vctx.params.llm.headers,
-    logprobs: req.mode !== "img",
     stream: true,
     ...(isInitialTurn && req.mode === "chat" ? { verbosity: "low" as const } : {}),
     ...(req.mode === "img" ? { modalities: ["text", "image"] } : {}),
