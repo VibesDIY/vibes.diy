@@ -20,6 +20,11 @@ queue = "vibes-service"
 max_batch_size = 10
 max_batch_timeout = 1
 
+[[durable_objects.bindings]]
+name = "USER_NOTIFY"
+class_name = "UserNotify"
+script_name = "vibes-diy-v2"
+
 [env.dev]
 
 [env.dev.browser]
@@ -38,3 +43,8 @@ bucket_name = "vibes-diy-fs-ids"
 queue = "vibes-service-dev"
 max_batch_size = 10
 max_batch_timeout = 1
+
+[[env.dev.durable_objects.bindings]]
+name = "USER_NOTIFY"
+class_name = "UserNotify"
+script_name = "vibes-diy-v2-dev"
