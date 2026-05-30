@@ -73,6 +73,7 @@ import {
   ResHasAccessRequest,
   EvtRequestGrant,
 } from "./request-access.js";
+import { ResSubscribeUserNotifications, EvtUserNotification } from "./notifications.js";
 import {
   ReqPutDoc,
   ResPutDoc,
@@ -241,4 +242,13 @@ export interface VibesDiyApiIface<_T = unknown> {
   // Events arrive only for apps this connection has subscribed to via
   // subscribeRequestGrants. Returns an unsubscribe function.
   onRequestGrant(fn: (evt: EvtRequestGrant) => void): () => void;
+
+  // Subscribe to user-level notifications on the current WS connection.
+  // The server will push EvtUserNotification events for the authenticated user.
+  subscribeUserNotifications(req: Req<{ auth?: unknown }>): Promise<Result<ResSubscribeUserNotifications, VibesDiyError>>;
+
+  // Register a callback for user notification events pushed from the API.
+  // Events arrive only after subscribeUserNotifications has been called.
+  // Returns an unsubscribe function.
+  onUserNotification(fn: (evt: EvtUserNotification) => void): () => void;
 }

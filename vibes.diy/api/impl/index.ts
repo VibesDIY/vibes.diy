@@ -169,6 +169,10 @@ import {
   isEvtDocChanged,
   EvtRequestGrant,
   isEvtRequestGrant,
+  EvtUserNotification,
+  isEvtUserNotification,
+  ResSubscribeUserNotifications,
+  isResSubscribeUserNotifications,
   ReqPromptLLMChatSection,
   FSUpdate,
   isFSUpdate,
@@ -257,6 +261,9 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   private readonly requestGrantListeners: ((evt: EvtRequestGrant) => void)[] = [];
   private readonly requestGrantDetachers = new Map<(evt: EvtRequestGrant) => void, () => void>();
   private readonly requestGrantSubscriptions: { userSlug: string; appSlug: string }[] = [];
+  private readonly userNotificationListeners: ((evt: EvtUserNotification) => void)[] = [];
+  private readonly userNotificationDetachers = new Map<(evt: EvtUserNotification) => void, () => void>();
+  private userNotificationSubscribed = false;
   private currentConnection: VibeDiyApiConnection | undefined;
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   private closed = false;
@@ -348,6 +355,18 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       for (const sub of this.requestGrantSubscriptions) {
         this.subscribeRequestGrants(sub).catch((_e: unknown) => {
           /* re-subscribe best-effort; next reconnect will retry */
+        });
+      }
+      // Re-attach all onUserNotification listeners to the new connection
+      for (const fn of this.userNotificationListeners) {
+        this.userNotificationDetachers.get(fn)?.();
+        const detach = this.attachUserNotificationToConnection(conn, fn);
+        this.userNotificationDetachers.set(fn, detach);
+      }
+      // Re-subscribe to user notifications if we had subscribed before (server needs to know again)
+      if (this.userNotificationSubscribed) {
+        void this.subscribeUserNotifications({}).catch((_e: unknown) => {
+          /* best-effort */
         });
       }
       // When this connection dies, schedule proactive reconnect (unless explicitly closed)
@@ -929,6 +948,64 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       if (idx >= 0) this.requestGrantListeners.splice(idx, 1);
       const detach = this.requestGrantDetachers.get(fn);
       this.requestGrantDetachers.delete(fn);
+      detach?.();
+    };
+  }
+
+  private attachUserNotificationToConnection(conn: VibeDiyApiConnection, fn: (evt: EvtUserNotification) => void): () => void {
+    const unsub = conn.onMessage((wsEvent) => {
+      if (wsEvent.type !== "MessageEvent") return;
+      const raw = wsEvent.event.data;
+      const textPromise =
+        raw instanceof Blob
+          ? raw.text()
+          : Promise.resolve(typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array));
+      textPromise
+        .then((text) => {
+          const parsed = JSON.parse(text);
+          const msg = msgBase(parsed);
+          if (!(msg instanceof type.errors) && isEvtUserNotification(msg.payload)) {
+            fn(msg.payload);
+          }
+        })
+        .catch((_e: unknown) => {
+          // Not a valid message — ignore
+        });
+    });
+    return () => {
+      unsub();
+    };
+  }
+
+  async subscribeUserNotifications(req: Req<{ auth?: unknown }>): Promise<Result<ResSubscribeUserNotifications, VibesDiyError>> {
+    const result: Result<ResSubscribeUserNotifications, VibesDiyError> = await this.request(
+      { ...req, type: "vibes.diy.req-subscribe-user-notifications" },
+      { resMatch: isResSubscribeUserNotifications }
+    );
+    if (result.isOk()) {
+      this.userNotificationSubscribed = true;
+    }
+    return result;
+  }
+
+  onUserNotification(fn: (evt: EvtUserNotification) => void): () => void {
+    this.userNotificationListeners.push(fn);
+    const conn = this.currentConnection;
+    if (conn) {
+      // Connection already established — attach immediately
+      const detach = this.attachUserNotificationToConnection(conn, fn);
+      this.userNotificationDetachers.set(fn, detach);
+    } else {
+      // Trigger connection — replay loop in getReadyConnection will attach all stored listeners
+      this.getReadyConnection().catch((_e: unknown) => {
+        /* best-effort; next activity will establish connection */
+      });
+    }
+    return () => {
+      const idx = this.userNotificationListeners.indexOf(fn);
+      if (idx >= 0) this.userNotificationListeners.splice(idx, 1);
+      const detach = this.userNotificationDetachers.get(fn);
+      this.userNotificationDetachers.delete(fn);
       detach?.();
     };
   }
