@@ -43,6 +43,18 @@ const DocNotifyDelivery = type({
   senderConnId: "string",
 });
 
+const UserNotifyEvtShape = type({
+  type: "'vibes.diy.evt-user-notification'",
+  notificationType: "string",
+  userSlug: "string",
+  appSlug: "string",
+});
+
+const UserNotifyDelivery = type({
+  evt: UserNotifyEvtShape,
+  senderConnId: "string",
+});
+
 declare const caches: CacheStorage;
 declare const Response: typeof CFResponse;
 // declare const DurableObject: typeof DurableObject;
@@ -68,6 +80,44 @@ export class ChatSessions implements DurableObject {
   async fetch(request: CFRequest): Promise<CFResponse> {
     // Internal notification from DocNotify coordinator — broadcast to local subscribers
     if (request.method === "POST") {
+      const url = new URL(request.url);
+
+      if (url.pathname === "/user-notify") {
+        const rJson = await exception2Result(() => request.json());
+        if (rJson.isErr()) return new Response("Invalid JSON", { status: 400 });
+        const parsed = UserNotifyDelivery(rJson.Ok());
+        if (parsed instanceof type.errors) return new Response("Invalid notification", { status: 400 });
+
+        const { evt, senderConnId } = parsed;
+        let delivered = 0;
+        for (const conn of this.connections) {
+          if (!conn.subscribedUserKey) continue; // only subscribed connections
+          if (conn.connId === senderConnId) continue; // skip originator
+          exception2Result(() =>
+            conn.ws.send(
+              conn.ende.uint8ify({
+                tid: crypto.randomUUID(),
+                src: "vibes.diy.api",
+                dst: "vibes.diy.client",
+                ttl: 10,
+                payload: evt,
+              })
+            )
+          );
+          delivered++;
+        }
+        console.log(
+          "[ChatSessions] user-notify",
+          evt.notificationType,
+          evt.userSlug + "/" + evt.appSlug,
+          "| delivered to",
+          delivered,
+          "connections"
+        );
+        if (delivered === 0) return new Response("no connections", { status: 410 });
+        return new Response("ok");
+      }
+
       const rJson = await exception2Result(() => request.json());
       if (rJson.isErr()) {
         return new Response("Invalid JSON", { status: 400 });
