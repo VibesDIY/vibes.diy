@@ -33,6 +33,10 @@ export interface ExpandedVibesPillProps {
   /** When true, the VIBES letters twinkle in opacity on a loop, reusing the
    *  same staggered delays the fill transition uses. */
   isTwinkling?: boolean;
+  /** When provided, replaces the Group + Vibe buttons with a single Login
+   *  button. Pass this for logged-out visitors so they can sign in from the
+   *  pill without hunting for another entry point. */
+  onLogin?: () => void;
 }
 
 function PillActionButton({
@@ -277,6 +281,7 @@ export function ExpandedVibesPill({
   appIconUrl,
   appSlug,
   isTwinkling = false,
+  onLogin,
 }: ExpandedVibesPillProps) {
   // idle → bubble → expanding → open (click to close: open → collapsing → idle)
   const [phase, setPhase] = useState<"idle" | "bubble" | "expanding" | "open" | "collapsing" | "shrinking">("idle");
@@ -568,61 +573,93 @@ export function ExpandedVibesPill({
               </svg>
             }
           />
-          <PillActionButton
-            height={height}
-            open={isWide}
-            label="Group"
-            bgColor="var(--vibes-green, #22c55e)"
-            labelColor="var(--vibes-cream, #FFFEF0)"
-            buttonRef={communityButtonRef}
-            onClick={(e) => {
-              e.stopPropagation();
-              onCommunity?.();
-            }}
-            icon={
-              <svg
-                width="13"
-                height="13"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                <path d="M16 3.13a4 4 0 010 7.75" />
-              </svg>
-            }
-          />
-          <PillActionButton
-            height={height}
-            open={isWide}
-            label="Vibe"
-            bgColor="var(--vibes-yellow, #fedd00)"
-            labelColor="var(--vibes-near-black, #1a1a1a)"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSubMode((m) => (m === "change" ? "default" : "change"));
-            }}
-            icon={
-              <svg
-                width="13"
-                height="13"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-            }
-          />
+          {onLogin ? (
+            <PillActionButton
+              height={height}
+              open={isWide}
+              label="Login"
+              bgColor="var(--vibes-near-black, #1a1a1a)"
+              labelColor="var(--vibes-cream, #FFFEF0)"
+              onClick={(e) => {
+                e.stopPropagation();
+                onLogin();
+              }}
+              icon={
+                <svg
+                  width="13"
+                  height="13"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
+                  <polyline points="10 17 15 12 10 7" />
+                  <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+              }
+            />
+          ) : (
+            <>
+              <PillActionButton
+                height={height}
+                open={isWide}
+                label="Group"
+                bgColor="var(--vibes-green, #22c55e)"
+                labelColor="var(--vibes-cream, #FFFEF0)"
+                buttonRef={communityButtonRef}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCommunity?.();
+                }}
+                icon={
+                  <svg
+                    width="13"
+                    height="13"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                    <path d="M16 3.13a4 4 0 010 7.75" />
+                  </svg>
+                }
+              />
+              <PillActionButton
+                height={height}
+                open={isWide}
+                label="Vibe"
+                bgColor="var(--vibes-yellow, #fedd00)"
+                labelColor="var(--vibes-near-black, #1a1a1a)"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSubMode((m) => (m === "change" ? "default" : "change"));
+                }}
+                icon={
+                  <svg
+                    width="13"
+                    height="13"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                }
+              />
+            </>
+          )}
         </div>
       </div>
 
