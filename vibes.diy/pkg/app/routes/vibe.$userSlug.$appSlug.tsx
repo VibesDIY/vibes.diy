@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useMatches, useNavigate, useParams, useSearchParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
-import { SignIn, useAuth } from "@clerk/react";
+import { SignIn, useAuth, useClerk } from "@clerk/react";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
@@ -144,6 +144,7 @@ export default function VibeIframeWrapper() {
   const [appTitle, setAppTitle] = useState<string | null>(null);
   const [ownerDisplayName, setOwnerDisplayName] = useState<string | undefined>(undefined);
   const { isSignedIn: authSignedIn, isLoaded } = useAuth();
+  const clerk = useClerk();
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
   const [searchParam] = useSearchParams();
@@ -564,7 +565,7 @@ export default function VibeIframeWrapper() {
                 size={60}
                 cloneHref={cloneUrl}
                 editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
-                onCommunity={shareModal.open}
+                onCommunity={authSignedIn ? shareModal.open : undefined}
                 communityButtonRef={shareModal.buttonRef}
                 communityBadgeCount={isOwner ? pendingCount : 0}
                 dmUnreadCount={dmUnreadCount}
@@ -576,6 +577,7 @@ export default function VibeIframeWrapper() {
                 onHome={() => {
                   window.open("https://vibes.diy", "_blank");
                 }}
+                onLogin={authSignedIn ? undefined : () => clerk.openSignIn()}
               />
               <ShareModal modal={shareModal} placement="above" isOwner={isOwner} myGrant={myGrant} />
             </Delayed>
