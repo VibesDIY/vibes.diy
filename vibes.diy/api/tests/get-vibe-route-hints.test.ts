@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, inject, it } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import type { VibesApiSQLCtx } from "@vibes.diy/api-svc";
-import { deriveIsWorldReadable, getVibeRouteHints } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
+import { deriveIsWorldReadable, getVibeRouteHints, parseVibePathname } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 describe("deriveIsWorldReadable", () => {
@@ -86,97 +86,110 @@ function makeAppsRow(overrides: {
   };
 }
 
-describe(
-  "getVibeRouteHints",
-  { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 5000 },
-  () => {
-    const sthis = ensureSuperThis();
-    let vibesCtx: VibesApiSQLCtx;
+describe("getVibeRouteHints", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 5000 }, () => {
+  const sthis = ensureSuperThis();
+  let vibesCtx: VibesApiSQLCtx;
 
-    beforeAll(async () => {
-      const deviceCA = await createTestDeviceCA(sthis);
-      const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
-      vibesCtx = appCtx.vibesCtx;
+  beforeAll(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    vibesCtx = appCtx.vibesCtx;
+  });
+
+  it("returns ogTitle from MetaTitle and isWorldReadable:false when no AppSettings row", async () => {
+    const appSlug = `hints-notitle-${sthis.nextId(6).str}`;
+    const userSlug = `hints-user-${sthis.nextId(6).str}`;
+    await vibesCtx.sql.db
+      .insert(vibesCtx.sql.tables.apps)
+      .values(makeAppsRow({ appSlug, userSlug, meta: [{ type: "title", title: "My App" }] }));
+
+    const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok().ogTitle).toBe("My App");
+    expect(result.Ok().isWorldReadable).toBe(false);
+  });
+
+  it("returns isWorldReadable:true when AppSettings has publicAccess enable:true", async () => {
+    const appSlug = `hints-pub-${sthis.nextId(6).str}`;
+    const userSlug = `hints-user-${sthis.nextId(6).str}`;
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.apps).values(makeAppsRow({ appSlug, userSlug, meta: [] }));
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
+      userId: "test-user-hints",
+      appSlug,
+      userSlug,
+      settings: [{ type: "app.public.access", enable: true }],
+      updated: new Date().toISOString(),
+      created: new Date().toISOString(),
     });
 
-    it("returns ogTitle from MetaTitle and isWorldReadable:false when no AppSettings row", async () => {
-      const appSlug = `hints-notitle-${sthis.nextId(6).str}`;
-      const userSlug = `hints-user-${sthis.nextId(6).str}`;
-      await vibesCtx.sql.db
-        .insert(vibesCtx.sql.tables.apps)
-        .values(makeAppsRow({ appSlug, userSlug, meta: [{ type: "title", title: "My App" }] }));
+    const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok().isWorldReadable).toBe(true);
+  });
 
-      const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
-      expect(result.isOk()).toBe(true);
-      expect(result.Ok().ogTitle).toBe("My App");
-      expect(result.Ok().isWorldReadable).toBe(false);
+  it("returns isWorldReadable:true when AppSettings has enableRequest autoAcceptRole", async () => {
+    const appSlug = `hints-auto-${sthis.nextId(6).str}`;
+    const userSlug = `hints-user-${sthis.nextId(6).str}`;
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.apps).values(makeAppsRow({ appSlug, userSlug, meta: [] }));
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
+      userId: "test-user-hints",
+      appSlug,
+      userSlug,
+      settings: [{ type: "app.request", enable: true, autoAcceptRole: "viewer" }],
+      updated: new Date().toISOString(),
+      created: new Date().toISOString(),
     });
 
-    it("returns isWorldReadable:true when AppSettings has publicAccess enable:true", async () => {
-      const appSlug = `hints-pub-${sthis.nextId(6).str}`;
-      const userSlug = `hints-user-${sthis.nextId(6).str}`;
-      await vibesCtx.sql.db
-        .insert(vibesCtx.sql.tables.apps)
-        .values(makeAppsRow({ appSlug, userSlug, meta: [] }));
-      await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
-        userId: "test-user-hints",
-        appSlug,
-        userSlug,
-        settings: [{ type: "app.public.access", enable: true }],
-        updated: new Date().toISOString(),
-        created: new Date().toISOString(),
-      });
+    const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok().isWorldReadable).toBe(true);
+  });
 
-      const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
-      expect(result.isOk()).toBe(true);
-      expect(result.Ok().isWorldReadable).toBe(true);
+  it("returns isWorldReadable:false when enableRequest has no autoAcceptRole", async () => {
+    const appSlug = `hints-req-${sthis.nextId(6).str}`;
+    const userSlug = `hints-user-${sthis.nextId(6).str}`;
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.apps).values(makeAppsRow({ appSlug, userSlug, meta: [] }));
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
+      userId: "test-user-hints",
+      appSlug,
+      userSlug,
+      settings: [{ type: "app.request", enable: true }],
+      updated: new Date().toISOString(),
+      created: new Date().toISOString(),
     });
 
-    it("returns isWorldReadable:true when AppSettings has enableRequest autoAcceptRole", async () => {
-      const appSlug = `hints-auto-${sthis.nextId(6).str}`;
-      const userSlug = `hints-user-${sthis.nextId(6).str}`;
-      await vibesCtx.sql.db
-        .insert(vibesCtx.sql.tables.apps)
-        .values(makeAppsRow({ appSlug, userSlug, meta: [] }));
-      await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
-        userId: "test-user-hints",
-        appSlug,
-        userSlug,
-        settings: [{ type: "app.request", enable: true, autoAcceptRole: "viewer" }],
-        updated: new Date().toISOString(),
-        created: new Date().toISOString(),
-      });
+    const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok().isWorldReadable).toBe(false);
+  });
 
-      const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
-      expect(result.isOk()).toBe(true);
-      expect(result.Ok().isWorldReadable).toBe(true);
-    });
+  it("returns {ogTitle:undefined, isWorldReadable:false} for unknown slugs", async () => {
+    const result = await getVibeRouteHints(vibesCtx, { userSlug: "nobody", appSlug: "nothing" });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok().ogTitle).toBeUndefined();
+    expect(result.Ok().isWorldReadable).toBe(false);
+  });
+});
 
-    it("returns isWorldReadable:false when enableRequest has no autoAcceptRole", async () => {
-      const appSlug = `hints-req-${sthis.nextId(6).str}`;
-      const userSlug = `hints-user-${sthis.nextId(6).str}`;
-      await vibesCtx.sql.db
-        .insert(vibesCtx.sql.tables.apps)
-        .values(makeAppsRow({ appSlug, userSlug, meta: [] }));
-      await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
-        userId: "test-user-hints",
-        appSlug,
-        userSlug,
-        settings: [{ type: "app.request", enable: true }],
-        updated: new Date().toISOString(),
-        created: new Date().toISOString(),
-      });
+describe("parseVibePathname", () => {
+  it("extracts slugs from a canonical /vibe/:user/:app path", () => {
+    expect(parseVibePathname("/vibe/jchris/my-cool-app")).toEqual({ userSlug: "jchris", appSlug: "my-cool-app" });
+  });
 
-      const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
-      expect(result.isOk()).toBe(true);
-      expect(result.Ok().isWorldReadable).toBe(false);
-    });
+  it("extracts slugs when path has additional segments", () => {
+    expect(parseVibePathname("/vibe/jchris/my-cool-app/some-fsid")).toEqual({ userSlug: "jchris", appSlug: "my-cool-app" });
+  });
 
-    it("returns {ogTitle:undefined, isWorldReadable:false} for unknown slugs", async () => {
-      const result = await getVibeRouteHints(vibesCtx, { userSlug: "nobody", appSlug: "nothing" });
-      expect(result.isOk()).toBe(true);
-      expect(result.Ok().ogTitle).toBeUndefined();
-      expect(result.Ok().isWorldReadable).toBe(false);
-    });
-  }
-);
+  it("returns undefined for non-vibe paths", () => {
+    expect(parseVibePathname("/")).toBeUndefined();
+    expect(parseVibePathname("/api/foo")).toBeUndefined();
+    expect(parseVibePathname("/reports")).toBeUndefined();
+  });
+
+  it("returns undefined for /vibe with missing slugs", () => {
+    expect(parseVibePathname("/vibe")).toBeUndefined();
+    expect(parseVibePathname("/vibe/")).toBeUndefined();
+    expect(parseVibePathname("/vibe/jchris")).toBeUndefined();
+    expect(parseVibePathname("/vibe/jchris/")).toBeUndefined();
+  });
+});
