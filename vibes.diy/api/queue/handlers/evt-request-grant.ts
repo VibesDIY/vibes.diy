@@ -37,6 +37,25 @@ export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGra
     //     token: payload.grant.tokenOrGrantUserId,
     //   }]);
     // }
+    // Notify the requester when their access request is decided
+    const requesterUserId = payload.grant.foreignUserId;
+    if (payload.grant.state === "approved") {
+      await qctx.notifyUser(requesterUserId, {
+        type: "vibes.diy.evt-user-notification",
+        notificationType: "request-approved",
+        userSlug: payload.grant.userSlug,
+        appSlug: payload.grant.appSlug,
+      });
+    }
+    if (payload.grant.state === "revoked") {
+      await qctx.notifyUser(requesterUserId, {
+        type: "vibes.diy.evt-user-notification",
+        notificationType: "request-revoked",
+        userSlug: payload.grant.userSlug,
+        appSlug: payload.grant.appSlug,
+      });
+    }
+
     if (!(payload.grant.foreignInfo.claims?.params.email && payload.grant.foreignInfo.givenEmail)) {
       return Result.Ok(EventoResult.Continue);
     }
