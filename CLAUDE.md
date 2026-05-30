@@ -1,5 +1,7 @@
 # Claude Development Notes
 
+> **Say command style:** [agents/coding-standards.md § Say command timing & style](agents/coding-standards.md) — ultra-terse, single-word opener, spell out abbrevs (`C I`, `A P I`), `PRs` no space.
+
 ## Vibes App Development Guide
 
 **NOTE**: For creating individual Vibes (React components), see `notes/vibes-app-jsx.md`. The instructions in that file are for building apps WITH this platform, NOT for working on this repository itself.
