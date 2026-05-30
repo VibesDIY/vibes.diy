@@ -16,6 +16,7 @@ import {
   isResHasAccessRequestApproved,
   isResHasAccessRequestPending,
   isResHasAccessRequestRevoked,
+  isResRequestAccessApproved,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
@@ -25,7 +26,7 @@ import { and, eq } from "drizzle-orm/sql/expressions";
 import { max } from "drizzle-orm/sql";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite, redeemInvite } from "./invite-flow.js";
-import { hasAccessRequest } from "./request-flow.js";
+import { hasAccessRequest, requestAccess } from "./request-flow.js";
 
 function grantedAccess(role: "editor" | "viewer" | "submitter") {
   switch (role) {
@@ -270,10 +271,6 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
               }
             }
           } else if (settings.entry.enableRequest) {
-            // Auto-join apps surface a distinct grant so the landing card can
-            // show "Accept open invitation"-style copy. We never auto-claim the
-            // grant on read — the explicit Install/Join click is what triggers
-            // requestAccess, which then auto-approves on the server.
             const autoJoinEnabled = settings.entry.enableRequest.autoAcceptRole !== undefined;
             if (!reqUserId) {
               grant = autoJoinEnabled ? "req-login.auto-join" : "req-login.request";
@@ -313,7 +310,35 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                   break;
               }
               if (!grant) {
-                grant = autoJoinEnabled ? "req-login.auto-join" : "req-login.request";
+                const rRequestAccess = await requestAccess(vctx, {
+                  appSlug: app.appSlug,
+                  userSlug: app.userSlug,
+                  foreignUserId: reqUserId,
+                  claims: req._auth?.verifiedAuth.claims,
+                });
+                if (rRequestAccess.isErr()) {
+                  await ctx.send.send(ctx, {
+                    type: "vibes.diy.res-get-app-by-fsid",
+                    error: "request-access-failed",
+                    appSlug: req.appSlug,
+                    userSlug: req.userSlug,
+                    fsId: req.fsId,
+                    grant: "not-found",
+                    mode: "dev",
+                    releaseSeq: -1,
+                    env: {},
+                    fileSystem: [],
+                    meta: [],
+                    created: new Date().toISOString(),
+                  } satisfies ResGetAppByFsId);
+                  return Result.Ok(EventoResult.Continue);
+                }
+                const requestAccessRes = rRequestAccess.Ok();
+                if (isResRequestAccessApproved(requestAccessRes)) {
+                  grant = grantedAccess(requestAccessRes.role);
+                } else {
+                  grant = "pending-request";
+                }
               }
             }
           }

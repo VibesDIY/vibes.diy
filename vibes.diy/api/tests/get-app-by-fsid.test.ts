@@ -124,36 +124,14 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
     expect(rApp.Ok().grant).toBe("req-login.request");
   });
 
-  it("getAppByFsId returns req-login.auto-join on first visit when autoAcceptRole is enabled", async () => {
+  it("getAppByFsId auto-grants access on first visit when autoAcceptRole is enabled", async () => {
     const { appSlug, userSlug } = await createApp();
 
     // Enable request access with auto-approve
     await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "viewer" } });
 
-    // Non-owner visits — must see the landing card with auto-join copy. The page-load
-    // resolver must NOT silently auto-claim the grant; the visitor still consents via
-    // an explicit click that fires requestAccess.
-    const rApp = await api2.getAppByFsId({ appSlug, userSlug });
-    if (rApp.isErr()) {
-      assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
-    }
-    expect(rApp.Ok().grant).toBe("req-login.auto-join");
-  });
-
-  it("auto-accept resolves to granted access only after explicit requestAccess", async () => {
-    const { appSlug, userSlug } = await createApp();
-
-    // Enable request access with auto-approve
-    await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "viewer" } });
-
-    // Explicit requestAccess (what the Join button triggers) auto-approves immediately
-    const rRequested = await api2.requestAccess({ appSlug, userSlug });
-    if (rRequested.isErr()) {
-      assert.fail("Expected requestAccess to succeed: " + JSON.stringify(rRequested.Err()));
-    }
-    expect(rRequested.Ok().state).toBe("approved");
-
-    // Subsequent getAppByFsId now returns granted-access.viewer
+    // Signed-in non-owner visits — getAppByFsId fires requestAccess internally and
+    // resolves straight to granted-access.viewer without any user click.
     const rApp = await api2.getAppByFsId({ appSlug, userSlug });
     if (rApp.isErr()) {
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
