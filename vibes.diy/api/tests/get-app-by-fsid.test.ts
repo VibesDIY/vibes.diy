@@ -139,6 +139,25 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
     expect(rApp.Ok().grant).toBe("granted-access.viewer");
   });
 
+  it("signed-in user gets auto-promoted above public-access when autoAcceptRole is also set", async () => {
+    const { appSlug, userSlug } = await createApp();
+
+    // Both public access AND auto-accept editor are active simultaneously
+    await api.ensureAppSettings({
+      appSlug,
+      userSlug,
+      publicAccess: { enable: true },
+      request: { enable: true, autoAcceptRole: "editor" },
+    });
+
+    // Signed-in non-owner should get granted-access.editor, not the read-only public-access
+    const rApp = await api2.getAppByFsId({ appSlug, userSlug });
+    if (rApp.isErr()) {
+      assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
+    }
+    expect(rApp.Ok().grant).toBe("granted-access.editor");
+  });
+
   it("getAppByFsId returns not-grant when request access is disabled", async () => {
     const { appSlug, userSlug } = await createApp();
 
