@@ -53,6 +53,7 @@ const UserNotifyEvtShape = type({
 const UserNotifyDelivery = type({
   evt: UserNotifyEvtShape,
   senderConnId: "string",
+  targetUserId: "string",
 });
 
 declare const caches: CacheStorage;
@@ -88,10 +89,10 @@ export class ChatSessions implements DurableObject {
         const parsed = UserNotifyDelivery(rJson.Ok());
         if (parsed instanceof type.errors) return new Response("Invalid notification", { status: 400 });
 
-        const { evt, senderConnId } = parsed;
+        const { evt, senderConnId, targetUserId } = parsed;
         let delivered = 0;
         for (const conn of this.connections) {
-          if (!conn.subscribedUserKey) continue; // only subscribed connections
+          if (conn.subscribedUserKey !== targetUserId) continue; // only the target user
           if (conn.connId === senderConnId) continue; // skip originator
           exception2Result(() =>
             conn.ws.send(

@@ -17,6 +17,7 @@ const UserNotifyEvt = type({
 
 const UserNotifyNotify = type({
   action: "'notify'",
+  targetUserId: "string",
   senderShardId: "string",
   senderConnId: "string",
   evt: UserNotifyEvt,
@@ -110,7 +111,7 @@ export class UserNotify implements DurableObject {
             stub.fetch(
               new Request("https://internal/user-notify", {
                 method: "POST",
-                body: JSON.stringify({ evt: msg.evt, senderConnId: msg.senderConnId }),
+                body: JSON.stringify({ evt: msg.evt, senderConnId: msg.senderConnId, targetUserId: msg.targetUserId }),
                 headers: { "Content-Type": "application/json" },
               }) as unknown as CFRequest
             )

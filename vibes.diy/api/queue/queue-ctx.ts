@@ -147,6 +147,7 @@ export class QueueCtx {
           method: "POST",
           body: JSON.stringify({
             action: "notify",
+            targetUserId: userId,
             senderShardId: "queue",
             senderConnId: "queue",
             evt,

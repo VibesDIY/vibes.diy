@@ -175,6 +175,7 @@ function userNotifyCallbacks(dn: DocNotifyCtx) {
     notifyUser: async (userId: string, evt: EvtUserNotification, senderConnId: string): Promise<void> => {
       await fetchUserNotify(userId, {
         action: "notify",
+        targetUserId: userId,
         senderShardId: dn.shardId,
         senderConnId,
         evt,
