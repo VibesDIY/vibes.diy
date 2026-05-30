@@ -1,31 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
-import { Result } from "@adviser/cement";
+import { OnFunc, Result } from "@adviser/cement";
 import { VibesDiyApi, VibesDiyApiParam } from "./index.js";
 import { VibeDiyApiConnection } from "./api-connection.js";
-import { W3CWebSocketMessageEvent } from "@vibes.diy/api-types";
+import { W3CWebSocketCloseEvent, W3CWebSocketErrorEvent, W3CWebSocketMessageEvent } from "@vibes.diy/api-types";
 
 function createMockConnection(): {
   connection: VibeDiyApiConnection;
   emitMessage: (message: Record<string, unknown>) => void;
 } {
-  const onMessageHandlers = new Set<(event: W3CWebSocketMessageEvent) => void>();
-  const onCloseHandlers = new Set<(event: unknown) => void>();
-  const onErrorHandlers = new Set<(event: unknown) => void>();
+  const onMessage = OnFunc<(event: W3CWebSocketMessageEvent) => void>();
+  const onClose = OnFunc<(event: W3CWebSocketCloseEvent) => void>();
+  const onError = OnFunc<(event: W3CWebSocketErrorEvent) => void>();
 
   const connection: VibeDiyApiConnection = {
     ctx: {},
-    onMessage: (handler) => {
-      onMessageHandlers.add(handler);
-      return () => onMessageHandlers.delete(handler);
-    },
-    onClose: (handler) => {
-      onCloseHandlers.add(handler as (event: unknown) => void);
-      return () => onCloseHandlers.delete(handler as (event: unknown) => void);
-    },
-    onError: (handler) => {
-      onErrorHandlers.add(handler as (event: unknown) => void);
-      return () => onErrorHandlers.delete(handler as (event: unknown) => void);
-    },
+    onMessage,
+    onClose,
+    onError,
     send: () => Result.Ok(undefined),
     close: async () => undefined,
   };
@@ -36,9 +27,7 @@ function createMockConnection(): {
       type: "MessageEvent",
       event: { data: payload },
     } as W3CWebSocketMessageEvent;
-    for (const handler of [...onMessageHandlers]) {
-      handler(evt);
-    }
+    onMessage.invoke(evt);
   };
 
   return { connection, emitMessage };
