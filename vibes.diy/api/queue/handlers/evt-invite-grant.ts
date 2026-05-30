@@ -26,6 +26,14 @@ export const evtInviteGrantEvento: EventoHandler<unknown, MsgBase<EvtInviteGrant
       // we skip on delete
       return Result.Ok(EventoResult.Continue);
     }
+
+    if (payload.grant.state === "accepted") {
+      const rNotify = await qctx.notifyUserNotification(payload.userId, payload);
+      if (rNotify.isErr()) {
+        console.warn("Failed to fan out invite-grant websocket notification", rNotify.Err());
+      }
+    }
+
     if (payload.grant.state === "accepted") {
       await postEmbed(qctx, buildInviteAcceptedEmbed(qctx, payload));
     }

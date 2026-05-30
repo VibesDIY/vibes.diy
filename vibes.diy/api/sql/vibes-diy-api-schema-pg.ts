@@ -158,6 +158,16 @@ export const sqlUserSettings = pgTable("UserSettings", {
   created: text().notNull(),
 });
 
+export const sqlUserNotificationPreferences = pgTable("user_notification_preferences", {
+  userId: text().notNull().primaryKey(),
+  buildCompleteSuccess: integer().notNull().default(1),
+  buildCompleteFailed: integer().notNull().default(1),
+  commentPosted: integer().notNull().default(1),
+  accessRequestPending: integer().notNull().default(1),
+  updated: text().notNull(),
+  created: text().notNull(),
+});
+
 export const sqlAppSettings = pgTable(
   "AppSettings",
   {

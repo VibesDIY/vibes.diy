@@ -33,7 +33,36 @@ const RequestGrantEvt = type({
   }).and(type("Record<string, unknown>")),
 }).and(type("Record<string, unknown>"));
 
-const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt);
+const BuildCompleteEvt = type({
+  type: "'vibes.diy.evt-build-complete'",
+  userSlug: "string",
+  appSlug: "string",
+  promptId: "string",
+  status: "'success' | 'failed'",
+  "durationMs?": "number",
+});
+
+const CommentPostedEvt = type({
+  type: "'vibes.diy.evt-comment-posted'",
+  userId: "string",
+  userSlug: "string",
+  appSlug: "string",
+  docId: "string",
+  created: "string",
+  "email?": "string",
+});
+
+const InviteGrantEvt = type({
+  type: "'vibes.diy.evt-invite-grant'",
+  op: "'upsert' | 'delete'",
+  userId: "string",
+  grant: type({
+    userSlug: "string",
+    appSlug: "string",
+  }).and(type("Record<string, unknown>")),
+}).and(type("Record<string, unknown>"));
+
+const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt).or(BuildCompleteEvt).or(CommentPostedEvt).or(InviteGrantEvt);
 
 // Internal POST body from DocNotify: the doc-changed event plus the
 // originating WebSocket's connId, so we can skip just that one connection
@@ -41,6 +70,7 @@ const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt);
 const DocNotifyDelivery = type({
   evt: DocNotifyEvt,
   senderConnId: "string",
+  "subscriptionKey?": "string",
 });
 
 declare const caches: CacheStorage;
@@ -65,6 +95,19 @@ export class ChatSessions implements DurableObject {
     this.env = env;
   }
 
+  private subscriptionKeyFromEvent(evt: typeof DocNotifyEvt.infer): string | undefined {
+    switch (evt.type) {
+      case "vibes.diy.evt-doc-changed":
+        return `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
+      case "vibes.diy.evt-request-grant":
+        return `${evt.grant.userSlug}/${evt.grant.appSlug}`;
+      case "vibes.diy.evt-build-complete":
+      case "vibes.diy.evt-comment-posted":
+      case "vibes.diy.evt-invite-grant":
+        return undefined;
+    }
+  }
+
   async fetch(request: CFRequest): Promise<CFResponse> {
     // Internal notification from DocNotify coordinator — broadcast to local subscribers
     if (request.method === "POST") {
@@ -77,17 +120,17 @@ export class ChatSessions implements DurableObject {
         return new Response("Invalid notification", { status: 400 });
       }
       const { evt, senderConnId } = parsed;
-      const subscriptionKey =
-        evt.type === "vibes.diy.evt-request-grant"
-          ? `${evt.grant.userSlug}/${evt.grant.appSlug}`
-          : `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
+      const subscriptionKey = parsed.subscriptionKey ?? this.subscriptionKeyFromEvent(evt);
+      if (!subscriptionKey) {
+        return new Response("Missing subscriptionKey", { status: 400 });
+      }
       let delivered = 0;
       let skippedSender = 0;
       for (const conn of this.connections) {
         const subscribed =
-          evt.type === "vibes.diy.evt-request-grant"
-            ? conn.subscribedRequestGrantKeys.has(subscriptionKey)
-            : conn.subscribedDocKeys.has(subscriptionKey);
+          conn.subscribedDocKeys.has(subscriptionKey) ||
+          conn.subscribedRequestGrantKeys.has(subscriptionKey) ||
+          conn.subscribedUserKeys.has(subscriptionKey);
         if (!subscribed) continue;
         // Skip the originating WebSocket — it already updated optimistically
         // when the put/delete returned. Sibling connections on the same
@@ -109,7 +152,7 @@ export class ChatSessions implements DurableObject {
         );
         delivered++;
       }
-      const eventDetail = evt.type === "vibes.diy.evt-request-grant" ? `op:${evt.op}` : `docId:${evt.docId.slice(0, 8)}`;
+      const eventDetail = `type:${evt.type}`;
       console.log(
         "[ChatSessions] received notification",
         subscriptionKey,

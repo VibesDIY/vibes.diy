@@ -19,6 +19,8 @@ export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unk
   // Per-(userSlug/appSlug) subscription keys this connection is subscribed to
   // for request-grant notifications (owner pending approvals).
   readonly subscribedRequestGrantKeys = new Set<string>();
+  // User-level subscription keys for cross-tab/device notifications.
+  readonly subscribedUserKeys = new Set<string>();
   // Unique per-WebSocket id used to skip the originating connection when
   // fanning out doc-changed notifications. Many connections share a shard
   // (warm-DO sharing per (userSlug, appSlug)), so shard-level exclusion

@@ -15,6 +15,11 @@ database_id = "105530de-9900-435b-92f4-15347af604f6"
 binding = "FS_IDS_BUCKET"
 bucket_name = "vibes-diy-fs-ids"
 
+[[durable_objects.bindings]]
+name = "DOC_NOTIFY"
+class_name = "DocNotify"
+script_name = "vibes-diy-v2"
+
 [[queues.consumers]]
 queue = "vibes-service"
 max_batch_size = 10
@@ -43,6 +48,11 @@ database_id = "105530de-9900-435b-92f4-15347af604f6"
 binding = "FS_IDS_BUCKET"
 bucket_name = "vibes-diy-fs-ids"
 
+[[env.dev.durable_objects.bindings]]
+name = "DOC_NOTIFY"
+class_name = "DocNotify"
+script_name = "vibes-diy-v2-dev"
+
 [[env.dev.queues.consumers]]
 queue = "vibes-service-dev"
 max_batch_size = 10
@@ -66,6 +76,11 @@ database_id = "0f783eae-91cf-49c4-a706-6e4d2498cb4a"
 [[env.prod.r2_buckets]]
 binding = "FS_IDS_BUCKET"
 bucket_name = "vibes-diy-fs-ids"
+
+[[env.prod.durable_objects.bindings]]
+name = "DOC_NOTIFY"
+class_name = "DocNotify"
+script_name = "vibes-diy-v2-prod"
 
 [[env.prod.queues.consumers]]
 queue = "vibes-service-prod"

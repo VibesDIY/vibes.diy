@@ -1,7 +1,9 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import { useEngagedVisit } from "./hooks/useEngagedVisit.js";
 import { useCapiCompleteRegistration } from "./hooks/useCapiCompleteRegistration.js";
+import { useBuildCompletionNotifications } from "./hooks/useBuildCompletionNotifications.js";
+import { useQueueNotifications } from "./hooks/useQueueNotifications.js";
 import { ClerkProvider, useClerk } from "@clerk/react";
 import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Option, Result } from "@adviser/cement";
 import { type } from "arktype";
@@ -246,6 +248,27 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
           },
         }
       : {}),
+  });
+
+  const notificationsEnabled = clerk.loaded && !!clerk.isSignedIn;
+
+  useEffect(() => {
+    if (!notificationsEnabled) return;
+
+    void realCtx.vibeDiyApi.subscribeUserNotifications({}).then((rSub) => {
+      if (rSub.isErr()) {
+        console.warn("Failed to subscribe user-level notifications", rSub.Err());
+      }
+    });
+  }, [notificationsEnabled, realCtx.vibeDiyApi]);
+
+  useBuildCompletionNotifications({
+    vibeDiyApi: realCtx.vibeDiyApi,
+    enabled: notificationsEnabled,
+  });
+  useQueueNotifications({
+    vibeDiyApi: realCtx.vibeDiyApi,
+    enabled: notificationsEnabled,
   });
 
   useEngagedVisit();

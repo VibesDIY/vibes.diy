@@ -33,7 +33,36 @@ const RequestGrantEvt = type({
   }).and(type("Record<string, unknown>")),
 }).and(type("Record<string, unknown>"));
 
-const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt);
+const BuildCompleteEvt = type({
+  type: "'vibes.diy.evt-build-complete'",
+  userSlug: "string",
+  appSlug: "string",
+  promptId: "string",
+  status: "'success' | 'failed'",
+  "durationMs?": "number",
+});
+
+const CommentPostedEvt = type({
+  type: "'vibes.diy.evt-comment-posted'",
+  userId: "string",
+  userSlug: "string",
+  appSlug: "string",
+  docId: "string",
+  created: "string",
+  "email?": "string",
+});
+
+const InviteGrantEvt = type({
+  type: "'vibes.diy.evt-invite-grant'",
+  op: "'upsert' | 'delete'",
+  userId: "string",
+  grant: type({
+    userSlug: "string",
+    appSlug: "string",
+  }).and(type("Record<string, unknown>")),
+}).and(type("Record<string, unknown>"));
+
+const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt).or(BuildCompleteEvt).or(CommentPostedEvt).or(InviteGrantEvt);
 
 const DocNotifyNotify = type({
   action: "'notify'",
@@ -41,6 +70,7 @@ const DocNotifyNotify = type({
   // per-WebSocket via senderConnId so siblings on the same shard still fan out.
   senderShardId: "string",
   senderConnId: "string",
+  "subscriptionKey?": "string",
   evt: DocNotifyEvt,
 });
 
@@ -70,6 +100,19 @@ export class DocNotify implements DurableObject {
   private async saveSubscribers(): Promise<void> {
     if (this.subscribers) {
       await this.state.storage.put(SUBSCRIBERS_KEY, [...this.subscribers]);
+    }
+  }
+
+  private subscriptionKeyFromEvt(evt: typeof DocNotifyEvt.infer): string | undefined {
+    switch (evt.type) {
+      case "vibes.diy.evt-doc-changed":
+        return `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
+      case "vibes.diy.evt-request-grant":
+        return `${evt.grant.userSlug}/${evt.grant.appSlug}`;
+      case "vibes.diy.evt-build-complete":
+      case "vibes.diy.evt-comment-posted":
+      case "vibes.diy.evt-invite-grant":
+        return undefined;
     }
   }
 
@@ -104,7 +147,19 @@ export class DocNotify implements DurableObject {
         return new Response("ok");
 
       case "notify":
-        await this.fanOut(body, subs);
+        {
+          const subscriptionKey = body.subscriptionKey ?? this.subscriptionKeyFromEvt(body.evt);
+          if (!subscriptionKey) {
+            return new Response("Missing subscriptionKey", { status: 400 });
+          }
+          await this.fanOut(
+            {
+              ...body,
+              subscriptionKey,
+            },
+            subs
+          );
+        }
         return new Response("ok");
 
       default:
@@ -112,7 +167,7 @@ export class DocNotify implements DurableObject {
     }
   }
 
-  private async fanOut(msg: typeof DocNotifyNotify.infer, subs: Set<string>): Promise<void> {
+  private async fanOut(msg: typeof DocNotifyNotify.infer & { subscriptionKey: string }, subs: Set<string>): Promise<void> {
     const stale: string[] = [];
     const promises: Promise<void>[] = [];
 
@@ -120,11 +175,8 @@ export class DocNotify implements DurableObject {
     // sender connection is excluded per-WebSocket inside chat-sessions via
     // senderConnId, which lets sibling tabs/browsers on the same shard
     // (warm-DO sharing per vibe) still receive the notification.
-    const eventScope =
-      msg.evt.type === "vibes.diy.evt-request-grant"
-        ? `${msg.evt.grant.userSlug}/${msg.evt.grant.appSlug}`
-        : `${msg.evt.userSlug}/${msg.evt.appSlug}`;
-    const eventDetail = msg.evt.type === "vibes.diy.evt-request-grant" ? `op:${msg.evt.op}` : `docId:${msg.evt.docId.slice(0, 8)}`;
+    const eventScope = msg.subscriptionKey;
+    const eventDetail = `type:${msg.evt.type}`;
     const targets = [...subs];
     console.log(
       "[DocNotify] notify",
@@ -148,7 +200,7 @@ export class DocNotify implements DurableObject {
             stub.fetch(
               new Request("https://internal/doc-notify", {
                 method: "POST",
-                body: JSON.stringify({ evt: msg.evt, senderConnId: msg.senderConnId }),
+                body: JSON.stringify({ evt: msg.evt, senderConnId: msg.senderConnId, subscriptionKey: msg.subscriptionKey }),
                 headers: { "Content-Type": "application/json" },
               }) as unknown as CFRequest
             )

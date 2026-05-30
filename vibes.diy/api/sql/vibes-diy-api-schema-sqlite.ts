@@ -157,6 +157,16 @@ export const sqlUserSettings = sqliteTable("UserSettings", {
   created: text().notNull(),
 });
 
+export const sqlUserNotificationPreferences = sqliteTable("user_notification_preferences", {
+  userId: text().notNull().primaryKey(),
+  buildCompleteSuccess: int().notNull().default(1),
+  buildCompleteFailed: int().notNull().default(1),
+  commentPosted: int().notNull().default(1),
+  accessRequestPending: int().notNull().default(1),
+  updated: text().notNull(),
+  created: text().notNull(),
+});
+
 export const sqlAppSettings = sqliteTable(
   "AppSettings",
   {

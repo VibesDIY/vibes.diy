@@ -12,8 +12,9 @@ import {
   isResAssetUploadGrant,
   parseArray,
   userSettingModelDefaults,
+  defaultUserNotificationPreferences,
 } from "@vibes.diy/api-types";
-import type { AIParams, UserSettingProfile } from "@vibes.diy/api-types";
+import type { AIParams, UserSettingProfile, UserNotificationPreferences } from "@vibes.diy/api-types";
 import { exception2Result } from "@adviser/cement";
 import { ModelSettingsCards } from "../components/ModelSettingsCards.js";
 
@@ -577,6 +578,85 @@ function ProfileCard() {
   );
 }
 
+type NotificationPreferenceKey = keyof UserNotificationPreferences;
+
+const notificationPreferenceLabels: Record<NotificationPreferenceKey, string> = {
+  buildCompleteSuccess: "Build complete (success)",
+  buildCompleteFailed: "Build failed",
+  commentPosted: "New comment on my vibe",
+  accessRequestPending: "Access request pending",
+};
+
+function NotificationPreferencesCard() {
+  const { vibeDiyApi } = useVibesDiy();
+  const [prefs, setPrefs] = useState<UserNotificationPreferences>(defaultUserNotificationPreferences);
+  const [loading, setLoading] = useState(true);
+  const [savingKey, setSavingKey] = useState<NotificationPreferenceKey | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    void vibeDiyApi.getUserNotificationPreferences({}).then((res) => {
+      setLoading(false);
+      if (res.isErr()) {
+        setError(`Failed to load notification preferences: ${res.Err()}`);
+        return;
+      }
+      setPrefs(res.Ok().preferences);
+    });
+  }, [vibeDiyApi]);
+
+  const toggle = (key: NotificationPreferenceKey) => {
+    const nextValue = !prefs[key];
+    setSavingKey(key);
+    setError(null);
+    void vibeDiyApi
+      .setUserNotificationPreferences({
+        preferences: {
+          [key]: nextValue,
+        },
+      })
+      .then((res) => {
+        setSavingKey(null);
+        if (res.isErr()) {
+          setError(`Failed to save notification preferences: ${res.Err()}`);
+          return;
+        }
+        setPrefs(res.Ok().preferences);
+      });
+  };
+
+  return (
+    <BrutalistCard size="md">
+      <h3 className="text-2xl font-bold mb-4">Notification Preferences</h3>
+      <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
+        Browser notifications are delivered across your signed-in sessions. Control which notification types can alert you.
+      </p>
+      {error && <p className="text-red-600 font-medium mb-3">{error}</p>}
+      {loading ? (
+        <p style={{ color: "var(--vibes-text-secondary)" }}>Loading...</p>
+      ) : (
+        <div className="space-y-3">
+          {(Object.keys(notificationPreferenceLabels) as NotificationPreferenceKey[]).map((key) => (
+            <label key={key} className="flex items-center justify-between gap-4 text-sm">
+              <span>{notificationPreferenceLabels[key]}</span>
+              <span className="flex items-center gap-2">
+                {savingKey === key && (
+                  <span className="text-xs" style={{ color: "var(--vibes-text-secondary)" }}>
+                    Saving…
+                  </span>
+                )}
+                <input type="checkbox" checked={prefs[key]} disabled={savingKey !== null} onChange={() => toggle(key)} />
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+    </BrutalistCard>
+  );
+}
+
 function SettingsContent() {
   const { signOut } = useClerk();
   const navigate = useNavigate();
@@ -591,6 +671,8 @@ function SettingsContent() {
       <UserSlugsCard />
 
       <ProfileCard />
+
+      <NotificationPreferencesCard />
 
       <ModelDefaultsCard />
 

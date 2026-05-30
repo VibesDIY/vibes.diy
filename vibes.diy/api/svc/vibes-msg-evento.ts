@@ -59,6 +59,11 @@ import { reportActiveMembersEvento } from "./public/report-active-members.js";
 import { reportTopVibesByMembersEvento } from "./public/report-top-vibes-by-members.js";
 import { reportAttributionReferrersEvento } from "./public/report-attribution-referrers.js";
 import { reportCampaignHealthEvento } from "./public/report-campaign-health.js";
+import {
+  subscribeUserNotificationsEvento,
+  getUserNotificationPreferencesEvento,
+  setUserNotificationPreferencesEvento,
+} from "./public/user-notifications.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
@@ -102,6 +107,9 @@ export const vibesMsgEvento = Lazy(() => {
     deleteDocEvento,
     subscribeDocsEvento,
     listDbNamesEvento,
+    subscribeUserNotificationsEvento,
+    getUserNotificationPreferencesEvento,
+    setUserNotificationPreferencesEvento,
     listMembersEvento,
     listMembershipsEvento,
     whoAmIEvento,

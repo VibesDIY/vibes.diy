@@ -1,6 +1,6 @@
 import { exception2Result, Result } from "@adviser/cement";
-import { RawEmailWithoutFrom, S3Api } from "@vibes.diy/api-types";
-import { D1Database, Fetcher, R2Bucket } from "@cloudflare/workers-types";
+import { RawEmailWithoutFrom, S3Api, UserNotificationEvent, userNotificationSubscriptionKey } from "@vibes.diy/api-types";
+import { D1Database, DurableObjectNamespace, Fetcher, R2Bucket, Request as CFRequest } from "@cloudflare/workers-types";
 import { createVibesApiTables, cfDrizzle, CreateSQLPeerParams, toDBFlavour, VibesApiTables } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "@vibes.diy/api-svc";
 import { SuperThis } from "@fireproof/core-types-base";
@@ -11,6 +11,7 @@ export interface QueueCtxParams {
     BROWSER: Fetcher;
     D1: D1Database;
     FS_IDS_BUCKET?: R2Bucket;
+    DOC_NOTIFY?: DurableObjectNamespace;
   };
   vibes: {
     env: {
@@ -125,5 +126,39 @@ export class QueueCtx {
     const jsonTxt = await res.text();
     const rJson = exception2Result(() => JSON.parse(jsonTxt));
     return Result.Ok({ result: rJson.isOk() ? rJson.Ok() : jsonTxt });
+  }
+
+  async notifyUserNotification(userId: string, evt: UserNotificationEvent): Promise<Result<void>> {
+    const docNotify = this.params.cf.DOC_NOTIFY;
+    if (!docNotify) {
+      console.log("DOC_NOTIFY not bound — skipping websocket notification");
+      return Result.Ok();
+    }
+    const subscriptionKey = userNotificationSubscriptionKey(userId);
+    const id = docNotify.idFromName(subscriptionKey);
+    const stub = docNotify.get(id);
+    const rFetch = await exception2Result(() =>
+      stub.fetch(
+        new Request("https://internal/doc-notify", {
+          method: "POST",
+          body: JSON.stringify({
+            action: "notify",
+            subscriptionKey,
+            senderShardId: "queue-worker",
+            senderConnId: "",
+            evt,
+          }),
+          headers: { "Content-Type": "application/json" },
+        }) as unknown as CFRequest
+      )
+    );
+    if (rFetch.isErr()) {
+      return Result.Err(rFetch);
+    }
+    const res = rFetch.Ok();
+    if (!res.ok) {
+      return Result.Err(`DocNotify notification failed: ${res.status}:${res.statusText}`);
+    }
+    return Result.Ok();
   }
 }

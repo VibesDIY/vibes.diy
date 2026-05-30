@@ -13,7 +13,13 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { AppContext, Lazy, LoggerImpl, Result, URI } from "@adviser/cement";
 import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
 import { CfCacheIf } from "./types.js";
-import { CFEnv, type EvtRequestGrant, MsgBase } from "@vibes.diy/api-types";
+import {
+  CFEnv,
+  type EvtRequestGrant,
+  type UserNotificationEvent,
+  MsgBase,
+  userNotificationSubscriptionKey,
+} from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/core-types-base";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "./peers/r2-to-s3api.js";
@@ -97,16 +103,25 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
     );
   }
 
+  async function notifyByKey(
+    key: string,
+    evt: Record<string, unknown>,
+    opts: { senderConnId?: string; senderShardId?: string } = {}
+  ): Promise<void> {
+    await fetchDocNotify(key, {
+      action: "notify",
+      subscriptionKey: key,
+      senderShardId: opts.senderShardId ?? dn.shardId,
+      senderConnId: opts.senderConnId ?? "",
+      evt,
+    });
+  }
+
   return {
     notifyDocChanged: async (evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string) => {
       const key = `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
       console.log("[docNotify] notifyDocChanged key:", key, "shard:", dn.shardId.slice(0, 8), "conn:", senderConnId.slice(0, 8));
-      await fetchDocNotify(key, {
-        action: "notify",
-        senderShardId: dn.shardId,
-        senderConnId,
-        evt: { type: "vibes.diy.evt-doc-changed", ...evt },
-      });
+      await notifyByKey(key, { type: "vibes.diy.evt-doc-changed", ...evt }, { senderConnId });
     },
     registerDocSubscription: async (subscriptionKey: string) => {
       console.log("[docNotify] register key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
@@ -126,12 +141,7 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
         "conn:",
         senderConnId.slice(0, 8)
       );
-      await fetchDocNotify(key, {
-        action: "notify",
-        senderShardId: dn.shardId,
-        senderConnId,
-        evt,
-      });
+      await notifyByKey(key, evt, { senderConnId });
     },
     registerRequestGrantSubscription: async (subscriptionKey: string) => {
       console.log("[docNotify] register request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
@@ -140,6 +150,21 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
     deregisterRequestGrantSubscription: async (subscriptionKey: string) => {
       console.log("[docNotify] deregister request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
       await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
+    },
+    notifyUserNotification: async (userId: string, evt: UserNotificationEvent, senderConnId = "") => {
+      const key = userNotificationSubscriptionKey(userId);
+      console.log("[docNotify] notifyUserNotification key:", key, "shard:", dn.shardId.slice(0, 8));
+      await notifyByKey(key, evt, { senderConnId });
+    },
+    registerUserSubscription: async (userId: string) => {
+      const key = userNotificationSubscriptionKey(userId);
+      console.log("[docNotify] register user key:", key, "shard:", dn.shardId.slice(0, 8));
+      await fetchDocNotify(key, { action: "register", shardId: dn.shardId });
+    },
+    deregisterUserSubscription: async (userId: string) => {
+      const key = userNotificationSubscriptionKey(userId);
+      console.log("[docNotify] deregister user key:", key, "shard:", dn.shardId.slice(0, 8));
+      await fetchDocNotify(key, { action: "deregister", shardId: dn.shardId });
     },
   };
 }

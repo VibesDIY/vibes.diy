@@ -1,121 +1,147 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import {
+  defaultUserNotificationPreferences,
+  EvtBuildComplete,
+  UserNotificationPreferences,
+  VibesDiyApiIface,
+} from "@vibes.diy/api-types";
 
-const DEFAULT_NOTIFICATION_THRESHOLD_MS = 15_000;
-const STORAGE_KEY_SUPPRESSED = "vibes.diy.build-complete-notifications.suppressed";
-
-export interface UseBuildCompletionNotificationsArgs {
-  buildRunning: boolean;
-  buildFailed: boolean;
-  appTitle: string;
+interface UseBuildCompletionNotificationsArgs {
+  vibeDiyApi: VibesDiyApiIface;
+  enabled?: boolean;
   thresholdMs?: number;
 }
 
-function notificationsAvailable(): boolean {
+const DISMISSED_KEY = "vibes.buildNotifications.dismissed";
+const PERMISSION_PROMPTED_KEY = "vibes.buildNotifications.permissionPrompted";
+const DEFAULT_THRESHOLD_MS = 15_000;
+
+function isPageVisibleAndFocused(): boolean {
+  return document.visibilityState === "visible" && document.hasFocus();
+}
+
+function isNotificationApiAvailable(): boolean {
   return typeof window !== "undefined" && typeof Notification !== "undefined";
 }
 
-function readSuppressed(): boolean {
-  if (typeof localStorage === "undefined") return false;
+function wasDismissed(): boolean {
   try {
-    return localStorage.getItem(STORAGE_KEY_SUPPRESSED) === "1";
+    return window.localStorage.getItem(DISMISSED_KEY) === "1";
   } catch {
     return false;
   }
 }
 
-function writeSuppressed(): void {
-  if (typeof localStorage === "undefined") return;
+function markDismissed(): void {
   try {
-    localStorage.setItem(STORAGE_KEY_SUPPRESSED, "1");
+    window.localStorage.setItem(DISMISSED_KEY, "1");
   } catch {
-    // Ignore storage failures (privacy mode, quota, etc.).
+    // no-op
   }
 }
 
+function hasPromptedBefore(): boolean {
+  try {
+    return window.localStorage.getItem(PERMISSION_PROMPTED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markPrompted(): void {
+  try {
+    window.localStorage.setItem(PERMISSION_PROMPTED_KEY, "1");
+  } catch {
+    // no-op
+  }
+}
+
+async function ensureNotificationPermission(): Promise<NotificationPermission> {
+  if (!isNotificationApiAvailable()) return "denied";
+
+  const current = Notification.permission;
+  if (current === "granted" || current === "denied") return current;
+
+  if (wasDismissed() || hasPromptedBefore()) return "default";
+
+  markPrompted();
+  const next = await Notification.requestPermission();
+  if (next === "default") {
+    markDismissed();
+  }
+  return next;
+}
+
+function isBuildTypeMuted(evt: EvtBuildComplete, prefs: UserNotificationPreferences): boolean {
+  if (evt.status === "failed") {
+    return !prefs.buildCompleteFailed;
+  }
+  return !prefs.buildCompleteSuccess;
+}
+
 export function useBuildCompletionNotifications({
-  buildRunning,
-  buildFailed,
-  appTitle,
-  thresholdMs = DEFAULT_NOTIFICATION_THRESHOLD_MS,
+  vibeDiyApi,
+  enabled = true,
+  thresholdMs = DEFAULT_THRESHOLD_MS,
 }: UseBuildCompletionNotificationsArgs): void {
-  const wasRunningRef = useRef(false);
-  const startedAtRef = useRef<number | null>(null);
-  const permissionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearPermissionTimer = useCallback(() => {
-    if (permissionTimerRef.current !== null) {
-      clearTimeout(permissionTimerRef.current);
-      permissionTimerRef.current = null;
-    }
-  }, []);
-
-  const maybeRequestPermission = useCallback(async (): Promise<NotificationPermission | null> => {
-    if (!notificationsAvailable()) return null;
-
-    const current = Notification.permission;
-    if (current !== "default") return current;
-    if (readSuppressed()) return current;
-
-    const next = await Notification.requestPermission().catch(() => "default" as NotificationPermission);
-    if (next === "default") {
-      writeSuppressed();
-    }
-    return next;
-  }, []);
-
-  const sendCompletionNotification = useCallback(() => {
-    if (!notificationsAvailable()) return;
-    if (Notification.permission !== "granted") return;
-    if (!document.hidden && document.hasFocus()) return;
-
-    const status = buildFailed ? "failed" : "completed";
-    const notification = new Notification(`Build ${status}`, {
-      body: `${appTitle} build ${status}.`,
-      tag: "vibes-diy-build-complete",
-    });
-
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-  }, [appTitle, buildFailed]);
+  const prefsRef = useRef<UserNotificationPreferences>(defaultUserNotificationPreferences);
 
   useEffect(() => {
+    if (!enabled) return;
+
+    let cancelled = false;
+    void vibeDiyApi.getUserNotificationPreferences({}).then((rPrefs) => {
+      if (cancelled || rPrefs.isErr()) return;
+      prefsRef.current = rPrefs.Ok().preferences;
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, vibeDiyApi]);
+
+  useEffect(() => {
+    if (!enabled) return;
     if (typeof window === "undefined") return;
+    if (!isNotificationApiAvailable()) return;
 
-    const wasRunning = wasRunningRef.current;
-    if (!wasRunning && buildRunning) {
-      wasRunningRef.current = true;
-      startedAtRef.current = Date.now();
-      clearPermissionTimer();
-      permissionTimerRef.current = setTimeout(() => {
-        void maybeRequestPermission();
-      }, thresholdMs);
-      return;
-    }
+    const unsubscribe = vibeDiyApi.onBuildComplete((evt) => {
+      if (typeof evt.durationMs === "number" && evt.durationMs < thresholdMs) {
+        return;
+      }
 
-    if (wasRunning && !buildRunning) {
-      wasRunningRef.current = false;
-      clearPermissionTimer();
+      if (isBuildTypeMuted(evt, prefsRef.current)) {
+        return;
+      }
 
-      const startedAt = startedAtRef.current;
-      startedAtRef.current = null;
-      if (startedAt === null) return;
-
-      if (Date.now() - startedAt < thresholdMs) return;
+      if (isPageVisibleAndFocused()) {
+        return;
+      }
 
       void (async () => {
-        const permission = await maybeRequestPermission();
+        const permission = await ensureNotificationPermission();
         if (permission !== "granted") return;
-        sendCompletionNotification();
-      })();
-    }
-  }, [buildRunning, thresholdMs, clearPermissionTimer, maybeRequestPermission, sendCompletionNotification]);
 
-  useEffect(
-    () => () => {
-      clearPermissionTimer();
-    },
-    [clearPermissionTimer]
-  );
+        const title = evt.status === "failed" ? "Build failed" : "Build complete";
+        const notification = new Notification(title, {
+          body: `${evt.userSlug}/${evt.appSlug}`,
+          tag: `vibes-build-${evt.promptId}`,
+          requireInteraction: evt.status === "failed",
+        });
+
+        notification.onclick = () => {
+          window.focus();
+          const targetPath = `/chat/${evt.userSlug}/${evt.appSlug}`;
+          if (window.location.pathname !== targetPath) {
+            window.location.assign(targetPath);
+          }
+          notification.close();
+        };
+      })();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [enabled, thresholdMs, vibeDiyApi]);
 }

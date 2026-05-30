@@ -41,6 +41,15 @@ import {
   ReqEnsureAppSettings,
   ResEnsureAppSettings,
 } from "./settings.js";
+import {
+  ReqSubscribeUserNotifications,
+  ResSubscribeUserNotifications,
+  ReqGetUserNotificationPreferences,
+  ResGetUserNotificationPreferences,
+  ReqSetUserNotificationPreferences,
+  ResSetUserNotificationPreferences,
+  EvtBuildComplete,
+} from "./notifications.js";
 import { ReqFPCloudToken, ResFPCloudToken } from "./fpcloud-token.js";
 import {
   ReqCreateInvite,
@@ -55,6 +64,7 @@ import {
   ResInviteSetRole,
   ReqListInviteGrants,
   ResListInviteGrants,
+  EvtInviteGrant,
 } from "./invite-flow.js";
 import {
   ReqListRequestGrants,
@@ -87,6 +97,7 @@ import {
   ResSubscribeDocs,
   ReqListDbNames,
   ResListDbNames,
+  EvtCommentPosted,
 } from "./app-documents.js";
 import { ReqListMembers, ResListMembers } from "./members.js";
 import { ReqListMemberships, ResListMemberships } from "./memberships.js";
@@ -155,6 +166,13 @@ export interface VibesDiyApiIface<_T = unknown> {
   getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>>;
   openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>>;
   ensureUserSettings(req: Req<ReqEnsureUserSettings>): Promise<Result<ResEnsureUserSettings, VibesDiyError>>;
+  subscribeUserNotifications(req: Req<ReqSubscribeUserNotifications>): Promise<Result<ResSubscribeUserNotifications, VibesDiyError>>;
+  getUserNotificationPreferences(
+    req: Req<ReqGetUserNotificationPreferences>
+  ): Promise<Result<ResGetUserNotificationPreferences, VibesDiyError>>;
+  setUserNotificationPreferences(
+    req: Req<ReqSetUserNotificationPreferences>
+  ): Promise<Result<ResSetUserNotificationPreferences, VibesDiyError>>;
   ensureAppSettings(req: Req<ReqEnsureAppSettings>): Promise<Result<ResEnsureAppSettings, VibesDiyError>>;
   listApplicationChats(req: Req<ReqListApplicationChats>): Promise<Result<ResListApplicationChats, VibesDiyError>>;
 
@@ -233,4 +251,9 @@ export interface VibesDiyApiIface<_T = unknown> {
   // Events arrive only for apps this connection has subscribed to via
   // subscribeRequestGrants. Returns an unsubscribe function.
   onRequestGrant(fn: (evt: EvtRequestGrant) => void): () => void;
+
+  // Register callbacks for server-driven user-level notifications.
+  onBuildComplete(fn: (evt: EvtBuildComplete) => void): () => void;
+  onCommentPosted(fn: (evt: EvtCommentPosted) => void): () => void;
+  onInviteGrant(fn: (evt: EvtInviteGrant) => void): () => void;
 }
