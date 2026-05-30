@@ -273,7 +273,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           } else if (settings.entry.enableRequest) {
             const autoJoinEnabled = settings.entry.enableRequest.autoAcceptRole !== undefined;
             if (!reqUserId) {
-              grant = autoJoinEnabled ? "req-login.auto-join" : "req-login.request";
+              grant = "req-login.request";
             } else {
               const rHasRequest = await hasAccessRequest(vctx, {
                 appSlug: app.appSlug,
