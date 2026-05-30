@@ -213,7 +213,36 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
 
         if (settings.entry.publicAccess?.enable && app.mode === "production") {
           grant = "public-access";
-          // here we would could
+          // Signed-in users on apps with autoAcceptRole get promoted above public-access.
+          // Check for an existing approved request first; if none, auto-fire one.
+          if (reqUserId && settings.entry.enableRequest?.autoAcceptRole !== undefined) {
+            const rHasRequest = await hasAccessRequest(vctx, {
+              appSlug: app.appSlug,
+              userSlug: app.userSlug,
+              foreignUserId: reqUserId,
+            });
+            if (rHasRequest.isOk()) {
+              const hasRequest = rHasRequest.Ok();
+              if (isResHasAccessRequestApproved(hasRequest)) {
+                grant = grantedAccess(hasRequest.role);
+              } else if (isResHasAccessRequestRevoked(hasRequest)) {
+                // revoked — leave them on public-access, don't re-fire
+              } else if (!isResHasAccessRequestPending(hasRequest)) {
+                const rRequestAccess = await requestAccess(vctx, {
+                  appSlug: app.appSlug,
+                  userSlug: app.userSlug,
+                  foreignUserId: reqUserId,
+                  claims: req._auth?.verifiedAuth.claims,
+                });
+                if (rRequestAccess.isOk()) {
+                  const raRes = rRequestAccess.Ok();
+                  if (isResRequestAccessApproved(raRes)) {
+                    grant = grantedAccess(raRes.role);
+                  }
+                }
+              }
+            }
+          }
         } else {
           // console.log(`-1`, settings.entry, settings.entries);
           const rHasInvite = await hasAccessInvite(vctx, { ...req, grantUserId: reqUserId });
