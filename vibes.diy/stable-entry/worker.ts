@@ -19,6 +19,7 @@ async function proxyRequest(
       method: request.method,
       headers,
       body: request.body,
+      redirect: "manual",
     })
   );
   const response = new Response(upstream.body, upstream);
