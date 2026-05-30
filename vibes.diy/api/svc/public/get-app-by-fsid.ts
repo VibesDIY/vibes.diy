@@ -310,34 +310,38 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                   break;
               }
               if (!grant) {
-                const rRequestAccess = await requestAccess(vctx, {
-                  appSlug: app.appSlug,
-                  userSlug: app.userSlug,
-                  foreignUserId: reqUserId,
-                  claims: req._auth?.verifiedAuth.claims,
-                });
-                if (rRequestAccess.isErr()) {
-                  await ctx.send.send(ctx, {
-                    type: "vibes.diy.res-get-app-by-fsid",
-                    error: "request-access-failed",
-                    appSlug: req.appSlug,
-                    userSlug: req.userSlug,
-                    fsId: req.fsId,
-                    grant: "not-found",
-                    mode: "dev",
-                    releaseSeq: -1,
-                    env: {},
-                    fileSystem: [],
-                    meta: [],
-                    created: new Date().toISOString(),
-                  } satisfies ResGetAppByFsId);
-                  return Result.Ok(EventoResult.Continue);
-                }
-                const requestAccessRes = rRequestAccess.Ok();
-                if (isResRequestAccessApproved(requestAccessRes)) {
-                  grant = grantedAccess(requestAccessRes.role);
+                if (autoJoinEnabled) {
+                  const rRequestAccess = await requestAccess(vctx, {
+                    appSlug: app.appSlug,
+                    userSlug: app.userSlug,
+                    foreignUserId: reqUserId,
+                    claims: req._auth?.verifiedAuth.claims,
+                  });
+                  if (rRequestAccess.isErr()) {
+                    await ctx.send.send(ctx, {
+                      type: "vibes.diy.res-get-app-by-fsid",
+                      error: "request-access-failed",
+                      appSlug: req.appSlug,
+                      userSlug: req.userSlug,
+                      fsId: req.fsId,
+                      grant: "not-found",
+                      mode: "dev",
+                      releaseSeq: -1,
+                      env: {},
+                      fileSystem: [],
+                      meta: [],
+                      created: new Date().toISOString(),
+                    } satisfies ResGetAppByFsId);
+                    return Result.Ok(EventoResult.Continue);
+                  }
+                  const requestAccessRes = rRequestAccess.Ok();
+                  if (isResRequestAccessApproved(requestAccessRes)) {
+                    grant = grantedAccess(requestAccessRes.role);
+                  } else {
+                    grant = "pending-request";
+                  }
                 } else {
-                  grant = "pending-request";
+                  grant = "req-login.request";
                 }
               }
             }
