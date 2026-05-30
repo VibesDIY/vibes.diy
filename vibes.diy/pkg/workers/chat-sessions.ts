@@ -81,7 +81,7 @@ export class ChatSessions implements DurableObject {
   async fetch(request: CFRequest): Promise<CFResponse> {
     // Internal notification from DocNotify coordinator — broadcast to local subscribers
     if (request.method === "POST") {
-      const url = new URL(request.url);
+      const url = URI.from(request.url);
 
       if (url.pathname === "/user-notify") {
         const rJson = await exception2Result(() => request.json());
