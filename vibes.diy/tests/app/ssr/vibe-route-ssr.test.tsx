@@ -154,7 +154,7 @@ describe("viewer route — iframe + meta track the configured hostname base", ()
 
   it("meta() og:image / twitter:image point at the configured base", () => {
     const tags = vibeRouteMeta({
-      data: { iframeUrl: undefined, vibeOgTitle: undefined },
+      data: { iframeUrl: undefined, vibeOgTitle: undefined, isWorldReadable: false },
       params: { userSlug: "alice", appSlug: "myapp" },
       matches: [{ data: { env: { VIBES_SVC_HOSTNAME_BASE: PREVIEW_BASE } } }],
     }) as { property?: string; name?: string; content?: string }[];

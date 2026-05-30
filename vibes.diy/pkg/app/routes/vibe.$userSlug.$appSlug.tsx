@@ -26,11 +26,13 @@ import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
 interface VibeLoaderCtx {
   readonly vibeDiyAppParams: VibesFPApiParameters;
   readonly vibeOgTitle?: string;
+  readonly isWorldReadable?: boolean;
 }
 
 interface VibeLoaderData {
   readonly iframeUrl: string | undefined;
   readonly vibeOgTitle: string | undefined;
+  readonly isWorldReadable: boolean;
 }
 
 export async function loader(loaderCtx: {
@@ -40,7 +42,7 @@ export async function loader(loaderCtx: {
 }): Promise<VibeLoaderData> {
   const { userSlug, appSlug, fsId } = loaderCtx.params;
   if (!userSlug || !appSlug) {
-    return { iframeUrl: undefined, vibeOgTitle: undefined };
+    return { iframeUrl: undefined, vibeOgTitle: undefined, isWorldReadable: false };
   }
   const reqUrl = URI.from(loaderCtx.request.url);
   const protocol = reqUrl.protocol === "https:" ? "https" : "http";
@@ -53,7 +55,11 @@ export async function loader(loaderCtx: {
     port,
   });
   const iframeUrl = BuildURI.from(baseUrl).setParam("npmUrl", params.pkgRepos.workspace).toString();
-  return { iframeUrl, vibeOgTitle: loaderCtx.context.vibeOgTitle };
+  return {
+    iframeUrl,
+    vibeOgTitle: loaderCtx.context.vibeOgTitle,
+    isWorldReadable: loaderCtx.context.isWorldReadable ?? false,
+  };
 }
 
 export function meta({
@@ -100,7 +106,7 @@ export default function VibeIframeWrapper() {
   // so this works in non-data routers (the test) without throwing. Render
   // must remain SSR-safe: no synchronous window access.
   const matches = useMatches();
-  const loaderData = matches[matches.length - 1]?.data as { iframeUrl?: string } | undefined;
+  const loaderData = matches[matches.length - 1]?.data as { iframeUrl?: string; isWorldReadable?: boolean } | undefined;
   const [iframeUrl, setIframeUrl] = useState<string | undefined>(loaderData?.iframeUrl);
   const isNetworkActive = useIframeApiInFlight();
   // Gate the post-iframe chrome (overlays, pill, sidebar) until after client
