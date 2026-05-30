@@ -329,11 +329,17 @@ export default {
           )
         : { ogTitle: undefined, isWorldReadable: false };
 
+    // Suppress the fast-paint optimisation for explicit-fsId URLs
+    // (/vibe/:userSlug/:appSlug/:fsId). getVibeRouteHints queries the latest
+    // production row, but the iframe will serve the requested fsId which may be
+    // a dev/draft build whose grant check won't confirm public access.
+    const hasFsId = url.pathname.split("/").filter(Boolean).length > 3;
+
     // Delegate to React Router for SSR
     const ssrResponse = (await getRequestHandler()(request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0], {
       vibeDiyAppParams: cfCtx.vibesCtx.params,
       vibeOgTitle: vibeHints.ogTitle,
-      isWorldReadable: vibeHints.isWorldReadable,
+      isWorldReadable: hasFsId ? false : vibeHints.isWorldReadable,
     })) as unknown as CFResponse;
 
     // Log missing vibe paths so the ETL pipeline can surface them for reanimation triage.
