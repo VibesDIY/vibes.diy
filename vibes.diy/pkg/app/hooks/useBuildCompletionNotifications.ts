@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
+import { isUserSettingNotifications } from "@vibes.diy/api-types";
+import type { UserSettingNotifications } from "@vibes.diy/api-types";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 
 const STORAGE_KEY_SUPPRESSED = "vibes.diy.build-complete-notifications.suppressed";
@@ -39,15 +41,61 @@ const maybeRequestPermission = async (): Promise<NotificationPermission | null> 
   return next;
 };
 
+type NotificationType = keyof Omit<UserSettingNotifications, "type">;
+
+const TYPE_MAP: Record<string, { prefKey: NotificationType; title: string; body: (u: string, a: string) => string }> = {
+  "build-complete": {
+    prefKey: "buildComplete",
+    title: "Build completed",
+    body: (u, a) => `${u}/${a} build completed.`,
+  },
+  "build-failed": {
+    prefKey: "buildFailed",
+    title: "Build failed",
+    body: (u, a) => `${u}/${a} build failed.`,
+  },
+  "vibe-published": {
+    prefKey: "vibePublished",
+    title: "Vibe published",
+    body: (u, a) => `${u}/${a} was published.`,
+  },
+  "comment-posted": {
+    prefKey: "commentPosted",
+    title: "New comment",
+    body: (u, a) => `New comment on ${u}/${a}.`,
+  },
+  "request-approved": {
+    prefKey: "requestApproved",
+    title: "Access approved",
+    body: (u, a) => `Access to ${u}/${a} approved.`,
+  },
+  "request-revoked": {
+    prefKey: "requestRevoked",
+    title: "Access revoked",
+    body: (u, a) => `Access to ${u}/${a} was revoked.`,
+  },
+};
+
 export function useBuildCompletionNotifications(): void {
   const { vibeDiyApi } = useVibesDiy();
   const permissionRequestedRef = useRef(false);
+  const prefsRef = useRef<UserSettingNotifications>({ type: "notifications" });
+
+  useEffect(() => {
+    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
+      if (res.isOk()) {
+        const saved = res.Ok().settings.find(isUserSettingNotifications);
+        if (saved) prefsRef.current = saved;
+      }
+    });
+  }, [vibeDiyApi]);
 
   const handleNotification = useCallback(async (evt: { notificationType: string; userSlug: string; appSlug: string }) => {
-    if (evt.notificationType !== "build-complete" && evt.notificationType !== "build-failed") return;
+    const config = TYPE_MAP[evt.notificationType];
+    if (config === undefined) return;
+    if (prefsRef.current[config.prefKey] === false) return;
     if (!notificationsAvailable()) return;
 
-    // Request permission once if not yet determined.
     if (!permissionRequestedRef.current && Notification.permission === "default" && !readSuppressed()) {
       permissionRequestedRef.current = true;
       await maybeRequestPermission();
@@ -56,10 +104,9 @@ export function useBuildCompletionNotifications(): void {
     if (Notification.permission !== "granted") return;
     if (!document.hidden && document.hasFocus()) return;
 
-    const status = evt.notificationType === "build-failed" ? "failed" : "completed";
-    const notification = new Notification(`Build ${status}`, {
-      body: `${evt.userSlug}/${evt.appSlug} build ${status}.`,
-      tag: `vibes-diy-build-${evt.userSlug}-${evt.appSlug}`,
+    const notification = new Notification(config.title, {
+      body: config.body(evt.userSlug, evt.appSlug),
+      tag: `vibes-diy-${evt.notificationType}-${evt.userSlug}-${evt.appSlug}`,
     });
 
     notification.onclick = () => {
