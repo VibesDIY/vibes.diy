@@ -443,7 +443,7 @@ export default function VibeIframeWrapper() {
           <iframe
             src={iframeUrl}
             className="w-full h-full border-none"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox"
             allow="camera; microphone"
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
