@@ -1,6 +1,6 @@
 import { exception2Result, Result } from "@adviser/cement";
 import { RawEmailWithoutFrom, S3Api } from "@vibes.diy/api-types";
-import { D1Database, Fetcher, R2Bucket } from "@cloudflare/workers-types";
+import { D1Database, DurableObjectNamespace, Fetcher, R2Bucket } from "@cloudflare/workers-types";
 import { createVibesApiTables, cfDrizzle, CreateSQLPeerParams, toDBFlavour, VibesApiTables } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "@vibes.diy/api-svc";
 import { SuperThis } from "@fireproof/core-types-base";
@@ -11,6 +11,7 @@ export interface QueueCtxParams {
     BROWSER: Fetcher;
     D1: D1Database;
     FS_IDS_BUCKET?: R2Bucket;
+    USER_NOTIFY?: DurableObjectNamespace;
   };
   vibes: {
     env: {
@@ -125,5 +126,36 @@ export class QueueCtx {
     const jsonTxt = await res.text();
     const rJson = exception2Result(() => JSON.parse(jsonTxt));
     return Result.Ok({ result: rJson.isOk() ? rJson.Ok() : jsonTxt });
+  }
+
+  async notifyUser(
+    userId: string,
+    evt: {
+      type: "vibes.diy.evt-user-notification";
+      notificationType: string;
+      userSlug: string;
+      appSlug: string;
+    }
+  ): Promise<void> {
+    const ns = this.params.cf?.USER_NOTIFY;
+    if (!ns) return;
+    try {
+      const id = ns.idFromName(userId);
+      const stub = ns.get(id);
+      await stub.fetch(
+        new Request("https://internal/user-notify", {
+          method: "POST",
+          body: JSON.stringify({
+            action: "notify",
+            senderShardId: "queue",
+            senderConnId: "queue",
+            evt,
+          }),
+          headers: { "Content-Type": "application/json" },
+        }) as unknown as Parameters<typeof stub.fetch>[0]
+      );
+    } catch (e: unknown) {
+      console.error("[QueueCtx] notifyUser failed for userId:", userId.slice(0, 8), e);
+    }
   }
 }

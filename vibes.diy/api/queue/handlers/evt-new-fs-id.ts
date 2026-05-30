@@ -41,6 +41,24 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
         .limit(1);
       const publishCount = rows[0]?.releaseSeq;
       await postEmbed(qctx, buildPublishEmbed(qctx, payload, publishCount));
+
+      // Resolve userSlug → userId to notify the vibe owner
+      const usb = qctx.sql.tables.userSlugBinding;
+      const ownerRow = await qctx.sql.db
+        .select({ userId: usb.userId })
+        .from(usb)
+        .where(eq(usb.userSlug, payload.userSlug))
+        .limit(1)
+        .then((r) => r[0] ?? null);
+
+      if (ownerRow?.userId) {
+        await qctx.notifyUser(ownerRow.userId, {
+          type: "vibes.diy.evt-user-notification",
+          notificationType: "vibe-published",
+          userSlug: payload.userSlug,
+          appSlug: payload.appSlug,
+        });
+      }
     }
     return Result.Ok(EventoResult.Continue);
   },
