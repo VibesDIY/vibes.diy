@@ -115,7 +115,6 @@ export class ChatSessions implements DurableObject {
           delivered,
           "connections"
         );
-        if (delivered === 0) return new Response("no connections", { status: 410 });
         return new Response("ok");
       }
 
