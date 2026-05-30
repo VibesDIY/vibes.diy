@@ -140,15 +140,28 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
   });
 
   it("signed-in user gets auto-promoted above public-access when autoAcceptRole is also set", async () => {
-    const { appSlug, userSlug } = await createApp();
-
-    // Both public access AND auto-accept editor are active simultaneously
-    await api.ensureAppSettings({
-      appSlug,
-      userSlug,
-      publicAccess: { enable: true },
-      request: { enable: true, autoAcceptRole: "editor" },
+    // Must be a production app — the publicAccess branch gates on app.mode === "production"
+    const now = sthis.nextId(8).str;
+    const rRes = await api.ensureAppSlug({
+      mode: "production",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `function App() { return <div>Pub+AutoGrant ${now}</div>; } App();`,
+        },
+      ],
     });
+    const res = rRes.Ok();
+    if (!isResEnsureAppSlugOk(res)) {
+      assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+    const { appSlug, userSlug } = res;
+
+    // ensureAppSettings only applies one setting per call — two separate calls required
+    await api.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: true } });
+    await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "editor" } });
 
     // Signed-in non-owner should get granted-access.editor, not the read-only public-access
     const rApp = await api2.getAppByFsId({ appSlug, userSlug });
