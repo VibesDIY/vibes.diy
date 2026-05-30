@@ -40,6 +40,14 @@ export function parseVibePathname(pathname: string): VibeSlugPair | undefined {
   return { userSlug, appSlug };
 }
 
+// Returns true when the vibe URL includes an explicit fsId segment
+// (/vibe/:userSlug/:appSlug/:fsId). Uses the same split as parseVibePathname
+// so both helpers stay in sync.
+export function vibePathnameHasFsId(pathname: string): boolean {
+  const parts = pathname.split("/");
+  return parts[1] === "vibe" && parts[4] !== undefined && parts[4] !== "";
+}
+
 // Looks up both the OG title and world-readable flag for a vibe route SSR pass.
 // Returns defaults on error so a lookup failure never breaks page rendering.
 export async function getVibeRouteHints(ctx: VibesApiSQLCtx, slugs: VibeSlugPair): Promise<Result<VibeRouteHints>> {
@@ -53,6 +61,7 @@ export async function getVibeRouteHints(ctx: VibesApiSQLCtx, slugs: VibeSlugPair
       .leftJoin(
         ctx.sql.tables.appSettings,
         and(
+          eq(ctx.sql.tables.appSettings.userId, ctx.sql.tables.apps.userId),
           eq(ctx.sql.tables.appSettings.userSlug, ctx.sql.tables.apps.userSlug),
           eq(ctx.sql.tables.appSettings.appSlug, ctx.sql.tables.apps.appSlug)
         )

@@ -19,7 +19,7 @@ import { routeDecision } from "./route-decision.js";
 import { sendCapiPageView, sendCapiViewContent } from "./meta-capi.js";
 import { sendCapiCompleteRegistration } from "./capi-complete-registration.js";
 import { verifyClerkWebhookSignature, postSignupToDiscord, ClerkUserCreatedData } from "./clerk-webhook.js";
-import { getVibeRouteHints, parseVibePathname } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
+import { getVibeRouteHints, parseVibePathname, vibePathnameHasFsId } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
 
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
@@ -333,7 +333,7 @@ export default {
     // (/vibe/:userSlug/:appSlug/:fsId). getVibeRouteHints queries the latest
     // production row, but the iframe will serve the requested fsId which may be
     // a dev/draft build whose grant check won't confirm public access.
-    const hasFsId = url.pathname.split("/").filter(Boolean).length > 3;
+    const hasFsId = vibePathnameHasFsId(url.pathname);
 
     // Delegate to React Router for SSR
     const ssrResponse = (await getRequestHandler()(request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0], {
