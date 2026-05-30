@@ -49,6 +49,7 @@ import {
   isActiveTitle,
   type SelectedSlotInput,
   type SlotConfig,
+  type EvtUserNotification,
 } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { type } from "arktype";
@@ -102,6 +103,13 @@ import {
 import { loadVersionTimeline, selectSlotSources, loadLatestPromptId } from "../intern/version-timeline.js";
 import { assembleSlotMessages, renderSlotMessagesAs, resolveSlotConfig } from "../intern/slot-assembler.js";
 import { bumpAppRecency } from "../intern/bump-app-recency.js";
+import { WSSendProvider } from "../svc-ws-send-provider.js";
+
+// Access the raw WSSendProvider from Evento's wrapped ctx.send.
+// Evento wraps the send provider — the raw instance is at .provider.
+function clientWsSend(ctx: { send: unknown }): WSSendProvider {
+  return (ctx.send as { provider: WSSendProvider }).provider;
+}
 
 // Build the `fetch` override that makeBaseSystemPrompt uses to load asset
 // files (system-prompt.md, llms/*.md) from the worker's `/vibe-pkg/`
@@ -2240,6 +2248,24 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
               error: (e as Error).message,
             },
           });
+          if (vctx.notifyUser) {
+            const userId = req._auth.verifiedAuth.claims.userId;
+            const connId = clientWsSend(ctx).connId;
+            void vctx
+              .notifyUser(
+                userId,
+                {
+                  type: "vibes.diy.evt-user-notification",
+                  notificationType: "build-failed",
+                  userSlug: resChat.userSlug,
+                  appSlug: resChat.appSlug,
+                } satisfies EvtUserNotification,
+                connId
+              )
+              .catch((_e: unknown) => {
+                /* best-effort */
+              });
+          }
         }, 0);
 
         await scope
@@ -2282,6 +2308,24 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
                 timestamp: new Date(),
               },
             });
+            if (vctx.notifyUser) {
+              const userId = req._auth.verifiedAuth.claims.userId;
+              const connId = clientWsSend(ctx).connId;
+              void vctx
+                .notifyUser(
+                  userId,
+                  {
+                    type: "vibes.diy.evt-user-notification",
+                    notificationType: "build-complete",
+                    userSlug: resChat.userSlug,
+                    appSlug: resChat.appSlug,
+                  } satisfies EvtUserNotification,
+                  connId
+                )
+                .catch((_e: unknown) => {
+                  /* best-effort */
+                });
+            }
           })
           .do();
       });
