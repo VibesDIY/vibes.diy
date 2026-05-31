@@ -38,9 +38,22 @@ function App() {
 function CommentForm() {
   const { viewer, isViewerPending, can, ViewerTag } = useViewer();
   if (isViewerPending) return null;
-  if (!viewer) return <ViewerTag />; // renders "Sign in" button; opens platform login when clicked
-  if (!can("write", "comments")) return <p>Contact the owner to request write access so you can post.</p>;
-  return <form>...</form>;
+
+  return (
+    <div>
+      {/* Always rendered: "Sign in" button when anonymous, identity pill when signed in.
+          The label only appears once viewer is known so it doesn't flash. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
+        <ViewerTag />
+      </div>
+
+      {viewer && !can("write", "comments") && (
+        <p>Contact the owner to request write access so you can post.</p>
+      )}
+      {viewer && can("write", "comments") && <form>...</form>}
+    </div>
+  );
 }
 ```
 
