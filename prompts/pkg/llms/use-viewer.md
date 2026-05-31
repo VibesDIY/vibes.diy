@@ -66,7 +66,7 @@ import { useFireproof } from "use-fireproof";
 import { useViewer } from "use-vibes";
 
 function CommentThread() {
-  const { viewer, can } = useViewer();
+  const { viewer, isViewerPending, can, ViewerTag } = useViewer();
   const { useLiveQuery, database } = useFireproof("comments");
   const { docs: comments } = useLiveQuery("createdAt");
   const [body, setBody] = useState("");
@@ -97,20 +97,27 @@ function CommentThread() {
         ))}
       </ul>
 
-      {!viewer ? (
-        <p>Sign in to comment.</p>
-      ) : !can("write", "comments") ? (
-        <p>Contact the owner to request write access so you can post.</p>
-      ) : (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            post();
-          }}
-        >
-          <input value={body} onChange={(e) => setBody(e.target.value)} />
-          <button type="submit">Post</button>
-        </form>
+      {!isViewerPending && (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
+            <ViewerTag />
+          </div>
+          {viewer && !can("write", "comments") && (
+            <p>Contact the owner to request write access so you can post.</p>
+          )}
+          {viewer && can("write", "comments") && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                post();
+              }}
+            >
+              <input value={body} onChange={(e) => setBody(e.target.value)} />
+              <button type="submit">Post</button>
+            </form>
+          )}
+        </div>
       )}
     </div>
   );
