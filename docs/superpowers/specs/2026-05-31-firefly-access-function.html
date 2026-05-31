@@ -413,10 +413,14 @@
 </div>
 
 <p class="prose">
-  <strong>Document types.</strong> <code>channel-meta</code> owns a channel: its <code>_id</code> is the channel name, so
-  platform-generated IDs carry entropy directly into the access model with no separate <code>channelId</code> field. A
-  <code>message</code> carries a single chat post and references the channel by its ID. A <code>channel-invite</code> extends read
-  access to a new user. The access function's job is to validate each write and declare how it affects the grant state.
+  <strong>Document types.</strong> <code>channel-meta</code> owns a channel. Its <code>_id</code> is used directly as the channel
+  name in the access function return — <code>channels: [doc._id]</code>. <code>_id</code> is the document's identity key; it can be
+  a human-readable slug (<code>"chan-general"</code>), a natural key, a foreign key from another system, or a platform-generated
+  opaque ID. Any unique value works. Using <code>doc._id</code> as the channel name is a convenience: it avoids a redundant
+  <code>channelId</code> field when the document's identity and its channel name are the same thing. A generated ID adds enumeration
+  resistance as a side-effect, but that is not required. A <code>message</code> carries a single chat post and holds a
+  <code>channelId</code> foreign key pointing at a channel-meta <code>_id</code>. A <code>channel-invite</code> extends read access
+  to a new user. The access function's job is to validate each write and declare how it affects the grant state.
 </p>
 
 <!-- ACCESS FUNCTION -->
