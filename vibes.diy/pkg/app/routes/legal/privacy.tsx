@@ -1,23 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import SimpleAppLayout from "../../components/SimpleAppLayout.js";
 import { HomeIcon } from "../../components/SessionSidebar/HomeIcon.js";
 import VibesDIYLogo from "../../components/VibesDIYLogo.js";
 import ReactMarkdown from "react-markdown";
-import { loadAsset } from "@adviser/cement";
+import privContent from "./privacy-notes.md?raw";
 
 export function meta() {
   return [{ title: "Privacy Policy - Vibes DIY" }, { name: "description", content: "Privacy Policy for Vibes DIY" }];
 }
 
 export default function Legal_Privacy() {
-  const [privContent, setPrivContent] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadAsset("/app/routes/legal/privacy-notes.md", {
-      basePath: () => window.location.origin,
-    }).then((tos) => setPrivContent(tos.Ok()));
-  }, [privContent]);
-
   return (
     <SimpleAppLayout
       headerLeft={

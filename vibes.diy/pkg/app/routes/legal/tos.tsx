@@ -1,23 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import SimpleAppLayout from "../../components/SimpleAppLayout.js";
 import { HomeIcon } from "../../components/SessionSidebar/HomeIcon.js";
 import VibesDIYLogo from "../../components/VibesDIYLogo.js";
 import ReactMarkdown from "react-markdown";
-import { loadAsset } from "@adviser/cement";
+import tosContent from "./tos-notes.md?raw";
 
 export function meta() {
   return [{ title: "Terms of Service - Vibes DIY" }, { name: "description", content: "Terms of Service for Vibes DIY" }];
 }
 
 export default function Legal_Tos() {
-  const [tosContent, setTosContent] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadAsset("/app/routes/legal/tos-notes.md", {
-      basePath: () => window.location.origin,
-    }).then((tos) => setTosContent(tos.Ok()));
-  }, [tosContent]);
-
   return (
     <SimpleAppLayout
       headerLeft={
