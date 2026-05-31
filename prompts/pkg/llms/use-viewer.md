@@ -10,12 +10,16 @@ The contract: **every write surface (form, submit button, edit input, delete but
 import { useViewer } from "use-vibes";
 
 function App() {
-  const { viewer, can } = useViewer();
-  if (!viewer) return <p>Sign in to use this app.</p>;
+  const { viewer, isViewerPending, can, ViewerTag } = useViewer();
+
+  // isViewerPending is true until the platform has resolved the viewer identity.
+  // Gate on it to avoid flashing the anonymous state on first render.
+  if (isViewerPending) return null;
+
   return (
     <header>
-      <img src={viewer.avatarUrl} alt={viewer.userSlug} />
-      <span>{viewer.displayName ?? viewer.userSlug}</span>
+      {/* ViewerTag renders a "Sign in" button when logged out, a user pill when logged in */}
+      <ViewerTag />
     </header>
   );
 }
@@ -24,14 +28,17 @@ function App() {
 ## What you get
 
 - `viewer` — `{ userSlug, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — just use it in `<img src>`, don't construct it yourself.
+- `isViewerPending` — `true` while the platform is still resolving the viewer identity (e.g. on first render before the parent shell has pushed the identity update). **Gate any auth-dependent UI on `!isViewerPending`** to avoid flashing the wrong state. Once it becomes `false`, `viewer` is either populated or definitively `null`.
 - `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Pass a `dbName` for multi-db apps; omit for single-db apps. Use it to hide forms when the viewer can't post.
+- `ViewerTag` — ready-made user pill; see the ViewerTag section below.
 
 ## Gating UI
 
 ```jsx
 function CommentForm() {
-  const { viewer, can } = useViewer();
-  if (!viewer) return <p>Sign in to comment.</p>;
+  const { viewer, isViewerPending, can, ViewerTag } = useViewer();
+  if (isViewerPending) return null;
+  if (!viewer) return <ViewerTag />; // renders "Sign in" button; opens platform login when clicked
   if (!can("write", "comments")) return <p>Contact the owner to request write access so you can post.</p>;
   return <form>...</form>;
 }
