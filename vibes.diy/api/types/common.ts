@@ -179,25 +179,25 @@ export const FSMode = type("'production'|'dev'");
 
 export const AppSlugUserSlug = type({
   appSlug: "string", // desired app slug
-  userSlug: "string", // desired user slug
+  ownerHandle: "string", // desired user slug
 });
 export type AppSlugUserSlug = typeof AppSlugUserSlug.infer;
 
 export const OptAppSlugUserSlug = type({
   "appSlug?": "string", // desired app slug
-  userSlug: "string", // desired user slug
+  ownerHandle: "string", // desired user slug
 });
 export type OptAppSlugUserSlug = typeof OptAppSlugUserSlug.infer;
 
 export const AppSlugOptUserSlug = type({
   appSlug: "string", // desired app slug
-  "userSlug?": "string", // desired user slug
+  "ownerHandle?": "string", // desired user slug
 });
 export type AppSlugOptUserSlug = typeof AppSlugOptUserSlug.infer;
 
 export const OptAppSlugOptUserSlug = type({
   "appSlug?": "string", // desired app slug
-  "userSlug?": "string", // desired user slug
+  "ownerHandle?": "string", // desired user slug
 });
 export type OptAppSlugOptUserSlug = typeof OptAppSlugOptUserSlug.infer;
 
@@ -294,7 +294,7 @@ export type InviteForeignInfo = ForeignInfo;
 // shared identity for all key-grant messages (used by invite-flow and request-access)
 export const GrantListBase = type({
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   auth: dashAuthType,
   pager: Pager,
 });

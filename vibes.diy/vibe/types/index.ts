@@ -14,7 +14,7 @@ export const ReqVibeRegisterFPDb = type({
   type: "'vibe.req.register.fpdb'",
   dbName: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   fsId: "string",
 }).and(Base);
 
@@ -35,7 +35,7 @@ export type ResErrorVibeRegisterFPDb = typeof ResErrorVibeRegisterFPDb.infer;
 export const FPDbData = type({
   dbName: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   // fsId: "string",
   // appId: "string",
   // tenant: "string",
@@ -235,7 +235,7 @@ export function isJSONSchema(x: unknown): x is JSONSchema {
 
 export const ReqCallAI = type({
   type: "'vibe.req.callAI'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   prompt: "string",
   schema: JSONSchema,
@@ -285,7 +285,7 @@ export function isResErrorCallAI(x: unknown): x is ResErrorCallAI {
 // Stage C's URL minter resolves the doc-side meta.url for display.
 export const ReqImgGen = type({
   type: "'vibe.req.imgGen'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   prompt: "string",
   "inputImageBase64?": "string",
@@ -371,7 +371,7 @@ export {
 export const ReqPutDoc = type({
   type: "'vibes.diy.req-put-doc'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
   doc: "Record<string, unknown>",
   "docId?": "string",
@@ -386,7 +386,7 @@ export function isReqPutDoc(x: unknown): x is ReqPutDoc {
 export const ReqGetDoc = type({
   type: "'vibes.diy.req-get-doc'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
   docId: "string",
 }).and(Base);
@@ -400,7 +400,7 @@ export function isReqGetDoc(x: unknown): x is ReqGetDoc {
 export const ReqQueryDocs = type({
   type: "'vibes.diy.req-query-docs'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
   "filter?": queryFilter,
 }).and(Base);
@@ -414,7 +414,7 @@ export function isReqQueryDocs(x: unknown): x is ReqQueryDocs {
 export const ReqDeleteDoc = type({
   type: "'vibes.diy.req-delete-doc'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
   docId: "string",
 }).and(Base);
@@ -428,7 +428,7 @@ export function isReqDeleteDoc(x: unknown): x is ReqDeleteDoc {
 export const ReqSubscribeDocs = type({
   type: "'vibes.diy.req-subscribe-docs'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
 }).and(Base);
 
@@ -441,7 +441,7 @@ export function isReqSubscribeDocs(x: unknown): x is ReqSubscribeDocs {
 export const ReqSetDbAcl = type({
   type: "'vibes.diy.req-set-db-acl'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
   acl: dbAcl,
 }).and(Base);
@@ -470,7 +470,7 @@ export function isResSetDbAcl(x: unknown): x is ResSetDbAcl {
 export const ReqListDbNames = type({
   type: "'vibes.diy.req-list-db-names'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 }).and(Base);
 
 export type ReqListDbNames = typeof ReqListDbNames.infer;
@@ -490,7 +490,7 @@ export function isReqListDbNames(x: unknown): x is ReqListDbNames {
 export interface ReqVibePutAsset {
   readonly tid: string;
   readonly type: "vibe.req.putAsset";
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly appSlug: string;
   readonly blob: Blob;
   readonly mimeType?: string;
@@ -502,7 +502,7 @@ export function isReqVibePutAsset(x: unknown): x is ReqVibePutAsset {
   return (
     r.type === "vibe.req.putAsset" &&
     typeof r.tid === "string" &&
-    typeof r.userSlug === "string" &&
+    typeof r.ownerHandle === "string" &&
     typeof r.appSlug === "string" &&
     typeof Blob !== "undefined" &&
     r.blob instanceof Blob &&
@@ -557,11 +557,11 @@ export function isEvtVibePutAssetProgress(x: unknown): x is EvtVibePutAssetProgr
 
 // ── Viewer identity & capabilities ───────────────────────────────────
 // Sandbox-facing surface for who is viewing this vibe and what they can
-// do. Sandbox sees only userSlug — never Clerk userId. Capabilities are
+// do. Sandbox sees only userHandle — never Clerk userId. Capabilities are
 // UX hints; every write still re-authorizes server-side at put-doc.
 
 export const viewerPayload = type({
-  userSlug: "string",
+  userHandle: "string",
   "displayName?": "string",
   avatarUrl: "string", // stable indirection URL — opaque to apps, set by server at render time
 });
@@ -570,13 +570,13 @@ export type ViewerPayload = typeof viewerPayload.infer;
 export const docAccessLevel = type("'owner' | 'editor' | 'viewer' | 'submitter' | 'none'");
 export type DocAccessLevel = typeof docAccessLevel.infer;
 
-// Request: sandbox → host. Carries (appSlug, userSlug) so the host
+// Request: sandbox → host. Carries (appSlug, ownerHandle) so the host
 // handler can compute access against the right app — same pattern as
 // every other Req<*> in this file.
 export const ReqVibeWhoAmI = type({
   type: "'vibe.req.whoAmI'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 }).and(Base);
 
 export type ReqVibeWhoAmI = typeof ReqVibeWhoAmI.infer;
@@ -607,11 +607,11 @@ export function isResVibeWhoAmI(x: unknown): x is ResVibeWhoAmI {
 }
 
 // Sandbox → host: persist a freshly-uploaded avatar CID to the viewer's
-// platform profile. The host enforces that the sandbox userSlug matches
+// platform profile. The host enforces that the sandbox ownerHandle matches
 // the authenticated session before calling ensureUserSettings.
 export const ReqVibeUpdateAvatarCid = type({
   type: "'vibe.req.updateAvatarCid'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   cid: "string",
 }).and(Base);

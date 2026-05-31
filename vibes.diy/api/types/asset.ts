@@ -12,7 +12,7 @@ import { dashAuthType } from "./common.js";
 export const ReqAssetUploadGrant = type({
   type: "'vibes.diy.req-asset-upload-grant'",
   auth: dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   "mimeType?": "string",
 });
@@ -50,7 +50,7 @@ export function isResPutAsset(obj: unknown): obj is ResPutAsset {
 export const AssetGrantClaims = type({
   jti: "string",
   userId: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   iat: "number",
   exp: "number",
