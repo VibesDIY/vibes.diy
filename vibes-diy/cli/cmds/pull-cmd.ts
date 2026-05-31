@@ -15,7 +15,7 @@ import { type } from "arktype";
 import type { FileSystemItem } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
-import { resolveUserSlug } from "../resolve-user-slug.js";
+import { resolveHandle } from "../resolve-handle.js";
 
 export const ReqPull = type({
   type: "'vibes-diy.cli.pull'",
@@ -77,7 +77,7 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
-    const ownerHandle = await resolveUserSlug(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
+    const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
     if (ownerHandle === undefined) {
       return Result.Err("Could not resolve user slug. Run 'vibes-diy login' first.");
     }
@@ -151,9 +151,16 @@ export function pullCmd(ctx: CliCtx) {
         description: "Slug of the app to pull",
         type: string,
       }),
-      ownerHandle: option({
+      handle: option({
+        long: "handle",
+        description: "Handle (uses default if omitted)",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
+      userSlug: option({
         long: "user-slug",
-        description: "User slug (uses default if omitted)",
+        // No description — hidden from help output (deprecated alias for --handle)
         type: string,
         defaultValue: () => "",
         defaultValueIsSerializable: true,
@@ -170,7 +177,7 @@ export function pullCmd(ctx: CliCtx) {
       return {
         type: "vibes-diy.cli.pull",
         appSlug: args.appSlug,
-        ownerHandle: args.ownerHandle,
+        ownerHandle: args.handle || args.userSlug,
         dir: args.dir,
         apiUrl: args.apiUrl,
       } satisfies ReqPull;

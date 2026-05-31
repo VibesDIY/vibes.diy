@@ -17,7 +17,7 @@ import { ResEnsureAppSlug, isResError, isSectionEvent } from "@vibes.diy/api-typ
 import type { ResError, SectionEvent } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
-import { resolveUserSlug } from "../resolve-user-slug.js";
+import { resolveHandle } from "../resolve-handle.js";
 import { resolveSectionStream } from "./resolve-section-stream.js";
 import { pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
@@ -77,7 +77,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
     // Resolve ownerHandle: explicit flag > default setting > first from list
-    const ownerHandle = await resolveUserSlug(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
+    const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
 
     await sendProgress(ctx, "info", "Generating...");
 
@@ -267,9 +267,16 @@ export function generateCmd(ctx: CliCtx) {
         defaultValue: () => "",
         defaultValueIsSerializable: true,
       }),
-      ownerHandle: option({
+      handle: option({
+        long: "handle",
+        description: "Handle to publish under (uses default if omitted)",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
+      userSlug: option({
         long: "user-slug",
-        description: "User slug to publish under (uses default if omitted)",
+        // No description — hidden from help output (deprecated alias for --handle)
         type: string,
         defaultValue: () => "",
         defaultValueIsSerializable: true,
@@ -294,11 +301,11 @@ export function generateCmd(ctx: CliCtx) {
         type: optional(string),
       }),
     },
-    handler: ctx.cliStream.enqueue(({ focus, model, ...rest }) => {
+    handler: ctx.cliStream.enqueue(({ focus, model, handle, userSlug, ...rest }) => {
       // Same silent-no-op gotcha as edit-cmd: ArkType validate trips on an
       // explicit `focusPath: undefined` / `model: undefined`. Destructure
       // both out of the spread and only attach when defined.
-      const base = { type: "vibes-diy.cli.generate" as const, ...rest };
+      const base = { type: "vibes-diy.cli.generate" as const, ...rest, ownerHandle: handle || userSlug };
       const withFocus = focus === undefined ? base : { ...base, focusPath: focus };
       return model === undefined ? withFocus : { ...withFocus, model };
     }),
