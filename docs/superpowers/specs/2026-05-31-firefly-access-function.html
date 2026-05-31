@@ -672,26 +672,36 @@
 
 <div class="fn-box">
   <div class="fn-label">⚡ (doc, oldDoc, user: UserContext | null, ctx: Helpers) → AccessDescriptor</div>
-  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">type</span> <span class="t">Helpers</span> = {
-  <span class="k">requireAccess</span>: (channelId: <span class="t">string</span>) => <span class="t">void</span> <span style="color: #94a3b8">// throws if user not in channel — opaque, not enumerable</span>
-  <span class="k">requireRole</span>:   (roleName: <span class="t">string</span>) => <span class="t">void</span>   <span style="color: #94a3b8">// throws if user not in role — opaque, not enumerable</span>
-}
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9">
+    <span class="k">type</span> <span class="t">Helpers</span> = { <span class="k">requireAccess</span>: (channelId:
+    <span class="t">string</span>) => <span class="t">void</span>
+    <span style="color: #94a3b8">// throws if user not in channel — opaque, not enumerable</span>
+    <span class="k">requireRole</span>: (roleName: <span class="t">string</span>) => <span class="t">void</span>
+    <span style="color: #94a3b8">// throws if user not in role — opaque, not enumerable</span>
+    }
 
-<span class="k">type</span> <span class="t">AccessDescriptor</span> = {
-  <span class="k">channels</span>?:      <span class="t">string[]</span>                                <span style="color: #94a3b8">// route this doc — per-doc, not reduced</span>
-  <span class="k">members</span>?:       Record&lt;<span class="t">roleName</span>, <span class="t">userSlug[]</span>&gt;        <span style="color: #94a3b8">// role membership — reduced by union</span>
-  <span class="k">grant</span>?: {
-    <span class="k">users</span>?:  Record&lt;<span class="t">userSlug</span>, <span class="t">string[]</span>&gt;               <span style="color: #94a3b8">// direct grants — reduced by union</span>
-    <span class="k">roles</span>?:  Record&lt;<span class="t">roleName</span>, <span class="t">string[]</span>&gt;               <span style="color: #94a3b8">// role grants — reduced by union</span>
-    <span class="k">public</span>?: <span class="t">string[]</span>                                    <span style="color: #94a3b8">// public read — no auth required</span>
-  }
-  <span class="k">expiry</span>?:         <span class="t">string</span> | <span class="t">number</span> | <span class="t">null</span>              <span style="color: #94a3b8">// ISO date or unix seconds</span>
-  <span class="k">allowAnonymous</span>?: <span class="t">boolean</span>                                <span style="color: #94a3b8">// opt-in: runtime rejects null-user writes if absent</span>
-}
-<span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"reason"</span> } <span style="color: #94a3b8">// rejects write — not a return field</span>
+    <span class="k">type</span> <span class="t">AccessDescriptor</span> = { <span class="k">channels</span>?:
+    <span class="t">string[]</span> <span style="color: #94a3b8">// route this doc — per-doc, not reduced</span>
+    <span class="k">members</span>?: Record&lt;<span class="t">roleName</span>, <span class="t">userSlug[]</span>&gt;
+    <span style="color: #94a3b8">// role membership — reduced by union</span> <span class="k">grant</span>?: {
+    <span class="k">users</span>?: Record&lt;<span class="t">userSlug</span>, <span class="t">string[]</span>&gt;
+    <span style="color: #94a3b8">// direct grants — reduced by union</span> <span class="k">roles</span>?: Record&lt;<span class="t"
+      >roleName</span
+    >, <span class="t">string[]</span>&gt; <span style="color: #94a3b8">// role grants — reduced by union</span>
+    <span class="k">public</span>?: <span class="t">string[]</span>
+    <span style="color: #94a3b8">// public read — no auth required</span>
+    }
+    <span class="k">expiry</span>?: <span class="t">string</span> | <span class="t">number</span> | <span class="t">null</span>
+    <span style="color: #94a3b8">// ISO date or unix seconds</span> <span class="k">allowAnonymous</span>?:
+    <span class="t">boolean</span> <span style="color: #94a3b8">// opt-in: runtime rejects null-user writes if absent</span>
+    }
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"reason"</span> }
+    <span style="color: #94a3b8">// rejects write — not a return field</span>
 
-<span style="color: #94a3b8">// default behaviour — both helpers also throw if user is null</span>
-<span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"authentication required"</span> }</div>
+    <span style="color: #94a3b8">// default behaviour — both helpers also throw if user is null</span>
+    <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"authentication required"</span> }
+  </div>
 
   <p class="prose" style="margin: 16px 0 14px">
     <strong>Anonymous writes require explicit opt-in.</strong> If <code>user</code> is <code>null</code> and the access function
@@ -1073,25 +1083,39 @@
 
 <div class="fn-box" style="margin-bottom: 24px">
   <div class="fn-label">⚡ survey access function</div>
-  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">const</span> access = (doc, oldDoc, user, ctx) => {
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9">
+    <span class="k">const</span> access = (doc, oldDoc, user, ctx) => {
 
-  <span class="k">if</span> (doc.type === <span class="t">"survey-questions"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"survey-admin"</span>) <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>]
-  <span style="color: #94a3b8">// team-only — no grant.public</span>
-  } }
+    <span class="k">if</span> (doc.type === <span class="t">"survey-questions"</span>) { ctx.<span style="color: #dc2626"
+      >requireRole</span
+    >(<span class="t">"survey-admin"</span>) <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>]
+    <span style="color: #94a3b8">// team-only — no grant.public</span>
+    } }
 
-  <span class="k">if</span> (doc.type === <span class="t">"final-results"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"feedback-team"</span>) <span class="k">return</span> { channels: [doc._id], grant: { public: [doc._id] }
-  <span style="color: #94a3b8">// published results — no auth required to read</span>
-  } }
+    <span class="k">if</span> (doc.type === <span class="t">"final-results"</span>) { ctx.<span style="color: #dc2626"
+      >requireRole</span
+    >(<span class="t">"feedback-team"</span>) <span class="k">return</span> { channels: [doc._id], grant: { public: [doc._id] }
+    <span style="color: #94a3b8">// published results — no auth required to read</span>
+    } }
 
-  <span class="k">if</span> (doc.type === <span class="t">"survey-response"</span>) { <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
-  <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>], allowAnonymous: <span class="t">true</span> }
-  <span style="color: #94a3b8">// explicit opt-in — runtime rejects without this</span>
-  }
+    <span class="k">if</span> (doc.type === <span class="t">"survey-response"</span>) { <span class="k">if</span> (doc._id)
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"id must be server-generated"</span> } <span class="k">return</span> { channels: [<span class="t"
+      >"inbound-responses"</span
+    >], allowAnonymous: <span class="t">true</span> }
+    <span style="color: #94a3b8">// explicit opt-in — runtime rejects without this</span>
+    }
 
-  <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"survey-admin"</span>) <span class="k">return</span> { grant: { roles: { <span class="t">"survey-admin"</span>: [<span class="t">"inbound-responses"</span>], <span class="t">"feedback-team"</span>: [<span class="t">"inbound-responses"</span>] } } } }
+    <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) { ctx.<span style="color: #dc2626"
+      >requireRole</span
+    >(<span class="t">"survey-admin"</span>) <span class="k">return</span> { grant: { roles: {
+    <span class="t">"survey-admin"</span>: [<span class="t">"inbound-responses"</span>], <span class="t">"feedback-team"</span>:
+    [<span class="t">"inbound-responses"</span>] } } } }
 
-  <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"authentication required"</span> } <span style="color: #94a3b8">// default gate</span>
-  <span class="k">return</span> {} }</div>
+    <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"authentication required"</span> } <span style="color: #94a3b8">// default gate</span>
+    <span class="k">return</span> {} }
+  </div>
 </div>
 
 <div class="flow-box">
@@ -1267,32 +1291,45 @@
 <!-- Full access function -->
 <div class="fn-box">
   <div class="fn-label">⚡ access function — all doc types, both survey variants</div>
-  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">const</span> access = (doc, oldDoc, user, ctx) => { <span class="k">const</span> id = doc.surveyId
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9">
+    <span class="k">const</span> access = (doc, oldDoc, user, ctx) => { <span class="k">const</span> id = doc.surveyId
 
-  <span class="k">if</span> (doc.type === <span class="t">"question"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`) <span style="color: #94a3b8">// team-only write; doc.open is trustworthy</span>
-  <span class="k">const</span> ch = `${id}-questions` <span class="k">return</span> { channels: [ch], grant: doc.open
-    ? { public: [ch] }                                 <span style="color: #94a3b8">// s1: anyone reads</span>
-    : { roles: { [`survey-${id}-responders`]: [ch] } } <span style="color: #94a3b8">// s2: invited only</span>
-  } }
+    <span class="k">if</span> (doc.type === <span class="t">"question"</span>) { ctx.<span style="color: #dc2626">requireRole</span
+    >(`survey-${id}-team`) <span style="color: #94a3b8">// team-only write; doc.open is trustworthy</span>
+    <span class="k">const</span> ch = `${id}-questions` <span class="k">return</span> { channels: [ch], grant: doc.open ? { public:
+    [ch] } <span style="color: #94a3b8">// s1: anyone reads</span> : { roles: { [`survey-${id}-responders`]: [ch] } }
+    <span style="color: #94a3b8">// s2: invited only</span>
+    } }
 
-  <span class="k">if</span> (doc.type === <span class="t">"invite"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`) <span class="k">if</span> (doc.senderSlug !== user?.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
-  <span class="k">return</span> { channels: [`${id}-admin`], members: { [`survey-${id}-responders`]: [doc.inviteeSlug] }
-  <span style="color: #94a3b8">// grants invitee the responder role</span>
-  } }
+    <span class="k">if</span> (doc.type === <span class="t">"invite"</span>) { ctx.<span style="color: #dc2626">requireRole</span
+    >(`survey-${id}-team`) <span class="k">if</span> (doc.senderSlug !== user?.userSlug)
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
+    <span class="k">return</span> { channels: [`${id}-admin`], members: { [`survey-${id}-responders`]: [doc.inviteeSlug] }
+    <span style="color: #94a3b8">// grants invitee the responder role</span>
+    } }
 
-  <span class="k">if</span> (doc.type === <span class="t">"open-response"</span>) { <span style="color: #94a3b8">// s1 — explicit opt-in for anonymous submit</span>
-  <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
-  <span class="k">return</span> { channels: [`${id}-responses`], allowAnonymous: <span class="t">true</span> } }
+    <span class="k">if</span> (doc.type === <span class="t">"open-response"</span>) {
+    <span style="color: #94a3b8">// s1 — explicit opt-in for anonymous submit</span> <span class="k">if</span> (doc._id)
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"id must be server-generated"</span> } <span class="k">return</span> { channels: [`${id}-responses`],
+    allowAnonymous: <span class="t">true</span> } }
 
-  <span class="k">if</span> (doc.type === <span class="t">"response"</span>) { <span style="color: #94a3b8">// s2 — invited users only</span>
-  <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
-  ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-responders`) <span class="k">return</span> { channels: [`${id}-responses`] } }
+    <span class="k">if</span> (doc.type === <span class="t">"response"</span>) {
+    <span style="color: #94a3b8">// s2 — invited users only</span> <span class="k">if</span> (doc._id)
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"id must be server-generated"</span> } ctx.<span style="color: #dc2626">requireRole</span
+    >(`survey-${id}-responders`) <span class="k">return</span> { channels: [`${id}-responses`] } }
 
-  <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`) <span class="k">return</span> { grant: { roles: { [`survey-${id}-team`]: [`${id}-responses`] } } } }
+    <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) { ctx.<span style="color: #dc2626"
+      >requireRole</span
+    >(`survey-${id}-team`) <span class="k">return</span> { grant: { roles: { [`survey-${id}-team`]: [`${id}-responses`] } } } }
 
-  <span class="k">if</span> (doc.type === <span class="t">"results"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`) <span class="k">return</span> { channels: [`${id}-results`], grant: { public: [`${id}-results`] } } }
+    <span class="k">if</span> (doc.type === <span class="t">"results"</span>) { ctx.<span style="color: #dc2626">requireRole</span
+    >(`survey-${id}-team`) <span class="k">return</span> { channels: [`${id}-results`], grant: { public: [`${id}-results`] } } }
 
-  <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"authentication required"</span> } <span class="k">return</span> {} }</div>
+    <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"authentication required"</span> } <span class="k">return</span> {} }
+  </div>
 </div>
 
 <div class="flow-box">
@@ -1350,3 +1387,73 @@
   <code>allowAnonymous</code> independently. Role and channel names should be scoped to application-level identifiers (survey ID,
   team ID) to prevent cross-namespace leakage in shared databases.
 </div>
+
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Runtime Architecture — Function Serialization</h2>
+
+<p class="prose">
+  The access function must evaluate <strong>server-side</strong> to be a real security boundary. Client-side evaluation (sending the
+  <code>AccessDescriptor</code> result from the browser) is not a security boundary — a client can send any descriptor it likes. The
+  design below achieves server-side evaluation without tying function identity to a specific database instance.
+</p>
+
+<p class="prose">
+  <strong>The access function lives in <code>access.js</code>.</strong> It is a dedicated file in the vibe's multi-file filesystem,
+  alongside <code>App.jsx</code> and other source files. Developers author and upload it the same way they upload any vibe file —
+  via <code>npx use-vibes push</code> or the chat editor once multi-file support lands (issue #2068). The file exports a single
+  default function matching the <code>AccessFunction</code> signature.
+</p>
+
+<p class="prose">
+  <strong>The file is content-addressed.</strong> The vibes.diy filesystem already assigns a CID (content-addressed ID) to every
+  file version. When <code>access.js</code> is uploaded, its CID is stored alongside the database record. When the developer updates
+  the file, the CID changes automatically — no manual versioning required.
+</p>
+
+<p class="prose">
+  <strong>Evaluation runs in a Durable Object keyed by CID.</strong> The <code>putDoc</code> handler looks up the current
+  <code>access.js</code> CID for the target database (a D1 lookup), then routes the write to a Durable Object whose name is that
+  CID. On cold start the DO loads <code>access.js</code> source from storage by CID and evaluates it once with
+  <code>new&nbsp;Function()</code>. The resulting function object stays in memory for the lifetime of the DO — all subsequent writes
+  to any database using that CID call the cached function with no re-eval and no re-fetch.
+</p>
+
+<div class="fn-box" style="margin: 24px 0">
+  <div class="fn-label">⚡ putDoc handler — access function call path</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9">
+    <span class="k">// 1.</span> look up CID for this database (D1) <span class="k">const</span> cid =
+    <span class="k">await</span> db.prepare(<span class="t">"SELECT access_fn_cid FROM apps WHERE slug=?"</span
+    >).bind(appSlug).first()
+
+    <span class="k">// 2.</span> route to the DO keyed by CID — DO evals access.js once on cold start
+    <span class="k">const</span> stub = env.ACCESS_FN_DO.get(env.ACCESS_FN_DO.idFromName(cid)) <span class="k">const</span> result =
+    <span class="k">await</span> stub.evaluate({ doc, oldDoc, user })
+
+    <span class="k">// 3.</span> reject or continue <span class="k">if</span> (result.forbidden)
+    <span class="k">return</span> json({ forbidden: result.forbidden }, 403)
+  </div>
+</div>
+
+<p class="prose">
+  <strong>Why CID-keyed, not database-keyed.</strong> If the DO were keyed by database name, each database would need its own warm
+  DO even when many databases share the same access function. CID-keying means one DO per unique function version — databases that
+  share a function (common in template-based apps) share a DO. When a developer updates <code>access.js</code>, a new CID routes to
+  a fresh DO; the old DO goes dormant and Cloudflare evicts it naturally. There is no invalidation step.
+</p>
+
+<p class="prose">
+  <strong>Security model.</strong> The DO uses the <code>unsafe_eval</code> Cloudflare Workers compatibility flag to enable
+  <code>new&nbsp;Function()</code>. This is not a JS-level sandbox — the access function runs in the same V8 isolate as the DO
+  itself. The isolation boundary is the Cloudflare Worker process, not an inner VM. This is an honest tradeoff: the access function
+  is developer-authored policy code (same trust level as the rest of the vibe), and the Worker sandbox provides process-level
+  isolation. The security property being enforced is that <em>the client cannot bypass the policy</em> — not that the policy author
+  cannot write arbitrary server code.
+</p>
+
+<p class="prose">
+  <strong>Migration path.</strong> When channel routing (Phase 3) is implemented, the per-database coordinator DO will manage
+  subscription state. The access function DO can be merged into the coordinator DO at that point — the CID-keyed eval cache becomes
+  one responsibility of the coordinator alongside channel membership. The interface
+  <code>(doc, oldDoc, user) → AccessDescriptor | forbidden</code> stays the same.
+</p>
