@@ -5,7 +5,7 @@ import { type } from "arktype";
 import { ResEnsureAppSlug } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
-import { resolveUserSlug } from "../resolve-user-slug.js";
+import { resolveHandle } from "../resolve-handle.js";
 import { pushFromDir } from "./push-from-dir.js";
 
 export const ReqPush = type({
@@ -41,7 +41,7 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
     const api = ectx.vibesDiyApiFactory(args.apiUrl, { idleTimeoutMs: args.idleTimeoutMs });
     const mode = args.mode === "dev" ? "dev" : "production";
     const appSlug = args.appSlug === "" ? basename(process.cwd()) : args.appSlug;
-    const ownerHandle = await resolveUserSlug(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
+    const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
 
     const rPush = await pushFromDir({
       dir: process.cwd(),
@@ -81,9 +81,16 @@ export function pushCmd(ctx: CliCtx) {
         defaultValue: () => "",
         defaultValueIsSerializable: true,
       }),
-      ownerHandle: option({
+      handle: option({
+        long: "handle",
+        description: "Handle to publish under (uses default if omitted)",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
+      userSlug: option({
         long: "user-slug",
-        description: "User slug to publish under (uses default if omitted)",
+        // No description — hidden from help output (deprecated alias for --handle)
         type: string,
         defaultValue: () => "",
         defaultValueIsSerializable: true,
@@ -105,7 +112,8 @@ export function pushCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      return { type: "vibes-diy.cli.push", ...args };
+      const { handle, userSlug, ...rest } = args;
+      return { type: "vibes-diy.cli.push", ...rest, ownerHandle: handle || userSlug };
     }),
   });
 }

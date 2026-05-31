@@ -16,7 +16,7 @@ import { type } from "arktype";
 import { isResAssetUploadGrant } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
-import { resolveUserSlug } from "../resolve-user-slug.js";
+import { resolveHandle } from "../resolve-handle.js";
 
 // `vibes-diy put-asset <file> [--user-slug=...] [--app-slug=...] [--verify-fetch]`
 //
@@ -121,7 +121,7 @@ export const putAssetEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPutAsset, R
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
-    const ownerHandle = await resolveUserSlug(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
+    const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
     if (!ownerHandle) {
       return Result.Err("Could not resolve ownerHandle. Pass --user-slug or set a default via vibes-diy user-settings.");
     }
@@ -213,9 +213,16 @@ export function putAssetCmd(ctx: CliCtx) {
         defaultValue: () => "",
         defaultValueIsSerializable: true,
       }),
-      ownerHandle: option({
+      handle: option({
+        long: "handle",
+        description: "Handle (uses default if omitted)",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
+      userSlug: option({
         long: "user-slug",
-        description: "User slug (uses default if omitted)",
+        // No description — hidden from help output (deprecated alias for --handle)
         type: string,
         defaultValue: () => "",
         defaultValueIsSerializable: true,
@@ -238,7 +245,7 @@ export function putAssetCmd(ctx: CliCtx) {
         type: "vibes-diy.cli.put-asset",
         file: args.file,
         appSlug: args.appSlug,
-        ownerHandle: args.ownerHandle,
+        ownerHandle: args.handle || args.userSlug,
         apiUrl: args.apiUrl,
         verifyFetch: args.verifyFetch,
         mimeType,

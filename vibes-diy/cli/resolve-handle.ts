@@ -5,7 +5,7 @@ import type { VibesDiyApi } from "@vibes.diy/api-impl";
  * Resolve the ownerHandle to use for CLI commands.
  * Priority: explicit flag > defaultHandle setting > first from list.
  */
-export async function resolveUserSlug(api: VibesDiyApi, explicit?: string): Promise<string | undefined> {
+export async function resolveHandle(api: VibesDiyApi, explicit?: string): Promise<string | undefined> {
   if (explicit) return explicit;
 
   // Try the user's defaultHandle setting
