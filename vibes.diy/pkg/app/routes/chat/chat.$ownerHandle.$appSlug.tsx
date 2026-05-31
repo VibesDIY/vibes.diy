@@ -293,7 +293,11 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 }
 
 export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
-  const { ownerHandle = "preparing", appSlug = "session", fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
+  const {
+    ownerHandle = "preparing",
+    appSlug = "session",
+    fsId,
+  } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
   useDocumentTitle(`${ownerHandle} - ${appSlug} - vibes.diy`);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
