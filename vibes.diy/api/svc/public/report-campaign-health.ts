@@ -73,8 +73,10 @@ export async function fetchGoodVibesClickThroughs(
     .where(
       and(eq(t.refererEvents.refHost, "good.vibes.diy"), gte(t.refererEvents.ts, sinceIso), lte(t.refererEvents.ts, untilIso))
     );
-  const byPath: Record<string, Set<string>> = {};
-  const byCampaignId: Record<string, Set<string>> = {};
+  // Null-prototype objects prevent user-supplied keys (utm_campaign, refPath) from
+  // shadowing inherited properties like "constructor" or "__proto__".
+  const byPath: Record<string, Set<string>> = Object.create(null) as Record<string, Set<string>>;
+  const byCampaignId: Record<string, Set<string>> = Object.create(null) as Record<string, Set<string>>;
   for (const r of rows) {
     let fbclid: string | null = null;
     let utmCampaign: string | null = null;
