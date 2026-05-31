@@ -21,6 +21,7 @@ export default [
   route("vibe/:userSlug/:appSlug/:fsId?", "./routes/vibe.$userSlug.$appSlug.tsx"),
 
   route("about", "./routes/about.tsx", { id: "about" }),
+  route("help", "./routes/help.tsx", { id: "help" }),
   // route("sso-callback", "./routes/sso-callback.tsx", { id: "sso-callback" }),
 
   route("legal/privacy", "./routes/legal/privacy.tsx", {
