@@ -1,4 +1,5 @@
 import { DurableObject, DurableObjectState, Request as CFRequest, Response as CFResponse } from "@cloudflare/workers-types";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 import { CFEnv } from "@vibes.diy/api-types";
 import type { AccessDescriptor, UserContext } from "@vibes.diy/api-types";
 import { makeHelpers } from "@vibes.diy/api-svc/public/access-function.js";
@@ -36,7 +37,9 @@ export class AccessFnDO implements DurableObject {
     if (typeof row.content === "string") {
       source = row.content;
     } else {
-      source = new TextDecoder().decode(row.content instanceof ArrayBuffer ? row.content : row.content);
+      const sthis = ensureSuperThis();
+      const bytes = row.content instanceof ArrayBuffer ? new Uint8Array(row.content) : row.content;
+      source = sthis.txt.decode(bytes);
     }
 
     // Strip ES module export keywords so new Function() can wrap the source.
