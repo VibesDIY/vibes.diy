@@ -46,10 +46,21 @@ export const FileSystemRef = type({
 });
 export type FileSystemRef = typeof FileSystemRef.infer;
 
+// Legacy shape stored before the handle rename; normalised to FileSystemRef on parse.
+const legacyFileSystemRef = type({
+  appSlug: "string",
+  userSlug: "string",
+  mode: "'production'|'dev'",
+  fsId: "string",
+}).pipe(({ userSlug, ...rest }) => ({ ...rest, ownerHandle: userSlug }));
+
+// Accepts both current and legacy shapes; always resolves to FileSystemRef.
+const anyFileSystemRef = FileSystemRef.or(legacyFileSystemRef);
+
 export const PromptContextSql = type({
   type: "'prompt.usage.sql'",
   usage: BlockUsage,
-  "fsRef?": FileSystemRef,
+  "fsRef?": anyFileSystemRef,
 });
 export type PromptContextSql = typeof PromptContextSql.infer;
 
@@ -78,7 +89,7 @@ export const BlockEndMsg = type({
     total: BlockStats,
   },
   usage: BlockUsage,
-  "fsRef?": FileSystemRef,
+  "fsRef?": anyFileSystemRef,
 }).and(BlockBase);
 
 // Toplevel (non-code) section events
