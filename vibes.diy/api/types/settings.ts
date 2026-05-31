@@ -64,9 +64,16 @@ export function isUserSettingNotifications(obj: unknown): obj is UserSettingNoti
   return !(userSettingNotifications(obj) instanceof type.errors);
 }
 
+// Legacy setting type stored before handle rename; normalized to defaultHandle on parse.
+const userSettingLegacyDefaultHandle = type({
+  type: "'defaultUserSlug'",
+  userSlug: "string",
+}).pipe(({ userSlug }) => ({ type: "defaultHandle" as const, ownerHandle: userSlug }));
+
 export const userSettingItem = userSettingShareing
   .or(userSettingModelDefaults)
   .or(userSettingDefaultHandle)
+  .or(userSettingLegacyDefaultHandle)
   .or(userSettingProfile)
   .or(userSettingNotifications);
 
