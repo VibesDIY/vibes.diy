@@ -17,7 +17,7 @@ export interface UseViewerResult {
    *  on !isViewerPending rather than rendering the anonymous fallback. */
   readonly isViewerPending: boolean;
   /** Inline user pill. Renders the current viewer (editable) when called
-   *  with no props. Pass `userSlug` to render another user read-only. */
+   *  with no props. Pass `ownerHandle` to render another user read-only. */
   readonly ViewerTag: React.FC<ViewerTagProps>;
 }
 
