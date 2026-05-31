@@ -63,12 +63,12 @@ const faqs: { q: string; a: React.ReactNode }[] = [
     q: "How do I delete my data?",
     a: (
       <>
-        To delete a specific app, open it in your Vibes dashboard, go to Settings, and choose &ldquo;Delete app.&rdquo; This removes
-        the app and its data permanently. To delete your account and all associated data, go to{" "}
+        To permanently delete app data, go to{" "}
         <a href="/settings" style={link}>
           Settings
         </a>{" "}
-        and choose &ldquo;Delete account.&rdquo; If you need help, email{" "}
+        and delete the user slug that owns that app. This permanently deletes that user slug and all apps connected to it,
+        and cannot be undone. There is currently no in-app &ldquo;Delete account&rdquo; button. For account deletion help, email{" "}
         <a href="mailto:help@vibes.diy" style={link}>
           help@vibes.diy
         </a>
