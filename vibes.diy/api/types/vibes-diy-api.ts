@@ -119,7 +119,7 @@ import { ClerkClaim } from "@fireproof/core-types-base";
 export const LLMChatEntry = type({
   tid: "string",
   chatId: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
 });
 export type LLMChatEntry = typeof LLMChatEntry.infer;
@@ -236,7 +236,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   // subscribed to via subscribeDocs. Returns an unsubscribe function;
   // callers (eg. React effects) MUST call it on cleanup, otherwise listeners
   // accumulate per mount and each doc change fires N redundant callbacks.
-  onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): () => void;
+  onDocChanged(fn: (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void): () => void;
 
   // Register a callback for request-grant updates pushed from the API.
   // Events arrive only for apps this connection has subscribed to via
