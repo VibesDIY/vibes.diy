@@ -1075,24 +1075,29 @@
   <div class="fn-label">⚡ survey access function</div>
   <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">const</span> access = (doc, oldDoc, user, ctx) => {
 
-  <span class="k">if</span> (doc.type === <span class="t">"survey-questions"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"survey-admin"</span>)  <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>]
-  <span style="color: #94a3b8">// team-only — no grant.public</span>
-  } }
-
-  <span class="k">if</span> (doc.type === <span class="t">"final-results"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"feedback-team"</span>)  <span class="k">return</span> { channels: [doc._id], grant: { public: [doc._id] }
-  <span style="color: #94a3b8">// published results — no auth required to read</span>
-  } }
-
-  <span class="k">if</span> (doc.type === <span class="t">"survey-response"</span>) { <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
-  <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>], allowAnonymous: <span class="t">true</span> }
-  <span style="color: #94a3b8">// explicit opt-in — runtime rejects without this</span>
+  <span class="k">if</span> (doc.type === <span class="t">"survey-questions"</span>) {
+    ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"survey-admin"</span>)
+    <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>] }  <span style="color: #94a3b8">// team-only — no grant.public</span>
   }
 
-  <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"survey-admin"</span>)  <span class="k">return</span> { grant: { roles: {
-  <span class="t">"survey-admin"</span>: [<span class="t">"inbound-responses"</span>], <span class="t">"feedback-team"</span>: [<span class="t">"inbound-responses"</span>] } } } }
+  <span class="k">if</span> (doc.type === <span class="t">"final-results"</span>) {
+    ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"feedback-team"</span>)
+    <span class="k">return</span> { channels: [doc._id], grant: { public: [doc._id] } }  <span style="color: #94a3b8">// published results — no auth required to read</span>
+  }
+
+  <span class="k">if</span> (doc.type === <span class="t">"survey-response"</span>) {
+    <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
+    <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>], allowAnonymous: <span class="t">true</span> }  <span style="color: #94a3b8">// explicit opt-in — runtime rejects without this</span>
+  }
+
+  <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) {
+    ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"survey-admin"</span>)
+    <span class="k">return</span> { grant: { roles: { <span class="t">"survey-admin"</span>: [<span class="t">"inbound-responses"</span>], <span class="t">"feedback-team"</span>: [<span class="t">"inbound-responses"</span>] } } }
+  }
 
   <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"authentication required"</span> }  <span style="color: #94a3b8">// default gate</span>
-  <span class="k">return</span> {} }</div>
+  <span class="k">return</span> {}
+}</div>
 </div>
 
 <div class="flow-box">
@@ -1269,32 +1274,49 @@
 <!-- prettier-ignore -->
 <div class="fn-box">
   <div class="fn-label">⚡ access function — all doc types, both survey variants</div>
-  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">const</span> access = (doc, oldDoc, user, ctx) => { <span class="k">const</span> id = doc.surveyId
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">const</span> access = (doc, oldDoc, user, ctx) => {
+  <span class="k">const</span> id = doc.surveyId
 
-  <span class="k">if</span> (doc.type === <span class="t">"question"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)  <span style="color: #94a3b8">// team-only write; doc.open is trustworthy</span>
-  <span class="k">const</span> ch = `${id}-questions`  <span class="k">return</span> { channels: [ch], grant: doc.open
-    ? { public: [ch] }                                 <span style="color: #94a3b8">// s1: anyone reads</span>
-    : { roles: { [`survey-${id}-responders`]: [ch] } } <span style="color: #94a3b8">// s2: invited only</span>
-  } }
+  <span class="k">if</span> (doc.type === <span class="t">"question"</span>) {
+    ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)  <span style="color: #94a3b8">// team-only write; doc.open is trustworthy</span>
+    <span class="k">const</span> ch = `${id}-questions`
+    <span class="k">return</span> { channels: [ch], grant: doc.open
+      ? { public: [ch] }                                 <span style="color: #94a3b8">// s1: anyone reads</span>
+      : { roles: { [`survey-${id}-responders`]: [ch] } } <span style="color: #94a3b8">// s2: invited only</span>
+    }
+  }
 
-  <span class="k">if</span> (doc.type === <span class="t">"invite"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)  <span class="k">if</span> (doc.senderSlug !== user?.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
-  <span class="k">return</span> { channels: [`${id}-admin`], members: { [`survey-${id}-responders`]: [doc.inviteeSlug] }
-  <span style="color: #94a3b8">// grants invitee the responder role</span>
-  } }
+  <span class="k">if</span> (doc.type === <span class="t">"invite"</span>) {
+    ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)
+    <span class="k">if</span> (doc.senderSlug !== user?.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
+    <span class="k">return</span> { channels: [`${id}-admin`], members: { [`survey-${id}-responders`]: [doc.inviteeSlug] } }
+    <span style="color: #94a3b8">// grants invitee the responder role</span>
+  }
 
-  <span class="k">if</span> (doc.type === <span class="t">"open-response"</span>) { <span style="color: #94a3b8">// s1 — explicit opt-in for anonymous submit</span>
-  <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
-  <span class="k">return</span> { channels: [`${id}-responses`], allowAnonymous: <span class="t">true</span> } }
+  <span class="k">if</span> (doc.type === <span class="t">"open-response"</span>) {  <span style="color: #94a3b8">// s1 — explicit opt-in for anonymous submit</span>
+    <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
+    <span class="k">return</span> { channels: [`${id}-responses`], allowAnonymous: <span class="t">true</span> }
+  }
 
-  <span class="k">if</span> (doc.type === <span class="t">"response"</span>) { <span style="color: #94a3b8">// s2 — invited users only</span>
-  <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
-  ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-responders`)  <span class="k">return</span> { channels: [`${id}-responses`] } }
+  <span class="k">if</span> (doc.type === <span class="t">"response"</span>) {  <span style="color: #94a3b8">// s2 — invited users only</span>
+    <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
+    ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-responders`)
+    <span class="k">return</span> { channels: [`${id}-responses`] }
+  }
 
-  <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)  <span class="k">return</span> { grant: { roles: { [`survey-${id}-team`]: [`${id}-responses`] } } } }
+  <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) {
+    ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)
+    <span class="k">return</span> { grant: { roles: { [`survey-${id}-team`]: [`${id}-responses`] } } }
+  }
 
-  <span class="k">if</span> (doc.type === <span class="t">"results"</span>) { ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)  <span class="k">return</span> { channels: [`${id}-results`], grant: { public: [`${id}-results`] } } }
+  <span class="k">if</span> (doc.type === <span class="t">"results"</span>) {
+    ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)
+    <span class="k">return</span> { channels: [`${id}-results`], grant: { public: [`${id}-results`] } }
+  }
 
-  <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"authentication required"</span> }  <span class="k">return</span> {} }</div>
+  <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"authentication required"</span> }
+  <span class="k">return</span> {}
+}</div>
 </div>
 
 <div class="flow-box">
