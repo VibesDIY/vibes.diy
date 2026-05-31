@@ -973,7 +973,7 @@
   <div class="doc-grid" style="grid-template-columns: repeat(2, 1fr)">
     <div class="doc channel-meta">
       <div class="doc-type">
-        survey-questions <span style="font-weight: 400; font-size: 10px">(admin writes, admin + feedback-team read)</span>
+        survey-questions <span style="font-weight: 400; font-size: 10px">(admin writes, team-only on inbound-responses)</span>
       </div>
       <div class="doc-field">_id: <span>survey-q-2026</span></div>
       <div class="doc-field">type: <span>"survey-questions"</span></div>
@@ -1086,7 +1086,7 @@
     <span class="k">if</span> (doc.type === <span class="t">"survey-questions"</span>) { ctx.<span style="color: #dc2626"
       >requireRole</span
     >(<span class="t">"survey-admin"</span>) <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>]
-    } }
+    } } <span style="color: #94a3b8">// team-only — no grant.public</span>
 
     <span class="k">if</span> (doc.type === <span class="t">"final-results"</span>) { ctx.<span style="color: #dc2626"
       >requireRole</span
@@ -1115,7 +1115,7 @@
 </div>
 
 <div class="flow-box">
-  <div class="flow-title">1 — Admin publishes questions</div>
+  <div class="flow-title">1 — Admin saves questions (team-only)</div>
   <div class="flow-steps">
     <div class="step">
       <span class="icon">👤</span><span class="label">admin writes</span><span class="value">survey-questions</span>
