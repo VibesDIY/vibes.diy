@@ -1,4 +1,5 @@
 import { FPCloudClaim, dbAcl, queryFilter, type DbAcl } from "@vibes.diy/api-types";
+export type { AccessDescriptor, AccessFunction, Helpers, UserContext } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
 export * from "./img-gen.js";

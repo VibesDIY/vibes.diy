@@ -28,6 +28,7 @@ export * from "./asset.js";
 export * from "./report.js";
 export * from "./direct-channel.js";
 export * from "./notifications.js";
+export * from "./access-function.js";
 
 export interface FetchOkResult {
   type: "fetch.ok";
