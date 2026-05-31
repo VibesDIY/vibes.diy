@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { COMMENTS_DB_NAME } from "@vibes.diy/api-types";
-import { avatarRouteForUserSlug } from "../../utils/avatarUrl.js";
+import { avatarRouteForHandle } from "../../utils/avatarUrl.js";
 
 // authorUserId / authorUserSlug / authorDisplay / authorIsOwner / createdAt
 // are stamped client-side at post time. The server writes the doc verbatim
@@ -174,7 +174,7 @@ export function CommentsSection({ userSlug, appSlug, canModerate, composerDisabl
           comments.map((c) => {
             const canDelete = canModerate || (viewerUserId && viewerUserId === c.authorUserId);
             const display = c.authorDisplay ?? "anonymous";
-            const avatarUrl = avatarRouteForUserSlug(c.authorUserSlug);
+            const avatarUrl = avatarRouteForHandle(c.authorUserSlug);
             return (
               <div key={c._id} className="flex items-start gap-2 text-sm">
                 {avatarUrl ? (

@@ -152,7 +152,7 @@ export async function renderVibe({
       ? undefined
       : await buildViewerEnvForRender(vctx, {
           appSlug: fs.appSlug,
-          ownerUserSlug: fs.userSlug,
+          ownerUserSlug: fs.ownerHandle,
           apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
         });
 
@@ -182,7 +182,7 @@ export async function renderVibe({
     mountJS: [
       `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
       ...imports.map((i) => i.importStmt),
-      `registerDependencies(${JSON.stringify({ appSlug: fs.appSlug, userSlug: fs.userSlug, fsId: fs.fsId })})`,
+      `registerDependencies(${JSON.stringify({ appSlug: fs.appSlug, userSlug: fs.ownerHandle, fsId: fs.fsId })})`,
       `  .then(() => mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({
         usrEnv,
         ...(viewerEnv ? { viewerEnv } : {}),

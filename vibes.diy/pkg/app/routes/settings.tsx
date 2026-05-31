@@ -406,7 +406,7 @@ function ModelDefaultsCard() {
 function ProfileCard() {
   const { vibeDiyApi } = useVibesDiy();
   const [profile, setProfile] = useState<Omit<UserSettingProfile, "type">>({});
-  const [defaultUserSlug, setDefaultUserSlug] = useState<string | null>(null);
+  const [defaultHandle, setDefaultHandle] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -423,13 +423,13 @@ function ProfileCard() {
       }
       const def = res.Ok().settings.find(isUserSettingDefaultUserSlug);
       if (def) {
-        setDefaultUserSlug(def.userSlug);
+        setDefaultHandle(def.userSlug);
       }
     });
   }, [vibeDiyApi]);
 
   const handleAvatarUpload = async (file: File) => {
-    if (!defaultUserSlug) {
+    if (!defaultHandle) {
       setError("No user slug set — create one in User Slugs first.");
       return;
     }
@@ -438,7 +438,7 @@ function ProfileCard() {
 
     // Step 1: mint a short-lived upload grant via WS
     const rGrant = await vibeDiyApi.requestAssetUploadGrant({
-      userSlug: defaultUserSlug,
+      ownerHandle: defaultHandle,
       appSlug: "_profile",
       mimeType: file.type || "application/octet-stream",
     });
@@ -512,9 +512,9 @@ function ProfileCard() {
       <div className="mb-6">
         <h4 className="text-sm font-semibold mb-2">Avatar</h4>
         <div className="flex items-center gap-4">
-          {profile.avatarCid && defaultUserSlug ? (
+          {profile.avatarCid && defaultHandle ? (
             <img
-              src={`/u/${defaultUserSlug}/avatar`}
+              src={`/u/${defaultHandle}/avatar`}
               alt="Current avatar"
               className="h-16 w-16 rounded-full object-cover border-2"
               style={{ borderColor: "var(--vibes-border-primary)" }}
@@ -549,7 +549,7 @@ function ProfileCard() {
             />
             <p className="text-xs mt-3" style={{ color: "var(--vibes-text-secondary)" }}>
               PNG, JPG, or WebP. Displayed at /u/
-              {defaultUserSlug ?? "your-slug"}/avatar
+              {defaultHandle ?? "your-slug"}/avatar
             </p>
           </div>
         </div>

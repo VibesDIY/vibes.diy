@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from "@tanstack/react-table";
 import { FlagToggle, byNewest, requestDate, stateLabel, fmtDate, RequestGrantItem } from "./shared.js";
 import { AppSettings, ClerkClaimParams } from "@vibes.diy/api-types";
-import { avatarRouteForUserSlug } from "../../../utils/avatarUrl.js";
+import { avatarRouteForHandle } from "../../../utils/avatarUrl.js";
 
 const columnHelper = createColumnHelper<RequestGrantItem>();
 
@@ -318,7 +318,7 @@ export function renderRequestUser(r: RequestGrantItem): React.ReactNode {
   // Only the server-resolved Vibes slug points at a real avatar route.
   // Clerk's `nick` may be sanitized away during slug derivation, so don't
   // fall back to it — render no image rather than a 404.
-  const avatarUrl = avatarRouteForUserSlug(r.foreignUserSlug);
+  const avatarUrl = avatarRouteForHandle(r.foreignUserSlug);
   return (
     <>
       {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-4 h-4 rounded-full object-cover mr-1" />}
