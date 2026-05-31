@@ -103,6 +103,23 @@ The URL pattern `/vibe/{userSlug}/{appSlug}` — the segment value doesn't chang
 
 ---
 
+## CLI Commands (Backwards-Compatible)
+
+Two commands expose `--user-slug` as a user-facing flag:
+
+| Command | Current flag | New flag | Kept as deprecated |
+|---|---|---|---|
+| `vibes-diy push` | `--user-slug` | `--handle` | `--user-slug` (hidden, undocumented) |
+| `vibes-diy pull` | `--user-slug` | `--handle` | `--user-slug` (hidden, undocumented) |
+
+Implementation:
+- Add `--handle` as the primary documented option with description "Handle to publish under (uses default if omitted)".
+- Keep `--user-slug` as a second option with `hidden: true` (or equivalent in the CLI parser) — no description, no docs, but still accepted so existing scripts don't break.
+- Both options feed the same internal variable, renamed `handle` (the user's own handle, used as `ownerHandle` of the published app).
+- `resolve-user-slug.ts` → `resolve-handle.ts`; internal function `resolveUserSlug` → `resolveHandle`.
+
+---
+
 ## Out of Scope (This PR)
 
 - DB column renames (tracked in follow-up issue: "DB migration: rename `user_slug` columns → `owner_handle` / `handle`")
