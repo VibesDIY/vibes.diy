@@ -36,31 +36,37 @@ export const BlockUsage = type({
 });
 export type BlockUsage = typeof BlockUsage.infer;
 
+// Accepts both current and legacy fsRef shapes and always normalizes to
+// `{ appSlug, ownerHandle, mode, fsId }` on parse. Using a single morph avoids
+// ArkType's indeterminate union error for overlapping object inputs.
 export const FileSystemRef = type({
   appSlug: "string",
-  ownerHandle: "string",
+  "ownerHandle?": "string",
+  "userSlug?": "string",
   mode: "'production'|'dev'",
   fsId: "string",
   // wrapperUrl: "string",
   // entryPointUrl: "string",
-});
+})
+  .narrow((value, ctx) => {
+    const hasOwnerHandle = typeof value.ownerHandle === "string";
+    const hasUserSlug = typeof value.userSlug === "string";
+    return hasOwnerHandle !== hasUserSlug || ctx.mustBe("exactly one of ownerHandle or userSlug");
+  })
+  .pipe((value) => {
+    const ownerHandle = value.ownerHandle ?? value.userSlug;
+    if (ownerHandle === undefined) {
+      throw new Error("FileSystemRef requires ownerHandle or userSlug");
+    }
+    const { userSlug: _legacyUserSlug, ownerHandle: _currentOwnerHandle, ...rest } = value;
+    return { ...rest, ownerHandle };
+  });
 export type FileSystemRef = typeof FileSystemRef.infer;
-
-// Legacy shape stored before the handle rename; normalised to FileSystemRef on parse.
-const legacyFileSystemRef = type({
-  appSlug: "string",
-  userSlug: "string",
-  mode: "'production'|'dev'",
-  fsId: "string",
-}).pipe(({ userSlug, ...rest }) => ({ ...rest, ownerHandle: userSlug }));
-
-// Accepts both current and legacy shapes; always resolves to FileSystemRef.
-const anyFileSystemRef = FileSystemRef.or(legacyFileSystemRef);
 
 export const PromptContextSql = type({
   type: "'prompt.usage.sql'",
   usage: BlockUsage,
-  "fsRef?": anyFileSystemRef,
+  "fsRef?": FileSystemRef,
 });
 export type PromptContextSql = typeof PromptContextSql.infer;
 
@@ -89,7 +95,7 @@ export const BlockEndMsg = type({
     total: BlockStats,
   },
   usage: BlockUsage,
-  "fsRef?": anyFileSystemRef,
+  "fsRef?": FileSystemRef,
 }).and(BlockBase);
 
 // Toplevel (non-code) section events
