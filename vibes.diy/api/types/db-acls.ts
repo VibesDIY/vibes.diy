@@ -1,6 +1,6 @@
 import { type } from "arktype";
 
-// ── Per-(userSlug, appSlug, dbName) access control list ────────────
+// ── Per-(ownerHandle, appSlug, dbName) access control list ────────────
 //
 // Each db can carry an ACL granting capabilities to subjects, where
 // subjects are built-in groups projected from the existing role grants:

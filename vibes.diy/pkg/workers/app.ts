@@ -324,7 +324,7 @@ export default {
       }
     }
 
-    // For /vibe/:userSlug/:appSlug routes, look up the real app title so SSR
+    // For /vibe/:ownerHandle/:appSlug routes, look up the real app title so SSR
     // can embed it in OG/Twitter meta tags before the page reaches crawlers.
     const vibeSlugPair = parseVibePathname(url.pathname);
     const vibeHints =
@@ -335,7 +335,7 @@ export default {
         : { ogTitle: undefined, isWorldReadable: false };
 
     // Suppress the fast-paint optimisation for explicit-fsId URLs
-    // (/vibe/:userSlug/:appSlug/:fsId). getVibeRouteHints queries the latest
+    // (/vibe/:ownerHandle/:appSlug/:fsId). getVibeRouteHints queries the latest
     // production row, but the iframe will serve the requested fsId which may be
     // a dev/draft build whose grant check won't confirm public access.
     const hasFsId = vibePathnameHasFsId(url.pathname);

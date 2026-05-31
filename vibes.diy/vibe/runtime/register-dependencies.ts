@@ -60,7 +60,7 @@ import { getActiveImportMap, rewriteBareSpecifiers } from "./bare-specifier-rewr
 
 export interface VibeApp {
   readonly appSlug: string;
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly fsId: string;
 }
 
@@ -304,7 +304,7 @@ export class VibeSandboxApi {
   }
 
   setDbAcl(dbName: string, acl: DbAcl): Promise<Result<ResSetDbAcl>> {
-    return this.request<{ type: string; appSlug: string; userSlug: string; dbName: string; acl: DbAcl }, ResSetDbAcl>(
+    return this.request<{ type: string; appSlug: string; ownerHandle: string; dbName: string; acl: DbAcl }, ResSetDbAcl>(
       {
         type: "vibes.diy.req-set-db-acl",
         ...this.svc.vibeApp,
@@ -316,7 +316,7 @@ export class VibeSandboxApi {
   }
 
   listDbNames(): Promise<Result<ResListDbNames>> {
-    return this.request<{ type: string; appSlug: string; userSlug: string }, ResListDbNames>(
+    return this.request<{ type: string; appSlug: string; ownerHandle: string }, ResListDbNames>(
       {
         type: "vibes.diy.req-list-db-names",
         ...this.svc.vibeApp,
@@ -330,7 +330,7 @@ export class VibeSandboxApi {
       {
         type: "vibe.req.whoAmI",
         appSlug: this.svc.vibeApp.appSlug,
-        userSlug: this.svc.vibeApp.userSlug,
+        ownerHandle: this.svc.vibeApp.ownerHandle,
       },
       { wait: isResVibeWhoAmI, timeout: 10000 }
     );
@@ -378,7 +378,7 @@ export class VibeSandboxApi {
 
   readonly tokenCache = new KeyedResolvOnce();
   fetchCloudToken(req: Omit<ReqFetchCloudToken, "type" | "tid">): Promise<Result<ResFetchCloudToken>> {
-    const key = `vibe-${req.data.dbName}-${req.data.userSlug}-${req.data.appSlug}`;
+    const key = `vibe-${req.data.dbName}-${req.data.ownerHandle}-${req.data.appSlug}`;
     return this.tokenCache.get(key).once(async (opts) => {
       console.info("Fetching cloud token with key", key);
       const rRes = await this.request<ReqFetchCloudToken, ResFetchCloudToken>(

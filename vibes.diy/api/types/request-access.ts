@@ -5,7 +5,7 @@ export const ReqRequestAccess = type({
   type: "'vibes.diy.req-request-access'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 });
 export type ReqRequestAccess = typeof ReqRequestAccess.infer;
 export function isReqRequestAccess(obj: unknown): obj is ReqRequestAccess {
@@ -15,7 +15,7 @@ export function isReqRequestAccess(obj: unknown): obj is ReqRequestAccess {
 export const ResRequestAccessBase = type({
   type: "'vibes.diy.res-request-access'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   foreignUserId: "string",
   foreignInfo: ForeignInfo,
   updated: "string",
@@ -52,7 +52,7 @@ export const ReqApproveRequest = type({
   type: "'vibes.diy.req-approve-request'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   foreignUserId: "string",
   role: Role,
 });
@@ -64,7 +64,7 @@ export function isReqApproveRequest(obj: unknown): obj is ReqApproveRequest {
 export const ResApproveRequest = type({
   type: "'vibes.diy.res-approve-request'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   foreignUserId: "string",
   role: Role,
   state: "'approved'",
@@ -79,7 +79,7 @@ export const ReqRequestSetRole = type({
   type: "'vibes.diy.req-request-set-role'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   foreignUserId: "string",
   role: Role,
 });
@@ -91,7 +91,7 @@ export function isReqRequestSetRole(obj: unknown): obj is ReqRequestSetRole {
 export const ResRequestSetRole = type({
   type: "'vibes.diy.res-request-set-role'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   foreignUserId: "string",
   role: Role,
 });
@@ -104,7 +104,7 @@ export const ReqRevokeRequest = type({
   type: "'vibes.diy.req-revoke-request'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   foreignUserId: "string",
   "delete?": "boolean",
 });
@@ -116,7 +116,7 @@ export function isReqRevokeRequest(obj: unknown): obj is ReqRevokeRequest {
 export const ResRevokeRequest = type({
   type: "'vibes.diy.res-revoke-request'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   foreignUserId: "string",
   deleted: "boolean",
 });
@@ -129,7 +129,7 @@ export const ReqHasAccessRequest = type({
   type: "'vibes.diy.req-has-access-request'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 });
 export type ReqHasAccessRequest = typeof ReqHasAccessRequest.infer;
 export function isReqHasAccessRequest(obj: unknown): obj is ReqHasAccessRequest {
@@ -139,7 +139,7 @@ export function isReqHasAccessRequest(obj: unknown): obj is ReqHasAccessRequest 
 export const ResHasAccessRequestBase = type({
   type: "'vibes.diy.res-has-access-request'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 });
 
 export const ResHasAccessRequestNotFound = type({
@@ -237,7 +237,7 @@ export function isReqListRequestGrants(obj: unknown): obj is ReqListRequestGrant
 export const ResListRequestGrants = type({
   type: "'vibes.diy.res-list-request-grants'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   items: type({
     foreignUserId: "string",
     "foreignUserSlug?": "string",
@@ -265,7 +265,7 @@ export const ReqSubscribeRequestGrants = type({
   type: "'vibes.diy.req-subscribe-request-grants'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 });
 export type ReqSubscribeRequestGrants = typeof ReqSubscribeRequestGrants.infer;
 export function isReqSubscribeRequestGrants(obj: unknown): obj is ReqSubscribeRequestGrants {

@@ -23,7 +23,7 @@ async function computeTopVibesByMembers(vctx: VibesApiSQLCtx): Promise<ResReport
   const reqRows = await vctx.sql.db
     .select({
       memberId: t.requestGrants.foreignUserId,
-      userSlug: t.requestGrants.userSlug,
+      ownerHandle: t.requestGrants.ownerHandle,
       appSlug: t.requestGrants.appSlug,
     })
     .from(t.requestGrants)
@@ -32,7 +32,7 @@ async function computeTopVibesByMembers(vctx: VibesApiSQLCtx): Promise<ResReport
   const invRows = await vctx.sql.db
     .select({
       memberId: t.inviteGrants.tokenOrGrantUserId,
-      userSlug: t.inviteGrants.userSlug,
+      ownerHandle: t.inviteGrants.ownerHandle,
       appSlug: t.inviteGrants.appSlug,
     })
     .from(t.inviteGrants)
@@ -41,7 +41,7 @@ async function computeTopVibesByMembers(vctx: VibesApiSQLCtx): Promise<ResReport
   // Dedupe members per vibe (same person might have both a request and an invite)
   const vibeMembers = new Map<string, Set<string>>();
   for (const r of [...reqRows, ...invRows]) {
-    const vibeKey = `${r.userSlug}\x00${r.appSlug}`;
+    const vibeKey = `${r.ownerHandle}\x00${r.appSlug}`;
     let members = vibeMembers.get(vibeKey);
     if (members === undefined) {
       members = new Set();
@@ -54,7 +54,7 @@ async function computeTopVibesByMembers(vctx: VibesApiSQLCtx): Promise<ResReport
     .map(([key, members]) => {
       const sep = key.indexOf("\x00");
       return {
-        userSlug: key.slice(0, sep),
+        ownerHandle: key.slice(0, sep),
         appSlug: key.slice(sep + 1),
         memberCount: members.size,
       };

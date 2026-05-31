@@ -199,24 +199,24 @@ function EnvRow({
 // ── pending update ────────────────────────────────────────────────────────────
 
 type SettingsUpdate =
-  | { kind: "fetch"; appSlug: string; userSlug: string }
-  | { kind: "title"; appSlug: string; userSlug: string; title: string }
-  | { kind: "theme"; appSlug: string; userSlug: string; theme: string }
-  | { kind: "iconDescription"; appSlug: string; userSlug: string; iconDescription: string }
-  | { kind: "iconRegen"; appSlug: string; userSlug: string }
-  | { kind: "chat"; appSlug: string; userSlug: string; chat: AIParams }
-  | { kind: "app"; appSlug: string; userSlug: string; app: AIParams }
-  | { kind: "img"; appSlug: string; userSlug: string; img: AIParams }
-  | { kind: "env"; appSlug: string; userSlug: string; env: Record<string, string> };
+  | { kind: "fetch"; appSlug: string; ownerHandle: string }
+  | { kind: "title"; appSlug: string; ownerHandle: string; title: string }
+  | { kind: "theme"; appSlug: string; ownerHandle: string; theme: string }
+  | { kind: "iconDescription"; appSlug: string; ownerHandle: string; iconDescription: string }
+  | { kind: "iconRegen"; appSlug: string; ownerHandle: string }
+  | { kind: "chat"; appSlug: string; ownerHandle: string; chat: AIParams }
+  | { kind: "app"; appSlug: string; ownerHandle: string; app: AIParams }
+  | { kind: "img"; appSlug: string; ownerHandle: string; img: AIParams }
+  | { kind: "env"; appSlug: string; ownerHandle: string; env: Record<string, string> };
 
 // ── main tab ─────────────────────────────────────────────────────────────────
 
 interface SettingsTabProps {
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
 }
 
-export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
+export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
   const { vibeDiyApi } = useVibesDiy();
 
   const [title, setTitle] = useState("");
@@ -228,7 +228,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
   const [imgConfig, setImgConfig] = useState<Partial<AIParams>>({});
   const [env, setEnv] = useState<Record<string, string>>({});
 
-  const [pending, setPending] = useState<SettingsUpdate>({ kind: "fetch", appSlug, userSlug });
+  const [pending, setPending] = useState<SettingsUpdate>({ kind: "fetch", appSlug, ownerHandle });
   const [savingTitle, setSavingTitle] = useState(false);
   const [savingTheme, setSavingTheme] = useState(false);
   const [savingChat, setSavingChat] = useState(false);
@@ -243,8 +243,8 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
   const [iconWaitingFor, setIconWaitingFor] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
-    setPending({ kind: "fetch", appSlug, userSlug });
-  }, [appSlug, userSlug, vibeDiyApi]);
+    setPending({ kind: "fetch", appSlug, ownerHandle });
+  }, [appSlug, ownerHandle, vibeDiyApi]);
 
   useEffect(() => {
     let alive = true;
@@ -261,7 +261,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
       setIconWaitingFor(icon?.cid ?? null);
     } else setLoading(true);
 
-    const base = { appSlug: pending.appSlug, userSlug: pending.userSlug };
+    const base = { appSlug: pending.appSlug, ownerHandle: pending.ownerHandle };
     const req =
       pending.kind === "title"
         ? { ...base, title: pending.title }
@@ -312,7 +312,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
 
       if (pending.kind === "title") {
         notifyRecentVibesChanged({
-          userSlug: pending.userSlug,
+          ownerHandle: pending.ownerHandle,
           appSlug: pending.appSlug,
           title: s.entry.settings.title ?? "",
         });
@@ -337,7 +337,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
     async function tick() {
       if (!alive) return;
       attempts += 1;
-      const res = await vibeDiyApi.ensureAppSettings({ appSlug, userSlug });
+      const res = await vibeDiyApi.ensureAppSettings({ appSlug, ownerHandle });
       if (!alive) return;
       if (res.isOk()) {
         const s = res.Ok().settings;
@@ -363,18 +363,18 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
     return () => {
       alive = false;
     };
-  }, [iconWaitingFor, vibeDiyApi, appSlug, userSlug]);
+  }, [iconWaitingFor, vibeDiyApi, appSlug, ownerHandle]);
 
   function upsertEnv(key: string, value: string) {
     const updated = { ...env, [key]: value };
     setEnv(updated);
-    setPending({ kind: "env", appSlug, userSlug, env: updated });
+    setPending({ kind: "env", appSlug, ownerHandle, env: updated });
   }
 
   function deleteEnv(key: string) {
     const { [key]: _, ...updated } = env;
     setEnv(updated);
-    setPending({ kind: "env", appSlug, userSlug, env: updated });
+    setPending({ kind: "env", appSlug, ownerHandle, env: updated });
   }
 
   if (loading) {
@@ -391,7 +391,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
         <div className="space-y-2">
           <Field label="Title" value={title} onChange={setTitle} placeholder={appSlug} />
           <div className="flex justify-end">
-            <SaveBtn saving={savingTitle} onClick={() => setPending({ kind: "title", appSlug, userSlug, title })} />
+            <SaveBtn saving={savingTitle} onClick={() => setPending({ kind: "title", appSlug, ownerHandle, title })} />
           </div>
         </div>
       </Card>
@@ -425,7 +425,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
             )}
           </div>
           <div className="flex justify-end">
-            <SaveBtn saving={savingTheme} onClick={() => setPending({ kind: "theme", appSlug, userSlug, theme })} />
+            <SaveBtn saving={savingTheme} onClick={() => setPending({ kind: "theme", appSlug, ownerHandle, theme })} />
           </div>
         </div>
       </Card>
@@ -459,7 +459,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
             <button
               type="button"
               disabled={iconWaitingFor !== undefined || !iconDescription.trim()}
-              onClick={() => setPending({ kind: "iconRegen", appSlug, userSlug })}
+              onClick={() => setPending({ kind: "iconRegen", appSlug, ownerHandle })}
               className="rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-50"
             >
               {iconWaitingFor !== undefined ? "Generating…" : "Regenerate"}
@@ -467,7 +467,7 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
             <button
               type="button"
               disabled={iconWaitingFor !== undefined}
-              onClick={() => setPending({ kind: "iconDescription", appSlug, userSlug, iconDescription })}
+              onClick={() => setPending({ kind: "iconDescription", appSlug, ownerHandle, iconDescription })}
               className="rounded px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 disabled:opacity-50"
             >
               {iconWaitingFor !== undefined ? "Generating…" : "Save"}
@@ -483,9 +483,9 @@ export function SettingsTab({ userSlug, appSlug }: SettingsTabProps) {
         savingChat={savingChat}
         savingApp={savingApp}
         savingImg={savingImg}
-        onSaveChat={(cfg) => setPending({ kind: "chat", appSlug, userSlug, chat: cfg })}
-        onSaveApp={(cfg) => setPending({ kind: "app", appSlug, userSlug, app: cfg })}
-        onSaveImg={(cfg) => setPending({ kind: "img", appSlug, userSlug, img: cfg })}
+        onSaveChat={(cfg) => setPending({ kind: "chat", appSlug, ownerHandle, chat: cfg })}
+        onSaveApp={(cfg) => setPending({ kind: "app", appSlug, ownerHandle, app: cfg })}
+        onSaveImg={(cfg) => setPending({ kind: "img", appSlug, ownerHandle, img: cfg })}
       />
 
       <Card title="Environment Variables">

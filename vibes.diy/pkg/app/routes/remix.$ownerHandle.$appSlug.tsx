@@ -12,10 +12,10 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { notifyRecentVibesChanged } from "../hooks/useRecentVibes.js";
 
 export default function RemixRoute() {
-  const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
+  const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
   const [searchParams] = useSearchParams();
   const skipChat = searchParams.get("skipChat") === "true";
-  useDocumentTitle(`${skipChat ? "Clone" : "Remix"} ${userSlug}/${appSlug} - vibes.diy`);
+  useDocumentTitle(`${skipChat ? "Clone" : "Remix"} ${ownerHandle}/${appSlug} - vibes.diy`);
   const { vibeDiyApi } = useVibesDiy();
   const { isSignedIn, isLoaded } = useAuth();
   const navigate = useNavigate();
@@ -24,15 +24,15 @@ export default function RemixRoute() {
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
-    if (!userSlug || !appSlug) return;
+    if (!ownerHandle || !appSlug) return;
     if (hasRun.current) return;
     hasRun.current = true;
 
     (async () => {
-      const rFork = await vibeDiyApi.forkApp({ srcUserSlug: userSlug, srcAppSlug: appSlug, srcFsId: fsId, skipChat });
+      const rFork = await vibeDiyApi.forkApp({ srcUserSlug: ownerHandle, srcAppSlug: appSlug, srcFsId: fsId, skipChat });
       if (rFork.isErr()) {
         toast.error(`${skipChat ? "Clone" : "Remix"} failed: ${rFork.Err().message}`);
-        navigate(`/vibe/${userSlug}/${appSlug}`);
+        navigate(`/vibe/${ownerHandle}/${appSlug}`);
         return;
       }
       const fork = rFork.Ok();
@@ -61,7 +61,7 @@ export default function RemixRoute() {
       if (skipChat) {
         // Clone: skip the chat/edit stage and land straight on the
         // published /vibe/ URL.
-        navigate(`/vibe/${fork.userSlug}/${fork.appSlug}/${fork.srcFsId}`);
+        navigate(`/vibe/${fork.ownerHandle}/${fork.appSlug}/${fork.srcFsId}`);
         return;
       }
 
@@ -69,9 +69,9 @@ export default function RemixRoute() {
       // chat route hydrates the editor from Apps.fileSystem when no
       // ChatSections exist, so landing on code view shows the source code
       // ready to edit.
-      navigate(`/chat/${fork.userSlug}/${fork.appSlug}/${fork.srcFsId}?view=code`);
+      navigate(`/chat/${fork.ownerHandle}/${fork.appSlug}/${fork.srcFsId}?view=code`);
     })();
-  }, [isLoaded, isSignedIn, userSlug, appSlug, fsId, skipChat, navigate, vibeDiyApi]);
+  }, [isLoaded, isSignedIn, ownerHandle, appSlug, fsId, skipChat, navigate, vibeDiyApi]);
 
   return (
     <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>

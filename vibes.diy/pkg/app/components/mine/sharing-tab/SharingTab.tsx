@@ -5,12 +5,12 @@ import { EmailInvitationsSection } from "./EmailInvitationsSection.js";
 import { useSharingPanel } from "./useSharingPanel.js";
 
 interface SharingTabProps {
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
 }
 
-export function SharingTab({ userSlug, appSlug }: SharingTabProps) {
-  const panel = useSharingPanel({ userSlug, appSlug });
+export function SharingTab({ ownerHandle, appSlug }: SharingTabProps) {
+  const panel = useSharingPanel({ ownerHandle, appSlug });
 
   if (panel.loading) {
     return (

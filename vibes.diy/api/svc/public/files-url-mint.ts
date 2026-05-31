@@ -24,7 +24,7 @@ export interface FileMeta {
 }
 
 export interface FilesUrlMintCtx {
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly appSlug: string;
   readonly dbName: string;
   readonly docId: string;
@@ -48,14 +48,14 @@ export function isFileMeta(v: unknown): v is FileMeta {
 // the doc itself — `?v=` is NOT an integrity claim. Don't start trusting
 // it as one.
 export function buildFileUrl(ctx: FilesUrlMintCtx, key: string, uploadId: string): string {
-  const { svc, userSlug, appSlug, dbName, docId } = ctx;
+  const { svc, ownerHandle, appSlug, dbName, docId } = ctx;
   const hostname = `assets.${svc.hostnameBase.replace(/^\./, "")}`;
   const buri = BuildURI.from(`http://template`).protocol(svc.protocol).hostname(hostname);
   if (svc.port && svc.port !== "80" && svc.port !== "443") {
     buri.port(svc.port);
   }
   buri.pathname(
-    `/_files/${encodeURIComponent(userSlug)}/${encodeURIComponent(appSlug)}/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}`
+    `/_files/${encodeURIComponent(ownerHandle)}/${encodeURIComponent(appSlug)}/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}`
   );
   buri.setParam("v", uploadId);
   return buri.toString();

@@ -24,7 +24,7 @@ export function inGroup(level: DocAccessLevel, group: DbAclSubject): boolean {
   }
 }
 
-// Resolve the per-(userSlug, appSlug, dbName) ACL.
+// Resolve the per-(ownerHandle, appSlug, dbName) ACL.
 //
 // Storage: each ACL lives as one ActiveDbAcl entry in the AppSettings JSON
 // blob. Loading goes through the same ensureAppSettings path used for every
@@ -39,14 +39,14 @@ export function inGroup(level: DocAccessLevel, group: DbAclSubject): boolean {
 //   - any other dbName → undefined (caller falls back to canRead / canWrite)
 export async function resolveDbAcl(
   vctx: VibesApiSQLCtx,
-  userSlug: string,
+  ownerHandle: string,
   appSlug: string,
   dbName: string
 ): Promise<Result<DbAcl | undefined>> {
   const rSettings = await ensureAppSettings(vctx, {
     type: "vibes.diy.req-ensure-app-settings",
     appSlug,
-    userSlug,
+    ownerHandle,
     env: [],
   });
   if (rSettings.isErr()) return Result.Err(rSettings);
@@ -56,10 +56,10 @@ export async function resolveDbAcl(
   return Result.Ok(undefined);
 }
 
-// Check whether `userId` is a participant in a direct-channel userSlug.
+// Check whether `userId` is a participant in a direct-channel ownerHandle.
 //
-// A direct-channel slug encodes exactly two participant userSlugs. This
-// function queries `userSlugBinding` to see if any of the caller's userSlugs
+// A direct-channel slug encodes exactly two participant ownerHandles. This
+// function queries `handleBinding` to see if any of the caller's ownerHandles
 // matches either participant — if it does, access is granted. No app
 // membership check is required; channel participation IS the gate.
 //
@@ -72,12 +72,12 @@ export async function checkDirectChannelAccess(
 ): Promise<Result<boolean>> {
   const participants = directChannelParticipants(channelUserSlug);
   if (!participants) return Result.Ok(false);
-  const [userSlugA, userSlugB] = participants;
-  const t = vctx.sql.tables.userSlugBinding;
+  const [ownerHandleA, ownerHandleB] = participants;
+  const t = vctx.sql.tables.handleBinding;
   const matches = await vctx.sql.db
-    .select({ userSlug: t.userSlug })
+    .select({ handle: t.handle })
     .from(t)
-    .where(and(eq(t.userId, userId), inArray(t.userSlug, [userSlugA, userSlugB])));
+    .where(and(eq(t.userId, userId), inArray(t.handle, [ownerHandleA, ownerHandleB])));
   return Result.Ok(matches.length > 0);
 }
 

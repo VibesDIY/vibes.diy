@@ -5,7 +5,7 @@ describe("entry-point-utils", () => {
   describe("calcEntryPointUrl", () => {
     const bindings = {
       appSlug: "myapp",
-      userSlug: "myuser",
+      ownerHandle: "myuser",
       fsId: "abc123",
     };
 
@@ -38,26 +38,26 @@ describe("entry-point-utils", () => {
   });
 
   describe("extractHostToBindings", () => {
-    it("extracts appSlug and userSlug from hostname", () => {
+    it("extracts appSlug and ownerHandle from hostname", () => {
       const result = extractHostToBindings({
         matchURL: "https://myapp--myuser.vibes.app/",
       });
       expect(result.Unwrap()).toEqual({
         url: "https://myapp--myuser.vibes.app/",
         appSlug: "myapp",
-        userSlug: "myuser",
+        ownerHandle: "myuser",
         path: "/",
       });
     });
 
-    it("extracts appSlug, userSlug and path", () => {
+    it("extracts appSlug, ownerHandle and path", () => {
       const result = extractHostToBindings({
         matchURL: "https://myapp--myuser.vibes.app/some/path",
       });
       expect(result.Unwrap()).toEqual({
         url: "https://myapp--myuser.vibes.app/some/path",
         appSlug: "myapp",
-        userSlug: "myuser",
+        ownerHandle: "myuser",
         path: "/some/path",
       });
     });
@@ -69,7 +69,7 @@ describe("entry-point-utils", () => {
       expect(result.Unwrap()).toEqual({
         url: "https://myapp--myuser.vibes.app/~zabc12345~",
         appSlug: "myapp",
-        userSlug: "myuser",
+        ownerHandle: "myuser",
         fsId: "zabc12345",
         path: "/",
       });
@@ -82,7 +82,7 @@ describe("entry-point-utils", () => {
       expect(result.Unwrap()).toEqual({
         url: "https://myapp--myuser.vibes.app/~zabc12345~/",
         appSlug: "myapp",
-        userSlug: "myuser",
+        ownerHandle: "myuser",
         fsId: "zabc12345",
         path: "/",
       });
@@ -95,7 +95,7 @@ describe("entry-point-utils", () => {
       expect(result.Unwrap()).toEqual({
         url: "https://myapp--myuser.vibes.app/~zabc12345~/some",
         appSlug: "myapp",
-        userSlug: "myuser",
+        ownerHandle: "myuser",
         fsId: "zabc12345",
         path: "/some",
       });
@@ -108,7 +108,7 @@ describe("entry-point-utils", () => {
       expect(result.Unwrap()).toEqual({
         url: "https://myapp--myuser.vibes.app/~zabc12345~/some/thing",
         appSlug: "myapp",
-        userSlug: "myuser",
+        ownerHandle: "myuser",
         fsId: "zabc12345",
         path: "/some/thing",
       });
@@ -121,19 +121,19 @@ describe("entry-point-utils", () => {
       expect(result.Unwrap()).toEqual({
         url: "https://myapp--myuser.vibes.app/zabc12345/some",
         appSlug: "myapp",
-        userSlug: "myuser",
+        ownerHandle: "myuser",
         path: "/zabc12345/some",
       });
     });
 
-    it("lowercases appSlug and userSlug", () => {
+    it("lowercases appSlug and ownerHandle", () => {
       const result = extractHostToBindings({
         matchURL: "https://MyApp--MyUser.vibes.app/",
       });
       expect(result.Unwrap()).toEqual({
         url: "https://MyApp--MyUser.vibes.app/",
         appSlug: "myapp",
-        userSlug: "myuser",
+        ownerHandle: "myuser",
         path: "/",
       });
     });
@@ -145,7 +145,7 @@ describe("entry-point-utils", () => {
       expect(result.Unwrap()).toEqual({
         url: "https://my-cool-app--some-user.vibes.app/",
         appSlug: "my-cool-app",
-        userSlug: "some-user",
+        ownerHandle: "some-user",
         path: "/",
       });
     });
@@ -179,7 +179,7 @@ describe("entry-point-utils", () => {
       expect(result.Unwrap()).toEqual({
         url: "http://partly-daily-tropical--negative-learn-generally.localhost.vibesdiy.net/~zFJwyDDJWMu3qBw3ujoQa15bpHrPciZTc1sYuTz7UC8wB~/",
         appSlug: "partly-daily-tropical",
-        userSlug: "negative-learn-generally",
+        ownerHandle: "negative-learn-generally",
         fsId: "zFJwyDDJWMu3qBw3ujoQa15bpHrPciZTc1sYuTz7UC8wB",
         path: "/",
       });
@@ -192,7 +192,7 @@ describe("entry-point-utils", () => {
       expect(result.Unwrap()).toEqual({
         url: "http://myapp--myuser.vibes.app/~zABC123xyz~/some/path",
         appSlug: "myapp",
-        userSlug: "myuser",
+        ownerHandle: "myuser",
         fsId: "zABC123xyz",
         path: "/some/path",
       });
@@ -201,7 +201,7 @@ describe("entry-point-utils", () => {
     it("roundtrip: calcEntryPointUrl -> extractHostToBindings", () => {
       const bindings = {
         appSlug: "testapp",
-        userSlug: "testuser",
+        ownerHandle: "testuser",
         fsId: "zabc12345678",
       };
 
@@ -220,7 +220,7 @@ describe("entry-point-utils", () => {
       expect(extracted.Unwrap()).toEqual({
         url,
         appSlug: "testapp",
-        userSlug: "testuser",
+        ownerHandle: "testuser",
         fsId: "zabc12345678",
         path: "/",
       });
@@ -229,7 +229,7 @@ describe("entry-point-utils", () => {
     it("roundtrip: PR-preview base pr-<N>.vibespreview.dev (no special-casing)", () => {
       const bindings = {
         appSlug: "myapp",
-        userSlug: "alice",
+        ownerHandle: "alice",
         fsId: "zabc12345678",
       };
 
@@ -244,7 +244,7 @@ describe("entry-point-utils", () => {
       expect(extractHostToBindings({ matchURL: url }).Unwrap()).toEqual({
         url,
         appSlug: "myapp",
-        userSlug: "alice",
+        ownerHandle: "alice",
         fsId: "zabc12345678",
         path: "/",
       });
@@ -255,7 +255,7 @@ describe("entry-point-utils", () => {
       expect(extractHostToBindings({ matchURL: `${url}/.db-explorer` }).Unwrap()).toEqual({
         url: `${url}/.db-explorer`,
         appSlug: "myapp",
-        userSlug: "alice",
+        ownerHandle: "alice",
         fsId: "zabc12345678",
         path: "/.db-explorer",
       });

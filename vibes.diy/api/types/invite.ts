@@ -49,7 +49,7 @@ export const EmailOpsBase = type({
   dst: "string",
   role: Role,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   "fsId?": "string",
 });
 

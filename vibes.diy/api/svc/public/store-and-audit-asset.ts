@@ -16,7 +16,7 @@ import { VibesApiSQLCtx } from "../types.js";
 export interface StoreAndAuditAssetParams {
   readonly bytes: ReadableStream<Uint8Array> | Uint8Array;
   readonly userId: string;
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly appSlug: string;
   // mimeType is optional in the audit row (the WS asset-upload-grant
   // claim makes it advisory). Image-gen always supplies it; user uploads
@@ -58,7 +58,7 @@ export async function storeAndAuditAsset(
     vctx.sql.db.insert(uploadsTable).values({
       uploadId,
       userId: params.userId,
-      userSlug: params.userSlug,
+      ownerHandle: params.ownerHandle,
       appSlug: params.appSlug,
       cid: stored.cid,
       assetURI: stored.getURL,

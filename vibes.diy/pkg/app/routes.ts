@@ -8,17 +8,17 @@ export default [
   // Protected routes - wrapped by auth layout (no path segment added)
   layout("./routes/auth.tsx", [
     route("chat/prompt", "./routes/chat/prompt.tsx"),
-    route("chat/:userSlug/:appSlug/:fsId?", "./routes/chat/chat.$userSlug.$appSlug.tsx"),
-    route("remix/:userSlug/:appSlug/:fsId?", "./routes/remix.$userSlug.$appSlug.tsx"),
-    route("vibes/mine/:userSlug?/:appSlug?/:tab?", "./routes/vibes/mine.tsx"),
-    route("memberships/:userSlug?/:appSlug?", "./routes/vibes/memberships.tsx"),
+    route("chat/:ownerHandle/:appSlug/:fsId?", "./routes/chat/chat.$ownerHandle.$appSlug.tsx"),
+    route("remix/:ownerHandle/:appSlug/:fsId?", "./routes/remix.$ownerHandle.$appSlug.tsx"),
+    route("vibes/mine/:ownerHandle?/:appSlug?/:tab?", "./routes/vibes/mine.tsx"),
+    route("memberships/:ownerHandle?/:appSlug?", "./routes/vibes/memberships.tsx"),
     route("messages", "./routes/messages.tsx"),
-    route("messages/:userSlugA/:userSlugB", "./routes/messages.$userSlugA.$userSlugB.tsx"),
+    route("messages/:ownerHandleA/:ownerHandleB", "./routes/messages.$ownerHandleA.$ownerHandleB.tsx"),
     route("settings", "./routes/settings.tsx", { id: "settings" }),
     route("settings/csr-to-cert", "./routes/settings/csr-to-cert.tsx", { id: "settings-csr-to-cert" }),
   ]),
 
-  route("vibe/:userSlug/:appSlug/:fsId?", "./routes/vibe.$userSlug.$appSlug.tsx"),
+  route("vibe/:ownerHandle/:appSlug/:fsId?", "./routes/vibe.$ownerHandle.$appSlug.tsx"),
 
   route("about", "./routes/about.tsx", { id: "about" }),
   route("help", "./routes/help.tsx", { id: "help" }),

@@ -120,17 +120,17 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
     const fiveDaysAgo = daysAgoUTC(5);
     const futureDate = daysAgoUTC(-2);
 
-    await appCtx.vibesCtx.sql.db.insert(t.userSlugBinding).values([
-      { userId: "member-alice", userSlug: "alice", tenant: "t-alice", created: fiveDaysAgo },
-      { userId: "member-bob", userSlug: "bob", tenant: "t-bob", created: fiveDaysAgo },
-      { userId: "member-carol", userSlug: "carol", tenant: "t-carol", created: todayMid },
+    await appCtx.vibesCtx.sql.db.insert(t.handleBinding).values([
+      { userId: "member-alice", handle: "alice", tenant: "t-alice", created: fiveDaysAgo },
+      { userId: "member-bob", handle: "bob", tenant: "t-bob", created: fiveDaysAgo },
+      { userId: "member-carol", handle: "carol", tenant: "t-carol", created: todayMid },
     ]);
 
     await appCtx.vibesCtx.sql.db.insert(t.requestGrants).values([
       {
         userId: "owner-1",
         appSlug: "vibe-x",
-        userSlug: "owner-slug-1",
+        ownerHandle: "owner-slug-1",
         state: "approved",
         role: "viewer",
         foreignUserId: "member-alice",
@@ -142,7 +142,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       {
         userId: "owner-1",
         appSlug: "vibe-y",
-        userSlug: "owner-slug-1",
+        ownerHandle: "owner-slug-1",
         state: "approved",
         role: "viewer",
         foreignUserId: "member-bob",
@@ -154,7 +154,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       {
         userId: "owner-1",
         appSlug: "vibe-y",
-        userSlug: "owner-slug-1",
+        ownerHandle: "owner-slug-1",
         state: "pending",
         role: "viewer",
         foreignUserId: "member-pending",
@@ -166,7 +166,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       {
         userId: "owner-1",
         appSlug: "vibe-z",
-        userSlug: "owner-slug-1",
+        ownerHandle: "owner-slug-1",
         state: "approved",
         role: "viewer",
         foreignUserId: "member-future",
@@ -181,7 +181,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       {
         userId: "owner-1",
         appSlug: "vibe-y",
-        userSlug: "owner-slug-1",
+        ownerHandle: "owner-slug-1",
         state: "accepted",
         role: "viewer",
         emailKey: "bob@example.com",
@@ -194,7 +194,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       {
         userId: "owner-1",
         appSlug: "vibe-w",
-        userSlug: "owner-slug-1",
+        ownerHandle: "owner-slug-1",
         state: "accepted",
         role: "viewer",
         emailKey: "carol@example.com",
@@ -207,7 +207,7 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
       {
         userId: "owner-1",
         appSlug: "vibe-p",
-        userSlug: "owner-slug-1",
+        ownerHandle: "owner-slug-1",
         state: "pending",
         role: "viewer",
         emailKey: "pending@example.com",
@@ -220,9 +220,9 @@ describe("report-growth", { timeout: TIMEOUT }, () => {
     ]);
 
     await appCtx.vibesCtx.sql.db.insert(t.appSlugBinding).values([
-      { appSlug: "vibe-old", userSlug: "owner-slug-1", ledger: "led-1", created: fiveDaysAgo },
-      { appSlug: "vibe-new", userSlug: "owner-slug-1", ledger: "led-2", created: todayMid },
-      { appSlug: "vibe-future", userSlug: "owner-slug-1", ledger: "led-3", created: daysAgoUTC(-2) },
+      { appSlug: "vibe-old", ownerHandle: "owner-slug-1", ledger: "led-1", created: fiveDaysAgo },
+      { appSlug: "vibe-new", ownerHandle: "owner-slug-1", ledger: "led-2", created: todayMid },
+      { appSlug: "vibe-future", ownerHandle: "owner-slug-1", ledger: "led-3", created: daysAgoUTC(-2) },
     ]);
   }, TIMEOUT);
 

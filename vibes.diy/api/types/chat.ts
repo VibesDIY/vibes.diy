@@ -40,7 +40,7 @@ export const reqOpenChat = type({
   type: "'vibes.diy.req-open-chat'",
   auth: dashAuthType,
   "appSlug?": "string",
-  "userSlug?": "string",
+  "ownerHandle?": "string",
   "chatId?": "string",
   "prompt?": "string", // when present on a new chat, triggers pre-allocation (LLM-driven title+slug+skills+theme)
   mode: PromptStyle,
@@ -51,7 +51,7 @@ export type ReqOpenChat = typeof reqOpenChat.infer;
 export const resOpenChat = type({
   type: "'vibes.diy.res-open-chat'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   chatId: "string",
   mode: PromptStyle,
 });
@@ -199,7 +199,7 @@ export const resPromptChatSection = type({
   type: "'vibes.diy.res-prompt-chat-section'",
   mode: PromptStyle,
   chatId: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   promptId: "string",
   outerTid: "string",
@@ -220,7 +220,7 @@ export function isResPromptChatSection(obj: unknown): obj is ResPromptChatSectio
 //   }),
 //   // binding allows to associate fs with an app
 //   "binding?": type({
-//     userSlug: "string",
+//     ownerHandle: "string",
 //     appSlug: "string",
 //   }),
 //   // if refFsId is provided, the fs is merged
@@ -265,7 +265,7 @@ export function isSectionEvent(obj: unknown): obj is SectionEvent {
 
 export const evtNewFsId = type({
   type: "'vibes.diy.evt-new-fs-id'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   fsId: "string",
   sessionToken: "string",
@@ -282,7 +282,7 @@ export function isEvtNewFsId(obj: unknown): obj is EvtNewFsId {
 
 export const evtIconGen = type({
   type: "'vibes.diy.evt-icon-gen'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   "force?": "boolean",
 });

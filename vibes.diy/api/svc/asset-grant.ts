@@ -42,7 +42,7 @@ export async function createAssetGrantSigner(params: CreateAssetGrantSignerParam
       return exception2Result(async () => {
         const token = await new SignJWT({
           userId: claims.userId,
-          userSlug: claims.userSlug,
+          ownerHandle: claims.ownerHandle,
           appSlug: claims.appSlug,
           ...(claims.mimeType !== undefined ? { mimeType: claims.mimeType } : {}),
         })
@@ -63,7 +63,7 @@ export async function createAssetGrantSigner(params: CreateAssetGrantSignerParam
       const claims: AssetGrantClaims = {
         jti: payload.jti as string,
         userId: payload.userId as string,
-        userSlug: payload.userSlug as string,
+        ownerHandle: payload.ownerHandle as string,
         appSlug: payload.appSlug as string,
         iat: payload.iat as number,
         exp: payload.exp as number,

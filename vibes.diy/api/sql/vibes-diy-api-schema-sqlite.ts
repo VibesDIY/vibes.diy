@@ -19,8 +19,8 @@ export const sqlHandleBinding = sqliteTable(
   (table) => [
     primaryKey({ columns: [table.handle, table.userId] }),
     // uniqueIndex("UserSlug_tenant").on(table.tenant),
-    uniqueIndex("UserSlug_userSlug").on(table.handle),
-    index("UserSlug_userId_userSlug").on(table.userId, table.handle),
+    uniqueIndex("UserSlug_ownerHandle").on(table.handle),
+    index("UserSlug_userId_ownerHandle").on(table.userId, table.handle),
   ]
 );
 
@@ -47,7 +47,7 @@ export const sqlAppSlugBinding = sqliteTable(
     // updated is intentionally excluded: including it forces a non-HOT index update on every
     // bumpAppRecency call (every chat turn). list-recent-vibes already does a filesort; keeping
     // updated out of the index makes writes HOT-eligible without changing read correctness.
-    index("AppSlug_userSlug_pinnedAt_appSlug").on(table.ownerHandle, table.pinnedAt, table.appSlug),
+    index("AppSlug_ownerHandle_pinnedAt_appSlug").on(table.ownerHandle, table.pinnedAt, table.appSlug),
   ]
 );
 
@@ -146,7 +146,12 @@ export const sqlApplicationChats = sqliteTable(
     uniqueIndex("ApplicationChats_userId_chatIdidx").on(table.userId, table.chatId),
     primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle, table.chatId] }),
     // query for all chats of an app: appSlug + ownerHandle + created desc
-    index("ApplicationChats_userId_appSlug_userSlug_created_idx").on(table.userId, table.appSlug, table.ownerHandle, table.created),
+    index("ApplicationChats_userId_appSlug_ownerHandle_created_idx").on(
+      table.userId,
+      table.appSlug,
+      table.ownerHandle,
+      table.created
+    ),
   ]
 );
 
@@ -169,7 +174,7 @@ export const sqlAppSettings = sqliteTable(
   },
   (table) => [
     primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle] }),
-    index("AppSettings_userSlug_appSlug_idx").on(table.ownerHandle, table.appSlug),
+    index("AppSettings_ownerHandle_appSlug_idx").on(table.ownerHandle, table.appSlug),
   ]
 );
 

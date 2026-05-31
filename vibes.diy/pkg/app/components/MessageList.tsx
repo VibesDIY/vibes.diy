@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useRef } from "react";
 // import type { ChatMessageDocument, ViewType } from "@vibes.diy/prompts";
-import { PromptBlock } from "../routes/chat/chat.$userSlug.$appSlug.js";
+import { PromptBlock } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { parseOptionLines } from "../utils/option-lines.js";
 import { OptionButtons } from "./OptionButtons.js";
 import {
@@ -30,7 +30,7 @@ interface MessageListProps {
   promptProcessing: boolean;
   chatId: string;
   selectedFsId?: string;
-  onClick: (fsRes: { userSlug: string; appSlug: string; fsId: string }) => void;
+  onClick: (fsRes: { ownerHandle: string; appSlug: string; fsId: string }) => void;
   onRetry?: (msg: PromptError) => void;
   onSelectOption?: (option: string) => void;
   // Block IDs whose save originated from the agent autosave (end-of-aider-
@@ -507,7 +507,7 @@ function MessageList({
 
   // Handle special case for waiting state
   const blockMsgs: BlockedMsg[] = [];
-  let lastFsRef: { fsId: string; appSlug: string; userSlug: string } | undefined;
+  let lastFsRef: { fsId: string; appSlug: string; ownerHandle: string } | undefined;
 
   const messageElements = promptBlocks.reduce((acc, promptBlock) => {
     // Only show the streaming indicator on the latest AI message
@@ -569,7 +569,7 @@ function MessageList({
             if (block.type === "Code") {
               // console.log(`code rendered`, block.begin.sectionId, block.lines)
               if (msg.fsRef) {
-                lastFsRef = { fsId: msg.fsRef.fsId, appSlug: msg.fsRef.appSlug, userSlug: msg.fsRef.userSlug };
+                lastFsRef = { fsId: msg.fsRef.fsId, appSlug: msg.fsRef.appSlug, ownerHandle: msg.fsRef.ownerHandle };
               }
               acc.push(
                 <CodeMsg
@@ -583,7 +583,7 @@ function MessageList({
                       onClick({
                         fsId: msg.fsRef.fsId,
                         appSlug: msg.fsRef.appSlug,
-                        userSlug: msg.fsRef.userSlug,
+                        ownerHandle: msg.fsRef.ownerHandle,
                       });
                     }
                   }}
@@ -710,10 +710,7 @@ function MessageList({
     const el = messageElements[i];
     if (React.isValidElement(el) && el.type === TopLevelMsg) {
       if (promptProcessing) {
-        messageElements[i] = React.cloneElement(
-          el as React.ReactElement<{ streaming?: boolean }>,
-          { streaming: true }
-        );
+        messageElements[i] = React.cloneElement(el as React.ReactElement<{ streaming?: boolean }>, { streaming: true });
       } else {
         messageElements[i] = React.cloneElement(
           el as React.ReactElement<{ isLast: boolean; onSelectOption?: (o: string) => void }>,

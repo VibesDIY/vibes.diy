@@ -40,7 +40,7 @@ const MIN_LIMIT = 1;
 const cursorShape = type({
   "pinnedAt?": "string",
   updated: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
 });
 
@@ -106,7 +106,7 @@ export const listRecentVibesEvento: EventoHandler<
       const limit = clampLimit(req.limit);
 
       const asb = vctx.sql.tables.appSlugBinding;
-      const usb = vctx.sql.tables.userSlugBinding;
+      const usb = vctx.sql.tables.handleBinding;
       const settings = vctx.sql.tables.appSettings;
 
       const conditions: SQL[] = [eq(usb.userId, userId)];
@@ -121,34 +121,39 @@ export const listRecentVibesEvento: EventoHandler<
         }
         const c = rDecoded.Ok();
         // Tuple predicate: rows that come strictly after the cursor under
-        // the order (pinnedAt DESC, updated DESC, userSlug DESC, appSlug DESC).
+        // the order (pinnedAt DESC, updated DESC, ownerHandle DESC, appSlug DESC).
         const tuplePred = or(
           lt(asb.pinnedAt, c.pinnedAt),
           and(eq(asb.pinnedAt, c.pinnedAt), lt(asb.updated, c.updated)),
-          and(eq(asb.pinnedAt, c.pinnedAt), eq(asb.updated, c.updated), lt(asb.userSlug, c.userSlug)),
-          and(eq(asb.pinnedAt, c.pinnedAt), eq(asb.updated, c.updated), eq(asb.userSlug, c.userSlug), lt(asb.appSlug, c.appSlug))
+          and(eq(asb.pinnedAt, c.pinnedAt), eq(asb.updated, c.updated), lt(asb.ownerHandle, c.ownerHandle)),
+          and(
+            eq(asb.pinnedAt, c.pinnedAt),
+            eq(asb.updated, c.updated),
+            eq(asb.ownerHandle, c.ownerHandle),
+            lt(asb.appSlug, c.appSlug)
+          )
         );
         if (tuplePred) conditions.push(tuplePred);
       }
 
       const rows = await vctx.sql.db
         .select({
-          userSlug: asb.userSlug,
+          ownerHandle: asb.ownerHandle,
           appSlug: asb.appSlug,
           updated: asb.updated,
           pinnedAt: asb.pinnedAt,
           settings: settings.settings,
         })
         .from(usb)
-        .innerJoin(asb, eq(asb.userSlug, usb.userSlug))
+        .innerJoin(asb, eq(asb.ownerHandle, usb.handle))
         .leftJoin(
           settings,
-          and(eq(settings.userId, usb.userId), eq(settings.userSlug, usb.userSlug), eq(settings.appSlug, asb.appSlug))
+          and(eq(settings.userId, usb.userId), eq(settings.ownerHandle, usb.handle), eq(settings.appSlug, asb.appSlug))
         )
         .where(and(...conditions))
         // Pinned rows float to the top: empty string sorts below any ISO
         // timestamp under DESC, so unpinned rows fall through naturally.
-        .orderBy(desc(asb.pinnedAt), desc(asb.updated), desc(asb.userSlug), desc(asb.appSlug))
+        .orderBy(desc(asb.pinnedAt), desc(asb.updated), desc(asb.ownerHandle), desc(asb.appSlug))
         .limit(limit + 1);
 
       const hasMore = rows.length > limit;
@@ -161,7 +166,7 @@ export const listRecentVibesEvento: EventoHandler<
         const head = iconEntry?.versions.find((v) => v.cid === iconEntry.currentCid);
         const icon = head && head.cid.length > 0 ? { cid: head.cid, mime: head.mime } : undefined;
         const item: ResRecentVibesItem = {
-          userSlug: row.userSlug,
+          ownerHandle: row.ownerHandle,
           appSlug: row.appSlug,
           updated: row.updated,
         };
@@ -176,7 +181,7 @@ export const listRecentVibesEvento: EventoHandler<
         ? encodeCursor({
             pinnedAt: lastRow.pinnedAt ?? "",
             updated: lastRow.updated,
-            userSlug: lastRow.userSlug,
+            ownerHandle: lastRow.ownerHandle,
             appSlug: lastRow.appSlug,
           })
         : undefined;

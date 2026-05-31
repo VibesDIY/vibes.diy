@@ -2,14 +2,14 @@ import { eq } from "drizzle-orm";
 import type { ApiTestCtx } from "../api-test-setup.js";
 import { appendTurnToChat } from "../../svc/intern/append-turn-to-chat.js";
 
-async function userIdForSlug(ctx: ApiTestCtx, userSlug: string): Promise<string> {
+async function userIdForSlug(ctx: ApiTestCtx, ownerHandle: string): Promise<string> {
   const row = await ctx.appCtx.vibesCtx.sql.db
-    .select({ userId: ctx.appCtx.vibesCtx.sql.tables.userSlugBinding.userId })
-    .from(ctx.appCtx.vibesCtx.sql.tables.userSlugBinding)
-    .where(eq(ctx.appCtx.vibesCtx.sql.tables.userSlugBinding.userSlug, userSlug))
+    .select({ userId: ctx.appCtx.vibesCtx.sql.tables.handleBinding.userId })
+    .from(ctx.appCtx.vibesCtx.sql.tables.handleBinding)
+    .where(eq(ctx.appCtx.vibesCtx.sql.tables.handleBinding.handle, ownerHandle))
     .limit(1)
     .then((r) => r[0]);
-  if (row === undefined) throw new Error(`No userSlugBinding found for userSlug=${userSlug}`);
+  if (row === undefined) throw new Error(`No handleBinding found for ownerHandle=${ownerHandle}`);
   return row.userId;
 }
 
@@ -21,12 +21,12 @@ export const c7Scenario = {
   prompt: "Go back to the simpler version we had at the start, then add a footer.",
 
   async setup(ctx: ApiTestCtx): Promise<C7ScenarioResult> {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const userId = await userIdForSlug(ctx, userSlug);
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, ownerHandle);
     const vctx = ctx.appCtx.vibesCtx;
 
     // openChat gives us the chatId. createApp() seeds turn 0 (scaffold/original).
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     if (rOpen.isOk() === false) throw new Error(`openChat failed: ${String(rOpen.Err())}`);
     const chat = rOpen.Ok();
     const chatId = chat.chatId;
@@ -38,7 +38,7 @@ export const c7Scenario = {
       const rAppend = await appendTurnToChat(vctx, {
         chatId,
         userId,
-        userSlug,
+        ownerHandle,
         appSlug,
         fileSystem: [
           {

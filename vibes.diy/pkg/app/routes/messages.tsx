@@ -11,10 +11,10 @@ export default function MessagesRoute() {
   const [myUserSlug, setMyUserSlug] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    vibeDiyApi.listUserSlugBindings({}).then((res) => {
+    vibeDiyApi.listHandleBindings({}).then((res) => {
       if (res.isErr()) return;
       const items = res.Ok().items;
-      if (items.length > 0) setMyUserSlug(items[0].userSlug);
+      if (items.length > 0) setMyUserSlug(items[0].ownerHandle);
     });
   }, [vibeDiyApi]);
 

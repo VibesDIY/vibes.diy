@@ -10,14 +10,14 @@ function firstText(msg: ChatMessage): string {
   return part?.type === "text" ? part.text : "";
 }
 
-async function userIdForSlug(ctx: ApiTestCtx, userSlug: string): Promise<string> {
+async function userIdForSlug(ctx: ApiTestCtx, ownerHandle: string): Promise<string> {
   const row = await ctx.appCtx.vibesCtx.sql.db
-    .select({ userId: ctx.appCtx.vibesCtx.sql.tables.userSlugBinding.userId })
-    .from(ctx.appCtx.vibesCtx.sql.tables.userSlugBinding)
-    .where(eq(ctx.appCtx.vibesCtx.sql.tables.userSlugBinding.userSlug, userSlug))
+    .select({ userId: ctx.appCtx.vibesCtx.sql.tables.handleBinding.userId })
+    .from(ctx.appCtx.vibesCtx.sql.tables.handleBinding)
+    .where(eq(ctx.appCtx.vibesCtx.sql.tables.handleBinding.handle, ownerHandle))
     .limit(1)
     .then((r) => r[0]);
-  if (row === undefined) throw new Error(`No userSlugBinding found for userSlug=${userSlug}`);
+  if (row === undefined) throw new Error(`No handleBinding found for ownerHandle=${ownerHandle}`);
   return row.userId;
 }
 
@@ -34,9 +34,9 @@ describe("assemblePromptPayload: slot interpolation", () => {
   });
 
   it("on a 3-turn chat, payload contains synthetic ORIGINAL + LAST_EDIT + PREVIOUS user messages", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const userId = await userIdForSlug(ctx, userSlug);
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, ownerHandle);
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
@@ -45,7 +45,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
     await appendTurnToChat(vctx, {
       chatId: chat.chatId,
       userId,
-      userSlug,
+      ownerHandle,
       appSlug,
       fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: V2_CONTENT }],
       userMessage: "turn 2",
@@ -54,7 +54,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
     await appendTurnToChat(vctx, {
       chatId: chat.chatId,
       userId,
-      userSlug,
+      ownerHandle,
       appSlug,
       fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: V3_CONTENT }],
       userMessage: "turn 3",
@@ -83,9 +83,9 @@ describe("assemblePromptPayload: slot interpolation", () => {
   });
 
   it("selected:{kind:'version',fsId} loads that fsId's vfs into SELECTED_VERSION slot", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const userId = await userIdForSlug(ctx, userSlug);
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, ownerHandle);
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
@@ -94,7 +94,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
     const rTurnA = await appendTurnToChat(vctx, {
       chatId: chat.chatId,
       userId,
-      userSlug,
+      ownerHandle,
       appSlug,
       fileSystem: [
         {
@@ -113,7 +113,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
     const rTurnB = await appendTurnToChat(vctx, {
       chatId: chat.chatId,
       userId,
-      userSlug,
+      ownerHandle,
       appSlug,
       fileSystem: [
         {
@@ -145,9 +145,9 @@ describe("assemblePromptPayload: slot interpolation", () => {
   });
 
   it("slots.compaction='off' disables turn compaction (older code blocks render verbatim)", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const userId = await userIdForSlug(ctx, userSlug);
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, ownerHandle);
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
@@ -161,7 +161,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
     await appendTurnToChat(vctx, {
       chatId: chat.chatId,
       userId,
-      userSlug,
+      ownerHandle,
       appSlug,
       fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: TURN2_CONTENT }],
       userMessage: "turn 2",
@@ -169,7 +169,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
     await appendTurnToChat(vctx, {
       chatId: chat.chatId,
       userId,
-      userSlug,
+      ownerHandle,
       appSlug,
       fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: V3_CONTENT }],
       userMessage: "turn 3",
@@ -211,8 +211,8 @@ describe("assemblePromptPayload: slot interpolation", () => {
   });
 
   it("system prompt no longer contains 'CURRENT FILES (resolved so far this turn):'", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;

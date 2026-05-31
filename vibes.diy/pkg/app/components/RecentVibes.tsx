@@ -22,8 +22,8 @@ function VibeIconThumb({ icon }: { icon?: { cid: string; mime: string } }) {
   );
 }
 
-function rowKey(item: { userSlug: string; appSlug: string }): string {
-  return `${item.userSlug}/${item.appSlug}`;
+function rowKey(item: { ownerHandle: string; appSlug: string }): string {
+  return `${item.ownerHandle}/${item.appSlug}`;
 }
 
 function isPinned(pinnedAt: string | undefined): boolean {
@@ -76,7 +76,7 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
       });
     });
     const res = await vibeDiyApi.pinRecentVibe({
-      userSlug: item.userSlug,
+      ownerHandle: item.ownerHandle,
       appSlug: item.appSlug,
       pin: !wasPinned,
     });
@@ -95,7 +95,7 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
     if (trimmed === (item.title ?? "")) return;
     mutate((prev) => prev.map((row) => (rowKey(row) === key ? { ...row, title: trimmed } : row)));
     const res = await vibeDiyApi.ensureAppSettings({
-      userSlug: item.userSlug,
+      ownerHandle: item.ownerHandle,
       appSlug: item.appSlug,
       title: trimmed,
     });
@@ -103,7 +103,7 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
       void refresh();
       return;
     }
-    notifyRecentVibesChanged({ userSlug: item.userSlug, appSlug: item.appSlug, title: trimmed });
+    notifyRecentVibesChanged({ ownerHandle: item.ownerHandle, appSlug: item.appSlug, title: trimmed });
   }
 
   return (
@@ -165,12 +165,12 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
                           }}
                           className="w-full min-w-0 truncate border-none bg-transparent p-0 text-sm focus:ring-0 focus-visible:!outline-none focus-visible:!outline-offset-0"
                         />
-                        <span className="truncate text-xs opacity-50">{item.userSlug}</span>
+                        <span className="truncate text-xs opacity-50">{item.ownerHandle}</span>
                       </span>
                     </div>
                   ) : (
                     <Link
-                      to={`/chat/${item.userSlug}/${item.appSlug}`}
+                      to={`/chat/${item.ownerHandle}/${item.appSlug}`}
                       onClick={onNavigate}
                       className="flex items-center gap-2 pl-2 pr-10 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                     >
@@ -182,7 +182,7 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
                           ) : null}
                           {displayTitle(item)}
                         </span>
-                        <span className="truncate text-xs opacity-50">{item.userSlug}</span>
+                        <span className="truncate text-xs opacity-50">{item.ownerHandle}</span>
                       </span>
                     </Link>
                   )}

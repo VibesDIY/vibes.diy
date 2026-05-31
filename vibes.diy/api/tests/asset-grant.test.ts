@@ -17,7 +17,7 @@ async function mkSigner(info?: string) {
 describe("asset-grant signer", () => {
   it("sign/verify roundtrip preserves all claims", async () => {
     const signer = await mkSigner();
-    const claims = { jti: "upl-1", userId: "u-1", userSlug: "alice", appSlug: "notebook", mimeType: "image/png" };
+    const claims = { jti: "upl-1", userId: "u-1", ownerHandle: "alice", appSlug: "notebook", mimeType: "image/png" };
     const rSigned = await signer.sign(claims, 60);
     if (rSigned.isErr()) throw new Error(`sign failed: ${rSigned.Err()}`);
     const { token, expiresAt } = rSigned.Ok();
@@ -29,7 +29,7 @@ describe("asset-grant signer", () => {
     const out = rVerified.Ok();
     expect(out.jti).toBe("upl-1");
     expect(out.userId).toBe("u-1");
-    expect(out.userSlug).toBe("alice");
+    expect(out.ownerHandle).toBe("alice");
     expect(out.appSlug).toBe("notebook");
     expect(out.mimeType).toBe("image/png");
     expect(typeof out.iat).toBe("number");
@@ -39,7 +39,7 @@ describe("asset-grant signer", () => {
 
   it("verify rejects expired tokens", async () => {
     const signer = await mkSigner();
-    const rSigned = await signer.sign({ jti: "upl-x", userId: "u", userSlug: "a", appSlug: "b" }, -1);
+    const rSigned = await signer.sign({ jti: "upl-x", userId: "u", ownerHandle: "a", appSlug: "b" }, -1);
     if (rSigned.isErr()) throw new Error(`sign failed: ${rSigned.Err()}`);
     const rVerified = await signer.verify(rSigned.Ok().token);
     expect(rVerified.isErr()).toBe(true);
@@ -47,7 +47,7 @@ describe("asset-grant signer", () => {
 
   it("verify rejects tampered tokens", async () => {
     const signer = await mkSigner();
-    const rSigned = await signer.sign({ jti: "upl-tamper", userId: "u", userSlug: "a", appSlug: "b" }, 60);
+    const rSigned = await signer.sign({ jti: "upl-tamper", userId: "u", ownerHandle: "a", appSlug: "b" }, 60);
     if (rSigned.isErr()) throw new Error(`sign failed: ${rSigned.Err()}`);
     // Flip one byte of the signature segment.
     const parts = rSigned.Ok().token.split(".");
@@ -61,7 +61,7 @@ describe("asset-grant signer", () => {
   it("HKDF info string discriminates audiences (cross-domain attack defense)", async () => {
     const signerV1 = await mkSigner("vibes.diy.asset-grant.v1");
     const signerV2 = await mkSigner("vibes.diy.asset-grant.v2");
-    const rSigned = await signerV1.sign({ jti: "upl-cross", userId: "u", userSlug: "a", appSlug: "b" }, 60);
+    const rSigned = await signerV1.sign({ jti: "upl-cross", userId: "u", ownerHandle: "a", appSlug: "b" }, 60);
     if (rSigned.isErr()) throw new Error(`sign failed: ${rSigned.Err()}`);
     // Same root secret, different info → different derived keys → v2 must reject.
     const rVerified = await signerV2.verify(rSigned.Ok().token);

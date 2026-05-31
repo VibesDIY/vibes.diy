@@ -8,7 +8,7 @@ import type { VibeSandboxApi } from "../../vibe/runtime/register-dependencies.js
 type MsgListener = (event: { data: unknown }) => void;
 
 export interface MockVibeApi {
-  svc: { vibeApp: { appSlug: string; userSlug: string } };
+  svc: { vibeApp: { appSlug: string; ownerHandle: string } };
   putDoc(doc: Record<string, unknown>, docId?: string): Promise<Result<unknown>>;
   getDoc(docId: string): Promise<Result<unknown>>;
   queryDocs(dbName?: string, filter?: unknown): Promise<Result<unknown>>;
@@ -39,7 +39,7 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
   const queryDocsFilterHints: unknown[] = [];
 
   return {
-    svc: { vibeApp: { appSlug, userSlug: "test-user" } },
+    svc: { vibeApp: { appSlug, ownerHandle: "test-user" } },
 
     putDoc: async (doc: Record<string, unknown>, docId?: string) => {
       // Time-sortable ID: hex timestamp + monotonic counter (mirrors sthis.nextId() behavior)
@@ -107,7 +107,7 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
 
     _simulateDocChanged: (docId: string, dbName = "testdb") => {
       for (const fn of msgListeners) {
-        fn({ data: { type: "vibes.diy.evt-doc-changed", userSlug: "test-user", appSlug, dbName, docId } });
+        fn({ data: { type: "vibes.diy.evt-doc-changed", ownerHandle: "test-user", appSlug, dbName, docId } });
       }
     },
 

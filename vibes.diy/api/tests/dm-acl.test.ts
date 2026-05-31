@@ -39,7 +39,7 @@ async function mkUser(seqUserId: number) {
     getToken: async () => Result.Ok(await user.getDashBoardToken()),
   });
 
-  // Create a vibe to bind a userSlug
+  // Create a vibe to bind a ownerHandle
   const rEnsure = await api.ensureAppSlug({
     mode: "dev",
     fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
@@ -47,9 +47,9 @@ async function mkUser(seqUserId: number) {
   if (rEnsure.isErr()) throw new Error(`ensureAppSlug failed: ${rEnsure.Err().message}`);
   const res = rEnsure.Ok();
   if (!isResEnsureAppSlugOk(res)) throw new Error("ensureAppSlug not ok");
-  const userSlug = res.userSlug;
+  const ownerHandle = res.ownerHandle;
 
-  return { api, appCtx, userSlug };
+  return { api, appCtx, ownerHandle };
 }
 
 describe("DM ACL", { timeout: 20000 }, () => {
@@ -58,10 +58,10 @@ describe("DM ACL", { timeout: 20000 }, () => {
     const bob = await mkUser(1002);
     const mallory = await mkUser(1003);
 
-    const channel = directChannelUserSlug(alice.userSlug, bob.userSlug);
+    const channel = directChannelUserSlug(alice.ownerHandle, bob.ownerHandle);
 
     const result = await mallory.api.putDoc({
-      userSlug: channel,
+      ownerHandle: channel,
       appSlug: "dm",
       dbName: "messages",
       doc: { body: "hi", createdAt: new Date().toISOString() },
@@ -74,9 +74,9 @@ describe("DM ACL", { timeout: 20000 }, () => {
     const alice = await mkUser(1010);
     const bob = await mkUser(1020);
 
-    const channel = directChannelUserSlug(alice.userSlug, bob.userSlug);
+    const channel = directChannelUserSlug(alice.ownerHandle, bob.ownerHandle);
     const result = await alice.api.putDoc({
-      userSlug: channel,
+      ownerHandle: channel,
       appSlug: "dm",
       dbName: "messages",
       doc: { body: "hello bob", createdAt: new Date().toISOString() },
@@ -128,7 +128,7 @@ describe("DM DirectChannelIndex", { timeout: 20000 }, () => {
       getToken: async () => Result.Ok(await bobUser.getDashBoardToken()),
     });
 
-    // Both alice and bob need ensureAppSlug to get their userSlugs
+    // Both alice and bob need ensureAppSlug to get their ownerHandles
     const rAlice = await aliceApi.ensureAppSlug({
       mode: "dev",
       fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
@@ -136,7 +136,7 @@ describe("DM DirectChannelIndex", { timeout: 20000 }, () => {
     if (rAlice.isErr()) throw new Error(`ensureAppSlug (alice) failed: ${rAlice.Err().message}`);
     const aliceRes = rAlice.Ok();
     if (!isResEnsureAppSlugOk(aliceRes)) throw new Error("ensureAppSlug (alice) not ok");
-    aliceUserSlug = aliceRes.userSlug;
+    aliceUserSlug = aliceRes.ownerHandle;
 
     const rBob = await bobApi.ensureAppSlug({
       mode: "dev",
@@ -145,21 +145,21 @@ describe("DM DirectChannelIndex", { timeout: 20000 }, () => {
     if (rBob.isErr()) throw new Error(`ensureAppSlug (bob) failed: ${rBob.Err().message}`);
     const bobRes = rBob.Ok();
     if (!isResEnsureAppSlugOk(bobRes)) throw new Error("ensureAppSlug (bob) not ok");
-    bobUserSlug = bobRes.userSlug;
+    bobUserSlug = bobRes.ownerHandle;
   });
 
   it("sending a DM upserts DirectChannelIndex for both participants", async () => {
     const channel = directChannelUserSlug(aliceUserSlug, bobUserSlug);
     await aliceApi.putDoc({
-      userSlug: channel,
+      ownerHandle: channel,
       appSlug: "dm",
       dbName: "messages",
       doc: { body: "first message", createdAt: new Date().toISOString() },
     });
 
     const t = sharedVibesCtx.sql.tables.directChannelIndex;
-    const rows = await sharedVibesCtx.sql.db.select().from(t).where(eq(t.channelUserSlug, channel));
-    const slugs = rows.map((r) => r.userSlug).sort();
+    const rows = await sharedVibesCtx.sql.db.select().from(t).where(eq(t.channelHandle, channel));
+    const slugs = rows.map((r) => r.handle).sort();
     expect(slugs).toEqual([aliceUserSlug, bobUserSlug].sort());
   });
 });
@@ -208,7 +208,7 @@ describe("listDmThreads", { timeout: 20000 }, () => {
     if (rAlice.isErr()) throw new Error(`ensureAppSlug (alice) failed: ${rAlice.Err().message}`);
     const aliceRes = rAlice.Ok();
     if (!isResEnsureAppSlugOk(aliceRes)) throw new Error("ensureAppSlug (alice) not ok");
-    aliceUserSlug = aliceRes.userSlug;
+    aliceUserSlug = aliceRes.ownerHandle;
 
     const rBob = await bobApi.ensureAppSlug({
       mode: "dev",
@@ -217,14 +217,14 @@ describe("listDmThreads", { timeout: 20000 }, () => {
     if (rBob.isErr()) throw new Error(`ensureAppSlug (bob) failed: ${rBob.Err().message}`);
     const bobRes = rBob.Ok();
     if (!isResEnsureAppSlugOk(bobRes)) throw new Error("ensureAppSlug (bob) not ok");
-    bobUserSlug = bobRes.userSlug;
+    bobUserSlug = bobRes.ownerHandle;
   });
 
   it("returns threads with unread counts", async () => {
     const channel = directChannelUserSlug(aliceUserSlug, bobUserSlug);
 
     await aliceApi.putDoc({
-      userSlug: channel,
+      ownerHandle: channel,
       appSlug: "dm",
       dbName: "messages",
       doc: { body: "hey bob!", authorUserSlug: aliceUserSlug, createdAt: new Date().toISOString() },
@@ -291,7 +291,7 @@ describe("DM sender identification with multi-slug user", { timeout: 20000 }, ()
     if (rAlice1.isErr()) throw new Error("alice ensureAppSlug 1 failed");
     const aliceRes1 = rAlice1.Ok();
     if (!isResEnsureAppSlugOk(aliceRes1)) throw new Error("alice ensureAppSlug 1 failed");
-    const aliceSlug1 = aliceRes1.userSlug;
+    const aliceSlug1 = aliceRes1.ownerHandle;
 
     const rAlice2 = await aliceApi.ensureAppSlug({
       mode: "dev",
@@ -302,7 +302,7 @@ describe("DM sender identification with multi-slug user", { timeout: 20000 }, ()
     if (rAlice2.isErr()) throw new Error("alice ensureAppSlug 2 failed");
     const aliceRes2 = rAlice2.Ok();
     if (!isResEnsureAppSlugOk(aliceRes2)) throw new Error("alice ensureAppSlug 2 failed");
-    const _aliceSlug2 = aliceRes2.userSlug;
+    const _aliceSlug2 = aliceRes2.ownerHandle;
 
     const rBob = await bobApi.ensureAppSlug({
       mode: "dev",
@@ -311,14 +311,14 @@ describe("DM sender identification with multi-slug user", { timeout: 20000 }, ()
     if (rBob.isErr()) throw new Error("bob ensureAppSlug failed");
     const bobRes = rBob.Ok();
     if (!isResEnsureAppSlugOk(bobRes)) throw new Error("bob ensureAppSlug failed");
-    const bobSlug = bobRes.userSlug;
+    const bobSlug = bobRes.ownerHandle;
 
     // Alice sends using her first slug; if sender identification is broken and
     // picks aliceSlug2 as sender, listDmThreads would report aliceSlug2 as
     // otherUserSlug instead of bobSlug.
     const channel = directChannelUserSlug(aliceSlug1, bobSlug);
     const putResult = await aliceApi.putDoc({
-      userSlug: channel,
+      ownerHandle: channel,
       appSlug: "dm",
       dbName: "messages",
       doc: { body: "hey bob", authorUserSlug: aliceSlug1, createdAt: new Date().toISOString() },
@@ -390,7 +390,7 @@ describe("markDmRead", { timeout: 20000 }, () => {
     if (rAlice.isErr()) throw new Error(`ensureAppSlug (alice) failed: ${rAlice.Err().message}`);
     const aliceRes = rAlice.Ok();
     if (!isResEnsureAppSlugOk(aliceRes)) throw new Error("ensureAppSlug (alice) not ok");
-    aliceUserSlug = aliceRes.userSlug;
+    aliceUserSlug = aliceRes.ownerHandle;
 
     const rBob = await bobApi.ensureAppSlug({
       mode: "dev",
@@ -399,14 +399,14 @@ describe("markDmRead", { timeout: 20000 }, () => {
     if (rBob.isErr()) throw new Error(`ensureAppSlug (bob) failed: ${rBob.Err().message}`);
     const bobRes = rBob.Ok();
     if (!isResEnsureAppSlugOk(bobRes)) throw new Error("ensureAppSlug (bob) not ok");
-    bobUserSlug = bobRes.userSlug;
+    bobUserSlug = bobRes.ownerHandle;
   });
 
   it("sets unreadCount to 0 after marking read", async () => {
     const channel = directChannelUserSlug(aliceUserSlug, bobUserSlug);
 
     await aliceApi.putDoc({
-      userSlug: channel,
+      ownerHandle: channel,
       appSlug: "dm",
       dbName: "messages",
       doc: { body: "unread msg", authorUserSlug: aliceUserSlug, createdAt: new Date().toISOString() },

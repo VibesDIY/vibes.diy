@@ -9,7 +9,7 @@ import { ensureSlugBinding } from "./ensure-slug-binding.js";
 export interface AppendTurnOpts {
   readonly chatId: string;
   readonly userId: string;
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly appSlug: string;
   readonly fileSystem: readonly VibeFile[];
   readonly userMessage?: string;
@@ -46,7 +46,7 @@ export async function appendTurnToChat(vctx: VibesApiSQLCtx, opts: AppendTurnOpt
 
   // Step 1: Resolve slug binding using the production slug-binding function.
   // The app was already created via ensureAppSlug; this call is idempotent and
-  // returns the existing binding for (userId, userSlug, appSlug).
+  // returns the existing binding for (userId, ownerHandle, appSlug).
   const syntheticClaims = {
     userId: opts.userId,
     role: "user",
@@ -59,14 +59,14 @@ export async function appendTurnToChat(vctx: VibesApiSQLCtx, opts: AppendTurnOpt
       name: "Synthetic User",
       image_url: "",
       public_meta: undefined,
-      nick: opts.userSlug,
+      nick: opts.ownerHandle,
     },
   };
 
   const rBinding = await ensureSlugBinding(vctx, {
     claims: syntheticClaims,
     userId: opts.userId,
-    userSlug: opts.userSlug,
+    ownerHandle: opts.ownerHandle,
     appSlug: opts.appSlug,
   });
   if (rBinding.isErr()) return Result.Err(`appendTurnToChat: ensureSlugBinding failed: ${rBinding.Err().message}`);
@@ -111,7 +111,7 @@ export async function appendTurnToChat(vctx: VibesApiSQLCtx, opts: AppendTurnOpt
   const refValue: PromptContextSql = {
     type: "prompt.usage.sql",
     usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
-    fsRef: { fsId, mode, appSlug: opts.appSlug, userSlug: opts.userSlug },
+    fsRef: { fsId, mode, appSlug: opts.appSlug, ownerHandle: opts.ownerHandle },
   };
   const rPC = await exception2Result(() =>
     vctx.sql.db.insert(vctx.sql.tables.promptContexts).values({
@@ -148,7 +148,7 @@ export async function appendTurnToChat(vctx: VibesApiSQLCtx, opts: AppendTurnOpt
     userText,
     files: seedFiles,
     timestamp: now,
-    fsRef: { fsId, mode, appSlug: opts.appSlug, userSlug: opts.userSlug },
+    fsRef: { fsId, mode, appSlug: opts.appSlug, ownerHandle: opts.ownerHandle },
   });
   if (rSeed.isErr()) return Result.Err(`appendTurnToChat: seedChatSection failed: ${rSeed.Err()}`);
 

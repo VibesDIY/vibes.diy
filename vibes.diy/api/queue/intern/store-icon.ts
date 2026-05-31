@@ -8,7 +8,7 @@ import { createS3Peer } from "@vibes.diy/api-svc";
 import { QueueCtx } from "../queue-ctx.js";
 
 export interface StoreIconResult {
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly appSlug: string;
   readonly cid: string;
   readonly mime: string;
@@ -16,7 +16,7 @@ export interface StoreIconResult {
 
 export async function storeIcon(
   qctx: QueueCtx,
-  args: { userSlug: string; appSlug: string; bytes: Uint8Array; mime: string; description: string }
+  args: { ownerHandle: string; appSlug: string; bytes: Uint8Array; mime: string; description: string }
 ): Promise<Result<StoreIconResult>> {
   const { db, tables } = qctx.sql;
 
@@ -24,14 +24,14 @@ export async function storeIcon(
     db
       .select()
       .from(tables.appSettings)
-      .where(and(eq(tables.appSettings.userSlug, args.userSlug), eq(tables.appSettings.appSlug, args.appSlug)))
+      .where(and(eq(tables.appSettings.ownerHandle, args.ownerHandle), eq(tables.appSettings.appSlug, args.appSlug)))
       .limit(1)
       .then((r) => r[0])
   );
   if (rRow.isErr()) return Result.Err(rRow);
   const row = rRow.Ok();
   if (!row) {
-    return Result.Err(`appSettings row not found for ${args.userSlug}/${args.appSlug}`);
+    return Result.Err(`appSettings row not found for ${args.ownerHandle}/${args.appSlug}`);
   }
 
   const peers: StoragePeer[] = [createSQLPeer(qctx.storageSystems.sql)];
@@ -80,9 +80,9 @@ export async function storeIcon(
     db
       .update(tables.appSettings)
       .set({ settings: entries, updated: now })
-      .where(and(eq(tables.appSettings.userSlug, args.userSlug), eq(tables.appSettings.appSlug, args.appSlug)))
+      .where(and(eq(tables.appSettings.ownerHandle, args.ownerHandle), eq(tables.appSettings.appSlug, args.appSlug)))
   );
   if (rUpd.isErr()) return Result.Err(rUpd);
 
-  return Result.Ok({ userSlug: args.userSlug, appSlug: args.appSlug, cid, mime: args.mime });
+  return Result.Ok({ ownerHandle: args.ownerHandle, appSlug: args.appSlug, cid, mime: args.mime });
 }

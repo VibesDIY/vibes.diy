@@ -28,7 +28,7 @@ function last30DaysUTC(): string[] {
 
 async function computeVibesWithData(vctx: VibesApiSQLCtx): Promise<ResReportGrowthVibesWithData> {
   const t = vctx.sql.tables;
-  // AppSlugBindings PK is (appSlug, userSlug), so each row is already a
+  // AppSlugBindings PK is (appSlug, ownerHandle), so each row is already a
   // distinct vibe. Cumulative count per day = rows where created <= dayEnd.
   const rows = await vctx.sql.db.select({ created: t.appSlugBinding.created }).from(t.appSlugBinding);
 

@@ -55,10 +55,10 @@ export const listMembersEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
 
       // Read-access gate: any reader (or public-readable) can list members.
       const access = req._auth
-        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
+        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
         : "none";
       if (!canRead(access)) {
-        const pub = await isPublicReadable(vctx, req.appSlug, req.userSlug);
+        const pub = await isPublicReadable(vctx, req.appSlug, req.ownerHandle);
         if (!pub) {
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-error",
@@ -70,9 +70,9 @@ export const listMembersEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
 
       // Find the owner's userId — grants are keyed by it.
       const binding = await vctx.sql.db
-        .select({ userId: vctx.sql.tables.userSlugBinding.userId })
-        .from(vctx.sql.tables.userSlugBinding)
-        .where(eq(vctx.sql.tables.userSlugBinding.userSlug, req.userSlug))
+        .select({ userId: vctx.sql.tables.handleBinding.userId })
+        .from(vctx.sql.tables.handleBinding)
+        .where(eq(vctx.sql.tables.handleBinding.handle, req.ownerHandle))
         .limit(1)
         .then((r) => r[0]);
 
@@ -99,7 +99,7 @@ export const listMembersEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
           and(
             eq(vctx.sql.tables.inviteGrants.userId, ownerUserId),
             eq(vctx.sql.tables.inviteGrants.appSlug, req.appSlug),
-            eq(vctx.sql.tables.inviteGrants.userSlug, req.userSlug),
+            eq(vctx.sql.tables.inviteGrants.ownerHandle, req.ownerHandle),
             eq(vctx.sql.tables.inviteGrants.state, "accepted")
           )
         );
@@ -116,7 +116,7 @@ export const listMembersEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
           and(
             eq(vctx.sql.tables.requestGrants.userId, ownerUserId),
             eq(vctx.sql.tables.requestGrants.appSlug, req.appSlug),
-            eq(vctx.sql.tables.requestGrants.userSlug, req.userSlug),
+            eq(vctx.sql.tables.requestGrants.ownerHandle, req.ownerHandle),
             eq(vctx.sql.tables.requestGrants.state, "approved")
           )
         );

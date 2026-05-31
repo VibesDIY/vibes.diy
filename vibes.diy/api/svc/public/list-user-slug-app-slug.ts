@@ -21,7 +21,7 @@ export const listUserSlugAppSlugEvento: EventoHandler<
   MsgBase<ReqListUserSlugAppSlug>,
   ResListUserSlugAppSlug | VibesDiyError
 > = {
-  hash: "list-userSlug-appSlug",
+  hash: "list-ownerHandle-appSlug",
   validate: unwrapMsgBase(async (msg: MsgBase) => {
     const ret = reqListUserSlugAppSlug(msg.payload);
     if (ret instanceof type.errors) {
@@ -46,9 +46,9 @@ export const listUserSlugAppSlugEvento: EventoHandler<
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      const conditions: SQL[] = [eq(vctx.sql.tables.userSlugBinding.userId, userId)];
-      if (req.userSlug) {
-        conditions.push(eq(vctx.sql.tables.userSlugBinding.userSlug, req.userSlug));
+      const conditions: SQL[] = [eq(vctx.sql.tables.handleBinding.userId, userId)];
+      if (req.ownerHandle) {
+        conditions.push(eq(vctx.sql.tables.handleBinding.handle, req.ownerHandle));
       }
       if (req.appSlug) {
         conditions.push(eq(vctx.sql.tables.appSlugBinding.appSlug, req.appSlug));
@@ -56,35 +56,35 @@ export const listUserSlugAppSlugEvento: EventoHandler<
 
       const rows = await vctx.sql.db
         .select({
-          userSlug: vctx.sql.tables.userSlugBinding.userSlug,
-          userId: vctx.sql.tables.userSlugBinding.userId,
+          ownerHandle: vctx.sql.tables.handleBinding.handle,
+          userId: vctx.sql.tables.handleBinding.userId,
           appSlug: vctx.sql.tables.appSlugBinding.appSlug,
           appCreated: vctx.sql.tables.appSlugBinding.created,
-          userCreated: vctx.sql.tables.userSlugBinding.created,
+          userCreated: vctx.sql.tables.handleBinding.created,
         })
-        .from(vctx.sql.tables.userSlugBinding)
+        .from(vctx.sql.tables.handleBinding)
         .leftJoin(
           vctx.sql.tables.appSlugBinding,
-          eq(vctx.sql.tables.appSlugBinding.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
+          eq(vctx.sql.tables.appSlugBinding.ownerHandle, vctx.sql.tables.handleBinding.handle)
         )
         .where(and(...conditions))
-        .orderBy(desc(vctx.sql.tables.userSlugBinding.created), desc(vctx.sql.tables.appSlugBinding.created));
+        .orderBy(desc(vctx.sql.tables.handleBinding.created), desc(vctx.sql.tables.appSlugBinding.created));
 
-      // Group by userSlug
+      // Group by ownerHandle
       const grouped = new Map<string, string[]>();
       for (const row of rows) {
-        if (!grouped.has(row.userSlug)) {
-          grouped.set(row.userSlug, []);
+        if (!grouped.has(row.ownerHandle)) {
+          grouped.set(row.ownerHandle, []);
         }
         if (row.appSlug) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          grouped.get(row.userSlug)!.push(row.appSlug);
+          grouped.get(row.ownerHandle)!.push(row.appSlug);
         }
       }
 
-      const items: ResListUserSlugAppSlugItem[] = Array.from(grouped.entries()).map(([userSlug, appSlugs]) => ({
+      const items: ResListUserSlugAppSlugItem[] = Array.from(grouped.entries()).map(([ownerHandle, appSlugs]) => ({
         userId,
-        userSlug,
+        ownerHandle,
         appSlugs,
       }));
 

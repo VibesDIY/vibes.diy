@@ -37,7 +37,7 @@ export interface PushFromDirOptions {
   dir: string;
   mode: "production" | "dev";
   appSlug: string;
-  userSlug: string | undefined;
+  ownerHandle: string | undefined;
   instantJoin: boolean;
   publicAccess?: boolean;
   apiUrl: string;
@@ -45,15 +45,17 @@ export interface PushFromDirOptions {
     ensureAppSlug: (req: {
       mode: "production" | "dev";
       appSlug: string;
-      userSlug: string | undefined;
+      ownerHandle: string | undefined;
       fileSystem: VibeFile[];
     }) => Promise<Result<unknown>>;
     ensureAppSettings: (req: {
       appSlug: string;
-      userSlug: string;
+      ownerHandle: string;
       request?: { enable: boolean; autoAcceptRole?: "viewer" };
       publicAccess?: { enable: boolean };
-    }) => Promise<Result<{ settings: { entry: { enableRequest?: { autoAcceptRole?: string }; publicAccess?: { enable?: boolean } } } }>>;
+    }) => Promise<
+      Result<{ settings: { entry: { enableRequest?: { autoAcceptRole?: string }; publicAccess?: { enable?: boolean } } } }>
+    >;
   };
   ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, unknown, unknown>;
 }
@@ -85,7 +87,7 @@ export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<Push
   const rResult = await opts.api.ensureAppSlug({
     mode: opts.mode,
     appSlug: opts.appSlug,
-    userSlug: opts.userSlug,
+    ownerHandle: opts.ownerHandle,
     fileSystem: files,
   });
   if (rResult.isErr()) {
@@ -98,10 +100,10 @@ export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<Push
     return Result.Err(`type mismatch: ${result.summary}`);
   }
 
-  if (opts.userSlug) {
+  if (opts.ownerHandle) {
     const rSettings = await opts.api.ensureAppSettings({
       appSlug: opts.appSlug,
-      userSlug: opts.userSlug,
+      ownerHandle: opts.ownerHandle,
       request: { enable: true, autoAcceptRole: opts.instantJoin ? "viewer" : undefined },
     });
     if (rSettings.isErr()) {
@@ -122,7 +124,7 @@ export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<Push
     if (opts.publicAccess) {
       const rPub = await opts.api.ensureAppSettings({
         appSlug: opts.appSlug,
-        userSlug: opts.userSlug,
+        ownerHandle: opts.ownerHandle,
         publicAccess: { enable: true },
       });
       if (rPub.isErr()) {
@@ -141,10 +143,10 @@ export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<Push
   let publicUrl = "";
   if (isResEnsureAppSlugOk(result)) {
     publicUrl = BuildURI.from(opts.apiUrl)
-      .pathname(`/vibe/${result.userSlug}/${result.appSlug}`)
+      .pathname(`/vibe/${result.ownerHandle}/${result.appSlug}`)
       .cleanParams("@stable-entry@", ".stable-entry.")
       .toString();
-    await sendProgress(opts.ctx, "info", `Deployed: ${result.userSlug}/${result.appSlug}`);
+    await sendProgress(opts.ctx, "info", `Deployed: ${result.ownerHandle}/${result.appSlug}`);
     await sendProgress(opts.ctx, "info", `URL: ${publicUrl}`);
   }
 

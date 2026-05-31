@@ -12,7 +12,7 @@ describe("Firefly public subscribeDocs", { timeout: 15000 }, () => {
   let ownerApi: VibesDiyApi;
   let anonApi: VibesDiyApi;
   let appSlug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -57,19 +57,19 @@ describe("Firefly public subscribeDocs", { timeout: 15000 }, () => {
     const res = rRes.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
     appSlug = res.appSlug;
-    userSlug = res.userSlug;
+    ownerHandle = res.ownerHandle;
 
-    await ownerApi.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: true } });
+    await ownerApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
   });
 
   it("public subscribeDocs succeeds without auth", async () => {
-    const rRes = await anonApi.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await anonApi.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
 
   it("owner can still subscribe", async () => {
-    const rRes = await ownerApi.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await ownerApi.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
@@ -80,7 +80,7 @@ describe("Firefly non-public subscribeDocs denied", { timeout: 15000 }, () => {
   let ownerApi: VibesDiyApi;
   let anonApi: VibesDiyApi;
   let appSlug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -125,12 +125,12 @@ describe("Firefly non-public subscribeDocs denied", { timeout: 15000 }, () => {
     const res = rRes.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
     appSlug = res.appSlug;
-    userSlug = res.userSlug;
+    ownerHandle = res.ownerHandle;
     // publicAccess NOT enabled
   });
 
   it("non-public subscribeDocs denied without auth", async () => {
-    const rRes = await anonApi.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await anonApi.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isErr()).toBe(true);
   });
 });

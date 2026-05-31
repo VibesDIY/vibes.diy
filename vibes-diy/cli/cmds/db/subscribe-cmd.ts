@@ -12,7 +12,7 @@ export const ReqDbSubscribe = type({
   type: "'vibes-diy.cli.db.subscribe'",
   apiUrl: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
 });
 export type ReqDbSubscribe = typeof ReqDbSubscribe.infer;
@@ -34,9 +34,9 @@ export const dbSubscribeEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbSubscr
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const rUser = await resolveUserSlug(api, ctx.validated.userSlug);
+    const rUser = await resolveUserSlug(api, ctx.validated.ownerHandle);
     if (rUser.isErr()) return Result.Err(rUser.Err());
-    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userSlug: rUser.Ok() });
+    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userHandle: rUser.Ok() });
 
     // Trigger server-side subscription. The api layer transparently reconnects on
     // mid-stream disconnects (api/impl/index.ts onClose → setTimeout → replay), but
@@ -82,7 +82,7 @@ export function dbSubscribeCmd(ctx: CliCtx) {
       type: "vibes-diy.cli.db.subscribe",
       apiUrl: args.apiUrl,
       appSlug: args.appSlug,
-      userSlug: args.userSlug,
+      ownerHandle: args.ownerHandle,
       dbName: args.dbName,
     })),
   });

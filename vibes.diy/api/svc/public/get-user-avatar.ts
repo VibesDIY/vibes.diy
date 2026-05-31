@@ -18,18 +18,18 @@ export interface AvatarHttpResult {
   body?: string;
 }
 
-// Spec §1a — content-addressed URL behind a stable per-userSlug
+// Spec §1a — content-addressed URL behind a stable per-ownerHandle
 // indirection so embedded references update when the user uploads a
 // new avatar.
 export async function handleGetUserAvatar(
   vctx: VibesApiSQLCtx,
-  userSlug: string,
+  ownerHandle: string,
   ifNoneMatch: string | undefined
 ): Promise<AvatarHttpResult> {
   const binding = await vctx.sql.db
-    .select({ userId: vctx.sql.tables.userSlugBinding.userId })
-    .from(vctx.sql.tables.userSlugBinding)
-    .where(eq(vctx.sql.tables.userSlugBinding.userSlug, userSlug))
+    .select({ userId: vctx.sql.tables.handleBinding.userId })
+    .from(vctx.sql.tables.handleBinding)
+    .where(eq(vctx.sql.tables.handleBinding.handle, ownerHandle))
     .limit(1)
     .then((r) => r[0]);
   if (!binding) return { status: 404, headers: {} };
@@ -88,16 +88,16 @@ export async function handleGetUserAvatar(
   };
 }
 
-// USER_AVATAR_PATH_RE matches GET /u/<userSlug>/avatar where userSlug is the
+// USER_AVATAR_PATH_RE matches GET /u/<ownerHandle>/avatar where ownerHandle is the
 // path segment between /u/ and /avatar.
 const USER_AVATAR_PATH_RE = /^\/u\/([^/]+)\/avatar$/;
 
-// Evento handler that wires GET /u/:userSlug/avatar into the HTTP evento chain.
+// Evento handler that wires GET /u/:ownerHandle/avatar into the HTTP evento chain.
 // Registered after cidAsset so content-addressed asset fetches are handled
 // before the stable-redirect layer.
-export const userAvatar: EventoHandler<Request, { userSlug: string; ifNoneMatch: string | undefined }, unknown> = {
+export const userAvatar: EventoHandler<Request, { ownerHandle: string; ifNoneMatch: string | undefined }, unknown> = {
   hash: "user-avatar",
-  validate: (ctx: ValidateTriggerCtx<Request, { userSlug: string; ifNoneMatch: string | undefined }, unknown>) => {
+  validate: (ctx: ValidateTriggerCtx<Request, { ownerHandle: string; ifNoneMatch: string | undefined }, unknown>) => {
     const { request: req } = ctx;
     if (req && (req.method === "GET" || req.method === "HEAD")) {
       const url = URI.from(req.url);
@@ -106,7 +106,7 @@ export const userAvatar: EventoHandler<Request, { userSlug: string; ifNoneMatch:
         return Promise.resolve(
           Result.Ok(
             Option.Some({
-              userSlug: decodeURIComponent(m[1]),
+              ownerHandle: decodeURIComponent(m[1]),
               ifNoneMatch: req.headers.get("If-None-Match") ?? undefined,
             })
           )
@@ -116,18 +116,18 @@ export const userAvatar: EventoHandler<Request, { userSlug: string; ifNoneMatch:
     return Promise.resolve(Result.Ok(Option.None()));
   },
   handle: async (
-    ctx: HandleTriggerCtx<Request, { userSlug: string; ifNoneMatch: string | undefined }, unknown>
+    ctx: HandleTriggerCtx<Request, { ownerHandle: string; ifNoneMatch: string | undefined }, unknown>
   ): Promise<Result<EventoResultType>> => {
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    const { userSlug, ifNoneMatch } = ctx.validated;
+    const { ownerHandle, ifNoneMatch } = ctx.validated;
 
-    const res = await handleGetUserAvatar(vctx, userSlug, ifNoneMatch);
+    const res = await handleGetUserAvatar(vctx, ownerHandle, ifNoneMatch);
 
     if (res.status === 404) {
       await ctx.send.send(ctx, {
         type: "http.Response.JSON",
         status: 404,
-        json: { type: "error", message: `Avatar not found for user ${userSlug}` },
+        json: { type: "error", message: `Avatar not found for user ${ownerHandle}` },
       } satisfies HttpResponseJsonType);
       return Result.Ok(EventoResult.Stop);
     }

@@ -47,8 +47,8 @@ export interface ModelDefaults {
 
 /**
  * Resolves model defaults for chat/app/img using a 3-tier fallback:
- *   1. appSettings (appSlug + userSlug required)
- *   2. userSettings (looked up via userSlug → userId)
+ *   1. appSettings (appSlug + ownerHandle required)
+ *   2. userSettings (looked up via ownerHandle → userId)
  *   3. preSelected defaults from models.json (fails if not configured)
  *
  * Each field is resolved independently, so appSettings.chat can override
@@ -56,7 +56,7 @@ export interface ModelDefaults {
  */
 export async function getModelDefaults(
   ctx: VibesApiSQLCtx,
-  { appSlug, userSlug }: { appSlug?: string; userSlug?: string }
+  { appSlug, ownerHandle }: { appSlug?: string; ownerHandle?: string }
 ): Promise<Result<ModelDefaults>> {
   // Tier 3: preSelected defaults from model catalog (lowest priority)
   const rDefaults = await loadPreSelectedDefaults(ctx);
@@ -64,12 +64,12 @@ export async function getModelDefaults(
   const result: ModelDefaults = { ...rDefaults.Ok() };
 
   // Tier 2: user-level model defaults
-  if (userSlug) {
+  if (ownerHandle) {
     const rBinding = await exception2Result(() =>
       ctx.sql.db
         .select()
-        .from(ctx.sql.tables.userSlugBinding)
-        .where(eq(ctx.sql.tables.userSlugBinding.userSlug, userSlug))
+        .from(ctx.sql.tables.handleBinding)
+        .where(eq(ctx.sql.tables.handleBinding.handle, ownerHandle))
         .limit(1)
         .then((r) => r[0])
     );
@@ -102,12 +102,12 @@ export async function getModelDefaults(
   }
 
   // Tier 1: app-level overrides (highest priority)
-  if (appSlug && userSlug) {
+  if (appSlug && ownerHandle) {
     const rApp = await exception2Result(() =>
       ctx.sql.db
         .select()
         .from(ctx.sql.tables.appSettings)
-        .where(and(eq(ctx.sql.tables.appSettings.appSlug, appSlug), eq(ctx.sql.tables.appSettings.userSlug, userSlug)))
+        .where(and(eq(ctx.sql.tables.appSettings.appSlug, appSlug), eq(ctx.sql.tables.appSettings.ownerHandle, ownerHandle)))
         .limit(1)
         .then((r) => r[0])
     );

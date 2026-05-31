@@ -1,6 +1,6 @@
 import { ResolveOnce, Result } from "@adviser/cement";
 import {
-  isUserSettingDefaultUserSlug,
+  isUserSettingDefaultHandle,
   type ResPutDoc,
   type ResGetDoc,
   type ResGetDocNotFound,
@@ -21,13 +21,13 @@ import type { VibesDiyApi } from "./index.js";
  * One adapter per (apiUrl, appSlug) pair — typically created once per
  * process via the fireproof() factory in use-vibes.
  *
- * userHandle is resolved lazily from the user's defaultUserSlug setting
+ * userHandle is resolved lazily from the user's defaultHandle setting
  * via ensureUserSettings({}). Pass opts.userHandle to skip the round-trip
  * (e.g. for service accounts where the token's user differs from the
  * routing user).
  */
 export class FireflyApiAdapter {
-  readonly svc: { readonly vibeApp: { userHandle: string; appSlug: string; fsId: string } };
+  readonly svc: { readonly vibeApp: { ownerHandle: string; appSlug: string; fsId: string } };
 
   private readonly api: VibesDiyApi;
   private readonly userHandleOverride: string | undefined;
@@ -42,8 +42,8 @@ export class FireflyApiAdapter {
     this.svc = {
       vibeApp: {
         appSlug,
-        userHandle: opts?.userHandle ?? "",
-        fsId: "", // unused on the Node side; FireflyDatabase only reads userHandle+appSlug
+        ownerHandle: opts?.userHandle ?? "",
+        fsId: "", // unused on the Node side; FireflyDatabase only reads ownerHandle+appSlug
       },
     };
   }
@@ -55,13 +55,13 @@ export class FireflyApiAdapter {
       if (rRes.isErr()) {
         throw new Error(`Failed to load user settings: ${rRes.Err()}`);
       }
-      const def = rRes.Ok().settings.find(isUserSettingDefaultUserSlug);
+      const def = rRes.Ok().settings.find(isUserSettingDefaultHandle);
       if (def === undefined) {
-        throw new Error("No defaultUserSlug — pass {userHandle} or run 'npx vibes-diy login' first");
+        throw new Error("No defaultHandle — pass {userHandle} or run 'npx vibes-diy login' first");
       }
-      // Backfill svc.vibeApp.userHandle so FireflyDatabase's onMsg filter works.
-      (this.svc.vibeApp as { userHandle: string }).userHandle = def.userSlug;
-      return def.userSlug;
+      // Backfill svc.vibeApp.ownerHandle so FireflyDatabase's onMsg filter works.
+      (this.svc.vibeApp as { ownerHandle: string }).ownerHandle = def.ownerHandle;
+      return def.ownerHandle;
     });
   }
 
@@ -71,7 +71,7 @@ export class FireflyApiAdapter {
     const userHandle = await this.resolveUserHandle();
     return this.api.putDoc({
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug: userHandle,
+      ownerHandle: userHandle,
       dbName,
       doc,
       ...(docId ? { docId } : {}),
@@ -82,7 +82,7 @@ export class FireflyApiAdapter {
     const userHandle = await this.resolveUserHandle();
     return this.api.getDoc({
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug: userHandle,
+      ownerHandle: userHandle,
       dbName,
       docId,
     });
@@ -92,7 +92,7 @@ export class FireflyApiAdapter {
     const userHandle = await this.resolveUserHandle();
     return this.api.queryDocs({
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug: userHandle,
+      ownerHandle: userHandle,
       dbName,
       ...(filter !== undefined ? { filter } : {}),
     });
@@ -102,7 +102,7 @@ export class FireflyApiAdapter {
     const userHandle = await this.resolveUserHandle();
     return this.api.deleteDoc({
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug: userHandle,
+      ownerHandle: userHandle,
       dbName,
       docId,
     });
@@ -112,7 +112,7 @@ export class FireflyApiAdapter {
     const userHandle = await this.resolveUserHandle();
     return this.api.subscribeDocs({
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug: userHandle,
+      ownerHandle: userHandle,
       dbName,
     });
   }

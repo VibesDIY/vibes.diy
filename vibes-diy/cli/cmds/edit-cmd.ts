@@ -26,7 +26,7 @@ import { formatNoFilesError } from "./format-no-files-error.js";
 export const ResEdit = type({
   type: "'vibes-diy.cli.res-edit'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   url: "string",
   directory: "string",
 });
@@ -40,7 +40,7 @@ export const ReqEdit = type({
   type: "'vibes-diy.cli.edit'",
   appSlug: "string",
   prompt: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   instantJoin: "boolean",
   verbose: "boolean",
   dir: "string",
@@ -126,7 +126,7 @@ export interface PromptOpts {
 export async function buildEditPromptRequest(input: {
   readonly chatId: string;
   readonly appSlug: string;
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly prompt: string;
   readonly dir: string;
   readonly focus: string | undefined;
@@ -179,13 +179,13 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
-    // Resolve userSlug: explicit flag > default setting > first from list
-    const userSlug = await resolveUserSlug(api, args.userSlug === "" ? undefined : args.userSlug);
+    // Resolve ownerHandle: explicit flag > default setting > first from list
+    const ownerHandle = await resolveUserSlug(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
     const dir = args.dir === "" ? process.cwd() : args.dir;
 
     if (args.dryRun) {
       await sendProgress(ctx, "info", "Dry-run: inspecting prompt assembly...");
-      const rChat = await api.openChat({ userSlug, appSlug: args.appSlug, mode: "chat" });
+      const rChat = await api.openChat({ ownerHandle, appSlug: args.appSlug, mode: "chat" });
       if (rChat.isErr()) {
         return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
       }
@@ -193,7 +193,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
       const dryRunOpts = await buildEditPromptRequest({
         chatId: chat.chatId,
         appSlug: chat.appSlug,
-        userSlug: chat.userSlug,
+        ownerHandle: chat.ownerHandle,
         prompt: args.prompt,
         dir,
         focus: args.focusPath,
@@ -221,7 +221,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
       return sendMsg(ctx, {
         type: "vibes-diy.cli.res-edit",
         appSlug: chat.appSlug,
-        userSlug: chat.userSlug,
+        ownerHandle: chat.ownerHandle,
         url: "",
         directory: dir,
       } satisfies ResEdit);
@@ -235,7 +235,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     await sendProgress(ctx, "info", "Editing...");
 
     const rChat = await api.openChat({
-      userSlug,
+      ownerHandle,
       appSlug: args.appSlug,
       mode: "chat",
     });
@@ -247,7 +247,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     const promptOpts = await buildEditPromptRequest({
       chatId: chat.chatId,
       appSlug: chat.appSlug,
-      userSlug: chat.userSlug,
+      ownerHandle: chat.ownerHandle,
       prompt: args.prompt,
       dir,
       focus: args.focusPath,
@@ -352,7 +352,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     }
 
     const pushAppSlug = chat.appSlug;
-    const pushUserSlug = chat.userSlug;
+    const pushUserSlug = chat.ownerHandle;
 
     for (const [path, content] of Object.entries(resolved.files)) {
       const filename = path.startsWith("/") ? path.slice(1) : path;
@@ -363,7 +363,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
       dir,
       mode: "production",
       appSlug: pushAppSlug,
-      userSlug: pushUserSlug,
+      ownerHandle: pushUserSlug,
       instantJoin: args.instantJoin,
       apiUrl: args.apiUrl,
       api,
@@ -376,7 +376,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     return sendMsg(ctx, {
       type: "vibes-diy.cli.res-edit",
       appSlug: pushAppSlug,
-      userSlug: pushUserSlug,
+      ownerHandle: pushUserSlug,
       url: rPush.Ok().publicUrl,
       directory: dir,
     } satisfies ResEdit);
@@ -399,7 +399,7 @@ export function editCmd(ctx: CliCtx) {
         description: "Follow-up prompt describing what to change",
         type: string,
       }),
-      userSlug: option({
+      ownerHandle: option({
         long: "user-slug",
         description: "User slug to publish under (uses default if omitted)",
         type: string,

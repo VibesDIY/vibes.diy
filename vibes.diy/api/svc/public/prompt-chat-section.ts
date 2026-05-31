@@ -147,7 +147,7 @@ interface AppendBlockEventParams {
   evt: PromptAndBlockMsgs;
   emitMode?: "store" | "emit-only";
   // Required for the base64 image branch (LLM-streamed data: URLs) so the
-  // bytes go through storeAndAuditAsset with the right (userSlug, appSlug).
+  // bytes go through storeAndAuditAsset with the right (ownerHandle, appSlug).
   // Non-image events may omit this.
   resChat?: ResChat;
 }
@@ -412,7 +412,7 @@ async function appendBlockEvent({
     const rConv = await convertImageEvtToFileRef(vctx, {
       evt,
       userId: req._auth.verifiedAuth.claims.userId,
-      userSlug: resChat.userSlug,
+      ownerHandle: resChat.ownerHandle,
       appSlug: resChat.appSlug,
     });
     if (rConv.isOk()) {
@@ -532,7 +532,7 @@ export async function handlePromptContext({
       mode: "dev",
       // chatId: req.chatId,
       appSlug: resChat.appSlug,
-      userSlug: resChat.userSlug,
+      ownerHandle: resChat.ownerHandle,
       fileSystem: resolvedFileSystem,
       auth: req.auth,
       _auth: req._auth,
@@ -676,19 +676,19 @@ async function loadActiveSettings(
 ): Promise<{ skills?: string[]; theme?: string; title?: string; enrichedPrompt?: string }> {
   const rChat = await exception2Result(() =>
     vctx.sql.db
-      .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, userSlug: vctx.sql.tables.chatContexts.userSlug })
+      .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, ownerHandle: vctx.sql.tables.chatContexts.ownerHandle })
       .from(vctx.sql.tables.chatContexts)
       .where(eq(vctx.sql.tables.chatContexts.chatId, chatId))
       .limit(1)
       .then((r) => r[0])
   );
   if (rChat.isErr() || !rChat.Ok()) return {};
-  const { appSlug, userSlug } = rChat.Ok();
+  const { appSlug, ownerHandle } = rChat.Ok();
   const rApp = await exception2Result(() =>
     vctx.sql.db
       .select({ settings: vctx.sql.tables.appSettings.settings })
       .from(vctx.sql.tables.appSettings)
-      .where(and(eq(vctx.sql.tables.appSettings.appSlug, appSlug), eq(vctx.sql.tables.appSettings.userSlug, userSlug)))
+      .where(and(eq(vctx.sql.tables.appSettings.appSlug, appSlug), eq(vctx.sql.tables.appSettings.ownerHandle, ownerHandle)))
       .limit(1)
       .then((r) => r[0])
   );
@@ -861,7 +861,7 @@ export async function assemblePromptPayload(
 
 interface ResChat {
   appSlug: string;
-  userSlug: string;
+  ownerHandle: string;
   mode: PromptStyle;
 }
 
@@ -934,7 +934,7 @@ async function handlerLlmRequest({
 }): Promise<{ res: Response; blockSeq: number; llmReq: LLMRequest & { headers: LLMHeaders }; abort: AbortController }> {
   const modelId: string = await scope
     .evalResult(async (): Promise<Result<string>> => {
-      const r = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
+      const r = await getModelDefaults(vctx, { appSlug: resChat.appSlug, ownerHandle: resChat.ownerHandle });
       if (r.isErr()) {
         return Result.Err(r);
       }
@@ -1181,7 +1181,7 @@ async function handleProdiaImageRequest({
   const rStored = await storeAndAuditAsset(vctx, {
     bytes: prodiaRes.body,
     userId: req._auth.verifiedAuth.claims.userId,
-    userSlug: resChat.userSlug,
+    ownerHandle: resChat.ownerHandle,
     appSlug: resChat.appSlug,
     mimeType: "image/png",
   });
@@ -1978,7 +1978,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
   handle: checkAuth(
     async (ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>) => {
       const req = ctx.validated.payload;
-      // is need to determine the chat type and get the appSlug and userSlug based on the chatId and the authenticated user
+      // is need to determine the chat type and get the appSlug and ownerHandle based on the chatId and the authenticated user
       const orig = (ctx.enRequest as MsgBase<ReqPromptChatSection>).payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
@@ -1998,7 +1998,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         if (!orig.prompt.messages.some((m) => m.role === "user")) {
           return Result.Err(`prompt.messages must include at least one user message`);
         }
-        const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
+        const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, ownerHandle: resChat.ownerHandle });
         if (rDefaults.isErr()) return Result.Err(rDefaults);
         const modelId = orig.prompt.model ?? rDefaults.Ok().chat.model.id;
         const rAssembled = await assemblePromptPayload(vctx, {
@@ -2030,7 +2030,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
               payload: {
                 type: "vibes.diy.res-prompt-chat-section",
                 chatId: req.chatId,
-                userSlug: resChat.userSlug,
+                ownerHandle: resChat.ownerHandle,
                 appSlug: resChat.appSlug,
                 promptId: dryRunPromptId,
                 outerTid: req.outerTid,
@@ -2101,7 +2101,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         if (override) {
           resolvedImgModel = override;
         } else {
-          const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, userSlug: resChat.userSlug });
+          const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, ownerHandle: resChat.ownerHandle });
           if (rDefaults.isOk()) {
             const defaults = rDefaults.Ok();
             const hasInputImage = !!(orig as { inputImageBase64?: string }).inputImageBase64;
@@ -2195,7 +2195,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       // res-prompt-chat-section below) reads a freshly-bumped row. Without
       // this, the client refresh would race the LLM stream's eventual bump
       // and surface stale ordering until the next page load.
-      const rBump = await bumpAppRecency(vctx, { userSlug: resChat.userSlug, appSlug: resChat.appSlug });
+      const rBump = await bumpAppRecency(vctx, { ownerHandle: resChat.ownerHandle, appSlug: resChat.appSlug });
       if (rBump.isErr()) {
         vctx.logger.Warn().Err(rBump).Msg("bumpAppRecency failed");
       }
@@ -2210,7 +2210,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           payload: {
             type: "vibes.diy.res-prompt-chat-section",
             chatId: req.chatId,
-            userSlug: resChat.userSlug,
+            ownerHandle: resChat.ownerHandle,
             appSlug: resChat.appSlug,
             promptId,
             outerTid: req.outerTid,
@@ -2256,7 +2256,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
                 {
                   type: "vibes.diy.evt-user-notification",
                   notificationType: "build-failed",
-                  userSlug: resChat.userSlug,
+                  ownerHandle: resChat.ownerHandle,
                   appSlug: resChat.appSlug,
                 } satisfies EvtUserNotification,
                 connId
@@ -2316,7 +2316,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
                   {
                     type: "vibes.diy.evt-user-notification",
                     notificationType: "build-complete",
-                    userSlug: resChat.userSlug,
+                    ownerHandle: resChat.ownerHandle,
                     appSlug: resChat.appSlug,
                   } satisfies EvtUserNotification,
                   connId

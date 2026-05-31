@@ -12,7 +12,7 @@ describe("Firefly access control", { timeout: 15000 }, () => {
   let ownerApi: VibesDiyApi;
   let visitorApi: VibesDiyApi;
   let appSlug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -61,41 +61,41 @@ describe("Firefly access control", { timeout: 15000 }, () => {
       assert.fail("Failed to create app for test");
     }
     appSlug = res.appSlug;
-    userSlug = res.userSlug;
+    ownerHandle = res.ownerHandle;
 
     // Seed a document so read tests have something to find
-    await ownerApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "seed" }, docId: "seed-doc" });
+    await ownerApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "seed" }, docId: "seed-doc" });
   });
 
   // ── Owner access ─────────────────────────────────────────────────
 
   it("owner can read docs", async () => {
-    const rRes = await ownerApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "seed-doc" });
+    const rRes = await ownerApi.getDoc({ appSlug, ownerHandle, dbName: "default", docId: "seed-doc" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
 
   it("owner can write docs", async () => {
-    const rRes = await ownerApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "owner-write" } });
+    const rRes = await ownerApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "owner-write" } });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
 
   it("owner can query docs", async () => {
-    const rRes = await ownerApi.queryDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await ownerApi.queryDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().docs.length).toBeGreaterThan(0);
   });
 
   it("owner can delete docs", async () => {
-    await ownerApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "del-me" }, docId: "owner-del" });
-    const rRes = await ownerApi.deleteDoc({ appSlug, userSlug, dbName: "default", docId: "owner-del" });
+    await ownerApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "del-me" }, docId: "owner-del" });
+    const rRes = await ownerApi.deleteDoc({ appSlug, ownerHandle, dbName: "default", docId: "owner-del" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
 
   it("owner can subscribe", async () => {
-    const rRes = await ownerApi.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await ownerApi.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
@@ -103,27 +103,27 @@ describe("Firefly access control", { timeout: 15000 }, () => {
   // ── No-grant visitor (denied) ────────────────────────────────────
 
   it("visitor without grant cannot write", async () => {
-    const rRes = await visitorApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "nope" } });
+    const rRes = await visitorApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "nope" } });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("visitor without grant cannot read", async () => {
-    const rRes = await visitorApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "seed-doc" });
+    const rRes = await visitorApi.getDoc({ appSlug, ownerHandle, dbName: "default", docId: "seed-doc" });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("visitor without grant cannot query", async () => {
-    const rRes = await visitorApi.queryDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await visitorApi.queryDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("visitor without grant cannot delete", async () => {
-    const rRes = await visitorApi.deleteDoc({ appSlug, userSlug, dbName: "default", docId: "seed-doc" });
+    const rRes = await visitorApi.deleteDoc({ appSlug, ownerHandle, dbName: "default", docId: "seed-doc" });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("visitor without grant cannot subscribe", async () => {
-    const rRes = await visitorApi.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await visitorApi.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isErr()).toBe(true);
   });
 
@@ -132,39 +132,39 @@ describe("Firefly access control", { timeout: 15000 }, () => {
   describe("editor grant", () => {
     beforeAll(async () => {
       // Enable requests with auto-accept as editor
-      await ownerApi.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "editor" } });
+      await ownerApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "editor" } });
       // Visitor requests access → auto-approved as editor
-      const rReq = await visitorApi.requestAccess({ appSlug, userSlug });
+      const rReq = await visitorApi.requestAccess({ appSlug, ownerHandle });
       const req = rReq.Ok();
       if (!isResRequestAccessApproved(req)) assert.fail("Expected auto-approved");
       expect(req.role).toBe("editor");
     });
 
     it("editor can read", async () => {
-      const rRes = await visitorApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "seed-doc" });
+      const rRes = await visitorApi.getDoc({ appSlug, ownerHandle, dbName: "default", docId: "seed-doc" });
       expect(rRes.isOk()).toBe(true);
       expect(rRes.Ok().status).toBe("ok");
     });
 
     it("editor can write", async () => {
-      const rRes = await visitorApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "editor-write" } });
+      const rRes = await visitorApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "editor-write" } });
       expect(rRes.isOk()).toBe(true);
       expect(rRes.Ok().status).toBe("ok");
     });
 
     it("editor can query", async () => {
-      const rRes = await visitorApi.queryDocs({ appSlug, userSlug, dbName: "default" });
+      const rRes = await visitorApi.queryDocs({ appSlug, ownerHandle, dbName: "default" });
       expect(rRes.isOk()).toBe(true);
     });
 
     it("editor can delete", async () => {
-      await visitorApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "ed-del" }, docId: "editor-del" });
-      const rRes = await visitorApi.deleteDoc({ appSlug, userSlug, dbName: "default", docId: "editor-del" });
+      await visitorApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "ed-del" }, docId: "editor-del" });
+      const rRes = await visitorApi.deleteDoc({ appSlug, ownerHandle, dbName: "default", docId: "editor-del" });
       expect(rRes.isOk()).toBe(true);
     });
 
     it("editor can subscribe", async () => {
-      const rRes = await visitorApi.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+      const rRes = await visitorApi.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
       expect(rRes.isOk()).toBe(true);
     });
   });
@@ -177,7 +177,7 @@ describe("Firefly viewer access", { timeout: 15000 }, () => {
   let ownerApi: VibesDiyApi;
   let visitorApi: VibesDiyApi;
   let appSlug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -223,41 +223,41 @@ describe("Firefly viewer access", { timeout: 15000 }, () => {
     const res = rRes.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
     appSlug = res.appSlug;
-    userSlug = res.userSlug;
+    ownerHandle = res.ownerHandle;
 
-    await ownerApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "seed" }, docId: "seed-doc" });
+    await ownerApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "seed" }, docId: "seed-doc" });
 
     // Grant viewer access
-    await ownerApi.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "viewer" } });
-    const rReq = await visitorApi.requestAccess({ appSlug, userSlug });
+    await ownerApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "viewer" } });
+    const rReq = await visitorApi.requestAccess({ appSlug, ownerHandle });
     const req = rReq.Ok();
     if (!isResRequestAccessApproved(req)) assert.fail("Expected auto-approved as viewer");
     expect(req.role).toBe("viewer");
   });
 
   it("viewer can read", async () => {
-    const rRes = await visitorApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "seed-doc" });
+    const rRes = await visitorApi.getDoc({ appSlug, ownerHandle, dbName: "default", docId: "seed-doc" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
 
   it("viewer can query", async () => {
-    const rRes = await visitorApi.queryDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await visitorApi.queryDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isOk()).toBe(true);
   });
 
   it("viewer can subscribe", async () => {
-    const rRes = await visitorApi.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await visitorApi.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isOk()).toBe(true);
   });
 
   it("viewer cannot write", async () => {
-    const rRes = await visitorApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "nope" } });
+    const rRes = await visitorApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "nope" } });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("viewer cannot delete", async () => {
-    const rRes = await visitorApi.deleteDoc({ appSlug, userSlug, dbName: "default", docId: "seed-doc" });
+    const rRes = await visitorApi.deleteDoc({ appSlug, ownerHandle, dbName: "default", docId: "seed-doc" });
     expect(rRes.isErr()).toBe(true);
   });
 });
@@ -267,7 +267,7 @@ describe("Firefly submitter access", { timeout: 15000 }, () => {
   let ownerApi: VibesDiyApi;
   let visitorApi: VibesDiyApi;
   let appSlug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -313,42 +313,42 @@ describe("Firefly submitter access", { timeout: 15000 }, () => {
     const res = rRes.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
     appSlug = res.appSlug;
-    userSlug = res.userSlug;
+    ownerHandle = res.ownerHandle;
 
-    await ownerApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "seed" }, docId: "seed-doc" });
+    await ownerApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "seed" }, docId: "seed-doc" });
 
     // Grant submitter access
-    await ownerApi.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "submitter" } });
-    const rReq = await visitorApi.requestAccess({ appSlug, userSlug });
+    await ownerApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "submitter" } });
+    const rReq = await visitorApi.requestAccess({ appSlug, ownerHandle });
     const req = rReq.Ok();
     if (!isResRequestAccessApproved(req)) assert.fail("Expected auto-approved as submitter");
     expect(req.role).toBe("submitter");
   });
 
   it("submitter can write", async () => {
-    const rRes = await visitorApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "submitted" } });
+    const rRes = await visitorApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "submitted" } });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
 
   it("submitter cannot read", async () => {
-    const rRes = await visitorApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "seed-doc" });
+    const rRes = await visitorApi.getDoc({ appSlug, ownerHandle, dbName: "default", docId: "seed-doc" });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("submitter cannot query", async () => {
-    const rRes = await visitorApi.queryDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await visitorApi.queryDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("submitter cannot subscribe", async () => {
-    const rRes = await visitorApi.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await visitorApi.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("submitter can delete (write operation)", async () => {
-    await visitorApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "to-del" }, docId: "sub-del" });
-    const rRes = await visitorApi.deleteDoc({ appSlug, userSlug, dbName: "default", docId: "sub-del" });
+    await visitorApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "to-del" }, docId: "sub-del" });
+    const rRes = await visitorApi.deleteDoc({ appSlug, ownerHandle, dbName: "default", docId: "sub-del" });
     expect(rRes.isOk()).toBe(true);
   });
 });
@@ -358,7 +358,7 @@ describe("Firefly public access", { timeout: 15000 }, () => {
   let ownerApi: VibesDiyApi;
   let anonApi: VibesDiyApi;
   let appSlug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -404,33 +404,33 @@ describe("Firefly public access", { timeout: 15000 }, () => {
     const res = rRes.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
     appSlug = res.appSlug;
-    userSlug = res.userSlug;
+    ownerHandle = res.ownerHandle;
 
-    await ownerApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "public-seed" }, docId: "pub-doc" });
+    await ownerApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "public-seed" }, docId: "pub-doc" });
 
     // Enable public access
-    await ownerApi.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: true } });
+    await ownerApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
   });
 
   it("public read: getDoc succeeds without auth", async () => {
-    const rRes = await anonApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "pub-doc" });
+    const rRes = await anonApi.getDoc({ appSlug, ownerHandle, dbName: "default", docId: "pub-doc" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
 
   it("public read: queryDocs succeeds without auth", async () => {
-    const rRes = await anonApi.queryDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await anonApi.queryDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().docs.length).toBeGreaterThan(0);
   });
 
   it("public write: putDoc denied without auth", async () => {
-    const rRes = await anonApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "nope" } });
+    const rRes = await anonApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "nope" } });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("public write: deleteDoc denied without auth", async () => {
-    const rRes = await anonApi.deleteDoc({ appSlug, userSlug, dbName: "default", docId: "pub-doc" });
+    const rRes = await anonApi.deleteDoc({ appSlug, ownerHandle, dbName: "default", docId: "pub-doc" });
     expect(rRes.isErr()).toBe(true);
   });
 });
@@ -440,7 +440,7 @@ describe("Firefly pending request on public app", { timeout: 15000 }, () => {
   let ownerApi: VibesDiyApi;
   let pendingApi: VibesDiyApi;
   let appSlug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -486,33 +486,33 @@ describe("Firefly pending request on public app", { timeout: 15000 }, () => {
     const res = rRes.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
     appSlug = res.appSlug;
-    userSlug = res.userSlug;
+    ownerHandle = res.ownerHandle;
 
-    await ownerApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "seed" }, docId: "seed-doc" });
+    await ownerApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "seed" }, docId: "seed-doc" });
 
     // Enable public access + requests (no auto-accept)
-    await ownerApi.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: true } });
-    await ownerApi.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
+    await ownerApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
+    await ownerApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true } });
 
     // Visitor requests access → stays pending
-    const rReq = await pendingApi.requestAccess({ appSlug, userSlug });
+    const rReq = await pendingApi.requestAccess({ appSlug, ownerHandle });
     expect(rReq.Ok().state).toBe("pending");
   });
 
   it("pending user can still read public app docs", async () => {
-    const rRes = await pendingApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "seed-doc" });
+    const rRes = await pendingApi.getDoc({ appSlug, ownerHandle, dbName: "default", docId: "seed-doc" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });
 
   it("pending user can query public app docs", async () => {
-    const rRes = await pendingApi.queryDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await pendingApi.queryDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().docs.length).toBeGreaterThan(0);
   });
 
   it("pending user cannot write to public app", async () => {
-    const rRes = await pendingApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "nope" } });
+    const rRes = await pendingApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "nope" } });
     expect(rRes.isErr()).toBe(true);
   });
 });
@@ -522,7 +522,7 @@ describe("Firefly dev mode denies public reads", { timeout: 15000 }, () => {
   let ownerApi: VibesDiyApi;
   let anonApi: VibesDiyApi;
   let appSlug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -568,29 +568,29 @@ describe("Firefly dev mode denies public reads", { timeout: 15000 }, () => {
     const res = rRes.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
     appSlug = res.appSlug;
-    userSlug = res.userSlug;
+    ownerHandle = res.ownerHandle;
 
-    await ownerApi.putDoc({ appSlug, userSlug, dbName: "default", doc: { title: "dev-seed" }, docId: "dev-doc" });
-    await ownerApi.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: true } });
+    await ownerApi.putDoc({ appSlug, ownerHandle, dbName: "default", doc: { title: "dev-seed" }, docId: "dev-doc" });
+    await ownerApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
   });
 
   it("dev mode: anonymous getDoc denied despite publicAccess", async () => {
-    const rRes = await anonApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "dev-doc" });
+    const rRes = await anonApi.getDoc({ appSlug, ownerHandle, dbName: "default", docId: "dev-doc" });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("dev mode: anonymous queryDocs denied despite publicAccess", async () => {
-    const rRes = await anonApi.queryDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await anonApi.queryDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("dev mode: anonymous subscribeDocs denied despite publicAccess", async () => {
-    const rRes = await anonApi.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+    const rRes = await anonApi.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
     expect(rRes.isErr()).toBe(true);
   });
 
   it("dev mode: owner can still read their own docs", async () => {
-    const rRes = await ownerApi.getDoc({ appSlug, userSlug, dbName: "default", docId: "dev-doc" });
+    const rRes = await ownerApi.getDoc({ appSlug, ownerHandle, dbName: "default", docId: "dev-doc" });
     expect(rRes.isOk()).toBe(true);
     expect(rRes.Ok().status).toBe("ok");
   });

@@ -18,7 +18,7 @@ function renderViewerTag(env: ViewerEnv | undefined, props: Record<string, unkno
 }
 
 const aliceEnv: ViewerEnv = {
-  viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+  viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
   access: "owner",
 };
 
@@ -28,23 +28,23 @@ describe("ViewerTag", () => {
     expect(screen.getByText("alice")).toBeTruthy();
   });
 
-  it("renders another user's slug when userSlug prop is given", () => {
-    renderViewerTag(aliceEnv, { userSlug: "bob" });
+  it("renders another user's slug when ownerHandle prop is given", () => {
+    renderViewerTag(aliceEnv, { ownerHandle: "bob" });
     expect(screen.getByText("bob")).toBeTruthy();
   });
 
-  it("renders fallback when userSlug prop is present but undefined", () => {
-    renderViewerTag(aliceEnv, { userSlug: undefined });
+  it("renders fallback when ownerHandle prop is present but undefined", () => {
+    renderViewerTag(aliceEnv, { ownerHandle: undefined });
     expect(screen.getByText("no user handle provided")).toBeTruthy();
   });
 
-  it("renders fallback when user prop has no userSlug", () => {
-    renderViewerTag(aliceEnv, { user: { userSlug: "" } });
+  it("renders fallback when user prop has no ownerHandle", () => {
+    renderViewerTag(aliceEnv, { user: { ownerHandle: "" } });
     expect(screen.getByText("no user handle provided")).toBeTruthy();
   });
 
   it("does not show edit ring for another user", () => {
-    renderViewerTag(aliceEnv, { userSlug: "bob" });
+    renderViewerTag(aliceEnv, { ownerHandle: "bob" });
     // file input should not be present
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
@@ -60,14 +60,14 @@ describe("ViewerTag", () => {
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
-  it("does not show edit ring when userSlug matches viewer but viewer is null", () => {
-    renderViewerTag(undefined, { userSlug: undefined });
+  it("does not show edit ring when ownerHandle matches viewer but viewer is null", () => {
+    renderViewerTag(undefined, { ownerHandle: undefined });
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
   it("uses user.avatarUrl when provided via object prop", () => {
     renderViewerTag(aliceEnv, {
-      user: { userSlug: "bob", avatarUrl: "https://custom.test/bob.png" },
+      user: { ownerHandle: "bob", avatarUrl: "https://custom.test/bob.png" },
     });
     const img = document.querySelector("img") as HTMLImageElement;
     expect(img?.src).toBe("https://custom.test/bob.png");

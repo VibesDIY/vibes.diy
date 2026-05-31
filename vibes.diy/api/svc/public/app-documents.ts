@@ -58,11 +58,11 @@ async function readAllowed(
   acl: DbAcl | undefined,
   access: DocAccessLevel,
   appSlug: string,
-  userSlug: string
+  ownerHandle: string
 ): Promise<boolean> {
   if (acl?.read !== undefined) return aclAllows(acl, "read", access);
   if (canRead(access)) return true;
-  return isPublicReadable(vctx, appSlug, userSlug);
+  return isPublicReadable(vctx, appSlug, ownerHandle);
 }
 
 // Access the raw WSSendProvider from Evento's wrapped ctx.send.
@@ -73,12 +73,12 @@ function clientWsSend(ctx: { send: unknown }): WSSendProvider {
 }
 
 // Verify that every `_files.<key>.uploadId` referenced in the doc was minted
-// for THIS (userSlug, appSlug) pair. Defends against:
+// for THIS (ownerHandle, appSlug) pair. Defends against:
 //   - typos / stale uploadIds → reject so the doc never references a
 //     CID the read handler can't resolve.
 //   - foreign-uploadId paste attacks (user A's uploadId pasted into user
 //     B's doc) → reject so cross-user reads are impossible at write time,
-//     not just at read time. The read handler also checks userSlug/appSlug
+//     not just at read time. The read handler also checks ownerHandle/appSlug
 //     match (defense in depth at [files-asset.ts:178](./files-asset.ts#L178)).
 //
 // Single batched SELECT via `inArray` — N round-trips would scale badly
@@ -88,7 +88,7 @@ function clientWsSend(ctx: { send: unknown }): WSSendProvider {
 async function validateFilesUploads(
   vctx: VibesApiSQLCtx,
   doc: unknown,
-  userSlug: string,
+  ownerHandle: string,
   appSlug: string
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const files = (doc as { _files?: Record<string, unknown> } | undefined)?._files;
@@ -101,7 +101,7 @@ async function validateFilesUploads(
 
   const t = vctx.sql.tables.assetUploads;
   const rows = await vctx.sql.db
-    .select({ uploadId: t.uploadId, userSlug: t.userSlug, appSlug: t.appSlug })
+    .select({ uploadId: t.uploadId, ownerHandle: t.ownerHandle, appSlug: t.appSlug })
     .from(t)
     .where(inArray(t.uploadId, uploadIds));
 
@@ -109,7 +109,7 @@ async function validateFilesUploads(
   for (const id of uploadIds) {
     const row = found.get(id);
     if (!row) return { ok: false, reason: `unknown uploadId: ${id}` };
-    if (row.userSlug !== userSlug || row.appSlug !== appSlug) {
+    if (row.ownerHandle !== ownerHandle || row.appSlug !== appSlug) {
       return { ok: false, reason: `uploadId ${id} not minted for this app` };
     }
   }
@@ -135,15 +135,15 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      if (isDirectChannel(req.userSlug)) {
-        const rAccess = await checkDirectChannelAccess(vctx, req.userSlug, userId);
+      if (isDirectChannel(req.ownerHandle)) {
+        const rAccess = await checkDirectChannelAccess(vctx, req.ownerHandle, userId);
         if (rAccess.isErr() || !rAccess.Ok()) {
           await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
       } else {
-        const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
-        const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
+        const access = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+        const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         // Fail closed: a settings-read error must not silently fall back to the
         // open default and re-open writes on a tightened ACL.
         if (rAcl.isErr()) {
@@ -158,9 +158,9 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       }
 
       // Phase 3: validate every `_files.<key>.uploadId` references an
-      // AssetUploads row minted for this (userSlug, appSlug). See
+      // AssetUploads row minted for this (ownerHandle, appSlug). See
       // validateFilesUploads above.
-      const filesCheck = await validateFilesUploads(vctx, req.doc, req.userSlug, req.appSlug);
+      const filesCheck = await validateFilesUploads(vctx, req.doc, req.ownerHandle, req.appSlug);
       if (!filesCheck.ok) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
@@ -178,13 +178,13 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const maxSeqResult = await vctx.sql.db
         .select({ maxSeq: max(t.seq) })
         .from(t)
-        .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
+        .where(and(eq(t.ownerHandle, req.ownerHandle), eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
         .then((r) => r[0]);
 
       const nextSeq = (maxSeqResult?.maxSeq ?? 0) + 1;
 
       await vctx.sql.db.insert(t).values({
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
         dbName,
         docId,
@@ -196,26 +196,26 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       });
 
       // Upsert DirectChannelIndex so both participants appear in listDmThreads
-      if (isDirectChannel(req.userSlug)) {
-        const participants = directChannelParticipants(req.userSlug);
+      if (isDirectChannel(req.ownerHandle)) {
+        const participants = directChannelParticipants(req.ownerHandle);
         if (participants) {
           const t_idx = vctx.sql.tables.directChannelIndex;
           await vctx.sql.db
             .insert(t_idx)
             .values([
-              { userSlug: participants[0], channelUserSlug: req.userSlug },
-              { userSlug: participants[1], channelUserSlug: req.userSlug },
+              { handle: participants[0], channelHandle: req.ownerHandle },
+              { handle: participants[1], channelHandle: req.ownerHandle },
             ])
             .onConflictDoNothing();
 
           // Look up which participant slug belongs to the sender
-          const t_usb = vctx.sql.tables.userSlugBinding;
+          const t_usb = vctx.sql.tables.handleBinding;
           const senderRow = await vctx.sql.db
-            .select({ userSlug: t_usb.userSlug })
+            .select({ handle: t_usb.handle })
             .from(t_usb)
-            .where(and(eq(t_usb.userId, userId), inArray(t_usb.userSlug, participants)))
+            .where(and(eq(t_usb.userId, userId), inArray(t_usb.handle, participants)))
             .then((r) => r[0]);
-          const senderUserSlug = senderRow?.userSlug ?? "";
+          const senderUserSlug = senderRow?.handle ?? "";
           const recipientUserSlug = participants.find((h) => h !== senderUserSlug) ?? participants[1];
 
           await vctx.postQueue({
@@ -224,7 +224,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
               senderUserId: userId,
               senderUserSlug,
               recipientUserSlug,
-              channelUserSlug: req.userSlug,
+              channelUserSlug: req.ownerHandle,
               docId,
               created: now,
               bodySnippet:
@@ -243,9 +243,9 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             const t_reads = vctx.sql.tables.directChannelReads;
             await vctx.sql.db
               .insert(t_reads)
-              .values({ channelUserSlug: req.userSlug, userSlug: senderUserSlug, lastSeenSeq: nextSeq })
+              .values({ channelHandle: req.ownerHandle, handle: senderUserSlug, lastSeenSeq: nextSeq })
               .onConflictDoUpdate({
-                target: [t_reads.channelUserSlug, t_reads.userSlug],
+                target: [t_reads.channelHandle, t_reads.handle],
                 set: { lastSeenSeq: sql`MAX(${t_reads.lastSeenSeq}, ${nextSeq})` },
               });
           }
@@ -257,7 +257,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           payload: {
             type: "vibes.diy.evt-comment-posted",
             userId,
-            userSlug: req.userSlug,
+            ownerHandle: req.ownerHandle,
             appSlug: req.appSlug,
             docId,
             created: now,
@@ -273,7 +273,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       // Notify DocNotify coordinator for cross-shard fan-out
       if (vctx.notifyDocChanged) {
         vctx
-          .notifyDocChanged({ userSlug: req.userSlug, appSlug: req.appSlug, dbName, docId }, clientWsSend(ctx).connId)
+          .notifyDocChanged({ ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId }, clientWsSend(ctx).connId)
           .catch((e: unknown) => console.error("DocNotify error:", e));
       }
 
@@ -311,10 +311,10 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
       const access: DocAccessLevel = req._auth
-        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
+        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
         : "none";
-      const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
-      if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.userSlug))) {
+      const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
+      if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: { message: "Access denied" },
@@ -328,7 +328,9 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       const row = await vctx.sql.db
         .select()
         .from(t)
-        .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug), eq(t.dbName, req.dbName), eq(t.docId, req.docId)))
+        .where(
+          and(eq(t.ownerHandle, req.ownerHandle), eq(t.appSlug, req.appSlug), eq(t.dbName, req.dbName), eq(t.docId, req.docId))
+        )
         .orderBy(sql`${t.seq} desc`)
         .limit(1)
         .then((r) => r[0]);
@@ -343,7 +345,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       }
 
       const doc = mintFilesUrls(row.data as Record<string, unknown>, {
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
         dbName: req.dbName,
         docId: row.docId,
@@ -415,9 +417,9 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
-      if (isDirectChannel(req.userSlug)) {
+      if (isDirectChannel(req.ownerHandle)) {
         const userId = req._auth?.verifiedAuth.claims.userId;
-        const rAccess = userId ? await checkDirectChannelAccess(vctx, req.userSlug, userId) : Result.Ok(false);
+        const rAccess = userId ? await checkDirectChannelAccess(vctx, req.ownerHandle, userId) : Result.Ok(false);
         if (rAccess.isErr() || !rAccess.Ok()) {
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-error",
@@ -427,10 +429,10 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
         }
       } else {
         const access: DocAccessLevel = req._auth
-          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
+          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
           : "none";
-        const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
-        if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.userSlug))) {
+        const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
+        if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-error",
             error: { message: "Access denied" },
@@ -446,7 +448,7 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const rows = await vctx.sql.db
         .select()
         .from(t)
-        .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug), eq(t.dbName, req.dbName)))
+        .where(and(eq(t.ownerHandle, req.ownerHandle), eq(t.appSlug, req.appSlug), eq(t.dbName, req.dbName)))
         .orderBy(sql`${t.docId}, ${t.seq}`);
 
       // Last row per docId wins (highest seq), skip deleted
@@ -458,7 +460,7 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       for (const row of latest.values()) {
         if (row.deleted === 1) continue;
         const doc = mintFilesUrls(row.data as Record<string, unknown>, {
-          userSlug: req.userSlug,
+          ownerHandle: req.ownerHandle,
           appSlug: req.appSlug,
           dbName: req.dbName,
           docId: row.docId,
@@ -500,15 +502,15 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      if (isDirectChannel(req.userSlug)) {
-        const rAccess = await checkDirectChannelAccess(vctx, req.userSlug, userId);
+      if (isDirectChannel(req.ownerHandle)) {
+        const rAccess = await checkDirectChannelAccess(vctx, req.ownerHandle, userId);
         if (rAccess.isErr() || !rAccess.Ok()) {
           await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
       } else {
-        const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
-        const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
+        const access = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+        const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !aclAllows(rAcl.Ok(), "delete", access)) {
           await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
@@ -524,13 +526,13 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       const maxSeqResult = await vctx.sql.db
         .select({ maxSeq: max(t.seq) })
         .from(t)
-        .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, req.docId)))
+        .where(and(eq(t.ownerHandle, req.ownerHandle), eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, req.docId)))
         .then((r) => r[0]);
 
       const nextSeq = (maxSeqResult?.maxSeq ?? 0) + 1;
 
       await vctx.sql.db.insert(t).values({
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
         dbName,
         docId: req.docId,
@@ -544,7 +546,10 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       // Notify DocNotify coordinator for cross-shard fan-out
       if (vctx.notifyDocChanged) {
         vctx
-          .notifyDocChanged({ userSlug: req.userSlug, appSlug: req.appSlug, dbName, docId: req.docId }, clientWsSend(ctx).connId)
+          .notifyDocChanged(
+            { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId: req.docId },
+            clientWsSend(ctx).connId
+          )
           .catch((e: unknown) => console.error("DocNotify error:", e));
       }
 
@@ -577,9 +582,9 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
-      if (isDirectChannel(req.userSlug)) {
+      if (isDirectChannel(req.ownerHandle)) {
         const userId = req._auth?.verifiedAuth.claims.userId;
-        const rAccess = userId ? await checkDirectChannelAccess(vctx, req.userSlug, userId) : Result.Ok(false);
+        const rAccess = userId ? await checkDirectChannelAccess(vctx, req.ownerHandle, userId) : Result.Ok(false);
         if (rAccess.isErr() || !rAccess.Ok()) {
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-error",
@@ -589,10 +594,10 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
         }
       } else {
         const access: DocAccessLevel = req._auth
-          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.userSlug)
+          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
           : "none";
-        const rAcl = await resolveDbAcl(vctx, req.userSlug, req.appSlug, req.dbName);
-        if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.userSlug))) {
+        const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
+        if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-error",
             error: { message: "Access denied" },
@@ -606,7 +611,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       // Key includes dbName so the per-db read ACL is preserved across the
       // change-event channel — see putDoc/deleteDoc and ChatSessions fan-out.
       const wsSend = clientWsSend(ctx);
-      const subscriptionKey = `${req.userSlug}/${req.appSlug}/${req.dbName}`;
+      const subscriptionKey = `${req.ownerHandle}/${req.appSlug}/${req.dbName}`;
       wsSend.subscribedDocKeys.add(subscriptionKey);
 
       // Register this shard with DocNotify coordinator for cross-shard fan-out
@@ -642,7 +647,7 @@ export const listDbNamesEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
+      const access = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
       if (access !== "owner") {
         await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
@@ -652,7 +657,7 @@ export const listDbNamesEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
       const rows = await vctx.sql.db
         .selectDistinct({ dbName: t.dbName })
         .from(t)
-        .where(and(eq(t.userSlug, req.userSlug), eq(t.appSlug, req.appSlug)));
+        .where(and(eq(t.ownerHandle, req.ownerHandle), eq(t.appSlug, req.appSlug)));
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-list-db-names",
@@ -681,10 +686,10 @@ export const listDmThreadsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqLi
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      // Get all userSlugs for this user
-      const t_usb = vctx.sql.tables.userSlugBinding;
-      const mySlugRows = await vctx.sql.db.select({ userSlug: t_usb.userSlug }).from(t_usb).where(eq(t_usb.userId, userId));
-      const myUserSlugs = mySlugRows.map((r) => r.userSlug);
+      // Get all ownerHandles for this user
+      const t_usb = vctx.sql.tables.handleBinding;
+      const mySlugRows = await vctx.sql.db.select({ handle: t_usb.handle }).from(t_usb).where(eq(t_usb.userId, userId));
+      const myUserSlugs = mySlugRows.map((r) => r.handle);
 
       if (myUserSlugs.length === 0) {
         await ctx.send.send(ctx, { type: "vibes.diy.res-list-dm-threads", status: "ok", items: [] } satisfies ResListDmThreads);
@@ -694,9 +699,9 @@ export const listDmThreadsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqLi
       // Get all channels where any of my slugs participates
       const t_idx = vctx.sql.tables.directChannelIndex;
       const channelRows = await vctx.sql.db
-        .select({ channelUserSlug: t_idx.channelUserSlug, userSlug: t_idx.userSlug })
+        .select({ channelUserSlug: t_idx.channelHandle, ownerHandle: t_idx.handle })
         .from(t_idx)
-        .where(inArray(t_idx.userSlug, myUserSlugs));
+        .where(inArray(t_idx.handle, myUserSlugs));
 
       const t_docs = vctx.sql.tables.appDocuments;
       const t_reads = vctx.sql.tables.directChannelReads;
@@ -706,34 +711,34 @@ export const listDmThreadsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqLi
 
       // Batch query 1: latest doc per channel using subquery (avoids N+1)
       const subq = vctx.sql.db
-        .select({ userSlug: t_docs.userSlug, maxSeq: max(t_docs.seq).as("maxSeq") })
+        .select({ ownerHandle: t_docs.ownerHandle, maxSeq: max(t_docs.seq).as("maxSeq") })
         .from(t_docs)
         .where(
           and(
-            inArray(t_docs.userSlug, channelSlugs),
+            inArray(t_docs.ownerHandle, channelSlugs),
             eq(t_docs.appSlug, "dm"),
             eq(t_docs.dbName, "messages"),
             eq(t_docs.deleted, 0)
           )
         )
-        .groupBy(t_docs.userSlug)
+        .groupBy(t_docs.ownerHandle)
         .as("latest");
 
       const latestDocs = await vctx.sql.db
         .select()
         .from(t_docs)
-        .innerJoin(subq, and(eq(t_docs.userSlug, subq.userSlug), eq(t_docs.seq, subq.maxSeq)));
+        .innerJoin(subq, and(eq(t_docs.ownerHandle, subq.ownerHandle), eq(t_docs.seq, subq.maxSeq)));
 
-      const latestDocByChannel = new Map(latestDocs.map((row) => [row.AppDocuments.userSlug, row.AppDocuments]));
+      const latestDocByChannel = new Map(latestDocs.map((row) => [row.AppDocuments.ownerHandle, row.AppDocuments]));
 
       // Batch query 2: read rows for all channels at once
       const readRows = await vctx.sql.db
-        .select({ channelUserSlug: t_reads.channelUserSlug, lastSeenSeq: t_reads.lastSeenSeq })
+        .select({ channelUserSlug: t_reads.channelHandle, lastSeenSeq: t_reads.lastSeenSeq })
         .from(t_reads)
-        .where(and(inArray(t_reads.channelUserSlug, channelSlugs), inArray(t_reads.userSlug, myUserSlugs)));
+        .where(and(inArray(t_reads.channelHandle, channelSlugs), inArray(t_reads.handle, myUserSlugs)));
       const lastSeenByChannel = new Map(readRows.map((r) => [r.channelUserSlug, r.lastSeenSeq]));
 
-      const items: DmThreadItem[] = channelRows.map(({ channelUserSlug, userSlug: mySlug }) => {
+      const items: DmThreadItem[] = channelRows.map(({ channelUserSlug, ownerHandle: mySlug }) => {
         const otherUserSlug = (directChannelParticipants(channelUserSlug) ?? []).find((h) => h !== mySlug) ?? "";
         const latestDoc = latestDocByChannel.get(channelUserSlug);
         const latestSeq = latestDoc?.seq ?? 0;
@@ -790,24 +795,24 @@ export const markDmReadEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqMarkD
 
       // Resolve which of my slugs is in this channel
       const participants = directChannelParticipants(req.channelUserSlug) ?? ["", ""];
-      const t_usb = vctx.sql.tables.userSlugBinding;
+      const t_usb = vctx.sql.tables.handleBinding;
       const slugRow = await vctx.sql.db
-        .select({ userSlug: t_usb.userSlug })
+        .select({ handle: t_usb.handle })
         .from(t_usb)
-        .where(and(eq(t_usb.userId, userId), inArray(t_usb.userSlug, participants)))
+        .where(and(eq(t_usb.userId, userId), inArray(t_usb.handle, participants)))
         .then((r) => r[0]);
       if (!slugRow) {
         await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
-      const myUserSlug = slugRow.userSlug;
+      const myUserSlug = slugRow.handle;
 
       const t_reads = vctx.sql.tables.directChannelReads;
       await vctx.sql.db
         .insert(t_reads)
-        .values({ channelUserSlug: req.channelUserSlug, userSlug: myUserSlug, lastSeenSeq: req.lastSeenSeq })
+        .values({ channelHandle: req.channelUserSlug, handle: myUserSlug, lastSeenSeq: req.lastSeenSeq })
         .onConflictDoUpdate({
-          target: [t_reads.channelUserSlug, t_reads.userSlug],
+          target: [t_reads.channelHandle, t_reads.handle],
           // MAX so a delayed call never regresses the watermark
           set: { lastSeenSeq: sql`MAX(${t_reads.lastSeenSeq}, ${req.lastSeenSeq})` },
         });

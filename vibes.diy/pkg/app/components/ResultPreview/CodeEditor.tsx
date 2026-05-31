@@ -4,7 +4,7 @@ import { setupMonacoEditor } from "./setupMonacoEditor.js";
 import { editor } from "monaco-editor";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { useTheme } from "../../contexts/ThemeContext.js";
-import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { useParams } from "react-router";
 import {
   AppCode,

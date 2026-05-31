@@ -11,7 +11,7 @@ function Probe({ onR }: { onR: (r: ReturnType<typeof useViewer>) => void }) {
 }
 
 const baseEnv = {
-  viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
+  viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
   access: "owner" as const,
 };
 
@@ -35,7 +35,7 @@ function renderWith(env: ViewerEnv | undefined): UseViewerResult {
 describe("useViewer", () => {
   it("exposes viewer + access + dbAcls", () => {
     const r = renderWith({ ...baseEnv, dbAcls: { comments: { write: ["members"] } } });
-    expect(r.viewer?.userSlug).toBe("alice");
+    expect(r.viewer?.userHandle).toBe("alice");
     expect(r.access).toBe("owner");
     expect(r.dbAcls.comments.write).toEqual(["members"]);
   });
@@ -49,7 +49,7 @@ describe("useViewer", () => {
 
   it("can(write, dbName) consults the per-db ACL", () => {
     const r = renderWith({
-      viewer: { userSlug: "bob", avatarUrl: "https://api/u/bob/avatar" },
+      viewer: { userHandle: "bob", avatarUrl: "https://api/u/bob/avatar" },
       access: "viewer" as const,
       dbAcls: { comments: { write: ["members"] } },
     });
@@ -58,7 +58,7 @@ describe("useViewer", () => {
   });
 
   it("can(write) without dbName collapses for single-db case", () => {
-    const r = renderWith({ viewer: { userSlug: "bob", avatarUrl: "https://api/u/bob/avatar" }, access: "owner" as const });
+    const r = renderWith({ viewer: { userHandle: "bob", avatarUrl: "https://api/u/bob/avatar" }, access: "owner" as const });
     expect(r.can("write")).toBe(true);
     const r2 = renderWith({ viewer: null, access: "none" as const });
     expect(r2.can("write")).toBe(false);
@@ -66,7 +66,7 @@ describe("useViewer", () => {
 
   it("can(action) returns false if any configured override denies", () => {
     const r = renderWith({
-      viewer: { userSlug: "bob", avatarUrl: "https://api/u/bob/avatar" },
+      viewer: { userHandle: "bob", avatarUrl: "https://api/u/bob/avatar" },
       access: "editor" as const,
       // "submitters"-only write means editors cannot write to lockedDb
       dbAcls: { lockedDb: { write: ["submitters"] } },

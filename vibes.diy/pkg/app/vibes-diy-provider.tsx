@@ -35,7 +35,7 @@ export interface VibesDiyWebVars {
 
 export interface AppUserSlugFsId {
   appSlug: string;
-  userSlug: string;
+  ownerHandle: string;
   fsId: string;
 }
 

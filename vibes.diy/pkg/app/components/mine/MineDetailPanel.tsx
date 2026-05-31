@@ -20,7 +20,7 @@ const TABS: { id: MineDetailTab; label: string }[] = [
 ];
 
 interface MineDetailPanelProps {
-  userSlug?: string;
+  ownerHandle?: string;
   appSlug?: string;
   title?: string;
   headScreenshot?: MetaScreenShot;
@@ -29,13 +29,13 @@ interface MineDetailPanelProps {
   isLoading: boolean;
   chatDetails: ResGetChatDetails | null;
   screenshots: Map<string, { screenshot?: MetaScreenShot; mode?: string }>;
-  onToggleMode: (fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) => Promise<void>;
+  onToggleMode: (fsId: string, appSlug: string, ownerHandle: string, currentMode: string | undefined) => Promise<void>;
   onTabChange: (tab: MineDetailTab) => void;
   onClose: () => void;
 }
 
 export function MineDetailPanel({
-  userSlug,
+  ownerHandle,
   appSlug,
   title,
   headScreenshot,
@@ -48,7 +48,7 @@ export function MineDetailPanel({
   onTabChange,
   onClose,
 }: MineDetailPanelProps) {
-  const open = !!(userSlug && appSlug);
+  const open = !!(ownerHandle && appSlug);
   const label = title ?? appSlug ?? "";
   const previewUrl = headScreenshot
     ? `/assets/cid/?url=${encodeURIComponent(headScreenshot.assetUrl)}&mime=${encodeURIComponent(headScreenshot.mime)}`
@@ -100,9 +100,7 @@ export function MineDetailPanel({
           {previewUrl ? (
             <img src={previewUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <span className="text-light-primary/40 dark:text-dark-primary/40 text-xs uppercase tracking-widest">
-              No preview
-            </span>
+            <span className="text-light-primary/40 dark:text-dark-primary/40 text-xs uppercase tracking-widest">No preview</span>
           )}
         </div>
 
@@ -110,7 +108,7 @@ export function MineDetailPanel({
         <div className="px-6 pt-5 pb-3 flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <h3 className="text-light-primary dark:text-dark-primary text-2xl font-bold truncate">{label}</h3>
-            <p className="text-light-primary/60 dark:text-dark-primary/60 text-sm truncate">@{userSlug}</p>
+            <p className="text-light-primary/60 dark:text-dark-primary/60 text-sm truncate">@{ownerHandle}</p>
           </div>
           {headMode && (
             <span
@@ -156,11 +154,11 @@ export function MineDetailPanel({
               onToggleMode={onToggleMode}
             />
           ) : activeTab === "chats" ? (
-            <AppChatsTab userSlug={userSlug ?? ""} appSlug={appSlug ?? ""} />
+            <AppChatsTab ownerHandle={ownerHandle ?? ""} appSlug={appSlug ?? ""} />
           ) : activeTab === "sharing" ? (
-            <SharingTab userSlug={userSlug ?? ""} appSlug={appSlug ?? ""} />
+            <SharingTab ownerHandle={ownerHandle ?? ""} appSlug={appSlug ?? ""} />
           ) : (
-            <SettingsTab userSlug={userSlug ?? ""} appSlug={appSlug ?? ""} />
+            <SettingsTab ownerHandle={ownerHandle ?? ""} appSlug={appSlug ?? ""} />
           )}
         </div>
       </div>

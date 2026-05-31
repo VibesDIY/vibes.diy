@@ -182,7 +182,7 @@ export async function renderVibe({
     mountJS: [
       `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
       ...imports.map((i) => i.importStmt),
-      `registerDependencies(${JSON.stringify({ appSlug: fs.appSlug, userSlug: fs.ownerHandle, fsId: fs.fsId })})`,
+      `registerDependencies(${JSON.stringify({ appSlug: fs.appSlug, ownerHandle: fs.ownerHandle, fsId: fs.fsId })})`,
       `  .then(() => mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({
         usrEnv,
         ...(viewerEnv ? { viewerEnv } : {}),
@@ -221,7 +221,7 @@ export async function renderVibe({
 export interface RenderPendingVibesOpts {
   ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>;
   appSlug: string;
-  userSlug: string;
+  ownerHandle: string;
   pkgRepos: {
     private: NpmUrlCapture;
     public?: string;
@@ -238,7 +238,7 @@ export interface RenderPendingVibesOpts {
 export async function renderPendingVibe({
   ctx,
   appSlug,
-  userSlug,
+  ownerHandle,
   pkgRepos,
 }: RenderPendingVibesOpts): Promise<Result<EventoResultType>> {
   const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
@@ -262,7 +262,7 @@ export async function renderPendingVibe({
       ? undefined
       : await buildViewerEnvForRender(vctx, {
           appSlug,
-          ownerUserSlug: userSlug,
+          ownerUserSlug: ownerHandle,
           apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
         });
 
@@ -281,7 +281,7 @@ export async function renderPendingVibe({
     },
     mountJS: [
       `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
-      `registerDependencies(${JSON.stringify({ appSlug, userSlug, fsId: "pending" })})`,
+      `registerDependencies(${JSON.stringify({ appSlug, ownerHandle, fsId: "pending" })})`,
       `  .then(() => mountVibe([], ${JSON.stringify({
         usrEnv: {},
         ...(viewerEnv ? { viewerEnv } : {}),

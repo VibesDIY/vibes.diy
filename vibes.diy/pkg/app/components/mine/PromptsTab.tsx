@@ -6,17 +6,17 @@ interface PromptsTabProps {
   isLoading: boolean;
   chatDetails?: ResGetChatDetails;
   screenshots: Map<string, { screenshot?: MetaScreenShot; mode?: string }>;
-  onToggleMode: (fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) => Promise<void>;
+  onToggleMode: (fsId: string, appSlug: string, ownerHandle: string, currentMode: string | undefined) => Promise<void>;
 }
 
 export function PromptsTab({ isLoading, chatDetails, screenshots, onToggleMode }: PromptsTabProps) {
   const navigate = useNavigate();
   const [toggling, setToggling] = useState<string | null>(null);
 
-  async function handleToggle(fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) {
+  async function handleToggle(fsId: string, appSlug: string, ownerHandle: string, currentMode: string | undefined) {
     setToggling(fsId);
     try {
-      await onToggleMode(fsId, appSlug, userSlug, currentMode);
+      await onToggleMode(fsId, appSlug, ownerHandle, currentMode);
     } finally {
       setToggling(null);
     }
@@ -39,7 +39,7 @@ export function PromptsTab({ isLoading, chatDetails, screenshots, onToggleMode }
         const info = screenshots.get(p.fsId);
         const shot = info?.screenshot;
         const mode = info?.mode;
-        const appUrl = `/vibe/${chatDetails.userSlug}/${chatDetails.appSlug}/${p.fsId}`;
+        const appUrl = `/vibe/${chatDetails.ownerHandle}/${chatDetails.appSlug}/${p.fsId}`;
         const isToggling = toggling === p.fsId;
         const isProd = mode === "production";
         const dateLabel = new Date(p.created).toLocaleDateString(undefined, {
@@ -91,7 +91,7 @@ export function PromptsTab({ isLoading, chatDetails, screenshots, onToggleMode }
               </a>
               <button
                 type="button"
-                onClick={() => navigate(`/chat/${chatDetails.userSlug}/${chatDetails.appSlug}/${p.fsId}`)}
+                onClick={() => navigate(`/chat/${chatDetails.ownerHandle}/${chatDetails.appSlug}/${p.fsId}`)}
                 className="inline-flex items-center gap-1 rounded-md bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
               >
                 Continue chat
@@ -102,7 +102,7 @@ export function PromptsTab({ isLoading, chatDetails, screenshots, onToggleMode }
               <button
                 type="button"
                 disabled={isToggling || !mode}
-                onClick={() => void handleToggle(p.fsId, chatDetails.appSlug, chatDetails.userSlug, mode)}
+                onClick={() => void handleToggle(p.fsId, chatDetails.appSlug, chatDetails.ownerHandle, mode)}
                 className={`ml-auto inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
                   isProd
                     ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/50 dark:text-green-300 dark:hover:bg-green-800/50"
@@ -111,7 +111,7 @@ export function PromptsTab({ isLoading, chatDetails, screenshots, onToggleMode }
                 aria-label={`Mode ${mode ?? "unknown"} — click to switch to ${isProd ? "dev" : "production"}`}
                 title={mode ? `Switch to ${isProd ? "dev" : "production"}` : undefined}
               >
-                {isToggling ? "…" : mode ?? "—"}
+                {isToggling ? "…" : (mode ?? "—")}
               </button>
             </div>
           </div>

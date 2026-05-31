@@ -17,7 +17,7 @@ export type MemberItem = typeof memberItem.infer;
 export const reqListMembers = type({
   type: "'vibes.diy.req-list-members'",
   "auth?": dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
 });
 export type ReqListMembers = typeof reqListMembers.infer;

@@ -31,7 +31,7 @@ export function isResReportGrowthMemberships(obj: unknown): obj is ResReportGrow
   return !(resReportGrowthMemberships(obj) instanceof type.errors);
 }
 
-// Vibes With Data — daily cumulative count of distinct (userSlug, appSlug)
+// Vibes With Data — daily cumulative count of distinct (ownerHandle, appSlug)
 // pairs in AppSlugBindings (PK already enforces distinctness per row).
 export const reqReportGrowthVibesWithData = type({
   type: "'vibes.diy.req-report-growth-vibes-with-data'",
@@ -99,7 +99,7 @@ export function isReqReportTopVibesByMembers(obj: unknown): obj is ReqReportTopV
 }
 
 export const resReportTopVibesByMembersRow = type({
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   memberCount: "number",
 });

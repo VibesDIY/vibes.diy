@@ -32,7 +32,7 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
         .from(qctx.sql.tables.apps)
         .where(
           and(
-            eq(qctx.sql.tables.apps.userSlug, payload.userSlug),
+            eq(qctx.sql.tables.apps.ownerHandle, payload.ownerHandle),
             eq(qctx.sql.tables.apps.appSlug, payload.appSlug),
             eq(qctx.sql.tables.apps.fsId, payload.fsId)
           )
@@ -42,12 +42,12 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
       const publishCount = rows[0]?.releaseSeq;
       await postEmbed(qctx, buildPublishEmbed(qctx, payload, publishCount));
 
-      // Resolve userSlug → userId to notify the vibe owner
-      const usb = qctx.sql.tables.userSlugBinding;
+      // Resolve ownerHandle → userId to notify the vibe owner
+      const usb = qctx.sql.tables.handleBinding;
       const ownerRow = await qctx.sql.db
         .select({ userId: usb.userId })
         .from(usb)
-        .where(eq(usb.userSlug, payload.userSlug))
+        .where(eq(usb.handle, payload.ownerHandle))
         .limit(1)
         .then((r) => r[0] ?? null);
 
@@ -55,7 +55,7 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
         await qctx.notifyUser(ownerRow.userId, {
           type: "vibes.diy.evt-user-notification",
           notificationType: "vibe-published",
-          userSlug: payload.userSlug,
+          ownerHandle: payload.ownerHandle,
           appSlug: payload.appSlug,
         });
       }

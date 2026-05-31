@@ -4,7 +4,7 @@ import { dashAuthType, FPCloudClaim } from "./common.js";
 export const ReqFPCloudToken = type({
   type: "'vibes.diy.req-fpcloud-token'",
   auth: dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   dbName: "string",
 });
@@ -39,7 +39,7 @@ export const ResFPCloudTokenGrant = type({
   token: Token,
   fpCloudUrl: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
   ledger: "string",
   tenant: "string",

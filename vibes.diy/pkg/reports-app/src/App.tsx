@@ -147,7 +147,7 @@ export function App({ getClerkToken, report }: AppProps) {
                   Vibes With Data
                 </span>
                 <Metric loadable={vibes} pick={(d) => d.total} accent="black" />
-                <p style={{ color: "var(--near-black)" }}>Distinct userSlug/appSlug pairs in AppSlugBindings.</p>
+                <p style={{ color: "var(--near-black)" }}>Distinct ownerHandle/appSlug pairs in AppSlugBindings.</p>
               </div>
             </div>
           </div>
@@ -199,8 +199,8 @@ export function App({ getClerkToken, report }: AppProps) {
               <span className="section-label section-label--filled">30 Days</span>
               <h2 className="section-title">Vibes with data over time</h2>
               <p className="section-intro">
-                Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct userSlug/appSlug pair in
-                AppSlugBindings counts as one active vibe.
+                Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct ownerHandle/appSlug pair
+                in AppSlugBindings counts as one active vibe.
               </p>
               {vibes.kind === "loading" ? (
                 <div className="empty">Loading…</div>
@@ -344,7 +344,7 @@ function TopVibesTable({ rows }: { readonly rows: ResReportTopVibesByMembersRow[
         <tbody>
           {rows.map((row, i) => (
             <tr
-              key={`${row.userSlug}/${row.appSlug}`}
+              key={`${row.ownerHandle}/${row.appSlug}`}
               style={{
                 borderBottom: "1px solid color-mix(in srgb, var(--near-black) 15%, transparent)",
                 background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--near-black) 4%, transparent)",
@@ -353,12 +353,12 @@ function TopVibesTable({ rows }: { readonly rows: ResReportTopVibesByMembersRow[
               <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", color: "var(--gray-mid)" }}>{i + 1}</td>
               <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace" }}>
                 <a
-                  href={`https://vibes.diy/vibe/${row.userSlug}/${row.appSlug}`}
+                  href={`https://vibes.diy/vibe/${row.ownerHandle}/${row.appSlug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: "var(--cyan)", textDecoration: "underline", textDecorationStyle: "dotted" }}
                 >
-                  {row.userSlug}/{row.appSlug}
+                  {row.ownerHandle}/{row.appSlug}
                 </a>
               </td>
               <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.memberCount.toLocaleString()}</td>

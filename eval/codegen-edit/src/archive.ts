@@ -11,7 +11,7 @@ export interface ArchiveDirs {
 
 export interface RunManifest {
   promptId: string;
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
   apiUrl: string;
   model?: string;

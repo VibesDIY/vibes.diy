@@ -137,7 +137,7 @@ function buildTrigger(args: ReqEdit, api: unknown, sent: unknown[]) {
   } as unknown as Parameters<typeof editEvento.handle>[0];
 }
 
-function buildApi(opts: { sectionStream: ReadableStream<SectionEvent>; promptId: string; appSlug: string; userSlug: string }) {
+function buildApi(opts: { sectionStream: ReadableStream<SectionEvent>; promptId: string; appSlug: string; ownerHandle: string }) {
   const calls = {
     openChat: [] as unknown[],
     prompt: [] as unknown[],
@@ -147,7 +147,7 @@ function buildApi(opts: { sectionStream: ReadableStream<SectionEvent>; promptId:
 
   const chat = {
     appSlug: opts.appSlug,
-    userSlug: opts.userSlug,
+    ownerHandle: opts.ownerHandle,
     sectionStream: opts.sectionStream,
     prompt: async (req: unknown) => {
       calls.prompt.push(req);
@@ -166,7 +166,7 @@ function buildApi(opts: { sectionStream: ReadableStream<SectionEvent>; promptId:
       return Result.Ok({
         type: "vibes.diy.res-ensure-app-slug",
         appSlug: opts.appSlug,
-        userSlug: opts.userSlug,
+        ownerHandle: opts.ownerHandle,
         mode: "production",
         fsId: "fs-1",
         env: {},
@@ -213,7 +213,7 @@ describe("editEvento", () => {
       type: "vibes-diy.cli.edit",
       appSlug: "todo-app",
       prompt: "Refine the UI",
-      userSlug: "alice",
+      ownerHandle: "alice",
       dir: "/tmp/target",
       apiUrl: "https://example.com/api",
       instantJoin: false,
@@ -312,7 +312,7 @@ describe("editEvento", () => {
     const { api, calls } = buildApi({
       promptId,
       appSlug: "todo-app",
-      userSlug: "alice",
+      ownerHandle: "alice",
       sectionStream: sectionEventStream(promptId, [
         {
           blockId: "b1",
@@ -329,7 +329,7 @@ describe("editEvento", () => {
       type: "vibes-diy.cli.edit",
       appSlug: "todo-app",
       prompt: "Update the greeting",
-      userSlug: "alice",
+      ownerHandle: "alice",
       instantJoin: false,
       verbose: false,
       dryRun: false,
@@ -343,7 +343,7 @@ describe("editEvento", () => {
 
     const updated = await readFile(join(cwd, "App.jsx"), "utf-8");
     expect(updated).toContain("Hello, world");
-    expect(calls.openChat).toEqual([{ userSlug: "alice", appSlug: "todo-app", mode: "chat" }]);
+    expect(calls.openChat).toEqual([{ ownerHandle: "alice", appSlug: "todo-app", mode: "chat" }]);
     expect(calls.prompt).toEqual([
       {
         messages: [
@@ -378,7 +378,7 @@ describe("editEvento", () => {
     const { api, calls } = buildApi({
       promptId,
       appSlug: "todo-app",
-      userSlug: "alice",
+      ownerHandle: "alice",
       sectionStream: sectionEventStream(promptId, [
         {
           blockId: "b1",
@@ -395,7 +395,7 @@ describe("editEvento", () => {
       type: "vibes-diy.cli.edit",
       appSlug: "todo-app",
       prompt: "Edit in target dir",
-      userSlug: "alice",
+      ownerHandle: "alice",
       instantJoin: false,
       verbose: false,
       dryRun: false,
@@ -470,7 +470,7 @@ describe("editEvento", () => {
     const { api, calls } = buildApi({
       promptId,
       appSlug: "todo-app",
-      userSlug: "alice",
+      ownerHandle: "alice",
       sectionStream: bareBlockEndStream,
     });
 
@@ -479,7 +479,7 @@ describe("editEvento", () => {
       type: "vibes-diy.cli.edit",
       appSlug: "todo-app",
       prompt: "Add a tea button",
-      userSlug: "alice",
+      ownerHandle: "alice",
       instantJoin: false,
       verbose: false,
       dryRun: false,
@@ -508,7 +508,7 @@ describe("buildEditPromptRequest", () => {
     const req = await buildEditPromptRequest({
       chatId: "c1",
       appSlug: "x",
-      userSlug: "u",
+      ownerHandle: "u",
       prompt: "make it pink",
       dir,
       focus: undefined,
@@ -528,7 +528,7 @@ describe("buildEditPromptRequest", () => {
     const req = await buildEditPromptRequest({
       chatId: "c1",
       appSlug: "x",
-      userSlug: "u",
+      ownerHandle: "u",
       prompt: "go",
       dir,
       focus: undefined,

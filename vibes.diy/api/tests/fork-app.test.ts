@@ -84,26 +84,26 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     if (!isResEnsureAppSlugOk(res)) {
       assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
     }
-    return { appSlug: res.appSlug, userSlug: res.userSlug, fsId: res.fsId };
+    return { appSlug: res.appSlug, ownerHandle: res.ownerHandle, fsId: res.fsId };
   }
 
   it("owner can fork their own app; forked row shares source fsId and points back via remix-of meta", async () => {
     const src = await createProdApp("hello-owner");
 
-    const rFork = await api.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug });
+    const rFork = await api.forkApp({ srcUserSlug: src.ownerHandle, srcAppSlug: src.appSlug });
     if (rFork.isErr()) {
       assert.fail("Expected forkApp to succeed: " + JSON.stringify(rFork.Err()));
     }
     const fork = rFork.Ok();
     expect(fork.appSlug).not.toBe(src.appSlug);
-    expect(fork.userSlug).toBe(src.userSlug);
+    expect(fork.ownerHandle).toBe(src.ownerHandle);
     expect(fork.chatId).toBeTruthy();
     expect(fork.srcFsId).toBe(src.fsId);
-    expect(fork.srcUserSlug).toBe(src.userSlug);
+    expect(fork.srcUserSlug).toBe(src.ownerHandle);
     expect(fork.srcAppSlug).toBe(src.appSlug);
 
     // Apps row at the forked pair should share the source fsId and be readable.
-    const rApp = await api.getAppByFsId({ appSlug: fork.appSlug, userSlug: fork.userSlug });
+    const rApp = await api.getAppByFsId({ appSlug: fork.appSlug, ownerHandle: fork.ownerHandle });
     if (rApp.isErr()) assert.fail(`getAppByFsId failed: ${rApp.Err().message}`);
     expect(rApp.Ok().grant).toBe("owner");
     expect(rApp.Ok().mode).toBe("dev");
@@ -116,16 +116,16 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
 
   it("non-owner can fork a publicAccess app", async () => {
     const src = await createProdApp("hello-public");
-    await api.ensureAppSettings({ appSlug: src.appSlug, userSlug: src.userSlug, publicAccess: { enable: true } });
+    await api.ensureAppSettings({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, publicAccess: { enable: true } });
 
-    const rFork = await api2.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug });
+    const rFork = await api2.forkApp({ srcUserSlug: src.ownerHandle, srcAppSlug: src.appSlug });
     if (rFork.isErr()) {
       assert.fail("Expected forkApp to succeed: " + JSON.stringify(rFork.Err()));
     }
     const fork = rFork.Ok();
-    expect(fork.userSlug).not.toBe(src.userSlug);
+    expect(fork.ownerHandle).not.toBe(src.ownerHandle);
     expect(fork.srcFsId).toBe(src.fsId);
-    expect(fork.srcUserSlug).toBe(src.userSlug);
+    expect(fork.srcUserSlug).toBe(src.ownerHandle);
     expect(fork.srcAppSlug).toBe(src.appSlug);
   });
 
@@ -133,22 +133,22 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     const src = await createProdApp("hello-request-enabled");
     await api.ensureAppSettings({
       appSlug: src.appSlug,
-      userSlug: src.userSlug,
+      ownerHandle: src.ownerHandle,
       request: { enable: true },
     });
 
-    const rFork = await api2.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug });
+    const rFork = await api2.forkApp({ srcUserSlug: src.ownerHandle, srcAppSlug: src.appSlug });
     if (rFork.isErr()) {
       assert.fail("Expected forkApp to succeed for enableRequest app: " + JSON.stringify(rFork.Err()));
     }
     const fork = rFork.Ok();
-    expect(fork.userSlug).not.toBe(src.userSlug);
+    expect(fork.ownerHandle).not.toBe(src.ownerHandle);
     expect(fork.srcFsId).toBe(src.fsId);
-    expect(fork.srcUserSlug).toBe(src.userSlug);
+    expect(fork.srcUserSlug).toBe(src.ownerHandle);
     expect(fork.srcAppSlug).toBe(src.appSlug);
 
     // Forker's admin UI must NOT inherit src env entries from the source.
-    const rForkSettings = await api2.ensureAppSettings({ appSlug: fork.appSlug, userSlug: fork.userSlug });
+    const rForkSettings = await api2.ensureAppSettings({ appSlug: fork.appSlug, ownerHandle: fork.ownerHandle });
     if (rForkSettings.isErr()) assert.fail(`ensureAppSettings failed: ${rForkSettings.Err().message}`);
     expect(rForkSettings.Ok().settings.entry.settings.env).toEqual([]);
   });
@@ -156,7 +156,7 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
   it("skipChat=true clones into production with -clone slug, request-access settings, and a seeded chat", async () => {
     const src = await createProdApp("hello-clone");
 
-    const rFork = await api.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug, skipChat: true });
+    const rFork = await api.forkApp({ srcUserSlug: src.ownerHandle, srcAppSlug: src.appSlug, skipChat: true });
     if (rFork.isErr()) {
       assert.fail("Expected forkApp(skipChat) to succeed: " + JSON.stringify(rFork.Err()));
     }
@@ -164,14 +164,14 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     expect(fork.appSlug).toContain("clone");
     expect(fork.srcFsId).toBe(src.fsId);
 
-    const rApp = await api.getAppByFsId({ appSlug: fork.appSlug, userSlug: fork.userSlug });
+    const rApp = await api.getAppByFsId({ appSlug: fork.appSlug, ownerHandle: fork.ownerHandle });
     if (rApp.isErr()) assert.fail(`getAppByFsId failed: ${rApp.Err().message}`);
     expect(rApp.Ok().mode).toBe("production");
     expect(rApp.Ok().fsId).toBe(src.fsId);
     const remixMeta = rApp.Ok().meta.find((m) => m.type === "remix-of");
     expect(remixMeta).toBeDefined();
 
-    const rSettings = await api.ensureAppSettings({ appSlug: fork.appSlug, userSlug: fork.userSlug });
+    const rSettings = await api.ensureAppSettings({ appSlug: fork.appSlug, ownerHandle: fork.ownerHandle });
     if (rSettings.isErr()) assert.fail(`ensureAppSettings failed: ${rSettings.Err().message}`);
     const entry = rSettings.Ok().settings.entry;
     expect(entry.enableRequest?.enable).toBe(true);
@@ -194,16 +194,16 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
   it("remix-of meta survives a code edit on the fork", async () => {
     const src = await createProdApp("hello-carry-forward");
 
-    const rFork = await api.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug });
+    const rFork = await api.forkApp({ srcUserSlug: src.ownerHandle, srcAppSlug: src.appSlug });
     if (rFork.isErr()) assert.fail("forkApp failed: " + JSON.stringify(rFork.Err()));
     const fork = rFork.Ok();
 
     // Simulate a code edit on the fork — ensureAppSlug with different content
-    // produces a new fsId at the same (userSlug, appSlug).
+    // produces a new fsId at the same (ownerHandle, appSlug).
     const rEdit = await api.ensureAppSlug({
       mode: "dev",
       appSlug: fork.appSlug,
-      userSlug: fork.userSlug,
+      ownerHandle: fork.ownerHandle,
       fileSystem: [
         {
           type: "code-block",
@@ -219,7 +219,7 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     expect(edit.fsId).not.toBe(fork.srcFsId);
 
     // The new release should have carried the remix-of meta forward.
-    const rApp = await api.getAppByFsId({ appSlug: fork.appSlug, userSlug: fork.userSlug, fsId: edit.fsId });
+    const rApp = await api.getAppByFsId({ appSlug: fork.appSlug, ownerHandle: fork.ownerHandle, fsId: edit.fsId });
     if (rApp.isErr()) assert.fail(`getAppByFsId failed: ${rApp.Err().message}`);
     const remixMeta = rApp.Ok().meta.find((m) => m.type === "remix-of");
     expect(remixMeta).toBeDefined();
@@ -229,7 +229,7 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
   it("non-owner cannot fork a private app (no grant)", async () => {
     const src = await createProdApp("hello-private");
 
-    const rFork = await api2.forkApp({ srcUserSlug: src.userSlug, srcAppSlug: src.appSlug });
+    const rFork = await api2.forkApp({ srcUserSlug: src.ownerHandle, srcAppSlug: src.appSlug });
     expect(rFork.isErr()).toBe(true);
   });
 

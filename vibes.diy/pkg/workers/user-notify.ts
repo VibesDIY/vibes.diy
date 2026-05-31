@@ -11,7 +11,7 @@ const UserNotifyDeregister = type({ action: "'deregister'", shardId: "string" })
 const UserNotifyEvt = type({
   type: "'vibes.diy.evt-user-notification'",
   notificationType: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
 });
 
@@ -92,7 +92,7 @@ export class UserNotify implements DurableObject {
     console.log(
       "[UserNotify] notify",
       msg.evt.notificationType,
-      msg.evt.userSlug + "/" + msg.evt.appSlug,
+      msg.evt.ownerHandle + "/" + msg.evt.appSlug,
       "| sender shard:",
       msg.senderShardId.slice(0, 8),
       "conn:",

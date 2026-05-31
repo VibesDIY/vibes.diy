@@ -26,7 +26,7 @@ export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userI
         .where(
           and(
             eq(vctx.sql.tables.apps.userId, userId),
-            eq(vctx.sql.tables.apps.userSlug, req.userSlug),
+            eq(vctx.sql.tables.apps.ownerHandle, req.ownerHandle),
             eq(vctx.sql.tables.apps.appSlug, req.appSlug),
             eq(vctx.sql.tables.apps.mode, "production")
           )
@@ -43,7 +43,7 @@ export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userI
       .where(
         and(
           eq(vctx.sql.tables.apps.userId, userId),
-          eq(vctx.sql.tables.apps.userSlug, req.userSlug),
+          eq(vctx.sql.tables.apps.ownerHandle, req.ownerHandle),
           eq(vctx.sql.tables.apps.appSlug, req.appSlug),
           eq(vctx.sql.tables.apps.fsId, req.fsId)
         )
@@ -55,12 +55,12 @@ export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userI
   if (req.mode === "production") {
     const entryPointUrl = calcEntryPointUrl({
       ...vctx.params.vibes.svc,
-      bindings: { userSlug: req.userSlug, appSlug: req.appSlug, fsId: req.fsId },
+      bindings: { ownerHandle: req.ownerHandle, appSlug: req.appSlug, fsId: req.fsId },
     });
     await vctx.postQueue({
       payload: {
         type: "vibes.diy.evt-new-fs-id",
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
         fsId: req.fsId,
         vibeUrl: entryPointUrl,
@@ -77,7 +77,7 @@ export async function setModeFsId(vctx: VibesApiSQLCtx, req: ReqSetModeFs, userI
     type: "vibes.diy.res-set-mode-fs",
     fsId: req.fsId,
     appSlug: req.appSlug,
-    userSlug: req.userSlug,
+    ownerHandle: req.ownerHandle,
     mode: req.mode,
   } satisfies ResSetModeFs);
 }

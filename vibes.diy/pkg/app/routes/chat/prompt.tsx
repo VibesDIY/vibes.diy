@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { useNavigate, useSearchParams } from "react-router";
-import { Chat } from "./chat.$userSlug.$appSlug.js";
+import { Chat } from "./chat.$ownerHandle.$appSlug.js";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/react";
 import { notifyRecentVibesChanged } from "../../hooks/useRecentVibes.js";
@@ -69,7 +69,7 @@ export default function ChatPrompt() {
               return;
             }
             notifyRecentVibesChanged();
-            navigate(`/chat/${chat.userSlug}/${chat.appSlug}`);
+            navigate(`/chat/${chat.ownerHandle}/${chat.appSlug}`);
           });
       });
   }, [effectivePrompt, isLoaded, isSignedIn]);

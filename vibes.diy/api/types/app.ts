@@ -82,7 +82,7 @@ export function isResEnsureAppSlug(obj: unknown): obj is ResEnsureAppSlug {
 export const reqGetChatDetails = type({
   type: "'vibes.diy.req-get-chat-details'",
   auth: dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
 });
 export type ReqGetChatDetails = typeof reqGetChatDetails.infer;
@@ -97,7 +97,7 @@ export type ResChatDetailsPrompt = typeof resChatDetailsPrompt.infer;
 export const resGetChatDetails = type({
   type: "'vibes.diy.res-get-chat-details'",
   chatId: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   prompts: resChatDetailsPrompt.array(),
 });
@@ -111,7 +111,7 @@ export const reqGetAppByFsId = type({
   "auth?": dashAuthType,
   "fsId?": "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   "token?": "string",
 });
 export type ReqGetAppByFsId = typeof reqGetAppByFsId.infer;
@@ -123,7 +123,7 @@ export const resGetAppByFsId = type({
   type: "'vibes.diy.res-get-app-by-fsid'",
   "error?": "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   "ownerDisplayName?": "string",
   "fsId?": "string",
   mode: "'production'|'dev'",
@@ -143,14 +143,14 @@ export function isResGetAppByFsId(obj: unknown): obj is ResGetAppByFsId {
 export const reqGetByUserSlugAppSlug = type({
   type: "'vibes.diy.req-get-by-user-slug-app-slug'",
   auth: dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
 });
 
 export const reqListUserSlugAppSlug = type({
   type: "'vibes.diy.req-list-user-slug-app-slug'",
   auth: dashAuthType,
-  "userSlug?": "string",
+  "ownerHandle?": "string",
   "appSlug?": "string",
 });
 export type ReqListUserSlugAppSlug = typeof reqListUserSlugAppSlug.infer;
@@ -160,7 +160,7 @@ export function isReqListUserSlugAppSlug(obj: unknown): obj is ReqListUserSlugAp
 
 export const resListUserSlugAppSlugItem = type({
   userId: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlugs: type("string").array(),
 });
 export type ResListUserSlugAppSlugItem = typeof resListUserSlugAppSlugItem.infer;
@@ -186,7 +186,7 @@ export function isReqListRecentVibes(obj: unknown): obj is ReqListRecentVibes {
 }
 
 export const resRecentVibesItem = type({
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   updated: "string",
   "title?": "string",
@@ -207,11 +207,11 @@ export function isResListRecentVibes(obj: unknown): obj is ResListRecentVibes {
   return !(resListRecentVibes(obj) instanceof type.errors);
 }
 
-// Toggle pin state on a (userSlug, appSlug) row owned by the caller.
+// Toggle pin state on a (ownerHandle, appSlug) row owned by the caller.
 export const reqPinRecentVibe = type({
   type: "'vibes.diy.req-pin-recent-vibe'",
   auth: dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   pin: "boolean",
 });
@@ -222,7 +222,7 @@ export function isReqPinRecentVibe(obj: unknown): obj is ReqPinRecentVibe {
 
 export const resPinRecentVibe = type({
   type: "'vibes.diy.res-pin-recent-vibe'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   // Empty string when unpinned, ISO timestamp when pinned.
   pinnedAt: "string",
@@ -269,7 +269,7 @@ export function isReqForkApp(obj: unknown): obj is ReqForkApp {
 
 export const resForkApp = type({
   type: "'vibes.diy.res-fork-app'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   chatId: "string",
   // Immutable anchor pointing at the source content. Stored server-side in
@@ -290,7 +290,7 @@ export const ResSetModeFs = type({
   type: "'vibes.diy.res-set-mode-fs'",
   fsId: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   mode: FSMode,
 });
 
@@ -304,7 +304,7 @@ export const ReqSetModeFs = type({
   auth: dashAuthType,
   fsId: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   mode: FSMode,
 });
 
@@ -314,72 +314,72 @@ export function isReqSetModeFs(obj: unknown): obj is ReqSetModeFs {
   return !(ReqSetModeFs(obj) instanceof type.errors);
 }
 
-// UserSlugBinding CRUD
+// HandleBinding CRUD
 
-export const ReqListUserSlugBindings = type({
+export const ReqListHandleBindings = type({
   type: "'vibes.diy.req-list-user-slug-bindings'",
   auth: dashAuthType,
 });
-export type ReqListUserSlugBindings = typeof ReqListUserSlugBindings.infer;
-export function isReqListUserSlugBindings(obj: unknown): obj is ReqListUserSlugBindings {
-  return !(ReqListUserSlugBindings(obj) instanceof type.errors);
+export type ReqListHandleBindings = typeof ReqListHandleBindings.infer;
+export function isReqListHandleBindings(obj: unknown): obj is ReqListHandleBindings {
+  return !(ReqListHandleBindings(obj) instanceof type.errors);
 }
 
-export const UserSlugBindingItem = type({
-  userSlug: "string",
+export const HandleBindingItem = type({
+  ownerHandle: "string",
   tenant: "string",
   created: "string",
   appSlugCount: "number",
 });
-export type UserSlugBindingItem = typeof UserSlugBindingItem.infer;
+export type HandleBindingItem = typeof HandleBindingItem.infer;
 
-export const ResListUserSlugBindings = type({
+export const ResListHandleBindings = type({
   type: "'vibes.diy.res-list-user-slug-bindings'",
-  items: UserSlugBindingItem.array(),
+  items: HandleBindingItem.array(),
 });
-export type ResListUserSlugBindings = typeof ResListUserSlugBindings.infer;
-export function isResListUserSlugBindings(obj: unknown): obj is ResListUserSlugBindings {
-  return !(ResListUserSlugBindings(obj) instanceof type.errors);
+export type ResListHandleBindings = typeof ResListHandleBindings.infer;
+export function isResListHandleBindings(obj: unknown): obj is ResListHandleBindings {
+  return !(ResListHandleBindings(obj) instanceof type.errors);
 }
 
-export const ReqCreateUserSlugBinding = type({
+export const ReqCreateHandleBinding = type({
   type: "'vibes.diy.req-create-user-slug-binding'",
   auth: dashAuthType,
   // if omitted, a random slug is generated; if provided it is sanitized via toRFC2822_32ByteLength
-  "userSlug?": "string",
+  "ownerHandle?": "string",
 });
-export type ReqCreateUserSlugBinding = typeof ReqCreateUserSlugBinding.infer;
-export function isReqCreateUserSlugBinding(obj: unknown): obj is ReqCreateUserSlugBinding {
-  return !(ReqCreateUserSlugBinding(obj) instanceof type.errors);
+export type ReqCreateHandleBinding = typeof ReqCreateHandleBinding.infer;
+export function isReqCreateHandleBinding(obj: unknown): obj is ReqCreateHandleBinding {
+  return !(ReqCreateHandleBinding(obj) instanceof type.errors);
 }
 
-export const ResCreateUserSlugBinding = type({
+export const ResCreateHandleBinding = type({
   type: "'vibes.diy.res-create-user-slug-binding'",
-  userSlug: "string",
+  ownerHandle: "string",
   tenant: "string",
   created: "string",
 });
-export type ResCreateUserSlugBinding = typeof ResCreateUserSlugBinding.infer;
-export function isResCreateUserSlugBinding(obj: unknown): obj is ResCreateUserSlugBinding {
-  return !(ResCreateUserSlugBinding(obj) instanceof type.errors);
+export type ResCreateHandleBinding = typeof ResCreateHandleBinding.infer;
+export function isResCreateHandleBinding(obj: unknown): obj is ResCreateHandleBinding {
+  return !(ResCreateHandleBinding(obj) instanceof type.errors);
 }
 
-export const ReqDeleteUserSlugBinding = type({
+export const ReqDeleteHandleBinding = type({
   type: "'vibes.diy.req-delete-user-slug-binding'",
   auth: dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
 });
-export type ReqDeleteUserSlugBinding = typeof ReqDeleteUserSlugBinding.infer;
-export function isReqDeleteUserSlugBinding(obj: unknown): obj is ReqDeleteUserSlugBinding {
-  return !(ReqDeleteUserSlugBinding(obj) instanceof type.errors);
+export type ReqDeleteHandleBinding = typeof ReqDeleteHandleBinding.infer;
+export function isReqDeleteHandleBinding(obj: unknown): obj is ReqDeleteHandleBinding {
+  return !(ReqDeleteHandleBinding(obj) instanceof type.errors);
 }
 
-export const ResDeleteUserSlugBinding = type({
+export const ResDeleteHandleBinding = type({
   type: "'vibes.diy.res-delete-user-slug-binding'",
-  userSlug: "string",
+  ownerHandle: "string",
   deleted: "boolean",
 });
-export type ResDeleteUserSlugBinding = typeof ResDeleteUserSlugBinding.infer;
-export function isResDeleteUserSlugBinding(obj: unknown): obj is ResDeleteUserSlugBinding {
-  return !(ResDeleteUserSlugBinding(obj) instanceof type.errors);
+export type ResDeleteHandleBinding = typeof ResDeleteHandleBinding.infer;
+export function isResDeleteHandleBinding(obj: unknown): obj is ResDeleteHandleBinding {
+  return !(ResDeleteHandleBinding(obj) instanceof type.errors);
 }

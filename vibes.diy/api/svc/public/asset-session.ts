@@ -18,7 +18,7 @@ import { verifyAuth } from "../check-auth.js";
 // mints a short-lived host-only HttpOnly cookie that browsers will then
 // auto-attach to every subresource fetch (`<img src=...>`, `<video>`, etc.)
 // to the asset host. The cookie carries verified userId only — per-db ACL
-// still gates `(userSlug, appSlug, dbName)` at /_files/<...> read time.
+// still gates `(ownerHandle, appSlug, dbName)` at /_files/<...> read time.
 //
 // The endpoints sit on the asset host (`assets.<env>.vibesdiy.net`), not
 // on vibes.diy or the per-vibe subdomain. SameSite=None + Partitioned is

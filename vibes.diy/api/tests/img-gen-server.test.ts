@@ -30,7 +30,7 @@ describe("img-gen server contract", () => {
     const rStored = await storeAndAuditAsset(ctx.vibesCtx, {
       bytes: pngBytes,
       userId: "img-gen-test-user",
-      userSlug: "img-gen-test-slug",
+      ownerHandle: "img-gen-test-slug",
       appSlug: "img-gen-test-app",
       mimeType: "image/png",
     });
@@ -44,7 +44,7 @@ describe("img-gen server contract", () => {
     const t = ctx.vibesCtx.sql.tables.assetUploads;
     const rows = await ctx.vibesCtx.sql.db.select().from(t).where(eq(t.uploadId, stored.uploadId));
     expect(rows).toHaveLength(1);
-    expect(rows[0].userSlug).toBe("img-gen-test-slug");
+    expect(rows[0].ownerHandle).toBe("img-gen-test-slug");
     expect(rows[0].appSlug).toBe("img-gen-test-app");
     expect(rows[0].userId).toBe("img-gen-test-user");
     expect(rows[0].mimeType).toBe("image/png");

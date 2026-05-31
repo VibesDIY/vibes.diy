@@ -12,11 +12,11 @@ export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unk
   readonly ws: WebSocket;
   readonly ende: JSONEnDecoder;
   readonly chatIds = new Map<string, ChatIdCtx>();
-  // Firefly: per-(userSlug/appSlug/dbName) subscription keys this connection
+  // Firefly: per-(ownerHandle/appSlug/dbName) subscription keys this connection
   // is subscribed to for document change notifications. dbName-scoped so a
   // tighter `read` ACL on one db doesn't leak via change events on another.
   readonly subscribedDocKeys = new Set<string>();
-  // Per-(userSlug/appSlug) subscription keys this connection is subscribed to
+  // Per-(ownerHandle/appSlug) subscription keys this connection is subscribed to
   // for request-grant notifications (owner pending approvals).
   readonly subscribedRequestGrantKeys = new Set<string>();
   // The userId this connection is subscribed to for user-level notifications
@@ -25,7 +25,7 @@ export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unk
   subscribedUserKey: string | undefined = undefined;
   // Unique per-WebSocket id used to skip the originating connection when
   // fanning out doc-changed notifications. Many connections share a shard
-  // (warm-DO sharing per (userSlug, appSlug)), so shard-level exclusion
+  // (warm-DO sharing per (ownerHandle, appSlug)), so shard-level exclusion
   // would mute sibling tabs/browsers — exclusion must be per-connection.
   readonly connId: string = crypto.randomUUID();
   constructor(ws: WebSocket, ende?: JSONEnDecoder) {

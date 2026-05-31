@@ -20,7 +20,7 @@ import { resolveUserSlug } from "../resolve-user-slug.js";
 export const ReqPull = type({
   type: "'vibes-diy.cli.pull'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dir: "string",
   apiUrl: "string",
 });
@@ -33,7 +33,7 @@ export function isReqPull(obj: unknown): obj is ReqPull {
 export const ResPull = type({
   type: "'vibes-diy.cli.res-pull'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   directory: "string",
   files: type({ name: "string", size: "number" }).array(),
 });
@@ -77,27 +77,27 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
-    const userSlug = await resolveUserSlug(api, args.userSlug === "" ? undefined : args.userSlug);
-    if (userSlug === undefined) {
+    const ownerHandle = await resolveUserSlug(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
+    if (ownerHandle === undefined) {
       return Result.Err("Could not resolve user slug. Run 'vibes-diy login' first.");
     }
 
-    const rApp = await api.getAppByFsId({ appSlug: args.appSlug, userSlug });
+    const rApp = await api.getAppByFsId({ appSlug: args.appSlug, ownerHandle });
     if (rApp.isErr()) {
       return Result.Err(rApp.Err().message ?? String(rApp.Err()));
     }
     const app = rApp.Ok();
 
     if (app.grant === "not-found") {
-      return Result.Err(`App not found: ${userSlug}/${args.appSlug}`);
+      return Result.Err(`App not found: ${ownerHandle}/${args.appSlug}`);
     }
     if (app.grant === "not-grant") {
-      return Result.Err(`Access denied: ${userSlug}/${args.appSlug}`);
+      return Result.Err(`Access denied: ${ownerHandle}/${args.appSlug}`);
     }
 
     const sourceFiles = app.fileSystem.filter(isSourceFile);
     if (sourceFiles.length === 0) {
-      return Result.Err(`No source files found for ${userSlug}/${args.appSlug}`);
+      return Result.Err(`No source files found for ${ownerHandle}/${args.appSlug}`);
     }
 
     const dir = args.dir === "" ? resolve(process.cwd(), args.appSlug) : resolve(args.dir);
@@ -111,7 +111,7 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
 
     for (const item of sourceFiles) {
       const fileName = item.fileName.startsWith("/") ? item.fileName.slice(1) : item.fileName;
-      const fileUrl = `https://${args.appSlug}--${userSlug}.${hostnameBase}/${fileName}?source=true`;
+      const fileUrl = `https://${args.appSlug}--${ownerHandle}.${hostnameBase}/${fileName}?source=true`;
       const rFetch = await exception2Result(() => fetch(fileUrl));
       if (rFetch.isErr()) {
         return Result.Err(`Failed to fetch ${fileName}: ${rFetch.Err().message}`);
@@ -133,7 +133,7 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
     return sendMsg(ctx, {
       type: "vibes-diy.cli.res-pull",
       appSlug: args.appSlug,
-      userSlug,
+      ownerHandle,
       directory: dir,
       files: written,
     } satisfies ResPull);
@@ -151,7 +151,7 @@ export function pullCmd(ctx: CliCtx) {
         description: "Slug of the app to pull",
         type: string,
       }),
-      userSlug: option({
+      ownerHandle: option({
         long: "user-slug",
         description: "User slug (uses default if omitted)",
         type: string,
@@ -170,7 +170,7 @@ export function pullCmd(ctx: CliCtx) {
       return {
         type: "vibes-diy.cli.pull",
         appSlug: args.appSlug,
-        userSlug: args.userSlug,
+        ownerHandle: args.ownerHandle,
         dir: args.dir,
         apiUrl: args.apiUrl,
       } satisfies ReqPull;

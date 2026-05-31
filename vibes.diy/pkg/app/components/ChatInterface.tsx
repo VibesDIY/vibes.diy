@@ -3,7 +3,7 @@ import { useParams } from "react-router";
 // import type { ChatInterfaceProps } from "@vibes.diy/prompts";
 import MessageList from "./MessageList.js";
 import WelcomeScreen from "./WelcomeScreen.js";
-import { PromptState } from "../routes/chat/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { PromptError } from "@vibes.diy/api-types";
 
 function ChatInterface({
@@ -17,7 +17,7 @@ function ChatInterface({
   // navigateToView,
 }: {
   promptState: PromptState;
-  onClick: (a: { fsId: string; appSlug: string; userSlug: string }) => void;
+  onClick: (a: { fsId: string; appSlug: string; ownerHandle: string }) => void;
   onRetry?: (msg: PromptError) => void;
   onSelectOption?: (option: string) => void;
 }) {

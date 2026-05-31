@@ -208,7 +208,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
                 await renderDBExplorer({
                   base: dbExplorerBase,
                   vctx,
-                  vibeApp: { appSlug: ctx.validated.appSlug, userSlug: ctx.validated.userSlug, fsId: ctx.validated.fsId },
+                  vibeApp: { appSlug: ctx.validated.appSlug, ownerHandle: ctx.validated.ownerHandle, fsId: ctx.validated.fsId },
                   pkgRepos: {
                     private: npmUrl,
                   },
@@ -228,7 +228,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         .from(vctx.sql.tables.apps)
         .where(
           and(
-            eq(vctx.sql.tables.apps.userSlug, ctx.validated.userSlug),
+            eq(vctx.sql.tables.apps.ownerHandle, ctx.validated.ownerHandle),
             eq(vctx.sql.tables.apps.appSlug, ctx.validated.appSlug),
             eq(vctx.sql.tables.apps.fsId, ctx.validated.fsId)
           )
@@ -241,7 +241,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         .from(vctx.sql.tables.apps)
         .where(
           and(
-            eq(vctx.sql.tables.apps.userSlug, ctx.validated.userSlug),
+            eq(vctx.sql.tables.apps.ownerHandle, ctx.validated.ownerHandle),
             eq(vctx.sql.tables.apps.appSlug, ctx.validated.appSlug),
             eq(vctx.sql.tables.apps.mode, "production")
           )
@@ -264,7 +264,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         const rPending = await renderPendingVibe({
           ctx,
           appSlug: ctx.validated.appSlug,
-          userSlug: ctx.validated.userSlug,
+          ownerHandle: ctx.validated.ownerHandle,
           pkgRepos: { private: npmUrl },
         });
         if (rPending.isErr()) return rPending;

@@ -40,8 +40,8 @@ export async function loader(loaderCtx: {
   request: Request;
   context: VibeLoaderCtx;
 }): Promise<VibeLoaderData> {
-  const { userSlug, appSlug, fsId } = loaderCtx.params;
-  if (!userSlug || !appSlug) {
+  const { ownerHandle, appSlug, fsId } = loaderCtx.params;
+  if (!ownerHandle || !appSlug) {
     return { iframeUrl: undefined, vibeOgTitle: undefined, isWorldReadable: false };
   }
   const reqUrl = URI.from(loaderCtx.request.url);
@@ -51,7 +51,7 @@ export async function loader(loaderCtx: {
   const baseUrl = calcEntryPointUrl({
     hostnameBase: params.vibes.svc.hostnameBase,
     protocol,
-    bindings: { appSlug, userSlug, ...(fsId ? { fsId } : {}) },
+    bindings: { appSlug, ownerHandle, ...(fsId ? { fsId } : {}) },
     port,
   });
   const reqParams = Object.fromEntries(reqUrl.getParams);
@@ -75,10 +75,10 @@ export function meta({
   params: Record<string, string>;
   matches: { data: unknown }[];
 }) {
-  const { userSlug, appSlug } = params;
+  const { ownerHandle, appSlug } = params;
   const rootData = matches[0]?.data as { env?: { VIBES_SVC_HOSTNAME_BASE?: string } } | undefined;
   const hostnameBase = rootData?.env?.VIBES_SVC_HOSTNAME_BASE?.replace(/^\./, "") ?? "vibes.diy";
-  const imageUrl = `https://${appSlug}--${userSlug}.${hostnameBase}/screenshot.jpg`;
+  const imageUrl = `https://${appSlug}--${ownerHandle}.${hostnameBase}/screenshot.jpg`;
   const title = data?.vibeOgTitle ?? appSlug ?? "Vibe";
 
   return [
@@ -96,9 +96,9 @@ export function meta({
 }
 
 export default function VibeIframeWrapper() {
-  const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
+  const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
   const navigate = useNavigate();
-  useDocumentTitle(`${userSlug} - ${appSlug} - vibes.diy`);
+  useDocumentTitle(`${ownerHandle} - ${appSlug} - vibes.diy`);
   // const [searchParam] = useSearchParams();
   const vctx = useVibesDiy();
   // Iframe URL: prefer the SSR-computed value from the loader so the
@@ -127,7 +127,7 @@ export default function VibeIframeWrapper() {
   const ssrIframeUrl = loaderData?.iframeUrl;
   useEffect(() => {
     if (ssrIframeUrl) return;
-    if (!appSlug || !userSlug) {
+    if (!appSlug || !ownerHandle) {
       setIframeUrl(undefined);
       return;
     }
@@ -136,14 +136,14 @@ export default function VibeIframeWrapper() {
     const baseUrl = calcEntryPointUrl({
       hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
       protocol: myUrl.protocol === "https:" ? "https" : "http",
-      bindings: { appSlug, userSlug, ...(fsId ? { fsId } : {}) },
+      bindings: { appSlug, ownerHandle, ...(fsId ? { fsId } : {}) },
       port,
     });
     const myParams = Object.fromEntries(myUrl.getParams);
     setIframeUrl(
       BuildURI.from(baseUrl).searchParams(myParams, "merge").setParam("npmUrl", vctx.webVars.pkgRepos.workspace).toString()
     );
-  }, [ssrIframeUrl, appSlug, userSlug, fsId, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
+  }, [ssrIframeUrl, appSlug, ownerHandle, fsId, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
   const [notFound, setNotFound] = useState(false);
   const [reqLogin, setReqLogin] = useState(false);
   const [cardGrant, setCardGrant] = useState<ResGetAppByFsId["grant"] | undefined>(undefined);
@@ -176,46 +176,46 @@ export default function VibeIframeWrapper() {
   const cachedResRef = useRef<ResGetAppByFsId | undefined>(undefined);
 
   useEffect(() => {
-    if (!authSignedIn || !userSlug) {
+    if (!authSignedIn || !ownerHandle) {
       setIsOwner(false);
       setMyUserSlug(undefined);
       return;
     }
-    vctx.vibeDiyApi.listUserSlugBindings({}).then((res) => {
+    vctx.vibeDiyApi.listHandleBindings({}).then((res) => {
       if (res.isErr()) return;
       const items = res.Ok().items;
-      setIsOwner(items.some((item) => item.userSlug === userSlug));
-      if (items.length > 0) setMyUserSlug(items[0].userSlug);
+      setIsOwner(items.some((item) => item.ownerHandle === ownerHandle));
+      if (items.length > 0) setMyUserSlug(items[0].ownerHandle);
     });
-  }, [authSignedIn, userSlug, vctx.vibeDiyApi]);
+  }, [authSignedIn, ownerHandle, vctx.vibeDiyApi]);
 
   useEffect(() => {
-    if (!isOwner || !userSlug || !appSlug) {
+    if (!isOwner || !ownerHandle || !appSlug) {
       setPendingCount(0);
       return;
     }
     let cancelled = false;
-    vctx.vibeDiyApi.listRequestGrants({ appSlug, userSlug, pager: { limit: 100 } }).then((res) => {
+    vctx.vibeDiyApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
       if (cancelled || res.isErr()) return;
       setPendingCount(res.Ok().items.filter((r) => r.state === "pending").length);
     });
     return () => {
       cancelled = true;
     };
-  }, [isOwner, userSlug, appSlug, vctx.vibeDiyApi, pendingBump]);
+  }, [isOwner, ownerHandle, appSlug, vctx.vibeDiyApi, pendingBump]);
 
   useEffect(() => {
-    if (!isOwner || !userSlug || !appSlug) {
+    if (!isOwner || !ownerHandle || !appSlug) {
       return;
     }
-    void vctx.vibeDiyApi.subscribeRequestGrants({ appSlug, userSlug });
+    void vctx.vibeDiyApi.subscribeRequestGrants({ appSlug, ownerHandle });
     const unsubscribe = vctx.vibeDiyApi.onRequestGrant((evt) => {
-      if (evt.grant.userSlug === userSlug && evt.grant.appSlug === appSlug) {
+      if (evt.grant.ownerHandle === ownerHandle && evt.grant.appSlug === appSlug) {
         setPendingBump((n) => n + 1);
       }
     });
     return unsubscribe;
-  }, [isOwner, userSlug, appSlug, vctx.vibeDiyApi]);
+  }, [isOwner, ownerHandle, appSlug, vctx.vibeDiyApi]);
 
   useEffect(() => {
     if (!vctx.vibeDiyApi || !authSignedIn) {
@@ -255,11 +255,11 @@ export default function VibeIframeWrapper() {
   // hydration after we already fired with the cached JWT), re-derive UI from
   // the cached response instead of hitting the API again.
   useEffect(() => {
-    if (!(appSlug && userSlug)) {
+    if (!(appSlug && ownerHandle)) {
       return;
     }
     const token = searchParam.get("token") ?? undefined;
-    const paramsKey = `${userSlug}|${appSlug}|${fsId ?? ""}|${token ?? ""}|${retryCount}`;
+    const paramsKey = `${ownerHandle}|${appSlug}|${fsId ?? ""}|${token ?? ""}|${retryCount}`;
 
     const applyResToUI = (res: ResGetAppByFsId): void => {
       const resolvedOwnerDisplayName = res.ownerDisplayName?.trim();
@@ -327,7 +327,7 @@ export default function VibeIframeWrapper() {
     inGetAppByFsIdRef.current = true;
     lastFiredKeyRef.current = paramsKey;
     toast.loading("Verifying access…", { id: "vibe-access" });
-    vctx.vibeDiyApi.getAppByFsId({ fsId, appSlug, userSlug, token }).then((rRes) => {
+    vctx.vibeDiyApi.getAppByFsId({ fsId, appSlug, ownerHandle, token }).then((rRes) => {
       inGetAppByFsIdRef.current = false;
       if (rRes.isErr()) {
         toast.error(`getAppByFsId failed with: ${rRes.Err().message}`, { id: "vibe-access" });
@@ -337,7 +337,7 @@ export default function VibeIframeWrapper() {
       cachedResRef.current = res;
       applyResToUI(res);
     });
-  }, [userSlug, appSlug, fsId, searchParam, retryCount, vctx.vibeDiyApi]);
+  }, [ownerHandle, appSlug, fsId, searchParam, retryCount, vctx.vibeDiyApi]);
 
   useEffect(() => {
     if (authSignedIn !== true) return;
@@ -357,7 +357,7 @@ export default function VibeIframeWrapper() {
   const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
 
   const shareModal = useShareModal({
-    userSlug: userSlug ?? "",
+    ownerHandle: ownerHandle ?? "",
     appSlug: appSlug ?? "",
     fsId,
     vibeDiyApi: vctx.vibeDiyApi,
@@ -371,7 +371,7 @@ export default function VibeIframeWrapper() {
     prevShareOpenRef.current = shareModal.isOpen;
   }, [shareModal.isOpen]);
 
-  const vibeSlug = `${userSlug}/${appSlug}`;
+  const vibeSlug = `${ownerHandle}/${appSlug}`;
   const cloneUrl = `/remix/${vibeSlug}?skipChat=true`;
 
   const showLoginOverlay = !authSignedIn && isLoaded && reqLogin;
@@ -389,8 +389,8 @@ export default function VibeIframeWrapper() {
   }
 
   async function fireJoin() {
-    if (appSlug === undefined || userSlug === undefined) return;
-    const r = await vctx.vibeDiyApi.requestAccess({ appSlug, userSlug });
+    if (appSlug === undefined || ownerHandle === undefined) return;
+    const r = await vctx.vibeDiyApi.requestAccess({ appSlug, ownerHandle });
     if (r.isErr()) {
       toast.error(`Request failed: ${r.Err().message}`);
       return;

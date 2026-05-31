@@ -17,7 +17,7 @@ const PAGE_SIZE = 30;
 
 export default function VibesMemberships(): ReactElement {
   const navigate = useNavigate();
-  const { userSlug: paramUserSlug, appSlug: paramAppSlug } = useParams<{ userSlug?: string; appSlug?: string }>();
+  const { ownerHandle: paramUserSlug, appSlug: paramAppSlug } = useParams<{ ownerHandle?: string; appSlug?: string }>();
   const [searchQuery, setSearchQuery] = useState("");
 
   const { vibeDiyApi } = useVibesDiy();
@@ -25,7 +25,14 @@ export default function VibesMemberships(): ReactElement {
 
   // Map ResMembershipItem → ResRecentVibesItem for VibesGrid (activityAt drives updated display).
   const items: ResRecentVibesItem[] = useMemo(
-    () => rawItems.map((m) => ({ userSlug: m.userSlug, appSlug: m.appSlug, updated: m.activityAt, title: m.title, icon: m.icon })),
+    () =>
+      rawItems.map((m) => ({
+        ownerHandle: m.ownerHandle,
+        appSlug: m.appSlug,
+        updated: m.activityAt,
+        title: m.title,
+        icon: m.icon,
+      })),
     [rawItems]
   );
 
@@ -34,10 +41,10 @@ export default function VibesMemberships(): ReactElement {
 
   useEffect(() => {
     for (const item of items) {
-      const key = `${item.userSlug}/${item.appSlug}`;
+      const key = `${item.ownerHandle}/${item.appSlug}`;
       if (requestedKeysRef.current.has(key)) continue;
       requestedKeysRef.current.add(key);
-      vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug: item.appSlug }).then((res) => {
+      vibeDiyApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
         setAppHeadInfo((prev) => {
           if (res.isErr()) return new Map(prev).set(key, {});
           const app = res.Ok();
@@ -53,17 +60,17 @@ export default function VibesMemberships(): ReactElement {
     return items.filter((item) => {
       const title = (item.title ?? "").toLowerCase();
       const slug = item.appSlug.toLowerCase();
-      const user = item.userSlug.toLowerCase();
+      const user = item.ownerHandle.toLowerCase();
       return title.includes(q) || slug.includes(q) || user.includes(q);
     });
   }, [items, searchQuery]);
 
   const isPanelOpen = !!(paramUserSlug && paramAppSlug);
   const selectedKey = isPanelOpen ? `${paramUserSlug}/${paramAppSlug}` : "";
-  const selectedItem = isPanelOpen ? items.find((v) => v.userSlug === paramUserSlug && v.appSlug === paramAppSlug) : undefined;
+  const selectedItem = isPanelOpen ? items.find((v) => v.ownerHandle === paramUserSlug && v.appSlug === paramAppSlug) : undefined;
 
   const openTile = (item: ResRecentVibesItem) =>
-    navigate(`/memberships/${item.userSlug}/${item.appSlug}`, { replace: false, preventScrollReset: true });
+    navigate(`/memberships/${item.ownerHandle}/${item.appSlug}`, { replace: false, preventScrollReset: true });
   const closePanel = () => navigate("/memberships", { replace: false, preventScrollReset: true });
 
   return (
@@ -174,13 +181,13 @@ function MembershipDetailPanel({ item, onClose }: MembershipDetailPanelProps) {
               <div>
                 <h3 className="text-light-primary dark:text-dark-primary text-xl font-bold">{label}</h3>
                 <p className="text-light-primary/60 dark:text-dark-primary/60 text-xs uppercase tracking-widest mt-1">
-                  @{item.userSlug}
+                  @{item.ownerHandle}
                 </p>
               </div>
 
               <div className="flex flex-col gap-3 mt-auto pt-4">
                 <Link
-                  to={`/vibe/${item.userSlug}/${item.appSlug}`}
+                  to={`/vibe/${item.ownerHandle}/${item.appSlug}`}
                   onClick={onClose}
                   className="flex items-center justify-center px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold uppercase tracking-widest border-2 border-[var(--vibes-near-black)] rounded-md shadow-[4px_4px_0_0_var(--vibes-near-black)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--vibes-near-black)] transition-all duration-150"
                 >

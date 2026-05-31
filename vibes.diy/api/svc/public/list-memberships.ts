@@ -36,7 +36,7 @@ const MIN_LIMIT = 1;
 
 const cursorShape = type({
   activityAt: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
 });
 type DecodedCursor = typeof cursorShape.infer;
@@ -103,7 +103,7 @@ export const listMembershipsEvento: EventoHandler<
       const inviteRows = await vctx.sql.db
         .select({
           ownerUserId: t.inviteGrants.userId,
-          ownerUserSlug: t.inviteGrants.userSlug,
+          ownerUserSlug: t.inviteGrants.ownerHandle,
           appSlug: t.inviteGrants.appSlug,
           role: t.inviteGrants.role,
           grantUpdated: t.inviteGrants.updated,
@@ -115,7 +115,7 @@ export const listMembershipsEvento: EventoHandler<
       const requestRows = await vctx.sql.db
         .select({
           ownerUserId: t.requestGrants.userId,
-          ownerUserSlug: t.requestGrants.userSlug,
+          ownerUserSlug: t.requestGrants.ownerHandle,
           appSlug: t.requestGrants.appSlug,
           role: t.requestGrants.role,
           grantUpdated: t.requestGrants.updated,
@@ -150,23 +150,25 @@ export const listMembershipsEvento: EventoHandler<
       const merged = [...mergedMap.values()];
 
       // Max AppDocuments write timestamp per (ownerUserSlug, appSlug) by this user.
-      // AppDocuments.userSlug = owner's slug; .userId = writer's Clerk userId.
+      // AppDocuments.ownerHandle = owner's slug; .userId = writer's Clerk userId.
       const lastWriteMap = new Map<string, string>();
       if (merged.length > 0) {
-        const appKeys = merged.map((m) => ({ userSlug: m.ownerUserSlug, appSlug: m.appSlug }));
-        const conditions = appKeys.map((k) => and(eq(t.appDocuments.userSlug, k.userSlug), eq(t.appDocuments.appSlug, k.appSlug)));
+        const appKeys = merged.map((m) => ({ ownerHandle: m.ownerUserSlug, appSlug: m.appSlug }));
+        const conditions = appKeys.map((k) =>
+          and(eq(t.appDocuments.ownerHandle, k.ownerHandle), eq(t.appDocuments.appSlug, k.appSlug))
+        );
         const [firstCondition, ...otherConditions] = conditions;
         if (firstCondition) {
           const orCondition = otherConditions.length === 0 ? firstCondition : or(firstCondition, ...otherConditions);
           const docRows = await vctx.sql.db
             .select({
-              ownerUserSlug: t.appDocuments.userSlug,
+              ownerUserSlug: t.appDocuments.ownerHandle,
               appSlug: t.appDocuments.appSlug,
               lastWrite: sql<string>`MAX(${t.appDocuments.created})`,
             })
             .from(t.appDocuments)
             .where(and(eq(t.appDocuments.userId, myUserId), orCondition))
-            .groupBy(t.appDocuments.userSlug, t.appDocuments.appSlug);
+            .groupBy(t.appDocuments.ownerHandle, t.appDocuments.appSlug);
           for (const row of docRows) {
             if (row.lastWrite) lastWriteMap.set(`${row.ownerUserSlug}/${row.appSlug}`, row.lastWrite);
           }
@@ -204,8 +206,8 @@ export const listMembershipsEvento: EventoHandler<
         rows = sortable.filter(
           (r) =>
             r.activityAt < c.activityAt ||
-            (r.activityAt === c.activityAt && r.ownerUserSlug < c.userSlug) ||
-            (r.activityAt === c.activityAt && r.ownerUserSlug === c.userSlug && r.appSlug < c.appSlug)
+            (r.activityAt === c.activityAt && r.ownerUserSlug < c.ownerHandle) ||
+            (r.activityAt === c.activityAt && r.ownerUserSlug === c.ownerHandle && r.appSlug < c.appSlug)
         );
       }
 
@@ -218,7 +220,7 @@ export const listMembershipsEvento: EventoHandler<
         const settingsConds = page.map((p) =>
           and(
             eq(t.appSettings.userId, p.ownerUserId),
-            eq(t.appSettings.userSlug, p.ownerUserSlug),
+            eq(t.appSettings.ownerHandle, p.ownerUserSlug),
             eq(t.appSettings.appSlug, p.appSlug)
           )
         );
@@ -226,12 +228,12 @@ export const listMembershipsEvento: EventoHandler<
         if (firstSettingsCond) {
           const settingsOrCond = otherSettingsConds.length === 0 ? firstSettingsCond : or(firstSettingsCond, ...otherSettingsConds);
           const settingsRows = await vctx.sql.db
-            .select({ userSlug: t.appSettings.userSlug, appSlug: t.appSettings.appSlug, settings: t.appSettings.settings })
+            .select({ ownerHandle: t.appSettings.ownerHandle, appSlug: t.appSettings.appSlug, settings: t.appSettings.settings })
             .from(t.appSettings)
             .where(settingsOrCond);
           for (const s of settingsRows) {
             const entries = (s.settings as ActiveEntry[] | null) ?? [];
-            settingsMap.set(`${s.userSlug}/${s.appSlug}`, entries);
+            settingsMap.set(`${s.ownerHandle}/${s.appSlug}`, entries);
           }
         }
       }
@@ -243,7 +245,7 @@ export const listMembershipsEvento: EventoHandler<
         const head = iconEntry?.versions.find((v) => v.cid === iconEntry.currentCid);
         const icon = head && head.cid.length > 0 ? { cid: head.cid, mime: head.mime } : undefined;
         const item: ResMembershipItem = {
-          userSlug: p.ownerUserSlug,
+          ownerHandle: p.ownerUserSlug,
           appSlug: p.appSlug,
           activityAt: p.activityAt,
           role: p.role,
@@ -255,7 +257,7 @@ export const listMembershipsEvento: EventoHandler<
 
       const lastRow = hasMore ? page[page.length - 1] : undefined;
       const nextCursor = lastRow
-        ? encodeCursor({ activityAt: lastRow.activityAt, userSlug: lastRow.ownerUserSlug, appSlug: lastRow.appSlug })
+        ? encodeCursor({ activityAt: lastRow.activityAt, ownerHandle: lastRow.ownerUserSlug, appSlug: lastRow.appSlug })
         : undefined;
 
       await ctx.send.send(ctx, {

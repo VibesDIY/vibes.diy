@@ -9,7 +9,7 @@ function fakeVibesDiyApi(overrides: Partial<Record<string, unknown>> = {}): Vibe
       Result.Ok({
         type: "vibes.diy.res-ensure-user-settings",
         userId: "user-1",
-        settings: [{ type: "defaultUserSlug", userSlug: "alice" }],
+        settings: [{ type: "defaultHandle", ownerHandle: "alice" }],
         updated: "now",
         created: "now",
       })
@@ -25,7 +25,7 @@ describe("FireflyApiAdapter", () => {
     expect(adapter.svc.vibeApp.appSlug).toBe("my-app");
   });
 
-  it("resolves userHandle from ensureUserSettings.defaultUserSlug on first request", async () => {
+  it("resolves userHandle from ensureUserSettings.defaultHandle on first request", async () => {
     const api = fakeVibesDiyApi();
     const adapter = new FireflyApiAdapter(api, "my-app");
     const slug = await adapter.resolveUserHandle();
@@ -43,7 +43,7 @@ describe("FireflyApiAdapter", () => {
     expect(api.ensureUserSettings).not.toHaveBeenCalled();
   });
 
-  it("throws when ensureUserSettings has no defaultUserSlug entry", async () => {
+  it("throws when ensureUserSettings has no defaultHandle entry", async () => {
     const api = fakeVibesDiyApi({
       ensureUserSettings: vi.fn(async () =>
         Result.Ok({
@@ -56,10 +56,10 @@ describe("FireflyApiAdapter", () => {
       ),
     });
     const adapter = new FireflyApiAdapter(api, "my-app");
-    await expect(adapter.resolveUserHandle()).rejects.toThrow(/defaultUserSlug/);
+    await expect(adapter.resolveUserHandle()).rejects.toThrow(/defaultHandle/);
   });
 
-  it("putDoc translates positional call to request object with appSlug+userSlug+dbName", async () => {
+  it("putDoc translates positional call to request object with appSlug+ownerHandle+dbName", async () => {
     const putDoc = vi.fn(async () => Result.Ok({ type: "vibes.diy.res-put-doc", status: "ok", id: "doc-1" }));
     const api = fakeVibesDiyApi({ putDoc });
     const adapter = new FireflyApiAdapter(api, "my-app");
@@ -67,7 +67,7 @@ describe("FireflyApiAdapter", () => {
     expect(res.isOk()).toBe(true);
     expect(putDoc).toHaveBeenCalledWith({
       appSlug: "my-app",
-      userSlug: "alice",
+      ownerHandle: "alice",
       dbName: "todos",
       doc: { text: "hello" },
       docId: "doc-1",
@@ -89,7 +89,7 @@ describe("FireflyApiAdapter", () => {
     await adapter.getDoc("doc-1", "todos");
     expect(getDoc).toHaveBeenCalledWith({
       appSlug: "my-app",
-      userSlug: "alice",
+      ownerHandle: "alice",
       dbName: "todos",
       docId: "doc-1",
     });
@@ -100,7 +100,7 @@ describe("FireflyApiAdapter", () => {
     const api = fakeVibesDiyApi({ queryDocs });
     const adapter = new FireflyApiAdapter(api, "my-app");
     await adapter.queryDocs("todos");
-    expect(queryDocs).toHaveBeenCalledWith({ appSlug: "my-app", userSlug: "alice", dbName: "todos" });
+    expect(queryDocs).toHaveBeenCalledWith({ appSlug: "my-app", ownerHandle: "alice", dbName: "todos" });
   });
 
   it("queryDocs passes filter hint to VibesDiyApi.queryDocs when provided", async () => {
@@ -111,7 +111,7 @@ describe("FireflyApiAdapter", () => {
     await adapter.queryDocs("todos", filter);
     expect(queryDocs).toHaveBeenCalledWith({
       appSlug: "my-app",
-      userSlug: "alice",
+      ownerHandle: "alice",
       dbName: "todos",
       filter,
     });
@@ -122,7 +122,7 @@ describe("FireflyApiAdapter", () => {
     const api = fakeVibesDiyApi({ queryDocs });
     const adapter = new FireflyApiAdapter(api, "my-app");
     await adapter.queryDocs("todos");
-    expect(queryDocs).toHaveBeenCalledWith({ appSlug: "my-app", userSlug: "alice", dbName: "todos" });
+    expect(queryDocs).toHaveBeenCalledWith({ appSlug: "my-app", ownerHandle: "alice", dbName: "todos" });
   });
 
   it("deleteDoc routes through VibesDiyApi.deleteDoc", async () => {
@@ -132,7 +132,7 @@ describe("FireflyApiAdapter", () => {
     await adapter.deleteDoc("doc-1", "todos");
     expect(deleteDoc).toHaveBeenCalledWith({
       appSlug: "my-app",
-      userSlug: "alice",
+      ownerHandle: "alice",
       dbName: "todos",
       docId: "doc-1",
     });
@@ -143,7 +143,7 @@ describe("FireflyApiAdapter", () => {
     const api = fakeVibesDiyApi({ subscribeDocs });
     const adapter = new FireflyApiAdapter(api, "my-app");
     await adapter.subscribeDocs("todos");
-    expect(subscribeDocs).toHaveBeenCalledWith({ appSlug: "my-app", userSlug: "alice", dbName: "todos" });
+    expect(subscribeDocs).toHaveBeenCalledWith({ appSlug: "my-app", ownerHandle: "alice", dbName: "todos" });
   });
 
   it("putAsset throws — file uploads not supported in v1", async () => {

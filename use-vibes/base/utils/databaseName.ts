@@ -5,5 +5,5 @@ import { VibeBindings } from "../index.js";
  * Format: vf-{titleId}-{installId}-{baseName}
  */
 export function constructVibesDatabaseName(bindings: VibeBindings, baseName: string): string {
-  return `vf-${bindings.appSlug}-${bindings.userSlug}-${baseName}`;
+  return `vf-${bindings.appSlug}-${bindings.ownerHandle}-${baseName}`;
 }

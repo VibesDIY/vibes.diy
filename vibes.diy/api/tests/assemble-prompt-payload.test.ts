@@ -17,8 +17,8 @@ describe("assemblePromptPayload", () => {
   });
 
   it("returns system + new user turn for an initial (empty) chat", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -37,8 +37,8 @@ describe("assemblePromptPayload", () => {
   });
 
   it("produces deterministic output for the same inputs (idempotent reads)", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 

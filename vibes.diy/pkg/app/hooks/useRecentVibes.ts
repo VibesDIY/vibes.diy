@@ -17,7 +17,7 @@ export interface UseRecentVibes {
 }
 
 export interface RecentVibesChange {
-  userSlug?: string;
+  ownerHandle?: string;
   appSlug?: string;
   title?: string;
 }

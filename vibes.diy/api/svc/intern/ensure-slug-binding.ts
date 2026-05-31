@@ -1,5 +1,5 @@
 import { exception2Result, Result } from "@adviser/cement";
-import { AppSlugBinding, AppUserSlugBinding, UserSlugBinding, VibesApiSQLCtx } from "../types.js";
+import { AppSlugBinding, AppHandleBinding, HandleBinding, VibesApiSQLCtx } from "../types.js";
 import { generate } from "random-words";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { sql } from "drizzle-orm/sql";
@@ -10,7 +10,7 @@ import {
   NeedOneAppSlugUserSlug,
   OptAppSlugOptUserSlug,
   OptAppSlugUserSlug,
-  isUserSettingDefaultUserSlug,
+  isUserSettingDefaultHandle,
   userSettingItem,
   parseArrayWarning,
 } from "@vibes.diy/api-types";
@@ -21,35 +21,31 @@ export type AppSlugBindingParam = Partial<NeedOneAppSlugUserSlug> & {
   claims: ClerkClaim;
 };
 
-export async function writeUserSlugBinding(
-  ctx: VibesApiSQLCtx,
-  userId: string,
-  userSlug: string
-): Promise<Result<UserSlugBinding>> {
-  return exception2Result(async (): Promise<Result<UserSlugBinding>> => {
+export async function writeHandleBinding(ctx: VibesApiSQLCtx, userId: string, ownerHandle: string): Promise<Result<HandleBinding>> {
+  return exception2Result(async (): Promise<Result<HandleBinding>> => {
     const existing = await ctx.sql.db
       .select()
-      .from(ctx.sql.tables.userSlugBinding)
-      .where(eq(ctx.sql.tables.userSlugBinding.userId, userId));
-    const owned = existing.find((e) => e.userSlug === userSlug);
+      .from(ctx.sql.tables.handleBinding)
+      .where(eq(ctx.sql.tables.handleBinding.userId, userId));
+    const owned = existing.find((e) => e.handle === ownerHandle);
     if (owned) {
       return Result.Ok({
         type: "vibes.diy-user-slug-binding",
         userId,
-        userSlug: owned.userSlug,
+        ownerHandle: owned.handle,
         tenant: owned.tenant,
       });
     }
     if (existing.length >= ctx.params.maxUserSlugPerUserId) {
-      return Result.Err("maximum userSlug bindings reached for this userId");
+      return Result.Err("maximum ownerHandle bindings reached for this userId");
     }
     const tenant = ctx.sthis.nextId(12).str;
     await ctx.sql.db
-      .insert(ctx.sql.tables.userSlugBinding)
+      .insert(ctx.sql.tables.handleBinding)
       .values({
         userId,
         tenant,
-        userSlug,
+        handle: ownerHandle,
         created: new Date().toISOString(),
       })
       .onConflictDoNothing();
@@ -57,23 +53,23 @@ export async function writeUserSlugBinding(
     // If another user won the race, the insert was a no-op and we reject.
     const owner = await ctx.sql.db
       .select()
-      .from(ctx.sql.tables.userSlugBinding)
-      .where(eq(ctx.sql.tables.userSlugBinding.userSlug, userSlug))
+      .from(ctx.sql.tables.handleBinding)
+      .where(eq(ctx.sql.tables.handleBinding.handle, ownerHandle))
       .limit(1)
       .then((r) => r[0]);
     if (!owner || owner.userId !== userId) {
-      return Result.Err(`userSlug "${userSlug}" is owned by another user`);
+      return Result.Err(`ownerHandle "${ownerHandle}" is owned by another user`);
     }
     return Result.Ok({
       type: "vibes.diy-user-slug-binding",
       userId,
-      userSlug,
+      ownerHandle,
       tenant: owner.tenant,
     });
   });
 }
 
-function userSlugFromClaims(claims: ClerkClaim): string[] {
+function ownerHandleFromClaims(claims: ClerkClaim): string[] {
   const result: string[] = [];
   if (claims.params.nick) {
     result.push(claims.params.nick);
@@ -100,29 +96,29 @@ export async function ensureUserSlug(
   ctx: VibesApiSQLCtx,
   claims: ClerkClaim,
   binding: (OptAppSlugOptUserSlug | OptAppSlugUserSlug | AppSlugOptUserSlug | AppSlugUserSlug) & { userId: string }
-): Promise<Result<UserSlugBinding>> {
-  return exception2Result(async (): Promise<Result<UserSlugBinding>> => {
-    if (!binding.userSlug) {
+): Promise<Result<HandleBinding>> {
+  return exception2Result(async (): Promise<Result<HandleBinding>> => {
+    if (!binding.ownerHandle) {
       const existingForUser = await ctx.sql.db
         .select()
-        .from(ctx.sql.tables.userSlugBinding)
-        .where(eq(ctx.sql.tables.userSlugBinding.userId, binding.userId));
+        .from(ctx.sql.tables.handleBinding)
+        .where(eq(ctx.sql.tables.handleBinding.userId, binding.userId));
       if (existingForUser.length >= ctx.params.maxUserSlugPerUserId) {
-        return Result.Err("maximum userSlug bindings reached for this userId");
+        return Result.Err("maximum ownerHandle bindings reached for this userId");
       }
-      const userSlugCandidates = [
-        ...userSlugFromClaims(claims),
+      const ownerHandleCandidates = [
+        ...ownerHandleFromClaims(claims),
         ...new Array(5).fill(0).map(() => generate({ exactly: 1, wordsPerString: 3, separator: "-" })[0]),
       ];
-      for (const tryUserSlug of userSlugCandidates) {
+      for (const tryUserSlug of ownerHandleCandidates) {
         const sanitizedUserSlug = toRFC2822_32ByteLength(tryUserSlug);
         if (!sanitizedUserSlug) {
           continue;
         }
         const existing = await ctx.sql.db
           .select()
-          .from(ctx.sql.tables.userSlugBinding)
-          .where(eq(ctx.sql.tables.userSlugBinding.userSlug, sanitizedUserSlug))
+          .from(ctx.sql.tables.handleBinding)
+          .where(eq(ctx.sql.tables.handleBinding.handle, sanitizedUserSlug))
           .limit(1)
           .then((r) => r[0]);
         if (existing) {
@@ -130,38 +126,35 @@ export async function ensureUserSlug(
             return Result.Ok({
               type: "vibes.diy-user-slug-binding",
               userId: binding.userId,
-              userSlug: existing.userSlug,
+              ownerHandle: existing.handle,
               tenant: existing.tenant,
             });
           }
           continue;
         }
-        const rWrite = await writeUserSlugBinding(ctx, binding.userId, sanitizedUserSlug);
+        const rWrite = await writeHandleBinding(ctx, binding.userId, sanitizedUserSlug);
         if (rWrite.isOk()) return rWrite;
       }
-      return Result.Err("could not generate unique userSlug after attempts");
+      return Result.Err("could not generate unique ownerHandle after attempts");
     }
-    const sanitizedUserSlug = toRFC2822_32ByteLength(binding.userSlug);
+    const sanitizedUserSlug = toRFC2822_32ByteLength(binding.ownerHandle);
     const existing = await ctx.sql.db
       .select()
-      .from(ctx.sql.tables.userSlugBinding)
+      .from(ctx.sql.tables.handleBinding)
       .where(
-        and(
-          eq(ctx.sql.tables.userSlugBinding.userId, binding.userId),
-          eq(ctx.sql.tables.userSlugBinding.userSlug, sanitizedUserSlug)
-        )
+        and(eq(ctx.sql.tables.handleBinding.userId, binding.userId), eq(ctx.sql.tables.handleBinding.handle, sanitizedUserSlug))
       )
       .limit(1)
       .then((r) => r[0]);
     if (!existing) {
-      // console.log("given-userSlug no existing binding:", binding.userSlug, sanitizedUserSlug);
-      return writeUserSlugBinding(ctx, binding.userId, sanitizedUserSlug);
+      // console.log("given-ownerHandle no existing binding:", binding.ownerHandle, sanitizedUserSlug);
+      return writeHandleBinding(ctx, binding.userId, sanitizedUserSlug);
     }
-    // console.log("given-userSlug binding:", binding, existing);
+    // console.log("given-ownerHandle binding:", binding, existing);
     return Result.Ok({
       type: "vibes.diy-user-slug-binding",
       userId: binding.userId,
-      userSlug: existing.userSlug,
+      ownerHandle: existing.handle,
       tenant: existing.tenant,
     });
   });
@@ -170,15 +163,15 @@ export async function ensureUserSlug(
 export async function writeAppSlugBinding(
   ctx: VibesApiSQLCtx,
   userId: string,
-  userSlug: string,
+  ownerHandle: string,
   appSlug: string
 ): Promise<Result<AppSlugBinding>> {
   return exception2Result(async (): Promise<Result<AppSlugBinding>> => {
     const [{ count }] = await ctx.sql.db
       .select({ count: sql<number>`count(*)` })
-      .from(ctx.sql.tables.userSlugBinding)
-      .innerJoin(ctx.sql.tables.appSlugBinding, eq(ctx.sql.tables.userSlugBinding.userSlug, ctx.sql.tables.appSlugBinding.userSlug))
-      .where(eq(ctx.sql.tables.userSlugBinding.userId, userId));
+      .from(ctx.sql.tables.handleBinding)
+      .innerJoin(ctx.sql.tables.appSlugBinding, eq(ctx.sql.tables.handleBinding.handle, ctx.sql.tables.appSlugBinding.ownerHandle))
+      .where(eq(ctx.sql.tables.handleBinding.userId, userId));
     if (count >= ctx.params.maxAppSlugPerUserId) {
       return Result.Err("maximum appSlug bindings reached for this userId");
     }
@@ -186,7 +179,7 @@ export async function writeAppSlugBinding(
     const now = new Date().toISOString();
     await ctx.sql.db.insert(ctx.sql.tables.appSlugBinding).values({
       appSlug,
-      userSlug,
+      ownerHandle,
       ledger,
       created: now,
       updated: now,
@@ -211,12 +204,12 @@ export async function ensureAppSlug(
     if (!binding.appSlug) {
       const [{ count }] = await ctx.sql.db
         .select({ count: sql<number>`count(*)` })
-        .from(ctx.sql.tables.userSlugBinding)
+        .from(ctx.sql.tables.handleBinding)
         .innerJoin(
           ctx.sql.tables.appSlugBinding,
-          eq(ctx.sql.tables.userSlugBinding.userSlug, ctx.sql.tables.appSlugBinding.userSlug)
+          eq(ctx.sql.tables.handleBinding.handle, ctx.sql.tables.appSlugBinding.ownerHandle)
         )
-        .where(eq(ctx.sql.tables.userSlugBinding.userId, binding.userId));
+        .where(eq(ctx.sql.tables.handleBinding.userId, binding.userId));
       if (count >= ctx.params.maxAppSlugPerUserId) {
         return Result.Err("maximum appSlug bindings reached for this userId");
       }
@@ -249,37 +242,34 @@ export async function ensureAppSlug(
           attemptErrors.push({ slug: sanitized, reason: "collision" });
           continue;
         }
-        const rWrite = await writeAppSlugBinding(ctx, binding.userId, binding.userSlug, sanitized);
+        const rWrite = await writeAppSlugBinding(ctx, binding.userId, binding.ownerHandle, sanitized);
         if (rWrite.isOk()) return Result.Ok({ ...rWrite.Ok(), chosenTitle: candidate.title });
         attemptErrors.push({ slug: sanitized, reason: `write-err: ${rWrite.Err().message}` });
       }
       ensureLogger(ctx.sthis, "ensureAppSlug")
         .Error()
-        .Any({ userId: binding.userId, userSlug: binding.userSlug, attempts: attemptErrors })
+        .Any({ userId: binding.userId, ownerHandle: binding.ownerHandle, attempts: attemptErrors })
         .Msg("all candidates failed");
       return Result.Err("could not generate unique appSlug after attempts");
     } else {
       const sanitizedAppSlug = toRFC2822_32ByteLength(binding.appSlug);
-      // AppSlugBindings is keyed on (appSlug, userSlug); the same appSlug
-      // may live under multiple userSlugs. Filter on both so the caller's
+      // AppSlugBindings is keyed on (appSlug, ownerHandle); the same appSlug
+      // may live under multiple ownerHandles. Filter on both so the caller's
       // binding is created when only another user owns the same appSlug.
       const existing = await ctx.sql.db
         .select()
         .from(ctx.sql.tables.appSlugBinding)
-        .innerJoin(
-          ctx.sql.tables.userSlugBinding,
-          eq(ctx.sql.tables.appSlugBinding.userSlug, ctx.sql.tables.userSlugBinding.userSlug)
-        )
+        .innerJoin(ctx.sql.tables.handleBinding, eq(ctx.sql.tables.appSlugBinding.ownerHandle, ctx.sql.tables.handleBinding.handle))
         .where(
           and(
             eq(ctx.sql.tables.appSlugBinding.appSlug, sanitizedAppSlug),
-            eq(ctx.sql.tables.appSlugBinding.userSlug, binding.userSlug)
+            eq(ctx.sql.tables.appSlugBinding.ownerHandle, binding.ownerHandle)
           )
         )
         .limit(1)
         .then((r) => r[0]);
       if (!existing) {
-        return writeAppSlugBinding(ctx, binding.userId, binding.userSlug, sanitizedAppSlug);
+        return writeAppSlugBinding(ctx, binding.userId, binding.ownerHandle, sanitizedAppSlug);
       }
       return Result.Ok({
         type: "vibes.diy-app-slug-binding",
@@ -291,8 +281,8 @@ export async function ensureAppSlug(
   });
 }
 
-export async function getDefaultUserSlug(ctx: VibesApiSQLCtx, userId: string): Promise<Result<UserSlugBinding | undefined>> {
-  return exception2Result(async (): Promise<Result<UserSlugBinding | undefined>> => {
+export async function getDefaultUserSlug(ctx: VibesApiSQLCtx, userId: string): Promise<Result<HandleBinding | undefined>> {
+  return exception2Result(async (): Promise<Result<HandleBinding | undefined>> => {
     const existing = await ctx.sql.db
       .select()
       .from(ctx.sql.tables.userSettings)
@@ -306,24 +296,24 @@ export async function getDefaultUserSlug(ctx: VibesApiSQLCtx, userId: string): P
     if (parsedWarning.length > 0) {
       ensureLogger(ctx.sthis, "getDefaultUserSlug").Warn().Any({ parseErrors: parsedWarning }).Msg("skip");
     }
-    const def = parsedSettings.filter(isUserSettingDefaultUserSlug)[0];
+    const def = parsedSettings.filter(isUserSettingDefaultHandle)[0];
     if (!def) return Result.Ok(undefined);
 
     const binding = await ctx.sql.db
       .select()
-      .from(ctx.sql.tables.userSlugBinding)
-      .where(and(eq(ctx.sql.tables.userSlugBinding.userId, userId), eq(ctx.sql.tables.userSlugBinding.userSlug, def.userSlug)))
+      .from(ctx.sql.tables.handleBinding)
+      .where(and(eq(ctx.sql.tables.handleBinding.userId, userId), eq(ctx.sql.tables.handleBinding.handle, def.ownerHandle)))
       .limit(1)
       .then((r) => r[0]);
 
     if (!binding) return Result.Ok(undefined);
-    return Result.Ok({ type: "vibes.diy-user-slug-binding", userId, userSlug: binding.userSlug, tenant: binding.tenant });
+    return Result.Ok({ type: "vibes.diy-user-slug-binding", userId, ownerHandle: binding.handle, tenant: binding.tenant });
   });
 }
 
-export async function persistDefaultUserSlug(ctx: VibesApiSQLCtx, userId: string, userSlug: string): Promise<void> {
+export async function persistDefaultUserSlug(ctx: VibesApiSQLCtx, userId: string, ownerHandle: string): Promise<void> {
   const now = new Date().toISOString();
-  const newSetting = { type: "defaultUserSlug" as const, userSlug };
+  const newSetting = { type: "defaultHandle" as const, ownerHandle };
   const existing = await ctx.sql.db
     .select()
     .from(ctx.sql.tables.userSettings)
@@ -337,7 +327,7 @@ export async function persistDefaultUserSlug(ctx: VibesApiSQLCtx, userId: string
     if (currentWarning.length > 0) {
       ensureLogger(ctx.sthis, "persistDefaultUserSlug").Warn().Any({ parseErrors: currentWarning }).Msg("skip");
     }
-    const current = currentParsed.filter((s) => s.type !== "defaultUserSlug");
+    const current = currentParsed.filter((s) => s.type !== "defaultHandle");
     await ctx.sql.db
       .update(ctx.sql.tables.userSettings)
       .set({ settings: [...current, newSetting], updated: now })
@@ -345,25 +335,25 @@ export async function persistDefaultUserSlug(ctx: VibesApiSQLCtx, userId: string
   }
 }
 
-export async function ensureSlugBinding(ctx: VibesApiSQLCtx, binding: AppSlugBindingParam): Promise<Result<AppUserSlugBinding>> {
-  // console.log("ensureSlugBinding pre", binding.userSlug, binding.appSlug);
+export async function ensureSlugBinding(ctx: VibesApiSQLCtx, binding: AppSlugBindingParam): Promise<Result<AppHandleBinding>> {
+  // console.log("ensureSlugBinding pre", binding.ownerHandle, binding.appSlug);
   const rUserSlug = await ensureUserSlug(ctx, binding.claims, binding);
   if (rUserSlug.isErr()) {
     return Result.Err(rUserSlug);
   }
   const rAppSlug = await ensureAppSlug(ctx, {
     ...binding,
-    userSlug: rUserSlug.Ok().userSlug,
+    ownerHandle: rUserSlug.Ok().ownerHandle,
   });
   if (rAppSlug.isErr()) {
     return Result.Err(rAppSlug);
   }
   // console.log("ensureSlugBinding success",
-  //   binding.userSlug, '===', rUserSlug.Ok().userSlug,
+  //   binding.ownerHandle, '===', rUserSlug.Ok().ownerHandle,
   //   binding.appSlug, '===', rAppSlug.Ok().appSlug);
   return Result.Ok({
     type: "vibes.diy-app-user-slug-binding",
-    userSlug: rUserSlug.Ok(),
+    ownerHandle: rUserSlug.Ok(),
     appSlug: rAppSlug.Ok(),
   });
 }
@@ -380,7 +370,7 @@ export function toRFC2822_32ByteLength(slug: string): string {
 }
 
 //  const sanitizedAppSlug = toRFC2822_32ByteLength(req.appSlug);
-//   const sanitizedUserSlug = toRFC2822_32ByteLength(req.userSlug);
+//   const sanitizedUserSlug = toRFC2822_32ByteLength(req.ownerHandle);
 
 //   if (sanitizedAppSlug !== req.appSlug) {
 //     return Result.Ok({
@@ -393,10 +383,10 @@ export function toRFC2822_32ByteLength(slug: string): string {
 //     } satisfies ResEnsureAppSlugError);
 //   }
 
-//   if (sanitizedUserSlug !== req.userSlug) {
+//   if (sanitizedUserSlug !== req.ownerHandle) {
 //     return Result.Ok({
 //       type: "vibes.diy.error",
-//       message: `userSlug "${req.userSlug}" is invalid.
+//       message: `ownerHandle "${req.ownerHandle}" is invalid.
 //         It must be 32 characters or less, contain only lowercase letters,
 //         numbers, and hyphens, and cannot start or end with a hyphen.
 //         Suggested slug: "${sanitizedUserSlug}"`,

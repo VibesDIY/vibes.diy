@@ -215,7 +215,7 @@ import { createFakeVibesDiyApi } from "./fake-vibes-diy-api.js";
 
 describe("FireflyApiAdapter end-to-end against fake VibesDiyApi", () => {
   it("put / get / query workflow translates correctly through the adapter", async () => {
-    const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
+    const api = createFakeVibesDiyApi({ defaultHandle: "alice" });
     const adapter = new FireflyApiAdapter(api as never, "my-app");
     const db = new FireflyDatabase("todos", adapter);
 
@@ -234,7 +234,7 @@ describe("FireflyApiAdapter end-to-end against fake VibesDiyApi", () => {
   });
 
   it("delete + 'not found' error", async () => {
-    const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
+    const api = createFakeVibesDiyApi({ defaultHandle: "alice" });
     const db = new FireflyDatabase("delete-test", new FireflyApiAdapter(api as never, "my-app"));
 
     const ok = await db.put({ text: "delete me" });
@@ -243,13 +243,13 @@ describe("FireflyApiAdapter end-to-end against fake VibesDiyApi", () => {
   });
 
   it("subscribe receives synthesized evt-doc-changed when fake fires onDocChanged", async () => {
-    const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
+    const api = createFakeVibesDiyApi({ defaultHandle: "alice" });
     const adapter = new FireflyApiAdapter(api as never, "my-app");
     const db = new FireflyDatabase("subs-test", adapter);
     // FireflyDatabase's constructor calls subscribeDocs and resolveUserSlug
     // asynchronously; flush a microtask to let those land.
     await new Promise((r) => setTimeout(r, 0));
-    await adapter.resolveUserSlug();
+    await adapter.resolveUserHandle();
 
     // notifyListeners is called with [] on remote doc-changed (no local doc available);
     // count calls rather than items so we detect the notification regardless.
@@ -270,7 +270,7 @@ describe("FireflyApiAdapter end-to-end against fake VibesDiyApi", () => {
 // the factory uses, but without pulling in node:path (which Chromium can't load).
 describe("Multi-database caching via KeyedResolvOnce", () => {
   it("fireproof('a') returns the same instance on repeat calls", () => {
-    const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
+    const api = createFakeVibesDiyApi({ defaultHandle: "alice" });
     const adapter = new FireflyApiAdapter(api as never, "my-app");
     const dbsByName = new KeyedResolvOnce<FireflyDatabase>();
 
@@ -280,7 +280,7 @@ describe("Multi-database caching via KeyedResolvOnce", () => {
   });
 
   it("reset clears the cache so a new instance is returned", () => {
-    const api = createFakeVibesDiyApi({ defaultUserSlug: "alice" });
+    const api = createFakeVibesDiyApi({ defaultHandle: "alice" });
     const adapter = new FireflyApiAdapter(api as never, "my-app");
     let dbsByName = new KeyedResolvOnce<FireflyDatabase>();
 

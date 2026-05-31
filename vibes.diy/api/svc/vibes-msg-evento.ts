@@ -26,11 +26,7 @@ import {
   inviteSetRoleEvento,
   listInviteGrantsEvento,
 } from "./public/invite-flow.js";
-import {
-  listUserSlugBindingsEvento,
-  createUserSlugBindingEvento,
-  deleteUserSlugBindingEvento,
-} from "./public/user-slug-bindings.js";
+import { listHandleBindingsEvento, createHandleBindingEvento, deleteHandleBindingEvento } from "./public/user-slug-bindings.js";
 import {
   listRequestGrantsEvento,
   subscribeRequestGrantsEvento,
@@ -97,9 +93,9 @@ export const vibesMsgEvento = Lazy(() => {
     forkAppEvento,
     ensureUserSettingsEvento,
     listApplicationChats,
-    listUserSlugBindingsEvento,
-    createUserSlugBindingEvento,
-    deleteUserSlugBindingEvento,
+    listHandleBindingsEvento,
+    createHandleBindingEvento,
+    deleteHandleBindingEvento,
     putDocEvento,
     getDocEvento,
     queryDocsEvento,

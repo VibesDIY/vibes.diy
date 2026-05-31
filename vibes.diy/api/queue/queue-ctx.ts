@@ -133,7 +133,7 @@ export class QueueCtx {
     evt: {
       type: "vibes.diy.evt-user-notification";
       notificationType: string;
-      userSlug: string;
+      ownerHandle: string;
       appSlug: string;
     }
   ): Promise<void> {

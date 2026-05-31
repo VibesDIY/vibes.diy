@@ -26,7 +26,7 @@ import { formatNoFilesError } from "./format-no-files-error.js";
 export const ResGenerate = type({
   type: "'vibes-diy.cli.res-generate'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   url: "string",
   directory: "string",
 });
@@ -40,7 +40,7 @@ export const ReqGenerate = type({
   type: "'vibes-diy.cli.generate'",
   prompt: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   instantJoin: "boolean",
   verbose: "boolean",
   apiUrl: "string",
@@ -76,15 +76,15 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
-    // Resolve userSlug: explicit flag > default setting > first from list
-    const userSlug = await resolveUserSlug(api, args.userSlug === "" ? undefined : args.userSlug);
+    // Resolve ownerHandle: explicit flag > default setting > first from list
+    const ownerHandle = await resolveUserSlug(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
 
     await sendProgress(ctx, "info", "Generating...");
 
     // Open chat — pass prompt for server-side pre-allocation (title+slug)
     const appSlug = args.appSlug === "" ? undefined : args.appSlug;
     const rChat = await api.openChat({
-      userSlug,
+      ownerHandle,
       appSlug,
       prompt: args.prompt,
       mode: "chat",
@@ -189,7 +189,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     }
 
     const pushAppSlug = chat.appSlug;
-    const pushUserSlug = chat.userSlug;
+    const pushUserSlug = chat.ownerHandle;
 
     // Write files to local directory, then push from there so generate uses
     // the exact same lint+push path as `cli push`.
@@ -213,7 +213,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       dir,
       mode: "production",
       appSlug: pushAppSlug,
-      userSlug: pushUserSlug,
+      ownerHandle: pushUserSlug,
       instantJoin: args.instantJoin,
       apiUrl: args.apiUrl,
       api,
@@ -226,7 +226,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     return sendMsg(ctx, {
       type: "vibes-diy.cli.res-generate",
       appSlug: pushAppSlug,
-      userSlug: pushUserSlug,
+      ownerHandle: pushUserSlug,
       url: rPush.Ok().publicUrl,
       directory: dir,
     } satisfies ResGenerate);
@@ -267,7 +267,7 @@ export function generateCmd(ctx: CliCtx) {
         defaultValue: () => "",
         defaultValueIsSerializable: true,
       }),
-      userSlug: option({
+      ownerHandle: option({
         long: "user-slug",
         description: "User slug to publish under (uses default if omitted)",
         type: string,

@@ -60,7 +60,10 @@ export interface VibesApiSQLCtx {
   metaAccessToken?: string;
   metaAdAccountId?: string;
   metaPixelId?: string;
-  notifyDocChanged?(evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string): Promise<void>;
+  notifyDocChanged?(
+    evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string },
+    senderConnId: string
+  ): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;
   deregisterDocSubscription?(subscriptionKey: string): Promise<void>;
   notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
@@ -71,16 +74,16 @@ export interface VibesApiSQLCtx {
   deregisterUserSubscription?(userId: string): Promise<void>;
 }
 
-export const UserSlugBinding = type({
+export const HandleBinding = type({
   type: "'vibes.diy-user-slug-binding'",
   userId: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   tenant: "string",
 });
-export type UserSlugBinding = type.infer<typeof UserSlugBinding>;
+export type HandleBinding = type.infer<typeof HandleBinding>;
 
-export function isUserSlugBinding(obj: unknown): obj is UserSlugBinding {
-  return !(UserSlugBinding(obj) instanceof type.errors);
+export function isHandleBinding(obj: unknown): obj is HandleBinding {
+  return !(HandleBinding(obj) instanceof type.errors);
 }
 
 export const AppSlugBinding = type({
@@ -95,13 +98,13 @@ export function isAppSlugBinding(obj: unknown): obj is AppSlugBinding {
   return !(AppSlugBinding(obj) instanceof type.errors);
 }
 
-export const AppUserSlugBinding = type({
+export const AppHandleBinding = type({
   type: "'vibes.diy-app-user-slug-binding'",
-  userSlug: UserSlugBinding,
+  ownerHandle: HandleBinding,
   appSlug: AppSlugBinding,
 });
-export type AppUserSlugBinding = type.infer<typeof AppUserSlugBinding>;
+export type AppHandleBinding = type.infer<typeof AppHandleBinding>;
 
-export function isAppUserSlugBinding(obj: unknown): obj is AppUserSlugBinding {
-  return !(AppUserSlugBinding(obj) instanceof type.errors);
+export function isAppHandleBinding(obj: unknown): obj is AppHandleBinding {
+  return !(AppHandleBinding(obj) instanceof type.errors);
 }

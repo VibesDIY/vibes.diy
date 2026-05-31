@@ -50,7 +50,7 @@ function screenshotSrc(shot: MetaScreenShot): string {
   return `/assets/cid/?url=${encodeURIComponent(shot.assetUrl)}&mime=${encodeURIComponent(shot.mime)}`;
 }
 
-type AppItem = Pick<ResRecentVibesItem, "userSlug" | "appSlug" | "title" | "icon">;
+type AppItem = Pick<ResRecentVibesItem, "ownerHandle" | "appSlug" | "title" | "icon">;
 
 interface MyAppsSectionProps {
   isMobile: boolean;
@@ -69,7 +69,7 @@ export function MyAppsSection({ isMobile }: MyAppsSectionProps) {
       (item) =>
         (item.title ?? "").toLowerCase().includes(q) ||
         item.appSlug.toLowerCase().includes(q) ||
-        item.userSlug.toLowerCase().includes(q)
+        item.ownerHandle.toLowerCase().includes(q)
     );
   }, [items, searchQuery]);
 
@@ -120,9 +120,7 @@ export function MyAppsSection({ isMobile }: MyAppsSectionProps) {
           </div>
           {filteredItems.length === 0 && !loading ? (
             <div className="py-12 text-center text-sm" style={{ color: "var(--vibes-near-black)", opacity: 0.6 }}>
-              {searchQuery.trim()
-                ? `No matches for "${searchQuery.trim()}".`
-                : "No vibes yet — describe one above to get started."}
+              {searchQuery.trim() ? `No matches for "${searchQuery.trim()}".` : "No vibes yet — describe one above to get started."}
             </div>
           ) : (
             <div
@@ -136,7 +134,7 @@ export function MyAppsSection({ isMobile }: MyAppsSectionProps) {
             >
               {filteredItems.map((item, index) => (
                 <AppIconCard
-                  key={`${item.userSlug}/${item.appSlug}`}
+                  key={`${item.ownerHandle}/${item.appSlug}`}
                   item={item}
                   appHostBaseUrl={appHostBaseUrl}
                   isMobile={isMobile}
@@ -144,9 +142,7 @@ export function MyAppsSection({ isMobile }: MyAppsSectionProps) {
                   onOpenInfo={() => setDetailItem(item)}
                 />
               ))}
-              {nextCursor && !searchQuery.trim() && (
-                <div ref={sentinelRef} className="col-span-full h-1" aria-hidden="true" />
-              )}
+              {nextCursor && !searchQuery.trim() && <div ref={sentinelRef} className="col-span-full h-1" aria-hidden="true" />}
               {loading && filteredItems.length > 0 && (
                 <div className="col-span-full flex justify-center py-3">
                   <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
@@ -231,7 +227,7 @@ function AppIconCard({ item, appHostBaseUrl, isMobile, index, onOpenInfo }: AppI
         </div>
 
         <Link
-          to={`/chat/${item.userSlug}/${item.appSlug}`}
+          to={`/chat/${item.ownerHandle}/${item.appSlug}`}
           aria-label={`Open ${label}`}
           style={getVibeCardMainIconContainerStyle(isHovered, isMobile)}
         >
@@ -290,7 +286,16 @@ function SearchBar({ value, onChange }: SearchBarProps) {
         aria-hidden="true"
         className="absolute left-3 top-1/2 -translate-y-1/2 text-light-primary/50 dark:text-dark-primary/50 pointer-events-none"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <circle cx="11" cy="11" r="7" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
@@ -310,7 +315,16 @@ function SearchBar({ value, onChange }: SearchBarProps) {
           aria-label="Clear search"
           className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-light-primary dark:text-dark-primary"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -330,10 +344,8 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
   const open = item !== null;
   const label = item?.title ?? item?.appSlug ?? "";
   const iconUrl = item?.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
-  const cacheKey = item ? `${item.userSlug}/${item.appSlug}` : "";
-  const [screenshot, setScreenshot] = useState<MetaScreenShot | null>(
-    item ? (screenshotCache.get(cacheKey) ?? null) : null
-  );
+  const cacheKey = item ? `${item.ownerHandle}/${item.appSlug}` : "";
+  const [screenshot, setScreenshot] = useState<MetaScreenShot | null>(item ? (screenshotCache.get(cacheKey) ?? null) : null);
   const { vibeDiyApi } = useVibesDiy();
   const previewUrl = screenshot ? screenshotSrc(screenshot) : iconUrl;
   const mockCreator = "@amber-macias";
@@ -348,7 +360,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
       return;
     }
     let cancelled = false;
-    vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug: item.appSlug }).then((res) => {
+    vibeDiyApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
       if (cancelled) return;
       if (res.isErr()) {
         screenshotCache.set(cacheKey, null);
@@ -412,11 +424,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
               style={{ height: 200 }}
             >
               {previewUrl ? (
-                <img
-                  src={previewUrl}
-                  alt=""
-                  className={`w-full h-full object-cover${screenshot ? "" : " dark:invert"}`}
-                />
+                <img src={previewUrl} alt="" className={`w-full h-full object-cover${screenshot ? "" : " dark:invert"}`} />
               ) : (
                 <span className="text-light-primary/40 dark:text-dark-primary/40 text-xs uppercase tracking-widest">
                   No preview
@@ -436,7 +444,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
 
               <div className="flex flex-col gap-3 mt-auto pt-4">
                 <Link
-                  to={`/chat/${item.userSlug}/${item.appSlug}`}
+                  to={`/chat/${item.ownerHandle}/${item.appSlug}`}
                   onClick={onClose}
                   className="flex items-center justify-center px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold uppercase tracking-widest border-2 border-[var(--vibes-near-black)] rounded-md shadow-[4px_4px_0_0_var(--vibes-near-black)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--vibes-near-black)] transition-all duration-150"
                 >

@@ -71,7 +71,7 @@ export async function forkApp(
         and(
           eq(vctx.sql.tables.apps.fsId, req.srcFsId),
           eq(vctx.sql.tables.apps.appSlug, req.srcAppSlug),
-          eq(vctx.sql.tables.apps.userSlug, req.srcUserSlug)
+          eq(vctx.sql.tables.apps.ownerHandle, req.srcUserSlug)
         )
       )
       .limit(1)
@@ -80,14 +80,14 @@ export async function forkApp(
     const maxCreatedSub = vctx.sql.db
       .select({ mode: vctx.sql.tables.apps.mode, maxCreated: max(vctx.sql.tables.apps.created).as("max_created") })
       .from(vctx.sql.tables.apps)
-      .where(and(eq(vctx.sql.tables.apps.userSlug, req.srcUserSlug), eq(vctx.sql.tables.apps.appSlug, req.srcAppSlug)))
+      .where(and(eq(vctx.sql.tables.apps.ownerHandle, req.srcUserSlug), eq(vctx.sql.tables.apps.appSlug, req.srcAppSlug)))
       .groupBy(vctx.sql.tables.apps.mode)
       .as("mc");
     const rows = await vctx.sql.db
       .select({
         appSlug: vctx.sql.tables.apps.appSlug,
         userId: vctx.sql.tables.apps.userId,
-        userSlug: vctx.sql.tables.apps.userSlug,
+        ownerHandle: vctx.sql.tables.apps.ownerHandle,
         releaseSeq: vctx.sql.tables.apps.releaseSeq,
         fsId: vctx.sql.tables.apps.fsId,
         env: vctx.sql.tables.apps.env,
@@ -102,7 +102,7 @@ export async function forkApp(
         and(
           eq(vctx.sql.tables.apps.mode, maxCreatedSub.mode),
           eq(vctx.sql.tables.apps.created, maxCreatedSub.maxCreated),
-          eq(vctx.sql.tables.apps.userSlug, req.srcUserSlug),
+          eq(vctx.sql.tables.apps.ownerHandle, req.srcUserSlug),
           eq(vctx.sql.tables.apps.appSlug, req.srcAppSlug)
         )
       )
@@ -115,7 +115,7 @@ export async function forkApp(
 
   // 2. Grant check mirrors /vibe view rules: allow owner, public-access,
   //    invite-accepted, request-approved, or enableRequest (the /vibe page's
-  //    "remix while you wait" affordance — matches vibe.$userSlug.$appSlug.tsx
+  //    "remix while you wait" affordance — matches vibe.$ownerHandle.$appSlug.tsx
   //    showing REMIX/CLONE for pending-request viewers). Forks only copy
   //    env into Apps.env (runtime-only); AppSettings.env is not seeded, so
   //    the forker's admin UI does not expose src.env.
@@ -124,18 +124,18 @@ export async function forkApp(
     const rAppSet = await ensureAppSettings(vctx, {
       type: "vibes.diy.req-ensure-app-settings",
       appSlug: src.appSlug,
-      userSlug: src.userSlug,
+      ownerHandle: src.ownerHandle,
     });
     if (rAppSet.isErr()) return Result.Err("app-settings-not-found");
     const settings = rAppSet.Ok().settings;
     const isPublic = settings.entry.publicAccess?.enable && src.mode === "production";
     let granted = !!isPublic;
     if (!granted) {
-      const rInvite = await hasAccessInvite(vctx, { appSlug: src.appSlug, userSlug: src.userSlug, grantUserId: userId });
+      const rInvite = await hasAccessInvite(vctx, { appSlug: src.appSlug, ownerHandle: src.ownerHandle, grantUserId: userId });
       if (rInvite.isOk() && isResHasAccessInviteAccepted(rInvite.Ok())) granted = true;
     }
     if (!granted) {
-      const rReq = await hasAccessRequest(vctx, { appSlug: src.appSlug, userSlug: src.userSlug, foreignUserId: userId });
+      const rReq = await hasAccessRequest(vctx, { appSlug: src.appSlug, ownerHandle: src.ownerHandle, foreignUserId: userId });
       if (rReq.isOk() && isResHasAccessRequestApproved(rReq.Ok())) granted = true;
     }
     if (!granted && settings.entry.enableRequest?.enable && src.mode === "production") {
@@ -144,17 +144,17 @@ export async function forkApp(
     if (!granted) return Result.Err("not-grant");
   }
 
-  // 3. Resolve caller's default userSlug; mirror ensureChatId.
+  // 3. Resolve caller's default ownerHandle; mirror ensureChatId.
   let destUserSlug: string;
   const rDefault = await getDefaultUserSlug(vctx, userId);
-  if (rDefault.isErr()) return Result.Err(`Failed to get default userSlug: ${rDefault.Err().message}`);
+  if (rDefault.isErr()) return Result.Err(`Failed to get default ownerHandle: ${rDefault.Err().message}`);
   const defaultBinding = rDefault.Ok();
   if (defaultBinding) {
-    destUserSlug = defaultBinding.userSlug;
+    destUserSlug = defaultBinding.ownerHandle;
   } else {
     const rNew = await ensureUserSlug(vctx, claims, { userId });
-    if (rNew.isErr()) return Result.Err(`Failed to ensure userSlug: ${rNew.Err().message}`);
-    destUserSlug = rNew.Ok().userSlug;
+    if (rNew.isErr()) return Result.Err(`Failed to ensure ownerHandle: ${rNew.Err().message}`);
+    destUserSlug = rNew.Ok().ownerHandle;
     await persistDefaultUserSlug(vctx, userId, destUserSlug);
   }
 
@@ -172,7 +172,7 @@ export async function forkApp(
   const candidates = buildForkCandidates(req.srcAppSlug, word);
   const rApp = await ensureAppSlug(vctx, {
     userId,
-    userSlug: destUserSlug,
+    ownerHandle: destUserSlug,
     preferredPairs: candidates.map((slug) => ({ title: sourceTitle, slug })),
   });
   if (rApp.isErr()) return Result.Err(`Failed to ensure appSlug: ${rApp.Err().message}`);
@@ -191,7 +191,7 @@ export async function forkApp(
     vctx.sql.db.insert(vctx.sql.tables.apps).values({
       appSlug: destAppSlug,
       userId,
-      userSlug: destUserSlug,
+      ownerHandle: destUserSlug,
       releaseSeq: 1,
       fsId: src.fsId,
       env: src.env,
@@ -210,13 +210,13 @@ export async function forkApp(
       chatId,
       userId,
       appSlug: destAppSlug,
-      userSlug: destUserSlug,
+      ownerHandle: destUserSlug,
       created: new Date().toISOString(),
     })
   );
   if (rChat.isErr()) return Result.Err(`Failed to create chatContext: ${rChat.Err().message}`);
 
-  const rBump = await bumpAppRecency(vctx, { userSlug: destUserSlug, appSlug: destAppSlug });
+  const rBump = await bumpAppRecency(vctx, { ownerHandle: destUserSlug, appSlug: destAppSlug });
   if (rBump.isErr()) {
     vctx.logger.Warn().Err(rBump).Msg("bumpAppRecency failed");
   }
@@ -242,9 +242,9 @@ export async function forkApp(
       promptId,
       blockId,
       streamId: blockId,
-      userText: `${skipChat ? "Clone" : "Remix"} of ${src.userSlug}/${src.appSlug}`,
+      userText: `${skipChat ? "Clone" : "Remix"} of ${src.ownerHandle}/${src.appSlug}`,
       files: [{ path: srcEntry.fileName, lang: "jsx", content }],
-      fsRef: { appSlug: destAppSlug, userSlug: destUserSlug, mode: destMode, fsId: src.fsId },
+      fsRef: { appSlug: destAppSlug, ownerHandle: destUserSlug, mode: destMode, fsId: src.fsId },
     });
     if (rSeed.isErr()) return Result.Err(rSeed);
   }
@@ -258,7 +258,7 @@ export async function forkApp(
       {
         type: "vibes.diy.req-ensure-app-settings",
         appSlug: destAppSlug,
-        userSlug: destUserSlug,
+        ownerHandle: destUserSlug,
         request: { enable: true },
       },
       userId
@@ -269,7 +269,7 @@ export async function forkApp(
       {
         type: "vibes.diy.req-ensure-app-settings",
         appSlug: destAppSlug,
-        userSlug: destUserSlug,
+        ownerHandle: destUserSlug,
         publicAccess: { enable: false },
       },
       userId
@@ -279,11 +279,11 @@ export async function forkApp(
 
   return Result.Ok({
     type: "vibes.diy.res-fork-app",
-    userSlug: destUserSlug,
+    ownerHandle: destUserSlug,
     appSlug: destAppSlug,
     chatId,
     srcFsId: src.fsId,
-    srcUserSlug: src.userSlug,
+    srcUserSlug: src.ownerHandle,
     srcAppSlug: src.appSlug,
   } satisfies ResForkApp);
 }

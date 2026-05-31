@@ -22,11 +22,11 @@ export const evtCommentPostedEvento: EventoHandler<unknown, MsgBase<EvtCommentPo
     const payload = ctx.validated.payload;
     await postEmbed(qctx, buildCommentEmbed(qctx, payload));
 
-    const usb = qctx.sql.tables.userSlugBinding;
+    const usb = qctx.sql.tables.handleBinding;
     const ownerRow = await qctx.sql.db
       .select({ userId: usb.userId })
       .from(usb)
-      .where(eq(usb.userSlug, payload.userSlug))
+      .where(eq(usb.handle, payload.ownerHandle))
       .limit(1)
       .then((r) => r[0] ?? null);
 
@@ -34,7 +34,7 @@ export const evtCommentPostedEvento: EventoHandler<unknown, MsgBase<EvtCommentPo
       await qctx.notifyUser(ownerRow.userId, {
         type: "vibes.diy.evt-user-notification",
         notificationType: "comment-posted",
-        userSlug: payload.userSlug,
+        ownerHandle: payload.ownerHandle,
         appSlug: payload.appSlug,
       });
     }

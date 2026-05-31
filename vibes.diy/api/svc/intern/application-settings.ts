@@ -34,7 +34,7 @@
 //   crud: "upsert" | "delete";
 //   userId: string;
 //   appSlug: string;
-//   userSlug: string;
+//   ownerHandle: string;
 //   token(): string;
 // }
 
@@ -89,7 +89,7 @@
 //   return Result.Err("Entry not found for update/delete");
 // }
 
-// export async function ensureACLEntry({ vctx, activeEntries, userId, crud, appSlug, userSlug, token: tokenFn }: EnsureEntryArgs): Promise<Result<{
+// export async function ensureACLEntry({ vctx, activeEntries, userId, crud, appSlug, ownerHandle, token: tokenFn }: EnsureEntryArgs): Promise<Result<{
 //   emailOps: EmailOps[];
 //   aclEntries: ActiveACL[];
 // }>> {
@@ -121,7 +121,7 @@
 //         and(
 //           eq(vctx.sql.tables.keyGrants.userId, userId),
 //           eq(vctx.sql.tables.keyGrants.appSlug, appSlug),
-//           eq(vctx.sql.tables.keyGrants.userSlug, userSlug),
+//           eq(vctx.sql.tables.keyGrants.ownerHandle, ownerHandle),
 //           eq(vctx.sql.tables.keyGrants.key, key)
 //         )).run();
 //     } else {
@@ -129,7 +129,7 @@
 //         and(
 //           eq(vctx.sql.tables.keyGrants.userId, userId),
 //           eq(vctx.sql.tables.keyGrants.appSlug, appSlug),
-//           eq(vctx.sql.tables.keyGrants.userSlug, userSlug),
+//           eq(vctx.sql.tables.keyGrants.ownerHandle, ownerHandle),
 //           eq(vctx.sql.tables.keyGrants.key, key)
 //         )).then((res) => res[0] || null)
 //       let tickEntry = entry
@@ -146,7 +146,7 @@
 //       await vctx.sql.db.insert(vctx.sql.tables.keyGrants).values({
 //         userId,
 //         appSlug,
-//         userSlug,
+//         ownerHandle,
 //         key,
 //         entry: merged,
 //         created: new Date().toISOString(),
@@ -154,7 +154,7 @@
 //         target: [
 //           vctx.sql.tables.keyGrants.userId,
 //           vctx.sql.tables.keyGrants.appSlug,
-//           vctx.sql.tables.keyGrants.userSlug,
+//           vctx.sql.tables.keyGrants.ownerHandle,
 //           vctx.sql.tables.keyGrants.key],
 //         set: {
 //           entry: merged,
@@ -169,7 +169,7 @@
 //           action: "invite",
 //           role: entry.role,
 //           appSlug,
-//           userSlug,
+//           ownerHandle,
 //           token: entry.token,
 //         });
 //     }
@@ -179,7 +179,7 @@
 //         role: entry.role,
 //         action: entry.state === 'approved' ? "req-accepted" : "req-rejected",
 //         appSlug,
-//         userSlug,
+//         ownerHandle,
 //       });
 //     }
 //   }
@@ -187,7 +187,7 @@
 //       and(
 //         eq(vctx.sql.tables.keyGrants.userId, userId),
 //         eq(vctx.sql.tables.keyGrants.appSlug, appSlug),
-//         eq(vctx.sql.tables.keyGrants.userSlug, userSlug)
+//         eq(vctx.sql.tables.keyGrants.ownerHandle, ownerHandle)
 //       ))
 //     const aclEntries = ActiveACL.array()(sqlAclEntries.map(e => e.entry));
 //     if (aclEntries instanceof type.errors) {
@@ -228,7 +228,7 @@
 //         action: "invite",
 //         role: entry.role,
 //         appSlug,
-//         userSlug,
+//         ownerHandle,
 //         token: entry.token,
 //       });
 //     }
@@ -250,7 +250,7 @@
 //         role: entry.role,
 //         action: "req-rejected",
 //         appSlug,
-//         userSlug,
+//         ownerHandle,
 //       });
 //     }
 //     break;
@@ -262,7 +262,7 @@
 //         role: entry.role,
 //         action: "req-rejected",
 //         appSlug,
-//         userSlug,
+//         ownerHandle,
 //       });
 //     }
 //     break;

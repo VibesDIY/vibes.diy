@@ -66,7 +66,7 @@ describe("vibeSetDbAcl host handler", () => {
           type: "vibes.diy.req-set-db-acl",
           tid: "t1",
           appSlug: "myapp",
-          userSlug: "alice",
+          ownerHandle: "alice",
           dbName: "announcements",
           acl,
         },
@@ -79,7 +79,7 @@ describe("vibeSetDbAcl host handler", () => {
     expect(ensureAppSettingsCalls).toHaveLength(1);
     expect(ensureAppSettingsCalls[0]).toMatchObject({
       appSlug: "myapp",
-      userSlug: "alice",
+      ownerHandle: "alice",
       dbAcl: { dbName: "announcements", acl },
     });
 
@@ -130,7 +130,7 @@ describe("vibeSetDbAcl host handler", () => {
           type: "vibes.diy.req-set-db-acl",
           tid: "t2",
           appSlug: "myapp",
-          userSlug: "alice",
+          ownerHandle: "alice",
           dbName: "announcements",
           acl: { write: ["editors"] },
         },
@@ -157,7 +157,7 @@ describe("vibeSetDbAcl host handler", () => {
           type: "something-else",
           tid: "t3",
           appSlug: "a",
-          userSlug: "b",
+          ownerHandle: "b",
           dbName: "c",
           acl: {},
         },

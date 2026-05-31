@@ -28,7 +28,7 @@ export interface ExpandedVibesPillProps {
   appTitle?: string;
   /** Icon/screenshot URL shown alongside the title in the metadata strip. */
   appIconUrl?: string;
-  /** Canonical slug (e.g. "userSlug/appSlug") shown as a secondary line under the title. */
+  /** Canonical slug (e.g. "ownerHandle/appSlug") shown as a secondary line under the title. */
   appSlug?: string;
   /** When true, the VIBES letters twinkle in opacity on a loop, reusing the
    *  same staggered delays the fill transition uses. */

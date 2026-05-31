@@ -3,11 +3,11 @@ import { useVibesDiy } from "../../vibes-diy-provider.js";
 import type { MemberItem } from "@vibes.diy/api-types";
 
 interface MembersSectionProps {
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
 }
 
-export function MembersSection({ userSlug, appSlug }: MembersSectionProps) {
+export function MembersSection({ ownerHandle, appSlug }: MembersSectionProps) {
   const { vibeDiyApi } = useVibesDiy();
   const [members, setMembers] = useState<MemberItem[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,7 @@ export function MembersSection({ userSlug, appSlug }: MembersSectionProps) {
     let cancelled = false;
     setLoading(true);
     vibeDiyApi
-      .listMembers({ userSlug, appSlug })
+      .listMembers({ ownerHandle, appSlug })
       .then((res) => {
         if (cancelled) return;
         if (res.isOk()) setMembers(res.Ok().members);
@@ -28,7 +28,7 @@ export function MembersSection({ userSlug, appSlug }: MembersSectionProps) {
     return () => {
       cancelled = true;
     };
-  }, [vibeDiyApi, userSlug, appSlug]);
+  }, [vibeDiyApi, ownerHandle, appSlug]);
 
   return (
     <section className="space-y-2">

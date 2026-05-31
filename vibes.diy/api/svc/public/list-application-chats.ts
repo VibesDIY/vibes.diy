@@ -52,7 +52,7 @@ export const listApplicationChats: EventoHandler<
 
       const conditions: SQL[] = [eq(vctx.sql.tables.applicationChats.userId, userId)];
       if (req.appSlug) conditions.push(eq(vctx.sql.tables.applicationChats.appSlug, req.appSlug));
-      if (req.userSlug) conditions.push(eq(vctx.sql.tables.applicationChats.userSlug, req.userSlug));
+      if (req.ownerHandle) conditions.push(eq(vctx.sql.tables.applicationChats.ownerHandle, req.ownerHandle));
       if (req.cursor) conditions.push(lt(vctx.sql.tables.applicationChats.created, req.cursor));
 
       // Fetch limit+1 to detect whether a next page exists
@@ -60,7 +60,7 @@ export const listApplicationChats: EventoHandler<
         .select({
           chatId: vctx.sql.tables.applicationChats.chatId,
           appSlug: vctx.sql.tables.applicationChats.appSlug,
-          userSlug: vctx.sql.tables.applicationChats.userSlug,
+          ownerHandle: vctx.sql.tables.applicationChats.ownerHandle,
           created: vctx.sql.tables.applicationChats.created,
         })
         .from(vctx.sql.tables.applicationChats)

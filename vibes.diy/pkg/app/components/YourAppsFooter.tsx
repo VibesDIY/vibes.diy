@@ -21,7 +21,7 @@ interface YourAppsFooterProps {
 }
 
 interface AppItem {
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
   title?: string;
   icon?: { cid: string; mime: string };
@@ -55,7 +55,7 @@ export function YourAppsFooter({ sidebarOpen }: YourAppsFooterProps) {
       (item) =>
         (item.title ?? "").toLowerCase().includes(q) ||
         item.appSlug.toLowerCase().includes(q) ||
-        item.userSlug.toLowerCase().includes(q)
+        item.ownerHandle.toLowerCase().includes(q)
     );
   }, [items, searchQuery]);
 
@@ -226,7 +226,7 @@ export function YourAppsFooter({ sidebarOpen }: YourAppsFooterProps) {
             <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
               {pagedItems.map((item) => (
                 <AppCard
-                  key={`${item.userSlug}/${item.appSlug}`}
+                  key={`${item.ownerHandle}/${item.appSlug}`}
                   item={item}
                   appHostBaseUrl={appHostBaseUrl}
                   onNavigate={close}
@@ -288,7 +288,7 @@ function AppCard({ item, appHostBaseUrl, onNavigate, onOpenInfo }: AppCardProps)
         {/* Main card — the Link wraps just this surface so clicking elsewhere
             (e.g. the info button) doesn't navigate. */}
         <Link
-          to={`/chat/${item.userSlug}/${item.appSlug}`}
+          to={`/chat/${item.ownerHandle}/${item.appSlug}`}
           onClick={onNavigate}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -359,7 +359,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
   const open = item !== null;
   const label = item?.title ?? item?.appSlug ?? "";
   const iconUrl = item?.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
-  const cacheKey = item ? `${item.userSlug}/${item.appSlug}` : "";
+  const cacheKey = item ? `${item.ownerHandle}/${item.appSlug}` : "";
   const [screenshot, setScreenshot] = useState<MetaScreenShot | null>(item ? (screenshotCache.get(cacheKey) ?? null) : null);
   const { vibeDiyApi } = useVibesDiy();
   const previewUrl = screenshot ? screenshotSrc(screenshot) : iconUrl;
@@ -376,7 +376,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
       return;
     }
     let cancelled = false;
-    vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug: item.appSlug }).then((res) => {
+    vibeDiyApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
       if (cancelled) return;
       if (res.isErr()) {
         screenshotCache.set(cacheKey, null);
@@ -462,7 +462,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
 
               <div className="flex flex-col gap-3 mt-auto pt-4">
                 <Link
-                  to={`/chat/${item.userSlug}/${item.appSlug}`}
+                  to={`/chat/${item.ownerHandle}/${item.appSlug}`}
                   onClick={onClose}
                   className="flex items-center justify-center px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold uppercase tracking-widest border-2 border-[var(--vibes-near-black)] rounded-md shadow-[4px_4px_0_0_var(--vibes-near-black)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--vibes-near-black)] transition-all duration-150"
                 >

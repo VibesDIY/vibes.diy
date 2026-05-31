@@ -80,7 +80,7 @@ describe("CommentsSection avatar behavior", () => {
     whoAmI.mockResolvedValue(
       Result.Ok({
         viewer: {
-          userSlug: "commenter-resolved-slug",
+          ownerHandle: "commenter-resolved-slug",
           displayName: "Commenter",
           avatarUrl: "https://api.test/u/commenter-resolved-slug/avatar",
         },
@@ -91,7 +91,7 @@ describe("CommentsSection avatar behavior", () => {
 
   it("renders comment avatars using /u/{slug}/avatar (not Clerk URLs)", async () => {
     const { container } = render(
-      <CommentsSection userSlug="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />
+      <CommentsSection ownerHandle="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />
     );
 
     await screen.findByText("hello");
@@ -111,7 +111,7 @@ describe("CommentsSection avatar behavior", () => {
       imageUrl: "https://img.clerk.com/avatar.png",
     };
 
-    render(<CommentsSection userSlug="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />);
+    render(<CommentsSection ownerHandle="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />);
 
     await screen.findByText("hello");
     await waitFor(() => expect(whoAmI).toHaveBeenCalledTimes(1));
@@ -135,7 +135,7 @@ describe("CommentsSection avatar behavior", () => {
       primaryEmailAddress: { emailAddress: "no-username@example.com" },
     };
 
-    render(<CommentsSection userSlug="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />);
+    render(<CommentsSection ownerHandle="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />);
 
     await screen.findByText("hello");
     await waitFor(() => expect(whoAmI).toHaveBeenCalledTimes(1));

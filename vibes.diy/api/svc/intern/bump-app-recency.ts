@@ -4,7 +4,7 @@ import { VibesApiSQLCtx } from "../types.js";
 
 export async function bumpAppRecency(
   vctx: VibesApiSQLCtx,
-  args: { userSlug: string; appSlug: string; ts?: string }
+  args: { ownerHandle: string; appSlug: string; ts?: string }
 ): Promise<Result<void>> {
   return exception2Result(async () => {
     const ts = args.ts ?? new Date().toISOString();
@@ -13,7 +13,7 @@ export async function bumpAppRecency(
       .set({ updated: ts })
       .where(
         and(
-          eq(vctx.sql.tables.appSlugBinding.userSlug, args.userSlug),
+          eq(vctx.sql.tables.appSlugBinding.ownerHandle, args.ownerHandle),
           eq(vctx.sql.tables.appSlugBinding.appSlug, args.appSlug)
         )
       );

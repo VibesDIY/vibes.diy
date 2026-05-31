@@ -63,25 +63,25 @@ async function setupApp(seqOffset: number) {
   const res = rRes.Ok();
   if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
   const appSlug = res.appSlug;
-  const userSlug = res.userSlug;
+  const ownerHandle = res.ownerHandle;
 
   // Grant viewer + editor + submitter access (auto-approved). No explicit
   // dbAcl setup needed — the resolver lazy-defaults the `comments` dbName to
   // COMMENTS_DEFAULT_ACL ({ write: ["members"], delete: ["members"] }) when
   // no entry exists in AppSettings.
-  await ownerApi.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "viewer" } });
-  const rViewer = await viewerApi.requestAccess({ appSlug, userSlug });
+  await ownerApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "viewer" } });
+  const rViewer = await viewerApi.requestAccess({ appSlug, ownerHandle });
   if (!isResRequestAccessApproved(rViewer.Ok())) assert.fail("viewer not auto-approved");
 
-  await ownerApi.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "editor" } });
-  const rEditor = await editorApi.requestAccess({ appSlug, userSlug });
+  await ownerApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "editor" } });
+  const rEditor = await editorApi.requestAccess({ appSlug, ownerHandle });
   if (!isResRequestAccessApproved(rEditor.Ok())) assert.fail("editor not auto-approved");
 
-  await ownerApi.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "submitter" } });
-  const rSubmitter = await submitterApi.requestAccess({ appSlug, userSlug });
+  await ownerApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "submitter" } });
+  const rSubmitter = await submitterApi.requestAccess({ appSlug, ownerHandle });
   if (!isResRequestAccessApproved(rSubmitter.Ok())) assert.fail("submitter not auto-approved");
 
-  return { ownerApi, viewerApi, editorApi, otherApi, submitterApi, appSlug, userSlug };
+  return { ownerApi, viewerApi, editorApi, otherApi, submitterApi, appSlug, ownerHandle };
 }
 
 describe("comments ACL: lazy default (members can write/delete)", { timeout: 20000 }, () => {
@@ -94,7 +94,7 @@ describe("comments ACL: lazy default (members can write/delete)", { timeout: 200
   it("viewer (a member) can post a comment", async () => {
     const res = await ctx.viewerApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "hello from viewer" },
     });
@@ -104,7 +104,7 @@ describe("comments ACL: lazy default (members can write/delete)", { timeout: 200
   it("submitter (a member) can post a comment", async () => {
     const res = await ctx.submitterApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "submitter post" },
     });
@@ -114,7 +114,7 @@ describe("comments ACL: lazy default (members can write/delete)", { timeout: 200
   it("non-member authed user cannot post", async () => {
     const res = await ctx.otherApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "intruder" },
     });
@@ -124,7 +124,7 @@ describe("comments ACL: lazy default (members can write/delete)", { timeout: 200
   it("doc is written through verbatim — no server stamping", async () => {
     const putRes = await ctx.viewerApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "raw" },
     });
@@ -132,7 +132,7 @@ describe("comments ACL: lazy default (members can write/delete)", { timeout: 200
     const docId = putRes.Ok().id;
     const getRes = await ctx.viewerApi.getDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       docId,
     });
@@ -147,14 +147,14 @@ describe("comments ACL: lazy default (members can write/delete)", { timeout: 200
   it("any member can delete any other member's comment (members are trusted)", async () => {
     const putRes = await ctx.viewerApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "viewer's comment" },
     });
     const docId = putRes.Ok().id;
     const delRes = await ctx.editorApi.deleteDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       docId,
     });
@@ -164,14 +164,14 @@ describe("comments ACL: lazy default (members can write/delete)", { timeout: 200
   it("non-member cannot delete a comment", async () => {
     const putRes = await ctx.viewerApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "another viewer comment" },
     });
     const docId = putRes.Ok().id;
     const delRes = await ctx.otherApi.deleteDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       docId,
     });
@@ -179,7 +179,7 @@ describe("comments ACL: lazy default (members can write/delete)", { timeout: 200
   });
 
   it("listMembers returns approved members with display name + role only", async () => {
-    const res = await ctx.viewerApi.listMembers({ appSlug: ctx.appSlug, userSlug: ctx.userSlug });
+    const res = await ctx.viewerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
     expect(res.isOk()).toBe(true);
     const members = res.Ok().members;
     expect(members.length).toBeGreaterThan(0);
@@ -199,7 +199,7 @@ describe("comments ACL: 'Only collaborators' (editors-only write/delete)", { tim
     ctx = await setupApp(1000);
     const setRes = await ctx.ownerApi.ensureAppSettings({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbAcl: {
         dbName: COMMENTS_DB_NAME,
         acl: { write: ["editors"], delete: ["editors"] },
@@ -213,7 +213,7 @@ describe("comments ACL: 'Only collaborators' (editors-only write/delete)", { tim
   it("viewer cannot post (not in editors)", async () => {
     const res = await ctx.viewerApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "blocked" },
     });
@@ -223,7 +223,7 @@ describe("comments ACL: 'Only collaborators' (editors-only write/delete)", { tim
   it("submitter cannot post (not in editors)", async () => {
     const res = await ctx.submitterApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "blocked submitter" },
     });
@@ -233,7 +233,7 @@ describe("comments ACL: 'Only collaborators' (editors-only write/delete)", { tim
   it("editor can still post", async () => {
     const res = await ctx.editorApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "editor post" },
     });
@@ -243,7 +243,7 @@ describe("comments ACL: 'Only collaborators' (editors-only write/delete)", { tim
   it("owner can still post (implicit member of every group)", async () => {
     const res = await ctx.ownerApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "owner post" },
     });
@@ -256,20 +256,20 @@ describe("comments ACL: 'Only collaborators' (editors-only write/delete)", { tim
     // settings mutation). Confirm the stored ACL is unchanged.
     await ctx.viewerApi.ensureAppSettings({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbAcl: {
         dbName: COMMENTS_DB_NAME,
         acl: { write: ["members"], delete: ["members"] },
       },
     });
-    const ownerRes = await ctx.ownerApi.ensureAppSettings({ appSlug: ctx.appSlug, userSlug: ctx.userSlug });
+    const ownerRes = await ctx.ownerApi.ensureAppSettings({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
     expect(ownerRes.Ok().settings.entry.dbAcls?.[COMMENTS_DB_NAME]?.write).toEqual(["editors"]);
   });
 
   it("removing the dbAcl reverts to lazy default — viewer can post again", async () => {
     const removeRes = await ctx.ownerApi.ensureAppSettings({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbAclRemove: { dbName: COMMENTS_DB_NAME },
     });
     expect(removeRes.isOk()).toBe(true);
@@ -277,7 +277,7 @@ describe("comments ACL: 'Only collaborators' (editors-only write/delete)", { tim
 
     const postRes = await ctx.viewerApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: COMMENTS_DB_NAME,
       doc: { body: "back to default" },
     });
@@ -295,7 +295,7 @@ describe("default db (no ACL): unchanged from today", { timeout: 20000 }, () => 
   it("viewer cannot write to the default db", async () => {
     const res = await ctx.viewerApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: "default",
       doc: { body: "should fail" },
     });
@@ -305,7 +305,7 @@ describe("default db (no ACL): unchanged from today", { timeout: 20000 }, () => 
   it("editor can write to the default db", async () => {
     const res = await ctx.editorApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: "default",
       doc: { body: "editor doc" },
     });
@@ -315,7 +315,7 @@ describe("default db (no ACL): unchanged from today", { timeout: 20000 }, () => 
   it("submitter can write to the default db", async () => {
     const res = await ctx.submitterApi.putDoc({
       appSlug: ctx.appSlug,
-      userSlug: ctx.userSlug,
+      ownerHandle: ctx.ownerHandle,
       dbName: "default",
       doc: { body: "submitter doc" },
     });

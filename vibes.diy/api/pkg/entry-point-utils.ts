@@ -9,7 +9,7 @@ export interface CalcEntryPointUrlParams {
 }
 
 export function calcEntryPointUrl({ hostnameBase, protocol, bindings, port }: CalcEntryPointUrlParams): string {
-  const hostname = `${bindings.appSlug}--${bindings.userSlug}.${hostnameBase.replace(/^\./, "")}`;
+  const hostname = `${bindings.appSlug}--${bindings.ownerHandle}.${hostnameBase.replace(/^\./, "")}`;
   const buri = BuildURI.from(`http://template`);
   if (port && port !== "80" && port !== "443") {
     buri.port(port);
@@ -23,7 +23,7 @@ export function calcEntryPointUrl({ hostnameBase, protocol, bindings, port }: Ca
 
 export interface ExtractedHostToBindings {
   url: string;
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
   fsId?: string;
   groupId?: string;
@@ -37,13 +37,13 @@ export function extractHostToBindings({ matchURL }: { matchURL: string }): Optio
     return Option.None();
   }
   const appSlug = match[1].toLowerCase();
-  const userSlug = match[2].toLowerCase();
+  const ownerHandle = match[2].toLowerCase();
   const restPath = uri.pathname.match(/^\/~(z[a-zA-Z0-9]{8,})~(\/.*)?$/);
   if (restPath) {
     return Option.Some({
       url: matchURL,
       appSlug,
-      userSlug,
+      ownerHandle,
       fsId: restPath[1],
       path: restPath[2] ?? "/",
     });
@@ -51,7 +51,7 @@ export function extractHostToBindings({ matchURL }: { matchURL: string }): Optio
   return Option.Some({
     url: matchURL,
     appSlug,
-    userSlug,
+    ownerHandle,
     path: uri.pathname,
   });
 }
