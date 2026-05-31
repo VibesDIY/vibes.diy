@@ -1,7 +1,7 @@
 # Handoff: Anonymous Write Safety Gap
 
 **Date:** 2026-05-31  
-**Status:** Open design question — needs resolution before access function API is final
+**Status:** Resolved by PR #2069 (https://github.com/VibesDIY/vibes.diy/pull/2069)
 
 ---
 
