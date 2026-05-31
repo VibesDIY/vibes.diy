@@ -326,10 +326,66 @@
     color: #166534;
     border: 1px solid #86efac;
   }
+
+  .prose {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #334155;
+    margin: 0 0 20px;
+    max-width: 860px;
+  }
+  .prose + .prose {
+    margin-top: -8px;
+  }
+  .prose strong {
+    color: #1e293b;
+  }
+  .prose code {
+    font-family: "SF Mono", monospace;
+    font-size: 12px;
+    background: #e2e8f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #0369a1;
+  }
+  .intro {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #334155;
+    margin-bottom: 28px;
+    padding: 18px 22px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border-left: 4px solid #6366f1;
+  }
+  .intro code {
+    font-family: "SF Mono", monospace;
+    font-size: 12px;
+    background: #e2e8f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #0369a1;
+  }
 </style>
 
 <h2>Firefly Access Function <span class="badge fixed">v2 — user.userSlug</span></h2>
 <p class="subtitle">Workplace chat — one database, channels as the isolation unit</p>
+
+<div class="intro">
+  <strong>What this is.</strong> Firefly is the database and sync layer built into vibes.diy. Applications open a database with
+  <code>useFireproof("db-name", { access })</code> and supply an <em>access function</em> as the <code>access</code> option. The
+  server runs this function on every write — including deletes — before storing the document. It is the single checkpoint for
+  validation, routing, and access grants. This document specifies the access function API and its return type,
+  <code>AccessDescriptor</code>.
+</div>
+
+<p class="prose">
+  The first example is a workplace chat app. The database holds three document types that together implement channel-based access
+  control. Channels are the unit of read isolation: a document routed to a channel is only visible to users who have been granted
+  access to that channel.
+</p>
 
 <!-- DATABASE -->
 <div class="db">
@@ -356,6 +412,13 @@
   </div>
 </div>
 
+<p class="prose">
+  <strong>Document types.</strong> <code>channel-meta</code> owns a channel: its <code>_id</code> is the channel name, so
+  platform-generated IDs carry entropy directly into the access model with no separate <code>channelId</code> field. A
+  <code>message</code> carries a single chat post and references the channel by its ID. A <code>channel-invite</code> extends read
+  access to a new user. The access function's job is to validate each write and declare how it affects the grant state.
+</p>
+
 <!-- ACCESS FUNCTION -->
 <div class="fn-box">
   <div class="fn-label">⚡ access function — runs on every write including delete</div>
@@ -377,6 +440,14 @@
     </div>
   </div>
 
+  <p class="prose" style="margin: 0 0 12px">
+    <strong>Identity.</strong> <code>userSlug</code> is the stable unique identifier for an authenticated user — sourced from
+    <code>useViewer().viewer.userSlug</code> in the platform layer. It is the only field the access function should use for identity
+    checks. <code>displayName</code> is natural data; it changes when users rename themselves and must never anchor an authorization
+    decision. <code>user</code> is <code>null</code> for unauthenticated (anonymous) requests; the default behavior is to throw in
+    that case.
+  </p>
+
   <!-- helpers shape -->
   <div class="user-ctx">
     <div class="user-ctx-label">Helpers</div>
@@ -389,6 +460,14 @@
       >
     </div>
   </div>
+
+  <p class="prose" style="margin: 0 0 14px">
+    <strong>Helpers are opaque.</strong> <code>ctx.requireAccess(channelId)</code> and <code>ctx.requireRole(roleName)</code>
+    are server-provided closures over the current materialized grant state. They throw or they don't — the access function cannot
+    enumerate channels, list members, or iterate the grant map. Both helpers also throw automatically when
+    <code>user</code> is null, so any branch that calls them is protected against anonymous access without an explicit null check.
+    This is intentional: the helpers are a yes/no validation surface, not a queryable store.
+  </p>
 
   <div class="fn-rules">
     <div class="rule amber">
@@ -425,6 +504,14 @@
   </div>
 </div>
 
+<p class="prose">
+  <strong>Return value semantics.</strong> <code>channels</code> routes this specific document — any user with channel access
+  receives it on their next sync. The grant fields (<code>grant.users</code>, <code>grant.roles</code>, <code>members</code>) are
+  <em>additive contributions</em> to a server-side materialized view: the effective access state at any moment is the union
+  reduction of the access function's output across every current document. This is the key property that makes revocation automatic.
+  Deleting a document drops its contribution from the reduction — no explicit "remove grant" step is needed or possible.
+</p>
+
 <!-- RESULTING CHANNELS -->
 <h3>Resulting channel access (materialized from current docs)</h3>
 <div class="channels-section">
@@ -447,6 +534,15 @@
     <p class="note">Separate channel-meta doc, separate grant set. bob &amp; carol have no access.</p>
   </div>
 </div>
+
+<p class="prose">
+  The channel memberships shown are derived purely from the current document set. No separate access control list is maintained
+  alongside the data. If alice's <code>channel-meta</code> doc is deleted, the reduction over remaining docs yields no grants for
+  <code>chan-general</code>, and bob and carol lose access on their next sync — automatically, with no separate revocation step.
+  This contrasts with Couchbase Sync Gateway's <code>access()</code>, where grants from deleted documents persist in the grant store
+  and must be explicitly retracted. The declarative return-value model fixes this: the grant state is a pure function of the current
+  document set, not an accumulation of past writes.
+</p>
 
 <!-- KEY FLOWS -->
 <h3>Key flows</h3>
@@ -520,6 +616,15 @@
 <h2>Complete API <span class="badge fixed">v2</span></h2>
 <p class="subtitle">Full AccessDescriptor — all fields optional, {} is valid, throw rejects the write</p>
 
+<p class="prose">
+  The workplace chat example used a subset of the return type. There is no larger API hidden elsewhere: the access function's entire
+  surface is the return value plus <code>throw</code>. There are no imperative helpers analogous to Sync Gateway's
+  <code>channel()</code> or <code>access()</code> side-effect calls — routing and grants are expressed as return fields only. The
+  database-level ACL (<code>{ read: ["members"], write: ["editors"] }</code> passed as the <code>acl</code> option to
+  <code>useFireproof</code>) is a coarser gate that controls which subject groups can touch the database at all; the access function
+  is the finer gate that runs on every individual write inside those groups.
+</p>
+
 <div class="fn-box">
   <div class="fn-label">⚡ (doc, oldDoc, user: UserContext | null, ctx: Helpers) → AccessDescriptor</div>
   <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9">
@@ -551,6 +656,15 @@
     <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
     <span class="t">"authentication required"</span> }
   </div>
+
+  <p class="prose" style="margin: 16px 0 14px">
+    <strong>Roles are not a fixed registry.</strong> Because <code>members</code> and <code>grant.roles</code> both reduce across
+    current docs, role membership is a materialized aggregate of document contributions — not a separately administered list. A
+    team-meta doc with three entries in <code>memberSlugs</code> contributes three slugs to the
+    <code>members["design-team"]</code> reduce. A singleton role-channels doc contributes channel grants for that role. The server
+    resolves effective per-user channel access in two passes: first expand <code>grant.roles</code> through <code>members</code>,
+    then union with <code>grant.users</code> direct grants.
+  </p>
 
   <div style="margin-top: 18px">
     <div class="fn-label" style="margin-bottom: 10px">
@@ -587,6 +701,20 @@
 
 <h2>Use Case — Employee Onboarding</h2>
 <p class="subtitle">New hire gets 4 mandatory + 4 design + 12 PDX channels from two manager edits</p>
+
+<p class="prose">
+  This example extends the model to an organizational hierarchy. A new employee needs company-wide mandatory channels managed
+  centrally by HR, team channels managed by the design lead, and location channels managed by the PDX office. Each manager writes
+  their own doc type independently — no coordination between them is required. The access model stitches the contributions together
+  via the reduce.
+</p>
+<p class="prose">
+  Global team membership uses the <strong>singleton pattern</strong>: one <code>role-channels</code> doc declares what channels the
+  role grants, and one small <code>membership</code> doc per employee contributes that employee's slug to the role. The membership
+  doc is written on hire and deleted on offboarding — the role loses the slug contribution automatically. Contrast this with the
+  design team's <code>team-meta</code> doc, which carries both membership and channel grants in one place. Both patterns produce
+  identical reduced state; the choice is organizational, not technical.
+</p>
 
 <div class="db">
   <div class="db-label">📦 four doc types, four access function returns</div>
@@ -778,7 +906,14 @@
 <hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
 
 <h2>Use Case — Survey App</h2>
-<p class="subtitle">Public read + anonymous submit — two doc types, two very different access shapes</p>
+<p class="subtitle">Anonymous submit + role-gated read + public results</p>
+
+<p class="prose">
+  The survey app demonstrates the two access patterns not present in the workplace chat example: unauthenticated writes (where
+  <code>user</code> is <code>null</code>) and public read via <code>grant.public</code>. It also shows the
+  <strong>singleton grant doc</strong> pattern, where role-to-channel wiring lives in one admin-owned document rather than being
+  repeated across every data document.
+</p>
 
 <div class="db">
   <div class="db-label">📦 useFireproof("survey-app", { access })</div>
@@ -874,6 +1009,19 @@
     </div>
   </div>
 </div>
+
+<p class="prose">
+  <strong>Singleton grant doc.</strong> The <code>survey-config</code> doc is the only place that declares who can read
+  <code>inbound-responses</code>. Because the grant reduce is additive and idempotent, it would be technically valid to include the
+  same role grant on every response doc — but 1,000 response docs redundantly asserting the same <code>grant.roles</code> entry is
+  wasteful. The singleton keeps wiring in one place: changing who reads responses means updating one doc, not rewriting the entire
+  response set.
+</p>
+<p class="prose">
+  <strong>Server-generated IDs.</strong> Requiring <code>doc._id</code> to be falsy prevents clients from choosing response
+  identifiers. A client that sets <code>_id</code> to a known value could overwrite an existing response (update attack) or fetch it
+  directly by ID (enumeration attack). Throwing at the access function layer stops both before storage.
+</p>
 
 <div class="fn-box" style="margin-bottom: 24px">
   <div class="fn-label">⚡ survey access function</div>
@@ -974,6 +1122,20 @@
 <h2>Survey Variants — open vs invite-only</h2>
 <p class="subtitle">Same database, same access function — role and channel names scoped to survey ID</p>
 
+<p class="prose">
+  When a database holds multiple surveys, all role and channel names must be scoped to the survey ID to prevent cross-survey data
+  leakage. A generic <code>survey-participant</code> role spanning all surveys would let a participant in survey A read questions
+  from survey B. The pattern <code>survey-{id}-team</code>, <code>survey-{id}-responders</code>, <code>{id}-questions</code>,
+  <code>{id}-responses</code> makes each survey a self-contained access namespace within the shared database.
+</p>
+<p class="prose">
+  Two survey modes are shown. An <strong>open</strong> survey (<code>s1</code>) routes its questions to a
+  <code>grant.public</code> channel — anyone can read without authentication. An <strong>invite-only</strong> survey
+  (<code>s2</code>) routes questions to a role-gated channel; a team member must write an invite doc to extend
+  <code>survey-s2-responders</code> membership to each respondent. The invite doc is a membership grant doc: writing it adds the
+  invitee to the role via the <code>members</code> reduce, and deleting it removes them.
+</p>
+
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px">
   <!-- S1: Open -->
   <div class="db">
@@ -1055,6 +1217,14 @@
     </div>
   </div>
 </div>
+
+<p class="prose">
+  <strong>Why <code>doc.open</code> on the question doc is trustworthy.</strong> The access function dispatches on
+  <code>doc.type</code> and derives the grant shape from <code>doc.open</code>. This field is set by the writer — but only team
+  members can write question docs (<code>ctx.requireRole</code> enforces this). A client who is not a team member cannot write a
+  question doc at all, so they cannot spoof <code>doc.open</code>. The security property follows from the write gate, not from
+  trusting the field in isolation.
+</p>
 
 <!-- Full access function -->
 <div class="fn-box">
@@ -1140,4 +1310,14 @@
   <p class="note">
     Alice deletes the invite doc → bob drops from s2-responders reduce → can no longer submit. Already-submitted responses remain.
   </p>
+</div>
+
+<div class="intro" style="margin-top: 32px; border-left-color: #10b981">
+  <strong>Summary.</strong> The access function API has three surfaces: the <strong>return value</strong> (<code>channels</code>,
+  <code>members</code>, <code>grant.{users,roles,public}</code>, <code>expiry</code>) which drives routing and grants;
+  <strong><code>throw</code></strong> which rejects writes; and the <strong>ctx helpers</strong> (<code>requireAccess</code>,
+  <code>requireRole</code>) which query materialized state opaquely. All grant fields reduce by union across current docs. Deletion
+  is automatic revocation. <code>user</code> is null for anonymous requests; the default is to throw, and any branch that opts into
+  anonymous access must handle null explicitly. Role and channel names should be scoped to application-level identifiers (survey ID,
+  team ID) to prevent cross-namespace leakage in shared databases.
 </div>
