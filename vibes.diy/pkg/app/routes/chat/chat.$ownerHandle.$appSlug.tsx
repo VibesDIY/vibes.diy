@@ -826,14 +826,17 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     const filename = normalizeCodeViewPath(editorState.filePath || "/App.jsx");
     const lang = editorState.lang || inferCodeViewLanguage(filename, "text/javascript");
     chat
-      .promptFS([
-        {
-          type: "code-block",
-          filename,
-          lang,
-          content: editorState.buffer,
-        },
-      ])
+      .promptFS({
+        update: [
+          {
+            type: "code-block",
+            filename,
+            lang,
+            content: editorState.buffer,
+          },
+        ],
+        remove: [],
+      })
       .then((r) => {
         if (r.isErr()) {
           toast.error(`Failed to save code changes: ${r.Err().message}`);
