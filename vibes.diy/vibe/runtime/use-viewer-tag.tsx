@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { ViewerEnv } from "./vibe.js";
 import { getRegisteredVibeApi } from "./register-dependencies.js";
 
@@ -18,6 +18,17 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
   const fileRef = useRef<HTMLInputElement>(null);
 
   const slugFromProp = "user" in props && props.user ? props.user.userSlug : "userSlug" in props ? props.userSlug : undefined;
+  const resolvedSlug = slugFromProp ?? _viewer?.userSlug ?? "";
+  const resolvedAvatarUrl =
+    "user" in props && props.user?.avatarUrl
+      ? props.user.avatarUrl
+      : resolvedSlug
+        ? `/u/${encodeURIComponent(resolvedSlug)}/avatar`
+        : undefined;
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [resolvedAvatarUrl]);
 
   if (("userSlug" in props || "user" in props) && !slugFromProp) {
     return <span style={{ color: "var(--muted, #888)", fontStyle: "italic", fontSize: 13 }}>no user handle provided</span>;
@@ -48,14 +59,6 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
       </button>
     );
   }
-
-  const resolvedSlug = slugFromProp ?? _viewer?.userSlug ?? "";
-  const resolvedAvatarUrl =
-    "user" in props && props.user?.avatarUrl
-      ? props.user.avatarUrl
-      : resolvedSlug
-        ? `/u/${encodeURIComponent(resolvedSlug)}/avatar`
-        : undefined;
 
   // _viewer !== null guard prevents undefined === undefined when viewer is anonymous.
   const isSelf = _viewer !== null && ((!("userSlug" in props) && !("user" in props)) || resolvedSlug === _viewer?.userSlug);
