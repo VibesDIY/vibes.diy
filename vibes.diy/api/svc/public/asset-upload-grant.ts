@@ -52,9 +52,9 @@ export const assetUploadGrantEvento: EventoHandler<
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      // Upload requires write access to (userSlug, appSlug). Public-readable
+      // Upload requires write access to (ownerHandle, appSlug). Public-readable
       // apps don't grant write — uploaders must be owner/editor/submitter.
-      const access = await checkDocAccess(vctx, userId, req.appSlug, req.userSlug);
+      const access = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
       if (!canWrite(access)) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
@@ -68,7 +68,7 @@ export const assetUploadGrantEvento: EventoHandler<
         {
           jti,
           userId,
-          userSlug: req.userSlug,
+          ownerHandle: req.ownerHandle,
           appSlug: req.appSlug,
           ...(req.mimeType !== undefined ? { mimeType: req.mimeType } : {}),
         },
