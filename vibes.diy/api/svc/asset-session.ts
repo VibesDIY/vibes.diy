@@ -7,7 +7,7 @@
 //
 // Audience is the asset host itself (`assets.<env>.vibesdiy.net`); the
 // cookie carries the verified Clerk userId only. Per-db ACL still gates
-// `(userSlug, appSlug, dbName)` at read time — identity goes via cookie,
+// `(ownerHandle, appSlug, dbName)` at read time — identity goes via cookie,
 // authorization goes via the existing ACL machinery.
 import { Result, exception2Result } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core-types-base";

@@ -20,7 +20,7 @@ import { resolveUserSlug } from "../resolve-user-slug.js";
 
 // `vibes-diy put-asset <file> [--user-slug=...] [--app-slug=...] [--verify-fetch]`
 //
-// 1. WS-mints an upload-grant for (userSlug, appSlug) over the existing
+// 1. WS-mints an upload-grant for (ownerHandle, appSlug) over the existing
 //    VibesDiyApi connection.
 // 2. Streams the file body to the absolute uploadUrl in the grant
 //    response, with X-Asset-Grant carrying the JWT.
@@ -33,7 +33,7 @@ export const ReqPutAsset = type({
   type: "'vibes-diy.cli.put-asset'",
   file: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   apiUrl: "string",
   mimeType: "string",
   verifyFetch: "boolean",
@@ -121,9 +121,9 @@ export const putAssetEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPutAsset, R
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
-    const userSlug = await resolveUserSlug(api, args.userSlug === "" ? undefined : args.userSlug);
-    if (!userSlug) {
-      return Result.Err("Could not resolve userSlug. Pass --user-slug or set a default via vibes-diy user-settings.");
+    const ownerHandle = await resolveUserSlug(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
+    if (!ownerHandle) {
+      return Result.Err("Could not resolve ownerHandle. Pass --user-slug or set a default via vibes-diy user-settings.");
     }
     const appSlug = args.appSlug === "" ? basename(args.file).split(".")[0] : args.appSlug;
 
@@ -134,7 +134,7 @@ export const putAssetEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPutAsset, R
 
     const rGrant = await api.requestAssetUploadGrant({
       appSlug,
-      userSlug,
+      ownerHandle,
       mimeType: args.mimeType,
     });
     if (rGrant.isErr()) {
@@ -213,7 +213,7 @@ export function putAssetCmd(ctx: CliCtx) {
         defaultValue: () => "",
         defaultValueIsSerializable: true,
       }),
-      userSlug: option({
+      ownerHandle: option({
         long: "user-slug",
         description: "User slug (uses default if omitted)",
         type: string,
@@ -238,7 +238,7 @@ export function putAssetCmd(ctx: CliCtx) {
         type: "vibes-diy.cli.put-asset",
         file: args.file,
         appSlug: args.appSlug,
-        userSlug: args.userSlug,
+        ownerHandle: args.ownerHandle,
         apiUrl: args.apiUrl,
         verifyFetch: args.verifyFetch,
         mimeType,

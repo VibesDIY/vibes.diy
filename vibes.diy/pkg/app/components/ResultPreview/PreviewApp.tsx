@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { BuildURI, URI } from "@adviser/cement";
@@ -10,10 +10,10 @@ import { getCode } from "./get-code.js";
 import type { EvtVibeViewerChanged } from "@vibes.diy/vibe-types";
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
-  const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
+  const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
   const { webVars: svcVars, srvVibeSandbox } = useVibesDiy();
 
-  // Pin the iframe URL per (userSlug,appSlug). Two valid initial states:
+  // Pin the iframe URL per (ownerHandle,appSlug). Two valid initial states:
   //   1. URL has fsId at mount → pin to it; iframe loads that fsId.
   //   2. URL has no fsId at mount → pinnedFsId stays undefined; iframe loads
   //      the server's "pending" shell, then hot-swap installs streamed code
@@ -24,9 +24,9 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // an iteration on an existing chat picks up the server's canonical bundle.
   // Cross-vibe navigation (different slug pair) re-pins from scratch.
   const [pinnedFsId, setPinnedFsId] = useState<string | undefined>(fsId);
-  const [pinnedKey, setPinnedKey] = useState<string>(`${userSlug}/${appSlug}`);
+  const [pinnedKey, setPinnedKey] = useState<string>(`${ownerHandle}/${appSlug}`);
   useEffect(() => {
-    const key = `${userSlug}/${appSlug}`;
+    const key = `${ownerHandle}/${appSlug}`;
     if (pinnedKey !== key) {
       // Drop any cached hot-swap source from the prior vibe before pinning the
       // new context — otherwise runtime.ready of the about-to-reload iframe
@@ -35,7 +35,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
       setPinnedFsId(fsId);
       setPinnedKey(key);
     }
-  }, [fsId, userSlug, appSlug, pinnedKey, srvVibeSandbox]);
+  }, [fsId, ownerHandle, appSlug, pinnedKey, srvVibeSandbox]);
 
   // Also clear on first mount: when ResultPreview swaps the welcome empty-div
   // for PreviewApp (showWelcome flips false during cross-chat nav), this is a
@@ -51,17 +51,17 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // BEFORE the first code streams. First pushSource then hits a live listener
   // and the scaffold renders immediately.
   const previewUrl = useMemo(() => {
-    if (!appSlug || !userSlug) return null;
+    if (!appSlug || !ownerHandle) return null;
     const myUrl = URI.from(window.location.href);
     const baseUrl = calcEntryPointUrl({
       hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
       protocol: myUrl.protocol as "http" | "",
       port: myUrl.port,
-      bindings: { appSlug, userSlug, ...(pinnedFsId ? { fsId: pinnedFsId } : {}) },
+      bindings: { appSlug, ownerHandle, ...(pinnedFsId ? { fsId: pinnedFsId } : {}) },
     });
     const url = BuildURI.from(baseUrl).setParam("npmUrl", svcVars.pkgRepos.workspace).setParam("preview", "yes");
     return url;
-  }, [pinnedFsId, userSlug, appSlug, fsId]);
+  }, [pinnedFsId, ownerHandle, appSlug, fsId]);
 
   // Track last-seen code.end seq per blockId so we push exactly once per
   // code.end. seq counters reset per block, so a single global "must increase"
@@ -193,7 +193,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // here eliminates the read-only flash. bootstrapViewer still fires after
   // and fills in viewer.displayName / avatarUrl via the normal bridge path.
   useEffect(() => {
-    if (!srvVibeSandbox || !userSlug || !appSlug) return;
+    if (!srvVibeSandbox || !ownerHandle || !appSlug) return;
     return srvVibeSandbox.onRuntimeReady(() => {
       const msg: EvtVibeViewerChanged = {
         type: "vibe.evt.viewerChanged",
@@ -202,7 +202,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
       };
       srvVibeSandbox.pushViewerChanged(msg);
     }) as () => void;
-  }, [srvVibeSandbox, userSlug, appSlug]);
+  }, [srvVibeSandbox, ownerHandle, appSlug]);
 
   // Toast when the iframe rejects a hot-swap source (sucrase transform fail,
   // dynamic import fail, mountVibe throw). The iframe keeps showing the

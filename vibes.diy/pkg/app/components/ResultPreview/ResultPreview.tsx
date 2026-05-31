@@ -8,7 +8,7 @@ import { PreviewApp } from "./PreviewApp.js";
 import { DataView } from "./DataView.js";
 import { SettingsTab } from "../mine/settings-tab/index.js";
 import { SharingTab } from "../mine/sharing-tab/SharingTab.js";
-import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { EditorState } from "../../types/code-editor.js";
 // import { useTheme } from "../../contexts/ThemeContext.js";
 
@@ -16,7 +16,7 @@ const CodeEditor = lazy(() => import("./CodeEditor.js"));
 
 type SettingsSubTab = "settings" | "sharing";
 
-function AppSettingsPanel({ userSlug, appSlug }: { userSlug: string; appSlug: string }) {
+function AppSettingsPanel({ ownerHandle, appSlug }: { ownerHandle: string; appSlug: string }) {
   const [sub, setSub] = React.useState<SettingsSubTab>("settings");
   return (
     <div>
@@ -33,9 +33,9 @@ function AppSettingsPanel({ userSlug, appSlug }: { userSlug: string; appSlug: st
         ))}
       </div>
       {sub === "settings" ? (
-        <SettingsTab userSlug={userSlug} appSlug={appSlug} />
+        <SettingsTab ownerHandle={ownerHandle} appSlug={appSlug} />
       ) : (
-        <SharingTab userSlug={userSlug} appSlug={appSlug} />
+        <SharingTab ownerHandle={ownerHandle} appSlug={appSlug} />
       )}
     </div>
   );
@@ -106,7 +106,7 @@ function ResultPreview({ promptState, currentView, children, onCode }: ResultPre
     } else if (currentView === "settings") {
       foreground = (
         <div className="h-full overflow-y-auto p-6">
-          <AppSettingsPanel userSlug={promptState.chat.userSlug} appSlug={promptState.chat.appSlug} />
+          <AppSettingsPanel ownerHandle={promptState.chat.ownerHandle} appSlug={promptState.chat.appSlug} />
         </div>
       );
     }

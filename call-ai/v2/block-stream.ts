@@ -38,7 +38,7 @@ export type BlockUsage = typeof BlockUsage.infer;
 
 export const FileSystemRef = type({
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   mode: "'production'|'dev'",
   fsId: "string",
   // wrapperUrl: "string",

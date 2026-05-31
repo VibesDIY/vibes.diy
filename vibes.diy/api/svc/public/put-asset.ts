@@ -15,7 +15,7 @@ import { storeAndAuditAsset } from "./store-and-audit-asset.js";
 // HTTP `POST /assets` upload endpoint. Auth comes from the X-Asset-Grant
 // header (a short-lived signed JWT minted by the WS asset-upload-grant
 // handler) — *not* from the dashboard auth header. The grant carries the
-// (userId, userSlug, appSlug, jti) tuple the audit row needs.
+// (userId, ownerHandle, appSlug, jti) tuple the audit row needs.
 //
 // Body streams via `request.body` directly into `vctx.storage.ensure()`,
 // which writes to the SQL peer for ≤4KB or to R2 for larger uploads.
@@ -97,7 +97,7 @@ export const putAsset: EventoHandler<Request, PutAssetValidated, unknown> = {
     const rStored = await storeAndAuditAsset(vctx, {
       bytes: body,
       userId: claims.userId,
-      userSlug: claims.userSlug,
+      ownerHandle: claims.ownerHandle,
       appSlug: claims.appSlug,
       mimeType: claims.mimeType,
       uploadId: claims.jti,

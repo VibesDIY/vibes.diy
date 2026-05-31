@@ -150,7 +150,7 @@ const MODEL_DEFAULTS_TIMEOUT_MS = 3000;
 
 async function withModelDefaults(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings): Promise<ResEnsureAppSettings> {
   const timeout = new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), MODEL_DEFAULTS_TIMEOUT_MS));
-  const raced = await Promise.race([getModelDefaults(vctx, { appSlug: res.appSlug, userSlug: res.userSlug }), timeout]);
+  const raced = await Promise.race([getModelDefaults(vctx, { appSlug: res.appSlug, ownerHandle: res.ownerHandle }), timeout]);
   if (raced === "timeout") {
     ensureLogger(vctx.sthis, "ensureAppSettings").Warn().Msg("withModelDefaults timed out, returning res without defaults");
     return res;
@@ -164,11 +164,11 @@ async function withModelDefaults(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings
   return res;
 }
 
-async function postIconGen(vctx: VibesApiSQLCtx, args: { userSlug: string; appSlug: string; force: boolean }): Promise<void> {
+async function postIconGen(vctx: VibesApiSQLCtx, args: { ownerHandle: string; appSlug: string; force: boolean }): Promise<void> {
   await vctx.postQueue({
     payload: {
       type: "vibes.diy.evt-icon-gen",
-      userSlug: args.userSlug,
+      ownerHandle: args.ownerHandle,
       appSlug: args.appSlug,
       ...(args.force ? { force: true } : {}),
     },
@@ -202,21 +202,24 @@ export async function ensureAppSettings(
   const rPrev = await exception2Result(() =>
     vctx.sql.db
       .select()
-      .from(vctx.sql.tables.userSlugBinding)
+      .from(vctx.sql.tables.handleBinding)
       .innerJoin(
         vctx.sql.tables.appSlugBinding,
-        eq(vctx.sql.tables.appSlugBinding.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
+        eq(vctx.sql.tables.appSlugBinding.ownerHandle, vctx.sql.tables.handleBinding.handle)
       )
       .leftJoin(
         vctx.sql.tables.appSettings,
         and(
-          eq(vctx.sql.tables.appSettings.userId, vctx.sql.tables.userSlugBinding.userId),
+          eq(vctx.sql.tables.appSettings.userId, vctx.sql.tables.handleBinding.userId),
           eq(vctx.sql.tables.appSettings.appSlug, req.appSlug),
-          eq(vctx.sql.tables.appSettings.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
+          eq(vctx.sql.tables.appSettings.ownerHandle, vctx.sql.tables.handleBinding.handle)
         )
       )
       .where(
-        and(eq(vctx.sql.tables.appSlugBinding.userSlug, req.userSlug), eq(vctx.sql.tables.appSlugBinding.appSlug, req.appSlug))
+        and(
+          eq(vctx.sql.tables.appSlugBinding.ownerHandle, req.ownerHandle),
+          eq(vctx.sql.tables.appSlugBinding.appSlug, req.appSlug)
+        )
       )
       .limit(1)
       .then((r) => r[0])
@@ -234,8 +237,8 @@ export async function ensureAppSettings(
         userId: "------",
         appSlug: req.appSlug,
         ledger: req.appSlug,
-        userSlug: req.userSlug,
-        tenant: req.userSlug,
+        ownerHandle: req.ownerHandle,
+        tenant: req.ownerHandle,
         error: "not-found",
         settings: buildEnsureEntryResult([]),
         updated: now,
@@ -252,7 +255,7 @@ export async function ensureAppSettings(
         userId: record.UserSlugBindings.userId,
         appSlug: req.appSlug,
         ledger: record.AppSlugBindings.ledger,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         tenant: record.UserSlugBindings.tenant,
         settings: buildEnsureEntryResult(settings || []),
         updated: record.AppSettings?.updated ?? now,
@@ -265,7 +268,7 @@ export async function ensureAppSettings(
     updated: now,
     created: now,
     userId: record.UserSlugBindings.userId,
-    userSlug: record.UserSlugBindings.userSlug,
+    ownerHandle: record.UserSlugBindings.handle,
     appSlug: record.AppSlugBindings.appSlug,
   };
 
@@ -278,7 +281,7 @@ export async function ensureAppSettings(
     userId,
     appSlug: req.appSlug,
     ledger: record.AppSlugBindings.ledger,
-    userSlug: req.userSlug,
+    ownerHandle: req.ownerHandle,
     tenant: record.UserSlugBindings.tenant,
     error: undefined as string | undefined,
     settings: buildEnsureEntryResult(settings),
@@ -327,7 +330,7 @@ export async function ensureAppSettings(
           {
             userId: res.userId,
             appSlug: res.appSlug,
-            userSlug: res.userSlug,
+            ownerHandle: res.ownerHandle,
           },
           nextAutoAcceptRole
         );
@@ -364,14 +367,14 @@ export async function ensureAppSettings(
           }) satisfies ActiveIconDescription
       );
       if (!res.error) {
-        await postIconGen(vctx, { userSlug: res.userSlug, appSlug: res.appSlug, force: false });
+        await postIconGen(vctx, { ownerHandle: res.ownerHandle, appSlug: res.appSlug, force: false });
       }
       break;
     case isReqEnsureAppSettingsIconRegen(req):
       // No entry mutation — pure regen request. Rate-limit on the head
       // version's `created` to bound double-click cost.
       if (!recentlyRegenerated(settings)) {
-        await postIconGen(vctx, { userSlug: res.userSlug, appSlug: res.appSlug, force: true });
+        await postIconGen(vctx, { ownerHandle: res.ownerHandle, appSlug: res.appSlug, force: true });
       }
       break;
     case isReqEnsureAppSettingsSkills(req):
@@ -564,13 +567,13 @@ async function sqlUpdateSettings(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings
       .values({
         userId: res.userId,
         appSlug: res.appSlug,
-        userSlug: res.userSlug,
+        ownerHandle: res.ownerHandle,
         settings,
         updated: now,
         created: res.created,
       })
       .onConflictDoUpdate({
-        target: [vctx.sql.tables.appSettings.userId, vctx.sql.tables.appSettings.userSlug, vctx.sql.tables.appSettings.appSlug],
+        target: [vctx.sql.tables.appSettings.userId, vctx.sql.tables.appSettings.ownerHandle, vctx.sql.tables.appSettings.appSlug],
         set: {
           settings: res.settings.entries,
           updated: now,
@@ -580,7 +583,7 @@ async function sqlUpdateSettings(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings
   await vctx.postQueue({
     payload: {
       type: "vibes.diy.evt-app-setting",
-      userSlug: res.userSlug,
+      ownerHandle: res.ownerHandle,
       appSlug: res.appSlug,
       settings,
     },
@@ -601,7 +604,7 @@ async function sqlUpdateSettings(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings
 //     crud: req.aclEntry.op === "delete" ? "delete" : "upsert",
 //     // entry: req.aclEntry.entry,
 //     appSlug: res.appSlug,
-//     userSlug: res.userSlug,
+//     ownerHandle: res.ownerHandle,
 //     token: () => vctx.sthis.nextId(128 / 8).str,
 //   });
 //   if (result.isErr()) {

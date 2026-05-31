@@ -39,7 +39,7 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       // console.log("openChat handler called", ctx.validated.payload);
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-      let chatPromise: Promise<Result<{ appSlug: string; userSlug: string; chatId: string }>>;
+      let chatPromise: Promise<Result<{ appSlug: string; ownerHandle: string; chatId: string }>>;
       switch (req.mode) {
         case "chat":
           chatPromise = ensureChatId(vctx, req);
@@ -55,8 +55,8 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       if (rChatId.isErr()) {
         return Result.Err(rChatId);
       }
-      const { appSlug, userSlug, chatId } = rChatId.Ok();
-      // console.log("openChat: Obtained chatId", chatId, "for appSlug:", appSlug, "userSlug:", userSlug, "mode:", req.mode);
+      const { appSlug, ownerHandle, chatId } = rChatId.Ok();
+      // console.log("openChat: Obtained chatId", chatId, "for appSlug:", appSlug, "ownerHandle:", ownerHandle, "mode:", req.mode);
 
       const wsp = ctx.send.provider as WSSendProvider;
       // console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
@@ -87,7 +87,7 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
         type: "vibes.diy.res-open-chat",
         chatId,
         appSlug,
-        userSlug,
+        ownerHandle,
         mode: req.mode,
       } satisfies ResOpenChat);
       if (resOpenChat.isErr()) {

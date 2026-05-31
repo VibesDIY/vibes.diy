@@ -4,7 +4,7 @@ export const EvtUserNotification = type({
   type: "'vibes.diy.evt-user-notification'",
   notificationType:
     "'build-complete' | 'build-failed' | 'vibe-published' | 'comment-posted' | 'request-approved' | 'request-revoked'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
 });
 export type EvtUserNotification = typeof EvtUserNotification.infer;

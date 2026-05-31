@@ -4,7 +4,7 @@ import React from "react";
 // because the db-explorer loads from the app subdomain without a versioned path.
 interface DBExplorerVibeApp {
   readonly appSlug: string;
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly fsId?: string;
 }
 

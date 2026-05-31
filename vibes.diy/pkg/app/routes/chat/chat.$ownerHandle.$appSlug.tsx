@@ -293,70 +293,70 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 }
 
 export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
-  const { userSlug = "preparing", appSlug = "session", fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
-  useDocumentTitle(`${userSlug} - ${appSlug} - vibes.diy`);
+  const { ownerHandle = "preparing", appSlug = "session", fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
+  useDocumentTitle(`${ownerHandle} - ${appSlug} - vibes.diy`);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [chat, setChat] = useState<LLMChat | null>(null);
   const openingRef = useRef(false);
-  const prevSlugsRef = useRef(`${userSlug}/${appSlug}`);
-  if (`${userSlug}/${appSlug}` !== prevSlugsRef.current) {
+  const prevSlugsRef = useRef(`${ownerHandle}/${appSlug}`);
+  if (`${ownerHandle}/${appSlug}` !== prevSlugsRef.current) {
     openingRef.current = false;
-    prevSlugsRef.current = `${userSlug}/${appSlug}`;
+    prevSlugsRef.current = `${ownerHandle}/${appSlug}`;
   }
   const { vibeDiyApi, webVars: svcVars, srvVibeSandbox } = useVibesDiy();
-  const shareModal = useShareModal({ userSlug, appSlug, fsId, vibeDiyApi });
+  const shareModal = useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi });
   const { isSignedIn } = useAuth();
   const [isOwner, setIsOwner] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingBump, setPendingBump] = useState(0);
 
   useEffect(() => {
-    if (!isSignedIn || !userSlug) {
+    if (!isSignedIn || !ownerHandle) {
       setIsOwner(false);
       return;
     }
     let cancelled = false;
-    void vibeDiyApi.listUserSlugBindings({}).then((res) => {
+    void vibeDiyApi.listHandleBindings({}).then((res) => {
       if (cancelled) return;
       if (res.isErr()) {
         setIsOwner(false);
         return;
       }
-      setIsOwner(res.Ok().items.some((item) => item.userSlug === userSlug));
+      setIsOwner(res.Ok().items.some((item) => item.ownerHandle === ownerHandle));
     });
     return () => {
       cancelled = true;
     };
-  }, [isSignedIn, userSlug, vibeDiyApi]);
+  }, [isSignedIn, ownerHandle, vibeDiyApi]);
 
   useEffect(() => {
-    if (!isOwner || !userSlug || !appSlug) {
+    if (!isOwner || !ownerHandle || !appSlug) {
       setPendingCount(0);
       return;
     }
     let cancelled = false;
-    void vibeDiyApi.listRequestGrants({ appSlug, userSlug, pager: { limit: 100 } }).then((res) => {
+    void vibeDiyApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
       if (cancelled || res.isErr()) return;
       setPendingCount(res.Ok().items.filter((r) => r.state === "pending").length);
     });
     return () => {
       cancelled = true;
     };
-  }, [isOwner, userSlug, appSlug, vibeDiyApi, pendingBump]);
+  }, [isOwner, ownerHandle, appSlug, vibeDiyApi, pendingBump]);
 
   useEffect(() => {
-    if (!isOwner || !userSlug || !appSlug) {
+    if (!isOwner || !ownerHandle || !appSlug) {
       return;
     }
-    void vibeDiyApi.subscribeRequestGrants({ appSlug, userSlug });
+    void vibeDiyApi.subscribeRequestGrants({ appSlug, ownerHandle });
     const unsubscribe = vibeDiyApi.onRequestGrant((evt) => {
-      if (evt.grant.userSlug === userSlug && evt.grant.appSlug === appSlug) {
+      if (evt.grant.ownerHandle === ownerHandle && evt.grant.appSlug === appSlug) {
         setPendingBump((n) => n + 1);
       }
     });
     return unsubscribe;
-  }, [isOwner, userSlug, appSlug, vibeDiyApi]);
+  }, [isOwner, ownerHandle, appSlug, vibeDiyApi]);
 
   const prevShareOpenRef = useRef(shareModal.isOpen);
   useEffect(() => {
@@ -415,21 +415,21 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   useEffect(() => {
     return subscribeRecentVibesChanged((change) => {
-      if (change?.userSlug !== userSlug || change.appSlug !== appSlug || change.title === undefined) return;
+      if (change?.ownerHandle !== ownerHandle || change.appSlug !== appSlug || change.title === undefined) return;
       dispatch({ type: "setTitle", title: change.title.length > 0 ? change.title : appSlug });
     });
-  }, [userSlug, appSlug]);
+  }, [ownerHandle, appSlug]);
 
   // Clear stale messages immediately when navigating to a different chat so
   // the old conversation is not visible while the new one loads.
-  const prevChatKeyRef = useRef(`${userSlug}/${appSlug}`);
+  const prevChatKeyRef = useRef(`${ownerHandle}/${appSlug}`);
   useEffect(() => {
-    const key = `${userSlug}/${appSlug}`;
+    const key = `${ownerHandle}/${appSlug}`;
     if (key !== prevChatKeyRef.current) {
       prevChatKeyRef.current = key;
       dispatch({ type: "clearChat", appSlug });
     }
-  }, [userSlug, appSlug, dispatch]);
+  }, [ownerHandle, appSlug, dispatch]);
 
   const handleThemeSelect = useCallback(
     (theme: VibesTheme) => {
@@ -441,7 +441,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       // themes apply session-only — they're not in the catalog so the backend
       // would drop them on validation.
       const isCatalog = !!getThemeBySlug(theme.slug);
-      const canPersist = isCatalog && userSlug !== "preparing" && appSlug !== "session";
+      const canPersist = isCatalog && ownerHandle !== "preparing" && appSlug !== "session";
       // Prefill the chat textarea with a default restyle prompt — only if
       // it's empty, so we don't clobber a half-typed message. The user can
       // edit before sending.
@@ -452,7 +452,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         // and an existing draft means the user is mid-thought — in either
         // case let the user hit submit themselves.
         if (canPersist) {
-          void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, theme: theme.slug });
+          void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug });
         }
         return;
       }
@@ -460,12 +460,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       // restyle turn — the server builds the prompt by reading the active
       // theme, so submitting while ensureAppSettings is in flight can
       // process the turn against the previous theme.
-      void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, theme: theme.slug }).then((res) => {
+      void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug }).then((res) => {
         if (res.isErr()) return;
         chatInput.current?.clickSubmit();
       });
     },
-    [vibeDiyApi, userSlug, appSlug]
+    [vibeDiyApi, ownerHandle, appSlug]
   );
 
   // Persist a palette choice (slug only) so future codegen turns and page
@@ -475,11 +475,11 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const handlePaletteSelect = useCallback(
     (colorTheme: string) => {
       dispatch({ type: "setColorTheme", colorTheme });
-      if (userSlug !== "preparing" && appSlug !== "session") {
-        void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, colorTheme });
+      if (ownerHandle !== "preparing" && appSlug !== "session") {
+        void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme });
       }
     },
-    [vibeDiyApi, userSlug, appSlug]
+    [vibeDiyApi, ownerHandle, appSlug]
   );
 
   // Live-only push: postMessage to the iframe so the runtime injects CSS
@@ -505,22 +505,22 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const handlePaletteRegenerate = useCallback(
     (paletteSlug: string, paletteName: string) => {
       dispatch({ type: "setColorTheme", colorTheme: paletteSlug });
-      const canPersist = userSlug !== "preparing" && appSlug !== "session";
+      const canPersist = ownerHandle !== "preparing" && appSlug !== "session";
       const prompt = `Update the styles to use the "${paletteName}" palette. Apply the palette's colors via CSS variables on :root (and inside @media (prefers-color-scheme: dark) for dark-mode tokens), then reference them as var(--token) everywhere instead of inline hex values.`;
       const prefilled = chatInput.current?.setPromptIfEmpty(prompt) ?? false;
       chatInput.current?.setFocus();
       if (!canPersist || !prefilled) {
         if (canPersist) {
-          void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, colorTheme: paletteSlug });
+          void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug });
         }
         return;
       }
-      void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, colorTheme: paletteSlug }).then((res) => {
+      void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug }).then((res) => {
         if (res.isErr()) return;
         chatInput.current?.clickSubmit();
       });
     },
-    [vibeDiyApi, userSlug, appSlug]
+    [vibeDiyApi, ownerHandle, appSlug]
   );
 
   // Reset reverts the override: pushing empty `colors` tells the runtime to
@@ -532,10 +532,10 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     if (srvVibeSandbox) {
       srvVibeSandbox.pushColorOverride({ type: "vibe.evt.color-override", colors: {} });
     }
-    if (userSlug !== "preparing" && appSlug !== "session") {
-      void vibeDiyApi.ensureAppSettings({ userSlug, appSlug, colorTheme: null });
+    if (ownerHandle !== "preparing" && appSlug !== "session") {
+      void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: null });
     }
-  }, [vibeDiyApi, userSlug, appSlug, srvVibeSandbox]);
+  }, [vibeDiyApi, ownerHandle, appSlug, srvVibeSandbox]);
 
   // Hydrate the code editor from Apps.fileSystem when no ChatSections
   // exist for this fsId (e.g. a freshly forked vibe). The fetch is
@@ -543,11 +543,11 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   // getCode walks blocks first and this fallback is ignored.
   const hydratedFsIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (!fsId || !userSlug || !appSlug) return;
+    if (!fsId || !ownerHandle || !appSlug) return;
     if (hydratedFsIdsRef.current.has(fsId)) return;
     hydratedFsIdsRef.current.add(fsId);
     (async () => {
-      const rApp = await vibeDiyApi.getAppByFsId({ appSlug, userSlug, fsId });
+      const rApp = await vibeDiyApi.getAppByFsId({ appSlug, ownerHandle, fsId });
       if (rApp.isErr()) return;
       const app = rApp.Ok();
       const appJsx =
@@ -561,7 +561,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       const text = await rRes.Ok().text();
       dispatch({ type: "setHydratedSource", fsId, code: text.split("\n") });
     })();
-  }, [fsId, userSlug, appSlug, vibeDiyApi]);
+  }, [fsId, ownerHandle, appSlug, vibeDiyApi]);
 
   useEffect(() => {
     if (inConstruction) return;
@@ -580,7 +580,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         // Read fsId from the ref so future autosave-driven fsId changes don't
         // re-trigger this effect with the same promptToSend (loop bug).
         const currentFsId = fsIdRef.current;
-        const pathname = currentFsId ? `/chat/${userSlug}/${appSlug}/${currentFsId}` : `/chat/${userSlug}/${appSlug}`;
+        const pathname = currentFsId ? `/chat/${ownerHandle}/${appSlug}/${currentFsId}` : `/chat/${ownerHandle}/${appSlug}`;
         navigate({ pathname, search: newSearch.toString() }, { replace: true });
         const sentPrompt = promptToSend;
         // Clear promptToSend BEFORE firing so any re-render of this effect
@@ -607,14 +607,14 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       return; // Already opened or opening
     }
     openingRef.current = true;
-    vibeDiyApi.openChat({ userSlug, appSlug, mode: "chat" }).then((rChat) => {
+    vibeDiyApi.openChat({ ownerHandle, appSlug, mode: "chat" }).then((rChat) => {
       if (rChat.isErr()) {
-        console.error("CHAT-Error", rChat.Err(), userSlug, appSlug);
+        console.error("CHAT-Error", rChat.Err(), ownerHandle, appSlug);
         return;
       }
       setChat(rChat.Ok());
       dispatch({ type: "initChat", chat: rChat.Ok() });
-      vibeDiyApi.ensureAppSettings({ userSlug, appSlug }).then((rS) => {
+      vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
         if (rS.isOk()) {
           const s = rS.Ok().settings.entry.settings;
           if (s.title) dispatch({ type: "setTitle", title: s.title });
@@ -640,11 +640,11 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       });
       // For CLI-pushed apps with no chat history, look up the latest fsId
       if (!fsId) {
-        vibeDiyApi.getAppByFsId({ appSlug, userSlug }).then((rApp) => {
+        vibeDiyApi.getAppByFsId({ appSlug, ownerHandle }).then((rApp) => {
           if (rApp.isOk() && rApp.Ok().fsId) {
             const sp = new URLSearchParams(searchParams);
             if (!sp.has("view")) sp.set("view", "preview");
-            navigate({ pathname: `/chat/${userSlug}/${appSlug}/${rApp.Ok().fsId}`, search: sp.toString() }, { replace: true });
+            navigate({ pathname: `/chat/${ownerHandle}/${appSlug}/${rApp.Ok().fsId}`, search: sp.toString() }, { replace: true });
           }
         });
       }
@@ -654,7 +654,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         (chat as LLMChat).close();
       }
     };
-  }, [userSlug, appSlug, chat, openingRef, vibeDiyApi, promptToSend]);
+  }, [ownerHandle, appSlug, chat, openingRef, vibeDiyApi, promptToSend]);
 
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -664,7 +664,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   }, []);
 
   const sandboxUrl =
-    fsId && appSlug && userSlug
+    fsId && appSlug && ownerHandle
       ? (() => {
           const myUrl = URI.from(window.location.href);
           return BuildURI.from(
@@ -672,7 +672,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
               hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
               protocol: myUrl.protocol as "http" | "",
               port: myUrl.port,
-              bindings: { appSlug, userSlug, fsId },
+              bindings: { appSlug, ownerHandle, fsId },
             })
           )
             .setParam("npmUrl", svcVars.pkgRepos.workspace)
@@ -699,7 +699,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   currentViewRef.current = currentView;
 
   const fsIdClick = useCallback(
-    ({ fsId: newFsId }: { fsId: string; appSlug: string; userSlug: string }) => {
+    ({ fsId: newFsId }: { fsId: string; appSlug: string; ownerHandle: string }) => {
       // navigateToView();
       if (!["preview", "code"].includes(currentViewRef.current)) {
         currentViewRef.current = "preview";
@@ -709,14 +709,14 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       if (isMobileViewport()) {
         setMobilePreviewShown(true);
       }
-      navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
+      navigate({ pathname: `/chat/${ownerHandle}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
     },
-    [navigate, userSlug, appSlug, searchParams]
+    [navigate, ownerHandle, appSlug, searchParams]
   );
 
   const openVibe = useCallback(() => {
-    window.open(`/vibe/${userSlug}/${appSlug}/${fsId}`, "_blank");
-  }, [fsId, userSlug, appSlug]);
+    window.open(`/vibe/${ownerHandle}/${appSlug}/${fsId}`, "_blank");
+  }, [fsId, ownerHandle, appSlug]);
 
   const handleRetry = useCallback(
     (errorMsg: PromptError) => {
@@ -794,17 +794,17 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           const sp = new URLSearchParams(searchParams);
           if (!sp.has("view")) sp.set("view", "preview");
           console.log(`[CodeSave] navigating to new fsId: ${msg.fsRef.fsId} (promptId: ${targetPromptId})`);
-          navigate({ pathname: `/chat/${userSlug}/${appSlug}/${msg.fsRef.fsId}`, search: sp.toString() }, { replace: true });
+          navigate({ pathname: `/chat/${ownerHandle}/${appSlug}/${msg.fsRef.fsId}`, search: sp.toString() }, { replace: true });
           return;
         }
       }
     }
-  }, [promptState.blocks, searchParams, navigate, userSlug, appSlug, fsId]);
+  }, [promptState.blocks, searchParams, navigate, ownerHandle, appSlug, fsId]);
 
   // Clear pending save when switching chats
   useEffect(() => {
     pendingSavePromptIdRef.current = null;
-  }, [userSlug, appSlug]);
+  }, [ownerHandle, appSlug]);
 
   // Brand-new app first-paint: when the server persists the first (create-only)
   // scaffold block it emits block.end with fsRef.fsId. If we still have no fsId
@@ -833,13 +833,13 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
             lastNavigatedFsIdRef.current = newFsId;
             const sp = new URLSearchParams(searchParams);
             if (!sp.has("view")) sp.set("view", "preview");
-            navigate({ pathname: `/chat/${userSlug}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
+            navigate({ pathname: `/chat/${ownerHandle}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
           }
           return;
         }
       }
     }
-  }, [promptState.running, promptState.blocks, searchParams, navigate, userSlug, appSlug]);
+  }, [promptState.running, promptState.blocks, searchParams, navigate, ownerHandle, appSlug]);
 
   // Clear the chat input when a stream ends so a new prompt starts blank.
   useEffect(() => {
@@ -939,7 +939,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         <VibeAppContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          vibeHref={`/vibe/${userSlug}/${appSlug}/${fsId}`}
+          vibeHref={`/vibe/${ownerHandle}/${appSlug}/${fsId}`}
           sandboxUrl={sandboxUrl}
           onClose={() => setContextMenu(null)}
         />

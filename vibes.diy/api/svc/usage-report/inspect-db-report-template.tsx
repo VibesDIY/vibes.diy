@@ -28,7 +28,7 @@ interface ReportData {
   readonly membershipTimeseries: readonly Record<string, unknown>[];
   readonly membershipSlugsByDay: readonly { readonly day: string; readonly slugs: readonly string[] }[];
   readonly activeVibesTimeseries: readonly Record<string, unknown>[];
-  readonly userSlugBindingsTimeseries: readonly Record<string, unknown>[];
+  readonly handleBindingsTimeseries: readonly Record<string, unknown>[];
   readonly membershipsByApp: readonly Record<string, unknown>[];
   readonly tableStats: readonly {
     readonly table: string;
@@ -455,7 +455,7 @@ function ReportPage(data: ReportData): React.ReactElement {
     membershipTimeseries,
     membershipSlugsByDay,
     activeVibesTimeseries,
-    userSlugBindingsTimeseries,
+    handleBindingsTimeseries,
     membershipsByApp,
     tableStats,
     indexStats,
@@ -472,7 +472,7 @@ function ReportPage(data: ReportData): React.ReactElement {
       : totalDbBytes >= 1024 * 1024
         ? `${(totalDbBytes / (1024 * 1024)).toFixed(0)} MB`
         : `${(totalDbBytes / 1024).toFixed(0)} KB`;
-  const lastBindingsCount = userSlugBindingsTimeseries[userSlugBindingsTimeseries.length - 1]?.["user_slug_bindings_count"] ?? 0;
+  const lastBindingsCount = handleBindingsTimeseries[handleBindingsTimeseries.length - 1]?.["user_slug_bindings_count"] ?? 0;
 
   return (
     <html lang="en">
@@ -518,15 +518,15 @@ function ReportPage(data: ReportData): React.ReactElement {
 
           <TrendSection
             title="Vibes With Data"
-            description="Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct userSlug/appSlug pair in AppSlugBindings counts as one active vibe."
+            description="Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct ownerHandle/appSlug pair in AppSlugBindings counts as one active vibe."
             rows={activeVibesTimeseries}
             valueKey="active_vibes_count"
           />
 
           <TrendSection
             title="User Slug Bindings Over 30 Days"
-            description="Daily cumulative total of rows in UserSlugBindings over the last 30 days."
-            rows={userSlugBindingsTimeseries}
+            description="Daily cumulative total of rows in HandleBindings over the last 30 days."
+            rows={handleBindingsTimeseries}
             valueKey="user_slug_bindings_count"
           />
 

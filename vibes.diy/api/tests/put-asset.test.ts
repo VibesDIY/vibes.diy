@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 // End-to-end test for the put-asset flow:
-//   1. Owner WS-mints a grant for (userSlug, appSlug).
+//   1. Owner WS-mints a grant for (ownerHandle, appSlug).
 //   2. POST /assets with X-Asset-Grant header streams bytes.
 //   3. Response carries cid/getURL/size/uploadId.
 //   4. AssetUploads audit row is written with the uploaded data + assetURI.
@@ -52,7 +52,7 @@ describe("put-asset / asset-upload-grant end-to-end", { timeout: 30000 }, () => 
   let ownerApi: VibesDiyApi;
   let strangerApi: VibesDiyApi;
   let appSlug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const { ctx, wsPair, sthis, deviceCA } = await setupCtx();
@@ -68,11 +68,11 @@ describe("put-asset / asset-upload-grant end-to-end", { timeout: 30000 }, () => 
     const res = rApp.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
     appSlug = res.appSlug;
-    userSlug = res.userSlug;
+    ownerHandle = res.ownerHandle;
   }, 30000);
 
   it("mints a grant, uploads bytes, returns cid + writes AssetUploads", async () => {
-    const rGrant = await ownerApi.requestAssetUploadGrant({ userSlug, appSlug, mimeType: "text/plain" });
+    const rGrant = await ownerApi.requestAssetUploadGrant({ ownerHandle, appSlug, mimeType: "text/plain" });
     if (rGrant.isErr()) assert.fail(`grant failed: ${rGrant.Err().message}`);
     const grantRes = rGrant.Ok();
     if (!isResAssetUploadGrant(grantRes)) assert.fail("grant response shape mismatch");
@@ -105,7 +105,7 @@ describe("put-asset / asset-upload-grant end-to-end", { timeout: 30000 }, () => 
     const row = rows[0];
     expect(row.cid).toBe(body.cid);
     expect(row.assetURI).toBe(body.getURL);
-    expect(row.userSlug).toBe(userSlug);
+    expect(row.ownerHandle).toBe(ownerHandle);
     expect(row.appSlug).toBe(appSlug);
     expect(row.size).toBe(bytes.byteLength);
     expect(row.mimeType).toBe("text/plain");
@@ -114,7 +114,7 @@ describe("put-asset / asset-upload-grant end-to-end", { timeout: 30000 }, () => 
   });
 
   it("stranger cannot mint a grant for an app they don't have access to", async () => {
-    const rGrant = await strangerApi.requestAssetUploadGrant({ userSlug, appSlug });
+    const rGrant = await strangerApi.requestAssetUploadGrant({ ownerHandle, appSlug });
     expect(rGrant.isErr()).toBe(true);
   });
 
@@ -129,7 +129,7 @@ describe("put-asset / asset-upload-grant end-to-end", { timeout: 30000 }, () => 
   });
 
   it("POST /assets with tampered grant returns 401", async () => {
-    const rGrant = await ownerApi.requestAssetUploadGrant({ userSlug, appSlug });
+    const rGrant = await ownerApi.requestAssetUploadGrant({ ownerHandle, appSlug });
     if (rGrant.isErr()) assert.fail(`grant failed: ${rGrant.Err().message}`);
     const grantRes = rGrant.Ok();
     if (!isResAssetUploadGrant(grantRes)) assert.fail("grant response shape mismatch");
@@ -155,7 +155,7 @@ describe("put-asset / asset-upload-grant end-to-end", { timeout: 30000 }, () => 
     const rStored = await storeAndAuditAsset(appCtx.vibesCtx, {
       bytes,
       userId: "test-user-id",
-      userSlug,
+      ownerHandle,
       appSlug,
       mimeType: "image/png",
     });
@@ -172,7 +172,7 @@ describe("put-asset / asset-upload-grant end-to-end", { timeout: 30000 }, () => 
     const row = rows[0];
     expect(row.cid).toBe(stored.cid);
     expect(row.assetURI).toBe(stored.assetURI);
-    expect(row.userSlug).toBe(userSlug);
+    expect(row.ownerHandle).toBe(ownerHandle);
     expect(row.appSlug).toBe(appSlug);
     expect(row.userId).toBe("test-user-id");
     expect(row.mimeType).toBe("image/png");
@@ -191,15 +191,15 @@ describe("put-asset / asset-upload-grant end-to-end", { timeout: 30000 }, () => 
     if (!isResEnsureAppSlugOk(appRes)) assert.fail("Failed to create app");
     await ownerEditorSetup.api.ensureAppSettings({
       appSlug: appRes.appSlug,
-      userSlug: appRes.userSlug,
+      ownerHandle: appRes.ownerHandle,
       request: { enable: true, autoAcceptRole: "editor" },
     });
-    const rApproved = await editorSetup.api.requestAccess({ appSlug: appRes.appSlug, userSlug: appRes.userSlug });
+    const rApproved = await editorSetup.api.requestAccess({ appSlug: appRes.appSlug, ownerHandle: appRes.ownerHandle });
     if (!isResRequestAccessApproved(rApproved.Ok())) assert.fail("editor not auto-approved");
 
     const rGrant = await editorSetup.api.requestAssetUploadGrant({
       appSlug: appRes.appSlug,
-      userSlug: appRes.userSlug,
+      ownerHandle: appRes.ownerHandle,
     });
     expect(rGrant.isOk()).toBe(true);
     void editorCtx;

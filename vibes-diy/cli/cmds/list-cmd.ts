@@ -1,12 +1,5 @@
 import { command } from "cmd-ts";
-import {
-  ValidateTriggerCtx,
-  Result,
-  HandleTriggerCtx,
-  Option,
-  EventoHandler,
-  EventoResultType,
-} from "@adviser/cement";
+import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType } from "@adviser/cement";
 import { type } from "arktype";
 import { resRecentVibesItem } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
@@ -40,9 +33,7 @@ export const listEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqVibesList, ResV
     }
     return Promise.resolve(Result.Ok(Option.None()));
   },
-  handle: async (
-    ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqVibesList, ResVibesList>
-  ): Promise<Result<EventoResultType>> => {
+  handle: async (ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqVibesList, ResVibesList>): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
     if (!ectx.vibesDiyApiFactory) {
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
@@ -66,7 +57,7 @@ export const listEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqVibesList, ResV
 export function listCmd(ctx: CliCtx) {
   return command({
     name: "list",
-    description: "List your vibes (userSlug/appSlug). Use --json for NDJSON output.",
+    description: "List your vibes (ownerHandle/appSlug). Use --json for NDJSON output.",
     args: {
       ...cmdTsDefaultArgs(ctx),
     },

@@ -9,7 +9,7 @@ export function sendEmailOpts(vctx: QueueCtx, ops: EmailOps[]): Promise<Result<v
 
       const buri = BuildURI.from(vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL)
         .appendRelative("vibe")
-        .appendRelative(op.userSlug)
+        .appendRelative(op.ownerHandle)
         .appendRelative(op.appSlug);
 
       if (isEmailOpsInvite(op)) {
@@ -28,7 +28,7 @@ export function sendEmailOpts(vctx: QueueCtx, ops: EmailOps[]): Promise<Result<v
             text: [
               "Hello,",
 
-              `We wanted to inform you that your invitation as ${op.role} to the app "${op.appSlug}" on Vibes DIY has been revoked by ${op.userSlug}.`,
+              `We wanted to inform you that your invitation as ${op.role} to the app "${op.appSlug}" on Vibes DIY has been revoked by ${op.ownerHandle}.`,
 
               "If you have any questions or believe this was a mistake, please reach out to the app owner directly.",
             ].join("\n\n"),
@@ -37,11 +37,11 @@ export function sendEmailOpts(vctx: QueueCtx, ops: EmailOps[]): Promise<Result<v
         case "invite":
           raw = {
             to: op.dst,
-            subject: `You've been invited as ${op.role} a Vibe App from ${op.userSlug}`,
+            subject: `You've been invited as ${op.role} a Vibe App from ${op.ownerHandle}`,
             text: [
               "Hello,",
 
-              `You have been invited as ${op.role} to the app "${op.appSlug}" on Vibes DIY by ${op.userSlug}.`,
+              `You have been invited as ${op.role} to the app "${op.appSlug}" on Vibes DIY by ${op.ownerHandle}.`,
 
               "To accept the invitation and start collaborating, please click the link below:",
               `${buri.toString()}`,
@@ -55,7 +55,7 @@ export function sendEmailOpts(vctx: QueueCtx, ops: EmailOps[]): Promise<Result<v
             text: [
               "Hello,",
 
-              `Great news — ${op.userSlug} has approved your request to access the app "${op.appSlug}" on Vibes DIY as ${op.role}.`,
+              `Great news — ${op.ownerHandle} has approved your request to access the app "${op.appSlug}" on Vibes DIY as ${op.role}.`,
 
               "You can open the app here:",
               `${buri.toString()}`,
@@ -69,7 +69,7 @@ export function sendEmailOpts(vctx: QueueCtx, ops: EmailOps[]): Promise<Result<v
             text: [
               "Hello,",
 
-              `Unfortunately, your request to access the app "${op.appSlug}" on Vibes DIY was not approved by ${op.userSlug}.`,
+              `Unfortunately, your request to access the app "${op.appSlug}" on Vibes DIY was not approved by ${op.ownerHandle}.`,
 
               "If you think this was a mistake, you can reach out to the app owner directly.",
             ].join("\n\n"),

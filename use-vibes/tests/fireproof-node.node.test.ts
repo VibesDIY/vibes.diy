@@ -9,7 +9,7 @@ function makeOpts(overrides: Partial<FireproofOpts> = {}): FireproofOpts {
   return {
     apiUrl: "ws://test.invalid",
     appSlug: "my-app",
-    userSlug: "alice",
+    ownerHandle: "alice",
     getToken: fakeGetToken() as FireproofOpts["getToken"],
     ...overrides,
   };

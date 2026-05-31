@@ -90,7 +90,7 @@ export function useBuildCompletionNotifications(): void {
     });
   }, [vibeDiyApi]);
 
-  const handleNotification = useCallback(async (evt: { notificationType: string; userSlug: string; appSlug: string }) => {
+  const handleNotification = useCallback(async (evt: { notificationType: string; ownerHandle: string; appSlug: string }) => {
     const config = TYPE_MAP[evt.notificationType];
     if (config === undefined) return;
     if (prefsRef.current[config.prefKey] === false) return;
@@ -105,8 +105,8 @@ export function useBuildCompletionNotifications(): void {
     if (!document.hidden && document.hasFocus()) return;
 
     const notification = new Notification(config.title, {
-      body: config.body(evt.userSlug, evt.appSlug),
-      tag: `vibes-diy-${evt.notificationType}-${evt.userSlug}-${evt.appSlug}`,
+      body: config.body(evt.ownerHandle, evt.appSlug),
+      tag: `vibes-diy-${evt.notificationType}-${evt.ownerHandle}-${evt.appSlug}`,
     });
 
     notification.onclick = () => {

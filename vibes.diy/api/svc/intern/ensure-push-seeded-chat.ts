@@ -28,7 +28,7 @@ function toSeedFile(file: VibeFile): SeedFile | undefined {
 
 export interface EnsurePushSeededChatOpts {
   readonly userId: string;
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly appSlug: string;
   readonly fsId?: string;
   readonly mode: "dev" | "production";
@@ -50,7 +50,7 @@ export interface EnsurePushSeededChatResult {
 
 /**
  * Idempotent chat-seed for the `vibes-diy push` flow. If a ChatContext
- * already exists for (userId, userSlug, appSlug) AND a ChatSection is
+ * already exists for (userId, ownerHandle, appSlug) AND a ChatSection is
  * present for that chatId, return untouched — that chat is fully seeded
  * or has accumulated real conversation history beyond the seed, either
  * of which we must not overwrite.
@@ -66,8 +66,8 @@ export interface EnsurePushSeededChatResult {
  * Seeded rows (all keyed off the same chatId / promptId):
  *
  * 1. ChatContexts: enables `openChat({mode:"chat"})` → `ensureChatId` to
- *    resolve the (userSlug, appSlug) pair back to a chatId. CLI `edit`
- *    (edit-cmd.ts) and the web continuation (chat.$userSlug.$appSlug.tsx)
+ *    resolve the (ownerHandle, appSlug) pair back to a chatId. CLI `edit`
+ *    (edit-cmd.ts) and the web continuation (chat.$ownerHandle.$appSlug.tsx)
  *    both use mode "chat" and this table. (Mode "app"/"img" goes through
  *    applicationChats via ensureApplicationChatId, but those are iframe
  *    sandbox flows, not user-editing.)
@@ -91,7 +91,7 @@ export async function ensurePushSeededChat(
       .where(
         and(
           eq(vctx.sql.tables.chatContexts.userId, opts.userId),
-          eq(vctx.sql.tables.chatContexts.userSlug, opts.userSlug),
+          eq(vctx.sql.tables.chatContexts.ownerHandle, opts.ownerHandle),
           eq(vctx.sql.tables.chatContexts.appSlug, opts.appSlug)
         )
       )
@@ -139,7 +139,7 @@ export async function ensurePushSeededChat(
         chatId,
         userId: opts.userId,
         appSlug: opts.appSlug,
-        userSlug: opts.userSlug,
+        ownerHandle: opts.ownerHandle,
         created: now.toISOString(),
       })
     );
@@ -149,7 +149,7 @@ export async function ensurePushSeededChat(
   if (opts.fsId) {
     const fsRef = {
       appSlug: opts.appSlug,
-      userSlug: opts.userSlug,
+      ownerHandle: opts.ownerHandle,
       mode: opts.mode,
       fsId: opts.fsId,
     };
@@ -188,7 +188,7 @@ export async function ensurePushSeededChat(
       ? {
           fsRef: {
             appSlug: opts.appSlug,
-            userSlug: opts.userSlug,
+            ownerHandle: opts.ownerHandle,
             mode: opts.mode,
             fsId: opts.fsId,
           },

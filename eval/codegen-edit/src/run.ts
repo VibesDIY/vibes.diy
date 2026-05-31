@@ -42,7 +42,7 @@ interface CorpusEntry {
 
 interface RunArgs {
   promptId: string | undefined;
-  userSlug: string;
+  ownerHandle: string;
   apiUrl: string;
   archiveRoot: string;
   promptsPath: string;
@@ -96,7 +96,7 @@ async function runEntry(args: RunArgs, entry: CorpusEntry): Promise<void> {
   const startedAt = new Date().toISOString();
   const manifest: RunManifest = {
     promptId: entry.id,
-    userSlug: args.userSlug,
+    ownerHandle: args.ownerHandle,
     appSlug: "(pending)",
     apiUrl: args.apiUrl,
     ...(args.model !== undefined ? { model: args.model } : {}),
@@ -124,7 +124,7 @@ async function runEntry(args: RunArgs, entry: CorpusEntry): Promise<void> {
 
   const api = auth.factory(args.apiUrl);
   const rChat = await api.openChat({
-    userSlug: args.userSlug,
+    ownerHandle: args.ownerHandle,
     prompt: entry.create,
     mode: "chat",
   });
@@ -135,7 +135,7 @@ async function runEntry(args: RunArgs, entry: CorpusEntry): Promise<void> {
   }
   const chat = rChat.Ok();
   manifest.appSlug = chat.appSlug;
-  manifest.userSlug = chat.userSlug;
+  manifest.ownerHandle = chat.ownerHandle;
   await writeManifest(archive, manifest);
   stderr.write(`  appSlug: ${chat.appSlug}\n`);
 
@@ -272,7 +272,7 @@ const cmd = command({
       displayName: "promptId",
       description: "Corpus entry id (defaults to first entry)",
     }),
-    userSlug: option({
+    ownerHandle: option({
       long: "user-slug",
       type: string,
       defaultValue: () => DEFAULT_USER_SLUG,
@@ -314,7 +314,7 @@ const cmd = command({
     await runEntry(
       {
         promptId: args.promptId,
-        userSlug: args.userSlug,
+        ownerHandle: args.ownerHandle,
         apiUrl: args.apiUrl,
         archiveRoot: args.archiveRoot,
         promptsPath: args.promptsPath,

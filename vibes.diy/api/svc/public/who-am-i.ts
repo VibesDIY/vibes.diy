@@ -7,7 +7,7 @@ import {
   W3CWebSocketEvent,
   ClerkClaim,
   isUserSettingProfile,
-  isUserSettingDefaultUserSlug,
+  isUserSettingDefaultHandle,
   type DbAcl,
   COMMENTS_DB_NAME,
   COMMENTS_DEFAULT_ACL,
@@ -56,7 +56,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   const rSettings = await ensureAppSettings(vctx, {
     type: "vibes.diy.req-ensure-app-settings",
     appSlug,
-    userSlug: ownerUserSlug,
+    ownerHandle: ownerUserSlug,
     env: [],
   });
   if (rSettings.isErr()) return Result.Err(rSettings.Err());
@@ -93,7 +93,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   let displayOverride: string | undefined;
   const items = (userSettingsRow?.settings as unknown[]) ?? [];
   for (const item of items) {
-    if (isUserSettingDefaultUserSlug(item) && !viewerSlug) viewerSlug = item.userSlug;
+    if (isUserSettingDefaultHandle(item) && !viewerSlug) viewerSlug = item.ownerHandle;
     if (isUserSettingProfile(item)) {
       if (item.displayName) displayOverride = item.displayName;
     }
@@ -101,9 +101,9 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
 
   if (!viewerSlug) {
     const binding = await vctx.sql.db
-      .select({ handle: vctx.sql.tables.userSlugBinding.handle })
-      .from(vctx.sql.tables.userSlugBinding)
-      .where(eq(vctx.sql.tables.userSlugBinding.userId, viewerUserId))
+      .select({ handle: vctx.sql.tables.handleBinding.handle })
+      .from(vctx.sql.tables.handleBinding)
+      .where(eq(vctx.sql.tables.handleBinding.userId, viewerUserId))
       .limit(1)
       .then((r) => r[0]);
     viewerSlug = binding?.handle;

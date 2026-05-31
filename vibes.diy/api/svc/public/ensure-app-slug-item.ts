@@ -71,7 +71,7 @@ export async function ensureAppSlugItem(
     claims: req._auth.verifiedAuth.claims,
     userId: req._auth.verifiedAuth.claims.userId,
     appSlug: req.appSlug,
-    userSlug: req.userSlug,
+    ownerHandle: req.ownerHandle,
   });
   if (rAppSlugBinding.isErr()) {
     return Result.Err(rAppSlugBinding);
@@ -136,14 +136,14 @@ export async function ensureAppSlugItem(
 
   // let wrapperUrl: string;
   // if (req.mode === "production") {
-  //   wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
+  //   wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().ownerHandle}/${res.Ok().appSlug}/${res.Ok().fsId}`;
   // } else {
-  //   wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().userSlug}/${res.Ok().appSlug}/${res.Ok().fsId}`;
+  //   wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().ownerHandle}/${res.Ok().appSlug}/${res.Ok().fsId}`;
   // }
   const entryPointUrl = calcEntryPointUrl({
     ...vctx.params.vibes.svc,
     bindings: {
-      userSlug: ensured.userSlug,
+      ownerHandle: ensured.ownerHandle,
       appSlug: ensured.appSlug,
       fsId: ensured.fsId,
     },
@@ -153,7 +153,7 @@ export async function ensureAppSlugItem(
     await vctx.postQueue({
       payload: {
         type: "vibes.diy.evt-new-fs-id",
-        userSlug: ensured.userSlug,
+        ownerHandle: ensured.ownerHandle,
         appSlug: ensured.appSlug,
         fsId: ensured.fsId,
         vibeUrl: entryPointUrl,
@@ -176,13 +176,13 @@ export async function ensureAppSlugItem(
   if (metadataPrompt) {
     const rMetadata = await ensureAppMetadata(vctx, {
       userId: req._auth.verifiedAuth.claims.userId,
-      userSlug: ensured.userSlug,
+      ownerHandle: ensured.ownerHandle,
       appSlug: ensured.appSlug,
       prompt: metadataPrompt,
       src: "ensureAppSlugItem",
     });
     if (rMetadata.isErr()) {
-      console.warn(`ensureAppSlugItem: ensureAppMetadata failed for ${ensured.userSlug}/${ensured.appSlug}:`, rMetadata.Err());
+      console.warn(`ensureAppSlugItem: ensureAppMetadata failed for ${ensured.ownerHandle}/${ensured.appSlug}:`, rMetadata.Err());
     }
   }
 
@@ -195,19 +195,19 @@ export async function ensureAppSlugItem(
   // the existing chat and skip seeding.
   const rSeed = await ensurePushSeededChat(vctx, {
     userId: req._auth.verifiedAuth.claims.userId,
-    userSlug: ensured.userSlug,
+    ownerHandle: ensured.ownerHandle,
     appSlug: ensured.appSlug,
     fsId: ensured.fsId,
     mode: req.mode,
     fileSystem: req.fileSystem,
   });
   if (rSeed.isErr()) {
-    console.warn(`ensureAppSlugItem: ensurePushSeededChat failed for ${ensured.userSlug}/${ensured.appSlug}:`, rSeed.Err());
+    console.warn(`ensureAppSlugItem: ensurePushSeededChat failed for ${ensured.ownerHandle}/${ensured.appSlug}:`, rSeed.Err());
   }
   return Result.Ok({
     type: "vibes.diy.res-ensure-app-slug",
     appSlug: ensured.appSlug,
-    userSlug: ensured.userSlug,
+    ownerHandle: ensured.ownerHandle,
     // userId: req._auth.verifiedAuth.claims.userId,
     // promptId: req.promptId,
     // chatId: req.chatId,
@@ -273,7 +273,7 @@ export const ensureAppSlugItemEvento: EventoHandler<
 
       // const res = rAppSlugBinding.Ok();
       // if (isResEnsureAppSlugOk(res)) {
-      // console.log("ensureAppSlugItem success", req.appSlug, '===', res.appSlug, req.userSlug, '===', res.userSlug);
+      // console.log("ensureAppSlugItem success", req.appSlug, '===', res.appSlug, req.ownerHandle, '===', res.ownerHandle);
       // }
 
       await ctx.send.send(ctx, rAppSlugBinding.Ok());

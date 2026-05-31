@@ -38,7 +38,7 @@ export const evtInviteGrantEvento: EventoHandler<unknown, MsgBase<EvtInviteGrant
         {
           action: "invite",
           dst: payload.grant.foreignInfo.givenEmail,
-          userSlug: payload.grant.userSlug,
+          ownerHandle: payload.grant.ownerHandle,
           appSlug: payload.grant.appSlug,
           role: payload.grant.role,
           token: payload.grant.tokenOrGrantUserId,
@@ -54,7 +54,7 @@ export const evtInviteGrantEvento: EventoHandler<unknown, MsgBase<EvtInviteGrant
         {
           action: "invite-revoked",
           dst: payload.grant.foreignInfo.givenEmail,
-          userSlug: payload.grant.userSlug,
+          ownerHandle: payload.grant.ownerHandle,
           appSlug: payload.grant.appSlug,
           role: payload.grant.role,
         },

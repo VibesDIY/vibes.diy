@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getCode } from "~/vibes.diy/app/components/ResultPreview/CodeEditor.js";
-import type { PromptState, PromptBlock } from "~/vibes.diy/app/routes/chat/chat.$userSlug.$appSlug.js";
+import type { PromptState, PromptBlock } from "~/vibes.diy/app/routes/chat/chat.$ownerHandle.$appSlug.js";
 
 // Pull the message type via PromptBlock so we don't add a direct dep on
 // @vibes.diy/api-types here.
@@ -82,7 +82,7 @@ function blockEnd(blockId: string, fsId: string): PromptAndBlockMsgs {
       given: [],
       calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
     },
-    fsRef: { appSlug: "a", userSlug: "u", mode: "dev", fsId },
+    fsRef: { appSlug: "a", ownerHandle: "u", mode: "dev", fsId },
   } as PromptAndBlockMsgs;
 }
 
@@ -153,13 +153,7 @@ describe("CodeEditor getCode — aider replace across fsIds", () => {
     // we want the historical snapshot (after turn 1 only), not turn 2's edits
     // applied on top.
     const create = blockOf("blk-1", "fsid-A", ["export default function App() { return null; }"]);
-    const replace = blockOf("blk-2", "fsid-B", [
-      "<<<<<<< SEARCH",
-      "return null;",
-      "=======",
-      "return <div />;",
-      ">>>>>>> REPLACE",
-    ]);
+    const replace = blockOf("blk-2", "fsid-B", ["<<<<<<< SEARCH", "return null;", "=======", "return <div />;", ">>>>>>> REPLACE"]);
     const state = makeState([create, replace]);
 
     const a = getCode(state, "fsid-A");

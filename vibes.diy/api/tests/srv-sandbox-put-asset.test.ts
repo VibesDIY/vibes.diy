@@ -110,7 +110,7 @@ describe("vibePutAsset host handler", () => {
     const blob = new Blob(["hello world"], { type: "text/plain" });
     sandbox.handleMessage(
       fakeMessageEvent(
-        { type: "vibe.req.putAsset", tid: "tid-1", userSlug: "alice", appSlug: "notes", blob },
+        { type: "vibe.req.putAsset", tid: "tid-1", ownerHandle: "alice", appSlug: "notes", blob },
         "https://notes--alice.example.com",
         iframe
       )
@@ -145,7 +145,7 @@ describe("vibePutAsset host handler", () => {
     const blob = new Blob(["x"], { type: "text/plain" });
     sandbox.handleMessage(
       fakeMessageEvent(
-        { type: "vibe.req.putAsset", tid: "tid-2", userSlug: "alice", appSlug: "notes", blob },
+        { type: "vibe.req.putAsset", tid: "tid-2", ownerHandle: "alice", appSlug: "notes", blob },
         "https://notes--alice.example.com",
         iframe
       )
@@ -178,7 +178,7 @@ describe("vibePutAsset host handler", () => {
     const blob = new Blob(["x"], { type: "text/plain" });
     sandbox.handleMessage(
       fakeMessageEvent(
-        { type: "vibe.req.putAsset", tid: "tid-3", userSlug: "alice", appSlug: "notes", blob },
+        { type: "vibe.req.putAsset", tid: "tid-3", ownerHandle: "alice", appSlug: "notes", blob },
         "https://notes--alice.example.com",
         iframe
       )
@@ -211,7 +211,7 @@ describe("vibePutAsset host handler", () => {
     const blob = new Blob(["bytes"], { type: "text/plain" });
     sandbox.handleMessage(
       fakeMessageEvent(
-        { type: "vibe.req.putAsset", tid: "tid-progress", userSlug: "alice", appSlug: "notes", blob },
+        { type: "vibe.req.putAsset", tid: "tid-progress", ownerHandle: "alice", appSlug: "notes", blob },
         "https://notes--alice.example.com",
         iframe
       )

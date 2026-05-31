@@ -13,7 +13,7 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
   const sthis = ensureSuperThis();
   let vibesCtx: VibesApiSQLCtx;
   let appSlug: string;
-  let userSlug: string; // alice's slug
+  let ownerHandle: string; // alice's slug
   let aliceUserId: string;
   let bobUserId: string;
 
@@ -66,23 +66,23 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     const res = rRes.Ok();
     if (!isResEnsureAppSlugOk(res)) throw new Error("Failed to create app for who-am-i test");
     appSlug = res.appSlug;
-    userSlug = res.userSlug; // alice's userSlug
+    ownerHandle = res.ownerHandle; // alice's ownerHandle
 
     // Set alice's profile with displayName override
     await aliceApi.ensureUserSettings({
       settings: [
         { type: "profile", displayName: "Alice the Great" },
-        { type: "defaultUserSlug", userSlug },
+        { type: "defaultHandle", ownerHandle },
       ],
     });
 
-    // Set bob's defaultUserSlug (bob's userSlug will be auto-assigned by the API)
+    // Set bob's defaultHandle (bob's ownerHandle will be auto-assigned by the API)
     // Grant bob editor access via request + autoAccept
-    await aliceApi.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "editor" } });
-    const rBob = await bobApi.requestAccess({ appSlug, userSlug });
+    await aliceApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "editor" } });
+    const rBob = await bobApi.requestAccess({ appSlug, ownerHandle });
     if (!isResRequestAccessApproved(rBob.Ok())) throw new Error("Bob not auto-approved");
 
-    // Read bob's actual userSlug so we can set his defaultUserSlug
+    // Read bob's actual ownerHandle so we can set his defaultHandle
     const bobInfoRes = await bobApi.ensureAppSlug({
       mode: "dev",
       fileSystem: [
@@ -96,16 +96,16 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     });
     const bobInfo = bobInfoRes.Ok();
     if (!isResEnsureAppSlugOk(bobInfo)) throw new Error("Failed to create bob app");
-    const bobUserSlug = bobInfo.userSlug;
+    const bobUserSlug = bobInfo.ownerHandle;
 
     await bobApi.ensureUserSettings({
-      settings: [{ type: "defaultUserSlug", userSlug: bobUserSlug }],
+      settings: [{ type: "defaultHandle", ownerHandle: bobUserSlug }],
     });
 
     // Configure app settings with a dbAcl override for "comments"
     await aliceApi.ensureAppSettings({
       appSlug,
-      userSlug,
+      ownerHandle,
       dbAcl: {
         dbName: "comments",
         acl: { write: ["members"] },
@@ -117,7 +117,7 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     const res = await resolveWhoAmI(vibesCtx, {
       auth: undefined,
       appSlug,
-      ownerUserSlug: userSlug,
+      ownerUserSlug: ownerHandle,
       apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
@@ -130,14 +130,14 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     const res = await resolveWhoAmI(vibesCtx, {
       auth: makeAuth(aliceUserId, "alice-test"),
       appSlug,
-      ownerUserSlug: userSlug,
+      ownerUserSlug: ownerHandle,
       apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
-    expect(r.viewer?.userSlug).toBe(userSlug);
+    expect(r.viewer?.userHandle).toBe(ownerHandle);
     expect(r.access).toBe("owner");
-    expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${userSlug}/avatar`);
+    expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${ownerHandle}/avatar`);
     expect(r.viewer?.avatarUrl.includes("//u/")).toBe(false);
   });
 
@@ -145,27 +145,27 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     const res = await resolveWhoAmI(vibesCtx, {
       auth: makeAuth(aliceUserId, "alice-test"),
       appSlug,
-      ownerUserSlug: userSlug,
+      ownerUserSlug: ownerHandle,
       apiBaseUrl: "https://api.test/",
     });
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
-    expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${userSlug}/avatar`);
+    expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${ownerHandle}/avatar`);
     expect(r.viewer?.avatarUrl.includes("//u/")).toBe(false);
   });
 
-  it("returns viewer userSlug + 'editor' access for an invited editor", async () => {
+  it("returns viewer ownerHandle + 'editor' access for an invited editor", async () => {
     const res = await resolveWhoAmI(vibesCtx, {
       auth: makeAuth(bobUserId, "bob-test"),
       appSlug,
-      ownerUserSlug: userSlug,
+      ownerUserSlug: ownerHandle,
       apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
-    expect(typeof r.viewer?.userSlug).toBe("string");
+    expect(typeof r.viewer?.userHandle).toBe("string");
     expect(r.access).toBe("editor");
-    expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${r.viewer?.userSlug}/avatar`);
+    expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${r.viewer?.userHandle}/avatar`);
     expect(r.viewer?.avatarUrl.includes("//u/")).toBe(false);
   });
 
@@ -173,7 +173,7 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     const res = await resolveWhoAmI(vibesCtx, {
       auth: makeAuth(aliceUserId, "alice-test"),
       appSlug,
-      ownerUserSlug: userSlug,
+      ownerUserSlug: ownerHandle,
       apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
@@ -218,7 +218,7 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     const res = await resolveWhoAmI(freshCtx.vibesCtx, {
       auth: undefined,
       appSlug: freshRes.appSlug,
-      ownerUserSlug: freshRes.userSlug,
+      ownerUserSlug: freshRes.ownerHandle,
       apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
@@ -233,7 +233,7 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     const res = await resolveWhoAmI(vibesCtx, {
       auth: undefined,
       appSlug,
-      ownerUserSlug: userSlug,
+      ownerUserSlug: ownerHandle,
       apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
@@ -248,7 +248,7 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     const res = await resolveWhoAmI(vibesCtx, {
       auth: makeAuth(aliceUserId, "alice-test"),
       appSlug,
-      ownerUserSlug: userSlug,
+      ownerUserSlug: ownerHandle,
       apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);

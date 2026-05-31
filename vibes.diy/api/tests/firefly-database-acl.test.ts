@@ -11,7 +11,7 @@ beforeAll(() => {
 
 function makeFakeTransport(setDbAclFn?: (dbName: string, acl: DbAcl) => void): FireflyTransport {
   return {
-    svc: { vibeApp: { appSlug: "myapp", userSlug: "alice", fsId: "fs1" } },
+    svc: { vibeApp: { appSlug: "myapp", ownerHandle: "alice", fsId: "fs1" } },
     putDoc: () => Promise.resolve(Result.Err("not used")),
     getDoc: () => Promise.resolve(Result.Err("not used")),
     queryDocs: () => Promise.resolve(Result.Err("not used")),

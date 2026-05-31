@@ -6,7 +6,7 @@ import { dbAcl, DbAcl } from "./db-acls.js";
 export const sharingGrantItem = type({
   grant: "'allow' | 'deny'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string", // could be "*" for all databases
 });
 export type SharingGrantItem = typeof sharingGrantItem.infer;
@@ -31,13 +31,13 @@ export function isUserSettingModelDefaults(obj: unknown): obj is UserSettingMode
   return !(userSettingModelDefaults(obj) instanceof type.errors);
 }
 
-export const userSettingDefaultUserSlug = type({
-  type: "'defaultUserSlug'",
-  userSlug: "string",
+export const userSettingDefaultHandle = type({
+  type: "'defaultHandle'",
+  ownerHandle: "string",
 });
-export type UserSettingDefaultUserSlug = typeof userSettingDefaultUserSlug.infer;
-export function isUserSettingDefaultUserSlug(obj: unknown): obj is UserSettingDefaultUserSlug {
-  return !(userSettingDefaultUserSlug(obj) instanceof type.errors);
+export type UserSettingDefaultHandle = typeof userSettingDefaultHandle.infer;
+export function isUserSettingDefaultHandle(obj: unknown): obj is UserSettingDefaultHandle {
+  return !(userSettingDefaultHandle(obj) instanceof type.errors);
 }
 
 export const userSettingProfile = type({
@@ -66,7 +66,7 @@ export function isUserSettingNotifications(obj: unknown): obj is UserSettingNoti
 
 export const userSettingItem = userSettingShareing
   .or(userSettingModelDefaults)
-  .or(userSettingDefaultUserSlug)
+  .or(userSettingDefaultHandle)
   .or(userSettingProfile)
   .or(userSettingNotifications);
 
@@ -95,7 +95,7 @@ export const reqEnsureAppSettingsBase = type({
   type: "'vibes.diy.req-ensure-app-settings'",
   "auth?": dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 });
 
 export type ReqEnsureAppSettingsBase = typeof reqEnsureAppSettingsBase.infer;
@@ -326,7 +326,7 @@ export const resEnsureAppSettings = type({
   userId: "string",
   appSlug: "string",
   ledger: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   tenant: "string",
   "error?": "string",
   settings: AppSettings,
@@ -342,7 +342,7 @@ export const reqListApplicationChats = type({
   type: "'vibes.diy.req-list-application-chats'",
   auth: dashAuthType,
   "appSlug?": "string",
-  "userSlug?": "string",
+  "ownerHandle?": "string",
   "limit?": "number", // default 20, max 100
   "cursor?": "string", // ISO timestamp cursor for next page (exclusive)
 });
@@ -351,7 +351,7 @@ export type ReqListApplicationChats = typeof reqListApplicationChats.infer;
 export const resListApplicationChatsItem = type({
   chatId: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   created: "string",
 });
 export type ResListApplicationChatsItem = typeof resListApplicationChatsItem.infer;
@@ -368,7 +368,7 @@ export function isResListApplicationChats(obj: unknown): obj is ResListApplicati
 
 export const evtAppSetting = type({
   type: "'vibes.diy.evt-app-setting'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   settings: ActiveEntry.array(),
 });

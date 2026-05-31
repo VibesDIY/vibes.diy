@@ -100,8 +100,11 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
   }
 
   return {
-    notifyDocChanged: async (evt: { userSlug: string; appSlug: string; dbName: string; docId: string }, senderConnId: string) => {
-      const key = `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
+    notifyDocChanged: async (
+      evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string },
+      senderConnId: string
+    ) => {
+      const key = `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
       if (shouldLogDocNotify) {
         console.info("[docNotify] notifyDocChanged key:", key, "shard:", dn.shardId.slice(0, 8), "conn:", senderConnId.slice(0, 8));
       }
@@ -125,7 +128,7 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
       await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
     },
     notifyRequestGrantChanged: async (evt: EvtRequestGrant, senderConnId: string) => {
-      const key = `${evt.grant.userSlug}/${evt.grant.appSlug}`;
+      const key = `${evt.grant.ownerHandle}/${evt.grant.appSlug}`;
       if (shouldLogDocNotify) {
         console.info(
           "[docNotify] notifyRequestGrantChanged key:",

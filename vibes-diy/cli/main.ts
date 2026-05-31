@@ -301,7 +301,7 @@ async function main(): Promise<number> {
             } else {
               for (const item of items) {
                 const label = item.title ? `  ${item.title}` : "";
-                console.log(`${item.userSlug}/${item.appSlug}${label}`);
+                console.log(`${item.ownerHandle}/${item.appSlug}${label}`);
               }
             }
             break;

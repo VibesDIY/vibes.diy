@@ -33,7 +33,7 @@ async function computeActiveMembers(vctx: VibesApiSQLCtx): Promise<ResReportActi
   const reqRows = await vctx.sql.db
     .select({
       memberId: t.requestGrants.foreignUserId,
-      userSlug: t.requestGrants.userSlug,
+      ownerHandle: t.requestGrants.ownerHandle,
       appSlug: t.requestGrants.appSlug,
     })
     .from(t.requestGrants)
@@ -42,7 +42,7 @@ async function computeActiveMembers(vctx: VibesApiSQLCtx): Promise<ResReportActi
   const invRows = await vctx.sql.db
     .select({
       memberId: t.inviteGrants.tokenOrGrantUserId,
-      userSlug: t.inviteGrants.userSlug,
+      ownerHandle: t.inviteGrants.ownerHandle,
       appSlug: t.inviteGrants.appSlug,
     })
     .from(t.inviteGrants)
@@ -51,7 +51,7 @@ async function computeActiveMembers(vctx: VibesApiSQLCtx): Promise<ResReportActi
   // Build a lookup: "userId:ownerUserSlug:appSlug" → is a member
   const memberKeys = new Set<string>();
   for (const r of [...reqRows, ...invRows]) {
-    memberKeys.add(`${r.memberId}:${r.userSlug}:${r.appSlug}`);
+    memberKeys.add(`${r.memberId}:${r.ownerHandle}:${r.appSlug}`);
   }
 
   const days = last30DaysUTC();
@@ -60,7 +60,7 @@ async function computeActiveMembers(vctx: VibesApiSQLCtx): Promise<ResReportActi
   const writes = await vctx.sql.db
     .select({
       userId: t.appDocuments.userId,
-      userSlug: t.appDocuments.userSlug,
+      ownerHandle: t.appDocuments.ownerHandle,
       appSlug: t.appDocuments.appSlug,
       created: t.appDocuments.created,
     })
@@ -71,7 +71,7 @@ async function computeActiveMembers(vctx: VibesApiSQLCtx): Promise<ResReportActi
   const dayBuckets = new Map<string, Set<string>>();
   for (const w of writes) {
     if (w.userId === "unknown") continue;
-    const key = `${w.userId}:${w.userSlug}:${w.appSlug}`;
+    const key = `${w.userId}:${w.ownerHandle}:${w.appSlug}`;
     if (!memberKeys.has(key)) continue;
     const day = w.created.slice(0, 10);
     let bucket = dayBuckets.get(day);

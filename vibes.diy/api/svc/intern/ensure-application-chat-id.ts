@@ -9,7 +9,7 @@ interface EnsureChatIdPResult {
   blocks: PromptAndBlockMsgs[];
   created: Date;
   appSlug: string;
-  userSlug: string;
+  ownerHandle: string;
 }
 
 export async function ensureApplicationChatId({
@@ -21,7 +21,7 @@ export async function ensureApplicationChatId({
 }): Promise<Result<EnsureChatIdPResult>> {
   const { chatId } = req;
   const appSlug = req.appSlug;
-  const userSlug = req.userSlug;
+  const ownerHandle = req.ownerHandle;
   if (chatId) {
     const condition = [
       eq(ctx.sql.tables.applicationChats.userId, req._auth.verifiedAuth.claims.userId),
@@ -35,7 +35,7 @@ export async function ensureApplicationChatId({
           ctx.sql.tables.appSlugBinding,
           and(
             eq(ctx.sql.tables.appSlugBinding.appSlug, ctx.sql.tables.applicationChats.appSlug),
-            eq(ctx.sql.tables.appSlugBinding.userSlug, ctx.sql.tables.applicationChats.userSlug)
+            eq(ctx.sql.tables.appSlugBinding.ownerHandle, ctx.sql.tables.applicationChats.ownerHandle)
           )
         )
         .where(and(...condition))
@@ -55,21 +55,21 @@ export async function ensureApplicationChatId({
     }
     return Result.Ok({
       appSlug: result.ApplicationChats.appSlug,
-      userSlug: result.ApplicationChats.userSlug,
+      ownerHandle: result.ApplicationChats.ownerHandle,
       chatId: result.ApplicationChats.chatId,
       blocks,
       created: new Date(result.ApplicationChats.created),
     });
   } else {
-    if (!(appSlug && userSlug)) {
-      return Result.Err("appSlug and userSlug are required if chatId is not provided");
+    if (!(appSlug && ownerHandle)) {
+      return Result.Err("appSlug and ownerHandle are required if chatId is not provided");
     }
   }
   const rHasAppUserSlug = await exception2Result(() =>
     ctx.sql.db
       .select()
       .from(ctx.sql.tables.appSlugBinding)
-      .where(and(eq(ctx.sql.tables.appSlugBinding.appSlug, appSlug), eq(ctx.sql.tables.appSlugBinding.userSlug, userSlug)))
+      .where(and(eq(ctx.sql.tables.appSlugBinding.appSlug, appSlug), eq(ctx.sql.tables.appSlugBinding.ownerHandle, ownerHandle)))
       .limit(1)
       .then((r) => r[0])
   );
@@ -77,14 +77,14 @@ export async function ensureApplicationChatId({
     return Result.Err(`Failed to query app slug binding: ${rHasAppUserSlug.Err().message}`);
   }
   if (!rHasAppUserSlug.Ok()) {
-    return Result.Err(`No app slug binding found for appSlug ${appSlug} and userSlug ${userSlug}`);
+    return Result.Err(`No app slug binding found for appSlug ${appSlug} and ownerHandle ${ownerHandle}`);
   }
   const newChatId = ctx.sthis.nextId(12).str;
   const created = new Date();
   const value = {
     userId: req._auth.verifiedAuth.claims.userId,
     appSlug,
-    userSlug,
+    ownerHandle,
     chatId: newChatId,
     blocks: [],
     created: created.toISOString(),
@@ -95,7 +95,7 @@ export async function ensureApplicationChatId({
   }
   return Result.Ok({
     appSlug,
-    userSlug,
+    ownerHandle,
     chatId: newChatId,
     blocks: [],
     created: created,

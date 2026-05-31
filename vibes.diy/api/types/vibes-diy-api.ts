@@ -17,12 +17,12 @@ import {
   ResSetModeFs,
   ReqForkApp,
   ResForkApp,
-  ReqListUserSlugBindings,
-  ResListUserSlugBindings,
-  ReqCreateUserSlugBinding,
-  ResCreateUserSlugBinding,
-  ReqDeleteUserSlugBinding,
-  ResDeleteUserSlugBinding,
+  ReqListHandleBindings,
+  ResListHandleBindings,
+  ReqCreateHandleBinding,
+  ResCreateHandleBinding,
+  ReqDeleteHandleBinding,
+  ResDeleteHandleBinding,
 } from "./app.js";
 import {
   ReqOpenChat,
@@ -187,9 +187,9 @@ export interface VibesDiyApiIface<_T = unknown> {
   subscribeRequestGrants(req: Req<ReqSubscribeRequestGrants>): Promise<Result<ResSubscribeRequestGrants, VibesDiyError>>;
   hasAccessRequest(req: Req<ReqHasAccessRequest>): Promise<Result<ResHasAccessRequest, VibesDiyError>>;
 
-  listUserSlugBindings(req: Req<ReqListUserSlugBindings>): Promise<Result<ResListUserSlugBindings, VibesDiyError>>;
-  createUserSlugBinding(req: Req<ReqCreateUserSlugBinding>): Promise<Result<ResCreateUserSlugBinding, VibesDiyError>>;
-  deleteUserSlugBinding(req: Req<ReqDeleteUserSlugBinding>): Promise<Result<ResDeleteUserSlugBinding, VibesDiyError>>;
+  listHandleBindings(req: Req<ReqListHandleBindings>): Promise<Result<ResListHandleBindings, VibesDiyError>>;
+  createHandleBinding(req: Req<ReqCreateHandleBinding>): Promise<Result<ResCreateHandleBinding, VibesDiyError>>;
+  deleteHandleBinding(req: Req<ReqDeleteHandleBinding>): Promise<Result<ResDeleteHandleBinding, VibesDiyError>>;
 
   listModels(req: Req<ReqListModels>): Promise<Result<ResListModels, VibesDiyError>>;
 

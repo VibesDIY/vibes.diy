@@ -13,7 +13,7 @@ export const ReqDbDel = type({
   type: "'vibes-diy.cli.db.del'",
   apiUrl: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
   docId: "string",
 });
@@ -46,9 +46,9 @@ export const dbDelEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbDel, ResDbDe
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const rUser = await resolveUserSlug(api, ctx.validated.userSlug);
+    const rUser = await resolveUserSlug(api, ctx.validated.ownerHandle);
     if (rUser.isErr()) return Result.Err(rUser.Err());
-    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userSlug: rUser.Ok() });
+    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userHandle: rUser.Ok() });
     const r = await adapter.deleteDoc(ctx.validated.docId, ctx.validated.dbName);
     if (r.isErr()) return Result.Err(r.Err());
     const res = r.Ok();
@@ -92,7 +92,7 @@ export function dbDelCmd(ctx: CliCtx) {
         type: "vibes-diy.cli.db.del",
         apiUrl: args.apiUrl,
         appSlug: args.appSlug,
-        userSlug: args.userSlug,
+        ownerHandle: args.ownerHandle,
         dbName: args.dbName,
         docId,
       };

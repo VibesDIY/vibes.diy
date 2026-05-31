@@ -92,7 +92,7 @@ export function AllowFireproofSharing({ state, dbRef, onResult, onDismiss, onLog
             <span className="text-gray-500">app:</span> {dbRef.appSlug}
           </div>
           <div>
-            <span className="text-gray-500">user:</span> {dbRef.userSlug}
+            <span className="text-gray-500">user:</span> {dbRef.ownerHandle}
           </div>
           <div>
             <span className="text-gray-500">db:</span> {dbRef.dbName}

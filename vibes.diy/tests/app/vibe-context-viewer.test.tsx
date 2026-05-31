@@ -17,7 +17,7 @@ describe("VibeContextProvider", () => {
         mountParams={{
           usrEnv: {},
           viewerEnv: {
-            viewer: { userSlug: "alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
+            viewer: { userHandle: "alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
             access: "owner",
           },
         }}
@@ -25,7 +25,7 @@ describe("VibeContextProvider", () => {
         <Probe onCtx={(c) => (captured = c)} />
       </VibeContextProvider>
     );
-    expect(captured?.mountParams.viewerEnv?.viewer?.userSlug).toBe("alice");
+    expect(captured?.mountParams.viewerEnv?.viewer?.userHandle).toBe("alice");
     expect(captured?.mountParams.viewerEnv?.access).toBe("owner");
   });
 
@@ -47,7 +47,7 @@ describe("VibeContextProvider", () => {
       new MessageEvent("message", {
         data: {
           type: "vibe.evt.viewerChanged",
-          viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
+          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
           access: "viewer",
         },
       })
@@ -55,7 +55,7 @@ describe("VibeContextProvider", () => {
 
     // Wait for React state update to propagate.
     await waitFor(() => {
-      expect(captured?.mountParams.viewerEnv?.viewer?.userSlug).toBe("alice");
+      expect(captured?.mountParams.viewerEnv?.viewer?.userHandle).toBe("alice");
     });
     expect(captured?.mountParams.viewerEnv?.access).toBe("viewer");
     // avatarUrl is on the viewer object, not in viewerEnv root.

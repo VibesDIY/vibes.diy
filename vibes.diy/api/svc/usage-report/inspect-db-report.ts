@@ -55,7 +55,7 @@ function last30Days(): string[] {
 // All schema tables for row counting
 const schemaTableMap = {
   "public.Assets": pg.sqlAssets,
-  "public.UserSlugBindings": pg.sqlUserSlugBinding,
+  "public.UserSlugBindings": pg.sqlHandleBinding,
   "public.AppSlugBindings": pg.sqlAppSlugBinding,
   "public.Apps": pg.sqlApps,
   "public.ChatContexts": pg.sqlChatContexts,
@@ -114,7 +114,7 @@ async function main(): Promise<Result<void>> {
   const membershipSummaryRows = await db
     .select({
       membership_count: count(),
-      shared_app_count: sql<number>`count(distinct (${pg.sqlRequestGrants.userSlug}, ${pg.sqlRequestGrants.appSlug}))::int`,
+      shared_app_count: sql<number>`count(distinct (${pg.sqlRequestGrants.ownerHandle}, ${pg.sqlRequestGrants.appSlug}))::int`,
       distinct_member_count: countDistinct(pg.sqlRequestGrants.foreignUserId),
     })
     .from(pg.sqlRequestGrants)
@@ -125,16 +125,16 @@ async function main(): Promise<Result<void>> {
   const membershipsByApp = await db
     .select({
       owner_user_id: pg.sqlRequestGrants.userId,
-      userSlug: pg.sqlRequestGrants.userSlug,
+      ownerHandle: pg.sqlRequestGrants.ownerHandle,
       appSlug: pg.sqlRequestGrants.appSlug,
       memberships: countDistinct(pg.sqlRequestGrants.foreignUserId),
     })
     .from(pg.sqlRequestGrants)
     .where(eq(pg.sqlRequestGrants.state, "approved"))
-    .groupBy(pg.sqlRequestGrants.userId, pg.sqlRequestGrants.userSlug, pg.sqlRequestGrants.appSlug)
+    .groupBy(pg.sqlRequestGrants.userId, pg.sqlRequestGrants.ownerHandle, pg.sqlRequestGrants.appSlug)
     .orderBy(
       desc(countDistinct(pg.sqlRequestGrants.foreignUserId)),
-      asc(pg.sqlRequestGrants.userSlug),
+      asc(pg.sqlRequestGrants.ownerHandle),
       asc(pg.sqlRequestGrants.appSlug)
     )
     .limit(200);
@@ -160,10 +160,10 @@ async function main(): Promise<Result<void>> {
     .select({
       created: pg.sqlRequestGrants.created,
       foreignUserId: pg.sqlRequestGrants.foreignUserId,
-      memberSlug: pg.sqlUserSlugBinding.userSlug,
+      memberSlug: pg.sqlHandleBinding.handle,
     })
     .from(pg.sqlRequestGrants)
-    .leftJoin(pg.sqlUserSlugBinding, eq(pg.sqlRequestGrants.foreignUserId, pg.sqlUserSlugBinding.userId))
+    .leftJoin(pg.sqlHandleBinding, eq(pg.sqlRequestGrants.foreignUserId, pg.sqlHandleBinding.userId))
     .where(and(eq(pg.sqlRequestGrants.state, "approved"), lte(pg.sqlRequestGrants.created, `${lastDay}T23:59:59.999Z`)))
     .orderBy(asc(pg.sqlRequestGrants.created));
 
@@ -179,23 +179,23 @@ async function main(): Promise<Result<void>> {
   }
   const membershipSlugsByDay = days.map((day) => ({ day, slugs: newMemberSlugsByDay.get(day) ?? [] }));
 
-  // Active vibes timeseries — cumulative distinct userSlug+appSlug in AppSlugBindings per day
+  // Active vibes timeseries — cumulative distinct ownerHandle+appSlug in AppSlugBindings per day
   const activeVibesTimeseries: { day: string; active_vibes_count: number }[] = [];
   for (const day of days) {
     const dayEnd = `${day}T23:59:59.999Z`;
     const result = await db
-      .select({ cnt: sql<number>`count(distinct (${pg.sqlAppSlugBinding.userSlug}, ${pg.sqlAppSlugBinding.appSlug}))::int` })
+      .select({ cnt: sql<number>`count(distinct (${pg.sqlAppSlugBinding.ownerHandle}, ${pg.sqlAppSlugBinding.appSlug}))::int` })
       .from(pg.sqlAppSlugBinding)
       .where(lte(pg.sqlAppSlugBinding.created, dayEnd));
     activeVibesTimeseries.push({ day, active_vibes_count: result[0]?.cnt ?? 0 });
   }
 
   // User slug bindings timeseries — cumulative per day
-  const userSlugBindingsTimeseries: { day: string; user_slug_bindings_count: number }[] = [];
+  const handleBindingsTimeseries: { day: string; user_slug_bindings_count: number }[] = [];
   for (const day of days) {
     const dayEnd = `${day}T23:59:59.999Z`;
-    const result = await db.select({ cnt: count() }).from(pg.sqlUserSlugBinding).where(lte(pg.sqlUserSlugBinding.created, dayEnd));
-    userSlugBindingsTimeseries.push({ day, user_slug_bindings_count: result[0]?.cnt ?? 0 });
+    const result = await db.select({ cnt: count() }).from(pg.sqlHandleBinding).where(lte(pg.sqlHandleBinding.created, dayEnd));
+    handleBindingsTimeseries.push({ day, user_slug_bindings_count: result[0]?.cnt ?? 0 });
   }
 
   // Schema stats — table sizes and index counts from system catalogs
@@ -254,7 +254,7 @@ async function main(): Promise<Result<void>> {
   const allAppSettings = await db
     .select({
       userId: pg.sqlAppSettings.userId,
-      userSlug: pg.sqlAppSettings.userSlug,
+      ownerHandle: pg.sqlAppSettings.ownerHandle,
       appSlug: pg.sqlAppSettings.appSlug,
       settings: pg.sqlAppSettings.settings,
       updated: pg.sqlAppSettings.updated,
@@ -262,7 +262,7 @@ async function main(): Promise<Result<void>> {
     .from(pg.sqlAppSettings)
     .orderBy(desc(pg.sqlAppSettings.updated))
     .limit(200);
-  const appModelRows: { userId: string; userSlug: string; appSlug: string; setting: unknown; updated: string }[] = [];
+  const appModelRows: { userId: string; ownerHandle: string; appSlug: string; setting: unknown; updated: string }[] = [];
   for (const row of allAppSettings) {
     const settingsArray = Array.isArray(row.settings) ? row.settings : [];
     for (const elem of settingsArray) {
@@ -274,7 +274,7 @@ async function main(): Promise<Result<void>> {
       ) {
         appModelRows.push({
           userId: row.userId,
-          userSlug: row.userSlug,
+          ownerHandle: row.ownerHandle,
           appSlug: row.appSlug,
           setting: elem,
           updated: row.updated,
@@ -299,7 +299,7 @@ async function main(): Promise<Result<void>> {
   const appSettingsSample = await db
     .select({
       userId: pg.sqlAppSettings.userId,
-      userSlug: pg.sqlAppSettings.userSlug,
+      ownerHandle: pg.sqlAppSettings.ownerHandle,
       appSlug: pg.sqlAppSettings.appSlug,
       updated: pg.sqlAppSettings.updated,
       created: pg.sqlAppSettings.created,
@@ -323,7 +323,7 @@ async function main(): Promise<Result<void>> {
     membershipTimeseries,
     membershipSlugsByDay,
     activeVibesTimeseries,
-    userSlugBindingsTimeseries,
+    handleBindingsTimeseries,
     membershipsByApp,
     tableStats,
     indexStats,

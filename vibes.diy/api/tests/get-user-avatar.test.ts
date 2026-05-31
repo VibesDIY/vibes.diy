@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
-import { writeUserSlugBinding, type VibesApiSQLCtx } from "@vibes.diy/api-svc";
+import { writeHandleBinding, type VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import { string2stream } from "@adviser/cement";
 import { handleGetUserAvatar } from "../svc/public/get-user-avatar.js";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
-describe("GET /u/:userSlug/avatar", { timeout: 30000 }, () => {
+describe("GET /u/:ownerHandle/avatar", { timeout: 30000 }, () => {
   const sthis = ensureSuperThis();
   let vctx: VibesApiSQLCtx;
   let avatarCid: string;
@@ -17,8 +17,8 @@ describe("GET /u/:userSlug/avatar", { timeout: 30000 }, () => {
     const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
     vctx = appCtx.vibesCtx;
 
-    // Seed userSlugBinding for alice → user_alice
-    const rAlice = await writeUserSlugBinding(vctx, "user_alice", "alice");
+    // Seed handleBinding for alice → user_alice
+    const rAlice = await writeHandleBinding(vctx, "user_alice", "alice");
     if (rAlice.isErr()) throw new Error(`Failed to seed alice slug: ${rAlice.Err().message}`);
 
     // Seed avatar bytes into storage and AssetUploads
@@ -33,7 +33,7 @@ describe("GET /u/:userSlug/avatar", { timeout: 30000 }, () => {
     await vctx.sql.db.insert(vctx.sql.tables.assetUploads).values({
       uploadId,
       userId: "user_alice",
-      userSlug: "alice",
+      ownerHandle: "alice",
       appSlug: "profile",
       cid: avatarCid,
       assetURI: avatarAssetURI,
@@ -51,8 +51,8 @@ describe("GET /u/:userSlug/avatar", { timeout: 30000 }, () => {
       created: now,
     });
 
-    // Seed userSlugBinding for noavatar → user_noavatar (NO avatar configured)
-    const rNoAvatar = await writeUserSlugBinding(vctx, "user_noavatar", "noavatar");
+    // Seed handleBinding for noavatar → user_noavatar (NO avatar configured)
+    const rNoAvatar = await writeHandleBinding(vctx, "user_noavatar", "noavatar");
     if (rNoAvatar.isErr()) throw new Error(`Failed to seed noavatar slug: ${rNoAvatar.Err().message}`);
     // No userSettings row for user_noavatar
   });
@@ -72,12 +72,12 @@ describe("GET /u/:userSlug/avatar", { timeout: 30000 }, () => {
     expect(res.headers.ETag).toBe(etag);
   });
 
-  it("404s when userSlug is unknown", async () => {
+  it("404s when ownerHandle is unknown", async () => {
     const res = await handleGetUserAvatar(vctx, "ghost", undefined);
     expect(res.status).toBe(404);
   });
 
-  it("404s when userSlug is bound but has no avatarCid", async () => {
+  it("404s when ownerHandle is bound but has no avatarCid", async () => {
     const res = await handleGetUserAvatar(vctx, "noavatar", undefined);
     expect(res.status).toBe(404);
   });

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
-import { ensureAppSlug, ensureUserSlug, writeAppSlugBinding, writeUserSlugBinding, VibesApiSQLCtx } from "@vibes.diy/api-svc";
+import { ensureAppSlug, ensureUserSlug, writeAppSlugBinding, writeHandleBinding, VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import type { ClerkClaim } from "@vibes.diy/api-types";
 import { eq } from "drizzle-orm/sql/expressions";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
@@ -34,26 +34,26 @@ describe("slug ownership", () => {
     vibesCtx = appCtx.vibesCtx;
   });
 
-  it("should reject userSlug owned by another user", async () => {
+  it("should reject ownerHandle owned by another user", async () => {
     const userA = "user-slug-owner-A";
     const userB = "user-slug-thief-B";
     const slug = `ownership-${sthis.nextId(8).str}`;
 
     // User A creates a binding
-    const rA = await writeUserSlugBinding(vibesCtx, userA, slug);
+    const rA = await writeHandleBinding(vibesCtx, userA, slug);
     expect(rA.isOk()).toBe(true);
-    expect(rA.Ok().userSlug).toBe(slug);
+    expect(rA.Ok().ownerHandle).toBe(slug);
 
     // Verify row exists for user A
     const rows = await vibesCtx.sql.db
       .select()
-      .from(vibesCtx.sql.tables.userSlugBinding)
-      .where(eq(vibesCtx.sql.tables.userSlugBinding.userSlug, slug));
+      .from(vibesCtx.sql.tables.handleBinding)
+      .where(eq(vibesCtx.sql.tables.handleBinding.handle, slug));
     expect(rows).toHaveLength(1);
     expect(rows[0].userId).toBe(userA);
 
-    // User B tries to use the same userSlug — should fail
-    const rB = await writeUserSlugBinding(vibesCtx, userB, slug);
+    // User B tries to use the same ownerHandle — should fail
+    const rB = await writeHandleBinding(vibesCtx, userB, slug);
     expect(rB.isErr()).toBe(true);
   });
 
@@ -62,16 +62,16 @@ describe("slug ownership", () => {
     const slugA = `multi-a-${sthis.nextId(8).str}`;
     const slugB = `multi-b-${sthis.nextId(8).str}`;
 
-    const rA = await writeUserSlugBinding(vibesCtx, userId, slugA);
+    const rA = await writeHandleBinding(vibesCtx, userId, slugA);
     expect(rA.isOk()).toBe(true);
 
-    const rB = await writeUserSlugBinding(vibesCtx, userId, slugB);
+    const rB = await writeHandleBinding(vibesCtx, userId, slugB);
     expect(rB.isOk()).toBe(true);
 
     // Request slugB again — should return slugB's tenant, not slugA's
-    const rB2 = await writeUserSlugBinding(vibesCtx, userId, slugB);
+    const rB2 = await writeHandleBinding(vibesCtx, userId, slugB);
     expect(rB2.isOk()).toBe(true);
-    expect(rB2.Ok().userSlug).toBe(slugB);
+    expect(rB2.Ok().ownerHandle).toBe(slugB);
     expect(rB2.Ok().tenant).toBe(rB.Ok().tenant);
   });
 
@@ -80,7 +80,7 @@ describe("slug ownership", () => {
     const slug = `quota-${sthis.nextId(8).str}`;
 
     // Create the binding first
-    const r1 = await writeUserSlugBinding(vibesCtx, userId, slug);
+    const r1 = await writeHandleBinding(vibesCtx, userId, slug);
     expect(r1.isOk()).toBe(true);
 
     // Temporarily lower the max to simulate being at quota
@@ -88,7 +88,7 @@ describe("slug ownership", () => {
     vibesCtx.params.maxUserSlugPerUserId = 1;
 
     // Idempotent call should still succeed — owned slug, not a new one
-    const r2 = await writeUserSlugBinding(vibesCtx, userId, slug);
+    const r2 = await writeHandleBinding(vibesCtx, userId, slug);
     expect(r2.isOk()).toBe(true);
     expect(r2.Ok().tenant).toBe(r1.Ok().tenant);
 
@@ -99,8 +99,8 @@ describe("slug ownership", () => {
     const slug = `concurrent-${sthis.nextId(8).str}`;
 
     const [r1, r2] = await Promise.all([
-      writeUserSlugBinding(vibesCtx, "racer-1", slug),
-      writeUserSlugBinding(vibesCtx, "racer-2", slug),
+      writeHandleBinding(vibesCtx, "racer-1", slug),
+      writeHandleBinding(vibesCtx, "racer-2", slug),
     ]);
 
     // Exactly one succeeds, one fails
@@ -110,8 +110,8 @@ describe("slug ownership", () => {
     // Only one row exists
     const rows = await vibesCtx.sql.db
       .select()
-      .from(vibesCtx.sql.tables.userSlugBinding)
-      .where(eq(vibesCtx.sql.tables.userSlugBinding.userSlug, slug));
+      .from(vibesCtx.sql.tables.handleBinding)
+      .where(eq(vibesCtx.sql.tables.handleBinding.handle, slug));
     expect(rows).toHaveLength(1);
   });
 
@@ -119,7 +119,7 @@ describe("slug ownership", () => {
     const uniq = sthis.nextId(6).str.toLowerCase();
     // Pre-claim the sanitized form of the email-prefix candidate for another user.
     const takenSlug = `jchris-${uniq}`;
-    const rPre = await writeUserSlugBinding(vibesCtx, `owner-${uniq}`, takenSlug);
+    const rPre = await writeHandleBinding(vibesCtx, `owner-${uniq}`, takenSlug);
     expect(rPre.isOk()).toBe(true);
 
     // New user whose candidates after sanitization would include `takenSlug` via the raw-vs-sanitized mismatch.
@@ -135,20 +135,20 @@ describe("slug ownership", () => {
       { userId: newUserId }
     );
     expect(rEnsure.isOk()).toBe(true);
-    expect(rEnsure.Ok().userSlug).not.toBe(takenSlug);
+    expect(rEnsure.Ok().ownerHandle).not.toBe(takenSlug);
 
     // The taken slug still belongs to the original owner.
     const rows = await vibesCtx.sql.db
       .select()
-      .from(vibesCtx.sql.tables.userSlugBinding)
-      .where(eq(vibesCtx.sql.tables.userSlugBinding.userSlug, takenSlug));
+      .from(vibesCtx.sql.tables.handleBinding)
+      .where(eq(vibesCtx.sql.tables.handleBinding.handle, takenSlug));
     expect(rows).toHaveLength(1);
     expect(rows[0].userId).toBe(`owner-${uniq}`);
   });
 
   it("ensureUserSlug rejects at quota with a quota error, not an ownership error", async () => {
     const userId = `quota-auto-${sthis.nextId(6).str}`;
-    const rSeed = await writeUserSlugBinding(vibesCtx, userId, `seed-${sthis.nextId(6).str}`);
+    const rSeed = await writeHandleBinding(vibesCtx, userId, `seed-${sthis.nextId(6).str}`);
     expect(rSeed.isOk()).toBe(true);
 
     const original = vibesCtx.params.maxUserSlugPerUserId;
@@ -156,30 +156,30 @@ describe("slug ownership", () => {
     try {
       const rEnsure = await ensureUserSlug(vibesCtx, makeClaims({ email: "whatever@example.com" }), { userId });
       expect(rEnsure.isErr()).toBe(true);
-      expect(rEnsure.Err().message).toMatch(/maximum userSlug bindings/);
+      expect(rEnsure.Err().message).toMatch(/maximum ownerHandle bindings/);
     } finally {
       vibesCtx.params.maxUserSlugPerUserId = original;
     }
   });
 
-  it("writeAppSlugBinding allows two users to claim the same appSlug under different userSlugs", async () => {
+  it("writeAppSlugBinding allows two users to claim the same appSlug under different ownerHandles", async () => {
     const uniq = sthis.nextId(6).str.toLowerCase();
     const sharedAppSlug = `shared-${uniq}`;
 
     const userIdA = `multi-owner-a-${uniq}`;
     const userIdB = `multi-owner-b-${uniq}`;
-    const userSlugA = `owner-a-${uniq}`;
-    const userSlugB = `owner-b-${uniq}`;
+    const ownerHandleA = `owner-a-${uniq}`;
+    const ownerHandleB = `owner-b-${uniq}`;
 
-    const rSlugA = await writeUserSlugBinding(vibesCtx, userIdA, userSlugA);
+    const rSlugA = await writeHandleBinding(vibesCtx, userIdA, ownerHandleA);
     expect(rSlugA.isOk()).toBe(true);
-    const rSlugB = await writeUserSlugBinding(vibesCtx, userIdB, userSlugB);
+    const rSlugB = await writeHandleBinding(vibesCtx, userIdB, ownerHandleB);
     expect(rSlugB.isOk()).toBe(true);
 
-    const rAppA = await writeAppSlugBinding(vibesCtx, userIdA, userSlugA, sharedAppSlug);
+    const rAppA = await writeAppSlugBinding(vibesCtx, userIdA, ownerHandleA, sharedAppSlug);
     expect(rAppA.isOk()).toBe(true);
 
-    const rAppB = await writeAppSlugBinding(vibesCtx, userIdB, userSlugB, sharedAppSlug);
+    const rAppB = await writeAppSlugBinding(vibesCtx, userIdB, ownerHandleB, sharedAppSlug);
     expect(rAppB.isOk()).toBe(true);
     expect(rAppB.Ok().appSlug).toBe(sharedAppSlug);
     expect(rAppB.Ok().ledger).not.toBe(rAppA.Ok().ledger);
@@ -189,18 +189,18 @@ describe("slug ownership", () => {
       .from(vibesCtx.sql.tables.appSlugBinding)
       .where(eq(vibesCtx.sql.tables.appSlugBinding.appSlug, sharedAppSlug));
     expect(rows).toHaveLength(2);
-    const userSlugs = rows.map((r) => r.userSlug).sort();
-    expect(userSlugs).toEqual([userSlugA, userSlugB].sort());
+    const ownerHandles = rows.map((r) => r.ownerHandle).sort();
+    expect(ownerHandles).toEqual([ownerHandleA, ownerHandleB].sort());
   });
 
   it("ensureAppSlug falls through to the next preferredPair when the first is taken", async () => {
     const uniq = sthis.nextId(6).str.toLowerCase();
     const ownerUserSlug = `app-owner-${uniq}`;
-    const rOwnerSlug = await writeUserSlugBinding(vibesCtx, `owner-user-${uniq}`, ownerUserSlug);
+    const rOwnerSlug = await writeHandleBinding(vibesCtx, `owner-user-${uniq}`, ownerUserSlug);
     expect(rOwnerSlug.isOk()).toBe(true);
 
     const newcomerUserSlug = `app-newcomer-${uniq}`;
-    const rNewcomerSlug = await writeUserSlugBinding(vibesCtx, `newcomer-user-${uniq}`, newcomerUserSlug);
+    const rNewcomerSlug = await writeHandleBinding(vibesCtx, `newcomer-user-${uniq}`, newcomerUserSlug);
     expect(rNewcomerSlug.isOk()).toBe(true);
 
     const takenAppSlug = `taken-${uniq}`;
@@ -208,14 +208,14 @@ describe("slug ownership", () => {
 
     const rTakenApp = await ensureAppSlug(vibesCtx, {
       userId: `owner-user-${uniq}`,
-      userSlug: ownerUserSlug,
+      ownerHandle: ownerUserSlug,
       appSlug: takenAppSlug,
     });
     expect(rTakenApp.isOk()).toBe(true);
 
     const rEnsure = await ensureAppSlug(vibesCtx, {
       userId: `newcomer-user-${uniq}`,
-      userSlug: newcomerUserSlug,
+      ownerHandle: newcomerUserSlug,
       preferredPairs: [
         { slug: takenAppSlug, title: "First" },
         { slug: freeAppSlug, title: "Second" },
@@ -234,26 +234,26 @@ describe("slug ownership", () => {
     const callerUserId = `branch-caller-user-${uniq}`;
     const sharedAppSlug = `branch-${uniq}`;
 
-    const rOwnerSlug = await writeUserSlugBinding(vibesCtx, ownerUserId, ownerUserSlug);
+    const rOwnerSlug = await writeHandleBinding(vibesCtx, ownerUserId, ownerUserSlug);
     expect(rOwnerSlug.isOk()).toBe(true);
-    const rCallerSlug = await writeUserSlugBinding(vibesCtx, callerUserId, callerUserSlug);
+    const rCallerSlug = await writeHandleBinding(vibesCtx, callerUserId, callerUserSlug);
     expect(rCallerSlug.isOk()).toBe(true);
 
-    // Owner registers the appSlug under their own userSlug.
+    // Owner registers the appSlug under their own ownerHandle.
     const rOwnerApp = await ensureAppSlug(vibesCtx, {
       userId: ownerUserId,
-      userSlug: ownerUserSlug,
+      ownerHandle: ownerUserSlug,
       appSlug: sharedAppSlug,
     });
     expect(rOwnerApp.isOk()).toBe(true);
 
-    // Caller asks for the same appSlug under THEIR own userSlug.
-    // The else-branch lookup must filter by (appSlug, userSlug), not appSlug
+    // Caller asks for the same appSlug under THEIR own ownerHandle.
+    // The else-branch lookup must filter by (appSlug, ownerHandle), not appSlug
     // alone — otherwise the caller's binding is silently skipped and a
     // downstream Apps insert produces an orphan row.
     const rCallerApp = await ensureAppSlug(vibesCtx, {
       userId: callerUserId,
-      userSlug: callerUserSlug,
+      ownerHandle: callerUserSlug,
       appSlug: sharedAppSlug,
     });
     expect(rCallerApp.isOk()).toBe(true);
@@ -265,7 +265,7 @@ describe("slug ownership", () => {
       .from(vibesCtx.sql.tables.appSlugBinding)
       .where(eq(vibesCtx.sql.tables.appSlugBinding.appSlug, sharedAppSlug));
     expect(rows).toHaveLength(2);
-    const userSlugs = rows.map((r) => r.userSlug).sort();
-    expect(userSlugs).toEqual([ownerUserSlug, callerUserSlug].sort());
+    const ownerHandles = rows.map((r) => r.ownerHandle).sort();
+    expect(ownerHandles).toEqual([ownerUserSlug, callerUserSlug].sort());
   });
 });

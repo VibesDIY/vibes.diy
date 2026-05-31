@@ -28,7 +28,7 @@ describe(
     let fetchPair: ReturnType<typeof TestFetchPair.create>;
     let getToken: VibesDiyApiParam["getToken"];
     let appSlug: string;
-    let userSlug: string;
+    let ownerHandle: string;
 
     beforeAll(async () => {
       const deviceCA = await createTestDeviceCA(sthis);
@@ -80,22 +80,22 @@ describe(
       const app = rApp.Ok();
       if (!isResEnsureAppSlugOk(app)) assert.fail("Expected ResEnsureAppSlugOk");
       appSlug = app.appSlug;
-      userSlug = app.userSlug;
+      ownerHandle = app.ownerHandle;
 
       // Enable public access so subscribe works
-      await api.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: true } });
+      await api.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
 
       // Subscribe — this should be stored internally for replay
-      const rSub = await api.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+      const rSub = await api.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
       expect(rSub.isOk()).toBe(true);
 
       // Subscribe again with same params — should deduplicate
-      const rSub2 = await api.subscribeDocs({ appSlug, userSlug, dbName: "default" });
+      const rSub2 = await api.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
       expect(rSub2.isOk()).toBe(true);
 
       // Verify deduplication via test inspection getter
       expect(api._testInternals.docSubscriptions).toHaveLength(1);
-      expect(api._testInternals.docSubscriptions[0]).toEqual({ userSlug, appSlug, dbName: "default" });
+      expect(api._testInternals.docSubscriptions[0]).toEqual({ ownerHandle, appSlug, dbName: "default" });
     });
 
     it("subscribeRequestGrants stores params for replay on reconnection", async () => {
@@ -110,14 +110,14 @@ describe(
         getToken,
       });
 
-      const rSub = await api.subscribeRequestGrants({ appSlug, userSlug });
+      const rSub = await api.subscribeRequestGrants({ appSlug, ownerHandle });
       expect(rSub.isOk()).toBe(true);
 
-      const rSub2 = await api.subscribeRequestGrants({ appSlug, userSlug });
+      const rSub2 = await api.subscribeRequestGrants({ appSlug, ownerHandle });
       expect(rSub2.isOk()).toBe(true);
 
       expect(api._testInternals.requestGrantSubscriptions).toHaveLength(1);
-      expect(api._testInternals.requestGrantSubscriptions[0]).toEqual({ userSlug, appSlug });
+      expect(api._testInternals.requestGrantSubscriptions[0]).toEqual({ ownerHandle, appSlug });
     });
 
     it("onDocChanged stores listeners for replay", () => {

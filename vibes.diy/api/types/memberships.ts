@@ -2,7 +2,7 @@ import { type } from "arktype";
 import { dashAuthType, Role } from "./common.js";
 
 export const resMembershipItem = type({
-  userSlug: "string", // app owner's slug
+  ownerHandle: "string", // app owner's slug
   appSlug: "string",
   activityAt: "string", // ISO — drives sort, shown as "last active"
   role: Role,

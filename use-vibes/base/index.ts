@@ -44,7 +44,7 @@ const slugPattern = /^(?!.*\/|.*--|.*\.\.)[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$/
 
 export const vibeBindings = type({
   appSlug: slugPattern,
-  userSlug: slugPattern,
+  ownerHandle: slugPattern,
   fsId: slugPattern,
   "groupId?": slugPattern,
 });

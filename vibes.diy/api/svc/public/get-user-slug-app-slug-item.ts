@@ -11,7 +11,7 @@
 // import { unwrapMsgBase as unwrapMsgBase } from "../unwrap-msg-base.js";
 // import { VibesApiSQLCtx } from "../types.js";
 // import { ReqWithVerifiedAuth, checkAuth as checkAuth } from "../check-auth.js";
-// import { sqlAppSlugBinding, sqlChatContexts, sqlChatSections, sqlUserSlugBinding } from "../sql/vibes-diy-api-schema.js";
+// import { sqlAppSlugBinding, sqlChatContexts, sqlChatSections, sqlHandleBinding } from "../sql/vibes-diy-api-schema.js";
 // import { eq, and } from "drizzle-orm/sql/expressions";
 // import { BlockEndMsg, BlockMsgs, isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
 
@@ -20,7 +20,7 @@
 //   MsgBase<ReqGetByUserSlugAppSlug>,
 //   ResGetByUserSlugAppSlug | VibesDiyError
 // > = {
-//   hash: "get-by-userSlug-appSlug",
+//   hash: "get-by-ownerHandle-appSlug",
 //   validate: unwrapMsgBase(async (msg: MsgBase) => {
 //     // async (ctx): Promise<Result<Option<ReqEnsureAppSlug>>> => {
 //     const ret = reqGetByUserSlugAppSlug(msg.payload);
@@ -50,18 +50,18 @@
 //       if (req.sectionId) {
 //         const chat = await vctx.db
 //           .select()
-//           .from(sqlUserSlugBinding)
-//           .innerJoin(sqlAppSlugBinding, eq(sqlAppSlugBinding.userSlug, sqlUserSlugBinding.userSlug))
+//           .from(sqlHandleBinding)
+//           .innerJoin(sqlAppSlugBinding, eq(sqlAppSlugBinding.ownerHandle, sqlHandleBinding.ownerHandle))
 //           .innerJoin(
 //             sqlChatContexts,
-//             and(eq(sqlChatContexts.userSlug, sqlUserSlugBinding.userSlug), eq(sqlChatContexts.appSlug, sqlAppSlugBinding.appSlug))
+//             and(eq(sqlChatContexts.ownerHandle, sqlHandleBinding.ownerHandle), eq(sqlChatContexts.appSlug, sqlAppSlugBinding.appSlug))
 //           )
 //           .innerJoin(sqlChatSections, eq(sqlChatSections.chatId, sqlChatContexts.chatId))
 //           .where(
 //             and(
-//               eq(sqlUserSlugBinding.userSlug, req.userSlug),
+//               eq(sqlHandleBinding.ownerHandle, req.ownerHandle),
 //               eq(sqlAppSlugBinding.appSlug, req.appSlug),
-//               eq(sqlUserSlugBinding.userId, req.auth.verifiedAuth.claims.userId)
+//               eq(sqlHandleBinding.userId, req.auth.verifiedAuth.claims.userId)
 //             )
 //           )
 //           // .groupBy(sqlChatSections.chatId, sqlChatSections.promptId)
@@ -108,7 +108,7 @@
 //             fsId: foundBlockEnd.fsRef.fsId,
 //             // sectionId: req.sectionId,
 //             appSlug: req.appSlug,
-//             userSlug: req.userSlug,
+//             ownerHandle: req.ownerHandle,
 //             mode: foundBlockEnd.fsRef.mode,
 //             // wrapperUrl: foundBlockEnd.fsRef.wrapperUrl,
 //           } satisfies ResGetByUserSlugAppSlug);

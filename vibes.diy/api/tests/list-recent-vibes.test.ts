@@ -11,7 +11,7 @@ import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 interface RecentOrderRow {
   appSlug: string;
-  userSlug: string;
+  ownerHandle: string;
   fsId: string;
   updated: string;
   pinnedAt?: string;
@@ -92,19 +92,19 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     if (!isResEnsureAppSlugOk(res)) {
       assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
     }
-    return { appSlug: res.appSlug, userSlug: res.userSlug, fsId: res.fsId };
+    return { appSlug: res.appSlug, ownerHandle: res.ownerHandle, fsId: res.fsId };
   }
 
-  async function setUpdated(userSlug: string, appSlug: string, isoTs: string) {
+  async function setUpdated(ownerHandle: string, appSlug: string, isoTs: string) {
     const t = appCtx.vibesCtx.sql.tables.appSlugBinding;
     await appCtx.vibesCtx.sql.db
       .update(t)
       .set({ updated: isoTs })
-      .where(and(eq(t.userSlug, userSlug), eq(t.appSlug, appSlug)));
+      .where(and(eq(t.ownerHandle, ownerHandle), eq(t.appSlug, appSlug)));
   }
 
-  function rowKey(row: { userSlug: string; appSlug: string }): string {
-    return `${row.userSlug}/${row.appSlug}`;
+  function rowKey(row: { ownerHandle: string; appSlug: string }): string {
+    return `${row.ownerHandle}/${row.appSlug}`;
   }
 
   function seededShuffle<T>(items: readonly T[], seed: number): T[] {
@@ -130,8 +130,8 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     if (pinned !== 0) return pinned;
     const updated = compareDesc(a.updated, b.updated);
     if (updated !== 0) return updated;
-    const userSlug = compareDesc(a.userSlug, b.userSlug);
-    if (userSlug !== 0) return userSlug;
+    const ownerHandle = compareDesc(a.ownerHandle, b.ownerHandle);
+    if (ownerHandle !== 0) return ownerHandle;
     return compareDesc(a.appSlug, b.appSlug);
   }
 
@@ -141,7 +141,7 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     const rList = await api.listRecentVibes({ limit: 50 });
     if (rList.isErr()) assert.fail(`listRecentVibes failed: ${rList.Err().message}`);
 
-    const found = rList.Ok().items.find((it) => it.appSlug === app.appSlug && it.userSlug === app.userSlug);
+    const found = rList.Ok().items.find((it) => it.appSlug === app.appSlug && it.ownerHandle === app.ownerHandle);
     expect(found).toBeDefined();
     expect(typeof found?.updated).toBe("string");
     expect((found?.updated ?? "").length).toBeGreaterThan(0);
@@ -151,8 +151,8 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     const older = await createApp(api, "older");
     const newer = await createApp(api, "newer");
 
-    await setUpdated(older.userSlug, older.appSlug, "2020-01-01T00:00:00.000Z");
-    await setUpdated(newer.userSlug, newer.appSlug, "2030-01-01T00:00:00.000Z");
+    await setUpdated(older.ownerHandle, older.appSlug, "2020-01-01T00:00:00.000Z");
+    await setUpdated(newer.ownerHandle, newer.appSlug, "2030-01-01T00:00:00.000Z");
 
     const rList = await api.listRecentVibes({ limit: 100 });
     if (rList.isErr()) assert.fail(`listRecentVibes failed: ${rList.Err().message}`);
@@ -171,7 +171,7 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     ]);
     const base = Date.parse("2025-06-01T00:00:00.000Z");
     for (let i = 0; i < created.length; i++) {
-      await setUpdated(created[i].userSlug, created[i].appSlug, new Date(base + i * 1000).toISOString());
+      await setUpdated(created[i].ownerHandle, created[i].appSlug, new Date(base + i * 1000).toISOString());
     }
     const seen = new Set<string>();
 
@@ -180,14 +180,14 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     const ok1 = r1.Ok();
     expect(ok1.items.length).toBe(2);
     expect(ok1.nextCursor).toBeTruthy();
-    for (const it of ok1.items) seen.add(`${it.userSlug}/${it.appSlug}`);
+    for (const it of ok1.items) seen.add(`${it.ownerHandle}/${it.appSlug}`);
 
     const r2 = await api.listRecentVibes({ limit: 2, cursor: ok1.nextCursor });
     if (r2.isErr()) assert.fail(`page 2 failed: ${r2.Err().message}`);
     const ok2 = r2.Ok();
     expect(ok2.items.length).toBe(2);
     for (const it of ok2.items) {
-      const key = `${it.userSlug}/${it.appSlug}`;
+      const key = `${it.ownerHandle}/${it.appSlug}`;
       expect(seen.has(key)).toBe(false);
       seen.add(key);
     }
@@ -198,11 +198,11 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     const b = await createApp(api, "tie-b");
     const c = await createApp(api, "tie-c");
     const sameTs = "2099-07-01T00:00:00.000Z";
-    await setUpdated(a.userSlug, a.appSlug, sameTs);
-    await setUpdated(b.userSlug, b.appSlug, sameTs);
-    await setUpdated(c.userSlug, c.appSlug, sameTs);
+    await setUpdated(a.ownerHandle, a.appSlug, sameTs);
+    await setUpdated(b.ownerHandle, b.appSlug, sameTs);
+    await setUpdated(c.ownerHandle, c.appSlug, sameTs);
 
-    const tieKeys = new Set([`${a.userSlug}/${a.appSlug}`, `${b.userSlug}/${b.appSlug}`, `${c.userSlug}/${c.appSlug}`]);
+    const tieKeys = new Set([`${a.ownerHandle}/${a.appSlug}`, `${b.ownerHandle}/${b.appSlug}`, `${c.ownerHandle}/${c.appSlug}`]);
     const seen = new Set<string>();
 
     let cursor: string | undefined;
@@ -211,7 +211,7 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
       if (rPage.isErr()) assert.fail(`page ${page + 1} failed: ${rPage.Err().message}`);
       const ok = rPage.Ok();
       for (const it of ok.items) {
-        const key = `${it.userSlug}/${it.appSlug}`;
+        const key = `${it.ownerHandle}/${it.appSlug}`;
         if (tieKeys.has(key)) {
           expect(seen.has(key)).toBe(false);
           seen.add(key);
@@ -269,7 +269,7 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
   it("returns title from app settings when set", async () => {
     const app = await createApp(api, "with-title");
 
-    const rSet = await api.ensureAppSettings({ appSlug: app.appSlug, userSlug: app.userSlug, title: "Pretty Name" });
+    const rSet = await api.ensureAppSettings({ appSlug: app.appSlug, ownerHandle: app.ownerHandle, title: "Pretty Name" });
     if (rSet.isErr()) assert.fail(`ensureAppSettings failed: ${rSet.Err().message}`);
 
     const rList = await api.listRecentVibes({ limit: 100 });
@@ -295,7 +295,7 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
       0xdecafbad
     )) {
       const row = fixture[i];
-      await setUpdated(row.userSlug, row.appSlug, row.updated);
+      await setUpdated(row.ownerHandle, row.appSlug, row.updated);
     }
 
     const pinnedIndexes = seededShuffle(
@@ -304,7 +304,7 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     ).slice(0, pinCount);
     for (const i of pinnedIndexes) {
       const row = fixture[i];
-      const rPin = await api.pinRecentVibe({ userSlug: row.userSlug, appSlug: row.appSlug, pin: true });
+      const rPin = await api.pinRecentVibe({ ownerHandle: row.ownerHandle, appSlug: row.appSlug, pin: true });
       if (rPin.isErr()) assert.fail(`pinRecentVibe failed for ${rowKey(row)}: ${rPin.Err().message}`);
       expect(rPin.Ok().pinnedAt.length).toBeGreaterThan(0);
       const current = fixtureByKey.get(rowKey(row));
@@ -326,11 +326,11 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
 
   it("unpinning clears pinnedAt and restores update-order placement", async () => {
     const app = await createApp(api, "pin-toggle");
-    const rPin = await api.pinRecentVibe({ userSlug: app.userSlug, appSlug: app.appSlug, pin: true });
+    const rPin = await api.pinRecentVibe({ ownerHandle: app.ownerHandle, appSlug: app.appSlug, pin: true });
     if (rPin.isErr()) assert.fail(rPin.Err().message);
     expect(rPin.Ok().pinnedAt.length).toBeGreaterThan(0);
 
-    const rUnpin = await api.pinRecentVibe({ userSlug: app.userSlug, appSlug: app.appSlug, pin: false });
+    const rUnpin = await api.pinRecentVibe({ ownerHandle: app.ownerHandle, appSlug: app.appSlug, pin: false });
     if (rUnpin.isErr()) assert.fail(rUnpin.Err().message);
     expect(rUnpin.Ok().pinnedAt).toBe("");
 
@@ -343,13 +343,13 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
 
   it("rejects pin requests on apps owned by another user", async () => {
     const otherApp = await createApp(api2, "pin-not-yours");
-    const r = await api.pinRecentVibe({ userSlug: otherApp.userSlug, appSlug: otherApp.appSlug, pin: true });
+    const r = await api.pinRecentVibe({ ownerHandle: otherApp.ownerHandle, appSlug: otherApp.appSlug, pin: true });
     expect(r.isErr()).toBe(true);
   });
 
   it("rejects pin requests for missing apps under an owned slug", async () => {
     const app = await createApp(api, "pin-missing-owner-slug");
-    const r = await api.pinRecentVibe({ userSlug: app.userSlug, appSlug: "missing-pin-target", pin: true });
+    const r = await api.pinRecentVibe({ ownerHandle: app.ownerHandle, appSlug: "missing-pin-target", pin: true });
     expect(r.isErr()).toBe(true);
   });
 });

@@ -13,25 +13,25 @@ export interface FakeVibesDiyApi {
   ensureUserSettings: (req: unknown) => Promise<Result<unknown>>;
   putDoc: (req: {
     appSlug: string;
-    userSlug: string;
+    ownerHandle: string;
     dbName: string;
     doc: Record<string, unknown>;
     docId?: string;
   }) => Promise<Result<unknown>>;
-  getDoc: (req: { appSlug: string; userSlug: string; dbName: string; docId: string }) => Promise<Result<unknown>>;
-  queryDocs: (req: { appSlug: string; userSlug: string; dbName: string }) => Promise<Result<unknown>>;
-  deleteDoc: (req: { appSlug: string; userSlug: string; dbName: string; docId: string }) => Promise<Result<unknown>>;
-  subscribeDocs: (req: { appSlug: string; userSlug: string; dbName: string }) => Promise<Result<unknown>>;
-  onDocChanged: (fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void) => () => void;
+  getDoc: (req: { appSlug: string; ownerHandle: string; dbName: string; docId: string }) => Promise<Result<unknown>>;
+  queryDocs: (req: { appSlug: string; ownerHandle: string; dbName: string }) => Promise<Result<unknown>>;
+  deleteDoc: (req: { appSlug: string; ownerHandle: string; dbName: string; docId: string }) => Promise<Result<unknown>>;
+  subscribeDocs: (req: { appSlug: string; ownerHandle: string; dbName: string }) => Promise<Result<unknown>>;
+  onDocChanged: (fn: (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void) => () => void;
   /** how many times `new VibesDiyApi(...)` would have been called — used by multi-db test */
   readonly _connectionId: number;
   /** raw access to the doc store keyed by dbName */
   readonly _docs: Map<string, Map<string, Record<string, unknown>>>;
   /** simulate a server-push doc-changed event */
-  _simulateDocChanged: (userSlug: string, appSlug: string, dbName: string, docId: string) => void;
+  _simulateDocChanged: (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void;
 }
 
-export function createFakeVibesDiyApi(opts: { defaultUserSlug?: string } = {}): FakeVibesDiyApi {
+export function createFakeVibesDiyApi(opts: { defaultHandle?: string } = {}): FakeVibesDiyApi {
   const docsByDb = new Map<string, Map<string, Record<string, unknown>>>();
   const docChangedListeners: ((u: string, a: string, db: string, doc: string) => void)[] = [];
   const connectionId = ++connectionCounter;
@@ -53,7 +53,7 @@ export function createFakeVibesDiyApi(opts: { defaultUserSlug?: string } = {}): 
       Result.Ok({
         type: "vibes.diy.res-ensure-user-settings",
         userId: `user-${connectionId}`,
-        settings: opts.defaultUserSlug ? [{ type: "defaultUserSlug", userSlug: opts.defaultUserSlug }] : [],
+        settings: opts.defaultHandle ? [{ type: "defaultHandle", ownerHandle: opts.defaultHandle }] : [],
         updated: "now",
         created: "now",
       }),
@@ -95,8 +95,8 @@ export function createFakeVibesDiyApi(opts: { defaultUserSlug?: string } = {}): 
       };
     },
 
-    _simulateDocChanged: (userSlug, appSlug, dbName, docId) => {
-      for (const fn of docChangedListeners) fn(userSlug, appSlug, dbName, docId);
+    _simulateDocChanged: (ownerHandle, appSlug, dbName, docId) => {
+      for (const fn of docChangedListeners) fn(ownerHandle, appSlug, dbName, docId);
     },
   };
 }

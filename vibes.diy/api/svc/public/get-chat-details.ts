@@ -45,7 +45,7 @@ export const getChatDetailsEvento: EventoHandler<
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      // Single query: verify ownership via UserSlugBinding, get chatId from ChatContexts,
+      // Single query: verify ownership via HandleBinding, get chatId from ChatContexts,
       // fsId/created from PromptContexts, and blocks from ChatSections
       const rows = await vctx.sql.db
         .select({
@@ -55,11 +55,8 @@ export const getChatDetailsEvento: EventoHandler<
           created: vctx.sql.tables.promptContexts.created,
           blocks: vctx.sql.tables.chatSections.blocks,
         })
-        .from(vctx.sql.tables.userSlugBinding)
-        .innerJoin(
-          vctx.sql.tables.chatContexts,
-          eq(vctx.sql.tables.chatContexts.userSlug, vctx.sql.tables.userSlugBinding.userSlug)
-        )
+        .from(vctx.sql.tables.handleBinding)
+        .innerJoin(vctx.sql.tables.chatContexts, eq(vctx.sql.tables.chatContexts.ownerHandle, vctx.sql.tables.handleBinding.handle))
         .innerJoin(vctx.sql.tables.promptContexts, eq(vctx.sql.tables.promptContexts.chatId, vctx.sql.tables.chatContexts.chatId))
         .innerJoin(
           vctx.sql.tables.chatSections,
@@ -70,8 +67,8 @@ export const getChatDetailsEvento: EventoHandler<
         )
         .where(
           and(
-            eq(vctx.sql.tables.userSlugBinding.userId, userId),
-            eq(vctx.sql.tables.chatContexts.userSlug, req.userSlug),
+            eq(vctx.sql.tables.handleBinding.userId, userId),
+            eq(vctx.sql.tables.chatContexts.ownerHandle, req.ownerHandle),
             eq(vctx.sql.tables.chatContexts.appSlug, req.appSlug)
           )
         )
@@ -81,7 +78,7 @@ export const getChatDetailsEvento: EventoHandler<
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-get-chat-details",
           chatId: "",
-          userSlug: req.userSlug,
+          ownerHandle: req.ownerHandle,
           appSlug: req.appSlug,
           prompts: [],
         } satisfies ResGetChatDetails);
@@ -124,7 +121,7 @@ export const getChatDetailsEvento: EventoHandler<
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-get-chat-details",
         chatId,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
         prompts: Array.from(seen.values()),
       } satisfies ResGetChatDetails);

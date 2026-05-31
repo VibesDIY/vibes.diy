@@ -15,7 +15,7 @@ export const ReqDbQuery = type({
   type: "'vibes-diy.cli.db.query'",
   apiUrl: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
   field: "string",
   key: "string",
@@ -52,9 +52,9 @@ export const dbQueryEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbQuery, Res
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const rUser = await resolveUserSlug(api, ctx.validated.userSlug);
+    const rUser = await resolveUserSlug(api, ctx.validated.ownerHandle);
     if (rUser.isErr()) return Result.Err(rUser.Err());
-    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userSlug: rUser.Ok() });
+    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userHandle: rUser.Ok() });
 
     const r = await adapter.queryDocs(ctx.validated.dbName);
     if (r.isErr()) return Result.Err(r.Err());
@@ -176,7 +176,7 @@ export function dbQueryCmd(ctx: CliCtx) {
       type: "vibes-diy.cli.db.query",
       apiUrl: args.apiUrl,
       appSlug: args.appSlug,
-      userSlug: args.userSlug,
+      ownerHandle: args.ownerHandle,
       dbName: args.dbName,
       field: args.field,
       key: args.key,

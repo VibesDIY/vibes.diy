@@ -11,7 +11,7 @@ export const ReqDbList = type({
   type: "'vibes-diy.cli.db.list'",
   apiUrl: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 });
 export type ReqDbList = typeof ReqDbList.infer;
 export function isReqDbList(obj: unknown): obj is ReqDbList {
@@ -41,9 +41,9 @@ export const dbListEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbList, ResDb
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const rUser = await resolveUserSlug(api, ctx.validated.userSlug);
+    const rUser = await resolveUserSlug(api, ctx.validated.ownerHandle);
     if (rUser.isErr()) return Result.Err(rUser.Err());
-    const r = await api.listDbNames({ appSlug: ctx.validated.appSlug, userSlug: rUser.Ok() });
+    const r = await api.listDbNames({ appSlug: ctx.validated.appSlug, ownerHandle: rUser.Ok() });
     if (r.isErr()) return Result.Err(r.Err());
     return sendMsg(ctx, {
       type: "vibes-diy.cli.db.list-res",
@@ -64,7 +64,7 @@ export function dbListCmd(ctx: CliCtx) {
       type: "vibes-diy.cli.db.list",
       apiUrl: args.apiUrl,
       appSlug: args.appSlug,
-      userSlug: args.userSlug,
+      ownerHandle: args.ownerHandle,
     })),
   });
 }

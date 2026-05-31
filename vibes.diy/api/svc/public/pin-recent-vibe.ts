@@ -32,21 +32,21 @@ export const pinRecentVibeEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPi
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      const usb = vctx.sql.tables.userSlugBinding;
+      const usb = vctx.sql.tables.handleBinding;
       const asb = vctx.sql.tables.appSlugBinding;
 
       const appRow = await vctx.sql.db
-        .select({ userSlug: asb.userSlug, appSlug: asb.appSlug })
+        .select({ ownerHandle: asb.ownerHandle, appSlug: asb.appSlug })
         .from(asb)
-        .innerJoin(usb, and(eq(usb.userSlug, asb.userSlug), eq(usb.userId, userId)))
-        .where(and(eq(asb.userSlug, req.userSlug), eq(asb.appSlug, req.appSlug)))
+        .innerJoin(usb, and(eq(usb.handle, asb.ownerHandle), eq(usb.userId, userId)))
+        .where(and(eq(asb.ownerHandle, req.ownerHandle), eq(asb.appSlug, req.appSlug)))
         .limit(1)
         .then((r) => r[0]);
       if (appRow === undefined) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: {
-            message: `not found or not authorized to pin ${req.userSlug}/${req.appSlug}`,
+            message: `not found or not authorized to pin ${req.ownerHandle}/${req.appSlug}`,
             code: "pin-recent-vibe-not-found",
           },
         } satisfies ResError);
@@ -57,11 +57,11 @@ export const pinRecentVibeEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPi
       await vctx.sql.db
         .update(asb)
         .set({ pinnedAt })
-        .where(and(eq(asb.userSlug, req.userSlug), eq(asb.appSlug, req.appSlug)));
+        .where(and(eq(asb.ownerHandle, req.ownerHandle), eq(asb.appSlug, req.appSlug)));
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-pin-recent-vibe",
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
         pinnedAt,
       } satisfies ResPinRecentVibe);

@@ -1,21 +1,21 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { eq, and } from "drizzle-orm/sql/expressions";
-import { AppUserSlugBinding, VibesApiSQLCtx } from "../types.js";
+import { AppHandleBinding, VibesApiSQLCtx } from "../types.js";
 
 export interface GetSlugBinding {
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
 }
 
-export async function getSlugBinding(ctx: VibesApiSQLCtx, binding: GetSlugBinding): Promise<Result<AppUserSlugBinding>> {
+export async function getSlugBinding(ctx: VibesApiSQLCtx, binding: GetSlugBinding): Promise<Result<AppHandleBinding>> {
   const r = await exception2Result(() =>
     ctx.sql.db
       .select()
-      .from(ctx.sql.tables.userSlugBinding)
-      .innerJoin(ctx.sql.tables.appSlugBinding, eq(ctx.sql.tables.appSlugBinding.userSlug, ctx.sql.tables.userSlugBinding.userSlug))
+      .from(ctx.sql.tables.handleBinding)
+      .innerJoin(ctx.sql.tables.appSlugBinding, eq(ctx.sql.tables.appSlugBinding.ownerHandle, ctx.sql.tables.handleBinding.handle))
       .where(
         and(
-          eq(ctx.sql.tables.userSlugBinding.userSlug, binding.userSlug),
+          eq(ctx.sql.tables.handleBinding.handle, binding.ownerHandle),
           eq(ctx.sql.tables.appSlugBinding.appSlug, binding.appSlug)
         )
       )
@@ -27,14 +27,14 @@ export async function getSlugBinding(ctx: VibesApiSQLCtx, binding: GetSlugBindin
   }
   const sql = r.Ok();
   if (!sql) {
-    return Result.Err(`appSlug/userSlug not found ${binding.appSlug}:${binding.userSlug} not found`);
+    return Result.Err(`appSlug/ownerHandle not found ${binding.appSlug}:${binding.ownerHandle} not found`);
   }
   return Result.Ok({
     type: "vibes.diy-app-user-slug-binding",
-    userSlug: {
+    ownerHandle: {
       type: "vibes.diy-user-slug-binding",
       userId: sql.UserSlugBindings.userId,
-      userSlug: sql.UserSlugBindings.userSlug,
+      ownerHandle: sql.UserSlugBindings.handle,
       tenant: sql.UserSlugBindings.tenant,
     },
     appSlug: {

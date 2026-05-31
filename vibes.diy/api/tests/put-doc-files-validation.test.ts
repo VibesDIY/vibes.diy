@@ -11,7 +11,7 @@ import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 // against AssetUploads. Three rejection paths covered:
 //   1. unknown uploadId (typo or stale).
 //   2. foreign uploadId (minted for a different app — paste-attack).
-//   3. uploadId minted for the same userSlug but a different appSlug.
+//   3. uploadId minted for the same ownerHandle but a different appSlug.
 // Plus the happy path: valid uploadId for this exact app → accepted.
 //
 // See vibes.diy/api/svc/public/app-documents.ts validateFilesUploads.
@@ -53,7 +53,7 @@ interface Seeded {
 
 async function seedAssetUpload(
   ctx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>,
-  binding: { userSlug: string; appSlug: string; userId: string },
+  binding: { ownerHandle: string; appSlug: string; userId: string },
   bytes: string
 ): Promise<Seeded> {
   const [rStore] = await ctx.vibesCtx.storage.ensure(string2stream(bytes));
@@ -63,7 +63,7 @@ async function seedAssetUpload(
   await ctx.vibesCtx.sql.db.insert(ctx.vibesCtx.sql.tables.assetUploads).values({
     uploadId,
     userId: binding.userId,
-    userSlug: binding.userSlug,
+    ownerHandle: binding.ownerHandle,
     appSlug: binding.appSlug,
     cid: stored.cid,
     assetURI: stored.getURL,
@@ -79,7 +79,7 @@ describe("putDoc _files.uploadId validation (Stage B Phase 3)", { timeout: 30000
   let ownerApi: VibesDiyApi;
   let app1Slug: string;
   let app2Slug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const { ctx, wsPair, sthis, deviceCA } = await setupCtx();
@@ -93,7 +93,7 @@ describe("putDoc _files.uploadId validation (Stage B Phase 3)", { timeout: 30000
     const res1 = r1.Ok();
     if (!isResEnsureAppSlugOk(res1)) assert.fail("Failed to create app1");
     app1Slug = res1.appSlug;
-    userSlug = res1.userSlug;
+    ownerHandle = res1.ownerHandle;
     const r2 = await ownerApi.ensureAppSlug({
       mode: "dev",
       fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
@@ -104,9 +104,9 @@ describe("putDoc _files.uploadId validation (Stage B Phase 3)", { timeout: 30000
   }, 30000);
 
   it("accepts a put referencing a valid uploadId minted for this app", async () => {
-    const seeded = await seedAssetUpload(appCtx, { userSlug, appSlug: app1Slug, userId: "test-user" }, "valid-bytes");
+    const seeded = await seedAssetUpload(appCtx, { ownerHandle, appSlug: app1Slug, userId: "test-user" }, "valid-bytes");
     const res = await ownerApi.putDoc({
-      userSlug,
+      ownerHandle,
       appSlug: app1Slug,
       dbName: "default",
       doc: { _files: { photo: { uploadId: seeded.uploadId, type: "text/plain", size: 11 } } },
@@ -116,7 +116,7 @@ describe("putDoc _files.uploadId validation (Stage B Phase 3)", { timeout: 30000
 
   it("rejects a put referencing an unknown uploadId", async () => {
     const res = await ownerApi.putDoc({
-      userSlug,
+      ownerHandle,
       appSlug: app1Slug,
       dbName: "default",
       doc: { _files: { photo: { uploadId: "test-upl-bogus-id", type: "text/plain", size: 1 } } },
@@ -126,9 +126,9 @@ describe("putDoc _files.uploadId validation (Stage B Phase 3)", { timeout: 30000
   });
 
   it("rejects a put referencing an uploadId minted for a different app (paste-attack)", async () => {
-    const seeded = await seedAssetUpload(appCtx, { userSlug, appSlug: app2Slug, userId: "test-user" }, "foreign-bytes");
+    const seeded = await seedAssetUpload(appCtx, { ownerHandle, appSlug: app2Slug, userId: "test-user" }, "foreign-bytes");
     const res = await ownerApi.putDoc({
-      userSlug,
+      ownerHandle,
       appSlug: app1Slug,
       dbName: "default",
       doc: { _files: { photo: { uploadId: seeded.uploadId, type: "text/plain", size: 13 } } },
@@ -139,7 +139,7 @@ describe("putDoc _files.uploadId validation (Stage B Phase 3)", { timeout: 30000
 
   it("docs without _files write through unchanged (no-op for legacy data)", async () => {
     const res = await ownerApi.putDoc({
-      userSlug,
+      ownerHandle,
       appSlug: app1Slug,
       dbName: "default",
       doc: { title: "no files here" },
@@ -150,7 +150,7 @@ describe("putDoc _files.uploadId validation (Stage B Phase 3)", { timeout: 30000
   it("entries that aren't in {uploadId, type, size} shape pass through (no-op)", async () => {
     // Some other shape — e.g. a legacy data field happens to be named _files
     const res = await ownerApi.putDoc({
-      userSlug,
+      ownerHandle,
       appSlug: app1Slug,
       dbName: "default",
       doc: { _files: { unrelated: "just a string" } },
@@ -159,9 +159,9 @@ describe("putDoc _files.uploadId validation (Stage B Phase 3)", { timeout: 30000
   });
 
   it("rejects when one of multiple _files entries is invalid (all-or-nothing)", async () => {
-    const goodSeed = await seedAssetUpload(appCtx, { userSlug, appSlug: app1Slug, userId: "test-user" }, "good-of-mixed");
+    const goodSeed = await seedAssetUpload(appCtx, { ownerHandle, appSlug: app1Slug, userId: "test-user" }, "good-of-mixed");
     const res = await ownerApi.putDoc({
-      userSlug,
+      ownerHandle,
       appSlug: app1Slug,
       dbName: "default",
       doc: {

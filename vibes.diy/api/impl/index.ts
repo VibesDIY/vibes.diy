@@ -97,15 +97,15 @@ import {
   isResRequestAccessFlow,
   isResHasAccessRequestFlow,
   ResRequestAccess,
-  ReqListUserSlugBindings,
-  ResListUserSlugBindings,
-  isResListUserSlugBindings,
-  ReqCreateUserSlugBinding,
-  ResCreateUserSlugBinding,
-  isResCreateUserSlugBinding,
-  ReqDeleteUserSlugBinding,
-  ResDeleteUserSlugBinding,
-  isResDeleteUserSlugBinding,
+  ReqListHandleBindings,
+  ResListHandleBindings,
+  isResListHandleBindings,
+  ReqCreateHandleBinding,
+  ResCreateHandleBinding,
+  isResCreateHandleBinding,
+  ReqDeleteHandleBinding,
+  ResDeleteHandleBinding,
+  isResDeleteHandleBinding,
   ReqListModels,
   ResListModels,
   isResListModels,
@@ -218,7 +218,7 @@ export interface VibesDiyApiParam {
   readonly sthis?: SuperThis;
   readonly timeoutMs?: number;
   // Optional perf hint: pin this connection's DO shard to a stable value (e.g.
-  // "${userSlug}--${appSlug}" for a viewer route) so multiple visitors to the
+  // "${ownerHandle}--${appSlug}" for a viewer route) so multiple visitors to the
   // same vibe land on the same warm DO instead of each paying ~1s cold-start.
   // Omit for codegen / load-balanced traffic — random UUID is used.
   readonly shardKey?: string;
@@ -252,15 +252,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 }> {
   readonly cfg: VibesDiyApiConfig;
   private readonly pendingRequests = new Map<string, PendingRequest<unknown>>();
-  private readonly docChangedListeners: ((userSlug: string, appSlug: string, dbName: string, docId: string) => void)[] = [];
+  private readonly docChangedListeners: ((ownerHandle: string, appSlug: string, dbName: string, docId: string) => void)[] = [];
   private readonly docChangedDetachers = new Map<
-    (userSlug: string, appSlug: string, dbName: string, docId: string) => void,
+    (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void,
     () => void
   >();
-  private readonly docSubscriptions: { userSlug: string; appSlug: string; dbName: string }[] = [];
+  private readonly docSubscriptions: { ownerHandle: string; appSlug: string; dbName: string }[] = [];
   private readonly requestGrantListeners: ((evt: EvtRequestGrant) => void)[] = [];
   private readonly requestGrantDetachers = new Map<(evt: EvtRequestGrant) => void, () => void>();
-  private readonly requestGrantSubscriptions: { userSlug: string; appSlug: string }[] = [];
+  private readonly requestGrantSubscriptions: { ownerHandle: string; appSlug: string }[] = [];
   private readonly userNotificationListeners: ((evt: EvtUserNotification) => void)[] = [];
   private readonly userNotificationDetachers = new Map<(evt: EvtUserNotification) => void, () => void>();
   private userNotificationSubscribed = false;
@@ -727,9 +727,9 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { resMatch: isResSubscribeRequestGrants }
     );
     if (result.isOk()) {
-      const sub = { userSlug: req.userSlug, appSlug: req.appSlug };
-      const key = `${sub.userSlug}/${sub.appSlug}`;
-      if (!this.requestGrantSubscriptions.some((s) => `${s.userSlug}/${s.appSlug}` === key)) {
+      const sub = { ownerHandle: req.ownerHandle, appSlug: req.appSlug };
+      const key = `${sub.ownerHandle}/${sub.appSlug}`;
+      if (!this.requestGrantSubscriptions.some((s) => `${s.ownerHandle}/${s.appSlug}` === key)) {
         this.requestGrantSubscriptions.push(sub);
       }
     }
@@ -740,16 +740,16 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.request({ ...req, type: "vibes.diy.req-has-access-request" }, { resMatch: isResHasAccessRequestFlow });
   }
 
-  listUserSlugBindings(req: Req<ReqListUserSlugBindings>): Promise<Result<ResListUserSlugBindings, VibesDiyError>> {
-    return this.request({ ...req, type: "vibes.diy.req-list-user-slug-bindings" }, { resMatch: isResListUserSlugBindings });
+  listHandleBindings(req: Req<ReqListHandleBindings>): Promise<Result<ResListHandleBindings, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-user-slug-bindings" }, { resMatch: isResListHandleBindings });
   }
 
-  createUserSlugBinding(req: Req<ReqCreateUserSlugBinding>): Promise<Result<ResCreateUserSlugBinding, VibesDiyError>> {
-    return this.request({ ...req, type: "vibes.diy.req-create-user-slug-binding" }, { resMatch: isResCreateUserSlugBinding });
+  createHandleBinding(req: Req<ReqCreateHandleBinding>): Promise<Result<ResCreateHandleBinding, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-create-user-slug-binding" }, { resMatch: isResCreateHandleBinding });
   }
 
-  deleteUserSlugBinding(req: Req<ReqDeleteUserSlugBinding>): Promise<Result<ResDeleteUserSlugBinding, VibesDiyError>> {
-    return this.request({ ...req, type: "vibes.diy.req-delete-user-slug-binding" }, { resMatch: isResDeleteUserSlugBinding });
+  deleteHandleBinding(req: Req<ReqDeleteHandleBinding>): Promise<Result<ResDeleteHandleBinding, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-delete-user-slug-binding" }, { resMatch: isResDeleteHandleBinding });
   }
 
   listModels = Lazy(
@@ -785,9 +785,9 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { resMatch: isResSubscribeDocs }
     );
     if (result.isOk()) {
-      const sub = { userSlug: req.userSlug, appSlug: req.appSlug, dbName: req.dbName };
-      const key = `${sub.userSlug}/${sub.appSlug}/${sub.dbName}`;
-      if (!this.docSubscriptions.some((s) => `${s.userSlug}/${s.appSlug}/${s.dbName}` === key)) {
+      const sub = { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName: req.dbName };
+      const key = `${sub.ownerHandle}/${sub.appSlug}/${sub.dbName}`;
+      if (!this.docSubscriptions.some((s) => `${s.ownerHandle}/${s.appSlug}/${s.dbName}` === key)) {
         this.docSubscriptions.push(sub);
       }
     }
@@ -860,7 +860,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   private attachDocChangedToConnection(
     conn: VibeDiyApiConnection,
-    fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void
+    fn: (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void
   ): () => void {
     const unsub = conn.onMessage((wsEvent) => {
       if (wsEvent.type !== "MessageEvent") return;
@@ -874,7 +874,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
           const parsed = JSON.parse(text);
           const msg = msgBase(parsed);
           if (!(msg instanceof type.errors) && isEvtDocChanged(msg.payload)) {
-            fn(msg.payload.userSlug, msg.payload.appSlug, msg.payload.dbName, msg.payload.docId);
+            fn(msg.payload.ownerHandle, msg.payload.appSlug, msg.payload.dbName, msg.payload.docId);
           }
         })
         .catch((_e: unknown) => {
@@ -886,7 +886,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     };
   }
 
-  onDocChanged(fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void): () => void {
+  onDocChanged(fn: (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void): () => void {
     this.docChangedListeners.push(fn);
     const conn = this.currentConnection;
     if (conn) {
@@ -1015,8 +1015,8 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   /** @internal — test inspection only */
   get _testInternals(): {
-    docSubscriptions: readonly { userSlug: string; appSlug: string; dbName: string }[];
-    requestGrantSubscriptions: readonly { userSlug: string; appSlug: string }[];
+    docSubscriptions: readonly { ownerHandle: string; appSlug: string; dbName: string }[];
+    requestGrantSubscriptions: readonly { ownerHandle: string; appSlug: string }[];
     docChangedListenerCount: number;
     requestGrantListenerCount: number;
     currentConnection: VibeDiyApiConnection | undefined;
@@ -1048,8 +1048,8 @@ class LLMChatImpl implements LLMChat {
   get chatId(): string {
     return this.res.chatId;
   }
-  get userSlug(): string {
-    return this.res.userSlug;
+  get ownerHandle(): string {
+    return this.res.ownerHandle;
   }
   get appSlug(): string {
     return this.res.appSlug;

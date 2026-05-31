@@ -1,16 +1,16 @@
 import { useParams } from "react-router";
-import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 import React, { useMemo } from "react";
 import { BuildURI, URI } from "@adviser/cement";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 
 export function DataView({ promptState: _p }: { promptState: PromptState }) {
-  const { userSlug, appSlug, fsId } = useParams<{ userSlug: string; appSlug: string; fsId?: string }>();
+  const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
   const { webVars: svcVars } = useVibesDiy();
 
   const previewUrl = useMemo(() => {
-    if (fsId && appSlug && userSlug) {
+    if (fsId && appSlug && ownerHandle) {
       const myUrl = URI.from(window.location.href);
       const baseUrl = calcEntryPointUrl({
         hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
@@ -18,7 +18,7 @@ export function DataView({ promptState: _p }: { promptState: PromptState }) {
         port: myUrl.port,
         // Carry the route's pinned fsId so the DB-explorer reflects the
         // same snapshot the preview iframe is showing (not always-latest).
-        bindings: { appSlug, userSlug, fsId },
+        bindings: { appSlug, ownerHandle, fsId },
       });
       const previewUrl = BuildURI.from(baseUrl)
         .appendRelative(".db-explorer")
@@ -27,7 +27,7 @@ export function DataView({ promptState: _p }: { promptState: PromptState }) {
       return previewUrl;
     }
     return null;
-  }, [fsId, userSlug, appSlug]);
+  }, [fsId, ownerHandle, appSlug]);
 
   if (!previewUrl) {
     return <>No App Found</>;

@@ -107,7 +107,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
             and(
               eq(vctx.sql.tables.apps.fsId, req.fsId),
               eq(vctx.sql.tables.apps.appSlug, req.appSlug),
-              eq(vctx.sql.tables.apps.userSlug, req.userSlug)
+              eq(vctx.sql.tables.apps.ownerHandle, req.ownerHandle)
             )
           )
           .limit(1)
@@ -116,14 +116,14 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         const maxCreatedSub = vctx.sql.db
           .select({ mode: vctx.sql.tables.apps.mode, maxCreated: max(vctx.sql.tables.apps.created).as("max_created") })
           .from(vctx.sql.tables.apps)
-          .where(and(eq(vctx.sql.tables.apps.userSlug, req.userSlug), eq(vctx.sql.tables.apps.appSlug, req.appSlug)))
+          .where(and(eq(vctx.sql.tables.apps.ownerHandle, req.ownerHandle), eq(vctx.sql.tables.apps.appSlug, req.appSlug)))
           .groupBy(vctx.sql.tables.apps.mode)
           .as("mc");
         const rows = await vctx.sql.db
           .select({
             appSlug: vctx.sql.tables.apps.appSlug,
             userId: vctx.sql.tables.apps.userId,
-            userSlug: vctx.sql.tables.apps.userSlug,
+            ownerHandle: vctx.sql.tables.apps.ownerHandle,
             releaseSeq: vctx.sql.tables.apps.releaseSeq,
             fsId: vctx.sql.tables.apps.fsId,
             env: vctx.sql.tables.apps.env,
@@ -138,7 +138,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
             and(
               eq(vctx.sql.tables.apps.mode, maxCreatedSub.mode),
               eq(vctx.sql.tables.apps.created, maxCreatedSub.maxCreated),
-              eq(vctx.sql.tables.apps.userSlug, req.userSlug),
+              eq(vctx.sql.tables.apps.ownerHandle, req.ownerHandle),
               eq(vctx.sql.tables.apps.appSlug, req.appSlug)
             )
           )
@@ -151,7 +151,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           type: "vibes.diy.res-get-app-by-fsid",
           error: "app-not-found",
           appSlug: req.appSlug,
-          userSlug: req.userSlug,
+          ownerHandle: req.ownerHandle,
           fsId: req.fsId,
           grant: "not-found",
           mode: "dev",
@@ -170,14 +170,14 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       const rAppSet = await ensureAppSettings(vctx, {
         type: "vibes.diy.req-ensure-app-settings",
         appSlug: app.appSlug,
-        userSlug: app.userSlug,
+        ownerHandle: app.ownerHandle,
       });
       if (rAppSet.isErr()) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-get-app-by-fsid",
           error: "app-settings-not-found",
           appSlug: req.appSlug,
-          userSlug: req.userSlug,
+          ownerHandle: req.ownerHandle,
           fsId: req.fsId,
           grant: "not-found",
           mode: "dev",
@@ -218,7 +218,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           if (reqUserId && settings.entry.enableRequest?.autoAcceptRole !== undefined) {
             const rHasRequest = await hasAccessRequest(vctx, {
               appSlug: app.appSlug,
-              userSlug: app.userSlug,
+              ownerHandle: app.ownerHandle,
               foreignUserId: reqUserId,
             });
             if (rHasRequest.isOk()) {
@@ -230,7 +230,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
               } else if (!isResHasAccessRequestPending(hasRequest)) {
                 const rRequestAccess = await requestAccess(vctx, {
                   appSlug: app.appSlug,
-                  userSlug: app.userSlug,
+                  ownerHandle: app.ownerHandle,
                   foreignUserId: reqUserId,
                   claims: req._auth?.verifiedAuth.claims,
                 });
@@ -252,7 +252,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
               type: "vibes.diy.res-get-app-by-fsid",
               error: "access-invite-check-failed",
               appSlug: req.appSlug,
-              userSlug: req.userSlug,
+              ownerHandle: req.ownerHandle,
               fsId: req.fsId,
               grant: "not-found",
               mode: "dev",
@@ -284,7 +284,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                     type: "vibes.diy.res-get-app-by-fsid",
                     error: "redeem-invite-failed",
                     appSlug: req.appSlug,
-                    userSlug: req.userSlug,
+                    ownerHandle: req.ownerHandle,
                     fsId: req.fsId,
                     grant: "not-found",
                     mode: "dev",
@@ -306,7 +306,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
             } else {
               const rHasRequest = await hasAccessRequest(vctx, {
                 appSlug: app.appSlug,
-                userSlug: app.userSlug,
+                ownerHandle: app.ownerHandle,
                 foreignUserId: reqUserId,
               });
               if (rHasRequest.isErr()) {
@@ -314,7 +314,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                   type: "vibes.diy.res-get-app-by-fsid",
                   error: "access-request-check-failed",
                   appSlug: req.appSlug,
-                  userSlug: req.userSlug,
+                  ownerHandle: req.ownerHandle,
                   fsId: req.fsId,
                   grant: "not-found",
                   mode: "dev",
@@ -342,7 +342,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                 if (autoJoinEnabled) {
                   const rRequestAccess = await requestAccess(vctx, {
                     appSlug: app.appSlug,
-                    userSlug: app.userSlug,
+                    ownerHandle: app.ownerHandle,
                     foreignUserId: reqUserId,
                     claims: req._auth?.verifiedAuth.claims,
                   });
@@ -351,7 +351,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                       type: "vibes.diy.res-get-app-by-fsid",
                       error: "request-access-failed",
                       appSlug: req.appSlug,
-                      userSlug: req.userSlug,
+                      ownerHandle: req.ownerHandle,
                       fsId: req.fsId,
                       grant: "not-found",
                       mode: "dev",
@@ -380,7 +380,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-get-app-by-fsid",
             appSlug: "not-existing",
-            userSlug: "not-existing",
+            ownerHandle: "not-existing",
             fsId: "not-found",
             grant: "not-grant",
             mode: "dev",
@@ -405,7 +405,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-get-app-by-fsid",
         appSlug: app.appSlug,
-        userSlug: app.userSlug,
+        ownerHandle: app.ownerHandle,
         ...(ownerDisplayName ? { ownerDisplayName } : {}),
         fsId: app.fsId,
         grant,

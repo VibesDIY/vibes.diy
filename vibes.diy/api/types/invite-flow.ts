@@ -5,7 +5,7 @@ import { ActiveACL } from "./invite.js";
 // shared identity for all key-grant messages
 export const KeyGrantKey = type({
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   grantType: "'invite' | 'request'",
   key: "string",
 });
@@ -51,7 +51,7 @@ export const ReqUpsertKeyGrant = type({
   type: "'vibes.diy.req-upsert-key-grant'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   entry: ActiveACL,
 });
 export type ReqUpsertKeyGrant = typeof ReqUpsertKeyGrant.infer;
@@ -100,7 +100,7 @@ export function isReqRedeemInvite(obj: unknown): obj is ReqRedeemInvite {
 export const ResRedeemInviteOK = type({
   type: "'vibes.diy.res-redeem-invite'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   emailKey: "string",
   role: Role,
   state: "'accepted'",
@@ -128,7 +128,7 @@ export function isResRedeemInvite(obj: unknown): obj is ResRedeemInvite {
 
 export const InviteGrantItem = type({
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   emailKey: "string",
   state: "'pending' | 'accepted' | 'revoked'",
   role: Role,
@@ -143,7 +143,7 @@ export const ReqCreateInvite = type({
   type: "'vibes.diy.req-create-invite'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   invitedEmail: "string",
   role: Role,
 });
@@ -155,7 +155,7 @@ export function isReqCreateInvite(obj: unknown): obj is ReqCreateInvite {
 export const ResCreateInvite = type({
   type: "'vibes.diy.res-create-invite'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 }).and(InviteGrantItem);
 export type ResCreateInvite = typeof ResCreateInvite.infer;
 export function isResCreateInvite(obj: unknown): obj is ResCreateInvite {
@@ -166,7 +166,7 @@ export const ReqHasAccessInvite = type({
   type: "'vibes.diy.req-has-access-invite'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 });
 export type ReqHasAccessInvite = typeof ReqHasAccessInvite.infer;
 export function isReqHasAccessInvite(obj: unknown): obj is ReqHasAccessInvite {
@@ -176,7 +176,7 @@ export function isReqHasAccessInvite(obj: unknown): obj is ReqHasAccessInvite {
 export const ResHasAccessInviteBase = type({
   type: "'vibes.diy.res-has-access-invite'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
 });
 
 export const ResHasAccessInviteNotFound = type({
@@ -223,7 +223,7 @@ export const ReqInviteSetRole = type({
   type: "'vibes.diy.req-invite-set-role'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   emailKey: "string",
   role: Role,
 });
@@ -235,7 +235,7 @@ export function isReqInviteSetRole(obj: unknown): obj is ReqInviteSetRole {
 export const ResInviteSetRole = type({
   type: "'vibes.diy.res-invite-set-role'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   emailKey: "string",
   role: Role,
 });
@@ -248,7 +248,7 @@ export const ReqRevokeInvite = type({
   type: "'vibes.diy.req-revoke-invite'",
   auth: dashAuthType,
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   emailKey: "string",
   "delete?": "boolean",
 });
@@ -260,7 +260,7 @@ export function isReqRevokeInvite(obj: unknown): obj is ReqRevokeInvite {
 export const ResRevokeInvite = type({
   type: "'vibes.diy.res-revoke-invite'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   emailKey: "string",
   deleted: "boolean",
 });
@@ -280,7 +280,7 @@ export function isReqListInviteGrants(obj: unknown): obj is ReqListInviteGrants 
 export const ResListInviteGrants = type({
   type: "'vibes.diy.res-list-invite-grants'",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   items: InviteGrantItem.array(),
   "nextCursor?": "string",
 });

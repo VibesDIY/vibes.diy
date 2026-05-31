@@ -14,7 +14,7 @@ Environment:
   NEON_DATABASE_ADMIN_URL must be set (in .dev.vars or env).
 
 Examples:
-  pnpm --dir vibes.diy/api/svc run admin:db sql "UPDATE \\"AppDocuments\\" SET \\"userSlug\\" = 'test' WHERE \\"appSlug\\" = 'foo'"
+  pnpm --dir vibes.diy/api/svc run admin:db sql "UPDATE \\"AppDocuments\\" SET \\"ownerHandle\\" = 'test' WHERE \\"appSlug\\" = 'foo'"
 `.trim()
   );
 }

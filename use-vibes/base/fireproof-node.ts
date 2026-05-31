@@ -4,7 +4,7 @@
  * Module-level singletons:
  *  - sharedAdapter: Lazy<FireflyApiAdapter> — first fireproof() call's
  *    opts win. Subsequent calls reuse the cached adapter, so N
- *    fireproof(name) calls share one VibesDiyApi/WebSocket/userSlug.
+ *    fireproof(name) calls share one VibesDiyApi/WebSocket/userHandle.
  *  - databasesByName: KeyedResolvOnce<FireflyDatabase> — per-name cache
  *    so fireproof("x") returns the same instance across the process.
  *
@@ -28,14 +28,14 @@ import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 export interface FireproofOpts {
   apiUrl?: string;
   appSlug?: string;
-  userSlug?: string;
+  userHandle?: string;
   getToken?: () => Promise<Result<DashAuthType>>;
 }
 
 interface ResolvedOpts {
   apiUrl: string;
   appSlug: string;
-  userSlug: string | undefined;
+  userHandle: string | undefined;
   getToken: () => Promise<Result<DashAuthType>>;
 }
 
@@ -73,7 +73,7 @@ function resolveOptsSync(opts?: FireproofOpts): ResolvedOpts {
       const inner = await lazyKeybagGetToken();
       return inner();
     });
-  return { apiUrl, appSlug, userSlug: opts?.userSlug, getToken };
+  return { apiUrl, appSlug, userHandle: opts?.userHandle, getToken };
 }
 
 let sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
@@ -81,7 +81,7 @@ let sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
     apiUrl: resolved.apiUrl,
     getToken: resolved.getToken,
   });
-  return new FireflyApiAdapter(api, resolved.appSlug, resolved.userSlug ? { userSlug: resolved.userSlug } : undefined);
+  return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { userHandle: resolved.userHandle } : undefined);
 });
 
 let databasesByName = new KeyedResolvOnce<FireflyDatabase>();
@@ -89,11 +89,11 @@ let databasesByName = new KeyedResolvOnce<FireflyDatabase>();
 /**
  * Standalone fireproof() factory.
  *
- * Bare form `fireproof("todos")` auto-resolves auth/userSlug/appSlug from
+ * Bare form `fireproof("todos")` auto-resolves auth/userHandle/appSlug from
  * local CLI state populated by `npx vibes-diy login`.
  *
  * **First-call-wins for opts.** The first call to fireproof() in a process
- * binds apiUrl/appSlug/getToken/userSlug to the singleton adapter — later
+ * binds apiUrl/appSlug/getToken/userHandle to the singleton adapter — later
  * calls' opts arguments are silently ignored (matches the legacy fireproof()
  * mental model where opts are config-time, not call-time). Callers that need
  * different configs in one process should construct VibesDiyApi +
@@ -111,7 +111,7 @@ export function __resetFireproofForTesting(): void {
       apiUrl: resolved.apiUrl,
       getToken: resolved.getToken,
     });
-    return new FireflyApiAdapter(api, resolved.appSlug, resolved.userSlug ? { userSlug: resolved.userSlug } : undefined);
+    return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { userHandle: resolved.userHandle } : undefined);
   });
   databasesByName = new KeyedResolvOnce<FireflyDatabase>();
 }

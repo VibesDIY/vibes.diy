@@ -112,7 +112,7 @@ export class FireflyDatabase {
     this.vibeApp = vibeApi.svc.vibeApp;
 
     // Subscribe to remote doc-changed events for THIS db (cross-client sync).
-    // The server's DocNotify DO is keyed on (userSlug, appSlug, dbName), so
+    // The server's DocNotify DO is keyed on (ownerHandle, appSlug, dbName), so
     // each FireflyDatabase must subscribe for its own name — otherwise apps
     // using a non-"default" dbName get zero subscribers on the server side
     // and never receive notifications. Fire-and-forget; the client-side
@@ -134,7 +134,7 @@ export class FireflyDatabase {
       const { data } = event;
       if (
         isEvtDocChanged(data) &&
-        data.userSlug === this.vibeApp.userSlug &&
+        data.ownerHandle === this.vibeApp.ownerHandle &&
         data.appSlug === this.vibeApp.appSlug &&
         data.dbName === this.name
       ) {

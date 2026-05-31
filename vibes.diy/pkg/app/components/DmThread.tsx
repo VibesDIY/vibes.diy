@@ -5,7 +5,7 @@ import type { VibesDiyApiIface } from "@vibes.diy/api-types";
 interface DmThreadProps {
   myUserSlug: string;
   otherUserSlug: string;
-  vibeRef?: { userSlug: string; appSlug: string };
+  vibeRef?: { ownerHandle: string; appSlug: string };
   vibeDiyApi?: VibesDiyApiIface | null;
 }
 
@@ -26,7 +26,7 @@ export function DmThread({ myUserSlug, otherUserSlug, vibeRef, vibeDiyApi }: DmT
 
   useEffect(() => {
     if (!vibeDiyApi) return;
-    vibeDiyApi.queryDocs({ userSlug: channelUserSlug, appSlug: "dm", dbName: "messages" }).then((res) => {
+    vibeDiyApi.queryDocs({ ownerHandle: channelUserSlug, appSlug: "dm", dbName: "messages" }).then((res) => {
       if (res.isErr()) return;
       setMessages(res.Ok().docs as unknown as MsgDoc[]);
     });
@@ -46,7 +46,7 @@ export function DmThread({ myUserSlug, otherUserSlug, vibeRef, vibeDiyApi }: DmT
     if (!body.trim() || !vibeDiyApi) return;
     setSending(true);
     await vibeDiyApi.putDoc({
-      userSlug: channelUserSlug,
+      ownerHandle: channelUserSlug,
       appSlug: "dm",
       dbName: "messages",
       doc: {
@@ -58,7 +58,7 @@ export function DmThread({ myUserSlug, otherUserSlug, vibeRef, vibeDiyApi }: DmT
     });
     setBody("");
     setSending(false);
-    vibeDiyApi.queryDocs({ userSlug: channelUserSlug, appSlug: "dm", dbName: "messages" }).then((res) => {
+    vibeDiyApi.queryDocs({ ownerHandle: channelUserSlug, appSlug: "dm", dbName: "messages" }).then((res) => {
       if (!res.isErr()) setMessages(res.Ok().docs as unknown as MsgDoc[]);
     });
   }

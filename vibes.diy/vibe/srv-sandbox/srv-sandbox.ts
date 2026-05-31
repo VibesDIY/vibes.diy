@@ -166,7 +166,7 @@ function vibeRegisterFPDB(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqVibeRegisterFPDb, unknown>): Promise<Result<EventoResultType>> => {
-      const key = `${ctx.validated.userSlug}-${ctx.validated.appSlug}-${ctx.validated.dbName}`;
+      const key = `${ctx.validated.ownerHandle}-${ctx.validated.appSlug}-${ctx.validated.dbName}`;
       shareableDBs.onSet(async (k, v, meta) => {
         if (k !== key || !meta.update) {
           return;
@@ -196,7 +196,7 @@ function vibeRegisterFPDB(sandbox: vibesDiySrvSandbox): EventoHandler {
           data: {
             dbName: token.dbName,
             appSlug: token.appSlug,
-            userSlug: token.userSlug,
+            ownerHandle: token.ownerHandle,
             fpcloudUrl: token.fpCloudUrl,
           },
         } satisfies EvtAttachFPDb);
@@ -207,7 +207,7 @@ function vibeRegisterFPDB(sandbox: vibesDiySrvSandbox): EventoHandler {
         status: "ok",
         data: {
           appSlug: ctx.validated.appSlug,
-          userSlug: ctx.validated.userSlug,
+          ownerHandle: ctx.validated.ownerHandle,
           dbName: ctx.validated.dbName,
           // appId: rCloudToken.Ok().appId,
           // tenant: rCloudToken.Ok().tenant,
@@ -272,7 +272,7 @@ function vibeFetchCloudToken(sandbox: vibesDiySrvSandbox): EventoHandler {
       sandbox.args.vibeDiyApi
         .getFPCloudToken({
           appSlug: data.appSlug,
-          userSlug: data.userSlug,
+          ownerHandle: data.ownerHandle,
           dbName: data.dbName,
         })
         .then((rRes) => {
@@ -314,7 +314,7 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqCallAI, unknown>): Promise<Result<EventoResultType>> => {
       await vibeDiyApi
-        .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "app" })
+        .openChat({ ownerHandle: ctx.validated.ownerHandle, appSlug: ctx.validated.appSlug, mode: "app" })
         .then(async (rChat) => {
           if (rChat.isErr()) {
             return ctx.send.send(ctx, {
@@ -444,7 +444,7 @@ function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
         } satisfies ResOkImgGen);
 
       await vibeDiyApi
-        .openChat({ userSlug: ctx.validated.userSlug, appSlug: ctx.validated.appSlug, mode: "img" })
+        .openChat({ ownerHandle: ctx.validated.ownerHandle, appSlug: ctx.validated.appSlug, mode: "img" })
         .then(async (rChat) => {
           if (rChat.isErr()) return sendErr(rChat.Err().message);
           const chat = rChat.Ok();
@@ -487,7 +487,7 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqPutDoc, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.putDoc({
-        userSlug: ctx.validated.userSlug,
+        ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
         doc: ctx.validated.doc,
@@ -527,7 +527,7 @@ function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqGetDoc, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.getDoc({
-        userSlug: ctx.validated.userSlug,
+        ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
         docId: ctx.validated.docId,
@@ -565,7 +565,7 @@ function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqQueryDocs, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.queryDocs({
-        userSlug: ctx.validated.userSlug,
+        ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
       });
@@ -602,7 +602,7 @@ function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqDeleteDoc, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.deleteDoc({
-        userSlug: ctx.validated.userSlug,
+        ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
         docId: ctx.validated.docId,
@@ -640,7 +640,7 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqSubscribeDocs, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.subscribeDocs({
-        userSlug: ctx.validated.userSlug,
+        ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
         dbName: ctx.validated.dbName,
       });
@@ -676,7 +676,7 @@ function vibeSetDbAcl(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqSetDbAcl, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.ensureAppSettings({
-        userSlug: ctx.validated.userSlug,
+        ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
         dbAcl: { dbName: ctx.validated.dbName, acl: ctx.validated.acl },
       });
@@ -712,7 +712,7 @@ function vibeListDbNames(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqListDbNames, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.listDbNames({
-        userSlug: ctx.validated.userSlug,
+        ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
       });
       if (rRes.isErr()) {
@@ -758,7 +758,7 @@ function vibePutAsset(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibePutAsset, unknown>): Promise<Result<EventoResultType>> => {
-      const { tid, blob, userSlug, appSlug, mimeType } = ctx.validated;
+      const { tid, blob, ownerHandle, appSlug, mimeType } = ctx.validated;
       const sendErr = async (message: string) => {
         await ctx.send.send(ctx, {
           tid,
@@ -769,7 +769,7 @@ function vibePutAsset(sandbox: vibesDiySrvSandbox): EventoHandler {
       };
 
       const rGrant = await vibeDiyApi.requestAssetUploadGrant({
-        userSlug,
+        ownerHandle,
         appSlug,
         ...(mimeType ? { mimeType } : mimeType === undefined && blob.type ? { mimeType: blob.type } : {}),
       });
@@ -837,8 +837,8 @@ function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibeWhoAmI, unknown>): Promise<Result<EventoResultType>> => {
-      const { tid, appSlug, userSlug } = ctx.validated;
-      const rRes = await vibeDiyApi.whoAmI({ tid, appSlug, userSlug });
+      const { tid, appSlug, ownerHandle } = ctx.validated;
+      const rRes = await vibeDiyApi.whoAmI({ tid, appSlug, ownerHandle });
 
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
@@ -993,9 +993,9 @@ export class vibesDiySrvSandbox implements Disposable {
   };
 
   // Forward a doc-changed event from the API to the iframe
-  forwardDocChangedToIframe(userSlug: string, appSlug: string, dbName: string, docId: string): void {
+  forwardDocChangedToIframe(ownerHandle: string, appSlug: string, dbName: string, docId: string): void {
     if (this.iframeSource && this.iframeOrigin) {
-      this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", userSlug, appSlug, dbName, docId }, this.iframeOrigin);
+      this.iframeSource.postMessage({ type: "vibes.diy.evt-doc-changed", ownerHandle, appSlug, dbName, docId }, this.iframeOrigin);
     }
   }
 
@@ -1075,8 +1075,8 @@ export class vibesDiySrvSandbox implements Disposable {
     this.removeEventListeners = this.args.eventListeners.removeEventListener;
 
     // Forward doc-changed events from the API WebSocket to the iframe
-    this.args.vibeDiyApi.onDocChanged((userSlug, appSlug, dbName, docId) => {
-      this.forwardDocChangedToIframe(userSlug, appSlug, dbName, docId);
+    this.args.vibeDiyApi.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
+      this.forwardDocChangedToIframe(ownerHandle, appSlug, dbName, docId);
     });
   }
 

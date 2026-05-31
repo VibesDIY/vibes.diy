@@ -18,7 +18,7 @@ import { preAllocate } from "./pre-allocate.js";
 
 export interface EnsureAppMetadataArgs {
   readonly userId: string;
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly appSlug: string;
   readonly prompt: string;
   // For audit / queue source attribution.
@@ -30,7 +30,7 @@ export interface EnsureAppMetadataResult {
 }
 
 /**
- * Idempotently ensures (userSlug, appSlug) has metadata in AppSettings:
+ * Idempotently ensures (ownerHandle, appSlug) has metadata in AppSettings:
  * active.title, active.skills, active.icon-description, plus an enqueued
  * evt-icon-gen so the queue worker generates the icon PNG.
  *
@@ -53,7 +53,7 @@ export async function ensureAppMetadata(
       .where(
         and(
           eq(ctx.sql.tables.appSettings.userId, args.userId),
-          eq(ctx.sql.tables.appSettings.userSlug, args.userSlug),
+          eq(ctx.sql.tables.appSettings.ownerHandle, args.ownerHandle),
           eq(ctx.sql.tables.appSettings.appSlug, args.appSlug)
         )
       )
@@ -73,7 +73,7 @@ export async function ensureAppMetadata(
   if (rPre.isErr()) {
     ensureLogger(ctx.sthis, "ensureAppMetadata")
       .Warn()
-      .Any({ err: rPre.Err(), userSlug: args.userSlug, appSlug: args.appSlug })
+      .Any({ err: rPre.Err(), ownerHandle: args.ownerHandle, appSlug: args.appSlug })
       .Msg("preAllocate failed; skipping metadata generation");
     return Result.Ok({ generated: false });
   }
@@ -104,7 +104,7 @@ export async function ensureAppMetadata(
         .where(
           and(
             eq(ctx.sql.tables.appSettings.userId, args.userId),
-            eq(ctx.sql.tables.appSettings.userSlug, args.userSlug),
+            eq(ctx.sql.tables.appSettings.ownerHandle, args.ownerHandle),
             eq(ctx.sql.tables.appSettings.appSlug, args.appSlug)
           )
         )
@@ -116,7 +116,7 @@ export async function ensureAppMetadata(
     const rIns = await exception2Result(() =>
       ctx.sql.db.insert(ctx.sql.tables.appSettings).values({
         userId: args.userId,
-        userSlug: args.userSlug,
+        ownerHandle: args.ownerHandle,
         appSlug: args.appSlug,
         settings: newEntries,
         updated: now,
@@ -131,7 +131,7 @@ export async function ensureAppMetadata(
   await ctx.postQueue({
     payload: {
       type: "vibes.diy.evt-app-setting",
-      userSlug: args.userSlug,
+      ownerHandle: args.ownerHandle,
       appSlug: args.appSlug,
       settings: newEntries,
     },
@@ -145,7 +145,7 @@ export async function ensureAppMetadata(
     await ctx.postQueue({
       payload: {
         type: "vibes.diy.evt-icon-gen",
-        userSlug: args.userSlug,
+        ownerHandle: args.ownerHandle,
         appSlug: args.appSlug,
       },
       tid: "queue-event",

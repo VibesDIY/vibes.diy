@@ -20,7 +20,7 @@ import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import mime from "mime";
 import { transform } from "sucrase";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
-import { AppUserSlugBinding, VibesApiSQLCtx } from "../types.js";
+import { AppHandleBinding, VibesApiSQLCtx } from "../types.js";
 
 async function checkMaxAppsPerUser(
   ctx: VibesApiSQLCtx,
@@ -278,7 +278,7 @@ export interface EnsureAppsOpts {
 export async function ensureApps(
   ctx: VibesApiSQLCtx,
   opts: EnsureAppsOpts,
-  binding: AppUserSlugBinding,
+  binding: AppHandleBinding,
   fs: { vibeFileItem: VibeFile; storage: StorageResult }[]
 ): Promise<Result<ResEnsureAppSlug>> {
   // console.log("0-ensureApps called with opts:", opts, "binding:", binding, "fs:", fs);
@@ -289,9 +289,9 @@ export async function ensureApps(
     .where(
       and(
         eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
-        eq(ctx.sql.tables.apps.userSlug, binding.userSlug.userSlug),
+        eq(ctx.sql.tables.apps.ownerHandle, binding.ownerHandle.ownerHandle),
         eq(ctx.sql.tables.apps.fsId, fsId),
-        eq(ctx.sql.tables.apps.userId, binding.userSlug.userId)
+        eq(ctx.sql.tables.apps.userId, binding.ownerHandle.userId)
       )
     )
     .limit(1)
@@ -305,10 +305,10 @@ export async function ensureApps(
         .set({ mode: opts.mode })
         .where(
           and(
-            eq(ctx.sql.tables.apps.userId, binding.userSlug.userId),
+            eq(ctx.sql.tables.apps.userId, binding.ownerHandle.userId),
             eq(ctx.sql.tables.apps.fsId, fsId),
             eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
-            eq(ctx.sql.tables.apps.userSlug, binding.userSlug.userSlug)
+            eq(ctx.sql.tables.apps.ownerHandle, binding.ownerHandle.ownerHandle)
           )
         );
     }
@@ -323,7 +323,7 @@ export async function ensureApps(
     }
     return Result.Ok({
       type: "vibes.diy.res-ensure-app-slug",
-      userSlug: binding.userSlug.userSlug,
+      ownerHandle: binding.ownerHandle.ownerHandle,
       appSlug: binding.appSlug.appSlug,
       mode: opts.mode,
       fsId,
@@ -357,7 +357,7 @@ export async function ensureApps(
     );
   }
   // Carry forward cross-release meta (title, remix-of) from the prior
-  // release at this (appSlug, userSlug, userId). fsId-bound entries like
+  // release at this (appSlug, ownerHandle, userId). fsId-bound entries like
   // screen-shot-ref are excluded by the allow-list and get regenerated per
   // release by the screenshot queue.
   const priorRow = await ctx.sql.db
@@ -366,8 +366,8 @@ export async function ensureApps(
     .where(
       and(
         eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
-        eq(ctx.sql.tables.apps.userSlug, binding.userSlug.userSlug),
-        eq(ctx.sql.tables.apps.userId, binding.userSlug.userId)
+        eq(ctx.sql.tables.apps.ownerHandle, binding.ownerHandle.ownerHandle),
+        eq(ctx.sql.tables.apps.userId, binding.ownerHandle.userId)
       )
     )
     .orderBy(desc(ctx.sql.tables.apps.releaseSeq))
@@ -381,8 +381,8 @@ export async function ensureApps(
 
   const sqlVal = {
     appSlug: binding.appSlug.appSlug,
-    userId: binding.userSlug.userId,
-    userSlug: binding.userSlug.userSlug,
+    userId: binding.ownerHandle.userId,
+    ownerHandle: binding.ownerHandle.ownerHandle,
     releaseSeq: maxSeq + 1,
     fsId,
     env: opts.env,
@@ -399,7 +399,7 @@ export async function ensureApps(
   return Result.Ok({
     type: "vibes.diy.res-ensure-app-slug",
     appSlug: binding.appSlug.appSlug,
-    userSlug: binding.userSlug.userSlug,
+    ownerHandle: binding.ownerHandle.ownerHandle,
     mode: opts.mode,
     fsId,
     env: opts.env,

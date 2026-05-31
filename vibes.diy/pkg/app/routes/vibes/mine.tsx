@@ -19,10 +19,10 @@ export function meta() {
 export default function VibesMine(): ReactElement {
   const navigate = useNavigate();
   const {
-    userSlug: paramUserSlug,
+    ownerHandle: paramUserSlug,
     appSlug: paramAppSlug,
     tab: paramTab,
-  } = useParams<{ userSlug?: string; appSlug?: string; tab?: string }>();
+  } = useParams<{ ownerHandle?: string; appSlug?: string; tab?: string }>();
   const { vibeDiyApi } = useVibesDiy();
   const { items: vibeItems, loading: isLoading, nextCursor, loadMore } = useRecentVibes(30);
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,12 +37,14 @@ export default function VibesMine(): ReactElement {
   const isPanelOpen = !!(paramUserSlug && paramAppSlug);
   const activeTab = toMineDetailTab(paramTab);
   const selectedKey = isPanelOpen ? `${paramUserSlug}/${paramAppSlug}` : "";
-  const selectedItem = isPanelOpen ? vibeItems.find((v) => v.userSlug === paramUserSlug && v.appSlug === paramAppSlug) : undefined;
+  const selectedItem = isPanelOpen
+    ? vibeItems.find((v) => v.ownerHandle === paramUserSlug && v.appSlug === paramAppSlug)
+    : undefined;
   const selectedHead = selectedKey ? appHeadInfo.get(selectedKey) : undefined;
 
-  async function onToggleMode(fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) {
+  async function onToggleMode(fsId: string, appSlug: string, ownerHandle: string, currentMode: string | undefined) {
     const nextMode = currentMode === "production" ? "dev" : "production";
-    const res = await vibeDiyApi.setSetModeFs({ fsId, appSlug, userSlug, mode: nextMode });
+    const res = await vibeDiyApi.setSetModeFs({ fsId, appSlug, ownerHandle, mode: nextMode });
     if (res.isErr()) {
       toast.error(`Failed to set mode: ${res.Err().message}`);
       return;
@@ -72,7 +74,7 @@ export default function VibesMine(): ReactElement {
     setLoadingDetails(key);
     setChatDetails(null);
     vibeDiyApi
-      .getChatDetails({ userSlug: paramUserSlug, appSlug: paramAppSlug })
+      .getChatDetails({ ownerHandle: paramUserSlug, appSlug: paramAppSlug })
       .then((res) => {
         if (!cancelledRef.current && res.isOk()) setChatDetails(res.Ok());
       })
@@ -92,7 +94,7 @@ export default function VibesMine(): ReactElement {
     }
     setScreenshots(new Map());
     for (const p of chatDetails.prompts) {
-      vibeDiyApi.getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, userSlug: chatDetails.userSlug }).then((res) => {
+      vibeDiyApi.getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, ownerHandle: chatDetails.ownerHandle }).then((res) => {
         if (res.isErr()) return;
         const app = res.Ok();
         setScreenshots((prev) =>
@@ -110,10 +112,10 @@ export default function VibesMine(): ReactElement {
   // already-resolved rows don't flash back to skeleton.
   useEffect(() => {
     for (const item of vibeItems) {
-      const key = `${item.userSlug}/${item.appSlug}`;
+      const key = `${item.ownerHandle}/${item.appSlug}`;
       if (requestedHeadKeysRef.current.has(key)) continue;
       requestedHeadKeysRef.current.add(key);
-      vibeDiyApi.getAppByFsId({ userSlug: item.userSlug, appSlug: item.appSlug }).then((res) => {
+      vibeDiyApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
         setAppHeadInfo((prev) => {
           // Resolve the per-row skeleton even on failure by always seeding
           // an entry (empty object) — otherwise the row would stay pulsing.
@@ -134,13 +136,13 @@ export default function VibesMine(): ReactElement {
     return vibeItems.filter((item) => {
       const title = (item.title ?? "").toLowerCase();
       const slug = item.appSlug.toLowerCase();
-      const user = item.userSlug.toLowerCase();
+      const user = item.ownerHandle.toLowerCase();
       return title.includes(q) || slug.includes(q) || user.includes(q);
     });
   }, [vibeItems, searchQuery]);
 
   const openTile = (item: ResRecentVibesItem) =>
-    navigate(`/vibes/mine/${item.userSlug}/${item.appSlug}/prompts`, { replace: false, preventScrollReset: true });
+    navigate(`/vibes/mine/${item.ownerHandle}/${item.appSlug}/prompts`, { replace: false, preventScrollReset: true });
   const closePanel = () => navigate("/vibes/mine", { replace: false, preventScrollReset: true });
   const changeTab = (tab: string) => {
     if (!paramUserSlug || !paramAppSlug) return;
@@ -151,7 +153,7 @@ export default function VibesMine(): ReactElement {
     <BrutalistLayout title="My Vibes" subtitle="Your created vibes">
       {isPanelOpen ? (
         <MineDetailPanel
-          userSlug={paramUserSlug}
+          ownerHandle={paramUserSlug}
           appSlug={paramAppSlug}
           title={selectedItem?.title}
           headScreenshot={selectedHead?.screenshot}

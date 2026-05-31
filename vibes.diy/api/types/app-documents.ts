@@ -6,7 +6,7 @@ import { dashAuthType } from "./common.js";
 export const reqPutDoc = type({
   type: "'vibes.diy.req-put-doc'",
   auth: dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   dbName: "string",
   doc: "Record<string, unknown>",
@@ -32,7 +32,7 @@ export function isResPutDoc(obj: unknown): obj is ResPutDoc {
 export const reqGetDoc = type({
   type: "'vibes.diy.req-get-doc'",
   "auth?": dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   dbName: "string",
   docId: "string",
@@ -76,7 +76,7 @@ export type QueryFilter = typeof queryFilter.infer;
 export const reqQueryDocs = type({
   type: "'vibes.diy.req-query-docs'",
   "auth?": dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   dbName: "string",
   "filter?": queryFilter,
@@ -101,7 +101,7 @@ export function isResQueryDocs(obj: unknown): obj is ResQueryDocs {
 export const reqDeleteDoc = type({
   type: "'vibes.diy.req-delete-doc'",
   auth: dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   dbName: "string",
   docId: "string",
@@ -126,7 +126,7 @@ export function isResDeleteDoc(obj: unknown): obj is ResDeleteDoc {
 export const reqSubscribeDocs = type({
   type: "'vibes.diy.req-subscribe-docs'",
   "auth?": dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   dbName: "string",
 });
@@ -149,7 +149,7 @@ export function isResSubscribeDocs(obj: unknown): obj is ResSubscribeDocs {
 export const reqListDbNames = type({
   type: "'vibes.diy.req-list-db-names'",
   auth: dashAuthType,
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
 });
 export type ReqListDbNames = typeof reqListDbNames.infer;
@@ -171,7 +171,7 @@ export function isResListDbNames(obj: unknown): obj is ResListDbNames {
 
 export const evtDocChanged = type({
   type: "'vibes.diy.evt-doc-changed'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   // dbName carries the per-db ACL boundary out to subscribers — without it,
   // a connection that subscribed to one readable db could observe change
@@ -189,7 +189,7 @@ export function isEvtDocChanged(obj: unknown): obj is EvtDocChanged {
 export const evtCommentPosted = type({
   type: "'vibes.diy.evt-comment-posted'",
   userId: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   docId: "string",
   created: "string",

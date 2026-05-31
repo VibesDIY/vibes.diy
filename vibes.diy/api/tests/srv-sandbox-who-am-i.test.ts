@@ -69,14 +69,14 @@ describe("vibeWhoAmI host handler", () => {
       whoAmIResult: Result.Ok({
         type: "vibe.res.whoAmI" as const,
         tid: "t1",
-        viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+        viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
         access: "owner",
       } satisfies ResVibeWhoAmI),
     });
 
     sandbox.handleMessage(
       fakeMessageEvent(
-        { type: "vibe.req.whoAmI", tid: "t1", appSlug: "myapp", userSlug: "alice" },
+        { type: "vibe.req.whoAmI", tid: "t1", appSlug: "myapp", ownerHandle: "alice" },
         "https://myapp--alice.example.com",
         iframe
       )
@@ -88,7 +88,7 @@ describe("vibeWhoAmI host handler", () => {
     expect(msg?.data).toMatchObject({
       tid: "t1",
       type: "vibe.res.whoAmI",
-      viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+      viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
       access: "owner",
     });
   });
@@ -99,7 +99,7 @@ describe("vibeWhoAmI host handler", () => {
       whoAmIResult: Result.Ok({
         type: "vibe.res.whoAmI" as const,
         tid: "t2",
-        viewer: { userSlug: "bob", displayName: "Bob", avatarUrl: "https://api.test/u/bob/avatar" },
+        viewer: { userHandle: "bob", displayName: "Bob", avatarUrl: "https://api.test/u/bob/avatar" },
         access: "viewer",
         dbAcls,
       } satisfies ResVibeWhoAmI),
@@ -107,7 +107,7 @@ describe("vibeWhoAmI host handler", () => {
 
     sandbox.handleMessage(
       fakeMessageEvent(
-        { type: "vibe.req.whoAmI", tid: "t2", appSlug: "notes", userSlug: "alice" },
+        { type: "vibe.req.whoAmI", tid: "t2", appSlug: "notes", ownerHandle: "alice" },
         "https://notes--alice.example.com",
         iframe
       )
@@ -134,7 +134,7 @@ describe("vibeWhoAmI host handler", () => {
 
     sandbox.handleMessage(
       fakeMessageEvent(
-        { type: "vibe.req.whoAmI", tid: "t3", appSlug: "myapp", userSlug: "alice" },
+        { type: "vibe.req.whoAmI", tid: "t3", appSlug: "myapp", ownerHandle: "alice" },
         "https://myapp--alice.example.com",
         iframe
       )

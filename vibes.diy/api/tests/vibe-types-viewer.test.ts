@@ -3,13 +3,13 @@ import { isReqVibeWhoAmI, isResVibeWhoAmI, isEvtVibeViewerChanged } from "@vibes
 
 describe("ReqVibeWhoAmI", () => {
   it("validates a request", () => {
-    expect(isReqVibeWhoAmI({ type: "vibe.req.whoAmI", tid: "abc", appSlug: "myapp", userSlug: "alice" })).toBe(true);
+    expect(isReqVibeWhoAmI({ type: "vibe.req.whoAmI", tid: "abc", appSlug: "myapp", ownerHandle: "alice" })).toBe(true);
   });
   it("rejects wrong type", () => {
-    expect(isReqVibeWhoAmI({ type: "vibe.req.other", tid: "abc", appSlug: "x", userSlug: "y" })).toBe(false);
+    expect(isReqVibeWhoAmI({ type: "vibe.req.other", tid: "abc", appSlug: "x", ownerHandle: "y" })).toBe(false);
   });
   it("rejects missing appSlug", () => {
-    expect(isReqVibeWhoAmI({ type: "vibe.req.whoAmI", tid: "abc", userSlug: "alice" })).toBe(false);
+    expect(isReqVibeWhoAmI({ type: "vibe.req.whoAmI", tid: "abc", ownerHandle: "alice" })).toBe(false);
   });
 });
 
@@ -29,7 +29,7 @@ describe("ResVibeWhoAmI", () => {
       isResVibeWhoAmI({
         type: "vibe.res.whoAmI",
         tid: "abc",
-        viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
         access: "owner",
         dbAcls: { comments: { write: ["members"] } },
       })
@@ -40,7 +40,7 @@ describe("ResVibeWhoAmI", () => {
       isResVibeWhoAmI({
         type: "vibe.res.whoAmI",
         tid: "abc",
-        viewer: { userSlug: "alice" },
+        viewer: { ownerHandle: "alice" },
         access: "owner",
       })
     ).toBe(false);
@@ -62,7 +62,7 @@ describe("EvtVibeViewerChanged", () => {
     expect(
       isEvtVibeViewerChanged({
         type: "vibe.evt.viewerChanged",
-        viewer: { userSlug: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
+        viewer: { ownerHandle: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
         access: "viewer",
       })
     ).toBe(true);
@@ -71,7 +71,7 @@ describe("EvtVibeViewerChanged", () => {
     expect(
       isEvtVibeViewerChanged({
         type: "vibe.evt.viewerChanged",
-        viewer: { userSlug: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
+        viewer: { ownerHandle: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
         access: "superadmin",
       })
     ).toBe(false);
@@ -80,7 +80,7 @@ describe("EvtVibeViewerChanged", () => {
     expect(
       isEvtVibeViewerChanged({
         type: "vibe.evt.viewerChanged",
-        viewer: { userSlug: "alice" },
+        viewer: { ownerHandle: "alice" },
         access: "viewer",
       })
     ).toBe(false);

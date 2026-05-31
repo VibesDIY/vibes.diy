@@ -35,7 +35,7 @@ async function computeMemberships(vctx: VibesApiSQLCtx): Promise<ResReportGrowth
     .select({
       created: t.requestGrants.created,
       memberId: t.requestGrants.foreignUserId,
-      userSlug: t.requestGrants.userSlug,
+      ownerHandle: t.requestGrants.ownerHandle,
       appSlug: t.requestGrants.appSlug,
     })
     .from(t.requestGrants)
@@ -46,7 +46,7 @@ async function computeMemberships(vctx: VibesApiSQLCtx): Promise<ResReportGrowth
     .select({
       created: t.inviteGrants.created,
       memberId: t.inviteGrants.tokenOrGrantUserId,
-      userSlug: t.inviteGrants.userSlug,
+      ownerHandle: t.inviteGrants.ownerHandle,
       appSlug: t.inviteGrants.appSlug,
     })
     .from(t.inviteGrants)
@@ -57,7 +57,7 @@ async function computeMemberships(vctx: VibesApiSQLCtx): Promise<ResReportGrowth
   // first-acquisition, not whichever path arrived later.
   const earliest = new Map<string, string>();
   for (const r of [...reqRows, ...invRows]) {
-    const key = `${r.memberId} ${r.userSlug} ${r.appSlug}`;
+    const key = `${r.memberId} ${r.ownerHandle} ${r.appSlug}`;
     const prev = earliest.get(key);
     if (prev === undefined || r.created < prev) earliest.set(key, r.created);
   }
@@ -90,10 +90,10 @@ async function computeMemberships(vctx: VibesApiSQLCtx): Promise<ResReportGrowth
   const slugById = new Map<string, string>();
   if (memberIdsNeedingSlug.size > 0) {
     const bindings = await vctx.sql.db
-      .select({ userId: t.userSlugBinding.userId, userSlug: t.userSlugBinding.userSlug })
-      .from(t.userSlugBinding)
-      .where(inArray(t.userSlugBinding.userId, [...memberIdsNeedingSlug]));
-    for (const b of bindings) slugById.set(b.userId, b.userSlug);
+      .select({ userId: t.handleBinding.userId, ownerHandle: t.handleBinding.handle })
+      .from(t.handleBinding)
+      .where(inArray(t.handleBinding.userId, [...memberIdsNeedingSlug]));
+    for (const b of bindings) slugById.set(b.userId, b.ownerHandle);
   }
 
   const earliestList = [...earliest.values()].sort();

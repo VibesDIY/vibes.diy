@@ -12,7 +12,7 @@ export const ReqPush = type({
   type: "'vibes-diy.cli.push'",
   mode: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   instantJoin: "boolean",
   publicAccess: "boolean",
   apiUrl: "string",
@@ -41,13 +41,13 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
     const api = ectx.vibesDiyApiFactory(args.apiUrl, { idleTimeoutMs: args.idleTimeoutMs });
     const mode = args.mode === "dev" ? "dev" : "production";
     const appSlug = args.appSlug === "" ? basename(process.cwd()) : args.appSlug;
-    const userSlug = await resolveUserSlug(api, args.userSlug === "" ? undefined : args.userSlug);
+    const ownerHandle = await resolveUserSlug(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
 
     const rPush = await pushFromDir({
       dir: process.cwd(),
       mode,
       appSlug,
-      userSlug,
+      ownerHandle,
       instantJoin: args.instantJoin,
       publicAccess: args.publicAccess,
       apiUrl: args.apiUrl,
@@ -81,7 +81,7 @@ export function pushCmd(ctx: CliCtx) {
         defaultValue: () => "",
         defaultValueIsSerializable: true,
       }),
-      userSlug: option({
+      ownerHandle: option({
         long: "user-slug",
         description: "User slug to publish under (uses default if omitted)",
         type: string,
@@ -94,7 +94,8 @@ export function pushCmd(ctx: CliCtx) {
       }),
       publicAccess: flag({
         long: "public",
-        description: "Enable anonymous public reads for this app (publicAccess.enable). Required for cross-origin <img>/<video> tags reading _files when the iframe can't share auth cookies with the file host.",
+        description:
+          "Enable anonymous public reads for this app (publicAccess.enable). Required for cross-origin <img>/<video> tags reading _files when the iframe can't share auth cookies with the file host.",
       }),
       idleTimeoutMs: option({
         long: "idle-timeout",

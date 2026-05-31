@@ -14,13 +14,13 @@ interface IconLookup {
   readonly headDescriptionAt: string | undefined;
 }
 
-async function lookupIconState(qctx: QueueCtx, userSlug: string, appSlug: string): Promise<Result<IconLookup | undefined>> {
+async function lookupIconState(qctx: QueueCtx, ownerHandle: string, appSlug: string): Promise<Result<IconLookup | undefined>> {
   const { db, tables } = qctx.sql;
   const rRow = await exception2Result(() =>
     db
       .select({ settings: tables.appSettings.settings })
       .from(tables.appSettings)
-      .where(and(eq(tables.appSettings.userSlug, userSlug), eq(tables.appSettings.appSlug, appSlug)))
+      .where(and(eq(tables.appSettings.ownerHandle, ownerHandle), eq(tables.appSettings.appSlug, appSlug)))
       .limit(1)
       .then((r) => r[0])
   );
@@ -41,7 +41,7 @@ async function lookupIconState(qctx: QueueCtx, userSlug: string, appSlug: string
 }
 
 export async function processIconGenEvent(qctx: QueueCtx, evt: EvtIconGen): Promise<Result<void>> {
-  const rLookup = await lookupIconState(qctx, evt.userSlug, evt.appSlug);
+  const rLookup = await lookupIconState(qctx, evt.ownerHandle, evt.appSlug);
   if (rLookup.isErr()) return Result.Err(rLookup);
   const lookup = rLookup.Ok();
   if (!lookup) return Result.Ok(undefined);
@@ -60,9 +60,9 @@ export async function processIconGenEvent(qctx: QueueCtx, evt: EvtIconGen): Prom
   });
   if (rGen.isErr()) return Result.Err(rGen);
   const { bytes, mime, model } = rGen.Ok();
-  console.info(`Icon generated for ${evt.userSlug}/${evt.appSlug} via ${model}: ${bytes.byteLength} bytes (${mime})`);
+  console.info(`Icon generated for ${evt.ownerHandle}/${evt.appSlug} via ${model}: ${bytes.byteLength} bytes (${mime})`);
   const rStore = await storeIcon(qctx, {
-    userSlug: evt.userSlug,
+    ownerHandle: evt.ownerHandle,
     appSlug: evt.appSlug,
     bytes,
     mime,

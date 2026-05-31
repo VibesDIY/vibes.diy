@@ -83,7 +83,7 @@ function createMockModal(overrides: Partial<UseShareModalReturn> = {}): UseShare
   });
 
   return {
-    userSlug: "testuser",
+    ownerHandle: "testuser",
     appSlug: "testapp",
     isOpen: true,
     open: vi.fn(),
@@ -378,7 +378,7 @@ describe("ShareModal", () => {
       });
 
       expect(requestAccessMock).toHaveBeenCalledTimes(1);
-      expect(requestAccessMock).toHaveBeenCalledWith({ appSlug: "testapp", userSlug: "testuser" });
+      expect(requestAccessMock).toHaveBeenCalledWith({ appSlug: "testapp", ownerHandle: "testuser" });
       await waitFor(() => {
         expect(screen.getByRole("button", { name: "Request pending" })).toBeDisabled();
       });

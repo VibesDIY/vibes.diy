@@ -101,7 +101,7 @@ describe("iframeSource capture filtering", () => {
     expect(messages).toHaveLength(1);
     expect(messages[0].data).toEqual({
       type: "vibes.diy.evt-doc-changed",
-      userSlug: "jchris",
+      ownerHandle: "jchris",
       appSlug: "quick-doc-saver",
       dbName: "default",
       docId: "doc123",

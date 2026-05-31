@@ -9,17 +9,17 @@ import type { PromptContextSql } from "@vibes.diy/call-ai-v2";
 const SEQ_BASE = 1_667_300;
 
 /**
- * Look up the userId that owns a given userSlug.  Mirrors the same helper
+ * Look up the userId that owns a given ownerHandle.  Mirrors the same helper
  * used in append-turn-to-chat.test.ts.
  */
-async function userIdForSlug(ctx: ApiTestCtx, userSlug: string): Promise<string> {
+async function userIdForSlug(ctx: ApiTestCtx, ownerHandle: string): Promise<string> {
   const row = await ctx.appCtx.vibesCtx.sql.db
-    .select({ userId: ctx.appCtx.vibesCtx.sql.tables.userSlugBinding.userId })
-    .from(ctx.appCtx.vibesCtx.sql.tables.userSlugBinding)
-    .where(eq(ctx.appCtx.vibesCtx.sql.tables.userSlugBinding.userSlug, userSlug))
+    .select({ userId: ctx.appCtx.vibesCtx.sql.tables.handleBinding.userId })
+    .from(ctx.appCtx.vibesCtx.sql.tables.handleBinding)
+    .where(eq(ctx.appCtx.vibesCtx.sql.tables.handleBinding.handle, ownerHandle))
     .limit(1)
     .then((r) => r[0]);
-  if (!row) throw new Error(`No userSlugBinding found for userSlug=${userSlug}`);
+  if (!row) throw new Error(`No handleBinding found for ownerHandle=${ownerHandle}`);
   return row.userId;
 }
 
@@ -34,8 +34,8 @@ describe("loadVersionTimeline", () => {
     // createApp() calls ensureAppSlug → ensurePushSeededChat, which inserts one
     // promptContexts row as the seed for the app.  openChat resolves to that same
     // chatId, so a fresh timeline is never empty — it always contains the seed entry.
-    const { appSlug, userSlug } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     const chat = rOpen.Ok();
 
     const tl = (await loadVersionTimeline(ctx.appCtx.vibesCtx, chat.chatId)).Ok();
@@ -55,10 +55,10 @@ describe("loadVersionTimeline", () => {
   it("returns distinct fsIds oldest-first for seed + two appended turns", async () => {
     // createApp inserts a seed row (fsId = seedFsId) with /App.jsx.
     // We then append two more turns; the timeline has 3 entries: seed, r1, r2.
-    const { appSlug, userSlug } = await ctx.createApp();
-    const userId = await userIdForSlug(ctx, userSlug);
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, ownerHandle);
 
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
 
@@ -73,7 +73,7 @@ describe("loadVersionTimeline", () => {
       await appendTurnToChat(vctx, {
         chatId: chat.chatId,
         userId,
-        userSlug,
+        ownerHandle,
         appSlug,
         fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: V1_CONTENT }],
       })
@@ -83,7 +83,7 @@ describe("loadVersionTimeline", () => {
       await appendTurnToChat(vctx, {
         chatId: chat.chatId,
         userId,
-        userSlug,
+        ownerHandle,
         appSlug,
         fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: V2_CONTENT }],
       })
@@ -117,10 +117,10 @@ describe("loadVersionTimeline", () => {
     // We then append one turn (r1.fsId) and directly insert a second
     // promptContexts row with the same r1.fsId.  The timeline should dedup
     // the duplicate and return 2 entries: [seed, r1].
-    const { appSlug, userSlug } = await ctx.createApp();
-    const userId = await userIdForSlug(ctx, userSlug);
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, ownerHandle);
 
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
 
@@ -130,7 +130,7 @@ describe("loadVersionTimeline", () => {
       await appendTurnToChat(vctx, {
         chatId: chat.chatId,
         userId,
-        userSlug,
+        ownerHandle,
         appSlug,
         fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: DEDUP_CONTENT }],
       })
@@ -144,7 +144,7 @@ describe("loadVersionTimeline", () => {
     const refValue: PromptContextSql = {
       type: "prompt.usage.sql",
       usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
-      fsRef: { fsId: sharedFsId, mode: "dev", appSlug, userSlug },
+      fsRef: { fsId: sharedFsId, mode: "dev", appSlug, ownerHandle },
     };
     const rInsert = await exception2Result(() =>
       vctx.sql.db.insert(vctx.sql.tables.promptContexts).values({
@@ -177,10 +177,10 @@ describe("loadVersionTimeline", () => {
   });
 
   it("loadLatestPromptId returns undefined for a chat with no turns", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const _userId = await userIdForSlug(ctx, userSlug);
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const _userId = await userIdForSlug(ctx, ownerHandle);
 
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
 
@@ -197,10 +197,10 @@ describe("loadVersionTimeline", () => {
   });
 
   it("loadLatestPromptId returns the promptId of the most recent turn", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const userId = await userIdForSlug(ctx, userSlug);
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const userId = await userIdForSlug(ctx, ownerHandle);
 
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
 
@@ -211,7 +211,7 @@ describe("loadVersionTimeline", () => {
       await appendTurnToChat(vctx, {
         chatId: chat.chatId,
         userId,
-        userSlug,
+        ownerHandle,
         appSlug,
         fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: V1_CONTENT }],
       })
@@ -221,7 +221,7 @@ describe("loadVersionTimeline", () => {
       await appendTurnToChat(vctx, {
         chatId: chat.chatId,
         userId,
-        userSlug,
+        ownerHandle,
         appSlug,
         fileSystem: [{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: V2_CONTENT }],
       })

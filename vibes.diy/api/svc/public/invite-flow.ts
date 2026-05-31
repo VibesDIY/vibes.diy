@@ -84,7 +84,7 @@ export const createInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqCre
       const value = {
         userId,
         appSlug: req.appSlug,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         state: "pending",
         role: req.role,
         emailKey,
@@ -102,7 +102,7 @@ export const createInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqCre
             target: [
               vctx.sql.tables.inviteGrants.userId,
               vctx.sql.tables.inviteGrants.appSlug,
-              vctx.sql.tables.inviteGrants.userSlug,
+              vctx.sql.tables.inviteGrants.ownerHandle,
               vctx.sql.tables.inviteGrants.emailKey,
             ],
             set: {
@@ -119,7 +119,7 @@ export const createInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqCre
       const val = {
         type: "vibes.diy.res-create-invite",
         appSlug: req.appSlug,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         emailKey,
         state: "pending" as const,
         role: req.role,
@@ -160,7 +160,7 @@ export const revokeInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRev
       const where = and(
         eq(vctx.sql.tables.inviteGrants.userId, userId),
         eq(vctx.sql.tables.inviteGrants.appSlug, req.appSlug),
-        eq(vctx.sql.tables.inviteGrants.userSlug, req.userSlug),
+        eq(vctx.sql.tables.inviteGrants.ownerHandle, req.ownerHandle),
         eq(vctx.sql.tables.inviteGrants.emailKey, req.emailKey)
       );
 
@@ -186,7 +186,7 @@ export const revokeInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRev
             userId,
             grant: {
               appSlug: req.appSlug,
-              userSlug: req.userSlug,
+              ownerHandle: req.ownerHandle,
               emailKey: req.emailKey,
               role: prev.role as EvtInviteGrant["grant"]["role"],
               state: prev.state as EvtInviteGrant["grant"]["state"],
@@ -216,7 +216,7 @@ export const revokeInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRev
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-revoke-invite",
         appSlug: req.appSlug,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         emailKey: req.emailKey,
         deleted: !!req.delete,
       } satisfies ResRevokeInvite);
@@ -270,7 +270,7 @@ export async function redeemInvite(
     userId: row.userId,
     grant: {
       appSlug: row.appSlug,
-      userSlug: row.userSlug,
+      ownerHandle: row.ownerHandle,
       emailKey: row.emailKey,
       role: row.role as EvtInviteGrant["grant"]["role"],
       state: "accepted" as EvtInviteGrant["grant"]["state"],
@@ -313,7 +313,7 @@ export const redeemInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRed
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-redeem-invite",
         appSlug: row.appSlug,
-        userSlug: row.userSlug,
+        ownerHandle: row.ownerHandle,
         emailKey: row.emailKey,
         role: row.role as ResRedeemInviteOK["role"],
         state: "accepted",
@@ -326,14 +326,14 @@ export const redeemInviteEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRed
 
 export async function hasAccessInvite(
   vctx: VibesApiSQLCtx,
-  req: { grantUserId?: string; appSlug: string; userSlug: string }
+  req: { grantUserId?: string; appSlug: string; ownerHandle: string }
 ): Promise<Result<ResHasAccessInvite>> {
   if (!req.grantUserId) {
     return Result.Ok({
       type: "vibes.diy.res-has-access-invite",
       state: "not-found",
       appSlug: req.appSlug,
-      userSlug: req.userSlug,
+      ownerHandle: req.ownerHandle,
     });
   }
   return exception2Result(() =>
@@ -343,7 +343,7 @@ export async function hasAccessInvite(
         tokenOrGrantUserId: vctx.sql.tables.inviteGrants.tokenOrGrantUserId,
         role: vctx.sql.tables.inviteGrants.role,
         appSlug: vctx.sql.tables.inviteGrants.appSlug,
-        userSlug: vctx.sql.tables.inviteGrants.userSlug,
+        ownerHandle: vctx.sql.tables.inviteGrants.ownerHandle,
       })
       .from(vctx.sql.tables.inviteGrants)
       .where(
@@ -351,7 +351,7 @@ export async function hasAccessInvite(
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           eq(vctx.sql.tables.inviteGrants.tokenOrGrantUserId, req.grantUserId!),
           eq(vctx.sql.tables.inviteGrants.appSlug, req.appSlug),
-          eq(vctx.sql.tables.inviteGrants.userSlug, req.userSlug)
+          eq(vctx.sql.tables.inviteGrants.ownerHandle, req.ownerHandle)
         )
       )
       .limit(1)
@@ -363,7 +363,12 @@ export async function hasAccessInvite(
           case isResHasAccessInviteRevoke(row):
             return row;
           default:
-            return { type: "vibes.diy.res-has-access-invite", state: "not-found", appSlug: req.appSlug, userSlug: req.userSlug };
+            return {
+              type: "vibes.diy.res-has-access-invite",
+              state: "not-found",
+              appSlug: req.appSlug,
+              ownerHandle: req.ownerHandle,
+            };
         }
       })
   );
@@ -394,7 +399,7 @@ export const hasAccessInviteEvento: EventoHandler<
       await ctx.send.send(ctx, rRow.Ok());
       //   type: "vibes.diy.res-has-access-invite",
       //   appSlug: req.appSlug,
-      //   userSlug: req.userSlug,
+      //   ownerHandle: req.ownerHandle,
       //   ...rRow.Ok(),
       // } satisfies ResHasAccessInvite);
 
@@ -428,7 +433,7 @@ export const inviteSetRoleEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqIn
             and(
               eq(vctx.sql.tables.inviteGrants.userId, userId),
               eq(vctx.sql.tables.inviteGrants.appSlug, req.appSlug),
-              eq(vctx.sql.tables.inviteGrants.userSlug, req.userSlug),
+              eq(vctx.sql.tables.inviteGrants.ownerHandle, req.ownerHandle),
               eq(vctx.sql.tables.inviteGrants.emailKey, req.emailKey)
             )
           )
@@ -444,7 +449,7 @@ export const inviteSetRoleEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqIn
           and(
             eq(vctx.sql.tables.inviteGrants.userId, userId),
             eq(vctx.sql.tables.inviteGrants.appSlug, req.appSlug),
-            eq(vctx.sql.tables.inviteGrants.userSlug, req.userSlug),
+            eq(vctx.sql.tables.inviteGrants.ownerHandle, req.ownerHandle),
             eq(vctx.sql.tables.inviteGrants.emailKey, req.emailKey)
           )
         )
@@ -463,7 +468,7 @@ export const inviteSetRoleEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqIn
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-invite-set-role",
           appSlug: req.appSlug,
-          userSlug: req.userSlug,
+          ownerHandle: req.ownerHandle,
           emailKey: req.emailKey,
           role: req.role,
         } satisfies ResInviteSetRole);
@@ -504,7 +509,7 @@ export const listInviteGrantsEvento: EventoHandler<
       const conditions: SQL[] = [
         eq(vctx.sql.tables.inviteGrants.userId, userId),
         eq(vctx.sql.tables.inviteGrants.appSlug, req.appSlug),
-        eq(vctx.sql.tables.inviteGrants.userSlug, req.userSlug),
+        eq(vctx.sql.tables.inviteGrants.ownerHandle, req.ownerHandle),
       ];
       if (req.pager.cursor) {
         conditions.push(lt(vctx.sql.tables.inviteGrants.created, req.pager.cursor));
@@ -513,7 +518,7 @@ export const listInviteGrantsEvento: EventoHandler<
       const rows = await vctx.sql.db
         .select({
           appSlug: vctx.sql.tables.inviteGrants.appSlug,
-          userSlug: vctx.sql.tables.inviteGrants.userSlug,
+          ownerHandle: vctx.sql.tables.inviteGrants.ownerHandle,
           emailKey: vctx.sql.tables.inviteGrants.emailKey,
           state: vctx.sql.tables.inviteGrants.state,
           role: vctx.sql.tables.inviteGrants.role,
@@ -536,7 +541,7 @@ export const listInviteGrantsEvento: EventoHandler<
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-list-invite-grants",
         appSlug: req.appSlug,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         items,
         ...(hasMore ? { nextCursor: items[items.length - 1].created } : {}),
       } satisfies ResListInviteGrants);

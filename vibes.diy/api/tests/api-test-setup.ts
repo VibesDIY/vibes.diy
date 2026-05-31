@@ -63,7 +63,7 @@ export interface ApiTestCtx {
   api2: VibesDiyApi;
   appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
   sthis: ReturnType<typeof ensureSuperThis>;
-  createApp: () => Promise<{ appSlug: string; userSlug: string }>;
+  createApp: () => Promise<{ appSlug: string; ownerHandle: string }>;
   dryRun: (input: DryRunInput) => Promise<AssembledPayload>;
 }
 
@@ -144,7 +144,7 @@ export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise
     if (!isResEnsureAppSlugOk(res)) {
       assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
     }
-    return { appSlug: res.appSlug, userSlug: res.userSlug };
+    return { appSlug: res.appSlug, ownerHandle: res.ownerHandle };
   }
 
   async function dryRun(input: DryRunInput): Promise<AssembledPayload> {

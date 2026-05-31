@@ -68,7 +68,7 @@ function makeErrResult(msg: string) {
 
 type SettingsItem =
   | { type: "profile"; avatarCid?: string; displayName?: string }
-  | { type: "defaultUserSlug"; userSlug: string }
+  | { type: "defaultHandle"; ownerHandle: string }
   | { type: "sharing"; grants: unknown[] }
   | { type: "modelDefaults" };
 
@@ -77,14 +77,14 @@ function makeVibeDiyApi(overrides?: {
   grantCid?: string;
   requestGrantFail?: string;
   ensureSettingsFail?: string;
-  userSlugItems?: { userSlug: string; tenant: string; created: string; appSlugCount: number }[];
+  handleItems?: { ownerHandle: string; tenant: string; created: string; appSlugCount: number }[];
 }) {
   const {
-    initialSettings = [{ type: "defaultUserSlug" as const, userSlug: "test-user" }],
+    initialSettings = [{ type: "defaultHandle" as const, ownerHandle: "test-user" }],
     grantCid = "bafy123",
     requestGrantFail,
     ensureSettingsFail,
-    userSlugItems = [],
+    handleItems = [],
   } = overrides ?? {};
 
   const ensureUserSettings = vi.fn().mockImplementation((req: { settings: SettingsItem[] }) => {
@@ -120,18 +120,18 @@ function makeVibeDiyApi(overrides?: {
     });
   });
 
-  const listUserSlugBindings = vi.fn().mockImplementation(() => makeOkResult({ items: userSlugItems }));
+  const listHandleBindings = vi.fn().mockImplementation(() => makeOkResult({ items: handleItems }));
 
-  const deleteUserSlugBinding = vi.fn().mockImplementation(() => makeOkResult({ userSlug: "deleted" }));
+  const deleteHandleBinding = vi.fn().mockImplementation(() => makeOkResult({ ownerHandle: "deleted" }));
 
-  const createUserSlugBinding = vi.fn().mockImplementation(() => makeOkResult({ userSlug: "new-slug" }));
+  const createHandleBinding = vi.fn().mockImplementation(() => makeOkResult({ ownerHandle: "new-slug" }));
 
   return {
     ensureUserSettings,
     requestAssetUploadGrant,
-    listUserSlugBindings,
-    deleteUserSlugBinding,
-    createUserSlugBinding,
+    listHandleBindings,
+    deleteHandleBinding,
+    createHandleBinding,
   };
 }
 
@@ -154,7 +154,7 @@ import Settings from "~/vibes.diy/app/routes/settings.js";
 describe("Settings ProfileCard", () => {
   beforeEach(() => {
     vibeDiyApiStub = makeVibeDiyApi({
-      initialSettings: [{ type: "defaultUserSlug", userSlug: "test-user" }],
+      initialSettings: [{ type: "defaultHandle", ownerHandle: "test-user" }],
     });
     mockFetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -213,7 +213,7 @@ describe("Settings ProfileCard", () => {
 
     expect(vibeDiyApiStub.requestAssetUploadGrant).toHaveBeenCalledWith(
       expect.objectContaining({
-        userSlug: "test-user",
+        ownerHandle: "test-user",
         mimeType: "image/png",
       })
     );
@@ -238,7 +238,7 @@ describe("Settings ProfileCard", () => {
   it("shows the avatar img at /u/<slug>/avatar after successful upload", async () => {
     vibeDiyApiStub = makeVibeDiyApi({
       initialSettings: [
-        { type: "defaultUserSlug", userSlug: "test-user" },
+        { type: "defaultHandle", ownerHandle: "test-user" },
         { type: "profile", avatarCid: "existing-cid" },
       ],
     });
@@ -283,7 +283,7 @@ describe("Settings ProfileCard", () => {
   it("preserves existing avatarCid when saving displayName", async () => {
     vibeDiyApiStub = makeVibeDiyApi({
       initialSettings: [
-        { type: "defaultUserSlug", userSlug: "test-user" },
+        { type: "defaultHandle", ownerHandle: "test-user" },
         { type: "profile", avatarCid: "existing-cid", displayName: "Bob" },
       ],
     });
@@ -331,7 +331,7 @@ describe("Settings ProfileCard", () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText("Your display name")).toBeInTheDocument();
     });
-    // Also wait for the settings to load so defaultUserSlug is populated
+    // Also wait for the settings to load so defaultHandle is populated
     await waitFor(() => {
       expect(vibeDiyApiStub.ensureUserSettings).toHaveBeenCalled();
     });

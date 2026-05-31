@@ -11,15 +11,15 @@ export interface SlugAvailability {
 interface ShareButtonProps {
   initialUserSlug: string;
   initialAppSlug: string;
-  genUrl: (userSlug: string, appSlug: string) => Promise<string>;
-  checkAvailability?: (userSlug: string, appSlug: string) => Promise<SlugAvailability>;
-  onPublish?: (userSlug: string, appSlug: string) => Promise<void>;
+  genUrl: (ownerHandle: string, appSlug: string) => Promise<string>;
+  checkAvailability?: (ownerHandle: string, appSlug: string) => Promise<SlugAvailability>;
+  onPublish?: (ownerHandle: string, appSlug: string) => Promise<void>;
 }
 
 export const ShareButton = forwardRef<HTMLButtonElement, ShareButtonProps>(
   ({ initialUserSlug, initialAppSlug, genUrl, checkAvailability, onPublish }, forwardedRef) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [userSlug, setUserSlug] = useState(initialUserSlug);
+    const [ownerHandle, setUserSlug] = useState(initialUserSlug);
     const [appSlug, setAppSlug] = useState(initialAppSlug);
     const [url, setUrl] = useState("");
     const [urlCopied, setUrlCopied] = useState(false);
@@ -74,8 +74,8 @@ export const ShareButton = forwardRef<HTMLButtonElement, ShareButtonProps>(
 
     // Recalculate URL whenever slugs change
     useEffect(() => {
-      genUrl(userSlug, appSlug).then(setUrl);
-    }, [userSlug, appSlug, genUrl]);
+      genUrl(ownerHandle, appSlug).then(setUrl);
+    }, [ownerHandle, appSlug, genUrl]);
 
     // Debounced availability check
     const scheduleCheck = useCallback(
@@ -104,7 +104,7 @@ export const ShareButton = forwardRef<HTMLButtonElement, ShareButtonProps>(
     function handleAppSlugChange(e: React.ChangeEvent<HTMLInputElement>) {
       const v = e.target.value;
       setAppSlug(v);
-      scheduleCheck(userSlug, v);
+      scheduleCheck(ownerHandle, v);
     }
 
     async function handleCopy() {
@@ -118,7 +118,7 @@ export const ShareButton = forwardRef<HTMLButtonElement, ShareButtonProps>(
       if (!onPublish) return;
       setIsPublishing(true);
       try {
-        await onPublish(userSlug, appSlug);
+        await onPublish(ownerHandle, appSlug);
         setIsPublished(true);
       } finally {
         setIsPublishing(false);
@@ -202,7 +202,7 @@ export const ShareButton = forwardRef<HTMLButtonElement, ShareButtonProps>(
                 <label className="flex flex-col gap-1 text-xs font-semibold">
                   User slug
                   <input
-                    value={userSlug}
+                    value={ownerHandle}
                     onChange={handleUserSlugChange}
                     placeholder="your-name"
                     className="rounded border border-[var(--vibes-border-primary)] bg-[var(--vibes-gray-lighter)] px-2 py-1 text-xs font-mono"

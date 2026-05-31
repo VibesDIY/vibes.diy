@@ -2,14 +2,14 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import type { VibesDiyApiIface } from "@vibes.diy/api-types";
 
 interface UseShareModalParams {
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
   fsId: string | undefined;
   vibeDiyApi: VibesDiyApiIface;
 }
 
 interface UseShareModalReturn {
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
   isOpen: boolean;
   open: () => void;
@@ -38,7 +38,7 @@ interface UseShareModalReturn {
 
 export type { UseShareModalReturn };
 
-export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareModalParams): UseShareModalReturn {
+export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseShareModalParams): UseShareModalReturn {
   const [isOpen, setIsOpen] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -62,7 +62,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
   const hasUnpublishedChanges =
     isPublished && fsId !== undefined && fsId !== "" && productionFsId !== undefined && productionFsId !== fsId;
 
-  // Proactively fetch the production fsId once per (appSlug, userSlug) so the
+  // Proactively fetch the production fsId once per (appSlug, ownerHandle) so the
   // Share button can show an "unpublished changes" badge before the modal is
   // ever opened. We intentionally do NOT depend on `fsId` here — a fresh save
   // changes fsId on every keystroke and would otherwise re-trigger this fetch.
@@ -71,7 +71,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
   useEffect(() => {
     let cancelled = false;
     vibeDiyApi
-      .getAppByFsId({ appSlug, userSlug })
+      .getAppByFsId({ appSlug, ownerHandle })
       .then((res) => {
         if (cancelled) return;
         if (res.isOk()) {
@@ -91,7 +91,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     return () => {
       cancelled = true;
     };
-  }, [appSlug, userSlug, vibeDiyApi]);
+  }, [appSlug, ownerHandle, vibeDiyApi]);
 
   function clearCopyTimeout() {
     if (copyTimeoutRef.current !== null) {
@@ -131,7 +131,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     // fetch result (both branches) so a transition from "was published" to
     // "no longer published" doesn't leave the badge state stale.
     vibeDiyApi
-      .getAppByFsId({ appSlug, userSlug })
+      .getAppByFsId({ appSlug, ownerHandle })
       .then((res) => {
         if (cancelled) return;
         if (res.isOk()) {
@@ -139,7 +139,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
           if (app.mode === "production" && app.fsId) {
             setIsPublished(true);
             setProductionFsId(app.fsId);
-            setPublishedUrl(`${window.location.origin}/vibe/${userSlug}/${appSlug}/`);
+            setPublishedUrl(`${window.location.origin}/vibe/${ownerHandle}/${appSlug}/`);
           } else {
             setIsPublished(false);
             setProductionFsId(undefined);
@@ -153,7 +153,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
 
     // Fetch sharing settings
     vibeDiyApi
-      .ensureAppSettings({ appSlug, userSlug })
+      .ensureAppSettings({ appSlug, ownerHandle })
       .then((res) => {
         if (cancelled) return;
         if (res.isOk()) {
@@ -173,7 +173,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     return () => {
       cancelled = true;
     };
-  }, [isOpen, appSlug, userSlug, vibeDiyApi]);
+  }, [isOpen, appSlug, ownerHandle, vibeDiyApi]);
 
   const handlePublish = useCallback(
     async (autoJoin: boolean, role: "editor" | "viewer" = "viewer") => {
@@ -186,7 +186,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
         const modeResult = await vibeDiyApi.setSetModeFs({
           fsId: fsId as string,
           appSlug,
-          userSlug,
+          ownerHandle,
           mode: "production",
         });
 
@@ -197,7 +197,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
 
         const settingsResult = await vibeDiyApi.ensureAppSettings({
           appSlug,
-          userSlug,
+          ownerHandle,
           request: { enable: true, autoAcceptRole: autoJoin ? role : undefined },
         });
 
@@ -208,7 +208,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
           setAutoAcceptRoleState(autoJoin ? role : undefined);
         }
 
-        const url = `${window.location.origin}/vibe/${userSlug}/${appSlug}/`;
+        const url = `${window.location.origin}/vibe/${ownerHandle}/${appSlug}/`;
         setPublishedUrl(url);
         setProductionFsId(fsId);
         setIsPublished(true);
@@ -222,7 +222,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
         setIsPublishing(false);
       }
     },
-    [canPublish, settingsLoaded, isPublished, fsId, appSlug, userSlug, vibeDiyApi]
+    [canPublish, settingsLoaded, isPublished, fsId, appSlug, ownerHandle, vibeDiyApi]
   );
 
   const handleToggleAutoJoin = useCallback(async () => {
@@ -231,7 +231,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     try {
       const result = await vibeDiyApi.ensureAppSettings({
         appSlug,
-        userSlug,
+        ownerHandle,
         request: { enable: true, autoAcceptRole: nextValue ? "viewer" : undefined },
       });
       if (result.isOk()) {
@@ -241,7 +241,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
     } finally {
       setIsTogglingAutoJoin(false);
     }
-  }, [autoJoinEnabled, appSlug, userSlug, vibeDiyApi]);
+  }, [autoJoinEnabled, appSlug, ownerHandle, vibeDiyApi]);
 
   const handleSetAutoAccept = useCallback(
     async (autoAccept: boolean, role: "editor" | "viewer") => {
@@ -249,7 +249,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
       try {
         const result = await vibeDiyApi.ensureAppSettings({
           appSlug,
-          userSlug,
+          ownerHandle,
           request: { enable: true, autoAcceptRole: autoAccept ? role : undefined },
         });
         if (result.isOk()) {
@@ -260,7 +260,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
         setIsTogglingAutoJoin(false);
       }
     },
-    [appSlug, userSlug, vibeDiyApi]
+    [appSlug, ownerHandle, vibeDiyApi]
   );
 
   const handleCopyUrl = useCallback(async () => {
@@ -276,7 +276,7 @@ export function useShareModal({ userSlug, appSlug, fsId, vibeDiyApi }: UseShareM
   }, [publishedUrl]);
 
   return {
-    userSlug,
+    ownerHandle,
     appSlug,
     isOpen,
     open,

@@ -12,10 +12,10 @@ import { DiscordWebhookBody, QueueCtx } from "../queue-ctx.js";
 
 const DISCORD_EMBED_COLOR = 11184810;
 
-function vibeUrl(vctx: QueueCtx, userSlug: string, appSlug: string): string {
+function vibeUrl(vctx: QueueCtx, ownerHandle: string, appSlug: string): string {
   return BuildURI.from(vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL)
     .appendRelative("vibe")
-    .appendRelative(userSlug)
+    .appendRelative(ownerHandle)
     .appendRelative(appSlug)
     .toString();
 }
@@ -25,19 +25,19 @@ function foreignLabel(foreignInfo: ForeignInfo | undefined): string {
 }
 
 export function buildPublishEmbed(vctx: QueueCtx, payload: EvtNewFsId, publishCount?: number): DiscordWebhookBody {
-  const url = vibeUrl(vctx, payload.userSlug, payload.appSlug);
+  const url = vibeUrl(vctx, payload.ownerHandle, payload.appSlug);
   const screenshotUrl = BuildURI.from(payload.vibeUrl).pathname("/screenshot.png").toString();
   const countLabel = publishCount !== undefined ? ` (update #${publishCount})` : "";
   const verb = publishCount === 1 ? "New Vibe published" : "Vibe updated";
   return {
-    content: `🎉 ${verb}${countLabel}: **[${payload.userSlug}/${payload.appSlug}](${url})**`,
+    content: `🎉 ${verb}${countLabel}: **[${payload.ownerHandle}/${payload.appSlug}](${url})**`,
     embeds: [
       {
-        title: `${payload.userSlug}/${payload.appSlug}`,
+        title: `${payload.ownerHandle}/${payload.appSlug}`,
         url,
         color: DISCORD_EMBED_COLOR,
         fields: [
-          { name: "User", value: payload.userSlug, inline: true },
+          { name: "User", value: payload.ownerHandle, inline: true },
           { name: "App", value: payload.appSlug, inline: true },
           { name: "fsId", value: payload.fsId, inline: false },
         ],
@@ -48,13 +48,13 @@ export function buildPublishEmbed(vctx: QueueCtx, payload: EvtNewFsId, publishCo
 }
 
 export function buildCommentEmbed(vctx: QueueCtx, payload: EvtCommentPosted): DiscordWebhookBody {
-  const url = vibeUrl(vctx, payload.userSlug, payload.appSlug);
+  const url = vibeUrl(vctx, payload.ownerHandle, payload.appSlug);
   const commenter = payload.email ?? payload.userId;
   return {
-    content: `🗨️ New comment on **[${payload.userSlug}/${payload.appSlug}](${url})**`,
+    content: `🗨️ New comment on **[${payload.ownerHandle}/${payload.appSlug}](${url})**`,
     embeds: [
       {
-        title: `${payload.userSlug}/${payload.appSlug}`,
+        title: `${payload.ownerHandle}/${payload.appSlug}`,
         url,
         color: DISCORD_EMBED_COLOR,
         fields: [
@@ -68,12 +68,12 @@ export function buildCommentEmbed(vctx: QueueCtx, payload: EvtCommentPosted): Di
 }
 
 export function buildInviteAcceptedEmbed(vctx: QueueCtx, payload: EvtInviteGrant): DiscordWebhookBody {
-  const url = vibeUrl(vctx, payload.grant.userSlug, payload.grant.appSlug);
+  const url = vibeUrl(vctx, payload.grant.ownerHandle, payload.grant.appSlug);
   return {
-    content: `🎟️ Invite accepted on **[${payload.grant.userSlug}/${payload.grant.appSlug}](${url})**`,
+    content: `🎟️ Invite accepted on **[${payload.grant.ownerHandle}/${payload.grant.appSlug}](${url})**`,
     embeds: [
       {
-        title: `${payload.grant.userSlug}/${payload.grant.appSlug}`,
+        title: `${payload.grant.ownerHandle}/${payload.grant.appSlug}`,
         url,
         color: DISCORD_EMBED_COLOR,
         fields: [
@@ -86,12 +86,12 @@ export function buildInviteAcceptedEmbed(vctx: QueueCtx, payload: EvtInviteGrant
 }
 
 export function buildRequestPendingEmbed(vctx: QueueCtx, payload: EvtRequestGrant): DiscordWebhookBody {
-  const url = vibeUrl(vctx, payload.grant.userSlug, payload.grant.appSlug);
+  const url = vibeUrl(vctx, payload.grant.ownerHandle, payload.grant.appSlug);
   return {
-    content: `🙋 Access requested on **[${payload.grant.userSlug}/${payload.grant.appSlug}](${url})**`,
+    content: `🙋 Access requested on **[${payload.grant.ownerHandle}/${payload.grant.appSlug}](${url})**`,
     embeds: [
       {
-        title: `${payload.grant.userSlug}/${payload.grant.appSlug}`,
+        title: `${payload.grant.ownerHandle}/${payload.grant.appSlug}`,
         url,
         color: DISCORD_EMBED_COLOR,
         fields: [{ name: "Requester", value: foreignLabel(payload.grant.foreignInfo), inline: true }],
@@ -101,12 +101,12 @@ export function buildRequestPendingEmbed(vctx: QueueCtx, payload: EvtRequestGran
 }
 
 export function buildRequestApprovedEmbed(vctx: QueueCtx, payload: EvtRequestGrant, role: Role): DiscordWebhookBody {
-  const url = vibeUrl(vctx, payload.grant.userSlug, payload.grant.appSlug);
+  const url = vibeUrl(vctx, payload.grant.ownerHandle, payload.grant.appSlug);
   return {
-    content: `✅ Access granted on **[${payload.grant.userSlug}/${payload.grant.appSlug}](${url})**`,
+    content: `✅ Access granted on **[${payload.grant.ownerHandle}/${payload.grant.appSlug}](${url})**`,
     embeds: [
       {
-        title: `${payload.grant.userSlug}/${payload.grant.appSlug}`,
+        title: `${payload.grant.ownerHandle}/${payload.grant.appSlug}`,
         url,
         color: DISCORD_EMBED_COLOR,
         fields: [

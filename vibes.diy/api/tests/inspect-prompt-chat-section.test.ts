@@ -49,8 +49,8 @@ describe("promptChatSection dry-run (chat mode)", () => {
   });
 
   it("returns assembled {model, messages} as a section-stream block without writing to PromptContexts or ChatSections", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -83,8 +83,8 @@ describe("promptChatSection dry-run (chat mode)", () => {
   });
 
   it("rejects requests with no new user message", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     const chat = rOpen.Ok();
 
     const ack = await chat.prompt({ messages: [] }, { dryRun: true });
@@ -93,15 +93,15 @@ describe("promptChatSection dry-run (chat mode)", () => {
   });
 
   it("returns an error for a chat the caller does not own", async () => {
-    const { appSlug, userSlug } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
     const chat = rOpen.Ok();
     await chat.close();
 
     // api2 opens a chat session against api's chatId by calling prompt
     // directly through openChat — but the ownership check rejects on
     // openChat. So we use api2.request directly with the raw payload.
-    const rOpen2 = await ctx.api2.openChat({ userSlug, appSlug, mode: "chat" });
+    const rOpen2 = await ctx.api2.openChat({ ownerHandle, appSlug, mode: "chat" });
     // openChat behavior for non-owner: may succeed because chat-create or
     // may error. We only need to confirm THAT chat (whatever it is) is
     // not the same as `chat.chatId` AND that a dry-run against

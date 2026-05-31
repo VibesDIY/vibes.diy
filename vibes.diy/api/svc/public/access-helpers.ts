@@ -14,18 +14,18 @@ export async function checkDocAccess(
   vctx: VibesApiSQLCtx,
   userId: string,
   appSlug: string,
-  userSlug: string
+  ownerHandle: string
 ): Promise<DocAccessLevel> {
   const binding = await vctx.sql.db
-    .select({ userId: vctx.sql.tables.userSlugBinding.userId })
-    .from(vctx.sql.tables.userSlugBinding)
-    .where(eq(vctx.sql.tables.userSlugBinding.userSlug, userSlug))
+    .select({ userId: vctx.sql.tables.handleBinding.userId })
+    .from(vctx.sql.tables.handleBinding)
+    .where(eq(vctx.sql.tables.handleBinding.handle, ownerHandle))
     .limit(1)
     .then((r) => r[0]);
 
   if (binding?.userId === userId) return "owner";
 
-  const rInvite = await hasAccessInvite(vctx, { grantUserId: userId, appSlug, userSlug });
+  const rInvite = await hasAccessInvite(vctx, { grantUserId: userId, appSlug, ownerHandle });
   if (rInvite.isOk()) {
     const invite = rInvite.Ok();
     if (isResHasAccessInviteAccepted(invite)) {
@@ -33,7 +33,7 @@ export async function checkDocAccess(
     }
   }
 
-  const rReq = await hasAccessRequest(vctx, { foreignUserId: userId, appSlug, userSlug });
+  const rReq = await hasAccessRequest(vctx, { foreignUserId: userId, appSlug, ownerHandle });
   if (rReq.isOk()) {
     const req = rReq.Ok();
     if (isResHasAccessRequestApproved(req)) {
@@ -44,11 +44,11 @@ export async function checkDocAccess(
   return "none";
 }
 
-export async function isPublicReadable(vctx: VibesApiSQLCtx, appSlug: string, userSlug: string): Promise<boolean> {
+export async function isPublicReadable(vctx: VibesApiSQLCtx, appSlug: string, ownerHandle: string): Promise<boolean> {
   const rSettings = await ensureAppSettings(vctx, {
     type: "vibes.diy.req-ensure-app-settings",
     appSlug,
-    userSlug,
+    ownerHandle,
     env: [],
   });
   if (rSettings.isErr()) return false;
@@ -60,7 +60,7 @@ export async function isPublicReadable(vctx: VibesApiSQLCtx, appSlug: string, us
     .where(
       and(
         eq(vctx.sql.tables.apps.appSlug, appSlug),
-        eq(vctx.sql.tables.apps.userSlug, userSlug),
+        eq(vctx.sql.tables.apps.ownerHandle, ownerHandle),
         eq(vctx.sql.tables.apps.mode, "production")
       )
     )

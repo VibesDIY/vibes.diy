@@ -28,7 +28,7 @@ function makeFakeChat(blocks: unknown[]): LLMChat {
   return {
     tid: "tid",
     chatId: "chat-1",
-    userSlug: "alice",
+    ownerHandle: "alice",
     appSlug: "demo",
     sectionStream: new ReadableStream<OnResponseTypes>({
       start(c) {
@@ -113,7 +113,7 @@ describe("vibeImgGen host handler (Seam G3)", () => {
         {
           type: "vibe.req.imgGen",
           tid: "tid-1",
-          userSlug: "alice",
+          ownerHandle: "alice",
           appSlug: "demo",
           prompt: "a sunset",
         },
@@ -146,7 +146,7 @@ describe("vibeImgGen host handler (Seam G3)", () => {
         {
           type: "vibe.req.imgGen",
           tid: "tid-2",
-          userSlug: "alice",
+          ownerHandle: "alice",
           appSlug: "demo",
           prompt: "a sunset",
         },

@@ -1,6 +1,6 @@
 import { applyEdits, applyReplace, isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine, parseFenceBody } from "@vibes.diy/call-ai-v2";
 import { AppCode } from "../../types/code-editor.js";
-import { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
+import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 
 interface DebugSection {
   blockIdx: number;

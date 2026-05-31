@@ -33,7 +33,7 @@ async function getFPCloudToken(ctx: VibesApiSQLCtx, req: ReqWithOptionalAuth<Req
   const rAppSettings = await ensureAppSettings(ctx, {
     type: "vibes.diy.req-ensure-app-settings",
     appSlug: req.appSlug,
-    userSlug: req.userSlug,
+    ownerHandle: req.ownerHandle,
   });
   if (rAppSettings.isErr()) {
     return Result.Err(rAppSettings);
@@ -48,7 +48,7 @@ async function getFPCloudToken(ctx: VibesApiSQLCtx, req: ReqWithOptionalAuth<Req
     if (entry.enableRequest && reqUserId) {
       const rHasRequest = await hasAccessRequest(ctx, {
         appSlug: req.appSlug,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         foreignUserId: reqUserId,
       });
       if (rHasRequest.isErr()) {
@@ -100,8 +100,8 @@ async function getFPCloudToken(ctx: VibesApiSQLCtx, req: ReqWithOptionalAuth<Req
         right: "write",
       },
     ],
-    email: `${req.appSlug}--${req.userSlug}--${req.dbName}@sand.box`,
-    nickname: `${req.appSlug}--${req.userSlug}--${req.dbName}`,
+    email: `${req.appSlug}--${req.ownerHandle}--${req.dbName}@sand.box`,
+    nickname: `${req.appSlug}--${req.ownerHandle}--${req.dbName}`,
     provider: "google", // "vibes.diy" as FPCloudClaim['provider'],
     created: now,
     selected: {
@@ -133,7 +133,7 @@ async function getFPCloudToken(ctx: VibesApiSQLCtx, req: ReqWithOptionalAuth<Req
     grant: grant, //as ResFPCloudTokenGrant['grant'],
     fpCloudUrl: ctx.fpCloud.url,
     appSlug: req.appSlug,
-    userSlug: req.userSlug,
+    ownerHandle: req.ownerHandle,
     dbName: req.dbName,
     tenant: rAppSettings.Ok().tenant,
     ledger: rAppSettings.Ok().ledger,

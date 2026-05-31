@@ -77,7 +77,7 @@ async function sendUpdateEvent(vctx: VibesApiSQLCtx, value: Omit<EvtRequestGrant
 
 export async function approveAllPendingRequests(
   vctx: VibesApiSQLCtx,
-  ref: { userId: string; appSlug: string; userSlug: string },
+  ref: { userId: string; appSlug: string; ownerHandle: string },
   role: Role
 ): Promise<Result<number>> {
   const now = new Date().toISOString();
@@ -90,7 +90,7 @@ export async function approveAllPendingRequests(
         and(
           eq(vctx.sql.tables.requestGrants.userId, ref.userId),
           eq(vctx.sql.tables.requestGrants.appSlug, ref.appSlug),
-          eq(vctx.sql.tables.requestGrants.userSlug, ref.userSlug),
+          eq(vctx.sql.tables.requestGrants.ownerHandle, ref.ownerHandle),
           eq(vctx.sql.tables.requestGrants.state, "pending")
         )
       )
@@ -110,7 +110,7 @@ export async function approveAllPendingRequests(
       grant: {
         type: "vibes.diy.res-request-access",
         appSlug: ref.appSlug,
-        userSlug: ref.userSlug,
+        ownerHandle: ref.ownerHandle,
         foreignUserId: row.foreignUserId,
         foreignInfo: row.foreignInfo as ForeignInfo,
         role,
@@ -126,18 +126,18 @@ export async function approveAllPendingRequests(
 
 export async function hasAccessRequest(
   vctx: VibesApiSQLCtx,
-  req: { foreignUserId: string; appSlug: string; userSlug: string }
+  req: { foreignUserId: string; appSlug: string; ownerHandle: string }
 ): Promise<Result<ResHasAccessRequest | ResFlowOwnerError>> {
   const ownerRows = await vctx.sql.db
-    .select({ userId: vctx.sql.tables.userSlugBinding.userId })
-    .from(vctx.sql.tables.userSlugBinding)
-    .where(eq(vctx.sql.tables.userSlugBinding.userSlug, req.userSlug))
+    .select({ userId: vctx.sql.tables.handleBinding.userId })
+    .from(vctx.sql.tables.handleBinding)
+    .where(eq(vctx.sql.tables.handleBinding.handle, req.ownerHandle))
     .limit(1);
 
   if (ownerRows[0]?.userId === req.foreignUserId) {
     return Result.Ok({
       type: "vibes.diy.res-error",
-      error: { message: `owner cannot check own app access: ${req.userSlug}/${req.appSlug}`, code: "owner-error" },
+      error: { message: `owner cannot check own app access: ${req.ownerHandle}/${req.appSlug}`, code: "owner-error" },
     } satisfies ResFlowOwnerError);
   }
 
@@ -147,14 +147,14 @@ export async function hasAccessRequest(
         state: vctx.sql.tables.requestGrants.state,
         role: vctx.sql.tables.requestGrants.role,
         appSlug: vctx.sql.tables.requestGrants.appSlug,
-        userSlug: vctx.sql.tables.requestGrants.userSlug,
+        ownerHandle: vctx.sql.tables.requestGrants.ownerHandle,
       })
       .from(vctx.sql.tables.requestGrants)
       .where(
         and(
           eq(vctx.sql.tables.requestGrants.foreignUserId, req.foreignUserId),
           eq(vctx.sql.tables.requestGrants.appSlug, req.appSlug),
-          eq(vctx.sql.tables.requestGrants.userSlug, req.userSlug)
+          eq(vctx.sql.tables.requestGrants.ownerHandle, req.ownerHandle)
         )
       )
       .limit(1)
@@ -172,7 +172,7 @@ export async function hasAccessRequest(
               type: "vibes.diy.res-has-access-request" as const,
               state: "not-found" as const,
               appSlug: req.appSlug,
-              userSlug: req.userSlug,
+              ownerHandle: req.ownerHandle,
             };
         }
       })
@@ -203,7 +203,7 @@ export const hasAccessRequestEvento: EventoHandler<
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const foreignUserId = req._auth.verifiedAuth.claims.userId;
 
-      const rRow = await hasAccessRequest(vctx, { foreignUserId, appSlug: req.appSlug, userSlug: req.userSlug });
+      const rRow = await hasAccessRequest(vctx, { foreignUserId, appSlug: req.appSlug, ownerHandle: req.ownerHandle });
       if (rRow.isErr()) return Result.Err(rRow);
       await ctx.send.send(ctx, rRow.Ok());
 
@@ -214,7 +214,7 @@ export const hasAccessRequestEvento: EventoHandler<
 
 export async function requestAccess(
   vctx: VibesApiSQLCtx,
-  req: { foreignUserId: string; appSlug: string; userSlug: string; claims: ClerkClaim },
+  req: { foreignUserId: string; appSlug: string; ownerHandle: string; claims: ClerkClaim },
   senderConnId?: string
 ): Promise<Result<ResRequestAccess | ResRequestAccessError | ResFlowOwnerError>> {
   const now = new Date().toISOString();
@@ -222,18 +222,18 @@ export async function requestAccess(
   const rSettings = await exception2Result(() =>
     vctx.sql.db
       .select({
-        userId: vctx.sql.tables.userSlugBinding.userId,
+        userId: vctx.sql.tables.handleBinding.userId,
         settings: vctx.sql.tables.appSettings.settings,
       })
-      .from(vctx.sql.tables.userSlugBinding)
+      .from(vctx.sql.tables.handleBinding)
       .leftJoin(
         vctx.sql.tables.appSettings,
         and(
-          eq(vctx.sql.tables.appSettings.userSlug, vctx.sql.tables.userSlugBinding.userSlug),
+          eq(vctx.sql.tables.appSettings.ownerHandle, vctx.sql.tables.handleBinding.handle),
           eq(vctx.sql.tables.appSettings.appSlug, req.appSlug)
         )
       )
-      .where(eq(vctx.sql.tables.userSlugBinding.userSlug, req.userSlug))
+      .where(eq(vctx.sql.tables.handleBinding.handle, req.ownerHandle))
       .limit(1)
       .then((r) => r[0])
   );
@@ -242,14 +242,14 @@ export async function requestAccess(
   if (!record) {
     return Result.Ok({
       type: "vibes.diy.res-error",
-      error: { message: `app not found: ${req.userSlug}/${req.appSlug}`, code: "request-access-app-not-found" },
+      error: { message: `app not found: ${req.ownerHandle}/${req.appSlug}`, code: "request-access-app-not-found" },
     } satisfies ResRequestAccessError);
   }
 
   if (record.userId === req.foreignUserId) {
     return Result.Ok({
       type: "vibes.diy.res-error",
-      error: { message: `owner cannot request access to own app: ${req.userSlug}/${req.appSlug}`, code: "owner-error" },
+      error: { message: `owner cannot request access to own app: ${req.ownerHandle}/${req.appSlug}`, code: "owner-error" },
     } satisfies ResFlowOwnerError);
   }
 
@@ -258,7 +258,7 @@ export async function requestAccess(
   if (!enableRequest?.enable) {
     return Result.Ok({
       type: "vibes.diy.res-error",
-      error: { message: `access requests not enabled for ${req.userSlug}/${req.appSlug}`, code: "request-access-not-enabled" },
+      error: { message: `access requests not enabled for ${req.ownerHandle}/${req.appSlug}`, code: "request-access-not-enabled" },
     } satisfies ResRequestAccessError);
   }
 
@@ -273,7 +273,7 @@ export async function requestAccess(
       .values({
         userId: record.userId,
         appSlug: req.appSlug,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         state,
         role: role ?? null,
         foreignUserId: req.foreignUserId,
@@ -286,7 +286,7 @@ export async function requestAccess(
         target: [
           vctx.sql.tables.requestGrants.userId,
           vctx.sql.tables.requestGrants.appSlug,
-          vctx.sql.tables.requestGrants.userSlug,
+          vctx.sql.tables.requestGrants.ownerHandle,
           vctx.sql.tables.requestGrants.foreignUserId,
         ],
         set: { foreignInfo, updated: now },
@@ -297,7 +297,7 @@ export async function requestAccess(
   const base = {
     type: "vibes.diy.res-request-access" as const,
     appSlug: req.appSlug,
-    userSlug: req.userSlug,
+    ownerHandle: req.ownerHandle,
     foreignUserId: req.foreignUserId,
     foreignInfo,
     updated: now,
@@ -338,7 +338,7 @@ export const requestAccessEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRe
 
       const rResult = await requestAccess(
         vctx,
-        { foreignUserId, appSlug: req.appSlug, userSlug: req.userSlug, claims },
+        { foreignUserId, appSlug: req.appSlug, ownerHandle: req.ownerHandle, claims },
         clientWsSend(ctx).connId
       );
       if (rResult.isErr()) return Result.Err(rResult);
@@ -377,7 +377,7 @@ export const listRequestGrantsEvento: EventoHandler<
       const conditions: SQL[] = [
         eq(vctx.sql.tables.requestGrants.userId, userId),
         eq(vctx.sql.tables.requestGrants.appSlug, req.appSlug),
-        eq(vctx.sql.tables.requestGrants.userSlug, req.userSlug),
+        eq(vctx.sql.tables.requestGrants.ownerHandle, req.ownerHandle),
       ];
       if (req.pager.cursor) {
         conditions.push(lt(vctx.sql.tables.requestGrants.created, req.pager.cursor));
@@ -406,16 +406,16 @@ export const listRequestGrantsEvento: EventoHandler<
       if (foreignUserIds.length > 0) {
         const slugRows = await vctx.sql.db
           .select({
-            userId: vctx.sql.tables.userSlugBinding.userId,
-            userSlug: vctx.sql.tables.userSlugBinding.userSlug,
+            userId: vctx.sql.tables.handleBinding.userId,
+            ownerHandle: vctx.sql.tables.handleBinding.handle,
           })
-          .from(vctx.sql.tables.userSlugBinding)
-          .where(inArray(vctx.sql.tables.userSlugBinding.userId, foreignUserIds))
-          .orderBy(desc(vctx.sql.tables.userSlugBinding.created));
+          .from(vctx.sql.tables.handleBinding)
+          .where(inArray(vctx.sql.tables.handleBinding.userId, foreignUserIds))
+          .orderBy(desc(vctx.sql.tables.handleBinding.created));
 
         for (const row of slugRows) {
           if (!slugByUserId.has(row.userId)) {
-            slugByUserId.set(row.userId, row.userSlug);
+            slugByUserId.set(row.userId, row.ownerHandle);
           }
         }
       }
@@ -428,7 +428,7 @@ export const listRequestGrantsEvento: EventoHandler<
       const possible = ResListRequestGrants({
         type: "vibes.diy.res-list-request-grants",
         appSlug: req.appSlug,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         items: itemsWithSlugs,
         ...(hasMore ? { nextCursor: items[items.length - 1].created } : {}),
       } satisfies ResListRequestGrants);
@@ -469,9 +469,9 @@ export const subscribeRequestGrantsEvento: EventoHandler<
       const userId = req._auth.verifiedAuth.claims.userId;
 
       const ownerBinding = await vctx.sql.db
-        .select({ userId: vctx.sql.tables.userSlugBinding.userId })
-        .from(vctx.sql.tables.userSlugBinding)
-        .where(and(eq(vctx.sql.tables.userSlugBinding.userSlug, req.userSlug), eq(vctx.sql.tables.userSlugBinding.userId, userId)))
+        .select({ userId: vctx.sql.tables.handleBinding.userId })
+        .from(vctx.sql.tables.handleBinding)
+        .where(and(eq(vctx.sql.tables.handleBinding.handle, req.ownerHandle), eq(vctx.sql.tables.handleBinding.userId, userId)))
         .limit(1)
         .then((rows) => rows[0]);
 
@@ -484,7 +484,7 @@ export const subscribeRequestGrantsEvento: EventoHandler<
       }
 
       const wsSend = clientWsSend(ctx);
-      const subscriptionKey = `${req.userSlug}/${req.appSlug}`;
+      const subscriptionKey = `${req.ownerHandle}/${req.appSlug}`;
       wsSend.subscribedRequestGrantKeys.add(subscriptionKey);
 
       if (vctx.registerRequestGrantSubscription) {
@@ -524,7 +524,7 @@ export const approveRequestEvento: EventoHandler<
       const where = and(
         eq(vctx.sql.tables.requestGrants.userId, userId),
         eq(vctx.sql.tables.requestGrants.appSlug, req.appSlug),
-        eq(vctx.sql.tables.requestGrants.userSlug, req.userSlug),
+        eq(vctx.sql.tables.requestGrants.ownerHandle, req.ownerHandle),
         eq(vctx.sql.tables.requestGrants.foreignUserId, req.foreignUserId)
       );
 
@@ -541,7 +541,7 @@ export const approveRequestEvento: EventoHandler<
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: {
-            message: `approve-request: not found ${req.userSlug}/${req.appSlug}/${req.foreignUserId}`,
+            message: `approve-request: not found ${req.ownerHandle}/${req.appSlug}/${req.foreignUserId}`,
             code: "approve-request-not-found",
           },
         } satisfies ResApproveRequestError);
@@ -556,7 +556,7 @@ export const approveRequestEvento: EventoHandler<
       const r = {
         type: "vibes.diy.res-approve-request",
         appSlug: req.appSlug,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         foreignUserId: req.foreignUserId,
         role: req.role,
         state: "approved",
@@ -571,7 +571,7 @@ export const approveRequestEvento: EventoHandler<
           grant: {
             type: "vibes.diy.res-request-access",
             appSlug: req.appSlug,
-            userSlug: req.userSlug,
+            ownerHandle: req.ownerHandle,
             foreignUserId: req.foreignUserId,
             role: req.role,
             state: "approved",
@@ -614,7 +614,7 @@ export const requestSetRoleEvento: EventoHandler<
       const where = and(
         eq(vctx.sql.tables.requestGrants.userId, userId),
         eq(vctx.sql.tables.requestGrants.appSlug, req.appSlug),
-        eq(vctx.sql.tables.requestGrants.userSlug, req.userSlug),
+        eq(vctx.sql.tables.requestGrants.ownerHandle, req.ownerHandle),
         eq(vctx.sql.tables.requestGrants.foreignUserId, req.foreignUserId)
       );
 
@@ -633,7 +633,7 @@ export const requestSetRoleEvento: EventoHandler<
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",
           error: {
-            message: `request-set-role: not found ${req.userSlug}/${req.appSlug}/${req.foreignUserId}`,
+            message: `request-set-role: not found ${req.ownerHandle}/${req.appSlug}/${req.foreignUserId}`,
             code: "request-set-role-not-found",
           },
         } satisfies ResRequestSetRoleError);
@@ -648,7 +648,7 @@ export const requestSetRoleEvento: EventoHandler<
       const r = {
         type: "vibes.diy.res-request-set-role",
         appSlug: req.appSlug,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         foreignUserId: req.foreignUserId,
         role: req.role,
       } satisfies ResRequestSetRole;
@@ -661,7 +661,7 @@ export const requestSetRoleEvento: EventoHandler<
           grant: {
             type: "vibes.diy.res-request-access",
             appSlug: req.appSlug,
-            userSlug: req.userSlug,
+            ownerHandle: req.ownerHandle,
             foreignUserId: req.foreignUserId,
             role: req.role,
             state: existing.state as ResRequestAccess["state"],
@@ -703,7 +703,7 @@ export const revokeRequestEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRe
       const where = and(
         eq(vctx.sql.tables.requestGrants.userId, userId),
         eq(vctx.sql.tables.requestGrants.appSlug, req.appSlug),
-        eq(vctx.sql.tables.requestGrants.userSlug, req.userSlug),
+        eq(vctx.sql.tables.requestGrants.ownerHandle, req.ownerHandle),
         eq(vctx.sql.tables.requestGrants.foreignUserId, req.foreignUserId)
       );
 
@@ -729,7 +729,7 @@ export const revokeRequestEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRe
       const r = {
         type: "vibes.diy.res-revoke-request",
         appSlug: req.appSlug,
-        userSlug: req.userSlug,
+        ownerHandle: req.ownerHandle,
         foreignUserId: req.foreignUserId,
         deleted: req.delete ?? false,
       } satisfies ResRevokeRequest;
@@ -742,7 +742,7 @@ export const revokeRequestEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRe
             grant: {
               type: "vibes.diy.res-request-access",
               appSlug: req.appSlug,
-              userSlug: req.userSlug,
+              ownerHandle: req.ownerHandle,
               foreignUserId: req.foreignUserId,
               role: Role.assert(prev.role),
               state: "revoked",
@@ -751,7 +751,7 @@ export const revokeRequestEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqRe
               created: prev.created,
             },
             // appSlug: req.appSlug,
-            // userSlug: req.userSlug,
+            // ownerHandle: req.ownerHandle,
             // foreignUserId: req.foreignUserId,
             // state: (req.delete ? prev.state : "revoked") as EvtRequestGrant["state"],
             // role: prev.role as EvtRequestGrant["role"],

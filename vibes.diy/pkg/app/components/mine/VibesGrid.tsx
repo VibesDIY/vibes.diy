@@ -56,7 +56,7 @@ export function VibesGrid({
     <>
       <div className="flex flex-col gap-3">
         {items.map((item) => {
-          const key = `${item.userSlug}/${item.appSlug}`;
+          const key = `${item.ownerHandle}/${item.appSlug}`;
           return (
             <VibeRow
               key={key}
@@ -68,9 +68,7 @@ export function VibesGrid({
           );
         })}
       </div>
-      {nextCursor && onLoadMore && (
-        <LoadMoreSentinel onLoadMore={onLoadMore} isLoading={isLoading} />
-      )}
+      {nextCursor && onLoadMore && <LoadMoreSentinel onLoadMore={onLoadMore} isLoading={isLoading} />}
     </>
   );
 }
@@ -192,7 +190,7 @@ function VibeRow({ item, head, isSelected, onOpen }: VibeRowProps) {
             />
           )}
         </div>
-        <span className="text-xs text-light-primary/60 dark:text-dark-primary/60 truncate">@{item.userSlug}</span>
+        <span className="text-xs text-light-primary/60 dark:text-dark-primary/60 truncate">@{item.ownerHandle}</span>
         {updatedLabel && (
           <span className="text-[11px] uppercase tracking-widest text-light-primary/40 dark:text-dark-primary/40">
             Updated {updatedLabel}

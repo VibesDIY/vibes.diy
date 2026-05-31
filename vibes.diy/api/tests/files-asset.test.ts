@@ -15,7 +15,7 @@ import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 //      anonymous reads, CORS for embed, etc).
 
 interface TestApp {
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly appSlug: string;
   readonly api: VibesDiyApi;
   readonly userToken: string;
@@ -62,7 +62,7 @@ interface SeededFile {
 
 async function seedAssetUpload(
   ctx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>,
-  app: { userSlug: string; appSlug: string; userId: string },
+  app: { ownerHandle: string; appSlug: string; userId: string },
   bytes: string,
   mimeType: string
 ): Promise<SeededFile> {
@@ -73,7 +73,7 @@ async function seedAssetUpload(
   await ctx.vibesCtx.sql.db.insert(ctx.vibesCtx.sql.tables.assetUploads).values({
     uploadId,
     userId: app.userId,
-    userSlug: app.userSlug,
+    ownerHandle: app.ownerHandle,
     appSlug: app.appSlug,
     cid: stored.cid,
     assetURI: stored.getURL,
@@ -93,7 +93,7 @@ function fileUrl(
   uploadId: string
 ): string {
   const port = ctx.svc.port && ctx.svc.port !== "80" && ctx.svc.port !== "443" ? `:${ctx.svc.port}` : "";
-  return `${ctx.svc.protocol}://assets.${ctx.svc.hostnameBase.replace(/^\./, "")}${port}/_files/${encodeURIComponent(app.userSlug)}/${encodeURIComponent(app.appSlug)}/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}?v=${encodeURIComponent(uploadId)}`;
+  return `${ctx.svc.protocol}://assets.${ctx.svc.hostnameBase.replace(/^\./, "")}${port}/_files/${encodeURIComponent(app.ownerHandle)}/${encodeURIComponent(app.appSlug)}/${encodeURIComponent(dbName)}/${encodeURIComponent(docId)}/${encodeURIComponent(key)}?v=${encodeURIComponent(uploadId)}`;
 }
 
 // Mint an asset-session cookie for a test user by hitting the bridge
@@ -131,7 +131,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
   let privateUserSlug: string;
   let svc: { hostnameBase: string; protocol: string; port?: string };
   // userId on AssetUploads rows is unused by the read handler (it gates on
-  // userSlug/appSlug match). Phase 3 will validate userId on doc write.
+  // ownerHandle/appSlug match). Phase 3 will validate userId on doc write.
   const seededUserId = "test-uploader";
 
   beforeAll(async () => {
@@ -153,12 +153,12 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     const pubRes = rPublic.Ok();
     if (!isResEnsureAppSlugOk(pubRes)) assert.fail("Failed to create public app");
     publicAppSlug = pubRes.appSlug;
-    publicUserSlug = pubRes.userSlug;
+    publicUserSlug = pubRes.ownerHandle;
     // Mark public app as publicAccess (mode: "production" + this flag is what
     // isPublicReadable checks).
     await ownerSetup.api.ensureAppSettings({
       appSlug: publicAppSlug,
-      userSlug: publicUserSlug,
+      ownerHandle: publicUserSlug,
       publicAccess: { enable: true },
     });
 
@@ -171,27 +171,27 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     const privRes = rPrivate.Ok();
     if (!isResEnsureAppSlugOk(privRes)) assert.fail("Failed to create private app");
     privateAppSlug = privRes.appSlug;
-    privateUserSlug = privRes.userSlug;
+    privateUserSlug = privRes.ownerHandle;
 
     // Viewer requests access to the private app — auto-approved as viewer.
     await ownerSetup.api.ensureAppSettings({
       appSlug: privateAppSlug,
-      userSlug: privateUserSlug,
+      ownerHandle: privateUserSlug,
       request: { enable: true, autoAcceptRole: "viewer" },
     });
-    const rViewer = await viewerSetup.api.requestAccess({ appSlug: privateAppSlug, userSlug: privateUserSlug });
+    const rViewer = await viewerSetup.api.requestAccess({ appSlug: privateAppSlug, ownerHandle: privateUserSlug });
     if (!isResRequestAccessApproved(rViewer.Ok())) assert.fail("viewer not auto-approved");
 
-    owner = { userSlug: publicUserSlug, appSlug: publicAppSlug, api: ownerSetup.api, userToken: ownerSetup.token };
-    viewer = { userSlug: publicUserSlug, appSlug: publicAppSlug, api: viewerSetup.api, userToken: viewerSetup.token };
-    stranger = { userSlug: publicUserSlug, appSlug: publicAppSlug, api: strangerSetup.api, userToken: strangerSetup.token };
+    owner = { ownerHandle: publicUserSlug, appSlug: publicAppSlug, api: ownerSetup.api, userToken: ownerSetup.token };
+    viewer = { ownerHandle: publicUserSlug, appSlug: publicAppSlug, api: viewerSetup.api, userToken: viewerSetup.token };
+    stranger = { ownerHandle: publicUserSlug, appSlug: publicAppSlug, api: strangerSetup.api, userToken: strangerSetup.token };
   }, 60000);
 
   describe("public app, default db (publicAccess + auto-approve viewer)", () => {
     it("anonymous reads work; CORS allows embed; bytes round-trip via meta.url", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
-        { userSlug: publicUserSlug, appSlug: publicAppSlug, userId: seededUserId },
+        { ownerHandle: publicUserSlug, appSlug: publicAppSlug, userId: seededUserId },
         "anonymous-readable-content",
         "text/plain"
       );
@@ -200,7 +200,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
 
       // Owner puts a doc with the stored shape.
       const putRes = await owner.api.putDoc({
-        userSlug: publicUserSlug,
+        ownerHandle: publicUserSlug,
         appSlug: publicAppSlug,
         dbName,
         docId,
@@ -214,7 +214,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       if (!isResPutDoc(putOk)) assert.fail("Failed to put doc");
 
       // getDoc returns the doc with the public file shape.
-      const getRes = await owner.api.getDoc({ userSlug: publicUserSlug, appSlug: publicAppSlug, dbName, docId });
+      const getRes = await owner.api.getDoc({ ownerHandle: publicUserSlug, appSlug: publicAppSlug, dbName, docId });
       const getOk = getRes.Ok();
       if (!isResGetDoc(getOk)) assert.fail("Failed to get doc");
       const photo = (getOk as unknown as { doc: { _files?: Record<string, unknown> } }).doc._files?.photo as
@@ -248,14 +248,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     it("owner reads with cookie succeed", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
-        { userSlug: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
+        { ownerHandle: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
         "private-content",
         "text/plain"
       );
       const dbName = "default";
       const docId = "priv-doc-owner";
       await owner.api.putDoc({
-        userSlug: privateUserSlug,
+        ownerHandle: privateUserSlug,
         appSlug: privateAppSlug,
         dbName,
         docId,
@@ -263,7 +263,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       });
       const url = fileUrl(
         { svc },
-        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        { ...owner, ownerHandle: privateUserSlug, appSlug: privateAppSlug },
         dbName,
         docId,
         "secret",
@@ -296,14 +296,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     it("credentialed cross-origin GET reflects Origin + Allow-Credentials", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
-        { userSlug: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
+        { ownerHandle: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
         "private-cors-cred",
         "text/plain"
       );
       const dbName = "default";
       const docId = "priv-doc-cors";
       await owner.api.putDoc({
-        userSlug: privateUserSlug,
+        ownerHandle: privateUserSlug,
         appSlug: privateAppSlug,
         dbName,
         docId,
@@ -311,7 +311,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       });
       const url = fileUrl(
         { svc },
-        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        { ...owner, ownerHandle: privateUserSlug, appSlug: privateAppSlug },
         dbName,
         docId,
         "y",
@@ -333,14 +333,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     it("If-None-Match without a cookie still 401s (no body, no leak)", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
-        { userSlug: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
+        { ownerHandle: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
         "private-anon-etag-probe",
         "text/plain"
       );
       const dbName = "default";
       const docId = "priv-doc-anon-etag";
       await owner.api.putDoc({
-        userSlug: privateUserSlug,
+        ownerHandle: privateUserSlug,
         appSlug: privateAppSlug,
         dbName,
         docId,
@@ -348,7 +348,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       });
       const url = fileUrl(
         { svc },
-        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        { ...owner, ownerHandle: privateUserSlug, appSlug: privateAppSlug },
         dbName,
         docId,
         "x",
@@ -366,14 +366,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     it("anonymous read returns 401", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
-        { userSlug: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
+        { ownerHandle: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
         "private-anon-deny",
         "text/plain"
       );
       const dbName = "default";
       const docId = "priv-doc-anon";
       await owner.api.putDoc({
-        userSlug: privateUserSlug,
+        ownerHandle: privateUserSlug,
         appSlug: privateAppSlug,
         dbName,
         docId,
@@ -381,7 +381,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       });
       const url = fileUrl(
         { svc },
-        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        { ...owner, ownerHandle: privateUserSlug, appSlug: privateAppSlug },
         dbName,
         docId,
         "hidden",
@@ -394,14 +394,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     it("stranger with cookie (no access invite) returns 403", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
-        { userSlug: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
+        { ownerHandle: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
         "private-stranger-deny",
         "text/plain"
       );
       const dbName = "default";
       const docId = "priv-doc-stranger";
       await owner.api.putDoc({
-        userSlug: privateUserSlug,
+        ownerHandle: privateUserSlug,
         appSlug: privateAppSlug,
         dbName,
         docId,
@@ -409,7 +409,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       });
       const url = fileUrl(
         { svc },
-        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        { ...owner, ownerHandle: privateUserSlug, appSlug: privateAppSlug },
         dbName,
         docId,
         "confidential",
@@ -423,14 +423,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     it("viewer with cookie (auto-approved) returns 200", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
-        { userSlug: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
+        { ownerHandle: privateUserSlug, appSlug: privateAppSlug, userId: seededUserId },
         "private-viewer-allowed",
         "text/plain"
       );
       const dbName = "default";
       const docId = "priv-doc-viewer";
       await owner.api.putDoc({
-        userSlug: privateUserSlug,
+        ownerHandle: privateUserSlug,
         appSlug: privateAppSlug,
         dbName,
         docId,
@@ -438,7 +438,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       });
       const url = fileUrl(
         { svc },
-        { ...owner, userSlug: privateUserSlug, appSlug: privateAppSlug },
+        { ...owner, ownerHandle: privateUserSlug, appSlug: privateAppSlug },
         dbName,
         docId,
         "allowed",
@@ -455,7 +455,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     it("editing a sibling field does not break the file URL", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
-        { userSlug: publicUserSlug, appSlug: publicAppSlug, userId: seededUserId },
+        { ownerHandle: publicUserSlug, appSlug: publicAppSlug, userId: seededUserId },
         "rmw-bytes",
         "text/plain"
       );
@@ -464,7 +464,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
 
       // First put: doc with _files + a sibling field.
       await owner.api.putDoc({
-        userSlug: publicUserSlug,
+        ownerHandle: publicUserSlug,
         appSlug: publicAppSlug,
         dbName,
         docId,
@@ -476,7 +476,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
 
       // Read the doc back; client-shape includes uploadId so a verbatim
       // re-put preserves the file reference.
-      const r1 = await owner.api.getDoc({ userSlug: publicUserSlug, appSlug: publicAppSlug, dbName, docId });
+      const r1 = await owner.api.getDoc({ ownerHandle: publicUserSlug, appSlug: publicAppSlug, dbName, docId });
       const doc1 = (r1.Ok() as unknown as { doc: Record<string, unknown> }).doc;
       expect(doc1.title).toBe("v1");
       const photoBefore = doc1._files as Record<string, Record<string, unknown>> | undefined;
@@ -484,11 +484,11 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
 
       // Edit a sibling field, put back verbatim.
       const updated = { ...doc1, title: "v2" };
-      const putBack = await owner.api.putDoc({ userSlug: publicUserSlug, appSlug: publicAppSlug, dbName, docId, doc: updated });
+      const putBack = await owner.api.putDoc({ ownerHandle: publicUserSlug, appSlug: publicAppSlug, dbName, docId, doc: updated });
       expect(putBack.isOk()).toBe(true);
 
       // Re-read; URL still resolvable, bytes still served.
-      const r2 = await owner.api.getDoc({ userSlug: publicUserSlug, appSlug: publicAppSlug, dbName, docId });
+      const r2 = await owner.api.getDoc({ ownerHandle: publicUserSlug, appSlug: publicAppSlug, dbName, docId });
       const doc2 = (r2.Ok() as unknown as { doc: Record<string, unknown> }).doc;
       expect(doc2.title).toBe("v2");
       const photoAfter = (doc2._files as Record<string, Record<string, unknown>>).photo;
@@ -510,14 +510,14 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     it("doc without the requested file key returns 404", async () => {
       const seeded = await seedAssetUpload(
         appCtx,
-        { userSlug: publicUserSlug, appSlug: publicAppSlug, userId: seededUserId },
+        { ownerHandle: publicUserSlug, appSlug: publicAppSlug, userId: seededUserId },
         "key-mismatch-source",
         "text/plain"
       );
       const dbName = "default";
       const docId = "pub-doc-key-mismatch";
       await owner.api.putDoc({
-        userSlug: publicUserSlug,
+        ownerHandle: publicUserSlug,
         appSlug: publicAppSlug,
         dbName,
         docId,
@@ -529,7 +529,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
     });
 
     it("non-_files path on app subdomain falls through to 501 (or close)", async () => {
-      const url = `http://${owner.appSlug}--${owner.userSlug}.localhost.vibesdiy.net:8787/__not_files/x/y/z`;
+      const url = `http://${owner.appSlug}--${owner.ownerHandle}.localhost.vibesdiy.net:8787/__not_files/x/y/z`;
       const res = await processRequest(appCtx.appCtx, new Request(url, { method: "GET" }));
       // Wildcard or doc-fallback — never 200, never 5xx.
       expect([404, 501]).toContain(res.status);
@@ -547,7 +547,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       // Names with `+` and `.` are URL-safe but easy round-trip targets.
       const seeded = await seedAssetUpload(
         appCtx,
-        { userSlug: publicUserSlug, appSlug: publicAppSlug, userId: seededUserId },
+        { ownerHandle: publicUserSlug, appSlug: publicAppSlug, userId: seededUserId },
         "encoded-segments",
         "text/plain"
       );
@@ -555,7 +555,7 @@ describe("files-asset / _files end-to-end", { timeout: 60000 }, () => {
       const docId = "doc.with-dots+plus";
       const key = "key.png";
       await owner.api.putDoc({
-        userSlug: publicUserSlug,
+        ownerHandle: publicUserSlug,
         appSlug: publicAppSlug,
         dbName,
         docId,

@@ -36,7 +36,7 @@ vi.mock("../../../pkg/app/vibes-diy-provider.js", () => ({
   useVibesDiy: () => ({
     sthis: {},
     vibeDiyApi: {
-      listUserSlugBindings: () => Promise.resolve({ isErr: () => true, Err: () => new Error("ssr") }),
+      listHandleBindings: () => Promise.resolve({ isErr: () => true, Err: () => new Error("ssr") }),
       listRequestGrants: () => Promise.resolve({ isErr: () => true, Err: () => new Error("ssr") }),
       getAppByFsId: () => Promise.resolve({ isErr: () => true, Err: () => new Error("ssr") }),
     },
@@ -76,7 +76,7 @@ vi.mock("../../../pkg/app/hooks/useDocumentTitle.js", () => ({
 import VibeIframeWrapper, {
   loader as vibeRouteLoader,
   meta as vibeRouteMeta,
-} from "../../../pkg/app/routes/vibe.$userSlug.$appSlug.js";
+} from "../../../pkg/app/routes/vibe.$ownerHandle.$appSlug.js";
 import { URI } from "@adviser/cement";
 
 describe("viewer route SSR safety", () => {
@@ -97,7 +97,7 @@ describe("viewer route SSR safety", () => {
       renderToString(
         <MemoryRouter initialEntries={["/vibe/og/test-app/"]}>
           <Routes>
-            <Route path="/vibe/:userSlug/:appSlug/*" element={<VibeIframeWrapper />} />
+            <Route path="/vibe/:ownerHandle/:appSlug/*" element={<VibeIframeWrapper />} />
           </Routes>
         </MemoryRouter>
       );
@@ -120,7 +120,7 @@ describe("viewer route — iframe + meta track the configured hostname base", ()
 
   it("loader builds the iframe URL on the configured base, carrying fsId + npmUrl", async () => {
     const { iframeUrl } = await vibeRouteLoader({
-      params: { userSlug: "alice", appSlug: "myapp", fsId: "zabc12345678" },
+      params: { ownerHandle: "alice", appSlug: "myapp", fsId: "zabc12345678" },
       request: new Request("https://pr-7-vibes-diy-v2.jchris.workers.dev/vibe/alice/myapp/zabc12345678"),
       context: {
         vibeDiyAppParams: {
@@ -138,7 +138,7 @@ describe("viewer route — iframe + meta track the configured hostname base", ()
 
   it("loader omits the /~fsId~ segment when the route has no fsId", async () => {
     const { iframeUrl } = await vibeRouteLoader({
-      params: { userSlug: "alice", appSlug: "myapp" },
+      params: { ownerHandle: "alice", appSlug: "myapp" },
       request: new Request("https://pr-7-vibes-diy-v2.jchris.workers.dev/vibe/alice/myapp"),
       context: {
         vibeDiyAppParams: {
@@ -155,7 +155,7 @@ describe("viewer route — iframe + meta track the configured hostname base", ()
   it("meta() og:image / twitter:image point at the configured base", () => {
     const tags = vibeRouteMeta({
       data: { iframeUrl: undefined, vibeOgTitle: undefined, isWorldReadable: false },
-      params: { userSlug: "alice", appSlug: "myapp" },
+      params: { ownerHandle: "alice", appSlug: "myapp" },
       matches: [{ data: { env: { VIBES_SVC_HOSTNAME_BASE: PREVIEW_BASE } } }],
     }) as { property?: string; name?: string; content?: string }[];
     const expected = "https://myapp--alice.pr-7.vibespreview.dev/screenshot.jpg";

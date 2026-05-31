@@ -69,7 +69,7 @@ describe("worker routeDecision", () => {
     expect(decide({ pathname: "/assets", method: "POST" })).not.toBe("api-do");
   });
 
-  it("GET /u/<userSlug>/avatar → cf-serve (stable per-user avatar indirection)", () => {
+  it("GET /u/<ownerHandle>/avatar → cf-serve (stable per-user avatar indirection)", () => {
     expect(decide({ pathname: "/u/jchris/avatar" })).toBe("cf-serve");
     expect(decide({ pathname: "/u/jchris/avatar", method: "HEAD" })).toBe("cf-serve");
     // Non-GET methods are not avatar reads — let them fall through to SSR

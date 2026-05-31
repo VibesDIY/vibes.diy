@@ -107,7 +107,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     if (!isResEnsureAppSlugOk(res)) {
       assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
     }
-    return { appSlug: res.appSlug, userSlug: res.userSlug };
+    return { appSlug: res.appSlug, ownerHandle: res.ownerHandle };
   }
 
   // let svc: Awaited<ReturnType<typeof createHandler>>;
@@ -179,7 +179,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
   it("make it a valid appSlug", async () => {
     const id = sthis.nextId(8).str.toLocaleLowerCase();
-    let userSlug: string | undefined;
+    let ownerHandle: string | undefined;
     for (let i = 0; i < 3; i++) {
       const rRes = await api.ensureAppSlug({
         appSlug: `Invalid App Slug! ${id}`,
@@ -198,19 +198,19 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         assert.fail("Expected invalid appSlug to return a ResEnsureAppSlugOk");
       }
       expect(res.appSlug).toBe(`invalid-app-slug-${id}`);
-      if (!userSlug) {
-        userSlug = res.userSlug;
+      if (!ownerHandle) {
+        ownerHandle = res.ownerHandle;
       }
-      expect(res.userSlug).toBe(userSlug);
+      expect(res.ownerHandle).toBe(ownerHandle);
     }
   });
 
-  it("coerce invalid userSlugs", async () => {
+  it("coerce invalid ownerHandles", async () => {
     const id = sthis.nextId(8).str.toLocaleLowerCase();
     for (let i = 0; i < 3; i++) {
       const rRes = await api.ensureAppSlug({
         appSlug: `valid-app-slug-${id}`,
-        userSlug: `Invalid User Slug! ${id}`,
+        ownerHandle: `Invalid User Slug! ${id}`,
         mode: "dev",
         fileSystem: [
           {
@@ -225,7 +225,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       if (!isResEnsureAppSlugOk(res)) {
         assert.fail("Expected invalid appSlug to return a ResEnsureAppSlugOk");
       }
-      expect(res.userSlug).toBe(`invalid-user-slug-${id}`);
+      expect(res.ownerHandle).toBe(`invalid-user-slug-${id}`);
     }
   });
 
@@ -246,7 +246,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       assert.fail("Expected ensureAppSlug with defaults to return a ResEnsureAppSlugOk");
     }
     expect(res.appSlug.length).toBeGreaterThan(3);
-    expect(res.userSlug.length).toBeGreaterThan(3);
+    expect(res.ownerHandle.length).toBeGreaterThan(3);
 
     const rRes1 = await api.ensureAppSlug({
       mode: "dev",
@@ -265,7 +265,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     }
     expect(res.fsId).toBe(res1.fsId);
     expect(res.appSlug).not.toBe(res1.appSlug);
-    expect(res.userSlug).toBe(res.userSlug);
+    expect(res.ownerHandle).toBe(res.ownerHandle);
   });
 
   it("render iframe content page", async () => {
@@ -294,7 +294,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       port: "4711",
       bindings: {
         appSlug: res.appSlug,
-        userSlug: res.userSlug,
+        ownerHandle: res.ownerHandle,
         fsId: res.fsId,
       },
     });
@@ -350,7 +350,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       hostnameBase: ".nowhere",
       protocol: "http",
       port: "4711",
-      bindings: { appSlug: res.appSlug, userSlug: res.userSlug, fsId: res.fsId },
+      bindings: { appSlug: res.appSlug, ownerHandle: res.ownerHandle, fsId: res.fsId },
     });
     const resIframe = await api.cfg.fetch(url);
     expect(resIframe.status).toBe(200);
@@ -405,7 +405,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       hostnameBase: ".nowhere",
       protocol: "http",
       port: "4711",
-      bindings: { appSlug: res.appSlug, userSlug: res.userSlug, fsId: res.fsId },
+      bindings: { appSlug: res.appSlug, ownerHandle: res.ownerHandle, fsId: res.fsId },
     });
     const resIframe = await api.cfg.fetch(url);
     expect(resIframe.status).toBe(200);
@@ -452,7 +452,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       port: "4711",
       bindings: {
         appSlug: res.appSlug,
-        userSlug: res.userSlug,
+        ownerHandle: res.ownerHandle,
       },
     });
 
@@ -471,7 +471,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       .where(
         and(
           eq(appCtx.vibesCtx.sql.tables.apps.appSlug, res.appSlug),
-          eq(appCtx.vibesCtx.sql.tables.apps.userSlug, res.userSlug),
+          eq(appCtx.vibesCtx.sql.tables.apps.ownerHandle, res.ownerHandle),
           eq(appCtx.vibesCtx.sql.tables.apps.fsId, res.fsId),
           eq(appCtx.vibesCtx.sql.tables.apps.mode, "production")
         )
@@ -532,7 +532,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       const res = await api.ensureAppSlug({
         mode: "dev",
         appSlug: "sand-nose-hope",
-        userSlug: `immediately-steel-${now}`,
+        ownerHandle: `immediately-steel-${now}`,
         env: {
           TEST_ENV_VAR: "hello world",
         },
@@ -600,7 +600,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         fsId: "zGDU8X6kbHpi3Uxf7jMZMhUTad4VbtrmrwuRxtpzXxn7s",
         mode: "dev",
         type: "vibes.diy.res-ensure-app-slug",
-        userSlug: `immediately-steel-${now}`,
+        ownerHandle: `immediately-steel-${now}`,
         // wrapperUrl: `https://tbd/immediately-steel-${now}/sand-nose-hope/zGDU8X6kbHpi3Uxf7jMZMhUTad4VbtrmrwuRxtpzXxn7s`,
       });
     }
@@ -742,7 +742,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
   describe("ensureAppSettings", () => {
     let appSlug: string;
-    let userSlug: string;
+    let ownerHandle: string;
     beforeAll(async () => {
       const rRes = await api.ensureAppSlug({
         mode: "dev",
@@ -769,16 +769,16 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         assert.fail("Expected ensureAppSlug with defaults to return a ResEnsureAppSlugOk");
       }
       appSlug = res.appSlug;
-      userSlug = res.userSlug;
+      ownerHandle = res.ownerHandle;
     });
 
     it("ensureAppSettings not found", async () => {
-      const res = await api.ensureAppSettings({ appSlug: "non-existent-app", userSlug: "non-existent-user" });
+      const res = await api.ensureAppSettings({ appSlug: "non-existent-app", ownerHandle: "non-existent-user" });
       expect(res.Ok().error).toContain("not-found");
     });
 
     it("ensureAppSettings found", async () => {
-      const res = await api.ensureAppSettings({ appSlug, userSlug });
+      const res = await api.ensureAppSettings({ appSlug, ownerHandle });
       expect(res.Ok().error).toBeFalsy();
     });
 
@@ -810,12 +810,12 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         assert.fail("Expected ensureAppSlug with defaults to return a ResEnsureAppSlugOk");
       }
       appSlug = test.appSlug;
-      userSlug = test.userSlug;
+      ownerHandle = test.ownerHandle;
 
-      const ref = await api.ensureAppSettings({ appSlug, userSlug });
+      const ref = await api.ensureAppSettings({ appSlug, ownerHandle });
       const res = await api2.ensureAppSettings({
         appSlug,
-        userSlug,
+        ownerHandle,
         request: {
           enable: true,
           autoAcceptRole: "viewer",
@@ -825,9 +825,9 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
 
     it("ensureAppSettings update title", async () => {
-      const x1 = await api.ensureAppSettings({ appSlug, userSlug, title: "My App" });
-      const x2 = await api.ensureAppSettings({ appSlug, userSlug, title: "My App" });
-      const x3 = await api.ensureAppSettings({ appSlug, userSlug, title: "My App1" });
+      const x1 = await api.ensureAppSettings({ appSlug, ownerHandle, title: "My App" });
+      const x2 = await api.ensureAppSettings({ appSlug, ownerHandle, title: "My App" });
+      const x3 = await api.ensureAppSettings({ appSlug, ownerHandle, title: "My App1" });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entries).toEqual(
@@ -842,9 +842,9 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
 
     it("ensureAppSettings update chat", async () => {
-      const x1 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: m("x") } });
-      const x2 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: m("x") } });
-      const x3 = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: m("x1"), apiKey: "x" } });
+      const x1 = await api.ensureAppSettings({ appSlug, ownerHandle, chat: { model: m("x") } });
+      const x2 = await api.ensureAppSettings({ appSlug, ownerHandle, chat: { model: m("x") } });
+      const x3 = await api.ensureAppSettings({ appSlug, ownerHandle, chat: { model: m("x1"), apiKey: "x" } });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entries).toEqual(
@@ -866,8 +866,8 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
 
     it("ensureAppSettings canonicalizes duplicate chat model entries on save", async () => {
-      const { appSlug, userSlug } = await createApp();
-      const seed = await api.ensureAppSettings({ appSlug, userSlug, chat: { model: m("seed-chat"), apiKey: "seed-key" } });
+      const { appSlug, ownerHandle } = await createApp();
+      const seed = await api.ensureAppSettings({ appSlug, ownerHandle, chat: { model: m("seed-chat"), apiKey: "seed-key" } });
       const appSettings = appCtx.vibesCtx.sql.tables.appSettings;
 
       await appCtx.vibesCtx.sql.db
@@ -891,16 +891,18 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
             },
           ],
         })
-        .where(and(eq(appSettings.userId, seed.Ok().userId), eq(appSettings.appSlug, appSlug), eq(appSettings.userSlug, userSlug)));
+        .where(
+          and(eq(appSettings.userId, seed.Ok().userId), eq(appSettings.appSlug, appSlug), eq(appSettings.ownerHandle, ownerHandle))
+        );
 
       const selectedChat = { model: m("saved-chat"), apiKey: "saved-key" };
-      const save = await api.ensureAppSettings({ appSlug, userSlug, chat: selectedChat });
+      const save = await api.ensureAppSettings({ appSlug, ownerHandle, chat: selectedChat });
       const saveChatEntries = save.Ok().settings.entries.filter((entry) => entry.type === "active.model" && entry.usage === "chat");
 
       expect(saveChatEntries).toHaveLength(1);
       expect(save.Ok().settings.entry.settings.chat).toEqual(selectedChat);
 
-      const read = await api.ensureAppSettings({ appSlug, userSlug });
+      const read = await api.ensureAppSettings({ appSlug, ownerHandle });
       const readChatEntries = read.Ok().settings.entries.filter((entry) => entry.type === "active.model" && entry.usage === "chat");
 
       expect(readChatEntries).toHaveLength(1);
@@ -917,10 +919,10 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
 
     it("ensureAppSettings canonicalizes duplicates for every singleton entry type", async () => {
-      const { appSlug, userSlug } = await createApp();
+      const { appSlug, ownerHandle } = await createApp();
       // Seed with any settings field to materialize the AppSettings row; the
       // direct UPDATE below requires an existing row to target.
-      const seed = await api.ensureAppSettings({ appSlug, userSlug, title: "seed-title" });
+      const seed = await api.ensureAppSettings({ appSlug, ownerHandle, title: "seed-title" });
       const appSettings = appCtx.vibesCtx.sql.tables.appSettings;
       const userId = seed.Ok().userId;
 
@@ -949,19 +951,19 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
             { type: "active.db-acl", dbName: "private", acl: { read: ["editors"] } },
           ],
         })
-        .where(and(eq(appSettings.userId, userId), eq(appSettings.appSlug, appSlug), eq(appSettings.userSlug, userSlug)));
+        .where(and(eq(appSettings.userId, userId), eq(appSettings.appSlug, appSlug), eq(appSettings.ownerHandle, ownerHandle)));
 
       // One save per entry type. Each save must canonicalize that type to one entry.
-      await api.ensureAppSettings({ appSlug, userSlug, title: "new-title" });
-      await api.ensureAppSettings({ appSlug, userSlug, theme: "new-theme" });
-      await api.ensureAppSettings({ appSlug, userSlug, skills: ["new-skill"] });
-      await api.ensureAppSettings({ appSlug, userSlug, iconDescription: "new-icon-desc" });
-      await api.ensureAppSettings({ appSlug, userSlug, env: [{ key: "NEW", value: "v" }] });
-      await api.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: false } });
-      await api.ensureAppSettings({ appSlug, userSlug, request: { enable: false } });
-      await api.ensureAppSettings({ appSlug, userSlug, dbAcl: { dbName: "shared", acl: { read: ["members"] } } });
+      await api.ensureAppSettings({ appSlug, ownerHandle, title: "new-title" });
+      await api.ensureAppSettings({ appSlug, ownerHandle, theme: "new-theme" });
+      await api.ensureAppSettings({ appSlug, ownerHandle, skills: ["new-skill"] });
+      await api.ensureAppSettings({ appSlug, ownerHandle, iconDescription: "new-icon-desc" });
+      await api.ensureAppSettings({ appSlug, ownerHandle, env: [{ key: "NEW", value: "v" }] });
+      await api.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: false } });
+      await api.ensureAppSettings({ appSlug, ownerHandle, request: { enable: false } });
+      await api.ensureAppSettings({ appSlug, ownerHandle, dbAcl: { dbName: "shared", acl: { read: ["members"] } } });
 
-      const final = await api.ensureAppSettings({ appSlug, userSlug });
+      const final = await api.ensureAppSettings({ appSlug, ownerHandle });
       const entries = final.Ok().settings.entries;
 
       expect(entries.filter(isActiveTitle)).toHaveLength(1);
@@ -987,9 +989,9 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
 
     it("ensureAppSettings update app", async () => {
-      const x1 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: m("x") } });
-      const x2 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: m("x") } });
-      const x3 = await api.ensureAppSettings({ appSlug, userSlug, app: { model: m("x1"), apiKey: "x" } });
+      const x1 = await api.ensureAppSettings({ appSlug, ownerHandle, app: { model: m("x") } });
+      const x2 = await api.ensureAppSettings({ appSlug, ownerHandle, app: { model: m("x") } });
+      const x3 = await api.ensureAppSettings({ appSlug, ownerHandle, app: { model: m("x1"), apiKey: "x" } });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entries).toEqual(
@@ -1011,11 +1013,11 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
 
     it("ensureAppSettings update env", async () => {
-      const x1 = await api.ensureAppSettings({ appSlug, userSlug, env: [{ key: "x", value: "x" }] });
-      const x2 = await api.ensureAppSettings({ appSlug, userSlug, env: [{ key: "x", value: "x" }] });
+      const x1 = await api.ensureAppSettings({ appSlug, ownerHandle, env: [{ key: "x", value: "x" }] });
+      const x2 = await api.ensureAppSettings({ appSlug, ownerHandle, env: [{ key: "x", value: "x" }] });
       const x3 = await api.ensureAppSettings({
         appSlug,
-        userSlug,
+        ownerHandle,
         env: [
           { key: "x1", value: "x" },
           { key: "x", value: "y" },
@@ -1030,24 +1032,24 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
 
     it("ensureAppSettings update enable-public-access", async () => {
-      const { appSlug, userSlug } = await createApp();
+      const { appSlug, ownerHandle } = await createApp();
       const x1 = await api.ensureAppSettings({
         appSlug,
-        userSlug,
+        ownerHandle,
         publicAccess: {
           enable: true,
         },
       });
       const x2 = await api.ensureAppSettings({
         appSlug,
-        userSlug,
+        ownerHandle,
         publicAccess: {
           enable: false,
         },
       });
       const x3 = await api.ensureAppSettings({
         appSlug,
-        userSlug,
+        ownerHandle,
         publicAccess: {
           enable: true,
           // tick: { count: 5, last: new Date() },
@@ -1062,24 +1064,24 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
 
     it("ensureAppSettings update enable-request", async () => {
-      const { appSlug, userSlug } = await createApp();
+      const { appSlug, ownerHandle } = await createApp();
       const x1 = await api.ensureAppSettings({
         appSlug,
-        userSlug,
+        ownerHandle,
         request: {
           enable: true,
         },
       });
       const x2 = await api.ensureAppSettings({
         appSlug,
-        userSlug,
+        ownerHandle,
         request: {
           enable: true,
         },
       });
       const x3 = await api.ensureAppSettings({
         appSlug,
-        userSlug,
+        ownerHandle,
         request: { enable: true, autoAcceptRole: "viewer" },
       });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
@@ -1131,14 +1133,14 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         req: {
           ...req,
           chatId,
-          userSlug: "example-user",
+          ownerHandle: "example-user",
           appSlug: "example-app",
           promptId,
           outerTid: "outer",
         } as unknown as ReqWithVerifiedAuth<ReqPromptChatSection>,
         resChat: {
           appSlug: "example-app",
-          userSlug: "example-user",
+          ownerHandle: "example-user",
           mode: "chat",
         },
         promptId,
@@ -1155,7 +1157,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         .where(
           and(
             eq(vctx.sql.tables.apps.appSlug, "example-app"),
-            eq(vctx.sql.tables.apps.userSlug, "example-user"),
+            eq(vctx.sql.tables.apps.ownerHandle, "example-user"),
             eq(vctx.sql.tables.apps.fsId, pctx.Ok().fsRef.Unwrap().fsId)
           )
         )
@@ -1207,7 +1209,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         mode: "dev",
         releaseSeq: 1,
         userId: "testUserId",
-        userSlug: "example-user",
+        ownerHandle: "example-user",
       });
       expect(pctx.Ok()).toEqual({
         blockSeq: 138,
@@ -1216,7 +1218,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
             appSlug: "example-app",
             fsId: "zDdC6RKfJgJB9HzK8qKMXGgTSaENJXjXBWUarsrgShUCW",
             mode: "dev",
-            userSlug: "example-user",
+            ownerHandle: "example-user",
           },
         },
       });

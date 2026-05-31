@@ -18,7 +18,7 @@ import { isFileMeta } from "./files-url-mint.js";
 import { ASSET_SESSION_COOKIE_NAME } from "./asset-session.js";
 import { etagMatches, quoteEtag } from "./etag-utils.js";
 
-// Handler for `/_files/<userSlug>/<appSlug>/<dbName>/<docId>/<key>` on
+// Handler for `/_files/<ownerHandle>/<appSlug>/<dbName>/<docId>/<key>` on
 // the singleton asset host `assets.<base>`. Auth/ACL gate, doc lookup,
 // AssetUploads resolution, vctx.storage.fetch, stream. CID and assetURI
 // never leak to the client.
@@ -37,7 +37,7 @@ import { etagMatches, quoteEtag } from "./etag-utils.js";
 // could never have served images in practice.
 
 interface FilesAssetValidated {
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly appSlug: string;
   readonly dbName: string;
   readonly docId: string;
@@ -99,7 +99,7 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
     return Promise.resolve(
       Result.Ok(
         Option.Some({
-          userSlug: decodeURIComponent(pathMatch[1]).toLowerCase(),
+          ownerHandle: decodeURIComponent(pathMatch[1]).toLowerCase(),
           appSlug: decodeURIComponent(pathMatch[2]).toLowerCase(),
           dbName: decodeURIComponent(pathMatch[3]),
           docId: decodeURIComponent(pathMatch[4]),
@@ -113,7 +113,7 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
   },
   handle: async (ctx: HandleTriggerCtx<Request, FilesAssetValidated, unknown>): Promise<Result<EventoResultType>> => {
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    const { userSlug, appSlug, dbName, docId, key, cookie, ifNoneMatch, origin } = ctx.validated;
+    const { ownerHandle, appSlug, dbName, docId, key, cookie, ifNoneMatch, origin } = ctx.validated;
     const corsHeaders = credentialedCors(origin);
 
     // 1. Resolve user identity from the asset-session cookie (best-effort —
@@ -125,11 +125,11 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
         userId = rVerified.Ok().userId;
       }
     }
-    const access: DocAccessLevel = userId ? await checkDocAccess(vctx, userId, appSlug, userSlug) : "none";
+    const access: DocAccessLevel = userId ? await checkDocAccess(vctx, userId, appSlug, ownerHandle) : "none";
 
     // 2. ACL gate. If the db has an explicit dbAcl, use it. Otherwise allow
     //    when the user has any role OR when the app is public-readable.
-    const rAcl = await resolveDbAcl(vctx, userSlug, appSlug, dbName);
+    const rAcl = await resolveDbAcl(vctx, ownerHandle, appSlug, dbName);
     if (rAcl.isErr()) {
       // Fail closed: a settings-read error must not silently fall back to
       // the open default and re-open reads on a tightened ACL.
@@ -143,7 +143,7 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
     } else if (access !== "none") {
       allowed = true;
     } else {
-      isPublic = await isPublicReadable(vctx, appSlug, userSlug);
+      isPublic = await isPublicReadable(vctx, appSlug, ownerHandle);
       allowed = isPublic;
     }
     if (!allowed) {
@@ -156,7 +156,7 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
       vctx.sql.db
         .select()
         .from(t)
-        .where(and(eq(t.userSlug, userSlug), eq(t.appSlug, appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
+        .where(and(eq(t.ownerHandle, ownerHandle), eq(t.appSlug, appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
         .orderBy(desc(t.seq))
         .limit(1)
         .then((r) => r[0])
@@ -181,7 +181,7 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
       vctx.sql.db
         .select({
           assetURI: uploadsT.assetURI,
-          userSlug: uploadsT.userSlug,
+          ownerHandle: uploadsT.ownerHandle,
           appSlug: uploadsT.appSlug,
           mimeType: uploadsT.mimeType,
           cid: uploadsT.cid,
@@ -201,7 +201,7 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
     // Defense-in-depth: an uploadId stored in this app's doc must have been
     // minted for this app. If it isn't, the put-doc validation (Phase 3)
     // missed something — fail closed rather than serve cross-user bytes.
-    if (upload.userSlug !== userSlug || upload.appSlug !== appSlug) {
+    if (upload.ownerHandle !== ownerHandle || upload.appSlug !== appSlug) {
       return sendErr(ctx, 403, "Access denied");
     }
 

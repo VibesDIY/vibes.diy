@@ -14,8 +14,8 @@ function App() {
   if (!viewer) return <div data-testid="state">Sign in</div>;
   return (
     <div data-testid="state">
-      <img src={viewer.avatarUrl} alt={viewer.userSlug} data-testid="avatar" />
-      <span data-testid="name">{viewer.displayName ?? viewer.userSlug}</span>
+      <img src={viewer.avatarUrl} alt={viewer.userHandle} data-testid="avatar" />
+      <span data-testid="name">{viewer.displayName ?? viewer.userHandle}</span>
       {can("write", "comments") ? <button data-testid="write">Post</button> : null}
     </div>
   );
@@ -52,7 +52,7 @@ describe("useViewer integration", () => {
         mountParams={{
           usrEnv: {},
           viewerEnv: {
-            viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
+            viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
             access: "owner",
           },
         }}
@@ -82,7 +82,7 @@ describe("useViewer integration", () => {
       new MessageEvent("message", {
         data: {
           type: "vibe.evt.viewerChanged",
-          viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
+          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
           access: "viewer",
         },
       })

@@ -5,7 +5,7 @@ import { getCodeBlock } from "@vibes.diy/vibe-srv-sandbox";
 interface ChatItem {
   chatId: string;
   appSlug: string;
-  userSlug: string;
+  ownerHandle: string;
   created: string;
 }
 
@@ -15,11 +15,11 @@ interface ChatDetail {
 }
 
 interface AppChatsTabProps {
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
 }
 
-export function AppChatsTab({ userSlug, appSlug }: AppChatsTabProps) {
+export function AppChatsTab({ ownerHandle, appSlug }: AppChatsTabProps) {
   const { vibeDiyApi } = useVibesDiy();
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
@@ -67,11 +67,11 @@ export function AppChatsTab({ userSlug, appSlug }: AppChatsTabProps) {
           setError(String(res.Err()));
           return;
         }
-        setChats(res.Ok().items.filter((c) => c.userSlug === userSlug && c.appSlug === appSlug));
+        setChats(res.Ok().items.filter((c) => c.ownerHandle === ownerHandle && c.appSlug === appSlug));
         setNextCursor(res.Ok().nextCursor);
       })
       .finally(() => setLoading(false));
-  }, [vibeDiyApi, userSlug, appSlug]);
+  }, [vibeDiyApi, ownerHandle, appSlug]);
 
   const loadMore = () => {
     if (!nextCursor || loading) return;
@@ -83,7 +83,7 @@ export function AppChatsTab({ userSlug, appSlug }: AppChatsTabProps) {
           setError(String(res.Err()));
           return;
         }
-        setChats((prev) => [...prev, ...res.Ok().items.filter((c) => c.userSlug === userSlug && c.appSlug === appSlug)]);
+        setChats((prev) => [...prev, ...res.Ok().items.filter((c) => c.ownerHandle === ownerHandle && c.appSlug === appSlug)]);
         setNextCursor(res.Ok().nextCursor);
       })
       .finally(() => setLoading(false));

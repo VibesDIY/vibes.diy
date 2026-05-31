@@ -301,7 +301,7 @@ describe("FireflyDatabase cross-client sync", () => {
     const listener = vi.fn();
     db.subscribe(listener);
 
-    // Same userSlug + appSlug but a different dbName — must NOT fire here.
+    // Same ownerHandle + appSlug but a different dbName — must NOT fire here.
     mockApi._simulateDocChanged("doc-other-db", "comments");
     expect(listener).not.toHaveBeenCalled();
 
@@ -312,7 +312,7 @@ describe("FireflyDatabase cross-client sync", () => {
 });
 
 // ── server subscription (regression: VibesDIY/vibes.diy#1545) ───────
-// The server's DocNotify DO is keyed on (userSlug, appSlug, dbName) since
+// The server's DocNotify DO is keyed on (ownerHandle, appSlug, dbName) since
 // commit f7963074. Each FireflyDatabase corresponds to exactly one such
 // tuple, so the constructor must call subscribeDocs(this.name) — otherwise
 // any vibe using a non-"default" dbName gets zero subscribers on its

@@ -6,7 +6,7 @@ import type { VibesApiSQLCtx } from "../types.js";
 export interface ConvertImageEvtParams {
   readonly evt: BlockImageMsg;
   readonly userId: string;
-  readonly userSlug: string;
+  readonly ownerHandle: string;
   readonly appSlug: string;
   // DI seam — defaults to global fetch. Tests inject a fake.
   readonly fetchFn?: typeof fetch;
@@ -24,7 +24,7 @@ export async function convertImageEvtToFileRef(
   vctx: VibesApiSQLCtx,
   params: ConvertImageEvtParams
 ): Promise<Result<BlockImageMsg>> {
-  const { evt, userId, userSlug, appSlug } = params;
+  const { evt, userId, ownerHandle, appSlug } = params;
   const url = evt.url;
   if (url === undefined) {
     return Result.Ok(evt);
@@ -48,7 +48,7 @@ export async function convertImageEvtToFileRef(
     const rStored = await storeAndAuditAsset(vctx, {
       bytes: rDecoded.Ok(),
       userId,
-      userSlug,
+      ownerHandle,
       appSlug,
       mimeType: mime,
     });
@@ -86,7 +86,7 @@ export async function convertImageEvtToFileRef(
   const rStored = await storeAndAuditAsset(vctx, {
     bytes,
     userId,
-    userSlug,
+    ownerHandle,
     appSlug,
     mimeType,
   });

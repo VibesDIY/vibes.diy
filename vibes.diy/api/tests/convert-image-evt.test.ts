@@ -41,7 +41,7 @@ describe("convertImageEvtToFileRef", () => {
     const r = await convertImageEvtToFileRef(ctx.vibesCtx, {
       evt,
       userId: "u-1",
-      userSlug: "user-slug-1",
+      ownerHandle: "user-slug-1",
       appSlug: "app-slug-1",
     });
     expect(r.isOk()).toBe(true);
@@ -56,7 +56,7 @@ describe("convertImageEvtToFileRef", () => {
     const t = ctx.vibesCtx.sql.tables.assetUploads;
     const rows = await ctx.vibesCtx.sql.db.select().from(t).where(eq(t.uploadId, uploadId));
     expect(rows).toHaveLength(1);
-    expect(rows[0].userSlug).toBe("user-slug-1");
+    expect(rows[0].ownerHandle).toBe("user-slug-1");
     expect(rows[0].appSlug).toBe("app-slug-1");
     expect(rows[0].mimeType).toBe("image/png");
   });
@@ -79,7 +79,7 @@ describe("convertImageEvtToFileRef", () => {
     const r = await convertImageEvtToFileRef(ctx.vibesCtx, {
       evt,
       userId: "u-2",
-      userSlug: "user-slug-2",
+      ownerHandle: "user-slug-2",
       appSlug: "app-slug-2",
       fetchFn: fakeFetch,
     });
@@ -110,7 +110,7 @@ describe("convertImageEvtToFileRef", () => {
     const r = await convertImageEvtToFileRef(ctx.vibesCtx, {
       evt: makeEvt({ url: "https://example.com/missing.png" }),
       userId: "u-3",
-      userSlug: "user-slug-3",
+      ownerHandle: "user-slug-3",
       appSlug: "app-slug-3",
       fetchFn: fakeFetch,
     });
@@ -132,7 +132,7 @@ describe("convertImageEvtToFileRef", () => {
     const r = await convertImageEvtToFileRef(ctx.vibesCtx, {
       evt,
       userId: "u-4",
-      userSlug: "user-slug-4",
+      ownerHandle: "user-slug-4",
       appSlug: "app-slug-4",
     });
     expect(r.isOk()).toBe(true);
@@ -147,7 +147,7 @@ describe("convertImageEvtToFileRef", () => {
     const r = await convertImageEvtToFileRef(ctx.vibesCtx, {
       evt: makeEvt({ url: "data:image/png;not-base64-here" }),
       userId: "u-5",
-      userSlug: "user-slug-5",
+      ownerHandle: "user-slug-5",
       appSlug: "app-slug-5",
     });
     expect(r.isErr()).toBe(true);

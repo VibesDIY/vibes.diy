@@ -17,7 +17,7 @@ import { type } from "arktype";
 
 const DocChangedEvt = type({
   type: "'vibes.diy.evt-doc-changed'",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
   dbName: "string",
   docId: "string",
@@ -28,7 +28,7 @@ const RequestGrantEvt = type({
   op: "'upsert' | 'delete'",
   userId: "string",
   grant: type({
-    userSlug: "string",
+    ownerHandle: "string",
     appSlug: "string",
   }).and(type("Record<string, unknown>")),
 }).and(type("Record<string, unknown>"));
@@ -46,7 +46,7 @@ const DocNotifyDelivery = type({
 const UserNotifyEvtShape = type({
   type: "'vibes.diy.evt-user-notification'",
   notificationType: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   appSlug: "string",
 });
 
@@ -110,7 +110,7 @@ export class ChatSessions implements DurableObject {
         console.log(
           "[ChatSessions] user-notify",
           evt.notificationType,
-          evt.userSlug + "/" + evt.appSlug,
+          evt.ownerHandle + "/" + evt.appSlug,
           "| delivered to",
           delivered,
           "connections"
@@ -130,8 +130,8 @@ export class ChatSessions implements DurableObject {
       const shouldLogVerbose = this.env.ENVIRONMENT !== "prod";
       const subscriptionKey =
         evt.type === "vibes.diy.evt-request-grant"
-          ? `${evt.grant.userSlug}/${evt.grant.appSlug}`
-          : `${evt.userSlug}/${evt.appSlug}/${evt.dbName}`;
+          ? `${evt.grant.ownerHandle}/${evt.grant.appSlug}`
+          : `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
       let delivered = 0;
       let skippedSender = 0;
       for (const conn of this.connections) {

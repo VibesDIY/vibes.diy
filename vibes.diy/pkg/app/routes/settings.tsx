@@ -7,7 +7,7 @@ import BrutalistLayout from "../components/BrutalistLayout.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 // To restore GrantsList: re-add `isUserSettingSharing` to the named import and `SharingGrantItem` to the type import below.
 import {
-  isUserSettingDefaultUserSlug,
+  isUserSettingDefaultHandle,
   isUserSettingProfile,
   isResAssetUploadGrant,
   isUserSettingNotifications,
@@ -99,8 +99,8 @@ function GrantsList() {
                 </button>
               </td>
               <td className="py-2 pr-4 font-mono">
-                <Link to={`/chat/${g.userSlug}/${g.appSlug}`} className="hover:underline">
-                  {g.userSlug}/{g.appSlug}
+                <Link to={`/chat/${g.ownerHandle}/${g.appSlug}`} className="hover:underline">
+                  {g.ownerHandle}/{g.appSlug}
                 </Link>
               </td>
               <td className="py-2 font-mono">{g.dbName}</td>
@@ -115,7 +115,7 @@ function GrantsList() {
 
 function UserSlugsCard() {
   const { vibeDiyApi } = useVibesDiy();
-  const [items, setItems] = useState<{ userSlug: string; tenant: string; created: string; appSlugCount: number }[]>([]);
+  const [items, setItems] = useState<{ ownerHandle: string; tenant: string; created: string; appSlugCount: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newSlug, setNewSlug] = useState("");
@@ -123,13 +123,13 @@ function UserSlugsCard() {
   const [defaultSlug, setDefaultSlug] = useState<string | null>(null);
   const [settingDefault, setSettingDefault] = useState(false);
   // modal state: which slug is pending deletion, and user's typed confirmation
-  const [pendingDelete, setPendingDelete] = useState<{ userSlug: string; appSlugCount: number } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ ownerHandle: string; appSlugCount: number } | null>(null);
   const [confirmInput, setConfirmInput] = useState("");
   const [deleting, setDeleting] = useState(false);
 
   const load = () => {
     setLoading(true);
-    void Promise.all([vibeDiyApi.listUserSlugBindings({}), vibeDiyApi.ensureUserSettings({ settings: [] })]).then(
+    void Promise.all([vibeDiyApi.listHandleBindings({}), vibeDiyApi.ensureUserSettings({ settings: [] })]).then(
       ([slugRes, settingsRes]) => {
         setLoading(false);
         if (slugRes.isErr()) {
@@ -139,13 +139,13 @@ function UserSlugsCard() {
         const slugItems = slugRes.Ok().items;
         setItems(slugItems);
         if (settingsRes.isOk()) {
-          const def = settingsRes.Ok().settings.filter(isUserSettingDefaultUserSlug)[0];
+          const def = settingsRes.Ok().settings.filter(isUserSettingDefaultHandle)[0];
           if (def) {
-            setDefaultSlug(def.userSlug);
+            setDefaultSlug(def.ownerHandle);
           } else if (slugItems.length > 0) {
-            const firstSlug = slugItems[0].userSlug;
+            const firstSlug = slugItems[0].ownerHandle;
             setSettingDefault(true);
-            void vibeDiyApi.ensureUserSettings({ settings: [{ type: "defaultUserSlug", userSlug: firstSlug }] }).then((res) => {
+            void vibeDiyApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: firstSlug }] }).then((res) => {
               setSettingDefault(false);
               if (res.isOk()) setDefaultSlug(firstSlug);
             });
@@ -155,15 +155,15 @@ function UserSlugsCard() {
     );
   };
 
-  const handleSetDefault = (userSlug: string) => {
+  const handleSetDefault = (ownerHandle: string) => {
     setSettingDefault(true);
-    void vibeDiyApi.ensureUserSettings({ settings: [{ type: "defaultUserSlug", userSlug }] }).then((res) => {
+    void vibeDiyApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle }] }).then((res) => {
       setSettingDefault(false);
       if (res.isErr()) {
         setError(`Failed to set default: ${res.Err()}`);
         return;
       }
-      setDefaultSlug(userSlug);
+      setDefaultSlug(ownerHandle);
     });
   };
 
@@ -171,7 +171,7 @@ function UserSlugsCard() {
 
   const handleCreate = () => {
     setSaving(true);
-    void vibeDiyApi.createUserSlugBinding({ userSlug: newSlug || undefined }).then((res) => {
+    void vibeDiyApi.createHandleBinding({ ownerHandle: newSlug || undefined }).then((res) => {
       setSaving(false);
       if (res.isErr()) {
         setError(`Failed to create: ${res.Err()}`);
@@ -185,7 +185,7 @@ function UserSlugsCard() {
   const handleDeleteConfirm = () => {
     if (!pendingDelete) return;
     setDeleting(true);
-    void vibeDiyApi.deleteUserSlugBinding({ userSlug: pendingDelete.userSlug }).then((res) => {
+    void vibeDiyApi.deleteHandleBinding({ ownerHandle: pendingDelete.ownerHandle }).then((res) => {
       setDeleting(false);
       setPendingDelete(null);
       setConfirmInput("");
@@ -214,12 +214,12 @@ function UserSlugsCard() {
           >
             <h4 className="text-lg font-bold mb-2">Delete user slug?</h4>
             <p className="text-sm mb-1" style={{ color: "var(--vibes-text-secondary)" }}>
-              This will delete <span className="font-mono font-bold">{pendingDelete.userSlug}</span> and its{" "}
+              This will delete <span className="font-mono font-bold">{pendingDelete.ownerHandle}</span> and its{" "}
               <strong>{pendingDelete.appSlugCount}</strong> connected app slug{pendingDelete.appSlugCount !== 1 ? "s" : ""}. This
               cannot be undone.
             </p>
             <p className="text-sm mb-3" style={{ color: "var(--vibes-text-secondary)" }}>
-              Type <span className="font-mono font-bold">{pendingDelete.userSlug}</span> to confirm:
+              Type <span className="font-mono font-bold">{pendingDelete.ownerHandle}</span> to confirm:
             </p>
             <input
               type="text"
@@ -243,7 +243,7 @@ function UserSlugsCard() {
               <VibesButton
                 variant="red"
                 onClick={handleDeleteConfirm}
-                disabled={confirmInput !== pendingDelete.userSlug || deleting}
+                disabled={confirmInput !== pendingDelete.ownerHandle || deleting}
               >
                 {deleting ? "Deleting…" : "Delete"}
               </VibesButton>
@@ -268,8 +268,8 @@ function UserSlugsCard() {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.userSlug} className="border-b" style={{ borderColor: "var(--vibes-border-primary)" }}>
-                  <td className="py-2 pr-4 font-mono">{item.userSlug}</td>
+                <tr key={item.ownerHandle} className="border-b" style={{ borderColor: "var(--vibes-border-primary)" }}>
+                  <td className="py-2 pr-4 font-mono">{item.ownerHandle}</td>
                   <td className="py-2 pr-4" style={{ color: "var(--vibes-text-secondary)" }}>
                     {item.appSlugCount}
                   </td>
@@ -279,17 +279,17 @@ function UserSlugsCard() {
                   <td className="py-2 pr-4">
                     <input
                       type="radio"
-                      name="defaultUserSlug"
-                      checked={defaultSlug === item.userSlug}
+                      name="defaultHandle"
+                      checked={defaultSlug === item.ownerHandle}
                       disabled={settingDefault}
-                      onChange={() => handleSetDefault(item.userSlug)}
+                      onChange={() => handleSetDefault(item.ownerHandle)}
                     />
                   </td>
                   <td className="py-2">
                     <button
                       type="button"
                       onClick={() => {
-                        setPendingDelete({ userSlug: item.userSlug, appSlugCount: item.appSlugCount });
+                        setPendingDelete({ ownerHandle: item.ownerHandle, appSlugCount: item.appSlugCount });
                         setConfirmInput("");
                       }}
                       className="text-xs text-red-600 hover:underline"
@@ -421,9 +421,9 @@ function ProfileCard() {
       if (prof) {
         setProfile({ avatarCid: prof.avatarCid, displayName: prof.displayName });
       }
-      const def = res.Ok().settings.find(isUserSettingDefaultUserSlug);
+      const def = res.Ok().settings.find(isUserSettingDefaultHandle);
       if (def) {
-        setDefaultHandle(def.userSlug);
+        setDefaultHandle(def.ownerHandle);
       }
     });
   }, [vibeDiyApi]);

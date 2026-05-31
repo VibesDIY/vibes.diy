@@ -22,7 +22,7 @@ describe("vibeMountParams", () => {
     const r = vibeMountParams({
       usrEnv: {},
       viewerEnv: {
-        viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
+        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
         access: "owner",
         dbAcls: { comments: { write: ["members"] } },
       },
@@ -45,7 +45,7 @@ describe("vibeMountParams", () => {
     const r = vibeMountParams({
       usrEnv: {},
       viewerEnv: {
-        viewer: { userSlug: "alice" },
+        viewer: { ownerHandle: "alice" },
         access: "owner",
       },
     });

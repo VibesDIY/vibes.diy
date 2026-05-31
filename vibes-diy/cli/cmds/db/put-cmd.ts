@@ -14,7 +14,7 @@ export const ReqDbPut = type({
   type: "'vibes-diy.cli.db.put'",
   apiUrl: "string",
   appSlug: "string",
-  userSlug: "string",
+  ownerHandle: "string",
   dbName: "string",
   docJson: "string",
   docId: "string",
@@ -54,9 +54,9 @@ export const dbPutEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbPut, ResDbPu
     const doc = rParsed.Ok();
 
     const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const rUser = await resolveUserSlug(api, ctx.validated.userSlug);
+    const rUser = await resolveUserSlug(api, ctx.validated.ownerHandle);
     if (rUser.isErr()) return Result.Err(rUser.Err());
-    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userSlug: rUser.Ok() });
+    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userHandle: rUser.Ok() });
     const docId = ctx.validated.docId === "" ? undefined : ctx.validated.docId;
     const r = await adapter.putDoc(doc, docId, ctx.validated.dbName);
     if (r.isErr()) return Result.Err(r.Err());
@@ -96,7 +96,7 @@ export function dbPutCmd(ctx: CliCtx) {
       type: "vibes-diy.cli.db.put",
       apiUrl: args.apiUrl,
       appSlug: args.appSlug,
-      userSlug: args.userSlug,
+      ownerHandle: args.ownerHandle,
       dbName: args.dbName,
       docJson: args.docJson,
       docId: args.docId,

@@ -84,24 +84,24 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
     if (!isResEnsureAppSlugOk(res)) {
       assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
     }
-    return { appSlug: res.appSlug, userSlug: res.userSlug };
+    return { appSlug: res.appSlug, ownerHandle: res.ownerHandle };
   }
 
   it("getAppByFsId returns pending-request after requestAccess", async () => {
-    const { appSlug, userSlug } = await createApp();
+    const { appSlug, ownerHandle } = await createApp();
 
     // Enable request access (no auto-approve)
-    await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
+    await api.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true } });
 
     // Non-owner requests access
-    const rRequested = await api2.requestAccess({ appSlug, userSlug });
+    const rRequested = await api2.requestAccess({ appSlug, ownerHandle });
     if (rRequested.isErr()) {
       assert.fail("Expected requestAccess to succeed: " + JSON.stringify(rRequested.Err()));
     }
     expect(rRequested.Ok().state).toBe("pending");
 
     // Now getAppByFsId as non-owner should return pending-request, not not-grant
-    const rApp = await api2.getAppByFsId({ appSlug, userSlug });
+    const rApp = await api2.getAppByFsId({ appSlug, ownerHandle });
     if (rApp.isErr()) {
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
     }
@@ -109,15 +109,15 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
   });
 
   it("getAppByFsId returns req-login.request on first visit (no implicit requestAccess)", async () => {
-    const { appSlug, userSlug } = await createApp();
+    const { appSlug, ownerHandle } = await createApp();
 
     // Enable request access (no auto-approve)
-    await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true } });
+    await api.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true } });
 
     // Non-owner calls getAppByFsId without prior requestAccess — must NOT create a
     // request implicitly. The landing card needs to render so the visitor can choose
     // to install vs request; only an explicit requestAccess click should fire the flow.
-    const rApp = await api2.getAppByFsId({ appSlug, userSlug });
+    const rApp = await api2.getAppByFsId({ appSlug, ownerHandle });
     if (rApp.isErr()) {
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
     }
@@ -125,14 +125,14 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
   });
 
   it("getAppByFsId auto-grants access on first visit when autoAcceptRole is enabled", async () => {
-    const { appSlug, userSlug } = await createApp();
+    const { appSlug, ownerHandle } = await createApp();
 
     // Enable request access with auto-approve
-    await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "viewer" } });
+    await api.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "viewer" } });
 
     // Signed-in non-owner visits — getAppByFsId fires requestAccess internally and
     // resolves straight to granted-access.viewer without any user click.
-    const rApp = await api2.getAppByFsId({ appSlug, userSlug });
+    const rApp = await api2.getAppByFsId({ appSlug, ownerHandle });
     if (rApp.isErr()) {
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
     }
@@ -157,14 +157,14 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
     if (!isResEnsureAppSlugOk(res)) {
       assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
     }
-    const { appSlug, userSlug } = res;
+    const { appSlug, ownerHandle } = res;
 
     // ensureAppSettings only applies one setting per call — two separate calls required
-    await api.ensureAppSettings({ appSlug, userSlug, publicAccess: { enable: true } });
-    await api.ensureAppSettings({ appSlug, userSlug, request: { enable: true, autoAcceptRole: "editor" } });
+    await api.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
+    await api.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "editor" } });
 
     // Signed-in non-owner should get granted-access.editor, not the read-only public-access
-    const rApp = await api2.getAppByFsId({ appSlug, userSlug });
+    const rApp = await api2.getAppByFsId({ appSlug, ownerHandle });
     if (rApp.isErr()) {
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
     }
@@ -172,10 +172,10 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
   });
 
   it("getAppByFsId returns not-grant when request access is disabled", async () => {
-    const { appSlug, userSlug } = await createApp();
+    const { appSlug, ownerHandle } = await createApp();
 
     // No enableRequest, no publicAccess — non-owner should get not-grant
-    const rApp = await api2.getAppByFsId({ appSlug, userSlug });
+    const rApp = await api2.getAppByFsId({ appSlug, ownerHandle });
     if (rApp.isErr()) {
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
     }
@@ -183,12 +183,12 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
   });
 
   it("getAppByFsId surfaces the displayable title via meta", async () => {
-    const { appSlug, userSlug } = await createApp();
+    const { appSlug, ownerHandle } = await createApp();
 
     // Owner sets a real title; the slug stays slug-shaped.
-    await api.ensureAppSettings({ appSlug, userSlug, title: "Friendly Title" });
+    await api.ensureAppSettings({ appSlug, ownerHandle, title: "Friendly Title" });
 
-    const rApp = await api.getAppByFsId({ appSlug, userSlug });
+    const rApp = await api.getAppByFsId({ appSlug, ownerHandle });
     if (rApp.isErr()) {
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
     }
@@ -197,9 +197,9 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
   });
 
   it("getAppByFsId returns owner for app owner", async () => {
-    const { appSlug, userSlug } = await createApp();
+    const { appSlug, ownerHandle } = await createApp();
 
-    const rApp = await api.getAppByFsId({ appSlug, userSlug });
+    const rApp = await api.getAppByFsId({ appSlug, ownerHandle });
     if (rApp.isErr()) {
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
     }

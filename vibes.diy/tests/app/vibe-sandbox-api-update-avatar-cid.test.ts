@@ -6,7 +6,7 @@ describe("VibeSandboxApi.updateAvatarCid", () => {
     const posts: unknown[] = [];
     const listeners: ((e: MessageEvent) => void)[] = [];
     const api = new VibeSandboxApi({
-      vibeApp: { appSlug: "myapp", userSlug: "alice", fsId: "fs1" },
+      vibeApp: { appSlug: "myapp", ownerHandle: "alice", fsId: "fs1" },
       addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
       postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
     });
@@ -22,12 +22,12 @@ describe("VibeSandboxApi.updateAvatarCid", () => {
     const req = posts.find((p) => (p as { type: string }).type === "vibe.req.updateAvatarCid") as {
       type: string;
       tid: string;
-      userSlug: string;
+      ownerHandle: string;
       appSlug: string;
       cid: string;
     };
     expect(req).toBeDefined();
-    expect(req.userSlug).toBe("alice");
+    expect(req.ownerHandle).toBe("alice");
     expect(req.appSlug).toBe("myapp");
     expect(req.cid).toBe("bafycid123");
 
@@ -43,7 +43,7 @@ describe("VibeSandboxApi.updateAvatarCid", () => {
     const posts: unknown[] = [];
     const listeners: ((e: MessageEvent) => void)[] = [];
     const api = new VibeSandboxApi({
-      vibeApp: { appSlug: "myapp", userSlug: "alice", fsId: "fs1" },
+      vibeApp: { appSlug: "myapp", ownerHandle: "alice", fsId: "fs1" },
       addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
       postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
     });

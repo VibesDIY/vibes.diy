@@ -19,7 +19,7 @@ export function useShareableDB() {
   const { srvVibeSandbox, vibeDiyApi } = useVibesDiy();
   const { isSignedIn, isLoaded } = useAuth();
   const clerk = useClerk();
-  const { userSlug: routeUserSlug, appSlug: routeAppSlug } = useParams<{ userSlug: string; appSlug: string }>();
+  const { ownerHandle: routeUserSlug, appSlug: routeAppSlug } = useParams<{ ownerHandle: string; appSlug: string }>();
 
   const [pendingDbRef, setPendingDbRef] = useState<ReturnType<typeof srvVibeSandbox.shareableDBs.get> | null>(null);
   const pendingDbRefRef = useRef<ReturnType<typeof srvVibeSandbox.shareableDBs.get> | null>(null);
@@ -43,7 +43,7 @@ export function useShareableDB() {
 
   // Auto-allow same-vibe DB registrations without prompting
   const isSameVibe = pendingDbRef
-    ? pendingDbRef.data.appSlug === routeAppSlug && pendingDbRef.data.userSlug === routeUserSlug
+    ? pendingDbRef.data.appSlug === routeAppSlug && pendingDbRef.data.ownerHandle === routeUserSlug
     : false;
 
   // Compute sharingState whenever pendingDbRef or auth status changes
@@ -80,9 +80,9 @@ export function useShareableDB() {
       }
       const sharing = res.isOk() ? res.Ok().settings.find(isUserSettingSharing) : undefined;
       currentSharingRef.current = sharing;
-      const { dbName, appSlug, userSlug } = pendingDbRef.data;
+      const { dbName, appSlug, ownerHandle } = pendingDbRef.data;
       const grant = sharing?.grants.find(
-        (g) => (g.dbName === "*" || g.dbName === dbName) && g.appSlug === appSlug && g.userSlug === userSlug
+        (g) => (g.dbName === "*" || g.dbName === dbName) && g.appSlug === appSlug && g.ownerHandle === ownerHandle
       );
       if (grant?.grant === "allow") {
         const v = pendingDbRefRef.current;
@@ -116,17 +116,17 @@ export function useShareableDB() {
   const onResult = useCallback(
     (result: SharingResult) => {
       if (result.status === "accepted" || result.status === "declined") {
-        const { appSlug, userSlug, dbName } = result.dbRef;
+        const { appSlug, ownerHandle, dbName } = result.dbRef;
         const newGrant = {
           grant: result.status === "accepted" ? ("allow" as const) : ("deny" as const),
           appSlug,
-          userSlug,
+          ownerHandle,
           dbName,
         };
         // Merge with existing grants, replacing any for the same db
         const filteredGrants =
           currentSharingRef.current?.grants.filter(
-            (g) => !(g.appSlug === appSlug && g.userSlug === userSlug && (g.dbName === dbName || g.dbName === "*"))
+            (g) => !(g.appSlug === appSlug && g.ownerHandle === ownerHandle && (g.dbName === dbName || g.dbName === "*"))
           ) ?? [];
         void vibeDiyApi.ensureUserSettings({
           settings: [{ type: "sharing", grants: [...filteredGrants, newGrant] }],

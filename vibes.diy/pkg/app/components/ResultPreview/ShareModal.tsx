@@ -135,7 +135,7 @@ function CopyLinkRow({ url, copied, onCopy }: { url: string; copied: boolean; on
 // Lightweight Request Access button for non-owners. Loads pending state from
 // hasAccessRequest on mount so a returning viewer sees "Request pending"
 // instead of being able to spam new requests.
-function RequestAccessButton({ userSlug, appSlug }: { userSlug: string; appSlug: string }) {
+function RequestAccessButton({ ownerHandle, appSlug }: { ownerHandle: string; appSlug: string }) {
   const { vibeDiyApi } = useVibesDiy();
   const [state, setState] = useState<"unknown" | "none" | "pending" | "approved" | "revoked" | "submitting">("unknown");
   const [role, setRole] = useState<"editor" | "viewer" | null>(null);
@@ -143,7 +143,7 @@ function RequestAccessButton({ userSlug, appSlug }: { userSlug: string; appSlug:
 
   useEffect(() => {
     let cancelled = false;
-    void vibeDiyApi.hasAccessRequest({ appSlug, userSlug }).then((res) => {
+    void vibeDiyApi.hasAccessRequest({ appSlug, ownerHandle }).then((res) => {
       if (cancelled) return;
       if (res.isErr()) {
         setState("none");
@@ -160,12 +160,12 @@ function RequestAccessButton({ userSlug, appSlug }: { userSlug: string; appSlug:
     return () => {
       cancelled = true;
     };
-  }, [vibeDiyApi, userSlug, appSlug]);
+  }, [vibeDiyApi, ownerHandle, appSlug]);
 
   async function submit() {
     setState("submitting");
     setError(null);
-    const res = await vibeDiyApi.requestAccess({ appSlug, userSlug });
+    const res = await vibeDiyApi.requestAccess({ appSlug, ownerHandle });
     if (res.isErr()) {
       setError(res.Err().message);
       setState("none");
@@ -207,13 +207,13 @@ function RequestAccessButton({ userSlug, appSlug }: { userSlug: string; appSlug:
 
 // Read-only hook returning whether the comments dbAcl is pinned to "editors-only".
 // Returns null while the initial fetch is in flight or the modal is closed.
-function useCommentsEditorsOnly(userSlug: string, appSlug: string, isOpen: boolean): boolean | null {
+function useCommentsEditorsOnly(ownerHandle: string, appSlug: string, isOpen: boolean): boolean | null {
   const { vibeDiyApi } = useVibesDiy();
   const [editorsOnly, setEditorsOnly] = useState<boolean | null>(null);
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
-    void vibeDiyApi.ensureAppSettings({ userSlug, appSlug }).then((res) => {
+    void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug }).then((res) => {
       if (cancelled || res.isErr()) return;
       const stored = res.Ok().settings.entry.dbAcls?.[COMMENTS_DB_NAME];
       setEditorsOnly(stored?.write?.length === 1 && stored.write[0] === "editors");
@@ -221,16 +221,16 @@ function useCommentsEditorsOnly(userSlug: string, appSlug: string, isOpen: boole
     return () => {
       cancelled = true;
     };
-  }, [vibeDiyApi, userSlug, appSlug, isOpen]);
+  }, [vibeDiyApi, ownerHandle, appSlug, isOpen]);
   return editorsOnly;
 }
 
 // Owner-only toggle that flips the comments dbAcl between the lazy default
 // (members write/delete) and editors-only via the regular ensureAppSettings
 // flow. Toggling off removes the entry, falling back to the resolver default.
-function CommentsPolicyToggle({ userSlug, appSlug, isOpen }: { userSlug: string; appSlug: string; isOpen: boolean }) {
+function CommentsPolicyToggle({ ownerHandle, appSlug, isOpen }: { ownerHandle: string; appSlug: string; isOpen: boolean }) {
   const { vibeDiyApi } = useVibesDiy();
-  const editorsOnlyInitial = useCommentsEditorsOnly(userSlug, appSlug, isOpen);
+  const editorsOnlyInitial = useCommentsEditorsOnly(ownerHandle, appSlug, isOpen);
   const [editorsOnly, setEditorsOnly] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -245,11 +245,11 @@ function CommentsPolicyToggle({ userSlug, appSlug, isOpen }: { userSlug: string;
     const res = await vibeDiyApi.ensureAppSettings(
       next
         ? {
-            userSlug,
+            ownerHandle,
             appSlug,
             dbAcl: { dbName: COMMENTS_DB_NAME, acl: { write: ["editors"], delete: ["editors"] } },
           }
-        : { userSlug, appSlug, dbAclRemove: { dbName: COMMENTS_DB_NAME } }
+        : { ownerHandle, appSlug, dbAclRemove: { dbName: COMMENTS_DB_NAME } }
     );
     setBusy(false);
     if (res.isOk()) setEditorsOnly(next);
@@ -303,8 +303,8 @@ function useIsMobile(breakpoint = 640) {
 // Owner-only sharing trio (Public toggle + Requests + Email invites) that
 // mirrors the App Settings → Sharing tab. Wraps useSharingPanel so neither
 // surface drifts.
-function OwnerSharingPanel({ userSlug, appSlug, enabled }: { userSlug: string; appSlug: string; enabled: boolean }) {
-  const panel = useSharingPanel({ userSlug, appSlug, enabled });
+function OwnerSharingPanel({ ownerHandle, appSlug, enabled }: { ownerHandle: string; appSlug: string; enabled: boolean }) {
+  const panel = useSharingPanel({ ownerHandle, appSlug, enabled });
   if (!panel.settings) return null;
   const { entry } = panel.settings;
   return (
@@ -344,7 +344,7 @@ function OwnerSharingPanel({ userSlug, appSlug, enabled }: { userSlug: string; a
 
 export function ShareModal({ modal, placement = "below", isOwner = false, myGrant = "none" }: ShareModalProps) {
   const isMobile = useIsMobile();
-  const commentsEditorsOnly = useCommentsEditorsOnly(modal.userSlug, modal.appSlug, modal.isOpen);
+  const commentsEditorsOnly = useCommentsEditorsOnly(modal.ownerHandle, modal.appSlug, modal.isOpen);
   // Composer is disabled when the owner has restricted commenting to editors
   // and the viewer isn't owner or editor. Server is still the authority — this
   // is a UX prefetch so non-collaborators don't see a server reject after submit.
@@ -435,13 +435,13 @@ export function ShareModal({ modal, placement = "below", isOwner = false, myGran
                 <PublishedAutoApproveControl modal={modal} />
               </div>
               <div className={isMobile ? "flex-1 min-h-0 overflow-auto border-t border-gray-200 dark:border-gray-700 p-4" : ""}>
-                <OwnerSharingPanel userSlug={modal.userSlug} appSlug={modal.appSlug} enabled={modal.isOpen} />
+                <OwnerSharingPanel ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} enabled={modal.isOpen} />
               </div>
             </>
           ) : (
             <div className={isMobile ? "flex-none space-y-2 p-4 pt-14" : "space-y-2"}>
               <CopyLinkRow url={modal.publishedUrl} copied={modal.urlCopied} onCopy={() => void modal.handleCopyUrl()} />
-              {showRequestAccess ? <RequestAccessButton userSlug={modal.userSlug} appSlug={modal.appSlug} /> : null}
+              {showRequestAccess ? <RequestAccessButton ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} /> : null}
             </div>
           )
         ) : (
@@ -458,10 +458,10 @@ export function ShareModal({ modal, placement = "below", isOwner = false, myGran
               : "mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-3"
           }
         >
-          {isOwner ? <CommentsPolicyToggle userSlug={modal.userSlug} appSlug={modal.appSlug} isOpen={modal.isOpen} /> : null}
-          <MembersSection userSlug={modal.userSlug} appSlug={modal.appSlug} />
+          {isOwner ? <CommentsPolicyToggle ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} isOpen={modal.isOpen} /> : null}
+          <MembersSection ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} />
           <CommentsSection
-            userSlug={modal.userSlug}
+            ownerHandle={modal.ownerHandle}
             appSlug={modal.appSlug}
             canModerate={isOwner}
             composerDisabled={composerDisabled}

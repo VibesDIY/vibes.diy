@@ -23,7 +23,7 @@ describe("bootstrapViewer", () => {
     const posts: unknown[] = [];
     const listeners: ((e: MessageEvent) => void)[] = [];
     const api = new VibeSandboxApi({
-      vibeApp: { appSlug: "myapp", userSlug: "alice", fsId: "fs1" },
+      vibeApp: { appSlug: "myapp", ownerHandle: "alice", fsId: "fs1" },
       addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
       postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
     });
@@ -46,7 +46,7 @@ describe("bootstrapViewer", () => {
         data: {
           type: "vibe.res.whoAmI",
           tid: sentTid,
-          viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
           access: "owner",
           dbAcls: { comments: { write: ["members"], delete: ["members"] } },
         },
@@ -58,7 +58,7 @@ describe("bootstrapViewer", () => {
     expect(capturedEvents).toHaveLength(1);
     const evt = capturedEvents[0];
     expect(evt.data.type).toBe("vibe.evt.viewerChanged");
-    expect(evt.data.viewer).toEqual({ userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" });
+    expect(evt.data.viewer).toEqual({ userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" });
     expect(evt.data.access).toBe("owner");
     expect(evt.data.dbAcls).toEqual({ comments: { write: ["members"], delete: ["members"] } });
   });
@@ -77,7 +77,7 @@ describe("bootstrapViewer", () => {
     const posts: unknown[] = [];
     const listeners: ((e: MessageEvent) => void)[] = [];
     const api = new VibeSandboxApi({
-      vibeApp: { appSlug: "myapp", userSlug: "alice", fsId: "fs1" },
+      vibeApp: { appSlug: "myapp", ownerHandle: "alice", fsId: "fs1" },
       addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
       postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
     });
@@ -109,11 +109,11 @@ describe("bootstrapViewer", () => {
 });
 
 describe("VibeSandboxApi.whoAmI", () => {
-  it("posts vibe.req.whoAmI with appSlug+userSlug and resolves on a matching response", async () => {
+  it("posts vibe.req.whoAmI with appSlug+ownerHandle and resolves on a matching response", async () => {
     const posts: unknown[] = [];
     const listeners: ((e: MessageEvent) => void)[] = [];
     const api = new VibeSandboxApi({
-      vibeApp: { appSlug: "myapp", userSlug: "alice", fsId: "fs1" },
+      vibeApp: { appSlug: "myapp", ownerHandle: "alice", fsId: "fs1" },
       addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
       postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
     });
@@ -125,19 +125,19 @@ describe("VibeSandboxApi.whoAmI", () => {
     const sentTid = (posts[0] as { tid: string }).tid;
     expect((posts[0] as { type: string }).type).toBe("vibe.req.whoAmI");
     expect((posts[0] as { appSlug: string }).appSlug).toBe("myapp");
-    expect((posts[0] as { userSlug: string }).userSlug).toBe("alice");
+    expect((posts[0] as { ownerHandle: string }).ownerHandle).toBe("alice");
     listeners.forEach((h) =>
       h({
         data: {
           type: "vibe.res.whoAmI",
           tid: sentTid,
-          viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
           access: "owner",
         },
       } as MessageEvent)
     );
     const res = await pending;
     expect(res.isOk()).toBe(true);
-    expect(res.Ok().viewer?.userSlug).toBe("alice");
+    expect(res.Ok().viewer?.userHandle).toBe("alice");
   });
 });

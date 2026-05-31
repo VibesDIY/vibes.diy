@@ -6,7 +6,7 @@ import { ViewControls } from "./ViewControls.js";
 import { Button } from "../ui/button.js";
 import { ShareIcon } from "../HeaderContent/SvgIcons.js";
 import { ShareModal } from "./ShareModal.js";
-import type { PromptState } from "../../routes/chat/chat.$userSlug.$appSlug.js";
+import type { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 import type { UseShareModalReturn } from "./useShareModal.js";
 
 interface ResultPreviewHeaderContentProps {

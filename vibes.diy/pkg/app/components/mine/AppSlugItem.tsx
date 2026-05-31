@@ -14,7 +14,7 @@ function toTab(s: string | undefined): Tab {
 }
 
 interface AppSlugItemProps {
-  userSlug: string;
+  ownerHandle: string;
   appSlug: string;
   title?: string;
   isSelected: boolean;
@@ -23,11 +23,11 @@ interface AppSlugItemProps {
   headInfo?: { screenshot?: MetaScreenShot; mode?: string };
   chatDetails?: ResGetChatDetails;
   screenshots: Map<string, { screenshot?: MetaScreenShot; mode?: string }>;
-  onToggleMode: (fsId: string, appSlug: string, userSlug: string, currentMode: string | undefined) => Promise<void>;
+  onToggleMode: (fsId: string, appSlug: string, ownerHandle: string, currentMode: string | undefined) => Promise<void>;
 }
 
 export function AppSlugItem({
-  userSlug,
+  ownerHandle,
   appSlug,
   title,
   isSelected,
@@ -47,7 +47,7 @@ export function AppSlugItem({
   }, [isSelected, activeTabProp]);
 
   function navigateTab(tab: Tab) {
-    navigate(`/vibes/mine/${userSlug}/${appSlug}/${tab}`, { replace: true, preventScrollReset: true });
+    navigate(`/vibes/mine/${ownerHandle}/${appSlug}/${tab}`, { replace: true, preventScrollReset: true });
   }
 
   return (
@@ -58,7 +58,7 @@ export function AppSlugItem({
         onClick={() =>
           isSelected
             ? navigate("/vibes/mine", { replace: true, preventScrollReset: true })
-            : navigate(`/vibes/mine/${userSlug}/${appSlug}/prompts`, { replace: true, preventScrollReset: true })
+            : navigate(`/vibes/mine/${ownerHandle}/${appSlug}/prompts`, { replace: true, preventScrollReset: true })
         }
         className="flex w-full items-center gap-3 px-4 py-3 text-left"
       >
@@ -78,7 +78,7 @@ export function AppSlugItem({
             >
               {title || appSlug}
             </span>
-            <span className="truncate text-xs text-gray-500 dark:text-gray-400">{userSlug}</span>
+            <span className="truncate text-xs text-gray-500 dark:text-gray-400">{ownerHandle}</span>
           </span>
           {headInfo?.mode && (
             <span
@@ -135,11 +135,11 @@ export function AppSlugItem({
                 onToggleMode={onToggleMode}
               />
             ) : activeTab === "chats" ? (
-              <AppChatsTab userSlug={userSlug} appSlug={appSlug} />
+              <AppChatsTab ownerHandle={ownerHandle} appSlug={appSlug} />
             ) : activeTab === "settings" ? (
-              <SettingsTab userSlug={userSlug} appSlug={appSlug} />
+              <SettingsTab ownerHandle={ownerHandle} appSlug={appSlug} />
             ) : (
-              <SharingTab userSlug={userSlug} appSlug={appSlug} />
+              <SharingTab ownerHandle={ownerHandle} appSlug={appSlug} />
             )}
           </div>
         </div>

@@ -32,7 +32,7 @@ export function preAllocEligible(req: {
 
 interface EnsureChatIdPResult {
   appSlug: string;
-  userSlug: string;
+  ownerHandle: string;
   chatId: string;
 }
 
@@ -41,7 +41,7 @@ export async function ensureChatId(
   req: ReqWithVerifiedAuth<ReqOpenChat>
 ): Promise<Result<EnsureChatIdPResult>> {
   let appSlug = "";
-  let userSlug = "";
+  let ownerHandle = "";
   let chatId: string | undefined;
   const userId = req._auth.verifiedAuth.claims.userId;
 
@@ -61,29 +61,29 @@ export async function ensureChatId(
       return Result.Err(`Chat ID ${req.chatId} not found`);
     }
     appSlug = result[0].appSlug;
-    userSlug = result[0].userSlug;
+    ownerHandle = result[0].ownerHandle;
     chatId = result[0].chatId;
   } else {
-    // Resolve userSlug: explicit → default → create new
-    if (req.userSlug) {
-      const resUser = await ensureUserSlug(ctx, req._auth.verifiedAuth.claims, { userId, userSlug: req.userSlug });
-      if (resUser.isErr()) return Result.Err(`Failed to ensure userSlug: ${resUser.Err().message}`);
-      userSlug = resUser.Ok().userSlug;
+    // Resolve ownerHandle: explicit → default → create new
+    if (req.ownerHandle) {
+      const resUser = await ensureUserSlug(ctx, req._auth.verifiedAuth.claims, { userId, ownerHandle: req.ownerHandle });
+      if (resUser.isErr()) return Result.Err(`Failed to ensure ownerHandle: ${resUser.Err().message}`);
+      ownerHandle = resUser.Ok().ownerHandle;
     } else {
       const resDefault = await getDefaultUserSlug(ctx, userId);
-      if (resDefault.isErr()) return Result.Err(`Failed to get default userSlug: ${resDefault.Err().message}`);
+      if (resDefault.isErr()) return Result.Err(`Failed to get default ownerHandle: ${resDefault.Err().message}`);
       const defaultBinding = resDefault.Ok();
       if (defaultBinding) {
-        userSlug = defaultBinding.userSlug;
+        ownerHandle = defaultBinding.ownerHandle;
       } else {
         const resNew = await ensureUserSlug(ctx, req._auth.verifiedAuth.claims, { userId });
-        if (resNew.isErr()) return Result.Err(`Failed to ensure userSlug: ${resNew.Err().message}`);
-        userSlug = resNew.Ok().userSlug;
-        await persistDefaultUserSlug(ctx, userId, userSlug);
+        if (resNew.isErr()) return Result.Err(`Failed to ensure ownerHandle: ${resNew.Err().message}`);
+        ownerHandle = resNew.Ok().ownerHandle;
+        await persistDefaultUserSlug(ctx, userId, ownerHandle);
       }
     }
 
-    // Look up existing chat by userSlug+appSlug if appSlug provided
+    // Look up existing chat by ownerHandle+appSlug if appSlug provided
     if (req.appSlug) {
       const reqAppSlug = req.appSlug;
       const rResult = await exception2Result(() =>
@@ -93,7 +93,7 @@ export async function ensureChatId(
           .where(
             and(
               eq(ctx.sql.tables.chatContexts.userId, userId),
-              eq(ctx.sql.tables.chatContexts.userSlug, userSlug),
+              eq(ctx.sql.tables.chatContexts.ownerHandle, ownerHandle),
               eq(ctx.sql.tables.chatContexts.appSlug, reqAppSlug)
             )
           )
@@ -128,7 +128,7 @@ export async function ensureChatId(
         }
       }
 
-      const resApp = await ensureAppSlug(ctx, { userId, userSlug, appSlug: req.appSlug, preferredPairs });
+      const resApp = await ensureAppSlug(ctx, { userId, ownerHandle, appSlug: req.appSlug, preferredPairs });
       if (resApp.isErr()) {
         return Result.Err(`Failed to ensure appSlug: ${resApp.Err().message}`);
       }
@@ -139,14 +139,14 @@ export async function ensureChatId(
         chatId,
         userId,
         appSlug,
-        userSlug,
+        ownerHandle,
         created: new Date().toISOString(),
       });
 
       if (chosenTitle || preAllocSkills || preAllocIconDescription || preAllocTheme || preAllocEnrichedPrompt) {
         await writePreAllocActiveEntries(ctx, {
           userId,
-          userSlug,
+          ownerHandle,
           appSlug,
           title: chosenTitle,
           skills: preAllocSkills,
@@ -157,14 +157,14 @@ export async function ensureChatId(
       }
     }
   }
-  return Result.Ok({ appSlug, userSlug, chatId });
+  return Result.Ok({ appSlug, ownerHandle, chatId });
 }
 
 async function writePreAllocActiveEntries(
   ctx: VibesApiSQLCtx,
   {
     userId,
-    userSlug,
+    ownerHandle,
     appSlug,
     title,
     skills,
@@ -173,7 +173,7 @@ async function writePreAllocActiveEntries(
     enrichedPrompt,
   }: {
     userId: string;
-    userSlug: string;
+    ownerHandle: string;
     appSlug: string;
     title?: string;
     skills?: string[];
@@ -203,7 +203,7 @@ async function writePreAllocActiveEntries(
   const rIns = await exception2Result(() =>
     ctx.sql.db.insert(ctx.sql.tables.appSettings).values({
       userId,
-      userSlug,
+      ownerHandle,
       appSlug,
       settings: entries,
       updated: now,
@@ -213,14 +213,14 @@ async function writePreAllocActiveEntries(
   if (rIns.isErr()) {
     ensureLogger(ctx.sthis, "writePreAllocActiveEntries")
       .Error()
-      .Any({ err: rIns.Err(), userSlug, appSlug })
+      .Any({ err: rIns.Err(), ownerHandle, appSlug })
       .Msg("appSettings insert failed; skipping evt-app-setting");
     return;
   }
   await ctx.postQueue({
     payload: {
       type: "vibes.diy.evt-app-setting",
-      userSlug,
+      ownerHandle,
       appSlug,
       settings: entries,
     },
@@ -233,7 +233,7 @@ async function writePreAllocActiveEntries(
     await ctx.postQueue({
       payload: {
         type: "vibes.diy.evt-icon-gen",
-        userSlug,
+        ownerHandle,
         appSlug,
       },
       tid: "queue-event",

@@ -31,7 +31,7 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
   const sthis = ensureSuperThis();
   let vibesCtx: VibesApiSQLCtx;
   let appSlug: string;
-  let userSlug: string;
+  let ownerHandle: string;
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
@@ -71,7 +71,7 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
     const res = rRes.Ok();
     if (!isResEnsureAppSlugOk(res)) throw new Error("Failed to create app for render-vibe viewer-env test");
     appSlug = res.appSlug;
-    userSlug = res.userSlug;
+    ownerHandle = res.ownerHandle;
   });
 
   it("resolveWhoAmI with auth=undefined returns viewer:null and access:'none'", async () => {
@@ -79,7 +79,7 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
     const rViewer = await resolveWhoAmI(vibesCtx, {
       auth: undefined,
       appSlug,
-      ownerUserSlug: userSlug,
+      ownerUserSlug: ownerHandle,
       apiBaseUrl: "https://api.test",
     });
 

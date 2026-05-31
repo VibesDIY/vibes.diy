@@ -31,7 +31,7 @@ export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGra
     //   sendEmailOpts(qctx, [{
     //     action: "request-pending",
     //     dst: payload.grant.foreignInfo.givenEmail,
-    //     userSlug: payload.userSlug,
+    //     ownerHandle: payload.ownerHandle,
     //     appSlug: payload.appSlug,
     //     role: payload.grant.role,
     //     token: payload.grant.tokenOrGrantUserId,
@@ -43,7 +43,7 @@ export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGra
       await qctx.notifyUser(requesterUserId, {
         type: "vibes.diy.evt-user-notification",
         notificationType: "request-approved",
-        userSlug: payload.grant.userSlug,
+        ownerHandle: payload.grant.ownerHandle,
         appSlug: payload.grant.appSlug,
       });
     }
@@ -51,7 +51,7 @@ export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGra
       await qctx.notifyUser(requesterUserId, {
         type: "vibes.diy.evt-user-notification",
         notificationType: "request-revoked",
-        userSlug: payload.grant.userSlug,
+        ownerHandle: payload.grant.ownerHandle,
         appSlug: payload.grant.appSlug,
       });
     }
@@ -64,7 +64,7 @@ export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGra
         {
           action: "req-accepted",
           dst: payload.grant.foreignInfo.claims?.params.email || payload.grant.foreignInfo.givenEmail,
-          userSlug: payload.grant.userSlug,
+          ownerHandle: payload.grant.ownerHandle,
           appSlug: payload.grant.appSlug,
           role: payload.grant.role,
         },
@@ -76,7 +76,7 @@ export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGra
         {
           action: "req-rejected",
           dst: payload.grant.foreignInfo.claims?.params.email || payload.grant.foreignInfo.givenEmail,
-          userSlug: payload.grant.userSlug,
+          ownerHandle: payload.grant.ownerHandle,
           appSlug: payload.grant.appSlug,
           role: payload.grant.role,
         },
