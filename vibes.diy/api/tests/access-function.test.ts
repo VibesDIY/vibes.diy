@@ -41,6 +41,8 @@ describe("makeHelpers", () => {
     expect(() => ctx.requireAccess("some-channel")).toThrow("not in channel");
   });
 
+  // Phase 3: replace these not.toThrow() assertions with role/channel membership checks
+  // when makeHelpers is wired to real materialized state.
   it("requireAccess does not throw when user is authenticated", () => {
     const user: UserContext = { userSlug: "alice" };
     const ctx = makeHelpers(user);
