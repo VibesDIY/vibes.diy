@@ -13,6 +13,7 @@ vibes.diy/docs/superpowers/specs/2026-05-31-firefly-access-function.html
 ```
 
 Open it in a browser or read the raw HTML. Everything about the API shape, behavior, examples, and edge cases is defined there. The key sections are:
+
 - **Type definition block** — `Helpers`, `AccessDescriptor` with all fields
 - **Anonymous writes require explicit opt-in** — the `allowAnonymous` enforcement rule
 - **Workplace chat example** — reference implementation showing real usage
@@ -22,26 +23,38 @@ Open it in a browser or read the raw HTML. Everything about the API shape, behav
 
 The current system uses a **coarse role-group ACL** (`members | editors | submitters | readers`), not a per-doc function. Key files:
 
-| File | Role |
-|------|------|
-| `vibes.diy/vibe/runtime/use-firefly.ts` | `useFireproof(name, { acl? })` hook — entry point |
-| `vibes.diy/vibe/runtime/firefly-database.ts` | `FireflyDatabase` class, `applyAcl()` |
-| `vibes.diy/api/svc/public/app-documents.ts` | Server write gate at `putDocEvento` line ~154 |
-| `vibes.diy/api/svc/public/db-acl-resolver.ts` | `resolveDbAcl()`, `aclAllows()` |
-| `vibes.diy/api/types/db-acls.ts` | `DbAcl` type |
-| `vibes.diy/vibe/types/index.ts` | WebSocket message types (`ReqPutDoc`, etc.) |
+| File                                          | Role                                              |
+| --------------------------------------------- | ------------------------------------------------- |
+| `vibes.diy/vibe/runtime/use-firefly.ts`       | `useFireproof(name, { acl? })` hook — entry point |
+| `vibes.diy/vibe/runtime/firefly-database.ts`  | `FireflyDatabase` class, `applyAcl()`             |
+| `vibes.diy/api/svc/public/app-documents.ts`   | Server write gate at `putDocEvento` line ~154     |
+| `vibes.diy/api/svc/public/db-acl-resolver.ts` | `resolveDbAcl()`, `aclAllows()`                   |
+| `vibes.diy/api/types/db-acls.ts`              | `DbAcl` type                                      |
+| `vibes.diy/vibe/types/index.ts`               | WebSocket message types (`ReqPutDoc`, etc.)       |
 
 The write gate in `putDocEvento` currently calls `aclAllows(acl, "write", access)` — this is where the access function evaluation needs to happen **after** the coarse ACL check passes.
 
-## Critical Design Question — Function Serialization
+## Function Serialization — Decision (resolved)
 
-The access function is a JavaScript closure (`(doc, oldDoc, user, ctx) => AccessDescriptor`). It must run **server-side** to be a meaningful security boundary (client-side evaluation defeats the model). Before writing any code, investigate and decide:
+**Chosen: `access.js` file in the vibe filesystem, evaluated in a CID-keyed Durable Object.**
 
-1. **String serialization + server eval** — `fn.toString()` on the client, send to server, `new Function(...)` in a restricted Worker context. Simplest. Research whether Cloudflare Workers allow `eval`/`new Function`.
-2. **Server-side registration** — access functions are defined in the app's Worker code (not in the vibe component). The vibe just names which function to use. More secure, requires a new registration mechanism.
-3. **Client-side pre-evaluation** — run the function on the client, send the `AccessDescriptor` result to the server, server trusts it. Only useful as a prototype / for non-security-sensitive routing.
+The access function lives in a dedicated `access.js` file alongside `App.jsx` in the vibe's multi-file filesystem. It is not serialized from a client-side closure — it is stored as source text, content-addressed by CID.
 
-Pick the approach that is both implementable and honest about its security properties. Document the choice clearly in a comment in the code.
+**Evaluation path:**
+
+1. `putDoc` handler looks up the current `access.js` CID for the target database (D1 query).
+2. Routes to `ACCESS_FN_DO` Durable Object named by that CID.
+3. DO cold-starts on a new CID: loads `access.js` source from storage, evals once with `new Function()`, caches the function object in memory.
+4. Subsequent writes call the cached function — no re-eval, no re-fetch.
+5. DO goes dormant when no databases use that CID; Cloudflare evicts it naturally.
+
+**Why CID-keyed (not database-keyed):** databases sharing the same access function share one DO. When `access.js` changes, new CID → new DO, no invalidation step needed.
+
+**`unsafe_eval` flag required:** add `"unsafe_eval"` to `compatibility_flags` in `vibes.diy/pkg/wrangler.toml`. Document in code that this enables `new Function()` for the access function DO only; the isolation boundary is the Cloudflare Worker process (not a JS-level VM), which is the honest security model for developer-authored policy code.
+
+**Migration path:** when the coordinator DO is implemented for Phase 3 channel routing, the CID-keyed eval cache merges into that DO. The interface `(doc, oldDoc, user) → AccessDescriptor | forbidden` stays the same.
+
+See spec section "Runtime Architecture — Function Serialization" for full detail.
 
 ## Implementation Scope (do these in order, stop at the first blocker)
 
@@ -52,20 +65,20 @@ Pick the approach that is both implementable and honest about its security prope
 ```typescript
 // in vibes.diy/pkg/types/src/ or vibes.diy/vibe/types/
 interface Helpers {
-  requireAccess(channelId: string): void  // throws if user not in channel
-  requireRole(roleName: string): void     // throws if user not in role
+  requireAccess(channelId: string): void; // throws if user not in channel
+  requireRole(roleName: string): void; // throws if user not in role
 }
 
 interface AccessDescriptor {
-  channels?:      string[]
-  members?:       Record<string, string[]>            // roleName → userSlug[]
+  channels?: string[];
+  members?: Record<string, string[]>; // roleName → userSlug[]
   grant?: {
-    users?:  Record<string, string[]>                 // userSlug → channelId[]
-    roles?:  Record<string, string[]>                 // roleName → channelId[]
-    public?: string[]
-  }
-  expiry?:        string | number | null
-  allowAnonymous?: boolean
+    users?: Record<string, string[]>; // userSlug → channelId[]
+    roles?: Record<string, string[]>; // roleName → channelId[]
+    public?: string[];
+  };
+  expiry?: string | number | null;
+  allowAnonymous?: boolean;
 }
 
 type AccessFunction = (
@@ -73,7 +86,7 @@ type AccessFunction = (
   oldDoc: unknown,
   user: { userSlug: string; [k: string]: unknown } | null,
   ctx: Helpers
-) => AccessDescriptor
+) => AccessDescriptor;
 ```
 
 2. Add `access?: AccessFunction` to the `useFireproof` config type alongside (not replacing) `acl`.
@@ -85,6 +98,7 @@ type AccessFunction = (
 This is the most important and most contained feature from the spec: **if `user` is null and the access function returns without `allowAnonymous: true`, reject the write**.
 
 In `putDocEvento` (`app-documents.ts`), after the coarse ACL check passes:
+
 - If the request user is unauthenticated (null user) AND an access function is configured for this db:
   - Evaluate the access function with `(doc, null, null, ctx)`
   - If the result lacks `allowAnonymous: true`, send `{ forbidden: "authentication required" }` and return
@@ -112,6 +126,7 @@ The `grant.{users,roles,public}` and `members` fields build a materialized per-u
 ## Tests
 
 Look for existing test infrastructure in `vibes.diy/pkg/test/` — use `createVibeDiyTestCtx`. Write at minimum:
+
 - A test that writes with `user: null` and access function returning `{}` → expect `forbidden` error
 - A test that writes with `user: null` and access function returning `{ allowAnonymous: true }` → expect success
 - A test that writes with `user: { userSlug: "alice" }` and no `allowAnonymous` → expect success (non-null user is unaffected)
