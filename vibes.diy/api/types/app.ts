@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { FileSystemRef } from "@vibes.diy/call-ai-v2";
+import { FileSystemRefFields } from "@vibes.diy/call-ai-v2";
 import { fileSystemItem, MetaItem } from "./types.js";
 import { dashAuthType, vibeUserEnv, vibeFile, FSMode, NeedOneAppSlugUserSlug } from "./common.js";
 
@@ -18,7 +18,7 @@ export const resEnsureAppSlugOk = type({
   type: "'vibes.diy.res-ensure-app-slug'",
   env: vibeUserEnv,
   fileSystem: [fileSystemItem, "[]"],
-}).and(FileSystemRef);
+}).and(FileSystemRefFields);
 
 export type ResEnsureAppSlugOk = typeof resEnsureAppSlugOk.infer;
 
@@ -239,7 +239,7 @@ export function isReqGetByUserSlugAppSlug(obj: unknown): obj is ReqGetByUserSlug
 
 export const resGetByUserSlugAppSlug = type({
   type: "'vibes.diy.res-get-by-user-slug-app-slug'",
-}).and(FileSystemRef);
+}).and(FileSystemRefFields);
 
 export type ResGetByUserSlugAppSlug = typeof resGetByUserSlugAppSlug.infer;
 export function isResGetByUserSlugAppSlug(obj: unknown): obj is ResGetByUserSlugAppSlug {
