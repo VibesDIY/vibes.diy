@@ -13,8 +13,9 @@ export const ReqPush = type({
   mode: "string",
   appSlug: "string",
   ownerHandle: "string",
-  instantJoin: "boolean",
-  publicAccess: "boolean",
+  "instantJoin?": "boolean", // kept for backward compat; fast path is now always on
+  "publicAccess?": "boolean", // kept for backward compat; fast path is now always on
+  "privateMode?": "boolean", // opt out of fast-path defaults
   apiUrl: "string",
   "idleTimeoutMs?": "number | undefined",
 });
@@ -48,8 +49,7 @@ export const pushEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPush, ResEnsure
       mode,
       appSlug,
       ownerHandle,
-      instantJoin: args.instantJoin,
-      publicAccess: args.publicAccess,
+      private: args.privateMode,
       apiUrl: args.apiUrl,
       api,
       ctx,
@@ -97,12 +97,15 @@ export function pushCmd(ctx: CliCtx) {
       }),
       instantJoin: flag({
         long: "instant-join",
-        description: "Auto-accept database sharing view requests",
+        description: "[Deprecated: no-op. Auto-accept editor is now always enabled by default. Use --private to opt out.]",
       }),
       publicAccess: flag({
         long: "public",
-        description:
-          "Enable anonymous public reads for this app (publicAccess.enable). Required for cross-origin <img>/<video> tags reading _files when the iframe can't share auth cookies with the file host.",
+        description: "[Deprecated: no-op. Public access is now always enabled by default. Use --private to opt out.]",
+      }),
+      privateMode: flag({
+        long: "private",
+        description: "Opt out of fast-path defaults: disables public access and auto-accept-editor. Use for private or gated apps.",
       }),
       idleTimeoutMs: option({
         long: "idle-timeout",

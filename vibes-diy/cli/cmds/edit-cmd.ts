@@ -41,7 +41,7 @@ export const ReqEdit = type({
   appSlug: "string",
   prompt: "string",
   ownerHandle: "string",
-  instantJoin: "boolean",
+  "instantJoin?": "boolean", // kept for backward compat; fast path is now always on
   verbose: "boolean",
   dir: "string",
   apiUrl: "string",
@@ -364,7 +364,6 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
       mode: "production",
       appSlug: pushAppSlug,
       ownerHandle: pushUserSlug,
-      instantJoin: args.instantJoin,
       apiUrl: args.apiUrl,
       api,
       ctx,
@@ -415,7 +414,7 @@ export function editCmd(ctx: CliCtx) {
       }),
       instantJoin: flag({
         long: "instant-join",
-        description: "Auto-accept database sharing view requests",
+        description: "[Deprecated: no-op. Auto-accept editor is now always enabled by default.]",
       }),
       verbose: flag({
         long: "verbose",

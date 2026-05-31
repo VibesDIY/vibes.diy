@@ -41,7 +41,7 @@ export const ReqGenerate = type({
   prompt: "string",
   appSlug: "string",
   ownerHandle: "string",
-  instantJoin: "boolean",
+  "instantJoin?": "boolean", // kept for backward compat; fast path is now always on
   verbose: "boolean",
   apiUrl: "string",
   // Optional: file path to focus first in slot rendering. Forwarded to the
@@ -214,7 +214,6 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       mode: "production",
       appSlug: pushAppSlug,
       ownerHandle: pushUserSlug,
-      instantJoin: args.instantJoin,
       apiUrl: args.apiUrl,
       api,
       ctx,
@@ -283,7 +282,7 @@ export function generateCmd(ctx: CliCtx) {
       }),
       instantJoin: flag({
         long: "instant-join",
-        description: "Auto-accept database sharing view requests",
+        description: "[Deprecated: no-op. Auto-accept editor is now always enabled by default.]",
       }),
       verbose: flag({
         long: "verbose",
