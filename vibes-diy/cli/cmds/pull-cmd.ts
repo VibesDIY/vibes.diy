@@ -111,7 +111,7 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
 
     for (const item of sourceFiles) {
       const fileName = item.fileName.startsWith("/") ? item.fileName.slice(1) : item.fileName;
-      const fileUrl = `https://${args.appSlug}--${userSlug}.${hostnameBase}/${fileName}`;
+      const fileUrl = `https://${args.appSlug}--${userSlug}.${hostnameBase}/${fileName}?source=true`;
       const rFetch = await exception2Result(() => fetch(fileUrl));
       if (rFetch.isErr()) {
         return Result.Err(`Failed to fetch ${fileName}: ${rFetch.Err().message}`);
