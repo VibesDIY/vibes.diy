@@ -1,0 +1,1143 @@
+<style>
+  body {
+    font-family: "SF Mono", monospace;
+  }
+  .db {
+    border: 3px solid #6366f1;
+    border-radius: 12px;
+    padding: 20px;
+    background: #f8f7ff;
+    margin-bottom: 24px;
+  }
+  .db-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #6366f1;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .doc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .doc {
+    border-radius: 8px;
+    padding: 12px 14px;
+    border: 2px solid;
+    position: relative;
+  }
+  .doc-type {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .doc-field {
+    font-size: 12px;
+    color: #444;
+    margin: 3px 0;
+  }
+  .doc-field span {
+    color: #888;
+  }
+  .doc.channel-meta {
+    border-color: #f59e0b;
+    background: #fffbeb;
+  }
+  .doc.message {
+    border-color: #10b981;
+    background: #f0fdf4;
+  }
+  .doc.invite {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+  .doc.channel-meta .doc-type {
+    color: #b45309;
+  }
+  .doc.message .doc-type {
+    color: #065f46;
+  }
+  .doc.invite .doc-type {
+    color: #1d4ed8;
+  }
+
+  .fn-box {
+    border: 2px dashed #94a3b8;
+    border-radius: 10px;
+    padding: 18px 20px;
+    background: #f1f5f9;
+    margin-bottom: 24px;
+  }
+  .fn-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #475569;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .fn-sig {
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 14px;
+    background: #e2e8f0;
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .fn-sig .k {
+    color: #7c3aed;
+  }
+  .fn-sig .t {
+    color: #0369a1;
+  }
+  .fn-rules {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .rule {
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.7;
+    border: 1px solid;
+  }
+  .rule.amber {
+    border-color: #f59e0b;
+    background: #fffbeb;
+  }
+  .rule.green {
+    border-color: #10b981;
+    background: #f0fdf4;
+  }
+  .rule.blue {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+  .rule-header {
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .rule.amber .rule-header {
+    color: #b45309;
+  }
+  .rule.green .rule-header {
+    color: #065f46;
+  }
+  .rule.blue .rule-header {
+    color: #1d4ed8;
+  }
+  .throw {
+    color: #dc2626;
+    font-style: italic;
+  }
+  .grant {
+    color: #059669;
+    font-weight: 600;
+  }
+  .route {
+    color: #7c3aed;
+    font-weight: 600;
+  }
+  .hl {
+    background: #fef9c3;
+    padding: 0 2px;
+    border-radius: 3px;
+    font-weight: 700;
+    color: #92400e;
+  }
+
+  .user-ctx {
+    margin-bottom: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .user-ctx-label {
+    font-weight: 700;
+    color: #475569;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    padding-top: 2px;
+  }
+  .user-ctx-fields {
+    color: #334155;
+    line-height: 1.7;
+  }
+  .user-ctx-fields .k {
+    color: #7c3aed;
+  }
+  .user-ctx-fields .v {
+    color: #0369a1;
+  }
+  .user-ctx-fields .c {
+    color: #94a3b8;
+    font-style: italic;
+  }
+
+  .channels-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .channel-box {
+    border: 2px solid #6366f1;
+    border-radius: 10px;
+    padding: 14px;
+    background: #f8f7ff;
+  }
+  .channel-name {
+    font-weight: 700;
+    font-size: 13px;
+    color: #4338ca;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .channel-name::before {
+    content: "#";
+    opacity: 0.5;
+  }
+  .members {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .member {
+    background: #e0e7ff;
+    color: #3730a3;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .member.new {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px dashed #059669;
+  }
+
+  .flow-box {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px 20px;
+    background: white;
+    margin-bottom: 12px;
+  }
+  .flow-title {
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 10px;
+    color: #334155;
+  }
+  .flow-steps {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .step {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    padding: 8px 4px;
+    line-height: 1.5;
+  }
+  .step .icon {
+    font-size: 20px;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .step .label {
+    color: #64748b;
+  }
+  .step .value {
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .arrow {
+    align-self: center;
+    color: #94a3b8;
+    font-size: 18px;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+  .arrow.red {
+    color: #dc2626;
+  }
+  .arrow.green {
+    color: #059669;
+  }
+
+  .note {
+    font-size: 11px;
+    color: #64748b;
+    font-style: italic;
+    margin-top: 6px;
+    padding-left: 8px;
+    border-left: 2px solid #e2e8f0;
+  }
+
+  h2 {
+    color: #1e293b;
+    font-size: 18px;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  h3 {
+    font-size: 13px;
+    color: #334155;
+    margin: 0 0 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge.fixed {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+  }
+</style>
+
+<h2>Firefly Access Function <span class="badge fixed">v2 — user.userSlug</span></h2>
+<p class="subtitle">Workplace chat — one database, channels as the isolation unit</p>
+
+<!-- DATABASE -->
+<div class="db">
+  <div class="db-label">📦 useFireproof("workspace-chat", { access })</div>
+  <div class="doc-grid">
+    <div class="doc channel-meta">
+      <div class="doc-type">channel-meta</div>
+      <div class="doc-field">_id: <span>chan-general</span></div>
+      <div class="doc-field">ownerSlug: <span>"alice"</span></div>
+      <div class="doc-field">memberSlugs: <span>["bob","carol"]</span></div>
+    </div>
+    <div class="doc message">
+      <div class="doc-type">message</div>
+      <div class="doc-field">userSlug: <span>"bob"</span></div>
+      <div class="doc-field">channelId: <span>"chan-general"</span></div>
+      <div class="doc-field">text: <span>"hey everyone"</span></div>
+    </div>
+    <div class="doc invite">
+      <div class="doc-type">channel-invite</div>
+      <div class="doc-field">senderSlug: <span>"carol"</span></div>
+      <div class="doc-field">inviteeSlug: <span>"dave"</span></div>
+      <div class="doc-field">channelId: <span>"chan-general"</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ACCESS FUNCTION -->
+<div class="fn-box">
+  <div class="fn-label">⚡ access function — runs on every write including delete</div>
+  <div class="fn-sig">
+    <span class="k">const</span> access = (doc, oldDoc, <span class="t">user: UserContext | null</span>,
+    <span class="t">ctx: Helpers</span>) => <span class="t">AccessDescriptor</span>
+  </div>
+
+  <!-- user context shape -->
+  <div class="user-ctx">
+    <div class="user-ctx-label">UserContext</div>
+    <div class="user-ctx-fields">
+      <span class="k">userSlug</span>: <span class="v">"bob"</span> &nbsp;<span class="c"
+        >// stable unique id — use for all auth checks</span
+      ><br />
+      <span class="k">displayName</span>?: <span class="v">"Bob Smith"</span> &nbsp;<span class="c"
+        >// natural data — never use for identity checks</span
+      >
+    </div>
+  </div>
+
+  <!-- helpers shape -->
+  <div class="user-ctx">
+    <div class="user-ctx-label">Helpers</div>
+    <div class="user-ctx-fields">
+      <span class="k">requireAccess</span>(<span class="v">channelId</span>) &nbsp;<span class="c"
+        >// throws if user not in channel — opaque, not enumerable</span
+      ><br />
+      <span class="k">requireRole</span>(<span class="v">roleName</span>) &nbsp;&nbsp;&nbsp;&nbsp;<span class="c"
+        >// throws if user not in role &nbsp;&nbsp; — opaque, not enumerable</span
+      >
+    </div>
+  </div>
+
+  <div class="fn-rules">
+    <div class="rule amber">
+      <div class="rule-header">channel-meta</div>
+      <span class="throw">throw</span> if doc.ownerSlug ≠ <span class="hl">user.userSlug</span><br />
+      <span class="throw">throw</span> if oldDoc &amp;&amp; oldDoc.ownerSlug ≠ <span class="hl">user.userSlug</span><br />
+      <br />
+      <span class="route">channels:</span> [doc._id]<br />
+      <span class="grant">grant:</span> memberSlugs → doc._id<br />
+      <span class="grant">grant:</span> ownerSlug → doc._id<br />
+      <br />
+      <em style="color: #92400e; font-size: 11px">delete → grants recomputed → members lose access ✓</em>
+    </div>
+    <div class="rule green">
+      <div class="rule-header">message</div>
+      <span class="throw">throw</span> if doc.userSlug ≠ <span class="hl">user.userSlug</span><br />
+      ctx.<span class="throw">requireAccess</span>(doc.channelId)<br />
+      <br />
+      <span class="route">channels:</span> [doc.channelId]<br />
+      <span class="grant">grant:</span> (none)<br />
+      <br />
+      <em style="color: #065f46; font-size: 11px">read gated by existing channel membership</em>
+    </div>
+    <div class="rule blue">
+      <div class="rule-header">channel-invite</div>
+      <span class="throw">throw</span> if doc.senderSlug ≠ <span class="hl">user.userSlug</span><br />
+      ctx.<span class="throw">requireAccess</span>(doc.channelId)<br />
+      <br />
+      <span class="route">channels:</span> [doc.channelId]<br />
+      <span class="grant">grant:</span> inviteeSlug → doc.channelId<br />
+      <br />
+      <em style="color: #1d4ed8; font-size: 11px">any member can invite; delete revokes invite grant</em>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTING CHANNELS -->
+<h3>Resulting channel access (materialized from current docs)</h3>
+<div class="channels-section">
+  <div class="channel-box">
+    <div class="channel-name">chan-general</div>
+    <div class="members">
+      <span class="member">alice</span>
+      <span class="member">bob</span>
+      <span class="member">carol</span>
+      <span class="member new">dave ← via invite</span>
+    </div>
+    <p class="note">Derived from channel-meta grants + invite grants. Recomputed on every write.</p>
+  </div>
+  <div class="channel-box">
+    <div class="channel-name">chan-engineering</div>
+    <div class="members">
+      <span class="member">alice</span>
+      <span class="member">dave</span>
+    </div>
+    <p class="note">Separate channel-meta doc, separate grant set. bob &amp; carol have no access.</p>
+  </div>
+</div>
+
+<!-- KEY FLOWS -->
+<h3>Key flows</h3>
+
+<div class="flow-box">
+  <div class="flow-title">1 — Member discovers new channel</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">📝</span><span class="label">alice writes</span><span class="value">channel-meta</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">⚡</span><span class="label">access fn runs</span><span class="value">grants bob, carol</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">🔄</span><span class="label">bob's next query</span><span class="value">sees channel-meta</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">💬</span><span class="label">sidebar updates</span><span class="value">#chan-general appears</span>
+    </div>
+  </div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">2 — Invite flow (any member can invite)</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">📨</span><span class="label">carol writes</span><span class="value">channel-invite (dave)</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">⚡</span><span class="label">access fn checks</span><span class="value">carol.userSlug ∈ channel ✓</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">🔑</span><span class="label">grant issued</span><span class="value">dave → chan-general</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">👀</span><span class="label">dave can read</span><span class="value">all channel history</span>
+    </div>
+  </div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">3 — Revocation (channel deleted or memberSlugs updated)</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">🗑️</span><span class="label">alice deletes</span><span class="value">channel-meta</span>
+    </div>
+    <div class="arrow red">→</div>
+    <div class="step">
+      <span class="icon">⚡</span><span class="label">access fn runs</span><span class="value">returns {} grants</span>
+    </div>
+    <div class="arrow red">→</div>
+    <div class="step">
+      <span class="icon">📊</span><span class="label">grants recomputed</span><span class="value">bob, carol removed</span>
+    </div>
+    <div class="arrow red">→</div>
+    <div class="step">
+      <span class="icon">🚫</span><span class="label">next query</span><span class="value">channel gone from sidebar</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Complete API <span class="badge fixed">v2</span></h2>
+<p class="subtitle">Full AccessDescriptor — all fields optional, {} is valid, throw rejects the write</p>
+
+<div class="fn-box">
+  <div class="fn-label">⚡ (doc, oldDoc, user: UserContext | null, ctx: Helpers) → AccessDescriptor</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9">
+    <span class="k">type</span> <span class="t">Helpers</span> = { <span class="k">requireAccess</span>: (channelId:
+    <span class="t">string</span>) => <span class="t">void</span>
+    <span style="color: #94a3b8">// throws if user not in channel — opaque, not enumerable</span>
+    <span class="k">requireRole</span>: (roleName: <span class="t">string</span>) => <span class="t">void</span>
+    <span style="color: #94a3b8">// throws if user not in role — opaque, not enumerable</span>
+    }
+
+    <span class="k">type</span> <span class="t">AccessDescriptor</span> = { <span class="k">channels</span>?:
+    <span class="t">string[]</span> <span style="color: #94a3b8">// route this doc — per-doc, not reduced</span>
+    <span class="k">members</span>?: Record&lt;<span class="t">roleName</span>, <span class="t">userSlug[]</span>&gt;
+    <span style="color: #94a3b8">// role membership — reduced by union</span> <span class="k">grant</span>?: {
+    <span class="k">users</span>?: Record&lt;<span class="t">userSlug</span>, <span class="t">string[]</span>&gt;
+    <span style="color: #94a3b8">// direct grants — reduced by union</span> <span class="k">roles</span>?: Record&lt;<span class="t"
+      >roleName</span
+    >, <span class="t">string[]</span>&gt; <span style="color: #94a3b8">// role grants — reduced by union</span>
+    <span class="k">public</span>?: <span class="t">string[]</span>
+    <span style="color: #94a3b8">// public read — no auth required</span>
+    }
+    <span class="k">expiry</span>?: <span class="t">string</span> | <span class="t">number</span> | <span class="t">null</span>
+    <span style="color: #94a3b8">// ISO date or unix seconds</span>
+    }
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"reason"</span> }
+    <span style="color: #94a3b8">// rejects write — not a return field</span>
+
+    <span style="color: #94a3b8">// default behaviour — both helpers also throw if user is null</span>
+    <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"authentication required"</span> }
+  </div>
+
+  <div style="margin-top: 18px">
+    <div class="fn-label" style="margin-bottom: 10px">
+      server reduces across all current docs — delete drops contribution automatically
+    </div>
+    <div class="fn-rules">
+      <div class="rule green">
+        <div class="rule-header">members reduce</div>
+        <span class="grant">effectiveMembers[role]</span><br />
+        = union of all docs'<br />
+        members[role] arrays<br /><br />
+        <em style="color: #065f46; font-size: 11px">delete → slug disappears ✓</em>
+      </div>
+      <div class="rule blue">
+        <div class="rule-header">grant.roles resolve</div>
+        <span class="grant">grant.roles[role]</span> channels<br />
+        × effectiveMembers[role]<br />
+        = per-user channel set<br /><br />
+        <em style="color: #1d4ed8; font-size: 11px">two-pass expansion</em>
+      </div>
+      <div class="rule amber">
+        <div class="rule-header">grant.users direct</div>
+        <span class="grant">grant.users[slug]</span> channels<br />
+        unioned on top of<br />
+        role-expanded channels<br /><br />
+        <em style="color: #b45309; font-size: 11px">DMs, one-off grants</em>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Use Case — Employee Onboarding</h2>
+<p class="subtitle">New hire gets 4 mandatory + 4 design + 12 PDX channels from two manager edits</p>
+
+<div class="db">
+  <div class="db-label">📦 four doc types, four access function returns</div>
+  <div class="doc-grid" style="grid-template-columns: repeat(2, 1fr)">
+    <div class="doc" style="border-color: #8b5cf6; background: #f5f3ff">
+      <div class="doc-type" style="color: #6d28d9">
+        role-channels <span style="font-weight: 400; font-size: 10px">(singleton, admin writes once)</span>
+      </div>
+      <div class="doc-field">type: <span>"role-channels"</span></div>
+      <div class="doc-field">role: <span>"global-team"</span></div>
+      <div class="doc-field">channels: <span>["announcements","handbook","it-help","all-hands"]</span></div>
+      <div
+        style="
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #ddd6fe;
+          font-size: 11px;
+          color: #6d28d9;
+          line-height: 1.8;
+        "
+      >
+        <span class="route">grant.roles</span>["global-team"] → doc.channels
+      </div>
+    </div>
+
+    <div class="doc" style="border-color: #ec4899; background: #fdf2f8">
+      <div class="doc-type" style="color: #be185d">
+        membership <span style="font-weight: 400; font-size: 10px">(one per employee, written on hire)</span>
+      </div>
+      <div class="doc-field">type: <span>"membership"</span></div>
+      <div class="doc-field">userSlug: <span>"newperson"</span></div>
+      <div class="doc-field">role: <span>"global-team"</span></div>
+      <div
+        style="
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #fbcfe8;
+          font-size: 11px;
+          color: #be185d;
+          line-height: 1.8;
+        "
+      >
+        <span class="route">members</span>["global-team"] → ["newperson"]
+      </div>
+    </div>
+
+    <div class="doc channel-meta">
+      <div class="doc-type">team-meta <span style="font-weight: 400; font-size: 10px">(manager edits memberSlugs)</span></div>
+      <div class="doc-field">type: <span>"team-meta"</span></div>
+      <div class="doc-field">teamId: <span>"design-team"</span></div>
+      <div class="doc-field">memberSlugs: <span>["alice","bob","newperson"]</span></div>
+      <div class="doc-field">channels: <span>["design-general","design-reviews","design-assets","design-critique"]</span></div>
+      <div
+        style="
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #fde68a;
+          font-size: 11px;
+          color: #b45309;
+          line-height: 1.8;
+        "
+      >
+        <span class="route">members</span>["design-team"] → memberSlugs<br />
+        <span class="route">grant.roles</span>["design-team"] → doc.channels
+      </div>
+    </div>
+
+    <div class="doc message">
+      <div class="doc-type">dm <span style="font-weight: 400; font-size: 10px">(app creates on first message)</span></div>
+      <div class="doc-field">type: <span>"dm"</span></div>
+      <div class="doc-field">participants: <span>["alice","newperson"]</span></div>
+      <div
+        style="
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #a7f3d0;
+          font-size: 11px;
+          color: #065f46;
+          line-height: 1.8;
+        "
+      >
+        <span class="route">channels</span> → ["dm-alice-newperson"]<br />
+        <span class="route">grant.users</span>["alice"] → ["dm-alice-newperson"]<br />
+        <span class="route">grant.users</span>["newperson"] → ["dm-alice-newperson"]
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Reduced state after onboarding</h3>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px">
+  <div class="fn-box" style="margin-bottom: 0">
+    <div class="fn-label">members</div>
+    <div style="font-size: 12px; line-height: 2; color: #334155">
+      <span style="color: #6d28d9; font-weight: 700">global-team</span> → [...all, <span class="hl">newperson</span>]<br />
+      <span style="color: #b45309; font-weight: 700">design-team</span> → [alice, bob, <span class="hl">newperson</span>]<br />
+      <span style="color: #0369a1; font-weight: 700">pdx-crew</span>&nbsp;&nbsp;&nbsp; → [...12...,
+      <span class="hl">newperson</span>]
+    </div>
+  </div>
+  <div class="fn-box" style="margin-bottom: 0">
+    <div class="fn-label">grant.roles</div>
+    <div style="font-size: 12px; line-height: 2; color: #334155">
+      <span style="color: #6d28d9; font-weight: 700">global-team</span> → [announcements, handbook, it-help, all-hands]<br />
+      <span style="color: #b45309; font-weight: 700">design-team</span> → [design-general, design-reviews, design-assets,
+      design-critique]<br />
+      <span style="color: #0369a1; font-weight: 700">pdx-crew</span>&nbsp;&nbsp;&nbsp; → [pdx-lunch, pdx-commute, pdx-events … ×12]
+    </div>
+  </div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">Onboarding — two writes, 20 channels</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">👤</span><span class="label">HR creates</span><span class="value">membership doc</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">🎨</span><span class="label">design mgr adds</span><span class="value">newperson to team-meta</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">📊</span><span class="label">reduces recompute</span><span class="value">members + grants</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">✅</span><span class="label">newperson syncs</span><span class="value">4 + 4 + 12 channels</span>
+    </div>
+  </div>
+  <p class="note">PDX manager adds newperson independently. Each write is atomic — no coordination needed between managers.</p>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">Offboarding — delete membership doc, remove from team-meta</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">🗑️</span><span class="label">HR deletes</span><span class="value">membership doc</span>
+    </div>
+    <div class="arrow red">→</div>
+    <div class="step">
+      <span class="icon">🎨</span><span class="label">mgr removes slug</span><span class="value">from team-meta</span>
+    </div>
+    <div class="arrow red">→</div>
+    <div class="step">
+      <span class="icon">📊</span><span class="label">reduces recompute</span><span class="value">newperson → {}</span>
+    </div>
+    <div class="arrow red">→</div>
+    <div class="step">
+      <span class="icon">🚫</span><span class="label">next sync</span><span class="value">all channels gone</span>
+    </div>
+  </div>
+  <p class="note">DM docs persist — offboarding policy decides whether to delete them separately.</p>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">Two valid membership topologies — same access function, same reduce</div>
+  <div
+    style="
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.8;
+      margin-top: 4px;
+    "
+  >
+    <div>
+      <strong style="color: #6366f1">Team-centric (decentralized)</strong><br />
+      Team manager edits team-meta doc.<br />
+      memberSlugs lives on the team.<br />
+      Manager controls their own roster.
+    </div>
+    <div>
+      <strong style="color: #6366f1">Employee-centric (admin)</strong><br />
+      HR edits employee doc, roles field.<br />
+      Membership tags live on the person.<br />
+      Central HR controls all memberships.
+    </div>
+  </div>
+  <p class="note">
+    Both produce identical reduced state. Can be mixed: HR owns global-team via employee tags, design manager owns design-team via
+    team-meta.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Use Case — Survey App</h2>
+<p class="subtitle">Public read + anonymous submit — two doc types, two very different access shapes</p>
+
+<div class="db">
+  <div class="db-label">📦 useFireproof("survey-app", { access })</div>
+  <div class="doc-grid" style="grid-template-columns: repeat(2, 1fr)">
+    <div class="doc channel-meta">
+      <div class="doc-type">
+        survey-questions <span style="font-weight: 400; font-size: 10px">(admin writes, admin + feedback-team read)</span>
+      </div>
+      <div class="doc-field">_id: <span>survey-q-2026</span></div>
+      <div class="doc-field">type: <span>"survey-questions"</span></div>
+      <div class="doc-field">questions: <span>[…]</span></div>
+      <div
+        style="
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #fde68a;
+          font-size: 11px;
+          color: #b45309;
+          line-height: 1.8;
+        "
+      >
+        ctx.<span class="throw">requireRole</span>("survey-admin")<br />
+        <span class="route">channels:</span> ["inbound-responses"]
+      </div>
+    </div>
+
+    <div class="doc invite">
+      <div class="doc-type">
+        survey-response <span style="font-weight: 400; font-size: 10px">(anyone submits, survey-admin + feedback-team read)</span>
+      </div>
+      <div class="doc-field">_id: <span>null ← must be server-generated</span></div>
+      <div class="doc-field">type: <span>"survey-response"</span></div>
+      <div class="doc-field">answers: <span>[…]</span></div>
+      <div
+        style="
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #bfdbfe;
+          font-size: 11px;
+          color: #1d4ed8;
+          line-height: 1.8;
+        "
+      >
+        <span class="throw">throw</span> if doc._id &nbsp;<span style="color: #94a3b8">// must be server-generated</span><br />
+        <span class="route">channels:</span> ["inbound-responses"]
+        <span style="color: #94a3b8">// null user ok, grant via config doc</span>
+      </div>
+    </div>
+
+    <div class="doc" style="border-color: #6366f1; background: #f8f7ff">
+      <div class="doc-type" style="color: #4338ca">
+        survey-config <span style="font-weight: 400; font-size: 10px">(singleton — admin writes once)</span>
+      </div>
+      <div class="doc-field">_id: <span>"survey-config"</span></div>
+      <div class="doc-field">type: <span>"survey-config"</span></div>
+      <div
+        style="
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #e0e7ff;
+          font-size: 11px;
+          color: #4338ca;
+          line-height: 1.8;
+        "
+      >
+        ctx.<span class="throw">requireRole</span>("survey-admin")<br />
+        <span class="route">grant.roles:</span> survey-admin → inbound-responses<br />
+        <span class="route">grant.roles:</span> feedback-team → inbound-responses
+      </div>
+    </div>
+
+    <div class="doc message">
+      <div class="doc-type">
+        final-results <span style="font-weight: 400; font-size: 10px">(feedback-team writes, world reads)</span>
+      </div>
+      <div class="doc-field">_id: <span>results-2026</span></div>
+      <div class="doc-field">type: <span>"final-results"</span></div>
+      <div class="doc-field">summary: <span>{…}</span></div>
+      <div
+        style="
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #a7f3d0;
+          font-size: 11px;
+          color: #065f46;
+          line-height: 1.8;
+        "
+      >
+        ctx.<span class="throw">requireRole</span>("feedback-team")<br />
+        <span class="route">channels:</span> [doc._id]<br />
+        <span class="route">grant.public:</span> [doc._id]
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fn-box" style="margin-bottom: 24px">
+  <div class="fn-label">⚡ survey access function</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9">
+    <span class="k">const</span> access = (doc, oldDoc, user, ctx) => {
+
+    <span class="k">if</span> (doc.type === <span class="t">"survey-questions"</span>) { ctx.<span style="color: #dc2626"
+      >requireRole</span
+    >(<span class="t">"survey-admin"</span>) <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>]
+    } }
+
+    <span class="k">if</span> (doc.type === <span class="t">"final-results"</span>) { ctx.<span style="color: #dc2626"
+      >requireRole</span
+    >(<span class="t">"feedback-team"</span>) <span class="k">return</span> { channels: [doc._id], grant: { public: [doc._id] }
+    <span style="color: #94a3b8">// published results — no auth required to read</span>
+    } }
+
+    <span class="k">if</span> (doc.type === <span class="t">"survey-response"</span>) { <span class="k">if</span> (doc._id)
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"id must be server-generated"</span> } <span class="k">return</span> { channels: [<span class="t"
+      >"inbound-responses"</span
+    >] } <span style="color: #94a3b8">// null user allowed — role grant is on survey-config</span>
+    }
+
+    <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) { ctx.<span style="color: #dc2626"
+      >requireRole</span
+    >(<span class="t">"survey-admin"</span>) <span class="k">return</span> { grant: { roles: {
+    <span class="t">"survey-admin"</span>: [<span class="t">"inbound-responses"</span>], <span class="t">"feedback-team"</span>:
+    [<span class="t">"inbound-responses"</span>], } } } }
+
+    <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"authentication required"</span> } <span style="color: #94a3b8">// default gate</span>
+    <span class="k">return</span> {} }
+  </div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">1 — Admin publishes questions</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">👤</span><span class="label">admin writes</span><span class="value">survey-questions</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">⚡</span><span class="label">requireRole passes</span><span class="value">admin ∈ survey-admin ✓</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">🌐</span><span class="label">grant.public set</span><span class="value">channel open to all</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">👀</span><span class="label">anyone reads</span><span class="value">no auth required</span>
+    </div>
+  </div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">2 — Anonymous visitor submits response</div>
+  <div class="flow-steps">
+    <div class="step"><span class="icon">🌐</span><span class="label">visitor posts</span><span class="value">_id: null</span></div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">⚡</span><span class="label">_id check passes</span><span class="value">null user allowed</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">💾</span><span class="label">server assigns ID</span><span class="value">routed to inbound-responses</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">🔒</span><span class="label">admin reads all</span><span class="value">visitor sees nothing</span>
+    </div>
+  </div>
+  <p class="note">Visitor submitting with a self-chosen _id throws immediately — prevents targeting or overwriting any response.</p>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">3 — Authenticated user tries to forge response ID</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">😈</span><span class="label">client sets</span><span class="value">_id: "target-id"</span>
+    </div>
+    <div class="arrow red">→</div>
+    <div class="step">
+      <span class="icon">⚡</span><span class="label">access fn runs</span><span class="value">doc._id is truthy</span>
+    </div>
+    <div class="arrow red">→</div>
+    <div class="step">
+      <span class="icon">🚫</span><span class="label">throw</span><span class="value">"id must be server-generated"</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Survey Variants — open vs invite-only</h2>
+<p class="subtitle">Same database, same access function — role and channel names scoped to survey ID</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px">
+  <!-- S1: Open -->
+  <div class="db">
+    <div class="db-label">📋 survey s1 — open responses</div>
+
+    <div class="doc channel-meta" style="margin-bottom: 10px">
+      <div class="doc-type">question</div>
+      <div class="doc-field">surveyId: <span>"s1"</span></div>
+      <div class="doc-field">open: <span>true</span></div>
+      <div class="doc-field">text: <span>"Rate our service"</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #fde68a; font-size: 11px; color: #b45309; line-height: 1.8"
+      >
+        ctx.<span class="throw">requireRole</span>("survey-s1-team")<br />
+        <span class="route">channels:</span> ["s1-questions"]<br />
+        <span class="route">grant.public:</span> ["s1-questions"]
+      </div>
+    </div>
+
+    <div class="doc message">
+      <div class="doc-type">open-response <span style="font-weight: 400; font-size: 10px">(null user ok)</span></div>
+      <div class="doc-field">_id: <span>null ← server-generated</span></div>
+      <div class="doc-field">surveyId: <span>"s1"</span></div>
+      <div class="doc-field">answers: <span>[…]</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #a7f3d0; font-size: 11px; color: #065f46; line-height: 1.8"
+      >
+        <span class="throw">throw</span> if doc._id<br />
+        <span class="route">channels:</span> ["s1-responses"]
+      </div>
+    </div>
+  </div>
+
+  <!-- S2: Invite-only -->
+  <div class="db">
+    <div class="db-label">🔒 survey s2 — invite-only</div>
+
+    <div class="doc channel-meta" style="margin-bottom: 10px">
+      <div class="doc-type">question</div>
+      <div class="doc-field">surveyId: <span>"s2"</span></div>
+      <div class="doc-field">open: <span>false</span></div>
+      <div class="doc-field">text: <span>"Evaluate the candidate"</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #fde68a; font-size: 11px; color: #b45309; line-height: 1.8"
+      >
+        ctx.<span class="throw">requireRole</span>("survey-s2-team")<br />
+        <span class="route">channels:</span> ["s2-questions"]<br />
+        <span class="route">grant.roles:</span> survey-s2-responders → s2-questions
+      </div>
+    </div>
+
+    <div class="doc invite" style="margin-bottom: 10px">
+      <div class="doc-type">invite <span style="font-weight: 400; font-size: 10px">(team member invites responder)</span></div>
+      <div class="doc-field">surveyId: <span>"s2"</span></div>
+      <div class="doc-field">senderSlug: <span>"alice"</span></div>
+      <div class="doc-field">inviteeSlug: <span>"bob"</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #bfdbfe; font-size: 11px; color: #1d4ed8; line-height: 1.8"
+      >
+        ctx.<span class="throw">requireRole</span>("survey-s2-team")<br />
+        <span class="throw">throw</span> if doc.senderSlug ≠ user.userSlug<br />
+        <span class="route">members:</span> { survey-s2-responders: ["bob"] }<br />
+        <span class="route">channels:</span> ["s2-admin"]
+      </div>
+    </div>
+
+    <div class="doc message">
+      <div class="doc-type">response <span style="font-weight: 400; font-size: 10px">(invited users only)</span></div>
+      <div class="doc-field">_id: <span>null ← server-generated</span></div>
+      <div class="doc-field">surveyId: <span>"s2"</span></div>
+      <div class="doc-field">answers: <span>[…]</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #a7f3d0; font-size: 11px; color: #065f46; line-height: 1.8"
+      >
+        <span class="throw">throw</span> if doc._id<br />
+        ctx.<span class="throw">requireRole</span>("survey-s2-responders")<br />
+        <span class="route">channels:</span> ["s2-responses"]
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Full access function -->
+<div class="fn-box">
+  <div class="fn-label">⚡ access function — all doc types, both survey variants</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9">
+    <span class="k">const</span> access = (doc, oldDoc, user, ctx) => { <span class="k">const</span> id = doc.surveyId
+
+    <span class="k">if</span> (doc.type === <span class="t">"question"</span>) { ctx.<span style="color: #dc2626">requireRole</span
+    >(`survey-${id}-team`) <span style="color: #94a3b8">// team-only write; doc.open is trustworthy</span>
+    <span class="k">const</span> ch = `${id}-questions` <span class="k">return</span> { channels: [ch], grant: doc.open ? { public:
+    [ch] } <span style="color: #94a3b8">// s1: anyone reads</span> : { roles: { [`survey-${id}-responders`]: [ch] } }
+    <span style="color: #94a3b8">// s2: invited only</span>
+    } }
+
+    <span class="k">if</span> (doc.type === <span class="t">"invite"</span>) { ctx.<span style="color: #dc2626">requireRole</span
+    >(`survey-${id}-team`) <span class="k">if</span> (doc.senderSlug !== user?.userSlug)
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
+    <span class="k">return</span> { channels: [`${id}-admin`], members: { [`survey-${id}-responders`]: [doc.inviteeSlug] }
+    <span style="color: #94a3b8">// grants invitee the responder role</span>
+    } }
+
+    <span class="k">if</span> (doc.type === <span class="t">"open-response"</span>) {
+    <span style="color: #94a3b8">// s1 — null user ok</span> <span class="k">if</span> (doc._id)
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"id must be server-generated"</span> } <span class="k">return</span> { channels: [`${id}-responses`] } }
+
+    <span class="k">if</span> (doc.type === <span class="t">"response"</span>) {
+    <span style="color: #94a3b8">// s2 — invited users only</span> <span class="k">if</span> (doc._id)
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"id must be server-generated"</span> } ctx.<span style="color: #dc2626">requireRole</span
+    >(`survey-${id}-responders`) <span class="k">return</span> { channels: [`${id}-responses`] } }
+
+    <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) { ctx.<span style="color: #dc2626"
+      >requireRole</span
+    >(`survey-${id}-team`) <span class="k">return</span> { grant: { roles: { [`survey-${id}-team`]: [`${id}-responses`] } } } }
+
+    <span class="k">if</span> (doc.type === <span class="t">"results"</span>) { ctx.<span style="color: #dc2626">requireRole</span
+    >(`survey-${id}-team`) <span class="k">return</span> { channels: [`${id}-results`], grant: { public: [`${id}-results`] } } }
+
+    <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
+    <span class="t">"authentication required"</span> } <span class="k">return</span> {} }
+  </div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">s1 — open: anonymous visitor responds</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">🌐</span><span class="label">visitor reads</span><span class="value">s1-questions (public)</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">📝</span><span class="label">posts open-response</span><span class="value">_id: null, user: null</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">💾</span><span class="label">server assigns ID</span><span class="value">→ s1-responses</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">📊</span><span class="label">team reads</span><span class="value">via survey-config grant</span>
+    </div>
+  </div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">s2 — invite-only: alice invites bob, bob responds</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">📨</span><span class="label">alice writes</span><span class="value">invite (bob)</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">⚡</span><span class="label">members reduce</span><span class="value">bob ∈ s2-responders</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step"><span class="icon">🔑</span><span class="label">bob reads</span><span class="value">s2-questions</span></div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">💾</span><span class="label">bob responds</span><span class="value">role check passes</span>
+    </div>
+  </div>
+  <p class="note">
+    Alice deletes the invite doc → bob drops from s2-responders reduce → can no longer submit. Already-submitted responses remain.
+  </p>
+</div>
