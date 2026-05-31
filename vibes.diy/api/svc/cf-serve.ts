@@ -17,6 +17,7 @@ import { CFEnv, type EvtRequestGrant, type EvtUserNotification, MsgBase } from "
 import { SuperThis } from "@fireproof/core-types-base";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "./peers/r2-to-s3api.js";
+import type { AccessDescriptor } from "../types/access-function.js";
 
 // declare global {
 //   class WebSocketPair {
@@ -271,6 +272,23 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
     env: env as unknown as Record<string, string>,
     ...(ctx.docNotify ? docNotifyCallbacks(ctx.docNotify) : {}),
     ...(ctx.docNotify ? userNotifyCallbacks(ctx.docNotify) : {}),
+    invokeAccessFn: async (params: {
+      cid: string;
+      doc: unknown;
+      oldDoc: unknown | null;
+      user: { userSlug: string; displayName?: string } | null;
+    }) => {
+      const id = env.ACCESS_FN_DO.idFromName(params.cid);
+      const stub = env.ACCESS_FN_DO.get(id);
+      const res = await stub.fetch(
+        new Request("https://internal/invoke", {
+          method: "POST",
+          body: JSON.stringify(params),
+          headers: { "Content-Type": "application/json" },
+        }) as unknown as CFRequest
+      );
+      return res.json() as Promise<AccessDescriptor | { forbidden: string }>;
+    },
   });
 }
 

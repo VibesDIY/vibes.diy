@@ -24,6 +24,7 @@ import { getVibeRouteHints, parseVibePathname, vibePathnameHasFsId } from "@vibe
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
 export { UserNotify } from "./user-notify.js";
+export { AccessFnDO } from "./access-fn.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 

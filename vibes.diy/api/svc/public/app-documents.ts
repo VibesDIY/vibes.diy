@@ -48,6 +48,8 @@ import { eq, and, sql, inArray } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess, canRead, isPublicReadable, DocAccessLevel } from "./access-helpers.js";
+import { enforceAllowAnonymous, ForbiddenError } from "./access-function.js";
+import type { AccessDescriptor } from "../../types/access-function.js";
 import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
 import { mintFilesUrls, isFileMeta } from "./files-url-mint.js";
 
@@ -169,6 +171,48 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         return Result.Ok(EventoResult.Continue);
       }
 
+      // Access function gate: look up CID for this (userSlug, appSlug, dbName) or app-wide ('*')
+      let accessResult: AccessDescriptor | undefined;
+      const tAfb = vctx.sql.tables.accessFunctionBindings;
+      const afbRow = await vctx.sql.db
+        .select({ accessFnCid: tAfb.accessFnCid })
+        .from(tAfb)
+        .where(and(eq(tAfb.userSlug, req.userSlug), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [req.dbName, "*"])))
+        .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
+        .limit(1)
+        .then((r) => r[0]);
+
+      if (afbRow?.accessFnCid && vctx.invokeAccessFn) {
+        const userContext = req._auth ? { userSlug: req.userSlug } : null;
+        const invokeResult = await vctx.invokeAccessFn({
+          cid: afbRow.accessFnCid,
+          doc: req.doc,
+          oldDoc: null,
+          user: userContext,
+        });
+
+        if ("forbidden" in invokeResult) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { message: invokeResult.forbidden },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+
+        try {
+          enforceAllowAnonymous(invokeResult, userContext);
+        } catch (err: unknown) {
+          const reason = err instanceof ForbiddenError ? err.forbidden : String(err);
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { message: reason },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+
+        accessResult = invokeResult;
+      }
+
       const now = new Date().toISOString();
       const docId = req.docId ?? vctx.sthis.timeOrderedNextId().str;
       const dbName = req.dbName;
@@ -275,6 +319,15 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         vctx
           .notifyDocChanged({ ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId }, clientWsSend(ctx).connId)
           .catch((e: unknown) => console.error("DocNotify error:", e));
+      }
+
+      // Channel routing: if access function returned channels, notify subscribers for each
+      if (accessResult?.channels?.length && vctx.notifyDocChanged) {
+        for (const channel of accessResult.channels) {
+          vctx
+            .notifyDocChanged({ userSlug: req.userSlug, appSlug: req.appSlug, dbName: channel, docId }, clientWsSend(ctx).connId)
+            .catch((e: unknown) => console.error("DocNotify channel error:", e));
+        }
       }
 
       await ctx.send.send(ctx, {

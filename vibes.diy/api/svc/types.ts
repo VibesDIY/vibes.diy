@@ -72,6 +72,12 @@ export interface VibesApiSQLCtx {
   notifyUser?(userId: string, evt: EvtUserNotification, senderConnId: string): Promise<void>;
   registerUserSubscription?(userId: string): Promise<void>;
   deregisterUserSubscription?(userId: string): Promise<void>;
+  invokeAccessFn?(params: {
+    cid: string;
+    doc: unknown;
+    oldDoc: unknown | null;
+    user: { userSlug: string; displayName?: string } | null;
+  }): Promise<import("../types/access-function.js").AccessDescriptor | { forbidden: string }>;
 }
 
 export const HandleBinding = type({

@@ -11,6 +11,7 @@ import { defaultLLMRequest } from "./default-llm-request.js";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
 import {
+  type AccessDescriptor,
   type EvtRequestGrant,
   type EvtUserNotification,
   LLMEnforced,
@@ -57,6 +58,12 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   notifyUser?(userId: string, evt: EvtUserNotification, senderConnId: string): Promise<void>;
   registerUserSubscription?(userId: string): Promise<void>;
   deregisterUserSubscription?(userId: string): Promise<void>;
+  invokeAccessFn?(params: {
+    cid: string;
+    doc: unknown;
+    oldDoc: unknown | null;
+    user: { userSlug: string; displayName?: string } | null;
+  }): Promise<AccessDescriptor | { forbidden: string }>;
   // waitUntil?<T>(promise: Promise<T>): void;
 }
 
@@ -302,6 +309,7 @@ export async function createAppContext<T extends VibesSqlite>(
     notifyUser: params.notifyUser,
     registerUserSubscription: params.registerUserSubscription,
     deregisterUserSubscription: params.deregisterUserSubscription,
+    invokeAccessFn: params.invokeAccessFn,
   } satisfies VibesApiSQLCtx;
 
   return {

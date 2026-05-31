@@ -134,6 +134,31 @@ export async function ensureAppSlugItem(
     return Result.Err(`Expected ensureApps to return ResEnsureAppSlugOk on success, got ${JSON.stringify(ensured)}`);
   }
 
+  // Upsert AccessFunctionBindings if access.js was pushed
+  const accessJsEntry = fullFileSystem.find(
+    (e) => e.vibeFileItem.filename === "/access.js" || e.vibeFileItem.filename.endsWith("/access.js")
+  );
+  if (accessJsEntry) {
+    try {
+      const tAfb = vctx.sql.tables.accessFunctionBindings;
+      await vctx.sql.db
+        .insert(tAfb)
+        .values({
+          userSlug: ensured.userSlug,
+          appSlug: ensured.appSlug,
+          dbName: "*",
+          accessFnCid: accessJsEntry.storage.cid,
+          updated: new Date().toISOString(),
+        })
+        .onConflictDoUpdate({
+          target: [tAfb.userSlug, tAfb.appSlug, tAfb.dbName],
+          set: { accessFnCid: accessJsEntry.storage.cid, updated: new Date().toISOString() },
+        });
+    } catch (err: unknown) {
+      console.warn(`ensureAppSlugItem: failed to upsert AccessFunctionBindings for ${ensured.userSlug}/${ensured.appSlug}:`, err);
+    }
+  }
+
   // let wrapperUrl: string;
   // if (req.mode === "production") {
   //   wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().ownerHandle}/${res.Ok().appSlug}/${res.Ok().fsId}`;

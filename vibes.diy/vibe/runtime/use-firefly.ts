@@ -70,12 +70,6 @@ export function fireproof(name: string): FireflyDatabase {
  * Apps call: const { database, useLiveQuery, useDocument } = useFireproof("mydb")
  */
 export function useFireproof(name = "useFireproof", config: { acl?: DbAcl; access?: AccessFunction; [key: string]: unknown } = {}) {
-  if (config.access !== undefined) {
-    throw new Error(
-      "useFireproof config.access is not enforced yet; runtime access-function enforcement lands in Phase 3. Remove config.access for now."
-    );
-  }
-
   const database = useMemo(() => getOrCreateDb(name, config.acl), [name]);
   const useDocument = useMemo(() => createUseDocument(database), [database]);
   const useLiveQuery = useMemo(() => createUseLiveQuery(database), [database]);
