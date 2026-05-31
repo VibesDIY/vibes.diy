@@ -14,26 +14,26 @@ export const sqlAssets = pgTable("Assets", {
   created: text().notNull(),
 });
 
-export const sqlUserSlugBinding = pgTable(
+export const sqlHandleBinding = pgTable(
   "UserSlugBindings",
   {
     userId: text().notNull(), // max bindings per userId
-    userSlug: text().notNull(),
+    handle: text("user_slug").notNull(),
     tenant: text().notNull(), // cryptograhic Id
     created: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userSlug, table.userId] }),
+    primaryKey({ columns: [table.handle, table.userId] }),
     // uniqueIndex("UserSlug_tenant").on(table.tenant),
-    uniqueIndex("UserSlug_userSlug").on(table.userSlug),
-    index("UserSlug_userId_userSlug").on(table.userId, table.userSlug),
+    uniqueIndex("UserSlug_userSlug").on(table.handle),
+    index("UserSlug_userId_userSlug").on(table.userId, table.handle),
   ]
 );
 
 export const sqlAppSlugBinding = pgTable(
   "AppSlugBindings",
   {
-    userSlug: text().notNull(),
+    ownerHandle: text("user_slug").notNull(),
     appSlug: text().notNull(), // human friendly app id
     ledger: text().notNull(), // cryptograhic Id
     created: text().notNull(),
@@ -48,11 +48,11 @@ export const sqlAppSlugBinding = pgTable(
     pinnedAt: text().notNull().default(""),
   },
   (table) => [
-    primaryKey({ columns: [table.appSlug, table.userSlug] }),
+    primaryKey({ columns: [table.appSlug, table.ownerHandle] }),
     // updated is intentionally excluded: including it forces a non-HOT index update on every
     // bumpAppRecency call (every chat turn). list-recent-vibes already does a filesort; keeping
     // updated out of the index makes writes HOT-eligible without changing read correctness.
-    index("AppSlug_userSlug_pinnedAt_appSlug").on(table.userSlug, table.pinnedAt, table.appSlug),
+    index("AppSlug_userSlug_pinnedAt_appSlug").on(table.ownerHandle, table.pinnedAt, table.appSlug),
   ]
 );
 
@@ -61,7 +61,7 @@ export const sqlApps = pgTable(
   {
     appSlug: text().notNull(), // human friendly app id
     userId: text().notNull(),
-    userSlug: text().notNull(),
+    ownerHandle: text("user_slug").notNull(),
     releaseSeq: integer().notNull(), // incremented on each publish
     // appId: text().notNull(), // FP app id
     fsId: text().notNull(), // CID of filenames+mimetypes+cid
@@ -82,7 +82,7 @@ export const sqlChatContexts = pgTable("ChatContexts", {
   chatId: text().notNull().primaryKey(), // uuid v4
   userId: text().notNull(),
   appSlug: text().notNull(),
-  userSlug: text().notNull(),
+  ownerHandle: text("user_slug").notNull(),
   created: text().notNull(),
 });
 
@@ -137,7 +137,7 @@ export const sqlApplicationChats = pgTable(
   {
     userId: text().notNull(), // usally from Clerk
     appSlug: text().notNull(), // reverenced from the calling Page
-    userSlug: text().notNull(), // reverenced from the calling Page
+    ownerHandle: text("user_slug").notNull(), // reverenced from the calling Page
     chatId: text().notNull(), // uuid v4
     blocks: jsonb().notNull(),
     created: text().notNull(),
@@ -145,9 +145,9 @@ export const sqlApplicationChats = pgTable(
   (table) => [
     uniqueIndex("ApplicationChats_chatId_idx").on(table.chatId),
     uniqueIndex("ApplicationChats_userId_chatIdidx").on(table.userId, table.chatId),
-    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.chatId] }),
-    // query for all chats of an app: appSlug + userSlug + created desc
-    index("ApplicationChats_userId_appSlug_userSlug_created_idx").on(table.userId, table.appSlug, table.userSlug, table.created),
+    primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle, table.chatId] }),
+    // query for all chats of an app: appSlug + ownerHandle + created desc
+    index("ApplicationChats_userId_appSlug_userSlug_created_idx").on(table.userId, table.appSlug, table.ownerHandle, table.created),
   ]
 );
 
@@ -163,17 +163,17 @@ export const sqlAppSettings = pgTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    userSlug: text().notNull(),
+    ownerHandle: text("user_slug").notNull(),
     settings: jsonb().notNull(), // AclEntry.or(ActiveAclEntries)[]
     updated: text().notNull(),
     created: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] }),
-    // Supports queries by (userSlug, appSlug) without userId — e.g. getModelDefaults, loadActiveSettings.
-    // PK is (userId, appSlug, userSlug) so those queries do a partial index scan (cost ~126)
+    primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle] }),
+    // Supports queries by (ownerHandle, appSlug) without userId — e.g. getModelDefaults, loadActiveSettings.
+    // PK is (userId, appSlug, ownerHandle) so those queries do a partial index scan (cost ~126)
     // without this secondary index.
-    index("AppSettings_userSlug_appSlug_idx").on(table.userSlug, table.appSlug),
+    index("AppSettings_userSlug_appSlug_idx").on(table.ownerHandle, table.appSlug),
   ]
 );
 
@@ -182,7 +182,7 @@ export const sqlRequestGrants = pgTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    userSlug: text().notNull(),
+    ownerHandle: text("user_slug").notNull(),
     state: text().notNull(), // 'pending' | 'approved' | 'rejected'
     role: text(), // 'editor' | 'viewer'
     foreignUserId: text().notNull(), // sanitized email for grant
@@ -192,7 +192,7 @@ export const sqlRequestGrants = pgTable(
     created: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.foreignUserId] }),
+    primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle, table.foreignUserId] }),
     index("RequestGrants_cursor").on(table.created),
     index("RequestGrants_foreignUserId_idx").on(table.foreignUserId),
   ]
@@ -202,36 +202,36 @@ export const sqlRequestGrants = pgTable(
 export const sqlAppDocuments = pgTable(
   "AppDocuments",
   {
-    userSlug: text().notNull().default("unknown"),
+    ownerHandle: text("user_slug").notNull().default("unknown"),
     appSlug: text().notNull(),
     dbName: text().notNull().default("default"), // database namespace within app
     docId: text().notNull(),
-    seq: integer().notNull(), // monotonic per (userSlug, appSlug, dbName, docId), starts at 1
+    seq: integer().notNull(), // monotonic per (ownerHandle, appSlug, dbName, docId), starts at 1
     userId: text().notNull().default("unknown"), // authenticated user who made this change
     data: jsonb().notNull(), // document JSON
     deleted: integer().notNull().default(0), // 1 = tombstone
     created: text().notNull(), // ISO timestamp of this revision
   },
-  (table) => [primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId, table.seq] })]
+  (table) => [primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId, table.seq] })]
 );
 
 export const sqlDirectChannelIndex = pgTable(
   "DirectChannelIndex",
   {
-    userSlug: text().notNull(),
-    channelUserSlug: text().notNull(),
+    handle: text("user_slug").notNull(),
+    channelHandle: text("channel_user_slug").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.userSlug, table.channelUserSlug] })]
+  (table) => [primaryKey({ columns: [table.handle, table.channelHandle] })]
 );
 
 export const sqlDirectChannelReads = pgTable(
   "DirectChannelReads",
   {
-    channelUserSlug: text().notNull(),
-    userSlug: text().notNull(),
+    channelHandle: text("channel_user_slug").notNull(),
+    handle: text("user_slug").notNull(),
     lastSeenSeq: integer().notNull().default(0),
   },
-  (table) => [primaryKey({ columns: [table.channelUserSlug, table.userSlug] })]
+  (table) => [primaryKey({ columns: [table.channelHandle, table.handle] })]
 );
 
 export const sqlInviteGrants = pgTable(
@@ -239,7 +239,7 @@ export const sqlInviteGrants = pgTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    userSlug: text().notNull(),
+    ownerHandle: text("user_slug").notNull(),
     state: text().notNull(), // 'pending' | 'accepted' | 'revoked'
     role: text().notNull(), // 'editor' | 'viewer'
     emailKey: text().notNull(), // sanitized email for grant
@@ -250,7 +250,7 @@ export const sqlInviteGrants = pgTable(
     created: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.emailKey] }),
+    primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle, table.emailKey] }),
     index("InviteGrants_cursor").on(table.created),
     index("InviteGrants_tokenOrGrantUserId_idx").on(table.tokenOrGrantUserId),
   ]
@@ -294,15 +294,15 @@ export const sqlMissingVibeEvents = pgTable(
 // Per-doc file uploads — audit + lookup table for `_files` reads. One row
 // per put-asset call. uploadId is the public handle the client puts into
 // doc._files.<key>; the server resolves uploadId → assetURI at read time
-// for vctx.storage.fetch. Bound to (userSlug, appSlug) at upload-grant time
+// for vctx.storage.fetch. Bound to (ownerHandle, appSlug) at upload-grant time
 // so a foreign uploadId pasted into another user's doc fails put-doc
-// validation. size is recorded for future SUM-by-userSlug quota math.
+// validation. size is recorded for future SUM-by-ownerHandle quota math.
 export const sqlAssetUploads = pgTable(
   "AssetUploads",
   {
     uploadId: text().notNull().primaryKey(),
     userId: text().notNull(), // Clerk userId of the uploader
-    userSlug: text().notNull(),
+    ownerHandle: text("user_slug").notNull(),
     appSlug: text().notNull(),
     cid: text().notNull(), // content hash (for dedup queries)
     assetURI: text().notNull(), // full storage URI for vctx.storage.fetch (e.g. s3://r2/<cid>, pg://Assets/<cid>)
@@ -311,7 +311,7 @@ export const sqlAssetUploads = pgTable(
     created: text().notNull(),
   },
   (table) => [
-    index("AssetUploads_app_idx").on(table.userSlug, table.appSlug, table.created),
+    index("AssetUploads_app_idx").on(table.ownerHandle, table.appSlug, table.created),
     index("AssetUploads_user_idx").on(table.userId, table.created),
     index("AssetUploads_cid_idx").on(table.cid),
   ]

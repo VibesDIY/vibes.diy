@@ -8,27 +8,27 @@ export const sqlAssets = sqliteTable("Assets", {
   created: text().notNull(),
 });
 
-export const sqlUserSlugBinding = sqliteTable(
+export const sqlHandleBinding = sqliteTable(
   "UserSlugBindings",
   {
     userId: text().notNull(), // max bindings per userId
-    userSlug: text().notNull(),
+    handle: text("user_slug").notNull(),
     tenant: text().notNull(), // cryptograhic Id
     created: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userSlug, table.userId] }),
+    primaryKey({ columns: [table.handle, table.userId] }),
     // uniqueIndex("UserSlug_tenant").on(table.tenant),
-    uniqueIndex("UserSlug_userSlug").on(table.userSlug),
-    index("UserSlug_userId_userSlug").on(table.userId, table.userSlug),
+    uniqueIndex("UserSlug_userSlug").on(table.handle),
+    index("UserSlug_userId_userSlug").on(table.userId, table.handle),
   ]
 );
 
 export const sqlAppSlugBinding = sqliteTable(
   "AppSlugBindings",
   {
-    userSlug: text().notNull(),
-    //.references(() => sqlUserSlugBinding.userSlug), // max bindings per userId
+    ownerHandle: text("user_slug").notNull(),
+    //.references(() => sqlHandleBinding.handle), // max bindings per userId
     appSlug: text().notNull(), // human friendly app id
     ledger: text().notNull(), // cryptograhic Id
     created: text().notNull(),
@@ -43,11 +43,11 @@ export const sqlAppSlugBinding = sqliteTable(
     pinnedAt: text().notNull().default(""),
   },
   (table) => [
-    primaryKey({ columns: [table.appSlug, table.userSlug] }),
+    primaryKey({ columns: [table.appSlug, table.ownerHandle] }),
     // updated is intentionally excluded: including it forces a non-HOT index update on every
     // bumpAppRecency call (every chat turn). list-recent-vibes already does a filesort; keeping
     // updated out of the index makes writes HOT-eligible without changing read correctness.
-    index("AppSlug_userSlug_pinnedAt_appSlug").on(table.userSlug, table.pinnedAt, table.appSlug),
+    index("AppSlug_userSlug_pinnedAt_appSlug").on(table.ownerHandle, table.pinnedAt, table.appSlug),
   ]
 );
 
@@ -55,8 +55,8 @@ export const sqlApps = sqliteTable(
   "Apps",
   {
     appSlug: text().notNull(), // .references(() => sqlAppSlugBinding.appSlug), // human friendly app id
-    userId: text().notNull(), // .references(() => sqlUserSlugBinding.userId),
-    userSlug: text().notNull(), // .references(() => sqlAppSlugBinding.userSlug),
+    userId: text().notNull(), // .references(() => sqlHandleBinding.userId),
+    ownerHandle: text("user_slug").notNull(), // .references(() => sqlAppSlugBinding.ownerHandle),
     releaseSeq: int().notNull(), // incremented on each publish
     // appId: text().notNull(), // FP app id
     fsId: text().notNull(), // CID of filenames+mimetypes+cid
@@ -79,7 +79,7 @@ export const sqlChatContexts = sqliteTable("ChatContexts", {
   chatId: text().notNull().primaryKey(), // uuid v4
   userId: text().notNull(),
   appSlug: text().notNull(),
-  userSlug: text().notNull(),
+  ownerHandle: text("user_slug").notNull(),
   created: text().notNull(),
 });
 
@@ -136,7 +136,7 @@ export const sqlApplicationChats = sqliteTable(
   {
     userId: text().notNull(), // usally from Clerk
     appSlug: text().notNull(), // reverenced from the calling Page
-    userSlug: text().notNull(), // reverenced from the calling Page
+    ownerHandle: text("user_slug").notNull(), // reverenced from the calling Page
     chatId: text().notNull(), // uuid v4
     blocks: text({ mode: "json" }).notNull(),
     created: text().notNull(),
@@ -144,9 +144,9 @@ export const sqlApplicationChats = sqliteTable(
   (table) => [
     uniqueIndex("ApplicationChats_chatId_idx").on(table.chatId),
     uniqueIndex("ApplicationChats_userId_chatIdidx").on(table.userId, table.chatId),
-    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.chatId] }),
-    // query for all chats of an app: appSlug + userSlug + created desc
-    index("ApplicationChats_userId_appSlug_userSlug_created_idx").on(table.userId, table.appSlug, table.userSlug, table.created),
+    primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle, table.chatId] }),
+    // query for all chats of an app: appSlug + ownerHandle + created desc
+    index("ApplicationChats_userId_appSlug_userSlug_created_idx").on(table.userId, table.appSlug, table.ownerHandle, table.created),
   ]
 );
 
@@ -162,14 +162,14 @@ export const sqlAppSettings = sqliteTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    userSlug: text().notNull(),
+    ownerHandle: text("user_slug").notNull(),
     settings: text({ mode: "json" }).notNull(), // AclEntry.or(ActiveAclEntries)[]
     updated: text().notNull(),
     created: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug] }),
-    index("AppSettings_userSlug_appSlug_idx").on(table.userSlug, table.appSlug),
+    primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle] }),
+    index("AppSettings_userSlug_appSlug_idx").on(table.ownerHandle, table.appSlug),
   ]
 );
 
@@ -178,7 +178,7 @@ export const sqlRequestGrants = sqliteTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    userSlug: text().notNull(),
+    ownerHandle: text("user_slug").notNull(),
     state: text().notNull(), // 'pending' | 'approved' | 'rejected'
     role: text(), // 'editor' | 'viewer'
     foreignUserId: text().notNull(), // sanitized email for grant
@@ -187,43 +187,43 @@ export const sqlRequestGrants = sqliteTable(
     updated: text().notNull(),
     created: text().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.foreignUserId] })]
+  (table) => [primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle, table.foreignUserId] })]
 );
 
 // Firefly — immutable append-only document store
 export const sqlAppDocuments = sqliteTable(
   "AppDocuments",
   {
-    userSlug: text().notNull().default("unknown"),
+    ownerHandle: text("user_slug").notNull().default("unknown"),
     appSlug: text().notNull(),
     dbName: text().notNull().default("default"), // database namespace within app
     docId: text().notNull(),
-    seq: int().notNull(), // monotonic per (userSlug, appSlug, dbName, docId), starts at 1
+    seq: int().notNull(), // monotonic per (ownerHandle, appSlug, dbName, docId), starts at 1
     userId: text().notNull().default("unknown"), // authenticated user who made this change
     data: text({ mode: "json" }).notNull(), // document JSON
     deleted: int().notNull().default(0), // 1 = tombstone
     created: text().notNull(), // ISO timestamp of this revision
   },
-  (table) => [primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId, table.seq] })]
+  (table) => [primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId, table.seq] })]
 );
 
 export const sqlDirectChannelIndex = sqliteTable(
   "DirectChannelIndex",
   {
-    userSlug: text().notNull(),
-    channelUserSlug: text().notNull(),
+    handle: text("user_slug").notNull(),
+    channelHandle: text("channel_user_slug").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.userSlug, table.channelUserSlug] })]
+  (table) => [primaryKey({ columns: [table.handle, table.channelHandle] })]
 );
 
 export const sqlDirectChannelReads = sqliteTable(
   "DirectChannelReads",
   {
-    channelUserSlug: text().notNull(),
-    userSlug: text().notNull(),
+    channelHandle: text("channel_user_slug").notNull(),
+    handle: text("user_slug").notNull(),
     lastSeenSeq: int().notNull().default(0),
   },
-  (table) => [primaryKey({ columns: [table.channelUserSlug, table.userSlug] })]
+  (table) => [primaryKey({ columns: [table.channelHandle, table.handle] })]
 );
 
 export const sqlInviteGrants = sqliteTable(
@@ -231,7 +231,7 @@ export const sqlInviteGrants = sqliteTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    userSlug: text().notNull(),
+    ownerHandle: text("user_slug").notNull(),
     state: text().notNull(), // 'pending' | 'accepted' | 'revoked'
     role: text().notNull(), // 'editor' | 'viewer'
     emailKey: text().notNull(), // sanitized email for grant
@@ -242,7 +242,7 @@ export const sqlInviteGrants = sqliteTable(
     created: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userId, table.appSlug, table.userSlug, table.emailKey] }),
+    primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle, table.emailKey] }),
     index("tokenOrGrantUserId_idx").on(table.tokenOrGrantUserId),
   ]
 );
@@ -250,15 +250,15 @@ export const sqlInviteGrants = sqliteTable(
 // Per-doc file uploads — audit + lookup table for `_files` reads. One row
 // per put-asset call. uploadId is the public handle the client puts into
 // doc._files.<key>; the server resolves uploadId → assetURI at read time
-// for vctx.storage.fetch. Bound to (userSlug, appSlug) at upload-grant time
+// for vctx.storage.fetch. Bound to (ownerHandle, appSlug) at upload-grant time
 // so a foreign uploadId pasted into another user's doc fails put-doc
-// validation. size is recorded for future SUM-by-userSlug quota math.
+// validation. size is recorded for future SUM-by-ownerHandle quota math.
 export const sqlAssetUploads = sqliteTable(
   "AssetUploads",
   {
     uploadId: text().notNull().primaryKey(),
     userId: text().notNull(), // Clerk userId of the uploader
-    userSlug: text().notNull(),
+    ownerHandle: text("user_slug").notNull(),
     appSlug: text().notNull(),
     cid: text().notNull(), // content hash (for dedup queries)
     assetURI: text().notNull(), // full storage URI for vctx.storage.fetch (e.g. s3://r2/<cid>, pg://Assets/<cid>)
@@ -267,7 +267,7 @@ export const sqlAssetUploads = sqliteTable(
     created: text().notNull(),
   },
   (table) => [
-    index("AssetUploads_app_idx").on(table.userSlug, table.appSlug, table.created),
+    index("AssetUploads_app_idx").on(table.ownerHandle, table.appSlug, table.created),
     index("AssetUploads_user_idx").on(table.userId, table.created),
     index("AssetUploads_cid_idx").on(table.cid),
   ]
