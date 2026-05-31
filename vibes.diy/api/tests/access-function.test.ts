@@ -41,8 +41,20 @@ describe("makeHelpers", () => {
     expect(() => ctx.requireAccess("some-channel")).toThrow("not in channel");
   });
 
+  it("requireAccess does not throw when user is authenticated", () => {
+    const user: UserContext = { userSlug: "alice" };
+    const ctx = makeHelpers(user);
+    expect(() => ctx.requireAccess("some-channel")).not.toThrow();
+  });
+
   it("requireRole throws forbidden when user is null", () => {
     const ctx = makeHelpers(null);
     expect(() => ctx.requireRole("admin")).toThrow("not in role");
+  });
+
+  it("requireRole does not throw when user is authenticated", () => {
+    const user: UserContext = { userSlug: "alice" };
+    const ctx = makeHelpers(user);
+    expect(() => ctx.requireRole("admin")).not.toThrow();
   });
 });
