@@ -3,7 +3,7 @@ import SimpleAppLayout from "../../components/SimpleAppLayout.js";
 import { HomeIcon } from "../../components/SessionSidebar/HomeIcon.js";
 import VibesDIYLogo from "../../components/VibesDIYLogo.js";
 import ReactMarkdown from "react-markdown";
-import { loadAsset } from "@adviser/cement";
+import { loadAsset, URI } from "@adviser/cement";
 import privContentAssetUrl from "./privacy-notes.md?url";
 
 export function meta() {
@@ -14,7 +14,7 @@ export default function Legal_Privacy() {
   const [privContent, setPrivContent] = useState<string | null>(null);
 
   useEffect(() => {
-    const markdownPath = new URL(privContentAssetUrl, window.location.origin).pathname;
+    const markdownPath = URI.from(window.location.origin).build().resolve(privContentAssetUrl).URI().pathname;
 
     void loadAsset(markdownPath, {
       basePath: () => window.location.origin,
