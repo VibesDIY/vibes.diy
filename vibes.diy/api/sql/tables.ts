@@ -10,7 +10,7 @@ export type VibesSqlite = BaseSQLiteDatabase<"async", ResultSet | D1Result, Reco
 function createSqliteVibesApiTables() {
   return {
     assets: sqlite.sqlAssets,
-    userSlugBinding: sqlite.sqlUserSlugBinding,
+    userSlugBinding: sqlite.sqlHandleBinding,
     appSlugBinding: sqlite.sqlAppSlugBinding,
     apps: sqlite.sqlApps,
     chatContexts: sqlite.sqlChatContexts,
@@ -46,7 +46,7 @@ export function createVibesApiTables(flavour: DBFlavour): VibesApiTables {
   if (flavour === "pg") {
     return {
       assets: pg.sqlAssets,
-      userSlugBinding: pg.sqlUserSlugBinding,
+      userSlugBinding: pg.sqlHandleBinding,
       appSlugBinding: pg.sqlAppSlugBinding,
       apps: pg.sqlApps,
       chatContexts: pg.sqlChatContexts,
