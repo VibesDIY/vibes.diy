@@ -413,14 +413,14 @@
 </div>
 
 <p class="prose">
-  <strong>Document types.</strong> <code>channel-meta</code> owns a channel. Its <code>_id</code> is used directly as the channel
-  name in the access function return — <code>channels: [doc._id]</code>. <code>_id</code> is the document's identity key; it can be
-  a human-readable slug (<code>"chan-general"</code>), a natural key, a foreign key from another system, or a platform-generated
-  opaque ID. Any unique value works. Using <code>doc._id</code> as the channel name is a convenience: it avoids a redundant
-  <code>channelId</code> field when the document's identity and its channel name are the same thing. A generated ID adds enumeration
-  resistance as a side-effect, but that is not required. A <code>message</code> carries a single chat post and holds a
-  <code>channelId</code> foreign key pointing at a channel-meta <code>_id</code>. A <code>channel-invite</code> extends read access
-  to a new user. The access function's job is to validate each write and declare how it affects the grant state.
+  <strong>Document types.</strong> The app code assigns channel ids. In this app <code>channel-meta</code> owns a channel. The doc
+  <code>_id</code> is used directly as the channel name in the access function return — <code>channels: [doc._id]</code>.
+  <code>_id</code> is the document's identity key; it can be a human-readable slug (<code>"chan-general"</code>), a natural key, a
+  foreign key from another system, or a platform-generated opaque ID. Any unique value works. Using <code>doc._id</code> as the
+  channel name enforces uniqueness: it avoids a redundant <code>channelId</code> field when the document's identity and its channel
+  name are the same thing. A <code>message</code> carries a single chat post and holds a <code>channelId</code> foreign key pointing
+  at a channel-meta <code>_id</code>. A <code>channel-invite</code> extends read access to a new user. The access function's job is
+  to validate each write and declare how it affects the grant state.
 </p>
 
 <!-- ACCESS FUNCTION -->
@@ -652,6 +652,8 @@
     }
     <span class="k">expiry</span>?: <span class="t">string</span> | <span class="t">number</span> | <span class="t">null</span>
     <span style="color: #94a3b8">// ISO date or unix seconds</span>
+    <span class="k">allowAnonymous</span>?: <span class="t">boolean</span>
+    <span style="color: #94a3b8">// explicit opt-in — runtime rejects null-user writes if absent or false</span>
     }
     <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"reason"</span> }
     <span style="color: #94a3b8">// rejects write — not a return field</span>
@@ -660,6 +662,16 @@
     <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
     <span class="t">"authentication required"</span> }
   </div>
+
+  <p class="prose" style="margin: 16px 0 14px">
+    <strong>Anonymous writes require explicit opt-in.</strong> If <code>user</code> is <code>null</code> and the access function
+    returns without throwing, the runtime checks <code>result.allowAnonymous</code>. If it is absent or <code>false</code>, the
+    write is rejected with <code>{ forbidden: "authentication required" }</code>. This closes the footgun where a natural arrow
+    function (<code>doc =&gt; ({ channels: [doc.type] })</code>) silently opens anonymous writes because it never inspects
+    <code>user</code>. When <code>user</code> is not null, <code>allowAnonymous</code> has no effect — it is safe to always include
+    it on branches that can be reached by either authenticated or anonymous writers. <code>grant.public</code> on a channel grants
+    public <em>read</em>; anonymous <em>write</em> is always gated separately by <code>allowAnonymous: true</code>.
+  </p>
 
   <p class="prose" style="margin: 16px 0 14px">
     <strong>Roles are not a fixed registry.</strong> Because <code>members</code> and <code>grant.roles</code> both reduce across
@@ -962,8 +974,10 @@
         "
       >
         <span class="throw">throw</span> if doc._id &nbsp;<span style="color: #94a3b8">// must be server-generated</span><br />
-        <span class="route">channels:</span> ["inbound-responses"]
-        <span style="color: #94a3b8">// null user ok, grant via config doc</span>
+        <span class="route">channels:</span> ["inbound-responses"]<br />
+        <span class="route">allowAnonymous:</span> true &nbsp;<span style="color: #94a3b8"
+          >// explicit opt-in; grant via survey-config</span
+        >
       </div>
     </div>
 
@@ -1047,7 +1061,8 @@
     <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
     <span class="t">"id must be server-generated"</span> } <span class="k">return</span> { channels: [<span class="t"
       >"inbound-responses"</span
-    >] } <span style="color: #94a3b8">// null user allowed — role grant is on survey-config</span>
+    >], allowAnonymous: <span class="t">true</span> }
+    <span style="color: #94a3b8">// explicit opt-in — runtime rejects without this</span>
     }
 
     <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) { ctx.<span style="color: #dc2626"
@@ -1160,7 +1175,7 @@
     </div>
 
     <div class="doc message">
-      <div class="doc-type">open-response <span style="font-weight: 400; font-size: 10px">(null user ok)</span></div>
+      <div class="doc-type">open-response <span style="font-weight: 400; font-size: 10px">(allowAnonymous: true)</span></div>
       <div class="doc-field">_id: <span>null ← server-generated</span></div>
       <div class="doc-field">surveyId: <span>"s1"</span></div>
       <div class="doc-field">answers: <span>[…]</span></div>
@@ -1168,7 +1183,8 @@
         style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #a7f3d0; font-size: 11px; color: #065f46; line-height: 1.8"
       >
         <span class="throw">throw</span> if doc._id<br />
-        <span class="route">channels:</span> ["s1-responses"]
+        <span class="route">channels:</span> ["s1-responses"]<br />
+        <span class="route">allowAnonymous:</span> true
       </div>
     </div>
   </div>
@@ -1251,9 +1267,10 @@
     } }
 
     <span class="k">if</span> (doc.type === <span class="t">"open-response"</span>) {
-    <span style="color: #94a3b8">// s1 — null user ok</span> <span class="k">if</span> (doc._id)
+    <span style="color: #94a3b8">// s1 — explicit opt-in for anonymous submit</span> <span class="k">if</span> (doc._id)
     <span style="color: #dc2626; font-style: italic">throw</span> { forbidden:
-    <span class="t">"id must be server-generated"</span> } <span class="k">return</span> { channels: [`${id}-responses`] } }
+    <span class="t">"id must be server-generated"</span> } <span class="k">return</span> { channels: [`${id}-responses`],
+    allowAnonymous: <span class="t">true</span> } }
 
     <span class="k">if</span> (doc.type === <span class="t">"response"</span>) {
     <span style="color: #94a3b8">// s2 — invited users only</span> <span class="k">if</span> (doc._id)
@@ -1318,10 +1335,13 @@
 
 <div class="intro" style="margin-top: 32px; border-left-color: #10b981">
   <strong>Summary.</strong> The access function API has three surfaces: the <strong>return value</strong> (<code>channels</code>,
-  <code>members</code>, <code>grant.{users,roles,public}</code>, <code>expiry</code>) which drives routing and grants;
-  <strong><code>throw</code></strong> which rejects writes; and the <strong>ctx helpers</strong> (<code>requireAccess</code>,
-  <code>requireRole</code>) which query materialized state opaquely. All grant fields reduce by union across current docs. Deletion
-  is automatic revocation. <code>user</code> is null for anonymous requests; the default is to throw, and any branch that opts into
-  anonymous access must handle null explicitly. Role and channel names should be scoped to application-level identifiers (survey ID,
+  <code>members</code>, <code>grant.{users,roles,public}</code>, <code>expiry</code>, <code>allowAnonymous</code>) which drives
+  routing and grants; <strong><code>throw</code></strong> which rejects writes; and the
+  <strong>ctx helpers</strong> (<code>requireAccess</code>, <code>requireRole</code>) which query materialized state opaquely. All
+  grant fields reduce by union across current docs. Deletion is automatic revocation. <code>user</code> is null for anonymous
+  requests; the runtime rejects null-user writes unless the return value explicitly sets <code>allowAnonymous: true</code> — this
+  prevents the common footgun where a function returns without inspecting <code>user</code> and inadvertently opens anonymous
+  writes. <code>grant.public</code> grants public read access only; anonymous write is always governed by
+  <code>allowAnonymous</code> independently. Role and channel names should be scoped to application-level identifiers (survey ID,
   team ID) to prevent cross-namespace leakage in shared databases.
 </div>
