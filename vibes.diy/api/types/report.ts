@@ -171,6 +171,8 @@ export const resReportCampaignHealthCampaignRow = type({
   "date_stop?": "string",
   // good.vibes.diy → vibes.diy click-throughs from RefererEvents (date-scoped to report window)
   "ctaClicks?": "number",
+  // true when ctaClicks is a page-level total shared across multiple campaigns (no utm_campaign in refHref yet)
+  "ctaClicksIsShared?": "boolean",
   // spend ÷ ctaClicks; undefined when ctaClicks is 0 or unavailable
   "costPerCtaClick?": "number",
   // good.vibes.diy path this campaign links to (extracted from destination URL)

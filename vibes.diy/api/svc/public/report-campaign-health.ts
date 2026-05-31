@@ -56,11 +56,16 @@ function costPerLpv(row: MetaInsightRow): number {
   return l > 0 ? Number(row.spend) / l : Infinity;
 }
 
+export interface GoodVibesClickThroughs {
+  byPath: Record<string, number>;
+  byCampaignId: Record<string, number>;
+}
+
 export async function fetchGoodVibesClickThroughs(
   vctx: VibesApiSQLCtx,
   sinceIso: string,
   untilIso: string
-): Promise<Record<string, number>> {
+): Promise<GoodVibesClickThroughs> {
   const t = vctx.sql.tables;
   const rows = await vctx.sql.db
     .select({ refPath: t.refererEvents.refPath, refHref: t.refererEvents.refHref })
@@ -69,17 +74,27 @@ export async function fetchGoodVibesClickThroughs(
       and(eq(t.refererEvents.refHost, "good.vibes.diy"), gte(t.refererEvents.ts, sinceIso), lte(t.refererEvents.ts, untilIso))
     );
   const byPath: Record<string, Set<string>> = {};
+  const byCampaignId: Record<string, Set<string>> = {};
   for (const r of rows) {
     let fbclid: string | null = null;
+    let utmCampaign: string | null = null;
     try {
-      fbclid = new URL(r.refHref).searchParams.get("fbclid");
+      const u = new URL(r.refHref);
+      fbclid = u.searchParams.get("fbclid");
+      utmCampaign = u.searchParams.get("utm_campaign");
     } catch {
       // malformed URL — skip
     }
     if (fbclid === null) continue;
     (byPath[r.refPath] ??= new Set()).add(fbclid);
+    if (utmCampaign !== null) {
+      (byCampaignId[utmCampaign] ??= new Set()).add(fbclid);
+    }
   }
-  return Object.fromEntries(Object.entries(byPath).map(([path, ids]) => [path, ids.size]));
+  return {
+    byPath: Object.fromEntries(Object.entries(byPath).map(([path, ids]) => [path, ids.size])),
+    byCampaignId: Object.fromEntries(Object.entries(byCampaignId).map(([id, ids]) => [id, ids.size])),
+  };
 }
 
 async function fetchCampaignMeta(
@@ -131,7 +146,7 @@ async function fetchCampaignHealth(
   const dateLabel = since ? `since ${since}` : `last ${days} days`;
 
   // Fetch campaign meta (URL + status) and referrer click-throughs in parallel with insights
-  const [campaignMeta, clicksByPath] = await Promise.all([
+  const [campaignMeta, { byPath: clicksByPath, byCampaignId: clicksByCampaignId }] = await Promise.all([
     fetchCampaignMeta(token, account),
     fetchGoodVibesClickThroughs(vctx, sinceIso, today),
   ]);
@@ -139,7 +154,9 @@ async function fetchCampaignHealth(
     "fetch-campaign-health: campaign meta count:",
     Object.keys(campaignMeta).length,
     "referrer paths:",
-    Object.keys(clicksByPath).length
+    Object.keys(clicksByPath).length,
+    "referrer campaign ids:",
+    Object.keys(clicksByCampaignId).length
   );
 
   const fields = "campaign_name,campaign_id,impressions,clicks,spend,ctr,cpc,reach,actions";
@@ -195,6 +212,22 @@ async function fetchCampaignHealth(
     .map((r) => ({ name: r.campaign_name, clicks: Number(r.clicks), lpvs: lpv(r), ratio: lpv(r) / Number(r.clicks) }))
     .filter((r) => r.ratio < 0.6 && r.clicks > 0);
 
+  // Count campaigns per landing path to detect shared pages (used for ctaClicksIsShared fallback)
+  const pathCampaignCount: Record<string, number> = {};
+  for (const r of rows) {
+    const websiteUrl = campaignMeta[r.campaign_id]?.website_url;
+    if (websiteUrl === undefined) continue;
+    try {
+      const u = new URL(websiteUrl);
+      if (u.hostname === "good.vibes.diy") {
+        const lp = u.pathname.replace(/\/$/, "") || "/";
+        pathCampaignCount[lp] = (pathCampaignCount[lp] ?? 0) + 1;
+      }
+    } catch {
+      // malformed URL — skip
+    }
+  }
+
   const ranked: ResReportCampaignHealthCampaignRow[] = [...rows]
     .sort((a, b) => costPerLpv(a) - costPerLpv(b))
     .map((r) => {
@@ -212,9 +245,25 @@ async function fetchCampaignHealth(
           // malformed URL — skip
         }
       }
-      const ctaClicks = landingPath !== undefined ? (clicksByPath[landingPath] ?? 0) : undefined;
+      // Prefer per-campaign attribution (utm_campaign in refHref); fall back to page-level total
+      const hasCampaignAttribution = r.campaign_id in clicksByCampaignId;
+      const ctaClicks = hasCampaignAttribution
+        ? clicksByCampaignId[r.campaign_id]
+        : landingPath !== undefined
+          ? (clicksByPath[landingPath] ?? 0)
+          : undefined;
+      // Mark as shared when using path fallback and multiple campaigns share the landing page
+      const ctaClicksIsShared = !hasCampaignAttribution && landingPath !== undefined && (pathCampaignCount[landingPath] ?? 1) > 1;
       const costPerCtaClick = ctaClicks !== undefined && ctaClicks > 0 ? Number(r.spend) / ctaClicks : undefined;
-      return { ...r, actions: r.actions?.map((a) => ({ ...a })), landingPath, ctaClicks, costPerCtaClick, effective_status };
+      return {
+        ...r,
+        actions: r.actions?.map((a) => ({ ...a })),
+        landingPath,
+        ctaClicks,
+        ctaClicksIsShared: ctaClicksIsShared || undefined,
+        costPerCtaClick,
+        effective_status,
+      };
     });
 
   console.info("fetch-campaign-health: pixel done");

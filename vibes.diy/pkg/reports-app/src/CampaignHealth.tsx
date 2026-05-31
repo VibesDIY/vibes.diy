@@ -39,6 +39,7 @@ function costPerCtaClick(row: ResReportCampaignHealthCampaignRow): number {
 }
 
 function ctaRate(row: ResReportCampaignHealthCampaignRow): number | null {
+  if (row.ctaClicksIsShared) return null;
   const l = lpv(row);
   const c = row.ctaClicks;
   return l > 0 && c !== undefined ? c / l : null;
@@ -512,7 +513,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               ["Cost/Landing", "Spend ÷ landings. Primary efficiency metric — drives row color coding."],
               [
                 "Unique CTA Visitors",
-                "Distinct fbclid values from Meta-attributed sessions that clicked through from good.vibes.diy to vibes.diy (date-scoped to the report window). One user clicking multiple CTAs counts once. Organic visits without fbclid are excluded. — means no destination URL is set for the campaign.",
+                "Distinct fbclid values from Meta-attributed sessions that clicked through from good.vibes.diy to vibes.diy (date-scoped to the report window). One user clicking multiple CTAs counts once. Organic visits without fbclid are excluded. — means no destination URL is set for the campaign. ~ prefix means multiple campaigns share this landing page and utm_campaign is not yet set — the count is a page-level total, not per-campaign; add utm_campaign to the ad URL to enable per-campaign attribution.",
               ],
               [
                 "Cost/Visitor",
@@ -612,10 +613,22 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                         </td>
                         <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{lpv(row).toLocaleString() || "—"}</td>
                         <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{fmtMoney(cplv)}</td>
-                        <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
-                          {row.ctaClicks !== undefined ? (row.ctaClicks > 0 ? row.ctaClicks.toLocaleString() : "0") : "—"}
+                        <td
+                          style={{
+                            padding: "0.4rem 0.75rem",
+                            textAlign: "right",
+                            color: row.ctaClicksIsShared ? "var(--gray-mid)" : undefined,
+                          }}
+                        >
+                          {row.ctaClicks !== undefined
+                            ? row.ctaClicks > 0
+                              ? `${row.ctaClicksIsShared ? "~" : ""}${row.ctaClicks.toLocaleString()}`
+                              : "0"
+                            : "—"}
                         </td>
-                        <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{fmtMoney(costPerCtaClick(row))}</td>
+                        <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
+                          {row.ctaClicksIsShared ? "—" : fmtMoney(costPerCtaClick(row))}
+                        </td>
                         <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
                           {(() => {
                             const r = ctaRate(row);
