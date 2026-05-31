@@ -313,7 +313,8 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       // imports like `./helper.js` resolve correctly against the original
       // filename path rather than the content-addressed ~~transformed~~ path.
       let serveItem: FileSystemItem = selectedFsItem;
-      if (selectedFsItem.transform?.type === "jsx-to-js") {
+      const wantsRawSource = uri.getParam("source") === "true";
+      if (!wantsRawSource && selectedFsItem.transform?.type === "jsx-to-js") {
         const transformedId = selectedFsItem.transform.transformedAssetId;
         const transformedFsItem = fileSystem.find((i) => i.transform?.type === "transformed" && i.assetId === transformedId);
         if (transformedFsItem) {
