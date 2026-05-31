@@ -38,6 +38,13 @@ import { notifyRecentVibesChanged, subscribeRecentVibesChanged } from "../../hoo
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { EditorState, isEditorStateEdit } from "../../types/code-editor.js";
+import {
+  inferCodeViewLanguage,
+  isCodeViewFileCandidate,
+  normalizeCodeViewPath,
+  pickDefaultCodeViewFile,
+  sortCodeViewFiles,
+} from "../../components/ResultPreview/code-view-files.js";
 
 interface VibeAppContextMenuProps {
   x: number;
@@ -91,6 +98,12 @@ export interface PromptState {
   // replayed prompt). CodeEditor falls back to this when getCode returns no
   // blocks for the current fsId.
   hydratedSource?: { fsId: string; code: string[] };
+  // Canonical file-system snapshot for the currently-loaded fsId. The code
+  // panel renders from this structure in file-system-primary mode.
+  hydratedFileSystem?: {
+    fsId: string;
+    files: HydratedCodeViewFile[];
+  };
   // Block IDs whose save originated from the agent autosave (end-of-aider-
   // turn) rather than a manual editor save. Populated only for the lifetime
   // of an open chat session — chat reload loses these tags and the MessageList
@@ -105,6 +118,13 @@ export interface PromptState {
   // colorset's palette with the structural `theme`. Defaults to the same
   // slug as `theme` (matching today's behavior).
   colorTheme?: string | null;
+}
+
+export interface HydratedCodeViewFile {
+  fileName: string;
+  lang: string;
+  code: string[];
+  entryPoint?: boolean;
 }
 
 export interface PromptBlock {
@@ -176,6 +196,16 @@ function isSetHydratedSource(msg: unknown): msg is SetHydratedSource {
   return !(SetHydratedSource(msg) instanceof type.errors);
 }
 
+interface SetHydratedFileSystem {
+  type: "setHydratedFileSystem";
+  fsId: string;
+  files: HydratedCodeViewFile[];
+}
+
+function isSetHydratedFileSystem(msg: unknown): msg is SetHydratedFileSystem {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setHydratedFileSystem";
+}
+
 const MarkAgentSaved = type({
   type: "'markAgentSaved'",
   blockId: "string",
@@ -203,6 +233,7 @@ type PromptAction =
   | SetTheme
   | SetColorTheme
   | SetHydratedSource
+  | SetHydratedFileSystem
   | MarkAgentSaved
   | ClearChat;
 
@@ -222,6 +253,7 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
         colorTheme: null,
         agentSavedBlockIds: new Set<string>(),
         hydratedSource: undefined,
+        hydratedFileSystem: undefined,
       };
 
     case isInitChat(block):
@@ -242,6 +274,9 @@ function promptReducer(state: PromptState, block: PromptAction): PromptState {
 
     case isSetHydratedSource(block):
       return { ...state, hydratedSource: { fsId: block.fsId, code: block.code } };
+
+    case isSetHydratedFileSystem(block):
+      return { ...state, hydratedFileSystem: { fsId: block.fsId, files: block.files } };
 
     case isMarkAgentSaved(block): {
       const next = new Set(state.agentSavedBlockIds);
@@ -541,10 +576,9 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     }
   }, [vibeDiyApi, ownerHandle, appSlug, srvVibeSandbox]);
 
-  // Hydrate the code editor from Apps.fileSystem when no ChatSections
-  // exist for this fsId (e.g. a freshly forked vibe). The fetch is
-  // content-addressed and HTTP-cacheable. Once a real prompt lands,
-  // getCode walks blocks first and this fallback is ignored.
+  // Hydrate code-view files from the canonical Apps.fileSystem for the
+  // current fsId. The code panel renders from this snapshot (file-system-
+  // primary mode) while chat chunk reconstruction remains secondary context.
   const hydratedFsIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!fsId || !ownerHandle || !appSlug) return;
@@ -554,16 +588,40 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       const rApp = await vibeDiyApi.getAppByFsId({ appSlug, ownerHandle, fsId });
       if (rApp.isErr()) return;
       const app = rApp.Ok();
-      const appJsx =
-        app.fileSystem.find((f) => f.entryPoint && f.fileName === "/App.jsx") ??
-        app.fileSystem.find((f) => f.fileName === "/App.jsx");
-      if (!appJsx) return;
-      const rRes = await exception2Result(() =>
-        fetch(`/assets/cid/?url=${encodeURIComponent(appJsx.assetURI)}&mime=${encodeURIComponent(appJsx.mimeType)}`)
+      const sourceFiles = sortCodeViewFiles(
+        app.fileSystem
+          .filter((file) => isCodeViewFileCandidate(file.fileName, file.mimeType))
+          .map((file) => ({ ...file, fileName: normalizeCodeViewPath(file.fileName) }))
       );
-      if (rRes.isErr() || !rRes.Ok().ok) return;
-      const text = await rRes.Ok().text();
-      dispatch({ type: "setHydratedSource", fsId, code: text.split("\n") });
+      if (sourceFiles.length === 0) return;
+
+      const hydratedFiles = (
+        await Promise.all(
+          sourceFiles.map(async (file): Promise<HydratedCodeViewFile | null> => {
+            const rRes = await exception2Result(() =>
+              fetch(`/assets/cid/?url=${encodeURIComponent(file.assetURI)}&mime=${encodeURIComponent(file.mimeType)}`)
+            );
+            if (rRes.isErr() || !rRes.Ok().ok) return null;
+            const text = await rRes.Ok().text();
+            return {
+              fileName: file.fileName,
+              lang: inferCodeViewLanguage(file.fileName, file.mimeType),
+              code: text.split("\n"),
+              ...(file.entryPoint ? { entryPoint: true } : {}),
+            };
+          })
+        )
+      ).filter((file): file is HydratedCodeViewFile => file !== null);
+
+      if (hydratedFiles.length === 0) return;
+      const sortedHydrated = sortCodeViewFiles(hydratedFiles);
+      dispatch({ type: "setHydratedFileSystem", fsId, files: sortedHydrated });
+
+      // Keep getCode's legacy fallback seeded to the default file for the fsId.
+      const defaultFile = pickDefaultCodeViewFile(sortedHydrated);
+      if (defaultFile) {
+        dispatch({ type: "setHydratedSource", fsId, code: defaultFile.code });
+      }
     })();
   }, [fsId, ownerHandle, appSlug, vibeDiyApi]);
 
@@ -765,12 +823,14 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       return;
     }
     setEditorState({ state: "idle" });
+    const filename = normalizeCodeViewPath(editorState.filePath || "/App.jsx");
+    const lang = editorState.lang || inferCodeViewLanguage(filename, "text/javascript");
     chat
       .promptFS([
         {
           type: "code-block",
-          filename: "/App.jsx",
-          lang: "jsx", // "'jsx'|'js'",
+          filename,
+          lang,
           content: editorState.buffer,
         },
       ])
