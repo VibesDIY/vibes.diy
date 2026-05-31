@@ -14,6 +14,7 @@ type ViewerTagImplProps = ViewerTagProps & { _viewer: ViewerPayload | null };
 
 export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps): React.ReactElement {
   const [uploading, setUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const slugFromProp = "user" in props && props.user ? props.user.userSlug : "userSlug" in props ? props.userSlug : undefined;
@@ -116,10 +117,11 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
           ...(isSelf ? { outline: "2px dashed var(--accent, #818cf8)", outlineOffset: 2 } : {}),
         }}
       >
-        {resolvedAvatarUrl ? (
+        {resolvedAvatarUrl && !avatarError ? (
           <img
             src={resolvedAvatarUrl}
             alt={resolvedSlug}
+            onError={() => setAvatarError(true)}
             style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
           />
         ) : (
