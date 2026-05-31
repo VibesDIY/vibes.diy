@@ -508,6 +508,33 @@
   </div>
 </div>
 
+<div class="fn-box">
+  <div class="fn-label">⚡ workspace chat — complete access function</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9">
+    <span class="k">const</span> access = (doc, oldDoc, user, ctx) => { <span class="k">if</span> (!user)
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"authentication required"</span> }
+
+    <span class="k">if</span> (doc.type === <span class="t">"channel-meta"</span>) { <span class="k">if</span> (doc.ownerSlug !==
+    user.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not owner"</span> }
+    <span class="k">if</span> (oldDoc &amp;&amp; oldDoc.ownerSlug !== user.userSlug)
+    <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not owner"</span> }
+    <span class="k">return</span> { channels: [doc._id], grant: { users: Object.fromEntries([ [doc.ownerSlug, [doc._id]],
+    ...doc.memberSlugs.map(s => [s, [doc._id]]) ]) } } }
+
+    <span class="k">if</span> (doc.type === <span class="t">"message"</span>) { <span class="k">if</span> (doc.userSlug !==
+    user.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not author"</span> }
+    ctx.<span style="color: #dc2626">requireAccess</span>(doc.channelId) <span class="k">return</span> { channels: [doc.channelId] }
+    }
+
+    <span class="k">if</span> (doc.type === <span class="t">"channel-invite"</span>) { <span class="k">if</span> (doc.senderSlug !==
+    user.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
+    ctx.<span style="color: #dc2626">requireAccess</span>(doc.channelId) <span class="k">return</span> { channels: [doc.channelId],
+    grant: { users: { [doc.inviteeSlug]: [doc.channelId] } } } }
+
+    <span class="k">return</span> {} }
+  </div>
+</div>
+
 <p class="prose">
   <strong>Return value semantics.</strong> <code>channels</code> routes this specific document — any user with channel access
   receives it on their next sync. The grant fields (<code>grant.users</code>, <code>grant.roles</code>, <code>members</code>) are
