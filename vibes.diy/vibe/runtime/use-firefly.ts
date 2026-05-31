@@ -16,7 +16,7 @@ let vibeApiRef: VibeSandboxApi | undefined;
 // Cache FireflyDatabase instances by name so useMemo stability works
 const dbCache = new Map<string, FireflyDatabase>();
 
-function getOrCreateDb(name: string, acl?: DbAcl, _access?: AccessFunction): FireflyDatabase {
+function getOrCreateDb(name: string, acl?: DbAcl): FireflyDatabase {
   let db = dbCache.get(name);
   if (!db) {
     if (!vibeApiRef) {
@@ -70,7 +70,13 @@ export function fireproof(name: string): FireflyDatabase {
  * Apps call: const { database, useLiveQuery, useDocument } = useFireproof("mydb")
  */
 export function useFireproof(name = "useFireproof", config: { acl?: DbAcl; access?: AccessFunction; [key: string]: unknown } = {}) {
-  const database = useMemo(() => getOrCreateDb(name, config.acl, config.access), [name]);
+  if (config.access !== undefined) {
+    throw new Error(
+      "useFireproof config.access is not enforced yet; runtime access-function enforcement lands in Phase 3. Remove config.access for now."
+    );
+  }
+
+  const database = useMemo(() => getOrCreateDb(name, config.acl), [name]);
   const useDocument = useMemo(() => createUseDocument(database), [database]);
   const useLiveQuery = useMemo(() => createUseLiveQuery(database), [database]);
   const useAllDocs = useMemo(() => createUseAllDocs(database), [database]);
