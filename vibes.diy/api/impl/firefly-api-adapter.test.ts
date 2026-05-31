@@ -28,18 +28,18 @@ describe("FireflyApiAdapter", () => {
   it("resolves userHandle from ensureUserSettings.defaultHandle on first request", async () => {
     const api = fakeVibesDiyApi();
     const adapter = new FireflyApiAdapter(api, "my-app");
-    const slug = await adapter.resolveUserHandle();
+    const slug = await adapter.resolveOwnerHandle();
     expect(slug).toBe("alice");
     expect(api.ensureUserSettings).toHaveBeenCalledTimes(1);
     // Second call uses the cache
-    await adapter.resolveUserHandle();
+    await adapter.resolveOwnerHandle();
     expect(api.ensureUserSettings).toHaveBeenCalledTimes(1);
   });
 
-  it("uses opts.userHandle override and skips ensureUserSettings", async () => {
+  it("uses opts.ownerHandle override and skips ensureUserSettings", async () => {
     const api = fakeVibesDiyApi();
-    const adapter = new FireflyApiAdapter(api, "my-app", { userHandle: "bob" });
-    expect(await adapter.resolveUserHandle()).toBe("bob");
+    const adapter = new FireflyApiAdapter(api, "my-app", { ownerHandle: "bob" });
+    expect(await adapter.resolveOwnerHandle()).toBe("bob");
     expect(api.ensureUserSettings).not.toHaveBeenCalled();
   });
 
@@ -56,7 +56,7 @@ describe("FireflyApiAdapter", () => {
       ),
     });
     const adapter = new FireflyApiAdapter(api, "my-app");
-    await expect(adapter.resolveUserHandle()).rejects.toThrow(/defaultHandle/);
+    await expect(adapter.resolveOwnerHandle()).rejects.toThrow(/defaultHandle/);
   });
 
   it("putDoc translates positional call to request object with appSlug+ownerHandle+dbName", async () => {

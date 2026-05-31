@@ -36,6 +36,14 @@ export const BlockUsage = type({
 });
 export type BlockUsage = typeof BlockUsage.infer;
 
+// Plain shape for use in .and() type compositions (morph types break .and() inference).
+export const FileSystemRefFields = type({
+  appSlug: "string",
+  ownerHandle: "string",
+  mode: "'production'|'dev'",
+  fsId: "string",
+});
+
 // Accepts both current and legacy fsRef shapes and always normalizes to
 // `{ appSlug, ownerHandle, mode, fsId }` on parse. Using a single morph avoids
 // ArkType's indeterminate union error for overlapping object inputs.

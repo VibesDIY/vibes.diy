@@ -249,7 +249,7 @@ describe("FireflyApiAdapter end-to-end against fake VibesDiyApi", () => {
     // FireflyDatabase's constructor calls subscribeDocs and resolveUserSlug
     // asynchronously; flush a microtask to let those land.
     await new Promise((r) => setTimeout(r, 0));
-    await adapter.resolveUserHandle();
+    await adapter.resolveOwnerHandle();
 
     // notifyListeners is called with [] on remote doc-changed (no local doc available);
     // count calls rather than items so we detect the notification regardless.

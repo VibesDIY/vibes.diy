@@ -81,7 +81,7 @@ let sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
     apiUrl: resolved.apiUrl,
     getToken: resolved.getToken,
   });
-  return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { userHandle: resolved.userHandle } : undefined);
+  return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { ownerHandle: resolved.userHandle } : undefined);
 });
 
 let databasesByName = new KeyedResolvOnce<FireflyDatabase>();
@@ -111,7 +111,7 @@ export function __resetFireproofForTesting(): void {
       apiUrl: resolved.apiUrl,
       getToken: resolved.getToken,
     });
-    return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { userHandle: resolved.userHandle } : undefined);
+    return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { ownerHandle: resolved.userHandle } : undefined);
   });
   databasesByName = new KeyedResolvOnce<FireflyDatabase>();
 }

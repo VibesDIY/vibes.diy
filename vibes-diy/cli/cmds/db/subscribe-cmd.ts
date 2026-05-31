@@ -36,7 +36,7 @@ export const dbSubscribeEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbSubscr
     const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
     const rUser = await resolveUserSlug(api, ctx.validated.ownerHandle);
     if (rUser.isErr()) return Result.Err(rUser.Err());
-    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userHandle: rUser.Ok() });
+    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { ownerHandle: rUser.Ok() });
 
     // Trigger server-side subscription. The api layer transparently reconnects on
     // mid-stream disconnects (api/impl/index.ts onClose → setTimeout → replay), but
