@@ -25,21 +25,21 @@ describe("FireflyApiAdapter", () => {
     expect(adapter.svc.vibeApp.appSlug).toBe("my-app");
   });
 
-  it("resolves userSlug from ensureUserSettings.defaultUserSlug on first request", async () => {
+  it("resolves userHandle from ensureUserSettings.defaultUserSlug on first request", async () => {
     const api = fakeVibesDiyApi();
     const adapter = new FireflyApiAdapter(api, "my-app");
-    const slug = await adapter.resolveUserSlug();
+    const slug = await adapter.resolveUserHandle();
     expect(slug).toBe("alice");
     expect(api.ensureUserSettings).toHaveBeenCalledTimes(1);
     // Second call uses the cache
-    await adapter.resolveUserSlug();
+    await adapter.resolveUserHandle();
     expect(api.ensureUserSettings).toHaveBeenCalledTimes(1);
   });
 
-  it("uses opts.userSlug override and skips ensureUserSettings", async () => {
+  it("uses opts.userHandle override and skips ensureUserSettings", async () => {
     const api = fakeVibesDiyApi();
-    const adapter = new FireflyApiAdapter(api, "my-app", { userSlug: "bob" });
-    expect(await adapter.resolveUserSlug()).toBe("bob");
+    const adapter = new FireflyApiAdapter(api, "my-app", { userHandle: "bob" });
+    expect(await adapter.resolveUserHandle()).toBe("bob");
     expect(api.ensureUserSettings).not.toHaveBeenCalled();
   });
 
@@ -56,7 +56,7 @@ describe("FireflyApiAdapter", () => {
       ),
     });
     const adapter = new FireflyApiAdapter(api, "my-app");
-    await expect(adapter.resolveUserSlug()).rejects.toThrow(/defaultUserSlug/);
+    await expect(adapter.resolveUserHandle()).rejects.toThrow(/defaultUserSlug/);
   });
 
   it("putDoc translates positional call to request object with appSlug+userSlug+dbName", async () => {
@@ -180,7 +180,7 @@ describe("FireflyApiAdapter", () => {
     expect(seen).toEqual([
       {
         type: "vibes.diy.evt-doc-changed",
-        userSlug: "alice",
+        ownerHandle: "alice",
         appSlug: "my-app",
         dbName: "todos",
         docId: "doc-1",

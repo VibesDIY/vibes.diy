@@ -101,12 +101,12 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
 
   if (!viewerSlug) {
     const binding = await vctx.sql.db
-      .select({ userSlug: vctx.sql.tables.userSlugBinding.userSlug })
+      .select({ handle: vctx.sql.tables.userSlugBinding.handle })
       .from(vctx.sql.tables.userSlugBinding)
       .where(eq(vctx.sql.tables.userSlugBinding.userId, viewerUserId))
       .limit(1)
       .then((r) => r[0]);
-    viewerSlug = binding?.userSlug;
+    viewerSlug = binding?.handle;
   }
 
   if (!viewerSlug) {
@@ -117,7 +117,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   const avatarUrl = `${baseOrigin}/u/${encodeURIComponent(viewerSlug)}/avatar`;
 
   return Result.Ok({
-    viewer: { userSlug: viewerSlug, displayName, avatarUrl },
+    viewer: { userHandle: viewerSlug, displayName, avatarUrl },
     access,
     dbAcls,
   });
@@ -137,7 +137,7 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      const { appSlug, userSlug: ownerUserSlug } = req;
+      const { appSlug, ownerHandle: ownerUserSlug } = req;
       const rRes = await resolveWhoAmI(vctx, {
         auth: req._auth,
         appSlug,
