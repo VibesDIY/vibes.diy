@@ -1,3 +1,4 @@
+import { type } from "arktype";
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   createBlockStream,
@@ -20,6 +21,7 @@ import {
   CodeBeginMsg,
   CodeLineMsg,
   CodeEndMsg,
+  FileSystemRef,
 } from "./block-stream.js";
 import { LineStreamMsg } from "./line-stream.js";
 import { DeltaImageMsg } from "./delta-stream.js";
@@ -54,6 +56,52 @@ describe("block-stream", () => {
       });
       return events;
     };
+
+    it("accepts current fsRef ownerHandle shape", () => {
+      const parsed = FileSystemRef({
+        appSlug: "demo-app",
+        ownerHandle: "alice",
+        mode: "dev",
+        fsId: "fs-1",
+      });
+
+      expect(parsed).not.toBeInstanceOf(type.errors);
+      expect(parsed).toEqual({
+        appSlug: "demo-app",
+        ownerHandle: "alice",
+        mode: "dev",
+        fsId: "fs-1",
+      });
+    });
+
+    it("normalizes legacy fsRef userSlug shape", () => {
+      const parsed = FileSystemRef({
+        appSlug: "demo-app",
+        userSlug: "alice",
+        mode: "production",
+        fsId: "fs-1",
+      });
+
+      expect(parsed).not.toBeInstanceOf(type.errors);
+      expect(parsed).toEqual({
+        appSlug: "demo-app",
+        ownerHandle: "alice",
+        mode: "production",
+        fsId: "fs-1",
+      });
+    });
+
+    it("rejects ambiguous fsRef values with both handle keys", () => {
+      const parsed = FileSystemRef({
+        appSlug: "demo-app",
+        ownerHandle: "alice",
+        userSlug: "alice",
+        mode: "dev",
+        fsId: "fs-1",
+      });
+
+      expect(parsed).toBeInstanceOf(type.errors);
+    });
 
     it("emits block.begin on line.begin", async () => {
       const events = createLineEvents("innerStream", []);
