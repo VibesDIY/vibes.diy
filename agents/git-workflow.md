@@ -68,6 +68,10 @@ Workflow:
 
 Skip PR creation only when the user has explicitly said they don't want one yet, or when you're working on a branch that is itself a PR-review branch (e.g. making fixup commits on someone else's branch at their request).
 
+## Docs and notes can push directly to main
+
+Changes that are purely in `docs/` or `notes/` directories can be committed and pushed directly to `main` — no topic branch or PR needed. These are documentation-only changes with no runtime impact, so the branch/PR overhead is unnecessary.
+
 ## Ask before merging PRs
 
 Never merge PRs without explicit user confirmation. The workflow is: create PR → tag from PR branch → deploy and validate in prod → then merge only after the user says to.

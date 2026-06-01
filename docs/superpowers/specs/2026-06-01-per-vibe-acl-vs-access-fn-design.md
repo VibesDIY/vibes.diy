@@ -3,7 +3,7 @@
 ## The Two Systems
 
 **Per-vibe ACL** (existing) — app-level settings stored in AppSettings:
-- Fixed roles: owner, editor, viewer, submitter
+- Fixed roles: owner, viewer, submitter (no "editor" role yet — only owner can edit source or see chats)
 - Public access toggle (`publicAccess.enable`)
 - Request access with optional auto-approve (`request.enable` + `autoAcceptRole`)
 - Email invites with per-invite role
@@ -24,13 +24,19 @@ fireproof.md states the relationship explicitly: "The `acl` option above is a co
 
 ---
 
-## Principle: Two Layers Gate Two Things
+## Principle: The Door and the Room
 
-Per-vibe ACL gates the **app shell** — who can see the app, who can edit source code, who gets the editor vs viewer UI.
+Per-vibe ACL is **the door** — who can see the app at all. The only approval that matters is "member" (read+write access to the app). Once you're through the door, you're in the trusted group.
 
-Access functions gate **data** — who can read/write specific documents in specific databases, routed to specific channels.
+Access functions are **the room** — they govern what members can do with data once inside. Channels, grants, roles, anonymous writes — all of that is the access function's domain.
 
-The trouble is that per-vibe ACL *also* gates data today (via canRead/canWrite role checks and dbAcls). When both systems are active on the same database, there are two overlapping authorities.
+Today the door also tries to gate data (via canRead/canWrite role checks and dbAcls). When access functions exist, that overlap creates confusion. The fix: the door decides who's in, the access function decides what they can do.
+
+### The "member" role is the only approval that matters
+
+When someone requests access (or gets invited, or auto-approved), the meaningful grant is **member** — equivalent to the existing "editor" role (read+write). This is the one role the door needs to hand out, because the access function manages all the fine-grained permissions inside the trust boundary.
+
+**Reader-only** is reserved for edge cases (remediation, restricted accounts, unusual situations). It doesn't need to be hidden, but it shouldn't be highlighted in the UI or docs. The normal path is: request access → approved as member → access function governs data.
 
 ---
 
@@ -38,35 +44,33 @@ The trouble is that per-vibe ACL *also* gates data today (via canRead/canWrite r
 
 ### 1. Public Access Toggle
 
+"Public" in the access function world means **any approved member** — anyone who's through the door. It does not mean anonymous/world-readable.
+
 | Scenario | Current behavior | Least-surprise behavior |
 |---|---|---|
 | Public ON, no access fn | Anyone reads all databases | Same — no change |
-| Public ON, access fn exists | Anyone reads all databases (access fn channels bypassed?) | Access fn governs reads: only `grant.public` channels are world-readable. The toggle should not punch through channel isolation. |
-| Public OFF, access fn has `grant.public` | Anonymous reads blocked at app level | `grant.public` should work — the access fn is the authority for that database. The per-vibe toggle should only affect databases *without* an access fn export. |
+| Public ON, access fn exists | Anyone reads all databases (access fn channels bypassed?) | Access fn governs reads: `grant.public` channels are readable by any member. The toggle should not punch through channel isolation. |
+| Public OFF, access fn has `grant.public` | Anonymous reads blocked at app level | `grant.public` makes channels readable by any member (not any logged-in user — membership is required). The per-vibe toggle only affects databases *without* an access fn export. |
 
-**Verdict:** When an access fn export exists for a database, the public toggle should not affect that database's read access. Public reads come from `grant.public` in the access fn output. The toggle remains meaningful for databases without access fn exports (including the default `data` database in simple vibes).
+**Verdict:** When an access fn export exists for a database, the public toggle should not affect that database's read access. "Public" channels via `grant.public` are readable by all members (anyone through the door). The toggle remains meaningful for databases without access fn exports (including the default `data` database in simple vibes).
 
 ### 2. Request Access / Auto-Approve
 
-The request flow grants a platform role (editor or viewer). But access function roles are a separate namespace — they come from `members` reduce across documents, not from platform grants.
+The only approval role that matters is **member** (read+write, equivalent to the existing "editor" role). Approving someone means letting them through the door into the trusted group. The access function handles everything from there.
 
-| Scenario | Surprise |
-|---|---|
-| User auto-approved as "editor", access fn requires `ctx.requireRole("team-member")` | User has editor badge but can't write. Confusing. |
-| User auto-approved as "viewer", access fn grants them channels via a document | User has viewer badge but can actually write to granted channels. Confusing in the other direction. |
-
-**Verdict:** When access functions exist, the request/auto-approve role should mean *app shell access only*:
 - **Can they see the app?** Yes (they passed the door).
-- **Can they edit source code?** Only if role is editor.
-- **Can they read/write data?** Determined entirely by the access fn's grants/channels/members — the platform role is irrelevant for data.
+- **Can they edit source code?** No — only the owner can edit source code or see chats today.
+- **Can they read/write data?** Determined entirely by the access fn's grants/channels/members.
 
-The auto-approve UI could be reframed: "auto-approve" means "let them in the door automatically" rather than "grant them data permissions." Data permissions come from the access fn's document-driven grants.
+Auto-approve means "let them through the door automatically as a member." The viewer (reader-only) role exists but is reserved for edge cases like remediation — it shouldn't be the default option in the auto-approve UI.
+
+**Verdict:** Approval = member. The access function is the authority for data permissions once inside.
 
 ### 3. Email Invites
 
-Same analysis as request/auto-approve. The invited role (editor/viewer) controls app-shell access. Data access comes from the access fn.
+Same as request/auto-approve. An invite gets you through the door as a member. The access fn decides what data you see once inside.
 
-**Verdict:** Invite role = app shell role, not data role. The invite gets you through the door; the access fn decides what data you see.
+**Verdict:** Invite = member. Reader-only invites are possible but reserved for edge cases.
 
 ### 4. dbAcls (Per-Database ACLs)
 
@@ -106,42 +110,46 @@ App-level operations on source code. Access functions don't control this.
 
 | Per-vibe ACL feature | Without access fn | With access fn for that database |
 |---|---|---|
-| Public access toggle | Controls read access to all DBs | Ignored — `grant.public` channels control public reads |
-| Request/auto-approve role | Grants data read/write via canRead/canWrite | App-shell only — data access from access fn grants |
-| Email invite role | Same as above | Same as above — app-shell only |
+| Public access toggle | Controls read access to all DBs | Ignored — `grant.public` channels control member-visible reads |
+| Request/auto-approve | Grants member (read+write) access through the door | Same — member gets through the door; access fn governs data |
+| Email invite | Same — invites grant member access | Same — member through the door; access fn governs data |
+| Reader-only role | Available but not highlighted | Reserved for edge cases (remediation, restricted accounts) |
 | dbAcls | Per-DB subject-group gate | Superseded — access fn is the authority |
 | Comments toggle | Convenience dbAcl | Superseded if `export function comments` exists |
 | The door (landing card) | Controls app visibility | Unchanged — still controls app visibility |
 | Clone / remix | Controls code copying | Unchanged |
-| Editor UI access | Controls who sees code editor | Unchanged |
+| Source editing / chats | Owner-only | Unchanged |
 
 ---
 
-## What This Implies About Redundancy
+## What This Implies About Simplification
 
-When a vibe has `/access.js`, the following per-vibe ACL features become **dead weight for data access**:
+When a vibe has `/access.js`, the per-vibe ACL simplifies to **just the door**:
 
-1. **`publicAccess.enable`** — replaced by `grant.public` channels
-2. **`request.autoAcceptRole`** — the granted role has no data meaning; only the door-opening matters
-3. **Email invite role** — same; the role is app-shell-only
-4. **All dbAcls** — strictly weaker than access fn, and conflicting when both are active
-5. **The subject groups** (members/editors/submitters/readers) — these project from per-vibe roles, which aren't the access fn's role system
+**Becomes the access fn's job:**
+1. **`publicAccess.enable`** — replaced by `grant.public` channels (visible to all members)
+2. **All dbAcls** — strictly weaker than access fn, and conflicting when both are active
+3. **The subject groups** (members/editors/submitters/readers) — these project from per-vibe roles, which aren't the access fn's role system
 
-What per-vibe ACL **cannot** be replaced:
+**Simplifies to one role:**
+4. **`request.autoAcceptRole`** — the only meaningful approval is "member" (read+write); reader-only is reserved for edge cases
+5. **Email invite role** — same; invite = member
+
+**Stays with per-vibe ACL:**
 - **The door** — who can see the app at all
-- **Editor UI gate** — who can modify source code (`/App.jsx`, `/access.js`)
+- **Source editing / chats** — owner-only
 - **Clone/remix** — app-level operations
 
-The per-vibe ACL system was designed before access functions existed. It served double duty as both "app shell gate" and "data gate." Access functions now handle the data gate with far more precision. The remaining per-vibe ACL role is as the app shell gate — and for that purpose, the current system (public toggle, request access, invites, the door) is overbuilt. "Can they see the app?" and "can they edit source?" are binary questions that don't need 13 access states.
+The per-vibe ACL system was designed before access functions existed. It served double duty as both "app shell gate" and "data gate." Access functions now handle the data gate. The door's job is simple: are you in or out? The one approval role is member. Reader-only exists for edge cases but isn't the normal path.
 
 ---
 
 ## Open Questions
 
-1. **Should per-vibe roles feed into access fn roles?** One possible bridge: a platform "editor" grant could automatically contribute to a well-known access fn role (e.g., `members: { "platform-editors": [userHandle] }`). This would make the two role systems composable rather than parallel. But it adds complexity and couples the systems.
+1. **Should "member" automatically feed into access fn context?** The access fn receives `user` — that already includes the user's handle. Knowing they're a member (through the door) is implicit: if the access fn is running, the user is authenticated. No bridge needed between the two role systems.
 
-2. **What does the sharing UI show when access functions exist?** The current sharing page (good.vibes.diy/sharing) is entirely about per-vibe ACL. If data access comes from access fn documents, the sharing UI can't show who has access to what — that's materialized from document state, not from AppSettings. The sharing page might need to say "data access is controlled by /access.js" and link to the access fn documentation.
+2. **What does the sharing UI show when access functions exist?** The current sharing page is entirely about per-vibe ACL. With access functions, the sharing page could simplify to: list of members (everyone who's through the door) + "data access is controlled by /access.js." The fine-grained per-database permissions are materialized from document state, not from AppSettings.
 
 3. **Should simple vibes (no /access.js) keep working exactly as today?** Yes — "databases without a matching export use the default app-level permissions" (fireproof.md). The per-vibe ACL system is the correct default for vibes that don't need per-document policy.
 
-4. **Is the 13-state access model worth keeping for the door?** The door needs: owner, has-access, no-access, pending, public. That's 5 states, not 13. The fine distinctions (editor vs viewer vs submitter, invite vs request vs auto-join) mattered when the platform role determined data access. If it only determines app-shell access, fewer states are needed.
+4. **Can we simplify the 13 access states?** The door needs: owner, member, not-a-member, pending, public. That's 5 states. The fine distinctions (editor vs viewer vs submitter) mattered when the platform role determined data access. With member as the one approval role and reader-only reserved, fewer states are needed.

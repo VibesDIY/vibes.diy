@@ -275,7 +275,7 @@ Each capability (`read`, `write`, `delete`) is independent. Omitting one falls b
 
 ## Access Function (`/access.js`)
 
-The `acl` option above is a coarse per-database gate. Access functions are a finer gate: functions the server runs on every write (including deletes) before storing the document. They validate writes, route documents to channels, and declare grants that control who can read what. Only create an `/access.js` file when the user asks for per-document routing, channel-based isolation, or document-level write validation.
+Access functions are **the room** — they govern what members can do with data once inside the app. The per-vibe membership system is **the door** — it decides who can see the app at all. Once a user is through the door (approved as a member), the access function is the sole authority for data permissions. Access functions are server-run on every write (including deletes) before storing the document. They validate writes, route documents to channels, and declare grants that control who can read what. Only create an `/access.js` file when the user asks for per-document routing, channel-based isolation, or document-level write validation.
 
 Access functions live in `/access.js`, a separate file in the vibe's filesystem alongside `/App.jsx`. Each **named export** maps to a database name — `export function chat(...)` gates `useFireproof("chat")`. An `export default` function acts as a catch-all: it gates any database that doesn't have its own named export. Named exports always take precedence over the default.
 
@@ -333,7 +333,7 @@ type AccessDescriptor = {
   grant?: {
     users?: Record<userHandle, string[]>; // direct user → channel grants (reduced by union)
     roles?: Record<roleName, string[]>; // role → channel grants (reduced by union)
-    public?: string[]; // public read — no auth required
+    public?: string[]; // member-public read — any member, no channel grant needed
   };
   expiry?: string | number | null; // ISO date or unix seconds
   allowAnonymous?: boolean; // opt-in for null-user writes
@@ -348,7 +348,7 @@ type AccessDescriptor = {
 
 **Grant resolution order:** The server resolves per-user channel access in two passes — first expand `grant.roles` through `members`, then union with `grant.users` direct grants.
 
-**`allowAnonymous` prevents a footgun.** If `user` is `null` and the function returns without throwing, the runtime checks `allowAnonymous`. If absent or `false`, the write is rejected. This prevents a function that never inspects `user` from silently opening anonymous writes. When `user` is not null, `allowAnonymous` has no effect. `grant.public` grants public _read_; anonymous _write_ requires `allowAnonymous: true` separately.
+**`allowAnonymous` prevents a footgun.** If `user` is `null` and the function returns without throwing, the runtime checks `allowAnonymous`. If absent or `false`, the write is rejected. This prevents a function that never inspects `user` from silently opening anonymous writes. When `user` is not null, `allowAnonymous` has no effect. `grant.public` makes channels readable by any member (anyone through the door) without a specific channel grant — whether non-members can also read depends on the app-level public toggle. Anonymous _write_ requires `allowAnonymous: true` separately.
 
 **Access functions are server-enforced policy code.** Checks should be deterministic over `(doc, oldDoc, user, ctx)` and deny with `throw { forbidden: "reason" }` when violated.
 
@@ -431,7 +431,7 @@ Key patterns:
 
 - `allowAnonymous: true` on survey-response lets unauthenticated visitors submit
 - Requiring `doc._id` to be falsy prevents clients from choosing or overwriting response IDs
-- `grant.public` on final-results makes them readable without authentication
+- `grant.public` on final-results makes them readable by any member without a specific channel grant
 - The **singleton grant doc** pattern (survey-config) wires role-to-channel access in one place
 
 ### Multiple databases in one file

@@ -381,10 +381,18 @@
   <strong>What this is.</strong> Firefly is the database and sync layer built into vibes.diy. Access functions live in
   <code>/access.js</code>, a separate file in the vibe's filesystem alongside <code>/App.jsx</code>. Each
   <strong>named export</strong> maps to a database name — <code>export function chat(...)</code> gates
-  <code>useFireproof("chat")</code>. There is no <code>export default</code>; only named exports are recognized. The server
+  <code>useFireproof("chat")</code>. An <code>export default</code> function acts as a catch-all, gating any database
+  without its own named export; named exports always take precedence. The server
   discovers <code>/access.js</code> automatically and runs the matching export on every write — including deletes — before storing
   the document. It is the single checkpoint for validation, routing, and access grants. This document specifies the access function
   API and its return type, <code>AccessDescriptor</code>.
+  <br /><br />
+  <strong>The door and the room.</strong> Access functions are <em>the room</em> — they govern what members can do with data
+  once inside the app. The per-vibe membership system is <em>the door</em> — it decides who can see the app at all. Once a user
+  is approved as a member (through the door), the access function is the sole authority for data permissions. The door's only
+  job is: are you in or out? <code>grant.public</code> means "any member can read this channel" — no specific channel grant
+  needed beyond membership. Whether the door itself is open to the world (public toggle ON) or requires approval (public toggle
+  OFF) is a separate, app-level decision.
 </div>
 
 <p class="prose">
@@ -666,9 +674,8 @@
   The workplace chat example used a subset of the return type. There is no larger API hidden elsewhere: the access function's entire
   surface is the return value plus <code>throw</code>. There are no imperative helpers analogous to Sync Gateway's
   <code>channel()</code> or <code>access()</code> side-effect calls — routing and grants are expressed as return fields only. The
-  database-level ACL (<code>{ read: ["members"], write: ["editors"] }</code> passed as the <code>acl</code> option to
-  <code>useFireproof</code>) is a coarser gate that controls which subject groups can touch the database at all; the access function
-  is the finer gate that runs on every individual write inside those groups.
+  per-vibe membership system (the door) controls who can see the app at all. When an access function exists for a database, it is
+  the sole authority for that database's read and write permissions — the room inside the door.
 </p>
 
 <!-- prettier-ignore -->
@@ -683,7 +690,7 @@
   <span class="k">members</span>?: Record&lt;<span class="t">roleName</span>, <span class="t">userHandle[]</span>&gt;               <span style="color: #94a3b8">// role membership — reduced by union</span>
   <span class="k">grant</span>?: { <span class="k">users</span>?: Record&lt;<span class="t">userHandle</span>, <span class="t">string[]</span>&gt;         <span style="color: #94a3b8">// direct grants — reduced by union</span>
     <span class="k">roles</span>?: Record&lt;<span class="t">roleName</span>, <span class="t">string[]</span>&gt;                   <span style="color: #94a3b8">// role grants — reduced by union</span>
-    <span class="k">public</span>?: <span class="t">string[]</span>                                     <span style="color: #94a3b8">// public read — no auth required</span>
+    <span class="k">public</span>?: <span class="t">string[]</span>                                     <span style="color: #94a3b8">// member-public read — any member, no channel grant needed</span>
   }
   <span class="k">expiry</span>?: <span class="t">string</span> | <span class="t">number</span> | <span class="t">null</span>                     <span style="color: #94a3b8">// ISO date or unix seconds</span>
   <span class="k">allowAnonymous</span>?: <span class="t">boolean</span>                                <span style="color: #94a3b8">// opt-in: runtime rejects null-user writes if absent</span>
@@ -699,8 +706,10 @@
     write is rejected with <code>{ forbidden: "authentication required" }</code>. This closes the footgun where a natural arrow
     function (<code>doc =&gt; ({ channels: [doc.type] })</code>) silently opens anonymous writes because it never inspects
     <code>user</code>. When <code>user</code> is not null, <code>allowAnonymous</code> has no effect — it is safe to always include
-    it on branches that can be reached by either authenticated or anonymous writers. <code>grant.public</code> on a channel grants
-    public <em>read</em>; anonymous <em>write</em> is always gated separately by <code>allowAnonymous: true</code>.
+    it on branches that can be reached by either authenticated or anonymous writers. <code>grant.public</code> on a channel makes
+    it readable by <em>any member</em> (anyone through the door) without a specific channel grant; anonymous <em>write</em> is
+    always gated separately by <code>allowAnonymous: true</code>. Whether anonymous visitors (non-members) can also read public
+    channels depends on the app-level public toggle — that's the door's decision, not the access function's.
   </p>
 
   <p class="prose" style="margin: 16px 0 14px">
@@ -988,7 +997,7 @@
 
     <div class="doc invite">
       <div class="doc-type">
-        survey-response <span style="font-weight: 400; font-size: 10px">(anyone submits, survey-admin + feedback-team read)</span>
+        survey-response <span style="font-weight: 400; font-size: 10px">(anonymous submit via allowAnonymous, survey-admin + feedback-team read)</span>
       </div>
       <div class="doc-field">type: <span>"survey-response"</span></div>
       <div class="doc-field">answers: <span>[…]</span></div>
@@ -1034,7 +1043,7 @@
 
     <div class="doc message">
       <div class="doc-type">
-        final-results <span style="font-weight: 400; font-size: 10px">(feedback-team writes, world reads)</span>
+        final-results <span style="font-weight: 400; font-size: 10px">(feedback-team writes, any member reads)</span>
       </div>
       <div class="doc-field">_id: <span>results-2026</span></div>
       <div class="doc-field">type: <span>"final-results"</span></div>
@@ -1082,7 +1091,7 @@
 
   <span class="k">if</span> (doc.type === <span class="t">"final-results"</span>) {
     ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"feedback-team"</span>)
-    <span class="k">return</span> { channels: [doc._id], grant: { public: [doc._id] } }  <span style="color: #94a3b8">// published results — no auth required to read</span>
+    <span class="k">return</span> { channels: [doc._id], grant: { public: [doc._id] } }  <span style="color: #94a3b8">// published results — any member can read</span>
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"survey-response"</span>) {
@@ -1173,7 +1182,7 @@
 </p>
 <p class="prose">
   Two survey modes are shown. An <strong>open</strong> survey (<code>s1</code>) routes its questions to a
-  <code>grant.public</code> channel — anyone can read without authentication. An <strong>invite-only</strong> survey
+  <code>grant.public</code> channel — any member can read without a specific channel grant. An <strong>invite-only</strong> survey
   (<code>s2</code>) routes questions to a role-gated channel; a team member must write an invite doc to extend
   <code>survey-s2-responders</code> membership to each respondent. The invite doc is a membership grant doc: writing it adds the
   invitee to the role via the <code>members</code> reduce, and deleting it removes them.
@@ -1281,7 +1290,7 @@
     ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)  <span style="color: #94a3b8">// team-only write; doc.open is trustworthy</span>
     <span class="k">const</span> ch = `${id}-questions`
     <span class="k">return</span> { channels: [ch], grant: doc.open
-      ? { public: [ch] }                                 <span style="color: #94a3b8">// s1: anyone reads</span>
+      ? { public: [ch] }                                 <span style="color: #94a3b8">// s1: any member reads</span>
       : { roles: { [`survey-${id}-responders`]: [ch] } } <span style="color: #94a3b8">// s2: invited only</span>
     }
   }
@@ -1323,7 +1332,7 @@
   <div class="flow-title">s1 — open: anonymous visitor responds</div>
   <div class="flow-steps">
     <div class="step">
-      <span class="icon">🌐</span><span class="label">visitor reads</span><span class="value">s1-questions (public)</span>
+      <span class="icon">🌐</span><span class="label">member reads</span><span class="value">s1-questions (public channel)</span>
     </div>
     <div class="arrow green">→</div>
     <div class="step">
@@ -1370,9 +1379,10 @@
   grant fields reduce by union across current docs. Deletion is automatic revocation. <code>user</code> is null for anonymous
   requests; the runtime rejects null-user writes unless the return value explicitly sets <code>allowAnonymous: true</code> — this
   prevents the common footgun where a function returns without inspecting <code>user</code> and inadvertently opens anonymous
-  writes. <code>grant.public</code> grants public read access only; anonymous write is always governed by
-  <code>allowAnonymous</code> independently. Role and channel names should be scoped to application-level identifiers (survey ID,
-  team ID) to prevent cross-namespace leakage in shared databases.
+  writes. <code>grant.public</code> makes channels readable by any member (anyone through the door) without a specific channel
+  grant — whether non-members can also read depends on the app-level public toggle (the door). Anonymous write is always governed
+  by <code>allowAnonymous</code> independently. Role and channel names should be scoped to application-level identifiers (survey
+  ID, team ID) to prevent cross-namespace leakage in shared databases.
 </div>
 
 <hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
