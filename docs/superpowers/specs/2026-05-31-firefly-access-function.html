@@ -374,15 +374,17 @@
   }
 </style>
 
-<h2>Firefly Access Function <span class="badge fixed">v2 — user.userSlug</span></h2>
+<h2>Firefly Access Function <span class="badge fixed">v2 — user.userHandle · named exports</span></h2>
 <p class="subtitle">Workplace chat — one database, channels as the isolation unit</p>
 
 <div class="intro">
-  <strong>What this is.</strong> Firefly is the database and sync layer built into vibes.diy. Applications open a database with
-  <code>useFireproof("db-name", { access })</code> and supply an <em>access function</em> as the <code>access</code> option. The
-  server runs this function on every write — including deletes — before storing the document. It is the single checkpoint for
-  validation, routing, and access grants. This document specifies the access function API and its return type,
-  <code>AccessDescriptor</code>.
+  <strong>What this is.</strong> Firefly is the database and sync layer built into vibes.diy. Access functions live in
+  <code>/access.js</code>, a separate file in the vibe's filesystem alongside <code>/App.jsx</code>. Each
+  <strong>named export</strong> maps to a database name — <code>export function chat(...)</code> gates
+  <code>useFireproof("chat")</code>. There is no <code>export default</code>; only named exports are recognized. The server
+  discovers <code>/access.js</code> automatically and runs the matching export on every write — including deletes — before storing
+  the document. It is the single checkpoint for validation, routing, and access grants. This document specifies the access function
+  API and its return type, <code>AccessDescriptor</code>.
 </div>
 
 <p class="prose">
@@ -393,24 +395,24 @@
 
 <!-- DATABASE -->
 <div class="db">
-  <div class="db-label">📦 useFireproof("workspace-chat", { access })</div>
+  <div class="db-label">📦 useFireproof("chat") &nbsp;·&nbsp; gated by: export function chat(...) in /access.js</div>
   <div class="doc-grid">
     <div class="doc channel-meta">
       <div class="doc-type">channel-meta</div>
       <div class="doc-field">_id: <span>chan-general</span></div>
-      <div class="doc-field">ownerSlug: <span>"alice"</span></div>
-      <div class="doc-field">memberSlugs: <span>["bob","carol"]</span></div>
+      <div class="doc-field">ownerHandle: <span>"alice"</span></div>
+      <div class="doc-field">memberHandles: <span>["bob","carol"]</span></div>
     </div>
     <div class="doc message">
       <div class="doc-type">message</div>
-      <div class="doc-field">userSlug: <span>"bob"</span></div>
+      <div class="doc-field">userHandle: <span>"bob"</span></div>
       <div class="doc-field">channelId: <span>"chan-general"</span></div>
       <div class="doc-field">text: <span>"hey everyone"</span></div>
     </div>
     <div class="doc invite">
       <div class="doc-type">channel-invite</div>
-      <div class="doc-field">senderSlug: <span>"carol"</span></div>
-      <div class="doc-field">inviteeSlug: <span>"dave"</span></div>
+      <div class="doc-field">senderHandle: <span>"carol"</span></div>
+      <div class="doc-field">inviteeHandle: <span>"dave"</span></div>
       <div class="doc-field">channelId: <span>"chan-general"</span></div>
     </div>
   </div>
@@ -429,17 +431,17 @@
 
 <!-- ACCESS FUNCTION -->
 <div class="fn-box">
-  <div class="fn-label">⚡ access function — runs on every write including delete</div>
+  <div class="fn-label">⚡ /access.js — named export per database, runs on every write including delete</div>
   <div class="fn-sig">
-    <span class="k">const</span> access = (doc, oldDoc, <span class="t">user: UserContext | null</span>,
-    <span class="t">ctx: Helpers</span>) => <span class="t">AccessDescriptor</span>
+    <span class="k">export function</span> chat(doc, oldDoc, <span class="t">user: UserContext | null</span>,
+    <span class="t">ctx: Helpers</span>): <span class="t">AccessDescriptor</span>
   </div>
 
   <!-- user context shape -->
   <div class="user-ctx">
     <div class="user-ctx-label">UserContext</div>
     <div class="user-ctx-fields">
-      <span class="k">userSlug</span>: <span class="v">"bob"</span> &nbsp;<span class="c"
+      <span class="k">userHandle</span>: <span class="v">"bob"</span> &nbsp;<span class="c"
         >// stable unique id — use for all auth checks</span
       ><br />
       <span class="k">displayName</span>?: <span class="v">"Bob Smith"</span> &nbsp;<span class="c"
@@ -449,11 +451,10 @@
   </div>
 
   <p class="prose" style="margin: 0 0 12px">
-    <strong>Identity.</strong> <code>userSlug</code> is the stable unique identifier for an authenticated user — sourced from
-    <code>useViewer().viewer.userSlug</code> in the platform layer. It is the only field the access function should use for identity
-    checks. <code>displayName</code> is natural data; it changes when users rename themselves and must never anchor an authorization
-    decision. <code>user</code> is <code>null</code> for unauthenticated (anonymous) requests; the default behavior is to throw in
-    that case.
+    <strong>Identity.</strong> <code>userHandle</code> is the stable unique identifier for an authenticated user. It is the only
+    field the access function should use for identity checks. <code>displayName</code> is natural data; it changes when users rename
+    themselves and must never anchor an authorization decision. <code>user</code> is <code>null</code> for unauthenticated
+    (anonymous) requests; the default behavior is to throw in that case.
   </p>
 
   <!-- helpers shape -->
@@ -480,18 +481,18 @@
   <div class="fn-rules">
     <div class="rule amber">
       <div class="rule-header">channel-meta</div>
-      <span class="throw">throw</span> if doc.ownerSlug ≠ <span class="hl">user.userSlug</span><br />
-      <span class="throw">throw</span> if oldDoc &amp;&amp; oldDoc.ownerSlug ≠ <span class="hl">user.userSlug</span><br />
+      <span class="throw">throw</span> if doc.ownerHandle ≠ <span class="hl">user.userHandle</span><br />
+      <span class="throw">throw</span> if oldDoc &amp;&amp; oldDoc.ownerHandle ≠ <span class="hl">user.userHandle</span><br />
       <br />
       <span class="route">channels:</span> [doc._id]<br />
-      <span class="grant">grant:</span> memberSlugs → doc._id<br />
-      <span class="grant">grant:</span> ownerSlug → doc._id<br />
+      <span class="grant">grant:</span> memberHandles → doc._id<br />
+      <span class="grant">grant:</span> ownerHandle → doc._id<br />
       <br />
       <em style="color: #92400e; font-size: 11px">delete → grants recomputed → members lose access ✓</em>
     </div>
     <div class="rule green">
       <div class="rule-header">message</div>
-      <span class="throw">throw</span> if doc.userSlug ≠ <span class="hl">user.userSlug</span><br />
+      <span class="throw">throw</span> if doc.userHandle ≠ <span class="hl">user.userHandle</span><br />
       ctx.<span class="throw">requireAccess</span>(doc.channelId)<br />
       <br />
       <span class="route">channels:</span> [doc.channelId]<br />
@@ -501,11 +502,11 @@
     </div>
     <div class="rule blue">
       <div class="rule-header">channel-invite</div>
-      <span class="throw">throw</span> if doc.senderSlug ≠ <span class="hl">user.userSlug</span><br />
+      <span class="throw">throw</span> if doc.senderHandle ≠ <span class="hl">user.userHandle</span><br />
       ctx.<span class="throw">requireAccess</span>(doc.channelId)<br />
       <br />
       <span class="route">channels:</span> [doc.channelId]<br />
-      <span class="grant">grant:</span> inviteeSlug → doc.channelId<br />
+      <span class="grant">grant:</span> inviteeHandle → doc.channelId<br />
       <br />
       <em style="color: #1d4ed8; font-size: 11px">any member can invite; delete revokes invite grant</em>
     </div>
@@ -514,34 +515,34 @@
 
 <!-- prettier-ignore -->
 <div class="fn-box">
-  <div class="fn-label">⚡ workspace chat — complete access function</div>
-  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">const</span> access = (doc, oldDoc, user, ctx) => {
+  <div class="fn-label">⚡ /access.js — workspace chat (export function chat)</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">export function</span> chat(doc, oldDoc, user, ctx) {
   <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"authentication required"</span> }
 
   <span class="k">if</span> (doc.type === <span class="t">"channel-meta"</span>) {
-    <span class="k">if</span> (doc.ownerSlug !== user.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not owner"</span> }
-    <span class="k">if</span> (oldDoc &amp;&amp; oldDoc.ownerSlug !== user.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not owner"</span> }
+    <span class="k">if</span> (doc.ownerHandle !== user.userHandle) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not owner"</span> }
+    <span class="k">if</span> (oldDoc &amp;&amp; oldDoc.ownerHandle !== user.userHandle) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not owner"</span> }
     <span class="k">return</span> {
       channels: [doc._id],
       grant: { users: Object.fromEntries([
-        [doc.ownerSlug, [doc._id]],
-        ...doc.memberSlugs.map(s => [s, [doc._id]])
+        [doc.ownerHandle, [doc._id]],
+        ...doc.memberHandles.map(h => [h, [doc._id]])
       ]) }
     }
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"message"</span>) {
-    <span class="k">if</span> (doc.userSlug !== user.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not author"</span> }
+    <span class="k">if</span> (doc.userHandle !== user.userHandle) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not author"</span> }
     ctx.<span style="color: #dc2626">requireAccess</span>(doc.channelId)
     <span class="k">return</span> { channels: [doc.channelId] }
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"channel-invite"</span>) {
-    <span class="k">if</span> (doc.senderSlug !== user.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
+    <span class="k">if</span> (doc.senderHandle !== user.userHandle) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
     ctx.<span style="color: #dc2626">requireAccess</span>(doc.channelId)
     <span class="k">return</span> {
       channels: [doc.channelId],
-      grant: { users: { [doc.inviteeSlug]: [doc.channelId] } }
+      grant: { users: { [doc.inviteeHandle]: [doc.channelId] } }
     }
   }
 
@@ -621,7 +622,7 @@
     </div>
     <div class="arrow green">→</div>
     <div class="step">
-      <span class="icon">⚡</span><span class="label">access fn checks</span><span class="value">carol.userSlug ∈ channel ✓</span>
+      <span class="icon">⚡</span><span class="label">access fn checks</span><span class="value">carol.userHandle ∈ channel ✓</span>
     </div>
     <div class="arrow green">→</div>
     <div class="step">
@@ -635,7 +636,7 @@
 </div>
 
 <div class="flow-box">
-  <div class="flow-title">3 — Revocation (channel deleted or memberSlugs updated)</div>
+  <div class="flow-title">3 — Revocation (channel deleted or memberHandles updated)</div>
   <div class="flow-steps">
     <div class="step">
       <span class="icon">🗑️</span><span class="label">alice deletes</span><span class="value">channel-meta</span>
@@ -679,8 +680,8 @@
 
 <span class="k">type</span> <span class="t">AccessDescriptor</span> = {
   <span class="k">channels</span>?: <span class="t">string[]</span>                                    <span style="color: #94a3b8">// route this doc — per-doc, not reduced</span>
-  <span class="k">members</span>?: Record&lt;<span class="t">roleName</span>, <span class="t">userSlug[]</span>&gt;               <span style="color: #94a3b8">// role membership — reduced by union</span>
-  <span class="k">grant</span>?: { <span class="k">users</span>?: Record&lt;<span class="t">userSlug</span>, <span class="t">string[]</span>&gt;         <span style="color: #94a3b8">// direct grants — reduced by union</span>
+  <span class="k">members</span>?: Record&lt;<span class="t">roleName</span>, <span class="t">userHandle[]</span>&gt;               <span style="color: #94a3b8">// role membership — reduced by union</span>
+  <span class="k">grant</span>?: { <span class="k">users</span>?: Record&lt;<span class="t">userHandle</span>, <span class="t">string[]</span>&gt;         <span style="color: #94a3b8">// direct grants — reduced by union</span>
     <span class="k">roles</span>?: Record&lt;<span class="t">roleName</span>, <span class="t">string[]</span>&gt;                   <span style="color: #94a3b8">// role grants — reduced by union</span>
     <span class="k">public</span>?: <span class="t">string[]</span>                                     <span style="color: #94a3b8">// public read — no auth required</span>
   }
@@ -705,7 +706,7 @@
   <p class="prose" style="margin: 16px 0 14px">
     <strong>Roles are not a fixed registry.</strong> Because <code>members</code> and <code>grant.roles</code> both reduce across
     current docs, role membership is a materialized aggregate of document contributions — not a separately administered list. A
-    team-meta doc with three entries in <code>memberSlugs</code> contributes three slugs to the
+    team-meta doc with three entries in <code>memberHandles</code> contributes three handles to the
     <code>members["design-team"]</code> reduce. A singleton role-channels doc contributes channel grants for that role. The server
     resolves effective per-user channel access in two passes: first expand <code>grant.roles</code> through <code>members</code>,
     then union with <code>grant.users</code> direct grants.
@@ -721,7 +722,7 @@
         <span class="grant">effectiveMembers[role]</span><br />
         = union of all docs'<br />
         members[role] arrays<br /><br />
-        <em style="color: #065f46; font-size: 11px">delete → slug disappears ✓</em>
+        <em style="color: #065f46; font-size: 11px">delete → handle disappears ✓</em>
       </div>
       <div class="rule blue">
         <div class="rule-header">grant.roles resolve</div>
@@ -732,7 +733,7 @@
       </div>
       <div class="rule amber">
         <div class="rule-header">grant.users direct</div>
-        <span class="grant">grant.users[slug]</span> channels<br />
+        <span class="grant">grant.users[handle]</span> channels<br />
         unioned on top of<br />
         role-expanded channels<br /><br />
         <em style="color: #b45309; font-size: 11px">DMs, one-off grants</em>
@@ -755,8 +756,8 @@
 </p>
 <p class="prose">
   Global team membership uses the <strong>singleton pattern</strong>: one <code>role-channels</code> doc declares what channels the
-  role grants, and one small <code>membership</code> doc per employee contributes that employee's slug to the role. The membership
-  doc is written on hire and deleted on offboarding — the role loses the slug contribution automatically. Contrast this with the
+  role grants, and one small <code>membership</code> doc per employee contributes that employee's handle to the role. The membership
+  doc is written on hire and deleted on offboarding — the role loses the handle contribution automatically. Contrast this with the
   design team's <code>team-meta</code> doc, which carries both membership and channel grants in one place. Both patterns produce
   identical reduced state; the choice is organizational, not technical.
 </p>
@@ -790,7 +791,7 @@
         membership <span style="font-weight: 400; font-size: 10px">(one per employee, written on hire)</span>
       </div>
       <div class="doc-field">type: <span>"membership"</span></div>
-      <div class="doc-field">userSlug: <span>"newperson"</span></div>
+      <div class="doc-field">userHandle: <span>"newperson"</span></div>
       <div class="doc-field">role: <span>"global-team"</span></div>
       <div
         style="
@@ -807,10 +808,10 @@
     </div>
 
     <div class="doc channel-meta">
-      <div class="doc-type">team-meta <span style="font-weight: 400; font-size: 10px">(manager edits memberSlugs)</span></div>
+      <div class="doc-type">team-meta <span style="font-weight: 400; font-size: 10px">(manager edits memberHandles)</span></div>
       <div class="doc-field">type: <span>"team-meta"</span></div>
       <div class="doc-field">teamId: <span>"design-team"</span></div>
-      <div class="doc-field">memberSlugs: <span>["alice","bob","newperson"]</span></div>
+      <div class="doc-field">memberHandles: <span>["alice","bob","newperson"]</span></div>
       <div class="doc-field">channels: <span>["design-general","design-reviews","design-assets","design-critique"]</span></div>
       <div
         style="
@@ -822,7 +823,7 @@
           line-height: 1.8;
         "
       >
-        <span class="route">members</span>["design-team"] → memberSlugs<br />
+        <span class="route">members</span>["design-team"] → memberHandles<br />
         <span class="route">grant.roles</span>["design-team"] → doc.channels
       </div>
     </div>
@@ -901,7 +902,7 @@
     </div>
     <div class="arrow red">→</div>
     <div class="step">
-      <span class="icon">🎨</span><span class="label">mgr removes slug</span><span class="value">from team-meta</span>
+      <span class="icon">🎨</span><span class="label">mgr removes handle</span><span class="value">from team-meta</span>
     </div>
     <div class="arrow red">→</div>
     <div class="step">
@@ -931,7 +932,7 @@
     <div>
       <strong style="color: #6366f1">Team-centric (decentralized)</strong><br />
       Team manager edits team-meta doc.<br />
-      memberSlugs lives on the team.<br />
+      memberHandles lives on the team.<br />
       Manager controls their own roster.
     </div>
     <div>
@@ -961,7 +962,7 @@
 </p>
 
 <div class="db">
-  <div class="db-label">📦 useFireproof("survey-app", { access })</div>
+  <div class="db-label">📦 useFireproof("survey") &nbsp;·&nbsp; gated by: export function survey(...) in /access.js</div>
   <div class="doc-grid" style="grid-template-columns: repeat(2, 1fr)">
     <div class="doc channel-meta">
       <div class="doc-type">
@@ -1072,8 +1073,8 @@
 
 <!-- prettier-ignore -->
 <div class="fn-box" style="margin-bottom: 24px">
-  <div class="fn-label">⚡ survey access function</div>
-  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">const</span> access = (doc, oldDoc, user, ctx) => {
+  <div class="fn-label">⚡ /access.js — survey (export function survey)</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">export function</span> survey(doc, oldDoc, user, ctx) {
 
   <span class="k">if</span> (doc.type === <span class="t">"survey-questions"</span>) {
     ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"survey-admin"</span>)
@@ -1234,13 +1235,13 @@
     <div class="doc invite" style="margin-bottom: 10px">
       <div class="doc-type">invite <span style="font-weight: 400; font-size: 10px">(team member invites responder)</span></div>
       <div class="doc-field">surveyId: <span>"s2"</span></div>
-      <div class="doc-field">senderSlug: <span>"alice"</span></div>
-      <div class="doc-field">inviteeSlug: <span>"bob"</span></div>
+      <div class="doc-field">senderHandle: <span>"alice"</span></div>
+      <div class="doc-field">inviteeHandle: <span>"bob"</span></div>
       <div
         style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #bfdbfe; font-size: 11px; color: #1d4ed8; line-height: 1.8"
       >
         ctx.<span class="throw">requireRole</span>("survey-s2-team")<br />
-        <span class="throw">throw</span> if doc.senderSlug ≠ user.userSlug<br />
+        <span class="throw">throw</span> if doc.senderHandle ≠ user.userHandle<br />
         <span class="route">members:</span> { survey-s2-responders: ["bob"] }<br />
         <span class="route">channels:</span> ["s2-admin"]
       </div>
@@ -1273,8 +1274,8 @@
 <!-- Full access function -->
 <!-- prettier-ignore -->
 <div class="fn-box">
-  <div class="fn-label">⚡ access function — all doc types, both survey variants</div>
-  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">const</span> access = (doc, oldDoc, user, ctx) => {
+  <div class="fn-label">⚡ /access.js — all doc types, both survey variants (export function survey)</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">export function</span> survey(doc, oldDoc, user, ctx) {
   <span class="k">const</span> id = doc.surveyId
 
   <span class="k">if</span> (doc.type === <span class="t">"question"</span>) {
@@ -1288,8 +1289,8 @@
 
   <span class="k">if</span> (doc.type === <span class="t">"invite"</span>) {
     ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)
-    <span class="k">if</span> (doc.senderSlug !== user?.userSlug) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
-    <span class="k">return</span> { channels: [`${id}-admin`], members: { [`survey-${id}-responders`]: [doc.inviteeSlug] } }
+    <span class="k">if</span> (doc.senderHandle !== user?.userHandle) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
+    <span class="k">return</span> { channels: [`${id}-admin`], members: { [`survey-${id}-responders`]: [doc.inviteeHandle] } }
     <span style="color: #94a3b8">// grants invitee the responder role</span>
   }
 
@@ -1377,68 +1378,59 @@
 
 <hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
 
-<h2>Runtime Architecture — Function Serialization</h2>
+<h2>Runtime Architecture — Named Exports + Per-Database DO</h2>
 
 <p class="prose">
   The access function must evaluate <strong>server-side</strong> to be a real security boundary. Client-side evaluation (sending the
   <code>AccessDescriptor</code> result from the browser) is not a security boundary — a client can send any descriptor it likes. The
-  design below achieves server-side evaluation without tying function identity to a specific database instance.
+  design below achieves server-side evaluation with per-database isolation and a grant reduce that materializes channel membership.
 </p>
 
 <p class="prose">
-  <strong>The access function lives in <code>access.js</code>.</strong> It is a dedicated file in the vibe's multi-file filesystem,
-  alongside <code>App.jsx</code> and other source files. Developers author and upload it the same way they upload any vibe file —
-  via <code>npx use-vibes push</code> or the chat editor once multi-file support lands (issue #2068). The file exports a single
-  default function matching the <code>AccessFunction</code> signature.
+  <strong>Named exports, not default export.</strong> <code>/access.js</code> uses named exports only — each export name maps to a
+  database name. At push time, the server parses the module with QuickJS to extract export names, filters out JS built-in globals
+  (<code>toString</code>, <code>constructor</code>, etc.), and creates a binding row per valid export. Databases without a matching
+  export have no access function — no DO is created, no evaluation runs, no performance overhead.
 </p>
 
 <p class="prose">
-  <strong>The file is content-addressed.</strong> The vibes.diy filesystem already assigns a CID (content-addressed ID) to every
-  file version. When <code>access.js</code> is uploaded, its CID is stored alongside the database record. When the developer updates
-  the file, the CID changes automatically — no manual versioning required.
-</p>
-
-<p class="prose">
-  <strong>Evaluation runs in a Durable Object keyed by CID.</strong> The <code>putDoc</code> handler looks up the current
-  <code>access.js</code> CID for the target database (a D1 lookup), then routes the write to a Durable Object whose name is that
-  CID. On cold start the DO loads <code>access.js</code> source from storage by CID and evaluates it once with
-  <code>new&nbsp;Function()</code>. The resulting function object stays in memory for the lifetime of the DO — all subsequent writes
-  to any database using that CID call the cached function with no re-eval and no re-fetch.
+  <strong>Per-database Durable Object.</strong> Each DO is keyed by <code>${userHandle}/${appSlug}/${dbName}</code> and holds the
+  grant reduce for exactly one database. On every write, the <code>putDoc</code> handler looks up the binding row (D1) and routes to
+  the matching DO. The DO evaluates the access function source using <strong>QuickJS WASM</strong> — a sandboxed JS VM that runs
+  inside the Worker. The <code>ctx.requireAccess</code> and <code>ctx.requireRole</code> helpers are registered as QuickJS host
+  functions that call back into the DO's materialized grant state.
 </p>
 
 <!-- prettier-ignore -->
 <div class="fn-box" style="margin: 24px 0">
   <div class="fn-label">⚡ putDoc handler — access function call path</div>
-  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">// 1.</span> look up CID for this database (D1)
-<span class="k">const</span> cid = <span class="k">await</span> db.prepare(<span class="t">"SELECT access_fn_cid FROM apps WHERE slug=?"</span>).bind(appSlug).first()
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">// 1.</span> look up binding for this database (D1)
+<span class="k">const</span> afb = <span class="k">await</span> getAccessFunctionBinding(ownerHandle, appSlug, dbName)
 
-<span class="k">// 2.</span> route to the DO keyed by CID — DO evals access.js once on cold start
-<span class="k">const</span> stub = env.ACCESS_FN_DO.get(env.ACCESS_FN_DO.idFromName(cid))
-<span class="k">const</span> result = <span class="k">await</span> stub.evaluate({ doc, oldDoc, user })
+<span class="k">// 2.</span> route to per-database DO — DO evals function source via QuickJS
+<span class="k">const</span> doId = env.ACCESS_FN_DO.idFromName(`${ownerHandle}/${appSlug}/${dbName}`)
+<span class="k">const</span> stub = env.ACCESS_FN_DO.get(doId)
+<span class="k">const</span> result = <span class="k">await</span> stub.fetch(<span class="t">"/invoke"</span>, { body: { doc, oldDoc, user, source: afb.source } })
 
-<span class="k">// 3.</span> reject or continue
+<span class="k">// 3.</span> if DO needs hydration (cold start), fetch all docs and hydrate
+<span class="k">if</span> (result.needsHydrate) {
+  <span class="k">const</span> docs = <span class="k">await</span> fetchAllDocs(ownerHandle, appSlug, dbName)
+  <span class="k">await</span> stub.fetch(<span class="t">"/hydrate"</span>, { body: { docs, source: afb.source } })
+}
+
+<span class="k">// 4.</span> reject or continue
 <span class="k">if</span> (result.forbidden) <span class="k">return</span> json({ forbidden: result.forbidden }, 403)</div>
 </div>
 
 <p class="prose">
-  <strong>Why CID-keyed, not database-keyed.</strong> If the DO were keyed by database name, each database would need its own warm
-  DO even when many databases share the same access function. CID-keying means one DO per unique function version — databases that
-  share a function (common in template-based apps) share a DO. When a developer updates <code>access.js</code>, a new CID routes to
-  a fresh DO; the old DO goes dormant and Cloudflare evicts it naturally. There is no invalidation step.
+  <strong>Hydration protocol.</strong> When a DO evicts and restarts (cold start), it has no grant state. The first write returns
+  <code>{ needsHydrate: true }</code>. The caller fetches all current docs for the database and sends them via
+  <code>POST /hydrate</code>. The DO uses <code>blockConcurrencyWhile</code> during hydration — concurrent writes queue behind it
+  and proceed once the reduce is populated. Only one hydration runs; subsequent requests see the hydrated state.
 </p>
 
 <p class="prose">
-  <strong>Security model.</strong> The DO uses the <code>unsafe_eval</code> Cloudflare Workers compatibility flag to enable
-  <code>new&nbsp;Function()</code>. This is not a JS-level sandbox — the access function runs in the same V8 isolate as the DO
-  itself. The isolation boundary is the Cloudflare Worker process, not an inner VM. This is an honest tradeoff: the access function
-  is developer-authored policy code (same trust level as the rest of the vibe), and the Worker sandbox provides process-level
-  isolation. The security property being enforced is that <em>the client cannot bypass the policy</em> — not that the policy author
-  cannot write arbitrary server code.
-</p>
-
-<p class="prose">
-  <strong>Migration path.</strong> When channel routing (Phase 3) is implemented, the per-database coordinator DO will manage
-  subscription state. The access function DO can be merged into the coordinator DO at that point — the CID-keyed eval cache becomes
-  one responsibility of the coordinator alongside channel membership. The interface
-  <code>(doc, oldDoc, user) → AccessDescriptor | forbidden</code> stays the same.
+  <strong>Security model.</strong> Access function evaluation uses QuickJS WASM — a sandboxed JavaScript VM that runs inside the
+  Cloudflare Worker. The access function cannot access Worker globals, environment bindings, or network. The security property is
+  twofold: the <em>client cannot bypass the policy</em>, and the <em>policy code is sandboxed</em> from the Worker runtime.
 </p>
