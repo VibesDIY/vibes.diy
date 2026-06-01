@@ -10,15 +10,11 @@
 #
 # Prompt-generated App.jsx artifacts are exempt by glob in the check script.
 
-call-ai/v2/block-stream.ts:628:  const txtEndcoder = new TextEncoder();
-call-ai/v2/cli.ts:348:      const decoder = new TextDecoder();
 call-ai/v2/line-stream.test.ts:108:      const encoder = new TextEncoder();
 call-ai/v2/line-stream.test.ts:125:      const encoder = new TextEncoder();
 call-ai/v2/line-stream.test.ts:145:      const encoder = new TextEncoder();
 call-ai/v2/line-stream.test.ts:169:      const encoder = new TextEncoder();
 call-ai/v2/line-stream.test.ts:185:      const encoder = new TextEncoder();
-call-ai/v2/line-stream.ts:133:  const decoder = new TextDecoder();
-call-ai/v2/line-stream.ts:81:  parser.totalBytes += new TextEncoder().encode(content).length;
 vibes.diy/pkg/slack/scripts/bundle-fs.ts:281:  return new TextDecoder().decode(decompressed);
 vibes.diy/pkg/workers/clerk-webhook.ts:3:const enc = new TextEncoder();
 vibes.diy/pkg/test/url-origin-normalization.test.ts:20:    expect(new URL("http://example.com:80/path").origin).toBe("http://example.com");
