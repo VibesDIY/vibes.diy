@@ -1,4 +1,6 @@
-import { DurableObject, DurableObjectState } from "@cloudflare/workers-types";
+import { DurableObject, DurableObjectState, Request as CFRequest, Response as CFResponse } from "@cloudflare/workers-types";
+
+declare const Response: typeof CFResponse;
 
 export class AccessFnSpike implements DurableObject {
   private evalResult: unknown = null;
@@ -15,7 +17,7 @@ export class AccessFnSpike implements DurableObject {
     });
   }
 
-  async fetch(): Promise<Response> {
+  async fetch(_request: CFRequest): Promise<CFResponse> {
     if (this.evalError) {
       return new Response(JSON.stringify({ ok: false, error: this.evalError }), {
         headers: { "Content-Type": "application/json" },
