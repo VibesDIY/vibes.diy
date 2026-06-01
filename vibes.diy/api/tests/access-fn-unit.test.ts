@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
 
 // Unit test: the eval wrapper used inside AccessFnDO.
-// Mirrors the exact pattern the DO uses so we can test it outside CF Workers.
+// NOTE: In production, AccessFnDO uses QuickJS WASM (@cf-wasm/quickjs) to evaluate
+// access functions — new Function() does not work at runtime in Cloudflare DO fetch
+// handlers (allow_eval_during_startup only covers startup/module scope). These tests
+// use new Function() directly because it works in Node/Vitest and tests the same
+// logical behavior pattern.
 
 function evalAccessFn(source: string): (doc: unknown, oldDoc: unknown, user: unknown, ctx: unknown) => unknown {
   return new Function("doc", "oldDoc", "user", "ctx", source) as (

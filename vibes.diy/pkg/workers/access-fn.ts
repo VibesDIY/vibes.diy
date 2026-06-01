@@ -1,6 +1,6 @@
 import { DurableObject, Request as CFRequest, Response as CFResponse } from "@cloudflare/workers-types";
-import type { AccessDescriptor, AccessFunction, UserContext } from "@vibes.diy/api-types";
-import { makeHelpers, ForbiddenError } from "@vibes.diy/api-svc";
+import type { UserContext } from "@vibes.diy/api-types";
+import { getQuickJSWASMModule } from "@cf-wasm/quickjs";
 
 declare const Response: typeof CFResponse;
 
@@ -12,9 +12,6 @@ const InvokeBody = {
 };
 
 export class AccessFnDO implements DurableObject {
-  private fn: AccessFunction | null = null;
-  private loadError: string | null = null;
-
   async fetch(request: CFRequest): Promise<CFResponse> {
     if (request.method !== "POST") {
       return new Response("expected POST", { status: 400 });
@@ -30,49 +27,43 @@ export class AccessFnDO implements DurableObject {
       });
     }
 
-    // Lazy eval: compile fn on first request, cache for lifetime of this DO instance.
-    if (!this.fn && !this.loadError) {
-      if (!body.source) {
-        return new Response(JSON.stringify({ forbidden: "access function source not provided" }), {
+    if (!body.source) {
+      return new Response(JSON.stringify({ forbidden: "access function source not provided" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const source = body.source;
+
+    const QuickJS = await getQuickJSWASMModule();
+    const vm = QuickJS.newContext();
+
+    try {
+      vm.evalCode(`const doc = ${JSON.stringify(body.doc)};`);
+      vm.evalCode(`const oldDoc = ${JSON.stringify(body.oldDoc)};`);
+      vm.evalCode(`const user = ${JSON.stringify(body.user)};`);
+      vm.evalCode(`const ctx = ${JSON.stringify({})};`);
+
+      const fnResult = vm.evalCode(`(function() { ${source} })()`);
+
+      if (fnResult.error) {
+        const errVal = vm.dump(fnResult.error);
+        fnResult.error.dispose();
+        return new Response(JSON.stringify({ forbidden: `access function error: ${JSON.stringify(errVal)}` }), {
           status: 500,
           headers: { "Content-Type": "application/json" },
         });
       }
-      try {
-        this.fn = new Function("doc", "oldDoc", "user", "ctx", body.source) as AccessFunction;
-      } catch (err: unknown) {
-        this.loadError = `AccessFnDO: eval failed: ${String(err)}`;
-      }
-    }
 
-    if (this.loadError) {
-      return new Response(JSON.stringify({ forbidden: this.loadError }), {
-        status: 500,
+      const accessResult = vm.dump(fnResult.value);
+      fnResult.value.dispose();
+
+      return new Response(JSON.stringify(accessResult), {
         headers: { "Content-Type": "application/json" },
       });
+    } finally {
+      vm.dispose();
     }
-
-    if (!this.fn) {
-      return new Response(JSON.stringify({ forbidden: "access function not loaded" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const helpers = makeHelpers(body.user);
-    let result: AccessDescriptor | { forbidden: string };
-    try {
-      result = this.fn(body.doc, body.oldDoc, body.user, helpers);
-    } catch (err: unknown) {
-      if (err instanceof ForbiddenError) {
-        result = { forbidden: err.forbidden };
-      } else {
-        result = { forbidden: `access function threw: ${String(err)}` };
-      }
-    }
-
-    return new Response(JSON.stringify(result), {
-      headers: { "Content-Type": "application/json" },
-    });
   }
 }
