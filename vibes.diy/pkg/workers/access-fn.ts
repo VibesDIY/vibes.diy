@@ -146,7 +146,13 @@ export class AccessFnDO implements DurableObject {
       if (fnResult.error) {
         const errVal = vm.dump(fnResult.error);
         fnResult.error.dispose();
-        return new Response(JSON.stringify({ forbidden: `access function error: ${String(errVal)}` }), {
+        const reason =
+          typeof errVal === "object" && errVal !== null && "forbidden" in errVal
+            ? String((errVal as Record<string, unknown>).forbidden)
+            : typeof errVal === "string"
+              ? errVal
+              : `access function error: ${JSON.stringify(errVal)}`;
+        return new Response(JSON.stringify({ forbidden: reason }), {
           status: 500,
           headers: { "Content-Type": "application/json" },
         });

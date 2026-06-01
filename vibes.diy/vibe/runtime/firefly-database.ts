@@ -96,6 +96,11 @@ const fireflyLogger = {
   },
 };
 
+function errMsg(err: Error): string {
+  const e = err as Error & { error?: { message?: string } };
+  return e.error?.message ?? e.message ?? String(e);
+}
+
 export class FireflyDatabase {
   readonly name: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -174,7 +179,7 @@ export class FireflyDatabase {
   async get<T extends DocTypes>(id: string): Promise<DocWithId<T>> {
     const rRes = await this.vibeApi.getDoc(id, this.name);
     if (rRes.isErr()) {
-      throw new Error(`Failed to get document: ${rRes.Err()}`);
+      throw new Error(`Failed to get document: ${errMsg(rRes.Err())}`);
     }
     const res = rRes.Ok();
     if (isResGetDoc(res)) {
@@ -198,7 +203,7 @@ export class FireflyDatabase {
     const docToPut = await uploadFiles(doc, this.vibeApi as unknown as AssetUploader);
     const rRes = await this.vibeApi.putDoc(docToPut as Record<string, unknown>, doc._id, this.name);
     if (rRes.isErr()) {
-      throw new Error(`Failed to put document: ${rRes.Err()}`);
+      throw new Error(`Failed to put document: ${errMsg(rRes.Err())}`);
     }
     const res = rRes.Ok();
     if (isResPutDoc(res)) {
@@ -212,7 +217,7 @@ export class FireflyDatabase {
   async del(id: string): Promise<DocResponse> {
     const rRes = await this.vibeApi.deleteDoc(id, this.name);
     if (rRes.isErr()) {
-      throw new Error(`Failed to delete document: ${rRes.Err()}`);
+      throw new Error(`Failed to delete document: ${errMsg(rRes.Err())}`);
     }
     const res = rRes.Ok();
     if (isResDeleteDoc(res)) {
@@ -269,7 +274,7 @@ export class FireflyDatabase {
 
     const rRes = await this.vibeApi.queryDocs(this.name, hint);
     if (rRes.isErr()) {
-      throw new Error(`Failed to query documents: ${rRes.Err()}`);
+      throw new Error(`Failed to query documents: ${errMsg(rRes.Err())}`);
     }
     const res = rRes.Ok();
     if (!isResQueryDocs(res)) {
@@ -391,7 +396,7 @@ export class FireflyDatabase {
   ): Promise<{ rows: IndexRow<T>[]; docs: DocWithId<T>[] }> {
     const rRes = await this.vibeApi.queryDocs(this.name);
     if (rRes.isErr()) {
-      throw new Error(`Failed to query documents: ${rRes.Err()}`);
+      throw new Error(`Failed to query documents: ${errMsg(rRes.Err())}`);
     }
     const res = rRes.Ok();
     if (!isResQueryDocs(res)) {
