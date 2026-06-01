@@ -220,7 +220,8 @@ export async function ensureAppSlugItem(
             );
 
           // Backfill AccessFnOutputs for dbNames where CID changed or is new (#2101)
-          if (vctx.invokeAccessFn) {
+          const invokeAccessFn = vctx.invokeAccessFn;
+          if (invokeAccessFn) {
             const changedDbNames = exportNames.filter((name) => oldCids.get(name) !== cid);
             if (changedDbNames.length > 0) {
               // Fetch source once — same CID for all exports from this access.js.
@@ -277,7 +278,7 @@ export async function ensureAppSlugItem(
                     docsTotal++;
 
                     const rInvoke = await exception2Result(() =>
-                      vctx.invokeAccessFn!({
+                      invokeAccessFn({
                         cid,
                         doc: row.data,
                         oldDoc: null,
@@ -343,7 +344,7 @@ export async function ensureAppSlugItem(
                     }
                   }
 
-                  console.log(
+                  console.info(
                     `backfill: ${ensured.ownerHandle}/${ensured.appSlug}/${dbName} cid=${cid.slice(0, 8)}` +
                       ` total=${docsTotal} upserted=${docsUpserted} forbidden=${docsForbiddenSkipped}` +
                       ` invokeErr=${invokeErrors} upsertErr=${upsertErrors} elapsed=${Date.now() - t0}ms`
