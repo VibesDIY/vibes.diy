@@ -1,8 +1,127 @@
-import { describe, it } from "vitest";
+import { assert, beforeAll, describe, expect, it } from "vitest";
+import { Result, TestWSPair } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
+import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
+import { VibesDiyApi } from "@vibes.diy/api-impl";
+import { vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
+import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
+import type { AccessDescriptor } from "@vibes.diy/api-types";
+import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
-describe("invokeAccessFn gate (unit — fake invoker)", { timeout: 15000 }, () => {
-  it.todo("authenticated write passes access fn allowing anonymous");
-  it.todo("anonymous write rejected when fn returns {}");
-  it.todo("anonymous write allowed when fn returns { allowAnonymous: true }");
-  it.todo("new CID causes fresh invocation");
+// Integration tests for the access-function gate in putDocEvento.
+// A mock invokeAccessFn stands in for the AccessFnDO so we exercise the
+// handler's gate logic without a real Durable Object. An
+// AccessFunctionBindings row must exist for the (ownerHandle, appSlug, dbName)
+// or the gate is skipped entirely.
+//
+// See vibes.diy/api/svc/public/app-documents.ts putDocEvento.
+
+const CID = "test-access-fn-cid";
+
+// Records the arg the mock was last called with, plus the response it returns.
+interface InvokeRecorder {
+  calls: { cid: string; user: unknown }[];
+  result: AccessDescriptor | { forbidden: string };
+}
+
+async function setupCtx(recorder: InvokeRecorder) {
+  const sthis = ensureSuperThis();
+  const deviceCA = await createTestDeviceCA(sthis);
+  const ctx = await createVibeDiyTestCtx(sthis, deviceCA, {
+    invokeAccessFn: async (params) => {
+      recorder.calls.push({ cid: params.cid, user: params.user });
+      return recorder.result;
+    },
+  });
+  const wsPair = TestWSPair.create();
+  const wsEvento = vibesMsgEvento();
+  const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+  ctx.vibesCtx.connections.add(wsSendProvider);
+  wsPair.p2.onmessage = (event: MessageEvent) => {
+    wsEvento.trigger({ ctx: ctx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+  };
+  return { ctx, wsPair, sthis, deviceCA };
+}
+
+async function mkUser(
+  sthis: ReturnType<typeof ensureSuperThis>,
+  deviceCA: Awaited<ReturnType<typeof createTestDeviceCA>>,
+  wsPair: ReturnType<typeof TestWSPair.create>,
+  seqOffset: number
+) {
+  const user = await createTestUser({ sthis, deviceCA, seqUserId: seqOffset });
+  const api = new VibesDiyApi({
+    apiUrl: "http://localhost:8787/api",
+    ws: wsPair.p1 as unknown as WebSocket,
+    timeoutMs: 10000,
+    getToken: async () => Result.Ok(await user.getDashBoardToken()),
+  });
+  return { user, api };
+}
+
+async function seedBinding(
+  ctx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>,
+  binding: { ownerHandle: string; appSlug: string; dbName: string }
+) {
+  await ctx.vibesCtx.sql.db.insert(ctx.vibesCtx.sql.tables.accessFunctionBindings).values({
+    userSlug: binding.ownerHandle,
+    appSlug: binding.appSlug,
+    dbName: binding.dbName,
+    accessFnCid: CID,
+    updated: new Date().toISOString(),
+  });
+}
+
+describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 }, () => {
+  let appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
+  let ownerApi: VibesDiyApi;
+  let appSlug: string;
+  let ownerHandle: string;
+  const recorder: InvokeRecorder = { calls: [], result: { allowAnonymous: true } };
+
+  beforeAll(async () => {
+    const { ctx, wsPair, sthis, deviceCA } = await setupCtx(recorder);
+    appCtx = ctx;
+    const ownerSetup = await mkUser(sthis, deviceCA, wsPair, 800);
+    ownerApi = ownerSetup.api;
+    const r = await ownerApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+    });
+    const res = r.Ok();
+    if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
+    appSlug = res.appSlug;
+    ownerHandle = res.ownerHandle;
+    await seedBinding(appCtx, { ownerHandle, appSlug, dbName: "default" });
+  }, 30000);
+
+  it("authenticated write passes when invokeAccessFn allows it", async () => {
+    recorder.calls = [];
+    recorder.result = { allowAnonymous: true };
+    const res = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      doc: { title: "auth write" },
+    });
+    expect(res.isOk()).toBe(true);
+    // The gate invoked the mock with the binding's CID and a non-null user.
+    expect(recorder.calls.length).toBe(1);
+    expect(recorder.calls[0]?.cid).toBe(CID);
+    expect(recorder.calls[0]?.user).not.toBeNull();
+  });
+
+  it("write rejected when invokeAccessFn returns { forbidden }", async () => {
+    recorder.calls = [];
+    recorder.result = { forbidden: "custom deny" };
+    const res = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      doc: { title: "should be denied" },
+    });
+    expect(res.isErr()).toBe(true);
+    expect(res.Err().error?.message).toBe("custom deny");
+    expect(recorder.calls.length).toBe(1);
+  });
 });

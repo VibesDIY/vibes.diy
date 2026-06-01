@@ -129,21 +129,27 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
     }
     return Result.Ok(Option.Some({ ...msg, payload: ret }));
   }),
-  handle: checkAuth(
+  handle: optAuth(
     async (
-      ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPutDoc>>, ResPutDoc | VibesDiyError>
+      ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithOptionalAuth<ReqPutDoc>>, ResPutDoc | VibesDiyError>
     ): Promise<Result<EventoResultType>> => {
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-      const userId = req._auth.verifiedAuth.claims.userId;
+      const userId = req._auth?.verifiedAuth.claims.userId ?? null;
 
       if (isDirectChannel(req.ownerHandle)) {
+        // DM writes always require authentication
+        if (!userId) {
+          await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
         const rAccess = await checkDirectChannelAccess(vctx, req.ownerHandle, userId);
         if (rAccess.isErr() || !rAccess.Ok()) {
           await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
-      } else {
+      } else if (userId) {
+        // Authenticated user: standard ACL gate
         const access = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         // Fail closed: a settings-read error must not silently fall back to the
@@ -158,6 +164,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           return Result.Ok(EventoResult.Continue);
         }
       }
+      // Anonymous non-DM: falls through to access fn gate below
 
       // Phase 3: validate every `_files.<key>.uploadId` references an
       // AssetUploads row minted for this (ownerHandle, appSlug). See
@@ -182,15 +189,28 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         .limit(1)
         .then((r) => r[0]);
 
+      // Anonymous write with no access function → deny
+      if (!userId && !afbRow?.accessFnCid) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-error",
+          error: { message: "Access denied" },
+        } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
+      }
+
       if (afbRow?.accessFnCid && vctx.invokeAccessFn) {
-        // Resolve writer's handle from userId — req.ownerHandle is the DB owner, not the writer
+        // Resolve writer's handle from userId — req.ownerHandle is the DB owner, not the writer.
+        // Anonymous writers have no userId; userContext stays null so the access fn
+        // must opt in via allowAnonymous.
         const t_usb = vctx.sql.tables.handleBinding;
-        const writerRow = await vctx.sql.db
-          .select({ handle: t_usb.handle })
-          .from(t_usb)
-          .where(eq(t_usb.userId, userId))
-          .limit(1)
-          .then((r) => r[0]);
+        const writerRow = userId
+          ? await vctx.sql.db
+              .select({ handle: t_usb.handle })
+              .from(t_usb)
+              .where(eq(t_usb.userId, userId))
+              .limit(1)
+              .then((r) => r[0])
+          : undefined;
         const userContext = writerRow?.handle ? { userHandle: writerRow.handle } : null;
 
         // Load existing doc so access fn can enforce update-ownership checks
@@ -263,7 +283,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         dbName,
         docId,
         seq: nextSeq,
-        userId,
+        userId: userId ?? "anonymous",
         data: req.doc,
         deleted: 0,
         created: now,
@@ -287,7 +307,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           const senderRow = await vctx.sql.db
             .select({ handle: t_usb.handle })
             .from(t_usb)
-            .where(and(eq(t_usb.userId, userId), inArray(t_usb.handle, participants)))
+            .where(and(eq(t_usb.userId, userId ?? ""), inArray(t_usb.handle, participants)))
             .then((r) => r[0]);
           const senderUserSlug = senderRow?.handle ?? "";
           const recipientUserSlug = participants.find((h) => h !== senderUserSlug) ?? participants[1];
@@ -295,7 +315,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           await vctx.postQueue({
             payload: {
               type: "vibes.diy.evt-dm-received",
-              senderUserId: userId,
+              senderUserId: userId ?? "",
               senderUserSlug,
               recipientUserSlug,
               channelUserSlug: req.ownerHandle,
@@ -330,12 +350,12 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         await vctx.postQueue({
           payload: {
             type: "vibes.diy.evt-comment-posted",
-            userId,
+            userId: userId ?? "anonymous",
             ownerHandle: req.ownerHandle,
             appSlug: req.appSlug,
             docId,
             created: now,
-            email: req._auth.verifiedAuth.claims.params.email,
+            email: req._auth?.verifiedAuth.claims.params.email ?? "anonymous",
           },
           tid: "queue-event",
           src: "putDoc",
