@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 
 import {
-  DurableObjectNamespace,
   ExecutionContext,
   ExportedHandler,
   Request as CFRequest,
@@ -26,7 +25,6 @@ export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
 export { UserNotify } from "./user-notify.js";
 export { AccessFnDO } from "./access-fn.js";
-export { AccessFnSpike } from "./access-fn-spike.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 
@@ -65,16 +63,6 @@ function getRequestHandler() {
 export default {
   async fetch(request: CFRequest, env: CFEnv, ctx: ExecutionContext): Promise<CFResponse> {
     const url = URI.from(request.url);
-
-    if (url.pathname === "/_spike-test") {
-      const spikeEnv = env as unknown as { ACCESS_FN_SPIKE: DurableObjectNamespace };
-      const id = spikeEnv.ACCESS_FN_SPIKE.idFromName("test");
-      const stub = spikeEnv.ACCESS_FN_SPIKE.get(id);
-      const res = await stub.fetch(new Request("https://internal/") as unknown as CFRequest);
-      return new Response(await res.text(), {
-        headers: { "Content-Type": "application/json" },
-      }) as unknown as CFResponse;
-    }
 
     const fbclid = url.getParam("fbclid");
     if (fbclid !== undefined && env.META_CAPI_TOKEN !== undefined && env.META_PIXEL_ID !== undefined) {
