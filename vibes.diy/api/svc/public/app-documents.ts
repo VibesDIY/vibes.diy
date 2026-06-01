@@ -234,11 +234,24 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           oldDoc = existing?.data ?? null;
         }
 
+        // Fetch source from DB (handles both D1 and Neon via Drizzle). Small
+        // access.js files (≤4 KB — all real-world ones) live in SQL, not R2.
+        const tAssets = vctx.sql.tables.assets;
+        const assetRow = await vctx.sql.db
+          .select({ content: tAssets.content })
+          .from(tAssets)
+          .where(eq(tAssets.assetId, afbRow.accessFnCid))
+          .limit(1)
+          .then((r) => r[0]);
+        // content is stored as a blob — decode to UTF-8 string
+        const accessFnSource = assetRow?.content ? Buffer.from(assetRow.content as Uint8Array).toString("utf-8") : undefined;
+
         const invokeResult = await vctx.invokeAccessFn({
           cid: afbRow.accessFnCid,
           doc: req.doc,
           oldDoc,
           user: userContext,
+          source: accessFnSource,
         });
 
         if ("forbidden" in invokeResult) {

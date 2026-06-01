@@ -64,6 +64,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
     doc: unknown;
     oldDoc: unknown | null;
     user: UserContext | null;
+    source?: string;
   }): Promise<AccessDescriptor | { forbidden: string }>;
   // waitUntil?<T>(promise: Promise<T>): void;
 }

@@ -283,13 +283,26 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
       doc: unknown;
       oldDoc: unknown | null;
       user: UserContext | null;
+      source?: string;
     }): Promise<AccessDescriptor | { forbidden: string }> => {
+      // Source may already be resolved by app-documents.ts (SQL path).
+      // Fall back to R2 for large files (> 4 KB).
+      let resolvedSource = params.source;
+      if (!resolvedSource) {
+        const r2obj = await env.FS_IDS_BUCKET.get(params.cid);
+        if (r2obj) {
+          resolvedSource = await r2obj.text();
+        }
+      }
+      if (!resolvedSource) {
+        return { forbidden: `access function source not found for CID ${params.cid}` };
+      }
       const id = env.ACCESS_FN_DO.idFromName(params.cid);
       const stub = env.ACCESS_FN_DO.get(id);
       const res = await stub.fetch(
         new Request("https://internal/invoke", {
           method: "POST",
-          body: JSON.stringify({ doc: params.doc, oldDoc: params.oldDoc, user: params.user }),
+          body: JSON.stringify({ doc: params.doc, oldDoc: params.oldDoc, user: params.user, source: resolvedSource }),
           headers: { "Content-Type": "application/json" },
         }) as unknown as CFRequest
       );
