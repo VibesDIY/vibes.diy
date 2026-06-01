@@ -332,6 +332,7 @@ export const sqlAccessFunctionBindings = pgTable(
     appSlug: text().notNull(),
     dbName: text().notNull(),
     accessFnCid: text().notNull(),
+    accessFnAssetUri: text(), // nullable — full storage URI, e.g. s3://r2/<cid> or pg://Assets/<cid>
     updated: text().notNull(),
   },
   (table) => [

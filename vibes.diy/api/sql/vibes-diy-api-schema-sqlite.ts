@@ -310,6 +310,7 @@ export const sqlAccessFunctionBindings = sqliteTable(
     appSlug: text().notNull(),
     dbName: text().notNull(), // specific dbName or '*' for app-wide
     accessFnCid: text().notNull(), // CID in Assets table
+    accessFnAssetUri: text(), // nullable — full storage URI, e.g. s3://r2/<cid> or pg://Assets/<cid>
     updated: text().notNull(),
   },
   (table) => [

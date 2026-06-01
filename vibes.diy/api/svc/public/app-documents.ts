@@ -182,7 +182,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       let accessResult: AccessDescriptor | undefined;
       const tAfb = vctx.sql.tables.accessFunctionBindings;
       const afbRow = await vctx.sql.db
-        .select({ accessFnCid: tAfb.accessFnCid })
+        .select({ accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri })
         .from(tAfb)
         .where(and(eq(tAfb.userSlug, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [req.dbName, "*"])))
         .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
@@ -234,17 +234,29 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           oldDoc = existing?.data ?? null;
         }
 
-        // Fetch source from DB (handles both D1 and Neon via Drizzle). Small
-        // access.js files (≤4 KB — all real-world ones) live in SQL, not R2.
-        const tAssets = vctx.sql.tables.assets;
-        const assetRow = await vctx.sql.db
-          .select({ content: tAssets.content })
-          .from(tAssets)
-          .where(eq(tAssets.assetId, afbRow.accessFnCid))
-          .limit(1)
-          .then((r) => r[0]);
-        // content is stored as a blob — decode to UTF-8 string
-        const accessFnSource = assetRow?.content ? Buffer.from(assetRow.content as Uint8Array).toString("utf-8") : undefined;
+        // Fetch source using the stored assetURI (handles SQL and R2 transparently).
+        let accessFnSource: string | undefined;
+        if (afbRow.accessFnAssetUri) {
+          const rFetch = await vctx.storage.fetch(afbRow.accessFnAssetUri);
+          if (rFetch.type === "fetch.ok") {
+            // Collect stream to Uint8Array, decode to UTF-8
+            const reader = rFetch.data.getReader();
+            const chunks: Uint8Array[] = [];
+            for (;;) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              if (value) chunks.push(value);
+            }
+            const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+            const merged = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const chunk of chunks) {
+              merged.set(chunk, offset);
+              offset += chunk.length;
+            }
+            accessFnSource = new TextDecoder().decode(merged);
+          }
+        }
 
         const invokeResult = await vctx.invokeAccessFn({
           cid: afbRow.accessFnCid,
