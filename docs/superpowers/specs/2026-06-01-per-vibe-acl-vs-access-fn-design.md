@@ -192,13 +192,12 @@ const { database, useLiveQuery, access } = useFireproof("comments");
 
 access.roles; // Set<string> — roles this user has (from members reduce)
 access.channels; // Set<string> — channels this user can read (from grant reduce)
-access.isPending; // true until grants have loaded from the server
 
 access.hasRole("moderator"); // boolean convenience
 access.hasChannel("engineering"); // boolean convenience
 ```
 
-`access.isPending` works like `useViewer().isViewerPending` — gate access-dependent UI on `!access.isPending` to avoid false-negative flicker (hiding a component then showing it once grants arrive).
+No separate pending flag — grants arrive in the same `resolveWhoAmI` response as the viewer identity, so `useViewer().isViewerPending` covers both. When `isViewerPending` is false, grants are already populated.
 
 The AI agent writes the access function (so it knows the role names) and writes the UI (so it knows which roles gate which components):
 
@@ -207,7 +206,7 @@ function App() {
   const { viewer, isViewerPending, ViewerTag } = useViewer();
   const { database, useLiveQuery, access } = useFireproof("comments");
 
-  if (isViewerPending || access.isPending) return null;
+  if (isViewerPending) return null;
 
   return (
     <div>
