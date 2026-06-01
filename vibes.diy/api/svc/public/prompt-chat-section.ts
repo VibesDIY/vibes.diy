@@ -1,14 +1,4 @@
-import {
-  EventoHandler,
-  Result,
-  Option,
-  HandleTriggerCtx,
-  EventoResult,
-  exception2Result,
-  chunkyAsync,
-  BuildURI,
-  URI,
-} from "@adviser/cement";
+import { EventoHandler, Result, Option, HandleTriggerCtx, EventoResult, exception2Result, chunkyAsync } from "@adviser/cement";
 import { storeAndAuditAsset } from "./store-and-audit-asset.js";
 import { convertImageEvtToFileRef } from "./convert-image-evt.js";
 import { Scope, scopey } from "@adviser/scopey";
@@ -25,7 +15,6 @@ import {
   LLMHeaders,
   type PromptStyle,
   MsgBase,
-  parseArrayWarning,
   PromptAndBlockMsgs,
   ReqPromptChatSection,
   reqPromptChatSection,
@@ -37,18 +26,10 @@ import {
   VibeFile,
   VibesDiyError,
   W3CWebSocketEvent,
-  isPromptReq,
   isReqPromptFSSetChatSection,
   parseArray,
   vibeFile,
   isVibeCodeBlock,
-  ActiveEntry,
-  isActiveEnrichedPrompt,
-  isActiveSkills,
-  isActiveTheme,
-  isActiveTitle,
-  type SelectedSlotInput,
-  type SlotConfig,
   type EvtUserNotification,
 } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
@@ -58,7 +39,6 @@ import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
 import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import {
-  applyEdits,
   createStatsCollector,
   createLineStream,
   createDataStream,
@@ -66,15 +46,9 @@ import {
   createDeltaStream,
   createSectionsStream,
   isBlockEnd,
-  isCodeBegin,
-  isCodeEnd,
-  isCodeLine,
   isDeltaLine,
-  isToplevelLine,
   LLMRequest,
   ChatMessage,
-  CodeMsg,
-  parseFenceBody,
   CodeBeginMsg,
   CodeLineMsg,
   FileSystemRef,
@@ -84,12 +58,9 @@ import {
   isBlockImage,
   CodeEndMsg,
   BlockBeginMsg,
-  type ApplyEditsError,
   type DeltaStreamMsg,
-  type FenceParseError,
 } from "@vibes.diy/call-ai-v2";
-import type { Logger } from "@adviser/cement";
-import { getRecoveryAddendum, getRecoveryStitchAddendum, makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
+import { getRecoveryAddendum, getRecoveryStitchAddendum } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
@@ -100,8 +71,30 @@ import {
   updateRecoveryCounter,
   type RecoveryCounter,
 } from "../intern/recovery.js";
-import { loadVersionTimeline, selectSlotSources, loadLatestPromptId } from "../intern/version-timeline.js";
-import { assembleSlotMessages, renderSlotMessagesAs, resolveSlotConfig } from "../intern/slot-assembler.js";
+import { loadVersionTimeline } from "../intern/version-timeline.js";
+import { resolveSlotConfig } from "../intern/slot-assembler.js";
+import { createPromptAssetFetch, promptsPkgBaseUrl, type PromptAssetFetchDeps } from "../intern/prompt-asset-fetch.js";
+import {
+  resolveCodeBlocksToFileSystem,
+  createStreamingResolver,
+  createBlockAccumulator,
+  logApplyError,
+  type CodeBlocks,
+  type ApplyErrorEvent,
+  type StreamingResolverDeps,
+  type BlockApplyResult,
+  type StreamingResolver,
+  type ClosedCodeBlock,
+  type BlockAccumulator,
+  type ApplyEditsError,
+  type FenceParseError,
+} from "../intern/prompt-streaming.js";
+import {
+  reconstructConversationMessages,
+  assemblePromptPayload,
+  type ReconstructOpts,
+  type AssemblePromptPayloadArgs,
+} from "../intern/prompt-assembly.js";
 import { bumpAppRecency } from "../intern/bump-app-recency.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
 
@@ -111,32 +104,8 @@ function clientWsSend(ctx: { send: unknown }): WSSendProvider {
   return (ctx.send as { provider: WSSendProvider }).provider;
 }
 
-// Build the `fetch` override that makeBaseSystemPrompt uses to load asset
-// files (system-prompt.md, llms/*.md) from the worker's `/vibe-pkg/`
-// endpoint instead of esm.sh. With `pkgBaseUrl` passed into prompts.ts, the
-// URL we receive here is already the workspace URL — just delegate to
-// fetchAsset, no path math.
-export interface PromptAssetFetchDeps {
-  readonly fetchAsset: (url: string) => Promise<Result<ReadableStream<Uint8Array>>>;
-}
-
-export function createPromptAssetFetch(deps: PromptAssetFetchDeps): typeof fetch {
-  return async (url, _init) => {
-    const uri = URI.from(url);
-    if (uri.protocol === "file:") {
-      return fetch(url, _init);
-    }
-    const rRes = await deps.fetchAsset(uri.toString());
-    if (rRes.isErr()) {
-      return new Response(JSON.stringify({ error: rRes.Err() }), { status: 500 });
-    }
-    return new Response(rRes.Ok());
-  };
-}
-
-export function promptsPkgBaseUrl(workspace: string): string {
-  return BuildURI.from(workspace).appendRelative("@vibes.diy/prompts/").toString();
-}
+export type { PromptAssetFetchDeps };
+export { createPromptAssetFetch, promptsPkgBaseUrl };
 
 interface AppendBlockEventParams {
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -152,243 +121,17 @@ interface AppendBlockEventParams {
   resChat?: ResChat;
 }
 
-interface CodeBlocks {
-  begin: CodeBeginMsg;
-  lines: CodeLineMsg[];
-  end?: CodeMsg;
-}
-
-// Resolve a sequence of streamed code blocks into a VibeFile[] by grouping
-// blocks by their `path` (aider-style), running parseFenceBody on each
-// block's body, and applying the resulting edits in order. A body with no
-// SEARCH markers is a `create`; bodies with markers are `replace` edits.
-//
-// `seed` carries prior-turn file content keyed by filename — required so
-// that a turn consisting only of `replace` blocks can compose against the
-// previously persisted state. Without it, SEARCH would run against an
-// empty buffer and produce a 0-byte App.jsx.
-//
-// Falls back to filename `/App.jsx` when a block has no `path` (back-compat
-// for blocks emitted before block-stream tracked path lines).
-export function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[], seed?: ReadonlyMap<string, string>): VibeFile[] {
-  const byPath = new Map<string, { lang: string; lines: string[][] }>();
-  for (const block of blocks) {
-    if (!block.end) continue;
-    const path = block.begin.path ?? "App.jsx";
-    const langRaw = block.begin.lang.toLowerCase();
-    const lang = ["js", "jsx"].includes(langRaw) ? "jsx" : langRaw;
-    const acc = byPath.get(path) ?? { lang, lines: [] };
-    acc.lines.push(block.lines.map((l) => l.line));
-    byPath.set(path, acc);
-  }
-  const result: VibeFile[] = [];
-  for (const [path, { lang, lines }] of byPath.entries()) {
-    const filename = path.startsWith("/") ? path : `/${path}`;
-    let resolved = seed?.get(filename) ?? seed?.get(path) ?? "";
-    for (const blockLines of lines) {
-      const parsed = parseFenceBody(blockLines);
-      const r = applyEdits(resolved, parsed.edits);
-      resolved = r.content;
-    }
-    result.push({
-      type: "code-block",
-      filename,
-      lang,
-      content: resolved,
-    });
-  }
-  // Carry forward seed entries for files this turn didn't touch.
-  if (seed) {
-    for (const [seededName, seededContent] of seed.entries()) {
-      const filename = seededName.startsWith("/") ? seededName : `/${seededName}`;
-      const path = filename.startsWith("/") ? filename.slice(1) : filename;
-      if (byPath.has(path) || byPath.has(filename)) continue;
-      // Determine lang from extension.
-      const ext = filename.match(/\.([^.]+)$/)?.[1] ?? "jsx";
-      const lang = ["js", "jsx"].includes(ext.toLowerCase()) ? "jsx" : ext.toLowerCase();
-      result.push({
-        type: "code-block",
-        filename,
-        lang,
-        content: seededContent,
-      });
-    }
-  }
-  return result;
-}
-
-// Per-block streaming apply-error observer. Mirrors the parseFenceBody +
-// applyEdits work that resolveCodeBlocksToFileSystem performs at end-of-turn,
-// but runs against each block.code.end as it arrives so we can surface apply
-// errors the moment they happen. The end-of-turn resolver still produces the
-// authoritative VibeFile[] for storage — this path is observability only and
-// must not mutate any state visible to the wire output.
-//
-// Filename normalization mirrors resolveCodeBlocksToFileSystem so the running
-// vfs sees the same content the end-of-turn pass would compose against.
-export interface ApplyErrorEvent {
-  readonly chatId: string;
-  readonly promptId: string;
-  readonly blockId: string;
-  readonly sectionId: string;
-  // "fence-parse" → parseFenceBody flagged a structural problem before edits ran.
-  // "apply" → an individual SEARCH/REPLACE edit failed to match.
-  readonly kind: "fence-parse" | "apply";
-  readonly reason: string;
-  readonly searchPrefix?: string;
-}
-
-export interface StreamingResolverDeps {
-  readonly chatId: string;
-  readonly promptId: string;
-  readonly seed: ReadonlyMap<string, string>;
-  readonly onApplyError: (evt: ApplyErrorEvent) => void;
-}
-
-// Result of applying one closed block. Returned from observeBlock so a
-// caller (e.g. the recovery orchestrator) can decide what to do without
-// re-running parseFenceBody/applyEdits against a parallel vfs.
-export interface BlockApplyResult {
-  readonly path: string;
-  readonly errors: readonly ApplyErrorEvent[];
-}
-
-export interface StreamingResolver {
-  readonly observeBlock: (block: { begin: CodeBeginMsg; lines: readonly CodeLineMsg[]; end: CodeEndMsg }) => BlockApplyResult;
-  // Snapshot of the resolver's running per-path content. The recovery
-  // orchestrator passes this to buildRecoveryRequest as the CURRENT FILES
-  // section. Returns a fresh Map so callers cannot mutate internal state.
-  readonly getVfs: () => ReadonlyMap<string, string>;
-}
-
-function normalizeFilename(rawPath: string | undefined): string {
-  const path = rawPath ?? "App.jsx";
-  return path.startsWith("/") ? path : `/${path}`;
-}
-
-function searchPrefixOf(search: string): string {
-  // First non-empty line, capped to 80 chars — enough to identify the failing
-  // edit in logs without spilling an entire file body into the metric stream.
-  const firstLine = search.split("\n").find((l) => l.trim().length > 0) ?? "";
-  return firstLine.length > 80 ? `${firstLine.slice(0, 80)}…` : firstLine;
-}
-
-export function createStreamingResolver(deps: StreamingResolverDeps): StreamingResolver {
-  // Running per-path content. Seeded lazily on first touch of each path so
-  // create-only blocks don't read stale content from prior turns.
-  const vfs = new Map<string, string>();
-  const seedFor = (filename: string, rawPath: string): string => {
-    return deps.seed.get(filename) ?? deps.seed.get(rawPath) ?? "";
-  };
-  return {
-    observeBlock(block) {
-      const rawPath = block.begin.path ?? "App.jsx";
-      const filename = normalizeFilename(rawPath);
-      const current = vfs.has(filename) ? (vfs.get(filename) ?? "") : seedFor(filename, rawPath);
-      const parsed = parseFenceBody(block.lines.map((l) => l.line));
-      const errors: ApplyErrorEvent[] = [];
-      for (const fenceErr of parsed.errors) {
-        const evt: ApplyErrorEvent = {
-          chatId: deps.chatId,
-          promptId: deps.promptId,
-          blockId: block.end.blockId,
-          sectionId: block.end.sectionId,
-          kind: "fence-parse",
-          reason: fenceErr.kind,
-        };
-        deps.onApplyError(evt);
-        errors.push(evt);
-      }
-      const applied = applyEdits(current, parsed.edits);
-      for (const applyErr of applied.errors) {
-        const evt: ApplyErrorEvent = {
-          chatId: deps.chatId,
-          promptId: deps.promptId,
-          blockId: block.end.blockId,
-          sectionId: block.end.sectionId,
-          kind: "apply",
-          reason: applyErr.reason,
-          searchPrefix: searchPrefixOf(applyErr.search),
-        };
-        deps.onApplyError(evt);
-        errors.push(evt);
-      }
-      vfs.set(filename, applied.content);
-      return { path: filename, errors };
-    },
-    getVfs() {
-      return new Map(vfs);
-    },
-  };
-}
-
-// Tracks open `block.code.*` messages by blockId and emits a closed
-// {begin, lines, end} triple as soon as the matching block.code.end arrives.
-// Used by both the streaming pipeline (handleLlmResponse) and the end-of-turn
-// replay (handlePromptContext) so the two paths agree on how lines map to
-// blocks. Keying by blockId is required for the streaming path because
-// nothing in the protocol guarantees code lines for different blocks don't
-// interleave; the end-of-turn path benefits from the same routing instead of
-// the older positional "latest open block" heuristic.
-export interface ClosedCodeBlock {
-  readonly begin: CodeBeginMsg;
-  readonly lines: readonly CodeLineMsg[];
-  readonly end: CodeEndMsg;
-}
-
-export interface BlockAccumulator {
-  readonly ingest: (msg: unknown) => ClosedCodeBlock | undefined;
-}
-
-export function createBlockAccumulator(): BlockAccumulator {
-  const open = new Map<string, { begin: CodeBeginMsg; lines: CodeLineMsg[] }>();
-  return {
-    ingest(msg) {
-      if (isCodeBegin(msg)) {
-        open.set(msg.blockId, { begin: msg, lines: [] });
-        return undefined;
-      }
-      if (isCodeLine(msg)) {
-        open.get(msg.blockId)?.lines.push(msg);
-        return undefined;
-      }
-      if (isCodeEnd(msg)) {
-        const acc = open.get(msg.blockId);
-        if (!acc) return undefined;
-        open.delete(msg.blockId);
-        return { begin: acc.begin, lines: acc.lines, end: msg };
-      }
-      return undefined;
-    },
-  };
-}
-
-// Adapter that builds an ApplyErrorEvent sink writing to a Logger. Kept
-// separate so tests can substitute a plain collector without going through
-// ensureLogger plumbing.
-export function logApplyError(logger: Logger, evt: ApplyErrorEvent): void {
-  // Debug, not Info: these fire on every parser hiccup (divider-as-end,
-  // no-match, content-before-search) which is routine in the
-  // tiny-edits design where 20–40 small SR pairs may have one or two
-  // hiccups. Recovery handles them. Failures that actually matter
-  // (recovery-exhausted, recovery-call-failed) stay at Info.
-  logger
-    .Debug()
-    .Any({
-      chatId: evt.chatId,
-      promptId: evt.promptId,
-      blockId: evt.blockId,
-      sectionId: evt.sectionId,
-      kind: evt.kind,
-      reason: evt.reason,
-      ...(evt.searchPrefix === undefined ? {} : { searchPrefix: evt.searchPrefix }),
-    })
-    .Msg("apply-error");
-}
-
-// For consumers (tests, future recovery PR) that want the raw types without
-// reaching into apply-edits / fence-body-parser directly.
-export type { ApplyEditsError, FenceParseError };
+export { resolveCodeBlocksToFileSystem, createStreamingResolver, createBlockAccumulator, logApplyError };
+export type {
+  ApplyErrorEvent,
+  StreamingResolverDeps,
+  BlockApplyResult,
+  StreamingResolver,
+  ClosedCodeBlock,
+  BlockAccumulator,
+  ApplyEditsError,
+  FenceParseError,
+};
 
 async function appendBlockEvent({
   ctx,
@@ -589,275 +332,8 @@ export async function handlePromptContext({
   return Result.Ok({ blockSeq, fsRef });
 }
 
-export interface ReconstructOpts {
-  readonly keepFullTurnStreamId?: string;
-}
-
-/**
- * Reconstruct conversation messages (user + assistant) from stored section blocks.
- * Assistant responses are rebuilt from ToplevelLine and Code block messages.
- *
- * When opts.keepFullTurnStreamId is set, code blocks in older turns (identified
- * by the prompt.req streamId) are compacted to summary lines instead of being
- * emitted verbatim. The turn whose streamId matches keepFullTurnStreamId is
- * kept in full.
- */
-export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[], opts: ReconstructOpts = {}): ChatMessage[] {
-  const messages: ChatMessage[] = [];
-  const assistantLines: string[] = [];
-  let currentStreamId: string | undefined;
-  let blockBuffer: { path: string; lineCount: number; firstNonBlank?: string } | null = null;
-
-  function flushAssistant() {
-    if (assistantLines.length === 0) return;
-    messages.push({
-      role: "assistant",
-      content: [{ type: "text", text: assistantLines.join("\n") }],
-    });
-    assistantLines.length = 0;
-  }
-
-  for (const msg of sectionMsgs) {
-    switch (true) {
-      case isPromptReq(msg):
-        flushAssistant();
-        // Invariant: each stored prompt.req carries only the newest user turn
-        // (see handlePromptContext); full history is rebuilt across sections
-        // rather than duplicated per request.
-        currentStreamId = msg.streamId;
-        messages.push(...msg.request.messages.filter((m) => m.role === "user"));
-        break;
-      case isToplevelLine(msg):
-        assistantLines.push(msg.line);
-        break;
-      case isCodeBegin(msg): {
-        const compact = opts.keepFullTurnStreamId !== undefined && currentStreamId !== opts.keepFullTurnStreamId;
-        if (compact) {
-          blockBuffer = { path: msg.path ?? "App.jsx", lineCount: 0 };
-        } else {
-          assistantLines.push("```" + msg.lang);
-        }
-        break;
-      }
-      case isCodeLine(msg):
-        if (blockBuffer) {
-          blockBuffer.lineCount++;
-          if (!blockBuffer.firstNonBlank && msg.line.trim().length > 0) {
-            blockBuffer.firstNonBlank = msg.line.trim();
-          }
-        } else {
-          assistantLines.push(msg.line);
-        }
-        break;
-      case isCodeEnd(msg):
-        if (blockBuffer) {
-          const isEdit = blockBuffer.firstNonBlank === "<<<<<<< SEARCH";
-          if (isEdit) {
-            assistantLines.push(`[${blockBuffer.lineCount}-line edit to ${blockBuffer.path}]`);
-          } else {
-            const lines = msg.stats.lines !== 0 ? msg.stats.lines : blockBuffer.lineCount;
-            const bytes = msg.stats.bytes;
-            assistantLines.push(`[Created ${blockBuffer.path} — ${lines} lines, ${bytes} bytes]`);
-          }
-          blockBuffer = null;
-        } else {
-          assistantLines.push("```");
-        }
-        break;
-    }
-  }
-  flushAssistant();
-  return messages;
-}
-
-async function loadActiveSettings(
-  vctx: VibesApiSQLCtx,
-  chatId: string
-): Promise<{ skills?: string[]; theme?: string; title?: string; enrichedPrompt?: string }> {
-  const rChat = await exception2Result(() =>
-    vctx.sql.db
-      .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, ownerHandle: vctx.sql.tables.chatContexts.ownerHandle })
-      .from(vctx.sql.tables.chatContexts)
-      .where(eq(vctx.sql.tables.chatContexts.chatId, chatId))
-      .limit(1)
-      .then((r) => r[0])
-  );
-  if (rChat.isErr() || !rChat.Ok()) return {};
-  const { appSlug, ownerHandle } = rChat.Ok();
-  const rApp = await exception2Result(() =>
-    vctx.sql.db
-      .select({ settings: vctx.sql.tables.appSettings.settings })
-      .from(vctx.sql.tables.appSettings)
-      .where(and(eq(vctx.sql.tables.appSettings.appSlug, appSlug), eq(vctx.sql.tables.appSettings.ownerHandle, ownerHandle)))
-      .limit(1)
-      .then((r) => r[0])
-  );
-  if (rApp.isErr() || !rApp.Ok()) return {};
-  const entries = (rApp.Ok().settings ?? []) as ActiveEntry[];
-  return {
-    skills: entries.find(isActiveSkills)?.skills,
-    theme: entries.find(isActiveTheme)?.theme,
-    title: entries.find(isActiveTitle)?.title,
-    enrichedPrompt: entries.find(isActiveEnrichedPrompt)?.enrichedPrompt,
-  };
-}
-
-export interface AssemblePromptPayloadArgs {
-  readonly chatId: string;
-  readonly model: string;
-  // Next user turn(s) appended to the reconstructed conversation. Callers
-  // pass these explicitly instead of writing a prompt.req block first and
-  // letting reconstruction pick it up — so the same function serves both
-  // the dispatch path (writes after assembly) and the dry-run path (no write).
-  // Non-user roles are filtered.
-  readonly newUserMessages: readonly ChatMessage[];
-  // Optional: the version or draft the user currently has selected in the UI.
-  // Drives the SELECTED_DRAFT or SELECTED_VERSION slot.
-  readonly selected?: SelectedSlotInput;
-  // Optional: per-slot mute configuration.
-  readonly slots?: SlotConfig;
-  // Optional: the file path to focus on in slot rendering. Defaults to "App.jsx".
-  readonly focusPath?: string;
-  // Optional: override which role slot messages are delivered as. When absent,
-  // falls back to the SLOT_DELIVERY_MODE env var (defaulting to "user").
-  readonly slotDeliveryMode?: "user" | "system";
-}
-
-export async function assemblePromptPayload(
-  vctx: VibesApiSQLCtx,
-  args: AssemblePromptPayloadArgs
-): Promise<
-  Result<{
-    model: string;
-    messages: ChatMessage[];
-  }>
-> {
-  const { chatId, model, newUserMessages } = args;
-  const sections = await vctx.sql.db
-    .select()
-    .from(vctx.sql.tables.chatSections)
-    .where(eq(vctx.sql.tables.chatSections.chatId, chatId))
-    .orderBy(vctx.sql.tables.chatSections.created);
-  // A single assistant turn can span multiple chatSections rows (blockChunks
-  // boundary), so concat every section's parsed messages and reconstruct once —
-  // reconstructing per-row would flush mid-turn and fragment the assistant message.
-  const allSectionMsgs: PromptAndBlockMsgs[] = [];
-  for (const rowSection of sections) {
-    const { filtered: sectionMsgs, warning: sectionWarning } = parseArrayWarning(rowSection.blocks, PromptAndBlockMsgs);
-    if (sectionWarning.length > 0) {
-      ensureLogger(vctx.sthis, "assemblePromptPayload").Warn().Any({ parseErrors: sectionWarning }).Msg("skip");
-    }
-    allSectionMsgs.push(...sectionMsgs);
-  }
-
-  // Load timeline and latest promptId for slot assembly + compaction.
-  // Both return Result<T>; on error we propagate the failure.
-  const timelineResult = await loadVersionTimeline(vctx, chatId);
-  if (timelineResult.isErr()) return Result.Err(timelineResult);
-
-  const latestPromptIdResult = await loadLatestPromptId(vctx, chatId);
-  if (latestPromptIdResult.isErr()) return Result.Err(latestPromptIdResult);
-
-  const timeline = timelineResult.Ok();
-  const latestPromptId = latestPromptIdResult.Ok();
-
-  // Reconstruct conversation history, compacting older turns when a latest
-  // promptId is available (keeps only the most recent turn in full fidelity).
-  // SLOTS_COMPACTION=off (or slots.compaction: "off") disables compaction
-  // entirely — all turns render verbatim. Kill-switch for rollback / A-B.
-  const compactionDisabled = args.slots?.compaction === "off";
-  const reconstructed = reconstructConversationMessages(allSectionMsgs, {
-    keepFullTurnStreamId: compactionDisabled ? undefined : latestPromptId,
-  });
-  const newUserOnly = newUserMessages.filter((m) => m.role === "user");
-
-  // Resolve the app's ActiveSkills + ActiveTitle from app_settings. Pre-allocation
-  // seeds both on new chats; legacy rows without skills fall back to
-  // makeBaseSystemPrompt's getDefaultSkills(), and an unset title drops the
-  // title hint line entirely.
-  const { skills, theme, title, enrichedPrompt } = await loadActiveSettings(vctx, chatId);
-  const isInitial = timeline.length === 0;
-
-  const systemPrompt = await exception2Result(async () => {
-    return makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
-      skills,
-      theme,
-      title,
-      enrichedPrompt,
-      demoData: false,
-      variant: isInitial ? "initial" : "continuation",
-      pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
-      fetch: createPromptAssetFetch({ fetchAsset: vctx.fetchAsset }),
-    });
-  });
-  if (systemPrompt.isErr()) {
-    console.error("Failed to create system prompt:", systemPrompt.Err());
-    return Result.Err(systemPrompt);
-  }
-  const hasUserMessage = [...reconstructed, ...newUserOnly].some((m) => m.role === "user");
-  if (hasUserMessage === false) {
-    return Result.Err(`No user messages found in the prompt`);
-  }
-
-  // Build slot messages from the version timeline. The PREVIOUS slot carries
-  // the current file state (replacing the old CURRENT FILES system-prompt append),
-  // ORIGINAL anchors to the scaffold, and LAST_EDIT provides the preceding diff.
-  const slotSources = selectSlotSources(timeline);
-
-  // Resolve a historical version if the caller specified selected:{kind:"version",fsId}.
-  let selectedVersion: { readonly vfs: ReadonlyMap<string, string>; readonly turnsAgo: number } | undefined;
-  const sel = args.selected;
-  if (sel?.kind === "version") {
-    const idx = timeline.findIndex((t) => t.fsId === sel.fsId);
-    if (idx >= 0) {
-      selectedVersion = { vfs: timeline[idx].vfs, turnsAgo: timeline.length - 1 - idx };
-    }
-  }
-
-  // Resolve a draft map if the caller supplied selected draft files.
-  // Only files with string content (code-block, str-asset-block) are included.
-  const selectedDraftMap: ReadonlyMap<string, string> | undefined =
-    args.selected?.kind === "draft"
-      ? new Map(
-          args.selected.files.flatMap((f) =>
-            f.type === "code-block" || f.type === "str-asset-block" ? [[f.filename, f.content]] : []
-          )
-        )
-      : undefined;
-
-  const slotMessages = assembleSlotMessages({
-    original: slotSources.original !== undefined ? { vfs: slotSources.original.vfs, turnsAgo: timeline.length - 1 } : undefined,
-    prev2: slotSources.prev2?.vfs,
-    previous: slotSources.previous?.vfs,
-    selectedVersion,
-    selectedDraft: selectedDraftMap,
-    focusPath: args.focusPath ?? "App.jsx",
-    config: args.slots ?? {},
-  });
-
-  // Build final message list: system → conversation history → slot messages → new user.
-  const slotDeliveryMode: "user" | "system" =
-    args.slotDeliveryMode ?? (vctx.sthis.env.get("SLOT_DELIVERY_MODE") === "system" ? "system" : "user");
-  const slotChatMessages = renderSlotMessagesAs(slotMessages, slotDeliveryMode);
-
-  return Result.Ok({
-    model,
-    messages: [
-      {
-        role: "system",
-        content: [
-          {
-            type: "text",
-            text: systemPrompt.Ok().systemPrompt,
-          },
-        ],
-      },
-      ...reconstructed,
-      ...slotChatMessages,
-      ...newUserOnly,
-    ],
-  });
-}
+export { reconstructConversationMessages, assemblePromptPayload };
+export type { ReconstructOpts, AssemblePromptPayloadArgs };
 
 interface ResChat {
   appSlug: string;
