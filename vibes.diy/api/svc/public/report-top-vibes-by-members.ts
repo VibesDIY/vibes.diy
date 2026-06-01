@@ -59,8 +59,12 @@ async function computeTopVibesByMembers(vctx: VibesApiSQLCtx): Promise<ResReport
         memberCount: members.size,
       };
     })
-    .sort((a, b) => b.memberCount - a.memberCount)
-    .slice(0, 20);
+    .sort((a, b) => {
+      if (a.memberCount !== b.memberCount) return b.memberCount - a.memberCount;
+      if (a.ownerHandle !== b.ownerHandle) return a.ownerHandle < b.ownerHandle ? -1 : 1;
+      if (a.appSlug !== b.appSlug) return a.appSlug < b.appSlug ? -1 : 1;
+      return 0;
+    });
 
   return {
     type: "vibes.diy.res-report-top-vibes-by-members",

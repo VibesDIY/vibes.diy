@@ -29,6 +29,56 @@ function deriveApiUrl(): string {
   return `${proto}://${window.location.host}/api`;
 }
 
+const TOP_VIBES_DEFAULT_PAGE_SIZE = 20;
+const TOP_VIBES_PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
+type TopVibesPageSize = (typeof TOP_VIBES_PAGE_SIZE_OPTIONS)[number];
+
+const TOP_VIBES_PAGE_QUERY_PARAM = "topVibesPage";
+const TOP_VIBES_PAGE_SIZE_QUERY_PARAM = "topVibesPageSize";
+
+function parsePositiveInt(raw: string | null): number | undefined {
+  if (raw === null || /^\d+$/.test(raw) === false) return undefined;
+  const parsed = Number(raw);
+  if (Number.isInteger(parsed) === false || parsed < 1) return undefined;
+  return parsed;
+}
+
+function isTopVibesPageSize(value: number): value is TopVibesPageSize {
+  return TOP_VIBES_PAGE_SIZE_OPTIONS.includes(value as TopVibesPageSize);
+}
+
+function readTopVibesPaginationFromUrl(): { page: number; pageSize: TopVibesPageSize } {
+  if (typeof window === "undefined") {
+    return { page: 1, pageSize: TOP_VIBES_DEFAULT_PAGE_SIZE };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const page = parsePositiveInt(params.get(TOP_VIBES_PAGE_QUERY_PARAM)) ?? 1;
+  const parsedPageSize = parsePositiveInt(params.get(TOP_VIBES_PAGE_SIZE_QUERY_PARAM));
+  const pageSize =
+    parsedPageSize !== undefined && isTopVibesPageSize(parsedPageSize) ? parsedPageSize : TOP_VIBES_DEFAULT_PAGE_SIZE;
+
+  return { page, pageSize };
+}
+
+function writeTopVibesPaginationToUrl(page: number, pageSize: TopVibesPageSize): void {
+  if (typeof window === "undefined") return;
+
+  const params = new URLSearchParams(window.location.search);
+
+  if (page <= 1) params.delete(TOP_VIBES_PAGE_QUERY_PARAM);
+  else params.set(TOP_VIBES_PAGE_QUERY_PARAM, String(page));
+
+  if (pageSize === TOP_VIBES_DEFAULT_PAGE_SIZE) params.delete(TOP_VIBES_PAGE_SIZE_QUERY_PARAM);
+  else params.set(TOP_VIBES_PAGE_SIZE_QUERY_PARAM, String(pageSize));
+
+  const nextSearch = params.toString();
+  const nextUrl = `${window.location.pathname}${nextSearch.length > 0 ? `?${nextSearch}` : ""}${window.location.hash}`;
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (currentUrl === nextUrl) return;
+  window.history.replaceState(null, "", nextUrl);
+}
+
 export function App({ getClerkToken, report }: AppProps) {
   const clerk = useClerk();
   const apiRef = useRef<VibesDiyApi | undefined>(undefined);
@@ -261,7 +311,10 @@ export function App({ getClerkToken, report }: AppProps) {
             <div className="card">
               <span className="section-label section-label--filled">All time</span>
               <h2 className="section-title">Top vibes by member count</h2>
-              <p className="section-intro">Vibes ranked by number of distinct non-owner members with durable access.</p>
+              <p className="section-intro">
+                Vibes ranked by number of distinct non-owner members with durable access.
+                {topVibes.kind === "ok" && ` Total vibes: ${topVibes.data.rows.length.toLocaleString()}.`}
+              </p>
               {topVibes.kind === "loading" ? (
                 <div className="empty">Loading…</div>
               ) : topVibes.kind === "err" ? (
@@ -331,42 +384,135 @@ function ErrorPanel({ msg }: { msg: string }) {
 }
 
 function TopVibesTable({ rows }: { readonly rows: ResReportTopVibesByMembersRow[] }) {
+  const [pagination, setPagination] = useState<{ page: number; pageSize: TopVibesPageSize }>(() => readTopVibesPaginationFromUrl());
+
+  const totalRows = rows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pagination.pageSize));
+  const page = Math.min(pagination.page, totalPages);
+  const pageStart = (page - 1) * pagination.pageSize;
+  const pageRows = rows.slice(pageStart, pageStart + pagination.pageSize);
+  const pageEnd = pageStart + pageRows.length;
+
+  useEffect(() => {
+    if (pagination.page === page) return;
+    setPagination((prev) => ({ ...prev, page }));
+  }, [page, pagination.page]);
+
+  useEffect(() => {
+    writeTopVibesPaginationToUrl(page, pagination.pageSize);
+  }, [page, pagination.pageSize]);
+
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
-        <thead>
-          <tr style={{ borderBottom: "2px solid var(--near-black)" }}>
-            <th style={{ textAlign: "right", padding: "0.5rem 0.75rem", width: "3rem" }}>#</th>
-            <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Vibe</th>
-            <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Members</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr
-              key={`${row.ownerHandle}/${row.appSlug}`}
-              style={{
-                borderBottom: "1px solid color-mix(in srgb, var(--near-black) 15%, transparent)",
-                background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--near-black) 4%, transparent)",
-              }}
-            >
-              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", color: "var(--gray-mid)" }}>{i + 1}</td>
-              <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace" }}>
-                <a
-                  href={`https://vibes.diy/vibe/${row.ownerHandle}/${row.appSlug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "var(--cyan)", textDecoration: "underline", textDecorationStyle: "dotted" }}
-                >
-                  {row.ownerHandle}/{row.appSlug}
-                </a>
-              </td>
-              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.memberCount.toLocaleString()}</td>
+    <>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "0.75rem",
+          marginBottom: "0.75rem",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+          <label
+            htmlFor="top-vibes-page-size"
+            style={{ fontSize: "0.75rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--gray-mid)" }}
+          >
+            Rows per page
+          </label>
+          <select
+            id="top-vibes-page-size"
+            value={pagination.pageSize}
+            onChange={(event) => {
+              const parsedPageSize = parsePositiveInt(event.target.value);
+              if (parsedPageSize === undefined || isTopVibesPageSize(parsedPageSize) === false) return;
+              setPagination({ page: 1, pageSize: parsedPageSize });
+            }}
+            style={{
+              border: "1px solid var(--gray-light)",
+              background: "var(--paper)",
+              color: "var(--near-black)",
+              borderRadius: "4px",
+              padding: "0.2rem 0.45rem",
+              fontSize: "0.875rem",
+              fontFamily: "monospace",
+            }}
+          >
+            {TOP_VIBES_PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+          <button
+            className="btn"
+            style={{ fontSize: "0.75rem", padding: "0.2rem 0.6rem", opacity: page <= 1 ? 0.6 : 1 }}
+            disabled={page <= 1}
+            onClick={() => setPagination((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+          >
+            ← Previous
+          </button>
+          <span style={{ fontSize: "0.875rem", color: "var(--gray-mid)", fontFamily: "monospace" }}>
+            Page {page.toLocaleString()} / {totalPages.toLocaleString()}
+          </span>
+          <button
+            className="btn"
+            style={{ fontSize: "0.75rem", padding: "0.2rem 0.6rem", opacity: page >= totalPages ? 0.6 : 1 }}
+            disabled={page >= totalPages}
+            onClick={() => setPagination((prev) => ({ ...prev, page: Math.min(totalPages, prev.page + 1) }))}
+          >
+            Next →
+          </button>
+        </div>
+      </div>
+
+      <div style={{ fontSize: "0.8rem", color: "var(--gray-mid)", marginBottom: "0.75rem", fontFamily: "monospace" }}>
+        Showing {pageStart + 1}-{pageEnd} of {totalRows.toLocaleString()}
+      </div>
+
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid var(--near-black)" }}>
+              <th style={{ textAlign: "right", padding: "0.5rem 0.75rem", width: "3rem" }}>#</th>
+              <th style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}>Vibe</th>
+              <th style={{ textAlign: "right", padding: "0.5rem 0.75rem" }}>Members</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {pageRows.map((row, i) => {
+              const rank = pageStart + i + 1;
+              return (
+                <tr
+                  key={`${row.ownerHandle}/${row.appSlug}`}
+                  style={{
+                    borderBottom: "1px solid color-mix(in srgb, var(--near-black) 15%, transparent)",
+                    background: rank % 2 === 1 ? "transparent" : "color-mix(in srgb, var(--near-black) 4%, transparent)",
+                  }}
+                >
+                  <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", color: "var(--gray-mid)" }}>{rank}</td>
+                  <td style={{ padding: "0.4rem 0.75rem", fontFamily: "monospace" }}>
+                    <a
+                      href={`https://vibes.diy/vibe/${row.ownerHandle}/${row.appSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "var(--cyan)", textDecoration: "underline", textDecorationStyle: "dotted" }}
+                    >
+                      {row.ownerHandle}/{row.appSlug}
+                    </a>
+                  </td>
+                  <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.memberCount.toLocaleString()}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 
