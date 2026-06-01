@@ -7,6 +7,7 @@ import {
   EventoResult,
   uint8array2stream,
   to_uint8,
+  exception2Result,
 } from "@adviser/cement";
 import {
   EvtNewFsId,
@@ -24,7 +25,8 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
-import { and, eq, notInArray } from "drizzle-orm";
+import { and, eq, notInArray, sql } from "drizzle-orm";
+import type { AccessDescriptor } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase as unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -180,6 +182,13 @@ export async function ensureAppSlugItem(
           }
         }
 
+        // Snapshot existing CIDs before upsert to detect changes for backfill
+        const existingBindings = await vctx.sql.db
+          .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
+          .from(tAfb)
+          .where(and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
+        const oldCids = new Map(existingBindings.map((b) => [b.dbName, b.accessFnCid]));
+
         if (exportNames.length > 0) {
           // Upsert one row per export
           for (const dbName of exportNames) {
@@ -209,6 +218,119 @@ export async function ensureAppSlugItem(
             .where(
               and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug), notInArray(tAfb.dbName, exportNames))
             );
+
+          // Backfill AccessFnOutputs for dbNames where CID changed or is new (#2101)
+          if (vctx.invokeAccessFn) {
+            const changedDbNames = exportNames.filter((name) => oldCids.get(name) !== cid);
+            if (changedDbNames.length > 0) {
+              // Fetch source once — same CID for all exports from this access.js.
+              // Prefer in-memory content (already available), fall back to storage.
+              let backfillSource: string | undefined = accessJsSource;
+              if (!backfillSource && accessJsEntry.storage.getURL) {
+                const rFetch = await vctx.storage.fetch(accessJsEntry.storage.getURL);
+                if (rFetch.type === "fetch.ok") {
+                  const reader = rFetch.data.getReader();
+                  const chunks: Uint8Array[] = [];
+                  for (;;) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    if (value) chunks.push(value);
+                  }
+                  const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+                  const merged = new Uint8Array(totalLength);
+                  let offset = 0;
+                  for (const chunk of chunks) {
+                    merged.set(chunk, offset);
+                    offset += chunk.length;
+                  }
+                  backfillSource = new TextDecoder().decode(merged);
+                }
+              }
+
+              if (backfillSource) {
+                const tDocs = vctx.sql.tables.appDocuments;
+                const tOutputs = vctx.sql.tables.accessFnOutputs;
+
+                for (const dbName of changedDbNames) {
+                  const allRows = await vctx.sql.db
+                    .select({ docId: tDocs.docId, data: tDocs.data, deleted: tDocs.deleted })
+                    .from(tDocs)
+                    .where(
+                      and(eq(tDocs.ownerHandle, ensured.ownerHandle), eq(tDocs.appSlug, ensured.appSlug), eq(tDocs.dbName, dbName))
+                    )
+                    .orderBy(sql`${tDocs.docId}, ${tDocs.seq}`);
+
+                  const latest = new Map<string, (typeof allRows)[0]>();
+                  for (const row of allRows) {
+                    latest.set(row.docId, row);
+                  }
+
+                  for (const [docId, row] of latest) {
+                    if (row.deleted === 1) continue;
+
+                    const rInvoke = await exception2Result(() =>
+                      vctx.invokeAccessFn!({
+                        cid,
+                        doc: row.data,
+                        oldDoc: null,
+                        user: null,
+                        source: backfillSource,
+                        grantState: { members: {}, roleGrants: {}, userGrants: {} },
+                      })
+                    );
+
+                    if (rInvoke.isErr()) {
+                      console.warn(
+                        `backfill: access fn threw for ${ensured.ownerHandle}/${ensured.appSlug}/${dbName}/${docId}:`,
+                        rInvoke.Err()
+                      );
+                      continue;
+                    }
+
+                    const invokeResult = rInvoke.Ok();
+                    if ("forbidden" in invokeResult) continue;
+
+                    const accessResult = invokeResult as AccessDescriptor;
+                    const outputHasGrants =
+                      (accessResult.members && Object.keys(accessResult.members).length > 0) ||
+                      (accessResult.grant?.users && Object.keys(accessResult.grant.users).length > 0) ||
+                      (accessResult.grant?.roles && Object.keys(accessResult.grant.roles).length > 0) ||
+                      (accessResult.grant?.public && accessResult.grant.public.length > 0)
+                        ? 1
+                        : 0;
+
+                    const rUpsert = await exception2Result(() =>
+                      vctx.sql.db
+                        .insert(tOutputs)
+                        .values({
+                          userSlug: ensured.ownerHandle,
+                          appSlug: ensured.appSlug,
+                          dbName,
+                          docId,
+                          fnCid: cid,
+                          output: JSON.stringify(accessResult),
+                          hasGrants: outputHasGrants,
+                        })
+                        .onConflictDoUpdate({
+                          target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+                          set: {
+                            fnCid: cid,
+                            output: JSON.stringify(accessResult),
+                            hasGrants: outputHasGrants,
+                          },
+                        })
+                    );
+                    if (rUpsert.isErr()) {
+                      console.warn(
+                        `backfill: output upsert failed for ${ensured.ownerHandle}/${ensured.appSlug}/${dbName}/${docId}:`,
+                        rUpsert.Err()
+                      );
+                    }
+                  }
+                }
+              }
+            }
+          }
         } else {
           // No valid exports → delete all bindings
           await vctx.sql.db.delete(tAfb).where(and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
