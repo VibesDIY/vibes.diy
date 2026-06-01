@@ -1,4 +1,4 @@
-import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
+import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
 import {
   MsgBase,
   reqPutDoc,
@@ -447,25 +447,30 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             ? 1
             : 0;
 
-        await vctx.sql.db
-          .insert(tOutputs)
-          .values({
-            userSlug: req.ownerHandle,
-            appSlug: req.appSlug,
-            dbName: req.dbName,
-            docId,
-            fnCid: afbRow.accessFnCid,
-            output: JSON.stringify(accessResult),
-            hasGrants: outputHasGrants,
-          })
-          .onConflictDoUpdate({
-            target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
-            set: {
+        const rUpsert = await exception2Result(() =>
+          vctx.sql.db
+            .insert(tOutputs)
+            .values({
+              userSlug: req.ownerHandle,
+              appSlug: req.appSlug,
+              dbName: req.dbName,
+              docId,
               fnCid: afbRow.accessFnCid,
               output: JSON.stringify(accessResult),
               hasGrants: outputHasGrants,
-            },
-          });
+            })
+            .onConflictDoUpdate({
+              target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+              set: {
+                fnCid: afbRow.accessFnCid,
+                output: JSON.stringify(accessResult),
+                hasGrants: outputHasGrants,
+              },
+            })
+        );
+        if (rUpsert.isErr()) {
+          console.error("AccessFnOutputs upsert failed:", rUpsert.Err());
+        }
       }
 
       await ctx.send.send(ctx, {
