@@ -154,11 +154,12 @@ export async function ensureAppSlugItem(
             appSlug: ensured.appSlug,
             dbName: "*",
             accessFnCid: cid,
+            accessFnAssetUri: accessJsEntry.storage.getURL,
             updated: new Date().toISOString(),
           })
           .onConflictDoUpdate({
             target: [tAfb.userSlug, tAfb.appSlug, tAfb.dbName],
-            set: { accessFnCid: cid, updated: new Date().toISOString() },
+            set: { accessFnCid: cid, accessFnAssetUri: accessJsEntry.storage.getURL, updated: new Date().toISOString() },
           });
       } catch (err: unknown) {
         console.warn(
