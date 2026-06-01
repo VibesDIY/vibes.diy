@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createUtf8StreamDecoder, encodeUtf8, utf8ByteLength } from "./utf8-stream.js";
+
+const sthis = ensureSuperThis();
 
 describe("utf8-stream", () => {
   describe("encodeUtf8 / utf8ByteLength", () => {
@@ -136,11 +139,10 @@ describe("utf8-stream", () => {
 
     it("matches TextDecoder output for mixed valid and invalid bytes", () => {
       const decoder = createUtf8StreamDecoder();
-      const textDecoder = new TextDecoder();
       // mix of valid ASCII, incomplete multibyte, and valid multibyte
       const bytes = new Uint8Array([0x41, 0xe2, 0x0a, 0xc3, 0xa9, 0x42]);
       const manual = decoder.decodeChunk(bytes) + decoder.flush();
-      const native = textDecoder.decode(bytes);
+      const native = sthis.txt.decode(bytes);
       expect(manual).toBe(native);
     });
   });
