@@ -57,6 +57,37 @@ export function makeHelpers(user: UserContext | null): Helpers {
   };
 }
 
+/**
+ * Extract a single function from a multi-export access.js source.
+ * For "*" (default), extracts `export default function(...)`.
+ * For a named dbName, extracts `export function <dbName>(...)`.
+ * Brace-counts to find the closing `}`. Returns undefined if not found.
+ */
+export function extractExportSource(fullSource: string, bindingDbName: string): string | undefined {
+  const pattern =
+    bindingDbName === "*"
+      ? /export\s+default\s+function\s*(?:\w+\s*)?\([^)]*\)\s*\{/
+      : new RegExp(`export\\s+function\\s+${bindingDbName}\\s*\\([^)]*\\)\\s*\\{`);
+  const match = fullSource.match(pattern);
+  if (!match) return undefined;
+  const start = match.index!;
+  let depth = 0;
+  let end = start;
+  for (let i = start; i < fullSource.length; i++) {
+    if (fullSource[i] === "{") depth++;
+    if (fullSource[i] === "}") {
+      depth--;
+      if (depth === 0) {
+        end = i + 1;
+        break;
+      }
+    }
+  }
+  let extracted = fullSource.slice(start, end).replace(/^export\s+/, "");
+  if (bindingDbName === "*") extracted = extracted.replace(/^default\s+/, "");
+  return extracted;
+}
+
 export class ForbiddenError extends Error {
   readonly forbidden: string;
 

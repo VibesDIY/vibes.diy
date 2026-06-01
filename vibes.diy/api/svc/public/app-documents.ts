@@ -48,7 +48,7 @@ import { eq, and, sql, inArray, desc } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess, canRead, isPublicReadable, DocAccessLevel } from "./access-helpers.js";
-import { enforceAllowAnonymous, ForbiddenError } from "./access-function.js";
+import { enforceAllowAnonymous, ForbiddenError, extractExportSource } from "./access-function.js";
 import type { AccessDescriptor } from "../../types/access-function.js";
 import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
 import { GrantReduce, extractContribution } from "./grant-reduce.js";
@@ -184,7 +184,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       let accessResult: AccessDescriptor | undefined;
       const tAfb = vctx.sql.tables.accessFunctionBindings;
       const afbRow = await vctx.sql.db
-        .select({ accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri })
+        .select({ accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri, dbName: tAfb.dbName })
         .from(tAfb)
         .where(and(eq(tAfb.userSlug, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [req.dbName, "*"])))
         .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
@@ -259,7 +259,8 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
               merged.set(chunk, offset);
               offset += chunk.length;
             }
-            accessFnSource = new TextDecoder().decode(merged);
+            const rawSource = new TextDecoder().decode(merged);
+            accessFnSource = extractExportSource(rawSource, afbRow.dbName) ?? rawSource;
           }
         }
 

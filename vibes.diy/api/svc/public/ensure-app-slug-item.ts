@@ -36,6 +36,7 @@ import { ensureApps } from "../intern/write-apps.js";
 import { ensureAppMetadata } from "../intern/ensure-app-metadata.js";
 import { ensurePushSeededChat } from "../intern/ensure-push-seeded-chat.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
+import { extractExportSource } from "./access-function.js";
 
 const JS_PROTO_NAMES = new Set([
   "toString",
@@ -257,7 +258,26 @@ export async function ensureAppSlugItem(
                 const tDocs = vctx.sql.tables.appDocuments;
                 const tOutputs = vctx.sql.tables.accessFnOutputs;
 
+                // Expand "*" to all databases that lack a named binding
+                const namedExportNames = exportNames.filter((n) => n !== "*");
+                const expandedDbNames: string[] = [];
                 for (const dbName of changedDbNames) {
+                  if (dbName === "*") {
+                    const distinctDbs = await vctx.sql.db
+                      .selectDistinct({ dbName: tDocs.dbName })
+                      .from(tDocs)
+                      .where(and(eq(tDocs.ownerHandle, ensured.ownerHandle), eq(tDocs.appSlug, ensured.appSlug)));
+                    for (const row of distinctDbs) {
+                      if (!namedExportNames.includes(row.dbName)) {
+                        expandedDbNames.push(row.dbName);
+                      }
+                    }
+                  } else {
+                    expandedDbNames.push(dbName);
+                  }
+                }
+
+                for (const dbName of expandedDbNames) {
                   const t0 = Date.now();
                   let docsTotal = 0;
                   let docsUpserted = 0;
@@ -278,6 +298,13 @@ export async function ensureAppSlugItem(
                     latest.set(row.docId, row);
                   }
 
+                  // Use the right function for this dbName
+                  const isWildcardExpanded = !namedExportNames.includes(dbName);
+                  const dbSource = isWildcardExpanded
+                    ? extractExportSource(backfillSource, "*")
+                    : extractExportSource(backfillSource, dbName);
+                  const effectiveSource = dbSource ?? backfillSource;
+
                   for (const [docId, row] of latest) {
                     if (row.deleted === 1) continue;
                     docsTotal++;
@@ -288,7 +315,7 @@ export async function ensureAppSlugItem(
                         doc: { ...(row.data as Record<string, unknown>), _id: docId },
                         oldDoc: null,
                         user: null,
-                        source: backfillSource,
+                        source: effectiveSource,
                         grantState: { members: {}, roleGrants: {}, userGrants: {} },
                       })
                     );
