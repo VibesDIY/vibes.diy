@@ -132,7 +132,16 @@ export class AccessFnDO implements DurableObject {
       requireRoleFn.dispose();
       ctxObj.dispose();
 
-      const fnResult = vm.evalCode(`(function() { ${source} })()`);
+      // Source is either:
+      // (a) a full function declaration from access.js: "export function notes(doc, ...) { ... }"
+      // (b) a function body from legacy Phase 4: "return { allowAnonymous: true };"
+      // Strip `export` keywords, then detect which form it is and eval accordingly.
+      const cleanSource = source.replace(/export\s+/g, "");
+      const fnNameMatch = cleanSource.match(/^function\s+(\w+)\s*\(/);
+      const evalSource = fnNameMatch
+        ? `${cleanSource}\n;${fnNameMatch[1]}(doc, oldDoc, user, ctx)`
+        : `(function() { ${cleanSource} })()`;
+      const fnResult = vm.evalCode(evalSource);
 
       if (fnResult.error) {
         const errVal = vm.dump(fnResult.error);
