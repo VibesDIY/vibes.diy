@@ -171,6 +171,7 @@ export async function ensureAppSlugItem(
           item.type === "code-block" || item.type === "str-asset-block" ? (item.content as string) : undefined;
 
         const exportNames: string[] = [];
+        let hasDefaultExport = false;
         if (accessJsSource) {
           const fnPattern = /export\s+function\s+(\w+)/g;
           let match: RegExpExecArray | null;
@@ -180,6 +181,10 @@ export async function ensureAppSlugItem(
               exportNames.push(name);
             }
           }
+          hasDefaultExport = /export\s+default\s+function/.test(accessJsSource);
+        }
+        if (hasDefaultExport) {
+          exportNames.push("*");
         }
 
         // Snapshot existing CIDs before upsert to detect changes for backfill

@@ -186,7 +186,8 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const afbRow = await vctx.sql.db
         .select({ accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri })
         .from(tAfb)
-        .where(and(eq(tAfb.userSlug, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), eq(tAfb.dbName, req.dbName)))
+        .where(and(eq(tAfb.userSlug, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [req.dbName, "*"])))
+        .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
         .limit(1)
         .then((r) => r[0]);
 
@@ -555,7 +556,8 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       const afbRowG = await vctx.sql.db
         .select({ accessFnCid: tAfbG.accessFnCid })
         .from(tAfbG)
-        .where(and(eq(tAfbG.userSlug, req.ownerHandle), eq(tAfbG.appSlug, req.appSlug), eq(tAfbG.dbName, req.dbName)))
+        .where(and(eq(tAfbG.userSlug, req.ownerHandle), eq(tAfbG.appSlug, req.appSlug), inArray(tAfbG.dbName, [req.dbName, "*"])))
+        .orderBy(sql`CASE WHEN ${tAfbG.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
         .limit(1)
         .then((r) => r[0]);
 
@@ -762,7 +764,8 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const afbRowQ = await vctx.sql.db
         .select({ accessFnCid: tAfbQ.accessFnCid })
         .from(tAfbQ)
-        .where(and(eq(tAfbQ.userSlug, req.ownerHandle), eq(tAfbQ.appSlug, req.appSlug), eq(tAfbQ.dbName, req.dbName)))
+        .where(and(eq(tAfbQ.userSlug, req.ownerHandle), eq(tAfbQ.appSlug, req.appSlug), inArray(tAfbQ.dbName, [req.dbName, "*"])))
+        .orderBy(sql`CASE WHEN ${tAfbQ.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
         .limit(1)
         .then((r) => r[0]);
 
@@ -958,7 +961,8 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       const afbRowS = await vctx.sql.db
         .select({ accessFnCid: tAfbS.accessFnCid })
         .from(tAfbS)
-        .where(and(eq(tAfbS.userSlug, req.ownerHandle), eq(tAfbS.appSlug, req.appSlug), eq(tAfbS.dbName, req.dbName)))
+        .where(and(eq(tAfbS.userSlug, req.ownerHandle), eq(tAfbS.appSlug, req.appSlug), inArray(tAfbS.dbName, [req.dbName, "*"])))
+        .orderBy(sql`CASE WHEN ${tAfbS.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
         .limit(1)
         .then((r) => r[0]);
 
