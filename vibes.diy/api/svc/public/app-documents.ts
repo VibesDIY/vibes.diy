@@ -470,6 +470,13 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         );
         if (rUpsert.isErr()) {
           console.error("AccessFnOutputs upsert failed:", rUpsert.Err());
+          if (outputHasGrants === 1) {
+            await ctx.send.send(ctx, {
+              type: "vibes.diy.res-error",
+              error: { message: "grant storage failed — retry the write" },
+            } satisfies ResError);
+            return Result.Ok(EventoResult.Continue);
+          }
         }
       }
 
