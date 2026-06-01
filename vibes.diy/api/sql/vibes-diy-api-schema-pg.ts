@@ -18,7 +18,7 @@ export const sqlHandleBinding = pgTable(
   "UserSlugBindings",
   {
     userId: text().notNull(), // max bindings per userId
-    handle: text("user_slug").notNull(),
+    handle: text("userSlug").notNull(),
     tenant: text().notNull(), // cryptograhic Id
     created: text().notNull(),
   },
@@ -33,7 +33,7 @@ export const sqlHandleBinding = pgTable(
 export const sqlAppSlugBinding = pgTable(
   "AppSlugBindings",
   {
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     appSlug: text().notNull(), // human friendly app id
     ledger: text().notNull(), // cryptograhic Id
     created: text().notNull(),
@@ -61,7 +61,7 @@ export const sqlApps = pgTable(
   {
     appSlug: text().notNull(), // human friendly app id
     userId: text().notNull(),
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     releaseSeq: integer().notNull(), // incremented on each publish
     // appId: text().notNull(), // FP app id
     fsId: text().notNull(), // CID of filenames+mimetypes+cid
@@ -82,7 +82,7 @@ export const sqlChatContexts = pgTable("ChatContexts", {
   chatId: text().notNull().primaryKey(), // uuid v4
   userId: text().notNull(),
   appSlug: text().notNull(),
-  ownerHandle: text("user_slug").notNull(),
+  ownerHandle: text("userSlug").notNull(),
   created: text().notNull(),
 });
 
@@ -137,7 +137,7 @@ export const sqlApplicationChats = pgTable(
   {
     userId: text().notNull(), // usally from Clerk
     appSlug: text().notNull(), // reverenced from the calling Page
-    ownerHandle: text("user_slug").notNull(), // reverenced from the calling Page
+    ownerHandle: text("userSlug").notNull(), // reverenced from the calling Page
     chatId: text().notNull(), // uuid v4
     blocks: jsonb().notNull(),
     created: text().notNull(),
@@ -168,7 +168,7 @@ export const sqlAppSettings = pgTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     settings: jsonb().notNull(), // AclEntry.or(ActiveAclEntries)[]
     updated: text().notNull(),
     created: text().notNull(),
@@ -187,7 +187,7 @@ export const sqlRequestGrants = pgTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     state: text().notNull(), // 'pending' | 'approved' | 'rejected'
     role: text(), // 'editor' | 'viewer'
     foreignUserId: text().notNull(), // sanitized email for grant
@@ -207,7 +207,7 @@ export const sqlRequestGrants = pgTable(
 export const sqlAppDocuments = pgTable(
   "AppDocuments",
   {
-    ownerHandle: text("user_slug").notNull().default("unknown"),
+    ownerHandle: text("userSlug").notNull().default("unknown"),
     appSlug: text().notNull(),
     dbName: text().notNull().default("default"), // database namespace within app
     docId: text().notNull(),
@@ -223,8 +223,8 @@ export const sqlAppDocuments = pgTable(
 export const sqlDirectChannelIndex = pgTable(
   "DirectChannelIndex",
   {
-    handle: text("user_slug").notNull(),
-    channelHandle: text("channel_user_slug").notNull(),
+    handle: text("userSlug").notNull(),
+    channelHandle: text("channelUserSlug").notNull(),
   },
   (table) => [primaryKey({ columns: [table.handle, table.channelHandle] })]
 );
@@ -232,8 +232,8 @@ export const sqlDirectChannelIndex = pgTable(
 export const sqlDirectChannelReads = pgTable(
   "DirectChannelReads",
   {
-    channelHandle: text("channel_user_slug").notNull(),
-    handle: text("user_slug").notNull(),
+    channelHandle: text("channelUserSlug").notNull(),
+    handle: text("userSlug").notNull(),
     lastSeenSeq: integer().notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.channelHandle, table.handle] })]
@@ -244,7 +244,7 @@ export const sqlInviteGrants = pgTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     state: text().notNull(), // 'pending' | 'accepted' | 'revoked'
     role: text().notNull(), // 'editor' | 'viewer'
     emailKey: text().notNull(), // sanitized email for grant
@@ -307,7 +307,7 @@ export const sqlAssetUploads = pgTable(
   {
     uploadId: text().notNull().primaryKey(),
     userId: text().notNull(), // Clerk userId of the uploader
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     appSlug: text().notNull(),
     cid: text().notNull(), // content hash (for dedup queries)
     assetURI: text().notNull(), // full storage URI for vctx.storage.fetch (e.g. s3://r2/<cid>, pg://Assets/<cid>)
