@@ -70,7 +70,8 @@ export function extractExportSource(fullSource: string, bindingDbName: string): 
       : new RegExp(`export\\s+function\\s+${bindingDbName}\\s*\\([^)]*\\)\\s*\\{`);
   const match = fullSource.match(pattern);
   if (!match) return undefined;
-  const start = match.index!;
+  const start = match.index;
+  if (start === undefined) return undefined;
   let depth = 0;
   let end = start;
   for (let i = start; i < fullSource.length; i++) {
