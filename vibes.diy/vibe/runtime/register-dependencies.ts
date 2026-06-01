@@ -120,8 +120,9 @@ export class VibeSandboxApi {
           const tid = crypto.randomUUID();
           const result = new Future<ResVibeRegisterFPDb>();
           this.onMsg((event) => {
-            // console.log("Received message event in request", event);
-            if (opts.wait(event.data) && event.data.tid === tid) {
+            const d = event.data as { tid?: string; status?: string; type?: string } | undefined;
+            if (d?.tid !== tid) return;
+            if (opts.wait(event.data) || d.status === "error") {
               result.resolve(event.data);
             }
           });
@@ -137,6 +138,10 @@ export class VibeSandboxApi {
         { timeout: opts.timeout ?? 5000 }
       );
       if (res.isSuccess()) {
+        const v = res.value as { status?: string; message?: string };
+        if (v.status === "error") {
+          return Result.Err(v.message ?? "request rejected");
+        }
         return Result.Ok(res.value as S);
       } else if (res.isError()) {
         return Result.Err(res.error);
