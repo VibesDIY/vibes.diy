@@ -277,7 +277,7 @@ Each capability (`read`, `write`, `delete`) is independent. Omitting one falls b
 
 The `acl` option above is a coarse per-database gate. Access functions are a finer gate: functions the server runs on every write (including deletes) before storing the document. They validate writes, route documents to channels, and declare grants that control who can read what. Only create an `/access.js` file when the user asks for per-document routing, channel-based isolation, or document-level write validation.
 
-Access functions live in `/access.js`, a separate file in the vibe's filesystem alongside `/App.jsx`. Each **named export** maps to a database name — `export function chat(...)` gates `useFireproof("chat")`. There is no `export default`; only named exports are recognized.
+Access functions live in `/access.js`, a separate file in the vibe's filesystem alongside `/App.jsx`. Each **named export** maps to a database name — `export function chat(...)` gates `useFireproof("chat")`. An `export default` function acts as a catch-all: it gates any database that doesn't have its own named export. Named exports always take precedence over the default.
 
 ```js
 // /access.js — each export name = the database it gates
@@ -452,7 +452,28 @@ export function notes(doc, oldDoc, user, ctx) {
 }
 ```
 
-Databases without a matching export have no access function and use the default app-level permissions.
+Databases without a matching named export fall through to `export default` if one exists. If there is no default export either, the database uses the default app-level permissions (no access function).
+
+### Catch-all with `export default`
+
+Use `export default` to gate every database without writing a named export for each one. Named exports still take precedence for databases that need custom logic:
+
+```js
+// /access.js
+export function chat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  ctx.requireAccess(doc.channelId);
+  return { channels: [doc.channelId] };
+}
+
+// Everything else: require authentication, no channel routing
+export default function (doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  return {};
+}
+```
+
+This is especially useful when an app has many databases or uses hyphenated names (`error-log`, `user-prefs`) that can't be JavaScript identifiers.
 
 ### Roles via `members` reduce
 
