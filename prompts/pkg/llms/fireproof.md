@@ -401,7 +401,7 @@ This single access function handles three document types:
 // /access.js
 export function survey(doc, oldDoc, user, ctx) {
   if (doc.type === "survey-response") {
-    if (doc._id) throw { forbidden: "id must be server-generated" };
+    if (oldDoc) throw { forbidden: "responses are write-once" };
     return { channels: ["inbound-responses"], allowAnonymous: true };
   }
 
