@@ -38,8 +38,8 @@ export interface PushFromDirOptions {
   mode: "production" | "dev";
   appSlug: string;
   ownerHandle: string | undefined;
-  instantJoin: boolean;
-  publicAccess?: boolean;
+  /** Opt out of fast-path defaults (public access + auto-accept editor). */
+  private?: boolean;
   apiUrl: string;
   api: {
     ensureAppSlug: (req: {
@@ -51,7 +51,7 @@ export interface PushFromDirOptions {
     ensureAppSettings: (req: {
       appSlug: string;
       ownerHandle: string;
-      request?: { enable: boolean; autoAcceptRole?: "viewer" };
+      request?: { enable: boolean; autoAcceptRole?: "viewer" | "editor" };
       publicAccess?: { enable: boolean };
     }) => Promise<
       Result<{ settings: { entry: { enableRequest?: { autoAcceptRole?: string }; publicAccess?: { enable?: boolean } } } }>
@@ -101,10 +101,14 @@ export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<Push
   }
 
   if (opts.ownerHandle) {
+    // Fast path: public + auto-accept-editor by default; opt out with --private.
+    // ensureAppSettings is one-slice-per-call (see api/svc/public/ensure-app-settings.ts
+    // switch on req shape) so publicAccess needs a separate call from the
+    // request-grant call below. Both are no-ops when already set, idempotent.
     const rSettings = await opts.api.ensureAppSettings({
       appSlug: opts.appSlug,
       ownerHandle: opts.ownerHandle,
-      request: { enable: true, autoAcceptRole: opts.instantJoin ? "viewer" : undefined },
+      request: { enable: true, autoAcceptRole: opts.private ? undefined : "editor" },
     });
     if (rSettings.isErr()) {
       const settErr = rSettings.Err();
@@ -114,14 +118,11 @@ export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<Push
         `Warning: failed to update app settings: ${typeof settErr === "object" ? JSON.stringify(settErr) : String(settErr)}`
       );
     } else {
-      const instantJoin = rSettings.Ok().settings.entry.enableRequest?.autoAcceptRole;
-      await sendProgress(opts.ctx, "info", `Requests enabled${instantJoin ? " (instant-join)" : ""}`);
+      const autoAcceptRole = rSettings.Ok().settings.entry.enableRequest?.autoAcceptRole;
+      await sendProgress(opts.ctx, "info", `Requests enabled${autoAcceptRole ? ` (auto-accept: ${autoAcceptRole})` : ""}`);
     }
 
-    // ensureAppSettings is one-slice-per-call (see api/svc/public/ensure-app-settings.ts
-    // switch on req shape) so publicAccess needs a separate call from the
-    // request-grant call above. Both are no-ops when already set, idempotent.
-    if (opts.publicAccess) {
+    if (!opts.private) {
       const rPub = await opts.api.ensureAppSettings({
         appSlug: opts.appSlug,
         ownerHandle: opts.ownerHandle,
@@ -135,7 +136,7 @@ export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<Push
           `Warning: failed to enable publicAccess: ${typeof pubErr === "object" ? JSON.stringify(pubErr) : String(pubErr)}`
         );
       } else {
-        await sendProgress(opts.ctx, "info", "publicAccess enabled (anonymous reads allowed)");
+        await sendProgress(opts.ctx, "info", "Public access enabled (world-readable, no login required)");
       }
     }
   }
