@@ -226,4 +226,41 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     expect(output.allowAnonymous).toBe(true);
     expect(recorder.calls.length).toBe(1);
   });
+
+  it("named binding takes precedence over wildcard '*' fallback", async () => {
+    const WILDCARD_CID = "wildcard-cid";
+    // Seed a wildcard binding (export default) for the same app
+    await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.accessFunctionBindings).values({
+      userSlug: ownerHandle,
+      appSlug,
+      dbName: "*",
+      accessFnCid: WILDCARD_CID,
+      updated: new Date().toISOString(),
+    });
+
+    // Write to "default" db — should use the named CID, not the wildcard
+    recorder.calls = [];
+    recorder.result = { allowAnonymous: true };
+    const r1 = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      doc: { title: "named binding" },
+    });
+    expect(r1.isOk()).toBe(true);
+    expect(recorder.calls.length).toBe(1);
+    expect(recorder.calls[0]?.cid).toBe(CID);
+
+    // Write to "other-db" — no named binding, should fall back to wildcard
+    recorder.calls = [];
+    const r2 = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "other-db",
+      doc: { title: "wildcard fallback" },
+    });
+    expect(r2.isOk()).toBe(true);
+    expect(recorder.calls.length).toBe(1);
+    expect(recorder.calls[0]?.cid).toBe(WILDCARD_CID);
+  });
 });
