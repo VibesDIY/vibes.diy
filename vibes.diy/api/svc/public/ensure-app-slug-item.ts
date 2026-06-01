@@ -24,6 +24,7 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
+import { and, eq, notInArray } from "drizzle-orm";
 import { type } from "arktype";
 import { unwrapMsgBase as unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -33,6 +34,21 @@ import { ensureApps } from "../intern/write-apps.js";
 import { ensureAppMetadata } from "../intern/ensure-app-metadata.js";
 import { ensurePushSeededChat } from "../intern/ensure-push-seeded-chat.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
+
+const JS_PROTO_NAMES = new Set([
+  "toString",
+  "valueOf",
+  "constructor",
+  "hasOwnProperty",
+  "isPrototypeOf",
+  "propertyIsEnumerable",
+  "toLocaleString",
+  "__proto__",
+  "__defineGetter__",
+  "__defineSetter__",
+  "__lookupGetter__",
+  "__lookupSetter__",
+]);
 
 // Build a preAllocate-friendly prompt from pushed code. Picks the first
 // code-block (typically App.jsx), takes the first 50 lines, and labels
@@ -138,35 +154,78 @@ export async function ensureAppSlugItem(
   const accessJsEntry = fullFileSystem.find(
     (e) => e.vibeFileItem.filename === "/access.js" || e.vibeFileItem.filename.endsWith("/access.js")
   );
+
+  const tAfb = vctx.sql.tables.accessFunctionBindings;
+
   if (accessJsEntry) {
     const cid = accessJsEntry.storage.cid;
     if (!cid) {
-      console.error(
-        `ensureAppSlugItem: access.js has no CID for ${ensured.ownerHandle}/${ensured.appSlug} — skipping AccessFunctionBindings upsert`
-      );
+      console.error(`ensureAppSlugItem: access.js has no CID for ${ensured.ownerHandle}/${ensured.appSlug}`);
     } else {
       try {
-        const tAfb = vctx.sql.tables.accessFunctionBindings;
-        await vctx.sql.db
-          .insert(tAfb)
-          .values({
-            userSlug: ensured.ownerHandle,
-            appSlug: ensured.appSlug,
-            dbName: "*",
-            accessFnCid: cid,
-            accessFnAssetUri: accessJsEntry.storage.getURL,
-            updated: new Date().toISOString(),
-          })
-          .onConflictDoUpdate({
-            target: [tAfb.userSlug, tAfb.appSlug, tAfb.dbName],
-            set: { accessFnCid: cid, accessFnAssetUri: accessJsEntry.storage.getURL, updated: new Date().toISOString() },
-          });
+        // Extract named export function names via regex from in-memory content
+        const item = accessJsEntry.vibeFileItem;
+        const accessJsSource: string | undefined =
+          item.type === "code-block" || item.type === "str-asset-block" ? (item.content as string) : undefined;
+
+        const exportNames: string[] = [];
+        if (accessJsSource) {
+          const fnPattern = /export\s+function\s+(\w+)/g;
+          let match: RegExpExecArray | null;
+          while ((match = fnPattern.exec(accessJsSource)) !== null) {
+            const name = match[1];
+            if (name && !JS_PROTO_NAMES.has(name) && name !== "default") {
+              exportNames.push(name);
+            }
+          }
+        }
+
+        if (exportNames.length > 0) {
+          // Upsert one row per export
+          for (const dbName of exportNames) {
+            await vctx.sql.db
+              .insert(tAfb)
+              .values({
+                userSlug: ensured.ownerHandle,
+                appSlug: ensured.appSlug,
+                dbName,
+                accessFnCid: cid,
+                accessFnAssetUri: accessJsEntry.storage.getURL,
+                updated: new Date().toISOString(),
+              })
+              .onConflictDoUpdate({
+                target: [tAfb.userSlug, tAfb.appSlug, tAfb.dbName],
+                set: {
+                  accessFnCid: cid,
+                  accessFnAssetUri: accessJsEntry.storage.getURL,
+                  updated: new Date().toISOString(),
+                },
+              });
+          }
+
+          // Delete stale rows (exports removed from access.js)
+          await vctx.sql.db
+            .delete(tAfb)
+            .where(
+              and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug), notInArray(tAfb.dbName, exportNames))
+            );
+        } else {
+          // No valid exports → delete all bindings
+          await vctx.sql.db.delete(tAfb).where(and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
+        }
       } catch (err: unknown) {
-        console.warn(
-          `ensureAppSlugItem: failed to upsert AccessFunctionBindings for ${ensured.ownerHandle}/${ensured.appSlug}:`,
-          err
-        );
+        console.warn(`ensureAppSlugItem: failed to process access.js for ${ensured.ownerHandle}/${ensured.appSlug}:`, err);
       }
+    }
+  } else {
+    // No access.js → delete all bindings for this app
+    try {
+      await vctx.sql.db.delete(tAfb).where(and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
+    } catch (err: unknown) {
+      console.warn(
+        `ensureAppSlugItem: failed to clean up AccessFunctionBindings for ${ensured.ownerHandle}/${ensured.appSlug}:`,
+        err
+      );
     }
   }
 
