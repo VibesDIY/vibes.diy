@@ -168,18 +168,20 @@ The full role hierarchy (owner/editor/viewer/submitter/none) and dbAcls infrastr
 
 The complexity reduction happens on the **supply side** — what the sharing UI defaults to — not by removing the ACL machinery:
 
-| Sharing control          | Default             | Reachable options                                  |
-| ------------------------ | ------------------- | -------------------------------------------------- |
-| **Auto-approve role**    | Editor (read+write) | Editor, Viewer (read-only), Submitter (write-only) |
-| **Access request grant** | Editor              | Editor, Viewer, Submitter                          |
-| **Email invite role**    | Editor              | Editor, Viewer, Submitter                          |
-| **Public toggle**        | Off                 | On/Off (controls app visibility)                   |
-| **Comments toggle**      | Members can comment | Editors-only, Members                              |
-| **Per-db ACLs**          | No overrides        | Available via settings API                         |
+| Sharing control          | Default                       | Reachable options                                   |
+| ------------------------ | ----------------------------- | --------------------------------------------------- |
+| **Auto-approve role**    | Viewer (read-only)            | Editor (read+write), Viewer, Submitter (write-only) |
+| **Access request grant** | Viewer                        | Editor, Viewer, Submitter                           |
+| **Email invite role**    | Editor (trusted collaborator) | Editor, Viewer, Submitter                           |
+| **Public toggle**        | Off                           | On/Off (controls app visibility)                    |
+| **Comments toggle**      | Members can comment           | Editors-only, Members                               |
+| **Per-db ACLs**          | No overrides                  | Available via settings API                          |
 
-The normal path is: visitor requests access → auto-approved as editor → `can("write")` returns true → access function (if any) governs fine-grained data permissions.
+Today's shipped sharing UI defaults to **viewer (read-only)** for broad-entry paths (auto-approve, access requests). This is the safe default — visitors get read access, and the owner explicitly upgrades to editor when they want to grant write access. **Editor** is the default for explicit trusted-collaborator flows (manual email invites) where the owner is choosing specific people.
 
-Reader-only and submitter-only are reachable for edge cases (remediation, restricted accounts, write-only submission flows) but aren't highlighted as the primary options.
+Submitter (write-only) exists server-side but isn't exposed in the sharing UI today. It's reachable via the settings API for specialized flows (anonymous submission boxes, write-only data collection).
+
+The normal path is: visitor requests access → auto-approved as viewer → owner upgrades to editor when ready → `can("write")` returns true → access function (if any) governs fine-grained data permissions.
 
 ### `useFireproof().access` — The Room (new)
 
@@ -190,10 +192,13 @@ const { database, useLiveQuery, access } = useFireproof("comments");
 
 access.roles; // Set<string> — roles this user has (from members reduce)
 access.channels; // Set<string> — channels this user can read (from grant reduce)
+access.isPending; // true until grants have loaded from the server
 
 access.hasRole("moderator"); // boolean convenience
 access.hasChannel("engineering"); // boolean convenience
 ```
+
+`access.isPending` works like `useViewer().isViewerPending` — gate access-dependent UI on `!access.isPending` to avoid false-negative flicker (hiding a component then showing it once grants arrive).
 
 The AI agent writes the access function (so it knows the role names) and writes the UI (so it knows which roles gate which components):
 
@@ -202,7 +207,7 @@ function App() {
   const { viewer, isViewerPending, ViewerTag } = useViewer();
   const { database, useLiveQuery, access } = useFireproof("comments");
 
-  if (isViewerPending) return null;
+  if (isViewerPending || access.isPending) return null;
 
   return (
     <div>
@@ -215,27 +220,27 @@ function App() {
 }
 ```
 
-`access` will repaint on page load as resolved grants arrive from the server — normal React behavior.
-
 **For databases without an access function export**, `access` has empty roles and channels — the app uses `useViewer().can("write")` for UI gating, same as today.
 
 ### Wire Protocol
 
-The server adds resolved grants alongside the existing viewer env fields (dbAcls stays):
+The server adds resolved grants alongside the existing viewer env fields. Precedence is **server-defined**: for databases that have an access function export, the server sends `grants` and omits that database from `dbAcls`. No client-side conflict resolution.
 
 ```typescript
 viewerEnv: {
   viewer: ViewerPayload | null,
   access: DocAccessLevel,
-  dbAcls?: Record<string, DbAcl>,          // existing — stays
-  grants?: Record<string, {                  // new — from access function reduce
+  dbAcls?: Record<string, DbAcl>,          // databases WITHOUT access fn exports
+  grants?: Record<string, {                  // databases WITH access fn exports
     channels: string[],
     roles: string[],
   }>
 }
 ```
 
-Computed during `resolveWhoAmI` by running the grant reduce once per access-function database for the authenticated user. Same work the server already does on writes — just cached for the client on page load.
+A database appears in **one or the other**, never both. The server decides which based on whether `/access.js` has a matching export for that database name.
+
+Grants are computed during `resolveWhoAmI` by running the grant reduce once per access-function database for the authenticated user. Same work the server already does on writes — just cached for the client on page load.
 
 ---
 
@@ -247,4 +252,4 @@ Computed during `resolveWhoAmI` by running the grant reduce once per access-func
 
 3. **Should simple vibes (no /access.js) keep working exactly as today?** Yes — "databases without a matching export use the default app-level permissions" (fireproof.md). The per-vibe ACL system is the correct default for vibes that don't need per-document policy.
 
-4. **Can we simplify the 13 access states?** The door needs: owner, member, not-a-member, pending, public. That's 5 states. The fine distinctions (editor vs viewer vs submitter) mattered when the platform role determined data access. With member as the one approval role and reader-only reserved, fewer states are needed.
+4. ~~**Can we simplify the 13 access states?**~~ **Resolved:** No. The full role hierarchy (owner/editor/viewer/submitter/none) stays. The supply-side defaults handle the simplification — viewer for broad entry, editor for trusted collaborators. The distinction between roles still matters for `can("write")` / `can("read")` gating.
