@@ -299,3 +299,21 @@ export const sqlMissingVibeEvents = sqliteTable("MissingVibeEvents", {
   ts: text().notNull(),
   reqPath: text().notNull(),
 });
+
+// Per-vibe access function binding: maps (userSlug, appSlug, dbName) to a CID in Assets.
+// dbName = '*' means the access function applies to all databases for this app.
+// CID-keyed so changing access.js produces a new entry with no cache invalidation step.
+export const sqlAccessFunctionBindings = sqliteTable(
+  "AccessFunctionBindings",
+  {
+    userSlug: text().notNull(),
+    appSlug: text().notNull(),
+    dbName: text().notNull(), // specific dbName or '*' for app-wide
+    accessFnCid: text().notNull(), // CID in Assets table
+    updated: text().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName] }),
+    index("AccessFunctionBindings_app_idx").on(table.userSlug, table.appSlug),
+  ]
+);

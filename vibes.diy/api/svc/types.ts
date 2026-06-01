@@ -5,6 +5,8 @@ import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { Logger, Result } from "@adviser/cement";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import {
+  type AccessDescriptor,
+  type UserContext,
   type EvtRequestGrant,
   type EvtUserNotification,
   LLMHeaders,
@@ -72,6 +74,12 @@ export interface VibesApiSQLCtx {
   notifyUser?(userId: string, evt: EvtUserNotification, senderConnId: string): Promise<void>;
   registerUserSubscription?(userId: string): Promise<void>;
   deregisterUserSubscription?(userId: string): Promise<void>;
+  invokeAccessFn?(params: {
+    cid: string;
+    doc: unknown;
+    oldDoc: unknown | null;
+    user: UserContext | null;
+  }): Promise<AccessDescriptor | { forbidden: string }>;
 }
 
 export const HandleBinding = type({

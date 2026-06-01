@@ -134,6 +134,41 @@ export async function ensureAppSlugItem(
     return Result.Err(`Expected ensureApps to return ResEnsureAppSlugOk on success, got ${JSON.stringify(ensured)}`);
   }
 
+  // Upsert AccessFunctionBindings if access.js was pushed
+  const accessJsEntry = fullFileSystem.find(
+    (e) => e.vibeFileItem.filename === "/access.js" || e.vibeFileItem.filename.endsWith("/access.js")
+  );
+  if (accessJsEntry) {
+    const cid = accessJsEntry.storage.cid;
+    if (!cid) {
+      console.error(
+        `ensureAppSlugItem: access.js has no CID for ${ensured.ownerHandle}/${ensured.appSlug} — skipping AccessFunctionBindings upsert`
+      );
+    } else {
+      try {
+        const tAfb = vctx.sql.tables.accessFunctionBindings;
+        await vctx.sql.db
+          .insert(tAfb)
+          .values({
+            userSlug: ensured.ownerHandle,
+            appSlug: ensured.appSlug,
+            dbName: "*",
+            accessFnCid: cid,
+            updated: new Date().toISOString(),
+          })
+          .onConflictDoUpdate({
+            target: [tAfb.userSlug, tAfb.appSlug, tAfb.dbName],
+            set: { accessFnCid: cid, updated: new Date().toISOString() },
+          });
+      } catch (err: unknown) {
+        console.warn(
+          `ensureAppSlugItem: failed to upsert AccessFunctionBindings for ${ensured.ownerHandle}/${ensured.appSlug}:`,
+          err
+        );
+      }
+    }
+  }
+
   // let wrapperUrl: string;
   // if (req.mode === "production") {
   //   wrapperUrl = `${vctx.params.wrapperBaseUrl}/${res.Ok().ownerHandle}/${res.Ok().appSlug}/${res.Ok().fsId}`;

@@ -321,3 +321,21 @@ export const sqlAssetUploads = pgTable(
     index("AssetUploads_cid_idx").on(table.cid),
   ]
 );
+
+// Per-vibe access function binding: maps (userSlug, appSlug, dbName) to a CID in Assets.
+// dbName = '*' means the access function applies to all databases for this app.
+// CID-keyed so changing access.js produces a new entry with no cache invalidation step.
+export const sqlAccessFunctionBindings = pgTable(
+  "AccessFunctionBindings",
+  {
+    userSlug: text().notNull(),
+    appSlug: text().notNull(),
+    dbName: text().notNull(),
+    accessFnCid: text().notNull(),
+    updated: text().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName] }),
+    index("AccessFunctionBindings_app_idx").on(table.userSlug, table.appSlug),
+  ]
+);
