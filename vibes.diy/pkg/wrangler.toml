@@ -122,7 +122,6 @@ bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "DOC_NOTIFY", class_name = "DocNotify" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
-  { name = "ACCESS_FN_SPIKE", class_name = "AccessFnSpike" },
   { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
 
@@ -137,10 +136,6 @@ new_classes = ["DocNotify"]
 [[env.dev.migrations]]
 tag = "v3"
 new_classes = ["UserNotify"]
-
-[[env.dev.migrations]]
-tag = "v4-spike"
-new_classes = ["AccessFnSpike"]
 
 [[env.dev.migrations]]
 tag = "v4"
