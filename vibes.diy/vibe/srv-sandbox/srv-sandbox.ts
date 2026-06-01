@@ -355,11 +355,20 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
         docId: ctx.validated.docId,
       });
       if (rRes.isErr()) {
+        const err = rRes.Err();
+        const errMessage = typeof err === "string" ? err : (err?.message ?? "unknown error");
+        const isAccessDenied = /access\s+denied/i.test(errMessage);
+        sandbox.args.errorLogger(
+          isAccessDenied ? "You have read-only access to this app." : "Failed to save your changes. Please try again."
+        );
+        if (!isAccessDenied) {
+          console.debug("vibePutDoc failed", err);
+        }
         await ctx.send.send(ctx, {
           tid: ctx.validated.tid,
           type: "vibes.diy.res-put-doc",
           status: "error",
-          message: rRes.Err().message,
+          message: errMessage,
         });
       } else {
         const res = rRes.Ok();
