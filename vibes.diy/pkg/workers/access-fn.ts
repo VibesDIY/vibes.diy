@@ -48,7 +48,12 @@ export class AccessFnDO implements DurableObject {
       ]) {
         const r = vm.evalCode(stmt);
         if (r.error) {
+          const errVal = vm.dump(r.error);
           r.error.dispose();
+          return new Response(JSON.stringify({ forbidden: `access function setup error: ${String(errVal)}` }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
         } else {
           r.value.dispose();
         }
@@ -59,7 +64,7 @@ export class AccessFnDO implements DurableObject {
       if (fnResult.error) {
         const errVal = vm.dump(fnResult.error);
         fnResult.error.dispose();
-        return new Response(JSON.stringify({ forbidden: `access function error: ${JSON.stringify(errVal)}` }), {
+        return new Response(JSON.stringify({ forbidden: `access function error: ${String(errVal)}` }), {
           status: 500,
           headers: { "Content-Type": "application/json" },
         });
