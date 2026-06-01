@@ -4,10 +4,12 @@ Fireproof is a lightweight embedded document database with encrypted live sync, 
 
 ## Key Features
 
-- **Apps run anywhere:** Bundle UI, data, and logic in one file.
+- **Apps run anywhere:** Bundle UI, data, and logic together.
 - **Real-Time & Offline-First:** Automatic persistence and live queries, runs in the browser - no loading or error states.
 - **Unified API:** TypeScript works with Deno, Bun, Node.js, and the browser.
 - **React Hooks:** Leverage `useLiveQuery` and `useDocument` for live collaboration. Note: these are NOT top-level exports — they are returned by the `useFireproof()` hook. Always destructure from `const { useLiveQuery, useDocument, database } = useFireproof("db-name")`.
+
+**File structure:** A vibe's source is one or more files. `/App.jsx` is the entry point (React component). `/access.js` is optional — include it when the app needs per-document write validation or channel-based read isolation. Both files are pushed together and the server discovers `/access.js` automatically.
 
 Fireproof enforces cryptographic causal consistency and ledger integrity using hash history, providing git-like versioning with lightweight blockchain-style verification. Data is stored and replicated as content-addressed encrypted blobs, making it safe and easy to sync via commodity object storage providers.
 
@@ -275,7 +277,7 @@ Each capability (`read`, `write`, `delete`) is independent. Omitting one falls b
 
 The `acl` option above is a coarse per-database gate. Access functions are a finer gate: functions the server runs on every write (including deletes) before storing the document. They validate writes, route documents to channels, and declare grants that control who can read what. Only create an `/access.js` file when the user asks for per-document routing, channel-based isolation, or document-level write validation.
 
-Access functions live in `/access.js`, a separate file in the vibe's filesystem alongside `/App.jsx`. Each **named export** maps to a database name — `export function chat(...)` gates `useFireproof("chat")`. There is no `export default`; only named exports are recognized. The file is evaluated server-side in a QuickJS WASM sandbox, not on the client. The client-side `useFireproof("chat")` call has no access parameter — the server discovers the function automatically from the file.
+Access functions live in `/access.js`, a separate file in the vibe's filesystem alongside `/App.jsx`. Each **named export** maps to a database name — `export function chat(...)` gates `useFireproof("chat")`. There is no `export default`; only named exports are recognized.
 
 ```js
 // /access.js — each export name = the database it gates
