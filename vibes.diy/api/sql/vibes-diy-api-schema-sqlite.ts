@@ -318,3 +318,20 @@ export const sqlAccessFunctionBindings = sqliteTable(
     index("AccessFunctionBindings_app_idx").on(table.userSlug, table.appSlug),
   ]
 );
+
+export const sqlAccessFnOutputs = sqliteTable(
+  "AccessFnOutputs",
+  {
+    userSlug: text().notNull(),
+    appSlug: text().notNull(),
+    dbName: text().notNull(),
+    docId: text().notNull(),
+    fnCid: text().notNull(),
+    output: text().notNull(),
+    hasGrants: int().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId] }),
+    index("AccessFnOutputs_grants_idx").on(table.userSlug, table.appSlug, table.dbName, table.fnCid),
+  ]
+);
