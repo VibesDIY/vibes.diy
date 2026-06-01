@@ -33,6 +33,7 @@ Claude Code looks for project-scoped skills under this path when running in this
 
 ## Existing skills
 
+- [`dependabot-review/`](dependabot-review/SKILL.md) — read-only audit of every open Dependabot PR. Assigns Merge/Verify/Investigate/Hold verdicts and produces a consolidated report. Source: [VibesDIY/dependabot-review](https://github.com/VibesDIY/dependabot-review).
 - [`qa-pr/`](qa-pr/SKILL.md) — agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP. Every run covers desktop + mobile (390×844) in one pass.
 
 ## Distribution & upgrade path

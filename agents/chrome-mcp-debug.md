@@ -11,6 +11,7 @@ When iterating on a UI/streaming bug with the user driving the dev server, follo
    - `list_console_messages` with `types: ["log", "warn", "error"]` for breadcrumbs.
    - `evaluate_script` calling `() => window.__<feature>Debug` to retrieve the structured snapshot.
    - For server-persisted state, `evaluate_script` an `async () => fetch(...)` to read what the iframe is actually loading. The persisted asset and the in-memory resolved buffer are not always the same — diff them.
+   - **To read a vibe's App.jsx source:** use `vibes-diy pull <appSlug> --dir /tmp/pull-out`, or fetch it directly from the worker in the page context: `evaluate_script: async () => { const r = await fetch('https://<appSlug>--<userSlug>.cli-v2.vibesdiy.net/App.jsx'); return r.text(); }`. Useful for diagnosing broken imports (e.g. a removed package) when the iframe renders blank.
    - `take_snapshot` (a11y tree) is better than screenshots for reading text content like chat history labels.
 5. **Form a hypothesis** — write it down before changing anything.
 6. **Write a failing test** that captures the hypothesis. Pure-function logic gets a unit test; UI logic gets a component test or a hook test.
