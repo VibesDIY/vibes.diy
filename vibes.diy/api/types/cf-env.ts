@@ -34,7 +34,6 @@ export interface CFEnv {
   CHAT_SESSIONS: DurableObjectNamespace;
   DOC_NOTIFY: DurableObjectNamespace;
   USER_NOTIFY: DurableObjectNamespace;
-  ACCESS_FN_DO: DurableObjectNamespace;
   VIBES_SERVICE: Queue;
   BROWSER: Fetcher; // screenshotter uses Cloudflare's Browser Rendering API, which is accessed via a Fetcher binding
   META_CAPI_TOKEN?: string;

@@ -139,23 +139,33 @@ export async function ensureAppSlugItem(
     (e) => e.vibeFileItem.filename === "/access.js" || e.vibeFileItem.filename.endsWith("/access.js")
   );
   if (accessJsEntry) {
-    try {
-      const tAfb = vctx.sql.tables.accessFunctionBindings;
-      await vctx.sql.db
-        .insert(tAfb)
-        .values({
-          userSlug: ensured.userSlug,
-          appSlug: ensured.appSlug,
-          dbName: "*",
-          accessFnCid: accessJsEntry.storage.cid,
-          updated: new Date().toISOString(),
-        })
-        .onConflictDoUpdate({
-          target: [tAfb.userSlug, tAfb.appSlug, tAfb.dbName],
-          set: { accessFnCid: accessJsEntry.storage.cid, updated: new Date().toISOString() },
-        });
-    } catch (err: unknown) {
-      console.warn(`ensureAppSlugItem: failed to upsert AccessFunctionBindings for ${ensured.userSlug}/${ensured.appSlug}:`, err);
+    const cid = accessJsEntry.storage.cid;
+    if (!cid) {
+      console.error(
+        `ensureAppSlugItem: access.js has no CID for ${ensured.ownerHandle}/${ensured.appSlug} — skipping AccessFunctionBindings upsert`
+      );
+    } else {
+      try {
+        const tAfb = vctx.sql.tables.accessFunctionBindings;
+        await vctx.sql.db
+          .insert(tAfb)
+          .values({
+            userSlug: ensured.ownerHandle,
+            appSlug: ensured.appSlug,
+            dbName: "*",
+            accessFnCid: cid,
+            updated: new Date().toISOString(),
+          })
+          .onConflictDoUpdate({
+            target: [tAfb.userSlug, tAfb.appSlug, tAfb.dbName],
+            set: { accessFnCid: cid, updated: new Date().toISOString() },
+          });
+      } catch (err: unknown) {
+        console.warn(
+          `ensureAppSlugItem: failed to upsert AccessFunctionBindings for ${ensured.ownerHandle}/${ensured.appSlug}:`,
+          err
+        );
+      }
     }
   }
 

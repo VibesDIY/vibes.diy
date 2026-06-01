@@ -12,6 +12,7 @@ import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
 import {
   type AccessDescriptor,
+  type UserContext,
   type EvtRequestGrant,
   type EvtUserNotification,
   LLMEnforced,
@@ -62,7 +63,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
     cid: string;
     doc: unknown;
     oldDoc: unknown | null;
-    user: { userSlug: string; displayName?: string } | null;
+    user: UserContext | null;
   }): Promise<AccessDescriptor | { forbidden: string }>;
   // waitUntil?<T>(promise: Promise<T>): void;
 }
