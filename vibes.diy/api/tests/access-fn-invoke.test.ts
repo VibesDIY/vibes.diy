@@ -21,7 +21,7 @@ const CID = "test-access-fn-cid";
 
 // Records the arg the mock was last called with, plus the response it returns.
 interface InvokeRecorder {
-  calls: { cid: string; user: unknown; grantState?: unknown }[];
+  calls: { cid: string; doc?: unknown; user: unknown; grantState?: unknown }[];
   result: AccessDescriptor | { forbidden: string };
 }
 
@@ -30,7 +30,7 @@ async function setupCtx(recorder: InvokeRecorder) {
   const deviceCA = await createTestDeviceCA(sthis);
   const ctx = await createVibeDiyTestCtx(sthis, deviceCA, {
     invokeAccessFn: async (params) => {
-      recorder.calls.push({ cid: params.cid, user: params.user, grantState: params.grantState });
+      recorder.calls.push({ cid: params.cid, doc: params.doc, user: params.user, grantState: params.grantState });
       return recorder.result;
     },
   });
@@ -124,6 +124,69 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     expect(res.isErr()).toBe(true);
     expect(res.Err().error?.message).toBe("custom deny");
     expect(recorder.calls.length).toBe(1);
+  });
+
+  it("doc passed to invokeAccessFn includes _id even when client omits docId", async () => {
+    recorder.calls = [];
+    recorder.result = { allowAnonymous: true };
+    const res = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      doc: { title: "no _id from client" },
+    });
+    expect(res.isOk()).toBe(true);
+    const putRes = res.Ok();
+    expect(recorder.calls.length).toBe(1);
+    const invokedDoc = recorder.calls[0]?.doc as Record<string, unknown>;
+    expect(invokedDoc._id).toBe(putRes.id);
+  });
+
+  it("doc._id matches client-provided docId", async () => {
+    recorder.calls = [];
+    recorder.result = { allowAnonymous: true };
+    const explicitId = "explicit-doc-id-123";
+    const res = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      doc: { title: "explicit id" },
+      docId: explicitId,
+    });
+    expect(res.isOk()).toBe(true);
+    expect(recorder.calls.length).toBe(1);
+    const invokedDoc = recorder.calls[0]?.doc as Record<string, unknown>;
+    expect(invokedDoc._id).toBe(explicitId);
+  });
+
+  it("grant from write N is visible in grantState of write N+1", async () => {
+    recorder.calls = [];
+    const channelId = "chan-meta-doc-id";
+    recorder.result = {
+      channels: [channelId],
+      grant: { users: { [ownerHandle]: [channelId] } },
+    };
+    const r1 = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      doc: { type: "channel-meta" },
+      docId: channelId,
+    });
+    expect(r1.isOk()).toBe(true);
+
+    // Second write — the mock still returns allowAnonymous but we check grantState
+    recorder.result = { channels: [channelId], allowAnonymous: true };
+    const r2 = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      doc: { type: "message", channelId },
+    });
+    expect(r2.isOk()).toBe(true);
+    expect(recorder.calls.length).toBe(2);
+    const gs = recorder.calls[1]?.grantState as { userGrants: Record<string, string[]> };
+    expect(gs.userGrants[ownerHandle]).toContain(channelId);
   });
 
   it("stores AccessFnOutputs row after successful access fn evaluation", async () => {
