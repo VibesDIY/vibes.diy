@@ -990,7 +990,6 @@
       <div class="doc-type">
         survey-response <span style="font-weight: 400; font-size: 10px">(anyone submits, survey-admin + feedback-team read)</span>
       </div>
-      <div class="doc-field">_id: <span>null ← must be server-generated</span></div>
       <div class="doc-field">type: <span>"survey-response"</span></div>
       <div class="doc-field">answers: <span>[…]</span></div>
       <div
@@ -1003,7 +1002,7 @@
           line-height: 1.8;
         "
       >
-        <span class="throw">throw</span> if doc._id &nbsp;<span style="color: #94a3b8">// must be server-generated</span><br />
+        <span class="throw">throw</span> if oldDoc &nbsp;<span style="color: #94a3b8">// responses are write-once</span><br />
         <span class="route">channels:</span> ["inbound-responses"]<br />
         <span class="route">allowAnonymous:</span> true &nbsp;<span style="color: #94a3b8"
           >// explicit opt-in; grant via survey-config</span
@@ -1087,7 +1086,7 @@
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"survey-response"</span>) {
-    <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
+    <span class="k">if</span> (oldDoc) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"responses are write-once"</span> }
     <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>], allowAnonymous: <span class="t">true</span> }  <span style="color: #94a3b8">// explicit opt-in — runtime rejects without this</span>
   }
 
@@ -1151,11 +1150,11 @@
     </div>
     <div class="arrow red">→</div>
     <div class="step">
-      <span class="icon">⚡</span><span class="label">access fn runs</span><span class="value">doc._id is truthy</span>
+      <span class="icon">⚡</span><span class="label">access fn runs</span><span class="value">oldDoc exists (update attempt)</span>
     </div>
     <div class="arrow red">→</div>
     <div class="step">
-      <span class="icon">🚫</span><span class="label">throw</span><span class="value">"id must be server-generated"</span>
+      <span class="icon">🚫</span><span class="label">throw</span><span class="value">"responses are write-once"</span>
     </div>
   </div>
 </div>
@@ -1200,14 +1199,15 @@
     </div>
 
     <div class="doc message">
-      <div class="doc-type">open-response <span style="font-weight: 400; font-size: 10px">(allowAnonymous: true)</span></div>
-      <div class="doc-field">_id: <span>null ← server-generated</span></div>
+      <div class="doc-type">
+        open-response <span style="font-weight: 400; font-size: 10px">(allowAnonymous: true, write-once)</span>
+      </div>
       <div class="doc-field">surveyId: <span>"s1"</span></div>
       <div class="doc-field">answers: <span>[…]</span></div>
       <div
         style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #a7f3d0; font-size: 11px; color: #065f46; line-height: 1.8"
       >
-        <span class="throw">throw</span> if doc._id<br />
+        <span class="throw">throw</span> if oldDoc<br />
         <span class="route">channels:</span> ["s1-responses"]<br />
         <span class="route">allowAnonymous:</span> true
       </div>
@@ -1248,14 +1248,13 @@
     </div>
 
     <div class="doc message">
-      <div class="doc-type">response <span style="font-weight: 400; font-size: 10px">(invited users only)</span></div>
-      <div class="doc-field">_id: <span>null ← server-generated</span></div>
+      <div class="doc-type">response <span style="font-weight: 400; font-size: 10px">(invited users only, write-once)</span></div>
       <div class="doc-field">surveyId: <span>"s2"</span></div>
       <div class="doc-field">answers: <span>[…]</span></div>
       <div
         style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #a7f3d0; font-size: 11px; color: #065f46; line-height: 1.8"
       >
-        <span class="throw">throw</span> if doc._id<br />
+        <span class="throw">throw</span> if oldDoc<br />
         ctx.<span class="throw">requireRole</span>("survey-s2-responders")<br />
         <span class="route">channels:</span> ["s2-responses"]
       </div>
@@ -1295,12 +1294,12 @@
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"open-response"</span>) {  <span style="color: #94a3b8">// s1 — explicit opt-in for anonymous submit</span>
-    <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
+    <span class="k">if</span> (oldDoc) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"responses are write-once"</span> }
     <span class="k">return</span> { channels: [`${id}-responses`], allowAnonymous: <span class="t">true</span> }
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"response"</span>) {  <span style="color: #94a3b8">// s2 — invited users only</span>
-    <span class="k">if</span> (doc._id) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"id must be server-generated"</span> }
+    <span class="k">if</span> (oldDoc) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"responses are write-once"</span> }
     ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-responders`)
     <span class="k">return</span> { channels: [`${id}-responses`] }
   }
