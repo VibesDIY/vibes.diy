@@ -133,14 +133,17 @@ export class AccessFnDO implements DurableObject {
       ctxObj.dispose();
 
       // Source is either:
-      // (a) a full function declaration from access.js: "export function notes(doc, ...) { ... }"
-      // (b) a function body from legacy Phase 4: "return { allowAnonymous: true };"
-      // Strip `export` keywords, then detect which form it is and eval accordingly.
-      const cleanSource = source.replace(/export\s+/g, "");
+      // (a) named export: "export function notes(doc, ...) { ... }"
+      // (b) default export: "export default function(doc, ...) { ... }"
+      // (c) function body from legacy Phase 4: "return { allowAnonymous: true };"
+      // Strip `export` and `default` keywords, then detect form and eval.
+      const cleanSource = source.replace(/export\s+/g, "").replace(/^default\s+/, "");
       const fnNameMatch = cleanSource.match(/^function\s+(\w+)\s*\(/);
       const evalSource = fnNameMatch
         ? `${cleanSource}\n;${fnNameMatch[1]}(doc, oldDoc, user, ctx)`
-        : `(function() { ${cleanSource} })()`;
+        : cleanSource.match(/^function\s*\(/)
+          ? `const __accessFn = ${cleanSource}\n;__accessFn(doc, oldDoc, user, ctx)`
+          : `(function() { ${cleanSource} })()`;
       const fnResult = vm.evalCode(evalSource);
 
       if (fnResult.error) {
