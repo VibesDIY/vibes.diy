@@ -3,6 +3,7 @@
 ## The Two Systems
 
 **Per-vibe ACL** (existing) — app-level settings stored in AppSettings:
+
 - Fixed roles: owner, viewer, submitter (no "editor" role yet — only owner can edit source or see chats)
 - Public access toggle (`publicAccess.enable`)
 - Request access with optional auto-approve (`request.enable` + `autoAcceptRole`)
@@ -12,6 +13,7 @@
 - Comments toggle (dbAcl on the well-known `comments` database)
 
 **Access functions** (`/access.js`) — per-database, per-document policy code:
+
 - Named exports map to database names
 - Channels for read isolation
 - Grants (`grant.users`, `grant.roles`, `grant.public`) reduced additively from document outputs
@@ -46,11 +48,11 @@ When someone requests access (or gets invited, or auto-approved), the meaningful
 
 "Public" in the access function world means **any approved member** — anyone who's through the door. It does not mean anonymous/world-readable.
 
-| Scenario | Current behavior | Least-surprise behavior |
-|---|---|---|
-| Public ON, no access fn | Anyone reads all databases | Same — no change |
-| Public ON, access fn exists | Anyone reads all databases (access fn channels bypassed?) | Access fn governs reads: `grant.public` channels are readable by any member. The toggle should not punch through channel isolation. |
-| Public OFF, access fn has `grant.public` | Anonymous reads blocked at app level | `grant.public` makes channels readable by any member (not any logged-in user — membership is required). The per-vibe toggle only affects databases *without* an access fn export. |
+| Scenario                                 | Current behavior                                          | Least-surprise behavior                                                                                                                                                           |
+| ---------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public ON, no access fn                  | Anyone reads all databases                                | Same — no change                                                                                                                                                                  |
+| Public ON, access fn exists              | Anyone reads all databases (access fn channels bypassed?) | Access fn governs reads: `grant.public` channels are readable by any member. The toggle should not punch through channel isolation.                                               |
+| Public OFF, access fn has `grant.public` | Anonymous reads blocked at app level                      | `grant.public` makes channels readable by any member (not any logged-in user — membership is required). The per-vibe toggle only affects databases _without_ an access fn export. |
 
 **Verdict:** When an access fn export exists for a database, the public toggle should not affect that database's read access. "Public" channels via `grant.public` are readable by all members (anyone through the door). The toggle remains meaningful for databases without access fn exports (including the default `data` database in simple vibes).
 
@@ -76,11 +78,11 @@ Same as request/auto-approve. An invite gets you through the door as a member. T
 
 dbAcls use subject groups (members/editors/submitters/readers) projected from per-vibe roles. Access functions use channels and their own role system. Having both active on the same database creates two overlapping authorities with no defined precedence.
 
-| Scenario | Surprise |
-|---|---|
-| dbAcl says `{ write: ["editors"] }`, access fn allows any authenticated user to write | Which wins? |
-| Access fn forbids a write via `throw { forbidden }`, dbAcl allows it | Does dbAcl override the access fn? (It shouldn't.) |
-| dbAcl restricts reads to "readers", access fn grants a channel via `grant.users` | User has channel access but dbAcl blocks the read. |
+| Scenario                                                                              | Surprise                                           |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| dbAcl says `{ write: ["editors"] }`, access fn allows any authenticated user to write | Which wins?                                        |
+| Access fn forbids a write via `throw { forbidden }`, dbAcl allows it                  | Does dbAcl override the access fn? (It shouldn't.) |
+| dbAcl restricts reads to "readers", access fn grants a channel via `grant.users`      | User has channel access but dbAcl blocks the read. |
 
 **Verdict:** Access functions supersede dbAcls for the same database. When `/access.js` exports a function named `foo`, any dbAcl entry for `foo` is ignored. They are two implementations of the same concept (per-database permission narrowing) at different granularities — running both is incoherent.
 
@@ -108,17 +110,17 @@ App-level operations on source code. Access functions don't control this.
 
 ## Summary Table
 
-| Per-vibe ACL feature | Without access fn | With access fn for that database |
-|---|---|---|
-| Public access toggle | Controls read access to all DBs | Ignored — `grant.public` channels control member-visible reads |
-| Request/auto-approve | Grants member (read+write) access through the door | Same — member gets through the door; access fn governs data |
-| Email invite | Same — invites grant member access | Same — member through the door; access fn governs data |
-| Reader-only role | Available but not highlighted | Reserved for edge cases (remediation, restricted accounts) |
-| dbAcls | Per-DB subject-group gate | Superseded — access fn is the authority |
-| Comments toggle | Convenience dbAcl | Superseded if `export function comments` exists |
-| The door (landing card) | Controls app visibility | Unchanged — still controls app visibility |
-| Clone / remix | Controls code copying | Unchanged |
-| Source editing / chats | Owner-only | Unchanged |
+| Per-vibe ACL feature    | Without access fn                                  | With access fn for that database                               |
+| ----------------------- | -------------------------------------------------- | -------------------------------------------------------------- |
+| Public access toggle    | Controls read access to all DBs                    | Ignored — `grant.public` channels control member-visible reads |
+| Request/auto-approve    | Grants member (read+write) access through the door | Same — member gets through the door; access fn governs data    |
+| Email invite            | Same — invites grant member access                 | Same — member through the door; access fn governs data         |
+| Reader-only role        | Available but not highlighted                      | Reserved for edge cases (remediation, restricted accounts)     |
+| dbAcls                  | Per-DB subject-group gate                          | Superseded — access fn is the authority                        |
+| Comments toggle         | Convenience dbAcl                                  | Superseded if `export function comments` exists                |
+| The door (landing card) | Controls app visibility                            | Unchanged — still controls app visibility                      |
+| Clone / remix           | Controls code copying                              | Unchanged                                                      |
+| Source editing / chats  | Owner-only                                         | Unchanged                                                      |
 
 ---
 
@@ -127,20 +129,113 @@ App-level operations on source code. Access functions don't control this.
 When a vibe has `/access.js`, the per-vibe ACL simplifies to **just the door**:
 
 **Becomes the access fn's job:**
+
 1. **`publicAccess.enable`** — replaced by `grant.public` channels (visible to all members)
 2. **All dbAcls** — strictly weaker than access fn, and conflicting when both are active
 3. **The subject groups** (members/editors/submitters/readers) — these project from per-vibe roles, which aren't the access fn's role system
 
-**Simplifies to one role:**
-4. **`request.autoAcceptRole`** — the only meaningful approval is "member" (read+write); reader-only is reserved for edge cases
-5. **Email invite role** — same; invite = member
+**Simplifies to one role:** 4. **`request.autoAcceptRole`** — the only meaningful approval is "member" (read+write); reader-only is reserved for edge cases 5. **Email invite role** — same; invite = member
 
 **Stays with per-vibe ACL:**
+
 - **The door** — who can see the app at all
 - **Source editing / chats** — owner-only
 - **Clone/remix** — app-level operations
 
 The per-vibe ACL system was designed before access functions existed. It served double duty as both "app shell gate" and "data gate." Access functions now handle the data gate. The door's job is simple: are you in or out? The one approval role is member. Reader-only exists for edge cases but isn't the normal path.
+
+---
+
+## Client API Design: `useViewer()` + `useFireproof().access`
+
+Two layers, matching the door/room metaphor.
+
+### `useViewer()` — The Door (unchanged)
+
+`useViewer()` is the app-level membership and per-database ACL check. The existing API stays as-is — `can("write", "comments")` keeps working, backed by the current dbAcls system.
+
+```typescript
+const { viewer, access, dbAcls, can, isViewerPending, ViewerTag } = useViewer();
+
+can("write"); // app-level: can this role write?
+can("write", "comments"); // per-db: can this role write to comments? (dbAcl check)
+can("read"); // app-level: can this role read?
+```
+
+The full role hierarchy (owner/editor/viewer/submitter/none) and dbAcls infrastructure stay in place. Nothing is removed — the system works and `can("write", "comments")` is already in deployed vibes and prompt docs.
+
+### Supply-Side Defaults: Sharing UI
+
+The complexity reduction happens on the **supply side** — what the sharing UI defaults to — not by removing the ACL machinery:
+
+| Sharing control          | Default             | Reachable options                                  |
+| ------------------------ | ------------------- | -------------------------------------------------- |
+| **Auto-approve role**    | Editor (read+write) | Editor, Viewer (read-only), Submitter (write-only) |
+| **Access request grant** | Editor              | Editor, Viewer, Submitter                          |
+| **Email invite role**    | Editor              | Editor, Viewer, Submitter                          |
+| **Public toggle**        | Off                 | On/Off (controls app visibility)                   |
+| **Comments toggle**      | Members can comment | Editors-only, Members                              |
+| **Per-db ACLs**          | No overrides        | Available via settings API                         |
+
+The normal path is: visitor requests access → auto-approved as editor → `can("write")` returns true → access function (if any) governs fine-grained data permissions.
+
+Reader-only and submitter-only are reachable for edge cases (remediation, restricted accounts, write-only submission flows) but aren't highlighted as the primary options.
+
+### `useFireproof().access` — The Room (new)
+
+For databases with access functions, the grant reduce already runs on every write. Running it once on page load gives the client the viewer's resolved permissions per database.
+
+```typescript
+const { database, useLiveQuery, access } = useFireproof("comments");
+
+access.roles; // Set<string> — roles this user has (from members reduce)
+access.channels; // Set<string> — channels this user can read (from grant reduce)
+
+access.hasRole("moderator"); // boolean convenience
+access.hasChannel("engineering"); // boolean convenience
+```
+
+The AI agent writes the access function (so it knows the role names) and writes the UI (so it knows which roles gate which components):
+
+```jsx
+function App() {
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
+  const { database, useLiveQuery, access } = useFireproof("comments");
+
+  if (isViewerPending) return null;
+
+  return (
+    <div>
+      <ViewerTag />
+      {access.hasRole("poster") && <CommentForm database={database} />}
+      {access.hasRole("moderator") && <ModTools database={database} />}
+      {access.hasChannel("announcements") && <Announcements />}
+    </div>
+  );
+}
+```
+
+`access` will repaint on page load as resolved grants arrive from the server — normal React behavior.
+
+**For databases without an access function export**, `access` has empty roles and channels — the app uses `useViewer().can("write")` for UI gating, same as today.
+
+### Wire Protocol
+
+The server adds resolved grants alongside the existing viewer env fields (dbAcls stays):
+
+```typescript
+viewerEnv: {
+  viewer: ViewerPayload | null,
+  access: DocAccessLevel,
+  dbAcls?: Record<string, DbAcl>,          // existing — stays
+  grants?: Record<string, {                  // new — from access function reduce
+    channels: string[],
+    roles: string[],
+  }>
+}
+```
+
+Computed during `resolveWhoAmI` by running the grant reduce once per access-function database for the authenticated user. Same work the server already does on writes — just cached for the client on page load.
 
 ---
 
