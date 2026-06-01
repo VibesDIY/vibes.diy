@@ -12,7 +12,7 @@ export const sqlHandleBinding = sqliteTable(
   "UserSlugBindings",
   {
     userId: text().notNull(), // max bindings per userId
-    handle: text("user_slug").notNull(),
+    handle: text("userSlug").notNull(),
     tenant: text().notNull(), // cryptograhic Id
     created: text().notNull(),
   },
@@ -27,7 +27,7 @@ export const sqlHandleBinding = sqliteTable(
 export const sqlAppSlugBinding = sqliteTable(
   "AppSlugBindings",
   {
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     //.references(() => sqlHandleBinding.handle), // max bindings per userId
     appSlug: text().notNull(), // human friendly app id
     ledger: text().notNull(), // cryptograhic Id
@@ -56,7 +56,7 @@ export const sqlApps = sqliteTable(
   {
     appSlug: text().notNull(), // .references(() => sqlAppSlugBinding.appSlug), // human friendly app id
     userId: text().notNull(), // .references(() => sqlHandleBinding.userId),
-    ownerHandle: text("user_slug").notNull(), // .references(() => sqlAppSlugBinding.ownerHandle),
+    ownerHandle: text("userSlug").notNull(), // .references(() => sqlAppSlugBinding.ownerHandle),
     releaseSeq: int().notNull(), // incremented on each publish
     // appId: text().notNull(), // FP app id
     fsId: text().notNull(), // CID of filenames+mimetypes+cid
@@ -79,7 +79,7 @@ export const sqlChatContexts = sqliteTable("ChatContexts", {
   chatId: text().notNull().primaryKey(), // uuid v4
   userId: text().notNull(),
   appSlug: text().notNull(),
-  ownerHandle: text("user_slug").notNull(),
+  ownerHandle: text("userSlug").notNull(),
   created: text().notNull(),
 });
 
@@ -136,7 +136,7 @@ export const sqlApplicationChats = sqliteTable(
   {
     userId: text().notNull(), // usally from Clerk
     appSlug: text().notNull(), // reverenced from the calling Page
-    ownerHandle: text("user_slug").notNull(), // reverenced from the calling Page
+    ownerHandle: text("userSlug").notNull(), // reverenced from the calling Page
     chatId: text().notNull(), // uuid v4
     blocks: text({ mode: "json" }).notNull(),
     created: text().notNull(),
@@ -167,7 +167,7 @@ export const sqlAppSettings = sqliteTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     settings: text({ mode: "json" }).notNull(), // AclEntry.or(ActiveAclEntries)[]
     updated: text().notNull(),
     created: text().notNull(),
@@ -183,7 +183,7 @@ export const sqlRequestGrants = sqliteTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     state: text().notNull(), // 'pending' | 'approved' | 'rejected'
     role: text(), // 'editor' | 'viewer'
     foreignUserId: text().notNull(), // sanitized email for grant
@@ -199,7 +199,7 @@ export const sqlRequestGrants = sqliteTable(
 export const sqlAppDocuments = sqliteTable(
   "AppDocuments",
   {
-    ownerHandle: text("user_slug").notNull().default("unknown"),
+    ownerHandle: text("userSlug").notNull().default("unknown"),
     appSlug: text().notNull(),
     dbName: text().notNull().default("default"), // database namespace within app
     docId: text().notNull(),
@@ -215,8 +215,8 @@ export const sqlAppDocuments = sqliteTable(
 export const sqlDirectChannelIndex = sqliteTable(
   "DirectChannelIndex",
   {
-    handle: text("user_slug").notNull(),
-    channelHandle: text("channel_user_slug").notNull(),
+    handle: text("userSlug").notNull(),
+    channelHandle: text("channelUserSlug").notNull(),
   },
   (table) => [primaryKey({ columns: [table.handle, table.channelHandle] })]
 );
@@ -224,8 +224,8 @@ export const sqlDirectChannelIndex = sqliteTable(
 export const sqlDirectChannelReads = sqliteTable(
   "DirectChannelReads",
   {
-    channelHandle: text("channel_user_slug").notNull(),
-    handle: text("user_slug").notNull(),
+    channelHandle: text("channelUserSlug").notNull(),
+    handle: text("userSlug").notNull(),
     lastSeenSeq: int().notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.channelHandle, table.handle] })]
@@ -236,7 +236,7 @@ export const sqlInviteGrants = sqliteTable(
   {
     userId: text().notNull(), // from Clerk
     appSlug: text().notNull(),
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     state: text().notNull(), // 'pending' | 'accepted' | 'revoked'
     role: text().notNull(), // 'editor' | 'viewer'
     emailKey: text().notNull(), // sanitized email for grant
@@ -263,7 +263,7 @@ export const sqlAssetUploads = sqliteTable(
   {
     uploadId: text().notNull().primaryKey(),
     userId: text().notNull(), // Clerk userId of the uploader
-    ownerHandle: text("user_slug").notNull(),
+    ownerHandle: text("userSlug").notNull(),
     appSlug: text().notNull(),
     cid: text().notNull(), // content hash (for dedup queries)
     assetURI: text().notNull(), // full storage URI for vctx.storage.fetch (e.g. s3://r2/<cid>, pg://Assets/<cid>)
