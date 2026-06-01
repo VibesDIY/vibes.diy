@@ -310,12 +310,12 @@ describe("FireflyDatabase cross-client sync", () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it("evt-doc-changed notifies update listeners with empty changes array", () => {
+  it("evt-doc-changed passes docId through to listeners so useDocument can filter", () => {
     const updateListener = vi.fn();
     db.subscribe(updateListener, true);
     mockApi._simulateDocChanged("doc-456");
     expect(updateListener).toHaveBeenCalledTimes(1);
-    expect(updateListener).toHaveBeenCalledWith([]);
+    expect(updateListener).toHaveBeenCalledWith([expect.objectContaining({ _id: "doc-456" })]);
   });
 });
 

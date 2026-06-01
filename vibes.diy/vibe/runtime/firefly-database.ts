@@ -143,7 +143,7 @@ export class FireflyDatabase {
         data.appSlug === this.vibeApp.appSlug &&
         data.dbName === this.name
       ) {
-        this.notifyListeners([]);
+        this.notifyListeners([{ _id: data.docId } as DocWithId]);
       }
     });
   }
