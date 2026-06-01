@@ -481,6 +481,11 @@ Both patterns produce identical reduced state. Deleting a membership doc removes
 Use `oldDoc` (the previous version of the document) to enforce invariants across updates:
 
 ```js
+// New document (create)
+if (oldDoc === null) {
+  // create-only logic
+}
+
 // Immutable-after-create fields
 if (oldDoc && doc.createdBy !== oldDoc.createdBy) {
   throw { forbidden: "createdBy is immutable" };
