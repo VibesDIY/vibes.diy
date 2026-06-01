@@ -18,6 +18,7 @@ import { toast } from "react-hot-toast";
 import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
 import { computeCardVariant } from "./vibe-card-variant.js";
 import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
+import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../lib/iframe-policy.js";
 
 // Server-render the iframe URL so the <iframe src=...> ships in the very
 // first byte of HTML. Without this, the browser can't start fetching the
@@ -450,8 +451,8 @@ export default function VibeIframeWrapper() {
           <iframe
             src={iframeUrl}
             className="w-full h-full border-none"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox"
-            allow="camera; microphone"
+            sandbox={RUNTIME_PREVIEW_IFRAME_SANDBOX}
+            allow={RUNTIME_PREVIEW_IFRAME_ALLOW}
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
         </div>

@@ -8,6 +8,7 @@ import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { getCode } from "./get-code.js";
 import type { EvtVibeViewerChanged } from "@vibes.diy/vibe-types";
+import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../../lib/iframe-policy.js";
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
@@ -232,8 +233,8 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
       <iframe
         src={previewUrl.toString()}
         className="relative w-full h-full"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox"
-        allow="camera; microphone"
+        sandbox={RUNTIME_PREVIEW_IFRAME_SANDBOX}
+        allow={RUNTIME_PREVIEW_IFRAME_ALLOW}
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
       {showOverlay && (
