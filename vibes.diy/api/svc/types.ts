@@ -80,6 +80,11 @@ export interface VibesApiSQLCtx {
     oldDoc: unknown | null;
     user: UserContext | null;
     source?: string;
+    grantState?: {
+      members: Record<string, string[]>;
+      roleGrants: Record<string, string[]>;
+      userGrants: Record<string, string[]>;
+    };
   }): Promise<AccessDescriptor | { forbidden: string }>;
 }
 

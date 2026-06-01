@@ -284,6 +284,11 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
       oldDoc: unknown | null;
       user: UserContext | null;
       source?: string;
+      grantState?: {
+        members: Record<string, string[]>;
+        roleGrants: Record<string, string[]>;
+        userGrants: Record<string, string[]>;
+      };
     }): Promise<AccessDescriptor | { forbidden: string }> => {
       // Source is resolved upstream by app-documents.ts via vctx.storage.fetch(assetURI).
       // If it's undefined here, the DO handles the missing-source case by returning forbidden.
@@ -292,7 +297,13 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
       const res = await stub.fetch(
         new Request("https://internal/invoke", {
           method: "POST",
-          body: JSON.stringify({ doc: params.doc, oldDoc: params.oldDoc, user: params.user, source: params.source }),
+          body: JSON.stringify({
+            doc: params.doc,
+            oldDoc: params.oldDoc,
+            user: params.user,
+            source: params.source,
+            grantState: params.grantState,
+          }),
           headers: { "Content-Type": "application/json" },
         }) as unknown as CFRequest
       );
