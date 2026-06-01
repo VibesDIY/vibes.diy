@@ -280,7 +280,7 @@ export async function ensureAppSlugItem(
                     const rInvoke = await exception2Result(() =>
                       invokeAccessFn({
                         cid,
-                        doc: row.data,
+                        doc: { ...(row.data as Record<string, unknown>), _id: docId },
                         oldDoc: null,
                         user: null,
                         source: backfillSource,

@@ -199,6 +199,8 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         return Result.Ok(EventoResult.Continue);
       }
 
+      const docId = req.docId ?? vctx.sthis.timeOrderedNextId().str;
+
       if (afbRow?.accessFnCid && vctx.invokeAccessFn) {
         const fnCid = afbRow.accessFnCid;
         // Resolve writer's handle from userId — req.ownerHandle is the DB owner, not the writer.
@@ -288,7 +290,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
 
         const invokeResult = await vctx.invokeAccessFn({
           cid: fnCid,
-          doc: req.doc,
+          doc: { ...req.doc, _id: docId },
           oldDoc,
           user: userContext,
           source: accessFnSource,
@@ -318,7 +320,6 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       }
 
       const now = new Date().toISOString();
-      const docId = req.docId ?? vctx.sthis.timeOrderedNextId().str;
       const dbName = req.dbName;
       const t = vctx.sql.tables.appDocuments;
 
