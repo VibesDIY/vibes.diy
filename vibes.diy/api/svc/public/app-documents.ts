@@ -199,6 +199,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       }
 
       if (afbRow?.accessFnCid && vctx.invokeAccessFn) {
+        const fnCid = afbRow.accessFnCid;
         // Resolve writer's handle from userId — req.ownerHandle is the DB owner, not the writer.
         // Anonymous writers have no userId; userContext stays null so the access fn
         // must opt in via allowAnonymous.
@@ -268,7 +269,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
               eq(tOutputs.userSlug, req.ownerHandle),
               eq(tOutputs.appSlug, req.appSlug),
               eq(tOutputs.dbName, req.dbName),
-              eq(tOutputs.fnCid, afbRow.accessFnCid),
+              eq(tOutputs.fnCid, fnCid),
               eq(tOutputs.hasGrants, 1)
             )
           );
@@ -285,7 +286,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         };
 
         const invokeResult = await vctx.invokeAccessFn({
-          cid: afbRow.accessFnCid,
+          cid: fnCid,
           doc: req.doc,
           oldDoc,
           user: userContext,
@@ -436,7 +437,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       }
 
       // Store access fn output for future reduce queries
-      if (accessResult && !("forbidden" in accessResult)) {
+      if (accessResult && !("forbidden" in accessResult) && afbRow?.accessFnCid) {
         const tOutputs = vctx.sql.tables.accessFnOutputs;
         const outputHasGrants =
           (accessResult.members && Object.keys(accessResult.members).length > 0) ||
@@ -446,8 +447,6 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             ? 1
             : 0;
 
-        // afbRow is guaranteed non-null here because accessResult is only set
-        // inside the afbRow?.accessFnCid branch above.
         await vctx.sql.db
           .insert(tOutputs)
           .values({
@@ -455,14 +454,14 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             appSlug: req.appSlug,
             dbName: req.dbName,
             docId,
-            fnCid: afbRow!.accessFnCid,
+            fnCid: afbRow.accessFnCid,
             output: JSON.stringify(accessResult),
             hasGrants: outputHasGrants,
           })
           .onConflictDoUpdate({
             target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
             set: {
-              fnCid: afbRow!.accessFnCid,
+              fnCid: afbRow.accessFnCid,
               output: JSON.stringify(accessResult),
               hasGrants: outputHasGrants,
             },
