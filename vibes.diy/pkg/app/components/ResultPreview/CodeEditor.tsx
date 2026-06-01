@@ -1,31 +1,76 @@
+import { isCodeBegin, isCodeLine } from "@vibes.diy/call-ai-v2";
 import { Editor } from "@monaco-editor/react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { setupMonacoEditor } from "./setupMonacoEditor.js";
+import type { Monaco } from "@monaco-editor/react";
+import fnv1a from "@sindresorhus/fnv1a";
 import { editor } from "monaco-editor";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
-import { useTheme } from "../../contexts/ThemeContext.js";
-import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { useParams } from "react-router";
+import { useTheme } from "../../contexts/ThemeContext.js";
+import { HydratedCodeViewFile, PromptBlock, PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 import {
-  AppCode,
   EditorState,
   EditorStateEdit,
   EditorStateToEdit,
   isEditorStateEdit,
-  isEditorStateMoreLines,
-  isEditorStateStartGenerating,
   isEditorStateToEdit,
 } from "../../types/code-editor.js";
-import type { Monaco } from "@monaco-editor/react";
-import { toast } from "react-hot-toast";
-import fnv1a from "@sindresorhus/fnv1a";
+import { inferCodeViewLanguage, pickDefaultCodeViewFile, sortCodeViewFiles } from "./code-view-files.js";
 import { getCode } from "./get-code.js";
+import { setupMonacoEditor } from "./setupMonacoEditor.js";
 export { getCode } from "./get-code.js";
 
 interface CodeEditorProps {
-  // runState: SettleState;
   promptState: PromptState;
   onCode?: (event: EditorState) => void;
+}
+
+interface ChunkContext {
+  filePath?: string;
+  lines: string[];
+}
+
+function normalizeChunkPath(path: string | undefined): string | undefined {
+  if (!path) return undefined;
+  if (path.startsWith("/")) return path;
+  return `/${path}`;
+}
+
+function getLatestChunkContext(blocks: PromptBlock[], selectedFilePath?: string): ChunkContext | null {
+  for (let blockIdx = blocks.length - 1; blockIdx >= 0; blockIdx -= 1) {
+    const sections = new Map<string, { filePath?: string; lines: string[]; lastSeq: number }>();
+    for (const msg of blocks[blockIdx].msgs) {
+      if (isCodeBegin(msg)) {
+        sections.set(msg.sectionId, {
+          filePath: normalizeChunkPath(msg.path),
+          lines: [],
+          lastSeq: msg.seq,
+        });
+        continue;
+      }
+      if (isCodeLine(msg)) {
+        const section = sections.get(msg.sectionId);
+        if (!section) continue;
+        section.lines.push(msg.line);
+        section.lastSeq = msg.seq;
+      }
+    }
+    const sectionsByRecency = [...sections.values()]
+      .filter((section) => section.lines.length > 0)
+      .sort((a, b) => b.lastSeq - a.lastSeq);
+    if (sectionsByRecency.length === 0) continue;
+    if (selectedFilePath) {
+      const selected = sectionsByRecency.find((section) => section.filePath === selectedFilePath);
+      if (selected) return selected;
+    }
+    return sectionsByRecency[0];
+  }
+  return null;
+}
+
+function isDiffMarkerLine(line: string): boolean {
+  const trimmed = line.trim();
+  return trimmed.startsWith("<<<<<<< SEARCH") || trimmed === "=======" || trimmed.startsWith(">>>>>>> REPLACE");
 }
 
 function updateCursorPosition(
@@ -41,7 +86,6 @@ function updateCursorPosition(
   if (ref.current) {
     cursorPosition = ref.current.editor.getPosition() ?? cursorPosition;
   }
-  // console.log(`Updating editor state with cursor position:`, cursorPosition, `for editorState:`, editorState.state);
   if (isEditorStateToEdit(editorState, { onlyType: true })) {
     const model = ref.current?.editor.getModel();
     ref.current?.editor.setValue(editorState.buffer);
@@ -50,138 +94,133 @@ function updateCursorPosition(
         lineNumber: cursorPosition.lineNumber,
         column: cursorPosition.column,
       });
-      // console.log(`Setting cursor position in Monaco editor...`, validPosition);
       ref.current?.editor.setPosition(validPosition);
       ref.current?.editor.focus();
     }
     return { ...editorState, cursorPosition };
   }
   if (isEditorStateEdit(editorState, { onlyType: true })) {
-    // console.log(
-    //   `Edit Updating editor state with cursor position:`,
-    //   cursorPosition,
-    //   `for editorState:`,
-    //   editorState.toEdit.onChange
-    // );
     ref.current?.editor.setPosition(cursorPosition);
     return { ...editorState, toEdit: { ...editorState.toEdit, cursorPosition } };
   }
   return editorState as EditorState;
 }
 
+function fileButtonClass(isActive: boolean): string {
+  if (isActive) {
+    return "rounded border border-blue-500/70 bg-blue-500/20 px-2 py-1 text-xs font-medium text-blue-900 dark:text-blue-200";
+  }
+  return "rounded border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800";
+}
+
 export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
   const { isDarkMode } = useTheme();
   const { fsId } = useParams<{ fsId?: string }>();
-
-  // const editorChecker = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const monacoReadyRef = useRef<{
     editor: editor.IStandaloneCodeEditor;
     api: Monaco;
   } | null>(null);
   const highlighterRef = useRef<HighlighterGeneric<BundledLanguage, BundledTheme> | null>(null);
-  // const errorMarkersRef = useRef<editor.IMarker[]>([]);
-  // const userScrolledRef = useRef<boolean>(false);
-  // const disposablesRef = useRef<{ dispose: () => void }[]>([]);
 
-  const appCodeGenerating = getCode(promptState, fsId);
-  const prevAppCodeRef = useRef<AppCode>({
-    code: [],
-    complete: false,
-    streamId: undefined,
-  });
-
-  const prevAppCode = prevAppCodeRef.current;
-
-  // const [state, setState] = useState<EditorState>({ state: "idle" });
   const stateRef = useRef<EditorState>({ state: "idle" });
-  // stateRef.current = state;
-
   function setState(newState: EditorState) {
-    // console.log(`Setting new editor state:`, newState);
     stateRef.current = newState;
     onCode?.(newState);
   }
 
-  const [monacoReady, setMonacoReady] = useState(false);
+  const hydratedFiles = useMemo(() => {
+    if (!fsId) return [] as HydratedCodeViewFile[];
+    if (promptState.hydratedFileSystem?.fsId !== fsId) return [] as HydratedCodeViewFile[];
+    return sortCodeViewFiles(promptState.hydratedFileSystem.files);
+  }, [promptState.hydratedFileSystem, fsId]);
 
+  const defaultHydratedFile = useMemo(() => pickDefaultCodeViewFile(hydratedFiles), [hydratedFiles]);
+
+  const [selectedFileName, setSelectedFileName] = useState<string | undefined>(defaultHydratedFile?.fileName);
   useEffect(() => {
-    if (!monacoReadyRef.current) {
+    const defaultPath = defaultHydratedFile?.fileName;
+    if (!defaultPath) {
+      setSelectedFileName(undefined);
       return;
     }
-    if (appCodeGenerating.streamId !== prevAppCode.streamId) {
-      const lines = [...appCodeGenerating.code];
-      const buffer = lines.join("\n");
-      if (appCodeGenerating.complete) {
-        setState(
-          updateCursorPosition(monacoReadyRef, {
-            state: "to-edit",
-            buffer,
-            onChange: handleCodeChange,
-            hash: fnv1a(buffer),
-          })
-        );
-      } else {
-        setState({ state: "start-generating", lines });
+    setSelectedFileName((prev) => {
+      if (prev && hydratedFiles.some((file) => file.fileName === prev)) {
+        return prev;
       }
-      prevAppCodeRef.current = {
-        code: lines,
-        complete: appCodeGenerating.complete,
-        streamId: appCodeGenerating.streamId,
-      };
-      return;
-    }
-    if (appCodeGenerating.code.length !== prevAppCode.code.length) {
-      // console.log(`New code lines received:`, appCodeGenerating.code, prevAppCode.code);
-      setState({
-        state: "more-lines",
-        lines: appCodeGenerating.code,
-        newLines: appCodeGenerating.code.slice(prevAppCode.code.length),
-      });
-      prevAppCodeRef.current.code = [...appCodeGenerating.code];
-    }
-    if (appCodeGenerating.complete && !prevAppCode.complete) {
-      const buffer = appCodeGenerating.code.join("\n");
-      setState(
-        updateCursorPosition(monacoReadyRef, {
-          state: "to-edit",
-          buffer,
-          onChange: handleCodeChange,
-          hash: fnv1a(buffer),
-        })
-      );
-      monacoReadyRef.current.editor.setValue(buffer);
-      prevAppCodeRef.current.complete = true;
-      return;
-    }
-  }, [
-    monacoReadyRef.current,
-    prevAppCode.streamId,
-    prevAppCode.code.length,
-    prevAppCode.complete,
-    appCodeGenerating.streamId,
-    appCodeGenerating.code.length,
-    appCodeGenerating.complete,
-  ]);
+      return defaultPath;
+    });
+  }, [defaultHydratedFile?.fileName, hydratedFiles]);
 
-  // useEffect(() => {
-  //   onCode?.(state);
-  // }, [state]);
+  const selectedHydratedFile = useMemo(() => {
+    if (hydratedFiles.length === 0) return undefined;
+    if (selectedFileName) {
+      const bySelection = hydratedFiles.find((file) => file.fileName === selectedFileName);
+      if (bySelection) return bySelection;
+    }
+    return defaultHydratedFile;
+  }, [hydratedFiles, selectedFileName, defaultHydratedFile]);
+
+  const streamedCode = getCode(promptState, fsId);
+
+  const activeFile = useMemo(() => {
+    if (selectedHydratedFile) {
+      return {
+        fileName: selectedHydratedFile.fileName,
+        lang: selectedHydratedFile.lang,
+        code: selectedHydratedFile.code,
+        source: "filesystem" as const,
+      };
+    }
+    return {
+      fileName: "/App.jsx",
+      lang: inferCodeViewLanguage("/App.jsx", "text/javascript"),
+      code: streamedCode.code,
+      source: "stream" as const,
+    };
+  }, [selectedHydratedFile, streamedCode.code]);
+
+  const activeBuffer = useMemo(() => activeFile.code.join("\n"), [activeFile.code]);
+  const activeHash = useMemo(() => fnv1a(activeBuffer), [activeBuffer]);
+
+  const handleCodeChange = useCallback((nextCode?: string) => {
+    setNewCode(nextCode);
+  }, []);
+
+  const sourceKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `${fsId ?? "none"}:${activeFile.fileName}:${activeHash.toString()}:${activeFile.source}`;
+    if (sourceKeyRef.current === key) return;
+    sourceKeyRef.current = key;
+    setState(
+      updateCursorPosition(monacoReadyRef, {
+        state: "to-edit",
+        buffer: activeBuffer,
+        onChange: handleCodeChange,
+        hash: activeHash,
+        filePath: activeFile.fileName,
+        lang: activeFile.lang,
+      })
+    );
+    setNewCode(activeBuffer);
+  }, [fsId, activeFile.fileName, activeFile.lang, activeFile.source, activeBuffer, activeHash, handleCodeChange]);
 
   const handleEditorMount = useCallback(
     (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
       setupMonacoEditor(editor, monaco, {
-        isDarkMode: isDarkMode,
+        isDarkMode,
         setHighlighter: (h) => {
           highlighterRef.current = h as HighlighterGeneric<BundledLanguage, BundledTheme>;
         },
       }).then(() => {
-        // console.log("Monaco editor is ready");
-        setMonacoReady(true);
         monacoReadyRef.current = { editor, api: monaco };
+        const current = stateRef.current;
+        if (isEditorStateToEdit(current) || isEditorStateEdit(current)) {
+          editor.setValue(current.buffer);
+        }
       });
     },
-    [monacoReadyRef, isDarkMode]
+    [isDarkMode]
   );
 
   const [newCode, setNewCode] = useState<string | undefined>(undefined);
@@ -190,10 +229,16 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
     const s = stateRef.current;
     const newHash = fnv1a(newCode ?? "");
     if (isEditorStateToEdit(s) && newHash !== s.hash) {
-      // console.log(`toEdit-to-edit state -
-      //     new code hash ${newHash}:${newCode?.length} differs from
-      //     current state hash ${s.hash}:${s.buffer.length}`);
-      setState(updateCursorPosition(monacoReadyRef, { state: "edit", toEdit: s, buffer: newCode ?? "", hash: newHash }));
+      setState(
+        updateCursorPosition(monacoReadyRef, {
+          state: "edit",
+          toEdit: s,
+          buffer: newCode ?? "",
+          hash: newHash,
+          filePath: s.filePath,
+          lang: s.lang,
+        })
+      );
     } else if (isEditorStateEdit(s)) {
       if (newHash === s.toEdit.hash) {
         setState(updateCursorPosition(monacoReadyRef, s.toEdit));
@@ -203,81 +248,79 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
     }
   }, [newCode]);
 
-  const handleCodeChange = useCallback((newCode?: string) => {
-    setNewCode(newCode);
-  }, []);
-
-  // Guards against re-applying the same state object. `stateRef.current` is in the
-  // dep array below but refs aren't reactive — the effect can re-fire (StrictMode,
-  // unrelated parent re-renders) with the same state and re-append `newLines`,
-  // producing visible duplicate lines during streaming. Identity check is sufficient
-  // because every setState assigns a fresh object. The marker is only set after the
-  // edit succeeds, so a transiently-null Monaco model lets the state be retried
-  // rather than silently dropped.
-  const lastAppliedStateRef = useRef<EditorState | null>(null);
-  useEffect(() => {
-    if (!monacoReadyRef.current) return;
-    const current = stateRef.current;
-    if (lastAppliedStateRef.current === current) return;
-
-    const { editor, api } = monacoReadyRef.current;
-
-    if (isEditorStateStartGenerating(current)) {
-      editor.setValue(current.lines.join("\n"));
-      editor.revealLineInCenter(current.lines.length);
-      lastAppliedStateRef.current = current;
-    } else if (isEditorStateMoreLines(current)) {
-      const model = editor.getModel();
-      if (!model) {
-        toast.error("Monaco editor model not found");
-        return;
-      }
-      const endRange = model.getFullModelRange();
-      const endPos = { lineNumber: endRange.endLineNumber, column: endRange.endColumn };
-      const prefix = model.getValueLength() === 0 ? "" : "\n";
-      model.applyEdits([
-        {
-          range: new api.Range(endPos.lineNumber, endPos.column, endPos.lineNumber, endPos.column),
-          text: prefix + current.newLines.join("\n"),
-        },
-      ]);
-      editor.revealLineInCenter(model.getFullModelRange().endLineNumber);
-      lastAppliedStateRef.current = current;
-    }
-  }, [monacoReady, stateRef.current]);
-
   const onChange = isEditorStateToEdit(stateRef.current)
     ? stateRef.current.onChange
     : isEditorStateEdit(stateRef.current)
       ? stateRef.current.toEdit.onChange
       : undefined;
-  // console.log("Rendering CodeEditor with state:", state, "and onChange:", onChange,
-  // (ArkEditorStateEdit.or(ArkEditorStateToEdit)(state) as type.errors).summary)
+
+  const diffContext = useMemo(() => {
+    if (activeFile.source !== "filesystem") return null;
+    const context = getLatestChunkContext(promptState.blocks, activeFile.fileName);
+    if (!context) return null;
+    if (!context.lines.some((line) => isDiffMarkerLine(line))) return null;
+    const maxLines = 14;
+    return {
+      filePath: context.filePath ?? activeFile.fileName,
+      lines: context.lines.slice(0, maxLines),
+      truncated: context.lines.length > maxLines,
+    };
+  }, [activeFile.source, activeFile.fileName, promptState.blocks]);
 
   return (
-    <div data-testid="sandpack-provider" className="h-full" spellCheck={false}>
+    <div data-testid="sandpack-provider" className="flex h-full flex-col" spellCheck={false}>
+      {hydratedFiles.length > 1 && (
+        <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-900/80">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Files</p>
+          <div className="flex gap-1 overflow-x-auto pb-1">
+            {hydratedFiles.map((file) => {
+              const isActive = file.fileName === activeFile.fileName;
+              return (
+                <button
+                  key={file.fileName}
+                  type="button"
+                  className={fileButtonClass(isActive)}
+                  onClick={() => setSelectedFileName(file.fileName)}
+                  aria-current={isActive ? "page" : undefined}
+                  title={file.fileName}
+                >
+                  {file.fileName}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {diffContext && (
+        <div className="mx-3 mt-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs dark:border-amber-800/60 dark:bg-amber-950/30">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+            Chat diff context (secondary)
+          </p>
+          <p className="mb-1 text-[11px] text-amber-700 dark:text-amber-200">{diffContext.filePath}</p>
+          <pre className="max-h-28 overflow-auto whitespace-pre-wrap font-mono text-[11px] leading-4 text-amber-900 dark:text-amber-100">
+            {diffContext.lines.join("\n")}
+            {diffContext.truncated ? "\n…" : ""}
+          </pre>
+        </div>
+      )}
+
       <div
+        className="min-h-0 flex-1"
         style={{
           visibility: "visible",
           position: "static",
-          height: "100%",
           width: "100%",
           top: 0,
           left: 0,
         }}
       >
-        {/* <pre>
-          {`State: ${state.state}, ${prevAppCode.streamId} 
-          ${(state as { buffer?: string }).buffer?.length} vs 
-          ${(state as { lines?: string[] }).lines?.length}`}
-        </pre> */}
         <Editor
           height="100%"
           width="100%"
-          path="/App.jsx"
-          defaultLanguage="jsx"
+          path={activeFile.fileName}
+          language={activeFile.lang}
           theme={isDarkMode ? "github-dark-default" : "github-light-default"}
-          // value={editedCode().appCode.code}
           onChange={onChange}
           options={{
             readOnly: false,

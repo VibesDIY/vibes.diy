@@ -44,6 +44,8 @@ export const ArkEditorStateToEdit = type({
   state: "'to-edit'",
   buffer: "string",
   hash: "bigint",
+  filePath: "string",
+  lang: "string",
   cursorPosition: CursorPosition,
 });
 export type ArkEditorStateToEdit = typeof ArkEditorStateToEdit.infer;
@@ -61,6 +63,8 @@ export const ArkEditorStateEdit = type({
   // toEdit: ArkEditorStateToEdit,
   buffer: "string",
   hash: "bigint",
+  filePath: "string",
+  lang: "string",
 });
 export type ArkEditorStateEdit = typeof ArkEditorStateEdit.infer;
 export type EditorStateEdit = ArkEditorStateEdit & {
