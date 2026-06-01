@@ -350,6 +350,8 @@ type AccessDescriptor = {
 
 **`allowAnonymous` prevents a footgun.** If `user` is `null` and the function returns without throwing, the runtime checks `allowAnonymous`. If absent or `false`, the write is rejected. This prevents a function that never inspects `user` from silently opening anonymous writes. When `user` is not null, `allowAnonymous` has no effect. `grant.public` grants public _read_; anonymous _write_ requires `allowAnonymous: true` separately.
 
+**Access functions are server-enforced policy code.** Checks should be deterministic over `(doc, oldDoc, user, ctx)` and deny with `throw { forbidden: "reason" }` when violated.
+
 ### Example: Workspace chat with channels
 
 ```js
@@ -473,6 +475,27 @@ if (doc.type === "membership") {
 ```
 
 Both patterns produce identical reduced state. Deleting a membership doc removes the user from the role automatically.
+
+### Common `oldDoc` patterns
+
+Use `oldDoc` (the previous version of the document) to enforce invariants across updates:
+
+```js
+// Immutable-after-create fields
+if (oldDoc && doc.createdBy !== oldDoc.createdBy) {
+  throw { forbidden: "createdBy is immutable" };
+}
+
+// Prevent unauthorized ownership transfer
+if (oldDoc && oldDoc.ownerHandle !== user.userHandle) {
+  throw { forbidden: "not owner" };
+}
+
+// Monotonic version — can only increase
+if (oldDoc && doc.version <= oldDoc.version) {
+  throw { forbidden: "version must increase" };
+}
+```
 
 ---
 
