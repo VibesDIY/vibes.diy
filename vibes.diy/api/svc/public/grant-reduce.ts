@@ -100,6 +100,10 @@ export class GrantReduce {
    */
   addDoc(docId: string, contribution: DocContribution): void {
     if (!hasContent(contribution)) {
+      if (this.docContributions.has(docId)) {
+        this.docContributions.delete(docId);
+        this.rebuild();
+      }
       return;
     }
     const existed = this.docContributions.has(docId);
