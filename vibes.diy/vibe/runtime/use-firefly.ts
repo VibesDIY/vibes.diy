@@ -154,9 +154,8 @@ function createUseDocument(database: FireflyDatabase) {
       if (!doc._id) return;
       return database.subscribe((changes) => {
         if (updateHappenedRef.current) return;
-        // Empty changes = remote evt-doc-changed (server sends notification only, no doc payload)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (changes.length === 0 || changes.find((c: any) => c._id === doc._id)) {
+        if (changes.find((c: any) => c._id === doc._id)) {
           void refresh();
         }
       }, true);
