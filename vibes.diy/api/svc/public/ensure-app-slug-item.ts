@@ -252,6 +252,13 @@ export async function ensureAppSlugItem(
                 const tOutputs = vctx.sql.tables.accessFnOutputs;
 
                 for (const dbName of changedDbNames) {
+                  const t0 = Date.now();
+                  let docsTotal = 0;
+                  let docsUpserted = 0;
+                  let docsForbiddenSkipped = 0;
+                  let invokeErrors = 0;
+                  let upsertErrors = 0;
+
                   const allRows = await vctx.sql.db
                     .select({ docId: tDocs.docId, data: tDocs.data, deleted: tDocs.deleted })
                     .from(tDocs)
@@ -267,6 +274,7 @@ export async function ensureAppSlugItem(
 
                   for (const [docId, row] of latest) {
                     if (row.deleted === 1) continue;
+                    docsTotal++;
 
                     const rInvoke = await exception2Result(() =>
                       vctx.invokeAccessFn!({
@@ -280,6 +288,7 @@ export async function ensureAppSlugItem(
                     );
 
                     if (rInvoke.isErr()) {
+                      invokeErrors++;
                       console.warn(
                         `backfill: access fn threw for ${ensured.ownerHandle}/${ensured.appSlug}/${dbName}/${docId}:`,
                         rInvoke.Err()
@@ -288,7 +297,10 @@ export async function ensureAppSlugItem(
                     }
 
                     const invokeResult = rInvoke.Ok();
-                    if ("forbidden" in invokeResult) continue;
+                    if ("forbidden" in invokeResult) {
+                      docsForbiddenSkipped++;
+                      continue;
+                    }
 
                     const accessResult = invokeResult as AccessDescriptor;
                     const outputHasGrants =
@@ -321,12 +333,21 @@ export async function ensureAppSlugItem(
                         })
                     );
                     if (rUpsert.isErr()) {
+                      upsertErrors++;
                       console.warn(
                         `backfill: output upsert failed for ${ensured.ownerHandle}/${ensured.appSlug}/${dbName}/${docId}:`,
                         rUpsert.Err()
                       );
+                    } else {
+                      docsUpserted++;
                     }
                   }
+
+                  console.log(
+                    `backfill: ${ensured.ownerHandle}/${ensured.appSlug}/${dbName} cid=${cid.slice(0, 8)}` +
+                      ` total=${docsTotal} upserted=${docsUpserted} forbidden=${docsForbiddenSkipped}` +
+                      ` invokeErr=${invokeErrors} upsertErr=${upsertErrors} elapsed=${Date.now() - t0}ms`
+                  );
                 }
               }
             }
