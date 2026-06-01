@@ -9,7 +9,7 @@
  */
 
 export interface UserContext {
-  userSlug: string;
+  userHandle: string;
   displayName?: string;
 }
 
@@ -20,9 +20,9 @@ export interface Helpers {
 
 export interface AccessDescriptor {
   channels?: string[];
-  members?: Record<string, string[]>; // roleName → userSlug[]
+  members?: Record<string, string[]>; // roleName → ownerHandle[]
   grant?: {
-    users?: Record<string, string[]>; // userSlug → channelId[]
+    users?: Record<string, string[]>; // ownerHandle → channelId[]
     roles?: Record<string, string[]>; // roleName → channelId[]
     public?: string[];
   };
