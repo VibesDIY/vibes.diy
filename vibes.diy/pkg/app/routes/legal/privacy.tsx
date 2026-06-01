@@ -3,7 +3,8 @@ import SimpleAppLayout from "../../components/SimpleAppLayout.js";
 import { HomeIcon } from "../../components/SessionSidebar/HomeIcon.js";
 import VibesDIYLogo from "../../components/VibesDIYLogo.js";
 import ReactMarkdown from "react-markdown";
-import { loadAsset } from "@adviser/cement";
+import { loadAsset, URI } from "@adviser/cement";
+import privContentAssetUrl from "./privacy-notes.md?url";
 
 export function meta() {
   return [{ title: "Privacy Policy - Vibes DIY" }, { name: "description", content: "Privacy Policy for Vibes DIY" }];
@@ -13,10 +14,19 @@ export default function Legal_Privacy() {
   const [privContent, setPrivContent] = useState<string | null>(null);
 
   useEffect(() => {
-    loadAsset("/app/routes/legal/privacy-notes.md", {
+    const markdownPath = URI.from(window.location.origin).build().resolve(privContentAssetUrl).URI().pathname;
+
+    void loadAsset(markdownPath, {
       basePath: () => window.location.origin,
-    }).then((tos) => setPrivContent(tos.Ok()));
-  }, [privContent]);
+    }).then((result) => {
+      if (result.isOk()) {
+        setPrivContent(result.Ok());
+        return;
+      }
+
+      console.error("Failed to load privacy markdown", result.Err());
+    });
+  }, []);
 
   return (
     <SimpleAppLayout
