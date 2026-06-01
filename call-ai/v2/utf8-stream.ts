@@ -78,7 +78,7 @@ function splitDecodableChunk(bytes: Uint8Array): { decodable: Uint8Array; remain
 }
 
 export function createUtf8StreamDecoder(): Utf8StreamDecoder {
-  let remainder = emptyBytes;
+  let remainder: Uint8Array = emptyBytes;
 
   return {
     decodeChunk(chunk: Uint8Array): string {
