@@ -59,15 +59,17 @@ export function makeHelpers(user: UserContext | null): Helpers {
 
 /**
  * Extract a single function from a multi-export access.js source.
- * For "*" (default), extracts `export default function(...)`.
+ * For "*" (default), extracts `export default function(...)` or `export default (...) => { ... }`.
  * For a named dbName, extracts `export function <dbName>(...)`.
  * Brace-counts to find the closing `}`. Returns undefined if not found.
  */
 export function extractExportSource(fullSource: string, bindingDbName: string): string | undefined {
-  const pattern =
-    bindingDbName === "*"
-      ? /export\s+default\s+function\s*(?:\w+\s*)?\([^)]*\)\s*\{/
-      : new RegExp(`export\\s+function\\s+${bindingDbName}\\s*\\([^)]*\\)\\s*\\{`);
+  let pattern: RegExp;
+  if (bindingDbName === "*") {
+    pattern = /export\s+default\s+(?:function\s*(?:\w+\s*)?\([^)]*\)\s*\{|\([^)]*\)\s*=>\s*\{|\w+\s*=>\s*\{)/;
+  } else {
+    pattern = new RegExp(`export\\s+function\\s+${bindingDbName}\\s*\\([^)]*\\)\\s*\\{`);
+  }
   const match = fullSource.match(pattern);
   if (!match) return undefined;
   const start = match.index;
