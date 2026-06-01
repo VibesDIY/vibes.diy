@@ -13,10 +13,9 @@
  * See docs/superpowers/specs/2026-05-31-firefly-access-function.html
  */
 
-import type { AccessDescriptor, Helpers, UserContext } from "../../types/access-function.js";
+import type { AccessDescriptor, AccessFunction, Helpers, UserContext } from "@vibes.diy/api-types";
 
-export type { AccessDescriptor, Helpers, UserContext };
-export type { AccessFunction } from "../../types/access-function.js";
+export type { AccessDescriptor, AccessFunction, Helpers, UserContext };
 
 /**
  * Enforces the allowAnonymous contract.
