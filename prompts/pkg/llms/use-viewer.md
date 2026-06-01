@@ -1,8 +1,8 @@
 # useViewer Hook
 
-`useViewer()` is a **read-only window** into runtime-managed access control. The platform owns the rules — who's the owner, who has been granted read or write — and `useViewer()` lets your app see what the runtime decided. You cannot grant or revoke access from code; you can only reflect the runtime's verdict in your UI.
+`useViewer()` is a **read-only window** into who the current user is and whether they're a member of this app. The platform owns membership (the door) and access functions (`/access.js`) own the fine-grained data rules. You cannot grant or revoke access from code; you can only reflect the runtime's verdict in your UI.
 
-The contract: **every write surface (form, submit button, edit input, delete button) must consult `can("write")`** and render a read-only fallback when it returns false. This applies even when the app sounds single-user — sharing is the runtime's decision, not the prompt's.
+The contract: **every write surface (form, submit button, edit input, delete button) must consult `can("write")`** and render a read-only fallback when it returns false. `can("write")` returns true when the viewer is a member — the access function handles per-document and per-database rules server-side. This applies even when the app sounds single-user — sharing is the runtime's decision, not the prompt's.
 
 ## Basic Usage
 
@@ -29,7 +29,7 @@ function App() {
 
 - `viewer` — `{ userSlug, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — just use it in `<img src>`, don't construct it yourself.
 - `isViewerPending` — `true` while the platform is still resolving the viewer identity (e.g. on first render before the parent shell has pushed the identity update). **Gate any auth-dependent UI on `!isViewerPending`** to avoid flashing the wrong state. Once it becomes `false`, `viewer` is either populated or definitively `null`.
-- `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Pass a `dbName` for multi-db apps; omit for single-db apps. Use it to hide forms when the viewer can't post.
+- `can(action)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Returns true when the viewer is a member (through the door). Fine-grained per-document and per-database rules are enforced server-side by access functions — the client just needs to know whether to show write UI.
 - `ViewerTag` — ready-made user pill; see the ViewerTag section below.
 
 ## Gating UI
@@ -48,10 +48,8 @@ function CommentForm() {
         <ViewerTag />
       </div>
 
-      {viewer && !can("write", "comments") && (
-        <p>Contact the owner to request write access so you can post.</p>
-      )}
-      {viewer && can("write", "comments") && <form>...</form>}
+      {viewer && !can("write") && <p>Request access to post comments.</p>}
+      {viewer && can("write") && <form>...</form>}
     </div>
   );
 }
@@ -103,10 +101,8 @@ function CommentThread() {
             {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
             <ViewerTag />
           </div>
-          {viewer && !can("write", "comments") && (
-            <p>Contact the owner to request write access so you can post.</p>
-          )}
-          {viewer && can("write", "comments") && (
+          {viewer && !can("write") && <p>Request access to post comments.</p>}
+          {viewer && can("write") && (
             <form
               onSubmit={(e) => {
                 e.preventDefault();

@@ -236,46 +236,9 @@ function App() {
 }
 ```
 
-## Per-Database Access Control (`acl` option)
-
-On vibes.diy, `useFireproof` accepts an optional `acl` argument that declares who can read, write, or delete documents in that database. The ACL is stored server-side and enforced on every operation — no separate API call needed.
-Only use the `acl` option when the user explicitly asks for fine-grained access control (or equivalent permission constraints).
-
-```jsx
-import { useFireproof } from "use-vibes";
-
-// Anyone with a grant can post; only editors can delete
-const { useLiveQuery, database } = useFireproof("announcements", {
-  acl: { write: ["members"], delete: ["editors"] },
-});
-
-// Editors-only space — viewers cannot read at all
-const { useLiveQuery, database } = useFireproof("drafts", {
-  acl: { read: ["editors"], write: ["editors"], delete: ["editors"] },
-});
-
-// No acl — falls back to app-level role gates (existing behavior, always safe)
-const { useLiveQuery, database } = useFireproof("public-notes");
-```
-
-**Subject groups** — who each name covers:
-
-| Group        | Who is included                                             |
-| ------------ | ----------------------------------------------------------- |
-| `members`    | owner + editor + viewer + submitter (anyone with any grant) |
-| `editors`    | owner + editor                                              |
-| `submitters` | owner + submitter                                           |
-| `readers`    | owner + editor + viewer                                     |
-
-Owner is always implicitly included — never list `owner` explicitly in an ACL.
-
-Each capability (`read`, `write`, `delete`) is independent. Omitting one falls back to the app-level role gate for that operation. The `acl` is sent once on first database open and persists across sessions (last-write-wins). Only the **app owner** can set ACLs; non-owner apps opening a database with an `acl` option have it silently ignored — the database still opens and works normally.
-
----
-
 ## Access Function (`/access.js`)
 
-The `acl` option above is a coarse per-database gate. Access functions are a finer gate: functions the server runs on every write (including deletes) before storing the document. They validate writes, route documents to channels, and declare grants that control who can read what. Only create an `/access.js` file when the user asks for per-document routing, channel-based isolation, or document-level write validation.
+Access functions are server-side functions that run on every write (including deletes) before storing the document. They validate writes, route documents to channels, and declare grants that control who can read what. Only create an `/access.js` file when the user asks for per-document routing, channel-based isolation, or document-level write validation.
 
 Access functions live in `/access.js`, a separate file in the vibe's filesystem alongside `/App.jsx`. Each **named export** maps to a database name — `export function chat(...)` gates `useFireproof("chat")`. An `export default` function acts as a catch-all: it gates any database that doesn't have its own named export. Named exports always take precedence over the default.
 
