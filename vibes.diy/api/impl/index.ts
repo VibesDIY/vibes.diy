@@ -6,18 +6,8 @@ import {
   ResultVibesDiy,
   VibesDiyError,
   MsgBox,
-  W3CWebSocketEvent,
-  msgBase,
-  resError,
-  isResError,
-  mkResError,
-  ResOpenChat,
   ReqOpenChat,
-  sectionEvent,
-  ResPromptChatSection,
   isResEnsureAppSlug,
-  isResOpenChat,
-  isResPromptChatSection,
   ReqListUserSlugAppSlug,
   ResListUserSlugAppSlug,
   isResListUserSlugAppSlug,
@@ -37,7 +27,6 @@ import {
   OptionalAuth,
   Req,
   LLMChat,
-  OnResponseTypes,
   ReqEnsureUserSettings,
   ResEnsureUserSettings,
   isResEnsureUserSettings,
@@ -56,7 +45,6 @@ import {
   ReqFPCloudToken,
   ResFPCloudToken,
   isResFPCloudToken,
-  VibeFile,
   ReqCreateInvite,
   ResCreateInvite,
   isResCreateInvite,
@@ -82,7 +70,6 @@ import {
   ResSubscribeRequestGrants,
   isResSubscribeRequestGrants,
   ReqRequestAccess,
-  // ResRequestAccess,
   ReqApproveRequest,
   ResApproveRequest,
   isResApproveRequest,
@@ -109,7 +96,6 @@ import {
   ReqListModels,
   ResListModels,
   isResListModels,
-  isPromptLLMStyle,
   ReqPutDoc,
   ResPutDoc,
   isResPutDoc,
@@ -166,45 +152,27 @@ import {
   isResReportCampaignAdPreviews,
   ResAssetUploadGrant,
   isResAssetUploadGrant,
-  isEvtDocChanged,
   EvtRequestGrant,
-  isEvtRequestGrant,
   EvtUserNotification,
-  isEvtUserNotification,
   ResSubscribeUserNotifications,
   isResSubscribeUserNotifications,
-  ReqPromptLLMChatSection,
-  FSUpdate,
-  isFSUpdate,
-  vibeFile,
-  ReqPromptFSSetChatSection,
-  ReqPromptFSUpdateChatSection,
-  SelectedSlotInput,
 } from "@vibes.diy/api-types";
-import {
-  Evento,
-  EventoSendProvider,
-  Future,
-  JSONEnDecoderSingleton,
-  Result,
-  Option,
-  TriggerCtx,
-  HandleTriggerCtx,
-  EventoResult,
-  ValidateTriggerCtx,
-  Lazy,
-  BuildURI,
-} from "@adviser/cement";
+import { Result, Lazy, BuildURI } from "@adviser/cement";
 import { ClerkClaim, SuperThis } from "@fireproof/core-types-base";
 import { ensureSuperThis } from "@fireproof/core-runtime";
-import { W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
-import { type } from "arktype";
-import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { ClerkApiToken } from "@fireproof/core-protocols-dashboard";
 import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { ReqVibeWhoAmI, ResVibeWhoAmI, isResVibeWhoAmI } from "@vibes.diy/vibe-types";
+import { LLMChatImpl } from "./llm-chat.js";
+import {
+  attachDocChangedToConnection as attachDocChangedToConnectionImpl,
+  attachRequestGrantToConnection as attachRequestGrantToConnectionImpl,
+  attachUserNotificationToConnection as attachUserNotificationToConnectionImpl,
+  replayConnectionState,
+} from "./vibes-diy-api-listeners.js";
+import { requestApiResponse, sendApiMessage } from "./vibes-diy-api-transport.js";
 
 export interface VibesDiyApiParam {
   readonly apiUrl: string;
@@ -243,7 +211,6 @@ interface PendingRequest<S> {
 
 // type LLMPrompt = Omit<LLMRequest, "model" | "stream"> & { model?: string; };
 
-type ReqType<T> = Omit<T, "auth"> & OptionalAuth;
 type WithAuth<T> = Omit<T, "auth"> & { readonly auth: DashAuthType };
 
 export class VibesDiyApi implements VibesDiyApiIface<{
@@ -333,42 +300,21 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     const conn = await getVibesDiyWebSocketConnection(this.cfg.apiUrl, this.cfg.ws, this.cfg.ca);
     if (conn !== this.currentConnection) {
       this.currentConnection = conn;
-      // Re-attach all onDocChanged listeners to the new connection
-      for (const fn of this.docChangedListeners) {
-        this.docChangedDetachers.get(fn)?.();
-        const detach = this.attachDocChangedToConnection(conn, fn);
-        this.docChangedDetachers.set(fn, detach);
-      }
-      // Re-attach all onRequestGrant listeners to the new connection
-      for (const fn of this.requestGrantListeners) {
-        this.requestGrantDetachers.get(fn)?.();
-        const detach = this.attachRequestGrantToConnection(conn, fn);
-        this.requestGrantDetachers.set(fn, detach);
-      }
-      // Re-subscribe to all doc subscriptions (server needs to know again)
-      for (const sub of this.docSubscriptions) {
-        this.subscribeDocs(sub).catch((_e: unknown) => {
-          /* re-subscribe best-effort; next reconnect will retry */
-        });
-      }
-      // Re-subscribe to all request-grant subscriptions (server needs to know again)
-      for (const sub of this.requestGrantSubscriptions) {
-        this.subscribeRequestGrants(sub).catch((_e: unknown) => {
-          /* re-subscribe best-effort; next reconnect will retry */
-        });
-      }
-      // Re-attach all onUserNotification listeners to the new connection
-      for (const fn of this.userNotificationListeners) {
-        this.userNotificationDetachers.get(fn)?.();
-        const detach = this.attachUserNotificationToConnection(conn, fn);
-        this.userNotificationDetachers.set(fn, detach);
-      }
-      // Re-subscribe to user notifications if we had subscribed before (server needs to know again)
-      if (this.userNotificationSubscribed) {
-        void this.subscribeUserNotifications({}).catch((_e: unknown) => {
-          /* best-effort */
-        });
-      }
+      replayConnectionState({
+        conn,
+        docChangedListeners: this.docChangedListeners,
+        docChangedDetachers: this.docChangedDetachers,
+        requestGrantListeners: this.requestGrantListeners,
+        requestGrantDetachers: this.requestGrantDetachers,
+        userNotificationListeners: this.userNotificationListeners,
+        userNotificationDetachers: this.userNotificationDetachers,
+        docSubscriptions: this.docSubscriptions,
+        requestGrantSubscriptions: this.requestGrantSubscriptions,
+        userNotificationSubscribed: this.userNotificationSubscribed,
+        subscribeDocs: (sub) => this.subscribeDocs(sub),
+        subscribeRequestGrants: (sub) => this.subscribeRequestGrants(sub),
+        subscribeUserNotifications: (req) => this.subscribeUserNotifications(req),
+      });
       // When this connection dies, schedule proactive reconnect (unless explicitly closed)
       conn.onClose(() => {
         if (this.currentConnection === conn) {
@@ -392,42 +338,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     req: T,
     msgParam: Partial<Omit<MsgBase, "tid">> & { tid: string }
   ): Promise<Result<MsgBox<WithAuth<T>>, VibesDiyError>> {
-    // getToken() can block on the browser's Clerk SDK loading; getReadyConnection()
-    // can block on the WS open. Run them in parallel — the WS handshake itself
-    // sends no auth, and auth is attached per-message below.
-    const tokenPromise = req.auth ? Promise.resolve(undefined) : this.cfg.getToken();
-    const connPromise = this.getReadyConnection();
-    let auth = req.auth;
-    if (!req.auth) {
-      const rDashAuth = await tokenPromise;
-      if (rDashAuth?.isOk()) {
-        auth = rDashAuth.Ok();
-      }
-      // if getToken fails, proceed unauthenticated
-    }
-    const msgBox: MsgBase = {
-      src: this.cfg.apiUrl,
-      dst: this.cfg.me,
-      ttl: 6,
-      ...msgParam,
-      payload: {
-        ...req,
-        ...(auth ? { auth } : {}),
-      },
-    };
-    // console.log("Prepared message box:", msgBox);
-    const conn = await connPromise;
-    // console.log("Got ready connection, sending message with tid:", msgParam.tid);
-    const ende = JSONEnDecoderSingleton();
-    const uint8ify = ende.uint8ify(msgBox);
-    // console.log("Encoded message to Uint8Array:", msgParam.tid, uint8ify.length, conn.send.toString());
-    const rSend = conn.send(uint8ify);
-    if (rSend.isErr()) {
-      return Result.Err<MsgBox<WithAuth<T>>, VibesDiyError>(
-        mkResError(`Reconnecting, please retry (${String(rSend.Err())})`, "websocket-send-failed")
-      );
-    }
-    return Result.Ok(msgBox as MsgBox<WithAuth<T>>);
+    return sendApiMessage(this, req, msgParam);
   }
 
   async request<Q extends OptionalAuth, S>(
@@ -437,111 +348,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       resMatch: (res: unknown) => boolean;
     }
   ): Promise<ResultVibesDiy<S>> {
-    const tid = msgParam?.tid ?? this.cfg.sthis.nextId(12).str;
-    const idleMs = this.cfg.timeoutMs;
-    const conn = await this.getReadyConnection();
-    const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
-    const waitForResponse = new Future<Result<S, VibesDiyError>>();
-    evento.push({
-      hash: tid,
-      validate: async (trigger: ValidateTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
-        const msg = msgBase(trigger.enRequest);
-        if (msg instanceof type.errors) {
-          return Result.Ok(Option.None());
-        }
-        const tidMatch = msg.tid === tid;
-        if (!tidMatch) {
-          return Result.Ok(Option.None());
-        }
-        const resMatch = msgParam.resMatch(msg.payload);
-        const isErr = isResError(msg.payload);
-        if (resMatch || isErr) {
-          return Result.Ok(Option.Some(trigger.enRequest));
-        }
-        // Fail fast: tid matched but the response shape failed validation.
-        // A schema miss on our own response type should never silently time out.
-        if (!resMatch && !isErr) {
-          const payloadType = (msg.payload as Record<string, unknown>)?.type;
-          if (
-            typeof payloadType === "string" &&
-            payloadType.startsWith("vibes.diy.res-") &&
-            payloadType !== "vibes.diy.res-progress"
-          ) {
-            waitForResponse.resolve(
-              Result.Err<S, VibesDiyError>(mkResError(`Response schema mismatch for ${payloadType}`, "response-schema-error"))
-            );
-            return Result.Ok(Option.None());
-          }
-        }
-        return Result.Ok(Option.None());
-      },
-      handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResEnsureAppSlug>) => {
-        if (isResError(trigger.validated.payload)) {
-          const e = trigger.validated.payload;
-          waitForResponse.resolve(Result.Err<S, VibesDiyError>(mkResError(e.error.message, e.error.code)));
-        } else {
-          waitForResponse.resolve(Result.Ok<S, VibesDiyError>(trigger.validated.payload as S));
-        }
-        return Result.Ok(EventoResult.Stop);
-      },
-    });
-
-    // Idle timeout — resets on every incoming message, so a long-running
-    // request that streams progress events keeps the request alive. The
-    // idle window is `cfg.timeoutMs` (default 30s); silence longer than
-    // that is what trips the timeout, not absolute wall time.
-    let timer: ReturnType<typeof setTimeout> | undefined = undefined;
-    const resetIdleTimer = (): void => {
-      if (timer !== undefined) clearTimeout(timer);
-      timer = setTimeout(() => {
-        waitForResponse.resolve(
-          Result.Err<S, VibesDiyError>(mkResError(`Request idle for ${idleMs}ms (no progress)`, "request-timeout"))
-        );
-      }, idleMs);
-    };
-    resetIdleTimer();
-
-    const unreg = conn.onMessage((event) => {
-      // Any incoming message — matching or not — keeps the request alive.
-      resetIdleTimer();
-      const triggerPromise = evento.trigger({
-        request: event,
-        send: (async (_ctx: TriggerCtx<W3CWebSocketEvent, unknown, unknown>, data: unknown) => {
-          const res = await this.send(data as Parameters<this["send"]>[0], { tid });
-          return res;
-        }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
-      });
-      Promise.resolve(triggerPromise).catch((err: unknown) => {
-        console.error("[request:onMessage] evento.trigger threw:", err);
-      });
-    });
-    const unregClose = conn.onClose(() => {
-      waitForResponse.resolve(
-        Result.Err<S, VibesDiyError>(mkResError("WebSocket closed before response (server disconnected)", "websocket-closed"))
-      );
-    });
-    const unregError = conn.onError(() => {
-      waitForResponse.resolve(
-        Result.Err<S, VibesDiyError>(mkResError("WebSocket error before response received", "websocket-error"))
-      );
-    });
-
-    const cleanup = (): void => {
-      if (timer !== undefined) clearTimeout(timer);
-      unreg();
-      unregClose();
-      unregError();
-    };
-
-    const rReq = await this.send(req, { tid });
-    if (rReq.isErr()) {
-      cleanup();
-      return Result.Err<S, VibesDiyError>(rReq.Err());
-    }
-
-    const result = await waitForResponse.asPromise();
-    cleanup();
-    return result;
+    return requestApiResponse(this, req, msgParam);
   }
 
   ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>> {
@@ -862,28 +669,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     conn: VibeDiyApiConnection,
     fn: (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void
   ): () => void {
-    const unsub = conn.onMessage((wsEvent) => {
-      if (wsEvent.type !== "MessageEvent") return;
-      const raw = wsEvent.event.data;
-      const textPromise =
-        raw instanceof Blob
-          ? raw.text()
-          : Promise.resolve(typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array));
-      textPromise
-        .then((text) => {
-          const parsed = JSON.parse(text);
-          const msg = msgBase(parsed);
-          if (!(msg instanceof type.errors) && isEvtDocChanged(msg.payload)) {
-            fn(msg.payload.ownerHandle, msg.payload.appSlug, msg.payload.dbName, msg.payload.docId);
-          }
-        })
-        .catch((_e: unknown) => {
-          // Not a valid message — ignore
-        });
-    });
-    return () => {
-      unsub();
-    };
+    return attachDocChangedToConnectionImpl(conn, fn);
   }
 
   onDocChanged(fn: (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void): () => void {
@@ -909,28 +695,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   }
 
   private attachRequestGrantToConnection(conn: VibeDiyApiConnection, fn: (evt: EvtRequestGrant) => void): () => void {
-    const unsub = conn.onMessage((wsEvent) => {
-      if (wsEvent.type !== "MessageEvent") return;
-      const raw = wsEvent.event.data;
-      const textPromise =
-        raw instanceof Blob
-          ? raw.text()
-          : Promise.resolve(typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array));
-      textPromise
-        .then((text) => {
-          const parsed = JSON.parse(text);
-          const msg = msgBase(parsed);
-          if (!(msg instanceof type.errors) && isEvtRequestGrant(msg.payload)) {
-            fn(msg.payload);
-          }
-        })
-        .catch((_e: unknown) => {
-          // Not a valid message — ignore
-        });
-    });
-    return () => {
-      unsub();
-    };
+    return attachRequestGrantToConnectionImpl(conn, fn);
   }
 
   onRequestGrant(fn: (evt: EvtRequestGrant) => void): () => void {
@@ -956,28 +721,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   }
 
   private attachUserNotificationToConnection(conn: VibeDiyApiConnection, fn: (evt: EvtUserNotification) => void): () => void {
-    const unsub = conn.onMessage((wsEvent) => {
-      if (wsEvent.type !== "MessageEvent") return;
-      const raw = wsEvent.event.data;
-      const textPromise =
-        raw instanceof Blob
-          ? raw.text()
-          : Promise.resolve(typeof raw === "string" ? raw : new TextDecoder().decode(raw as Uint8Array));
-      textPromise
-        .then((text) => {
-          const parsed = JSON.parse(text);
-          const msg = msgBase(parsed);
-          if (!(msg instanceof type.errors) && isEvtUserNotification(msg.payload)) {
-            fn(msg.payload);
-          }
-        })
-        .catch((_e: unknown) => {
-          // Not a valid message — ignore
-        });
-    });
-    return () => {
-      unsub();
-    };
+    return attachUserNotificationToConnectionImpl(conn, fn);
   }
 
   async subscribeUserNotifications(req: Req<{ auth?: unknown }>): Promise<Result<ResSubscribeUserNotifications, VibesDiyError>> {
@@ -1030,197 +774,6 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       currentConnection: this.currentConnection,
       reconnectTimer: this.reconnectTimer,
     };
-  }
-}
-
-class LLMChatImpl implements LLMChat {
-  readonly api: VibesDiyApi;
-  readonly tid: string;
-  readonly res: ResOpenChat;
-
-  readonly sectionStream: ReadableStream<OnResponseTypes>;
-
-  readonly #writer: WritableStreamDefaultWriter<OnResponseTypes>;
-  // promptId?: string
-  // onResponse = OnFunc<(msg: OnResponseTypes) => void>();
-  // onError = OnFunc<(err: VibesDiyError) => void>();
-
-  get chatId(): string {
-    return this.res.chatId;
-  }
-  get ownerHandle(): string {
-    return this.res.ownerHandle;
-  }
-  get appSlug(): string {
-    return this.res.appSlug;
-  }
-
-  static async open(open: ReqType<ReqOpenChat>, api: VibesDiyApi): Promise<Result<LLMChat>> {
-    const conn = await api.getReadyConnection();
-    const tid = api.cfg.sthis.nextId(12).str;
-
-    const sectionEvents = new TransformStream<OnResponseTypes, OnResponseTypes>();
-
-    const sectionEventsWriter = sectionEvents.writable.getWriter();
-    // const activePromptIds = new LRUMap<string, void>();
-    const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
-    evento.push({
-      hash: "wait-open-chat-" + tid,
-      validate: async (trigger: ValidateTriggerCtx<W3CWebSocketEvent, MsgBase, ResOpenChat>) => {
-        const msg = msgBase(trigger.enRequest);
-        if (msg instanceof type.errors) {
-          return Result.Ok(Option.None());
-        }
-        if (msg.tid === tid) {
-          return Result.Ok(Option.Some(msg));
-        }
-        return Result.Ok(Option.None());
-      },
-      handle: async (trigger: HandleTriggerCtx<W3CWebSocketEvent, MsgBase, ResOpenChat>) => {
-        const isError = resError(trigger.validated.payload);
-        if (!(isError instanceof type.errors)) {
-          // console.log("Response message is an error for chatId:", req.chatId, isError);
-          return Result.Err(mkResError(isError.error.message, isError.error.code));
-        } else {
-          const se = sectionEvent(trigger.validated.payload);
-          if (!(se instanceof type.errors)) {
-            await sectionEventsWriter.write(se);
-          } else {
-            // sectionEvent parse failed — skip silently
-          }
-        }
-        return Result.Ok(EventoResult.Continue);
-      },
-    });
-    const unreg = conn.onMessage((event) => {
-      // const msg = w3cMessageEventBox(event);
-      // if (!(msg instanceof type.errors)) {
-      //   // console.log("LLMChat received message event:", new TextDecoder().decode(msg.event.data as Uint8Array));
-      // }
-      evento
-        .trigger({
-          request: event,
-          send: (async (_ctx: TriggerCtx<W3CWebSocketEvent, unknown, unknown>, data: unknown) => {
-            const res = await api.send(data as Parameters<typeof api.send>[0], { tid });
-            return res;
-          }) as unknown as EventoSendProvider<W3CWebSocketEvent, unknown, unknown>,
-        })
-        .catch((err) => {
-          sectionEventsWriter.write(mkResError(`LLMChat evento trigger error: ${err.message}`, "llmchat-evento-error"));
-          sectionEventsWriter.abort();
-        });
-    });
-    conn.onError(unreg);
-    conn.onClose(unreg);
-
-    const res = await api.request<Req<ReqOpenChat>, ResOpenChat>(open, { tid, resMatch: isResOpenChat });
-    if (res.isErr()) {
-      return Result.Err<LLMChat>(res.Err());
-    }
-    // console.log("LLMChat open succeeded for chatId:", res.Ok());
-    const llmChat = new LLMChatImpl(api, tid, res.Ok(), sectionEvents.readable, sectionEventsWriter);
-    return Result.Ok(llmChat);
-  }
-
-  // readonly #activePromptIds: LRUMap<string, void>;
-  private constructor(
-    api: VibesDiyApi,
-    tid: string,
-    res: ResOpenChat,
-    sectionEvents: ReadableStream<OnResponseTypes>,
-    writer: WritableStreamDefaultWriter<OnResponseTypes>
-  ) {
-    this.api = api;
-    this.tid = tid;
-    this.res = res;
-    this.sectionStream = sectionEvents;
-    this.#writer = writer;
-    // this.#activePromptIds = activePromptIds;
-  }
-
-  // addFS(fs: VibeFile[]) {
-  //   console.log("LLMChat addFS called for chatId:", this.chatId, this.tid, fs);
-  //   return this.api.request<ReqType<ReqAddFS>, ResAddFS>(
-  //     {
-  //       type: "vibes.diy.req-add-fs",
-  //       chatId: this.chatId,
-  //       outerTid: this.tid,
-  //       fs,
-  //     },
-  //     {
-  //       resMatch: isResAddFS,
-  //     }
-  //   );
-  // }
-
-  async promptFS(req: FSUpdate | VibeFile[]): Promise<Result<ResPromptChatSection, VibesDiyError>> {
-    if (isFSUpdate(req)) {
-      return this.api.request<ReqType<ReqPromptFSUpdateChatSection>, ResPromptChatSection>(
-        {
-          type: "vibes.diy.req-prompt-chat-section",
-          mode: "fs-update",
-          chatId: this.res.chatId,
-          outerTid: this.tid, //leaking but necessary streaming
-          fsUpdate: req,
-        },
-        {
-          resMatch: isResPromptChatSection,
-        }
-      );
-    } else {
-      const possibleArray = vibeFile.array()(req);
-      if (possibleArray instanceof type.errors) {
-        return Result.Err(mkResError(`Invalid VibeFile array`, "invalid-vibefile-array"));
-      }
-      return this.api.request<ReqType<ReqPromptFSSetChatSection>, ResPromptChatSection>(
-        {
-          type: "vibes.diy.req-prompt-chat-section",
-          mode: "fs-set",
-          chatId: this.res.chatId,
-          outerTid: this.tid, //leaking but necessary streaming
-          fsSet: possibleArray,
-        },
-        {
-          resMatch: isResPromptChatSection,
-        }
-      );
-    }
-  }
-
-  async prompt(
-    msg: LLMRequest,
-    opts?: { inputImageBase64?: string; dryRun?: boolean; focusPath?: string; selected?: SelectedSlotInput }
-  ): Promise<Result<ResPromptChatSection, VibesDiyError>> {
-    const mode = this.res.mode;
-    if (!isPromptLLMStyle(mode)) {
-      return Result.Err(mkResError(`Chat mode ${this.res.mode} does not support prompting`, "unsupported-chat-mode"));
-    }
-    const res = await this.api.request<ReqType<ReqPromptLLMChatSection>, ResPromptChatSection>(
-      {
-        type: "vibes.diy.req-prompt-chat-section",
-        mode,
-        chatId: this.res.chatId,
-        outerTid: this.tid, //leaking but necessary streaming
-        prompt: msg,
-        ...(mode === "img" && opts?.inputImageBase64 ? { inputImageBase64: opts.inputImageBase64 } : {}),
-        // dryRun and focusPath are chat-mode-only flags (per reqCreationPromptChatSection
-        // type). Forward them only when mode === "chat" — for app/img the
-        // server type won't carry them.
-        ...(mode === "chat" && opts?.dryRun === true ? { dryRun: true } : {}),
-        ...(mode === "chat" && opts?.focusPath !== undefined ? { focusPath: opts.focusPath } : {}),
-        ...(mode === "chat" && opts?.selected !== undefined ? { selected: opts.selected } : {}),
-      },
-      {
-        resMatch: isResPromptChatSection,
-      }
-    );
-    // if (res.isOk()) {
-    // this.#activePromptIds.set(res.Ok().promptId, undefined);
-    // }
-    return res;
-  }
-  async close(_force = false) {
-    this.#writer.close();
   }
 }
 
