@@ -45,14 +45,14 @@ export function makeHelpers(user: UserContext | null): Helpers {
       if (user === null) {
         throw new ForbiddenError(`not in channel: ${channelId}`);
       }
-      // Phase 3: check materialized channel membership for user.userSlug
+      // Phase 3: check materialized channel membership for user.userHandle
       // For now this always passes for authenticated users.
     },
     requireRole(roleName: string): void {
       if (user === null) {
         throw new ForbiddenError(`not in role: ${roleName}`);
       }
-      // Phase 3: check materialized role membership for user.userSlug
+      // Phase 3: check materialized role membership for user.userHandle
       // For now this always passes for authenticated users.
     },
   };

@@ -19,13 +19,13 @@ describe("enforceAllowAnonymous", () => {
   });
 
   it("allows write when user is non-null regardless of allowAnonymous", () => {
-    const user: UserContext = { userSlug: "alice" };
+    const user: UserContext = { userHandle: "alice" };
     const result: AccessDescriptor = {};
     expect(() => enforceAllowAnonymous(result, user)).not.toThrow();
   });
 
   it("allows write when user is non-null with allowAnonymous true (no-op)", () => {
-    const user: UserContext = { userSlug: "alice" };
+    const user: UserContext = { userHandle: "alice" };
     const result: AccessDescriptor = { allowAnonymous: true };
     expect(() => enforceAllowAnonymous(result, user)).not.toThrow();
   });
@@ -42,7 +42,7 @@ describe("makeHelpers", () => {
   });
 
   it("requireAccess does not throw when user is authenticated", () => {
-    const user: UserContext = { userSlug: "alice" };
+    const user: UserContext = { userHandle: "alice" };
     const ctx = makeHelpers(user);
     expect(() => ctx.requireAccess("some-channel")).not.toThrow();
   });
@@ -53,7 +53,7 @@ describe("makeHelpers", () => {
   });
 
   it("requireRole does not throw when user is authenticated", () => {
-    const user: UserContext = { userSlug: "alice" };
+    const user: UserContext = { userHandle: "alice" };
     const ctx = makeHelpers(user);
     expect(() => ctx.requireRole("admin")).not.toThrow();
   });
