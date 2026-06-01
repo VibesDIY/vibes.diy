@@ -48,6 +48,7 @@ export class Cider {
 
 export interface PeerFactoryOptions {
   readonly onProgress?: StorageProgressFn;
+  readonly peerTimeout?: number;
 }
 
 export interface StoragePeer {
@@ -101,7 +102,10 @@ export function ensureStorage(...args: [EnsureStorageOptions | StoragePeer, ...S
       const items: ReadableStream<Uint8Array | string>[] = firstIsOpts
         ? (restArgs as ReadableStream<Uint8Array | string>[])
         : (args as ReadableStream<Uint8Array | string>[]);
-      const factoryOpts: PeerFactoryOptions = { onProgress: callOpts.onProgress };
+      const factoryOpts: PeerFactoryOptions = {
+        onProgress: callOpts.onProgress,
+        peerTimeout,
+      };
       // console.log("Ensuring storage for items, count:", items.length);
       const tees = await Promise.allSettled(
         items.map(
@@ -118,8 +122,7 @@ export function ensureStorage(...args: [EnsureStorageOptions | StoragePeer, ...S
             const cider = new Cider(lag1);
             return teeWriter(
               peers.map((i) => i.factory(cider, factoryOpts)),
-              lag2,
-              { peerTimeout }
+              lag2
             ).then(async (rTee) => {
               if (rTee.isErr()) {
                 return Result.Err(rTee);
