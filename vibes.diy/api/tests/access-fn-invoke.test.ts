@@ -1,4 +1,5 @@
 import { assert, beforeAll, describe, expect, it } from "vitest";
+import { eq, and } from "drizzle-orm";
 import { Result, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
@@ -122,6 +123,44 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     });
     expect(res.isErr()).toBe(true);
     expect(res.Err().error?.message).toBe("custom deny");
+    expect(recorder.calls.length).toBe(1);
+  });
+
+  it("stores AccessFnOutputs row after successful access fn evaluation", async () => {
+    recorder.calls = [];
+    recorder.result = { channels: ["public"], allowAnonymous: true };
+    const res = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      doc: { title: "output storage test" },
+    });
+    expect(res.isOk()).toBe(true);
+    const putRes = res.Ok();
+    expect(putRes.status).toBe("ok");
+
+    // Query the accessFnOutputs table for the row
+    const tOutputs = appCtx.vibesCtx.sql.tables.accessFnOutputs;
+    const rows = await appCtx.vibesCtx.sql.db
+      .select()
+      .from(tOutputs)
+      .where(
+        and(
+          eq(tOutputs.userSlug, ownerHandle),
+          eq(tOutputs.appSlug, appSlug),
+          eq(tOutputs.dbName, "default"),
+          eq(tOutputs.docId, putRes.id)
+        )
+      );
+
+    expect(rows.length).toBe(1);
+    const row = rows[0];
+    assert(row !== undefined, "expected one AccessFnOutputs row");
+    expect(row.fnCid).toBe(CID);
+    expect(row.hasGrants).toBe(0);
+    const output = JSON.parse(row.output) as { channels: string[]; allowAnonymous: boolean };
+    expect(output.channels).toEqual(["public"]);
+    expect(output.allowAnonymous).toBe(true);
     expect(recorder.calls.length).toBe(1);
   });
 });
