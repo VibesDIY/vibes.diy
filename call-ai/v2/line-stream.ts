@@ -1,6 +1,7 @@
 import { type } from "arktype";
 import { CoercedDate } from "./types.js";
 import { isStatsCollect, type StatsCollectMsg } from "./stats-stream.js";
+import { createUtf8StreamDecoder, utf8ByteLength } from "./utf8-stream.js";
 
 export const LineBeginMsg = type({
   type: "'line.begin'",
@@ -78,7 +79,7 @@ export function parseContent(parser: LineParser, content: string): LineStreamMsg
     });
   }
 
-  parser.totalBytes += new TextEncoder().encode(content).length;
+  parser.totalBytes += utf8ByteLength(content);
   parser.buffer += content;
 
   const lines = parser.buffer.split("\n");
@@ -130,7 +131,7 @@ export function createLineStream(filterStreamId: string): TransformStream<LineSt
   let totalBytes = 0;
   let lineNr = 0;
   let started = false;
-  const decoder = new TextDecoder();
+  const decoder = createUtf8StreamDecoder();
 
   return new TransformStream<LineStreamInput, LineStreamMsg | StatsCollectMsg>({
     transform(chunk, controller) {
@@ -166,7 +167,7 @@ export function createLineStream(filterStreamId: string): TransformStream<LineSt
         buffer += chunk;
       } else {
         totalBytes += chunk.byteLength;
-        buffer += decoder.decode(chunk, { stream: true });
+        buffer += decoder.decodeChunk(chunk);
       }
 
       const lines = buffer.split("\n");
@@ -185,6 +186,8 @@ export function createLineStream(filterStreamId: string): TransformStream<LineSt
     },
 
     flush(controller) {
+      buffer += decoder.flush();
+
       if (buffer.length > 0) {
         lineNr++;
         controller.enqueue({

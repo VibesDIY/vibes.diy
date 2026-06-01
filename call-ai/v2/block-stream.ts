@@ -6,6 +6,7 @@ import { passthrough } from "./passthrough.js";
 import { DeltaStreamMsg, isDeltaBegin, isDeltaEnd, isDeltaImage, isDeltaLine, isDeltaUsage } from "./delta-stream.js";
 import { consumeStream, Lazy } from "@adviser/cement";
 import { SseUsage } from "./sse-stream.js";
+import { encodeUtf8 } from "./utf8-stream.js";
 
 export const BlockBase = type({
   blockId: "string",
@@ -625,7 +626,6 @@ export function createSectionsStream(
   let writer: WritableStreamDefaultWriter<LineStreamInput | DeltaStreamMsg | StatsCollectMsg>;
   let consumePromise: Promise<unknown>;
   let blockStreamId: string;
-  const txtEndcoder = new TextEncoder();
   return new TransformStream<DeltaStreamMsg, BlockStreamMsg>({
     transform: passthrough(async (msg, controller) => {
       switch (true) {
@@ -643,7 +643,7 @@ export function createSectionsStream(
         }
 
         case isDeltaLine(msg, filterStreamId):
-          writer?.write(txtEndcoder.encode(msg.content));
+          writer?.write(encodeUtf8(msg.content));
           break;
 
         // case isDeltaImage(msg, filterStreamId):

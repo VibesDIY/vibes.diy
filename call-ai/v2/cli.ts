@@ -34,6 +34,7 @@ import {
 } from "./index.js";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import mime from "mime";
+import { createUtf8StreamDecoder } from "./utf8-stream.js";
 
 const env = (() => {
   try {
@@ -345,7 +346,7 @@ const app = command({
       }
     } else {
       const reader = body.getReader();
-      const decoder = new TextDecoder();
+      const utf8Decoder = createUtf8StreamDecoder();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -354,7 +355,14 @@ const app = command({
         if (raw) {
           process.stdout.write(Buffer.from(value));
         } else {
-          process.stdout.write(decoder.decode(value, { stream: true }));
+          process.stdout.write(utf8Decoder.decodeChunk(value));
+        }
+      }
+
+      if (raw === false) {
+        const trailing = utf8Decoder.flush();
+        if (trailing.length > 0) {
+          process.stdout.write(trailing);
         }
       }
     }
