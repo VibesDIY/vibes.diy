@@ -20,7 +20,7 @@ const CID = "test-access-fn-cid";
 
 // Records the arg the mock was last called with, plus the response it returns.
 interface InvokeRecorder {
-  calls: { cid: string; user: unknown }[];
+  calls: { cid: string; user: unknown; grantState?: unknown }[];
   result: AccessDescriptor | { forbidden: string };
 }
 
@@ -29,7 +29,7 @@ async function setupCtx(recorder: InvokeRecorder) {
   const deviceCA = await createTestDeviceCA(sthis);
   const ctx = await createVibeDiyTestCtx(sthis, deviceCA, {
     invokeAccessFn: async (params) => {
-      recorder.calls.push({ cid: params.cid, user: params.user });
+      recorder.calls.push({ cid: params.cid, user: params.user, grantState: params.grantState });
       return recorder.result;
     },
   });
