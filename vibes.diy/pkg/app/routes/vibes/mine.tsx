@@ -24,7 +24,14 @@ export default function VibesMine(): ReactElement {
     tab: paramTab,
   } = useParams<{ ownerHandle?: string; appSlug?: string; tab?: string }>();
   const { vibeDiyApi } = useVibesDiy();
-  const { items: vibeItems, loading: isLoading, nextCursor, loadMore } = useRecentVibes(30);
+  const {
+    items: vibeItems,
+    loading: isLoading,
+    isLoadingAll,
+    nextCursor,
+    loadMore,
+    ensureAllLoaded,
+  } = useRecentVibes(30);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [chatDetails, setChatDetails] = useState<ResGetChatDetails | null>(null);
@@ -37,10 +44,17 @@ export default function VibesMine(): ReactElement {
   const isPanelOpen = !!(paramUserSlug && paramAppSlug);
   const activeTab = toMineDetailTab(paramTab);
   const selectedKey = isPanelOpen ? `${paramUserSlug}/${paramAppSlug}` : "";
+  const searchTerm = searchQuery.trim();
+  const isSearchActive = searchTerm.length > 0;
   const selectedItem = isPanelOpen
     ? vibeItems.find((v) => v.ownerHandle === paramUserSlug && v.appSlug === paramAppSlug)
     : undefined;
   const selectedHead = selectedKey ? appHeadInfo.get(selectedKey) : undefined;
+
+  useEffect(() => {
+    if (!isSearchActive) return;
+    void ensureAllLoaded();
+  }, [isSearchActive, ensureAllLoaded]);
 
   async function onToggleMode(fsId: string, appSlug: string, ownerHandle: string, currentMode: string | undefined) {
     const nextMode = currentMode === "production" ? "dev" : "production";
@@ -131,7 +145,7 @@ export default function VibesMine(): ReactElement {
   }, [vibeItems, vibeDiyApi]);
 
   const filteredItems = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = searchTerm.toLowerCase();
     if (!q) return vibeItems;
     return vibeItems.filter((item) => {
       const title = (item.title ?? "").toLowerCase();
@@ -139,7 +153,7 @@ export default function VibesMine(): ReactElement {
       const user = item.ownerHandle.toLowerCase();
       return title.includes(q) || slug.includes(q) || user.includes(q);
     });
-  }, [vibeItems, searchQuery]);
+  }, [vibeItems, searchTerm]);
 
   const openTile = (item: ResRecentVibesItem) =>
     navigate(`/vibes/mine/${item.ownerHandle}/${item.appSlug}/prompts`, { replace: false, preventScrollReset: true });
@@ -182,11 +196,15 @@ export default function VibesMine(): ReactElement {
             selectedKey={selectedKey}
             onOpen={openTile}
             isLoading={isLoading}
-            nextCursor={searchQuery ? undefined : nextCursor}
+            nextCursor={isSearchActive ? undefined : nextCursor}
             onLoadMore={() => void loadMore()}
             emptyState={{
-              message: searchQuery ? `No vibes match "${searchQuery}"` : "You don't have any vibes yet",
-              cta: searchQuery ? undefined : (
+              message: isSearchActive
+                ? isLoadingAll
+                  ? "Searching all your vibes…"
+                  : `No vibes match "${searchTerm}"`
+                : "You don't have any vibes yet",
+              cta: isSearchActive ? undefined : (
                 <VibesButton variant="blue" onClick={() => navigate("/")}>
                   Create a Vibe
                 </VibesButton>
