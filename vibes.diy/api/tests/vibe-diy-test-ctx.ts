@@ -2,7 +2,7 @@ import { loadAsset, Result, string2stream } from "@adviser/cement";
 import { DeviceIdCA } from "@fireproof/core-device-id";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createAppContext, noopCache } from "@vibes.diy/api-svc";
-import { type EvtRequestGrant, MsgBase, S3Api } from "@vibes.diy/api-types";
+import { type AccessDescriptor, type EvtRequestGrant, MsgBase, S3Api } from "@vibes.diy/api-types";
 import { StubS3Api } from "./stub-s3-api.js";
 import { createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -53,6 +53,12 @@ export interface CreateVibeDiyTestCtxOpts {
   // Canary tests set this small (e.g. 200ms) so deadlines fire fast.
   peerTimeout?: number;
   notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
+  invokeAccessFn?(params: {
+    cid: string;
+    doc: unknown;
+    oldDoc: unknown | null;
+    user: { userHandle: string; displayName?: string } | null;
+  }): Promise<AccessDescriptor | { forbidden: string }>;
 }
 
 export async function createVibeDiyTestCtx(
@@ -156,5 +162,6 @@ export async function createVibeDiyTestCtx(
     db: drizzleDB,
     cache: noopCache,
     notifyRequestGrantChanged: opts.notifyRequestGrantChanged,
+    ...(opts?.invokeAccessFn ? { invokeAccessFn: opts.invokeAccessFn } : {}),
   });
 }
