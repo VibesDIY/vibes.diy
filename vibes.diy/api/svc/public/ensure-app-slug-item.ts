@@ -182,7 +182,10 @@ export async function ensureAppSlugItem(
               exportNames.push(name);
             }
           }
-          hasDefaultExport = /export\s+default\s+function/.test(accessJsSource);
+          hasDefaultExport =
+            /export\s+default\s+function/.test(accessJsSource) ||
+            /export\s+default\s+\(/.test(accessJsSource) ||
+            /export\s+default\s+\w+\s*=>/.test(accessJsSource);
         }
         if (hasDefaultExport) {
           exportNames.push("*");

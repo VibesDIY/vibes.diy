@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { extractExportSource } from "../svc/public/access-function.js";
 
 // Unit test: the eval wrapper used inside AccessFnDO.
 // NOTE: In production, AccessFnDO uses QuickJS WASM (@cf-wasm/quickjs) to evaluate
@@ -50,5 +51,54 @@ describe("AccessFnDO eval logic", () => {
 
   it("throws on malformed source", () => {
     expect(() => evalAccessFn("this is not js { {{")).toThrow();
+  });
+});
+
+describe("extractExportSource", () => {
+  const multiExportSource = [
+    'export function chat(doc, oldDoc, user, ctx) { if (!user) throw { forbidden: "auth" }; return {}; }',
+    "",
+    "export default function (doc, oldDoc, user, ctx) { return { allowAnonymous: true }; }",
+  ].join("\n");
+
+  const arrowDefaultSource = [
+    'export function chat(doc, oldDoc, user, ctx) { return { channels: ["public"] }; }',
+    "",
+    "export default (doc, oldDoc, user, ctx) => { return { allowAnonymous: true }; }",
+  ].join("\n");
+
+  it("extracts named export by dbName", () => {
+    const result = extractExportSource(multiExportSource, "chat");
+    expect(result).toContain("function chat(");
+    expect(result).not.toContain("export");
+    expect(result).not.toContain("allowAnonymous");
+  });
+
+  it("extracts default export for wildcard", () => {
+    const result = extractExportSource(multiExportSource, "*");
+    expect(result).toContain("allowAnonymous");
+    expect(result).not.toContain("export");
+    expect(result).not.toContain("default");
+    expect(result).toMatch(/^function\s*\(/);
+  });
+
+  it("extracts arrow default export for wildcard", () => {
+    const result = extractExportSource(arrowDefaultSource, "*");
+    expect(result).toBeDefined();
+    expect(result).toContain("allowAnonymous");
+    expect(result).not.toContain("export");
+    expect(result).toMatch(/^\(/);
+  });
+
+  it("returns undefined for missing export", () => {
+    expect(extractExportSource(multiExportSource, "nonexistent")).toBeUndefined();
+  });
+
+  it("named export takes precedence — extracts only that function", () => {
+    const chatFn = extractExportSource(multiExportSource, "chat");
+    const defaultFn = extractExportSource(multiExportSource, "*");
+    expect(chatFn).not.toEqual(defaultFn);
+    expect(chatFn).toContain("function chat(");
+    expect(defaultFn).toContain("allowAnonymous");
   });
 });
