@@ -271,22 +271,28 @@ Each capability (`read`, `write`, `delete`) is independent. Omitting one falls b
 
 ---
 
-## Access Function (`access` option)
+## Access Function (`/access.js`)
 
-The `acl` option above is a coarse per-database gate. The `access` option is a finer gate: a function the server runs on every write (including deletes) before storing the document. It validates writes, routes documents to channels, and declares grants that control who can read what. Only use the `access` option when the user asks for per-document routing, channel-based isolation, or document-level write validation.
+The `acl` option above is a coarse per-database gate. Access functions are a finer gate: functions the server runs on every write (including deletes) before storing the document. They validate writes, route documents to channels, and declare grants that control who can read what. Only create an `/access.js` file when the user asks for per-document routing, channel-based isolation, or document-level write validation.
+
+Access functions live in `/access.js`, a separate file in the vibe's filesystem alongside `/App.jsx`. Each **named export** maps to a database name — `export function chat(...)` gates `useFireproof("chat")`. There is no `export default`; only named exports are recognized. The file is evaluated server-side in a QuickJS WASM sandbox, not on the client. The client-side `useFireproof("chat")` call has no access parameter — the server discovers the function automatically from the file.
 
 ```js
-const { useLiveQuery, database } = useFireproof("workspace-chat", {
-  access: (doc, oldDoc, user, ctx) => {
-    if (!user) throw { forbidden: "authentication required" };
-    if (doc.type === "message") {
-      if (doc.userSlug !== user.userSlug) throw { forbidden: "not author" };
-      ctx.requireAccess(doc.channelId);
-      return { channels: [doc.channelId] };
-    }
-    return {};
-  },
-});
+// /access.js — each export name = the database it gates
+export function chat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  if (doc.type === "message") {
+    if (doc.userHandle !== user.userHandle) throw { forbidden: "not author" };
+    ctx.requireAccess(doc.channelId);
+    return { channels: [doc.channelId] };
+  }
+  return {};
+}
+```
+
+```js
+// /App.jsx — no access option needed; the server matches by database name
+const { useLiveQuery, database } = useFireproof("chat");
 ```
 
 ### Function signature
@@ -304,8 +310,8 @@ const { useLiveQuery, database } = useFireproof("workspace-chat", {
 
 ```ts
 {
-  userSlug: string    // stable unique id — use for all auth checks
-  displayName?: string // display only — never use for identity checks
+  userHandle: string    // stable unique id — use for all auth checks
+  displayName?: string  // display only — never use for identity checks
 }
 ```
 
@@ -321,9 +327,9 @@ All fields are optional. `{}` is a valid return. `throw { forbidden: "reason" }`
 ```ts
 type AccessDescriptor = {
   channels?: string[]; // route this doc to channels
-  members?: Record<roleName, userSlug[]>; // role membership (reduced by union)
+  members?: Record<roleName, userHandle[]>; // role membership (reduced by union)
   grant?: {
-    users?: Record<userSlug, string[]>; // direct user → channel grants (reduced by union)
+    users?: Record<userHandle, string[]>; // direct user → channel grants (reduced by union)
     roles?: Record<roleName, string[]>; // role → channel grants (reduced by union)
     public?: string[]; // public read — no auth required
   };
@@ -340,42 +346,43 @@ type AccessDescriptor = {
 
 **Grant resolution order:** The server resolves per-user channel access in two passes — first expand `grant.roles` through `members`, then union with `grant.users` direct grants.
 
-**`allowAnonymous` prevents a footgun.** If `user` is `null` and the function returns without throwing, the runtime checks `allowAnonymous`. If absent or `false`, the write is rejected. This prevents `(doc) => ({ channels: [doc.type] })` from silently opening anonymous writes. When `user` is not null, `allowAnonymous` has no effect. `grant.public` grants public _read_; anonymous _write_ requires `allowAnonymous: true` separately.
+**`allowAnonymous` prevents a footgun.** If `user` is `null` and the function returns without throwing, the runtime checks `allowAnonymous`. If absent or `false`, the write is rejected. This prevents a function that never inspects `user` from silently opening anonymous writes. When `user` is not null, `allowAnonymous` has no effect. `grant.public` grants public _read_; anonymous _write_ requires `allowAnonymous: true` separately.
 
 ### Example: Workspace chat with channels
 
 ```js
-const { useLiveQuery, database } = useFireproof("workspace-chat", {
-  access: (doc, oldDoc, user, ctx) => {
-    if (!user) throw { forbidden: "authentication required" };
+// /access.js
+export function chat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
 
-    if (doc.type === "channel-meta") {
-      if (doc.ownerSlug !== user.userSlug) throw { forbidden: "not owner" };
-      if (oldDoc && oldDoc.ownerSlug !== user.userSlug) throw { forbidden: "not owner" };
-      return {
-        channels: [doc._id],
-        grant: { users: Object.fromEntries([[doc.ownerSlug, [doc._id]], ...doc.memberSlugs.map((s) => [s, [doc._id]])]) },
-      };
-    }
+  if (doc.type === "channel-meta") {
+    if (doc.ownerHandle !== user.userHandle) throw { forbidden: "not owner" };
+    if (oldDoc && oldDoc.ownerHandle !== user.userHandle) throw { forbidden: "not owner" };
+    return {
+      channels: [doc._id],
+      grant: {
+        users: Object.fromEntries([[doc.ownerHandle, [doc._id]], ...doc.memberHandles.map((h) => [h, [doc._id]])]),
+      },
+    };
+  }
 
-    if (doc.type === "message") {
-      if (doc.userSlug !== user.userSlug) throw { forbidden: "not author" };
-      ctx.requireAccess(doc.channelId);
-      return { channels: [doc.channelId] };
-    }
+  if (doc.type === "message") {
+    if (doc.userHandle !== user.userHandle) throw { forbidden: "not author" };
+    ctx.requireAccess(doc.channelId);
+    return { channels: [doc.channelId] };
+  }
 
-    if (doc.type === "channel-invite") {
-      if (doc.senderSlug !== user.userSlug) throw { forbidden: "not sender" };
-      ctx.requireAccess(doc.channelId);
-      return {
-        channels: [doc.channelId],
-        grant: { users: { [doc.inviteeSlug]: [doc.channelId] } },
-      };
-    }
+  if (doc.type === "channel-invite") {
+    if (doc.senderHandle !== user.userHandle) throw { forbidden: "not sender" };
+    ctx.requireAccess(doc.channelId);
+    return {
+      channels: [doc.channelId],
+      grant: { users: { [doc.inviteeHandle]: [doc.channelId] } },
+    };
+  }
 
-    return {};
-  },
-});
+  return {};
+}
 ```
 
 This single access function handles three document types:
@@ -387,34 +394,33 @@ This single access function handles three document types:
 ### Example: Anonymous survey with role-gated results
 
 ```js
-const { useLiveQuery, database } = useFireproof("survey-app", {
-  access: (doc, oldDoc, user, ctx) => {
-    if (doc.type === "survey-response") {
-      if (doc._id) throw { forbidden: "id must be server-generated" };
-      return { channels: ["inbound-responses"], allowAnonymous: true };
-    }
+// /access.js
+export function survey(doc, oldDoc, user, ctx) {
+  if (doc.type === "survey-response") {
+    if (doc._id) throw { forbidden: "id must be server-generated" };
+    return { channels: ["inbound-responses"], allowAnonymous: true };
+  }
 
-    if (doc.type === "survey-config") {
-      ctx.requireRole("survey-admin");
-      return {
-        grant: {
-          roles: {
-            "survey-admin": ["inbound-responses"],
-            "feedback-team": ["inbound-responses"],
-          },
+  if (doc.type === "survey-config") {
+    ctx.requireRole("survey-admin");
+    return {
+      grant: {
+        roles: {
+          "survey-admin": ["inbound-responses"],
+          "feedback-team": ["inbound-responses"],
         },
-      };
-    }
+      },
+    };
+  }
 
-    if (doc.type === "final-results") {
-      ctx.requireRole("feedback-team");
-      return { channels: [doc._id], grant: { public: [doc._id] } };
-    }
+  if (doc.type === "final-results") {
+    ctx.requireRole("feedback-team");
+    return { channels: [doc._id], grant: { public: [doc._id] } };
+  }
 
-    if (!user) throw { forbidden: "authentication required" };
-    return {};
-  },
-});
+  if (!user) throw { forbidden: "authentication required" };
+  return {};
+}
 ```
 
 Key patterns:
@@ -423,6 +429,26 @@ Key patterns:
 - Requiring `doc._id` to be falsy prevents clients from choosing or overwriting response IDs
 - `grant.public` on final-results makes them readable without authentication
 - The **singleton grant doc** pattern (survey-config) wires role-to-channel access in one place
+
+### Multiple databases in one file
+
+Each named export gates its own database. A single `/access.js` can gate all databases the app uses:
+
+```js
+// /access.js
+export function chat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  ctx.requireAccess(doc.channelId);
+  return { channels: [doc.channelId] };
+}
+
+export function notes(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  return {};
+}
+```
+
+Databases without a matching export have no access function and use the default app-level permissions.
 
 ### Roles via `members` reduce
 
@@ -433,14 +459,14 @@ Roles are not a fixed registry. They are materialized from document contribution
 if (doc.type === "team-meta") {
   ctx.requireRole("admin");
   return {
-    members: { [doc.teamId]: doc.memberSlugs },
+    members: { [doc.teamId]: doc.memberHandles },
     grant: { roles: { [doc.teamId]: doc.channels } },
   };
 }
 
-// A per-employee membership doc contributes one slug
+// A per-employee membership doc contributes one handle
 if (doc.type === "membership") {
-  return { members: { [doc.role]: [doc.userSlug] } };
+  return { members: { [doc.role]: [doc.userHandle] } };
 }
 ```
 
