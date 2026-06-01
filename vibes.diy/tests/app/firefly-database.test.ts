@@ -309,6 +309,14 @@ describe("FireflyDatabase cross-client sync", () => {
     mockApi._simulateDocChanged("doc-self-db", "testdb");
     expect(listener).toHaveBeenCalledTimes(1);
   });
+
+  it("evt-doc-changed notifies update listeners with empty changes array", () => {
+    const updateListener = vi.fn();
+    db.subscribe(updateListener, true);
+    mockApi._simulateDocChanged("doc-456");
+    expect(updateListener).toHaveBeenCalledTimes(1);
+    expect(updateListener).toHaveBeenCalledWith([]);
+  });
 });
 
 // ── server subscription (regression: VibesDIY/vibes.diy#1545) ───────
