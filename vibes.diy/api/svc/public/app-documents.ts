@@ -418,22 +418,23 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         } satisfies MsgBase<EvtCommentPosted>);
       }
 
-      // Notify DocNotify coordinator for cross-shard fan-out
+      // Notify DocNotify coordinator for cross-shard fan-out.
+      // When the access fn returns channels, notify per-channel only (not the
+      // main dbName) so only channel-subscribed connections receive the event.
       if (vctx.notifyDocChanged) {
-        vctx
-          .notifyDocChanged({ ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId }, clientWsSend(ctx).connId)
-          .catch((e: unknown) => console.error("DocNotify error:", e));
-      }
-
-      // Channel routing: if access function returned channels, notify subscribers for each
-      if (accessResult?.channels?.length && vctx.notifyDocChanged) {
-        for (const channel of accessResult.channels) {
+        if (accessResult?.channels?.length) {
+          for (const channel of accessResult.channels) {
+            vctx
+              .notifyDocChanged(
+                { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName: channel, docId },
+                clientWsSend(ctx).connId
+              )
+              .catch((e: unknown) => console.error("DocNotify channel error:", e));
+          }
+        } else {
           vctx
-            .notifyDocChanged(
-              { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName: channel, docId },
-              clientWsSend(ctx).connId
-            )
-            .catch((e: unknown) => console.error("DocNotify channel error:", e));
+            .notifyDocChanged({ ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId }, clientWsSend(ctx).connId)
+            .catch((e: unknown) => console.error("DocNotify error:", e));
         }
       }
 
@@ -947,11 +948,75 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       // change-event channel — see putDoc/deleteDoc and ChatSessions fan-out.
       const wsSend = clientWsSend(ctx);
       const subscriptionKey = `${req.ownerHandle}/${req.appSlug}/${req.dbName}`;
-      wsSend.subscribedDocKeys.add(subscriptionKey);
+
+      // Channel-aware subscriptions: when an access fn binding exists, subscribe
+      // to the user's effective channels + public channels instead of the raw dbName.
+      // putDocEvento sends per-channel notifications when channels are present, so
+      // only channel-subscribed connections receive the doc-changed event.
+      const tAfbS = vctx.sql.tables.accessFunctionBindings;
+      const afbRowS = await vctx.sql.db
+        .select({ accessFnCid: tAfbS.accessFnCid })
+        .from(tAfbS)
+        .where(and(eq(tAfbS.userSlug, req.ownerHandle), eq(tAfbS.appSlug, req.appSlug), eq(tAfbS.dbName, req.dbName)))
+        .limit(1)
+        .then((r) => r[0]);
+
+      const channelKeys: string[] = [];
+      if (afbRowS?.accessFnCid) {
+        const tOutputsS = vctx.sql.tables.accessFnOutputs;
+        const grantOutputs = await vctx.sql.db
+          .select({ docId: tOutputsS.docId, output: tOutputsS.output })
+          .from(tOutputsS)
+          .where(
+            and(
+              eq(tOutputsS.userSlug, req.ownerHandle),
+              eq(tOutputsS.appSlug, req.appSlug),
+              eq(tOutputsS.dbName, req.dbName),
+              eq(tOutputsS.fnCid, afbRowS.accessFnCid),
+              eq(tOutputsS.hasGrants, 1)
+            )
+          );
+
+        const reduce = new GrantReduce();
+        for (const row of grantOutputs) {
+          reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
+        }
+
+        const userHandle = req._auth
+          ? await vctx.sql.db
+              .select({ handle: vctx.sql.tables.handleBinding.handle })
+              .from(vctx.sql.tables.handleBinding)
+              .where(eq(vctx.sql.tables.handleBinding.userId, req._auth.verifiedAuth.claims.userId))
+              .limit(1)
+              .then((r) => r[0]?.handle ?? null)
+          : null;
+
+        const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
+        for (const ch of effectiveChannels) {
+          channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
+        }
+        for (const ch of reduce.publicChannels) {
+          channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
+        }
+      }
+
+      if (channelKeys.length > 0) {
+        for (const key of channelKeys) {
+          wsSend.subscribedDocKeys.add(key);
+        }
+      } else {
+        wsSend.subscribedDocKeys.add(subscriptionKey);
+      }
 
       // Register this shard with DocNotify coordinator for cross-shard fan-out
       if (vctx.registerDocSubscription) {
-        vctx.registerDocSubscription(subscriptionKey).catch((e: unknown) => console.error("DocNotify error:", e));
+        if (channelKeys.length > 0) {
+          for (const key of channelKeys) {
+            vctx.registerDocSubscription(key).catch((e: unknown) => console.error("DocNotify error:", e));
+          }
+        } else {
+          vctx.registerDocSubscription(subscriptionKey).catch((e: unknown) => console.error("DocNotify error:", e));
+        }
       }
 
       await ctx.send.send(ctx, {
