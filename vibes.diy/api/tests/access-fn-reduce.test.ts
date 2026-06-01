@@ -98,6 +98,16 @@ describe("GrantReduce", () => {
     expect(gr.resolveEffectiveChannels("alice")).toEqual(new Set(["chan-shared"]));
   });
 
+  it("update to no-grant clears stale grants", () => {
+    const gr = new GrantReduce();
+    gr.addDoc("meta1", extractContribution({ grant: { users: { alice: ["chan-general"] } } }));
+    expect(gr.resolveEffectiveChannels("alice")).toEqual(new Set(["chan-general"]));
+
+    // Update the same doc to have no grants
+    gr.addDoc("meta1", extractContribution({ channels: ["chan-general"] }));
+    expect(gr.resolveEffectiveChannels("alice")).toEqual(new Set());
+  });
+
   it("empty reduce: no docs — resolveEffectiveChannels returns empty set", () => {
     const gr = new GrantReduce();
     expect(gr.resolveEffectiveChannels("alice")).toEqual(new Set());
