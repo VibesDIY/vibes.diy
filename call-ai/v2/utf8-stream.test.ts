@@ -129,9 +129,8 @@ describe("utf8-stream", () => {
       const encoded = encodeUtf8(input);
 
       let decoded = "";
-      // feed byte-by-byte to stress the buffering logic
-      for (let i = 0; i < encoded.length; i++) {
-        decoded += decoder.decodeChunk(new Uint8Array([encoded[i]]));
+      for (const byte of encoded) {
+        decoded += decoder.decodeChunk(new Uint8Array([byte]));
       }
       decoded += decoder.flush();
       expect(decoded).toBe(input);
