@@ -79,6 +79,7 @@ export interface VibesApiSQLCtx {
     doc: unknown;
     oldDoc: unknown | null;
     user: UserContext | null;
+    source?: string;
   }): Promise<AccessDescriptor | { forbidden: string }>;
 }
 
