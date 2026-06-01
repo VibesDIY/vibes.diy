@@ -58,6 +58,12 @@ export interface CreateVibeDiyTestCtxOpts {
     doc: unknown;
     oldDoc: unknown | null;
     user: { userHandle: string; displayName?: string } | null;
+    source?: string;
+    grantState?: {
+      members: Record<string, string[]>;
+      roleGrants: Record<string, string[]>;
+      userGrants: Record<string, string[]>;
+    };
   }): Promise<AccessDescriptor | { forbidden: string }>;
 }
 
