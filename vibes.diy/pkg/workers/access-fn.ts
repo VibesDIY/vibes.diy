@@ -40,10 +40,19 @@ export class AccessFnDO implements DurableObject {
     const vm = QuickJS.newContext();
 
     try {
-      vm.evalCode(`const doc = ${JSON.stringify(body.doc)};`);
-      vm.evalCode(`const oldDoc = ${JSON.stringify(body.oldDoc)};`);
-      vm.evalCode(`const user = ${JSON.stringify(body.user)};`);
-      vm.evalCode(`const ctx = ${JSON.stringify({})};`);
+      for (const stmt of [
+        `const doc = ${JSON.stringify(body.doc)};`,
+        `const oldDoc = ${JSON.stringify(body.oldDoc)};`,
+        `const user = ${JSON.stringify(body.user)};`,
+        `const ctx = ${JSON.stringify({})};`,
+      ]) {
+        const r = vm.evalCode(stmt);
+        if (r.error) {
+          r.error.dispose();
+        } else {
+          r.value.dispose();
+        }
+      }
 
       const fnResult = vm.evalCode(`(function() { ${source} })()`);
 
