@@ -51,6 +51,7 @@ import { checkDocAccess, canRead, isPublicReadable, DocAccessLevel } from "./acc
 import { enforceAllowAnonymous, ForbiddenError } from "./access-function.js";
 import type { AccessDescriptor } from "../../types/access-function.js";
 import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
+import { GrantReduce, extractContribution } from "./grant-reduce.js";
 import { mintFilesUrls, isFileMeta } from "./files-url-mint.js";
 
 // Read-side gate: if the ACL pins `read`, honor it exactly; otherwise fall
@@ -184,8 +185,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const afbRow = await vctx.sql.db
         .select({ accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri })
         .from(tAfb)
-        .where(and(eq(tAfb.userSlug, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [req.dbName, "*"])))
-        .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
+        .where(and(eq(tAfb.userSlug, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), eq(tAfb.dbName, req.dbName)))
         .limit(1)
         .then((r) => r[0]);
 
@@ -258,12 +258,39 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           }
         }
 
+        // Build reduce from stored outputs for grant state
+        const tOutputs = vctx.sql.tables.accessFnOutputs;
+        const storedOutputs = await vctx.sql.db
+          .select({ docId: tOutputs.docId, output: tOutputs.output })
+          .from(tOutputs)
+          .where(
+            and(
+              eq(tOutputs.userSlug, req.ownerHandle),
+              eq(tOutputs.appSlug, req.appSlug),
+              eq(tOutputs.dbName, req.dbName),
+              eq(tOutputs.fnCid, afbRow.accessFnCid),
+              eq(tOutputs.hasGrants, 1)
+            )
+          );
+
+        const reduce = new GrantReduce();
+        for (const row of storedOutputs) {
+          reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
+        }
+
+        const grantState = {
+          members: Object.fromEntries(Array.from(reduce.effectiveMembers).map(([k, v]) => [k, Array.from(v)])),
+          roleGrants: Object.fromEntries(Array.from(reduce.roleGrants).map(([k, v]) => [k, Array.from(v)])),
+          userGrants: Object.fromEntries(Array.from(reduce.userGrants).map(([k, v]) => [k, Array.from(v)])),
+        };
+
         const invokeResult = await vctx.invokeAccessFn({
           cid: afbRow.accessFnCid,
           doc: req.doc,
           oldDoc,
           user: userContext,
           source: accessFnSource,
+          grantState,
         });
 
         if ("forbidden" in invokeResult) {
@@ -406,6 +433,40 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             )
             .catch((e: unknown) => console.error("DocNotify channel error:", e));
         }
+      }
+
+      // Store access fn output for future reduce queries
+      if (accessResult && !("forbidden" in accessResult)) {
+        const tOutputs = vctx.sql.tables.accessFnOutputs;
+        const outputHasGrants =
+          (accessResult.members && Object.keys(accessResult.members).length > 0) ||
+          (accessResult.grant?.users && Object.keys(accessResult.grant.users).length > 0) ||
+          (accessResult.grant?.roles && Object.keys(accessResult.grant.roles).length > 0) ||
+          (accessResult.grant?.public && accessResult.grant.public.length > 0)
+            ? 1
+            : 0;
+
+        // afbRow is guaranteed non-null here because accessResult is only set
+        // inside the afbRow?.accessFnCid branch above.
+        await vctx.sql.db
+          .insert(tOutputs)
+          .values({
+            userSlug: req.ownerHandle,
+            appSlug: req.appSlug,
+            dbName: req.dbName,
+            docId,
+            fnCid: afbRow!.accessFnCid,
+            output: JSON.stringify(accessResult),
+            hasGrants: outputHasGrants,
+          })
+          .onConflictDoUpdate({
+            target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+            set: {
+              fnCid: afbRow!.accessFnCid,
+              output: JSON.stringify(accessResult),
+              hasGrants: outputHasGrants,
+            },
+          });
       }
 
       await ctx.send.send(ctx, {
