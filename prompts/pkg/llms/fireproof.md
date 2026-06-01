@@ -271,6 +271,183 @@ Each capability (`read`, `write`, `delete`) is independent. Omitting one falls b
 
 ---
 
+## Access Function (`access` option)
+
+The `acl` option above is a coarse per-database gate. The `access` option is a finer gate: a function the server runs on every write (including deletes) before storing the document. It validates writes, routes documents to channels, and declares grants that control who can read what. Only use the `access` option when the user asks for per-document routing, channel-based isolation, or document-level write validation.
+
+```js
+const { useLiveQuery, database } = useFireproof("workspace-chat", {
+  access: (doc, oldDoc, user, ctx) => {
+    if (!user) throw { forbidden: "authentication required" };
+    if (doc.type === "message") {
+      if (doc.userSlug !== user.userSlug) throw { forbidden: "not author" };
+      ctx.requireAccess(doc.channelId);
+      return { channels: [doc.channelId] };
+    }
+    return {};
+  },
+});
+```
+
+### Function signature
+
+```ts
+(doc, oldDoc, user: UserContext | null, ctx: Helpers) => AccessDescriptor;
+```
+
+- `doc` — the document being written
+- `oldDoc` — the previous version (null for new documents)
+- `user` — the authenticated user, or `null` for anonymous requests
+- `ctx` — server-provided helpers for checking materialized state
+
+**UserContext:**
+
+```ts
+{
+  userSlug: string    // stable unique id — use for all auth checks
+  displayName?: string // display only — never use for identity checks
+}
+```
+
+**Helpers (`ctx`):** Opaque closures over the materialized grant state. They throw or pass — you cannot enumerate channels, list members, or iterate grants. Both helpers also throw when `user` is null.
+
+- `ctx.requireAccess(channelId)` — throws if user is not in the channel
+- `ctx.requireRole(roleName)` — throws if user is not in the role
+
+### AccessDescriptor return type
+
+All fields are optional. `{}` is a valid return. `throw { forbidden: "reason" }` rejects the write.
+
+```ts
+type AccessDescriptor = {
+  channels?: string[]; // route this doc to channels
+  members?: Record<roleName, userSlug[]>; // role membership (reduced by union)
+  grant?: {
+    users?: Record<userSlug, string[]>; // direct user → channel grants (reduced by union)
+    roles?: Record<roleName, string[]>; // role → channel grants (reduced by union)
+    public?: string[]; // public read — no auth required
+  };
+  expiry?: string | number | null; // ISO date or unix seconds
+  allowAnonymous?: boolean; // opt-in for null-user writes
+};
+```
+
+### Key concepts
+
+**Channels** route documents. A document with `channels: ["general"]` is only visible to users who have been granted access to `"general"`. Channels are the unit of read isolation.
+
+**Grants are additive.** The effective access state is the union of every current document's `AccessDescriptor` output. There is no "remove grant" operation — deleting a document drops its contribution from the union automatically. This makes revocation trivial: delete the document that granted access, and the grant disappears on next sync.
+
+**Grant resolution order:** The server resolves per-user channel access in two passes — first expand `grant.roles` through `members`, then union with `grant.users` direct grants.
+
+**`allowAnonymous` prevents a footgun.** If `user` is `null` and the function returns without throwing, the runtime checks `allowAnonymous`. If absent or `false`, the write is rejected. This prevents `(doc) => ({ channels: [doc.type] })` from silently opening anonymous writes. When `user` is not null, `allowAnonymous` has no effect. `grant.public` grants public _read_; anonymous _write_ requires `allowAnonymous: true` separately.
+
+### Example: Workspace chat with channels
+
+```js
+const { useLiveQuery, database } = useFireproof("workspace-chat", {
+  access: (doc, oldDoc, user, ctx) => {
+    if (!user) throw { forbidden: "authentication required" };
+
+    if (doc.type === "channel-meta") {
+      if (doc.ownerSlug !== user.userSlug) throw { forbidden: "not owner" };
+      if (oldDoc && oldDoc.ownerSlug !== user.userSlug) throw { forbidden: "not owner" };
+      return {
+        channels: [doc._id],
+        grant: { users: Object.fromEntries([[doc.ownerSlug, [doc._id]], ...doc.memberSlugs.map((s) => [s, [doc._id]])]) },
+      };
+    }
+
+    if (doc.type === "message") {
+      if (doc.userSlug !== user.userSlug) throw { forbidden: "not author" };
+      ctx.requireAccess(doc.channelId);
+      return { channels: [doc.channelId] };
+    }
+
+    if (doc.type === "channel-invite") {
+      if (doc.senderSlug !== user.userSlug) throw { forbidden: "not sender" };
+      ctx.requireAccess(doc.channelId);
+      return {
+        channels: [doc.channelId],
+        grant: { users: { [doc.inviteeSlug]: [doc.channelId] } },
+      };
+    }
+
+    return {};
+  },
+});
+```
+
+This single access function handles three document types:
+
+- **channel-meta** — owner creates a channel and grants access to listed members
+- **message** — only the author can post, must already have channel access
+- **channel-invite** — any channel member can invite others; deleting the invite revokes the grant
+
+### Example: Anonymous survey with role-gated results
+
+```js
+const { useLiveQuery, database } = useFireproof("survey-app", {
+  access: (doc, oldDoc, user, ctx) => {
+    if (doc.type === "survey-response") {
+      if (doc._id) throw { forbidden: "id must be server-generated" };
+      return { channels: ["inbound-responses"], allowAnonymous: true };
+    }
+
+    if (doc.type === "survey-config") {
+      ctx.requireRole("survey-admin");
+      return {
+        grant: {
+          roles: {
+            "survey-admin": ["inbound-responses"],
+            "feedback-team": ["inbound-responses"],
+          },
+        },
+      };
+    }
+
+    if (doc.type === "final-results") {
+      ctx.requireRole("feedback-team");
+      return { channels: [doc._id], grant: { public: [doc._id] } };
+    }
+
+    if (!user) throw { forbidden: "authentication required" };
+    return {};
+  },
+});
+```
+
+Key patterns:
+
+- `allowAnonymous: true` on survey-response lets unauthenticated visitors submit
+- Requiring `doc._id` to be falsy prevents clients from choosing or overwriting response IDs
+- `grant.public` on final-results makes them readable without authentication
+- The **singleton grant doc** pattern (survey-config) wires role-to-channel access in one place
+
+### Roles via `members` reduce
+
+Roles are not a fixed registry. They are materialized from document contributions:
+
+```js
+// A team-meta doc contributes members to a role
+if (doc.type === "team-meta") {
+  ctx.requireRole("admin");
+  return {
+    members: { [doc.teamId]: doc.memberSlugs },
+    grant: { roles: { [doc.teamId]: doc.channels } },
+  };
+}
+
+// A per-employee membership doc contributes one slug
+if (doc.type === "membership") {
+  return { members: { [doc.role]: [doc.userSlug] } };
+}
+```
+
+Both patterns produce identical reduced state. Deleting a membership doc removes the user from the role automatically.
+
+---
+
 ## Multi-Space Pattern: Owner Creates, Members Discover
 
 `listDbNames()` is owner-only — members can't enumerate databases by name. Instead, the owner writes registry documents into a shared database that all members can query to discover available spaces.
