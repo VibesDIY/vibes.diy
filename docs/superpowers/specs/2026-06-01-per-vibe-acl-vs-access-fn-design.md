@@ -168,20 +168,20 @@ The full role hierarchy (owner/editor/viewer/submitter/none) and dbAcls infrastr
 
 The complexity reduction happens on the **supply side** — what the sharing UI defaults to — not by removing the ACL machinery:
 
-| Sharing control          | Default                       | Reachable options                                   |
-| ------------------------ | ----------------------------- | --------------------------------------------------- |
-| **Auto-approve role**    | Viewer (read-only)            | Editor (read+write), Viewer, Submitter (write-only) |
-| **Access request grant** | Viewer                        | Editor, Viewer, Submitter                           |
-| **Email invite role**    | Editor (trusted collaborator) | Editor, Viewer, Submitter                           |
-| **Public toggle**        | Off                           | On/Off (controls app visibility)                    |
-| **Comments toggle**      | Members can comment           | Editors-only, Members                               |
-| **Per-db ACLs**          | No overrides                  | Available via settings API                          |
+| Sharing control          | Default             | Reachable options                                  |
+| ------------------------ | ------------------- | -------------------------------------------------- |
+| **Auto-approve role**    | Editor (read+write) | Editor, Viewer (read-only), Submitter (write-only) |
+| **Access request grant** | Editor              | Editor, Viewer, Submitter                          |
+| **Email invite role**    | Editor              | Editor, Viewer, Submitter                          |
+| **Public toggle**        | Off                 | On/Off (controls app visibility)                   |
+| **Comments toggle**      | Members can comment | Editors-only, Members                              |
+| **Per-db ACLs**          | No overrides        | Available via settings API                         |
 
-Today's shipped sharing UI defaults to **viewer (read-only)** for broad-entry paths (auto-approve, access requests). This is the safe default — visitors get read access, and the owner explicitly upgrades to editor when they want to grant write access. **Editor** is the default for explicit trusted-collaborator flows (manual email invites) where the owner is choosing specific people.
+Member = editor (read+write). Every entry path defaults to granting full membership — auto-approve, access requests, and email invites all grant editor. The access function (if any) handles fine-grained data permissions from there.
 
-Submitter (write-only) exists server-side but isn't exposed in the sharing UI today. It's reachable via the settings API for specialized flows (anonymous submission boxes, write-only data collection).
+Viewer (read-only) and submitter (write-only) are reachable for edge cases (remediation, restricted accounts, write-only submission flows) but aren't highlighted as the primary options in the sharing UI.
 
-The normal path is: visitor requests access → auto-approved as viewer → owner upgrades to editor when ready → `can("write")` returns true → access function (if any) governs fine-grained data permissions.
+The normal path is: visitor requests access → auto-approved as editor → `can("write")` returns true → access function (if any) governs fine-grained data permissions.
 
 ### `useFireproof().access` — The Room (new)
 
