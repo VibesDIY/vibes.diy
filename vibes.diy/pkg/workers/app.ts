@@ -25,6 +25,7 @@ import { getVibeRouteHints, parseVibePathname, vibePathnameHasFsId } from "@vibe
 export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
 export { UserNotify } from "./user-notify.js";
+export { AccessFnDO } from "./access-fn.js";
 export { AccessFnSpike } from "./access-fn-spike.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
@@ -74,7 +75,6 @@ export default {
         headers: { "Content-Type": "application/json" },
       }) as unknown as CFResponse;
     }
-
 
     const fbclid = url.getParam("fbclid");
     if (fbclid !== undefined && env.META_CAPI_TOKEN !== undefined && env.META_PIXEL_ID !== undefined) {
