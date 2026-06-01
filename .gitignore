@@ -7,7 +7,7 @@ node_modules
 !.claude/skills/
 .superpowers/
 
-# QA agent run artifacts (triage drafts, screenshots, alias log) — local-only.
+# QA agent run artifacts (triage drafts, screenshots, run log) — local-only.
 qa-reports/
 .worktrees/
 
