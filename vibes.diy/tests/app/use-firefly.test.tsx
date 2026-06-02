@@ -1,7 +1,9 @@
+import React from "react";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { useFireproof, registerFirefly } from "../../vibe/runtime/use-firefly.js";
 import { FireflyDatabase } from "../../vibe/runtime/firefly-database.js";
+import { VibeContextProvider } from "../../vibe/runtime/VibeContext.js";
 import { createMockVibeApi, asSandboxApi, type MockVibeApi } from "./mock-vibe-api.js";
 
 const TEST_TIMEOUT = 5000;
@@ -361,6 +363,95 @@ describe("HOOK: useChanges", () => {
         expect(result.current.rows).toEqual([]);
         expect(result.current.docs).toEqual([]);
       });
+    },
+    TEST_TIMEOUT
+  );
+});
+
+// ── access (roles + channels from grants) ──────────────────────────
+
+describe("HOOK: useFireproof access", () => {
+  it(
+    "returns empty access when no grants are present",
+    () => {
+      const dbName = uniqueDbName();
+      const { result } = renderHook(() => useFireproof(dbName));
+      const { access } = result.current;
+
+      expect(access.roles.size).toBe(0);
+      expect(access.channels.size).toBe(0);
+      expect(access.hasRole("moderator")).toBe(false);
+      expect(access.hasChannel("general")).toBe(false);
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    "exposes grants for the matching database",
+    () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider
+          mountParams={{
+            usrEnv: {},
+            viewerEnv: {
+              viewer: { userHandle: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
+              access: "editor",
+              grants: {
+                [dbName]: { roles: ["moderator", "poster"], channels: ["general", "announcements"] },
+              },
+            },
+          }}
+        >
+          {children}
+        </VibeContextProvider>
+      );
+
+      const { result } = renderHook(() => useFireproof(dbName), { wrapper });
+      const { access } = result.current;
+
+      expect(access.hasRole("moderator")).toBe(true);
+      expect(access.hasRole("poster")).toBe(true);
+      expect(access.hasRole("admin")).toBe(false);
+
+      expect(access.hasChannel("general")).toBe(true);
+      expect(access.hasChannel("announcements")).toBe(true);
+      expect(access.hasChannel("secret")).toBe(false);
+
+      expect([...access.roles]).toEqual(expect.arrayContaining(["moderator", "poster"]));
+      expect([...access.channels]).toEqual(expect.arrayContaining(["general", "announcements"]));
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    "returns empty access for databases without grants",
+    () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider
+          mountParams={{
+            usrEnv: {},
+            viewerEnv: {
+              viewer: { userHandle: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
+              access: "editor",
+              grants: {
+                "other-db": { roles: ["admin"], channels: ["private"] },
+              },
+            },
+          }}
+        >
+          {children}
+        </VibeContextProvider>
+      );
+
+      const { result } = renderHook(() => useFireproof(dbName), { wrapper });
+      const { access } = result.current;
+
+      expect(access.roles.size).toBe(0);
+      expect(access.channels.size).toBe(0);
+      expect(access.hasRole("admin")).toBe(false);
+      expect(access.hasChannel("private")).toBe(false);
     },
     TEST_TIMEOUT
   );

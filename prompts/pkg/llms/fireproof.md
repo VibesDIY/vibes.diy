@@ -271,6 +271,42 @@ Owner is always implicitly included — never list `owner` explicitly in an ACL.
 
 Each capability (`read`, `write`, `delete`) is independent. Omitting one falls back to the app-level role gate for that operation. The `acl` is sent once on first database open and persists across sessions (last-write-wins). Only the **app owner** can set ACLs; non-owner apps opening a database with an `acl` option have it silently ignored — the database still opens and works normally.
 
+## Reading Resolved Grants (`access`)
+
+`useFireproof()` returns an `access` property — the viewer's resolved roles and channels for that database, computed server-side from the access function's `members` and `grant` declarations.
+
+```jsx
+const { database, useLiveQuery, access } = useFireproof("comments");
+
+access.roles; // ReadonlySet<string> — roles the viewer belongs to
+access.channels; // ReadonlySet<string> — channels the viewer can access
+
+access.hasRole("moderator"); // boolean convenience
+access.hasChannel("engineering"); // boolean convenience
+```
+
+For databases without an access function export, `access` has empty roles and channels — the app falls back to `useViewer().can("write")` for membership checks. No separate pending flag — grants arrive alongside the viewer identity, so `useViewer().isViewerPending` covers both.
+
+```jsx
+function App() {
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
+  const { database, useLiveQuery, access } = useFireproof("comments");
+
+  if (isViewerPending) return null;
+
+  return (
+    <div>
+      <ViewerTag />
+      {access.hasRole("poster") && <CommentForm database={database} />}
+      {access.hasRole("moderator") && <ModTools database={database} />}
+      {access.hasChannel("announcements") && <Announcements />}
+    </div>
+  );
+}
+```
+
+The AI agent writes the access function (so it knows the role names) and writes the UI (so it knows which roles gate which components). The `access` object is the bridge — it lets the UI reflect server-enforced permissions without duplicating the logic.
+
 ---
 
 ## Access Function (`/access.js`)
