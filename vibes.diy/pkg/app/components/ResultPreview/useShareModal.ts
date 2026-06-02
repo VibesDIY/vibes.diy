@@ -176,7 +176,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
   }, [isOpen, appSlug, ownerHandle, vibeDiyApi]);
 
   const handlePublish = useCallback(
-    async (autoJoin: boolean, role: "editor" | "viewer" = "viewer") => {
+    async (autoJoin: boolean, role: "editor" | "viewer" = "editor") => {
       if (!canPublish || !settingsLoaded) return;
       const isInitialPublish = !isPublished;
       setIsPublishing(true);
