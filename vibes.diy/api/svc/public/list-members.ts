@@ -56,7 +56,7 @@ export const listMembersEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
       // Read-access gate: any reader (or public-readable) can list members.
       const { access } = req._auth
         ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
-        : { access: "none" as DocAccessLevel, isOwner: false };
+        : { access: "none" as DocAccessLevel };
       if (!canRead(access)) {
         const pub = await isPublicReadable(vctx, req.appSlug, req.ownerHandle);
         if (!pub) {
