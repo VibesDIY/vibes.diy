@@ -159,13 +159,29 @@ Insert after line 308 (`The AI agent writes the access function...`):
 ````markdown
 ### Complete example: Team announcements with roles and channels
 
-This example shows the full round-trip — access.js declares roles, channels, and grants; App.jsx reads them back via `access`.
+This example shows the full round-trip — access.js declares roles, channels, and grants; App.jsx reads them back via `access`. Key details:
+
+- **Channel grant bootstrap:** A `channelSetup` document uses `grant.public` so all members can read, and `grant.roles` so admins and posters can write to specific channels.
+- **Admin bootstrap:** The app owner is always implicitly in every role. The first `roleGrant` document can only be written by the owner (via `ctx.requireRole("admin")`), who then grants admin to others.
+- **All write surfaces** are gated with `can("write")` (membership) alongside `access.hasRole()`/`access.hasChannel()` (permissions).
+- **`ViewerTag`** takes `ownerHandle` (not `userHandle`) when rendering another user.
 
 access.js
 
 ```js
 export function announcements(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "sign in" };
+
+  if (doc.type === "channelSetup") {
+    ctx.requireRole("admin");
+    return {
+      channels: [doc.channel],
+      grant: {
+        public: [doc.channel],
+        roles: { admin: [doc.channel], poster: [doc.channel] },
+      },
+    };
+  }
 
   if (doc.type === "roleGrant") {
     ctx.requireRole("admin");
@@ -216,7 +232,7 @@ export default function App() {
     <div>
       <ViewerTag />
 
-      {/* membership gate — can they interact at all? */}
+      {/* membership + channel gate */}
       {can("write") && access.hasChannel(channel) && (
         <form
           onSubmit={(e) => {
@@ -229,8 +245,8 @@ export default function App() {
         </form>
       )}
 
-      {/* role gate — admin-only controls */}
-      {access.hasRole("admin") && (
+      {/* membership + role gate — admin-only controls */}
+      {can("write") && access.hasRole("admin") && (
         <button onClick={() => database.put({ type: "roleGrant", role: "poster", userHandle: "newUser" })}>
           Grant poster role
         </button>
@@ -238,9 +254,9 @@ export default function App() {
 
       {posts.map((p) => (
         <div key={p._id}>
-          <ViewerTag userHandle={p.authorHandle} />
+          <ViewerTag ownerHandle={p.authorHandle} />
           <p>{p.body}</p>
-          {access.hasRole("admin") && <button onClick={() => database.del(p._id)}>Delete</button>}
+          {can("write") && access.hasRole("admin") && <button onClick={() => database.del(p._id)}>Delete</button>}
         </div>
       ))}
     </div>
