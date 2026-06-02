@@ -109,9 +109,6 @@ export async function createAppContext<T extends VibesSqlite>(
     DEV_SERVER_PORT: param.OPTIONAL,
     DEV: param.OPTIONAL,
 
-    FPCLOUD_URL: param.REQUIRED,
-    // DASHBOARD_URL: param.REQUIRED,
-
     VIBES_SVC_HOSTNAME_BASE: param.OPTIONAL,
     VIBES_SVC_PROTOCOL: "https",
     VIBES_SVC_PORT: param.OPTIONAL,
@@ -133,7 +130,6 @@ export async function createAppContext<T extends VibesSqlite>(
     CLOUD_SESSION_TOKEN_PUBLIC: param.REQUIRED,
     CLOUD_SESSION_TOKEN_SECRET: param.REQUIRED,
     CLOUD_SESSION_TOKEN_ISSUER: param.REQUIRED,
-    CLOUD_SESSION_TOKEN_VALID_SEC: "600",
   });
   if (rEnvVals.isErr()) {
     throw rEnvVals.Err();
@@ -268,15 +264,6 @@ export async function createAppContext<T extends VibesSqlite>(
         cache: params.cache,
       },
     }),
-    fpCloud: {
-      url: envVals.FPCLOUD_URL,
-      secretToken: envVals.CLOUD_SESSION_TOKEN_SECRET,
-      publicToken: envVals.CLOUD_SESSION_TOKEN_PUBLIC,
-      issuer: envVals.CLOUD_SESSION_TOKEN_ISSUER,
-      audience: "sandboxes.vibes.diy",
-      validFor: parseInt(envVals.CLOUD_SESSION_TOKEN_VALID_SEC ?? "600", 10) ?? 600,
-    },
-
     postQueue: params.postQueue,
     fetchAsset: params.fetchAsset,
     tokenApi: await tokenApi(sthis, {

@@ -41,7 +41,6 @@ import {
   ReqEnsureAppSettings,
   ResEnsureAppSettings,
 } from "./settings.js";
-import { ReqFPCloudToken, ResFPCloudToken } from "./fpcloud-token.js";
 import {
   ReqCreateInvite,
   ResCreateInvite,
@@ -170,8 +169,6 @@ export interface VibesDiyApiIface<_T = unknown> {
   forkApp(req: Req<ReqForkApp>): Promise<Result<ResForkApp, VibesDiyError>>;
 
   getCertFromCsr(req: Req<ReqCertFromCsr>): Promise<Result<ResCertFromCsr>>;
-
-  getFPCloudToken(req: Req<ReqFPCloudToken>): Promise<Result<ResFPCloudToken>>;
 
   createInvite(req: Req<ReqCreateInvite>): Promise<Result<ResCreateInvite, VibesDiyError>>;
   revokeInvite(req: Req<ReqRevokeInvite>): Promise<Result<ResRevokeInvite, VibesDiyError>>;

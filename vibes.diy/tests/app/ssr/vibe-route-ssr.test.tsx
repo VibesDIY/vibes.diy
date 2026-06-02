@@ -50,16 +50,6 @@ vi.mock("../../../pkg/app/vibes-diy-provider.js", () => ({
   }),
 }));
 
-vi.mock("../../../pkg/app/hooks/useShareableDB.js", () => ({
-  useShareableDB: () => ({
-    sharingState: undefined,
-    dbRef: { current: null },
-    onResult: () => undefined,
-    onDismiss: () => undefined,
-    onLoginRedirect: () => undefined,
-  }),
-}));
-
 vi.mock("../../../pkg/app/components/ResultPreview/useShareModal.js", () => ({
   useShareModal: () => ({
     isOpen: false,

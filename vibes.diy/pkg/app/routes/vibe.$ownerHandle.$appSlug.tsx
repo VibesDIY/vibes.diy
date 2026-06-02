@@ -8,11 +8,9 @@ import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
 import { VibesSwitch, VibesButton, BLUE, YELLOW, ExpandedVibesPill, gridBackground, cx, useMobile } from "@vibes.diy/base";
-import { AllowFireproofSharing } from "../components/AllowFireproofSharing.js";
 import { useShareModal } from "../components/ResultPreview/useShareModal.js";
 import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
-import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { toast } from "react-hot-toast";
 import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
@@ -380,8 +378,6 @@ export default function VibeIframeWrapper() {
     });
   }, [adminMode, adminStorageKey, srvVibeSandbox, ownerHandle, appSlug, vctx.vibeDiyApi]);
 
-  const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
-
   const shareModal = useShareModal({
     ownerHandle: ownerHandle ?? "",
     appSlug: appSlug ?? "",
@@ -635,15 +631,6 @@ export default function VibeIframeWrapper() {
         </Delayed>
       )}
       {loginOverlay}
-      {hasMounted && sharingState && (
-        <AllowFireproofSharing
-          state={sharingState}
-          dbRef={dbRef}
-          onResult={onResult}
-          onDismiss={onDismiss}
-          onLoginRedirect={onLoginRedirect}
-        />
-      )}
     </>
   );
 }

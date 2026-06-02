@@ -2,9 +2,7 @@ import { gridBackground, cx } from "@vibes.diy/base";
 import React from "react";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import type { ReactNode } from "react";
-import { useShareableDB } from "../hooks/useShareableDB.js";
 import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
-import { AllowFireproofSharing } from "./AllowFireproofSharing.js";
 import { PillPortal, PILL_CLEARANCE } from "./PillPortal.js";
 
 interface AppLayoutProps {
@@ -34,7 +32,6 @@ export default function AppLayout({
   appInfo,
   fullWidthChat = false,
 }: AppLayoutProps) {
-  const { sharingState, dbRef, onResult, onDismiss, onLoginRedirect } = useShareableDB();
   const isNetworkActive = useIframeApiInFlight();
   useDocumentTitle("vibes.diy");
 
@@ -88,16 +85,6 @@ export default function AppLayout({
 
         <div className="w-full">{appInfo}</div>
       </div>
-
-      {sharingState && (
-        <AllowFireproofSharing
-          state={sharingState}
-          dbRef={dbRef}
-          onResult={onResult}
-          onDismiss={onDismiss}
-          onLoginRedirect={onLoginRedirect}
-        />
-      )}
     </div>
   );
 }
