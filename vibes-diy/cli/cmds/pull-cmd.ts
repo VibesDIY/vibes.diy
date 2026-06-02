@@ -16,6 +16,7 @@ import type { FileSystemItem } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
+import { formatErr } from "./format-err.js";
 
 export const ReqPull = type({
   type: "'vibes-diy.cli.pull'",
@@ -84,7 +85,7 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
 
     const rApp = await api.getAppByFsId({ appSlug: args.appSlug, ownerHandle });
     if (rApp.isErr()) {
-      return Result.Err(rApp.Err().message ?? String(rApp.Err()));
+      return Result.Err(formatErr(rApp.Err()));
     }
     const app = rApp.Ok();
 
