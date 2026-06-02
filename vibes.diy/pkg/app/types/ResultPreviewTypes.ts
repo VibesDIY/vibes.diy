@@ -10,6 +10,7 @@ export interface ResultPreviewProps {
   promptState: PromptState;
   currentView: ViewType;
   onCode: (event: EditorState) => void;
+  diffOverlay?: { path: string; lines: string[] } | null;
   // code: string;
   // dependencies?: Record<string, string>;
   // onScreenshotCaptured?: (screenshotData: string | null) => void;

@@ -490,9 +490,21 @@ export function notes(doc, oldDoc, user, ctx) {
 
 Databases without a matching named export fall through to `export default` if one exists. If there is no default export either, the database uses the default app-level permissions (no access function).
 
+**Hyphenated database names** (like `useFireproof("crew-chat")`) can't be direct JavaScript identifiers. Use `export { localName as "db-name" }` to map a local function to the hyphenated name:
+
+access.js
+```js
+function crewChat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  ctx.requireAccess(doc.channelId);
+  return { channels: [doc.channelId] };
+}
+export { crewChat as "crew-chat" }
+```
+
 ### Catch-all with `export default`
 
-Use `export default` to gate every database without writing a named export for each one. Named exports still take precedence for databases that need custom logic:
+Use `export default` to gate every database without writing a named export for each one. Named exports (including `as` exports) still take precedence for databases that need custom logic:
 
 access.js
 ```js
@@ -509,7 +521,7 @@ export default function (doc, oldDoc, user, ctx) {
 }
 ```
 
-This is especially useful when an app has many databases or uses hyphenated names (`error-log`, `user-prefs`) that can't be JavaScript identifiers.
+This is especially useful when an app has many databases.
 
 ### Roles via `members` reduce
 

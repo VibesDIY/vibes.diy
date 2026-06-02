@@ -31,6 +31,7 @@ interface MessageListProps {
   chatId: string;
   selectedFsId?: string;
   onClick: (fsRes: { ownerHandle: string; appSlug: string; fsId: string }) => void;
+  onDiffClick?: (diff: { path: string; lines: string[] } | null) => void;
   onRetry?: (msg: PromptError) => void;
   onSelectOption?: (option: string) => void;
   // Block IDs whose save originated from the agent autosave (end-of-aider-
@@ -255,13 +256,16 @@ function CodeMsg({
   end,
   truncated,
   onClick,
+  onDiffClick,
 }: {
   begin: CodeBeginMsg;
   lines: LineMsg[];
   end?: CodeEndMsg;
   truncated?: { reason: string; kind: string; truncatedAtLine: number };
   onClick: () => void;
+  onDiffClick?: (diff: { path: string; lines: string[] } | null) => void;
 }) {
+  const isDiff = lines.some((l) => l.line.startsWith("<<<<<<< SEARCH"));
   const codeReady = end !== undefined;
   const isTruncated = truncated !== undefined;
   const renderSeq = useChatDebug("CodeMsg", {
@@ -317,7 +321,13 @@ function CodeMsg({
             border: "1px solid var(--vibes-card-border)",
           }}
           className="sticky-active relative mx-3 my-4 cursor-pointer transition-all"
-          onClick={onClick}
+          onClick={() => {
+            if (isDiff && onDiffClick) {
+              onDiffClick({ path: begin.path ?? "App.jsx", lines: lines.map((l) => l.line) });
+            } else {
+              onClick();
+            }
+          }}
         >
           <div className={`absolute -top-1 left-1 text-lg ${dotClass}`}>{dotGlyph}</div>
           <div className="flex items-center justify-between rounded-sm p-2">
@@ -487,6 +497,7 @@ function MessageList({
   chatId,
   selectedFsId,
   onClick,
+  onDiffClick,
   onRetry,
   onSelectOption,
   agentSavedBlockIds,
@@ -578,7 +589,9 @@ function MessageList({
                   lines={block.lines}
                   end={block.end}
                   truncated={block.truncated}
+                  onDiffClick={onDiffClick}
                   onClick={() => {
+                    if (onDiffClick) onDiffClick(null);
                     if (msg.fsRef) {
                       onClick({
                         fsId: msg.fsRef.fsId,
