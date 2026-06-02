@@ -37,8 +37,12 @@ export function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[], see
   for (const block of blocks) {
     if (!block.end) continue;
     const path = block.begin.path ?? "App.jsx";
+    const langRaw = block.begin.lang?.toLowerCase() || "";
     const ext = path.match(/\.(\w+)$/)?.[1]?.toLowerCase() ?? "";
-    const lang = ["js", "jsx", "ts", "tsx"].includes(ext) ? ext : block.begin.lang?.toLowerCase() || "jsx";
+    // .js extension + "js" fence = plain JS (e.g. access.js); keep as "js".
+    // .js extension + "jsx" fence = React in a .js file; promote to "jsx".
+    // All other js/jsx fences default to "jsx" (original behaviour).
+    const lang = ext === "js" && langRaw === "js" ? "js" : ["js", "jsx"].includes(langRaw) ? "jsx" : langRaw || "jsx";
     const acc = byPath.get(path) ?? { lang, lines: [] };
     acc.lines.push(block.lines.map((l) => l.line));
     byPath.set(path, acc);

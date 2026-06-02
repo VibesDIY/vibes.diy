@@ -151,6 +151,12 @@ describe("resolveCodeBlocksToFileSystem — multi-file (#2157)", () => {
     expect(langOf(result[0])).toBe("jsx");
   });
 
+  it(".js file with jsx fence keeps lang 'jsx' (React in a .js file)", () => {
+    const block = makeBlock(["export default function App() { return <h1>Hi</h1>; }"], "App.js", "jsx");
+    const result = resolveCodeBlocksToFileSystem([block]);
+    expect(langOf(result[0])).toBe("jsx");
+  });
+
   it("seeded access.js carries forward with lang 'js'", () => {
     const seed = new Map<string, string>([
       ["/App.jsx", "app code"],
