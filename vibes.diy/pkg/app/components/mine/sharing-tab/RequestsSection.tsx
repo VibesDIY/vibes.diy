@@ -3,6 +3,7 @@ import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from "
 import { FlagToggle, byNewest, requestDate, stateLabel, fmtDate, RequestGrantItem } from "./shared.js";
 import { AppSettings, ClerkClaimParams } from "@vibes.diy/api-types";
 import { avatarRouteForHandle } from "../../../utils/avatarUrl.js";
+import { Avatar } from "../../ui/avatar.js";
 
 const columnHelper = createColumnHelper<RequestGrantItem>();
 
@@ -315,14 +316,15 @@ interface RequestsSectionProps {
 
 export function renderRequestUser(r: RequestGrantItem): React.ReactNode {
   const params = r.foreignInfo?.claims?.params ?? ({} as Partial<ClerkClaimParams>);
+  const display = params.nick ?? params.name ?? params.email ?? name(params) ?? r.foreignUserId;
   // Only the server-resolved Vibes slug points at a real avatar route.
   // Clerk's `nick` may be sanitized away during slug derivation, so don't
-  // fall back to it — render no image rather than a 404.
+  // derive avatar routes from it.
   const avatarUrl = avatarRouteForHandle(r.foreignUserSlug);
   return (
     <>
-      {avatarUrl && <img src={avatarUrl} alt="avatar" className="w-4 h-4 rounded-full object-cover mr-1" />}
-      {params.nick ?? params.name ?? params.email ?? name(params) ?? r.foreignUserId}
+      <Avatar src={avatarUrl} name={display} alt="" className="h-4 w-4 mr-1" fallbackClassName="text-[9px]" />
+      {display}
     </>
   );
 }

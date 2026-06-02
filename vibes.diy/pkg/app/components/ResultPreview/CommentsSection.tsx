@@ -3,6 +3,7 @@ import { useAuth, useUser } from "@clerk/react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { COMMENTS_DB_NAME } from "@vibes.diy/api-types";
 import { avatarRouteForHandle } from "../../utils/avatarUrl.js";
+import { Avatar } from "../ui/avatar.js";
 
 // authorUserId / authorUserSlug / authorDisplay / authorIsOwner / createdAt
 // are stamped client-side at post time. The server writes the doc verbatim
@@ -50,10 +51,6 @@ function formatTime(iso?: string): string {
   if (day < 7) return `${day}d`;
   if (day < 365) return `${Math.round(day / 7)}w`;
   return d.toLocaleDateString();
-}
-
-function authorInitial(name?: string): string {
-  return (name?.trim()[0] ?? "?").toUpperCase();
 }
 
 export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDisabled }: CommentsSectionProps) {
@@ -177,13 +174,7 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
             const avatarUrl = avatarRouteForHandle(c.authorUserSlug);
             return (
               <div key={c._id} className="flex items-start gap-2 text-sm">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover mt-0.5" />
-                ) : (
-                  <div className="h-7 w-7 shrink-0 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center text-xs font-medium mt-0.5">
-                    {authorInitial(display)}
-                  </div>
-                )}
+                <Avatar src={avatarUrl} name={display} alt="" className="h-7 w-7 mt-0.5" fallbackClassName="text-xs" />
                 <div className="flex-1 min-w-0">
                   <p className="text-gray-800 dark:text-gray-200 leading-snug whitespace-pre-wrap break-words">
                     <span className="font-semibold mr-1.5">
