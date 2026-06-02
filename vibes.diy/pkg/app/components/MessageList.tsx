@@ -337,7 +337,7 @@ function CodeMsg({
               className="bg-light-background-02 hover:accent-00 dark:bg-dark-background-01 dark:hover:bg-dark-decorative-00 text-accent-01 hover:text-accent-02 dark:text-accent-01 dark:hover:text-dark-secondary rounded-sm px-2 py-1 text-sm transition-colors active:bg-orange-400 active:text-orange-800 dark:active:bg-orange-600 dark:active:text-orange-200"
             >
               <code className="font-mono">
-                <span className="mr-3">{begin.lang} App.jsx</span>
+                <span className="mr-3">{begin.path ?? "App.jsx"}</span>
 
                 <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" className="inline-block">
                   <path
