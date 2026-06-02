@@ -6,7 +6,6 @@ export * from "./common.js";
 export * from "./app.js";
 export * from "./chat.js";
 export * from "./settings.js";
-export * from "./fpcloud-token.js";
 export * from "./invite-flow.js";
 export * from "./request-access.js";
 export * from "./vibes-types.js";

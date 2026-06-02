@@ -101,7 +101,6 @@ export async function createVibeDiyTestCtx(
     ENVIRONMENT: "test",
 
     LLM_BACKEND_API_KEY: "llm-api-key",
-    FPCLOUD_URL: "fpcloud-url",
     DASHBOARD_URL: "dashboard-url",
     DEV_SERVER_HOST: "localhost",
     DEV_SERVER_PORT: "8787",

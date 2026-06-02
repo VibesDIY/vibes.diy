@@ -31,14 +31,6 @@ export interface VibesApiSQLCtx {
     db: VibesSqlite;
     tables: VibesApiTables;
   };
-  fpCloud: {
-    url: string;
-    secretToken: string;
-    publicToken: string;
-    issuer: string;
-    audience: string;
-    validFor: number;
-  };
   tokenApi: Record<string, FPApiToken>;
   connections: Set<WSSendProvider>;
   deviceCA: DeviceIdCAIf;

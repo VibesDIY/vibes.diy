@@ -16,7 +16,6 @@ import { ensureAppSettingsEvento } from "./public/ensure-app-settings.js";
 import { setModeFsIdEvento } from "./public/set-mode-fsid.js";
 import { forkAppEvento } from "./public/fork-app.js";
 import { getCertFromCsrEvento } from "./public/get-cert-from-csr.js";
-import { getFPCloudTokenEvento } from "./public/get-fp-cloud-token.js";
 // import { listKeyGrantsEvento, upsertKeyGrantEvento, deleteKeyGrantEvento } from "./public/key-grant.js";
 import {
   createInviteEvento,
@@ -65,7 +64,6 @@ export const vibesMsgEvento = Lazy(() => {
   evento.push(
     ensureAppSlugItemEvento,
     // getByUserSlugAppSlugItemEvento,
-    getFPCloudTokenEvento,
     listUserSlugAppSlugEvento,
     listRecentVibesEvento,
     pinRecentVibeEvento,

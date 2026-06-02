@@ -2,8 +2,6 @@
 import { Result } from "@adviser/cement";
 import { type } from "arktype";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
-import { CoercedDate } from "@vibes.diy/call-ai-v2";
-
 export const ClerkClaimParams = type({
   "nick?": "string",
   email: "string",
@@ -33,37 +31,6 @@ export const ClerkClaim = type({
   "app_metadata?": "unknown",
 });
 export type ClerkClaim = typeof ClerkClaim.infer;
-
-export const FPCloudClaim = type({
-  "azp?": "string",
-  "iss?": "string",
-  "sub?": "string",
-  "aud?": "string | string[]",
-  "exp?": "number",
-  "nbf?": "number",
-  "iat?": "number",
-  "jti?": "string",
-  userId: "string",
-  email: "string.email",
-  "nickname?": "string",
-  "provider?": "'github' | 'google'",
-  created: CoercedDate,
-  tenants: type({
-    id: "string",
-    role: "'admin' | 'member' | 'owner'",
-  }).array(),
-  ledgers: type({
-    id: "string",
-    role: "'admin' | 'member' | 'owner'",
-    right: "'read' | 'write'",
-  }).array(),
-  selected: {
-    "appId?": "string",
-    tenant: "string",
-    ledger: "string",
-  },
-});
-export type FPCloudClaim = typeof FPCloudClaim.infer;
 
 // Runtime validator — must stay compatible with DashAuthType from @fireproof/core-types-protocols-dashboard
 export const dashAuthType = type({

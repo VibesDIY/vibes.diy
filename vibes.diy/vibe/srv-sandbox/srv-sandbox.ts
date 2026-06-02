@@ -9,7 +9,6 @@ import {
   EventoResultType,
   EventoResult,
   EventoSendProvider,
-  LRUMap,
   processStream,
   EventoHandler,
   exception2Result,
@@ -17,20 +16,13 @@ import {
   OnFunc,
 } from "@adviser/cement";
 import {
-  isReqVibeRegisterFPDb,
-  ReqVibeRegisterFPDb,
-  ResOkVibeRegisterFPDb,
   isReqCallAI,
   ReqCallAI,
   ResErrorCallAI,
   ResOkCallAI,
-  ReqFetchCloudToken,
-  isReqFetchCloudToken,
-  ResFetchCloudToken,
   isEvtRuntimeReady,
   EvtRuntimeReady,
   EvtRuntimeAck,
-  EvtAttachFPDb,
   isReqImgGen,
   ReqImgGen,
   ResOkImgGen,
@@ -70,15 +62,7 @@ import {
   isReqOpenDmThread,
   ReqOpenDmThread,
 } from "@vibes.diy/vibe-types";
-import {
-  isPromptBlockEnd,
-  isPromptReq,
-  isResFPCloudTokenGrant,
-  isSectionEvent,
-  PromptReq,
-  SectionEvent,
-  VibesDiyApiIface,
-} from "@vibes.diy/api-types";
+import { isPromptBlockEnd, isPromptReq, isSectionEvent, PromptReq, SectionEvent, VibesDiyApiIface } from "@vibes.diy/api-types";
 import { ChatMessage, CodeEndMsg, isBlockImage, isCodeBegin, isCodeEnd, isCodeLine } from "@vibes.diy/call-ai-v2";
 import { buildSchemaSystemMessage } from "@vibes.diy/prompts";
 
@@ -130,12 +114,6 @@ interface VibesDiySrvSandboxArgs {
   ensureAssetSession?: () => Promise<void>;
 }
 
-interface ShareableDBInfo {
-  key: string;
-  data: ResOkVibeRegisterFPDb["data"];
-  attachAction: "attach" | "detach" | "none" | "prepare-attach";
-}
-
 function vibeRuntimeReady(sandbox: vibesDiySrvSandbox): EventoHandler {
   return {
     hash: "vibe.runtime.ready",
@@ -150,78 +128,6 @@ function vibeRuntimeReady(sandbox: vibesDiySrvSandbox): EventoHandler {
       sandbox.onRuntimeReady.invoke(ctx.validated);
       // console.log(`Received vibe.runtime.ready event`, ctx);
       return Result.Ok(EventoResult.Continue);
-    },
-  };
-}
-
-function vibeRegisterFPDB(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { shareableDBs, args } = sandbox;
-  return {
-    hash: "vibe.register.fpdb",
-    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
-      const { request: req } = ctx;
-      if (isReqVibeRegisterFPDb(req?.data)) {
-        return Promise.resolve(Result.Ok(Option.Some(req.data)));
-      }
-      return Promise.resolve(Result.Ok(Option.None()));
-    },
-    handle: async (ctx: HandleTriggerCtx<Request, ReqVibeRegisterFPDb, unknown>): Promise<Result<EventoResultType>> => {
-      const key = `${ctx.validated.ownerHandle}-${ctx.validated.appSlug}-${ctx.validated.dbName}`;
-      shareableDBs.onSet(async (k, v, meta) => {
-        if (k !== key || !meta.update) {
-          return;
-        }
-        if (v.attachAction !== "attach") {
-          return;
-        }
-        v.attachAction = "prepare-attach";
-        // const rUser = await dashApi.ensureUser({});
-        // if (rUser.isErr()) {
-        //   sandbox.args.errorLogger(`Failed to ensure user: ${rUser.Err().message}`);
-        // }
-        const rCloudToken = await args.vibeDiyApi.getFPCloudToken({
-          ...ctx.validated,
-        });
-        if (rCloudToken.isErr()) {
-          sandbox.args.errorLogger(`Failed to ensure cloud token: ${rCloudToken.Err().message}`);
-        }
-        const token = rCloudToken.Ok();
-        if (!isResFPCloudTokenGrant(token)) {
-          sandbox.args.errorLogger(`Cloud token grant is ${token.grant}, cannot attach to DB`);
-          return;
-        }
-        void ctx.send.send(ctx, {
-          type: "vibe.evt.attach.fpdb",
-          // status: "ok",
-          data: {
-            dbName: token.dbName,
-            appSlug: token.appSlug,
-            ownerHandle: token.ownerHandle,
-            fpcloudUrl: token.fpCloudUrl,
-          },
-        } satisfies EvtAttachFPDb);
-      });
-      const ok = {
-        tid: ctx.validated.tid,
-        type: "vibe.res.register.fpdb",
-        status: "ok",
-        data: {
-          appSlug: ctx.validated.appSlug,
-          ownerHandle: ctx.validated.ownerHandle,
-          dbName: ctx.validated.dbName,
-          // appId: rCloudToken.Ok().appId,
-          // tenant: rCloudToken.Ok().tenant,
-          // ledger: rCloudToken.Ok().ledger,
-        },
-      } satisfies ResOkVibeRegisterFPDb;
-      console.log("vibeRegisterFPDB sending response", ok);
-      await ctx.send.send(ctx, ok);
-      shareableDBs.set(key, {
-        key,
-        data: ok.data,
-        attachAction: "none",
-      });
-      return Result.Ok(EventoResult.Stop);
     },
   };
 }
@@ -254,51 +160,6 @@ export function getCodeBlock(stream: ReadableStream<unknown>): Promise<{
     }
   });
   return firstCodeBlock.asPromise();
-}
-
-function vibeFetchCloudToken(sandbox: vibesDiySrvSandbox): EventoHandler {
-  return {
-    hash: "vibe.fetchCloudToken",
-    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
-      const { request: req } = ctx;
-      if (isReqFetchCloudToken(req?.data)) {
-        return Promise.resolve(Result.Ok(Option.Some(req.data)));
-      }
-      return Promise.resolve(Result.Ok(Option.None()));
-    },
-    handle: async (ctx: HandleTriggerCtx<Request, ReqFetchCloudToken, unknown>): Promise<Result<EventoResultType>> => {
-      const { data } = ctx.validated;
-      console.log(`Handling vibe.fetchCloudToken event with validated data`, data);
-      sandbox.args.vibeDiyApi
-        .getFPCloudToken({
-          appSlug: data.appSlug,
-          ownerHandle: data.ownerHandle,
-          dbName: data.dbName,
-        })
-        .then((rRes) => {
-          if (rRes.isErr()) {
-            sandbox.args.errorLogger(`Failed to get FP Cloud token: ${rRes.Err().message}`);
-            return rRes;
-          }
-          const res = rRes.Ok();
-          if (!isResFPCloudTokenGrant(res)) {
-            sandbox.args.errorLogger(`Cloud token grant is ${res.grant}, cannot fetch cloud token`);
-            return Result.Err(`Cloud token grant is ${res.grant}, cannot fetch cloud token`);
-          }
-          ctx.send.send(ctx, {
-            tid: ctx.validated.tid,
-            type: "vibe.res.fetchCloudToken",
-            data,
-            token: {
-              cloudToken: res.token.token,
-              claims: res.token.claims,
-              expiresInSec: res.token.expiresInSec,
-            },
-          } satisfies ResFetchCloudToken);
-        });
-      return Result.Ok(EventoResult.Stop);
-    },
-  };
 }
 
 function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
@@ -919,8 +780,6 @@ function vibeRequestLogin(sandbox: vibesDiySrvSandbox): EventoHandler {
 export class vibesDiySrvSandbox implements Disposable {
   readonly evento: Evento;
 
-  readonly shareableDBs = new LRUMap<string, ShareableDBInfo>();
-
   readonly onRuntimeReady = OnFunc<(evt: EvtRuntimeReady) => void>();
 
   // Iframe → parent hot-swap failure dispatch. Subscribers (PreviewApp) toast
@@ -1056,10 +915,8 @@ export class vibesDiySrvSandbox implements Disposable {
     this.evento.push(
       ...[
         vibeRuntimeReady(this),
-        vibeRegisterFPDB(this),
         vibeCallAI(this),
         vibeImgGen(this),
-        vibeFetchCloudToken(this),
         vibePutDoc(this),
         vibeGetDoc(this),
         vibeQueryDocs(this),

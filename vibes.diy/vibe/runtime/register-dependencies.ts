@@ -1,17 +1,10 @@
 import {
-  isResFetchCloudToken,
-  isResVibeRegisterFPDb,
   isResCallAI,
   ReqCallAI,
   ResCallAI,
   isResImgGen,
   ReqImgGen,
   ResImgGen,
-  ReqFetchCloudToken,
-  ReqVibeRegisterFPDb,
-  ResFetchCloudToken,
-  ResVibeRegisterFPDb,
-  EvtVibeAttachStatusFPDb,
   EvtVibeHotSwapError,
   isEvtVibeSetSource,
   isEvtRuntimeAck,
@@ -48,8 +41,7 @@ import {
   type DbAcl,
   type QueryFilter,
 } from "@vibes.diy/vibe-types";
-import { exception2Result, Future, KeyedResolvOnce, Lazy, OnFunc, OnFuncReturn, Result, timeouted } from "@adviser/cement";
-import { type } from "arktype";
+import { exception2Result, Future, Lazy, OnFunc, OnFuncReturn, Result, timeouted } from "@adviser/cement";
 import { transform } from "sucrase";
 import { FunctionComponent } from "react";
 import { CallAIOpts, registerCallAI } from "./call-ai.js";
@@ -118,7 +110,7 @@ export class VibeSandboxApi {
       const res = await timeouted(
         () => {
           const tid = crypto.randomUUID();
-          const result = new Future<ResVibeRegisterFPDb>();
+          const result = new Future<S>();
           this.onMsg((event) => {
             const d = event.data as { tid?: string; status?: string; type?: string } | undefined;
             if (d?.tid !== tid) return;
@@ -216,17 +208,6 @@ export class VibeSandboxApi {
     );
   }
 
-  sendRegisterFPDbMessage(req: Omit<ReqVibeRegisterFPDb, "type" | "tid">) {
-    // console.log("VibeSandboxApi sending register FPDb message", data);
-    return this.request<ReqVibeRegisterFPDb, ResVibeRegisterFPDb>(
-      {
-        type: "vibe.req.register.fpdb",
-        ...req,
-      },
-      { wait: isResVibeRegisterFPDb }
-    );
-  }
-
   sendRuntimeReady(deps: string[]) {
     this.svc.postMessage(
       {
@@ -237,15 +218,6 @@ export class VibeSandboxApi {
     );
   }
 
-  sendAttachStatusFPDbMessage(evt: Omit<EvtVibeAttachStatusFPDb, "type" | "tid">) {
-    this.svc.postMessage(
-      {
-        type: "vibe.evt.attach.status.fpdb",
-        ...evt,
-      } satisfies EvtVibeAttachStatusFPDb,
-      "*"
-    );
-  }
   // ── Firefly document operations ──────────────────────────────────────
 
   putDoc(doc: Record<string, unknown>, docId?: string, dbName = "default"): Promise<Result<ResPutDoc>> {
@@ -379,34 +351,6 @@ export class VibeSandboxApi {
       },
       { wait: isResVibeUpdateAvatarCid, timeout: 10000 }
     );
-  }
-
-  readonly tokenCache = new KeyedResolvOnce();
-  fetchCloudToken(req: Omit<ReqFetchCloudToken, "type" | "tid">): Promise<Result<ResFetchCloudToken>> {
-    const key = `vibe-${req.data.dbName}-${req.data.ownerHandle}-${req.data.appSlug}`;
-    return this.tokenCache.get(key).once(async (opts) => {
-      console.info("Fetching cloud token with key", key);
-      const rRes = await this.request<ReqFetchCloudToken, ResFetchCloudToken>(
-        {
-          type: "vibe.req.fetchCloudToken",
-          data: req.data,
-        },
-        { wait: isResFetchCloudToken }
-      );
-      opts.self.setResetAfter(100);
-      if (rRes.isErr()) {
-        console.error("Failed to fetch cloud token from vibe sandbox", rRes.Err());
-        return rRes;
-      }
-      const res = rRes.Ok();
-      const isValidRes = ResFetchCloudToken(res);
-      if (isValidRes instanceof type.errors) {
-        console.error("Failed to fetch cloud token from vibe sandbox", isValidRes.summary);
-        return Result.Err(isValidRes.summary);
-      }
-      opts.self.setResetAfter(1000 * (isValidRes.token.expiresInSec - ~~(isValidRes.token.expiresInSec * 0.05)));
-      return rRes;
-    });
   }
 }
 

@@ -42,9 +42,6 @@ import {
   ReqForkApp,
   ResForkApp,
   isResForkApp,
-  ReqFPCloudToken,
-  ResFPCloudToken,
-  isResFPCloudToken,
   ReqCreateInvite,
   ResCreateInvite,
   isResCreateInvite,
@@ -455,15 +452,6 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-fork-app" },
       {
         resMatch: isResForkApp,
-      }
-    );
-  }
-
-  getFPCloudToken(req: Req<ReqFPCloudToken>): Promise<Result<ResFPCloudToken>> {
-    return this.request(
-      { ...req, type: "vibes.diy.req-fpcloud-token" },
-      {
-        resMatch: isResFPCloudToken,
       }
     );
   }
