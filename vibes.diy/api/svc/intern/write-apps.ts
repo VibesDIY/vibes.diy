@@ -121,18 +121,23 @@ async function transformJSXAndImports(
       //   content: "[content hidden]",
       // });
       if (item.fsItem.transform?.type === "jsx-to-js" && isVibeCodeBlock(item.vibeFileItem)) {
-        // console.log("do jsx transform for file:", item.fsItem.fileName);
         const rJsStr = exception2Result(() => transformJSXToJS((item.vibeFileItem as VibeCodeBlock).content));
         if (rJsStr.isErr()) {
           console.error(`Failed to transform JSX to JS for file ${item.vibeFileItem.filename}: ${rJsStr.Err()}`);
+          const { transform: _dropped, ...withoutTransform } = item.fsItem;
+          acc.push(Result.Ok(withoutTransform));
           return;
         }
         const jsStr = rJsStr.Ok();
-        // const dataCid = await calcCid(ctx, jsStr);
-        // reference original item to set transformedAssetId
 
-        const rImports = importsFromJS(jsStr);
-        rImports.forEach((imp) => {
+        const rImports = exception2Result(() => importsFromJS(jsStr));
+        if (rImports.isErr()) {
+          console.error(`Failed to extract imports from transformed JS for file ${item.vibeFileItem.filename}: ${rImports.Err()}`);
+          const { transform: _dropped, ...withoutTransform } = item.fsItem;
+          acc.push(Result.Ok(withoutTransform));
+          return;
+        }
+        rImports.Ok().forEach((imp) => {
           if (imp.startsWith("./") || imp.startsWith("../")) return;
           if (!imports.has(imp)) {
             imports.set(imp, []);
@@ -168,10 +173,10 @@ async function transformJSXAndImports(
           })
         );
       } else if (isVibeCodeBlock(item.vibeFileItem) && item.vibeFileItem.lang === "js") {
-        // console.log("do import extraction for file:", item);
         const rImports = exception2Result(() => importsFromJS((item.vibeFileItem as VibeCodeBlock).content));
         if (rImports.isErr()) {
           console.error(`Failed to extract imports from JS for file ${item.vibeFileItem.filename}: ${rImports.Err()}`);
+          acc.push(Result.Ok(item.fsItem));
           return;
         }
         rImports.Ok().forEach((imp) => {
