@@ -1,4 +1,5 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
+import { WSSendProvider } from "../svc-ws-send-provider.js";
 import {
   MsgBase,
   ReqWithOptionalAuth,
@@ -227,6 +228,9 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       const { appSlug, ownerHandle: ownerUserSlug, adminMode } = req;
+      if (ctx.send instanceof WSSendProvider) {
+        ctx.send.adminMode = adminMode === true;
+      }
       const rRes = await resolveWhoAmI(vctx, {
         auth: req._auth,
         appSlug,
