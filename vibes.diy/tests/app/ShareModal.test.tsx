@@ -147,11 +147,11 @@ describe("ShareModal", () => {
       expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument();
     });
 
-    it("auto-approve defaults to enabled with role 'readers'", () => {
+    it("auto-approve defaults to enabled with role 'editors'", () => {
       const modal = createMockModal();
       render(<ShareModal modal={modal} isOwner />);
       expect(getAutoApproveCheckbox()).toBeChecked();
-      expect(screen.getByRole("combobox")).toHaveValue("viewer");
+      expect(screen.getByRole("combobox")).toHaveValue("editor");
     });
 
     it("publishes with autoJoin=true and the selected role", async () => {
@@ -163,7 +163,7 @@ describe("ShareModal", () => {
       });
 
       expect(modal.handlePublish).toHaveBeenCalledTimes(1);
-      expect(modal.handlePublish).toHaveBeenCalledWith(true, "viewer");
+      expect(modal.handlePublish).toHaveBeenCalledWith(true, "editor");
     });
 
     it("publishes with autoJoin=false when the checkbox is unchecked", async () => {
@@ -179,7 +179,7 @@ describe("ShareModal", () => {
       });
 
       expect(modal.handlePublish).toHaveBeenCalledTimes(1);
-      expect(modal.handlePublish).toHaveBeenCalledWith(false, "viewer");
+      expect(modal.handlePublish).toHaveBeenCalledWith(false, "editor");
     });
 
     it("publishes with the selected role when role is changed to editors", async () => {
@@ -263,7 +263,7 @@ describe("ShareModal", () => {
       expect(modal.handlePublish).toHaveBeenCalledWith(true, "editor");
     });
 
-    it("Update falls back to role=viewer when autoAcceptRole is undefined", async () => {
+    it("Update falls back to role=editor when autoAcceptRole is undefined", async () => {
       const modal = publishedModal({ autoJoinEnabled: false, autoAcceptRole: undefined });
       render(<ShareModal modal={modal} isOwner />);
 
@@ -271,7 +271,7 @@ describe("ShareModal", () => {
         fireEvent.click(screen.getByRole("button", { name: "Update" }));
       });
 
-      expect(modal.handlePublish).toHaveBeenCalledWith(false, "viewer");
+      expect(modal.handlePublish).toHaveBeenCalledWith(false, "editor");
     });
 
     it("calls handleCopyUrl when clicking Copy Link", async () => {

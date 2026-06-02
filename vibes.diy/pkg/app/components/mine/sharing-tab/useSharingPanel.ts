@@ -188,7 +188,7 @@ export function useSharingPanel({ ownerHandle, appSlug, enabled = true }: UseSha
     const res = await vibeDiyApi.ensureAppSettings({
       appSlug,
       ownerHandle,
-      request: { enable: true, autoAcceptRole: currentRole ? undefined : "viewer" },
+      request: { enable: true, autoAcceptRole: currentRole ? undefined : "editor" },
     });
     setToggling(null);
     toastError(res, (s) => setSettings(s.settings));

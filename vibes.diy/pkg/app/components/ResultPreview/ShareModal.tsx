@@ -57,7 +57,7 @@ function AutoApproveControl({
 
 function PublishForm({ modal, publishDisabled }: { modal: UseShareModalReturn; publishDisabled: boolean }) {
   const [autoAccept, setAutoAccept] = useState(true);
-  const [role, setRole] = useState<Role>("viewer");
+  const [role, setRole] = useState<Role>("editor");
   return (
     <div className="space-y-3">
       <AutoApproveControl
@@ -87,7 +87,7 @@ function PublishForm({ modal, publishDisabled }: { modal: UseShareModalReturn; p
 function PublishedAutoApproveControl({ modal }: { modal: UseShareModalReturn }) {
   // When auto-approve is off there's no stored role — remember the last chosen
   // role locally so toggling back on restores it.
-  const [role, setRole] = useState<Role>(modal.autoAcceptRole ?? "viewer");
+  const [role, setRole] = useState<Role>(modal.autoAcceptRole ?? "editor");
   useEffect(() => {
     if (modal.autoAcceptRole) setRole(modal.autoAcceptRole);
   }, [modal.autoAcceptRole]);
