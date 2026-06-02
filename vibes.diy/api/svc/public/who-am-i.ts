@@ -9,13 +9,13 @@ import {
   isUserSettingProfile,
   isUserSettingDefaultHandle,
   type DbAcl,
+  type AccessDescriptor,
   COMMENTS_DB_NAME,
   COMMENTS_DEFAULT_ACL,
 } from "@vibes.diy/api-types";
 import { ReqVibeWhoAmI, ResVibeWhoAmI, ViewerPayload, DocAccessLevel, isReqVibeWhoAmI } from "@vibes.diy/vibe-types";
 import { and, eq } from "drizzle-orm";
 import { GrantReduce, extractContribution } from "./grant-reduce.js";
-import type { AccessDescriptor } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
