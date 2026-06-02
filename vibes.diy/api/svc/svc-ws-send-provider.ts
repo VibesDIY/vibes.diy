@@ -23,6 +23,7 @@ export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unk
   // (build-complete, request-approved, etc.). A single value because a
   // WebSocket connection belongs to exactly one authenticated user.
   subscribedUserKey: string | undefined = undefined;
+  adminMode = false;
   // Unique per-WebSocket id used to skip the originating connection when
   // fanning out doc-changed notifications. Many connections share a shard
   // (warm-DO sharing per (ownerHandle, appSlug)), so shard-level exclusion
