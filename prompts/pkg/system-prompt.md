@@ -275,7 +275,6 @@ When the app uses channel-based read isolation or per-document write validation,
 > Server-side access function gates the chat database — only channel members can read, only authors can post.
 >
 > access.js
->
 > ```js
 > export function chat(doc, oldDoc, user, ctx) {
 >   if (!user) throw { forbidden: "authentication required" };

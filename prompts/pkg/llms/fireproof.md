@@ -316,7 +316,6 @@ Access functions are **the room** — they govern what members can do with data 
 Access functions live in `/access.js`, a separate file in the vibe's filesystem alongside `/App.jsx`. **Always emit the access function as a block preceded by the filename `access.js` on its own line — never inside an `App.jsx` block.** Each **named export** maps to a database name — `export function chat(...)` gates `useFireproof("chat")`. An `export default` function acts as a catch-all: it gates any database that doesn't have its own named export. Named exports always take precedence over the default.
 
 access.js
-
 ```js
 export function chat(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };
@@ -330,7 +329,6 @@ export function chat(doc, oldDoc, user, ctx) {
 ```
 
 App.jsx
-
 ```jsx
 const { useLiveQuery, database } = useFireproof("chat");
 ```
@@ -393,7 +391,6 @@ type AccessDescriptor = {
 ### Example: Workspace chat with channels
 
 access.js
-
 ```js
 export function chat(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };
@@ -437,7 +434,6 @@ This single access function handles three document types:
 ### Example: Anonymous survey with role-gated results
 
 access.js
-
 ```js
 export function survey(doc, oldDoc, user, ctx) {
   if (doc.type === "survey-response") {
@@ -479,7 +475,6 @@ Key patterns:
 Each named export gates its own database. A single `/access.js` can gate all databases the app uses:
 
 access.js
-
 ```js
 export function chat(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };
@@ -500,7 +495,6 @@ Databases without a matching named export fall through to `export default` if on
 Use `export default` to gate every database without writing a named export for each one. Named exports still take precedence for databases that need custom logic:
 
 access.js
-
 ```js
 export function chat(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };

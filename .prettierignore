@@ -13,3 +13,8 @@ scripts/
 
 # Eval harness output (transient generated apps)
 eval/codegen-edit/archive-*/
+
+# LLM prompt files — filename-line + fence must be adjacent (no blank line)
+prompts/pkg/system-prompt.md
+prompts/pkg/system-prompt-initial.md
+prompts/pkg/llms/
