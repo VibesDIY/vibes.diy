@@ -293,16 +293,18 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
       )}
 
       {diffContext && (
-        <div className="mx-3 mt-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs dark:border-amber-800/60 dark:bg-amber-950/30">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+        <details className="mx-3 mt-2 rounded-md border border-amber-300 bg-amber-50 text-xs dark:border-amber-800/60 dark:bg-amber-950/30">
+          <summary className="cursor-pointer p-2 text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
             Chat diff context (secondary)
-          </p>
-          <p className="mb-1 text-[11px] text-amber-700 dark:text-amber-200">{diffContext.filePath}</p>
-          <pre className="max-h-28 overflow-auto whitespace-pre-wrap font-mono text-[11px] leading-4 text-amber-900 dark:text-amber-100">
-            {diffContext.lines.join("\n")}
-            {diffContext.truncated ? "\n…" : ""}
-          </pre>
-        </div>
+          </summary>
+          <div className="px-2 pb-2">
+            <p className="mb-1 text-[11px] text-amber-700 dark:text-amber-200">{diffContext.filePath}</p>
+            <pre className="max-h-28 overflow-auto whitespace-pre-wrap font-mono text-[11px] leading-4 text-amber-900 dark:text-amber-100">
+              {diffContext.lines.join("\n")}
+              {diffContext.truncated ? "\n…" : ""}
+            </pre>
+          </div>
+        </details>
       )}
 
       <div
