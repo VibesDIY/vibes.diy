@@ -36,25 +36,44 @@ describe("enforceAllowAnonymous", () => {
 });
 
 describe("makeHelpers", () => {
-  it("requireAccess throws forbidden when user is null", () => {
+  const user: UserContext = { userHandle: "alice", isOwner: false };
+
+  it("requireAccess throws when user is null", () => {
     const ctx = makeHelpers(null);
     expect(() => ctx.requireAccess("some-channel")).toThrow("not in channel");
   });
 
-  it("requireAccess does not throw when user is authenticated", () => {
-    const user: UserContext = { userHandle: "alice", isOwner: false };
-    const ctx = makeHelpers(user);
-    expect(() => ctx.requireAccess("some-channel")).not.toThrow();
-  });
-
-  it("requireRole throws forbidden when user is null", () => {
+  it("requireRole throws when user is null", () => {
     const ctx = makeHelpers(null);
     expect(() => ctx.requireRole("admin")).toThrow("not in role");
   });
 
-  it("requireRole does not throw when user is authenticated", () => {
-    const user: UserContext = { userHandle: "alice", isOwner: false };
-    const ctx = makeHelpers(user);
+  it("requireAccess throws when user has no access to channel", () => {
+    const ctx = makeHelpers(user, { members: {}, roleGrants: {}, userGrants: {} });
+    expect(() => ctx.requireAccess("secret-channel")).toThrow("not in channel");
+  });
+
+  it("requireAccess passes when user has direct channel grant", () => {
+    const ctx = makeHelpers(user, { members: {}, roleGrants: {}, userGrants: { alice: ["secret-channel"] } });
+    expect(() => ctx.requireAccess("secret-channel")).not.toThrow();
+  });
+
+  it("requireAccess passes when user has channel via role", () => {
+    const ctx = makeHelpers(user, {
+      members: { admin: ["alice"] },
+      roleGrants: { admin: ["admin-channel"] },
+      userGrants: {},
+    });
+    expect(() => ctx.requireAccess("admin-channel")).not.toThrow();
+  });
+
+  it("requireRole throws when user does not have the role", () => {
+    const ctx = makeHelpers(user, { members: { editor: ["bob"] }, roleGrants: {}, userGrants: {} });
+    expect(() => ctx.requireRole("editor")).toThrow("not in role");
+  });
+
+  it("requireRole passes when user has the role", () => {
+    const ctx = makeHelpers(user, { members: { admin: ["alice"] }, roleGrants: {}, userGrants: {} });
     expect(() => ctx.requireRole("admin")).not.toThrow();
   });
 });

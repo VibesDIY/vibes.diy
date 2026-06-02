@@ -32,27 +32,46 @@ export function enforceAllowAnonymous(result: AccessDescriptor, user: UserContex
   }
 }
 
-/**
- * Builds the Helpers ctx passed to the access function during evaluation.
- *
- * Both helpers throw immediately when user is null — any branch that calls
- * them is protected against anonymous access without a separate null check.
- */
-export function makeHelpers(user: UserContext | null): Helpers {
+interface GrantState {
+  members: Record<string, string[]>;
+  roleGrants: Record<string, string[]>;
+  userGrants: Record<string, string[]>;
+}
+
+export function makeHelpers(user: UserContext | null, grantState?: GrantState): Helpers {
+  const gs: GrantState = grantState ?? { members: {}, roleGrants: {}, userGrants: {} };
+
+  function resolveChannels(userSlug: string): Set<string> {
+    const channels = new Set<string>();
+    const direct = gs.userGrants[userSlug];
+    if (direct) for (const ch of direct) channels.add(ch);
+    for (const [role, members] of Object.entries(gs.members)) {
+      if (members.includes(userSlug)) {
+        const roleChannels = gs.roleGrants[role];
+        if (roleChannels) for (const ch of roleChannels) channels.add(ch);
+      }
+    }
+    return channels;
+  }
+
   return {
     requireAccess(channelId: string): void {
       if (user === null) {
         throw new ForbiddenError(`not in channel: ${channelId}`);
       }
-      // Phase 3: check materialized channel membership for user.userHandle
-      // For now this always passes for authenticated users.
+      const channels = resolveChannels(user.userHandle);
+      if (!channels.has(channelId)) {
+        throw new ForbiddenError(`not in channel: ${channelId}`);
+      }
     },
     requireRole(roleName: string): void {
       if (user === null) {
         throw new ForbiddenError(`not in role: ${roleName}`);
       }
-      // Phase 3: check materialized role membership for user.userHandle
-      // For now this always passes for authenticated users.
+      const roleMembers = gs.members[roleName];
+      if (!roleMembers?.includes(user.userHandle)) {
+        throw new ForbiddenError(`not in role: ${roleName}`);
+      }
     },
   };
 }
@@ -77,9 +96,7 @@ export function extractExportSource(fullSource: string, bindingDbName: string): 
   const direct = extractByPattern(fullSource, directPattern, false);
   if (direct) return direct;
 
-  const asMatch = fullSource.match(
-    new RegExp(`export\\s*\\{\\s*(\\w+)\\s+as\\s+["']${escapeRegExp(bindingDbName)}["']\\s*\\}`)
-  );
+  const asMatch = fullSource.match(new RegExp(`export\\s*\\{\\s*(\\w+)\\s+as\\s+["']${escapeRegExp(bindingDbName)}["']\\s*\\}`));
   if (asMatch) {
     const localName = asMatch[1];
     const fnPattern = new RegExp(`function\\s+${localName}\\s*\\([^)]*\\)\\s*\\{`);
