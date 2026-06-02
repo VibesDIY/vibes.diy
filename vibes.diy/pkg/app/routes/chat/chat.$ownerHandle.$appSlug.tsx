@@ -23,6 +23,7 @@ import SessionSidebar from "../../components/SessionSidebar.js";
 import ChatInput, { ChatInputRef } from "../../components/ChatInput.js";
 import ThemePickerModal from "../../components/ThemePickerModal.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
+import { useIframeCurrentTokens } from "../../hooks/useIframeCurrentTokens.js";
 import { useFreshFirstCodegen } from "../../utils/freshFirstCodegen.js";
 import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
@@ -542,10 +543,23 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   // the new palette tokens. Auto-submits so the user gets the regenerated
   // app without an extra click. Mirrors the structural-theme restyle flow.
   const handlePaletteRegenerate = useCallback(
-    (paletteSlug: string, paletteName: string) => {
+    (paletteSlug: string, paletteName: string, rootCssBlock: string) => {
       dispatch({ type: "setColorTheme", colorTheme: paletteSlug });
       const canPersist = ownerHandle !== "preparing" && appSlug !== "session";
-      const prompt = `Update the styles to use the "${paletteName}" palette. Apply the palette's colors via CSS variables on :root (and inside @media (prefers-color-scheme: dark) for dark-mode tokens), then reference them as var(--token) everywhere instead of inline hex values.`;
+      // Embed the literal :root block in the user message — sending only the
+      // palette name (or only the system-prompt design.md) left the LLM
+      // interpreting the palette description from training data and inventing
+      // hex values. The literal block is the operative instruction the model
+      // sees most recently, so prose can't override it.
+      const prompt = `Update the styles to use the "${paletteName}" palette.
+
+Copy this \`<style>\` block VERBATIM into the app (replace any existing :root block). Do not change hex values, do not round, do not invent a dark-mode block if none is shown below. Reference every variable via \`bg-[var(--token)]\` / \`text-[var(--token)]\` / \`border-[var(--token)]\` — no inline hex literals.
+
+\`\`\`html
+<style>
+${rootCssBlock}
+</style>
+\`\`\``;
       const prefilled = chatInput.current?.setPromptIfEmpty(prompt) ?? false;
       chatInput.current?.setFocus();
       if (!canPersist || !prefilled) {
@@ -749,6 +763,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   const [mobilePreviewShown, setMobilePreviewShown] = useState(false);
   const { navigateToView, viewControls, currentView } = useViewState(promptState, [searchParams, setSearchParams]);
+
+  // Tokens the running app declares on `:root`. The palette picker uses these
+  // so the user can edit and remap any custom property the app actually has —
+  // including bespoke ones like `--gold-base` that the canonical palette set
+  // doesn't include.
+  const iframeCurrentTokens = useIframeCurrentTokens();
 
   // During the first codegen of a brand-new chat or remix the UI shows the
   // streaming code editor (with a hidden pre-warming iframe behind it). The
@@ -1019,6 +1039,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
               onApplyLivePalette={handleApplyLivePalette}
               onResetPalette={handlePaletteReset}
               onRegeneratePalette={handlePaletteRegenerate}
+              paletteStorageKey={
+                ownerHandle !== "preparing" && appSlug !== "session"
+                  ? `vibes-overrides:${ownerHandle}/${appSlug}`
+                  : undefined
+              }
+              paletteCurrentTokens={iframeCurrentTokens}
             />
           </BrutalistCard>
         }

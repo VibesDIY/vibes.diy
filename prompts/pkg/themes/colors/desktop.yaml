@@ -1,5 +1,5 @@
 name: Desktop Retro
-colors:
+extras:
   editor-bg: "oklch(0.11 0.01 250)"
   chrome: "oklch(0.18 0.000 0)"
   gutter: "oklch(0.39 0.01 250)"

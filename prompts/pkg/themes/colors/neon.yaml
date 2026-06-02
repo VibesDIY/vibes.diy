@@ -1,5 +1,5 @@
 name: Neon Arcade
-colors:
+extras:
   bg-gradient-start: "#ff5bad"
   bg-gradient-mid: "#ffc85c"
   bg-gradient-end: "#fcee0a"

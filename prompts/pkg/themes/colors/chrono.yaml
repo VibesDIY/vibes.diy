@@ -1,6 +1,7 @@
 name: Chrono
 colors:
-  bg: "#dde1e7"
-  text: "#5a6270"
-  text-dark: "#3a3f4a"
+  background: "#dde1e7"
   accent: "#6c8ee6"
+  text-primary: "#5a6270"
+extras:
+  text-dark: "#3a3f4a"

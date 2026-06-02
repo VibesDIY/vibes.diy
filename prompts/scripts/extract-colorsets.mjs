@@ -100,12 +100,136 @@ async function buildBundle() {
   console.log(`bundled ${entries.length} colorsets to colorsets-bundle.ts`);
 }
 
+// Mirror of CANONICAL_TOKENS in colorsets.ts. Build-time only — the runtime
+// path uses the TS exports directly. Keep these two in sync; tests validate
+// the bundled shape matches what parseColorsetYaml would produce.
+const CANONICAL_TOKENS = [
+  "background",
+  "surface",
+  "primary",
+  "secondary",
+  "accent",
+  "text-primary",
+  "text-secondary",
+  "text-disabled",
+  "border",
+  "success",
+  "warning",
+  "error",
+  "neutral",
+];
+const CANONICAL_SET = new Set(CANONICAL_TOKENS);
+const TOKEN_ALIASES = {
+  bg: "background",
+  "bg-dark": "background",
+  "color-background": "background",
+  "page-bg": "background",
+  card: "surface",
+  "card-bg": "surface",
+  "card-background": "surface",
+  "comp-bg": "surface",
+  "bg-card": "surface",
+  "bg-surface": "surface",
+  "bg-panel": "surface",
+  panel: "surface",
+  "panel-bg": "surface",
+  "comp-accent": "primary",
+  "comp-secondary": "secondary",
+  "comp-accent-secondary": "secondary",
+  fg: "text-primary",
+  text: "text-primary",
+  ink: "text-primary",
+  "comp-text": "text-primary",
+  muted: "text-secondary",
+  "fg-muted": "text-secondary",
+  "fg-dim": "text-secondary",
+  "comp-muted": "text-secondary",
+  "text-muted": "text-secondary",
+  "text-dim": "text-secondary",
+  "comp-text-secondary": "text-secondary",
+  outline: "border",
+  stroke: "border",
+  rule: "border",
+  separator: "border",
+  "comp-border": "border",
+  "comp-success": "success",
+  danger: "error",
+  "comp-danger": "error",
+};
+
+function splitCanonical(raw) {
+  const colors = {};
+  const extras = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (CANONICAL_SET.has(key)) colors[key] = value;
+  }
+  for (const [key, value] of Object.entries(raw)) {
+    if (CANONICAL_SET.has(key)) continue;
+    const alias = TOKEN_ALIASES[key];
+    if (alias && CANONICAL_SET.has(alias) && !colors[alias]) {
+      colors[alias] = value;
+    } else {
+      extras[key] = value;
+    }
+  }
+  return { colors, extras };
+}
+
+const CANONICAL_STRUCTURAL = [
+  "font-family",
+  "font-family-mono",
+  "font-size-base",
+  "radius",
+  "radius-sm",
+  "radius-lg",
+  "spacing",
+  "border-width",
+];
+const STRUCTURAL_SET = new Set(CANONICAL_STRUCTURAL);
+
+function splitStructural(raw) {
+  const structural = {};
+  const extras = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (STRUCTURAL_SET.has(key)) structural[key] = value;
+    else extras[key] = value;
+  }
+  return { structural, extras };
+}
+
 function parseYamlMinimal(raw) {
   const nameMatch = raw.match(/^name:\s*(.+)$/m);
   const name = nameMatch ? nameMatch[1].trim() : "Untitled";
-  const colors = readMap(raw, "colors");
-  const colorsDark = /^colorsDark:/m.test(raw) ? readMap(raw, "colorsDark") : undefined;
-  return { name, colors, colorsDark };
+
+  const rawColors = readMap(raw, "colors");
+  const explicitExtras = /^extras:/m.test(raw) ? readMap(raw, "extras") : {};
+  const rawDark = /^colorsDark:/m.test(raw) ? readMap(raw, "colorsDark") : undefined;
+  const explicitExtrasDark = /^extrasDark:/m.test(raw) ? readMap(raw, "extrasDark") : {};
+  const rawStructural = /^structural:/m.test(raw) ? readMap(raw, "structural") : undefined;
+  const explicitStructuralExtras = /^structuralExtras:/m.test(raw)
+    ? readMap(raw, "structuralExtras")
+    : {};
+
+  const light = splitCanonical(rawColors);
+  const lightExtras = { ...light.extras, ...explicitExtras };
+
+  const result = { name, colors: light.colors };
+  if (Object.keys(lightExtras).length > 0) result.extras = lightExtras;
+  if (rawDark) {
+    const dark = splitCanonical(rawDark);
+    const darkExtras = { ...dark.extras, ...explicitExtrasDark };
+    result.colorsDark = dark.colors;
+    if (Object.keys(darkExtras).length > 0) result.extrasDark = darkExtras;
+  }
+  if (rawStructural) {
+    const struct = splitStructural(rawStructural);
+    const structExtras = { ...struct.extras, ...explicitStructuralExtras };
+    if (Object.keys(struct.structural).length > 0) result.structural = struct.structural;
+    if (Object.keys(structExtras).length > 0) result.structuralExtras = structExtras;
+  } else if (Object.keys(explicitStructuralExtras).length > 0) {
+    result.structuralExtras = explicitStructuralExtras;
+  }
+  return result;
 }
 
 function readMap(raw, key) {
@@ -130,6 +254,10 @@ function formatColorset(cs) {
   const parts = [`name: ${JSON.stringify(cs.name)}`];
   parts.push(`colors: ${JSON.stringify(cs.colors)}`);
   if (cs.colorsDark) parts.push(`colorsDark: ${JSON.stringify(cs.colorsDark)}`);
+  if (cs.extras) parts.push(`extras: ${JSON.stringify(cs.extras)}`);
+  if (cs.extrasDark) parts.push(`extrasDark: ${JSON.stringify(cs.extrasDark)}`);
+  if (cs.structural) parts.push(`structural: ${JSON.stringify(cs.structural)}`);
+  if (cs.structuralExtras) parts.push(`structuralExtras: ${JSON.stringify(cs.structuralExtras)}`);
   return `{ ${parts.join(", ")} }`;
 }
 

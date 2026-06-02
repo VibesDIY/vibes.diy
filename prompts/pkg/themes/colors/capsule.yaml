@@ -1,12 +1,13 @@
 name: Capsule Split
 colors:
-  comp-bg: "oklch(0.89 0.20 110)"
-  comp-text: "oklch(0.00 0 0)"
-  comp-border: "oklch(0.00 0 0 / 0.10)"
-  comp-accent: "oklch(0.00 0 0)"
+  background: "oklch(0.00 0 0)"
+  surface: "oklch(0.89 0.20 110)"
+  primary: "oklch(0.00 0 0)"
+  text-primary: "oklch(0.00 0 0)"
+  text-secondary: "oklch(0.00 0 0 / 0.50)"
+  border: "oklch(0.00 0 0 / 0.10)"
+extras:
   comp-accent-text: "oklch(1.00 0 0)"
-  comp-muted: "oklch(0.00 0 0 / 0.50)"
-  color-background: "oklch(0.00 0 0)"
   capsule-frame: "oklch(1.00 0 0)"
   capsule-visual-bg: "oklch(0.13 0 0)"
   capsule-visual-text: "oklch(1.00 0 0)"

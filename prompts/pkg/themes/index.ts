@@ -271,7 +271,18 @@ export function getColorsetCatalogNames(): ReadonlySet<string> {
 
 // Re-export the composer so callers can import everything theme-related from
 // one module (`@vibes.diy/prompts/themes`).
-export { composeDesignMd, parseColorsetYaml, type Colorset } from "./colorsets.js";
+export {
+  CANONICAL_STRUCTURAL,
+  CANONICAL_TOKENS,
+  composeDesignMd,
+  deriveCanonical,
+  deriveStructural,
+  parseColorsetYaml,
+  renderRootCssBlock,
+  type CanonicalStructuralToken,
+  type CanonicalToken,
+  type Colorset,
+} from "./colorsets.js";
 
 // Bundled colorsets live in `./colorsets-bundle.js`, but we intentionally do
 // not re-export them from this shared module. `prompts.ts` is imported by the

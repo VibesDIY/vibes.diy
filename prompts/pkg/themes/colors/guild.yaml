@@ -1,9 +1,10 @@
 name: Guild Ledger
 colors:
-  bg: "oklch(0.10 0.03 260)"
+  background: "oklch(0.10 0.03 260)"
+  text-primary: "oklch(0.90 0.000 0)"
+  text-secondary: "oklch(0.67 0.04 240)"
+extras:
   bg-highlight: "oklch(0.18 0.04 255)"
-  fg: "oklch(0.90 0.000 0)"
-  fg-muted: "oklch(0.67 0.04 240)"
   gold-base: "oklch(0.60 0.13 80)"
   gold-mid: "oklch(0.78 0.13 88)"
   gold-light: "oklch(0.96 0.08 100)"
