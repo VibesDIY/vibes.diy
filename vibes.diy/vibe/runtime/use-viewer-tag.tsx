@@ -101,54 +101,54 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
         ...style,
       }}
     >
-      <span
-        onClick={isSelf ? () => fileRef.current?.click() : undefined}
-        style={{
-          width: 30,
-          height: 30,
-          borderRadius: "50%",
-          background: "var(--accent, #6366f1)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 12,
-          fontWeight: 700,
-          color: "white",
-          position: "relative",
-          overflow: "hidden",
-          flexShrink: 0,
-          cursor: isSelf ? "pointer" : "default",
-          opacity: uploading ? 0.5 : 1,
-          ...(isSelf ? { outline: "2px dashed var(--accent, #818cf8)", outlineOffset: 2 } : {}),
-        }}
-      >
-        {hasAvatarImage ? (
-          <img
-            src={resolvedAvatarUrl}
-            alt={resolvedSlug}
-            onError={() => setAvatarError(true)}
-            style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
-          />
-        ) : (
-          initial
-        )}
-        {isSelf && !hasAvatarImage && (
-          <span
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "rgba(15,12,40,0.72)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 13,
-              color: "var(--accent-text, var(--accent, #a5b4fc))",
-              borderRadius: "50%",
-            }}
-          >
-            ✎
-          </span>
-        )}
+      <span style={{ position: "relative", flexShrink: 0 }}>
+        <span
+          onClick={isSelf ? () => fileRef.current?.click() : undefined}
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: "50%",
+            background: "var(--accent, #6366f1)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "white",
+            overflow: "hidden",
+            cursor: isSelf ? "pointer" : "default",
+            opacity: uploading ? 0.5 : 1,
+            ...(isSelf ? { outline: "2px dashed var(--accent, #818cf8)", outlineOffset: 2 } : {}),
+          }}
+        >
+          {hasAvatarImage ? (
+            <img
+              src={resolvedAvatarUrl}
+              alt={resolvedSlug}
+              onError={() => setAvatarError(true)}
+              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+            />
+          ) : (
+            initial
+          )}
+          {isSelf && !hasAvatarImage && (
+            <span
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(15,12,40,0.72)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 13,
+                color: "var(--accent-text, var(--accent, #a5b4fc))",
+                borderRadius: "50%",
+              }}
+            >
+              ✎
+            </span>
+          )}
+        </span>
         {isSelf && hasAvatarImage && (
           <span
             style={{
