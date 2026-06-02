@@ -264,6 +264,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
   const [sortCol, setSortCol] = useState<SortCol>("costPerLanding");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showPaused, setShowPaused] = useState(false);
   const previewCacheRef = useRef<Map<string, ResReportCampaignAdPreviewsAd[]>>(new Map());
 
   function handleSort(col: SortCol) {
@@ -329,7 +330,12 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
   const d = data.data;
   const { anomalies } = d;
 
-  const displayRows = sortRows(d.ranked, sortCol, sortDir);
+  const allRows = sortRows(d.ranked, sortCol, sortDir);
+  const displayRows = showPaused
+    ? allRows
+    : allRows.filter((r) => r.effective_status === undefined || r.effective_status === "ACTIVE");
+  const pausedCount =
+    allRows.length - allRows.filter((r) => r.effective_status === undefined || r.effective_status === "ACTIVE").length;
 
   function SortTh({ col, label, left }: { col: SortCol; label: string; left?: boolean }) {
     const active = sortCol === col;
@@ -539,6 +545,22 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               </React.Fragment>
             ))}
           </dl>
+          {pausedCount > 0 && (
+            <label
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.4rem",
+                fontSize: "0.8rem",
+                color: "var(--gray-mid)",
+                marginBottom: "0.5rem",
+                cursor: "pointer",
+              }}
+            >
+              <input type="checkbox" checked={showPaused} onChange={(e) => setShowPaused(e.target.checked)} />
+              Show {pausedCount} paused campaign{pausedCount !== 1 ? "s" : ""}
+            </label>
+          )}
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
               <thead>
