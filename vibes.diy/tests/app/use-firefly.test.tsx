@@ -398,7 +398,7 @@ describe("HOOK: useFireproof access", () => {
               viewer: { userHandle: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
               access: "editor",
               grants: {
-                [dbName]: { roles: ["moderator", "poster"], channels: ["general", "announcements"] },
+                [dbName]: { roles: ["moderator", "poster"], channels: ["general", "announcements"], publicChannels: [] },
               },
             },
           }}
@@ -436,7 +436,7 @@ describe("HOOK: useFireproof access", () => {
               viewer: { userHandle: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
               access: "editor",
               grants: {
-                "other-db": { roles: ["admin"], channels: ["private"] },
+                "other-db": { roles: ["admin"], channels: ["private"], publicChannels: [] },
               },
             },
           }}
