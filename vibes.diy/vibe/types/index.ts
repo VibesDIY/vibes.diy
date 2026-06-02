@@ -577,6 +577,7 @@ export const ReqVibeWhoAmI = type({
   type: "'vibe.req.whoAmI'",
   appSlug: "string",
   ownerHandle: "string",
+  "adminMode?": "boolean",
 }).and(Base);
 
 export type ReqVibeWhoAmI = typeof ReqVibeWhoAmI.infer;
@@ -597,6 +598,7 @@ export const ResVibeWhoAmI = type({
   type: "'vibe.res.whoAmI'",
   viewer: viewerPayload.or("null"),
   access: docAccessLevel,
+  "isOwner?": "boolean",
   "dbAcls?": type({ "[string]": dbAcl }),
   "grants?": type({ "[string]": type({ channels: "string[]", publicChannels: "string[]", roles: "string[]" }) }),
 }).and(Base);
@@ -655,6 +657,7 @@ export const EvtVibeViewerChanged = type({
   type: "'vibe.evt.viewerChanged'",
   viewer: viewerPayload.or("null"),
   access: docAccessLevel,
+  "isOwner?": "boolean",
   "dbAcls?": type({ "[string]": dbAcl }),
   "grants?": type({ "[string]": type({ channels: "string[]", publicChannels: "string[]", roles: "string[]" }) }),
 });
