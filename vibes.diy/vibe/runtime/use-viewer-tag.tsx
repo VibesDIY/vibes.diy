@@ -12,6 +12,26 @@ export type ViewerTagProps = { style?: React.CSSProperties } & (
 
 type ViewerTagImplProps = ViewerTagProps & { _viewer: ViewerPayload | null };
 
+function CameraGlyph({ size }: { size: number }): React.ReactElement {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      style={{ display: "block" }}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 7h4l2-2h4l2 2h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" />
+      <circle cx="12" cy="12.5" r="3.5" />
+    </svg>
+  );
+}
+
 export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps): React.ReactElement {
   const [uploading, setUploading] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -140,12 +160,11 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 13,
                 color: "var(--accent-text, var(--accent, #a5b4fc))",
                 borderRadius: "50%",
               }}
             >
-              ✎
+              <CameraGlyph size={13} />
             </span>
           )}
         </span>
@@ -163,13 +182,12 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 9,
               lineHeight: 1,
               color: "var(--accent-text, var(--accent, #a5b4fc))",
               pointerEvents: "none",
             }}
           >
-            ✎
+            <CameraGlyph size={9} />
           </span>
         )}
       </span>
