@@ -34,7 +34,7 @@
 | `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`               | Modify | Forward `isOwner` in whoAmI handler response                                               |
 | `vibes.diy/api/svc/public/access-function.ts`             | Modify | Wire `makeHelpers()` to use grant state                                                    |
 | `vibes.diy/pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx` | Modify | Admin toggle UI with full whoAmI re-fetch                                                  |
-| `vibes.diy/api/tests/db-acl-allows.test.ts`               | Modify | No ACL changes but add tests validating owner-as-editor                                    |
+| `vibes.diy/api/tests/db-acl-allows.test.ts`               | Modify | Add tests validating owner-as-editor behavior (Task 4)                                     |
 | `vibes.diy/tests/app/use-viewer.test.tsx`                 | Modify | Test `isOwner` and effective access level                                                  |
 | `vibes.diy/api/tests/access-function.test.ts`             | Modify | Test grant-aware `makeHelpers()`                                                           |
 
@@ -95,7 +95,7 @@ Also update `canRead` and `canWrite` — these stay as-is (no `adminMode` param 
 
 Run: `cd vibes.diy && pnpm tsc --noEmit 2>&1 | head -60`
 
-Expected: Type errors at every call site that destructures a bare `DocAccessLevel` from `checkDocAccess()`. There are ~12 call sites across `app-documents.ts`, `who-am-i.ts`, `files-asset.ts`, `asset-upload-grant.ts`, `list-members.ts`.
+Expected: Type errors at every call site that assigns a bare `DocAccessLevel` from `checkDocAccess()`. There are 10 call sites across 5 files (`app-documents.ts`, `who-am-i.ts`, `files-asset.ts`, `asset-upload-grant.ts`, `list-members.ts`).
 
 - [ ] **Step 3: Fix all callers — destructure `{ access }` or `{ access, isOwner }`**
 
@@ -118,7 +118,7 @@ Files to update (with line numbers from current code):
 - `app-documents.ts:154` — putDoc handler, use `{ access, isOwner }` (need isOwner for userContext)
 - `app-documents.ts:521` — getDoc handler, ternary pattern
 - `app-documents.ts:718` — listDocs handler, ternary pattern
-- `app-documents.ts:852` — deleteDoc handler, use `{ access, isOwner }` (need isOwner for userContext)
+- `app-documents.ts:852` — deleteDoc handler, destructure `{ access }` (deleteDoc does not build userContext)
 - `app-documents.ts:937` — subscribeDocs handler, ternary pattern
 - `app-documents.ts:1055` — searchDocs handler
 - `who-am-i.ts:132` — ternary pattern
@@ -175,11 +175,7 @@ const userContext = writerRow?.handle ? { userHandle: writerRow.handle, isOwner 
 
 Where `isOwner` comes from the `checkDocAccess()` result destructured in Task 1.
 
-- [ ] **Step 3: Set `isOwner` on userContext in deleteDoc handler**
-
-Same pattern in the deleteDoc handler — find where `userContext` is built and add `isOwner`.
-
-- [ ] **Step 4: Run type check**
+- [ ] **Step 3: Run type check**
 
 Run: `cd vibes.diy && pnpm tsc --noEmit 2>&1 | head -40`
 Expected: May see errors if other code constructs `UserContext` without `isOwner`. Fix any remaining sites.
@@ -375,15 +371,35 @@ it("owner with admin on: access is owner, can() bypasses", () => {
 });
 ```
 
-- [ ] **Step 5: Run tests**
+- [ ] **Step 5: Add db-acl-allows tests validating owner-as-editor behavior**
 
-Run: `cd vibes.diy && pnpm vitest run tests/app/use-viewer.test.tsx`
+Add to `vibes.diy/api/tests/db-acl-allows.test.ts` — these confirm that when the server sends `access: "editor"` (admin off) instead of `access: "owner"`, the ACL helpers correctly evaluate as editor:
+
+```typescript
+it("owner-as-editor (admin off): submitters-only write denies editor", () => {
+  expect(aclAllows({ write: ["submitters"] }, "write", "editor")).toBe(false);
+});
+
+it("owner-as-editor (admin off): editors group allows editor", () => {
+  expect(aclAllows({ write: ["editors"] }, "write", "editor")).toBe(true);
+});
+
+it("owner-as-editor (admin off): members group allows editor", () => {
+  expect(aclAllows({ write: ["members"] }, "write", "editor")).toBe(true);
+});
+```
+
+These tests pass with the existing ACL code — no changes to `db-acl-allows.ts` needed. They document the expected behavior when `checkDocAccess()` returns `"editor"` for the owner.
+
+- [ ] **Step 6: Run all tests**
+
+Run: `cd vibes.diy && pnpm vitest run tests/app/use-viewer.test.tsx api/tests/db-acl-allows.test.ts`
 Expected: All tests PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add vibes.diy/vibe/runtime/vibe.ts vibes.diy/vibe/runtime/VibeContext.tsx vibes.diy/vibe/runtime/use-viewer.ts vibes.diy/tests/app/use-viewer.test.tsx
+git add vibes.diy/vibe/runtime/vibe.ts vibes.diy/vibe/runtime/VibeContext.tsx vibes.diy/vibe/runtime/use-viewer.ts vibes.diy/tests/app/use-viewer.test.tsx vibes.diy/api/tests/db-acl-allows.test.ts
 git commit -m "feat: useViewer() exposes isOwner, access is effective level (#2166)"
 ```
 
@@ -699,20 +715,32 @@ const [adminMode, setAdminMode] = useState(() => {
 });
 ```
 
-- [ ] **Step 2: Add toggle handler that does full whoAmI re-fetch**
+- [ ] **Step 2: Add toggle handler that calls whoAmI and pushes full viewer payload**
+
+The toggle must call `whoAmI({ adminMode })` via the bridge API, then push the complete result into the iframe via `pushViewerChanged`. This ensures the iframe gets a consistent `ViewerEnv` (viewer, access, isOwner, dbAcls, grants) — never a partial payload.
 
 ```typescript
-const toggleAdmin = useCallback(() => {
-  setAdminMode((prev) => {
-    const next = !prev;
-    if (adminStorageKey) localStorage.setItem(adminStorageKey, String(next));
-    setRetryCount((n) => n + 1);
-    return next;
+const toggleAdmin = useCallback(async () => {
+  const next = !adminMode;
+  if (adminStorageKey) localStorage.setItem(adminStorageKey, String(next));
+  setAdminMode(next);
+
+  if (!srvVibeSandbox || !ownerHandle || !appSlug) return;
+  const rRes = await vctx.vibeDiyApi.whoAmI({ tid: crypto.randomUUID(), appSlug, ownerHandle, adminMode: next });
+  if (rRes.isErr()) return;
+  const r = rRes.Ok();
+  srvVibeSandbox.pushViewerChanged({
+    type: "vibe.evt.viewerChanged",
+    viewer: r.viewer,
+    access: r.access,
+    ...(r.isOwner !== undefined ? { isOwner: r.isOwner } : {}),
+    ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
+    ...(r.grants ? { grants: r.grants } : {}),
   });
-}, [adminStorageKey]);
+}, [adminMode, adminStorageKey, srvVibeSandbox, ownerHandle, appSlug, vctx.vibeDiyApi]);
 ```
 
-The `setRetryCount` bump triggers the existing `getAppByFsId` useEffect to re-fire, which re-resolves access.
+This is the spec's required path: toggle → `whoAmI({ adminMode })` → full `pushViewerChanged` from result. No `retryCount` bump or `getAppByFsId` re-fire — the whoAmI call is the authoritative re-fetch.
 
 - [ ] **Step 3: Gate owner-only chrome on `adminMode`**
 
