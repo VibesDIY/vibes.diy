@@ -13,7 +13,9 @@ import {
   COMMENTS_DEFAULT_ACL,
 } from "@vibes.diy/api-types";
 import { ReqVibeWhoAmI, ResVibeWhoAmI, ViewerPayload, DocAccessLevel, isReqVibeWhoAmI } from "@vibes.diy/vibe-types";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { GrantReduce, extractContribution } from "./grant-reduce.js";
+import type { AccessDescriptor } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
@@ -44,6 +46,60 @@ export interface ResolvedWhoAmI {
   viewer: ViewerPayload | null;
   access: DocAccessLevel;
   dbAcls: Record<string, DbAcl> | undefined;
+  grants: Record<string, { channels: string[]; roles: string[] }> | undefined;
+}
+
+async function resolveGrants(
+  vctx: VibesApiSQLCtx,
+  ownerUserSlug: string,
+  appSlug: string,
+  viewerSlug: string | undefined
+): Promise<Record<string, { channels: string[]; roles: string[] }> | undefined> {
+  const tAfb = vctx.sql.tables.accessFunctionBindings;
+  const afbRows = await vctx.sql.db
+    .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
+    .from(tAfb)
+    .where(and(eq(tAfb.userSlug, ownerUserSlug), eq(tAfb.appSlug, appSlug)));
+
+  if (afbRows.length === 0) return undefined;
+
+  const tOutputs = vctx.sql.tables.accessFnOutputs;
+  const grants: Record<string, { channels: string[]; roles: string[] }> = {};
+
+  for (const afb of afbRows) {
+    const storedOutputs = await vctx.sql.db
+      .select({ docId: tOutputs.docId, output: tOutputs.output })
+      .from(tOutputs)
+      .where(
+        and(
+          eq(tOutputs.userSlug, ownerUserSlug),
+          eq(tOutputs.appSlug, appSlug),
+          eq(tOutputs.dbName, afb.dbName),
+          eq(tOutputs.fnCid, afb.accessFnCid),
+          eq(tOutputs.hasGrants, 1)
+        )
+      );
+
+    const reduce = new GrantReduce();
+    for (const row of storedOutputs) {
+      reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
+    }
+
+    const channels = viewerSlug ? Array.from(reduce.resolveEffectiveChannels(viewerSlug)) : [];
+    const publicCh = Array.from(reduce.publicChannels);
+    const allChannels = [...new Set([...channels, ...publicCh])];
+
+    const roles: string[] = [];
+    if (viewerSlug) {
+      for (const [roleName, members] of reduce.effectiveMembers) {
+        if (members.has(viewerSlug)) roles.push(roleName);
+      }
+    }
+
+    grants[afb.dbName] = { channels: allChannels, roles };
+  }
+
+  return Object.keys(grants).length > 0 ? grants : undefined;
 }
 
 export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArgs): Promise<Result<ResolvedWhoAmI>> {
@@ -75,11 +131,11 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   const dbAcls = effectiveDbAcls;
 
   if (!auth) {
-    return Result.Ok({ viewer: null, access, dbAcls });
+    return Result.Ok({ viewer: null, access, dbAcls, grants: undefined });
   }
 
   if (!viewerUserId) {
-    return Result.Ok({ viewer: null, access, dbAcls });
+    return Result.Ok({ viewer: null, access, dbAcls, grants: undefined });
   }
 
   const userSettingsRow = await vctx.sql.db
@@ -110,16 +166,19 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   }
 
   if (!viewerSlug) {
-    return Result.Ok({ viewer: null, access, dbAcls });
+    return Result.Ok({ viewer: null, access, dbAcls, grants: undefined });
   }
 
   const displayName = displayOverride ?? deriveDisplayName(auth.verifiedAuth.claims);
   const avatarUrl = `${baseOrigin}/u/${encodeURIComponent(viewerSlug)}/avatar`;
 
+  const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, viewerSlug);
+
   return Result.Ok({
     viewer: { userHandle: viewerSlug, displayName, avatarUrl },
     access,
     dbAcls,
+    grants,
   });
 }
 
@@ -158,6 +217,7 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
         viewer: r.viewer,
         access: r.access,
         ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
+        ...(r.grants !== undefined ? { grants: r.grants } : {}),
       } satisfies ResVibeWhoAmI);
       return Result.Ok(EventoResult.Continue);
     }

@@ -30,6 +30,18 @@ describe("vibeMountParams", () => {
     expect(r instanceof type.errors).toBe(false);
   });
 
+  it("accepts viewerEnv with grants", () => {
+    const r = vibeMountParams({
+      usrEnv: {},
+      viewerEnv: {
+        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
+        access: "owner",
+        grants: { chat: { channels: ["general", "random"], roles: ["admin"] } },
+      },
+    });
+    expect(r instanceof type.errors).toBe(false);
+  });
+
   it("rejects bad access value", () => {
     const r = vibeMountParams({
       usrEnv: {},

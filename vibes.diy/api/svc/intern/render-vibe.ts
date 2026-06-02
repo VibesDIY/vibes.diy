@@ -28,8 +28,8 @@ import { sqlite } from "@vibes.diy/api-sql";
 async function buildViewerEnvForRender(vctx: VibesApiSQLCtx, args: { appSlug: string; ownerUserSlug: string; apiBaseUrl: string }) {
   const r = await resolveWhoAmI(vctx, { auth: undefined, ...args });
   if (!r.isOk()) return undefined;
-  const { viewer, access, dbAcls } = r.Ok();
-  return { viewer, access, ...(dbAcls ? { dbAcls } : {}) };
+  const { viewer, access, dbAcls, grants } = r.Ok();
+  return { viewer, access, ...(dbAcls ? { dbAcls } : {}), ...(grants ? { grants } : {}) };
 }
 
 export interface RenderVibesOpts {

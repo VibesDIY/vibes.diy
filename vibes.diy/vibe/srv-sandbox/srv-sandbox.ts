@@ -856,6 +856,7 @@ function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
         viewer: r.viewer,
         access: r.access,
         ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
+        ...(r.grants !== undefined ? { grants: r.grants } : {}),
       } satisfies ResVibeWhoAmI);
       return Result.Ok(EventoResult.Stop);
     },

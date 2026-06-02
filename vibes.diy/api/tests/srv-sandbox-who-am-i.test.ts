@@ -123,6 +123,36 @@ describe("vibeWhoAmI host handler", () => {
     });
   });
 
+  it("passes grants through when present", async () => {
+    const grants = { "chat-db": { channels: ["general"], roles: ["moderator"] } };
+    const { sandbox, captured, iframe } = setupSandbox({
+      whoAmIResult: Result.Ok({
+        type: "vibe.res.whoAmI" as const,
+        tid: "t4",
+        viewer: { userHandle: "bob", displayName: "Bob", avatarUrl: "https://api.test/u/bob/avatar" },
+        access: "editor",
+        grants,
+      } satisfies ResVibeWhoAmI),
+    });
+
+    sandbox.handleMessage(
+      fakeMessageEvent(
+        { type: "vibe.req.whoAmI", tid: "t4", appSlug: "chat", ownerHandle: "alice" },
+        "https://chat--alice.example.com",
+        iframe
+      )
+    );
+    await new Promise((r) => setTimeout(r, 50));
+
+    const msg = captured.find((c) => (c.data as { type?: string }).type === "vibe.res.whoAmI");
+    expect(msg?.data).toMatchObject({
+      tid: "t4",
+      type: "vibe.res.whoAmI",
+      access: "editor",
+      grants,
+    });
+  });
+
   it("error path — when vibeDiyApi.whoAmI fails, posts fallback with viewer: null and access: 'none'", async () => {
     const { sandbox, captured, iframe, whoAmICalls } = setupSandbox({
       whoAmIResult: Result.Err<ResVibeWhoAmI, VibesDiyError>({

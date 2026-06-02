@@ -598,6 +598,7 @@ export const ResVibeWhoAmI = type({
   viewer: viewerPayload.or("null"),
   access: docAccessLevel,
   "dbAcls?": type({ "[string]": dbAcl }),
+  "grants?": type({ "[string]": type({ channels: "string[]", roles: "string[]" }) }),
 }).and(Base);
 
 export type ResVibeWhoAmI = typeof ResVibeWhoAmI.infer;
@@ -655,6 +656,7 @@ export const EvtVibeViewerChanged = type({
   viewer: viewerPayload.or("null"),
   access: docAccessLevel,
   "dbAcls?": type({ "[string]": dbAcl }),
+  "grants?": type({ "[string]": type({ channels: "string[]", roles: "string[]" }) }),
 });
 
 export type EvtVibeViewerChanged = typeof EvtVibeViewerChanged.infer;

@@ -59,6 +59,7 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
         viewer: event.data.viewer,
         access: event.data.access,
         ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
+        ...(event.data.grants ? { grants: event.data.grants } : {}),
       });
     };
     window.addEventListener("message", onMsg);

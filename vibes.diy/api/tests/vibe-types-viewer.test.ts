@@ -35,6 +35,17 @@ describe("ResVibeWhoAmI", () => {
       })
     ).toBe(true);
   });
+  it("validates signed-in response with grants", () => {
+    expect(
+      isResVibeWhoAmI({
+        type: "vibe.res.whoAmI",
+        tid: "abc",
+        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+        access: "owner",
+        grants: { comments: { channels: ["general"], roles: ["moderator"] } },
+      })
+    ).toBe(true);
+  });
   it("rejects viewer missing avatarUrl", () => {
     expect(
       isResVibeWhoAmI({
