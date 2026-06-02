@@ -58,6 +58,7 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
       setViewerEnv({
         viewer: event.data.viewer,
         access: event.data.access,
+        ...(event.data.isOwner !== undefined ? { isOwner: event.data.isOwner } : {}),
         ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
         ...(event.data.grants ? { grants: event.data.grants } : {}),
       });

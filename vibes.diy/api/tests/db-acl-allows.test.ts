@@ -37,4 +37,16 @@ describe("aclAllows (client port)", () => {
     expect(aclAllows({ read: ["readers"] }, "read", "viewer")).toBe(true);
     expect(aclAllows({ read: ["readers"] }, "read", "submitter")).toBe(false);
   });
+
+  it("owner-as-editor (admin off): submitters-only write denies editor", () => {
+    expect(aclAllows({ write: ["submitters"] }, "write", "editor")).toBe(false);
+  });
+
+  it("owner-as-editor (admin off): editors group allows editor", () => {
+    expect(aclAllows({ write: ["editors"] }, "write", "editor")).toBe(true);
+  });
+
+  it("owner-as-editor (admin off): members group allows editor", () => {
+    expect(aclAllows({ write: ["members"] }, "write", "editor")).toBe(true);
+  });
 });

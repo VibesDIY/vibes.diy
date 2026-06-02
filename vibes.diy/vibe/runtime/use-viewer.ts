@@ -10,6 +10,7 @@ type DocAccessLevel = ViewerEnv["access"];
 export interface UseViewerResult {
   readonly viewer: ViewerPayload | null;
   readonly access: DocAccessLevel;
+  readonly isOwner: boolean;
   readonly dbAcls: Record<string, DbAcl>;
   readonly can: (action: "read" | "write" | "delete", dbName?: string) => boolean;
   /** True while viewer identity has not yet been resolved (e.g. preview mode
@@ -27,6 +28,7 @@ export function useViewer(): UseViewerResult {
   const isViewerPending = env === undefined;
   const viewer = env?.viewer ?? null;
   const access: DocAccessLevel = env?.access ?? "none";
+  const isOwner = env?.isOwner ?? false;
   const dbAcls: Record<string, DbAcl> = env?.dbAcls ?? {};
 
   function can(action: "read" | "write" | "delete", dbName?: string): boolean {
@@ -45,5 +47,5 @@ export function useViewer(): UseViewerResult {
     [viewer]
   );
 
-  return { viewer, access, dbAcls, can, isViewerPending, ViewerTag };
+  return { viewer, access, isOwner, dbAcls, can, isViewerPending, ViewerTag };
 }
