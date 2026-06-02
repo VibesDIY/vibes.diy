@@ -137,6 +137,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth?.verifiedAuth.claims.userId ?? null;
+      let isOwner = false;
 
       if (isDirectChannel(req.ownerHandle)) {
         // DM writes always require authentication
@@ -151,7 +152,9 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         }
       } else if (userId) {
         // Authenticated user: standard ACL gate
-        const { access, isOwner } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+        const docAccessResult = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+        const access = docAccessResult.access;
+        isOwner = docAccessResult.isOwner;
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         // Fail closed: a settings-read error must not silently fall back to the
         // open default and re-open writes on a tightened ACL.
@@ -519,7 +522,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
       const { access } = req._auth
         ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
-        : { access: "none" as DocAccessLevel, isOwner: false };
+        : { access: "none" as DocAccessLevel };
       const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
       if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
         await ctx.send.send(ctx, {
@@ -716,7 +719,7 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       } else {
         const { access } = req._auth
           ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
-          : { access: "none" as DocAccessLevel, isOwner: false };
+          : { access: "none" as DocAccessLevel };
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
           await ctx.send.send(ctx, {
@@ -935,7 +938,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       } else {
         const { access } = req._auth
           ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
-          : { access: "none" as DocAccessLevel, isOwner: false };
+          : { access: "none" as DocAccessLevel };
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
           await ctx.send.send(ctx, {
