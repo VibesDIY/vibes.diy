@@ -133,8 +133,12 @@ describe("resolveCodeBlocksToFileSystem — multi-file (#2157)", () => {
     const byName = new Map(result.map((f) => [f.filename, f]));
     expect(byName.has("/App.jsx")).toBe(true);
     expect(byName.has("/access.js")).toBe(true);
-    expect(contentOf(byName.get("/App.jsx")!)).toContain("function App()");
-    expect(contentOf(byName.get("/access.js")!)).toContain("function boards");
+    const appFile = byName.get("/App.jsx");
+    const accessFile = byName.get("/access.js");
+    expect(appFile).toBeDefined();
+    expect(accessFile).toBeDefined();
+    expect(contentOf(appFile as VibeFile)).toContain("function App()");
+    expect(contentOf(accessFile as VibeFile)).toContain("function boards");
   });
 
   it("access.js gets lang 'js', not 'jsx' (#2157 lang normalization)", () => {
@@ -165,7 +169,11 @@ describe("resolveCodeBlocksToFileSystem — multi-file (#2157)", () => {
     const appBlock = makeBlock(["new app code"]);
     const result = resolveCodeBlocksToFileSystem([appBlock], seed);
     const byName = new Map(result.map((f) => [f.filename, f]));
-    expect(langOf(byName.get("/App.jsx")!)).toBe("jsx");
-    expect(langOf(byName.get("/access.js")!)).toBe("js");
+    const appFile = byName.get("/App.jsx");
+    const accessFile = byName.get("/access.js");
+    expect(appFile).toBeDefined();
+    expect(accessFile).toBeDefined();
+    expect(langOf(appFile as VibeFile)).toBe("jsx");
+    expect(langOf(accessFile as VibeFile)).toBe("js");
   });
 });
