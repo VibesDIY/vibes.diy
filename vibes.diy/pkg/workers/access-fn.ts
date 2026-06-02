@@ -17,6 +17,7 @@ const InvokeBody = {
     user: UserContext | null;
     source?: string;
     grantState?: GrantState;
+    adminMode?: boolean;
   } {
     if (typeof raw !== "object" || raw === null) throw new Error("invalid invoke body");
     return raw as {
@@ -25,6 +26,7 @@ const InvokeBody = {
       user: UserContext | null;
       source?: string;
       grantState?: GrantState;
+      adminMode?: boolean;
     };
   },
 };
@@ -41,6 +43,7 @@ export class AccessFnDO implements DurableObject {
       user: UserContext | null;
       source?: string;
       grantState?: GrantState;
+      adminMode?: boolean;
     };
     try {
       body = InvokeBody.parse(await request.json());
@@ -102,6 +105,9 @@ export class AccessFnDO implements DurableObject {
       const ctxObj = vm.newObject();
 
       const requireAccessFn = vm.newFunction("requireAccess", (channelIdHandle: Parameters<typeof vm.dump>[0]) => {
+        if (body.adminMode === true) {
+          return undefined;
+        }
         const channelId = vm.dump(channelIdHandle) as string;
         if (!body.user) {
           return { error: vm.newError("authentication required") };
@@ -114,6 +120,9 @@ export class AccessFnDO implements DurableObject {
       });
 
       const requireRoleFn = vm.newFunction("requireRole", (roleNameHandle: Parameters<typeof vm.dump>[0]) => {
+        if (body.adminMode === true) {
+          return undefined;
+        }
         const roleName = vm.dump(roleNameHandle) as string;
         if (!body.user) {
           return { error: vm.newError("authentication required") };
