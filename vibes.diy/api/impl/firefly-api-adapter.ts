@@ -117,7 +117,6 @@ export class FireflyApiAdapter {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async setDbAcl(_dbName: string, _acl: DbAcl): Promise<Result<ResSetDbAcl>> {
     return Result.Err("setDbAcl not supported in standalone fireproof adapter");
   }
