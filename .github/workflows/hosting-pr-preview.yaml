@@ -53,7 +53,12 @@ jobs:
           echo "📦 Worker name: ${{ steps.pr.outputs.worker_name }}"
 
           # Deploy with custom worker name
-          npx wrangler deploy --env preview --name ${{ steps.pr.outputs.worker_name }}
+          for attempt in 1 2 3; do
+            npx wrangler deploy --env preview --name ${{ steps.pr.outputs.worker_name }} && break
+            if [ "$attempt" -eq 3 ]; then echo "wrangler deploy failed after 3 attempts"; exit 1; fi
+            echo "wrangler deploy attempt $attempt failed, retrying in 15s..."
+            sleep 15
+          done
 
           echo "✅ Preview deployed successfully"
           echo "preview_url=${{ steps.pr.outputs.preview_url }}" >> $GITHUB_OUTPUT

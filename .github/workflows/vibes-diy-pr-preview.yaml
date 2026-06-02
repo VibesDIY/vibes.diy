@@ -175,7 +175,7 @@ jobs:
           # No migrations — merge to main for schema changes
 
           # Set secrets on the preview worker
-          pnpm exec core-cli writeEnv --out - --json \
+          SECRETS=$(pnpm exec core-cli writeEnv --out - --json \
             --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
             --fromEnv CLERK_PUBLISHABLE_KEY \
             --fromEnv DEVICE_ID_CA_PRIV_KEY \
@@ -196,8 +196,13 @@ jobs:
             --fromEnv NEON_DATABASE_URL \
             --fromEnv MAX_APP_SLUG_PER_USER_ID \
             --fromEnv WORKSPACE_NPM_URL \
-            --fromEnv VIBES_DIY_API_URL | \
-            pnpm exec wrangler secret --name $WORKER_NAME bulk
+            --fromEnv VIBES_DIY_API_URL)
+          for attempt in 1 2 3; do
+            echo "$SECRETS" | pnpm exec wrangler secret --name $WORKER_NAME bulk && break
+            if [ "$attempt" -eq 3 ]; then echo "secret bulk failed after 3 attempts"; exit 1; fi
+            echo "secret bulk attempt $attempt failed (Cloudflare 10021?), retrying in 15s..."
+            sleep 15
+          done
 
           # Deploy with custom worker name. Routes are attached separately
           # via the zone-level Workers Routes API below: wrangler's `--route`
@@ -206,7 +211,12 @@ jobs:
           # SSL for SaaS) certs without explicit zone disambiguation
           # (CF error code 10082). The zone-level endpoint embeds zone_id
           # in the URL so it doesn't need it in the body.
-          pnpm exec wrangler deploy --env preview --name "$WORKER_NAME"
+          for attempt in 1 2 3; do
+            pnpm exec wrangler deploy --env preview --name "$WORKER_NAME" && break
+            if [ "$attempt" -eq 3 ]; then echo "wrangler deploy failed after 3 attempts"; exit 1; fi
+            echo "wrangler deploy attempt $attempt failed, retrying in 15s..."
+            sleep 15
+          done
 
           # Attach the per-PR vibespreview.dev routes via zone-level API.
           # Idempotent: list existing routes for our patterns, only POST the

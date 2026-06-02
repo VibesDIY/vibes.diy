@@ -33,4 +33,9 @@ runs:
       run: |
         #pnpm exec wrangler deploy --var BACKEND:"$BACKEND" --var BACKEND_CFG:"$BACKEND_CFG"
         # CF is the leading system for that both vars
-        pnpm exec wrangler deploy --keep-vars
+        for attempt in 1 2 3; do
+          pnpm exec wrangler deploy --keep-vars && break
+          if [ "$attempt" -eq 3 ]; then echo "wrangler deploy failed after 3 attempts"; exit 1; fi
+          echo "wrangler deploy attempt $attempt failed, retrying in 15s..."
+          sleep 15
+        done
