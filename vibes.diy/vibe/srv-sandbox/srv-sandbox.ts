@@ -837,8 +837,8 @@ function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibeWhoAmI, unknown>): Promise<Result<EventoResultType>> => {
-      const { tid, appSlug, ownerHandle } = ctx.validated;
-      const rRes = await vibeDiyApi.whoAmI({ tid, appSlug, ownerHandle });
+      const { tid, appSlug, ownerHandle, adminMode } = ctx.validated;
+      const rRes = await vibeDiyApi.whoAmI({ tid, appSlug, ownerHandle, adminMode });
 
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
@@ -855,6 +855,7 @@ function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
         type: "vibe.res.whoAmI",
         viewer: r.viewer,
         access: r.access,
+        ...(r.isOwner !== undefined ? { isOwner: r.isOwner } : {}),
         ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants !== undefined ? { grants: r.grants } : {}),
       } satisfies ResVibeWhoAmI);
