@@ -21,6 +21,7 @@ const dbAcl = type({
 export const viewerEnv = type({
   viewer: viewerPayload.or("null"),
   access: docAccessLevel,
+  "isOwner?": "boolean",
   "dbAcls?": type({ "[string]": dbAcl }),
   "grants?": type({ "[string]": type({ channels: "string[]", publicChannels: "string[]", roles: "string[]" }) }),
 });

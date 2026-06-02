@@ -19,6 +19,7 @@ function renderWith(env: ViewerEnv | undefined): UseViewerResult {
   let captured: UseViewerResult = {
     viewer: null,
     access: "none",
+    isOwner: false,
     dbAcls: {},
     can: () => false,
     isViewerPending: true,
@@ -84,5 +85,40 @@ describe("useViewer", () => {
   it("isViewerPending is true when viewerEnv is undefined, false when set", () => {
     expect(renderWith(undefined).isViewerPending).toBe(true);
     expect(renderWith(baseEnv).isViewerPending).toBe(false);
+  });
+
+  it("isOwner is true when viewerEnv.isOwner is true", () => {
+    const r = renderWith({ ...baseEnv, access: "editor" as const, isOwner: true });
+    expect(r.isOwner).toBe(true);
+    expect(r.access).toBe("editor");
+  });
+
+  it("isOwner is false by default", () => {
+    const r = renderWith({ ...baseEnv, access: "editor" as const });
+    expect(r.isOwner).toBe(false);
+  });
+
+  it("owner with admin off: access is editor, can() evaluates as editor", () => {
+    const r = renderWith({
+      ...baseEnv,
+      access: "editor" as const,
+      isOwner: true,
+      dbAcls: { restrictedDb: { write: ["submitters"] } },
+    });
+    expect(r.access).toBe("editor");
+    expect(r.isOwner).toBe(true);
+    expect(r.can("write", "restrictedDb")).toBe(false);
+  });
+
+  it("owner with admin on: access is owner, can() bypasses", () => {
+    const r = renderWith({
+      ...baseEnv,
+      access: "owner" as const,
+      isOwner: true,
+      dbAcls: { restrictedDb: { write: ["submitters"] } },
+    });
+    expect(r.access).toBe("owner");
+    expect(r.isOwner).toBe(true);
+    expect(r.can("write", "restrictedDb")).toBe(true);
   });
 });
