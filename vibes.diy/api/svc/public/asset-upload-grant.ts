@@ -54,7 +54,7 @@ export const assetUploadGrantEvento: EventoHandler<
 
       // Upload requires write access to (ownerHandle, appSlug). Public-readable
       // apps don't grant write — uploaders must be owner/editor/submitter.
-      const access = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+      const { access } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
       if (!canWrite(access)) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",

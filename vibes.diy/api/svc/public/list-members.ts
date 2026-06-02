@@ -18,7 +18,7 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
-import { checkDocAccess, canRead, isPublicReadable } from "./access-helpers.js";
+import { checkDocAccess, canRead, isPublicReadable, type DocAccessLevel } from "./access-helpers.js";
 
 function deriveAuthorDisplay(claims: ClerkClaim): string {
   const p = claims.params;
@@ -54,9 +54,9 @@ export const listMembersEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // Read-access gate: any reader (or public-readable) can list members.
-      const access = req._auth
+      const { access } = req._auth
         ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
-        : "none";
+        : { access: "none" as DocAccessLevel, isOwner: false };
       if (!canRead(access)) {
         const pub = await isPublicReadable(vctx, req.appSlug, req.ownerHandle);
         if (!pub) {

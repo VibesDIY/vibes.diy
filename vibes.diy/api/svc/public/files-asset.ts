@@ -125,7 +125,9 @@ export const filesAsset: EventoHandler<Request, FilesAssetValidated, unknown> = 
         userId = rVerified.Ok().userId;
       }
     }
-    const access: DocAccessLevel = userId ? await checkDocAccess(vctx, userId, appSlug, ownerHandle) : "none";
+    const { access } = userId
+      ? await checkDocAccess(vctx, userId, appSlug, ownerHandle)
+      : { access: "none" as DocAccessLevel, isOwner: false };
 
     // 2. ACL gate. If the db has an explicit dbAcl, use it. Otherwise allow
     //    when the user has any role OR when the app is public-readable.

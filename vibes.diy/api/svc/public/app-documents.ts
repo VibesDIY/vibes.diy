@@ -151,7 +151,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         }
       } else if (userId) {
         // Authenticated user: standard ACL gate
-        const access = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+        const { access, isOwner: _isOwner } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         // Fail closed: a settings-read error must not silently fall back to the
         // open default and re-open writes on a tightened ACL.
@@ -517,9 +517,9 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
-      const access: DocAccessLevel = req._auth
+      const { access } = req._auth
         ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
-        : "none";
+        : { access: "none" as DocAccessLevel, isOwner: false };
       const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
       if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
         await ctx.send.send(ctx, {
@@ -714,9 +714,9 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
           return Result.Ok(EventoResult.Continue);
         }
       } else {
-        const access: DocAccessLevel = req._auth
+        const { access } = req._auth
           ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
-          : "none";
+          : { access: "none" as DocAccessLevel, isOwner: false };
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
           await ctx.send.send(ctx, {
@@ -849,7 +849,7 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
           return Result.Ok(EventoResult.Continue);
         }
       } else {
-        const access = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+        const { access } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !aclAllows(rAcl.Ok(), "delete", access)) {
           await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
@@ -933,9 +933,9 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
           return Result.Ok(EventoResult.Continue);
         }
       } else {
-        const access: DocAccessLevel = req._auth
+        const { access } = req._auth
           ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
-          : "none";
+          : { access: "none" as DocAccessLevel, isOwner: false };
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
           await ctx.send.send(ctx, {
@@ -1052,8 +1052,8 @@ export const listDbNamesEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      const access = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
-      if (access !== "owner") {
+      const { isOwner } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+      if (!isOwner) {
         await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
       }
