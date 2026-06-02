@@ -76,15 +76,19 @@ Same as request/auto-approve. An invite gets you through the door as a member. T
 
 ### 4. dbAcls (Per-Database ACLs)
 
-dbAcls use subject groups (members/editors/submitters/readers) projected from per-vibe roles. Access functions use channels and their own role system. Having both active on the same database creates two overlapping authorities with no defined precedence.
+dbAcls and access functions are not competing authorities — they answer different questions. dbAcls govern **membership** (who can reach the database at all), access functions govern **what members can do** (channels, roles, per-document policy). The server correctly layers both: the dbAcl gate runs first, then the access function.
 
-| Scenario                                                                              | Surprise                                           |
-| ------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| dbAcl says `{ write: ["editors"] }`, access fn allows any authenticated user to write | Which wins?                                        |
-| Access fn forbids a write via `throw { forbidden }`, dbAcl allows it                  | Does dbAcl override the access fn? (It shouldn't.) |
-| dbAcl restricts reads to "readers", access fn grants a channel via `grant.users`      | User has channel access but dbAcl blocks the read. |
+For databases with access functions, the only sensible dbAcl is the default: editors (members) get read+write. This is true whether the app is public or invite-only — the ACL controls the membership list, the access function controls what happens inside.
 
-**Verdict:** Access functions supersede dbAcls for the same database. When `/access.js` exports a function named `foo`, any dbAcl entry for `foo` is ignored. They are two implementations of the same concept (per-database permission narrowing) at different granularities — running both is incoherent.
+| Scenario                                                     | How it works                                                       |
+| ------------------------------------------------------------ | ------------------------------------------------------------------ |
+| dbAcl default (editors write), access fn restricts via roles | Members pass the door, access fn governs data — correct            |
+| dbAcl default, access fn grants channels via `grant.users`   | Members pass the door, channels control read isolation — correct   |
+| No dbAcl override, access fn uses `throw { forbidden }`      | Members pass the door, access fn rejects specific writes — correct |
+
+The edge cases (restricting a database to submitters-only, readers-only) are reachable via the settings API but should never be the default. The sharing UI defaults make it hard to accidentally create a non-editor membership.
+
+**Verdict:** dbAcls and access functions layer correctly. The ACL is the membership list, the access function is the policy. No changes needed to server behavior.
 
 ### 5. Comments Toggle
 
@@ -223,14 +227,14 @@ function App() {
 
 ### Wire Protocol
 
-The server adds resolved grants alongside the existing viewer env fields. Precedence is **server-defined**: for databases that have an access function export, the server sends `grants` and omits that database from `dbAcls`. No client-side conflict resolution.
+The server adds resolved grants alongside the existing viewer env fields. Both can coexist for the same database — they answer different questions (dbAcl = membership gate, grants = what you can do inside).
 
 ```typescript
 viewerEnv: {
   viewer: ViewerPayload | null,
   access: DocAccessLevel,
-  dbAcls?: Record<string, DbAcl>,          // databases WITHOUT access fn exports
-  grants?: Record<string, {                  // databases WITH access fn exports
+  dbAcls?: Record<string, DbAcl>,          // membership gate per database
+  grants?: Record<string, {                  // resolved access fn permissions
     channels: string[],
     roles: string[],
   }>
