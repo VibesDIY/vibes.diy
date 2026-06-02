@@ -1,6 +1,7 @@
 name: Terminal CRT
 colors:
-  bg: "oklch(0.16 0.000 0)"
+  background: "oklch(0.16 0.000 0)"
+extras:
   terminal: "oklch(0.00 0.000 0 / 0.85)"
   green: "oklch(0.87 0.30 142)"
   green-dim: "oklch(0.87 0.30 142 / 0.4)"

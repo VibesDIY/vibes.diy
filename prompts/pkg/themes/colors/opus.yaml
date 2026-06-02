@@ -1,7 +1,11 @@
 name: Opus Cabinet
 colors:
-  bg: "oklch(0.06 0.000 0)"
-  bg-surface: "oklch(0.12 0.000 0)"
+  background: "oklch(0.06 0.000 0)"
+  surface: "oklch(0.12 0.000 0)"
+  text-primary: "oklch(0.90 0.000 0)"
+  text-secondary: "oklch(0.57 0.000 0)"
+  border: "oklch(0.27 0.000 0)"
+extras:
   bg-card: "oklch(0.13 0.000 0)"
   bg-elevated: "oklch(0.15 0.000 0)"
   bg-header: "oklch(0.18 0.000 0)"
@@ -19,8 +23,5 @@ colors:
   iron-darker: "oklch(0.16 0.010 240)"
   iron-border: "oklch(0.43 0.030 230)"
   iron-text: "oklch(0.83 0.020 240)"
-  text: "oklch(0.90 0.000 0)"
-  text-dim: "oklch(0.57 0.000 0)"
   text-muted: "oklch(0.40 0.000 0)"
-  border: "oklch(0.27 0.000 0)"
   border-hover: "oklch(0.55 0.090 75)"

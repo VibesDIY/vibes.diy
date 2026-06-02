@@ -1,7 +1,7 @@
 name: Broadsheet
 colors:
   background: "#ffffff"
-  text: "#111111"
-  muted: "#666666"
   accent: "#666666"
-  rule: "#cccccc"
+  text-primary: "#111111"
+  text-secondary: "#666666"
+  border: "#cccccc"

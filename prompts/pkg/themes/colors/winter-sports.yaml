@@ -1,9 +1,10 @@
 name: Winter Sports
 colors:
-  comp-bg: "oklch(0.99 0.003 240)"
-  comp-text: "oklch(0.22 0.025 250)"
-  comp-border: "oklch(0.88 0.012 235)"
-  comp-accent: "oklch(0.55 0.19 250)"
+  background: "oklch(0.95 0.015 230)"
+  surface: "oklch(0.99 0.003 240)"
+  primary: "oklch(0.55 0.19 250)"
+  text-primary: "oklch(0.22 0.025 250)"
+  text-secondary: "oklch(0.55 0.02 250)"
+  border: "oklch(0.88 0.012 235)"
+extras:
   comp-accent-text: "oklch(0.99 0 0)"
-  comp-muted: "oklch(0.55 0.02 250)"
-  color-background: "oklch(0.95 0.015 230)"

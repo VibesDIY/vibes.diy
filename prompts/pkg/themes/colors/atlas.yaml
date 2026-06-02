@@ -1,12 +1,13 @@
 name: Atlas Reference
 colors:
-  comp-bg: "oklch(1.00 0 0)"
-  comp-text: "oklch(0.13 0 0)"
-  comp-border: "oklch(0.93 0 0)"
-  comp-accent: "oklch(0.62 0.24 25)"
+  background: "oklch(1.00 0 0)"
+  surface: "oklch(1.00 0 0)"
+  primary: "oklch(0.62 0.24 25)"
+  text-primary: "oklch(0.13 0 0)"
+  text-secondary: "oklch(0.66 0 0)"
+  border: "oklch(0.93 0 0)"
+extras:
   comp-accent-text: "oklch(0.13 0 0)"
-  comp-muted: "oklch(0.66 0 0)"
-  color-background: "oklch(1.00 0 0)"
   atlas-brand-bg: "oklch(0.62 0.24 25)"
   atlas-brand-border: "oklch(0 0 0 / 0.08)"
   atlas-brand-hover: "oklch(0 0 0 / 0.05)"

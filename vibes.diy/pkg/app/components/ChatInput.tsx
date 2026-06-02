@@ -26,7 +26,14 @@ interface ChatInputProps {
   onSelectPalette?: (slug: string) => void;
   onApplyLivePalette?: (colors: Record<string, string>, colorsDark?: Record<string, string>) => void;
   onResetPalette?: () => void;
-  onRegeneratePalette?: (paletteSlug: string, paletteName: string) => void;
+  onRegeneratePalette?: (paletteSlug: string, paletteName: string, rootCssBlock: string) => void;
+  // localStorage key for persisting palette edits per app. Threaded straight
+  // to ColorsetPicker — see its `storageKey` prop for semantics.
+  paletteStorageKey?: string;
+  // Tokens the running app's `:root` actually declares, streamed from the
+  // sandbox runtime. Lets the modal show + edit + remap every custom
+  // property the app has, including bespoke ones outside the canonical set.
+  paletteCurrentTokens?: Record<string, string>;
 }
 
 export interface ChatInputRef extends HTMLTextAreaElement {
@@ -68,6 +75,8 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       onApplyLivePalette,
       onResetPalette,
       onRegeneratePalette,
+      paletteStorageKey,
+      paletteCurrentTokens,
     },
     ref
   ) => {
@@ -199,6 +208,8 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
               onApplyLive={onApplyLivePalette}
               onReset={onResetPalette}
               onRegenerate={onRegeneratePalette}
+              storageKey={paletteStorageKey}
+              currentTokens={paletteCurrentTokens}
             />
           )}
           </div>

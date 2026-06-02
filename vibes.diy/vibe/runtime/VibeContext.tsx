@@ -1,14 +1,29 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { VibeMountParams, ViewerEnv } from "./vibe.js";
 import { isEvtVibeColorOverride, isEvtVibeViewerChanged } from "@vibes.diy/vibe-types";
+import { generateTailwindRemapCss } from "./tailwindRemap.js";
 
 // Style element id used to install/replace the parent-pushed palette override.
 // Kept stable so multiple overrides replace each other rather than stacking.
 const COLOR_OVERRIDE_STYLE_ID = "vibe-color-override";
+// Static stylesheet that remaps common Tailwind utilities (rounded-md, p-4,
+// text-lg, font-sans, etc.) to canonical CSS variables. Injected once per
+// iframe boot so the modal's structural edits flow into apps that use
+// literal Tailwind classes, not just `rounded-[var(--radius)]` arbitrary
+// values. The remap uses `var(--canonical, <fallback>)` so apps with no
+// canonical definitions render exactly as before.
+const TAILWIND_REMAP_STYLE_ID = "vibe-tailwind-remap";
 
 function renderTokens(map: Record<string, string>): string {
+  // `!important` is essential here. The LLM emits the app's baseline `:root`
+  // inside a `<style>` child of the component — which React renders into
+  // the body, AFTER the override `<style>` we put in `<head>`. CSS cascade
+  // then makes the app's `:root` win over ours and palette swaps look like
+  // they did nothing. Marking each token `!important` makes the override win
+  // regardless of document order, without us having to chase the React tree
+  // to insert our style at the right spot.
   return Object.entries(map)
-    .map(([k, v]) => `  --${k}: ${v};`)
+    .map(([k, v]) => `  --${k}: ${v} !important;`)
     .join("\n");
 }
 
@@ -31,6 +46,47 @@ function applyColorOverride(colors: Record<string, string>, colorsDark?: Record<
     document.head.appendChild(el);
   }
   el.textContent = css;
+}
+
+// Walk every stylesheet looking for `:root { … }` rules and collect their
+// custom-property declarations. Skips our own override stylesheet so the
+// parent sees the baseline values the app shipped with, not the values
+// we're already pushing — otherwise the modal would render an echo of its
+// own edits.
+function discoverRootTokens(): Record<string, string> {
+  if (typeof document === "undefined") return {};
+  const baseline: Record<string, string> = {};
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      const owner = sheet.ownerNode;
+      if (owner instanceof Element && owner.id === COLOR_OVERRIDE_STYLE_ID) continue;
+      for (const rule of Array.from(sheet.cssRules)) {
+        if (!(rule instanceof CSSStyleRule)) continue;
+        if (rule.selectorText !== ":root") continue;
+        for (let i = 0; i < rule.style.length; i++) {
+          const prop = rule.style.item(i);
+          if (!prop.startsWith("--")) continue;
+          const name = prop.slice(2);
+          if (!(name in baseline)) {
+            baseline[name] = rule.style.getPropertyValue(prop).trim();
+          }
+        }
+      }
+    } catch {
+      // CORS-blocked or otherwise unreadable sheet — skip silently.
+    }
+  }
+  return baseline;
+}
+
+// Post discovered tokens to the parent. Called on mount and whenever style
+// elements change (new app render, palette swap, etc.) so the parent's
+// modal always reflects what the running app actually defines.
+function publishRootTokens(): void {
+  if (typeof window === "undefined" || window.parent === window) return;
+  const tokens = discoverRootTokens();
+  if (Object.keys(tokens).length === 0) return;
+  window.parent.postMessage({ type: "vibe.evt.tokens-discovered", tokens }, "*");
 }
 
 export interface Vibe {
@@ -77,6 +133,42 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  // Inject the Tailwind utility remap once on mount. This stays for the life
+  // of the iframe — `var(--canonical)` references update automatically via
+  // CSS cascade whenever the color-override pipeline pushes new values, so
+  // we never need to regenerate or re-inject this sheet.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (document.getElementById(TAILWIND_REMAP_STYLE_ID)) return;
+    const el = document.createElement("style");
+    el.id = TAILWIND_REMAP_STYLE_ID;
+    el.textContent = generateTailwindRemapCss();
+    document.head.appendChild(el);
+  }, []);
+
+  // Publish the running app's `:root` baseline to the parent so the modal can
+  // show "current tokens" — every CSS var the app actually defines, including
+  // bespoke ones the canonical palette set doesn't cover. Republishes on
+  // mutations to `<style>` elements (theme re-renders, dynamic CSS loads) so
+  // the modal stays in sync with whatever the app currently has on the wire.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    publishRootTokens();
+    // Defer once more after layout — the very first render may not have
+    // committed all `<style>` children into document.styleSheets yet.
+    const firstPaint = requestAnimationFrame(() => publishRootTokens());
+    const observer = new MutationObserver(() => publishRootTokens());
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: false,
+    });
+    return () => {
+      cancelAnimationFrame(firstPaint);
+      observer.disconnect();
+    };
   }, []);
 
   const ctx: Vibe = {

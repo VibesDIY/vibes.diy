@@ -1,8 +1,8 @@
 name: Signal
 colors:
-  bg: "#030303"
-  card-bg: "#0a0a0a"
-  text: "#eaeaea"
-  border: "#1a1a1a"
+  background: "#030303"
+  surface: "#0a0a0a"
   accent: "#ffffff"
-  muted: "#666"
+  text-primary: "#eaeaea"
+  text-secondary: "#666"
+  border: "#1a1a1a"
