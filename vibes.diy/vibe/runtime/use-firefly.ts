@@ -9,6 +9,21 @@ import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { FireflyDatabase } from "./firefly-database.js";
 import type { VibeSandboxApi } from "./register-dependencies.js";
 import type { DbAcl, AccessFunction } from "@vibes.diy/vibe-types";
+import { useVibeContext } from "./VibeContext.js";
+
+export interface DatabaseAccess {
+  readonly roles: ReadonlySet<string>;
+  readonly channels: ReadonlySet<string>;
+  hasRole(role: string): boolean;
+  hasChannel(channel: string): boolean;
+}
+
+const EMPTY_ACCESS: DatabaseAccess = {
+  roles: new Set<string>(),
+  channels: new Set<string>(),
+  hasRole: () => false,
+  hasChannel: () => false,
+};
 
 // Module-scoped state, set by registerFirefly()
 let vibeApiRef: VibeSandboxApi | undefined;
@@ -76,7 +91,22 @@ export function useFireproof(name = "useFireproof", config: { acl?: DbAcl; acces
   const useAllDocs = useMemo(() => createUseAllDocs(database), [database]);
   const useChanges = useMemo(() => createUseChanges(database), [database]);
   const attach = () => Promise.resolve();
-  return { database, useLiveQuery, useDocument, useAllDocs, useChanges, attach };
+
+  const { mountParams } = useVibeContext();
+  const grantsForDb = mountParams.viewerEnv?.grants?.[name];
+  const access: DatabaseAccess = useMemo(() => {
+    if (!grantsForDb) return EMPTY_ACCESS;
+    const roles: ReadonlySet<string> = new Set(grantsForDb.roles);
+    const channels: ReadonlySet<string> = new Set(grantsForDb.channels);
+    return {
+      roles,
+      channels,
+      hasRole: (role: string) => roles.has(role),
+      hasChannel: (channel: string) => channels.has(channel),
+    };
+  }, [grantsForDb]);
+
+  return { database, useLiveQuery, useDocument, useAllDocs, useChanges, attach, access };
 }
 
 // ── Inline React hooks (no Fireproof dependency) ────────────────────

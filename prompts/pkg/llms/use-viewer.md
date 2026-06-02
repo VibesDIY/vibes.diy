@@ -48,9 +48,7 @@ function CommentForm() {
         <ViewerTag />
       </div>
 
-      {viewer && !can("write", "comments") && (
-        <p>Contact the owner to request write access so you can post.</p>
-      )}
+      {viewer && !can("write", "comments") && <p>Contact the owner to request write access so you can post.</p>}
       {viewer && can("write", "comments") && <form>...</form>}
     </div>
   );
@@ -103,9 +101,7 @@ function CommentThread() {
             {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
             <ViewerTag />
           </div>
-          {viewer && !can("write", "comments") && (
-            <p>Contact the owner to request write access so you can post.</p>
-          )}
+          {viewer && !can("write", "comments") && <p>Contact the owner to request write access so you can post.</p>}
           {viewer && can("write", "comments") && (
             <form
               onSubmit={(e) => {
@@ -134,6 +130,7 @@ Key points:
 
 - Never use Clerk user IDs. Only `userSlug` crosses into vibe code.
 - Avatar URLs are stable indirection URLs — when a user changes their avatar, the URL stays the same and the bytes update. Treat them as opaque strings.
+- For fine-grained per-database permissions (roles and channels from access functions), use `access` from `useFireproof()` — see the Fireproof docs. `useViewer().can()` checks app-level membership; `access.hasRole()` / `access.hasChannel()` checks access-function grants.
 
 ## ViewerTag
 
