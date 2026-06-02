@@ -114,17 +114,17 @@ App-level operations on source code. Access functions don't control this.
 
 ## Summary Table
 
-| Per-vibe ACL feature    | Without access fn                                  | With access fn for that database                               |
-| ----------------------- | -------------------------------------------------- | -------------------------------------------------------------- |
-| Public access toggle    | Controls read access to all DBs                    | Ignored — `grant.public` channels control member-visible reads |
-| Request/auto-approve    | Grants member (read+write) access through the door | Same — member gets through the door; access fn governs data    |
-| Email invite            | Same — invites grant member access                 | Same — member through the door; access fn governs data         |
-| Reader-only role        | Available but not highlighted                      | Reserved for edge cases (remediation, restricted accounts)     |
-| dbAcls                  | Per-DB subject-group gate                          | Superseded — access fn is the authority                        |
-| Comments toggle         | Convenience dbAcl                                  | Superseded if `export function comments` exists                |
-| The door (landing card) | Controls app visibility                            | Unchanged — still controls app visibility                      |
-| Clone / remix           | Controls code copying                              | Unchanged                                                      |
-| Source editing / chats  | Owner-only                                         | Unchanged                                                      |
+| Per-vibe ACL feature    | Without access fn                      | With access fn for that database                               |
+| ----------------------- | -------------------------------------- | -------------------------------------------------------------- |
+| Public access toggle    | Controls read access to all DBs        | Ignored — `grant.public` channels control member-visible reads |
+| Request/auto-approve    | Grants editor (read+write) by default  | Same — editor gets through the door; access fn governs data    |
+| Email invite            | Same — invites grant editor by default | Same — editor through the door; access fn governs data         |
+| Reader-only role        | Available but not highlighted          | Reserved for edge cases (remediation, restricted accounts)     |
+| dbAcls                  | Per-DB subject-group gate              | Membership gate — layers with access fn (both run)             |
+| Comments toggle         | Convenience dbAcl                      | dbAcl layer; superseded if `export function comments` exists   |
+| The door (landing card) | Controls app visibility                | Unchanged — still controls app visibility                      |
+| Clone / remix           | Controls code copying                  | Unchanged                                                      |
+| Source editing / chats  | Owner-only                             | Unchanged                                                      |
 
 ---
 
@@ -228,12 +228,13 @@ viewerEnv: {
   dbAcls?: Record<string, DbAcl>,          // membership gate per database
   grants?: Record<string, {                  // resolved access fn permissions
     channels: string[],
+    publicChannels: string[],
     roles: string[],
   }>
 }
 ```
 
-A database appears in **one or the other**, never both. The server decides which based on whether `/access.js` has a matching export for that database name.
+Both can coexist for the same database — they answer different questions. dbAcls gate membership (who can reach the database), grants describe what the access function resolved (channels and roles). The server sends both; the client uses `can("write", "comments")` for membership checks and `access.hasRole("moderator")` for access-function-level checks.
 
 Grants are computed during `resolveWhoAmI` by running the grant reduce once per access-function database for the authenticated user. Same work the server already does on writes — just cached for the client on page load.
 
