@@ -9,15 +9,13 @@ import { PromptError } from "@vibes.diy/api-types";
 function ChatInterface({
   promptState,
   onClick,
+  onDiffClick,
   onRetry,
   onSelectOption,
-  // selectedResponseDoc,
-  // setSelectedResponseId,
-  // setMobilePreviewShown,
-  // navigateToView,
 }: {
   promptState: PromptState;
   onClick: (a: { fsId: string; appSlug: string; ownerHandle: string }) => void;
+  onDiffClick?: (diff: { path: string; lines: string[] } | null) => void;
   onRetry?: (msg: PromptError) => void;
   onSelectOption?: (option: string) => void;
 }) {
@@ -50,6 +48,7 @@ function ChatInterface({
         <div ref={messagesContainerRef} className="flex flex-grow flex-col-reverse overflow-y-auto">
           <MessageList
             onClick={onClick}
+            onDiffClick={onDiffClick}
             onRetry={onRetry}
             onSelectOption={onSelectOption}
             promptBlocks={blocks}

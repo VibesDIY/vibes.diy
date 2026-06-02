@@ -61,19 +61,42 @@ export function makeHelpers(user: UserContext | null): Helpers {
  * Extract a single function from a multi-export access.js source.
  * For "*" (default), extracts `export default function(...)` or `export default (...) => { ... }`.
  * For a named dbName, extracts `export function <dbName>(...)`.
+ * Also supports `export { localName as "dbName" }` for non-identifier db names.
  * Brace-counts to find the closing `}`. Returns undefined if not found.
  */
 export function extractExportSource(fullSource: string, bindingDbName: string): string | undefined {
-  let pattern: RegExp;
   if (bindingDbName === "*") {
-    pattern = /export\s+default\s+(?:function\s*(?:\w+\s*)?\([^)]*\)\s*\{|\([^)]*\)\s*=>\s*\{|\w+\s*=>\s*\{)/;
-  } else {
-    pattern = new RegExp(`export\\s+function\\s+${bindingDbName}\\s*\\([^)]*\\)\\s*\\{`);
+    return extractByPattern(
+      fullSource,
+      /export\s+default\s+(?:function\s*(?:\w+\s*)?\([^)]*\)\s*\{|\([^)]*\)\s*=>\s*\{|\w+\s*=>\s*\{)/,
+      true
+    );
   }
+
+  const directPattern = new RegExp(`export\\s+function\\s+${escapeRegExp(bindingDbName)}\\s*\\([^)]*\\)\\s*\\{`);
+  const direct = extractByPattern(fullSource, directPattern, false);
+  if (direct) return direct;
+
+  const asMatch = fullSource.match(
+    new RegExp(`export\\s*\\{\\s*(\\w+)\\s+as\\s+["']${escapeRegExp(bindingDbName)}["']\\s*\\}`)
+  );
+  if (asMatch) {
+    const localName = asMatch[1];
+    const fnPattern = new RegExp(`function\\s+${localName}\\s*\\([^)]*\\)\\s*\\{`);
+    return extractByPattern(fullSource, fnPattern, false);
+  }
+
+  return undefined;
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractByPattern(fullSource: string, pattern: RegExp, isDefault: boolean): string | undefined {
   const match = fullSource.match(pattern);
-  if (!match) return undefined;
+  if (!match || match.index === undefined) return undefined;
   const start = match.index;
-  if (start === undefined) return undefined;
   let depth = 0;
   let end = start;
   for (let i = start; i < fullSource.length; i++) {
@@ -87,7 +110,7 @@ export function extractExportSource(fullSource: string, bindingDbName: string): 
     }
   }
   let extracted = fullSource.slice(start, end).replace(/^export\s+/, "");
-  if (bindingDbName === "*") extracted = extracted.replace(/^default\s+/, "");
+  if (isDefault) extracted = extracted.replace(/^default\s+/, "");
   return extracted;
 }
 

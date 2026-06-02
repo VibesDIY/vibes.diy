@@ -23,6 +23,7 @@ export { getCode } from "./get-code.js";
 interface CodeEditorProps {
   promptState: PromptState;
   onCode?: (event: EditorState) => void;
+  diffOverlay?: { path: string; lines: string[] } | null;
 }
 
 interface ChunkContext {
@@ -113,7 +114,7 @@ function fileButtonClass(isActive: boolean): string {
   return "rounded border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800";
 }
 
-export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
+export function CodeEditor({ promptState, onCode, diffOverlay }: CodeEditorProps) {
   const { isDarkMode } = useTheme();
   const { fsId } = useParams<{ fsId?: string }>();
 
@@ -292,16 +293,24 @@ export function CodeEditor({ promptState, onCode }: CodeEditorProps) {
         </div>
       )}
 
-      {diffContext && (
-        <details className="mx-3 mt-2 rounded-md border border-amber-300 bg-amber-50 text-xs dark:border-amber-800/60 dark:bg-amber-950/30">
+      {(diffOverlay || diffContext) && (
+        <details
+          open={!!diffOverlay}
+          className="mx-3 mt-2 rounded-md border border-amber-300 bg-amber-50 text-xs dark:border-amber-800/60 dark:bg-amber-950/30"
+        >
           <summary className="cursor-pointer p-2 text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
-            Chat diff context (secondary)
+            {diffOverlay ? diffOverlay.path : "Chat diff context (secondary)"}
           </summary>
           <div className="px-2 pb-2">
-            <p className="mb-1 text-[11px] text-amber-700 dark:text-amber-200">{diffContext.filePath}</p>
-            <pre className="max-h-28 overflow-auto whitespace-pre-wrap font-mono text-[11px] leading-4 text-amber-900 dark:text-amber-100">
-              {diffContext.lines.join("\n")}
-              {diffContext.truncated ? "\n…" : ""}
+            {!diffOverlay && diffContext && (
+              <p className="mb-1 text-[11px] text-amber-700 dark:text-amber-200">{diffContext.filePath}</p>
+            )}
+            <pre className="max-h-60 overflow-auto whitespace-pre-wrap font-mono text-[11px] leading-4 text-amber-900 dark:text-amber-100">
+              {diffOverlay
+                ? diffOverlay.lines.join("\n")
+                : diffContext
+                  ? diffContext.lines.join("\n") + (diffContext.truncated ? "\n…" : "")
+                  : ""}
             </pre>
           </div>
         </details>

@@ -776,6 +776,24 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     [navigate, ownerHandle, appSlug, searchParams]
   );
 
+  const [diffOverlay, setDiffOverlay] = useState<{ path: string; lines: string[] } | null>(null);
+
+  const handleDiffClick = useCallback(
+    (diff: { path: string; lines: string[] } | null) => {
+      setDiffOverlay(diff);
+      if (diff && !["code"].includes(currentViewRef.current)) {
+        currentViewRef.current = "code";
+        const sp = new URLSearchParams(searchParams);
+        sp.set("view", "code");
+        if (isMobileViewport()) {
+          setMobilePreviewShown(true);
+        }
+        navigate({ search: sp.toString() }, { replace: true });
+      }
+    },
+    [navigate, searchParams]
+  );
+
   const openVibe = useCallback(() => {
     window.open(`/vibe/${ownerHandle}/${appSlug}/${fsId}`, "_blank");
   }, [fsId, ownerHandle, appSlug]);
@@ -974,9 +992,17 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
           />
         }
         chatPanel={
-          <ChatInterface promptState={promptState} onClick={fsIdClick} onRetry={handleRetry} onSelectOption={handleSelectOption} />
+          <ChatInterface
+            promptState={promptState}
+            onClick={fsIdClick}
+            onDiffClick={handleDiffClick}
+            onRetry={handleRetry}
+            onSelectOption={handleSelectOption}
+          />
         }
-        previewPanel={<ResultPreview promptState={promptState} currentView={currentView} onCode={handleOnCode} />}
+        previewPanel={
+          <ResultPreview promptState={promptState} currentView={currentView} onCode={handleOnCode} diffOverlay={diffOverlay} />
+        }
         chatInput={
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
             <ChatInput

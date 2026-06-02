@@ -44,15 +44,17 @@ function AppSettingsPanel({ ownerHandle, appSlug }: { ownerHandle: string; appSl
 function CodeEditorWrapper({
   promptState,
   onCode,
+  diffOverlay,
 }: {
   promptState: PromptState;
   onCode: (event: EditorState) => void;
   currentView: string;
+  diffOverlay?: { path: string; lines: string[] } | null;
 }) {
   return (
     <ClientOnly>
       <Suspense>
-        <CodeEditor promptState={promptState} onCode={onCode} />
+        <CodeEditor promptState={promptState} onCode={onCode} diffOverlay={diffOverlay} />
       </Suspense>
     </ClientOnly>
   );
@@ -73,7 +75,13 @@ function CodeEditorWrapper({
 //   return nextProps.currentView === "code";
 // });
 
-function ResultPreview({ promptState, currentView, children, onCode }: ResultPreviewProps & { children?: React.ReactNode }) {
+function ResultPreview({
+  promptState,
+  currentView,
+  children,
+  onCode,
+  diffOverlay,
+}: ResultPreviewProps & { children?: React.ReactNode }) {
   const { fsId } = useParams<{ fsId?: string }>();
 
   // Fresh-chat first-codegen experience. The preview area should:
@@ -89,7 +97,9 @@ function ResultPreview({ promptState, currentView, children, onCode }: ResultPre
 
   const showWelcome = !fsId && !promptState.running && !promptState.hasCode;
 
-  const codeEditor = <CodeEditorWrapper promptState={promptState} onCode={onCode} currentView={currentView} />;
+  const codeEditor = (
+    <CodeEditorWrapper promptState={promptState} onCode={onCode} currentView={currentView} diffOverlay={diffOverlay} />
+  );
 
   // PreviewApp slot is mounted whenever the active view is "preview", whether
   // visible or pre-warming. Visibility flips off during the override window.

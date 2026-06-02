@@ -182,6 +182,13 @@ export async function ensureAppSlugItem(
               exportNames.push(name);
             }
           }
+          const asPattern = /export\s*\{\s*\w+\s+as\s+["']([^"']+)["']\s*\}/g;
+          while ((match = asPattern.exec(accessJsSource)) !== null) {
+            const name = match[1];
+            if (name && !JS_PROTO_NAMES.has(name)) {
+              exportNames.push(name);
+            }
+          }
           hasDefaultExport =
             /export\s+default\s+function/.test(accessJsSource) ||
             /export\s+default\s+\(/.test(accessJsSource) ||
