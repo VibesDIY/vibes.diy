@@ -427,7 +427,7 @@ export function ShareModal({ modal, placement = "below", isOwner = false, myGran
                   variant={modal.isUpToDate ? "cool" : "blue"}
                   size="fixed"
                   className="w-full"
-                  onClick={() => void modal.handlePublish(modal.autoJoinEnabled, modal.autoAcceptRole ?? "viewer")}
+                  onClick={() => void modal.handlePublish(modal.autoJoinEnabled, modal.autoAcceptRole ?? "editor")}
                   disabled={modal.isPublishing || !modal.canPublish || modal.isUpToDate || !modal.settingsLoaded}
                 >
                   {modal.isPublishing ? "Updating..." : modal.isUpToDate ? "Up to date" : "Update"}
