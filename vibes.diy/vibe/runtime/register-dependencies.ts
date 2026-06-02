@@ -564,6 +564,7 @@ export async function bootstrapViewer(api: VibeSandboxApi): Promise<void> {
         type: "vibe.evt.viewerChanged",
         viewer: r.viewer,
         access: r.access,
+        ...(r.isOwner !== undefined ? { isOwner: r.isOwner } : {}),
         ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants ? { grants: r.grants } : {}),
       },

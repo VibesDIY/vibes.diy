@@ -40,11 +40,13 @@ export interface ResolveWhoAmIArgs {
   // Absolute origin (e.g. "https://vibes.diy") used to build viewer.avatarUrl.
   // Any trailing slashes are stripped so the resulting URL never contains "//u/".
   apiBaseUrl: string;
+  adminMode?: boolean;
 }
 
 export interface ResolvedWhoAmI {
   viewer: ViewerPayload | null;
   access: DocAccessLevel;
+  isOwner: boolean;
   dbAcls: Record<string, DbAcl> | undefined;
   grants: Record<string, { channels: string[]; publicChannels: string[]; roles: string[] }> | undefined;
 }
@@ -129,8 +131,8 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   const baseOrigin = apiBaseUrl.replace(/\/+$/, "");
 
   const viewerUserId = auth?.verifiedAuth.claims.userId;
-  const { access } = viewerUserId
-    ? await checkDocAccess(vctx, viewerUserId, appSlug, ownerUserSlug)
+  const { access, isOwner } = viewerUserId
+    ? await checkDocAccess(vctx, viewerUserId, appSlug, ownerUserSlug, args.adminMode)
     : { access: "none" as DocAccessLevel, isOwner: false };
 
   const rSettings = await ensureAppSettings(vctx, {
@@ -156,12 +158,12 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
 
   if (!auth) {
     const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
-    return Result.Ok({ viewer: null, access, dbAcls, grants });
+    return Result.Ok({ viewer: null, access, isOwner, dbAcls, grants });
   }
 
   if (!viewerUserId) {
     const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
-    return Result.Ok({ viewer: null, access, dbAcls, grants });
+    return Result.Ok({ viewer: null, access, isOwner, dbAcls, grants });
   }
 
   const userSettingsRow = await vctx.sql.db
@@ -193,7 +195,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
 
   if (!viewerSlug) {
     const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
-    return Result.Ok({ viewer: null, access, dbAcls, grants });
+    return Result.Ok({ viewer: null, access, isOwner, dbAcls, grants });
   }
 
   const displayName = displayOverride ?? deriveDisplayName(auth.verifiedAuth.claims);
@@ -204,6 +206,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   return Result.Ok({
     viewer: { userHandle: viewerSlug, displayName, avatarUrl },
     access,
+    isOwner,
     dbAcls,
     grants,
   });
@@ -223,12 +226,13 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      const { appSlug, ownerHandle: ownerUserSlug } = req;
+      const { appSlug, ownerHandle: ownerUserSlug, adminMode } = req;
       const rRes = await resolveWhoAmI(vctx, {
         auth: req._auth,
         appSlug,
         ownerUserSlug,
         apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
+        adminMode,
       });
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
@@ -243,6 +247,7 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
         tid: req.tid,
         viewer: r.viewer,
         access: r.access,
+        ...(r.isOwner ? { isOwner: r.isOwner } : {}),
         ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants !== undefined ? { grants: r.grants } : {}),
       } satisfies ResVibeWhoAmI);
