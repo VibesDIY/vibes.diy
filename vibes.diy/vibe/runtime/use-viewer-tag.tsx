@@ -84,6 +84,7 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
   }
 
   const initial = resolvedSlug.charAt(0).toUpperCase();
+  const hasAvatarImage = Boolean(resolvedAvatarUrl && !avatarError);
 
   return (
     <span
@@ -121,7 +122,7 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
           ...(isSelf ? { outline: "2px dashed var(--accent, #818cf8)", outlineOffset: 2 } : {}),
         }}
       >
-        {resolvedAvatarUrl && !avatarError ? (
+        {hasAvatarImage ? (
           <img
             src={resolvedAvatarUrl}
             alt={resolvedSlug}
@@ -131,7 +132,7 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
         ) : (
           initial
         )}
-        {isSelf && (
+        {isSelf && !hasAvatarImage && (
           <span
             style={{
               position: "absolute",
@@ -143,6 +144,29 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
               fontSize: 13,
               color: "var(--accent-text, var(--accent, #a5b4fc))",
               borderRadius: "50%",
+            }}
+          >
+            ✎
+          </span>
+        )}
+        {isSelf && hasAvatarImage && (
+          <span
+            style={{
+              position: "absolute",
+              right: -1,
+              bottom: -1,
+              width: 13,
+              height: 13,
+              borderRadius: "50%",
+              background: "rgba(15,12,40,0.9)",
+              border: "1px solid var(--border, rgba(255,255,255,0.25))",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 9,
+              lineHeight: 1,
+              color: "var(--accent-text, var(--accent, #a5b4fc))",
+              pointerEvents: "none",
             }}
           >
             ✎
