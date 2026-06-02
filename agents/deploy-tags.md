@@ -88,6 +88,19 @@ When the background-task notification fires, read the final `gh run list` output
 
 The same rule applies to npm publishes, package releases, queue drains — anything where the action you triggered runs asynchronously somewhere else.
 
+## vibe-pkg cache and `pkg@*` publishes
+
+Browser-side `/vibe/` routes load runtime packages (call-ai-v2, vibe-runtime, etc.) from `/vibe-pkg/` URLs with a `?v=<commit-hash>` query param. The hash is the **app's deploy commit** baked into the worker at `@c`/`@p` tag time — NOT the npm package version. Cloudflare caches these responses (`cf-cache-status: HIT`, `max-age=60`).
+
+**Consequence:** a `pkg@p*` publish alone does NOT update what browsers load. The worker still serves the old `?v=` hash, and Cloudflare serves the cached response for that hash. To pick up a new npm version in the browser:
+
+1. Push `pkg@p*` → wait for npm publish to succeed
+2. Push `vibes-diy@c*` and/or `vibes-diy@p*` → new worker build generates a fresh `?v=` hash → Cloudflare cache miss → `/vibe-pkg/` fetches the new npm version
+
+If you only do step 1, `/vibe/` routes keep serving the old package until the next worker deploy. If the old package is broken (e.g. missing import map entry), the site stays broken until step 2.
+
+**Always pair `pkg@p*` fixes with `@c`/`@p` retags when the fix is browser-facing.**
+
 ## Pending changes
 
 "Pending changes" = commits on `origin/main` that have not yet been shipped via the relevant deploy tag. There are three independent pending-change sets, one per tag stream:
