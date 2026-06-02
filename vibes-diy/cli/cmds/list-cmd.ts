@@ -4,6 +4,7 @@ import { type } from "arktype";
 import { resRecentVibesItem } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
+import { formatErr } from "./format-err.js";
 
 export const ReqVibesList = type({
   type: "'vibes-diy.cli.list'",
@@ -44,7 +45,7 @@ export const listEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqVibesList, ResV
     do {
       const rPage = await api.listRecentVibes({ limit: 100, ...(cursor ? { cursor } : {}) });
       if (rPage.isErr()) {
-        return Result.Err(rPage.Err());
+        return Result.Err(formatErr(rPage.Err()));
       }
       const page = rPage.Ok();
       items.push(...page.items);
