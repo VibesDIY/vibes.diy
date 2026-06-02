@@ -151,7 +151,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         }
       } else if (userId) {
         // Authenticated user: standard ACL gate
-        const { access, isOwner: _isOwner } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+        const { access, isOwner } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         // Fail closed: a settings-read error must not silently fall back to the
         // open default and re-open writes on a tightened ACL.
@@ -215,7 +215,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
               .limit(1)
               .then((r) => r[0])
           : undefined;
-        const userContext = writerRow?.handle ? { userHandle: writerRow.handle } : null;
+        const userContext = writerRow?.handle ? { userHandle: writerRow.handle, isOwner } : null;
 
         // Load existing doc so access fn can enforce update-ownership checks
         let oldDoc: unknown | null = null;

@@ -11,6 +11,7 @@
 export interface UserContext {
   userHandle: string;
   displayName?: string;
+  isOwner: boolean;
 }
 
 export interface Helpers {
