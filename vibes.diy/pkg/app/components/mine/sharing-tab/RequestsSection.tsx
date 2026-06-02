@@ -316,7 +316,7 @@ interface RequestsSectionProps {
 
 export function renderRequestUser(r: RequestGrantItem): React.ReactNode {
   const params = r.foreignInfo?.claims?.params ?? ({} as Partial<ClerkClaimParams>);
-  const display = params.nick ?? params.name ?? params.email ?? name(params) ?? r.foreignUserId;
+  const display = params.nick ?? params.name ?? name(params) ?? params.email ?? r.foreignUserId;
   // Only the server-resolved Vibes slug points at a real avatar route.
   // Clerk's `nick` may be sanitized away during slug derivation, so don't
   // derive avatar routes from it.
