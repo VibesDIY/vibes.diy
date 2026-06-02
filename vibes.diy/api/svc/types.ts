@@ -85,6 +85,7 @@ export interface VibesApiSQLCtx {
       roleGrants: Record<string, string[]>;
       userGrants: Record<string, string[]>;
     };
+    adminMode?: boolean;
   }): Promise<AccessDescriptor | { forbidden: string }>;
 }
 

@@ -296,6 +296,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           userGrants: Object.fromEntries(Array.from(reduce.userGrants).map(([k, v]) => [k, Array.from(v)])),
         };
 
+        const adminActive = isOwner && connectionAdminMode(ctx);
         const invokeResult = await vctx.invokeAccessFn({
           cid: fnCid,
           doc: { ...req.doc, _id: docId },
@@ -303,28 +304,35 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           user: userContext,
           source: accessFnSource,
           grantState,
+          adminMode: adminActive,
         });
 
         if ("forbidden" in invokeResult) {
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-error",
-            error: { message: invokeResult.forbidden },
-          } satisfies ResError);
-          return Result.Ok(EventoResult.Continue);
-        }
+          if (adminActive) {
+            accessResult = {};
+          } else {
+            await ctx.send.send(ctx, {
+              type: "vibes.diy.res-error",
+              error: { message: invokeResult.forbidden },
+            } satisfies ResError);
+            return Result.Ok(EventoResult.Continue);
+          }
+        } else {
+          if (!adminActive) {
+            try {
+              enforceAllowAnonymous(invokeResult, userContext);
+            } catch (err: unknown) {
+              const reason = err instanceof ForbiddenError ? err.forbidden : String(err);
+              await ctx.send.send(ctx, {
+                type: "vibes.diy.res-error",
+                error: { message: reason },
+              } satisfies ResError);
+              return Result.Ok(EventoResult.Continue);
+            }
+          }
 
-        try {
-          enforceAllowAnonymous(invokeResult, userContext);
-        } catch (err: unknown) {
-          const reason = err instanceof ForbiddenError ? err.forbidden : String(err);
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-error",
-            error: { message: reason },
-          } satisfies ResError);
-          return Result.Ok(EventoResult.Continue);
+          accessResult = invokeResult;
         }
-
-        accessResult = invokeResult;
       }
 
       const now = new Date().toISOString();
