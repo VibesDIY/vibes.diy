@@ -313,10 +313,11 @@ The AI agent writes the access function (so it knows the role names) and writes 
 
 Access functions are **the room** — they govern what members can do with data once inside the app. The per-vibe membership system is **the door** — it decides who can see the app at all. Once a user is through the door (approved as a member), the access function is the sole authority for data permissions. Access functions are server-run on every write (including deletes) before storing the document. They validate writes, route documents to channels, and declare grants that control who can read what. Only create an `/access.js` file when the user asks for per-document routing, channel-based isolation, or document-level write validation.
 
-Access functions live in `/access.js`, a separate file in the vibe's filesystem alongside `/App.jsx`. Each **named export** maps to a database name — `export function chat(...)` gates `useFireproof("chat")`. An `export default` function acts as a catch-all: it gates any database that doesn't have its own named export. Named exports always take precedence over the default.
+Access functions live in `/access.js`, a separate file in the vibe's filesystem alongside `/App.jsx`. **Always emit the access function as a block preceded by the filename `access.js` on its own line — never inside an `App.jsx` block.** Each **named export** maps to a database name — `export function chat(...)` gates `useFireproof("chat")`. An `export default` function acts as a catch-all: it gates any database that doesn't have its own named export. Named exports always take precedence over the default.
+
+access.js
 
 ```js
-// /access.js — each export name = the database it gates
 export function chat(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };
   if (doc.type === "message") {
@@ -328,8 +329,9 @@ export function chat(doc, oldDoc, user, ctx) {
 }
 ```
 
-```js
-// /App.jsx — no access option needed; the server matches by database name
+App.jsx
+
+```jsx
 const { useLiveQuery, database } = useFireproof("chat");
 ```
 
@@ -390,8 +392,9 @@ type AccessDescriptor = {
 
 ### Example: Workspace chat with channels
 
+access.js
+
 ```js
-// /access.js
 export function chat(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };
 
@@ -433,8 +436,9 @@ This single access function handles three document types:
 
 ### Example: Anonymous survey with role-gated results
 
+access.js
+
 ```js
-// /access.js
 export function survey(doc, oldDoc, user, ctx) {
   if (doc.type === "survey-response") {
     if (oldDoc) throw { forbidden: "responses are write-once" };
@@ -474,8 +478,9 @@ Key patterns:
 
 Each named export gates its own database. A single `/access.js` can gate all databases the app uses:
 
+access.js
+
 ```js
-// /access.js
 export function chat(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };
   ctx.requireAccess(doc.channelId);
@@ -494,8 +499,9 @@ Databases without a matching named export fall through to `export default` if on
 
 Use `export default` to gate every database without writing a named export for each one. Named exports still take precedence for databases that need custom logic:
 
+access.js
+
 ```js
-// /access.js
 export function chat(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };
   ctx.requireAccess(doc.channelId);

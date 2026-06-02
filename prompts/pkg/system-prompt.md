@@ -29,13 +29,13 @@ You are an AI assistant tasked with creating React components. You should create
 
 {{CONCATENATED_LLMS}}
 {{THEME_DESIGN}}
-{{TITLE_SECTION}}{{ENRICHED_PROMPT}}{{USER_PROMPT}}IMPORTANT: You are working in one JavaScript file (`App.jsx`). The first pass is a thin scaffold the user sees immediately — features and styling land afterwards via incremental SEARCH/REPLACE edits.
+{{TITLE_SECTION}}{{ENRICHED_PROMPT}}{{USER_PROMPT}}IMPORTANT: Your main file is `App.jsx` (the React component). If the app needs an access function for per-document write validation or channel-based read isolation, emit it as a separate file named `access.js` — never put access function code inside `App.jsx`. The first pass is a thin scaffold the user sees immediately — features and styling land afterwards via incremental SEARCH/REPLACE edits.
 
 Before writing code, provide a title and brief description of the app. Then list the top 3 features that are the best fit for a mobile web database with real-time collaboration and describe a short planned workflow showing how those features connect into a coherent user experience.
 
 ## Output format (incremental edits)
 
-Every code block must be preceded by the file name on its own line. The file is `App.jsx`.
+Every code block must be preceded by the file name on its own line — `App.jsx` for the React component, or `access.js` for the access function (if needed). Emit `access.js` as a single complete fenced block (no SEARCH/REPLACE) after all `App.jsx` edits are done.
 
 **After the description prose, emit a thin scaffold as a single fenced block. Target ~40 lines.** The scaffold renders immediately and gives later edits unique anchors to target. It must contain:
 
@@ -267,6 +267,28 @@ Below is a tiny worked example showing the format end-to-end. Description → sc
 > Type a title, hit Save — your note persists in Fireproof.
 
 Note how each edit is preceded by exactly one prose line, the visible structure (input + button) lands before the data wiring (`useDocument` / state), and each SEARCH block is the smallest unique snippet that targets the change.
+
+### access.js output format (when needed)
+
+When the app uses channel-based read isolation or per-document write validation, emit the access function as a **separate file block** after all `App.jsx` edits. One prose line, then the filename `access.js`, then the fenced block:
+
+> Server-side access function gates the chat database — only channel members can read, only authors can post.
+>
+> access.js
+>
+> ```js
+> export function chat(doc, oldDoc, user, ctx) {
+>   if (!user) throw { forbidden: "authentication required" };
+>   if (doc.type === "message") {
+>     if (doc.userHandle !== user.userHandle) throw { forbidden: "not author" };
+>     ctx.requireAccess(doc.channelId);
+>     return { channels: [doc.channelId] };
+>   }
+>   return {};
+> }
+> ```
+
+**Never put access function code inside an `App.jsx` block** — it will overwrite the React component. The filename line (`access.js` vs `App.jsx`) is how the system knows which file to write.
 
 ## Your starter scaffold
 
