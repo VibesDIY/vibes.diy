@@ -37,8 +37,8 @@ export function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[], see
   for (const block of blocks) {
     if (!block.end) continue;
     const path = block.begin.path ?? "App.jsx";
-    const langRaw = block.begin.lang.toLowerCase();
-    const lang = ["js", "jsx"].includes(langRaw) ? "jsx" : langRaw;
+    const ext = path.match(/\.(\w+)$/)?.[1]?.toLowerCase() ?? "";
+    const lang = ["js", "jsx", "ts", "tsx"].includes(ext) ? ext : block.begin.lang?.toLowerCase() || "jsx";
     const acc = byPath.get(path) ?? { lang, lines: [] };
     acc.lines.push(block.lines.map((l) => l.line));
     byPath.set(path, acc);
@@ -65,9 +65,8 @@ export function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[], see
       const filename = seededName.startsWith("/") ? seededName : `/${seededName}`;
       const path = filename.startsWith("/") ? filename.slice(1) : filename;
       if (byPath.has(path) || byPath.has(filename)) continue;
-      // Determine lang from extension.
-      const ext = filename.match(/\.([^.]+)$/)?.[1] ?? "jsx";
-      const lang = ["js", "jsx"].includes(ext.toLowerCase()) ? "jsx" : ext.toLowerCase();
+      const ext = filename.match(/\.(\w+)$/)?.[1]?.toLowerCase() ?? "jsx";
+      const lang = ext;
       result.push({
         type: "code-block",
         filename,
