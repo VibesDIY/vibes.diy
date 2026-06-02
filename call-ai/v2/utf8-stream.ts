@@ -1,7 +1,6 @@
-import { Lazy } from "@adviser/cement";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { TxtEnDecoderSingleton } from "@adviser/cement";
 
-const sthis = Lazy(() => ensureSuperThis());
+const txt = TxtEnDecoderSingleton();
 const emptyBytes = new Uint8Array(0);
 
 export interface Utf8StreamDecoder {
@@ -10,7 +9,7 @@ export interface Utf8StreamDecoder {
 }
 
 export function encodeUtf8(input: string): Uint8Array {
-  return sthis().txt.encode(input);
+  return txt.encode(input);
 }
 
 export function utf8ByteLength(input: string): number {
@@ -91,7 +90,7 @@ export function createUtf8StreamDecoder(): Utf8StreamDecoder {
         return "";
       }
 
-      return sthis().txt.decode(split.decodable);
+      return txt.decode(split.decodable);
     },
 
     flush(): string {
@@ -99,7 +98,7 @@ export function createUtf8StreamDecoder(): Utf8StreamDecoder {
         return "";
       }
 
-      const trailing = sthis().txt.decode(remainder);
+      const trailing = txt.decode(remainder);
       remainder = emptyBytes;
       return trailing;
     },
