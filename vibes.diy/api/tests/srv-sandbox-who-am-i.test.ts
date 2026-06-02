@@ -124,7 +124,7 @@ describe("vibeWhoAmI host handler", () => {
   });
 
   it("passes grants through when present", async () => {
-    const grants = { "chat-db": { channels: ["general"], roles: ["moderator"] } };
+    const grants = { "chat-db": { channels: ["general"], publicChannels: ["announcements"], roles: ["moderator"] } };
     const { sandbox, captured, iframe } = setupSandbox({
       whoAmIResult: Result.Ok({
         type: "vibe.res.whoAmI" as const,

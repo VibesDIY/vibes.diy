@@ -46,7 +46,7 @@ export interface ResolvedWhoAmI {
   viewer: ViewerPayload | null;
   access: DocAccessLevel;
   dbAcls: Record<string, DbAcl> | undefined;
-  grants: Record<string, { channels: string[]; roles: string[] }> | undefined;
+  grants: Record<string, { channels: string[]; publicChannels: string[]; roles: string[] }> | undefined;
 }
 
 async function resolveGrants(
@@ -54,7 +54,7 @@ async function resolveGrants(
   ownerUserSlug: string,
   appSlug: string,
   viewerSlug: string | undefined
-): Promise<Record<string, { channels: string[]; roles: string[] }> | undefined> {
+): Promise<Record<string, { channels: string[]; publicChannels: string[]; roles: string[] }> | undefined> {
   const tAfb = vctx.sql.tables.accessFunctionBindings;
   const afbRows = await vctx.sql.db
     .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
@@ -63,31 +63,53 @@ async function resolveGrants(
 
   if (afbRows.length === 0) return undefined;
 
-  const tOutputs = vctx.sql.tables.accessFnOutputs;
-  const grants: Record<string, { channels: string[]; roles: string[] }> = {};
-
+  // Build fnCid lookup: named bindings take precedence over wildcard ('*').
+  // Collect all distinct fnCids for the single batched outputs query.
+  let wildcardCid: string | undefined;
+  const namedCids = new Map<string, string>();
+  const allCids = new Set<string>();
   for (const afb of afbRows) {
-    const storedOutputs = await vctx.sql.db
-      .select({ docId: tOutputs.docId, output: tOutputs.output })
-      .from(tOutputs)
-      .where(
-        and(
-          eq(tOutputs.userSlug, ownerUserSlug),
-          eq(tOutputs.appSlug, appSlug),
-          eq(tOutputs.dbName, afb.dbName),
-          eq(tOutputs.fnCid, afb.accessFnCid),
-          eq(tOutputs.hasGrants, 1)
-        )
-      );
+    allCids.add(afb.accessFnCid);
+    if (afb.dbName === "*") {
+      wildcardCid = afb.accessFnCid;
+    } else {
+      namedCids.set(afb.dbName, afb.accessFnCid);
+    }
+  }
 
+  // Single batched query: fetch all grant-bearing outputs for this app
+  // across all relevant fnCids. Outputs are stored under concrete dbNames
+  // even when the binding was wildcard.
+  const tOutputs = vctx.sql.tables.accessFnOutputs;
+  const storedOutputs = await vctx.sql.db
+    .select({ dbName: tOutputs.dbName, docId: tOutputs.docId, fnCid: tOutputs.fnCid, output: tOutputs.output })
+    .from(tOutputs)
+    .where(and(eq(tOutputs.userSlug, ownerUserSlug), eq(tOutputs.appSlug, appSlug), eq(tOutputs.hasGrants, 1)));
+
+  // Group outputs by concrete dbName, only including rows whose fnCid
+  // matches the effective binding (named takes precedence over wildcard).
+  const outputsByDb = new Map<string, { docId: string; output: string }[]>();
+  for (const row of storedOutputs) {
+    const effectiveCid = namedCids.get(row.dbName) ?? wildcardCid;
+    if (row.fnCid !== effectiveCid) continue;
+    let arr = outputsByDb.get(row.dbName);
+    if (!arr) {
+      arr = [];
+      outputsByDb.set(row.dbName, arr);
+    }
+    arr.push(row);
+  }
+
+  const grants: Record<string, { channels: string[]; publicChannels: string[]; roles: string[] }> = {};
+
+  for (const [dbName, rows] of outputsByDb) {
     const reduce = new GrantReduce();
-    for (const row of storedOutputs) {
+    for (const row of rows) {
       reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
     }
 
     const channels = viewerSlug ? Array.from(reduce.resolveEffectiveChannels(viewerSlug)) : [];
-    const publicCh = Array.from(reduce.publicChannels);
-    const allChannels = [...new Set([...channels, ...publicCh])];
+    const publicChannels = Array.from(reduce.publicChannels);
 
     const roles: string[] = [];
     if (viewerSlug) {
@@ -96,7 +118,7 @@ async function resolveGrants(
       }
     }
 
-    grants[afb.dbName] = { channels: allChannels, roles };
+    grants[dbName] = { channels, publicChannels, roles };
   }
 
   return Object.keys(grants).length > 0 ? grants : undefined;
@@ -131,11 +153,13 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   const dbAcls = effectiveDbAcls;
 
   if (!auth) {
-    return Result.Ok({ viewer: null, access, dbAcls, grants: undefined });
+    const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
+    return Result.Ok({ viewer: null, access, dbAcls, grants });
   }
 
   if (!viewerUserId) {
-    return Result.Ok({ viewer: null, access, dbAcls, grants: undefined });
+    const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
+    return Result.Ok({ viewer: null, access, dbAcls, grants });
   }
 
   const userSettingsRow = await vctx.sql.db
@@ -166,7 +190,8 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   }
 
   if (!viewerSlug) {
-    return Result.Ok({ viewer: null, access, dbAcls, grants: undefined });
+    const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
+    return Result.Ok({ viewer: null, access, dbAcls, grants });
   }
 
   const displayName = displayOverride ?? deriveDisplayName(auth.verifiedAuth.claims);

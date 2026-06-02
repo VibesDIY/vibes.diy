@@ -36,7 +36,7 @@ describe("vibeMountParams", () => {
       viewerEnv: {
         viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
         access: "owner",
-        grants: { chat: { channels: ["general", "random"], roles: ["admin"] } },
+        grants: { chat: { channels: ["general", "random"], publicChannels: ["announcements"], roles: ["admin"] } },
       },
     });
     expect(r instanceof type.errors).toBe(false);
