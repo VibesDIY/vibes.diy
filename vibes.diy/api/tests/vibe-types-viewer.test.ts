@@ -42,7 +42,7 @@ describe("ResVibeWhoAmI", () => {
         tid: "abc",
         viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
         access: "owner",
-        grants: { comments: { channels: ["general"], roles: ["moderator"] } },
+        grants: { comments: { channels: ["general"], publicChannels: ["announcements"], roles: ["moderator"] } },
       })
     ).toBe(true);
   });
