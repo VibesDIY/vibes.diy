@@ -23,7 +23,7 @@ describe("vibeMountParams", () => {
       usrEnv: {},
       viewerEnv: {
         viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
-        access: "owner",
+        access: "override",
         dbAcls: { comments: { write: ["members"] } },
       },
     });
@@ -35,7 +35,7 @@ describe("vibeMountParams", () => {
       usrEnv: {},
       viewerEnv: {
         viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
-        access: "owner",
+        access: "override",
         grants: { chat: { channels: ["general", "random"], publicChannels: ["announcements"], roles: ["admin"] } },
       },
     });
@@ -58,7 +58,7 @@ describe("vibeMountParams", () => {
       usrEnv: {},
       viewerEnv: {
         viewer: { ownerHandle: "alice" },
-        access: "owner",
+        access: "override",
       },
     });
     expect(r instanceof type.errors).toBe(true);

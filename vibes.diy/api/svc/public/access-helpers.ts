@@ -5,10 +5,10 @@ import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 
-export type DocAccessLevel = Role | "owner" | "none";
+export type DocAccessLevel = Role | "override" | "none";
 
-export const canRead = (level: DocAccessLevel) => level === "owner" || level === "editor" || level === "viewer";
-export const canWrite = (level: DocAccessLevel) => level === "owner" || level === "editor" || level === "submitter";
+export const canRead = (level: DocAccessLevel) => level === "override" || level === "editor" || level === "viewer";
+export const canWrite = (level: DocAccessLevel) => level === "override" || level === "editor" || level === "submitter";
 
 export async function checkDocAccess(
   vctx: VibesApiSQLCtx,
@@ -24,7 +24,7 @@ export async function checkDocAccess(
     .limit(1)
     .then((r) => r[0]);
 
-  if (binding?.userId === userId) return { access: adminMode ? "owner" : "editor", isOwner: true };
+  if (binding?.userId === userId) return { access: adminMode ? "override" : "editor", isOwner: true };
 
   const rInvite = await hasAccessInvite(vctx, { grantUserId: userId, appSlug, ownerHandle });
   if (rInvite.isOk()) {

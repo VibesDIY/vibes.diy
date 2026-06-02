@@ -18,7 +18,7 @@ describe("VibeContextProvider", () => {
           usrEnv: {},
           viewerEnv: {
             viewer: { userHandle: "alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
-            access: "owner",
+            access: "override",
           },
         }}
       >
@@ -26,7 +26,7 @@ describe("VibeContextProvider", () => {
       </VibeContextProvider>
     );
     expect(captured?.mountParams.viewerEnv?.viewer?.userHandle).toBe("alice");
-    expect(captured?.mountParams.viewerEnv?.access).toBe("owner");
+    expect(captured?.mountParams.viewerEnv?.access).toBe("override");
   });
 
   it("updates viewerEnv when vibe.evt.viewerChanged fires", async () => {

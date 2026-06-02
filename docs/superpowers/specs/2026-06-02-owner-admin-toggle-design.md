@@ -2,7 +2,7 @@
 
 ## Problem
 
-The owner always bypasses every ACL and access function check. `inGroup()` returns `true` immediately when `level === "owner"` ([db-acl-allows.ts:17](../../vibes.diy/vibe/runtime/db-acl-allows.ts)). `canRead("owner")` and `canWrite("owner")` both short-circuit to `true` ([db-acl-allows.ts:12-14](../../vibes.diy/vibe/runtime/db-acl-allows.ts)). The server returns `"owner"` from `checkDocAccess()` ([access-helpers.ts:26](../../vibes.diy/api/svc/public/access-helpers.ts)) and all downstream checks use that level.
+The owner always bypasses every ACL and access function check. `inGroup()` returns `true` immediately when `level === "override"` ([db-acl-allows.ts:17](../../vibes.diy/vibe/runtime/db-acl-allows.ts)). `canRead("override")` and `canWrite("override")` both short-circuit to `true` ([db-acl-allows.ts:12-14](../../vibes.diy/vibe/runtime/db-acl-allows.ts)). The server returns `"override"` from `checkDocAccess()` ([access-helpers.ts:26](../../vibes.diy/api/svc/public/access-helpers.ts)) and all downstream checks use that level.
 
 This means the owner never experiences their own vibe's permissions. They can't test ACLs, can't participate as a normal user, and can't verify that their access functions work correctly.
 
@@ -14,11 +14,12 @@ This means the owner never experiences their own vibe's permissions. They can't 
 
 **`isOwner` is a separate identity flag.** `useViewer().isOwner` tells App.jsx "this user owns this vibe" for UI concerns — showing settings, the admin toggle, owner-specific features. This is identity, not permissions.
 
-**When admin mode is on,** `access` returns `"owner"` and everything bypasses as today.
+**When admin mode is on,** `access` returns `"override"` and everything bypasses as today.
 
 This means:
+
 - A vibe author who checks `access === "editor"` and `can("write")` gets consistent answers
-- Owner-specific UI uses `isOwner`, not `access === "owner"`
+- Owner-specific UI uses `isOwner`, not `access === "override"`
 - No `adminMode` threading through ACL helpers — the server makes the decision once, upstream
 
 ### Admin Mode is Invisible to Vibe Code
@@ -32,7 +33,7 @@ Admin mode is a **platform-level** concern. The vibe sandbox (App.jsx, access fu
 
 ### Three Layers of Owner Policy
 
-1. **Platform (admin toggle):** Full bypass. Access functions not executed. `access: "owner"`. The owner needs this for debugging, seeing all data, emergency fixes.
+1. **Platform (admin toggle):** Full bypass. Access functions not executed. `access: "override"`. The owner needs this for debugging, seeing all data, emergency fixes.
 
 2. **Vibe author (access function with `user.isOwner`):** The vibe author decides what the owner can do when participating normally. E.g., "owners can always create channels" or "owners can delete any post." This runs through the normal access function path.
 
@@ -43,7 +44,7 @@ Admin mode is a **platform-level** concern. The vibe sandbox (App.jsx, access fu
 A boolean toggle, off by default. The server resolves it at `whoAmI` time and returns the appropriate effective access level.
 
 - **Admin OFF (default):** `checkDocAccess()` returns `"editor"` for the owner. Writes go through access functions with `user.isOwner = true`. The owner participates like a normal user but the access function knows who they are.
-- **Admin ON:** `checkDocAccess()` returns `"owner"`. Access functions are **not executed** for reads or writes. The current behavior.
+- **Admin ON:** `checkDocAccess()` returns `"override"`. Access functions are **not executed** for reads or writes. The current behavior.
 
 The toggle appears in the vibe menu on the `/vibe/` route, visible only to the owner.
 
@@ -54,7 +55,8 @@ The toggle appears in the vibe menu on the `/vibe/` route, visible only to the o
 In [access-helpers.ts:26](../../vibes.diy/api/svc/public/access-helpers.ts):
 
 When the userId matches the ownerHandle binding:
-- If `adminMode` is true: return `"owner"` (full bypass, current behavior)
+
+- If `adminMode` is true: return `"override"` (full bypass, current behavior)
 - If `adminMode` is false (default): return `"editor"`
 
 ```typescript
@@ -106,8 +108,8 @@ In [use-viewer.ts](../../vibes.diy/vibe/runtime/use-viewer.ts):
 ```typescript
 export interface UseViewerResult {
   readonly viewer: ViewerPayload | null;
-  readonly access: DocAccessLevel;     // effective level: "editor" when admin off, "owner" when admin on
-  readonly isOwner: boolean;           // true when the viewer owns this vibe, regardless of admin mode
+  readonly access: DocAccessLevel; // effective level: "editor" when admin off, "override" when admin on
+  readonly isOwner: boolean; // true when the viewer owns this vibe, regardless of admin mode
   readonly dbAcls: Record<string, DbAcl>;
   readonly can: (action: "read" | "write" | "delete", dbName?: string) => boolean;
   readonly isViewerPending: boolean;
@@ -119,7 +121,7 @@ export interface UseViewerResult {
 
 ### 4. db-acl-allows.ts — no changes needed
 
-The ACL helpers (`canRead`, `canWrite`, `inGroup`, `aclAllows`) remain unchanged. They receive `"editor"` when admin is off and `"owner"` when admin is on. The decision is made upstream in `checkDocAccess()`.
+The ACL helpers (`canRead`, `canWrite`, `inGroup`, `aclAllows`) remain unchanged. They receive `"editor"` when admin is off and `"override"` when admin is on. The decision is made upstream in `checkDocAccess()`.
 
 ### 5. UserContext — add `isOwner` for access functions
 
@@ -136,7 +138,7 @@ export interface UserContext {
 The server sets `isOwner: true` when building the `userContext` for access function invocation. This lets vibe authors write owner-specific policy:
 
 ```js
-export default function(doc, oldDoc, user, ctx) {
+export default function (doc, oldDoc, user, ctx) {
   if (user?.isOwner) {
     return { channels: [doc.channel] };
   }
@@ -152,7 +154,8 @@ The `AccessFnDO` already passes the full `user` object into the QuickJS sandbox,
 In [who-am-i.ts](../../vibes.diy/api/svc/public/who-am-i.ts):
 
 `resolveWhoAmI()` accepts `adminMode` and passes it to `checkDocAccess()`. The response includes:
-- `access`: the effective level (`"editor"` or `"owner"`)
+
+- `access`: the effective level (`"editor"` or `"override"`)
 - `isOwner`: true if the viewer is the vibe owner
 
 ```typescript
@@ -171,7 +174,7 @@ The bridge types (`ResVibeWhoAmI`, `EvtVibeViewerChanged`) also gain `"isOwner?"
 
 In [app-documents.ts](../../vibes.diy/api/svc/public/app-documents.ts):
 
-When `access === "owner"` (which only happens when admin mode is on), the server does not invoke the access function. This is the same check as today — no new logic needed, because `checkDocAccess()` only returns `"owner"` when admin mode is on.
+When `access === "override"` (which only happens when admin mode is on), the server does not invoke the access function. This is the same check as today — no new logic needed, because `checkDocAccess()` only returns `"override"` when admin mode is on.
 
 When admin mode is off, the owner's `access` is `"editor"` and the normal access function path runs. The `userContext` passed to the access function includes `isOwner: true` so the vibe author's code can branch on it.
 
@@ -180,9 +183,7 @@ When admin mode is off, the owner's `access` is `"editor"` and the normal access
 When building the `userContext` for access function invocation, set `isOwner` based on the `isOwner` flag from `checkDocAccess()`:
 
 ```typescript
-const userContext = writerRow?.handle
-  ? { userHandle: writerRow.handle, isOwner: docAccessResult.isOwner }
-  : null;
+const userContext = writerRow?.handle ? { userHandle: writerRow.handle, isOwner: docAccessResult.isOwner } : null;
 ```
 
 ### 9. /vibe/ route UI — admin toggle
@@ -202,7 +203,7 @@ Update `makeHelpers()` to accept grant state and enforce the same way the DO doe
 ### 11. Bridge types — add `isOwner`, `adminMode` on whoAmI request
 
 - `ReqVibeWhoAmI` gains `"adminMode?"` so the iframe can request admin mode
-- `ResVibeWhoAmI` and `EvtVibeViewerChanged` gain `"isOwner?"` 
+- `ResVibeWhoAmI` and `EvtVibeViewerChanged` gain `"isOwner?"`
 - Runtime document request types (`reqPutDoc`, `reqGetDoc`, etc.) do NOT need `adminMode` — the server already knows the effective access level from the connection/session state
 
 ### 12. End-to-end admin toggle flow
@@ -210,11 +211,11 @@ Update `makeHelpers()` to accept grant state and enforce the same way the DO doe
 ```
 Toggle ON in /vibe/ chrome
   → whoAmI({ adminMode: true }) via bridge
-  → server: checkDocAccess() returns { access: "owner", isOwner: true }
-  → response: { access: "owner", isOwner: true, dbAcls, grants }
+  → server: checkDocAccess() returns { access: "override", isOwner: true }
+  → response: { access: "override", isOwner: true, dbAcls, grants }
   → pushViewerChanged with full payload
-  → iframe: useViewer().access === "owner", can() bypasses, isOwner === true
-  → document ops: access === "owner" → skip access function (current behavior)
+  → iframe: useViewer().access === "override", can() bypasses, isOwner === true
+  → document ops: access === "override" → skip access function (current behavior)
 
 Toggle OFF in /vibe/ chrome
   → whoAmI({ adminMode: false }) via bridge
@@ -234,7 +235,7 @@ Toggle OFF in /vibe/ chrome
 
 ## What Changes from Previous Revision
 
-- `access` now returns the **effective** level, not always `"owner"` — eliminates split brain between `access` and `can()`
+- `access` now returns the **effective** level, not always `"override"` — eliminates split brain between `access` and `can()`
 - `isOwner` is a separate boolean flag on `useViewer()` and `ViewerEnv`
 - No `adminMode` threading through ACL helpers — decision made once in `checkDocAccess()`
 - Access functions get `user.isOwner` so vibe authors can write owner-specific policy
@@ -244,7 +245,7 @@ Toggle OFF in /vibe/ chrome
 ## Test Plan
 
 - Owner with admin off: `access === "editor"`, `isOwner === true`, `can()` evaluates as editor
-- Owner with admin on: `access === "owner"`, `isOwner === true`, `can()` bypasses everything
+- Owner with admin on: `access === "override"`, `isOwner === true`, `can()` bypasses everything
 - Owner with admin off: writes go through access function with `user.isOwner === true`
 - Owner with admin on: access function not executed for reads or writes
 - Non-owner: `isOwner === false`, `access` is their granted role, `user.isOwner` is false/undefined in access fn

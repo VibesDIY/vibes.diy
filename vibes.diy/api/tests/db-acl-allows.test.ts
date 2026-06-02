@@ -3,14 +3,14 @@ import { aclAllows } from "@vibes.diy/vibe-runtime";
 
 describe("aclAllows (client port)", () => {
   it("falls back to canRead when ACL has no read entry", () => {
-    expect(aclAllows(undefined, "read", "owner")).toBe(true);
+    expect(aclAllows(undefined, "read", "override")).toBe(true);
     expect(aclAllows(undefined, "read", "viewer")).toBe(true);
     expect(aclAllows(undefined, "read", "submitter")).toBe(false);
     expect(aclAllows(undefined, "read", "none")).toBe(false);
   });
 
   it("falls back to canWrite when ACL has no write entry", () => {
-    expect(aclAllows(undefined, "write", "owner")).toBe(true);
+    expect(aclAllows(undefined, "write", "override")).toBe(true);
     expect(aclAllows(undefined, "write", "submitter")).toBe(true);
     expect(aclAllows(undefined, "write", "viewer")).toBe(false);
     expect(aclAllows(undefined, "write", "none")).toBe(false);
@@ -18,14 +18,14 @@ describe("aclAllows (client port)", () => {
 
   it("members group includes editor/viewer/submitter (and owner implicitly)", () => {
     expect(aclAllows({ write: ["members"] }, "write", "viewer")).toBe(true);
-    expect(aclAllows({ write: ["members"] }, "write", "owner")).toBe(true);
+    expect(aclAllows({ write: ["members"] }, "write", "override")).toBe(true);
     expect(aclAllows({ write: ["members"] }, "write", "none")).toBe(false);
   });
 
   it("editors group is editor + owner", () => {
     expect(aclAllows({ write: ["editors"] }, "write", "editor")).toBe(true);
     expect(aclAllows({ write: ["editors"] }, "write", "viewer")).toBe(false);
-    expect(aclAllows({ write: ["editors"] }, "write", "owner")).toBe(true);
+    expect(aclAllows({ write: ["editors"] }, "write", "override")).toBe(true);
   });
 
   it("submitters group is submitter + owner", () => {

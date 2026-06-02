@@ -190,7 +190,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // Push owner identity into the iframe as soon as the runtime is ready.
   // render-vibe.ts omits viewerEnv for ?preview=yes (no Clerk session on the
   // HTTP path), so without this push can("write") would be false until the
-  // bootstrapViewer WS roundtrip completes. Sending access:"owner" eagerly
+  // bootstrapViewer WS roundtrip completes. Sending access:"override" eagerly
   // here eliminates the read-only flash. bootstrapViewer still fires after
   // and fills in viewer.displayName / avatarUrl via the normal bridge path.
   useEffect(() => {
@@ -199,7 +199,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
       const msg: EvtVibeViewerChanged = {
         type: "vibe.evt.viewerChanged",
         viewer: null,
-        access: "owner",
+        access: "override",
       };
       srvVibeSandbox.pushViewerChanged(msg);
     }) as () => void;

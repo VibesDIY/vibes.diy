@@ -266,7 +266,7 @@ The system prompt (or vibe template) gains a short stanza:
 
 - Unit: `aclAllows` client port matches host port (shared test fixtures).
 - Unit: `can(action)` (no dbName) returns expected booleans for {empty dbAcls, one allowing override, one denying override, mixed}.
-- Integration: iframe mount with signed-in owner sees `access: "owner"`, anon sees `viewer: null` + `access: "none"`.
+- Integration: iframe mount with signed-in owner sees `access: "override"`, anon sees `viewer: null` + `access: "none"`.
 - Integration: `vibe.req.whoAmI` after sign-in fires the event and returns the new viewer.
 - Integration: avatar upload flow — settings widget puts asset, `/u/:userSlug/avatar` 302s to the new CID URL, ETag changes; old ETag responses 304.
 - Integration: `viewer.avatarUrl` for a userSlug with no upload returns a URL that 302s to Clerk `imageUrl`; for an unknown slug returns one that 404s.
