@@ -232,11 +232,11 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
       const result = await vibeDiyApi.ensureAppSettings({
         appSlug,
         ownerHandle,
-        request: { enable: true, autoAcceptRole: nextValue ? "viewer" : undefined },
+        request: { enable: true, autoAcceptRole: nextValue ? "editor" : undefined },
       });
       if (result.isOk()) {
         setAutoJoinEnabled(nextValue);
-        setAutoAcceptRoleState(nextValue ? "viewer" : undefined);
+        setAutoAcceptRoleState(nextValue ? "editor" : undefined);
       }
     } finally {
       setIsTogglingAutoJoin(false);
