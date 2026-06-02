@@ -59,7 +59,12 @@ jobs:
           fi
 
           # Deploy to Cloudflare Pages
-          npx wrangler pages deploy dist --project-name=${PROJECT_NAME}
+          for attempt in 1 2 3; do
+            npx wrangler pages deploy dist --project-name=${PROJECT_NAME} && break
+            if [ "$attempt" -eq 3 ]; then echo "wrangler pages deploy failed after 3 attempts"; exit 1; fi
+            echo "wrangler pages deploy attempt $attempt failed, retrying in 15s..."
+            sleep 15
+          done
 
           echo "✅ Deployment complete!"
           echo "🌐 Site URL: https://${PROJECT_NAME}.pages.dev"

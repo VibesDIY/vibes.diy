@@ -198,7 +198,12 @@ runs:
           echo "secret bulk attempt $attempt failed (Cloudflare 10021?), retrying in 15s..."
           sleep 15
         done
-        pnpm run deploy:${{inputs.CLOUDFLARE_ENV}}
+        for attempt in 1 2 3; do
+          pnpm run deploy:${{inputs.CLOUDFLARE_ENV}} && break
+          if [ "$attempt" -eq 3 ]; then echo "wrangler deploy failed after 3 attempts"; exit 1; fi
+          echo "wrangler deploy attempt $attempt failed, retrying in 15s..."
+          sleep 15
+        done
 
     - name: Upload startup profile (on failure)
       if: failure()
@@ -270,7 +275,12 @@ runs:
           echo "secret bulk attempt $attempt failed (Cloudflare 10021?), retrying in 15s..."
           sleep 15
         done
-        pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}}
+        for attempt in 1 2 3; do
+          pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}} && break
+          if [ "$attempt" -eq 3 ]; then echo "wrangler deploy failed after 3 attempts"; exit 1; fi
+          echo "wrangler deploy attempt $attempt failed, retrying in 15s..."
+          sleep 15
+        done
 
     - name: Deploy logpush-etl worker
       if: ${{ inputs.CLOUDFLARE_ENV == 'prod' || inputs.CLOUDFLARE_ENV == 'cli' }}
@@ -290,4 +300,9 @@ runs:
           echo "secret bulk attempt $attempt failed (Cloudflare 10021?), retrying in 15s..."
           sleep 15
         done
-        pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}}
+        for attempt in 1 2 3; do
+          pnpm run deploy -- --env ${{inputs.CLOUDFLARE_ENV}} && break
+          if [ "$attempt" -eq 3 ]; then echo "wrangler deploy failed after 3 attempts"; exit 1; fi
+          echo "wrangler deploy attempt $attempt failed, retrying in 15s..."
+          sleep 15
+        done
