@@ -43,14 +43,18 @@ import {
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
-import { WSSendProvider } from "../svc-ws-send-provider.js";
 import { eq, and, sql, inArray, desc } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess, canRead, isPublicReadable, DocAccessLevel } from "./access-helpers.js";
 import { enforceAllowAnonymous, ForbiddenError, extractExportSource, type AccessDescriptor } from "./access-function.js";
 import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
+import { WSSendProvider } from "../svc-ws-send-provider.js";
 import { GrantReduce, extractContribution } from "./grant-reduce.js";
+
+function connectionAdminMode(ctx: { send: unknown }): boolean {
+  return ctx.send instanceof WSSendProvider ? ctx.send.adminMode : false;
+}
 import { filterDocsByChannel } from "./channel-read-filter.js";
 import { mintFilesUrls, isFileMeta } from "./files-url-mint.js";
 
@@ -152,7 +156,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         }
       } else if (userId) {
         // Authenticated user: standard ACL gate
-        const docAccessResult = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+        const docAccessResult = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx));
         const access = docAccessResult.access;
         isOwner = docAccessResult.isOwner;
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
@@ -521,7 +525,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
       const { access } = req._auth
-        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
+        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx))
         : { access: "none" as DocAccessLevel };
       const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
       if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
@@ -718,7 +722,7 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
         }
       } else {
         const { access } = req._auth
-          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
+          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx))
           : { access: "none" as DocAccessLevel };
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
@@ -852,7 +856,7 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
           return Result.Ok(EventoResult.Continue);
         }
       } else {
-        const { access } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+        const { access } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx));
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !aclAllows(rAcl.Ok(), "delete", access)) {
           await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
@@ -937,7 +941,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
         }
       } else {
         const { access } = req._auth
-          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
+          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx))
           : { access: "none" as DocAccessLevel };
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
@@ -1055,7 +1059,7 @@ export const listDbNamesEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      const { isOwner } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle);
+      const { isOwner } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx));
       if (!isOwner) {
         await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
         return Result.Ok(EventoResult.Continue);
