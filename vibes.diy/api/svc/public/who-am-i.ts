@@ -129,7 +129,9 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   const baseOrigin = apiBaseUrl.replace(/\/+$/, "");
 
   const viewerUserId = auth?.verifiedAuth.claims.userId;
-  const access: DocAccessLevel = viewerUserId ? await checkDocAccess(vctx, viewerUserId, appSlug, ownerUserSlug) : "none";
+  const { access } = viewerUserId
+    ? await checkDocAccess(vctx, viewerUserId, appSlug, ownerUserSlug)
+    : { access: "none" as DocAccessLevel, isOwner: false };
 
   const rSettings = await ensureAppSettings(vctx, {
     type: "vibes.diy.req-ensure-app-settings",

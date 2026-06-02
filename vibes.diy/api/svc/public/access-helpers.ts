@@ -14,8 +14,9 @@ export async function checkDocAccess(
   vctx: VibesApiSQLCtx,
   userId: string,
   appSlug: string,
-  ownerHandle: string
-): Promise<DocAccessLevel> {
+  ownerHandle: string,
+  adminMode?: boolean
+): Promise<{ access: DocAccessLevel; isOwner: boolean }> {
   const binding = await vctx.sql.db
     .select({ userId: vctx.sql.tables.handleBinding.userId })
     .from(vctx.sql.tables.handleBinding)
@@ -23,13 +24,13 @@ export async function checkDocAccess(
     .limit(1)
     .then((r) => r[0]);
 
-  if (binding?.userId === userId) return "owner";
+  if (binding?.userId === userId) return { access: adminMode ? "owner" : "editor", isOwner: true };
 
   const rInvite = await hasAccessInvite(vctx, { grantUserId: userId, appSlug, ownerHandle });
   if (rInvite.isOk()) {
     const invite = rInvite.Ok();
     if (isResHasAccessInviteAccepted(invite)) {
-      return invite.role;
+      return { access: invite.role, isOwner: false };
     }
   }
 
@@ -37,11 +38,11 @@ export async function checkDocAccess(
   if (rReq.isOk()) {
     const req = rReq.Ok();
     if (isResHasAccessRequestApproved(req)) {
-      return req.role;
+      return { access: req.role, isOwner: false };
     }
   }
 
-  return "none";
+  return { access: "none", isOwner: false };
 }
 
 export async function isPublicReadable(vctx: VibesApiSQLCtx, appSlug: string, ownerHandle: string): Promise<boolean> {
