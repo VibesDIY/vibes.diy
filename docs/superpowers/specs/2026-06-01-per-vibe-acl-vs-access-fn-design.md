@@ -128,25 +128,17 @@ App-level operations on source code. Access functions don't control this.
 
 ---
 
-## What This Implies About Simplification
+## What This Means for Implementation
 
-When a vibe has `/access.js`, the per-vibe ACL simplifies to **just the door**:
+**No existing features need to change.** The per-vibe ACL system (`useViewer()`, `can()`, `dbAcls`, role hierarchy, comments toggle, sharing UI) stays exactly as it is. It works, it's deployed, and vibes already use `can("write", "comments")` in production.
 
-**Becomes the access fn's job:**
+The work is purely additive:
 
-1. **`publicAccess.enable`** — replaced by `grant.public` channels (visible to all members)
-2. **All dbAcls** — strictly weaker than access fn, and conflicting when both are active
-3. **The subject groups** (members/editors/submitters/readers) — these project from per-vibe roles, which aren't the access fn's role system
+1. **Add `grants` to the wire protocol** — resolved roles + channels from the grant reduce, sent alongside the existing `dbAcls` in the viewer env
+2. **Add `access` to `useFireproof()`** — exposes the resolved grants so vibes can gate UI on `access.hasRole()` and `access.hasChannel()`
+3. **Default the sharing UI to editor** — all entry paths (auto-approve, access requests, invites) grant editor (read+write) by default, with viewer/submitter reachable but not highlighted
 
-**Simplifies to one role:** 4. **`request.autoAcceptRole`** — the only meaningful approval is "member" (read+write); reader-only is reserved for edge cases 5. **Email invite role** — same; invite = member
-
-**Stays with per-vibe ACL:**
-
-- **The door** — who can see the app at all
-- **Source editing / chats** — owner-only
-- **Clone/remix** — app-level operations
-
-The per-vibe ACL system was designed before access functions existed. It served double duty as both "app shell gate" and "data gate." Access functions now handle the data gate. The door's job is simple: are you in or out? The one approval role is member. Reader-only exists for edge cases but isn't the normal path.
+The ACL system and the access function system layer correctly — ACL is the membership list, access function is the data policy. No supersession, no removal, no refactoring of existing behavior.
 
 ---
 
