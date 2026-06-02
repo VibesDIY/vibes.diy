@@ -90,7 +90,6 @@ After your final `App.jsx` edit, if the app needs an access function, emit it as
 > Server-side access function gates the chat database — only channel members can read, only authors can post.
 >
 > access.js
->
 > ```js
 > export function chat(doc, oldDoc, user, ctx) {
 >   if (!user) throw { forbidden: "authentication required" };
