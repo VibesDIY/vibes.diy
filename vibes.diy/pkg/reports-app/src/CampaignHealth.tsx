@@ -260,7 +260,7 @@ function AdPreviewRow({
 
 export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
   const [data, setData] = useState<Loadable<ResReportCampaignHealth>>({ kind: "loading" });
-  const [last24hSpend, setLast24hSpend] = useState<Loadable<number>>({ kind: "loading" });
+  const [lastDaySpend, setLastDaySpend] = useState<Loadable<number>>({ kind: "loading" });
   const [elapsed, setElapsed] = useState(0);
   const [sortCol, setSortCol] = useState<SortCol>("costPerLanding");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -285,18 +285,27 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
 
   useEffect(() => {
     const ac = new AbortController();
+
     void (async () => {
-      const [r, r24] = await Promise.all([api.reportCampaignHealth({}), api.reportCampaignHealth({ days: "1" })]);
+      const r = await api.reportCampaignHealth({});
       if (ac.signal.aborted) return;
+
       if (r.isOk()) setData({ kind: "ok", data: r.Ok() });
       else setData({ kind: "err", msg: r.Err().message, code: r.Err().error?.code });
-      if (r24.isOk()) {
-        const spend = r24.Ok().ranked.reduce((sum, row) => sum + Number(row.spend), 0);
-        setLast24hSpend({ kind: "ok", data: spend });
+    })();
+
+    void (async () => {
+      const r1d = await api.reportCampaignHealth({ days: "1" });
+      if (ac.signal.aborted) return;
+
+      if (r1d.isOk()) {
+        const spend = r1d.Ok().ranked.reduce((sum, row) => sum + Number(row.spend), 0);
+        setLastDaySpend({ kind: "ok", data: spend });
       } else {
-        setLast24hSpend({ kind: "err", msg: r24.Err().message });
+        setLastDaySpend({ kind: "err", msg: r1d.Err().message });
       }
     })();
+
     return () => ac.abort();
   }, [api]);
 
@@ -400,10 +409,10 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
           Campaign Health
         </span>
         <h1>Campaign Health</h1>
-        {last24hSpend.kind === "ok" && (
+        {lastDaySpend.kind === "ok" && (
           <div style={{ fontSize: "2rem", fontWeight: 700, lineHeight: 1.1 }}>
-            {fmtMoney(last24hSpend.data)}
-            <span style={{ fontSize: "0.875rem", fontWeight: 400, opacity: 0.6, marginLeft: "0.5rem" }}>last 24h</span>
+            {fmtMoney(lastDaySpend.data)}
+            <span style={{ fontSize: "0.875rem", fontWeight: 400, opacity: 0.6, marginLeft: "0.5rem" }}>last day</span>
           </div>
         )}
         <p className="hero-sub">
