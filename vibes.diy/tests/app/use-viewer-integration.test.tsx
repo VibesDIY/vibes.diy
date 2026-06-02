@@ -53,7 +53,7 @@ describe("useViewer integration", () => {
           usrEnv: {},
           viewerEnv: {
             viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
-            access: "owner",
+            access: "override",
           },
         }}
       >

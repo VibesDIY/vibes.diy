@@ -30,7 +30,7 @@ describe("ResVibeWhoAmI", () => {
         type: "vibe.res.whoAmI",
         tid: "abc",
         viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
-        access: "owner",
+        access: "override",
         dbAcls: { comments: { write: ["members"] } },
       })
     ).toBe(true);
@@ -41,7 +41,7 @@ describe("ResVibeWhoAmI", () => {
         type: "vibe.res.whoAmI",
         tid: "abc",
         viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
-        access: "owner",
+        access: "override",
         grants: { comments: { channels: ["general"], publicChannels: ["announcements"], roles: ["moderator"] } },
       })
     ).toBe(true);
@@ -52,7 +52,7 @@ describe("ResVibeWhoAmI", () => {
         type: "vibe.res.whoAmI",
         tid: "abc",
         viewer: { ownerHandle: "alice" },
-        access: "owner",
+        access: "override",
       })
     ).toBe(false);
   });

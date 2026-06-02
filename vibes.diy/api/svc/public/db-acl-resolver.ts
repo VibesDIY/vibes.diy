@@ -7,11 +7,11 @@ import { and, eq, inArray } from "drizzle-orm";
 
 // Built-in groups projected from existing role grants.
 //
-// Owner is implicitly in every group, so the resolver never requires owners
-// to appear in an ACL. Each non-owner case maps directly to a single role,
-// since DocAccessLevel = Role | "owner" | "none".
+// Override is implicitly in every group, so the resolver never requires
+// override-level access to appear in an ACL. Each non-override case maps
+// directly to a single role, since DocAccessLevel = Role | "override" | "none".
 export function inGroup(level: DocAccessLevel, group: DbAclSubject): boolean {
-  if (level === "owner") return true;
+  if (level === "override") return true;
   switch (group) {
     case "members":
       return level === "editor" || level === "viewer" || level === "submitter";

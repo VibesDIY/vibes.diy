@@ -4,8 +4,8 @@
 
 **Per-vibe ACL** (app-level membership) — stored in AppSettings:
 
-- Roles: `owner | editor | viewer | submitter | none`
-- Owner gets `access: "editor"` by default; `access: "owner"` when admin mode is toggled on
+- Roles: `override | editor | viewer | submitter | none`
+- Owner gets `access: "editor"` by default; `access: "override"` when admin mode is toggled on
 - `isOwner` flag sent on the wire alongside `access` — lets apps distinguish owner-as-editor from granted-editor
 - Public access toggle (`publicAccess.enable`)
 - Request access with optional auto-approve (`request.enable` + `autoAcceptRole`)
@@ -40,7 +40,7 @@ Viewer (read-only) and submitter (write-only) exist for edge cases but are not h
 
 The owner operates as `access: "editor"` with `isOwner: true` by default. This is deliberate — the owner is a member like everyone else, with the same data permissions. The `isOwner` flag lets apps show owner-specific UI (settings, sharing controls) without granting elevated data access.
 
-When the owner toggles **admin mode**, `access` elevates to `"owner"`:
+When the owner toggles **admin mode**, `access` elevates to `"override"`:
 
 - ACL checks pass unconditionally (owner is in every subject group)
 - Access function enforcement is suppressed (`requireAccess`/`requireRole` become no-ops, `{ forbidden }` results are treated as `{}`)
@@ -56,7 +56,7 @@ When the owner toggles **admin mode**, `access` elevates to `"owner"`:
 ```typescript
 viewerEnv: {
   viewer: ViewerPayload | null,
-  access: DocAccessLevel,              // "owner" | "editor" | "viewer" | "submitter" | "none"
+  access: DocAccessLevel,              // "override" | "editor" | "viewer" | "submitter" | "none"
   isOwner?: boolean,                   // true for app owner regardless of access level
   dbAcls?: Record<string, DbAcl>,      // per-database subject-group gates
   grants?: Record<string, {            // resolved access fn permissions per database
@@ -139,7 +139,7 @@ Purely app-level: can you see the app at all? Access functions have no opinion h
 
 Owner can toggle admin mode via the chrome UI. Effects:
 
-- `checkDocAccess` returns `access: "owner"` instead of `"editor"` (passes all ACL checks)
+- `checkDocAccess` returns `access: "override"` instead of `"editor"` (passes all ACL checks)
 - Access function enforcement suppressed (guards no-op, `{ forbidden }` suppressed)
 - Access function still executes for declarative effects (channels, grants, members)
 - Stored per-connection on server (`WSSendProvider.adminMode`), in `localStorage` on client
@@ -162,7 +162,7 @@ App-level operations on source code. Access functions don't control this. Unchan
 | dbAcls                  | Per-DB subject-group gate             | Membership gate — layers with access fn (both run)             |
 | Comments toggle         | Convenience dbAcl                     | Superseded if `export function comments` exists                |
 | The door (landing card) | Controls app visibility               | Unchanged                                                      |
-| Admin mode              | Owner → `access: "owner"`             | Same + access fn enforcement suppressed                        |
+| Admin mode              | Owner → `access: "override"`          | Same + access fn enforcement suppressed                        |
 | Clone / remix           | Controls code copying                 | Unchanged                                                      |
 
 ---

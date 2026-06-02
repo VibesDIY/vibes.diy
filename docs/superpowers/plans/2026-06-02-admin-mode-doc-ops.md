@@ -357,7 +357,7 @@ _(was Task 4)_
 
 - Modify: `vibes.diy/pkg/app/components/ResultPreview/PreviewApp.tsx:196-206`
 
-The `onRuntimeReady` effect pushes an eager `viewerChanged` with `access: "owner"` so the iframe doesn't flash read-only. It needs to also read the stored `adminMode` from localStorage and set `access` accordingly — `"owner"` when admin is on, `"editor"` when off.
+The `onRuntimeReady` effect pushes an eager `viewerChanged` with `access: "override"` so the iframe doesn't flash read-only. It needs to also read the stored `adminMode` from localStorage and set `access` accordingly — `"override"` when admin is on, `"editor"` when off.
 
 - [ ] **Step 1: Update the onRuntimeReady effect to read stored adminMode**
 
@@ -370,7 +370,7 @@ useEffect(() => {
     const msg: EvtVibeViewerChanged = {
       type: "vibe.evt.viewerChanged",
       viewer: null,
-      access: "owner",
+      access: "override",
     };
     srvVibeSandbox.pushViewerChanged(msg);
   }) as () => void;
@@ -388,7 +388,7 @@ useEffect(() => {
     const msg: EvtVibeViewerChanged = {
       type: "vibe.evt.viewerChanged",
       viewer: null,
-      access: storedAdmin ? "owner" : "editor",
+      access: storedAdmin ? "override" : "editor",
       isOwner: true,
     };
     srvVibeSandbox.pushViewerChanged(msg);
@@ -396,7 +396,7 @@ useEffect(() => {
 }, [srvVibeSandbox, ownerHandle, appSlug]);
 ```
 
-This way, on reload with adminMode persisted as "true", the iframe immediately gets `access: "owner"`. When adminMode is off (or not set), it gets `access: "editor"` with `isOwner: true`.
+This way, on reload with adminMode persisted as "true", the iframe immediately gets `access: "override"`. When adminMode is off (or not set), it gets `access: "editor"` with `isOwner: true`.
 
 - [ ] **Step 2: Verify TypeScript compiles**
 
@@ -468,7 +468,7 @@ describe("checkDocAccess adminMode", { timeout: 15000 }, () => {
 
   it("owner with adminMode=true gets access=owner, isOwner=true", async () => {
     const result = await checkDocAccess(vctx, ownerUserId, appSlug, ownerHandle, true);
-    expect(result.access).toBe("owner");
+    expect(result.access).toBe("override");
     expect(result.isOwner).toBe(true);
   });
 

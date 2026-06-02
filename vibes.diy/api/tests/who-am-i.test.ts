@@ -136,7 +136,7 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
     expect(r.viewer?.userHandle).toBe(ownerHandle);
-    expect(r.access).toBe("owner");
+    expect(r.access).toBe("override");
     expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${ownerHandle}/avatar`);
     expect(r.viewer?.avatarUrl.includes("//u/")).toBe(false);
   });

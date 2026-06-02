@@ -12,7 +12,7 @@ function Probe({ onR }: { onR: (r: ReturnType<typeof useViewer>) => void }) {
 
 const baseEnv = {
   viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
-  access: "owner" as const,
+  access: "override" as const,
 };
 
 function renderWith(env: ViewerEnv | undefined): UseViewerResult {
@@ -37,7 +37,7 @@ describe("useViewer", () => {
   it("exposes viewer + access + dbAcls", () => {
     const r = renderWith({ ...baseEnv, dbAcls: { comments: { write: ["members"] } } });
     expect(r.viewer?.userHandle).toBe("alice");
-    expect(r.access).toBe("owner");
+    expect(r.access).toBe("override");
     expect(r.dbAcls.comments.write).toEqual(["members"]);
   });
 
@@ -59,7 +59,7 @@ describe("useViewer", () => {
   });
 
   it("can(write) without dbName collapses for single-db case", () => {
-    const r = renderWith({ viewer: { userHandle: "bob", avatarUrl: "https://api/u/bob/avatar" }, access: "owner" as const });
+    const r = renderWith({ viewer: { userHandle: "bob", avatarUrl: "https://api/u/bob/avatar" }, access: "override" as const });
     expect(r.can("write")).toBe(true);
     const r2 = renderWith({ viewer: null, access: "none" as const });
     expect(r2.can("write")).toBe(false);
@@ -113,11 +113,11 @@ describe("useViewer", () => {
   it("owner with admin on: access is owner, can() bypasses", () => {
     const r = renderWith({
       ...baseEnv,
-      access: "owner" as const,
+      access: "override" as const,
       isOwner: true,
       dbAcls: { restrictedDb: { write: ["submitters"] } },
     });
-    expect(r.access).toBe("owner");
+    expect(r.access).toBe("override");
     expect(r.isOwner).toBe(true);
     expect(r.can("write", "restrictedDb")).toBe(true);
   });

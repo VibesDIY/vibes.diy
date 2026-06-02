@@ -567,7 +567,7 @@ export const viewerPayload = type({
 });
 export type ViewerPayload = typeof viewerPayload.infer;
 
-export const docAccessLevel = type("'owner' | 'editor' | 'viewer' | 'submitter' | 'none'");
+export const docAccessLevel = type("'override' | 'editor' | 'viewer' | 'submitter' | 'none'");
 export type DocAccessLevel = typeof docAccessLevel.infer;
 
 // Request: sandbox → host. Carries (appSlug, ownerHandle) so the host

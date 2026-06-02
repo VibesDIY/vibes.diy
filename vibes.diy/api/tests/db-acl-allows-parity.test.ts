@@ -13,7 +13,7 @@ describe("aclAllows host/client parity", () => {
     { delete: ["editors"] },
     { read: ["members"], write: ["editors"] },
   ];
-  const accesses: DocAccessLevel[] = ["owner", "editor", "viewer", "submitter", "none"];
+  const accesses: DocAccessLevel[] = ["override", "editor", "viewer", "submitter", "none"];
   const caps = ["read", "write", "delete"] as const;
 
   it.each(acls.flatMap((acl) => accesses.flatMap((acc) => caps.map((cap) => ({ acl, acc, cap })))))(

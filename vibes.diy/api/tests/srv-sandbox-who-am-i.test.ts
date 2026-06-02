@@ -70,7 +70,7 @@ describe("vibeWhoAmI host handler", () => {
         type: "vibe.res.whoAmI" as const,
         tid: "t1",
         viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
-        access: "owner",
+        access: "override",
       } satisfies ResVibeWhoAmI),
     });
 
@@ -89,7 +89,7 @@ describe("vibeWhoAmI host handler", () => {
       tid: "t1",
       type: "vibe.res.whoAmI",
       viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
-      access: "owner",
+      access: "override",
     });
   });
 

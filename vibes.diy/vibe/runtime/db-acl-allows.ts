@@ -9,12 +9,12 @@ export interface DbAcl {
   delete?: DbAclSubject[];
 }
 
-export const canRead = (level: DocAccessLevel): boolean => level === "owner" || level === "editor" || level === "viewer";
+export const canRead = (level: DocAccessLevel): boolean => level === "override" || level === "editor" || level === "viewer";
 
-export const canWrite = (level: DocAccessLevel): boolean => level === "owner" || level === "editor" || level === "submitter";
+export const canWrite = (level: DocAccessLevel): boolean => level === "override" || level === "editor" || level === "submitter";
 
 export function inGroup(level: DocAccessLevel, group: DbAclSubject): boolean {
-  if (level === "owner") return true;
+  if (level === "override") return true;
   switch (group) {
     case "members":
       return level === "editor" || level === "viewer" || level === "submitter";
