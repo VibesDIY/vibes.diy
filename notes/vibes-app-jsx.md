@@ -194,7 +194,7 @@ function ChannelView({ name }) {
 Key rules:
 - Channel name = database name. Use descriptive names (`general`, `dev`, `announcements`).
 - `access.hasChannel(channelName)` — hide channels the user cannot access.
-- `can('write') && access.hasChannel(channelName)` — hide compose UI for read-only channels.
+- `viewer && access.hasChannel(channelName)` — hide compose UI for channels the user can't write to.
 - `isOwner` from `useViewer()` — gate the owner's "add channel" form.
 - Channel access policies are set in app settings, not in App.jsx.
 - For private channels (where members shouldn't know they exist), only add them to the registry after the owner grants access.
