@@ -64,7 +64,61 @@ Useful greps for recovery-orchestrator markers:
 grep -aE "apply-error|recovery-(start|call-started|call-failed|stream-end|exhausted|build-failed|addendum-failed)" /tmp/vite-dev.log
 ```
 
-## 7. Truncate before each session
+## 7. Browser-driven eval via Chrome MCP
+
+For interactive prompt testing (reviewing generated App.jsx + access.js against prompt doc guidance), use Chrome MCP to submit prompts through the dev server UI.
+
+### Submit a prompt
+
+Navigate to the dev server homepage, fill the textarea using `evaluate_script` with React's native setter pattern (plain `fill` doesn't trigger React state), then click the submit button:
+
+```js
+const textarea = document.querySelector("textarea");
+const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set;
+setter.call(textarea, "YOUR PROMPT");
+textarea.dispatchEvent(new Event("input", { bubbles: true }));
+```
+
+Wait for generation (60-180s), then switch to Code view to inspect App.jsx and access.js.
+
+### Pull source via CLI
+
+```bash
+export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
+npx vibes-diy@latest login --force --api-url https://vite.localhost.vibesdiy.net:8888/api
+npx vibes-diy@latest pull --api-url https://vite.localhost.vibesdiy.net:8888/api \
+  --user-slug jchris APP_SLUG --dir OUTPUT_DIR
+```
+
+Use `NODE_EXTRA_CA_CERTS` (not `NODE_TLS_REJECT_UNAUTHORIZED=0`) for proper mkcert trust.
+
+### Review checklist
+
+- [ ] `viewer` gates write surfaces (not `can("write")`)
+- [ ] `access.hasChannel()` / `access.hasRole()` for permissions (not doc field reads)
+- [ ] `isOwner` for management UI
+- [ ] `<ViewerTag userHandle={doc.authorHandle} />` for author rendering
+- [ ] Stamps `authorHandle` only (no `displayName`/`avatarUrl` on docs)
+- [ ] `user.isOwner` in access.js for owner-gated operations
+- [ ] Channel `_id` deterministic (e.g. `"ch:" + name`)
+- [ ] Channel creation grants creator via `grant.users[user.userHandle]`
+- [ ] No callAI unless prompt asks for AI features
+- [ ] No emojis — SVG icons
+- [ ] `isViewerPending` gate
+- [ ] Components at module scope
+- [ ] camelCase database name
+
+### Standard test prompt
+
+```
+Make a team message board with channels like "announcements", "general",
+and "watercooler". I can create channels and manage who can post where.
+Some channels are open to all members, others are restricted. People
+should only see channels they have access to. Posts show who wrote them
+with their avatar. I can pin or delete any post.
+```
+
+## 8. Truncate before each session
 
 ```sh
 : > /tmp/vite-dev.log
