@@ -189,7 +189,7 @@ Handler in `vibes.diy/api/svc/public/put-asset.ts`. Validates `X-Asset-Grant` (s
 ## CLI
 
 ```
-vibes-diy put-asset <file> [--api-url=...] [--user-slug=...] [--app-slug=...] [--verify-fetch]
+vibes-diy put-asset <file> [--api-url=...] [--handle=...] [--app-slug=...] [--verify-fetch]
 ```
 
 1. Open WS, authenticate (existing device-id flow).

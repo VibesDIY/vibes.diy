@@ -14,7 +14,7 @@ quick-start for future agents working on this package.
 - Logged-in `vibes-diy` CLI (`vibes-diy login`). The harness reuses the same
   device-id keybag — no separate auth.
 - Account has access to the `eval` user slug (default; override via
-  `--user-slug`).
+  `--handle`).
 
 ## Run a single prompt
 
@@ -31,7 +31,7 @@ CLI flags:
 
 - `<promptId>` — positional, matches the `id` field in `prompts/seed.jsonl`.
   Defaults to the first entry.
-- `--user-slug <slug>` — defaults to `eval`.
+- `--handle <slug>` — defaults to `eval`.
 - `--api-url <url>` — defaults to prod (`https://vibes.diy/api`).
 - `--archive-root <path>` — defaults to `./archive`.
 - `--prompts <path>` — defaults to `./prompts/seed.jsonl`.

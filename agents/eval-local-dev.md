@@ -87,7 +87,7 @@ Wait for generation (60-180s), then switch to Code view to inspect App.jsx and a
 export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
 npx vibes-diy@latest login --force --api-url https://vite.localhost.vibesdiy.net:8888/api
 npx vibes-diy@latest pull --api-url https://vite.localhost.vibesdiy.net:8888/api \
-  --user-slug jchris APP_SLUG --dir OUTPUT_DIR
+  --handle jchris APP_SLUG --dir OUTPUT_DIR
 ```
 
 Use `NODE_EXTRA_CA_CERTS` (not `NODE_TLS_REJECT_UNAUTHORIZED=0`) for proper mkcert trust.

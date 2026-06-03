@@ -43,7 +43,7 @@ mkdir -p /tmp/eval-web-cli-$RUN_ID/$CASE-edit && cd $_
 vibes-diy edit <appSlug> "<follow-up prompt>" --dir . 2>&1 | tee edit.log
 ```
 
-If your CLI default userHandle differs from the web account's, pass `--user-slug <slug>` so `ensureChatId` can find the existing chat.
+If your CLI default userHandle differs from the web account's, pass `--handle <slug>` so `ensureChatId` can find the existing chat.
 
 ### 5. Verify
 
@@ -66,7 +66,7 @@ Expect `prompts >= 2` (one from the initial web generate, one from the CLI edit)
 
 ## Pitfalls
 
-- The CLI default userHandle must match the web account's slug. `vibes-diy user-settings` shows the default. If wrong, pass `--user-slug` explicitly.
+- The CLI default userHandle must match the web account's slug. `vibes-diy user-settings` shows the default. If wrong, pass `--handle` explicitly.
 - The generate page may briefly render `/chat/prompt?...` before the appSlug binding lands. Don't extract slugs from the URL until you've confirmed the `/chat/<user>/<app>` pattern.
 - `vibes-diy edit` opens a fresh chat session each call — there's no client-side conversation state, the server reconstructs from `ChatSections`. This is the same as the web 2nd prompt path.
 - For multi-turn evaluation, just call `vibes-diy edit` repeatedly with different follow-ups. Each call appends a `PromptContext` row.

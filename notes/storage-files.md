@@ -118,15 +118,15 @@ HKDF over an EC scalar is cryptographically sound — HKDF treats the IKM as opa
 ```bash
 # 6 KB sanity
 echo -n "tiny" > /tmp/asset-tiny.txt
-tsx vibes-diy/cli/main.ts put-asset /tmp/asset-tiny.txt --api-url=https://pr-NNNN-vibes-diy-v2.jchris.workers.dev/api --user-slug=... --app-slug=... --verify-fetch
+tsx vibes-diy/cli/main.ts put-asset /tmp/asset-tiny.txt --api-url=https://pr-NNNN-vibes-diy-v2.jchris.workers.dev/api --handle=... --app-slug=... --verify-fetch
 
 # 8 MiB multipart
 yes 'x' | head -c 8388608 > /tmp/asset-8m.bin
-tsx vibes-diy/cli/main.ts put-asset /tmp/asset-8m.bin --api-url=... --user-slug=... --app-slug=... --verify-fetch
+tsx vibes-diy/cli/main.ts put-asset /tmp/asset-8m.bin --api-url=... --handle=... --app-slug=... --verify-fetch
 
 # 100 MiB confirmation
 yes 'x' | head -c 104857600 > /tmp/asset-100m.bin
-tsx vibes-diy/cli/main.ts put-asset /tmp/asset-100m.bin --api-url=... --user-slug=... --app-slug=... --verify-fetch
+tsx vibes-diy/cli/main.ts put-asset /tmp/asset-100m.bin --api-url=... --handle=... --app-slug=... --verify-fetch
 ```
 
 Tail the worker during each: should see exactly one `put-asset` log line per upload, no `R2ToS3Api.*` errors. The 100 MiB run is the proof that we've actually escaped the 1 MiB WS message ceiling for blob uploads.
