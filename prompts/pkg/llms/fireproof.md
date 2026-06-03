@@ -318,13 +318,13 @@ function App() {
 
 The AI agent writes the access function (so it knows the role names) and writes the UI (so it knows which roles gate which components). The `access` object is the bridge — it lets the UI reflect server-enforced permissions without duplicating the logic.
 
-### Complete example: Team announcements with roles and channels
+### Complete example: Team announcements with channels
 
-This example shows the full round-trip — access.js declares roles, channels, and grants; App.jsx reads them back via `access`. Key details:
+This example shows the full round-trip — access.js declares channels and grants; App.jsx reads them back via `access`. Key details:
 
-- **Channel grant bootstrap:** A `channelSetup` document uses `grant.public` so all members can read, and `grant.roles` so admins and posters can write to specific channels.
-- **Admin bootstrap:** The app owner is always implicitly in every role. The first `roleGrant` document can only be written by the owner (via `ctx.requireRole("admin")`), who then grants admin to others.
-- **All write surfaces** are gated with `can("write")` (membership) alongside `access.hasRole()`/`access.hasChannel()` (permissions).
+- **Owner bootstrap:** `user.isOwner` gates management operations (channel setup, role grants, moderation). No bootstrap problem — the owner can always manage without needing a role granted first.
+- **Channel grant:** A `channelSetup` document uses `grant.public` so all members can read, and `grant.roles` so posters can write to specific channels.
+- **All write surfaces** are gated with `can("write")` (membership) alongside `isOwner` or `access.hasChannel()` (permissions).
 - **`ViewerTag`** takes `ownerHandle` (not `userHandle`) when rendering another user.
 
 access.js
@@ -334,18 +334,18 @@ export function announcements(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "sign in" };
 
   if (doc.type === "channelSetup") {
-    ctx.requireRole("admin");
+    if (!user.isOwner) throw { forbidden: "owner only" };
     return {
       channels: [doc.channel],
       grant: {
         public: [doc.channel],
-        roles: { admin: [doc.channel], poster: [doc.channel] },
+        roles: { poster: [doc.channel] },
       },
     };
   }
 
   if (doc.type === "roleGrant") {
-    ctx.requireRole("admin");
+    if (!user.isOwner) throw { forbidden: "owner only" };
     return { members: { [doc.role]: [doc.userHandle] } };
   }
 
@@ -359,7 +359,7 @@ export function announcements(doc, oldDoc, user, ctx) {
 }
 ```
 
-App.jsx — `access.hasRole()` and `access.hasChannel()` gate the UI based on what the access function declared:
+App.jsx — `isOwner` and `access.hasChannel()` gate the UI based on what the access function declared:
 
 ```jsx
 import React from "react";
@@ -367,7 +367,7 @@ import { useFireproof } from "use-fireproof";
 import { useViewer } from "use-vibes";
 
 export default function App() {
-  const { viewer, can, isViewerPending, ViewerTag } = useViewer();
+  const { viewer, can, isOwner, isViewerPending, ViewerTag } = useViewer();
   const { database, useLiveQuery, access } = useFireproof("announcements");
 
   const { docs: posts } = useLiveQuery("type", { key: "post" });
@@ -405,8 +405,8 @@ export default function App() {
         </form>
       )}
 
-      {/* membership + role gate — admin-only controls */}
-      {can("write") && access.hasRole("admin") && (
+      {/* owner-only management */}
+      {isOwner && (
         <button onClick={() => database.put({ type: "roleGrant", role: "poster", userHandle: "newUser" })}>
           Grant poster role
         </button>
@@ -416,7 +416,7 @@ export default function App() {
         <div key={p._id}>
           <ViewerTag ownerHandle={p.authorHandle} />
           <p>{p.body}</p>
-          {can("write") && access.hasRole("admin") && <button onClick={() => database.del(p._id)}>Delete</button>}
+          {isOwner && <button onClick={() => database.del(p._id)}>Delete</button>}
         </div>
       ))}
     </div>
@@ -424,7 +424,7 @@ export default function App() {
 }
 ```
 
-The pattern: `can("write")` is the door (membership). `access.hasRole()` and `access.hasChannel()` are the room (what you can do once inside). The access function is the server-side authority — the UI just reflects its decisions.
+The pattern: `can("write")` is the door (membership). `access.hasChannel()` is the room (what you can do once inside). `isOwner` gates management operations — no bootstrap problem, the owner can always manage. Real apps can graduate to `access.hasRole("moderator")` when they need to delegate management to non-owners.
 
 ---
 

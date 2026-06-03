@@ -74,11 +74,7 @@ function CommentThread() {
     await database.put({
       body: body.trim(),
       createdAt: Date.now(),
-      // Stamp the viewer's identity at write time. Other users will
-      // render from these fields — no need to look anything up later.
       authorHandle: viewer.userHandle,
-      authorDisplayName: viewer.displayName ?? viewer.userHandle,
-      authorAvatarUrl: viewer.avatarUrl,
     });
     setBody("");
   }
@@ -88,8 +84,7 @@ function CommentThread() {
       <ul>
         {comments.map((c) => (
           <li key={c._id}>
-            <img src={c.authorAvatarUrl} alt={c.authorHandle} className="avatar" />
-            <strong>{c.authorDisplayName}</strong>
+            <ViewerTag ownerHandle={c.authorHandle} />
             <p>{c.body}</p>
           </li>
         ))}
@@ -122,9 +117,9 @@ function CommentThread() {
 
 Key points:
 
-- **Write-time stamping** — the doc carries the author info, not a foreign-key lookup. Old comments keep working even if the author later deletes their account.
-- **`avatarUrl` is stable** — if the author changes their avatar tomorrow, every historical comment shows the new image because the URL stays the same, the bytes change.
-- **One source of identity** — never store the viewer's user ID, only `userHandle` + `displayName` + `avatarUrl`. The trio is everything a renderer needs.
+- **Stamp `authorHandle` at write time** — persist the author's handle on the doc. Render with `<ViewerTag ownerHandle={authorHandle} />` which resolves display name and avatar automatically.
+- **`avatarUrl` is stable** — if the author changes their avatar, the URL stays the same and the bytes update. ViewerTag handles this for you.
+- **One source of identity** — persist `authorHandle` on the doc. ViewerTag does the rest.
 
 ## Notes
 
