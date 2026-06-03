@@ -1,12 +1,13 @@
 import { assert, beforeAll, describe, expect, it } from "vitest";
 import { eq, and } from "drizzle-orm";
-import { Result, TestWSPair } from "@adviser/cement";
+import { Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
-import { calcEntryPointUrl, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
+import { calcEntryPointUrl, CFInject, cfServe, noopCache, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { isResEnsureAppSlugOk, parseArray, fileSystemItem } from "@vibes.diy/api-types";
 import type { AccessDescriptor, FileSystemItem } from "@vibes.diy/api-types";
+import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 const ACCESS_JS_CHAT_AND_DEFAULT = `export function chat(doc, oldDoc, user) {
@@ -44,26 +45,48 @@ async function setupCtx(recorder: InvokeRecorder) {
       return recorder.result;
     },
   });
+  const fetchPair = TestFetchPair.create();
   const wsPair = TestWSPair.create();
+
+  fetchPair.server.onServe(async (req: Request) => {
+    return cfServe(
+      req as unknown as CFRequest,
+      {
+        appCtx: ctx.appCtx,
+        cache: noopCache,
+        drizzle: ctx.vibesCtx.sql.db,
+        webSocket: {
+          connections: new Set(),
+          webSocketPair: () => ({
+            client: wsPair.p1,
+            server: wsPair.p2,
+          }),
+        },
+      } as unknown as ExecutionContext & CFInject
+    ) as unknown as Promise<Response>;
+  });
+
   const wsEvento = vibesMsgEvento();
   const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
   ctx.vibesCtx.connections.add(wsSendProvider);
   wsPair.p2.onmessage = (event: MessageEvent) => {
     wsEvento.trigger({ ctx: ctx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
   };
-  return { ctx, wsPair, sthis, deviceCA };
+  return { ctx, wsPair, fetchPair, sthis, deviceCA };
 }
 
 async function mkUser(
   sthis: ReturnType<typeof ensureSuperThis>,
   deviceCA: Awaited<ReturnType<typeof createTestDeviceCA>>,
   wsPair: ReturnType<typeof TestWSPair.create>,
-  seqOffset: number
+  seqOffset: number,
+  fetchFn?: typeof fetch
 ) {
   const user = await createTestUser({ sthis, deviceCA, seqUserId: seqOffset });
   const api = new VibesDiyApi({
     apiUrl: "http://localhost:8787/api",
     ws: wsPair.p1 as unknown as WebSocket,
+    fetch: fetchFn,
     timeoutMs: 10000,
     getToken: async () => Result.Ok(await user.getDashBoardToken()),
   });
@@ -110,9 +133,9 @@ describe("access.js fileSystem invariant (#2188)", { timeout: 30000 }, () => {
   const recorder: InvokeRecorder = { calls: [], result: { allowAnonymous: true } };
 
   beforeAll(async () => {
-    const { ctx, wsPair, sthis, deviceCA } = await setupCtx(recorder);
+    const { ctx, wsPair, fetchPair, sthis, deviceCA } = await setupCtx(recorder);
     appCtx = ctx;
-    const ownerSetup = await mkUser(sthis, deviceCA, wsPair, 2188);
+    const ownerSetup = await mkUser(sthis, deviceCA, wsPair, 2188, fetchPair.client.fetch);
     api = ownerSetup.api;
   }, 30000);
 
@@ -135,5 +158,21 @@ describe("access.js fileSystem invariant (#2188)", { timeout: 30000 }, () => {
     const accessEntry = fsItems.find((item) => item.fileName === "/access.js");
     expect(accessEntry).toBeDefined();
     expect(accessEntry?.mimeType).toBe("text/javascript");
+  });
+
+  it("sandbox serves /access.js?source=true", async () => {
+    const url = calcEntryPointUrl({
+      hostnameBase: ".nowhere",
+      protocol: "http",
+      port: "4711",
+      bindings: { appSlug, ownerHandle, fsId },
+    });
+    // url ends with /~fsId~ (no trailing slash); add /access.js so that
+    // extractHostToBindings resolves the fsId and finds the dev-mode app.
+    const sourceRes = await api.cfg.fetch(`${url}/access.js?source=true`);
+    expect(sourceRes.status).toBe(200);
+    const content = await sourceRes.text();
+    expect(content).toContain("export function chat");
+    expect(content).toContain("export default function");
   });
 });
