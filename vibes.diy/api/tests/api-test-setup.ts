@@ -15,7 +15,7 @@ import {
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { type EvtRequestGrant, isResEnsureAppSlugOk, type SelectedSlotInput, type SlotConfig } from "@vibes.diy/api-types";
 import type { ChatMessage } from "@vibes.diy/call-ai-v2";
-import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
+import { createVibeDiyTestCtx, type CreateVibeDiyTestCtxOpts } from "./vibe-diy-test-ctx.js";
 
 let apiTestIdentityPartition = 0;
 
@@ -28,6 +28,8 @@ export interface CreateApiTestCtxOpts {
    */
   seqUserIdBase?: number;
   notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
+  models?: CreateVibeDiyTestCtxOpts["models"];
+  llmRequest?: CreateVibeDiyTestCtxOpts["llmRequest"];
   /**
    * Override the apiUrl to avoid colliding with the module-level
    * connection cache shared across tests that all use the default host.
@@ -72,6 +74,8 @@ export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise
   const deviceCA = await createTestDeviceCA(sthis);
   const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, {
     notifyRequestGrantChanged: opts.notifyRequestGrantChanged,
+    models: opts.models,
+    llmRequest: opts.llmRequest,
   });
   const seqUserIdBase = opts.seqUserIdBase ?? nextSeqUserIdBase();
   const testUser = await createTestUser({ sthis, deviceCA, seqUserId: seqUserIdBase + 1 });
