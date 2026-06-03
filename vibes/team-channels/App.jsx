@@ -32,7 +32,7 @@ function ChannelPreview({ name, onPick }) {
   const { docs } = useLiveQuery("timestamp", { descending: true, limit: 5 });
   const last = docs[0];
   const avatars = [
-    ...new Map(docs.filter((m) => m.authorAvatarUrl).map((m) => [m.authorUserSlug, m.authorAvatarUrl])).values(),
+    ...new Map(docs.filter((m) => m.authorAvatarUrl).map((m) => [m.authorHandle, m.authorAvatarUrl])).values(),
   ].slice(0, 4);
 
   return (
@@ -55,7 +55,7 @@ function ChannelPreview({ name, onPick }) {
       </div>
       {last ? (
         <p className="text-sm text-[oklch(0.71_0.02_261)] truncate">
-          <span className="text-[oklch(0.87_0.01_258)]">{last.authorDisplayName || last.authorUserSlug || "someone"}: </span>
+          <span className="text-[oklch(0.87_0.01_258)]">{last.authorDisplayName || last.authorHandle || "someone"}: </span>
           {last._files?.image ? "📷 image" : last.text}
         </p>
       ) : (
@@ -101,7 +101,7 @@ function ChannelView({ name, viewer, can }) {
   useEffect(() => {
     if (messages.length > prevCountRef.current) {
       const last = messages[messages.length - 1];
-      if (document.hidden && Notification.permission === "granted" && last?.authorUserSlug !== viewer?.userHandle) {
+      if (document.hidden && Notification.permission === "granted" && last?.authorHandle !== viewer?.userHandle) {
         new Notification(`#${name}`, {
           body: `${last.authorDisplayName || "someone"}: ${last._files?.image ? "📷 sent an image" : last.text}`,
           icon: last.authorAvatarUrl || undefined,
@@ -118,7 +118,7 @@ function ChannelView({ name, viewer, can }) {
     const entry = {
       text: text || "",
       timestamp: Date.now(),
-      authorUserSlug: viewer.userHandle,
+      authorHandle: viewer.userHandle,
       authorDisplayName: viewer.displayName || viewer.userHandle,
       authorAvatarUrl: viewer.avatarUrl,
     };
@@ -139,7 +139,7 @@ function ChannelView({ name, viewer, can }) {
             <li key={m._id} className="text-sm text-[oklch(0.87_0.01_258)] flex gap-3">
               {m.authorAvatarUrl && <img src={m.authorAvatarUrl} alt="" className="w-8 h-8 rounded-full shrink-0" />}
               <div className="min-w-0">
-                <span className="font-semibold text-[oklch(1_0_0)]">{m.authorDisplayName || m.authorUserSlug || "anonymous"}</span>
+                <span className="font-semibold text-[oklch(1_0_0)]">{m.authorDisplayName || m.authorHandle || "anonymous"}</span>
                 <span className="ml-2 text-xs text-[oklch(0.71_0.02_261)]">
                   {m.timestamp ? new Date(m.timestamp).toLocaleTimeString() : ""}
                 </span>

@@ -106,7 +106,7 @@ export const listDmThreadsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqLi
             ? {
                 body: String((latestDoc.data as { body?: unknown }).body ?? ""),
                 createdAt: latestDoc.created,
-                authorUserSlug: String((latestDoc.data as { authorUserSlug?: unknown }).authorUserSlug ?? ""),
+                authorHandle: String((latestDoc.data as { authorHandle?: unknown }).authorHandle ?? ""),
               }
             : undefined,
         };

@@ -13,7 +13,7 @@ interface MsgDoc {
   _id: string;
   _seq?: number;
   body?: string;
-  authorUserSlug?: string;
+  authorHandle?: string;
   createdAt?: string;
 }
 
@@ -51,7 +51,7 @@ export function DmThread({ myUserSlug, otherUserSlug, vibeRef, vibeDiyApi }: DmT
       dbName: "messages",
       doc: {
         body: body.trim(),
-        authorUserSlug: myUserSlug,
+        authorHandle: myUserSlug,
         createdAt: new Date().toISOString(),
         ...(vibeRef ? { vibeRef } : {}),
       },
@@ -67,10 +67,10 @@ export function DmThread({ myUserSlug, otherUserSlug, vibeRef, vibeDiyApi }: DmT
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m) => (
-          <div key={m._id} className={`flex flex-col ${m.authorUserSlug === myUserSlug ? "items-end" : "items-start"}`}>
+          <div key={m._id} className={`flex flex-col ${m.authorHandle === myUserSlug ? "items-end" : "items-start"}`}>
             <div
               className={`max-w-xs px-3 py-2 rounded-2xl text-sm ${
-                m.authorUserSlug === myUserSlug
+                m.authorHandle === myUserSlug
                   ? "bg-blue-500 text-white"
                   : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               }`}

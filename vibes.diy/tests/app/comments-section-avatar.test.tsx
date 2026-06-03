@@ -65,7 +65,7 @@ describe("CommentsSection avatar behavior", () => {
             _id: "comment-1",
             body: "hello",
             authorUserId: "viewer-2",
-            authorUserSlug: "alice",
+            authorHandle: "alice",
             authorDisplay: "Alice",
             authorImageUrl: "https://img.clerk.com/legacy.png",
             createdAt: "2026-01-01T00:00:00.000Z",
@@ -122,12 +122,12 @@ describe("CommentsSection avatar behavior", () => {
     await waitFor(() => expect(putDoc).toHaveBeenCalledTimes(1));
 
     const request = putDoc.mock.calls[0][0] as { doc: Record<string, unknown> };
-    expect(request.doc.authorUserSlug).toBe("commenter-resolved-slug");
+    expect(request.doc.authorHandle).toBe("commenter-resolved-slug");
     expect(request.doc).not.toHaveProperty("authorImageUrl");
   });
 
   it("still posts a comment when Clerk has no username (whoAmI supplies the slug)", async () => {
-    // Codex P2 regression: previously authorUserSlug was derived from
+    // Codex P2 regression: previously authorHandle was derived from
     // user.username, so signed-in users without a Clerk username got
     // undefined and lost their avatar entirely.
     mockUser = {
@@ -146,6 +146,6 @@ describe("CommentsSection avatar behavior", () => {
     await waitFor(() => expect(putDoc).toHaveBeenCalledTimes(1));
 
     const request = putDoc.mock.calls[0][0] as { doc: Record<string, unknown> };
-    expect(request.doc.authorUserSlug).toBe("commenter-resolved-slug");
+    expect(request.doc.authorHandle).toBe("commenter-resolved-slug");
   });
 });

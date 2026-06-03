@@ -239,7 +239,7 @@ export const dmThreadItem = type({
   "latestMessage?": type({
     body: "string",
     createdAt: "string",
-    authorUserSlug: "string",
+    authorHandle: "string",
   }),
 });
 export type DmThreadItem = typeof dmThreadItem.infer;

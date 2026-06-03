@@ -54,7 +54,7 @@ const v2Exemplar: ProbeVariant = {
       "- ImgGen: `<ImgGen prompt='…' />` renders a generated illustration tile.",
       "",
       "Example enrichedPrompt — for the user request 'Build a comment thread under each post':",
-      'The app writes Fireproof docs of shape `{ type: "comment", postId, body, authorUserSlug, authorDisplayName, authorAvatarUrl, createdAt }` to the "comments" database, and every viewer sees new comments stream in live via `useLiveQuery("postId")`. When the user submits a comment, `callAI` is called once on the body with schema `{ properties: { toxic: { type: "boolean" } } }` to flag spam, and the result is saved on the doc; toxic-flagged comments render collapsed. The Submit button and the comment textarea are hidden when `useViewer().can("write")` is false — non-owners see only the live thread and an "Owners can post replies" line in place of the form.',
+      'The app writes Fireproof docs of shape `{ type: "comment", postId, body, authorHandle, authorDisplayName, authorAvatarUrl, createdAt }` to the "comments" database, and every viewer sees new comments stream in live via `useLiveQuery("postId")`. When the user submits a comment, `callAI` is called once on the body with schema `{ properties: { toxic: { type: "boolean" } } }` to flag spam, and the result is saved on the doc; toxic-flagged comments render collapsed. The Submit button and the comment textarea are hidden when `useViewer().can("write")` is false — non-owners see only the live thread and an "Owners can post replies" line in place of the form.',
       "",
     ].join("\n");
     return brief + baseline;
