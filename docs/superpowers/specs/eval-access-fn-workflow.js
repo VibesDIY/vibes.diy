@@ -68,15 +68,38 @@ const REPORT_SCHEMA = {
   required: ["summary", "setAverages", "tripleRunVariance", "topFindings"],
 };
 
+const PROMPT_LIST_SCHEMA = {
+  type: "object",
+  properties: {
+    prompts: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          set: { type: "string" },
+          category: { type: "string" },
+          triple: { type: "boolean" },
+          prompt: { type: "string" },
+        },
+        required: ["id", "set", "triple", "prompt"],
+      },
+    },
+  },
+  required: ["prompts"],
+};
+
 // Build the run list: each prompt once, plus triple-run prompts get 2 extra
-const promptData = JSON.parse(
-  await agent(`Read the file at ${PROMPTS_PATH} and return its full JSON contents as a string.`, {
+const promptData = await agent(
+  `Read the file at ${PROMPTS_PATH} and return its contents. The file is a JSON object with a "prompts" array. Return every prompt entry exactly as-is — do not summarize, truncate, or omit any entries.`,
+  {
     label: "read-prompts",
     phase: "Generate",
-  })
+    schema: PROMPT_LIST_SCHEMA,
+  }
 );
 
-const prompts = promptData.prompts || promptData;
+const prompts = promptData.prompts;
 const runs = [];
 for (const p of prompts) {
   const count = p.triple ? 3 : 1;

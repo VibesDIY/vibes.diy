@@ -1,0 +1,36 @@
+{
+  "runDate": "2026-06-03",
+  "agents": 122,
+  "scoredRuns": 60,
+  "durationMs": 785354,
+  "summary": "Across 60 scored eval runs (24 as-is, 24 enhanced, 12 new-capability), the system produces a bimodal distribution: 42% score 5 (fully working) but 35% score 1-2 (broken/non-functional), yielding an overall mean of 3.37. access.js is emitted 100% of the time across all sets, with isOwner and ViewerTag as the dominant patterns (75-100% and 75-92% adoption respectively). The primary reliability problem is not prompt comprehension but generation integrity -- 7 of 12 score-1 results are catastrophically truncated App.jsx files (under 90 lines, missing export default), and another 8 low scores stem from stub/placeholder components that accept props but render static text. When generation completes intact, the model demonstrates strong access control design and feature implementation.",
+  "setAverages": {
+    "asIs": 3.54,
+    "enhanced": 3.33,
+    "newCapabilities": 3.08
+  },
+  "tripleRunVariance": [
+    { "id": "brain-dump-asis", "scores": [2, 5, 2], "mean": 3, "range": 3 },
+    { "id": "brain-dump-enh", "scores": [2, 1, 5], "mean": 2.67, "range": 4 },
+    { "id": "meet-up-enh", "scores": [1, 2, 5], "mean": 2.67, "range": 4 },
+    { "id": "focus-timer-asis", "scores": [1, 1, 3], "mean": 1.67, "range": 2 },
+    { "id": "contact-form-new", "scores": [3, 1, 1], "mean": 1.67, "range": 2 },
+    { "id": "survey-new", "scores": [2, 2, 5], "mean": 3, "range": 3 },
+    { "id": "soccer-signup-new", "scores": [5, 1, 5], "mean": 3.67, "range": 4 }
+  ],
+  "accessFnAdoption": {
+    "asIsPercent": 100,
+    "enhancedPercent": 100,
+    "newPercent": 100
+  },
+  "topFindings": [
+    "access.js emitted in 100% of all 60 runs across all three sets, with well-structured validation logic even when App.jsx is broken. isOwner is used in 75-100% of runs per set, ViewerTag in 75-92%. The model has fully internalized the access control contract -- the access.js file is never the failure point.",
+    "When generation completes intact, quality is high: 25 of 60 runs scored 5/5 with fully working features, correct hook usage, coherent UI themes, and proper AI integration via callAI. Standout examples include soccer-signup-new r0 (coach/parent role separation with AI load balancing), maintenance-request-new (per-tenant channel isolation with AI triage), bookmarks-enh (three-tier role model with curator gating via hasRole), and emoji-chef-enh (voting, AI roasting, and owner-only pinning).",
+    "New-capability prompts (Set C) correctly adopt allowAnonymous at 58% -- every prompt that semantically requires anonymous access (contact-form, survey, job-application) emits it. This is a strong signal that the model reads prompt intent and maps it to the right access.js primitive, even for a feature (allowAnonymous) that never appears in Set A or B."
+  ],
+  "bottomFindings": [
+    "Catastrophic truncation is the single largest failure mode: 7 of 12 score-1 results have App.jsx files under 90 lines with no export default, no imports, and no main component -- just a single surviving sub-component fragment.",
+    "Stub/placeholder components are the second failure mode (8 occurrences across scores 1-2): a component is defined but renders only static text like 'Loading...' or 'Composer lands here'. The stub always corresponds to the primary user-facing input feature.",
+    "Triple-run variance is extreme: 4 of 7 triple-run prompts show a range of 4 (scores spanning 1 to 5), meaning the same prompt can produce either a perfect app or a completely broken one. focus-timer-asis is consistently bad (1, 1, 3) -- its multi-timer + phase-switching + stats architecture may exceed a reliable single-generation complexity budget."
+  ]
+}
