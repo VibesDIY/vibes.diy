@@ -419,9 +419,9 @@
   <div class="user-ctx">
     <div class="user-ctx-label">ctx.db</div>
     <div class="user-ctx-fields">
-      <span class="k">put</span>(<span class="v">doc</span>): <span class="v">Promise&lt;{ id, clock }&gt;</span> &nbsp;<span
+      <span class="k">put</span>(<span class="v">doc, opts?</span>): <span class="v">Promise&lt;{ id, clock }&gt;</span> &nbsp;<span
         class="c"
-        >// write a document — runs through access.js if present</span
+        >// write as ctx.userInfo — runs through access.js</span
       ><br />
       <span class="k">get</span>(<span class="v">id</span>): <span class="v">Promise&lt;doc&gt;</span> &nbsp;<span class="c"
         >// read a document by _id</span
@@ -432,6 +432,26 @@
       >
     </div>
   </div>
+
+  <div class="user-ctx">
+    <div class="user-ctx-label">Write identity</div>
+    <div class="user-ctx-fields">
+      <span class="k">ctx.db.put</span>(<span class="v">doc</span>) &nbsp;<span class="c"
+        >// writes as ctx.userInfo.userHandle (the trigger's identity)</span
+      ><br />
+      <span class="k">ctx.db.put</span>(<span class="v">doc</span>, { <span class="k">as</span>: <span class="v">"alice"</span> })
+      &nbsp;<span class="c">// writes as "alice" — only vibe owner can impersonate</span>
+    </div>
+  </div>
+
+  <p class="prose" style="margin: 12px 0 14px">
+    <strong>Identity passthrough.</strong> Every <code>ctx.db.put()</code> writes as a specific <code>userHandle</code>, so the
+    access function always sees a real user — no special system-write knobs needed. The default identity comes from the trigger:
+    <code>onChange</code> passes through the original writer's handle, <code>fetch</code> uses the session-authenticated user, and
+    <code>scheduled</code> defaults to the vibe owner. A handler can override with <code>{ as: userHandle }</code>, but only the
+    vibe owner's code can impersonate — the runtime enforces this. This keeps access.js clean: it validates the same
+    <code>user.userHandle</code> field regardless of whether the write came from the frontend or a backend handler.
+  </p>
 
   <p class="prose" style="margin: 12px 0 14px">
     <strong>Secrets hierarchy.</strong> Secrets resolve with vibe-level overriding account-level overriding platform-level. A vibe
@@ -969,11 +989,12 @@
 <div class="fn-rules">
   <div class="rule amber">
     <div class="rule-header">fetch trigger</div>
-    <span class="route">route:</span> /vibe/{owner}/{app}/api/*<br />
+    <span class="route">route:</span> /vibe/{owner}/{app}/_api/*<br />
     Worker matches URL pattern<br />
     → routes to BackendDO.fetch()<br />
     → handler sees relative path<br /><br />
-    <em style="color: #b45309; font-size: 11px">ctx.userInfo populated from session cookie</em>
+    <span class="grant">write identity:</span> session user<br />
+    <em style="color: #b45309; font-size: 11px">ctx.userInfo from session cookie; db.put writes as that user</em>
   </div>
   <div class="rule green">
     <div class="rule-header">scheduled trigger</div>
@@ -981,15 +1002,17 @@
     interval from config export<br />
     → BackendDO.alarm() invoked<br />
     → re-arms for next tick<br /><br />
-    <em style="color: #065f46; font-size: 11px">ctx.userInfo is null — no user context</em>
+    <span class="grant">write identity:</span> vibe owner<br />
+    <em style="color: #065f46; font-size: 11px">no triggering user — defaults to ownerHandle</em>
   </div>
   <div class="rule blue">
     <div class="rule-header">onChange trigger</div>
-    <span class="route">route:</span> write path → queue/DO<br />
+    <span class="route">route:</span> write path → Worker Queue<br />
     after putDoc stores doc<br />
     → BackendDO.invokeOnChange()<br />
-    → async, non-blocking<br /><br />
-    <em style="color: #1d4ed8; font-size: 11px">ctx.userInfo is the writer's identity</em>
+    → async, reliable delivery<br /><br />
+    <span class="grant">write identity:</span> original writer<br />
+    <em style="color: #1d4ed8; font-size: 11px">passthrough — db.put writes as the user who triggered the change</em>
   </div>
 </div>
 
@@ -1049,10 +1072,11 @@
 
 <p class="prose">
   <strong>ctx.db writes go through access.js.</strong> When <code>ctx.db.put()</code> is called from a backend handler, the write
-  follows the same path as a client write — including access function evaluation if <code>/access.js</code> exists. The backend
-  handler's identity is the system user or the authenticated user who triggered the action (for <code>fetch</code>
-  handlers with session auth). This means access functions govern backend writes the same way they govern frontend writes — there is
-  no backdoor.
+  follows the same path as a client write — including access function evaluation if <code>/access.js</code> exists. The write
+  identity comes from the trigger: <code>onChange</code> passes through the original writer's <code>userHandle</code>,
+  <code>fetch</code> uses the session-authenticated user, and <code>scheduled</code> defaults to the vibe owner. A handler can
+  override with <code>ctx.db.put(doc, { as: "handle" })</code> — only the vibe owner's code can impersonate. The access function
+  always sees a real <code>user.userHandle</code>, never a special system identity. No backdoor, no new API surface on access.js.
 </p>
 
 <!-- ═══════════════════════════════════════════════════════ -->
@@ -1100,10 +1124,12 @@
   <strong>Summary.</strong> <code>/backend.js</code> gives vibes server-side capabilities through three named exports:
   <code>fetch</code> for HTTP triggers (webhooks, OAuth, APIs), <code>scheduled</code> for timer-driven polling (with intervals
   declared in <code>config</code>), and <code>onChange</code> for database-reactive side effects (notifications, external sync). All
-  handlers share a <code>ctx</code> object with database access (<code>ctx.db</code>), hierarchical secrets
-  (<code>ctx.secrets</code>), and user identity (<code>ctx.userInfo</code>). Execution happens in a per-vibe Durable Object
-  (<code>BackendDO</code>) using <code>new Function()</code> for source compilation. Backend access requires KYC verification.
-  Writes from backend handlers go through <code>/access.js</code> the same way client writes do — no backdoor. The file is
-  discovered automatically at push time, following the same pattern as <code>/access.js</code>
+  handlers share a <code>ctx</code> object with database access (<code>ctx.db</code>), app-level secrets (<code>ctx.secrets</code>),
+  and user identity (<code>ctx.userInfo</code>). Writes go through <code>/access.js</code> as the trigger's identity —
+  <code>onChange</code> passes through the original writer, <code>fetch</code> uses the session user,
+  <code>scheduled</code> defaults to the vibe owner. Handlers can override with <code>ctx.db.put(doc, { as: "handle" })</code>. The
+  access function always sees a real <code>userHandle</code>, never a system identity. Execution happens in a per-vibe Durable
+  Object (<code>BackendDO</code>) using <code>new Function()</code>. <code>onChange</code> events are delivered via Worker Queue for
+  reliable retry. The file is discovered automatically at push time, following the same pattern as <code>/access.js</code>
   detection.
 </div>
