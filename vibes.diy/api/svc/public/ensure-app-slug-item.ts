@@ -7,7 +7,6 @@ import {
   EventoResult,
   uint8array2stream,
   to_uint8,
-  exception2Result,
 } from "@adviser/cement";
 import {
   EvtNewFsId,
@@ -25,8 +24,6 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
-import { and, eq, notInArray, sql } from "drizzle-orm";
-import type { AccessDescriptor } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase as unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -36,22 +33,7 @@ import { ensureApps } from "../intern/write-apps.js";
 import { ensureAppMetadata } from "../intern/ensure-app-metadata.js";
 import { ensurePushSeededChat } from "../intern/ensure-push-seeded-chat.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
-import { extractExportSource } from "./access-function.js";
-
-const JS_PROTO_NAMES = new Set([
-  "toString",
-  "valueOf",
-  "constructor",
-  "hasOwnProperty",
-  "isPrototypeOf",
-  "propertyIsEnumerable",
-  "toLocaleString",
-  "__proto__",
-  "__defineGetter__",
-  "__defineSetter__",
-  "__lookupGetter__",
-  "__lookupSetter__",
-]);
+import { processAccessBindings } from "../intern/process-access-bindings.js";
 
 // Build a preAllocate-friendly prompt from pushed code. Picks the first
 // code-block (typically App.jsx), takes the first 50 lines, and labels
@@ -153,270 +135,16 @@ export async function ensureAppSlugItem(
     return Result.Err(`Expected ensureApps to return ResEnsureAppSlugOk on success, got ${JSON.stringify(ensured)}`);
   }
 
-  // Upsert AccessFunctionBindings if access.js was pushed
-  const accessJsEntry = fullFileSystem.find(
-    (e) => e.vibeFileItem.filename === "/access.js" || e.vibeFileItem.filename.endsWith("/access.js")
-  );
-
-  const tAfb = vctx.sql.tables.accessFunctionBindings;
-
-  if (accessJsEntry) {
-    const cid = accessJsEntry.storage.cid;
-    if (!cid) {
-      console.error(`ensureAppSlugItem: access.js has no CID for ${ensured.ownerHandle}/${ensured.appSlug}`);
-    } else {
-      try {
-        // Extract named export function names via regex from in-memory content
-        const item = accessJsEntry.vibeFileItem;
-        const accessJsSource: string | undefined =
-          item.type === "code-block" || item.type === "str-asset-block" ? (item.content as string) : undefined;
-
-        const exportNames: string[] = [];
-        let hasDefaultExport = false;
-        if (accessJsSource) {
-          const fnPattern = /export\s+function\s+(\w+)/g;
-          let match: RegExpExecArray | null;
-          while ((match = fnPattern.exec(accessJsSource)) !== null) {
-            const name = match[1];
-            if (name && !JS_PROTO_NAMES.has(name) && name !== "default") {
-              exportNames.push(name);
-            }
-          }
-          const asPattern = /export\s*\{\s*\w+\s+as\s+["']([^"']+)["']\s*\}/g;
-          while ((match = asPattern.exec(accessJsSource)) !== null) {
-            const name = match[1];
-            if (name && !JS_PROTO_NAMES.has(name)) {
-              exportNames.push(name);
-            }
-          }
-          hasDefaultExport =
-            /export\s+default\s+function/.test(accessJsSource) ||
-            /export\s+default\s+\(/.test(accessJsSource) ||
-            /export\s+default\s+\w+\s*=>/.test(accessJsSource);
-        }
-        if (hasDefaultExport) {
-          exportNames.push("*");
-        }
-
-        // Snapshot existing CIDs before upsert to detect changes for backfill
-        const existingBindings = await vctx.sql.db
-          .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
-          .from(tAfb)
-          .where(and(eq(tAfb.ownerHandle, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
-        const oldCids = new Map(existingBindings.map((b) => [b.dbName, b.accessFnCid]));
-
-        if (exportNames.length > 0) {
-          // Upsert one row per export
-          for (const dbName of exportNames) {
-            await vctx.sql.db
-              .insert(tAfb)
-              .values({
-                ownerHandle: ensured.ownerHandle,
-                appSlug: ensured.appSlug,
-                dbName,
-                accessFnCid: cid,
-                accessFnAssetUri: accessJsEntry.storage.getURL,
-                updated: new Date().toISOString(),
-              })
-              .onConflictDoUpdate({
-                target: [tAfb.ownerHandle, tAfb.appSlug, tAfb.dbName],
-                set: {
-                  accessFnCid: cid,
-                  accessFnAssetUri: accessJsEntry.storage.getURL,
-                  updated: new Date().toISOString(),
-                },
-              });
-          }
-
-          // Delete stale rows (exports removed from access.js)
-          await vctx.sql.db
-            .delete(tAfb)
-            .where(
-              and(
-                eq(tAfb.ownerHandle, ensured.ownerHandle),
-                eq(tAfb.appSlug, ensured.appSlug),
-                notInArray(tAfb.dbName, exportNames)
-              )
-            );
-
-          // Backfill AccessFnOutputs for dbNames where CID changed or is new (#2101)
-          const invokeAccessFn = vctx.invokeAccessFn;
-          if (invokeAccessFn) {
-            const changedDbNames = exportNames.filter((name) => oldCids.get(name) !== cid);
-            if (changedDbNames.length > 0) {
-              // Fetch source once — same CID for all exports from this access.js.
-              // Prefer in-memory content (already available), fall back to storage.
-              let backfillSource: string | undefined = accessJsSource;
-              if (!backfillSource && accessJsEntry.storage.getURL) {
-                const rFetch = await vctx.storage.fetch(accessJsEntry.storage.getURL);
-                if (rFetch.type === "fetch.ok") {
-                  const reader = rFetch.data.getReader();
-                  const chunks: Uint8Array[] = [];
-                  for (;;) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    if (value) chunks.push(value);
-                  }
-                  const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-                  const merged = new Uint8Array(totalLength);
-                  let offset = 0;
-                  for (const chunk of chunks) {
-                    merged.set(chunk, offset);
-                    offset += chunk.length;
-                  }
-                  backfillSource = new TextDecoder().decode(merged);
-                }
-              }
-
-              if (backfillSource) {
-                const tDocs = vctx.sql.tables.appDocuments;
-                const tOutputs = vctx.sql.tables.accessFnOutputs;
-
-                // Expand "*" to all databases that lack a named binding
-                const namedExportNames = exportNames.filter((n) => n !== "*");
-                const expandedDbNames: string[] = [];
-                for (const dbName of changedDbNames) {
-                  if (dbName === "*") {
-                    const distinctDbs = await vctx.sql.db
-                      .selectDistinct({ dbName: tDocs.dbName })
-                      .from(tDocs)
-                      .where(and(eq(tDocs.ownerHandle, ensured.ownerHandle), eq(tDocs.appSlug, ensured.appSlug)));
-                    for (const row of distinctDbs) {
-                      if (!namedExportNames.includes(row.dbName)) {
-                        expandedDbNames.push(row.dbName);
-                      }
-                    }
-                  } else {
-                    expandedDbNames.push(dbName);
-                  }
-                }
-
-                for (const dbName of expandedDbNames) {
-                  const t0 = Date.now();
-                  let docsTotal = 0;
-                  let docsUpserted = 0;
-                  let docsForbiddenSkipped = 0;
-                  let invokeErrors = 0;
-                  let upsertErrors = 0;
-
-                  const allRows = await vctx.sql.db
-                    .select({ docId: tDocs.docId, data: tDocs.data, deleted: tDocs.deleted })
-                    .from(tDocs)
-                    .where(
-                      and(eq(tDocs.ownerHandle, ensured.ownerHandle), eq(tDocs.appSlug, ensured.appSlug), eq(tDocs.dbName, dbName))
-                    )
-                    .orderBy(sql`${tDocs.docId}, ${tDocs.seq}`);
-
-                  const latest = new Map<string, (typeof allRows)[0]>();
-                  for (const row of allRows) {
-                    latest.set(row.docId, row);
-                  }
-
-                  // Use the right function for this dbName
-                  const isWildcardExpanded = !namedExportNames.includes(dbName);
-                  const dbSource = isWildcardExpanded
-                    ? extractExportSource(backfillSource, "*")
-                    : extractExportSource(backfillSource, dbName);
-                  const effectiveSource = dbSource ?? backfillSource;
-
-                  for (const [docId, row] of latest) {
-                    if (row.deleted === 1) continue;
-                    docsTotal++;
-
-                    const rInvoke = await exception2Result(() =>
-                      invokeAccessFn({
-                        cid,
-                        doc: { ...(row.data as Record<string, unknown>), _id: docId },
-                        oldDoc: null,
-                        user: null,
-                        source: effectiveSource,
-                        grantState: { members: {}, roleGrants: {}, userGrants: {} },
-                      })
-                    );
-
-                    if (rInvoke.isErr()) {
-                      invokeErrors++;
-                      console.warn(
-                        `backfill: access fn threw for ${ensured.ownerHandle}/${ensured.appSlug}/${dbName}/${docId}:`,
-                        rInvoke.Err()
-                      );
-                      continue;
-                    }
-
-                    const invokeResult = rInvoke.Ok();
-                    if ("forbidden" in invokeResult) {
-                      docsForbiddenSkipped++;
-                      continue;
-                    }
-
-                    const accessResult = invokeResult as AccessDescriptor;
-                    const outputHasGrants =
-                      (accessResult.members && Object.keys(accessResult.members).length > 0) ||
-                      (accessResult.grant?.users && Object.keys(accessResult.grant.users).length > 0) ||
-                      (accessResult.grant?.roles && Object.keys(accessResult.grant.roles).length > 0) ||
-                      (accessResult.grant?.public && accessResult.grant.public.length > 0)
-                        ? 1
-                        : 0;
-
-                    const rUpsert = await exception2Result(() =>
-                      vctx.sql.db
-                        .insert(tOutputs)
-                        .values({
-                          ownerHandle: ensured.ownerHandle,
-                          appSlug: ensured.appSlug,
-                          dbName,
-                          docId,
-                          fnCid: cid,
-                          output: JSON.stringify(accessResult),
-                          hasGrants: outputHasGrants,
-                        })
-                        .onConflictDoUpdate({
-                          target: [tOutputs.ownerHandle, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
-                          set: {
-                            fnCid: cid,
-                            output: JSON.stringify(accessResult),
-                            hasGrants: outputHasGrants,
-                          },
-                        })
-                    );
-                    if (rUpsert.isErr()) {
-                      upsertErrors++;
-                      console.warn(
-                        `backfill: output upsert failed for ${ensured.ownerHandle}/${ensured.appSlug}/${dbName}/${docId}:`,
-                        rUpsert.Err()
-                      );
-                    } else {
-                      docsUpserted++;
-                    }
-                  }
-
-                  console.info(
-                    `backfill: ${ensured.ownerHandle}/${ensured.appSlug}/${dbName} cid=${cid.slice(0, 8)}` +
-                      ` total=${docsTotal} upserted=${docsUpserted} forbidden=${docsForbiddenSkipped}` +
-                      ` invokeErr=${invokeErrors} upsertErr=${upsertErrors} elapsed=${Date.now() - t0}ms`
-                  );
-                }
-              }
-            }
-          }
-        } else {
-          // No valid exports → delete all bindings
-          await vctx.sql.db.delete(tAfb).where(and(eq(tAfb.ownerHandle, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
-        }
-      } catch (err: unknown) {
-        console.warn(`ensureAppSlugItem: failed to process access.js for ${ensured.ownerHandle}/${ensured.appSlug}:`, err);
-      }
-    }
-  } else {
-    // No access.js → delete all bindings for this app
-    try {
-      await vctx.sql.db.delete(tAfb).where(and(eq(tAfb.ownerHandle, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
-    } catch (err: unknown) {
-      console.warn(
-        `ensureAppSlugItem: failed to clean up AccessFunctionBindings for ${ensured.ownerHandle}/${ensured.appSlug}:`,
-        err
-      );
-    }
+  const rAccessBindings = await processAccessBindings(vctx, {
+    ownerHandle: ensured.ownerHandle,
+    appSlug: ensured.appSlug,
+    fullFileSystem,
+  });
+  if (rAccessBindings.isErr()) {
+    console.warn(
+      `ensureAppSlugItem: access binding processing failed for ${ensured.ownerHandle}/${ensured.appSlug}:`,
+      rAccessBindings.Err()
+    );
   }
 
   // let wrapperUrl: string;
