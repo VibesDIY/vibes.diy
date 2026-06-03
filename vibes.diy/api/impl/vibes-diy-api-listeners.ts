@@ -1,9 +1,11 @@
 import {
   EvtRequestGrant,
   EvtUserNotification,
+  EvtViewerGrantsChanged,
   isEvtDocChanged,
   isEvtRequestGrant,
   isEvtUserNotification,
+  isEvtViewerGrantsChanged,
   msgBase,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
@@ -59,6 +61,15 @@ export function attachRequestGrantToConnection(conn: VibeDiyApiConnection, fn: (
   });
 }
 
+export function attachViewerGrantsChangedToConnection(
+  conn: VibeDiyApiConnection,
+  fn: (evt: EvtViewerGrantsChanged) => void
+): ListenerDetacher {
+  return attachPayloadListener(conn, isEvtViewerGrantsChanged, (payload) => {
+    fn(payload);
+  });
+}
+
 export function attachUserNotificationToConnection(
   conn: VibeDiyApiConnection,
   fn: (evt: EvtUserNotification) => void
@@ -74,13 +85,17 @@ export interface ReplayConnectionStateParams {
   docChangedDetachers: Map<(ownerHandle: string, appSlug: string, dbName: string, docId: string) => void, ListenerDetacher>;
   requestGrantListeners: ((evt: EvtRequestGrant) => void)[];
   requestGrantDetachers: Map<(evt: EvtRequestGrant) => void, ListenerDetacher>;
+  viewerGrantsListeners: ((evt: EvtViewerGrantsChanged) => void)[];
+  viewerGrantsDetachers: Map<(evt: EvtViewerGrantsChanged) => void, ListenerDetacher>;
   userNotificationListeners: ((evt: EvtUserNotification) => void)[];
   userNotificationDetachers: Map<(evt: EvtUserNotification) => void, ListenerDetacher>;
   docSubscriptions: { ownerHandle: string; appSlug: string; dbName: string }[];
   requestGrantSubscriptions: { ownerHandle: string; appSlug: string }[];
+  viewerGrantsSubscriptions: { ownerHandle: string; appSlug: string }[];
   userNotificationSubscribed: boolean;
   subscribeDocs: (sub: { ownerHandle: string; appSlug: string; dbName: string }) => Promise<unknown>;
   subscribeRequestGrants: (sub: { ownerHandle: string; appSlug: string }) => Promise<unknown>;
+  subscribeViewerGrants: (sub: { ownerHandle: string; appSlug: string }) => Promise<unknown>;
   subscribeUserNotifications: (req: object) => Promise<unknown>;
 }
 
@@ -91,13 +106,17 @@ export function replayConnectionState(params: ReplayConnectionStateParams): void
     docChangedDetachers,
     requestGrantListeners,
     requestGrantDetachers,
+    viewerGrantsListeners,
+    viewerGrantsDetachers,
     userNotificationListeners,
     userNotificationDetachers,
     docSubscriptions,
     requestGrantSubscriptions,
+    viewerGrantsSubscriptions,
     userNotificationSubscribed,
     subscribeDocs,
     subscribeRequestGrants,
+    subscribeViewerGrants,
     subscribeUserNotifications,
   } = params;
 
@@ -115,6 +134,13 @@ export function replayConnectionState(params: ReplayConnectionStateParams): void
     requestGrantDetachers.set(fn, detach);
   }
 
+  // Re-attach all onViewerGrantsChanged listeners to the new connection
+  for (const fn of viewerGrantsListeners) {
+    viewerGrantsDetachers.get(fn)?.();
+    const detach = attachViewerGrantsChangedToConnection(conn, fn);
+    viewerGrantsDetachers.set(fn, detach);
+  }
+
   // Re-subscribe to all doc subscriptions (server needs to know again)
   for (const sub of docSubscriptions) {
     subscribeDocs(sub).catch((_e: unknown) => {
@@ -125,6 +151,13 @@ export function replayConnectionState(params: ReplayConnectionStateParams): void
   // Re-subscribe to all request-grant subscriptions (server needs to know again)
   for (const sub of requestGrantSubscriptions) {
     subscribeRequestGrants(sub).catch((_e: unknown) => {
+      /* re-subscribe best-effort; next reconnect will retry */
+    });
+  }
+
+  // Re-subscribe to all viewer-grant subscriptions (server needs to know again)
+  for (const sub of viewerGrantsSubscriptions) {
+    subscribeViewerGrants(sub).catch((_e: unknown) => {
       /* re-subscribe best-effort; next reconnect will retry */
     });
   }

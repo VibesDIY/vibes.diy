@@ -33,7 +33,13 @@ const RequestGrantEvt = type({
   }).and(type("Record<string, unknown>")),
 }).and(type("Record<string, unknown>"));
 
-const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt);
+const ViewerGrantsChangedEvt = type({
+  type: "'vibes.diy.evt-viewer-grants-changed'",
+  ownerHandle: "string",
+  appSlug: "string",
+});
+
+const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt).or(ViewerGrantsChangedEvt);
 
 const DocNotifyNotify = type({
   action: "'notify'",
@@ -129,7 +135,12 @@ export class DocNotify implements DurableObject {
       msg.evt.type === "vibes.diy.evt-request-grant"
         ? `${msg.evt.grant.ownerHandle}/${msg.evt.grant.appSlug}`
         : `${msg.evt.ownerHandle}/${msg.evt.appSlug}`;
-    const eventDetail = msg.evt.type === "vibes.diy.evt-request-grant" ? `op:${msg.evt.op}` : `docId:${msg.evt.docId.slice(0, 8)}`;
+    const eventDetail =
+      msg.evt.type === "vibes.diy.evt-request-grant"
+        ? `op:${msg.evt.op}`
+        : msg.evt.type === "vibes.diy.evt-viewer-grants-changed"
+          ? "viewer-grants"
+          : `docId:${msg.evt.docId.slice(0, 8)}`;
     const targets = [...subs];
     const shouldLogVerbose = this.env.ENVIRONMENT !== "prod";
     if (shouldLogVerbose) {

@@ -13,7 +13,13 @@ import {
   assemblePromptPayload,
 } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
-import { type EvtRequestGrant, isResEnsureAppSlugOk, type SelectedSlotInput, type SlotConfig } from "@vibes.diy/api-types";
+import {
+  type EvtRequestGrant,
+  type EvtViewerGrantsChanged,
+  isResEnsureAppSlugOk,
+  type SelectedSlotInput,
+  type SlotConfig,
+} from "@vibes.diy/api-types";
 import type { ChatMessage } from "@vibes.diy/call-ai-v2";
 import { createVibeDiyTestCtx, type CreateVibeDiyTestCtxOpts } from "./vibe-diy-test-ctx.js";
 
@@ -28,6 +34,7 @@ export interface CreateApiTestCtxOpts {
    */
   seqUserIdBase?: number;
   notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
+  notifyViewerGrantsChanged?(evt: EvtViewerGrantsChanged, senderConnId: string): Promise<void>;
   models?: CreateVibeDiyTestCtxOpts["models"];
   llmRequest?: CreateVibeDiyTestCtxOpts["llmRequest"];
   /**
@@ -74,6 +81,7 @@ export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise
   const deviceCA = await createTestDeviceCA(sthis);
   const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, {
     notifyRequestGrantChanged: opts.notifyRequestGrantChanged,
+    notifyViewerGrantsChanged: opts.notifyViewerGrantsChanged,
     models: opts.models,
     llmRequest: opts.llmRequest,
   });

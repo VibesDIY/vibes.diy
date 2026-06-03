@@ -13,6 +13,7 @@ import { CfCacheIf, VibesApiSQLCtx } from "./types.js";
 import {
   type AccessDescriptor,
   type UserContext,
+  type EvtViewerGrantsChanged,
   type EvtRequestGrant,
   type EvtUserNotification,
   LLMEnforced,
@@ -56,6 +57,9 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
   registerRequestGrantSubscription?(subscriptionKey: string): Promise<void>;
   deregisterRequestGrantSubscription?(subscriptionKey: string): Promise<void>;
+  notifyViewerGrantsChanged?(evt: EvtViewerGrantsChanged, senderConnId: string): Promise<void>;
+  registerViewerGrantsSubscription?(subscriptionKey: string): Promise<void>;
+  deregisterViewerGrantsSubscription?(subscriptionKey: string): Promise<void>;
   notifyUser?(userId: string, evt: EvtUserNotification, senderConnId: string): Promise<void>;
   registerUserSubscription?(userId: string): Promise<void>;
   deregisterUserSubscription?(userId: string): Promise<void>;
@@ -296,6 +300,9 @@ export async function createAppContext<T extends VibesSqlite>(
     notifyRequestGrantChanged: params.notifyRequestGrantChanged,
     registerRequestGrantSubscription: params.registerRequestGrantSubscription,
     deregisterRequestGrantSubscription: params.deregisterRequestGrantSubscription,
+    notifyViewerGrantsChanged: params.notifyViewerGrantsChanged,
+    registerViewerGrantsSubscription: params.registerViewerGrantsSubscription,
+    deregisterViewerGrantsSubscription: params.deregisterViewerGrantsSubscription,
     notifyUser: params.notifyUser,
     registerUserSubscription: params.registerUserSubscription,
     deregisterUserSubscription: params.deregisterUserSubscription,

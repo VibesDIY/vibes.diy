@@ -33,7 +33,13 @@ const RequestGrantEvt = type({
   }).and(type("Record<string, unknown>")),
 }).and(type("Record<string, unknown>"));
 
-const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt);
+const ViewerGrantsChangedEvt = type({
+  type: "'vibes.diy.evt-viewer-grants-changed'",
+  ownerHandle: "string",
+  appSlug: "string",
+});
+
+const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt).or(ViewerGrantsChangedEvt);
 
 // Internal POST body from DocNotify: the doc-changed event plus the
 // originating WebSocket's connId, so we can skip just that one connection
@@ -131,19 +137,23 @@ export class ChatSessions implements DurableObject {
       const subscriptionKey =
         evt.type === "vibes.diy.evt-request-grant"
           ? `${evt.grant.ownerHandle}/${evt.grant.appSlug}`
-          : `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
+          : evt.type === "vibes.diy.evt-viewer-grants-changed"
+            ? `${evt.ownerHandle}/${evt.appSlug}`
+            : `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
       let delivered = 0;
       let skippedSender = 0;
       for (const conn of this.connections) {
         const subscribed =
           evt.type === "vibes.diy.evt-request-grant"
             ? conn.subscribedRequestGrantKeys.has(subscriptionKey)
-            : conn.subscribedDocKeys.has(subscriptionKey);
+            : evt.type === "vibes.diy.evt-viewer-grants-changed"
+              ? conn.subscribedViewerGrantKeys.has(subscriptionKey)
+              : conn.subscribedDocKeys.has(subscriptionKey);
         if (!subscribed) continue;
-        // Skip the originating WebSocket — it already updated optimistically
-        // when the put/delete returned. Sibling connections on the same
-        // shard (other tabs/browsers under the same warm-DO) still receive.
-        if (conn.connId === senderConnId) {
+        // Skip the originating WebSocket for doc/request-grant events because
+        // that tab already updated optimistically. For viewer-grants-changed we
+        // DO deliver to the sender so its iframe can refresh whoAmI grants.
+        if (evt.type !== "vibes.diy.evt-viewer-grants-changed" && conn.connId === senderConnId) {
           skippedSender++;
           continue;
         }
@@ -160,7 +170,12 @@ export class ChatSessions implements DurableObject {
         );
         delivered++;
       }
-      const eventDetail = evt.type === "vibes.diy.evt-request-grant" ? `op:${evt.op}` : `docId:${evt.docId.slice(0, 8)}`;
+      const eventDetail =
+        evt.type === "vibes.diy.evt-request-grant"
+          ? `op:${evt.op}`
+          : evt.type === "vibes.diy.evt-viewer-grants-changed"
+            ? "viewer-grants"
+            : `docId:${evt.docId.slice(0, 8)}`;
       if (shouldLogVerbose) {
         console.log(
           "[ChatSessions] received notification",
