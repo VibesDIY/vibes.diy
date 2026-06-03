@@ -14,6 +14,9 @@ scripts/
 # Eval harness output (transient generated apps)
 eval/codegen-edit/archive-*/
 
+# Eval result App snapshots can intentionally capture broken/truncated JSX.
+vibes/eval/**/App.jsx
+
 # LLM prompt files — filename-line + fence must be adjacent (no blank line)
 prompts/pkg/system-prompt.md
 prompts/pkg/system-prompt-initial.md
