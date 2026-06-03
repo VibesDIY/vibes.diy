@@ -5,14 +5,14 @@ import { COMMENTS_DB_NAME } from "@vibes.diy/api-types";
 import { avatarRouteForHandle } from "../../utils/avatarUrl.js";
 import { Avatar } from "../ui/avatar.js";
 
-// authorUserId / authorUserSlug / authorDisplay / authorIsOwner / createdAt
+// authorUserId / authorHandle / authorDisplay / authorIsOwner / createdAt
 // are stamped client-side at post time. The server writes the doc verbatim
 // under the new ACL model, so the client owns identity fields.
 interface CommentDoc {
   _id: string;
   body?: string;
   authorUserId?: string;
-  authorUserSlug?: string;
+  authorHandle?: string;
   authorDisplay?: string;
   authorIsOwner?: boolean;
   createdAt?: string;
@@ -130,7 +130,7 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
       doc: {
         body: text,
         authorUserId: viewerUserId,
-        authorUserSlug: viewerUserSlug,
+        authorHandle: viewerUserSlug,
         authorDisplay: deriveAuthorDisplay(user),
         // Stamp `authorIsOwner` so any viewer can render a badge next to the
         // vibe owner's comments. This is purely a display hint — non-malicious
@@ -171,7 +171,7 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
           comments.map((c) => {
             const canDelete = canModerate || (viewerUserId && viewerUserId === c.authorUserId);
             const display = c.authorDisplay ?? "anonymous";
-            const avatarUrl = avatarRouteForHandle(c.authorUserSlug);
+            const avatarUrl = avatarRouteForHandle(c.authorHandle);
             return (
               <div key={c._id} className="flex items-start gap-2 text-sm">
                 <Avatar src={avatarUrl} name={display} alt="" className="h-7 w-7 mt-0.5" fallbackClassName="text-xs" />

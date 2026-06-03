@@ -227,7 +227,7 @@ describe("listDmThreads", { timeout: 20000 }, () => {
       ownerHandle: channel,
       appSlug: "dm",
       dbName: "messages",
-      doc: { body: "hey bob!", authorUserSlug: aliceUserSlug, createdAt: new Date().toISOString() },
+      doc: { body: "hey bob!", authorHandle: aliceUserSlug, createdAt: new Date().toISOString() },
     });
 
     // Alice lists — should see 1 thread, unread=1 (no read record yet)
@@ -321,7 +321,7 @@ describe("DM sender identification with multi-slug user", { timeout: 20000 }, ()
       ownerHandle: channel,
       appSlug: "dm",
       dbName: "messages",
-      doc: { body: "hey bob", authorUserSlug: aliceSlug1, createdAt: new Date().toISOString() },
+      doc: { body: "hey bob", authorHandle: aliceSlug1, createdAt: new Date().toISOString() },
     });
     expect(putResult.isErr()).toBe(false);
 
@@ -409,7 +409,7 @@ describe("markDmRead", { timeout: 20000 }, () => {
       ownerHandle: channel,
       appSlug: "dm",
       dbName: "messages",
-      doc: { body: "unread msg", authorUserSlug: aliceUserSlug, createdAt: new Date().toISOString() },
+      doc: { body: "unread msg", authorHandle: aliceUserSlug, createdAt: new Date().toISOString() },
     });
 
     // Bob marks it read at seq=1
