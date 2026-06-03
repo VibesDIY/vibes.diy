@@ -17,7 +17,10 @@ import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 //
 // See vibes.diy/api/svc/public/app-documents.ts putDocEvento.
 
-const CID = "test-access-fn-cid";
+const ACCESS_JS_DEFAULT = `export default function(doc, oldDoc, user) {
+  if (!user) throw { forbidden: "sign in to save" };
+  return { allowAnonymous: true };
+}`;
 
 // Records the arg the mock was last called with, plus the response it returns.
 interface InvokeRecorder {
@@ -60,24 +63,12 @@ async function mkUser(
   return { user, api };
 }
 
-async function seedBinding(
-  ctx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>,
-  binding: { ownerHandle: string; appSlug: string; dbName: string }
-) {
-  await ctx.vibesCtx.sql.db.insert(ctx.vibesCtx.sql.tables.accessFunctionBindings).values({
-    ownerHandle: binding.ownerHandle,
-    appSlug: binding.appSlug,
-    dbName: binding.dbName,
-    accessFnCid: CID,
-    updated: new Date().toISOString(),
-  });
-}
-
 describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 }, () => {
   let appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
   let ownerApi: VibesDiyApi;
   let appSlug: string;
   let ownerHandle: string;
+  let actualCid: string;
   const recorder: InvokeRecorder = { calls: [], result: { allowAnonymous: true } };
 
   beforeAll(async () => {
@@ -87,13 +78,25 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     ownerApi = ownerSetup.api;
     const r = await ownerApi.ensureAppSlug({
       mode: "dev",
-      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` },
+        { type: "code-block", lang: "js", filename: "/access.js", content: ACCESS_JS_DEFAULT },
+      ],
     });
     const res = r.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
     appSlug = res.appSlug;
     ownerHandle = res.ownerHandle;
-    await seedBinding(appCtx, { ownerHandle, appSlug, dbName: "default" });
+
+    // Read actual CID from the binding the extraction logic created
+    const tAfb = appCtx.vibesCtx.sql.tables.accessFunctionBindings;
+    const bindings = await appCtx.vibesCtx.sql.db
+      .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
+      .from(tAfb)
+      .where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug)));
+    const wildcardBinding = bindings.find((b) => b.dbName === "*");
+    assert(wildcardBinding !== undefined, "extraction must create a '*' binding for export default");
+    actualCid = wildcardBinding.accessFnCid;
   }, 30000);
 
   it("authenticated write passes when invokeAccessFn allows it", async () => {
@@ -108,7 +111,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     expect(res.isOk()).toBe(true);
     // The gate invoked the mock with the binding's CID and a non-null user.
     expect(recorder.calls.length).toBe(1);
-    expect(recorder.calls[0]?.cid).toBe(CID);
+    expect(recorder.calls[0]?.cid).toBe(actualCid);
     expect(recorder.calls[0]?.user).not.toBeNull();
   });
 
@@ -219,7 +222,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     expect(rows.length).toBe(1);
     const row = rows[0];
     assert(row !== undefined, "expected one AccessFnOutputs row");
-    expect(row.fnCid).toBe(CID);
+    expect(row.fnCid).toBe(actualCid);
     expect(row.hasGrants).toBe(0);
     const output = JSON.parse(row.output) as { channels: string[]; allowAnonymous: boolean };
     expect(output.channels).toEqual(["public"]);
@@ -227,31 +230,44 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     expect(recorder.calls.length).toBe(1);
   });
 
-  it("named binding takes precedence over wildcard '*' fallback", async () => {
-    const WILDCARD_CID = "wildcard-cid";
-    // Seed a wildcard binding (export default) for the same app
-    await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.accessFunctionBindings).values({
-      ownerHandle: ownerHandle,
+  it("named export binding takes precedence over wildcard '*' fallback", async () => {
+    const r = await ownerApi.ensureAppSlug({
+      mode: "dev",
       appSlug,
-      dbName: "*",
-      accessFnCid: WILDCARD_CID,
-      updated: new Date().toISOString(),
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` },
+        {
+          type: "code-block",
+          lang: "js",
+          filename: "/access.js",
+          content: `export function notes(doc) { return { allowAnonymous: true }; }\nexport default function(doc) { return { allowAnonymous: true }; }`,
+        },
+      ],
     });
+    assert(r.isOk(), "push with named+default failed");
 
-    // Write to "default" db — should use the named CID, not the wildcard
+    const tAfb = appCtx.vibesCtx.sql.tables.accessFunctionBindings;
+    const bindings = await appCtx.vibesCtx.sql.db
+      .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
+      .from(tAfb)
+      .where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug)));
+    const namedCid = bindings.find((b) => b.dbName === "notes")?.accessFnCid;
+    const wildcardCid = bindings.find((b) => b.dbName === "*")?.accessFnCid;
+    assert(namedCid !== undefined, "named binding must exist");
+    assert(wildcardCid !== undefined, "wildcard binding must exist");
+
     recorder.calls = [];
     recorder.result = { allowAnonymous: true };
     const r1 = await ownerApi.putDoc({
       ownerHandle,
       appSlug,
-      dbName: "default",
+      dbName: "notes",
       doc: { title: "named binding" },
     });
     expect(r1.isOk()).toBe(true);
     expect(recorder.calls.length).toBe(1);
-    expect(recorder.calls[0]?.cid).toBe(CID);
+    expect(recorder.calls[0]?.cid).toBe(namedCid);
 
-    // Write to "other-db" — no named binding, should fall back to wildcard
     recorder.calls = [];
     const r2 = await ownerApi.putDoc({
       ownerHandle,
@@ -261,6 +277,6 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     });
     expect(r2.isOk()).toBe(true);
     expect(recorder.calls.length).toBe(1);
-    expect(recorder.calls[0]?.cid).toBe(WILDCARD_CID);
+    expect(recorder.calls[0]?.cid).toBe(wildcardCid);
   });
 });
