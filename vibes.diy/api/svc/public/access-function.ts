@@ -41,12 +41,12 @@ interface GrantState {
 export function makeHelpers(user: UserContext | null, grantState?: GrantState): Helpers {
   const gs: GrantState = grantState ?? { members: {}, roleGrants: {}, userGrants: {} };
 
-  function resolveChannels(userSlug: string): Set<string> {
+  function resolveChannels(userHandle: string): Set<string> {
     const channels = new Set<string>();
-    const direct = gs.userGrants[userSlug];
+    const direct = gs.userGrants[userHandle];
     if (direct) for (const ch of direct) channels.add(ch);
     for (const [role, members] of Object.entries(gs.members)) {
-      if (members.includes(userSlug)) {
+      if (members.includes(userHandle)) {
         const roleChannels = gs.roleGrants[role];
         if (roleChannels) for (const ch of roleChannels) channels.add(ch);
       }

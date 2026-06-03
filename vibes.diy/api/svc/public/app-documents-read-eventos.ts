@@ -97,7 +97,9 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       const afbRowG = await vctx.sql.db
         .select({ accessFnCid: tAfbG.accessFnCid })
         .from(tAfbG)
-        .where(and(eq(tAfbG.userSlug, req.ownerHandle), eq(tAfbG.appSlug, req.appSlug), inArray(tAfbG.dbName, [req.dbName, "*"])))
+        .where(
+          and(eq(tAfbG.ownerHandle, req.ownerHandle), eq(tAfbG.appSlug, req.appSlug), inArray(tAfbG.dbName, [req.dbName, "*"]))
+        )
         .orderBy(sql`CASE WHEN ${tAfbG.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
         .limit(1)
         .then((r) => r[0]);
@@ -109,7 +111,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
           .from(tOutputsG)
           .where(
             and(
-              eq(tOutputsG.userSlug, req.ownerHandle),
+              eq(tOutputsG.ownerHandle, req.ownerHandle),
               eq(tOutputsG.appSlug, req.appSlug),
               eq(tOutputsG.dbName, req.dbName),
               eq(tOutputsG.docId, req.docId),
@@ -136,7 +138,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
           .from(tOutputsG)
           .where(
             and(
-              eq(tOutputsG.userSlug, req.ownerHandle),
+              eq(tOutputsG.ownerHandle, req.ownerHandle),
               eq(tOutputsG.appSlug, req.appSlug),
               eq(tOutputsG.dbName, req.dbName),
               eq(tOutputsG.fnCid, afbRowG.accessFnCid),
@@ -269,7 +271,9 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const afbRowQ = await vctx.sql.db
         .select({ accessFnCid: tAfbQ.accessFnCid })
         .from(tAfbQ)
-        .where(and(eq(tAfbQ.userSlug, req.ownerHandle), eq(tAfbQ.appSlug, req.appSlug), inArray(tAfbQ.dbName, [req.dbName, "*"])))
+        .where(
+          and(eq(tAfbQ.ownerHandle, req.ownerHandle), eq(tAfbQ.appSlug, req.appSlug), inArray(tAfbQ.dbName, [req.dbName, "*"]))
+        )
         .orderBy(sql`CASE WHEN ${tAfbQ.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
         .limit(1)
         .then((r) => r[0]);
@@ -282,7 +286,7 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
           .from(tOutputsQ)
           .where(
             and(
-              eq(tOutputsQ.userSlug, req.ownerHandle),
+              eq(tOutputsQ.ownerHandle, req.ownerHandle),
               eq(tOutputsQ.appSlug, req.appSlug),
               eq(tOutputsQ.dbName, req.dbName),
               eq(tOutputsQ.fnCid, afbRowQ.accessFnCid)
@@ -386,7 +390,9 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       const afbRowS = await vctx.sql.db
         .select({ accessFnCid: tAfbS.accessFnCid })
         .from(tAfbS)
-        .where(and(eq(tAfbS.userSlug, req.ownerHandle), eq(tAfbS.appSlug, req.appSlug), inArray(tAfbS.dbName, [req.dbName, "*"])))
+        .where(
+          and(eq(tAfbS.ownerHandle, req.ownerHandle), eq(tAfbS.appSlug, req.appSlug), inArray(tAfbS.dbName, [req.dbName, "*"]))
+        )
         .orderBy(sql`CASE WHEN ${tAfbS.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
         .limit(1)
         .then((r) => r[0]);
@@ -399,7 +405,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
           .from(tOutputsS)
           .where(
             and(
-              eq(tOutputsS.userSlug, req.ownerHandle),
+              eq(tOutputsS.ownerHandle, req.ownerHandle),
               eq(tOutputsS.appSlug, req.appSlug),
               eq(tOutputsS.dbName, req.dbName),
               eq(tOutputsS.fnCid, afbRowS.accessFnCid),

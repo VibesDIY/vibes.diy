@@ -322,13 +322,13 @@ export const sqlAssetUploads = pgTable(
   ]
 );
 
-// Per-vibe access function binding: maps (userSlug, appSlug, dbName) to a CID in Assets.
+// Per-vibe access function binding: maps (ownerHandle, appSlug, dbName) to a CID in Assets.
 // dbName = '*' means the access function applies to all databases for this app.
 // CID-keyed so changing access.js produces a new entry with no cache invalidation step.
 export const sqlAccessFunctionBindings = pgTable(
   "AccessFunctionBindings",
   {
-    userSlug: text().notNull(),
+    ownerHandle: text("userSlug").notNull(),
     appSlug: text().notNull(),
     dbName: text().notNull(),
     accessFnCid: text().notNull(),
@@ -336,15 +336,15 @@ export const sqlAccessFunctionBindings = pgTable(
     updated: text().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName] }),
-    index("AccessFunctionBindings_app_idx").on(table.userSlug, table.appSlug),
+    primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName] }),
+    index("AccessFunctionBindings_app_idx").on(table.ownerHandle, table.appSlug),
   ]
 );
 
 export const sqlAccessFnOutputs = pgTable(
   "AccessFnOutputs",
   {
-    userSlug: text().notNull(),
+    ownerHandle: text("userSlug").notNull(),
     appSlug: text().notNull(),
     dbName: text().notNull(),
     docId: text().notNull(),
@@ -353,7 +353,7 @@ export const sqlAccessFnOutputs = pgTable(
     hasGrants: integer().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId] }),
-    index("AccessFnOutputs_grants_idx").on(table.userSlug, table.appSlug, table.dbName, table.fnCid),
+    primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId] }),
+    index("AccessFnOutputs_grants_idx").on(table.ownerHandle, table.appSlug, table.dbName, table.fnCid),
   ]
 );

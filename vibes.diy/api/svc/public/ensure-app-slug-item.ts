@@ -202,7 +202,7 @@ export async function ensureAppSlugItem(
         const existingBindings = await vctx.sql.db
           .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
           .from(tAfb)
-          .where(and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
+          .where(and(eq(tAfb.ownerHandle, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
         const oldCids = new Map(existingBindings.map((b) => [b.dbName, b.accessFnCid]));
 
         if (exportNames.length > 0) {
@@ -211,7 +211,7 @@ export async function ensureAppSlugItem(
             await vctx.sql.db
               .insert(tAfb)
               .values({
-                userSlug: ensured.ownerHandle,
+                ownerHandle: ensured.ownerHandle,
                 appSlug: ensured.appSlug,
                 dbName,
                 accessFnCid: cid,
@@ -219,7 +219,7 @@ export async function ensureAppSlugItem(
                 updated: new Date().toISOString(),
               })
               .onConflictDoUpdate({
-                target: [tAfb.userSlug, tAfb.appSlug, tAfb.dbName],
+                target: [tAfb.ownerHandle, tAfb.appSlug, tAfb.dbName],
                 set: {
                   accessFnCid: cid,
                   accessFnAssetUri: accessJsEntry.storage.getURL,
@@ -232,7 +232,11 @@ export async function ensureAppSlugItem(
           await vctx.sql.db
             .delete(tAfb)
             .where(
-              and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug), notInArray(tAfb.dbName, exportNames))
+              and(
+                eq(tAfb.ownerHandle, ensured.ownerHandle),
+                eq(tAfb.appSlug, ensured.appSlug),
+                notInArray(tAfb.dbName, exportNames)
+              )
             );
 
           // Backfill AccessFnOutputs for dbNames where CID changed or is new (#2101)
@@ -358,7 +362,7 @@ export async function ensureAppSlugItem(
                       vctx.sql.db
                         .insert(tOutputs)
                         .values({
-                          userSlug: ensured.ownerHandle,
+                          ownerHandle: ensured.ownerHandle,
                           appSlug: ensured.appSlug,
                           dbName,
                           docId,
@@ -367,7 +371,7 @@ export async function ensureAppSlugItem(
                           hasGrants: outputHasGrants,
                         })
                         .onConflictDoUpdate({
-                          target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+                          target: [tOutputs.ownerHandle, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
                           set: {
                             fnCid: cid,
                             output: JSON.stringify(accessResult),
@@ -397,7 +401,7 @@ export async function ensureAppSlugItem(
           }
         } else {
           // No valid exports → delete all bindings
-          await vctx.sql.db.delete(tAfb).where(and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
+          await vctx.sql.db.delete(tAfb).where(and(eq(tAfb.ownerHandle, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
         }
       } catch (err: unknown) {
         console.warn(`ensureAppSlugItem: failed to process access.js for ${ensured.ownerHandle}/${ensured.appSlug}:`, err);
@@ -406,7 +410,7 @@ export async function ensureAppSlugItem(
   } else {
     // No access.js → delete all bindings for this app
     try {
-      await vctx.sql.db.delete(tAfb).where(and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
+      await vctx.sql.db.delete(tAfb).where(and(eq(tAfb.ownerHandle, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
     } catch (err: unknown) {
       console.warn(
         `ensureAppSlugItem: failed to clean up AccessFunctionBindings for ${ensured.ownerHandle}/${ensured.appSlug}:`,

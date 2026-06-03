@@ -175,6 +175,7 @@ export function pullCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
+      if (args.userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle instead\n");
       return {
         type: "vibes-diy.cli.pull",
         appSlug: args.appSlug,

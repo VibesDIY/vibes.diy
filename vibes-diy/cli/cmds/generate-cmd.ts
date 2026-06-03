@@ -301,6 +301,7 @@ export function generateCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue(({ focus, model, handle, userSlug, ...rest }) => {
+      if (userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle instead\n");
       // Same silent-no-op gotcha as edit-cmd: ArkType validate trips on an
       // explicit `focusPath: undefined` / `model: undefined`. Destructure
       // both out of the spread and only attach when defined.

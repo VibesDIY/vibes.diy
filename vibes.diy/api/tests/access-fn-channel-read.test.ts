@@ -81,7 +81,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
 
     // Seed access fn binding for "chat" db
     await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.accessFunctionBindings).values({
-      userSlug: ownerHandle,
+      ownerHandle: ownerHandle,
       appSlug,
       dbName: "chat",
       accessFnCid: CID,
@@ -102,7 +102,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     await appCtx.vibesCtx.sql.db
       .insert(tOutputs)
       .values({
-        userSlug: ownerHandle,
+        ownerHandle: ownerHandle,
         appSlug,
         dbName: "chat",
         docId: "grant-doc",
@@ -111,7 +111,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
         hasGrants: 1,
       })
       .onConflictDoUpdate({
-        target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+        target: [tOutputs.ownerHandle, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
         set: {
           output: JSON.stringify({ grant: { users: { [ownerHandle]: ["general"] } } }),
           hasGrants: 1,
@@ -136,7 +136,12 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
       .select({ docId: tOutputs.docId, output: tOutputs.output })
       .from(tOutputs)
       .where(
-        and(eq(tOutputs.userSlug, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat"), eq(tOutputs.fnCid, CID))
+        and(
+          eq(tOutputs.ownerHandle, ownerHandle),
+          eq(tOutputs.appSlug, appSlug),
+          eq(tOutputs.dbName, "chat"),
+          eq(tOutputs.fnCid, CID)
+        )
       );
 
     const secretDoc = secretRows.find((r) => {

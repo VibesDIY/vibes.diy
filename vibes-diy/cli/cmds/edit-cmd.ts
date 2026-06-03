@@ -448,6 +448,7 @@ export function editCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue(({ focus, model, handle, userSlug, ...rest }) => {
+      if (userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle instead\n");
       // ArkType's optional-with-typed-value fields (`focusPath?: "string"`,
       // `model?: "string"`) allow the key to be ABSENT but reject an explicit
       // `undefined`. Spreading an `undefined` value when the flag isn't passed
