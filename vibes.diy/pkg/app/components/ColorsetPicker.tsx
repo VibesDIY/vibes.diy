@@ -494,8 +494,17 @@ export default function ColorsetPicker({
   // Merge edits over the source palette per mode. For dark, when the colorset
   // doesn't ship a `colorsDark`, fall back to the light baseline so the user
   // sees something to edit and any change creates the dark variant.
+  //
+  // Palette extras (`accent-weak`, `panel-hi`, `gold-base`, …) ride along so
+  // the iframe defines them as CSS vars too — necessary for the Map-to flow:
+  // when the user maps `--my-bespoke` to `--accent-weak`, the override sets
+  // `--my-bespoke: var(--accent-weak)` and the target has to exist somewhere
+  // in the cascade for the var() to resolve.
   const mergedLight = useMemo(
-    () => (draftColorset ? { ...draftColorset.colors, ...editsLight } : undefined),
+    () =>
+      draftColorset
+        ? { ...(draftColorset.extras ?? {}), ...draftColorset.colors, ...editsLight }
+        : undefined,
     [draftColorset, editsLight]
   );
   const mergedDark = useMemo(() => {
@@ -503,7 +512,11 @@ export default function ColorsetPicker({
     const hasDarkSource = draftColorset.colorsDark !== undefined;
     const hasDarkEdits = Object.keys(editsDark).length > 0;
     if (!hasDarkSource && !hasDarkEdits) return undefined;
-    return { ...(draftColorset.colorsDark ?? draftColorset.colors), ...editsDark };
+    return {
+      ...(draftColorset.extrasDark ?? draftColorset.extras ?? {}),
+      ...(draftColorset.colorsDark ?? draftColorset.colors),
+      ...editsDark,
+    };
   }, [draftColorset, editsDark]);
   // Filled structural (8 canonical + extras) with edits layered on top. Same
   // shape regardless of mode — the runtime applies these to :root once.
@@ -719,8 +732,18 @@ export default function ColorsetPicker({
       ...editsLight,
       ...editsStructural,
     };
-    const colorRows: { name: string; value: string; isCanonical: boolean }[] = [];
-    const structuralRows: { name: string; value: string; isCanonical: boolean }[] = [];
+    interface Row {
+      name: string;
+      value: string;
+      isCanonical: boolean;
+    }
+    // Four buckets so the modal can show the user a clean Standard / Custom
+    // split per kind. Mapping a color to a structural target makes no sense,
+    // so the row's bucket also drives which dropdown options it gets.
+    const canonicalColorRows: Row[] = [];
+    const customColorRows: Row[] = [];
+    const canonicalStructuralRows: Row[] = [];
+    const customStructuralRows: Row[] = [];
     const STRUCTURAL_HINTS = [
       "font-family",
       "font-size",
@@ -737,25 +760,48 @@ export default function ColorsetPicker({
     ];
     for (const name of Object.keys(merged)) {
       const value = merged[name];
-      const isCanonical =
-        CANONICAL_TOKENS.includes(name as (typeof CANONICAL_TOKENS)[number]) ||
-        CANONICAL_STRUCTURAL.includes(name as (typeof CANONICAL_STRUCTURAL)[number]);
+      const isCanonicalColor = CANONICAL_TOKENS.includes(
+        name as (typeof CANONICAL_TOKENS)[number]
+      );
+      const isCanonicalStructural = CANONICAL_STRUCTURAL.includes(
+        name as (typeof CANONICAL_STRUCTURAL)[number]
+      );
+      const isCanonical = isCanonicalColor || isCanonicalStructural;
       const isStructural =
-        CANONICAL_STRUCTURAL.includes(name as (typeof CANONICAL_STRUCTURAL)[number]) ||
-        STRUCTURAL_HINTS.some((hint) => name.includes(hint));
-      const row = { name, value, isCanonical };
-      if (isStructural) structuralRows.push(row);
-      else colorRows.push(row);
+        isCanonicalStructural || STRUCTURAL_HINTS.some((hint) => name.includes(hint));
+      const row: Row = { name, value, isCanonical };
+      if (isStructural) {
+        if (isCanonicalStructural) canonicalStructuralRows.push(row);
+        else customStructuralRows.push(row);
+      } else {
+        if (isCanonicalColor) canonicalColorRows.push(row);
+        else customColorRows.push(row);
+      }
     }
-    return { colorRows, structuralRows };
+    return {
+      canonicalColorRows,
+      customColorRows,
+      canonicalStructuralRows,
+      customStructuralRows,
+    };
   }, [currentTokens, mergedLight, editsLight, editsStructural]);
 
-  // Canonical option list for the "Map to" dropdown shown next to bespoke
-  // tokens. Selecting one writes `var(--<canonical>)` to edits, which the
-  // runtime applies so the bespoke token tracks the canonical via cascade.
-  const mappableOptions = useMemo(() => {
-    return [...CANONICAL_TOKENS, ...CANONICAL_STRUCTURAL];
-  }, []);
+  // Dropdown options for the Map-to selector. Split by kind — mapping a
+  // color bespoke to `--radius` would be a category error and just confuses
+  // the user. Each list includes the 13/8 canonicals + the SELECTED palette's
+  // extras (so picking Sensor exposes `accent-weak`/`panel-hi` as targets).
+  const colorMappableOptions = useMemo(() => {
+    const opts: string[] = [...CANONICAL_TOKENS];
+    if (draftColorset?.extras) opts.push(...Object.keys(draftColorset.extras));
+    return opts;
+  }, [draftColorset]);
+  const structuralMappableOptions = useMemo(() => {
+    const opts: string[] = [...CANONICAL_STRUCTURAL];
+    if (draftColorset?.structuralExtras) {
+      opts.push(...Object.keys(draftColorset.structuralExtras));
+    }
+    return opts;
+  }, [draftColorset]);
 
   function handleMapToken(bespokeName: string, target: string) {
     if (!draftColorset) return;
@@ -881,29 +927,67 @@ export default function ColorsetPicker({
                     </div>
                     {currentTokensView ? (
                       <>
-                        <SectionHeader label="Current tokens (from app)" />
-                        {currentTokensView.colorRows.map((row) => (
-                          <CurrentTokenRow
-                            key={`cur-${row.name}`}
-                            name={row.name}
-                            value={row.value}
-                            isCanonical={row.isCanonical}
-                            mappableOptions={mappableOptions}
-                            onEdit={handleTokenEdit}
-                            onMap={handleMapToken}
-                            scope={currentTokens ?? {}}
-                          />
-                        ))}
-                        {currentTokensView.structuralRows.length > 0 && (
+                        {currentTokensView.canonicalColorRows.length > 0 && (
                           <>
-                            <SectionHeader label="Structural (from app)" />
-                            {currentTokensView.structuralRows.map((row) => (
+                            <SectionHeader label="Standard tokens (colors)" />
+                            {currentTokensView.canonicalColorRows.map((row) => (
                               <CurrentTokenRow
-                                key={`cur-struct-${row.name}`}
+                                key={`std-color-${row.name}`}
                                 name={row.name}
                                 value={row.value}
                                 isCanonical={row.isCanonical}
-                                mappableOptions={mappableOptions}
+                                mappableOptions={colorMappableOptions}
+                                onEdit={handleTokenEdit}
+                                onMap={handleMapToken}
+                                scope={currentTokens ?? {}}
+                              />
+                            ))}
+                          </>
+                        )}
+                        {currentTokensView.customColorRows.length > 0 && (
+                          <>
+                            <SectionHeader label="Custom tokens (colors) — pick a target" />
+                            {currentTokensView.customColorRows.map((row) => (
+                              <CurrentTokenRow
+                                key={`cust-color-${row.name}`}
+                                name={row.name}
+                                value={row.value}
+                                isCanonical={row.isCanonical}
+                                mappableOptions={colorMappableOptions}
+                                onEdit={handleTokenEdit}
+                                onMap={handleMapToken}
+                                scope={currentTokens ?? {}}
+                              />
+                            ))}
+                          </>
+                        )}
+                        {currentTokensView.canonicalStructuralRows.length > 0 && (
+                          <>
+                            <SectionHeader label="Standard tokens (structural)" />
+                            {currentTokensView.canonicalStructuralRows.map((row) => (
+                              <CurrentTokenRow
+                                key={`std-struct-${row.name}`}
+                                name={row.name}
+                                value={row.value}
+                                isCanonical={row.isCanonical}
+                                mappableOptions={structuralMappableOptions}
+                                onEdit={handleStructuralEdit}
+                                onMap={handleMapToken}
+                                scope={currentTokens ?? {}}
+                              />
+                            ))}
+                          </>
+                        )}
+                        {currentTokensView.customStructuralRows.length > 0 && (
+                          <>
+                            <SectionHeader label="Custom tokens (structural) — pick a target" />
+                            {currentTokensView.customStructuralRows.map((row) => (
+                              <CurrentTokenRow
+                                key={`cust-struct-${row.name}`}
+                                name={row.name}
+                                value={row.value}
+                                isCanonical={row.isCanonical}
+                                mappableOptions={structuralMappableOptions}
                                 onEdit={handleStructuralEdit}
                                 onMap={handleMapToken}
                                 scope={currentTokens ?? {}}
