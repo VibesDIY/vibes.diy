@@ -77,7 +77,6 @@ export class BackendDO implements DurableObject {
 
     const wrappedSource = `const exports = {};\n${transformed}\nreturn exports;`;
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function(wrappedSource);
     this.handlers = factory() as BackendHandlers;
     this.currentCid = cid;

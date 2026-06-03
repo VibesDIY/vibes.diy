@@ -242,7 +242,7 @@ export async function fetch(request, ctx) { return new Response("ok"); }`,
 
 describe("putDocEvento — EvtBackendOnChange queue event", { timeout: 30000 }, () => {
   const queueMessages: MsgBase[] = [];
-  let appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
+  let _appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
   let api: VibesDiyApi;
   let appSlugWithBackend: string;
   let ownerHandle: string;
@@ -250,7 +250,7 @@ describe("putDocEvento — EvtBackendOnChange queue event", { timeout: 30000 }, 
 
   beforeAll(async () => {
     const setup = await setupCtx(queueMessages, 9300, 19300);
-    appCtx = setup.appCtx;
+    _appCtx = setup.appCtx;
     api = setup.api;
 
     // App WITH backend.js onChange
@@ -290,7 +290,9 @@ describe("putDocEvento — EvtBackendOnChange queue event", { timeout: 30000 }, 
     expect(rPut.isOk()).toBe(true);
     const docId = rPut.Ok().id;
 
-    const onchangeMsgs = queueMessages.filter((m) => m.payload?.type === "vibes.diy.evt-backend-onchange");
+    const onchangeMsgs = queueMessages.filter(
+      (m) => (m.payload as Record<string, unknown>)?.type === "vibes.diy.evt-backend-onchange"
+    );
     expect(onchangeMsgs).toHaveLength(1);
 
     const msg = onchangeMsgs[0];
@@ -331,7 +333,9 @@ describe("putDocEvento — EvtBackendOnChange queue event", { timeout: 30000 }, 
     });
     expect(rPut2.isOk()).toBe(true);
 
-    const onchangeMsgs = queueMessages.filter((m) => m.payload?.type === "vibes.diy.evt-backend-onchange");
+    const onchangeMsgs = queueMessages.filter(
+      (m) => (m.payload as Record<string, unknown>)?.type === "vibes.diy.evt-backend-onchange"
+    );
     expect(onchangeMsgs).toHaveLength(1);
 
     const payload = onchangeMsgs[0]?.payload as EvtBackendOnChange;
@@ -350,7 +354,9 @@ describe("putDocEvento — EvtBackendOnChange queue event", { timeout: 30000 }, 
     });
     expect(rPut.isOk()).toBe(true);
 
-    const onchangeMsgs = queueMessages.filter((m) => m.payload?.type === "vibes.diy.evt-backend-onchange");
+    const onchangeMsgs = queueMessages.filter(
+      (m) => (m.payload as Record<string, unknown>)?.type === "vibes.diy.evt-backend-onchange"
+    );
     expect(onchangeMsgs).toHaveLength(0);
   });
 
@@ -364,7 +370,7 @@ describe("putDocEvento — EvtBackendOnChange queue event", { timeout: 30000 }, 
       doc: { check: "meta" },
     });
 
-    const msg = queueMessages.find((m) => m.payload?.type === "vibes.diy.evt-backend-onchange");
+    const msg = queueMessages.find((m) => (m.payload as Record<string, unknown>)?.type === "vibes.diy.evt-backend-onchange");
     assert(msg !== undefined, "expected evt-backend-onchange message");
     expect(msg.tid).toBe("queue-event");
     expect(msg.src).toBe("putDoc");
