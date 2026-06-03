@@ -506,7 +506,7 @@ async function enableVR(scene) {
 // ── React container component ──────────────────────────────────────────────
 
 export default function App() {
-  const { database, useLiveQuery } = useFireproof("galaxy-sessions");
+  const { database, useLiveQuery } = useFireproof("galaxySessions");
   const canvasRef = useRef(null);
   const { docs: sessions } = useLiveQuery("type", { key: "session" });
 
@@ -661,7 +661,7 @@ async function enableAR(scene, onPlace) {
 // ── React container ────────────────────────────────────────────────────────
 
 export default function App() {
-  const { database, useLiveQuery } = useFireproof("ar-orbs");
+  const { database, useLiveQuery } = useFireproof("arOrbs");
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const orbMatRef = useRef(null);

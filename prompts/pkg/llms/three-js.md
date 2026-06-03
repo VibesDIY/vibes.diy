@@ -1068,7 +1068,7 @@ import { useFireproof } from "use-fireproof";
 import * as THREE from "three";
 
 export default function SkyGlider() {
-  const { database, useLiveQuery } = useFireproof("sky-glider-scores");
+  const { database, useLiveQuery } = useFireproof("skyGliderScores");
   const canvasRef = useRef(null);
   const gameStateRef = useRef({
     scene: null,
@@ -1475,7 +1475,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { HalftonePass } from "three/addons/postprocessing/HalftonePass.js";
 
 export default function HalftoneArtStudio() {
-  const { database, useLiveQuery } = useFireproof("halftone-studio");
+  const { database, useLiveQuery } = useFireproof("halftoneStudio");
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const [currentPreset, setCurrentPreset] = useState(null);
