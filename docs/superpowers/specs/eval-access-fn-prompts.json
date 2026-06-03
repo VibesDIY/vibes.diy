@@ -3,8 +3,7 @@
     "created": "2026-06-03",
     "description": "Eval prompt catalog for access function system prompt update",
     "scoringRubric": "1-5 app quality scale (see playbook spec)",
-    "totalRuns": 62,
-    "tripleRuns": 18
+    "notes": "Run count: prompts.length + sum(triple ? 2 : 0). Workflow computes this from the data."
   },
   "prompts": [
     {
@@ -117,7 +116,7 @@
       "set": "B",
       "category": "carousel",
       "triple": false,
-      "prompt": "Team focus board — everyone on the team has their own pomodoro timer, and we can all see who's in a deep work session right now. Only you can start and stop your own timer."
+      "prompt": "Team focus board — we each have our own pomodoro running, and everyone can see who's heads-down right now."
     },
     {
       "id": "trivia-night-asis",
@@ -130,7 +129,7 @@
       "id": "trivia-night-enh",
       "set": "B",
       "category": "carousel",
-      "triple": true,
+      "triple": false,
       "prompt": "Trivia game night — the host picks topics and AI writes the questions. Players submit answers privately, and only the host reveals the scores at the end."
     },
     {
@@ -204,11 +203,25 @@
       "prompt": "My journal is totally private — only I can see my entries. But I want to be able to share a specific entry with someone if I choose to."
     },
     {
+      "id": "habit-tracker-asis",
+      "set": "A",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Habit streak tracker — daily check-ins, flame streaks, and a gentle nudge when you slip."
+    },
+    {
       "id": "habit-tracker-enh",
       "set": "B",
       "category": "gallery",
       "triple": false,
-      "prompt": "Accountability group where we each track our own habits and streaks, and everyone in the group can cheer each other on but can't edit anyone else's check-ins."
+      "prompt": "Accountability group where we each track our own habits and streaks, and everyone can cheer each other on but nobody messes with your check-ins."
+    },
+    {
+      "id": "bookmarks-asis",
+      "set": "A",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Bookmark vault — save links, auto-tag by topic, search everything instantly."
     },
     {
       "id": "bookmarks-enh",
@@ -216,6 +229,13 @@
       "category": "gallery",
       "triple": false,
       "prompt": "Team bookmark library where anyone adds links and they get auto-tagged, but only curators can organize them into collections. Everyone browses everything."
+    },
+    {
+      "id": "goals-asis",
+      "set": "A",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Goal tracker with milestones, a visual progress bar, and celebratory animations on completion."
     },
     {
       "id": "goals-enh",
@@ -235,28 +255,42 @@
       "id": "pixel-art-enh",
       "set": "B",
       "category": "gallery",
-      "triple": true,
-      "prompt": "Collaborative pixel art where each artist claims their own canvas layer, and we all see the combined piece. Only the project creator can merge layers."
+      "triple": false,
+      "prompt": "Collaborative pixel art where we each paint on our own layer and the final piece combines everything together."
+    },
+    {
+      "id": "soundboard-asis",
+      "set": "A",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Soundboard with 16 neon pads that ripple when tapped — load your own sounds or use built-in kits."
     },
     {
       "id": "soundboard-enh",
       "set": "B",
       "category": "gallery",
       "triple": false,
-      "prompt": "Shared soundboard for our podcast — anyone on the team records samples, but only the producer decides which pads go live for the show."
+      "prompt": "Shared soundboard for our podcast — anyone on the team records samples, but only the producer picks which ones go on the board."
+    },
+    {
+      "id": "snake-asis",
+      "set": "A",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Snake with arrow keys, a growing neon tail, and a high-score board that persists."
     },
     {
       "id": "snake-enh",
       "set": "B",
       "category": "gallery",
       "triple": false,
-      "prompt": "Snake game with a shared high-score board where everyone's best runs show up, but you can only see your own replays."
+      "prompt": "Snake game where everyone's high scores show up on a shared leaderboard."
     },
     {
       "id": "contact-form-new",
       "set": "C",
       "category": "business",
-      "triple": false,
+      "triple": true,
       "prompt": "Contact page for my landscaping business. Visitors fill out their name, phone number, and what they need done — they don't have to sign up or anything. I get a list of all the requests so I can call them back."
     },
     {
@@ -277,8 +311,22 @@
       "id": "soccer-signup-new",
       "set": "C",
       "category": "business",
-      "triple": false,
+      "triple": true,
       "prompt": "Sign-up sheet for my kid's soccer team. Parents put their name and which games they can bring snacks for. Everyone sees the full schedule but you can only change your own sign-ups. I'm the coach so I can edit anything."
+    },
+    {
+      "id": "maintenance-request-new",
+      "set": "C",
+      "category": "business",
+      "triple": false,
+      "prompt": "Maintenance request form for our apartment building. Tenants describe the problem and which unit they're in. The building manager sees all the requests and marks them in progress or done. Tenants only see their own."
+    },
+    {
+      "id": "job-application-new",
+      "set": "C",
+      "category": "business",
+      "triple": false,
+      "prompt": "Simple job application page. Candidates fill in their name, email, and a short cover letter. They can't go back and edit after submitting. Our hiring team reviews all the applications together."
     }
   ]
 }
