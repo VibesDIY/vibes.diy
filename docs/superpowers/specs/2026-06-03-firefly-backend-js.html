@@ -1120,6 +1120,14 @@
   </div>
 </div>
 
+<p class="prose">
+  <strong>LLM codegen docs (<code>backend-js.llms.md</code>).</strong> The codegen prompt should document that every vibe knows its
+  own <code>ownerHandle</code> and <code>appSlug</code>, and the webhook URL follows mechanically from those. When the generated app
+  needs to register a webhook URL with a third-party service (Stripe, Sonos, GitHub) or set an OAuth redirect URI, the LLM should
+  generate UI or setup instructions that show the user their webhook endpoint. The LLM should also know the common inbound patterns:
+  signature verification (Stripe HMAC), OAuth code exchange, and simple POST-body webhooks.
+</p>
+
 <!-- SUMMARY -->
 <div class="intro" style="margin-top: 32px; border-left-color: #10b981">
   <strong>Summary.</strong> <code>/backend.js</code> gives vibes server-side capabilities through three named exports:
