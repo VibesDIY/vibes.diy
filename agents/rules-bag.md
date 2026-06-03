@@ -39,6 +39,8 @@ The `if (!x)` rule forbids truthy/falsy coercion, not explicit value comparisons
 
 What the rule forbids is the type-ambiguous shortcut `if (!x)`, which collapses multiple "falsy" states (undefined, null, 0, "", false) into one branch. The explicit forms above declare exactly which state you mean. `??` (nullish coalescing) for defaults also handles `undefined` precisely — rules-bag-correct.
 
+Never add a fallback — fix the real code path. Ask an expert if the fix looks like it takes work to stitch in.
+
 Never use `try/catch` → `exception2Result()`
 
 Never implement a Singleton — use `ResolveOnce`/`Lazy`
