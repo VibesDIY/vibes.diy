@@ -228,8 +228,11 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       const { appSlug, ownerHandle: ownerUserSlug, adminMode } = req;
-      if (ctx.send instanceof WSSendProvider) {
-        ctx.send.adminMode = adminMode === true;
+      // Evento wraps the raw WSSendProvider — unwrap via .provider to
+      // reach the actual connection state.
+      const rawSend = (ctx.send as { provider?: unknown })?.provider ?? ctx.send;
+      if (rawSend instanceof WSSendProvider) {
+        rawSend.adminMode = adminMode === true;
       }
       const rRes = await resolveWhoAmI(vctx, {
         auth: req._auth,

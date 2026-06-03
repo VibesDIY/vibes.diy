@@ -53,7 +53,11 @@ import { WSSendProvider } from "../svc-ws-send-provider.js";
 import { GrantReduce, extractContribution } from "./grant-reduce.js";
 
 function connectionAdminMode(ctx: { send: unknown }): boolean {
-  return ctx.send instanceof WSSendProvider ? ctx.send.adminMode : false;
+  // Evento wraps the raw WSSendProvider in an EventoSend wrapper — the raw
+  // provider lives at ctx.send.provider. Check both paths so this works
+  // whether called from inside an Evento handler (wrapped) or directly.
+  const raw = (ctx.send as { provider?: unknown })?.provider ?? ctx.send;
+  return raw instanceof WSSendProvider ? raw.adminMode : false;
 }
 import { filterDocsByChannel } from "./channel-read-filter.js";
 import { mintFilesUrls, isFileMeta } from "./files-url-mint.js";
