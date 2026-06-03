@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make `import { fireproof } from "use-vibes"` work for Node.js / Wrangler scripts. Bare form `fireproof("todos")` auto-resolves auth/userSlug/appSlug from local CLI state populated by `npx vibes-diy login`.
+**Goal:** Make `import { fireproof } from "use-vibes"` work for Node.js / Wrangler scripts. Bare form `fireproof("todos")` auto-resolves auth/userHandle/appSlug from local CLI state populated by `npx vibes-diy login`.
 
 **Architecture:** Three-package layering (no new packages). vibe-runtime gains a `FireflyTransport` structural interface. api-impl gains a `FireflyApiAdapter` that wraps `VibesDiyApi` to satisfy that interface. use-vibes-base gains the `fireproof()` factory + a Node-only keybag loader, replacing the legacy `@fireproof/use-fireproof` re-export. Module-level singleton (`Lazy`) shares one `VibesDiyApi` across all `fireproof(name)` calls; per-name database cache (`KeyedResolvOnce`) makes repeat-name calls return the same instance.
 
@@ -153,9 +153,9 @@ EOF
 
 ---
 
-## Task 2: Scaffold `FireflyApiAdapter` with userSlug resolver
+## Task 2: Scaffold `FireflyApiAdapter` with userHandle resolver
 
-**Why:** The adapter is what bridges `VibesDiyApi`'s request-object methods to the positional `FireflyTransport` shape. Start with construction + lazy `userSlug` resolution; per-method translation comes in Task 3.
+**Why:** The adapter is what bridges `VibesDiyApi`'s request-object methods to the positional `FireflyTransport` shape. Start with construction + lazy `userHandle` resolution; per-method translation comes in Task 3.
 
 **Files:**
 
@@ -177,7 +177,7 @@ function fakeVibesDiyApi(overrides: Partial<Record<string, unknown>> = {}) {
       Result.Ok({
         type: "vibes.diy.res-ensure-user-settings",
         userId: "user-1",
-        settings: [{ type: "defaultUserSlug", userSlug: "alice" }],
+        settings: [{ type: "defaultUserSlug", userHandle: "alice" }],
         updated: "now",
         created: "now",
       })
@@ -193,7 +193,7 @@ describe("FireflyApiAdapter", () => {
     expect(adapter.svc.vibeApp.appSlug).toBe("my-app");
   });
 
-  it("resolves userSlug from ensureUserSettings.defaultUserSlug on first request", async () => {
+  it("resolves userHandle from ensureUserSettings.defaultUserSlug on first request", async () => {
     const api = fakeVibesDiyApi();
     const adapter = new FireflyApiAdapter(api, "my-app");
     const slug = await adapter.resolveUserSlug();
@@ -204,9 +204,9 @@ describe("FireflyApiAdapter", () => {
     expect(api.ensureUserSettings).toHaveBeenCalledTimes(1);
   });
 
-  it("uses opts.userSlug override and skips ensureUserSettings", async () => {
+  it("uses opts.userHandle override and skips ensureUserSettings", async () => {
     const api = fakeVibesDiyApi();
-    const adapter = new FireflyApiAdapter(api, "my-app", { userSlug: "bob" });
+    const adapter = new FireflyApiAdapter(api, "my-app", { userHandle: "bob" });
     expect(await adapter.resolveUserSlug()).toBe("bob");
     expect(api.ensureUserSettings).not.toHaveBeenCalled();
   });
@@ -253,52 +253,52 @@ import type { VibesDiyApi } from "./index.js";
 /**
  * Bridges VibesDiyApi (WebSocket, request-object signatures) to the
  * FireflyTransport shape FireflyDatabase expects (positional, dbName,
- * appSlug/userSlug baked in via svc.vibeApp).
+ * appSlug/userHandle baked in via svc.vibeApp).
  *
  * One adapter per (apiUrl, appSlug) pair — typically created once per
  * process via the fireproof() factory in use-vibes.
  *
- * userSlug is resolved lazily from the user's defaultUserSlug setting
- * via ensureUserSettings({}). Pass opts.userSlug to skip the round-trip
+ * userHandle is resolved lazily from the user's defaultUserSlug setting
+ * via ensureUserSettings({}). Pass opts.userHandle to skip the round-trip
  * (e.g. for service accounts where the token's user differs from the
  * routing user).
  */
 export class FireflyApiAdapter {
-  readonly svc: { vibeApp: { userSlug: string; appSlug: string; fsId: string } };
+  readonly svc: { vibeApp: { userHandle: string; appSlug: string; fsId: string } };
 
   private readonly api: VibesDiyApi;
-  private readonly userSlugOverride: string | undefined;
-  private readonly userSlugOnce = new ResolveOnce<string>();
+  private readonly userHandleOverride: string | undefined;
+  private readonly userHandleOnce = new ResolveOnce<string>();
 
-  constructor(api: VibesDiyApi, appSlug: string, opts?: { userSlug?: string }) {
+  constructor(api: VibesDiyApi, appSlug: string, opts?: { userHandle?: string }) {
     this.api = api;
-    this.userSlugOverride = opts?.userSlug;
-    // svc.vibeApp.userSlug is mutable — gets backfilled after resolveUserSlug()
+    this.userHandleOverride = opts?.userHandle;
+    // svc.vibeApp.userHandle is mutable — gets backfilled after resolveUserSlug()
     // completes. Consumers who need it before any RPC should call
     // adapter.resolveUserSlug() explicitly.
     this.svc = {
       vibeApp: {
         appSlug,
-        userSlug: opts?.userSlug ?? "",
-        fsId: "", // unused on the Node side; FireflyDatabase only reads userSlug+appSlug
+        userHandle: opts?.userHandle ?? "",
+        fsId: "", // unused on the Node side; FireflyDatabase only reads userHandle+appSlug
       },
     };
   }
 
   async resolveUserSlug(): Promise<string> {
-    if (this.userSlugOverride) return this.userSlugOverride;
-    return this.userSlugOnce.once(async () => {
+    if (this.userHandleOverride) return this.userHandleOverride;
+    return this.userHandleOnce.once(async () => {
       const rRes = await this.api.ensureUserSettings({ settings: [] });
       if (rRes.isErr()) {
         throw new Error(`Failed to load user settings: ${rRes.Err()}`);
       }
       const def = rRes.Ok().settings.find(isUserSettingDefaultUserSlug);
       if (!def) {
-        throw new Error("No defaultUserSlug — pass {userSlug} or run 'npx vibes-diy login' first");
+        throw new Error("No defaultUserSlug — pass {userHandle} or run 'npx vibes-diy login' first");
       }
-      // Backfill svc.vibeApp.userSlug so FireflyDatabase's onMsg filter works.
-      (this.svc.vibeApp as { userSlug: string }).userSlug = def.userSlug;
-      return def.userSlug;
+      // Backfill svc.vibeApp.userHandle so FireflyDatabase's onMsg filter works.
+      (this.svc.vibeApp as { userHandle: string }).userHandle = def.userHandle;
+      return def.userHandle;
     });
   }
 }
@@ -316,11 +316,11 @@ cd /Users/jchris/code/fp/vibes.diy
 npx prettier --write vibes.diy/api/impl/firefly-api-adapter.ts vibes.diy/api/impl/firefly-api-adapter.test.ts
 git add vibes.diy/api/impl/firefly-api-adapter.ts vibes.diy/api/impl/firefly-api-adapter.test.ts
 git commit -m "$(cat <<'EOF'
-feat(api-impl): scaffold FireflyApiAdapter with lazy userSlug resolver
+feat(api-impl): scaffold FireflyApiAdapter with lazy userHandle resolver
 
 First slice of the WS-side adapter. Builds svc.vibeApp from constructor
-args and resolves userSlug from ensureUserSettings({}) -> defaultUserSlug
-on first request, with optional opts.userSlug override.
+args and resolves userHandle from ensureUserSettings({}) -> defaultUserSlug
+on first request, with optional opts.userHandle override.
 
 Refs: #1438
 
@@ -333,7 +333,7 @@ EOF
 
 ## Task 3: Implement `FireflyApiAdapter` document methods
 
-**Why:** Translate the positional `(doc, docId?, dbName?)` calls FireflyDatabase makes into the request-object shape VibesDiyApi expects, with `appSlug`/`userSlug` baked in.
+**Why:** Translate the positional `(doc, docId?, dbName?)` calls FireflyDatabase makes into the request-object shape VibesDiyApi expects, with `appSlug`/`userHandle` baked in.
 
 **Files:**
 
@@ -345,7 +345,7 @@ EOF
 Append to `vibes.diy/api/impl/firefly-api-adapter.test.ts` (inside the existing `describe`):
 
 ```ts
-it("putDoc translates positional call to request object with appSlug+userSlug+dbName", async () => {
+it("putDoc translates positional call to request object with appSlug+userHandle+dbName", async () => {
   const putDoc = vi.fn(async () => Result.Ok({ type: "vibes.diy.res-put-doc", status: "ok", id: "doc-1" }));
   const api = fakeVibesDiyApi({ putDoc });
   const adapter = new FireflyApiAdapter(api, "my-app");
@@ -353,7 +353,7 @@ it("putDoc translates positional call to request object with appSlug+userSlug+db
   expect(res.isOk()).toBe(true);
   expect(putDoc).toHaveBeenCalledWith({
     appSlug: "my-app",
-    userSlug: "alice",
+    userHandle: "alice",
     dbName: "todos",
     doc: { text: "hello" },
     docId: "doc-1",
@@ -375,7 +375,7 @@ it("getDoc routes through VibesDiyApi.getDoc", async () => {
   await adapter.getDoc("doc-1", "todos");
   expect(getDoc).toHaveBeenCalledWith({
     appSlug: "my-app",
-    userSlug: "alice",
+    userHandle: "alice",
     dbName: "todos",
     docId: "doc-1",
   });
@@ -386,7 +386,7 @@ it("queryDocs routes through VibesDiyApi.queryDocs", async () => {
   const api = fakeVibesDiyApi({ queryDocs });
   const adapter = new FireflyApiAdapter(api, "my-app");
   await adapter.queryDocs("todos");
-  expect(queryDocs).toHaveBeenCalledWith({ appSlug: "my-app", userSlug: "alice", dbName: "todos" });
+  expect(queryDocs).toHaveBeenCalledWith({ appSlug: "my-app", userHandle: "alice", dbName: "todos" });
 });
 
 it("deleteDoc routes through VibesDiyApi.deleteDoc", async () => {
@@ -396,7 +396,7 @@ it("deleteDoc routes through VibesDiyApi.deleteDoc", async () => {
   await adapter.deleteDoc("doc-1", "todos");
   expect(deleteDoc).toHaveBeenCalledWith({
     appSlug: "my-app",
-    userSlug: "alice",
+    userHandle: "alice",
     dbName: "todos",
     docId: "doc-1",
   });
@@ -407,7 +407,7 @@ it("subscribeDocs routes through VibesDiyApi.subscribeDocs", async () => {
   const api = fakeVibesDiyApi({ subscribeDocs });
   const adapter = new FireflyApiAdapter(api, "my-app");
   await adapter.subscribeDocs("todos");
-  expect(subscribeDocs).toHaveBeenCalledWith({ appSlug: "my-app", userSlug: "alice", dbName: "todos" });
+  expect(subscribeDocs).toHaveBeenCalledWith({ appSlug: "my-app", userHandle: "alice", dbName: "todos" });
 });
 
 it("putAsset throws — file uploads not supported in v1", async () => {
@@ -460,10 +460,10 @@ Then append these methods to the class body (after `resolveUserSlug`):
     docId?: string,
     dbName = "default",
   ): Promise<Result<ResPutDoc, VibesDiyError>> {
-    const userSlug = await this.resolveUserSlug();
+    const userHandle = await this.resolveUserSlug();
     return this.api.putDoc({
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug,
+      userHandle,
       dbName,
       doc,
       ...(docId ? { docId } : {}),
@@ -474,39 +474,39 @@ Then append these methods to the class body (after `resolveUserSlug`):
     docId: string,
     dbName = "default",
   ): Promise<Result<ResGetDoc | ResGetDocNotFound, VibesDiyError>> {
-    const userSlug = await this.resolveUserSlug();
+    const userHandle = await this.resolveUserSlug();
     return this.api.getDoc({
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug,
+      userHandle,
       dbName,
       docId,
     });
   }
 
   async queryDocs(dbName = "default"): Promise<Result<ResQueryDocs, VibesDiyError>> {
-    const userSlug = await this.resolveUserSlug();
+    const userHandle = await this.resolveUserSlug();
     return this.api.queryDocs({
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug,
+      userHandle,
       dbName,
     });
   }
 
   async deleteDoc(docId: string, dbName = "default"): Promise<Result<ResDeleteDoc, VibesDiyError>> {
-    const userSlug = await this.resolveUserSlug();
+    const userHandle = await this.resolveUserSlug();
     return this.api.deleteDoc({
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug,
+      userHandle,
       dbName,
       docId,
     });
   }
 
   async subscribeDocs(dbName = "default"): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
-    const userSlug = await this.resolveUserSlug();
+    const userHandle = await this.resolveUserSlug();
     return this.api.subscribeDocs({
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug,
+      userHandle,
       dbName,
     });
   }
@@ -533,7 +533,7 @@ git commit -m "$(cat <<'EOF'
 feat(api-impl): FireflyApiAdapter document methods
 
 Translates positional FireflyTransport calls (put/get/query/delete/
-subscribe) into VibesDiyApi request-object payloads with appSlug/userSlug
+subscribe) into VibesDiyApi request-object payloads with appSlug/userHandle
 baked in. putAsset throws — file uploads land in a future release.
 
 Refs: #1438
@@ -547,7 +547,7 @@ EOF
 
 ## Task 4: Implement `FireflyApiAdapter.onMsg` (doc-changed bridge)
 
-**Why:** `FireflyDatabase`'s constructor wires up `vibeApi.onMsg(event => isEvtDocChanged(event.data) && ...)`. `VibesDiyApi` exposes `onDocChanged((userSlug, appSlug, dbName, docId) => ...)` instead, so the adapter has to synthesize the event shape FireflyDatabase expects.
+**Why:** `FireflyDatabase`'s constructor wires up `vibeApi.onMsg(event => isEvtDocChanged(event.data) && ...)`. `VibesDiyApi` exposes `onDocChanged((userHandle, appSlug, dbName, docId) => ...)` instead, so the adapter has to synthesize the event shape FireflyDatabase expects.
 
 **Files:**
 
@@ -577,7 +577,7 @@ it("onMsg synthesizes evt-doc-changed events from VibesDiyApi.onDocChanged", () 
   expect(seen).toEqual([
     {
       type: "vibes.diy.evt-doc-changed",
-      userSlug: "alice",
+      userHandle: "alice",
       appSlug: "my-app",
       dbName: "todos",
       docId: "doc-1",
@@ -602,11 +602,11 @@ Append to `FireflyApiAdapter` class body:
    * (each fan-outs from a single onDocChanged registration).
    */
   onMsg(fn: (event: { data: unknown }) => void): void {
-    this.api.onDocChanged((userSlug, appSlug, dbName, docId) => {
+    this.api.onDocChanged((userHandle, appSlug, dbName, docId) => {
       fn({
         data: {
           type: "vibes.diy.evt-doc-changed",
-          userSlug,
+          userHandle,
           appSlug,
           dbName,
           docId,
@@ -875,7 +875,7 @@ function makeOpts(overrides: Partial<FireproofOpts> = {}): FireproofOpts {
   return {
     apiUrl: "ws://test.invalid",
     appSlug: "my-app",
-    userSlug: "alice",
+    userHandle: "alice",
     getToken: fakeGetToken(),
     ...overrides,
   };
@@ -923,7 +923,7 @@ Create `use-vibes/base/fireproof-node.ts`:
  * Module-level singletons:
  *  - sharedAdapter: Lazy<FireflyApiAdapter> — first fireproof() call's
  *    opts win. Subsequent calls reuse the cached adapter, so N
- *    fireproof(name) calls share one VibesDiyApi/WebSocket/userSlug.
+ *    fireproof(name) calls share one VibesDiyApi/WebSocket/userHandle.
  *  - databasesByName: KeyedResolvOnce<FireflyDatabase> — per-name cache
  *    so fireproof("x") returns the same instance across the process.
  *
@@ -941,14 +941,14 @@ import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 export interface FireproofOpts {
   apiUrl?: string;
   appSlug?: string;
-  userSlug?: string;
+  userHandle?: string;
   getToken?: () => Promise<Result<DashAuthType>>;
 }
 
 interface ResolvedOpts {
   apiUrl: string;
   appSlug: string;
-  userSlug: string | undefined;
+  userHandle: string | undefined;
   getToken: () => Promise<Result<DashAuthType>>;
 }
 
@@ -971,7 +971,7 @@ function resolveOptsSync(opts?: FireproofOpts): ResolvedOpts {
       const inner = await lazyKeybagGetToken();
       return inner();
     });
-  return { apiUrl, appSlug, userSlug: opts?.userSlug, getToken };
+  return { apiUrl, appSlug, userHandle: opts?.userHandle, getToken };
 }
 
 let sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
@@ -979,7 +979,7 @@ let sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
     apiUrl: resolved.apiUrl,
     getToken: resolved.getToken,
   });
-  return new FireflyApiAdapter(api, resolved.appSlug, resolved.userSlug ? { userSlug: resolved.userSlug } : undefined);
+  return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { userHandle: resolved.userHandle } : undefined);
 });
 
 let databasesByName = new KeyedResolvOnce<FireflyDatabase>();
@@ -987,11 +987,11 @@ let databasesByName = new KeyedResolvOnce<FireflyDatabase>();
 /**
  * Standalone fireproof() factory.
  *
- * Bare form `fireproof("todos")` auto-resolves auth/userSlug/appSlug from
+ * Bare form `fireproof("todos")` auto-resolves auth/userHandle/appSlug from
  * local CLI state populated by `npx vibes-diy login`.
  *
  * **First-call-wins for opts.** The first call to fireproof() in a process
- * binds apiUrl/appSlug/getToken/userSlug to the singleton adapter — later
+ * binds apiUrl/appSlug/getToken/userHandle to the singleton adapter — later
  * calls' opts arguments are silently ignored (matches the legacy fireproof()
  * mental model where opts are config-time, not call-time). Callers that need
  * different configs in one process should construct VibesDiyApi +
@@ -1009,7 +1009,7 @@ export function __resetFireproofForTesting(): void {
       apiUrl: resolved.apiUrl,
       getToken: resolved.getToken,
     });
-    return new FireflyApiAdapter(api, resolved.appSlug, resolved.userSlug ? { userSlug: resolved.userSlug } : undefined);
+    return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { userHandle: resolved.userHandle } : undefined);
   });
   databasesByName = new KeyedResolvOnce<FireflyDatabase>();
 }
@@ -1067,7 +1067,7 @@ Defaults pipeline (when opts omitted):
   apiUrl   <- VIBES_DIY_API_URL env, then https://vibes.diy/api
   appSlug  <- VIBES_APP_SLUG env, then basename(cwd)
   getToken <- dynamic-import keybag loader (npx vibes-diy login)
-  userSlug <- ensureUserSettings({}).defaultUserSlug (lazy in adapter)
+  userHandle <- ensureUserSettings({}).defaultUserSlug (lazy in adapter)
 
 Refs: #1438
 
@@ -1208,22 +1208,22 @@ export interface FakeVibesDiyApi {
   ensureUserSettings: (req: unknown) => Promise<Result<unknown>>;
   putDoc: (req: {
     appSlug: string;
-    userSlug: string;
+    userHandle: string;
     dbName: string;
     doc: Record<string, unknown>;
     docId?: string;
   }) => Promise<Result<unknown>>;
-  getDoc: (req: { appSlug: string; userSlug: string; dbName: string; docId: string }) => Promise<Result<unknown>>;
-  queryDocs: (req: { appSlug: string; userSlug: string; dbName: string }) => Promise<Result<unknown>>;
-  deleteDoc: (req: { appSlug: string; userSlug: string; dbName: string; docId: string }) => Promise<Result<unknown>>;
-  subscribeDocs: (req: { appSlug: string; userSlug: string; dbName: string }) => Promise<Result<unknown>>;
-  onDocChanged: (fn: (userSlug: string, appSlug: string, dbName: string, docId: string) => void) => () => void;
+  getDoc: (req: { appSlug: string; userHandle: string; dbName: string; docId: string }) => Promise<Result<unknown>>;
+  queryDocs: (req: { appSlug: string; userHandle: string; dbName: string }) => Promise<Result<unknown>>;
+  deleteDoc: (req: { appSlug: string; userHandle: string; dbName: string; docId: string }) => Promise<Result<unknown>>;
+  subscribeDocs: (req: { appSlug: string; userHandle: string; dbName: string }) => Promise<Result<unknown>>;
+  onDocChanged: (fn: (userHandle: string, appSlug: string, dbName: string, docId: string) => void) => () => void;
   /** how many times `new VibesDiyApi(...)` would have been called — used by multi-db test */
   readonly _connectionId: number;
   /** raw access to the doc store keyed by dbName */
   readonly _docs: Map<string, Map<string, Record<string, unknown>>>;
   /** simulate a server-push doc-changed event */
-  _simulateDocChanged: (userSlug: string, appSlug: string, dbName: string, docId: string) => void;
+  _simulateDocChanged: (userHandle: string, appSlug: string, dbName: string, docId: string) => void;
 }
 
 export function createFakeVibesDiyApi(opts: { defaultUserSlug?: string } = {}): FakeVibesDiyApi {
@@ -1248,7 +1248,7 @@ export function createFakeVibesDiyApi(opts: { defaultUserSlug?: string } = {}): 
       Result.Ok({
         type: "vibes.diy.res-ensure-user-settings",
         userId: `user-${connectionId}`,
-        settings: opts.defaultUserSlug ? [{ type: "defaultUserSlug", userSlug: opts.defaultUserSlug }] : [],
+        settings: opts.defaultUserSlug ? [{ type: "defaultUserSlug", userHandle: opts.defaultUserSlug }] : [],
         updated: "now",
         created: "now",
       }),
@@ -1290,8 +1290,8 @@ export function createFakeVibesDiyApi(opts: { defaultUserSlug?: string } = {}): 
       };
     },
 
-    _simulateDocChanged: (userSlug, appSlug, dbName, docId) => {
-      for (const fn of docChangedListeners) fn(userSlug, appSlug, dbName, docId);
+    _simulateDocChanged: (userHandle, appSlug, dbName, docId) => {
+      for (const fn of docChangedListeners) fn(userHandle, appSlug, dbName, docId);
     },
   };
 }
@@ -1363,7 +1363,7 @@ describe("Multi-database caching via fireproof() factory", () => {
     const opts = {
       apiUrl: "ws://test.invalid",
       appSlug: "my-app",
-      userSlug: "alice",
+      userHandle: "alice",
       getToken: async () => Result.Ok({ type: "device-id" as const, token: "t" }),
     };
 
@@ -1381,7 +1381,7 @@ describe("Multi-database caching via fireproof() factory", () => {
     const opts = {
       apiUrl: "ws://test.invalid",
       appSlug: "my-app",
-      userSlug: "alice",
+      userHandle: "alice",
       getToken: async () => {
         tokenCalls++;
         return Result.Ok({ type: "device-id" as const, token: "t" });
@@ -1476,7 +1476,7 @@ Plan: [docs/superpowers/plans/2026-05-10-standalone-fireproof-node.md](docs/supe
 
 - [x] `pnpm check` green
 - [x] Existing firefly-database / use-firefly / firefly-files / firefly-nodejs tests pass unchanged (FireflyTransport interface is structurally satisfied by VibeSandboxApi)
-- [x] New `firefly-api-adapter.test.ts` covers put/get/query/del/subscribe/onMsg/userSlug-resolution/putAsset-throws
+- [x] New `firefly-api-adapter.test.ts` covers put/get/query/del/subscribe/onMsg/userHandle-resolution/putAsset-throws
 - [x] New `firefly-defaults.node.test.ts` covers "no cert → helpful error"
 - [x] New `fireproof-node.test.ts` covers cache identity + first-call-wins
 - [x] firefly-nodejs.test.ts gains end-to-end + multi-db caching describe blocks
@@ -1496,7 +1496,7 @@ Done after writing the plan; fix issues inline.
 **Spec coverage checklist:**
 
 - ✅ `FireflyTransport` interface extracted in vibe-runtime → Task 1
-- ✅ `FireflyApiAdapter` in api-impl with userSlug lazy resolution → Tasks 2, 3, 4
+- ✅ `FireflyApiAdapter` in api-impl with userHandle lazy resolution → Tasks 2, 3, 4
 - ✅ `FireflyApiAdapter` exported from api-impl barrel → Task 5
 - ✅ Keybag loader Node-only module → Task 6
 - ✅ `fireproof()` factory with Lazy singleton + KeyedResolvOnce cache → Task 7
@@ -1507,7 +1507,7 @@ Done after writing the plan; fix issues inline.
 
 **Type/symbol consistency:**
 
-- `FireflyTransport.svc.vibeApp` is `VibeApp` (existing 3-field interface) — `FireflyApiAdapter.svc.vibeApp` matches with userSlug/appSlug/fsId.
+- `FireflyTransport.svc.vibeApp` is `VibeApp` (existing 3-field interface) — `FireflyApiAdapter.svc.vibeApp` matches with userHandle/appSlug/fsId.
 - `FireflyApiAdapter` constructor signature `(api, appSlug, opts?)` consistent across Tasks 2, 3, 4, 7.
 - Method signatures (positional, dbName-default, Result-wrapped) consistent between Task 1 interface and Task 3 implementation.
 - `__resetFireproofForTesting` exported from `fireproof-node.ts` (Task 7) and used by `firefly-nodejs.test.ts` (Task 9) — name matches.

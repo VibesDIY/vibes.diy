@@ -107,7 +107,7 @@ export function dbCommonArgs(ctx: CliCtx) {
       defaultValue: () => ctx.sthis.env.get("VIBES_APP_SLUG") ?? basename(process.cwd()),
       defaultValueIsSerializable: true,
     }),
-    userSlug: option({
+    userHandle: option({
       long: "user-slug",
       description: "User slug; defaults to defaultUserSlug from user settings",
       type: string,
@@ -124,7 +124,7 @@ export function dbCommonArgs(ctx: CliCtx) {
   };
 }
 
-// Resolve userSlug: explicit override -> defaultUserSlug from user settings.
+// Resolve userHandle: explicit override -> defaultUserSlug from user settings.
 export async function resolveUserSlug(api: VibesDiyApi, explicit: string): Promise<Result<string>> {
   if (explicit !== "") return Result.Ok(explicit);
   const r = await api.ensureUserSettings({ settings: [] });
@@ -133,7 +133,7 @@ export async function resolveUserSlug(api: VibesDiyApi, explicit: string): Promi
   if (def === undefined) {
     return Result.Err("No defaultUserSlug — pass --user-slug or run 'vibes-diy login' first");
   }
-  return Result.Ok(def.userSlug);
+  return Result.Ok(def.userHandle);
 }
 ```
 
@@ -152,7 +152,7 @@ export const ReqDbList = type({
   type: "'vibes-diy.cli.db.list'",
   apiUrl: "string",
   appSlug: "string",
-  userSlug: "string",
+  userHandle: "string",
 });
 export type ReqDbList = typeof ReqDbList.infer;
 export function isReqDbList(obj: unknown): obj is ReqDbList {
@@ -182,9 +182,9 @@ export const dbListEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbList, ResDb
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const rUser = await resolveUserSlug(api, ctx.validated.userSlug);
+    const rUser = await resolveUserSlug(api, ctx.validated.userHandle);
     if (rUser.isErr()) return Result.Err(rUser.Err());
-    const r = await api.listDbNames({ appSlug: ctx.validated.appSlug, userSlug: rUser.Ok() });
+    const r = await api.listDbNames({ appSlug: ctx.validated.appSlug, userHandle: rUser.Ok() });
     if (r.isErr()) return Result.Err(r.Err());
     return sendMsg(ctx, {
       type: "vibes-diy.cli.db.list-res",
@@ -205,7 +205,7 @@ export function dbListCmd(ctx: CliCtx) {
       type: "vibes-diy.cli.db.list",
       apiUrl: args.apiUrl,
       appSlug: args.appSlug,
-      userSlug: args.userSlug,
+      userHandle: args.userHandle,
     })),
   });
 }
@@ -313,7 +313,7 @@ export const ReqDbGet = type({
   type: "'vibes-diy.cli.db.get'",
   apiUrl: "string",
   appSlug: "string",
-  userSlug: "string",
+  userHandle: "string",
   dbName: "string",
   docId: "string",
 });
@@ -345,9 +345,9 @@ export const dbGetEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbGet, ResDbGe
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const rUser = await resolveUserSlug(api, ctx.validated.userSlug);
+    const rUser = await resolveUserSlug(api, ctx.validated.userHandle);
     if (rUser.isErr()) return Result.Err(rUser.Err());
-    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userSlug: rUser.Ok() });
+    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { userHandle: rUser.Ok() });
     const r = await adapter.getDoc(ctx.validated.docId, ctx.validated.dbName);
     if (r.isErr()) return Result.Err(r.Err());
     const res = r.Ok();
@@ -378,7 +378,7 @@ export function dbGetCmd(ctx: CliCtx) {
       type: "vibes-diy.cli.db.get",
       apiUrl: args.apiUrl,
       appSlug: args.appSlug,
-      userSlug: args.userSlug,
+      userHandle: args.userHandle,
       dbName: args.dbName,
       docId: args.docId,
     })),
@@ -442,7 +442,7 @@ This is the most complex. Compose a real `FireflyDatabase` to get filter parity 
 ```ts
 import { FireflyDatabase } from "@vibes.diy/vibe-runtime";
 // ...
-const adapter = new FireflyApiAdapter(api, appSlug, { userSlug });
+const adapter = new FireflyApiAdapter(api, appSlug, { userHandle });
 const db = new FireflyDatabase(dbName, adapter);
 const opts: Record<string, unknown> = {};
 if (args.key !== "") opts.key = JSON.parse(args.key);
@@ -469,7 +469,7 @@ Render: print `docs` as JSON array.
 ### Sketch
 
 ```ts
-const adapter = new FireflyApiAdapter(api, appSlug, { userSlug });
+const adapter = new FireflyApiAdapter(api, appSlug, { userHandle });
 // Trigger the server-side subscription
 await adapter.subscribeDocs(dbName);
 // Set up the listener
@@ -514,7 +514,7 @@ gh pr create --title "feat(cli): vibes-diy db subcommands (#1666)" --body "...cl
 
 - **Spec coverage:** All 6 subcommands implemented? ✓
 - **Pattern consistency:** Every command follows the same req/res/evento/command shape from `user-settings-cmd.ts` and friends.
-- **Auth:** Each command resolves `userSlug` via the shared helper; never assumes the token's user is the routing user.
+- **Auth:** Each command resolves `userHandle` via the shared helper; never assumes the token's user is the routing user.
 - **No new deps:** All needed packages already in `vibes-diy/package.json` (`@vibes.diy/api-impl` and `@vibes.diy/vibe-runtime` are workspace packages; verify the runtime dep exists or add it).
 
 ## Out of scope

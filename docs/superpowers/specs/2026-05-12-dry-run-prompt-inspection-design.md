@@ -62,7 +62,7 @@ duplicating logic, extract:
 
 - `assemblePromptPayload(vctx, { chatId, model, newUserMessages }): Result<{ model, messages }>`
   — pure (only reads). Wraps the existing `injectSystemPrompt` body.
-  Takes the *next* user turn as an explicit argument and appends it to
+  Takes the _next_ user turn as an explicit argument and appends it to
   the reconstructed conversation, instead of relying on a just-written
   `prompt.req` block to feed `reconstructConversationMessages`.
 
@@ -96,7 +96,7 @@ reqInspectPromptChatSection = type({
   chatId: "string",
   mode: "'chat'", // chat only for now; app/img dry-run is out of scope
   prompt: LLMRequest, // the next user turn, same shape as ReqCreationPromptChatSection.prompt
-})
+});
 ```
 
 Response shape:
@@ -107,7 +107,7 @@ resInspectPromptChatSection = type({
   chatId: "string",
   model: "string",
   messages: ChatMessage.array(),
-})
+});
 ```
 
 Handler flow:
@@ -135,8 +135,8 @@ vibes-diy inspect <appSlug> --prompt "<next user turn>" [--text] [--user-slug <s
 
 Behavior:
 
-- Resolve `userSlug` exactly like `edit-cmd.ts`.
-- Open a chat via `api.openChat({ userSlug, appSlug, mode: "chat" })` —
+- Resolve `userHandle` exactly like `edit-cmd.ts`.
+- Open a chat via `api.openChat({ userHandle, appSlug, mode: "chat" })` —
   this resolves `chatId` without side effects on prompt assembly. (The
   `openChat` handler is the same one `edit` uses.)
 - Send a `req-inspect-prompt-chat-section` message via the existing
@@ -164,6 +164,7 @@ the same not-found error.
 ## Zero-side-effect guarantee
 
 The dry-run handler does only `SELECT`s. It never calls:
+
 - `appendBlockEvent` / `appendChatSection`
 - `storePromptContext`
 - `dispatchLlm` / any LLM provider

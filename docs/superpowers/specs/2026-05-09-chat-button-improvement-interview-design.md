@@ -6,7 +6,7 @@
 
 ## Problem
 
-The chat input today has a single submit button labeled **Code** that sends the user's prompt to a code-generation pass — `makeBaseSystemPrompt` builds the full system prompt with all the skills (callai, fireproof, image-gen, web-audio), SEARCH/REPLACE rules, and code-gen scaffolding. There is no lightweight, conversational way for a user to *think out loud* about what to change in an existing app before committing to a code-gen pass. The user has to phrase the change themselves, often missing structure or context that would help the code pass land cleanly.
+The chat input today has a single submit button labeled **Code** that sends the user's prompt to a code-generation pass — `makeBaseSystemPrompt` builds the full system prompt with all the skills (callai, fireproof, image-gen, web-audio), SEARCH/REPLACE rules, and code-gen scaffolding. There is no lightweight, conversational way for a user to _think out loud_ about what to change in an existing app before committing to a code-gen pass. The user has to phrase the change themselves, often missing structure or context that would help the code pass land cleanly.
 
 We want a second submit button — **Chat** — sitting next to **Code**. Clicking Chat runs an interview that gathers a structured improvement brief through short multiple-choice questions, then automatically hands that brief off to a code-gen pass. The interview LLM call uses a different, leaner system prompt with no skill catalog and no code-gen rules — its only job is to ask good questions and produce the brief.
 
@@ -16,7 +16,7 @@ We want a second submit button — **Chat** — sitting next to **Code**. Clicki
 - Run improvement-only interviews — Chat assumes the app exists and asks "what to change next" questions specific to the current app.
 - Interview output renders as conversational markdown with `▸ ` lines parsed into clickable answer-option buttons styled to the existing chat UI.
 - Auto-handoff: when the interview produces a `<vibes-brief>` block, fire a follow-up `mode: 'app'` code-gen request automatically — one chat thread, two distinct turns (interview, then build).
-- Use a dedicated system prompt that does *not* load the skill catalog or the code-gen template.
+- Use a dedicated system prompt that does _not_ load the skill catalog or the code-gen template.
 
 ## Non-goals
 
@@ -72,9 +72,9 @@ Content adapted from the user's `vibes-brainstorm` skill draft, with two structu
 **Categories adapted for improvement-only:**
 
 - Drop "Who uses this?" and "What do others see?" (already settled by the existing app).
-- Add an opener: *"What part needs to feel better?"* — answer choices invented per app from the current App.jsx context.
-- Reframe "How big is this?" as *"Scope of this change"* with options ranging from quick polish through new feature to bigger rework.
-- Keep the *Main interaction*, *What are you tracking?*, *What gets saved?*, *Special features*, and *What's the vibe?* categories — re-pose them as "should this change?" rather than "what is this?".
+- Add an opener: _"What part needs to feel better?"_ — answer choices invented per app from the current App.jsx context.
+- Reframe "How big is this?" as _"Scope of this change"_ with options ranging from quick polish through new feature to bigger rework.
+- Keep the _Main interaction_, _What are you tracking?_, _What gets saved?_, _Special features_, and _What's the vibe?_ categories — re-pose them as "should this change?" rather than "what is this?".
 - Every question after the first ends with the escape hatch: `▸ That's enough — let's build it!`.
 
 **Brief shape (change-request, not from-scratch):**
@@ -129,7 +129,7 @@ export async function makeBrainstormSystemPrompt(
 ): Promise<BrainstormSystemPromptResult>;
 ```
 
-Loads `system-prompt-brainstorm.md` via the same `loadAsset` keyed cache used for `system-prompt.md`. Substitutes `{{TITLE_SECTION}}`, `{{THEME_DESIGN}}`, and `{{CURRENT_VFS}}`. **Does not** load the skill catalog, generate import statements, fetch llms/*.md files, or interpolate `{{IMPORT_STATEMENTS}}` / `{{CONCATENATED_LLMS}}` / `{{DEMO_DATA}}` — those concepts don't exist in interview output.
+Loads `system-prompt-brainstorm.md` via the same `loadAsset` keyed cache used for `system-prompt.md`. Substitutes `{{TITLE_SECTION}}`, `{{THEME_DESIGN}}`, and `{{CURRENT_VFS}}`. **Does not** load the skill catalog, generate import statements, fetch llms/\*.md files, or interpolate `{{IMPORT_STATEMENTS}}` / `{{CONCATENATED_LLMS}}` / `{{DEMO_DATA}}` — those concepts don't exist in interview output.
 
 `{{CURRENT_VFS}}` expands to a single block wrapping one entry per file. Format:
 
@@ -179,22 +179,22 @@ Modify [ChatInput.tsx](vibes.diy/pkg/app/components/ChatInput.tsx):
 
 - `onSubmit` prop becomes `onSubmit: (prompt: string, mode: 'app' | 'brainstorm') => void`.
 - Render two buttons in the bottom row, in order: **Chat** (left), **Code** (right). Same height, same border treatment, same loading-border animation when `promptProcessing`.
-- **Chat button** is `disabled={!hasCode || promptProcessing}`. Tooltip on hover when disabled: *"Available once your app has code — start with Code first."*
+- **Chat button** is `disabled={!hasCode || promptProcessing}`. Tooltip on hover when disabled: _"Available once your app has code — start with Code first."_
 - Both buttons fire `handleSendPrompt` with their respective mode. `handleSendPrompt` accepts a mode argument, calls `onSubmit(prompt, mode)`, and clears the textarea.
-- The working-message text (`getWorkingMessage`) stays Code-pass-specific. While brainstorm is processing, the Chat button shows a short label like *"Asking…"* (and is disabled); the Code button is also disabled to prevent double-submits.
+- The working-message text (`getWorkingMessage`) stays Code-pass-specific. While brainstorm is processing, the Chat button shows a short label like _"Asking…"_ (and is disabled); the Code button is also disabled to prevent double-submits.
 
-Update [chat.$userSlug.$appSlug.tsx:257](vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx:257):
+Update [chat.$userHandle.$appSlug.tsx:257](vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx:257):
 
 ```ts
-type PendingPrompt = { text: string; mode: 'app' | 'brainstorm' };
+type PendingPrompt = { text: string; mode: "app" | "brainstorm" };
 const [promptToSend, sendPrompt] = useState<PendingPrompt | null>(null);
 ```
 
-The firing effect at [chat.$userSlug.$appSlug.tsx:368](vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx:368) reads `promptToSend.mode` and routes to the right `chat.prompt(...)` call. The `vibeDiyApi` chat session wrapper needs a way to send with `mode: 'brainstorm'` — either an explicit `chat.brainstormPrompt(...)` method, or the existing `chat.prompt` extended to accept a mode argument. Implementation plan picks one; design treats them as interchangeable.
+The firing effect at [chat.$userHandle.$appSlug.tsx:368](vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx:368) reads `promptToSend.mode` and routes to the right `chat.prompt(...)` call. The `vibeDiyApi` chat session wrapper needs a way to send with `mode: 'brainstorm'` — either an explicit `chat.brainstormPrompt(...)` method, or the existing `chat.prompt` extended to accept a mode argument. Implementation plan picks one; design treats them as interchangeable.
 
 ### 6. Frontend: clickable `▸ ` options in TopLevelMsg
 
-Today [MessageList.tsx:146](vibes.diy/pkg/app/components/MessageList.tsx:146) renders assistant narration with `<ReactMarkdown>{lines.map((i) => i.line).join("\n")}</ReactMarkdown>`. Add a small parser that runs *before* the markdown render: split the joined text into a `prose` chunk and an `options` array.
+Today [MessageList.tsx:146](vibes.diy/pkg/app/components/MessageList.tsx:146) renders assistant narration with `<ReactMarkdown>{lines.map((i) => i.line).join("\n")}</ReactMarkdown>`. Add a small parser that runs _before_ the markdown render: split the joined text into a `prose` chunk and an `options` array.
 
 **Parsing rules:**
 
@@ -210,7 +210,7 @@ Today [MessageList.tsx:146](vibes.diy/pkg/app/components/MessageList.tsx:146) re
 - Clicking an option calls a new prop, `onSelectOption(text)`, which `ChatInterface` plumbs from the route. The route's `onSelectOption` calls `sendPrompt({ text, mode: 'brainstorm' })` directly — no textarea round-trip.
 - Streaming: the parser runs on each render. While a `▸ ` line is partially streamed (e.g., the line ends mid-word with no following newline), it renders as plain prose; once the line terminates (newline or end-of-message), it switches to a button on the next render. This is acceptable because the chat already re-renders rapidly during streaming.
 
-**Styling note:** the existing `BrutalistCard` uses `messageType="ai"` for assistant messages. The option buttons sit *inside* that card, so they don't need their own card chrome — just a subtle border/background that reads as "clickable" against the card's background. Final palette tuning happens during implementation; the design constraint is "consistent with the current chat UX, distinct as clickable."
+**Styling note:** the existing `BrutalistCard` uses `messageType="ai"` for assistant messages. The option buttons sit _inside_ that card, so they don't need their own card chrome — just a subtle border/background that reads as "clickable" against the card's background. Final palette tuning happens during implementation; the design constraint is "consistent with the current chat UX, distinct as clickable."
 
 ### 7. Frontend: auto-handoff on `<vibes-brief>`
 
@@ -246,22 +246,27 @@ Brainstorm turns ride the same `chatSections` table the existing turns do. No sc
 ### 10. Testing
 
 **Unit (prompts pkg):**
+
 - `makeBrainstormSystemPrompt` substitutes `{{TITLE_SECTION}}`, `{{THEME_DESIGN}}`, and `{{CURRENT_VFS}}` correctly across cases: single-file VFS, multi-file VFS (sorted ordering), empty VFS, missing title, missing theme.
 - The brainstorm system prompt does not contain skill catalog markers (`{{CONCATENATED_LLMS}}`, `{{IMPORT_STATEMENTS}}`).
 
 **Unit (frontend):**
+
 - The `▸ ` parser splits prose and options correctly: trailing group, mid-message group, no group, partial line during streaming.
 - The `<vibes-brief>` extraction handles well-formed, malformed (no closing tag), empty body, and multiple-blocks cases.
 
 **Component (frontend):**
+
 - ChatInput renders both buttons; Chat is disabled when `!hasCode`; Code is disabled when `promptProcessing`. Click on each fires `onSubmit` with the correct mode.
 - A `TopLevelMsg` containing `▸ ` lines renders prose + buttons. Click on a button fires `onSelectOption` with the option's text. Buttons in non-most-recent messages render as disabled.
 
 **API (vibes.diy/api/tests):**
+
 - A `mode: 'brainstorm'` request through `prompt-chat-section.ts` selects the brainstorm system prompt (mock the LLM, assert the system message content matches the brainstorm template — not the code-gen one, no llms/ content, no `{{IMPORT_STATEMENTS}}` artifacts).
 - The brainstorm request resolves the same `applicationChats` row as `mode: 'app'` for the same chat.
 
 **Integration (existing harness):**
+
 - Click Chat → interview turn streams with `▸ ` lines → click an option → next turn streams → brief lands → code-gen turn auto-fires using the brief → preview updates.
 - Reload after a completed brainstorm + build: history shows interview messages with disabled buttons, the brief, and the build turn — all intact.
 

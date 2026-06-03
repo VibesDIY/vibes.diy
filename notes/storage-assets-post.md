@@ -57,14 +57,14 @@ Presigned grants get this right by issuing a short-lived signed token over the W
 2. Client → server (over WS):
      ReqAssetUploadGrant {
        type: "vibes.diy.req-asset-upload-grant",
-       auth, userSlug, appSlug,
+       auth, userHandle, appSlug,
      }
 3. Server WS handler:
      - verifyAuth (existing): user U is who they claim
-     - app-access check: user U has permission to upload to (userSlug, appSlug)
+     - app-access check: user U has permission to upload to (userHandle, appSlug)
        (same access semantics as Firefly read/write — including invite-grants
         and public-access apps)
-     - mint signed JWT with claims { userId, userSlug, appSlug, exp, jti }
+     - mint signed JWT with claims { userId, userHandle, appSlug, exp, jti }
        and TTL ~60s
      - reply ResAssetUploadGrant { uploadUrl, grant, expiresAt }
 4. Client → server (over HTTP):
@@ -75,7 +75,7 @@ Presigned grants get this right by issuing a short-lived signed token over the W
 5. HTTP handler:
      - verify grant signature, check exp
      - vctx.storage.ensure(req.body)
-     - INSERT INTO AssetUploads (uploadId=jti, userId, userSlug, appSlug, cid, size, mimeType, created)
+     - INSERT INTO AssetUploads (uploadId=jti, userId, userHandle, appSlug, cid, size, mimeType, created)
      - return JSON { cid, getURL, size, uploadId }
 ```
 
@@ -125,14 +125,14 @@ The `Apps.fileSystem` jsonb references are how assets get *bound* to apps in the
 sqlAssetUploads = pgTable("AssetUploads", {
   uploadId: text().primaryKey(),     // = JWT jti
   userId: text().notNull(),          // who uploaded (Clerk userId)
-  userSlug: text().notNull(),        // app owner namespace
+  userHandle: text().notNull(),        // app owner namespace
   appSlug: text().notNull(),
   cid: text().notNull(),             // logical FK into Assets / R2
   size: integer().notNull(),         // for SUM-based quota math
   mimeType: text(),                  // optional client hint
   created: text().notNull(),
 }, (table) => [
-  index("AssetUploads_app_idx").on(table.userSlug, table.appSlug, table.created),
+  index("AssetUploads_app_idx").on(table.userHandle, table.appSlug, table.created),
   index("AssetUploads_user_idx").on(table.userId, table.created),
   index("AssetUploads_cid_idx").on(table.cid),
 ]);
@@ -142,8 +142,8 @@ This way:
 
 - `Assets` table stays content-addressed and dedup-friendly. Same CID space as today; nothing changes for existing referenced blobs.
 - `AssetUploads` is the audit/quota layer — every upload event is a row, attributing bytes to (user, app). Same shape and indexing as `PromptContexts`.
-- Quota becomes `SUM(size) WHERE userSlug=? AND appSlug=?` — identical pattern to `SUM(totalTokens)` for LLM rollups.
-- For the runtime-`_files` case where any app user uploads: `userId` records who, `userSlug`/`appSlug` records the app, ownership is implicit via the app — exactly the right model.
+- Quota becomes `SUM(size) WHERE userHandle=? AND appSlug=?` — identical pattern to `SUM(totalTokens)` for LLM rollups.
+- For the runtime-`_files` case where any app user uploads: `userId` records who, `userHandle`/`appSlug` records the app, ownership is implicit via the app — exactly the right model.
 
 ## Endpoint shapes
 
@@ -153,7 +153,7 @@ This way:
 ReqAssetUploadGrant = type({
   type: "'vibes.diy.req-asset-upload-grant'",
   auth: dashAuthType,
-  userSlug: "string",
+  userHandle: "string",
   appSlug: "string",
   "mimeType?": "string",
 });
@@ -193,7 +193,7 @@ vibes-diy put-asset <file> [--api-url=...] [--user-slug=...] [--app-slug=...] [-
 ```
 
 1. Open WS, authenticate (existing device-id flow).
-2. Send `req-asset-upload-grant { userSlug, appSlug, mimeType: <inferred from filename> }`.
+2. Send `req-asset-upload-grant { userHandle, appSlug, mimeType: <inferred from filename> }`.
 3. Receive grant, expiresAt, uploadUrl.
 4. `fetch(uploadUrl, { method: "POST", body: createReadStream(file), headers: { "X-Asset-Grant": grant, "Content-Type": "application/octet-stream" } })`.
 5. Print `cid getURL size uploadId` (text, no JSON formatting flag — the CLI doesn't pretend to JSON output anywhere).

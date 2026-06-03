@@ -61,7 +61,7 @@ After upserting `ActiveIconDescription`, post a queue message per app:
 
 ```jsonc
 {
-  "payload": { "type": "vibes.diy.evt-icon-gen", "userSlug": "...", "appSlug": "..." },
+  "payload": { "type": "vibes.diy.evt-icon-gen", "userHandle": "...", "appSlug": "..." },
   "tid": "queue-event",
   "src": "icon-backfill",
   "dst": "vibes-service",

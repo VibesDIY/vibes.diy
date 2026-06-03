@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace Edit/Clone/Remix on `/vibe/:userSlug/:appSlug` for non-public viewers with two CTAs — **Install your own copy** (clone API) and **Join** / **Request access** (request-grant API). Strip Remix from the running-app pill on this route, stop the sidebar and Clerk modal from auto-opening on shared-link landings, and route both CTAs through the existing Clerk overlay with an `?intent=` round-trip.
+**Goal:** Replace Edit/Clone/Remix on `/vibe/:userHandle/:appSlug` for non-public viewers with two CTAs — **Install your own copy** (clone API) and **Join** / **Request access** (request-grant API). Strip Remix from the running-app pill on this route, stop the sidebar and Clerk modal from auto-opening on shared-link landings, and route both CTAs through the existing Clerk overlay with an `?intent=` round-trip.
 
-**Architecture:** Reuse the existing Mac-classic landing card already in `vibe.$userSlug.$appSlug.tsx`. Drive helper copy + button row from a `cardVariant` derived from a new `cardGrant` state (the raw grant string from `getAppByFsId`). Two pure helpers — `vibe-intent.ts` (URL param r/w) and `vibe-card-variant.ts` (grant → variant) — keep the testable logic out of the React tree. The Clerk overlay itself is unchanged: CTAs set the intent param and flip `reqLogin=true`; the existing `forceRedirectUrl` carries the param across sign-up; a new effect reads it on return and fires the action.
+**Architecture:** Reuse the existing Mac-classic landing card already in `vibe.$userHandle.$appSlug.tsx`. Drive helper copy + button row from a `cardVariant` derived from a new `cardGrant` state (the raw grant string from `getAppByFsId`). Two pure helpers — `vibe-intent.ts` (URL param r/w) and `vibe-card-variant.ts` (grant → variant) — keep the testable logic out of the React tree. The Clerk overlay itself is unchanged: CTAs set the intent param and flip `reqLogin=true`; the existing `forceRedirectUrl` carries the param across sign-up; a new effect reads it on return and fires the action.
 
 **Tech Stack:** React Router 7, Clerk (`@clerk/react`), `@vibes.diy/base` `VibesButton`, vitest, `vctx.vibeDiyApi.requestAccess()`.
 
@@ -25,7 +25,7 @@
 
 **Modified:**
 
-- `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx`:
+- `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`:
   - Add `cardGrant` state; populate it from `applyResToUI`.
   - Stop the auto-opens: `setReqLogin(true)` from grant resolution (Clerk modal) and `setIsSidebarVisible(true)` (sidebar). Tighten `showLoginOverlay` so it depends only on `reqLogin`.
   - Replace the landing card's helper paragraph + button row with variant-driven content.
@@ -258,11 +258,11 @@ This task wires the new state and **stops the existing automatic Clerk modal and
 
 **Files:**
 
-- Modify: `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx`
+- Modify: `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`
 
 - [ ] **Step 1: Add `cardGrant` state and populate it from `applyResToUI`**
 
-Open `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx`.
+Open `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`.
 
 Add an import near the top (alongside other route imports):
 
@@ -329,7 +329,7 @@ switch (res.grant) {
 Find the `showLoginOverlay` line (around line 362). Replace:
 
 ```typescript
-const showLoginOverlay = !authSignedIn && isLoaded && (!!(fsId && userSlug && appSlug) || reqLogin);
+const showLoginOverlay = !authSignedIn && isLoaded && (!!(fsId && userHandle && appSlug) || reqLogin);
 ```
 
 With:
@@ -346,13 +346,13 @@ Locate the effect around line 178 that opens the sidebar based on URL params. Re
 
 ```typescript
 useEffect(() => {
-  if (isLoaded && !authSignedIn && fsId && userSlug && appSlug) {
+  if (isLoaded && !authSignedIn && fsId && userHandle && appSlug) {
     setIsSidebarVisible(true);
   }
   if (authSignedIn) {
     setIsSidebarVisible(false);
   }
-}, [isLoaded, authSignedIn, fsId, userSlug, appSlug]);
+}, [isLoaded, authSignedIn, fsId, userHandle, appSlug]);
 ```
 
 With:
@@ -375,8 +375,8 @@ Expected: PASS. (UI doesn't render the new card yet — the existing card render
 - [ ] **Step 6: Format and commit**
 
 ```bash
-npx prettier --write vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx
-git add vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx
+npx prettier --write vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx
+git add vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx
 git commit -m "refactor(vibe-route): cardGrant state, stop auto-opens (#1665, #1741)"
 ```
 
@@ -388,7 +388,7 @@ Render the existing card based on the new variant. Stub handlers so the file com
 
 **Files:**
 
-- Modify: `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx`
+- Modify: `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`
 
 - [ ] **Step 1: Add variant + stub handlers right before the JSX return**
 
@@ -491,8 +491,8 @@ Expected: PASS.
 - [ ] **Step 4: Format and commit**
 
 ```bash
-npx prettier --write vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx
-git add vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx
+npx prettier --write vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx
+git add vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx
 git commit -m "feat(vibe-route): variant-driven two-CTA landing card (#1741)"
 ```
 
@@ -502,7 +502,7 @@ git commit -m "feat(vibe-route): variant-driven two-CTA landing card (#1741)"
 
 **Files:**
 
-- Modify: `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx`
+- Modify: `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`
 
 - [ ] **Step 1: Add imports**
 
@@ -524,8 +524,8 @@ function fireInstall() {
 }
 
 async function fireJoin() {
-  if (!appSlug || !userSlug) return;
-  const r = await vctx.vibeDiyApi.requestAccess({ appSlug, userSlug });
+  if (!appSlug || !userHandle) return;
+  const r = await vctx.vibeDiyApi.requestAccess({ appSlug, userHandle });
   if (r.isErr()) {
     toast.error(`Request failed: ${r.Err().message}`);
     return;
@@ -588,8 +588,8 @@ Expected: both PASS.
 - [ ] **Step 5: Format and commit**
 
 ```bash
-npx prettier --write vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx
-git add vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx
+npx prettier --write vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx
+git add vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx
 git commit -m "feat(vibe-route): wire Install/Join CTAs with intent round-trip (#1741)"
 ```
 
@@ -601,7 +601,7 @@ After Tasks 3-5 the modal, the `reqAccess` flag, and the `pendingRequest`/`revok
 
 **Files:**
 
-- Modify: `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx`
+- Modify: `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`
 
 - [ ] **Step 1: Delete `reqAccessOverlay`**
 
@@ -617,7 +617,7 @@ const [pendingRequest, setPendingRequest] = useState(false);
 const [revokedAccess, setRevokedAccess] = useState(false);
 ```
 
-Verify with `grep -n "reqAccess\|pendingRequest\|revokedAccess" vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx` — only `setReqAccess`/`setPendingRequest`/`setRevokedAccess` calls inside the old `applyResToUI` switch should remain, and Task 3's rewrite already deleted those. If grep returns any matches, delete them.
+Verify with `grep -n "reqAccess\|pendingRequest\|revokedAccess" vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx` — only `setReqAccess`/`setPendingRequest`/`setRevokedAccess` calls inside the old `applyResToUI` switch should remain, and Task 3's rewrite already deleted those. If grep returns any matches, delete them.
 
 - [ ] **Step 3: Drop `remixHref` from the pill**
 
@@ -631,8 +631,8 @@ Expected: PASS, no unused-variable warnings.
 - [ ] **Step 5: Format and commit**
 
 ```bash
-npx prettier --write vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx
-git add vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx
+npx prettier --write vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx
+git add vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx
 git commit -m "refactor(vibe-route): drop modal + dead flags + Remix from pill (#1741)"
 ```
 
@@ -665,7 +665,7 @@ Per CLAUDE.md: UI changes require a real browser test.
 git push -u origin jchris/1741-anon-vibe-two-cta
 gh pr create --title "Anon Vibe page: Install/Join two-CTA landing (#1741)" --body "$(cat <<'EOF'
 ## Summary
-- Replaces Edit/Clone/Remix on `/vibe/:userSlug/:appSlug` with **Install your own copy** + **Join** / **Request access** for anon and authed-non-owner viewers of non-public vibes
+- Replaces Edit/Clone/Remix on `/vibe/:userHandle/:appSlug` with **Install your own copy** + **Join** / **Request access** for anon and authed-non-owner viewers of non-public vibes
 - Stops the sidebar and Clerk modal from auto-opening on shared-link landings (closes #1665)
 - Removes Remix from the running-app pill on `/vibe/...` routes (relocation tracked in #1746)
 - Wires both CTAs through the existing Clerk overlay with `?intent=` round-trip

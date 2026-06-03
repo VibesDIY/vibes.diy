@@ -54,7 +54,7 @@ In `vibes.diy/api/sql/vibes-diy-api-schema-sqlite.ts`, add after the `sqlAccessF
 export const sqlAccessFnOutputs = sqliteTable(
   "AccessFnOutputs",
   {
-    userSlug: text().notNull(),
+    userHandle: text().notNull(),
     appSlug: text().notNull(),
     dbName: text().notNull(),
     docId: text().notNull(),
@@ -63,8 +63,8 @@ export const sqlAccessFnOutputs = sqliteTable(
     hasGrants: integer().notNull(), // 1 if output has members/grant fields
   },
   (table) => [
-    primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId] }),
-    index("AccessFnOutputs_grants_idx").on(table.userSlug, table.appSlug, table.dbName, table.fnCid),
+    primaryKey({ columns: [table.userHandle, table.appSlug, table.dbName, table.docId] }),
+    index("AccessFnOutputs_grants_idx").on(table.userHandle, table.appSlug, table.dbName, table.fnCid),
   ]
 );
 ```
@@ -77,7 +77,7 @@ In `vibes.diy/api/sql/vibes-diy-api-schema-pg.ts`, add after the `sqlAccessFunct
 export const sqlAccessFnOutputs = pgTable(
   "AccessFnOutputs",
   {
-    userSlug: text().notNull(),
+    userHandle: text().notNull(),
     appSlug: text().notNull(),
     dbName: text().notNull(),
     docId: text().notNull(),
@@ -86,8 +86,8 @@ export const sqlAccessFnOutputs = pgTable(
     hasGrants: integer().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userSlug, table.appSlug, table.dbName, table.docId] }),
-    index("AccessFnOutputs_grants_idx").on(table.userSlug, table.appSlug, table.dbName, table.fnCid),
+    primaryKey({ columns: [table.userHandle, table.appSlug, table.dbName, table.docId] }),
+    index("AccessFnOutputs_grants_idx").on(table.userHandle, table.appSlug, table.dbName, table.fnCid),
   ]
 );
 ```
@@ -267,7 +267,7 @@ In `vibes.diy/api/svc/public/app-documents.ts`, update the access function gate 
           .from(tOutputs)
           .where(
             and(
-              eq(tOutputs.userSlug, req.ownerHandle),
+              eq(tOutputs.userHandle, req.ownerHandle),
               eq(tOutputs.appSlug, req.appSlug),
               eq(tOutputs.dbName, req.dbName),
               eq(tOutputs.fnCid, afbRow.accessFnCid),
@@ -324,7 +324,7 @@ if (accessResult && !("forbidden" in accessResult)) {
   await vctx.sql.db
     .insert(tOutputs)
     .values({
-      userSlug: req.ownerHandle,
+      userHandle: req.ownerHandle,
       appSlug: req.appSlug,
       dbName: req.dbName,
       docId: req.docId ?? generatedDocId,
@@ -333,7 +333,7 @@ if (accessResult && !("forbidden" in accessResult)) {
       hasGrants: outputHasGrants,
     })
     .onConflictDoUpdate({
-      target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+      target: [tOutputs.userHandle, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
       set: {
         fnCid: afbRow.accessFnCid,
         output: JSON.stringify(accessResult),

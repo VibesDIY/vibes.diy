@@ -62,7 +62,7 @@ Find the end of the `ReqSubscribeDocs` block (the `isReqSubscribeDocs` function,
 export const ReqSetDbAcl = type({
   type: "'vibes.diy.req-set-db-acl'",
   appSlug: "string",
-  userSlug: "string",
+  userHandle: "string",
   dbName: "string",
   acl: dbAcl,
 }).and(Base);
@@ -192,7 +192,7 @@ describe("vibeSetDbAcl host handler", () => {
           type: "vibes.diy.req-set-db-acl",
           tid: "t1",
           appSlug: "myapp",
-          userSlug: "alice",
+          userHandle: "alice",
           dbName: "announcements",
           acl,
         },
@@ -205,7 +205,7 @@ describe("vibeSetDbAcl host handler", () => {
     expect(ensureAppSettingsCalls).toHaveLength(1);
     expect(ensureAppSettingsCalls[0]).toMatchObject({
       appSlug: "myapp",
-      userSlug: "alice",
+      userHandle: "alice",
       dbAcl: { dbName: "announcements", acl },
     });
 
@@ -256,7 +256,7 @@ describe("vibeSetDbAcl host handler", () => {
           type: "vibes.diy.req-set-db-acl",
           tid: "t2",
           appSlug: "myapp",
-          userSlug: "alice",
+          userHandle: "alice",
           dbName: "announcements",
           acl: { write: ["editors"] },
         },
@@ -279,7 +279,7 @@ describe("vibeSetDbAcl host handler", () => {
 
     sandbox.handleMessage(
       fakeMessageEvent(
-        { type: "something-else", tid: "t3", appSlug: "a", userSlug: "b", dbName: "c", acl: {} },
+        { type: "something-else", tid: "t3", appSlug: "a", userHandle: "b", dbName: "c", acl: {} },
         "https://a--b.example.com",
         iframe
       )
@@ -315,7 +315,7 @@ git commit -m "test(srv-sandbox): failing test for vibeSetDbAcl handler"
 
 - Modify: `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`
 
-Context: Handlers are plain functions that take `sandbox: vibesDiySrvSandbox` and return an `EventoHandler`. Handlers are registered in the array at line ~946. `isReqSetDbAcl` and `ReqSetDbAcl` come from `@vibes.diy/vibe-types`. `vibeDiyApi.ensureAppSettings` takes `Req<ReqEnsureAppSettings>` — the `Req<>` wrapper strips `type` and `auth` from the request type, so you just pass `{ userSlug, appSlug, dbAcl: { dbName, acl } }`.
+Context: Handlers are plain functions that take `sandbox: vibesDiySrvSandbox` and return an `EventoHandler`. Handlers are registered in the array at line ~946. `isReqSetDbAcl` and `ReqSetDbAcl` come from `@vibes.diy/vibe-types`. `vibeDiyApi.ensureAppSettings` takes `Req<ReqEnsureAppSettings>` — the `Req<>` wrapper strips `type` and `auth` from the request type, so you just pass `{ userHandle, appSlug, dbAcl: { dbName, acl } }`.
 
 - [ ] **Step 1: Add `isReqSetDbAcl` and `ReqSetDbAcl` to the import from `@vibes.diy/vibe-types`**
 
@@ -346,7 +346,7 @@ function vibeSetDbAcl(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqSetDbAcl, unknown>): Promise<Result<EventoResultType>> => {
       const rRes = await vibeDiyApi.ensureAppSettings({
-        userSlug: ctx.validated.userSlug,
+        userHandle: ctx.validated.userHandle,
         appSlug: ctx.validated.appSlug,
         dbAcl: { dbName: ctx.validated.dbName, acl: ctx.validated.acl },
       });
@@ -447,7 +447,7 @@ After the `subscribeDocs` method (around line 293), add:
 
 ```typescript
   setDbAcl(dbName: string, acl: DbAcl): Promise<Result<ResSetDbAcl>> {
-    return this.request<{ type: string; appSlug: string; userSlug: string; dbName: string; acl: DbAcl }, ResSetDbAcl>(
+    return this.request<{ type: string; appSlug: string; userHandle: string; dbName: string; acl: DbAcl }, ResSetDbAcl>(
       {
         type: "vibes.diy.req-set-db-acl",
         ...this.svc.vibeApp,
@@ -505,7 +505,7 @@ beforeAll(() => {
 
 function makeFakeTransport(setDbAclFn?: (dbName: string, acl: DbAcl) => void): FireflyTransport {
   return {
-    svc: { vibeApp: { appSlug: "myapp", userSlug: "alice", fsId: "fs1" } },
+    svc: { vibeApp: { appSlug: "myapp", userHandle: "alice", fsId: "fs1" } },
     putDoc: () => Promise.resolve(Result.Err("not used")),
     getDoc: () => Promise.resolve(Result.Err("not used")),
     queryDocs: () => Promise.resolve(Result.Err("not used")),
@@ -603,7 +603,7 @@ In `vibes.diy/vibe/runtime/firefly-database.ts`, update the constructor signatur
       const { data } = event;
       if (
         isEvtDocChanged(data) &&
-        data.userSlug === this.vibeApp.userSlug &&
+        data.userHandle === this.vibeApp.userHandle &&
         data.appSlug === this.vibeApp.appSlug &&
         data.dbName === this.name
       ) {

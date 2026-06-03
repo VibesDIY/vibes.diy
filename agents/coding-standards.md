@@ -50,7 +50,7 @@ Read every commit diff before pushing. Check each pattern against the rules-bag 
 When linking to a deployed app on vibes.diy, always use the canonical path form:
 
 ```
-https://vibes.diy/vibe/{userSlug}/{appSlug}
+https://vibes.diy/vibe/{userHandle}/{appSlug}
 ```
 
 Example: `https://vibes.diy/vibe/garden-gnome/meeting-picker`. Do not use the `https://{appSlug}.vibesdiy.app` subdomain form when surfacing links in chat or PR descriptions — the subdomain exists for internal fetches but is not the canonical user-facing link.

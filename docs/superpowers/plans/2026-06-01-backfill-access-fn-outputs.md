@@ -15,6 +15,7 @@
 ### Task 1: Write integration test for backfill behavior
 
 **Files:**
+
 - Create: `vibes.diy/api/tests/access-fn-backfill.test.ts`
 
 - [ ] **Step 1: Write the test file**
@@ -100,9 +101,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
     // Create app WITHOUT access.js first
     const r = await ownerApi.ensureAppSlug({
       mode: "dev",
-      fileSystem: [
-        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: "function App() { return null; } App();" },
-      ],
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: "function App() { return null; } App();" }],
     });
     const res = r.Ok();
     if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create app");
@@ -111,7 +110,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
 
     // Manually seed AccessFunctionBindings so putDoc writes go through the gate
     await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.accessFunctionBindings).values({
-      userSlug: ownerHandle,
+      userHandle: ownerHandle,
       appSlug,
       dbName: "chat",
       accessFnCid: "pre-seed-cid",
@@ -132,7 +131,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
       .delete(appCtx.vibesCtx.sql.tables.accessFunctionBindings)
       .where(
         and(
-          eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.userSlug, ownerHandle),
+          eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.userHandle, ownerHandle),
           eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.appSlug, appSlug)
         )
       );
@@ -140,7 +139,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
       .delete(appCtx.vibesCtx.sql.tables.accessFnOutputs)
       .where(
         and(
-          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.userSlug, ownerHandle),
+          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.userHandle, ownerHandle),
           eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.appSlug, appSlug)
         )
       );
@@ -172,7 +171,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
     const rows = await appCtx.vibesCtx.sql.db
       .select()
       .from(tOutputs)
-      .where(and(eq(tOutputs.userSlug, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
+      .where(and(eq(tOutputs.userHandle, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
 
     expect(rows.length).toBe(3);
     for (const row of rows) {
@@ -226,7 +225,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
     const rows = await appCtx.vibesCtx.sql.db
       .select()
       .from(tOutputs)
-      .where(and(eq(tOutputs.userSlug, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
+      .where(and(eq(tOutputs.userHandle, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
 
     expect(rows.length).toBe(3);
     for (const row of rows) {
@@ -241,7 +240,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
       .delete(appCtx.vibesCtx.sql.tables.accessFnOutputs)
       .where(
         and(
-          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.userSlug, ownerHandle),
+          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.userHandle, ownerHandle),
           eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.appSlug, appSlug)
         )
       );
@@ -249,7 +248,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
       .delete(appCtx.vibesCtx.sql.tables.accessFunctionBindings)
       .where(
         and(
-          eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.userSlug, ownerHandle),
+          eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.userHandle, ownerHandle),
           eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.appSlug, appSlug)
         )
       );
@@ -287,7 +286,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
     const rows = await appCtx.vibesCtx.sql.db
       .select()
       .from(tOutputs)
-      .where(and(eq(tOutputs.userSlug, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
+      .where(and(eq(tOutputs.userHandle, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
 
     expect(rows.length).toBe(2);
   });
@@ -318,6 +317,7 @@ CID change re-backfills, forbidden docs skipped. Issue #2101."
 ### Task 2: Implement backfill logic in ensureAppSlugItem
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/ensure-app-slug-item.ts`
 
 - [ ] **Step 1: Add `exception2Result` to imports**
@@ -325,14 +325,23 @@ CID change re-backfills, forbidden docs skipped. Issue #2101."
 In `vibes.diy/api/svc/public/ensure-app-slug-item.ts`, add `exception2Result` to the `@adviser/cement` import and add `sql` and `desc` from `drizzle-orm`.
 
 At the top, add `exception2Result` to the cement import:
+
 ```typescript
 import {
-  EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult,
-  uint8array2stream, to_uint8, exception2Result,
+  EventoHandler,
+  Result,
+  Option,
+  EventoResultType,
+  HandleTriggerCtx,
+  EventoResult,
+  uint8array2stream,
+  to_uint8,
+  exception2Result,
 } from "@adviser/cement";
 ```
 
 Add `desc` and `sql` to the drizzle-orm import:
+
 ```typescript
 import { and, eq, notInArray, desc, sql } from "drizzle-orm";
 ```
@@ -342,12 +351,12 @@ import { and, eq, notInArray, desc, sql } from "drizzle-orm";
 Inside the `if (accessJsEntry)` block, after `const exportNames: string[] = [];` is populated and before the `if (exportNames.length > 0)` block, query existing bindings to detect CID changes:
 
 ```typescript
-        // Snapshot existing CIDs before upsert to detect changes for backfill
-        const existingBindings = await vctx.sql.db
-          .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
-          .from(tAfb)
-          .where(and(eq(tAfb.userSlug, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
-        const oldCids = new Map(existingBindings.map((b) => [b.dbName, b.accessFnCid]));
+// Snapshot existing CIDs before upsert to detect changes for backfill
+const existingBindings = await vctx.sql.db
+  .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
+  .from(tAfb)
+  .where(and(eq(tAfb.userHandle, ensured.ownerHandle), eq(tAfb.appSlug, ensured.appSlug)));
+const oldCids = new Map(existingBindings.map((b) => [b.dbName, b.accessFnCid]));
 ```
 
 - [ ] **Step 3: Add backfill after the binding upsert loop**
@@ -355,115 +364,119 @@ Inside the `if (accessJsEntry)` block, after `const exportNames: string[] = [];`
 After the upsert loop (the `for (const dbName of exportNames)` block) and after the stale-row deletion, add the backfill logic:
 
 ```typescript
-          // Backfill AccessFnOutputs for dbNames where the CID changed or is new (#2101)
-          if (vctx.invokeAccessFn) {
-            const changedDbNames = exportNames.filter((name) => oldCids.get(name) !== cid);
-            if (changedDbNames.length > 0) {
-              // Fetch source once (same CID for all exports from this access.js)
-              let accessFnSource: string | undefined;
-              if (accessJsEntry.storage.getURL) {
-                const rFetch = await vctx.storage.fetch(accessJsEntry.storage.getURL);
-                if (rFetch.type === "fetch.ok") {
-                  const reader = rFetch.data.getReader();
-                  const chunks: Uint8Array[] = [];
-                  for (;;) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    if (value) chunks.push(value);
-                  }
-                  const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-                  const merged = new Uint8Array(totalLength);
-                  let offset = 0;
-                  for (const chunk of chunks) {
-                    merged.set(chunk, offset);
-                    offset += chunk.length;
-                  }
-                  accessFnSource = new TextDecoder().decode(merged);
-                }
-              }
-              // Fallback: use in-memory source if storage fetch failed
-              if (!accessFnSource) {
-                accessFnSource = accessJsSource;
-              }
+// Backfill AccessFnOutputs for dbNames where the CID changed or is new (#2101)
+if (vctx.invokeAccessFn) {
+  const changedDbNames = exportNames.filter((name) => oldCids.get(name) !== cid);
+  if (changedDbNames.length > 0) {
+    // Fetch source once (same CID for all exports from this access.js)
+    let accessFnSource: string | undefined;
+    if (accessJsEntry.storage.getURL) {
+      const rFetch = await vctx.storage.fetch(accessJsEntry.storage.getURL);
+      if (rFetch.type === "fetch.ok") {
+        const reader = rFetch.data.getReader();
+        const chunks: Uint8Array[] = [];
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) chunks.push(value);
+        }
+        const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+        const merged = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const chunk of chunks) {
+          merged.set(chunk, offset);
+          offset += chunk.length;
+        }
+        accessFnSource = new TextDecoder().decode(merged);
+      }
+    }
+    // Fallback: use in-memory source if storage fetch failed
+    if (!accessFnSource) {
+      accessFnSource = accessJsSource;
+    }
 
-              if (accessFnSource) {
-                const tDocs = vctx.sql.tables.appDocuments;
-                const tOutputs = vctx.sql.tables.accessFnOutputs;
+    if (accessFnSource) {
+      const tDocs = vctx.sql.tables.appDocuments;
+      const tOutputs = vctx.sql.tables.accessFnOutputs;
 
-                for (const dbName of changedDbNames) {
-                  const allRows = await vctx.sql.db
-                    .select({ docId: tDocs.docId, data: tDocs.data, deleted: tDocs.deleted })
-                    .from(tDocs)
-                    .where(
-                      and(eq(tDocs.ownerHandle, ensured.ownerHandle), eq(tDocs.appSlug, ensured.appSlug), eq(tDocs.dbName, dbName))
-                    )
-                    .orderBy(sql`${tDocs.docId}, ${tDocs.seq}`);
+      for (const dbName of changedDbNames) {
+        const allRows = await vctx.sql.db
+          .select({ docId: tDocs.docId, data: tDocs.data, deleted: tDocs.deleted })
+          .from(tDocs)
+          .where(and(eq(tDocs.ownerHandle, ensured.ownerHandle), eq(tDocs.appSlug, ensured.appSlug), eq(tDocs.dbName, dbName)))
+          .orderBy(sql`${tDocs.docId}, ${tDocs.seq}`);
 
-                  // Dedup: last row per docId wins (highest seq)
-                  const latest = new Map<string, (typeof allRows)[0]>();
-                  for (const row of allRows) {
-                    latest.set(row.docId, row);
-                  }
+        // Dedup: last row per docId wins (highest seq)
+        const latest = new Map<string, (typeof allRows)[0]>();
+        for (const row of allRows) {
+          latest.set(row.docId, row);
+        }
 
-                  for (const [docId, row] of latest) {
-                    if (row.deleted === 1) continue;
+        for (const [docId, row] of latest) {
+          if (row.deleted === 1) continue;
 
-                    const rInvoke = await exception2Result(() =>
-                      vctx.invokeAccessFn!({
-                        cid,
-                        doc: row.data,
-                        oldDoc: null,
-                        user: null,
-                        source: accessFnSource,
-                        grantState: { members: {}, roleGrants: {}, userGrants: {} },
-                      })
-                    );
+          const rInvoke = await exception2Result(() =>
+            vctx.invokeAccessFn!({
+              cid,
+              doc: row.data,
+              oldDoc: null,
+              user: null,
+              source: accessFnSource,
+              grantState: { members: {}, roleGrants: {}, userGrants: {} },
+            })
+          );
 
-                    if (rInvoke.isErr()) {
-                      console.warn(`backfill: access fn threw for ${ensured.ownerHandle}/${ensured.appSlug}/${dbName}/${docId}:`, rInvoke.Err());
-                      continue;
-                    }
-
-                    const invokeResult = rInvoke.Ok();
-                    if ("forbidden" in invokeResult) continue;
-
-                    const outputHasGrants =
-                      (invokeResult.members && Object.keys(invokeResult.members).length > 0) ||
-                      (invokeResult.grant?.users && Object.keys(invokeResult.grant.users).length > 0) ||
-                      (invokeResult.grant?.roles && Object.keys(invokeResult.grant.roles).length > 0) ||
-                      (invokeResult.grant?.public && invokeResult.grant.public.length > 0)
-                        ? 1
-                        : 0;
-
-                    const rUpsert = await exception2Result(() =>
-                      vctx.sql.db
-                        .insert(tOutputs)
-                        .values({
-                          userSlug: ensured.ownerHandle,
-                          appSlug: ensured.appSlug,
-                          dbName,
-                          docId,
-                          fnCid: cid,
-                          output: JSON.stringify(invokeResult),
-                          hasGrants: outputHasGrants,
-                        })
-                        .onConflictDoUpdate({
-                          target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
-                          set: {
-                            fnCid: cid,
-                            output: JSON.stringify(invokeResult),
-                            hasGrants: outputHasGrants,
-                          },
-                        })
-                    );
-                    if (rUpsert.isErr()) {
-                      console.warn(`backfill: output upsert failed for ${ensured.ownerHandle}/${ensured.appSlug}/${dbName}/${docId}:`, rUpsert.Err());
-                    }
-                  }
-                }
-              }
-            }
+          if (rInvoke.isErr()) {
+            console.warn(
+              `backfill: access fn threw for ${ensured.ownerHandle}/${ensured.appSlug}/${dbName}/${docId}:`,
+              rInvoke.Err()
+            );
+            continue;
           }
+
+          const invokeResult = rInvoke.Ok();
+          if ("forbidden" in invokeResult) continue;
+
+          const outputHasGrants =
+            (invokeResult.members && Object.keys(invokeResult.members).length > 0) ||
+            (invokeResult.grant?.users && Object.keys(invokeResult.grant.users).length > 0) ||
+            (invokeResult.grant?.roles && Object.keys(invokeResult.grant.roles).length > 0) ||
+            (invokeResult.grant?.public && invokeResult.grant.public.length > 0)
+              ? 1
+              : 0;
+
+          const rUpsert = await exception2Result(() =>
+            vctx.sql.db
+              .insert(tOutputs)
+              .values({
+                userHandle: ensured.ownerHandle,
+                appSlug: ensured.appSlug,
+                dbName,
+                docId,
+                fnCid: cid,
+                output: JSON.stringify(invokeResult),
+                hasGrants: outputHasGrants,
+              })
+              .onConflictDoUpdate({
+                target: [tOutputs.userHandle, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+                set: {
+                  fnCid: cid,
+                  output: JSON.stringify(invokeResult),
+                  hasGrants: outputHasGrants,
+                },
+              })
+          );
+          if (rUpsert.isErr()) {
+            console.warn(
+              `backfill: output upsert failed for ${ensured.ownerHandle}/${ensured.appSlug}/${dbName}/${docId}:`,
+              rUpsert.Err()
+            );
+          }
+        }
+      }
+    }
+  }
+}
 ```
 
 - [ ] **Step 4: Run tests**

@@ -18,18 +18,23 @@ cmd-ts command → enqueue → WrapCmdTSMsg → evento handler → sendMsg → o
 ### New file: `vibes-diy/cli/cmds/list-cmd.ts`
 
 **Request type:**
+
 ```ts
-ReqVibesList = { type: 'vibes-diy.cli.list', apiUrl: string }
+ReqVibesList = { type: "vibes-diy.cli.list", apiUrl: string };
 ```
+
 No extra args needed; `--json`/`--text` and `--api-url` come from `cmdTsDefaultArgs` and are carried in `WrapCmdTSMsg.cmdTs`.
 
 **Response type:**
+
 ```ts
 ResVibesList = { type: 'vibes-diy.cli.res-list', items: ResRecentVibesItem[] }
 ```
+
 All items after full pagination. Callers never see cursor details.
 
 **Handler (`listEvento`):**
+
 1. Error if `vibesDiyApiFactory` is absent (not logged in).
 2. Loop: call `api.listRecentVibes({ limit: 100, cursor? })` until `nextCursor` is absent.
 3. Accumulate all `items`.
@@ -45,33 +50,36 @@ All items after full pagination. Callers never see cursor details.
   - Add `list: listCmd(ctx)` to the `cmds` map.
   - Add `case isResVibesList(msg):` output handler:
     - `wmsg.cmdTs.outputFormat === "json"` → NDJSON (one `JSON.stringify(item)` per line)
-    - otherwise → `userSlug/appSlug  title` per line (title omitted if absent)
+    - otherwise → `userHandle/appSlug  title` per line (title omitted if absent)
 
 ## Output formats
 
 **Text (default):**
+
 ```
 jchris/todo-app    My Todo App
 jchris/weather     (no title)
 ```
 
 **JSON (`--json`):**
+
 ```json
-{"userSlug":"jchris","appSlug":"todo-app","updated":"...","title":"My Todo App"}
-{"userSlug":"jchris","appSlug":"weather","updated":"..."}
+{"userHandle":"jchris","appSlug":"todo-app","updated":"...","title":"My Todo App"}
+{"userHandle":"jchris","appSlug":"weather","updated":"..."}
 ```
 
 ## Testing
 
 `vibes-diy/cli/cmds/list-cmd.test.ts` — unit tests following `generate-cmd.test.ts` pattern:
+
 - Verify `listCmd` enqueues a request that passes `isReqVibesList`.
 - Verify `apiUrl` defaults correctly.
 
 ## Files changed
 
-| File | Change |
-|------|--------|
-| `vibes-diy/cli/cmds/list-cmd.ts` | New |
-| `vibes-diy/cli/cmds/list-cmd.test.ts` | New |
-| `vibes-diy/cli/cmd-evento.ts` | Add `listEvento` |
-| `vibes-diy/cli/main.ts` | Add `list` command + output handler |
+| File                                  | Change                              |
+| ------------------------------------- | ----------------------------------- |
+| `vibes-diy/cli/cmds/list-cmd.ts`      | New                                 |
+| `vibes-diy/cli/cmds/list-cmd.test.ts` | New                                 |
+| `vibes-diy/cli/cmd-evento.ts`         | Add `listEvento`                    |
+| `vibes-diy/cli/main.ts`               | Add `list` command + output handler |

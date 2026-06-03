@@ -1,7 +1,7 @@
 # ViewerTag Component Design
 
 **Date:** 2026-05-26
-**Issue:** [#1946](https://github.com/VibesDIY/vibes.diy/issues/1946) tracks renaming `userSlug` → `userHandle` globally; this spec uses `userSlug` until that lands.
+**Issue:** [#1946](https://github.com/VibesDIY/vibes.diy/issues/1946) tracks renaming `userHandle` → `userHandle` globally; this spec uses `userHandle` until that lands.
 
 ## Summary
 
@@ -18,7 +18,7 @@ const { viewer, ViewerTag } = useViewer()
 <ViewerTag />
 
 // Render another user by slug (read-only):
-<ViewerTag userSlug="mabelsmith" />
+<ViewerTag userHandle="mabelsmith" />
 ```
 
 ### Undocumented sugar (not in LLM preamble)
@@ -27,20 +27,20 @@ The component also accepts a user object for callers that already have one:
 
 ```tsx
 <ViewerTag user={post.author} />
-// where author: { userSlug: string; displayName?: string; avatarUrl?: string }
+// where author: { userHandle: string; displayName?: string; avatarUrl?: string }
 ```
 
-Prop resolution order: `user.userSlug` → `userSlug` prop → absent (treat as self).
+Prop resolution order: `user.userHandle` → `userHandle` prop → absent (treat as self).
 
 ### Type signature
 
 ```ts
 type ViewerTagProps =
-  | { userSlug?: never; user?: never } // self
-  | { userSlug: string; user?: never } // slug string
+  | { userHandle?: never; user?: never } // self
+  | { userHandle: string; user?: never } // slug string
   | {
-      user: { userSlug: string; displayName?: string; avatarUrl?: string }; // object sugar
-      userSlug?: never;
+      user: { userHandle: string; displayName?: string; avatarUrl?: string }; // object sugar
+      userHandle?: never;
     };
 ```
 
@@ -54,14 +54,14 @@ ViewerTag: React.FC<ViewerTagProps>;
 
 Edit mode activates when:
 
-- No `userSlug` or `user` prop is passed (`!('userSlug' in props) && !('user' in props)`), **or**
-- The resolved slug matches `viewer?.userSlug`
+- No `userHandle` or `user` prop is passed (`!('userHandle' in props) && !('user' in props)`), **or**
+- The resolved slug matches `viewer?.userHandle`
 
-`'userSlug' in props` distinguishes "prop explicitly omitted" from "prop passed as `undefined`", preventing a `undefined` value from a loop lookup from silently triggering edit mode.
+`'userHandle' in props` distinguishes "prop explicitly omitted" from "prop passed as `undefined`", preventing a `undefined` value from a loop lookup from silently triggering edit mode.
 
 ## Undefined guard
 
-When `userSlug` is present in props but resolves to a falsy value (e.g. `userSlug={undefined}` from a broken data lookup), the component renders a dim, non-interactive fallback instead of crashing or showing the edit ring:
+When `userHandle` is present in props but resolves to a falsy value (e.g. `userHandle={undefined}` from a broken data lookup), the component renders a dim, non-interactive fallback instead of crashing or showing the edit ring:
 
 ```tsx
 <span style={{ opacity: 0.4, fontStyle: "italic", fontSize: 13 }}>no user handle provided</span>
@@ -72,7 +72,7 @@ When `userSlug` is present in props but resolves to a falsy value (e.g. `userSlu
 **Read-only pill** (other user):
 
 - Inline flex: 30px avatar circle + slug text
-- Avatar: `user.avatarUrl` if provided, else `avatarRouteForUserSlug(userSlug)`; initials fallback
+- Avatar: `user.avatarUrl` if provided, else `avatarRouteForUserSlug(userHandle)`; initials fallback
 - Pill background: `rgba(255,255,255,0.07)`, 1px subtle border, 999px border-radius
 
 **Self pill** (current viewer):
@@ -104,26 +104,26 @@ await vibeApi.updateAvatarCid(cid);
 // host calls vibeDiyApi.ensureUserSettings({ settings: [{ type: "profile", avatarCid: cid }] })
 ```
 
-The host only honours this request when the requesting sandbox's `userSlug` matches the authenticated viewer — same ownership check already applied to `putAsset`.
+The host only honours this request when the requesting sandbox's `userHandle` matches the authenticated viewer — same ownership check already applied to `putAsset`.
 
-`GET /u/{userSlug}/avatar` reads `avatarCid` from SQL settings (unchanged); the new CID is live as soon as the host round-trip completes.
+`GET /u/{userHandle}/avatar` reads `avatarCid` from SQL settings (unchanged); the new CID is live as soon as the host round-trip completes.
 
 During upload the avatar circle shows 50% opacity. Silent failure on error — no error UI.
 
 ## Files
 
-| File                                              | Change                                                                                                                                     |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `vibes.diy/vibe/runtime/use-viewer-tag.tsx`       | New — component implementation                                                                                                             |
-| `vibes.diy/vibe/runtime/use-viewer.ts`            | Add `ViewerTag` to return value                                                                                                            |
-| `vibes.diy/vibe/types/index.ts`                   | New `ReqVibeUpdateAvatarCid` / `ResVibeUpdateAvatarCid` message types; add `ViewerTag` to `UseViewerResult` interface                      |
-| `vibes.diy/vibe/runtime/register-dependencies.ts` | Add `updateAvatarCid(cid)` method to `VibeSandboxApi`                                                                                      |
-| `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`       | Handle `vibe.req.updateAvatarCid` → call `vibeDiyApi.ensureUserSettings`                                                                   |
-| `prompts/pkg/llms/use-viewer.md`                  | New `## ViewerTag` section documenting `<ViewerTag />` and `<ViewerTag userSlug="..." />` (string prop only — object sugar not documented) |
+| File                                              | Change                                                                                                                                       |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vibes.diy/vibe/runtime/use-viewer-tag.tsx`       | New — component implementation                                                                                                               |
+| `vibes.diy/vibe/runtime/use-viewer.ts`            | Add `ViewerTag` to return value                                                                                                              |
+| `vibes.diy/vibe/types/index.ts`                   | New `ReqVibeUpdateAvatarCid` / `ResVibeUpdateAvatarCid` message types; add `ViewerTag` to `UseViewerResult` interface                        |
+| `vibes.diy/vibe/runtime/register-dependencies.ts` | Add `updateAvatarCid(cid)` method to `VibeSandboxApi`                                                                                        |
+| `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`       | Handle `vibe.req.updateAvatarCid` → call `vibeDiyApi.ensureUserSettings`                                                                     |
+| `prompts/pkg/llms/use-viewer.md`                  | New `## ViewerTag` section documenting `<ViewerTag />` and `<ViewerTag userHandle="..." />` (string prop only — object sugar not documented) |
 
 ## Out of scope
 
-- Renaming `userSlug` → `userHandle` (tracked in [#1946](https://github.com/VibesDIY/vibes.diy/issues/1946))
+- Renaming `userHandle` → `userHandle` (tracked in [#1946](https://github.com/VibesDIY/vibes.diy/issues/1946))
 - Showing upload progress beyond opacity dimming
 - Explicit error states or retry UI
 - Theming / CSS custom property hooks

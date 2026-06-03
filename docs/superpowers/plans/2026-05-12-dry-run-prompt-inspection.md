@@ -16,6 +16,7 @@
 ## File Map
 
 **Modify:**
+
 - `vibes.diy/api/types/chat.ts` — add `reqInspectPromptChatSection`, `resInspectPromptChatSection`, type guards.
 - `vibes.diy/api/svc/public/prompt-chat-section.ts` — extract `assemblePromptPayload`; rework dispatch to call it and move `prompt.req` `appendBlockEvent` to after assembly.
 - `vibes.diy/api/svc/vibes-msg-evento.ts` — register `inspectPromptChatSection`.
@@ -24,6 +25,7 @@
 - `vibes-diy/cli/main.ts` — wire `inspectCmd` into subcommand table.
 
 **Create:**
+
 - `vibes.diy/api/svc/public/inspect-prompt-chat-section.ts` — new handler.
 - `vibes.diy/api/tests/inspect-prompt-chat-section.test.ts` — integration test (zero-side-effects + payload correctness).
 - `vibes.diy/api/tests/assemble-prompt-payload.test.ts` — unit test for extracted function.
@@ -37,6 +39,7 @@
 ## Task 1: Add request/response types
 
 **Files:**
+
 - Modify: `vibes.diy/api/types/chat.ts`
 
 The new types live next to `reqPromptChatSection`. They piggyback on `LLMRequest` (same shape `ReqCreationPromptChatSection.prompt` uses) and `ChatMessage` (already imported indirectly via `LLMRequest`).
@@ -90,10 +93,7 @@ Create `vibes.diy/api/tests/inspect-prompt-types.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import {
-  isReqInspectPromptChatSection,
-  isResInspectPromptChatSection,
-} from "@vibes.diy/api-types";
+import { isReqInspectPromptChatSection, isResInspectPromptChatSection } from "@vibes.diy/api-types";
 
 describe("inspect prompt types", () => {
   it("validates a request shape", () => {
@@ -150,12 +150,13 @@ EOF
 ## Task 2: Extract `assemblePromptPayload`
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/prompt-chat-section.ts` (around `injectSystemPrompt` at line 674 and `handlerLlmRequest` at line 810)
 - Modify: `vibes.diy/api/svc/index.ts` (re-export `assemblePromptPayload`)
 
 The existing `injectSystemPrompt(vctx, chatId, model)` reads stored sections + reconstructs the conversation. The dispatch path writes `prompt.req` to chatSections **first**, then calls `injectSystemPrompt`, so the new user message lands in the assembled payload via reconstruction.
 
-For dry-run we cannot write `prompt.req` first. So `assemblePromptPayload` must take the next user turn as an explicit parameter and append it after reconstruction. The dispatch path also switches to passing the new user messages explicitly (and *then* writing the `prompt.req` block).
+For dry-run we cannot write `prompt.req` first. So `assemblePromptPayload` must take the next user turn as an explicit parameter and append it after reconstruction. The dispatch path also switches to passing the new user messages explicitly (and _then_ writing the `prompt.req` block).
 
 The final `{model, messages}` is identical in both orderings.
 
@@ -177,17 +178,15 @@ function firstText(msg: ChatMessage): string {
 describe("assemblePromptPayload", () => {
   it("returns system + new user turn for an initial (empty) chat", async () => {
     const tc = await createApiTestCtx();
-    const { appSlug, userSlug } = await tc.createApp();
-    const rOpen = await tc.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, userHandle } = await tc.createApp();
+    const rOpen = await tc.api.openChat({ userHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
     const r = await assemblePromptPayload(tc.appCtx.vibesCtx, {
       chatId: chat.chatId,
       model: "anthropic/claude-sonnet-4-6",
-      newUserMessages: [
-        { role: "user", content: [{ type: "text", text: "make a hello world app" }] },
-      ],
+      newUserMessages: [{ role: "user", content: [{ type: "text", text: "make a hello world app" }] }],
     });
     expect(r.isOk()).toBe(true);
     const { model, messages } = r.Ok();
@@ -208,8 +207,8 @@ describe("assemblePromptPayload", () => {
     // array the old code produced by writing prompt.req first and then
     // reconstructing.
     const tc = await createApiTestCtx();
-    const { appSlug, userSlug } = await tc.createApp();
-    const rOpen = await tc.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, userHandle } = await tc.createApp();
+    const rOpen = await tc.api.openChat({ userHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -249,7 +248,7 @@ async function injectSystemPrompt(
   vctx: VibesApiSQLCtx,
   chatId: string,
   model: string
-): Promise<Result<{ model: string; messages: ChatMessage[] }>>
+): Promise<Result<{ model: string; messages: ChatMessage[] }>>;
 ```
 
 Replace with:
@@ -370,6 +369,7 @@ For the `app` / `img` branches inside `handlerLlmRequest` (lines 877–907), the
 Concretely, in `handlerLlmRequest`:
 
 Before (existing structure, simplified):
+
 ```ts
 await scope.evalResult(async () => appendBlockEvent({ ..., evt: { type: "prompt.req", ... } }))... ;
 blockSeq++;
@@ -387,6 +387,7 @@ const withSystemPrompt = await scope.evalResult(async () => {
 ```
 
 After:
+
 ```ts
 const modelId = ... getModelDefaults ...;
 const withSystemPrompt = await scope.evalResult(async () => {
@@ -453,7 +454,7 @@ Expected: 2 passing.
 Run: `cd vibes.diy/tests && pnpm vitest run ../api/tests/seed-chat-section.test.ts ../api/tests/reconstruct-messages.test.ts ../api/tests/recovery.test.ts ../api/tests/recovery-truncated-event.test.ts`
 Expected: all passing.
 
-If any fail: investigate before continuing. The `prompt.req` write moving after assembly is the most likely regression point — if any test asserts the order of writes within a turn, surface it and reason about whether the test or the new ordering is correct (the new ordering is what the spec mandates; a failing test that asserts the *old* order should be updated to assert the *new* order, with a comment explaining why).
+If any fail: investigate before continuing. The `prompt.req` write moving after assembly is the most likely regression point — if any test asserts the order of writes within a turn, surface it and reason about whether the test or the new ordering is correct (the new ordering is what the spec mandates; a failing test that asserts the _old_ order should be updated to assert the _new_ order, with a comment explaining why).
 
 - [ ] **Step 9: Commit**
 
@@ -479,6 +480,7 @@ EOF
 ## Task 3: Implement `inspectPromptChatSection` Evento handler
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/public/inspect-prompt-chat-section.ts`
 - Modify: `vibes.diy/api/svc/vibes-msg-evento.ts`
 
@@ -503,8 +505,8 @@ function firstText(msg: ChatMessage): string {
 describe("inspectPromptChatSection", () => {
   it("returns model+messages without writing to PromptContexts or ChatSections", async () => {
     const tc = await createApiTestCtx();
-    const { appSlug, userSlug } = await tc.createApp();
-    const rOpen = await tc.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, userHandle } = await tc.createApp();
+    const rOpen = await tc.api.openChat({ userHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -551,8 +553,8 @@ describe("inspectPromptChatSection", () => {
 
   it("returns an error for a chat the caller does not own", async () => {
     const tc = await createApiTestCtx();
-    const { appSlug, userSlug } = await tc.createApp();
-    const rOpen = await tc.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, userHandle } = await tc.createApp();
+    const rOpen = await tc.api.openChat({ userHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     await chat.close();
@@ -644,7 +646,7 @@ export const inspectPromptChatSection: EventoHandler<
         return Result.Err(`Chat ID ${req.chatId} not found`);
       }
 
-      const rDefaults = await getModelDefaults(vctx, { appSlug: row.appSlug, userSlug: row.userSlug });
+      const rDefaults = await getModelDefaults(vctx, { appSlug: row.appSlug, userHandle: row.userHandle });
       if (rDefaults.isErr()) return Result.Err(rDefaults);
       const modelId = req.prompt.model ?? rDefaults.Ok().chat.model.id;
 
@@ -717,6 +719,7 @@ EOF
 ## Task 4: Expose `inspect` on the `LLMChat` API surface
 
 **Files:**
+
 - Modify: `vibes.diy/api/types/vibes-diy-api.ts`
 - Modify: `vibes.diy/api/impl/index.ts`
 
@@ -787,8 +790,8 @@ Append to `vibes.diy/api/tests/inspect-prompt-chat-section.test.ts`:
 describe("LLMChat.inspect", () => {
   it("round-trips through the typed chat.inspect helper", async () => {
     const tc = await createApiTestCtx();
-    const { appSlug, userSlug } = await tc.createApp();
-    const rOpen = await tc.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, userHandle } = await tc.createApp();
+    const rOpen = await tc.api.openChat({ userHandle, appSlug, mode: "chat" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -831,11 +834,12 @@ EOF
 ## Task 5: CLI `vibes-diy inspect` subcommand
 
 **Files:**
+
 - Create: `vibes-diy/cli/cmds/inspect-cmd.ts`
 - Create: `vibes-diy/cli/cmds/inspect-cmd.test.ts`
 - Modify: `vibes-diy/cli/main.ts`
 
-Pattern mirrors `edit-cmd.ts`: resolve userSlug, open chat, send request, format output.
+Pattern mirrors `edit-cmd.ts`: resolve userHandle, open chat, send request, format output.
 
 - [ ] **Step 1: Write the failing unit test for the `--text` formatter**
 
@@ -854,7 +858,13 @@ describe("formatInspectAsText", () => {
       messages: [
         { role: "system", content: [{ type: "text", text: "you are helpful" }] },
         { role: "user", content: [{ type: "text", text: "make a counter" }] },
-        { role: "assistant", content: [{ type: "text", text: "ok" }, { type: "text", text: " here you go" }] },
+        {
+          role: "assistant",
+          content: [
+            { type: "text", text: "ok" },
+            { type: "text", text: " here you go" },
+          ],
+        },
       ],
     });
     expect(out).toContain("=== SYSTEM ===");
@@ -900,14 +910,7 @@ Create `vibes-diy/cli/cmds/inspect-cmd.ts`:
 
 ```ts
 import { command, flag, option, positional, string } from "cmd-ts";
-import {
-  EventoHandler,
-  EventoResultType,
-  HandleTriggerCtx,
-  Option,
-  Result,
-  ValidateTriggerCtx,
-} from "@adviser/cement";
+import { EventoHandler, EventoResultType, HandleTriggerCtx, Option, Result, ValidateTriggerCtx } from "@adviser/cement";
 import { type } from "arktype";
 import type { ResInspectPromptChatSection } from "@vibes.diy/api-types";
 import type { ChatMessage } from "@vibes.diy/call-ai-v2";
@@ -919,7 +922,7 @@ import { formatErr } from "./format-err.js";
 export const ResInspect = type({
   type: "'use-vibes.cli.res-inspect'",
   appSlug: "string",
-  userSlug: "string",
+  userHandle: "string",
   chatId: "string",
   // Rendered payload as a string (JSON or transcript) so the CLI
   // wrapper can emit it without re-encoding.
@@ -935,7 +938,7 @@ export const ReqInspect = type({
   type: "'use-vibes.cli.inspect'",
   appSlug: "string",
   prompt: "string",
-  userSlug: "string",
+  userHandle: "string",
   asText: "boolean",
   apiUrl: "string",
 });
@@ -953,9 +956,7 @@ export function formatInspectAsText(res: ResInspectPromptChatSection): string {
   for (const msg of res.messages) {
     lines.push(`=== ${msg.role.toUpperCase()} ===`);
     const rendered = msg.content
-      .map((part: ChatMessage["content"][number]) =>
-        part.type === "text" ? part.text : `[${part.type}]`
-      )
+      .map((part: ChatMessage["content"][number]) => (part.type === "text" ? part.text : `[${part.type}]`))
       .join("");
     lines.push(rendered);
     lines.push("");
@@ -971,9 +972,7 @@ export const inspectEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqInspect, Res
     }
     return Promise.resolve(Result.Ok(Option.None()));
   },
-  handle: async (
-    ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqInspect, ResInspect>
-  ): Promise<Result<EventoResultType>> => {
+  handle: async (ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqInspect, ResInspect>): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
     if (ectx.vibesDiyApiFactory === undefined) {
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
@@ -981,11 +980,11 @@ export const inspectEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqInspect, Res
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
-    const userSlug = await resolveUserSlug(api, args.userSlug === "" ? undefined : args.userSlug);
+    const userHandle = await resolveUserSlug(api, args.userHandle === "" ? undefined : args.userHandle);
 
     await sendProgress(ctx, "info", "Inspecting prompt assembly...");
 
-    const rChat = await api.openChat({ userSlug, appSlug: args.appSlug, mode: "chat" });
+    const rChat = await api.openChat({ userHandle, appSlug: args.appSlug, mode: "chat" });
     if (rChat.isErr()) {
       return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
     }
@@ -1005,7 +1004,7 @@ export const inspectEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqInspect, Res
     return sendMsg(ctx, {
       type: "use-vibes.cli.res-inspect",
       appSlug: chat.appSlug,
-      userSlug: chat.userSlug,
+      userHandle: chat.userHandle,
       chatId: chat.chatId,
       output,
     } satisfies ResInspect);
@@ -1030,7 +1029,7 @@ export function inspectCmd(ctx: CliCtx) {
         description: "Treat this text as the next user turn for assembly",
         type: string,
       }),
-      userSlug: option({
+      userHandle: option({
         long: "user-slug",
         description: "User slug owning the app (uses default if omitted)",
         type: string,
@@ -1134,6 +1133,7 @@ Expected: 4–6 focused commits (types, refactor, handler, api-impl, cli, option
 
 Run: `git push -u origin worktree-issue-1696-dry-run-prompt-inspection`
 Then:
+
 ```bash
 gh pr create --title "feat(api+cli): dry-run prompt inspection for edit/generate" --body "$(cat <<'EOF'
 ## Summary
@@ -1161,6 +1161,7 @@ Do NOT merge without explicit confirmation (see memory: ask before merging PRs).
 ## Self-Review Notes
 
 **Spec coverage check:**
+
 - dryRun returns full payload — Task 3 test.
 - Zero side effects with row count assertion — Task 3 first test.
 - Works for continuation and initial generate — Task 2 first test (initial empty chat) and Task 3 test (chat with priorFs would also be covered by reusing the existing seed-chat-section fixture in a follow-up; spec note in design doc).
@@ -1172,6 +1173,7 @@ Do NOT merge without explicit confirmation (see memory: ask before merging PRs).
 - Existing edit/generate flows untouched — Task 2 step 8 runs prompt-chat related tests after the refactor.
 
 **Type consistency check:**
+
 - `assemblePromptPayload(vctx, { chatId, model, newUserMessages })` — same args used in Tasks 2, 3.
 - `ResInspectPromptChatSection.messages` is `LLMRequest.get("messages")` shape, used in Task 1 (definition), Task 3 (response), Task 4 (`chat.inspect` return), Task 5 (formatter).
 - `isResInspectPromptChatSection` — defined Task 1, used Tasks 3, 4.

@@ -14,24 +14,25 @@
 
 ## File Map
 
-| Action | File | Responsibility |
-|--------|------|----------------|
-| Modify | `vibes.diy/api/types/report.ts` | Add `reqReportCampaignHealth`, `resReportCampaignHealth`, sub-types, type-guards |
-| Modify | `vibes.diy/api/svc/types.ts` | Add `metaAccessToken?`, `metaAdAccountId?`, `metaPixelId?` to `VibesApiSQLCtx` |
-| Modify | `vibes.diy/api/svc/create-handler.ts` | Wire `META_*` env secrets into context (OPTIONAL) |
-| Create | `vibes.diy/api/tests/report-campaign-health.test.ts` | Auth gate + missing-creds tests |
-| Create | `vibes.diy/api/svc/public/report-campaign-health.ts` | WS handler: auth, Meta API call, cached response |
-| Modify | `vibes.diy/api/svc/vibes-msg-evento.ts` | Register `reportCampaignHealthEvento` |
-| Modify | `vibes.diy/api/impl/index.ts` | Add `reportCampaignHealth` method to `VibesDiyApi` |
-| Create | `vibes.diy/pkg/reports-app/src/CampaignHealth.tsx` | Campaign Health view component (brand palette) |
-| Modify | `vibes.diy/pkg/reports-app/src/App.tsx` | Accept `report` prop, add nav, conditional rendering |
-| Modify | `vibes.diy/pkg/reports-app/src/main.tsx` | Read `?report=` param, pass to `App` |
+| Action | File                                                 | Responsibility                                                                   |
+| ------ | ---------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Modify | `vibes.diy/api/types/report.ts`                      | Add `reqReportCampaignHealth`, `resReportCampaignHealth`, sub-types, type-guards |
+| Modify | `vibes.diy/api/svc/types.ts`                         | Add `metaAccessToken?`, `metaAdAccountId?`, `metaPixelId?` to `VibesApiSQLCtx`   |
+| Modify | `vibes.diy/api/svc/create-handler.ts`                | Wire `META_*` env secrets into context (OPTIONAL)                                |
+| Create | `vibes.diy/api/tests/report-campaign-health.test.ts` | Auth gate + missing-creds tests                                                  |
+| Create | `vibes.diy/api/svc/public/report-campaign-health.ts` | WS handler: auth, Meta API call, cached response                                 |
+| Modify | `vibes.diy/api/svc/vibes-msg-evento.ts`              | Register `reportCampaignHealthEvento`                                            |
+| Modify | `vibes.diy/api/impl/index.ts`                        | Add `reportCampaignHealth` method to `VibesDiyApi`                               |
+| Create | `vibes.diy/pkg/reports-app/src/CampaignHealth.tsx`   | Campaign Health view component (brand palette)                                   |
+| Modify | `vibes.diy/pkg/reports-app/src/App.tsx`              | Accept `report` prop, add nav, conditional rendering                             |
+| Modify | `vibes.diy/pkg/reports-app/src/main.tsx`             | Read `?report=` param, pass to `App`                                             |
 
 ---
 
 ### Task 1: Add types to `@vibes.diy/api-types`
 
 **Files:**
+
 - Modify: `vibes.diy/api/types/report.ts`
 
 - [ ] **Step 1: Append new types to the end of `vibes.diy/api/types/report.ts`**
@@ -129,6 +130,7 @@ git commit -m "feat(api-types): add ReqReportCampaignHealth and ResReportCampaig
 ### Task 2: Add Meta secrets to `VibesApiSQLCtx` and `create-handler.ts`
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/types.ts`
 - Modify: `vibes.diy/api/svc/create-handler.ts`
 
@@ -184,6 +186,7 @@ git commit -m "feat(api-svc): add Meta API credential fields to VibesApiSQLCtx"
 ### Task 3: Write the failing test
 
 **Files:**
+
 - Create: `vibes.diy/api/tests/report-campaign-health.test.ts`
 
 The test validates auth gate and missing-creds behaviour without calling the real Meta API. The test context (`createVibeDiyTestCtx`) doesn't set `metaAccessToken` etc, so a user with valid `campaign-health` permission will still hit the "creds missing" error path.
@@ -323,6 +326,7 @@ Expected: compile error or `reportCampaignHealth is not a function` — confirms
 ### Task 4: Write the WS handler
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/public/report-campaign-health.ts`
 
 - [ ] **Step 1: Create `vibes.diy/api/svc/public/report-campaign-health.ts`**
@@ -533,16 +537,19 @@ Expected: no errors.
 ### Task 5: Register the handler in `vibes-msg-evento.ts`
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/vibes-msg-evento.ts`
 
 - [ ] **Step 1: Add the import after the last report import (line ~59)**
 
 Find the line:
+
 ```typescript
 import { reportAttributionReferrersEvento } from "./public/report-attribution-referrers.js";
 ```
 
 Add directly after it:
+
 ```typescript
 import { reportCampaignHealthEvento } from "./public/report-campaign-health.js";
 ```
@@ -550,11 +557,13 @@ import { reportCampaignHealthEvento } from "./public/report-campaign-health.js";
 - [ ] **Step 2: Register the handler in the evento.push() call**
 
 Find the line:
+
 ```typescript
     reportAttributionReferrersEvento,
 ```
 
 Add directly after it:
+
 ```typescript
     reportCampaignHealthEvento,
 ```
@@ -572,6 +581,7 @@ Expected: no errors.
 ### Task 6: Add `reportCampaignHealth` to `VibesDiyApi`
 
 **Files:**
+
 - Modify: `vibes.diy/api/impl/index.ts`
 
 - [ ] **Step 1: Add imports**
@@ -585,6 +595,7 @@ In `vibes.diy/api/impl/index.ts`, find the existing report imports block (around
 ```
 
 Add directly after:
+
 ```typescript
   ReqReportCampaignHealth,
   ResReportCampaignHealth,
@@ -653,6 +664,7 @@ git commit -m "feat(reports): add reportCampaignHealth WS handler and types"
 ### Task 8: Build the `CampaignHealth` component
 
 **Files:**
+
 - Create: `vibes.diy/pkg/reports-app/src/CampaignHealth.tsx`
 
 - [ ] **Step 1: Create `vibes.diy/pkg/reports-app/src/CampaignHealth.tsx`**
@@ -735,7 +747,15 @@ function CampaignTable({
                 ${Number(row.cpc).toFixed(2)}
               </td>
               <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontFamily: "monospace" }}>{lpv(row)}</td>
-              <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontFamily: "monospace", color: lpvColor(row), fontWeight: "bold" }}>
+              <td
+                style={{
+                  padding: "0.4rem 0.75rem",
+                  textAlign: "right",
+                  fontFamily: "monospace",
+                  color: lpvColor(row),
+                  fontWeight: "bold",
+                }}
+              >
                 {costPerLpvStr(row)}
               </td>
               <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontFamily: "monospace" }}>
@@ -811,8 +831,7 @@ function AnomalyList({ anomalies }: { readonly anomalies: CampaignAnomalies }): 
       ))}
       {anomalies.lowLpvRatio.map((o) => (
         <li key={`lpv-${o.name}`}>
-          <strong>Low LPV ratio:</strong> {o.name} ({o.lpvs}/{o.clicks} ={" "}
-          {(o.ratio * 100).toFixed(0)}%)
+          <strong>Low LPV ratio:</strong> {o.name} ({o.lpvs}/{o.clicks} = {(o.ratio * 100).toFixed(0)}%)
         </li>
       ))}
     </ul>
@@ -858,9 +877,8 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }): React.Re
           <span className="section-label section-label--filled">{dateLabel}</span>
           <h2 className="section-title">Ad Performance</h2>
           <p className="section-intro">
-            Campaigns ranked by cost-per-landing-page-view.{" "}
-            <span style={{ color: "var(--cyan)", fontWeight: "bold" }}>Cyan</span> &lt; $0.30 ·{" "}
-            <span style={{ color: "var(--yellow)", fontWeight: "bold" }}>Yellow</span> $0.30–$0.50 ·{" "}
+            Campaigns ranked by cost-per-landing-page-view. <span style={{ color: "var(--cyan)", fontWeight: "bold" }}>Cyan</span>{" "}
+            &lt; $0.30 · <span style={{ color: "var(--yellow)", fontWeight: "bold" }}>Yellow</span> $0.30–$0.50 ·{" "}
             <span style={{ color: "var(--red)", fontWeight: "bold" }}>Red</span> &gt; $0.50
           </p>
           {ranked.length === 0 ? (
@@ -886,11 +904,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }): React.Re
         <div className="card">
           <span className="section-label section-label--filled">Anomalies</span>
           <h2 className="section-title">Flags</h2>
-          {hasAnomalies ? (
-            <AnomalyList anomalies={anomalies} />
-          ) : (
-            <div className="empty">✓ No anomalies detected</div>
-          )}
+          {hasAnomalies ? <AnomalyList anomalies={anomalies} /> : <div className="empty">✓ No anomalies detected</div>}
         </div>
       </section>
     </div>
@@ -903,6 +917,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }): React.Re
 ### Task 9: Update `App.tsx` and `main.tsx` for routing and nav
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/reports-app/src/App.tsx`
 - Modify: `vibes.diy/pkg/reports-app/src/main.tsx`
 
@@ -911,11 +926,13 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }): React.Re
 Replace the `AppProps` interface and `App` function signature. The nav sits between the top `<ColorStripe />` and the main content. The existing growth sections only mount when `report !== "campaign-health"`.
 
 At the top of `App.tsx`, add the import for `CampaignHealth`:
+
 ```typescript
 import { CampaignHealth } from "./CampaignHealth.js";
 ```
 
 Replace the `AppProps` interface:
+
 ```typescript
 interface AppProps {
   readonly getClerkToken: () => Promise<string | null>;
@@ -1033,7 +1050,7 @@ export function App({ getClerkToken, report }: AppProps) {
                   Vibes With Data
                 </span>
                 <Metric loadable={vibes} pick={(d) => d.total} accent="black" />
-                <p style={{ color: "var(--near-black)" }}>Distinct userSlug/appSlug pairs in AppSlugBindings.</p>
+                <p style={{ color: "var(--near-black)" }}>Distinct userHandle/appSlug pairs in AppSlugBindings.</p>
               </div>
             </div>
           </div>
@@ -1067,7 +1084,7 @@ export function App({ getClerkToken, report }: AppProps) {
               <span className="section-label section-label--filled">30 Days</span>
               <h2 className="section-title">Vibes with data over time</h2>
               <p className="section-intro">
-                Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct userSlug/appSlug pair in
+                Daily cumulative total of vibes with Fireproof data written by their owner. Each distinct userHandle/appSlug pair in
                 AppSlugBindings counts as one active vibe.
               </p>
               {vibes.kind === "loading" ? (
@@ -1239,6 +1256,7 @@ EOF
 ## Self-Review Notes
 
 **Spec coverage:**
+
 - ✅ `/reports?report=campaign-health` browser-accessible URL
 - ✅ Clerk auth (same as other reports) — no separate Bearer flow
 - ✅ WS data fetch via `api.reportCampaignHealth({})`

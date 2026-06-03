@@ -337,9 +337,9 @@ Current line 133 reads as a footnote. Replace with:
 - `can("write")` checks app-level membership — is the viewer through the door? For per-database permissions (roles and channels), use `access` from `useFireproof()`: `access.hasRole("moderator")`, `access.hasChannel("engineering")`. The access function (access.js) is the server-side authority; `access` in the UI reflects its decisions.
 ```
 
-- [ ] **Step 4: Fix `userSlug` reference at line 151**
+- [ ] **Step 4: Fix `userHandle` reference at line 151**
 
-Line 151 mentions `userSlug` — change to `userHandle`:
+Line 151 mentions `userHandle` — change to `userHandle`:
 
 ```markdown
 **Undefined safety.** If `userHandle` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring.
@@ -502,10 +502,10 @@ grep -rn 'useFireproof("[^"]*-[^"]*")' prompts/pkg/ notes/
 
 Expected: Only the footnote in fireproof.md showing the `export { localName as "db-name" }` pattern.
 
-- [ ] **Step 3: Verify `userHandle` is used consistently (no `userSlug` in identity contexts)**
+- [ ] **Step 3: Verify `userHandle` is used consistently (no `userHandle` in identity contexts)**
 
 ```bash
-grep -n 'userSlug' prompts/pkg/llms/use-viewer.md prompts/pkg/llms/fireproof.md
+grep -n 'userHandle' prompts/pkg/llms/use-viewer.md prompts/pkg/llms/fireproof.md
 ```
 
 Expected: No results (or only in non-identity contexts like URL slugs).

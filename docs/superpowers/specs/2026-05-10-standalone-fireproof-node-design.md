@@ -7,12 +7,12 @@ Issue: [#1438](https://github.com/VibesDIY/vibes.diy/issues/1438)
 External Node.js and Wrangler scripts can't currently use the Firefly database
 API. The pieces exist:
 
-- [`@vibes.diy/api-impl`](../../../vibes.diy/api/impl/) has [`VibesDiyApi`](../../../vibes.diy/api/impl/index.ts) — the WebSocket transport. Methods accept request objects (`{appSlug, userSlug, doc, docId, dbName}`).
+- [`@vibes.diy/api-impl`](../../../vibes.diy/api/impl/) has [`VibesDiyApi`](../../../vibes.diy/api/impl/index.ts) — the WebSocket transport. Methods accept request objects (`{appSlug, userHandle, doc, docId, dbName}`).
 - [`@vibes.diy/vibe-runtime`](../../../vibes.diy/vibe/runtime/) has [`FireflyDatabase`](../../../vibes.diy/vibe/runtime/firefly-database.ts) and [`fireproof("name")`](../../../vibes.diy/vibe/runtime/use-firefly.ts) — but typed against `VibeSandboxApi`, the postMessage bridge interface used inside vibe iframes.
 
 The shapes don't line up: `VibesDiyApi.putDoc({appSlug, doc, ...})` vs.
-`VibeSandboxApi.putDoc(doc, docId, dbName)` (with `appSlug`/`userSlug` baked in
-via `svc.vibeApp`). And `VibesDiyApi` requires the caller to know `userSlug`
+`VibeSandboxApi.putDoc(doc, docId, dbName)` (with `appSlug`/`userHandle` baked in
+via `svc.vibeApp`). And `VibesDiyApi` requires the caller to know `userHandle`
 explicitly, which most Node consumers won't.
 
 The desired ergonomics — matching what users already do via the
@@ -25,7 +25,7 @@ await db.put({ text: "hello" });
 ```
 
 If you're logged in via `npx vibes-diy login`, that's who your scripts run as.
-Auth, `userSlug`, and `appSlug` all auto-resolve from local state.
+Auth, `userHandle`, and `appSlug` all auto-resolve from local state.
 
 ## Goals
 
@@ -67,7 +67,7 @@ vibe-runtime.
 
 ```ts
 export interface FireflyTransport {
-  readonly svc: { readonly vibeApp: { readonly userSlug: string; readonly appSlug: string } };
+  readonly svc: { readonly vibeApp: { readonly userHandle: string; readonly appSlug: string } };
   putDoc(doc: Record<string, unknown>, docId?: string, dbName?: string): Promise<Result<ResPutDoc>>;
   getDoc(docId: string, dbName?: string): Promise<Result<ResGetDoc | ResGetDocNotFound>>;
   queryDocs(dbName?: string): Promise<Result<ResQueryDocs>>;
@@ -90,13 +90,13 @@ api-impl because it's WS-shape translation; no fs / Node-only deps.
 
 ```ts
 export class FireflyApiAdapter implements FireflyTransport {
-  readonly svc: { vibeApp: { userSlug: string; appSlug: string } };
+  readonly svc: { vibeApp: { userHandle: string; appSlug: string } };
 
-  constructor(api: VibesDiyApi, appSlug: string, opts?: { userSlug?: string });
+  constructor(api: VibesDiyApi, appSlug: string, opts?: { userHandle?: string });
 
-  // Lazy: resolves userSlug from ensureUserSettings({}) -> defaultUserSlug
+  // Lazy: resolves userHandle from ensureUserSettings({}) -> defaultUserSlug
   // setting on first call. Throws if no defaultUserSlug exists for the user.
-  // Caller may bypass by passing opts.userSlug to the constructor.
+  // Caller may bypass by passing opts.userHandle to the constructor.
   private resolveUserSlug(): Promise<string>;
 
   // FireflyTransport methods translate (positional, dbName) calls into
@@ -108,7 +108,7 @@ export class FireflyApiAdapter implements FireflyTransport {
   deleteDoc(docId, dbName?): Promise<Result<ResDeleteDoc>>;
   subscribeDocs(dbName?): Promise<Result<ResSubscribeDocs>>;
 
-  // Bridges VibesDiyApi.onDocChanged((userSlug, appSlug, dbName, docId) => ...)
+  // Bridges VibesDiyApi.onDocChanged((userHandle, appSlug, dbName, docId) => ...)
   // into the {data: {type: "vibes.diy.evt-doc-changed", ...}} shape that
   // FireflyDatabase's onMsg listener expects.
   onMsg(fn: (event: { data: unknown }) => void): void;
@@ -125,7 +125,7 @@ no internal callers exist — verified via repo-wide grep).
 export interface FireproofOpts {
   apiUrl?: string;
   appSlug?: string;
-  userSlug?: string;
+  userHandle?: string;
   getToken?: () => Promise<Result<DashAuthType>>;
 }
 
@@ -147,7 +147,7 @@ domain plus a registry db) and expect:
 
 1. Two calls with the same `name` return the same `FireflyDatabase` instance.
 2. N calls with different names share **one** underlying `VibesDiyApi`
-   (one WebSocket, one cached `getToken`, one resolved `userSlug`).
+   (one WebSocket, one cached `getToken`, one resolved `userHandle`).
 
 Implementation uses cement's [`Lazy`](../../../../fireproof/core/keybag/key-bag-setup.ts)
 and [`KeyedResolvOnce`](../../../../fireproof/core/quick-silver/fireproof.ts)
@@ -164,7 +164,7 @@ const sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
     apiUrl: resolved.apiUrl,
     getToken: resolved.getToken,
   });
-  return new FireflyApiAdapter(api, resolved.appSlug, resolved.userSlug ? { userSlug: resolved.userSlug } : undefined);
+  return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { userHandle: resolved.userHandle } : undefined);
 });
 
 // One FireflyDatabase per name, all sharing sharedAdapter.
@@ -190,7 +190,7 @@ function resolveOptsSync(opts?: FireproofOpts): ResolvedOpts {
   return {
     apiUrl: opts?.apiUrl ?? process.env.VIBES_DIY_API_URL ?? "https://vibes.diy/api",
     appSlug: opts?.appSlug ?? process.env.VIBES_APP_SLUG ?? path.basename(process.cwd()),
-    userSlug: opts?.userSlug,
+    userHandle: opts?.userHandle,
     getToken:
       opts?.getToken ??
       (async () => {
@@ -201,7 +201,7 @@ function resolveOptsSync(opts?: FireproofOpts): ResolvedOpts {
 }
 ```
 
-The `userSlug` resolution itself is one more level deep — `FireflyApiAdapter`
+The `userHandle` resolution itself is one more level deep — `FireflyApiAdapter`
 holds a `ResolveOnce<string>` that calls `ensureUserSettings({})` exactly
 once on first request and caches the result for the lifetime of the process.
 
@@ -217,12 +217,12 @@ sugar.
 
 When `fireproof("todos")` is called with no overrides:
 
-| Field      | Default source                                                                                     |
-| ---------- | -------------------------------------------------------------------------------------------------- |
-| `apiUrl`   | env `VIBES_DIY_API_URL`; fallback to built-in constant `https://vibes.diy/api`                     |
-| `appSlug`  | env `VIBES_APP_SLUG`; fallback to `path.basename(process.cwd())`                                   |
-| `getToken` | dynamic-imported keybag loader (Node-only)                                                         |
-| `userSlug` | lazy via `ensureUserSettings({})` → `defaultUserSlug` setting (handled inside `FireflyApiAdapter`) |
+| Field        | Default source                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------- |
+| `apiUrl`     | env `VIBES_DIY_API_URL`; fallback to built-in constant `https://vibes.diy/api`                     |
+| `appSlug`    | env `VIBES_APP_SLUG`; fallback to `path.basename(process.cwd())`                                   |
+| `getToken`   | dynamic-imported keybag loader (Node-only)                                                         |
+| `userHandle` | lazy via `ensureUserSettings({})` → `defaultUserSlug` setting (handled inside `FireflyApiAdapter`) |
 
 ### Keybag loader
 
@@ -265,9 +265,9 @@ fireproof("todos", opts?)
 The factory returns synchronously. Repeated calls with the same name return
 the cached `FireflyDatabase`; calls with different names build new database
 instances against the same shared adapter. The `FireflyApiAdapter` holds a
-`ResolveOnce<string>` for `userSlug` that resolves on first use via
+`ResolveOnce<string>` for `userHandle` that resolves on first use via
 `ensureUserSettings({})`. The `FireflyDatabase` constructor's existing
-fire-and-forget `subscribeDocs(name)` naturally awaits the userSlug
+fire-and-forget `subscribeDocs(name)` naturally awaits the userHandle
 internally.
 
 If `opts.getToken` is omitted, `resolveOptsSync` returns a `getToken`
@@ -283,7 +283,7 @@ db.put(doc)
         └─→ uploadFiles(doc) — pass-through if no _files
         └─→ adapter.putDoc(doc, undefined, this.name)
               └─→ await resolveUserSlug()    // first call only
-              └─→ VibesDiyApi.putDoc({appSlug, userSlug, dbName, doc, ...})
+              └─→ VibesDiyApi.putDoc({appSlug, userHandle, dbName, doc, ...})
                     └─→ WS message, awaits ResPutDoc
 ```
 
@@ -293,7 +293,7 @@ db.put(doc)
 db.subscribe(listener, true)
   └─→ adds to FireflyDatabase listeners
 
-VibesDiyApi.onDocChanged((userSlug, appSlug, dbName, docId) => ...)
+VibesDiyApi.onDocChanged((userHandle, appSlug, dbName, docId) => ...)
   └─→ adapter synthesizes {data: {type: "vibes.diy.evt-doc-changed", ...}}
   └─→ FireflyDatabase.onMsg handler fires, filters dbName, notifies listeners
 ```
@@ -304,7 +304,7 @@ VibesDiyApi.onDocChanged((userSlug, appSlug, dbName, docId) => ...)
 | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | Keybag has no device-id cert                            | First request throws `"Run 'npx vibes-diy login' to authenticate this device"`                                                          |
 | `appSlug` not resolvable (no env, cwd basename invalid) | Factory throws synchronously with `"Set VIBES_APP_SLUG or pass {appSlug}"`                                                              |
-| `ensureUserSettings({})` returns no `defaultUserSlug`   | First request throws `"No defaultUserSlug — pass {userSlug} or run vibes-diy login"`                                                    |
+| `ensureUserSettings({})` returns no `defaultUserSlug`   | First request throws `"No defaultUserSlug — pass {userHandle} or run vibes-diy login"`                                                  |
 | Doc has `_files` entries                                | `uploadFiles` calls `adapter.putAsset` which throws `"file uploads not supported in standalone fireproof — coming in a future release"` |
 | WS request times out / errors                           | `FireflyDatabase` already throws on `Result.Err` — unchanged                                                                            |
 
@@ -317,7 +317,7 @@ The existing suite uses `createMockVibeApi` + `asSandboxApi` to inject a fake
 
 1. **`fireproof() factory with explicit opts`** — exercises the same patterns
    from llms/fireproof.md but constructs via `fireproof("name", {apiUrl,
-appSlug, userSlug, getToken})` against an injected fake `VibesDiyApi`.
+appSlug, userHandle, getToken})` against an injected fake `VibesDiyApi`.
    Validates that `FireflyApiAdapter` translates positional → request-object
    correctly.
 
@@ -373,6 +373,6 @@ grep -rn 'from "use-vibes"' --include='*.ts' --include='*.tsx' | grep fireproof
 
 - File uploads via `putAsset` + the `requestAssetUploadGrant` HTTP grant flow.
 - A `connectFireproof()` / multi-app variant that lets one Node process talk
-  to several `(userSlug, appSlug)` pairs over one WS.
+  to several `(userHandle, appSlug)` pairs over one WS.
 - `useFireproof` rework to also auto-route to the WS backend outside iframes
   (currently still bound to the legacy library).

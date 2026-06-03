@@ -23,6 +23,7 @@
 ### Task 1: Strip dbAcls from wire types and ViewerEnv schema
 
 **Files:**
+
 - Modify: `vibes.diy/vibe/types/index.ts:593-657`
 - Modify: `vibes.diy/vibe/runtime/vibe.ts:7-24`
 
@@ -31,6 +32,7 @@
 In `vibes.diy/vibe/types/index.ts`, remove the `dbAcls?` field from both type definitions.
 
 `ResVibeWhoAmI` (around line 596-601) — change from:
+
 ```typescript
 // `viewer: null` means anonymous. The arktype `null` literal matches
 // encoded JSON null.
@@ -45,7 +47,9 @@ export const ResVibeWhoAmI = type({
   "dbAcls?": type({ "[string]": dbAcl }),
 }).and(Base);
 ```
+
 To:
+
 ```typescript
 export const ResVibeWhoAmI = type({
   type: "'vibe.res.whoAmI'",
@@ -55,6 +59,7 @@ export const ResVibeWhoAmI = type({
 ```
 
 `EvtVibeViewerChanged` (around line 653-658) — change from:
+
 ```typescript
 export const EvtVibeViewerChanged = type({
   type: "'vibe.evt.viewerChanged'",
@@ -63,7 +68,9 @@ export const EvtVibeViewerChanged = type({
   "dbAcls?": type({ "[string]": dbAcl }),
 });
 ```
+
 To:
+
 ```typescript
 export const EvtVibeViewerChanged = type({
   type: "'vibe.evt.viewerChanged'",
@@ -79,6 +86,7 @@ Also check whether `dbAcl` is still imported at line 1. It IS still needed for `
 In `vibes.diy/vibe/runtime/vibe.ts`, remove the local `dbAcl` schema definition and the `dbAcls?` field from `viewerEnv`.
 
 Change from:
+
 ```typescript
 // `dbAcl` shape — matches @vibes.diy/api-types' DbAcl, defined locally
 // for the same reason db-acl-allows.ts redefines it: api-types pulls
@@ -100,7 +108,9 @@ export const viewerEnv = type({
   "dbAcls?": type({ "[string]": dbAcl }),
 });
 ```
+
 To:
+
 ```typescript
 export const viewerEnv = type({
   viewer: viewerPayload.or("null"),
@@ -119,6 +129,7 @@ Expected: TypeScript errors in files that reference `dbAcls` on `ViewerEnv` or `
 ### Task 2: Simplify db-acl-allows.ts and use-viewer.ts
 
 **Files:**
+
 - Modify: `vibes.diy/vibe/runtime/db-acl-allows.ts`
 - Modify: `vibes.diy/vibe/runtime/use-viewer.ts`
 
@@ -184,6 +195,7 @@ export function useViewer(): UseViewerResult {
 ```
 
 Key changes:
+
 - Removed `dbAcls` from `UseViewerResult` interface
 - Removed `dbName` parameter from `can()` — old vibes passing a second arg still work (JS ignores extra args)
 - `can()` now delegates directly to `canRead`/`canWrite`
@@ -200,6 +212,7 @@ Expected: No errors in these two files (but errors may remain in other files).
 ### Task 3: Remove dbAcls from plumbing layers
 
 **Files:**
+
 - Modify: `vibes.diy/vibe/runtime/VibeContext.tsx:58-62`
 - Modify: `vibes.diy/vibe/runtime/register-dependencies.ts:564-568`
 - Modify: `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts:853-859`
@@ -209,19 +222,22 @@ Expected: No errors in these two files (but errors may remain in other files).
 In `vibes.diy/vibe/runtime/VibeContext.tsx`, the `setViewerEnv` call (around line 58-62):
 
 Change from:
+
 ```typescript
-      setViewerEnv({
-        viewer: event.data.viewer,
-        access: event.data.access,
-        ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
-      });
+setViewerEnv({
+  viewer: event.data.viewer,
+  access: event.data.access,
+  ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
+});
 ```
+
 To:
+
 ```typescript
-      setViewerEnv({
-        viewer: event.data.viewer,
-        access: event.data.access,
-      });
+setViewerEnv({
+  viewer: event.data.viewer,
+  access: event.data.access,
+});
 ```
 
 - [ ] **Step 2: Remove dbAcls from bootstrapViewer in register-dependencies.ts**
@@ -229,29 +245,32 @@ To:
 In `vibes.diy/vibe/runtime/register-dependencies.ts`, the `bootstrapViewer` function (around line 561-570):
 
 Change from:
+
 ```typescript
-  window.dispatchEvent(
-    new MessageEvent("message", {
-      data: {
-        type: "vibe.evt.viewerChanged",
-        viewer: r.viewer,
-        access: r.access,
-        ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
-      },
-    })
-  );
+window.dispatchEvent(
+  new MessageEvent("message", {
+    data: {
+      type: "vibe.evt.viewerChanged",
+      viewer: r.viewer,
+      access: r.access,
+      ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
+    },
+  })
+);
 ```
+
 To:
+
 ```typescript
-  window.dispatchEvent(
-    new MessageEvent("message", {
-      data: {
-        type: "vibe.evt.viewerChanged",
-        viewer: r.viewer,
-        access: r.access,
-      },
-    })
-  );
+window.dispatchEvent(
+  new MessageEvent("message", {
+    data: {
+      type: "vibe.evt.viewerChanged",
+      viewer: r.viewer,
+      access: r.access,
+    },
+  })
+);
 ```
 
 - [ ] **Step 3: Remove dbAcls from vibeWhoAmI in srv-sandbox.ts**
@@ -259,23 +278,26 @@ To:
 In `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`, the vibeWhoAmI handler (around line 853-859):
 
 Change from:
+
 ```typescript
-      await ctx.send.send(ctx, {
-        tid,
-        type: "vibe.res.whoAmI",
-        viewer: r.viewer,
-        access: r.access,
-        ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
-      } satisfies ResVibeWhoAmI);
+await ctx.send.send(ctx, {
+  tid,
+  type: "vibe.res.whoAmI",
+  viewer: r.viewer,
+  access: r.access,
+  ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
+} satisfies ResVibeWhoAmI);
 ```
+
 To:
+
 ```typescript
-      await ctx.send.send(ctx, {
-        tid,
-        type: "vibe.res.whoAmI",
-        viewer: r.viewer,
-        access: r.access,
-      } satisfies ResVibeWhoAmI);
+await ctx.send.send(ctx, {
+  tid,
+  type: "vibe.res.whoAmI",
+  viewer: r.viewer,
+  access: r.access,
+} satisfies ResVibeWhoAmI);
 ```
 
 ---
@@ -283,6 +305,7 @@ To:
 ### Task 4: Update server-side handlers that build wire responses
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/who-am-i.ts:155-161`
 - Modify: `vibes.diy/api/svc/intern/render-vibe.ts:31-32`
 
@@ -291,23 +314,26 @@ To:
 In `vibes.diy/api/svc/public/who-am-i.ts`, the `whoAmIEvento` handler (around line 155-161):
 
 Change from:
+
 ```typescript
-      await ctx.send.send(ctx, {
-        type: "vibe.res.whoAmI",
-        tid: req.tid,
-        viewer: r.viewer,
-        access: r.access,
-        ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
-      } satisfies ResVibeWhoAmI);
+await ctx.send.send(ctx, {
+  type: "vibe.res.whoAmI",
+  tid: req.tid,
+  viewer: r.viewer,
+  access: r.access,
+  ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
+} satisfies ResVibeWhoAmI);
 ```
+
 To:
+
 ```typescript
-      await ctx.send.send(ctx, {
-        type: "vibe.res.whoAmI",
-        tid: req.tid,
-        viewer: r.viewer,
-        access: r.access,
-      } satisfies ResVibeWhoAmI);
+await ctx.send.send(ctx, {
+  type: "vibe.res.whoAmI",
+  tid: req.tid,
+  viewer: r.viewer,
+  access: r.access,
+} satisfies ResVibeWhoAmI);
 ```
 
 Note: `resolveWhoAmI()` still returns `dbAcls` in its `ResolvedWhoAmI` interface — it's just no longer forwarded to the client. The function itself is unchanged.
@@ -317,14 +343,17 @@ Note: `resolveWhoAmI()` still returns `dbAcls` in its `ResolvedWhoAmI` interface
 In `vibes.diy/api/svc/intern/render-vibe.ts` (around line 31-32):
 
 Change from:
+
 ```typescript
-  const { viewer, access, dbAcls } = r.Ok();
-  return { viewer, access, ...(dbAcls ? { dbAcls } : {}) };
+const { viewer, access, dbAcls } = r.Ok();
+return { viewer, access, ...(dbAcls ? { dbAcls } : {}) };
 ```
+
 To:
+
 ```typescript
-  const { viewer, access } = r.Ok();
-  return { viewer, access };
+const { viewer, access } = r.Ok();
+return { viewer, access };
 ```
 
 - [ ] **Step 3: Verify build compiles**
@@ -338,6 +367,7 @@ Expected: No TypeScript errors in production code (test errors expected until Ta
 ### Task 5: Update all tests
 
 **Files:**
+
 - Modify: `vibes.diy/tests/app/use-viewer.test.tsx`
 - Modify: `vibes.diy/tests/app/vibe-sandbox-api-who-am-i.test.ts`
 - Modify: `vibes.diy/api/tests/vibe-mount-params.test.ts`
@@ -440,36 +470,40 @@ In `vibes.diy/tests/app/vibe-sandbox-api-who-am-i.test.ts`:
 In the first test (around line 44-63), remove `dbAcls` from the mock response and the assertion:
 
 Change the listener reply (around line 44-54) from:
+
 ```typescript
-    listeners.forEach((h) =>
-      h({
-        data: {
-          type: "vibe.res.whoAmI",
-          tid: sentTid,
-          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
-          access: "owner",
-          dbAcls: { comments: { write: ["members"], delete: ["members"] } },
-        },
-      } as MessageEvent)
-    );
+listeners.forEach((h) =>
+  h({
+    data: {
+      type: "vibe.res.whoAmI",
+      tid: sentTid,
+      viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+      access: "owner",
+      dbAcls: { comments: { write: ["members"], delete: ["members"] } },
+    },
+  } as MessageEvent)
+);
 ```
+
 To:
+
 ```typescript
-    listeners.forEach((h) =>
-      h({
-        data: {
-          type: "vibe.res.whoAmI",
-          tid: sentTid,
-          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
-          access: "owner",
-        },
-      } as MessageEvent)
-    );
+listeners.forEach((h) =>
+  h({
+    data: {
+      type: "vibe.res.whoAmI",
+      tid: sentTid,
+      viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+      access: "owner",
+    },
+  } as MessageEvent)
+);
 ```
 
 Remove the dbAcls assertion (line 63):
+
 ```typescript
-    expect(evt.data.dbAcls).toEqual({ comments: { write: ["members"], delete: ["members"] } });
+expect(evt.data.dbAcls).toEqual({ comments: { write: ["members"], delete: ["members"] } });
 ```
 
 - [ ] **Step 3: Update vibe-mount-params.test.ts**
@@ -477,31 +511,34 @@ Remove the dbAcls assertion (line 63):
 In `vibes.diy/api/tests/vibe-mount-params.test.ts`, update the test at line 21-31:
 
 Change from:
+
 ```typescript
-  it("accepts viewerEnv with viewer + dbAcls", () => {
-    const r = vibeMountParams({
-      usrEnv: {},
-      viewerEnv: {
-        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
-        access: "owner",
-        dbAcls: { comments: { write: ["members"] } },
-      },
-    });
-    expect(r instanceof type.errors).toBe(false);
+it("accepts viewerEnv with viewer + dbAcls", () => {
+  const r = vibeMountParams({
+    usrEnv: {},
+    viewerEnv: {
+      viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
+      access: "owner",
+      dbAcls: { comments: { write: ["members"] } },
+    },
   });
+  expect(r instanceof type.errors).toBe(false);
+});
 ```
+
 To:
+
 ```typescript
-  it("accepts viewerEnv with viewer", () => {
-    const r = vibeMountParams({
-      usrEnv: {},
-      viewerEnv: {
-        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
-        access: "owner",
-      },
-    });
-    expect(r instanceof type.errors).toBe(false);
+it("accepts viewerEnv with viewer", () => {
+  const r = vibeMountParams({
+    usrEnv: {},
+    viewerEnv: {
+      viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
+      access: "owner",
+    },
   });
+  expect(r instanceof type.errors).toBe(false);
+});
 ```
 
 - [ ] **Step 4: Update vibe-types-viewer.test.ts**
@@ -509,31 +546,34 @@ To:
 In `vibes.diy/api/tests/vibe-types-viewer.test.ts`, update the test at line 27-37:
 
 Change from:
+
 ```typescript
-  it("validates signed-in response with dbAcls", () => {
-    expect(
-      isResVibeWhoAmI({
-        type: "vibe.res.whoAmI",
-        tid: "abc",
-        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
-        access: "owner",
-        dbAcls: { comments: { write: ["members"] } },
-      })
-    ).toBe(true);
-  });
+it("validates signed-in response with dbAcls", () => {
+  expect(
+    isResVibeWhoAmI({
+      type: "vibe.res.whoAmI",
+      tid: "abc",
+      viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+      access: "owner",
+      dbAcls: { comments: { write: ["members"] } },
+    })
+  ).toBe(true);
+});
 ```
+
 To:
+
 ```typescript
-  it("validates signed-in response", () => {
-    expect(
-      isResVibeWhoAmI({
-        type: "vibe.res.whoAmI",
-        tid: "abc",
-        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
-        access: "owner",
-      })
-    ).toBe(true);
-  });
+it("validates signed-in response", () => {
+  expect(
+    isResVibeWhoAmI({
+      type: "vibe.res.whoAmI",
+      tid: "abc",
+      viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+      access: "owner",
+    })
+  ).toBe(true);
+});
 ```
 
 - [ ] **Step 5: Update srv-sandbox-who-am-i.test.ts**
@@ -549,6 +589,7 @@ Delete the entire "passes dbAcls through when present" test (lines 96-124).
 Delete `vibes.diy/api/tests/db-acl-allows.test.ts` and `vibes.diy/api/tests/db-acl-allows-parity.test.ts`. These test `aclAllows` and `inGroup` which no longer exist in the client.
 
 Run:
+
 ```bash
 git rm vibes.diy/api/tests/db-acl-allows.test.ts vibes.diy/api/tests/db-acl-allows-parity.test.ts
 ```
@@ -564,6 +605,7 @@ Expected: All tests pass, no TypeScript errors.
 ### Task 6: Update prompt docs
 
 **Files:**
+
 - Modify: `prompts/pkg/llms/use-viewer.md`
 
 - [ ] **Step 1: Update use-viewer.md API docs**
@@ -571,10 +613,13 @@ Expected: All tests pass, no TypeScript errors.
 In `prompts/pkg/llms/use-viewer.md`, update the `can()` description (line 32):
 
 Change from:
+
 ```markdown
 - `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Pass a `dbName` for multi-db apps; omit for single-db apps. Use it to hide forms when the viewer can't post.
 ```
+
 To:
+
 ```markdown
 - `can(action)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Use it to hide forms when the viewer can't post. Access functions handle per-database permissions server-side.
 ```
@@ -584,28 +629,38 @@ To:
 In `prompts/pkg/llms/use-viewer.md`, update the two code examples that use `can("write", "comments")`:
 
 Lines 51-54 — change:
+
 ```jsx
-      {viewer && !can("write", "comments") && (
-        <p>Contact the owner to request write access so you can post.</p>
-      )}
-      {viewer && can("write", "comments") && <form>...</form>}
+{
+  viewer && !can("write", "comments") && <p>Contact the owner to request write access so you can post.</p>;
+}
+{
+  viewer && can("write", "comments") && <form>...</form>;
+}
 ```
+
 To:
+
 ```jsx
-      {viewer && !can("write") && (
-        <p>Contact the owner to request write access so you can post.</p>
-      )}
-      {viewer && can("write") && <form>...</form>}
+{
+  viewer && !can("write") && <p>Contact the owner to request write access so you can post.</p>;
+}
+{
+  viewer && can("write") && <form>...</form>;
+}
 ```
 
 Lines 106-109 — change:
+
 ```jsx
           {viewer && !can("write", "comments") && (
             <p>Contact the owner to request write access so you can post.</p>
           )}
           {viewer && can("write", "comments") && (
 ```
+
 To:
+
 ```jsx
           {viewer && !can("write") && (
             <p>Contact the owner to request write access so you can post.</p>

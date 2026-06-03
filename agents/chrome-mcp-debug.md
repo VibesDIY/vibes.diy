@@ -11,7 +11,7 @@ When iterating on a UI/streaming bug with the user driving the dev server, follo
    - `list_console_messages` with `types: ["log", "warn", "error"]` for breadcrumbs.
    - `evaluate_script` calling `() => window.__<feature>Debug` to retrieve the structured snapshot.
    - For server-persisted state, `evaluate_script` an `async () => fetch(...)` to read what the iframe is actually loading. The persisted asset and the in-memory resolved buffer are not always the same — diff them.
-   - **To read a vibe's App.jsx source:** use `vibes-diy pull <appSlug> --dir /tmp/pull-out`, or fetch it directly from the worker in the page context: `evaluate_script: async () => { const r = await fetch('https://<appSlug>--<userSlug>.cli-v2.vibesdiy.net/App.jsx'); return r.text(); }`. Useful for diagnosing broken imports (e.g. a removed package) when the iframe renders blank.
+   - **To read a vibe's App.jsx source:** use `vibes-diy pull <appSlug> --dir /tmp/pull-out`, or fetch it directly from the worker in the page context: `evaluate_script: async () => { const r = await fetch('https://<appSlug>--<userHandle>.cli-v2.vibesdiy.net/App.jsx'); return r.text(); }`. Useful for diagnosing broken imports (e.g. a removed package) when the iframe renders blank.
    - `take_snapshot` (a11y tree) is better than screenshots for reading text content like chat history labels.
 5. **Form a hypothesis** — write it down before changing anything.
 6. **Write a failing test** that captures the hypothesis. Pure-function logic gets a unit test; UI logic gets a component test or a hook test.
@@ -27,7 +27,7 @@ Vite HMRs client-side TS, but Server-side TS imported via React-Router SSR may h
 
 - **`window.__*Debug` only exists when the resolver actually ran.** If the snapshot is `null`, the code path you're debugging didn't execute — e.g. the React effect hasn't fired yet, or the wrong fsId is in the URL.
 - **fsIds are content-addressed hashes.** Two failing turns can produce the same fsId because empty content always hashes to the same value. Don't assume "same fsId = same turn." Compare content lengths and snapshot timestamps.
-- **The iframe sandbox loads from a different host** (`<appSlug>--<userSlug>.localhost.vibesdiy.net:8888`). Fetching the persisted asset to confirm what the iframe sees is the only way to distinguish "client-only fix landed" from "fully fixed."
+- **The iframe sandbox loads from a different host** (`<appSlug>--<userHandle>.localhost.vibesdiy.net:8888`). Fetching the persisted asset to confirm what the iframe sees is the only way to distinguish "client-only fix landed" from "fully fixed."
 - **Replace markers (`<<<<<<< SEARCH`) inside chat history bubbles** are visible to the user — that's a UX issue, not a parser bug.
 
 ## Cleanup

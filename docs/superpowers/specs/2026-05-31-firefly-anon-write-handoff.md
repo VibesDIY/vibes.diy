@@ -7,12 +7,12 @@
 
 ## The Problem
 
-The current model says: if the access function does not throw, the write succeeds. For authenticated users this is fine — the function inspects `user.userSlug` and throws on bad writes. For anonymous users (`user === null`) the documented default is to throw, but this default lives in prose, not in the runtime.
+The current model says: if the access function does not throw, the write succeeds. For authenticated users this is fine — the function inspects `user.userHandle` and throws on bad writes. For anonymous users (`user === null`) the documented default is to throw, but this default lives in prose, not in the runtime.
 
 A minimal valid access function written as an arrow function:
 
 ```js
-const access = doc => ({ channels: [doc.type] })
+const access = (doc) => ({ channels: [doc.type] });
 ```
 
 This is a completely natural thing to write. It maps every document to a channel by type and returns. It never inspects `user`. The runtime sees no throw — so anonymous writes succeed. The app developer did not intend to allow anonymous writes; they just forgot the null check.
@@ -22,12 +22,12 @@ The same problem applies to any function that handles specific doc types and fal
 ```js
 const access = (doc, oldDoc, user, ctx) => {
   if (doc.type === "message") {
-    ctx.requireAccess(doc.channelId)    // throws if user null ✓
-    return { channels: [doc.channelId] }
+    ctx.requireAccess(doc.channelId); // throws if user null ✓
+    return { channels: [doc.channelId] };
   }
   // forgot to handle other doc types — fall-through returns undefined
   // undefined = no throw = anon write succeeds
-}
+};
 ```
 
 ---
@@ -60,8 +60,8 @@ If `user` is null and the function returns without throwing, the runtime checks 
 
 ```js
 if (doc.type === "survey-response") {
-  if (doc._id) throw { forbidden: "id must be server-generated" }
-  return { channels: ["inbound-responses"], allowAnonymous: true }
+  if (doc._id) throw { forbidden: "id must be server-generated" };
+  return { channels: ["inbound-responses"], allowAnonymous: true };
 }
 ```
 

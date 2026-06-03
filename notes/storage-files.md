@@ -10,7 +10,7 @@ Forward-planning doc for the `_files` upload path. The full design is in [storag
 |---|---|
 | `vibes.diy/api/svc/asset-grant.ts` | HKDF-over-EC-scalar signer/verifier. Derives an HS256 HMAC key from `CLOUD_SESSION_TOKEN_SECRET` (its JWK `d` parameter) at startup and caches the result. Exposes `sign(claims)` / `verify(token)` over a small fixed claim shape. |
 | `vibes.diy/api/types/asset.ts` | `ReqAssetUploadGrant` / `ResAssetUploadGrant` / `ResPutAsset` / `AssetGrantClaims`. arktype validators + isXxx guards matching the existing pattern. |
-| `vibes.diy/api/svc/public/asset-upload-grant.ts` | WS handler. `checkAuth` for user identity, app-access check (mirror of the FPCloud-token grant logic — handles owner, invite-grant, and public-access apps), then `signer.sign({ userId, userSlug, appSlug, jti, exp })`. Reply `{ uploadUrl, grant, expiresAt, uploadId }`. |
+| `vibes.diy/api/svc/public/asset-upload-grant.ts` | WS handler. `checkAuth` for user identity, app-access check (mirror of the FPCloud-token grant logic — handles owner, invite-grant, and public-access apps), then `signer.sign({ userId, userHandle, appSlug, jti, exp })`. Reply `{ uploadUrl, grant, expiresAt, uploadId }`. |
 | `vibes.diy/api/svc/public/put-asset.ts` | HTTP `POST /assets` handler. Read `X-Asset-Grant` header, `signer.verify(grant)`, run `vctx.storage.ensure(req.body)`, INSERT one `AssetUploads` row, return `{ cid, getURL, size, uploadId }` JSON. No `verifyAuth` call — the grant is the auth. |
 | `vibes.diy/api/sql/vibes-diy-api-schema-pg.ts` | Add `sqlAssetUploads` table (see schema below). |
 | `vibes.diy/api/sql/vibes-diy-api-schema-sqlite.ts` | Same for sqlite flavour. |
@@ -39,14 +39,14 @@ Forward-planning doc for the `_files` upload path. The full design is in [storag
 sqlAssetUploads = pgTable("AssetUploads", {
   uploadId: text().primaryKey(),     // = JWT jti
   userId: text().notNull(),          // who uploaded (Clerk userId)
-  userSlug: text().notNull(),        // app owner namespace
+  userHandle: text().notNull(),        // app owner namespace
   appSlug: text().notNull(),
   cid: text().notNull(),             // logical FK into Assets / R2
   size: integer().notNull(),         // for SUM-based quota math
   mimeType: text(),                  // optional client hint
   created: text().notNull(),
 }, (table) => [
-  index("AssetUploads_app_idx").on(table.userSlug, table.appSlug, table.created),
+  index("AssetUploads_app_idx").on(table.userHandle, table.appSlug, table.created),
   index("AssetUploads_user_idx").on(table.userId, table.created),
   index("AssetUploads_cid_idx").on(table.cid),
 ]);

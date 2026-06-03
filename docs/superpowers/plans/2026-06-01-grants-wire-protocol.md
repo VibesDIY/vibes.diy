@@ -15,6 +15,7 @@
 ### Task 1: Add `grants?` to wire types and ViewerEnv schema
 
 **Files:**
+
 - Modify: `vibes.diy/vibe/types/index.ts:596-601,653-658`
 - Modify: `vibes.diy/vibe/runtime/vibe.ts:21-24`
 
@@ -25,11 +26,13 @@ Add a `grantEntry` schema near the top of the file (after the existing `dbAcl` i
 In `vibes.diy/vibe/types/index.ts`, after the existing imports, add the grant entry schema. Then add the field to both type definitions.
 
 For `ResVibeWhoAmI` (around line 596-601), add after the `"dbAcls?"` line:
+
 ```typescript
   "grants?": type({ "[string]": type({ channels: "string[]", roles: "string[]" }) }),
 ```
 
 For `EvtVibeViewerChanged` (around line 653-658), add the same line after the `"dbAcls?"` line:
+
 ```typescript
   "grants?": type({ "[string]": type({ channels: "string[]", roles: "string[]" }) }),
 ```
@@ -37,6 +40,7 @@ For `EvtVibeViewerChanged` (around line 653-658), add the same line after the `"
 - [ ] **Step 2: Add grants to viewerEnv in vibe/runtime/vibe.ts**
 
 In `vibes.diy/vibe/runtime/vibe.ts`, the `viewerEnv` type (around line 21-24). Add after the `"dbAcls?"` line:
+
 ```typescript
   "grants?": type({ "[string]": type({ channels: "string[]", roles: "string[]" }) }),
 ```
@@ -52,6 +56,7 @@ Expected: No errors in these files.
 ### Task 2: Forward grants through plumbing layers
 
 **Files:**
+
 - Modify: `vibes.diy/vibe/runtime/VibeContext.tsx:58-62`
 - Modify: `vibes.diy/vibe/runtime/register-dependencies.ts:561-570`
 - Modify: `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts:853-859`
@@ -64,21 +69,24 @@ Each of these files already conditionally forwards `dbAcls`. Add the same patter
 In `vibes.diy/vibe/runtime/VibeContext.tsx`, the `setViewerEnv` call (around line 58-62). Add a `grants` spread after the `dbAcls` spread:
 
 Change from:
+
 ```typescript
-      setViewerEnv({
-        viewer: event.data.viewer,
-        access: event.data.access,
-        ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
-      });
+setViewerEnv({
+  viewer: event.data.viewer,
+  access: event.data.access,
+  ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
+});
 ```
+
 To:
+
 ```typescript
-      setViewerEnv({
-        viewer: event.data.viewer,
-        access: event.data.access,
-        ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
-        ...(event.data.grants ? { grants: event.data.grants } : {}),
-      });
+setViewerEnv({
+  viewer: event.data.viewer,
+  access: event.data.access,
+  ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
+  ...(event.data.grants ? { grants: event.data.grants } : {}),
+});
 ```
 
 - [ ] **Step 2: Forward grants in register-dependencies.ts bootstrapViewer**
@@ -86,10 +94,13 @@ To:
 In `vibes.diy/vibe/runtime/register-dependencies.ts`, the `bootstrapViewer` event dispatch (around line 561-570). Add grants spread:
 
 Change from:
+
 ```typescript
         ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
 ```
+
 To:
+
 ```typescript
         ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants ? { grants: r.grants } : {}),
@@ -100,10 +111,13 @@ To:
 In `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`, the vibeWhoAmI response (around line 853-859). Add grants spread:
 
 Change from:
+
 ```typescript
         ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
 ```
+
 To:
+
 ```typescript
         ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants !== undefined ? { grants: r.grants } : {}),
@@ -114,14 +128,17 @@ To:
 In `vibes.diy/api/svc/intern/render-vibe.ts` (around line 31-32). Add grants to the return value:
 
 Change from:
+
 ```typescript
-  const { viewer, access, dbAcls } = r.Ok();
-  return { viewer, access, ...(dbAcls ? { dbAcls } : {}) };
+const { viewer, access, dbAcls } = r.Ok();
+return { viewer, access, ...(dbAcls ? { dbAcls } : {}) };
 ```
+
 To:
+
 ```typescript
-  const { viewer, access, dbAcls, grants } = r.Ok();
-  return { viewer, access, ...(dbAcls ? { dbAcls } : {}), ...(grants ? { grants } : {}) };
+const { viewer, access, dbAcls, grants } = r.Ok();
+return { viewer, access, ...(dbAcls ? { dbAcls } : {}), ...(grants ? { grants } : {}) };
 ```
 
 ---
@@ -131,6 +148,7 @@ To:
 This is the core change. Add grant resolution to `resolveWhoAmI()` in `vibes.diy/api/svc/public/who-am-i.ts`.
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/who-am-i.ts:1-124`
 
 - [ ] **Step 1: Add imports**
@@ -148,6 +166,7 @@ Check which of these are already imported (some drizzle helpers may already be t
 - [ ] **Step 2: Add grants to ResolvedWhoAmI interface**
 
 Change the `ResolvedWhoAmI` interface from:
+
 ```typescript
 export interface ResolvedWhoAmI {
   viewer: ViewerPayload | null;
@@ -155,7 +174,9 @@ export interface ResolvedWhoAmI {
   dbAcls: Record<string, DbAcl> | undefined;
 }
 ```
+
 To:
+
 ```typescript
 export interface ResolvedWhoAmI {
   viewer: ViewerPayload | null;
@@ -180,7 +201,7 @@ async function resolveGrants(
   const afbRows = await vctx.sql.db
     .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
     .from(tAfb)
-    .where(and(eq(tAfb.userSlug, ownerUserSlug), eq(tAfb.appSlug, appSlug)));
+    .where(and(eq(tAfb.userHandle, ownerUserSlug), eq(tAfb.appSlug, appSlug)));
 
   if (afbRows.length === 0) return undefined;
 
@@ -193,7 +214,7 @@ async function resolveGrants(
       .from(tOutputs)
       .where(
         and(
-          eq(tOutputs.userSlug, ownerUserSlug),
+          eq(tOutputs.userHandle, ownerUserSlug),
           eq(tOutputs.appSlug, appSlug),
           eq(tOutputs.dbName, afb.dbName),
           eq(tOutputs.fnCid, afb.accessFnCid),
@@ -231,26 +252,30 @@ In the `resolveWhoAmI` function, add the grants resolution call. Insert it after
 The viewer slug is already computed as `viewerSlug` by line ~110. Add the grants call and include it in the return:
 
 Before the final return statement (`return Result.Ok({ viewer: ..., access, dbAcls })`), add:
+
 ```typescript
-  const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, viewerSlug);
+const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, viewerSlug);
 ```
 
 Then change the return from:
+
 ```typescript
-  return Result.Ok({
-    viewer: { userHandle: viewerSlug, displayName, avatarUrl },
-    access,
-    dbAcls,
-  });
+return Result.Ok({
+  viewer: { userHandle: viewerSlug, displayName, avatarUrl },
+  access,
+  dbAcls,
+});
 ```
+
 To:
+
 ```typescript
-  return Result.Ok({
-    viewer: { userHandle: viewerSlug, displayName, avatarUrl },
-    access,
-    dbAcls,
-    grants,
-  });
+return Result.Ok({
+  viewer: { userHandle: viewerSlug, displayName, avatarUrl },
+  access,
+  dbAcls,
+  grants,
+});
 ```
 
 Also update the early returns that return `{ viewer: null, access, dbAcls }` to include `grants: undefined`:
@@ -262,10 +287,13 @@ There are three early returns (around lines 78, 82, 113) that return `{ viewer: 
 In the same file, the `whoAmIEvento` handler (around line 155-161) already forwards dbAcls. Add grants:
 
 Change from:
+
 ```typescript
         ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
 ```
+
 To:
+
 ```typescript
         ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants !== undefined ? { grants: r.grants } : {}),
@@ -282,6 +310,7 @@ Expected: No TypeScript errors in production code.
 ### Task 4: Update tests
 
 **Files:**
+
 - Modify: `vibes.diy/api/tests/who-am-i.test.ts`
 - Modify: `vibes.diy/api/tests/vibe-types-viewer.test.ts`
 - Modify: `vibes.diy/api/tests/vibe-mount-params.test.ts`
@@ -293,17 +322,17 @@ Expected: No TypeScript errors in production code.
 Add a test for the grants field in `ResVibeWhoAmI` validation. Add after the existing "validates signed-in response with dbAcls" test:
 
 ```typescript
-  it("validates signed-in response with grants", () => {
-    expect(
-      isResVibeWhoAmI({
-        type: "vibe.res.whoAmI",
-        tid: "abc",
-        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
-        access: "owner",
-        grants: { comments: { channels: ["general"], roles: ["moderator"] } },
-      })
-    ).toBe(true);
-  });
+it("validates signed-in response with grants", () => {
+  expect(
+    isResVibeWhoAmI({
+      type: "vibe.res.whoAmI",
+      tid: "abc",
+      viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+      access: "owner",
+      grants: { comments: { channels: ["general"], roles: ["moderator"] } },
+    })
+  ).toBe(true);
+});
 ```
 
 - [ ] **Step 2: Update vibe-mount-params.test.ts**
@@ -311,17 +340,17 @@ Add a test for the grants field in `ResVibeWhoAmI` validation. Add after the exi
 Add a test for viewerEnv with grants:
 
 ```typescript
-  it("accepts viewerEnv with grants", () => {
-    const r = vibeMountParams({
-      usrEnv: {},
-      viewerEnv: {
-        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
-        access: "owner",
-        grants: { chat: { channels: ["general", "random"], roles: ["admin"] } },
-      },
-    });
-    expect(r instanceof type.errors).toBe(false);
+it("accepts viewerEnv with grants", () => {
+  const r = vibeMountParams({
+    usrEnv: {},
+    viewerEnv: {
+      viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
+      access: "owner",
+      grants: { chat: { channels: ["general", "random"], roles: ["admin"] } },
+    },
   });
+  expect(r instanceof type.errors).toBe(false);
+});
 ```
 
 - [ ] **Step 3: Run pnpm fast-check**

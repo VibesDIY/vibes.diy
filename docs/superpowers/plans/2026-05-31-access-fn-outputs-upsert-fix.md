@@ -15,6 +15,7 @@
 ### Task 1: Add test for AccessFnOutputs row storage
 
 **Files:**
+
 - Modify: `vibes.diy/api/tests/access-fn-invoke.test.ts`
 
 The test must verify that after a successful write through the access fn gate, a row appears in the `accessFnOutputs` table with correct values.
@@ -31,41 +32,41 @@ import { eq, and } from "drizzle-orm";
 Add the test after the "write rejected" test:
 
 ```typescript
-  it("stores AccessFnOutputs row after successful access fn evaluation", async () => {
-    recorder.calls = [];
-    recorder.result = { channels: ["public"], allowAnonymous: true };
-    const res = await ownerApi.putDoc({
-      ownerHandle,
-      appSlug,
-      dbName: "default",
-      doc: { title: "output storage test" },
-    });
-    expect(res.isOk()).toBe(true);
-    const putRes = res.Ok();
-    expect(putRes.status).toBe("ok");
-
-    // Query the accessFnOutputs table for the row
-    const tOutputs = appCtx.vibesCtx.sql.tables.accessFnOutputs;
-    const rows = await appCtx.vibesCtx.sql.db
-      .select()
-      .from(tOutputs)
-      .where(
-        and(
-          eq(tOutputs.userSlug, ownerHandle),
-          eq(tOutputs.appSlug, appSlug),
-          eq(tOutputs.dbName, "default"),
-          eq(tOutputs.docId, putRes.id)
-        )
-      );
-
-    expect(rows.length).toBe(1);
-    const row = rows[0];
-    expect(row?.fnCid).toBe(CID);
-    expect(row?.hasGrants).toBe(0);
-    const output = JSON.parse(row?.output ?? "{}");
-    expect(output.channels).toEqual(["public"]);
-    expect(output.allowAnonymous).toBe(true);
+it("stores AccessFnOutputs row after successful access fn evaluation", async () => {
+  recorder.calls = [];
+  recorder.result = { channels: ["public"], allowAnonymous: true };
+  const res = await ownerApi.putDoc({
+    ownerHandle,
+    appSlug,
+    dbName: "default",
+    doc: { title: "output storage test" },
   });
+  expect(res.isOk()).toBe(true);
+  const putRes = res.Ok();
+  expect(putRes.status).toBe("ok");
+
+  // Query the accessFnOutputs table for the row
+  const tOutputs = appCtx.vibesCtx.sql.tables.accessFnOutputs;
+  const rows = await appCtx.vibesCtx.sql.db
+    .select()
+    .from(tOutputs)
+    .where(
+      and(
+        eq(tOutputs.userHandle, ownerHandle),
+        eq(tOutputs.appSlug, appSlug),
+        eq(tOutputs.dbName, "default"),
+        eq(tOutputs.docId, putRes.id)
+      )
+    );
+
+  expect(rows.length).toBe(1);
+  const row = rows[0];
+  expect(row?.fnCid).toBe(CID);
+  expect(row?.hasGrants).toBe(0);
+  const output = JSON.parse(row?.output ?? "{}");
+  expect(output.channels).toEqual(["public"]);
+  expect(output.allowAnonymous).toBe(true);
+});
 ```
 
 Note: `putRes.id` is the doc ID returned by `res-put-doc`. The `ResPutDoc` type includes `id: string`. The `status` field is `"ok"`.
@@ -73,6 +74,7 @@ Note: `putRes.id` is the doc ID returned by `res-put-doc`. The `ResPutDoc` type 
 - [ ] **Step 2: Run test to verify it fails**
 
 Run from the repo root:
+
 ```bash
 cd vibes.diy/api/tests && pnpm test -- access-fn-invoke.test.ts
 ```
@@ -95,16 +97,19 @@ Covers issue #2095."
 ### Task 2: Wrap the upsert with exception2Result
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/app-documents.ts`
 
 - [ ] **Step 1: Add `exception2Result` to the cement import**
 
 In `vibes.diy/api/svc/public/app-documents.ts`, the first line is:
+
 ```typescript
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
 ```
 
 Change to:
+
 ```typescript
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
 ```
@@ -114,81 +119,82 @@ import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, Even
 Find the block (around line 439–469 on origin/main):
 
 ```typescript
-      // Store access fn output for future reduce queries
-      if (accessResult && !("forbidden" in accessResult) && afbRow?.accessFnCid) {
-        const tOutputs = vctx.sql.tables.accessFnOutputs;
-        const outputHasGrants =
-          (accessResult.members && Object.keys(accessResult.members).length > 0) ||
-          (accessResult.grant?.users && Object.keys(accessResult.grant.users).length > 0) ||
-          (accessResult.grant?.roles && Object.keys(accessResult.grant.roles).length > 0) ||
-          (accessResult.grant?.public && accessResult.grant.public.length > 0)
-            ? 1
-            : 0;
+// Store access fn output for future reduce queries
+if (accessResult && !("forbidden" in accessResult) && afbRow?.accessFnCid) {
+  const tOutputs = vctx.sql.tables.accessFnOutputs;
+  const outputHasGrants =
+    (accessResult.members && Object.keys(accessResult.members).length > 0) ||
+    (accessResult.grant?.users && Object.keys(accessResult.grant.users).length > 0) ||
+    (accessResult.grant?.roles && Object.keys(accessResult.grant.roles).length > 0) ||
+    (accessResult.grant?.public && accessResult.grant.public.length > 0)
+      ? 1
+      : 0;
 
-        await vctx.sql.db
-          .insert(tOutputs)
-          .values({
-            userSlug: req.ownerHandle,
-            appSlug: req.appSlug,
-            dbName: req.dbName,
-            docId,
-            fnCid: afbRow.accessFnCid,
-            output: JSON.stringify(accessResult),
-            hasGrants: outputHasGrants,
-          })
-          .onConflictDoUpdate({
-            target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
-            set: {
-              fnCid: afbRow.accessFnCid,
-              output: JSON.stringify(accessResult),
-              hasGrants: outputHasGrants,
-            },
-          });
-      }
+  await vctx.sql.db
+    .insert(tOutputs)
+    .values({
+      userHandle: req.ownerHandle,
+      appSlug: req.appSlug,
+      dbName: req.dbName,
+      docId,
+      fnCid: afbRow.accessFnCid,
+      output: JSON.stringify(accessResult),
+      hasGrants: outputHasGrants,
+    })
+    .onConflictDoUpdate({
+      target: [tOutputs.userHandle, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+      set: {
+        fnCid: afbRow.accessFnCid,
+        output: JSON.stringify(accessResult),
+        hasGrants: outputHasGrants,
+      },
+    });
+}
 ```
 
 Replace with:
 
 ```typescript
-      // Store access fn output for future reduce queries
-      if (accessResult && !("forbidden" in accessResult) && afbRow?.accessFnCid) {
-        const tOutputs = vctx.sql.tables.accessFnOutputs;
-        const outputHasGrants =
-          (accessResult.members && Object.keys(accessResult.members).length > 0) ||
-          (accessResult.grant?.users && Object.keys(accessResult.grant.users).length > 0) ||
-          (accessResult.grant?.roles && Object.keys(accessResult.grant.roles).length > 0) ||
-          (accessResult.grant?.public && accessResult.grant.public.length > 0)
-            ? 1
-            : 0;
+// Store access fn output for future reduce queries
+if (accessResult && !("forbidden" in accessResult) && afbRow?.accessFnCid) {
+  const tOutputs = vctx.sql.tables.accessFnOutputs;
+  const outputHasGrants =
+    (accessResult.members && Object.keys(accessResult.members).length > 0) ||
+    (accessResult.grant?.users && Object.keys(accessResult.grant.users).length > 0) ||
+    (accessResult.grant?.roles && Object.keys(accessResult.grant.roles).length > 0) ||
+    (accessResult.grant?.public && accessResult.grant.public.length > 0)
+      ? 1
+      : 0;
 
-        const rUpsert = await exception2Result(async () =>
-          vctx.sql.db
-            .insert(tOutputs)
-            .values({
-              userSlug: req.ownerHandle,
-              appSlug: req.appSlug,
-              dbName: req.dbName,
-              docId,
-              fnCid: afbRow.accessFnCid,
-              output: JSON.stringify(accessResult),
-              hasGrants: outputHasGrants,
-            })
-            .onConflictDoUpdate({
-              target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
-              set: {
-                fnCid: afbRow.accessFnCid,
-                output: JSON.stringify(accessResult),
-                hasGrants: outputHasGrants,
-              },
-            })
-        );
-        if (rUpsert.isErr()) {
-          console.error("AccessFnOutputs upsert failed:", rUpsert.Err());
-        }
-      }
+  const rUpsert = await exception2Result(async () =>
+    vctx.sql.db
+      .insert(tOutputs)
+      .values({
+        userHandle: req.ownerHandle,
+        appSlug: req.appSlug,
+        dbName: req.dbName,
+        docId,
+        fnCid: afbRow.accessFnCid,
+        output: JSON.stringify(accessResult),
+        hasGrants: outputHasGrants,
+      })
+      .onConflictDoUpdate({
+        target: [tOutputs.userHandle, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+        set: {
+          fnCid: afbRow.accessFnCid,
+          output: JSON.stringify(accessResult),
+          hasGrants: outputHasGrants,
+        },
+      })
+  );
+  if (rUpsert.isErr()) {
+    console.error("AccessFnOutputs upsert failed:", rUpsert.Err());
+  }
+}
 ```
 
 Key changes:
+
 - The `await vctx.sql.db.insert(...)` is now wrapped inside `exception2Result(async () => ...)`
 - If the upsert throws, `rUpsert.isErr()` is true — log the error but do NOT re-throw
 - The `res-put-doc` response below always sends regardless of upsert outcome

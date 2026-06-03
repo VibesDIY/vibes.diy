@@ -25,14 +25,14 @@ Navigate to `https://vibes.diy/chat/prompt?prompt64=<base64-prompt>`. The page k
 
 Two signals to watch for, in order of reliability:
 
-- **URL transition**: the chat starts at `/chat/prompt?...`; once the server has bound the appSlug and started streaming, the page navigates to `/chat/<userSlug>/<appSlug>` (or `/chat/<userSlug>/<appSlug>/<fsId>` after the first block.end). Poll with `evaluate_script: () => location.pathname`.
-- **Preview iframe**: when streaming completes the preview iframe at `<appSlug>--<userSlug>.vibesdiy.app` (or `.localhost.vibesdiy.net:8888` on dev) loads the actual built app. `wait_for` on a unique text marker from the prompt is more reliable than waiting for a fixed button label.
+- **URL transition**: the chat starts at `/chat/prompt?...`; once the server has bound the appSlug and started streaming, the page navigates to `/chat/<userHandle>/<appSlug>` (or `/chat/<userHandle>/<appSlug>/<fsId>` after the first block.end). Poll with `evaluate_script: () => location.pathname`.
+- **Preview iframe**: when streaming completes the preview iframe at `<appSlug>--<userHandle>.vibesdiy.app` (or `.localhost.vibesdiy.net:8888` on dev) loads the actual built app. `wait_for` on a unique text marker from the prompt is more reliable than waiting for a fixed button label.
 
 Use `mcp__chrome-devtools__wait_for` with a generous timeout (90s+). Generation against prod typically takes 30–90s.
 
-### 3. Extract userSlug + appSlug
+### 3. Extract userHandle + appSlug
 
-Read `location.pathname` via `evaluate_script`. Pattern: `/chat/<userSlug>/<appSlug>(/<fsId>)?`. The CLI command only needs `appSlug` (it resolves `userSlug` from your CLI default), but record both — they're needed for the DB inspection step. Also screenshot the chat for the report.
+Read `location.pathname` via `evaluate_script`. Pattern: `/chat/<userHandle>/<appSlug>(/<fsId>)?`. The CLI command only needs `appSlug` (it resolves `userHandle` from your CLI default), but record both — they're needed for the DB inspection step. Also screenshot the chat for the report.
 
 ### 4. Run the CLI `edit`
 
@@ -43,7 +43,7 @@ mkdir -p /tmp/eval-web-cli-$RUN_ID/$CASE-edit && cd $_
 vibes-diy edit <appSlug> "<follow-up prompt>" --dir . 2>&1 | tee edit.log
 ```
 
-If your CLI default userSlug differs from the web account's, pass `--user-slug <slug>` so `ensureChatId` can find the existing chat.
+If your CLI default userHandle differs from the web account's, pass `--user-slug <slug>` so `ensureChatId` can find the existing chat.
 
 ### 5. Verify
 
@@ -62,11 +62,11 @@ cd /Users/jchris/code/fp/vibes.diy
 pnpm --dir vibes.diy/api/svc run db:inspect sql "SELECT chatId, COUNT(*) AS prompts FROM \"PromptContexts\" WHERE chatId IN (SELECT chatId FROM \"ChatContexts\" WHERE appSlug = '<appSlug>')"
 ```
 
-Expect `prompts >= 2` (one from the initial web generate, one from the CLI edit). If it's 1, the edit's `openChat` failed to find the existing chat — investigate userSlug / appSlug match.
+Expect `prompts >= 2` (one from the initial web generate, one from the CLI edit). If it's 1, the edit's `openChat` failed to find the existing chat — investigate userHandle / appSlug match.
 
 ## Pitfalls
 
-- The CLI default userSlug must match the web account's slug. `vibes-diy user-settings` shows the default. If wrong, pass `--user-slug` explicitly.
+- The CLI default userHandle must match the web account's slug. `vibes-diy user-settings` shows the default. If wrong, pass `--user-slug` explicitly.
 - The generate page may briefly render `/chat/prompt?...` before the appSlug binding lands. Don't extract slugs from the URL until you've confirmed the `/chat/<user>/<app>` pattern.
 - `vibes-diy edit` opens a fresh chat session each call — there's no client-side conversation state, the server reconstructs from `ChatSections`. This is the same as the web 2nd prompt path.
 - For multi-turn evaluation, just call `vibes-diy edit` repeatedly with different follow-ups. Each call appends a `PromptContext` row.

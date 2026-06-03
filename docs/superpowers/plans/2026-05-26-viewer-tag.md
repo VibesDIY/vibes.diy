@@ -4,7 +4,7 @@
 
 **Goal:** Add a `ViewerTag` component returned from `useViewer()` that renders an inline user pill with a dashed-ring avatar; when the current viewer looks at themselves, clicking the avatar uploads a new profile photo.
 
-**Architecture:** The component is closure-bound to the current viewer inside `useViewer()` and not exported at the top level. Photo upload uses two existing/new postMessage RPCs: `putAsset` (bytes → CID) then a new `updateAvatarCid` (CID → SQL user settings). The avatar route `/u/:userSlug/avatar` is unchanged.
+**Architecture:** The component is closure-bound to the current viewer inside `useViewer()` and not exported at the top level. Photo upload uses two existing/new postMessage RPCs: `putAsset` (bytes → CID) then a new `updateAvatarCid` (CID → SQL user settings). The avatar route `/u/:userHandle/avatar` is unchanged.
 
 **Tech Stack:** React, arktype, Vitest, `@testing-library/react`, existing `VibeSandboxApi` postMessage bridge pattern.
 
@@ -38,11 +38,11 @@ Insert after the `isResVibeWhoAmI` function:
 
 ```ts
 // Sandbox → host: persist a freshly-uploaded avatar CID to the viewer's
-// platform profile. The host enforces that the sandbox userSlug matches
+// platform profile. The host enforces that the sandbox userHandle matches
 // the authenticated session before calling ensureUserSettings.
 export const ReqVibeUpdateAvatarCid = type({
   type: "'vibe.req.updateAvatarCid'",
-  userSlug: "string",
+  userHandle: "string",
   appSlug: "string",
   cid: "string",
 }).and(Base);
@@ -102,7 +102,7 @@ describe("VibeSandboxApi.updateAvatarCid", () => {
     const posts: unknown[] = [];
     const listeners: ((e: MessageEvent) => void)[] = [];
     const api = new VibeSandboxApi({
-      vibeApp: { appSlug: "myapp", userSlug: "alice", fsId: "fs1" },
+      vibeApp: { appSlug: "myapp", userHandle: "alice", fsId: "fs1" },
       addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
       postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
     });
@@ -118,12 +118,12 @@ describe("VibeSandboxApi.updateAvatarCid", () => {
     const req = posts.find((p) => (p as { type: string }).type === "vibe.req.updateAvatarCid") as {
       type: string;
       tid: string;
-      userSlug: string;
+      userHandle: string;
       appSlug: string;
       cid: string;
     };
     expect(req).toBeDefined();
-    expect(req.userSlug).toBe("alice");
+    expect(req.userHandle).toBe("alice");
     expect(req.appSlug).toBe("myapp");
     expect(req.cid).toBe("bafycid123");
 
@@ -139,7 +139,7 @@ describe("VibeSandboxApi.updateAvatarCid", () => {
     const posts: unknown[] = [];
     const listeners: ((e: MessageEvent) => void)[] = [];
     const api = new VibeSandboxApi({
-      vibeApp: { appSlug: "myapp", userSlug: "alice", fsId: "fs1" },
+      vibeApp: { appSlug: "myapp", userHandle: "alice", fsId: "fs1" },
       addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
       postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
     });
@@ -212,7 +212,7 @@ After the `putAsset` method (line ~338):
 
 ```ts
 /** Persist a freshly-uploaded avatar CID to the viewer's platform profile.
- *  The host validates that the sandbox userSlug matches the authenticated
+ *  The host validates that the sandbox userHandle matches the authenticated
  *  viewer before writing to user settings. */
 updateAvatarCid(cid: string): Promise<Result<ResVibeUpdateAvatarCid>> {
   return this.request<ReqVibeUpdateAvatarCid, ResVibeUpdateAvatarCid>(
@@ -363,7 +363,7 @@ function renderViewerTag(env: ViewerEnv | undefined, props: Record<string, unkno
 }
 
 const aliceEnv: ViewerEnv = {
-  viewer: { userSlug: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+  viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
   access: "owner",
 };
 
@@ -373,23 +373,23 @@ describe("ViewerTag", () => {
     expect(screen.getByText("alice")).toBeTruthy();
   });
 
-  it("renders another user's slug when userSlug prop is given", () => {
-    renderViewerTag(aliceEnv, { userSlug: "bob" });
+  it("renders another user's slug when userHandle prop is given", () => {
+    renderViewerTag(aliceEnv, { userHandle: "bob" });
     expect(screen.getByText("bob")).toBeTruthy();
   });
 
-  it("renders fallback when userSlug prop is present but undefined", () => {
-    renderViewerTag(aliceEnv, { userSlug: undefined });
+  it("renders fallback when userHandle prop is present but undefined", () => {
+    renderViewerTag(aliceEnv, { userHandle: undefined });
     expect(screen.getByText("no user handle provided")).toBeTruthy();
   });
 
-  it("renders fallback when user prop has no userSlug", () => {
-    renderViewerTag(aliceEnv, { user: { userSlug: "" } });
+  it("renders fallback when user prop has no userHandle", () => {
+    renderViewerTag(aliceEnv, { user: { userHandle: "" } });
     expect(screen.getByText("no user handle provided")).toBeTruthy();
   });
 
   it("does not show edit ring for another user", () => {
-    renderViewerTag(aliceEnv, { userSlug: "bob" });
+    renderViewerTag(aliceEnv, { userHandle: "bob" });
     // file input should not be present
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
@@ -401,18 +401,18 @@ describe("ViewerTag", () => {
 
   it("does not show edit affordance when viewer is anonymous", () => {
     renderViewerTag(undefined);
-    // No viewer → no edit ring even with no userSlug prop
+    // No viewer → no edit ring even with no userHandle prop
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
-  it("does not show edit ring when userSlug matches viewer but viewer is null", () => {
-    renderViewerTag(undefined, { userSlug: undefined });
+  it("does not show edit ring when userHandle matches viewer but viewer is null", () => {
+    renderViewerTag(undefined, { userHandle: undefined });
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
   it("uses user.avatarUrl when provided via object prop", () => {
     renderViewerTag(aliceEnv, {
-      user: { userSlug: "bob", avatarUrl: "https://custom.test/bob.png" },
+      user: { userHandle: "bob", avatarUrl: "https://custom.test/bob.png" },
     });
     const img = document.querySelector("img") as HTMLImageElement;
     expect(img?.src).toBe("https://custom.test/bob.png");
@@ -440,9 +440,9 @@ import { getRegisteredVibeApi } from "./register-dependencies.js";
 type ViewerPayload = NonNullable<ViewerEnv["viewer"]>;
 
 export type ViewerTagProps =
-  | { userSlug?: never; user?: never }
-  | { userSlug: string; user?: never }
-  | { user: { userSlug: string; displayName?: string; avatarUrl?: string }; userSlug?: never };
+  | { userHandle?: never; user?: never }
+  | { userHandle: string; user?: never }
+  | { user: { userHandle: string; displayName?: string; avatarUrl?: string }; userHandle?: never };
 
 type ViewerTagImplProps = ViewerTagProps & { _viewer: ViewerPayload | null };
 
@@ -451,14 +451,14 @@ export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Undefined / empty guard — key present but value falsy
-  const slugFromProp = "user" in props && props.user ? props.user.userSlug : "userSlug" in props ? props.userSlug : undefined;
+  const slugFromProp = "user" in props && props.user ? props.user.userHandle : "userHandle" in props ? props.userHandle : undefined;
 
-  if (("userSlug" in props || "user" in props) && !slugFromProp) {
+  if (("userHandle" in props || "user" in props) && !slugFromProp) {
     return <span style={{ opacity: 0.4, fontStyle: "italic", fontSize: 13 }}>no user handle provided</span>;
   }
 
   // Resolve final slug and avatar URL
-  const resolvedSlug = slugFromProp ?? _viewer?.userSlug ?? "";
+  const resolvedSlug = slugFromProp ?? _viewer?.userHandle ?? "";
   const resolvedAvatarUrl =
     "user" in props && props.user?.avatarUrl
       ? props.user.avatarUrl
@@ -468,7 +468,7 @@ export function ViewerTagImpl({ _viewer, ...props }: ViewerTagImplProps): React.
 
   // Self: no slug/user prop given, OR resolved slug matches the viewer.
   // Never self if viewer is anonymous — guards the undefined === undefined case.
-  const isSelf = _viewer !== null && ((!("userSlug" in props) && !("user" in props)) || resolvedSlug === _viewer?.userSlug);
+  const isSelf = _viewer !== null && ((!("userHandle" in props) && !("user" in props)) || resolvedSlug === _viewer?.userHandle);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -608,7 +608,7 @@ export interface UseViewerResult {
    *  on !isViewerPending rather than rendering the anonymous fallback. */
   readonly isViewerPending: boolean;
   /** Inline user pill. Renders the current viewer (editable) when called
-   *  with no props. Pass `userSlug` to render another user read-only. */
+   *  with no props. Pass `userHandle` to render another user read-only. */
   readonly ViewerTag: React.FC<ViewerTagProps>;
 }
 
@@ -696,15 +696,15 @@ const { viewer, ViewerTag } = useViewer();
 <ViewerTag />
 
 // Show another user read-only (no edit affordance):
-<ViewerTag userSlug={comment.authorUserSlug} />
+<ViewerTag userHandle={comment.authorUserSlug} />
 ```
 ````
 
 **Self-detection is automatic.** When `ViewerTag` renders the current viewer it shows a dashed indigo ring and pencil overlay on the avatar. Clicking it opens a file picker; the upload and profile save happen internally.
 
-**Undefined safety.** If `userSlug` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring. This prevents a broken data source from accidentally granting photo-edit access to an arbitrary pill.
+**Undefined safety.** If `userHandle` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring. This prevents a broken data source from accidentally granting photo-edit access to an arbitrary pill.
 
-Use `<ViewerTag />` (no props) for the current user and `<ViewerTag userSlug={...} />` for others. That's the whole API.
+Use `<ViewerTag />` (no props) for the current user and `<ViewerTag userHandle={...} />` for others. That's the whole API.
 
 ````
 
@@ -738,8 +738,8 @@ git commit -m "docs(prompts): document ViewerTag in use-viewer LLM preamble"
 **Spec coverage:**
 
 - [x] `ViewerTag` returned from `useViewer()`, not top-level export
-- [x] `userSlug` string prop + undocumented `user` object prop
-- [x] Self-detection via `'userSlug' in props` (not `=== undefined`)
+- [x] `userHandle` string prop + undocumented `user` object prop
+- [x] Self-detection via `'userHandle' in props` (not `=== undefined`)
 - [x] Undefined guard → dim italic fallback
 - [x] Visual: pill, dashed ring + ✎ overlay for self
 - [x] Click avatar → file input trigger
