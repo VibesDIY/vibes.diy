@@ -1,0 +1,1109 @@
+<style>
+  body {
+    font-family: "SF Mono", monospace;
+  }
+  .db {
+    border: 3px solid #6366f1;
+    border-radius: 12px;
+    padding: 20px;
+    background: #f8f7ff;
+    margin-bottom: 24px;
+  }
+  .db-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #6366f1;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .doc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .doc {
+    border-radius: 8px;
+    padding: 12px 14px;
+    border: 2px solid;
+    position: relative;
+  }
+  .doc-type {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .doc-field {
+    font-size: 12px;
+    color: #444;
+    margin: 3px 0;
+  }
+  .doc-field span {
+    color: #888;
+  }
+  .doc.fetch-handler {
+    border-color: #f59e0b;
+    background: #fffbeb;
+  }
+  .doc.scheduled-handler {
+    border-color: #10b981;
+    background: #f0fdf4;
+  }
+  .doc.onchange-handler {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+  .doc.fetch-handler .doc-type {
+    color: #b45309;
+  }
+  .doc.scheduled-handler .doc-type {
+    color: #065f46;
+  }
+  .doc.onchange-handler .doc-type {
+    color: #1d4ed8;
+  }
+
+  .fn-box {
+    border: 2px dashed #94a3b8;
+    border-radius: 10px;
+    padding: 18px 20px;
+    background: #f1f5f9;
+    margin-bottom: 24px;
+  }
+  .fn-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #475569;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .fn-sig {
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 14px;
+    background: #e2e8f0;
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .fn-sig .k {
+    color: #7c3aed;
+  }
+  .fn-sig .t {
+    color: #0369a1;
+  }
+  .fn-rules {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .rule {
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.7;
+    border: 1px solid;
+  }
+  .rule.amber {
+    border-color: #f59e0b;
+    background: #fffbeb;
+  }
+  .rule.green {
+    border-color: #10b981;
+    background: #f0fdf4;
+  }
+  .rule.blue {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+  .rule-header {
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .rule.amber .rule-header {
+    color: #b45309;
+  }
+  .rule.green .rule-header {
+    color: #065f46;
+  }
+  .rule.blue .rule-header {
+    color: #1d4ed8;
+  }
+  .throw {
+    color: #dc2626;
+    font-style: italic;
+  }
+  .grant {
+    color: #059669;
+    font-weight: 600;
+  }
+  .route {
+    color: #7c3aed;
+    font-weight: 600;
+  }
+  .hl {
+    background: #fef9c3;
+    padding: 0 2px;
+    border-radius: 3px;
+    font-weight: 700;
+    color: #92400e;
+  }
+
+  .user-ctx {
+    margin-bottom: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .user-ctx-label {
+    font-weight: 700;
+    color: #475569;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    padding-top: 2px;
+  }
+  .user-ctx-fields {
+    color: #334155;
+    line-height: 1.7;
+  }
+  .user-ctx-fields .k {
+    color: #7c3aed;
+  }
+  .user-ctx-fields .v {
+    color: #0369a1;
+  }
+  .user-ctx-fields .c {
+    color: #94a3b8;
+    font-style: italic;
+  }
+
+  .flow-box {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px 20px;
+    background: white;
+    margin-bottom: 12px;
+  }
+  .flow-title {
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 10px;
+    color: #334155;
+  }
+  .flow-steps {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .step {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    padding: 8px 4px;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+  .step .icon {
+    font-size: 20px;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .step .label {
+    display: block;
+    color: #64748b;
+  }
+  .step .value {
+    display: block;
+    font-weight: 600;
+    color: #1e293b;
+    letter-spacing: 0.03em;
+  }
+  .arrow {
+    align-self: center;
+    color: #94a3b8;
+    font-size: 18px;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+  .arrow.red {
+    color: #dc2626;
+  }
+  .arrow.green {
+    color: #059669;
+  }
+
+  .note {
+    font-size: 11px;
+    color: #64748b;
+    font-style: italic;
+    margin-top: 6px;
+    padding-left: 8px;
+    border-left: 2px solid #e2e8f0;
+  }
+
+  h2 {
+    color: #1e293b;
+    font-size: 18px;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  h3 {
+    font-size: 13px;
+    color: #334155;
+    margin: 0 0 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge.fixed {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+  }
+
+  .prose {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #334155;
+    margin: 0 0 20px;
+    max-width: 860px;
+  }
+  .prose + .prose {
+    margin-top: -8px;
+  }
+  .prose strong {
+    color: #1e293b;
+  }
+  .prose code {
+    font-family: "SF Mono", monospace;
+    font-size: 12px;
+    background: #e2e8f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #0369a1;
+  }
+  .intro {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #334155;
+    margin-bottom: 28px;
+    padding: 18px 22px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border-left: 4px solid #6366f1;
+  }
+  .intro code {
+    font-family: "SF Mono", monospace;
+    font-size: 12px;
+    background: #e2e8f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #0369a1;
+  }
+</style>
+
+<h2>Firefly Backend Handlers <span class="badge fixed">v1 — fetch · scheduled · onChange</span></h2>
+<p class="subtitle">One file, three trigger patterns — server-side logic for every vibe</p>
+
+<div class="intro">
+  <strong>What this is.</strong> <code>/backend.js</code> is a server-side file that lives alongside <code>/App.jsx</code> and
+  <code>/access.js</code> in a vibe's filesystem. Each <strong>named export</strong> maps to a trigger type:
+  <code>fetch</code> handles incoming HTTP requests, <code>scheduled</code> runs on a timer, and <code>onChange</code> reacts to
+  database writes. A <code>config</code> export declares scheduling intervals. All three handlers receive the same
+  <code>ctx</code> object with database access, secrets, and user identity. The server discovers
+  <code>/backend.js</code> automatically at push time — no deployment step, no infrastructure configuration. <br /><br />
+  <strong>Relationship to access.js.</strong> The access function (<code>/access.js</code>) is the <em>gatekeeper</em> — it runs
+  synchronously on every write, validates permissions, and routes documents to channels. Backend handlers are <em>reactors</em> —
+  they run asynchronously after writes land, on external HTTP triggers, or on a schedule. Access functions block writes; backend
+  handlers respond to events. They share the same vibe filesystem and the same <code>ctx.db</code>
+  interface for reading and writing data.
+</div>
+
+<!-- THREE EXPORTS -->
+<div class="db">
+  <div class="db-label">📁 /backend.js — three named exports, one config</div>
+  <div class="doc-grid">
+    <div class="doc fetch-handler">
+      <div class="doc-type">export fetch</div>
+      <div class="doc-field">trigger: <span>HTTP request</span></div>
+      <div class="doc-field">args: <span>(request, ctx)</span></div>
+      <div class="doc-field">returns: <span>Response</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #fde68a; font-size: 11px; color: #b45309; line-height: 1.8"
+      >
+        OAuth callbacks, webhooks,<br />REST APIs, form handlers
+      </div>
+    </div>
+    <div class="doc scheduled-handler">
+      <div class="doc-type">export scheduled</div>
+      <div class="doc-field">trigger: <span>timer (DO alarm)</span></div>
+      <div class="doc-field">args: <span>(event, ctx)</span></div>
+      <div class="doc-field">returns: <span>void</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #a7f3d0; font-size: 11px; color: #065f46; line-height: 1.8"
+      >
+        polling APIs, periodic sync,<br />cleanup jobs, aggregation
+      </div>
+    </div>
+    <div class="doc onchange-handler">
+      <div class="doc-type">export onChange</div>
+      <div class="doc-field">trigger: <span>database write</span></div>
+      <div class="doc-field">args: <span>(event, ctx)</span></div>
+      <div class="doc-field">returns: <span>void</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #bfdbfe; font-size: 11px; color: #1d4ed8; line-height: 1.8"
+      >
+        notifications, external sync,<br />audit logging, side effects
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="prose">
+  <strong>One file, familiar shape.</strong> The export names match Cloudflare Workers (<code>fetch</code> + <code>scheduled</code>)
+  plus <code>onChange</code> for database reactivity. Most backends need a mix — a payment vibe needs webhook receipt
+  (<code>fetch</code>) plus email-on-purchase (<code>onChange</code>). A single file with named exports is simpler to generate,
+  simpler to reason about, and matches the mental model of "my app has a frontend file and a backend file."
+</p>
+
+<!-- CONTEXT OBJECT -->
+<div class="fn-box">
+  <div class="fn-label">ctx — shared context object, same shape for all three handlers</div>
+
+  <div class="user-ctx">
+    <div class="user-ctx-label">ctx</div>
+    <div class="user-ctx-fields">
+      <span class="k">db</span>: <span class="v">FireflyDB</span> &nbsp;<span class="c"
+        >// put, get, query — reads and writes to this vibe's database</span
+      ><br />
+      <span class="k">secrets</span>: <span class="v">Record&lt;string, string&gt;</span> &nbsp;<span class="c"
+        >// hierarchical: vibe → account → platform</span
+      ><br />
+      <span class="k">userInfo</span>: <span class="v">UserContext | null</span> &nbsp;<span class="c"
+        >// authenticated user (null for scheduled, anonymous fetch)</span
+      ><br />
+      <span class="k">appInfo</span>: <span class="v">{ ownerHandle, appSlug }</span> &nbsp;<span class="c"
+        >// identity of this vibe</span
+      >
+    </div>
+  </div>
+
+  <div class="user-ctx">
+    <div class="user-ctx-label">ctx.db</div>
+    <div class="user-ctx-fields">
+      <span class="k">put</span>(<span class="v">doc</span>): <span class="v">Promise&lt;{ id, clock }&gt;</span> &nbsp;<span
+        class="c"
+        >// write a document — runs through access.js if present</span
+      ><br />
+      <span class="k">get</span>(<span class="v">id</span>): <span class="v">Promise&lt;doc&gt;</span> &nbsp;<span class="c"
+        >// read a document by _id</span
+      ><br />
+      <span class="k">query</span>(<span class="v">field, opts?</span>): <span class="v">Promise&lt;{ docs }&gt;</span> &nbsp;<span
+        class="c"
+        >// query documents by index field</span
+      >
+    </div>
+  </div>
+
+  <p class="prose" style="margin: 12px 0 14px">
+    <strong>Secrets hierarchy.</strong> Secrets resolve with vibe-level overriding account-level overriding platform-level. A vibe
+    sets <code>WEBHOOK_URL</code> at the vibe level; the user's <code>SENDGRID_API_KEY</code> comes from their account; a shared
+    <code>WEATHER_API_KEY</code> comes from the platform. When a vibe is remixed, it runs with the <strong>remixer's</strong> secret
+    hierarchy — the original creator's keys are never exposed.
+  </p>
+
+  <div class="fn-rules">
+    <div class="rule amber">
+      <div class="rule-header">Vibe-level</div>
+      <code>WEBHOOK_URL</code><br />
+      <code>CUSTOM_ENDPOINT</code><br /><br />
+      <em style="color: #b45309; font-size: 11px">set by vibe creator, specific to this app</em>
+    </div>
+    <div class="rule green">
+      <div class="rule-header">Account-level</div>
+      <code>SENDGRID_API_KEY</code><br />
+      <code>STRIPE_SECRET_KEY</code><br /><br />
+      <em style="color: #065f46; font-size: 11px">user's personal keys, shared across vibes</em>
+    </div>
+    <div class="rule blue">
+      <div class="rule-header">Platform-level</div>
+      <code>WEATHER_API_KEY</code><br />
+      <code>MAPS_API_KEY</code><br /><br />
+      <em style="color: #1d4ed8; font-size: 11px">managed by vibes.diy, available to all</em>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Handler 1 — fetch(request, ctx)</h2>
+<p class="subtitle">External HTTP → process → respond — webhooks, OAuth, REST APIs</p>
+
+<p class="prose">
+  The <code>fetch</code> handler receives inbound HTTP requests at a per-vibe URL:
+  <code>https://vibes.diy/vibe/{ownerHandle}/{appSlug}/api/...</code>. The path after <code>/api/</code> is passed through to the
+  handler as <code>request.url</code>. The handler returns a standard <code>Response</code> object. Platform auth populates
+  <code>ctx.userInfo</code> for authenticated requests; webhook endpoints implement their own signature verification.
+</p>
+
+<!-- prettier-ignore -->
+<div class="fn-box">
+  <div class="fn-label">⚡ /backend.js — fetch handler (OAuth + webhook example)</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">export async function</span> fetch(request, ctx) {
+  <span class="k">const</span> url = <span class="k">new</span> URL(request.url)
+
+  <span style="color: #94a3b8">// OAuth callback — exchange code for token, store in DB</span>
+  <span class="k">if</span> (url.pathname === <span class="t">"/oauth/callback"</span>) {
+    <span class="k">const</span> code = url.searchParams.get(<span class="t">"code"</span>)
+    <span class="k">const</span> token = <span class="k">await</span> exchangeToken(code, ctx.secrets.CLIENT_SECRET)
+    <span class="k">await</span> ctx.db.put({ _id: <span class="t">"oauth-token"</span>, ...token })
+    <span class="k">return new</span> Response(<span class="t">"Connected!"</span>)
+  }
+
+  <span style="color: #94a3b8">// Stripe webhook — verify signature, process payment</span>
+  <span class="k">if</span> (url.pathname === <span class="t">"/webhook/stripe"</span>) {
+    <span class="k">const</span> sig = request.headers.get(<span class="t">"stripe-signature"</span>)
+    <span class="k">const</span> payload = <span class="k">await</span> request.text()
+    <span class="k">const</span> event = verifyStripeSignature(payload, sig, ctx.secrets.STRIPE_WEBHOOK_SECRET)
+    <span class="k">await</span> ctx.db.put({ _id: <span class="t">`payment-${event.id}`</span>, type: <span class="t">"payment"</span>, ...event.data })
+    <span class="k">return new</span> Response(<span class="t">"OK"</span>)
+  }
+
+  <span class="k">return new</span> Response(<span class="t">"Not Found"</span>, { status: 404 })
+}</div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">OAuth callback flow</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">🔗</span><span class="label">user clicks</span><span class="value">Connect to Sonos</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">🌐</span><span class="label">redirect to</span><span class="value">sonos.com/authorize</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">⚡</span><span class="label">callback hits</span><span class="value">/api/oauth/callback</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">💾</span><span class="label">token stored</span><span class="value">ctx.db.put(token)</span>
+    </div>
+  </div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">Webhook receipt flow</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">📨</span><span class="label">Stripe sends</span><span class="value">POST /api/webhook/stripe</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step"><span class="icon">🔐</span><span class="label">verify sig</span><span class="value">HMAC check</span></div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">💾</span><span class="label">write to DB</span><span class="value">payment record</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">🔄</span><span class="label">frontend syncs</span><span class="value">live update</span>
+    </div>
+  </div>
+</div>
+
+<p class="prose">
+  <strong>URL routing.</strong> Each vibe's fetch handler is reachable at <code>/vibe/{ownerHandle}/{appSlug}/api/*</code>. The
+  Worker routes requests matching this pattern to the vibe's <code>BackendDO</code>. The path seen by the handler is relative to
+  <code>/api/</code> — a request to <code>/vibe/alice/sonos-display/api/oauth/callback</code> arrives as
+  <code>url.pathname === "/oauth/callback"</code>. Query parameters, headers, and body are passed through unchanged.
+</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Handler 2 — scheduled(event, ctx)</h2>
+<p class="subtitle">Timer fires → poll external API → write to DB → frontend syncs</p>
+
+<p class="prose">
+  The <code>scheduled</code> handler runs on a repeating interval declared in the <code>config</code> export. Under the hood, this
+  uses Durable Object alarms — each vibe's <code>BackendDO</code> sets an alarm for the next tick. The handler receives an
+  <code>event</code> with the scheduled time and can read/write the database and make outbound HTTP requests.
+  <code>ctx.userInfo</code> is <code>null</code> in scheduled handlers — there is no user context for timer-driven work.
+</p>
+
+<!-- prettier-ignore -->
+<div class="fn-box">
+  <div class="fn-label">⚡ /backend.js — scheduled handler (Sonos polling example)</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">export const</span> config = { scheduled: { interval: <span class="t">"5s"</span> } }
+
+<span class="k">export async function</span> scheduled(event, ctx) {
+  <span style="color: #94a3b8">// read stored OAuth token</span>
+  <span class="k">const</span> tokenDoc = <span class="k">await</span> ctx.db.get(<span class="t">"oauth-token"</span>)
+  <span class="k">if</span> (!tokenDoc) <span class="k">return</span> <span style="color: #94a3b8">// not connected yet</span>
+
+  <span style="color: #94a3b8">// poll Sonos API</span>
+  <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="t">"https://api.ws.sonos.com/control/api/v1/playback"</span>, {
+    headers: { Authorization: <span class="t">`Bearer ${tokenDoc.accessToken}`</span> }
+  })
+  <span class="k">const</span> data = <span class="k">await</span> res.json()
+
+  <span style="color: #94a3b8">// write current state — frontend picks up via live sync</span>
+  <span class="k">await</span> ctx.db.put({
+    _id: <span class="t">"now-playing"</span>,
+    track: data.track.name,
+    artist: data.track.artist,
+    albumArt: data.track.imageUrl,
+    isPlaying: data.playbackState === <span class="t">"PLAYING"</span>,
+    updatedAt: Date.now()
+  })
+}</div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">Scheduled polling cycle</div>
+  <div class="flow-steps">
+    <div class="step"><span class="icon">⏰</span><span class="label">alarm fires</span><span class="value">every 5s</span></div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">🌐</span><span class="label">outbound fetch</span><span class="value">Sonos API</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">💾</span><span class="label">ctx.db.put</span><span class="value">now-playing doc</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">📱</span><span class="label">frontend syncs</span><span class="value">display updates</span>
+    </div>
+  </div>
+  <p class="note">DO alarm re-arms after handler completes. If handler throws, alarm retries with exponential backoff.</p>
+</div>
+
+<div class="fn-box">
+  <div class="fn-label">config — schedule declaration</div>
+
+  <div class="user-ctx">
+    <div class="user-ctx-label">config.scheduled</div>
+    <div class="user-ctx-fields">
+      <span class="k">interval</span>: <span class="v">"5s" | "30s" | "1m" | "5m" | "15m" | "1h"</span> &nbsp;<span class="c"
+        >// minimum 5s, maximum 1h</span
+      >
+    </div>
+  </div>
+
+  <p class="prose" style="margin: 12px 0 0">
+    <strong>Interval limits.</strong> The minimum interval is 5 seconds — faster polling is rejected at push time. The maximum is 1
+    hour. The interval is a hint, not a guarantee: if the handler takes longer than the interval to complete, the next tick starts
+    immediately after the previous one finishes. There is no concurrent execution — only one invocation of
+    <code>scheduled</code> runs at a time per vibe.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Handler 3 — onChange(event, ctx)</h2>
+<p class="subtitle">Database write lands → side effect fires — notifications, external sync, logging</p>
+
+<p class="prose">
+  The <code>onChange</code> handler runs asynchronously after a document write succeeds (including deletes). It receives the new
+  document, the previous version (if any), the database name, and the identity of the writer. The handler runs <em>after</em> the
+  access function has approved the write and the document is stored — it cannot block or reject the write. This is the right place
+  for side effects that should not gate the write path: sending emails, posting to Slack, syncing to an external CRM.
+</p>
+
+<!-- prettier-ignore -->
+<div class="fn-box">
+  <div class="fn-label">⚡ /backend.js — onChange handler (order confirmation email)</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">export async function</span> onChange(event, ctx) {
+  <span style="color: #94a3b8">// event.doc      — current document (null on hard delete)</span>
+  <span style="color: #94a3b8">// event.oldDoc   — previous version (null on create)</span>
+  <span style="color: #94a3b8">// event.dbName   — which database</span>
+  <span style="color: #94a3b8">// event.userInfo — who made the change (null for system writes)</span>
+
+  <span class="k">const</span> isCreate = event.doc &amp;&amp; !event.oldDoc
+
+  <span class="k">if</span> (event.doc?.type === <span class="t">"order"</span> &amp;&amp; isCreate) {
+    <span class="k">await</span> fetch(<span class="t">"https://api.sendgrid.com/v3/mail/send"</span>, {
+      method: <span class="t">"POST"</span>,
+      headers: {
+        Authorization: <span class="t">`Bearer ${ctx.secrets.SENDGRID_API_KEY}`</span>,
+        <span class="t">"Content-Type"</span>: <span class="t">"application/json"</span>
+      },
+      body: JSON.stringify({
+        to: event.doc.customerEmail,
+        subject: <span class="t">"Order Confirmation"</span>,
+        text: <span class="t">`Your order #${event.doc._id} has been placed.`</span>
+      })
+    })
+  }
+}</div>
+</div>
+
+<div class="user-ctx">
+  <div class="user-ctx-label">event</div>
+  <div class="user-ctx-fields">
+    <span class="k">doc</span>: <span class="v">object | null</span> &nbsp;<span class="c"
+      >// current document after write (null on hard delete)</span
+    ><br />
+    <span class="k">oldDoc</span>: <span class="v">object | null</span> &nbsp;<span class="c"
+      >// previous version (null on create)</span
+    ><br />
+    <span class="k">dbName</span>: <span class="v">string</span> &nbsp;<span class="c">// which database was written to</span><br />
+    <span class="k">userInfo</span>: <span class="v">UserContext | null</span> &nbsp;<span class="c">// who made the change</span>
+  </div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">onChange — email on new order</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">🛒</span><span class="label">user submits</span><span class="value">order document</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">⚡</span><span class="label">access.js</span><span class="value">validates write</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">💾</span><span class="label">doc stored</span><span class="value">write committed</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">📧</span><span class="label">onChange fires</span><span class="value">email sent async</span>
+    </div>
+  </div>
+  <p class="note">
+    onChange is fire-and-forget from the writer's perspective. The write succeeds regardless of whether onChange completes or
+    throws.
+  </p>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">onChange — detect create vs update vs delete</div>
+  <div class="flow-steps">
+    <div class="step" style="flex: 1.5">
+      <span class="icon">➕</span><span class="label">create</span><span class="value">doc ✓ &nbsp; oldDoc null</span>
+    </div>
+    <div class="step" style="flex: 1.5">
+      <span class="icon">✏️</span><span class="label">update</span><span class="value">doc ✓ &nbsp; oldDoc ✓</span>
+    </div>
+    <div class="step" style="flex: 1.5">
+      <span class="icon">🗑️</span><span class="label">delete</span><span class="value">doc.deleted ✓ &nbsp; oldDoc ✓</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Use Case — Sonos Now-Playing Display</h2>
+<p class="subtitle">OAuth + polling + live sync — all three handlers in one vibe</p>
+
+<p class="prose">
+  A wall-mounted display showing what's currently playing on Sonos speakers. The backend handles the OAuth flow to connect the
+  user's Sonos account, polls the playback API every 5 seconds, and writes the current track to the database. The frontend
+  subscribes to live changes and renders the album art and track info. No <code>onChange</code> needed — but a more complex version
+  could use it to log play history or sync to a scrobbling service.
+</p>
+
+<div class="db">
+  <div class="db-label">📁 vibe filesystem — three files</div>
+  <div class="doc-grid">
+    <div class="doc fetch-handler">
+      <div class="doc-type">App.jsx</div>
+      <div class="doc-field">useDocument(<span>"now-playing"</span>)</div>
+      <div class="doc-field">renders: <span>track, artist, albumArt</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #fde68a; font-size: 11px; color: #b45309; line-height: 1.8"
+      >
+        pure reader — no backend logic
+      </div>
+    </div>
+    <div class="doc scheduled-handler">
+      <div class="doc-type">backend.js</div>
+      <div class="doc-field">fetch: <span>OAuth callback</span></div>
+      <div class="doc-field">scheduled: <span>poll every 5s</span></div>
+      <div class="doc-field">config: <span>{ interval: "5s" }</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #a7f3d0; font-size: 11px; color: #065f46; line-height: 1.8"
+      >
+        two of three handlers used
+      </div>
+    </div>
+    <div class="doc onchange-handler">
+      <div class="doc-type">access.js</div>
+      <div class="doc-field">default: <span>owner-only writes</span></div>
+      <div
+        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #bfdbfe; font-size: 11px; color: #1d4ed8; line-height: 1.8"
+      >
+        only the backend writes data<br />
+        frontend is read-only
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- prettier-ignore -->
+<div class="fn-box">
+  <div class="fn-label">⚡ /backend.js — complete Sonos vibe backend</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">export const</span> config = { scheduled: { interval: <span class="t">"5s"</span> } }
+
+<span class="k">export async function</span> fetch(request, ctx) {
+  <span class="k">const</span> code = <span class="k">new</span> URL(request.url).searchParams.get(<span class="t">"code"</span>)
+  <span class="k">if</span> (code) {
+    <span class="k">const</span> token = <span class="k">await</span> exchangeToken(code, ctx.secrets)
+    <span class="k">await</span> ctx.db.put({ _id: <span class="t">"sonos-token"</span>, ...token })
+    <span class="k">return new</span> Response(<span class="t">"Connected to Sonos!"</span>)
+  }
+  <span class="k">return new</span> Response(<span class="t">"Not Found"</span>, { status: 404 })
+}
+
+<span class="k">export async function</span> scheduled(event, ctx) {
+  <span class="k">const</span> tokenDoc = <span class="k">await</span> ctx.db.get(<span class="t">"sonos-token"</span>)
+  <span class="k">if</span> (!tokenDoc) <span class="k">return</span>
+
+  <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="t">"https://api.ws.sonos.com/control/api/v1/playback"</span>, {
+    headers: { Authorization: <span class="t">`Bearer ${tokenDoc.accessToken}`</span> }
+  })
+  <span class="k">const</span> data = <span class="k">await</span> res.json()
+
+  <span class="k">await</span> ctx.db.put({
+    _id: <span class="t">"now-playing"</span>,
+    track: data.track.name,
+    artist: data.track.artist,
+    albumArt: data.track.imageUrl,
+    isPlaying: data.playbackState === <span class="t">"PLAYING"</span>,
+    updatedAt: Date.now()
+  })
+}
+
+<span class="k">async function</span> exchangeToken(code, secrets) {
+  <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="t">"https://api.sonos.com/login/v3/oauth/access"</span>, {
+    method: <span class="t">"POST"</span>,
+    headers: {
+      <span class="t">"Content-Type"</span>: <span class="t">"application/x-www-form-urlencoded"</span>,
+      Authorization: <span class="t">`Basic ${btoa(secrets.SONOS_CLIENT_ID + ":" + secrets.SONOS_CLIENT_SECRET)}`</span>
+    },
+    body: <span class="t">`grant_type=authorization_code&amp;code=${code}&amp;redirect_uri=${secrets.REDIRECT_URI}`</span>
+  })
+  <span class="k">return</span> res.json()
+}</div>
+</div>
+
+<div class="flow-box">
+  <div class="flow-title">End-to-end: connect → poll → display</div>
+  <div class="flow-steps">
+    <div class="step">
+      <span class="icon">👤</span><span class="label">user clicks</span><span class="value">Connect Sonos</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">🔗</span><span class="label">OAuth redirect</span><span class="value">/api?code=abc</span>
+    </div>
+    <div class="arrow green">→</div>
+    <div class="step"><span class="icon">⏰</span><span class="label">alarm starts</span><span class="value">every 5s</span></div>
+    <div class="arrow green">→</div>
+    <div class="step">
+      <span class="icon">📱</span><span class="label">display updates</span><span class="value">live via sync</span>
+    </div>
+  </div>
+  <p class="note">
+    Token stored in DB. scheduled reads it each tick. Frontend reads now-playing doc via useDocument — no prop drilling, no polling
+    on the client.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Use Case — E-Commerce with Stripe</h2>
+<p class="subtitle">Webhook receipt + order confirmation email — fetch + onChange</p>
+
+<p class="prose">
+  An e-commerce vibe that receives Stripe webhook events and sends confirmation emails. The <code>fetch</code> handler verifies the
+  Stripe signature and writes payment records to the database. The <code>onChange</code> handler watches for new payment documents
+  and sends a confirmation email via SendGrid. No <code>scheduled</code> needed — both triggers are event-driven.
+</p>
+
+<!-- prettier-ignore -->
+<div class="fn-box">
+  <div class="fn-label">⚡ /backend.js — Stripe webhook + email notification</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">export async function</span> fetch(request, ctx) {
+  <span class="k">const</span> url = <span class="k">new</span> URL(request.url)
+  <span class="k">if</span> (url.pathname !== <span class="t">"/webhook/stripe"</span>) <span class="k">return new</span> Response(<span class="t">"Not Found"</span>, { status: 404 })
+
+  <span class="k">const</span> sig = request.headers.get(<span class="t">"stripe-signature"</span>)
+  <span class="k">const</span> body = <span class="k">await</span> request.text()
+  <span class="k">const</span> event = verifyStripeWebhook(body, sig, ctx.secrets.STRIPE_WEBHOOK_SECRET)
+
+  <span class="k">if</span> (event.type === <span class="t">"checkout.session.completed"</span>) {
+    <span class="k">await</span> ctx.db.put({
+      _id: <span class="t">`order-${event.data.object.id}`</span>,
+      type: <span class="t">"order"</span>,
+      customerEmail: event.data.object.customer_email,
+      amount: event.data.object.amount_total,
+      status: <span class="t">"paid"</span>,
+      stripeSessionId: event.data.object.id
+    })
+  }
+  <span class="k">return new</span> Response(<span class="t">"OK"</span>)
+}
+
+<span class="k">export async function</span> onChange(event, ctx) {
+  <span class="k">if</span> (event.doc?.type !== <span class="t">"order"</span> || event.oldDoc) <span class="k">return</span>
+
+  <span class="k">await</span> fetch(<span class="t">"https://api.sendgrid.com/v3/mail/send"</span>, {
+    method: <span class="t">"POST"</span>,
+    headers: {
+      Authorization: <span class="t">`Bearer ${ctx.secrets.SENDGRID_API_KEY}`</span>,
+      <span class="t">"Content-Type"</span>: <span class="t">"application/json"</span>
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: event.doc.customerEmail }] }],
+      from: { email: <span class="t">"orders@example.com"</span> },
+      subject: <span class="t">`Order Confirmation #${event.doc._id}`</span>,
+      content: [{ type: <span class="t">"text/plain"</span>, value: <span class="t">`Thank you! Amount: $${event.doc.amount / 100}`</span> }]
+    })
+  })
+}</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Runtime Architecture — Per-App BackendDO</h2>
+
+<p class="prose">
+  Backend handlers execute <strong>server-side</strong> inside a Durable Object. Each vibe with a <code>/backend.js</code> file gets
+  a <code>BackendDO</code> keyed by <code>{ownerHandle}/{appSlug}</code>. The DO loads the handler source, compiles it with
+  <code>new Function()</code> (via the <code>unsafe_eval</code> compatibility flag already present for <code>AccessFnDO</code>), and
+  dispatches to the matching export on each trigger.
+</p>
+
+<p class="prose">
+  <strong>Why not QuickJS.</strong> The access function uses QuickJS WASM for maximum sandbox isolation — but access functions are
+  synchronous, short-lived, and make no outbound calls. Backend handlers are the opposite: they need real <code>fetch()</code>,
+  async/await, and timer integration. Bridging async operations through QuickJS host functions is complex and fragile. The per-DO
+  model provides sufficient isolation — each vibe runs in its own DO with its own memory, and Cloudflare's Worker runtime provides
+  the security boundary.
+</p>
+
+<!-- prettier-ignore -->
+<div class="fn-box" style="margin: 24px 0">
+  <div class="fn-label">⚡ BackendDO — dispatch architecture</div>
+  <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">class</span> BackendDO <span class="k">extends</span> DurableObject {
+  handlers = <span class="k">null</span>        <span style="color: #94a3b8">// compiled { fetch?, scheduled?, onChange?, config? }</span>
+  alarmInterval = <span class="k">null</span>   <span style="color: #94a3b8">// parsed from config.scheduled.interval</span>
+
+  <span class="k">async</span> loadSource(source) {
+    <span style="color: #94a3b8">// compile once, cache in memory — eviction reloads from D1</span>
+    <span class="k">const</span> module = <span class="k">new</span> Function(<span class="t">"exports"</span>, <span class="t">"fetch"</span>, source + <span class="t">"; return exports;"</span>)
+    <span class="k">this</span>.handlers = module({}, globalThis.fetch)
+  }
+
+  <span style="color: #94a3b8">// HTTP trigger — routed from Worker fetch handler</span>
+  <span class="k">async</span> fetch(request) {
+    <span class="k">if</span> (<span class="k">this</span>.handlers?.fetch) {
+      <span class="k">const</span> ctx = <span class="k">this</span>.buildCtx(request)
+      <span class="k">return this</span>.handlers.fetch(request, ctx)
+    }
+    <span class="k">return new</span> Response(<span class="t">"No fetch handler"</span>, { status: 404 })
+  }
+
+  <span style="color: #94a3b8">// Timer trigger — Durable Object alarm</span>
+  <span class="k">async</span> alarm() {
+    <span class="k">if</span> (<span class="k">this</span>.handlers?.scheduled) {
+      <span class="k">const</span> ctx = <span class="k">this</span>.buildCtx(<span class="k">null</span>)
+      <span class="k">await this</span>.handlers.scheduled({ scheduledTime: Date.now() }, ctx)
+    }
+    <span style="color: #94a3b8">// re-arm alarm for next tick</span>
+    <span class="k">if</span> (<span class="k">this</span>.alarmInterval) {
+      <span class="k">await this</span>.ctx.storage.setAlarm(Date.now() + <span class="k">this</span>.alarmInterval)
+    }
+  }
+
+  <span style="color: #94a3b8">// Database trigger — called from write path after doc stored</span>
+  <span class="k">async</span> invokeOnChange(event) {
+    <span class="k">if</span> (<span class="k">this</span>.handlers?.onChange) {
+      <span class="k">const</span> ctx = <span class="k">this</span>.buildCtx(<span class="k">null</span>)
+      <span class="k">await this</span>.handlers.onChange(event, ctx)
+    }
+  }
+}</div>
+</div>
+
+<h3>Trigger routing</h3>
+
+<div class="fn-rules">
+  <div class="rule amber">
+    <div class="rule-header">fetch trigger</div>
+    <span class="route">route:</span> /vibe/{owner}/{app}/api/*<br />
+    Worker matches URL pattern<br />
+    → routes to BackendDO.fetch()<br />
+    → handler sees relative path<br /><br />
+    <em style="color: #b45309; font-size: 11px">ctx.userInfo populated from session cookie</em>
+  </div>
+  <div class="rule green">
+    <div class="rule-header">scheduled trigger</div>
+    <span class="route">route:</span> DO alarm fires<br />
+    interval from config export<br />
+    → BackendDO.alarm() invoked<br />
+    → re-arms for next tick<br /><br />
+    <em style="color: #065f46; font-size: 11px">ctx.userInfo is null — no user context</em>
+  </div>
+  <div class="rule blue">
+    <div class="rule-header">onChange trigger</div>
+    <span class="route">route:</span> write path → queue/DO<br />
+    after putDoc stores doc<br />
+    → BackendDO.invokeOnChange()<br />
+    → async, non-blocking<br /><br />
+    <em style="color: #1d4ed8; font-size: 11px">ctx.userInfo is the writer's identity</em>
+  </div>
+</div>
+
+<p class="prose" style="margin-top: 20px">
+  <strong>Source loading.</strong> At push time, <code>processBackendBindings()</code> detects <code>/backend.js</code> in the vibe
+  filesystem (same pattern as <code>/access.js</code> detection) and stores a <code>BackendFunctionBindings</code> row with the
+  asset CID. On first request to the DO, it loads the source from the asset store and compiles it. The compiled handlers are cached
+  in DO memory — Cloudflare evicts the DO when idle, and the next request reloads and recompiles.
+</p>
+
+<p class="prose">
+  <strong>Alarm lifecycle.</strong> When a vibe with a <code>scheduled</code> export is pushed, the binding creation also arms the
+  first alarm. The alarm fires, the handler runs, and the DO re-arms for the next interval. If the vibe is updated with a new
+  interval, the next alarm uses the new value. If <code>scheduled</code> is removed, no alarm is re-armed and polling stops.
+  Deleting the vibe destroys the DO and all its alarms.
+</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>Security Model</h2>
+<p class="subtitle">KYC gated, secrets isolated, resource-limited</p>
+
+<div class="fn-rules" style="margin-bottom: 24px">
+  <div class="rule amber">
+    <div class="rule-header">Identity gate</div>
+    KYC required for backend.js<br />
+    Verified account only<br />
+    Unapproved users: no DO created<br /><br />
+    <em style="color: #b45309; font-size: 11px"
+      >access.js does not require KYC — backend.js does because it makes outbound requests</em
+    >
+  </div>
+  <div class="rule green">
+    <div class="rule-header">Secret isolation</div>
+    Secrets resolved server-side only<br />
+    Never sent to frontend/browser<br />
+    Remix uses remixer's keys<br /><br />
+    <em style="color: #065f46; font-size: 11px">original creator's secrets are never leaked to remixers</em>
+  </div>
+  <div class="rule blue">
+    <div class="rule-header">Resource limits</div>
+    CPU time: 30s per invocation<br />
+    Memory: DO default (128MB)<br />
+    Outbound fetch: rate-limited<br /><br />
+    <em style="color: #1d4ed8; font-size: 11px">DO eviction provides natural cleanup</em>
+  </div>
+</div>
+
+<p class="prose">
+  <strong>Isolation model.</strong> Each vibe's <code>BackendDO</code> is its own Durable Object — separate memory, separate
+  storage, separate alarm schedule. Cloudflare's runtime provides the security boundary between vibes. The
+  <code>unsafe_eval</code> compatibility flag is required for <code>new Function()</code> compilation, but the evaluated code runs
+  within the Worker's security context, not with elevated privileges. The DO cannot access other vibes' data, other DOs, or
+  Worker-level environment bindings beyond what <code>ctx</code> provides.
+</p>
+
+<p class="prose">
+  <strong>ctx.db writes go through access.js.</strong> When <code>ctx.db.put()</code> is called from a backend handler, the write
+  follows the same path as a client write — including access function evaluation if <code>/access.js</code> exists. The backend
+  handler's identity is the system user or the authenticated user who triggered the action (for <code>fetch</code>
+  handlers with session auth). This means access functions govern backend writes the same way they govern frontend writes — there is
+  no backdoor.
+</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />
+
+<h2>AI Codegen Pattern Detection</h2>
+<p class="subtitle">Signal words → which exports to generate</p>
+
+<p class="prose">
+  When analyzing user prompts, the codegen system detects which backend exports to include based on signal words. Many prompts need
+  multiple exports — "payment system with Stripe webhooks and email confirmations" produces both <code>fetch</code> (webhook
+  receipt) and <code>onChange</code> (email on payment creation). Vibes that don't need a backend at all (calculator, gallery,
+  static display) get no <code>backend.js</code> file.
+</p>
+
+<div class="fn-rules" style="margin-bottom: 24px">
+  <div class="rule amber">
+    <div class="rule-header">fetch signals</div>
+    "webhook", "API endpoint"<br />
+    "OAuth", "callback"<br />
+    "receive", "form submit"<br />
+    "REST", "external request"<br /><br />
+    <em style="color: #b45309; font-size: 11px">external → internal data flow</em>
+  </div>
+  <div class="rule green">
+    <div class="rule-header">scheduled signals</div>
+    "every", "poll", "check"<br />
+    "periodic", "interval"<br />
+    "cron", "monitor"<br />
+    "update automatically"<br /><br />
+    <em style="color: #065f46; font-size: 11px">timer-driven, no user trigger</em>
+  </div>
+  <div class="rule blue">
+    <div class="rule-header">onChange signals</div>
+    "when", "after", "notify"<br />
+    "send email", "sync"<br />
+    "automatically", "trigger"<br />
+    "on new", "on change"<br /><br />
+    <em style="color: #1d4ed8; font-size: 11px">internal event → external action</em>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div class="intro" style="margin-top: 32px; border-left-color: #10b981">
+  <strong>Summary.</strong> <code>/backend.js</code> gives vibes server-side capabilities through three named exports:
+  <code>fetch</code> for HTTP triggers (webhooks, OAuth, APIs), <code>scheduled</code> for timer-driven polling (with intervals
+  declared in <code>config</code>), and <code>onChange</code> for database-reactive side effects (notifications, external sync). All
+  handlers share a <code>ctx</code> object with database access (<code>ctx.db</code>), hierarchical secrets
+  (<code>ctx.secrets</code>), and user identity (<code>ctx.userInfo</code>). Execution happens in a per-vibe Durable Object
+  (<code>BackendDO</code>) using <code>new Function()</code> for source compilation. Backend access requires KYC verification.
+  Writes from backend handlers go through <code>/access.js</code> the same way client writes do — no backdoor. The file is
+  discovered automatically at push time, following the same pattern as <code>/access.js</code>
+  detection.
+</div>
