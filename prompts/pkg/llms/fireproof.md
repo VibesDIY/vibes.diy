@@ -318,7 +318,7 @@ function App() {
 
 The AI agent writes the access function (so it knows the role names) and writes the UI (so it knows which roles gate which components). The `access` object is the bridge — it lets the UI reflect server-enforced permissions without duplicating the logic.
 
-**Never re-derive permissions from document fields.** If the access function grants channel access based on a doc property (e.g., `adminOnly`), the UI must check `access.hasChannel(name)` — not read the doc's `adminOnly` field and decide client-side. Grants may be set for reasons the UI can't see (other documents, role memberships, owner state). The access function is the single source of truth; the UI just reads its verdict from `access`.
+The access function is the single source of truth for permissions. The UI reads its verdict from `access` — gate with `access.hasChannel(name)` and `access.hasRole(name)`. Grants may reflect logic the UI can't see (other documents, role memberships, owner state), so `access` is always the right check.
 
 ### Complete example: Team announcements with channels
 
