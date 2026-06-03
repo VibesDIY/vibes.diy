@@ -260,4 +260,63 @@ export { myHandler as "my-db" }`;
     const bindings = await queryBindings(appCtx, ownerHandle, appSlug);
     expect(bindings.length).toBe(0);
   });
+
+  it("backfill creates accessFnOutputs via front door", async () => {
+    recorder.result = { channels: ["general"], allowAnonymous: true };
+
+    const rSetup = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: APP_JSX }],
+    });
+    assert(rSetup.isOk(), "setup push failed");
+
+    // Temporarily seed a binding so putDoc goes through the gate
+    const tAfb = appCtx.vibesCtx.sql.tables.accessFunctionBindings;
+    await appCtx.vibesCtx.sql.db.insert(tAfb).values({
+      userSlug: ownerHandle,
+      appSlug,
+      dbName: "chat",
+      accessFnCid: "temp-seed-cid",
+      updated: new Date().toISOString(),
+    });
+
+    const r1 = await api.putDoc({ ownerHandle, appSlug, dbName: "chat", doc: { title: "backfill-doc-1" } });
+    assert(r1.isOk(), "putDoc 1 failed");
+    const r2 = await api.putDoc({ ownerHandle, appSlug, dbName: "chat", doc: { title: "backfill-doc-2" } });
+    assert(r2.isOk(), "putDoc 2 failed");
+
+    // Clean up temp seed
+    await appCtx.vibesCtx.sql.db.delete(tAfb).where(and(eq(tAfb.userSlug, ownerHandle), eq(tAfb.appSlug, appSlug)));
+    await appCtx.vibesCtx.sql.db
+      .delete(appCtx.vibesCtx.sql.tables.accessFnOutputs)
+      .where(
+        and(
+          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.userSlug, ownerHandle),
+          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.appSlug, appSlug)
+        )
+      );
+
+    recorder.calls = [];
+
+    const rAccess = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: APP_JSX },
+        { type: "code-block", lang: "js", filename: "/access.js", content: ACCESS_JS_CHAT_ONLY },
+      ],
+    });
+    assert(rAccess.isOk(), "push with access.js failed");
+
+    const backfillCalls = recorder.calls.filter((c) => c.user === null);
+    expect(backfillCalls.length).toBe(2);
+
+    const tOutputs = appCtx.vibesCtx.sql.tables.accessFnOutputs;
+    const outputRows = await appCtx.vibesCtx.sql.db
+      .select()
+      .from(tOutputs)
+      .where(and(eq(tOutputs.userSlug, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
+    expect(outputRows.length).toBe(2);
+  });
 });
