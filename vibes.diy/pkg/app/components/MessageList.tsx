@@ -25,7 +25,7 @@ import { BrutalistCard } from "@vibes.diy/base";
 import ReactMarkdown from "react-markdown";
 import { PromptError, PromptReq, isPromptError, isPromptReq } from "@vibes.diy/api-types";
 
-type OptionSelectHandler = (option: string) => void | boolean | Promise<void | boolean>;
+type OptionSelectHandler = (option: string) => boolean | undefined | Promise<boolean | undefined>;
 
 interface MessageListProps {
   promptBlocks: PromptBlock[];

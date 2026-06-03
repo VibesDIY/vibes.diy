@@ -11,7 +11,7 @@ interface OptionButtonsProps {
    * only needs to see the explainer once.
    */
   readonly isFirst?: boolean;
-  readonly onSelect?: (option: string) => void | boolean | Promise<void | boolean>;
+  readonly onSelect?: (option: string) => boolean | undefined | Promise<boolean | undefined>;
 }
 
 /**
