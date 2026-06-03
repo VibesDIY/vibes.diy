@@ -53,11 +53,8 @@ import { WSSendProvider } from "../svc-ws-send-provider.js";
 import { GrantReduce, extractContribution } from "./grant-reduce.js";
 
 function connectionAdminMode(ctx: { send: unknown }): boolean {
-  // Evento wraps the raw WSSendProvider in an EventoSend wrapper — the raw
-  // provider lives at ctx.send.provider. Check both paths so this works
-  // whether called from inside an Evento handler (wrapped) or directly.
-  const raw = (ctx.send as { provider?: unknown })?.provider ?? ctx.send;
-  return raw instanceof WSSendProvider ? raw.adminMode : false;
+  const ws = clientWsSend(ctx);
+  return ws.adminMode;
 }
 import { filterDocsByChannel } from "./channel-read-filter.js";
 import { mintFilesUrls, isFileMeta } from "./files-url-mint.js";
@@ -312,31 +309,25 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         });
 
         if ("forbidden" in invokeResult) {
-          if (adminActive) {
-            accessResult = {};
-          } else {
-            await ctx.send.send(ctx, {
-              type: "vibes.diy.res-error",
-              error: { message: invokeResult.forbidden },
-            } satisfies ResError);
-            return Result.Ok(EventoResult.Continue);
-          }
-        } else {
-          if (!adminActive) {
-            try {
-              enforceAllowAnonymous(invokeResult, userContext);
-            } catch (err: unknown) {
-              const reason = err instanceof ForbiddenError ? err.forbidden : String(err);
-              await ctx.send.send(ctx, {
-                type: "vibes.diy.res-error",
-                error: { message: reason },
-              } satisfies ResError);
-              return Result.Ok(EventoResult.Continue);
-            }
-          }
-
-          accessResult = invokeResult;
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { message: invokeResult.forbidden },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
         }
+
+        try {
+          enforceAllowAnonymous(invokeResult, userContext);
+        } catch (err: unknown) {
+          const reason = err instanceof ForbiddenError ? err.forbidden : String(err);
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { message: reason },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+
+        accessResult = invokeResult;
       }
 
       const now = new Date().toISOString();

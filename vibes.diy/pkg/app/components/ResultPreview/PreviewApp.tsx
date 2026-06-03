@@ -9,6 +9,7 @@ import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { getCode } from "./get-code.js";
 import type { EvtVibeViewerChanged } from "@vibes.diy/vibe-types";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../../lib/iframe-policy.js";
+import { adminModeStorageKey } from "../../lib/admin-mode.js";
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
@@ -196,8 +197,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   useEffect(() => {
     if (!srvVibeSandbox || !ownerHandle || !appSlug) return;
     return srvVibeSandbox.onRuntimeReady(() => {
-      const adminKey = `adminMode:${ownerHandle}/${appSlug}`;
-      const storedAdmin = localStorage.getItem(adminKey) === "true";
+      const storedAdmin = localStorage.getItem(adminModeStorageKey(ownerHandle, appSlug)) === "true";
       const msg: EvtVibeViewerChanged = {
         type: "vibe.evt.viewerChanged",
         viewer: null,
