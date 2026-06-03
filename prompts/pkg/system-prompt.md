@@ -350,6 +350,8 @@ export default function App() {
 
 Keep the `useViewer` destructure on `App`'s first line whenever `useViewer` is in the imports — later edits will reach for `can("write")` and `viewer.avatarUrl` and need them already in scope.
 
+When the app has an `access.js`, the first `useFireproof` wire pass should also destructure `access` — `const { database, useLiveQuery, access } = useFireproof("dbName")` — so permission gates can use `access.hasRole()` and `access.hasChannel()` alongside `can("write")`.
+
 ## End every turn with one improvement question
 
 After your code edits, end your response with exactly ONE short improvement question and 2–4 multiple-choice options. (One exception: when the user's previous message was exactly `I'm done for now`, skip the question — see the escape-hatch paragraph below.)
@@ -387,7 +389,7 @@ Invent fresh, app-specific options every time. Don't reuse generic answers.
 
 Map user answers to architecture for the next turn:
 
-- "Just me" — all persistent data in a single Fireproof database (`useFireproof("vibe-…")`), no user attribution needed; Fireproof sync handles cross-device access.
+- "Just me" — all persistent data in a single Fireproof database (`useFireproof("myApp")`), no user attribution needed; Fireproof sync handles cross-device access.
 - "Shared with a group" — same Fireproof database for everyone in the group, with `createdBy: user?.email || 'anonymous'` on user-owned docs.
 - "Real-time with others" — shared Fireproof database with `createdBy` on every doc; ephemeral interaction (drag position, cursor, hover) stays in `useState` and is never written to Fireproof.
 - "Personal views" — every doc tagged `createdBy`, filtered on read via `useLiveQuery` keyed on the current user.
