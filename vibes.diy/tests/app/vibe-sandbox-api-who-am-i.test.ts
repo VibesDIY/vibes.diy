@@ -46,7 +46,13 @@ describe("bootstrapViewer", () => {
         data: {
           type: "vibe.res.whoAmI",
           tid: sentTid,
-          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+          viewer: {
+            userHandle: "alice",
+            userSlug: "alice",
+            userId: "user_123",
+            displayName: "Alice",
+            avatarUrl: "https://api.test/u/alice/avatar",
+          },
           access: "override",
           dbAcls: { comments: { write: ["members"], delete: ["members"] } },
         },
@@ -58,7 +64,13 @@ describe("bootstrapViewer", () => {
     expect(capturedEvents).toHaveLength(1);
     const evt = capturedEvents[0];
     expect(evt.data.type).toBe("vibe.evt.viewerChanged");
-    expect(evt.data.viewer).toEqual({ userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" });
+    expect(evt.data.viewer).toEqual({
+      userHandle: "alice",
+      userSlug: "alice",
+      userId: "user_123",
+      displayName: "Alice",
+      avatarUrl: "https://api.test/u/alice/avatar",
+    });
     expect(evt.data.access).toBe("override");
     expect(evt.data.dbAcls).toEqual({ comments: { write: ["members"], delete: ["members"] } });
   });
@@ -131,7 +143,13 @@ describe("VibeSandboxApi.whoAmI", () => {
         data: {
           type: "vibe.res.whoAmI",
           tid: sentTid,
-          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+          viewer: {
+            userHandle: "alice",
+            userSlug: "alice",
+            userId: "user_123",
+            displayName: "Alice",
+            avatarUrl: "https://api.test/u/alice/avatar",
+          },
           access: "override",
         },
       } as MessageEvent)
@@ -139,5 +157,7 @@ describe("VibeSandboxApi.whoAmI", () => {
     const res = await pending;
     expect(res.isOk()).toBe(true);
     expect(res.Ok().viewer?.userHandle).toBe("alice");
+    expect(res.Ok().viewer?.userSlug).toBe("alice");
+    expect(res.Ok().viewer?.userId).toBe("user_123");
   });
 });

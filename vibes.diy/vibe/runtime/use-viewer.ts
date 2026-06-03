@@ -5,10 +5,11 @@ import type { ViewerEnv } from "./vibe.js";
 import { ViewerTagImpl, type ViewerTagProps } from "./use-viewer-tag.js";
 
 type ViewerPayload = NonNullable<ViewerEnv["viewer"]>;
+type UseViewerPayload = ViewerPayload & { userSlug: string; userId?: string };
 type DocAccessLevel = ViewerEnv["access"];
 
 export interface UseViewerResult {
-  readonly viewer: ViewerPayload | null;
+  readonly viewer: UseViewerPayload | null;
   readonly access: DocAccessLevel;
   readonly isOwner: boolean;
   readonly dbAcls: Record<string, DbAcl>;
@@ -26,7 +27,15 @@ export function useViewer(): UseViewerResult {
   const { mountParams } = useVibeContext();
   const env = mountParams.viewerEnv;
   const isViewerPending = env === undefined;
-  const viewer = env?.viewer ?? null;
+  const rawViewer = env?.viewer ?? null;
+  const viewer = React.useMemo<UseViewerPayload | null>(() => {
+    if (!rawViewer) return null;
+    return {
+      ...rawViewer,
+      // Legacy compatibility for vibes that still read viewer.userSlug.
+      userSlug: rawViewer.userSlug ?? rawViewer.userHandle,
+    };
+  }, [rawViewer]);
   const access: DocAccessLevel = env?.access ?? "none";
   const isOwner = env?.isOwner ?? false;
   const dbAcls: Record<string, DbAcl> = env?.dbAcls ?? {};

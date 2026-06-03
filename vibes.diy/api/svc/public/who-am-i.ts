@@ -205,7 +205,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, viewerSlug);
 
   return Result.Ok({
-    viewer: { userHandle: viewerSlug, displayName, avatarUrl },
+    viewer: { userHandle: viewerSlug, userSlug: viewerSlug, userId: viewerUserId, displayName, avatarUrl },
     access,
     isOwner,
     dbAcls,

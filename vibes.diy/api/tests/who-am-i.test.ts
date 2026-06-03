@@ -136,6 +136,8 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
     expect(r.viewer?.userHandle).toBe(ownerHandle);
+    expect(r.viewer?.userSlug).toBe(ownerHandle);
+    expect(r.viewer?.userId).toBe(aliceUserId);
     expect(r.access).toBe("override");
     expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${ownerHandle}/avatar`);
     expect(r.viewer?.avatarUrl.includes("//u/")).toBe(false);
@@ -154,7 +156,7 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     expect(r.viewer?.avatarUrl.includes("//u/")).toBe(false);
   });
 
-  it("returns viewer ownerHandle + 'editor' access for an invited editor", async () => {
+  it("returns viewer userHandle + legacy aliases + 'editor' access for an invited editor", async () => {
     const res = await resolveWhoAmI(vibesCtx, {
       auth: makeAuth(bobUserId, "bob-test"),
       appSlug,
@@ -164,6 +166,8 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
     expect(typeof r.viewer?.userHandle).toBe("string");
+    expect(r.viewer?.userSlug).toBe(r.viewer?.userHandle);
+    expect(r.viewer?.userId).toBe(bobUserId);
     expect(r.access).toBe("editor");
     expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${r.viewer?.userHandle}/avatar`);
     expect(r.viewer?.avatarUrl.includes("//u/")).toBe(false);

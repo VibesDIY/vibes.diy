@@ -37,8 +37,20 @@ describe("useViewer", () => {
   it("exposes viewer + access + dbAcls", () => {
     const r = renderWith({ ...baseEnv, dbAcls: { comments: { write: ["members"] } } });
     expect(r.viewer?.userHandle).toBe("alice");
+    expect(r.viewer?.userSlug).toBe("alice");
     expect(r.access).toBe("override");
     expect(r.dbAcls.comments.write).toEqual(["members"]);
+  });
+
+  it("exposes viewer.userId when present in viewer payload", () => {
+    const r = renderWith({
+      ...baseEnv,
+      viewer: {
+        ...baseEnv.viewer,
+        userId: "user_123",
+      },
+    });
+    expect(r.viewer?.userId).toBe("user_123");
   });
 
   it("returns sensible defaults when no viewerEnv was provided", () => {

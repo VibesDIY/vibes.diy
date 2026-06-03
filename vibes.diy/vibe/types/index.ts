@@ -454,11 +454,15 @@ export function isEvtVibePutAssetProgress(x: unknown): x is EvtVibePutAssetProgr
 
 // ── Viewer identity & capabilities ───────────────────────────────────
 // Sandbox-facing surface for who is viewing this vibe and what they can
-// do. Sandbox sees only userHandle — never Clerk userId. Capabilities are
-// UX hints; every write still re-authorizes server-side at put-doc.
+// do. `userHandle` is the canonical identity field. `userSlug` and `userId`
+// are compatibility aliases for existing vibes and may be missing in older
+// payloads. Capabilities are UX hints; every write still re-authorizes
+// server-side at put-doc.
 
 export const viewerPayload = type({
   userHandle: "string",
+  "userSlug?": "string",
+  "userId?": "string",
   "displayName?": "string",
   avatarUrl: "string", // stable indirection URL — opaque to apps, set by server at render time
 });
