@@ -489,10 +489,11 @@
 <p class="subtitle">External HTTP → process → respond — webhooks, OAuth, REST APIs</p>
 
 <p class="prose">
-  The <code>fetch</code> handler receives inbound HTTP requests at a per-vibe URL:
-  <code>https://vibes.diy/vibe/{ownerHandle}/{appSlug}/api/...</code>. The path after <code>/api/</code> is passed through to the
-  handler as <code>request.url</code>. The handler returns a standard <code>Response</code> object. Platform auth populates
-  <code>ctx.userInfo</code> for authenticated requests; webhook endpoints implement their own signature verification.
+  The <code>fetch</code> handler receives inbound HTTP requests at the vibe's published URL with a <code>_api</code> reserved path.
+  The platform recognizes <code>_api</code> in the vibe's URL and routes to the <code>BackendDO</code> instead of serving static
+  files. The handler gets the standard <code>Request</code> object as-is and returns a standard <code>Response</code>. URL parsing,
+  path routing, signature verification, endpoint structure — all application concerns handled inside the handler.
+  <code>ctx.userInfo</code> is <code>null</code> for webhook requests (no session); the handler writes as the vibe owner by default.
 </p>
 
 <!-- prettier-ignore -->
@@ -534,7 +535,7 @@
     </div>
     <div class="arrow green">→</div>
     <div class="step">
-      <span class="icon">⚡</span><span class="label">callback hits</span><span class="value">/api/oauth/callback</span>
+      <span class="icon">⚡</span><span class="label">callback hits</span><span class="value">vibe/_api/...</span>
     </div>
     <div class="arrow green">→</div>
     <div class="step">
@@ -547,7 +548,7 @@
   <div class="flow-title">Webhook receipt flow</div>
   <div class="flow-steps">
     <div class="step">
-      <span class="icon">📨</span><span class="label">Stripe sends</span><span class="value">POST /api/webhook/stripe</span>
+      <span class="icon">📨</span><span class="label">Stripe sends</span><span class="value">POST vibe/_api/...</span>
     </div>
     <div class="arrow green">→</div>
     <div class="step"><span class="icon">🔐</span><span class="label">verify sig</span><span class="value">HMAC check</span></div>
@@ -989,12 +990,12 @@
 <div class="fn-rules">
   <div class="rule amber">
     <div class="rule-header">fetch trigger</div>
-    <span class="route">route:</span> /vibe/{owner}/{app}/_api/*<br />
-    Worker matches URL pattern<br />
-    → routes to BackendDO.fetch()<br />
-    → handler sees relative path<br /><br />
-    <span class="grant">write identity:</span> session user<br />
-    <em style="color: #b45309; font-size: 11px">ctx.userInfo from session cookie; db.put writes as that user</em>
+    <span class="route">route:</span> vibe URL + _api<br />
+    platform recognizes _api path<br />
+    → forwards Request to BackendDO<br />
+    → handler parses URL itself<br /><br />
+    <span class="grant">write identity:</span> vibe owner<br />
+    <em style="color: #b45309; font-size: 11px">ctx.userInfo null (webhooks have no session); app does its own auth</em>
   </div>
   <div class="rule green">
     <div class="rule-header">scheduled trigger</div>
