@@ -35,6 +35,7 @@ const opts = tseslint.config(
       "smoke/react/",
       "src/missingTypes/lib.deno.d.ts",
       "**/notes/**",
+      "docs/superpowers/specs/eval-access-fn-workflow.js",
       "vibesbox/**",
       "vibes.diy/tempo/**",
       "vibes.diy/failback-homepage/**",
