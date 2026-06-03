@@ -251,6 +251,24 @@ export function isEvtDmReceived(obj: unknown): obj is EvtDmReceived {
   return !(evtDmReceived(obj) instanceof type.errors);
 }
 
+// ── backendOnChange event (queue → BackendDO dispatch) ──────────────
+
+export const evtBackendOnChange = type({
+  type: "'vibes.diy.evt-backend-onchange'",
+  ownerHandle: "string",
+  appSlug: "string",
+  dbName: "string",
+  docId: "string",
+  doc: "unknown",
+  oldDoc: "unknown",
+  writerHandle: "string | null",
+  created: "string",
+});
+export type EvtBackendOnChange = typeof evtBackendOnChange.infer;
+export function isEvtBackendOnChange(p: unknown): p is EvtBackendOnChange {
+  return (p as Record<string, unknown>)?.type === "vibes.diy.evt-backend-onchange";
+}
+
 // ── DM thread listing ────────────────────────────────────────────────
 
 export const reqListDmThreads = type({
