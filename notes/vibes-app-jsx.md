@@ -115,10 +115,10 @@ import { useViewer } from "use-vibes";
 const { viewer, can } = useViewer();
 ```
 
-- `viewer` — `{ userSlug, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — use it directly in `<img src>`, don't construct it yourself.
+- `viewer` — `{ userHandle, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — use it directly in `<img src>`, don't construct it yourself.
 - `can(action, dbName?)` — `"read" | "write" | "delete"`. With a `dbName`, checks that db; without, allowed-everywhere.
 
-Render names with `viewer.displayName ?? viewer.userSlug`. Never look up user IDs — only userSlugs cross into vibe code.
+Render names with `viewer.displayName ?? viewer.userHandle`. Never look up user IDs — only userHandles cross into vibe code.
 
 For other users' avatars, store `viewer.avatarUrl` as `authorAvatarUrl` on the doc at write time and render from the doc.
 
@@ -164,8 +164,8 @@ function ChannelView({ name }) {
     await database.put({         // use database.put — submit() ignores extra fields
       text,
       timestamp: Date.now(),
-      authorUserSlug: viewer.userSlug,
-      authorDisplayName: viewer.displayName || viewer.userSlug,
+      authorHandle: viewer.userHandle,
+      authorDisplayName: viewer.displayName || viewer.userHandle,
       authorAvatarUrl: viewer.avatarUrl,
     })
   }
@@ -175,7 +175,7 @@ function ChannelView({ name }) {
       <ul>
         {messages.map(m => (
           <li key={m._id}>
-            <strong>{m.authorDisplayName || m.authorUserSlug || 'anonymous'}</strong>
+            <strong>{m.authorDisplayName || m.authorHandle || 'anonymous'}</strong>
             <span>{m.text}</span>
           </li>
         ))}

@@ -27,7 +27,7 @@ function App() {
 
 ## What you get
 
-- `viewer` — `{ userSlug, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — just use it in `<img src>`, don't construct it yourself.
+- `viewer` — `{ userHandle, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — just use it in `<img src>`, don't construct it yourself.
 - `isViewerPending` — `true` while the platform is still resolving the viewer identity (e.g. on first render before the parent shell has pushed the identity update). **Gate any auth-dependent UI on `!isViewerPending`** to avoid flashing the wrong state. Once it becomes `false`, `viewer` is either populated or definitively `null`.
 - `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Pass a `dbName` for multi-db apps; omit for single-db apps. Use it to hide forms when the viewer can't post.
 - `ViewerTag` — ready-made user pill; see the ViewerTag section below.
@@ -76,8 +76,8 @@ function CommentThread() {
       createdAt: Date.now(),
       // Stamp the viewer's identity at write time. Other users will
       // render from these fields — no need to look anything up later.
-      authorUserSlug: viewer.userSlug,
-      authorDisplayName: viewer.displayName ?? viewer.userSlug,
+      authorHandle: viewer.userHandle,
+      authorDisplayName: viewer.displayName ?? viewer.userHandle,
       authorAvatarUrl: viewer.avatarUrl,
     });
     setBody("");
@@ -88,7 +88,7 @@ function CommentThread() {
       <ul>
         {comments.map((c) => (
           <li key={c._id}>
-            <img src={c.authorAvatarUrl} alt={c.authorUserSlug} className="avatar" />
+            <img src={c.authorAvatarUrl} alt={c.authorHandle} className="avatar" />
             <strong>{c.authorDisplayName}</strong>
             <p>{c.body}</p>
           </li>
@@ -124,11 +124,11 @@ Key points:
 
 - **Write-time stamping** — the doc carries the author info, not a foreign-key lookup. Old comments keep working even if the author later deletes their account.
 - **`avatarUrl` is stable** — if the author changes their avatar tomorrow, every historical comment shows the new image because the URL stays the same, the bytes change.
-- **One source of identity** — never store the viewer's user ID, only `userSlug` + `displayName` + `avatarUrl`. The trio is everything a renderer needs.
+- **One source of identity** — never store the viewer's user ID, only `userHandle` + `displayName` + `avatarUrl`. The trio is everything a renderer needs.
 
 ## Notes
 
-- Never use Clerk user IDs. Only `userSlug` crosses into vibe code.
+- Never use Clerk user IDs. Only `userHandle` crosses into vibe code.
 - Avatar URLs are stable indirection URLs — when a user changes their avatar, the URL stays the same and the bytes update. Treat them as opaque strings.
 - `can("write")` checks app-level membership — is the viewer through the door? For per-database permissions (roles and channels), use `access` from `useFireproof()`: `access.hasRole("moderator")`, `access.hasChannel("engineering")`. The access function (access.js) is the server-side authority; `access` in the UI reflects its decisions.
 
@@ -143,7 +143,7 @@ const { viewer, ViewerTag } = useViewer();
 <ViewerTag />
 
 // Show another user read-only (no edit affordance):
-<ViewerTag userSlug={comment.authorUserSlug} />
+<ViewerTag ownerHandle={comment.authorHandle} />
 ```
 
 **Self-detection is automatic.** When `ViewerTag` renders the current viewer it shows a dashed indigo ring and pencil overlay on the avatar. Clicking it opens a file picker; the upload and profile save happen internally.
@@ -160,4 +160,4 @@ const { viewer, ViewerTag } = useViewer();
 <ViewerTag style={{ borderRadius: 8, fontSize: 12 }} />
 ```
 
-Use `<ViewerTag />` (no props) for the current user and `<ViewerTag userSlug={...} />` for others. That's the whole API.
+Use `<ViewerTag />` (no props) for the current user and `<ViewerTag ownerHandle={...} />` for others. That's the whole API.
