@@ -22,6 +22,7 @@ export default {
         D1: env.DB,
         FS_IDS_BUCKET: env.FS_IDS_BUCKET,
         USER_NOTIFY: env.USER_NOTIFY,
+        BACKEND_DO: env.BACKEND_DO,
       },
       vibes: {
         env: {

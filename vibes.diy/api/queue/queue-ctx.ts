@@ -12,6 +12,7 @@ export interface QueueCtxParams {
     D1: D1Database;
     FS_IDS_BUCKET?: R2Bucket;
     USER_NOTIFY?: DurableObjectNamespace;
+    BACKEND_DO?: DurableObjectNamespace;
   };
   vibes: {
     env: {
