@@ -296,7 +296,7 @@ access.hasRole("moderator"); // boolean convenience
 access.hasChannel("engineering"); // boolean convenience
 ```
 
-For databases without an access function export, `access` has empty roles and channels — the app falls back to `useViewer().can("write")` for membership checks. No separate pending flag — grants arrive alongside the viewer identity, so `useViewer().isViewerPending` covers both.
+For databases without an access function export, `access` has empty roles and channels. No separate pending flag — grants arrive alongside the viewer identity, so `useViewer().isViewerPending` covers both.
 
 ```jsx
 function App() {
@@ -324,7 +324,7 @@ This example shows the full round-trip — access.js declares channels and grant
 
 - **Owner bootstrap:** `user.isOwner` gates management operations (channel setup, role grants, moderation). No bootstrap problem — the owner can always manage without needing a role granted first.
 - **Channel grant:** A `channelSetup` document uses `grant.public` so all members can read, and `grant.roles` so posters can write to specific channels.
-- **All write surfaces** are gated with `can("write")` (membership) alongside `isOwner` or `access.hasChannel()` (permissions).
+- **Write surfaces** are gated with `viewer` (signed in?), `access.hasChannel()` (channel access), or `isOwner` (management).
 - **`ViewerTag`** takes `ownerHandle` (not `userHandle`) when rendering another user.
 
 access.js
@@ -367,7 +367,7 @@ import { useFireproof } from "use-fireproof";
 import { useViewer } from "use-vibes";
 
 export default function App() {
-  const { viewer, can, isOwner, isViewerPending, ViewerTag } = useViewer();
+  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
   const { database, useLiveQuery, access } = useFireproof("announcements");
 
   const { docs: posts } = useLiveQuery("type", { key: "post" });
@@ -393,7 +393,7 @@ export default function App() {
       <ViewerTag />
 
       {/* membership + channel gate */}
-      {can("write") && access.hasChannel(channel) && (
+      {viewer && access.hasChannel(channel) && (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -424,7 +424,7 @@ export default function App() {
 }
 ```
 
-The pattern: `can("write")` is the door (membership). `access.hasChannel()` is the room (what you can do once inside). `isOwner` gates management operations — no bootstrap problem, the owner can always manage. Real apps can graduate to `access.hasRole("moderator")` when they need to delegate management to non-owners.
+The pattern: `viewer` checks sign-in, `access.hasChannel()` checks what the access function granted, `isOwner` gates management. The access function is the server-side authority — the UI just reflects its decisions. Real apps can graduate to `access.hasRole("moderator")` when they need to delegate management to non-owners.
 
 ---
 

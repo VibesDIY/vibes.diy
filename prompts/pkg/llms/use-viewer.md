@@ -2,7 +2,7 @@
 
 `useViewer()` is a **read-only window** into runtime-managed access control. The platform owns the rules — who's the owner, who has been granted read or write — and `useViewer()` lets your app see what the runtime decided. You cannot grant or revoke access from code; you can only reflect the runtime's verdict in your UI.
 
-The contract: **every write surface (form, submit button, edit input, delete button) must consult `can("write")`** and render a read-only fallback when it returns false. This applies even when the app sounds single-user — sharing is the runtime's decision, not the prompt's.
+The contract: **every write surface (form, submit button, edit input, delete button) must check `viewer`** (signed in?) and render a read-only fallback when null. For apps with access functions, gate further with `access.hasRole()` or `access.hasChannel()` from `useFireproof()`. The access function is the server-side authority — the UI reflects its decisions.
 
 ## Basic Usage
 
@@ -10,7 +10,7 @@ The contract: **every write surface (form, submit button, edit input, delete but
 import { useViewer } from "use-vibes";
 
 function App() {
-  const { viewer, isViewerPending, can, ViewerTag } = useViewer();
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
 
   // isViewerPending is true until the platform has resolved the viewer identity.
   // Gate on it to avoid flashing the anonymous state on first render.
@@ -29,14 +29,15 @@ function App() {
 
 - `viewer` — `{ userHandle, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — just use it in `<img src>`, don't construct it yourself.
 - `isViewerPending` — `true` while the platform is still resolving the viewer identity (e.g. on first render before the parent shell has pushed the identity update). **Gate any auth-dependent UI on `!isViewerPending`** to avoid flashing the wrong state. Once it becomes `false`, `viewer` is either populated or definitively `null`.
-- `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Pass a `dbName` for multi-db apps; omit for single-db apps. Use it to hide forms when the viewer can't post.
+- `isOwner` — `true` when the viewer owns this vibe. Use it for management UI (settings, role grants, moderation).
+- `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Checks app-level ACLs. In most apps `viewer` and `access.hasRole()`/`access.hasChannel()` are the right gates instead.
 - `ViewerTag` — ready-made user pill; see the ViewerTag section below.
 
 ## Gating UI
 
 ```jsx
 function CommentForm() {
-  const { viewer, isViewerPending, can, ViewerTag } = useViewer();
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
   if (isViewerPending) return null;
 
   return (
@@ -48,8 +49,8 @@ function CommentForm() {
         <ViewerTag />
       </div>
 
-      {viewer && !can("write") && <p>Contact the owner to request write access so you can post.</p>}
-      {viewer && can("write") && <form>...</form>}
+      {!viewer && <p>Sign in to post.</p>}
+      {viewer && <form>...</form>}
     </div>
   );
 }
@@ -64,7 +65,7 @@ import { useFireproof } from "use-fireproof";
 import { useViewer } from "use-vibes";
 
 function CommentThread() {
-  const { viewer, isViewerPending, can, ViewerTag } = useViewer();
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
   const { useLiveQuery, database, access } = useFireproof("comments");
   const { docs: comments } = useLiveQuery("createdAt");
   const [body, setBody] = useState("");
@@ -96,8 +97,8 @@ function CommentThread() {
             {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
             <ViewerTag />
           </div>
-          {viewer && !can("write") && <p>Contact the owner to request write access so you can post.</p>}
-          {viewer && can("write") && (
+          {!viewer && <p>Sign in to post.</p>}
+          {viewer && (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -125,7 +126,7 @@ Key points:
 
 - Never use Clerk user IDs. Only `userHandle` crosses into vibe code.
 - Avatar URLs are stable indirection URLs — when a user changes their avatar, the URL stays the same and the bytes update. Treat them as opaque strings.
-- `can("write")` checks app-level membership — is the viewer through the door? For per-database permissions (roles and channels), use `access` from `useFireproof()`: `access.hasRole("moderator")`, `access.hasChannel("engineering")`. The access function (access.js) is the server-side authority; `access` in the UI reflects its decisions.
+- For per-database permissions (roles and channels), use `access` from `useFireproof()`: `access.hasRole("moderator")`, `access.hasChannel("engineering")`. The access function (access.js) is the server-side authority; `access` in the UI reflects its decisions.
 
 ## ViewerTag
 
