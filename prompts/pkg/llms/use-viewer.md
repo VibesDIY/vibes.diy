@@ -58,7 +58,7 @@ function CommentForm() {
 
 ## Tagging content with the viewer (write/render pattern)
 
-When one user writes content others will see (comments, posts, messages), **stamp `authorHandle` on the doc at write time**. That's it — just the handle. Render with `<ViewerTag ownerHandle={doc.authorHandle} />` which resolves display name and avatar automatically. Do not stamp `displayName` or `avatarUrl` on docs — ViewerTag handles that from the handle alone.
+When one user writes content others will see (comments, posts, messages), **stamp `authorHandle` on the doc at write time**. That's it — just the handle. Render with `<ViewerTag userHandle={doc.authorHandle} />` which resolves display name and avatar automatically. Do not stamp `displayName` or `avatarUrl` on docs — ViewerTag handles that from the handle alone.
 
 ```jsx
 import { useFireproof } from "use-fireproof";
@@ -85,7 +85,7 @@ function CommentThread() {
       <ul>
         {comments.map((c) => (
           <li key={c._id}>
-            <ViewerTag ownerHandle={c.authorHandle} />
+            <ViewerTag userHandle={c.authorHandle} />
             <p>{c.body}</p>
           </li>
         ))}
@@ -118,7 +118,7 @@ function CommentThread() {
 
 Key points:
 
-- **Stamp `authorHandle` at write time** — persist the author's handle on the doc. Render with `<ViewerTag ownerHandle={authorHandle} />` which resolves display name and avatar automatically.
+- **Stamp `authorHandle` at write time** — persist the author's handle on the doc. Render with `<ViewerTag userHandle={authorHandle} />` which resolves display name and avatar automatically.
 - **`avatarUrl` is stable** — if the author changes their avatar, the URL stays the same and the bytes update. ViewerTag handles this for you.
 - **One source of identity** — persist `authorHandle` on the doc. ViewerTag does the rest.
 
@@ -139,14 +139,14 @@ const { viewer, ViewerTag } = useViewer();
 <ViewerTag />
 
 // Show another user read-only (no edit affordance):
-<ViewerTag ownerHandle={comment.authorHandle} />
+<ViewerTag userHandle={comment.authorHandle} />
 ```
 
 **Self-detection is automatic.** When `ViewerTag` renders the current viewer it shows a dashed indigo ring and pencil overlay on the avatar. Clicking it opens a file picker; the upload and profile save happen internally.
 
-**Undefined safety.** If `ownerHandle` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring. This prevents a broken data source from accidentally granting photo-edit access to an arbitrary pill.
+**Undefined safety.** If `userHandle` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring. This prevents a broken data source from accidentally granting photo-edit access to an arbitrary pill.
 
-**Anonymous safety.** `ViewerTag` is always safe to call regardless of login state — it never throws. When the viewer is anonymous and no `ownerHandle` prop is given, it renders a "Sign in" button that opens the platform login UI when clicked. Wrap it in a `{viewer && <ViewerTag />}` guard if you want to suppress it entirely for anonymous users.
+**Anonymous safety.** `ViewerTag` is always safe to call regardless of login state — it never throws. When the viewer is anonymous and no `userHandle` prop is given, it renders a "Sign in" button that opens the platform login UI when clicked. Wrap it in a `{viewer && <ViewerTag />}` guard if you want to suppress it entirely for anonymous users.
 
 **Theming.** `ViewerTag` reads `--accent`, `--accent-text`, `--card-bg`, `--border`, `--text`, and `--muted` from the app's CSS variables with sensible fallbacks. If your app defines these on `:root` (which most generated themes do), `ViewerTag` inherits the theme automatically with no extra props.
 
@@ -156,4 +156,4 @@ const { viewer, ViewerTag } = useViewer();
 <ViewerTag style={{ borderRadius: 8, fontSize: 12 }} />
 ```
 
-Use `<ViewerTag />` (no props) for the current user and `<ViewerTag ownerHandle={...} />` for others. That's the whole API.
+Use `<ViewerTag />` (no props) for the current user and `<ViewerTag userHandle={...} />` for others. That's the whole API.

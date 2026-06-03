@@ -344,7 +344,7 @@ This example shows the full round-trip — access.js declares channels and grant
 - **Owner bootstrap:** `user.isOwner` gates management operations (channel setup, role grants, moderation). No bootstrap problem — the owner can always manage without needing a role granted first.
 - **Channel grant:** A `channelSetup` document uses `grant.public` so all members can read, and `grant.roles` so posters can write to specific channels.
 - **Write surfaces** are gated with `viewer` (signed in?), `access.hasChannel()` (channel access), or `isOwner` (management).
-- **`ViewerTag`** takes `ownerHandle` (not `userHandle`) when rendering another user.
+- **`ViewerTag`** takes `userHandle` when rendering another user.
 
 access.js
 
@@ -433,7 +433,7 @@ export default function App() {
 
       {posts.map((p) => (
         <div key={p._id}>
-          <ViewerTag ownerHandle={p.authorHandle} />
+          <ViewerTag userHandle={p.authorHandle} />
           <p>{p.body}</p>
           {isOwner && <button onClick={() => database.del(p._id)}>Delete</button>}
         </div>

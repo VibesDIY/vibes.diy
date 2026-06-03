@@ -5,9 +5,9 @@ import { getRegisteredVibeApi } from "./register-dependencies.js";
 type ViewerPayload = NonNullable<ViewerEnv["viewer"]>;
 
 export type ViewerTagProps = { style?: React.CSSProperties } & (
-  | { ownerHandle?: never; user?: never }
-  | { ownerHandle: string; user?: never }
-  | { user: { ownerHandle: string; displayName?: string; avatarUrl?: string }; ownerHandle?: never }
+  | { userHandle?: never; user?: never }
+  | { userHandle: string; user?: never }
+  | { user: { userHandle: string; displayName?: string; avatarUrl?: string }; userHandle?: never }
 );
 
 type ViewerTagImplProps = ViewerTagProps & { _viewer: ViewerPayload | null };
@@ -37,8 +37,7 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
   const [avatarError, setAvatarError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const slugFromProp =
-    "user" in props && props.user ? props.user.ownerHandle : "ownerHandle" in props ? props.ownerHandle : undefined;
+  const slugFromProp = "user" in props && props.user ? props.user.userHandle : "userHandle" in props ? props.userHandle : undefined;
   const resolvedSlug = slugFromProp ?? _viewer?.userHandle ?? "";
   const resolvedAvatarUrl =
     "user" in props && props.user?.avatarUrl
@@ -51,12 +50,12 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
     setAvatarError(false);
   }, [resolvedAvatarUrl]);
 
-  if (("ownerHandle" in props || "user" in props) && !slugFromProp) {
+  if (("userHandle" in props || "user" in props) && !slugFromProp) {
     return <span style={{ color: "var(--muted, #888)", fontStyle: "italic", fontSize: 13 }}>no user handle provided</span>;
   }
 
   // Anonymous viewer with no explicit slug prop: show a login button.
-  const isAnonymousSelf = _viewer === null && !("ownerHandle" in props) && !("user" in props);
+  const isAnonymousSelf = _viewer === null && !("userHandle" in props) && !("user" in props);
   if (isAnonymousSelf) {
     return (
       <button
@@ -82,7 +81,7 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
   }
 
   // _viewer !== null guard prevents undefined === undefined when viewer is anonymous.
-  const isSelf = _viewer !== null && ((!("ownerHandle" in props) && !("user" in props)) || resolvedSlug === _viewer?.userHandle);
+  const isSelf = _viewer !== null && ((!("userHandle" in props) && !("user" in props)) || resolvedSlug === _viewer?.userHandle);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

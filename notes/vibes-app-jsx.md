@@ -118,7 +118,7 @@ const { viewer, can } = useViewer();
 - `viewer` — `{ userHandle, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — use it directly in `<img src>`, don't construct it yourself.
 - `can(action, dbName?)` — `"read" | "write" | "delete"`. With a `dbName`, checks that db; without, allowed-everywhere.
 
-Stamp `authorHandle: viewer.userHandle` on docs at write time. Render with `<ViewerTag ownerHandle={doc.authorHandle} />` — it resolves display name and avatar automatically. Only persist the handle, not displayName or avatarUrl.
+Stamp `authorHandle: viewer.userHandle` on docs at write time. Render with `<ViewerTag userHandle={doc.authorHandle} />` — it resolves display name and avatar automatically. Only persist the handle, not displayName or avatarUrl.
 
 ## Channels (multi-group / Slack-style apps)
 
@@ -171,7 +171,7 @@ function ChannelView({ name }) {
       <ul>
         {messages.map(m => (
           <li key={m._id}>
-            <ViewerTag ownerHandle={m.authorHandle} />
+            <ViewerTag userHandle={m.authorHandle} />
             <span>{m.text}</span>
           </li>
         ))}
