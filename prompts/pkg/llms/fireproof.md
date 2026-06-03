@@ -72,6 +72,17 @@ const App = () => {
 };
 ```
 
+The access function lives in a separate file. Even simple apps include one — it's the server-side authority for who can write:
+
+access.js
+
+```js
+export default function (doc, oldDoc, user) {
+  if (!user) throw { forbidden: "sign in to save" };
+  return {};
+}
+```
+
 ### Editing Documents
 
 Address documents by a known `_id` if you want to force conflict resolution or work with a real world resource, like a schedule slot or a user profile. In a complex app this might come from a route parameter or correspond to an outside identifier.
@@ -800,6 +811,20 @@ export default function App() {
 
 IMPORTANT: Don't use `useState()` on form data, instead use `merge()` and `submit()` from `useDocument`. Only use `useState` for ephemeral UI state (active tabs, open/closed panels, cursor positions). Keep your data model in Fireproof.
 
+The todo app's access function validates authorship:
+
+access.js
+
+```js
+export function todoList(doc, oldDoc, user) {
+  if (!user) throw { forbidden: "sign in" };
+  if (doc.type === "todo" && doc.createdBy !== user.userHandle) {
+    throw { forbidden: "only the author can edit" };
+  }
+  return {};
+}
+```
+
 ## Example Image Uploader
 
 This pattern uses `_files` end-to-end: save a `File` directly, render thumbnails with `<img src={meta.url}>`.
@@ -871,5 +896,14 @@ export default function App() {
       </div>
     </div>
   );
+}
+```
+
+access.js
+
+```js
+export function imageUploads(doc, oldDoc, user) {
+  if (!user) throw { forbidden: "sign in to upload" };
+  return {};
 }
 ```
