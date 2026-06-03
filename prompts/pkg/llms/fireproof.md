@@ -7,7 +7,7 @@ Fireproof is a lightweight embedded document database with encrypted live sync, 
 - **Apps run anywhere:** Bundle UI, data, and logic together.
 - **Real-Time & Offline-First:** Automatic persistence and live queries, runs in the browser - no loading or error states.
 - **Unified API:** TypeScript works with Deno, Bun, Node.js, and the browser.
-- **React Hooks:** Leverage `useLiveQuery` and `useDocument` for live collaboration. Note: these are NOT top-level exports — they are returned by the `useFireproof()` hook. Always destructure from `const { useLiveQuery, useDocument, database } = useFireproof("db-name")`.
+- **React Hooks:** Leverage `useLiveQuery` and `useDocument` for live collaboration. Note: these are NOT top-level exports — they are returned by the `useFireproof()` hook. Always destructure from `const { useLiveQuery, useDocument, database } = useFireproof("dbName")`.
 
 **File structure:** A vibe's source is one or more files. `/App.jsx` is the entry point (React component). `/access.js` is optional — include it when the app needs per-document write validation or channel-based read isolation. Both files are pushed together and the server discovers `/access.js` automatically.
 
@@ -30,7 +30,7 @@ Fireproof databases store data across sessions and can sync in real-time. Each d
 ```js
 import { useFireproof } from "use-fireproof";
 
-const { database, useLiveQuery, useDocument } = useFireproof("my-ledger");
+const { database, useLiveQuery, useDocument } = useFireproof("myLedger");
 ```
 
 #### Put and Get Documents
@@ -47,7 +47,7 @@ This example shows Fireproof's `_id` allows easy sorting with `useLiveQuery`.
 
 ```js
 const App = () => {
-  const { useDocument, useLiveQuery } = useFireproof("my-ledger");
+  const { useDocument, useLiveQuery } = useFireproof("myLedger");
 
   const { doc, merge, submit } = useDocument({ text: "" });
 
@@ -77,7 +77,7 @@ const App = () => {
 Address documents by a known `_id` if you want to force conflict resolution or work with a real world resource, like a schedule slot or a user profile. In a complex app this might come from a route parameter or correspond to an outside identifier.
 
 ```js
-const { useDocument } = useFireproof("my-ledger");
+const { useDocument } = useFireproof("myLedger");
 
 const { doc, merge, submit, save, reset } = useDocument({ _id: "user-profile:abc@example.com" });
 ```
@@ -143,7 +143,7 @@ Documents can be updated by multiple clients, and synced later. To create an eve
 
 ```js
 const App = () => {
-  const { useLiveQuery, database } = useFireproof("my-ledger");
+  const { useLiveQuery, database } = useFireproof("myLedger");
 
   const { docs } = useLiveQuery("counter", { key: "my-event-name" });
   const counterValue = docs.length;
@@ -198,7 +198,7 @@ Sortable lists are a common pattern. Here's how to implement them using Fireproo
 
 ```js
 function App() {
-  const { database, useLiveQuery } = useFireproof("my-ledger");
+  const { database, useLiveQuery } = useFireproof("myLedger");
 
   // Initialize list with evenly spaced positions
   async function initializeList() {
@@ -255,7 +255,7 @@ const { useLiveQuery, database } = useFireproof("drafts", {
 });
 
 // No acl — falls back to app-level role gates (existing behavior, always safe)
-const { useLiveQuery, database } = useFireproof("public-notes");
+const { useLiveQuery, database } = useFireproof("publicNotes");
 ```
 
 **Subject groups** — who each name covers:
@@ -490,7 +490,7 @@ export function notes(doc, oldDoc, user, ctx) {
 
 Databases without a matching named export fall through to `export default` if one exists. If there is no default export either, the database uses the default app-level permissions (no access function).
 
-**Hyphenated database names** (like `useFireproof("crew-chat")`) can't be direct JavaScript identifiers. Use `export { localName as "db-name" }` to map a local function to the hyphenated name:
+**Hyphenated database names** are rare — prefer camelCase (`useFireproof("crewChat")`). If you inherit a hyphenated name, use `export { localName as "db-name" }` to map a local function:
 
 access.js
 ```js
@@ -584,7 +584,7 @@ You can use the core API in HTML or on the backend. Instead of hooks, import the
 ```js
 import { fireproof } from "use-fireproof";
 
-const database = fireproof("my-ledger");
+const database = fireproof("myLedger");
 ```
 
 The document API is async, but doesn't require loading states or error handling.
@@ -601,7 +601,7 @@ To subscribe to real-time updates, use the `subscribe` method. This is useful fo
 ```js
 import { fireproof } from "use-firproof";
 
-const database = fireproof("todo-list-db");
+const database = fireproof("todoList");
 
 database.subscribe((changes) => {
   console.log("Recent changes:", changes);
@@ -620,7 +620,7 @@ Fireproof documents carry attachments under `_files`. Save a `File` (or `Blob`) 
 #### Attaching files on save
 
 ```jsx
-const { useDocument } = useFireproof("photo-album");
+const { useDocument } = useFireproof("photoAlbum");
 const { doc, merge, submit } = useDocument({ _files: {}, caption: "" });
 
 // In a file input change handler:
@@ -719,7 +719,7 @@ import { useFireproof } from "use-fireproof";
 
 export default function App() {
   // 1. Hooks and document shapes
-  const { useLiveQuery, useDocument, database } = useFireproof("todo-list-db");
+  const { useLiveQuery, useDocument, database } = useFireproof("todoList");
 
   const {
     doc: newTodo,
@@ -810,7 +810,7 @@ import { useFireproof } from "use-fireproof";
 
 export default function App() {
   // 1. Hooks and document shapes
-  const { useDocument, useLiveQuery } = useFireproof("image-uploads");
+  const { useDocument, useLiveQuery } = useFireproof("imageUploads");
 
   const { doc, merge, submit } = useDocument({
     _files: {},
