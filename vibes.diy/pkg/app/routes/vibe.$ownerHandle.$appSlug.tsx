@@ -387,6 +387,17 @@ export default function VibeIframeWrapper() {
           ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
           ...(r.grants ? { grants: r.grants } : {}),
         });
+        setMyGrant(
+          r.isOwner
+            ? "owner"
+            : r.access === "editor" || r.access === "override"
+              ? "editor"
+              : r.access === "viewer"
+                ? "viewer"
+                : r.access === "submitter"
+                  ? "submitter"
+                  : "public"
+        );
       } finally {
         inRefreshViewerFromWhoAmIRef.current = false;
       }
