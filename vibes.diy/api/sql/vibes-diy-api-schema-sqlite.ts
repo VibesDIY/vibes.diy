@@ -1,5 +1,5 @@
 import { PromptAndBlockMsgs } from "@vibes.diy/api-types";
-import { int, sqliteTable, text, blob, primaryKey, uniqueIndex, index, numeric } from "drizzle-orm/sqlite-core";
+import { int, integer, sqliteTable, text, blob, primaryKey, uniqueIndex, index, numeric } from "drizzle-orm/sqlite-core";
 
 // could be put on R2
 export const sqlAssets = sqliteTable("Assets", {
@@ -334,4 +334,23 @@ export const sqlAccessFnOutputs = sqliteTable(
     primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId] }),
     index("AccessFnOutputs_grants_idx").on(table.ownerHandle, table.appSlug, table.dbName, table.fnCid),
   ]
+);
+
+// Per-vibe backend function binding: tracks which vibes have a /backend.js file
+// and what exports it provides (onChange, fetch, scheduled).
+// PK is (ownerHandle, appSlug) — one binding per app.
+export const sqlBackendFunctionBindings = sqliteTable(
+  "BackendFunctionBindings",
+  {
+    ownerHandle: text().notNull(),
+    appSlug: text().notNull(),
+    backendCid: text().notNull(),
+    backendAssetUri: text(),
+    hasOnChange: integer({ mode: "boolean" }).notNull().default(false),
+    hasFetch: integer({ mode: "boolean" }).notNull().default(false),
+    hasScheduled: integer({ mode: "boolean" }).notNull().default(false),
+    scheduledInterval: text(),
+    updated: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.ownerHandle, table.appSlug] })]
 );
