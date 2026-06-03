@@ -22,6 +22,7 @@ import {
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
+import type { EvtBackendOnChange } from "../../types/app-documents.js";
 import { eq, and, sql, inArray, desc } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
@@ -186,6 +187,17 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       // Access function gate: look up CID for this (ownerHandle, appSlug, dbName) or app-wide ('*')
       let accessResult: AccessDescriptor | undefined;
       let grantsReduceBefore: GrantReduce | undefined;
+
+      // Backend binding lookup: check if this app has a backend.js with onChange
+      const tBfb = vctx.sql.tables.backendFunctionBindings;
+      const [bfbRow] = await vctx.sql.db
+        .select({
+          hasOnChange: tBfb.hasOnChange,
+        })
+        .from(tBfb)
+        .where(and(eq(tBfb.ownerHandle, req.ownerHandle), eq(tBfb.appSlug, req.appSlug)))
+        .limit(1);
+
       const tAfb = vctx.sql.tables.accessFunctionBindings;
       const afbRow = await vctx.sql.db
         .select({ accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri, dbName: tAfb.dbName })
@@ -206,6 +218,11 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
 
       const docId = req.docId ?? vctx.sthis.timeOrderedNextId().str;
 
+      // oldDoc is populated during the access fn block (if present) or loaded separately for onChange
+      let oldDoc: unknown | null = null;
+      // writerHandle is resolved from userId → handleBinding for onChange events
+      let writerHandle: string | null = null;
+
       if (afbRow?.accessFnCid && vctx.invokeAccessFn) {
         const fnCid = afbRow.accessFnCid;
         // Resolve writer's handle from userId — req.ownerHandle is the DB owner, not the writer.
@@ -221,9 +238,9 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
               .then((r) => r[0])
           : undefined;
         const userContext = writerRow?.handle ? { userHandle: writerRow.handle, isOwner } : null;
+        writerHandle = writerRow?.handle ?? null;
 
         // Load existing doc so access fn can enforce update-ownership checks
-        let oldDoc: unknown | null = null;
         if (req.docId) {
           const tDocs = vctx.sql.tables.appDocuments;
           const existing = await vctx.sql.db
@@ -326,6 +343,38 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         }
 
         accessResult = invokeResult;
+      }
+
+      // If we have onChange and didn't resolve writerHandle/oldDoc via the access fn block, do it now
+      if (bfbRow?.hasOnChange) {
+        if (!writerHandle && userId) {
+          const t_usb = vctx.sql.tables.handleBinding;
+          const writerRow = await vctx.sql.db
+            .select({ handle: t_usb.handle })
+            .from(t_usb)
+            .where(eq(t_usb.userId, userId))
+            .limit(1)
+            .then((r) => r[0]);
+          writerHandle = writerRow?.handle ?? null;
+        }
+        if (oldDoc === null && req.docId) {
+          const tDocs = vctx.sql.tables.appDocuments;
+          const existing = await vctx.sql.db
+            .select({ data: tDocs.data })
+            .from(tDocs)
+            .where(
+              and(
+                eq(tDocs.ownerHandle, req.ownerHandle),
+                eq(tDocs.appSlug, req.appSlug),
+                eq(tDocs.dbName, req.dbName),
+                eq(tDocs.docId, req.docId)
+              )
+            )
+            .orderBy(desc(tDocs.seq))
+            .limit(1)
+            .then((r) => r[0]);
+          oldDoc = existing?.data ?? null;
+        }
       }
 
       const now = new Date().toISOString();
@@ -446,6 +495,27 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             .notifyDocChanged({ ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId }, clientWsSend(ctx).connId)
             .catch((e: unknown) => console.error("DocNotify error:", e));
         }
+      }
+
+      // Enqueue backend onChange event if the app has a backend.js with onChange
+      if (bfbRow?.hasOnChange && vctx.postQueue) {
+        await vctx.postQueue({
+          payload: {
+            type: "vibes.diy.evt-backend-onchange" as const,
+            ownerHandle: req.ownerHandle,
+            appSlug: req.appSlug,
+            dbName,
+            docId,
+            doc: req.doc,
+            oldDoc: oldDoc ?? null,
+            writerHandle,
+            created: now,
+          },
+          tid: "queue-event",
+          src: "putDoc",
+          dst: "vibes-service",
+          ttl: 1,
+        } satisfies MsgBase<EvtBackendOnChange>);
       }
 
       // Store access fn output for future reduce queries
