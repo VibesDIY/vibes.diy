@@ -342,7 +342,7 @@ const visibleChannels = channels.filter(ch => access.hasChannel(ch._id));
 This example shows the full round-trip — access.js declares channels and grants; App.jsx reads them back via `access`. Key details:
 
 - **Owner bootstrap:** `user.isOwner` gates management operations (channel setup, role grants, moderation). No bootstrap problem — the owner can always manage without needing a role granted first.
-- **Channel grant:** A `channelSetup` document uses `grant.public` so all members can read, and `grant.roles` so posters can write to specific channels.
+- **Channel grant:** A `channelSetup` document grants the creator (`grant.users`), adds `grant.public` so all members can read, and `grant.roles` so posters can write.
 - **Write surfaces** are gated with `viewer` (signed in?), `access.hasChannel()` (channel access), or `isOwner` (management).
 - **`ViewerTag`** takes `userHandle` when rendering another user.
 
@@ -357,6 +357,7 @@ export function announcements(doc, oldDoc, user, ctx) {
     return {
       channels: [doc.channel],
       grant: {
+        users: { [user.userHandle]: [doc.channel] },
         public: [doc.channel],
         roles: { poster: [doc.channel] },
       },
@@ -459,7 +460,10 @@ export function chat(doc, oldDoc, user, ctx) {
     if (!user.isOwner) throw { forbidden: "owner only" };
     return {
       channels: [doc.name],
-      grant: { public: [doc.name] },
+      grant: {
+        users: { [user.userHandle]: [doc.name] },
+        public: [doc.name],
+      },
     };
   }
 
