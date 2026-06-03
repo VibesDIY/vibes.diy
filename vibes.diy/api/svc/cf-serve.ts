@@ -16,6 +16,7 @@ import { CfCacheIf, type VibesApiSQLCtx } from "./types.js";
 import {
   type AccessDescriptor,
   type UserContext,
+  type EvtViewerGrantsChanged,
   CFEnv,
   type EvtRequestGrant,
   type EvtUserNotification,
@@ -153,6 +154,25 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
         evt,
       });
     },
+    notifyViewerGrantsChanged: async (evt: EvtViewerGrantsChanged, senderConnId: string) => {
+      const key = `${evt.ownerHandle}/${evt.appSlug}`;
+      if (shouldLogDocNotify) {
+        console.info(
+          "[docNotify] notifyViewerGrantsChanged key:",
+          key,
+          "shard:",
+          dn.shardId.slice(0, 8),
+          "conn:",
+          senderConnId.slice(0, 8)
+        );
+      }
+      await fetchDocNotify(key, {
+        action: "notify",
+        senderShardId: dn.shardId,
+        senderConnId,
+        evt,
+      });
+    },
     registerRequestGrantSubscription: async (subscriptionKey: string) => {
       if (shouldLogDocNotify) {
         console.info("[docNotify] register request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
@@ -162,6 +182,18 @@ function docNotifyCallbacks(dn: DocNotifyCtx) {
     deregisterRequestGrantSubscription: async (subscriptionKey: string) => {
       if (shouldLogDocNotify) {
         console.info("[docNotify] deregister request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
+      }
+      await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
+    },
+    registerViewerGrantsSubscription: async (subscriptionKey: string) => {
+      if (shouldLogDocNotify) {
+        console.info("[docNotify] register viewer-grants key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
+      }
+      await fetchDocNotify(subscriptionKey, { action: "register", shardId: dn.shardId });
+    },
+    deregisterViewerGrantsSubscription: async (subscriptionKey: string) => {
+      if (shouldLogDocNotify) {
+        console.info("[docNotify] deregister viewer-grants key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
       }
       await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
     },

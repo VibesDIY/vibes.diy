@@ -162,6 +162,10 @@ export default function VibeIframeWrapper() {
     if (typeof window === "undefined" || !adminStorageKey) return false;
     return localStorage.getItem(adminStorageKey) === "true";
   });
+  const adminModeRef = useRef(adminMode);
+  useEffect(() => {
+    adminModeRef.current = adminMode;
+  }, [adminMode]);
   const [myUserSlug, setMyUserSlug] = useState<string | undefined>(undefined);
   // The viewer's grant on this vibe — used to decide whether the comments
   // composer is enabled when the owner has flipped "Only collaborators can
@@ -171,6 +175,7 @@ export default function VibeIframeWrapper() {
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingBump, setPendingBump] = useState(0);
   const [dmUnreadCount, setDmUnreadCount] = useState(0);
+  const inRefreshViewerFromWhoAmIRef = useRef(false);
 
   const inGetAppByFsIdRef = useRef(false);
   // Dedupe key + cached response: when only `authSignedIn` flips post-Clerk-hydration,
@@ -359,24 +364,53 @@ export default function VibeIframeWrapper() {
     // scrub the intent param before firing so subsequent renders early-return.
   }, [authSignedIn]);
 
+  const refreshViewerFromWhoAmI = useCallback(
+    async (adminOverride?: boolean) => {
+      if (!srvVibeSandbox || !ownerHandle || !appSlug) return;
+      if (inRefreshViewerFromWhoAmIRef.current) return;
+      inRefreshViewerFromWhoAmIRef.current = true;
+
+      try {
+        const rRes = await vctx.vibeDiyApi.whoAmI({
+          tid: crypto.randomUUID(),
+          appSlug,
+          ownerHandle,
+          adminMode: adminOverride ?? adminModeRef.current,
+        });
+        if (rRes.isErr()) return;
+        const r = rRes.Ok();
+        srvVibeSandbox.pushViewerChanged({
+          type: "vibe.evt.viewerChanged",
+          viewer: r.viewer,
+          access: r.access,
+          ...(r.isOwner !== undefined ? { isOwner: r.isOwner } : {}),
+          ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
+          ...(r.grants ? { grants: r.grants } : {}),
+        });
+      } finally {
+        inRefreshViewerFromWhoAmIRef.current = false;
+      }
+    },
+    [appSlug, ownerHandle, srvVibeSandbox, vctx.vibeDiyApi]
+  );
+
   const toggleAdmin = useCallback(async () => {
     const next = !adminMode;
     if (adminStorageKey) localStorage.setItem(adminStorageKey, String(next));
     setAdminMode(next);
 
-    if (!srvVibeSandbox || !ownerHandle || !appSlug) return;
-    const rRes = await vctx.vibeDiyApi.whoAmI({ tid: crypto.randomUUID(), appSlug, ownerHandle, adminMode: next });
-    if (rRes.isErr()) return;
-    const r = rRes.Ok();
-    srvVibeSandbox.pushViewerChanged({
-      type: "vibe.evt.viewerChanged",
-      viewer: r.viewer,
-      access: r.access,
-      ...(r.isOwner !== undefined ? { isOwner: r.isOwner } : {}),
-      ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
-      ...(r.grants ? { grants: r.grants } : {}),
+    await refreshViewerFromWhoAmI(next);
+  }, [adminMode, adminStorageKey, refreshViewerFromWhoAmI]);
+
+  useEffect(() => {
+    if (!authSignedIn || !ownerHandle || !appSlug) return;
+    void vctx.vibeDiyApi.subscribeViewerGrants({ appSlug, ownerHandle });
+    const unsubscribe = vctx.vibeDiyApi.onViewerGrantsChanged((evt) => {
+      if (evt.ownerHandle !== ownerHandle || evt.appSlug !== appSlug) return;
+      void refreshViewerFromWhoAmI();
     });
-  }, [adminMode, adminStorageKey, srvVibeSandbox, ownerHandle, appSlug, vctx.vibeDiyApi]);
+    return unsubscribe;
+  }, [authSignedIn, ownerHandle, appSlug, refreshViewerFromWhoAmI, vctx.vibeDiyApi]);
 
   const shareModal = useShareModal({
     ownerHandle: ownerHandle ?? "",

@@ -15,6 +15,7 @@ import {
   EvtCommentPosted,
   COMMENTS_DB_NAME,
   EvtDmReceived,
+  EvtViewerGrantsChanged,
   isDirectChannel,
   directChannelParticipants,
 } from "@vibes.diy/api-types";
@@ -30,6 +31,58 @@ import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-reso
 import { GrantReduce, extractContribution } from "./grant-reduce.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
+
+function grantsUsers(reduce: GrantReduce): Set<string> {
+  const users = new Set<string>();
+  for (const userSlug of reduce.userGrants.keys()) {
+    users.add(userSlug);
+  }
+  for (const members of reduce.effectiveMembers.values()) {
+    for (const userSlug of members) {
+      users.add(userSlug);
+    }
+  }
+  return users;
+}
+
+function rolesForUser(reduce: GrantReduce, userSlug: string): string[] {
+  const roles: string[] = [];
+  for (const [roleName, members] of reduce.effectiveMembers) {
+    if (members.has(userSlug)) {
+      roles.push(roleName);
+    }
+  }
+  return roles.sort();
+}
+
+function channelsForUser(reduce: GrantReduce, userSlug: string): string[] {
+  return Array.from(reduce.resolveEffectiveChannels(userSlug)).sort();
+}
+
+function arraysEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function hasEffectiveViewerGrantDelta(before: GrantReduce, after: GrantReduce): boolean {
+  const users = new Set<string>([...grantsUsers(before), ...grantsUsers(after)]);
+  for (const userSlug of users) {
+    const beforeChannels = channelsForUser(before, userSlug);
+    const afterChannels = channelsForUser(after, userSlug);
+    if (!arraysEqual(beforeChannels, afterChannels)) {
+      return true;
+    }
+    const beforeRoles = rolesForUser(before, userSlug);
+    const afterRoles = rolesForUser(after, userSlug);
+    if (!arraysEqual(beforeRoles, afterRoles)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 async function validateFilesUploads(
   vctx: VibesApiSQLCtx,
@@ -127,6 +180,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
 
       // Access function gate: look up CID for this (ownerHandle, appSlug, dbName) or app-wide ('*')
       let accessResult: AccessDescriptor | undefined;
+      let grantsReduceBefore: GrantReduce | undefined;
       const tAfb = vctx.sql.tables.accessFunctionBindings;
       const afbRow = await vctx.sql.db
         .select({ accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri, dbName: tAfb.dbName })
@@ -228,6 +282,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         for (const row of storedOutputs) {
           reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
         }
+        grantsReduceBefore = reduce;
 
         const grantState = {
           members: Object.fromEntries(Array.from(reduce.effectiveMembers).map(([k, v]) => [k, Array.from(v)])),
@@ -399,6 +454,20 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             ? 1
             : 0;
 
+        let effectiveViewerGrantsChanged = false;
+        if (grantsReduceBefore) {
+          const grantsReduceAfter = new GrantReduce();
+          for (const [storedDocId, contribution] of grantsReduceBefore.docContributions) {
+            grantsReduceAfter.addDoc(storedDocId, contribution);
+          }
+          if (outputHasGrants === 1) {
+            grantsReduceAfter.addDoc(docId, extractContribution(accessResult));
+          } else {
+            grantsReduceAfter.removeDoc(docId);
+          }
+          effectiveViewerGrantsChanged = hasEffectiveViewerGrantDelta(grantsReduceBefore, grantsReduceAfter);
+        }
+
         const rUpsert = await exception2Result(() =>
           vctx.sql.db
             .insert(tOutputs)
@@ -429,6 +498,17 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             } satisfies ResError);
             return Result.Ok(EventoResult.Continue);
           }
+        } else if (effectiveViewerGrantsChanged && vctx.notifyViewerGrantsChanged) {
+          vctx
+            .notifyViewerGrantsChanged(
+              {
+                type: "vibes.diy.evt-viewer-grants-changed",
+                ownerHandle: req.ownerHandle,
+                appSlug: req.appSlug,
+              } satisfies EvtViewerGrantsChanged,
+              clientWsSend(ctx).connId
+            )
+            .catch((e: unknown) => console.error("Viewer grants notify error:", e));
         }
       }
 

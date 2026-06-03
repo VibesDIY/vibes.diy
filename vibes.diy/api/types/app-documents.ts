@@ -144,6 +144,28 @@ export function isResSubscribeDocs(obj: unknown): obj is ResSubscribeDocs {
   return !(resSubscribeDocs(obj) instanceof type.errors);
 }
 
+// ── subscribeViewerGrants ──────────────────────────────────────────
+
+export const reqSubscribeViewerGrants = type({
+  type: "'vibes.diy.req-subscribe-viewer-grants'",
+  auth: dashAuthType,
+  ownerHandle: "string",
+  appSlug: "string",
+});
+export type ReqSubscribeViewerGrants = typeof reqSubscribeViewerGrants.infer;
+export function isReqSubscribeViewerGrants(obj: unknown): obj is ReqSubscribeViewerGrants {
+  return !(reqSubscribeViewerGrants(obj) instanceof type.errors);
+}
+
+export const resSubscribeViewerGrants = type({
+  type: "'vibes.diy.res-subscribe-viewer-grants'",
+  status: "'ok'",
+});
+export type ResSubscribeViewerGrants = typeof resSubscribeViewerGrants.infer;
+export function isResSubscribeViewerGrants(obj: unknown): obj is ResSubscribeViewerGrants {
+  return !(resSubscribeViewerGrants(obj) instanceof type.errors);
+}
+
 // ── listDbNames ────────────────────────────────────────────────────
 
 export const reqListDbNames = type({
@@ -182,6 +204,16 @@ export const evtDocChanged = type({
 export type EvtDocChanged = typeof evtDocChanged.infer;
 export function isEvtDocChanged(obj: unknown): obj is EvtDocChanged {
   return !(evtDocChanged(obj) instanceof type.errors);
+}
+
+export const evtViewerGrantsChanged = type({
+  type: "'vibes.diy.evt-viewer-grants-changed'",
+  ownerHandle: "string",
+  appSlug: "string",
+});
+export type EvtViewerGrantsChanged = typeof evtViewerGrantsChanged.infer;
+export function isEvtViewerGrantsChanged(obj: unknown): obj is EvtViewerGrantsChanged {
+  return !(evtViewerGrantsChanged(obj) instanceof type.errors);
 }
 
 // ── commentPosted event (queue → Discord notification) ──────────────

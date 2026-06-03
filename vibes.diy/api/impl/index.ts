@@ -110,6 +110,9 @@ import {
   ReqSubscribeDocs,
   ResSubscribeDocs,
   isResSubscribeDocs,
+  ReqSubscribeViewerGrants,
+  ResSubscribeViewerGrants,
+  isResSubscribeViewerGrants,
   ReqListDbNames,
   ResListDbNames,
   isResListDbNames,
@@ -150,6 +153,7 @@ import {
   ResAssetUploadGrant,
   isResAssetUploadGrant,
   EvtRequestGrant,
+  EvtViewerGrantsChanged,
   EvtUserNotification,
   ResSubscribeUserNotifications,
   isResSubscribeUserNotifications,
@@ -166,6 +170,7 @@ import { LLMChatImpl } from "./llm-chat.js";
 import {
   attachDocChangedToConnection as attachDocChangedToConnectionImpl,
   attachRequestGrantToConnection as attachRequestGrantToConnectionImpl,
+  attachViewerGrantsChangedToConnection as attachViewerGrantsChangedToConnectionImpl,
   attachUserNotificationToConnection as attachUserNotificationToConnectionImpl,
   replayConnectionState,
 } from "./vibes-diy-api-listeners.js";
@@ -225,6 +230,9 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   private readonly requestGrantListeners: ((evt: EvtRequestGrant) => void)[] = [];
   private readonly requestGrantDetachers = new Map<(evt: EvtRequestGrant) => void, () => void>();
   private readonly requestGrantSubscriptions: { ownerHandle: string; appSlug: string }[] = [];
+  private readonly viewerGrantsSubscriptions: { ownerHandle: string; appSlug: string }[] = [];
+  private readonly viewerGrantsListeners: ((evt: EvtViewerGrantsChanged) => void)[] = [];
+  private readonly viewerGrantsDetachers = new Map<(evt: EvtViewerGrantsChanged) => void, () => void>();
   private readonly userNotificationListeners: ((evt: EvtUserNotification) => void)[] = [];
   private readonly userNotificationDetachers = new Map<(evt: EvtUserNotification) => void, () => void>();
   private userNotificationSubscribed = false;
@@ -303,13 +311,17 @@ export class VibesDiyApi implements VibesDiyApiIface<{
         docChangedDetachers: this.docChangedDetachers,
         requestGrantListeners: this.requestGrantListeners,
         requestGrantDetachers: this.requestGrantDetachers,
+        viewerGrantsListeners: this.viewerGrantsListeners,
+        viewerGrantsDetachers: this.viewerGrantsDetachers,
         userNotificationListeners: this.userNotificationListeners,
         userNotificationDetachers: this.userNotificationDetachers,
         docSubscriptions: this.docSubscriptions,
         requestGrantSubscriptions: this.requestGrantSubscriptions,
+        viewerGrantsSubscriptions: this.viewerGrantsSubscriptions,
         userNotificationSubscribed: this.userNotificationSubscribed,
         subscribeDocs: (sub) => this.subscribeDocs(sub),
         subscribeRequestGrants: (sub) => this.subscribeRequestGrants(sub),
+        subscribeViewerGrants: (sub) => this.subscribeViewerGrants(sub),
         subscribeUserNotifications: (req) => this.subscribeUserNotifications(req),
       });
       // When this connection dies, schedule proactive reconnect (unless explicitly closed)
@@ -531,6 +543,21 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return result;
   }
 
+  async subscribeViewerGrants(req: Req<ReqSubscribeViewerGrants>): Promise<Result<ResSubscribeViewerGrants, VibesDiyError>> {
+    const result: Result<ResSubscribeViewerGrants, VibesDiyError> = await this.request(
+      { ...req, type: "vibes.diy.req-subscribe-viewer-grants" },
+      { resMatch: isResSubscribeViewerGrants }
+    );
+    if (result.isOk()) {
+      const sub = { ownerHandle: req.ownerHandle, appSlug: req.appSlug };
+      const key = `${sub.ownerHandle}/${sub.appSlug}`;
+      if (!this.viewerGrantsSubscriptions.some((s) => `${s.ownerHandle}/${s.appSlug}` === key)) {
+        this.viewerGrantsSubscriptions.push(sub);
+      }
+    }
+    return result;
+  }
+
   hasAccessRequest(req: Req<ReqHasAccessRequest>): Promise<Result<ResHasAccessRequest, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-has-access-request" }, { resMatch: isResHasAccessRequestFlow });
   }
@@ -708,6 +735,32 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     };
   }
 
+  private attachViewerGrantsChangedToConnection(conn: VibeDiyApiConnection, fn: (evt: EvtViewerGrantsChanged) => void): () => void {
+    return attachViewerGrantsChangedToConnectionImpl(conn, fn);
+  }
+
+  onViewerGrantsChanged(fn: (evt: EvtViewerGrantsChanged) => void): () => void {
+    this.viewerGrantsListeners.push(fn);
+    const conn = this.currentConnection;
+    if (conn) {
+      // Connection already established — attach immediately
+      const detach = this.attachViewerGrantsChangedToConnection(conn, fn);
+      this.viewerGrantsDetachers.set(fn, detach);
+    } else {
+      // Trigger connection — replay loop in getReadyConnection will attach all stored listeners
+      this.getReadyConnection().catch((_e: unknown) => {
+        /* best-effort; next activity will establish connection */
+      });
+    }
+    return () => {
+      const idx = this.viewerGrantsListeners.indexOf(fn);
+      if (idx >= 0) this.viewerGrantsListeners.splice(idx, 1);
+      const detach = this.viewerGrantsDetachers.get(fn);
+      this.viewerGrantsDetachers.delete(fn);
+      detach?.();
+    };
+  }
+
   private attachUserNotificationToConnection(conn: VibeDiyApiConnection, fn: (evt: EvtUserNotification) => void): () => void {
     return attachUserNotificationToConnectionImpl(conn, fn);
   }
@@ -749,16 +802,20 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   get _testInternals(): {
     docSubscriptions: readonly { ownerHandle: string; appSlug: string; dbName: string }[];
     requestGrantSubscriptions: readonly { ownerHandle: string; appSlug: string }[];
+    viewerGrantsSubscriptions: readonly { ownerHandle: string; appSlug: string }[];
     docChangedListenerCount: number;
     requestGrantListenerCount: number;
+    viewerGrantsListenerCount: number;
     currentConnection: VibeDiyApiConnection | undefined;
     reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   } {
     return {
       docSubscriptions: this.docSubscriptions,
       requestGrantSubscriptions: this.requestGrantSubscriptions,
+      viewerGrantsSubscriptions: this.viewerGrantsSubscriptions,
       docChangedListenerCount: this.docChangedListeners.length,
       requestGrantListenerCount: this.requestGrantListeners.length,
+      viewerGrantsListenerCount: this.viewerGrantsListeners.length,
       currentConnection: this.currentConnection,
       reconnectTimer: this.reconnectTimer,
     };

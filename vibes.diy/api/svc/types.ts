@@ -7,6 +7,7 @@ import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import {
   type AccessDescriptor,
   type UserContext,
+  type EvtViewerGrantsChanged,
   type EvtRequestGrant,
   type EvtUserNotification,
   LLMHeaders,
@@ -63,6 +64,9 @@ export interface VibesApiSQLCtx {
   notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
   registerRequestGrantSubscription?(subscriptionKey: string): Promise<void>;
   deregisterRequestGrantSubscription?(subscriptionKey: string): Promise<void>;
+  notifyViewerGrantsChanged?(evt: EvtViewerGrantsChanged, senderConnId: string): Promise<void>;
+  registerViewerGrantsSubscription?(subscriptionKey: string): Promise<void>;
+  deregisterViewerGrantsSubscription?(subscriptionKey: string): Promise<void>;
   notifyUser?(userId: string, evt: EvtUserNotification, senderConnId: string): Promise<void>;
   registerUserSubscription?(userId: string): Promise<void>;
   deregisterUserSubscription?(userId: string): Promise<void>;
