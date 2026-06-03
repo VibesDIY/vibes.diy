@@ -428,6 +428,56 @@ export default function App() {
 
 The pattern: `viewer` checks sign-in, `access.hasChannel()` checks what the access function granted, `isOwner` gates management. The access function is the server-side authority — the UI just reflects its decisions. Real apps can graduate to `access.hasRole("moderator")` when they need to delegate management to non-owners.
 
+### Example: Channel board with restricted channels
+
+Some channels are open to all members, others are restricted. The access function decides — the UI just asks `access.hasChannel()`.
+
+access.js
+
+```js
+export function chat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "sign in" };
+
+  if (doc.type === "channel") {
+    if (!user.isOwner) throw { forbidden: "owner only" };
+    return {
+      channels: [doc.name],
+      grant: { public: [doc.name] },
+    };
+  }
+
+  if (doc.type === "post") {
+    if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
+    ctx.requireAccess(doc.channel);
+    return { channels: [doc.channel] };
+  }
+
+  return {};
+}
+```
+
+App.jsx — the UI uses `access.hasChannel()` for everything. It has no idea which channels are restricted — that's the access function's job.
+
+```jsx
+const { database, useLiveQuery, access } = useFireproof("chat");
+const { docs: channels } = useLiveQuery("type", { key: "channel" });
+
+// filter to channels the viewer can see
+const visible = channels.filter((ch) => isOwner || access.hasChannel(ch.name));
+
+// can post? just check channel access — the access function handles the rest
+const canPost = viewer && (isOwner || access.hasChannel(activeChannel));
+
+// gate the compose form
+{canPost ? (
+  <Composer channel={activeChannel} />
+) : (
+  <p>{viewer ? "Read-only in this channel." : "Sign in to post."}</p>
+)}
+```
+
+The `canPost` check is `access.hasChannel()` — not `!channel.restricted`. The channel doc might have a `restricted` field, but the UI ignores it. The access function reads it server-side to decide grants; the UI reads the grant verdict from `access`.
+
 ---
 
 ## Access Function (`/access.js`)
