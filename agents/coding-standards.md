@@ -83,3 +83,7 @@ When a design decision is sound on its own merits, present it that way. Do not d
 If something is obviously the right baseline, ship it as the baseline and say so directly. State the rationale (what mechanism makes it work, what failure mode it closes) — not the imagined eval outcome. Real evals, when they happen, speak for themselves. Prediction theater erodes credibility on the design itself: a reviewer reading "we hypothesize 95%" hears "the proposer is hedging." Drop it.
 
 Exception: when a reviewer explicitly proposes a numeric gate (e.g. ">5% degradation flips the decision"), echoing their threshold back is fine — that's coordination, not theater. Do not invent your own.
+
+## Prompt authoring — positive patterns only
+
+System prompts and LLM-facing docs (`prompts/pkg/`, `notes/vibes-app-jsx.md`) should show the correct pattern, not "don't do this" examples. Negative examples get tokenized and the model reproduces them. State rules as what TO do, and show more examples of the right pattern instead of contrasting with wrong ones.
