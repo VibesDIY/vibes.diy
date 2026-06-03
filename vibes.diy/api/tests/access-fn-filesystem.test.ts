@@ -107,7 +107,7 @@ function queryBindings(ctx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>, ow
   return ctx.vibesCtx.sql.db
     .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri })
     .from(tAfb)
-    .where(and(eq(tAfb.userSlug, ownerHandle), eq(tAfb.appSlug, appSlug)));
+    .where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug)));
 }
 
 function queryAppsFileSystem(
@@ -283,7 +283,7 @@ export { myHandler as "my-db" }`;
     // Temporarily seed a binding so putDoc goes through the gate
     const tAfb = appCtx.vibesCtx.sql.tables.accessFunctionBindings;
     await appCtx.vibesCtx.sql.db.insert(tAfb).values({
-      userSlug: ownerHandle,
+      ownerHandle: ownerHandle,
       appSlug,
       dbName: "chat",
       accessFnCid: "temp-seed-cid",
@@ -296,12 +296,12 @@ export { myHandler as "my-db" }`;
     assert(r2.isOk(), "putDoc 2 failed");
 
     // Clean up temp seed
-    await appCtx.vibesCtx.sql.db.delete(tAfb).where(and(eq(tAfb.userSlug, ownerHandle), eq(tAfb.appSlug, appSlug)));
+    await appCtx.vibesCtx.sql.db.delete(tAfb).where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug)));
     await appCtx.vibesCtx.sql.db
       .delete(appCtx.vibesCtx.sql.tables.accessFnOutputs)
       .where(
         and(
-          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.userSlug, ownerHandle),
+          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.ownerHandle, ownerHandle),
           eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.appSlug, appSlug)
         )
       );
@@ -325,7 +325,7 @@ export { myHandler as "my-db" }`;
     const outputRows = await appCtx.vibesCtx.sql.db
       .select()
       .from(tOutputs)
-      .where(and(eq(tOutputs.userSlug, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
+      .where(and(eq(tOutputs.ownerHandle, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
     expect(outputRows.length).toBe(2);
   });
 

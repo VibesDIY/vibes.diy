@@ -102,7 +102,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     await appCtx.vibesCtx.sql.db
       .insert(tOutputs)
       .values({
-        userSlug: ownerHandle,
+        ownerHandle: ownerHandle,
         appSlug,
         dbName: "chat",
         docId: "grant-doc",
