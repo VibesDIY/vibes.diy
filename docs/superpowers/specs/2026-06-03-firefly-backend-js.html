@@ -1121,11 +1121,18 @@
 </div>
 
 <p class="prose">
-  <strong>LLM codegen docs (<code>backend-js.llms.md</code>).</strong> The codegen prompt should document that every vibe knows its
-  own <code>ownerHandle</code> and <code>appSlug</code>, and the webhook URL follows mechanically from those. When the generated app
-  needs to register a webhook URL with a third-party service (Stripe, Sonos, GitHub) or set an OAuth redirect URI, the LLM should
-  generate UI or setup instructions that show the user their webhook endpoint. The LLM should also know the common inbound patterns:
-  signature verification (Stripe HMAC), OAuth code exchange, and simple POST-body webhooks.
+  <strong>LLM codegen docs (<code>backend-js.llms.md</code>).</strong> The codegen prompt is the primary delivery mechanism for the
+  backend.js API. LLMs learn APIs from examples, not type signatures — a well-chosen code sample teaches the model more than a page
+  of documentation. The <code>backend-js.llms.md</code> file should be built around
+  <strong>complete, copy-adaptable examples</strong> for each handler pattern: a fetch handler with a simple path router, a webhook
+  receiver with HMAC signature verification, an OAuth code exchange, a scheduled poller writing to <code>ctx.db</code>, an onChange
+  handler that filters on doc type and calls an external API. Each example should be minimal but fully working — no pseudocode, no
+  "implement here" placeholders. The LLM copies the shape and adapts the details to the user's prompt.
+</p>
+<p class="prose">
+  Every vibe knows its own <code>ownerHandle</code> and <code>appSlug</code>; the webhook URL follows mechanically from those. When
+  the generated app needs to register a webhook URL with a third-party service (Stripe, Sonos, GitHub) or set an OAuth redirect URI,
+  the LLM should generate UI or setup instructions that show the user their webhook endpoint.
 </p>
 
 <!-- SUMMARY -->
