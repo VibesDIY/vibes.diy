@@ -39,6 +39,7 @@ import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
 import { isResDeviceIdRegister } from "@fireproof/core-cli";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 async function vibesDiyApiFactory(sthis: SuperThis) {
   const kb = await getKeyBag(sthis);
@@ -103,7 +104,7 @@ class OutputSelector implements EventoSendProvider<unknown, unknown, unknown> {
 
 async function main(): Promise<number> {
   const sthis = ensureSuperThis();
-  const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  const packageJson = JSON.parse(readFileSync(join(import.meta.dirname, "..", "package.json"), "utf8"));
 
   const env = dotenv.loadSafe(".dev.vars", ".env");
   sthis.env.sets({ ...env } as Record<string, string>);
