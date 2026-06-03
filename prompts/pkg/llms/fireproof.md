@@ -563,11 +563,10 @@ export function survey(doc, oldDoc, user, ctx) {
   }
 
   if (doc.type === "survey-config") {
-    ctx.requireRole("survey-admin");
+    if (!user.isOwner) throw { forbidden: "owner only" };
     return {
       grant: {
         roles: {
-          "survey-admin": ["inbound-responses"],
           "feedback-team": ["inbound-responses"],
         },
       },
@@ -651,7 +650,7 @@ Roles are not a fixed registry. They are materialized from document contribution
 ```js
 // A team-meta doc contributes members to a role
 if (doc.type === "team-meta") {
-  ctx.requireRole("admin");
+  if (!user.isOwner) throw { forbidden: "owner only" };
   return {
     members: { [doc.teamId]: doc.memberHandles },
     grant: { roles: { [doc.teamId]: doc.channels } },
