@@ -320,6 +320,23 @@ The AI agent writes the access function (so it knows the role names) and writes 
 
 The access function is the single source of truth for permissions. The UI reads its verdict from `access` — gate with `access.hasChannel(name)` and `access.hasRole(name)`. Grants may reflect logic the UI can't see (other documents, role memberships, owner state), so `access` is always the right check.
 
+`access.hasChannel()` covers every grant path — public channels, restricted channels, role-expanded channels. The access function decides who gets access and how; the UI just asks `access.hasChannel(name)`:
+
+```jsx
+// Channel list — access.hasChannel covers both public and restricted channels
+const visibleChannels = channels.filter(ch => access.hasChannel(ch._id));
+
+// Compose gate — access.hasChannel is the only check needed
+{viewer && access.hasChannel(activeChannel) && <ComposeForm />}
+
+// Channel with mixed access modes — the UI doesn't need to know which mode
+// The access function granted public channels via grant.public and
+// restricted channels via grant.users — access.hasChannel handles both
+{visibleChannels.map(ch => (
+  <li key={ch._id} onClick={() => setActive(ch._id)}>#{ch.name}</li>
+))}
+```
+
 ### Complete example: Team announcements with channels
 
 This example shows the full round-trip — access.js declares channels and grants; App.jsx reads them back via `access`. Key details:
@@ -394,7 +411,7 @@ export default function App() {
     <div>
       <ViewerTag />
 
-      {/* membership + channel gate */}
+      {/* access.hasChannel covers public + restricted — the access function handles the distinction */}
       {viewer && access.hasChannel(channel) && (
         <form
           onSubmit={(e) => {
