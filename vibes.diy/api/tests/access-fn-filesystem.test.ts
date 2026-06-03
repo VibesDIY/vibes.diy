@@ -175,4 +175,89 @@ describe("access.js fileSystem invariant (#2188)", { timeout: 30000 }, () => {
     expect(content).toContain("export function chat");
     expect(content).toContain("export default function");
   });
+
+  it("binding rows created via extraction (not manual DB insert)", async () => {
+    const bindings = await queryBindings(appCtx, ownerHandle, appSlug);
+    const dbNames = bindings.map((b) => b.dbName).sort();
+    expect(dbNames).toContain("chat");
+    expect(dbNames).toContain("*");
+  });
+
+  it("binding CID matches fileSystem CID (single source of truth)", async () => {
+    const fsItems = await queryAppsFileSystem(appCtx, ownerHandle, appSlug, fsId);
+    const accessEntry = fsItems.find((item) => item.fileName === "/access.js");
+    assert(accessEntry !== undefined, "/access.js not found in fileSystem");
+
+    const bindings = await queryBindings(appCtx, ownerHandle, appSlug);
+    expect(bindings.length).toBeGreaterThan(0);
+    for (const binding of bindings) {
+      expect(binding.accessFnCid).toBe(accessEntry.assetId);
+      expect(binding.accessFnAssetUri).toBe(accessEntry.assetURI);
+    }
+  });
+
+  it("export-as syntax creates binding for non-identifier db name", async () => {
+    const ACCESS_JS_EXPORT_AS = `function myHandler(doc, oldDoc, user) {
+  return { allowAnonymous: true };
+}
+export { myHandler as "my-db" }`;
+
+    const r = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: APP_JSX },
+        { type: "code-block", lang: "js", filename: "/access.js", content: ACCESS_JS_EXPORT_AS },
+      ],
+    });
+    assert(r.isOk(), "push with export-as failed");
+
+    const bindings = await queryBindings(appCtx, ownerHandle, appSlug);
+    const dbNames = bindings.map((b) => b.dbName);
+    expect(dbNames).toContain("my-db");
+  });
+
+  it("stale binding rows cleaned up when export removed", async () => {
+    const r1 = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: APP_JSX },
+        { type: "code-block", lang: "js", filename: "/access.js", content: ACCESS_JS_CHAT_AND_BOARDS },
+      ],
+    });
+    assert(r1.isOk(), "push with chat+boards failed");
+
+    const bindingsBoth = await queryBindings(appCtx, ownerHandle, appSlug);
+    const dbNamesBoth = bindingsBoth.map((b) => b.dbName).sort();
+    expect(dbNamesBoth).toContain("chat");
+    expect(dbNamesBoth).toContain("boards");
+
+    const r2 = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: APP_JSX },
+        { type: "code-block", lang: "js", filename: "/access.js", content: ACCESS_JS_CHAT_ONLY },
+      ],
+    });
+    assert(r2.isOk(), "push with chat-only failed");
+
+    const bindingsAfter = await queryBindings(appCtx, ownerHandle, appSlug);
+    const dbNamesAfter = bindingsAfter.map((b) => b.dbName);
+    expect(dbNamesAfter).toContain("chat");
+    expect(dbNamesAfter).not.toContain("boards");
+  });
+
+  it("all bindings deleted when access.js removed from push", async () => {
+    const r = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: APP_JSX }],
+    });
+    assert(r.isOk(), "push without access.js failed");
+
+    const bindings = await queryBindings(appCtx, ownerHandle, appSlug);
+    expect(bindings.length).toBe(0);
+  });
 });
