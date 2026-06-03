@@ -59,12 +59,12 @@ db.subscribe((changes) => {
 
 ### How defaults resolve
 
-| Field      | Default source (when omitted)                                                       |
-| ---------- | ----------------------------------------------------------------------------------- |
-| `apiUrl`   | env `VIBES_DIY_API_URL`, then `https://vibes.diy/api`                               |
-| `appSlug`  | env `VIBES_APP_SLUG`, then `basename(process.cwd())`                                |
-| `getToken` | local device-id cert from the Fireproof keybag (populated by `npx vibes-diy login`) |
-| `userSlug` | lazy — looked up from your `defaultUserSlug` user setting on first request          |
+| Field        | Default source (when omitted)                                                       |
+| ------------ | ----------------------------------------------------------------------------------- |
+| `apiUrl`     | env `VIBES_DIY_API_URL`, then `https://vibes.diy/api`                               |
+| `appSlug`    | env `VIBES_APP_SLUG`, then `basename(process.cwd())`                                |
+| `getToken`   | local device-id cert from the Fireproof keybag (populated by `npx vibes-diy login`) |
+| `userHandle` | lazy — looked up from your `defaultHandle` user setting on first request            |
 
 ### Explicit overrides
 
@@ -76,7 +76,7 @@ import { fireproof, type FireproofOpts } from "use-vibes";
 const db = fireproof("todos", {
   apiUrl: "https://vibes.diy/api",
   appSlug: "my-app",
-  userSlug: "alice", // optional — auto-derived from token otherwise
+  userHandle: "alice", // optional — auto-derived from token otherwise
   getToken: async () => ({
     isOk: () => true,
     Ok: () => ({ type: "device-id", token: myToken }),
@@ -90,7 +90,7 @@ const db = fireproof("todos", {
 Calling `fireproof(name)` repeatedly is the supported pattern:
 
 - `fireproof("a") === fireproof("a")` — same name returns the same database instance.
-- `fireproof("a")` and `fireproof("b")` are distinct, but **share one WebSocket connection and one resolved userSlug**.
+- `fireproof("a")` and `fireproof("b")` are distinct, but **share one WebSocket connection and one resolved userHandle**.
 - **First call's opts win.** If you need to talk to multiple `(apiUrl, appSlug)` pairs in one process, drop the sugar and construct `VibesDiyApi` + `FireflyApiAdapter` + `FireflyDatabase` directly.
 
 ### v1 limitations
