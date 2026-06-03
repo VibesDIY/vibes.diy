@@ -1,5 +1,5 @@
 import { exception2Result, Result } from "@adviser/cement";
-import { RawEmailWithoutFrom, S3Api } from "@vibes.diy/api-types";
+import { RawEmailWithoutFrom, S3Api, type EvtUserNotification } from "@vibes.diy/api-types";
 import { D1Database, DurableObjectNamespace, Fetcher, R2Bucket } from "@cloudflare/workers-types";
 import { createVibesApiTables, cfDrizzle, CreateSQLPeerParams, toDBFlavour, VibesApiTables } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "@vibes.diy/api-svc";
@@ -128,15 +128,7 @@ export class QueueCtx {
     return Result.Ok({ result: rJson.isOk() ? rJson.Ok() : jsonTxt });
   }
 
-  async notifyUser(
-    userId: string,
-    evt: {
-      type: "vibes.diy.evt-user-notification";
-      notificationType: string;
-      ownerHandle: string;
-      appSlug: string;
-    }
-  ): Promise<void> {
+  async notifyUser(userId: string, evt: EvtUserNotification): Promise<void> {
     const ns = this.params.cf?.USER_NOTIFY;
     if (!ns) return;
     try {

@@ -208,9 +208,6 @@ function isSetHydratedFileSystem(msg: unknown): msg is SetHydratedFileSystem {
   return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setHydratedFileSystem";
 }
 
-const SCREENSHOT_POLL_MAX_ATTEMPTS = 12;
-const SCREENSHOT_POLL_BASE_INTERVAL_MS = 1500;
-
 const MarkAgentSaved = type({
   type: "'markAgentSaved'",
   blockId: "string",
@@ -457,10 +454,20 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   const [screenshotByFsId, setScreenshotByFsId] = useState<Map<string, MetaScreenShot>>(new Map());
   const screenshotByFsIdRef = useRef<ReadonlyMap<string, MetaScreenShot>>(new Map());
-  const screenshotPollInFlightRef = useRef<Set<string>>(new Set());
-  const screenshotPollAttemptsRef = useRef<Map<string, number>>(new Map());
-  const screenshotPollExhaustedRef = useRef<Set<string>>(new Set());
-  const screenshotPollGenerationRef = useRef(0);
+  const screenshotBackfillAttemptedRef = useRef<Set<string>>(new Set());
+  const screenshotBackfillInFlightRef = useRef<Set<string>>(new Set());
+
+  const applyScreenshot = useCallback((targetFsId: string, shot: MetaScreenShot) => {
+    setScreenshotByFsId((prev) => {
+      const prior = prev.get(targetFsId);
+      if (prior?.assetUrl === shot.assetUrl && prior?.mime === shot.mime) {
+        return prev;
+      }
+      const next = new Map(prev);
+      next.set(targetFsId, shot);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     screenshotByFsIdRef.current = screenshotByFsId;
@@ -480,76 +487,52 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     return fsIds;
   }, [promptState.blocks]);
 
-  // Screenshots are generated asynchronously by a queue after each release.
-  // Keep a chat-local cache keyed by fsId and poll for missing refs with
-  // bounded retries so block.end cards can render screenshots inline once
-  // available.
+  // Screenshots are generated asynchronously by a queue after each save.
+  // Keep a chat-local cache keyed by fsId and update it from pushed
+  // screenshot-ready notifications.
   useEffect(() => {
-    screenshotPollGenerationRef.current += 1;
-    screenshotPollInFlightRef.current.clear();
-    screenshotPollAttemptsRef.current.clear();
-    screenshotPollExhaustedRef.current.clear();
+    screenshotBackfillAttemptedRef.current.clear();
+    screenshotBackfillInFlightRef.current.clear();
     setScreenshotByFsId(new Map());
   }, [ownerHandle, appSlug]);
 
   useEffect(() => {
-    return () => {
-      screenshotPollGenerationRef.current += 1;
-    };
-  }, []);
+    return vibeDiyApi.onUserNotification((evt) => {
+      if (evt.notificationType !== "screenshot-ready") return;
+      if (evt.ownerHandle !== ownerHandle || evt.appSlug !== appSlug) return;
+      screenshotBackfillAttemptedRef.current.add(evt.screenShot.fsId);
+      applyScreenshot(evt.screenShot.fsId, {
+        type: "screen-shot-ref",
+        assetUrl: evt.screenShot.shotUrl,
+        mime: "image/jpeg",
+      });
+    });
+  }, [ownerHandle, appSlug, vibeDiyApi, applyScreenshot]);
 
+  // Light missed-event backfill: for each fsId we fetch at most once to pick
+  // up screenshots that were ready before this chat route subscribed.
   useEffect(() => {
     if (chatFsIds.length === 0) return;
-    const generation = screenshotPollGenerationRef.current;
-    const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-    const pollFsId = async (targetFsId: string) => {
-      screenshotPollInFlightRef.current.add(targetFsId);
-      try {
-        let attempt = screenshotPollAttemptsRef.current.get(targetFsId) ?? 0;
-        while (generation === screenshotPollGenerationRef.current && attempt < SCREENSHOT_POLL_MAX_ATTEMPTS) {
-          const rApp = await vibeDiyApi.getAppByFsId({ ownerHandle, appSlug, fsId: targetFsId });
-          if (generation !== screenshotPollGenerationRef.current) return;
-
-          if (rApp.isOk()) {
-            const shot = rApp.Ok().meta.find(isMetaScreenShot);
-            if (shot) {
-              setScreenshotByFsId((prev) => {
-                const prior = prev.get(targetFsId);
-                if (prior?.assetUrl === shot.assetUrl && prior?.mime === shot.mime) {
-                  return prev;
-                }
-                const next = new Map(prev);
-                next.set(targetFsId, shot);
-                return next;
-              });
-              screenshotPollAttemptsRef.current.delete(targetFsId);
-              screenshotPollExhaustedRef.current.delete(targetFsId);
-              return;
-            }
-          }
-
-          attempt += 1;
-          screenshotPollAttemptsRef.current.set(targetFsId, attempt);
-          if (attempt >= SCREENSHOT_POLL_MAX_ATTEMPTS) break;
-          await wait(Math.min(SCREENSHOT_POLL_BASE_INTERVAL_MS * attempt, 5000));
-        }
-
-        if (generation === screenshotPollGenerationRef.current) {
-          screenshotPollExhaustedRef.current.add(targetFsId);
-        }
-      } finally {
-        screenshotPollInFlightRef.current.delete(targetFsId);
-      }
-    };
 
     for (const targetFsId of chatFsIds) {
       if (screenshotByFsIdRef.current.has(targetFsId)) continue;
-      if (screenshotPollInFlightRef.current.has(targetFsId)) continue;
-      if (screenshotPollExhaustedRef.current.has(targetFsId)) continue;
-      void pollFsId(targetFsId);
+      if (screenshotBackfillAttemptedRef.current.has(targetFsId)) continue;
+      if (screenshotBackfillInFlightRef.current.has(targetFsId)) continue;
+      screenshotBackfillAttemptedRef.current.add(targetFsId);
+      screenshotBackfillInFlightRef.current.add(targetFsId);
+      void vibeDiyApi
+        .getAppByFsId({ ownerHandle, appSlug, fsId: targetFsId })
+        .then((rApp) => {
+          if (rApp.isErr()) return;
+          const shot = rApp.Ok().meta.find(isMetaScreenShot);
+          if (!shot) return;
+          applyScreenshot(targetFsId, shot);
+        })
+        .finally(() => {
+          screenshotBackfillInFlightRef.current.delete(targetFsId);
+        });
     }
-  }, [chatFsIds, ownerHandle, appSlug, vibeDiyApi]);
+  }, [chatFsIds, ownerHandle, appSlug, vibeDiyApi, applyScreenshot]);
 
   useBuildCompletionNotifications();
 

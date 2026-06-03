@@ -1,5 +1,5 @@
 import { DurableObject, DurableObjectState, Request as CFRequest, Response as CFResponse } from "@cloudflare/workers-types";
-import { CFEnv } from "@vibes.diy/api-types";
+import { CFEnv, EvtUserNotification } from "@vibes.diy/api-types";
 import { exception2Result } from "@adviser/cement";
 import { type } from "arktype";
 
@@ -8,19 +8,12 @@ declare const Response: typeof CFResponse;
 const UserNotifyRegister = type({ action: "'register'", shardId: "string" });
 const UserNotifyDeregister = type({ action: "'deregister'", shardId: "string" });
 
-const UserNotifyEvt = type({
-  type: "'vibes.diy.evt-user-notification'",
-  notificationType: "string",
-  ownerHandle: "string",
-  appSlug: "string",
-});
-
 const UserNotifyNotify = type({
   action: "'notify'",
   targetUserId: "string",
   senderShardId: "string",
   senderConnId: "string",
-  evt: UserNotifyEvt,
+  evt: EvtUserNotification,
 });
 
 const UserNotifyMessage = UserNotifyRegister.or(UserNotifyDeregister).or(UserNotifyNotify);
