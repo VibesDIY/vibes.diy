@@ -454,6 +454,9 @@
       ><br />
       <span class="k">displayName</span>?: <span class="v">"Bob Smith"</span> &nbsp;<span class="c"
         >// natural data — never use for identity checks</span
+      ><br />
+      <span class="k">isOwner</span>: <span class="v">boolean</span> &nbsp;<span class="c"
+        >// true when this user owns the vibe — use for management gates</span
       >
     </div>
   </div>
@@ -990,14 +993,14 @@
           line-height: 1.8;
         "
       >
-        ctx.<span class="throw">requireRole</span>("survey-admin")<br />
+        <span class="k">if</span> (!user.isOwner) <span class="throw">throw</span> { forbidden: "owner only" }<br />
         <span class="route">channels:</span> ["inbound-responses"]
       </div>
     </div>
 
     <div class="doc invite">
       <div class="doc-type">
-        survey-response <span style="font-weight: 400; font-size: 10px">(anonymous submit via allowAnonymous, survey-admin + feedback-team read)</span>
+        survey-response <span style="font-weight: 400; font-size: 10px">(anonymous submit via allowAnonymous, owner + feedback-team read)</span>
       </div>
       <div class="doc-field">type: <span>"survey-response"</span></div>
       <div class="doc-field">answers: <span>[…]</span></div>
@@ -1035,8 +1038,7 @@
           line-height: 1.8;
         "
       >
-        ctx.<span class="throw">requireRole</span>("survey-admin")<br />
-        <span class="route">grant.roles:</span> survey-admin → inbound-responses<br />
+        <span class="k">if</span> (!user.isOwner) <span class="throw">throw</span> { forbidden: "owner only" }<br />
         <span class="route">grant.roles:</span> feedback-team → inbound-responses
       </div>
     </div>
@@ -1085,8 +1087,8 @@
   <div class="fn-sig" style="display: block; white-space: pre; line-height: 1.9"><span class="k">export function</span> survey(doc, oldDoc, user, ctx) {
 
   <span class="k">if</span> (doc.type === <span class="t">"survey-questions"</span>) {
-    ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"survey-admin"</span>)
-    <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>] }  <span style="color: #94a3b8">// team-only — no grant.public</span>
+    <span class="k">if</span> (!user?.isOwner) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"owner only"</span> }
+    <span class="k">return</span> { channels: [<span class="t">"inbound-responses"</span>] }  <span style="color: #94a3b8">// owner-only — no grant.public</span>
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"final-results"</span>) {
@@ -1100,8 +1102,8 @@
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) {
-    ctx.<span style="color: #dc2626">requireRole</span>(<span class="t">"survey-admin"</span>)
-    <span class="k">return</span> { grant: { roles: { <span class="t">"survey-admin"</span>: [<span class="t">"inbound-responses"</span>], <span class="t">"feedback-team"</span>: [<span class="t">"inbound-responses"</span>] } } }
+    <span class="k">if</span> (!user?.isOwner) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"owner only"</span> }
+    <span class="k">return</span> { grant: { roles: { <span class="t">"feedback-team"</span>: [<span class="t">"inbound-responses"</span>] } } }
   }
 
   <span class="k">if</span> (!user) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"authentication required"</span> }  <span style="color: #94a3b8">// default gate</span>
@@ -1117,7 +1119,7 @@
     </div>
     <div class="arrow green">→</div>
     <div class="step">
-      <span class="icon">⚡</span><span class="label">requireRole passes</span><span class="value">admin ∈ survey-admin ✓</span>
+      <span class="icon">⚡</span><span class="label">isOwner check</span><span class="value">owner ✓</span>
     </div>
     <div class="arrow green">→</div>
     <div class="step">
@@ -1125,7 +1127,7 @@
     </div>
     <div class="arrow green">→</div>
     <div class="step">
-      <span class="icon">🔒</span><span class="label">survey-admin +<br />feedback-team read</span
+      <span class="icon">🔒</span><span class="label">owner +<br />feedback-team read</span
       ><span class="value">via survey-config grant</span>
     </div>
   </div>
@@ -1201,7 +1203,7 @@
       <div
         style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #fde68a; font-size: 11px; color: #b45309; line-height: 1.8"
       >
-        ctx.<span class="throw">requireRole</span>("survey-s1-team")<br />
+        <span class="k">if</span> (!user.isOwner) <span class="throw">throw</span> { forbidden: "owner only" }<br />
         <span class="route">channels:</span> ["s1-questions"]<br />
         <span class="route">grant.public:</span> ["s1-questions"]
       </div>
@@ -1235,7 +1237,7 @@
       <div
         style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #fde68a; font-size: 11px; color: #b45309; line-height: 1.8"
       >
-        ctx.<span class="throw">requireRole</span>("survey-s2-team")<br />
+        <span class="k">if</span> (!user.isOwner) <span class="throw">throw</span> { forbidden: "owner only" }<br />
         <span class="route">channels:</span> ["s2-questions"]<br />
         <span class="route">grant.roles:</span> survey-s2-responders → s2-questions
       </div>
@@ -1249,7 +1251,7 @@
       <div
         style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #bfdbfe; font-size: 11px; color: #1d4ed8; line-height: 1.8"
       >
-        ctx.<span class="throw">requireRole</span>("survey-s2-team")<br />
+        <span class="k">if</span> (!user.isOwner) <span class="throw">throw</span> { forbidden: "owner only" }<br />
         <span class="throw">throw</span> if doc.senderHandle ≠ user.userHandle<br />
         <span class="route">members:</span> { survey-s2-responders: ["bob"] }<br />
         <span class="route">channels:</span> ["s2-admin"]
@@ -1273,8 +1275,8 @@
 
 <p class="prose">
   <strong>Why <code>doc.open</code> on the question doc is trustworthy.</strong> The access function dispatches on
-  <code>doc.type</code> and derives the grant shape from <code>doc.open</code>. This field is set by the writer — but only team
-  members can write question docs (<code>ctx.requireRole</code> enforces this). A client who is not a team member cannot write a
+  <code>doc.type</code> and derives the grant shape from <code>doc.open</code>. This field is set by the writer — but only the
+  owner can write question docs (<code>user.isOwner</code> enforces this). A non-owner cannot write a
   question doc at all, so they cannot spoof <code>doc.open</code>. The security property follows from the write gate, not from
   trusting the field in isolation.
 </p>
@@ -1287,7 +1289,7 @@
   <span class="k">const</span> id = doc.surveyId
 
   <span class="k">if</span> (doc.type === <span class="t">"question"</span>) {
-    ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)  <span style="color: #94a3b8">// team-only write; doc.open is trustworthy</span>
+    <span class="k">if</span> (!user?.isOwner) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"owner only"</span> }  <span style="color: #94a3b8">// team-only write; doc.open is trustworthy</span>
     <span class="k">const</span> ch = `${id}-questions`
     <span class="k">return</span> { channels: [ch], grant: doc.open
       ? { public: [ch] }                                 <span style="color: #94a3b8">// s1: any member reads</span>
@@ -1296,7 +1298,7 @@
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"invite"</span>) {
-    ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)
+    <span class="k">if</span> (!user?.isOwner) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"owner only"</span> }
     <span class="k">if</span> (doc.senderHandle !== user?.userHandle) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"not sender"</span> }
     <span class="k">return</span> { channels: [`${id}-admin`], members: { [`survey-${id}-responders`]: [doc.inviteeHandle] } }
     <span style="color: #94a3b8">// grants invitee the responder role</span>
@@ -1314,12 +1316,12 @@
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"survey-config"</span>) {
-    ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)
+    <span class="k">if</span> (!user?.isOwner) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"owner only"</span> }
     <span class="k">return</span> { grant: { roles: { [`survey-${id}-team`]: [`${id}-responses`] } } }
   }
 
   <span class="k">if</span> (doc.type === <span class="t">"results"</span>) {
-    ctx.<span style="color: #dc2626">requireRole</span>(`survey-${id}-team`)
+    <span class="k">if</span> (!user?.isOwner) <span style="color: #dc2626; font-style: italic">throw</span> { forbidden: <span class="t">"owner only"</span> }
     <span class="k">return</span> { channels: [`${id}-results`], grant: { public: [`${id}-results`] } }
   }
 
