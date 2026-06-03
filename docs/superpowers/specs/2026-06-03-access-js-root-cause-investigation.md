@@ -80,3 +80,27 @@ This affects ALL files for web-UI vibes, not just access.js. It just happens tha
 2. **Fix the sandbox fsId routing for dev-mode vibes** — make the sandbox resolve the latest fsId for dev-mode apps. This fixes serving but doesn't address the unnecessary sandbox round-trip in pull.
 
 Option 1 is the right fix — it's simpler, more reliable, and eliminates the weird fetch-from-sandbox pattern the user flagged.
+
+### Test 3: Publish validates the hypothesis
+
+Clicked "Publish" in the Share dialog for the web-UI vibe. After publishing:
+
+```
+curl "https://shared-notes--jchris.prod-v2.vibesdiy.net/access.js?source=true"
+# → HTTP 200, full source content
+
+npx vibes-diy@latest pull --handle jchris shared-notes
+# → Wrote 2 file(s): access.js (453 B), App.jsx (6524 B)
+```
+
+**Confirmed:** the bug is entirely about dev-mode vibes not being servable from the sandbox. Publishing promotes to production mode with a real fsId, and everything works. access.js IS in fileSystem the whole time — the sandbox just can't resolve it until the vibe is published.
+
+### Revised root cause
+
+The issue title says "access.js should be in fileSystem" — but access.js IS in fileSystem. The real bug is: **pull fetches file content from the sandbox via HTTP, and the sandbox can't serve dev-mode vibes.** This affects ALL files, not just access.js. Publishing (promoting to production mode) fixes it.
+
+The fix should either:
+1. Make pull fetch from storage directly (using `assetURI` from the FileSystemItem), or
+2. Make pull work for dev-mode vibes by fixing sandbox routing
+
+Option 1 is cleaner — stop depending on the sandbox for pull entirely.
