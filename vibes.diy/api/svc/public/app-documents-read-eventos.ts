@@ -11,6 +11,9 @@ import {
   reqSubscribeDocs,
   ReqSubscribeDocs,
   ResSubscribeDocs,
+  reqSubscribeViewerGrants,
+  ReqSubscribeViewerGrants,
+  ResSubscribeViewerGrants,
   reqListDbNames,
   ReqListDbNames,
   ResListDbNames,
@@ -26,7 +29,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { type } from "arktype";
-import { checkDocAccess, DocAccessLevel } from "./access-helpers.js";
+import { checkDocAccess, DocAccessLevel, canRead, isPublicReadable } from "./access-helpers.js";
 import type { AccessDescriptor } from "./access-function.js";
 import { resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
 import { GrantReduce, extractContribution } from "./grant-reduce.js";
@@ -459,6 +462,60 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
         type: "vibes.diy.res-subscribe-docs",
         status: "ok",
       } satisfies ResSubscribeDocs);
+      return Result.Ok(EventoResult.Continue);
+    }
+  ),
+};
+
+// ── subscribeViewerGrants ──────────────────────────────────────────
+
+export const subscribeViewerGrantsEvento: EventoHandler<
+  W3CWebSocketEvent,
+  MsgBase<ReqSubscribeViewerGrants>,
+  ResSubscribeViewerGrants | VibesDiyError
+> = {
+  hash: "subscribe-viewer-grants",
+  validate: unwrapMsgBase(async (msg: MsgBase) => {
+    const ret = reqSubscribeViewerGrants(msg.payload);
+    if (ret instanceof type.errors) {
+      return Result.Ok(Option.None());
+    }
+    return Result.Ok(Option.Some({ ...msg, payload: ret }));
+  }),
+  handle: checkAuth(
+    async (
+      ctx: HandleTriggerCtx<
+        W3CWebSocketEvent,
+        MsgBase<ReqWithVerifiedAuth<ReqSubscribeViewerGrants>>,
+        ResSubscribeViewerGrants | VibesDiyError
+      >
+    ): Promise<Result<EventoResultType>> => {
+      const req = ctx.validated.payload;
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+      const userId = req._auth.verifiedAuth.claims.userId;
+
+      const { access, isOwner } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx));
+      const isPublic = await isPublicReadable(vctx, req.appSlug, req.ownerHandle);
+      if (!isOwner && !canRead(access) && !isPublic) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-error",
+          error: { message: "Access denied" },
+        } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
+      }
+
+      const wsSend = clientWsSend(ctx);
+      const subscriptionKey = `${req.ownerHandle}/${req.appSlug}`;
+      wsSend.subscribedViewerGrantKeys.add(subscriptionKey);
+
+      if (vctx.registerViewerGrantsSubscription) {
+        vctx.registerViewerGrantsSubscription(subscriptionKey).catch((e: unknown) => console.error("DocNotify error:", e));
+      }
+
+      await ctx.send.send(ctx, {
+        type: "vibes.diy.res-subscribe-viewer-grants",
+        status: "ok",
+      } satisfies ResSubscribeViewerGrants);
       return Result.Ok(EventoResult.Continue);
     }
   ),

@@ -85,6 +85,9 @@ import {
   ResDeleteDoc,
   ReqSubscribeDocs,
   ResSubscribeDocs,
+  ReqSubscribeViewerGrants,
+  ResSubscribeViewerGrants,
+  EvtViewerGrantsChanged,
   ReqListDbNames,
   ResListDbNames,
   ReqListDmThreads,
@@ -196,6 +199,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   queryDocs(req: Req<ReqQueryDocs>): Promise<Result<ResQueryDocs, VibesDiyError>>;
   deleteDoc(req: Req<ReqDeleteDoc>): Promise<Result<ResDeleteDoc, VibesDiyError>>;
   subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>>;
+  subscribeViewerGrants(req: Req<ReqSubscribeViewerGrants>): Promise<Result<ResSubscribeViewerGrants, VibesDiyError>>;
   listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>>;
 
   // DM thread listing and read watermark
@@ -239,6 +243,11 @@ export interface VibesDiyApiIface<_T = unknown> {
   // Events arrive only for apps this connection has subscribed to via
   // subscribeRequestGrants. Returns an unsubscribe function.
   onRequestGrant(fn: (evt: EvtRequestGrant) => void): () => void;
+
+  // Register a callback for viewer-grants refresh events pushed from the API.
+  // Events arrive only for apps this connection has subscribed to via
+  // subscribeViewerGrants. Returns an unsubscribe function.
+  onViewerGrantsChanged(fn: (evt: EvtViewerGrantsChanged) => void): () => void;
 
   // Subscribe to user-level notifications on the current WS connection.
   // The server will push EvtUserNotification events for the authenticated user.

@@ -5,8 +5,7 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
-import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
-import type { AccessDescriptor } from "@vibes.diy/api-types";
+import { isResEnsureAppSlugOk, type AccessDescriptor, type EvtViewerGrantsChanged } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 // Integration tests for the access-function gate in putDocEvento.
@@ -28,7 +27,10 @@ interface InvokeRecorder {
   result: AccessDescriptor | { forbidden: string };
 }
 
-async function setupCtx(recorder: InvokeRecorder) {
+async function setupCtx(
+  recorder: InvokeRecorder,
+  opts: { notifyViewerGrantsChanged?: (evt: EvtViewerGrantsChanged, senderConnId: string) => Promise<void> } = {}
+) {
   const sthis = ensureSuperThis();
   const deviceCA = await createTestDeviceCA(sthis);
   const ctx = await createVibeDiyTestCtx(sthis, deviceCA, {
@@ -36,6 +38,7 @@ async function setupCtx(recorder: InvokeRecorder) {
       recorder.calls.push({ cid: params.cid, doc: params.doc, user: params.user, grantState: params.grantState });
       return recorder.result;
     },
+    notifyViewerGrantsChanged: opts.notifyViewerGrantsChanged,
   });
   const wsPair = TestWSPair.create();
   const wsEvento = vibesMsgEvento();
@@ -69,10 +72,15 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
   let appSlug: string;
   let ownerHandle: string;
   let actualCid: string;
+  const viewerGrantEvents: EvtViewerGrantsChanged[] = [];
   const recorder: InvokeRecorder = { calls: [], result: { allowAnonymous: true } };
 
   beforeAll(async () => {
-    const { ctx, wsPair, sthis, deviceCA } = await setupCtx(recorder);
+    const { ctx, wsPair, sthis, deviceCA } = await setupCtx(recorder, {
+      notifyViewerGrantsChanged: async (evt) => {
+        viewerGrantEvents.push(evt);
+      },
+    });
     appCtx = ctx;
     const ownerSetup = await mkUser(sthis, deviceCA, wsPair, 800);
     ownerApi = ownerSetup.api;
@@ -190,6 +198,57 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     expect(recorder.calls.length).toBe(2);
     const gs = recorder.calls[1]?.grantState as { userGrants: Record<string, string[]> };
     expect(gs.userGrants[ownerHandle]).toContain(channelId);
+  });
+
+  it("notifies viewer-grants subscribers only when effective roles/channels change", async () => {
+    const channelId = "live-refresh-channel";
+    const docId = "viewer-grant-live-doc";
+    viewerGrantEvents.length = 0;
+
+    recorder.result = {
+      grant: { users: { [ownerHandle]: [channelId] } },
+    };
+    const r1 = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      docId,
+      doc: { type: "grant", seq: 1 },
+    });
+    expect(r1.isOk()).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(viewerGrantEvents).toHaveLength(1);
+    expect(viewerGrantEvents[0]).toMatchObject({
+      type: "vibes.diy.evt-viewer-grants-changed",
+      ownerHandle,
+      appSlug,
+    });
+
+    recorder.result = {
+      grant: { users: { [ownerHandle]: [channelId] } },
+    };
+    const r2 = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      docId,
+      doc: { type: "grant", seq: 2 },
+    });
+    expect(r2.isOk()).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(viewerGrantEvents).toHaveLength(1);
+
+    recorder.result = { allowAnonymous: true };
+    const r3 = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "default",
+      docId,
+      doc: { type: "grant", seq: 3 },
+    });
+    expect(r3.isOk()).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(viewerGrantEvents).toHaveLength(2);
   });
 
   it("stores AccessFnOutputs row after successful access fn evaluation", async () => {
