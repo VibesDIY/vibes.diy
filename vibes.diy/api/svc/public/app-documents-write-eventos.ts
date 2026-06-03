@@ -68,6 +68,11 @@ function arraysEqual(a: string[], b: string[]): boolean {
 }
 
 function hasEffectiveViewerGrantDelta(before: GrantReduce, after: GrantReduce): boolean {
+  const beforePublic = Array.from(before.publicChannels).sort();
+  const afterPublic = Array.from(after.publicChannels).sort();
+  if (!arraysEqual(beforePublic, afterPublic)) {
+    return true;
+  }
   const users = new Set<string>([...grantsUsers(before), ...grantsUsers(after)]);
   for (const userSlug of users) {
     const beforeChannels = channelsForUser(before, userSlug);
