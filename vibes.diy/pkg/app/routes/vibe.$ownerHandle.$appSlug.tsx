@@ -35,6 +35,10 @@ interface VibeLoaderData {
   readonly isWorldReadable: boolean;
 }
 
+function isWriterCapableGrant(grant: ResGetAppByFsId["grant"]): boolean {
+  return grant === "owner" || grant === "accepted-email-invite" || grant === "granted-access.editor";
+}
+
 export async function loader(loaderCtx: {
   params: Record<string, string | undefined>;
   request: Request;
@@ -184,6 +188,15 @@ export default function VibeIframeWrapper() {
   // the cached JWT (~73 ms cold), once after Clerk's useAuth/useSession finalize.
   const lastFiredKeyRef = useRef<string>("");
   const cachedResRef = useRef<ResGetAppByFsId | undefined>(undefined);
+  const hasRuntimeReadyRef = useRef(false);
+  const writerGrantActiveRef = useRef(false);
+  const pendingWriterViewerRefreshRef = useRef(false);
+
+  useEffect(() => {
+    hasRuntimeReadyRef.current = false;
+    writerGrantActiveRef.current = false;
+    pendingWriterViewerRefreshRef.current = false;
+  }, [ownerHandle, appSlug]);
 
   useEffect(() => {
     if (!authSignedIn || !ownerHandle) {
@@ -252,6 +265,62 @@ export default function VibeIframeWrapper() {
   // Subscribe to DM navigation requests from the iframe. A vibe posts
   // ReqOpenDmThread to ask the parent to open a direct-message thread.
   const srvVibeSandbox = vctx.srvVibeSandbox;
+
+  const refreshViewerFromWhoAmI = useCallback(
+    async (adminOverride?: boolean) => {
+      if (!srvVibeSandbox || !ownerHandle || !appSlug) return;
+      if (inRefreshViewerFromWhoAmIRef.current) return;
+      inRefreshViewerFromWhoAmIRef.current = true;
+
+      try {
+        const rRes = await vctx.vibeDiyApi.whoAmI({
+          tid: crypto.randomUUID(),
+          appSlug,
+          ownerHandle,
+          adminMode: adminOverride ?? adminModeRef.current,
+        });
+        if (rRes.isErr()) return;
+        const r = rRes.Ok();
+        srvVibeSandbox.pushViewerChanged({
+          type: "vibe.evt.viewerChanged",
+          viewer: r.viewer,
+          access: r.access,
+          ...(r.isOwner !== undefined ? { isOwner: r.isOwner } : {}),
+          ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
+          ...(r.grants ? { grants: r.grants } : {}),
+        });
+        setMyGrant(
+          r.isOwner
+            ? "owner"
+            : r.access === "editor" || r.access === "override"
+              ? "editor"
+              : r.access === "viewer"
+                ? "viewer"
+                : r.access === "submitter"
+                  ? "submitter"
+                  : "public"
+        );
+      } finally {
+        inRefreshViewerFromWhoAmIRef.current = false;
+      }
+    },
+    [appSlug, ownerHandle, srvVibeSandbox, vctx.vibeDiyApi]
+  );
+
+  const flushPendingWriterViewerRefresh = useCallback(async (): Promise<void> => {
+    if (!pendingWriterViewerRefreshRef.current || !hasRuntimeReadyRef.current) return;
+    await refreshViewerFromWhoAmI();
+    pendingWriterViewerRefreshRef.current = false;
+  }, [refreshViewerFromWhoAmI]);
+
+  useEffect(() => {
+    if (!srvVibeSandbox) return;
+    return srvVibeSandbox.onRuntimeReady(() => {
+      hasRuntimeReadyRef.current = true;
+      void flushPendingWriterViewerRefresh();
+    }) as () => void;
+  }, [srvVibeSandbox, flushPendingWriterViewerRefresh]);
+
   useEffect(() => {
     if (!srvVibeSandbox || !myUserSlug) return;
     return srvVibeSandbox.onOpenDmThread(({ recipientUserSlug }) => {
@@ -275,6 +344,8 @@ export default function VibeIframeWrapper() {
       const resolvedOwnerDisplayName = res.ownerDisplayName?.trim();
       setOwnerDisplayName(resolvedOwnerDisplayName && resolvedOwnerDisplayName !== "" ? resolvedOwnerDisplayName : undefined);
       if (res.error) {
+        writerGrantActiveRef.current = false;
+        pendingWriterViewerRefreshRef.current = false;
         setNotFound(true);
         toast.dismiss("vibe-access");
         return;
@@ -324,6 +395,19 @@ export default function VibeIframeWrapper() {
         default:
           toast.error(`Unexpected grant: ${res.grant}`, { id: "vibe-access" });
       }
+
+      const writerCapableGrant = isWriterCapableGrant(res.grant);
+      if (writerCapableGrant) {
+        if (!writerGrantActiveRef.current) {
+          pendingWriterViewerRefreshRef.current = true;
+        }
+        if (pendingWriterViewerRefreshRef.current) {
+          void flushPendingWriterViewerRefresh();
+        }
+      } else {
+        pendingWriterViewerRefreshRef.current = false;
+      }
+      writerGrantActiveRef.current = writerCapableGrant;
     };
 
     // Auth-only flip: same params, already have a response — just re-render.
@@ -347,7 +431,7 @@ export default function VibeIframeWrapper() {
       cachedResRef.current = res;
       applyResToUI(res);
     });
-  }, [ownerHandle, appSlug, fsId, searchParam, retryCount, vctx.vibeDiyApi]);
+  }, [ownerHandle, appSlug, fsId, searchParam, retryCount, vctx.vibeDiyApi, flushPendingWriterViewerRefresh]);
 
   useEffect(() => {
     if (authSignedIn !== true) return;
@@ -363,47 +447,6 @@ export default function VibeIframeWrapper() {
     // Only re-run on auth flip; searchParam is read at effect time, and we
     // scrub the intent param before firing so subsequent renders early-return.
   }, [authSignedIn]);
-
-  const refreshViewerFromWhoAmI = useCallback(
-    async (adminOverride?: boolean) => {
-      if (!srvVibeSandbox || !ownerHandle || !appSlug) return;
-      if (inRefreshViewerFromWhoAmIRef.current) return;
-      inRefreshViewerFromWhoAmIRef.current = true;
-
-      try {
-        const rRes = await vctx.vibeDiyApi.whoAmI({
-          tid: crypto.randomUUID(),
-          appSlug,
-          ownerHandle,
-          adminMode: adminOverride ?? adminModeRef.current,
-        });
-        if (rRes.isErr()) return;
-        const r = rRes.Ok();
-        srvVibeSandbox.pushViewerChanged({
-          type: "vibe.evt.viewerChanged",
-          viewer: r.viewer,
-          access: r.access,
-          ...(r.isOwner !== undefined ? { isOwner: r.isOwner } : {}),
-          ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
-          ...(r.grants ? { grants: r.grants } : {}),
-        });
-        setMyGrant(
-          r.isOwner
-            ? "owner"
-            : r.access === "editor" || r.access === "override"
-              ? "editor"
-              : r.access === "viewer"
-                ? "viewer"
-                : r.access === "submitter"
-                  ? "submitter"
-                  : "public"
-        );
-      } finally {
-        inRefreshViewerFromWhoAmIRef.current = false;
-      }
-    },
-    [appSlug, ownerHandle, srvVibeSandbox, vctx.vibeDiyApi]
-  );
 
   const toggleAdmin = useCallback(async () => {
     const next = !adminMode;
