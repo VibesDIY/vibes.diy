@@ -48,8 +48,8 @@ function CommentForm() {
         <ViewerTag />
       </div>
 
-      {viewer && !can("write", "comments") && <p>Contact the owner to request write access so you can post.</p>}
-      {viewer && can("write", "comments") && <form>...</form>}
+      {viewer && !can("write") && <p>Contact the owner to request write access so you can post.</p>}
+      {viewer && can("write") && <form>...</form>}
     </div>
   );
 }
@@ -65,7 +65,7 @@ import { useViewer } from "use-vibes";
 
 function CommentThread() {
   const { viewer, isViewerPending, can, ViewerTag } = useViewer();
-  const { useLiveQuery, database } = useFireproof("comments");
+  const { useLiveQuery, database, access } = useFireproof("comments");
   const { docs: comments } = useLiveQuery("createdAt");
   const [body, setBody] = useState("");
 
@@ -101,8 +101,8 @@ function CommentThread() {
             {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
             <ViewerTag />
           </div>
-          {viewer && !can("write", "comments") && <p>Contact the owner to request write access so you can post.</p>}
-          {viewer && can("write", "comments") && (
+          {viewer && !can("write") && <p>Contact the owner to request write access so you can post.</p>}
+          {viewer && can("write") && (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -130,7 +130,7 @@ Key points:
 
 - Never use Clerk user IDs. Only `userSlug` crosses into vibe code.
 - Avatar URLs are stable indirection URLs — when a user changes their avatar, the URL stays the same and the bytes update. Treat them as opaque strings.
-- For fine-grained per-database permissions (roles and channels from access functions), use `access` from `useFireproof()` — see the Fireproof docs. `useViewer().can()` checks app-level membership; `access.hasRole()` / `access.hasChannel()` checks access-function grants.
+- `can("write")` checks app-level membership — is the viewer through the door? For per-database permissions (roles and channels), use `access` from `useFireproof()`: `access.hasRole("moderator")`, `access.hasChannel("engineering")`. The access function (access.js) is the server-side authority; `access` in the UI reflects its decisions.
 
 ## ViewerTag
 
@@ -148,9 +148,9 @@ const { viewer, ViewerTag } = useViewer();
 
 **Self-detection is automatic.** When `ViewerTag` renders the current viewer it shows a dashed indigo ring and pencil overlay on the avatar. Clicking it opens a file picker; the upload and profile save happen internally.
 
-**Undefined safety.** If `userSlug` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring. This prevents a broken data source from accidentally granting photo-edit access to an arbitrary pill.
+**Undefined safety.** If `ownerHandle` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring. This prevents a broken data source from accidentally granting photo-edit access to an arbitrary pill.
 
-**Anonymous safety.** `ViewerTag` is always safe to call regardless of login state — it never throws. When the viewer is anonymous and no `userSlug` prop is given, it renders a "Sign in" button that opens the platform login UI when clicked. Wrap it in a `{viewer && <ViewerTag />}` guard if you want to suppress it entirely for anonymous users.
+**Anonymous safety.** `ViewerTag` is always safe to call regardless of login state — it never throws. When the viewer is anonymous and no `ownerHandle` prop is given, it renders a "Sign in" button that opens the platform login UI when clicked. Wrap it in a `{viewer && <ViewerTag />}` guard if you want to suppress it entirely for anonymous users.
 
 **Theming.** `ViewerTag` reads `--accent`, `--accent-text`, `--card-bg`, `--border`, `--text`, and `--muted` from the app's CSS variables with sensible fallbacks. If your app defines these on `:root` (which most generated themes do), `ViewerTag` inherits the theme automatically with no extra props.
 
