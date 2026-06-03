@@ -17,7 +17,7 @@ function ChatInterface({
   onClick: (a: { fsId: string; appSlug: string; ownerHandle: string }) => void;
   onDiffClick?: (diff: { path: string; lines: string[] } | null) => void;
   onRetry?: (msg: PromptError) => void;
-  onSelectOption?: (option: string) => void;
+  onSelectOption?: (option: string) => void | boolean | Promise<void | boolean>;
 }) {
   const { fsId } = useParams<{ fsId?: string }>();
   const { running, blocks } = promptState;

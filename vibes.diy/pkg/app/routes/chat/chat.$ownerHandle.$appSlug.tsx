@@ -412,6 +412,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   // flips promptState.running true (or the send settles/errors). Closes the
   // click→first-block window where neither promptToSend nor running is truthy.
   const [submitting, setSubmitting] = useState(false);
+  const pendingSubmitResolveRef = useRef<((ok: boolean) => void) | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
   const [themeModalOpen, setThemeModalOpen] = useState(false);
   // Hold latest fsId in a ref so the prompt-firing effect can preserve it in
@@ -452,14 +453,27 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
 
   useBuildCompletionNotifications();
 
+  const settlePendingSubmit = useCallback((ok: boolean) => {
+    const resolvePending = pendingSubmitResolveRef.current;
+    if (!resolvePending) return;
+    pendingSubmitResolveRef.current = null;
+    resolvePending(ok);
+  }, []);
+
   const submitPrompt = useCallback(
-    (text: string) => {
-      if (inConstruction) return;
-      if (!shouldAcceptPrompt({ text, submitting, running: promptState.running })) return;
-      setSubmitting(true);
-      sendPrompt(text);
+    (text: string): Promise<boolean> => {
+      if (inConstruction) return Promise.resolve(false);
+      if (!shouldAcceptPrompt({ text, submitting, running: promptState.running })) return Promise.resolve(false);
+      // Best effort safety: if a previous submit promise is somehow still
+      // pending, resolve it as failed before replacing it.
+      settlePendingSubmit(false);
+      return new Promise<boolean>((resolve) => {
+        pendingSubmitResolveRef.current = resolve;
+        setSubmitting(true);
+        sendPrompt(text);
+      });
     },
-    [inConstruction, submitting, promptState.running, sendPrompt]
+    [inConstruction, submitting, promptState.running, sendPrompt, settlePendingSubmit]
   );
 
   const handleSelectOption = useCallback((option: string) => submitPrompt(option), [submitPrompt]);
@@ -689,14 +703,17 @@ ${rootCssBlock}
           })
           .then((r) => {
             if (r.isErr()) {
-              console.error(`PromptSend failed`, r.Ok());
+              console.error(`PromptSend failed`, r.Err());
+              settlePendingSubmit(false);
             } else {
               console.log(`send prompt`, sentPrompt);
               notifyRecentVibesChanged();
+              settlePendingSubmit(true);
             }
           })
           .catch((err) => {
             console.error(`PromptSend threw`, err);
+            settlePendingSubmit(false);
           })
           .finally(() => {
             setSubmitting(false);
@@ -708,6 +725,8 @@ ${rootCssBlock}
     vibeDiyApi.openChat({ ownerHandle, appSlug, mode: "chat" }).then((rChat) => {
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), ownerHandle, appSlug);
+        settlePendingSubmit(false);
+        setSubmitting(false);
         return;
       }
       setChat(rChat.Ok());
@@ -752,7 +771,7 @@ ${rootCssBlock}
         (chat as LLMChat).close();
       }
     };
-  }, [ownerHandle, appSlug, chat, openingRef, vibeDiyApi, promptToSend]);
+  }, [ownerHandle, appSlug, chat, openingRef, vibeDiyApi, promptToSend, settlePendingSubmit]);
 
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -856,10 +875,10 @@ ${rootCssBlock}
       }
       if (promptText) {
         chatInput.current?.setPrompt(promptText);
-        sendPrompt(promptText);
+        void submitPrompt(promptText);
       }
     },
-    [promptState.blocks, chatInput]
+    [promptState.blocks, chatInput, submitPrompt]
   );
 
   const [editorState, setEditorState] = useState<EditorState>({

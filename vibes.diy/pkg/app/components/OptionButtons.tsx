@@ -11,7 +11,7 @@ interface OptionButtonsProps {
    * only needs to see the explainer once.
    */
   readonly isFirst?: boolean;
-  readonly onSelect?: (option: string) => void;
+  readonly onSelect?: (option: string) => void | boolean | Promise<void | boolean>;
 }
 
 /**
@@ -23,6 +23,10 @@ interface OptionButtonsProps {
  */
 export function OptionButtons({ options, disabled, isFirst, onSelect }: OptionButtonsProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
+
+  const clearIfStillSelected = React.useCallback((option: string) => {
+    setSelected((current) => (current === option ? null : current));
+  }, []);
 
   // When this message scrolls into history (disabled flips true) drop the
   // pressed state so it doesn't linger as a stuck highlight.
@@ -38,7 +42,24 @@ export function OptionButtons({ options, disabled, isFirst, onSelect }: OptionBu
   const handleClick = (option: string) => {
     if (locked) return;
     setSelected(option);
-    onSelect?.(option);
+    try {
+      const selectResult = onSelect?.(option);
+      if (selectResult === false) {
+        clearIfStillSelected(option);
+        return;
+      }
+      if (selectResult && typeof selectResult === "object" && "then" in selectResult) {
+        void Promise.resolve(selectResult)
+          .then((ok) => {
+            if (ok === false) clearIfStillSelected(option);
+          })
+          .catch(() => {
+            clearIfStillSelected(option);
+          });
+      }
+    } catch {
+      clearIfStillSelected(option);
+    }
   };
 
   return (
