@@ -97,6 +97,7 @@ import {
 } from "../intern/prompt-assembly.js";
 import { bumpAppRecency } from "../intern/bump-app-recency.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
+import { loadModels } from "./list-models.js";
 
 // Access the raw WSSendProvider from Evento's wrapped ctx.send.
 // Evento wraps the send provider — the raw instance is at .provider.
@@ -132,6 +133,264 @@ export type {
   ApplyEditsError,
   FenceParseError,
 };
+
+interface LLMRequestWithHeaders extends LLMRequest {
+  headers: LLMHeaders;
+  model: string;
+}
+
+const TRANSIENT_LLM_STATUSES = new Set([429, 502, 503, 504]);
+const PRIMARY_RETRY_DELAY_MS = 100;
+const FALLBACK_RETRY_DELAY_MS = 250;
+// Upper bound on how long we will wait before a retry. We honor an upstream
+// Retry-After up to this ceiling so a hostile or misconfigured provider cannot
+// pin the request handler open for an arbitrary duration.
+const MAX_RETRY_AFTER_MS = 10_000;
+const MAX_ATTEMPT_BODY_SNIPPET_CHARS = 2000;
+
+type LlmAttemptLabel = "primary" | "primary-retry" | "fallback";
+
+interface LlmAttemptFailureBase {
+  readonly label: LlmAttemptLabel;
+  readonly model: string;
+  readonly retryable: boolean;
+}
+
+interface LlmHttpStatusAttemptFailure extends LlmAttemptFailureBase {
+  readonly kind: "http-status";
+  readonly status: number;
+  readonly statusText: string;
+  readonly bodySnippet?: string;
+  readonly retryAfterMs?: number;
+}
+
+interface LlmMissingBodyAttemptFailure extends LlmAttemptFailureBase {
+  readonly kind: "missing-body";
+  readonly status: number;
+  readonly statusText: string;
+  readonly error: string;
+}
+
+interface LlmExceptionAttemptFailure extends LlmAttemptFailureBase {
+  readonly kind: "exception";
+  readonly error: string;
+}
+
+type LlmAttemptFailure = LlmHttpStatusAttemptFailure | LlmMissingBodyAttemptFailure | LlmExceptionAttemptFailure;
+
+interface LlmAttemptOk {
+  readonly ok: true;
+  readonly res: Response;
+  readonly abort: AbortController;
+}
+
+interface LlmAttemptErr {
+  readonly ok: false;
+  readonly abort: AbortController;
+  readonly failure: LlmAttemptFailure;
+}
+
+interface LlmDispatchOk {
+  readonly ok: true;
+  readonly res: Response;
+  readonly llmReq: LLMRequestWithHeaders;
+  readonly abort: AbortController;
+  readonly attempts: readonly LlmAttemptFailure[];
+}
+
+interface LlmDispatchErr {
+  readonly ok: false;
+  readonly llmReq: LLMRequestWithHeaders;
+  readonly abort: AbortController;
+  readonly attempts: readonly LlmAttemptFailure[];
+  readonly error: string;
+}
+
+type LlmDispatchResult = LlmDispatchOk | LlmDispatchErr;
+
+interface DispatchLlmRequestWithFallbackArgs {
+  readonly vctx: VibesApiSQLCtx;
+  readonly mode: PromptStyle;
+  readonly llmReq: LLMRequestWithHeaders;
+}
+
+function formatAttemptFailure(failure: LlmAttemptFailure): string {
+  const prefix = `${failure.label} ${failure.model}`;
+  switch (failure.kind) {
+    case "http-status":
+    case "missing-body": {
+      const statusText = failure.statusText.length > 0 ? ` ${failure.statusText}` : "";
+      const errorText = failure.kind === "missing-body" ? `: ${failure.error}` : "";
+      const bodyText =
+        failure.kind === "http-status" && typeof failure.bodySnippet === "string" && failure.bodySnippet.length > 0
+          ? `: ${failure.bodySnippet}`
+          : "";
+      return `${prefix} failed with status ${failure.status}${statusText}${errorText}${bodyText}`;
+    }
+    case "exception":
+      return `${prefix} failed with error ${failure.error}`;
+  }
+}
+
+function formatLlmAttemptFailures(failures: readonly LlmAttemptFailure[]): string {
+  return `LLM request failed after ${failures.length} attempt${failures.length === 1 ? "" : "s"}: ${failures
+    .map(formatAttemptFailure)
+    .join("; ")}`;
+}
+
+function parseRetryAfterMs(headers: Headers): number | undefined {
+  const raw = headers.get("retry-after");
+  if (raw === null) return;
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  const retryAt = Date.parse(raw);
+  if (Number.isFinite(retryAt)) return Math.max(0, retryAt - Date.now());
+}
+
+function delayForAttempt(failure: LlmAttemptFailure, defaultDelayMs: number): number {
+  const retryAfterMs = failure.kind === "http-status" ? failure.retryAfterMs : undefined;
+  return Math.min(retryAfterMs ?? defaultDelayMs, MAX_RETRY_AFTER_MS);
+}
+
+async function waitMs(ms: number): Promise<void> {
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function drainFailureBody(res: Response): Promise<string> {
+  if (res.body === null) return "";
+  const rText = await exception2Result(() => res.text());
+  const text = rText.isOk() ? rText.Ok() : `<read-failed: ${String(rText.Err())}>`;
+  return text.length > MAX_ATTEMPT_BODY_SNIPPET_CHARS
+    ? `${text.slice(0, MAX_ATTEMPT_BODY_SNIPPET_CHARS)}...[+${text.length - MAX_ATTEMPT_BODY_SNIPPET_CHARS}b]`
+    : text;
+}
+
+async function findFallbackModel(vctx: VibesApiSQLCtx, mode: PromptStyle, failedModel: string): Promise<Result<string>> {
+  if (mode !== "chat" && mode !== "app") {
+    return Result.Err(`Mode ${mode} does not support LLM fallback`);
+  }
+  const rModels = await loadModels(vctx);
+  if (rModels.isErr()) {
+    vctx.logger.Warn().Err(rModels).Msg("llm-fallback-model-load-failed");
+    return Result.Err(`Failed to load fallback model catalog: ${String(rModels.Err())}`);
+  }
+  for (const model of rModels.Ok().models) {
+    if (model.id !== failedModel && Array.isArray(model.fallbackFor) && model.fallbackFor.includes(mode)) {
+      return Result.Ok(model.id);
+    }
+  }
+  return Result.Err(`No fallback model configured for ${mode} after ${failedModel}`);
+}
+
+async function attemptLlmRequest(
+  vctx: VibesApiSQLCtx,
+  llmReq: LLMRequestWithHeaders,
+  label: LlmAttemptLabel
+): Promise<LlmAttemptOk | LlmAttemptErr> {
+  const abort = new AbortController();
+  const rRes = await exception2Result(() => vctx.llmRequest(llmReq, { signal: abort.signal }));
+  if (rRes.isErr()) {
+    abort.abort();
+    return {
+      ok: false,
+      abort,
+      failure: {
+        kind: "exception",
+        label,
+        model: llmReq.model,
+        error: String(rRes.Err()),
+        retryable: false,
+      },
+    };
+  }
+  const res = rRes.Ok();
+  if (res.ok && res.body !== null) {
+    return { ok: true, res, abort };
+  }
+  if (res.ok) {
+    abort.abort();
+    return {
+      ok: false,
+      abort,
+      failure: {
+        kind: "missing-body",
+        label,
+        model: llmReq.model,
+        status: res.status,
+        statusText: res.statusText,
+        error: "response body missing",
+        retryable: false,
+      },
+    };
+  }
+  const bodySnippet = await drainFailureBody(res);
+  const retryAfterMs = parseRetryAfterMs(res.headers);
+  abort.abort();
+  const failure: LlmHttpStatusAttemptFailure = {
+    kind: "http-status",
+    label,
+    model: llmReq.model,
+    status: res.status,
+    statusText: res.statusText,
+    retryable: TRANSIENT_LLM_STATUSES.has(res.status),
+    ...(bodySnippet.length > 0 ? { bodySnippet } : {}),
+    ...(typeof retryAfterMs === "number" ? { retryAfterMs } : {}),
+  };
+  return {
+    ok: false,
+    abort,
+    failure,
+  };
+}
+
+async function dispatchLlmRequestWithFallback(args: DispatchLlmRequestWithFallbackArgs): Promise<LlmDispatchResult> {
+  const attempts: LlmAttemptFailure[] = [];
+
+  // Primary then one retry on the same model. Bail immediately on a
+  // non-retryable failure; otherwise fall through to the fallback model.
+  let lastPrimary: LlmAttemptErr | undefined;
+  for (const label of ["primary", "primary-retry"] as const) {
+    if (lastPrimary) {
+      await waitMs(delayForAttempt(lastPrimary.failure, PRIMARY_RETRY_DELAY_MS));
+    }
+    const attempt = await attemptLlmRequest(args.vctx, args.llmReq, label);
+    if (attempt.ok) return { ok: true, res: attempt.res, llmReq: args.llmReq, abort: attempt.abort, attempts };
+    attempts.push(attempt.failure);
+    if (attempt.failure.retryable === false) {
+      return { ok: false, llmReq: args.llmReq, abort: attempt.abort, attempts, error: formatLlmAttemptFailures(attempts) };
+    }
+    lastPrimary = attempt;
+  }
+  // Both primary attempts failed retryably, so the loop ran to completion and
+  // lastPrimary is set.
+  const failedPrimary = lastPrimary as LlmAttemptErr;
+
+  const rFallbackModel = await findFallbackModel(args.vctx, args.mode, args.llmReq.model);
+  if (rFallbackModel.isErr()) {
+    const error = `${formatLlmAttemptFailures(attempts)}; ${String(rFallbackModel.Err())}`;
+    return { ok: false, llmReq: args.llmReq, abort: failedPrimary.abort, attempts, error };
+  }
+
+  const fallbackModel = rFallbackModel.Ok();
+  const fallbackReq: LLMRequestWithHeaders = { ...args.llmReq, model: fallbackModel };
+  await waitMs(delayForAttempt(failedPrimary.failure, FALLBACK_RETRY_DELAY_MS));
+  const fallback = await attemptLlmRequest(args.vctx, fallbackReq, "fallback");
+  if (fallback.ok) {
+    args.vctx.logger
+      .Info()
+      .Any("event", {
+        mode: args.mode,
+        fromModel: args.llmReq.model,
+        toModel: fallbackModel,
+      })
+      .Msg("llm-fallback-succeeded");
+    return { ok: true, res: fallback.res, llmReq: fallbackReq, abort: fallback.abort, attempts };
+  }
+  attempts.push(fallback.failure);
+  return { ok: false, llmReq: fallbackReq, abort: fallback.abort, attempts, error: formatLlmAttemptFailures(attempts) };
+}
 
 async function appendBlockEvent({
   ctx,
@@ -407,7 +666,7 @@ async function handlerLlmRequest({
   // skipped. For app/img modes this is undefined and the inline image_url
   // logic still runs.
   preAssembled?: { model: string; messages: ChatMessage[] };
-}): Promise<{ res: Response; blockSeq: number; llmReq: LLMRequest & { headers: LLMHeaders }; abort: AbortController }> {
+}): Promise<{ res: Response; blockSeq: number; llmReq: LLMRequestWithHeaders; abort: AbortController }> {
   const modelId: string = await scope
     .evalResult(async (): Promise<Result<string>> => {
       const r = await getModelDefaults(vctx, { appSlug: resChat.appSlug, ownerHandle: resChat.ownerHandle });
@@ -474,9 +733,21 @@ async function handlerLlmRequest({
       return withSystemPrompt;
     })
     .do();
-  // if (withSystemPrompt.isErr()) {
-  //   return Result.Err(withSystemPrompt);
-  // }
+  // "Initial turn" means we only have the current user message in the conversation history.
+  const isInitialTurn = withSystemPrompt.messages.filter((m) => m.role === "user").length <= 1;
+  const llmReq: LLMRequestWithHeaders = {
+    ...{
+      ...req.prompt,
+      messages: withSystemPrompt.messages,
+    },
+    ...vctx.params.llm.enforced,
+    model: withSystemPrompt.model,
+    headers: vctx.params.llm.headers,
+    stream: true,
+    ...(isInitialTurn && req.mode === "chat" ? { verbosity: "low" as const } : {}),
+    ...(req.mode === "img" ? { modalities: ["text", "image"] } : {}),
+  };
+
   // Write prompt.req to chatSections AFTER assembly. The block is needed so
   // the NEXT turn's reconstruction sees this turn's user prompt; it must NOT
   // be a precondition of assembly so the dry-run handler (inspect) can reuse
@@ -502,42 +773,19 @@ async function handlerLlmRequest({
       return r;
     })
     .do();
-  // console.log("Sending LLM request for promptId:", promptId);
-  // "Initial turn" means we only have the current user message in the conversation history.
-  const isInitialTurn = withSystemPrompt.messages.filter((m) => m.role === "user").length <= 1;
-  const llmReq: LLMRequest & { headers: LLMHeaders } = {
-    // ...vctx.params.llm.default,
-    // model,
-    ...{
-      ...req.prompt,
-      messages: withSystemPrompt.messages,
-    },
-    ...vctx.params.llm.enforced,
-    model: withSystemPrompt.model,
-    headers: vctx.params.llm.headers,
-    stream: true,
-    ...(isInitialTurn && req.mode === "chat" ? { verbosity: "low" as const } : {}),
-    ...(req.mode === "img" ? { modalities: ["text", "image"] } : {}),
-  };
 
-  // add system prompt here
-
-  // console.log(promptId, "LLM request for promptId:");
-  const abort = new AbortController();
+  const dispatch = await dispatchLlmRequestWithFallback({
+    vctx,
+    mode: req.mode,
+    llmReq,
+  });
   const res = await scope
     .evalResult<Response>(async () => {
-      const res = await vctx.llmRequest(llmReq, { signal: abort.signal });
-      if (!res.ok) {
-        return Result.Err(`LLM request failed with status ${res.status} :${llmReq.model} : ${res.statusText}`);
-      }
-      if (!res.body) {
-        return Result.Err(`LLM request returned no body`);
-      }
-      return Result.Ok(res);
+      return dispatch.ok ? Result.Ok(dispatch.res) : Result.Err(dispatch.error);
     })
     .do();
 
-  return { res, blockSeq, llmReq, abort };
+  return { res, blockSeq, llmReq: dispatch.llmReq, abort: dispatch.abort };
 }
 
 async function handleProdiaImageRequest({
@@ -841,7 +1089,7 @@ async function handleLlmResponse({
   res: Response;
   promptId: string;
   blockSeq: number;
-  llmReq: LLMRequest & { headers: LLMHeaders };
+  llmReq: LLMRequestWithHeaders;
   abort: AbortController;
 }): Promise<number> {
   await scope
@@ -1210,18 +1458,24 @@ async function handleLlmResponse({
         const recPayload = recReq.Ok();
         const recMessageCount = recPayload.messages.length;
         const recRoles = recPayload.messages.map((m) => m.role);
-        const recModel = recPayload.model;
-        const nextAbort = new AbortController();
-        const rNextRes = await exception2Result(() =>
-          vctx.llmRequest({ ...recPayload, headers: llmReq.headers }, { signal: nextAbort.signal })
-        );
-        if (rNextRes.isErr()) {
+        const recLlmReq: LLMRequestWithHeaders = {
+          ...recPayload,
+          headers: llmReq.headers,
+          model: llmReq.model,
+        };
+        const recDispatch = await dispatchLlmRequestWithFallback({
+          vctx,
+          mode: req.mode,
+          llmReq: recLlmReq,
+        });
+        const recModel = recDispatch.llmReq.model;
+        if (recDispatch.ok === false) {
           recoveryLogger
             .Info()
             .Any("event", {
               chatId: req.chatId,
               promptId,
-              err: String(rNextRes.Err()),
+              err: recDispatch.error,
               model: recModel,
               messageCount: recMessageCount,
               roles: recRoles,
@@ -1229,26 +1483,7 @@ async function handleLlmResponse({
             .Msg("recovery-call-failed");
           return Result.Ok();
         }
-        const nextRes = rNextRes.Ok();
-        if (!nextRes.ok || !nextRes.body) {
-          const rBody = await exception2Result(() => nextRes.text());
-          const rawBody = rBody.isOk() ? rBody.Ok() : `<read-failed: ${String(rBody.Err())}>`;
-          const bodySnippet = rawBody.length > 2000 ? `${rawBody.slice(0, 2000)}…[+${rawBody.length - 2000}b]` : rawBody;
-          recoveryLogger
-            .Info()
-            .Any("event", {
-              chatId: req.chatId,
-              promptId,
-              status: nextRes.status,
-              statusText: nextRes.statusText,
-              model: recModel,
-              messageCount: recMessageCount,
-              roles: recRoles,
-              bodySnippet,
-            })
-            .Msg("recovery-call-failed");
-          return Result.Ok();
-        }
+        const nextRes = recDispatch.res;
         recoveryLogger
           .Debug()
           .Any("event", {
@@ -1262,7 +1497,7 @@ async function handleLlmResponse({
           })
           .Msg("recovery-call-started");
         currentRes = nextRes;
-        currentAbort = nextAbort;
+        currentAbort = recDispatch.abort;
         isRecoveryStream = true;
         // Loop: consume the recovery stream the same way.
       }

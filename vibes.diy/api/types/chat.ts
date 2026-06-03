@@ -31,6 +31,7 @@ export const Model = type({
   description: "string",
   "featured?": "boolean",
   "preSelected?": ModelCapability.array(),
+  "fallbackFor?": ModelCapability.array(),
   "supports?": ModelCapability.array(),
 });
 

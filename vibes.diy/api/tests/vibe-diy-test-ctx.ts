@@ -2,7 +2,7 @@ import { loadAsset, Result, string2stream } from "@adviser/cement";
 import { DeviceIdCA } from "@fireproof/core-device-id";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createAppContext, noopCache } from "@vibes.diy/api-svc";
-import { type AccessDescriptor, type EvtRequestGrant, MsgBase, S3Api } from "@vibes.diy/api-types";
+import { type AccessDescriptor, type EvtRequestGrant, type LLMHeaders, type Model, MsgBase, S3Api } from "@vibes.diy/api-types";
 import { StubS3Api } from "./stub-s3-api.js";
 import { createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -49,6 +49,8 @@ async function createDrizzleDB(): Promise<VibesSqlite> {
 
 export interface CreateVibeDiyTestCtxOpts {
   s3?: S3Api;
+  models?: Model[];
+  llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }): Promise<Response>;
   // Override teeWriter peerTimeout for tests (default 30s in production).
   // Canary tests set this small (e.g. 200ms) so deadlines fire fast.
   peerTimeout?: number;
@@ -117,6 +119,25 @@ export async function createVibeDiyTestCtx(
     DB_FLAVOUR: flavour,
   };
 
+  const defaultModels: Model[] = [
+    {
+      id: "anthropic/claude-opus-4.5",
+      name: "Claude Opus 4.5 (Default)",
+      description:
+        "Claude Opus 4.5 is Anthropic's most powerful model, offering the best performance for complex reasoning, coding, and creative tasks",
+      featured: true,
+      preSelected: ["chat", "app", "img"],
+    },
+    {
+      id: "anthropic/claude-sonnet-4.6",
+      name: "Claude Sonnet 4.6",
+      description: "Claude Sonnet 4.6 is Anthropic's most advanced Sonnet model to date",
+      featured: true,
+      fallbackFor: ["chat", "app"],
+      supports: ["chat", "app"],
+    },
+  ];
+
   return createAppContext({
     sthis,
 
@@ -133,35 +154,22 @@ export async function createVibeDiyTestCtx(
     },
     fetchAsset: async (url: string) => {
       if (url.endsWith("models.json")) {
-        return Result.Ok(
-          await string2stream(
-            JSON.stringify([
-              {
-                id: "anthropic/claude-opus-4.5",
-                name: "Claude Opus 4.5 (Default)",
-                description:
-                  "Claude Opus 4.5 is Anthropic's most powerful model, offering the best performance for complex reasoning, coding, and creative tasks",
-                featured: true,
-                preSelected: ["chat", "app", "img"],
-              },
-            ])
-          )
-        );
+        return Result.Ok(await string2stream(JSON.stringify(opts.models ?? defaultModels)));
       }
       throw new Error(`fetchAsset not implemented in test for url: ${url}`);
     },
     postQueue: async (_msg: MsgBase) => {
       // throw new Error(`postQueue not implemented in test for msg: ${JSON.stringify(msg)}`);
     },
-    llmRequest: async (prompt: LLMRequest) => {
-      // console.log("Received LLM request in test llmRequest handler with messages:", prompt.messages.filter((m) => m.content.some((c) => c.type === "text")).map((m) => m.content.filter((c) => c.type === "text").map((c) => c.text).join("\n")).join("\n---\n"));
-      if (prompt.messages[0]?.content?.some((c) => c.type === "text" && c.text.includes("use fixture response"))) {
-        const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
-        return new Response(fixture.Ok(), { status: 200 });
-      }
-      // console.log("Received LLM request in test llmRequest handler with messages:", prompt.messages);
-      return new Response("", { status: 200 });
-    },
+    llmRequest:
+      opts.llmRequest ??
+      (async (prompt: LLMRequest & { headers: LLMHeaders }) => {
+        if (prompt.messages[0]?.content?.some((c) => c.type === "text" && c.text.includes("use fixture response"))) {
+          const fixture = await loadAsset("./fixture.llm", { basePath: () => import.meta.url });
+          return new Response(fixture.Ok(), { status: 200 });
+        }
+        return new Response("", { status: 200 });
+      }),
     netHash: () => "test-hash",
     connections: new Set(),
     env,
