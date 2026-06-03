@@ -131,7 +131,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const afbRow = await vctx.sql.db
         .select({ accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri, dbName: tAfb.dbName })
         .from(tAfb)
-        .where(and(eq(tAfb.userSlug, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [req.dbName, "*"])))
+        .where(and(eq(tAfb.ownerHandle, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [req.dbName, "*"])))
         .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
         .limit(1)
         .then((r) => r[0]);
@@ -216,7 +216,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           .from(tOutputs)
           .where(
             and(
-              eq(tOutputs.userSlug, req.ownerHandle),
+              eq(tOutputs.ownerHandle, req.ownerHandle),
               eq(tOutputs.appSlug, req.appSlug),
               eq(tOutputs.dbName, req.dbName),
               eq(tOutputs.fnCid, fnCid),
@@ -403,7 +403,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           vctx.sql.db
             .insert(tOutputs)
             .values({
-              userSlug: req.ownerHandle,
+              ownerHandle: req.ownerHandle,
               appSlug: req.appSlug,
               dbName: req.dbName,
               docId,
@@ -412,7 +412,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
               hasGrants: outputHasGrants,
             })
             .onConflictDoUpdate({
-              target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+              target: [tOutputs.ownerHandle, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
               set: {
                 fnCid: afbRow.accessFnCid,
                 output: JSON.stringify(accessResult),

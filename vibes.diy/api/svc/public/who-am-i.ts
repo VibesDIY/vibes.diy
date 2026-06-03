@@ -62,7 +62,7 @@ async function resolveGrants(
   const afbRows = await vctx.sql.db
     .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
     .from(tAfb)
-    .where(and(eq(tAfb.userSlug, ownerUserSlug), eq(tAfb.appSlug, appSlug)));
+    .where(and(eq(tAfb.ownerHandle, ownerUserSlug), eq(tAfb.appSlug, appSlug)));
 
   if (afbRows.length === 0) return undefined;
 
@@ -87,7 +87,7 @@ async function resolveGrants(
   const storedOutputs = await vctx.sql.db
     .select({ dbName: tOutputs.dbName, docId: tOutputs.docId, fnCid: tOutputs.fnCid, output: tOutputs.output })
     .from(tOutputs)
-    .where(and(eq(tOutputs.userSlug, ownerUserSlug), eq(tOutputs.appSlug, appSlug), eq(tOutputs.hasGrants, 1)));
+    .where(and(eq(tOutputs.ownerHandle, ownerUserSlug), eq(tOutputs.appSlug, appSlug), eq(tOutputs.hasGrants, 1)));
 
   // Group outputs by concrete dbName, only including rows whose fnCid
   // matches the effective binding (named takes precedence over wildcard).

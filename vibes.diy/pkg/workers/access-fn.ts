@@ -65,12 +65,12 @@ export class AccessFnDO implements DurableObject {
     const grantState: GrantState = body.grantState ?? { members: {}, roleGrants: {}, userGrants: {} };
 
     // Helper: resolve effective channels from serialized grant state
-    function resolveChannels(userSlug: string): Set<string> {
+    function resolveChannels(userHandle: string): Set<string> {
       const channels = new Set<string>();
-      const direct = grantState.userGrants[userSlug];
+      const direct = grantState.userGrants[userHandle];
       if (direct) for (const ch of direct) channels.add(ch);
       for (const [role, members] of Object.entries(grantState.members)) {
-        if ((members as string[]).includes(userSlug)) {
+        if ((members as string[]).includes(userHandle)) {
           const roleChannels = grantState.roleGrants[role];
           if (roleChannels) for (const ch of roleChannels) channels.add(ch);
         }

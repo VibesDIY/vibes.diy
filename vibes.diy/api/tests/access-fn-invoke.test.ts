@@ -65,7 +65,7 @@ async function seedBinding(
   binding: { ownerHandle: string; appSlug: string; dbName: string }
 ) {
   await ctx.vibesCtx.sql.db.insert(ctx.vibesCtx.sql.tables.accessFunctionBindings).values({
-    userSlug: binding.ownerHandle,
+    ownerHandle: binding.ownerHandle,
     appSlug: binding.appSlug,
     dbName: binding.dbName,
     accessFnCid: CID,
@@ -209,7 +209,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
       .from(tOutputs)
       .where(
         and(
-          eq(tOutputs.userSlug, ownerHandle),
+          eq(tOutputs.ownerHandle, ownerHandle),
           eq(tOutputs.appSlug, appSlug),
           eq(tOutputs.dbName, "default"),
           eq(tOutputs.docId, putRes.id)
@@ -231,7 +231,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     const WILDCARD_CID = "wildcard-cid";
     // Seed a wildcard binding (export default) for the same app
     await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.accessFunctionBindings).values({
-      userSlug: ownerHandle,
+      ownerHandle: ownerHandle,
       appSlug,
       dbName: "*",
       accessFnCid: WILDCARD_CID,

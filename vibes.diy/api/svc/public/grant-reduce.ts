@@ -20,11 +20,11 @@ export type { AccessDescriptor };
  * Per-document extracted grant data from a single AccessDescriptor result.
  */
 export interface DocContribution {
-  /** roleName → Set<userSlug> from result.members */
+  /** roleName → Set<userHandle> from result.members */
   members: Map<string, Set<string>>;
   /** roleName → Set<channelId> from result.grant.roles */
   grantRoles: Map<string, Set<string>>;
-  /** userSlug → Set<channelId> from result.grant.users */
+  /** userHandle → Set<channelId> from result.grant.users */
   grantUsers: Map<string, Set<string>>;
   /** Set<channelId> from result.grant.public */
   grantPublic: Set<string>;
@@ -74,11 +74,11 @@ export class GrantReduce {
   /** Per-doc contributions stored for incremental updates */
   readonly docContributions = new Map<string, DocContribution>();
 
-  /** Reduced state: roleName → Set<userSlug> */
+  /** Reduced state: roleName → Set<userHandle> */
   effectiveMembers = new Map<string, Set<string>>();
   /** Reduced state: roleName → Set<channelId> */
   roleGrants = new Map<string, Set<string>>();
-  /** Reduced state: userSlug → Set<channelId> */
+  /** Reduced state: userHandle → Set<channelId> */
   userGrants = new Map<string, Set<string>>();
   /** Reduced state: Set<channelId> accessible to all users */
   publicChannels = new Set<string>();
@@ -129,11 +129,11 @@ export class GrantReduce {
    * Returns the effective set of channel IDs accessible to a user.
    * Two-pass: union of direct user grants + role-expanded grants.
    */
-  resolveEffectiveChannels(userSlug: string): Set<string> {
+  resolveEffectiveChannels(userHandle: string): Set<string> {
     const result = new Set<string>();
 
     // Pass 1: direct user grants
-    const direct = this.userGrants.get(userSlug);
+    const direct = this.userGrants.get(userHandle);
     if (direct) {
       for (const ch of direct) {
         result.add(ch);
@@ -142,7 +142,7 @@ export class GrantReduce {
 
     // Pass 2: role-expanded grants
     for (const [roleName, members] of this.effectiveMembers) {
-      if (members.has(userSlug)) {
+      if (members.has(userHandle)) {
         const roleChannels = this.roleGrants.get(roleName);
         if (roleChannels) {
           for (const ch of roleChannels) {
@@ -158,8 +158,8 @@ export class GrantReduce {
   /**
    * Checks whether a user has a given role in the effective member state.
    */
-  hasRole(userSlug: string, roleName: string): boolean {
-    return this.effectiveMembers.get(roleName)?.has(userSlug) ?? false;
+  hasRole(userHandle: string, roleName: string): boolean {
+    return this.effectiveMembers.get(roleName)?.has(userHandle) ?? false;
   }
 
   /**

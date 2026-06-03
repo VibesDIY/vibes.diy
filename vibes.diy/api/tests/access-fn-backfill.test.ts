@@ -85,7 +85,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
 
     // Manually seed AccessFunctionBindings so putDoc writes go through the gate
     await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.accessFunctionBindings).values({
-      userSlug: ownerHandle,
+      ownerHandle: ownerHandle,
       appSlug,
       dbName: "chat",
       accessFnCid: "pre-seed-cid",
@@ -106,7 +106,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
       .delete(appCtx.vibesCtx.sql.tables.accessFunctionBindings)
       .where(
         and(
-          eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.userSlug, ownerHandle),
+          eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.ownerHandle, ownerHandle),
           eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.appSlug, appSlug)
         )
       );
@@ -114,7 +114,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
       .delete(appCtx.vibesCtx.sql.tables.accessFnOutputs)
       .where(
         and(
-          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.userSlug, ownerHandle),
+          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.ownerHandle, ownerHandle),
           eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.appSlug, appSlug)
         )
       );
@@ -144,7 +144,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
     const rows = await appCtx.vibesCtx.sql.db
       .select()
       .from(tOutputs)
-      .where(and(eq(tOutputs.userSlug, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
+      .where(and(eq(tOutputs.ownerHandle, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
 
     expect(rows.length).toBe(3);
     for (const row of rows) {
@@ -193,7 +193,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
     const rows = await appCtx.vibesCtx.sql.db
       .select()
       .from(tOutputs)
-      .where(and(eq(tOutputs.userSlug, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
+      .where(and(eq(tOutputs.ownerHandle, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
 
     expect(rows.length).toBe(3);
     for (const row of rows) {
@@ -208,7 +208,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
       .delete(appCtx.vibesCtx.sql.tables.accessFnOutputs)
       .where(
         and(
-          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.userSlug, ownerHandle),
+          eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.ownerHandle, ownerHandle),
           eq(appCtx.vibesCtx.sql.tables.accessFnOutputs.appSlug, appSlug)
         )
       );
@@ -216,7 +216,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
       .delete(appCtx.vibesCtx.sql.tables.accessFunctionBindings)
       .where(
         and(
-          eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.userSlug, ownerHandle),
+          eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.ownerHandle, ownerHandle),
           eq(appCtx.vibesCtx.sql.tables.accessFunctionBindings.appSlug, appSlug)
         )
       );
@@ -250,7 +250,7 @@ describe("backfill AccessFnOutputs on access.js push (#2101)", { timeout: 30000 
     const rows = await appCtx.vibesCtx.sql.db
       .select()
       .from(tOutputs)
-      .where(and(eq(tOutputs.userSlug, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
+      .where(and(eq(tOutputs.ownerHandle, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
 
     expect(rows.length).toBe(2);
   });

@@ -123,7 +123,7 @@ export const putAssetEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPutAsset, R
 
     const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
     if (!ownerHandle) {
-      return Result.Err("Could not resolve ownerHandle. Pass --user-slug or set a default via vibes-diy user-settings.");
+      return Result.Err("Could not resolve ownerHandle. Pass --handle or set a default via vibes-diy user-settings.");
     }
     const appSlug = args.appSlug === "" ? basename(args.file).split(".")[0] : args.appSlug;
 
@@ -240,6 +240,7 @@ export function putAssetCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
+      if (args.userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle instead\n");
       const mimeType = args.mimeType === "" ? inferMimeType(args.file) : args.mimeType;
       return {
         type: "vibes-diy.cli.put-asset",
