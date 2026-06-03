@@ -325,7 +325,8 @@ The access function is the single source of truth for permissions. The UI reads 
 This example shows the full round-trip — access.js declares channels and grants; App.jsx reads them back via `access`. Key details:
 
 - **Owner bootstrap:** `user.isOwner` gates management operations (channel setup, role grants, moderation). No bootstrap problem — the owner can always manage without needing a role granted first.
-- **Channel grant:** A `channelSetup` document grants the creator (`grant.users`), adds `grant.public` so all members can read, and `grant.roles` so posters can write.
+- **Channel identity:** Channel docs use `_id: "ch:" + name` so names are unique. The `_id` is the channel identifier everywhere — in `channels`, `grant`, and `ctx.requireAccess()`.
+- **Channel grant:** A channel document grants the creator (`grant.users`), adds `grant.public` so all members can read, and `grant.roles` so posters can write.
 - **Write surfaces** are gated with `viewer` (signed in?), `access.hasChannel()` (channel access), or `isOwner` (management).
 - **`ViewerTag`** takes `userHandle` when rendering another user.
 
@@ -335,14 +336,14 @@ access.js
 export function announcements(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "sign in" };
 
-  if (doc.type === "channelSetup") {
+  if (doc.type === "channel") {
     if (!user.isOwner) throw { forbidden: "owner only" };
     return {
-      channels: [doc.channel],
+      channels: [doc._id],
       grant: {
-        users: { [user.userHandle]: [doc.channel] },
-        public: [doc.channel],
-        roles: { poster: [doc.channel] },
+        users: { [user.userHandle]: [doc._id] },
+        public: [doc._id],
+        roles: { poster: [doc._id] },
       },
     };
   }
@@ -442,10 +443,10 @@ export function chat(doc, oldDoc, user, ctx) {
   if (doc.type === "channel") {
     if (!user.isOwner) throw { forbidden: "owner only" };
     return {
-      channels: [doc.name],
+      channels: [doc._id],
       grant: {
-        users: { [user.userHandle]: [doc.name] },
-        public: [doc.name],
+        users: { [user.userHandle]: [doc._id] },
+        public: [doc._id],
       },
     };
   }
@@ -466,21 +467,24 @@ App.jsx — the UI uses `access.hasChannel()` for everything. It has no idea whi
 const { database, useLiveQuery, access } = useFireproof("chat");
 const { docs: channels } = useLiveQuery("type", { key: "channel" });
 
-// filter to channels the viewer can see
-const visible = channels.filter((ch) => isOwner || access.hasChannel(ch.name));
+// client creates channels with a deterministic _id
+await database.put({ _id: "ch:" + name, type: "channel", createdAt: Date.now() });
 
-// can post? just check channel access — the access function handles the rest
-const canPost = viewer && (isOwner || access.hasChannel(activeChannel));
+// filter to channels the viewer can see — use _id as channel identifier
+const visible = channels.filter((ch) => isOwner || access.hasChannel(ch._id));
+
+// can post? just check channel access
+const canPost = viewer && (isOwner || access.hasChannel(activeChannel._id));
 
 // gate the compose form
 {canPost ? (
-  <Composer channel={activeChannel} />
+  <Composer channel={activeChannel._id} />
 ) : (
   <p>{viewer ? "Read-only in this channel." : "Sign in to post."}</p>
 )}
 ```
 
-The `canPost` check is `access.hasChannel()` — not `!channel.restricted`. The channel doc might have a `restricted` field, but the UI ignores it. The access function reads it server-side to decide grants; the UI reads the grant verdict from `access`.
+Channel `_id` is the channel identifier everywhere. The `canPost` check uses `access.hasChannel(ch._id)`. The access function uses `doc._id` for routing and grants. A deterministic `_id` like `"ch:" + name` enforces uniqueness — two users can't create duplicate channels.
 
 ---
 
