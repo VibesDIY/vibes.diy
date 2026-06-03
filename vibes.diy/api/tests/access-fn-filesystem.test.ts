@@ -4,11 +4,20 @@ import { Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
-import { calcEntryPointUrl, CFInject, cfServe, noopCache, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
+import {
+  calcEntryPointUrl,
+  CFInject,
+  cfServe,
+  noopCache,
+  vibesMsgEvento,
+  WSSendProvider,
+  resolveCodeBlocksToFileSystem,
+} from "@vibes.diy/api-svc";
 import { isResEnsureAppSlugOk, parseArray, fileSystemItem } from "@vibes.diy/api-types";
 import type { AccessDescriptor, FileSystemItem } from "@vibes.diy/api-types";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
+import { loadVersionTimeline } from "../svc/intern/version-timeline.js";
 
 const ACCESS_JS_CHAT_AND_DEFAULT = `export function chat(doc, oldDoc, user) {
   return { channels: ["general"], allowAnonymous: true };
@@ -318,5 +327,77 @@ export { myHandler as "my-db" }`;
       .from(tOutputs)
       .where(and(eq(tOutputs.userSlug, ownerHandle), eq(tOutputs.appSlug, appSlug), eq(tOutputs.dbName, "chat")));
     expect(outputRows.length).toBe(2);
+  });
+
+  it("access.js carries forward in version timeline seed", async () => {
+    const rPush = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: APP_JSX },
+        { type: "code-block", lang: "js", filename: "/access.js", content: ACCESS_JS_CHAT_ONLY },
+      ],
+    });
+    assert(rPush.isOk(), "push with access.js failed");
+    const pushRes = rPush.Ok();
+    assert(isResEnsureAppSlugOk(pushRes), "expected ResEnsureAppSlugOk");
+
+    const rOpen = await api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    assert(rOpen.isOk(), "openChat failed");
+    const chat = rOpen.Ok();
+
+    const tlResult = await loadVersionTimeline(appCtx.vibesCtx, chat.chatId);
+    assert(tlResult.isOk(), "loadVersionTimeline failed");
+    const timeline = tlResult.Ok();
+    expect(timeline.length).toBeGreaterThan(0);
+
+    const latestVfs = timeline[timeline.length - 1].vfs;
+    expect(latestVfs.has("/access.js")).toBe(true);
+
+    const appEditBlock = {
+      begin: {
+        type: "block.code.begin" as const,
+        blockId: "b1",
+        blockNr: 1,
+        streamId: "s1",
+        seq: 1,
+        timestamp: new Date(),
+        sectionId: "sec1",
+        lang: "jsx",
+        path: "App.jsx",
+      },
+      lines: [
+        {
+          type: "block.code.line" as const,
+          blockId: "b1",
+          blockNr: 1,
+          streamId: "s1",
+          seq: 2,
+          timestamp: new Date(),
+          sectionId: "sec1",
+          lang: "jsx",
+          line: "function App() { return null; } // edited",
+          lineNr: 1,
+        },
+      ],
+      end: {
+        type: "block.code.end" as const,
+        blockId: "b1",
+        blockNr: 1,
+        streamId: "s1",
+        seq: 3,
+        timestamp: new Date(),
+        sectionId: "sec1",
+        lang: "jsx",
+        stats: { lines: 1, bytes: 50 },
+      },
+    };
+
+    const resolved = resolveCodeBlocksToFileSystem([appEditBlock], latestVfs);
+    const accessFile = resolved.find((f) => f.filename === "/access.js");
+    expect(accessFile).toBeDefined();
+    expect(accessFile?.type).toBe("code-block");
+
+    await chat.close();
   });
 });
