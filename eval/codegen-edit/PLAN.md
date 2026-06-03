@@ -18,7 +18,7 @@ high-volume eval against it.
 ## Decisions (locked in before coding)
 
 - **Auth**: reuse existing CLI login. Pin runs to the existing `eval` user slug
-  via the CLI's already-supported `--user-slug` flag
+  via the CLI's already-supported `--handle` flag
   ([generate-cmd.ts:240-246](../../vibes-diy/cli/cmds/generate-cmd.ts#L240-L246)).
   No new credentials, no new account. Generated apps land under the `eval`
   namespace where they don't pollute the real user history.
