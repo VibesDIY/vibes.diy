@@ -2,6 +2,13 @@ import { applyEdits, applyReplace, isBlockEnd, isCodeBegin, isCodeEnd, isCodeLin
 import { AppCode } from "../../types/code-editor.js";
 import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 
+const STUB_PATTERN = /\{\/\*\s*.+\s+lands?\s+here\s*\*\/\}/gi;
+
+export function countLeftoverStubs(source: string): number {
+  const matches = source.match(STUB_PATTERN);
+  return matches ? matches.length : 0;
+}
+
 interface DebugSection {
   blockIdx: number;
   fsRefId: string | undefined;
@@ -128,12 +135,14 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
         finalLen: number;
         snapshotFsIds: string[];
         failedSectionCount: number;
+        stubCount: number;
       };
     };
     const failedSectionCount = debugSections.reduce(
       (acc, s) => acc + (s.applyErrors.length > 0 || s.parseErrors.length > 0 ? 1 : 0),
       0
     );
+    const stubCount = countLeftoverStubs(source);
     dbg.__aiderEditsDebug = {
       fsId,
       seedLen: seedFromHydrate.length,
@@ -141,6 +150,7 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
       finalLen: source.length,
       snapshotFsIds: [...snapshotByFsId.keys()],
       failedSectionCount,
+      stubCount,
     };
   }
 

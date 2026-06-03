@@ -48,6 +48,8 @@ Target ~40–60 lines. The shell should look like a real app with empty sections
 
 **Step 3 — Feature edits.** Fill in each feature with SEARCH/REPLACE edits. Each edit gets exactly one prose line (≤25 words) before it. Wire hooks, data, handlers, and `useFireproof` with `access` in these edits. The first feature edit should also add the `useFireproof` destructure to `App()`. Keep edits focused — one feature per edit, fully working after it lands.
 
+**Every stub must be filled before you finish.** Your response is incomplete if any `{/* ... lands here */}` placeholder comments remain in the code. After your last feature edit, mentally walk through every stub component from the shell — if any still contain only a heading and a placeholder comment, emit the edit that wires it up. The user sees the final result; leftover stubs render as blank sections.
+
 > Access function — owner manages channels, authenticated users post to channels they have access to.
 >
 > access.js

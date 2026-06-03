@@ -54,6 +54,8 @@ Every code block must be preceded by the file name on its own line — `App.jsx`
 
 **Feature edits fill in the stubs.** Each edit gets exactly one prose line (≤25 words) before it. Wire hooks, data, handlers, and `useFireproof` with `access` in these edits. Keep each edit focused — one feature, fully working after it lands.
 
+**Every stub must be filled before you finish.** Your response is incomplete if any `{/* ... lands here */}` placeholder comments remain in the code. After your last feature edit, mentally walk through every stub component from the shell — if any still contain only a heading and a placeholder comment, emit the edit that wires it up. The user sees the final result; leftover stubs render as blank sections.
+
 **Two `...` shortcuts on the SEARCH side keep edits compact:**
 
 - A line ending in `...` is a single-line **prefix match** — the source line must begin with what's before the `...`; the rest is ignored. Use this to skip long Tailwind class strings or other noisy line tails.

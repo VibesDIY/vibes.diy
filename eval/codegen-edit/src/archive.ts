@@ -31,6 +31,7 @@ export interface TurnSummary {
   upstreamErrorCount: number;
   applyErrorCount: number;
   resolvedFileCount: number;
+  stubCount?: number;
 }
 
 export async function createArchive(rootDir: string, slug: string): Promise<ArchiveDirs> {

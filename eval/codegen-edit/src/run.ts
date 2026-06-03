@@ -28,6 +28,8 @@ import {
   type RunManifest,
 } from "./archive.js";
 
+const STUB_PATTERN = /\{\/\*\s*.+\s+lands?\s+here\s*\*\/\}/gi;
+
 const DEFAULT_API_URL = "https://vibes.diy/api?.stable-entry.=cli";
 const DEFAULT_USER_SLUG = "eval";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -85,6 +87,7 @@ async function finalizeRun(opts: FinalizeOpts, state: RunManifest["exitState"], 
       applyErrors: opts.manifest.turns[0]?.applyErrorCount ?? 0,
       upstreamErrors: opts.manifest.turns[0]?.upstreamErrorCount ?? 0,
       resolvedFiles: opts.manifest.turns[0]?.resolvedFileCount ?? 0,
+      stubs: opts.manifest.turns[0]?.stubCount ?? 0,
     })
   );
 }
@@ -231,6 +234,10 @@ async function runEntry(args: RunArgs, entry: CorpusEntry): Promise<void> {
   await chat.close();
   await api.close().catch(() => undefined);
 
+  const stubCount = Object.values(resolvedFiles).reduce((acc, content) => {
+    const matches = content.match(STUB_PATTERN);
+    return acc + (matches ? matches.length : 0);
+  }, 0);
   manifest.turns.push({
     index: 0,
     prompt: entry.create,
@@ -240,6 +247,7 @@ async function runEntry(args: RunArgs, entry: CorpusEntry): Promise<void> {
     upstreamErrorCount: upstreamErrors.length,
     applyErrorCount: applyErrors.length,
     resolvedFileCount: Object.keys(resolvedFiles).length,
+    stubCount,
   });
   if (sawTurnEnd === false) {
     manifest.exitDetail = "stream closed before prompt.block.end";
@@ -251,7 +259,7 @@ async function runEntry(args: RunArgs, entry: CorpusEntry): Promise<void> {
   await finalizeRun(fin, sawTurnEnd === true ? "ok" : "stream-error", manifest.exitDetail);
 
   stderr.write(
-    `  resolved=${Object.keys(resolvedFiles).length} applyErrors=${applyErrors.length} upstreamErrors=${upstreamErrors.length}\n`
+    `  resolved=${Object.keys(resolvedFiles).length} applyErrors=${applyErrors.length} upstreamErrors=${upstreamErrors.length} stubs=${stubCount}\n`
   );
   if (applyErrors.length > 0) {
     for (const err of applyErrors) {

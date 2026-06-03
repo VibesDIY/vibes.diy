@@ -6,7 +6,7 @@ import { BuildURI, URI } from "@adviser/cement";
 import { toast } from "react-hot-toast";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
-import { getCode } from "./get-code.js";
+import { getCode, countLeftoverStubs } from "./get-code.js";
 import type { EvtVibeViewerChanged } from "@vibes.diy/vibe-types";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../../lib/iframe-policy.js";
 import { adminModeStorageKey } from "../../lib/admin-mode.js";
@@ -147,6 +147,29 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
     }
     wasRunningRef.current = promptState.running;
   }, [promptState.running, firstStreamDone]);
+
+  // At end-of-stream, check whether leftover scaffold stubs remain in the
+  // resolved code. Stubs are expected mid-stream (the scaffold emits them
+  // intentionally), but any that survive after the model finishes mean a
+  // feature was never wired up. Tracked separately from apply/parse errors.
+  const stubToastedRef = useRef(false);
+  useEffect(() => {
+    if (promptState.running) {
+      stubToastedRef.current = false;
+      return;
+    }
+    if (stubToastedRef.current) return;
+    const resolved = getCode(promptState).code.join("\n");
+    if (resolved.length === 0) return;
+    const stubs = countLeftoverStubs(resolved);
+    if (stubs > 0) {
+      stubToastedRef.current = true;
+      toast(`${stubs} placeholder stub${stubs === 1 ? "" : "s"} still in code — some features may not be wired up`, {
+        id: "leftover-stubs",
+        icon: "⚠️",
+      });
+    }
+  }, [promptState.running, promptState.blocks]);
 
   // At end-of-stream, repoint the iframe at the server-side merged fsId — but
   // only when the iframe was already pinned to an fsId at mount (an iteration
