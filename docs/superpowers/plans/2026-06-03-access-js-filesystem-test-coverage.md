@@ -256,16 +256,38 @@ Add inside the `describe` block:
   });
 ```
 
+  it("export-as syntax creates binding for non-identifier db name", async () => {
+    const ACCESS_JS_EXPORT_AS = `function myHandler(doc, oldDoc, user) {
+  return { allowAnonymous: true };
+}
+export { myHandler as "my-db" }`;
+
+    const r = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: APP_JSX },
+        { type: "code-block", lang: "js", filename: "/access.js", content: ACCESS_JS_EXPORT_AS },
+      ],
+    });
+    assert(r.isOk(), "push with export-as failed");
+
+    const bindings = await queryBindings(appCtx, ownerHandle, appSlug);
+    const dbNames = bindings.map((b) => b.dbName);
+    expect(dbNames).toContain("my-db");
+  });
+```
+
 - [ ] **Step 2: Run tests to verify all pass**
 
 Run: `npx vitest --run vibes.diy/api/tests/access-fn-filesystem.test.ts`
-Expected: 4 tests PASS
+Expected: 5 tests PASS
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add vibes.diy/api/tests/access-fn-filesystem.test.ts
-git commit -m "test: binding rows created via front door, CID matches fileSystem (#2188)"
+git commit -m "test: binding rows created via front door, CID matches fileSystem, export-as syntax (#2188)"
 ```
 
 ---
@@ -330,7 +352,7 @@ Add inside the `describe` block:
 - [ ] **Step 2: Run tests to verify all pass**
 
 Run: `npx vitest --run vibes.diy/api/tests/access-fn-filesystem.test.ts`
-Expected: 6 tests PASS
+Expected: 9 tests PASS
 
 - [ ] **Step 3: Commit**
 
@@ -418,7 +440,7 @@ Add inside the `describe` block:
 - [ ] **Step 2: Run tests to verify all pass**
 
 Run: `npx vitest --run vibes.diy/api/tests/access-fn-filesystem.test.ts`
-Expected: 7 tests PASS
+Expected: 9 tests PASS
 
 - [ ] **Step 3: Commit**
 
@@ -489,7 +511,7 @@ Add inside the `describe` block:
 - [ ] **Step 2: Run tests to verify all pass**
 
 Run: `npx vitest --run vibes.diy/api/tests/access-fn-filesystem.test.ts`
-Expected: 8 tests PASS
+Expected: 9 tests PASS
 
 - [ ] **Step 3: Commit**
 
@@ -621,7 +643,7 @@ In the test "getDoc returns not-found for doc in inaccessible channel" (if it qu
 - [ ] **Step 2: Run tests to verify all pass**
 
 Run: `npx vitest --run vibes.diy/api/tests/access-fn-invoke.test.ts`
-Expected: 6 tests PASS
+Expected: 9 tests PASS
 
 - [ ] **Step 3: Run full access-fn suite to check for regressions**
 
