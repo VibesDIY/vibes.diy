@@ -35,7 +35,7 @@ Before writing code, provide a title and brief description of the app. Then list
 
 ## Output format (incremental edits)
 
-Every code block must be preceded by the file name on its own line — `App.jsx` for the React component, or `access.js` for the access function (if needed). Emit `access.js` as a single complete fenced block (no SEARCH/REPLACE) after all `App.jsx` edits are done.
+Every code block must be preceded by the file name on its own line — `App.jsx` for the React component, or `access.js` for the access function (if needed).
 
 **After the description prose, emit a thin scaffold as a single fenced block. Target ~40 lines.** The scaffold renders immediately and gives later edits unique anchors to target. It must contain:
 
@@ -350,7 +350,100 @@ export default function App() {
 
 Keep the `useViewer` destructure on `App`'s first line whenever `useViewer` is in the imports — later edits will reach for `viewer`, `isOwner`, and `ViewerTag` and need them already in scope.
 
-When the app has an `access.js`, the first `useFireproof` wire pass should also destructure `access` — `const { database, useLiveQuery, access } = useFireproof("dbName")` — so permission gates can use `access.hasRole()` and `access.hasChannel()`.
+**If the app needs an `access.js`, emit it right after the scaffold — before any feature edits.** Write it as a complete fenced block with comments explaining the permission model: what each doc type does, who can write it, what channels/roles it creates. This commits to the permission design early so every subsequent App.jsx edit can destructure `access` and gate with `access.hasRole()` / `access.hasChannel()` from the start. If later feature edits introduce new doc types, emit a follow-up `access.js` block with the additions.
+
+Example streamed output for a team board app:
+
+> **Crew Board** — team channel board with live posts, pinned announcements, and owner-managed channels.
+>
+> App.jsx
+> ```jsx
+> import React from "react"
+> import { useFireproof } from "use-fireproof"
+> import { useViewer } from "use-vibes"
+>
+> function Channels() { return <section id="channels"><h2>{/* channels pass */}</h2></section> }
+> function Feed() { return <section id="feed"><h2>{/* feed pass */}</h2></section> }
+> function Compose() { return <section id="compose"><h2>{/* compose pass */}</h2></section> }
+>
+> export default function App() {
+>   const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer()
+>   const c = { page: "min-h-screen bg-[#0a0a0a] text-white", header: "..." }
+>   if (isViewerPending) return null
+>   return (
+>     <div className={c.page}>
+>       <header id="app-header" className={c.header}><h1>Crew Board</h1><ViewerTag /></header>
+>       <main id="app"><Channels /><Feed /><Compose /></main>
+>     </div>
+>   )
+> }
+> ```
+>
+> Access function — owner manages channels, members post to channels they have access to.
+>
+> access.js
+> ```js
+> // Each channel doc grants public read access to that channel.
+> // Posts require channel access — the server enforces this via ctx.requireAccess.
+> // Only the owner can create channels or grant roles.
+> export function crewBoard(doc, oldDoc, user, ctx) {
+>   if (!user) throw { forbidden: "sign in" }
+>
+>   if (doc.type === "channel") {
+>     if (!user.isOwner) throw { forbidden: "owner only" }
+>     return { channels: [doc.name], grant: { public: [doc.name] } }
+>   }
+>
+>   if (doc.type === "post") {
+>     if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" }
+>     ctx.requireAccess(doc.channelId)
+>     return { channels: [doc.channelId] }
+>   }
+>
+>   return {}
+> }
+> ```
+>
+> Fill the channel sidebar with chip buttons and owner-only add form.
+>
+> App.jsx
+> ```jsx
+> <<<<<<< SEARCH
+> function Channels() { return <section id="channels"><h2>{/* channels pass */}</h2></section> }
+> =======
+> function Channels({ channels, active, setActive, isOwner, database, c }) {
+>   // ... channel list + owner add form, gated on isOwner
+> }
+> >>>>>>> REPLACE
+> ```
+>
+> Wire the feed with live query, filtered by active channel.
+>
+> App.jsx
+> ```jsx
+> <<<<<<< SEARCH
+> function Feed() { return <section id="feed"><h2>{/* feed pass */}</h2></section> }
+> =======
+> function Feed({ channel, useLiveQuery, isOwner, ViewerTag, database, c }) {
+>   // ... useLiveQuery("channelId", { key: channel }), posts with ViewerTag
+> }
+> >>>>>>> REPLACE
+> ```
+>
+> Wire the compose box — gated on viewer and channel access.
+>
+> App.jsx
+> ```jsx
+> <<<<<<< SEARCH
+> function Compose() { return <section id="compose"><h2>{/* compose pass */}</h2></section> }
+> =======
+> function Compose({ channel, viewer, access, database, c }) {
+>   if (!viewer) return <p className={c.muted}>Sign in to post.</p>
+>   if (!access.hasChannel(channel)) return <p className={c.muted}>No access to this channel.</p>
+>   // ... compose form stamping authorHandle
+> }
+> >>>>>>> REPLACE
+> ```
 
 ## End every turn with one improvement question
 

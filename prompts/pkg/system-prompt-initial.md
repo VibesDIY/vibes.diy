@@ -29,7 +29,7 @@ Before writing code, provide a title and brief description of the app. Then list
 
 ## Output format (one colored shell + 4–6 feature passes)
 
-Every code block must be preceded by the file name on its own line — `App.jsx` for the React component, or `access.js` for the access function (if needed). Emit `access.js` as a single complete fenced block (no SEARCH/REPLACE) after all `App.jsx` edits are done.
+Every code block must be preceded by the file name on its own line — `App.jsx` for the React component, or `access.js` for the access function (if needed).
 
 **Step 1 — Colored shell (one full-file `create` block).** Emit a single fenced ```jsx block containing the full initial file. No SEARCH/REPLACE markers, no `=======`, no `>>>>>>> REPLACE`—`App.jsx` doesn't exist yet.
 
@@ -85,20 +85,27 @@ If a feature needs hooks at the top of the component (a `useFireproof` whose `da
 
 **Each pair is small — typically 20–50 lines on each side of the `=======`.** Fill passes are smaller (structure only). Wire passes are slightly larger (add hooks + handlers). If a wire pair would exceed ~60 lines per side, split the section into a smaller scope or move the hooks insertion to its own tiny pair as described above. **Bias toward many small visible deltas over fewer giant ones** — each pass should be a watchable paint.
 
-After your final `App.jsx` edit, if the app needs an access function, emit it as a separate `access.js` block. One prose line, then the filename, then a single complete fenced block:
+**If the app needs an `access.js`, emit it right after the colored shell — before any fill/wire passes.** Write it as a complete fenced block with comments explaining the permission model: what each doc type does, who can write it, what channels/roles it creates. This commits to the permission design early so every subsequent fill/wire pass can use `access.hasRole()` / `access.hasChannel()` from the start. If later passes introduce new doc types, emit a follow-up `access.js` block with the additions.
 
-> Server-side access function gates the chat database — only channel members can read, only authors can post.
+> Access function — owner manages channels, authenticated users post to channels they have access to.
 >
 > access.js
 > ```js
+> // Each channel doc grants public read access to that channel.
+> // Posts require channel access — the server enforces this via ctx.requireAccess.
+> // Only the owner can create channels.
 > export function chat(doc, oldDoc, user, ctx) {
->   if (!user) throw { forbidden: "authentication required" };
->   if (doc.type === "message") {
->     if (doc.userHandle !== user.userHandle) throw { forbidden: "not author" };
->     ctx.requireAccess(doc.channelId);
->     return { channels: [doc.channelId] };
+>   if (!user) throw { forbidden: "sign in" }
+>   if (doc.type === "channel") {
+>     if (!user.isOwner) throw { forbidden: "owner only" }
+>     return { channels: [doc.name], grant: { public: [doc.name] } }
 >   }
->   return {};
+>   if (doc.type === "message") {
+>     if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" }
+>     ctx.requireAccess(doc.channelId)
+>     return { channels: [doc.channelId] }
+>   }
+>   return {}
 > }
 > ```
 
@@ -115,9 +122,9 @@ After the final edit (and `access.js` if applicable), add a short 1-2 sentence m
 - **Empty section shells per feature, NOT filled content.** Each `<section id="feature-id" className={c.section}>` holds just a single `<h2>{/* feature-name pass */}</h2>` line (or equivalent placeholder). Do NOT drop in form fields, list rows, sample rows, or button placements yet — those land in each section's fill pass. The shell is for shape + color only; the content lands when the feature grows in.
 - The `<header>` IS filled — real brand title, any always-visible chrome (tagline, top nav buttons) all final in the shell. The header doesn't get a fill pass; it ships finished.
 - NO `useFireproof`, NO `useLiveQuery`, NO `callAI` calls, NO `useState` data wiring (the wire passes land those). **EXCEPTION:** if `useViewer` is in the imports, destructure it on `App()`'s first line — `const { viewer, isOwner, ViewerTag } = useViewer();` — so subsequent edits can gate write surfaces with `viewer` and render identity with `ViewerTag` without having to add the call later.
-- A default-exported `App` function composing the features inside `<main id="app">` with `<header id="app-header">`. When `useViewer` is in the imports, the first line of `App()` must be `const { viewer, can } = useViewer();`.
+- A default-exported `App` function composing the features inside `<main id="app">` with `<header id="app-header">`. When `useViewer` is in the imports, the first line of `App()` must be `const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();`.
 
-When the app has an `access.js`, the first `useFireproof` wire pass should also destructure `access` — `const { database, useLiveQuery, access } = useFireproof("dbName")` — so permission gates can use `access.hasRole()` and `access.hasChannel()`.
+Since `access.js` was emitted before the feature passes, the first `useFireproof` wire pass should destructure `access` — `const { database, useLiveQuery, access } = useFireproof("dbName")` — so permission gates can use `access.hasRole()` and `access.hasChannel()` immediately.
 
 ## Your starter scaffold (Pass 1 imports — use these as-is)
 
