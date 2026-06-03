@@ -1,6 +1,6 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { assert, beforeAll, describe, expect, inject, it, vi } from "vitest";
-import { loadAsset, processStream, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
+import { loadAsset, processStream, Result, string2stream, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import {
@@ -373,6 +373,59 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     expect(badgeRes.status).toBe(200);
     // Badge.jsx is served as transformed JS (JSX syntax removed)
     expect(await badgeRes.text()).toContain("badge");
+  });
+
+  it("serves /access.js?source=true from AccessFunctionBindings when fileSystem has no /access.js", async () => {
+    const accessSource = `export function chat(doc) {\n  return {\n    allowAnonymous: true,\n    channels: [doc?._id ?? "public"],\n  };\n}`;
+
+    const [rStored] = await appCtx.vibesCtx.storage.ensure(string2stream(accessSource));
+    if (rStored.isErr()) {
+      assert.fail(`Failed to store access.js source: ${rStored.Err()}`);
+    }
+    const stored = rStored.Ok();
+
+    const rRes = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `export default function App() { return <div>fallback-test</div>; }`,
+        },
+      ],
+    });
+    const res = rRes.Ok();
+    if (!isResEnsureAppSlugOk(res)) {
+      assert.fail("Expected ensureAppSlug for access.js fallback test to return ResEnsureAppSlugOk");
+    }
+
+    await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.accessFunctionBindings).values({
+      userSlug: res.ownerHandle,
+      appSlug: res.appSlug,
+      dbName: "*",
+      accessFnCid: stored.cid,
+      accessFnAssetUri: stored.getURL,
+      updated: new Date().toISOString(),
+    });
+
+    const baseUrl = calcEntryPointUrl({
+      hostnameBase: ".nowhere",
+      protocol: "http",
+      port: "4711",
+      bindings: {
+        appSlug: res.appSlug,
+        ownerHandle: res.ownerHandle,
+        fsId: res.fsId,
+      },
+    });
+
+    const sourceRes = await api.cfg.fetch(`${baseUrl}/access.js?source=true`);
+    expect(sourceRes.status).toBe(200);
+    expect(await sourceRes.text()).toBe(accessSource);
+
+    const noSourceRes = await api.cfg.fetch(`${baseUrl}/access.js`);
+    expect(noSourceRes.status).toBe(404);
   });
 
   it("bare specifiers in plain .js helpers land in the import map", async () => {

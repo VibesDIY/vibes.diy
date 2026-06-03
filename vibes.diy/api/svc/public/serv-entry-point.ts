@@ -18,6 +18,7 @@ import {
   HttpResponseBodyType,
   HttpResponseJsonType,
   isFetchErrResult,
+  isFetchNotFoundResult,
   isFetchOkResult,
   isMetaScreenShot,
   MetaItem,
@@ -306,6 +307,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Err(`Invalid filesystem data ${ctx.validated.fsId}`);
     }
 
+    const isAccessSourceRequest = ctx.validated.path === "/access.js" && uri.getParam("source") === "true";
     const selectedFsItem = fileSystem.find((i) => i.fileName === ctx.validated.path);
     if (selectedFsItem) {
       // For JSX→JS source files, serve the transformed JavaScript instead of
@@ -329,6 +331,47 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         return sendFetchOk(ctx, serveItem, possiblePath);
       }
     }
+
+    // Fallback for web-UI-created vibes: /access.js source may live only in
+    // AccessFunctionBindings.accessFnAssetUri (not Apps.fileSystem).
+    if (isAccessSourceRequest) {
+      const tAfb = vctx.sql.tables.accessFunctionBindings;
+      const afbRows = await vctx.sql.db
+        .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri })
+        .from(tAfb)
+        .where(and(eq(tAfb.userSlug, ctx.validated.ownerHandle), eq(tAfb.appSlug, ctx.validated.appSlug)));
+
+      const orderedRows = [...afbRows].sort((a, b) => {
+        const aPri = a.dbName === "*" ? 0 : 1;
+        const bPri = b.dbName === "*" ? 0 : 1;
+        if (aPri !== bPri) return aPri - bPri;
+        return a.dbName.localeCompare(b.dbName);
+      });
+
+      for (const afb of orderedRows) {
+        if (!afb.accessFnAssetUri) continue;
+        const rSource = await vctx.storage.fetch(afb.accessFnAssetUri);
+        if (isFetchErrResult(rSource)) {
+          return Result.Err(rSource.error);
+        }
+        if (isFetchNotFoundResult(rSource)) {
+          continue;
+        }
+
+        return sendFetchOk(
+          ctx,
+          {
+            assetId: afb.accessFnCid,
+            assetURI: afb.accessFnAssetUri,
+            fileName: "/access.js",
+            mimeType: "text/javascript",
+            size: 0,
+          },
+          rSource
+        );
+      }
+    }
+
     // Serve screenshot from meta for social media cards
     if (ctx.validated.path === "/screenshot.png" || ctx.validated.path === "/screenshot.jpg") {
       const metaItems = (fs.meta as MetaItem[]) || [];
