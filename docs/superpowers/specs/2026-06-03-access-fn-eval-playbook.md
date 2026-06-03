@@ -8,23 +8,21 @@ Not testing whether the model emits `access.js` — testing whether the apps are
 
 ## Prompt sets
 
-### Set A — As-is (20 prompts, run once each)
+### Set A — As-is (25 prompts, run once each)
 
-Home-page prompts run verbatim against the current system prompt. Tests that the prompt update didn't regress app quality.
+Home-page prompts run verbatim against the current system prompt. Tests that the prompt update didn't regress app quality. Every enhanced prompt now has an as-is control for clean delta measurement.
 
 ### Set B — Enhanced (24 prompts, run once each)
 
-The same concept rewritten so the user naturally describes sharing, privacy, or permissions in plain language. No tech jargon, no platform vocabulary. Reads like someone describing their app idea to a friend.
+The same concept rewritten so the user naturally describes sharing, privacy, or permissions in plain language. No tech jargon, no platform vocabulary. Reads like someone describing their app idea to a friend — "we each have our own," "only I can," "everyone sees" — not "only the project creator can merge layers."
 
-### Set C — New capabilities (4 prompts, run once each)
+### Set C — New capabilities (6 prompts, run once each)
 
-Business apps that weren't possible before `allowAnonymous` and channel-based isolation: contact forms, surveys, product configurators. These are net-new — no as-is baseline.
+Business apps that weren't possible before `allowAnonymous` and channel-based isolation: contact forms, surveys, product configurators, maintenance requests, job applications. These are net-new — no as-is baseline.
 
-### Set D — 3x consistency (6 prompts × 3 runs each = 18 runs)
+### Run count
 
-A distribution of prompts run three times to measure reliability vs. luck. Includes easy, mid, hard, and subtle cases, plus one with both as-is and enhanced versions for delta measurement.
-
-### Total: 62 single runs + bonus signal from 18 triple runs
+Derived from the prompt catalog: each prompt runs once, plus `triple: true` prompts get 2 extra runs. The workflow computes this from the data — no hardcoded totals.
 
 ## Scoring rubric
 
@@ -38,13 +36,16 @@ A distribution of prompts run three times to measure reliability vs. luck. Inclu
 | 2     | Renders with errors or crashes on basic interaction           |
 | 1     | Fails to render or fundamentally broken                       |
 
-### Bonus signals (logged, don't affect score)
+### Tracked signals (informational, don't affect score)
 
 - Emitted `access.js`? (yes/no)
 - Used `access.hasChannel()` or `access.hasRole()` in App.jsx?
 - Used `isOwner` for management gates?
 - Used `ViewerTag`?
 - Used `allowAnonymous`?
+- **Prompt fidelity** — did it build the constraints/features the user described?
+- **Access correctness** — do read/write/visibility rules match prompt intent?
+- **Denial UX** — clear "you can't do that" states vs. silent failure?
 
 ## Execution
 
@@ -68,12 +69,14 @@ See `eval-access-fn-prompts.json` for the full prompt list with IDs, categories,
 
 ## 3x consistency picks
 
-| ID                 | Prompt          | Version  | Why                                                            |
-| ------------------ | --------------- | -------- | -------------------------------------------------------------- |
-| `focus-timer-asis` | Focus Timer     | as-is    | Baseline calibrator — should score 4-5 every time              |
-| `brain-dump-asis`  | Brain Dump      | as-is    | Mid-complexity with callAI. Both versions for delta.           |
-| `brain-dump-enh`   | Brain Dump      | enhanced | Same concept + sharing language. Does it help or hurt?         |
-| `trivia-night-enh` | Trivia Night    | enhanced | Host/player roles, private answers, score reveal               |
-| `pixel-art-enh`    | Pixel Art       | enhanced | Most ambitious — collaborative layers. High variance expected. |
-| `meet-up-enh`      | Meet Up         | enhanced | Subtle privacy: "each person pastes privately"                 |
-| `survey-new`       | Customer Survey | new      | Richest access function case: anon + write-once + team role    |
+Swapped per CharlieHelps review — removed pixel-art-enh and trivia-night-enh (high non-access variance from rendering/game complexity), added contact-form-new and soccer-signup-new (cleaner access-function signal).
+
+| ID                  | Prompt          | Version  | Why                                                    |
+| ------------------- | --------------- | -------- | ------------------------------------------------------ |
+| `focus-timer-asis`  | Focus Timer     | as-is    | Baseline calibrator — should score 4-5 every time      |
+| `brain-dump-asis`   | Brain Dump      | as-is    | Mid-complexity with callAI. Both versions for delta.   |
+| `brain-dump-enh`    | Brain Dump      | enhanced | Same concept + sharing language. Does it help or hurt? |
+| `meet-up-enh`       | Meet Up         | enhanced | Subtle privacy: "each person pastes privately"         |
+| `contact-form-new`  | Contact Form    | new      | Purest allowAnonymous + owner-only inbox               |
+| `soccer-signup-new` | Soccer Sign-up  | new      | Own-row editing + coach override                       |
+| `survey-new`        | Customer Survey | new      | Richest case: anon + write-once + team role            |
