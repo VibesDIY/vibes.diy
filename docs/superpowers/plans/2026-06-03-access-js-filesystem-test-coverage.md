@@ -10,6 +10,12 @@
 
 ---
 
+## Refactor note: delete JS_PROTO_NAMES blocklist
+
+The extraction logic has a `JS_PROTO_NAMES` set that filters out JS built-in globals (`toString`, `constructor`, `__proto__`, etc.) from export names. This is a fallback defending against a problem that `export { fn as "dbName" }` already solves cleanly — if someone names their db "toString", the `as` syntax handles it. Per rules-bag ("never add a fallback"), the refactor should delete `JS_PROTO_NAMES` entirely. We intentionally do NOT add test coverage for it — the `export-as` test covers the real use case for odd-but-valid names.
+
+---
+
 ## File Structure
 
 - **Create:** `vibes.diy/api/tests/access-fn-filesystem.test.ts` — new integration tests for fileSystem invariant
