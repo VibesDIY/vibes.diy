@@ -133,6 +133,13 @@ export async function createVibeDiyTestCtx(
       name: "Claude Sonnet 4.6",
       description: "Claude Sonnet 4.6 is Anthropic's most advanced Sonnet model to date",
       featured: true,
+      supports: ["chat", "app"],
+    },
+    {
+      id: "google/gemini-3.1-pro-preview",
+      name: "Gemini 3.1 Pro",
+      description: "Gemini 3.1 Pro is Google's frontier reasoning model for software engineering and agentic tasks",
+      featured: true,
       fallbackFor: ["chat", "app"],
       supports: ["chat", "app"],
     },
