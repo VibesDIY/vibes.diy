@@ -576,6 +576,8 @@ type AccessDescriptor = {
 
 **Channels** route documents. A document with `channels: ["general"]` is only visible to users who have been granted access to `"general"`. Channels are the unit of read isolation.
 
+**`_id` strategy matters.** Documents that represent a unique named resource (channels, user profiles, config singletons) should use a deterministic `_id` with a short prefix — `"ch:" + name`, `"profile:" + handle`, `"config"`. This enforces uniqueness: two users creating "general" get the same doc, not two. Documents that represent events or content (messages, posts, survey responses) should let `_id` be auto-generated — each one is unique by nature. Use `doc._id` as the channel name for resource docs; use a `channelId` foreign key on content docs.
+
 **Grants are additive.** The effective access state is the union of every current document's `AccessDescriptor` output. There is no "remove grant" operation — deleting a document drops its contribution from the union automatically. This makes revocation trivial: delete the document that granted access, and the grant disappears on next sync.
 
 **Grant resolution order:** The server resolves per-user channel access in two passes — first expand `grant.roles` through `members`, then union with `grant.users` direct grants.
