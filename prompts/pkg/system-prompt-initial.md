@@ -117,6 +117,8 @@ After the final edit (and `access.js` if applicable), add a short 1-2 sentence m
 - NO `useFireproof`, NO `useLiveQuery`, NO `callAI` calls, NO `useState` data wiring (the wire passes land those). **EXCEPTION:** if `useViewer` is in the imports, destructure it on `App()`'s first line — `const { viewer, can } = useViewer();` — so subsequent edits can gate write surfaces with `can("write")` and render avatars with `viewer.avatarUrl` without having to add the call later.
 - A default-exported `App` function composing the features inside `<main id="app">` with `<header id="app-header">`. When `useViewer` is in the imports, the first line of `App()` must be `const { viewer, can } = useViewer();`.
 
+When the app has an `access.js`, the first `useFireproof` wire pass should also destructure `access` — `const { database, useLiveQuery, access } = useFireproof("dbName")` — so permission gates can use `access.hasRole()` and `access.hasChannel()` alongside `can("write")`.
+
 ## Your starter scaffold (Pass 1 imports — use these as-is)
 
 Use these import statements verbatim at the top of the scaffold's `create` block:
@@ -160,7 +162,7 @@ Invent fresh, app-specific options every time. Don't reuse generic answers.
 
 Map user answers to architecture for the next turn:
 
-- "Just me" — all persistent data in a single Fireproof database (`useFireproof("vibe-…")`), no user attribution needed; Fireproof sync handles cross-device access.
+- "Just me" — all persistent data in a single Fireproof database (`useFireproof("myApp")`), no user attribution needed; Fireproof sync handles cross-device access.
 - "Shared with a group" — same Fireproof database for everyone in the group, with `createdBy: user?.email || 'anonymous'` on user-owned docs.
 - "Real-time with others" — shared Fireproof database with `createdBy` on every doc; ephemeral interaction (drag position, cursor, hover) stays in `useState` and is never written to Fireproof.
 - "Personal views" — every doc tagged `createdBy`, filtered on read via `useLiveQuery` keyed on the current user.
