@@ -79,12 +79,27 @@ Push App.jsx + access.js. Re-push with only App.jsx. Assert zero `accessFunction
 
 Push App.jsx without access.js. Write 2 docs via `putDoc` (manually seed one binding to get through the gate). Then push App.jsx + access.js via `ensureAppSlug`. Assert `accessFnOutputs` rows exist for both docs — created by the extraction logic's backfill, not by manual seeding.
 
-### Pure function coverage (existing file additions)
+### Fix existing tests: replace manual DB seeding with extraction-based setup
 
-Add to `resolve-code-blocks.test.ts`:
-- Seeded access.js carries forward with `lang: "js"` when current turn doesn't touch it (already exists — test "seeded access.js carries forward with lang 'js'")
+Two existing test files bypass the extraction logic by manually inserting rows into `accessFunctionBindings`. These tests are correct about what they test (putDoc gate, channel filtering) but wrong about how they set up state. Fix them so the extraction logic is exercised on every run.
 
-No new unit test file needed. `extractExportSource` in `access-function.ts` is already a pure function and could get its own unit tests, but the integration tests exercise it end-to-end. Unit tests for it can come during the refactor.
+#### `access-fn-invoke.test.ts`
+
+**Current:** `seedBinding()` helper (line 63–74) does a raw `db.insert` into `accessFunctionBindings` with a hardcoded CID. The app is created via `ensureAppSlug` with only App.jsx — no access.js.
+
+**Fix:** Change `beforeAll` to push `[App.jsx, access.js]` via `ensureAppSlug`. The access.js source exports a `default` function (matching dbName `"*"` wildcard). Remove `seedBinding()` entirely. The binding rows come from the extraction logic. Update `CID` references to read from the actual binding rows rather than a hardcoded constant.
+
+#### `access-fn-channel-read.test.ts`
+
+**Current:** `beforeAll` (line 61–123) creates the app with only App.jsx, then manually inserts a binding row for `dbName: "chat"` with a hardcoded CID.
+
+**Fix:** Push `[App.jsx, access.js]` where access.js has `export function chat(doc, oldDoc, user) { ... }`. The extraction logic creates the `chat` binding row. Remove the manual insert. Update CID references to read from actual binding rows.
+
+Both fixes are mechanical: replace the manual insert with an access.js file in the push, remove the hardcoded CID, read actual CIDs from the binding table after push. The test assertions themselves don't change — they still test the putDoc gate and channel filtering. They just stop lying about how bindings get created.
+
+### Pure function coverage
+
+`extractExportSource` in `access-function.ts` is already a pure function and could get its own unit tests, but the integration tests exercise it end-to-end. Unit tests for it can come during the refactor.
 
 ## What this enables
 
