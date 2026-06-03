@@ -12,7 +12,7 @@ The extraction logic in `ensure-app-slug-item.ts` does three things inline after
 2. **Upsert bindings** — one `accessFunctionBindings` row per export, delete stale rows
 3. **Backfill outputs** — re-invoke the access function against every document when CID changes
 
-All three are wrapped in a `try/catch` that swallows errors into `console.warn` — a rules-bag violation (`exception2Result`, never `try/catch`).
+All three are wrapped in a `try/catch` that swallows errors into `console.warn` — a rules-bag violation (`exception2Result`, never `try/catch`). Per CharlieHelps review (#2189): the swallow was **deliberate resilience** (don't block the push path on parsing failures), dating back to the initial integration commit. The refactor should preserve this behavior: report the failure via `Result`, but don't fail the push.
 
 ### Existing test coverage
 
@@ -97,6 +97,8 @@ Two existing test files bypass the extraction logic by manually inserting rows i
 
 Both fixes are mechanical: replace the manual insert with an access.js file in the push, remove the hardcoded CID, read actual CIDs from the binding table after push. The test assertions themselves don't change — they still test the putDoc gate and channel filtering. They just stop lying about how bindings get created.
 
+Per CharlieHelps review (#2189): the manual seeding predates the extraction logic (`access-fn-invoke` seeding at `8798d8a4` predates named-export extraction at `0400ad89`; `access-fn-channel-read` used direct seeding as a test shortcut). No other runtime writers of `accessFunctionBindings` exist outside `ensure-app-slug-item.ts` — the only other writes are in these test files.
+
 ### Pure function coverage
 
 `extractExportSource` in `access-function.ts` is already a pure function and could get its own unit tests, but the integration tests exercise it end-to-end. Unit tests for it can come during the refactor.
@@ -106,7 +108,7 @@ Both fixes are mechanical: replace the manual insert with an access.js file in t
 Once these tests pass on the current code, the refactor can:
 
 1. Extract the 250-line inline block into its own function (or module)
-2. Replace the `try/catch` with `exception2Result` and propagate errors via `Result`
+2. Replace the `try/catch` with `exception2Result` — but preserve the non-fatal behavior (extraction failure must not block the push, per CharlieHelps review)
 3. Ensure access.js is always in `fileSystem` (fixing #2188)
 4. Make the backfill async (not blocking the push response) if desired
 
