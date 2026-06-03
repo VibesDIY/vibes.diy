@@ -9,7 +9,9 @@ import type { AccessDescriptor } from "@vibes.diy/api-types";
 import { eq, and } from "drizzle-orm";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
-const CID = "test-channel-read-cid";
+const ACCESS_JS_CHAT = `export function chat(doc, oldDoc, user) {
+  return { channels: ["general"], allowAnonymous: true };
+}`;
 
 interface InvokeRecorder {
   calls: { cid: string; user: unknown }[];
@@ -56,6 +58,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
   let ownerApi: VibesDiyApi;
   let appSlug: string;
   let ownerHandle: string;
+  let actualCid: string;
   const recorder: InvokeRecorder = { calls: [], result: { channels: ["general"], allowAnonymous: true } };
 
   beforeAll(async () => {
@@ -66,12 +69,8 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     const r = await ownerApi.ensureAppSlug({
       mode: "dev",
       fileSystem: [
-        {
-          type: "code-block",
-          lang: "jsx",
-          filename: "/App.jsx",
-          content: `function App() { return null; } App();`,
-        },
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` },
+        { type: "code-block", lang: "js", filename: "/access.js", content: ACCESS_JS_CHAT },
       ],
     });
     const res = r.Ok();
@@ -79,14 +78,15 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     appSlug = res.appSlug;
     ownerHandle = res.ownerHandle;
 
-    // Seed access fn binding for "chat" db
-    await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.accessFunctionBindings).values({
-      ownerHandle: ownerHandle,
-      appSlug,
-      dbName: "chat",
-      accessFnCid: CID,
-      updated: new Date().toISOString(),
-    });
+    // Read actual CID from the binding the extraction logic created
+    const tAfb = appCtx.vibesCtx.sql.tables.accessFunctionBindings;
+    const bindings = await appCtx.vibesCtx.sql.db
+      .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
+      .from(tAfb)
+      .where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug)));
+    const chatBinding = bindings.find((b) => b.dbName === "chat");
+    assert(chatBinding !== undefined, "extraction must create a 'chat' binding");
+    actualCid = chatBinding.accessFnCid;
 
     // Write two docs through the access fn gate — one in "general", one in "secret"
     recorder.result = { channels: ["general"], allowAnonymous: true };
@@ -102,11 +102,11 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     await appCtx.vibesCtx.sql.db
       .insert(tOutputs)
       .values({
-        ownerHandle: ownerHandle,
+        userSlug: ownerHandle,
         appSlug,
         dbName: "chat",
         docId: "grant-doc",
-        fnCid: CID,
+        fnCid: actualCid,
         output: JSON.stringify({ grant: { users: { [ownerHandle]: ["general"] } } }),
         hasGrants: 1,
       })
@@ -140,7 +140,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
           eq(tOutputs.ownerHandle, ownerHandle),
           eq(tOutputs.appSlug, appSlug),
           eq(tOutputs.dbName, "chat"),
-          eq(tOutputs.fnCid, CID)
+          eq(tOutputs.fnCid, actualCid)
         )
       );
 
