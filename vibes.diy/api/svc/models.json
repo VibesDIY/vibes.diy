@@ -20,7 +20,6 @@
     "description": "Claude Sonnet 4.6 is Anthropic's most advanced Sonnet model to date, optimized for real-world agents and coding workflows",
     "featured": true,
     "preSelected": ["chat"],
-    "fallbackFor": ["chat", "app"],
     "supports": ["chat", "app"]
   },
   {
@@ -35,6 +34,7 @@
     "name": "Gemini 3.1 Pro",
     "description": "Gemini 3.1 Pro is Google's frontier reasoning model for software engineering and agentic tasks",
     "featured": true,
+    "fallbackFor": ["chat", "app"],
     "supports": ["chat", "app"]
   },
   {

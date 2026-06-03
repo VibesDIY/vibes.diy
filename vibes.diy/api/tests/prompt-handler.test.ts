@@ -11,7 +11,7 @@ function allTexts(messages: readonly ChatMessage[]): string[] {
 
 const HANDLER_SEQ_BASE = 1_667_160;
 const PRIMARY_MODEL = "anthropic/claude-opus-4.7";
-const FALLBACK_MODEL = "anthropic/claude-sonnet-4.6";
+const FALLBACK_MODEL = "google/gemini-3.1-pro-preview";
 const encoder = new TextEncoder();
 
 async function collectBlocks(chat: {
