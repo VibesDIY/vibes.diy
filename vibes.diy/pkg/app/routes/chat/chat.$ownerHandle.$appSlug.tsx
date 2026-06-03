@@ -1,5 +1,5 @@
 import { SetURLSearchParams, useNavigate, useParams, useSearchParams } from "react-router";
-import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
+import React, { useEffect, useState, useReducer, useRef, useCallback, useMemo } from "react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { useAuth } from "@clerk/react";
 import { processStream, BuildURI, URI, exception2Result } from "@adviser/cement";
@@ -7,6 +7,7 @@ import { fireproof } from "@fireproof/use-fireproof";
 import type { VibeDocument, ViewType, VibesTheme } from "@vibes.diy/prompts";
 import { vibesThemes, getThemeBySlug } from "@vibes.diy/prompts";
 import {
+  isMetaScreenShot,
   isPromptBlockBegin,
   isPromptBlockEnd,
   isPromptReq,
@@ -16,6 +17,7 @@ import {
   PromptError,
   sectionEvent,
 } from "@vibes.diy/api-types";
+import type { MetaScreenShot } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import AppLayout from "../../components/AppLayout.js";
 import { BrutalistCard } from "@vibes.diy/base";
@@ -205,6 +207,9 @@ interface SetHydratedFileSystem {
 function isSetHydratedFileSystem(msg: unknown): msg is SetHydratedFileSystem {
   return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setHydratedFileSystem";
 }
+
+const SCREENSHOT_POLL_MAX_ATTEMPTS = 12;
+const SCREENSHOT_POLL_BASE_INTERVAL_MS = 1500;
 
 const MarkAgentSaved = type({
   type: "'markAgentSaved'",
@@ -449,6 +454,102 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     setSearchParams,
     agentSavedBlockIds: new Set<string>(),
   });
+
+  const [screenshotByFsId, setScreenshotByFsId] = useState<Map<string, MetaScreenShot>>(new Map());
+  const screenshotByFsIdRef = useRef<ReadonlyMap<string, MetaScreenShot>>(new Map());
+  const screenshotPollInFlightRef = useRef<Set<string>>(new Set());
+  const screenshotPollAttemptsRef = useRef<Map<string, number>>(new Map());
+  const screenshotPollExhaustedRef = useRef<Set<string>>(new Set());
+  const screenshotPollGenerationRef = useRef(0);
+
+  useEffect(() => {
+    screenshotByFsIdRef.current = screenshotByFsId;
+  }, [screenshotByFsId]);
+
+  const chatFsIds = useMemo(() => {
+    const seen = new Set<string>();
+    const fsIds: string[] = [];
+    for (const block of promptState.blocks) {
+      for (const msg of block.msgs) {
+        if (!isBlockEnd(msg) || !msg.fsRef?.fsId) continue;
+        if (seen.has(msg.fsRef.fsId)) continue;
+        seen.add(msg.fsRef.fsId);
+        fsIds.push(msg.fsRef.fsId);
+      }
+    }
+    return fsIds;
+  }, [promptState.blocks]);
+
+  // Screenshots are generated asynchronously by a queue after each release.
+  // Keep a chat-local cache keyed by fsId and poll for missing refs with
+  // bounded retries so block.end cards can render screenshots inline once
+  // available.
+  useEffect(() => {
+    screenshotPollGenerationRef.current += 1;
+    screenshotPollInFlightRef.current.clear();
+    screenshotPollAttemptsRef.current.clear();
+    screenshotPollExhaustedRef.current.clear();
+    setScreenshotByFsId(new Map());
+  }, [ownerHandle, appSlug]);
+
+  useEffect(() => {
+    return () => {
+      screenshotPollGenerationRef.current += 1;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (chatFsIds.length === 0) return;
+    const generation = screenshotPollGenerationRef.current;
+    const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+    const pollFsId = async (targetFsId: string) => {
+      screenshotPollInFlightRef.current.add(targetFsId);
+      try {
+        let attempt = screenshotPollAttemptsRef.current.get(targetFsId) ?? 0;
+        while (generation === screenshotPollGenerationRef.current && attempt < SCREENSHOT_POLL_MAX_ATTEMPTS) {
+          const rApp = await vibeDiyApi.getAppByFsId({ ownerHandle, appSlug, fsId: targetFsId });
+          if (generation !== screenshotPollGenerationRef.current) return;
+
+          if (rApp.isOk()) {
+            const shot = rApp.Ok().meta.find(isMetaScreenShot);
+            if (shot) {
+              setScreenshotByFsId((prev) => {
+                const prior = prev.get(targetFsId);
+                if (prior?.assetUrl === shot.assetUrl && prior?.mime === shot.mime) {
+                  return prev;
+                }
+                const next = new Map(prev);
+                next.set(targetFsId, shot);
+                return next;
+              });
+              screenshotPollAttemptsRef.current.delete(targetFsId);
+              screenshotPollExhaustedRef.current.delete(targetFsId);
+              return;
+            }
+          }
+
+          attempt += 1;
+          screenshotPollAttemptsRef.current.set(targetFsId, attempt);
+          if (attempt >= SCREENSHOT_POLL_MAX_ATTEMPTS) break;
+          await wait(Math.min(SCREENSHOT_POLL_BASE_INTERVAL_MS * attempt, 5000));
+        }
+
+        if (generation === screenshotPollGenerationRef.current) {
+          screenshotPollExhaustedRef.current.add(targetFsId);
+        }
+      } finally {
+        screenshotPollInFlightRef.current.delete(targetFsId);
+      }
+    };
+
+    for (const targetFsId of chatFsIds) {
+      if (screenshotByFsIdRef.current.has(targetFsId)) continue;
+      if (screenshotPollInFlightRef.current.has(targetFsId)) continue;
+      if (screenshotPollExhaustedRef.current.has(targetFsId)) continue;
+      void pollFsId(targetFsId);
+    }
+  }, [chatFsIds, ownerHandle, appSlug, vibeDiyApi]);
 
   useBuildCompletionNotifications();
 
@@ -994,6 +1095,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         chatPanel={
           <ChatInterface
             promptState={promptState}
+            screenshotByFsId={screenshotByFsId}
             onClick={fsIdClick}
             onDiffClick={handleDiffClick}
             onRetry={handleRetry}

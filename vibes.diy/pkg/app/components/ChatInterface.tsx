@@ -5,15 +5,18 @@ import MessageList from "./MessageList.js";
 import WelcomeScreen from "./WelcomeScreen.js";
 import { PromptState } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { PromptError } from "@vibes.diy/api-types";
+import type { MetaScreenShot } from "@vibes.diy/api-types";
 
 function ChatInterface({
   promptState,
+  screenshotByFsId,
   onClick,
   onDiffClick,
   onRetry,
   onSelectOption,
 }: {
   promptState: PromptState;
+  screenshotByFsId: ReadonlyMap<string, MetaScreenShot>;
   onClick: (a: { fsId: string; appSlug: string; ownerHandle: string }) => void;
   onDiffClick?: (diff: { path: string; lines: string[] } | null) => void;
   onRetry?: (msg: PromptError) => void;
@@ -55,6 +58,7 @@ function ChatInterface({
             promptProcessing={running}
             chatId={promptState.chat.chatId}
             selectedFsId={fsId}
+            screenshotByFsId={screenshotByFsId}
             agentSavedBlockIds={promptState.agentSavedBlockIds}
 
             // setSelectedResponseId={setSelectedResponseId}
