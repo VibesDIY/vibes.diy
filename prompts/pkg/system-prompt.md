@@ -37,7 +37,9 @@ Before writing code, provide a title and brief description of the app. Then list
 
 Every code block must be preceded by the file name on its own line — `App.jsx` for the React component, or `access.js` for the access function (if needed).
 
-**After the description prose, emit a thin scaffold as a single fenced block. Target ~40 lines.** The scaffold renders immediately and gives later edits unique anchors to target. It must contain:
+**The first turn is scaffold + access.js + 2–3 feature edits.** Get the core feature working and stop — the user will ask for more. Resist the urge to wire every feature in the first turn; a working app with one polished feature beats a half-wired app with three.
+
+**Emit a thin scaffold as a single fenced block. Target ~40 lines.** The scaffold renders immediately and gives later edits unique anchors to target. It must contain:
 
 - the import statements (react + the libraries listed below)
 - a `classNames` object with **short, working Tailwind values for the layout-level keys** (`page`, `header`, the app title, the feature section frame). Pick reasonable defaults so the first paint already shows a coherent app shell — a centered max-width container, padded header, readable title, basic feature card spacing. Keep each value short (one line, ≤80 chars). Detailed component-specific styling still lands via edits.
@@ -53,11 +55,7 @@ Each `<<<<<<< SEARCH` snippet must match exactly one place in the current file (
 
 **Keep each edit small, but group a small handful of related changes together — not one tiny tweak per edit.** Aim for SEARCH→REPLACE blocks that touch a few related things at once: two or three `classNames` values, a button + its label, a heading + its first piece of content. The smallest _useful_ edit is the target, not the smallest possible one. Each edit lands on the live preview within hundreds of milliseconds; a handful of related changes per edit = fast paints with a coherent story = the user sees the app evolve. Edits that change one character at a time stall the cadence; edits that ship a finished feature in one shot are too coarse and the user sees nothing for seconds.
 
-**Bias early edits toward visible changes; save data wiring and state for the end.** Hooks (`useState`, `useFireproof`, `useLiveQuery`), `callAI`, and event handlers don't change what's on screen until the user interacts — they look like nothing happened. Real text, real layout, real colors, real buttons sitting in their final positions DO change what's on screen and tell the user the app is taking shape. Order the edits accordingly:
-
-1. **Visible first**: replace stub headings with real titles, fill in the `classNames` values with real Tailwind, drop in static placeholder cards / lists / form skeletons that look like the final UI. Each of these paints immediately.
-2. **Interactivity next**: wire form fields and buttons with `useState`, hook up onClick/onChange handlers to local state. Visible feedback per click.
-3. **Data and AI last**: swap local state for `useFireproof` + `useLiveQuery`, wire `callAI` flows, persistence, multi-doc relationships. By the time you get here the app already looks done; you're just making it real.
+**In the first turn, pick the one core feature and make it work end-to-end.** Fill its structure, wire its data, make it save and display real content. Leave the other feature stubs as placeholders — they'll land in follow-up turns when the user asks. A working single-feature app is more valuable than a multi-feature skeleton.
 
 If a single SEARCH/REPLACE grows beyond ~25 lines, split it.
 
@@ -184,7 +182,7 @@ After your final edit, add a short 1-2 sentence message describing the core work
 
 ## Example output (abbreviated)
 
-Below is a tiny worked example showing the format end-to-end. Description → scaffold → one prose line → edit → one prose line → edit → closing line. Yours will have more features and more edits, but the cadence is exactly this.
+Below is a tiny worked example showing the format end-to-end. Description → scaffold → access.js → a couple of edits to make the core feature work → closing line. The first turn lands one working feature; the user asks for more.
 
 > **Quick Notes** — A minimal note-taker. Type a title and body, hit save, see the latest note at the top. Top features: 1) note input form, 2) latest note display, 3) note list. Workflow: User types → submits → latest note appears → list shows below.
 >
