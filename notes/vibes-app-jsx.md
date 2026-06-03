@@ -15,19 +15,19 @@ import { callAI, useFireproof, toCloud } from "use-vibes"
 
 ### Basic Setup
 ```javascript
-const { useDocument, useLiveQuery, database } = useFireproof("database-name")
+const { useDocument, useLiveQuery, database } = useFireproof("myDatabase")
 ```
 
 ### With Cloud Sync (No Tenant/Ledger)
 ```javascript
-const { useDocument, useLiveQuery, database, attach } = useFireproof("database-name", { 
+const { useDocument, useLiveQuery, database, attach } = useFireproof("myDatabase", { 
   attach: toCloud() 
 })
 ```
 
 ### With Cloud Sync (Specific Tenant/Ledger)
 ```javascript
-const { useDocument, useLiveQuery, database, attach } = useFireproof("database-name", { 
+const { useDocument, useLiveQuery, database, attach } = useFireproof("myDatabase", { 
   attach: toCloud({
     tenant: "tenant-id",
     ledger: "ledger-id"
@@ -124,17 +124,17 @@ For other users' avatars, store `viewer.avatarUrl` as `authorAvatarUrl` on the d
 
 ## Channels (multi-group / Slack-style apps)
 
-Each named Fireproof database is a **channel** — an isolated data space with its own access policy configured by the app owner via settings. App.jsx never sets access policy; it only reads it via `can()`.
+Each named Fireproof database is a **channel** — an isolated data space with its own access policy. App.jsx reads permissions via `access` from `useFireproof()`:
 
-Store available channels in a registry database, then filter by `can('read', channelName)` so each user only sees channels they can access:
+Store available channels in a registry database, then filter by `access.hasChannel(name)` so each user only sees channels they have access to:
 
 ```jsx
 function App() {
   const { can } = useViewer()
-  const { useLiveQuery } = useFireproof('channel-registry')
+  const { useLiveQuery, access } = useFireproof('channelRegistry')
   const { docs: channels } = useLiveQuery('name')
   const [active, setActive] = useState(null)
-  const visible = channels.filter(ch => can('read', ch.name))
+  const visible = channels.filter(ch => access.hasChannel(ch.name))
 
   return (
     <div style={{ display: 'flex' }}>
@@ -193,9 +193,9 @@ function ChannelView({ name }) {
 
 Key rules:
 - Channel name = database name. Use descriptive names (`general`, `dev`, `announcements`).
-- `can('read', channelName)` — hide channels the user cannot see.
-- `can('write', channelName)` — hide compose UI for read-only channels.
-- `can('write', 'channel-registry')` — gate the owner's "add channel" form. Always include this form so the owner can seed the channel list.
+- `access.hasChannel(channelName)` — hide channels the user cannot access.
+- `can('write') && access.hasChannel(channelName)` — hide compose UI for read-only channels.
+- `isOwner` from `useViewer()` — gate the owner's "add channel" form.
 - Channel access policies are set in app settings, not in App.jsx.
 - For private channels (where members shouldn't know they exist), only add them to the registry after the owner grants access.
 
@@ -203,7 +203,7 @@ Owner "add channel" form (always include in sidebar):
 
 ```jsx
 function AddChannelForm() {
-  const { useDocument, database } = useFireproof('channel-registry')
+  const { useDocument, database } = useFireproof('channelRegistry')
   const { doc, merge } = useDocument({ name: '' })
   async function handleSubmit(e) {
     e.preventDefault()
@@ -221,5 +221,5 @@ function AddChannelForm() {
 }
 
 // In sidebar, below channel list:
-{can('write', 'channel-registry') && <AddChannelForm />}
+{isOwner && <AddChannelForm />}
 ```
