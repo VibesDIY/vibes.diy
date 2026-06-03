@@ -101,7 +101,7 @@ function ChannelView({ name, viewer, can }) {
   useEffect(() => {
     if (messages.length > prevCountRef.current) {
       const last = messages[messages.length - 1];
-      if (document.hidden && Notification.permission === "granted" && last?.authorUserSlug !== viewer?.userSlug) {
+      if (document.hidden && Notification.permission === "granted" && last?.authorUserSlug !== viewer?.userHandle) {
         new Notification(`#${name}`, {
           body: `${last.authorDisplayName || "someone"}: ${last._files?.image ? "📷 sent an image" : last.text}`,
           icon: last.authorAvatarUrl || undefined,
@@ -118,8 +118,8 @@ function ChannelView({ name, viewer, can }) {
     const entry = {
       text: text || "",
       timestamp: Date.now(),
-      authorUserSlug: viewer.userSlug,
-      authorDisplayName: viewer.displayName || viewer.userSlug,
+      authorUserSlug: viewer.userHandle,
+      authorDisplayName: viewer.displayName || viewer.userHandle,
       authorAvatarUrl: viewer.avatarUrl,
     };
     if (pendingImage) entry._files = { image: pendingImage };
@@ -184,7 +184,7 @@ function ChannelView({ name, viewer, can }) {
             </div>
           )}
           <div className="px-6 pt-2 text-xs text-[oklch(0.71_0.02_261)]">
-            Posting as <span className="text-[oklch(0.79_0.18_75)] font-medium">{viewer.displayName || viewer.userSlug}</span>
+            Posting as <span className="text-[oklch(0.79_0.18_75)] font-medium">{viewer.displayName || viewer.userHandle}</span>
           </div>
           <form onSubmit={handleSubmit} className="px-6 py-3 flex gap-2 pr-20">
             <button
@@ -310,7 +310,7 @@ export default function App() {
         {viewer && (
           <div className={c.viewerBar}>
             <img src={viewer.avatarUrl} alt="" className="w-6 h-6 rounded-full" />
-            <span>{viewer.displayName || viewer.userSlug}</span>
+            <span>{viewer.displayName || viewer.userHandle}</span>
           </div>
         )}
       </aside>

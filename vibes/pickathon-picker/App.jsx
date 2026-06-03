@@ -57,7 +57,7 @@ export default function PickathonPicker() {
   const { database, useLiveQuery, useDocument } = useFireproof("pickathon-festival");
   const { viewer, can, ViewerTag } = useViewer();
   const canWrite = can("write");
-  const userId = viewer?.userSlug || "anonymous";
+  const userId = viewer?.userHandle || "anonymous";
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,20 +84,20 @@ export default function PickathonPicker() {
 
   // If arriving via a connect link, record the friendship once we know who we are
   useEffect(() => {
-    if (typeof window === "undefined" || !canWrite || !viewer?.userSlug) return;
+    if (typeof window === "undefined" || !canWrite || !viewer?.userHandle) return;
     const params = new URLSearchParams(window.location.search);
     const friendSlug = params.get("friend");
-    if (!friendSlug || friendSlug === viewer.userSlug) return;
+    if (!friendSlug || friendSlug === viewer.userHandle) return;
     database
       .put({
-        _id: `friend-${viewer.userSlug}-${friendSlug}`,
+        _id: `friend-${viewer.userHandle}-${friendSlug}`,
         type: "friend",
-        userId: viewer.userSlug,
+        userId: viewer.userHandle,
         friendSlug,
         createdAt: Date.now(),
       })
       .catch(() => {});
-  }, [canWrite, viewer?.userSlug]);
+  }, [canWrite, viewer?.userHandle]);
 
   const getCached = () => {
     const data = localStorage.getItem("pickathon-schedule-cache");
@@ -573,7 +573,7 @@ export default function PickathonPicker() {
                     }`}
                     title={`${u.count} pick${u.count === 1 ? "" : "s"}`}
                   >
-                    <ViewerTag userSlug={u.userId} />
+                    <ViewerTag userHandle={u.userId} />
                     <span className={`pr-3 font-bold text-sm ${c.bodyText}`}>{u.count}</span>
                   </button>
                 ))}
@@ -641,7 +641,7 @@ export default function PickathonPicker() {
                         key={`by-${f._id}`}
                         className="flex items-center gap-2 p-2 bg-[#71AD44] rounded-full border-2 border-[#4A4A4A]"
                       >
-                        <ViewerTag userSlug={f.userId} />
+                        <ViewerTag userHandle={f.userId} />
                       </div>
                     ))}
                   </div>
@@ -653,7 +653,7 @@ export default function PickathonPicker() {
                   <div className="flex flex-wrap gap-3">
                     {friends.map((f) => (
                       <div key={f._id} className="flex items-center gap-2 p-2 bg-[#BACD32] rounded-full border-2 border-[#4A4A4A]">
-                        <ViewerTag userSlug={f.friendSlug} />
+                        <ViewerTag userHandle={f.friendSlug} />
                         {canWrite && (
                           <button
                             onClick={() => database.del(f._id)}
