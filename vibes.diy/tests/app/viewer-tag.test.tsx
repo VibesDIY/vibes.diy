@@ -28,23 +28,23 @@ describe("ViewerTag", () => {
     expect(screen.getByText("alice")).toBeTruthy();
   });
 
-  it("renders another user's slug when ownerHandle prop is given", () => {
-    renderViewerTag(aliceEnv, { ownerHandle: "bob" });
+  it("renders another user's slug when userHandle prop is given", () => {
+    renderViewerTag(aliceEnv, { userHandle: "bob" });
     expect(screen.getByText("bob")).toBeTruthy();
   });
 
-  it("renders fallback when ownerHandle prop is present but undefined", () => {
-    renderViewerTag(aliceEnv, { ownerHandle: undefined });
+  it("renders fallback when userHandle prop is present but undefined", () => {
+    renderViewerTag(aliceEnv, { userHandle: undefined });
     expect(screen.getByText("no user handle provided")).toBeTruthy();
   });
 
-  it("renders fallback when user prop has no ownerHandle", () => {
-    renderViewerTag(aliceEnv, { user: { ownerHandle: "" } });
+  it("renders fallback when user prop has no userHandle", () => {
+    renderViewerTag(aliceEnv, { user: { userHandle: "" } });
     expect(screen.getByText("no user handle provided")).toBeTruthy();
   });
 
   it("does not show edit ring for another user", () => {
-    renderViewerTag(aliceEnv, { ownerHandle: "bob" });
+    renderViewerTag(aliceEnv, { userHandle: "bob" });
     // file input should not be present
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
@@ -60,14 +60,14 @@ describe("ViewerTag", () => {
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
-  it("does not show edit ring when ownerHandle matches viewer but viewer is null", () => {
-    renderViewerTag(undefined, { ownerHandle: undefined });
+  it("does not show edit ring when userHandle matches viewer but viewer is null", () => {
+    renderViewerTag(undefined, { userHandle: undefined });
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
   it("uses user.avatarUrl when provided via object prop", () => {
     renderViewerTag(aliceEnv, {
-      user: { ownerHandle: "bob", avatarUrl: "https://custom.test/bob.png" },
+      user: { userHandle: "bob", avatarUrl: "https://custom.test/bob.png" },
     });
     const img = document.querySelector("img") as HTMLImageElement;
     expect(img?.src).toBe("https://custom.test/bob.png");
