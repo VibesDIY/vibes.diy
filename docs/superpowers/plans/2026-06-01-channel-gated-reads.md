@@ -14,17 +14,18 @@
 
 ## File Structure
 
-| File | Responsibility |
-|------|---------------|
-| `vibes.diy/api/svc/public/channel-read-filter.ts` (new) | Pure function: given docs, AccessFnOutputs rows, user handle → filtered docs. Reusable by both queryDocs and getDoc. |
-| `vibes.diy/api/svc/public/app-documents.ts` (modify) | Wire the filter into queryDocsEvento and getDocEvento after existing ACL checks |
-| `vibes.diy/api/tests/access-fn-channel-read.test.ts` (new) | Integration tests for channel-gated reads |
+| File                                                       | Responsibility                                                                                                       |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `vibes.diy/api/svc/public/channel-read-filter.ts` (new)    | Pure function: given docs, AccessFnOutputs rows, user handle → filtered docs. Reusable by both queryDocs and getDoc. |
+| `vibes.diy/api/svc/public/app-documents.ts` (modify)       | Wire the filter into queryDocsEvento and getDocEvento after existing ACL checks                                      |
+| `vibes.diy/api/tests/access-fn-channel-read.test.ts` (new) | Integration tests for channel-gated reads                                                                            |
 
 ---
 
 ### Task 1: Channel read filter — pure logic module
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/public/channel-read-filter.ts`
 - Create: `vibes.diy/api/tests/access-fn-channel-read-unit.test.ts`
 
@@ -45,7 +46,10 @@ const mkOutput = (docId: string, output: Record<string, unknown>) => ({
 
 describe("filterDocsByChannel (unit)", () => {
   it("returns all docs when no access fn outputs exist (empty outputs array)", () => {
-    const docs = [{ _id: "d1", title: "hello" }, { _id: "d2", title: "world" }];
+    const docs = [
+      { _id: "d1", title: "hello" },
+      { _id: "d2", title: "world" },
+    ];
     const result = filterDocsByChannel(docs, [], null, new Set(), new Set());
     expect(result).toEqual(docs);
   });
@@ -55,10 +59,7 @@ describe("filterDocsByChannel (unit)", () => {
       { _id: "d1", title: "in-channel" },
       { _id: "d2", title: "not-in-channel" },
     ];
-    const outputs = [
-      mkOutput("d1", { channels: ["general"] }),
-      mkOutput("d2", { channels: ["secret"] }),
-    ];
+    const outputs = [mkOutput("d1", { channels: ["general"] }), mkOutput("d2", { channels: ["secret"] })];
     const effectiveChannels = new Set(["general"]);
     const publicChannels = new Set<string>();
     const result = filterDocsByChannel(docs, outputs, "user-a", effectiveChannels, publicChannels);
@@ -71,10 +72,7 @@ describe("filterDocsByChannel (unit)", () => {
       { _id: "d1", title: "public-doc" },
       { _id: "d2", title: "private-doc" },
     ];
-    const outputs = [
-      mkOutput("d1", { channels: ["announcements"] }),
-      mkOutput("d2", { channels: ["secret"] }),
-    ];
+    const outputs = [mkOutput("d1", { channels: ["announcements"] }), mkOutput("d2", { channels: ["secret"] })];
     const effectiveChannels = new Set<string>();
     const publicChannels = new Set(["announcements"]);
     const result = filterDocsByChannel(docs, outputs, null, effectiveChannels, publicChannels);
@@ -87,10 +85,7 @@ describe("filterDocsByChannel (unit)", () => {
       { _id: "d1", title: "has-channel" },
       { _id: "d2", title: "no-channel" },
     ];
-    const outputs = [
-      mkOutput("d1", { channels: ["general"] }),
-      mkOutput("d2", { allowAnonymous: true }),
-    ];
+    const outputs = [mkOutput("d1", { channels: ["general"] }), mkOutput("d2", { allowAnonymous: true })];
     const effectiveChannels = new Set(["general"]);
     const result = filterDocsByChannel(docs, outputs, "user-a", effectiveChannels, new Set());
     expect(result.length).toBe(1);
@@ -102,9 +97,7 @@ describe("filterDocsByChannel (unit)", () => {
       { _id: "d1", title: "has-output" },
       { _id: "d2", title: "no-output" },
     ];
-    const outputs = [
-      mkOutput("d1", { channels: ["general"] }),
-    ];
+    const outputs = [mkOutput("d1", { channels: ["general"] })];
     const effectiveChannels = new Set(["general"]);
     const result = filterDocsByChannel(docs, outputs, "user-a", effectiveChannels, new Set());
     expect(result.length).toBe(1);
@@ -197,6 +190,7 @@ no stored output, multi-channel docs, empty outputs passthrough."
 ### Task 2: Wire channel filter into queryDocsEvento
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/app-documents.ts` (queryDocsEvento handler, ~line 606-690)
 
 Insert channel filtering after the dedup/delete loop and before `applyQueryFilter`. The pattern: look up access fn binding → if exists, query AccessFnOutputs for all docs → build reduce → resolve channels → filter.
@@ -214,73 +208,73 @@ import { filterDocsByChannel } from "./channel-read-filter.js";
 In the queryDocsEvento handler, find the block that builds the `docs` array (around line 666-679 on origin/main). After the loop that builds `docs` and before `const filteredDocs = applyQueryFilter(...)`, insert:
 
 ```typescript
-      // Channel-gated read filter: if an access fn binding exists for this db,
-      // filter docs to only those in the user's effective channels or public channels.
-      const tAfb = vctx.sql.tables.accessFunctionBindings;
-      const afbRow = await vctx.sql.db
-        .select({ accessFnCid: tAfb.accessFnCid })
-        .from(tAfb)
-        .where(and(eq(tAfb.userSlug, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), eq(tAfb.dbName, req.dbName)))
+// Channel-gated read filter: if an access fn binding exists for this db,
+// filter docs to only those in the user's effective channels or public channels.
+const tAfb = vctx.sql.tables.accessFunctionBindings;
+const afbRow = await vctx.sql.db
+  .select({ accessFnCid: tAfb.accessFnCid })
+  .from(tAfb)
+  .where(and(eq(tAfb.userHandle, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), eq(tAfb.dbName, req.dbName)))
+  .limit(1)
+  .then((r) => r[0]);
+
+let channelFilteredDocs = docs;
+if (afbRow?.accessFnCid) {
+  const tOutputs = vctx.sql.tables.accessFnOutputs;
+  const allOutputs = await vctx.sql.db
+    .select({ docId: tOutputs.docId, output: tOutputs.output })
+    .from(tOutputs)
+    .where(
+      and(
+        eq(tOutputs.userHandle, req.ownerHandle),
+        eq(tOutputs.appSlug, req.appSlug),
+        eq(tOutputs.dbName, req.dbName),
+        eq(tOutputs.fnCid, afbRow.accessFnCid)
+      )
+    );
+
+  const grantOutputs = await vctx.sql.db
+    .select({ docId: tOutputs.docId, output: tOutputs.output })
+    .from(tOutputs)
+    .where(
+      and(
+        eq(tOutputs.userHandle, req.ownerHandle),
+        eq(tOutputs.appSlug, req.appSlug),
+        eq(tOutputs.dbName, req.dbName),
+        eq(tOutputs.fnCid, afbRow.accessFnCid),
+        eq(tOutputs.hasGrants, 1)
+      )
+    );
+
+  const reduce = new GrantReduce();
+  for (const row of grantOutputs) {
+    reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
+  }
+
+  const userHandle = req._auth
+    ? await vctx.sql.db
+        .select({ handle: vctx.sql.tables.handleBinding.handle })
+        .from(vctx.sql.tables.handleBinding)
+        .where(eq(vctx.sql.tables.handleBinding.userId, req._auth.verifiedAuth.claims.userId))
         .limit(1)
-        .then((r) => r[0]);
+        .then((r) => r[0]?.handle ?? null)
+    : null;
 
-      let channelFilteredDocs = docs;
-      if (afbRow?.accessFnCid) {
-        const tOutputs = vctx.sql.tables.accessFnOutputs;
-        const allOutputs = await vctx.sql.db
-          .select({ docId: tOutputs.docId, output: tOutputs.output })
-          .from(tOutputs)
-          .where(
-            and(
-              eq(tOutputs.userSlug, req.ownerHandle),
-              eq(tOutputs.appSlug, req.appSlug),
-              eq(tOutputs.dbName, req.dbName),
-              eq(tOutputs.fnCid, afbRow.accessFnCid)
-            )
-          );
-
-        const grantOutputs = await vctx.sql.db
-          .select({ docId: tOutputs.docId, output: tOutputs.output })
-          .from(tOutputs)
-          .where(
-            and(
-              eq(tOutputs.userSlug, req.ownerHandle),
-              eq(tOutputs.appSlug, req.appSlug),
-              eq(tOutputs.dbName, req.dbName),
-              eq(tOutputs.fnCid, afbRow.accessFnCid),
-              eq(tOutputs.hasGrants, 1)
-            )
-          );
-
-        const reduce = new GrantReduce();
-        for (const row of grantOutputs) {
-          reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
-        }
-
-        const userHandle = req._auth
-          ? await vctx.sql.db
-              .select({ handle: vctx.sql.tables.handleBinding.handle })
-              .from(vctx.sql.tables.handleBinding)
-              .where(eq(vctx.sql.tables.handleBinding.userId, req._auth.verifiedAuth.claims.userId))
-              .limit(1)
-              .then((r) => r[0]?.handle ?? null)
-          : null;
-
-        const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
-        channelFilteredDocs = filterDocsByChannel(docs, allOutputs, userHandle, effectiveChannels, reduce.publicChannels);
-      }
+  const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
+  channelFilteredDocs = filterDocsByChannel(docs, allOutputs, userHandle, effectiveChannels, reduce.publicChannels);
+}
 ```
 
 Then change the `applyQueryFilter` call from:
 
 ```typescript
-      const filteredDocs = applyQueryFilter(docs, req.filter);
+const filteredDocs = applyQueryFilter(docs, req.filter);
 ```
 
 to:
 
 ```typescript
-      const filteredDocs = applyQueryFilter(channelFilteredDocs, req.filter);
+const filteredDocs = applyQueryFilter(channelFilteredDocs, req.filter);
 ```
 
 - [ ] **Step 3: Run fast-check**
@@ -309,6 +303,7 @@ functions keep current behavior (all docs visible)."
 ### Task 3: Wire channel filter into getDocEvento
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/app-documents.ts` (getDocEvento handler, ~line 495-560)
 
 Same pattern as queryDocs but for a single doc. After fetching the doc and before returning it, check if the doc is in the user's channels. If not, return `not-found` (don't leak existence).
@@ -318,83 +313,83 @@ Same pattern as queryDocs but for a single doc. After fetching the doc and befor
 In the getDocEvento handler, after the `if (!row || row.deleted === 1)` early return and before the `mintFilesUrls` call, insert:
 
 ```typescript
-      // Channel-gated read: if access fn binding exists, verify doc is in user's channels
-      const tAfb = vctx.sql.tables.accessFunctionBindings;
-      const afbRow = await vctx.sql.db
-        .select({ accessFnCid: tAfb.accessFnCid })
-        .from(tAfb)
-        .where(and(eq(tAfb.userSlug, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), eq(tAfb.dbName, req.dbName)))
+// Channel-gated read: if access fn binding exists, verify doc is in user's channels
+const tAfb = vctx.sql.tables.accessFunctionBindings;
+const afbRow = await vctx.sql.db
+  .select({ accessFnCid: tAfb.accessFnCid })
+  .from(tAfb)
+  .where(and(eq(tAfb.userHandle, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), eq(tAfb.dbName, req.dbName)))
+  .limit(1)
+  .then((r) => r[0]);
+
+if (afbRow?.accessFnCid) {
+  const tOutputs = vctx.sql.tables.accessFnOutputs;
+  const docOutput = await vctx.sql.db
+    .select({ output: tOutputs.output })
+    .from(tOutputs)
+    .where(
+      and(
+        eq(tOutputs.userHandle, req.ownerHandle),
+        eq(tOutputs.appSlug, req.appSlug),
+        eq(tOutputs.dbName, req.dbName),
+        eq(tOutputs.docId, req.docId),
+        eq(tOutputs.fnCid, afbRow.accessFnCid)
+      )
+    )
+    .limit(1)
+    .then((r) => r[0]);
+
+  const parsed = docOutput ? (JSON.parse(docOutput.output) as { channels?: string[] }) : undefined;
+  const docChannels = parsed?.channels;
+
+  if (docChannels === undefined || docChannels.length === 0) {
+    await ctx.send.send(ctx, {
+      type: "vibes.diy.res-get-doc",
+      status: "not-found",
+      id: req.docId,
+    } satisfies ResGetDocNotFound);
+    return Result.Ok(EventoResult.Continue);
+  }
+
+  const grantOutputs = await vctx.sql.db
+    .select({ docId: tOutputs.docId, output: tOutputs.output })
+    .from(tOutputs)
+    .where(
+      and(
+        eq(tOutputs.userHandle, req.ownerHandle),
+        eq(tOutputs.appSlug, req.appSlug),
+        eq(tOutputs.dbName, req.dbName),
+        eq(tOutputs.fnCid, afbRow.accessFnCid),
+        eq(tOutputs.hasGrants, 1)
+      )
+    );
+
+  const reduce = new GrantReduce();
+  for (const r of grantOutputs) {
+    reduce.addDoc(r.docId, extractContribution(JSON.parse(r.output) as AccessDescriptor));
+  }
+
+  const userHandle = req._auth
+    ? await vctx.sql.db
+        .select({ handle: vctx.sql.tables.handleBinding.handle })
+        .from(vctx.sql.tables.handleBinding)
+        .where(eq(vctx.sql.tables.handleBinding.userId, req._auth.verifiedAuth.claims.userId))
         .limit(1)
-        .then((r) => r[0]);
+        .then((r) => r[0]?.handle ?? null)
+    : null;
 
-      if (afbRow?.accessFnCid) {
-        const tOutputs = vctx.sql.tables.accessFnOutputs;
-        const docOutput = await vctx.sql.db
-          .select({ output: tOutputs.output })
-          .from(tOutputs)
-          .where(
-            and(
-              eq(tOutputs.userSlug, req.ownerHandle),
-              eq(tOutputs.appSlug, req.appSlug),
-              eq(tOutputs.dbName, req.dbName),
-              eq(tOutputs.docId, req.docId),
-              eq(tOutputs.fnCid, afbRow.accessFnCid)
-            )
-          )
-          .limit(1)
-          .then((r) => r[0]);
+  const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
+  const hasAccess = docChannels.some((ch) => effectiveChannels.has(ch) || reduce.publicChannels.has(ch));
 
-        const parsed = docOutput ? (JSON.parse(docOutput.output) as { channels?: string[] }) : undefined;
-        const docChannels = parsed?.channels;
-
-        if (docChannels === undefined || docChannels.length === 0) {
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-get-doc",
-            status: "not-found",
-            id: req.docId,
-          } satisfies ResGetDocNotFound);
-          return Result.Ok(EventoResult.Continue);
-        }
-
-        const grantOutputs = await vctx.sql.db
-          .select({ docId: tOutputs.docId, output: tOutputs.output })
-          .from(tOutputs)
-          .where(
-            and(
-              eq(tOutputs.userSlug, req.ownerHandle),
-              eq(tOutputs.appSlug, req.appSlug),
-              eq(tOutputs.dbName, req.dbName),
-              eq(tOutputs.fnCid, afbRow.accessFnCid),
-              eq(tOutputs.hasGrants, 1)
-            )
-          );
-
-        const reduce = new GrantReduce();
-        for (const r of grantOutputs) {
-          reduce.addDoc(r.docId, extractContribution(JSON.parse(r.output) as AccessDescriptor));
-        }
-
-        const userHandle = req._auth
-          ? await vctx.sql.db
-              .select({ handle: vctx.sql.tables.handleBinding.handle })
-              .from(vctx.sql.tables.handleBinding)
-              .where(eq(vctx.sql.tables.handleBinding.userId, req._auth.verifiedAuth.claims.userId))
-              .limit(1)
-              .then((r) => r[0]?.handle ?? null)
-          : null;
-
-        const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
-        const hasAccess = docChannels.some((ch) => effectiveChannels.has(ch) || reduce.publicChannels.has(ch));
-
-        if (!hasAccess) {
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-get-doc",
-            status: "not-found",
-            id: req.docId,
-          } satisfies ResGetDocNotFound);
-          return Result.Ok(EventoResult.Continue);
-        }
-      }
+  if (!hasAccess) {
+    await ctx.send.send(ctx, {
+      type: "vibes.diy.res-get-doc",
+      status: "not-found",
+      id: req.docId,
+    } satisfies ResGetDocNotFound);
+    return Result.Ok(EventoResult.Continue);
+  }
+}
 ```
 
 - [ ] **Step 2: Run fast-check**
@@ -422,6 +417,7 @@ not-found for inaccessible docs (doesn't leak existence)."
 ### Task 4: Integration tests for channel-gated reads
 
 **Files:**
+
 - Create: `vibes.diy/api/tests/access-fn-channel-read.test.ts`
 
 End-to-end tests using the existing test infrastructure (createVibeDiyTestCtx, mock invokeAccessFn). Seed AccessFunctionBindings + AccessFnOutputs rows, then verify queryDocs and getDoc filter correctly.
@@ -507,7 +503,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
 
     // Seed access fn binding
     await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.accessFunctionBindings).values({
-      userSlug: ownerHandle,
+      userHandle: ownerHandle,
       appSlug,
       dbName: "chat",
       accessFnCid: CID,
@@ -539,7 +535,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     await appCtx.vibesCtx.sql.db
       .insert(tOutputs)
       .values({
-        userSlug: ownerHandle,
+        userHandle: ownerHandle,
         appSlug,
         dbName: "chat",
         docId: "grant-doc",
@@ -550,7 +546,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
         hasGrants: 1,
       })
       .onConflictDoUpdate({
-        target: [tOutputs.userSlug, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
+        target: [tOutputs.userHandle, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
         set: {
           output: JSON.stringify({ grant: { users: { [ownerHandle]: ["general"] } } }),
           hasGrants: 1,
@@ -574,7 +570,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
       .from(tOutputs)
       .where(
         and(
-          eq(tOutputs.userSlug, ownerHandle),
+          eq(tOutputs.userHandle, ownerHandle),
           eq(tOutputs.appSlug, appSlug),
           eq(tOutputs.dbName, "chat"),
           eq(tOutputs.fnCid, CID)

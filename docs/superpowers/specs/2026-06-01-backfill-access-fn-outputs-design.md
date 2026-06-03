@@ -12,6 +12,7 @@ When access.js is pushed for the first time (or updated), existing documents hav
 Inline backfill in `ensureAppSlugItem`. After the AccessFunctionBindings upsert loop, detect which bindings have new or changed CIDs. For each changed binding, query all existing docs, invoke the access function on each, and upsert the results into AccessFnOutputs.
 
 Inline (blocking) rather than async because:
+
 - The push already does heavy work (LLM metadata derivation, chat seeding)
 - QuickJS WASM eval is ~1ms/doc — even 500 docs adds < 1 second
 - Guarantees channel-gated reads work immediately after push (no race window)
@@ -66,31 +67,31 @@ Follow the same pattern as `queryDocsEvento`: query all rows ordered by `(docId,
 ### AccessFunctionBindings
 
 ```
-PK: (userSlug, appSlug, dbName)
+PK: (userHandle, appSlug, dbName)
 Columns: accessFnCid, accessFnAssetUri, updated
 ```
 
 ### AccessFnOutputs
 
 ```
-PK: (userSlug, appSlug, dbName, docId)
+PK: (userHandle, appSlug, dbName, docId)
 Columns: fnCid, output (JSON), hasGrants (0|1)
-Index: (userSlug, appSlug, dbName, fnCid) for grant queries
+Index: (userHandle, appSlug, dbName, fnCid) for grant queries
 ```
 
 ### AppDocuments
 
 ```
-PK: (ownerHandle[=userSlug], appSlug, dbName, docId, seq)
+PK: (ownerHandle[=userHandle], appSlug, dbName, docId, seq)
 Columns: userId, data (JSON), deleted (0|1), created
 ```
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `vibes.diy/api/svc/public/ensure-app-slug-item.ts` | Add backfill after binding upsert loop |
-| `vibes.diy/api/tests/access-fn-backfill.test.ts` (new) | Integration tests |
+| File                                                   | Change                                 |
+| ------------------------------------------------------ | -------------------------------------- |
+| `vibes.diy/api/svc/public/ensure-app-slug-item.ts`     | Add backfill after binding upsert loop |
+| `vibes.diy/api/tests/access-fn-backfill.test.ts` (new) | Integration tests                      |
 
 ## Test Plan
 

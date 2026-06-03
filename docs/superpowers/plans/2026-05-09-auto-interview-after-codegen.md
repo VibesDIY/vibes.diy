@@ -19,13 +19,15 @@
 ## File Structure
 
 **Modify (additions):**
+
 - `prompts/pkg/system-prompt.md` — append the new tail.
 - `prompts/pkg/system-prompt-initial.md` — append the same tail.
 - `prompts/tests/prompt-builder.test.ts` — add two substring-presence assertions (one per template).
 
 **Modify (reverts back toward `origin/main`):**
+
 - `vibes.diy/pkg/app/components/ChatInput.tsx` — remove Chat button, revert `onSubmit` to one arg.
-- `vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx` — revert `sendPrompt` queue to `string | null`, remove `<vibes-brief>` auto-handoff effect, simplify `handleSelectOption`, drop `mode` from the firing effect.
+- `vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx` — revert `sendPrompt` queue to `string | null`, remove `<vibes-brief>` auto-handoff effect, simplify `handleSelectOption`, drop `mode` from the firing effect.
 - `vibes.diy/tests/app/ChatInput.test.tsx` — revert assertions to one-arg `onSubmit`.
 - `vibes.diy/api/types/vibes-diy-api.ts` — revert `LLMChat.prompt` interface.
 - `vibes.diy/api/impl/index.ts` — revert `LLMChatImpl.prompt` impl.
@@ -38,11 +40,13 @@
 - `pnpm-lock.yaml` — regenerate after removing the workspace dep.
 
 **Delete:**
+
 - `prompts/pkg/system-prompt-brainstorm.md`
 - `prompts/tests/brainstorm-prompt.test.ts`
 - `vibes.diy/api/tests/brainstorm-mode.test.ts`
 
 **Unchanged (reused by new design):**
+
 - `vibes.diy/pkg/app/utils/option-lines.ts` and `vibes.diy/tests/app/option-lines.test.ts`.
 - `vibes.diy/pkg/app/components/OptionButtons.tsx`.
 - `vibes.diy/pkg/app/components/MessageList.tsx` (option rendering inside `TopLevelMsg` reused for trailing questions).
@@ -53,6 +57,7 @@
 ## Task 1: Add failing assertions for the new system-prompt tail
 
 **Files:**
+
 - Modify: `prompts/tests/prompt-builder.test.ts`
 
 - [ ] **Step 1: Open `prompts/tests/prompt-builder.test.ts`. Find the existing `describe("prompt builder (real implementation)", () => {` block (around line 106) and the `makeBaseSystemPrompt` test cases inside it.**
@@ -62,25 +67,25 @@
 The tests assert each system prompt template contains the literal escape-hatch text. They will fail until Task 2 lands.
 
 ```ts
-  it("system-prompt.md ends every turn with one improvement question (escape hatch present)", async () => {
-    const r = await makeBaseSystemPrompt("anthropic/claude-opus-4.5", {
-      skills: ["fireproof"],
-      title: "X",
-      variant: "continuation",
-    });
-    expect(r.systemPrompt).toContain("▸ I'm done for now");
-    expect(r.systemPrompt).toContain("End every turn with one improvement question");
+it("system-prompt.md ends every turn with one improvement question (escape hatch present)", async () => {
+  const r = await makeBaseSystemPrompt("anthropic/claude-opus-4.5", {
+    skills: ["fireproof"],
+    title: "X",
+    variant: "continuation",
   });
+  expect(r.systemPrompt).toContain("▸ I'm done for now");
+  expect(r.systemPrompt).toContain("End every turn with one improvement question");
+});
 
-  it("system-prompt-initial.md ends the first turn with one improvement question (escape hatch present)", async () => {
-    const r = await makeBaseSystemPrompt("anthropic/claude-opus-4.5", {
-      skills: ["fireproof"],
-      title: "X",
-      variant: "initial",
-    });
-    expect(r.systemPrompt).toContain("▸ I'm done for now");
-    expect(r.systemPrompt).toContain("End every turn with one improvement question");
+it("system-prompt-initial.md ends the first turn with one improvement question (escape hatch present)", async () => {
+  const r = await makeBaseSystemPrompt("anthropic/claude-opus-4.5", {
+    skills: ["fireproof"],
+    title: "X",
+    variant: "initial",
   });
+  expect(r.systemPrompt).toContain("▸ I'm done for now");
+  expect(r.systemPrompt).toContain("End every turn with one improvement question");
+});
 ```
 
 - [ ] **Step 3: Run the tests to confirm both fail for the right reason (substring not yet present in the templates).**
@@ -105,13 +110,13 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "test(prompts
 ## Task 2: Append the auto-interview tail to both system-prompt templates
 
 **Files:**
+
 - Modify: `prompts/pkg/system-prompt.md`
 - Modify: `prompts/pkg/system-prompt-initial.md`
 
 - [ ] **Step 1: Open `prompts/pkg/system-prompt.md`. Append the tail below to the end of the file (preserving any existing trailing newline). The `▸` character is U+25B8 BLACK RIGHT-POINTING SMALL TRIANGLE.**
 
 ```markdown
-
 ## End every turn with one improvement question
 
 After your code edits (or your acknowledgment, if the user said they were done), end your response with exactly ONE short improvement question and 2–4 multiple-choice options.
@@ -200,17 +205,19 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(prompts
 ## Task 3: Remove the `<vibes-brief>` auto-handoff effect from the chat route
 
 **Files:**
-- Modify: `vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx`
+
+- Modify: `vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx`
 
 PR #1642 added an effect that scanned each completed assistant turn for a `<vibes-brief>...</vibes-brief>` block and auto-fired a follow-up `mode: "app"` prompt. With the new design, every turn is `mode: "app"` and ends with a `▸ ` question instead of a `<vibes-brief>`. The effect is no longer triggered by anything and should be removed before the rest of the brainstorm cleanup so subsequent reverts don't accidentally retain a dangling reference.
 
 - [ ] **Step 1: Locate the brief-detection effect by searching for `lastBriefHandledRef`.**
 
 ```bash
-grep -n "lastBriefHandledRef\|vibes-brief" /Users/marcusestes/Websites/vibes.diy-chat-button/vibes.diy/pkg/app/routes/chat/chat.\$userSlug.\$appSlug.tsx
+grep -n "lastBriefHandledRef\|vibes-brief" /Users/marcusestes/Websites/vibes.diy-chat-button/vibes.diy/pkg/app/routes/chat/chat.\$userHandle.\$appSlug.tsx
 ```
 
 You should find:
+
 - The `useRef<string | null>(null)` declaration named `lastBriefHandledRef`.
 - A `useEffect(() => { ... }, [promptState.running, promptState.blocks]);` block that uses `lastBriefHandledRef`, iterates `promptState.blocks`, and matches `/<vibes-brief>([\s\S]*?)<\/vibes-brief>/`.
 - An import of `isToplevelBegin, isToplevelLine` from `@vibes.diy/call-ai-v2` (added when the effect was implemented).
@@ -220,38 +227,38 @@ You should find:
 The block to remove looks like:
 
 ```ts
-  const lastBriefHandledRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (promptState.running) return;
-    const blocks = promptState.blocks;
-    if (blocks.length === 0) return;
+const lastBriefHandledRef = useRef<string | null>(null);
+useEffect(() => {
+  if (promptState.running) return;
+  const blocks = promptState.blocks;
+  if (blocks.length === 0) return;
 
-    // Find the latest assistant TopLevel message text.
-    const lastBlock = blocks[blocks.length - 1];
-    let collected = "";
-    let toplevelStreamId: string | null = null;
-    for (const msg of lastBlock.msgs) {
-      if (isToplevelBegin(msg)) {
-        collected = "";
-        toplevelStreamId = msg.streamId;
-      } else if (isToplevelLine(msg)) {
-        collected += (collected ? "\n" : "") + msg.line;
-      }
+  // Find the latest assistant TopLevel message text.
+  const lastBlock = blocks[blocks.length - 1];
+  let collected = "";
+  let toplevelStreamId: string | null = null;
+  for (const msg of lastBlock.msgs) {
+    if (isToplevelBegin(msg)) {
+      collected = "";
+      toplevelStreamId = msg.streamId;
+    } else if (isToplevelLine(msg)) {
+      collected += (collected ? "\n" : "") + msg.line;
     }
-    if (!toplevelStreamId) return;
+  }
+  if (!toplevelStreamId) return;
 
-    // Only handle each turn once.
-    if (lastBriefHandledRef.current === toplevelStreamId) return;
+  // Only handle each turn once.
+  if (lastBriefHandledRef.current === toplevelStreamId) return;
 
-    const match = collected.match(/<vibes-brief>([\s\S]*?)<\/vibes-brief>/);
-    if (!match) return;
+  const match = collected.match(/<vibes-brief>([\s\S]*?)<\/vibes-brief>/);
+  if (!match) return;
 
-    const briefBody = match[1].trim();
-    if (!briefBody) return;
+  const briefBody = match[1].trim();
+  if (!briefBody) return;
 
-    lastBriefHandledRef.current = toplevelStreamId;
-    sendPrompt({ text: `Build this change:\n\n${briefBody}`, mode: "app" });
-  }, [promptState.running, promptState.blocks]);
+  lastBriefHandledRef.current = toplevelStreamId;
+  sendPrompt({ text: `Build this change:\n\n${briefBody}`, mode: "app" });
+}, [promptState.running, promptState.blocks]);
 ```
 
 Delete it in full.
@@ -289,7 +296,7 @@ Expected: pass. The flaky test mentioned in `agents/flaky-tests.md` is acceptabl
 - [ ] **Step 6: Commit.**
 
 ```bash
-git -C /Users/marcusestes/Websites/vibes.diy-chat-button add vibes.diy/pkg/app/routes/chat/chat.\$userSlug.\$appSlug.tsx
+git -C /Users/marcusestes/Websites/vibes.diy-chat-button add vibes.diy/pkg/app/routes/chat/chat.\$userHandle.\$appSlug.tsx
 git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(chat-route): drop <vibes-brief> auto-handoff effect (no longer needed)"
 ```
 
@@ -298,8 +305,9 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(chat-ro
 ## Task 4: Revert ChatInput dual-button + route mode plumbing + tests
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/ChatInput.tsx`
-- Modify: `vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx`
+- Modify: `vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx`
 - Modify: `vibes.diy/tests/app/ChatInput.test.tsx`
 
 This task is a single commit because changes across these three files must land atomically — the `onSubmit` signature and the `sendPrompt` shape must agree at all times. Three sub-files but one logical revert.
@@ -327,26 +335,26 @@ Replace with:
 Find:
 
 ```ts
-    const handleSendPrompt = useCallback(
-      (mode: "app" | "brainstorm") => {
-        if (prompt && !promptProcessing) {
-          onSubmit(prompt, mode);
-          setPrompt("");
-        }
-      },
-      [prompt, promptProcessing, onSubmit]
-    );
+const handleSendPrompt = useCallback(
+  (mode: "app" | "brainstorm") => {
+    if (prompt && !promptProcessing) {
+      onSubmit(prompt, mode);
+      setPrompt("");
+    }
+  },
+  [prompt, promptProcessing, onSubmit]
+);
 ```
 
 Replace with:
 
 ```ts
-    const handleSendPrompt = useCallback(() => {
-      if (prompt && !promptProcessing) {
-        onSubmit(prompt);
-        setPrompt("");
-      }
-    }, [prompt, promptProcessing, onSubmit]);
+const handleSendPrompt = useCallback(() => {
+  if (prompt && !promptProcessing) {
+    onSubmit(prompt);
+    setPrompt("");
+  }
+}, [prompt, promptProcessing, onSubmit]);
 ```
 
 - [ ] **Step 3: Revert the textarea `onKeyDown` Enter handler.**
@@ -354,13 +362,13 @@ Replace with:
 Find:
 
 ```ts
-                  handleSendPrompt("app");
+handleSendPrompt("app");
 ```
 
 Replace with:
 
 ```ts
-                  handleSendPrompt();
+handleSendPrompt();
 ```
 
 - [ ] **Step 4: Replace the dual-button JSX block with the single Code button.**
@@ -368,33 +376,31 @@ Replace with:
 Find the current block beginning with `<div className="flex items-center gap-2">` (the wrapper introduced by PR #1642's Task 9) and ending with the matching closing `</div>`. Replace the whole block with the original single-button shape:
 
 ```tsx
-            <div
-              style={{
-                display: "inline-flex",
-                borderRadius: 7,
-                padding: promptProcessing ? 2 : 0,
-                background: promptProcessing ? btnSnakeBorder : "transparent",
-                animation: promptProcessing ? "vibes-border-spin 2s linear infinite" : "none",
-              }}
-            >
-              <Button
-                ref={submitButtonRef}
-                type="button"
-                onClick={handleSendPrompt}
-                disabled={promptProcessing}
-                variant="blue"
-                size="fixed"
-                aria-label={promptProcessing ? "Processing" : "Send message"}
-                className={
-                  promptProcessing
-                    ? "!border-0 !shadow-none !bg-[var(--vibes-submit-disabled-bg)] !text-[var(--vibes-submit-disabled-fg)]"
-                    : ""
-                }
-                style={promptProcessing ? { opacity: 1 } : undefined}
-              >
-                {promptProcessing ? workingMessage : "Code"}
-              </Button>
-            </div>
+<div
+  style={{
+    display: "inline-flex",
+    borderRadius: 7,
+    padding: promptProcessing ? 2 : 0,
+    background: promptProcessing ? btnSnakeBorder : "transparent",
+    animation: promptProcessing ? "vibes-border-spin 2s linear infinite" : "none",
+  }}
+>
+  <Button
+    ref={submitButtonRef}
+    type="button"
+    onClick={handleSendPrompt}
+    disabled={promptProcessing}
+    variant="blue"
+    size="fixed"
+    aria-label={promptProcessing ? "Processing" : "Send message"}
+    className={
+      promptProcessing ? "!border-0 !shadow-none !bg-[var(--vibes-submit-disabled-bg)] !text-[var(--vibes-submit-disabled-fg)]" : ""
+    }
+    style={promptProcessing ? { opacity: 1 } : undefined}
+  >
+    {promptProcessing ? workingMessage : "Code"}
+  </Button>
+</div>
 ```
 
 Note: `onClick={handleSendPrompt}` (no arrow wrapper) because the handler now takes zero arguments.
@@ -404,33 +410,33 @@ Note: `onClick={handleSendPrompt}` (no arrow wrapper) because the handler now ta
 Find:
 
 ```ts
-    expect(onSubmit).toHaveBeenCalledWith("Hello world", "app");
+expect(onSubmit).toHaveBeenCalledWith("Hello world", "app");
 ```
 
 Replace with:
 
 ```ts
-    expect(onSubmit).toHaveBeenCalledWith("Hello world");
+expect(onSubmit).toHaveBeenCalledWith("Hello world");
 ```
 
 The same line appears twice in the file (one in the click test, one in the Enter-key test). Replace both occurrences.
 
-- [ ] **Step 6: In `vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx`, revert the `promptToSend` state shape.**
+- [ ] **Step 6: In `vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx`, revert the `promptToSend` state shape.**
 
 Find:
 
 ```ts
-  interface PendingPrompt {
-    text: string;
-    mode: "app" | "brainstorm";
-  }
-  const [promptToSend, sendPrompt] = useState<PendingPrompt | null>(null);
+interface PendingPrompt {
+  text: string;
+  mode: "app" | "brainstorm";
+}
+const [promptToSend, sendPrompt] = useState<PendingPrompt | null>(null);
 ```
 
 Replace with:
 
 ```ts
-  const [promptToSend, sendPrompt] = useState<string | null>(null);
+const [promptToSend, sendPrompt] = useState<string | null>(null);
 ```
 
 - [ ] **Step 7: Revert the firing-effect predicate.**
@@ -452,56 +458,56 @@ Replace with:
 Find:
 
 ```ts
-        const sentPrompt = promptToSend;
-        // Clear promptToSend BEFORE firing so any re-render of this effect
-        // (e.g. searchParams change) sees null and skips the branch.
-        sendPrompt(null);
-        chat
-          .prompt(
-            {
-              messages: [
-                {
-                  role: "user",
-                  content: [{ type: "text", text: sentPrompt.text }],
-                },
-              ],
-            },
-            sentPrompt.mode === "brainstorm" ? { mode: "brainstorm" } : undefined
-          )
-          .then((r) => {
-            if (r.isErr()) {
-              console.error(`PromptSend failed`, r.Ok());
-            } else {
-              console.log(`send prompt`, sentPrompt.text, sentPrompt.mode);
-              notifyRecentVibesChanged();
-            }
-          });
+const sentPrompt = promptToSend;
+// Clear promptToSend BEFORE firing so any re-render of this effect
+// (e.g. searchParams change) sees null and skips the branch.
+sendPrompt(null);
+chat
+  .prompt(
+    {
+      messages: [
+        {
+          role: "user",
+          content: [{ type: "text", text: sentPrompt.text }],
+        },
+      ],
+    },
+    sentPrompt.mode === "brainstorm" ? { mode: "brainstorm" } : undefined
+  )
+  .then((r) => {
+    if (r.isErr()) {
+      console.error(`PromptSend failed`, r.Ok());
+    } else {
+      console.log(`send prompt`, sentPrompt.text, sentPrompt.mode);
+      notifyRecentVibesChanged();
+    }
+  });
 ```
 
 Replace with:
 
 ```ts
-        const sentPrompt = promptToSend;
-        // Clear promptToSend BEFORE firing so any re-render of this effect
-        // (e.g. searchParams change) sees null and skips the branch.
-        sendPrompt(null);
-        chat
-          .prompt({
-            messages: [
-              {
-                role: "user",
-                content: [{ type: "text", text: sentPrompt }],
-              },
-            ],
-          })
-          .then((r) => {
-            if (r.isErr()) {
-              console.error(`PromptSend failed`, r.Ok());
-            } else {
-              console.log(`send prompt`, sentPrompt);
-              notifyRecentVibesChanged();
-            }
-          });
+const sentPrompt = promptToSend;
+// Clear promptToSend BEFORE firing so any re-render of this effect
+// (e.g. searchParams change) sees null and skips the branch.
+sendPrompt(null);
+chat
+  .prompt({
+    messages: [
+      {
+        role: "user",
+        content: [{ type: "text", text: sentPrompt }],
+      },
+    ],
+  })
+  .then((r) => {
+    if (r.isErr()) {
+      console.error(`PromptSend failed`, r.Ok());
+    } else {
+      console.log(`send prompt`, sentPrompt);
+      notifyRecentVibesChanged();
+    }
+  });
 ```
 
 - [ ] **Step 9: Revert the URL-prompt prefill call.**
@@ -509,13 +515,13 @@ Replace with:
 Find:
 
 ```ts
-        sendPrompt({ text: promptText, mode: "app" });
+sendPrompt({ text: promptText, mode: "app" });
 ```
 
 Replace with:
 
 ```ts
-        sendPrompt(promptText);
+sendPrompt(promptText);
 ```
 
 - [ ] **Step 10: Revert the ChatInput `onSubmit` wiring.**
@@ -529,7 +535,7 @@ Find:
 Replace with:
 
 ```tsx
-              onSubmit={sendPrompt}
+onSubmit = { sendPrompt };
 ```
 
 - [ ] **Step 11: Simplify `handleSelectOption`.**
@@ -537,23 +543,23 @@ Replace with:
 Find:
 
 ```ts
-  const handleSelectOption = useCallback(
-    (option: string) => {
-      sendPrompt({ text: option, mode: "brainstorm" });
-    },
-    [sendPrompt]
-  );
+const handleSelectOption = useCallback(
+  (option: string) => {
+    sendPrompt({ text: option, mode: "brainstorm" });
+  },
+  [sendPrompt]
+);
 ```
 
 Replace with:
 
 ```ts
-  const handleSelectOption = useCallback(
-    (option: string) => {
-      sendPrompt(option);
-    },
-    [sendPrompt]
-  );
+const handleSelectOption = useCallback(
+  (option: string) => {
+    sendPrompt(option);
+  },
+  [sendPrompt]
+);
 ```
 
 - [ ] **Step 12: Build to confirm everything types.**
@@ -577,7 +583,7 @@ Expected: 1116/1117 pass (matches PR #1642's baseline). One known flaky test is 
 ```bash
 git -C /Users/marcusestes/Websites/vibes.diy-chat-button add \
   vibes.diy/pkg/app/components/ChatInput.tsx \
-  vibes.diy/pkg/app/routes/chat/chat.\$userSlug.\$appSlug.tsx \
+  vibes.diy/pkg/app/routes/chat/chat.\$userHandle.\$appSlug.tsx \
   vibes.diy/tests/app/ChatInput.test.tsx
 git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(chat-ui): collapse dual-button to single Code button"
 ```
@@ -587,6 +593,7 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(chat-ui
 ## Task 5: Revert `LLMChat.prompt` mode override
 
 **Files:**
+
 - Modify: `vibes.diy/api/types/vibes-diy-api.ts`
 - Modify: `vibes.diy/api/impl/index.ts`
 
@@ -711,6 +718,7 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(api-imp
 ## Task 6: Remove brainstorm branches from `prompt-chat-section.ts`
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/prompt-chat-section.ts`
 
 This task removes every brainstorm reference from the API server-side handler. After this, `prompt-chat-section.ts` no longer imports `makeBrainstormSystemPrompt` or `isReqPromptBrainstormChatSection`, no longer branches on `resChat.mode === "brainstorm"`, and no longer special-cases `req.mode === "brainstorm"` anywhere. Task 7 will then delete the type definitions those branches referenced.
@@ -750,41 +758,41 @@ Two matches expected: one in the imports block, one in the `getResChatFromMode` 
 Find:
 
 ```ts
-    const effectiveModel = await resolveEffectiveModel({ model }, {});
-    const pkgBaseUrl = promptsPkgBaseUrl(vctx.params.pkgRepos.workspace);
-    const fetchOverride = createPromptAssetFetch({ fetchAsset: vctx.fetchAsset });
-    if (resChat.mode === "brainstorm") {
-      return makeBrainstormSystemPrompt(effectiveModel, {
-        title,
-        theme,
-        currentVfs: priorFs,
-        pkgBaseUrl,
-        fetch: fetchOverride,
-      });
-    }
-    return makeBaseSystemPrompt(effectiveModel, {
-      skills,
-      theme,
-      title,
-      demoData: false,
-      variant: isInitial ? "initial" : "continuation",
-      pkgBaseUrl,
-      fetch: fetchOverride,
-    });
+const effectiveModel = await resolveEffectiveModel({ model }, {});
+const pkgBaseUrl = promptsPkgBaseUrl(vctx.params.pkgRepos.workspace);
+const fetchOverride = createPromptAssetFetch({ fetchAsset: vctx.fetchAsset });
+if (resChat.mode === "brainstorm") {
+  return makeBrainstormSystemPrompt(effectiveModel, {
+    title,
+    theme,
+    currentVfs: priorFs,
+    pkgBaseUrl,
+    fetch: fetchOverride,
+  });
+}
+return makeBaseSystemPrompt(effectiveModel, {
+  skills,
+  theme,
+  title,
+  demoData: false,
+  variant: isInitial ? "initial" : "continuation",
+  pkgBaseUrl,
+  fetch: fetchOverride,
+});
 ```
 
 Replace with:
 
 ```ts
-    return makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
-      skills,
-      theme,
-      title,
-      demoData: false,
-      variant: isInitial ? "initial" : "continuation",
-      pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
-      fetch: createPromptAssetFetch({ fetchAsset: vctx.fetchAsset }),
-    });
+return makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
+  skills,
+  theme,
+  title,
+  demoData: false,
+  variant: isInitial ? "initial" : "continuation",
+  pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
+  fetch: createPromptAssetFetch({ fetchAsset: vctx.fetchAsset }),
+});
 ```
 
 (This restores the function shape that existed on `origin/main` before PR #1642 Task 5 introduced the branching helpers.)
@@ -794,34 +802,34 @@ Replace with:
 Find:
 
 ```ts
-      switch (req.mode) {
-        case "chat":
-          return Result.Ok(req.prompt.model ?? r.Ok().chat.model.id);
-        case "app":
-          return Result.Ok(req.prompt.model ?? r.Ok().app.model.id);
-        case "img":
-          return Result.Ok(req.prompt.model ?? r.Ok().img.model.id);
-        case "brainstorm":
-          // Brainstorm is conversational like chat — reuse the chat default model.
-          return Result.Ok(req.prompt.model ?? r.Ok().chat.model.id);
-        default:
-          return Result.Err(`Unknown prompt mode: ${(req as { mode: string }).mode}`);
-      }
+switch (req.mode) {
+  case "chat":
+    return Result.Ok(req.prompt.model ?? r.Ok().chat.model.id);
+  case "app":
+    return Result.Ok(req.prompt.model ?? r.Ok().app.model.id);
+  case "img":
+    return Result.Ok(req.prompt.model ?? r.Ok().img.model.id);
+  case "brainstorm":
+    // Brainstorm is conversational like chat — reuse the chat default model.
+    return Result.Ok(req.prompt.model ?? r.Ok().chat.model.id);
+  default:
+    return Result.Err(`Unknown prompt mode: ${(req as { mode: string }).mode}`);
+}
 ```
 
 Replace with:
 
 ```ts
-      switch (req.mode) {
-        case "chat":
-          return Result.Ok(req.prompt.model ?? r.Ok().chat.model.id);
-        case "app":
-          return Result.Ok(req.prompt.model ?? r.Ok().app.model.id);
-        case "img":
-          return Result.Ok(req.prompt.model ?? r.Ok().img.model.id);
-        default:
-          return Result.Err(`Unknown prompt mode: ${(req as { mode: string }).mode}`);
-      }
+switch (req.mode) {
+  case "chat":
+    return Result.Ok(req.prompt.model ?? r.Ok().chat.model.id);
+  case "app":
+    return Result.Ok(req.prompt.model ?? r.Ok().app.model.id);
+  case "img":
+    return Result.Ok(req.prompt.model ?? r.Ok().img.model.id);
+  default:
+    return Result.Err(`Unknown prompt mode: ${(req as { mode: string }).mode}`);
+}
 ```
 
 - [ ] **Step 5: Narrow the system-prompt-injection gate back to chat-only.**
@@ -865,25 +873,25 @@ Replace with:
 Find:
 
 ```ts
-        if (recoverHint === null) {
-          // Stream finished naturally and no recovery was triggered.
-          return Result.Ok();
-        }
+if (recoverHint === null) {
+  // Stream finished naturally and no recovery was triggered.
+  return Result.Ok();
+}
 
-        if (resChat.mode === "brainstorm") {
-          // Brainstorm output is plain markdown — no SEARCH/REPLACE blocks
-          // to recover. If a recoverHint somehow fires, drop it.
-          return Result.Ok();
-        }
+if (resChat.mode === "brainstorm") {
+  // Brainstorm output is plain markdown — no SEARCH/REPLACE blocks
+  // to recover. If a recoverHint somehow fires, drop it.
+  return Result.Ok();
+}
 ```
 
 Replace with:
 
 ```ts
-        if (recoverHint === null) {
-          // Stream finished naturally and no recovery was triggered.
-          return Result.Ok();
-        }
+if (recoverHint === null) {
+  // Stream finished naturally and no recovery was triggered.
+  return Result.Ok();
+}
 ```
 
 - [ ] **Step 8: Drop the brainstorm error branch in `getResChatFromMode`.**
@@ -891,31 +899,31 @@ Replace with:
 Find:
 
 ```ts
-  if (!iResChat) {
-    if (isReqCreationPromptChatSection(orig)) {
-      return Result.Err(`Creation Chat ID ${req.chatId} not found`);
-    } else if (isReqPromptApplicationChatSection(orig)) {
-      return Result.Err(`Application Chat ID ${req.chatId} not found`);
-    } else if (isReqPromptImageChatSection(orig)) {
-      return Result.Err(`Image Chat ID ${req.chatId} not found`);
-    } else if (isReqPromptBrainstormChatSection(orig)) {
-      return Result.Err(`Brainstorm Chat ID ${req.chatId} not found`);
-    }
+if (!iResChat) {
+  if (isReqCreationPromptChatSection(orig)) {
+    return Result.Err(`Creation Chat ID ${req.chatId} not found`);
+  } else if (isReqPromptApplicationChatSection(orig)) {
+    return Result.Err(`Application Chat ID ${req.chatId} not found`);
+  } else if (isReqPromptImageChatSection(orig)) {
+    return Result.Err(`Image Chat ID ${req.chatId} not found`);
+  } else if (isReqPromptBrainstormChatSection(orig)) {
+    return Result.Err(`Brainstorm Chat ID ${req.chatId} not found`);
   }
+}
 ```
 
 Replace with:
 
 ```ts
-  if (!iResChat) {
-    if (isReqCreationPromptChatSection(orig)) {
-      return Result.Err(`Creation Chat ID ${req.chatId} not found`);
-    } else if (isReqPromptApplicationChatSection(orig)) {
-      return Result.Err(`Application Chat ID ${req.chatId} not found`);
-    } else if (isReqPromptImageChatSection(orig)) {
-      return Result.Err(`Image Chat ID ${req.chatId} not found`);
-    }
+if (!iResChat) {
+  if (isReqCreationPromptChatSection(orig)) {
+    return Result.Err(`Creation Chat ID ${req.chatId} not found`);
+  } else if (isReqPromptApplicationChatSection(orig)) {
+    return Result.Err(`Application Chat ID ${req.chatId} not found`);
+  } else if (isReqPromptImageChatSection(orig)) {
+    return Result.Err(`Image Chat ID ${req.chatId} not found`);
   }
+}
 ```
 
 - [ ] **Step 9: Confirm there are no remaining brainstorm references in this file.**
@@ -946,6 +954,7 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(api): d
 ## Task 7: Remove the `'brainstorm'` mode literal and its request type
 
 **Files:**
+
 - Modify: `vibes.diy/api/types/chat.ts`
 
 After Task 6, no code in the API references `'brainstorm'` anymore. Now we can drop the type definitions.
@@ -1033,6 +1042,7 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(api-typ
 ## Task 8: Remove the brainstorm builder, asset, and unit tests
 
 **Files:**
+
 - Modify: `prompts/pkg/prompts.ts`
 - Modify: `prompts/pkg/index.ts`
 - Modify: `prompts/tests/helpers/load-mock-data.ts`
@@ -1070,12 +1080,12 @@ import brainstormPromptTemplate from "../../pkg/system-prompt-brainstorm.md?raw"
 Remove the conditional branch (placed before the `system-prompt.md` branch by PR #1642 Task 3):
 
 ```ts
-    if (url.includes("system-prompt-brainstorm.md")) {
-      return Promise.resolve({
-        ok: true,
-        text: () => Promise.resolve(brainstormPromptTemplate),
-      } as Response);
-    }
+if (url.includes("system-prompt-brainstorm.md")) {
+  return Promise.resolve({
+    ok: true,
+    text: () => Promise.resolve(brainstormPromptTemplate),
+  } as Response);
+}
 ```
 
 - [ ] **Step 4: Delete the brainstorm system-prompt asset.**
@@ -1125,6 +1135,7 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(prompts
 ## Task 9: Remove the brainstorm API integration test and workspace dep
 
 **Files:**
+
 - Modify: `vibes.diy/api/tests/package.json`
 - Modify: `pnpm-lock.yaml`
 - Delete: `vibes.diy/api/tests/brainstorm-mode.test.ts`
@@ -1193,6 +1204,7 @@ cd /Users/marcusestes/Websites/vibes.diy-chat-button && pnpm check 2>&1 | tail -
 ```
 
 Expected outcomes per stage:
+
 - `pnpm build` — green.
 - `pnpm lint` — same pre-existing 1 error + 1 warning in `vibes.diy/base/hooks/img-gen/use-img-gen.ts` and `vibes.diy/vibe/runtime/firefly-database.ts`. Both untouched by this branch (they're on `origin/main`). NOT blockers.
 - `pnpm test` — 1115/1116 pass (one fewer than PR #1642 because the brainstorm integration test is gone). Known flaky test acceptable on first run; rerun once if it appears.
@@ -1219,12 +1231,12 @@ Re-run the command until status is `completed` and conclusion is `success`. Or u
 
 Open `https://pr-1642-vibes-diy-v2.jchris.workers.dev/` in a fresh chat. Walk through:
 
-  1. Type an initial prompt like "todo list app" and click **Code**. The Chat button should be gone — only one button.
-  2. Code streams in. After streaming ends, the assistant message should contain a trailing `▸ ` improvement question with 2–4 options, last option `▸ I'm done for now`.
-  3. Click an option that's not the escape hatch. The option text appears as the next user message; the next assistant turn streams in with edits + a fresh `▸ ` question.
-  4. Click `▸ I'm done for now`. The next assistant turn should be a one-line acknowledgment with no edits and no `▸ ` question.
-  5. Type a fresh prompt (e.g., "make the empty state nicer") and click **Code**. The loop resumes — edits land + a new `▸ ` question appears.
-  6. Reload the page. Interview history renders with disabled buttons; the most recent assistant message's options remain interactive.
+1. Type an initial prompt like "todo list app" and click **Code**. The Chat button should be gone — only one button.
+2. Code streams in. After streaming ends, the assistant message should contain a trailing `▸ ` improvement question with 2–4 options, last option `▸ I'm done for now`.
+3. Click an option that's not the escape hatch. The option text appears as the next user message; the next assistant turn streams in with edits + a fresh `▸ ` question.
+4. Click `▸ I'm done for now`. The next assistant turn should be a one-line acknowledgment with no edits and no `▸ ` question.
+5. Type a fresh prompt (e.g., "make the empty state nicer") and click **Code**. The loop resumes — edits land + a new `▸ ` question appears.
+6. Reload the page. Interview history renders with disabled buttons; the most recent assistant message's options remain interactive.
 
 If any step misbehaves (e.g., model doesn't emit the trailing question, or doesn't honor the "I'm done for now" pause), the system prompt tail in Task 2 needs tuning — file a follow-up rather than blocking this PR.
 
@@ -1241,6 +1253,7 @@ Expected: clean working tree.
 ## Self-Review Notes
 
 **Spec coverage:**
+
 - §1 New tail on system-prompt templates → Tasks 1–2.
 - §2 Frontend collapse to single button → Task 3 (auto-handoff effect removal) + Task 4 (dual-button revert).
 - §3 Backend cleanup → Tasks 5–9.
@@ -1249,13 +1262,16 @@ Expected: clean working tree.
 - §6 Testing → Tasks 1–2 add tail-presence assertions; Task 10 step 4 covers manual smoke.
 
 **Type consistency:**
+
 - `onSubmit: (prompt: string) => void` is consistent across `ChatInput.tsx` (Step 1 of Task 4) and the test assertions in `ChatInput.test.tsx` (Step 5).
 - `sendPrompt` returns to `string | null` and every call site (URL prefill in Step 9, ChatInput wiring in Step 10, `handleSelectOption` in Step 11) passes a string or null — consistent.
 - `LLMChat.prompt(req, opts?: { inputImageBase64? })` reverts symmetrically in interface (Task 5 Step 1) and impl (Task 5 Step 2).
 
 **Placeholder scan:**
+
 - No TBD/TODO. The "Open questions for the implementation plan" section in the spec was about tuning (tail length, first-turn vs continuation differences, category ordering). Those are deliberately not in the plan because they're tuning decisions the implementer or QA can iterate on after Task 10's smoke.
 - Every step has either an explicit code edit, an explicit shell command, or a binary verification.
 
 **Deviation flagged:**
+
 - The plan ships a single tail file content (Task 2) for both `system-prompt.md` and `system-prompt-initial.md`. The spec acknowledged a possible first-turn-specific tweak as an open question; if QA finds a need, it's a small follow-up edit to one file.

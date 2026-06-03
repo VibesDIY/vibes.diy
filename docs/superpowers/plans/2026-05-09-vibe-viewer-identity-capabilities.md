@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Surface viewer identity (userSlug, displayName) and per-app/per-db access info to the running vibe sandbox via the existing iframe postMessage bridge, plus a stable per-userSlug avatar URL convention so generated app code can render avatars and gate UI on capabilities.
+**Goal:** Surface viewer identity (userHandle, displayName) and per-app/per-db access info to the running vibe sandbox via the existing iframe postMessage bridge, plus a stable per-userHandle avatar URL convention so generated app code can render avatars and gate UI on capabilities.
 
-**Architecture:** New typed message pair (`vibe.req.whoAmI` / `vibe.res.whoAmI`) modeled on the existing `vibe.req.putAsset` pattern. Viewer info is computed once on the server (`renderVibe`) and embedded as JSON into `mountParams` for instant first-paint; sandbox can also call `vibeDiyApi.whoAmI()` for refresh and subscribes to `vibe.evt.viewerChanged` for login/logout. Avatars resolve via a stable `GET /u/:userSlug/avatar` HTTP route that 302s to a content-addressed CID URL (or Clerk fallback), with ETag revalidation so embedded references update when a user uploads a new avatar.
+**Architecture:** New typed message pair (`vibe.req.whoAmI` / `vibe.res.whoAmI`) modeled on the existing `vibe.req.putAsset` pattern. Viewer info is computed once on the server (`renderVibe`) and embedded as JSON into `mountParams` for instant first-paint; sandbox can also call `vibeDiyApi.whoAmI()` for refresh and subscribes to `vibe.evt.viewerChanged` for login/logout. Avatars resolve via a stable `GET /u/:userHandle/avatar` HTTP route that 302s to a content-addressed CID URL (or Clerk fallback), with ETag revalidation so embedded references update when a user uploads a new avatar.
 
 **Tech Stack:** TypeScript, arktype runtime types, React, Drizzle ORM, Cloudflare Workers, Vitest, `@adviser/cement` Result/Future/Evento.
 
@@ -17,7 +17,7 @@
 **New files:**
 
 - `vibes.diy/api/svc/public/who-am-i.ts` — Evento handler that computes viewer identity, app-scoped access, and the per-db ACL map.
-- `vibes.diy/api/svc/public/get-user-avatar.ts` — HTTP route handler for `GET /u/:userSlug/avatar`.
+- `vibes.diy/api/svc/public/get-user-avatar.ts` — HTTP route handler for `GET /u/:userHandle/avatar`.
 - `use-vibes/base/hooks/use-viewer.ts` — `useViewer()` hook with `can()` helper. Lives in the public consumer package alongside `useVibes`/`useFireproof` so generated app code can `import { useViewer } from "use-vibes"` (same import path as `ImgGen`). `viewer.avatarUrl` is an opaque string set by the server; `avatarUrlFor()` is removed.
 - `vibes.diy/vibe/runtime/db-acl-allows.ts` — Client port of the host's `aclAllows` for sync sandbox-side gating. Pure logic, no React; lives in vibe-runtime since both use-vibes-base and any other consumer can depend on it.
 - `vibes.diy/api/svc/public/who-am-i.test.ts`, `vibes.diy/api/svc/public/get-user-avatar.test.ts`, `use-vibes/base/hooks/use-viewer.test.tsx`, `vibes.diy/vibe/runtime/db-acl-allows.test.ts`.
@@ -36,7 +36,7 @@
 - `use-vibes/base/index.ts` — re-export `useViewer` from `./hooks/use-viewer.js`.
 - `use-vibes/pkg/index.ts` — re-export `useViewer` from `@vibes.diy/use-vibes-base` so vibes can `import { useViewer } from "use-vibes"`.
 - `vibes.diy/pkg/app/...` settings page (whichever component owns user settings UI) — add Avatar upload + display-name fields.
-- HTTP router (wherever public routes register) — wire `GET /u/:userSlug/avatar`.
+- HTTP router (wherever public routes register) — wire `GET /u/:userHandle/avatar`.
 
 ---
 
@@ -163,13 +163,13 @@ import { isReqVibeWhoAmI, isResVibeWhoAmI, isEvtVibeViewerChanged } from "./inde
 
 describe("ReqVibeWhoAmI", () => {
   it("validates a request", () => {
-    expect(isReqVibeWhoAmI({ type: "vibe.req.whoAmI", tid: "abc", appSlug: "myapp", userSlug: "alice" })).toBe(true);
+    expect(isReqVibeWhoAmI({ type: "vibe.req.whoAmI", tid: "abc", appSlug: "myapp", userHandle: "alice" })).toBe(true);
   });
   it("rejects wrong type", () => {
-    expect(isReqVibeWhoAmI({ type: "vibe.req.other", tid: "abc", appSlug: "x", userSlug: "y" })).toBe(false);
+    expect(isReqVibeWhoAmI({ type: "vibe.req.other", tid: "abc", appSlug: "x", userHandle: "y" })).toBe(false);
   });
   it("rejects missing appSlug", () => {
-    expect(isReqVibeWhoAmI({ type: "vibe.req.whoAmI", tid: "abc", userSlug: "alice" })).toBe(false);
+    expect(isReqVibeWhoAmI({ type: "vibe.req.whoAmI", tid: "abc", userHandle: "alice" })).toBe(false);
   });
 });
 
@@ -189,7 +189,7 @@ describe("ResVibeWhoAmI", () => {
       isResVibeWhoAmI({
         type: "vibe.res.whoAmI",
         tid: "abc",
-        viewer: { userSlug: "alice", displayName: "Alice" },
+        viewer: { userHandle: "alice", displayName: "Alice" },
         access: "owner",
         dbAcls: { comments: { write: ["members"] } },
       })
@@ -212,7 +212,7 @@ describe("EvtVibeViewerChanged", () => {
     expect(
       isEvtVibeViewerChanged({
         type: "vibe.evt.viewerChanged",
-        viewer: { userSlug: "alice" },
+        viewer: { userHandle: "alice" },
         access: "viewer",
       })
     ).toBe(true);
@@ -232,13 +232,13 @@ In `vibes.diy/vibe/types/index.ts`, after the `EvtVibePutAssetProgress` definiti
 ```ts
 // ── Viewer identity & capabilities ───────────────────────────────────
 // Sandbox-facing surface for who is viewing this vibe and what they can
-// do. Sandbox sees only userSlug — never Clerk userId. Capabilities are
+// do. Sandbox sees only userHandle — never Clerk userId. Capabilities are
 // UX hints; every write still re-authorizes server-side at put-doc.
 
 import { dbAcl } from "@vibes.diy/api-types";
 
 export const viewerPayload = type({
-  userSlug: "string",
+  userHandle: "string",
   "displayName?": "string",
 });
 export type ViewerPayload = typeof viewerPayload.infer;
@@ -246,13 +246,13 @@ export type ViewerPayload = typeof viewerPayload.infer;
 export const docAccessLevel = type("'owner' | 'editor' | 'viewer' | 'submitter' | 'none'");
 export type DocAccessLevel = typeof docAccessLevel.infer;
 
-// Request: sandbox → host. Carries (appSlug, userSlug) so the host
+// Request: sandbox → host. Carries (appSlug, userHandle) so the host
 // handler can compute access against the right app — same pattern as
 // every other Req<*> in this file.
 export const ReqVibeWhoAmI = type({
   type: "'vibe.req.whoAmI'",
   appSlug: "string",
-  userSlug: "string",
+  userHandle: "string",
 }).and(Base);
 
 export type ReqVibeWhoAmI = typeof ReqVibeWhoAmI.infer;
@@ -336,7 +336,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ### Task 3: Implement the `whoAmI` Evento handler
 
-The handler reads the viewer's Clerk session, resolves their default userSlug + display name from user-settings, computes app-scoped access via `checkDocAccess`, loads the per-db ACL map from app settings, and returns `ResVibeWhoAmI`.
+The handler reads the viewer's Clerk session, resolves their default userHandle + display name from user-settings, computes app-scoped access via `checkDocAccess`, loads the per-db ACL map from app settings, and returns `ResVibeWhoAmI`.
 
 **Files:**
 
@@ -357,7 +357,7 @@ describe("resolveWhoAmI", () => {
 
   beforeEach(async () => {
     // copy the same beforeEach that list-members.test.ts uses to seed
-    // a userSlugBinding row + an app row and any inviteGrants.
+    // a userHandleBinding row + an app row and any inviteGrants.
   });
 
   it("returns null viewer for unauthenticated request", async () => {
@@ -380,11 +380,11 @@ describe("resolveWhoAmI", () => {
     });
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
-    expect(r.viewer?.userSlug).toBe("alice");
+    expect(r.viewer?.userHandle).toBe("alice");
     expect(r.access).toBe("owner");
   });
 
-  it("returns viewer userSlug + 'editor' access for an invited editor", async () => {
+  it("returns viewer userHandle + 'editor' access for an invited editor", async () => {
     // beforeEach added an editor inviteGrant for user_bob → alice/myapp
     const res = await resolveWhoAmI(vctx, {
       auth: { verifiedAuth: { claims: { userId: "user_bob" } } } as any,
@@ -393,7 +393,7 @@ describe("resolveWhoAmI", () => {
     });
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
-    expect(r.viewer?.userSlug).toBe("bob");
+    expect(r.viewer?.userHandle).toBe("bob");
     expect(r.access).toBe("editor");
   });
 
@@ -484,7 +484,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   const rSettings = await ensureAppSettings(vctx, {
     type: "vibes.diy.req-ensure-app-settings",
     appSlug,
-    userSlug: ownerUserSlug,
+    userHandle: ownerUserSlug,
     env: [],
   });
   if (rSettings.isErr()) return Result.Err(rSettings);
@@ -494,7 +494,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
     return Result.Ok({ viewer: null, access, dbAcls });
   }
 
-  // Identity: viewer's default userSlug + optional displayName from user-settings.
+  // Identity: viewer's default userHandle + optional displayName from user-settings.
   // Fallback display: derive from Clerk claims same as list-members.
   const userSettingsRow = await vctx.sql.db
     .select({ settings: vctx.sql.tables.userSettings.settings })
@@ -507,7 +507,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   let displayOverride: string | undefined;
   const items = (userSettingsRow?.settings as unknown[]) ?? [];
   for (const item of items) {
-    if (isUserSettingDefaultUserSlug(item) && !viewerSlug) viewerSlug = item.userSlug;
+    if (isUserSettingDefaultUserSlug(item) && !viewerSlug) viewerSlug = item.userHandle;
     if (isUserSettingProfile(item)) {
       if (item.displayName) displayOverride = item.displayName;
     }
@@ -517,12 +517,12 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   // associated with this userId.
   if (!viewerSlug) {
     const binding = await vctx.sql.db
-      .select({ userSlug: vctx.sql.tables.userSlugBinding.userSlug })
-      .from(vctx.sql.tables.userSlugBinding)
-      .where(eq(vctx.sql.tables.userSlugBinding.userId, viewerUserId!))
+      .select({ userHandle: vctx.sql.tables.userHandleBinding.userHandle })
+      .from(vctx.sql.tables.userHandleBinding)
+      .where(eq(vctx.sql.tables.userHandleBinding.userId, viewerUserId!))
       .limit(1)
       .then((r) => r[0]);
-    viewerSlug = binding?.userSlug;
+    viewerSlug = binding?.userHandle;
   }
 
   if (!viewerSlug) {
@@ -534,7 +534,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   const displayName = displayOverride ?? deriveDisplayName(auth.verifiedAuth.claims);
 
   return Result.Ok({
-    viewer: { userSlug: viewerSlug, displayName },
+    viewer: { userHandle: viewerSlug, displayName },
     access,
     dbAcls,
   });
@@ -554,7 +554,7 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      const { appSlug, userSlug: ownerUserSlug } = req;
+      const { appSlug, userHandle: ownerUserSlug } = req;
       const rRes = await resolveWhoAmI(vctx, {
         auth: req._auth,
         appSlug,
@@ -647,9 +647,9 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ## Phase 3 — Avatar HTTP Route
 
-### Task 5: Implement `GET /u/:userSlug/avatar`
+### Task 5: Implement `GET /u/:userHandle/avatar`
 
-Stable per-userSlug avatar URL that 302s to the current avatarCid (or 404 if none). Spec §1a.
+Stable per-userHandle avatar URL that 302s to the current avatarCid (or 404 if none). Spec §1a.
 
 **Files:**
 
@@ -665,11 +665,11 @@ Create `vibes.diy/api/svc/public/get-user-avatar.test.ts`. Pattern after any exi
 import { describe, it, expect, beforeEach } from "vitest";
 import { handleGetUserAvatar } from "./get-user-avatar.js";
 
-describe("GET /u/:userSlug/avatar", () => {
+describe("GET /u/:userHandle/avatar", () => {
   let vctx: /* same test ctx as other tests */;
 
   beforeEach(async () => {
-    // Seed: userSlugBinding alice→user_alice; userSettings for user_alice
+    // Seed: userHandleBinding alice→user_alice; userSettings for user_alice
     // with profile.avatarCid = "bafy123".
   });
 
@@ -686,12 +686,12 @@ describe("GET /u/:userSlug/avatar", () => {
     expect(res.status).toBe(304);
   });
 
-  it("404s when userSlug is unknown", async () => {
+  it("404s when userHandle is unknown", async () => {
     const res = await handleGetUserAvatar(vctx, "ghost", undefined);
     expect(res.status).toBe(404);
   });
 
-  it("404s when userSlug is bound but has no avatarCid", async () => {
+  it("404s when userHandle is bound but has no avatarCid", async () => {
     // beforeEach created a "noavatar" slug with no profile entry.
     const res = await handleGetUserAvatar(vctx, "noavatar", undefined);
     expect(res.status).toBe(404);
@@ -719,19 +719,19 @@ export interface AvatarHttpResult {
   body?: string;
 }
 
-// Resolve the userSlug → avatarCid; return a 302/304/404 shape suitable
+// Resolve the userHandle → avatarCid; return a 302/304/404 shape suitable
 // for the public route layer. Spec §1a — content-addressed URL behind a
-// stable per-userSlug indirection so embedded references update when the
+// stable per-userHandle indirection so embedded references update when the
 // user uploads a new avatar.
 export async function handleGetUserAvatar(
   vctx: VibesApiSQLCtx,
-  userSlug: string,
+  userHandle: string,
   ifNoneMatch: string | undefined
 ): Promise<AvatarHttpResult> {
   const binding = await vctx.sql.db
-    .select({ userId: vctx.sql.tables.userSlugBinding.userId })
-    .from(vctx.sql.tables.userSlugBinding)
-    .where(eq(vctx.sql.tables.userSlugBinding.userSlug, userSlug))
+    .select({ userId: vctx.sql.tables.userHandleBinding.userId })
+    .from(vctx.sql.tables.userHandleBinding)
+    .where(eq(vctx.sql.tables.userHandleBinding.userHandle, userHandle))
     .limit(1)
     .then((r) => r[0]);
   if (!binding) return { status: 404, headers: {} };
@@ -795,11 +795,11 @@ Search for the route registration that mounts `/assets/cid/`:
 grep -rn "/assets/cid\|assets/cid/\|cidAsset" vibes.diy/api/ | grep -v node_modules | grep -v ".test."
 ```
 
-Find the file that registers the route. Add a sibling registration for `GET /u/:userSlug/avatar` that:
+Find the file that registers the route. Add a sibling registration for `GET /u/:userHandle/avatar` that:
 
-1. Extracts `userSlug` from the path.
+1. Extracts `userHandle` from the path.
 2. Reads `If-None-Match` from request headers.
-3. Calls `handleGetUserAvatar(vctx, userSlug, ifNoneMatch)`.
+3. Calls `handleGetUserAvatar(vctx, userHandle, ifNoneMatch)`.
 4. Builds an `HttpResponseBodyType` from the returned `{status, headers}` and sends it.
 
 (Exact file shape varies; this step is a 30–60 line port of the cid-asset registration. Read that route's source first to learn the framework's request/response idiom.)
@@ -818,7 +818,7 @@ Expected: no new TS errors.
 ```bash
 npx prettier --write vibes.diy/api/svc/public/get-user-avatar.ts vibes.diy/api/svc/public/get-user-avatar.test.ts
 git add vibes.diy/api/svc/public/get-user-avatar.ts vibes.diy/api/svc/public/get-user-avatar.test.ts <route-registration-file>
-git commit -m "feat(api): GET /u/:userSlug/avatar — stable indirection to avatarCid
+git commit -m "feat(api): GET /u/:userHandle/avatar — stable indirection to avatarCid
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ```
@@ -846,7 +846,7 @@ describe("VibeSandboxApi.whoAmI", () => {
     const posts: unknown[] = [];
     const listeners: ((e: MessageEvent) => void)[] = [];
     const api = new VibeSandboxApi({
-      vibeApp: { appSlug: "myapp", userSlug: "alice", fsId: "fs1" },
+      vibeApp: { appSlug: "myapp", userHandle: "alice", fsId: "fs1" },
       addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as any,
       postMessage: ((msg: unknown) => posts.push(msg)) as any,
     });
@@ -860,14 +860,14 @@ describe("VibeSandboxApi.whoAmI", () => {
         data: {
           type: "vibe.res.whoAmI",
           tid: sentTid,
-          viewer: { userSlug: "alice", displayName: "Alice" },
+          viewer: { userHandle: "alice", displayName: "Alice" },
           access: "owner",
         },
       } as MessageEvent)
     );
     const res = await pending;
     expect(res.isOk()).toBe(true);
-    expect(res.Ok().viewer?.userSlug).toBe("alice");
+    expect(res.Ok().viewer?.userHandle).toBe("alice");
   });
 });
 ```
@@ -893,7 +893,7 @@ whoAmI(): Promise<Result<ResVibeWhoAmI>> {
     {
       type: "vibe.req.whoAmI",
       appSlug: this.svc.vibeApp.appSlug,
-      userSlug: this.svc.vibeApp.userSlug,
+      userHandle: this.svc.vibeApp.userHandle,
     },
     { wait: isResVibeWhoAmI, timeout: 10000 }
   );
@@ -943,7 +943,7 @@ describe("srv-sandbox vibe.req.whoAmI", () => {
   it("calls vibeDiyApi.whoAmI and posts the response", async () => {
     // 1. Spin up vibesDiySrvSandbox with a mocked vibeDiyApi whose .whoAmI
     //    returns Result.Ok({ type: "vibe.res.whoAmI", viewer: ..., access: ... }).
-    // 2. Dispatch a fake MessageEvent { data: { type: "vibe.req.whoAmI", tid: "t1", appSlug, userSlug } }.
+    // 2. Dispatch a fake MessageEvent { data: { type: "vibe.req.whoAmI", tid: "t1", appSlug, userHandle } }.
     // 3. Assert: postMessage was called with { tid: "t1", type: "vibe.res.whoAmI", ... }.
   });
 });
@@ -972,14 +972,14 @@ function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx) => {
-      const { tid, appSlug, userSlug } = ctx.validated as ReqVibeWhoAmI;
+      const { tid, appSlug, userHandle } = ctx.validated as ReqVibeWhoAmI;
       const rRes = await vibeDiyApi.whoAmI({
         // Wrap in whatever Req<> shape the dispatcher expects — copy from
         // the existing listMembers call site within srv-sandbox if there
         // is one; otherwise the simplest form is the validated payload.
         type: "vibe.req.whoAmI",
         appSlug,
-        userSlug,
+        userHandle,
       } as ReqVibeWhoAmI);
 
       if (rRes.isErr()) {
@@ -1228,7 +1228,7 @@ describe("vibeMountParams", () => {
     const r = vibeMountParams({
       usrEnv: {},
       viewerEnv: {
-        viewer: { userSlug: "alice", displayName: "Alice" },
+        viewer: { userHandle: "alice", displayName: "Alice" },
         access: "owner",
         dbAcls: { comments: { write: ["members"] } },
         apiBaseUrl: "https://api.vibes.diy",
@@ -1329,7 +1329,7 @@ describe("VibeContextProvider", () => {
         mountParams={{
           usrEnv: {},
           viewerEnv: {
-            viewer: { userSlug: "alice" },
+            viewer: { userHandle: "alice" },
             access: "owner",
             apiBaseUrl: "https://api.example.com",
           },
@@ -1338,7 +1338,7 @@ describe("VibeContextProvider", () => {
         <Probe onCtx={(c) => (captured = c)} />
       </VibeContextProvider>
     );
-    expect(captured.mountParams.viewerEnv?.viewer?.userSlug).toBe("alice");
+    expect(captured.mountParams.viewerEnv?.viewer?.userHandle).toBe("alice");
   });
 });
 ```
@@ -1437,7 +1437,7 @@ it("updates viewerEnv when vibe.evt.viewerChanged fires", async () => {
     new MessageEvent("message", {
       data: {
         type: "vibe.evt.viewerChanged",
-        viewer: { userSlug: "alice", displayName: "Alice" },
+        viewer: { userHandle: "alice", displayName: "Alice" },
         access: "viewer",
       },
     })
@@ -1445,7 +1445,7 @@ it("updates viewerEnv when vibe.evt.viewerChanged fires", async () => {
 
   // React schedules state updates; flush by awaiting a microtask.
   await Promise.resolve();
-  expect(captured.mountParams.viewerEnv?.viewer?.userSlug).toBe("alice");
+  expect(captured.mountParams.viewerEnv?.viewer?.userHandle).toBe("alice");
   expect(captured.mountParams.viewerEnv?.access).toBe("viewer");
   expect(captured.mountParams.viewerEnv?.apiBaseUrl).toBe("https://api");
 });
@@ -1495,7 +1495,7 @@ function Probe({ onR }: { onR: (r: ReturnType<typeof useViewer>) => void }) {
 }
 
 const baseEnv = {
-  viewer: { userSlug: "alice", displayName: "Alice" },
+  viewer: { userHandle: "alice", displayName: "Alice" },
   access: "owner" as const,
   apiBaseUrl: "https://api.example.com",
 };
@@ -1513,7 +1513,7 @@ function renderWith(env: any) {
 describe("useViewer", () => {
   it("exposes viewer + access + dbAcls", () => {
     const r = renderWith({ ...baseEnv, dbAcls: { comments: { write: ["members"] } } });
-    expect(r.viewer?.userSlug).toBe("alice");
+    expect(r.viewer?.userHandle).toBe("alice");
     expect(r.access).toBe("owner");
     expect(r.dbAcls.comments.write).toEqual(["members"]);
   });
@@ -1527,7 +1527,7 @@ describe("useViewer", () => {
 
   it("can(write, dbName) consults the per-db ACL", () => {
     const r = renderWith({
-      viewer: { userSlug: "bob" },
+      viewer: { userHandle: "bob" },
       access: "viewer" as const,
       dbAcls: { comments: { write: ["members"] } },
       apiBaseUrl: "https://api",
@@ -1537,7 +1537,7 @@ describe("useViewer", () => {
   });
 
   it("can(write) without dbName collapses for single-db case", () => {
-    const r = renderWith({ viewer: { userSlug: "bob" }, access: "owner" as const, apiBaseUrl: "x" });
+    const r = renderWith({ viewer: { userHandle: "bob" }, access: "owner" as const, apiBaseUrl: "x" });
     expect(r.can("write")).toBe(true);
     const r2 = renderWith({ viewer: null, access: "none" as const, apiBaseUrl: "x" });
     expect(r2.can("write")).toBe(false);
@@ -1545,7 +1545,7 @@ describe("useViewer", () => {
 
   it("can(action) returns false if any configured override denies", () => {
     const r = renderWith({
-      viewer: { userSlug: "bob" },
+      viewer: { userHandle: "bob" },
       access: "editor" as const,
       dbAcls: { lockedDb: { write: ["owner"] as any } },
       apiBaseUrl: "x",
@@ -1581,7 +1581,7 @@ export interface UseViewerResult {
   readonly access: DocAccessLevel;
   readonly dbAcls: Record<string, DbAcl>;
   readonly can: (action: "read" | "write" | "delete", dbName?: string) => boolean;
-  readonly avatarUrlFor: (userSlug: string) => string;
+  readonly avatarUrlFor: (userHandle: string) => string;
 }
 
 export function useViewer(): UseViewerResult {
@@ -1607,8 +1607,8 @@ export function useViewer(): UseViewerResult {
     return true;
   }
 
-  function avatarUrlFor(userSlug: string): string {
-    return `${apiBaseUrl}/u/${userSlug}/avatar`;
+  function avatarUrlFor(userHandle: string): string {
+    return `${apiBaseUrl}/u/${userHandle}/avatar`;
   }
 
   return { viewer, access, dbAcls, can, avatarUrlFor };
@@ -1684,7 +1684,7 @@ import { resolveWhoAmI } from "../public/who-am-i.js";
 const rViewer = await resolveWhoAmI(vctx, {
   auth: ctx.auth, // adapt to whatever the actual request-scoped auth field is
   appSlug: fs.appSlug,
-  ownerUserSlug: fs.userSlug,
+  ownerUserSlug: fs.userHandle,
 });
 const viewerEnv = rViewer.isOk()
   ? {
@@ -1715,7 +1715,7 @@ to:
 })}));`,
 ```
 
-Repeat the same change in `renderPendingVibe` for its `mountJS` block (~line 232) — but with `viewerEnv` computed against the pending fsId (using `appSlug, userSlug` already in scope).
+Repeat the same change in `renderPendingVibe` for its `mountJS` block (~line 232) — but with `viewerEnv` computed against the pending fsId (using `appSlug, userHandle` already in scope).
 
 - [ ] **Step 4: Add a smoke test**
 
@@ -1798,7 +1798,7 @@ Add an "Avatar" section to the settings page:
     }}
   />
   {currentAvatarCid ? (
-    <img src={`/u/${userSlug}/avatar`} alt="Current avatar" className="h-16 w-16 rounded-full" />
+    <img src={`/u/${userHandle}/avatar`} alt="Current avatar" className="h-16 w-16 rounded-full" />
   ) : null}
 </section>
 
@@ -1827,7 +1827,7 @@ Expected: PASS.
 
 Start the dev server, log in, visit `/settings`, upload a small PNG. Confirm:
 
-- The image renders next to the upload input via the `/u/<userSlug>/avatar` URL.
+- The image renders next to the upload input via the `/u/<userHandle>/avatar` URL.
 - Refreshing the page still shows the new avatar.
 - Reuploading replaces the avatar (the rendered URL didn't change but the bytes did — visible after a hard refresh).
 
@@ -1874,8 +1874,8 @@ function App() {
   if (!viewer) return <p>Sign in to use this app.</p>;
   return (
     <header>
-      <img src={avatarUrlFor(viewer.userSlug)} alt={viewer.userSlug} />
-      <span>{viewer.displayName ?? viewer.userSlug}</span>
+      <img src={avatarUrlFor(viewer.userHandle)} alt={viewer.userHandle} />
+      <span>{viewer.displayName ?? viewer.userHandle}</span>
     </header>
   );
 }
@@ -1884,9 +1884,9 @@ function App() {
 
 ## What you get
 
-- `viewer` — `{ userSlug, displayName? }` or `null` for anonymous visitors.
+- `viewer` — `{ userHandle, displayName? }` or `null` for anonymous visitors.
 - `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Pass a `dbName` for multi-db apps; omit for single-db apps. Use it to hide forms when the viewer can't post.
-- `avatarUrlFor(userSlug)` — stable image URL for any user. Updates automatically when a user changes their avatar.
+- `avatarUrlFor(userHandle)` — stable image URL for any user. Updates automatically when a user changes their avatar.
 
 ## Gating UI
 
@@ -1901,7 +1901,7 @@ function CommentForm() {
 
 ## Other users' avatars
 
-Store the author's `userSlug` on each doc, not their `userId`. Render by passing the slug to `avatarUrlFor`:
+Store the author's `userHandle` on each doc, not their `userId`. Render by passing the slug to `avatarUrlFor`:
 
 ```jsx
 {
@@ -1916,8 +1916,8 @@ Store the author's `userSlug` on each doc, not their `userId`. Render by passing
 
 ## Notes
 
-- Never use Clerk user IDs. Only `userSlug` crosses into vibe code.
-- Avatar URLs are stable per userSlug — when a user changes their avatar, every reference updates automatically.
+- Never use Clerk user IDs. Only `userHandle` crosses into vibe code.
+- Avatar URLs are stable per userHandle — when a user changes their avatar, every reference updates automatically.
 
 ````
 
@@ -1943,11 +1943,11 @@ const { viewer, can, avatarUrlFor } = useViewer();
 ```
 ````
 
-- `viewer` — `{ userSlug, displayName? } | null`. `null` for anonymous visitors.
+- `viewer` — `{ userHandle, displayName? } | null`. `null` for anonymous visitors.
 - `can(action, dbName?)` — `"read" | "write" | "delete"`. With a `dbName`, checks that db; without, allowed-everywhere.
-- `avatarUrlFor(userSlug)` — stable image URL for any user. Works for the viewer or any author whose userSlug you stored.
+- `avatarUrlFor(userHandle)` — stable image URL for any user. Works for the viewer or any author whose userHandle you stored.
 
-Render names with `viewer.displayName ?? viewer.userSlug`. Never look up user IDs — only userSlugs cross into vibe code.
+Render names with `viewer.displayName ?? viewer.userHandle`. Never look up user IDs — only userHandles cross into vibe code.
 
 ````
 
@@ -1991,7 +1991,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 Boot the test harness that already mounts the iframe runtime, render a small vibe that uses `useViewer`, and assert:
 
 1. Anonymous mount: `viewer === null`, `access === "none"`, `can("write")` returns `false`, the rendered DOM uses the fallback markup.
-2. Authenticated owner mount: `viewer.userSlug` matches the expected slug, `access === "owner"`, `can("write", "comments")` returns `true`, an `<img>` for the viewer's avatar has `src` ending in `/u/<userSlug>/avatar`.
+2. Authenticated owner mount: `viewer.userHandle` matches the expected slug, `access === "owner"`, `can("write", "comments")` returns `true`, an `<img>` for the viewer's avatar has `src` ending in `/u/<userHandle>/avatar`.
 3. After the test fires `vibe.evt.viewerChanged` with a new viewer, the rendered DOM reflects the new identity (the `useViewer` hook re-renders).
 
 - [ ] **Step 2: Run the test**
@@ -2041,7 +2041,7 @@ Body should reference the spec at `docs/superpowers/specs/2026-05-09-vibe-viewer
 
 **Auth in the HTTP render path:** Task 12 has a `ctx.auth` placeholder. The render-vibe handler uses different auth surface than the Evento path. Read the function header carefully and use whichever field the existing code consults to detect a signed-in user. If the path is currently anonymous-only (no Clerk session detection), the iframe will mount with `viewer: null` until the sandbox calls `vibe.req.whoAmI` after boot — that's still functional, just slightly worse first-paint UX. Land that as a follow-up if the auth wiring is non-trivial.
 
-**Clerk `imageUrl` fallback:** Spec §1a step 2 says the avatar route should fall back to Clerk's profile image when no `avatarCid` is configured. The plan implements step 1 (avatarCid → 302) and step 3 (404 if neither). Step 2 (Clerk fallback) requires looking up Clerk by userId server-side. If the existing codebase already caches Clerk profile fields anywhere (e.g. on the `inviteGrants.foreignInfo` JSON) and you can read them from `userSlugBinding`, add the fallback to `handleGetUserAvatar`. Otherwise leave it as 404 and ship the rest.
+**Clerk `imageUrl` fallback:** Spec §1a step 2 says the avatar route should fall back to Clerk's profile image when no `avatarCid` is configured. The plan implements step 1 (avatarCid → 302) and step 3 (404 if neither). Step 2 (Clerk fallback) requires looking up Clerk by userId server-side. If the existing codebase already caches Clerk profile fields anywhere (e.g. on the `inviteGrants.foreignInfo` JSON) and you can read them from `userHandleBinding`, add the fallback to `handleGetUserAvatar`. Otherwise leave it as 404 and ship the rest.
 
 **Frequent commits:** every task ends with a commit. Don't bundle.
 

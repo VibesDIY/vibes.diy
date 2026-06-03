@@ -280,7 +280,7 @@ Both surfaces use the same underlying `useSharingPanel` hook and write to the sa
 
 ## Request access API flow (for reference)
 
-1. Visitor clicks Request access → `requestAccess({ appSlug, userSlug })` API call.
+1. Visitor clicks Request access → `requestAccess({ appSlug, userHandle })` API call.
 2. Server creates a pending request record.
 3. Grant re-resolves to `pending-request`. Landing card button changes to **Requested** (disabled).
 4. Owner sees badge count increment on the Community button.

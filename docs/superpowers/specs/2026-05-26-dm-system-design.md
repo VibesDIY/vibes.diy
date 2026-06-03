@@ -10,10 +10,10 @@ A direct message system between user handles. Each thread is a 1:1 relationship 
 
 ## Core Insight: DM Thread as a Fake Vibe
 
-AppDocuments, DocNotify, putDoc, queryDocs, subscribeDocs, and deleteDoc all work on `(userSlug, appSlug, dbName)` triples. Rather than a new storage path, a DM thread IS a vibe — a system-namespace vibe:
+AppDocuments, DocNotify, putDoc, queryDocs, subscribeDocs, and deleteDoc all work on `(userHandle, appSlug, dbName)` triples. Rather than a new storage path, a DM thread IS a vibe — a system-namespace vibe:
 
 ```
-userSlug = "_d.alice.bob"   ← _d prefix (direct), alpha-sorted handles
+userHandle = "_d.alice.bob"   ← _d prefix (direct), alpha-sorted handles
 appSlug  = "dm"             ← the text DM app within the 1:1 channel
 dbName   = <vibe-chosen>    ← whatever the app wants: "messages", "chat", etc.
 ```
@@ -25,6 +25,7 @@ dbName   = <vibe-chosen>    ← whatever the app wants: "messages", "chat", etc.
 The entire existing write path, subscription fan-out, and DocNotify infrastructure serves DMs for free.
 
 **Channel address derivation:**
+
 ```typescript
 function directChannelHandle(a: string, b: string): string {
   const [p, q] = [a, b].sort();
@@ -67,7 +68,7 @@ Messages themselves live in **AppDocuments** at `(channelHandle="_d.alice.bob", 
 {
   body: string          // max 2000 chars, enforced server-side
   vibeRef?: {           // present when thread was initiated from a vibe
-    userSlug: string
+    userHandle: string
     appSlug: string
   }
   createdAt: string     // ISO timestamp
@@ -81,8 +82,8 @@ Messages themselves live in **AppDocuments** at `(channelHandle="_d.alice.bob", 
 New branch in `db-acl-resolver.ts`, checked before any vibe-membership lookup:
 
 ```typescript
-if (userSlug.startsWith("_d.")) {
-  const [, handleA, handleB] = userSlug.split(".");
+if (userHandle.startsWith("_d.")) {
+  const [, handleA, handleB] = userHandle.split(".");
   const authedHandle = ctx.authedHandle;
   if (authedHandle !== handleA && authedHandle !== handleB) {
     return Result.Err("not a participant");
@@ -95,7 +96,7 @@ No app settings lookup, no vibe membership check. Participant check is the only 
 
 ## New API Endpoints
 
-Three new WebSocket message types. Everything else reuses existing types with the `_d.*` handle as `userSlug`.
+Three new WebSocket message types. Everything else reuses existing types with the `_d.*` handle as `userHandle`.
 
 ### `listDmThreads`
 
@@ -122,12 +123,12 @@ Server joins `DirectChannelIndex → AppDocuments (latest seq per thread) → Di
 
 ```typescript
 ReqMarkDmRead: {
-  type: "vibes.diy.req-mark-dm-read"
-  otherHandle: string
-  lastSeenSeq: number
+  type: "vibes.diy.req-mark-dm-read";
+  otherHandle: string;
+  lastSeenSeq: number;
 }
 ResMarkDmRead: {
-  type: "vibes.diy.res-mark-dm-read"
+  type: "vibes.diy.res-mark-dm-read";
 }
 ```
 
@@ -139,8 +140,8 @@ Sent by a vibe iframe to initiate a DM with the vibe owner:
 
 ```typescript
 ReqOpenDmThread: {
-  type: "vibes.diy.req-open-dm-thread"
-  recipientHandle: string
+  type: "vibes.diy.req-open-dm-thread";
+  recipientHandle: string;
 }
 ```
 
@@ -166,7 +167,7 @@ Both routes require authentication. Redirect to sign-in if unauthed.
 
 ### ExpandedVibesPill
 
-New `dmUnreadCount` prop alongside existing `communityBadgeCount`. Distinct color badge. Tapping navigates to `/messages/{viewerHandle}/{ownerHandle}`. Fetched on vibe load alongside the existing `listRequestGrants` call (same pattern, lines 171–184 of `vibe.$userSlug.$appSlug.tsx`).
+New `dmUnreadCount` prop alongside existing `communityBadgeCount`. Distinct color badge. Tapping navigates to `/messages/{viewerHandle}/{ownerHandle}`. Fetched on vibe load alongside the existing `listRequestGrants` call (same pattern, lines 171–184 of `vibe.$userHandle.$appSlug.tsx`).
 
 ### Sidebar
 
@@ -191,22 +192,22 @@ Currently comments are vibe-scoped: `(ownerHandle, appSlug, "comments")` lives u
 
 ## Files to Touch
 
-| File | Change |
-|------|--------|
-| `api/sql/vibes-diy-api-schema-sqlite.ts` | Add DirectChannelIndex, DirectChannelReads tables |
-| `api/sql/vibes-diy-api-schema-postgres.ts` | Same |
-| `api/types/db-acls.ts` | `DM_THREAD_PREFIX = "_d."` constant |
-| `api/types/app-documents.ts` | `evtDmReceived` type; `listDmThreads`/`markDmRead` req/res types |
-| `api/svc/public/db-acl-resolver.ts` | Participant check branch for `_d.*` handles |
-| `api/svc/public/app-documents.ts` | `listDmThreadsEvento`, `markDmReadEvento` handlers |
-| `api/queue/handlers/evt-dm-received.ts` | New queue handler |
-| `api/queue/queue-evento.ts` | Register evt-dm-received |
-| `api/queue/intern/post-to-discord.ts` | `buildDmEmbed()` |
-| `base/components/ExpandedVibesPill.tsx` | `dmUnreadCount` prop + badge |
-| `pkg/app/routes/vibe.$userSlug.$appSlug.tsx` | Fetch dmUnreadCount on load |
-| `pkg/app/routes/messages.tsx` | New inbox route |
-| `pkg/app/routes/messages.$handleA.$handleB.tsx` | New thread route |
-| `pkg/app/components/DmThread/` | Thread view + composer components |
-| `pkg/app/components/DmInbox/` | Inbox list component |
-| `vibes.diy/api/types/iframe-bridge.ts` | `req-open-dm-thread` message type |
-| `api/tests/dm-acl.test.ts` | New ACL + behavior tests |
+| File                                            | Change                                                           |
+| ----------------------------------------------- | ---------------------------------------------------------------- |
+| `api/sql/vibes-diy-api-schema-sqlite.ts`        | Add DirectChannelIndex, DirectChannelReads tables                |
+| `api/sql/vibes-diy-api-schema-postgres.ts`      | Same                                                             |
+| `api/types/db-acls.ts`                          | `DM_THREAD_PREFIX = "_d."` constant                              |
+| `api/types/app-documents.ts`                    | `evtDmReceived` type; `listDmThreads`/`markDmRead` req/res types |
+| `api/svc/public/db-acl-resolver.ts`             | Participant check branch for `_d.*` handles                      |
+| `api/svc/public/app-documents.ts`               | `listDmThreadsEvento`, `markDmReadEvento` handlers               |
+| `api/queue/handlers/evt-dm-received.ts`         | New queue handler                                                |
+| `api/queue/queue-evento.ts`                     | Register evt-dm-received                                         |
+| `api/queue/intern/post-to-discord.ts`           | `buildDmEmbed()`                                                 |
+| `base/components/ExpandedVibesPill.tsx`         | `dmUnreadCount` prop + badge                                     |
+| `pkg/app/routes/vibe.$userHandle.$appSlug.tsx`  | Fetch dmUnreadCount on load                                      |
+| `pkg/app/routes/messages.tsx`                   | New inbox route                                                  |
+| `pkg/app/routes/messages.$handleA.$handleB.tsx` | New thread route                                                 |
+| `pkg/app/components/DmThread/`                  | Thread view + composer components                                |
+| `pkg/app/components/DmInbox/`                   | Inbox list component                                             |
+| `vibes.diy/api/types/iframe-bridge.ts`          | `req-open-dm-thread` message type                                |
+| `api/tests/dm-acl.test.ts`                      | New ACL + behavior tests                                         |

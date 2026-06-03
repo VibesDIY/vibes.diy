@@ -47,23 +47,23 @@ New table `AccessFnOutputs`:
 
 ```sql
 CREATE TABLE AccessFnOutputs (
-  userSlug   TEXT NOT NULL,
+  userHandle   TEXT NOT NULL,
   appSlug    TEXT NOT NULL,
   dbName     TEXT NOT NULL,
   docId      TEXT NOT NULL,
   fnCid      TEXT NOT NULL,    -- which access fn version produced this
   output     TEXT NOT NULL,    -- JSON-serialized AccessDescriptor
   hasGrants  INTEGER NOT NULL, -- 1 if output has members/grant fields, 0 otherwise
-  PRIMARY KEY (userSlug, appSlug, dbName, docId)
+  PRIMARY KEY (userHandle, appSlug, dbName, docId)
 );
 CREATE INDEX AccessFnOutputs_grants_idx
-  ON AccessFnOutputs (userSlug, appSlug, dbName, fnCid)
+  ON AccessFnOutputs (userHandle, appSlug, dbName, fnCid)
   WHERE hasGrants = 1;
 ```
 
 The `hasGrants` flag enables efficient filtering: most docs (messages, regular data) return `{ channels: [...] }` with no grant fields. Only channel-meta and membership docs have grants. The reduce query only scans `hasGrants = 1` rows.
 
-The primary key is `(userSlug, appSlug, dbName, docId)` — one output per doc, upserted on each write. When the access fn CID changes, old rows persist with the old `fnCid` but the reduce query filters by current CID, so they're effectively stale. A cleanup job can delete old-CID rows lazily.
+The primary key is `(userHandle, appSlug, dbName, docId)` — one output per doc, upserted on each write. When the access fn CID changes, old rows persist with the old `fnCid` but the reduce query filters by current CID, so they're effectively stale. A cleanup job can delete old-CID rows lazily.
 
 ### No Separate DO for State
 
@@ -110,7 +110,7 @@ Filter out JS built-in global object keys when parsing exports at push time. Rej
 1. Use QuickJS to evaluate the module source and extract named export names
 2. Filter export names through the safety blocklist (reject JS globals)
 3. For each valid export name: upsert `AccessFunctionBindings` row with `dbName = exportName`
-4. Delete stale rows for this `(userSlug, appSlug)` where `dbName` is not in the current export set
+4. Delete stale rows for this `(userHandle, appSlug)` where `dbName` is not in the current export set
 5. Store the full access.js source once (one CID/assetUri), referenced by all binding rows
 
 When access.js is deleted from a push, delete all `AccessFunctionBindings` rows for that app.
@@ -124,9 +124,9 @@ When access.js is deleted from a push, delete all `AccessFunctionBindings` rows 
 The `GrantReduce` class and `extractContribution` function are pure logic with no runtime dependencies. They accumulate contributions from AccessDescriptor outputs and resolve effective channel/role memberships.
 
 ```
-effectiveChannels(userSlug) =
-  userGrants[userSlug]                           // direct grants
-  ∪ for each role where userSlug ∈ effectiveMembers[role]:
+effectiveChannels(userHandle) =
+  userGrants[userHandle]                           // direct grants
+  ∪ for each role where userHandle ∈ effectiveMembers[role]:
       roleGrants[role]                           // role-expanded grants
 ```
 
@@ -134,7 +134,7 @@ effectiveChannels(userSlug) =
 
 On each write, the reduce is computed by:
 
-1. Query `AccessFnOutputs WHERE (userSlug, appSlug, dbName, fnCid) AND hasGrants = 1`
+1. Query `AccessFnOutputs WHERE (userHandle, appSlug, dbName, fnCid) AND hasGrants = 1`
 2. For each row, `extractContribution(JSON.parse(output))` → `DocContribution`
 3. Accumulate into a fresh `GrantReduce` instance
 4. Use `resolveEffectiveChannels` and `hasRole` for the current write's checks

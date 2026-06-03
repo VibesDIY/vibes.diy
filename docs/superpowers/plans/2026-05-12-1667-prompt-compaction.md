@@ -226,8 +226,8 @@ describe("appendTurnToChat", () => {
   });
 
   it("appends a PromptContexts row + ChatSections row + Apps row in one call", async () => {
-    const { appSlug, userSlug, userId } = await ctx.createApp();
-    const r1 = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, userHandle, userId } = await ctx.createApp();
+    const r1 = await ctx.api.openChat({ userHandle, appSlug, mode: "chat" });
     const chat = r1.Ok();
     const vctx = ctx.appCtx.vibesCtx;
 
@@ -246,7 +246,7 @@ describe("appendTurnToChat", () => {
     const result = await appendTurnToChat(vctx, {
       chatId: chat.chatId,
       userId,
-      userSlug,
+      userHandle,
       appSlug,
       fileSystem: [{ type: "code-block", filename: "App.jsx", lang: "jsx", content: "v1" }],
       userMessage: "make it",
@@ -274,8 +274,8 @@ describe("appendTurnToChat", () => {
   });
 
   it("appending two turns produces two distinct PromptContexts rows", async () => {
-    const { appSlug, userSlug, userId } = await ctx.createApp();
-    const r1 = await ctx.api.openChat({ userSlug, appSlug, mode: "chat" });
+    const { appSlug, userHandle, userId } = await ctx.createApp();
+    const r1 = await ctx.api.openChat({ userHandle, appSlug, mode: "chat" });
     const chat = r1.Ok();
     const vctx = ctx.appCtx.vibesCtx;
 
@@ -283,7 +283,7 @@ describe("appendTurnToChat", () => {
       await appendTurnToChat(vctx, {
         chatId: chat.chatId,
         userId,
-        userSlug,
+        userHandle,
         appSlug,
         fileSystem: [{ type: "code-block", filename: "App.jsx", lang: "jsx", content: "v1" }],
       })
@@ -292,7 +292,7 @@ describe("appendTurnToChat", () => {
       await appendTurnToChat(vctx, {
         chatId: chat.chatId,
         userId,
-        userSlug,
+        userHandle,
         appSlug,
         fileSystem: [{ type: "code-block", filename: "App.jsx", lang: "jsx", content: "v2" }],
       })
@@ -333,7 +333,7 @@ import { buildSeedSectionBlocks } from "./seed-chat-section.js";
 export interface AppendTurnOpts {
   readonly chatId: string;
   readonly userId: string;
-  readonly userSlug: string;
+  readonly userHandle: string;
   readonly appSlug: string;
   readonly fileSystem: readonly VibeFile[];
   readonly userMessage?: string;
@@ -370,7 +370,7 @@ export async function appendTurnToChat(vctx: VibesApiSQLCtx, opts: AppendTurnOpt
   const rApps = await ensureApps(vctx, {
     type: "vibes.diy.req-ensure-app-slug",
     auth: { kind: "device-id", token: "synthetic" } as never, // ensureApps needs the userId from vctx context; check actual signature
-    userSlug: opts.userSlug,
+    userHandle: opts.userHandle,
     appSlug: opts.appSlug,
     fsId: opts.fsId,
     fileSystem: opts.fileSystem,
@@ -387,7 +387,7 @@ export async function appendTurnToChat(vctx: VibesApiSQLCtx, opts: AppendTurnOpt
   const refValue: PromptContextSql = {
     type: "prompt.usage.sql",
     usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
-    fsRef: { fsId, mode, appSlug: opts.appSlug, userSlug: opts.userSlug },
+    fsRef: { fsId, mode, appSlug: opts.appSlug, userHandle: opts.userHandle },
   };
   const rPC = await exception2Result(() =>
     vctx.sql.db.insert(vctx.sql.tables.promptContexts).values({
@@ -415,7 +415,7 @@ export async function appendTurnToChat(vctx: VibesApiSQLCtx, opts: AppendTurnOpt
       if (f.type !== "code-block" || typeof f.content !== "string") return [];
       return [{ path: f.filename, lang: f.lang ?? "jsx", content: f.content as string }];
     }),
-    fsRef: { fsId, mode, appSlug: opts.appSlug, userSlug: opts.userSlug },
+    fsRef: { fsId, mode, appSlug: opts.appSlug, userHandle: opts.userHandle },
     timestamp: now,
   });
   const rSec = await exception2Result(() =>
@@ -2306,7 +2306,7 @@ it("buildEditPromptRequest includes selected.draft when .undo absent and disk ha
   const req = await buildEditPromptRequest({
     chatId: "c1",
     appSlug: "x",
-    userSlug: "u",
+    userHandle: "u",
     prompt: "make it pink",
     dir,
     focus: undefined,
@@ -2319,7 +2319,7 @@ it("omits selected when .undo matches disk", async () => {
     "App.jsx": "function App(){}",
     ".undo": JSON.stringify([{ filename: "App.jsx", content: "function App(){}" }]),
   });
-  const req = await buildEditPromptRequest({ chatId: "c1", appSlug: "x", userSlug: "u", prompt: "go", dir, focus: undefined });
+  const req = await buildEditPromptRequest({ chatId: "c1", appSlug: "x", userHandle: "u", prompt: "go", dir, focus: undefined });
   expect(req.selected).toBeUndefined();
 });
 ```

@@ -71,9 +71,9 @@ interface Helpers {
 
 interface AccessDescriptor {
   channels?: string[];
-  members?: Record<string, string[]>; // roleName → userSlug[]
+  members?: Record<string, string[]>; // roleName → userHandle[]
   grant?: {
-    users?: Record<string, string[]>; // userSlug → channelId[]
+    users?: Record<string, string[]>; // userHandle → channelId[]
     roles?: Record<string, string[]>; // roleName → channelId[]
     public?: string[];
   };
@@ -84,7 +84,7 @@ interface AccessDescriptor {
 type AccessFunction = (
   doc: unknown,
   oldDoc: unknown,
-  user: { userSlug: string; [k: string]: unknown } | null,
+  user: { userHandle: string; [k: string]: unknown } | null,
   ctx: Helpers
 ) => AccessDescriptor;
 ```
@@ -129,7 +129,7 @@ Look for existing test infrastructure in `vibes.diy/pkg/test/` — use `createVi
 
 - A test that writes with `user: null` and access function returning `{}` → expect `forbidden` error
 - A test that writes with `user: null` and access function returning `{ allowAnonymous: true }` → expect success
-- A test that writes with `user: { userSlug: "alice" }` and no `allowAnonymous` → expect success (non-null user is unaffected)
+- A test that writes with `user: { userHandle: "alice" }` and no `allowAnonymous` → expect success (non-null user is unaffected)
 
 ## What NOT to do
 

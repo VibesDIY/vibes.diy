@@ -10,13 +10,14 @@
 
 **Spec reference:** [docs/superpowers/specs/2026-05-09-chat-button-improvement-interview-design.md](../specs/2026-05-09-chat-button-improvement-interview-design.md)
 
-**Important deviation from spec:** The spec said brainstorm should resolve via the `applicationChats` branch in `getResChatFromMode`. The chat editor route ([chat.$userSlug.$appSlug.tsx:389](../../vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx)) opens its session with `mode: "chat"`, which only ensures a `chatContexts` row — `applicationChats` is not guaranteed to exist for these chats. Brainstorm therefore joins the **chatContexts** branch (alongside `'chat'` creation mode) so the existing session's chat row is found. The system-prompt selection still diverges per-mode; only the table lookup is shared.
+**Important deviation from spec:** The spec said brainstorm should resolve via the `applicationChats` branch in `getResChatFromMode`. The chat editor route ([chat.$userHandle.$appSlug.tsx:389](../../vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx)) opens its session with `mode: "chat"`, which only ensures a `chatContexts` row — `applicationChats` is not guaranteed to exist for these chats. Brainstorm therefore joins the **chatContexts** branch (alongside `'chat'` creation mode) so the existing session's chat row is found. The system-prompt selection still diverges per-mode; only the table lookup is shared.
 
 ---
 
 ## File Structure
 
 **Create:**
+
 - `prompts/pkg/system-prompt-brainstorm.md` — interview prompt template with `{{TITLE_SECTION}}`, `{{THEME_DESIGN}}`, `{{CURRENT_VFS}}` placeholders.
 - `prompts/tests/brainstorm-prompt.test.ts` — unit tests for `makeBrainstormSystemPrompt`.
 - `vibes.diy/pkg/app/utils/option-lines.ts` — pure parser for splitting prose vs `▸ ` option lines.
@@ -24,6 +25,7 @@
 - `vibes.diy/pkg/app/components/OptionButtons.tsx` — visual component for clickable option buttons.
 
 **Modify:**
+
 - `vibes.diy/api/types/chat.ts` — extend `PromptLLMStyle`; add `reqPromptBrainstormChatSection`.
 - `prompts/pkg/prompts.ts` — add `makeBrainstormSystemPrompt`.
 - `prompts/pkg/index.ts` — re-export.
@@ -32,7 +34,7 @@
 - `vibes.diy/api/types/vibes-diy-api.ts` — extend `LLMChat.prompt()` opts with optional `mode`.
 - `vibes.diy/api/impl/index.ts` — `LLMChatImpl.prompt()` honors mode override.
 - `vibes.diy/pkg/app/components/ChatInput.tsx` — render Chat button next to Code; `onSubmit` accepts mode.
-- `vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx` — `sendPrompt` carries mode; brainstorm dispatches via `chat.prompt(msg, { mode: "brainstorm" })`; auto-handoff on turn-end.
+- `vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx` — `sendPrompt` carries mode; brainstorm dispatches via `chat.prompt(msg, { mode: "brainstorm" })`; auto-handoff on turn-end.
 - `vibes.diy/pkg/app/components/MessageList.tsx` — pass `onSelectOption` + `isLast` to `TopLevelMsg`; `TopLevelMsg` runs the parser and renders `<OptionButtons>` below the prose.
 - `vibes.diy/pkg/app/components/ChatInterface.tsx` — accept `onSelectOption` and forward to `MessageList`.
 
@@ -56,6 +58,7 @@ Expected: clean working tree on the new branch.
 ## Task 1: Add `'brainstorm'` mode types
 
 **Files:**
+
 - Modify: `vibes.diy/api/types/chat.ts`
 
 - [ ] **Step 1: Open `vibes.diy/api/types/chat.ts` and extend `PromptLLMStyle`.**
@@ -130,6 +133,7 @@ git commit -m "feat(api-types): add 'brainstorm' to PromptLLMStyle and request t
 ## Task 2: Create the brainstorm system-prompt asset
 
 **Files:**
+
 - Create: `prompts/pkg/system-prompt-brainstorm.md`
 
 - [ ] **Step 1: Write `prompts/pkg/system-prompt-brainstorm.md` with the full interview content.**
@@ -143,7 +147,7 @@ The user is non-technical. Avoid words like "schema", "rows", "tables", "state m
 
 ## How it works
 
-You ALREADY have an app. The user wants to change something about it. Your job is to clarify *what* should change and *why*, then emit a brief that the build pass can act on.
+You ALREADY have an app. The user wants to change something about it. Your job is to clarify _what_ should change and _why_, then emit a brief that the build pass can act on.
 
 You have access to the current app state in the `<current-vfs>...</current-vfs>` block below — read it to ask sharp, specific questions about what is actually there. Do not ask about features that already exist as if they don't.
 
@@ -273,6 +277,7 @@ git commit -m "feat(prompts): add brainstorm system-prompt asset"
 ## Task 3: Write failing test for `makeBrainstormSystemPrompt`
 
 **Files:**
+
 - Modify: `prompts/tests/helpers/load-mock-data.ts` (add brainstorm asset to mock fetcher)
 - Create: `prompts/tests/brainstorm-prompt.test.ts`
 
@@ -287,12 +292,12 @@ import brainstormPromptTemplate from "../../pkg/system-prompt-brainstorm.md?raw"
 Inside the `createMockFetchFromPkgFiles` function, add a new branch alongside the existing `system-prompt.md` branch:
 
 ```ts
-    if (url.includes("system-prompt-brainstorm.md")) {
-      return Promise.resolve({
-        ok: true,
-        text: () => Promise.resolve(brainstormPromptTemplate),
-      } as Response);
-    }
+if (url.includes("system-prompt-brainstorm.md")) {
+  return Promise.resolve({
+    ok: true,
+    text: () => Promise.resolve(brainstormPromptTemplate),
+  } as Response);
+}
 ```
 
 Place it BEFORE the `system-prompt.md` branch so the more-specific name wins (otherwise `system-prompt.md` matches first via `includes`).
@@ -390,6 +395,7 @@ git commit -m "test(prompts): failing tests for makeBrainstormSystemPrompt"
 ## Task 4: Implement `makeBrainstormSystemPrompt`
 
 **Files:**
+
 - Modify: `prompts/pkg/prompts.ts`
 - Modify: `prompts/pkg/index.ts`
 
@@ -495,6 +501,7 @@ git commit -m "feat(prompts): add makeBrainstormSystemPrompt builder"
 ## Task 5: Backend — branch system-prompt selection on brainstorm mode
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/prompt-chat-section.ts`
 
 - [ ] **Step 1: Update imports at the top of `prompt-chat-section.ts`.**
@@ -522,45 +529,45 @@ import {
 Find the block at [prompt-chat-section.ts:709](../../vibes.diy/api/svc/public/prompt-chat-section.ts:709):
 
 ```ts
-  const systemPrompt = await exception2Result(async () =>
-    makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
-      skills,
-      theme,
-      title,
-      demoData: false,
-      variant: isInitial ? "initial" : "continuation",
-      pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
-      fetch: createPromptAssetFetch({ fetchAsset: vctx.fetchAsset }),
-    })
-  );
+const systemPrompt = await exception2Result(async () =>
+  makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
+    skills,
+    theme,
+    title,
+    demoData: false,
+    variant: isInitial ? "initial" : "continuation",
+    pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
+    fetch: createPromptAssetFetch({ fetchAsset: vctx.fetchAsset }),
+  })
+);
 ```
 
 Replace with (preserving surrounding `if (systemPrompt.isErr())` etc.):
 
 ```ts
-  const systemPrompt = await exception2Result(async () => {
-    const effectiveModel = await resolveEffectiveModel({ model }, {});
-    const pkgBaseUrl = promptsPkgBaseUrl(vctx.params.pkgRepos.workspace);
-    const fetchOverride = createPromptAssetFetch({ fetchAsset: vctx.fetchAsset });
-    if (resChat.mode === "brainstorm") {
-      return makeBrainstormSystemPrompt(effectiveModel, {
-        title,
-        theme,
-        currentVfs: priorFs,
-        pkgBaseUrl,
-        fetch: fetchOverride,
-      });
-    }
-    return makeBaseSystemPrompt(effectiveModel, {
-      skills,
-      theme,
+const systemPrompt = await exception2Result(async () => {
+  const effectiveModel = await resolveEffectiveModel({ model }, {});
+  const pkgBaseUrl = promptsPkgBaseUrl(vctx.params.pkgRepos.workspace);
+  const fetchOverride = createPromptAssetFetch({ fetchAsset: vctx.fetchAsset });
+  if (resChat.mode === "brainstorm") {
+    return makeBrainstormSystemPrompt(effectiveModel, {
       title,
-      demoData: false,
-      variant: isInitial ? "initial" : "continuation",
+      theme,
+      currentVfs: priorFs,
       pkgBaseUrl,
       fetch: fetchOverride,
     });
+  }
+  return makeBaseSystemPrompt(effectiveModel, {
+    skills,
+    theme,
+    title,
+    demoData: false,
+    variant: isInitial ? "initial" : "continuation",
+    pkgBaseUrl,
+    fetch: fetchOverride,
   });
+});
 ```
 
 `priorFs` is the `ReadonlyMap<string, string>` already loaded a few lines above by `loadPriorFileSystem(vctx, chatId)` — exactly the format `makeBrainstormSystemPrompt` expects.
@@ -585,6 +592,7 @@ git commit -m "feat(api): select brainstorm system prompt for mode='brainstorm'"
 ## Task 6: Backend — extend `getResChatFromMode` for brainstorm
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/prompt-chat-section.ts`
 
 - [ ] **Step 1: Verify the current `getResChatFromMode` shape.**
@@ -593,38 +601,38 @@ Open [prompt-chat-section.ts:751](../../vibes.diy/api/svc/public/prompt-chat-sec
 
 - [ ] **Step 2: Confirm brainstorm joins the chatContexts branch.**
 
-The route ([chat.$userSlug.$appSlug.tsx:389](../../vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx)) opens its session with `mode: "chat"`, which only ensures a `chatContexts` row. Brainstorm uses the same chat session, so it must look the row up in `chatContexts`. **No code change is required** — falling through to the `else` branch is correct.
+The route ([chat.$userHandle.$appSlug.tsx:389](../../vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx)) opens its session with `mode: "chat"`, which only ensures a `chatContexts` row. Brainstorm uses the same chat session, so it must look the row up in `chatContexts`. **No code change is required** — falling through to the `else` branch is correct.
 
 What we DO need to change: extend the `if (!iResChat)` error-typing block so a missing chatContexts row reports a specific brainstorm error (instead of generically falling through with no `Result.Err` branch matched).
 
 Find:
 
 ```ts
-  if (!iResChat) {
-    if (isReqCreationPromptChatSection(orig)) {
-      return Result.Err(`Creation Chat ID ${req.chatId} not found`);
-    } else if (isReqPromptApplicationChatSection(orig)) {
-      return Result.Err(`Application Chat ID ${req.chatId} not found`);
-    } else if (isReqPromptImageChatSection(orig)) {
-      return Result.Err(`Image Chat ID ${req.chatId} not found`);
-    }
+if (!iResChat) {
+  if (isReqCreationPromptChatSection(orig)) {
+    return Result.Err(`Creation Chat ID ${req.chatId} not found`);
+  } else if (isReqPromptApplicationChatSection(orig)) {
+    return Result.Err(`Application Chat ID ${req.chatId} not found`);
+  } else if (isReqPromptImageChatSection(orig)) {
+    return Result.Err(`Image Chat ID ${req.chatId} not found`);
   }
+}
 ```
 
 Replace with:
 
 ```ts
-  if (!iResChat) {
-    if (isReqCreationPromptChatSection(orig)) {
-      return Result.Err(`Creation Chat ID ${req.chatId} not found`);
-    } else if (isReqPromptApplicationChatSection(orig)) {
-      return Result.Err(`Application Chat ID ${req.chatId} not found`);
-    } else if (isReqPromptImageChatSection(orig)) {
-      return Result.Err(`Image Chat ID ${req.chatId} not found`);
-    } else if (isReqPromptBrainstormChatSection(orig)) {
-      return Result.Err(`Brainstorm Chat ID ${req.chatId} not found`);
-    }
+if (!iResChat) {
+  if (isReqCreationPromptChatSection(orig)) {
+    return Result.Err(`Creation Chat ID ${req.chatId} not found`);
+  } else if (isReqPromptApplicationChatSection(orig)) {
+    return Result.Err(`Application Chat ID ${req.chatId} not found`);
+  } else if (isReqPromptImageChatSection(orig)) {
+    return Result.Err(`Image Chat ID ${req.chatId} not found`);
+  } else if (isReqPromptBrainstormChatSection(orig)) {
+    return Result.Err(`Brainstorm Chat ID ${req.chatId} not found`);
   }
+}
 ```
 
 - [ ] **Step 3: Add the import for `isReqPromptBrainstormChatSection` at the top of the file.**
@@ -651,6 +659,7 @@ git commit -m "feat(api): brainstorm mode resolves via chatContexts branch"
 ## Task 7: Backend — skip recovery for brainstorm mode
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/prompt-chat-section.ts`
 
 - [ ] **Step 1: Locate the recovery dispatch.**
@@ -662,10 +671,10 @@ Find the recovery branch at [prompt-chat-section.ts:1539](../../vibes.diy/api/sv
 Find the function that contains this recovery block (search backward from line 1539 for the nearest `function` keyword — likely `dispatchRecoveryIfApplicable` or inline inside `handlerLlmRequest`). Add an early return at the top of the recovery dispatch:
 
 ```ts
-  if (resChat.mode === "brainstorm") {
-    // Brainstorm output is plain markdown — no SEARCH/REPLACE blocks to recover.
-    return Result.Ok();
-  }
+if (resChat.mode === "brainstorm") {
+  // Brainstorm output is plain markdown — no SEARCH/REPLACE blocks to recover.
+  return Result.Ok();
+}
 ```
 
 Place it immediately after the function's parameter destructuring, before any other early-return checks. If `resChat` is not in scope at that point, locate the nearest enclosing scope where it IS available and add the guard one level out (the call to `recoveryLogger.Debug()…Msg("recovery-start")` is the latest you can guard before recovery work begins).
@@ -690,6 +699,7 @@ git commit -m "feat(api): skip SEARCH/REPLACE recovery for brainstorm mode"
 ## Task 8: Chat session API — add `mode` override to `LLMChat.prompt()`
 
 **Files:**
+
 - Modify: `vibes.diy/api/types/vibes-diy-api.ts`
 - Modify: `vibes.diy/api/impl/index.ts`
 
@@ -776,6 +786,7 @@ git commit -m "feat(api-impl): allow per-prompt mode override on LLMChat.prompt"
 ## Task 9: Frontend — `ChatInput` dual-button
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/ChatInput.tsx`
 
 - [ ] **Step 1: Update the `ChatInputProps` interface.**
@@ -805,26 +816,26 @@ interface ChatInputProps {
 Find:
 
 ```ts
-    const handleSendPrompt = useCallback(() => {
-      if (prompt && !promptProcessing) {
-        onSubmit(prompt);
-        setPrompt("");
-      }
-    }, [prompt, promptProcessing, onSubmit]);
+const handleSendPrompt = useCallback(() => {
+  if (prompt && !promptProcessing) {
+    onSubmit(prompt);
+    setPrompt("");
+  }
+}, [prompt, promptProcessing, onSubmit]);
 ```
 
 Replace with:
 
 ```ts
-    const handleSendPrompt = useCallback(
-      (mode: "app" | "brainstorm") => {
-        if (prompt && !promptProcessing) {
-          onSubmit(prompt, mode);
-          setPrompt("");
-        }
-      },
-      [prompt, promptProcessing, onSubmit]
-    );
+const handleSendPrompt = useCallback(
+  (mode: "app" | "brainstorm") => {
+    if (prompt && !promptProcessing) {
+      onSubmit(prompt, mode);
+      setPrompt("");
+    }
+  },
+  [prompt, promptProcessing, onSubmit]
+);
 ```
 
 - [ ] **Step 3: Update the keyboard handler to default to `'app'`.**
@@ -870,79 +881,77 @@ This stays the same; `submitButtonRef` will continue to point at the Code button
 Find the bottom-row JSX block beginning with:
 
 ```tsx
-            <div
-              style={{
-                display: "inline-flex",
-                borderRadius: 7,
-                padding: promptProcessing ? 2 : 0,
-                background: promptProcessing ? btnSnakeBorder : "transparent",
-                animation: promptProcessing ? "vibes-border-spin 2s linear infinite" : "none",
-              }}
-            >
-              <Button
-                ref={submitButtonRef}
-                type="button"
-                onClick={handleSendPrompt}
-                disabled={promptProcessing}
-                variant="blue"
-                size="fixed"
-                aria-label={promptProcessing ? "Processing" : "Send message"}
-                className={
-                  promptProcessing
-                    ? "!border-0 !shadow-none !bg-[var(--vibes-submit-disabled-bg)] !text-[var(--vibes-submit-disabled-fg)]"
-                    : ""
-                }
-                style={promptProcessing ? { opacity: 1 } : undefined}
-              >
-                {promptProcessing ? workingMessage : "Code"}
-              </Button>
-            </div>
+<div
+  style={{
+    display: "inline-flex",
+    borderRadius: 7,
+    padding: promptProcessing ? 2 : 0,
+    background: promptProcessing ? btnSnakeBorder : "transparent",
+    animation: promptProcessing ? "vibes-border-spin 2s linear infinite" : "none",
+  }}
+>
+  <Button
+    ref={submitButtonRef}
+    type="button"
+    onClick={handleSendPrompt}
+    disabled={promptProcessing}
+    variant="blue"
+    size="fixed"
+    aria-label={promptProcessing ? "Processing" : "Send message"}
+    className={
+      promptProcessing ? "!border-0 !shadow-none !bg-[var(--vibes-submit-disabled-bg)] !text-[var(--vibes-submit-disabled-fg)]" : ""
+    }
+    style={promptProcessing ? { opacity: 1 } : undefined}
+  >
+    {promptProcessing ? workingMessage : "Code"}
+  </Button>
+</div>
 ```
 
 Replace with:
 
 ```tsx
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                onClick={() => handleSendPrompt("brainstorm")}
-                disabled={!hasCode || promptProcessing || !prompt}
-                variant="blue"
-                size="fixed"
-                aria-label="Brainstorm an improvement"
-                title={!hasCode ? "Available once your app has code — start with Code first." : "Brainstorm an improvement"}
-                className="!bg-transparent !text-light-primary dark:!text-dark-primary !border !border-light-decorative-01 dark:!border-dark-decorative-01 hover:!bg-light-decorative-01 dark:hover:!bg-dark-decorative-01"
-              >
-                Chat
-              </Button>
-              <div
-                style={{
-                  display: "inline-flex",
-                  borderRadius: 7,
-                  padding: promptProcessing ? 2 : 0,
-                  background: promptProcessing ? btnSnakeBorder : "transparent",
-                  animation: promptProcessing ? "vibes-border-spin 2s linear infinite" : "none",
-                }}
-              >
-                <Button
-                  ref={submitButtonRef}
-                  type="button"
-                  onClick={() => handleSendPrompt("app")}
-                  disabled={promptProcessing}
-                  variant="blue"
-                  size="fixed"
-                  aria-label={promptProcessing ? "Processing" : "Send message"}
-                  className={
-                    promptProcessing
-                      ? "!border-0 !shadow-none !bg-[var(--vibes-submit-disabled-bg)] !text-[var(--vibes-submit-disabled-fg)]"
-                      : ""
-                  }
-                  style={promptProcessing ? { opacity: 1 } : undefined}
-                >
-                  {promptProcessing ? workingMessage : "Code"}
-                </Button>
-              </div>
-            </div>
+<div className="flex items-center gap-2">
+  <Button
+    type="button"
+    onClick={() => handleSendPrompt("brainstorm")}
+    disabled={!hasCode || promptProcessing || !prompt}
+    variant="blue"
+    size="fixed"
+    aria-label="Brainstorm an improvement"
+    title={!hasCode ? "Available once your app has code — start with Code first." : "Brainstorm an improvement"}
+    className="!bg-transparent !text-light-primary dark:!text-dark-primary !border !border-light-decorative-01 dark:!border-dark-decorative-01 hover:!bg-light-decorative-01 dark:hover:!bg-dark-decorative-01"
+  >
+    Chat
+  </Button>
+  <div
+    style={{
+      display: "inline-flex",
+      borderRadius: 7,
+      padding: promptProcessing ? 2 : 0,
+      background: promptProcessing ? btnSnakeBorder : "transparent",
+      animation: promptProcessing ? "vibes-border-spin 2s linear infinite" : "none",
+    }}
+  >
+    <Button
+      ref={submitButtonRef}
+      type="button"
+      onClick={() => handleSendPrompt("app")}
+      disabled={promptProcessing}
+      variant="blue"
+      size="fixed"
+      aria-label={promptProcessing ? "Processing" : "Send message"}
+      className={
+        promptProcessing
+          ? "!border-0 !shadow-none !bg-[var(--vibes-submit-disabled-bg)] !text-[var(--vibes-submit-disabled-fg)]"
+          : ""
+      }
+      style={promptProcessing ? { opacity: 1 } : undefined}
+    >
+      {promptProcessing ? workingMessage : "Code"}
+    </Button>
+  </div>
+</div>
 ```
 
 - [ ] **Step 6: Build the frontend package.**
@@ -965,26 +974,27 @@ git commit -m "feat(chat-input): add Chat button next to Code with mode-aware on
 ## Task 10: Frontend — thread mode through the chat route's `sendPrompt`
 
 **Files:**
-- Modify: `vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx`
+
+- Modify: `vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx`
 
 - [ ] **Step 1: Change the `promptToSend` state shape.**
 
-Find at [chat.$userSlug.$appSlug.tsx:257](../../vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx:257):
+Find at [chat.$userHandle.$appSlug.tsx:257](../../vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx:257):
 
 ```ts
-  const [promptToSend, sendPrompt] = useState<string | null>(null);
+const [promptToSend, sendPrompt] = useState<string | null>(null);
 ```
 
 Replace with:
 
 ```ts
-  type PendingPrompt = { text: string; mode: "app" | "brainstorm" };
-  const [promptToSend, sendPrompt] = useState<PendingPrompt | null>(null);
+type PendingPrompt = { text: string; mode: "app" | "brainstorm" };
+const [promptToSend, sendPrompt] = useState<PendingPrompt | null>(null);
 ```
 
 - [ ] **Step 2: Update the firing effect.**
 
-Find at [chat.$userSlug.$appSlug.tsx:348](../../vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx:348):
+Find at [chat.$userHandle.$appSlug.tsx:348](../../vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx:348):
 
 ```ts
       if (chat && promptToSend?.trim().length) {
@@ -999,40 +1009,38 @@ Replace with:
 Then find the nearby:
 
 ```ts
-        const sentPrompt = promptToSend;
-        // Clear promptToSend BEFORE firing so any re-render of this effect
-        // (e.g. searchParams change) sees null and skips the branch.
-        sendPrompt(null);
-        chat
-          .prompt({
-            messages: [
-              {
-                role: "user",
-                content: [{ type: "text", text: sentPrompt }],
-              },
-            ],
-          })
+const sentPrompt = promptToSend;
+// Clear promptToSend BEFORE firing so any re-render of this effect
+// (e.g. searchParams change) sees null and skips the branch.
+sendPrompt(null);
+chat.prompt({
+  messages: [
+    {
+      role: "user",
+      content: [{ type: "text", text: sentPrompt }],
+    },
+  ],
+});
 ```
 
 Replace with:
 
 ```ts
-        const sentPrompt = promptToSend;
-        // Clear promptToSend BEFORE firing so any re-render of this effect
-        // (e.g. searchParams change) sees null and skips the branch.
-        sendPrompt(null);
-        chat
-          .prompt(
-            {
-              messages: [
-                {
-                  role: "user",
-                  content: [{ type: "text", text: sentPrompt.text }],
-                },
-              ],
-            },
-            sentPrompt.mode === "brainstorm" ? { mode: "brainstorm" } : undefined
-          )
+const sentPrompt = promptToSend;
+// Clear promptToSend BEFORE firing so any re-render of this effect
+// (e.g. searchParams change) sees null and skips the branch.
+sendPrompt(null);
+chat.prompt(
+  {
+    messages: [
+      {
+        role: "user",
+        content: [{ type: "text", text: sentPrompt.text }],
+      },
+    ],
+  },
+  sentPrompt.mode === "brainstorm" ? { mode: "brainstorm" } : undefined
+);
 ```
 
 The `console.log` immediately below uses `sentPrompt` as a string — change `console.log(`send prompt`, sentPrompt);` to `console.log(\`send prompt\`, sentPrompt.text, sentPrompt.mode);`.
@@ -1040,23 +1048,23 @@ The `console.log` immediately below uses `sentPrompt` as a string — change `co
 Also find:
 
 ```ts
-        sendPrompt(promptText);
+sendPrompt(promptText);
 ```
 
-near [chat.$userSlug.$appSlug.tsx:506](../../vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx:506) and replace with:
+near [chat.$userHandle.$appSlug.tsx:506](../../vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx:506) and replace with:
 
 ```ts
-        sendPrompt({ text: promptText, mode: "app" });
+sendPrompt({ text: promptText, mode: "app" });
 ```
 
 (That call site is the URL-prompt prefill — keep it on `'app'` because URL prompts are first-build flows.)
 
 - [ ] **Step 3: Update the `<ChatInput onSubmit={sendPrompt}>` wiring.**
 
-Find at [chat.$userSlug.$appSlug.tsx:715](../../vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx:715):
+Find at [chat.$userHandle.$appSlug.tsx:715](../../vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx:715):
 
 ```tsx
-              onSubmit={sendPrompt}
+onSubmit = { sendPrompt };
 ```
 
 Replace with:
@@ -1084,7 +1092,7 @@ Expected: same pass/fail as before this change. Any new failures should be surfa
 - [ ] **Step 6: Commit.**
 
 ```bash
-git add vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx
+git add vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx
 git commit -m "feat(chat-route): plumb mode through sendPrompt for chat-button dispatch"
 ```
 
@@ -1093,6 +1101,7 @@ git commit -m "feat(chat-route): plumb mode through sendPrompt for chat-button d
 ## Task 11: Frontend — option-line parser util
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/utils/option-lines.ts`
 - Create: `vibes.diy/tests/app/option-lines.test.ts`
 
@@ -1112,7 +1121,9 @@ describe("parseOptionLines", () => {
   });
 
   it("extracts a trailing options group and removes it from the prose", () => {
-    const text = ["What's the vibe?", "", "▸ Calm and focused", "▸ Playful and weird", "▸ That's enough — let's build it!"].join("\n");
+    const text = ["What's the vibe?", "", "▸ Calm and focused", "▸ Playful and weird", "▸ That's enough — let's build it!"].join(
+      "\n"
+    );
     const r = parseOptionLines(text);
     expect(r.prose).toBe(["What's the vibe?", ""].join("\n"));
     expect(r.options).toEqual(["Calm and focused", "Playful and weird", "That's enough — let's build it!"]);
@@ -1228,6 +1239,7 @@ git commit -m "feat(chat-options): add parseOptionLines util with tests"
 ## Task 12: Frontend — `OptionButtons` component
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/components/OptionButtons.tsx`
 
 - [ ] **Step 1: Write the component.**
@@ -1299,6 +1311,7 @@ git commit -m "feat(chat-options): add OptionButtons component"
 ## Task 13: Frontend — wire option buttons into `TopLevelMsg`
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/MessageList.tsx`
 - Modify: `vibes.diy/pkg/app/components/ChatInterface.tsx`
 
@@ -1376,50 +1389,46 @@ In `MessageList`, find every place that renders `<TopLevelMsg ... />`. There is 
 For the main one (around line 553):
 
 ```tsx
-              acc.push(<TopLevelMsg key={`toplevel-${block.begin.sectionId}-${idx}`} begin={block.begin} lines={block.lines} />);
+acc.push(<TopLevelMsg key={`toplevel-${block.begin.sectionId}-${idx}`} begin={block.begin} lines={block.lines} />);
 ```
 
 Replace with:
 
 ```tsx
-              const isLast = msg.fsRef ? false /* code-end follow-up */ : true;
-              acc.push(
-                <TopLevelMsg
-                  key={`toplevel-${block.begin.sectionId}-${idx}`}
-                  begin={block.begin}
-                  lines={block.lines}
-                  isLast={false}
-                  onSelectOption={onSelectOption}
-                />
-              );
+const isLast = msg.fsRef ? false /* code-end follow-up */ : true;
+acc.push(
+  <TopLevelMsg
+    key={`toplevel-${block.begin.sectionId}-${idx}`}
+    begin={block.begin}
+    lines={block.lines}
+    isLast={false}
+    onSelectOption={onSelectOption}
+  />
+);
 ```
 
-(We default older messages to `isLast={false}` and patch the *very last* assistant message after the reduce — see step 4.)
+(We default older messages to `isLast={false}` and patch the _very last_ assistant message after the reduce — see step 4.)
 
 For the truncate-recovery one:
 
 ```tsx
-              acc.push(
-                <TopLevelMsg
-                  key={`pre-truncate-top-${preBlock.begin.sectionId}-${preIdx}`}
-                  begin={preBlock.begin}
-                  lines={preBlock.lines}
-                />
-              );
+acc.push(
+  <TopLevelMsg key={`pre-truncate-top-${preBlock.begin.sectionId}-${preIdx}`} begin={preBlock.begin} lines={preBlock.lines} />
+);
 ```
 
 Replace with:
 
 ```tsx
-              acc.push(
-                <TopLevelMsg
-                  key={`pre-truncate-top-${preBlock.begin.sectionId}-${preIdx}`}
-                  begin={preBlock.begin}
-                  lines={preBlock.lines}
-                  isLast={false}
-                  onSelectOption={undefined}
-                />
-              );
+acc.push(
+  <TopLevelMsg
+    key={`pre-truncate-top-${preBlock.begin.sectionId}-${preIdx}`}
+    begin={preBlock.begin}
+    lines={preBlock.lines}
+    isLast={false}
+    onSelectOption={undefined}
+  />
+);
 ```
 
 - [ ] **Step 4: After the reduce, mark the most recent `TopLevelMsg` as `isLast`.**
@@ -1427,22 +1436,22 @@ Replace with:
 After the reduce that builds `messageElements`, scan for the last `TopLevelMsg` and clone it with `isLast={true}` and the live `onSelectOption`:
 
 ```tsx
-  // Mark the most recent TopLevelMsg as the active one — its option buttons
-  // are clickable; older ones are visual history.
-  if (!promptProcessing) {
-    for (let i = messageElements.length - 1; i >= 0; i--) {
-      const el = messageElements[i];
-      // React.isValidElement guarantees el is a ReactElement; we still need
-      // to narrow on the component type to be safe.
-      if (React.isValidElement(el) && (el.type as { name?: string }).name === "TopLevelMsg") {
-        messageElements[i] = React.cloneElement(el as React.ReactElement<{ isLast: boolean; onSelectOption?: (o: string) => void }>, {
-          isLast: true,
-          onSelectOption,
-        });
-        break;
-      }
+// Mark the most recent TopLevelMsg as the active one — its option buttons
+// are clickable; older ones are visual history.
+if (!promptProcessing) {
+  for (let i = messageElements.length - 1; i >= 0; i--) {
+    const el = messageElements[i];
+    // React.isValidElement guarantees el is a ReactElement; we still need
+    // to narrow on the component type to be safe.
+    if (React.isValidElement(el) && (el.type as { name?: string }).name === "TopLevelMsg") {
+      messageElements[i] = React.cloneElement(el as React.ReactElement<{ isLast: boolean; onSelectOption?: (o: string) => void }>, {
+        isLast: true,
+        onSelectOption,
+      });
+      break;
     }
   }
+}
 ```
 
 Place this block immediately before the existing `useEffect(() => { … }, [lastFsRef?.fsId]);` and the `return (...)` JSX.
@@ -1491,7 +1500,7 @@ function ChatInterface({
   onSelectOption,
 }: {
   promptState: PromptState;
-  onClick: (a: { fsId: string; appSlug: string; userSlug: string }) => void;
+  onClick: (a: { fsId: string; appSlug: string; userHandle: string }) => void;
   onRetry?: (msg: PromptError) => void;
   onSelectOption?: (option: string) => void;
 }) {
@@ -1519,19 +1528,20 @@ git commit -m "feat(chat-options): render OptionButtons inside TopLevelMsg with 
 ## Task 14: Frontend — wire `onSelectOption` from the chat route
 
 **Files:**
-- Modify: `vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx`
+
+- Modify: `vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx`
 
 - [ ] **Step 1: Define the handler.**
 
 In the route component, just below the existing `const [promptToSend, sendPrompt] = useState<PendingPrompt | null>(null);` line, add:
 
 ```ts
-  const handleSelectOption = useCallback(
-    (option: string) => {
-      sendPrompt({ text: option, mode: "brainstorm" });
-    },
-    [sendPrompt]
-  );
+const handleSelectOption = useCallback(
+  (option: string) => {
+    sendPrompt({ text: option, mode: "brainstorm" });
+  },
+  [sendPrompt]
+);
 ```
 
 - [ ] **Step 2: Pass it to `<ChatInterface>`.**
@@ -1557,7 +1567,7 @@ Expected: same pass/fail as before. Investigate any regressions.
 - [ ] **Step 5: Commit.**
 
 ```bash
-git add vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx
+git add vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx
 git commit -m "feat(chat-route): dispatch brainstorm prompt when option clicked"
 ```
 
@@ -1566,47 +1576,48 @@ git commit -m "feat(chat-route): dispatch brainstorm prompt when option clicked"
 ## Task 15: Frontend — auto-handoff on `<vibes-brief>`
 
 **Files:**
-- Modify: `vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx`
+
+- Modify: `vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx`
 
 - [ ] **Step 1: Add a brief-detection effect.**
 
 The chat reducer dispatches `block.end` events that close out a turn. We watch `promptState.running` flipping from `true` to `false` and inspect the most recent assistant message for a `<vibes-brief>` block.
 
-Add this effect immediately after the existing fsId-fetch `useEffect` (the one that ends with `}, [fsId, userSlug, appSlug, vibeDiyApi]);`):
+Add this effect immediately after the existing fsId-fetch `useEffect` (the one that ends with `}, [fsId, userHandle, appSlug, vibeDiyApi]);`):
 
 ```ts
-  const lastBriefHandledRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (promptState.running) return;
-    const blocks = promptState.blocks;
-    if (blocks.length === 0) return;
+const lastBriefHandledRef = useRef<string | null>(null);
+useEffect(() => {
+  if (promptState.running) return;
+  const blocks = promptState.blocks;
+  if (blocks.length === 0) return;
 
-    // Find the latest assistant TopLevel message text.
-    const lastBlock = blocks[blocks.length - 1];
-    let collected = "";
-    let toplevelStreamId: string | null = null;
-    for (const msg of lastBlock.msgs) {
-      if (msg.type === "block.toplevel.begin") {
-        collected = "";
-        toplevelStreamId = msg.streamId;
-      } else if (msg.type === "block.toplevel.line") {
-        collected += (collected ? "\n" : "") + msg.line;
-      }
+  // Find the latest assistant TopLevel message text.
+  const lastBlock = blocks[blocks.length - 1];
+  let collected = "";
+  let toplevelStreamId: string | null = null;
+  for (const msg of lastBlock.msgs) {
+    if (msg.type === "block.toplevel.begin") {
+      collected = "";
+      toplevelStreamId = msg.streamId;
+    } else if (msg.type === "block.toplevel.line") {
+      collected += (collected ? "\n" : "") + msg.line;
     }
-    if (!toplevelStreamId) return;
+  }
+  if (!toplevelStreamId) return;
 
-    // Only handle each turn once.
-    if (lastBriefHandledRef.current === toplevelStreamId) return;
+  // Only handle each turn once.
+  if (lastBriefHandledRef.current === toplevelStreamId) return;
 
-    const match = collected.match(/<vibes-brief>([\s\S]*?)<\/vibes-brief>/);
-    if (!match) return;
+  const match = collected.match(/<vibes-brief>([\s\S]*?)<\/vibes-brief>/);
+  if (!match) return;
 
-    const briefBody = match[1].trim();
-    if (!briefBody) return;
+  const briefBody = match[1].trim();
+  if (!briefBody) return;
 
-    lastBriefHandledRef.current = toplevelStreamId;
-    sendPrompt({ text: `Build this change:\n\n${briefBody}`, mode: "app" });
-  }, [promptState.running, promptState.blocks]);
+  lastBriefHandledRef.current = toplevelStreamId;
+  sendPrompt({ text: `Build this change:\n\n${briefBody}`, mode: "app" });
+}, [promptState.running, promptState.blocks]);
 ```
 
 - [ ] **Step 2: Verify imports.**
@@ -1632,7 +1643,7 @@ Expected: pass.
 - [ ] **Step 5: Commit.**
 
 ```bash
-git add vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx
+git add vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx
 git commit -m "feat(chat-route): auto-handoff to code-gen when brainstorm emits <vibes-brief>"
 ```
 
@@ -1641,6 +1652,7 @@ git commit -m "feat(chat-route): auto-handoff to code-gen when brainstorm emits 
 ## Task 16: API integration test — brainstorm system prompt selection
 
 **Files:**
+
 - Create: `vibes.diy/api/tests/brainstorm-mode.test.ts`
 
 - [ ] **Step 1: Look for an existing test that exercises `prompt-chat-section.ts` and use it as a template.**
@@ -1729,13 +1741,13 @@ Expected: format clean, build green, tests pass, lint clean. Re-run individual f
 
 Per `CLAUDE.md`: for UI changes, exercise the feature in a browser. Start dev locally (the workspace's documented dev command — refer to `agents/environments.md` for the exact command), then:
 
-  1. Open an existing chat where `hasCode === true`.
-  2. Verify the **Chat** button appears next to **Code** and is enabled.
-  3. Type a short prompt like "make the empty state nicer" and click **Chat**. Confirm the assistant reply streams in with `▸ ` lines turned into stacked clickable buttons inside the message bubble.
-  4. Click an option. Confirm the chosen text appears as the next user message and a follow-up assistant reply streams in.
-  5. Continue until the brief lands. Confirm a second turn (mode `'app'`) auto-fires and code starts streaming.
-  6. Reload the page. Confirm the interview history renders with disabled buttons; the brief and the code-gen turn are intact.
-  7. Open a fresh chat with no code. Confirm the Chat button is disabled.
+1. Open an existing chat where `hasCode === true`.
+2. Verify the **Chat** button appears next to **Code** and is enabled.
+3. Type a short prompt like "make the empty state nicer" and click **Chat**. Confirm the assistant reply streams in with `▸ ` lines turned into stacked clickable buttons inside the message bubble.
+4. Click an option. Confirm the chosen text appears as the next user message and a follow-up assistant reply streams in.
+5. Continue until the brief lands. Confirm a second turn (mode `'app'`) auto-fires and code starts streaming.
+6. Reload the page. Confirm the interview history renders with disabled buttons; the brief and the code-gen turn are intact.
+7. Open a fresh chat with no code. Confirm the Chat button is disabled.
 
 Document any deviation in a follow-up note. UI assertions are visual; if you can't run the dev server in this environment, skip step 2 and explicitly say so when reporting completion (per CLAUDE.md guidance on UI verification).
 
@@ -1754,6 +1766,7 @@ Expected: clean working tree.
 ## Self-Review Notes
 
 **Spec coverage check:**
+
 - §1 New mode `'brainstorm'` → Task 1.
 - §2 New asset `system-prompt-brainstorm.md` → Task 2.
 - §3 New builder `makeBrainstormSystemPrompt` → Tasks 3–4.
@@ -1766,6 +1779,7 @@ Expected: clean working tree.
 - §10 Testing → Tasks 3, 11, 16; Task 17 covers integration.
 
 **Type consistency check:**
+
 - `'brainstorm'` literal used identically in `PromptLLMStyle`, `reqPromptBrainstormChatSection.mode`, `LLMChat.prompt(opts.mode)`, and `ChatInput.onSubmit`.
 - `PendingPrompt = { text: string; mode: 'app' | 'brainstorm' }` consistent across `ChatInput.onSubmit`, the route's `sendPrompt`, the firing effect, and the option-click handler.
 - `ReadonlyMap<string, string>` flows from `loadPriorFileSystem` → `priorFs` → `makeBrainstormSystemPrompt({ currentVfs })` consistently.

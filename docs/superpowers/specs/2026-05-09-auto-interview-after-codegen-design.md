@@ -7,14 +7,14 @@
 
 ## Problem
 
-The just-shipped Chat button (PR #1642) lets the user opt into an improvement interview that suggests the next iteration of their app. Smoke testing confirmed the interview behavior was useful — but the separate button created friction. Users had to know the Chat affordance existed and remember to click it; the interview added value to *every* iteration, but it was only running when the user explicitly invoked it.
+The just-shipped Chat button (PR #1642) lets the user opt into an improvement interview that suggests the next iteration of their app. Smoke testing confirmed the interview behavior was useful — but the separate button created friction. Users had to know the Chat affordance existed and remember to click it; the interview added value to _every_ iteration, but it was only running when the user explicitly invoked it.
 
 We want the interview to be the default. Every code-gen turn should end with one improvement question and a small set of clickable answer options, so the user can iterate by clicking — without a separate mode or button.
 
 ## Goals
 
 - Every assistant turn ends with one short improvement question and 2–4 clickable `▸ ` options. Last option is always the escape hatch: `▸ I'm done for now`.
-- Picking the escape hatch makes the *next* assistant turn a one-line acknowledgment with no edits and no question, pausing the loop until the user types a fresh prompt.
+- Picking the escape hatch makes the _next_ assistant turn a one-line acknowledgment with no edits and no question, pausing the loop until the user types a fresh prompt.
 - Picking any other option fires a normal code-gen turn whose narration explains the change, makes the edits, and ends with another improvement question.
 - Single LLM call per round (interview behavior folded into the code-gen system prompt). No separate `'brainstorm'` mode.
 - Single submit button. The dual `Chat`/`Code` UI from PR #1642 collapses back to one button labeled `Code`.
@@ -54,14 +54,14 @@ The tail is markdown, lives entirely inside the existing prompt asset files, and
 - The single Code button stays, with its current loading-border treatment unchanged.
 - `ChatInput.test.tsx` assertions revert to the original one-arg form.
 
-`vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx`:
+`vibes.diy/pkg/app/routes/chat/chat.$userHandle.$appSlug.tsx`:
 
 - `sendPrompt` queue reverts from `{ text: string; mode: "app" | "brainstorm" } | null` to `string | null`.
 - The firing effect reverts to passing only the text to `chat.prompt(...)` — no mode override.
 - Remove the `<vibes-brief>` auto-handoff effect entirely.
 - `handleSelectOption` is kept but simplified: it calls `sendPrompt(option)` (no mode wrapper). Clicking an option is now structurally identical to typing the option text and pressing Enter.
 
-`vibes.diy/pkg/app/components/MessageList.tsx`, `OptionButtons.tsx`, and `vibes.diy/pkg/app/utils/option-lines.ts` are unchanged. They already parse `▸ ` lines from any assistant `TopLevelMsg` and render clickable buttons. They become the rendering pipeline for *every* turn's trailing question, not just brainstorm-turn questions. The "most recent message gets interactive buttons; older messages get disabled buttons" behavior also carries over unchanged.
+`vibes.diy/pkg/app/components/MessageList.tsx`, `OptionButtons.tsx`, and `vibes.diy/pkg/app/utils/option-lines.ts` are unchanged. They already parse `▸ ` lines from any assistant `TopLevelMsg` and render clickable buttons. They become the rendering pipeline for _every_ turn's trailing question, not just brainstorm-turn questions. The "most recent message gets interactive buttons; older messages get disabled buttons" behavior also carries over unchanged.
 
 `vibes.diy/pkg/app/components/ChatInterface.tsx` keeps the `onSelectOption` prop and forwarding — no change.
 

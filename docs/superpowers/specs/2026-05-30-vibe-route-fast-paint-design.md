@@ -11,11 +11,11 @@ Minimize time-to-first-paint on the `/vibe` route for world-readable apps. The i
 
 **World-readable (fast path)** — any visitor gets in without owner action:
 
-| Setting | Grant effect |
-|---|---|
-| `app.public.access: enable: true` | Immediate access, no login required |
-| `app.request: enable: true, autoAcceptRole: viewer` | Auto-approved as viewer on login |
-| `app.request: enable: true, autoAcceptRole: editor` | Auto-approved as editor on login |
+| Setting                                             | Grant effect                        |
+| --------------------------------------------------- | ----------------------------------- |
+| `app.public.access: enable: true`                   | Immediate access, no login required |
+| `app.request: enable: true, autoAcceptRole: viewer` | Auto-approved as viewer on login    |
+| `app.request: enable: true, autoAcceptRole: editor` | Auto-approved as editor on login    |
 
 **Gated (current behavior)** — owner action required at some point:
 
@@ -26,14 +26,12 @@ Minimize time-to-first-paint on the `/vibe` route for world-readable apps. The i
 Derivation:
 
 ```typescript
-const isWorldReadable =
-  settings.entry.publicAccess?.enable === true ||
-  settings.entry.enableRequest?.autoAcceptRole !== undefined;
+const isWorldReadable = settings.entry.publicAccess?.enable === true || settings.entry.enableRequest?.autoAcceptRole !== undefined;
 ```
 
 ## Zero-Migration Approach
 
-No schema changes. `isWorldReadable` is derived at read time from the existing `AppSettings.settings` JSON blob. The AppSettings row is already indexed on `(userSlug, appSlug)`, so a LEFT JOIN in the existing server-side lookup is cheap (cost ~8).
+No schema changes. `isWorldReadable` is derived at read time from the existing `AppSettings.settings` JSON blob. The AppSettings row is already indexed on `(userHandle, appSlug)`, so a LEFT JOIN in the existing server-side lookup is cheap (cost ~8).
 
 If no AppSettings row exists (new app, no sharing settings), the LEFT JOIN returns NULL and `isWorldReadable` defaults to `false` — current behavior.
 
@@ -44,6 +42,7 @@ If no AppSettings row exists (new app, no sharing settings), the LEFT JOIN retur
 Rename and extend the existing function. It already queries the `apps` table server-side (before React Router SSR) to populate `vibeOgTitle`. Add a LEFT JOIN to `AppSettings` and derive `isWorldReadable` from the loaded JSON.
 
 **New return type:**
+
 ```typescript
 interface VibeRouteHints {
   ogTitle: string | undefined;
@@ -52,33 +51,27 @@ interface VibeRouteHints {
 ```
 
 **Query change** — same `apps` lookup, add LEFT JOIN:
+
 ```typescript
 const row = await ctx.sql.db
   .select({
     meta: apps.meta,
-    settings: appSettings.settings,   // new
+    settings: appSettings.settings, // new
   })
   .from(apps)
-  .leftJoin(appSettings,
-    and(eq(appSettings.userSlug, apps.userSlug), eq(appSettings.appSlug, apps.appSlug))
-  )
-  .where(and(
-    eq(apps.userSlug, slugs.userSlug),
-    eq(apps.appSlug, slugs.appSlug),
-    eq(apps.mode, "production")
-  ))
+  .leftJoin(appSettings, and(eq(appSettings.userHandle, apps.userHandle), eq(appSettings.appSlug, apps.appSlug)))
+  .where(and(eq(apps.userHandle, slugs.userHandle), eq(apps.appSlug, slugs.appSlug), eq(apps.mode, "production")))
   .orderBy(desc(apps.releaseSeq))
   .limit(1)
   .then((r) => r[0]);
 ```
 
 **Derivation in TypeScript** (no raw SQL JSON extraction):
+
 ```typescript
 const parsed = row?.settings ? AppSettings(row.settings) : undefined;
 const entry = parsed instanceof type.errors ? undefined : parsed?.entry;
-const isWorldReadable =
-  entry?.publicAccess?.enable === true ||
-  entry?.enableRequest?.autoAcceptRole !== undefined;
+const isWorldReadable = entry?.publicAccess?.enable === true || entry?.enableRequest?.autoAcceptRole !== undefined;
 ```
 
 ### 2. Worker context (`app.ts`)
@@ -116,6 +109,7 @@ return { iframeUrl, vibeOgTitle: loaderCtx.context.vibeOgTitle, isWorldReadable:
 ### 4. Vibe route component — conditional visibility
 
 Current behavior (all apps):
+
 ```tsx
 style={{ visibility: isAccessGranted ? "visible" : "hidden" }}
 ```
@@ -141,7 +135,8 @@ style={{
 ```
 
 The iframe is in the DOM and painting. The transparent overlay prevents clicks until either:
-- `cardGrant` resolves to an accessible grant (owner, public-access, granted-access.*), or
+
+- `cardGrant` resolves to an accessible grant (owner, public-access, granted-access.\*), or
 - `cardGrant` resolves to a denied state (not-grant, revoked) → the standard access-denied UI appears, overlay is replaced
 
 The overlay has no visual treatment — it is purely a pointer-events blocker. The user sees the app rendering without any spinner or blur.
@@ -202,13 +197,13 @@ getAppByFsId returns grant → if accessible, iframe revealed
 
 ## Files Changed
 
-| File | Change |
-|---|---|
-| `vibes.diy/api/svc/intern/get-vibe-og-title.ts` | Rename to `get-vibe-route-hints.ts`; add LEFT JOIN, return `VibeRouteHints` |
-| `vibes.diy/pkg/workers/app.ts` | Use `getVibeRouteHints`; pass `isWorldReadable` in loader context |
-| `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx` | Loader returns `isWorldReadable`; component uses it for conditional visibility + overlay |
-| `vibes.diy/api/svc/intern/render-vibe.ts` | No change (Phase 2) |
-| Loader context type (wherever it lives) | Add `isWorldReadable: boolean` |
+| File                                                     | Change                                                                                   |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `vibes.diy/api/svc/intern/get-vibe-og-title.ts`          | Rename to `get-vibe-route-hints.ts`; add LEFT JOIN, return `VibeRouteHints`              |
+| `vibes.diy/pkg/workers/app.ts`                           | Use `getVibeRouteHints`; pass `isWorldReadable` in loader context                        |
+| `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx` | Loader returns `isWorldReadable`; component uses it for conditional visibility + overlay |
+| `vibes.diy/api/svc/intern/render-vibe.ts`                | No change (Phase 2)                                                                      |
+| Loader context type (wherever it lives)                  | Add `isWorldReadable: boolean`                                                           |
 
 No schema migrations. No new tables or columns.
 

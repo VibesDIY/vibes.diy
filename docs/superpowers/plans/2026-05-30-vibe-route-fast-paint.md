@@ -12,20 +12,21 @@
 
 ## File Map
 
-| Status | Path | Purpose |
-|---|---|---|
-| **Create** | `vibes.diy/api/svc/intern/get-vibe-route-hints.ts` | New function replacing `getVibeOgTitle`; adds LEFT JOIN + `deriveIsWorldReadable` helper |
-| **Create** | `vibes.diy/api/tests/get-vibe-route-hints.test.ts` | Unit tests for `deriveIsWorldReadable` + integration tests for `getVibeRouteHints` |
-| **Modify** | `vibes.diy/pkg/workers/app.ts` | Swap `getVibeOgTitle` → `getVibeRouteHints`; add `isWorldReadable` to load context |
-| **Modify** | `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx` | Add `isWorldReadable` to loader ctx/data types; update iframe visibility + overlay |
-| **Delete** | `vibes.diy/api/svc/intern/get-vibe-og-title.ts` | Superseded by `get-vibe-route-hints.ts`; removed after callers are migrated |
-| **Rename** | `vibes.diy/api/tests/get-vibe-og-title.test.ts` → `get-vibe-route-hints.test.ts` | Old test file folded into new one |
+| Status     | Path                                                                             | Purpose                                                                                  |
+| ---------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Create** | `vibes.diy/api/svc/intern/get-vibe-route-hints.ts`                               | New function replacing `getVibeOgTitle`; adds LEFT JOIN + `deriveIsWorldReadable` helper |
+| **Create** | `vibes.diy/api/tests/get-vibe-route-hints.test.ts`                               | Unit tests for `deriveIsWorldReadable` + integration tests for `getVibeRouteHints`       |
+| **Modify** | `vibes.diy/pkg/workers/app.ts`                                                   | Swap `getVibeOgTitle` → `getVibeRouteHints`; add `isWorldReadable` to load context       |
+| **Modify** | `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`                         | Add `isWorldReadable` to loader ctx/data types; update iframe visibility + overlay       |
+| **Delete** | `vibes.diy/api/svc/intern/get-vibe-og-title.ts`                                  | Superseded by `get-vibe-route-hints.ts`; removed after callers are migrated              |
+| **Rename** | `vibes.diy/api/tests/get-vibe-og-title.test.ts` → `get-vibe-route-hints.test.ts` | Old test file folded into new one                                                        |
 
 ---
 
 ## Task 1: `deriveIsWorldReadable` — pure helper with unit tests
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/intern/get-vibe-route-hints.ts`
 - Create: `vibes.diy/api/tests/get-vibe-route-hints.test.ts`
 
@@ -119,7 +120,7 @@ import { isMetaTitle, MetaItem, parseArrayWarning, isEnablePublicAccess, isEnabl
 import { VibesApiSQLCtx } from "../types.js";
 
 export interface VibeSlugPair {
-  readonly userSlug: string;
+  readonly userHandle: string;
   readonly appSlug: string;
 }
 
@@ -143,15 +144,15 @@ export function deriveIsWorldReadable(rawSettings: unknown): boolean {
 }
 
 // Pure pathname parser — no I/O, safe to call before any async work.
-// Extracts the (userSlug, appSlug) pair from /vibe/:userSlug/:appSlug[/...].
+// Extracts the (userHandle, appSlug) pair from /vibe/:userHandle/:appSlug[/...].
 export function parseVibePathname(pathname: string): VibeSlugPair | undefined {
   const parts = pathname.split("/");
-  const userSlug = parts[2];
+  const userHandle = parts[2];
   const appSlug = parts[3];
-  if (parts[1] !== "vibe" || userSlug === undefined || userSlug === "" || appSlug === undefined || appSlug === "") {
+  if (parts[1] !== "vibe" || userHandle === undefined || userHandle === "" || appSlug === undefined || appSlug === "") {
     return undefined;
   }
-  return { userSlug, appSlug };
+  return { userHandle, appSlug };
 }
 
 // Looks up both the OG title and world-readable flag for a vibe route SSR pass.
@@ -167,13 +168,13 @@ export async function getVibeRouteHints(ctx: VibesApiSQLCtx, slugs: VibeSlugPair
       .leftJoin(
         ctx.sql.tables.appSettings,
         and(
-          eq(ctx.sql.tables.appSettings.userSlug, ctx.sql.tables.apps.userSlug),
+          eq(ctx.sql.tables.appSettings.userHandle, ctx.sql.tables.apps.userHandle),
           eq(ctx.sql.tables.appSettings.appSlug, ctx.sql.tables.apps.appSlug)
         )
       )
       .where(
         and(
-          eq(ctx.sql.tables.apps.userSlug, slugs.userSlug),
+          eq(ctx.sql.tables.apps.userHandle, slugs.userHandle),
           eq(ctx.sql.tables.apps.appSlug, slugs.appSlug),
           eq(ctx.sql.tables.apps.mode, "production")
         )
@@ -227,6 +228,7 @@ EOF
 ## Task 2: Integration tests for `getVibeRouteHints`
 
 **Files:**
+
 - Modify: `vibes.diy/api/tests/get-vibe-route-hints.test.ts`
 
 - [ ] **Step 2.1: Add integration tests for `getVibeRouteHints`**
@@ -245,119 +247,109 @@ import { getVibeRouteHints } from "@vibes.diy/api-svc/intern/get-vibe-route-hint
 Add these imports at the top of the file (merge with existing imports), then add the `describe` block:
 
 ```typescript
-describe(
-  "getVibeRouteHints",
-  { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 5000 },
-  () => {
-    const sthis = ensureSuperThis();
-    let vibesCtx: VibesApiSQLCtx;
+describe("getVibeRouteHints", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 5000 }, () => {
+  const sthis = ensureSuperThis();
+  let vibesCtx: VibesApiSQLCtx;
 
-    function makeAppsRow(overrides: {
-      appSlug: string;
-      userSlug: string;
-      meta: unknown;
-      mode?: "dev" | "production";
-      releaseSeq?: number;
-    }) {
-      return {
-        userId: "test-user-hints",
-        fsId: `bafyhints${Math.random().toString(36).slice(2, 10)}`,
-        env: [],
-        fileSystem: [],
-        created: new Date().toISOString(),
-        mode: overrides.mode ?? "production",
-        releaseSeq: overrides.releaseSeq ?? 1,
-        ...overrides,
-      };
-    }
-
-    beforeAll(async () => {
-      const deviceCA = await createTestDeviceCA(sthis);
-      const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
-      vibesCtx = appCtx.vibesCtx;
-    });
-
-    it("returns ogTitle from MetaTitle and isWorldReadable:false when no AppSettings row", async () => {
-      const appSlug = `hints-notitle-${sthis.nextId(6).str}`;
-      const userSlug = `hints-user-${sthis.nextId(6).str}`;
-      await vibesCtx.sql.db
-        .insert(vibesCtx.sql.tables.apps)
-        .values(makeAppsRow({ appSlug, userSlug, meta: [{ type: "title", title: "My App" }] }));
-
-      const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
-      expect(result.isOk()).toBe(true);
-      expect(result.Ok().ogTitle).toBe("My App");
-      expect(result.Ok().isWorldReadable).toBe(false);
-    });
-
-    it("returns isWorldReadable:true when AppSettings has publicAccess enable:true", async () => {
-      const appSlug = `hints-pub-${sthis.nextId(6).str}`;
-      const userSlug = `hints-user-${sthis.nextId(6).str}`;
-      await vibesCtx.sql.db
-        .insert(vibesCtx.sql.tables.apps)
-        .values(makeAppsRow({ appSlug, userSlug, meta: [] }));
-      await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
-        userId: "test-user-hints",
-        appSlug,
-        userSlug,
-        settings: [{ type: "app.public.access", enable: true }],
-        updated: new Date().toISOString(),
-        created: new Date().toISOString(),
-      });
-
-      const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
-      expect(result.isOk()).toBe(true);
-      expect(result.Ok().isWorldReadable).toBe(true);
-    });
-
-    it("returns isWorldReadable:true when AppSettings has enableRequest autoAcceptRole", async () => {
-      const appSlug = `hints-auto-${sthis.nextId(6).str}`;
-      const userSlug = `hints-user-${sthis.nextId(6).str}`;
-      await vibesCtx.sql.db
-        .insert(vibesCtx.sql.tables.apps)
-        .values(makeAppsRow({ appSlug, userSlug, meta: [] }));
-      await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
-        userId: "test-user-hints",
-        appSlug,
-        userSlug,
-        settings: [{ type: "app.request", enable: true, autoAcceptRole: "viewer" }],
-        updated: new Date().toISOString(),
-        created: new Date().toISOString(),
-      });
-
-      const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
-      expect(result.isOk()).toBe(true);
-      expect(result.Ok().isWorldReadable).toBe(true);
-    });
-
-    it("returns isWorldReadable:false when enableRequest has no autoAcceptRole", async () => {
-      const appSlug = `hints-req-${sthis.nextId(6).str}`;
-      const userSlug = `hints-user-${sthis.nextId(6).str}`;
-      await vibesCtx.sql.db
-        .insert(vibesCtx.sql.tables.apps)
-        .values(makeAppsRow({ appSlug, userSlug, meta: [] }));
-      await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
-        userId: "test-user-hints",
-        appSlug,
-        userSlug,
-        settings: [{ type: "app.request", enable: true }],
-        updated: new Date().toISOString(),
-        created: new Date().toISOString(),
-      });
-
-      const result = await getVibeRouteHints(vibesCtx, { userSlug, appSlug });
-      expect(result.isOk()).toBe(true);
-      expect(result.Ok().isWorldReadable).toBe(false);
-    });
-
-    it("returns {ogTitle:undefined, isWorldReadable:false} for unknown slugs", async () => {
-      const result = await getVibeRouteHints(vibesCtx, { userSlug: "nobody", appSlug: "nothing" });
-      expect(result.isOk()).toBe(true);
-      expect(result.Ok().ogTitle).toBeUndefined();
-      expect(result.Ok().isWorldReadable).toBe(false);
-    });
+  function makeAppsRow(overrides: {
+    appSlug: string;
+    userHandle: string;
+    meta: unknown;
+    mode?: "dev" | "production";
+    releaseSeq?: number;
+  }) {
+    return {
+      userId: "test-user-hints",
+      fsId: `bafyhints${Math.random().toString(36).slice(2, 10)}`,
+      env: [],
+      fileSystem: [],
+      created: new Date().toISOString(),
+      mode: overrides.mode ?? "production",
+      releaseSeq: overrides.releaseSeq ?? 1,
+      ...overrides,
+    };
   }
-);
+
+  beforeAll(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    vibesCtx = appCtx.vibesCtx;
+  });
+
+  it("returns ogTitle from MetaTitle and isWorldReadable:false when no AppSettings row", async () => {
+    const appSlug = `hints-notitle-${sthis.nextId(6).str}`;
+    const userHandle = `hints-user-${sthis.nextId(6).str}`;
+    await vibesCtx.sql.db
+      .insert(vibesCtx.sql.tables.apps)
+      .values(makeAppsRow({ appSlug, userHandle, meta: [{ type: "title", title: "My App" }] }));
+
+    const result = await getVibeRouteHints(vibesCtx, { userHandle, appSlug });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok().ogTitle).toBe("My App");
+    expect(result.Ok().isWorldReadable).toBe(false);
+  });
+
+  it("returns isWorldReadable:true when AppSettings has publicAccess enable:true", async () => {
+    const appSlug = `hints-pub-${sthis.nextId(6).str}`;
+    const userHandle = `hints-user-${sthis.nextId(6).str}`;
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.apps).values(makeAppsRow({ appSlug, userHandle, meta: [] }));
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
+      userId: "test-user-hints",
+      appSlug,
+      userHandle,
+      settings: [{ type: "app.public.access", enable: true }],
+      updated: new Date().toISOString(),
+      created: new Date().toISOString(),
+    });
+
+    const result = await getVibeRouteHints(vibesCtx, { userHandle, appSlug });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok().isWorldReadable).toBe(true);
+  });
+
+  it("returns isWorldReadable:true when AppSettings has enableRequest autoAcceptRole", async () => {
+    const appSlug = `hints-auto-${sthis.nextId(6).str}`;
+    const userHandle = `hints-user-${sthis.nextId(6).str}`;
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.apps).values(makeAppsRow({ appSlug, userHandle, meta: [] }));
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
+      userId: "test-user-hints",
+      appSlug,
+      userHandle,
+      settings: [{ type: "app.request", enable: true, autoAcceptRole: "viewer" }],
+      updated: new Date().toISOString(),
+      created: new Date().toISOString(),
+    });
+
+    const result = await getVibeRouteHints(vibesCtx, { userHandle, appSlug });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok().isWorldReadable).toBe(true);
+  });
+
+  it("returns isWorldReadable:false when enableRequest has no autoAcceptRole", async () => {
+    const appSlug = `hints-req-${sthis.nextId(6).str}`;
+    const userHandle = `hints-user-${sthis.nextId(6).str}`;
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.apps).values(makeAppsRow({ appSlug, userHandle, meta: [] }));
+    await vibesCtx.sql.db.insert(vibesCtx.sql.tables.appSettings).values({
+      userId: "test-user-hints",
+      appSlug,
+      userHandle,
+      settings: [{ type: "app.request", enable: true }],
+      updated: new Date().toISOString(),
+      created: new Date().toISOString(),
+    });
+
+    const result = await getVibeRouteHints(vibesCtx, { userHandle, appSlug });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok().isWorldReadable).toBe(false);
+  });
+
+  it("returns {ogTitle:undefined, isWorldReadable:false} for unknown slugs", async () => {
+    const result = await getVibeRouteHints(vibesCtx, { userHandle: "nobody", appSlug: "nothing" });
+    expect(result.isOk()).toBe(true);
+    expect(result.Ok().ogTitle).toBeUndefined();
+    expect(result.Ok().isWorldReadable).toBe(false);
+  });
+});
 ```
 
 - [ ] **Step 2.2: Run integration tests**
@@ -388,28 +380,35 @@ EOF
 ## Task 3: Wire `isWorldReadable` through the Worker and loader context
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/workers/app.ts`
-- Modify: `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx`
+- Modify: `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`
 
 - [ ] **Step 3.1: Update `app.ts` — swap import, pass `isWorldReadable` in context**
 
 In `vibes.diy/pkg/workers/app.ts`, change the import line (currently):
+
 ```typescript
 import { getVibeOgTitle, parseVibePathname } from "@vibes.diy/api-svc/intern/get-vibe-og-title.js";
 ```
+
 To:
+
 ```typescript
 import { getVibeRouteHints, parseVibePathname } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
 ```
 
 Then replace the `getVibeOgTitle` call block (currently):
+
 ```typescript
 const vibeOgTitle =
   vibeSlugPair !== undefined
     ? await getVibeOgTitle(cfCtx.vibesCtx, vibeSlugPair).then((r) => (r.isOk() ? r.Ok() : undefined))
     : undefined;
 ```
+
 With:
+
 ```typescript
 const vibeHints =
   vibeSlugPair !== undefined
@@ -420,13 +419,16 @@ const vibeHints =
 ```
 
 And update the context object passed to `getRequestHandler` (currently):
+
 ```typescript
 {
   vibeDiyAppParams: cfCtx.vibesCtx.params,
   vibeOgTitle,
 }
 ```
+
 To:
+
 ```typescript
 {
   vibeDiyAppParams: cfCtx.vibesCtx.params,
@@ -437,27 +439,30 @@ To:
 
 - [ ] **Step 3.2: Update the vibe route loader context and data types**
 
-In `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx`, update the two interfaces:
+In `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`, update the two interfaces:
 
 ```typescript
 interface VibeLoaderCtx {
   readonly vibeDiyAppParams: VibesFPApiParameters;
   readonly vibeOgTitle?: string;
-  readonly isWorldReadable?: boolean;          // new
+  readonly isWorldReadable?: boolean; // new
 }
 
 interface VibeLoaderData {
   readonly iframeUrl: string | undefined;
   readonly vibeOgTitle: string | undefined;
-  readonly isWorldReadable: boolean;           // new
+  readonly isWorldReadable: boolean; // new
 }
 ```
 
 And update the loader return value. Currently:
+
 ```typescript
 return { iframeUrl, vibeOgTitle: loaderCtx.context.vibeOgTitle };
 ```
+
 Change to:
+
 ```typescript
 return {
   iframeUrl,
@@ -467,6 +472,7 @@ return {
 ```
 
 Also update the early-exit return (currently `return { iframeUrl: undefined, vibeOgTitle: undefined }`):
+
 ```typescript
 return { iframeUrl: undefined, vibeOgTitle: undefined, isWorldReadable: false };
 ```
@@ -486,7 +492,7 @@ const loaderData = matches[matches.length - 1]?.data as { iframeUrl?: string; is
 - [ ] **Step 3.4: Commit**
 
 ```bash
-git add vibes.diy/pkg/workers/app.ts vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx
+git add vibes.diy/pkg/workers/app.ts vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx
 git commit -m "$(cat <<'EOF'
 feat(worker): wire isWorldReadable through SSR loader context
 
@@ -504,7 +510,8 @@ EOF
 ## Task 4: Component — conditional visibility and pointer-blocking overlay
 
 **Files:**
-- Modify: `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx`
+
+- Modify: `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`
 
 - [ ] **Step 4.1: Write the failing test for the overlay**
 
@@ -553,6 +560,7 @@ describe("vibe route iframe visibility logic", () => {
 ```
 
 Run it:
+
 ```bash
 cd vibes.diy/tests && pnpm test vibe-fast-paint --reporter=dot
 ```
@@ -561,7 +569,7 @@ Expected: PASS immediately (these are pure logic tests, no component deps). If t
 
 - [ ] **Step 4.2: Apply the visibility + overlay changes to the component**
 
-In `vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx`:
+In `vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx`:
 
 **a) Read `isWorldReadable` from loader data** — add after the `loaderData` line:
 
@@ -570,10 +578,13 @@ const isWorldReadable = (loaderData as { isWorldReadable?: boolean } | undefined
 ```
 
 **b) Update iframe container visibility** — find the current visibility style:
+
 ```tsx
 style={{ isolation: "isolate", transform: "translate3d(0,0,0)", visibility: isAccessGranted ? "visible" : "hidden" }}
 ```
+
 Change to:
+
 ```tsx
 style={{ isolation: "isolate", transform: "translate3d(0,0,0)", visibility: (isWorldReadable || isAccessGranted) ? "visible" : "hidden" }}
 ```
@@ -581,12 +592,14 @@ style={{ isolation: "isolate", transform: "translate3d(0,0,0)", visibility: (isW
 **c) Add pointer-blocking overlay** — add immediately after the closing `</div>` of the iframe container (after the `{iframeUrl && (...)}` block, before the `{!isAccessGranted && (` grid overlay):
 
 ```tsx
-{/* Pointer-blocking overlay for world-readable apps — transparent, no visual
+{
+  /* Pointer-blocking overlay for world-readable apps — transparent, no visual
     treatment. Prevents interaction while grant check and SrvSandbox ack are
-    in flight. Drops as soon as cardGrant is set (to any value). */}
-{isWorldReadable && cardGrant === undefined && (
-  <div className="fixed inset-0 z-40" style={{ pointerEvents: "all" }} aria-hidden />
-)}
+    in flight. Drops as soon as cardGrant is set (to any value). */
+}
+{
+  isWorldReadable && cardGrant === undefined && <div className="fixed inset-0 z-40" style={{ pointerEvents: "all" }} aria-hidden />;
+}
 ```
 
 - [ ] **Step 4.3: Build**
@@ -600,7 +613,7 @@ Expected: No type errors.
 - [ ] **Step 4.4: Commit**
 
 ```bash
-git add vibes.diy/pkg/app/routes/vibe.\$userSlug.\$appSlug.tsx vibes.diy/tests/app/vibe-fast-paint.test.tsx
+git add vibes.diy/pkg/app/routes/vibe.\$userHandle.\$appSlug.tsx vibes.diy/tests/app/vibe-fast-paint.test.tsx
 git commit -m "$(cat <<'EOF'
 feat(vibe-route): show iframe immediately for world-readable apps
 
@@ -621,6 +634,7 @@ EOF
 ## Task 5: Cleanup — remove `get-vibe-og-title.ts` and fold old tests
 
 **Files:**
+
 - Delete: `vibes.diy/api/svc/intern/get-vibe-og-title.ts`
 - Delete: `vibes.diy/api/tests/get-vibe-og-title.test.ts`
 - Modify: `vibes.diy/api/tests/get-vibe-route-hints.test.ts` (add coverage for `parseVibePathname`)
@@ -638,11 +652,11 @@ Then paste the `parseVibePathname` describe block from `get-vibe-og-title.test.t
 ```typescript
 describe("parseVibePathname", () => {
   it("extracts slugs from a canonical /vibe/:user/:app path", () => {
-    expect(parseVibePathname("/vibe/jchris/my-cool-app")).toEqual({ userSlug: "jchris", appSlug: "my-cool-app" });
+    expect(parseVibePathname("/vibe/jchris/my-cool-app")).toEqual({ userHandle: "jchris", appSlug: "my-cool-app" });
   });
 
   it("extracts slugs when path has additional segments", () => {
-    expect(parseVibePathname("/vibe/jchris/my-cool-app/some-fsid")).toEqual({ userSlug: "jchris", appSlug: "my-cool-app" });
+    expect(parseVibePathname("/vibe/jchris/my-cool-app/some-fsid")).toEqual({ userHandle: "jchris", appSlug: "my-cool-app" });
   });
 
   it("returns undefined for non-vibe paths", () => {
@@ -703,6 +717,7 @@ EOF
 ## Self-Review Checklist
 
 **Spec coverage:**
+
 - ✅ `getVibeRouteHints` with LEFT JOIN to AppSettings (Task 1)
 - ✅ `deriveIsWorldReadable` pure helper (Task 1)
 - ✅ Worker context passes `isWorldReadable` (Task 3)

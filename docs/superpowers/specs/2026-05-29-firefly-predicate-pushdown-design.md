@@ -57,16 +57,16 @@ Only one of `key`, `keys`, or `range` will be set per request.
 ### Server handler change (`queryDocsEvento`)
 
 Existing flow (unchanged):
-1. Fetch all revisions for `(userSlug, appSlug, dbName)`
+
+1. Fetch all revisions for `(userHandle, appSlug, dbName)`
 2. JS-deduplicate to latest revision per `docId`
 3. Exclude deleted docs
 4. Mint file URLs
 
-New step inserted after step 4, before serialising:
-5. If `req.filter` is present, filter docs in JS using native JS value comparison on the
-   raw JSONB field value — strict equality for `key`, `Set.has` for `keys`, `>=`/`<=` for
-   `range`. No charwise encoding: the server works with native JSON types, not the
-   client's sort-encoded strings.
+New step inserted after step 4, before serialising: 5. If `req.filter` is present, filter docs in JS using native JS value comparison on the
+raw JSONB field value — strict equality for `key`, `Set.has` for `keys`, `>=`/`<=` for
+`range`. No charwise encoding: the server works with native JSON types, not the
+client's sort-encoded strings.
 
 The client-side filter in `FireflyDatabase.query()` remains as a correctness safety net
 (it becomes a no-op on the fast path; it still runs on the fallback path).
@@ -79,7 +79,7 @@ useLiveQuery('status', { key: 'active' })
     hint = { field: 'status', key: 'active' }
     → FireflyTransport.queryDocs(dbName, hint)
       → FireflyApiAdapter.queryDocs(dbName, hint)
-        → VibesDiyApi.queryDocs({ userSlug, appSlug, dbName, filter: hint })
+        → VibesDiyApi.queryDocs({ userHandle, appSlug, dbName, filter: hint })
           → handler: fetch → dedup → filter(hint) → return subset
 ```
 
@@ -87,33 +87,33 @@ useLiveQuery('status', { key: 'active' })
 
 ## Changes Required
 
-| File | Change |
-|------|--------|
-| `api/types/app-documents.ts` | Add optional `filter` to `reqQueryDocs` arktype schema |
-| `api/svc/public/app-documents.ts` | Apply JS filter after dedup in `queryDocsEvento` |
+| File                               | Change                                                       |
+| ---------------------------------- | ------------------------------------------------------------ |
+| `api/types/app-documents.ts`       | Add optional `filter` to `reqQueryDocs` arktype schema       |
+| `api/svc/public/app-documents.ts`  | Apply JS filter after dedup in `queryDocsEvento`             |
 | `vibe/runtime/firefly-database.ts` | Update `FireflyTransport` interface; build hint in `query()` |
-| `api/impl/firefly-api-adapter.ts` | Thread hint through to API call |
-| `pkg/test/` | New test file for predicate pushdown |
+| `api/impl/firefly-api-adapter.ts`  | Thread hint through to API call                              |
+| `pkg/test/`                        | New test file for predicate pushdown                         |
 
 ---
 
 ## Tests
 
 Tests are written to survive the Phase 2 migration to SQL-level filtering (Approach C).
-They assert on *observable behaviour*, not on whether filtering happens in SQL or JS.
+They assert on _observable behaviour_, not on whether filtering happens in SQL or JS.
 
 **Test cases:**
 
-| Case | Description |
-|------|-------------|
-| `key` match | Returns only docs where `field === value`; other docs absent |
-| `keys` match | Returns docs where field value is in the provided set |
-| `range` match | Returns docs where field value is within `[lo, hi]` inclusive |
-| No filter | All non-deleted docs returned (baseline regression) |
+| Case              | Description                                                         |
+| ----------------- | ------------------------------------------------------------------- |
+| `key` match       | Returns only docs where `field === value`; other docs absent        |
+| `keys` match      | Returns docs where field value is in the provided set               |
+| `range` match     | Returns docs where field value is within `[lo, hi]` inclusive       |
+| No filter         | All non-deleted docs returned (baseline regression)                 |
 | Dedup correctness | Latest revision wins; earlier revision value does not bleed through |
-| Deleted exclusion | Doc with matching field but `deleted=1` is excluded |
-| Function mapFn | No hint sent; full set returned; client-side filter applied |
-| Unknown field | Docs that lack the field are excluded from results |
+| Deleted exclusion | Doc with matching field but `deleted=1` is excluded                 |
+| Function mapFn    | No hint sent; full set returned; client-side filter applied         |
+| Unknown field     | Docs that lack the field are excluded from results                  |
 
 Test location: `vibes.diy/pkg/test/` using existing `createVibeDiyTestCtx` infrastructure.
 

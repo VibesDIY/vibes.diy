@@ -29,7 +29,7 @@ In `access-fn-invoke.test.ts`, add a test that:
 
 - Performs a write through the access fn gate (using the existing mock invoker)
 - Queries the `accessFnOutputs` table afterward
-- Asserts a row was inserted with correct `userSlug`, `appSlug`, `dbName`, `docId`, `fnCid`, `output`, and `hasGrants`
+- Asserts a row was inserted with correct `userHandle`, `appSlug`, `dbName`, `docId`, `fnCid`, `output`, and `hasGrants`
 
 ## Out of Scope
 

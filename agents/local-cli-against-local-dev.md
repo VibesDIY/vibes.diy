@@ -99,7 +99,7 @@ Use `sqlite3` directly to read it:
 ```sh
 DB=$(find vibes.diy/pkg/.wrangler/state/v3/d1/miniflare-D1DatabaseObject -name '*.sqlite' -not -name 'metadata.sqlite' | head -1)
 sqlite3 "$DB" ".tables"
-sqlite3 "$DB" "select chatId, userSlug, appSlug from ChatContexts where appSlug = 'foo'"
+sqlite3 "$DB" "select chatId, userHandle, appSlug from ChatContexts where appSlug = 'foo'"
 ```
 
 **Do not use `pnpm --dir vibes.diy/api/svc run db:inspect` to verify local state.** That tool reads `NEON_DATABASE_URL` from `vibes.diy/api/svc/.dev.vars` and goes to the prod Neon Postgres, not the local SQLite. Use it for prod investigations only — never for verifying a local test ran clean.

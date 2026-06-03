@@ -32,7 +32,7 @@ A database-level view that extracts per-doc channel assignments from the `Access
 
 ```sql
 CREATE VIEW "DocChannels" AS
-SELECT "userSlug", "appSlug", "dbName", "docId",
+SELECT "userHandle", "appSlug", "dbName", "docId",
        jsonb_array_elements_text("output"::jsonb->'channels') AS "channelId"
 FROM "AccessFnOutputs";
 ```
@@ -41,7 +41,7 @@ FROM "AccessFnOutputs";
 
 ```sql
 CREATE VIEW DocChannels AS
-SELECT userSlug, appSlug, dbName, docId, value AS channelId
+SELECT userHandle, appSlug, dbName, docId, value AS channelId
 FROM AccessFnOutputs, json_each(json_extract(output, '$.channels'));
 ```
 
@@ -83,7 +83,7 @@ Same channel check applied to single-doc fetch. After the existing ACL check and
 The read path builds the same reduce as the write path:
 
 ```
-1. Query AccessFnOutputs WHERE (userSlug, appSlug, dbName, fnCid) AND hasGrants = 1
+1. Query AccessFnOutputs WHERE (userHandle, appSlug, dbName, fnCid) AND hasGrants = 1
 2. For each row: extractContribution(JSON.parse(output))
 3. Accumulate into GrantReduce
 4. resolveEffectiveChannels(userHandle) → Set<channelId>

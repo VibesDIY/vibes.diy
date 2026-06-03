@@ -4,7 +4,7 @@ Closes VibesDIY/vibes.diy#1741.
 
 ## Problem
 
-An unauthenticated visitor landing on `/vibe/:userSlug/:appSlug` via a shared link sees Edit/Clone/Remix with no explanation (#1709), an auto-opening login sidebar that blocks the page (#1665), and no clear signal of what to do. The visitor's mental model is much simpler than what we surface: "Can I just have this?" or "Can I join my friend?"
+An unauthenticated visitor landing on `/vibe/:userHandle/:appSlug` via a shared link sees Edit/Clone/Remix with no explanation (#1709), an auto-opening login sidebar that blocks the page (#1665), and no clear signal of what to do. The visitor's mental model is much simpler than what we surface: "Can I just have this?" or "Can I join my friend?"
 
 ## Goal
 
@@ -25,7 +25,7 @@ Source of truth for this spec:
 
 ## Scope
 
-**In scope** — the landing card on `/vibe/:userSlug/:appSlug` for:
+**In scope** — the landing card on `/vibe/:userHandle/:appSlug` for:
 
 1. Anon viewer (Clerk not signed in) — non-public vibe
 2. Authed non-owner viewer — non-public vibe, no existing grant
@@ -42,7 +42,7 @@ Source of truth for this spec:
 
 ### Landing card visuals
 
-Reuse the existing Mac-classic card already present in [vibe.$userSlug.$appSlug.tsx](../../../vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx): `gridBackground` background, cream body with black borders, blue title bar, app title, screenshot, helper paragraph, button row. Style stays exactly as it is — only the helper paragraph and button row content change.
+Reuse the existing Mac-classic card already present in [vibe.$userHandle.$appSlug.tsx](../../../vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx): `gridBackground` background, cream body with black borders, blue title bar, app title, screenshot, helper paragraph, button row. Style stays exactly as it is — only the helper paragraph and button row content change.
 
 ### Card variants (driven by `getAppByFsId` grant)
 
@@ -80,7 +80,7 @@ Invite and (future) auto-join share the same visual branch ("Join"). Differentia
 ### What gets removed
 
 1. **Remix** button — removed from both the landing card and the running-app [ExpandedVibesPill](../../../vibes.diy/base/components/ExpandedVibesPill.tsx) on `/vibe/...` routes. Relocation is a separate decision (follow-up issue).
-2. **Auto-opening login sidebar** on anon shared-link landings — the effect that today opens `SessionSidebar` when `!authSignedIn && fsId && userSlug && appSlug` is suppressed when the landing card is the focal point. The manual sidebar toggle still works. Closes #1665.
+2. **Auto-opening login sidebar** on anon shared-link landings — the effect that today opens `SessionSidebar` when `!authSignedIn && fsId && userHandle && appSlug` is suppressed when the landing card is the focal point. The manual sidebar toggle still works. Closes #1665.
 3. **The old Edit/Clone/Remix overlay confusion** (#1709) — obsolete; the landing card with two CTAs replaces it.
 
 ### Public-vibe handling
@@ -89,7 +89,7 @@ If grant resolves to `public-access`, no landing card. Iframe renders directly (
 
 ## Implementation notes
 
-- The card already exists in [vibe.$userSlug.$appSlug.tsx](../../../vibes.diy/pkg/app/routes/vibe.$userSlug.$appSlug.tsx) (see the `else` branch around the `gridBackground` block). Wiring is mostly copy + button-row swap + intent-param handling + sidebar effect adjustment.
+- The card already exists in [vibe.$userHandle.$appSlug.tsx](../../../vibes.diy/pkg/app/routes/vibe.$userHandle.$appSlug.tsx) (see the `else` branch around the `gridBackground` block). Wiring is mostly copy + button-row swap + intent-param handling + sidebar effect adjustment.
 - Intent param survives Clerk hash routing because it lives in `?` not `#`.
 - `clone` URL today is `/remix/${vibeSlug}?skipChat=true` — keep using it. Renaming the underlying route is **out of scope**.
 - Drop the `reqAccessOverlay` modal (today's three-button "Remix / Clone / Request access" overlay) — its job is now the landing card.

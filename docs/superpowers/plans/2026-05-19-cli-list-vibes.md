@@ -12,18 +12,19 @@
 
 ## File Map
 
-| File | Action | Responsibility |
-|------|--------|----------------|
-| `vibes-diy/cli/cmds/list-cmd.ts` | Create | Request/response types, evento handler, cmd-ts command |
-| `vibes-diy/cli/cmds/list-cmd.test.ts` | Create | Unit tests for command wiring |
-| `vibes-diy/cli/cmd-evento.ts` | Modify | Register `listEvento` in the evento registry |
-| `vibes-diy/cli/main.ts` | Modify | Add `list` to cmds map; add `isResVibesList` output handler |
+| File                                  | Action | Responsibility                                              |
+| ------------------------------------- | ------ | ----------------------------------------------------------- |
+| `vibes-diy/cli/cmds/list-cmd.ts`      | Create | Request/response types, evento handler, cmd-ts command      |
+| `vibes-diy/cli/cmds/list-cmd.test.ts` | Create | Unit tests for command wiring                               |
+| `vibes-diy/cli/cmd-evento.ts`         | Modify | Register `listEvento` in the evento registry                |
+| `vibes-diy/cli/main.ts`               | Modify | Add `list` to cmds map; add `isResVibesList` output handler |
 
 ---
 
 ## Task 1: Write `list-cmd.ts` with tests
 
 **Files:**
+
 - Create: `vibes-diy/cli/cmds/list-cmd.ts`
 - Create: `vibes-diy/cli/cmds/list-cmd.test.ts`
 
@@ -93,14 +94,7 @@ Create `vibes-diy/cli/cmds/list-cmd.ts`:
 
 ```ts
 import { command } from "cmd-ts";
-import {
-  ValidateTriggerCtx,
-  Result,
-  HandleTriggerCtx,
-  Option,
-  EventoHandler,
-  EventoResultType,
-} from "@adviser/cement";
+import { ValidateTriggerCtx, Result, HandleTriggerCtx, Option, EventoHandler, EventoResultType } from "@adviser/cement";
 import { type } from "arktype";
 import type { ResRecentVibesItem } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
@@ -119,7 +113,7 @@ export function isReqVibesList(obj: unknown): obj is ReqVibesList {
 export const ResVibesList = type({
   type: "'vibes-diy.cli.res-list'",
   items: type({
-    userSlug: "string",
+    userHandle: "string",
     appSlug: "string",
     updated: "string",
     "title?": "string",
@@ -141,9 +135,7 @@ export const listEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqVibesList, ResV
     }
     return Promise.resolve(Result.Ok(Option.None()));
   },
-  handle: async (
-    ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqVibesList, ResVibesList>
-  ): Promise<Result<EventoResultType>> => {
+  handle: async (ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqVibesList, ResVibesList>): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
     if (!ectx.vibesDiyApiFactory) {
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
@@ -167,7 +159,7 @@ export const listEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqVibesList, ResV
 export function listCmd(ctx: CliCtx) {
   return command({
     name: "list",
-    description: "List your vibes (userSlug/appSlug). Use --json for NDJSON output.",
+    description: "List your vibes (userHandle/appSlug). Use --json for NDJSON output.",
     args: {
       ...cmdTsDefaultArgs(ctx),
     },
@@ -198,6 +190,7 @@ git commit -m "feat(cli): add list-cmd types, evento handler, and cmd-ts command
 ## Task 2: Wire `listEvento` into the evento registry
 
 **Files:**
+
 - Modify: `vibes-diy/cli/cmd-evento.ts`
 
 - [ ] **Step 2.1: Add import and registration**
@@ -211,24 +204,24 @@ import { listEvento } from "./cmds/list-cmd.js";
 Then add `listEvento` to the `evento.push([...])` array. The full updated array should be:
 
 ```ts
-  evento.push([
-    userSettingsEvento,
-    skillsEvento,
-    themesEvento,
-    systemEvento,
-    pushEvento,
-    putAssetEvento,
-    generateEvento,
-    editEvento,
-    listEvento,
-    deviceIdRegisterEvento,
-    dbListEvento,
-    dbGetEvento,
-    dbPutEvento,
-    dbDelEvento,
-    dbQueryEvento,
-    dbSubscribeEvento,
-  ]);
+evento.push([
+  userSettingsEvento,
+  skillsEvento,
+  themesEvento,
+  systemEvento,
+  pushEvento,
+  putAssetEvento,
+  generateEvento,
+  editEvento,
+  listEvento,
+  deviceIdRegisterEvento,
+  dbListEvento,
+  dbGetEvento,
+  dbPutEvento,
+  dbDelEvento,
+  dbQueryEvento,
+  dbSubscribeEvento,
+]);
 ```
 
 - [ ] **Step 2.2: Type-check**
@@ -251,6 +244,7 @@ git commit -m "feat(cli): register listEvento in evento registry (#1830)"
 ## Task 3: Wire `listCmd` and output handler into `main.ts`
 
 **Files:**
+
 - Modify: `vibes-diy/cli/main.ts`
 
 - [ ] **Step 3.1: Add import to `main.ts`**
@@ -301,7 +295,7 @@ In the `switch (true)` block inside `processStream(outputSelector.outputStream, 
             } else {
               for (const item of items) {
                 const label = item.title ? `  ${item.title}` : "";
-                console.log(`${item.userSlug}/${item.appSlug}${label}`);
+                console.log(`${item.userHandle}/${item.appSlug}${label}`);
               }
             }
             break;
@@ -365,4 +359,4 @@ Expected: lines like `jchris/my-app  My App Title` or `jchris/my-app` (no title)
 node vibes-diy/cli/run.js list --json
 ```
 
-Expected: NDJSON — one `{"userSlug":"...","appSlug":"...","updated":"..."}` object per line.
+Expected: NDJSON — one `{"userHandle":"...","appSlug":"...","updated":"..."}` object per line.

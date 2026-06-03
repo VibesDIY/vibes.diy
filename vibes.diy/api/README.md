@@ -78,7 +78,7 @@ interface MsgBase {
 The server uses Evento (from `@adviser/cement`) for request routing. Handlers are registered in order:
 
 1. **CORS preflight** - Handles OPTIONS requests
-2. **servEntryPoint** - Serves deployed app HTML (hostname routing: `{appSlug}--{userSlug}.{host}/~{fsId}~/`)
+2. **servEntryPoint** - Serves deployed app HTML (hostname routing: `{appSlug}--{userHandle}.{host}/~{fsId}~/`)
 3. **Request logging** - Logs incoming POST/PUT requests, rejects other methods with 503
 4. **ensureAppSlugItem** - App deployment handler
 5. **ensureChatContext** - Chat session handler
@@ -237,26 +237,26 @@ Defined in `svc/sql/vibes-diy-api-schema.ts` using Drizzle ORM.
 | Column | Type | Description |
 |--------|------|-------------|
 | `userId` | text | User identifier |
-| `userSlug` | text | Human-friendly user slug (unique) |
+| `userHandle` | text | Human-friendly user slug (unique) |
 | `created` | text | ISO timestamp |
 
-Primary key: `(userSlug, userId)`. Unique index on `userSlug`.
+Primary key: `(userHandle, userId)`. Unique index on `userHandle`.
 
 **AppSlugBindings** - Maps apps to slugs within a user's namespace
 | Column | Type | Description |
 |--------|------|-------------|
-| `userSlug` | text FK | References UserSlugBindings.userSlug |
+| `userHandle` | text FK | References UserSlugBindings.userHandle |
 | `appSlug` | text | Human-friendly app slug |
 | `created` | text | ISO timestamp |
 
-Primary key: `(appSlug, userSlug)`.
+Primary key: `(appSlug, userHandle)`.
 
 **Apps** - Deployed app versions with filesystem and environment
 | Column | Type | Description |
 |--------|------|-------------|
 | `appSlug` | text | App identifier |
 | `userId` | text | Owner |
-| `userSlug` | text | Owner's slug |
+| `userHandle` | text | Owner's slug |
 | `releaseSeq` | int | Incremented on each deployment |
 | `fsId` | text | CID of filesystem manifest |
 | `env` | json | Environment variables (VibesEnv) |
@@ -393,7 +393,7 @@ The client uses `KeyedResolvOnce` for connection pooling - multiple `VibeDiyApi`
 const res = await api.ensureAppSlug({
   mode: "dev", // 'dev' or 'production'
   appSlug: "my-app", // optional, server generates 3-word slug
-  userSlug: "my-user", // optional, server generates 3-word slug
+  userHandle: "my-user", // optional, server generates 3-word slug
   env: { API_KEY: "..." }, // optional, passed to app runtime
   fileSystem: [
     {
@@ -407,8 +407,8 @@ const res = await api.ensureAppSlug({
 });
 
 if (res.isOk()) {
-  const { entryPointUrl, fsId, userSlug, appSlug, fileSystem } = res.Ok();
-  // entryPointUrl -> https://{appSlug}--{userSlug}.{hostnameBase}/~{fsId}~/
+  const { entryPointUrl, fsId, userHandle, appSlug, fileSystem } = res.Ok();
+  // entryPointUrl -> https://{appSlug}--{userHandle}.{hostnameBase}/~{fsId}~/
   // e.g. https://my-app--my-user.vibes.app/~zABC123~/
   // fsId -> CID of filesystem manifest
   // fileSystem -> Array<FileSystemItem> with assetIds and transforms
@@ -486,7 +486,7 @@ pnpm test
 Deployed apps are served via hostname-based routing:
 
 ```
-https://{appSlug}--{userSlug}.{hostnameBase}/~{fsId}~/
+https://{appSlug}--{userHandle}.{hostnameBase}/~{fsId}~/
        └────────────────────┘ └──────────┘  └──────┘
               hostname          base domain   version path
 ```
@@ -495,13 +495,13 @@ Example: `https://my-app--fuzzy-purple-elephant.vibes.app/~z4PhNX7vuL~/`
 
 The `extractHostToBindings()` function parses:
 
-- Hostname pattern: `{appSlug}--{userSlug}.{rest}`
+- Hostname pattern: `{appSlug}--{userHandle}.{rest}`
 - Path pattern: `/~{fsId}~/` (fsId starts with `z`, 8+ chars)
 - If no fsId in path, serves latest production release
 
 ### Slug Generation
 
-When `appSlug` or `userSlug` are not provided, the server generates 3-word slugs using the `random-words` package:
+When `appSlug` or `userHandle` are not provided, the server generates 3-word slugs using the `random-words` package:
 
 ```typescript
 generate({ exactly: 1, wordsPerString: 3, separator: "-" });
