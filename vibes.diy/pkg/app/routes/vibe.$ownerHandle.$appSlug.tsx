@@ -18,6 +18,7 @@ import { toast } from "react-hot-toast";
 import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
 import { computeCardVariant } from "./vibe-card-variant.js";
 import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
+import { adminModeStorageKey } from "../lib/admin-mode.js";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../lib/iframe-policy.js";
 
 // Server-render the iframe URL so the <iframe src=...> ships in the very
@@ -158,7 +159,7 @@ export default function VibeIframeWrapper() {
   const [searchParam] = useSearchParams();
   const [retryCount, setRetryCount] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
-  const adminStorageKey = ownerHandle && appSlug ? `adminMode:${ownerHandle}/${appSlug}` : "";
+  const adminStorageKey = ownerHandle && appSlug ? adminModeStorageKey(ownerHandle, appSlug) : "";
   const [adminMode, setAdminMode] = useState(() => {
     if (typeof window === "undefined" || !adminStorageKey) return false;
     return localStorage.getItem(adminStorageKey) === "true";
