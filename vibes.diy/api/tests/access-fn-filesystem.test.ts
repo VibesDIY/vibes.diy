@@ -89,7 +89,7 @@ async function mkUser(
   deviceCA: Awaited<ReturnType<typeof createTestDeviceCA>>,
   wsPair: ReturnType<typeof TestWSPair.create>,
   seqOffset: number,
-  fetchFn?: typeof fetch
+  fetchFn?: VibesDiyApi["cfg"]["fetch"]
 ) {
   const user = await createTestUser({ sthis, deviceCA, seqUserId: seqOffset });
   const api = new VibesDiyApi({
