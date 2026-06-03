@@ -38,6 +38,7 @@ import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
 import { isResDeviceIdRegister } from "@fireproof/core-cli";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
+import { readFileSync } from "node:fs";
 
 async function vibesDiyApiFactory(sthis: SuperThis) {
   const kb = await getKeyBag(sthis);
@@ -102,6 +103,7 @@ class OutputSelector implements EventoSendProvider<unknown, unknown, unknown> {
 
 async function main(): Promise<number> {
   const sthis = ensureSuperThis();
+  const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 
   const env = dotenv.loadSafe(".dev.vars", ".env");
   sthis.env.sets({ ...env } as Record<string, string>);
@@ -127,7 +129,7 @@ async function main(): Promise<number> {
     subcommands({
       name: "vibes-diy CLI",
       description: "vibes-diy cli",
-      version: "1.0.0",
+      version: packageJson.version,
       cmds: {
         db: dbSubcommands(ctx),
         edit: editCmd(ctx),
