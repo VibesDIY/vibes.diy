@@ -299,8 +299,8 @@ describe("promptChatSection handler with selected+slots", () => {
   });
 
   it("emits prompt.req before the upstream LLM response resolves", async () => {
-    let resolveLlm: (res: Response) => void = () => {};
-    let resolveStarted: () => void = () => {};
+    let resolveLlm: (res: Response) => void = (_res) => undefined;
+    let resolveStarted: () => void = () => undefined;
     const llmStarted = new Promise<void>((resolve) => {
       resolveStarted = resolve;
     });
