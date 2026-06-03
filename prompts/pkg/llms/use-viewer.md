@@ -58,7 +58,7 @@ function CommentForm() {
 
 ## Tagging content with the viewer (write/render pattern)
 
-When one user writes content others will see (comments, posts, messages), **stamp the viewer's identity onto the doc at write time**. Then any user can render the author info from the doc itself — no extra lookup. The `avatarUrl` is a stable indirection URL so it keeps working when the author later changes their avatar.
+When one user writes content others will see (comments, posts, messages), **stamp `authorHandle` on the doc at write time**. That's it — just the handle. Render with `<ViewerTag ownerHandle={doc.authorHandle} />` which resolves display name and avatar automatically. Do not stamp `displayName` or `avatarUrl` on docs — ViewerTag handles that from the handle alone.
 
 ```jsx
 import { useFireproof } from "use-fireproof";

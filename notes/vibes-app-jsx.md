@@ -118,9 +118,7 @@ const { viewer, can } = useViewer();
 - `viewer` — `{ userHandle, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — use it directly in `<img src>`, don't construct it yourself.
 - `can(action, dbName?)` — `"read" | "write" | "delete"`. With a `dbName`, checks that db; without, allowed-everywhere.
 
-Render names with `viewer.displayName ?? viewer.userHandle`. Never look up user IDs — only userHandles cross into vibe code.
-
-For other users' avatars, store `viewer.avatarUrl` as `authorAvatarUrl` on the doc at write time and render from the doc.
+Stamp `authorHandle: viewer.userHandle` on docs at write time. Render with `<ViewerTag ownerHandle={doc.authorHandle} />` — it resolves display name and avatar automatically. Only persist the handle, not displayName or avatarUrl.
 
 ## Channels (multi-group / Slack-style apps)
 
@@ -165,8 +163,6 @@ function ChannelView({ name }) {
       text,
       timestamp: Date.now(),
       authorHandle: viewer.userHandle,
-      authorDisplayName: viewer.displayName || viewer.userHandle,
-      authorAvatarUrl: viewer.avatarUrl,
     })
   }
 
@@ -175,12 +171,12 @@ function ChannelView({ name }) {
       <ul>
         {messages.map(m => (
           <li key={m._id}>
-            <strong>{m.authorDisplayName || m.authorHandle || 'anonymous'}</strong>
+            <ViewerTag ownerHandle={m.authorHandle} />
             <span>{m.text}</span>
           </li>
         ))}
       </ul>
-      {can('write', name) && (
+      {viewer && access.hasChannel(name) && (
         <form onSubmit={handleSubmit}>
           <input value={doc.text} onChange={e => merge({ text: e.target.value })} />
           <button type="submit">Send</button>
