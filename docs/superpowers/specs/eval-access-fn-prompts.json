@@ -1,0 +1,284 @@
+{
+  "meta": {
+    "created": "2026-06-03",
+    "description": "Eval prompt catalog for access function system prompt update",
+    "scoringRubric": "1-5 app quality scale (see playbook spec)",
+    "totalRuns": 62,
+    "tripleRuns": 18
+  },
+  "prompts": [
+    {
+      "id": "event-tracker-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule."
+    },
+    {
+      "id": "event-tracker-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "I'm organizing a music festival. I need a schedule where my crew adds the acts and stage times, but everyone at the event can browse and star their favorites. Only my crew should be able to change the lineup."
+    },
+    {
+      "id": "dream-job-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Take my photo with the camera, ask me my dream job, then generate a fun caricature of me doing that job. Post it to a public gallery so everyone can see each other's dream jobs."
+    },
+    {
+      "id": "dream-job-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Take my photo, ask my dream job, make a caricature of me doing it. Post it to a wall where everyone at the party can see all the portraits, but you can only make your own."
+    },
+    {
+      "id": "brain-dump-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": true,
+      "prompt": "Create a task tracker with freeform textarea entry, that sends the text to AI to create task list items using json, and tag them into the selected list."
+    },
+    {
+      "id": "brain-dump-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": true,
+      "prompt": "I need a task dump where I type a mess of thoughts and it sorts them into lists. My team should see the lists I share with them, but my private brain dumps stay mine."
+    },
+    {
+      "id": "photo-wall-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Image auto-tagger app that automatically saves, analyzes, tags, and describes images, displaying them in a masonry grid as soon as they're dropped on the page, adding tags and descriptions as they come back."
+    },
+    {
+      "id": "photo-wall-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Shared photo board for our trip — anyone in the group drops photos and they get auto-tagged, but only I can remove stuff or reorganize the albums."
+    },
+    {
+      "id": "legends-chat-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Chat with historical legends — pick a figure and have a conversation. Results are streamed live."
+    },
+    {
+      "id": "legends-chat-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "History chat room where each person in our study group picks a historical figure to talk to, and we can all read each other's wild conversations."
+    },
+    {
+      "id": "dj-playlist-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Describe your mood and AI curates the perfect playlist with YouTube search links for each track."
+    },
+    {
+      "id": "dj-playlist-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Party playlist where guests describe their mood and get song suggestions, but only the DJ decides which ones make the final queue. Everyone sees the queue."
+    },
+    {
+      "id": "meet-up-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Paste two people's availability and AI instantly finds the best overlapping times to meet."
+    },
+    {
+      "id": "meet-up-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": true,
+      "prompt": "Group scheduling where each person pastes their own availability privately, and only the organizer sees the full picture and picks the time."
+    },
+    {
+      "id": "focus-timer-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": true,
+      "prompt": "Pomodoro timer with multiple concurrent timers, work/break intervals, and session stats. Persists across page refreshes."
+    },
+    {
+      "id": "focus-timer-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Team focus board — everyone on the team has their own pomodoro timer, and we can all see who's in a deep work session right now. Only you can start and stop your own timer."
+    },
+    {
+      "id": "trivia-night-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Game show trivia — pick any topic, AI generates questions and judges your answers. Styled like a retro board game."
+    },
+    {
+      "id": "trivia-night-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": true,
+      "prompt": "Trivia game night — the host picks topics and AI writes the questions. Players submit answers privately, and only the host reveals the scores at the end."
+    },
+    {
+      "id": "flash-study-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Flashcard app — pick any topic and AI generates a study deck you can flip through and shuffle."
+    },
+    {
+      "id": "flash-study-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Study group flashcards — anyone in the group creates decks on different topics, but each person tracks their own progress and scores privately."
+    },
+    {
+      "id": "emoji-chef-asis",
+      "set": "A",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "AI recipe generator that uses emoji for ingredients. An AI food critic tastes your creations and roasts them with scores."
+    },
+    {
+      "id": "emoji-chef-enh",
+      "set": "B",
+      "category": "carousel",
+      "triple": false,
+      "prompt": "Cooking club where members post emoji recipes, everyone votes and the AI food critic roasts them. Only the club leader can pin the winner of the week."
+    },
+    {
+      "id": "kanban-asis",
+      "set": "A",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Kanban board with buttery drag-and-drop across To Do, Doing, and Done columns."
+    },
+    {
+      "id": "kanban-enh",
+      "set": "B",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Team task board where everyone drags their own cards between columns, but only the project lead can create new columns or archive old ones."
+    },
+    {
+      "id": "meeting-notes-asis",
+      "set": "A",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Meeting notes app — bullet-point capture during the call, AI summary at the end."
+    },
+    {
+      "id": "meeting-notes-enh",
+      "set": "B",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Meeting notes where everyone on the call adds bullet points live, but only the meeting organizer can publish the AI summary afterward."
+    },
+    {
+      "id": "journal-asis",
+      "set": "A",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Daily journal with a mood picker and AI-generated reflection prompts to end your day."
+    },
+    {
+      "id": "journal-enh",
+      "set": "B",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "My journal is totally private — only I can see my entries. But I want to be able to share a specific entry with someone if I choose to."
+    },
+    {
+      "id": "habit-tracker-enh",
+      "set": "B",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Accountability group where we each track our own habits and streaks, and everyone in the group can cheer each other on but can't edit anyone else's check-ins."
+    },
+    {
+      "id": "bookmarks-enh",
+      "set": "B",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Team bookmark library where anyone adds links and they get auto-tagged, but only curators can organize them into collections. Everyone browses everything."
+    },
+    {
+      "id": "goals-enh",
+      "set": "B",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Team goals where the lead sets the milestones and everyone posts updates on their piece. Only the lead marks milestones complete."
+    },
+    {
+      "id": "pixel-art-asis",
+      "set": "A",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Pixel art editor with a 16×16 grid, custom palette, and export to PNG."
+    },
+    {
+      "id": "pixel-art-enh",
+      "set": "B",
+      "category": "gallery",
+      "triple": true,
+      "prompt": "Collaborative pixel art where each artist claims their own canvas layer, and we all see the combined piece. Only the project creator can merge layers."
+    },
+    {
+      "id": "soundboard-enh",
+      "set": "B",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Shared soundboard for our podcast — anyone on the team records samples, but only the producer decides which pads go live for the show."
+    },
+    {
+      "id": "snake-enh",
+      "set": "B",
+      "category": "gallery",
+      "triple": false,
+      "prompt": "Snake game with a shared high-score board where everyone's best runs show up, but you can only see your own replays."
+    },
+    {
+      "id": "contact-form-new",
+      "set": "C",
+      "category": "business",
+      "triple": false,
+      "prompt": "Contact page for my landscaping business. Visitors fill out their name, phone number, and what they need done — they don't have to sign up or anything. I get a list of all the requests so I can call them back."
+    },
+    {
+      "id": "survey-new",
+      "set": "C",
+      "category": "business",
+      "triple": true,
+      "prompt": "Customer feedback survey — visitors answer 5 questions and submit. They can't see other people's answers or go back and change theirs. My team reviews all the responses and I can publish a summary when we're ready."
+    },
+    {
+      "id": "fence-quote-new",
+      "set": "C",
+      "category": "business",
+      "triple": false,
+      "prompt": "Fence quote calculator. The visitor picks fence style, enters their yard measurements, and gets a rough estimate. When they're happy with it they submit a request with their phone number. My sales team gets the request with all the details so they can follow up."
+    },
+    {
+      "id": "soccer-signup-new",
+      "set": "C",
+      "category": "business",
+      "triple": false,
+      "prompt": "Sign-up sheet for my kid's soccer team. Parents put their name and which games they can bring snacks for. Everyone sees the full schedule but you can only change your own sign-ups. I'm the coach so I can edit anything."
+    }
+  ]
+}
