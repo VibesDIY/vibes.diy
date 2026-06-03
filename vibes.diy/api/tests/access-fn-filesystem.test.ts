@@ -226,6 +226,26 @@ export { myHandler as "my-db" }`;
     expect(dbNames).toContain("my-db");
   });
 
+  it("JS built-in name like toString works as a database name", async () => {
+    const ACCESS_JS_TOSTRING = `export function toString(doc, oldDoc, user) {
+  return { allowAnonymous: true };
+}`;
+
+    const r = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: APP_JSX },
+        { type: "code-block", lang: "js", filename: "/access.js", content: ACCESS_JS_TOSTRING },
+      ],
+    });
+    assert(r.isOk(), "push with toString export failed");
+
+    const bindings = await queryBindings(appCtx, ownerHandle, appSlug);
+    const dbNames = bindings.map((b) => b.dbName);
+    expect(dbNames).toContain("toString");
+  });
+
   it("stale binding rows cleaned up when export removed", async () => {
     const r1 = await api.ensureAppSlug({
       mode: "dev",
