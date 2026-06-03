@@ -109,10 +109,11 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
 
     const hostnameBase = deriveHostnameBase(args.apiUrl);
     const written: { name: string; size: number }[] = [];
+    const fsIdSegment = app.fsId ? `/~${app.fsId}~` : "";
 
     for (const item of sourceFiles) {
       const fileName = item.fileName.startsWith("/") ? item.fileName.slice(1) : item.fileName;
-      const fileUrl = `https://${args.appSlug}--${ownerHandle}.${hostnameBase}/${fileName}?source=true`;
+      const fileUrl = `https://${args.appSlug}--${ownerHandle}.${hostnameBase}${fsIdSegment}/${fileName}?source=true`;
       const rFetch = await exception2Result(() => fetch(fileUrl));
       if (rFetch.isErr()) {
         return Result.Err(`Failed to fetch ${fileName}: ${rFetch.Err().message}`);
