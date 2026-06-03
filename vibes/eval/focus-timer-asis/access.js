@@ -4,10 +4,10 @@
 // - "insight" docs: AI coach output, owner-written, readable by all members
 // Everyone signed in can read everything (public stats dashboard).
 export default function (doc, oldDoc, user) {
-  if (!user) throw { forbidden: "sign in" }
+  if (!user) throw { forbidden: "sign in" };
   if (doc.type === "timer" || doc.type === "session" || doc.type === "insight") {
-    if (!user.isOwner) throw { forbidden: "owner only" }
-    return {}
+    if (!user.isOwner) throw { forbidden: "owner only" };
+    return {};
   }
-  return {}
+  return {};
 }

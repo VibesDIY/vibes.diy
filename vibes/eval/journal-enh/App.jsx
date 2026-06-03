@@ -1,15 +1,15 @@
-import React from "react"
-import { callAI } from "call-ai"
-import { useFireproof } from "use-fireproof"
-import { useViewer } from "use-vibes"
+import React from "react";
+import { callAI } from "call-ai";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
 
 function Composer({ database, viewer }) {
-  const [text, setText] = React.useState("")
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [text, setText] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
 
   async function save() {
-    if (!text.trim() || !viewer) return
-    setIsLoading(true)
+    if (!text.trim() || !viewer) return;
+    setIsLoading(true);
     try {
       const raw = await callAI(`Analyze this journal entry and respond with structured JSON.\n\nEntry: ${text}`, {
         schema: {
@@ -19,8 +19,8 @@ function Composer({ database, viewer }) {
             keywords: { type: "array", items: { type: "string" }, description: "3-5 topical keywords" },
           },
         },
-      })
-      const tags = JSON.parse(raw)
+      });
+      const tags = JSON.parse(raw);
       await database.put({
         type: "entry",
         text: text.trim(),
@@ -30,29 +30,31 @@ function Composer({ database, viewer }) {
         shared: false,
         createdAt: Date.now(),
         authorHandle: viewer.userHandle,
-      })
-      setText("")
+      });
+      setText("");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   async function suggest() {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       const raw = await callAI("Write a short, evocative journal entry (2-3 sentences) as inspiration.", {
         schema: { properties: { entry: { type: "string" } } },
-      })
-      setText(JSON.parse(raw).entry || "")
+      });
+      setText(JSON.parse(raw).entry || "");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   return (
     <section id="composer" className="border border-[color:var(--border)] rounded-lg p-4 bg-black/20">
       <div className="flex items-baseline justify-between mb-3">
-        <h2 className="text-2xl" style={{ fontFamily: "'Cormorant Garamond', serif" }}>New entry</h2>
+        <h2 className="text-2xl" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+          New entry
+        </h2>
         <button onClick={suggest} disabled={isLoading} className="text-xs italic opacity-70 hover:opacity-100 underline">
           inspire me
         </button>
@@ -78,14 +80,16 @@ function Composer({ database, viewer }) {
         <span style={{ fontFamily: "'Cormorant Garamond', serif" }}>{isLoading ? "Tagging…" : "Save entry"}</span>
       </button>
     </section>
-  )
+  );
 }
 
 function EntryList({ docs, database }) {
-  const entries = docs.filter((d) => d.type === "entry")
+  const entries = docs.filter((d) => d.type === "entry");
   return (
     <section id="entries" className="border border-[color:var(--border)] rounded-lg p-4 bg-black/10">
-      <h2 className="text-2xl mb-3" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Journal</h2>
+      <h2 className="text-2xl mb-3" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+        Journal
+      </h2>
       {entries.length === 0 ? (
         <p className="text-sm italic opacity-60">Your entries will appear here.</p>
       ) : (
@@ -93,15 +97,21 @@ function EntryList({ docs, database }) {
           {entries.map((e) => (
             <li key={e._id} className="border-b border-[color:var(--border)] pb-4 last:border-0">
               <div className="flex items-baseline justify-between mb-1">
-                <span className="text-sm opacity-70">{new Date(e.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</span>
+                <span className="text-sm opacity-70">
+                  {new Date(e.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
+                </span>
                 {e.mood && <span className="text-xs italic uppercase tracking-wider opacity-80">{e.mood}</span>}
               </div>
               {e.summary && <p className="text-sm italic opacity-80 mb-2">{e.summary}</p>}
-              <p className="text-lg leading-relaxed mb-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>{e.text}</p>
+              <p className="text-lg leading-relaxed mb-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                {e.text}
+              </p>
               {e.keywords?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-3">
                   {e.keywords.map((k) => (
-                    <span key={k} className="text-xs px-2 py-0.5 border border-[color:var(--border)] rounded-full opacity-70">{k}</span>
+                    <span key={k} className="text-xs px-2 py-0.5 border border-[color:var(--border)] rounded-full opacity-70">
+                      {k}
+                    </span>
                   ))}
                 </div>
               )}
@@ -124,14 +134,16 @@ function EntryList({ docs, database }) {
         </ul>
       )}
     </section>
-  )
+  );
 }
 
 function SharedView({ docs }) {
-  const shared = docs.filter((d) => d.type === "entry" && d.shared)
+  const shared = docs.filter((d) => d.type === "entry" && d.shared);
   return (
     <section id="shared" className="border border-[color:var(--border)] rounded-lg p-4 bg-black/10">
-      <h2 className="text-2xl mb-3" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Shared entries</h2>
+      <h2 className="text-2xl mb-3" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+        Shared entries
+      </h2>
       {shared.length === 0 ? (
         <p className="text-sm italic opacity-60">Nothing has been shared with you yet.</p>
       ) : (
@@ -139,24 +151,28 @@ function SharedView({ docs }) {
           {shared.map((e) => (
             <li key={e._id} className="border-b border-[color:var(--border)] pb-4 last:border-0">
               <div className="flex items-baseline justify-between mb-1">
-                <span className="text-sm opacity-70">{new Date(e.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</span>
+                <span className="text-sm opacity-70">
+                  {new Date(e.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
+                </span>
                 {e.mood && <span className="text-xs italic uppercase tracking-wider opacity-80">{e.mood}</span>}
               </div>
               {e.summary && <p className="text-sm italic opacity-80 mb-2">{e.summary}</p>}
-              <p className="text-lg leading-relaxed" style={{ fontFamily: "'Cormorant Garamond', serif" }}>{e.text}</p>
+              <p className="text-lg leading-relaxed" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                {e.text}
+              </p>
             </li>
           ))}
         </ul>
       )}
     </section>
-  )
+  );
 }
 
 export default function App() {
-  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer()
-  const { useLiveQuery, database, access } = useFireproof("palateNotes")
-  const sharedQuery = useLiveQuery("shared", { key: true, descending: true })
-  const allQuery = useLiveQuery("createdAt", { descending: true })
+  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
+  const { useLiveQuery, database, access } = useFireproof("palateNotes");
+  const sharedQuery = useLiveQuery("shared", { key: true, descending: true });
+  const allQuery = useLiveQuery("createdAt", { descending: true });
 
   const c = {
     page: "min-h-screen bg-[#0a0a0d] text-[#e8e6f0]",
@@ -164,9 +180,9 @@ export default function App() {
     header: "flex items-center justify-between pb-4 border-b border-[color:var(--border)]",
     title: "text-3xl tracking-wide",
     muted: "text-sm opacity-70",
-  }
+  };
 
-  if (isViewerPending) return <div className={c.page} />
+  if (isViewerPending) return <div className={c.page} />;
 
   return (
     <>
@@ -183,7 +199,9 @@ export default function App() {
       <main id="app" className={c.page}>
         <div className={c.wrap}>
           <header id="app-header" className={c.header}>
-            <h1 className={c.title} style={{ fontFamily: "'Cormorant Garamond', serif" }}>Palate Notes</h1>
+            <h1 className={c.title} style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+              Palate Notes
+            </h1>
             <ViewerTag />
           </header>
           {isOwner ? (
@@ -198,5 +216,5 @@ export default function App() {
         </div>
       </main>
     </>
-  )
+  );
 }

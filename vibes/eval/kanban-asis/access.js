@@ -5,11 +5,11 @@
 export default function (doc, oldDoc, user, ctx) {
   if (!user) {
     // Anonymous read-only — no writes allowed via this path
-    throw { forbidden: "sign in required to write" }
+    throw { forbidden: "sign in required to write" };
   }
   if (doc.type === "card") {
-    if (!user.isOwner) throw { forbidden: "owner only" }
-    return {}
+    if (!user.isOwner) throw { forbidden: "owner only" };
+    return {};
   }
-  return {}
+  return {};
 }

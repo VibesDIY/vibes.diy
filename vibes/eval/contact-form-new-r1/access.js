@@ -5,9 +5,9 @@
 // The owner can read everything by virtue of being owner.
 export default function (doc, oldDoc, user, ctx) {
   if (doc.type === "request") {
-    if (oldDoc && (!user || !user.isOwner)) throw { forbidden: "owner only edits" }
-    return { channels: ["requests"], allowAnonymous: true }
+    if (oldDoc && (!user || !user.isOwner)) throw { forbidden: "owner only edits" };
+    return { channels: ["requests"], allowAnonymous: true };
   }
-  if (!user) throw { forbidden: "sign in" }
-  return {}
+  if (!user) throw { forbidden: "sign in" };
+  return {};
 }

@@ -3,10 +3,10 @@
 // - All members (signed in via the runtime) can read everything via grant.public.
 // - Anonymous reads are governed by the platform's app-level public toggle.
 export default function (doc, oldDoc, user) {
-  if (!user) throw { forbidden: "sign in" }
+  if (!user) throw { forbidden: "sign in" };
   if (doc.type === "bookmark") {
-    if (!user.isOwner) throw { forbidden: "owner only" }
-    return { channels: ["vault"], grant: { public: ["vault"] } }
+    if (!user.isOwner) throw { forbidden: "owner only" };
+    return { channels: ["vault"], grant: { public: ["vault"] } };
   }
-  return {}
+  return {};
 }

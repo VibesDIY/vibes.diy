@@ -1,7 +1,7 @@
-import React from "react"
-import { callAI } from "call-ai"
-import { useFireproof } from "use-fireproof"
-import { useViewer } from "use-vibes"
+import React from "react";
+import { callAI } from "call-ai";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
 
 function ListSwitcher({ lists, activeListId, setActiveListId, viewer, newListName, setNewListName, createList, suggestListName }) {
   return (
@@ -10,7 +10,7 @@ function ListSwitcher({ lists, activeListId, setActiveListId, viewer, newListNam
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
         {lists.length === 0 && <div className="text-sm text-[oklch(0.87_0.01_258)] italic">No lists yet.</div>}
         {lists.map((l) => {
-          const active = l._id === activeListId
+          const active = l._id === activeListId;
           return (
             <button
               key={l._id}
@@ -23,7 +23,7 @@ function ListSwitcher({ lists, activeListId, setActiveListId, viewer, newListNam
             >
               {l.name}
             </button>
-          )
+          );
         })}
       </div>
       {viewer ? (
@@ -53,16 +53,16 @@ function ListSwitcher({ lists, activeListId, setActiveListId, viewer, newListNam
         <div className="text-sm text-[oklch(0.71_0.02_261)] mt-1">Sign in to manage lists.</div>
       )}
     </section>
-  )
+  );
 }
 
 function TaskDump({ activeListId, viewer, database }) {
-  const [text, setText] = React.useState("")
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [text, setText] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
 
   async function parse() {
-    if (!text.trim() || !activeListId || !viewer) return
-    setIsLoading(true)
+    if (!text.trim() || !activeListId || !viewer) return;
+    setIsLoading(true);
     try {
       const res = await callAI(
         `Break the following freeform note into discrete actionable task items. For each task, give a short title, an optional description (or empty string), and a priority of "low", "medium", or "high". Note: ${text}`,
@@ -83,8 +83,8 @@ function TaskDump({ activeListId, viewer, database }) {
             },
           },
         }
-      )
-      const { tasks } = JSON.parse(res)
+      );
+      const { tasks } = JSON.parse(res);
       for (const t of tasks || []) {
         await database.put({
           type: "task",
@@ -95,19 +95,22 @@ function TaskDump({ activeListId, viewer, database }) {
           completed: false,
           createdAt: Date.now(),
           createdBy: viewer.userHandle,
-        })
+        });
       }
-      setText("")
+      setText("");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   async function suggestExample() {
-    const res = await callAI("Give one short freeform brain-dump example a busy person might type, mixing 3-4 tasks with priorities, run on, casual.", {
-      schema: { properties: { example: { type: "string" } } },
-    })
-    setText(JSON.parse(res).example || "")
+    const res = await callAI(
+      "Give one short freeform brain-dump example a busy person might type, mixing 3-4 tasks with priorities, run on, casual.",
+      {
+        schema: { properties: { example: { type: "string" } } },
+      }
+    );
+    setText(JSON.parse(res).example || "");
   }
 
   if (!activeListId) {
@@ -116,7 +119,7 @@ function TaskDump({ activeListId, viewer, database }) {
         <h2 className="text-xs uppercase tracking-wider text-[oklch(0.71_0.02_261)] mb-2">Dump tasks</h2>
         <div className="text-sm text-[oklch(0.71_0.02_261)] italic">Pick or create a list first.</div>
       </section>
-    )
+    );
   }
 
   return (
@@ -145,7 +148,17 @@ function TaskDump({ activeListId, viewer, database }) {
           >
             {isLoading ? (
               <>
-                <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  className="animate-spin"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M12 2a10 10 0 0 1 10 10" />
                 </svg>
                 Parsing…
@@ -159,27 +172,27 @@ function TaskDump({ activeListId, viewer, database }) {
         <div className="text-sm text-[oklch(0.71_0.02_261)]">Sign in to add tasks.</div>
       )}
     </section>
-  )
+  );
 }
 
 function TaskBoard({ activeListId, viewer, database }) {
-  const { useLiveQuery } = useFireproof("taskparse")
-  const { docs: tasks } = useLiveQuery("listId", { key: activeListId || "__none__" })
+  const { useLiveQuery } = useFireproof("taskparse");
+  const { docs: tasks } = useLiveQuery("listId", { key: activeListId || "__none__" });
 
-  const sorted = [...tasks].sort((a, b) => Number(a.completed) - Number(b.completed) || b.createdAt - a.createdAt)
+  const sorted = [...tasks].sort((a, b) => Number(a.completed) - Number(b.completed) || b.createdAt - a.createdAt);
 
   const priorityColor = {
     high: "bg-[oklch(0.63_0.24_25)]",
     medium: "bg-[oklch(0.79_0.18_75)]",
     low: "bg-[oklch(0.77_0.22_145)]",
-  }
+  };
 
   if (!activeListId) {
     return (
       <section id="board" className="px-4 py-4 flex-1">
         <div className="text-sm text-[oklch(0.71_0.02_261)] italic">No list selected.</div>
       </section>
-    )
+    );
   }
 
   return (
@@ -190,7 +203,7 @@ function TaskBoard({ activeListId, viewer, database }) {
       ) : (
         <ul className="space-y-2">
           {sorted.map((t) => {
-            const mine = viewer && t.createdBy === viewer.userHandle
+            const mine = viewer && t.createdBy === viewer.userHandle;
             return (
               <li
                 key={t._id}
@@ -204,7 +217,16 @@ function TaskBoard({ activeListId, viewer, database }) {
                   className="mt-1 w-5 h-5 rounded border border-[oklch(0.31_0.005_285)] flex items-center justify-center flex-shrink-0 disabled:cursor-not-allowed"
                 >
                   {t.completed && (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.77 0.22 145)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="oklch(0.77 0.22 145)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   )}
@@ -222,60 +244,70 @@ function TaskBoard({ activeListId, viewer, database }) {
                     className="text-[oklch(0.71_0.02_261)] hover:text-[oklch(0.63_0.24_25)] flex-shrink-0"
                     aria-label="Delete"
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6l-2 14H7L5 6" />
                     </svg>
                   </button>
                 )}
               </li>
-            )
+            );
           })}
         </ul>
       )}
     </section>
-  )
+  );
 }
 
 export default function App() {
-  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer()
-  const { database, useLiveQuery } = useFireproof("taskparse")
-  const { docs: lists } = useLiveQuery("type", { key: "list" })
-  const [activeListId, setActiveListId] = React.useState(null)
-  const [newListName, setNewListName] = React.useState("")
+  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
+  const { database, useLiveQuery } = useFireproof("taskparse");
+  const { docs: lists } = useLiveQuery("type", { key: "list" });
+  const [activeListId, setActiveListId] = React.useState(null);
+  const [newListName, setNewListName] = React.useState("");
 
   React.useEffect(() => {
-    if (!activeListId && lists.length) setActiveListId(lists[0]._id)
-  }, [lists, activeListId])
+    if (!activeListId && lists.length) setActiveListId(lists[0]._id);
+  }, [lists, activeListId]);
 
   async function createList(e) {
-    e.preventDefault()
-    if (!newListName.trim() || !viewer) return
+    e.preventDefault();
+    if (!newListName.trim() || !viewer) return;
     const ok = await database.put({
       type: "list",
       name: newListName.trim(),
       createdAt: Date.now(),
       createdBy: viewer.userHandle,
-    })
-    setActiveListId(ok.id)
-    setNewListName("")
+    });
+    setActiveListId(ok.id);
+    setNewListName("");
   }
 
   async function suggestListName() {
     const res = await callAI("Suggest one short creative name for a personal task list. Just the name.", {
       schema: { properties: { name: { type: "string" } } },
-    })
-    setNewListName(JSON.parse(res).name || "")
+    });
+    setNewListName(JSON.parse(res).name || "");
   }
 
   const c = {
     page: "min-h-screen bg-[oklch(0.18_0.005_285)] text-[oklch(1.00_0.000_0)] font-sans flex flex-col",
-    header: "sticky top-0 z-10 px-4 py-3 bg-[oklch(0.25_0.005_285)] border-b border-[oklch(0.31_0.005_285)] flex items-center justify-between",
+    header:
+      "sticky top-0 z-10 px-4 py-3 bg-[oklch(0.25_0.005_285)] border-b border-[oklch(0.31_0.005_285)] flex items-center justify-between",
     title: "text-lg font-semibold tracking-tight",
     sub: "text-xs text-[oklch(0.71_0.02_261)]",
-  }
+  };
 
-  if (isViewerPending) return <div className={c.page} />
+  if (isViewerPending) return <div className={c.page} />;
 
   return (
     <main id="app" className={c.page}>
@@ -299,5 +331,5 @@ export default function App() {
       <TaskDump activeListId={activeListId} viewer={viewer} database={database} />
       <TaskBoard activeListId={activeListId} viewer={viewer} database={database} />
     </main>
-  )
+  );
 }

@@ -1,18 +1,18 @@
-import React from "react"
-import { callAI } from "call-ai"
-import { useFireproof } from "use-fireproof"
-import { useViewer } from "use-vibes"
+import React from "react";
+import { callAI } from "call-ai";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
 
 function DumpPad() {
-  const { database } = useFireproof("brainDump")
-  const [text, setText] = React.useState("")
-  const [isLoading, setIsLoading] = React.useState(false)
+  const { database } = useFireproof("brainDump");
+  const [text, setText] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
 
   async function sort() {
-    if (!text.trim()) return
-    setIsLoading(true)
+    if (!text.trim()) return;
+    setIsLoading(true);
     try {
-      const dumpId = (await database.put({ type: "dump", text, createdAt: Date.now() })).id
+      const dumpId = (await database.put({ type: "dump", text, createdAt: Date.now() })).id;
       const raw = await callAI(`Sort these messy thoughts into 2-5 titled task groups. Thoughts:\n\n${text}`, {
         schema: {
           properties: {
@@ -28,26 +28,29 @@ function DumpPad() {
             },
           },
         },
-      })
-      const { groups } = JSON.parse(raw)
+      });
+      const { groups } = JSON.parse(raw);
       for (const g of groups) {
-        await database.put({ type: "list", title: g.title, tasks: g.tasks, shared: false, dumpId, createdAt: Date.now() })
+        await database.put({ type: "list", title: g.title, tasks: g.tasks, shared: false, dumpId, createdAt: Date.now() });
       }
-      setText("")
+      setText("");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   async function suggest() {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const raw = await callAI("Generate a realistic messy brain dump of 6-10 mixed thoughts spanning work, errands, and ideas. Plain text, line breaks ok.", {
-        schema: { properties: { dump: { type: "string" } } },
-      })
-      setText(JSON.parse(raw).dump)
+      const raw = await callAI(
+        "Generate a realistic messy brain dump of 6-10 mixed thoughts spanning work, errands, and ideas. Plain text, line breaks ok.",
+        {
+          schema: { properties: { dump: { type: "string" } } },
+        }
+      );
+      setText(JSON.parse(raw).dump);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -67,8 +70,22 @@ function DumpPad() {
           className="flex-1 bg-[oklch(0.86_0.18_90)] text-[oklch(0.20_0.04_163)] font-semibold rounded-lg min-h-[44px] px-4 active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isLoading ? (
-            <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
-          ) : "Sort it"}
+            <svg
+              className="animate-spin"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+          ) : (
+            "Sort it"
+          )}
         </button>
         <button
           onClick={suggest}
@@ -79,17 +96,21 @@ function DumpPad() {
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 function SortedLists() {
-  const { useLiveQuery, database } = useFireproof("brainDump")
-  const { isOwner } = useViewer()
-  const { docs: allLists } = useLiveQuery("type", { key: "list", descending: true })
-  const lists = isOwner ? allLists : allLists.filter((l) => l.shared)
+  const { useLiveQuery, database } = useFireproof("brainDump");
+  const { isOwner } = useViewer();
+  const { docs: allLists } = useLiveQuery("type", { key: "list", descending: true });
+  const lists = isOwner ? allLists : allLists.filter((l) => l.shared);
 
   if (lists.length === 0) {
-    return <p className="text-sm text-[oklch(0.55_0.04_165)] italic py-6 text-center">{isOwner ? "Dump some thoughts and sort to see lists here." : "No shared lists yet."}</p>
+    return (
+      <p className="text-sm text-[oklch(0.55_0.04_165)] italic py-6 text-center">
+        {isOwner ? "Dump some thoughts and sort to see lists here." : "No shared lists yet."}
+      </p>
+    );
   }
 
   return (
@@ -116,25 +137,23 @@ function SortedLists() {
             ))}
           </ul>
           {isOwner && (
-            <button
-              onClick={() => database.del(list._id)}
-              className="text-xs text-[oklch(0.55_0.04_165)] mt-2 active:opacity-60"
-            >
+            <button onClick={() => database.del(list._id)} className="text-xs text-[oklch(0.55_0.04_165)] mt-2 active:opacity-60">
               Delete
             </button>
           )}
         </li>
       ))}
     </ul>
-  )
+  );
 }
 
 export default function App() {
-  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer()
+  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
 
   const c = {
     page: "min-h-screen bg-[oklch(0.22_0.05_163)] text-[oklch(0.95_0.01_100)] font-['Space_Grotesk',sans-serif]",
-    header: "sticky top-0 z-10 bg-[oklch(0.22_0.05_163)]/95 backdrop-blur border-b border-[oklch(0.39_0.065_165)] px-4 py-3 flex items-center justify-between",
+    header:
+      "sticky top-0 z-10 bg-[oklch(0.22_0.05_163)]/95 backdrop-blur border-b border-[oklch(0.39_0.065_165)] px-4 py-3 flex items-center justify-between",
     title: "text-xl font-bold tracking-tight",
     subtitle: "text-xs text-[oklch(0.55_0.04_165)] mt-0.5",
     main: "px-4 py-4 pb-24 max-w-3xl mx-auto space-y-4",
@@ -142,9 +161,9 @@ export default function App() {
     sectionTitle: "text-sm font-semibold uppercase tracking-wider text-[oklch(0.55_0.04_165)] mb-3",
     empty: "text-sm text-[oklch(0.55_0.04_165)] italic py-6 text-center",
     accent: "bg-[oklch(0.86_0.18_90)] text-[oklch(0.20_0.04_163)] font-semibold rounded-lg min-h-[44px] px-4 active:opacity-80",
-  }
+  };
 
-  if (isViewerPending) return <div className={c.page} />
+  if (isViewerPending) return <div className={c.page} />;
 
   return (
     <div className={c.page}>
@@ -168,5 +187,5 @@ export default function App() {
         </section>
       </main>
     </div>
-  )
+  );
 }

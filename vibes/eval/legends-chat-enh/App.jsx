@@ -1,7 +1,7 @@
-import React from "react"
-import { callAI } from "call-ai"
-import { useFireproof } from "use-fireproof"
-import { useViewer } from "use-vibes"
+import React from "react";
+import { callAI } from "call-ai";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
 
 function ThreadWall() {
   // feature: live wall of all conversations
@@ -10,37 +10,37 @@ function ThreadWall() {
       <h2 className="font-[Cinzel_Decorative] text-[oklch(0.73_0.10_78)] text-lg tracking-wider mb-3">The Council Wall</h2>
       <p className="text-[oklch(0.55_0_0)] italic text-sm">No echoes yet. Summon a figure below.</p>
     </section>
-  )
+  );
 }
 
 function SummonForm({ viewer, database, setActiveId }) {
-  const [figure, setFigure] = React.useState("")
-  const [suggesting, setSuggesting] = React.useState(false)
+  const [figure, setFigure] = React.useState("");
+  const [suggesting, setSuggesting] = React.useState(false);
 
   async function suggest() {
-    setSuggesting(true)
+    setSuggesting(true);
     try {
       const res = await callAI("Suggest one intriguing historical figure to converse with. Just the name.", {
         schema: { properties: { name: { type: "string" } } },
-      })
-      const { name } = JSON.parse(res)
-      if (name) setFigure(name)
+      });
+      const { name } = JSON.parse(res);
+      if (name) setFigure(name);
     } finally {
-      setSuggesting(false)
+      setSuggesting(false);
     }
   }
 
   async function summon(e) {
-    e.preventDefault()
-    if (!viewer || !figure.trim()) return
+    e.preventDefault();
+    if (!viewer || !figure.trim()) return;
     const ok = await database.put({
       type: "thread",
       figure: figure.trim(),
       authorHandle: viewer.userHandle,
       createdAt: Date.now(),
-    })
-    setFigure("")
-    setActiveId(ok.id)
+    });
+    setFigure("");
+    setActiveId(ok.id);
   }
 
   if (!viewer) {
@@ -49,7 +49,7 @@ function SummonForm({ viewer, database, setActiveId }) {
         <h2 className="font-[Cinzel_Decorative] text-[oklch(0.73_0.10_78)] text-lg tracking-wider mb-3">Summon a Figure</h2>
         <p className="text-[oklch(0.55_0_0)] italic text-sm">Sign in to summon a voice from the past.</p>
       </section>
-    )
+    );
   }
 
   return (
@@ -78,30 +78,40 @@ function SummonForm({ viewer, database, setActiveId }) {
             title="Suggest a figure"
           >
             {suggesting ? (
-              <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" strokeDasharray="40 20" /></svg>
-            ) : "Suggest"}
+              <svg
+                className="animate-spin w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="9" strokeDasharray="40 20" />
+              </svg>
+            ) : (
+              "Suggest"
+            )}
           </button>
         </div>
       </form>
     </section>
-  )
+  );
 }
 
 function ActiveThread({ threads, messages, activeId, viewer, database, ViewerTag }) {
-  const [draft, setDraft] = React.useState("")
-  const [sending, setSending] = React.useState(false)
+  const [draft, setDraft] = React.useState("");
+  const [sending, setSending] = React.useState(false);
 
-  const thread = threads.find((t) => t._id === activeId)
-  const threadMessages = messages
-    .filter((m) => m.threadId === activeId)
-    .sort((a, b) => a.createdAt - b.createdAt)
-  const isOwn = thread && viewer && thread.authorHandle === viewer.userHandle
+  const thread = threads.find((t) => t._id === activeId);
+  const threadMessages = messages.filter((m) => m.threadId === activeId).sort((a, b) => a.createdAt - b.createdAt);
+  const isOwn = thread && viewer && thread.authorHandle === viewer.userHandle;
 
   async function send(e) {
-    e.preventDefault()
-    if (!viewer || !thread || !draft.trim() || sending) return
-    setSending(true)
-    const userText = draft.trim()
+    e.preventDefault();
+    if (!viewer || !thread || !draft.trim() || sending) return;
+    setSending(true);
+    const userText = draft.trim();
     try {
       await database.put({
         type: "message",
@@ -110,11 +120,11 @@ function ActiveThread({ threads, messages, activeId, viewer, database, ViewerTag
         body: userText,
         authorHandle: viewer.userHandle,
         createdAt: Date.now(),
-      })
-      setDraft("")
+      });
+      setDraft("");
 
-      const history = threadMessages.map((m) => `${m.role === "user" ? "Seeker" : thread.figure}: ${m.body}`).join("\n")
-      const prompt = `You are ${thread.figure}, the historical figure. Respond in their voice, era, and worldview. Be vivid and concise (2-4 sentences). Include one surprising fun fact about your life or times.\n\nConversation so far:\n${history}\nSeeker: ${userText}\n${thread.figure}:`
+      const history = threadMessages.map((m) => `${m.role === "user" ? "Seeker" : thread.figure}: ${m.body}`).join("\n");
+      const prompt = `You are ${thread.figure}, the historical figure. Respond in their voice, era, and worldview. Be vivid and concise (2-4 sentences). Include one surprising fun fact about your life or times.\n\nConversation so far:\n${history}\nSeeker: ${userText}\n${thread.figure}:`;
       const res = await callAI(prompt, {
         schema: {
           properties: {
@@ -122,8 +132,8 @@ function ActiveThread({ threads, messages, activeId, viewer, database, ViewerTag
             funFact: { type: "string", description: "One surprising fun fact" },
           },
         },
-      })
-      const { reply, funFact } = JSON.parse(res)
+      });
+      const { reply, funFact } = JSON.parse(res);
       await database.put({
         type: "message",
         threadId: thread._id,
@@ -132,9 +142,9 @@ function ActiveThread({ threads, messages, activeId, viewer, database, ViewerTag
         funFact,
         authorHandle: viewer.userHandle,
         createdAt: Date.now(),
-      })
+      });
     } finally {
-      setSending(false)
+      setSending(false);
     }
   }
 
@@ -144,7 +154,7 @@ function ActiveThread({ threads, messages, activeId, viewer, database, ViewerTag
         <h2 className="font-[Cinzel_Decorative] text-[oklch(0.73_0.10_78)] text-lg tracking-wider mb-3">The Audience</h2>
         <p className="text-[oklch(0.55_0_0)] italic text-sm">Choose a thread from the Council Wall to read or continue.</p>
       </section>
-    )
+    );
   }
 
   return (
@@ -158,11 +168,12 @@ function ActiveThread({ threads, messages, activeId, viewer, database, ViewerTag
       </div>
 
       <ul className="space-y-3 mb-4">
-        {threadMessages.length === 0 && (
-          <li className="text-[oklch(0.55_0_0)] italic text-sm">The figure waits in silence...</li>
-        )}
+        {threadMessages.length === 0 && <li className="text-[oklch(0.55_0_0)] italic text-sm">The figure waits in silence...</li>}
         {threadMessages.map((m) => (
-          <li key={m._id} className={`p-3 rounded border ${m.role === "figure" ? "bg-[oklch(0.20_0.07_22)] border-[oklch(0.73_0.10_78)]" : "bg-[oklch(0.17_0_0)] border-[oklch(0.40_0_0)]"}`}>
+          <li
+            key={m._id}
+            className={`p-3 rounded border ${m.role === "figure" ? "bg-[oklch(0.20_0.07_22)] border-[oklch(0.73_0.10_78)]" : "bg-[oklch(0.17_0_0)] border-[oklch(0.40_0_0)]"}`}
+          >
             <div className="text-[10px] uppercase tracking-widest text-[oklch(0.73_0.10_78)] mb-1 font-[Cinzel_Decorative]">
               {m.role === "figure" ? thread.figure : "Seeker"}
             </div>
@@ -193,10 +204,22 @@ function ActiveThread({ threads, messages, activeId, viewer, database, ViewerTag
           >
             {sending ? (
               <>
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" strokeDasharray="40 20" /></svg>
+                <svg
+                  className="animate-spin w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9" strokeDasharray="40 20" />
+                </svg>
                 <span>Awaiting reply...</span>
               </>
-            ) : "Send"}
+            ) : (
+              "Send"
+            )}
           </button>
         </form>
       ) : (
@@ -205,22 +228,22 @@ function ActiveThread({ threads, messages, activeId, viewer, database, ViewerTag
         </p>
       )}
     </section>
-  )
+  );
 }
 
 export default function App() {
-  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer()
-  const { useLiveQuery, database } = useFireproof("council")
-  const { docs: threads } = useLiveQuery("type", { key: "thread", descending: true })
-  const { docs: messages } = useLiveQuery("type", { key: "message" })
-  const [activeId, setActiveId] = React.useState(null)
+  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
+  const { useLiveQuery, database } = useFireproof("council");
+  const { docs: threads } = useLiveQuery("type", { key: "thread", descending: true });
+  const { docs: messages } = useLiveQuery("type", { key: "message" });
+  const [activeId, setActiveId] = React.useState(null);
 
   const c = {
     page: "min-h-screen bg-[oklch(0.06_0_0)] text-[oklch(0.90_0_0)] font-[Cinzel]",
     header: "px-4 py-5 border-b-2 border-[oklch(0.40_0_0)] bg-[oklch(0.17_0_0)] sticky top-0 z-10",
     title: "font-[Cinzel_Decorative] text-[oklch(0.97_0.07_100)] text-2xl tracking-[0.2em] uppercase",
     sub: "text-[oklch(0.55_0_0)] text-xs italic mt-1",
-  }
+  };
 
   return (
     <>
@@ -236,11 +259,25 @@ export default function App() {
           </div>
         </header>
         <main id="app">
-          <ThreadWall threads={threads} messages={messages} onSelect={setActiveId} activeId={activeId} ViewerTag={ViewerTag} currentHandle={viewer?.userHandle} />
+          <ThreadWall
+            threads={threads}
+            messages={messages}
+            onSelect={setActiveId}
+            activeId={activeId}
+            ViewerTag={ViewerTag}
+            currentHandle={viewer?.userHandle}
+          />
           <SummonForm viewer={viewer} database={database} setActiveId={setActiveId} />
-          <ActiveThread threads={threads} messages={messages} activeId={activeId} viewer={viewer} database={database} ViewerTag={ViewerTag} />
+          <ActiveThread
+            threads={threads}
+            messages={messages}
+            activeId={activeId}
+            viewer={viewer}
+            database={database}
+            ViewerTag={ViewerTag}
+          />
         </main>
       </div>
     </>
-  )
+  );
 }

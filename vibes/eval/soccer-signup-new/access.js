@@ -4,24 +4,24 @@
 //   Parents can only edit/delete their own claims (matched by claimedBy === userHandle).
 //   The coach (owner) can override any claim.
 export function snackSheet(doc, oldDoc, user) {
-  if (!user) throw { forbidden: "sign in" }
+  if (!user) throw { forbidden: "sign in" };
 
   if (doc.type === "game") {
-    if (!user.isOwner) throw { forbidden: "coach only" }
-    return {}
+    if (!user.isOwner) throw { forbidden: "coach only" };
+    return {};
   }
 
   if (doc.type === "claim") {
-    if (user.isOwner) return {}
+    if (user.isOwner) return {};
     if (!oldDoc) {
       // creating: must stamp self as claimedBy
-      if (doc.claimedBy !== user.userHandle) throw { forbidden: "must claim as yourself" }
-      return {}
+      if (doc.claimedBy !== user.userHandle) throw { forbidden: "must claim as yourself" };
+      return {};
     }
     // editing existing claim: only original claimant
-    if (oldDoc.claimedBy !== user.userHandle) throw { forbidden: "not your claim" }
-    return {}
+    if (oldDoc.claimedBy !== user.userHandle) throw { forbidden: "not your claim" };
+    return {};
   }
 
-  return {}
+  return {};
 }

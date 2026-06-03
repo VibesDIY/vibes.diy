@@ -2,14 +2,14 @@
 // update: any signed-in member can post; must be their own authorHandle.
 // Deletions follow the same rules as writes.
 export default function (doc, oldDoc, user) {
-  if (!user) throw { forbidden: "sign in" }
+  if (!user) throw { forbidden: "sign in" };
   if (doc.type === "milestone") {
-    if (!user.isOwner) throw { forbidden: "lead only" }
-    return {}
+    if (!user.isOwner) throw { forbidden: "lead only" };
+    return {};
   }
   if (doc.type === "update") {
-    if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" }
-    return {}
+    if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
+    return {};
   }
-  return {}
+  return {};
 }
