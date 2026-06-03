@@ -25,6 +25,7 @@ export { ChatSessions } from "./chat-sessions.js";
 export { DocNotify } from "./doc-notify.js";
 export { UserNotify } from "./user-notify.js";
 export { AccessFnDO } from "./access-fn.js";
+export { BackendDO } from "./backend-do.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 
