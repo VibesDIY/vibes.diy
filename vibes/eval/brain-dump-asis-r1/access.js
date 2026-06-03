@@ -2,9 +2,9 @@
 // can only edit their own docs. No channels needed — this is a single shared
 // workspace where everyone sees everything (Fireproof sync handles the rest).
 export default function (doc, oldDoc, user) {
-  if (!user) throw { forbidden: "sign in to edit" }
+  if (!user) throw { forbidden: "sign in to edit" };
   if (oldDoc && oldDoc.createdBy && oldDoc.createdBy !== user.userHandle) {
-    throw { forbidden: "only the author can edit" }
+    throw { forbidden: "only the author can edit" };
   }
-  return {}
+  return {};
 }

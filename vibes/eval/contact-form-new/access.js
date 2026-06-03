@@ -5,12 +5,12 @@ export default function (doc, oldDoc, user, ctx) {
   if (doc.type === "request") {
     if (!oldDoc) {
       // Anyone can create a new request — no auth required.
-      return { channels: ["requests"], allowAnonymous: true }
+      return { channels: ["requests"], allowAnonymous: true };
     }
     // Updates (status changes) — owner only.
-    if (!user || !user.isOwner) throw { forbidden: "owner only" }
-    return { channels: ["requests"] }
+    if (!user || !user.isOwner) throw { forbidden: "owner only" };
+    return { channels: ["requests"] };
   }
-  if (!user) throw { forbidden: "sign in" }
-  return {}
+  if (!user) throw { forbidden: "sign in" };
+  return {};
 }

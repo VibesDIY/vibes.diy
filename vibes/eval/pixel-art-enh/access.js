@@ -3,10 +3,10 @@
 // palette docs: AI-suggested palettes saved per-user.
 // Anyone signed in can paint; no channels needed — single shared canvas.
 export default function (doc, oldDoc, user) {
-  if (!user) throw { forbidden: "sign in to paint" }
+  if (!user) throw { forbidden: "sign in to paint" };
   if (doc.type === "pixel") {
-    if (doc.authorHandle !== user.userHandle) throw { forbidden: "not your pixel" }
-    if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "can't overwrite another painter's pixel" }
+    if (doc.authorHandle !== user.userHandle) throw { forbidden: "not your pixel" };
+    if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "can't overwrite another painter's pixel" };
   }
-  return {}
+  return {};
 }

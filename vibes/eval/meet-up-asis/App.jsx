@@ -1,7 +1,7 @@
-import React from "react"
-import { callAI } from "call-ai"
-import { useFireproof } from "use-fireproof"
-import { useViewer } from "use-vibes"
+import React from "react";
+import { callAI } from "call-ai";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
 
 function Header({ ViewerTag, c }) {
   return (
@@ -14,7 +14,7 @@ function Header({ ViewerTag, c }) {
         <ViewerTag />
       </div>
     </header>
-  )
+  );
 }
 
 function ScheduleInputs({ c, isOwner, draftA, draftB, setDraftA, setDraftB, saveSlot }) {
@@ -31,7 +31,7 @@ function ScheduleInputs({ c, isOwner, draftA, draftB, setDraftA, setDraftB, save
           <p className={`${c.textBody} text-sm whitespace-pre-wrap`}>{draftB || "No schedule yet."}</p>
         </div>
       </section>
-    )
+    );
   }
   return (
     <section id="schedule-inputs" className="px-4 pt-5 space-y-3">
@@ -57,18 +57,18 @@ function ScheduleInputs({ c, isOwner, draftA, draftB, setDraftA, setDraftB, save
         />
       </div>
     </section>
-  )
+  );
 }
 
 function FindButton({ c, isOwner, draftA, draftB, database }) {
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [suggesting, setSuggesting] = React.useState(false)
-  if (!isOwner) return null
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [suggesting, setSuggesting] = React.useState(false);
+  if (!isOwner) return null;
   async function findOverlaps() {
-    if (!draftA.trim() || !draftB.trim()) return
-    setIsLoading(true)
+    if (!draftA.trim() || !draftB.trim()) return;
+    setIsLoading(true);
     try {
-      const prompt = `Two people's availability:\nPerson A: ${draftA}\nPerson B: ${draftB}\n\nExtract their free times, compute overlapping windows when BOTH are free, and rank top 5 by duration and convenience. For each window give a day label, time range, duration in minutes, and a short fit note.`
+      const prompt = `Two people's availability:\nPerson A: ${draftA}\nPerson B: ${draftB}\n\nExtract their free times, compute overlapping windows when BOTH are free, and rank top 5 by duration and convenience. For each window give a day label, time range, duration in minutes, and a short fit note.`;
       const res = await callAI(prompt, {
         schema: {
           properties: {
@@ -87,8 +87,8 @@ function FindButton({ c, isOwner, draftA, draftB, database }) {
             summary: { type: "string" },
           },
         },
-      })
-      const parsed = JSON.parse(res)
+      });
+      const parsed = JSON.parse(res);
       await database.put({
         type: "result",
         overlaps: parsed.overlaps || [],
@@ -96,19 +96,23 @@ function FindButton({ c, isOwner, draftA, draftB, database }) {
         scheduleA: draftA,
         scheduleB: draftB,
         createdAt: Date.now(),
-      })
-    } finally { setIsLoading(false) }
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
   async function suggestExamples() {
-    setSuggesting(true)
+    setSuggesting(true);
     try {
       const res = await callAI("Generate two realistic example availability blurbs for two coworkers trying to meet.", {
         schema: { properties: { a: { type: "string" }, b: { type: "string" } } },
-      })
-      const parsed = JSON.parse(res)
-      await database.put({ type: "schedule", slot: "A", text: parsed.a })
-      await database.put({ type: "schedule", slot: "B", text: parsed.b })
-    } finally { setSuggesting(false) }
+      });
+      const parsed = JSON.parse(res);
+      await database.put({ type: "schedule", slot: "A", text: parsed.a });
+      await database.put({ type: "schedule", slot: "B", text: parsed.b });
+    } finally {
+      setSuggesting(false);
+    }
   }
   return (
     <section id="find-button" className="px-4 py-4 space-y-2 sticky bottom-0 bg-black/95 backdrop-blur border-t border-white/10">
@@ -119,12 +123,24 @@ function FindButton({ c, isOwner, draftA, draftB, database }) {
       >
         {isLoading ? (
           <>
-            <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="animate-spin"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M21 12a9 9 0 1 1-6.219-8.56" />
             </svg>
             <span>Finding overlaps…</span>
           </>
-        ) : "Find overlapping times"}
+        ) : (
+          "Find overlapping times"
+        )}
       </button>
       <button
         onClick={suggestExamples}
@@ -134,18 +150,20 @@ function FindButton({ c, isOwner, draftA, draftB, database }) {
         {suggesting ? "Loading example…" : "Try with example schedules"}
       </button>
     </section>
-  )
+  );
 }
 
 function ResultsFeed({ c, isOwner, database }) {
-  const { useLiveQuery } = useFireproof("syncWindows")
-  const { docs: results } = useLiveQuery("type", { key: "result", descending: true })
-  const sorted = [...results].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+  const { useLiveQuery } = useFireproof("syncWindows");
+  const { docs: results } = useLiveQuery("type", { key: "result", descending: true });
+  const sorted = [...results].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   return (
     <section id="results-feed" className="px-4 pt-2 pb-8">
       <h2 className={`${c.textDim} text-xs uppercase tracking-widest mb-3`}>Overlap results ({sorted.length})</h2>
       {sorted.length === 0 && (
-        <p className={`${c.textDim} text-sm italic`}>No analyses yet. {isOwner ? "Paste schedules above and tap the button." : "Waiting for the owner to run an analysis."}</p>
+        <p className={`${c.textDim} text-sm italic`}>
+          No analyses yet. {isOwner ? "Paste schedules above and tap the button." : "Waiting for the owner to run an analysis."}
+        </p>
       )}
       <ul className="space-y-3">
         {sorted.map((r) => (
@@ -154,7 +172,16 @@ function ResultsFeed({ c, isOwner, database }) {
               <span className={`${c.textDim} text-xs`}>{new Date(r.createdAt).toLocaleString()}</span>
               {isOwner && (
                 <button onClick={() => database.del(r._id)} className={`${c.textDim} hover:text-white`} aria-label="Delete">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
                   </svg>
                 </button>
@@ -166,8 +193,12 @@ function ResultsFeed({ c, isOwner, database }) {
                 <li key={i} className="flex gap-3 items-start">
                   <span className={`${c.accent} rounded-md px-2 py-0.5 text-xs font-bold flex-shrink-0`}>#{i + 1}</span>
                   <div className="flex-1">
-                    <div className={`${c.text} text-sm font-semibold`}>{o.day} · {o.timeRange}</div>
-                    <div className={`${c.textDim} text-xs`}>{o.durationMinutes} min{o.fitNote ? ` — ${o.fitNote}` : ""}</div>
+                    <div className={`${c.text} text-sm font-semibold`}>
+                      {o.day} · {o.timeRange}
+                    </div>
+                    <div className={`${c.textDim} text-xs`}>
+                      {o.durationMinutes} min{o.fitNote ? ` — ${o.fitNote}` : ""}
+                    </div>
                   </div>
                 </li>
               ))}
@@ -176,23 +207,27 @@ function ResultsFeed({ c, isOwner, database }) {
         ))}
       </ul>
     </section>
-  )
+  );
 }
 
 export default function App() {
-  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer()
-  const { useLiveQuery, database } = useFireproof("syncWindows")
-  const { docs: schedules } = useLiveQuery("type", { key: "schedule" })
-  const scheduleA = schedules.find((d) => d.slot === "A")
-  const scheduleB = schedules.find((d) => d.slot === "B")
-  const [draftA, setDraftA] = React.useState("")
-  const [draftB, setDraftB] = React.useState("")
-  React.useEffect(() => { if (scheduleA) setDraftA(scheduleA.text) }, [scheduleA?._id])
-  React.useEffect(() => { if (scheduleB) setDraftB(scheduleB.text) }, [scheduleB?._id])
+  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
+  const { useLiveQuery, database } = useFireproof("syncWindows");
+  const { docs: schedules } = useLiveQuery("type", { key: "schedule" });
+  const scheduleA = schedules.find((d) => d.slot === "A");
+  const scheduleB = schedules.find((d) => d.slot === "B");
+  const [draftA, setDraftA] = React.useState("");
+  const [draftB, setDraftB] = React.useState("");
+  React.useEffect(() => {
+    if (scheduleA) setDraftA(scheduleA.text);
+  }, [scheduleA?._id]);
+  React.useEffect(() => {
+    if (scheduleB) setDraftB(scheduleB.text);
+  }, [scheduleB?._id]);
   async function saveSlot(slot, text) {
-    const existing = slot === "A" ? scheduleA : scheduleB
-    if (existing) await database.put({ ...existing, text })
-    else await database.put({ type: "schedule", slot, text })
+    const existing = slot === "A" ? scheduleA : scheduleB;
+    if (existing) await database.put({ ...existing, text });
+    else await database.put({ type: "schedule", slot, text });
   }
 
   const c = {
@@ -207,18 +242,26 @@ export default function App() {
     accent: "bg-[#D4FF00] text-black",
     accentText: "text-[#D4FF00]",
     input: "bg-black border border-white/30 text-white placeholder-[#666666] rounded-lg p-3 w-full min-h-[140px]",
-  }
+  };
 
-  if (isViewerPending) return <div className={c.page} />
+  if (isViewerPending) return <div className={c.page} />;
 
   return (
     <div className={c.page}>
       <Header ViewerTag={ViewerTag} c={c} />
       <main id="app" className="max-w-2xl mx-auto">
-        <ScheduleInputs c={c} isOwner={isOwner} draftA={draftA} draftB={draftB} setDraftA={setDraftA} setDraftB={setDraftB} saveSlot={saveSlot} />
+        <ScheduleInputs
+          c={c}
+          isOwner={isOwner}
+          draftA={draftA}
+          draftB={draftB}
+          setDraftA={setDraftA}
+          setDraftB={setDraftB}
+          saveSlot={saveSlot}
+        />
         <FindButton c={c} isOwner={isOwner} draftA={draftA} draftB={draftB} database={database} />
         <ResultsFeed c={c} isOwner={isOwner} database={database} />
       </main>
     </div>
-  )
+  );
 }

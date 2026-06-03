@@ -1,7 +1,7 @@
-import React from "react"
-import { callAI } from "call-ai"
-import { useFireproof } from "use-fireproof"
-import { useViewer } from "use-vibes"
+import React from "react";
+import { callAI } from "call-ai";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
 
 const MOODS = [
   { key: "radiant", label: "Radiant" },
@@ -9,56 +9,64 @@ const MOODS = [
   { key: "meh", label: "Meh" },
   { key: "tense", label: "Tense" },
   { key: "heavy", label: "Heavy" },
-]
+];
 
 function Spinner() {
   return (
-    <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <svg
+      className="animate-spin"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
       <path d="M21 12a9 9 0 1 1-6.219-8.56" />
     </svg>
-  )
+  );
 }
 
 function ComposeSection() {
-  const { viewer, isViewerPending } = useViewer()
-  const { database } = useFireproof("hearthJournal")
-  const [mood, setMood] = React.useState("calm")
-  const [notes, setNotes] = React.useState("")
-  const [reflection, setReflection] = React.useState(null)
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [isSaving, setIsSaving] = React.useState(false)
+  const { viewer, isViewerPending } = useViewer();
+  const { database } = useFireproof("hearthJournal");
+  const [mood, setMood] = React.useState("calm");
+  const [notes, setNotes] = React.useState("");
+  const [reflection, setReflection] = React.useState(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
 
   async function generate() {
-    if (!viewer) return
-    setIsLoading(true)
+    if (!viewer) return;
+    setIsLoading(true);
     try {
       const raw = await callAI(
         `The journaler is feeling "${mood}". Their notes: "${notes || "(none yet)"}". Generate one thoughtful reflection question and one brief warm affirmation.`,
         { schema: { properties: { question: { type: "string" }, affirmation: { type: "string" } } } }
-      )
-      setReflection(JSON.parse(raw))
+      );
+      setReflection(JSON.parse(raw));
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   async function suggestStarter() {
-    if (!viewer) return
-    setIsLoading(true)
+    if (!viewer) return;
+    setIsLoading(true);
     try {
-      const raw = await callAI(
-        `Suggest a one-sentence journal opener for someone feeling "${mood}".`,
-        { schema: { properties: { opener: { type: "string" } } } }
-      )
-      setNotes(JSON.parse(raw).opener)
+      const raw = await callAI(`Suggest a one-sentence journal opener for someone feeling "${mood}".`, {
+        schema: { properties: { opener: { type: "string" } } },
+      });
+      setNotes(JSON.parse(raw).opener);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   async function save() {
-    if (!viewer || !notes.trim()) return
-    setIsSaving(true)
+    if (!viewer || !notes.trim()) return;
+    setIsSaving(true);
     try {
       await database.put({
         type: "entry",
@@ -67,33 +75,37 @@ function ComposeSection() {
         reflection,
         authorHandle: viewer.userHandle,
         createdAt: Date.now(),
-      })
-      setNotes("")
-      setReflection(null)
+      });
+      setNotes("");
+      setReflection(null);
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
   }
 
-  if (isViewerPending) return null
+  if (isViewerPending) return null;
 
   if (!viewer) {
     return (
       <section id="compose" className="rounded-2xl p-5 border border-white/10 bg-[oklch(0.38_0.17_295/0.4)]">
-        <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: "Fredoka, sans-serif" }}>Tonight's entry</h2>
+        <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: "Fredoka, sans-serif" }}>
+          Tonight's entry
+        </h2>
         <p className="text-sm opacity-80">Sign in above to begin your journal.</p>
       </section>
-    )
+    );
   }
 
   return (
     <section id="compose" className="rounded-2xl p-5 border border-white/10 bg-[oklch(0.38_0.17_295/0.4)]">
-      <h2 className="text-xl font-semibold mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>Tonight's entry</h2>
+      <h2 className="text-xl font-semibold mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>
+        Tonight's entry
+      </h2>
 
       <label className="block text-sm font-medium mb-2 opacity-90">How are you feeling?</label>
       <div className="flex flex-wrap gap-2 mb-4">
         {MOODS.map((m) => {
-          const active = mood === m.key
+          const active = mood === m.key;
           return (
             <button
               key={m.key}
@@ -107,7 +119,7 @@ function ComposeSection() {
             >
               {m.label}
             </button>
-          )
+          );
         })}
       </div>
 
@@ -143,29 +155,43 @@ function ComposeSection() {
           disabled={isLoading}
           className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold min-h-[44px] border border-white/15 bg-[oklch(0.47_0.18_295)] text-white disabled:opacity-50"
         >
-          {isLoading ? <><Spinner /> Reflecting...</> : "Generate reflection"}
+          {isLoading ? (
+            <>
+              <Spinner /> Reflecting...
+            </>
+          ) : (
+            "Generate reflection"
+          )}
         </button>
         <button
           onClick={save}
           disabled={isSaving || !notes.trim()}
           className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold min-h-[44px] bg-[oklch(0.70_0.15_155)] text-[oklch(0.15_0.10_155)] disabled:opacity-50"
         >
-          {isSaving ? <><Spinner /> Saving...</> : "Save entry"}
+          {isSaving ? (
+            <>
+              <Spinner /> Saving...
+            </>
+          ) : (
+            "Save entry"
+          )}
         </button>
       </div>
     </section>
-  )
+  );
 }
 
 function FeedSection() {
-  const { ViewerTag, isOwner } = useViewer()
-  const { useLiveQuery, database } = useFireproof("hearthJournal")
-  const { docs } = useLiveQuery("createdAt", { descending: true, limit: 50 })
-  const entries = docs.filter((d) => d.type === "entry")
+  const { ViewerTag, isOwner } = useViewer();
+  const { useLiveQuery, database } = useFireproof("hearthJournal");
+  const { docs } = useLiveQuery("createdAt", { descending: true, limit: 50 });
+  const entries = docs.filter((d) => d.type === "entry");
 
   return (
     <section id="feed" className="rounded-2xl p-5 border border-white/10 bg-[oklch(0.38_0.17_295/0.4)]">
-      <h2 className="text-xl font-semibold mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>Past entries</h2>
+      <h2 className="text-xl font-semibold mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>
+        Past entries
+      </h2>
       {entries.length === 0 ? (
         <p className="text-sm opacity-70">No entries yet — your journal will grow here.</p>
       ) : (
@@ -201,11 +227,11 @@ function FeedSection() {
         </ul>
       )}
     </section>
-  )
+  );
 }
 
 export default function App() {
-  const { ViewerTag } = useViewer()
+  const { ViewerTag } = useViewer();
 
   return (
     <div
@@ -215,7 +241,10 @@ export default function App() {
         fontFamily: "Nunito, sans-serif",
       }}
     >
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=optional" />
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=optional"
+      />
       <header
         id="app-header"
         className="sticky top-0 z-10 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-white/10"
@@ -231,5 +260,5 @@ export default function App() {
         <FeedSection />
       </main>
     </div>
-  )
+  );
 }

@@ -1,31 +1,31 @@
-import React from "react"
-import { useFireproof } from "use-fireproof"
-import { useViewer } from "use-vibes"
+import React from "react";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
 
-const SIZE = 16
-const DEFAULT_PALETTE = ["#1a1822", "#e23636", "#f5d547", "#3fa34d", "#3f7fa3", "#f5f3ec"]
+const SIZE = 16;
+const DEFAULT_PALETTE = ["#1a1822", "#e23636", "#f5d547", "#3fa34d", "#3f7fa3", "#f5f3ec"];
 
 export default function App() {
-  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer()
-  const { database, useLiveQuery } = useFireproof("pixelforge")
-  const { docs: pixelDocs } = useLiveQuery("type", { key: "pixel" })
-  const { docs: paletteDocs } = useLiveQuery("type", { key: "palette-color" })
-  const [activeColor, setActiveColor] = React.useState(DEFAULT_PALETTE[1])
-  const [isDragging, setIsDragging] = React.useState(false)
+  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
+  const { database, useLiveQuery } = useFireproof("pixelforge");
+  const { docs: pixelDocs } = useLiveQuery("type", { key: "pixel" });
+  const { docs: paletteDocs } = useLiveQuery("type", { key: "palette-color" });
+  const [activeColor, setActiveColor] = React.useState(DEFAULT_PALETTE[1]);
+  const [isDragging, setIsDragging] = React.useState(false);
 
   const pixelMap = React.useMemo(() => {
-    const m = {}
-    for (const p of pixelDocs) m[p._id] = p.color
-    return m
-  }, [pixelDocs])
+    const m = {};
+    for (const p of pixelDocs) m[p._id] = p.color;
+    return m;
+  }, [pixelDocs]);
 
-  const palette = paletteDocs.length > 0 ? paletteDocs.map(d => d.color) : DEFAULT_PALETTE
+  const palette = paletteDocs.length > 0 ? paletteDocs.map((d) => d.color) : DEFAULT_PALETTE;
 
   const paintCell = (r, col) => {
-    if (!viewer) return
-    const id = `px:${r}:${col}`
-    database.put({ _id: id, type: "pixel", color: activeColor, row: r, col })
-  }
+    if (!viewer) return;
+    const id = `px:${r}:${col}`;
+    database.put({ _id: id, type: "pixel", color: activeColor, row: r, col });
+  };
 
   const c = {
     page: "min-h-screen bg-[#f5f3ec] text-[#1a1822] font-sans",
@@ -37,9 +37,9 @@ export default function App() {
     btn: "min-h-[44px] px-4 py-2 bg-[#e23636] text-white font-semibold rounded border-2 border-[#1a1822] hover:bg-[#c52a2a] disabled:opacity-50",
     btnGhost: "min-h-[44px] px-4 py-2 bg-white text-[#1a1822] font-semibold rounded border-2 border-[#1a1822] hover:bg-[#f5f3ec]",
     muted: "text-sm text-[#6b6878]",
-  }
+  };
 
-  if (isViewerPending) return <div className={c.page} />
+  if (isViewerPending) return <div className={c.page} />;
 
   return (
     <div className={c.page}>
@@ -59,10 +59,10 @@ export default function App() {
             onTouchEnd={() => setIsDragging(false)}
           >
             {Array.from({ length: SIZE * SIZE }).map((_, i) => {
-              const r = Math.floor(i / SIZE)
-              const col = i % SIZE
-              const id = `px:${r}:${col}`
-              const fill = pixelMap[id] || "#ffffff"
+              const r = Math.floor(i / SIZE);
+              const col = i % SIZE;
+              const id = `px:${r}:${col}`;
+              const fill = pixelMap[id] || "#ffffff";
               return (
                 <div
                   key={id}
@@ -72,7 +72,7 @@ export default function App() {
                   style={{ backgroundColor: fill }}
                   className="border border-[#e5e3dc] cursor-pointer"
                 />
-              )
+              );
             })}
           </div>
           {!viewer && <p className={c.muted + " mt-3"}>Sign in to paint.</p>}
@@ -100,10 +100,7 @@ export default function App() {
               />
               <span className={c.muted}>Add color</span>
               {paletteDocs.length > 0 && (
-                <button
-                  className={c.btnGhost}
-                  onClick={() => paletteDocs.forEach(d => database.del(d._id))}
-                >
+                <button className={c.btnGhost} onClick={() => paletteDocs.forEach((d) => database.del(d._id))}>
                   Reset palette
                 </button>
               )}
@@ -116,26 +113,26 @@ export default function App() {
             <button
               className={c.btn}
               onClick={() => {
-                const scale = 16
-                const cv = document.createElement("canvas")
-                cv.width = SIZE * scale
-                cv.height = SIZE * scale
-                const ctx = cv.getContext("2d")
-                ctx.fillStyle = "#ffffff"
-                ctx.fillRect(0, 0, cv.width, cv.height)
+                const scale = 16;
+                const cv = document.createElement("canvas");
+                cv.width = SIZE * scale;
+                cv.height = SIZE * scale;
+                const ctx = cv.getContext("2d");
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, cv.width, cv.height);
                 for (let r = 0; r < SIZE; r++) {
                   for (let col = 0; col < SIZE; col++) {
-                    const fill = pixelMap[`px:${r}:${col}`]
+                    const fill = pixelMap[`px:${r}:${col}`];
                     if (fill) {
-                      ctx.fillStyle = fill
-                      ctx.fillRect(col * scale, r * scale, scale, scale)
+                      ctx.fillStyle = fill;
+                      ctx.fillRect(col * scale, r * scale, scale, scale);
                     }
                   }
                 }
-                const link = document.createElement("a")
-                link.download = `pixelforge-${Date.now()}.png`
-                link.href = cv.toDataURL("image/png")
-                link.click()
+                const link = document.createElement("a");
+                link.download = `pixelforge-${Date.now()}.png`;
+                link.href = cv.toDataURL("image/png");
+                link.click();
               }}
             >
               Export PNG
@@ -145,7 +142,7 @@ export default function App() {
                 className={c.btnGhost}
                 onClick={() => {
                   if (confirm("Clear all pixels?")) {
-                    pixelDocs.forEach(d => database.del(d._id))
+                    pixelDocs.forEach((d) => database.del(d._id));
                   }
                 }}
               >
@@ -156,5 +153,5 @@ export default function App() {
         </section>
       </main>
     </div>
-  )
+  );
 }

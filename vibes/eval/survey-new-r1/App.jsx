@@ -1,7 +1,7 @@
-import React from "react"
-import { callAI } from "call-ai"
-import { useFireproof } from "use-fireproof"
-import { useViewer } from "use-vibes"
+import React from "react";
+import { callAI } from "call-ai";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
 
 function SurveyForm() {
   return (
@@ -10,18 +10,18 @@ function SurveyForm() {
       <p className="text-sm text-[#666] mb-4">5 quick questions. One submission per visitor.</p>
       {/* survey questions land here */}
     </section>
-  )
+  );
 }
 
 function ResponseReview({ database, useLiveQuery, latestSummary }) {
-  const { docs: responses } = useLiveQuery("type", { key: "response", descending: true })
-  const [busy, setBusy] = React.useState(false)
+  const { docs: responses } = useLiveQuery("type", { key: "response", descending: true });
+  const [busy, setBusy] = React.useState(false);
 
   async function generateSummary() {
-    if (busy || responses.length === 0) return
-    setBusy(true)
+    if (busy || responses.length === 0) return;
+    setBusy(true);
     try {
-      const prompt = `You are a feedback analyst. Summarize these ${responses.length} survey responses. Identify key themes, sentiment highlights, and an overall takeaway.\n\nResponses:\n${responses.map((r, i) => `#${i + 1}: ${JSON.stringify(r.answers)}`).join("\n")}`
+      const prompt = `You are a feedback analyst. Summarize these ${responses.length} survey responses. Identify key themes, sentiment highlights, and an overall takeaway.\n\nResponses:\n${responses.map((r, i) => `#${i + 1}: ${JSON.stringify(r.answers)}`).join("\n")}`;
       const raw = await callAI(prompt, {
         schema: {
           properties: {
@@ -30,11 +30,11 @@ function ResponseReview({ database, useLiveQuery, latestSummary }) {
             takeaway: { type: "string", description: "Overall takeaway in 2-3 sentences" },
           },
         },
-      })
-      const parsed = JSON.parse(raw)
-      await database.put({ type: "summary", ...parsed, responseCount: responses.length, createdAt: Date.now() })
+      });
+      const parsed = JSON.parse(raw);
+      await database.put({ type: "summary", ...parsed, responseCount: responses.length, createdAt: Date.now() });
     } finally {
-      setBusy(false)
+      setBusy(false);
     }
   }
 
@@ -52,12 +52,25 @@ function ResponseReview({ database, useLiveQuery, latestSummary }) {
       >
         {busy ? (
           <>
-            <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg
+              className="animate-spin"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
               <path d="M12 2a10 10 0 0 1 10 10" />
             </svg>
             Generating...
           </>
-        ) : latestSummary ? "Regenerate summary" : "Generate summary"}
+        ) : latestSummary ? (
+          "Regenerate summary"
+        ) : (
+          "Generate summary"
+        )}
       </button>
       <ul className="space-y-3">
         {responses.length === 0 && <li className="text-sm text-[#666] italic">No responses yet.</li>}
@@ -74,7 +87,7 @@ function ResponseReview({ database, useLiveQuery, latestSummary }) {
         ))}
       </ul>
     </section>
-  )
+  );
 }
 
 function SummaryPanel({ summary }) {
@@ -84,18 +97,22 @@ function SummaryPanel({ summary }) {
         <h2 className="text-lg font-medium mb-1 text-[#eaeaea]">Published summary</h2>
         <p className="text-sm text-[#666]">No summary published yet.</p>
       </section>
-    )
+    );
   }
   return (
     <section id="summary-panel" className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] p-5">
       <h2 className="text-lg font-medium mb-1 text-[#eaeaea]">Published summary</h2>
-      <p className="text-xs text-[#666] mb-4">Based on {summary.responseCount} responses · {new Date(summary.createdAt).toLocaleDateString()}</p>
+      <p className="text-xs text-[#666] mb-4">
+        Based on {summary.responseCount} responses · {new Date(summary.createdAt).toLocaleDateString()}
+      </p>
       <div className="space-y-4 text-sm">
         <div>
           <h3 className="text-xs uppercase tracking-wide text-[#666] mb-2">Key themes</h3>
           <ul className="space-y-1">
             {summary.themes?.map((t, i) => (
-              <li key={i} className="text-[#eaeaea]">• {t}</li>
+              <li key={i} className="text-[#eaeaea]">
+                • {t}
+              </li>
             ))}
           </ul>
         </div>
@@ -109,23 +126,23 @@ function SummaryPanel({ summary }) {
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 export default function App() {
-  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer()
-  const { database, useLiveQuery, access } = useFireproof("feedback")
-  const { docs: summaries } = useLiveQuery("type", { key: "summary", descending: true, limit: 1 })
-  const latestSummary = summaries[0]
+  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
+  const { database, useLiveQuery, access } = useFireproof("feedback");
+  const { docs: summaries } = useLiveQuery("type", { key: "summary", descending: true, limit: 1 });
+  const latestSummary = summaries[0];
 
   const c = {
     page: "min-h-screen bg-[#030303] text-[#eaeaea]",
     header: "sticky top-0 z-10 border-b border-[#1a1a1a] bg-[#030303]/95 backdrop-blur px-5 py-4 flex items-center justify-between",
     title: "text-base font-medium tracking-tight",
     main: "max-w-2xl mx-auto px-4 py-6 space-y-5",
-  }
+  };
 
-  if (isViewerPending) return <div className={c.page} />
+  if (isViewerPending) return <div className={c.page} />;
 
   return (
     <div className={c.page} style={{ fontFamily: "Inter, sans-serif" }}>
@@ -135,9 +152,11 @@ export default function App() {
       </header>
       <main id="app" className={c.main}>
         <SurveyForm database={database} hasSummary={!!latestSummary} />
-        {isOwner && <ResponseReview database={database} useLiveQuery={useLiveQuery} isOwner={isOwner} latestSummary={latestSummary} />}
+        {isOwner && (
+          <ResponseReview database={database} useLiveQuery={useLiveQuery} isOwner={isOwner} latestSummary={latestSummary} />
+        )}
         <SummaryPanel summary={latestSummary} />
       </main>
     </div>
-  )
+  );
 }

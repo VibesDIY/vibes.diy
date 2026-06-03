@@ -5,7 +5,7 @@
 // - Coach suggestions (type: "coach") are owner-only writes
 // - Everyone (including anonymous viewers) gets read-only via app-level public toggle
 export default function (doc, oldDoc, user) {
-  if (!user) throw { forbidden: "sign in" }
-  if (!user.isOwner) throw { forbidden: "owner only" }
-  return {}
+  if (!user) throw { forbidden: "sign in" };
+  if (!user.isOwner) throw { forbidden: "owner only" };
+  return {};
 }

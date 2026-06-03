@@ -3,9 +3,9 @@
 // allowAnonymous lets candidates apply without signing in if the app owner opens it up.
 export function careerpost(doc, oldDoc, user) {
   if (doc.type === "application") {
-    if (oldDoc) throw { forbidden: "applications cannot be edited after submission" }
-    return { allowAnonymous: true }
+    if (oldDoc) throw { forbidden: "applications cannot be edited after submission" };
+    return { allowAnonymous: true };
   }
-  if (!user) throw { forbidden: "sign in" }
-  return {}
+  if (!user) throw { forbidden: "sign in" };
+  return {};
 }

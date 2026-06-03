@@ -1,1 +1,3 @@
-        {isOwner && <RequestList database={database} useLiveQuery={useLiveQuery} />}
+{
+  isOwner && <RequestList database={database} useLiveQuery={useLiveQuery} />;
+}
