@@ -31,7 +31,8 @@ Three changes follow from that feedback:
 | Gist visibility | **Public** (`gh gist create --public`). |
 | Gist-create failure | **Fall back to full inline comment** (current behavior) + a one-line "gist upload failed" note. The report is never lost. |
 | Screenshots | **Inline-embedded via two-pass publish.** Only the screenshots that findings reference (evidence); per-step working captures stay local. |
-| Pass-2 (gist edit) failure | Do **not** fall back to inline comment — the gist already holds the triage text and PNGs as file panes. Post the comment with the gist link; images render as panes, not inline. |
+| Screenshot transport | `gh gist create` refuses binaries, so PNGs are pushed into the gist's **git repo** (`gh gist clone` + `git push`), which renders them inline via raw URLs. |
+| Pass-2 (git push) failure | Do **not** fall back to inline comment — the gist already holds the triage text (screenshot tokens left as literal placeholders, no images). Post the comment with the gist link anyway. |
 | Comment dedup | **Sticky edit-in-place** via a hidden HTML marker. One qa-pr comment per PR, always current. |
 
 ## What changes, section by section
@@ -47,9 +48,9 @@ Today Step 7 finalizes `triage.md`, greps for leftover placeholders, then runs o
      `triage.md` inline exactly as the skill does today, body prefixed with
      `> ⚠️ Gist upload failed; full triage inline below.`, carrying the dedup marker.
      Skip the remaining steps.
-   - If **pass 2** (`gh gist edit`) fails → continue with the gist URL from pass 1;
-     evidence images will render as file panes rather than inline. Note nothing extra in
-     the comment.
+   - If **pass 2** (`gh gist clone` + `git push`) fails → continue with the gist URL from
+     pass 1; the gist shows the triage text with screenshot placeholders (no images). Note
+     nothing extra in the comment.
 3. **Compose the concise comment** into `qa-reports/{run_id}/comment.md`, derived from
    fields already in the triage, and carrying the hidden dedup marker:
 
@@ -71,36 +72,47 @@ Today Step 7 finalizes `triage.md`, greps for leftover placeholders, then runs o
 **Scope:** the evidence set = the union of `findings[].screenshots`. Per-step working
 captures (`1-signin-desktop.png`, etc.) that no finding references stay local, as today.
 
-**Mechanism:**
+**Mechanism (two-pass — create text-only, then git-push the images):** `gh gist create`
+**refuses binary files** ("binary file not supported"), so PNGs cannot ride along on the
+CLI create call. They go in via the gist's underlying **git repo**, which does accept
+binaries — verified empirically: a PNG pushed into a gist serves `image/png` at HTTP 200
+from its raw URL and renders inline.
 
-1. **Pass 1 — create:**
+1. **Pass 1 — create (text-only):**
    ```bash
-   gh gist create --public --desc "<desc>" \
-     qa-reports/{run_id}/triage.md <evidence-1.png> <evidence-2.png> …
+   gh gist create --public --desc "<desc>" qa-reports/{run_id}/triage.md
    ```
-   Parse stdout for the gist URL → derive `<owner>` and `<gist_id>` (last path segment).
+   Only `triage.md` (no PNG args). Parse stdout for the gist URL → derive `<owner>` and
+   `<gist_id>` (last path segment) and `<raw_base> =
+   https://gist.githubusercontent.com/<owner>/<gist_id>/raw/`.
    `<desc>` = `qa-pr triage — PR #<N> — <verdict> (<run_id>)`.
-2. **Rewrite `triage.md`:** replace each local screenshot reference with a sized,
+2. **Rewrite `triage.md`:** replace each `{{EVIDENCE:<basename>.png}}` token with a sized,
    click-through thumbnail at the raw gist URL:
    ```html
-   <a href="<raw>"><img src="<raw>" width="240"></a>
+   <a href="<raw_base><basename>.png"><img src="<raw_base><basename>.png" width="240"></a>
    ```
-   where `<raw> = https://gist.githubusercontent.com/<owner>/<gist_id>/raw/<basename>`.
-   The thumbnail lands in the finding's new **Evidence** slot (template change below).
-3. **Pass 2 — edit:**
+   The thumbnail lands in the finding's **Evidence** slot (template change below).
+3. **Pass 2 — git-push the PNGs + rewritten triage:**
    ```bash
-   gh gist edit <gist_id> qa-reports/{run_id}/triage.md
+   gh gist clone <gist_id> "$dir"
+   cp qa-reports/{run_id}/<evidence>.png "$dir"/
+   cp qa-reports/{run_id}/triage.md "$dir"/triage.md
+   git -C "$dir" add -A && git -C "$dir" commit -m "qa-pr: evidence for {run_id}" && git -C "$dir" push
    ```
-   pushes the corrected markdown (filename matches, so it overwrites `triage.md`).
+   One commit carries both the evidence images and the rewritten markdown; the raw URLs
+   then serve the images and `triage.md` renders them inline. (No `gh gist edit` — the git
+   push replaces it.)
 
 **Edge cases:**
 - **Zero evidence screenshots** (clean pass, or capture failed) → no images to embed,
-  the two-pass collapses to a single `gh gist create` with `triage.md` only, no rewrite.
-- **Pass-2 failure** → degrade as described in Step 7 (gist link, images as panes).
+  the flow collapses to a single text-only `gh gist create`, no rewrite, no git push.
+- **Pass-2 failure** (clone/commit/push) → degrade as described in Step 7: the gist exists
+  with the triage text (screenshot tokens left as literal placeholders, no images); post
+  the comment with the gist link anyway.
 
-**Why two passes:** gist markdown renders images only from absolute URLs, and a
-screenshot's raw gist URL isn't known until the gist exists — chicken-and-egg. Create to
-learn the ID, rewrite, edit.
+**Why two passes:** the gist id (hence `<raw_base>`) isn't known until the gist exists, and
+binaries can't go through `gh gist create` at all — so create text-only to learn the id,
+then push images + the URL-rewritten triage into the gist repo with git.
 
 ### Comment dedup — sticky via hidden marker
 
@@ -131,15 +143,18 @@ preserved off-thread in `runs.jsonl` (below).
 Today: authorizes **exactly one** GitHub write (`gh pr comment`). New: authorizes three
 write *operations*, all no-confirmation:
 
-1. **Gist publish** — `gh gist create --public …` + `gh gist edit …` (one logical
-   publish, two calls).
+1. **Gist publish** — `gh gist create --public …`, then (when there are evidence images)
+   `gh gist clone <id>` + a `git commit`/`git push` into that gist's own repo to add the
+   PNGs and the rewritten triage (one logical publish).
 2. **Comment post** — `gh pr comment <N> …` **or** the comment-edit
    `gh api …/issues/comments/<id> -X PATCH …`. Editing only ever targets the skill's own
    prior marked comment on the PR under test.
 
 Still forbidden, unchanged: opening issues, editing PR titles/descriptions, requesting
-review, merging, pushing commits, commenting on other PRs, any other GitHub write. The
-"exactly one write" wording is replaced; the forbidden list is preserved.
+review, merging, pushing commits **to the project repo or any non-gist remote**,
+commenting on other PRs, any other GitHub write. The git push in (1) targets only the
+operator's own throwaway triage gist — not the project repo. The "exactly one write"
+wording is replaced; the forbidden list is otherwise preserved.
 
 ### Frontmatter + intro copy
 
@@ -171,7 +186,8 @@ All existing partial-triage branches (OAuth sign-in fails, generation never comp
 failure surfaces:
 
 - **Gist create (pass 1) fails** → full inline comment fallback (still deduped via marker).
-- **Gist edit (pass 2) fails** → post comment with gist link; images render as panes.
+- **Git push of evidence (pass 2) fails** → post comment with gist link; the gist shows the
+  triage text with screenshot placeholders (no images embedded).
 
 ## Out of scope
 
