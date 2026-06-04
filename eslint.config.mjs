@@ -36,7 +36,7 @@ const opts = tseslint.config(
       "src/missingTypes/lib.deno.d.ts",
       "**/notes/**",
       "docs/superpowers/specs/eval-access-fn-workflow.js",
-      "vibes/eval/**/access.js",
+      "vibes/**/access.js",
       "vibesbox/**",
       "vibes.diy/tempo/**",
       "vibes.diy/failback-homepage/**",
