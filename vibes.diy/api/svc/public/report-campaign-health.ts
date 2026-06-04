@@ -203,7 +203,9 @@ async function fetchCampaignHealth(
 
   const spends = rows.map((r) => Number(r.spend)).sort((a, b) => a - b);
   const medianSpend = spends[Math.floor(spends.length / 2)] ?? 0;
-  const reportDays = Number(days);
+  const reportDays = since
+    ? Math.max(1, Math.round((new Date(today).getTime() - new Date(sinceIso).getTime()) / 86_400_000))
+    : Number(days);
   const nowMs = Date.now();
 
   const zeroSpend = rows.filter((r) => Number(r.spend) === 0).map((r) => r.campaign_name);
