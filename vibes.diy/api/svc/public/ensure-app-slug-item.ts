@@ -34,6 +34,7 @@ import { ensureAppMetadata } from "../intern/ensure-app-metadata.js";
 import { ensurePushSeededChat } from "../intern/ensure-push-seeded-chat.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 import { processAccessBindings } from "../intern/process-access-bindings.js";
+import { processBackendBindings } from "../intern/process-backend-bindings.js";
 
 // Build a preAllocate-friendly prompt from pushed code. Picks the first
 // code-block (typically App.jsx), takes the first 50 lines, and labels
@@ -144,6 +145,18 @@ export async function ensureAppSlugItem(
     console.warn(
       `ensureAppSlugItem: access binding processing failed for ${ensured.ownerHandle}/${ensured.appSlug}:`,
       rAccessBindings.Err()
+    );
+  }
+
+  const rBackendBindings = await processBackendBindings(vctx, {
+    ownerHandle: ensured.ownerHandle,
+    appSlug: ensured.appSlug,
+    fullFileSystem,
+  });
+  if (rBackendBindings.isErr()) {
+    console.warn(
+      `ensureAppSlugItem: backend binding processing failed for ${ensured.ownerHandle}/${ensured.appSlug}:`,
+      rBackendBindings.Err()
     );
   }
 

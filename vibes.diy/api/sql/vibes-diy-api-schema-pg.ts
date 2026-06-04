@@ -1,5 +1,5 @@
 import { PromptAndBlockMsgs } from "@vibes.diy/api-types";
-import { integer, pgTable, text, jsonb, primaryKey, uniqueIndex, index, customType, numeric } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, jsonb, primaryKey, uniqueIndex, index, customType, numeric } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Uint8Array }>({
   dataType() {
@@ -356,4 +356,23 @@ export const sqlAccessFnOutputs = pgTable(
     primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId] }),
     index("AccessFnOutputs_grants_idx").on(table.ownerHandle, table.appSlug, table.dbName, table.fnCid),
   ]
+);
+
+// Per-vibe backend function binding: tracks which vibes have a /backend.js file
+// and what exports it provides (onChange, fetch, scheduled).
+// PK is (ownerHandle, appSlug) — one binding per app.
+export const sqlBackendFunctionBindings = pgTable(
+  "BackendFunctionBindings",
+  {
+    ownerHandle: text("userSlug").notNull(),
+    appSlug: text().notNull(),
+    backendCid: text().notNull(),
+    backendAssetUri: text(),
+    hasOnChange: boolean().notNull().default(false),
+    hasFetch: boolean().notNull().default(false),
+    hasScheduled: boolean().notNull().default(false),
+    scheduledInterval: text(),
+    updated: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.ownerHandle, table.appSlug] })]
 );

@@ -24,3 +24,4 @@ vibes.diy/pkg/test/url-origin-normalization.test.ts:32:    const referrer = new 
 vibes.diy/pkg/test/url-origin-normalization.test.ts:33:    const current = new URL("http://vibes.diy/logout");
 vibes.diy/pkg/test/url-origin-normalization.test.ts:38:    const referrer = new URL("https://attacker.com/logout");
 vibes.diy/pkg/test/url-origin-normalization.test.ts:39:    const current = new URL("https://vibes.diy/logout");
+vibes.diy/pkg/workers/backend-do.ts:146:          const getUrl = new URL(putDocUrl);
