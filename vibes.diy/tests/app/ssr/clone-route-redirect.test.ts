@@ -12,29 +12,19 @@
 import { describe, it, expect } from "vitest";
 import { loader as cloneLoader } from "../../../pkg/app/routes/clone.$ownerHandle.$appSlug.js";
 
-function callLoader(params: { ownerHandle: string; appSlug: string; fsId?: string }, url: string) {
-  return cloneLoader({
-    params,
-    request: new Request(url),
-    context: {} as unknown as Parameters<typeof cloneLoader>[0]["context"],
-  });
+function callLoader(params: { ownerHandle: string; appSlug: string; fsId?: string }) {
+  return cloneLoader({ params });
 }
 
 describe("clone route redirect", () => {
   it("redirects /clone/og/<slug> to the remix flow with skipChat=true", async () => {
-    const res = await callLoader(
-      { ownerHandle: "og", appSlug: "daily-specials-board" },
-      "https://vibes.diy/clone/og/daily-specials-board"
-    );
+    const res = await callLoader({ ownerHandle: "og", appSlug: "daily-specials-board" });
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toBe("/remix/og/daily-specials-board?skipChat=true");
   });
 
   it("preserves the optional fsId segment", async () => {
-    const res = await callLoader(
-      { ownerHandle: "og", appSlug: "daily-specials-board", fsId: "zabc12345678" },
-      "https://vibes.diy/clone/og/daily-specials-board/zabc12345678"
-    );
+    const res = await callLoader({ ownerHandle: "og", appSlug: "daily-specials-board", fsId: "zabc12345678" });
     expect(res.headers.get("Location")).toBe("/remix/og/daily-specials-board/zabc12345678?skipChat=true");
   });
 });
