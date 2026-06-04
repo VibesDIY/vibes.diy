@@ -67,7 +67,7 @@
     "react-markdown": "^10.1.0",
     "react-router": "^7.15.0",
     "react-router-dom": "^7.15.0",
-    "tailwind-merge": "^3.5.0",
+    "tailwind-merge": "^3.6.0",
     "use-fireproof": "0.24.19",
     "use-vibes": "workspace:*",
     "wrangler": "^4.88.0"
@@ -97,7 +97,7 @@
     "vite": "^7.3.3",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "~4.1.7",
-    "yaml": "^2.8.3",
+    "yaml": "^2.9.0",
     "zx": "^8.8.5"
   },
   "repository": {
