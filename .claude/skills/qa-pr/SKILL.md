@@ -15,10 +15,10 @@ The skill is invoked as `/qa-pr <PR-number>` (for example, `/qa-pr 1714`).
 
 This skill is explicitly authorized to perform the following GitHub write operations against **the PR passed as the argument**, with no confirmation prompt required:
 
-1. **Publish the triage gist** — `gh gist create --public …` to create the gist, and `gh gist edit …` to push the screenshot-rewritten triage back into that same gist. (One logical publish; see Step 7.)
+1. **Publish the triage gist** — `gh gist create --public …` to create the gist (text-only; `gh gist create` refuses binaries), then `gh gist clone …` + a `git commit`/`git push` into that gist's own repo to add the evidence PNGs and the screenshot-rewritten triage. (One logical publish; see Step 7.)
 2. **Post or update the summary comment** — either `gh pr comment <PR-number> --body-file <comment>` to create the comment, or `gh api repos/VibesDIY/vibes.diy/issues/comments/<id> -X PATCH -F body=@<comment>` to edit the skill's **own** prior marked comment on this PR in place. (One logical post; see Step 7's sticky-comment flow.)
 
-The skill is **not** authorized to: open issues, edit PR titles or descriptions, request review, merge, push commits, comment on or edit comments on **other** PRs, edit comments it did not author, or perform any other GitHub write. The comment-edit operation may only ever target a comment that (a) is on the PR under test, (b) was authored by the current `gh` user, and (c) contains the marker `<!-- qa-pr-triage-comment -->`. If any other write would help, surface the suggestion in the triage body — do not act on it.
+The skill is **not** authorized to: open issues, edit PR titles or descriptions, request review, merge, push commits to the project repo or any non-gist remote, comment on or edit comments on **other** PRs, edit comments it did not author, or perform any other GitHub write. (The `git push` in operation 1 targets only the operator's own triage gist, not the project repo.) The comment-edit operation may only ever target a comment that (a) is on the PR under test, (b) was authored by the current `gh` user, and (c) contains the marker `<!-- qa-pr-triage-comment -->`. If any other write would help, surface the suggestion in the triage body — do not act on it.
 
 ## Sign-in model (v0.3 design note)
 
@@ -199,19 +199,104 @@ Keep the working file editable as you go — append findings into the relevant t
 
 ## Step 7 — Render and post
 
-When both phases are complete (or aborted under a documented failure mode):
+When both phases are complete (or aborted under a documented failure mode), publish the full triage to a public gist, post a concise summary comment that links to it, then sign out. The full triage never goes in the PR comment — long comments pollute a reviewer's working context; the gist holds the detail and the comment is a scannable pointer.
 
-1. Finalize all placeholders in `qa-reports/{run_id}/triage.md`. Verify by running `grep -oE '\{[A-Z0-9_]+\}' qa-reports/{run_id}/triage.md` — the output must be empty.
-2. Post the comment:
+**7.1 — Finalize the triage.** Fill every placeholder in `qa-reports/{run_id}/triage.md`, including each finding's **Evidence** cell. For a finding that has no screenshot, put a literal `—` in its Evidence cell. For a finding **with** screenshot(s), leave a placeholder token `{{EVIDENCE:<basename>.png}}` in the Evidence cell for each shot (e.g. `{{EVIDENCE:remix-live-mobile.png}}`) — Step 7.3 rewrites these into inline image tags once the gist exists. Then verify no schema placeholders remain:
 
 ```bash
-gh pr comment <PR-NUMBER> --body-file qa-reports/{run_id}/triage.md
+grep -oE '\{[A-Z0-9_]+\}' qa-reports/{run_id}/triage.md
 ```
 
-This is the single authorized GitHub write operation for the skill. Run it directly, without a confirmation prompt — the authorization is documented in this skill's *Authorization* section above.
+The output must be empty. (The `{{EVIDENCE:…}}` tokens use doubled braces and lowercase, so they do **not** match this single-brace uppercase pattern — that's intentional; they are resolved in 7.3.)
 
-3. Print the comment URL (`gh` prints it on success) and a one-line summary of the verdict to the session.
-4. **Sign out of Vibes** to leave the chrome-devtools profile in a "Google signed in, Vibes signed out" state for the next run. Navigate to the account / settings area in the Vibes UI and click Sign out — or if a `/sign-out` route exists, navigate to it directly. Verify via `evaluate_script` that the `__session` cookie is gone (or set to expired). Skipping this leaves Vibes session state in the profile and the next run's preflight will abort on a dirty profile.
+**7.2 — Publish the gist (pass 1: create, text-only).** Collect the **evidence set**: the de-duplicated list of every basename appearing in any finding's `screenshots` (i.e. every file named in a `{{EVIDENCE:…}}` token). These are the only screenshots that go to the gist; per-step working captures stay local. Create the gist with **only the triage markdown** — `gh gist create` refuses binary files, so the PNGs are added later by git push in 7.3:
+
+```bash
+gh gist create --public \
+  --desc "qa-pr triage — PR #<N> — <verdict> (<run_id>)" \
+  qa-reports/{run_id}/triage.md
+```
+
+`gh gist create` prints the gist's web URL on its last line, of the form `https://gist.github.com/<owner>/<gist_id>`. Capture it. Derive:
+- `<gist_url>` = that full web URL (goes in the comment).
+- `<owner>` = the second-to-last path segment.
+- `<gist_id>` = the last path segment.
+- `<raw_base>` = `https://gist.githubusercontent.com/<owner>/<gist_id>/raw/` (no commit SHA, so it always serves the latest revision).
+
+If the evidence set is **empty**, this text-only gist is the whole publish — skip 7.3 entirely, there is nothing to embed.
+
+**If `gh gist create` fails** (non-zero exit, or no `gist.github.com` URL in output): take the **gist-failure fallback** — do not lose the report. Prepend a marker + warning line to a fresh copy of the full triage and post it inline exactly as the old skill did:
+
+```bash
+{ printf '<!-- qa-pr-triage-comment -->\n> ⚠️ Gist upload failed; full triage inline below.\n\n'; cat qa-reports/{run_id}/triage.md; } > qa-reports/{run_id}/comment.md
+```
+
+Then jump straight to **7.5** (sticky post) with this `comment.md`, and skip 7.3–7.4. (`comment.md` carries the marker, so dedup still works.)
+
+**7.3 — Embed evidence + git-push the images (pass 2).** `gh gist create` cannot carry binaries, but a gist is a git repo that accepts them — so the PNGs and the URL-rewritten triage go in together via one git push. First, for every `{{EVIDENCE:<basename>.png}}` token in `qa-reports/{run_id}/triage.md`, replace it with a sized, click-through thumbnail pointing at the raw gist URL:
+
+```html
+<a href="<raw_base><basename>.png"><img src="<raw_base><basename>.png" width="240"></a>
+```
+
+(If a finding has multiple shots, emit one `<a><img></a>` per token, space-separated, in the same Evidence cell.) Then clone the gist's git repo, drop in the evidence PNGs and the rewritten triage, and push:
+
+```bash
+gist_dir="$(mktemp -d)/gist"
+gh gist clone <gist_id> "$gist_dir"
+cp qa-reports/{run_id}/<evidence-1>.png qa-reports/{run_id}/<evidence-2>.png … "$gist_dir"/
+cp qa-reports/{run_id}/triage.md "$gist_dir"/triage.md
+git -C "$gist_dir" add -A
+git -C "$gist_dir" commit -m "qa-pr: add evidence screenshots for <run_id>"
+git -C "$gist_dir" push
+```
+
+One commit carries both the evidence images and the rewritten markdown; the raw URLs then serve the images (`image/png`, HTTP 200) and the gist's `triage.md` renders them inline.
+
+**If the clone/commit/push fails** here: do **not** fall back to an inline comment — the gist already exists from 7.2 with the triage text (the `{{EVIDENCE:…}}` tokens remain as literal placeholders, no images). Log a one-line warning to the session ("gist push failed; evidence not embedded") and continue to 7.4 with the `<gist_url>` from 7.2.
+
+**7.4 — Compose the concise comment.** Write `qa-reports/{run_id}/comment.md` with the hidden marker on the first line, derived entirely from fields already in the triage:
+
+```markdown
+<!-- qa-pr-triage-comment -->
+## QA: <PR title> — <verdict>
+
+<one-sentence narrative: how the PR's change held up across desktop + mobile>
+
+**<x> P0 · <y> P1 · <z> P2** across desktop + mobile · [Full triage ↗](<gist_url>)
+```
+
+- `<PR title>` comes from `gh pr view <N> --json title --jq .title`.
+- `<verdict>` is the triage's `pr_verdict` (`pass` / `fail` / `pass-with-caveats`).
+- `<x>/<y>/<z>` are the counts of P0/P1/P2 findings.
+- If Phase B was skipped, write `desktop only` instead of `across desktop + mobile` in both lines.
+
+**7.5 — Post or update the comment (sticky).** Find a prior comment by the skill on this PR — same marker, authored by the current `gh` user — and edit it in place; otherwise create a new one.
+
+```bash
+me="$(gh api user --jq .login)"
+prior="$(gh api repos/VibesDIY/vibes.diy/issues/<N>/comments --paginate \
+  --jq ".[] | select(.user.login == \"$me\") | select(.body | contains(\"<!-- qa-pr-triage-comment -->\")) | .id" \
+  | tail -n1)"
+if [ -n "$prior" ]; then
+  gh api repos/VibesDIY/vibes.diy/issues/comments/"$prior" -X PATCH -F body=@qa-reports/{run_id}/comment.md
+else
+  gh pr comment <N> --body-file qa-reports/{run_id}/comment.md
+fi
+```
+
+Both branches are authorized writes (see *Authorization*); run without a confirmation prompt. The edit branch only ever targets the skill's own marked comment on this PR.
+
+**7.6 — Record + report.** Append a completion record to the run log and print the URLs:
+
+```bash
+printf '{"run_id":"%s","gist_url":"%s","comment_id":"%s","finished_at":"%s"}\n' \
+  "<run_id>" "<gist_url>" "<comment_id_or_empty>" "<UTC ISO8601>" >> qa-reports/runs.jsonl
+```
+
+(`<comment_id>` is `$prior` when editing, or parsed from the `gh pr comment` output URL when creating; empty string in the gist-failure fallback if no gist exists.) Print the comment URL, the `<gist_url>`, and a one-line verdict summary to the session.
+
+**7.7 — Sign out of Vibes** to leave the chrome-devtools profile in a "Google signed in, Vibes signed out" state for the next run. Navigate to the account / settings area in the Vibes UI and click Sign out — or if a `/sign-out` route exists, navigate to it directly. Verify via `evaluate_script` that the `__session` cookie is gone (or set to expired). Skipping this leaves Vibes session state in the profile and the next run's preflight will abort on a dirty profile.
 
 ## Failure modes
 
