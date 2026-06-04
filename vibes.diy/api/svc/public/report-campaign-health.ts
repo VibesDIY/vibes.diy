@@ -102,12 +102,12 @@ export async function fetchGoodVibesClickThroughs(
 async function fetchCampaignMeta(
   token: string,
   account: string
-): Promise<Record<string, { website_url?: string; effective_status?: string }>> {
+): Promise<Record<string, { website_url?: string; effective_status?: string; created_time?: string }>> {
   // effective_status lives on campaigns; destination URL lives on ad creative link_data.link.
   // website_url is not a valid campaign-level field — fetch ads with nested creative instead.
   const [rCampaigns, rAds] = await Promise.all([
-    metaGet<{ data?: readonly { id: string; effective_status?: string }[] }>(
-      `/${account}/campaigns?fields=id,effective_status&limit=200`,
+    metaGet<{ data?: readonly { id: string; effective_status?: string; created_time?: string }[] }>(
+      `/${account}/campaigns?fields=id,effective_status,created_time&limit=200`,
       token
     ),
     metaGet<{
@@ -118,10 +118,10 @@ async function fetchCampaignMeta(
     }>(`/${account}/ads?fields=campaign_id,creative{object_story_spec{link_data{link}}}&limit=200`, token),
   ]);
 
-  const byId: Record<string, { website_url?: string; effective_status?: string }> = {};
+  const byId: Record<string, { website_url?: string; effective_status?: string; created_time?: string }> = {};
 
   for (const c of rCampaigns.isOk() ? (rCampaigns.Ok().data ?? []) : []) {
-    byId[c.id] = { effective_status: c.effective_status };
+    byId[c.id] = { effective_status: c.effective_status, created_time: c.created_time };
   }
   // First ad per campaign wins; all ads for a campaign link to the same landing page
   for (const ad of rAds.isOk() ? (rAds.Ok().data ?? []) : []) {
@@ -203,10 +203,21 @@ async function fetchCampaignHealth(
 
   const spends = rows.map((r) => Number(r.spend)).sort((a, b) => a - b);
   const medianSpend = spends[Math.floor(spends.length / 2)] ?? 0;
+  const reportDays = Number(days);
+  const nowMs = Date.now();
 
   const zeroSpend = rows.filter((r) => Number(r.spend) === 0).map((r) => r.campaign_name);
   const budgetOutliers = rows
-    .filter((r) => Number(r.spend) > 0 && Number(r.spend) < medianSpend * 0.4)
+    .filter((r) => {
+      const spend = Number(r.spend);
+      if (spend === 0) return false;
+      // Age-adjust threshold: a campaign launched N days ago can only spend N/reportDays of the median.
+      const createdTime = campaignMeta[r.campaign_id]?.created_time;
+      const campaignAgeDays = createdTime ? (nowMs - new Date(createdTime).getTime()) / 86_400_000 : reportDays;
+      const effectiveDays = Math.min(campaignAgeDays, reportDays);
+      const ageAdjustedMedian = (effectiveDays / reportDays) * medianSpend;
+      return spend < ageAdjustedMedian * 0.4;
+    })
     .map((r) => ({ name: r.campaign_name, spend: Number(r.spend).toFixed(2), medianSpend: medianSpend.toFixed(2) }));
 
   const lowLpvRatio = rows

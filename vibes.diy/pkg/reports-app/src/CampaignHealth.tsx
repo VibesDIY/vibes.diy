@@ -373,6 +373,9 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
     );
   }
 
+  const activeRows = d.ranked.filter((r) => r.effective_status === undefined || r.effective_status === "ACTIVE");
+  const activeCount = activeRows.length;
+
   const totalSpend = d.ranked.reduce((sum, r) => sum + Number(r.spend), 0);
   const totalClicks = d.ranked.reduce((sum, r) => sum + Number(r.clicks), 0);
   const totalImpressions = d.ranked.reduce((sum, r) => sum + Number(r.impressions), 0);
@@ -430,12 +433,17 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
         }}
       >
         {[
-          { label: "Total Spend", value: fmtMoney(totalSpend) },
-          { label: "Ad Clicks", value: totalClicks.toLocaleString() },
-          { label: "Click Rate", value: totalImpressions > 0 ? `${overallCtr.toFixed(2)}%` : "—" },
-          { label: "Landings", value: totalLpv.toLocaleString() },
-          { label: "Signups", value: totalReg > 0 ? totalReg.toLocaleString() : "—" },
-        ].map(({ label, value }) => (
+          { label: "Total Spend", value: fmtMoney(totalSpend), sub: "all campaigns" },
+          { label: "Ad Clicks", value: totalClicks.toLocaleString(), sub: undefined },
+          { label: "Click Rate", value: totalImpressions > 0 ? `${overallCtr.toFixed(2)}%` : "—", sub: undefined },
+          { label: "Landings", value: totalLpv.toLocaleString(), sub: undefined },
+          { label: "Signups", value: totalReg > 0 ? totalReg.toLocaleString() : "—", sub: undefined },
+          {
+            label: "Campaigns",
+            value: `${activeCount} active`,
+            sub: pausedCount > 0 ? `${pausedCount} paused` : undefined,
+          },
+        ].map(({ label, value, sub }) => (
           <div
             key={label}
             style={{
@@ -458,6 +466,9 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
             >
               {label}
             </div>
+            {sub !== undefined && (
+              <div style={{ fontSize: "0.65rem", opacity: 0.4, marginTop: "0.15rem" }}>{sub}</div>
+            )}
           </div>
         ))}
       </div>
