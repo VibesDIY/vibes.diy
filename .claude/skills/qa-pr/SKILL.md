@@ -103,7 +103,7 @@ Verify the operator's environment can complete a run before starting one. Each c
 - Read the operator's email via `git config user.email` (e.g. `marcus@vibes.diy`). Used to label the run and identify who triggered it in the run log.
 - Create `qa-reports/{run_id}/` (mkdir -p; do not commit).
 - Copy [`assets/triage-template.md`](assets/triage-template.md) to `qa-reports/{run_id}/triage.md`. This is the working file. Edit it incrementally as the run proceeds, filling in placeholders.
-- Append a line to `qa-reports/runs.jsonl` (create if needed) of the form `{"run_id":"...","operator_email":"...","pr":N,"started_at":"..."}`.
+- Append a line to `qa-reports/runs.jsonl` (create if needed) of the form `{"run_id":"...","operator_email":"...","pr":N,"started_at":"..."}`. Step 7 appends a second completion record for this `run_id` carrying `gist_url` and `comment_id`, so run history (including every gist URL) is preserved even though the sticky PR comment shows only the latest run.
 
 ## Step 3 — Capture environment
 
