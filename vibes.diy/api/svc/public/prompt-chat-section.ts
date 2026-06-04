@@ -208,10 +208,22 @@ interface LlmDispatchErr {
 
 type LlmDispatchResult = LlmDispatchOk | LlmDispatchErr;
 
+type LlmRequestPhase = "initial" | "recovery";
+
+interface LlmAttemptDiagnosticsCtx {
+  readonly chatId: string;
+  readonly promptId: string;
+  readonly phase: LlmRequestPhase;
+  readonly mode: PromptStyle;
+}
+
 interface DispatchLlmRequestWithFallbackArgs {
   readonly vctx: VibesApiSQLCtx;
   readonly mode: PromptStyle;
   readonly llmReq: LLMRequestWithHeaders;
+  readonly chatId: string;
+  readonly promptId: string;
+  readonly phase: LlmRequestPhase;
 }
 
 function formatAttemptFailure(failure: LlmAttemptFailure): string {
@@ -258,13 +270,159 @@ async function waitMs(ms: number): Promise<void> {
   });
 }
 
-async function drainFailureBody(res: Response): Promise<string> {
-  if (res.body === null) return "";
-  const rText = await exception2Result(() => res.text());
-  const text = rText.isOk() ? rText.Ok() : `<read-failed: ${String(rText.Err())}>`;
+function boundSnippet(text: string): string {
   return text.length > MAX_ATTEMPT_BODY_SNIPPET_CHARS
     ? `${text.slice(0, MAX_ATTEMPT_BODY_SNIPPET_CHARS)}...[+${text.length - MAX_ATTEMPT_BODY_SNIPPET_CHARS}b]`
     : text;
+}
+
+// Read a failed response body once, returning both the full text (for JSON
+// parsing) and the bounded snippet used in the user-visible attempt message.
+async function readFailureBody(res: Response): Promise<{ snippet: string; full: string }> {
+  if (res.body === null) return { snippet: "", full: "" };
+  const rText = await exception2Result(() => res.text());
+  const full = rText.isOk() ? rText.Ok() : `<read-failed: ${String(rText.Err())}>`;
+  return { snippet: boundSnippet(full), full };
+}
+
+const DIAGNOSTIC_HEADER_NAMES = ["cf-ray", "cf-ew-via", "server", "retry-after", "x-generation-id", "content-type"] as const;
+
+function pickDiagnosticHeaders(headers: Headers): Record<string, string> | undefined {
+  const out: Record<string, string> = {};
+  for (const name of DIAGNOSTIC_HEADER_NAMES) {
+    const value = headers.get(name);
+    if (value !== null) out[name] = value;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+const OPENROUTER_META_FIELDS = ["requested", "strategy", "region", "summary", "attempt", "is_byok"] as const;
+
+interface ProviderErrorFields {
+  readonly errorCode?: string | number;
+  readonly errorMessage?: string;
+  readonly providerName?: string;
+  readonly rawSnippet?: string;
+  readonly openrouterMeta?: Record<string, unknown>;
+}
+
+// Structural validator for an OpenRouter-style JSON error body. Leaf values stay
+// `unknown` (tolerant of provider quirks) and are narrowed on read; arktype keeps
+// us off manual casts when walking parsed JSON.
+const providerErrorBody = type({
+  "error?": {
+    "code?": "unknown",
+    "message?": "unknown",
+    "metadata?": {
+      "provider_name?": "unknown",
+      "raw?": "unknown",
+    },
+  },
+  "openrouter_metadata?": {
+    "requested?": "unknown",
+    "strategy?": "unknown",
+    "region?": "unknown",
+    "summary?": "unknown",
+    "attempt?": "unknown",
+    "is_byok?": "unknown",
+  },
+});
+
+// Pull the safe, bounded subset of an OpenRouter-style JSON error body. Never
+// surfaces full payloads, prompts, or secrets — only the allowlisted fields.
+function extractProviderErrorFields(bodyFull: string): ProviderErrorFields {
+  const rParsed = exception2Result(() => providerErrorBody(JSON.parse(bodyFull)));
+  if (rParsed.isErr()) return {};
+  const parsed = rParsed.Ok();
+  if (parsed instanceof type.errors) return {};
+  const out: {
+    errorCode?: string | number;
+    errorMessage?: string;
+    providerName?: string;
+    rawSnippet?: string;
+    openrouterMeta?: Record<string, unknown>;
+  } = {};
+  const code = parsed.error?.code;
+  if (typeof code === "string" || typeof code === "number") out.errorCode = code;
+  if (typeof parsed.error?.message === "string") out.errorMessage = parsed.error.message;
+  const providerName = parsed.error?.metadata?.provider_name;
+  if (typeof providerName === "string") out.providerName = providerName;
+  const raw = parsed.error?.metadata?.raw;
+  if (typeof raw === "string") out.rawSnippet = boundSnippet(raw);
+  else if (raw !== undefined) out.rawSnippet = boundSnippet(JSON.stringify(raw));
+  const orMeta = parsed.openrouter_metadata;
+  if (orMeta !== undefined) {
+    const picked: Record<string, unknown> = {};
+    for (const field of OPENROUTER_META_FIELDS) {
+      if (orMeta[field] !== undefined) picked[field] = orMeta[field];
+    }
+    if (Object.keys(picked).length > 0) out.openrouterMeta = picked;
+  }
+  return out;
+}
+
+type EdgeErrorVendor = "cloudflare" | "unknown";
+type EdgeErrorFamily = "cloudflare-1xxx" | "unknown";
+
+interface EdgeErrorFields {
+  readonly edgeErrorCode?: string;
+  readonly edgeErrorVendor?: EdgeErrorVendor;
+  readonly edgeErrorFamily?: EdgeErrorFamily;
+}
+
+// Generalized edge-error detection: scan the bounded body + provider raw for a
+// numeric edge code (e.g. Cloudflare "error code: 1019") and classify the
+// vendor/family from headers + body markers. Intentionally not hardcoded to 1019.
+function extractEdgeError(bodySnippet: string | undefined, rawSnippet: string | undefined, headers: Headers): EdgeErrorFields {
+  const haystacks = [bodySnippet, rawSnippet].filter((s): s is string => typeof s === "string" && s.length > 0);
+  let code: string | undefined;
+  for (const hay of haystacks) {
+    const match = hay.match(/error code:\s*(\d{3,4})/i) ?? hay.match(/\bError\s+(\d{3,4})\b/);
+    if (match !== null) {
+      code = match[1];
+      break;
+    }
+  }
+  if (code === undefined) return {};
+  const server = headers.get("server") ?? "";
+  const cloudflareMarker =
+    headers.get("cf-ray") !== null ||
+    headers.get("cf-ew-via") !== null ||
+    /cloudflare/i.test(server) ||
+    haystacks.some((hay) => /cloudflare/i.test(hay));
+  const edgeErrorVendor: EdgeErrorVendor = cloudflareMarker ? "cloudflare" : "unknown";
+  const edgeErrorFamily: EdgeErrorFamily =
+    edgeErrorVendor === "cloudflare" && /^1\d{3}$/.test(code) ? "cloudflare-1xxx" : "unknown";
+  return { edgeErrorCode: code, edgeErrorVendor, edgeErrorFamily };
+}
+
+interface LogLlmAttemptFailureArgs {
+  readonly vctx: VibesApiSQLCtx;
+  readonly diag: LlmAttemptDiagnosticsCtx;
+  readonly label: LlmAttemptLabel;
+  readonly model: string;
+  readonly elapsedMs: number;
+  readonly details: Record<string, unknown>;
+}
+
+// Sanitized per-attempt diagnostics. Mirrors the existing `.Any("event", {...})`
+// log style; all custom fields nest under `event`. Never logs prompts, request
+// bodies, auth headers, or unbounded payloads.
+function logLlmAttemptFailure(args: LogLlmAttemptFailureArgs): void {
+  const { vctx, diag, label, model, elapsedMs, details } = args;
+  vctx.logger
+    .Warn()
+    .Any("event", {
+      chatId: diag.chatId,
+      promptId: diag.promptId,
+      phase: diag.phase,
+      mode: diag.mode,
+      label,
+      model,
+      elapsedMs,
+      ...details,
+    })
+    .Msg("llm-request-attempt-failed");
 }
 
 async function findFallbackModel(vctx: VibesApiSQLCtx, mode: PromptStyle, failedModel: string): Promise<Result<string>> {
@@ -284,15 +442,30 @@ async function findFallbackModel(vctx: VibesApiSQLCtx, mode: PromptStyle, failed
   return Result.Err(`No fallback model configured for ${mode} after ${failedModel}`);
 }
 
-async function attemptLlmRequest(
-  vctx: VibesApiSQLCtx,
-  llmReq: LLMRequestWithHeaders,
-  label: LlmAttemptLabel
-): Promise<LlmAttemptOk | LlmAttemptErr> {
+interface AttemptLlmRequestArgs {
+  readonly vctx: VibesApiSQLCtx;
+  readonly diag: LlmAttemptDiagnosticsCtx;
+  readonly llmReq: LLMRequestWithHeaders;
+  readonly label: LlmAttemptLabel;
+}
+
+async function attemptLlmRequest(args: AttemptLlmRequestArgs): Promise<LlmAttemptOk | LlmAttemptErr> {
+  const { vctx, diag, llmReq, label } = args;
   const abort = new AbortController();
+  const startedAt = Date.now();
   const rRes = await exception2Result(() => vctx.llmRequest(llmReq, { signal: abort.signal }));
+  const elapsedMs = Date.now() - startedAt;
   if (rRes.isErr()) {
     abort.abort();
+    const error = String(rRes.Err());
+    logLlmAttemptFailure({
+      vctx,
+      diag,
+      label,
+      model: llmReq.model,
+      elapsedMs,
+      details: { kind: "exception", retryable: false, error },
+    });
     return {
       ok: false,
       abort,
@@ -300,7 +473,7 @@ async function attemptLlmRequest(
         kind: "exception",
         label,
         model: llmReq.model,
-        error: String(rRes.Err()),
+        error,
         retryable: false,
       },
     };
@@ -311,6 +484,20 @@ async function attemptLlmRequest(
   }
   if (res.ok) {
     abort.abort();
+    logLlmAttemptFailure({
+      vctx,
+      diag,
+      label,
+      model: llmReq.model,
+      elapsedMs,
+      details: {
+        kind: "missing-body",
+        status: res.status,
+        statusText: res.statusText,
+        retryable: false,
+        error: "response body missing",
+      },
+    });
     return {
       ok: false,
       abort,
@@ -325,16 +512,38 @@ async function attemptLlmRequest(
       },
     };
   }
-  const bodySnippet = await drainFailureBody(res);
+  const { snippet: bodySnippet, full: bodyFull } = await readFailureBody(res);
   const retryAfterMs = parseRetryAfterMs(res.headers);
   abort.abort();
+  const retryable = TRANSIENT_LLM_STATUSES.has(res.status);
+  const provider = extractProviderErrorFields(bodyFull);
+  const edge = extractEdgeError(bodySnippet, provider.rawSnippet, res.headers);
+  const headers = pickDiagnosticHeaders(res.headers);
+  logLlmAttemptFailure({
+    vctx,
+    diag,
+    label,
+    model: llmReq.model,
+    elapsedMs,
+    details: {
+      kind: "http-status",
+      status: res.status,
+      statusText: res.statusText,
+      retryable,
+      ...(typeof retryAfterMs === "number" ? { retryAfterMs } : {}),
+      ...(headers ? { headers } : {}),
+      ...(bodySnippet.length > 0 ? { bodySnippet } : {}),
+      ...provider,
+      ...edge,
+    },
+  });
   const failure: LlmHttpStatusAttemptFailure = {
     kind: "http-status",
     label,
     model: llmReq.model,
     status: res.status,
     statusText: res.statusText,
-    retryable: TRANSIENT_LLM_STATUSES.has(res.status),
+    retryable,
     ...(bodySnippet.length > 0 ? { bodySnippet } : {}),
     ...(typeof retryAfterMs === "number" ? { retryAfterMs } : {}),
   };
@@ -347,6 +556,12 @@ async function attemptLlmRequest(
 
 async function dispatchLlmRequestWithFallback(args: DispatchLlmRequestWithFallbackArgs): Promise<LlmDispatchResult> {
   const attempts: LlmAttemptFailure[] = [];
+  const diag: LlmAttemptDiagnosticsCtx = {
+    chatId: args.chatId,
+    promptId: args.promptId,
+    phase: args.phase,
+    mode: args.mode,
+  };
 
   // Primary then one retry on the same model. Bail immediately on a
   // non-retryable failure; otherwise fall through to the fallback model.
@@ -355,7 +570,7 @@ async function dispatchLlmRequestWithFallback(args: DispatchLlmRequestWithFallba
     if (lastPrimary) {
       await waitMs(delayForAttempt(lastPrimary.failure, PRIMARY_RETRY_DELAY_MS));
     }
-    const attempt = await attemptLlmRequest(args.vctx, args.llmReq, label);
+    const attempt = await attemptLlmRequest({ vctx: args.vctx, diag, llmReq: args.llmReq, label });
     if (attempt.ok) return { ok: true, res: attempt.res, llmReq: args.llmReq, abort: attempt.abort, attempts };
     attempts.push(attempt.failure);
     if (attempt.failure.retryable === false) {
@@ -376,7 +591,7 @@ async function dispatchLlmRequestWithFallback(args: DispatchLlmRequestWithFallba
   const fallbackModel = rFallbackModel.Ok();
   const fallbackReq: LLMRequestWithHeaders = { ...args.llmReq, model: fallbackModel };
   await waitMs(delayForAttempt(failedPrimary.failure, FALLBACK_RETRY_DELAY_MS));
-  const fallback = await attemptLlmRequest(args.vctx, fallbackReq, "fallback");
+  const fallback = await attemptLlmRequest({ vctx: args.vctx, diag, llmReq: fallbackReq, label: "fallback" });
   if (fallback.ok) {
     args.vctx.logger
       .Info()
@@ -778,6 +993,9 @@ async function handlerLlmRequest({
     vctx,
     mode: req.mode,
     llmReq,
+    chatId: req.chatId,
+    promptId,
+    phase: "initial",
   });
   const res = await scope
     .evalResult<Response>(async () => {
@@ -1467,6 +1685,9 @@ async function handleLlmResponse({
           vctx,
           mode: req.mode,
           llmReq: recLlmReq,
+          chatId: req.chatId,
+          promptId,
+          phase: "recovery",
         });
         const recModel = recDispatch.llmReq.model;
         if (recDispatch.ok === false) {

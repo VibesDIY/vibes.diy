@@ -2,6 +2,7 @@ import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { assert } from "vitest";
 import { Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
+import type { SuperThis } from "@fireproof/core-types-base";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import {
   CFInject,
@@ -37,6 +38,12 @@ export interface CreateApiTestCtxOpts {
   notifyViewerGrantsChanged?(evt: EvtViewerGrantsChanged, senderConnId: string): Promise<void>;
   models?: CreateVibeDiyTestCtxOpts["models"];
   llmRequest?: CreateVibeDiyTestCtxOpts["llmRequest"];
+  /**
+   * Inject a SuperThis (e.g. built with a MockLogger via
+   * `ensureSuperThis({ logger })`) so a test can capture the structured logs
+   * emitted through `ensureLogger(sthis, ...)`. Defaults to a fresh SuperThis.
+   */
+  sthis?: SuperThis;
   /**
    * Override the apiUrl to avoid colliding with the module-level
    * connection cache shared across tests that all use the default host.
@@ -77,7 +84,7 @@ export interface ApiTestCtx {
 }
 
 export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise<ApiTestCtx> {
-  const sthis = ensureSuperThis();
+  const sthis = opts.sthis ?? ensureSuperThis();
   const deviceCA = await createTestDeviceCA(sthis);
   const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, {
     notifyRequestGrantChanged: opts.notifyRequestGrantChanged,
