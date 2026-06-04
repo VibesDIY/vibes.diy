@@ -27,12 +27,18 @@ import ReactMarkdown from "react-markdown";
 import { PromptError, PromptReq, isPromptError, isPromptReq } from "@vibes.diy/api-types";
 import type { MetaScreenShot } from "@vibes.diy/api-types";
 
+interface FsRefTarget {
+  ownerHandle: string;
+  appSlug: string;
+  fsId: string;
+}
+
 interface MessageListProps {
   promptBlocks: PromptBlock[];
   promptProcessing: boolean;
   chatId: string;
   selectedFsId?: string;
-  onClick: (fsRes: { ownerHandle: string; appSlug: string; fsId: string }) => void;
+  onClick: (fsRes: FsRefTarget) => void;
   onDiffClick?: (diff: { path: string; lines: string[] } | null) => void;
   onRetry?: (msg: PromptError) => void;
   onSelectOption?: (option: string) => void;
@@ -253,11 +259,22 @@ function PromptErrorMsg({ msg, onRetry }: { msg: PromptError; onRetry?: (msg: Pr
   );
 }
 
-function ScreenshotMsg({ fsId, screenshot }: { fsId: string; screenshot: MetaScreenShot }) {
+function ScreenshotMsg({
+  fsId,
+  screenshot,
+  fsRef,
+  onClick,
+}: {
+  fsId: string;
+  screenshot: MetaScreenShot;
+  fsRef?: FsRefTarget;
+  onClick: (fsRes: FsRefTarget) => void;
+}) {
   const imageUrl = screenshotRefToProxyUrl(screenshot);
   const renderSeq = useChatDebug("ScreenshotMsg", {
     fsId,
     assetUrl: screenshot.assetUrl,
+    hasFsRef: fsRef !== undefined,
   });
 
   return (
@@ -269,7 +286,19 @@ function ScreenshotMsg({ fsId, screenshot }: { fsId: string; screenshot: MetaScr
     >
       <div className="max-w-[85%]">
         <BrutalistCard size="sm" className="mx-3 my-2 overflow-hidden" style={{ borderRadius: 0 }}>
-          <a href={imageUrl} target="_blank" rel="noreferrer" className="block rounded-sm">
+          <a
+            href={imageUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block rounded-sm"
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              if (!fsRef) return;
+              const primaryClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+              if (!primaryClick) return;
+              e.preventDefault();
+              onClick(fsRef);
+            }}
+          >
             <img
               src={imageUrl}
               alt="Generated app screenshot"
@@ -554,7 +583,7 @@ function MessageList({
   // Handle special case for waiting state
   const blockMsgs: BlockedMsg[] = [];
   const renderedScreenshotFsIds = new Set<string>();
-  let lastFsRef: { fsId: string; appSlug: string; ownerHandle: string } | undefined;
+  let lastFsRef: FsRefTarget | undefined;
 
   const messageElements = promptBlocks.reduce((acc, promptBlock) => {
     // Only show the streaming indicator on the latest AI message
@@ -656,12 +685,23 @@ function MessageList({
             }
           });
 
-          const fsId = msg.fsRef?.fsId;
+          const screenshotFsRef = msg.fsRef
+            ? { fsId: msg.fsRef.fsId, appSlug: msg.fsRef.appSlug, ownerHandle: msg.fsRef.ownerHandle }
+            : undefined;
+          const fsId = screenshotFsRef?.fsId;
           if (fsId) {
             const screenshot = screenshotByFsId?.get(fsId);
             if (screenshot && !renderedScreenshotFsIds.has(fsId)) {
               renderedScreenshotFsIds.add(fsId);
-              acc.push(<ScreenshotMsg key={`screenshot-${fsId}`} fsId={fsId} screenshot={screenshot} />);
+              acc.push(
+                <ScreenshotMsg
+                  key={`screenshot-${fsId}`}
+                  fsId={fsId}
+                  screenshot={screenshot}
+                  fsRef={screenshotFsRef}
+                  onClick={onClick}
+                />
+              );
             }
           }
 
