@@ -182,7 +182,7 @@ type QAResult = {
     description: string
     why_it_matters: string
     repro_steps: string[]
-    screenshots: string[]   // file paths inside qa-reports/{run_id}/ (desktop shots end -desktop.png, mobile shots -mobile.png)
+    screenshots: string[]   // file paths inside qa-reports/{run_id}/ (desktop shots end -desktop.png, mobile shots -mobile.png). These evidence shots are uploaded to the gist and embedded inline in the finding's Evidence cell at Step 7 (two-pass publish).
     related_existing_issues?: string[]   // gh issue numbers
   }>
   cross_cutting_patterns: Array<{
