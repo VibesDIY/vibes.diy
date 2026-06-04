@@ -1,5 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { processStream } from "@adviser/cement";
+import { processStream, MockLogger } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
+import { type } from "arktype";
 import type { PromptAndBlockMsgs } from "@vibes.diy/api-types";
 import { isSectionEvent } from "@vibes.diy/api-types";
 import type { ChatMessage } from "@vibes.diy/call-ai-v2";
@@ -409,5 +411,101 @@ describe("promptChatSection handler with selected+slots", () => {
     expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(1950);
     expect(starts[1] - starts[0]).toBeLessThan(2600);
     expect(blocks.some((b) => b.type === "prompt.error")).toBe(false);
+  });
+
+  it("logs structured edge diagnostics for a Cloudflare 1019 backend failure", async () => {
+    const { logger, logCollector } = MockLogger();
+    const sthis = ensureSuperThis({ logger });
+    const calls: string[] = [];
+    const body = JSON.stringify({
+      error: {
+        code: 503,
+        message: "Provider returned error",
+        metadata: { provider_name: "anthropic", raw: "error code: 1019" },
+      },
+      openrouter_metadata: {
+        requested: PRIMARY_MODEL,
+        strategy: "fallback",
+        region: "us-east",
+        summary: "all providers unavailable",
+        attempt: 1,
+        is_byok: false,
+      },
+    });
+    const local = await createApiTestCtx({
+      seqUserIdBase: HANDLER_SEQ_BASE + 900,
+      apiUrlPort: 8796,
+      sthis,
+      llmRequest: async (prompt) => {
+        if (typeof prompt.model === "string") calls.push(prompt.model);
+        return new Response(body, {
+          status: 503,
+          statusText: "Service Unavailable",
+          headers: {
+            "cf-ray": "9a1f0c2b3abc1234-ATL",
+            server: "cloudflare",
+            "content-type": "application/json",
+            "x-generation-id": "gen-abc123",
+          },
+        });
+      },
+    });
+    const rOpen = await local.api.openChat({ mode: "chat" });
+    expect(rOpen.isOk()).toBe(true);
+    const chat = rOpen.Ok();
+
+    const rPrompt = await chat.prompt({
+      model: PRIMARY_MODEL,
+      messages: [{ role: "user", content: [{ type: "text", text: "build a todo app" }] }],
+    });
+    expect(rPrompt.isOk()).toBe(true);
+    await collectBlocks(chat);
+
+    await sthis.logger.Flush();
+    const logRow = type({ level: "string", msg: "string", event: { "[string]": "unknown" } });
+    const logs = logCollector.Logs().flatMap((entry) => {
+      const row = logRow(entry);
+      return row instanceof type.errors ? [] : [row];
+    });
+    const attemptLogs = logs.filter((l) => l.msg === "llm-request-attempt-failed");
+
+    expect(calls).toEqual([PRIMARY_MODEL, PRIMARY_MODEL, FALLBACK_MODEL]);
+    expect(attemptLogs.map((l) => l.event.label)).toEqual(["primary", "primary-retry", "fallback"]);
+
+    const primary = attemptLogs[0];
+    expect(primary.level).toBe("warn");
+    expect(primary.event).toEqual(
+      expect.objectContaining({
+        phase: "initial",
+        mode: "chat",
+        model: PRIMARY_MODEL,
+        status: 503,
+        statusText: "Service Unavailable",
+        retryable: true,
+        providerName: "anthropic",
+        edgeErrorCode: "1019",
+        edgeErrorVendor: "cloudflare",
+        edgeErrorFamily: "cloudflare-1xxx",
+      })
+    );
+    expect(typeof primary.event.elapsedMs).toBe("number");
+    expect(primary.event.headers).toEqual(expect.objectContaining({ "cf-ray": "9a1f0c2b3abc1234-ATL", server: "cloudflare" }));
+    expect(primary.event.openrouterMeta).toEqual(
+      expect.objectContaining({
+        requested: PRIMARY_MODEL,
+        strategy: "fallback",
+        region: "us-east",
+        attempt: 1,
+        is_byok: false,
+      })
+    );
+
+    expect(attemptLogs[2].event.model).toBe(FALLBACK_MODEL);
+    expect(attemptLogs[2].event.edgeErrorCode).toBe("1019");
+
+    // Sanitization: our diagnostics never carry prompt text or secret-looking values.
+    const serialized = JSON.stringify(attemptLogs);
+    expect(serialized).not.toContain("build a todo app");
+    expect(serialized).not.toContain("llm-api-key");
   });
 });
