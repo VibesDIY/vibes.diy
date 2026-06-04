@@ -37,13 +37,13 @@ Before writing code, provide a title and brief description of the app. Then list
 
 Every code block must be preceded by the file name on its own line — `App.jsx` for the React component, or `access.js` for the access function (if needed).
 
-**Emit a colored shell first, then access.js, then wire each feature with SEARCH/REPLACE edits.** The shell paints real colors and layout shape immediately. The access function commits to the permission model. Then each feature edit fills in one stub and wires it with hooks and data.
+**Emit a colored shell first, then access.js, then wire each feature with SEARCH/REPLACE edits.** The shell paints real colors and layout shape immediately. The access function commits to the permission model. Then each feature edit wires one component with hooks and data.
 
 **The shell must contain:**
 
 - the import statements (react + the libraries listed below)
 - a `classNames` / `c` object with **real Tailwind colors** — page background, header colors, section frames, button styles
-- one stub function component per feature with a heading and placeholder comment
+- one stub function component per feature with a heading — these are the anchors for later edits
 - a default-exported `App` function composing them inside `<main id="app">` with `<header id="app-header">`
 - name the section ids and components after the features (e.g. `id="board"`, `id="compose"`), not literal `feature-one`
 - `useViewer` destructured at the top of `App()` when identity is needed — `const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();`
@@ -52,7 +52,7 @@ Every code block must be preceded by the file name on its own line — `App.jsx`
 
 **If the app needs an `access.js`, emit it right after the shell.** Write it as a complete fenced block with comments explaining the permission model. This commits to the permission design so every subsequent edit can destructure `access` and gate with `access.hasRole()` / `access.hasChannel()` from the start.
 
-**Feature edits fill in the stubs.** Each edit gets exactly one prose line (≤25 words) before it. Wire hooks, data, handlers, and `useFireproof` with `access` in these edits. Keep each edit focused — one feature, fully working after it lands.
+**Feature edits wire each component.** Each edit gets exactly one prose line (≤25 words) before it. Wire hooks, data, handlers, and `useFireproof` with `access` in these edits. Keep each edit focused — one feature, fully working after it lands.
 
 **Two `...` shortcuts on the SEARCH side keep edits compact:**
 
@@ -199,7 +199,6 @@ Below is a tiny worked example showing the format end-to-end. Description → sc
 >   return (
 >     <section id="note-form" className={classNames.feature}>
 >       <h2 className={classNames.featureTitle}>Feature</h2>
->       {/* form lands here */}
 >     </section>
 >   );
 > }
@@ -226,7 +225,6 @@ Below is a tiny worked example showing the format end-to-end. Description → sc
 >   return (
 >     <section id="note-form" className={classNames.feature}>
 >       <h2 className={classNames.featureTitle}>Feature</h2>
->       {/* form lands here */}
 >     </section>
 >   );
 > }
@@ -303,7 +301,6 @@ function FeatureOne() {
   return (
     <section id="feature-one" className={classNames.feature}>
       <h2 className={classNames.featureTitle}>Feature One</h2>
-      {/* feature one lands here */}
     </section>
   );
 }
@@ -312,7 +309,6 @@ function FeatureTwo() {
   return (
     <section id="feature-two" className={classNames.feature}>
       <h2 className={classNames.featureTitle}>Feature Two</h2>
-      {/* feature two lands here */}
     </section>
   );
 }
@@ -321,7 +317,6 @@ function FeatureThree() {
   return (
     <section id="feature-three" className={classNames.feature}>
       <h2 className={classNames.featureTitle}>Feature Three</h2>
-      {/* feature three lands here */}
     </section>
   );
 }

@@ -36,7 +36,7 @@ Every code block must be preceded by the file name on its own line — `App.jsx`
 - Imports.
 - A full `classNames` / `c` object with **real Tailwind colors** — page background, header colors, section frames, button styles. Final-ish colors, not placeholders.
 - The `<header>` with the real brand title and any always-visible chrome.
-- One stub function component per feature with a heading and placeholder comment — these are the anchors for later edits.
+- One stub function component per feature with a heading — these are the anchors for later edits.
 - A default-exported `App` function composing them inside `<main id="app">` with `<header id="app-header">`.
 - `useViewer` destructured at the top of `App()` — `const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();`
 - **Be creative with the layout, but respect mobile idioms.** Thumb-reachable primary actions, generous tap targets (`min-h-[44px]`), scrollable lists, no hover-only interactions.
@@ -46,7 +46,7 @@ Target ~40–60 lines. The shell should look like a real app with empty sections
 
 **Step 2 — Access function (if needed).** Emit `access.js` as a complete fenced block with comments explaining the permission model: what each doc type does, who can write it, what channels/roles it creates. This commits to the permission design before any feature edits, so every subsequent edit can destructure `access` and gate with `access.hasRole()` / `access.hasChannel()` from the start.
 
-**Step 3 — Feature edits.** Fill in each feature with SEARCH/REPLACE edits. Each edit gets exactly one prose line (≤25 words) before it. Wire hooks, data, handlers, and `useFireproof` with `access` in these edits. The first feature edit should also add the `useFireproof` destructure to `App()`. Keep edits focused — one feature per edit, fully working after it lands.
+**Step 3 — Feature edits.** Wire each feature with SEARCH/REPLACE edits. Each edit gets exactly one prose line (≤25 words) before it. Wire hooks, data, handlers, and `useFireproof` with `access` in these edits. The first feature edit should also add the `useFireproof` destructure to `App()`. Keep edits focused — one feature per edit, fully working after it lands.
 
 > Access function — owner manages channels, authenticated users post to channels they have access to.
 >
