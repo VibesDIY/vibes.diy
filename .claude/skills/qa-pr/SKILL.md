@@ -1,11 +1,11 @@
 ---
 name: qa-pr
-description: Run an agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP. Drives chrome-devtools MCP through cold sign-up, first prompt, in-app exploration, edit/theme change, publish, live URL test, and remix the way a first-time user would — and every run covers BOTH desktop (default viewport) and mobile (390×844, iPhone 14 Pro) so mobile-only regressions get caught in the same pass. Writes a P0/P1/P2 triage with cross-cutting patterns and posts it as a PR comment. Trigger this whenever the user wants to QA a PR, validate a preview deploy, walk a preview URL, do a pre-merge browser review, check responsive/mobile behavior, or asks for an SOP-style QA pass — even if they don't explicitly say "qa-pr".
+description: Run an agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP. Drives chrome-devtools MCP through cold sign-up, first prompt, in-app exploration, edit/theme change, publish, live URL test, and remix the way a first-time user would — and every run covers BOTH desktop (default viewport) and mobile (390×844, iPhone 14 Pro) so mobile-only regressions get caught in the same pass. Writes a P0/P1/P2 triage with cross-cutting patterns, publishes it (with inline screenshots) as a public GitHub gist, and posts or updates a single concise summary comment on the PR. Trigger this whenever the user wants to QA a PR, validate a preview deploy, walk a preview URL, do a pre-merge browser review, check responsive/mobile behavior, or asks for an SOP-style QA pass — even if they don't explicitly say "qa-pr".
 ---
 
 # /qa-pr — agent-driven QA pass against a PR preview URL
 
-This skill walks the [QA v0.01m SOP](references/sop-v0.01m.md) against a PR's preview URL using only the `mcp__chrome-devtools__*` toolkit. It captures friction the way a first-time user would, writes a [P0/P1/P2 triage](assets/triage-template.md), and posts it as a comment on the PR.
+This skill walks the [QA v0.01m SOP](references/sop-v0.01m.md) against a PR's preview URL using only the `mcp__chrome-devtools__*` toolkit. It captures friction the way a first-time user would, writes a [P0/P1/P2 triage](assets/triage-template.md), publishes that triage as a public gist with evidence screenshots embedded inline, and posts a concise summary comment that links to the gist (editing its own prior comment in place on reruns).
 
 The skill is invoked as `/qa-pr <PR-number>` (for example, `/qa-pr 1714`).
 
