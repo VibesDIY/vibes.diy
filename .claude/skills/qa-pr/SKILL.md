@@ -13,9 +13,12 @@ The skill is invoked as `/qa-pr <PR-number>` (for example, `/qa-pr 1714`).
 
 ## Authorization
 
-This skill is explicitly authorized to perform exactly **one** GitHub write operation: `gh pr comment <PR-number> --body-file <triage>` against the PR passed as the argument. No confirmation prompt is required for that single command.
+This skill is explicitly authorized to perform the following GitHub write operations against **the PR passed as the argument**, with no confirmation prompt required:
 
-The skill is **not** authorized to: open issues, edit PR titles or descriptions, request review, merge, push commits, comment on other PRs, or perform any other GitHub write. If any of those would help, surface the suggestion in the triage body — do not act on it.
+1. **Publish the triage gist** — `gh gist create --public …` to create the gist, and `gh gist edit …` to push the screenshot-rewritten triage back into that same gist. (One logical publish; see Step 7.)
+2. **Post or update the summary comment** — either `gh pr comment <PR-number> --body-file <comment>` to create the comment, or `gh api repos/VibesDIY/vibes.diy/issues/comments/<id> -X PATCH -F body=@<comment>` to edit the skill's **own** prior marked comment on this PR in place. (One logical post; see Step 7's sticky-comment flow.)
+
+The skill is **not** authorized to: open issues, edit PR titles or descriptions, request review, merge, push commits, comment on or edit comments on **other** PRs, edit comments it did not author, or perform any other GitHub write. The comment-edit operation may only ever target a comment that (a) is on the PR under test, (b) was authored by the current `gh` user, and (c) contains the marker `<!-- qa-pr-triage-comment -->`. If any other write would help, surface the suggestion in the triage body — do not act on it.
 
 ## Sign-in model (v0.3 design note)
 
