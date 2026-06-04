@@ -10,6 +10,9 @@ export default [
     route("chat/prompt", "./routes/chat/prompt.tsx"),
     route("chat/:ownerHandle/:appSlug/:fsId?", "./routes/chat/chat.$ownerHandle.$appSlug.tsx"),
     route("remix/:ownerHandle/:appSlug/:fsId?", "./routes/remix.$ownerHandle.$appSlug.tsx"),
+    // Clone links from the good.vibes.diy landing pages point at /clone/...;
+    // this route redirects into the remix flow with skipChat=true.
+    route("clone/:ownerHandle/:appSlug/:fsId?", "./routes/clone.$ownerHandle.$appSlug.tsx"),
     route("vibes/mine/:ownerHandle?/:appSlug?/:tab?", "./routes/vibes/mine.tsx"),
     route("memberships/:ownerHandle?/:appSlug?", "./routes/vibes/memberships.tsx"),
     route("messages", "./routes/messages.tsx"),
