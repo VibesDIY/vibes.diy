@@ -25,20 +25,20 @@
 
 ## Critical (P0)
 
-| # | Issue | Viewport | Why it matters |
-|---|---|---|---|
+| # | Issue | Viewport | Evidence | Why it matters |
+|---|---|---|---|---|
 {P0_ROWS}
 
 ## High-impact (P1)
 
-| # | Issue | Viewport | Why it matters |
-|---|---|---|---|
+| # | Issue | Viewport | Evidence | Why it matters |
+|---|---|---|---|---|
 {P1_ROWS}
 
 ## Polish (P2)
 
-| # | Issue | Viewport |
-|---|---|---|
+| # | Issue | Viewport | Evidence |
+|---|---|---|---|
 {P2_ROWS}
 
 ## Cross-cutting patterns
@@ -59,4 +59,4 @@
 
 ---
 
-*Raw run artifacts (screenshots, network logs, console messages) live in `qa-reports/{RUN_ID}/` on the developer's machine and are not attached to this comment.*
+*Evidence screenshots referenced by findings are embedded inline in the Evidence column above, served from this gist. Other raw run artifacts (per-step screenshots, network logs, console messages) live in `qa-reports/{RUN_ID}/` on the developer's machine and are not attached.*
