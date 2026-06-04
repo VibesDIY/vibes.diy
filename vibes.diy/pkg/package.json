@@ -70,7 +70,7 @@
     "tailwind-merge": "^3.5.0",
     "use-fireproof": "0.24.19",
     "use-vibes": "workspace:*",
-    "wrangler": "^4.88.0"
+    "wrangler": "^4.97.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.36.0",
