@@ -340,13 +340,12 @@ grep -oE '\{[A-Z0-9_]+\}' qa-reports/{run_id}/triage.md
 
 The output must be empty. (The `{{EVIDENCE:…}}` tokens use doubled braces and lowercase, so they do **not** match this single-brace uppercase pattern — that's intentional; they are resolved in 7.3.)
 
-**7.2 — Publish the gist (pass 1: create).** Collect the **evidence set**: the de-duplicated list of every basename appearing in any finding's `screenshots` (i.e. every file named in a `{{EVIDENCE:…}}` token). These are the only screenshots that go to the gist; per-step working captures stay local. Create the gist with the triage plus those PNGs:
+**7.2 — Publish the gist (pass 1: create, text-only).** Collect the **evidence set**: the de-duplicated list of every basename appearing in any finding's `screenshots` (i.e. every file named in a `{{EVIDENCE:…}}` token). These are the only screenshots that go to the gist; per-step working captures stay local. Create the gist with **only the triage markdown** — `gh gist create` refuses binary files, so the PNGs are added later by git push in 7.3:
 
 ```bash
 gh gist create --public \
   --desc "qa-pr triage — PR #<N> — <verdict> (<run_id>)" \
-  qa-reports/{run_id}/triage.md \
-  qa-reports/{run_id}/<evidence-1>.png qa-reports/{run_id}/<evidence-2>.png …
+  qa-reports/{run_id}/triage.md
 ```
 
 `gh gist create` prints the gist's web URL on its last line, of the form `https://gist.github.com/<owner>/<gist_id>`. Capture it. Derive:
@@ -355,7 +354,7 @@ gh gist create --public \
 - `<gist_id>` = the last path segment.
 - `<raw_base>` = `https://gist.githubusercontent.com/<owner>/<gist_id>/raw/` (no commit SHA, so it always serves the latest revision).
 
-If the evidence set is **empty**, run the same command with no PNG arguments (just `triage.md`) and skip 7.3 entirely — there is nothing to embed.
+If the evidence set is **empty**, this text-only gist is the whole publish — skip 7.3 entirely, there is nothing to embed.
 
 **If `gh gist create` fails** (non-zero exit, or no `gist.github.com` URL in output): take the **gist-failure fallback** — do not lose the report. Prepend a marker + warning line to a fresh copy of the full triage and post it inline exactly as the old skill did:
 
@@ -365,21 +364,27 @@ If the evidence set is **empty**, run the same command with no PNG arguments (ju
 
 Then jump straight to **7.5** (sticky post) with this `comment.md`, and skip 7.3–7.4. (`comment.md` carries the marker, so dedup still works.)
 
-**7.3 — Rewrite evidence tokens to inline images, then push (pass 2: edit).** For every `{{EVIDENCE:<basename>.png}}` token in `qa-reports/{run_id}/triage.md`, replace it with a sized, click-through thumbnail pointing at the raw gist URL:
+**7.3 — Embed evidence + git-push the images (pass 2).** `gh gist create` cannot carry binaries, but a gist is a git repo that accepts them — so the PNGs and the URL-rewritten triage go in together via one git push. First, for every `{{EVIDENCE:<basename>.png}}` token in `qa-reports/{run_id}/triage.md`, replace it with a sized, click-through thumbnail pointing at the raw gist URL:
 
 ```html
 <a href="<raw_base><basename>.png"><img src="<raw_base><basename>.png" width="240"></a>
 ```
 
-(If a finding has multiple shots, emit one `<a><img></a>` per token, space-separated, in the same Evidence cell.) Then push the rewritten triage back into the same gist:
+(If a finding has multiple shots, emit one `<a><img></a>` per token, space-separated, in the same Evidence cell.) Then clone the gist's git repo, drop in the evidence PNGs and the rewritten triage, and push:
 
 ```bash
-gh gist edit <gist_id> qa-reports/{run_id}/triage.md
+gist_dir="$(mktemp -d)/gist"
+gh gist clone <gist_id> "$gist_dir"
+cp qa-reports/{run_id}/<evidence-1>.png qa-reports/{run_id}/<evidence-2>.png … "$gist_dir"/
+cp qa-reports/{run_id}/triage.md "$gist_dir"/triage.md
+git -C "$gist_dir" add -A
+git -C "$gist_dir" commit -m "qa-pr: add evidence screenshots for <run_id>"
+git -C "$gist_dir" push
 ```
 
-Because the local file's basename is `triage.md` and the gist already contains a file named `triage.md`, this overwrites it. The PNG files added in 7.2 are untouched.
+One commit carries both the evidence images and the rewritten markdown; the raw URLs then serve the images (`image/png`, HTTP 200 — verified) and the gist's `triage.md` renders them inline.
 
-**If `gh gist edit` fails** here: do **not** fall back to an inline comment — the gist already exists and holds both the triage text and the PNGs as separate file panes. Log a one-line warning to the session ("gist edit failed; evidence renders as file panes, not inline") and continue to 7.4 with the `<gist_url>` from 7.2.
+**If the clone/commit/push fails** here: do **not** fall back to an inline comment — the gist already exists from 7.2 with the triage text (the `{{EVIDENCE:…}}` tokens remain as literal placeholders, no images). Log a one-line warning to the session ("gist push failed; evidence not embedded") and continue to 7.4 with the `<gist_url>` from 7.2.
 
 **7.4 — Compose the concise comment.** Write `qa-reports/{run_id}/comment.md` with the hidden marker on the first line, derived entirely from fields already in the triage:
 
@@ -425,6 +430,32 @@ printf '{"run_id":"%s","gist_url":"%s","comment_id":"%s","finished_at":"%s"}\n' 
 **7.7 — Sign out of Vibes** to leave the chrome-devtools profile in a "Google signed in, Vibes signed out" state for the next run. Navigate to the account / settings area in the Vibes UI and click Sign out — or if a `/sign-out` route exists, navigate to it directly. Verify via `evaluate_script` that the `__session` cookie is gone (or set to expired). Skipping this leaves Vibes session state in the profile and the next run's preflight will abort on a dirty profile.
 ````
 
+- [ ] **Step 1b: Correct the Authorization gist wording (committed in Task 2)**
+
+Task 2 described the gist publish as `gh gist edit`, but the transport is actually `gh gist clone` + `git push` (binaries can't go through `gh gist create`/`gh gist edit`). In `.claude/skills/qa-pr/SKILL.md`, find:
+
+```
+1. **Publish the triage gist** — `gh gist create --public …` to create the gist, and `gh gist edit …` to push the screenshot-rewritten triage back into that same gist. (One logical publish; see Step 7.)
+```
+
+Replace with:
+
+```
+1. **Publish the triage gist** — `gh gist create --public …` to create the gist (text-only; `gh gist create` refuses binaries), then `gh gist clone …` + a `git commit`/`git push` into that gist's own repo to add the evidence PNGs and the screenshot-rewritten triage. (One logical publish; see Step 7.)
+```
+
+Also find the forbidden-list sentence:
+
+```
+The skill is **not** authorized to: open issues, edit PR titles or descriptions, request review, merge, push commits, comment on or edit comments on **other** PRs, edit comments it did not author, or perform any other GitHub write.
+```
+
+Replace with:
+
+```
+The skill is **not** authorized to: open issues, edit PR titles or descriptions, request review, merge, push commits to the project repo or any non-gist remote, comment on or edit comments on **other** PRs, edit comments it did not author, or perform any other GitHub write. (The `git push` in operation 1 targets only the operator's own triage gist, not the project repo.)
+```
+
 - [ ] **Step 2: Verify the new Step 7 structure (structural grep)**
 
 Run:
@@ -433,22 +464,23 @@ cd /Users/marcusestes/Websites/vibes.diy
 # old single-write language is gone:
 grep -c "single authorized GitHub write operation for the skill" .claude/skills/qa-pr/SKILL.md
 # new sub-steps present:
-for s in "7.1 — Finalize the triage" "7.2 — Publish the gist (pass 1: create)" \
-         "7.3 — Rewrite evidence tokens" "7.4 — Compose the concise comment" \
+for s in "7.1 — Finalize the triage" "7.2 — Publish the gist (pass 1: create" \
+         "7.3 — Embed evidence" "7.4 — Compose the concise comment" \
          "7.5 — Post or update the comment (sticky)" "7.6 — Record" "7.7 — Sign out of Vibes"; do
   printf '%s => ' "$s"; grep -c "$s" .claude/skills/qa-pr/SKILL.md
 done
 # key commands present exactly once:
 grep -c "gh gist create --public" .claude/skills/qa-pr/SKILL.md
-grep -c "gh gist edit <gist_id> qa-reports/{run_id}/triage.md" .claude/skills/qa-pr/SKILL.md
+grep -c "gh gist clone <gist_id>" .claude/skills/qa-pr/SKILL.md
+grep -c 'git -C "\$gist_dir" push' .claude/skills/qa-pr/SKILL.md
 grep -c "gist.githubusercontent.com/<owner>/<gist_id>/raw/" .claude/skills/qa-pr/SKILL.md
 grep -c "issues/comments/" .claude/skills/qa-pr/SKILL.md
 ```
-Expected: the first `grep -c` prints `0`; each of the seven sub-step lines prints `=> 1`; `gh gist create --public` prints `1`; the `gh gist edit` line prints `1`; the raw-base line prints `1` (the `<raw_base>` definition — the `<a><img>` template references `<raw_base>` by name, not the literal host); `issues/comments/` prints ≥`2` (Authorization mention + Step 7 PATCH).
+Expected: the first `grep -c` prints `0`; each of the seven sub-step lines prints `=> 1`; `gh gist create --public` prints `1`; `gh gist clone <gist_id>` prints `1`; the `git … push` line prints `1`; the raw-base line prints `1` (the `<raw_base>` definition — the `<a><img>` template references `<raw_base>` by name, not the literal host); `issues/comments/` prints ≥`2` (Authorization mention + Step 7 PATCH).
 
 - [ ] **Step 3: Live smoke-test the gist owner/id/raw-URL derivation**
 
-This validates the single riskiest mechanic the prose instructs — that `gh gist create` output yields a working `<raw_base><basename>` — without touching any PR. It creates a throwaway public gist with one tiny PNG, derives the raw URL the way Step 7.2/7.3 describes, confirms the raw URL serves the image, then deletes the gist.
+This validates the riskiest mechanic the prose instructs — that a PNG **git-pushed into a gist** serves a working image from its `<raw_base><basename>` URL — without touching any PR. It creates a throwaway text-only gist (7.2), git-pushes a tiny PNG into it (7.3), confirms the raw URL serves `image/png` at HTTP 200, then deletes the gist. (`gh gist create` cannot accept the PNG directly — that is exactly why 7.3 uses git push.)
 
 Run:
 ```bash
@@ -457,18 +489,25 @@ tmp="$(mktemp -d)"
 printf '# smoke\n' > "$tmp/triage.md"
 # 1x1 PNG:
 printf 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' | base64 --decode > "$tmp/shot.png"
-url="$(gh gist create --public --desc "qa-pr smoke (delete me)" "$tmp/triage.md" "$tmp/shot.png" | tail -n1)"
+# 7.2 — text-only create:
+url="$(gh gist create --public --desc "qa-pr smoke (delete me)" "$tmp/triage.md" | tail -n1)"
 echo "gist url: $url"
 owner="$(echo "$url" | awk -F/ '{print $(NF-1)}')"
 gid="$(echo "$url" | awk -F/ '{print $NF}')"
+# 7.3 — git-push the PNG into the gist repo:
+gh gist clone "$gid" "$tmp/gist"
+cp "$tmp/shot.png" "$tmp/gist"/
+git -C "$tmp/gist" add -A
+git -C "$tmp/gist" commit -q -m "smoke: add evidence png"
+git -C "$tmp/gist" push -q
 raw="https://gist.githubusercontent.com/$owner/$gid/raw/shot.png"
 echo "raw url:  $raw"
-code="$(curl -s -o /dev/null -w '%{http_code}' -L "$raw")"
-echo "raw http status: $code"
+sleep 2
+echo "raw http status: $(curl -s -o /dev/null -w '%{http_code}' -L "$raw")  content-type: $(curl -s -o /dev/null -w '%{content_type}' -L "$raw")"
 gh gist delete "$gid" --yes 2>/dev/null || gh gist delete "$gid"
 rm -rf "$tmp"
 ```
-Expected: `gist url:` is a `https://gist.github.com/<owner>/<id>` line; `raw http status: 200`; the gist is deleted at the end (no error). If the raw status is not `200`, the raw-URL derivation in the prose is wrong — fix Step 7.2's `<raw_base>` definition before continuing. (If `gh gist delete` errors because gist deletion needs the `gist` scope, run `gh auth refresh -s gist` once, then delete the leftover gist manually from <https://gist.github.com>.)
+Expected: `gist url:` is a `https://gist.github.com/<owner>/<id>` line; `raw http status: 200` and `content-type: image/png`; the gist is deleted at the end (no error). If the raw status is not `200` or the content-type is not `image/png`, the transport mechanic is wrong — STOP and report before committing. (If `gh gist delete` errors because deletion needs the `gist` scope, run `gh auth refresh -s gist` once, then delete the leftover gist manually from <https://gist.github.com>.)
 
 - [ ] **Step 4: Commit**
 
@@ -505,8 +544,10 @@ Every branch below that says "post" routes through **Step 7** — i.e. publish t
 
 - **Preview URL never ready.** Polled `gh pr view` for 10 minutes without finding a `vibes.diy` URL in `statusCheckRollup`. Abort. Do not post anything. Tell the operator the deploy workflow may have failed; point them at `gh run list --branch <ref>`.
 - **Gist creation fails (Step 7.2 pass 1).** `gh gist create` exits non-zero or prints no gist URL. Do not lose the report: take the gist-failure fallback in Step 7.2 — post the full triage inline as the comment (carrying the `<!-- qa-pr-triage-comment -->` marker so the sticky-edit dedup still applies), prefixed with a one-line "Gist upload failed" warning. This is the only path that still puts the full triage in the PR thread; it is a degradation, not the norm.
-- **Gist edit fails (Step 7.3 pass 2).** The gist already exists with the triage text and the evidence PNGs as separate file panes. Do **not** fall back to an inline comment. Continue with the `<gist_url>` from pass 1; the evidence renders as file panes instead of inline. Note the degradation in one line to the session.
+- **Git push of evidence fails (Step 7.3 pass 2).** The gist already exists from pass 1 with the triage text (the `{{EVIDENCE:…}}` tokens remain as literal placeholders, no images). Do **not** fall back to an inline comment. Continue with the `<gist_url>` from pass 1; the evidence is simply not embedded. Note the degradation in one line to the session.
 ```
+
+> **Note (transport correction):** `gh gist create` refuses binary files, so evidence PNGs are git-pushed into the gist repo in Step 7.3 (`gh gist clone` + `git push`), not attached via `gh gist edit`. The Authorization section committed in Task 2 still references `gh gist edit`; Task 6 / Step 1b below corrects it.
 
 - [ ] **Step 2: Verify**
 
@@ -515,7 +556,7 @@ Run:
 cd /Users/marcusestes/Websites/vibes.diy
 grep -c "Every branch below that says \"post\" routes through \*\*Step 7\*\*" .claude/skills/qa-pr/SKILL.md
 grep -c "Gist creation fails (Step 7.2 pass 1)" .claude/skills/qa-pr/SKILL.md
-grep -c "Gist edit fails (Step 7.3 pass 2)" .claude/skills/qa-pr/SKILL.md
+grep -c "Git push of evidence fails (Step 7.3 pass 2)" .claude/skills/qa-pr/SKILL.md
 ```
 Expected: each prints `1`.
 
