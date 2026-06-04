@@ -262,4 +262,34 @@ describe("Test Dependencies", () => {
       "call-ai": "http://localhost:8888/vibe-pkg/@vibes.diy/vibe-runtime",
     });
   });
+
+  it("trailing-slash privateNpm entries strip query params so address ends with /", async () => {
+    const deps = Dependencies.from({
+      "@vibes.diy/vibe-runtime": "privateNpm:",
+      "@vibes.diy/vibe-runtime/": "privateNpm:",
+      "use-fireproof": "alias:@vibes.diy/vibe-runtime",
+      "use-fireproof/": "alias:@vibes.diy/vibe-runtime/",
+      "@fireproof/use-fireproof": "alias:@vibes.diy/vibe-runtime",
+      "@fireproof/use-fireproof/": "alias:@vibes.diy/vibe-runtime/",
+    });
+
+    const im = await deps.renderImportMap({
+      resolveFn: resolveVersionRegistry({
+        fetch: defaultFetchPkgVersion({
+          defaults: {
+            fetch: () => Promise.resolve(new Response(JSON.stringify({ version: "1.0.0" }))),
+          },
+        }),
+        symbol2Version: {},
+      }),
+      renderRHS: render_esm_sh({
+        privateUrl: "https://prod-v2.vibesdiy.net/vibe-pkg/?v=abc123",
+      }),
+    });
+
+    expect(im["@vibes.diy/vibe-runtime"]).toBe("https://prod-v2.vibesdiy.net/vibe-pkg/@vibes.diy/vibe-runtime?v=abc123");
+    expect(im["@vibes.diy/vibe-runtime/"]).toBe("https://prod-v2.vibesdiy.net/vibe-pkg/@vibes.diy/vibe-runtime/");
+    expect(im["use-fireproof/"]).toBe("https://prod-v2.vibesdiy.net/vibe-pkg/@vibes.diy/vibe-runtime/");
+    expect(im["@fireproof/use-fireproof/"]).toBe("https://prod-v2.vibesdiy.net/vibe-pkg/@vibes.diy/vibe-runtime/");
+  });
 });

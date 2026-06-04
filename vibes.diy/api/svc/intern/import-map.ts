@@ -326,9 +326,13 @@ export function render_esm_sh(opts: RenderEsmShOpts = {}) {
         break;
       default:
         if (version.ver.privateNpm) {
-          return BuildURI.from(opts.privateUrl ?? opts.baseUrl ?? "https://esm.sh/")
-            .appendRelative(pkg.givenPkg)
-            .toString();
+          const uri = BuildURI.from(opts.privateUrl ?? opts.baseUrl ?? "https://esm.sh/").appendRelative(pkg.givenPkg);
+          // Import map spec: when specifier key ends with "/", address must too.
+          // Query params (e.g. ?v=hash) would violate this — strip them.
+          if (pkg.givenPkg.endsWith("/")) {
+            uri.cleanParams();
+          }
+          return uri.toString();
         }
         break;
     }
