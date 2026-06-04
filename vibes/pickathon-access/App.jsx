@@ -37,24 +37,144 @@ const toFestivalDate = (s) => {
 };
 
 const FESTIVAL_2026 = {
-  dayOrder: ["Thursday", "Friday", "Saturday", "Sunday", "Monday"],
+  dayOrder: ["Thursday", "Friday", "Saturday", "Sunday"],
   dates: {
     Thursday: "2026-07-30",
     Friday: "2026-07-31",
     Saturday: "2026-08-01",
     Sunday: "2026-08-02",
-    Monday: "2026-08-03",
   },
   fallbackStart: "2026-07-30T00:00:00",
 };
 
 const LOGO_URL = "https://pickathon.com/wp-content/themes/pickathon/images/2026/_logo_head.png";
 
+const festivalDayFor = (dateStr) => {
+  const d = toFestivalDate(dateStr);
+  if (isNaN(d)) return null;
+  const partsFmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: FESTIVAL_TZ,
+    weekday: "long",
+    hourCycle: "h23",
+    hour: "2-digit",
+  });
+  const parts = Object.fromEntries(partsFmt.formatToParts(d).map((p) => [p.type, p.value]));
+  const hour = +parts.hour;
+  if (hour < 4) {
+    const prev = new Date(d.getTime() - 24 * 60 * 60 * 1000);
+    return new Intl.DateTimeFormat("en-US", { timeZone: FESTIVAL_TZ, weekday: "long" }).format(prev);
+  }
+  return parts.weekday;
+};
+
+function ScheduleView({
+  days,
+  getDateForDay,
+  buildSchedule,
+  fmtTime,
+  notes,
+  c,
+  shiftStartRaw,
+  shiftEndRaw,
+  emptyMessage,
+  eventNotes,
+  savingNotes,
+  onNoteChange,
+  onNoteBlur,
+  onNoteFocus,
+  canWrite,
+  focusedNote,
+  onToggleFavorite,
+  myFavIds,
+}) {
+  const anyContent = days.some((day) => buildSchedule(day).length > 0);
+  if (!anyContent) {
+    return (
+      <div className="text-center py-12">
+        <h3 className={`text-2xl font-black mb-2 ${c.bodyText}`}>{emptyMessage}</h3>
+      </div>
+    );
+  }
+  return (
+    <>
+      {days.map((day) => {
+        const daySchedule = buildSchedule(day);
+        if (daySchedule.length === 0) return null;
+        return (
+          <div key={day} className={c.schedDay}>
+            <h3 className="text-xl font-black mb-4 text-white">
+              {day} — {getDateForDay(day)}
+            </h3>
+            <div className="space-y-3">
+              {daySchedule.map((item) => {
+                const itemStart = item.type === "shift" ? shiftStartRaw(item.data) : item.data.start;
+                const itemEnd = item.type === "shift" ? shiftEndRaw(item.data) : item.data.end;
+                return (
+                  <div key={`${item.type}-${item.id}`} className={item.type === "shift" ? c.schedShift : c.schedEvent}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h4 className={`font-black ${c.bodyText}`}>
+                            {item.type === "shift" ? item.data.kind || item.data.title || "Shift" : item.title}
+                          </h4>
+                          {item.type === "event" && onToggleFavorite && (
+                            <button
+                              onClick={() => onToggleFavorite(item.data)}
+                              className="p-1 bg-[#CD6C0C] text-white rounded-lg border-2 border-[#4A4A4A] text-xs font-bold px-2"
+                            >
+                              {myFavIds && myFavIds.has(item.data.eventId) ? "♥" : "♡"}
+                            </button>
+                          )}
+                        </div>
+                        <p className={`text-sm font-bold ${c.bodyText}`}>
+                          {fmtTime(itemStart)} – {fmtTime(itemEnd)}
+                          {item.type === "event" && ` · ${item.venue}`}
+                        </p>
+                        {item.type === "event" &&
+                          (canWrite && onNoteChange ? (
+                            (() => {
+                              const val = (eventNotes && eventNotes[item.data.eventId]) || "";
+                              const expanded = focusedNote === item.data.eventId || val.length > 0;
+                              return (
+                                <div className="mt-2 flex items-center gap-2">
+                                  <textarea
+                                    placeholder="Add note..."
+                                    value={val}
+                                    onChange={(e) => onNoteChange(item.data.eventId, e.target.value)}
+                                    onBlur={() => onNoteBlur && onNoteBlur(item.data.eventId)}
+                                    onFocus={() => onNoteFocus && onNoteFocus(item.data.eventId)}
+                                    className={c.noteArea}
+                                    rows={expanded ? 2 : 1}
+                                  />
+                                  {savingNotes && savingNotes[item.data.eventId] && <div className={c.spinner}></div>}
+                                </div>
+                              );
+                            })()
+                          ) : notes && notes[item.data.eventId] ? (
+                            <div className={`mt-2 p-2 bg-[#EEE] rounded-lg border border-[#4A4A4A]`}>
+                              <p className={`text-sm font-bold ${c.bodyText}`}>{notes[item.data.eventId]}</p>
+                            </div>
+                          ) : null)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 export default function PickathonAccess() {
-  const { database, useLiveQuery, useDocument } = useFireproof("picker");
   const { viewer, can, ViewerTag } = useViewer();
+  const { database, useLiveQuery, useDocument } = useFireproof("picker");
+
   const canWrite = can("write");
-  const userId = viewer?.userHandle || "anonymous";
+  const myUserHandle = viewer?.userHandle || "anonymous";
+  const userId = myUserHandle;
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,38 +182,60 @@ export default function PickathonAccess() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDay, setSelectedDay] = useState("all");
   const [view, setView] = useState("browse");
-  const [superMode, setSuperMode] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("super") === "true";
-  });
-  const [viewingUser, setViewingUser] = useState(null);
   const [eventNotes, setEventNotes] = useState({});
   const [savingNotes, setSavingNotes] = useState({});
   const [originalNotes, setOriginalNotes] = useState({});
+  const [focusedNote, setFocusedNote] = useState(null);
+  const [superMode, setSuperMode] = useState(false);
+  const [viewingUser, setViewingUser] = useState(null);
+  const [selectedFriend, setSelectedFriend] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
+
+  useEffect(() => {
+    try {
+      const w = typeof window !== "undefined" && window.top && window.top !== window ? window.top : window;
+      const params = new URLSearchParams(w.location.search);
+      if (params.get("super") === "1") setSuperMode(true);
+    } catch (e) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("super") === "1") setSuperMode(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!viewer?.userHandle) return;
+    let friendParam = null;
+    try {
+      const w = typeof window !== "undefined" && window.top && window.top !== window ? window.top : window;
+      friendParam = new URLSearchParams(w.location.search).get("friend");
+    } catch (e) {
+      friendParam = new URLSearchParams(window.location.search).get("friend");
+    }
+    if (friendParam && friendParam !== viewer.userHandle) {
+      database
+        .put({
+          _id: `friend-${viewer.userHandle}-${friendParam}`,
+          type: "friend",
+          userId: viewer.userHandle,
+          friendSlug: friendParam,
+          createdAt: Date.now(),
+        })
+        .catch(() => {});
+    }
+  }, [viewer?.userHandle, database]);
+
+  useEffect(() => {
+    if (!pendingDelete) return;
+    const handler = (e) => {
+      if (!e.target.closest("[data-pending-delete]")) setPendingDelete(null);
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [pendingDelete]);
 
   useEffect(() => {
     fetchSchedule();
   }, []);
-
-  useEffect(() => {
-    if (!canWrite && view !== "browse") setView("browse");
-  }, [canWrite, view]);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !canWrite || !viewer?.userHandle) return;
-    const params = new URLSearchParams(window.location.search);
-    const friendSlug = params.get("friend");
-    if (!friendSlug || friendSlug === viewer.userHandle) return;
-    database
-      .put({
-        _id: `friend-${viewer.userHandle}-${friendSlug}`,
-        type: "friend",
-        userId: viewer.userHandle,
-        friendSlug,
-        createdAt: Date.now(),
-      })
-      .catch(() => {});
-  }, [canWrite, viewer?.userHandle]);
 
   const getCached = () => {
     const data = localStorage.getItem("pickathon-schedule-cache");
@@ -152,7 +294,8 @@ export default function PickathonAccess() {
           venueTitle: v.title,
           venueColor: v.color,
           lineup: e.lineup || {},
-          day: toFestivalDate(start).toLocaleDateString("en-US", { weekday: "long", timeZone: FESTIVAL_TZ }),
+          day:
+            festivalDayFor(start) || toFestivalDate(start).toLocaleDateString("en-US", { weekday: "long", timeZone: FESTIVAL_TZ }),
         });
       }
     }
@@ -181,15 +324,9 @@ export default function PickathonAccess() {
 
   const { docs: allFavorites } = useLiveQuery("type", { key: "favorite" });
 
-  const { docs: friends } = useLiveQuery((doc) => [doc.type, doc.userId], { key: ["friend", userId] });
-
-  const { docs: friendedBy } = useLiveQuery((doc) => [doc.type, doc.friendSlug], { key: ["friend", userId] });
-
   const favCounts = useMemo(() => {
     const m = {};
-    for (const f of allFavorites) {
-      m[f.eventId] = (m[f.eventId] || 0) + 1;
-    }
+    for (const f of allFavorites) m[f.eventId] = (m[f.eventId] || 0) + 1;
     return m;
   }, [allFavorites]);
 
@@ -209,6 +346,21 @@ export default function PickathonAccess() {
   const activeUserId = superMode && viewingUser ? viewingUser : userId;
   const viewFavorites = allFavorites.filter((f) => (f.userId || "anonymous") === activeUserId);
   const favIds = new Set(viewFavorites.map((f) => f.eventId));
+
+  const { docs: friends } = useLiveQuery((doc) => [doc.type, doc.userId], { key: ["friend", userId] });
+  const { docs: friendedBy } = useLiveQuery((doc) => [doc.type, doc.friendSlug], { key: ["friend", userId] });
+
+  const friendFavoriteEvents = useMemo(() => {
+    if (!selectedFriend) return [];
+    const ids = new Set(allFavorites.filter((f) => (f.userId || "anonymous") === selectedFriend).map((f) => f.eventId));
+    return events.filter((e) => ids.has(e.eventId)).sort((a, b) => toDate(a.start) - toDate(b.start));
+  }, [selectedFriend, allFavorites, events]);
+
+  const { docs: allShifts } = useLiveQuery("type", { key: "shift" });
+  const friendShifts = useMemo(() => {
+    if (!selectedFriend) return [];
+    return allShifts.filter((s) => (s.userId || "anonymous") === selectedFriend && s.shareWithFriends);
+  }, [selectedFriend, allShifts]);
 
   useEffect(() => {
     const newEventNotes = {},
@@ -238,7 +390,7 @@ export default function PickathonAccess() {
     doc: shiftForm,
     merge: mergeShift,
     reset: resetShift,
-  } = useDocument({ type: "shift", day: "Thursday", startTime: "09:00", endTime: "17:00", kind: "Shift" });
+  } = useDocument({ type: "shift", day: "Thursday", startTime: "09:00", endTime: "17:00", kind: "Shift", shareWithFriends: false });
 
   const storeShiftTime = (dayISO, time) => `${dayISO}T${time}:00`;
 
@@ -247,23 +399,31 @@ export default function PickathonAccess() {
     const dayISO = getDateForDay(shiftForm.day);
     await database.put({
       type: "shift",
-      userId,
       day: shiftForm.day,
       startTime: shiftForm.startTime,
       endTime: shiftForm.endTime,
       start: storeShiftTime(dayISO, shiftForm.startTime),
       end: storeShiftTime(dayISO, shiftForm.endTime),
       kind: shiftForm.kind || "Shift",
+      shareWithFriends: !!shiftForm.shareWithFriends,
+      userId,
     });
     resetShift();
   };
 
   const toggleFavorite = async (event) => {
-    const myFav = myFavorites.find((f) => f.eventId === event.eventId);
-    if (myFav) {
-      await database.del(myFav._id);
+    if (myFavIds.has(event.eventId)) {
+      const fav = myFavorites.find((f) => f.eventId === event.eventId);
+      if (fav) await database.del(fav._id);
     } else {
-      await database.put({ _id: `favorite-${userId}-${event.eventId}`, type: "favorite", userId, eventId: event.eventId });
+      await database.put({
+        _id: `favorite-${userId}-${event.eventId}`,
+        type: "favorite",
+        eventId: event.eventId,
+        userId,
+        userDisplayName: viewer?.displayName,
+        userAvatarUrl: viewer?.avatarUrl,
+      });
     }
   };
 
@@ -273,7 +433,7 @@ export default function PickathonAccess() {
     try {
       const existing = notesDocs.find((n) => n.eventId === eventId);
       if (existing) await database.put({ ...existing, notes: noteText });
-      else await database.put({ _id: `note-${userId}-${eventId}`, type: "note", userId, eventId, notes: noteText });
+      else await database.put({ _id: `note-${userId}-${eventId}`, type: "note", eventId, notes: noteText, userId });
       setOriginalNotes((prev) => ({ ...prev, [eventId]: noteText }));
       setTimeout(() => setSavingNotes((prev) => ({ ...prev, [eventId]: false })), 500);
     } catch (err) {
@@ -284,9 +444,13 @@ export default function PickathonAccess() {
 
   const handleNoteChange = (eventId, value) => setEventNotes((prev) => ({ ...prev, [eventId]: value }));
   const handleNoteBlur = (eventId) => {
+    setFocusedNote(null);
     if ((eventNotes[eventId] || "") !== (originalNotes[eventId] || "")) saveEventNote(eventId);
   };
-  const handleNoteFocus = (eventId) => setOriginalNotes((prev) => ({ ...prev, [eventId]: eventNotes[eventId] || "" }));
+  const handleNoteFocus = (eventId) => {
+    setFocusedNote(eventId);
+    setOriginalNotes((prev) => ({ ...prev, [eventId]: eventNotes[eventId] || "" }));
+  };
   const deleteShift = async (shiftId) => {
     await database.del(shiftId);
   };
@@ -298,16 +462,27 @@ export default function PickathonAccess() {
     .filter((e) => e.title.toLowerCase().includes(searchTerm.toLowerCase()) && (selectedDay === "all" || e.day === selectedDay))
     .sort((a, b) => toDate(a.start) - toDate(b.start));
 
-  const favoriteEvents = events.filter((e) => favIds.has(e.eventId)).sort((a, b) => toDate(a.start) - toDate(b.start));
+  const favoriteEvents = events.filter((e) => myFavIds.has(e.eventId)).sort((a, b) => toDate(a.start) - toDate(b.start));
 
   const makeSchedule = (day) => {
-    const ev = favoriteEvents.filter((e) => e.day === day);
-    const sh = shifts.filter((s) => s.day === day);
+    const ev = favoriteEvents.filter((e) => festivalDayFor(e.start) === day);
+    const sh = shifts.filter((s) => festivalDayFor(shiftStartRaw(s)) === day);
     return [
       ...ev.map((e) => ({ type: "event", id: e.eventId, title: e.title, sort: toDate(e.start), venue: e.venueTitle, data: e })),
       ...sh.map((s) => ({ type: "shift", id: s._id, sort: toDate(shiftStartRaw(s)), data: s })),
     ].sort((a, b) => a.sort - b.sort || (a.type === "shift" ? -1 : 1));
   };
+
+  const makeFriendSchedule = (day) => {
+    const ev = friendFavoriteEvents.filter((e) => festivalDayFor(e.start) === day);
+    const sh = friendShifts.filter((s) => festivalDayFor(shiftStartRaw(s)) === day);
+    return [
+      ...ev.map((e) => ({ type: "event", id: e.eventId, title: e.title, sort: toDate(e.start), venue: e.venueTitle, data: e })),
+      ...sh.map((s) => ({ type: "shift", id: s._id, sort: toDate(shiftStartRaw(s)), data: s })),
+    ].sort((a, b) => a.sort - b.sort || (a.type === "shift" ? -1 : 1));
+  };
+
+  const friendCount = friends.length + friendedBy.length;
 
   const c = {
     pageBg: "bg-[#EEE]",
@@ -340,6 +515,25 @@ export default function PickathonAccess() {
     readOnlyBanner: "mt-2 bg-white text-[#4A4A4A] px-3 py-2 rounded-lg text-sm font-bold border-2 border-[#4A4A4A]",
   };
 
+  const renderDeleteX = (docId) => (
+    <button
+      data-pending-delete
+      onClick={(e) => {
+        e.stopPropagation();
+        if (pendingDelete === docId) {
+          database.del(docId).catch(() => {});
+          setPendingDelete(null);
+        } else {
+          setPendingDelete(docId);
+        }
+      }}
+      className={`px-2 py-1 rounded-full border-2 border-[#4A4A4A] text-xs font-bold transition-all ${pendingDelete === docId ? "bg-[#B22222] text-white" : "bg-white text-[#4A4A4A] hover:bg-[#B22222] hover:text-white"}`}
+      title={pendingDelete === docId ? "Tap to confirm" : "Remove"}
+    >
+      {pendingDelete === docId ? "Confirm" : "×"}
+    </button>
+  );
+
   if (loading && events.length === 0) {
     return (
       <div className={`min-h-screen ${c.pageBg} p-4`}>
@@ -367,10 +561,13 @@ export default function PickathonAccess() {
     );
   }
 
+  // this is hardcoded on purpose
+  const connectUrl = `https://vibes.diy/vibe/og/pickathon-picker/?friend=${encodeURIComponent(userId)}`;
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(connectUrl)}`;
+
   return (
     <div className={`min-h-screen ${c.pageBg} p-4`}>
       <div className={`max-w-6xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl border-8 ${c.border} overflow-hidden`}>
-        {/* Header */}
         <div className={`${c.headerBg} border-b-8 ${c.border} p-6`}>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
@@ -381,7 +578,7 @@ export default function PickathonAccess() {
                 <h1 className={`text-4xl font-black ${c.bodyText} mb-1`}>
                   {superMode ? "SUPER PICKATHON PICKER" : "PICKATHON PICKER"}
                 </h1>
-                <p className={`${c.bodyText} text-base font-bold`}>Jul 30 - Aug 2, 2026 &middot; Pendarvis Farm, OR</p>
+                <p className={`${c.bodyText} text-base font-bold`}>Jul 30 – Aug 2, 2026 · Pendarvis Farm, Happy Valley, OR</p>
                 <p className={`${c.bodyText} text-sm mt-1`}>
                   <em>Discover, favorite, and organize your perfect festival experience</em>
                 </p>
@@ -395,33 +592,33 @@ export default function PickathonAccess() {
           {!canWrite && <div className={c.readOnlyBanner}>Sign in to save your favorites.</div>}
         </div>
 
-        {/* Navigation */}
         <div className={`${c.navBg} border-b-8 ${c.border} p-4`}>
           <div className="flex flex-wrap gap-3">
             {["browse", "favorites", "friends", "shifts", "schedule"]
-              .filter((v) => v === "browse" || (v === "favorites" ? superMode && canWrite : v === "friends" ? canWrite : canWrite))
+              .filter((v) => v === "browse" || (v === "favorites" ? superMode && canWrite : canWrite))
               .map((viewName) => (
                 <button key={viewName} onClick={() => setView(viewName)} className={c.navBtn(view === viewName)}>
                   {viewName === "browse" && `Browse Events`}
                   {viewName === "favorites" && `Favorites (${myFavIds.size})`}
-                  {viewName === "friends" && `Friends`}
+                  {viewName === "friends" && `Friends (${friendCount})`}
                   {viewName === "shifts" && `Extras (${shifts.length})`}
-                  {viewName === "schedule" && `My Schedule`}
+                  {viewName === "schedule" && `My Schedule (${myFavIds.size})`}
                 </button>
               ))}
-            <a
-              href="https://pickathon.com/wp-content/uploads/2025/07/2025-Pickathon-Festival-Map_Web_Hyperlinks.pdf"
-              target="map"
-              rel="noopener noreferrer"
-              className={c.navBtn(false)}
-            >
-              Map (PDF)
-            </a>
+            {superMode && (
+              <a
+                href="https://pickathon.com/wp-content/uploads/2025/07/2025-Pickathon-Festival-Map_Web_Hyperlinks.pdf"
+                target="map"
+                rel="noopener noreferrer"
+                className={c.navBtn(false)}
+              >
+                Map (PDF)
+              </a>
+            )}
           </div>
         </div>
 
         <div className="p-6">
-          {/* BROWSE */}
           {view === "browse" && (
             <div>
               <div className="mb-6 flex flex-wrap gap-4">
@@ -469,17 +666,23 @@ export default function PickathonAccess() {
                           </p>
                         </div>
                         {canWrite ? (
-                          <div className="mt-3">
-                            <textarea
-                              placeholder="Add your notes about this artist..."
-                              value={eventNotes[event.eventId] || ""}
-                              onChange={(e) => handleNoteChange(event.eventId, e.target.value)}
-                              onBlur={() => handleNoteBlur(event.eventId)}
-                              onFocus={() => handleNoteFocus(event.eventId)}
-                              className={c.noteArea}
-                              rows="2"
-                            />
-                          </div>
+                          (() => {
+                            const val = eventNotes[event.eventId] || "";
+                            const expanded = focusedNote === event.eventId || val.length > 0;
+                            return (
+                              <div className="mt-3">
+                                <textarea
+                                  placeholder="Add note..."
+                                  value={val}
+                                  onChange={(e) => handleNoteChange(event.eventId, e.target.value)}
+                                  onBlur={() => handleNoteBlur(event.eventId)}
+                                  onFocus={() => handleNoteFocus(event.eventId)}
+                                  className={c.noteArea}
+                                  rows={expanded ? 2 : 1}
+                                />
+                              </div>
+                            );
+                          })()
                         ) : notes[event.eventId] ? (
                           <div className={c.noteBox}>
                             <p className={`text-sm font-bold ${c.bodyText}`}>{notes[event.eventId]}</p>
@@ -532,46 +735,38 @@ export default function PickathonAccess() {
             </div>
           )}
 
-          {/* FAVORITES */}
           {view === "favorites" && superMode && (
-            <div className="mb-6 p-4 bg-[#BACD32] rounded-2xl border-4 border-[#4A4A4A]">
-              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                <h3 className={`text-lg font-black ${c.bodyText}`}>
-                  {viewingUser ? `Viewing ${viewingUser}'s picks` : "Pickers (tap to view their picks)"}
-                </h3>
-                {viewingUser && (
-                  <button onClick={() => setViewingUser(null)} className={c.btnCyan}>
-                    Back to my picks
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {favUsers.map((u) => (
-                  <button
-                    key={u.userId}
-                    onClick={() => setViewingUser(u.userId === userId ? null : u.userId)}
-                    className={`flex items-center gap-2 p-1 rounded-full border-2 border-[#4A4A4A] transition-all ${
-                      viewingUser === u.userId || (!viewingUser && u.userId === userId)
-                        ? "bg-[#CD6C0C]"
-                        : "bg-white hover:bg-[#71AD44]"
-                    }`}
-                    title={`${u.count} pick${u.count === 1 ? "" : "s"}`}
-                  >
-                    <ViewerTag userHandle={u.userId} />
-                    <span className={`pr-3 font-bold text-sm ${c.bodyText}`}>{u.count}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {view === "favorites" && (
             <div>
-              <h2 className={`text-2xl font-black mb-6 ${c.bodyText}`}>Your Favorite Events</h2>
+              <div className="mb-6 p-4 bg-[#BACD32] rounded-2xl border-4 border-[#4A4A4A]">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <h3 className={`text-lg font-black ${c.bodyText}`}>
+                    {viewingUser ? `Viewing ${viewingUser}'s picks` : "Pickers (tap to view their picks)"}
+                  </h3>
+                  {viewingUser && (
+                    <button onClick={() => setViewingUser(null)} className={c.btnCyan}>
+                      Back to my picks
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {favUsers.map((u) => (
+                    <button
+                      key={u.userId}
+                      onClick={() => setViewingUser(u.userId === userId ? null : u.userId)}
+                      className={`flex items-center gap-2 p-1 rounded-full border-2 border-[#4A4A4A] transition-all ${viewingUser === u.userId || (!viewingUser && u.userId === userId) ? "bg-[#CD6C0C]" : "bg-white hover:bg-[#71AD44]"}`}
+                      title={`${u.count} pick${u.count === 1 ? "" : "s"}`}
+                    >
+                      <ViewerTag userHandle={u.userId} />
+                      <span className={`pr-3 font-bold text-sm ${c.bodyText}`}>{u.count}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <h2 className={`text-2xl font-black mb-6 ${c.bodyText}`}>Favorite Events</h2>
               {favoriteEvents.length === 0 ? (
                 <div className="text-center py-12">
                   <h3 className={`text-2xl font-black mb-2 ${c.bodyText}`}>No favorites yet!</h3>
-                  <p className={c.bodyText}>Browse events and click the heart to add them here</p>
                 </div>
               ) : (
                 <div className="grid gap-4">
@@ -609,74 +804,104 @@ export default function PickathonAccess() {
             </div>
           )}
 
-          {/* FRIENDS */}
           {view === "friends" && (
             <div>
-              <h2 className={`text-2xl font-black mb-6 ${c.bodyText}`}>Connect with Friends</h2>
+              <div className="flex flex-col items-center gap-4 p-6 bg-[#BACD32] rounded-2xl border-4 border-[#4A4A4A] mb-6">
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                  <p className={`text-lg font-bold ${c.bodyText}`}>Scan to follow</p>
+                  <ViewerTag />
+                  <p className={`text-lg font-bold ${c.bodyText}`}>schedule</p>
+                </div>
+                <div className="bg-white rounded-2xl border-4 border-[#4A4A4A] p-4">
+                  <img src={qrSrc} alt="Connect QR code" width="320" height="320" />
+                </div>
+                <a href={connectUrl} target="_blank" rel="noopener noreferrer" className={c.btnPink}>
+                  Connect
+                </a>
+                <p className={`text-xs font-bold ${c.bodyText} break-all text-center max-w-md`}>{connectUrl}</p>
+              </div>
 
               <div className="mb-6 p-6 bg-white rounded-2xl border-4 border-[#4A4A4A]">
+                <p className={`text-sm font-bold mb-4 ${c.bodyText} italic`}>
+                  {friends.length + friendedBy.length > 0
+                    ? "Click a friend to see their schedule"
+                    : "Add a friend to see their schedule"}
+                </p>
                 <h3 className={`text-xl font-black mb-4 ${c.bodyText}`}>Added You ({friendedBy.length})</h3>
                 {friendedBy.length === 0 ? (
-                  <p className={`font-bold ${c.bodyText}`}>Nobody has scanned your QR yet.</p>
+                  <p className={`font-bold ${c.bodyText} mb-6`}>Nobody has scanned your QR yet.</p>
                 ) : (
                   <div className="flex flex-wrap gap-3 mb-6">
                     {friendedBy.map((f) => (
                       <div
                         key={`by-${f._id}`}
-                        className="flex items-center gap-2 p-2 bg-[#71AD44] rounded-full border-2 border-[#4A4A4A]"
+                        className={`flex items-center gap-2 p-2 rounded-full border-2 border-[#4A4A4A] transition-all ${selectedFriend === f.userId ? "bg-[#CD6C0C]" : "bg-[#71AD44]"}`}
                       >
-                        <ViewerTag userHandle={f.userId} />
+                        <button
+                          onClick={() => setSelectedFriend(selectedFriend === f.userId ? null : f.userId)}
+                          className="flex items-center"
+                        >
+                          <ViewerTag userHandle={f.userId} />
+                        </button>
+                        {canWrite && renderDeleteX(f._id)}
                       </div>
                     ))}
                   </div>
                 )}
-                <h3 className={`text-xl font-black mb-4 ${c.bodyText}`}>Your Friends ({friends.length})</h3>
+
+                <h3 className={`text-xl font-black mb-4 ${c.bodyText}`}>Following ({friends.length})</h3>
                 {friends.length === 0 ? (
-                  <p className={`font-bold ${c.bodyText}`}>No friends yet — share your QR code below to connect.</p>
+                  <p className={`font-bold ${c.bodyText}`}>No friends yet — share your QR code above to connect.</p>
                 ) : (
                   <div className="flex flex-wrap gap-3">
                     {friends.map((f) => (
-                      <div key={f._id} className="flex items-center gap-2 p-2 bg-[#BACD32] rounded-full border-2 border-[#4A4A4A]">
-                        <ViewerTag userHandle={f.friendSlug} />
-                        {canWrite && (
-                          <button
-                            onClick={() => database.del(f._id)}
-                            className="px-2 py-1 bg-[#B22222] text-white rounded-full border-2 border-[#4A4A4A] text-xs font-bold hover:opacity-80"
-                            title="Remove friend"
-                          >
-                            ×
-                          </button>
-                        )}
+                      <div
+                        key={f._id}
+                        className={`flex items-center gap-2 p-2 rounded-full border-2 border-[#4A4A4A] transition-all ${selectedFriend === f.friendSlug ? "bg-[#CD6C0C]" : "bg-[#BACD32]"}`}
+                      >
+                        <button
+                          onClick={() => setSelectedFriend(selectedFriend === f.friendSlug ? null : f.friendSlug)}
+                          className="flex items-center"
+                        >
+                          <ViewerTag userHandle={f.friendSlug} />
+                        </button>
+                        {canWrite && renderDeleteX(f._id)}
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col items-center gap-4 p-6 bg-[#BACD32] rounded-2xl border-4 border-[#4A4A4A]">
-                {(() => {
-                  const url = new URL("https://vibes.diy/vibe/og/pickathon-access/");
-                  url.searchParams.set("friend", userId);
-                  const connectUrl = url.toString();
-                  return (
-                    <>
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(connectUrl)}`}
-                        alt="Connect QR"
-                        className="w-60 h-60 bg-white p-2 rounded-2xl border-4 border-[#4A4A4A]"
-                      />
-                      <a href={connectUrl} target="_blank" rel="noopener noreferrer" className={c.btnPink}>
-                        Connect
-                      </a>
-                      <p className={`text-xs font-bold ${c.bodyText} break-all text-center max-w-md`}>{connectUrl}</p>
-                    </>
-                  );
-                })()}
-              </div>
+              {selectedFriend && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className={`text-2xl font-black ${c.bodyText}`}>Picks by</h3>
+                      <ViewerTag userHandle={selectedFriend} />
+                    </div>
+                    <button onClick={() => setSelectedFriend(null)} className={c.btnCyan}>
+                      Close
+                    </button>
+                  </div>
+                  <ScheduleView
+                    days={displayDays}
+                    getDateForDay={getDateForDay}
+                    buildSchedule={makeFriendSchedule}
+                    fmtTime={fmtTime}
+                    notes={null}
+                    c={c}
+                    shiftStartRaw={shiftStartRaw}
+                    shiftEndRaw={shiftEndRaw}
+                    emptyMessage="This friend hasn't picked any events yet."
+                    canWrite={false}
+                    onToggleFavorite={canWrite ? toggleFavorite : null}
+                    myFavIds={myFavIds}
+                  />
+                </div>
+              )}
             </div>
           )}
 
-          {/* SHIFTS */}
           {view === "shifts" && (
             <div>
               <h2 className={`text-2xl font-black mb-6 ${c.bodyText}`}>Manage Your Extras</h2>
@@ -711,6 +936,15 @@ export default function PickathonAccess() {
                       className={c.input}
                     />
                   </div>
+                  <label className={`mt-4 flex items-center gap-2 font-bold ${c.bodyText}`}>
+                    <input
+                      type="checkbox"
+                      checked={!!shiftForm.shareWithFriends}
+                      onChange={(e) => mergeShift({ shareWithFriends: e.target.checked })}
+                      className="w-5 h-5"
+                    />
+                    Show in friends view
+                  </label>
                   <button onClick={submitShift} className={`mt-4 ${c.btnCyan}`}>
                     Add Extra
                   </button>
@@ -729,6 +963,17 @@ export default function PickathonAccess() {
                           <p className={`font-bold ${c.bodyText}`}>
                             {shift.day} ({getDateForDay(shift.day)}) — {fmtTime(shiftStart)} to {fmtTime(shiftEnd)}
                           </p>
+                          {canWrite && (
+                            <label className={`mt-2 inline-flex items-center gap-2 text-sm font-bold ${c.bodyText}`}>
+                              <input
+                                type="checkbox"
+                                checked={!!shift.shareWithFriends}
+                                onChange={(e) => database.put({ ...shift, shareWithFriends: e.target.checked })}
+                                className="w-4 h-4"
+                              />
+                              Show in friends view
+                            </label>
+                          )}
                         </div>
                         {canWrite && (
                           <button onClick={() => deleteShift(shift._id)} className={c.deleteBtn} title="Delete shift">
@@ -764,63 +1009,29 @@ export default function PickathonAccess() {
             </div>
           )}
 
-          {/* SCHEDULE */}
           {view === "schedule" && (
             <div>
               <h2 className={`text-2xl font-black mb-6 ${c.bodyText}`}>My Personal Festival Schedule</h2>
-              {displayDays.map((day) => {
-                const daySchedule = makeSchedule(day);
-                if (daySchedule.length === 0) return null;
-                return (
-                  <div key={day} className={c.schedDay}>
-                    <h3 className="text-xl font-black mb-4 text-white">
-                      {day} — {getDateForDay(day)}
-                    </h3>
-                    <div className="space-y-3">
-                      {daySchedule.map((item) => {
-                        const itemStart = item.type === "shift" ? shiftStartRaw(item.data) : item.data.start;
-                        const itemEnd = item.type === "shift" ? shiftEndRaw(item.data) : item.data.end;
-                        return (
-                          <div key={`${item.type}-${item.id}`} className={item.type === "shift" ? c.schedShift : c.schedEvent}>
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                  <h4 className={`font-black ${c.bodyText}`}>
-                                    {item.type === "shift" ? item.data.kind || item.data.title || "Shift" : item.title}
-                                  </h4>
-                                  {item.type === "event" && (
-                                    <button
-                                      onClick={() => toggleFavorite(item.data)}
-                                      className="p-1 bg-[#CD6C0C] text-white rounded-lg border-2 border-[#4A4A4A] text-xs font-bold px-2"
-                                    >
-                                      ♥
-                                    </button>
-                                  )}
-                                </div>
-                                <p className={`text-sm font-bold ${c.bodyText}`}>
-                                  {fmtTime(itemStart)} – {fmtTime(itemEnd)}
-                                  {item.type === "event" && ` · ${item.venue}`}
-                                </p>
-                                {item.type === "event" && notes[item.data.eventId] && (
-                                  <div className={`mt-2 p-2 bg-[#EEE] rounded-lg border border-[#4A4A4A]`}>
-                                    <p className={`text-sm font-bold ${c.bodyText}`}>{notes[item.data.eventId]}</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-              {favoriteEvents.length === 0 && shifts.length === 0 && (
-                <div className="text-center py-12">
-                  <h3 className={`text-2xl font-black mb-2 ${c.bodyText}`}>No events or shifts scheduled</h3>
-                  <p className={c.bodyText}>Add some favorites and shifts to see your personalized schedule!</p>
-                </div>
-              )}
+              <ScheduleView
+                days={displayDays}
+                getDateForDay={getDateForDay}
+                buildSchedule={makeSchedule}
+                fmtTime={fmtTime}
+                notes={notes}
+                c={c}
+                shiftStartRaw={shiftStartRaw}
+                shiftEndRaw={shiftEndRaw}
+                emptyMessage="No events or shifts scheduled"
+                eventNotes={eventNotes}
+                savingNotes={savingNotes}
+                onNoteChange={handleNoteChange}
+                onNoteBlur={handleNoteBlur}
+                onNoteFocus={handleNoteFocus}
+                canWrite={canWrite}
+                focusedNote={focusedNote}
+                onToggleFavorite={canWrite ? toggleFavorite : null}
+                myFavIds={myFavIds}
+              />
             </div>
           )}
         </div>
