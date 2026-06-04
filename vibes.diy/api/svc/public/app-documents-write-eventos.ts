@@ -636,6 +636,26 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
 
       const dbName = req.dbName;
 
+      // Check for backend onChange binding
+      const tBfbDel = vctx.sql.tables.backendFunctionBindings;
+      const [bfbRowDel] = await vctx.sql.db
+        .select({ hasOnChange: tBfbDel.hasOnChange })
+        .from(tBfbDel)
+        .where(and(eq(tBfbDel.ownerHandle, req.ownerHandle), eq(tBfbDel.appSlug, req.appSlug)))
+        .limit(1);
+
+      // Load the previous doc before inserting tombstone (for onChange oldDoc)
+      let deleteOldDoc: unknown = null;
+      if (bfbRowDel?.hasOnChange) {
+        const [prevDoc] = await vctx.sql.db
+          .select({ data: t.data })
+          .from(t)
+          .where(and(eq(t.ownerHandle, req.ownerHandle), eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, req.docId)))
+          .orderBy(desc(t.seq))
+          .limit(1);
+        deleteOldDoc = prevDoc?.data ?? null;
+      }
+
       // Insert tombstone
       const maxSeqResult = await vctx.sql.db
         .select({ maxSeq: max(t.seq) })
@@ -665,6 +685,33 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
             clientWsSend(ctx).connId
           )
           .catch((e: unknown) => console.error("DocNotify error:", e));
+      }
+
+      // Enqueue backend onChange for delete events
+      if (bfbRowDel?.hasOnChange && vctx.postQueue) {
+        let deleteWriterHandle: string | null = null;
+        if (userId) {
+          const t_hb = vctx.sql.tables.handleBinding;
+          const [writerRow] = await vctx.sql.db.select({ handle: t_hb.handle }).from(t_hb).where(eq(t_hb.userId, userId)).limit(1);
+          deleteWriterHandle = writerRow?.handle ?? null;
+        }
+        await vctx.postQueue({
+          payload: {
+            type: "vibes.diy.evt-backend-onchange" as const,
+            ownerHandle: req.ownerHandle,
+            appSlug: req.appSlug,
+            dbName,
+            docId: req.docId,
+            doc: { _id: req.docId, _deleted: true },
+            oldDoc: deleteOldDoc,
+            writerHandle: deleteWriterHandle,
+            created: now,
+          },
+          tid: "queue-event",
+          src: "deleteDoc",
+          dst: "vibes-service",
+          ttl: 1,
+        } satisfies MsgBase<EvtBackendOnChange>);
       }
 
       await ctx.send.send(ctx, {
