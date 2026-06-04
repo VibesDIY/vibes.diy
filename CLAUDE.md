@@ -28,6 +28,10 @@ Invokable Claude Code skills live in [`.claude/skills/README.md`](.claude/skills
 
 `agents/*.md` (above) documents _how we work_; `.claude/skills/` provides _things we invoke_. See [`.claude/skills/README.md`](.claude/skills/README.md) for the boundary.
 
+## Writing issues
+
+- Lead every issue with a one or two sentence plain-language summary of the problem, before any technical detail, file paths, or repro steps. A teammate triaging the backlog should be able to tell what an issue is without decoding it.
+
 ## Quick Reference
 
 - Run checks: `pnpm check` (format + build + test + lint)
