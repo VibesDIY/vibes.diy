@@ -38,12 +38,10 @@ This is the first time the user sees the 2+Other pattern. Every app in the tree 
 2 curated options per node is a depth budget: narrower tree means we can guarantee instant cached content at least 2 levels deep across the board. The coverage target:
 
 - **Level 0 (category → root app):** all 4 categories have a cached root app (instant)
-- **Level 1 (root app → first transform):** each root app has at least 1 cached curated option (instant on second tap)
-- **Level 2+:** best effort — "Other" is always there
+- **Level 1 (root app → first chiclets):** both curated options are fully cached (instant)
+- **Level 2+ (deeper transforms):** at least 1 cached; the other may build on demand
 
-Two instant taps before any wait. Breadth can grow later; depth-first.
-
-This also creates a natural A/B surface: serve one chiclet from cache (instant) and let the other build, then measure which path users prefer — cached-instant vs. generated-with-wait.
+The first two taps are always instant. Deeper in the tree, having one cached and one generated creates a natural A/B surface to measure whether users prefer instant-cached vs. generated-with-wait.
 
 ## Starter Apps
 
