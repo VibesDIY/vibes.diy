@@ -33,6 +33,18 @@ Bottom: a "Make it yours" tray with:
 
 This is the first time the user sees the 2+Other pattern. Every app in the tree has its own 2+Other. The curated chiclets swap the app instantly. "Other" is the first time anything waits.
 
+### Why 2+Other (not 3+Other)
+
+2 curated options per node is a depth budget: narrower tree means we can guarantee instant cached content at least 2 levels deep across the board. The coverage target:
+
+- **Level 0 (category → root app):** all 4 categories have a cached root app (instant)
+- **Level 1 (root app → first transform):** each root app has at least 1 cached curated option (instant on second tap)
+- **Level 2+:** best effort — "Other" is always there
+
+Two instant taps before any wait. Breadth can grow later; depth-first.
+
+This also creates a natural A/B surface: serve one chiclet from cache (instant) and let the other build, then measure which path users prefer — cached-instant vs. generated-with-wait.
+
 ## Starter Apps
 
 Each starter app is a self-contained React component bundled in the app (not dynamically generated). All audio uses the WebAudio API with no external assets.
