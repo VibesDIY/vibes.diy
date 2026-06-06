@@ -65,13 +65,11 @@ async function startMcpServer(ctx: CliCtx, args: { appSlug: string; ownerHandle:
   server.tool(
     "vibes_list_databases",
     "List database names for an app",
-    {
-      app_slug: z.string().optional().describe("App slug; defaults to the server's configured app slug"),
-    },
+    {},
     { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
-    async (params) => {
+    async () => {
       try {
-        const slug = params.app_slug ?? args.appSlug;
+        const slug = args.appSlug;
         const r = await api.listDbNames({ appSlug: slug, ownerHandle });
         if (r.isErr()) {
           return { content: [{ type: "text" as const, text: `Error: ${r.Err()}` }] };
@@ -88,23 +86,22 @@ async function startMcpServer(ctx: CliCtx, args: { appSlug: string; ownerHandle:
     "vibes_get",
     "Get a document by ID from a database",
     {
-      doc_id: z.string().describe("Document ID"),
+      id: z.string().describe("Document ID"),
       db: z.string().optional().describe("Database name (default: 'default')"),
-      app_slug: z.string().optional().describe("App slug; defaults to the server's configured app slug"),
     },
     { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     async (params) => {
       try {
-        const slug = params.app_slug ?? args.appSlug;
+        const slug = args.appSlug;
         const dbName = params.db ?? "default";
         const adapter = new FireflyApiAdapter(api, slug, { ownerHandle });
-        const r = await adapter.getDoc(params.doc_id, dbName);
+        const r = await adapter.getDoc(params.id, dbName);
         if (r.isErr()) {
           return { content: [{ type: "text" as const, text: `Error: ${r.Err()}` }] };
         }
         const res = r.Ok();
         if (isResGetDocNotFound(res)) {
-          return { content: [{ type: "text" as const, text: `Document not found: ${params.doc_id}` }] };
+          return { content: [{ type: "text" as const, text: `Document not found: ${params.id}` }] };
         }
         if (!isResGetDoc(res)) {
           return { content: [{ type: "text" as const, text: `Unexpected response: ${JSON.stringify(res)}` }] };
@@ -122,24 +119,18 @@ async function startMcpServer(ctx: CliCtx, args: { appSlug: string; ownerHandle:
     "vibes_put",
     "Create or update a document in a database",
     {
-      doc: z.string().describe("JSON document to store"),
-      doc_id: z.string().optional().describe("Document ID (_id); generated if omitted"),
+      doc: z.record(z.unknown()).describe("Document to store"),
+      id: z.string().optional().describe("Document ID (_id); generated if omitted"),
       db: z.string().optional().describe("Database name (default: 'default')"),
-      app_slug: z.string().optional().describe("App slug; defaults to the server's configured app slug"),
     },
     { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
     async (params) => {
       try {
-        const rParsed = await exception2Result(() => JSON.parse(params.doc) as Record<string, unknown>);
-        if (rParsed.isErr()) {
-          return { content: [{ type: "text" as const, text: `Invalid JSON: ${rParsed.Err()}` }] };
-        }
-        const doc = rParsed.Ok();
-        const slug = params.app_slug ?? args.appSlug;
+        const slug = args.appSlug;
         const dbName = params.db ?? "default";
         const adapter = new FireflyApiAdapter(api, slug, { ownerHandle });
-        const docId = params.doc_id ?? undefined;
-        const r = await adapter.putDoc(doc, docId, dbName);
+        const docId = params.id;
+        const r = await adapter.putDoc(params.doc, docId, dbName);
         if (r.isErr()) {
           return { content: [{ type: "text" as const, text: `Error: ${r.Err()}` }] };
         }
@@ -159,17 +150,16 @@ async function startMcpServer(ctx: CliCtx, args: { appSlug: string; ownerHandle:
     "vibes_delete",
     "Delete a document by ID from a database",
     {
-      doc_id: z.string().describe("Document ID to delete"),
+      id: z.string().describe("Document ID to delete"),
       db: z.string().optional().describe("Database name (default: 'default')"),
-      app_slug: z.string().optional().describe("App slug; defaults to the server's configured app slug"),
     },
     { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
     async (params) => {
       try {
-        const slug = params.app_slug ?? args.appSlug;
+        const slug = args.appSlug;
         const dbName = params.db ?? "default";
         const adapter = new FireflyApiAdapter(api, slug, { ownerHandle });
-        const r = await adapter.deleteDoc(params.doc_id, dbName);
+        const r = await adapter.deleteDoc(params.id, dbName);
         if (r.isErr()) {
           return { content: [{ type: "text" as const, text: `Error: ${r.Err()}` }] };
         }
@@ -187,18 +177,20 @@ async function startMcpServer(ctx: CliCtx, args: { appSlug: string; ownerHandle:
   // ── vibes_query ──────────────────────────────────────────────────
   server.tool(
     "vibes_query",
-    "Query documents by field value with optional key and limit filters",
+    "Query documents by field value with optional key, prefix, range, limit, and descending filters",
     {
       field: z.string().describe("Field name to index on"),
       db: z.string().optional().describe("Database name (default: 'default')"),
       key: z.string().optional().describe("Exact key match (JSON value)"),
+      prefix: z.string().optional().describe("Key prefix match (JSON value)"),
+      range: z.tuple([z.string(), z.string()]).optional().describe("Key range [start, end] (JSON values)"),
       limit: z.number().optional().describe("Maximum number of results (0 or omitted = no limit)"),
-      app_slug: z.string().optional().describe("App slug; defaults to the server's configured app slug"),
+      descending: z.boolean().optional().describe("Return results in descending order"),
     },
     { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     async (params) => {
       try {
-        const slug = params.app_slug ?? args.appSlug;
+        const slug = args.appSlug;
         const dbName = params.db ?? "default";
         const adapter = new FireflyApiAdapter(api, slug, { ownerHandle });
 
@@ -230,8 +222,43 @@ async function startMcpServer(ctx: CliCtx, args: { appSlug: string; ownerHandle:
           rows = rows.filter((r) => r.encodedKey === encodedKey);
         }
 
+        // Apply prefix filter
+        if (params.prefix !== undefined && params.prefix !== "") {
+          const rPrefix = await exception2Result(() => JSON.parse(params.prefix!) as unknown);
+          if (rPrefix.isErr()) {
+            return { content: [{ type: "text" as const, text: `Invalid prefix JSON: ${rPrefix.Err()}` }] };
+          }
+          const prefixVal = rPrefix.Ok();
+          let encodedPrefix = charwise.encode(prefixVal) as string;
+          if (Array.isArray(prefixVal) && encodedPrefix.endsWith("!")) {
+            encodedPrefix = encodedPrefix.slice(0, -1);
+          }
+          rows = rows.filter((r) => r.encodedKey.startsWith(encodedPrefix));
+        }
+
+        // Apply range filter
+        if (params.range !== undefined) {
+          const [rangeStart, rangeEnd] = params.range;
+          const rStart = await exception2Result(() => JSON.parse(rangeStart) as unknown);
+          const rEnd = await exception2Result(() => JSON.parse(rangeEnd) as unknown);
+          if (rStart.isErr()) {
+            return { content: [{ type: "text" as const, text: `Invalid range start JSON: ${rStart.Err()}` }] };
+          }
+          if (rEnd.isErr()) {
+            return { content: [{ type: "text" as const, text: `Invalid range end JSON: ${rEnd.Err()}` }] };
+          }
+          const encodedStart = charwise.encode(rStart.Ok()) as string;
+          const encodedEnd = charwise.encode(rEnd.Ok()) as string;
+          rows = rows.filter((r) => r.encodedKey >= encodedStart && r.encodedKey <= encodedEnd);
+        }
+
         // Sort by charwise-encoded key
         rows.sort((a, b) => (a.encodedKey < b.encodedKey ? -1 : a.encodedKey > b.encodedKey ? 1 : 0));
+
+        // Apply descending
+        if (params.descending) {
+          rows.reverse();
+        }
 
         // Apply limit
         if (params.limit !== undefined && params.limit > 0) {
