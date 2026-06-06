@@ -120,8 +120,42 @@ async function main(): Promise<number> {
   };
   const rFooter = await exception2Result(() => getCliFooter());
   const cliFooter = rFooter.isOk() ? rFooter.Ok() : "";
+  const mcpFooter = `
+## MCP Server Setup
+
+Tools: vibes_list_apps, vibes_list_databases, vibes_get, vibes_put, vibes_delete, vibes_query
+
+Requires: npx vibes-diy login (one time)
+
+### Claude Desktop / Cowork
+
+Add to ~/Library/Application Support/Claude/claude_desktop_config.json:
+
+  { "mcpServers": { "my-vibe": {
+      "command": "npx",
+      "args": ["vibes-diy", "mcp", "--app-slug", "APP", "--user-slug", "USER"]
+  }}}
+
+### Claude Code
+
+Add to .claude/settings.json:
+
+  { "mcpServers": { "my-vibe": {
+      "command": "npx", "args": ["vibes-diy", "mcp"]
+  }}}
+
+### Test interactively
+
+  npx @modelcontextprotocol/inspector npx vibes-diy mcp --app-slug APP`;
+
   setDefaultHelpFormatter({
-    formatCommand: defaultHelpFormatter.formatCommand,
+    formatCommand(data, context) {
+      const base = defaultHelpFormatter.formatCommand(data, context);
+      if (data.name === "mcp") {
+        return base + "\n" + mcpFooter;
+      }
+      return base;
+    },
     formatSubcommands(data, context) {
       const base = defaultHelpFormatter.formatSubcommands(data, context);
       return cliFooter ? base + "\n" + cliFooter : base;
