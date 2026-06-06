@@ -2,6 +2,12 @@ import React, { useState, useCallback, useEffect } from "react";
 import { gridBackground, cx } from "@vibes.diy/base";
 import { isMobileViewport } from "../../utils/ViewState.js";
 import { getPageStyle } from "./StartPage.styles.js";
+import CategoryPicker from "./CategoryPicker.js";
+import StarterAppView from "./StarterAppView.js";
+import { getStarterNode } from "./starter-tree.js";
+
+// Side-effect import: registers all apps in the tree
+import "./starter-tree.js";
 
 type View = { kind: "categories" } | { kind: "app"; nodeId: string };
 
@@ -41,9 +47,25 @@ export default function StartPage() {
     return <div className={cx(gridBackground, "page-grid-background")} style={getPageStyle()} />;
   }
 
+  const mobile = isMobile as boolean;
+
+  if (view.kind === "categories") {
+    return (
+      <div className={cx(gridBackground, "page-grid-background")} style={getPageStyle()}>
+        <CategoryPicker isMobile={mobile} onSelect={navigateToApp} />
+      </div>
+    );
+  }
+
+  const node = getStarterNode(view.nodeId);
+  if (!node) {
+    setView({ kind: "categories" });
+    return null;
+  }
+
   return (
     <div className={cx(gridBackground, "page-grid-background")} style={getPageStyle()}>
-      {view.kind === "categories" ? <div>Category picker placeholder</div> : <div>App view placeholder for {view.nodeId}</div>}
+      <StarterAppView node={node} isMobile={mobile} onSelectChiclet={navigateToApp} onBack={navigateBack} />
     </div>
   );
 }
