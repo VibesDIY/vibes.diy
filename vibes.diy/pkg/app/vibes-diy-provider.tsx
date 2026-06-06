@@ -43,6 +43,7 @@ export interface VibesDiyCtx {
   sthis: SuperThis;
   // dashApi: FPApiInterface;
   vibeDiyApi: VibesDiyApiIface;
+  appDiyApi?: VibesDiyApiIface;
   webVars: VibesDiyWebVars;
   srvVibeSandbox: vibesDiySrvSandbox;
   getToken?: () => Promise<Result<DashAuthType>>;
@@ -143,6 +144,10 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       .toString();
   // console.log(`apiUrl`, apiUrl, realCtx.webVars.env.VIBES_DIY_API_URL)
 
+  // Shared token-getter captured by both vibeDiyApi and appDiyApi closures.
+  // Set synchronously inside the vibeDiyApi .once() call below.
+  let sharedGetToken: (() => Promise<Result<DashAuthType>>) | undefined;
+
   realCtx.vibeDiyApi = vibesDiyApis.get(apiUrl).once(() => {
     // Perf hint: if the user is landing on a viewer route, pin this WS to a
     // deterministic per-vibe DO shard so they join whatever DO is already warm
@@ -216,12 +221,35 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       }
     });
     realCtx.getToken = getToken;
+    sharedGetToken = getToken;
     return new VibesDiyApi({
       apiUrl,
       shardKey,
       getToken,
     });
   });
+
+  const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
+  if (vibeMatch !== null) {
+    const ownerHandle = vibeMatch[1];
+    const appSlug = vibeMatch[2];
+    const appApiUrl = BuildURI.from(window.location.href)
+      .protocol(window.location.protocol.startsWith("https") ? "wss" : "ws")
+      .pathname("/api/app")
+      .cleanParams()
+      .setParam("vibe", `${ownerHandle}--${appSlug}`)
+      .toString();
+
+    const capturedGetToken = sharedGetToken ?? realCtx.getToken;
+    realCtx.appDiyApi = vibesDiyApis.get(appApiUrl).once(() => {
+      return new VibesDiyApi({
+        apiUrl: appApiUrl,
+        getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
+      });
+    });
+  } else {
+    realCtx.appDiyApi = undefined;
+  }
 
   const sandboxHostnameBase = realCtx.webVars.env.VIBES_SVC_HOSTNAME_BASE;
   realCtx.srvVibeSandbox = VibesDiySrvSandbox({
@@ -240,6 +268,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     },
     // dashApi: realCtx.dashApi as ReturnType<typeof clerkDashApi>,
     vibeDiyApi: realCtx.vibeDiyApi,
+    appDiyApi: realCtx.appDiyApi,
     eventListeners: globalThis.window,
     openSignIn: () => clerk.openSignIn(),
     // Stage C: bridge the asset-host cookie before the iframe gets ack.
