@@ -2,6 +2,7 @@ import React, { memo, useEffect, useRef } from "react";
 // import type { ChatMessageDocument, ViewType } from "@vibes.diy/prompts";
 import { PromptBlock } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { parseOptionLines } from "../utils/option-lines.js";
+import { screenshotRefToProxyUrl } from "../utils/screenshot-ref.js";
 import { OptionButtons } from "./OptionButtons.js";
 import {
   BlockBeginMsg,
@@ -24,16 +25,24 @@ import {
 import { BrutalistCard } from "@vibes.diy/base";
 import ReactMarkdown from "react-markdown";
 import { PromptError, PromptReq, isPromptError, isPromptReq } from "@vibes.diy/api-types";
+import type { MetaScreenShot } from "@vibes.diy/api-types";
+
+interface FsRefTarget {
+  ownerHandle: string;
+  appSlug: string;
+  fsId: string;
+}
 
 interface MessageListProps {
   promptBlocks: PromptBlock[];
   promptProcessing: boolean;
   chatId: string;
   selectedFsId?: string;
-  onClick: (fsRes: { ownerHandle: string; appSlug: string; fsId: string }) => void;
+  onClick: (fsRes: FsRefTarget) => void;
   onDiffClick?: (diff: { path: string; lines: string[] } | null) => void;
   onRetry?: (msg: PromptError) => void;
   onSelectOption?: (option: string) => void;
+  screenshotByFsId?: ReadonlyMap<string, MetaScreenShot>;
   // Block IDs whose save originated from the agent autosave (end-of-aider-
   // turn). Renders "Agent saved code" instead of "User edited code".
   agentSavedBlockIds?: ReadonlySet<string>;
@@ -246,6 +255,60 @@ function PromptErrorMsg({ msg, onRetry }: { msg: PromptError; onRetry?: (msg: Pr
           </button>
         )}
       </BrutalistCard>
+    </div>
+  );
+}
+
+function ScreenshotMsg({
+  fsId,
+  screenshot,
+  fsRef,
+  onClick,
+}: {
+  fsId: string;
+  screenshot: MetaScreenShot;
+  fsRef?: FsRefTarget;
+  onClick: (fsRes: FsRefTarget) => void;
+}) {
+  const imageUrl = screenshotRefToProxyUrl(screenshot);
+  const renderSeq = useChatDebug("ScreenshotMsg", {
+    fsId,
+    assetUrl: screenshot.assetUrl,
+    hasFsRef: fsRef !== undefined,
+  });
+
+  return (
+    <div
+      className="mb-4 flex flex-row justify-start px-4"
+      data-message-role="screenshot"
+      data-fs-id={fsId}
+      data-render-seq={renderSeq}
+    >
+      <div className="max-w-[85%]">
+        <BrutalistCard size="sm" className="mx-3 my-2 overflow-hidden" style={{ borderRadius: 0 }}>
+          <a
+            href={imageUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block rounded-sm"
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              if (!fsRef) return;
+              const primaryClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+              if (!primaryClick) return;
+              e.preventDefault();
+              onClick(fsRef);
+            }}
+          >
+            <img
+              src={imageUrl}
+              alt="Generated app screenshot"
+              loading="lazy"
+              decoding="async"
+              className="bg-light-background-02 dark:bg-dark-background-01 max-h-80 w-full object-cover"
+            />
+          </a>
+        </BrutalistCard>
+      </div>
     </div>
   );
 }
@@ -500,6 +563,7 @@ function MessageList({
   onDiffClick,
   onRetry,
   onSelectOption,
+  screenshotByFsId,
   agentSavedBlockIds,
   // setSelectedResponseId,
   // selectedResponseId,
@@ -518,7 +582,8 @@ function MessageList({
 
   // Handle special case for waiting state
   const blockMsgs: BlockedMsg[] = [];
-  let lastFsRef: { fsId: string; appSlug: string; ownerHandle: string } | undefined;
+  const renderedScreenshotFsIds = new Set<string>();
+  let lastFsRef: FsRefTarget | undefined;
 
   const messageElements = promptBlocks.reduce((acc, promptBlock) => {
     // Only show the streaming indicator on the latest AI message
@@ -558,7 +623,7 @@ function MessageList({
         case isBlockBegin(msg):
           blockMsgs.splice(0, blockMsgs.length);
           break;
-        case isBlockEnd(msg):
+        case isBlockEnd(msg): {
           if (!hasPromptReq && blockMsgs.some((b) => b.type === "Code")) {
             const isAgentSaved = agentSavedBlockIds?.has(msg.blockId) ?? false;
             const label = isAgentSaved ? "Agent saved code" : "User edited code";
@@ -619,8 +684,30 @@ function MessageList({
               );
             }
           });
+
+          const screenshotFsRef = msg.fsRef
+            ? { fsId: msg.fsRef.fsId, appSlug: msg.fsRef.appSlug, ownerHandle: msg.fsRef.ownerHandle }
+            : undefined;
+          const fsId = screenshotFsRef?.fsId;
+          if (fsId) {
+            const screenshot = screenshotByFsId?.get(fsId);
+            if (screenshot && !renderedScreenshotFsIds.has(fsId)) {
+              renderedScreenshotFsIds.add(fsId);
+              acc.push(
+                <ScreenshotMsg
+                  key={`screenshot-${fsId}`}
+                  fsId={fsId}
+                  screenshot={screenshot}
+                  fsRef={screenshotFsRef}
+                  onClick={onClick}
+                />
+              );
+            }
+          }
+
           // blockMsgs.splice(0, blockMsgs.length);
           break;
+        }
 
         case isCodeBegin(msg):
           collectedMsg = [];
@@ -776,10 +863,12 @@ export default memo(MessageList, (prevProps, nextProps) => {
   // console.log(`promptState:`, promptState.blocks.length, promptState.blocks.map(i => i.msgs.length))
   const streamingStateEqual = prevProps.promptProcessing === nextProps.promptProcessing;
 
+  const screenshotStateEqual = prevProps.screenshotByFsId === nextProps.screenshotByFsId;
+
   const promptBlocks = nextProps.promptBlocks.length === prevProps.promptBlocks.length;
 
   const msgs =
     nextProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0) === prevProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0);
 
-  return streamingStateEqual && promptBlocks && msgs;
+  return streamingStateEqual && screenshotStateEqual && promptBlocks && msgs;
 });

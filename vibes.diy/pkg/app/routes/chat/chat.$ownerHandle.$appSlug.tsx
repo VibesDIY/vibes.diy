@@ -1,5 +1,5 @@
 import { SetURLSearchParams, useNavigate, useParams, useSearchParams } from "react-router";
-import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
+import React, { useEffect, useState, useReducer, useRef, useCallback, useMemo } from "react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { useAuth } from "@clerk/react";
 import { processStream, BuildURI, URI, exception2Result } from "@adviser/cement";
@@ -7,6 +7,7 @@ import { fireproof } from "@fireproof/use-fireproof";
 import type { VibeDocument, ViewType, VibesTheme } from "@vibes.diy/prompts";
 import { vibesThemes, getThemeBySlug } from "@vibes.diy/prompts";
 import {
+  isMetaScreenShot,
   isPromptBlockBegin,
   isPromptBlockEnd,
   isPromptReq,
@@ -16,6 +17,7 @@ import {
   PromptError,
   sectionEvent,
 } from "@vibes.diy/api-types";
+import type { MetaScreenShot } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import AppLayout from "../../components/AppLayout.js";
 import { BrutalistCard } from "@vibes.diy/base";
@@ -449,6 +451,88 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     setSearchParams,
     agentSavedBlockIds: new Set<string>(),
   });
+
+  const [screenshotByFsId, setScreenshotByFsId] = useState<Map<string, MetaScreenShot>>(new Map());
+  const screenshotByFsIdRef = useRef<ReadonlyMap<string, MetaScreenShot>>(new Map());
+  const screenshotBackfillAttemptedRef = useRef<Set<string>>(new Set());
+  const screenshotBackfillInFlightRef = useRef<Set<string>>(new Set());
+
+  const applyScreenshot = useCallback((targetFsId: string, shot: MetaScreenShot) => {
+    setScreenshotByFsId((prev) => {
+      const prior = prev.get(targetFsId);
+      if (prior?.assetUrl === shot.assetUrl && prior?.mime === shot.mime) {
+        return prev;
+      }
+      const next = new Map(prev);
+      next.set(targetFsId, shot);
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    screenshotByFsIdRef.current = screenshotByFsId;
+  }, [screenshotByFsId]);
+
+  const chatFsIds = useMemo(() => {
+    const seen = new Set<string>();
+    const fsIds: string[] = [];
+    for (const block of promptState.blocks) {
+      for (const msg of block.msgs) {
+        if (!isBlockEnd(msg) || !msg.fsRef?.fsId) continue;
+        if (seen.has(msg.fsRef.fsId)) continue;
+        seen.add(msg.fsRef.fsId);
+        fsIds.push(msg.fsRef.fsId);
+      }
+    }
+    return fsIds;
+  }, [promptState.blocks]);
+
+  // Screenshots are generated asynchronously by a queue after each save.
+  // Keep a chat-local cache keyed by fsId and update it from pushed
+  // screenshot-ready notifications.
+  useEffect(() => {
+    screenshotBackfillAttemptedRef.current.clear();
+    screenshotBackfillInFlightRef.current.clear();
+    setScreenshotByFsId(new Map());
+  }, [ownerHandle, appSlug]);
+
+  useEffect(() => {
+    return vibeDiyApi.onUserNotification((evt) => {
+      if (evt.notificationType !== "screenshot-ready") return;
+      if (evt.ownerHandle !== ownerHandle || evt.appSlug !== appSlug) return;
+      screenshotBackfillAttemptedRef.current.add(evt.screenShot.fsId);
+      applyScreenshot(evt.screenShot.fsId, {
+        type: "screen-shot-ref",
+        assetUrl: evt.screenShot.shotUrl,
+        mime: "image/jpeg",
+      });
+    });
+  }, [ownerHandle, appSlug, vibeDiyApi, applyScreenshot]);
+
+  // Light missed-event backfill: for each fsId we fetch at most once to pick
+  // up screenshots that were ready before this chat route subscribed.
+  useEffect(() => {
+    if (chatFsIds.length === 0) return;
+
+    for (const targetFsId of chatFsIds) {
+      if (screenshotByFsIdRef.current.has(targetFsId)) continue;
+      if (screenshotBackfillAttemptedRef.current.has(targetFsId)) continue;
+      if (screenshotBackfillInFlightRef.current.has(targetFsId)) continue;
+      screenshotBackfillAttemptedRef.current.add(targetFsId);
+      screenshotBackfillInFlightRef.current.add(targetFsId);
+      void vibeDiyApi
+        .getAppByFsId({ ownerHandle, appSlug, fsId: targetFsId })
+        .then((rApp) => {
+          if (rApp.isErr()) return;
+          const shot = rApp.Ok().meta.find(isMetaScreenShot);
+          if (!shot) return;
+          applyScreenshot(targetFsId, shot);
+        })
+        .finally(() => {
+          screenshotBackfillInFlightRef.current.delete(targetFsId);
+        });
+    }
+  }, [chatFsIds, ownerHandle, appSlug, vibeDiyApi, applyScreenshot]);
 
   useBuildCompletionNotifications();
 
@@ -994,6 +1078,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         chatPanel={
           <ChatInterface
             promptState={promptState}
+            screenshotByFsId={screenshotByFsId}
             onClick={fsIdClick}
             onDiffClick={handleDiffClick}
             onRetry={handleRetry}

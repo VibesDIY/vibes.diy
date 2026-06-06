@@ -22,10 +22,43 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
     const qctx = ctx.ctx.getOrThrow<QueueCtx>("queueCtx");
     const payload = ctx.validated.payload;
     // console.log("Handling evt-new-fs-id event with payload:", payload);
-    const res = await processScreenShotEvent(qctx, payload);
-    if (res.isErr()) {
-      console.error("Error processing screen shot event:", res.Err());
+    const rScreenShot = await processScreenShotEvent(qctx, payload);
+    if (rScreenShot.isErr()) {
+      console.error("Error processing screen shot event:", rScreenShot.Err());
     }
+
+    let ownerUserId: string | null | undefined;
+    const getOwnerUserId = async (): Promise<string | null> => {
+      if (ownerUserId !== undefined) return ownerUserId;
+      const usb = qctx.sql.tables.handleBinding;
+      const ownerRow = await qctx.sql.db
+        .select({ userId: usb.userId })
+        .from(usb)
+        .where(eq(usb.handle, payload.ownerHandle))
+        .limit(1)
+        .then((r) => r[0] ?? null);
+      ownerUserId = ownerRow?.userId ?? null;
+      return ownerUserId;
+    };
+
+    if (rScreenShot.isOk()) {
+      const screenshot = rScreenShot.Ok();
+      const userId = await getOwnerUserId();
+      if (userId) {
+        await qctx.notifyUser(userId, {
+          type: "vibes.diy.evt-user-notification",
+          notificationType: "screenshot-ready",
+          ownerHandle: payload.ownerHandle,
+          appSlug: payload.appSlug,
+          screenShot: {
+            type: "screenShotEvent",
+            fsId: payload.fsId,
+            shotUrl: screenshot.assetUrl,
+          },
+        });
+      }
+    }
+
     if (payload.mode === "production") {
       const rows = await qctx.sql.db
         .select({ releaseSeq: qctx.sql.tables.apps.releaseSeq })
@@ -42,17 +75,9 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
       const publishCount = rows[0]?.releaseSeq;
       await postEmbed(qctx, buildPublishEmbed(qctx, payload, publishCount));
 
-      // Resolve ownerHandle → userId to notify the vibe owner
-      const usb = qctx.sql.tables.handleBinding;
-      const ownerRow = await qctx.sql.db
-        .select({ userId: usb.userId })
-        .from(usb)
-        .where(eq(usb.handle, payload.ownerHandle))
-        .limit(1)
-        .then((r) => r[0] ?? null);
-
-      if (ownerRow?.userId) {
-        await qctx.notifyUser(ownerRow.userId, {
+      const userId = await getOwnerUserId();
+      if (userId) {
+        await qctx.notifyUser(userId, {
           type: "vibes.diy.evt-user-notification",
           notificationType: "vibe-published",
           ownerHandle: payload.ownerHandle,

@@ -11,7 +11,7 @@ import {
 import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
-import { CFEnv } from "@vibes.diy/api-types";
+import { CFEnv, EvtUserNotification } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 
@@ -49,12 +49,7 @@ const DocNotifyDelivery = type({
   senderConnId: "string",
 });
 
-const UserNotifyEvtShape = type({
-  type: "'vibes.diy.evt-user-notification'",
-  notificationType: "string",
-  ownerHandle: "string",
-  appSlug: "string",
-});
+const UserNotifyEvtShape = EvtUserNotification;
 
 const UserNotifyDelivery = type({
   evt: UserNotifyEvtShape,

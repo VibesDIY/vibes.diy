@@ -1,12 +1,23 @@
 import { type } from "arktype";
+import { screenShotEvent } from "./screen-shotter.js";
 
-export const EvtUserNotification = type({
+const EvtUserNotificationBase = type({
   type: "'vibes.diy.evt-user-notification'",
-  notificationType:
-    "'build-complete' | 'build-failed' | 'vibe-published' | 'comment-posted' | 'request-approved' | 'request-revoked'",
   ownerHandle: "string",
   appSlug: "string",
 });
+
+const EvtUserNotificationStandard = type({
+  notificationType:
+    "'build-complete' | 'build-failed' | 'vibe-published' | 'comment-posted' | 'request-approved' | 'request-revoked'",
+}).and(EvtUserNotificationBase);
+
+const EvtUserNotificationScreenshotReady = type({
+  notificationType: "'screenshot-ready'",
+  screenShot: screenShotEvent,
+}).and(EvtUserNotificationBase);
+
+export const EvtUserNotification = EvtUserNotificationStandard.or(EvtUserNotificationScreenshotReady);
 export type EvtUserNotification = typeof EvtUserNotification.infer;
 export function isEvtUserNotification(obj: unknown): obj is EvtUserNotification {
   return !(EvtUserNotification(obj) instanceof type.errors);
