@@ -25,6 +25,7 @@ import {
 import { SuperThis } from "@fireproof/core-types-base";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "./peers/r2-to-s3api.js";
+import { getQuickJSWASMModule, type QuickJSWASMModule } from "@cf-wasm/quickjs";
 
 // declare global {
 //   class WebSocketPair {
@@ -232,7 +233,229 @@ function userNotifyCallbacks(dn: DocNotifyCtx) {
   };
 }
 
-export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: ExecutionContext & Omit<CFInject, "appCtx">) {
+export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: CFEnv) {
+  const shouldLog = env.ENVIRONMENT !== "prod";
+
+  return {
+    notifyDocChanged: async (
+      evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string },
+      senderConnId: string
+    ): Promise<void> => {
+      const key = `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
+      if (shouldLog) {
+        console.info("[AppSessions] notifyDocChanged key:", key, "conn:", senderConnId.slice(0, 8));
+      }
+      const fullEvt = { type: "vibes.diy.evt-doc-changed", ...evt };
+      for (const conn of connections) {
+        if (!conn.subscribedDocKeys.has(key)) continue;
+        if (conn.connId === senderConnId) continue;
+        exception2Result(() =>
+          conn.ws.send(
+            conn.ende.uint8ify({
+              tid: crypto.randomUUID(),
+              src: "vibes.diy.api",
+              dst: "vibes.diy.client",
+              ttl: 10,
+              payload: fullEvt,
+            })
+          )
+        );
+      }
+    },
+    registerDocSubscription: async (_subscriptionKey: string): Promise<void> => {
+      // no-op: no external coordinator needed for local broadcast
+    },
+    deregisterDocSubscription: async (_subscriptionKey: string): Promise<void> => {
+      // no-op
+    },
+    notifyRequestGrantChanged: async (evt: EvtRequestGrant, senderConnId: string): Promise<void> => {
+      const key = `${evt.grant.ownerHandle}/${evt.grant.appSlug}`;
+      if (shouldLog) {
+        console.info("[AppSessions] notifyRequestGrantChanged key:", key, "conn:", senderConnId.slice(0, 8));
+      }
+      for (const conn of connections) {
+        if (!conn.subscribedRequestGrantKeys.has(key)) continue;
+        if (conn.connId === senderConnId) continue;
+        exception2Result(() =>
+          conn.ws.send(
+            conn.ende.uint8ify({
+              tid: crypto.randomUUID(),
+              src: "vibes.diy.api",
+              dst: "vibes.diy.client",
+              ttl: 10,
+              payload: evt,
+            })
+          )
+        );
+      }
+    },
+    registerRequestGrantSubscription: async (_subscriptionKey: string): Promise<void> => {
+      // no-op
+    },
+    deregisterRequestGrantSubscription: async (_subscriptionKey: string): Promise<void> => {
+      // no-op
+    },
+    notifyViewerGrantsChanged: async (evt: EvtViewerGrantsChanged, _senderConnId: string): Promise<void> => {
+      const key = `${evt.ownerHandle}/${evt.appSlug}`;
+      if (shouldLog) {
+        console.info("[AppSessions] notifyViewerGrantsChanged key:", key);
+      }
+      // DON'T skip sender — iframe needs grant refresh
+      for (const conn of connections) {
+        if (!conn.subscribedViewerGrantKeys.has(key)) continue;
+        exception2Result(() =>
+          conn.ws.send(
+            conn.ende.uint8ify({
+              tid: crypto.randomUUID(),
+              src: "vibes.diy.api",
+              dst: "vibes.diy.client",
+              ttl: 10,
+              payload: evt,
+            })
+          )
+        );
+      }
+    },
+    registerViewerGrantsSubscription: async (_subscriptionKey: string): Promise<void> => {
+      // no-op
+    },
+    deregisterViewerGrantsSubscription: async (_subscriptionKey: string): Promise<void> => {
+      // no-op
+    },
+  };
+}
+
+export async function localInvokeAccessFn(
+  cachedModuleRef: { module: QuickJSWASMModule | null },
+  params: {
+    cid: string;
+    doc: unknown;
+    oldDoc: unknown | null;
+    user: UserContext | null;
+    source?: string;
+    grantState?: {
+      members: Record<string, string[]>;
+      roleGrants: Record<string, string[]>;
+      userGrants: Record<string, string[]>;
+    };
+    adminMode?: boolean;
+  }
+): Promise<AccessDescriptor | { forbidden: string }> {
+  if (!params.source) {
+    return { forbidden: "access function source not provided" };
+  }
+
+  const source = params.source;
+  const grantState = params.grantState ?? { members: {}, roleGrants: {}, userGrants: {} };
+
+  function resolveChannels(userHandle: string): Set<string> {
+    const channels = new Set<string>();
+    const direct = grantState.userGrants[userHandle];
+    if (direct) for (const ch of direct) channels.add(ch);
+    for (const [role, members] of Object.entries(grantState.members)) {
+      if ((members as string[]).includes(userHandle)) {
+        const roleChannels = grantState.roleGrants[role];
+        if (roleChannels) for (const ch of roleChannels) channels.add(ch);
+      }
+    }
+    return channels;
+  }
+
+  const QuickJS = cachedModuleRef.module ?? (await getQuickJSWASMModule());
+  cachedModuleRef.module = QuickJS;
+  const vm = QuickJS.newContext();
+
+  try {
+    for (const stmt of [
+      `const doc = ${JSON.stringify(params.doc)};`,
+      `const oldDoc = ${JSON.stringify(params.oldDoc)};`,
+      `const user = ${JSON.stringify(params.user)};`,
+    ]) {
+      const r = vm.evalCode(stmt);
+      if (r.error) {
+        const errVal = vm.dump(r.error);
+        r.error.dispose();
+        return { forbidden: `access function setup error: ${String(errVal)}` };
+      } else {
+        r.value.dispose();
+      }
+    }
+
+    const ctxObj = vm.newObject();
+
+    const requireAccessFn = vm.newFunction("requireAccess", (channelIdHandle: Parameters<typeof vm.dump>[0]) => {
+      if (params.adminMode === true) {
+        return undefined;
+      }
+      const channelId = vm.dump(channelIdHandle) as string;
+      if (!params.user) {
+        return { error: vm.newError("authentication required") };
+      }
+      const channels = resolveChannels(params.user.userHandle);
+      if (!channels.has(channelId)) {
+        return { error: vm.newError(`not in channel: ${channelId}`) };
+      }
+      return undefined;
+    });
+
+    const requireRoleFn = vm.newFunction("requireRole", (roleNameHandle: Parameters<typeof vm.dump>[0]) => {
+      if (params.adminMode === true) {
+        return undefined;
+      }
+      const roleName = vm.dump(roleNameHandle) as string;
+      if (!params.user) {
+        return { error: vm.newError("authentication required") };
+      }
+      const roleMembers = grantState.members[roleName] as string[] | undefined;
+      if (!roleMembers?.includes(params.user.userHandle)) {
+        return { error: vm.newError(`not in role: ${roleName}`) };
+      }
+      return undefined;
+    });
+
+    vm.setProp(ctxObj, "requireAccess", requireAccessFn);
+    vm.setProp(ctxObj, "requireRole", requireRoleFn);
+    vm.setProp(vm.global, "ctx", ctxObj);
+    requireAccessFn.dispose();
+    requireRoleFn.dispose();
+    ctxObj.dispose();
+
+    const cleanSource = source.replace(/export\s+/g, "").replace(/^default\s+/, "");
+    const fnNameMatch = cleanSource.match(/^function\s+(\w+)\s*\(/);
+    const isAnonymousFnOrArrow = /^function\s*\(/.test(cleanSource) || /^\(/.test(cleanSource) || /^\w+\s*=>/.test(cleanSource);
+    const evalSource = fnNameMatch
+      ? `${cleanSource}\n;${fnNameMatch[1]}(doc, oldDoc, user, ctx)`
+      : isAnonymousFnOrArrow
+        ? `const __accessFn = ${cleanSource}\n;__accessFn(doc, oldDoc, user, ctx)`
+        : `(function() { ${cleanSource} })()`;
+    const fnResult = vm.evalCode(evalSource);
+
+    if (fnResult.error) {
+      const errVal = vm.dump(fnResult.error);
+      fnResult.error.dispose();
+      const reason =
+        typeof errVal === "object" && errVal !== null && "forbidden" in errVal
+          ? String((errVal as Record<string, unknown>).forbidden)
+          : typeof errVal === "string"
+            ? errVal
+            : `access function error: ${JSON.stringify(errVal)}`;
+      return { forbidden: reason };
+    }
+
+    const accessResult = vm.dump(fnResult.value);
+    fnResult.value.dispose();
+    return accessResult as AccessDescriptor;
+  } finally {
+    vm.dispose();
+  }
+}
+
+export async function cfServeAppCtx(
+  request: CFRequest,
+  env: CFEnv,
+  ctx: ExecutionContext & Omit<CFInject, "appCtx">,
+  callbackOverrides?: Record<string, unknown>
+) {
   const netHash = Lazy(() => netHashFn(request.cf as CfProperties));
   const sthis =
     ctx.sthis ??
@@ -343,6 +566,7 @@ export async function cfServeAppCtx(request: CFRequest, env: CFEnv, ctx: Executi
       );
       return res.json() as Promise<AccessDescriptor | { forbidden: string }>;
     },
+    ...(callbackOverrides ?? {}),
   });
 }
 
@@ -363,7 +587,11 @@ function shouldLogVerbose(ctx: CFInject): boolean {
   return rEnvironment.Ok() !== "prod";
 }
 
-export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResponse> {
+export async function cfServe(
+  request: CFRequest,
+  ctx: CFInject,
+  eventoFactory?: () => ReturnType<typeof vibesMsgEvento>
+): Promise<CFResponse> {
   const appCtx = ctx.appCtx;
   const shouldLog = shouldLogVerbose(ctx);
   const upgradeHeader = request.headers.get("Upgrade");
@@ -408,7 +636,7 @@ export async function cfServe(request: CFRequest, ctx: CFInject): Promise<CFResp
     console.info("New WebSocket connection accepted", ws.connections.size);
   }
 
-  const wsEvento = vibesMsgEvento();
+  const wsEvento = eventoFactory ? eventoFactory() : vibesMsgEvento();
 
   server.addEventListener("message", (event) => {
     wsEvento.trigger({ ctx: appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider }).catch((err: unknown) => {
