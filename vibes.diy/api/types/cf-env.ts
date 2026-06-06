@@ -32,6 +32,7 @@ export interface CFEnv {
   PRODIA_TOKEN?: string;
 
   CHAT_SESSIONS: DurableObjectNamespace;
+  APP_SESSIONS: DurableObjectNamespace;
   DOC_NOTIFY: DurableObjectNamespace;
   USER_NOTIFY: DurableObjectNamespace;
   ACCESS_FN_DO: DurableObjectNamespace;
