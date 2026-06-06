@@ -14,13 +14,13 @@ New **AppSessions** Durable Object that handles all app document operations. Sha
 
 ### Per-putDoc DO-to-DO subrequests: zero
 
-| Operation | Before (ChatSessions) | After (AppSessions) |
-|---|---|---|
-| ACCESS_FN_DO.fetch() | 1 subrequest | 0 — local QuickJS eval |
-| DocNotify.fetch() | 1 subrequest | 0 — local broadcast |
-| DocNotify → ChatSessions fan-out | 1+ subrequests | 0 — no coordinator |
-| subscribeDocs registration | 1 subrequest | 0 — local state |
-| **Total DO-to-DO** | **3+** | **0** |
+| Operation                        | Before (ChatSessions) | After (AppSessions)    |
+| -------------------------------- | --------------------- | ---------------------- |
+| ACCESS_FN_DO.fetch()             | 1 subrequest          | 0 — local QuickJS eval |
+| DocNotify.fetch()                | 1 subrequest          | 0 — local broadcast    |
+| DocNotify → ChatSessions fan-out | 1+ subrequests        | 0 — no coordinator     |
+| subscribeDocs registration       | 1 subrequest          | 0 — local state        |
+| **Total DO-to-DO**               | **3+**                | **0**                  |
 
 ### Why split instead of migrating ChatSessions
 
@@ -37,16 +37,21 @@ AppSessions is sharded by `(ownerHandle/appSlug)` — all connections to the sam
 
 This eliminates the need for DocNotify as a cross-shard coordinator. Notifications are just local broadcasts: iterate connections, match subscription keys, `ws.send()`.
 
-Tradeoff: all viewers of a popular vibe share one DO. CPU contention risk under high concurrency, mitigated by Cloudflare DO connection limits (~32K) and most vibes having <10 concurrent viewers.
+Tradeoff: all viewers of a popular vibe share one DO. CPU contention risk under high concurrency, mitigated by Cloudflare DO connection limits (~32K) and most vibes having <10 concurrent viewers. The `--` separator is safe — double-hyphen is not allowed inside normalized slug tokens.
+
+Escape hatch: if a vibe hits contention, partition the key (e.g. `ownerHandle--appSlug:partition`) in a future PR.
 
 ### Notification flow
 
 putDoc handler in AppSessions:
+
 1. Evaluate access function locally (cached QuickJS WASM module, fresh VM context per eval)
 2. D1 INSERT
 3. Iterate `this.connections` — for each connection subscribed to this `(ownerHandle/appSlug/dbName)`, `ws.send()` the doc-changed event (skip sender by `connId`)
 
-Zero subrequests. Zero external coordination. Same flow for `evt-request-grant` and `evt-viewer-grants-changed`.
+Zero subrequests. Zero external coordination. Same flow for `evt-request-grant`.
+
+Exception: `evt-viewer-grants-changed` delivers TO the sender (do NOT skip by connId) so the writer's iframe refreshes whoAmI after its own grant-changing write.
 
 ### Inlined access function evaluation
 
@@ -58,19 +63,20 @@ Each evaluation gets a fresh `vm = QuickJS.newContext()` — no state leaks betw
 
 Cache repeated queries in memory on the DO instance. Populated on first access, reused across subsequent messages.
 
-| Lookup | Cache key | Invalidation |
-|--------|-----------|-------------|
-| QuickJS WASM module | singleton | Never (reuse across evals) |
-| `accessFunctionBindings` row | `${ownerHandle}/${appSlug}/${dbName}` | Access fn redeployed (rare; cache miss is fine) |
-| `handleBinding` (writer's handle) | `userId` | Never within a session |
-| Access fn source via `storage.fetch` | CID (content-addressed) | Never for same CID |
-| `accessFnOutputs` grant state | `${ownerHandle}/${appSlug}/${dbName}/${fnCid}` | Grant change; invalidate on putDoc that modifies grants |
+| Lookup                               | Cache key                                      | Invalidation                                            |
+| ------------------------------------ | ---------------------------------------------- | ------------------------------------------------------- |
+| QuickJS WASM module                  | singleton                                      | Never (reuse across evals)                              |
+| `accessFunctionBindings` row         | `${ownerHandle}/${appSlug}/${dbName}`          | Access fn redeployed (rare; cache miss is fine)         |
+| `handleBinding` (writer's handle)    | `userId`                                       | Never within a session                                  |
+| Access fn source via `storage.fetch` | CID (content-addressed)                        | Never for same CID                                      |
+| `accessFnOutputs` grant state        | `${ownerHandle}/${appSlug}/${dbName}/${fnCid}` | Grant change; invalidate on putDoc that modifies grants |
 
 ### Message type split
 
 **Rubric:** Operations scoped to a vibe instance (ownerHandle/appSlug) — its data, ACLs, membership, identity — belong on AppSessions. Operations that depend on chat streaming state (chatIds) stay on ChatSessions.
 
 **AppSessions** (vibe-scoped):
+
 - Data: `putDoc`, `getDoc`, `queryDocs`, `deleteDoc`, `listDbNames`
 - Subscriptions: `subscribeDocs`, `subscribeViewerGrants`, `subscribeRequestGrants`, `subscribeUserNotifications`
 - Access control: `requestAccess`, `approveRequest`, `requestSetRole`, `revokeRequest`, `hasAccessRequest`, `createInvite`, `revokeInvite`, `redeemInvite`, `hasAccessInvite`, `inviteSetRole`, `listInviteGrants`
@@ -79,24 +85,33 @@ Cache repeated queries in memory on the DO instance. Populated on first access, 
 - DMs: `listDmThreads`, `markDmRead`
 
 **ChatSessions** (chat streaming state):
+
 - `openChat`, `promptChatSection` (depend on chatIds)
 - `ensureAppSlugItem` (app creation, starts a chat)
 - `getChatDetails`, `listApplicationChats` (chat queries)
 - `forkApp` (creates a new chat session)
 
 **Registered on both DOs** (stateless D1 queries needed before a vibe or chat context exists, or by callers on either connection — just import the same handler into both Evento instances):
+
 - `ensureAppSettings`, `ensureUserSettings`
 - `listUserSlugAppSlug`, `listRecentVibes`, `pinRecentVibe` — sidebar needs these on any page, regardless of which connection is open
 - `getAppByFsId`, `listModels`
 
-**Default to ChatSessions** (only needed during prompt flow):
-- `getCertFromCsr`, `setModeFsId`
+**Registered on both DOs** (continued — settings/identity flows, not chat-stateful):
+
 - `listHandleBindings`, `createHandleBinding`, `deleteHandleBinding`
+- `getCertFromCsr`
+
+**Default to ChatSessions** (only needed during prompt flow):
+
+- `setModeFsId`
 - Report endpoints
 
 ### UserNotify
 
 Stays separate — keyed by userId (cross-vibe), different namespace. AppSessions registers with UserNotify on `subscribeUserNotifications` and deregisters on WebSocket close (100ms delay to avoid race with reconnect).
+
+UserNotify currently hardcodes `env.CHAT_SESSIONS.get(shardId)` for fan-out delivery. With AppSessions subscriptions, UserNotify needs an `APP_SESSIONS` binding and must resolve the correct DO namespace per subscriber. Registration includes `{ shardId, doType: "app" | "chat" }` so fan-out calls `env.APP_SESSIONS.get(shardId)` or `env.CHAT_SESSIONS.get(shardId)` accordingly. This changes `user-notify.ts` (subscriber storage schema + fan-out logic) and `wrangler.toml` (add APP_SESSIONS binding to UserNotify).
 
 ### Edge worker routing
 
@@ -114,7 +129,7 @@ if (route === "app-api") {           // /api/app?vibe=ownerHandle--appSlug
 }
 ```
 
-`route-decision.ts` adds `"app-api"` for `pathname === "/api/app"` with WebSocket upgrade. The existing `/api` route stays unchanged.
+`route-decision.ts` adds `"app-api"` for `pathname === "/api/app"` with WebSocket upgrade. Must match before the generic `/api` route. The existing `/api` route stays unchanged. Client must not append `shard=` on `/api/app` requests — `vibe=` is the only shard key.
 
 ### Impact on callers
 
@@ -145,20 +160,20 @@ DocNotify and ACCESS_FN_DO bindings stay in wrangler.toml — can't delete DO cl
 
 ### Files changed
 
-| File | Change |
-|------|--------|
-| `pkg/workers/app-sessions.ts` | New DO class — WebSocket handling, local broadcast, local QuickJS eval, memoized caches |
-| `pkg/workers/app.ts` | Add routing for `app-api` → APP_SESSIONS, export AppSessions |
-| `pkg/workers/route-decision.ts` | Add `"app-api"` route decision |
-| `pkg/wrangler.toml` (+ env variants) | Add APP_SESSIONS binding + v5 migration |
-| `api/svc/cf-serve.ts` | Extract reusable appCtx creation; add local broadcast + local access fn eval to vctx |
-| Client: vibe-runtime connection URL | Point at `/api/app?vibe=ownerHandle--appSlug` |
+| File                                 | Change                                                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `pkg/workers/app-sessions.ts`        | New DO class — WebSocket handling, local broadcast, local QuickJS eval, memoized caches           |
+| `pkg/workers/app.ts`                 | Add routing for `app-api` → APP_SESSIONS, export AppSessions                                      |
+| `pkg/workers/route-decision.ts`      | Add `"app-api"` route decision                                                                    |
+| `pkg/wrangler.toml` (+ env variants) | Add APP_SESSIONS binding + v5 migration                                                           |
+| `pkg/workers/user-notify.ts`         | Add `doType` to subscriber storage; fan-out resolves APP_SESSIONS or CHAT_SESSIONS per subscriber |
+| `api/svc/cf-serve.ts`                | Extract reusable appCtx creation; add local broadcast + local access fn eval to vctx              |
+| Client: vibe-runtime connection URL  | Point at `/api/app?vibe=ownerHandle--appSlug`                                                     |
 
 ### Files NOT changed
 
 - `pkg/workers/chat-sessions.ts`
 - `pkg/workers/doc-notify.ts`
-- `pkg/workers/user-notify.ts`
 - `pkg/workers/access-fn.ts`
 - All Evento handler files (same WSSendProvider interface)
 - All chat files (open-chat.ts, prompt-chat-section.ts, etc.)
@@ -171,7 +186,7 @@ Be mindful of top-level module startup tasks. QuickJS WASM compilation (`getQuic
 ### Risk areas
 
 1. **Client routing** — new client code to manage two connections. The web app must route messages to the correct connection by type. Reconnection and auth refresh need to work independently.
-2. **QuickJS memory** — WASM module stays in memory on the DO instance. Should be small (~few MB), shared across all connections on the same vibe.
+2. **QuickJS memory** — WASM module stays in memory on the DO instance. Keep cache opportunistic (DO memory is ephemeral). Cloudflare isolate limit is 128MB — monitor usage.
 3. **Memoization staleness** — cached accessFnBindings or grant state could be stale if another user deploys a new access function or grants change. Acceptable: cache miss on DO eviction provides natural refresh; grant state invalidated on putDoc that modifies grants.
 4. **Popular vibes** — all viewers share one DO. CPU contention under high concurrency. Monitor and add Hibernation API if needed.
 
