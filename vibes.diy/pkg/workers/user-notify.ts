@@ -105,8 +105,11 @@ export class UserNotify implements DurableObject {
     for (const shardId of targets) {
       promises.push(
         (async () => {
-          const id = this.env.CHAT_SESSIONS.idFromName(shardId);
-          const stub = this.env.CHAT_SESSIONS.get(id);
+          const isAppShard = shardId.startsWith("app:");
+          const doName = isAppShard ? shardId.slice(4) : shardId;
+          const ns = isAppShard ? this.env.APP_SESSIONS : this.env.CHAT_SESSIONS;
+          const id = ns.idFromName(doName);
+          const stub = ns.get(id);
           const rFetch = await exception2Result(() =>
             stub.fetch(
               new Request("https://internal/user-notify", {
