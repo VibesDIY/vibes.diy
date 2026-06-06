@@ -41,6 +41,8 @@ function cfWebSocketPair(): { client: WebSocket; server: WebSocket } {
 }
 
 function userNotifyCallbacksForAppSessions(vibeKey: string, env: CFEnv) {
+  const shardId = `app:${vibeKey}`;
+
   function fetchUserNotify(userId: string, body: Record<string, unknown>): Promise<CFResponse> {
     const id = env.USER_NOTIFY.idFromName(userId);
     const stub = env.USER_NOTIFY.get(id);
@@ -58,16 +60,16 @@ function userNotifyCallbacksForAppSessions(vibeKey: string, env: CFEnv) {
       await fetchUserNotify(userId, {
         action: "notify",
         targetUserId: userId,
-        senderShardId: vibeKey,
+        senderShardId: shardId,
         senderConnId,
         evt,
       });
     },
     registerUserSubscription: async (userId: string): Promise<void> => {
-      await fetchUserNotify(userId, { action: "register", shardId: vibeKey });
+      await fetchUserNotify(userId, { action: "register", shardId });
     },
     deregisterUserSubscription: async (userId: string): Promise<void> => {
-      await fetchUserNotify(userId, { action: "deregister", shardId: vibeKey });
+      await fetchUserNotify(userId, { action: "deregister", shardId });
     },
   };
 }
