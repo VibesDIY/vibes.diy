@@ -23,6 +23,7 @@ export default [
 
   route("vibe/:ownerHandle/:appSlug/:fsId?", "./routes/vibe.$ownerHandle.$appSlug.tsx"),
 
+  route("start", "./routes/start.tsx", { id: "start" }),
   route("about", "./routes/about.tsx", { id: "about" }),
   route("help", "./routes/help.tsx", { id: "help" }),
   // route("sso-callback", "./routes/sso-callback.tsx", { id: "sso-callback" }),
