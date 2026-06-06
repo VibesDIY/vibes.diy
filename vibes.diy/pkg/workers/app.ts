@@ -22,6 +22,7 @@ import { verifyClerkWebhookSignature, postSignupToDiscord, ClerkUserCreatedData 
 import { getVibeRouteHints, parseVibePathname, vibePathnameHasFsId } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
 
 export { ChatSessions } from "./chat-sessions.js";
+export { AppSessions } from "./app-sessions.js";
 export { DocNotify } from "./doc-notify.js";
 export { UserNotify } from "./user-notify.js";
 export { AccessFnDO } from "./access-fn.js";
@@ -87,6 +88,19 @@ export default {
         status: 301,
         headers: { Location: `${destination}${url.search}` },
       }) as unknown as CFResponse;
+    }
+
+    if (route === "app-api") {
+      const vibe = url.getParam("vibe");
+      if (vibe === undefined) {
+        return new Response(JSON.stringify({ error: "missing ?vibe= parameter" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }) as unknown as CFResponse;
+      }
+      const id = env.APP_SESSIONS.idFromName(vibe);
+      const obj = env.APP_SESSIONS.get(id);
+      return obj.fetch(request);
     }
 
     if (route === "api-do") {
