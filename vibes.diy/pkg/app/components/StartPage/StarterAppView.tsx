@@ -1,7 +1,7 @@
 import React from "react";
 import type { StarterNode } from "./starter-tree.js";
 import StarterTray from "./StarterTray.js";
-import { getAppContainerStyle, getAppBodyStyle, getBackButtonStyle, getAppTitleStyle } from "./StartPage.styles.js";
+import { getAppContainerStyle, getAppBodyStyle, getBackButtonStyle } from "./StartPage.styles.js";
 
 interface StarterAppViewProps {
   node: StarterNode;
