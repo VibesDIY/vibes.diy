@@ -1,86 +1,152 @@
-# vibes-connect-mcp — Spec
+# Vibes Connect — Agent Data Access Spec
 
-MCP server that gives Claude Desktop (Cowork) read/write access to Fireproof databases via the `use-vibes` package.
+Give AI agents read/write access to vibe data. Two distribution surfaces — a Claude Code skill (Bash + CLI) and an MCP server (`vibes-diy mcp`) for Desktop/Cowork — backed by the same CLI internals.
 
 ## Problem
 
-Claude can talk about your app's data but can't touch it. An MCP server bridges that gap — Claude discovers database tools automatically, and the user approves each operation.
+Agents can build vibes but can't read or write the data inside them. The `vibes-diy` CLI already has a complete data surface (`db list`, `db get`, `db put`, `db del`, `db query`, `db subscribe`). What's missing is the glue that lets agents discover and use it.
+
+## Existing CLI surface
+
+```
+vibes-diy list --json                              # list all vibes (NDJSON)
+vibes-diy db list   --app-slug X --user-slug Y     # list databases in a vibe
+vibes-diy db get    --app-slug X --user-slug Y --db Z <id> --json
+vibes-diy db put    --app-slug X --user-slug Y --db Z <json>
+vibes-diy db del    --app-slug X --user-slug Y --db Z <id>
+vibes-diy db query  --app-slug X --user-slug Y --db Z <field> [--key K] [--limit N] --json
+vibes-diy db subscribe --app-slug X --user-slug Y --db Z
+```
+
+Auth is handled by device certificates from `npx vibes-diy login`. The `--app-slug` and `--user-slug` default from `VIBES_APP_SLUG` env var or `basename(cwd)` and user settings respectively.
 
 ## Architecture
 
 ```
-Claude Desktop / Cowork
-  ↕ stdio (JSON-RPC over stdin/stdout)
-vibes-connect-mcp (Node.js process)
-  ↕ use-vibes fireproof() factory
-Fireproof cloud (WebSocket sync)
+┌─────────────────────────────────────────────────┐
+│              vibes-diy CLI internals             │
+│   (use-vibes → Firefly cloud via WebSocket)      │
+└──────────┬──────────────────────┬────────────────┘
+           │                      │
+    ┌──────┴──────┐       ┌───────┴───────┐
+    │  Bash/Shell │       │ stdio MCP     │
+    │  (CLI args) │       │ (JSON-RPC)    │
+    └──────┬──────┘       └───────┬───────┘
+           │                      │
+    ┌──────┴──────┐       ┌───────┴───────┐
+    │ Claude Code │       │ Cowork /      │
+    │ skill       │       │ Desktop /     │
+    │             │       │ any MCP client│
+    └─────────────┘       └───────────────┘
 ```
 
-- **Transport:** stdio — Claude launches the server as a subprocess
-- **Auth:** device certificates from `npx vibes-diy login` (resolved automatically by `use-vibes`)
-- **SDK:** `@modelcontextprotocol/sdk` (McpServer + StdioServerTransport)
-- **Database:** `use-vibes` `fireproof(dbName, { appSlug })` — singleton-cached, safe to call per-invocation
+One set of operations, two transports. The skill teaches Claude Code to shell out; the MCP server wraps the same internals in stdio JSON-RPC for environments without shell access.
 
-## Tools
+## Phase 1: Claude Code skill
 
-Four MCP tools mapping 1:1 to Fireproof CRUD:
+A skill file that teaches agents how to use the CLI for data operations. No new code — just documentation that Claude Code loads when working with vibe data.
 
-| Tool | Method | destructiveHint | idempotentHint | Description |
-|------|--------|-----------------|----------------|-------------|
-| `fireproof_put` | `db.put(doc)` | true | false | Store or update a document |
-| `fireproof_get` | `db.get(id)` | false | true | Retrieve a document by ID |
-| `fireproof_delete` | `db.del(id)` | true | false | Delete a document by ID |
-| `fireproof_query` | `db.query(field, opts)` | false | true | Query documents by field value |
+The skill covers:
 
-All tools accept `dbName` and `appSlug` as parameters so Claude can work across multiple databases/apps in one session.
+- Listing vibes and databases
+- CRUD operations with `--json` output
+- How `--app-slug` / `--user-slug` default from cwd and login state
+- When to use `db subscribe` for tailing changes
 
-### Input schemas (Zod)
+This works today for any Claude Code agent (CLI, IDE extensions, Agent SDK).
+
+## Phase 2: `vibes-diy mcp` subcommand
+
+A new CLI subcommand that starts an MCP server over stdio, exposing the same data operations as tools. This is the required interface for Claude Desktop / Cowork, which has no shell access.
+
+### Startup
+
+```sh
+npx vibes-diy mcp                                          # defaults from cwd + login
+npx vibes-diy mcp --app-slug pickathon-picker --user-slug og  # explicit
+VIBES_APP_SLUG=pickathon-picker npx vibes-diy mcp            # env var
+```
+
+The `ownerHandle/appSlug` is fixed for the session — resolved at startup from args, env, or cwd. No per-call switching.
+
+### MCP tools
+
+| Tool                   | CLI equivalent                      | destructiveHint | idempotentHint |
+| ---------------------- | ----------------------------------- | --------------- | -------------- |
+| `vibes_list_apps`      | `vibes-diy list --json`             | false           | true           |
+| `vibes_list_databases` | `vibes-diy db list --json`          | false           | true           |
+| `vibes_get`            | `vibes-diy db get <id> --json`      | false           | true           |
+| `vibes_put`            | `vibes-diy db put <json>`           | true            | false          |
+| `vibes_delete`         | `vibes-diy db del <id>`             | true            | false          |
+| `vibes_query`          | `vibes-diy db query <field> --json` | false           | true           |
+
+### Input schemas
 
 ```
-fireproof_put:    { dbName: string, appSlug: string, doc: Record<string, unknown> }
-fireproof_get:    { dbName: string, appSlug: string, id: string }
-fireproof_delete: { dbName: string, appSlug: string, id: string }
-fireproof_query:  { dbName: string, appSlug: string, field: string, key?: string, range?: [string, string] }
+vibes_list_apps:       {}
+vibes_list_databases:  {}
+vibes_get:             { db: string, id: string }
+vibes_put:             { db: string, doc: Record<string, unknown> }
+vibes_delete:          { db: string, id: string }
+vibes_query:           { db: string, field: string, key?: string, prefix?: string,
+                         range?: [string, string], limit?: number, descending?: boolean }
 ```
+
+No `appSlug` or `userSlug` in tool schemas — they're session-level, set at startup.
 
 ### Return format
 
 All tools return `{ content: [{ type: "text", text: JSON.stringify(result) }] }`.
 
-## What's NOT in v1
+### Client config
 
-- **Real-time subscriptions** — MCP resource subscriptions use a notify-then-re-read pattern that doesn't map cleanly to Fireproof's push-based `subscribe()`. A `fireproof_query` tool called on-demand is simpler and sufficient for now.
-- **Schema introspection** — no auto-generated tools from document shapes. The four CRUD tools cover all operations.
-- **Remote transport** — stdio only. Streamable HTTP can be added later for remote/serverless hosting.
-- **Multi-user** — the server runs under the OS user who ran `npx vibes-diy login`. No multi-tenant auth.
-
-## Open questions
-
-1. **Folder placement** — should this live at repo root (`vibes-connect-mcp/`) or inside an existing package like `use-vibes/mcp/`?
-2. **Package identity** — standalone npm package (`vibes-connect-mcp`) or part of the `use-vibes` distribution?
-3. **allDocs / list tool** — should we add a `fireproof_list` tool that returns all documents (paginated), or is `fireproof_query` sufficient?
-4. **Database discovery** — should the server auto-discover databases the user has access to, or require explicit `dbName` + `appSlug` on every call?
-5. **Changes feed** — worth adding a `fireproof_changes` tool that returns recent changes since a sequence number, even without full subscriptions?
-6. **Claude Code config** — Claude Code uses `.claude/settings.json` for MCP servers, not `claude_desktop_config.json`. Should the README cover both?
-
-## Claude Desktop config
+Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
-    "vibes-data": {
-      "command": "node",
-      "args": ["/path/to/vibes-connect-mcp/server.js"]
+    "my-vibe": {
+      "command": "npx",
+      "args": ["vibes-diy", "mcp", "--app-slug", "pickathon-picker", "--user-slug", "og"]
     }
   }
 }
 ```
 
-## Dependencies
+Claude Code (`.claude/settings.json`):
 
-- `@modelcontextprotocol/sdk` (v1.x — v2 split packages expected Q3 2026)
-- `use-vibes`
-- `zod`
+```json
+{
+  "mcpServers": {
+    "my-vibe": {
+      "command": "npx",
+      "args": ["vibes-diy", "mcp"]
+    }
+  }
+}
+```
+
+### Implementation
+
+The MCP server is thin plumbing — `@modelcontextprotocol/sdk` McpServer + StdioServerTransport, calling the same internal functions the CLI commands use. Lives in the `vibes-diy` package (not a separate package), registered as a subcommand alongside `login`, `push`, `generate`, etc.
+
+## What's NOT in v1
+
+- **Real-time subscriptions via MCP** — MCP resource subscriptions use notify-then-re-read, which doesn't map to Firefly's push model. The CLI `db subscribe` works for Claude Code agents; Cowork gets poll-via-query for now.
+- **Remote transport** — stdio only. Streamable HTTP for remote hosting is a later concern.
+- **Multi-app sessions** — one `ownerHandle/appSlug` per server process. Run multiple MCP server entries for multiple apps.
+- **Schema introspection** — no auto-generated tools from document shapes.
+
+## Build order
+
+1. Skill (teaches Claude Code agents the CLI commands — no code changes)
+2. `vibes-diy mcp` subcommand (thin MCP wrapper for Cowork/Desktop)
+3. Iterate tool surface based on real agent usage patterns
+
+## Dependencies (Phase 2 only)
+
+- `@modelcontextprotocol/sdk` (v1.x)
+- `zod` (already in repo)
 
 ## References
 
@@ -88,4 +154,5 @@ All tools return `{ content: [{ type: "text", text: JSON.stringify(result) }] }`
 - [MCP Build Server Tutorial](https://modelcontextprotocol.io/docs/develop/build-server)
 - [MCP Transport Spec](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports)
 - [Vibes Connect docs](https://good.vibes.diy/vibes-connect)
-- [Fireproof API](https://use-fireproof.com/docs/database-api/basics/)
+- [vibes-diy CLI help](vibes-diy --help)
+- [fireproof-storage/mcp-database-server](https://github.com/fireproof-storage/mcp-database-server) (prior art, demo-level)
