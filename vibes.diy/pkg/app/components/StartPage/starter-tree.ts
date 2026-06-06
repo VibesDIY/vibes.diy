@@ -118,7 +118,7 @@ registerStarterApp({
   component: SurveyApp,
   chiclets: [
     { label: "Pizza Vote", targetId: "productive-pizza-vote", variant: "yellow" },
-    { label: "Job Applications", targetId: "productive-job-apps", variant: "blue" },
+    { label: "Job Apps", targetId: "productive-job-apps", variant: "blue" },
   ],
 });
 
@@ -128,7 +128,7 @@ registerStarterApp({
   title: "Kanban",
   component: KanbanApp,
   chiclets: [
-    { label: "Photo Lab Queue", targetId: "productive-photo-lab", variant: "yellow" },
+    { label: "Photo Lab", targetId: "productive-photo-lab", variant: "yellow" },
     { label: "Habit Tracker", targetId: "productive-habits", variant: "blue" },
   ],
 });
@@ -139,7 +139,7 @@ registerStarterApp({
   title: "Pizza Vote",
   component: PizzaVoteApp,
   chiclets: [
-    { label: "Job Applications", targetId: "productive-job-apps", variant: "red" },
+    { label: "Job Apps", targetId: "productive-job-apps", variant: "red" },
     { label: "Habit Tracker", targetId: "productive-habits", variant: "yellow" },
   ],
 });
@@ -147,22 +147,22 @@ registerStarterApp({
 registerStarterApp({
   id: "productive-job-apps",
   category: "productive",
-  title: "Job Applications",
+  title: "Job Apps",
   component: JobApplicationsApp,
   chiclets: [
     { label: "Pizza Vote", targetId: "productive-pizza-vote", variant: "blue" },
-    { label: "Photo Lab Queue", targetId: "productive-photo-lab", variant: "red" },
+    { label: "Photo Lab", targetId: "productive-photo-lab", variant: "red" },
   ],
 });
 
 registerStarterApp({
   id: "productive-photo-lab",
   category: "productive",
-  title: "Photo Lab Queue",
+  title: "Photo Lab",
   component: PhotoLabApp,
   chiclets: [
     { label: "Habit Tracker", targetId: "productive-habits", variant: "blue" },
-    { label: "Job Applications", targetId: "productive-job-apps", variant: "yellow" },
+    { label: "Job Apps", targetId: "productive-job-apps", variant: "yellow" },
   ],
 });
 
@@ -172,7 +172,7 @@ registerStarterApp({
   title: "Habit Tracker",
   component: HabitTrackerApp,
   chiclets: [
-    { label: "Photo Lab Queue", targetId: "productive-photo-lab", variant: "red" },
+    { label: "Photo Lab", targetId: "productive-photo-lab", variant: "red" },
     { label: "Pizza Vote", targetId: "productive-pizza-vote", variant: "yellow" },
   ],
 });
