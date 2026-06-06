@@ -16,11 +16,32 @@ export default function StarterAppView({ node, isMobile, onSelectChiclet, onBack
   return (
     <div style={getAppContainerStyle()}>
       <div style={getAppBodyStyle()}>
-        <button type="button" style={getBackButtonStyle()} onClick={onBack} aria-label="Back">
-          ‹
-        </button>
-        <div style={getAppTitleStyle()}>{node.title}</div>
-        <div style={{ flex: 1, minHeight: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 12px",
+            backgroundColor: "var(--vibes-cream, #FFFEF0)",
+            borderBottom: "2px solid var(--vibes-near-black)",
+          }}
+        >
+          <button type="button" style={getBackButtonStyle()} onClick={onBack} aria-label="Back">
+            ‹
+          </button>
+          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--vibes-near-black)" }}>
+            {node.title}
+          </div>
+        </div>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+            backgroundColor: "var(--vibes-cream, #FFFEF0)",
+          }}
+        >
           <AppComponent />
         </div>
       </div>

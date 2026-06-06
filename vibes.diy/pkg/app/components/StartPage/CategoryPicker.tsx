@@ -8,8 +8,10 @@ import {
   getVibeCardTexturedShadowStyle,
   getVibeCardMainIconContainerStyle,
   getVibeCardNameStyle,
+  getGalleryContainerStyle,
+  getGalleryLabelStyle,
+  getGalleryContentStyle,
 } from "../NewSessionContent/NewSessionContent.styles.js";
-import { getCategoryGridStyle } from "./StartPage.styles.js";
 
 const CATEGORIES = [
   { label: "Creative", Icon: FaceIcon1 },
@@ -42,40 +44,52 @@ export default function CategoryPicker({ isMobile, onSelect }: CategoryPickerPro
   const borderRadius = isMobile ? 16 : 24;
 
   return (
-    <div style={getCategoryGridStyle(isMobile)}>
-      {CATEGORIES.map((cat, index) => (
-        <button
-          key={cat.label}
-          type="button"
+    <div style={{ ...getGalleryContainerStyle(false), maxWidth: isMobile ? "100%" : "600px" }}>
+      <div style={getGalleryLabelStyle(false)}>Pick One</div>
+      <div style={getGalleryContentStyle()}>
+        <div
           style={{
-            ...getVibeCardWrapperStyle(),
-            cursor: "pointer",
-            background: "none",
-            border: "none",
-            padding: 0,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: isMobile ? 16 : 24,
+            padding: isMobile ? 16 : 24,
           }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            handleTouch(cat.label);
-          }}
-          onClick={() => handleTouch(cat.label)}
-          aria-label={`Start with ${cat.label}`}
         >
-          <div
-            style={getVibeCardIconContainerStyle(isMobile)}
-            onMouseEnter={() => setHoveredIndex(index)}
-            onMouseLeave={() => setHoveredIndex(null)}
-          >
-            <div style={getVibeCardTexturedShadowStyle(hoveredIndex === index, isMobile)}>
-              <TexturedPattern width={iconSize} height={iconSize} borderRadius={borderRadius} />
-            </div>
-            <div style={getVibeCardMainIconContainerStyle(hoveredIndex === index, isMobile)}>
-              <cat.Icon width={iconInnerSize} height={iconInnerSize} fill="var(--vibes-near-black)" />
-            </div>
-          </div>
-          <div style={getVibeCardNameStyle()}>{cat.label}</div>
-        </button>
-      ))}
+          {CATEGORIES.map((cat, index) => (
+            <button
+              key={cat.label}
+              type="button"
+              style={{
+                ...getVibeCardWrapperStyle(),
+                cursor: "pointer",
+                background: "none",
+                border: "none",
+                padding: 0,
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleTouch(cat.label);
+              }}
+              onClick={() => handleTouch(cat.label)}
+              aria-label={`Start with ${cat.label}`}
+            >
+              <div
+                style={getVibeCardIconContainerStyle(isMobile)}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                <div style={getVibeCardTexturedShadowStyle(hoveredIndex === index, isMobile)}>
+                  <TexturedPattern width={iconSize} height={iconSize} borderRadius={borderRadius} />
+                </div>
+                <div style={getVibeCardMainIconContainerStyle(hoveredIndex === index, isMobile)}>
+                  <cat.Icon width={iconInnerSize} height={iconInnerSize} fill="var(--vibes-near-black)" />
+                </div>
+              </div>
+              <div style={getVibeCardNameStyle()}>{cat.label}</div>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

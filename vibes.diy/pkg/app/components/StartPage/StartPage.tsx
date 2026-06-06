@@ -49,7 +49,17 @@ export default function StartPage() {
   if (view.kind === "categories") {
     return (
       <div className={cx(gridBackground, "page-grid-background")} style={getPageStyle()}>
-        <CategoryPicker isMobile={mobile} onSelect={navigateToApp} />
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            padding: mobile ? "48px 16px 16px" : "64px 32px 32px",
+          }}
+        >
+          <CategoryPicker isMobile={mobile} onSelect={navigateToApp} />
+        </div>
       </div>
     );
   }

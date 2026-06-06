@@ -13,10 +13,12 @@ export function getCategoryGridStyle(isMobile: boolean): CSSProperties {
   return {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: isMobile ? 12 : 16,
-    padding: isMobile ? 16 : 24,
+    gap: isMobile ? 16 : 24,
+    padding: isMobile ? "24px" : "48px",
     maxWidth: 400,
     margin: "0 auto",
+    flex: 1,
+    alignContent: "center",
   };
 }
 
@@ -42,11 +44,12 @@ export function getAppBodyStyle(): CSSProperties {
 export function getTrayStyle(isMobile: boolean): CSSProperties {
   return {
     flexShrink: 0,
-    padding: isMobile ? "12px 16px" : "16px 24px",
-    borderTop: "1px solid rgba(0,0,0,0.12)",
-    backgroundColor: "rgb(255, 255, 240)",
+    padding: isMobile ? "12px 16px 24px" : "16px 24px 32px",
+    borderTop: "2px solid var(--vibes-near-black)",
+    backgroundColor: "var(--vibes-cream, #FFFEF0)",
     display: "flex",
     flexDirection: "column",
+    gap: isMobile ? 10 : 12,
   };
 }
 
@@ -55,13 +58,13 @@ export function getTrayLabelStyle(): CSSProperties {
     fontSize: 14,
     fontWeight: 800,
     letterSpacing: "0.02em",
+    color: "var(--vibes-near-black)",
   };
 }
 
 export function getTrayButtonsStyle(): CSSProperties {
   return {
     display: "flex",
-    flexDirection: "row",
     gap: 12,
     flexWrap: "wrap",
   };
@@ -69,17 +72,19 @@ export function getTrayButtonsStyle(): CSSProperties {
 
 export function getBackButtonStyle(): CSSProperties {
   return {
-    position: "absolute",
-    top: 0,
-    left: 0,
     width: 36,
     height: 36,
     borderRadius: 10,
-    border: "1px solid rgba(0,0,0,0.2)",
+    border: "2px solid var(--vibes-near-black)",
+    backgroundColor: "var(--vibes-cream, #FFFEF0)",
+    cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 10,
+    fontSize: 18,
+    fontWeight: 800,
+    color: "var(--vibes-near-black)",
+    flexShrink: 0,
   };
 }
 
@@ -89,5 +94,6 @@ export function getAppTitleStyle(): CSSProperties {
     fontSize: 20,
     fontWeight: 800,
     letterSpacing: "-0.02em",
+    color: "var(--vibes-near-black)",
   };
 }
