@@ -1096,6 +1096,9 @@ importers:
       '@adviser/scopey':
         specifier: ^0.0.4
         version: 0.0.4(typescript@6.0.3)
+      '@cf-wasm/quickjs':
+        specifier: ^0.2.5
+        version: 0.2.5
       '@cloudflare/workers-types':
         specifier: 4.20260402.1
         version: 4.20260402.1
