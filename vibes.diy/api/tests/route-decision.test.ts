@@ -13,6 +13,25 @@ function decide(opts: { pathname: string; method?: string; hostname?: string }) 
 }
 
 describe("worker routeDecision", () => {
+  it("/api/app → app-api (AppSessions DO)", () => {
+    expect(decide({ pathname: "/api/app" })).toBe("app-api");
+    expect(decide({ pathname: "/api/app", method: "GET" })).toBe("app-api");
+  });
+
+  it("/api/app?vibe=alice--myapp → app-api (vibe-keyed WebSocket)", () => {
+    expect(decide({ pathname: "/api/app" })).toBe("app-api");
+  });
+
+  it("regression: /api/app must not fall through to api-do", () => {
+    expect(decide({ pathname: "/api/app" })).not.toBe("api-do");
+  });
+
+  it("regression: /api (without /app) still routes to api-do", () => {
+    expect(decide({ pathname: "/api" })).toBe("api-do");
+    expect(decide({ pathname: "/api/" })).toBe("api-do");
+    expect(decide({ pathname: "/api/foo" })).toBe("api-do");
+  });
+
   it("/api/* → ChatSessions DO (WebSocket + DocNotify)", () => {
     expect(decide({ pathname: "/api" })).toBe("api-do");
     expect(decide({ pathname: "/api/" })).toBe("api-do");
