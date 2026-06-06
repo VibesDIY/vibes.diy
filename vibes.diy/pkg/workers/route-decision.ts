@@ -6,6 +6,7 @@
 // invariant is exercised at test time and not just in production.
 
 export type Route =
+  | "app-api" // /api/app → AppSessions DO (vibe-scoped WebSocket)
   | "api-do" // /api/* → ChatSessions DO (WebSocket + DocNotify)
   | "vibe-pkg" // /vibe-pkg/* → npm package serving
   | "cf-serve" // app subdomain *--*.host, /assets/cid, POST/OPTIONS /assets
@@ -28,6 +29,9 @@ export interface RouteInput {
 export function routeDecision(req: RouteInput): Route {
   const { hostname, pathname, method, hostnameBase } = req;
 
+  if (pathname === "/api/app" || pathname.startsWith("/api/app/")) {
+    return "app-api";
+  }
   if (pathname === "/api" || pathname.startsWith("/api/")) {
     return "api-do";
   }
