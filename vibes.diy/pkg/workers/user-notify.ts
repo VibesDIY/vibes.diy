@@ -2,6 +2,7 @@ import { DurableObject, DurableObjectState, Request as CFRequest, Response as CF
 import { CFEnv } from "@vibes.diy/api-types";
 import { exception2Result } from "@adviser/cement";
 import { type } from "arktype";
+import { resolveShardDO } from "./resolve-shard-do.js";
 
 declare const Response: typeof CFResponse;
 
@@ -105,9 +106,7 @@ export class UserNotify implements DurableObject {
     for (const shardId of targets) {
       promises.push(
         (async () => {
-          const isAppShard = shardId.startsWith("app:");
-          const doName = isAppShard ? shardId.slice(4) : shardId;
-          const ns = isAppShard ? this.env.APP_SESSIONS : this.env.CHAT_SESSIONS;
+          const { ns, name: doName } = resolveShardDO(shardId, this.env);
           const id = ns.idFromName(doName);
           const stub = ns.get(id);
           const rFetch = await exception2Result(() =>
