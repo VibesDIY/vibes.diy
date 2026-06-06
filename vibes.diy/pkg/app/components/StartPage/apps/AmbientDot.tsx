@@ -106,23 +106,22 @@ export default function AmbientDot() {
     (e: React.TouchEvent | React.MouseEvent) => {
       if (!isDragging.current) return;
       isDragging.current = false;
+      const canvas = canvasRef.current;
       const pos =
-        "changedTouches" in e
+        "changedTouches" in e && canvas
           ? {
               x: Math.max(
                 0,
                 Math.min(
                   1,
-                  (e.changedTouches[0].clientX - canvasRef.current!.getBoundingClientRect().left) /
-                    canvasRef.current!.getBoundingClientRect().width
+                  (e.changedTouches[0].clientX - canvas.getBoundingClientRect().left) / canvas.getBoundingClientRect().width
                 )
               ),
               y: Math.max(
                 0,
                 Math.min(
                   1,
-                  (e.changedTouches[0].clientY - canvasRef.current!.getBoundingClientRect().top) /
-                    canvasRef.current!.getBoundingClientRect().height
+                  (e.changedTouches[0].clientY - canvas.getBoundingClientRect().top) / canvas.getBoundingClientRect().height
                 )
               ),
             }

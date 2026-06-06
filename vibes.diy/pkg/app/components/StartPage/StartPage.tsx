@@ -6,9 +6,6 @@ import CategoryPicker from "./CategoryPicker.js";
 import StarterAppView from "./StarterAppView.js";
 import { getStarterNode } from "./starter-tree.js";
 
-// Side-effect import: registers all apps in the tree
-import "./starter-tree.js";
-
 type View = { kind: "categories" } | { kind: "app"; nodeId: string };
 
 export default function StartPage() {

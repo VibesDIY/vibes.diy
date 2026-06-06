@@ -10,7 +10,7 @@ export function getAudioContext(): AudioContext {
   return audioCtx;
 }
 
-export function createReverb(ctx: AudioContext, decay: number = 2): ConvolverNode {
+export function createReverb(ctx: AudioContext, decay = 2): ConvolverNode {
   const convolver = ctx.createConvolver();
   const rate = ctx.sampleRate;
   const length = rate * decay;
@@ -40,7 +40,7 @@ export function playChime(ctx: AudioContext) {
   osc.stop(now + 0.6);
 }
 
-export function playTone(ctx: AudioContext, frequency: number, reverb: ConvolverNode, duration: number = 2) {
+export function playTone(ctx: AudioContext, frequency: number, reverb: ConvolverNode, duration = 2) {
   const now = ctx.currentTime;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();

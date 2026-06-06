@@ -22,9 +22,10 @@ export default function ChordExplorer() {
   const playChord = useCallback((chord: Chord) => {
     const ctx = getAudioContext();
     if (!reverbRef.current) reverbRef.current = createReverb(ctx, 2.5);
+    const reverb = reverbRef.current;
     chord.notes.forEach((freq, i) => {
       setTimeout(() => {
-        playTone(ctx, freq, reverbRef.current!, 1.5);
+        playTone(ctx, freq, reverb, 1.5);
       }, i * 60);
     });
   }, []);
