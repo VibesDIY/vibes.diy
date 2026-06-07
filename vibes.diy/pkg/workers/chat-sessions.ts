@@ -11,6 +11,7 @@ import {
 import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
+import { chatMsgEvento } from "@vibes.diy/api-svc/chat-msg-evento.js";
 import { CFEnv } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
@@ -102,8 +103,7 @@ export class ChatSessions implements DurableObject {
       connections: this.connections,
       webSocketPair: cfWebSocketPair,
     };
-    cctx.docNotify = undefined;
     cctx.appCtx = (await cfServeAppCtx(request, this.env, cctx)).appCtx;
-    return cfServe(request, cctx);
+    return cfServe(request, cctx, chatMsgEvento);
   }
 }

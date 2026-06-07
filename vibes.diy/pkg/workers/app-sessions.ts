@@ -141,9 +141,6 @@ export class AppSessions implements DurableObject {
       connections: this.connections,
       webSocketPair: cfWebSocketPair,
     };
-    // AppSessions does NOT use DocNotify — notifications are local broadcasts
-    cctx.docNotify = undefined;
-
     const broadcastCbs = localBroadcastCallbacks(this.connections, this.env);
     const quickjsRef = this.quickjsModule;
     const currentVibeKey = this.vibeKey;

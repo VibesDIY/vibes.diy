@@ -42,11 +42,6 @@ import { getQuickJSWASMModule, type QuickJSWASMModule } from "@cf-wasm/quickjs";
 //   return { client, server };
 // }
 
-export interface DocNotifyCtx {
-  readonly shardId: string;
-  readonly env: CFEnv;
-}
-
 export interface CFInjectMutable {
   sthis?: SuperThis;
   appCtx: AppContext;
@@ -56,11 +51,8 @@ export interface CFInjectMutable {
     webSocketPair: () => { client: WebSocket; server: WebSocket };
   };
   drizzle: VibesSqlite;
-  // assetBucket: R2Bucket;
   wsResponse?: Response;
   llmRequest?: (prompt: LLMRequest, opts?: { readonly signal?: AbortSignal }) => Promise<Response>;
-  docNotify?: DocNotifyCtx;
-  // readonly db?: D1Database;
 }
 export type CFInject = Readonly<CFInjectMutable>;
 
@@ -91,146 +83,6 @@ function netHashFn({
     regionCode,
     metroCode,
   });
-}
-
-function docNotifyCallbacks(dn: DocNotifyCtx) {
-  const shouldLogDocNotify = dn.env.ENVIRONMENT !== "prod";
-
-  function fetchDocNotify(key: string, body: Record<string, unknown>): Promise<CFResponse> {
-    const id = dn.env.DOC_NOTIFY.idFromName(key);
-    const stub = dn.env.DOC_NOTIFY.get(id);
-    return stub.fetch(
-      new Request("https://internal/doc-notify", {
-        method: "POST",
-        body: JSON.stringify(body),
-        headers: { "Content-Type": "application/json" },
-      }) as unknown as CFRequest
-    );
-  }
-
-  return {
-    notifyDocChanged: async (
-      evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string },
-      senderConnId: string
-    ) => {
-      const key = `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
-      if (shouldLogDocNotify) {
-        console.info("[docNotify] notifyDocChanged key:", key, "shard:", dn.shardId.slice(0, 8), "conn:", senderConnId.slice(0, 8));
-      }
-      await fetchDocNotify(key, {
-        action: "notify",
-        senderShardId: dn.shardId,
-        senderConnId,
-        evt: { type: "vibes.diy.evt-doc-changed", ...evt },
-      });
-    },
-    registerDocSubscription: async (subscriptionKey: string) => {
-      if (shouldLogDocNotify) {
-        console.info("[docNotify] register key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
-      }
-      await fetchDocNotify(subscriptionKey, { action: "register", shardId: dn.shardId });
-    },
-    deregisterDocSubscription: async (subscriptionKey: string) => {
-      if (shouldLogDocNotify) {
-        console.info("[docNotify] deregister key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
-      }
-      await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
-    },
-    notifyRequestGrantChanged: async (evt: EvtRequestGrant, senderConnId: string) => {
-      const key = `${evt.grant.ownerHandle}/${evt.grant.appSlug}`;
-      if (shouldLogDocNotify) {
-        console.info(
-          "[docNotify] notifyRequestGrantChanged key:",
-          key,
-          "shard:",
-          dn.shardId.slice(0, 8),
-          "conn:",
-          senderConnId.slice(0, 8)
-        );
-      }
-      await fetchDocNotify(key, {
-        action: "notify",
-        senderShardId: dn.shardId,
-        senderConnId,
-        evt,
-      });
-    },
-    notifyViewerGrantsChanged: async (evt: EvtViewerGrantsChanged, senderConnId: string) => {
-      const key = `${evt.ownerHandle}/${evt.appSlug}`;
-      if (shouldLogDocNotify) {
-        console.info(
-          "[docNotify] notifyViewerGrantsChanged key:",
-          key,
-          "shard:",
-          dn.shardId.slice(0, 8),
-          "conn:",
-          senderConnId.slice(0, 8)
-        );
-      }
-      await fetchDocNotify(key, {
-        action: "notify",
-        senderShardId: dn.shardId,
-        senderConnId,
-        evt,
-      });
-    },
-    registerRequestGrantSubscription: async (subscriptionKey: string) => {
-      if (shouldLogDocNotify) {
-        console.info("[docNotify] register request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
-      }
-      await fetchDocNotify(subscriptionKey, { action: "register", shardId: dn.shardId });
-    },
-    deregisterRequestGrantSubscription: async (subscriptionKey: string) => {
-      if (shouldLogDocNotify) {
-        console.info("[docNotify] deregister request-grant key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
-      }
-      await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
-    },
-    registerViewerGrantsSubscription: async (subscriptionKey: string) => {
-      if (shouldLogDocNotify) {
-        console.info("[docNotify] register viewer-grants key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
-      }
-      await fetchDocNotify(subscriptionKey, { action: "register", shardId: dn.shardId });
-    },
-    deregisterViewerGrantsSubscription: async (subscriptionKey: string) => {
-      if (shouldLogDocNotify) {
-        console.info("[docNotify] deregister viewer-grants key:", subscriptionKey, "shard:", dn.shardId.slice(0, 8));
-      }
-      await fetchDocNotify(subscriptionKey, { action: "deregister", shardId: dn.shardId });
-    },
-  };
-}
-
-function userNotifyCallbacks(dn: DocNotifyCtx) {
-  function fetchUserNotify(userId: string, body: Record<string, unknown>): Promise<CFResponse> {
-    const id = dn.env.USER_NOTIFY.idFromName(userId);
-    const stub = dn.env.USER_NOTIFY.get(id);
-    return stub.fetch(
-      new Request("https://internal/user-notify", {
-        method: "POST",
-        body: JSON.stringify(body),
-        headers: { "Content-Type": "application/json" },
-      }) as unknown as CFRequest
-    );
-  }
-
-  return {
-    notifyUser: async (userId: string, evt: EvtUserNotification, senderConnId: string): Promise<void> => {
-      await fetchUserNotify(userId, {
-        action: "notify",
-        targetUserId: userId,
-        senderShardId: dn.shardId,
-        senderConnId,
-        evt,
-      });
-    },
-    registerUserSubscription: async (userId: string): Promise<void> => {
-      await fetchUserNotify(userId, { action: "register", shardId: dn.shardId });
-    },
-    deregisterUserSubscription: async (userId: string): Promise<void> => {
-      await fetchUserNotify(userId, { action: "deregister", shardId: dn.shardId });
-    },
-  };
 }
 
 export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: CFEnv) {
@@ -531,8 +383,6 @@ export async function cfServeAppCtx(
     netHash,
     llmRequest: ctx.llmRequest,
     env: env as unknown as Record<string, string>,
-    ...(ctx.docNotify ? docNotifyCallbacks(ctx.docNotify) : {}),
-    ...(ctx.docNotify ? userNotifyCallbacks(ctx.docNotify) : {}),
     invokeAccessFn: async (params: {
       cid: string;
       doc: unknown;
@@ -577,9 +427,6 @@ export function isInternalReferer(hostname: string): boolean {
 }
 
 function shouldLogVerbose(ctx: CFInject): boolean {
-  if (ctx.docNotify) {
-    return ctx.docNotify.env.ENVIRONMENT !== "prod";
-  }
   const rEnvironment = exception2Result(() => ctx.appCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx").sthis.env.get("ENVIRONMENT"));
   if (rEnvironment.isErr()) {
     return true;
