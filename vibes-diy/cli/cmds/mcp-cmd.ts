@@ -2,8 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { command, option, string } from "cmd-ts";
-import { basename, join } from "node:path";
-import { readFileSync } from "node:fs";
+import { basename } from "node:path";
 import { exception2Result } from "@adviser/cement";
 import { FireflyApiAdapter } from "@vibes.diy/api-impl";
 import { isResGetDoc, isResGetDocNotFound, isResPutDoc, isResDeleteDoc, isResQueryDocs } from "@vibes.diy/api-types";
@@ -219,7 +218,8 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
 
         // Apply prefix filter
         if (params.prefix !== undefined && params.prefix !== "") {
-          const rPrefix = await exception2Result(() => JSON.parse(params.prefix!) as unknown);
+          const prefixStr = params.prefix;
+          const rPrefix = await exception2Result(() => JSON.parse(prefixStr) as unknown);
           if (rPrefix.isErr()) {
             return { content: [{ type: "text" as const, text: `Invalid prefix JSON: ${rPrefix.Err()}` }] };
           }

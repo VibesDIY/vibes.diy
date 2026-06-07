@@ -97,7 +97,7 @@ describe("MCP server — vibes_list_apps", () => {
   it("returns all apps", async () => {
     const { client } = await setupClient();
     const result = await client.callTool({ name: "vibes_list_apps", arguments: {} });
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    const text = (result.content as { type: string; text: string }[])[0].text;
     const items = JSON.parse(text);
     expect(items).toHaveLength(2);
     expect(items[0].appSlug).toBe("test-app");
@@ -110,7 +110,7 @@ describe("MCP server — vibes_list_databases", () => {
   it("returns database names for the session app", async () => {
     const { client, api } = await setupClient();
     const result = await client.callTool({ name: "vibes_list_databases", arguments: {} });
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    const text = (result.content as { type: string; text: string }[])[0].text;
     expect(JSON.parse(text)).toEqual(["main", "settings"]);
     expect(api.listDbNames).toHaveBeenCalledWith({ appSlug: "test-app", ownerHandle: "og" });
     await client.close();
@@ -121,7 +121,7 @@ describe("MCP server — vibes_get", () => {
   it("retrieves a document by ID", async () => {
     const { client } = await setupClient();
     const result = await client.callTool({ name: "vibes_get", arguments: { id: "doc-abc", db: "main" } });
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    const text = (result.content as { type: string; text: string }[])[0].text;
     const doc = JSON.parse(text);
     expect(doc._id).toBe("doc-abc");
     expect(doc.title).toBe("Test Doc");
@@ -144,7 +144,7 @@ describe("MCP server — vibes_put", () => {
       name: "vibes_put",
       arguments: { doc: { type: "note", title: "New Note" }, db: "main" },
     });
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    const text = (result.content as { type: string; text: string }[])[0].text;
     const res = JSON.parse(text);
     expect(res.id).toBe("generated-id-123");
     expect(res.ok).toBe(true);
@@ -156,7 +156,7 @@ describe("MCP server — vibes_delete", () => {
   it("deletes a document and returns confirmation", async () => {
     const { client } = await setupClient();
     const result = await client.callTool({ name: "vibes_delete", arguments: { id: "doc-to-delete", db: "main" } });
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    const text = (result.content as { type: string; text: string }[])[0].text;
     const res = JSON.parse(text);
     expect(res.id).toBe("doc-to-delete");
     expect(res.ok).toBe(true);
@@ -168,7 +168,7 @@ describe("MCP server — vibes_query", () => {
   it("queries by field and returns matching documents", async () => {
     const { client } = await setupClient();
     const result = await client.callTool({ name: "vibes_query", arguments: { field: "type", db: "main" } });
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    const text = (result.content as { type: string; text: string }[])[0].text;
     const docs = JSON.parse(text);
     expect(docs).toHaveLength(3);
     await client.close();
@@ -180,7 +180,7 @@ describe("MCP server — vibes_query", () => {
       name: "vibes_query",
       arguments: { field: "type", db: "main", key: '"note"' },
     });
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    const text = (result.content as { type: string; text: string }[])[0].text;
     const docs = JSON.parse(text);
     expect(docs).toHaveLength(2);
     expect(docs.every((d: Record<string, unknown>) => d.type === "note")).toBe(true);
@@ -193,7 +193,7 @@ describe("MCP server — vibes_query", () => {
       name: "vibes_query",
       arguments: { field: "type", db: "main", limit: 1 },
     });
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    const text = (result.content as { type: string; text: string }[])[0].text;
     const docs = JSON.parse(text);
     expect(docs).toHaveLength(1);
     await client.close();
@@ -203,8 +203,8 @@ describe("MCP server — vibes_query", () => {
     const { client } = await setupClient();
     const asc = await client.callTool({ name: "vibes_query", arguments: { field: "type", db: "main" } });
     const desc = await client.callTool({ name: "vibes_query", arguments: { field: "type", db: "main", descending: true } });
-    const ascDocs = JSON.parse((asc.content as Array<{ type: string; text: string }>)[0].text);
-    const descDocs = JSON.parse((desc.content as Array<{ type: string; text: string }>)[0].text);
+    const ascDocs = JSON.parse((asc.content as { type: string; text: string }[])[0].text);
+    const descDocs = JSON.parse((desc.content as { type: string; text: string }[])[0].text);
     expect(ascDocs[0].type).toBe("note");
     expect(descDocs[0].type).toBe("task");
     await client.close();
