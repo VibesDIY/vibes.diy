@@ -23,23 +23,7 @@ export default function App() {
 }
 ```
 
-`<ImgGen>` writes the doc into a Fireproof database (default name `"ImgGen"`). The doc carries `_files.v1 = { uploadId, type, size }` and the platform mints `_files.v1.url` on read. To render a stored image doc, read the version and resolve through `_files`:
-
-App.jsx
-
-```jsx
-<<<<<<< SEARCH
-      <ImgGen prompt="A sunset over mountains" />
-=======
-      <ImgGen prompt="A sunset over mountains" />
-      {/* To render a stored doc manually: */}
-      {(() => {
-        const ver = doc.versions?.[doc.currentVersion ?? 0];
-        const meta = ver?.id ? doc._files?.[ver.id] : undefined;
-        return meta?.url ? <img src={meta.url} alt={doc.prompt} /> : null;
-      })()}
->>>>>>> REPLACE
-```
+`<ImgGen>` writes the doc into a Fireproof database (default name `"ImgGen"`). The doc carries `_files.v1 = { uploadId, type, size }` and the platform mints `_files.v1.url` on read. To render a stored image doc manually, read the version with `doc.versions?.[doc.currentVersion ?? 0]`, get the file metadata with `doc._files?.[ver.id]`, and use `meta.url` for `<img src>`. The gallery pattern below shows this in a working component with proper hooks.
 
 This is the same `_files`-shape contract documented in `fireproof.md`'s "Working with Files" section — read it first if you have not seen the platform's file/URL story.
 
