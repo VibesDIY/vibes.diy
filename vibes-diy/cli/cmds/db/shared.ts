@@ -15,8 +15,8 @@ export function dbCommonArgs(ctx: CliCtx) {
       defaultValueIsSerializable: true,
     }),
     ownerHandle: option({
-      long: "user-slug",
-      description: "User slug; defaults to defaultHandle from user settings",
+      long: "handle",
+      description: "Handle; defaults to defaultHandle from user settings",
       type: string,
       defaultValue: () => "",
       defaultValueIsSerializable: true,
@@ -38,7 +38,7 @@ export async function resolveUserSlug(api: VibesDiyApi, explicit: string): Promi
   if (r.isErr()) return Result.Err(r.Err());
   const def = r.Ok().settings.find(isUserSettingDefaultHandle);
   if (def === undefined) {
-    return Result.Err("No defaultHandle — pass --user-slug or run 'vibes-diy login' first");
+    return Result.Err("No defaultHandle — pass --handle or run 'vibes-diy login' first");
   }
   return Result.Ok(def.ownerHandle);
 }

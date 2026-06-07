@@ -13,7 +13,7 @@ Add to ~/Library/Application Support/Claude/claude_desktop_config.json:
   "mcpServers": {
     "my-vibe": {
       "command": "npx",
-      "args": ["vibes-diy", "mcp", "--app-slug", "APP", "--user-slug", "USER"]
+      "args": ["vibes-diy", "mcp", "--app-slug", "APP", "--handle", "USER"]
     }
   }
 }
