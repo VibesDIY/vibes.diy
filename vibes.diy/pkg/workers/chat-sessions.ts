@@ -15,40 +15,6 @@ import { CFEnv } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 
-const DocChangedEvt = type({
-  type: "'vibes.diy.evt-doc-changed'",
-  ownerHandle: "string",
-  appSlug: "string",
-  dbName: "string",
-  docId: "string",
-});
-
-const RequestGrantEvt = type({
-  type: "'vibes.diy.evt-request-grant'",
-  op: "'upsert' | 'delete'",
-  userId: "string",
-  grant: type({
-    ownerHandle: "string",
-    appSlug: "string",
-  }).and(type("Record<string, unknown>")),
-}).and(type("Record<string, unknown>"));
-
-const ViewerGrantsChangedEvt = type({
-  type: "'vibes.diy.evt-viewer-grants-changed'",
-  ownerHandle: "string",
-  appSlug: "string",
-});
-
-const DocNotifyEvt = DocChangedEvt.or(RequestGrantEvt).or(ViewerGrantsChangedEvt);
-
-// Internal POST body from DocNotify: the doc-changed event plus the
-// originating WebSocket's connId, so we can skip just that one connection
-// while still delivering to sibling tabs/browsers on the same shard.
-const DocNotifyDelivery = type({
-  evt: DocNotifyEvt,
-  senderConnId: "string",
-});
-
 const UserNotifyEvtShape = type({
   type: "'vibes.diy.evt-user-notification'",
   notificationType: "string",
@@ -78,14 +44,12 @@ function cfWebSocketPair(): { client: WebSocket; server: WebSocket } {
 export class ChatSessions implements DurableObject {
   private connections: Set<WSSendProvider> = new Set<WSSendProvider>();
   private env: CFEnv;
-  private shardId: string | undefined;
 
   constructor(_state: DurableObjectState, env: CFEnv) {
     this.env = env;
   }
 
   async fetch(request: CFRequest): Promise<CFResponse> {
-    // Internal notification from DocNotify coordinator — broadcast to local subscribers
     if (request.method === "POST") {
       const url = URI.from(request.url);
 
@@ -98,8 +62,8 @@ export class ChatSessions implements DurableObject {
         const { evt, senderConnId, targetUserId } = parsed;
         let delivered = 0;
         for (const conn of this.connections) {
-          if (conn.subscribedUserKey !== targetUserId) continue; // only the target user
-          if (conn.connId === senderConnId) continue; // skip originator
+          if (conn.subscribedUserKey !== targetUserId) continue;
+          if (conn.connId === senderConnId) continue;
           exception2Result(() =>
             conn.ws.send(
               conn.ende.uint8ify({
@@ -124,80 +88,7 @@ export class ChatSessions implements DurableObject {
         return new Response("ok");
       }
 
-      const rJson = await exception2Result(() => request.json());
-      if (rJson.isErr()) {
-        return new Response("Invalid JSON", { status: 400 });
-      }
-      const parsed = DocNotifyDelivery(rJson.Ok());
-      if (parsed instanceof type.errors) {
-        return new Response("Invalid notification", { status: 400 });
-      }
-      const { evt, senderConnId } = parsed;
-      const shouldLogVerbose = this.env.ENVIRONMENT !== "prod";
-      const subscriptionKey =
-        evt.type === "vibes.diy.evt-request-grant"
-          ? `${evt.grant.ownerHandle}/${evt.grant.appSlug}`
-          : evt.type === "vibes.diy.evt-viewer-grants-changed"
-            ? `${evt.ownerHandle}/${evt.appSlug}`
-            : `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
-      let delivered = 0;
-      let skippedSender = 0;
-      for (const conn of this.connections) {
-        const subscribed =
-          evt.type === "vibes.diy.evt-request-grant"
-            ? conn.subscribedRequestGrantKeys.has(subscriptionKey)
-            : evt.type === "vibes.diy.evt-viewer-grants-changed"
-              ? conn.subscribedViewerGrantKeys.has(subscriptionKey)
-              : conn.subscribedDocKeys.has(subscriptionKey);
-        if (!subscribed) continue;
-        // Skip the originating WebSocket for doc/request-grant events because
-        // that tab already updated optimistically. For viewer-grants-changed we
-        // DO deliver to the sender so its iframe can refresh whoAmI grants.
-        if (evt.type !== "vibes.diy.evt-viewer-grants-changed" && conn.connId === senderConnId) {
-          skippedSender++;
-          continue;
-        }
-        exception2Result(() =>
-          conn.ws.send(
-            conn.ende.uint8ify({
-              tid: crypto.randomUUID(),
-              src: "vibes.diy.api",
-              dst: "vibes.diy.client",
-              ttl: 10,
-              payload: evt,
-            })
-          )
-        );
-        delivered++;
-      }
-      const eventDetail =
-        evt.type === "vibes.diy.evt-request-grant"
-          ? `op:${evt.op}`
-          : evt.type === "vibes.diy.evt-viewer-grants-changed"
-            ? "viewer-grants"
-            : `docId:${evt.docId.slice(0, 8)}`;
-      if (shouldLogVerbose) {
-        console.log(
-          "[ChatSessions] received notification",
-          subscriptionKey,
-          eventDetail,
-          "| shard:",
-          (this.shardId ?? "unknown").slice(0, 8),
-          "| delivered to",
-          delivered,
-          "of",
-          this.connections.size,
-          "connections (skipped sender:",
-          skippedSender + ")"
-        );
-      }
-      // Return 410 Gone only if there are no live local connections at all.
-      // If the only matching connection was the sender (skipped), that's a
-      // legitimate fan-out — the shard still has subscribers, don't evict.
-      if (delivered === 0 && skippedSender === 0) {
-        return new Response("no connections", { status: 410 });
-      }
-      return new Response("ok");
+      return new Response("unknown POST", { status: 400 });
     }
 
     const upgradeHeader = request.headers.get("Upgrade");
@@ -205,22 +96,13 @@ export class ChatSessions implements DurableObject {
       return new Response("Expected WebSocket", { status: 426 });
     }
 
-    // Extract shard ID from URL for DocNotify registration/deregistration
-    const uri = URI.from(request.url);
-    this.shardId = uri.getParam("shard") ?? this.shardId;
-
     const cctx = {} as unknown as ExecutionContext & CFInjectMutable;
-    cctx.cache = caches.default as unknown as CfCacheIf; // Use Cloudflare's default cache
+    cctx.cache = caches.default as unknown as CfCacheIf;
     cctx.webSocket = {
       connections: this.connections,
       webSocketPair: cfWebSocketPair,
     };
-    cctx.docNotify = this.shardId
-      ? {
-          shardId: this.shardId,
-          env: this.env,
-        }
-      : undefined;
+    cctx.docNotify = undefined;
     cctx.appCtx = (await cfServeAppCtx(request, this.env, cctx)).appCtx;
     return cfServe(request, cctx);
   }
