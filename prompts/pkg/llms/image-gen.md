@@ -4,76 +4,117 @@ Generate and edit images from a text prompt. Each generated image lands as a fil
 
 ## Basic Usage
 
+Start with a minimal image generation component:
+
+App.jsx
+
 ```jsx
+import React from "react";
+import { useFireproof } from "use-fireproof";
 import { ImgGen } from "use-vibes";
 
-function MyComponent() {
-  return <ImgGen prompt="A sunset over mountains" />;
+export default function App() {
+  return (
+    <div>
+      <h2>Image Generator</h2>
+      <ImgGen prompt="A sunset over mountains" />
+    </div>
+  );
 }
 ```
 
-`<ImgGen>` writes the doc into a Fireproof database (default name `"ImgGen"`). The doc carries `_files.v1 = { uploadId, type, size }` and the platform mints `_files.v1.url` on read. Render the image with:
+`<ImgGen>` writes the doc into a Fireproof database (default name `"ImgGen"`). The doc carries `_files.v1 = { uploadId, type, size }` and the platform mints `_files.v1.url` on read. To render a stored image doc, read the version and resolve through `_files`:
+
+App.jsx
 
 ```jsx
-const ver = doc.versions?.[doc.currentVersion ?? 0];
-const meta = ver?.id ? doc._files?.[ver.id] : undefined;
-return <img src={meta?.url} alt={doc.prompt} />;
+<<<<<<< SEARCH
+      <ImgGen prompt="A sunset over mountains" />
+=======
+      <ImgGen prompt="A sunset over mountains" />
+      {/* To render a stored doc manually: */}
+      {(() => {
+        const ver = doc.versions?.[doc.currentVersion ?? 0];
+        const meta = ver?.id ? doc._files?.[ver.id] : undefined;
+        return meta?.url ? <img src={meta.url} alt={doc.prompt} /> : null;
+      })()}
+>>>>>>> REPLACE
 ```
 
 This is the same `_files`-shape contract documented in `fireproof.md`'s "Working with Files" section — read it first if you have not seen the platform's file/URL story.
 
 ## Editing an Uploaded Image
 
-Pass a `File` object via `images` to run img2img:
+Pass a `File` object via `images` to run img2img. Adding a file picker that feeds into ImgGen:
+
+App.jsx
 
 ```jsx
-import { useState } from "react";
-import { ImgGen } from "use-vibes";
-
-function MyComponent() {
-  const [file, setFile] = useState(null);
+<<<<<<< SEARCH
+export default function App() {
   return (
     <div>
+      <h2>Image Generator</h2>
+=======
+export default function App() {
+  const [file, setFile] = React.useState(null);
+
+  return (
+    <div>
+      <h2>Image Generator</h2>
       <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
       {file && <ImgGen prompt="Make it look like a watercolor painting" images={[file]} />}
-    </div>
-  );
-}
+>>>>>>> REPLACE
 ```
 
 The input image is automatically resized (max 1024px) and compressed as JPEG before sending. img2img is currently supported on `prodia/*` models.
 
 ## Loading a Specific Doc
 
-```jsx
-<ImgGen _id="my-image-id" database={database} />
-```
-
-If the doc has a `prompt` but no `_files` yet, the component generates one.
+Load a previously generated image by `_id` — if the doc has a `prompt` but no `_files` yet, the component generates one: `<ImgGen _id="my-image-id" database={database} />`
 
 ## Gallery Pattern
 
-Browse stored images with `useLiveQuery`:
+Browse stored images with `useLiveQuery`. Building a gallery below the generator:
+
+App.jsx
 
 ```jsx
-import { useFireproof } from "use-fireproof";
-import { ImgGen } from "use-vibes";
-
-function MyComponent() {
-  const { useLiveQuery } = useFireproof("ImgGen");
-  const { docs } = useLiveQuery("type", { key: "image", descending: true });
+<<<<<<< SEARCH
+export default function App() {
+  const [file, setFile] = React.useState(null);
 
   return (
-    <div>
-      <ImgGen prompt="A colorful landscape" />
-      {docs.map((doc) => {
-        const ver = doc.versions?.[doc.currentVersion ?? 0];
-        const meta = ver?.id ? doc._files?.[ver.id] : undefined;
-        return <img key={doc._id} src={meta?.url} alt={doc.prompt} width={128} />;
-      })}
+=======
+export default function App() {
+  const { useLiveQuery } = useFireproof("ImgGen");
+  const { docs } = useLiveQuery("type", { key: "image", descending: true });
+  const [file, setFile] = React.useState(null);
+
+  return (
+>>>>>>> REPLACE
+```
+
+App.jsx
+
+```jsx
+<<<<<<< SEARCH
     </div>
   );
 }
+=======
+      <h3>Gallery</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        {docs.map((doc) => {
+          const ver = doc.versions?.[doc.currentVersion ?? 0];
+          const meta = ver?.id ? doc._files?.[ver.id] : undefined;
+          return <img key={doc._id} src={meta?.url} alt={doc.prompt} width={128} />;
+        })}
+      </div>
+    </div>
+  );
+}
+>>>>>>> REPLACE
 ```
 
 ## Caching and Versions
@@ -85,9 +126,7 @@ function MyComponent() {
 
 ## Choosing a Model
 
-```jsx
-<ImgGen prompt="An astronaut riding a horse" model="openai/gpt-5-image-mini" />
-```
+Override the model per component: `<ImgGen prompt="An astronaut riding a horse" model="openai/gpt-5-image-mini" />`
 
 Model ids follow the `provider/model-name` form from the platform's model catalog. Unknown ids surface as an error in the component's error UI.
 

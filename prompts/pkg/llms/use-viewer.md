@@ -6,21 +6,28 @@ The contract: **every write surface (form, submit button, edit input, delete but
 
 ## Basic Usage
 
+Start with a minimal component that shows the viewer identity:
+
+App.jsx
+
 ```jsx
+import React from "react";
+import { useFireproof } from "use-fireproof";
 import { useViewer } from "use-vibes";
 
-function App() {
+export default function App() {
   const { viewer, isViewerPending, ViewerTag } = useViewer();
 
-  // isViewerPending is true until the platform has resolved the viewer identity.
-  // Gate on it to avoid flashing the anonymous state on first render.
   if (isViewerPending) return null;
 
   return (
-    <header>
-      {/* ViewerTag renders a "Sign in" button when logged out, a user pill when logged in */}
-      <ViewerTag />
-    </header>
+    <div>
+      <header>
+        <ViewerTag />
+      </header>
+      {!viewer && <p>Sign in to post.</p>}
+      {viewer && <p>Welcome back!</p>}
+    </div>
   );
 }
 ```
@@ -35,40 +42,67 @@ function App() {
 
 ## Gating UI
 
-```jsx
-function CommentForm() {
-  const { viewer, isViewerPending, ViewerTag } = useViewer();
-  if (isViewerPending) return null;
+Add a "commenting as" label and a gated form. The ViewerTag handles sign-in/identity display:
 
-  return (
-    <div>
-      {/* Always rendered: "Sign in" button when anonymous, identity pill when signed in.
-          The label only appears once viewer is known so it doesn't flash. */}
+App.jsx
+
+```jsx
+<<<<<<< SEARCH
+      {!viewer && <p>Sign in to post.</p>}
+      {viewer && <p>Welcome back!</p>}
+=======
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
         <ViewerTag />
       </div>
 
       {!viewer && <p>Sign in to post.</p>}
-      {viewer && <form>...</form>}
-    </div>
-  );
-}
+      {viewer && <form>
+        <input placeholder="Add a comment..." />
+        <button type="submit">Post</button>
+      </form>}
+>>>>>>> REPLACE
 ```
 
 ## Tagging content with the viewer (write/render pattern)
 
 When one user writes content others will see (comments, posts, messages), **stamp `authorHandle` on the doc at write time**. That's it — just the handle. Render with `<ViewerTag userHandle={doc.authorHandle} />` which resolves display name and avatar automatically. Do not stamp `displayName` or `avatarUrl` on docs — ViewerTag handles that from the handle alone.
 
-```jsx
-import { useFireproof } from "use-fireproof";
-import { useViewer } from "use-vibes";
+Wire up a full comment thread with Fireproof and viewer attribution:
 
-function CommentThread() {
+App.jsx
+
+```jsx
+<<<<<<< SEARCH
+export default function App() {
   const { viewer, isViewerPending, ViewerTag } = useViewer();
-  const { useLiveQuery, database, access } = useFireproof("comments");
+
+  if (isViewerPending) return null;
+
+  return (
+    <div>
+      <header>
+        <ViewerTag />
+      </header>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
+        <ViewerTag />
+      </div>
+
+      {!viewer && <p>Sign in to post.</p>}
+      {viewer && <form>
+        <input placeholder="Add a comment..." />
+        <button type="submit">Post</button>
+      </form>}
+    </div>
+  );
+}
+=======
+export default function App() {
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
+  const { useLiveQuery, database } = useFireproof("comments");
   const { docs: comments } = useLiveQuery("createdAt");
-  const [body, setBody] = useState("");
+  const [body, setBody] = React.useState("");
 
   async function post() {
     if (!viewer || !body.trim()) return;
@@ -79,6 +113,8 @@ function CommentThread() {
     });
     setBody("");
   }
+
+  if (isViewerPending) return null;
 
   return (
     <div>
@@ -91,29 +127,21 @@ function CommentThread() {
         ))}
       </ul>
 
-      {!isViewerPending && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
-            <ViewerTag />
-          </div>
-          {!viewer && <p>Sign in to post.</p>}
-          {viewer && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                post();
-              }}
-            >
-              <input value={body} onChange={(e) => setBody(e.target.value)} />
-              <button type="submit">Post</button>
-            </form>
-          )}
-        </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
+        <ViewerTag />
+      </div>
+      {!viewer && <p>Sign in to post.</p>}
+      {viewer && (
+        <form onSubmit={(e) => { e.preventDefault(); post(); }}>
+          <input value={body} onChange={(e) => setBody(e.target.value)} />
+          <button type="submit">Post</button>
+        </form>
       )}
     </div>
   );
 }
+>>>>>>> REPLACE
 ```
 
 Key points:
@@ -132,14 +160,26 @@ Key points:
 
 `ViewerTag` is a ready-made inline user pill returned alongside `viewer` from `useViewer()`. It is not a separate import — you get it from the hook.
 
+Show the current viewer (edit ring appears — they can tap to change their avatar):
+
+App.jsx
+
 ```jsx
-const { viewer, ViewerTag } = useViewer();
-
-// Show the current viewer (edit ring appears — they can tap to change their avatar):
-<ViewerTag />
-
-// Show another user read-only (no edit affordance):
-<ViewerTag userHandle={comment.authorHandle} />
+<<<<<<< SEARCH
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
+        <ViewerTag />
+      </div>
+=======
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
+        <ViewerTag />
+        {/* Show another user read-only (no edit affordance): */}
+        <ViewerTag userHandle={comments[0]?.authorHandle} />
+        {/* Style override: */}
+        <ViewerTag style={{ borderRadius: 8, fontSize: 12 }} />
+      </div>
+>>>>>>> REPLACE
 ```
 
 **Self-detection is automatic.** When `ViewerTag` renders the current viewer it shows a dashed indigo ring and pencil overlay on the avatar. Clicking it opens a file picker; the upload and profile save happen internally.
@@ -149,11 +189,5 @@ const { viewer, ViewerTag } = useViewer();
 **Anonymous safety.** `ViewerTag` is always safe to call regardless of login state — it never throws. When the viewer is anonymous and no `userHandle` prop is given, it renders a "Sign in" button that opens the platform login UI when clicked. Wrap it in a `{viewer && <ViewerTag />}` guard if you want to suppress it entirely for anonymous users.
 
 **Theming.** `ViewerTag` reads `--accent`, `--accent-text`, `--card-bg`, `--border`, `--text`, and `--muted` from the app's CSS variables with sensible fallbacks. If your app defines these on `:root` (which most generated themes do), `ViewerTag` inherits the theme automatically with no extra props.
-
-**Style override.** Pass a `style` prop to override the root element's appearance. Layout properties are preserved; your values win:
-
-```jsx
-<ViewerTag style={{ borderRadius: 8, fontSize: 12 }} />
-```
 
 Use `<ViewerTag />` (no props) for the current user and `<ViewerTag userHandle={...} />` for others. That's the whole API.
