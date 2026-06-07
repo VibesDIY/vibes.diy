@@ -75,6 +75,10 @@ function cfWebSocketPair(): { client: WebSocket; server: WebSocket } {
   return { client: client as unknown as WebSocket, server: server as unknown as WebSocket };
 }
 
+function isBuildNotification(notificationType: string): boolean {
+  return notificationType === "build-complete" || notificationType === "build-failed";
+}
+
 export class ChatSessions implements DurableObject {
   private connections: Set<WSSendProvider> = new Set<WSSendProvider>();
   private env: CFEnv;
@@ -99,7 +103,11 @@ export class ChatSessions implements DurableObject {
         let delivered = 0;
         for (const conn of this.connections) {
           if (conn.subscribedUserKey !== targetUserId) continue; // only the target user
-          if (conn.connId === senderConnId) continue; // skip originator
+          if (isBuildNotification(evt.notificationType)) {
+            if (conn.connId !== senderConnId) continue; // browser notification should focus the tab that generated the build
+          } else if (conn.connId === senderConnId) {
+            continue; // skip originator for other notification types
+          }
           exception2Result(() =>
             conn.ws.send(
               conn.ende.uint8ify({
