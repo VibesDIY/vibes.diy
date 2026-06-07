@@ -69,7 +69,8 @@ export const getChatDetailsEvento: EventoHandler<
           and(
             eq(vctx.sql.tables.handleBinding.userId, userId),
             eq(vctx.sql.tables.chatContexts.ownerHandle, req.ownerHandle),
-            eq(vctx.sql.tables.chatContexts.appSlug, req.appSlug)
+            eq(vctx.sql.tables.chatContexts.appSlug, req.appSlug),
+            ...(req.chatId !== undefined ? [eq(vctx.sql.tables.chatContexts.chatId, req.chatId)] : [])
           )
         )
         .orderBy(desc(vctx.sql.tables.promptContexts.created));
@@ -77,7 +78,7 @@ export const getChatDetailsEvento: EventoHandler<
       if (rows.length === 0) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-get-chat-details",
-          chatId: "",
+          chatId: req.chatId ?? "",
           ownerHandle: req.ownerHandle,
           appSlug: req.appSlug,
           prompts: [],
