@@ -882,11 +882,23 @@ App.jsx
     const f = e.target.files?.[0];
     if (f) merge({ _files: { photo: f } });
   };
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    if (!doc._files?.photo) return;
+    submit();
+  };
 =======
   const onPickFile = (e) => {
     const next = {};
     for (const f of e.target.files) next[f.name] = f;
     merge({ _files: next });
+  };
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    if (!Object.keys(doc._files || {}).length) return;
+    submit();
   };
 >>>>>>> REPLACE
 ```
@@ -910,7 +922,7 @@ App.jsx
 <<<<<<< SEARCH
   const onSubmit = (e) => {
     e.preventDefault();
-    if (!doc._files?.photo) return;
+    if (!Object.keys(doc._files || {}).length) return;
     submit();
   };
 =======
