@@ -18,6 +18,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [vibe-pkg.md](agents/vibe-pkg.md) — Self-hosted package serving via /vibe-pkg/
 - [dev-state.md](agents/dev-state.md) — Which caches are safe to delete, and which destroy local dev data
 - [flaky-tests.md](agents/flaky-tests.md) — Rerun (or run the suite in isolation) before treating a `pnpm check` failure as real; log to VibesDIY/vibes.diy#1515
+- [pr-lifecycle.md](agents/pr-lifecycle.md) — Spec-first workflow, feature-goal PR titles, autonomous feedback handling, ready-to-merge signal
 
 ## Team-shared skills
 
@@ -25,7 +26,7 @@ Invokable Claude Code skills live in [`.claude/skills/README.md`](.claude/skills
 
 - [`qa-pr`](.claude/skills/qa-pr/SKILL.md) — agent-driven QA pass against a PR preview URL
 
-`agents/*.md` (above) documents *how we work*; `.claude/skills/` provides *things we invoke*. See [`.claude/skills/README.md`](.claude/skills/README.md) for the boundary.
+`agents/*.md` (above) documents _how we work_; `.claude/skills/` provides _things we invoke_. See [`.claude/skills/README.md`](.claude/skills/README.md) for the boundary.
 
 ## Quick Reference
 
