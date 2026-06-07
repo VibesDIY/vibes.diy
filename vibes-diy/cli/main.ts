@@ -8,7 +8,7 @@ import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { dotenv } from "zx";
 import { cmd_tsStream } from "./cmd-ts-stream.js";
 import { runSafely, subcommands, setDefaultHelpFormatter, defaultHelpFormatter } from "cmd-ts";
-import { getCliFooter } from "@vibes.diy/prompts";
+import { getCliFooter, getMcpFooter } from "@vibes.diy/prompts";
 import { isResEnsureUserSettings, isUserSettingSharing, isResEnsureAppSlug } from "@vibes.diy/api-types";
 import { userSettingsCmd } from "./cmds/user-settings-cmd.js";
 import {
@@ -120,33 +120,8 @@ async function main(): Promise<number> {
   };
   const rFooter = await exception2Result(() => getCliFooter());
   const cliFooter = rFooter.isOk() ? rFooter.Ok() : "";
-  const mcpFooter = `
-## MCP Server Setup
-
-Tools: vibes_list_apps, vibes_list_databases, vibes_get, vibes_put, vibes_delete, vibes_query
-
-Requires: npx vibes-diy login (one time)
-
-### Claude Desktop / Cowork
-
-Add to ~/Library/Application Support/Claude/claude_desktop_config.json:
-
-  { "mcpServers": { "my-vibe": {
-      "command": "npx",
-      "args": ["vibes-diy", "mcp", "--app-slug", "APP", "--user-slug", "USER"]
-  }}}
-
-### Claude Code
-
-Add to .claude/settings.json:
-
-  { "mcpServers": { "my-vibe": {
-      "command": "npx", "args": ["vibes-diy", "mcp"]
-  }}}
-
-### Test interactively
-
-  npx @modelcontextprotocol/inspector npx vibes-diy mcp --app-slug APP`;
+  const rMcpFooter = await exception2Result(() => getMcpFooter());
+  const mcpFooter = rMcpFooter.isOk() ? rMcpFooter.Ok() : "";
 
   setDefaultHelpFormatter({
     formatCommand(data, context) {

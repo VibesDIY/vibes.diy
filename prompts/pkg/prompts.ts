@@ -446,6 +446,19 @@ export async function getCliFooter(): Promise<string> {
   return rText.Ok();
 }
 
+export async function getMcpFooter(): Promise<string> {
+  const rText = await keyedLoadAsset.get("mcp-footer").once(async () => {
+    return loadAsset("./mcp-footer.md", {
+      fallBackUrl: DEFAULT_PKG_BASE_URL,
+      basePath: () => import.meta.url,
+    });
+  });
+  if (rText.isErr()) {
+    return Promise.reject(rText.Err());
+  }
+  return rText.Ok();
+}
+
 export async function getSkillText(name: string): Promise<string> {
   const rText = await keyedLoadAsset.get(name).once(async () => {
     return loadAsset(`./llms/${name}.md`, {
