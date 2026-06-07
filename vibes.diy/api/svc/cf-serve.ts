@@ -19,7 +19,6 @@ import {
   type EvtViewerGrantsChanged,
   CFEnv,
   type EvtRequestGrant,
-  type EvtUserNotification,
   MsgBase,
 } from "@vibes.diy/api-types";
 import { SuperThis } from "@fireproof/core-types-base";
