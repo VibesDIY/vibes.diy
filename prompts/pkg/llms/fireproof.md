@@ -15,23 +15,11 @@ Fireproof enforces cryptographic causal consistency and ledger integrity using h
 
 ## Installation
 
-The `use-fireproof` package provides both the core API and React hooks.
-
-```js
-import { useFireproof } from "use-fireproof";
-```
-
-React hooks are the recommended way to use Fireproof in LLM code generation contexts.
+Import with `import { useFireproof } from "use-fireproof"`. React hooks are the recommended way to use Fireproof in LLM code generation contexts.
 
 #### Create or Load a Database
 
-Fireproof databases store data across sessions and can sync in real-time. Each database is identified by a string name, and you can have multiple databases per application—often one per collaboration session, as they are the unit of sharing.
-
-```js
-import { useFireproof } from "use-fireproof";
-
-const { database, useLiveQuery, useDocument } = useFireproof("myLedger");
-```
+Fireproof databases store data across sessions and can sync in real-time. Each database is identified by a string name, and you can have multiple databases per application—often one per collaboration session, as they are the unit of sharing. Destructure from the hook: `const { database, useLiveQuery, useDocument } = useFireproof("myLedger")`.
 
 #### Put and Get Documents
 
@@ -85,13 +73,7 @@ export default function (doc, oldDoc, user) {
 
 ### Editing Documents
 
-Address documents by a known `_id` if you want to force conflict resolution or work with a real world resource, like a schedule slot or a user profile. In a complex app this might come from a route parameter or correspond to an outside identifier.
-
-```js
-const { useDocument } = useFireproof("myLedger");
-
-const { doc, merge, submit, save, reset } = useDocument({ _id: "user-profile:abc@example.com" });
-```
+Address documents by a known `_id` if you want to force conflict resolution or work with a real world resource, like a schedule slot or a user profile. In a complex app this might come from a route parameter or correspond to an outside identifier. Use `const { doc, merge, submit, save, reset } = useDocument({ _id: "user-profile:abc@example.com" })`.
 
 The `useDocument` hook provides several methods:
 
@@ -100,27 +82,13 @@ The `useDocument` hook provides several methods:
 - `save()`: Save the current document state
 - `reset()`: Reset to initial state
 
-For form-based creation flows, use `submit`:
-
-```js
-<form onSubmit={submit}>
-```
+For form-based creation flows, use `submit` as the form's `onSubmit` handler: `<form onSubmit={submit}>`.
 
 When you call submit, the document is reset, so if you didn't provide an `_id` then you can use the form to create a stream of new documents as in the basic example above.
 
 ### Updating Documents in Event Handlers
 
-To update an existing document from a click handler or callback, use `database.put()` directly. Never call `useDocument` inside an event handler — that violates React's Rules of Hooks.
-
-```js
-// ✅ Correct — use database.put() in handlers
-onClick={() => database.put({ ...doc, favorite: !doc.favorite })}
-
-// ❌ Wrong — never call hooks inside handlers
-function toggleFavorite(id) {
-  const { doc, save } = useDocument({ _id: id }) // BREAKS Rules of Hooks
-}
-```
+To update an existing document from a click handler or callback, use `database.put()` directly — e.g. `onClick={() => database.put({ ...doc, favorite: !doc.favorite })}`. Never call `useDocument` inside an event handler — that violates React's Rules of Hooks.
 
 ### Query Data
 
@@ -132,21 +100,7 @@ Here are other common patterns:
 
 #### Query by Key Range
 
-Passing a string to `useLiveQuery` will index by that field. You can use the key argument to filter by a specific value:
-
-```js
-const { docs } = useLiveQuery("agentName", {
-  key: "agent-1", // all docs where doc.agentName === "agent-1", sorted by _id
-});
-```
-
-You can also query a range within a key:
-
-```js
-const { docs } = useLiveQuery("agentRating", {
-  range: [3, 5],
-});
-```
+Passing a string to `useLiveQuery` will index by that field. Filter by a specific value with `key`: `useLiveQuery("agentName", { key: "agent-1" })` returns all docs where `doc.agentName === "agent-1"`, sorted by `_id`. Query a range with `range`: `useLiveQuery("agentRating", { range: [3, 5] })`.
 
 #### Counter Pattern
 
@@ -176,16 +130,28 @@ This pattern ensures the count is accurate even during sync.
 Use a custom index function to normalize and transform document data, for instance if you have both new and old document versions in your app.
 
 ```js
-const { docs } = useLiveQuery(
-  (doc) => {
-    if (doc.type == "listing_v1") {
-      return doc.sellerId;
-    } else if (doc.type == "listing") {
-      return doc.userId;
-    }
-  },
-  { key: routeParams.sellerId }
-);
+const App = () => {
+  const { useLiveQuery } = useFireproof("myLedger");
+
+  const { docs } = useLiveQuery(
+    (doc) => {
+      if (doc.type == "listing_v1") {
+        return doc.sellerId;
+      } else if (doc.type == "listing") {
+        return doc.userId;
+      }
+    },
+    { key: routeParams.sellerId }
+  );
+
+  return (
+    <ul>
+      {docs.map((doc) => (
+        <li key={doc._id}>{doc.userId || doc.sellerId}</li>
+      ))}
+    </ul>
+  );
+};
 ```
 
 #### Array Indexes and Prefix Queries
@@ -193,14 +159,26 @@ const { docs } = useLiveQuery(
 When you want to group rows easily, you can use an array index key. This is great for grouping records my year / month / day or other paths. In this example the prefix query is a shorthand for a key range, loading everything from November 2024:
 
 ```js
-const queryResult = useLiveQuery(
-  (doc) => {
-    const date = new Date(doc.date);
-    if (Number.isNaN(date.getTime())) return; // return nothing to skip docs without a valid date
-    return [date.getFullYear(), date.getMonth(), date.getDate()];
-  },
-  { prefix: [2024, 11] }
-);
+const App = () => {
+  const { useLiveQuery } = useFireproof("myLedger");
+
+  const queryResult = useLiveQuery(
+    (doc) => {
+      const date = new Date(doc.date);
+      if (Number.isNaN(date.getTime())) return; // return nothing to skip docs without a valid date
+      return [date.getFullYear(), date.getMonth(), date.getDate()];
+    },
+    { prefix: [2024, 11] }
+  );
+
+  return (
+    <ul>
+      {queryResult.docs.map((doc) => (
+        <li key={doc._id}>{doc.date}</li>
+      ))}
+    </ul>
+  );
+};
 ```
 
 #### Sortable Lists
@@ -253,20 +231,28 @@ On vibes.diy, `useFireproof` accepts an optional `acl` argument that declares wh
 Only use the `acl` option when the user explicitly asks for fine-grained access control (or equivalent permission constraints).
 
 ```jsx
+import React from "react";
 import { useFireproof } from "use-vibes";
+import { useViewer } from "use-vibes";
 
-// Anyone with a grant can post; only editors can delete
-const { useLiveQuery, database } = useFireproof("announcements", {
-  acl: { write: ["members"], delete: ["editors"] },
-});
+export default function App() {
+  const { viewer, isOwner, ViewerTag } = useViewer();
 
-// Editors-only space — viewers cannot read at all
-const { useLiveQuery, database } = useFireproof("drafts", {
-  acl: { read: ["editors"], write: ["editors"], delete: ["editors"] },
-});
+  // Anyone with a grant can post; only editors can delete
+  const { useLiveQuery: queryAnnouncements, database: announcementsDb } = useFireproof("announcements", {
+    acl: { write: ["members"], delete: ["editors"] },
+  });
 
-// No acl — falls back to app-level role gates (existing behavior, always safe)
-const { useLiveQuery, database } = useFireproof("publicNotes");
+  // Editors-only space — viewers cannot read at all
+  const { useLiveQuery: queryDrafts, database: draftsDb } = useFireproof("drafts", {
+    acl: { read: ["editors"], write: ["editors"], delete: ["editors"] },
+  });
+
+  // No acl — falls back to app-level role gates (existing behavior, always safe)
+  const { useLiveQuery: queryNotes, database: notesDb } = useFireproof("publicNotes");
+
+  return null; // wire up UI per your app
+}
 ```
 
 **Subject groups** — who each name covers:
@@ -284,21 +270,15 @@ Each capability (`read`, `write`, `delete`) is independent. Omitting one falls b
 
 ## Reading Resolved Grants (`access`)
 
-`useFireproof()` returns an `access` property — the viewer's resolved roles and channels for that database, computed server-side from the access function's `members` and `grant` declarations.
-
-```jsx
-const { database, useLiveQuery, access } = useFireproof("comments");
-
-access.roles; // ReadonlySet<string> — roles the viewer belongs to
-access.channels; // ReadonlySet<string> — channels the viewer can access
-
-access.hasRole("moderator"); // boolean convenience
-access.hasChannel("engineering"); // boolean convenience
-```
+`useFireproof()` returns an `access` property — the viewer's resolved roles and channels for that database, computed server-side from the access function's `members` and `grant` declarations. Destructure it as `const { database, useLiveQuery, access } = useFireproof("comments")`. The `access` object provides `access.roles` (ReadonlySet of role names), `access.channels` (ReadonlySet of channel names), and convenience methods `access.hasRole("moderator")` and `access.hasChannel("engineering")`.
 
 For databases without an access function export, `access` has empty roles and channels. No separate pending flag — grants arrive alongside the viewer identity, so `useViewer().isViewerPending` covers both.
 
 ```jsx
+import React from "react";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
+
 function App() {
   const { viewer, isViewerPending, ViewerTag } = useViewer();
   const { database, useLiveQuery, access } = useFireproof("comments");
@@ -320,22 +300,7 @@ The AI agent writes the access function (so it knows the role names) and writes 
 
 The access function is the single source of truth for permissions. The UI reads its verdict from `access` — gate with `access.hasChannel(name)` and `access.hasRole(name)`. Grants may reflect logic the UI can't see (other documents, role memberships, owner state), so `access` is always the right check.
 
-`access.hasChannel()` covers every grant path — public channels, restricted channels, role-expanded channels. The access function decides who gets access and how; the UI just asks `access.hasChannel(name)`:
-
-```jsx
-// Channel list — access.hasChannel covers both public and restricted channels
-const visibleChannels = channels.filter(ch => access.hasChannel(ch._id));
-
-// Compose gate — access.hasChannel is the only check needed
-{viewer && access.hasChannel(activeChannel) && <ComposeForm />}
-
-// Channel with mixed access modes — the UI doesn't need to know which mode
-// The access function granted public channels via grant.public and
-// restricted channels via grant.users — access.hasChannel handles both
-{visibleChannels.map(ch => (
-  <li key={ch._id} onClick={() => setActive(ch._id)}>#{ch.name}</li>
-))}
-```
+`access.hasChannel()` covers every grant path — public channels, restricted channels, role-expanded channels. The access function decides who gets access and how; the UI just asks `access.hasChannel(name)`. Filter visible channels with `channels.filter(ch => access.hasChannel(ch._id))`, gate compose forms with `viewer && access.hasChannel(activeChannel)`, and render channel lists without worrying about access modes — the access function handles the distinction.
 
 ### Complete example: Team announcements with channels
 
@@ -481,24 +446,47 @@ export function chat(doc, oldDoc, user, ctx) {
 App.jsx — the UI uses `access.hasChannel()` for everything. It has no idea which channels are restricted — that's the access function's job.
 
 ```jsx
-const { database, useLiveQuery, access } = useFireproof("chat");
-const { docs: channels } = useLiveQuery("type", { key: "channel" });
+import React from "react";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
 
-// client creates channels with a deterministic _id
-await database.put({ _id: "ch:" + name, type: "channel", createdAt: Date.now() });
+export default function App() {
+  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
+  const { database, useLiveQuery, access } = useFireproof("chat");
+  const { docs: channels } = useLiveQuery("type", { key: "channel" });
+  const [activeChannel, setActiveChannel] = React.useState(null);
 
-// filter to channels the viewer can see — use _id as channel identifier
-const visible = channels.filter((ch) => isOwner || access.hasChannel(ch._id));
+  if (isViewerPending) return null;
 
-// can post? just check channel access
-const canPost = viewer && (isOwner || access.hasChannel(activeChannel._id));
+  // client creates channels with a deterministic _id
+  async function createChannel(name) {
+    await database.put({ _id: "ch:" + name, type: "channel", createdAt: Date.now() });
+  }
 
-// gate the compose form
-{canPost ? (
-  <Composer channel={activeChannel._id} />
-) : (
-  <p>{viewer ? "Read-only in this channel." : "Sign in to post."}</p>
-)}
+  // filter to channels the viewer can see — use _id as channel identifier
+  const visible = channels.filter((ch) => isOwner || access.hasChannel(ch._id));
+
+  // can post? just check channel access
+  const canPost = viewer && activeChannel && (isOwner || access.hasChannel(activeChannel._id));
+
+  return (
+    <div>
+      <ViewerTag />
+      <ul>
+        {visible.map((ch) => (
+          <li key={ch._id} onClick={() => setActiveChannel(ch)}>
+            #{ch._id.replace("ch:", "")}
+          </li>
+        ))}
+      </ul>
+      {canPost ? (
+        <p>Compose form here for {activeChannel._id}</p>
+      ) : (
+        <p>{viewer ? "Read-only in this channel." : "Sign in to post."}</p>
+      )}
+    </div>
+  );
+}
 ```
 
 Channel `_id` is the channel identifier everywhere. The `canPost` check uses `access.hasChannel(ch._id)`. The access function uses `doc._id` for routing and grants. A deterministic `_id` like `"ch:" + name` enforces uniqueness — two users can't create duplicate channels.
@@ -524,30 +512,16 @@ export function chat(doc, oldDoc, user, ctx) {
 }
 ```
 
-App.jsx
-```jsx
-const { useLiveQuery, database } = useFireproof("chat");
-```
+The App.jsx side just destructures `useFireproof("chat")` to get `useLiveQuery`, `database`, and `access` — the database name `"chat"` matches the named export above.
 
 ### Function signature
 
-```ts
-(doc, oldDoc, user: UserContext | null, ctx: Helpers) => AccessDescriptor;
-```
+The access function signature is `(doc, oldDoc, user, ctx) => AccessDescriptor`:
 
 - `doc` — the document being written
 - `oldDoc` — the previous version (null for new documents)
-- `user` — the authenticated user, or `null` for anonymous requests
+- `user` — the authenticated user (`{ userHandle: string, displayName?: string }`) or `null` for anonymous requests
 - `ctx` — server-provided helpers for checking materialized state
-
-**UserContext:**
-
-```ts
-{
-  userHandle: string    // stable unique id — use for all auth checks
-  displayName?: string  // display only — never use for identity checks
-}
-```
 
 **Helpers (`ctx`):** Opaque closures over the materialized grant state. They throw or pass — you cannot enumerate channels, list members, or iterate grants. Both helpers also throw when `user` is null.
 
@@ -558,19 +532,7 @@ const { useLiveQuery, database } = useFireproof("chat");
 
 All fields are optional. `{}` is a valid return. `throw { forbidden: "reason" }` rejects the write.
 
-```ts
-type AccessDescriptor = {
-  channels?: string[]; // route this doc to channels
-  members?: Record<roleName, userHandle[]>; // role membership (reduced by union)
-  grant?: {
-    users?: Record<userHandle, string[]>; // direct user → channel grants (reduced by union)
-    roles?: Record<roleName, string[]>; // role → channel grants (reduced by union)
-    public?: string[]; // member-public read — any member, no channel grant needed
-  };
-  expiry?: string | number | null; // ISO date or unix seconds
-  allowAnonymous?: boolean; // opt-in for null-user writes
-};
-```
+The return type shape: `{ channels?: string[], members?: Record<roleName, userHandle[]>, grant?: { users?: Record<userHandle, string[]>, roles?: Record<roleName, string[]>, public?: string[] }, expiry?: string | number | null, allowAnonymous?: boolean }`. Channels route documents to read isolation groups. Members declare role membership (reduced by union). Grant declares user/role/public channel access. Expiry sets a TTL. AllowAnonymous opts in null-user writes.
 
 ### Key concepts
 
@@ -722,51 +684,11 @@ This is especially useful when an app has many databases.
 
 ### Roles via `members` reduce
 
-Roles are not a fixed registry. They are materialized from document contributions:
-
-```js
-// A team-meta doc contributes members to a role
-if (doc.type === "team-meta") {
-  if (!user.isOwner) throw { forbidden: "owner only" };
-  return {
-    members: { [doc.teamId]: doc.memberHandles },
-    grant: { roles: { [doc.teamId]: doc.channels } },
-  };
-}
-
-// A per-employee membership doc contributes one handle
-if (doc.type === "membership") {
-  return { members: { [doc.role]: [doc.userHandle] } };
-}
-```
-
-Both patterns produce identical reduced state. Deleting a membership doc removes the user from the role automatically.
+Roles are not a fixed registry. They are materialized from document contributions. A team-meta doc can contribute members to a role: return `{ members: { [doc.teamId]: doc.memberHandles }, grant: { roles: { [doc.teamId]: doc.channels } } }`. A per-employee membership doc contributes one handle: return `{ members: { [doc.role]: [doc.userHandle] } }`. Both patterns produce identical reduced state. Deleting a membership doc removes the user from the role automatically.
 
 ### Common `oldDoc` patterns
 
-Use `oldDoc` (the previous version of the document) to enforce invariants across updates:
-
-```js
-// New document (create)
-if (oldDoc === null) {
-  // create-only logic
-}
-
-// Immutable-after-create fields
-if (oldDoc && doc.createdBy !== oldDoc.createdBy) {
-  throw { forbidden: "createdBy is immutable" };
-}
-
-// Prevent unauthorized ownership transfer
-if (oldDoc && oldDoc.ownerHandle !== user.userHandle) {
-  throw { forbidden: "not owner" };
-}
-
-// Monotonic version — can only increase
-if (oldDoc && doc.version <= oldDoc.version) {
-  throw { forbidden: "version must increase" };
-}
-```
+Use `oldDoc` (the previous version of the document) to enforce invariants across updates. Check for new documents with `if (oldDoc === null) { /* create-only logic */ }`. Enforce immutable fields with `if (oldDoc && doc.createdBy !== oldDoc.createdBy) throw { forbidden: "createdBy is immutable" }`. Prevent unauthorized ownership transfer with `if (oldDoc && oldDoc.ownerHandle !== user.userHandle) throw { forbidden: "not owner" }`. Enforce monotonic versions with `if (oldDoc && doc.version <= oldDoc.version) throw { forbidden: "version must increase" }`.
 
 ---
 
@@ -776,27 +698,14 @@ Data is stored in the browser, and is automatically synced with all invited user
 
 ## Using Fireproof in JavaScript
 
-You can use the core API in HTML or on the backend. Instead of hooks, import the core API directly:
+You can use the core API in HTML or on the backend. Instead of hooks, import the core API directly with `import { fireproof } from "use-fireproof"` and create a database with `const database = fireproof("myLedger")`.
 
-```js
-import { fireproof } from "use-fireproof";
-
-const database = fireproof("myLedger");
-```
-
-The document API is async, but doesn't require loading states or error handling.
-
-```js
-const ok = await database.put({ text: "Sample Data" });
-const doc = await database.get(ok.id);
-const latest = await database.query("_id", { limit: 10, descending: true });
-console.log("Latest documents:", latest.docs);
-```
+The document API is async, but doesn't require loading states or error handling: `await database.put({ text: "Sample Data" })`, `await database.get(ok.id)`, `await database.query("_id", { limit: 10, descending: true })`.
 
 To subscribe to real-time updates, use the `subscribe` method. This is useful for building backend event handlers or other server-side logic. For instance to send an email when the user completes a todo:
 
 ```js
-import { fireproof } from "use-firproof";
+import { fireproof } from "use-fireproof";
 
 const database = fireproof("todoList");
 
@@ -816,93 +725,60 @@ Fireproof documents carry attachments under `_files`. Save a `File` (or `Blob`) 
 
 #### Attaching files on save
 
-```jsx
-const { useDocument } = useFireproof("photoAlbum");
-const { doc, merge, submit } = useDocument({ _files: {}, caption: "" });
+Use `useDocument` with a `_files` shape: `const { doc, merge, submit } = useDocument({ _files: {}, caption: "" })`. In a file input change handler, merge the file: `const onPick = (e) => merge({ _files: { photo: e.target.files[0] } })`. Both `File` and `Blob` are accepted. Submit the document the normal way (`submit()` from `useDocument`, or `database.put(doc)`).
 
-// In a file input change handler:
-const onPick = (e) => merge({ _files: { photo: e.target.files[0] } });
-```
-
-`File` and `Blob` are both accepted. Submit the document the normal way (`submit()` from `useDocument`, or `database.put(doc)`).
-
-For multi-file uploads (e.g. `<input multiple>`), build the `_files` map keyed by filename:
-
-```jsx
-const onPickMany = (e) => {
-  const next = {};
-  for (const f of e.target.files) next[f.name] = f;
-  merge({ _files: next });
-};
-```
-
-Iterate the map with `Object.entries(doc._files)` to render or process each entry (see "Displaying files" below).
+For multi-file uploads (e.g. `<input multiple>`), build the `_files` map keyed by filename in the handler: `const next = {}; for (const f of e.target.files) next[f.name] = f; merge({ _files: next })`. Iterate the map with `Object.entries(doc._files)` to render or process each entry.
 
 #### Displaying files
 
-After a doc round-trips through the database, each `_files.<key>` entry carries a stable `url` you can drop straight into any browser-native subresource — `<img>`, `<video>`, `<audio>`, CSS `background-image`, `@font-face`, `<a download>`, etc.
-
-```jsx
-{
-  doc._files.photo && <img src={doc._files.photo.url} alt={doc.caption} />;
-}
-```
-
-For galleries with arbitrary keys, iterate the map:
-
-```jsx
-{
-  Object.entries(doc._files ?? {}).map(([key, meta]) => <img key={key} src={meta.url} alt={key} />);
-}
-```
-
-The platform-minted `url` is stable for the lifetime of that file, so the browser cache works normally.
+After a doc round-trips through the database, each `_files.<key>` entry carries a stable `url` you can drop straight into any browser-native subresource — `<img>`, `<video>`, `<audio>`, CSS `background-image`, `@font-face`, `<a download>`, etc. Use it as `<img src={doc._files.photo.url} alt={doc.caption} />`. For galleries with arbitrary keys, iterate: `Object.entries(doc._files ?? {}).map(([key, meta]) => <img key={key} src={meta.url} alt={key} />)`. The platform-minted `url` is stable for the lifetime of that file, so the browser cache works normally.
 
 #### Reading raw bytes
 
-When you need the bytes themselves (transcoding, hashing, ML features, custom downloads), call `meta.file()` on the entry — it returns a `Promise<File>`:
-
-```jsx
-const f = await doc._files.photo.file();
-const buf = await f.arrayBuffer();
-const hash = await crypto.subtle.digest("SHA-256", buf);
-```
-
-For plain `<img>` rendering, prefer `meta.url` — it skips one fetch and lets the browser handle cache and decoding.
+When you need the bytes themselves (transcoding, hashing, ML features, custom downloads), call `meta.file()` on the entry — it returns a `Promise<File>`: `const f = await doc._files.photo.file(); const buf = await f.arrayBuffer()`. For plain `<img>` rendering, prefer `meta.url` — it skips one fetch and lets the browser handle cache and decoding.
 
 #### Each `_files.<key>` entry shape
 
-After save + round-trip, an entry has:
-
-```ts
-{
-  url: string;           // ready-to-use URL for <img>/<video>/etc.
-  type: string;          // MIME type
-  size: number;          // bytes
-  lastModified?: number; // epoch ms (for File only)
-  file: () => Promise<File>; // bytes on demand
-}
-```
+After save + round-trip, an entry has: `{ url: string, type: string, size: number, lastModified?: number, file: () => Promise<File> }`. `url` is a ready-to-use URL for `<img>`/`<video>`/etc. `type` is the MIME type. `size` is bytes. `file()` returns bytes on demand.
 
 ### Form Validation
 
 You can use React's `useState` to manage validation states and error messages. Validate inputs at the UI level before allowing submission.
 
-```javascript
-const [errors, setErrors] = useState({});
+```jsx
+import React, { useState } from "react";
+import { useFireproof } from "use-fireproof";
 
-function validateForm() {
-  const newErrors = {};
-  if (!doc.name.trim()) newErrors.name = "Name is required.";
-  if (!doc.email) newErrors.email = "Email is required.";
-  if (!doc.message.trim()) newErrors.message = "Message is required.";
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-}
+export default function App() {
+  const { useDocument } = useFireproof("contacts");
+  const { doc, merge, submit } = useDocument({ name: "", email: "", message: "" });
+  const [errors, setErrors] = useState({});
 
-function handleSubmit(e) {
-  e.preventDefault();
-  if (validateForm()) submit();
+  function validateForm() {
+    const newErrors = {};
+    if (!doc.name.trim()) newErrors.name = "Name is required.";
+    if (!doc.email) newErrors.email = "Email is required.";
+    if (!doc.message.trim()) newErrors.message = "Message is required.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (validateForm()) submit();
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input value={doc.name} onChange={(e) => merge({ name: e.target.value })} placeholder="Name" />
+      {errors.name && <span>{errors.name}</span>}
+      <input value={doc.email} onChange={(e) => merge({ email: e.target.value })} placeholder="Email" />
+      {errors.email && <span>{errors.email}</span>}
+      <textarea value={doc.message} onChange={(e) => merge({ message: e.target.value })} placeholder="Message" />
+      {errors.message && <span>{errors.message}</span>}
+      <button type="submit">Send</button>
+    </form>
+  );
 }
 ```
 

@@ -7,9 +7,10 @@ The contract: **every write surface (form, submit button, edit input, delete but
 ## Basic Usage
 
 ```jsx
+import React from "react";
 import { useViewer } from "use-vibes";
 
-function App() {
+export default function App() {
   const { viewer, isViewerPending, ViewerTag } = useViewer();
 
   // isViewerPending is true until the platform has resolved the viewer identity.
@@ -36,6 +37,9 @@ function App() {
 ## Gating UI
 
 ```jsx
+import React from "react";
+import { useViewer } from "use-vibes";
+
 function CommentForm() {
   const { viewer, isViewerPending, ViewerTag } = useViewer();
   if (isViewerPending) return null;
@@ -54,6 +58,8 @@ function CommentForm() {
     </div>
   );
 }
+
+export default CommentForm;
 ```
 
 ## Tagging content with the viewer (write/render pattern)
@@ -61,6 +67,7 @@ function CommentForm() {
 When one user writes content others will see (comments, posts, messages), **stamp `authorHandle` on the doc at write time**. That's it — just the handle. Render with `<ViewerTag userHandle={doc.authorHandle} />` which resolves display name and avatar automatically. Do not stamp `displayName` or `avatarUrl` on docs — ViewerTag handles that from the handle alone.
 
 ```jsx
+import React, { useState } from "react";
 import { useFireproof } from "use-fireproof";
 import { useViewer } from "use-vibes";
 
@@ -114,6 +121,8 @@ function CommentThread() {
     </div>
   );
 }
+
+export default CommentThread;
 ```
 
 Key points:
@@ -130,17 +139,9 @@ Key points:
 
 ## ViewerTag
 
-`ViewerTag` is a ready-made inline user pill returned alongside `viewer` from `useViewer()`. It is not a separate import — you get it from the hook.
+`ViewerTag` is a ready-made inline user pill returned alongside `viewer` from `useViewer()`. It is not a separate import — you get it from the hook. Destructure it as `const { viewer, ViewerTag } = useViewer()`.
 
-```jsx
-const { viewer, ViewerTag } = useViewer();
-
-// Show the current viewer (edit ring appears — they can tap to change their avatar):
-<ViewerTag />
-
-// Show another user read-only (no edit affordance):
-<ViewerTag userHandle={comment.authorHandle} />
-```
+Show the current viewer (edit ring appears — they can tap to change their avatar) with `<ViewerTag />`. Show another user read-only (no edit affordance) with `<ViewerTag userHandle={comment.authorHandle} />`.
 
 **Self-detection is automatic.** When `ViewerTag` renders the current viewer it shows a dashed indigo ring and pencil overlay on the avatar. Clicking it opens a file picker; the upload and profile save happen internally.
 
@@ -150,10 +151,6 @@ const { viewer, ViewerTag } = useViewer();
 
 **Theming.** `ViewerTag` reads `--accent`, `--accent-text`, `--card-bg`, `--border`, `--text`, and `--muted` from the app's CSS variables with sensible fallbacks. If your app defines these on `:root` (which most generated themes do), `ViewerTag` inherits the theme automatically with no extra props.
 
-**Style override.** Pass a `style` prop to override the root element's appearance. Layout properties are preserved; your values win:
-
-```jsx
-<ViewerTag style={{ borderRadius: 8, fontSize: 12 }} />
-```
+**Style override.** Pass a `style` prop to override the root element's appearance: `<ViewerTag style={{ borderRadius: 8, fontSize: 12 }} />`. Layout properties are preserved; your values win.
 
 Use `<ViewerTag />` (no props) for the current user and `<ViewerTag userHandle={...} />` for others. That's the whole API.

@@ -12,13 +12,7 @@ function MyComponent() {
 }
 ```
 
-`<ImgGen>` writes the doc into a Fireproof database (default name `"ImgGen"`). The doc carries `_files.v1 = { uploadId, type, size }` and the platform mints `_files.v1.url` on read. Render the image with:
-
-```jsx
-const ver = doc.versions?.[doc.currentVersion ?? 0];
-const meta = ver?.id ? doc._files?.[ver.id] : undefined;
-return <img src={meta?.url} alt={doc.prompt} />;
-```
+`<ImgGen>` writes the doc into a Fireproof database (default name `"ImgGen"`). The doc carries `_files.v1 = { uploadId, type, size }` and the platform mints `_files.v1.url` on read. Render the stored image by reading the version chain: `const ver = doc.versions?.[doc.currentVersion ?? 0]; const meta = ver?.id ? doc._files?.[ver.id] : undefined;` then `<img src={meta?.url} alt={doc.prompt} />`.
 
 This is the same `_files`-shape contract documented in `fireproof.md`'s "Working with Files" section — read it first if you have not seen the platform's file/URL story.
 
@@ -45,11 +39,7 @@ The input image is automatically resized (max 1024px) and compressed as JPEG bef
 
 ## Loading a Specific Doc
 
-```jsx
-<ImgGen _id="my-image-id" database={database} />
-```
-
-If the doc has a `prompt` but no `_files` yet, the component generates one.
+Pass `_id` to load an existing doc instead of generating: `<ImgGen _id="my-image-id" database={database} />`. If the doc has a `prompt` but no `_files` yet, the component generates one.
 
 ## Gallery Pattern
 
@@ -85,11 +75,7 @@ function MyComponent() {
 
 ## Choosing a Model
 
-```jsx
-<ImgGen prompt="An astronaut riding a horse" model="openai/gpt-5-image-mini" />
-```
-
-Model ids follow the `provider/model-name` form from the platform's model catalog. Unknown ids surface as an error in the component's error UI.
+Override the model with the `model` prop: `<ImgGen prompt="An astronaut riding a horse" model="openai/gpt-5-image-mini" />`. Model ids follow the `provider/model-name` form from the platform's model catalog. Unknown ids surface as an error in the component's error UI.
 
 #### Props
 
