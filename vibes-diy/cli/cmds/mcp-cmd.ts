@@ -13,26 +13,21 @@ import charwise from "charwise";
 import type { CliCtx } from "../cli-ctx.js";
 import { resolveUserSlug } from "./db/shared.js";
 
-async function startMcpServer(ctx: CliCtx, args: { appSlug: string; ownerHandle: string; apiUrl: string }) {
-  if (!ctx.vibesDiyApiFactory) {
-    console.error("Not logged in. Run 'vibes-diy login' first.");
-    process.exit(1);
-  }
+import type { VibesDiyApi } from "@vibes.diy/api-impl";
 
-  const api = ctx.vibesDiyApiFactory(args.apiUrl);
+export interface McpServerDeps {
+  readonly api: VibesDiyApi;
+  readonly appSlug: string;
+  readonly ownerHandle: string;
+}
 
-  const rUser = await resolveUserSlug(api, args.ownerHandle);
-  if (rUser.isErr()) {
-    console.error(`Failed to resolve user slug: ${rUser.Err()}`);
-    process.exit(1);
-  }
-  const ownerHandle = rUser.Ok();
-
-  const packageJson = JSON.parse(readFileSync(join(import.meta.dirname, "..", "..", "package.json"), "utf8"));
+export function createMcpServer(deps: McpServerDeps): McpServer {
+  const { api, appSlug, ownerHandle } = deps;
+  const args = { appSlug };
 
   const server = new McpServer({
     name: "vibes-diy",
-    version: packageJson.version as string,
+    version: "0.0.0",
   });
 
   // ── vibes_list_apps ──────────────────────────────────────────────
@@ -273,12 +268,30 @@ async function startMcpServer(ctx: CliCtx, args: { appSlug: string; ownerHandle:
     }
   );
 
-  // ── Connect transport ────────────────────────────────────────────
+  return server;
+}
+
+async function startMcpServer(ctx: CliCtx, handlerArgs: { appSlug: string; ownerHandle: string; apiUrl: string }) {
+  if (!ctx.vibesDiyApiFactory) {
+    console.error("Not logged in. Run 'vibes-diy login' first.");
+    process.exit(1);
+  }
+
+  const api = ctx.vibesDiyApiFactory(handlerArgs.apiUrl);
+
+  const rUser = await resolveUserSlug(api, handlerArgs.ownerHandle);
+  if (rUser.isErr()) {
+    console.error(`Failed to resolve user slug: ${rUser.Err()}`);
+    process.exit(1);
+  }
+  const ownerHandle = rUser.Ok();
+
+  const server = createMcpServer({ api, appSlug: handlerArgs.appSlug, ownerHandle });
+
   const transport = new StdioServerTransport();
   console.error("vibes-diy MCP server started");
   await server.connect(transport);
 
-  // Block forever — the process exits on SIGINT
   await new Promise<never>(() => {
     /* never resolves */
   });
