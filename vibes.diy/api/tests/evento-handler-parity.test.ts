@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sharedHandlers, appHandlers, chatHandlers } from "../svc/evento-handler-manifest.js";
 
-function hashes(handlers: ReadonlyArray<{ readonly hash: string }>): Set<string> {
+function hashes(handlers: readonly { readonly hash: string }[]): Set<string> {
   return new Set(handlers.map((h) => h.hash));
 }
 
