@@ -127,6 +127,20 @@ npx vibes-diy db query --app-slug todo-app --user-slug jchris --db tasks status 
 npx vibes-diy db query --app-slug recipe-tracker --user-slug jchris --db recipes category --key '"dessert"' --json
 ```
 
+## Chat history
+
+List chat sessions for a vibe and view prompt history:
+
+```bash
+# List all chats for an app
+npx vibes-diy chats recipe-tracker --json
+
+# Show prompts for a specific chat
+npx vibes-diy chats recipe-tracker <chatId> --json
+```
+
+Use `--handle` (not `--user-slug`) to specify the owner.
+
 ## Tailing changes
 
 Subscribe to real-time changes on a database:
