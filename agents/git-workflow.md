@@ -61,10 +61,13 @@ PR reviews are fast and reviewers will catch rules-bag violations. Catching them
 Any time commits land on a topic branch (i.e. any branch that is not `main` or a shared integration branch), open a pull request immediately after the final commit — don't wait to be asked. The PR is the handoff artifact: it's where the user reviews, deploys from, and decides whether to merge. Leaving commits on a topic branch with no PR means the work is invisible.
 
 Workflow:
+
 1. Commit(s) land on `<account>/<topic>`.
 2. `git push -u origin <branch>` (if not already pushed).
-3. `gh pr create ...` with title, summary bullets, and a test plan.
+3. `gh pr create ...` with a **feature-goal title**, summary bullets, and a test plan.
 4. Return the PR URL to the user.
+
+**PR titles are the feature, not the phase.** No `spec:`, `plan:`, `wip:`, or `draft:` prefixes — the title answers "what does this ship?" Keep it updated as work evolves. See [pr-lifecycle.md](pr-lifecycle.md) for the full spec-to-merge workflow.
 
 Skip PR creation only when the user has explicitly said they don't want one yet, or when you're working on a branch that is itself a PR-review branch (e.g. making fixup commits on someone else's branch at their request).
 
