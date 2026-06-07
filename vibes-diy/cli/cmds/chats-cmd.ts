@@ -83,7 +83,7 @@ export const chatsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqChats, ResChat
         const detail: ResGetChatDetails = rDetail.Ok();
         return sendMsg(ctx, {
           type: "vibes-diy.cli.res-chat-detail",
-          chatId: detail.chatId,
+          chatId: args.chatId,
           ownerHandle: detail.ownerHandle,
           appSlug: detail.appSlug,
           prompts: detail.prompts,

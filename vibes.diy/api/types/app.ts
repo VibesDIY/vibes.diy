@@ -97,7 +97,7 @@ export type ResChatDetailsPrompt = typeof resChatDetailsPrompt.infer;
 
 export const resGetChatDetails = type({
   type: "'vibes.diy.res-get-chat-details'",
-  chatId: "string",
+  "chatId?": "string",
   ownerHandle: "string",
   appSlug: "string",
   prompts: resChatDetailsPrompt.array(),
