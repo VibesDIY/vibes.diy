@@ -78,7 +78,7 @@ export const getChatDetailsEvento: EventoHandler<
       if (rows.length === 0) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-get-chat-details",
-          chatId: req.chatId ?? "",
+          ...(req.chatId !== undefined ? { chatId: req.chatId } : {}),
           ownerHandle: req.ownerHandle,
           appSlug: req.appSlug,
           prompts: [],
@@ -86,17 +86,14 @@ export const getChatDetailsEvento: EventoHandler<
         return Result.Ok(EventoResult.Continue);
       }
 
-      // Group by promptId: collect prompt text from blocks, take fsId/created from first row
-      const chatId = rows[0].chatId;
       const seen = new Map<string, ResChatDetailsPrompt>();
       for (const row of rows) {
-        if (!row.fsId) continue;
-        if (!seen.has(row.promptId)) {
+        if (row.fsId === undefined || row.fsId === null) continue;
+        if (seen.has(row.promptId) === false) {
           seen.set(row.promptId, { prompt: "", fsId: row.fsId, created: row.created });
         }
         const entry = seen.get(row.promptId);
-        // Already found prompt text for this promptId, skip block parsing
-        if (!entry || entry.prompt) continue;
+        if (entry === undefined || entry.prompt !== "") continue;
         const { filtered: rowMsgs, warning: rowWarning } = parseArrayWarning(row.blocks, PromptAndBlockMsgs);
         if (rowWarning.length > 0) {
           ensureLogger(vctx.sthis, "getChatDetails").Warn().Any({ parseErrors: rowWarning }).Msg("skip");
@@ -105,12 +102,12 @@ export const getChatDetailsEvento: EventoHandler<
           if (isPromptReq(msg)) {
             const userMsgs = msg.request.messages.filter((m) => m.role === "user");
             const lastUserMsg = userMsgs[userMsgs.length - 1];
-            if (lastUserMsg) {
+            if (lastUserMsg !== undefined) {
               const text = lastUserMsg.content
                 .filter((c): c is { type: "text"; text: string } => c.type === "text")
                 .map((c) => c.text)
                 .join("\n");
-              if (text) {
+              if (text !== "") {
                 entry.prompt = text;
               }
             }
@@ -121,7 +118,7 @@ export const getChatDetailsEvento: EventoHandler<
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-get-chat-details",
-        chatId,
+        ...(req.chatId !== undefined ? { chatId: req.chatId } : {}),
         ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
         prompts: Array.from(seen.values()),
