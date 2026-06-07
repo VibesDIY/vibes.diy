@@ -25,8 +25,8 @@
     "@vibes.diy/prompts": "workspace:^",
     "@vibes.diy/vibe-types": "workspace:*",
     "arktype": "^2.2.0",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "use-fireproof": "0.24.19"
   },
   "devDependencies": {
