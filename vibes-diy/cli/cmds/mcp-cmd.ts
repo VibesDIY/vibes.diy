@@ -310,8 +310,8 @@ export function mcpCmd(ctx: CliCtx) {
         defaultValueIsSerializable: true,
       }),
       ownerHandle: option({
-        long: "user-slug",
-        description: "User slug; defaults to defaultHandle from user settings",
+        long: "handle",
+        description: "Handle; defaults to defaultHandle from user settings",
         type: string,
         defaultValue: () => "",
         defaultValueIsSerializable: true,

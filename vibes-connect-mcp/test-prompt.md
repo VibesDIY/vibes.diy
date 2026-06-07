@@ -18,14 +18,14 @@ pnpm build
 node vibes-diy/cli/run.js mcp --help
 ```
 
-Expected: shows `--app-slug`, `--user-slug`, `--api-url` options.
+Expected: shows `--app-slug`, `--handle`, `--api-url` options.
 
 ## 2. Start the MCP server and send raw JSON-RPC
 
 The MCP server speaks JSON-RPC over stdin/stdout. Start it and paste messages directly.
 
 ```sh
-node vibes-diy/cli/run.js mcp --app-slug pickathon-picker --user-slug og 2>/dev/null
+node vibes-diy/cli/run.js mcp --app-slug pickathon-picker --handle og 2>/dev/null
 ```
 
 Stderr shows `vibes-diy MCP server started` (redirected to /dev/null above so it doesn't mix with JSON-RPC).
@@ -139,7 +139,7 @@ Ctrl-C to exit.
 The MCP SDK ships an inspector UI:
 
 ```sh
-npx @modelcontextprotocol/inspector node vibes-diy/cli/run.js mcp --app-slug pickathon-picker --user-slug og
+npx @modelcontextprotocol/inspector node vibes-diy/cli/run.js mcp --app-slug pickathon-picker --handle og
 ```
 
 Opens a browser UI where you can click tools and invoke them interactively.
@@ -151,7 +151,7 @@ Requires local dev server running per [agents/local-cli-against-local-dev.md](..
 ```sh
 export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
 node vibes-diy/cli/run.js mcp \
-  --app-slug test-app --user-slug jchris \
+  --app-slug test-app --handle jchris \
   --api-url "https://vite.localhost.vibesdiy.net:8888/api?.stable-entry.=cli"
 ```
 
@@ -164,7 +164,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "pickathon": {
       "command": "node",
-      "args": ["/absolute/path/to/vibes-diy/cli/run.js", "mcp", "--app-slug", "pickathon-picker", "--user-slug", "og"]
+      "args": ["/absolute/path/to/vibes-diy/cli/run.js", "mcp", "--app-slug", "pickathon-picker", "--handle", "og"]
     }
   }
 }

@@ -21,7 +21,7 @@ This creates a device certificate. All subsequent commands authenticate automati
 
 Two flags appear on nearly every command but usually don't need to be passed explicitly:
 
-- `--user-slug` defaults to the logged-in user's handle (from `npx vibes-diy login`).
+- `--handle` defaults to the logged-in user's handle (from `npx vibes-diy login`).
 - `--app-slug` defaults to `VIBES_APP_SLUG` env var, or `basename(cwd)` if unset.
 
 When working with someone else's vibe, pass both flags explicitly.
@@ -45,7 +45,7 @@ npx vibes-diy list --json | jq -r 'select(.title | test("todo"; "i")) | "\(.owne
 ### 2. List databases in a vibe
 
 ```bash
-npx vibes-diy db list --app-slug recipe-tracker --user-slug jchris
+npx vibes-diy db list --app-slug recipe-tracker --handle jchris
 ```
 
 Output lists database names. A typical vibe has one database (often named after the app or a domain concept like `recipes`, `tasks`, `scores`).
@@ -55,13 +55,13 @@ Output lists database names. A typical vibe has one database (often named after 
 Most vibes store a `type` field on every document. Query it to see what kinds of documents exist:
 
 ```bash
-npx vibes-diy db query --app-slug recipe-tracker --user-slug jchris --db recipes type --json
+npx vibes-diy db query --app-slug recipe-tracker --handle jchris --db recipes type --json
 ```
 
 This returns all documents grouped by their `type` field value. Use `--limit N` to cap results:
 
 ```bash
-npx vibes-diy db query --app-slug recipe-tracker --user-slug jchris --db recipes type --limit 5 --json
+npx vibes-diy db query --app-slug recipe-tracker --handle jchris --db recipes type --limit 5 --json
 ```
 
 ### 4. Query by a specific key
@@ -71,7 +71,7 @@ To get documents of a specific type:
 > `--key` takes a JSON value — strings need quotes (e.g. `--key '"recipe"'`), numbers are bare (e.g. `--key 42`).
 
 ```bash
-npx vibes-diy db query --app-slug recipe-tracker --user-slug jchris --db recipes type --key '"recipe"' --json
+npx vibes-diy db query --app-slug recipe-tracker --handle jchris --db recipes type --key '"recipe"' --json
 ```
 
 ### 5. Get a specific document
@@ -79,7 +79,7 @@ npx vibes-diy db query --app-slug recipe-tracker --user-slug jchris --db recipes
 Once you have a document ID from query results:
 
 ```bash
-npx vibes-diy db get --app-slug recipe-tracker --user-slug jchris --db recipes 0196e3a1-7c00-7000-8000-abcdef123456 --json
+npx vibes-diy db get --app-slug recipe-tracker --handle jchris --db recipes 0196e3a1-7c00-7000-8000-abcdef123456 --json
 ```
 
 ## CRUD operations
@@ -87,19 +87,19 @@ npx vibes-diy db get --app-slug recipe-tracker --user-slug jchris --db recipes 0
 ### Create or update a document
 
 ```bash
-npx vibes-diy db put --app-slug recipe-tracker --user-slug jchris --db recipes '{"type":"recipe","title":"Banana Bread","servings":8}'
+npx vibes-diy db put --app-slug recipe-tracker --handle jchris --db recipes '{"type":"recipe","title":"Banana Bread","servings":8}'
 ```
 
 To update an existing document, include `_id` in the JSON:
 
 ```bash
-npx vibes-diy db put --app-slug recipe-tracker --user-slug jchris --db recipes '{"_id":"0196e3a1-7c00-7000-8000-abcdef123456","type":"recipe","title":"Banana Bread","servings":12}'
+npx vibes-diy db put --app-slug recipe-tracker --handle jchris --db recipes '{"_id":"0196e3a1-7c00-7000-8000-abcdef123456","type":"recipe","title":"Banana Bread","servings":12}'
 ```
 
 ### Delete a document
 
 ```bash
-npx vibes-diy db del --app-slug recipe-tracker --user-slug jchris --db recipes 0196e3a1-7c00-7000-8000-abcdef123456
+npx vibes-diy db del --app-slug recipe-tracker --handle jchris --db recipes 0196e3a1-7c00-7000-8000-abcdef123456
 ```
 
 ## Querying
@@ -108,23 +108,23 @@ The `db query` command indexes on a field and returns matching documents.
 
 ```bash
 # All documents indexed by "type"
-npx vibes-diy db query --app-slug X --user-slug Y --db Z type --json
+npx vibes-diy db query --app-slug X --handle Y --db Z type --json
 
 # Documents where type == "task"
-npx vibes-diy db query --app-slug X --user-slug Y --db Z type --key '"task"' --json
+npx vibes-diy db query --app-slug X --handle Y --db Z type --key '"task"' --json
 
 # Limit to 10 results
-npx vibes-diy db query --app-slug X --user-slug Y --db Z type --key '"task"' --limit 10 --json
+npx vibes-diy db query --app-slug X --handle Y --db Z type --key '"task"' --limit 10 --json
 ```
 
 Any field works as the index, not just `type`:
 
 ```bash
 # Query by status
-npx vibes-diy db query --app-slug todo-app --user-slug jchris --db tasks status --key '"done"' --json
+npx vibes-diy db query --app-slug todo-app --handle jchris --db tasks status --key '"done"' --json
 
 # Query by category
-npx vibes-diy db query --app-slug recipe-tracker --user-slug jchris --db recipes category --key '"dessert"' --json
+npx vibes-diy db query --app-slug recipe-tracker --handle jchris --db recipes category --key '"dessert"' --json
 ```
 
 ## Chat history
@@ -139,14 +139,14 @@ npx vibes-diy chats recipe-tracker --json
 npx vibes-diy chats recipe-tracker <chatId> --json
 ```
 
-Use `--handle` (not `--user-slug`) to specify the owner.
+Use `--handle` to specify the owner explicitly.
 
 ## Tailing changes
 
 Subscribe to real-time changes on a database:
 
 ```bash
-npx vibes-diy db subscribe --app-slug recipe-tracker --user-slug jchris --db recipes
+npx vibes-diy db subscribe --app-slug recipe-tracker --handle jchris --db recipes
 ```
 
 This streams changes as they happen. Useful for watching what an app does as a user interacts with it. The process runs until interrupted (Ctrl-C).
@@ -167,19 +167,19 @@ Without `--json`, output is human-formatted (tables, summaries) which is harder 
 
 ```bash
 # What databases exist?
-npx vibes-diy db list --app-slug my-vibe --user-slug jchris
+npx vibes-diy db list --app-slug my-vibe --handle jchris
 
 # What types of documents are in the main database?
-npx vibes-diy db query --app-slug my-vibe --user-slug jchris --db main type --json | jq -r '.[].type' | sort -u
+npx vibes-diy db query --app-slug my-vibe --handle jchris --db main type --json | jq -r '.[].type' | sort -u
 
 # How many of each type?
-npx vibes-diy db query --app-slug my-vibe --user-slug jchris --db main type --json | jq -r '.[].type' | sort | uniq -c | sort -rn
+npx vibes-diy db query --app-slug my-vibe --handle jchris --db main type --json | jq -r '.[].type' | sort | uniq -c | sort -rn
 ```
 
 ### Bulk read all documents of a type
 
 ```bash
-npx vibes-diy db query --app-slug my-vibe --user-slug jchris --db main type --key '"todo"' --json | jq '.[]'
+npx vibes-diy db query --app-slug my-vibe --handle jchris --db main type --key '"todo"' --json | jq '.[]'
 ```
 
 ### Watch a vibe while using it
@@ -187,7 +187,7 @@ npx vibes-diy db query --app-slug my-vibe --user-slug jchris --db main type --ke
 Open the vibe in a browser, then in a terminal:
 
 ```bash
-npx vibes-diy db subscribe --app-slug my-vibe --user-slug jchris --db main
+npx vibes-diy db subscribe --app-slug my-vibe --handle jchris --db main
 ```
 
 Every click, save, or interaction that writes data will appear in the stream.

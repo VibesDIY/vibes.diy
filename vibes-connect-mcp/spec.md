@@ -10,15 +10,15 @@ Agents can build vibes but can't read or write the data inside them. The `vibes-
 
 ```
 vibes-diy list --json                              # list all vibes (NDJSON)
-vibes-diy db list   --app-slug X --user-slug Y     # list databases in a vibe
-vibes-diy db get    --app-slug X --user-slug Y --db Z <id> --json
-vibes-diy db put    --app-slug X --user-slug Y --db Z <json>
-vibes-diy db del    --app-slug X --user-slug Y --db Z <id>
-vibes-diy db query  --app-slug X --user-slug Y --db Z <field> [--key K] [--limit N] --json
-vibes-diy db subscribe --app-slug X --user-slug Y --db Z
+vibes-diy db list   --app-slug X --handle Y     # list databases in a vibe
+vibes-diy db get    --app-slug X --handle Y --db Z <id> --json
+vibes-diy db put    --app-slug X --handle Y --db Z <json>
+vibes-diy db del    --app-slug X --handle Y --db Z <id>
+vibes-diy db query  --app-slug X --handle Y --db Z <field> [--key K] [--limit N] --json
+vibes-diy db subscribe --app-slug X --handle Y --db Z
 ```
 
-Auth is handled by device certificates from `npx vibes-diy login`. The `--app-slug` and `--user-slug` default from `VIBES_APP_SLUG` env var or `basename(cwd)` and user settings respectively.
+Auth is handled by device certificates from `npx vibes-diy login`. The `--app-slug` and `--handle` default from `VIBES_APP_SLUG` env var or `basename(cwd)` and user settings respectively.
 
 ## Architecture
 
@@ -50,7 +50,7 @@ The skill covers:
 
 - Listing vibes and databases
 - CRUD operations with `--json` output
-- How `--app-slug` / `--user-slug` default from cwd and login state
+- How `--app-slug` / `--handle` default from cwd and login state
 - When to use `db subscribe` for tailing changes
 
 This works today for any Claude Code agent (CLI, IDE extensions, Agent SDK).
@@ -63,7 +63,7 @@ A new CLI subcommand that starts an MCP server over stdio, exposing the same dat
 
 ```sh
 npx vibes-diy mcp                                          # defaults from cwd + login
-npx vibes-diy mcp --app-slug pickathon-picker --user-slug og  # explicit
+npx vibes-diy mcp --app-slug pickathon-picker --handle og  # explicit
 VIBES_APP_SLUG=pickathon-picker npx vibes-diy mcp            # env var
 ```
 
@@ -107,7 +107,7 @@ Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json
   "mcpServers": {
     "my-vibe": {
       "command": "npx",
-      "args": ["vibes-diy", "mcp", "--app-slug", "pickathon-picker", "--user-slug", "og"]
+      "args": ["vibes-diy", "mcp", "--app-slug", "pickathon-picker", "--handle", "og"]
     }
   }
 }
