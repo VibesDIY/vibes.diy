@@ -84,6 +84,7 @@ export const reqGetChatDetails = type({
   auth: dashAuthType,
   ownerHandle: "string",
   appSlug: "string",
+  "chatId?": "string",
 });
 export type ReqGetChatDetails = typeof reqGetChatDetails.infer;
 

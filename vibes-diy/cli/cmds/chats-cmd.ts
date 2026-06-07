@@ -75,6 +75,7 @@ export const chatsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqChats, ResChat
         const rDetail = await api.getChatDetails({
           ownerHandle,
           appSlug: args.appSlug,
+          chatId: args.chatId,
         });
         if (rDetail.isErr()) {
           return Result.Err(formatErr(rDetail.Err()));
