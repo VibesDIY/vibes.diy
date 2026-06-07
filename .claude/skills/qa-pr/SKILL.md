@@ -37,7 +37,7 @@ What's **preserved**: steps 2–7 of the spine (first-prompt generation, in-app 
 
 ## First-run setup (once per machine)
 
-Before the skill can complete a run, the operator's machine needs a handful of tools and accounts in place. Most engineers working in this repo already have all of them; this checklist exists so the *first* run fails loudly with a fix instead of stalling halfway. The skill's Step 1 preflight verifies each of these automatically and tells you exactly what's missing — this section is the human-readable version of what it checks and how to satisfy each item.
+Before the skill can complete a run, the operator's machine needs a handful of tools and accounts in place. Most engineers working in this repo already have all of them; this checklist exists so the _first_ run fails loudly with a fix instead of stalling halfway. The skill's Step 1 preflight verifies each of these automatically and tells you exactly what's missing — this section is the human-readable version of what it checks and how to satisfy each item.
 
 1. **Google Chrome** — `chrome-devtools-mcp` drives a real Chrome (not Chromium). Install it from <https://www.google.com/chrome/> if `open -Ra "Google Chrome"` errors.
 2. **Node.js** — needed to run the MCP server via `npx`. Any recent LTS is fine (`node --version`).
@@ -45,8 +45,8 @@ Before the skill can complete a run, the operator's machine needs a handful of t
 4. **chrome-devtools MCP server** — provisioned for you by the repo's root [`.mcp.json`](../../../.mcp.json), which declares the `chrome-devtools` server (`npx -y chrome-devtools-mcp@latest`). When you open this repo in Claude Code, you'll be prompted to approve the project's MCP servers on repo-trust; approve it (or run `/mcp` and enable `chrome-devtools`), then the `mcp__chrome-devtools__*` tools appear in the tool list. If those tools are absent, the skill cannot drive a browser — Step 1 preflight catches this first.
 5. **A clone of this repo** — the skill is project-scoped (auto-discovered under `.claude/skills/` when Claude Code runs inside a clone of `vibes.diy`). Nothing to install beyond cloning; see [`README.md` › Distribution & upgrade path](../README.md).
 6. **git email set** — `git config user.email` must return a non-empty address; it labels the run in `qa-reports/runs.jsonl`. Ideally a `@vibes.diy` / `@fireproof.storage` Workspace address, but a personal address only triggers a warning, not an abort (see Step 1).
-7. **A Vibes account** — the skill signs in as *your existing* Vibes identity via Google OAuth; it does **not** create accounts. If you've never signed into vibes.diy, do that once in a normal browser first.
-8. **Google session seeded into the chrome-devtools profile** — the one genuinely non-obvious step. See *Per-engineer one-time setup* immediately below; without it the Step 4.1 OAuth sign-in stalls on a password prompt the agent can't complete.
+7. **A Vibes account** — the skill signs in as _your existing_ Vibes identity via Google OAuth; it does **not** create accounts. If you've never signed into vibes.diy, do that once in a normal browser first.
+8. **Google session seeded into the chrome-devtools profile** — the one genuinely non-obvious step. See _Per-engineer one-time setup_ immediately below; without it the Step 4.1 OAuth sign-in stalls on a password prompt the agent can't complete.
 
 ## Per-engineer one-time setup (Google session in chrome-devtools profile)
 
@@ -84,18 +84,18 @@ After reading those, follow the steps below in order.
 
 ## Step 1 — Preflight
 
-Verify the operator's environment can complete a run before starting one. Each check below must pass; if any fail, stop and tell the operator what to do (the *First-run setup* section above is the fix-it reference for the environment checks). Run the environment checks in the order listed — the MCP-availability check comes first because nothing else matters if the agent can't drive a browser.
+Verify the operator's environment can complete a run before starting one. Each check below must pass; if any fail, stop and tell the operator what to do (the _First-run setup_ section above is the fix-it reference for the environment checks). Run the environment checks in the order listed — the MCP-availability check comes first because nothing else matters if the agent can't drive a browser.
 
 - **chrome-devtools MCP available** — confirm `mcp__chrome-devtools__*` tools are present in the current tool list. If they're absent, the repo's root `.mcp.json` declares the server but it hasn't been approved/enabled in this session: stop and tell the operator to approve the project's MCP servers on repo-trust (or run `/mcp` and enable `chrome-devtools`), then restart the session. Without these tools the rest of the run is impossible — check this first.
 - **Google Chrome installed** — `open -Ra "Google Chrome"` (macOS) returns success. `chrome-devtools-mcp` drives Chrome specifically; if it errors, point the operator at <https://www.google.com/chrome/>.
-- `gh --version` **and** `gh auth status` — `gh` is installed *and* authenticated. A bare `--version` passing while auth is missing is a silent gap that only surfaces when the triage post fails at the very end; check both up front. If unauthenticated, instruct the operator to run `gh auth login`.
+- `gh --version` **and** `gh auth status` — `gh` is installed _and_ authenticated. A bare `--version` passing while auth is missing is a silent gap that only surfaces when the triage post fails at the very end; check both up front. If unauthenticated, instruct the operator to run `gh auth login`.
 - `node --version` — Node is available (needed for the `npx`-launched MCP server).
-- `git config user.email` — must return a non-empty address; used to identify the operator in the run log. If empty, instruct the operator to set it (`git config --global user.email "<your-address>"`) and stop. The address's domain *should* be `vibes.diy` or `fireproof.storage` (the team Workspace's domains). If it's something else, warn but do not abort — git identity and Vibes OAuth identity can legitimately differ (e.g. personal Gmail used for git but Workspace account used for Vibes); the run still completes, the warning surfaces in the triage's `notable_conditions`.
+- `git config user.email` — must return a non-empty address; used to identify the operator in the run log. If empty, instruct the operator to set it (`git config --global user.email "<your-address>"`) and stop. The address's domain _should_ be `vibes.diy` or `fireproof.storage` (the team Workspace's domains). If it's something else, warn but do not abort — git identity and Vibes OAuth identity can legitimately differ (e.g. personal Gmail used for git but Workspace account used for Vibes); the run still completes, the warning surfaces in the triage's `notable_conditions`.
 - `gh pr view <N> --json url,headRefOid,state` — confirm the PR exists, is `OPEN` (abort if `MERGED` or `CLOSED` — previews are torn down on close by `hosting-pr-cleanup.yaml`), and capture the head commit SHA.
 - Locate the preview URL by fetching the PR's comments with `gh api repos/VibesDIY/vibes.diy/issues/<N>/comments` and finding the most recent comment by `github-actions[bot]` containing the marker `<!-- vibes-diy-preview -->`. Extract the `**Preview URL:**` line — the URL will be on `*.workers.dev` (Cloudflare Workers per-PR deployment), e.g. `https://pr-1795-vibes-diy-v2.jchris.workers.dev`. That `workers.dev` host is the correct target for PR-preview QA; **do not** rewrite it to `vibes.diy`.
 - If no preview-URL comment exists, the deploy workflow probably hasn't finished. Poll the same `gh api ... /comments` endpoint every 30 seconds for up to 10 minutes. If still missing, abort with a clear message pointing the operator at `gh run list --branch <head-ref>` to investigate the deploy workflow — do not post anything.
-- Read [`references/chrome-mcp-rules.md`](references/chrome-mcp-rules.md) and confirm via `evaluate_script` of `document.cookie` on the preview URL that the browser profile is clean of Vibes session state (no `__session` cookie, no signed-in `__client_uat` value, no `vibes.diy`-scoped cookies). If the profile is dirty, abort and instruct the operator to either complete Step 7's sign-out cleanup from the previous run, or wipe the profile per the *Per-engineer one-time setup* section and resign-in to Google.
-- Verify the operator's Google session is persisted in the chrome-devtools profile: `new_page` to <https://accounts.google.com>, take a snapshot, and confirm a signed-in identity appears (look for the operator's address in the account chooser, or the heading "Welcome, &lt;name&gt;"). If no Google account is signed in, abort and point the operator at the *Per-engineer one-time setup* section above. The Step 4.1 OAuth sign-in will fail or stall without this.
+- Read [`references/chrome-mcp-rules.md`](references/chrome-mcp-rules.md) and confirm via `evaluate_script` of `document.cookie` on the preview URL that the browser profile is clean of Vibes session state (no `__session` cookie, no signed-in `__client_uat` value, no `vibes.diy`-scoped cookies). If the profile is dirty, abort and instruct the operator to either complete Step 7's sign-out cleanup from the previous run, or wipe the profile per the _Per-engineer one-time setup_ section and resign-in to Google.
+- Verify the operator's Google session is persisted in the chrome-devtools profile: `new_page` to <https://accounts.google.com>, take a snapshot, and confirm a signed-in identity appears (look for the operator's address in the account chooser, or the heading "Welcome, &lt;name&gt;"). If no Google account is signed in, abort and point the operator at the _Per-engineer one-time setup_ section above. The Step 4.1 OAuth sign-in will fail or stall without this.
 
 ## Step 2 — Run setup
 
@@ -113,9 +113,9 @@ If a degraded-upstream banner is visible, record it under `notable_conditions`.
 
 ## Step 4 — Phase A: Desktop spine
 
-Phase A runs at the **default (desktop) viewport** and is the functional walkthrough — it produces the functional findings and the desktop-layout findings. Do not resize during Phase A. Walk the seven steps from [`references/sop-v0.01m.md`](references/sop-v0.01m.md), in order. The summary below is operational orchestration only — the SOP file is source of truth for *what to watch for* at each step.
+Phase A runs at the **default (desktop) viewport** and is the functional walkthrough — it produces the functional findings and the desktop-layout findings. Do not resize during Phase A. Walk the seven steps from [`references/sop-v0.01m.md`](references/sop-v0.01m.md), in order. The summary below is operational orchestration only — the SOP file is source of truth for _what to watch for_ at each step.
 
-1. **Sign in from cold cache.** Type a prompt into the homepage form *before* signing in (note whether it gets eaten). Click submit; the page should redirect to the auth screen with the prompt preserved (`prompt64=` URL param). Note whether a brand-new visitor lands on a "Sign in" or "Sign up" tab by default — same observation as the kmikeym SOP. Click **"Sign in with Google"** — because the chrome-devtools profile has a persisted Google session (verified in preflight), this should be a one-click "Continue as &lt;you&gt;" with no password prompt. If Google asks for a password, the preflight check missed something — abort and rerun preflight. **Clerk bot protection (Cloudflare Turnstile) was disabled for the QA flow on 2026-05-28**, so the OAuth callback should complete with no human-verification challenge — the sign-in is now fully hands-off. If a Turnstile / CAPTCHA / "verify you're human" challenge *does* appear, treat it as a Clerk config regression: the agent must **not** attempt to solve it (bot-detection challenges are never solved by the agent) — abort per the sign-in failure mode and flag it. After landing back in the chat shell, **click "New Vibe"** to ensure you're starting from a fresh project, not landing on a prior session's app. See the *Sign-in model* section at the top of this file for why the skill no longer uses email + OTP.
+1. **Sign in from cold cache.** Type a prompt into the homepage form _before_ signing in (note whether it gets eaten). Click submit; the page should redirect to the auth screen with the prompt preserved (`prompt64=` URL param). Note whether a brand-new visitor lands on a "Sign in" or "Sign up" tab by default — same observation as the kmikeym SOP. Click **"Sign in with Google"** — because the chrome-devtools profile has a persisted Google session (verified in preflight), this should be a one-click "Continue as &lt;you&gt;" with no password prompt. If Google asks for a password, the preflight check missed something — abort and rerun preflight. **Clerk bot protection (Cloudflare Turnstile) was disabled for the QA flow on 2026-05-28**, so the OAuth callback should complete with no human-verification challenge — the sign-in is now fully hands-off. If a Turnstile / CAPTCHA / "verify you're human" challenge _does_ appear, treat it as a Clerk config regression: the agent must **not** attempt to solve it (bot-detection challenges are never solved by the agent) — abort per the sign-in failure mode and flag it. After landing back in the chat shell, **click "New Vibe"** to ensure you're starting from a fresh project, not landing on a prior session's app. See the _Sign-in model_ section at the top of this file for why the skill no longer uses email + OTP.
 2. **First prompt → app generation.** Use the **Build** row from [`references/demo-prompts.md`](references/demo-prompts.md). Watch the build-in-progress feedback. Watch where the user lands when generation completes.
 3. **In-app exploration.** Click the generated app's core CTA. If the outcome is ambiguous (does it work or hang?), click it and wait at least 10 seconds before forming a conclusion — do not rely on the surrounding chat copy ("fully wired" claims are a known failure mode; see [#1704](https://github.com/VibesDIY/vibes.diy/issues/1704)).
 4. **Follow-up edit / theme change.** Use the **Edit** row from the prompt library. Watch the chrome, watch text repaint behavior on theme switches.
@@ -139,13 +139,13 @@ After Phase A completes, resize the page to the mobile target and re-walk the su
    - **Live published URL** — **mandatory and highest-value:** open the Phase A published URL in a fresh tab at 390×844 (true cold mobile load — this is what real mobile users hit). Walk the published-app action bar.
    - **Remix** — the Phase A remix, viewed at mobile, plus its live remix URL at mobile.
 
-3. **At each surface, check the mobile failure categories:** horizontal overflow / unexpected sideways scroll; touch targets smaller than ~44×44 px; text that wraps awkwardly, clips, or overlaps; modals / menus / toasts that don't fit the viewport or can't be dismissed; fixed headers or footers that cover content. Capture a screenshot named `{surface}-mobile.png` at each surface and append a one-line note. Tag every Phase B finding `viewport: mobile`. A regression that is present at *both* viewports is tagged `viewport: both` and filed once.
+3. **At each surface, check the mobile failure categories:** horizontal overflow / unexpected sideways scroll; touch targets smaller than ~44×44 px; text that wraps awkwardly, clips, or overlaps; modals / menus / toasts that don't fit the viewport or can't be dismissed; fixed headers or footers that cover content. Capture a screenshot named `{surface}-mobile.png` at each surface and append a one-line note. Tag every Phase B finding `viewport: mobile`. A regression that is present at _both_ viewports is tagged `viewport: both` and filed once.
 
 Apply the same discipline rules (Step 5) during Phase B — especially "reproduce before recording" (resize can momentarily reflow; reload and re-check before filing) and "after 3+ findings on one surface, write one cross-cutting pattern instead."
 
 ## Step 5 — Discipline rules
 
-These are non-negotiable. Each one names *why* — read it, then apply it.
+These are non-negotiable. Each one names _why_ — read it, then apply it.
 
 - **Use read-only chrome-devtools tools to inspect before interacting.** Reading state before clicking surfaces errors a click would mask.
 - **Reproduce before recording a finding.** LLMs hallucinate transient errors. One reload before filing kills the majority of those.
@@ -160,39 +160,39 @@ The triage's working file at `qa-reports/{run_id}/triage.md` is the agent's note
 
 ```ts
 type QAResult = {
-  pr_number: number
-  preview_url: string
-  summary: string               // one paragraph; the lead of the triage (kmikeym's "Summary" section). MUST cover both desktop and mobile.
-  pr_verdict: "pass" | "fail" | "pass-with-caveats"  // single verdict over BOTH phases; if mobile-only regressions block, that lowers the verdict
-  pr_verdict_reasoning: string  // one paragraph; call out separately how the PR's change held up at desktop vs mobile
+  pr_number: number;
+  preview_url: string;
+  summary: string; // one paragraph; the lead of the triage (kmikeym's "Summary" section). MUST cover both desktop and mobile.
+  pr_verdict: "pass" | "fail" | "pass-with-caveats"; // single verdict over BOTH phases; if mobile-only regressions block, that lowers the verdict
+  pr_verdict_reasoning: string; // one paragraph; call out separately how the PR's change held up at desktop vs mobile
   test_scope: {
-    account_alias: string
-    browser_profile: "clean-chrome-devtools-mcp"
-    build_commit_sha: string
-    viewports_tested: string[]  // always ["desktop (default)", "mobile 390×844 (iphone-14-pro)"] unless Phase B was skipped
-    path_tested: string[]       // bullet strings
-    path_not_tested: string[]   // bullet strings; copy from the SOP "Not yet in scope" section. If Phase B was skipped, add the mobile re-walk here.
-    models_in_play: { chat: string; app: string }
-    notable_conditions: string[]
-  }
+    account_alias: string;
+    browser_profile: "clean-chrome-devtools-mcp";
+    build_commit_sha: string;
+    viewports_tested: string[]; // always ["desktop (default)", "mobile 390×844 (iphone-14-pro)"] unless Phase B was skipped
+    path_tested: string[]; // bullet strings
+    path_not_tested: string[]; // bullet strings; copy from the SOP "Not yet in scope" section. If Phase B was skipped, add the mobile re-walk here.
+    models_in_play: { chat: string; app: string };
+    notable_conditions: string[];
+  };
   findings: Array<{
-    severity: "P0" | "P1" | "P2"
-    viewport: "desktop" | "mobile" | "both"   // which viewport surfaced it; "both" = present at desktop and mobile, filed once
-    title: string
-    description: string
-    why_it_matters: string
-    repro_steps: string[]
-    screenshots: string[]   // file paths inside qa-reports/{run_id}/ (desktop shots end -desktop.png, mobile shots -mobile.png). These evidence shots are uploaded to the gist and embedded inline in the finding's Evidence cell at Step 7 (two-pass publish).
-    related_existing_issues?: string[]   // gh issue numbers
-  }>
+    severity: "P0" | "P1" | "P2";
+    viewport: "desktop" | "mobile" | "both"; // which viewport surfaced it; "both" = present at desktop and mobile, filed once
+    title: string;
+    description: string;
+    why_it_matters: string;
+    repro_steps: string[];
+    screenshots: string[]; // file paths inside qa-reports/{run_id}/ (desktop shots end -desktop.png, mobile shots -mobile.png). These evidence shots are uploaded to the gist and embedded inline in the finding's Evidence cell at Step 7 (two-pass publish).
+    related_existing_issues?: string[]; // gh issue numbers
+  }>;
   cross_cutting_patterns: Array<{
-    theme: string
-    findings: string[]   // titles of findings included in the theme
-    suggested_root_cause: string
-  }>
-  recommended_fix_order: string[]  // ordered bullet list
-  methodology_notes: { session_length_min: number; notable_conditions: string[] }
-}
+    theme: string;
+    findings: string[]; // titles of findings included in the theme
+    suggested_root_cause: string;
+  }>;
+  recommended_fix_order: string[]; // ordered bullet list
+  methodology_notes: { session_length_min: number; notable_conditions: string[] };
+};
 ```
 
 Keep the working file editable as you go — append findings into the relevant table as each is reproduced; revise `pr_verdict_reasoning` at the end.
@@ -217,10 +217,16 @@ gh gist create --public \
   qa-reports/{run_id}/triage.md
 ```
 
-`gh gist create` prints the gist's web URL on its last line, of the form `https://gist.github.com/<owner>/<gist_id>`. Capture it. Derive:
+`gh gist create` prints the gist's web URL on its last line. The URL may take either of two forms:
+
+- `https://gist.github.com/<owner>/<gist_id>` (two path segments)
+- `https://gist.github.com/<gist_id>` (one path segment — ownerless)
+
+Capture the URL, then derive:
+
+- `<gist_id>` = the **last** path segment (always present).
+- `<owner>` = the second-to-last path segment **if** the URL has two segments; otherwise run `gh api user --jq .login` to get it.
 - `<gist_url>` = that full web URL (goes in the comment).
-- `<owner>` = the second-to-last path segment.
-- `<gist_id>` = the last path segment.
 - `<raw_base>` = `https://gist.githubusercontent.com/<owner>/<gist_id>/raw/` (no commit SHA, so it always serves the latest revision).
 
 If the evidence set is **empty**, this text-only gist is the whole publish — skip 7.3 entirely, there is nothing to embed.
@@ -236,7 +242,7 @@ Then jump straight to **7.5** (sticky post) with this `comment.md`, and skip 7.3
 **7.3 — Embed evidence + git-push the images (pass 2).** `gh gist create` cannot carry binaries, but a gist is a git repo that accepts them — so the PNGs and the URL-rewritten triage go in together via one git push. First, for every `{{EVIDENCE:<basename>.png}}` token in `qa-reports/{run_id}/triage.md`, replace it with a sized, click-through thumbnail pointing at the raw gist URL:
 
 ```html
-<a href="<raw_base><basename>.png"><img src="<raw_base><basename>.png" width="240"></a>
+<a href="<raw_base><basename>.png"><img src="<raw_base><basename>.png" width="240" /></a>
 ```
 
 (If a finding has multiple shots, emit one `<a><img></a>` per token, space-separated, in the same Evidence cell.) Then clone the gist's git repo, drop in the evidence PNGs and the rewritten triage, and push:
@@ -259,11 +265,12 @@ One commit carries both the evidence images and the rewritten markdown; the raw 
 
 ```markdown
 <!-- qa-pr-triage-comment -->
+
 ## QA: <PR title> — <verdict>
 
 <one-sentence narrative: how the PR's change held up across desktop + mobile>
 
-**<x> P0 · <y> P1 · <z> P2** across desktop + mobile · [Full triage ↗](<gist_url>)
+**<x> P0 · <y> P1 · <z> P2** across desktop + mobile · [Full triage ↗](gist_url)
 ```
 
 - `<PR title>` comes from `gh pr view <N> --json title --jq .title`.
@@ -285,7 +292,7 @@ else
 fi
 ```
 
-Both branches are authorized writes (see *Authorization*); run without a confirmation prompt. The edit branch only ever targets the skill's own marked comment on this PR.
+Both branches are authorized writes (see _Authorization_); run without a confirmation prompt. The edit branch only ever targets the skill's own marked comment on this PR.
 
 **7.6 — Record + report.** Append a completion record to the run log and print the URLs:
 
@@ -310,7 +317,7 @@ Every branch below that says "post" routes through **Step 7** — i.e. publish t
 - **Generation never completes (>5 min on step 2).** File a P0 finding, mark steps 3–7 as `unreached` in `path_not_tested`, post the partial triage. (Phase B has nothing to re-walk — note mobile as not exercised.)
 - **`resize_page` fails or chrome-devtools won't honor 390×844 (Phase B).** Desktop already passed, so do **not** abort the whole run. Finish and post the desktop verdict; mark the mobile re-walk under `path_not_tested` ("mobile re-walk skipped: resize_page failed") and say so in the summary. Never relabel desktop screenshots as a mobile pass — that produces a misleading triage and is worse than no mobile coverage.
 - **Model degraded mid-run** (visible banner, 5xx response from model). Record under `notable_conditions` and continue (matches SOP discipline).
-- **chrome-devtools MCP crashes or returns persistent tool errors.** Stop. Surface the error to the operator. Do *not* post a partial triage — the data is not trustworthy.
+- **chrome-devtools MCP crashes or returns persistent tool errors.** Stop. Surface the error to the operator. Do _not_ post a partial triage — the data is not trustworthy.
 
 ## Cleanup notes
 
