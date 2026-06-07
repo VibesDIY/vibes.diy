@@ -1,121 +1,14 @@
 import { Lazy, Evento, EventoResult, EventoType, Result } from "@adviser/cement";
 import { W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { ResError } from "@vibes.diy/api-types";
-import { ensureAppSlugItemEvento } from "./public/ensure-app-slug-item.js";
-import { openChat } from "./public/open-chat.js";
-import { promptChatSection } from "./public/prompt-chat-section.js";
-// import { getByUserSlugAppSlugItemEvento } from "./public/get-user-slug-app-slug-item.js";
-import { listUserSlugAppSlugEvento } from "./public/list-user-slug-app-slug.js";
-import { listRecentVibesEvento } from "./public/list-recent-vibes.js";
-import { pinRecentVibeEvento } from "./public/pin-recent-vibe.js";
-import { getChatDetailsEvento } from "./public/get-chat-details.js";
-import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
-import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
-import { listApplicationChats } from "./public/list-application-chats.js";
-import { ensureAppSettingsEvento } from "./public/ensure-app-settings.js";
-import { setModeFsIdEvento } from "./public/set-mode-fsid.js";
-import { forkAppEvento } from "./public/fork-app.js";
-import { getCertFromCsrEvento } from "./public/get-cert-from-csr.js";
-// import { listKeyGrantsEvento, upsertKeyGrantEvento, deleteKeyGrantEvento } from "./public/key-grant.js";
-import {
-  createInviteEvento,
-  revokeInviteEvento,
-  redeemInviteEvento,
-  hasAccessInviteEvento,
-  inviteSetRoleEvento,
-  listInviteGrantsEvento,
-} from "./public/invite-flow.js";
-import { listHandleBindingsEvento, createHandleBindingEvento, deleteHandleBindingEvento } from "./public/user-slug-bindings.js";
-import {
-  listRequestGrantsEvento,
-  subscribeRequestGrantsEvento,
-  requestAccessEvento,
-  approveRequestEvento,
-  requestSetRoleEvento,
-  revokeRequestEvento,
-  hasAccessRequestEvento,
-} from "./public/request-flow.js";
-import { listModelsEvento } from "./public/list-models.js";
-import {
-  putDocEvento,
-  getDocEvento,
-  queryDocsEvento,
-  deleteDocEvento,
-  subscribeDocsEvento,
-  subscribeViewerGrantsEvento,
-  listDbNamesEvento,
-  listDmThreadsEvento,
-  markDmReadEvento,
-} from "./public/app-documents.js";
-import { listMembersEvento } from "./public/list-members.js";
-import { listMembershipsEvento } from "./public/list-memberships.js";
-import { whoAmIEvento } from "./public/who-am-i.js";
-import { assetUploadGrantEvento } from "./public/asset-upload-grant.js";
-import { reportGrowthMembershipsEvento } from "./public/report-growth-memberships.js";
-import { reportGrowthVibesWithDataEvento } from "./public/report-growth-vibes-with-data.js";
-import { reportActiveMembersEvento } from "./public/report-active-members.js";
-import { reportTopVibesByMembersEvento } from "./public/report-top-vibes-by-members.js";
-import { reportAttributionReferrersEvento } from "./public/report-attribution-referrers.js";
-import { reportCampaignHealthEvento } from "./public/report-campaign-health.js";
-import { reportCampaignAdPreviewsEvento } from "./public/report-campaign-ad-previews.js";
-import { subscribeUserNotificationsEvento } from "./public/subscribe-user-notifications.js";
+import { sharedHandlers, appHandlers, chatHandlers } from "./evento-handler-manifest.js";
 
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
   evento.push(
-    ensureAppSlugItemEvento,
-    // getByUserSlugAppSlugItemEvento,
-    listUserSlugAppSlugEvento,
-    listRecentVibesEvento,
-    pinRecentVibeEvento,
-    getChatDetailsEvento,
-    getAppByFsIdEvento,
-    openChat,
-    promptChatSection,
-    createInviteEvento,
-    revokeInviteEvento,
-    redeemInviteEvento,
-    hasAccessInviteEvento,
-    inviteSetRoleEvento,
-    listInviteGrantsEvento,
-    requestAccessEvento,
-    hasAccessRequestEvento,
-    approveRequestEvento,
-    requestSetRoleEvento,
-    revokeRequestEvento,
-    listRequestGrantsEvento,
-    subscribeRequestGrantsEvento,
-    getCertFromCsrEvento,
-    listModelsEvento,
-    ensureAppSettingsEvento,
-    setModeFsIdEvento,
-    forkAppEvento,
-    ensureUserSettingsEvento,
-    listApplicationChats,
-    listHandleBindingsEvento,
-    createHandleBindingEvento,
-    deleteHandleBindingEvento,
-    putDocEvento,
-    getDocEvento,
-    queryDocsEvento,
-    deleteDocEvento,
-    subscribeDocsEvento,
-    subscribeViewerGrantsEvento,
-    listDbNamesEvento,
-    listDmThreadsEvento,
-    markDmReadEvento,
-    subscribeUserNotificationsEvento,
-    listMembersEvento,
-    listMembershipsEvento,
-    whoAmIEvento,
-    assetUploadGrantEvento,
-    reportGrowthMembershipsEvento,
-    reportGrowthVibesWithDataEvento,
-    reportActiveMembersEvento,
-    reportTopVibesByMembersEvento,
-    reportAttributionReferrersEvento,
-    reportCampaignHealthEvento,
-    reportCampaignAdPreviewsEvento,
+    ...sharedHandlers,
+    ...appHandlers,
+    ...chatHandlers,
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",
