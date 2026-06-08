@@ -10,6 +10,16 @@ export function resolveVibeArgs(args: { vibe: string; handle: string; appSlug: s
 } {
   if (args.vibe) {
     const parsed = parseVibe(args.vibe);
+    if (args.handle && parsed.handle && args.handle !== parsed.handle) {
+      throw new Error(
+        `Conflicting values: --vibe "${args.vibe}" disagrees with --handle "${args.handle}"`,
+      );
+    }
+    if (args.appSlug && args.appSlug !== parsed.appSlug) {
+      throw new Error(
+        `Conflicting values: --vibe "${args.vibe}" disagrees with --app-slug "${args.appSlug}"`,
+      );
+    }
     return { handle: parsed.handle ?? "", appSlug: parsed.appSlug };
   }
   const positional = args.positionalAppSlug ? parseVibe(args.positionalAppSlug) : undefined;
