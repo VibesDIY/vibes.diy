@@ -42,8 +42,8 @@ export interface AppUserSlugFsId {
 export interface VibesDiyCtx {
   sthis: SuperThis;
   // dashApi: FPApiInterface;
-  vibeDiyApi: VibesDiyApiIface;
-  appDiyApi?: VibesDiyApiIface;
+  vibeDiyApi: VibesDiyApiIface; // rename → chatApi (#2263)
+  appDiyApi?: VibesDiyApiIface; // rename → vibeApi (#2263)
   webVars: VibesDiyWebVars;
   srvVibeSandbox: vibesDiySrvSandbox;
   getToken?: () => Promise<Result<DashAuthType>>;
