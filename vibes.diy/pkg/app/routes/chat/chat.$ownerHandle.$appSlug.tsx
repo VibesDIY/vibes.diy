@@ -25,6 +25,7 @@ import ThemePickerModal from "../../components/ThemePickerModal.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import { useIframeCurrentTokens } from "../../hooks/useIframeCurrentTokens.js";
 import { useFreshFirstCodegen } from "../../utils/freshFirstCodegen.js";
+import { shouldAcceptPrompt } from "../../utils/submit-guard.js";
 import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
@@ -407,12 +408,11 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   }, [shareModal.isOpen]);
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
-  const handleSelectOption = useCallback(
-    (option: string) => {
-      sendPrompt(option);
-    },
-    [sendPrompt]
-  );
+  // True from the moment a turn is accepted until the stream's first block
+  // flips promptState.running true (or the send settles/errors). Closes the
+  // click→first-block window where neither promptToSend nor running is truthy.
+  const [submitting, setSubmitting] = useState(false);
+  const pendingSubmitResolveRef = useRef<((ok: boolean) => void) | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
   const [themeModalOpen, setThemeModalOpen] = useState(false);
   // Hold latest fsId in a ref so the prompt-firing effect can preserve it in
@@ -452,6 +452,36 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   });
 
   useBuildCompletionNotifications();
+
+  const settlePendingSubmit = useCallback((ok: boolean) => {
+    const resolvePending = pendingSubmitResolveRef.current;
+    if (!resolvePending) return;
+    pendingSubmitResolveRef.current = null;
+    resolvePending(ok);
+  }, []);
+
+  const submitPrompt = useCallback(
+    (text: string): Promise<boolean> => {
+      if (inConstruction) return Promise.resolve(false);
+      if (!shouldAcceptPrompt({ text, submitting, running: promptState.running })) return Promise.resolve(false);
+      // Best effort safety: if a previous submit promise is somehow still
+      // pending, resolve it as failed before replacing it.
+      settlePendingSubmit(false);
+      return new Promise<boolean>((resolve) => {
+        pendingSubmitResolveRef.current = resolve;
+        setSubmitting(true);
+        sendPrompt(text);
+      });
+    },
+    [inConstruction, submitting, promptState.running, sendPrompt, settlePendingSubmit]
+  );
+
+  const handleSelectOption = useCallback((option: string) => submitPrompt(option), [submitPrompt]);
+
+  // Primary reset: once the stream starts, `running` carries the busy signal.
+  useEffect(() => {
+    if (promptState.running) setSubmitting(false);
+  }, [promptState.running]);
 
   useEffect(() => {
     return subscribeRecentVibesChanged((change) => {
@@ -673,11 +703,19 @@ ${rootCssBlock}
           })
           .then((r) => {
             if (r.isErr()) {
-              console.error(`PromptSend failed`, r.Ok());
+              console.error(`PromptSend failed`, r.Err());
+              settlePendingSubmit(false);
+              setSubmitting(false);
             } else {
               console.log(`send prompt`, sentPrompt);
               notifyRecentVibesChanged();
+              settlePendingSubmit(true);
             }
+          })
+          .catch((err) => {
+            console.error(`PromptSend threw`, err);
+            settlePendingSubmit(false);
+            setSubmitting(false);
           });
       }
       return; // Already opened or opening
@@ -686,6 +724,8 @@ ${rootCssBlock}
     vibeDiyApi.openChat({ ownerHandle, appSlug, mode: "chat" }).then((rChat) => {
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), ownerHandle, appSlug);
+        settlePendingSubmit(false);
+        setSubmitting(false);
         return;
       }
       setChat(rChat.Ok());
@@ -730,7 +770,7 @@ ${rootCssBlock}
         (chat as LLMChat).close();
       }
     };
-  }, [ownerHandle, appSlug, chat, openingRef, vibeDiyApi, promptToSend]);
+  }, [ownerHandle, appSlug, chat, openingRef, vibeDiyApi, promptToSend, settlePendingSubmit]);
 
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -834,10 +874,10 @@ ${rootCssBlock}
       }
       if (promptText) {
         chatInput.current?.setPrompt(promptText);
-        sendPrompt(promptText);
+        void submitPrompt(promptText);
       }
     },
-    [promptState.blocks, chatInput]
+    [promptState.blocks, chatInput, submitPrompt]
   );
 
   const [editorState, setEditorState] = useState<EditorState>({
@@ -1027,8 +1067,8 @@ ${rootCssBlock}
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
             <ChatInput
               ref={chatInput}
-              onSubmit={sendPrompt}
-              promptProcessing={promptState.running}
+              onSubmit={submitPrompt}
+              promptProcessing={submitting || promptState.running}
               hasCode={promptState.hasCode}
               currentMsgCount={promptState.current?.msgs.length ?? 0}
               selectedTheme={promptState.theme ?? null}

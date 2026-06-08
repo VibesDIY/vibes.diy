@@ -1,7 +1,7 @@
 import type { ChangeEvent, KeyboardEvent } from "react";
-import React, { useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useState, useMemo } from "react";
+import React, { useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useState } from "react";
 import ModelPicker, { type ModelOption } from "./ModelPicker.js";
-import { Button } from "./ui/button.js";
+import { ChatInputStatus } from "./ChatInputStatus.js";
 import type { VibesTheme } from "@vibes.diy/prompts";
 import ColorsetPicker from "./ColorsetPicker.js";
 
@@ -48,14 +48,6 @@ export interface ChatInputRef extends HTMLTextAreaElement {
   setSelection: (start: number, end: number) => void;
 }
 
-function getWorkingMessage(hasCode: boolean, msgCount: number): string {
-  if (!hasCode && msgCount === 0) return "Thinking about your vibe...";
-  if (!hasCode && msgCount > 0) return "Planning your app...";
-  if (hasCode && msgCount < 20) return "Writing code...";
-  if (hasCode && msgCount < 50) return "Building components...";
-  return "Finishing up...";
-}
-
 const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
   (
     {
@@ -87,7 +79,13 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     const [isFocused, setIsFocused] = useState(false);
     const realTextArea = useRef<HTMLTextAreaElement>(null);
 
-    const workingMessage = useMemo(() => getWorkingMessage(hasCode, currentMsgCount), [hasCode, currentMsgCount]);
+    // Track latest values in refs so handleSendPrompt can stay identity-stable
+    // across keystrokes (its deps no longer include prompt/promptProcessing),
+    // which lets ChatInputStatus's React.memo actually hold.
+    const promptRef = useRef(prompt);
+    promptRef.current = prompt;
+    const promptProcessingRef = useRef(promptProcessing);
+    promptProcessingRef.current = promptProcessing;
 
     useImperativeHandle(
       ref,
@@ -117,20 +115,22 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     );
 
     const handleSendPrompt = useCallback(() => {
-      if (prompt && !promptProcessing) {
-        onSubmit(prompt);
+      const p = promptRef.current;
+      if (p && !promptProcessingRef.current) {
+        onSubmit(p);
         setPrompt("");
       }
-    }, [prompt, promptProcessing, onSubmit]);
+    }, [onSubmit]);
 
     const autoResizeTextarea = useCallback(() => {
-      if (realTextArea.current) {
-        realTextArea.current.style.height = "auto";
-        const maxHeight = 200;
-        const minHeight = 90;
-        realTextArea.current.style.height = `${Math.max(minHeight, Math.min(maxHeight, realTextArea.current.scrollHeight))}px`;
-      }
-    }, [ref]);
+      const el = realTextArea.current;
+      if (!el) return;
+      el.style.height = "auto";
+      const maxHeight = 200;
+      const minHeight = 90;
+      const next = `${Math.max(minHeight, Math.min(maxHeight, el.scrollHeight))}px`;
+      if (el.style.height !== next) el.style.height = next;
+    }, []);
 
     useEffect(() => {
       autoResizeTextarea();
@@ -152,8 +152,6 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       "linear-gradient(90deg, var(--vibes-red, #DA291C) 0% 25%, var(--vibes-yellow, #fedd00) 25% 50%, var(--vibes-green, #22c55e) 50% 75%, var(--vibes-blue, #3b82f6) 75% 100%)";
     const innerBg = "linear-gradient(var(--chat-input-bg), var(--chat-input-bg))";
 
-    const btnSnakeBorder = `conic-gradient(from var(--border-angle, 0deg), ${borderColor} 0deg 180deg, var(--vibes-red, #DA291C) 180deg 205deg, var(--vibes-yellow, #fedd00) 205deg 230deg, var(--vibes-green, #22c55e) 230deg 255deg, var(--vibes-blue, #3b82f6) 255deg 280deg, ${borderColor} 280deg 360deg)`;
-
     // Two states: focused (color bar at bottom), idle (neutral) — no animation on textarea
     const borderBackground = isFocused
       ? `${innerBg} padding-box, ${focusBottomBar} center bottom / 100% 3px no-repeat border-box, ${neutralBorder} border-box`
@@ -163,55 +161,55 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       <div ref={containerRef} className="px-2 py-1">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-1">
-          {onThemeButtonClick && (
-            <button
-              type="button"
-              onClick={onThemeButtonClick}
-              className="inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs text-light-secondary dark:text-dark-secondary hover:bg-light-background-01 dark:hover:bg-dark-background-01 transition-colors"
-              aria-label={selectedTheme ? `Theme: ${selectedTheme.name}` : "Choose a theme"}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            {onThemeButtonClick && (
+              <button
+                type="button"
+                onClick={onThemeButtonClick}
+                className="inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs text-light-secondary dark:text-dark-secondary hover:bg-light-background-01 dark:hover:bg-dark-background-01 transition-colors"
+                aria-label={selectedTheme ? `Theme: ${selectedTheme.name}` : "Choose a theme"}
               >
-                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
-                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
-                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
-                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
-              </svg>
-              {selectedTheme ? (
-                <>
-                  <span
-                    className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: selectedTheme.accentColor }}
-                  />
-                  <span className="max-w-[100px] truncate">{selectedTheme.name}</span>
-                </>
-              ) : (
-                <span>Theme</span>
-              )}
-            </button>
-          )}
-          {paletteOptions && onSelectPalette && onApplyLivePalette && onResetPalette && (
-            <ColorsetPicker
-              options={paletteOptions}
-              selectedSlug={selectedPaletteSlug}
-              themeSlug={selectedTheme?.slug}
-              onSelectPalette={onSelectPalette}
-              onApplyLive={onApplyLivePalette}
-              onReset={onResetPalette}
-              onRegenerate={onRegeneratePalette}
-              storageKey={paletteStorageKey}
-              currentTokens={paletteCurrentTokens}
-            />
-          )}
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                  <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                  <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                  <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+                </svg>
+                {selectedTheme ? (
+                  <>
+                    <span
+                      className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: selectedTheme.accentColor }}
+                    />
+                    <span className="max-w-[100px] truncate">{selectedTheme.name}</span>
+                  </>
+                ) : (
+                  <span>Theme</span>
+                )}
+              </button>
+            )}
+            {paletteOptions && onSelectPalette && onApplyLivePalette && onResetPalette && (
+              <ColorsetPicker
+                options={paletteOptions}
+                selectedSlug={selectedPaletteSlug}
+                themeSlug={selectedTheme?.slug}
+                onSelectPalette={onSelectPalette}
+                onApplyLive={onApplyLivePalette}
+                onReset={onResetPalette}
+                onRegenerate={onRegeneratePalette}
+                storageKey={paletteStorageKey}
+                currentTokens={paletteCurrentTokens}
+              />
+            )}
           </div>
           {/* Textarea — border is the color bar, animates when processing */}
           <div
@@ -260,33 +258,13 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             ) : (
               <span aria-hidden="true" />
             )}
-            <div
-              style={{
-                display: "inline-flex",
-                borderRadius: 7,
-                padding: promptProcessing ? 2 : 0,
-                background: promptProcessing ? btnSnakeBorder : "transparent",
-                animation: promptProcessing ? "vibes-border-spin 2s linear infinite" : "none",
-              }}
-            >
-              <Button
-                ref={submitButtonRef}
-                type="button"
-                onClick={handleSendPrompt}
-                disabled={promptProcessing}
-                variant="blue"
-                size="fixed"
-                aria-label={promptProcessing ? "Processing" : "Send message"}
-                className={
-                  promptProcessing
-                    ? "!border-0 !shadow-none !bg-[var(--vibes-submit-disabled-bg)] !text-[var(--vibes-submit-disabled-fg)]"
-                    : ""
-                }
-                style={promptProcessing ? { opacity: 1 } : undefined}
-              >
-                {promptProcessing ? workingMessage : "Code"}
-              </Button>
-            </div>
+            <ChatInputStatus
+              promptProcessing={promptProcessing}
+              hasCode={hasCode}
+              currentMsgCount={currentMsgCount}
+              onSend={handleSendPrompt}
+              buttonRef={submitButtonRef}
+            />
           </div>
         </div>
 
