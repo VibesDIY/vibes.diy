@@ -109,6 +109,8 @@ If you only do step 1, `/vibe/` routes keep serving the old package until the ne
 - vs latest `vibes-diy@c*` — unshipped to cli
 - vs latest `pkg@p*` — unpublished to npm prod dist-tag (use-vibes / call-ai / vibes-diy CLI)
 
+When reporting pending changes, **always include the current npm dist-tags** for the public CLI package `vibes-diy` (and `use-vibes` / `@vibes.diy/vibe-runtime`). Run `npm view vibes-diy dist-tags --json` and include the `latest` and `dev` versions in the report. `vibes-diy` is the public-facing CLI — its npm version is as important as the deploy tags.
+
 Each stream advances on its own cadence, so the three lists differ. To enumerate them:
 
 ```bash
