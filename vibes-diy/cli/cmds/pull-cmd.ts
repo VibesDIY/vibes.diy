@@ -16,6 +16,7 @@ import type { FileSystemItem } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
+import { resolveVibeArgs } from "../parse-vibe.js";
 import { formatErr } from "./format-err.js";
 
 export const ReqPull = type({
@@ -149,9 +150,16 @@ export function pullCmd(ctx: CliCtx) {
     args: {
       ...cmdTsDefaultArgs(ctx),
       appSlug: positional({
-        displayName: "appSlug",
-        description: "Slug of the app to pull",
+        displayName: "vibe",
+        description: "App slug or handle/app-slug (e.g. jchris/hat-smeller)",
         type: string,
+      }),
+      vibe: option({
+        long: "vibe",
+        description: "Vibe identifier as handle/app-slug",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
       }),
       handle: option({
         long: "handle",
@@ -176,11 +184,17 @@ export function pullCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      if (args.userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle instead\n");
+      if (args.userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle or --vibe instead\n");
+      const resolved = resolveVibeArgs({
+        vibe: args.vibe,
+        handle: args.handle || args.userSlug,
+        appSlug: "",
+        positionalAppSlug: args.appSlug,
+      });
       return {
         type: "vibes-diy.cli.pull",
-        appSlug: args.appSlug,
-        ownerHandle: args.handle || args.userSlug,
+        appSlug: resolved.appSlug,
+        ownerHandle: resolved.handle,
         dir: args.dir,
         apiUrl: args.apiUrl,
       } satisfies ReqPull;
