@@ -24,7 +24,7 @@ function CsrToCertContent() {
   const [searchParams] = useSearchParams();
   const csrParam = searchParams.get("csr");
   const returnUrl = searchParams.get("returnUrl");
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
 
   const {
     register,
@@ -42,7 +42,7 @@ function CsrToCertContent() {
   const onSubmit = async (data: CsrFormInputs) => {
     setError(null);
     setCertificate(null);
-    vibeDiyApi
+    chatApi
       .getCertFromCsr({
         csr: data.csrContent,
       })

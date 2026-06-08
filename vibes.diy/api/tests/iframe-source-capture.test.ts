@@ -13,7 +13,7 @@ beforeAll(() => {
 function createSandbox() {
   const listeners: ((event: MessageEvent) => void)[] = [];
   const sandbox = new vibesDiySrvSandbox({
-    vibeDiyApi: {
+    chatApi: {
       onDocChanged: () => {
         /* noop for test */
       },
@@ -150,7 +150,7 @@ describe("iframeSource capture filtering", () => {
     } as unknown as Window;
     const listeners: ((event: MessageEvent) => void)[] = [];
     const sandbox = new vibesDiySrvSandbox({
-      vibeDiyApi: { onDocChanged: () => undefined } as unknown as VibesDiyApiIface,
+      chatApi: { onDocChanged: () => undefined } as unknown as VibesDiyApiIface,
       errorLogger: () => undefined,
       eventListeners: {
         addEventListener: (_t: string, fn: EventListenerOrEventListenerObject) => {
@@ -181,7 +181,7 @@ describe("iframeSource capture filtering", () => {
     } as unknown as Window;
     const listeners: ((event: MessageEvent) => void)[] = [];
     const sandbox = new vibesDiySrvSandbox({
-      vibeDiyApi: { onDocChanged: () => undefined } as unknown as VibesDiyApiIface,
+      chatApi: { onDocChanged: () => undefined } as unknown as VibesDiyApiIface,
       errorLogger: () => undefined,
       eventListeners: {
         addEventListener: (_t: string, fn: EventListenerOrEventListenerObject) => {

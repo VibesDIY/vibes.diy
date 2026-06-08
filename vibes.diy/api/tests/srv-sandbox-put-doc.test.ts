@@ -43,7 +43,7 @@ function setupSandbox(opts: { putDocResult: Result<ResPutDoc, VibesDiyError> }):
 
   const errorLogs: unknown[] = [];
   const sandbox = new vibesDiySrvSandbox({
-    vibeDiyApi: fakeApi as VibesDiyApiIface,
+    chatApi: fakeApi as VibesDiyApiIface,
     errorLogger: (message) => {
       errorLogs.push(message);
     },

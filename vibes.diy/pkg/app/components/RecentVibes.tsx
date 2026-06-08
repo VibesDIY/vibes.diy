@@ -47,7 +47,7 @@ interface RecentVibesProps {
 export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false }: RecentVibesProps) {
   const { isSignedIn } = useAuth();
   const { items, loading, error, refresh, mutate } = useRecentVibes(20);
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
         return 0;
       });
     });
-    const res = await vibeDiyApi.pinRecentVibe({
+    const res = await chatApi.pinRecentVibe({
       ownerHandle: item.ownerHandle,
       appSlug: item.appSlug,
       pin: !wasPinned,
@@ -94,7 +94,7 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
     if (trimmed.length === 0) return;
     if (trimmed === (item.title ?? "")) return;
     mutate((prev) => prev.map((row) => (rowKey(row) === key ? { ...row, title: trimmed } : row)));
-    const res = await vibeDiyApi.ensureAppSettings({
+    const res = await chatApi.ensureAppSettings({
       ownerHandle: item.ownerHandle,
       appSlug: item.appSlug,
       title: trimmed,

@@ -31,7 +31,7 @@ vi.mock("@clerk/react", () => ({
 
 vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
   useVibesDiy: () => ({
-    vibeDiyApi: {
+    chatApi: {
       queryDocs,
       putDoc,
       deleteDoc,

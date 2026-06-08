@@ -6,7 +6,7 @@ interface DmThreadProps {
   myUserSlug: string;
   otherUserSlug: string;
   vibeRef?: { ownerHandle: string; appSlug: string };
-  vibeDiyApi?: VibesDiyApiIface | null;
+  chatApi?: VibesDiyApiIface | null;
 }
 
 interface MsgDoc {
@@ -17,7 +17,7 @@ interface MsgDoc {
   createdAt?: string;
 }
 
-export function DmThread({ myUserSlug, otherUserSlug, vibeRef, vibeDiyApi }: DmThreadProps) {
+export function DmThread({ myUserSlug, otherUserSlug, vibeRef, chatApi }: DmThreadProps) {
   const channelUserSlug = directChannelUserSlug(myUserSlug, otherUserSlug);
   const [messages, setMessages] = useState<MsgDoc[]>([]);
   const [body, setBody] = useState("");
@@ -25,27 +25,27 @@ export function DmThread({ myUserSlug, otherUserSlug, vibeRef, vibeDiyApi }: DmT
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!vibeDiyApi) return;
-    vibeDiyApi.queryDocs({ ownerHandle: channelUserSlug, appSlug: "dm", dbName: "messages" }).then((res) => {
+    if (!chatApi) return;
+    chatApi.queryDocs({ ownerHandle: channelUserSlug, appSlug: "dm", dbName: "messages" }).then((res) => {
       if (res.isErr()) return;
       setMessages(res.Ok().docs as unknown as MsgDoc[]);
     });
-  }, [vibeDiyApi, channelUserSlug]);
+  }, [chatApi, channelUserSlug]);
 
   useEffect(() => {
-    if (!messages.length || !vibeDiyApi) return;
+    if (!messages.length || !chatApi) return;
     const latestSeq = Math.max(...messages.map((m) => m._seq ?? 0));
-    void vibeDiyApi.markDmRead({ channelUserSlug, lastSeenSeq: latestSeq });
-  }, [messages, channelUserSlug, vibeDiyApi]);
+    void chatApi.markDmRead({ channelUserSlug, lastSeenSeq: latestSeq });
+  }, [messages, channelUserSlug, chatApi]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   async function handleSend() {
-    if (!body.trim() || !vibeDiyApi) return;
+    if (!body.trim() || !chatApi) return;
     setSending(true);
-    await vibeDiyApi.putDoc({
+    await chatApi.putDoc({
       ownerHandle: channelUserSlug,
       appSlug: "dm",
       dbName: "messages",
@@ -58,7 +58,7 @@ export function DmThread({ myUserSlug, otherUserSlug, vibeRef, vibeDiyApi }: DmT
     });
     setBody("");
     setSending(false);
-    vibeDiyApi.queryDocs({ ownerHandle: channelUserSlug, appSlug: "dm", dbName: "messages" }).then((res) => {
+    chatApi.queryDocs({ ownerHandle: channelUserSlug, appSlug: "dm", dbName: "messages" }).then((res) => {
       if (!res.isErr()) setMessages(res.Ok().docs as unknown as MsgDoc[]);
     });
   }

@@ -38,7 +38,7 @@ function setupSandbox() {
   };
 
   const sandbox = new vibesDiySrvSandbox({
-    vibeDiyApi: fakeApi as VibesDiyApiIface,
+    chatApi: fakeApi as VibesDiyApiIface,
     errorLogger: () => {
       /* noop */
     },
@@ -56,7 +56,7 @@ function setupSandbox() {
 }
 
 describe("vibeSetDbAcl host handler", () => {
-  it("happy path — calls vibeDiyApi.ensureAppSettings with dbAcl and posts res-set-db-acl ok", async () => {
+  it("happy path — calls chatApi.ensureAppSettings with dbAcl and posts res-set-db-acl ok", async () => {
     const { sandbox, captured, iframe, ensureAppSettingsCalls } = setupSandbox();
     const acl: DbAcl = { write: ["editors"], delete: ["editors"] };
 
@@ -110,7 +110,7 @@ describe("vibeSetDbAcl host handler", () => {
     };
 
     const sandbox = new vibesDiySrvSandbox({
-      vibeDiyApi: fakeApi as VibesDiyApiIface,
+      chatApi: fakeApi as VibesDiyApiIface,
       errorLogger: () => {
         /* noop */
       },

@@ -217,7 +217,7 @@ interface SettingsTabProps {
 }
 
 export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
 
   const [title, setTitle] = useState("");
   const [theme, setTheme] = useState("");
@@ -244,7 +244,7 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
 
   useEffect(() => {
     setPending({ kind: "fetch", appSlug, ownerHandle });
-  }, [appSlug, ownerHandle, vibeDiyApi]);
+  }, [appSlug, ownerHandle, chatApi]);
 
   useEffect(() => {
     let alive = true;
@@ -281,7 +281,7 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
                       ? { ...base, env: toKVString(pending.env) }
                       : base;
 
-    void vibeDiyApi.ensureAppSettings(req).then((res) => {
+    void chatApi.ensureAppSettings(req).then((res) => {
       if (!alive) return;
 
       if (pending.kind === "title") setSavingTitle(false);
@@ -324,7 +324,7 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
     return () => {
       alive = false;
     };
-  }, [pending, vibeDiyApi]);
+  }, [pending, chatApi]);
 
   // Icon-gen completion poll: when iconWaitingFor is set, re-fetch
   // settings every 2s until the icon CID differs from the captured
@@ -337,7 +337,7 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
     async function tick() {
       if (!alive) return;
       attempts += 1;
-      const res = await vibeDiyApi.ensureAppSettings({ appSlug, ownerHandle });
+      const res = await chatApi.ensureAppSettings({ appSlug, ownerHandle });
       if (!alive) return;
       if (res.isOk()) {
         const s = res.Ok().settings;
@@ -363,7 +363,7 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
     return () => {
       alive = false;
     };
-  }, [iconWaitingFor, vibeDiyApi, appSlug, ownerHandle]);
+  }, [iconWaitingFor, chatApi, appSlug, ownerHandle]);
 
   function upsertEnv(key: string, value: string) {
     const updated = { ...env, [key]: value };

@@ -40,7 +40,7 @@ export function notifyRecentVibesChanged(change?: RecentVibesChange): void {
 export function useRecentVibes(limit: number): UseRecentVibes {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
 
   const [items, setItems] = useState<ResRecentVibesItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
@@ -55,7 +55,7 @@ export function useRecentVibes(limit: number): UseRecentVibes {
     const token = ++fetchTokenRef.current;
     setLoading(true);
     setError(null);
-    const res = await vibeDiyApi.listRecentVibes({ limit });
+    const res = await chatApi.listRecentVibes({ limit });
     if (token !== fetchTokenRef.current) return;
     if (res.isOk()) {
       const ok = res.Ok();
@@ -65,14 +65,14 @@ export function useRecentVibes(limit: number): UseRecentVibes {
       setError(res.Err().message);
     }
     setLoading(false);
-  }, [vibeDiyApi, limit]);
+  }, [chatApi, limit]);
 
   const loadMore = useCallback(async () => {
     if (!isSignedInRef.current || !nextCursor) return;
     const token = ++fetchTokenRef.current;
     setLoading(true);
     setError(null);
-    const res = await vibeDiyApi.listRecentVibes({ limit, cursor: nextCursor });
+    const res = await chatApi.listRecentVibes({ limit, cursor: nextCursor });
     if (token !== fetchTokenRef.current) return;
     if (res.isOk()) {
       const ok = res.Ok();
@@ -82,7 +82,7 @@ export function useRecentVibes(limit: number): UseRecentVibes {
       setError(res.Err().message);
     }
     setLoading(false);
-  }, [vibeDiyApi, limit, nextCursor]);
+  }, [chatApi, limit, nextCursor]);
 
   useEffect(() => {
     if (!isLoaded) {

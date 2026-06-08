@@ -42,7 +42,7 @@ export interface UseSharingPanelReturn {
  * mutates them so the two surfaces stay in lockstep.
  */
 export function useSharingPanel({ ownerHandle, appSlug, enabled = true }: UseSharingPanelArgs): UseSharingPanelReturn {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [invites, setInvites] = useState<InviteGrantItem[]>([]);
   const [requests, setRequests] = useState<RequestGrantItem[]>([]);
@@ -55,9 +55,9 @@ export function useSharingPanel({ ownerHandle, appSlug, enabled = true }: UseSha
     if (!enabled) return;
     setLoading(true);
     Promise.all([
-      vibeDiyApi.ensureAppSettings({ appSlug, ownerHandle }),
-      vibeDiyApi.listInviteGrants({ appSlug, ownerHandle, pager: PAGER }),
-      vibeDiyApi.listRequestGrants({ appSlug, ownerHandle, pager: PAGER }),
+      chatApi.ensureAppSettings({ appSlug, ownerHandle }),
+      chatApi.listInviteGrants({ appSlug, ownerHandle, pager: PAGER }),
+      chatApi.listRequestGrants({ appSlug, ownerHandle, pager: PAGER }),
     ])
       .then(([rSettings, rInvites, rRequests]) => {
         toastError(rSettings, (s) => setSettings(s.settings));
@@ -65,7 +65,7 @@ export function useSharingPanel({ ownerHandle, appSlug, enabled = true }: UseSha
         toastError(rRequests, (s) => setRequests(s.items));
       })
       .finally(() => setLoading(false));
-  }, [enabled, vibeDiyApi, appSlug, ownerHandle]);
+  }, [enabled, chatApi, appSlug, ownerHandle]);
 
   useEffect(() => {
     refetch();
@@ -76,123 +76,123 @@ export function useSharingPanel({ ownerHandle, appSlug, enabled = true }: UseSha
       const email = inviteEmail.trim();
       if (!email) return;
       setInviting(true);
-      const res = await vibeDiyApi.createInvite({ appSlug, ownerHandle, invitedEmail: email, role });
+      const res = await chatApi.createInvite({ appSlug, ownerHandle, invitedEmail: email, role });
       setInviting(false);
       toastError(res, () => {
         setInviteEmail("");
-        void vibeDiyApi
+        void chatApi
           .listInviteGrants({ appSlug, ownerHandle, pager: PAGER })
           .then((r) => toastError(r, (s) => setInvites(s.items)));
       });
     },
-    [vibeDiyApi, appSlug, ownerHandle, inviteEmail]
+    [chatApi, appSlug, ownerHandle, inviteEmail]
   );
 
   const deleteInvite = useCallback(
     async (inv: InviteGrantItem) => {
-      const res = await vibeDiyApi.revokeInvite({ appSlug, ownerHandle, emailKey: inv.emailKey, delete: true });
+      const res = await chatApi.revokeInvite({ appSlug, ownerHandle, emailKey: inv.emailKey, delete: true });
       toastError(res, () => {
         setInvites((prev) => prev.filter((i) => i.emailKey !== inv.emailKey));
       });
     },
-    [vibeDiyApi, appSlug, ownerHandle]
+    [chatApi, appSlug, ownerHandle]
   );
 
   const revokeInvite = useCallback(
     async (inv: InviteGrantItem) => {
-      const res = await vibeDiyApi.revokeInvite({ appSlug, ownerHandle, emailKey: inv.emailKey });
+      const res = await chatApi.revokeInvite({ appSlug, ownerHandle, emailKey: inv.emailKey });
       toastError(res, () => {
         setInvites((prev) => prev.map((i) => (i.emailKey === inv.emailKey ? { ...i, state: "revoked" as const } : i)));
       });
     },
-    [vibeDiyApi, appSlug, ownerHandle]
+    [chatApi, appSlug, ownerHandle]
   );
 
   const changeInviteRole = useCallback(
     async (inv: InviteGrantItem, newRole: "editor" | "viewer") => {
       if (inv.role === newRole) return;
-      const res = await vibeDiyApi.inviteSetRole({ appSlug, ownerHandle, emailKey: inv.emailKey, role: newRole });
+      const res = await chatApi.inviteSetRole({ appSlug, ownerHandle, emailKey: inv.emailKey, role: newRole });
       toastError(res, () => {
         setInvites((prev) => prev.map((i) => (i.emailKey === inv.emailKey ? { ...i, role: newRole } : i)));
       });
     },
-    [vibeDiyApi, appSlug, ownerHandle]
+    [chatApi, appSlug, ownerHandle]
   );
 
   const approveRequest = useCallback(
     async (r: RequestGrantItem, role: "editor" | "viewer") => {
-      const res = await vibeDiyApi.approveRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, role });
+      const res = await chatApi.approveRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, role });
       toastError(res, () => {
         setRequests((prev) =>
           prev.map((x) => (x.foreignUserId === r.foreignUserId ? { ...x, state: "approved" as const, role } : x))
         );
       });
     },
-    [vibeDiyApi, appSlug, ownerHandle]
+    [chatApi, appSlug, ownerHandle]
   );
 
   const revokeRequest = useCallback(
     async (r: RequestGrantItem) => {
-      const res = await vibeDiyApi.revokeRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId });
+      const res = await chatApi.revokeRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId });
       toastError(res, () => {
         setRequests((prev) => prev.map((x) => (x.foreignUserId === r.foreignUserId ? { ...x, state: "revoked" as const } : x)));
       });
     },
-    [vibeDiyApi, appSlug, ownerHandle]
+    [chatApi, appSlug, ownerHandle]
   );
 
   const switchRequestRole = useCallback(
     async (r: RequestGrantItem, newRole: "editor" | "viewer") => {
-      const res = await vibeDiyApi.requestSetRole({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, role: newRole });
+      const res = await chatApi.requestSetRole({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, role: newRole });
       toastError(res, () => {
         setRequests((prev) => prev.map((x) => (x.foreignUserId === r.foreignUserId ? { ...x, role: newRole } : x)));
       });
     },
-    [vibeDiyApi, appSlug, ownerHandle]
+    [chatApi, appSlug, ownerHandle]
   );
 
   const removeRequest = useCallback(
     async (r: RequestGrantItem) => {
-      const res = await vibeDiyApi.revokeRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, delete: true });
+      const res = await chatApi.revokeRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, delete: true });
       toastError(res, () => {
         setRequests((prev) => prev.filter((x) => x.foreignUserId !== r.foreignUserId));
       });
     },
-    [vibeDiyApi, appSlug, ownerHandle]
+    [chatApi, appSlug, ownerHandle]
   );
 
   const togglePublicAccess = useCallback(
     async (currentlyEnabled: boolean) => {
       setToggling("public");
-      const res = await vibeDiyApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: !currentlyEnabled } });
+      const res = await chatApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: !currentlyEnabled } });
       setToggling(null);
       toastError(res, (s) => setSettings(s.settings));
     },
-    [vibeDiyApi, appSlug, ownerHandle]
+    [chatApi, appSlug, ownerHandle]
   );
 
   const toggleEnableRequest = useCallback(
     async (currentlyEnabled: boolean) => {
       setToggling("request");
-      const res = await vibeDiyApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: !currentlyEnabled } });
+      const res = await chatApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: !currentlyEnabled } });
       setToggling(null);
       toastError(res, (s) => setSettings(s.settings));
     },
-    [vibeDiyApi, appSlug, ownerHandle]
+    [chatApi, appSlug, ownerHandle]
   );
 
   const toggleAutoAcceptRole = useCallback(async () => {
     if (!settings?.entry.enableRequest) return;
     setToggling("autoAcceptRole");
     const currentRole = settings.entry.enableRequest.autoAcceptRole;
-    const res = await vibeDiyApi.ensureAppSettings({
+    const res = await chatApi.ensureAppSettings({
       appSlug,
       ownerHandle,
       request: { enable: true, autoAcceptRole: currentRole ? undefined : "editor" },
     });
     setToggling(null);
     toastError(res, (s) => setSettings(s.settings));
-  }, [vibeDiyApi, appSlug, ownerHandle, settings]);
+  }, [chatApi, appSlug, ownerHandle, settings]);
 
   return {
     settings,

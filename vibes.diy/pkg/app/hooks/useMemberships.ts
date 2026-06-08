@@ -15,7 +15,7 @@ export interface UseMemberships {
 export function useMemberships(limit: number): UseMemberships {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
 
   const [items, setItems] = useState<ResMembershipItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
@@ -30,7 +30,7 @@ export function useMemberships(limit: number): UseMemberships {
     const token = ++fetchTokenRef.current;
     setLoading(true);
     setError(null);
-    const res = await vibeDiyApi.listMemberships({ limit });
+    const res = await chatApi.listMemberships({ limit });
     if (token !== fetchTokenRef.current) return;
     if (res.isOk()) {
       const ok = res.Ok();
@@ -40,14 +40,14 @@ export function useMemberships(limit: number): UseMemberships {
       setError(res.Err().message);
     }
     setLoading(false);
-  }, [vibeDiyApi, limit]);
+  }, [chatApi, limit]);
 
   const loadMore = useCallback(async () => {
     if (!isSignedInRef.current || !nextCursor) return;
     const token = ++fetchTokenRef.current;
     setLoading(true);
     setError(null);
-    const res = await vibeDiyApi.listMemberships({ limit, cursor: nextCursor });
+    const res = await chatApi.listMemberships({ limit, cursor: nextCursor });
     if (token !== fetchTokenRef.current) return;
     if (res.isOk()) {
       const ok = res.Ok();
@@ -57,7 +57,7 @@ export function useMemberships(limit: number): UseMemberships {
       setError(res.Err().message);
     }
     setLoading(false);
-  }, [vibeDiyApi, limit, nextCursor]);
+  }, [chatApi, limit, nextCursor]);
 
   useEffect(() => {
     if (!isLoaded) {

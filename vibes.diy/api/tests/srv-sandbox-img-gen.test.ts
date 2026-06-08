@@ -7,7 +7,7 @@ import { Result } from "@adviser/cement";
 // - request type is `vibe.req.imgGen` (not `imgVibes`)
 // - response carries `files: ImgGenFile[]` (not `imageUrls: string[]`)
 // - each file entry is `{uploadId, cid, mimeType, size}` shape.
-// Inputs are fed via DI (vibeDiyApi.openChat) — no module mocking.
+// Inputs are fed via DI (chatApi.openChat) — no module mocking.
 
 beforeAll(() => {
   if (typeof globalThis.window === "undefined") {
@@ -65,7 +65,7 @@ function setupSandbox(chat: Result<LLMChat, VibesDiyError>) {
   };
 
   const sandbox = new vibesDiySrvSandbox({
-    vibeDiyApi: fakeApi as VibesDiyApiIface,
+    chatApi: fakeApi as VibesDiyApiIface,
     errorLogger: () => {
       /* noop */
     },

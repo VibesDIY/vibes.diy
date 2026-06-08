@@ -42,8 +42,8 @@ export interface AppUserSlugFsId {
 export interface VibesDiyCtx {
   sthis: SuperThis;
   // dashApi: FPApiInterface;
-  vibeDiyApi: VibesDiyApiIface; // rename → chatApi (#2263)
-  appDiyApi?: VibesDiyApiIface; // rename → vibeApi (#2263)
+  chatApi: VibesDiyApiIface;
+  vibeApi?: VibesDiyApiIface;
   webVars: VibesDiyWebVars;
   srvVibeSandbox: vibesDiySrvSandbox;
   getToken?: () => Promise<Result<DashAuthType>>;
@@ -52,7 +52,7 @@ export interface VibesDiyCtx {
 const realCtx: VibesDiyCtx = {
   sthis: {} as SuperThis,
   // dashApi: {} as FPApiInterface,
-  vibeDiyApi: {} as VibesDiyApi,
+  chatApi: {} as VibesDiyApi,
   webVars: {} as VibesDiyCtx["webVars"],
   srvVibeSandbox: {} as VibesDiyCtx["srvVibeSandbox"],
 };
@@ -144,11 +144,11 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       .toString();
   // console.log(`apiUrl`, apiUrl, realCtx.webVars.env.VIBES_DIY_API_URL)
 
-  // Shared token-getter captured by both vibeDiyApi and appDiyApi closures.
-  // Set synchronously inside the vibeDiyApi .once() call below.
+  // Shared token-getter captured by both chatApi and vibeApi closures.
+  // Set synchronously inside the chatApi .once() call below.
   let sharedGetToken: (() => Promise<Result<DashAuthType>>) | undefined;
 
-  realCtx.vibeDiyApi = vibesDiyApis.get(apiUrl).once(() => {
+  realCtx.chatApi = vibesDiyApis.get(apiUrl).once(() => {
     // Perf hint: if the user is landing on a viewer route, pin this WS to a
     // deterministic per-vibe DO shard so they join whatever DO is already warm
     // for that vibe. The shard is decided once at construction; SPA navigation
@@ -214,7 +214,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
         if (clerk.isSignedIn) {
           // Auto-subscribe this WS shard to the user's notification stream.
           // Fire-and-forget; reconnect loop will retry on connection failure.
-          void realCtx.vibeDiyApi.subscribeUserNotifications({}).catch((_e: unknown) => {
+          void realCtx.chatApi.subscribeUserNotifications({}).catch((_e: unknown) => {
             /* best-effort — reconnect loop will retry */
           });
         }
@@ -240,14 +240,14 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       .toString();
 
     const capturedGetToken = sharedGetToken ?? realCtx.getToken;
-    realCtx.appDiyApi = vibesDiyApis.get(appApiUrl).once(() => {
+    realCtx.vibeApi = vibesDiyApis.get(appApiUrl).once(() => {
       return new VibesDiyApi({
         apiUrl: appApiUrl,
         getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
       });
     });
   } else {
-    realCtx.appDiyApi = undefined;
+    realCtx.vibeApi = undefined;
   }
 
   const sandboxHostnameBase = realCtx.webVars.env.VIBES_SVC_HOSTNAME_BASE;
@@ -266,8 +266,8 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       toast.error(txt);
     },
     // dashApi: realCtx.dashApi as ReturnType<typeof clerkDashApi>,
-    vibeDiyApi: realCtx.vibeDiyApi,
-    appDiyApi: realCtx.appDiyApi,
+    chatApi: realCtx.chatApi,
+    vibeApi: realCtx.vibeApi,
     eventListeners: globalThis.window,
     openSignIn: () => clerk.openSignIn(),
     // Stage C: bridge the asset-host cookie before the iframe gets ack.

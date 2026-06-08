@@ -54,7 +54,7 @@ export async function generateTitle(_segments: Segment[], _model: string, _apiKe
   // };
 
   // const ctx = useVibeDiy();
-  // ctx.vibeDiyApi.openChat();
+  // ctx.chatApi.openChat();
 
   try {
     // Use callAI to get the title

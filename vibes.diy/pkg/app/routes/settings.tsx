@@ -24,7 +24,7 @@ export function meta() {
 
 /* Hidden per VibesDIY/vibes.diy#1692 — restore alongside the JSX block in SettingsContent and the imports above.
 function GrantsList() {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const [grants, setGrants] = useState<SharingGrantItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +32,7 @@ function GrantsList() {
 
   useEffect(() => {
     setLoading(true);
-    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
+    void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
       setLoading(false);
       if (res.isErr()) {
         setError(`Failed to load grants: ${res.Err()}`);
@@ -41,7 +41,7 @@ function GrantsList() {
       const sharing = res.Ok().settings.find(isUserSettingSharing);
       setGrants(sharing?.grants ?? []);
     });
-  }, [vibeDiyApi]);
+  }, [chatApi]);
 
   const toggleGrant = (index: number) => {
     const updated = grants.map((g, i) =>
@@ -49,7 +49,7 @@ function GrantsList() {
     );
     setGrants(updated);
     setSavingIndex(index);
-    void vibeDiyApi.ensureUserSettings({ settings: [{ type: "sharing", grants: updated }] }).then((res) => {
+    void chatApi.ensureUserSettings({ settings: [{ type: "sharing", grants: updated }] }).then((res) => {
       setSavingIndex(null);
       if (res.isErr()) {
         setError(`Failed to save: ${res.Err()}`);
@@ -114,7 +114,7 @@ function GrantsList() {
 */
 
 function UserSlugsCard() {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const [items, setItems] = useState<{ ownerHandle: string; tenant: string; created: string; appSlugCount: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,7 +129,7 @@ function UserSlugsCard() {
 
   const load = () => {
     setLoading(true);
-    void Promise.all([vibeDiyApi.listHandleBindings({}), vibeDiyApi.ensureUserSettings({ settings: [] })]).then(
+    void Promise.all([chatApi.listHandleBindings({}), chatApi.ensureUserSettings({ settings: [] })]).then(
       ([slugRes, settingsRes]) => {
         setLoading(false);
         if (slugRes.isErr()) {
@@ -145,7 +145,7 @@ function UserSlugsCard() {
           } else if (slugItems.length > 0) {
             const firstSlug = slugItems[0].ownerHandle;
             setSettingDefault(true);
-            void vibeDiyApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: firstSlug }] }).then((res) => {
+            void chatApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: firstSlug }] }).then((res) => {
               setSettingDefault(false);
               if (res.isOk()) setDefaultSlug(firstSlug);
             });
@@ -157,7 +157,7 @@ function UserSlugsCard() {
 
   const handleSetDefault = (ownerHandle: string) => {
     setSettingDefault(true);
-    void vibeDiyApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle }] }).then((res) => {
+    void chatApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle }] }).then((res) => {
       setSettingDefault(false);
       if (res.isErr()) {
         setError(`Failed to set default: ${res.Err()}`);
@@ -167,11 +167,11 @@ function UserSlugsCard() {
     });
   };
 
-  useEffect(load, [vibeDiyApi]);
+  useEffect(load, [chatApi]);
 
   const handleCreate = () => {
     setSaving(true);
-    void vibeDiyApi.createHandleBinding({ ownerHandle: newSlug || undefined }).then((res) => {
+    void chatApi.createHandleBinding({ ownerHandle: newSlug || undefined }).then((res) => {
       setSaving(false);
       if (res.isErr()) {
         setError(`Failed to create: ${res.Err()}`);
@@ -185,7 +185,7 @@ function UserSlugsCard() {
   const handleDeleteConfirm = () => {
     if (!pendingDelete) return;
     setDeleting(true);
-    void vibeDiyApi.deleteHandleBinding({ ownerHandle: pendingDelete.ownerHandle }).then((res) => {
+    void chatApi.deleteHandleBinding({ ownerHandle: pendingDelete.ownerHandle }).then((res) => {
       setDeleting(false);
       setPendingDelete(null);
       setConfirmInput("");
@@ -328,7 +328,7 @@ function UserSlugsCard() {
 }
 
 function ModelDefaultsCard() {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const [chatConfig, setChatConfig] = useState<Partial<AIParams>>({});
   const [appConfig, setAppConfig] = useState<Partial<AIParams>>({});
   const [imgConfig, setImgConfig] = useState<Partial<AIParams>>({});
@@ -338,7 +338,7 @@ function ModelDefaultsCard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
+    void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
       if (res.isErr()) {
         setError(`Failed to load: ${res.Err()}`);
         return;
@@ -351,7 +351,7 @@ function ModelDefaultsCard() {
         setImgConfig(def.img ?? {});
       }
     });
-  }, [vibeDiyApi]);
+  }, [chatApi]);
 
   const save = (patch: Partial<{ chat: AIParams; app: AIParams; img: AIParams }>, setSaving: (v: boolean) => void) => {
     setSaving(true);
@@ -362,7 +362,7 @@ function ModelDefaultsCard() {
       ...(merged.app?.model ? { app: merged.app } : {}),
       ...(merged.img?.model ? { img: merged.img } : {}),
     };
-    void vibeDiyApi.ensureUserSettings({ settings: [setting] }).then((res) => {
+    void chatApi.ensureUserSettings({ settings: [setting] }).then((res) => {
       setSaving(false);
       if (res.isErr()) {
         setError(`Failed to save: ${res.Err()}`);
@@ -404,7 +404,7 @@ function ModelDefaultsCard() {
 }
 
 function ProfileCard() {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const [profile, setProfile] = useState<Omit<UserSettingProfile, "type">>({});
   const [defaultHandle, setDefaultHandle] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -412,7 +412,7 @@ function ProfileCard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
+    void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
       if (res.isErr()) {
         setError(`Failed to load profile: ${res.Err()}`);
         return;
@@ -426,7 +426,7 @@ function ProfileCard() {
         setDefaultHandle(def.ownerHandle);
       }
     });
-  }, [vibeDiyApi]);
+  }, [chatApi]);
 
   const handleAvatarUpload = async (file: File) => {
     if (!defaultHandle) {
@@ -437,7 +437,7 @@ function ProfileCard() {
     setError(null);
 
     // Step 1: mint a short-lived upload grant via WS
-    const rGrant = await vibeDiyApi.requestAssetUploadGrant({
+    const rGrant = await chatApi.requestAssetUploadGrant({
       ownerHandle: defaultHandle,
       appSlug: "_profile",
       mimeType: file.type || "application/octet-stream",
@@ -485,7 +485,7 @@ function ProfileCard() {
 
     const next = { ...profile, avatarCid: cid };
     setProfile(next);
-    const rSave = await vibeDiyApi.ensureUserSettings({ settings: [{ type: "profile", ...next }] });
+    const rSave = await chatApi.ensureUserSettings({ settings: [{ type: "profile", ...next }] });
     if (rSave.isErr()) {
       setError(`Failed to save avatar: ${rSave.Err()}`);
     }
@@ -494,7 +494,7 @@ function ProfileCard() {
   const handleDisplayNameBlur = async () => {
     setSavingName(true);
     setError(null);
-    const rSave = await vibeDiyApi.ensureUserSettings({ settings: [{ type: "profile", ...profile }] });
+    const rSave = await chatApi.ensureUserSettings({ settings: [{ type: "profile", ...profile }] });
     setSavingName(false);
     if (rSave.isErr()) {
       setError(`Failed to save display name: ${rSave.Err()}`);
@@ -579,7 +579,7 @@ function ProfileCard() {
 }
 
 function NotificationSettingsCard() {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const [prefs, setPrefs] = useState<UserSettingNotifications>({
     type: "notifications",
     buildComplete: true,
@@ -593,19 +593,19 @@ function NotificationSettingsCard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
+    void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
       if (res.isOk()) {
         const saved = res.Ok().settings.find(isUserSettingNotifications);
         if (saved) setPrefs(saved);
       }
       setLoaded(true);
     });
-  }, [vibeDiyApi]);
+  }, [chatApi]);
 
   function toggle(key: keyof Omit<UserSettingNotifications, "type">) {
     const updated = { ...prefs, [key]: !prefs[key] };
     setPrefs(updated);
-    void vibeDiyApi.ensureUserSettings({ settings: [updated] }).then((res) => {
+    void chatApi.ensureUserSettings({ settings: [updated] }).then((res) => {
       if (res.isErr()) {
         setError(`Failed to save: ${res.Err()}`);
       }

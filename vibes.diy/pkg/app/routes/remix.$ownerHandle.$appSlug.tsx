@@ -16,7 +16,7 @@ export default function RemixRoute() {
   const [searchParams] = useSearchParams();
   const skipChat = searchParams.get("skipChat") === "true";
   useDocumentTitle(`${skipChat ? "Clone" : "Remix"} ${ownerHandle}/${appSlug} - vibes.diy`);
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const { isSignedIn, isLoaded } = useAuth();
   const navigate = useNavigate();
   const hasRun = useRef(false);
@@ -29,7 +29,7 @@ export default function RemixRoute() {
     hasRun.current = true;
 
     (async () => {
-      const rFork = await vibeDiyApi.forkApp({ srcUserSlug: ownerHandle, srcAppSlug: appSlug, srcFsId: fsId, skipChat });
+      const rFork = await chatApi.forkApp({ srcUserSlug: ownerHandle, srcAppSlug: appSlug, srcFsId: fsId, skipChat });
       if (rFork.isErr()) {
         toast.error(`${skipChat ? "Clone" : "Remix"} failed: ${rFork.Err().message}`);
         navigate(`/vibe/${ownerHandle}/${appSlug}`);
@@ -71,7 +71,7 @@ export default function RemixRoute() {
       // ready to edit.
       navigate(`/chat/${fork.ownerHandle}/${fork.appSlug}/${fork.srcFsId}?view=code`);
     })();
-  }, [isLoaded, isSignedIn, ownerHandle, appSlug, fsId, skipChat, navigate, vibeDiyApi]);
+  }, [isLoaded, isSignedIn, ownerHandle, appSlug, fsId, skipChat, navigate, chatApi]);
 
   return (
     <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
