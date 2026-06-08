@@ -7,6 +7,7 @@ import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
 import { pushFromDir } from "./push-from-dir.js";
+import { resolveVibeArgs } from "../parse-vibe.js";
 
 export const ReqPush = type({
   type: "'vibes-diy.cli.push'",
@@ -95,6 +96,13 @@ export function pushCmd(ctx: CliCtx) {
         defaultValue: () => "",
         defaultValueIsSerializable: true,
       }),
+      vibe: option({
+        long: "vibe",
+        description: "Vibe identifier as handle/app-slug",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
       instantJoin: flag({
         long: "instant-join",
         description: "[Deprecated: no-op. Auto-accept editor is now always enabled by default. Use --private to opt out.]",
@@ -115,9 +123,15 @@ export function pushCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      const { handle, userSlug, ...rest } = args;
-      if (userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle instead\n");
-      return { type: "vibes-diy.cli.push", ...rest, ownerHandle: handle || userSlug };
+      const { handle, userSlug, vibe, ...rest } = args;
+      if (userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle or --vibe instead\n");
+      const resolved = resolveVibeArgs({
+        vibe,
+        handle: handle || userSlug,
+        appSlug: rest.appSlug,
+        positionalAppSlug: "",
+      });
+      return { type: "vibes-diy.cli.push", ...rest, appSlug: resolved.appSlug, ownerHandle: resolved.handle };
     }),
   });
 }

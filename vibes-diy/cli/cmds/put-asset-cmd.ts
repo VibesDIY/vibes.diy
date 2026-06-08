@@ -17,6 +17,7 @@ import { isResAssetUploadGrant } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
+import { resolveVibeArgs } from "../parse-vibe.js";
 
 // `vibes-diy put-asset <file> [--user-slug=...] [--app-slug=...] [--verify-fetch]`
 //
@@ -227,6 +228,13 @@ export function putAssetCmd(ctx: CliCtx) {
         defaultValue: () => "",
         defaultValueIsSerializable: true,
       }),
+      vibe: option({
+        long: "vibe",
+        description: "Vibe identifier as handle/app-slug",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
       mimeType: option({
         long: "mime-type",
         description: "Content-Type for the upload (inferred from extension if omitted)",
@@ -240,13 +248,19 @@ export function putAssetCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      if (args.userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle instead\n");
+      if (args.userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle or --vibe instead\n");
+      const resolved = resolveVibeArgs({
+        vibe: args.vibe,
+        handle: args.handle || args.userSlug,
+        appSlug: args.appSlug,
+        positionalAppSlug: "",
+      });
       const mimeType = args.mimeType === "" ? inferMimeType(args.file) : args.mimeType;
       return {
         type: "vibes-diy.cli.put-asset",
         file: args.file,
-        appSlug: args.appSlug,
-        ownerHandle: args.handle || args.userSlug,
+        appSlug: resolved.appSlug,
+        ownerHandle: resolved.handle,
         apiUrl: args.apiUrl,
         verifyFetch: args.verifyFetch,
         mimeType,
