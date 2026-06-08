@@ -298,6 +298,63 @@ describe("editEvento", () => {
     });
   });
 
+  it("splits handle/app-slug positional into separate fields", async () => {
+    const ctx: CliCtx = {
+      sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
+      cliStream: cmd_tsStream(),
+      output: { stdout: () => undefined, stderr: () => undefined },
+      exitCode: 0,
+    };
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(editCmd(ctx), ["jchris/hat-smeller", "make it blue"]);
+
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    expect(first.done).toBe(false);
+    const request = (first.value as { result: ReqEdit }).result;
+    expect(isReqEdit(request)).toBe(true);
+    expect(request.appSlug).toBe("hat-smeller");
+    expect(request.ownerHandle).toBe("jchris");
+  });
+
+  it("bare app-slug still works for edit", async () => {
+    const ctx: CliCtx = {
+      sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
+      cliStream: cmd_tsStream(),
+      output: { stdout: () => undefined, stderr: () => undefined },
+      exitCode: 0,
+    };
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(editCmd(ctx), ["hat-smeller", "make it blue"]);
+
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    const request = (first.value as { result: ReqEdit }).result;
+    expect(isReqEdit(request)).toBe(true);
+    expect(request.appSlug).toBe("hat-smeller");
+    expect(request.ownerHandle).toBe("");
+  });
+
+  it("--vibe overrides positional for edit", async () => {
+    const ctx: CliCtx = {
+      sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
+      cliStream: cmd_tsStream(),
+      output: { stdout: () => undefined, stderr: () => undefined },
+      exitCode: 0,
+    };
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(editCmd(ctx), ["ignored", "make it blue", "--vibe", "alice/cool-app"]);
+
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    const request = (first.value as { result: ReqEdit }).result;
+    expect(request.appSlug).toBe("cool-app");
+    expect(request.ownerHandle).toBe("alice");
+  });
+
   it("uses cwd by default and applies SEARCH/REPLACE against local seed files", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "edit-cmd-cwd-"));
     tempDirs.push(cwd);

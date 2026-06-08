@@ -17,6 +17,7 @@ import type { ResError, SectionEvent, PromptDryRunPayload, SelectedSlotInput } f
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
+import { resolveVibeArgs } from "../parse-vibe.js";
 import { collectDiskDraft } from "./disk-drift.js";
 import { resolveSectionStream } from "./resolve-section-stream.js";
 import { readProjectFiles, pushFromDir } from "./push-from-dir.js";
@@ -389,14 +390,21 @@ export function editCmd(ctx: CliCtx) {
     args: {
       ...cmdTsDefaultArgs(ctx),
       appSlug: positional({
-        displayName: "appSlug",
-        description: "Slug of the existing app/chat to edit",
+        displayName: "vibe",
+        description: "App slug or handle/app-slug",
         type: string,
       }),
       prompt: positional({
         displayName: "prompt",
         description: "Follow-up prompt describing what to change",
         type: string,
+      }),
+      vibe: option({
+        long: "vibe",
+        description: "Vibe identifier as handle/app-slug",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
       }),
       handle: option({
         long: "handle",
@@ -447,15 +455,21 @@ export function editCmd(ctx: CliCtx) {
         type: optional(string),
       }),
     },
-    handler: ctx.cliStream.enqueue(({ focus, model, handle, userSlug, ...rest }) => {
-      if (userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle instead\n");
+    handler: ctx.cliStream.enqueue(({ focus, model, handle, userSlug, vibe, ...rest }) => {
+      if (userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle or --vibe instead\n");
+      const resolved = resolveVibeArgs({
+        vibe,
+        handle: handle || userSlug,
+        appSlug: "",
+        positionalAppSlug: rest.appSlug,
+      });
       // ArkType's optional-with-typed-value fields (`focusPath?: "string"`,
       // `model?: "string"`) allow the key to be ABSENT but reject an explicit
       // `undefined`. Spreading an `undefined` value when the flag isn't passed
       // makes ReqEdit validation silently miss and the evento dispatcher drop
       // the message with no error — a silent exit 0 for every default-flag
       // CLI run. Destructure both out of the spread and only attach when defined.
-      const base = { type: "vibes-diy.cli.edit" as const, ...rest, ownerHandle: handle || userSlug };
+      const base = { type: "vibes-diy.cli.edit" as const, ...rest, appSlug: resolved.appSlug, ownerHandle: resolved.handle };
       const withFocus = focus === undefined ? base : { ...base, focusPath: focus };
       return model === undefined ? withFocus : { ...withFocus, model };
     }),
