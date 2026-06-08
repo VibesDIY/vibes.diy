@@ -7,7 +7,7 @@ import { isResGetDoc, isResGetDocNotFound, type ResGetDoc } from "@vibes.diy/api
 import type { CliCtx } from "../../cli-ctx.js";
 import { cmdTsDefaultArgs } from "../../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../../cmd-evento.js";
-import { dbCommonArgs, resolveUserSlug } from "./shared.js";
+import { dbCommonArgs, resolveUserSlug, resolveDbVibeArgs } from "./shared.js";
 
 export const ReqDbGet = type({
   type: "'vibes-diy.cli.db.get'",
@@ -90,11 +90,12 @@ export function dbGetCmd(ctx: CliCtx) {
       if (docId === "") {
         throw new Error("docId is required: pass as positional or --id");
       }
+      const resolved = resolveDbVibeArgs(args);
       return {
         type: "vibes-diy.cli.db.get",
         apiUrl: args.apiUrl,
-        appSlug: args.appSlug,
-        ownerHandle: args.ownerHandle,
+        appSlug: resolved.appSlug,
+        ownerHandle: resolved.ownerHandle,
         dbName: args.dbName,
         docId,
       };

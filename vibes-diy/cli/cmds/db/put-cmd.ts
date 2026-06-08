@@ -8,7 +8,7 @@ import { isResPutDoc } from "@vibes.diy/api-types";
 import type { CliCtx } from "../../cli-ctx.js";
 import { cmdTsDefaultArgs } from "../../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../../cmd-evento.js";
-import { dbCommonArgs, resolveUserSlug } from "./shared.js";
+import { dbCommonArgs, resolveUserSlug, resolveDbVibeArgs } from "./shared.js";
 
 export const ReqDbPut = type({
   type: "'vibes-diy.cli.db.put'",
@@ -92,14 +92,17 @@ export function dbPutCmd(ctx: CliCtx) {
         defaultValueIsSerializable: true,
       }),
     },
-    handler: ctx.cliStream.enqueue((args) => ({
-      type: "vibes-diy.cli.db.put",
-      apiUrl: args.apiUrl,
-      appSlug: args.appSlug,
-      ownerHandle: args.ownerHandle,
-      dbName: args.dbName,
-      docJson: args.docJson,
-      docId: args.docId,
-    })),
+    handler: ctx.cliStream.enqueue((args) => {
+      const resolved = resolveDbVibeArgs(args);
+      return {
+        type: "vibes-diy.cli.db.put",
+        apiUrl: args.apiUrl,
+        appSlug: resolved.appSlug,
+        ownerHandle: resolved.ownerHandle,
+        dbName: args.dbName,
+        docJson: args.docJson,
+        docId: args.docId,
+      };
+    }),
   });
 }

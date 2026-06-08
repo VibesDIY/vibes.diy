@@ -7,7 +7,7 @@ import { isResDeleteDoc } from "@vibes.diy/api-types";
 import type { CliCtx } from "../../cli-ctx.js";
 import { cmdTsDefaultArgs } from "../../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../../cmd-evento.js";
-import { dbCommonArgs, resolveUserSlug } from "./shared.js";
+import { dbCommonArgs, resolveUserSlug, resolveDbVibeArgs } from "./shared.js";
 
 export const ReqDbDel = type({
   type: "'vibes-diy.cli.db.del'",
@@ -88,11 +88,12 @@ export function dbDelCmd(ctx: CliCtx) {
       if (docId === "") {
         throw new Error("docId is required: pass as positional or --id");
       }
+      const resolved = resolveDbVibeArgs(args);
       return {
         type: "vibes-diy.cli.db.del",
         apiUrl: args.apiUrl,
-        appSlug: args.appSlug,
-        ownerHandle: args.ownerHandle,
+        appSlug: resolved.appSlug,
+        ownerHandle: resolved.ownerHandle,
         dbName: args.dbName,
         docId,
       };
