@@ -52,9 +52,7 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
     // Without this, distinct DocFileMeta objects collapse to the same
     // genKey because Blob/DocFileMeta carry no `name`/`lastModified`,
     // and `currentGenRef` would short-circuit a new image source.
-    const inputMeta = inputImage as
-      | (Partial<File> & { uploadId?: string; size?: number; type?: string })
-      | undefined;
+    const inputMeta = inputImage as (Partial<File> & { uploadId?: string; size?: number; type?: string }) | undefined;
     const inputKey = inputMeta
       ? `${inputMeta.uploadId ?? ""}|${inputMeta.name ?? ""}|${inputMeta.lastModified ?? ""}|${inputMeta.size ?? ""}|${inputMeta.type ?? ""}`
       : "";
@@ -143,11 +141,10 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
           // `uploadId` instead. Tracked upstream — see
           // https://github.com/fireproof-storage/fireproof/issues/1812.
           await db.put<ImageDocumentPlain>(updated as unknown as DocSet<ImageDocumentPlain>);
-          const saved = (await db.get(existingDoc._id)) as PartialImageDocument;
-          setDocument(saved);
+          setDocument(updated);
         } else {
           const now = Date.now();
-          await db.put<ImageDocumentPlain>({
+          const newDoc = {
             _id,
             type: "image",
             prompt: promptText,
@@ -157,9 +154,9 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
             currentPromptKey: "p1",
             prompts: { p1: { text: promptText, created: now } },
             _files: { v1: fileMeta },
-          } as unknown as DocSet<ImageDocumentPlain>);
-          const saved = (await db.get(_id)) as PartialImageDocument;
-          setDocument(saved);
+          } as unknown as DocSet<ImageDocumentPlain>;
+          await db.put<ImageDocumentPlain>(newDoc);
+          setDocument(newDoc as unknown as PartialImageDocument);
         }
 
         setProgress(100);
