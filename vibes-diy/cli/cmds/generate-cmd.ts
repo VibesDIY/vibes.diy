@@ -18,6 +18,7 @@ import type { ResError, SectionEvent } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
+import { resolveVibeArgs } from "../parse-vibe.js";
 import { resolveSectionStream } from "./resolve-section-stream.js";
 import { pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
@@ -280,6 +281,13 @@ export function generateCmd(ctx: CliCtx) {
         defaultValue: () => "",
         defaultValueIsSerializable: true,
       }),
+      vibe: option({
+        long: "vibe",
+        description: "Vibe identifier as handle/app-slug",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
       instantJoin: flag({
         long: "instant-join",
         description: "[Deprecated: no-op. Auto-accept editor is now always enabled by default.]",
@@ -300,12 +308,18 @@ export function generateCmd(ctx: CliCtx) {
         type: optional(string),
       }),
     },
-    handler: ctx.cliStream.enqueue(({ focus, model, handle, userSlug, ...rest }) => {
-      if (userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle instead\n");
+    handler: ctx.cliStream.enqueue(({ focus, model, handle, userSlug, vibe, ...rest }) => {
+      if (userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle or --vibe instead\n");
+      const resolved = resolveVibeArgs({
+        vibe,
+        handle: handle || userSlug,
+        appSlug: rest.appSlug,
+        positionalAppSlug: "",
+      });
       // Same silent-no-op gotcha as edit-cmd: ArkType validate trips on an
       // explicit `focusPath: undefined` / `model: undefined`. Destructure
       // both out of the spread and only attach when defined.
-      const base = { type: "vibes-diy.cli.generate" as const, ...rest, ownerHandle: handle || userSlug };
+      const base = { type: "vibes-diy.cli.generate" as const, ...rest, appSlug: resolved.appSlug, ownerHandle: resolved.handle };
       const withFocus = focus === undefined ? base : { ...base, focusPath: focus };
       return model === undefined ? withFocus : { ...withFocus, model };
     }),
