@@ -63,18 +63,9 @@ export const sharedHandlers = [
   ensureAppSettingsEvento,
   ensureUserSettingsEvento,
   listModelsEvento,
-] as const;
-
-export const appHandlers = [
-  putDocEvento,
-  getDocEvento,
-  queryDocsEvento,
-  deleteDocEvento,
-  subscribeDocsEvento,
-  subscribeViewerGrantsEvento,
-  listDbNamesEvento,
-  listDmThreadsEvento,
-  markDmReadEvento,
+  // Grants, invites, membership — stateless D1 queries called from parent app
+  // on vibeDiyApi (chat connection). Registered on both DOs until client routing
+  // is fully split (#2263).
   createInviteEvento,
   revokeInviteEvento,
   redeemInviteEvento,
@@ -91,8 +82,23 @@ export const appHandlers = [
   listMembersEvento,
   listMembershipsEvento,
   whoAmIEvento,
-  assetUploadGrantEvento,
   subscribeUserNotificationsEvento,
+] as const;
+
+export const appHandlers = [
+  // Doc ops use notification callbacks (local broadcast on AppSessions,
+  // guarded no-op on ChatSessions). Registered on both DOs until client
+  // routing is fully split (#2263).
+  putDocEvento,
+  getDocEvento,
+  queryDocsEvento,
+  deleteDocEvento,
+  subscribeDocsEvento,
+  subscribeViewerGrantsEvento,
+  listDbNamesEvento,
+  listDmThreadsEvento,
+  markDmReadEvento,
+  assetUploadGrantEvento,
 ] as const;
 
 export const chatHandlers = [

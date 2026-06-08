@@ -1,12 +1,13 @@
 import { Lazy, Evento, EventoResult, EventoType, Result } from "@adviser/cement";
 import { W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { ResError } from "@vibes.diy/api-types";
-import { sharedHandlers, chatHandlers } from "./evento-handler-manifest.js";
+import { sharedHandlers, appHandlers, chatHandlers } from "./evento-handler-manifest.js";
 
 export const chatMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
   evento.push(
     ...sharedHandlers,
+    ...appHandlers,
     ...chatHandlers,
     {
       type: EventoType.WildCard,

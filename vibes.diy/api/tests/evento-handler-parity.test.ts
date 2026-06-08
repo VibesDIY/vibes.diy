@@ -36,32 +36,36 @@ describe("evento handler manifest parity", () => {
     expect(all.has("list-recent-vibes")).toBe(true);
     expect(all.has("list-ownerHandle-appSlug")).toBe(true);
     expect(all.has("list-models")).toBe(true);
+    expect(all.has("list-request-grants")).toBe(true);
+    expect(all.has("vibe.whoAmI")).toBe(true);
   });
 
-  it("app handlers do NOT include chat-only handlers", () => {
+  it("app handlers are doc/notification ops only", () => {
     const app = hashes(appHandlers);
+    expect(app.has("put-doc")).toBe(true);
+    expect(app.has("subscribe-docs")).toBe(true);
+
     expect(app.has("open-chat-handler")).toBe(false);
-    expect(app.has("prompt-chat-section")).toBe(false);
-    expect(app.has("ensure-app-slug-item")).toBe(false);
-    expect(app.has("fork-app")).toBe(false);
+    expect(app.has("list-request-grants")).toBe(false);
+    expect(app.has("vibe.whoAmI")).toBe(false);
   });
 
-  it("chat handlers do NOT include app-only handlers", () => {
+  it("chat handlers are chat-streaming ops only", () => {
     const chat = hashes(chatHandlers);
+    expect(chat.has("open-chat-handler")).toBe(true);
+    expect(chat.has("prompt-chat-section-handler")).toBe(true);
+    expect(chat.has("ensure-appSlug-item")).toBe(true);
+
     expect(chat.has("put-doc")).toBe(false);
-    expect(chat.has("subscribe-docs")).toBe(false);
-    expect(chat.has("who-am-i")).toBe(false);
-    expect(chat.has("create-invite")).toBe(false);
+    expect(chat.has("list-request-grants")).toBe(false);
   });
 
-  it("shared handlers are stateless D1 queries only", () => {
+  it("shared handlers include grants/membership (transition: called from parent app on chat connection)", () => {
     const shared = hashes(sharedHandlers);
-    expect(shared.has("list-recent-vibes")).toBe(true);
-    expect(shared.has("list-ownerHandle-appSlug")).toBe(true);
-    expect(shared.has("ensure-app-settings")).toBe(true);
-    expect(shared.has("ensure-user-settings")).toBe(true);
-    expect(shared.has("list-models")).toBe(true);
-    expect(shared.has("get-app-by-fsid")).toBe(true);
+    expect(shared.has("list-request-grants")).toBe(true);
+    expect(shared.has("vibe.whoAmI")).toBe(true);
+    expect(shared.has("create-invite")).toBe(true);
+    expect(shared.has("list-members")).toBe(true);
 
     expect(shared.has("put-doc")).toBe(false);
     expect(shared.has("open-chat-handler")).toBe(false);
