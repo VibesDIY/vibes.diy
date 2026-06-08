@@ -43,6 +43,61 @@ describe("pullCmd", () => {
     expect(isReqPull(request)).toBe(true);
     expect(request.apiUrl).toContain("vibes.diy");
   });
+
+  it("splits handle/app-slug positional into separate fields", async () => {
+    const ctx = makeCtx();
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(pullCmd(ctx), ["jchris/hat-smeller"]);
+
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    expect(first.done).toBe(false);
+    const request = (first.value as { result: ReqPull }).result;
+    expect(isReqPull(request)).toBe(true);
+    expect(request.appSlug).toBe("hat-smeller");
+    expect(request.ownerHandle).toBe("jchris");
+  });
+
+  it("bare app-slug still works (handle resolved later)", async () => {
+    const ctx = makeCtx();
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(pullCmd(ctx), ["hat-smeller"]);
+
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    const request = (first.value as { result: ReqPull }).result;
+    expect(isReqPull(request)).toBe(true);
+    expect(request.appSlug).toBe("hat-smeller");
+    expect(request.ownerHandle).toBe("");
+  });
+
+  it("--vibe overrides positional", async () => {
+    const ctx = makeCtx();
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(pullCmd(ctx), ["ignored-slug", "--vibe", "alice/cool-app"]);
+
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    const request = (first.value as { result: ReqPull }).result;
+    expect(request.appSlug).toBe("cool-app");
+    expect(request.ownerHandle).toBe("alice");
+  });
+
+  it("explicit --handle overrides handle parsed from positional", async () => {
+    const ctx = makeCtx();
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(pullCmd(ctx), ["jchris/hat-smeller", "--handle", "other-user"]);
+
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    const request = (first.value as { result: ReqPull }).result;
+    expect(request.appSlug).toBe("hat-smeller");
+    expect(request.ownerHandle).toBe("other-user");
+  });
 });
 
 describe("deriveHostnameBase", () => {
