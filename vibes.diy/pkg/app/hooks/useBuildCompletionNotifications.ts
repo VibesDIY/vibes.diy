@@ -77,18 +77,18 @@ const TYPE_MAP: Record<string, { prefKey: NotificationType; title: string; body:
 };
 
 export function useBuildCompletionNotifications(): void {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const permissionRequestedRef = useRef(false);
   const prefsRef = useRef<UserSettingNotifications>({ type: "notifications" });
 
   useEffect(() => {
-    void vibeDiyApi.ensureUserSettings({ settings: [] }).then((res) => {
+    void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
       if (res.isOk()) {
         const saved = res.Ok().settings.find(isUserSettingNotifications);
         if (saved) prefsRef.current = saved;
       }
     });
-  }, [vibeDiyApi]);
+  }, [chatApi]);
 
   const handleNotification = useCallback(async (evt: { notificationType: string; ownerHandle: string; appSlug: string }) => {
     const config = TYPE_MAP[evt.notificationType];
@@ -116,9 +116,9 @@ export function useBuildCompletionNotifications(): void {
   }, []);
 
   useEffect(() => {
-    if (!vibeDiyApi?.onUserNotification) return;
-    return vibeDiyApi.onUserNotification((evt) => {
+    if (!chatApi?.onUserNotification) return;
+    return chatApi.onUserNotification((evt) => {
       void handleNotification(evt);
     });
-  }, [vibeDiyApi, handleNotification]);
+  }, [chatApi, handleNotification]);
 }

@@ -10,15 +10,15 @@ export function meta() {
 export default function MessageThreadRoute() {
   const { ownerHandleA, ownerHandleB } = useParams<{ ownerHandleA: string; ownerHandleB: string }>();
   const location = useLocation();
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const [mySlugSet, setMySlugSet] = useState<Set<string> | undefined>(undefined);
 
   useEffect(() => {
-    vibeDiyApi.listHandleBindings({}).then((res) => {
+    chatApi.listHandleBindings({}).then((res) => {
       if (res.isErr()) return;
       setMySlugSet(new Set(res.Ok().items.map((i) => i.ownerHandle)));
     });
-  }, [vibeDiyApi]);
+  }, [chatApi]);
 
   const vibeRef = (location.state as { vibeRef?: { ownerHandle: string; appSlug: string } } | null)?.vibeRef;
 
@@ -54,7 +54,7 @@ export default function MessageThreadRoute() {
           </span>
         )}
       </div>
-      <DmThread myUserSlug={ownerHandleA} otherUserSlug={ownerHandleB} vibeRef={vibeRef} vibeDiyApi={vibeDiyApi} />
+      <DmThread myUserSlug={ownerHandleA} otherUserSlug={ownerHandleB} vibeRef={vibeRef} chatApi={chatApi} />
     </div>
   );
 }

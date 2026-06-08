@@ -5,7 +5,7 @@ interface UseShareModalParams {
   ownerHandle: string;
   appSlug: string;
   fsId: string | undefined;
-  vibeDiyApi: VibesDiyApiIface;
+  chatApi: VibesDiyApiIface;
 }
 
 interface UseShareModalReturn {
@@ -38,7 +38,7 @@ interface UseShareModalReturn {
 
 export type { UseShareModalReturn };
 
-export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseShareModalParams): UseShareModalReturn {
+export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareModalParams): UseShareModalReturn {
   const [isOpen, setIsOpen] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -70,7 +70,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
   // handlePublish via setProductionFsId) or when the modal is reopened.
   useEffect(() => {
     let cancelled = false;
-    vibeDiyApi
+    chatApi
       .getAppByFsId({ appSlug, ownerHandle })
       .then((res) => {
         if (cancelled) return;
@@ -91,7 +91,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
     return () => {
       cancelled = true;
     };
-  }, [appSlug, ownerHandle, vibeDiyApi]);
+  }, [appSlug, ownerHandle, chatApi]);
 
   function clearCopyTimeout() {
     if (copyTimeoutRef.current !== null) {
@@ -130,7 +130,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
     // Check if app has a production version. Always normalize state from the
     // fetch result (both branches) so a transition from "was published" to
     // "no longer published" doesn't leave the badge state stale.
-    vibeDiyApi
+    chatApi
       .getAppByFsId({ appSlug, ownerHandle })
       .then((res) => {
         if (cancelled) return;
@@ -152,7 +152,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
       });
 
     // Fetch sharing settings
-    vibeDiyApi
+    chatApi
       .ensureAppSettings({ appSlug, ownerHandle })
       .then((res) => {
         if (cancelled) return;
@@ -173,7 +173,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
     return () => {
       cancelled = true;
     };
-  }, [isOpen, appSlug, ownerHandle, vibeDiyApi]);
+  }, [isOpen, appSlug, ownerHandle, chatApi]);
 
   const handlePublish = useCallback(
     async (autoJoin: boolean, role: "editor" | "viewer" = "editor") => {
@@ -183,7 +183,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
       setPublishError(undefined);
 
       try {
-        const modeResult = await vibeDiyApi.setSetModeFs({
+        const modeResult = await chatApi.setSetModeFs({
           fsId: fsId as string,
           appSlug,
           ownerHandle,
@@ -195,7 +195,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
           return;
         }
 
-        const settingsResult = await vibeDiyApi.ensureAppSettings({
+        const settingsResult = await chatApi.ensureAppSettings({
           appSlug,
           ownerHandle,
           request: { enable: true, autoAcceptRole: autoJoin ? role : undefined },
@@ -222,14 +222,14 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
         setIsPublishing(false);
       }
     },
-    [canPublish, settingsLoaded, isPublished, fsId, appSlug, ownerHandle, vibeDiyApi]
+    [canPublish, settingsLoaded, isPublished, fsId, appSlug, ownerHandle, chatApi]
   );
 
   const handleToggleAutoJoin = useCallback(async () => {
     setIsTogglingAutoJoin(true);
     const nextValue = !autoJoinEnabled;
     try {
-      const result = await vibeDiyApi.ensureAppSettings({
+      const result = await chatApi.ensureAppSettings({
         appSlug,
         ownerHandle,
         request: { enable: true, autoAcceptRole: nextValue ? "editor" : undefined },
@@ -241,13 +241,13 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
     } finally {
       setIsTogglingAutoJoin(false);
     }
-  }, [autoJoinEnabled, appSlug, ownerHandle, vibeDiyApi]);
+  }, [autoJoinEnabled, appSlug, ownerHandle, chatApi]);
 
   const handleSetAutoAccept = useCallback(
     async (autoAccept: boolean, role: "editor" | "viewer") => {
       setIsTogglingAutoJoin(true);
       try {
-        const result = await vibeDiyApi.ensureAppSettings({
+        const result = await chatApi.ensureAppSettings({
           appSlug,
           ownerHandle,
           request: { enable: true, autoAcceptRole: autoAccept ? role : undefined },
@@ -260,7 +260,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi }: UseSha
         setIsTogglingAutoJoin(false);
       }
     },
-    [appSlug, ownerHandle, vibeDiyApi]
+    [appSlug, ownerHandle, chatApi]
   );
 
   const handleCopyUrl = useCallback(async () => {

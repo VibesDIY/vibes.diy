@@ -10,7 +10,7 @@ import { notifyRecentVibesChanged } from "../../hooks/useRecentVibes.js";
 const PENDING_PROMPT_KEY = "vibes.pendingPrompt";
 
 export default function ChatPrompt() {
-  const { vibeDiyApi, sthis } = useVibesDiy();
+  const { chatApi, sthis } = useVibesDiy();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const hasRun = useRef(false);
@@ -36,14 +36,14 @@ export default function ChatPrompt() {
       sessionStorage.removeItem(PENDING_PROMPT_KEY);
     }
     const prompt = effectivePrompt;
-    vibeDiyApi
+    chatApi
       .getTokenClaims()
       .then((rClaims) => {
         if (rClaims.isErr()) {
           console.error("tokenClaims:", rClaims.Err());
           return Promise.reject();
         }
-        return vibeDiyApi.openChat({
+        return chatApi.openChat({
           mode: "chat",
           prompt,
         });

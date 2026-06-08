@@ -23,7 +23,7 @@ export default function VibesMine(): ReactElement {
     appSlug: paramAppSlug,
     tab: paramTab,
   } = useParams<{ ownerHandle?: string; appSlug?: string; tab?: string }>();
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const { items: vibeItems, loading: isLoading, nextCursor, loadMore } = useRecentVibes(30);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -44,7 +44,7 @@ export default function VibesMine(): ReactElement {
 
   async function onToggleMode(fsId: string, appSlug: string, ownerHandle: string, currentMode: string | undefined) {
     const nextMode = currentMode === "production" ? "dev" : "production";
-    const res = await vibeDiyApi.setSetModeFs({ fsId, appSlug, ownerHandle, mode: nextMode });
+    const res = await chatApi.setSetModeFs({ fsId, appSlug, ownerHandle, mode: nextMode });
     if (res.isErr()) {
       toast.error(`Failed to set mode: ${res.Err().message}`);
       return;
@@ -73,7 +73,7 @@ export default function VibesMine(): ReactElement {
     cancelledRef.current = false;
     setLoadingDetails(key);
     setChatDetails(null);
-    vibeDiyApi
+    chatApi
       .getChatDetails({ ownerHandle: paramUserSlug, appSlug: paramAppSlug })
       .then((res) => {
         if (!cancelledRef.current && res.isOk()) setChatDetails(res.Ok());
@@ -84,7 +84,7 @@ export default function VibesMine(): ReactElement {
     return () => {
       cancelledRef.current = true;
     };
-  }, [paramUserSlug, paramAppSlug, vibeDiyApi]);
+  }, [paramUserSlug, paramAppSlug, chatApi]);
 
   // Per-prompt screenshots for the Prompts tab.
   useEffect(() => {
@@ -94,7 +94,7 @@ export default function VibesMine(): ReactElement {
     }
     setScreenshots(new Map());
     for (const p of chatDetails.prompts) {
-      vibeDiyApi.getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, ownerHandle: chatDetails.ownerHandle }).then((res) => {
+      chatApi.getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, ownerHandle: chatDetails.ownerHandle }).then((res) => {
         if (res.isErr()) return;
         const app = res.Ok();
         setScreenshots((prev) =>
@@ -105,7 +105,7 @@ export default function VibesMine(): ReactElement {
         );
       });
     }
-  }, [chatDetails, vibeDiyApi]);
+  }, [chatDetails, chatApi]);
 
   // Head screenshot for each tile in the grid. We track requested keys in a
   // ref so subsequent `loadMore` pages only fetch the new items and the
@@ -115,7 +115,7 @@ export default function VibesMine(): ReactElement {
       const key = `${item.ownerHandle}/${item.appSlug}`;
       if (requestedHeadKeysRef.current.has(key)) continue;
       requestedHeadKeysRef.current.add(key);
-      vibeDiyApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
+      chatApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
         setAppHeadInfo((prev) => {
           // Resolve the per-row skeleton even on failure by always seeding
           // an entry (empty object) — otherwise the row would stay pulsing.
@@ -128,7 +128,7 @@ export default function VibesMine(): ReactElement {
         });
       });
     }
-  }, [vibeItems, vibeDiyApi]);
+  }, [vibeItems, chatApi]);
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();

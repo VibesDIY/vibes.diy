@@ -35,7 +35,7 @@ vi.mock("react-hot-toast", () => ({
 vi.mock("../../../pkg/app/vibes-diy-provider.js", () => ({
   useVibesDiy: () => ({
     sthis: {},
-    vibeDiyApi: {
+    chatApi: {
       listHandleBindings: () => Promise.resolve({ isErr: () => true, Err: () => new Error("ssr") }),
       listRequestGrants: () => Promise.resolve({ isErr: () => true, Err: () => new Error("ssr") }),
       getAppByFsId: () => Promise.resolve({ isErr: () => true, Err: () => new Error("ssr") }),

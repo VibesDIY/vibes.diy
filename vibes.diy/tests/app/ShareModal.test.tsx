@@ -57,9 +57,9 @@ const requestAccessMock = vi.fn().mockResolvedValue({
 const hasAccessRequestMock = vi.fn().mockReturnValue(okHasAccess("not-found"));
 
 // Stable api reference — useSharingPanel's refetch callback depends on
-// vibeDiyApi identity; a fresh object per render causes an infinite re-render
+// chatApi identity; a fresh object per render causes an infinite re-render
 // loop in tests that mount OwnerSharingPanel.
-const vibeDiyApiStub = {
+const chatApiStub = {
   ensureAppSettings: () => okSettings(),
   listInviteGrants: () => okList([]),
   listRequestGrants: () => okList([]),
@@ -68,7 +68,7 @@ const vibeDiyApiStub = {
 };
 
 vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({ vibeDiyApi: vibeDiyApiStub }),
+  useVibesDiy: () => ({ chatApi: chatApiStub }),
 }));
 
 let mockButtonEl: HTMLButtonElement | undefined;

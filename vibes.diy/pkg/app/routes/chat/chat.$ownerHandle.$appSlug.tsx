@@ -344,8 +344,8 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     openingRef.current = false;
     prevSlugsRef.current = `${ownerHandle}/${appSlug}`;
   }
-  const { vibeDiyApi, webVars: svcVars, srvVibeSandbox } = useVibesDiy();
-  const shareModal = useShareModal({ ownerHandle, appSlug, fsId, vibeDiyApi });
+  const { chatApi, webVars: svcVars, srvVibeSandbox } = useVibesDiy();
+  const shareModal = useShareModal({ ownerHandle, appSlug, fsId, chatApi });
   const { isSignedIn } = useAuth();
   const [isOwner, setIsOwner] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -357,7 +357,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       return;
     }
     let cancelled = false;
-    void vibeDiyApi.listHandleBindings({}).then((res) => {
+    void chatApi.listHandleBindings({}).then((res) => {
       if (cancelled) return;
       if (res.isErr()) {
         setIsOwner(false);
@@ -368,7 +368,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [isSignedIn, ownerHandle, vibeDiyApi]);
+  }, [isSignedIn, ownerHandle, chatApi]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
@@ -376,27 +376,27 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       return;
     }
     let cancelled = false;
-    void vibeDiyApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
+    void chatApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
       if (cancelled || res.isErr()) return;
       setPendingCount(res.Ok().items.filter((r) => r.state === "pending").length);
     });
     return () => {
       cancelled = true;
     };
-  }, [isOwner, ownerHandle, appSlug, vibeDiyApi, pendingBump]);
+  }, [isOwner, ownerHandle, appSlug, chatApi, pendingBump]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
       return;
     }
-    void vibeDiyApi.subscribeRequestGrants({ appSlug, ownerHandle });
-    const unsubscribe = vibeDiyApi.onRequestGrant((evt) => {
+    void chatApi.subscribeRequestGrants({ appSlug, ownerHandle });
+    const unsubscribe = chatApi.onRequestGrant((evt) => {
       if (evt.grant.ownerHandle === ownerHandle && evt.grant.appSlug === appSlug) {
         setPendingBump((n) => n + 1);
       }
     });
     return unsubscribe;
-  }, [isOwner, ownerHandle, appSlug, vibeDiyApi]);
+  }, [isOwner, ownerHandle, appSlug, chatApi]);
 
   const prevShareOpenRef = useRef(shareModal.isOpen);
   useEffect(() => {
@@ -492,7 +492,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
         // and an existing draft means the user is mid-thought — in either
         // case let the user hit submit themselves.
         if (canPersist) {
-          void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug });
+          void chatApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug });
         }
         return;
       }
@@ -500,12 +500,12 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       // restyle turn — the server builds the prompt by reading the active
       // theme, so submitting while ensureAppSettings is in flight can
       // process the turn against the previous theme.
-      void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug }).then((res) => {
+      void chatApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug }).then((res) => {
         if (res.isErr()) return;
         chatInput.current?.clickSubmit();
       });
     },
-    [vibeDiyApi, ownerHandle, appSlug]
+    [chatApi, ownerHandle, appSlug]
   );
 
   // Persist a palette choice (slug only) so future codegen turns and page
@@ -516,10 +516,10 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     (colorTheme: string) => {
       dispatch({ type: "setColorTheme", colorTheme });
       if (ownerHandle !== "preparing" && appSlug !== "session") {
-        void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme });
+        void chatApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme });
       }
     },
-    [vibeDiyApi, ownerHandle, appSlug]
+    [chatApi, ownerHandle, appSlug]
   );
 
   // Live-only push: postMessage to the iframe so the runtime injects CSS
@@ -564,16 +564,16 @@ ${rootCssBlock}
       chatInput.current?.setFocus();
       if (!canPersist || !prefilled) {
         if (canPersist) {
-          void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug });
+          void chatApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug });
         }
         return;
       }
-      void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug }).then((res) => {
+      void chatApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug }).then((res) => {
         if (res.isErr()) return;
         chatInput.current?.clickSubmit();
       });
     },
-    [vibeDiyApi, ownerHandle, appSlug]
+    [chatApi, ownerHandle, appSlug]
   );
 
   // Reset reverts the override: pushing empty `colors` tells the runtime to
@@ -586,9 +586,9 @@ ${rootCssBlock}
       srvVibeSandbox.pushColorOverride({ type: "vibe.evt.color-override", colors: {} });
     }
     if (ownerHandle !== "preparing" && appSlug !== "session") {
-      void vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: null });
+      void chatApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: null });
     }
-  }, [vibeDiyApi, ownerHandle, appSlug, srvVibeSandbox]);
+  }, [chatApi, ownerHandle, appSlug, srvVibeSandbox]);
 
   // Hydrate code-view files from the canonical Apps.fileSystem for the
   // current fsId. The code panel renders from this snapshot (file-system-
@@ -599,7 +599,7 @@ ${rootCssBlock}
     if (hydratedFsIdsRef.current.has(fsId)) return;
     hydratedFsIdsRef.current.add(fsId);
     (async () => {
-      const rApp = await vibeDiyApi.getAppByFsId({ appSlug, ownerHandle, fsId });
+      const rApp = await chatApi.getAppByFsId({ appSlug, ownerHandle, fsId });
       if (rApp.isErr()) return;
       const app = rApp.Ok();
       const sourceFiles = sortCodeViewFiles(
@@ -637,7 +637,7 @@ ${rootCssBlock}
         dispatch({ type: "setHydratedSource", fsId, code: defaultFile.code });
       }
     })();
-  }, [fsId, ownerHandle, appSlug, vibeDiyApi]);
+  }, [fsId, ownerHandle, appSlug, chatApi]);
 
   useEffect(() => {
     if (inConstruction) return;
@@ -683,14 +683,14 @@ ${rootCssBlock}
       return; // Already opened or opening
     }
     openingRef.current = true;
-    vibeDiyApi.openChat({ ownerHandle, appSlug, mode: "chat" }).then((rChat) => {
+    chatApi.openChat({ ownerHandle, appSlug, mode: "chat" }).then((rChat) => {
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), ownerHandle, appSlug);
         return;
       }
       setChat(rChat.Ok());
       dispatch({ type: "initChat", chat: rChat.Ok() });
-      vibeDiyApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
+      chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
         if (rS.isOk()) {
           const s = rS.Ok().settings.entry.settings;
           if (s.title) dispatch({ type: "setTitle", title: s.title });
@@ -716,7 +716,7 @@ ${rootCssBlock}
       });
       // For CLI-pushed apps with no chat history, look up the latest fsId
       if (!fsId) {
-        vibeDiyApi.getAppByFsId({ appSlug, ownerHandle }).then((rApp) => {
+        chatApi.getAppByFsId({ appSlug, ownerHandle }).then((rApp) => {
           if (rApp.isOk() && rApp.Ok().fsId) {
             const sp = new URLSearchParams(searchParams);
             if (!sp.has("view")) sp.set("view", "preview");
@@ -730,7 +730,7 @@ ${rootCssBlock}
         (chat as LLMChat).close();
       }
     };
-  }, [ownerHandle, appSlug, chat, openingRef, vibeDiyApi, promptToSend]);
+  }, [ownerHandle, appSlug, chat, openingRef, chatApi, promptToSend]);
 
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -1040,9 +1040,7 @@ ${rootCssBlock}
               onResetPalette={handlePaletteReset}
               onRegeneratePalette={handlePaletteRegenerate}
               paletteStorageKey={
-                ownerHandle !== "preparing" && appSlug !== "session"
-                  ? `vibes-overrides:${ownerHandle}/${appSlug}`
-                  : undefined
+                ownerHandle !== "preparing" && appSlug !== "session" ? `vibes-overrides:${ownerHandle}/${appSlug}` : undefined
               }
               paletteCurrentTokens={iframeCurrentTokens}
             />

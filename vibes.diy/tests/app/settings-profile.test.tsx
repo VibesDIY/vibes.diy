@@ -137,10 +137,10 @@ function makeVibeDiyApi(overrides?: {
 
 // ---- wire the context mock ----
 
-let vibeDiyApiStub = makeVibeDiyApi();
+let chatApiStub = makeVibeDiyApi();
 
 vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({ vibeDiyApi: vibeDiyApiStub }),
+  useVibesDiy: () => ({ chatApi: chatApiStub }),
 }));
 
 // Stub global fetch so the HTTP POST doesn't escape the test
@@ -153,7 +153,7 @@ import Settings from "~/vibes.diy/app/routes/settings.js";
 
 describe("Settings ProfileCard", () => {
   beforeEach(() => {
-    vibeDiyApiStub = makeVibeDiyApi({
+    chatApiStub = makeVibeDiyApi({
       initialSettings: [{ type: "defaultHandle", ownerHandle: "test-user" }],
     });
     mockFetch = vi.fn().mockResolvedValue({
@@ -208,10 +208,10 @@ describe("Settings ProfileCard", () => {
     });
 
     await waitFor(() => {
-      expect(vibeDiyApiStub.requestAssetUploadGrant).toHaveBeenCalledTimes(1);
+      expect(chatApiStub.requestAssetUploadGrant).toHaveBeenCalledTimes(1);
     });
 
-    expect(vibeDiyApiStub.requestAssetUploadGrant).toHaveBeenCalledWith(
+    expect(chatApiStub.requestAssetUploadGrant).toHaveBeenCalledWith(
       expect.objectContaining({
         ownerHandle: "test-user",
         mimeType: "image/png",
@@ -227,7 +227,7 @@ describe("Settings ProfileCard", () => {
     expect(fetchInit.body).toBe(file);
 
     await waitFor(() => {
-      expect(vibeDiyApiStub.ensureUserSettings).toHaveBeenCalledWith(
+      expect(chatApiStub.ensureUserSettings).toHaveBeenCalledWith(
         expect.objectContaining({
           settings: expect.arrayContaining([expect.objectContaining({ type: "profile", avatarCid: "bafy123" })]),
         })
@@ -236,7 +236,7 @@ describe("Settings ProfileCard", () => {
   });
 
   it("shows the avatar img at /u/<slug>/avatar after successful upload", async () => {
-    vibeDiyApiStub = makeVibeDiyApi({
+    chatApiStub = makeVibeDiyApi({
       initialSettings: [
         { type: "defaultHandle", ownerHandle: "test-user" },
         { type: "profile", avatarCid: "existing-cid" },
@@ -265,14 +265,14 @@ describe("Settings ProfileCard", () => {
     });
 
     // Reset mock call count after initial load calls
-    vibeDiyApiStub.ensureUserSettings.mockClear();
+    chatApiStub.ensureUserSettings.mockClear();
 
     await act(async () => {
       fireEvent.blur(input);
     });
 
     await waitFor(() => {
-      expect(vibeDiyApiStub.ensureUserSettings).toHaveBeenCalledWith(
+      expect(chatApiStub.ensureUserSettings).toHaveBeenCalledWith(
         expect.objectContaining({
           settings: expect.arrayContaining([expect.objectContaining({ type: "profile", displayName: "Alice" })]),
         })
@@ -281,7 +281,7 @@ describe("Settings ProfileCard", () => {
   });
 
   it("preserves existing avatarCid when saving displayName", async () => {
-    vibeDiyApiStub = makeVibeDiyApi({
+    chatApiStub = makeVibeDiyApi({
       initialSettings: [
         { type: "defaultHandle", ownerHandle: "test-user" },
         { type: "profile", avatarCid: "existing-cid", displayName: "Bob" },
@@ -301,14 +301,14 @@ describe("Settings ProfileCard", () => {
       fireEvent.change(input, { target: { value: "Bob Updated" } });
     });
 
-    vibeDiyApiStub.ensureUserSettings.mockClear();
+    chatApiStub.ensureUserSettings.mockClear();
 
     await act(async () => {
       fireEvent.blur(input);
     });
 
     await waitFor(() => {
-      expect(vibeDiyApiStub.ensureUserSettings).toHaveBeenCalledWith(
+      expect(chatApiStub.ensureUserSettings).toHaveBeenCalledWith(
         expect.objectContaining({
           settings: expect.arrayContaining([
             expect.objectContaining({
@@ -323,7 +323,7 @@ describe("Settings ProfileCard", () => {
   });
 
   it("shows an error message when requestAssetUploadGrant fails", async () => {
-    vibeDiyApiStub = makeVibeDiyApi({ requestGrantFail: "network error" });
+    chatApiStub = makeVibeDiyApi({ requestGrantFail: "network error" });
 
     render(<Settings />);
 
@@ -333,7 +333,7 @@ describe("Settings ProfileCard", () => {
     });
     // Also wait for the settings to load so defaultHandle is populated
     await waitFor(() => {
-      expect(vibeDiyApiStub.ensureUserSettings).toHaveBeenCalled();
+      expect(chatApiStub.ensureUserSettings).toHaveBeenCalled();
     });
 
     const fileInput = document.getElementById("avatar-upload") as HTMLInputElement;
@@ -344,7 +344,7 @@ describe("Settings ProfileCard", () => {
     });
 
     await waitFor(() => {
-      expect(vibeDiyApiStub.requestAssetUploadGrant).toHaveBeenCalled();
+      expect(chatApiStub.requestAssetUploadGrant).toHaveBeenCalled();
     });
 
     await waitFor(() => {

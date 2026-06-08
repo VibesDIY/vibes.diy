@@ -8,14 +8,14 @@ interface MembersSectionProps {
 }
 
 export function MembersSection({ ownerHandle, appSlug }: MembersSectionProps) {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const [members, setMembers] = useState<MemberItem[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    vibeDiyApi
+    chatApi
       .listMembers({ ownerHandle, appSlug })
       .then((res) => {
         if (cancelled) return;
@@ -28,7 +28,7 @@ export function MembersSection({ ownerHandle, appSlug }: MembersSectionProps) {
     return () => {
       cancelled = true;
     };
-  }, [vibeDiyApi, ownerHandle, appSlug]);
+  }, [chatApi, ownerHandle, appSlug]);
 
   return (
     <section className="space-y-2">

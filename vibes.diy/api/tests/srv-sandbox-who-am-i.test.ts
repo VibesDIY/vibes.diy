@@ -6,7 +6,7 @@ import { ResVibeWhoAmI } from "@vibes.diy/vibe-types";
 import type { DbAcl } from "@vibes.diy/api-types";
 
 // Task 7 host-side bridge handler `vibeWhoAmI`. Dependencies are injected
-// (vibeDiyApi) so the handler is testable without stubbing globals or mocking
+// (chatApi) so the handler is testable without stubbing globals or mocking
 // modules — see agents/rules-bag.md "Never use mocking".
 
 beforeAll(() => {
@@ -47,7 +47,7 @@ function setupSandbox(opts: { whoAmIResult: Result<ResVibeWhoAmI, VibesDiyError>
   };
 
   const sandbox = new vibesDiySrvSandbox({
-    vibeDiyApi: fakeApi as VibesDiyApiIface,
+    chatApi: fakeApi as VibesDiyApiIface,
     errorLogger: () => {
       /* noop */
     },
@@ -64,7 +64,7 @@ function setupSandbox(opts: { whoAmIResult: Result<ResVibeWhoAmI, VibesDiyError>
 }
 
 describe("vibeWhoAmI host handler", () => {
-  it("happy path — calls vibeDiyApi.whoAmI and posts vibe.res.whoAmI with viewer + access", async () => {
+  it("happy path — calls chatApi.whoAmI and posts vibe.res.whoAmI with viewer + access", async () => {
     const { sandbox, captured, iframe, whoAmICalls } = setupSandbox({
       whoAmIResult: Result.Ok({
         type: "vibe.res.whoAmI" as const,
@@ -153,7 +153,7 @@ describe("vibeWhoAmI host handler", () => {
     });
   });
 
-  it("error path — when vibeDiyApi.whoAmI fails, posts fallback with viewer: null and access: 'none'", async () => {
+  it("error path — when chatApi.whoAmI fails, posts fallback with viewer: null and access: 'none'", async () => {
     const { sandbox, captured, iframe, whoAmICalls } = setupSandbox({
       whoAmIResult: Result.Err<ResVibeWhoAmI, VibesDiyError>({
         type: "vibes.diy.res-error",

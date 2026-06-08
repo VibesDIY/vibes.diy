@@ -361,7 +361,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
   const iconUrl = item?.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
   const cacheKey = item ? `${item.ownerHandle}/${item.appSlug}` : "";
   const [screenshot, setScreenshot] = useState<MetaScreenShot | null>(item ? (screenshotCache.get(cacheKey) ?? null) : null);
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const previewUrl = screenshot ? screenshotSrc(screenshot) : iconUrl;
   // Mock data for now — wire up real fields later.
   const mockCreator = "@amber-macias";
@@ -376,7 +376,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
       return;
     }
     let cancelled = false;
-    vibeDiyApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
+    chatApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
       if (cancelled) return;
       if (res.isErr()) {
         screenshotCache.set(cacheKey, null);
@@ -389,7 +389,7 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
     return () => {
       cancelled = true;
     };
-  }, [item, cacheKey, vibeDiyApi]);
+  }, [item, cacheKey, chatApi]);
 
   return (
     <>

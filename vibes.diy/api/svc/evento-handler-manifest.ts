@@ -64,7 +64,7 @@ export const sharedHandlers = [
   ensureUserSettingsEvento,
   listModelsEvento,
   // Grants, invites, membership — stateless D1 queries called from parent app
-  // on vibeDiyApi (chat connection). Registered on both DOs until client routing
+  // on chatApi (chat connection). Registered on both DOs until client routing
   // is fully split (#2263).
   createInviteEvento,
   revokeInviteEvento,

@@ -93,8 +93,8 @@ export class PostMsgSendProvider implements EventoSendProvider<MessageEvent, unk
 
 interface VibesDiySrvSandboxArgs {
   // dashApi: ReturnType<typeof clerkDashApi>;
-  vibeDiyApi: VibesDiyApiIface;
-  appDiyApi?: VibesDiyApiIface;
+  chatApi: VibesDiyApiIface;
+  vibeApi?: VibesDiyApiIface;
   errorLogger: (r: string | Result<unknown> | Error) => void;
   eventListeners: {
     addEventListener: typeof window.addEventListener;
@@ -164,7 +164,7 @@ export function getCodeBlock(stream: ReadableStream<unknown>): Promise<{
 }
 
 function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi } = sandbox.args;
+  const { chatApi } = sandbox.args;
   return {
     hash: "vibe.callAI",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -175,7 +175,7 @@ function vibeCallAI(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqCallAI, unknown>): Promise<Result<EventoResultType>> => {
-      await vibeDiyApi
+      await chatApi
         .openChat({ ownerHandle: ctx.validated.ownerHandle, appSlug: ctx.validated.appSlug, mode: "app" })
         .then(async (rChat) => {
           if (rChat.isErr()) {
@@ -271,7 +271,7 @@ export function getImageFiles(stream: ReadableStream<unknown>): Promise<ImgGenFi
 }
 
 function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi } = sandbox.args;
+  const { chatApi } = sandbox.args;
   return {
     hash: "vibe.imgGen",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -305,7 +305,7 @@ function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
           files,
         } satisfies ResOkImgGen);
 
-      await vibeDiyApi
+      await chatApi
         .openChat({ ownerHandle: ctx.validated.ownerHandle, appSlug: ctx.validated.appSlug, mode: "img" })
         .then(async (rChat) => {
           if (rChat.isErr()) return sendErr(rChat.Err().message);
@@ -337,8 +337,8 @@ function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
 // ── Firefly document handlers ──────────────────────────────────────
 
 function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi, appDiyApi } = sandbox.args;
-  const api = appDiyApi ?? vibeDiyApi;
+  const { chatApi, vibeApi } = sandbox.args;
+  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.putDoc",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -387,8 +387,8 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi, appDiyApi } = sandbox.args;
-  const api = appDiyApi ?? vibeDiyApi;
+  const { chatApi, vibeApi } = sandbox.args;
+  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.getDoc",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -426,8 +426,8 @@ function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi, appDiyApi } = sandbox.args;
-  const api = appDiyApi ?? vibeDiyApi;
+  const { chatApi, vibeApi } = sandbox.args;
+  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.queryDocs",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -464,8 +464,8 @@ function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi, appDiyApi } = sandbox.args;
-  const api = appDiyApi ?? vibeDiyApi;
+  const { chatApi, vibeApi } = sandbox.args;
+  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.deleteDoc",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -503,8 +503,8 @@ function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi, appDiyApi } = sandbox.args;
-  const api = appDiyApi ?? vibeDiyApi;
+  const { chatApi, vibeApi } = sandbox.args;
+  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.subscribeDocs",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -540,8 +540,8 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeSetDbAcl(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi, appDiyApi } = sandbox.args;
-  const api = appDiyApi ?? vibeDiyApi;
+  const { chatApi, vibeApi } = sandbox.args;
+  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.setDbAcl",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -577,8 +577,8 @@ function vibeSetDbAcl(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeListDbNames(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi, appDiyApi } = sandbox.args;
-  const api = appDiyApi ?? vibeDiyApi;
+  const { chatApi, vibeApi } = sandbox.args;
+  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.listDbNames",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -624,8 +624,8 @@ function vibeListDbNames(sandbox: vibesDiySrvSandbox): EventoHandler {
 const PROGRESS_INTERVAL_MS = 3000;
 
 function vibePutAsset(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi, appDiyApi } = sandbox.args;
-  const api = appDiyApi ?? vibeDiyApi;
+  const { chatApi, vibeApi } = sandbox.args;
+  const api = vibeApi ?? chatApi;
   const doFetch: typeof fetch = sandbox.args.fetch ?? ((...a) => fetch(...a));
   return {
     hash: "vibe.putAsset",
@@ -705,8 +705,8 @@ function vibePutAsset(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi, appDiyApi } = sandbox.args;
-  const api = appDiyApi ?? vibeDiyApi;
+  const { chatApi, vibeApi } = sandbox.args;
+  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.whoAmI",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -745,7 +745,7 @@ function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeUpdateAvatarCid(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { vibeDiyApi } = sandbox.args;
+  const { chatApi } = sandbox.args;
   return {
     hash: "vibe.updateAvatarCid",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -757,7 +757,7 @@ function vibeUpdateAvatarCid(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibeUpdateAvatarCid, unknown>): Promise<Result<EventoResultType>> => {
       const { tid, cid } = ctx.validated;
-      const rRes = await vibeDiyApi.ensureUserSettings({
+      const rRes = await chatApi.ensureUserSettings({
         settings: [{ type: "profile", avatarCid: cid }],
       });
       if (rRes.isErr()) {
@@ -953,11 +953,11 @@ export class vibesDiySrvSandbox implements Disposable {
     this.removeEventListeners = this.args.eventListeners.removeEventListener;
 
     // Forward doc-changed events from the API WebSocket to the iframe
-    this.args.vibeDiyApi.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
+    this.args.chatApi.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
       this.forwardDocChangedToIframe(ownerHandle, appSlug, dbName, docId);
     });
-    if (this.args.appDiyApi !== undefined) {
-      this.args.appDiyApi.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
+    if (this.args.vibeApi !== undefined) {
+      this.args.vibeApi.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
         this.forwardDocChangedToIframe(ownerHandle, appSlug, dbName, docId);
       });
     }

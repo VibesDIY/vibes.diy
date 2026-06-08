@@ -204,13 +204,13 @@ export default function VibeIframeWrapper() {
       setMyUserSlug(undefined);
       return;
     }
-    vctx.vibeDiyApi.listHandleBindings({}).then((res) => {
+    vctx.chatApi.listHandleBindings({}).then((res) => {
       if (res.isErr()) return;
       const items = res.Ok().items;
       setIsOwner(items.some((item) => item.ownerHandle === ownerHandle));
       if (items.length > 0) setMyUserSlug(items[0].ownerHandle);
     });
-  }, [authSignedIn, ownerHandle, vctx.vibeDiyApi]);
+  }, [authSignedIn, ownerHandle, vctx.chatApi]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
@@ -218,35 +218,35 @@ export default function VibeIframeWrapper() {
       return;
     }
     let cancelled = false;
-    vctx.vibeDiyApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
+    vctx.chatApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
       if (cancelled || res.isErr()) return;
       setPendingCount(res.Ok().items.filter((r) => r.state === "pending").length);
     });
     return () => {
       cancelled = true;
     };
-  }, [isOwner, ownerHandle, appSlug, vctx.vibeDiyApi, pendingBump]);
+  }, [isOwner, ownerHandle, appSlug, vctx.chatApi, pendingBump]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
       return;
     }
-    void vctx.vibeDiyApi.subscribeRequestGrants({ appSlug, ownerHandle });
-    const unsubscribe = vctx.vibeDiyApi.onRequestGrant((evt) => {
+    void vctx.chatApi.subscribeRequestGrants({ appSlug, ownerHandle });
+    const unsubscribe = vctx.chatApi.onRequestGrant((evt) => {
       if (evt.grant.ownerHandle === ownerHandle && evt.grant.appSlug === appSlug) {
         setPendingBump((n) => n + 1);
       }
     });
     return unsubscribe;
-  }, [isOwner, ownerHandle, appSlug, vctx.vibeDiyApi]);
+  }, [isOwner, ownerHandle, appSlug, vctx.chatApi]);
 
   useEffect(() => {
-    if (!vctx.vibeDiyApi || !authSignedIn) {
+    if (!vctx.chatApi || !authSignedIn) {
       setDmUnreadCount(0);
       return;
     }
     let cancelled = false;
-    vctx.vibeDiyApi.listDmThreads({}).then((res) => {
+    vctx.chatApi.listDmThreads({}).then((res) => {
       if (cancelled || res.isErr()) return;
       const total = res.Ok().items.reduce((sum, t) => sum + t.unreadCount, 0);
       setDmUnreadCount(total);
@@ -254,7 +254,7 @@ export default function VibeIframeWrapper() {
     return () => {
       cancelled = true;
     };
-  }, [vctx.vibeDiyApi, authSignedIn]);
+  }, [vctx.chatApi, authSignedIn]);
 
   useEffect(() => {
     if (authSignedIn) {
@@ -273,7 +273,7 @@ export default function VibeIframeWrapper() {
       inRefreshViewerFromWhoAmIRef.current = true;
 
       try {
-        const rRes = await vctx.vibeDiyApi.whoAmI({
+        const rRes = await vctx.chatApi.whoAmI({
           tid: crypto.randomUUID(),
           appSlug,
           ownerHandle,
@@ -304,7 +304,7 @@ export default function VibeIframeWrapper() {
         inRefreshViewerFromWhoAmIRef.current = false;
       }
     },
-    [appSlug, ownerHandle, srvVibeSandbox, vctx.vibeDiyApi]
+    [appSlug, ownerHandle, srvVibeSandbox, vctx.chatApi]
   );
 
   const flushPendingWriterViewerRefresh = useCallback(async (): Promise<void> => {
@@ -421,7 +421,7 @@ export default function VibeIframeWrapper() {
     inGetAppByFsIdRef.current = true;
     lastFiredKeyRef.current = paramsKey;
     toast.loading("Verifying access…", { id: "vibe-access" });
-    vctx.vibeDiyApi.getAppByFsId({ fsId, appSlug, ownerHandle, token }).then((rRes) => {
+    vctx.chatApi.getAppByFsId({ fsId, appSlug, ownerHandle, token }).then((rRes) => {
       inGetAppByFsIdRef.current = false;
       if (rRes.isErr()) {
         toast.error(`getAppByFsId failed with: ${rRes.Err().message}`, { id: "vibe-access" });
@@ -431,7 +431,7 @@ export default function VibeIframeWrapper() {
       cachedResRef.current = res;
       applyResToUI(res);
     });
-  }, [ownerHandle, appSlug, fsId, searchParam, retryCount, vctx.vibeDiyApi, flushPendingWriterViewerRefresh]);
+  }, [ownerHandle, appSlug, fsId, searchParam, retryCount, vctx.chatApi, flushPendingWriterViewerRefresh]);
 
   useEffect(() => {
     if (authSignedIn !== true) return;
@@ -458,19 +458,19 @@ export default function VibeIframeWrapper() {
 
   useEffect(() => {
     if (!authSignedIn || !ownerHandle || !appSlug) return;
-    void vctx.vibeDiyApi.subscribeViewerGrants({ appSlug, ownerHandle });
-    const unsubscribe = vctx.vibeDiyApi.onViewerGrantsChanged((evt) => {
+    void vctx.chatApi.subscribeViewerGrants({ appSlug, ownerHandle });
+    const unsubscribe = vctx.chatApi.onViewerGrantsChanged((evt) => {
       if (evt.ownerHandle !== ownerHandle || evt.appSlug !== appSlug) return;
       void refreshViewerFromWhoAmI();
     });
     return unsubscribe;
-  }, [authSignedIn, ownerHandle, appSlug, refreshViewerFromWhoAmI, vctx.vibeDiyApi]);
+  }, [authSignedIn, ownerHandle, appSlug, refreshViewerFromWhoAmI, vctx.chatApi]);
 
   const shareModal = useShareModal({
     ownerHandle: ownerHandle ?? "",
     appSlug: appSlug ?? "",
     fsId,
-    vibeDiyApi: vctx.vibeDiyApi,
+    chatApi: vctx.chatApi,
   });
 
   const prevShareOpenRef = useRef(shareModal.isOpen);
@@ -500,7 +500,7 @@ export default function VibeIframeWrapper() {
 
   async function fireJoin() {
     if (appSlug === undefined || ownerHandle === undefined) return;
-    const r = await vctx.vibeDiyApi.requestAccess({ appSlug, ownerHandle });
+    const r = await vctx.chatApi.requestAccess({ appSlug, ownerHandle });
     if (r.isErr()) {
       toast.error(`Request failed: ${r.Err().message}`);
       return;

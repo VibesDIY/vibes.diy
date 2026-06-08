@@ -54,7 +54,7 @@ function formatTime(iso?: string): string {
 }
 
 export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDisabled }: CommentsSectionProps) {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const { isSignedIn, userId: viewerUserId } = useAuth();
   const { user } = useUser();
   const [comments, setComments] = useState<CommentDoc[]>([]);
@@ -76,23 +76,23 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
     let cancelled = false;
     // tid is overwritten by the impl's request() — we just need to satisfy the
     // type since ReqVibeWhoAmI extends the postMessage Base shape.
-    void vibeDiyApi.whoAmI({ tid: crypto.randomUUID(), ownerHandle, appSlug }).then((res) => {
+    void chatApi.whoAmI({ tid: crypto.randomUUID(), ownerHandle, appSlug }).then((res) => {
       if (cancelled) return;
       if (res.isOk()) setViewerUserSlug(res.Ok().viewer?.userHandle);
     });
     return () => {
       cancelled = true;
     };
-  }, [vibeDiyApi, isSignedIn, ownerHandle, appSlug]);
+  }, [chatApi, isSignedIn, ownerHandle, appSlug]);
 
   const reload = useCallback(async () => {
-    const res = await vibeDiyApi.queryDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
+    const res = await chatApi.queryDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
     if (res.isOk()) {
       const docs = res.Ok().docs as unknown as CommentDoc[];
       docs.sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
       setComments(docs);
     }
-  }, [vibeDiyApi, ownerHandle, appSlug]);
+  }, [chatApi, ownerHandle, appSlug]);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,21 +109,21 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
   // open/close cycle of the parent modal doesn't accumulate live listeners
   // (otherwise every doc change fires reload() N times per session).
   useEffect(() => {
-    void vibeDiyApi.subscribeDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
-    const unsubscribe = vibeDiyApi.onDocChanged((evtUserSlug, evtAppSlug, evtDbName) => {
+    void chatApi.subscribeDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
+    const unsubscribe = chatApi.onDocChanged((evtUserSlug, evtAppSlug, evtDbName) => {
       if (evtUserSlug === ownerHandle && evtAppSlug === appSlug && evtDbName === COMMENTS_DB_NAME) {
         void reload();
       }
     });
     return unsubscribe;
-  }, [vibeDiyApi, ownerHandle, appSlug, reload]);
+  }, [chatApi, ownerHandle, appSlug, reload]);
 
   async function handlePost() {
     const text = body.trim();
     if (!text || posting) return;
     setPosting(true);
     setError(undefined);
-    const res = await vibeDiyApi.putDoc({
+    const res = await chatApi.putDoc({
       ownerHandle,
       appSlug,
       dbName: COMMENTS_DB_NAME,
@@ -149,7 +149,7 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
   }
 
   async function handleDelete(c: CommentDoc) {
-    const res = await vibeDiyApi.deleteDoc({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME, docId: c._id });
+    const res = await chatApi.deleteDoc({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME, docId: c._id });
     if (res.isOk()) {
       void reload();
     } else {

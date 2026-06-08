@@ -4,7 +4,7 @@ import { VibesDiyApiIface, ResAssetUploadGrant, VibesDiyError } from "@vibes.diy
 import { Future, Result } from "@adviser/cement";
 
 // Stage B Phase 5 host-side handler `vibePutAsset`. Dependencies are
-// injected (fetch + vibeDiyApi) so the handler is testable without
+// injected (fetch + chatApi) so the handler is testable without
 // stubbing globals or mocking modules — see agents/rules-bag.md "Never
 // use mocking". `vi.useFakeTimers` is OK; it controls test-environment
 // time, not behavior.
@@ -67,7 +67,7 @@ function setupSandbox(opts: {
   }) as typeof fetch;
 
   const sandbox = new vibesDiySrvSandbox({
-    vibeDiyApi: fakeApi as VibesDiyApiIface,
+    chatApi: fakeApi as VibesDiyApiIface,
     errorLogger: () => {
       /* noop */
     },

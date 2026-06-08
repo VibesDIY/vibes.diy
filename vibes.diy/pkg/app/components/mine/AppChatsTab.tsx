@@ -20,7 +20,7 @@ interface AppChatsTabProps {
 }
 
 export function AppChatsTab({ ownerHandle, appSlug }: AppChatsTabProps) {
-  const { vibeDiyApi } = useVibesDiy();
+  const { chatApi } = useVibesDiy();
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export function AppChatsTab({ ownerHandle, appSlug }: AppChatsTabProps) {
     setSelectedChatId(chatId);
     setChatDetail(null);
     setDetailLoading(true);
-    void vibeDiyApi.openChat({ chatId, mode: "app" }).then((rChat) => {
+    void chatApi.openChat({ chatId, mode: "app" }).then((rChat) => {
       if (rChat.isErr()) {
         setDetailLoading(false);
         return;
@@ -60,7 +60,7 @@ export function AppChatsTab({ ownerHandle, appSlug }: AppChatsTabProps) {
     setLoading(true);
     setSelectedChatId(null);
     setChatDetail(null);
-    void vibeDiyApi
+    void chatApi
       .listApplicationChats({})
       .then((res) => {
         if (res.isErr()) {
@@ -71,12 +71,12 @@ export function AppChatsTab({ ownerHandle, appSlug }: AppChatsTabProps) {
         setNextCursor(res.Ok().nextCursor);
       })
       .finally(() => setLoading(false));
-  }, [vibeDiyApi, ownerHandle, appSlug]);
+  }, [chatApi, ownerHandle, appSlug]);
 
   const loadMore = () => {
     if (!nextCursor || loading) return;
     setLoading(true);
-    void vibeDiyApi
+    void chatApi
       .listApplicationChats({ cursor: nextCursor })
       .then((res) => {
         if (res.isErr()) {
