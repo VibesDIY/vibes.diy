@@ -192,6 +192,10 @@ export interface VibesDiyApiParam {
   // same vibe land on the same warm DO instead of each paying ~1s cold-start.
   // Omit for codegen / load-balanced traffic — random UUID is used.
   readonly shardKey?: string;
+  // When true, skip appending ?shard=<uuid> entirely.  Use for connections
+  // where the server routes by a different param (e.g. /api/app?vibe=…) and
+  // the shard param is ignored noise.
+  readonly skipShard?: boolean;
 }
 
 interface VibesDiyApiConfig {
@@ -246,8 +250,14 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     // When a preset WebSocket is provided (tests), skip sharding — tests bypass worker routing.
     // If shardKey is provided (e.g. a viewer landing on /vibe/<u>/<a>), pin to that
     // stable value so all visitors of the same vibe land on the same warm DO.
-    const shard = cfg.shardKey ?? crypto.randomUUID();
-    const apiUrl = cfg.ws ? cfg.apiUrl : BuildURI.from(cfg.apiUrl).setParam("shard", shard).toString();
+    // If skipShard is true (e.g. /api/app which routes by ?vibe= instead),
+    // omit the param entirely so it doesn't appear as noise in logs/devtools.
+    const apiUrl =
+      cfg.ws || cfg.skipShard
+        ? cfg.apiUrl
+        : BuildURI.from(cfg.apiUrl)
+            .setParam("shard", cfg.shardKey ?? crypto.randomUUID())
+            .toString();
     // const pkgRepos: PkgRepos = {
     //   private: cfg.pkgRepos?.private ?? "https://esm.sh/",
     //   public: cfg.pkgRepos?.public ?? BuildURI.from(window.location.origin).appendRelative("/dev-npm").toString(),
