@@ -67,7 +67,9 @@ function createRacingTransport(): FireflyTransport {
 
     setDbAcl: async () => Result.Ok({ tid: "mock", type: "vibes.diy.res-set-db-acl" as const, status: "ok" as const }),
 
-    onMsg: () => {},
+    onMsg: () => {
+      /* noop */
+    },
   };
 }
 
