@@ -233,8 +233,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   if (vibeMatch !== null) {
     const ownerHandle = vibeMatch[1];
     const appSlug = vibeMatch[2];
-    const appApiUrl = BuildURI.from(window.location.href)
-      .protocol(window.location.protocol.startsWith("https") ? "wss" : "ws")
+    const appApiUrl = BuildURI.from(apiUrl)
       .pathname("/api/app")
       .cleanParams()
       .setParam("vibe", `${ownerHandle}--${appSlug}`)
