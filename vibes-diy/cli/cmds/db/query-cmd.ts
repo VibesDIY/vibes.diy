@@ -173,7 +173,12 @@ export function dbQueryCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      const resolved = resolveDbVibeArgs(args);
+      const resolved = resolveDbVibeArgs({
+        vibe: args.vibe,
+        appSlug: args.appSlug,
+        ownerHandle: args.ownerHandle,
+        ownerHandleDeprecated: args.ownerHandleDeprecated,
+      });
       return {
         type: "vibes-diy.cli.db.query",
         apiUrl: args.apiUrl,
