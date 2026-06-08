@@ -705,6 +705,7 @@ ${rootCssBlock}
             if (r.isErr()) {
               console.error(`PromptSend failed`, r.Err());
               settlePendingSubmit(false);
+              setSubmitting(false);
             } else {
               console.log(`send prompt`, sentPrompt);
               notifyRecentVibesChanged();
@@ -714,8 +715,6 @@ ${rootCssBlock}
           .catch((err) => {
             console.error(`PromptSend threw`, err);
             settlePendingSubmit(false);
-          })
-          .finally(() => {
             setSubmitting(false);
           });
       }
