@@ -243,6 +243,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     realCtx.vibeApi = vibesDiyApis.get(appApiUrl).once(() => {
       return new VibesDiyApi({
         apiUrl: appApiUrl,
+        skipShard: true,
         getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
       });
     });
