@@ -9,7 +9,7 @@ import charwise from "charwise";
 import type { CliCtx } from "../../cli-ctx.js";
 import { cmdTsDefaultArgs } from "../../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../../cmd-evento.js";
-import { dbCommonArgs, resolveUserSlug } from "./shared.js";
+import { dbCommonArgs, resolveUserSlug, resolveDbVibeArgs } from "./shared.js";
 
 export const ReqDbQuery = type({
   type: "'vibes-diy.cli.db.query'",
@@ -172,18 +172,21 @@ export function dbQueryCmd(ctx: CliCtx) {
         description: "Return results in descending order",
       }),
     },
-    handler: ctx.cliStream.enqueue((args) => ({
-      type: "vibes-diy.cli.db.query",
-      apiUrl: args.apiUrl,
-      appSlug: args.appSlug,
-      ownerHandle: args.ownerHandle,
-      dbName: args.dbName,
-      field: args.field,
-      key: args.key,
-      prefix: args.prefix,
-      range: args.range,
-      limit: args.limit,
-      descending: args.descending,
-    })),
+    handler: ctx.cliStream.enqueue((args) => {
+      const resolved = resolveDbVibeArgs(args);
+      return {
+        type: "vibes-diy.cli.db.query",
+        apiUrl: args.apiUrl,
+        appSlug: resolved.appSlug,
+        ownerHandle: resolved.ownerHandle,
+        dbName: args.dbName,
+        field: args.field,
+        key: args.key,
+        prefix: args.prefix,
+        range: args.range,
+        limit: args.limit,
+        descending: args.descending,
+      };
+    }),
   });
 }

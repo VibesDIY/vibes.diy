@@ -4,9 +4,17 @@ import type { CliCtx } from "../../cli-ctx.js";
 import type { VibesDiyApi } from "@vibes.diy/api-impl";
 import { Result } from "@adviser/cement";
 import { isUserSettingDefaultHandle } from "@vibes.diy/api-types";
+import { resolveVibeArgs } from "../../parse-vibe.js";
 
 export function dbCommonArgs(ctx: CliCtx) {
   return {
+    vibe: option({
+      long: "vibe",
+      description: "Vibe identifier as handle/app-slug",
+      type: string,
+      defaultValue: () => "",
+      defaultValueIsSerializable: true,
+    }),
     appSlug: option({
       long: "app-slug",
       description: "App slug; defaults to env VIBES_APP_SLUG or basename(cwd)",
@@ -21,6 +29,12 @@ export function dbCommonArgs(ctx: CliCtx) {
       defaultValue: () => "",
       defaultValueIsSerializable: true,
     }),
+    ownerHandleDeprecated: option({
+      long: "user-slug",
+      type: string,
+      defaultValue: () => "",
+      defaultValueIsSerializable: true,
+    }),
     dbName: option({
       long: "db",
       description: "Database name",
@@ -31,6 +45,22 @@ export function dbCommonArgs(ctx: CliCtx) {
   };
 }
 
+export function resolveDbVibeArgs(args: { vibe: string; appSlug: string; ownerHandle: string; ownerHandleDeprecated: string }): {
+  appSlug: string;
+  ownerHandle: string;
+} {
+  if (args.ownerHandleDeprecated) {
+    process.stderr.write("[deprecated] --user-slug is deprecated, use --handle or --vibe instead\n");
+  }
+  const resolved = resolveVibeArgs({
+    vibe: args.vibe,
+    handle: args.ownerHandle || args.ownerHandleDeprecated,
+    appSlug: args.appSlug,
+    positionalAppSlug: "",
+  });
+  return { appSlug: resolved.appSlug, ownerHandle: resolved.handle };
+}
+
 // Resolve ownerHandle: explicit override -> defaultHandle from user settings.
 export async function resolveUserSlug(api: VibesDiyApi, explicit: string): Promise<Result<string>> {
   if (explicit !== "") return Result.Ok(explicit);
@@ -38,7 +68,7 @@ export async function resolveUserSlug(api: VibesDiyApi, explicit: string): Promi
   if (r.isErr()) return Result.Err(r.Err());
   const def = r.Ok().settings.find(isUserSettingDefaultHandle);
   if (def === undefined) {
-    return Result.Err("No defaultHandle — pass --handle or run 'vibes-diy login' first");
+    return Result.Err("No defaultHandle — pass --handle, --vibe, or run 'vibes-diy login' first");
   }
   return Result.Ok(def.ownerHandle);
 }

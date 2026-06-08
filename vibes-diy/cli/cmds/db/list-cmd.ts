@@ -5,7 +5,7 @@ import type { ValidateTriggerCtx, HandleTriggerCtx, EventoResultType, EventoHand
 import type { CliCtx } from "../../cli-ctx.js";
 import { cmdTsDefaultArgs } from "../../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../../cmd-evento.js";
-import { dbCommonArgs, resolveUserSlug } from "./shared.js";
+import { dbCommonArgs, resolveUserSlug, resolveDbVibeArgs } from "./shared.js";
 
 export const ReqDbList = type({
   type: "'vibes-diy.cli.db.list'",
@@ -60,11 +60,14 @@ export function dbListCmd(ctx: CliCtx) {
       ...cmdTsDefaultArgs(ctx),
       ...dbCommonArgs(ctx),
     },
-    handler: ctx.cliStream.enqueue((args) => ({
-      type: "vibes-diy.cli.db.list",
-      apiUrl: args.apiUrl,
-      appSlug: args.appSlug,
-      ownerHandle: args.ownerHandle,
-    })),
+    handler: ctx.cliStream.enqueue((args) => {
+      const resolved = resolveDbVibeArgs(args);
+      return {
+        type: "vibes-diy.cli.db.list",
+        apiUrl: args.apiUrl,
+        appSlug: resolved.appSlug,
+        ownerHandle: resolved.ownerHandle,
+      };
+    }),
   });
 }
