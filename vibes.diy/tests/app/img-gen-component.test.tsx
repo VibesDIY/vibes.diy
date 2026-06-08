@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import { ImgGen } from "@vibes.diy/base";
 import { Result } from "@adviser/cement";
 import { registerFirefly } from "../../vibe/runtime/use-firefly.js";
@@ -46,6 +46,57 @@ function makeImageDoc(id: string, url: string, versions = 1) {
   };
 }
 
+type LaggyImgGenApi = MockVibeApi & {
+  _pendingDocs: Map<string, Record<string, unknown>>;
+  commitPendingDoc(id: string, dbName: string): string;
+};
+
+function createLaggyImgGenApi(): LaggyImgGenApi {
+  const api = createMockVibeApi("test-app") as LaggyImgGenApi;
+  const pendingDocs = new Map<string, Record<string, unknown>>();
+  let idCounter = 0;
+
+  api._pendingDocs = pendingDocs;
+
+  api.putDoc = async (doc: Record<string, unknown>, docId?: string) => {
+    const id = docId ?? `laggy-img-${++idCounter}`;
+    pendingDocs.set(id, { ...doc, _id: id });
+    return Result.Ok({ type: "vibes.diy.res-put-doc" as const, status: "ok" as const, id });
+  };
+
+  api.getDoc = async (id: string) => {
+    const doc = api._docs.get(id);
+    if (!doc) {
+      return Result.Ok({ type: "vibes.diy.res-get-doc" as const, status: "not-found" as const, id });
+    }
+    return Result.Ok({ type: "vibes.diy.res-get-doc" as const, status: "ok" as const, id, doc: { ...doc } });
+  };
+
+  api.commitPendingDoc = (id: string, dbName: string) => {
+    const pending = pendingDocs.get(id);
+    if (!pending) {
+      throw new Error(`No pending doc for ${id}`);
+    }
+
+    const files = Object.fromEntries(
+      Object.entries((pending._files as Record<string, Record<string, unknown>> | undefined) ?? {}).map(([key, meta]) => [
+        key,
+        {
+          ...meta,
+          url: `https://assets.example.test/_files/${dbName}/${id}/${key}?v=${String(meta.uploadId ?? "")}`,
+        },
+      ])
+    );
+    const committed = { ...pending, _id: id, _files: files };
+    api._docs.set(id, committed);
+    pendingDocs.delete(id);
+    api._simulateDocChanged(id, dbName);
+    return String((committed._files as Record<string, Record<string, unknown>>)[Object.keys(files)[0]]?.url ?? "");
+  };
+
+  return api;
+}
+
 beforeEach(async () => {
   vi.clearAllMocks();
   mockApi = createMockVibeApi("test-app");
@@ -86,6 +137,35 @@ describe("ImgGen component", () => {
       const stored = [...mockApi._docs.values()].find((d) => d.type === "image" && d.prompt === "beautiful sunset");
       expect(stored).toBeDefined();
       expect(stored?._files).toEqual(expect.objectContaining({ v1: expect.objectContaining({ uploadId: "upl-abc" }) }));
+    });
+  });
+
+  it("renders the generated image after server commit hydrates meta.url for a new doc", async () => {
+    const laggyApi = createLaggyImgGenApi();
+    await registerFirefly(asSandboxApi(laggyApi));
+    const imgGen = vi.fn().mockResolvedValue(Result.Ok([{ uploadId: "upl-lag", cid: "bafy-lag", mimeType: "image/png", size: 1024 }]));
+    const dbName = freshDb();
+
+    render(<ImgGen _id="img-race" prompt="eventual image" database={dbName} imgGen={imgGen} />);
+
+    await waitFor(() => {
+      expect(imgGen).toHaveBeenCalledWith("eventual image", undefined, undefined);
+    });
+    await waitFor(() => {
+      expect(laggyApi._pendingDocs.has("img-race")).toBe(true);
+    });
+
+    let committedUrl = "";
+    act(() => {
+      committedUrl = laggyApi.commitPendingDoc("img-race", dbName);
+    });
+
+    await waitFor(() => {
+      const stored = laggyApi._docs.get("img-race") as { _files?: { v1?: { url?: string } } } | undefined;
+      expect(stored?._files?.v1?.url).toBe(committedUrl);
+    });
+    await waitFor(() => {
+      expect(screen.getByRole("img")).toHaveAttribute("src", committedUrl);
     });
   });
 
