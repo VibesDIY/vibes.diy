@@ -46,6 +46,32 @@ describe("resolveVibeArgs", () => {
     });
   });
 
+  it("throws when --vibe conflicts with explicit --handle", () => {
+    expect(() =>
+      resolveVibeArgs({ vibe: "jchris/hat-smeller", handle: "other-user", appSlug: "", positionalAppSlug: "" }),
+    ).toThrowError('Conflicting values: --vibe "jchris/hat-smeller" disagrees with --handle "other-user"');
+  });
+
+  it("throws when --vibe conflicts with explicit --app-slug", () => {
+    expect(() =>
+      resolveVibeArgs({ vibe: "jchris/hat-smeller", handle: "", appSlug: "other-app", positionalAppSlug: "" }),
+    ).toThrowError('Conflicting values: --vibe "jchris/hat-smeller" disagrees with --app-slug "other-app"');
+  });
+
+  it("allows equivalent --vibe + explicit --handle/--app-slug", () => {
+    expect(
+      resolveVibeArgs({
+        vibe: "jchris/hat-smeller",
+        handle: "jchris",
+        appSlug: "hat-smeller",
+        positionalAppSlug: "",
+      }),
+    ).toEqual({
+      handle: "jchris",
+      appSlug: "hat-smeller",
+    });
+  });
+
   it("--handle + --app-slug: uses both directly", () => {
     expect(resolveVibeArgs({ vibe: "", handle: "jchris", appSlug: "hat-smeller", positionalAppSlug: "" })).toEqual({
       handle: "jchris",
