@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { FireflyDatabase } from "../../vibe/runtime/firefly-database.js";
+import { Result } from "@adviser/cement";
+import { FireflyDatabase, type FireflyTransport } from "../../vibe/runtime/firefly-database.js";
 import { createMockVibeApi, asSandboxApi, type MockVibeApi } from "./mock-vibe-api.js";
 
 let mockApi: MockVibeApi;
@@ -9,6 +10,61 @@ beforeEach(() => {
   mockApi = createMockVibeApi("test-app");
   db = new FireflyDatabase("testdb", asSandboxApi(mockApi));
 });
+
+function createLaggyCommitTransport(): FireflyTransport {
+  const committed = new Map<string, Record<string, unknown>>();
+
+  return {
+    svc: { vibeApp: { appSlug: "test-app", ownerHandle: "test-user", fsId: "fs-mock" } },
+
+    putDoc: async (doc: Record<string, unknown>, docId?: string) => {
+      const id = docId ?? crypto.randomUUID();
+      setTimeout(() => committed.set(id, { ...doc, _id: id }), 0);
+      return Result.Ok({
+        type: "vibes.diy.res-put-doc" as const,
+        status: "ok" as const,
+        id,
+      });
+    },
+
+    getDoc: async (docId: string) => {
+      const doc = committed.get(docId);
+      if (!doc) {
+        return Result.Ok({
+          type: "vibes.diy.res-get-doc" as const,
+          status: "not-found" as const,
+          id: docId,
+        });
+      }
+      return Result.Ok({
+        type: "vibes.diy.res-get-doc" as const,
+        status: "ok" as const,
+        id: docId,
+        doc: { ...doc },
+      });
+    },
+
+    queryDocs: async () =>
+      Result.Ok({
+        type: "vibes.diy.res-query-docs" as const,
+        status: "ok" as const,
+        docs: [...committed.values()].map((doc) => ({ ...doc, _id: String(doc._id ?? "") })),
+      }),
+
+    deleteDoc: async (docId: string) => {
+      committed.delete(docId);
+      return Result.Ok({ type: "vibes.diy.res-delete-doc" as const, status: "ok" as const, id: docId });
+    },
+
+    subscribeDocs: async () => Result.Ok({ type: "vibes.diy.res-subscribe-docs" as const, status: "ok" as const }),
+
+    setDbAcl: async () => Result.Ok({ tid: "mock", type: "vibes.diy.res-set-db-acl" as const, status: "ok" as const }),
+
+    onMsg: () => {
+      /* noop */
+    },
+  };
+}
 
 // ── CRUD ────────────────────────────────────────────────────────────
 
@@ -71,6 +127,27 @@ describe("FireflyDatabase CRUD", () => {
     const res = await db.bulk([{ title: "one" }, { title: "two" }, { title: "three" }]);
     expect(res.ids).toHaveLength(3);
     expect(mockApi._docs.size).toBe(3);
+  });
+
+  it("put should make the new doc immediately visible to same-session get even if remote commit lags", async () => {
+    const laggyDb = new FireflyDatabase("race-test", createLaggyCommitTransport());
+    const doc = { _id: "img-race-1", type: "image", prompt: "a sunset" };
+
+    const putResult = await laggyDb.put(doc);
+    expect(putResult.ok).toBe(true);
+
+    const saved = await laggyDb.get(doc._id);
+    expect(saved).toEqual(expect.objectContaining({ _id: "img-race-1", type: "image", prompt: "a sunset" }));
+  });
+
+  it("put should make the new doc immediately visible to same-session query even if remote commit lags", async () => {
+    const laggyDb = new FireflyDatabase("race-test", createLaggyCommitTransport());
+    await laggyDb.put({ _id: "img-race-2", type: "image", prompt: "a sunrise" });
+
+    const results = await laggyDb.query("type", { key: "image" });
+    expect(results.docs).toEqual(
+      expect.arrayContaining([expect.objectContaining({ _id: "img-race-2", type: "image", prompt: "a sunrise" })])
+    );
   });
 });
 
