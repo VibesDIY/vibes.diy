@@ -85,6 +85,7 @@ export default function ScheduleView({
                                   <textarea
                                     placeholder="Add note..."
                                     value={val}
+                                    style={expanded ? undefined : { width: "8em" }}
                                     onChange={(e) => onNoteChange(item.data.eventId, e.target.value)}
                                     onBlur={() => onNoteBlur && onNoteBlur(item.data.eventId)}
                                     onFocus={() => onNoteFocus && onNoteFocus(item.data.eventId)}
