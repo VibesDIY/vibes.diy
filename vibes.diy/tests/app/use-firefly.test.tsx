@@ -530,6 +530,45 @@ describe("HOOK: useLiveQuery viewer-ready re-fetch (#2285)", () => {
     },
     TEST_TIMEOUT
   );
+
+  it(
+    "useChanges re-fires when the viewer resolves",
+    async () => {
+      const dbName = uniqueDbName();
+      const { result: fpResult } = renderHook(() => useFireproof(dbName));
+      // useChanges() is a stub that calls database.changes() (not queryDocs),
+      // so count changes() calls directly to detect the re-fire.
+      let changesCalls = 0;
+      const realChanges = fpResult.current.database.changes.bind(fpResult.current.database);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (fpResult.current.database as any).changes = async () => {
+        changesCalls++;
+        return realChanges();
+      };
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider mountParams={{ usrEnv: {} }}>{children}</VibeContextProvider>
+      );
+      renderHook(
+        () => {
+          const { useChanges } = fpResult.current;
+          return useChanges();
+        },
+        { wrapper }
+      );
+      await waitFor(() => expect(changesCalls).toBeGreaterThan(0));
+      const before = changesCalls;
+      act(() => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "vibe.evt.viewerChanged", viewer: { userHandle: "anna" }, access: "viewer" },
+          })
+        );
+      });
+      await waitFor(() => expect(changesCalls).toBeGreaterThan(before));
+    },
+    TEST_TIMEOUT
+  );
 });
 
 // ── access (roles + channels from grants) ──────────────────────────
