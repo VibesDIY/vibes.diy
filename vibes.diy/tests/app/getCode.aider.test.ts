@@ -278,4 +278,26 @@ describe("CodeEditor getCode — multi-file (App.jsx + access.js)", () => {
     const dbg = (globalThis as unknown as { __aiderEditsDebug?: { failedSectionCount: number } }).__aiderEditsDebug;
     expect(dbg?.failedSectionCount ?? 0).toBe(0);
   });
+
+  it("renders App.jsx as the entry even when companion client files (Counter.jsx, styles.css) come after", () => {
+    // Multi-client-file app: App.jsx is the render root; Counter.jsx and
+    // styles.css are imported by it, not rendered standalone. The preview must
+    // resolve to App.jsx, not whichever companion file was written last.
+    const block = multiFileBlock("blk-1", "fsid-A", [
+      {
+        path: "App.jsx",
+        lines: ['import Counter from "./Counter.jsx";', "export default function App() {", "  return <Counter />;", "}"],
+      },
+      { path: "Counter.jsx", lines: ["export default function Counter() { return <div>0</div>; }"] },
+      { path: "styles.css", lines: [".counter { padding: 16px; }"] },
+    ]);
+    const result = getCode(makeState([block]), "fsid-A");
+    const source = result.code.join("\n");
+    // Entry resolves to App.jsx, not the trailing styles.css (which would be
+    // empty/wrong).
+    expect(source).toContain("export default function App()");
+    expect(source).toContain("<Counter />");
+    expect(source).not.toContain(".counter { padding");
+    expect(result.code.join("\n").length).toBeGreaterThan(0);
+  });
 });
