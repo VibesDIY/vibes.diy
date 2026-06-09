@@ -7,7 +7,7 @@ import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
 import { formatErr } from "./format-err.js";
-import { resolveVibeArgs } from "../parse-vibe.js";
+import { resolveVibePositionals } from "../parse-vibe.js";
 
 export const ReqChats = type({
   type: "'vibes-diy.cli.chats'",
@@ -122,7 +122,7 @@ export function chatsCmd(ctx: CliCtx) {
       appSlug: positional({
         displayName: "vibe",
         description: "App slug or handle/app-slug",
-        type: string,
+        type: optional(string),
       }),
       chatId: positional({
         displayName: "chatId",
@@ -144,15 +144,16 @@ export function chatsCmd(ctx: CliCtx) {
         defaultValueIsSerializable: true,
       }),
     },
-    handler: ctx.cliStream.enqueue(({ handle, chatId, vibe, ...rest }) => {
-      const resolved = resolveVibeArgs({
-        vibe,
-        handle,
-        appSlug: "",
-        positionalAppSlug: rest.appSlug,
-      });
-      const base = { type: "vibes-diy.cli.chats" as const, ...rest, appSlug: resolved.appSlug, ownerHandle: resolved.handle };
-      return chatId === undefined ? base : { ...base, chatId };
+    handler: ctx.cliStream.enqueue(({ handle, chatId, vibe, appSlug, ...rest }) => {
+      const resolved = resolveVibePositionals({ vibe, handle, positionals: [appSlug, chatId] });
+      const resolvedChatId = resolved.trailing[0];
+      const base = {
+        type: "vibes-diy.cli.chats" as const,
+        ...rest,
+        appSlug: resolved.appSlug,
+        ownerHandle: resolved.handle,
+      };
+      return resolvedChatId === undefined ? base : { ...base, chatId: resolvedChatId };
     }),
   });
 }

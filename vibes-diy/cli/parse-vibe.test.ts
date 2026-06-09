@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseVibe, resolveVibeArgs } from "./parse-vibe.js";
+import { parseVibe, resolveVibeArgs, resolveVibePositionals } from "./parse-vibe.js";
 
 describe("parseVibe", () => {
   it("splits handle/app-slug into both parts", () => {
@@ -48,13 +48,13 @@ describe("resolveVibeArgs", () => {
 
   it("throws when --vibe conflicts with explicit --handle", () => {
     expect(() =>
-      resolveVibeArgs({ vibe: "jchris/hat-smeller", handle: "other-user", appSlug: "", positionalAppSlug: "" }),
+      resolveVibeArgs({ vibe: "jchris/hat-smeller", handle: "other-user", appSlug: "", positionalAppSlug: "" })
     ).toThrowError('Conflicting values: --vibe "jchris/hat-smeller" disagrees with --handle "other-user"');
   });
 
   it("throws when --vibe conflicts with explicit --app-slug", () => {
     expect(() =>
-      resolveVibeArgs({ vibe: "jchris/hat-smeller", handle: "", appSlug: "other-app", positionalAppSlug: "" }),
+      resolveVibeArgs({ vibe: "jchris/hat-smeller", handle: "", appSlug: "other-app", positionalAppSlug: "" })
     ).toThrowError('Conflicting values: --vibe "jchris/hat-smeller" disagrees with --app-slug "other-app"');
   });
 
@@ -65,7 +65,7 @@ describe("resolveVibeArgs", () => {
         handle: "jchris",
         appSlug: "hat-smeller",
         positionalAppSlug: "",
-      }),
+      })
     ).toEqual({
       handle: "jchris",
       appSlug: "hat-smeller",
@@ -119,5 +119,61 @@ describe("resolveVibeArgs", () => {
       handle: "",
       appSlug: "",
     });
+  });
+});
+
+describe("resolveVibePositionals", () => {
+  it("no --vibe: first positional is the vibe, rest are trailing args", () => {
+    expect(resolveVibePositionals({ vibe: "", handle: "", positionals: ["jchris/hat-smeller", "chat-123"] })).toEqual({
+      handle: "jchris",
+      appSlug: "hat-smeller",
+      trailing: ["chat-123"],
+    });
+  });
+
+  it("no --vibe, bare slug, no trailing", () => {
+    expect(resolveVibePositionals({ vibe: "", handle: "", positionals: ["hat-smeller"] })).toEqual({
+      handle: "",
+      appSlug: "hat-smeller",
+      trailing: [],
+    });
+  });
+
+  it("--vibe supplies the vibe, so every positional shifts to trailing", () => {
+    expect(resolveVibePositionals({ vibe: "alice/cool-app", handle: "", positionals: ["make it blue"] })).toEqual({
+      handle: "alice",
+      appSlug: "cool-app",
+      trailing: ["make it blue"],
+    });
+  });
+
+  it("--vibe with no positionals: empty trailing", () => {
+    expect(resolveVibePositionals({ vibe: "alice/cool-app", handle: "", positionals: [] })).toEqual({
+      handle: "alice",
+      appSlug: "cool-app",
+      trailing: [],
+    });
+  });
+
+  it("--handle (no --vibe) overrides handle; first positional is still the vibe", () => {
+    expect(resolveVibePositionals({ vibe: "", handle: "bob", positionals: ["jchris/hat-smeller", "chat-123"] })).toEqual({
+      handle: "bob",
+      appSlug: "hat-smeller",
+      trailing: ["chat-123"],
+    });
+  });
+
+  it("drops absent/empty positional slots before resolving", () => {
+    expect(resolveVibePositionals({ vibe: "alice/cool-app", handle: "", positionals: [undefined, ""] })).toEqual({
+      handle: "alice",
+      appSlug: "cool-app",
+      trailing: [],
+    });
+  });
+
+  it("throws a consistent error when no vibe can be resolved", () => {
+    expect(() => resolveVibePositionals({ vibe: "", handle: "", positionals: [] })).toThrowError(
+      "No vibe specified — pass a vibe (handle/app-slug) as a positional or use --vibe."
+    );
   });
 });

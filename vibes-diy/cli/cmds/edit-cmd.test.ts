@@ -337,7 +337,7 @@ describe("editEvento", () => {
     expect(request.ownerHandle).toBe("");
   });
 
-  it("--vibe overrides positional for edit", async () => {
+  it("--vibe supplies the vibe; the lone positional is the prompt", async () => {
     const ctx: CliCtx = {
       sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
       cliStream: cmd_tsStream(),
@@ -346,13 +346,27 @@ describe("editEvento", () => {
     };
     const reader = ctx.cliStream.stream.getReader();
     const firstRead = reader.read();
-    await run(editCmd(ctx), ["ignored", "make it blue", "--vibe", "alice/cool-app"]);
+    await run(editCmd(ctx), ["make it blue", "--vibe", "alice/cool-app"]);
 
     const first = await firstRead;
     await ctx.cliStream.close();
     const request = (first.value as { result: ReqEdit }).result;
     expect(request.appSlug).toBe("cool-app");
     expect(request.ownerHandle).toBe("alice");
+    expect(request.prompt).toBe("make it blue");
+  });
+
+  it("errors when the prompt is missing", async () => {
+    const ctx: CliCtx = {
+      sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
+      cliStream: cmd_tsStream(),
+      output: { stdout: () => undefined, stderr: () => undefined },
+      exitCode: 0,
+    };
+    await expect(run(editCmd(ctx), ["my-app"])).rejects.toThrow(
+      "No prompt provided — pass a follow-up prompt describing what to change."
+    );
+    await ctx.cliStream.close();
   });
 
   it("uses cwd by default and applies SEARCH/REPLACE against local seed files", async () => {

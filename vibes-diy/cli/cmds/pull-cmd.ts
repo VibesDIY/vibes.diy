@@ -16,7 +16,7 @@ import type { FileSystemItem } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
-import { resolveVibeArgs } from "../parse-vibe.js";
+import { resolveVibePositionals } from "../parse-vibe.js";
 import { formatErr } from "./format-err.js";
 
 export const ReqPull = type({
@@ -185,11 +185,10 @@ export function pullCmd(ctx: CliCtx) {
     },
     handler: ctx.cliStream.enqueue((args) => {
       if (args.userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle or --vibe instead\n");
-      const resolved = resolveVibeArgs({
+      const resolved = resolveVibePositionals({
         vibe: args.vibe,
         handle: args.handle || args.userSlug,
-        appSlug: "",
-        positionalAppSlug: args.appSlug ?? "",
+        positionals: [args.appSlug],
       });
       return {
         type: "vibes-diy.cli.pull",
