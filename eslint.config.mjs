@@ -22,6 +22,7 @@ const opts = tseslint.config(
   {
     ignores: [
       "**/.claude/**",
+      "**/.claire/**",
       "babel.config.cjs",
       "jest.config.js",
       "**/.netlify/**",
@@ -37,6 +38,7 @@ const opts = tseslint.config(
       "**/notes/**",
       "docs/superpowers/specs/eval-access-fn-workflow.js",
       "vibes/**/access.js",
+      "vibes/multi-file-test/helper.js",
       "vibesbox/**",
       "vibes.diy/tempo/**",
       "vibes.diy/failback-homepage/**",
