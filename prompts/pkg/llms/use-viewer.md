@@ -34,7 +34,7 @@ export default function App() {
 
 ## What you get
 
-- `viewer` — `{ userHandle, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — just use it in `<img src>`, don't construct it yourself.
+- `viewer` — `{ userHandle, displayName? }` or `null` for anonymous visitors. Avatars are not on the payload — render them with `<ViewerTag userHandle={...} />`, which resolves the avatar from the handle. Don't build avatar URLs yourself.
 - `isViewerPending` — `true` while the platform is still resolving the viewer identity (e.g. on first render before the parent shell has pushed the identity update). **Gate any auth-dependent UI on `!isViewerPending`** to avoid flashing the wrong state. Once it becomes `false`, `viewer` is either populated or definitively `null`.
 - `isOwner` — `true` when the viewer owns this vibe. Use it for management UI (settings, role grants, moderation).
 - `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Checks app-level ACLs. In most apps `viewer` and `access.hasRole()`/`access.hasChannel()` are the right gates instead.
@@ -147,7 +147,7 @@ export default function App() {
 Key points:
 
 - **Stamp `authorHandle` at write time** — persist the author's handle on the doc. Render with `<ViewerTag userHandle={authorHandle} />` which resolves display name and avatar automatically.
-- **`avatarUrl` is stable** — if the author changes their avatar, the URL stays the same and the bytes update. ViewerTag handles this for you.
+- **Avatars are stable** — ViewerTag resolves the avatar from the handle; if the author changes their avatar, the URL stays the same and the bytes update. ViewerTag handles this for you.
 - **One source of identity** — persist `authorHandle` on the doc. ViewerTag does the rest.
 
 ## Notes
