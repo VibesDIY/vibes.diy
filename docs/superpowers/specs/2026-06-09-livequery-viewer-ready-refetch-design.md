@@ -73,7 +73,11 @@ Inside each returned hook, read a stable viewer key from context and thread it i
 function createUseLiveQuery(database) {
   return function useLiveQuery(mapFn, query = {}, initialRows = []) {
     const { mountParams } = useVibeContext();
-    const viewerKey = mountParams.viewerEnv?.userId ?? null; // stable identity token
+    const v = mountParams.viewerEnv;
+    // Sandbox sees only userHandle (never Clerk userId); pair it with the
+    // access level so the effect re-fires when EITHER identity or access
+    // resolves null -> value. See vibe/types/index.ts viewerPayload.
+    const viewerKey = `${v?.viewer?.userHandle ?? ""}:${v?.access ?? ""}`;
     // ...existing state/memo...
     const refreshRows = useCallback(async () => {
       const res = await database.query(mapFn, { ...query, includeDocs: true });
@@ -89,7 +93,7 @@ function createUseLiveQuery(database) {
 }
 ```
 
-`viewerKey` is the resolved viewer identity (e.g. `viewerEnv.userId`); the exact field is settled during implementation against the actual `viewerEnv` shape. When it transitions from `null` → resolved (and on any later identity change), the effect re-runs and re-queries with the now-authenticated context.
+`viewerKey` is built from `viewerEnv.viewer.userHandle` (the only identity the sandbox ever sees — never the Clerk `userId`) paired with `viewerEnv.access`. When it transitions from empty → resolved (and on any later identity/access change), the effect re-runs and re-queries with the now-authenticated context. `viewerEnv` is updated by the `window` `message` listener in `VibeContext.tsx:111-124`, which catches both the parent's `postMessage` and `bootstrapViewer`'s synthetic dispatch — so the boot-time signal is covered.
 
 ### Why Approach 1 over Approach 2
 
@@ -114,6 +118,12 @@ Approach 2 (have `FireflyDatabase` react to `isEvtVibeViewerChanged` in its `onM
 
 ## Open questions (for Charlie review on the PR)
 
-1. **Boot signal:** exactly which event updates `viewerEnv` on first load — the synthetic `window`-dispatched `viewerChanged` from `bootstrapViewer`, or a parent `postMessage`? Approach 1 works either way (it rides `viewerEnv`), but confirming this validates the test setup.
-2. **Identity field:** is `viewerEnv.userId` the right stable key, or should we key on handle / a composite? Need the canonical field that flips from absent → present on auth.
-3. **Hooks vs DB-level:** confirm Approach 1 (hooks) is preferred over Approach 2 (DB `onMsg`), given the boot-channel uncertainty.
+Resolved from the code while authoring this spec:
+
+- **Boot signal (was Q1):** `viewerEnv` is updated by a `window` `message` listener (`VibeContext.tsx:111-124`) filtering `isEvtVibeViewerChanged`. It catches both the parent `postMessage` and `bootstrapViewer`'s synthetic dispatch, so the initial-load case is covered.
+- **Identity field (was Q2):** the sandbox only ever sees `viewer.userHandle` (`vibe/types/index.ts:460` `viewerPayload`), never the Clerk `userId`. Key is `userHandle` + `access` level.
+
+Still open for Charlie:
+
+1. **Hooks vs DB-level:** confirm Approach 1 (hooks key on viewer) is preferred over Approach 2 (`FireflyDatabase` reacting to `isEvtVibeViewerChanged`). Approach 1 rides the proven `viewerEnv` reactive path; Approach 2 is tidier but depends on the event traversing `onMsg`. Any reason to prefer the centralized DB-level re-fire?
+2. **Composite key churn:** keying on `userHandle:access` re-fires the query when access level changes too. Is there a scenario where `access` legitimately churns mid-session and would cause unwanted extra queries, or is null→value the only transition in practice?
