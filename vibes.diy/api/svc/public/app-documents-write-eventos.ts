@@ -26,7 +26,13 @@ import { eq, and, sql, inArray, desc } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess } from "./access-helpers.js";
-import { enforceAllowAnonymous, ForbiddenError, extractExportSource, type AccessDescriptor } from "./access-function.js";
+import {
+  enforceAllowAnonymous,
+  ForbiddenError,
+  extractExportSource,
+  isReadableResult,
+  type AccessDescriptor,
+} from "./access-function.js";
 import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
 import { GrantReduce, extractContribution } from "./grant-reduce.js";
 import { isFileMeta } from "./files-url-mint.js";
@@ -321,6 +327,26 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-error",
             error: { message: reason },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+
+        // Reject writes that place the doc in zero channels: the read gate
+        // refuses any channel-less doc (no owner bypass), so persisting it
+        // would create a doc unreadable by everyone, silently. Point the
+        // builder at the existing channel+grant pattern. Doc-local check —
+        // we do not chase the cross-doc grant graph here.
+        if (!isReadableResult(invokeResult)) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: {
+              code: "unreadable",
+              message:
+                "Unreadable write: access.js placed this doc in no channel, so no one can read it — not even its author. " +
+                "Return a channel + grant. Private to author: " +
+                "return { channels: [doc._id], grant: { users: { [user.userHandle]: [doc._id] } } }. " +
+                "Public: return { channels: [doc._id], grant: { public: [doc._id] } }.",
+            },
           } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
