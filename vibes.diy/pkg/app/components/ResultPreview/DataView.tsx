@@ -1,13 +1,35 @@
 import { useParams } from "react-router";
 import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { BuildURI, URI } from "@adviser/cement";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
+import { useAuth } from "@clerk/react";
 
 export function DataView({ promptState: _p }: { promptState: PromptState }) {
   const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
-  const { webVars: svcVars } = useVibesDiy();
+  const { webVars: svcVars, chatApi } = useVibesDiy();
+  const { isSignedIn } = useAuth();
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    if (!isSignedIn || !ownerHandle) {
+      setIsOwner(false);
+      return;
+    }
+    let cancelled = false;
+    void chatApi.listHandleBindings({}).then((res) => {
+      if (cancelled) return;
+      if (res.isErr()) {
+        setIsOwner(false);
+        return;
+      }
+      setIsOwner(res.Ok().items.some((item) => item.ownerHandle === ownerHandle));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn, ownerHandle, chatApi]);
 
   const previewUrl = useMemo(() => {
     if (fsId && appSlug && ownerHandle) {
@@ -20,14 +42,17 @@ export function DataView({ promptState: _p }: { promptState: PromptState }) {
         // same snapshot the preview iframe is showing (not always-latest).
         bindings: { appSlug, ownerHandle, fsId },
       });
-      const previewUrl = BuildURI.from(baseUrl)
+      const uri = BuildURI.from(baseUrl)
         .appendRelative(".db-explorer")
         .setParam("npmUrl", svcVars.pkgRepos.workspace)
         .setParam("preview", "yes");
-      return previewUrl;
+      if (isOwner) {
+        uri.setParam("adminMode", "yes");
+      }
+      return uri;
     }
     return null;
-  }, [fsId, ownerHandle, appSlug]);
+  }, [fsId, ownerHandle, appSlug, isOwner]);
 
   if (!previewUrl) {
     return <>No App Found</>;

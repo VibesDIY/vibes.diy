@@ -54,6 +54,7 @@ export interface VibeApp {
   readonly appSlug: string;
   readonly ownerHandle: string;
   readonly fsId: string;
+  readonly adminMode?: boolean;
 }
 
 export interface VibeSandboxApiOptions {
@@ -308,6 +309,7 @@ export class VibeSandboxApi {
         type: "vibe.req.whoAmI",
         appSlug: this.svc.vibeApp.appSlug,
         ownerHandle: this.svc.vibeApp.ownerHandle,
+        ...(this.svc.vibeApp.adminMode ? { adminMode: true } : {}),
       },
       { wait: isResVibeWhoAmI, timeout: 10000 }
     );
