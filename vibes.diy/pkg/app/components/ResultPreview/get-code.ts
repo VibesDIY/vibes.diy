@@ -2,8 +2,16 @@ import { applyEdits, applyReplace, isBlockEnd, isCodeBegin, isCodeEnd, isCodeLin
 import { AppCode } from "../../types/code-editor.js";
 import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 
+// Files the AI may emit alongside `App.jsx` that are NOT part of the rendered
+// preview. `access.js` is a server-side access function — it never runs in the
+// sandbox iframe — so its edits must be routed to a separate buffer and never
+// resolved as the preview source.
+const DEFAULT_PATH = "App.jsx";
+const SERVER_ONLY_PATHS = new Set(["access.js"]);
+
 interface DebugSection {
   blockIdx: number;
+  path: string;
   fsRefId: string | undefined;
   rawLines: string[];
   parsedEdits: { kind: string; preview: string }[];
@@ -26,8 +34,16 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
   //   2. Hydrated saved file for the requested fsId (after chat reload).
   //   3. Latest running source (no historical match — typically the in-flight
   //      turn before block.end has fired).
+  // The AI emits multiple files in one turn (e.g. `App.jsx` + `access.js`).
+  // Each code section names its file via `path`. Keep a separate running buffer
+  // per file so an `access.js` create can't clobber the `App.jsx` buffer (which
+  // would make every subsequent App.jsx SEARCH/REPLACE fail to match). The
+  // preview resolves to the entry file — the most recent non-server-only file.
   const seedFromHydrate = fsId && promptState.hydratedSource?.fsId === fsId ? promptState.hydratedSource.code.join("\n") : "";
-  let source = seedFromHydrate;
+  const sources = new Map<string, string>();
+  if (seedFromHydrate) sources.set(DEFAULT_PATH, seedFromHydrate);
+  let entryPath = DEFAULT_PATH;
+  const entrySource = () => sources.get(entryPath) ?? "";
   let complete = false;
   let streamId: string | undefined;
   let foundAny = false;
@@ -40,11 +56,13 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
     let codeLines: string[] = [];
     let inSection = false;
     let sectionClosed = false;
+    let currentPath = DEFAULT_PATH;
     for (const msg of block.msgs) {
       if (isCodeBegin(msg)) {
         codeLines = [];
         inSection = true;
         sectionClosed = false;
+        currentPath = msg.path ?? DEFAULT_PATH;
         streamId = msg.streamId;
         foundAny = true;
         continue;
@@ -55,11 +73,12 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
       }
       if (isCodeEnd(msg) && inSection) {
         const parsed = parseFenceBody(codeLines);
-        const sourceLenBefore = source.length;
-        const result = applyEdits(source, parsed.edits);
+        const before = sources.get(currentPath) ?? "";
+        const sourceLenBefore = before.length;
+        const result = applyEdits(before, parsed.edits);
         const matchKinds: string[] = [];
         // Re-run per-edit so we can capture matchKind for telemetry.
-        let probeSource = source;
+        let probeSource = before;
         for (const edit of parsed.edits) {
           if (edit.op === "create") {
             matchKinds.push("create");
@@ -70,11 +89,13 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
             if (r.ok) probeSource = r.content;
           }
         }
-        source = result.content;
+        sources.set(currentPath, result.content);
+        if (!SERVER_ONLY_PATHS.has(currentPath)) entryPath = currentPath;
         inSection = false;
         sectionClosed = true;
         debugSections.push({
           blockIdx,
+          path: currentPath,
           fsRefId: undefined,
           rawLines: codeLines,
           parsedEdits: parsed.edits.map((e) =>
@@ -96,20 +117,23 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
       }
     }
     // For an in-flight section (no code.end yet), preview a tentative create —
-    // if the body has no SEARCH markers we can show the partial content.
+    // if the body has no SEARCH markers we can show the partial content. Route
+    // it to the section's own file so an in-flight access.js doesn't surface as
+    // the App.jsx preview.
     if (inSection) {
       const parsed = parseFenceBody(codeLines);
       const onlyCreate = parsed.edits.length === 1 && parsed.edits[0].op === "create";
       if (onlyCreate) {
-        source = (parsed.edits[0] as { content: string }).content;
+        sources.set(currentPath, (parsed.edits[0] as { content: string }).content);
+        if (!SERVER_ONLY_PATHS.has(currentPath)) entryPath = currentPath;
       }
     }
     complete = sectionClosed;
 
-    // Snapshot the resolved source under this block's fsId (if pinned).
+    // Snapshot the resolved entry source under this block's fsId (if pinned).
     const blockEnd = block.msgs.find((msg) => isBlockEnd(msg));
     if (blockEnd && isBlockEnd(blockEnd) && blockEnd.fsRef?.fsId) {
-      snapshotByFsId.set(blockEnd.fsRef.fsId, source);
+      snapshotByFsId.set(blockEnd.fsRef.fsId, entrySource());
     }
   }
 
@@ -138,7 +162,7 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
       fsId,
       seedLen: seedFromHydrate.length,
       sections: debugSections,
-      finalLen: source.length,
+      finalLen: entrySource().length,
       snapshotFsIds: [...snapshotByFsId.keys()],
       failedSectionCount,
     };
@@ -154,7 +178,7 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
     }
   }
   if (foundAny) {
-    return { code: source.split("\n"), complete, streamId };
+    return { code: entrySource().split("\n"), complete, streamId };
   }
   return { code: [], complete, streamId };
 }
