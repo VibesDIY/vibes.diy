@@ -77,6 +77,9 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const args = ctx.validated;
+    if (args.appSlug === "") {
+      return Result.Err("No vibe specified. Pass `pull <handle/app-slug>` or `pull --vibe <handle/app-slug>`.");
+    }
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
     const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);

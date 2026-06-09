@@ -1,8 +1,9 @@
+import { AppContext, Result } from "@adviser/cement";
 import { run } from "cmd-ts";
 import { describe, expect, it } from "vitest";
 import { cmd_tsStream } from "../cmd-ts-stream.js";
 import type { CliCtx } from "../cli-ctx.js";
-import { ReqPull, pullCmd, isReqPull, deriveHostnameBase } from "./pull-cmd.js";
+import { ReqPull, pullCmd, pullEvento, isReqPull, deriveHostnameBase } from "./pull-cmd.js";
 
 function makeCtx(): CliCtx {
   const cliStream = cmd_tsStream();
@@ -12,6 +13,32 @@ function makeCtx(): CliCtx {
     output: { stdout: () => undefined, stderr: () => undefined },
     exitCode: 0,
   };
+}
+
+// Minimal trigger for exercising pullEvento.handle directly. The api stub only
+// needs the methods resolveHandle touches, since the no-vibe guard short-circuits
+// before any app fetch.
+function buildPullTrigger(args: ReqPull) {
+  const cliCtx: CliCtx = {
+    sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
+    cliStream: cmd_tsStream(),
+    output: { stdout: () => undefined, stderr: () => undefined },
+    vibesDiyApiFactory: () =>
+      ({
+        ensureUserSettings: async () => Result.Ok({ settings: [] }),
+        listUserSlugAppSlug: async () => Result.Ok({ items: [] }),
+      }) as unknown as ReturnType<NonNullable<CliCtx["vibesDiyApiFactory"]>>,
+    exitCode: 0,
+  };
+  const appCtx = new AppContext().set("cliCtx", cliCtx);
+  return {
+    id: "trigger-1",
+    ctx: appCtx,
+    enRequest: args,
+    request: { type: "msg.cmd-ts", cmdTs: { raw: args, outputFormat: "text" }, result: args },
+    validated: args,
+    send: { send: async () => Result.Ok(undefined) },
+  } as unknown as Parameters<typeof pullEvento.handle>[0];
 }
 
 describe("pullCmd", () => {
@@ -110,6 +137,23 @@ describe("pullCmd", () => {
     const request = (first.value as { result: ReqPull }).result;
     expect(request.appSlug).toBe("hat-smeller");
     expect(request.ownerHandle).toBe("other-user");
+  });
+});
+
+describe("pullEvento", () => {
+  it("returns a clear error when no vibe is provided", async () => {
+    const req = {
+      type: "vibes-diy.cli.pull",
+      appSlug: "",
+      ownerHandle: "",
+      dir: "",
+      apiUrl: "https://example.com/api",
+    } satisfies ReqPull;
+
+    const r = await pullEvento.handle(buildPullTrigger(req));
+
+    expect(r.isErr()).toBe(true);
+    expect(r.Err().toString()).toContain("No vibe specified");
   });
 });
 
