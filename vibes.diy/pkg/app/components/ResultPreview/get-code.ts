@@ -9,6 +9,14 @@ import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
 const DEFAULT_PATH = "App.jsx";
 const SERVER_ONLY_PATHS = new Set(["access.js"]);
 
+// Seeded/hydrated filesystem blocks carry leading-slash filenames (`/App.jsx`,
+// `/access.js`) while fresh model edits stream bare (`App.jsx`). Strip any
+// leading `./` or `/` so both forms key the same per-file buffer and the
+// server-only check matches either form.
+function normalizePath(path: string): string {
+  return path.replace(/^(?:\.?\/)+/, "") || DEFAULT_PATH;
+}
+
 interface DebugSection {
   blockIdx: number;
   path: string;
@@ -62,7 +70,7 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
         codeLines = [];
         inSection = true;
         sectionClosed = false;
-        currentPath = msg.path ?? DEFAULT_PATH;
+        currentPath = normalizePath(msg.path ?? DEFAULT_PATH);
         streamId = msg.streamId;
         foundAny = true;
         continue;
