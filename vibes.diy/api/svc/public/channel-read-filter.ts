@@ -10,8 +10,10 @@ export function filterDocsByChannel(
   outputRows: OutputRow[],
   userHandle: string | null,
   effectiveChannels: Set<string>,
-  publicChannels: Set<string>
+  publicChannels: Set<string>,
+  adminOverride = false
 ): Doc[] {
+  if (adminOverride) return docs;
   if (outputRows.length === 0) return docs;
 
   const docChannels = new Map<string, string[]>();
