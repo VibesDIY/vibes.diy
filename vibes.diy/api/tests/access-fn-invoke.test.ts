@@ -109,7 +109,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
 
   it("authenticated write passes when invokeAccessFn allows it", async () => {
     recorder.calls = [];
-    recorder.result = { allowAnonymous: true };
+    recorder.result = { channels: ["default"], allowAnonymous: true };
     const res = await ownerApi.putDoc({
       ownerHandle,
       appSlug,
@@ -139,7 +139,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
 
   it("doc passed to invokeAccessFn includes _id even when client omits docId", async () => {
     recorder.calls = [];
-    recorder.result = { allowAnonymous: true };
+    recorder.result = { channels: ["default"], allowAnonymous: true };
     const res = await ownerApi.putDoc({
       ownerHandle,
       appSlug,
@@ -155,7 +155,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
 
   it("doc._id matches client-provided docId", async () => {
     recorder.calls = [];
-    recorder.result = { allowAnonymous: true };
+    recorder.result = { channels: ["default"], allowAnonymous: true };
     const explicitId = "explicit-doc-id-123";
     const res = await ownerApi.putDoc({
       ownerHandle,
@@ -206,6 +206,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     viewerGrantEvents.length = 0;
 
     recorder.result = {
+      channels: [docId],
       grant: { users: { [ownerHandle]: [channelId] } },
     };
     const r1 = await ownerApi.putDoc({
@@ -225,6 +226,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     });
 
     recorder.result = {
+      channels: [docId],
       grant: { users: { [ownerHandle]: [channelId] } },
     };
     const r2 = await ownerApi.putDoc({
@@ -238,7 +240,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(viewerGrantEvents).toHaveLength(1);
 
-    recorder.result = { allowAnonymous: true };
+    recorder.result = { channels: [docId], allowAnonymous: true };
     const r3 = await ownerApi.putDoc({
       ownerHandle,
       appSlug,
@@ -316,7 +318,7 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     assert(wildcardCid !== undefined, "wildcard binding must exist");
 
     recorder.calls = [];
-    recorder.result = { allowAnonymous: true };
+    recorder.result = { channels: ["notes"], allowAnonymous: true };
     const r1 = await ownerApi.putDoc({
       ownerHandle,
       appSlug,
