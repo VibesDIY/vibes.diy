@@ -61,6 +61,9 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
+      // DM dbs are implicitly safe here: a `_d.` direct-channel ownerHandle slug
+      // never matches a handleBinding.handle, so checkDocAccess returns "none" and
+      // override can never reach another user's DMs (parallel to TODO(#2290) in queryDocs).
       const { access } = req._auth
         ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx))
         : { access: "none" as DocAccessLevel };
@@ -365,6 +368,10 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
+      // TODO(#2290): remove this isDirectChannel special case once DM access is
+      // modeled as an access.js fn. The branch deliberately leaves access = "none"
+      // for DM dbs so the owner override never reaches another user's DMs.
+      let access: DocAccessLevel = "none";
       if (isDirectChannel(req.ownerHandle)) {
         const userId = req._auth?.verifiedAuth.claims.userId;
         const rAccess = userId ? await checkDirectChannelAccess(vctx, req.ownerHandle, userId) : Result.Ok(false);
@@ -375,10 +382,11 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
           } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
+        // access remains "none" for DM dbs — override must never reach DMs
       } else {
-        const { access } = req._auth
+        ({ access } = req._auth
           ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx))
-          : { access: "none" as DocAccessLevel };
+          : { access: "none" as DocAccessLevel });
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
           await ctx.send.send(ctx, {
@@ -414,39 +422,72 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       const channelKeys: string[] = [];
       if (afbRowS?.accessFnCid) {
         const tOutputsS = vctx.sql.tables.accessFnOutputs;
-        const grantOutputs = await vctx.sql.db
-          .select({ docId: tOutputsS.docId, output: tOutputsS.output })
-          .from(tOutputsS)
-          .where(
-            and(
-              eq(tOutputsS.ownerHandle, req.ownerHandle),
-              eq(tOutputsS.appSlug, req.appSlug),
-              eq(tOutputsS.dbName, req.dbName),
-              eq(tOutputsS.fnCid, afbRowS.accessFnCid),
-              eq(tOutputsS.hasGrants, 1)
-            )
-          );
 
-        const reduce = new GrantReduce();
-        for (const row of grantOutputs) {
-          reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
-        }
+        if (access === "override") {
+          // Owner override: subscribe to ALL channels that appear in any access-fn
+          // output for this db. This ensures the owner receives live doc-changed
+          // events for docs in channels they aren't personally a member of.
+          // Note: channels added after this subscribe call won't be covered until
+          // the next subscribeDocs — a known limitation.
+          const allOutputs = await vctx.sql.db
+            .select({ output: tOutputsS.output })
+            .from(tOutputsS)
+            .where(
+              and(
+                eq(tOutputsS.ownerHandle, req.ownerHandle),
+                eq(tOutputsS.appSlug, req.appSlug),
+                eq(tOutputsS.dbName, req.dbName),
+                eq(tOutputsS.fnCid, afbRowS.accessFnCid)
+              )
+            );
 
-        const userHandle = req._auth
-          ? await vctx.sql.db
-              .select({ handle: vctx.sql.tables.handleBinding.handle })
-              .from(vctx.sql.tables.handleBinding)
-              .where(eq(vctx.sql.tables.handleBinding.userId, req._auth.verifiedAuth.claims.userId))
-              .limit(1)
-              .then((r) => r[0]?.handle ?? null)
-          : null;
+          const allChannels = new Set<string>();
+          for (const row of allOutputs) {
+            const parsed = JSON.parse(row.output) as { channels?: string[] };
+            if (Array.isArray(parsed.channels)) {
+              for (const ch of parsed.channels) {
+                allChannels.add(ch);
+              }
+            }
+          }
+          for (const ch of allChannels) {
+            channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
+          }
+        } else {
+          const grantOutputs = await vctx.sql.db
+            .select({ docId: tOutputsS.docId, output: tOutputsS.output })
+            .from(tOutputsS)
+            .where(
+              and(
+                eq(tOutputsS.ownerHandle, req.ownerHandle),
+                eq(tOutputsS.appSlug, req.appSlug),
+                eq(tOutputsS.dbName, req.dbName),
+                eq(tOutputsS.fnCid, afbRowS.accessFnCid),
+                eq(tOutputsS.hasGrants, 1)
+              )
+            );
 
-        const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
-        for (const ch of effectiveChannels) {
-          channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
-        }
-        for (const ch of reduce.publicChannels) {
-          channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
+          const reduce = new GrantReduce();
+          for (const row of grantOutputs) {
+            reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
+          }
+
+          const userHandle = req._auth
+            ? await vctx.sql.db
+                .select({ handle: vctx.sql.tables.handleBinding.handle })
+                .from(vctx.sql.tables.handleBinding)
+                .where(eq(vctx.sql.tables.handleBinding.userId, req._auth.verifiedAuth.claims.userId))
+                .limit(1)
+                .then((r) => r[0]?.handle ?? null)
+            : null;
+
+          const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
+          for (const ch of effectiveChannels) {
+            channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
+          }
+          for (const ch of reduce.publicChannels) {
+            channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
+          }
         }
       }
 

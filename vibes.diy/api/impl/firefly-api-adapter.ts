@@ -60,12 +60,13 @@ export class FireflyApiAdapter {
   private async ensureAdminMode(ownerHandle: string): Promise<void> {
     if (!this.adminMode) return;
     await this.adminOnce.once(async () => {
-      await this.api.whoAmI({
+      const r = await this.api.whoAmI({
         tid: crypto.randomUUID(),
         appSlug: this.svc.vibeApp.appSlug,
         ownerHandle,
         adminMode: true,
       });
+      if (r.isErr()) throw new Error(`adminMode whoAmI failed: ${r.Err()}`);
     });
   }
 
