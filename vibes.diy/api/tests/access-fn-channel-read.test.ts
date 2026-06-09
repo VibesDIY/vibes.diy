@@ -120,9 +120,8 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
 
     // Seed secret-room db: insert a binding (reuse actualCid) so channel filtering applies,
     // then putDoc with channels: ["vip"] — owner is not in "vip", so normal reads filter it out.
-    const tAfbSecret = appCtx.vibesCtx.sql.tables.accessFunctionBindings;
     await appCtx.vibesCtx.sql.db
-      .insert(tAfbSecret)
+      .insert(tAfb)
       .values({
         ownerHandle,
         appSlug,
@@ -131,7 +130,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
         updated: new Date().toISOString(),
       })
       .onConflictDoUpdate({
-        target: [tAfbSecret.ownerHandle, tAfbSecret.appSlug, tAfbSecret.dbName],
+        target: [tAfb.ownerHandle, tAfb.appSlug, tAfb.dbName],
         set: { accessFnCid: actualCid, updated: new Date().toISOString() },
       });
 
@@ -140,6 +139,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
       ownerHandle,
       appSlug,
       dbName: "secret-room",
+      docId: "gated-doc",
       doc: { _id: "gated-doc", title: "vip-only" },
     });
     assert(rGated.isOk(), "gated-doc putDoc failed");
@@ -205,5 +205,17 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
       .docs.map((d) => d._id)
       .sort();
     expect(ids).toContain("gated-doc"); // owner not in "vip" — only override lets this through
+  });
+
+  it("owner in adminMode sees gated doc via getDoc", async () => {
+    const who = await ownerApi.whoAmI({ tid: crypto.randomUUID(), appSlug, ownerHandle, adminMode: true });
+    assert(who.isOk(), "whoAmI adminMode should succeed");
+
+    const r = await ownerApi.getDoc({ appSlug, ownerHandle, dbName: "secret-room", docId: "gated-doc" });
+    assert(r.isOk(), `getDoc failed: ${r.isErr() ? r.Err().message : ""}`);
+    // Expect an actual doc, NOT a not-found response.
+    // Owner is not in "vip"; without the access !== "override" guard this would return not-found.
+    expect(r.Ok().status).toBe("ok");
+    expect(r.Ok().id).toBe("gated-doc");
   });
 });
