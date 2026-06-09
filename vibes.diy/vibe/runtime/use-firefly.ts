@@ -114,6 +114,10 @@ export function useFireproof(name = "useFireproof", config: { acl?: DbAcl; acces
 function createUseDocument(database: FireflyDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useDocument(initialDocOrFn?: any) {
+    // Re-fetches when viewer identity resolves asynchronously (#2285).
+    const { mountParams } = useVibeContext();
+    const viewerEnv = mountParams.viewerEnv;
+    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}`;
     const updateHappenedRef = useRef(false);
     let initialDoc: Record<string, unknown>;
     if (typeof initialDocOrFn === "function") {
@@ -192,7 +196,7 @@ function createUseDocument(database: FireflyDatabase) {
     }, [doc._id, refresh]);
     useEffect(() => {
       void refresh();
-    }, [refresh]);
+    }, [refresh, viewerKey]);
     const submit = useCallback(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       async (e?: any) => {
@@ -209,6 +213,10 @@ function createUseDocument(database: FireflyDatabase) {
 function createUseLiveQuery(database: FireflyDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useLiveQuery(mapFn: any, query: any = {}, initialRows: any[] = []) {
+    // Re-fetches when viewer identity resolves asynchronously (#2285).
+    const { mountParams } = useVibeContext();
+    const viewerEnv = mountParams.viewerEnv;
+    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}`;
     const [result, setResult] = useState({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       docs: initialRows.map((r: any) => r.doc).filter((r: any) => !!r),
@@ -226,7 +234,7 @@ function createUseLiveQuery(database: FireflyDatabase) {
       return () => {
         unsubscribe();
       };
-    }, [database, refreshRows]);
+    }, [database, refreshRows, viewerKey]);
     return result;
   };
 }
@@ -234,6 +242,10 @@ function createUseLiveQuery(database: FireflyDatabase) {
 function createUseAllDocs(database: FireflyDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useAllDocs(query: any = {}) {
+    // Re-fetches when viewer identity resolves asynchronously (#2285).
+    const { mountParams } = useVibeContext();
+    const viewerEnv = mountParams.viewerEnv;
+    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}`;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [result, setResult] = useState<any>({ docs: [], rows: [] });
     const queryString = useMemo(() => JSON.stringify(query), [query]);
@@ -251,7 +263,7 @@ function createUseAllDocs(database: FireflyDatabase) {
       return () => {
         unsubscribe();
       };
-    }, [database, refreshRows]);
+    }, [database, refreshRows, viewerKey]);
     return result;
   };
 }
@@ -259,6 +271,10 @@ function createUseAllDocs(database: FireflyDatabase) {
 function createUseChanges(database: FireflyDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useChanges(_since: any[] = [], opts: any = {}) {
+    // Re-fetches when viewer identity resolves asynchronously (#2285).
+    const { mountParams } = useVibeContext();
+    const viewerEnv = mountParams.viewerEnv;
+    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}`;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [result, setResult] = useState<any>({ docs: [], rows: [] });
     const queryString = useMemo(() => JSON.stringify(opts), [opts]);
@@ -270,7 +286,7 @@ function createUseChanges(database: FireflyDatabase) {
     useEffect(() => {
       refreshRows();
       return database.subscribe(refreshRows);
-    }, [refreshRows]);
+    }, [refreshRows, viewerKey]);
     return result;
   };
 }
