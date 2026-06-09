@@ -4,7 +4,7 @@
 
 **Goal:** When a write is governed by an access function that places the doc in **zero channels**, reject the write with a clear `unreadable` error instead of silently persisting a doc no one — not even its author — can ever read.
 
-**Architecture:** Add a pure, doc-local predicate `isReadableResult(descriptor)` (true iff the access result lists ≥1 channel). Call it in the document-write gate right after the access function is evaluated and before the row is inserted; if the result is not readable, send a `vibes.diy.res-error` with an actionable message pointing at the existing channel+grant pattern, and skip the insert. The check is **doc-local on purpose** — it only looks at this write's `channels`, never the cross-doc grant graph (no grant chasing).
+**Architecture:** Add a pure, doc-local predicate `isReadableResult(descriptor)` (true iff the access result lists ≥1 channel). Call it in the document-write gate right after the access function is evaluated and before the row is inserted; if the result is not readable, send a `vibes.diy.res-error` carrying a stable `code: "unreadable"` plus an actionable message pointing at the existing channel+grant pattern, and skip the insert. The check is **doc-local on purpose** — it only looks at this write's `channels`, never the cross-doc grant graph (no grant chasing).
 
 **Tech Stack:** TypeScript, Drizzle (server tables), Vitest. Access functions run as JS in QuickJS server-side; this guard is a runtime check on their returned `AccessDescriptor`.
 
@@ -191,6 +191,8 @@ describe("write gate rejects unreadable (zero-channel) writes", { timeout: 15000
     });
     expect(rRes.isErr()).toBe(true);
     expect(rRes.Err().message).toMatch(/no channel|unreadable/i);
+    // Stable machine-readable code (Q3) — surfaced via mkResError(message, code).
+    expect(rRes.Err().code).toBe("unreadable");
   });
 
   it("allows a write whose access result has a channel", async () => {
@@ -238,6 +240,10 @@ if (!isReadableResult(invokeResult)) {
   await ctx.send.send(ctx, {
     type: "vibes.diy.res-error",
     error: {
+      // Stable machine-readable code so the runtime / codegen-eval loop can
+      // self-correct without string-matching the message. `ResError.error`
+      // already supports an optional `code` (see api/types/common.ts).
+      code: "unreadable",
       message:
         "Unreadable write: access.js placed this doc in no channel, so no one can read it — not even its author. " +
         "Return a channel + grant. Private to author: " +
@@ -346,7 +352,12 @@ git commit -m "test(access): no-access-fn apps unaffected by unreadable guard"
 - **The "author-readable default" (Option C).** Mutually exclusive with this strict guard. If C is later chosen, this guard would be removed, not stacked.
 - **ImgGen hook changes** (augment-not-replace, host-doc attach) — tracked in VibesDIY/vibes.diy#2279.
 - **Prompt/LLM/md guidance updates** teaching builders to channel every readable doc type — a docs change, separate PR.
-- **Migration / grace window for already-deployed apps** that currently rely on `{}` — a rollout decision (see Open Questions for Charlie).
+
+## Rollout (decided)
+
+**Hard-enforce globally from day one — no phased migration.** Charlie proposed a staged observe → warn-existing → enforce rollout; the owner decided against it: go straight to full enforcement and **let old usage break**. Apps whose access.js returns `{}` for a read-back doc type will start failing those writes immediately, surfacing as the `unreadable` error (`code: "unreadable"`). No observe phase, no warn-existing phase, no new-vs-existing app gating, no kill switch. The fix for a broken app is a one-line access.js change (channel + grant), and the error message + code tell the builder exactly what to do.
+
+Consequence to accept knowingly: any currently-deployed app relying on `{}` to write read-back docs breaks on its next such write until its access.js is updated.
 
 ## Self-Review
 
