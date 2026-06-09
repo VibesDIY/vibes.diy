@@ -248,4 +248,34 @@ describe("CodeEditor getCode — multi-file (App.jsx + access.js)", () => {
     expect(source).toContain("<h1>hi</h1>");
     expect(source).not.toContain("function appDb");
   });
+
+  it("normalizes leading-slash paths so seeded /App.jsx and streamed App.jsx share a buffer", () => {
+    // Seeded filesystem blocks carry leading-slash filenames ("/App.jsx",
+    // "/access.js"); fresh model edits stream bare ("App.jsx"). Both must
+    // resolve to the same file or the SEARCH/REPLACE runs against an empty
+    // buffer (empty/stale preview), and "/access.js" must still be recognized
+    // as server-only.
+    const block = multiFileBlock("blk-1", "fsid-A", [
+      { path: "/App.jsx", lines: ["export default function App() {", "  return <button>ADD</button>;", "}"] },
+      { path: "/access.js", lines: ["export function appDb(doc, oldDoc, user) { return {}; }"] },
+      {
+        path: "App.jsx",
+        lines: [
+          "<<<<<<< SEARCH",
+          "  return <button>ADD</button>;",
+          "=======",
+          "  return <button>LIST</button>;",
+          ">>>>>>> REPLACE",
+        ],
+      },
+    ]);
+    const result = getCode(makeState([block]), "fsid-A");
+    const source = result.code.join("\n");
+    expect(source).toContain("export default function App()");
+    expect(source).toContain("<button>LIST</button>");
+    expect(source).not.toContain("<button>ADD</button>");
+    expect(source).not.toContain("function appDb");
+    const dbg = (globalThis as unknown as { __aiderEditsDebug?: { failedSectionCount: number } }).__aiderEditsDebug;
+    expect(dbg?.failedSectionCount ?? 0).toBe(0);
+  });
 });
