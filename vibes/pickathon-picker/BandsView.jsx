@@ -34,7 +34,11 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
           const lineupColor = band.lineup?.color || "#d7c57d";
           const lineupText = band.lineup?.textColor || "#000";
           return (
-            <div key={band.title} className={anyFav ? c.favCard : c.eventCard}>
+            <div
+              key={band.title}
+              className={anyFav ? c.favCard : "rounded-2xl border-4 border-[#4A4A4A] p-4 shadow-lg"}
+              style={anyFav ? undefined : { backgroundColor: lineupColor }}
+            >
               <div className="flex items-start gap-3">
                 {canWrite && (
                   <button
@@ -47,10 +51,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <h3 className={`text-xl font-black ${anyFav ? "text-white" : c.bodyText}`}>{band.title}</h3>
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase"
-                      style={{ backgroundColor: lineupColor, color: lineupText }}
-                    >
+                    <span className="px-3 py-1 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase bg-[#BACD32] text-[#4A4A4A]">
                       {lineupLabel}
                     </span>
                     {superMode && band.events.some((e) => favCounts[e.eventId] > 0) && (
