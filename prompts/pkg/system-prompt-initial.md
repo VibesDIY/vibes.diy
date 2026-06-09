@@ -66,7 +66,7 @@ Target ~40–60 lines. The shell should look like a real app with empty sections
 >     ctx.requireAccess(doc.channelId)
 >     return { channels: [doc.channelId] }
 >   }
->   return {}
+>   throw { forbidden: "unknown document type" }
 > }
 > ```
 
