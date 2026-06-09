@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, Drizzle, Evento WS handlers, ArkType wire types, Vitest. Spec: [docs/superpowers/specs/2026-06-09-owner-mode-data-tab-cli-design.md](../specs/2026-06-09-owner-mode-data-tab-cli-design.md). Issue: [#2278](https://github.com/VibesDIY/vibes.diy/issues/2278).
 
-**Resolve before client tasks (4–5):** Open questions Q1 (default-on vs flag) and Q2 (data tab always-admin vs mirror toggle) in the spec. Tasks 4–5 below implement the **default-on** answer; adjust if review picks the flag/toggle path. Tasks 1–3 (server fix + tests) are unaffected by those answers.
+**Review decisions (CharlieHelps, [#2286](https://github.com/VibesDIY/vibes.diy/pull/2286)):** default-on `adminMode` (Q1), data tab **always owner-mode** (Q2), **connection-level** transport (Q3), `checkDocAccess` is the only `override` path (Q4), and — because no client-side owner gate exists today — the data tab must gate sending `adminMode: true` on **confirmed owner state** (Q5, Task 5). All five questions are resolved; the tasks below reflect those answers.
 
 **Run tests from:** `vibes.diy/api/` — `pnpm vitest run tests/<file>` (see `package.json` test script for the exact config flag if `vitest` isn't a direct bin).
 
