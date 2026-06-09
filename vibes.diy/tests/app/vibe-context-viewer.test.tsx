@@ -17,7 +17,7 @@ describe("VibeContextProvider", () => {
         mountParams={{
           usrEnv: {},
           viewerEnv: {
-            viewer: { userHandle: "alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
+            viewer: { userHandle: "alice" },
             access: "override",
           },
         }}
@@ -47,7 +47,7 @@ describe("VibeContextProvider", () => {
       new MessageEvent("message", {
         data: {
           type: "vibe.evt.viewerChanged",
-          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
+          viewer: { userHandle: "alice", displayName: "Alice" },
           access: "viewer",
         },
       })
@@ -58,7 +58,5 @@ describe("VibeContextProvider", () => {
       expect(captured?.mountParams.viewerEnv?.viewer?.userHandle).toBe("alice");
     });
     expect(captured?.mountParams.viewerEnv?.access).toBe("viewer");
-    // avatarUrl is on the viewer object, not in viewerEnv root.
-    expect(captured?.mountParams.viewerEnv?.viewer?.avatarUrl).toBe("https://api.example.com/u/alice/avatar");
   });
 });

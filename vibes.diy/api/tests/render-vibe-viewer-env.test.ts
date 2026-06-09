@@ -80,7 +80,6 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
       auth: undefined,
       appSlug,
       ownerUserSlug: ownerHandle,
-      apiBaseUrl: "https://api.test",
     });
 
     expect(rViewer.isOk()).toBe(true);

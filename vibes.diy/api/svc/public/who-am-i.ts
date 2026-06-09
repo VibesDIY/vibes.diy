@@ -38,9 +38,6 @@ export interface ResolveWhoAmIArgs {
   auth: VerifiedResult | undefined;
   appSlug: string;
   ownerUserSlug: string;
-  // Absolute origin (e.g. "https://vibes.diy") used to build viewer.avatarUrl.
-  // Any trailing slashes are stripped so the resulting URL never contains "//u/".
-  apiBaseUrl: string;
   adminMode?: boolean;
 }
 
@@ -128,8 +125,7 @@ async function resolveGrants(
 }
 
 export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArgs): Promise<Result<ResolvedWhoAmI>> {
-  const { auth, appSlug, ownerUserSlug, apiBaseUrl } = args;
-  const baseOrigin = apiBaseUrl.replace(/\/+$/, "");
+  const { auth, appSlug, ownerUserSlug } = args;
 
   const viewerUserId = auth?.verifiedAuth.claims.userId;
   const { access, isOwner } = viewerUserId
@@ -200,12 +196,11 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   }
 
   const displayName = displayOverride ?? deriveDisplayName(auth.verifiedAuth.claims);
-  const avatarUrl = `${baseOrigin}/u/${encodeURIComponent(viewerSlug)}/avatar`;
 
   const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, viewerSlug);
 
   return Result.Ok({
-    viewer: { userHandle: viewerSlug, displayName, avatarUrl },
+    viewer: { userHandle: viewerSlug, displayName },
     access,
     isOwner,
     dbAcls,
@@ -236,7 +231,6 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
         auth: req._auth,
         appSlug,
         ownerUserSlug,
-        apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
         adminMode,
       });
       if (rRes.isErr()) {

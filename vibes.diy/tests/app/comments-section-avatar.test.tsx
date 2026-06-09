@@ -82,7 +82,6 @@ describe("CommentsSection avatar behavior", () => {
         viewer: {
           ownerHandle: "commenter-resolved-slug",
           displayName: "Commenter",
-          avatarUrl: "https://api.test/u/commenter-resolved-slug/avatar",
         },
         access: "viewer",
       })

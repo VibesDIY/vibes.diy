@@ -460,7 +460,8 @@ export function isEvtVibePutAssetProgress(x: unknown): x is EvtVibePutAssetProgr
 export const viewerPayload = type({
   userHandle: "string",
   "displayName?": "string",
-  avatarUrl: "string", // stable indirection URL — opaque to apps, set by server at render time
+  // Avatars are derived from userHandle by ViewerTag (`/u/<handle>/avatar`);
+  // the server no longer ships a redundant avatarUrl on the wire.
 });
 export type ViewerPayload = typeof viewerPayload.infer;
 

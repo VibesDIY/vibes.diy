@@ -46,7 +46,7 @@ describe("bootstrapViewer", () => {
         data: {
           type: "vibe.res.whoAmI",
           tid: sentTid,
-          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+          viewer: { userHandle: "alice", displayName: "Alice" },
           access: "override",
           dbAcls: { comments: { write: ["members"], delete: ["members"] } },
         },
@@ -58,7 +58,7 @@ describe("bootstrapViewer", () => {
     expect(capturedEvents).toHaveLength(1);
     const evt = capturedEvents[0];
     expect(evt.data.type).toBe("vibe.evt.viewerChanged");
-    expect(evt.data.viewer).toEqual({ userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" });
+    expect(evt.data.viewer).toEqual({ userHandle: "alice", displayName: "Alice" });
     expect(evt.data.access).toBe("override");
     expect(evt.data.dbAcls).toEqual({ comments: { write: ["members"], delete: ["members"] } });
   });
@@ -131,7 +131,7 @@ describe("VibeSandboxApi.whoAmI", () => {
         data: {
           type: "vibe.res.whoAmI",
           tid: sentTid,
-          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+          viewer: { userHandle: "alice", displayName: "Alice" },
           access: "override",
         },
       } as MessageEvent)

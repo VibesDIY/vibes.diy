@@ -29,7 +29,7 @@ describe("ResVibeWhoAmI", () => {
       isResVibeWhoAmI({
         type: "vibe.res.whoAmI",
         tid: "abc",
-        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+        viewer: { userHandle: "alice", displayName: "Alice" },
         access: "override",
         dbAcls: { comments: { write: ["members"] } },
       })
@@ -40,13 +40,13 @@ describe("ResVibeWhoAmI", () => {
       isResVibeWhoAmI({
         type: "vibe.res.whoAmI",
         tid: "abc",
-        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+        viewer: { userHandle: "alice", displayName: "Alice" },
         access: "override",
         grants: { comments: { channels: ["general"], publicChannels: ["announcements"], roles: ["moderator"] } },
       })
     ).toBe(true);
   });
-  it("rejects viewer missing avatarUrl", () => {
+  it("rejects viewer missing userHandle", () => {
     expect(
       isResVibeWhoAmI({
         type: "vibe.res.whoAmI",
@@ -73,7 +73,7 @@ describe("EvtVibeViewerChanged", () => {
     expect(
       isEvtVibeViewerChanged({
         type: "vibe.evt.viewerChanged",
-        viewer: { ownerHandle: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
+        viewer: { userHandle: "alice" },
         access: "viewer",
       })
     ).toBe(true);
@@ -82,12 +82,12 @@ describe("EvtVibeViewerChanged", () => {
     expect(
       isEvtVibeViewerChanged({
         type: "vibe.evt.viewerChanged",
-        viewer: { ownerHandle: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
+        viewer: { userHandle: "alice" },
         access: "superadmin",
       })
     ).toBe(false);
   });
-  it("rejects viewer missing avatarUrl", () => {
+  it("rejects viewer missing userHandle", () => {
     expect(
       isEvtVibeViewerChanged({
         type: "vibe.evt.viewerChanged",

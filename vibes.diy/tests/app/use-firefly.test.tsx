@@ -395,7 +395,7 @@ describe("HOOK: useFireproof access", () => {
           mountParams={{
             usrEnv: {},
             viewerEnv: {
-              viewer: { userHandle: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
+              viewer: { userHandle: "alice" },
               access: "editor",
               grants: {
                 [dbName]: { roles: ["moderator", "poster"], channels: ["general", "announcements"], publicChannels: [] },
@@ -433,7 +433,7 @@ describe("HOOK: useFireproof access", () => {
           mountParams={{
             usrEnv: {},
             viewerEnv: {
-              viewer: { userHandle: "alice", avatarUrl: "https://api.test/u/alice/avatar" },
+              viewer: { userHandle: "alice" },
               access: "editor",
               grants: {
                 "other-db": { roles: ["admin"], channels: ["private"], publicChannels: [] },
