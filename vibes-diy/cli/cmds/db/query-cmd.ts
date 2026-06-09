@@ -54,7 +54,7 @@ export const dbQueryEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbQuery, Res
     const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
     const rUser = await resolveUserSlug(api, ctx.validated.ownerHandle);
     if (rUser.isErr()) return Result.Err(rUser.Err());
-    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { ownerHandle: rUser.Ok() });
+    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { ownerHandle: rUser.Ok(), adminMode: true });
 
     const r = await adapter.queryDocs(ctx.validated.dbName);
     if (r.isErr()) return Result.Err(r.Err());
