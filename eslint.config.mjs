@@ -38,7 +38,7 @@ const opts = tseslint.config(
       "**/notes/**",
       "docs/superpowers/specs/eval-access-fn-workflow.js",
       "vibes/**/access.js",
-      "vibes/multi-file-test/helper.js",
+      "vibes/**/*.js",
       "vibesbox/**",
       "vibes.diy/tempo/**",
       "vibes.diy/failback-homepage/**",
