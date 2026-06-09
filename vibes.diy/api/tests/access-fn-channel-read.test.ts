@@ -4,7 +4,7 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
-import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
+import { isResEnsureAppSlugOk, isResRequestAccessApproved } from "@vibes.diy/api-types";
 import type { AccessDescriptor } from "@vibes.diy/api-types";
 import { eq, and } from "drizzle-orm";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
@@ -59,10 +59,17 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
   let appSlug: string;
   let ownerHandle: string;
   let actualCid: string;
+  let sthis: ReturnType<typeof ensureSuperThis>;
+  let deviceCA: Awaited<ReturnType<typeof createTestDeviceCA>>;
+  let wsPair: ReturnType<typeof TestWSPair.create>;
   const recorder: InvokeRecorder = { calls: [], result: { channels: ["general"], allowAnonymous: true } };
 
   beforeAll(async () => {
-    const { ctx, wsPair, sthis, deviceCA } = await setupCtx(recorder);
+    const setup = await setupCtx(recorder);
+    const { ctx } = setup;
+    sthis = setup.sthis;
+    deviceCA = setup.deviceCA;
+    wsPair = setup.wsPair;
     appCtx = ctx;
     const ownerSetup = await mkUser(sthis, deviceCA, wsPair, 900);
     ownerApi = ownerSetup.api;
@@ -217,5 +224,36 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     // Owner is not in "vip"; without the access !== "override" guard this would return not-found.
     expect(r.Ok().status).toBe("ok");
     expect(r.Ok().id).toBe("gated-doc");
+  });
+
+  it("non-owner with read access + adminMode is still channel-gated (no override)", async () => {
+    // Create outsider with a distinct seqOffset so they don't collide with owner (900)
+    const { api: outsiderApi } = await mkUser(sthis, deviceCA, wsPair, 950);
+
+    // Grant the outsider editor role (read-capable) via auto-accept request flow.
+    // This clears the ACL gate but gives them NO "vip" channel grant — only the
+    // owner-binding match in checkDocAccess returns "override"; the request path
+    // returns the plain role and ignores adminMode.
+    await ownerApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "editor" } });
+    const rReq = await outsiderApi.requestAccess({ appSlug, ownerHandle });
+    assert(rReq.isOk(), `requestAccess failed: ${rReq.isErr() ? rReq.Err().message : ""}`);
+    const req = rReq.Ok();
+    assert(isResRequestAccessApproved(req), `Expected auto-approved, got state: ${req.state}`);
+    expect(req.role).toBe("editor"); // outsider has read-capable role
+
+    // Sanity: without adminMode the outsider clears the ACL gate (Ok, not access-denied)
+    // and is channel-filtered out of the vip-only gated-doc.
+    const before = await outsiderApi.queryDocs({ appSlug, ownerHandle, dbName: "secret-room" });
+    assert(before.isOk(), `expected Ok (cleared ACL gate), got error: ${before.isErr() ? before.Err().message : ""}`);
+    expect(before.Ok().docs.map((d) => d._id)).not.toContain("gated-doc");
+
+    // Now the outsider asserts adminMode. checkDocAccess must still return their plain role,
+    // NOT override — so they remain channel-filtered.
+    const who = await outsiderApi.whoAmI({ tid: crypto.randomUUID(), appSlug, ownerHandle, adminMode: true });
+    assert(who.isOk());
+
+    const after = await outsiderApi.queryDocs({ appSlug, ownerHandle, dbName: "secret-room" });
+    assert(after.isOk(), `expected Ok (cleared ACL gate), got error: ${after.isErr() ? after.Err().message : ""}`);
+    expect(after.Ok().docs.map((d) => d._id)).not.toContain("gated-doc"); // adminMode did NOT elevate the non-owner
   });
 });
