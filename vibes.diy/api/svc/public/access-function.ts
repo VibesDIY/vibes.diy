@@ -32,6 +32,20 @@ export function enforceAllowAnonymous(result: AccessDescriptor, user: UserContex
   }
 }
 
+/**
+ * True iff the access result makes the doc readable by *someone* — i.e. it
+ * places the doc in at least one channel. This is a deliberately doc-local
+ * check: it inspects only this write's `channels`, never the cross-doc grant
+ * graph. A doc in zero channels is provably unreadable by everyone (the read
+ * gate refuses any doc with no channels, with no owner bypass), so it is the
+ * one case worth rejecting at write time. "In a channel but no grant reaches
+ * it" is intentionally NOT covered here — grants may live on other docs or
+ * arrive later.
+ */
+export function isReadableResult(result: AccessDescriptor): boolean {
+  return Array.isArray(result.channels) && result.channels.length > 0;
+}
+
 interface GrantState {
   members: Record<string, string[]>;
   roleGrants: Record<string, string[]>;

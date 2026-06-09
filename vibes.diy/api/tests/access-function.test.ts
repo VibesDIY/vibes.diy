@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { enforceAllowAnonymous, makeHelpers } from "../svc/public/access-function.js";
+import { enforceAllowAnonymous, isReadableResult, makeHelpers } from "../svc/public/access-function.js";
 import type { AccessDescriptor, UserContext } from "../types/access-function.js";
 
 describe("enforceAllowAnonymous", () => {
@@ -75,5 +75,33 @@ describe("makeHelpers", () => {
   it("requireRole passes when user has the role", () => {
     const ctx = makeHelpers(user, { members: { admin: ["alice"] }, roleGrants: {}, userGrants: {} });
     expect(() => ctx.requireRole("admin")).not.toThrow();
+  });
+});
+
+describe("isReadableResult", () => {
+  it("false for empty descriptor (the {} catch-all)", () => {
+    expect(isReadableResult({})).toBe(false);
+  });
+
+  it("false when channels is an empty array", () => {
+    expect(isReadableResult({ channels: [] })).toBe(false);
+  });
+
+  it("false when only a grant is present but no channel (grant alone is not readability)", () => {
+    expect(isReadableResult({ grant: { public: ["ch"] } })).toBe(false);
+  });
+
+  it("false when only members/expiry/allowAnonymous are present (no channel)", () => {
+    expect(isReadableResult({ members: { editor: ["alice"] } })).toBe(false);
+    expect(isReadableResult({ expiry: null })).toBe(false);
+    expect(isReadableResult({ allowAnonymous: true })).toBe(false);
+  });
+
+  it("true when at least one channel is declared", () => {
+    expect(isReadableResult({ channels: ["cabinet"] })).toBe(true);
+  });
+
+  it("true with the documented private-to-author pattern", () => {
+    expect(isReadableResult({ channels: ["doc-1"], grant: { users: { alice: ["doc-1"] } } })).toBe(true);
   });
 });
