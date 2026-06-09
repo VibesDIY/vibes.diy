@@ -64,8 +64,15 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       // DM dbs are implicitly safe here: a `_d.` direct-channel ownerHandle slug
       // never matches a handleBinding.handle, so checkDocAccess returns "none" and
       // override can never reach another user's DMs (parallel to TODO(#2290) in queryDocs).
+      const reqAdmin = req.adminMode === true;
       const { access } = req._auth
-        ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx))
+        ? await checkDocAccess(
+            vctx,
+            req._auth.verifiedAuth.claims.userId,
+            req.appSlug,
+            req.ownerHandle,
+            connectionAdminMode(ctx) || reqAdmin
+          )
         : { access: "none" as DocAccessLevel };
       const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
       if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
@@ -231,8 +238,15 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
           return Result.Ok(EventoResult.Continue);
         }
       } else {
+        const reqAdmin = req.adminMode === true;
         ({ access } = req._auth
-          ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx))
+          ? await checkDocAccess(
+              vctx,
+              req._auth.verifiedAuth.claims.userId,
+              req.appSlug,
+              req.ownerHandle,
+              connectionAdminMode(ctx) || reqAdmin
+            )
           : { access: "none" as DocAccessLevel });
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {

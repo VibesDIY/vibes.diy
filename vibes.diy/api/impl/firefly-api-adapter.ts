@@ -26,11 +26,10 @@ import type { VibesDiyApi } from "./index.js";
  * (e.g. for service accounts where the token's user differs from the
  * routing user).
  *
- * When opts.adminMode is true the adapter sends a one-shot whoAmI with
- * adminMode:true before the first read (getDoc/queryDocs). This elevates
- * the connection to owner-override mode so all documents across every
- * channel are visible. checkDocAccess only grants the elevation to the
- * actual app owner, so non-owners receive no extra access.
+ * When opts.adminMode is true the adapter includes adminMode:true on each
+ * getDoc/queryDocs request, allowing the server to grant owner-override access
+ * per-request without a separate whoAmI round-trip. checkDocAccess only grants
+ * the elevation to the actual app owner, so non-owners receive no extra access.
  */
 export class FireflyApiAdapter {
   readonly svc: { readonly vibeApp: { ownerHandle: string; appSlug: string; fsId: string } };
@@ -39,7 +38,6 @@ export class FireflyApiAdapter {
   private readonly ownerHandleOverride: string | undefined;
   private readonly ownerHandleOnce = new ResolveOnce<string>();
   private readonly adminMode: boolean;
-  private readonly adminOnce = new ResolveOnce<void>();
 
   constructor(api: VibesDiyApi, appSlug: string, opts?: { ownerHandle?: string; adminMode?: boolean }) {
     this.api = api;
@@ -55,19 +53,6 @@ export class FireflyApiAdapter {
         fsId: "", // unused on the Node side; FireflyDatabase only reads ownerHandle+appSlug
       },
     };
-  }
-
-  private async ensureAdminMode(ownerHandle: string): Promise<void> {
-    if (!this.adminMode) return;
-    await this.adminOnce.once(async () => {
-      const r = await this.api.whoAmI({
-        tid: crypto.randomUUID(),
-        appSlug: this.svc.vibeApp.appSlug,
-        ownerHandle,
-        adminMode: true,
-      });
-      if (r.isErr()) throw new Error(`adminMode whoAmI failed: ${r.Err()}`);
-    });
   }
 
   async resolveOwnerHandle(): Promise<string> {
@@ -102,23 +87,23 @@ export class FireflyApiAdapter {
 
   async getDoc(docId: string, dbName = "default"): Promise<Result<ResGetDoc | ResGetDocNotFound, VibesDiyError>> {
     const ownerHandle = await this.resolveOwnerHandle();
-    await this.ensureAdminMode(ownerHandle);
     return this.api.getDoc({
       appSlug: this.svc.vibeApp.appSlug,
       ownerHandle,
       dbName,
       docId,
+      ...(this.adminMode ? { adminMode: true } : {}),
     });
   }
 
   async queryDocs(dbName = "default", filter?: QueryFilter): Promise<Result<ResQueryDocs, VibesDiyError>> {
     const ownerHandle = await this.resolveOwnerHandle();
-    await this.ensureAdminMode(ownerHandle);
     return this.api.queryDocs({
       appSlug: this.svc.vibeApp.appSlug,
       ownerHandle,
       dbName,
       ...(filter !== undefined ? { filter } : {}),
+      ...(this.adminMode ? { adminMode: true } : {}),
     });
   }
 

@@ -286,6 +286,7 @@ export const ReqGetDoc = type({
   ownerHandle: "string",
   dbName: "string",
   docId: "string",
+  "adminMode?": "boolean",
 }).and(Base);
 
 export type ReqGetDoc = typeof ReqGetDoc.infer;
@@ -300,6 +301,7 @@ export const ReqQueryDocs = type({
   ownerHandle: "string",
   dbName: "string",
   "filter?": queryFilter,
+  "adminMode?": "boolean",
 }).and(Base);
 
 export type ReqQueryDocs = typeof ReqQueryDocs.infer;
