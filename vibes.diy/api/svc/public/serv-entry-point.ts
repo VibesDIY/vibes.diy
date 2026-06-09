@@ -194,6 +194,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const npmUrl = captureNpmUrl(vctx, ctx.request);
       const dbExplorerBase = uri.pathname.slice(0, uri.pathname.indexOf("/.db-explorer") + "/.db-explorer".length);
+      const adminMode = uri.getParam("adminMode") === "yes";
       await ctx.send.send(ctx, {
         type: "http.Response.Body",
         status: 200,
@@ -208,7 +209,12 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
                 await renderDBExplorer({
                   base: dbExplorerBase,
                   vctx,
-                  vibeApp: { appSlug: ctx.validated.appSlug, ownerHandle: ctx.validated.ownerHandle, fsId: ctx.validated.fsId },
+                  vibeApp: {
+                    appSlug: ctx.validated.appSlug,
+                    ownerHandle: ctx.validated.ownerHandle,
+                    fsId: ctx.validated.fsId,
+                    ...(adminMode ? { adminMode: true } : {}),
+                  },
                   pkgRepos: {
                     private: npmUrl,
                   },

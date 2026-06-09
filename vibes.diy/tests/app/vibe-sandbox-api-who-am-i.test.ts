@@ -140,4 +140,85 @@ describe("VibeSandboxApi.whoAmI", () => {
     expect(res.isOk()).toBe(true);
     expect(res.Ok().viewer?.userHandle).toBe("alice");
   });
+
+  it("includes adminMode: true in whoAmI request when vibeApp.adminMode is true", async () => {
+    const posts: unknown[] = [];
+    const listeners: ((e: MessageEvent) => void)[] = [];
+    const api = new VibeSandboxApi({
+      vibeApp: { appSlug: "myapp", ownerHandle: "alice", fsId: "fs1", adminMode: true },
+      addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
+      postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
+    });
+    listeners.forEach((h) => h({ data: { type: "vibe.evt.runtime.ack" } } as MessageEvent));
+    const pending = api.whoAmI();
+    await Promise.resolve();
+    const sentTid = (posts[0] as { tid: string }).tid;
+    expect((posts[0] as { type: string }).type).toBe("vibe.req.whoAmI");
+    expect((posts[0] as { adminMode?: boolean }).adminMode).toBe(true);
+    listeners.forEach((h) =>
+      h({
+        data: {
+          type: "vibe.res.whoAmI",
+          tid: sentTid,
+          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+          access: "override",
+        },
+      } as MessageEvent)
+    );
+    await pending;
+  });
+
+  it("omits adminMode from whoAmI request when vibeApp.adminMode is absent", async () => {
+    const posts: unknown[] = [];
+    const listeners: ((e: MessageEvent) => void)[] = [];
+    const api = new VibeSandboxApi({
+      vibeApp: { appSlug: "myapp", ownerHandle: "alice", fsId: "fs1" },
+      addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
+      postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
+    });
+    listeners.forEach((h) => h({ data: { type: "vibe.evt.runtime.ack" } } as MessageEvent));
+    const pending = api.whoAmI();
+    await Promise.resolve();
+    const sentTid = (posts[0] as { tid: string }).tid;
+    expect((posts[0] as { type: string }).type).toBe("vibe.req.whoAmI");
+    expect(Object.prototype.hasOwnProperty.call(posts[0], "adminMode")).toBe(false);
+    listeners.forEach((h) =>
+      h({
+        data: {
+          type: "vibe.res.whoAmI",
+          tid: sentTid,
+          viewer: null,
+          access: "none",
+        },
+      } as MessageEvent)
+    );
+    await pending;
+  });
+
+  it("omits adminMode from whoAmI request when vibeApp.adminMode is false", async () => {
+    const posts: unknown[] = [];
+    const listeners: ((e: MessageEvent) => void)[] = [];
+    const api = new VibeSandboxApi({
+      vibeApp: { appSlug: "myapp", ownerHandle: "alice", fsId: "fs1", adminMode: false },
+      addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
+      postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
+    });
+    listeners.forEach((h) => h({ data: { type: "vibe.evt.runtime.ack" } } as MessageEvent));
+    const pending = api.whoAmI();
+    await Promise.resolve();
+    const sentTid = (posts[0] as { tid: string }).tid;
+    expect((posts[0] as { type: string }).type).toBe("vibe.req.whoAmI");
+    expect(Object.prototype.hasOwnProperty.call(posts[0], "adminMode")).toBe(false);
+    listeners.forEach((h) =>
+      h({
+        data: {
+          type: "vibe.res.whoAmI",
+          tid: sentTid,
+          viewer: null,
+          access: "none",
+        },
+      } as MessageEvent)
+    );
+    await pending;
+  });
 });

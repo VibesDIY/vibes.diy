@@ -6,6 +6,7 @@ interface DBExplorerVibeApp {
   readonly appSlug: string;
   readonly ownerHandle: string;
   readonly fsId?: string;
+  readonly adminMode?: boolean;
 }
 
 export function DBExplorerPage({
