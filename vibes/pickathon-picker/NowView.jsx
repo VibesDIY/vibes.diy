@@ -1,5 +1,38 @@
 import React from "react";
 import { FESTIVAL_TZ, fmtTime, fmtDate } from "./festival-utils.js";
+import { lineupTag, eventCardStyle } from "./styles.js";
+
+function EventCard({ event, isMine, isFriendPick, canWrite, toggleFavorite, c, showDate }) {
+  const tag = lineupTag(event);
+  return (
+    <div className="rounded-2xl border-4 border-[#4A4A4A] p-4 shadow-lg" style={eventCardStyle(event)}>
+      <div className="flex justify-between items-start gap-3 flex-wrap">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <h4 className={`text-lg font-black ${c.bodyText}`}>{event.title}</h4>
+            <span className="px-2 py-0.5 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase bg-[#BACD32] text-[#4A4A4A]">
+              {tag.label}
+            </span>
+            {isFriendPick && !isMine && (
+              <span className={c.badge} title="A friend favorited this">
+                friend pick
+              </span>
+            )}
+          </div>
+          <p className={`text-sm font-bold ${c.bodyText}`}>
+            {event.venueTitle} · {showDate ? `${fmtDate(event.start)} ` : ""}
+            {fmtTime(event.start)}–{fmtTime(event.end)}
+          </p>
+        </div>
+        {canWrite && (
+          <button onClick={() => toggleFavorite(event)} className={isMine ? c.favToggleOn : c.favToggleOff}>
+            {isMine ? "♥" : "♡"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function NowView({ nowSets, nextSets, nowTick, myFavIds, friendFavIds, canWrite, toggleFavorite, c }) {
   return (
@@ -19,43 +52,18 @@ export default function NowView({ nowSets, nextSets, nowTick, myFavIds, friendFa
         </div>
       ) : (
         <div className="grid gap-3 mb-8">
-          {nowSets.map((event) => {
-            const isMine = myFavIds.has(event.eventId);
-            const isFriendPick = friendFavIds.has(event.eventId);
-            return (
-              <div
-                key={event.eventId}
-                className={
-                  isMine
-                    ? c.favCard
-                    : isFriendPick
-                      ? "bg-[#FFE680] rounded-2xl border-4 border-[#4A4A4A] p-4 shadow-lg"
-                      : c.eventCard
-                }
-              >
-                <div className="flex justify-between items-start gap-3 flex-wrap">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h4 className={`text-lg font-black ${isMine ? "text-white" : c.bodyText}`}>{event.title}</h4>
-                      {isFriendPick && !isMine && (
-                        <span className={c.badge} title="A friend favorited this">
-                          friend pick
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-sm font-bold ${isMine ? "text-white" : c.bodyText}`}>
-                      {event.venueTitle} · {fmtTime(event.start)}–{fmtTime(event.end)}
-                    </p>
-                  </div>
-                  {canWrite && (
-                    <button onClick={() => toggleFavorite(event)} className={isMine ? c.favToggleOn : c.favToggleOff}>
-                      {isMine ? "♥" : "♡"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {nowSets.map((event) => (
+            <EventCard
+              key={event.eventId}
+              event={event}
+              isMine={myFavIds.has(event.eventId)}
+              isFriendPick={friendFavIds.has(event.eventId)}
+              canWrite={canWrite}
+              toggleFavorite={toggleFavorite}
+              c={c}
+              showDate={false}
+            />
+          ))}
         </div>
       )}
 
@@ -66,43 +74,18 @@ export default function NowView({ nowSets, nextSets, nowTick, myFavIds, friendFa
         </div>
       ) : (
         <div className="grid gap-3">
-          {nextSets.map((event) => {
-            const isMine = myFavIds.has(event.eventId);
-            const isFriendPick = friendFavIds.has(event.eventId);
-            return (
-              <div
-                key={event.eventId}
-                className={
-                  isMine
-                    ? c.favCard
-                    : isFriendPick
-                      ? "bg-[#FFE680] rounded-2xl border-4 border-[#4A4A4A] p-4 shadow-lg"
-                      : c.eventCard
-                }
-              >
-                <div className="flex justify-between items-start gap-3 flex-wrap">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h4 className={`text-lg font-black ${isMine ? "text-white" : c.bodyText}`}>{event.title}</h4>
-                      {isFriendPick && !isMine && (
-                        <span className={c.badge} title="A friend favorited this">
-                          friend pick
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-sm font-bold ${isMine ? "text-white" : c.bodyText}`}>
-                      {event.venueTitle} · {fmtDate(event.start)} {fmtTime(event.start)}–{fmtTime(event.end)}
-                    </p>
-                  </div>
-                  {canWrite && (
-                    <button onClick={() => toggleFavorite(event)} className={isMine ? c.favToggleOn : c.favToggleOff}>
-                      {isMine ? "♥" : "♡"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {nextSets.map((event) => (
+            <EventCard
+              key={event.eventId}
+              event={event}
+              isMine={myFavIds.has(event.eventId)}
+              isFriendPick={friendFavIds.has(event.eventId)}
+              canWrite={canWrite}
+              toggleFavorite={toggleFavorite}
+              c={c}
+              showDate={true}
+            />
+          ))}
         </div>
       )}
     </div>

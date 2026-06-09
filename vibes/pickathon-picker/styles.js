@@ -29,6 +29,13 @@ export const c = {
   readOnlyBanner: "mt-2 bg-white text-[#4A4A4A] px-3 py-2 rounded-lg text-sm font-bold border-2 border-[#4A4A4A]",
 };
 
+export const lineupTag = (event) => {
+  const label = event.lineup?.id || "music";
+  return { label, color: event.lineup?.color || "#d7c57d", textColor: event.lineup?.textColor || "#000" };
+};
+
+export const eventCardStyle = (event) => ({ backgroundColor: event.lineup?.color || "#d7c57d" });
+
 export const viewerTagStyle = {
   "--accent": "#CD6C0C",
   "--accent-text": "#fff",

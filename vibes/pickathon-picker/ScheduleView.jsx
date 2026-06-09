@@ -1,4 +1,5 @@
 import React from "react";
+import { lineupTag, eventCardStyle } from "./styles.js";
 
 export default function ScheduleView({
   days,
@@ -42,18 +43,29 @@ export default function ScheduleView({
               {daySchedule.map((item) => {
                 const itemStart = item.type === "shift" ? shiftStartRaw(item.data) : item.data.start;
                 const itemEnd = item.type === "shift" ? shiftEndRaw(item.data) : item.data.end;
+                const isEvent = item.type === "event";
+                const tag = isEvent ? lineupTag(item.data) : null;
                 return (
-                  <div key={`${item.type}-${item.id}`} className={item.type === "shift" ? c.schedShift : c.schedEvent}>
+                  <div
+                    key={`${item.type}-${item.id}`}
+                    className={item.type === "shift" ? c.schedShift : "rounded-xl border-2 border-[#4A4A4A] p-3"}
+                    style={isEvent ? eventCardStyle(item.data) : undefined}
+                  >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <h4 className={`font-black ${c.bodyText}`}>
                             {item.type === "shift" ? item.data.kind || item.data.title || "Shift" : item.title}
                           </h4>
-                          {item.type === "event" && onToggleFavorite && (
+                          {isEvent && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase bg-[#BACD32] text-[#4A4A4A]">
+                              {tag.label}
+                            </span>
+                          )}
+                          {isEvent && onToggleFavorite && (
                             <button
                               onClick={() => onToggleFavorite(item.data)}
-                              className="p-1 bg-[#CD6C0C] text-white rounded-lg border-2 border-[#4A4A4A] text-xs font-bold px-2"
+                              className={`p-1 rounded-lg border-2 border-[#4A4A4A] text-xs font-bold px-2 ${myFavIds && myFavIds.has(item.data.eventId) ? "bg-[#CD6C0C] text-white" : "bg-white text-[#4A4A4A]"}`}
                             >
                               {myFavIds && myFavIds.has(item.data.eventId) ? "♥" : "♡"}
                             </button>
@@ -61,9 +73,9 @@ export default function ScheduleView({
                         </div>
                         <p className={`text-sm font-bold ${c.bodyText}`}>
                           {fmtTime(itemStart)} – {fmtTime(itemEnd)}
-                          {item.type === "event" && ` · ${item.venue}`}
+                          {isEvent && ` · ${item.venue}`}
                         </p>
-                        {item.type === "event" &&
+                        {isEvent &&
                           (canWrite && onNoteChange ? (
                             (() => {
                               const val = (eventNotes && eventNotes[item.data.eventId]) || "";
