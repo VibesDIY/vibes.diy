@@ -35,10 +35,30 @@ export default function FriendsView({
         <div className="bg-white rounded-2xl border-4 border-[#4A4A4A] p-4">
           <img src={qrSrc} alt="Connect QR code" width="320" height="320" />
         </div>
-        <a href={connectUrl} target="_blank" rel="noopener noreferrer" className={c.btnPink}>
-          Connect
-        </a>
-        <p className={`text-xs font-bold ${c.bodyText} break-all text-center max-w-md`}>{connectUrl}</p>
+        <div className="flex items-center gap-3">
+          <a href={connectUrl} target="_blank" rel="noopener noreferrer" className={c.btnPink}>
+            Connect
+          </a>
+          <button
+            onClick={() => navigator.clipboard.writeText(connectUrl)}
+            className="p-3 bg-white text-[#4A4A4A] rounded-2xl border-4 border-[#4A4A4A] hover:bg-[#BACD32] transition-all"
+            title="Copy link"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#4A4A4A"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div className="mb-6 p-6 bg-white rounded-2xl border-4 border-[#4A4A4A]">
