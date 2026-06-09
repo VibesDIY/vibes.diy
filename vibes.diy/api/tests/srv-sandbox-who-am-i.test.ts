@@ -69,7 +69,7 @@ describe("vibeWhoAmI host handler", () => {
       whoAmIResult: Result.Ok({
         type: "vibe.res.whoAmI" as const,
         tid: "t1",
-        viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+        viewer: { userHandle: "alice", displayName: "Alice" },
         access: "override",
       } satisfies ResVibeWhoAmI),
     });
@@ -88,7 +88,7 @@ describe("vibeWhoAmI host handler", () => {
     expect(msg?.data).toMatchObject({
       tid: "t1",
       type: "vibe.res.whoAmI",
-      viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+      viewer: { userHandle: "alice", displayName: "Alice" },
       access: "override",
     });
   });
@@ -99,7 +99,7 @@ describe("vibeWhoAmI host handler", () => {
       whoAmIResult: Result.Ok({
         type: "vibe.res.whoAmI" as const,
         tid: "t2",
-        viewer: { userHandle: "bob", displayName: "Bob", avatarUrl: "https://api.test/u/bob/avatar" },
+        viewer: { userHandle: "bob", displayName: "Bob" },
         access: "viewer",
         dbAcls,
       } satisfies ResVibeWhoAmI),
@@ -129,7 +129,7 @@ describe("vibeWhoAmI host handler", () => {
       whoAmIResult: Result.Ok({
         type: "vibe.res.whoAmI" as const,
         tid: "t4",
-        viewer: { userHandle: "bob", displayName: "Bob", avatarUrl: "https://api.test/u/bob/avatar" },
+        viewer: { userHandle: "bob", displayName: "Bob" },
         access: "editor",
         grants,
       } satisfies ResVibeWhoAmI),

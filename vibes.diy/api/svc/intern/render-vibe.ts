@@ -25,7 +25,7 @@ import { lockedGroupsVersions, lockedVersions } from "./grouped-vibe-import-map.
 import { defaultFetchPkgVersion } from "../npm-package-version.js";
 import { sqlite } from "@vibes.diy/api-sql";
 
-async function buildViewerEnvForRender(vctx: VibesApiSQLCtx, args: { appSlug: string; ownerUserSlug: string; apiBaseUrl: string }) {
+async function buildViewerEnvForRender(vctx: VibesApiSQLCtx, args: { appSlug: string; ownerUserSlug: string }) {
   const r = await resolveWhoAmI(vctx, { auth: undefined, ...args });
   if (!r.isOk()) return undefined;
   const { viewer, access, isOwner, dbAcls, grants } = r.Ok();
@@ -153,7 +153,6 @@ export async function renderVibe({
       : await buildViewerEnvForRender(vctx, {
           appSlug: fs.appSlug,
           ownerUserSlug: fs.ownerHandle,
-          apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
         });
 
   let imageUrl: string | undefined;
@@ -263,7 +262,6 @@ export async function renderPendingVibe({
       : await buildViewerEnvForRender(vctx, {
           appSlug,
           ownerUserSlug: ownerHandle,
-          apiBaseUrl: vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
         });
 
   const title = appSlug;

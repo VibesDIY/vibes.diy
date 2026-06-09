@@ -14,7 +14,6 @@ function App() {
   if (!viewer) return <div data-testid="state">Sign in</div>;
   return (
     <div data-testid="state">
-      <img src={viewer.avatarUrl} alt={viewer.userHandle} data-testid="avatar" />
       <span data-testid="name">{viewer.displayName ?? viewer.userHandle}</span>
       {can("write", "comments") ? <button data-testid="write">Post</button> : null}
     </div>
@@ -29,7 +28,6 @@ function App() {
  * rendered DOM or verify that a real component re-renders correctly after an event.
  * These tests cover that seam:
  *   - DOM reflects the correct signed-out/signed-in state
- *   - viewer.avatarUrl lands in an <img src>
  *   - vibe.evt.viewerChanged causes the component to re-render with updated identity
  */
 describe("useViewer integration", () => {
@@ -46,13 +44,13 @@ describe("useViewer integration", () => {
     expect(screen.getByTestId("state")).toHaveTextContent("Sign in");
   });
 
-  it("authed owner mount: DOM shows avatar src, name, and write button", () => {
+  it("authed owner mount: DOM shows name and write button", () => {
     render(
       <VibeContextProvider
         mountParams={{
           usrEnv: {},
           viewerEnv: {
-            viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
+            viewer: { userHandle: "alice", displayName: "Alice" },
             access: "override",
           },
         }}
@@ -60,7 +58,6 @@ describe("useViewer integration", () => {
         <App />
       </VibeContextProvider>
     );
-    expect(screen.getByTestId("avatar").getAttribute("src")).toBe("https://api.example.com/u/alice/avatar");
     expect(screen.getByTestId("name").textContent).toBe("Alice");
     expect(screen.getByTestId("write")).toBeTruthy();
   });
@@ -82,14 +79,13 @@ describe("useViewer integration", () => {
       new MessageEvent("message", {
         data: {
           type: "vibe.evt.viewerChanged",
-          viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.example.com/u/alice/avatar" },
+          viewer: { userHandle: "alice", displayName: "Alice" },
           access: "viewer",
         },
       })
     );
 
     await waitFor(() => {
-      expect(screen.queryByTestId("avatar")?.getAttribute("src")).toBe("https://api.example.com/u/alice/avatar");
       expect(screen.queryByTestId("name")?.textContent).toBe("Alice");
     });
     // viewer role — no write button

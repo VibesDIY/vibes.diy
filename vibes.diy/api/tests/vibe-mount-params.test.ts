@@ -22,7 +22,7 @@ describe("vibeMountParams", () => {
     const r = vibeMountParams({
       usrEnv: {},
       viewerEnv: {
-        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
+        viewer: { userHandle: "alice", displayName: "Alice" },
         access: "override",
         dbAcls: { comments: { write: ["members"] } },
       },
@@ -34,7 +34,7 @@ describe("vibeMountParams", () => {
     const r = vibeMountParams({
       usrEnv: {},
       viewerEnv: {
-        viewer: { ownerHandle: "alice", displayName: "Alice", avatarUrl: "https://api.vibes.diy/u/alice/avatar" },
+        viewer: { userHandle: "alice", displayName: "Alice" },
         access: "override",
         grants: { chat: { channels: ["general", "random"], publicChannels: ["announcements"], roles: ["admin"] } },
       },
@@ -53,7 +53,7 @@ describe("vibeMountParams", () => {
     expect(r instanceof type.errors).toBe(true);
   });
 
-  it("rejects viewer missing avatarUrl", () => {
+  it("rejects viewer missing userHandle", () => {
     const r = vibeMountParams({
       usrEnv: {},
       viewerEnv: {

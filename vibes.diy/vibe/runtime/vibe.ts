@@ -16,8 +16,8 @@ const dbAcl = type({
 
 // Server-computed viewer info, embedded into the iframe's HTML by
 // render-vibe so the very first React render already has identity.
-// viewer.avatarUrl is the absolute URL for the viewer's avatar — opaque
-// to app code (just a string, not a function of ownerHandle).
+// Avatars are not shipped here — render them with <ViewerTag userHandle={...} />,
+// which derives the avatar URL from the handle.
 export const viewerEnv = type({
   viewer: viewerPayload.or("null"),
   access: docAccessLevel,

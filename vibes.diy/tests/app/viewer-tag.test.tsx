@@ -18,7 +18,7 @@ function renderViewerTag(env: ViewerEnv | undefined, props: Record<string, unkno
 }
 
 const aliceEnv: ViewerEnv = {
-  viewer: { userHandle: "alice", displayName: "Alice", avatarUrl: "https://api.test/u/alice/avatar" },
+  viewer: { userHandle: "alice", displayName: "Alice" },
   access: "override",
 };
 

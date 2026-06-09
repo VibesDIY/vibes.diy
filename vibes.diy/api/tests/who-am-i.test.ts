@@ -118,7 +118,6 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
       auth: undefined,
       appSlug,
       ownerUserSlug: ownerHandle,
-      apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
@@ -131,27 +130,11 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
       auth: makeAuth(aliceUserId, "alice-test"),
       appSlug,
       ownerUserSlug: ownerHandle,
-      apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
     expect(r.viewer?.userHandle).toBe(ownerHandle);
     expect(r.access).toBe("override");
-    expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${ownerHandle}/avatar`);
-    expect(r.viewer?.avatarUrl.includes("//u/")).toBe(false);
-  });
-
-  it("strips trailing slashes from apiBaseUrl so the avatar URL never doubles up", async () => {
-    const res = await resolveWhoAmI(vibesCtx, {
-      auth: makeAuth(aliceUserId, "alice-test"),
-      appSlug,
-      ownerUserSlug: ownerHandle,
-      apiBaseUrl: "https://api.test/",
-    });
-    expect(res.isOk()).toBe(true);
-    const r = res.Ok();
-    expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${ownerHandle}/avatar`);
-    expect(r.viewer?.avatarUrl.includes("//u/")).toBe(false);
   });
 
   it("returns viewer ownerHandle + 'editor' access for an invited editor", async () => {
@@ -159,14 +142,11 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
       auth: makeAuth(bobUserId, "bob-test"),
       appSlug,
       ownerUserSlug: ownerHandle,
-      apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
     expect(typeof r.viewer?.userHandle).toBe("string");
     expect(r.access).toBe("editor");
-    expect(r.viewer?.avatarUrl).toBe(`https://api.test/u/${r.viewer?.userHandle}/avatar`);
-    expect(r.viewer?.avatarUrl.includes("//u/")).toBe(false);
   });
 
   it("returns dbAcls map when the app has configured overrides", async () => {
@@ -174,7 +154,6 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
       auth: makeAuth(aliceUserId, "alice-test"),
       appSlug,
       ownerUserSlug: ownerHandle,
-      apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
     expect(res.Ok().dbAcls?.comments?.write).toEqual(["members"]);
@@ -219,7 +198,6 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
       auth: undefined,
       appSlug: freshRes.appSlug,
       ownerUserSlug: freshRes.ownerHandle,
-      apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
     // When no explicit comments override is stored, the lazy default is injected.
@@ -234,7 +212,6 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
       auth: undefined,
       appSlug,
       ownerUserSlug: ownerHandle,
-      apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
     const commentAcl = res.Ok().dbAcls?.[COMMENTS_DB_NAME];
@@ -249,7 +226,6 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
       auth: makeAuth(aliceUserId, "alice-test"),
       appSlug,
       ownerUserSlug: ownerHandle,
-      apiBaseUrl: "https://api.test",
     });
     expect(res.isOk()).toBe(true);
     expect(res.Ok().viewer?.displayName).toBe("Alice the Great");
