@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import ScheduleView from "./ScheduleView.jsx";
 
 export default function FriendsView({
@@ -24,39 +24,65 @@ export default function FriendsView({
   ViewerTag,
   c,
 }) {
+  const [copied, setCopied] = useState(false);
+  const copyLink = () => {
+    navigator.clipboard.writeText(connectUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <div>
       <div className="flex flex-col items-center gap-4 p-6 bg-[#BACD32] rounded-2xl border-4 border-[#4A4A4A] mb-6">
         <div className="flex items-center gap-2 flex-wrap justify-center">
-          <p className={`text-lg font-bold ${c.bodyText}`}>Scan to follow</p>
-          <ViewerTag />
-          <p className={`text-lg font-bold ${c.bodyText}`}>schedule</p>
+          <p className={`text-lg font-bold ${c.bodyText}`}>Share this link to connect schedules</p>
         </div>
         <div className="bg-white rounded-2xl border-4 border-[#4A4A4A] p-4">
           <img src={qrSrc} alt="Connect QR code" width="320" height="320" />
         </div>
         <div className="flex items-center gap-3">
           <a href={connectUrl} target="_blank" rel="noopener noreferrer" className={c.btnPink}>
-            Connect
+            Open Link
           </a>
           <button
-            onClick={() => navigator.clipboard.writeText(connectUrl)}
-            className="p-3 bg-white text-[#4A4A4A] rounded-2xl border-4 border-[#4A4A4A] hover:bg-[#BACD32] transition-all"
-            title="Copy link"
+            onClick={copyLink}
+            className={`flex items-center gap-2 py-3 px-6 font-bold rounded-2xl border-4 border-[#4A4A4A] transition-all ${copied ? "bg-[#71AD44] text-white" : "bg-white text-[#4A4A4A] hover:bg-[#BACD32]"}`}
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#4A4A4A"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-            </svg>
+            {copied ? (
+              <>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Copied!
+              </>
+            ) : (
+              <>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                Copy Link
+              </>
+            )}
           </button>
         </div>
       </div>
