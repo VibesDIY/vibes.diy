@@ -86,6 +86,19 @@ describe("pullCmd", () => {
     expect(request.ownerHandle).toBe("alice");
   });
 
+  it("--vibe works without a positional arg", async () => {
+    const ctx = makeCtx();
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(pullCmd(ctx), ["--vibe", "alice/cool-app"]);
+
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    const request = (first.value as { result: ReqPull }).result;
+    expect(request.appSlug).toBe("cool-app");
+    expect(request.ownerHandle).toBe("alice");
+  });
+
   it("explicit --handle overrides handle parsed from positional", async () => {
     const ctx = makeCtx();
     const reader = ctx.cliStream.stream.getReader();
