@@ -17,7 +17,7 @@ import type { ResError, SectionEvent, PromptDryRunPayload, SelectedSlotInput } f
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
-import { resolveVibeArgs } from "../parse-vibe.js";
+import { resolveVibePositionals } from "../parse-vibe.js";
 import { collectDiskDraft } from "./disk-drift.js";
 import { resolveSectionStream } from "./resolve-section-stream.js";
 import { readProjectFiles, pushFromDir } from "./push-from-dir.js";
@@ -392,12 +392,12 @@ export function editCmd(ctx: CliCtx) {
       appSlug: positional({
         displayName: "vibe",
         description: "App slug or handle/app-slug",
-        type: string,
+        type: optional(string),
       }),
       prompt: positional({
         displayName: "prompt",
         description: "Follow-up prompt describing what to change",
-        type: string,
+        type: optional(string),
       }),
       vibe: option({
         long: "vibe",
@@ -455,21 +455,28 @@ export function editCmd(ctx: CliCtx) {
         type: optional(string),
       }),
     },
-    handler: ctx.cliStream.enqueue(({ focus, model, handle, userSlug, vibe, ...rest }) => {
+    handler: ctx.cliStream.enqueue(({ focus, model, handle, userSlug, vibe, appSlug, prompt, ...rest }) => {
       if (userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle or --vibe instead\n");
-      const resolved = resolveVibeArgs({
-        vibe,
-        handle: handle || userSlug,
-        appSlug: "",
-        positionalAppSlug: rest.appSlug,
-      });
+      // When --vibe supplies the vibe, the positional the user typed is the
+      // prompt, not the vibe — resolveVibePositionals shifts it into `trailing`.
+      const resolved = resolveVibePositionals({ vibe, handle: handle || userSlug, positionals: [appSlug, prompt] });
+      const resolvedPrompt = resolved.trailing[0] ?? "";
+      if (resolvedPrompt === "") {
+        throw new Error("No prompt provided — pass a follow-up prompt describing what to change.");
+      }
       // ArkType's optional-with-typed-value fields (`focusPath?: "string"`,
       // `model?: "string"`) allow the key to be ABSENT but reject an explicit
       // `undefined`. Spreading an `undefined` value when the flag isn't passed
       // makes ReqEdit validation silently miss and the evento dispatcher drop
       // the message with no error — a silent exit 0 for every default-flag
       // CLI run. Destructure both out of the spread and only attach when defined.
-      const base = { type: "vibes-diy.cli.edit" as const, ...rest, appSlug: resolved.appSlug, ownerHandle: resolved.handle };
+      const base = {
+        type: "vibes-diy.cli.edit" as const,
+        ...rest,
+        appSlug: resolved.appSlug,
+        prompt: resolvedPrompt,
+        ownerHandle: resolved.handle,
+      };
       const withFocus = focus === undefined ? base : { ...base, focusPath: focus };
       return model === undefined ? withFocus : { ...withFocus, model };
     }),
