@@ -190,42 +190,26 @@ describe("FireflyApiAdapter", () => {
 });
 
 describe("FireflyApiAdapter — adminMode", () => {
-  function fakeMinimalWhoAmI() {
-    return Result.Ok({
-      type: "vibe.res.whoAmI" as const,
-      tid: "t1",
-      viewer: null,
-      access: "none" as const,
-    });
-  }
-
-  it("queryDocs with adminMode:true calls whoAmI(adminMode:true) before queryDocs", async () => {
-    const calls: string[] = [];
+  it("queryDocs with adminMode:true includes adminMode:true in the request", async () => {
+    const capturedReqs: unknown[] = [];
     const fakeApi = {
-      whoAmI: vi.fn(async (req: { adminMode?: boolean }) => {
-        calls.push(`whoAmI:${req.adminMode}`);
-        return fakeMinimalWhoAmI();
-      }),
-      queryDocs: vi.fn(async () => {
-        calls.push("queryDocs");
+      queryDocs: vi.fn(async (req: unknown) => {
+        capturedReqs.push(req);
         return Result.Ok({ type: "vibes.diy.res-query-docs", status: "ok", docs: [] });
       }),
     } as unknown as import("./index.js").VibesDiyApi;
 
     const adapter = new FireflyApiAdapter(fakeApi, "app1", { ownerHandle: "alice", adminMode: true });
     await adapter.queryDocs("db1");
-    expect(calls).toEqual(["whoAmI:true", "queryDocs"]);
+    expect(capturedReqs).toHaveLength(1);
+    expect((capturedReqs[0] as Record<string, unknown>).adminMode).toBe(true);
   });
 
-  it("queryDocs with adminMode:true only calls whoAmI once across multiple reads (memoized)", async () => {
-    const calls: string[] = [];
+  it("queryDocs with adminMode:true passes adminMode:true on every call (no memoization needed)", async () => {
+    const capturedReqs: unknown[] = [];
     const fakeApi = {
-      whoAmI: vi.fn(async (req: { adminMode?: boolean }) => {
-        calls.push(`whoAmI:${req.adminMode}`);
-        return fakeMinimalWhoAmI();
-      }),
-      queryDocs: vi.fn(async () => {
-        calls.push("queryDocs");
+      queryDocs: vi.fn(async (req: unknown) => {
+        capturedReqs.push(req);
         return Result.Ok({ type: "vibes.diy.res-query-docs", status: "ok", docs: [] });
       }),
     } as unknown as import("./index.js").VibesDiyApi;
@@ -233,66 +217,54 @@ describe("FireflyApiAdapter — adminMode", () => {
     const adapter = new FireflyApiAdapter(fakeApi, "app1", { ownerHandle: "alice", adminMode: true });
     await adapter.queryDocs("db1");
     await adapter.queryDocs("db1");
-    expect(calls).toEqual(["whoAmI:true", "queryDocs", "queryDocs"]);
+    expect(capturedReqs).toHaveLength(2);
+    for (const req of capturedReqs) {
+      expect((req as Record<string, unknown>).adminMode).toBe(true);
+    }
   });
 
-  it("queryDocs without adminMode does NOT call whoAmI", async () => {
-    const calls: string[] = [];
+  it("queryDocs without adminMode does NOT include adminMode field in the request", async () => {
+    const capturedReqs: unknown[] = [];
     const fakeApi = {
-      whoAmI: vi.fn(async () => {
-        calls.push("whoAmI");
-        return fakeMinimalWhoAmI();
-      }),
-      queryDocs: vi.fn(async () => {
-        calls.push("queryDocs");
+      queryDocs: vi.fn(async (req: unknown) => {
+        capturedReqs.push(req);
         return Result.Ok({ type: "vibes.diy.res-query-docs", status: "ok", docs: [] });
       }),
     } as unknown as import("./index.js").VibesDiyApi;
 
     const adapter = new FireflyApiAdapter(fakeApi, "app1", { ownerHandle: "alice" });
     await adapter.queryDocs("db1");
-    expect(calls).toEqual(["queryDocs"]);
-    expect(fakeApi.whoAmI).not.toHaveBeenCalled();
+    expect(capturedReqs).toHaveLength(1);
+    expect((capturedReqs[0] as Record<string, unknown>).adminMode).toBeUndefined();
   });
 
-  it("getDoc with adminMode:true calls whoAmI(adminMode:true) before getDoc", async () => {
-    const calls: string[] = [];
+  it("getDoc with adminMode:true includes adminMode:true in the request", async () => {
+    const capturedReqs: unknown[] = [];
     const fakeApi = {
-      whoAmI: vi.fn(async (req: { adminMode?: boolean }) => {
-        calls.push(`whoAmI:${req.adminMode}`);
-        return fakeMinimalWhoAmI();
-      }),
-      getDoc: vi.fn(async () => {
-        calls.push("getDoc");
+      getDoc: vi.fn(async (req: unknown) => {
+        capturedReqs.push(req);
         return Result.Ok({ type: "vibes.diy.res-get-doc", status: "not-found", id: "x" });
       }),
     } as unknown as import("./index.js").VibesDiyApi;
 
     const adapter = new FireflyApiAdapter(fakeApi, "app1", { ownerHandle: "alice", adminMode: true });
     await adapter.getDoc("x", "db1");
-    expect(calls).toEqual(["whoAmI:true", "getDoc"]);
+    expect(capturedReqs).toHaveLength(1);
+    expect((capturedReqs[0] as Record<string, unknown>).adminMode).toBe(true);
   });
 
-  it("getDoc with adminMode:true shares the memoized whoAmI with queryDocs", async () => {
-    const calls: string[] = [];
+  it("getDoc without adminMode does NOT include adminMode field in the request", async () => {
+    const capturedReqs: unknown[] = [];
     const fakeApi = {
-      whoAmI: vi.fn(async (req: { adminMode?: boolean }) => {
-        calls.push(`whoAmI:${req.adminMode}`);
-        return fakeMinimalWhoAmI();
-      }),
-      queryDocs: vi.fn(async () => {
-        calls.push("queryDocs");
-        return Result.Ok({ type: "vibes.diy.res-query-docs", status: "ok", docs: [] });
-      }),
-      getDoc: vi.fn(async () => {
-        calls.push("getDoc");
+      getDoc: vi.fn(async (req: unknown) => {
+        capturedReqs.push(req);
         return Result.Ok({ type: "vibes.diy.res-get-doc", status: "not-found", id: "x" });
       }),
     } as unknown as import("./index.js").VibesDiyApi;
 
-    const adapter = new FireflyApiAdapter(fakeApi, "app1", { ownerHandle: "alice", adminMode: true });
-    await adapter.queryDocs("db1");
+    const adapter = new FireflyApiAdapter(fakeApi, "app1", { ownerHandle: "alice" });
     await adapter.getDoc("x", "db1");
-    expect(calls).toEqual(["whoAmI:true", "queryDocs", "getDoc"]);
+    expect(capturedReqs).toHaveLength(1);
+    expect((capturedReqs[0] as Record<string, unknown>).adminMode).toBeUndefined();
   });
 });

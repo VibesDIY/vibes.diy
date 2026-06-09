@@ -254,6 +254,28 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     // per-connection once set via whoAmI).
   });
 
+  it("owner sees gated doc via queryDocs with per-request adminMode (no prior whoAmI)", async () => {
+    // Pass adminMode:true directly in the request — no whoAmI call on this connection.
+    // connectionAdminMode is false for the ownerApi (the existing adminMode tests set it
+    // via whoAmI, but Evento connections are independent per test-run ordering).
+    // The server must grant override based solely on req.adminMode for the actual owner.
+    const r = await ownerApi.queryDocs({ appSlug, ownerHandle, dbName: "secret-room", adminMode: true });
+    expect(r.isOk()).toBe(true);
+    const ids = r
+      .Ok()
+      .docs.map((d) => d._id)
+      .sort();
+    expect(ids).toContain("gated-doc"); // per-request adminMode elevated the owner
+  });
+
+  it("owner sees gated doc via getDoc with per-request adminMode (no prior whoAmI)", async () => {
+    // Same pattern: just adminMode:true on the getDoc request, no whoAmI.
+    const r = await ownerApi.getDoc({ appSlug, ownerHandle, dbName: "secret-room", docId: "gated-doc", adminMode: true });
+    expect(r.isOk()).toBe(true);
+    expect(r.Ok().status).toBe("ok");
+    expect(r.Ok().id).toBe("gated-doc");
+  });
+
   it("non-owner with read access + adminMode is still channel-gated (no override)", async () => {
     // Create outsider with a distinct seqOffset so they don't collide with owner (900)
     const { api: outsiderApi } = await mkUser(sthis, deviceCA, wsPair, 950);
@@ -283,5 +305,23 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     const after = await outsiderApi.queryDocs({ appSlug, ownerHandle, dbName: "secret-room" });
     assert(after.isOk(), `expected Ok (cleared ACL gate), got error: ${after.isErr() ? after.Err().message : ""}`);
     expect(after.Ok().docs.map((d) => d._id)).not.toContain("gated-doc"); // adminMode did NOT elevate the non-owner
+  });
+
+  it("non-owner with per-request adminMode:true is still channel-gated (req path)", async () => {
+    // Distinct seqOffset so this outsider doesn't collide with 900 (owner) or 950 (prior test).
+    const { api: outsider2Api } = await mkUser(sthis, deviceCA, wsPair, 960);
+
+    // Grant read access via auto-accept so they clear the ACL gate.
+    await ownerApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "editor" } });
+    const rReq = await outsider2Api.requestAccess({ appSlug, ownerHandle });
+    assert(rReq.isOk(), `requestAccess failed: ${rReq.isErr() ? rReq.Err().message : ""}`);
+    const req = rReq.Ok();
+    assert(isResRequestAccessApproved(req), `Expected auto-approved, got state: ${req.state}`);
+
+    // Pass adminMode:true directly in the queryDocs request — no whoAmI.
+    // Non-owners must remain channel-filtered regardless of req.adminMode.
+    const r = await outsider2Api.queryDocs({ appSlug, ownerHandle, dbName: "secret-room", adminMode: true });
+    assert(r.isOk(), `expected Ok (cleared ACL gate), got error: ${r.isErr() ? r.Err().message : ""}`);
+    expect(r.Ok().docs.map((d) => d._id)).not.toContain("gated-doc"); // per-request adminMode did NOT elevate the non-owner
   });
 });

@@ -36,6 +36,7 @@ export const reqGetDoc = type({
   appSlug: "string",
   dbName: "string",
   docId: "string",
+  "adminMode?": "boolean",
 });
 export type ReqGetDoc = typeof reqGetDoc.infer;
 export function isReqGetDoc(obj: unknown): obj is ReqGetDoc {
@@ -80,6 +81,7 @@ export const reqQueryDocs = type({
   appSlug: "string",
   dbName: "string",
   "filter?": queryFilter,
+  "adminMode?": "boolean",
 });
 export type ReqQueryDocs = typeof reqQueryDocs.infer;
 export function isReqQueryDocs(obj: unknown): obj is ReqQueryDocs {
