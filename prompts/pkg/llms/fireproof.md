@@ -59,14 +59,16 @@ export default function App() {
 }
 ```
 
-The access function lives in a separate file. Even simple apps include one — it's the server-side authority for who can write:
+The access function lives in a separate file. Even simple apps include one — it's the server-side authority for who can write, and it routes each document to a channel so the author can read it back:
 
 access.js
 
 ```js
 export default function (doc, oldDoc, user) {
   if (!user) throw { forbidden: "sign in to save" };
-  return {};
+  // Private to the author: one channel per user holds all of their documents.
+  const mine = `user:${user.userHandle}`;
+  return { channels: [mine], grant: { users: { [user.userHandle]: [mine] } } };
 }
 ```
 
@@ -376,7 +378,7 @@ export function announcements(doc, oldDoc, user, ctx) {
     return { channels: [doc.channel] };
   }
 
-  return {};
+  throw { forbidden: "unknown document type" };
 }
 ```
 
@@ -474,7 +476,7 @@ export function chat(doc, oldDoc, user, ctx) {
     return { channels: [doc.channel] };
   }
 
-  return {};
+  throw { forbidden: "unknown document type" };
 }
 ```
 
@@ -523,7 +525,7 @@ Access functions live in `/access.js`, a separate file in the vibe's filesystem 
 
 ### AccessDescriptor return type
 
-All fields are optional. `{}` is a valid return. `throw { forbidden: "reason" }` rejects the write.
+All fields are optional, but a stored document must be routed to at least one channel (`channels`) to be readable — a result with no channels is refused at write time. To reject a write outright, `throw { forbidden: "reason" }`.
 
 ```ts
 type AccessDescriptor = {
@@ -552,6 +554,15 @@ type AccessDescriptor = {
 **`allowAnonymous` prevents a footgun.** If `user` is `null` and the function returns without throwing, the runtime checks `allowAnonymous`. If absent or `false`, the write is rejected. This prevents a function that never inspects `user` from silently opening anonymous writes. When `user` is not null, `allowAnonymous` has no effect. `grant.public` makes channels readable by any member (anyone through the door) without a specific channel grant — whether non-members can also read depends on the app-level public toggle. Anonymous _write_ requires `allowAnonymous: true` separately.
 
 **Access functions are server-enforced policy code.** Checks should be deterministic over `(doc, oldDoc, user, ctx)` and deny with `throw { forbidden: "reason" }` when violated.
+
+### Choosing channels — keep the count low
+
+A channel is a _reusable_ unit of read access: grant a user into a channel once and they can read every document routed there. Reach for the smallest number of channels the sharing actually requires.
+
+- **A reusable group reads many docs** (a team, a board, a project): route to one channel the _collaboration_ owns — `return { channels: [doc.channelId] }` — and grant membership once via a meta or invite doc. Many documents share the one channel.
+- **Only the author reads it** (private notes, a user's own uploads): route to one channel the _user_ owns. `const mine = \`user:${user.userHandle}\`; return { channels: [mine], grant: { users: { [user.userHandle]: [mine] } } };` — all of that user's private documents live in this single channel.
+- **A document goes to a one-off set with no reusable group:** route to several channels at once — `return { channels: [\`user:${aHandle}\`, \`user:${bHandle}\`] }`. Mint a per-document channel (`channels: [doc._id]`) only when each document genuinely has its own disjoint audience.
+- **Refusing a write:** `throw { forbidden: "reason" }`. Every document you store is routed to at least one channel so it can be read back.
 
 ### Example: Workspace chat with channels
 
@@ -587,7 +598,7 @@ export function chat(doc, oldDoc, user, ctx) {
     };
   }
 
-  return {};
+  throw { forbidden: "unknown document type" };
 }
 ```
 
@@ -620,8 +631,7 @@ export function survey(doc, oldDoc, user, ctx) {
     return { channels: [doc._id], grant: { public: [doc._id] } };
   }
 
-  if (!user) throw { forbidden: "authentication required" };
-  return {};
+  throw { forbidden: "unknown document type" };
 }
 ```
 
@@ -642,7 +652,9 @@ export function chat(doc, oldDoc, user, ctx) {
 
 export function notes(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };
-  return {};
+  // Private to the author — one channel per user.
+  const mine = `user:${user.userHandle}`;
+  return { channels: [mine], grant: { users: { [user.userHandle]: [mine] } } };
 }
 ```
 
@@ -674,10 +686,11 @@ export function chat(doc, oldDoc, user, ctx) {
   return { channels: [doc.channelId] };
 }
 
-// Everything else: require authentication, no channel routing
+// Everything else: authenticated users get a private per-user channel
 export default function (doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };
-  return {};
+  const mine = `user:${user.userHandle}`;
+  return { channels: [mine], grant: { users: { [user.userHandle]: [mine] } } };
 }
 ```
 
@@ -908,7 +921,9 @@ access.js
 ```js
 export function imageUploads(doc, oldDoc, user) {
   if (!user) throw { forbidden: "sign in to upload" };
-  return {};
+  // Each uploader reads their own images — one private channel per user.
+  const mine = `user:${user.userHandle}`;
+  return { channels: [mine], grant: { users: { [user.userHandle]: [mine] } } };
 }
 ```
 
@@ -1044,6 +1059,8 @@ export function todoList(doc, oldDoc, user) {
   if (doc.type === "todo" && doc.createdBy !== user.userHandle) {
     throw { forbidden: "only the author can edit" };
   }
-  return {};
+  // Private to the author — one channel per user.
+  const mine = `user:${user.userHandle}`;
+  return { channels: [mine], grant: { users: { [user.userHandle]: [mine] } } };
 }
 ```

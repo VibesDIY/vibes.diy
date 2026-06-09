@@ -274,7 +274,7 @@ When the app uses channel-based read isolation or per-document write validation,
 >     ctx.requireAccess(doc.channelId);
 >     return { channels: [doc.channelId] };
 >   }
->   return {};
+>   throw { forbidden: "unknown document type" };
 > }
 > ```
 
