@@ -154,28 +154,37 @@ git commit -m "feat(firefly): override access bypasses channel gating on getDoc/
 
 - Test: `vibes.diy/api/tests/access-fn-channel-read.test.ts`
 
+> **Test must isolate the channel filter, not the ACL gate** (per Codex review on this plan). A bare outsider with no read grant is rejected earlier by `readAllowed` (`canRead("none") || isPublicReadable(...)`), so `queryDocs` would return access-denied and the test would pass for the wrong reason — never exercising `filterDocsByChannel`. The outsider must clear the ACL gate (have read access) but be **out of the `vip` channel**, so that channel filtering is the _only_ thing that can exclude `gated-doc`.
+
 - [ ] **Step 1: Write the test**
 
-Add a test using a second, non-owner user (mirror the `mkUser` pattern already in the file with a distinct `seqOffset`). The non-owner sends `whoAmI({ adminMode: true })` and must still be channel-filtered:
+Add a test using a second, non-owner user (mirror the `mkUser` pattern already in the file with a distinct `seqOffset`). Grant that outsider read access to the db (via the same invite/grant path the existing collaborator tests in this suite use — keep them a non-`vip` reader), then have them send `whoAmI({ adminMode: true })` and confirm they are still channel-filtered:
 
 ```typescript
-it("non-owner sending adminMode does NOT get override", async () => {
-  const { api: outsiderApi } = await mkUser(sthis, deviceCA, wsPair, 950);
+it("non-owner with read access + adminMode is still channel-gated (no override)", async () => {
+  const { api: outsiderApi, user: outsider } = await mkUser(sthis, deviceCA, wsPair, 950);
+
+  // Give the outsider plain read access so they clear the ACL gate — but NOT the "vip" channel.
+  // Use the same grant mechanism the existing collaborator-read tests in this file use
+  // (e.g. owner grants reader role / accepts invite for `outsider`), so readAllowed passes.
+  await grantReader(ownerApi, { appSlug, ownerHandle, dbName: "secret-room", userHandle: outsider.handle });
+
   const who = await outsiderApi.whoAmI({ tid: crypto.randomUUID(), appSlug, ownerHandle, adminMode: true });
   assert(who.isOk());
+
   const r = await outsiderApi.queryDocs({ appSlug, ownerHandle, dbName: "secret-room" });
-  assert(r.isOk());
+  assert(r.isOk(), "reader should clear the ACL gate (Ok), then be channel-filtered");
   const ids = r.Ok().docs.map((d) => d._id);
-  expect(ids).not.toContain("gated-doc"); // still filtered — adminMode only elevates the actual owner
+  expect(ids).not.toContain("gated-doc"); // filtered by channel — adminMode did NOT elevate a non-owner
 });
 ```
 
-`sthis`/`deviceCA`/`wsPair` must be reachable here; if `beforeAll` does not already hoist them to the describe scope, store them on describe-level `let` bindings when created (same pattern as `ownerApi`).
+`sthis`/`deviceCA`/`wsPair` must be reachable here; if `beforeAll` does not already hoist them to the describe scope, store them on describe-level `let` bindings when created (same pattern as `ownerApi`). Replace `grantReader(...)` with whatever read-grant helper/flow the existing collaborator tests in this file already use — do not invent a new grant API.
 
-- [ ] **Step 2: Run test to verify it passes immediately**
+- [ ] **Step 2: Run test to verify it passes**
 
 Run: `cd vibes.diy/api && pnpm vitest run tests/access-fn-channel-read.test.ts`
-Expected: PASS — `checkDocAccess` returns `editor` (not `override`) for a non-owner regardless of `adminMode`, so the channel filter still applies. This guards the safety property in the spec.
+Expected: PASS — the read clears the ACL gate (`Ok`), and `checkDocAccess` returns `editor` (not `override`) for the non-owner regardless of `adminMode`, so `filterDocsByChannel` still excludes `gated-doc`. This guards the safety property in the spec. (Verify in the assertion message / run output that the result was `Ok`, not an access-denied error — otherwise the test isn't exercising the channel filter.)
 
 - [ ] **Step 3: Commit**
 
@@ -250,12 +259,12 @@ git commit -m "feat(cli): db query/get/ls run in owner admin mode"
 
 ### Task 5: Data tab db-explorer connects in admin/override mode
 
-> Implements the **always-admin** answer to spec Q2 for the owner-only preview surface. If review chooses to mirror the builder admin toggle, source the boolean from the existing `adminMode` localStorage key instead of hardcoding `true`.
+> Review decisions (CharlieHelps on [#2286](https://github.com/VibesDIY/vibes.diy/pull/2286)): the data tab runs **always owner-mode** (Q2), default-on (Q1). **But** — there is no client-side owner gate on the db-explorer render path today (Q5), and the server only refuses to _elevate_ a non-owner; it doesn't stop us sending a misleading `adminMode: true`. So gate the flag on **confirmed owner state** client-side: only set `adminMode: true` when the surrounding builder context has established `isOwner === true` (the same owner signal the chrome admin toggle is conditioned on in `vibe.$ownerHandle.$appSlug.tsx`). If owner state isn't confirmed, send no `adminMode`.
 
 **Files:**
 
 - Modify: `vibes.diy/vibe/runtime/register-dependencies.ts` (`whoAmI()` ~lines 305–314)
-- Modify: caller that builds the runtime for the db-explorer preview context (the `?preview=yes` path; trace from `vibes.diy/pkg/app/components/ResultPreview/DataView.tsx` and `PreviewApp.tsx`)
+- Modify: caller that builds the runtime for the db-explorer preview context (the `?preview=yes` path; trace from `vibes.diy/pkg/app/components/ResultPreview/DataView.tsx` and `PreviewApp.tsx`) — pass the flag through **only when owner is confirmed**
 - Test: runtime unit test for `whoAmI()` (match existing runtime test pattern under `vibes.diy/vibe/runtime/`)
 
 - [ ] **Step 1: Write the failing test**
@@ -267,6 +276,12 @@ it("whoAmI includes adminMode when runtime is in admin mode", async () => {
   const svc = makeTestRuntime({ adminMode: true }); // existing test factory + new opt
   await svc.whoAmI();
   expect(lastRequest.adminMode).toBe(true);
+});
+
+it("whoAmI omits adminMode when owner is not confirmed", async () => {
+  const svc = makeTestRuntime({ adminMode: false });
+  await svc.whoAmI();
+  expect(lastRequest.adminMode).toBeUndefined();
 });
 ```
 
@@ -293,7 +308,7 @@ whoAmI(): Promise<Result<ResVibeWhoAmI>> {
 }
 ```
 
-Set `adminMode` on the runtime svc only for the db-explorer preview path (`?preview=yes`). Trace the construction site from `DataView.tsx`/`PreviewApp.tsx` and pass the flag through there.
+Set `adminMode` on the runtime svc only for the db-explorer preview path (`?preview=yes`) **and only when owner state is confirmed** (Q5). Trace the construction site from `DataView.tsx`/`PreviewApp.tsx`; gate the flag on the same `isOwner` signal the chrome admin toggle uses (`vibe.$ownerHandle.$appSlug.tsx`), so a non-owner viewing the surface never sends `adminMode: true`.
 
 - [ ] **Step 4: Run test to verify it passes**
 

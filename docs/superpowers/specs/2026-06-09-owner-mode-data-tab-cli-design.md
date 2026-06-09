@@ -85,21 +85,23 @@ context (`?preview=yes`).
 `whoAmI({ adminMode: true })` on connect (or thread `adminMode` so the adapter does),
 then query. Same applies to the get/list subcommands for a consistent owner view.
 
-## Open questions (for review — see PR)
+## Resolved decisions (CharlieHelps review, [#2286](https://github.com/VibesDIY/vibes.diy/pull/2286))
 
-1. **Default-on vs explicit flag.** Since `checkDocAccess` only elevates the actual
-   owner, defaulting `adminMode: true` on the data tab and CLI `db` reads is safe and
-   matches "owner sees all their data." Prefer default-on, or gate the CLI behind
-   `--admin` and the data tab behind the existing builder admin toggle?
-2. **Data tab vs builder admin toggle.** Should the data tab always run override
-   (it's an owner-only inspection surface), or mirror the chrome admin toggle state so
-   "data as a restricted viewer sees it" is observable?
-3. **Per-request vs connection-level.** Reuse the connection `adminMode` (this design),
-   or add `adminMode?` to `ReqQueryDocs`/`ReqGetDoc`/`ReqListDbNames` for explicitness?
-4. **Other override grant paths.** Confirm `checkDocAccess` (owner-binding match) is the
-   only path that yields `override`, so default-on `adminMode` can't elevate a non-owner.
-5. **db-explorer non-owner exposure.** Is the db-explorer ever rendered to a non-owner
-   (e.g. a remix viewer)? If so, the always-admin data-tab path must stay owner-gated.
+1. **Default-on vs explicit flag → default-on.** `adminMode: true` by default on the
+   data tab and CLI `db` reads; non-owners can't elevate because `override` is owner-bound.
+2. **Data tab vs builder admin toggle → always owner-mode.** The data tab is an owner
+   inspection surface; "what a restricted viewer sees" belongs in preview/runtime
+   surfaces. A "view as collaborator" mode can be a later follow-up.
+3. **Per-request vs connection-level → connection-level.** Ship on the existing
+   `whoAmI` → `WSSendProvider.adminMode` path; per-request wire fields are a follow-up,
+   not a blocker.
+4. **Other override grant paths → confirmed none.** `checkDocAccess` owner-binding +
+   `adminMode === true` (`api/svc/public/access-helpers.ts`) is the only path emitting
+   `access: "override"`. Encoded as a regression test (plan Task 3).
+5. **db-explorer non-owner exposure → no client-side owner gate exists today.** The
+   server still prevents non-owner elevation, but the client must gate sending
+   `adminMode: true` on **confirmed owner state** so we never signal a misleading mode
+   (plan Task 5).
 
 ## Out of scope
 
