@@ -118,6 +118,32 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
         },
       });
 
+    // Seed secret-room db: insert a binding (reuse actualCid) so channel filtering applies,
+    // then putDoc with channels: ["vip"] — owner is not in "vip", so normal reads filter it out.
+    const tAfbSecret = appCtx.vibesCtx.sql.tables.accessFunctionBindings;
+    await appCtx.vibesCtx.sql.db
+      .insert(tAfbSecret)
+      .values({
+        ownerHandle,
+        appSlug,
+        dbName: "secret-room",
+        accessFnCid: actualCid,
+        updated: new Date().toISOString(),
+      })
+      .onConflictDoUpdate({
+        target: [tAfbSecret.ownerHandle, tAfbSecret.appSlug, tAfbSecret.dbName],
+        set: { accessFnCid: actualCid, updated: new Date().toISOString() },
+      });
+
+    recorder.result = { channels: ["vip"], allowAnonymous: false };
+    const rGated = await ownerApi.putDoc({
+      ownerHandle,
+      appSlug,
+      dbName: "secret-room",
+      doc: { _id: "gated-doc", title: "vip-only" },
+    });
+    assert(rGated.isOk(), "gated-doc putDoc failed");
+
     recorder.calls = [];
     recorder.result = { channels: ["general"], allowAnonymous: true };
   }, 30000);
@@ -166,5 +192,18 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     const res = await ownerApi.queryDocs({ ownerHandle, appSlug, dbName: "notes" });
     expect(res.isOk()).toBe(true);
     expect(res.Ok().docs.length).toBe(2);
+  });
+
+  it("owner in adminMode sees docs across all channels (queryDocs)", async () => {
+    const who = await ownerApi.whoAmI({ tid: crypto.randomUUID(), appSlug, ownerHandle, adminMode: true });
+    assert(who.isOk(), "whoAmI adminMode should succeed");
+
+    const r = await ownerApi.queryDocs({ appSlug, ownerHandle, dbName: "secret-room" });
+    assert(r.isOk(), `queryDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+    const ids = r
+      .Ok()
+      .docs.map((d) => d._id)
+      .sort();
+    expect(ids).toContain("gated-doc"); // owner not in "vip" — only override lets this through
   });
 });

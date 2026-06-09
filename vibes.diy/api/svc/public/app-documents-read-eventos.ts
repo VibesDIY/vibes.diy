@@ -107,7 +107,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
         .limit(1)
         .then((r) => r[0]);
 
-      if (afbRowG?.accessFnCid) {
+      if (afbRowG?.accessFnCid && access !== "override") {
         const tOutputsG = vctx.sql.tables.accessFnOutputs;
         const docOutput = await vctx.sql.db
           .select({ output: tOutputsG.output })
@@ -213,6 +213,7 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
+      let access: DocAccessLevel = "none";
       if (isDirectChannel(req.ownerHandle)) {
         const userId = req._auth?.verifiedAuth.claims.userId;
         const rAccess = userId ? await checkDirectChannelAccess(vctx, req.ownerHandle, userId) : Result.Ok(false);
@@ -224,9 +225,9 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
           return Result.Ok(EventoResult.Continue);
         }
       } else {
-        const { access } = req._auth
+        ({ access } = req._auth
           ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx))
-          : { access: "none" as DocAccessLevel };
+          : { access: "none" as DocAccessLevel });
         const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
         if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, req.appSlug, req.ownerHandle))) {
           await ctx.send.send(ctx, {
@@ -321,7 +322,14 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
           : null;
 
         const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
-        channelFilteredDocs = filterDocsByChannel(docs, allOutputs, userHandle, effectiveChannels, reduce.publicChannels);
+        channelFilteredDocs = filterDocsByChannel(
+          docs,
+          allOutputs,
+          userHandle,
+          effectiveChannels,
+          reduce.publicChannels,
+          access === "override"
+        );
       }
 
       const filteredDocs = applyQueryFilter(channelFilteredDocs, req.filter);
