@@ -1,5 +1,6 @@
 import React from "react";
 import { fmtTime, fmtDate } from "./festival-utils.js";
+import { lineupTag, eventCardStyle } from "./styles.js";
 
 export default function FavoritesView({
   favoriteEvents,
@@ -49,35 +50,44 @@ export default function FavoritesView({
         </div>
       ) : (
         <div className="grid gap-4">
-          {favoriteEvents.map((event) => (
-            <div key={event.eventId} className={c.favCard}>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="text-xl font-black text-white mb-1">{event.title}</h3>
-                  <div className="space-y-1 text-sm font-bold text-white">
-                    <p>{event.venueTitle}</p>
-                    <p>{fmtDate(event.start)}</p>
-                    <p>
-                      {fmtTime(event.start)} – {fmtTime(event.end)}
-                    </p>
-                  </div>
-                  {notes[event.eventId] && (
-                    <div className={c.noteBox}>
-                      <p className={`text-sm font-bold ${c.bodyText}`}>{notes[event.eventId]}</p>
+          {favoriteEvents.map((event) => {
+            const tag = lineupTag(event);
+            return (
+              <div
+                key={event.eventId}
+                className="rounded-2xl border-4 border-[#4A4A4A] p-4 shadow-lg"
+                style={eventCardStyle(event)}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className={`text-xl font-black ${c.bodyText}`}>{event.title}</h3>
+                      <span className="px-2 py-0.5 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase bg-[#BACD32] text-[#4A4A4A]">
+                        {tag.label}
+                      </span>
                     </div>
+                    <div className={`space-y-1 text-sm font-bold ${c.bodyText}`}>
+                      <p>{event.venueTitle}</p>
+                      <p>{fmtDate(event.start)}</p>
+                      <p>
+                        {fmtTime(event.start)} – {fmtTime(event.end)}
+                      </p>
+                    </div>
+                    {notes[event.eventId] && (
+                      <div className={c.noteBox}>
+                        <p className={`text-sm font-bold ${c.bodyText}`}>{notes[event.eventId]}</p>
+                      </div>
+                    )}
+                  </div>
+                  {canWrite && (
+                    <button onClick={() => toggleFavorite(event)} className={c.favToggleOn}>
+                      <span className="font-black text-lg">♥</span>
+                    </button>
                   )}
                 </div>
-                {canWrite && (
-                  <button
-                    onClick={() => toggleFavorite(event)}
-                    className="p-2 bg-white rounded-2xl border-2 border-[#4A4A4A] hover:bg-[#BACD32] transition-all ml-3"
-                  >
-                    <span className="text-[#CD6C0C] font-black text-lg">♥</span>
-                  </button>
-                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
