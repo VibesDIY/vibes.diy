@@ -33,7 +33,7 @@ function codeBegin(blockId: string, sectionId: string, path = "App.jsx"): Prompt
   } as PromptAndBlockMsgs;
 }
 
-function codeLine(blockId: string, sectionId: string, line: string, lineNr: number): PromptAndBlockMsgs {
+function codeLine(blockId: string, sectionId: string, line: string, lineNr: number, path = "App.jsx"): PromptAndBlockMsgs {
   return {
     type: "block.code.line",
     blockId,
@@ -43,13 +43,13 @@ function codeLine(blockId: string, sectionId: string, line: string, lineNr: numb
     timestamp: ts,
     sectionId,
     lang: "jsx",
-    path: "App.jsx",
+    path,
     line,
     lineNr,
   } as PromptAndBlockMsgs;
 }
 
-function codeEnd(blockId: string, sectionId: string): PromptAndBlockMsgs {
+function codeEnd(blockId: string, sectionId: string, path = "App.jsx"): PromptAndBlockMsgs {
   return {
     type: "block.code.end",
     blockId,
@@ -59,7 +59,7 @@ function codeEnd(blockId: string, sectionId: string): PromptAndBlockMsgs {
     timestamp: ts,
     sectionId,
     lang: "jsx",
-    path: "App.jsx",
+    path,
     stats: { lines: 0, bytes: 0 },
   } as PromptAndBlockMsgs;
 }
@@ -95,6 +95,26 @@ function blockOf(blockId: string, fsId: string, lines: string[]): PromptBlock {
     codeEnd(blockId, sectionId),
     blockEnd(blockId, fsId),
   ];
+  return { msgs };
+}
+
+// One code section (codeBegin → lines → codeEnd) targeting a given file path.
+function section(blockId: string, sectionId: string, path: string, lines: string[]): PromptAndBlockMsgs[] {
+  return [
+    codeBegin(blockId, sectionId, path),
+    ...lines.map((l, i) => codeLine(blockId, sectionId, l, i + 1, path)),
+    codeEnd(blockId, sectionId, path),
+  ];
+}
+
+// A single block containing multiple file sections (e.g. App.jsx + access.js),
+// closed with one block.end carrying the fsId.
+function multiFileBlock(blockId: string, fsId: string, sections: { path: string; lines: string[] }[]): PromptBlock {
+  const msgs: PromptAndBlockMsgs[] = [blockBegin(blockId)];
+  sections.forEach((s, i) => {
+    msgs.push(...section(blockId, `${blockId}-sec-${i}`, s.path, s.lines));
+  });
+  msgs.push(blockEnd(blockId, fsId));
   return { msgs };
 }
 
@@ -166,5 +186,66 @@ describe("CodeEditor getCode — aider replace across fsIds", () => {
     const state = makeState([create]);
     const result = getCode(state, "fsid-A");
     expect(result.code.join("\n")).toContain("<h1>hi</h1>");
+  });
+});
+
+describe("CodeEditor getCode — multi-file (App.jsx + access.js)", () => {
+  // Regression: the AI now emits a separate `access.js` file alongside
+  // `App.jsx`. The streaming preview resolver must route each section's edits
+  // to the file named by its `path`, rather than applying every section to a
+  // single running buffer — otherwise the access.js `create` overwrites the
+  // App.jsx buffer and the following App.jsx SEARCH/REPLACE edits fail to
+  // match ("N edits couldn't apply — preview may be stale").
+  it("does not let an access.js create block clobber the App.jsx preview", () => {
+    const block = multiFileBlock("blk-1", "fsid-A", [
+      {
+        path: "App.jsx",
+        lines: [
+          "export default function App() {",
+          "  return (",
+          "    <div>",
+          "      <button>ADD</button>",
+          "    </div>",
+          "  );",
+          "}",
+        ],
+      },
+      {
+        path: "access.js",
+        lines: ["export function appDb(doc, oldDoc, user) {", '  if (!user) throw { forbidden: "sign in" };', "  return {};", "}"],
+      },
+      {
+        path: "App.jsx",
+        lines: ["<<<<<<< SEARCH", "      <button>ADD</button>", "=======", "      <button>LIST</button>", ">>>>>>> REPLACE"],
+      },
+    ]);
+    const state = makeState([block]);
+
+    const result = getCode(state, "fsid-A");
+    const source = result.code.join("\n");
+
+    // The preview renders App.jsx — the App.jsx replace must apply cleanly...
+    expect(source).toContain("export default function App()");
+    expect(source).toContain("<button>LIST</button>");
+    expect(source).not.toContain("<button>ADD</button>");
+    // ...and the access.js content must never leak into the App.jsx preview.
+    expect(source).not.toContain("function appDb");
+
+    // No section should have failed to apply.
+    const dbg = (globalThis as unknown as { __aiderEditsDebug?: { failedSectionCount: number } }).__aiderEditsDebug;
+    expect(dbg?.failedSectionCount ?? 0).toBe(0);
+  });
+
+  it("resolves access.js content when no App.jsx edits follow it (single-section back-compat)", () => {
+    // A turn that only touches App.jsx then access.js must still preview the
+    // App.jsx, not the trailing access.js create.
+    const block = multiFileBlock("blk-1", "fsid-A", [
+      { path: "App.jsx", lines: ["export default function App() { return <h1>hi</h1>; }"] },
+      { path: "access.js", lines: ["export function appDb() { return {}; }"] },
+    ]);
+    const result = getCode(makeState([block]), "fsid-A");
+    const source = result.code.join("\n");
+    expect(source).toContain("<h1>hi</h1>");
+    expect(source).not.toContain("function appDb");
   });
 });
