@@ -1,4 +1,4 @@
-import { command, option, positional, string } from "cmd-ts";
+import { command, option, optional, positional, string } from "cmd-ts";
 import { mkdir, writeFile } from "fs/promises";
 import { dirname, join, resolve } from "path";
 import {
@@ -152,7 +152,7 @@ export function pullCmd(ctx: CliCtx) {
       appSlug: positional({
         displayName: "vibe",
         description: "App slug or handle/app-slug (e.g. jchris/hat-smeller)",
-        type: string,
+        type: optional(string),
       }),
       vibe: option({
         long: "vibe",
@@ -189,7 +189,7 @@ export function pullCmd(ctx: CliCtx) {
         vibe: args.vibe,
         handle: args.handle || args.userSlug,
         appSlug: "",
-        positionalAppSlug: args.appSlug,
+        positionalAppSlug: args.appSlug ?? "",
       });
       return {
         type: "vibes-diy.cli.pull",
