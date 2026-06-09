@@ -410,6 +410,126 @@ describe("HOOK: useLiveQuery viewer-ready re-fetch (#2285)", () => {
     },
     TEST_TIMEOUT
   );
+
+  it(
+    "useAllDocs re-issues the query when the viewer resolves",
+    async () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider mountParams={{ usrEnv: {} }}>{children}</VibeContextProvider>
+      );
+      renderHook(
+        () => {
+          const { useAllDocs } = useFireproof(dbName);
+          return useAllDocs();
+        },
+        { wrapper }
+      );
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(0));
+      const before = mockApi._queryDocsFilterHints.length;
+      act(() => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "vibe.evt.viewerChanged", viewer: { userHandle: "anna" }, access: "viewer" },
+          })
+        );
+      });
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(before));
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    "useDocument re-fetches an existing doc when the viewer resolves",
+    async () => {
+      const dbName = uniqueDbName();
+      const { result: fpResult } = renderHook(() => useFireproof(dbName));
+      const { id } = await fpResult.current.database.put({ input: "existing" });
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider mountParams={{ usrEnv: {} }}>{children}</VibeContextProvider>
+      );
+      let getCalls = 0;
+      const realGet = fpResult.current.database.get.bind(fpResult.current.database);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (fpResult.current.database as any).get = async (docId: string) => {
+        getCalls++;
+        return realGet(docId);
+      };
+
+      renderHook(
+        () => {
+          const { useDocument } = fpResult.current;
+          return useDocument({ _id: id });
+        },
+        { wrapper }
+      );
+      await waitFor(() => expect(getCalls).toBeGreaterThan(0));
+      const before = getCalls;
+      act(() => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "vibe.evt.viewerChanged", viewer: { userHandle: "anna" }, access: "viewer" },
+          })
+        );
+      });
+      await waitFor(() => expect(getCalls).toBeGreaterThan(before));
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    "no-access-fn app (no grants) still re-fetches on viewer-ready and is otherwise unchanged",
+    async () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider mountParams={{ usrEnv: {} }}>{children}</VibeContextProvider>
+      );
+      const { result } = renderHook(
+        () => {
+          const fp = useFireproof(dbName);
+          return { live: fp.useLiveQuery("foo"), access: fp.access };
+        },
+        { wrapper }
+      );
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(0));
+      expect(result.current.access.channels.size).toBe(0);
+      const before = mockApi._queryDocsFilterHints.length;
+      act(() => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "vibe.evt.viewerChanged", viewer: { userHandle: "solo" }, access: "viewer" },
+          })
+        );
+      });
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(before));
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    "does not re-query on an unrelated re-render (no viewer change)",
+    async () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider mountParams={{ usrEnv: {} }}>{children}</VibeContextProvider>
+      );
+      const { rerender } = renderHook(
+        () => {
+          const { useLiveQuery } = useFireproof(dbName);
+          return useLiveQuery("foo");
+        },
+        { wrapper }
+      );
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(0));
+      const before = mockApi._queryDocsFilterHints.length;
+      rerender();
+      rerender();
+      await new Promise((r) => setTimeout(r, 50));
+      expect(mockApi._queryDocsFilterHints.length).toBe(before);
+    },
+    TEST_TIMEOUT
+  );
 });
 
 // ── access (roles + channels from grants) ──────────────────────────
