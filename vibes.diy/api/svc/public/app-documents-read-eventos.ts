@@ -213,6 +213,9 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
+      // TODO(#2290): remove this isDirectChannel special case once DM access is
+      // modeled as an access.js fn. The branch deliberately leaves access = "none"
+      // for DM dbs so the owner override never reaches another user's DMs.
       let access: DocAccessLevel = "none";
       if (isDirectChannel(req.ownerHandle)) {
         const userId = req._auth?.verifiedAuth.claims.userId;
