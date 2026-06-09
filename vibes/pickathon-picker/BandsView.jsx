@@ -34,9 +34,24 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
 
   return (
     <div>
-      <h2 className={`text-2xl font-black mb-6 ${c.bodyText}`}>Bands ({bandsList.length})</h2>
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <h2 className={`text-2xl font-black ${c.bodyText}`}>Bands ({bandsList.length})</h2>
+        {LINEUP_ORDER.filter((key) => grouped[key]?.length > 0).map((key) => (
+          <button
+            key={`nav-${key}`}
+            onClick={() => document.getElementById(`lineup-${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="px-4 py-2 rounded-xl border-2 border-[#4A4A4A] font-black text-sm cursor-pointer hover:opacity-80 transition-all"
+            style={{
+              backgroundColor: grouped[key][0].lineup?.color || "#d7c57d",
+              color: grouped[key][0].lineup?.textColor || "#000",
+            }}
+          >
+            {LINEUP_LABELS[key] || key} ({grouped[key].length})
+          </button>
+        ))}
+      </div>
       {LINEUP_ORDER.filter((key) => grouped[key]?.length > 0).map((key) => (
-        <div key={key} className="mb-8">
+        <div key={key} id={`lineup-${key}`} className="mb-8 scroll-mt-4">
           <h3
             className="text-lg font-black mb-3 px-4 py-2 rounded-xl border-2 border-[#4A4A4A] inline-block"
             style={{
