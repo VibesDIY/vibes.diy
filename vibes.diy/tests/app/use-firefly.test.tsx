@@ -368,6 +368,50 @@ describe("HOOK: useChanges", () => {
   );
 });
 
+// ── viewer-ready re-fetch (#2285) ───────────────────────────────────
+
+describe("HOOK: useLiveQuery viewer-ready re-fetch (#2285)", () => {
+  it(
+    "re-issues the backend query when the viewer resolves, with no local write",
+    async () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider mountParams={{ usrEnv: {} }}>{children}</VibeContextProvider>
+      );
+
+      renderHook(
+        () => {
+          const { useLiveQuery } = useFireproof(dbName);
+          return useLiveQuery("foo");
+        },
+        { wrapper }
+      );
+
+      // Mount fires the first backend query while the viewer is unresolved.
+      await waitFor(() => {
+        expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(0);
+      });
+      const callsBeforeViewer = mockApi._queryDocsFilterHints.length;
+
+      // Drive the real signal VibeContext listens to: a window "message"
+      // event carrying vibe.evt.viewerChanged → setViewerEnv → viewer resolves.
+      act(() => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "vibe.evt.viewerChanged", viewer: { userHandle: "anna" }, access: "viewer" },
+          })
+        );
+      });
+
+      // The fix: viewer-ready re-fires the query with no local write.
+      await waitFor(() => {
+        expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(callsBeforeViewer);
+      });
+    },
+    TEST_TIMEOUT
+  );
+});
+
 // ── access (roles + channels from grants) ──────────────────────────
 
 describe("HOOK: useFireproof access", () => {
