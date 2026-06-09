@@ -84,3 +84,51 @@ describe("write gate rejects unreadable (zero-channel) writes", { timeout: 15000
     expect(rRes.isOk()).toBe(true);
   });
 });
+
+describe("write gate leaves no-access-fn apps untouched", { timeout: 15000 }, () => {
+  const sthis = ensureSuperThis();
+  let ownerApi: VibesDiyApi;
+  let appSlug: string;
+  let ownerHandle: string;
+
+  beforeAll(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    // No invokeAccessFn stub and no /access.js → no binding → no channel gating.
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    const ownerUser = await createTestUser({ sthis, deviceCA, seqUserId: 101 });
+
+    const wsPair = TestWSPair.create();
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+
+    ownerApi = new VibesDiyApi({
+      apiUrl: "http://localhost:8787/api",
+      ws: wsPair.p1 as unknown as WebSocket,
+      timeoutMs: 10000,
+      getToken: async () => Result.Ok(await ownerUser.getDashBoardToken()),
+    });
+
+    const rSlug = await ownerApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+    });
+    const ok = rSlug.Ok();
+    if (!isResEnsureAppSlugOk(ok)) assert.fail("ensureAppSlug failed");
+    appSlug = ok.appSlug;
+    ownerHandle = ok.ownerHandle;
+  });
+
+  it("a channel-less doc still writes fine when there is no access fn", async () => {
+    const rRes = await ownerApi.putDoc({
+      appSlug,
+      ownerHandle,
+      dbName: "default",
+      doc: { type: "image", prompt: "no access fn here" },
+    });
+    expect(rRes.isOk()).toBe(true);
+  });
+});
