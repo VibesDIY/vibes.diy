@@ -35,7 +35,6 @@ coverage/
 
 **/_wildcard.localhost.vibesdiy.net*
 
-# Local scratch: CLI pull/push app dirs, eval outputs, stray tool worktrees.
-# Root-anchored so vibes.diy/ and use-vibes/ are unaffected.
-/vibes/
+# Local scratch: stray tool worktrees. Root-anchored so vibes.diy/ and
+# use-vibes/ are unaffected. vibes/ is tracked but excluded from ESLint.
 /.claire/
