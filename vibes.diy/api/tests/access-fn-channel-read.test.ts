@@ -34,7 +34,7 @@ async function setupCtx(recorder: InvokeRecorder) {
   wsPair.p2.onmessage = (event: MessageEvent) => {
     wsEvento.trigger({ ctx: ctx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
   };
-  return { ctx, wsPair, sthis, deviceCA };
+  return { ctx, wsPair, wsSendProvider, sthis, deviceCA };
 }
 
 async function mkUser(
@@ -62,6 +62,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
   let sthis: ReturnType<typeof ensureSuperThis>;
   let deviceCA: Awaited<ReturnType<typeof createTestDeviceCA>>;
   let wsPair: ReturnType<typeof TestWSPair.create>;
+  let wsSendProvider: WSSendProvider;
   const recorder: InvokeRecorder = { calls: [], result: { channels: ["general"], allowAnonymous: true } };
 
   beforeAll(async () => {
@@ -70,6 +71,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     sthis = setup.sthis;
     deviceCA = setup.deviceCA;
     wsPair = setup.wsPair;
+    wsSendProvider = setup.wsSendProvider;
     appCtx = ctx;
     const ownerSetup = await mkUser(sthis, deviceCA, wsPair, 900);
     ownerApi = ownerSetup.api;
@@ -224,6 +226,32 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     // Owner is not in "vip"; without the access !== "override" guard this would return not-found.
     expect(r.Ok().status).toBe("ok");
     expect(r.Ok().id).toBe("gated-doc");
+  });
+
+  it("owner subscribeDocs in adminMode subscribes to all channels (override)", async () => {
+    // Ensure the connection is in adminMode before subscribing.
+    const who = await ownerApi.whoAmI({ tid: crypto.randomUUID(), appSlug, ownerHandle, adminMode: true });
+    assert(who.isOk(), "whoAmI adminMode should succeed");
+
+    // Clear any keys from prior tests to isolate this assertion.
+    wsSendProvider.subscribedDocKeys.clear();
+
+    const r = await ownerApi.subscribeDocs({ appSlug, ownerHandle, dbName: "secret-room" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err() : ""}`);
+
+    // The owner should be subscribed to the vip channel key, even though they
+    // are not personally a member of "vip". Override enumerates ALL channels
+    // from accessFnOutputs so doc-changed events reach the owner.
+    const vipKey = `${ownerHandle}/${appSlug}/vip`;
+    expect(wsSendProvider.subscribedDocKeys.has(vipKey)).toBe(true);
+
+    // Note: the negative case (non-override does NOT add vip key) is tested
+    // implicitly by the "queryDocs returns only docs in user's channels" test
+    // above, which relies on channel filtering being accurate. A direct
+    // subscribeDocs negative assertion is omitted here because the shared
+    // wsSendProvider adminMode state makes re-testing the non-override path on
+    // the same connection unreliable (known harness quirk — adminMode is sticky
+    // per-connection once set via whoAmI).
   });
 
   it("non-owner with read access + adminMode is still channel-gated (no override)", async () => {
