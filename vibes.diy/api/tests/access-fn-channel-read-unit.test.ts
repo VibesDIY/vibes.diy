@@ -73,4 +73,15 @@ describe("filterDocsByChannel (unit)", () => {
     const result = filterDocsByChannel(docs, outputs, "user-a", effectiveChannels, new Set());
     expect(result.length).toBe(1);
   });
+
+  it("returns all docs unfiltered when adminOverride is true", () => {
+    const docs = [
+      { _id: "d1", title: "in-channel" },
+      { _id: "d2", title: "secret-channel" },
+    ];
+    const outputs = [mkOutput("d1", { channels: ["general"] }), mkOutput("d2", { channels: ["secret"] })];
+    const effectiveChannels = new Set(["general"]); // user only in "general"
+    const result = filterDocsByChannel(docs, outputs, "user-a", effectiveChannels, new Set(), true);
+    expect(result).toEqual(docs); // both returned despite "secret" not in effectiveChannels
+  });
 });
