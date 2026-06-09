@@ -42,15 +42,31 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
   //   2. Hydrated saved file for the requested fsId (after chat reload).
   //   3. Latest running source (no historical match — typically the in-flight
   //      turn before block.end has fired).
-  // The AI emits multiple files in one turn (e.g. `App.jsx` + `access.js`).
-  // Each code section names its file via `path`. Keep a separate running buffer
-  // per file so an `access.js` create can't clobber the `App.jsx` buffer (which
-  // would make every subsequent App.jsx SEARCH/REPLACE fail to match). The
-  // preview resolves to the entry file — the most recent non-server-only file.
+  // The AI emits multiple files in one turn (e.g. `App.jsx` + `access.js`, or
+  // `App.jsx` + `Counter.jsx` + `styles.css`). Each code section names its file
+  // via `path`. Keep a separate running buffer per file so a companion-file
+  // create can't clobber the `App.jsx` buffer (which would make every
+  // subsequent App.jsx SEARCH/REPLACE fail to match). The preview resolves to
+  // the render root — `App.jsx` by convention; companion files (components,
+  // CSS, the server-side `access.js`) are imported by it, never rendered
+  // standalone. Only if `App.jsx` never appears do we fall back to the first
+  // client file seen.
   const seedFromHydrate = fsId && promptState.hydratedSource?.fsId === fsId ? promptState.hydratedSource.code.join("\n") : "";
   const sources = new Map<string, string>();
   if (seedFromHydrate) sources.set(DEFAULT_PATH, seedFromHydrate);
   let entryPath = DEFAULT_PATH;
+  let appEntrySeen = Boolean(seedFromHydrate);
+  // Track the render root: lock to `App.jsx` once it appears; until then, fall
+  // back to the first non-server-only file written.
+  const noteEntryPath = (path: string) => {
+    if (SERVER_ONLY_PATHS.has(path)) return;
+    if (path === DEFAULT_PATH) {
+      appEntrySeen = true;
+      entryPath = DEFAULT_PATH;
+    } else if (!appEntrySeen) {
+      entryPath = path;
+    }
+  };
   const entrySource = () => sources.get(entryPath) ?? "";
   let complete = false;
   let streamId: string | undefined;
@@ -98,7 +114,7 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
           }
         }
         sources.set(currentPath, result.content);
-        if (!SERVER_ONLY_PATHS.has(currentPath)) entryPath = currentPath;
+        noteEntryPath(currentPath);
         inSection = false;
         sectionClosed = true;
         debugSections.push({
@@ -133,7 +149,7 @@ export function getCode(promptState: PromptState, fsId?: string | null): AppCode
       const onlyCreate = parsed.edits.length === 1 && parsed.edits[0].op === "create";
       if (onlyCreate) {
         sources.set(currentPath, (parsed.edits[0] as { content: string }).content);
-        if (!SERVER_ONLY_PATHS.has(currentPath)) entryPath = currentPath;
+        noteEntryPath(currentPath);
       }
     }
     complete = sectionClosed;
