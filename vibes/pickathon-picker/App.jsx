@@ -640,6 +640,8 @@ export default function PickathonPicker() {
                 focusedNote={focusedNote}
                 onToggleFavorite={canWrite ? toggleFavorite : null}
                 myFavIds={myFavIds}
+                allEvents={events}
+                showGaps={true}
               />
             </div>
           )}
