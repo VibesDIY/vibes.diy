@@ -13,7 +13,7 @@ function EventCard({ event, isMine, isFriendPick, canWrite, toggleFavorite, c, s
             <span className="px-2 py-0.5 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase bg-[#BACD32] text-[#4A4A4A]">
               {tag.label}
             </span>
-            {isFriendPick && !isMine && (
+            {isFriendPick && (
               <span className={c.badge} title="A friend favorited this">
                 friend pick
               </span>
