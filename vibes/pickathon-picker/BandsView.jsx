@@ -36,8 +36,8 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
           return (
             <div
               key={band.title}
-              className={anyFav ? c.favCard : "rounded-2xl border-4 border-[#4A4A4A] p-4 shadow-lg"}
-              style={anyFav ? undefined : { backgroundColor: lineupColor }}
+              className="rounded-2xl border-4 border-[#4A4A4A] p-4 shadow-lg"
+              style={{ backgroundColor: lineupColor }}
             >
               <div className="flex items-start gap-3">
                 {canWrite && (
@@ -50,7 +50,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <h3 className={`text-xl font-black ${anyFav ? "text-white" : c.bodyText}`}>{band.title}</h3>
+                    <h3 className={`text-xl font-black ${c.bodyText}`}>{band.title}</h3>
                     <span className="px-3 py-1 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase bg-[#BACD32] text-[#4A4A4A]">
                       {lineupLabel}
                     </span>
@@ -60,7 +60,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
                       </span>
                     )}
                   </div>
-                  <p className={`text-sm font-bold mb-2 ${anyFav ? "text-white/80" : "text-[#4A4A4A]/70"}`}>
+                  <p className={`text-sm font-bold mb-2 ${"text-[#4A4A4A]/70"}`}>
                     {band.venueList.join(" · ")} · {band.events.length} set{band.events.length > 1 ? "s" : ""}
                   </p>
                   <div className="space-y-1">
@@ -74,7 +74,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
                             {myFavIds.has(e.eventId) ? "♥" : "♡"}
                           </button>
                         )}
-                        <span className={`text-sm font-bold ${anyFav ? "text-white" : c.bodyText}`}>
+                        <span className={`text-sm font-bold ${c.bodyText}`}>
                           {fmtDate(e.start)} · {fmtTime(e.start)}–{fmtTime(e.end)} · {e.venueTitle}
                         </span>
                       </div>
