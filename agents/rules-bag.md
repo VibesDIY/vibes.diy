@@ -102,3 +102,9 @@ handler: ctx.cliStream.enqueue((args) => {
   return { type: "core-cli.build", ...args };
 });
 ```
+
+## Lessons (real incidents)
+
+### Don't overload an envelope field — [#2306](https://github.com/VibesDIY/vibes.diy/issues/2306)
+
+`vibes.diy.evt-doc-changed` carried the **channel** name in its `dbName` field when an access function routed documents to a channel whose name differed from the database name. Browser `useLiveQuery` filters change events by the real db name, so live cross-user sync **silently** broke for every access-fn app where channel ≠ db name — single-user use and reload looked fine; it took two live users to surface. Fix shape: keep `dbName` = the real database name always, and carry channel routing in the dedicated `channel` field (already introduced in [#2301](https://github.com/VibesDIY/vibes.diy/issues/2301)) — never repurpose `dbName`. This is the "Evento is an architectural boundary — unify the message types, don't cast around the mismatch" rule with a price tag attached: an overloaded field type-checks and works in the happy path but diverges from what consumers filter/key on, and the failure only appears under multi-actor conditions where CI and single-user testing miss it.
