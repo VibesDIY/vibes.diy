@@ -56,7 +56,7 @@ export interface VibesApiSQLCtx {
   metaAdAccountId?: string;
   metaPixelId?: string;
   notifyDocChanged?(
-    evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string },
+    evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string; channel?: string },
     senderConnId: string
   ): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;
