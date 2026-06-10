@@ -34,9 +34,14 @@ export const dbSubscribeEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbSubscr
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
     const bootstrapApi = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const rUser = await resolveUserSlug(bootstrapApi, ctx.validated.ownerHandle);
-    if (rUser.isErr()) return Result.Err(rUser.Err());
-    const ownerHandle = rUser.Ok();
+    let ownerHandle: string;
+    try {
+      const rUser = await resolveUserSlug(bootstrapApi, ctx.validated.ownerHandle);
+      if (rUser.isErr()) return Result.Err(rUser.Err());
+      ownerHandle = rUser.Ok();
+    } finally {
+      await bootstrapApi.close();
+    }
     const routedUrl = BuildURI.from(ctx.validated.apiUrl)
       .pathname("/api/app")
       .cleanParams()
