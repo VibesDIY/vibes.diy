@@ -504,6 +504,25 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
         }
       }
 
+      // [DBG2306] temporary diagnostic — remove after capturing runtime keys (#2306)
+      console.info(
+        "[DBG2306-sub] conn=",
+        wsSend.connId.slice(0, 8),
+        "owner=",
+        req.ownerHandle,
+        "app=",
+        req.appSlug,
+        "dbName=",
+        req.dbName,
+        "access=",
+        access,
+        "hasAfb=",
+        !!afbRowS?.accessFnCid,
+        "channelKeys=",
+        JSON.stringify(channelKeys),
+        "fallbackKey=",
+        subscriptionKey
+      );
       if (channelKeys.length > 0) {
         for (const key of channelKeys) {
           wsSend.subscribedDocKeys.add(key);

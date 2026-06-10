@@ -115,6 +115,19 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
           HOT_VIBE_CONN_WARN_THRESHOLD
         );
       }
+      // [DBG2306] temporary diagnostic — remove after capturing runtime keys (#2306)
+      console.info(
+        "[DBG2306-emit] key=",
+        key,
+        "channel=",
+        evt.channel ?? "(none)",
+        "dbName=",
+        evt.dbName,
+        "sender=",
+        senderConnId.slice(0, 8),
+        "conns=",
+        JSON.stringify([...connections].map((c) => ({ id: c.connId.slice(0, 8), keys: [...c.subscribedDocKeys] })))
+      );
       const fullEvt = { type: "vibes.diy.evt-doc-changed", ...evt };
       for (const conn of connections) {
         if (!conn.subscribedDocKeys.has(key)) continue;
