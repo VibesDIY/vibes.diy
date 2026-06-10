@@ -15,6 +15,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [coding-standards.md](agents/coding-standards.md) — No inline HTML, clickable links, review commits
 - [deploy-tags.md](agents/deploy-tags.md) — Tag naming and deploy runbook
 - [environments.md](agents/environments.md) — Dev/prod/cli/preview architecture, stable-entry routing
+- [iframe-policy.md](agents/iframe-policy.md) — Vibe iframe sandbox/allow tokens, adding a capability, validating a deployed policy on cli
 - [vibe-pkg.md](agents/vibe-pkg.md) — Self-hosted package serving via /vibe-pkg/
 - [dev-state.md](agents/dev-state.md) — Which caches are safe to delete, and which destroy local dev data
 - [flaky-tests.md](agents/flaky-tests.md) — Rerun (or run the suite in isolation) before treating a `pnpm check` failure as real; log to VibesDIY/vibes.diy#1515
