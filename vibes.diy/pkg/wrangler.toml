@@ -19,7 +19,6 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions" },
-  { name = "DOC_NOTIFY", class_name = "DocNotify" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
   { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
@@ -43,6 +42,13 @@ new_classes = ["AccessFnDO"]
 [[migrations]]
 tag = "v5"
 new_classes = ["AppSessions"]
+
+# v6: DocNotify is dead code (live fan-out moved to per-vibe
+# localBroadcastCallbacks in #2253). Class deleted here; cli dropped its
+# cross-script binding first (#2297) to clear the 10061 blocker. (#2265)
+[[migrations]]
+tag = "v6"
+deleted_classes = ["DocNotify"]
 
 [[d1_databases]]
 binding = "DB"
@@ -72,7 +78,6 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions" },
-  { name = "DOC_NOTIFY", class_name = "DocNotify" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
   { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
@@ -96,6 +101,10 @@ new_classes = ["AccessFnDO"]
 [[env.local.migrations]]
 tag = "v5"
 new_classes = ["AppSessions"]
+
+[[env.local.migrations]]
+tag = "v6"
+deleted_classes = ["DocNotify"]
 
 [[env.local.d1_databases]]
 binding = "DB"
@@ -131,7 +140,6 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions" },
-  { name = "DOC_NOTIFY", class_name = "DocNotify" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
   { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
@@ -155,6 +163,10 @@ new_classes = ["AccessFnDO"]
 [[env.dev.migrations]]
 tag = "v5"
 new_classes = ["AppSessions"]
+
+[[env.dev.migrations]]
+tag = "v6"
+deleted_classes = ["DocNotify"]
 
 [[env.dev.d1_databases]]
 binding = "DB"
@@ -192,7 +204,6 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions" },
-  { name = "DOC_NOTIFY", class_name = "DocNotify" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
   { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
@@ -216,6 +227,10 @@ new_classes = ["AccessFnDO"]
 [[env.preview.migrations]]
 tag = "v5"
 new_classes = ["AppSessions"]
+
+[[env.preview.migrations]]
+tag = "v6"
+deleted_classes = ["DocNotify"]
 
 [[env.preview.d1_databases]]
 binding = "DB"
@@ -252,7 +267,6 @@ binding = "BROWSER"
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions" },
-  { name = "DOC_NOTIFY", class_name = "DocNotify" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
   { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
@@ -276,6 +290,10 @@ new_classes = ["AccessFnDO"]
 [[env.prod.migrations]]
 tag = "v5"
 new_classes = ["AppSessions"]
+
+[[env.prod.migrations]]
+tag = "v6"
+deleted_classes = ["DocNotify"]
 
 [[env.prod.d1_databases]]
 binding = "DB"
@@ -313,10 +331,10 @@ binding = "BROWSER"
 # cross-script DOC_NOTIFY binding was removed as part of DocNotify
 # retirement (#2265) — DocNotify is dead code (live fan-out now runs through
 # per-vibe localBroadcastCallbacks, see #2253), so cli no longer references
-# prod's class. Dropping this binding here is what unblocks prod from
-# deleting the class in the follow-up PR; deploy cli BEFORE prod. The dormant
-# cli `v2 new_classes=["DocNotify"]` history entry is intentionally retained
-# (see note on the v2 migration below).
+# prod's class. This Step B deploy also deletes cli's dormant local DocNotify
+# class via the cli `v6 deleted_classes` migration below (required because the
+# DocNotify source is removed in this PR). Deploy order is still cli BEFORE
+# prod, so prod's class loses its last reference before prod deletes it.
 [env.cli.durable_objects]
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
@@ -334,13 +352,13 @@ new_classes = ["ChatSessions"]
 # to deploy when a live tag is missing from config (10074 — tries to
 # reset+reapply and trips on existing classes).
 #
-# The cross-script DOC_NOTIFY binding has now been removed (DocNotify
-# retirement, #2265). The local `v2 new_classes=["DocNotify"]` registry
-# entry stays dormant: the live cli worker has v2 applied, and wrangler
-# refuses to deploy when a previously-applied tag is missing from config.
-# We intentionally do NOT append a cli `deleted_classes` migration here —
-# now that the binding is gone the 10061 blocker no longer applies, but
-# leaving the dormant class costs nothing and avoids extra cli deploy churn.
+# The cross-script DOC_NOTIFY binding was removed in #2297. Keep this
+# historical `v2 new_classes=["DocNotify"]` entry — wrangler refuses to
+# deploy when a previously-applied tag is missing from config. The dormant
+# class itself is deleted by the cli `v6 deleted_classes` migration below:
+# now that this Step B deploy removes the DocNotify source, the cli worker no
+# longer exports the class, so the registry entry must be retired in the same
+# deploy (otherwise Cloudflare rejects the worker for a missing DO class).
 [[env.cli.migrations]]
 tag = "v2"
 new_classes = ["DocNotify"]
@@ -358,6 +376,14 @@ new_classes = ["AccessFnDO"]
 [[env.cli.migrations]]
 tag = "v5"
 new_classes = ["AppSessions"]
+
+# v6: retire cli's dormant local DocNotify class. Safe now that #2297 removed
+# the cross-script DOC_NOTIFY binding (no 10061), and required because this
+# Step B deploy deletes the DocNotify source so the worker no longer exports
+# the class. (#2265)
+[[env.cli.migrations]]
+tag = "v6"
+deleted_classes = ["DocNotify"]
 
 [[env.cli.d1_databases]]
 binding = "DB"
