@@ -124,7 +124,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
                         height="20"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="#4A4A4A"
+                        stroke="currentColor"
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"

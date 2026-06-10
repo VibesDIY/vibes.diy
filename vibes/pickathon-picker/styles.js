@@ -43,7 +43,7 @@ export const lineupTag = (event) => {
 // Light mode: full lineup color. Dark mode: the same hue mixed down into the dark
 // surface (via the --lineup custom prop + a `dark:bg-[color-mix(...)]` class on the card).
 export const eventCardStyle = (event) => ({ "--lineup": event.lineup?.color || "#d7c57d" });
-export const eventCardBg = "bg-[var(--lineup)] dark:bg-[color-mix(in_oklab,var(--lineup)_26%,#15171c)]";
+export const eventCardBg = "bg-[var(--lineup)] dark:bg-[color-mix(in_oklab,var(--lineup)_36%,#14161b)]";
 
 export const viewerTagStyle = {
   "--accent": "#CD6C0C",
