@@ -571,6 +571,101 @@ describe("HOOK: useLiveQuery viewer-ready re-fetch (#2285)", () => {
   );
 });
 
+// ── grant-change re-query + re-subscribe (live doc updates) ─────────
+
+describe("HOOK: useLiveQuery re-queries on a grants-only change", () => {
+  function viewerChanged(dbName: string, channels: string[]) {
+    return new MessageEvent("message", {
+      data: {
+        type: "vibe.evt.viewerChanged",
+        viewer: { userHandle: "anna" },
+        access: "viewer",
+        grants: { [dbName]: { channels, publicChannels: [], roles: [] } },
+      },
+    });
+  }
+
+  it(
+    "re-fires the query when a new grant adds a channel (same user, same access)",
+    async () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider
+          mountParams={{
+            usrEnv: {},
+            viewerEnv: {
+              viewer: { userHandle: "anna" },
+              access: "viewer",
+              grants: { [dbName]: { channels: [], publicChannels: [], roles: [] } },
+            },
+          }}
+        >
+          {children}
+        </VibeContextProvider>
+      );
+
+      renderHook(
+        () => {
+          const { useLiveQuery } = useFireproof(dbName);
+          return useLiveQuery("foo");
+        },
+        { wrapper }
+      );
+
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(0));
+      const before = mockApi._queryDocsFilterHints.length;
+
+      act(() => {
+        window.dispatchEvent(viewerChanged(dbName, ["c1"]));
+      });
+
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(before));
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    "does NOT re-fire when the grant arrays only reorder (sorted signature)",
+    async () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider
+          mountParams={{
+            usrEnv: {},
+            viewerEnv: {
+              viewer: { userHandle: "anna" },
+              access: "viewer",
+              grants: { [dbName]: { channels: ["a", "b"], publicChannels: [], roles: [] } },
+            },
+          }}
+        >
+          {children}
+        </VibeContextProvider>
+      );
+
+      renderHook(
+        () => {
+          const { useLiveQuery } = useFireproof(dbName);
+          return useLiveQuery("foo");
+        },
+        { wrapper }
+      );
+
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(0));
+      const before = mockApi._queryDocsFilterHints.length;
+
+      act(() => {
+        window.dispatchEvent(viewerChanged(dbName, ["b", "a"]));
+      });
+
+      // Give any spurious effect a chance to fire, then assert none did.
+      await new Promise((r) => setTimeout(r, 50));
+      expect(mockApi._queryDocsFilterHints.length).toBe(before);
+    },
+    TEST_TIMEOUT
+  );
+});
+
 // ── access (roles + channels from grants) ──────────────────────────
 
 describe("HOOK: useFireproof access", () => {
