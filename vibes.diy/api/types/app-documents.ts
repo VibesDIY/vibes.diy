@@ -202,6 +202,10 @@ export const evtDocChanged = type({
   // notifications from another db whose `read` ACL is tighter.
   dbName: "string",
   docId: "string",
+  // channel: for access-fn vibes, the fan-out routing channel. Informational to
+  // the client (it filters on dbName); present only when channel-scoped fan-out
+  // is used. See #2301.
+  "channel?": "string",
 });
 export type EvtDocChanged = typeof evtDocChanged.infer;
 export function isEvtDocChanged(obj: unknown): obj is EvtDocChanged {

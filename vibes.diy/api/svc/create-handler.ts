@@ -49,7 +49,7 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   fetchPkgVersion?: ResolveFunction;
   llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }): Promise<Response>;
   notifyDocChanged?(
-    evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string },
+    evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string; channel?: string },
     senderConnId: string
   ): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;
