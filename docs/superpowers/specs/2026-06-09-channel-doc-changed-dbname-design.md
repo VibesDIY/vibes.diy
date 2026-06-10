@@ -49,7 +49,47 @@ reintroduces the cross-db spurious-reload problem the filter was added to preven
 
 This change also fixes the adjacent **delete** gap (see Scope).
 
+### Review note (Charlie, #2302)
+
+Direction approved, no design fork. Three refinements folded in below:
+
+- **Channel normalization (point 1).** `channel ?? dbName` only falls through on
+  `null`/`undefined` — **not** `""`. An empty/whitespace-only channel would build
+  a broken routing key (`ownerHandle/appSlug/`) instead of falling back to
+  `dbName`. `channels` is currently an unconstrained `string[]` (readability only
+  checks array length), so this is reachable. Fix: a shared `normalizeChannels`
+  helper (trim, drop empty/whitespace-only, dedupe) applied in **both** the
+  subscribe-key construction and the notify fan-out, so subscriber keys and
+  notify keys still match. Route with `normalizedChannel ?? dbName`.
+- **Delete fallback (point 2).** Treat the `accessFnOutputs` lookup as
+  best-effort: fan out per-channel when valid channels exist, otherwise fall back
+  to one `dbName` notify (output row can be missing — upsert failure, backfill
+  skip).
+- **`channel` in payload (point 3).** Keep it, informational only; ensure
+  schema/types/forwarders accept it. `dbName` stays the real db identity; client
+  matching stays `data.dbName === this.name`.
+
 ## Design
+
+### 0. Shared helper: `normalizeChannels`
+
+A small pure helper (colocated with the access-fn channel logic) that takes a
+raw `string[]` and returns trimmed, non-empty, de-duplicated channels:
+
+```ts
+export function normalizeChannels(channels: readonly string[]): string[] {
+  const seen = new Set<string>();
+  for (const c of channels) {
+    const t = c.trim();
+    if (t.length > 0) seen.add(t);
+  }
+  return [...seen];
+}
+```
+
+Used by the subscribe handler (channel-key construction), the write notify path,
+and the delete notify path — so a normalized channel never desyncs subscriber
+keys from notify keys.
 
 ### 1. Type: add optional `channel` to `evtDocChanged`
 
@@ -101,8 +141,9 @@ same `channel ?? dbName` routing treatment. (Verify during implementation;
 [`app-documents-write-eventos.ts:461-474`](../../../vibes.diy/api/svc/public/app-documents-write-eventos.ts):
 
 ```ts
-if (accessResult?.channels?.length) {
-  for (const channel of accessResult.channels) {
+const channels = normalizeChannels(accessResult?.channels ?? []);
+if (channels.length) {
+  for (const channel of channels) {
     vctx.notifyDocChanged(
       { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId, channel },
       clientWsSend(ctx).connId
@@ -117,6 +158,11 @@ if (accessResult?.channels?.length) {
 ```
 
 `dbName` is now always the real db; the channel is a distinct routing argument.
+Channels are normalized first, so an all-empty/whitespace `channels` array
+correctly falls back to the single `dbName` notify. The subscribe handler
+([read-eventos](../../../vibes.diy/api/svc/public/app-documents-read-eventos.ts))
+applies the same `normalizeChannels` before building `channelKeys`, keeping
+subscriber keys and notify keys in sync.
 
 ### 4. Delete path — per-channel fan-out (adjacent gap, in scope)
 
@@ -130,11 +176,13 @@ currently notifies only with the real `dbName`, so on access-fn vibes nobody
   `(ownerHandle, appSlug, dbName, docId, fnCid)` — the delete handler writes a
   tombstone but does **not** clean up `accessFnOutputs`, so the last write's
   output (with `channels`) is still present at notify time. Parse `channels` from
-  the stored output JSON.
+  the stored output JSON and run them through `normalizeChannels`.
 - Fan out `notifyDocChanged({ …, dbName, docId, channel })` once per channel.
-- If unbound or no channels found, fall back to the single
-  `notifyDocChanged({ …, dbName, docId })` (current behavior, correct for
-  no-access-fn vibes).
+- **Best-effort fallback (Charlie point 2):** if unbound, the output row is
+  missing (upsert failure / backfill skip), or normalization yields zero
+  channels, fall back to the single `notifyDocChanged({ …, dbName, docId })`
+  (current behavior, correct for no-access-fn vibes). The lookup never blocks the
+  delete from completing.
 
 This keeps deletes live on access-fn vibes without changing no-access-fn
 behavior.
@@ -153,6 +201,14 @@ behavior.
 - **No-access-fn regression:** plain vibe, A writes, B (subscribed by dbName)
   receives event with `dbName = real db`, no `channel`. Unchanged.
 - **Sender exclusion preserved:** A does not receive its own event.
+- **Empty-channel output (Charlie):** access-fn output whose `channels` are all
+  empty/whitespace → `normalizeChannels` yields `[]` → write falls back to the
+  single `dbName` notify (no broken `ownerHandle/appSlug/` routing key).
+- **Delete with absent output row (Charlie):** delete a doc that has no
+  `accessFnOutputs` row → falls back to the single `dbName` notify; delete still
+  completes successfully.
+- **`normalizeChannels` unit test:** trims, drops empty/whitespace-only, dedupes;
+  order-independent set semantics.
 
 ### Manual
 
