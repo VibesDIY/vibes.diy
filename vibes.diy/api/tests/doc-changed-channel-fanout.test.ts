@@ -1,5 +1,4 @@
 import { assert, beforeAll, describe, expect, it } from "vitest";
-import { and, eq } from "drizzle-orm";
 import { Result, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
@@ -83,8 +82,26 @@ describe("doc-changed channel fan-out carries real dbName (#2301)", { timeout: 3
     expect(notifies[0].evt.dbName).toBe("default");
     expect(notifies[0].evt.channel).toBeUndefined();
   });
-});
 
-// Task 6 (deleteDoc) will append tests below that use `and`/`eq`.
-void and;
-void eq;
+  it("delete on an access-fn vibe fans out per stored channel with real dbName", async () => {
+    access.result = { channels: ["del-chan"], allowAnonymous: true };
+    await ownerApi.putDoc({ ownerHandle, appSlug, dbName: "default", docId: "d3", doc: { _id: "d3", n: 3 } });
+
+    notifies.length = 0;
+    const res = await ownerApi.deleteDoc({ ownerHandle, appSlug, dbName: "default", docId: "d3" });
+    expect(res.Ok().status).toBe("ok");
+    expect(notifies).toHaveLength(1);
+    expect(notifies[0].evt.dbName).toBe("default");
+    expect(notifies[0].evt.channel).toBe("del-chan");
+    expect(notifies[0].evt.docId).toBe("d3");
+  });
+
+  it("delete with no stored output row falls back to a single dbName notify", async () => {
+    notifies.length = 0;
+    const res = await ownerApi.deleteDoc({ ownerHandle, appSlug, dbName: "default", docId: "d4-never-written" });
+    expect(res.Ok().status).toBe("ok");
+    expect(notifies).toHaveLength(1);
+    expect(notifies[0].evt.dbName).toBe("default");
+    expect(notifies[0].evt.channel).toBeUndefined();
+  });
+});

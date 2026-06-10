@@ -615,14 +615,61 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
         created: now,
       });
 
-      // Notify DocNotify coordinator for cross-shard fan-out
+      // Notify DocNotify coordinator for cross-shard fan-out. On access-fn vibes,
+      // fan out per stored channel so channel-subscribed connections receive the
+      // delete. Best-effort: if there's no binding or stored output row, fall back
+      // to a single real-dbName notify (correct for no-access-fn vibes). Never block
+      // the delete on this lookup.
       if (vctx.notifyDocChanged) {
-        vctx
-          .notifyDocChanged(
-            { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId: req.docId },
-            clientWsSend(ctx).connId
-          )
-          .catch((e: unknown) => console.error("DocNotify error:", e));
+        const senderConnId = clientWsSend(ctx).connId;
+        let channels: string[] = [];
+        try {
+          const tAfb = vctx.sql.tables.accessFunctionBindings;
+          const afbRow = await vctx.sql.db
+            .select({ accessFnCid: tAfb.accessFnCid })
+            .from(tAfb)
+            .where(and(eq(tAfb.ownerHandle, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [dbName, "*"])))
+            .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${dbName} THEN 0 ELSE 1 END`)
+            .limit(1)
+            .then((r) => r[0]);
+          if (afbRow?.accessFnCid) {
+            const tOut = vctx.sql.tables.accessFnOutputs;
+            const outRow = await vctx.sql.db
+              .select({ output: tOut.output })
+              .from(tOut)
+              .where(
+                and(
+                  eq(tOut.ownerHandle, req.ownerHandle),
+                  eq(tOut.appSlug, req.appSlug),
+                  eq(tOut.dbName, dbName),
+                  eq(tOut.docId, req.docId)
+                )
+              )
+              .limit(1)
+              .then((r) => r[0]);
+            if (outRow?.output) {
+              const parsed = JSON.parse(outRow.output) as { channels?: string[] };
+              channels = normalizeChannels(parsed.channels ?? []);
+            }
+          }
+        } catch (e: unknown) {
+          console.error("DocNotify delete channel lookup error:", e);
+        }
+
+        if (channels.length) {
+          for (const channel of channels) {
+            vctx
+              .notifyDocChanged(
+                { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId: req.docId, channel },
+                senderConnId
+              )
+              .catch((e: unknown) => console.error("DocNotify channel error:", e));
+          }
+        } else {
+          vctx
+            .notifyDocChanged({ ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId: req.docId }, senderConnId)
+            .catch((e: unknown) => console.error("DocNotify error:", e));
+        }
       }
 
       await ctx.send.send(ctx, {
