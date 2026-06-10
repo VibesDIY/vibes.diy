@@ -189,6 +189,26 @@ describe("FireflyApiAdapter", () => {
   });
 });
 
+describe("FireflyApiAdapter — async factory", () => {
+  it("accepts an async api factory and resolves it once", async () => {
+    const api = fakeVibesDiyApi({
+      putDoc: vi.fn(async () => Result.Ok({ type: "vibes.diy.res-put-doc", status: "ok", id: "x" })),
+    });
+    let built = 0;
+    const adapter = new FireflyApiAdapter(
+      async () => {
+        built++;
+        return api as unknown as VibesDiyApi;
+      },
+      "my-app",
+      { ownerHandle: "alice" }
+    );
+    await adapter.putDoc({ hello: "world" });
+    await adapter.putDoc({ hello: "again" });
+    expect(built).toBe(1); // factory resolved exactly once
+  });
+});
+
 describe("FireflyApiAdapter — adminMode", () => {
   it("queryDocs with adminMode:true includes adminMode:true in the request", async () => {
     const capturedReqs: unknown[] = [];
