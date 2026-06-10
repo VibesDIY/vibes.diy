@@ -118,6 +118,21 @@ export function useFireproof(name = "useFireproof", config: { acl?: DbAcl; acces
     };
   }, [grantsForDb]);
 
+  // Re-subscribe when this db's grants change so the server refreshes the
+  // channel snapshot (new per-doc channels become live). Compare against the
+  // previously-committed signature rather than skip-first so a StrictMode
+  // double-invoke on mount can't trigger a spurious re-subscribe — the
+  // FireflyDatabase constructor already subscribed once on mount. Multiple
+  // useFireproof(name) callers each run this; subscribeDocs dedupe makes the
+  // redundant re-subscribes harmless.
+  const grantsSig = grantsSignature(mountParams.viewerEnv, name);
+  const lastGrantsSig = useRef(grantsSig);
+  useEffect(() => {
+    if (lastGrantsSig.current === grantsSig) return;
+    lastGrantsSig.current = grantsSig;
+    database.resubscribe();
+  }, [database, grantsSig]);
+
   return { database, useLiveQuery, useDocument, useAllDocs, useChanges, attach, access };
 }
 
