@@ -36,19 +36,19 @@ Both are needed end-to-end: routing puts the subscriber in the right broadcast d
 
 ### Piece 1 — Routing: share the per-vibe DO
 
-The headless `fireproof()` connection adopts the same transport the iframe uses: `/api/app?vibe=ownerHandle--appSlug` with `skipShard: true`, so a backend subscriber shares the per-vibe `AppSessions` DO with writers and receives their doc-changed broadcasts at all. The route already exists; the headless factory simply opts in.
+The headless `fireproof()` connection adopts the same transport the iframe uses: `/api/app?vibe=ownerHandle--appSlug` with `skipShard: true`, so a backend subscriber shares the per-vibe `AppSessions` DO with writers and receives their doc-changed broadcasts at all. The route already exists; the headless path simply opts in. This is also **required** for grant-reactivity, not merely preferable: the legacy `?shard=<uuid>` `CHAT_SESSIONS` route does not wire the `viewer-grants-changed` notify callbacks at all (review finding), so the trigger in Piece 2 cannot work there.
 
-Open: confirm there is no reason the CLI/headless path was deliberately left on the `?shard=` route (load distribution under concurrent CLI load — see the comment at [`index.ts:249`](../../../vibes.diy/api/impl/index.ts) — history sync, or multi-db fan-in) that `/api/app` does not cover.
+**Deliberate topology tradeoff (review-confirmed).** The `?shard=<uuid>` default ([`index.ts:249,259`](../../../vibes.diy/api/impl/index.ts)) spreads each connection across its own DO to avoid per-DO CPU limits under concurrent load. Moving headless clients onto `APP_SESSIONS.idFromName(vibe)` re-concentrates per-vibe fanout/CPU onto one DO for a **hot vibe** with many backend subscribers. This is an accepted tradeoff: correctness (live grant fanout) for a topology change that matters only at high per-vibe concurrency. The implementation plan must call this out explicitly; if a hot-vibe ceiling becomes a concern it couples to the broader DO-sharding work, not to this change.
 
-### Piece 2 — Grant-reactivity, wired at the `fireproof()` factory
+### Piece 2 — Grant-reactivity, wired in the headless adapter
 
-The chokepoint is the `fireproof()` factory / headless adapter — the single place **both** the CLI and the documented library snippet build a `FireflyDatabase`. When running outside an iframe (no parent `viewerEnv` relay), it self-subscribes to `viewer-grants-changed` on its own connection (`onViewerGrantsChanged` / `subscribeViewerGrants`) and, on a grant change relevant to this db, does two things:
+The locus is the **headless adapter** (`FireflyApiAdapter` / `fireproof-node`), not an environment-gated branch inside `FireflyDatabase` (review decision). This keeps `FireflyDatabase` transport-agnostic and the iframe path entirely untouched, while still covering **both** the CLI and the documented library snippet — they share this adapter. The adapter self-subscribes to `viewer-grants-changed` on its own connection (`onViewerGrantsChanged` / `subscribeViewerGrants`), and on a grant change does two things:
 
 1. **Auto `resubscribe()` — automatic, forward-only.** Refreshes the server-side channel snapshot so future writes to the newly-granted channel flow to the existing `db.subscribe()` callback through the unchanged `onMsg → notifyListeners` path ([`firefly-database.ts:133`](../../../vibes.diy/vibe/runtime/firefly-database.ts)). A raw change-subscriber has nothing to re-run, so this is forward-only by construction — no backfill, no pushdown into owned queries.
 
-2. **Emit a grant-changed signal — consumer's choice for backfill.** The db surfaces the grant change to the consumer as a generic notification. **What the app does with it is app-specific** and out of scope to standardize: it might re-pull current visible state, bump a `useEffect` counter to re-pull app state (≈ a fresh login), or ignore it. The `evt.refresh()` shown in discussion is illustrative pseudo-code for "the app re-pulls," not a fixed API contract. The point is the consumer is _told_ a promotion happened and can re-initialize on its own terms; without acting, it still gets forward events from step 1.
+2. **Emit a grant-changed signal — consumer's choice for backfill.** The adapter surfaces the grant change to the consumer as a generic notification. **What the app does with it is app-specific** and out of scope to standardize: it might re-pull current visible state, bump a `useEffect` counter to re-pull app state (≈ a fresh login), or ignore it. The `evt.refresh()` shown in discussion is illustrative pseudo-code for "the app re-pulls," not a fixed API contract. The point is the consumer is _told_ a promotion happened and can re-initialize on its own terms; without acting, it still gets forward events from step 1.
 
-Scoping mirrors the iframe fix: a **per-db grants signature** (cf. `grantsSignature`, [`use-firefly.ts:33`](../../../vibes.diy/vibe/runtime/use-firefly.ts)) gates the resubscribe so a db with no grants (no-access-fn apps) keeps prior behavior and unrelated grant churn doesn't thrash.
+**Resubscribe scope: all open dbs for the app.** The `viewer-grants-changed` payload is **app-coarse** — it carries `ownerHandle`/`appSlug`, not a db-level delta (review finding). So on the signal the adapter re-issues `subscribeDocs(name)` for **every open `FireflyDatabase` of that app**, rather than attempting per-db scoping it cannot derive from the event. `subscribeDocs` already dedupes by key on the client, so re-subscribing dbs whose grants did not change is harmless. Apps **without** an access function carry no grants and never receive the event, so the path stays inert for them.
 
 ## What is explicitly not changing
 
@@ -67,9 +67,13 @@ Scoping mirrors the iframe fix: a **per-db grants signature** (cf. `grantsSignat
 - **No-grants control.** An app without an access function sees no behavior change and no extra subscribe round-trips.
 - **Routing.** Assert the headless factory connects via `/api/app?vibe=…` + `skipShard: true` (no `?shard=` param).
 
-## Open questions for review
+## Review resolutions
 
-1. **Routing safety (Piece 1).** Any reason the CLI/headless path was intentionally left on `?shard=<uuid>` that `/api/app` doesn't cover — per-connection load distribution, history sync, multi-db fan-in?
-2. **Grant event delivery.** Once a headless connection calls `subscribeViewerGrants`, does its own connection reliably receive `viewer-grants-changed`, and does the event carry enough to scope the resubscribe to the affected db?
-3. **Locus.** `fireproof()` factory / headless adapter (proposed) vs. an environment-gated branch inside `FireflyDatabase`. Which keeps the boundary cleanest given the iframe path must stay untouched?
-4. **Signal shape.** Minimal surface for the grant-changed notification (a callback registration; payload = which db / new grants). Keep it generic enough that the app owns the re-pull, per the `connect-backend-data` doc's silence on access control.
+Spec-review pass by @CharlieHelps ([PR #2304](https://github.com/VibesDIY/vibes.diy/pull/2304)) — direction supported. Resolutions folded into the design above:
+
+1. **Routing safety (Piece 1).** ✅ Resolved. The `?shard=<uuid>` default is intentional load distribution; moving headless onto `/api/app` re-concentrates per-vibe CPU/fanout for hot vibes — a deliberate, documented tradeoff (see Piece 1). No clean alternative exists: the legacy route does not wire the grant-notify callbacks, so `/api/app` is required for the trigger to work.
+2. **Grant event delivery.** ✅ Resolved. The same subscribing connection does receive `viewer-grants-changed` on `AppSessions` (sender is not skipped for this event), but the payload is **app-coarse** (`ownerHandle`/`appSlug`, no db delta). Design updated: resubscribe **all open dbs for the app** (dedupe makes redundant resubscribes harmless).
+3. **Locus.** ✅ Resolved. Headless adapter (`FireflyApiAdapter`/`fireproof-node`), not an env-gate in `FireflyDatabase` — keeps the DB transport-agnostic and iframe untouched.
+4. **Forward-only contract.** ✅ Resolved. Forward-only by default matches `subscribeDocs` live-registration semantics; backfill stays an explicit app-opt-in, never auto-replayed on promotion.
+
+**Implementation caveat to carry into the plan:** the `/api/app` switch is a correctness win for grant fanout but a deliberate CPU/fanout topology tradeoff for high-concurrency vibes — state it explicitly in the rollout-watch.
