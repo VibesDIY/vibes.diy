@@ -37,6 +37,16 @@ export function resolveVibePositionals(args: { vibe: string; handle: string; pos
   trailing: string[];
 } {
   const present = args.positionals.filter((v): v is string => v !== undefined && v !== "");
+  // For multi-slot commands (edit, chats), filling EVERY slot while also passing
+  // --vibe is the stale "placeholder vibe + override" form. There are only
+  // (slots - 1) trailing args, so a full set means the leading positional is a
+  // leftover placeholder — reject it loudly rather than silently reinterpreting
+  // it as the prompt/chatId.
+  if (args.vibe && args.positionals.length > 1 && present.length === args.positionals.length) {
+    throw new Error(
+      "--vibe already supplies the vibe — drop the extra leading positional (the placeholder vibe argument is no longer needed)."
+    );
+  }
   const positionalAppSlug = args.vibe ? "" : (present[0] ?? "");
   const trailing = args.vibe ? present : present.slice(1);
   const resolved = resolveVibeArgs({ vibe: args.vibe, handle: args.handle, appSlug: "", positionalAppSlug });

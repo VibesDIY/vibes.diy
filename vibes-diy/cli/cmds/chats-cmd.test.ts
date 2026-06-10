@@ -67,4 +67,12 @@ describe("chatsCmd", () => {
     expect(request.appSlug).toBe("hat-smeller");
     expect(request.ownerHandle).toBe("other-user");
   });
+
+  it("rejects the legacy placeholder form (vibe positional + chatId + --vibe)", async () => {
+    const ctx = makeCtx();
+    await expect(run(chatsCmd(ctx), ["ignored", "chat-123", "--vibe", "alice/cool-app"])).rejects.toThrow(
+      "--vibe already supplies the vibe — drop the extra leading positional (the placeholder vibe argument is no longer needed)."
+    );
+    await ctx.cliStream.close();
+  });
 });
