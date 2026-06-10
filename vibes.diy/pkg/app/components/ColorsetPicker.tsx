@@ -408,6 +408,13 @@ export default function ColorsetPicker({
   // anchored when the layout shifts.
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [lookupColorset, setLookupColorset] = useState<((slug: string) => Colorset | undefined) | null>(null);
+  // Whether the user has authored a live override this session (picked a
+  // different swatch, edited a token, or hydrated stored edits). Gates the
+  // live push so that merely opening the panel — draft === the app's current
+  // palette, no edits — never restyles the iframe. Without this, the colorset
+  // bundle resolving on open would compute `draftColorset` and immediately
+  // stomp the app's own :root with the colorset's raw tokens.
+  const [liveActive, setLiveActive] = useState(false);
 
   useEffect(() => {
     if (!open || lookupColorset || typeof window === "undefined") return;
@@ -530,14 +537,18 @@ export default function ColorsetPicker({
   }, [draftColorset, editsStructural]);
 
   useEffect(() => {
-    if (!draftColorset || !mergedLight) return;
+    // Only push once the user has actually authored an override (`liveActive`).
+    // Opening the panel resolves the colorset bundle and computes
+    // `draftColorset` for the current palette — pushing then would overwrite
+    // the app's own :root with the colorset's raw tokens before any change.
+    if (!liveActive || !draftColorset || !mergedLight) return;
     // Runtime accepts any token name in the `colors` payload — it just renders
     // each as a CSS var on :root — so we ride structural through the same
     // channel rather than introducing a new event type. Fires regardless of
     // `open` state so the hydrated edits from localStorage apply at boot.
     const liveLight = { ...mergedLight, ...(mergedStructural ?? {}) };
     onApplyLive(liveLight, mergedDark);
-  }, [draftColorset, mergedLight, mergedDark, mergedStructural, onApplyLive]);
+  }, [liveActive, draftColorset, mergedLight, mergedDark, mergedStructural, onApplyLive]);
 
   // Hydrate edits from localStorage on first mount (once the bundle has
   // loaded so `draftSlug` reflects the persisted colorTheme). If the stored
@@ -551,6 +562,10 @@ export default function ColorsetPicker({
       if (stored.edits.light) setEditsLight(stored.edits.light);
       if (stored.edits.dark) setEditsDark(stored.edits.dark);
       if (stored.edits.structural) setEditsStructural(stored.edits.structural);
+      // Stored edits are a user-authored override — replay them live at boot.
+      if (stored.edits.light || stored.edits.dark || stored.edits.structural) {
+        setLiveActive(true);
+      }
     }
     didHydrateRef.current = true;
   }, [storageKey, lookupColorset, draftSlug]);
@@ -596,6 +611,7 @@ export default function ColorsetPicker({
     setEditsLight({});
     setEditsDark({});
     setEditsStructural({});
+    setLiveActive(true);
     onSelectPalette(slug);
   }
 
@@ -604,11 +620,14 @@ export default function ColorsetPicker({
     setEditsLight({});
     setEditsDark({});
     setEditsStructural({});
+    // Drop the live override; onReset pushes empty colors to clear the iframe.
+    setLiveActive(false);
     onReset();
   }
 
   function handleTokenEdit(token: string, value: string) {
     if (!draftColorset) return;
+    setLiveActive(true);
     if (mode === "light") {
       setEditsLight((current) => ({ ...current, [token]: value }));
     } else {
@@ -618,6 +637,7 @@ export default function ColorsetPicker({
 
   function handleStructuralEdit(token: string, value: string) {
     if (!draftColorset) return;
+    setLiveActive(true);
     setEditsStructural((current) => ({ ...current, [token]: value }));
   }
 
