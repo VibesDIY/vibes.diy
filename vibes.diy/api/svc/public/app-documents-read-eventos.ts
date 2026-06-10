@@ -33,6 +33,7 @@ import { checkDocAccess, DocAccessLevel, canRead, isPublicReadable } from "./acc
 import type { AccessDescriptor } from "./access-function.js";
 import { resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
 import { GrantReduce, extractContribution } from "./grant-reduce.js";
+import { normalizeChannels } from "./normalize-channels.js";
 import { filterDocsByChannel } from "./channel-read-filter.js";
 import { mintFilesUrls } from "./files-url-mint.js";
 import { applyQueryFilter } from "./app-documents-query-filter.js";
@@ -464,7 +465,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
               }
             }
           }
-          for (const ch of allChannels) {
+          for (const ch of normalizeChannels([...allChannels])) {
             channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
           }
         } else {
@@ -496,10 +497,8 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
             : null;
 
           const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
-          for (const ch of effectiveChannels) {
-            channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
-          }
-          for (const ch of reduce.publicChannels) {
+          const rawGrantChannels = [...effectiveChannels, ...reduce.publicChannels];
+          for (const ch of normalizeChannels(rawGrantChannels)) {
             channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
           }
         }
