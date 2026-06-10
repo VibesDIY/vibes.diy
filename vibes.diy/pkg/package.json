@@ -39,7 +39,7 @@
     "@react-router/node": "^7.16.0",
     "@shikijs/monaco": "^4.1.0",
     "@sindresorhus/fnv1a": "^3.1.0",
-    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/typography": "^0.5.20",
     "@tanstack/react-table": "^8.21.3",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-pkg": "workspace:*",
