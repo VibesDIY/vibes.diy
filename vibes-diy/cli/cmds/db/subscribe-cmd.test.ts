@@ -31,6 +31,7 @@ describe("dbSubscribeEvento – canonical route", () => {
           settings: [{ type: "defaultHandle", ownerHandle: "alice" }],
         }),
       }),
+      close: vi.fn(async () => {}),
       subscribeViewerGrants: vi.fn().mockResolvedValue(undefined),
       onViewerGrantsChanged: vi.fn(),
       subscribeDocs: vi.fn().mockResolvedValue({

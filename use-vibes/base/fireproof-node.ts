@@ -86,13 +86,17 @@ let sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
     let ownerHandle = resolved.userHandle;
     if (ownerHandle === undefined) {
       const bootstrap = new VibesDiyApi({ apiUrl: resolved.apiUrl, getToken: resolved.getToken });
-      const rRes = await bootstrap.ensureUserSettings({ settings: [] });
-      if (rRes.isErr()) throw new Error(`Failed to resolve owner handle: ${rRes.Err()}`);
-      const def = (rRes.Ok() as { settings: { type: string; ownerHandle?: string }[] }).settings.find(
-        (s) => s.type === "defaultHandle"
-      );
-      if (def === undefined) throw new Error("No defaultHandle — pass {userHandle} or run 'npx vibes-diy login' first");
-      ownerHandle = def.ownerHandle as string;
+      try {
+        const rRes = await bootstrap.ensureUserSettings({ settings: [] });
+        if (rRes.isErr()) throw new Error(`Failed to resolve owner handle: ${rRes.Err()}`);
+        const def = (rRes.Ok() as { settings: { type: string; ownerHandle?: string }[] }).settings.find(
+          (s) => s.type === "defaultHandle"
+        );
+        if (def === undefined) throw new Error("No defaultHandle — pass {userHandle} or run 'npx vibes-diy login' first");
+        ownerHandle = def.ownerHandle as string;
+      } finally {
+        await bootstrap.close();
+      }
     }
     return new VibesDiyApi({
       apiUrl: buildVibeApiUrl(resolved.apiUrl, ownerHandle, resolved.appSlug),
@@ -136,13 +140,17 @@ export function __resetFireproofForTesting(): void {
       let ownerHandle = resolved.userHandle;
       if (ownerHandle === undefined) {
         const bootstrap = new VibesDiyApi({ apiUrl: resolved.apiUrl, getToken: resolved.getToken });
-        const rRes = await bootstrap.ensureUserSettings({ settings: [] });
-        if (rRes.isErr()) throw new Error(`Failed to resolve owner handle: ${rRes.Err()}`);
-        const def = (rRes.Ok() as { settings: { type: string; ownerHandle?: string }[] }).settings.find(
-          (s) => s.type === "defaultHandle"
-        );
-        if (def === undefined) throw new Error("No defaultHandle — pass {userHandle} or run 'npx vibes-diy login' first");
-        ownerHandle = def.ownerHandle as string;
+        try {
+          const rRes = await bootstrap.ensureUserSettings({ settings: [] });
+          if (rRes.isErr()) throw new Error(`Failed to resolve owner handle: ${rRes.Err()}`);
+          const def = (rRes.Ok() as { settings: { type: string; ownerHandle?: string }[] }).settings.find(
+            (s) => s.type === "defaultHandle"
+          );
+          if (def === undefined) throw new Error("No defaultHandle — pass {userHandle} or run 'npx vibes-diy login' first");
+          ownerHandle = def.ownerHandle as string;
+        } finally {
+          await bootstrap.close();
+        }
       }
       return new VibesDiyApi({
         apiUrl: buildVibeApiUrl(resolved.apiUrl, ownerHandle, resolved.appSlug),
