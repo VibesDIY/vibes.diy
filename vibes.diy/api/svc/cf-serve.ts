@@ -547,8 +547,8 @@ export async function cfServe(
   });
 
   // No deregister-on-close: with UUID sharding each DO has 1 connection, so the old WS onclose
-  // races with the new WS subscribeDocs and clobbers the fresh registration. Instead, stale shards
-  // self-clean via failed fan-out in DocNotify (which removes them from persistent storage).
+  // races with the new WS subscribeDocs and clobbers the fresh registration. Instead, stale
+  // subscriptions self-clean when a later per-vibe fan-out fails to send to a closed connection.
   server.addEventListener("close", (event) => {
     if (shouldLog) {
       console.info("WebSocket connection closed", ws.connections.size - 1);

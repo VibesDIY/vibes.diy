@@ -61,7 +61,7 @@ function getOrCreateDb(name: string, acl?: DbAcl): FireflyDatabase {
  * Register the Firefly system. Called by registerDependencies().
  *
  * Per-dbName subscription happens in the FireflyDatabase constructor — see
- * firefly-database.ts. The server's DocNotify DO is keyed on
+ * firefly-database.ts. Server-side fan-out is keyed on
  * (ownerHandle, appSlug, dbName), so subscribing once here with a hardcoded
  * dbName would only cover one channel; each useFireproof(name) call must
  * trigger its own subscribe.
