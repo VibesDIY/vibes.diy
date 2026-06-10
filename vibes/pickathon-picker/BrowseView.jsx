@@ -1,6 +1,6 @@
 import React from "react";
 import { fmtTime, fmtDate } from "./festival-utils.js";
-import { lineupTag, eventCardStyle } from "./styles.js";
+import { lineupTag, eventCardStyle, eventCardBg } from "./styles.js";
 
 export default function BrowseView({
   filteredEvents,
@@ -31,12 +31,12 @@ export default function BrowseView({
           placeholder="Search for artists..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className={`flex-1 min-w-64 p-4 border-4 ${c.border} rounded-2xl text-lg font-bold ${c.bodyText}`}
+          className={`flex-1 min-w-64 p-8 m-2 ${c.border} rounded-2xl text-lg font-bold ${c.bodyText}`}
         />
         <select
           value={selectedDay}
           onChange={(e) => setSelectedDay(e.target.value)}
-          className={`p-4 border-4 ${c.border} rounded-2xl font-bold bg-white ${c.bodyText}`}
+          className={`p-8 m-2 ${c.border} rounded-2xl font-bold bg-white dark:bg-[#22252d] ${c.bodyText}`}
         >
           <option value="all">All Days</option>
           {displayDays.map((day) => (
@@ -51,7 +51,7 @@ export default function BrowseView({
         {filteredEvents.map((event) => {
           const tag = lineupTag(event);
           return (
-            <div key={event.eventId} className="rounded-2xl border-4 border-[#4A4A4A] p-4 shadow-lg" style={eventCardStyle(event)}>
+            <div key={event.eventId} className={`rounded-2xl m-2 p-8 shadow-lg ${eventCardBg}`} style={eventCardStyle(event)}>
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -61,7 +61,7 @@ export default function BrowseView({
                       </span>
                     )}
                     <h3 className={`text-xl font-black ${c.bodyText}`}>{event.title}</h3>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase bg-[#BACD32] text-[#4A4A4A]">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-black m-2  uppercase bg-[#BACD32] text-[#4A4A4A]">
                       {tag.label}
                     </span>
                     {savingNotes[event.eventId] && <div className={c.spinner}></div>}

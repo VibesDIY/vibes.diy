@@ -413,7 +413,7 @@ export default function PickathonPicker() {
           setPendingDelete(docId);
         }
       }}
-      className={`px-2 py-1 rounded-full border-2 border-[#4A4A4A] text-xs font-bold transition-all ${pendingDelete === docId ? "bg-[#B22222] text-white" : "bg-white text-[#4A4A4A] hover:bg-[#B22222] hover:text-white"}`}
+      className={`px-2 py-1 rounded-full m-2  text-xs font-bold transition-all ${pendingDelete === docId ? "bg-[#B22222] text-white" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] hover:bg-[#B22222] hover:text-white"}`}
       title={pendingDelete === docId ? "Tap to confirm" : "Remove"}
     >
       {pendingDelete === docId ? "Confirm" : "×"}
@@ -423,9 +423,9 @@ export default function PickathonPicker() {
   if (loading && events.length === 0) {
     return (
       <div className={`min-h-screen ${c.pageBg} p-4`}>
-        <div className={`max-w-4xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl border-8 ${c.border} p-8`}>
+        <div className={`max-w-4xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl m-2 ${c.border} p-12`}>
           <div className="flex items-center justify-center gap-4">
-            <div className={`w-16 h-16 border-8 border-[#71AD44] rounded-full animate-spin border-t-transparent`}></div>
+            <div className={`w-16 h-16 m-2  rounded-full animate-spin `}></div>
             <h2 className={`text-3xl font-black ${c.bodyText}`}>Loading Pickathon Schedule...</h2>
           </div>
         </div>
@@ -436,7 +436,7 @@ export default function PickathonPicker() {
   if (error && events.length === 0) {
     return (
       <div className={`min-h-screen ${c.pageBg} p-4`}>
-        <div className={`max-w-4xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl border-8 ${c.border} p-8`}>
+        <div className={`max-w-4xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl m-2 ${c.border} p-12`}>
           <h2 className={`text-3xl font-black mb-4 ${c.bodyText}`}>Error Loading Schedule</h2>
           <p className={`text-lg ${c.bodyText} mb-4`}>{error}</p>
           <button onClick={fetchSchedule} className={c.btnPink}>
@@ -452,8 +452,8 @@ export default function PickathonPicker() {
 
   return (
     <div className={`min-h-screen ${c.pageBg} p-4`}>
-      <div className={`max-w-6xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl border-8 ${c.border} overflow-hidden`}>
-        <div className={`${c.headerBg} border-b-8 ${c.border} p-6`}>
+      <div className={`max-w-6xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl m-2 ${c.border} overflow-hidden`}>
+        <div className={`${c.headerBg} mx-2 mt-2 ${c.border} p-10 rounded-t-3xl`}>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
               <a href="https://pickathon.com" target="_blank" rel="noopener noreferrer" className="shrink-0">
@@ -477,7 +477,7 @@ export default function PickathonPicker() {
           {!canWrite && <div className={c.readOnlyBanner}>Sign in to save your favorites and build your schedule.</div>}
         </div>
 
-        <div className={`${c.navBg} border-b-8 ${c.border} p-4`}>
+        <div className={`${c.navBg} mx-2 mb-2 ${c.border} p-8 rounded-b-3xl`}>
           <div className="flex flex-wrap gap-3">
             {["now", "browse", "bands", "favorites", "friends", "shifts", "schedule"]
               .filter(

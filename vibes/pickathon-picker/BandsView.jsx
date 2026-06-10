@@ -40,7 +40,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
           <button
             key={`nav-${key}`}
             onClick={() => document.getElementById(`lineup-${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            className="px-4 py-2 rounded-xl border-2 border-[#4A4A4A] font-black text-sm cursor-pointer hover:opacity-80 transition-all"
+            className="px-8 py-6 rounded-xl m-2  font-black text-sm cursor-pointer hover:opacity-80 transition-all"
             style={{
               backgroundColor: grouped[key][0].lineup?.color || "#d7c57d",
               color: grouped[key][0].lineup?.textColor || "#000",
@@ -53,7 +53,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
       {LINEUP_ORDER.filter((key) => grouped[key]?.length > 0).map((key) => (
         <div key={key} id={`lineup-${key}`} className="mb-8 scroll-mt-4">
           <h3
-            className="text-lg font-black mb-3 px-4 py-2 rounded-xl border-2 border-[#4A4A4A] inline-block"
+            className="text-lg font-black mb-3 px-8 py-6 rounded-xl m-2  inline-block"
             style={{
               backgroundColor: grouped[key][0].lineup?.color || "#d7c57d",
               color: grouped[key][0].lineup?.textColor || "#000",
@@ -69,16 +69,12 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
               const lineupColor = band.lineup?.color || "#d7c57d";
               const lineupText = band.lineup?.textColor || "#000";
               return (
-                <div
-                  key={band.title}
-                  className="rounded-2xl border-4 border-[#4A4A4A] p-4 shadow-lg"
-                  style={{ backgroundColor: lineupColor }}
-                >
+                <div key={band.title} className="rounded-2xl m-2  p-8 shadow-lg" style={{ backgroundColor: lineupColor }}>
                   <div className="flex items-start gap-3">
                     {canWrite && (
                       <button
                         onClick={() => toggleAllBand(band)}
-                        className={`shrink-0 text-2xl p-2 rounded-2xl border-4 border-[#4A4A4A] font-bold transition-all ${allFaved ? "bg-[#CD6C0C] text-white hover:opacity-90" : anyFav ? "bg-[#CD6C0C]/40 text-white hover:opacity-90" : "bg-white text-[#4A4A4A] hover:bg-[#BACD32]"}`}
+                        className={`shrink-0 text-2xl p-6 rounded-2xl m-2  font-bold transition-all ${allFaved ? "bg-[#CD6C0C] text-white hover:opacity-90" : anyFav ? "bg-[#CD6C0C]/40 text-white hover:opacity-90" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] hover:bg-[#BACD32] dark:hover:bg-[#2c3510]"}`}
                       >
                         {allFaved ? "♥" : anyFav ? "◐" : "♡"}
                       </button>
@@ -86,7 +82,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <h3 className={`text-xl font-black ${c.bodyText}`}>{band.title}</h3>
-                        <span className="px-3 py-1 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase bg-[#BACD32] text-[#4A4A4A]">
+                        <span className="px-3 py-1 rounded-full text-xs font-black m-2  uppercase bg-[#BACD32] text-[#4A4A4A]">
                           {lineupLabel}
                         </span>
                         {superMode && band.events.some((e) => favCounts[e.eventId] > 0) && (
@@ -95,7 +91,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
                           </span>
                         )}
                       </div>
-                      <p className={`text-sm font-bold mb-2 ${"text-[#4A4A4A]/70"}`}>
+                      <p className={`text-sm font-bold mb-2 text-[#4A4A4A]/70 dark:text-[#e9e9e9]/70`}>
                         {band.venueList.join(" · ")} · {band.events.length} set{band.events.length > 1 ? "s" : ""}
                       </p>
                       <div className="space-y-1">
@@ -104,7 +100,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
                             {canWrite && (
                               <button
                                 onClick={() => toggleFavorite(e)}
-                                className={`text-sm px-2 py-0.5 rounded-lg border-2 border-[#4A4A4A] font-bold transition-all ${myFavIds.has(e.eventId) ? "bg-[#CD6C0C] text-white" : "bg-white text-[#4A4A4A] hover:bg-[#BACD32]"}`}
+                                className={`text-sm px-2 py-0.5 rounded-lg m-2  font-bold transition-all ${myFavIds.has(e.eventId) ? "bg-[#CD6C0C] text-white" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] hover:bg-[#BACD32] dark:hover:bg-[#2c3510]"}`}
                               >
                                 {myFavIds.has(e.eventId) ? "♥" : "♡"}
                               </button>

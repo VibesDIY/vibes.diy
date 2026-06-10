@@ -1,6 +1,6 @@
 import React from "react";
 import { fmtTime, fmtDate } from "./festival-utils.js";
-import { lineupTag, eventCardStyle } from "./styles.js";
+import { lineupTag, eventCardStyle, eventCardBg } from "./styles.js";
 
 export default function FavoritesView({
   favoriteEvents,
@@ -17,7 +17,7 @@ export default function FavoritesView({
 }) {
   return (
     <div>
-      <div className="mb-6 p-4 bg-[#BACD32] rounded-2xl border-4 border-[#4A4A4A]">
+      <div className="mb-6 p-8 bg-[#BACD32] rounded-2xl m-2 ">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <h3 className={`text-lg font-black ${c.bodyText}`}>
             {viewingUser ? `Viewing ${viewingUser}'s picks` : "Pickers (tap to view their picks)"}
@@ -33,7 +33,7 @@ export default function FavoritesView({
             <button
               key={u.userId}
               onClick={() => setViewingUser(u.userId === userId ? null : u.userId)}
-              className={`flex items-center gap-2 p-1 rounded-full border-2 border-[#4A4A4A] transition-all ${viewingUser === u.userId || (!viewingUser && u.userId === userId) ? "bg-[#CD6C0C]" : "bg-white hover:bg-[#71AD44]"}`}
+              className={`flex items-center gap-2 p-1 rounded-full m-2  transition-all ${viewingUser === u.userId || (!viewingUser && u.userId === userId) ? "bg-[#CD6C0C]" : "bg-white dark:bg-[#22252d] hover:bg-[#71AD44] dark:hover:bg-[#1d3015]"}`}
               title={`${u.count} pick${u.count === 1 ? "" : "s"}`}
             >
               <ViewerTag userHandle={u.userId} />
@@ -53,16 +53,12 @@ export default function FavoritesView({
           {favoriteEvents.map((event) => {
             const tag = lineupTag(event);
             return (
-              <div
-                key={event.eventId}
-                className="rounded-2xl border-4 border-[#4A4A4A] p-4 shadow-lg"
-                style={eventCardStyle(event)}
-              >
+              <div key={event.eventId} className={`rounded-2xl m-2 p-8 shadow-lg ${eventCardBg}`} style={eventCardStyle(event)}>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h3 className={`text-xl font-black ${c.bodyText}`}>{event.title}</h3>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase bg-[#BACD32] text-[#4A4A4A]">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-black m-2  uppercase bg-[#BACD32] text-[#4A4A4A]">
                         {tag.label}
                       </span>
                     </div>

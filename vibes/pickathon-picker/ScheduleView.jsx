@@ -1,6 +1,6 @@
 import React from "react";
 import { toFestivalDate, festivalDayFor, fmtTime as fmtTimeUtil } from "./festival-utils.js";
-import { lineupTag, eventCardStyle } from "./styles.js";
+import { lineupTag, eventCardStyle, eventCardBg } from "./styles.js";
 
 function GapStrip({ startMs, endMs, allDayEvents, fmtTime }) {
   const count = allDayEvents.filter((e) => {
@@ -12,8 +12,8 @@ function GapStrip({ startMs, endMs, allDayEvents, fmtTime }) {
   const startStr = fmtTime(new Date(startMs).toISOString());
   const endStr = fmtTime(new Date(endMs).toISOString());
   return (
-    <div className="rounded-lg border border-[#4A4A4A]/30 px-3 py-1 bg-white/40 flex items-center gap-2">
-      <span className="text-xs font-bold text-[#4A4A4A]/60">
+    <div className="rounded-lg m-2  px-7 py-5 bg-white/40 dark:bg-white/10 flex items-center gap-2">
+      <span className="text-xs font-bold text-[#4A4A4A]/60 dark:text-[#e9e9e9]/60">
         {startStr}–{endStr} · {count} act{count !== 1 ? "s" : ""}
       </span>
     </div>
@@ -126,7 +126,7 @@ export default function ScheduleView({
                 return (
                   <div
                     key={entry.key}
-                    className={item.type === "shift" ? c.schedShift : "rounded-xl border-2 border-[#4A4A4A] p-3"}
+                    className={item.type === "shift" ? c.schedShift : `rounded-xl m-2 p-7 ${eventCardBg}`}
                     style={isEvent ? eventCardStyle(item.data) : undefined}
                   >
                     <div className="flex justify-between items-start">
@@ -136,14 +136,14 @@ export default function ScheduleView({
                             {item.type === "shift" ? item.data.kind || item.data.title || "Shift" : item.title}
                           </h4>
                           {isEvent && (
-                            <span className="px-2 py-0.5 rounded-full text-xs font-black border-2 border-[#4A4A4A] uppercase bg-[#BACD32] text-[#4A4A4A]">
+                            <span className="px-2 py-0.5 rounded-full text-xs font-black m-2  uppercase bg-[#BACD32] text-[#4A4A4A]">
                               {tag.label}
                             </span>
                           )}
                           {isEvent && onToggleFavorite && (
                             <button
                               onClick={() => onToggleFavorite(item.data)}
-                              className={`p-1 rounded-lg border-2 border-[#4A4A4A] text-xs font-bold px-2 ${myFavIds && myFavIds.has(item.data.eventId) ? "bg-[#CD6C0C] text-white" : "bg-white text-[#4A4A4A]"}`}
+                              className={`p-1 rounded-lg m-2  text-xs font-bold px-2 ${myFavIds && myFavIds.has(item.data.eventId) ? "bg-[#CD6C0C] text-white" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9]"}`}
                             >
                               {myFavIds && myFavIds.has(item.data.eventId) ? "♥" : "♡"}
                             </button>
@@ -175,7 +175,7 @@ export default function ScheduleView({
                               );
                             })()
                           ) : notes && notes[item.data.eventId] ? (
-                            <div className={`mt-2 p-2 bg-[#EEE] rounded-lg border border-[#4A4A4A]`}>
+                            <div className={`mt-2 p-6 bg-[#EEE] dark:bg-[#22252d] rounded-lg m-2 `}>
                               <p className={`text-sm font-bold ${c.bodyText}`}>{notes[item.data.eventId]}</p>
                             </div>
                           ) : null)}
