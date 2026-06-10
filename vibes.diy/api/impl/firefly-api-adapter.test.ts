@@ -164,7 +164,9 @@ describe("FireflyApiAdapter", () => {
 
   it("on viewer-grants-changed, resubscribes every open db and emits onGrantsChanged", async () => {
     let grantsListener: ((evt: { ownerHandle: string; appSlug: string }) => void) | undefined;
-    const subscribeDocs = vi.fn(async () => Result.Ok({ type: "vibes.diy.res-subscribe-docs", status: "ok" }));
+    const subscribeDocs = vi.fn(async (_req: { appSlug: string; ownerHandle: string; dbName: string }) =>
+      Result.Ok({ type: "vibes.diy.res-subscribe-docs", status: "ok" })
+    );
     const api = fakeVibesDiyApi({
       subscribeDocs,
       subscribeViewerGrants: vi.fn(async () => Result.Ok({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" })),
@@ -182,7 +184,7 @@ describe("FireflyApiAdapter", () => {
     subscribeDocs.mockClear();
     grantsListener?.({ ownerHandle: "alice", appSlug: "my-app" });
     await new Promise((r) => setTimeout(r, 0));
-    const resubscribed = subscribeDocs.mock.calls.map((c) => (c[0] as { dbName: string }).dbName).sort();
+    const resubscribed = subscribeDocs.mock.calls.map((c) => c[0].dbName).sort();
     expect(resubscribed).toEqual(["type-a", "type-b"]);
     expect(seen).toEqual([{ ownerHandle: "alice", appSlug: "my-app" }]);
   });
