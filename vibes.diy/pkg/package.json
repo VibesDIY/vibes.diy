@@ -85,7 +85,7 @@
     "@vitest/browser-playwright": "~4.1.7",
     "arktype": "^2.2.0",
     "cmd-ts": "^0.15.0",
-    "concurrently": "^9.1.2",
+    "concurrently": "^10.0.3",
     "drizzle-kit": "^0.31.8",
     "find-up": "^8.0.0",
     "prettier": "^3.8.1",
