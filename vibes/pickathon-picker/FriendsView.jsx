@@ -34,11 +34,11 @@ export default function FriendsView({
 
   return (
     <div>
-      <div className="flex flex-col items-center gap-4 p-10 bg-[#BACD32] rounded-2xl m-2  mb-6">
+      <div className="flex flex-col items-center gap-4 p-10 bg-[#BACD32] dark:bg-[#2c3510] rounded-2xl m-2  mb-6">
         <div className="flex items-center gap-2 flex-wrap justify-center">
           <p className={`text-lg font-bold ${c.bodyText}`}>Share this link to connect schedules</p>
         </div>
-        <div className="bg-white dark:bg-[#22252d] rounded-2xl m-2  p-8">
+        <div className="bg-white dark:bg-[#1d3015] rounded-2xl m-2  p-8">
           <img src={qrSrc} alt="Connect QR code" width="320" height="320" />
         </div>
         <div className="flex items-center gap-3">
@@ -99,7 +99,7 @@ export default function FriendsView({
             {friendedBy.map((f) => (
               <div
                 key={`by-${f._id}`}
-                className={`flex items-center gap-2 p-2 rounded-full m-2  transition-all ${selectedFriend === f.userId ? "bg-[#CD6C0C]" : "bg-[#71AD44]"}`}
+                className={`flex items-center gap-2 p-2 rounded-full m-2  transition-all ${selectedFriend === f.userId ? "bg-[#CD6C0C]" : "bg-[#71AD44] dark:bg-[#1d3015]"}`}
               >
                 <button
                   onClick={() => setSelectedFriend(selectedFriend === f.userId ? null : f.userId)}
@@ -121,7 +121,7 @@ export default function FriendsView({
             {friends.map((f) => (
               <div
                 key={f._id}
-                className={`flex items-center gap-2 p-2 rounded-full m-2  transition-all ${selectedFriend === f.friendSlug ? "bg-[#CD6C0C]" : "bg-[#BACD32]"}`}
+                className={`flex items-center gap-2 p-2 rounded-full m-2  transition-all ${selectedFriend === f.friendSlug ? "bg-[#CD6C0C]" : "bg-[#BACD32] dark:bg-[#2c3510]"}`}
               >
                 <button
                   onClick={() => setSelectedFriend(selectedFriend === f.friendSlug ? null : f.friendSlug)}

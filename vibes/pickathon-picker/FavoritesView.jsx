@@ -17,7 +17,7 @@ export default function FavoritesView({
 }) {
   return (
     <div>
-      <div className="mb-6 p-8 bg-[#BACD32] rounded-2xl m-2 ">
+      <div className="mb-6 p-8 bg-[#BACD32] dark:bg-[#2c3510] rounded-2xl m-2 ">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <h3 className={`text-lg font-black ${c.bodyText}`}>
             {viewingUser ? `Viewing ${viewingUser}'s picks` : "Pickers (tap to view their picks)"}

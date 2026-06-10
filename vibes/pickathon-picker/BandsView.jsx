@@ -1,5 +1,6 @@
 import React from "react";
 import { fmtDate, fmtTime } from "./festival-utils.js";
+import { eventCardBg } from "./styles.js";
 
 export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorite, favCounts, superMode, c, database, userId }) {
   const toggleAllBand = async (band) => {
@@ -69,7 +70,11 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
               const lineupColor = band.lineup?.color || "#d7c57d";
               const lineupText = band.lineup?.textColor || "#000";
               return (
-                <div key={band.title} className="rounded-2xl m-2  p-8 shadow-lg" style={{ backgroundColor: lineupColor }}>
+                <div
+                  key={band.title}
+                  className={`rounded-2xl m-2 p-8 shadow-lg ${eventCardBg}`}
+                  style={{ "--lineup": lineupColor }}
+                >
                   <div className="flex items-start gap-3">
                     {canWrite && (
                       <button
