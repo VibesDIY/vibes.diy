@@ -84,6 +84,8 @@ function netHashFn({
   });
 }
 
+const HOT_VIBE_CONN_WARN_THRESHOLD = 200;
+
 export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: CFEnv) {
   const shouldLog = env.ENVIRONMENT !== "prod";
 
@@ -101,6 +103,17 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
       if (shouldLog) {
         console.info("[AppSessions] notifyDocChanged key:", key, "conn:", senderConnId.slice(0, 8));
         console.info("[AppSessions] docChanged fanout", "key=", key, "conns=", connections.size);
+      }
+      if (connections.size >= HOT_VIBE_CONN_WARN_THRESHOLD) {
+        console.warn(
+          "[AppSessions] hot-vibe fanout",
+          "key=",
+          key,
+          "conns=",
+          connections.size,
+          "threshold=",
+          HOT_VIBE_CONN_WARN_THRESHOLD
+        );
       }
       const fullEvt = { type: "vibes.diy.evt-doc-changed", ...evt };
       for (const conn of connections) {
@@ -157,6 +170,17 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
       if (shouldLog) {
         console.info("[AppSessions] notifyViewerGrantsChanged key:", key);
         console.info("[AppSessions] viewerGrants fanout", "key=", key, "conns=", connections.size);
+      }
+      if (connections.size >= HOT_VIBE_CONN_WARN_THRESHOLD) {
+        console.warn(
+          "[AppSessions] hot-vibe fanout",
+          "key=",
+          key,
+          "conns=",
+          connections.size,
+          "threshold=",
+          HOT_VIBE_CONN_WARN_THRESHOLD
+        );
       }
       // DON'T skip sender — iframe needs grant refresh
       for (const conn of connections) {
