@@ -423,7 +423,7 @@ export default function PickathonPicker() {
   if (loading && events.length === 0) {
     return (
       <div className={`min-h-screen ${c.pageBg} p-4`}>
-        <div className={`max-w-4xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl m-2 ${c.border} p-12`}>
+        <div className={`max-w-4xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl my-2 ${c.border} p-12`}>
           <div className="flex items-center justify-center gap-4">
             <div className={`w-16 h-16 m-2  rounded-full animate-spin `}></div>
             <h2 className={`text-3xl font-black ${c.bodyText}`}>Loading Pickathon Schedule...</h2>
@@ -436,7 +436,7 @@ export default function PickathonPicker() {
   if (error && events.length === 0) {
     return (
       <div className={`min-h-screen ${c.pageBg} p-4`}>
-        <div className={`max-w-4xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl m-2 ${c.border} p-12`}>
+        <div className={`max-w-4xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl my-2 ${c.border} p-12`}>
           <h2 className={`text-3xl font-black mb-4 ${c.bodyText}`}>Error Loading Schedule</h2>
           <p className={`text-lg ${c.bodyText} mb-4`}>{error}</p>
           <button onClick={fetchSchedule} className={c.btnPink}>
@@ -452,7 +452,7 @@ export default function PickathonPicker() {
 
   return (
     <div className={`min-h-screen ${c.pageBg} p-4`}>
-      <div className={`max-w-6xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl m-2 ${c.border} overflow-hidden`}>
+      <div className={`max-w-6xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl my-2 ${c.border} overflow-hidden`}>
         <div className={`${c.headerBg} mx-2 mt-2 ${c.border} p-10 rounded-t-3xl`}>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
