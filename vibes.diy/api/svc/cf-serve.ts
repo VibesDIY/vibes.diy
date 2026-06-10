@@ -100,6 +100,7 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
       const key = `${evt.ownerHandle}/${evt.appSlug}/${routingKey}`;
       if (shouldLog) {
         console.info("[AppSessions] notifyDocChanged key:", key, "conn:", senderConnId.slice(0, 8));
+        console.info("[AppSessions] docChanged fanout", "key=", key, "conns=", connections.size);
       }
       const fullEvt = { type: "vibes.diy.evt-doc-changed", ...evt };
       for (const conn of connections) {
@@ -155,6 +156,7 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
       const key = `${evt.ownerHandle}/${evt.appSlug}`;
       if (shouldLog) {
         console.info("[AppSessions] notifyViewerGrantsChanged key:", key);
+        console.info("[AppSessions] viewerGrants fanout", "key=", key, "conns=", connections.size);
       }
       // DON'T skip sender — iframe needs grant refresh
       for (const conn of connections) {
