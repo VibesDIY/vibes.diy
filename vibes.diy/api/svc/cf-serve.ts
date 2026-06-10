@@ -89,10 +89,15 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
 
   return {
     notifyDocChanged: async (
-      evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string },
+      evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string; channel?: string },
       senderConnId: string
     ): Promise<void> => {
-      const key = `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
+      // Route by channel for access-fn vibes; fall back to dbName otherwise. The
+      // payload keeps the REAL dbName so the client's `data.dbName === this.name`
+      // filter passes (see #2301). channel `??` only falls through on null/undefined;
+      // callers normalize channels so "" never reaches here.
+      const routingKey = evt.channel ?? evt.dbName;
+      const key = `${evt.ownerHandle}/${evt.appSlug}/${routingKey}`;
       if (shouldLog) {
         console.info("[AppSessions] notifyDocChanged key:", key, "conn:", senderConnId.slice(0, 8));
       }
