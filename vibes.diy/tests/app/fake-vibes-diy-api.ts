@@ -23,6 +23,12 @@ export interface FakeVibesDiyApi {
   deleteDoc: (req: { appSlug: string; ownerHandle: string; dbName: string; docId: string }) => Promise<Result<unknown>>;
   subscribeDocs: (req: { appSlug: string; ownerHandle: string; dbName: string }) => Promise<Result<unknown>>;
   onDocChanged: (fn: (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void) => () => void;
+  subscribeViewerGrants: (req: { ownerHandle: string; appSlug: string }) => Promise<Result<unknown>>;
+  onViewerGrantsChanged: (fn: (evt: { ownerHandle: string; appSlug: string }) => void) => () => void;
+  /** db names passed to subscribeDocs, in call order — lets tests assert resubscribe */
+  readonly _subscribeDocsCalls: string[];
+  /** simulate a server-push viewer-grants-changed event */
+  _simulateViewerGrantsChanged: (ownerHandle: string, appSlug: string) => void;
   /** how many times `new VibesDiyApi(...)` would have been called — used by multi-db test */
   readonly _connectionId: number;
   /** raw access to the doc store keyed by dbName */
@@ -34,6 +40,8 @@ export interface FakeVibesDiyApi {
 export function createFakeVibesDiyApi(opts: { defaultHandle?: string } = {}): FakeVibesDiyApi {
   const docsByDb = new Map<string, Map<string, Record<string, unknown>>>();
   const docChangedListeners: ((u: string, a: string, db: string, doc: string) => void)[] = [];
+  const viewerGrantsListeners: ((evt: { ownerHandle: string; appSlug: string }) => void)[] = [];
+  const subscribeDocsCalls: string[] = [];
   const connectionId = ++connectionCounter;
 
   function dbStore(dbName: string): Map<string, Record<string, unknown>> {
@@ -85,7 +93,10 @@ export function createFakeVibesDiyApi(opts: { defaultHandle?: string } = {}): Fa
       return Result.Ok({ type: "vibes.diy.res-delete-doc", status: "ok", id: req.docId });
     },
 
-    subscribeDocs: async () => Result.Ok({ type: "vibes.diy.res-subscribe-docs", status: "ok" }),
+    subscribeDocs: async (req: { appSlug: string; ownerHandle: string; dbName: string }) => {
+      subscribeDocsCalls.push(req.dbName);
+      return Result.Ok({ type: "vibes.diy.res-subscribe-docs", status: "ok" });
+    },
 
     onDocChanged: (fn) => {
       docChangedListeners.push(fn);
@@ -93,6 +104,22 @@ export function createFakeVibesDiyApi(opts: { defaultHandle?: string } = {}): Fa
         const i = docChangedListeners.indexOf(fn);
         if (i >= 0) docChangedListeners.splice(i, 1);
       };
+    },
+
+    subscribeViewerGrants: async () => Result.Ok({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" }),
+
+    onViewerGrantsChanged: (fn) => {
+      viewerGrantsListeners.push(fn);
+      return () => {
+        const i = viewerGrantsListeners.indexOf(fn);
+        if (i >= 0) viewerGrantsListeners.splice(i, 1);
+      };
+    },
+
+    _subscribeDocsCalls: subscribeDocsCalls,
+
+    _simulateViewerGrantsChanged: (ownerHandle, appSlug) => {
+      for (const fn of viewerGrantsListeners) fn({ ownerHandle, appSlug });
     },
 
     _simulateDocChanged: (ownerHandle, appSlug, dbName, docId) => {
