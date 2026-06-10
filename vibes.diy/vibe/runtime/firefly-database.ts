@@ -117,16 +117,11 @@ export class FireflyDatabase {
     this.vibeApp = vibeApi.svc.vibeApp;
 
     // Subscribe to remote doc-changed events for THIS db (cross-client sync).
-    // The server's DocNotify DO is keyed on (ownerHandle, appSlug, dbName), so
-    // each FireflyDatabase must subscribe for its own name — otherwise apps
-    // using a non-"default" dbName get zero subscribers on the server side
-    // and never receive notifications. Fire-and-forget; the client-side
-    // subscribeDocs deduplicates by key, so reconnect replay stays safe.
-    this.vibeApi.subscribeDocs(this.name).then((rRes) => {
-      if (rRes.isErr()) {
-        console.error(`Failed to subscribe to docs for db "${this.name}":`, rRes.Err());
-      }
-    });
+    // Each FireflyDatabase subscribes for its own name — otherwise apps using a
+    // non-"default" dbName get zero subscribers on the server side and never
+    // receive notifications. Fire-and-forget; the client-side subscribeDocs
+    // deduplicates by key, so re-calls stay safe.
+    this.resubscribe();
 
     if (acl) {
       this.applyAcl(acl);
@@ -144,6 +139,19 @@ export class FireflyDatabase {
         data.dbName === this.name
       ) {
         this.notifyListeners([{ _id: data.docId } as DocWithId]);
+      }
+    });
+  }
+
+  /**
+   * Re-issue the doc subscription so the server refreshes this connection's
+   * channel snapshot — e.g. after the viewer's grants change and new channels
+   * become readable. Safe to call repeatedly; subscribeDocs dedupes by key.
+   */
+  resubscribe(): void {
+    this.vibeApi.subscribeDocs(this.name).then((rRes) => {
+      if (rRes.isErr()) {
+        console.error(`Failed to subscribe to docs for db "${this.name}":`, rRes.Err());
       }
     });
   }

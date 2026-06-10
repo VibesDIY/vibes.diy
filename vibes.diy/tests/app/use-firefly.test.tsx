@@ -664,6 +664,46 @@ describe("HOOK: useLiveQuery re-queries on a grants-only change", () => {
     },
     TEST_TIMEOUT
   );
+
+  it(
+    "re-issues subscribeDocs for the db when a new grant arrives",
+    async () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider
+          mountParams={{
+            usrEnv: {},
+            viewerEnv: {
+              viewer: { userHandle: "anna" },
+              access: "viewer",
+              grants: { [dbName]: { channels: [], publicChannels: [], roles: [] } },
+            },
+          }}
+        >
+          {children}
+        </VibeContextProvider>
+      );
+
+      renderHook(
+        () => {
+          const { useLiveQuery } = useFireproof(dbName);
+          return useLiveQuery("foo");
+        },
+        { wrapper }
+      );
+
+      // Constructor subscribes once on mount.
+      await waitFor(() => expect(mockApi._subscribeDocsCalls.filter((n) => n === dbName).length).toBe(1));
+
+      act(() => {
+        window.dispatchEvent(viewerChanged(dbName, ["c1"]));
+      });
+
+      // Fix: the grant change re-issues subscribeDocs for this db.
+      await waitFor(() => expect(mockApi._subscribeDocsCalls.filter((n) => n === dbName).length).toBeGreaterThan(1));
+    },
+    TEST_TIMEOUT
+  );
 });
 
 // ── access (roles + channels from grants) ──────────────────────────
