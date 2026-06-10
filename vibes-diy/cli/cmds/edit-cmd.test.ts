@@ -369,6 +369,19 @@ describe("editEvento", () => {
     await ctx.cliStream.close();
   });
 
+  it("rejects the legacy placeholder form (vibe positional + prompt + --vibe)", async () => {
+    const ctx: CliCtx = {
+      sthis: { env: { get: () => undefined } } as unknown as CliCtx["sthis"],
+      cliStream: cmd_tsStream(),
+      output: { stdout: () => undefined, stderr: () => undefined },
+      exitCode: 0,
+    };
+    await expect(run(editCmd(ctx), ["ignored", "make it blue", "--vibe", "alice/cool-app"])).rejects.toThrow(
+      "--vibe already supplies the vibe — drop the extra leading positional (the placeholder vibe argument is no longer needed)."
+    );
+    await ctx.cliStream.close();
+  });
+
   it("uses cwd by default and applies SEARCH/REPLACE against local seed files", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "edit-cmd-cwd-"));
     tempDirs.push(cwd);

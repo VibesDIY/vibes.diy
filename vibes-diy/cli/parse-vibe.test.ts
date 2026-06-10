@@ -176,4 +176,23 @@ describe("resolveVibePositionals", () => {
       "No vibe specified — pass a vibe (handle/app-slug) as a positional or use --vibe."
     );
   });
+
+  it("two slots, --vibe + only the trailing slot typed: shifts cleanly (no overflow)", () => {
+    // Mirrors `edit "make it blue" --vibe a/b`: cmd-ts fills slot 0, slot 1 is absent.
+    expect(resolveVibePositionals({ vibe: "alice/cool-app", handle: "", positionals: ["make it blue", undefined] })).toEqual({
+      handle: "alice",
+      appSlug: "cool-app",
+      trailing: ["make it blue"],
+    });
+  });
+
+  it("rejects --vibe combined with a full set of positionals (legacy placeholder form)", () => {
+    // Mirrors `edit ignored "make it blue" --vibe a/b` / `chats ignored chat-1 --vibe a/b`:
+    // both slots typed AND --vibe present means the leading positional is a stale placeholder.
+    expect(() =>
+      resolveVibePositionals({ vibe: "alice/cool-app", handle: "", positionals: ["ignored", "make it blue"] })
+    ).toThrowError(
+      "--vibe already supplies the vibe — drop the extra leading positional (the placeholder vibe argument is no longer needed)."
+    );
+  });
 });
