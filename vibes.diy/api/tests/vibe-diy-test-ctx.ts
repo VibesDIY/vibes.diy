@@ -2,7 +2,15 @@ import { loadAsset, Result, string2stream } from "@adviser/cement";
 import { DeviceIdCA } from "@fireproof/core-device-id";
 import { ensureSuperThis, sts } from "@fireproof/core-runtime";
 import { createAppContext, noopCache } from "@vibes.diy/api-svc";
-import { type AccessDescriptor, type EvtRequestGrant, type EvtViewerGrantsChanged, type LLMHeaders, type Model, MsgBase, S3Api } from "@vibes.diy/api-types";
+import {
+  type AccessDescriptor,
+  type EvtRequestGrant,
+  type EvtViewerGrantsChanged,
+  type LLMHeaders,
+  type Model,
+  MsgBase,
+  S3Api,
+} from "@vibes.diy/api-types";
 import { StubS3Api } from "./stub-s3-api.js";
 import { createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
@@ -56,6 +64,10 @@ export interface CreateVibeDiyTestCtxOpts {
   peerTimeout?: number;
   notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
   notifyViewerGrantsChanged?(evt: EvtViewerGrantsChanged, senderConnId: string): Promise<void>;
+  notifyDocChanged?(
+    evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string; channel?: string },
+    senderConnId: string
+  ): Promise<void>;
   invokeAccessFn?(params: {
     cid: string;
     doc: unknown;
@@ -185,6 +197,7 @@ export async function createVibeDiyTestCtx(
     cache: noopCache,
     notifyRequestGrantChanged: opts.notifyRequestGrantChanged,
     notifyViewerGrantsChanged: opts.notifyViewerGrantsChanged,
+    notifyDocChanged: opts.notifyDocChanged,
     ...(opts?.invokeAccessFn ? { invokeAccessFn: opts.invokeAccessFn } : {}),
   });
 }

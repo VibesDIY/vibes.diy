@@ -37,6 +37,7 @@ import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-reso
 import { GrantReduce, extractContribution } from "./grant-reduce.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
+import { normalizeChannels } from "./normalize-channels.js";
 
 function grantsUsers(reduce: GrantReduce): Set<string> {
   const users = new Set<string>();
@@ -458,11 +459,12 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       // When the access fn returns channels, notify per-channel only (not the
       // main dbName) so only channel-subscribed connections receive the event.
       if (vctx.notifyDocChanged) {
-        if (accessResult?.channels?.length) {
-          for (const channel of accessResult.channels) {
+        const channels = normalizeChannels(accessResult?.channels ?? []);
+        if (channels.length) {
+          for (const channel of channels) {
             vctx
               .notifyDocChanged(
-                { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName: channel, docId },
+                { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId, channel },
                 clientWsSend(ctx).connId
               )
               .catch((e: unknown) => console.error("DocNotify channel error:", e));
