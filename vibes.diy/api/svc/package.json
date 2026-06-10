@@ -49,7 +49,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "sucrase": "^3.35.1",
-    "ws": "^8.20.0"
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.19",
