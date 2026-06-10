@@ -262,6 +262,37 @@ describe("FireflyApiAdapter end-to-end against fake VibesDiyApi", () => {
 
     expect(callCount).toBe(1);
   });
+
+  it("promotion: newly-granted channel writes go live; pre-existing docs are not auto-delivered", async () => {
+    const api = createFakeVibesDiyApi({ defaultHandle: "alice" });
+    const adapter = new FireflyApiAdapter(api as never, "my-app", { ownerHandle: "alice" });
+    const db = new FireflyDatabase("type-b", adapter);
+    // let the constructor's async subscribeDocs land
+    await new Promise((r) => setTimeout(r, 0));
+    await adapter.resolveOwnerHandle();
+    await adapter.enableGrantReactivity();
+
+    const delivered: string[] = [];
+    db.subscribe((changes: { _id: string }[]) => {
+      for (const c of changes) delivered.push(c._id);
+    }, false);
+
+    // pre-existing doc written before promotion (putDoc does not fire doc-changed)
+    await api.putDoc({ appSlug: "my-app", ownerHandle: "alice", dbName: "type-b", doc: { _id: "old" }, docId: "old" });
+
+    // promotion: grants change → adapter resubscribes type-b + fires onGrantsChanged
+    const typeBBefore = api._subscribeDocsCalls.filter((n) => n === "type-b").length;
+    api._simulateViewerGrantsChanged("alice", "my-app");
+    await new Promise((r) => setTimeout(r, 0));
+    const typeBAfter = api._subscribeDocsCalls.filter((n) => n === "type-b").length;
+    expect(typeBAfter).toBeGreaterThan(typeBBefore); // resubscribed on grant change
+
+    // a write to the newly-granted channel AFTER promotion is delivered live
+    api._simulateDocChanged("alice", "my-app", "type-b", "new");
+
+    expect(delivered).toContain("new");
+    expect(delivered).not.toContain("old"); // forward-only: no backfill on promotion
+  });
 });
 
 // The fireproof() factory itself is tested in use-vibes/tests/fireproof-node.node.test.ts.
