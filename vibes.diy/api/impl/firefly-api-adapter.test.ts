@@ -162,6 +162,31 @@ describe("FireflyApiAdapter", () => {
     expect(onDocChanged).toHaveBeenCalledTimes(2);
   });
 
+  it("on viewer-grants-changed, resubscribes every open db and emits onGrantsChanged", async () => {
+    let grantsListener: ((evt: { ownerHandle: string; appSlug: string }) => void) | undefined;
+    const subscribeDocs = vi.fn(async () => Result.Ok({ type: "vibes.diy.res-subscribe-docs", status: "ok" }));
+    const api = fakeVibesDiyApi({
+      subscribeDocs,
+      subscribeViewerGrants: vi.fn(async () => Result.Ok({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" })),
+      onViewerGrantsChanged: vi.fn((fn: (evt: { ownerHandle: string; appSlug: string }) => void) => {
+        grantsListener = fn;
+        return () => undefined;
+      }),
+    });
+    const adapter = new FireflyApiAdapter(api, "my-app", { ownerHandle: "alice" });
+    await adapter.subscribeDocs("type-a");
+    await adapter.subscribeDocs("type-b");
+    await adapter.enableGrantReactivity();
+    const seen: { ownerHandle: string; appSlug: string }[] = [];
+    adapter.onGrantsChanged((evt) => seen.push(evt));
+    subscribeDocs.mockClear();
+    grantsListener?.({ ownerHandle: "alice", appSlug: "my-app" });
+    await new Promise((r) => setTimeout(r, 0));
+    const resubscribed = subscribeDocs.mock.calls.map((c) => (c[0] as { dbName: string }).dbName).sort();
+    expect(resubscribed).toEqual(["type-a", "type-b"]);
+    expect(seen).toEqual([{ ownerHandle: "alice", appSlug: "my-app" }]);
+  });
+
   it("onMsg synthesizes evt-doc-changed events from VibesDiyApi.onDocChanged", () => {
     let captured: ((u: string, a: string, db: string, doc: string) => void) | undefined;
     const onDocChanged = vi.fn((fn: typeof captured) => {
