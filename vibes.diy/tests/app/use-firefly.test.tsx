@@ -704,6 +704,196 @@ describe("HOOK: useLiveQuery re-queries on a grants-only change", () => {
     },
     TEST_TIMEOUT
   );
+
+  // The signature covers all three grant arrays — guard publicChannels/roles,
+  // not just channels.
+  function grantsEvt(dbName: string, grants: { channels?: string[]; publicChannels?: string[]; roles?: string[] }) {
+    return new MessageEvent("message", {
+      data: {
+        type: "vibe.evt.viewerChanged",
+        viewer: { userHandle: "anna" },
+        access: "viewer",
+        grants: {
+          [dbName]: { channels: grants.channels ?? [], publicChannels: grants.publicChannels ?? [], roles: grants.roles ?? [] },
+        },
+      },
+    });
+  }
+
+  it(
+    "re-fires when only publicChannels or only roles change (channels constant)",
+    async () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider
+          mountParams={{
+            usrEnv: {},
+            viewerEnv: {
+              viewer: { userHandle: "anna" },
+              access: "viewer",
+              grants: { [dbName]: { channels: ["x"], publicChannels: [], roles: [] } },
+            },
+          }}
+        >
+          {children}
+        </VibeContextProvider>
+      );
+
+      renderHook(
+        () => {
+          const { useLiveQuery } = useFireproof(dbName);
+          return useLiveQuery("foo");
+        },
+        { wrapper }
+      );
+
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(0));
+
+      // publicChannels [] -> ["p1"], channels unchanged.
+      const beforePub = mockApi._queryDocsFilterHints.length;
+      act(() => {
+        window.dispatchEvent(grantsEvt(dbName, { channels: ["x"], publicChannels: ["p1"] }));
+      });
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(beforePub));
+
+      // roles [] -> ["r1"], channels + publicChannels unchanged.
+      const beforeRoles = mockApi._queryDocsFilterHints.length;
+      act(() => {
+        window.dispatchEvent(grantsEvt(dbName, { channels: ["x"], publicChannels: ["p1"], roles: ["r1"] }));
+      });
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(beforeRoles));
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    "useAllDocs re-queries on a grants-only change",
+    async () => {
+      const dbName = uniqueDbName();
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider
+          mountParams={{
+            usrEnv: {},
+            viewerEnv: {
+              viewer: { userHandle: "anna" },
+              access: "viewer",
+              grants: { [dbName]: { channels: [], publicChannels: [], roles: [] } },
+            },
+          }}
+        >
+          {children}
+        </VibeContextProvider>
+      );
+
+      renderHook(
+        () => {
+          const { useAllDocs } = useFireproof(dbName);
+          return useAllDocs();
+        },
+        { wrapper }
+      );
+
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(0));
+      const before = mockApi._queryDocsFilterHints.length;
+      act(() => {
+        window.dispatchEvent(viewerChanged(dbName, ["c1"]));
+      });
+      await waitFor(() => expect(mockApi._queryDocsFilterHints.length).toBeGreaterThan(before));
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    "useChanges re-fires on a grants-only change",
+    async () => {
+      const dbName = uniqueDbName();
+      const { result: fpResult } = renderHook(() => useFireproof(dbName));
+      let changesCalls = 0;
+      const realChanges = fpResult.current.database.changes.bind(fpResult.current.database);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (fpResult.current.database as any).changes = async () => {
+        changesCalls++;
+        return realChanges();
+      };
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider
+          mountParams={{
+            usrEnv: {},
+            viewerEnv: {
+              viewer: { userHandle: "anna" },
+              access: "viewer",
+              grants: { [dbName]: { channels: [], publicChannels: [], roles: [] } },
+            },
+          }}
+        >
+          {children}
+        </VibeContextProvider>
+      );
+      renderHook(
+        () => {
+          const { useChanges } = fpResult.current;
+          return useChanges();
+        },
+        { wrapper }
+      );
+
+      await waitFor(() => expect(changesCalls).toBeGreaterThan(0));
+      const before = changesCalls;
+      act(() => {
+        window.dispatchEvent(viewerChanged(dbName, ["c1"]));
+      });
+      await waitFor(() => expect(changesCalls).toBeGreaterThan(before));
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    "useDocument re-fetches on a grants-only change",
+    async () => {
+      const dbName = uniqueDbName();
+      const { result: fpResult } = renderHook(() => useFireproof(dbName));
+      const { id } = await fpResult.current.database.put({ input: "existing" });
+
+      let getCalls = 0;
+      const realGet = fpResult.current.database.get.bind(fpResult.current.database);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (fpResult.current.database as any).get = async (docId: string) => {
+        getCalls++;
+        return realGet(docId);
+      };
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <VibeContextProvider
+          mountParams={{
+            usrEnv: {},
+            viewerEnv: {
+              viewer: { userHandle: "anna" },
+              access: "viewer",
+              grants: { [dbName]: { channels: [], publicChannels: [], roles: [] } },
+            },
+          }}
+        >
+          {children}
+        </VibeContextProvider>
+      );
+      renderHook(
+        () => {
+          const { useDocument } = fpResult.current;
+          return useDocument({ _id: id });
+        },
+        { wrapper }
+      );
+
+      await waitFor(() => expect(getCalls).toBeGreaterThan(0));
+      const before = getCalls;
+      act(() => {
+        window.dispatchEvent(viewerChanged(dbName, ["c1"]));
+      });
+      await waitFor(() => expect(getCalls).toBeGreaterThan(before));
+    },
+    TEST_TIMEOUT
+  );
 });
 
 // ── access (roles + channels from grants) ──────────────────────────
