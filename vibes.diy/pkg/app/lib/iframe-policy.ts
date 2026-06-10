@@ -1,6 +1,7 @@
 export const RUNTIME_PREVIEW_IFRAME_ALLOW_TOKENS = [
   "autoplay",
   "camera",
+  "clipboard-write",
   "encrypted-media",
   "microphone",
 ] as const;
