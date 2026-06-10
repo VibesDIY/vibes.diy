@@ -80,10 +80,11 @@ async function vibesDiyApiFactory(sthis: SuperThis) {
     },
     { resetAfter: 60, skipUnref: true }
   );
-  return (apiUrl: string, opts?: { idleTimeoutMs?: number }) => {
+  return (apiUrl: string, opts?: { idleTimeoutMs?: number; skipShard?: boolean }) => {
     return new VibesDiyApi({
       apiUrl,
       getToken,
+      ...(opts?.skipShard ? { skipShard: true } : {}),
       ...(opts?.idleTimeoutMs !== undefined ? { timeoutMs: opts.idleTimeoutMs } : {}),
     });
   };
