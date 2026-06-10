@@ -17,8 +17,8 @@ import { canWrite, checkDocAccess } from "./access-helpers.js";
 const GRANT_TTL_SEC = 60;
 
 // `POST /assets` lives at the host root (sibling of `/assets/cid`) — *not*
-// under `/api/` because that path goes to the ChatSessions DO which only
-// handles WS upgrades + a DocNotify POST shape. The host root is
+// under `/api/` because that path goes to the ChatSessions DO, which only
+// handles WS upgrades and does not accept arbitrary asset POSTs. The host root is
 // VIBES_DIY_PUBLIC_BASE_URL, set in api-svc env. Tests fall back to the
 // relative path; they exercise the handler via `processRequest()` directly
 // and ignore uploadUrl.

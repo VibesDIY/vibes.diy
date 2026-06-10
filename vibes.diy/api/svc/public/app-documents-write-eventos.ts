@@ -455,7 +455,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         } satisfies MsgBase<EvtCommentPosted>);
       }
 
-      // Notify DocNotify coordinator for cross-shard fan-out.
+      // Notify subscribers of the doc change via per-vibe local fan-out.
       // When the access fn returns channels, notify per-channel only (not the
       // main dbName) so only channel-subscribed connections receive the event.
       if (vctx.notifyDocChanged) {
@@ -615,7 +615,7 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
         created: now,
       });
 
-      // Notify DocNotify coordinator for cross-shard fan-out. On access-fn vibes,
+      // Notify subscribers of the doc change via per-vibe local fan-out. On access-fn vibes,
       // fan out per stored channel so channel-subscribed connections receive the
       // delete. Best-effort: if there's no binding or stored output row, fall back
       // to a single real-dbName notify (correct for no-access-fn vibes). Never block

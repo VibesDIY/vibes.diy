@@ -32,7 +32,7 @@ describe("worker routeDecision", () => {
     expect(decide({ pathname: "/api/foo" })).toBe("api-do");
   });
 
-  it("/api/* → ChatSessions DO (WebSocket + DocNotify)", () => {
+  it("/api/* → ChatSessions DO (WebSocket)", () => {
     expect(decide({ pathname: "/api" })).toBe("api-do");
     expect(decide({ pathname: "/api/" })).toBe("api-do");
     expect(decide({ pathname: "/api/foo/bar" })).toBe("api-do");
@@ -81,9 +81,9 @@ describe("worker routeDecision", () => {
     expect(decide({ pathname: "/vibe/alice/myapp" })).toBe("ssr");
   });
 
-  it("regression: /assets POST does NOT route to /api/ (DO would mishandle as DocNotify)", () => {
-    // The DO's fetch handler treats every POST as a DocNotify delivery
-    // and returns 400 on shape mismatch. Routing /assets POST through
+  it("regression: /assets POST does NOT route to /api/ (the DO would mishandle the POST)", () => {
+    // The DO's fetch handler does not expect arbitrary asset POSTs and
+    // returns 400 on shape mismatch. Routing /assets POST through
     // /api/ would silently break uploads.
     expect(decide({ pathname: "/assets", method: "POST" })).not.toBe("api-do");
   });

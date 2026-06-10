@@ -512,7 +512,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
         wsSend.subscribedDocKeys.add(subscriptionKey);
       }
 
-      // Register this shard with DocNotify coordinator for cross-shard fan-out
+      // Register this connection's subscription keys for per-vibe local fan-out
       if (vctx.registerDocSubscription) {
         if (channelKeys.length > 0) {
           for (const key of channelKeys) {

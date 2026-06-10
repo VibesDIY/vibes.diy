@@ -7,7 +7,7 @@
 
 export type Route =
   | "app-api" // /api/app → AppSessions DO (vibe-scoped WebSocket)
-  | "api-do" // /api/* → ChatSessions DO (WebSocket + DocNotify)
+  | "api-do" // /api/* → ChatSessions DO (WebSocket)
   | "vibe-pkg" // /vibe-pkg/* → npm package serving
   | "cf-serve" // app subdomain *--*.host, /assets/cid, POST/OPTIONS /assets
   | "reports-config" // /reports/config.json → JSON of public env (Clerk pub key)
