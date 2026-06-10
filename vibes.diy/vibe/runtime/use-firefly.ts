@@ -10,6 +10,7 @@ import { FireflyDatabase } from "./firefly-database.js";
 import type { VibeSandboxApi } from "./register-dependencies.js";
 import type { DbAcl, AccessFunction } from "@vibes.diy/vibe-types";
 import { useVibeContext } from "./VibeContext.js";
+import type { ViewerEnv } from "./vibe.js";
 
 export interface DatabaseAccess {
   readonly roles: ReadonlySet<string>;
@@ -24,6 +25,17 @@ const EMPTY_ACCESS: DatabaseAccess = {
   hasRole: () => false,
   hasChannel: () => false,
 };
+
+// Stable per-db signature over the viewer's grants for one database.
+// Sorted + de-duped so reordered who-am-i arrays (who-am-i builds them from
+// Sets via Array.from without sorting) don't churn the key. Empty when the
+// db has no grants (no-access-fn apps) — those keep the prior behaviour.
+function grantsSignature(viewerEnv: ViewerEnv | undefined, dbName: string): string {
+  const g = viewerEnv?.grants?.[dbName];
+  if (!g) return "";
+  const sig = (arr: readonly string[] | undefined) => [...new Set(arr ?? [])].sort().join(",");
+  return `${sig(g.channels)}|${sig(g.publicChannels)}|${sig(g.roles)}`;
+}
 
 // Module-scoped state, set by registerFirefly()
 let vibeApiRef: VibeSandboxApi | undefined;
@@ -117,7 +129,7 @@ function createUseDocument(database: FireflyDatabase) {
     // Re-fetches when viewer identity resolves asynchronously (#2285).
     const { mountParams } = useVibeContext();
     const viewerEnv = mountParams.viewerEnv;
-    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}`;
+    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}:${grantsSignature(viewerEnv, database.name)}`;
     const updateHappenedRef = useRef(false);
     let initialDoc: Record<string, unknown>;
     if (typeof initialDocOrFn === "function") {
@@ -216,7 +228,7 @@ function createUseLiveQuery(database: FireflyDatabase) {
     // Re-fetches when viewer identity resolves asynchronously (#2285).
     const { mountParams } = useVibeContext();
     const viewerEnv = mountParams.viewerEnv;
-    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}`;
+    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}:${grantsSignature(viewerEnv, database.name)}`;
     const [result, setResult] = useState({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       docs: initialRows.map((r: any) => r.doc).filter((r: any) => !!r),
@@ -245,7 +257,7 @@ function createUseAllDocs(database: FireflyDatabase) {
     // Re-fetches when viewer identity resolves asynchronously (#2285).
     const { mountParams } = useVibeContext();
     const viewerEnv = mountParams.viewerEnv;
-    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}`;
+    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}:${grantsSignature(viewerEnv, database.name)}`;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [result, setResult] = useState<any>({ docs: [], rows: [] });
     const queryString = useMemo(() => JSON.stringify(query), [query]);
@@ -274,7 +286,7 @@ function createUseChanges(database: FireflyDatabase) {
     // Re-fetches when viewer identity resolves asynchronously (#2285).
     const { mountParams } = useVibeContext();
     const viewerEnv = mountParams.viewerEnv;
-    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}`;
+    const viewerKey = `${viewerEnv?.viewer?.userHandle ?? ""}:${viewerEnv?.access ?? ""}:${grantsSignature(viewerEnv, database.name)}`;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [result, setResult] = useState<any>({ docs: [], rows: [] });
     const queryString = useMemo(() => JSON.stringify(opts), [opts]);
