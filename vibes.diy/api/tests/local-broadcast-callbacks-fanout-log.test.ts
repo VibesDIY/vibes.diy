@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { localBroadcastCallbacks } from "@vibes.diy/api-svc";
-import { WSSendProvider } from "@vibes.diy/api-svc";
-import type { CFEnv } from "@vibes.diy/api-types";
-import type { EvtViewerGrantsChanged } from "@vibes.diy/api-types";
+import { localBroadcastCallbacks, WSSendProvider } from "@vibes.diy/api-svc";
+import type { CFEnv, EvtViewerGrantsChanged } from "@vibes.diy/api-types";
 
 // Minimal CFEnv stub — localBroadcastCallbacks only reads ENVIRONMENT.
 const testEnv = { ENVIRONMENT: "test" } as unknown as CFEnv;
@@ -10,6 +8,7 @@ const prodEnv = { ENVIRONMENT: "prod" } as unknown as CFEnv;
 
 function makeMinimalWSSendProvider(): WSSendProvider {
   const fakeWs = {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     send: () => {},
   } as unknown as WebSocket;
   return new WSSendProvider(fakeWs);

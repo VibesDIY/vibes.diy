@@ -1,5 +1,4 @@
-import { AppContext } from "@adviser/cement";
-import { BuildURI } from "@adviser/cement";
+import { AppContext, BuildURI } from "@adviser/cement";
 import { describe, expect, it, vi } from "vitest";
 import { cmd_tsStream } from "../../cmd-ts-stream.js";
 import type { CliCtx } from "../../cli-ctx.js";
@@ -20,7 +19,7 @@ function makeCtx(factoryOverride?: CliCtx["vibesDiyApiFactory"]): CliCtx {
 
 describe("dbSubscribeEvento – canonical route", () => {
   it("calls vibesDiyApiFactory with /api/app?vibe=<handle>--<appSlug> and skipShard:true after resolving handle", async () => {
-    const factoryCalls: Array<{ url: string; opts: unknown }> = [];
+    const factoryCalls: { url: string; opts: unknown }[] = [];
 
     // Stub API: resolveUserSlug calls ensureUserSettings; subscribeDocs must exist;
     // enableGrantReactivity calls subscribeViewerGrants + onViewerGrantsChanged
@@ -31,7 +30,7 @@ describe("dbSubscribeEvento – canonical route", () => {
           settings: [{ type: "defaultHandle", ownerHandle: "alice" }],
         }),
       }),
-      close: vi.fn(async () => {}),
+      close: vi.fn(() => Promise.resolve()),
       subscribeViewerGrants: vi.fn().mockResolvedValue(undefined),
       onViewerGrantsChanged: vi.fn(),
       subscribeDocs: vi.fn().mockResolvedValue({
@@ -61,9 +60,9 @@ describe("dbSubscribeEvento – canonical route", () => {
     await dbSubscribeEvento.handle({
       ctx: appCtx,
       validated,
-      send: { send: vi.fn(), done: vi.fn() } as unknown as Parameters<(typeof dbSubscribeEvento)["handle"]>[0]["send"],
+      send: { send: vi.fn(), done: vi.fn() },
       enRequest: validated,
-    });
+    } as unknown as Parameters<(typeof dbSubscribeEvento)["handle"]>[0]);
 
     // Factory must have been called at least twice: once for bootstrap, once for routed
     expect(factory).toHaveBeenCalledTimes(2);
