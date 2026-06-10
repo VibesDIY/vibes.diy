@@ -1,6 +1,6 @@
 import { command } from "cmd-ts";
 import { type } from "arktype";
-import { Result, Option, EventoResult } from "@adviser/cement";
+import { Result, Option, EventoResult, BuildURI } from "@adviser/cement";
 import type { ValidateTriggerCtx, HandleTriggerCtx, EventoResultType, EventoHandler } from "@adviser/cement";
 import { FireflyApiAdapter } from "@vibes.diy/api-impl";
 import type { CliCtx } from "../../cli-ctx.js";
@@ -33,10 +33,18 @@ export const dbSubscribeEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbSubscr
     if (ectx.vibesDiyApiFactory === undefined) {
       return Result.Err("Not logged in. Run 'vibes-diy login' first.");
     }
-    const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const rUser = await resolveUserSlug(api, ctx.validated.ownerHandle);
+    const bootstrapApi = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
+    const rUser = await resolveUserSlug(bootstrapApi, ctx.validated.ownerHandle);
     if (rUser.isErr()) return Result.Err(rUser.Err());
-    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { ownerHandle: rUser.Ok() });
+    const ownerHandle = rUser.Ok();
+    const routedUrl = BuildURI.from(ctx.validated.apiUrl)
+      .pathname("/api/app")
+      .cleanParams()
+      .setParam("vibe", `${ownerHandle}--${ctx.validated.appSlug}`)
+      .toString();
+    const api = ectx.vibesDiyApiFactory(routedUrl, { skipShard: true });
+    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { ownerHandle });
+    await adapter.enableGrantReactivity();
 
     // Trigger server-side subscription. The api layer transparently reconnects on
     // mid-stream disconnects (api/impl/index.ts onClose → setTimeout → replay), but

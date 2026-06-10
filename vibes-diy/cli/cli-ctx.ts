@@ -44,6 +44,6 @@ export interface CliCtx {
   readonly sthis: SuperThis;
   readonly cliStream: ReturnType<typeof cmd_tsStream>;
   readonly output: CliOutput;
-  readonly vibesDiyApiFactory?: (apiUrl: string, opts?: { idleTimeoutMs?: number }) => VibesDiyApi;
+  readonly vibesDiyApiFactory?: (apiUrl: string, opts?: { idleTimeoutMs?: number; skipShard?: boolean }) => VibesDiyApi;
   exitCode: number;
 }
