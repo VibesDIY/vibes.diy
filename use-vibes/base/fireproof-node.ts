@@ -19,7 +19,7 @@
  * `lazyKeybagGetToken`. Native `node:path` is replaced by inline basename
  * logic so Vite/webpack don't fail at module-link time.
  */
-import { Lazy, KeyedResolvOnce, type Result } from "@adviser/cement";
+import { Lazy, KeyedResolvOnce, BuildURI, type Result } from "@adviser/cement";
 import { VibesDiyApi, FireflyApiAdapter } from "@vibes.diy/api-impl";
 import { FireflyDatabase } from "@vibes.diy/vibe-runtime";
 import { ensureSuperThis } from "@fireproof/core-runtime";
@@ -76,12 +76,37 @@ function resolveOptsSync(opts?: FireproofOpts): ResolvedOpts {
   return { apiUrl, appSlug, userHandle: opts?.userHandle, getToken };
 }
 
+/** Canonical per-vibe app route — shares the AppSessions DO with iframe clients. */
+export function buildVibeApiUrl(apiUrl: string, ownerHandle: string, appSlug: string): string {
+  return BuildURI.from(apiUrl).pathname("/api/app").cleanParams().setParam("vibe", `${ownerHandle}--${appSlug}`).toString();
+}
+
 let sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
-  const api = new VibesDiyApi({
-    apiUrl: resolved.apiUrl,
-    getToken: resolved.getToken,
-  });
-  return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { ownerHandle: resolved.userHandle } : undefined);
+  const apiFactory = async (): Promise<VibesDiyApi> => {
+    let ownerHandle = resolved.userHandle;
+    if (ownerHandle === undefined) {
+      const bootstrap = new VibesDiyApi({ apiUrl: resolved.apiUrl, getToken: resolved.getToken });
+      const rRes = await bootstrap.ensureUserSettings({ settings: [] });
+      if (rRes.isErr()) throw new Error(`Failed to resolve owner handle: ${rRes.Err()}`);
+      const def = (rRes.Ok() as { settings: { type: string; ownerHandle?: string }[] }).settings.find(
+        (s) => s.type === "defaultHandle"
+      );
+      if (def === undefined) throw new Error("No defaultHandle — pass {userHandle} or run 'npx vibes-diy login' first");
+      ownerHandle = def.ownerHandle as string;
+    }
+    return new VibesDiyApi({
+      apiUrl: buildVibeApiUrl(resolved.apiUrl, ownerHandle, resolved.appSlug),
+      skipShard: true,
+      getToken: resolved.getToken,
+    });
+  };
+  const adapter = new FireflyApiAdapter(
+    apiFactory,
+    resolved.appSlug,
+    resolved.userHandle ? { ownerHandle: resolved.userHandle } : undefined
+  );
+  void adapter.enableGrantReactivity(); // headless consumers get live grant updates by default
+  return adapter;
 });
 
 let databasesByName = new KeyedResolvOnce<FireflyDatabase>();
@@ -107,11 +132,31 @@ export function fireproof(name: string, opts?: FireproofOpts): FireflyDatabase {
 /** @internal — for tests only. Resets the module-level singletons. */
 export function __resetFireproofForTesting(): void {
   sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
-    const api = new VibesDiyApi({
-      apiUrl: resolved.apiUrl,
-      getToken: resolved.getToken,
-    });
-    return new FireflyApiAdapter(api, resolved.appSlug, resolved.userHandle ? { ownerHandle: resolved.userHandle } : undefined);
+    const apiFactory = async (): Promise<VibesDiyApi> => {
+      let ownerHandle = resolved.userHandle;
+      if (ownerHandle === undefined) {
+        const bootstrap = new VibesDiyApi({ apiUrl: resolved.apiUrl, getToken: resolved.getToken });
+        const rRes = await bootstrap.ensureUserSettings({ settings: [] });
+        if (rRes.isErr()) throw new Error(`Failed to resolve owner handle: ${rRes.Err()}`);
+        const def = (rRes.Ok() as { settings: { type: string; ownerHandle?: string }[] }).settings.find(
+          (s) => s.type === "defaultHandle"
+        );
+        if (def === undefined) throw new Error("No defaultHandle — pass {userHandle} or run 'npx vibes-diy login' first");
+        ownerHandle = def.ownerHandle as string;
+      }
+      return new VibesDiyApi({
+        apiUrl: buildVibeApiUrl(resolved.apiUrl, ownerHandle, resolved.appSlug),
+        skipShard: true,
+        getToken: resolved.getToken,
+      });
+    };
+    const adapter = new FireflyApiAdapter(
+      apiFactory,
+      resolved.appSlug,
+      resolved.userHandle ? { ownerHandle: resolved.userHandle } : undefined
+    );
+    void adapter.enableGrantReactivity(); // headless consumers get live grant updates by default
+    return adapter;
   });
   databasesByName = new KeyedResolvOnce<FireflyDatabase>();
 }
