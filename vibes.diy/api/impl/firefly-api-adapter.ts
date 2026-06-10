@@ -34,13 +34,18 @@ import type { VibesDiyApi } from "./index.js";
 export class FireflyApiAdapter {
   readonly svc: { readonly vibeApp: { ownerHandle: string; appSlug: string; fsId: string } };
 
-  private readonly api: VibesDiyApi;
+  private readonly apiArg: VibesDiyApi | (() => Promise<VibesDiyApi>);
+  private readonly apiOnce = new ResolveOnce<VibesDiyApi>();
   private readonly ownerHandleOverride: string | undefined;
   private readonly ownerHandleOnce = new ResolveOnce<string>();
   private readonly adminMode: boolean;
 
-  constructor(api: VibesDiyApi, appSlug: string, opts?: { ownerHandle?: string; adminMode?: boolean }) {
-    this.api = api;
+  constructor(
+    api: VibesDiyApi | (() => Promise<VibesDiyApi>),
+    appSlug: string,
+    opts?: { ownerHandle?: string; adminMode?: boolean }
+  ) {
+    this.apiArg = api;
     this.ownerHandleOverride = opts?.ownerHandle;
     this.adminMode = opts?.adminMode ?? false;
     // svc.vibeApp.ownerHandle is mutable — gets backfilled after resolveOwnerHandle()
@@ -55,10 +60,14 @@ export class FireflyApiAdapter {
     };
   }
 
+  private async getApi(): Promise<VibesDiyApi> {
+    return this.apiOnce.once(async () => (typeof this.apiArg === "function" ? this.apiArg() : this.apiArg));
+  }
+
   async resolveOwnerHandle(): Promise<string> {
     if (this.ownerHandleOverride !== undefined) return this.ownerHandleOverride;
     return this.ownerHandleOnce.once(async () => {
-      const rRes = await this.api.ensureUserSettings({ settings: [] });
+      const rRes = await (await this.getApi()).ensureUserSettings({ settings: [] });
       if (rRes.isErr()) {
         throw new Error(`Failed to load user settings: ${rRes.Err()}`);
       }
@@ -76,7 +85,7 @@ export class FireflyApiAdapter {
 
   async putDoc(doc: Record<string, unknown>, docId?: string, dbName = "default"): Promise<Result<ResPutDoc, VibesDiyError>> {
     const ownerHandle = await this.resolveOwnerHandle();
-    return this.api.putDoc({
+    return (await this.getApi()).putDoc({
       appSlug: this.svc.vibeApp.appSlug,
       ownerHandle,
       dbName,
@@ -87,7 +96,7 @@ export class FireflyApiAdapter {
 
   async getDoc(docId: string, dbName = "default"): Promise<Result<ResGetDoc | ResGetDocNotFound, VibesDiyError>> {
     const ownerHandle = await this.resolveOwnerHandle();
-    return this.api.getDoc({
+    return (await this.getApi()).getDoc({
       appSlug: this.svc.vibeApp.appSlug,
       ownerHandle,
       dbName,
@@ -98,7 +107,7 @@ export class FireflyApiAdapter {
 
   async queryDocs(dbName = "default", filter?: QueryFilter): Promise<Result<ResQueryDocs, VibesDiyError>> {
     const ownerHandle = await this.resolveOwnerHandle();
-    return this.api.queryDocs({
+    return (await this.getApi()).queryDocs({
       appSlug: this.svc.vibeApp.appSlug,
       ownerHandle,
       dbName,
@@ -109,7 +118,7 @@ export class FireflyApiAdapter {
 
   async deleteDoc(docId: string, dbName = "default"): Promise<Result<ResDeleteDoc, VibesDiyError>> {
     const ownerHandle = await this.resolveOwnerHandle();
-    return this.api.deleteDoc({
+    return (await this.getApi()).deleteDoc({
       appSlug: this.svc.vibeApp.appSlug,
       ownerHandle,
       dbName,
@@ -119,7 +128,7 @@ export class FireflyApiAdapter {
 
   async subscribeDocs(dbName = "default"): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
     const ownerHandle = await this.resolveOwnerHandle();
-    return this.api.subscribeDocs({
+    return (await this.getApi()).subscribeDocs({
       appSlug: this.svc.vibeApp.appSlug,
       ownerHandle,
       dbName,
@@ -142,16 +151,15 @@ export class FireflyApiAdapter {
    * active subscribers receive each event.
    */
   onMsg(fn: (event: { data: unknown }) => void): void {
-    this.api.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
-      fn({
-        data: {
-          type: "vibes.diy.evt-doc-changed",
-          ownerHandle,
-          appSlug,
-          dbName,
-          docId,
-        },
+    const register = (api: VibesDiyApi): void => {
+      api.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
+        fn({ data: { type: "vibes.diy.evt-doc-changed", ownerHandle, appSlug, dbName, docId } });
       });
-    });
+    };
+    if (typeof this.apiArg !== "function") {
+      register(this.apiArg);
+    } else {
+      void this.getApi().then(register);
+    }
   }
 }
