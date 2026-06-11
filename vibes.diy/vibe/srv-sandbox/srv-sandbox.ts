@@ -974,9 +974,6 @@ export class vibesDiySrvSandbox implements Disposable {
     this.removeEventListeners = this.args.eventListeners.removeEventListener;
 
     // Forward doc-changed events from the API WebSocket to the iframe
-    this.args.chatApi.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
-      this.forwardDocChangedToIframe(ownerHandle, appSlug, dbName, docId);
-    });
     if (this.args.vibeApi !== undefined) {
       this.args.vibeApi.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
         this.forwardDocChangedToIframe(ownerHandle, appSlug, dbName, docId);
