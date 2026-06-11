@@ -12,9 +12,13 @@ export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unk
   readonly ws: WebSocket;
   readonly ende: JSONEnDecoder;
   readonly chatIds = new Map<string, ChatIdCtx>();
-  // Firefly: per-(ownerHandle/appSlug/dbName) subscription keys this connection
-  // is subscribed to for document change notifications. dbName-scoped so a
-  // tighter `read` ACL on one db doesn't leak via change events on another.
+  // Firefly: subscription keys this connection holds for document change
+  // notifications. Keys are db-scoped so a tighter `read` ACL on one db doesn't
+  // leak via change events on another. Two shapes, both rooted at the db so a
+  // channel can never collide with a db of the same name (#2340):
+  //   owner/app/<dbName>            — bare db key (non-access-fn, or the #2337
+  //                                   fallback before a channel materializes)
+  //   owner/app/<dbName>/<channel>  — access-fn channel key (nested under its db)
   readonly subscribedDocKeys = new Set<string>();
   // Per-(ownerHandle/appSlug) subscription keys this connection is subscribed to
   // for request-grant notifications (owner pending approvals).

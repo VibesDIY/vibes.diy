@@ -25,6 +25,12 @@ export function narrowfeed(doc, oldDoc, user) {
 }
 export function privyfeed(doc, oldDoc, user) {
   return { channels: ["open"], grant: { public: ["open"] }, allowAnonymous: true };
+}
+export function alpha(doc, oldDoc, user) {
+  return { channels: ["beta"], grant: { public: ["beta"] }, allowAnonymous: true };
+}
+export function beta(doc, oldDoc, user) {
+  return { channels: ["gamma"], grant: { public: ["gamma"] }, allowAnonymous: true };
 }`;
 
 // These tests lock the GOOD path for channel ≠ db live sync (#2337): the
@@ -83,12 +89,13 @@ describe("subscribeDocs channel-key registration (channel ≠ db) — #2337 good
     assert(seed.isOk(), `seed putDoc failed: ${seed.isErr() ? seed.Err().message : ""}`);
   }, 30000);
 
-  it("registers the channel key (owner/app/notes), not the bare db key, once the channel is materialized", async () => {
+  it("registers the channel key (owner/app/quicknotes/notes), not the bare db key, once the channel is materialized", async () => {
     wsSendProvider.subscribedDocKeys.clear();
     const r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "quicknotes" });
     assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
 
-    expect(wsSendProvider.subscribedDocKeys.has(`${ownerHandle}/${appSlug}/notes`)).toBe(true);
+    // Channel keys nest under their db: owner/app/<dbName>/<channel>.
+    expect(wsSendProvider.subscribedDocKeys.has(`${ownerHandle}/${appSlug}/quicknotes/notes`)).toBe(true);
     // The write routes by channel, so the bare db key would never match the fan-out.
     expect(wsSendProvider.subscribedDocKeys.has(`${ownerHandle}/${appSlug}/quicknotes`)).toBe(false);
   });
@@ -170,7 +177,7 @@ describe("subscribeDocs channel-key registration (channel ≠ db) — #2337 good
   it("drops the bare db key once a re-subscribe discovers the channel (#2340)", async () => {
     wsSendProvider.subscribedDocKeys.clear();
     const bareKey = `${ownerHandle}/${appSlug}/narrowfeed`;
-    const channelKey = `${ownerHandle}/${appSlug}/lobby`;
+    const channelKey = `${ownerHandle}/${appSlug}/narrowfeed/lobby`;
 
     // 1. Subscribe before any doc materializes "lobby" → only the bare db key.
     let r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "narrowfeed" });
@@ -207,7 +214,7 @@ describe("subscribeDocs channel-key registration (channel ≠ db) — #2337 good
     r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "privyfeed" });
     assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
     expect(wsSendProvider.subscribedDocKeys.has(bareKey)).toBe(false);
-    expect(wsSendProvider.subscribedDocKeys.has(`${ownerHandle}/${appSlug}/open`)).toBe(true);
+    expect(wsSendProvider.subscribedDocKeys.has(`${ownerHandle}/${appSlug}/privyfeed/open`)).toBe(true);
 
     const got: { docId: string }[] = [];
     const off = ownerApi.onDocChanged((_o, _a, _db, doc) => got.push({ docId: doc }));
@@ -245,5 +252,42 @@ describe("subscribeDocs channel-key registration (channel ≠ db) — #2337 good
     r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "scratchpad" });
     assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
     expect(wsSendProvider.subscribedDocKeys.has(bareKey)).toBe(true);
+  });
+
+  // #2340 type-soundness — db and channel names share the owner/app/<…> namespace,
+  // so without db-scoping a db literally named like another db's channel would
+  // collide in the flat key set. Here db "alpha" routes to channel "beta" while a
+  // separate db is literally named "beta". Both subscriptions live on the same
+  // connection; narrowing "beta" (dropping its bare key) must not drop "alpha"'s
+  // channel key. Db-scoped keys (owner/app/<db>/<channel>) make the two distinct.
+  it("narrowing a db does not drop a same-named channel key owned by another db (#2340)", async () => {
+    wsSendProvider.subscribedDocKeys.clear();
+    const alphaChannelKey = `${ownerHandle}/${appSlug}/alpha/beta`; // db alpha → channel "beta"
+    const betaBareKey = `${ownerHandle}/${appSlug}/beta`; // db literally named "beta"
+
+    // Subscribe to db "alpha"; once "beta" is materialized the owner discovers it.
+    access.result = { channels: ["beta"], grant: { public: ["beta"] }, allowAnonymous: true };
+    let seed = await ownerApi.putDoc({ ownerHandle, appSlug, dbName: "alpha", doc: { type: "note", text: "a" } });
+    assert(seed.isOk(), `seed putDoc failed: ${seed.isErr() ? seed.Err().message : ""}`);
+    let r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "alpha" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+    expect(wsSendProvider.subscribedDocKeys.has(alphaChannelKey)).toBe(true);
+
+    // On the SAME connection, subscribe to db "beta" while empty → bare db key.
+    r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "beta" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+    expect(wsSendProvider.subscribedDocKeys.has(betaBareKey)).toBe(true);
+
+    // Materialize beta's own channel "gamma" and re-subscribe → beta narrows.
+    access.result = { channels: ["gamma"], grant: { public: ["gamma"] }, allowAnonymous: true };
+    seed = await ownerApi.putDoc({ ownerHandle, appSlug, dbName: "beta", doc: { type: "note", text: "b" } });
+    assert(seed.isOk(), `seed putDoc failed: ${seed.isErr() ? seed.Err().message : ""}`);
+    r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "beta" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+
+    expect(wsSendProvider.subscribedDocKeys.has(betaBareKey)).toBe(false); // narrowed
+    expect(wsSendProvider.subscribedDocKeys.has(`${ownerHandle}/${appSlug}/beta/gamma`)).toBe(true);
+    // The fix: alpha's channel key survives beta's narrowing — no collision.
+    expect(wsSendProvider.subscribedDocKeys.has(alphaChannelKey)).toBe(true);
   });
 });

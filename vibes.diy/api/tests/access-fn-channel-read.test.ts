@@ -242,7 +242,7 @@ describe("channel-gated reads (integration)", { timeout: 30000 }, () => {
     // The owner should be subscribed to the vip channel key, even though they
     // are not personally a member of "vip". Override enumerates ALL channels
     // from accessFnOutputs so doc-changed events reach the owner.
-    const vipKey = `${ownerHandle}/${appSlug}/vip`;
+    const vipKey = `${ownerHandle}/${appSlug}/secret-room/vip`;
     expect(wsSendProvider.subscribedDocKeys.has(vipKey)).toBe(true);
 
     // Note: the negative case (non-override does NOT add vip key) is tested

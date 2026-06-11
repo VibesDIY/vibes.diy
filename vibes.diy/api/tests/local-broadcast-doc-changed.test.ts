@@ -16,7 +16,7 @@ describe("localBroadcastCallbacks.notifyDocChanged routing decouple (#2301)", ()
   it("routes by channel but delivers payload with the real dbName", async () => {
     const pair = TestWSPair.create();
     const receiver = new WSSendProvider(pair.p2 as unknown as WebSocket);
-    receiver.subscribedDocKeys.add("alice/app1/doc-channel-1");
+    receiver.subscribedDocKeys.add("alice/app1/default/doc-channel-1");
 
     const connections = new Set<WSSendProvider>([receiver]);
     const cb = localBroadcastCallbacks(connections, env);
@@ -43,7 +43,7 @@ describe("localBroadcastCallbacks.notifyDocChanged routing decouple (#2301)", ()
   it("excludes the originating connection", async () => {
     const pair = TestWSPair.create();
     const sender = new WSSendProvider(pair.p2 as unknown as WebSocket);
-    sender.subscribedDocKeys.add("alice/app1/doc-channel-1");
+    sender.subscribedDocKeys.add("alice/app1/default/doc-channel-1");
     const connections = new Set<WSSendProvider>([sender]);
     const cb = localBroadcastCallbacks(connections, env);
 
