@@ -55,6 +55,6 @@ A PR is ready for the human to consider merging when there's a comment at the bo
 
 This comment tells the human: "I've addressed all feedback, the work is complete, and here's what matters during rollout." Items can be risks ("new DO class, watch for cold-start latency") or fun things to watch ("first users will see the new onramp — check analytics for /start traffic").
 
-Don't post this comment until the work is genuinely complete and CI is green. This is the merge signal — posting it prematurely defeats its purpose.
+Don't post this comment until the work is genuinely complete, CI is green, and `pnpm run rules-bag:constructors` passes. This is the merge signal — posting it prematurely defeats its purpose.
 
 When posting the Rollout watch comment, also add the `ready-to-merge` label to the PR. The comment gives humans context; the label makes merge queue triage faster.

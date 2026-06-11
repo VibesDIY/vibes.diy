@@ -7,6 +7,7 @@ watch:
 routines:
   - Resolve mechanical merge conflicts when the safe resolution is clear and preserves PR intent/scope.
   - "Apply low-risk mergeability fixes: snapshot updates, lockfile drift fixes, lint autofix, and flaky-test retries when tied to the trigger context."
+  - "Treat rules-bag compliance (`pnpm run rules-bag:constructors`) as merge-blocking and fix/escalate failures in trigger context."
   - Escalate semantic/intention conflicts between base and branch instead of auto-resolving.
 deny:
   - Do not act on pull requests authored by dependabot (PR author field `pull_request.user.login` matches `dependabot[bot]` case-insensitively); exit with no action.
@@ -22,7 +23,7 @@ deny:
 
 ## Role
 
-Maintain mergeability for all non-draft PRs by keeping branches fresh and required checks green, without changing PR intent/scope.
+Maintain mergeability for all non-draft PRs by keeping branches fresh and required checks green (including rules-bag compliance), without changing PR intent/scope.
 
 ## Primary trigger context
 
@@ -63,6 +64,7 @@ Do not wake on review or commit events.
 - Refresh stale non-draft PR branches from base **by rebase**, never by merge (see Branch freshness).
 - Resolve mechanical merge conflicts when the safe resolution is clear and preserves PR intent/scope.
 - Apply low-risk mergeability fixes: snapshot updates, lockfile drift fixes, lint autofix, and flaky-test retries.
+- Treat `pnpm run rules-bag:constructors` as a required mergeability check; when it fails, apply low-risk fixes in scope or escalate.
 - Escalate semantic/intention conflicts between base and branch instead of auto-resolving.
 
 ## Comment policy
