@@ -12,6 +12,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 
 - [rules-bag.md](agents/rules-bag.md) — Fireproof coding rules and patterns
 - [code-quality.md](agents/code-quality.md) — Linter rules and how to run tests
+- [testing-access-fn.md](agents/testing-access-fn.md) — Test harness patterns for access-fn behavior (channels, grants, fan-out)
 - [coding-standards.md](agents/coding-standards.md) — No inline HTML, clickable links, review commits
 - [deploy-tags.md](agents/deploy-tags.md) — Tag naming and deploy runbook
 - [environments.md](agents/environments.md) — Dev/prod/cli/preview architecture, stable-entry routing
