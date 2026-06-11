@@ -37,6 +37,18 @@ describe("resolveActiveHandle", { timeout: 30000 }, () => {
     await vctx.sql.db
       .insert(vctx.sql.tables.handleBinding)
       .values([{ userId: "u-single", handle: "solo-handle", tenant: "t-solo", created: now }]);
+
+    // Impersonation guard: a defaultHandle the user does NOT own (ensureUserSettings
+    // validates shape, not ownership) must not be returned — fall back to an owned one.
+    await vctx.sql.db
+      .insert(vctx.sql.tables.handleBinding)
+      .values([{ userId: "u-spoof", handle: "real-handle", tenant: "t-real", created: now }]);
+    await vctx.sql.db.insert(vctx.sql.tables.userSettings).values({
+      userId: "u-spoof",
+      settings: [{ type: "defaultHandle", ownerHandle: "victim-handle" }],
+      updated: now,
+      created: now,
+    });
   });
 
   it("prefers the defaultHandle setting over an arbitrary handleBinding row", async () => {
@@ -49,5 +61,9 @@ describe("resolveActiveHandle", { timeout: 30000 }, () => {
 
   it("returns undefined for a user with no handles", async () => {
     expect(await resolveActiveHandle(vctx, "u-none")).toBeUndefined();
+  });
+
+  it("ignores a defaultHandle the user does not own and falls back to a bound handle", async () => {
+    expect(await resolveActiveHandle(vctx, "u-spoof")).toBe("real-handle");
   });
 });
