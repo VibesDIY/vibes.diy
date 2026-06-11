@@ -19,6 +19,12 @@ export function emptyroom(doc, oldDoc, user) {
 }
 export function freshfeed(doc, oldDoc, user) {
   return { channels: ["pulse"], grant: { public: ["pulse"] }, allowAnonymous: true };
+}
+export function narrowfeed(doc, oldDoc, user) {
+  return { channels: ["lobby"], grant: { public: ["lobby"] }, allowAnonymous: true };
+}
+export function privyfeed(doc, oldDoc, user) {
+  return { channels: ["open"], grant: { public: ["open"] }, allowAnonymous: true };
 }`;
 
 // These tests lock the GOOD path for channel ≠ db live sync (#2337): the
@@ -153,5 +159,91 @@ describe("subscribeDocs channel-key registration (channel ≠ db) — #2337 good
 
     expect(got.length).toBeGreaterThanOrEqual(1);
     expect(got[0]?.dbName).toBe("freshfeed");
+  });
+
+  // #2340 — narrow fan-out after re-subscribe. A connection that subscribes to an
+  // access-fn db BEFORE any doc materializes its channel holds only the bare db
+  // key (the #2337 fallback). `subscribedDocKeys` is additive, so a later
+  // subscribeDocs (e.g. the evt-viewer-grants-changed → subscribeDocs loop) that
+  // discovers the channel must DROP the now-redundant bare key — otherwise the
+  // connection keeps matching the broad bare-db wake forever and never narrows.
+  it("drops the bare db key once a re-subscribe discovers the channel (#2340)", async () => {
+    wsSendProvider.subscribedDocKeys.clear();
+    const bareKey = `${ownerHandle}/${appSlug}/narrowfeed`;
+    const channelKey = `${ownerHandle}/${appSlug}/lobby`;
+
+    // 1. Subscribe before any doc materializes "lobby" → only the bare db key.
+    let r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "narrowfeed" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+    expect(wsSendProvider.subscribedDocKeys.has(bareKey)).toBe(true);
+    expect(wsSendProvider.subscribedDocKeys.has(channelKey)).toBe(false);
+
+    // 2. Materialize "lobby" with a public-grant doc so it becomes discoverable.
+    access.result = { channels: ["lobby"], grant: { public: ["lobby"] }, allowAnonymous: true };
+    const seed = await ownerApi.putDoc({ ownerHandle, appSlug, dbName: "narrowfeed", doc: { type: "note", text: "hi" } });
+    assert(seed.isOk(), `seed putDoc failed: ${seed.isErr() ? seed.Err().message : ""}`);
+
+    // 3. Re-subscribe → channel key discovered; the stale bare db key is dropped.
+    r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "narrowfeed" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+    expect(wsSendProvider.subscribedDocKeys.has(channelKey)).toBe(true);
+    expect(wsSendProvider.subscribedDocKeys.has(bareKey)).toBe(false);
+  });
+
+  // #2340 — once narrowed, a write to a *different*, private channel on the same
+  // db must not reach the connection. Before the narrowing the retained bare db
+  // key (owner/app/privyfeed) matched the write's dbKey and woke the connection
+  // (content-free over-delivery); after narrowing to "open" it no longer does.
+  it("private-channel write no longer wakes a connection narrowed to its public channel (#2340)", async () => {
+    wsSendProvider.subscribedDocKeys.clear();
+    const bareKey = `${ownerHandle}/${appSlug}/privyfeed`;
+
+    // Narrow to the public channel "open": subscribe empty → materialize → re-subscribe.
+    let r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "privyfeed" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+    access.result = { channels: ["open"], grant: { public: ["open"] }, allowAnonymous: true };
+    const seed = await ownerApi.putDoc({ ownerHandle, appSlug, dbName: "privyfeed", doc: { type: "note", text: "hi" } });
+    assert(seed.isOk(), `seed putDoc failed: ${seed.isErr() ? seed.Err().message : ""}`);
+    r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "privyfeed" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+    expect(wsSendProvider.subscribedDocKeys.has(bareKey)).toBe(false);
+    expect(wsSendProvider.subscribedDocKeys.has(`${ownerHandle}/${appSlug}/open`)).toBe(true);
+
+    const got: { docId: string }[] = [];
+    const off = ownerApi.onDocChanged((_o, _a, _db, doc) => got.push({ docId: doc }));
+
+    const fanout = localBroadcastCallbacks(appCtx.vibesCtx.connections, { ENVIRONMENT: "test" } as never);
+    // Private "vip" channel write on the same db — must NOT reach the narrowed conn.
+    await fanout.notifyDocChanged(
+      { ownerHandle, appSlug, dbName: "privyfeed", docId: "vip-1", channel: "vip" },
+      "external-writer-conn"
+    );
+    // Sanity: a write on the subscribed "open" channel still reaches it (narrowing
+    // didn't break correctness).
+    await fanout.notifyDocChanged(
+      { ownerHandle, appSlug, dbName: "privyfeed", docId: "open-1", channel: "open" },
+      "external-writer-conn"
+    );
+    await new Promise((res) => setTimeout(res, 150));
+    off();
+
+    expect(got.find((g) => g.docId === "vip-1")).toBeUndefined();
+    expect(got.find((g) => g.docId === "open-1")).toBeDefined();
+  });
+
+  // #2340 regression guard — a non-access-fn db has no channel keys to narrow to,
+  // so its bare db key is the ONLY fan-out key and must be retained across
+  // re-subscribes. Guards against an over-broad fix that drops bare keys blindly.
+  it("keeps the bare db key for a non-access-fn db across re-subscribe (#2340)", async () => {
+    wsSendProvider.subscribedDocKeys.clear();
+    const bareKey = `${ownerHandle}/${appSlug}/scratchpad`;
+
+    let r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "scratchpad" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+    expect(wsSendProvider.subscribedDocKeys.has(bareKey)).toBe(true);
+
+    r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "scratchpad" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+    expect(wsSendProvider.subscribedDocKeys.has(bareKey)).toBe(true);
   });
 });
