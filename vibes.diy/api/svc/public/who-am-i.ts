@@ -8,7 +8,6 @@ import {
   W3CWebSocketEvent,
   ClerkClaim,
   isUserSettingProfile,
-  isUserSettingDefaultHandle,
   type DbAcl,
   type AccessDescriptor,
   COMMENTS_DB_NAME,
@@ -22,6 +21,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
 import { checkDocAccess } from "./access-helpers.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
+import { resolveActiveHandle } from "./resolve-active-handle.js";
 import { VerifiedResult } from "@fireproof/core-types-protocols-dashboard";
 
 // Same precedence as list-members.ts:deriveAuthorDisplay.
@@ -170,25 +170,18 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
     .limit(1)
     .then((r) => r[0]);
 
-  let viewerSlug: string | undefined;
   let displayOverride: string | undefined;
   const items = (userSettingsRow?.settings as unknown[]) ?? [];
   for (const item of items) {
-    if (isUserSettingDefaultHandle(item) && !viewerSlug) viewerSlug = item.ownerHandle;
     if (isUserSettingProfile(item)) {
       if (item.displayName) displayOverride = item.displayName;
     }
   }
 
-  if (!viewerSlug) {
-    const binding = await vctx.sql.db
-      .select({ handle: vctx.sql.tables.handleBinding.handle })
-      .from(vctx.sql.tables.handleBinding)
-      .where(eq(vctx.sql.tables.handleBinding.userId, viewerUserId))
-      .limit(1)
-      .then((r) => r[0]);
-    viewerSlug = binding?.handle;
-  }
+  // Shared resolver: defaultHandle setting wins, else any bound handle. The
+  // document write path uses the same helper so the published handle and the
+  // access-fn user handle cannot diverge for multi-handle users (#2275).
+  const viewerSlug = await resolveActiveHandle(vctx, viewerUserId, items);
 
   if (!viewerSlug) {
     const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
