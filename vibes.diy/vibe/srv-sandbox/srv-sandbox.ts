@@ -336,9 +336,26 @@ function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
 
 // ── Firefly document handlers ──────────────────────────────────────
 
+// Vibe document data + DB subscriptions must ride AppSessions (vibeApi), which
+// wires the doc-changed emit. A missing vibeApi is a hard error, never a silent
+// fallback to chatApi (ChatSessions) — that fallback was the #2306 leak.
+async function requireVibeApi(
+  sandbox: vibesDiySrvSandbox,
+  ctx: HandleTriggerCtx<unknown, { tid: string }, unknown>,
+  resType: string
+): Promise<VibesDiyApiIface | undefined> {
+  const { vibeApi } = sandbox.args;
+  if (vibeApi !== undefined) return vibeApi;
+  await ctx.send.send(ctx, {
+    tid: ctx.validated.tid,
+    type: resType,
+    status: "error",
+    message: "vibeApi unavailable — vibe data requires an app session",
+  });
+  return undefined;
+}
+
 function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { chatApi, vibeApi } = sandbox.args;
-  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.putDoc",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -349,6 +366,8 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqPutDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const api = await requireVibeApi(sandbox, ctx, "vibes.diy.res-put-doc");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
       const rRes = await api.putDoc({
         ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
@@ -402,8 +421,6 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { chatApi, vibeApi } = sandbox.args;
-  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.getDoc",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -414,6 +431,8 @@ function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqGetDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const api = await requireVibeApi(sandbox, ctx, "vibes.diy.res-get-doc");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
       const rRes = await api.getDoc({
         ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
@@ -441,8 +460,6 @@ function vibeGetDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { chatApi, vibeApi } = sandbox.args;
-  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.queryDocs",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -453,6 +470,8 @@ function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqQueryDocs, unknown>): Promise<Result<EventoResultType>> => {
+      const api = await requireVibeApi(sandbox, ctx, "vibes.diy.res-query-docs");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
       const rRes = await api.queryDocs({
         ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
@@ -479,8 +498,6 @@ function vibeQueryDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { chatApi, vibeApi } = sandbox.args;
-  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.deleteDoc",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -491,6 +508,8 @@ function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqDeleteDoc, unknown>): Promise<Result<EventoResultType>> => {
+      const api = await requireVibeApi(sandbox, ctx, "vibes.diy.res-delete-doc");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
       const rRes = await api.deleteDoc({
         ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
@@ -518,8 +537,6 @@ function vibeDeleteDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { chatApi, vibeApi } = sandbox.args;
-  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.subscribeDocs",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -530,6 +547,8 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqSubscribeDocs, unknown>): Promise<Result<EventoResultType>> => {
+      const api = await requireVibeApi(sandbox, ctx, "vibes.diy.res-subscribe-docs");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
       const rRes = await api.subscribeDocs({
         ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
@@ -555,8 +574,6 @@ function vibeSubscribeDocs(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeSetDbAcl(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { chatApi, vibeApi } = sandbox.args;
-  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.setDbAcl",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -567,6 +584,8 @@ function vibeSetDbAcl(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqSetDbAcl, unknown>): Promise<Result<EventoResultType>> => {
+      const api = await requireVibeApi(sandbox, ctx, "vibes.diy.res-set-db-acl");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
       const rRes = await api.ensureAppSettings({
         ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
@@ -592,8 +611,6 @@ function vibeSetDbAcl(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeListDbNames(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { chatApi, vibeApi } = sandbox.args;
-  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.listDbNames",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -604,6 +621,8 @@ function vibeListDbNames(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqListDbNames, unknown>): Promise<Result<EventoResultType>> => {
+      const api = await requireVibeApi(sandbox, ctx, "vibes.diy.res-list-db-names");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
       const rRes = await api.listDbNames({
         ownerHandle: ctx.validated.ownerHandle,
         appSlug: ctx.validated.appSlug,
@@ -639,8 +658,6 @@ function vibeListDbNames(sandbox: vibesDiySrvSandbox): EventoHandler {
 const PROGRESS_INTERVAL_MS = 3000;
 
 function vibePutAsset(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { chatApi, vibeApi } = sandbox.args;
-  const api = vibeApi ?? chatApi;
   const doFetch: typeof fetch = sandbox.args.fetch ?? ((...a) => fetch(...a));
   return {
     hash: "vibe.putAsset",
@@ -652,6 +669,8 @@ function vibePutAsset(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibePutAsset, unknown>): Promise<Result<EventoResultType>> => {
+      const api = await requireVibeApi(sandbox, ctx, "vibe.res.putAsset");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
       const { tid, blob, ownerHandle, appSlug, mimeType } = ctx.validated;
       const sendErr = async (message: string) => {
         await ctx.send.send(ctx, {
@@ -720,8 +739,6 @@ function vibePutAsset(sandbox: vibesDiySrvSandbox): EventoHandler {
 }
 
 function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { chatApi, vibeApi } = sandbox.args;
-  const api = vibeApi ?? chatApi;
   return {
     hash: "vibe.whoAmI",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -732,6 +749,8 @@ function vibeWhoAmI(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibeWhoAmI, unknown>): Promise<Result<EventoResultType>> => {
+      const api = await requireVibeApi(sandbox, ctx, "vibe.res.whoAmI");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
       const { tid, appSlug, ownerHandle, adminMode } = ctx.validated;
       const rRes = await api.whoAmI({ tid, appSlug, ownerHandle, adminMode });
 

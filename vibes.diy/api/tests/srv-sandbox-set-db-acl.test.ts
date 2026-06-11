@@ -39,6 +39,7 @@ function setupSandbox() {
 
   const sandbox = new vibesDiySrvSandbox({
     chatApi: fakeApi as VibesDiyApiIface,
+    vibeApi: fakeApi as VibesDiyApiIface,
     errorLogger: () => {
       /* noop */
     },
@@ -111,6 +112,7 @@ describe("vibeSetDbAcl host handler", () => {
 
     const sandbox = new vibesDiySrvSandbox({
       chatApi: fakeApi as VibesDiyApiIface,
+      vibeApi: fakeApi as VibesDiyApiIface,
       errorLogger: () => {
         /* noop */
       },
