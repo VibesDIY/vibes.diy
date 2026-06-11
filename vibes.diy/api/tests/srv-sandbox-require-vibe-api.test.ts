@@ -90,20 +90,33 @@ describe("srv-sandbox vibe-data handlers require vibeApi", () => {
     const fakeChatApi: Partial<VibesDiyApiIface> = {
       onDocChanged: () => {
         chatOnDocChangedCalls++;
-        return () => {};
+        return () => {
+          /* noop */
+        };
       },
     };
     const fakeVibeApi: Partial<VibesDiyApiIface> = {
       onDocChanged: () => {
         vibeOnDocChangedCalls++;
-        return () => {};
+        return () => {
+          /* noop */
+        };
       },
     };
     const _sandbox = new vibesDiySrvSandbox({
       chatApi: fakeChatApi as VibesDiyApiIface,
       vibeApi: fakeVibeApi as VibesDiyApiIface,
-      errorLogger: () => {},
-      eventListeners: { addEventListener: () => {}, removeEventListener: () => {} },
+      errorLogger: () => {
+        /* noop */
+      },
+      eventListeners: {
+        addEventListener: () => {
+          /* noop */
+        },
+        removeEventListener: () => {
+          /* noop */
+        },
+      },
     });
     expect(_sandbox).toBeDefined();
     expect(chatOnDocChangedCalls).toBe(0);
