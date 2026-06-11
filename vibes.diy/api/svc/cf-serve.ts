@@ -99,16 +99,27 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
       // filter passes (see #2301). channel `??` only falls through on null/undefined;
       // callers normalize channels so "" never reaches here.
       const routingKey = evt.channel ?? evt.dbName;
-      const key = `${evt.ownerHandle}/${evt.appSlug}/${routingKey}`;
+      const channelKey = `${evt.ownerHandle}/${evt.appSlug}/${routingKey}`;
+      // Also wake connections holding the bare db key. A client that subscribed
+      // before any doc materialized the channel only holds owner/app/<dbName>, so
+      // channel-routed writes would otherwise never reach it — the "join before
+      // grant" gap (#2337). Over-delivery is access-safe: evt-doc-changed carries
+      // no document content and the client re-queries through the channel/grant-
+      // gated read path, so a connection that can't read the channel simply sees
+      // nothing new. Channel-key subscribers stay narrow (they match only their
+      // own channel), so a private-channel write still doesn't fan out to
+      // unrelated channel subscriptions. When channel == dbName the two keys
+      // coincide and this is a no-op.
+      const dbKey = `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
       if (shouldLog) {
-        console.info("[AppSessions] notifyDocChanged key:", key, "conn:", senderConnId.slice(0, 8));
-        console.info("[AppSessions] docChanged fanout", "key=", key, "conns=", connections.size);
+        console.info("[AppSessions] notifyDocChanged key:", channelKey, "conn:", senderConnId.slice(0, 8));
+        console.info("[AppSessions] docChanged fanout", "key=", channelKey, "conns=", connections.size);
       }
       if (connections.size >= HOT_VIBE_CONN_WARN_THRESHOLD) {
         console.warn(
           "[AppSessions] hot-vibe fanout",
           "key=",
-          key,
+          channelKey,
           "conns=",
           connections.size,
           "threshold=",
@@ -117,7 +128,7 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
       }
       const fullEvt = { type: "vibes.diy.evt-doc-changed", ...evt };
       for (const conn of connections) {
-        if (!conn.subscribedDocKeys.has(key)) continue;
+        if (!conn.subscribedDocKeys.has(channelKey) && !conn.subscribedDocKeys.has(dbKey)) continue;
         if (conn.connId === senderConnId) continue;
         exception2Result(() =>
           conn.ws.send(
