@@ -38,6 +38,7 @@ import { GrantReduce, extractContribution } from "./grant-reduce.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
 import { normalizeChannels } from "./normalize-channels.js";
+import { resolveActiveHandle } from "./resolve-active-handle.js";
 
 function grantsUsers(reduce: GrantReduce): Set<string> {
   const users = new Set<string>();
@@ -215,19 +216,15 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
 
       if (afbRow?.accessFnCid && vctx.invokeAccessFn) {
         const fnCid = afbRow.accessFnCid;
-        // Resolve writer's handle from userId — req.ownerHandle is the DB owner, not the writer.
-        // Anonymous writers have no userId; userContext stays null so the access fn
-        // must opt in via allowAnonymous.
-        const t_usb = vctx.sql.tables.handleBinding;
-        const writerRow = userId
-          ? await vctx.sql.db
-              .select({ handle: t_usb.handle })
-              .from(t_usb)
-              .where(eq(t_usb.userId, userId))
-              .limit(1)
-              .then((r) => r[0])
-          : undefined;
-        const userContext = writerRow?.handle ? { userHandle: writerRow.handle, isOwner } : null;
+        // Resolve writer's ACTIVE handle from userId — req.ownerHandle is the DB
+        // owner, not the writer. resolveActiveHandle (defaultHandle setting, else
+        // any bound handle) is the same resolver who-am-i uses for the viewer
+        // payload, so a multi-handle writer's published authorHandle matches the
+        // handle the access fn validates against — no spurious "not author"
+        // (#2275). Anonymous writers have no userId; userContext stays null so the
+        // access fn must opt in via allowAnonymous.
+        const writerHandle = userId ? await resolveActiveHandle(vctx, userId) : undefined;
+        const userContext = writerHandle ? { userHandle: writerHandle, isOwner } : null;
 
         // Load existing doc so access fn can enforce update-ownership checks
         let oldDoc: unknown | null = null;
