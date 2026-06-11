@@ -67,7 +67,7 @@
     "@fireproof/core-cli": "0.24.19",
     "@playwright/test": "^1.59.1",
     "@types/deno": "^2.5.0",
-    "@types/node": "^25.2.3",
+    "@types/node": "^25.9.2",
     "@typescript/native-preview": "7.0.0-dev.20260519.1",
     "@vitest/browser-playwright": "~4.1.7",
     "@vitest/coverage-v8": "~4.1.7",
