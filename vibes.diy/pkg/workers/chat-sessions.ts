@@ -98,7 +98,7 @@ export class ChatSessions implements DurableObject {
     }
 
     const cctx = {} as unknown as ExecutionContext & CFInjectMutable;
-    cctx.cache = caches.default as unknown as CfCacheIf;
+    (cctx as CFInjectMutable).cache = caches.default as unknown as CfCacheIf;
     cctx.webSocket = {
       connections: this.connections,
       webSocketPair: cfWebSocketPair,

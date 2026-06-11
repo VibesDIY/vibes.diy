@@ -30,7 +30,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@adviser/cement": "^0.5.34",
-    "@modelcontextprotocol/sdk": "^1.12.1",
     "@fireproof/core": "0.24.19",
     "@fireproof/core-cli": "0.24.19",
     "@fireproof/core-device-id": "0.24.19",
@@ -41,6 +40,7 @@
     "@fireproof/core-types-protocols-cloud": "0.24.19",
     "@fireproof/core-types-protocols-dashboard": "0.24.19",
     "@fireproof/use-fireproof": "0.24.19",
+    "@modelcontextprotocol/sdk": "^1.12.1",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
@@ -49,14 +49,14 @@
     "charwise": "^3.0.1",
     "cmd-ts": "^0.15.0",
     "tsx": "^4.22.3",
-    "ws": "^8.19.0",
+    "ws": "^8.21.0",
     "zod": "^3.25.67",
     "zx": "^8.8.5"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
-    "@vitest/browser-playwright": "~4.1.7",
-    "vitest": "~4.1.7"
+    "@vitest/browser-playwright": "~4.1.8",
+    "vitest": "~4.1.8"
   },
   "repository": {
     "type": "git",

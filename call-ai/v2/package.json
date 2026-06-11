@@ -24,12 +24,12 @@
     "zx": "^8.8.5"
   },
   "devDependencies": {
-    "@vitest/browser": "~4.1.7",
-    "@vitest/browser-playwright": "~4.1.7",
+    "@vitest/browser": "~4.1.8",
+    "@vitest/browser-playwright": "~4.1.8",
     "eslint": "^10.0.3",
     "playwright": "^1.59.1",
     "tsx": "^4.22.3",
-    "vitest": "~4.1.7"
+    "vitest": "~4.1.8"
   },
   "repository": {
     "type": "git",
