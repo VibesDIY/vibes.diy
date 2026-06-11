@@ -8,7 +8,7 @@
 
 ## Agent Rules
 
-Team-shared agent instructions live in the [`agents/`](agents/) directory. These files are meant to be actively maintained — update them when rules change, add new files when new patterns emerge, and remove content that's no longer accurate. PRs that change agent behavior should update the relevant agents/ file alongside the code.
+Team-shared agent instructions live in the [`agents/`](agents/) directory. These files are meant to be actively maintained — update them when rules change, add new files when new patterns emerge, and remove content that's no longer accurate. PRs that change agent behavior should update the relevant agents/ file alongside the code. Before declaring a PR ready, enforce [`agents/rules-bag.md`](agents/rules-bag.md) and run `pnpm run rules-bag:constructors` successfully.
 
 - [rules-bag.md](agents/rules-bag.md) — Fireproof coding rules and patterns
 - [code-quality.md](agents/code-quality.md) — Linter rules and how to run tests

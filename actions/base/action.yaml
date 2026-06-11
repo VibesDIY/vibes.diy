@@ -18,6 +18,10 @@ runs:
       shell: bash
       run: pnpm run format --check
 
+    - name: rules-bag-check
+      shell: bash
+      run: pnpm run rules-bag:constructors
+
     # Lint temporarily disabled due to memory issues
     - name: lint
       shell: bash
