@@ -498,6 +498,15 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
         for (const key of channelKeys) {
           wsSend.subscribedDocKeys.add(key);
         }
+        // Narrow fan-out: drop the now-redundant bare db key. A prior subscribe
+        // that ran before any channel materialized registered owner/app/<dbName>
+        // (the #2337 fallback). subscribedDocKeys is additive, so without this the
+        // connection keeps matching the broad bare-db wake forever and never
+        // narrows to channel scope (#2340). Keep it only when it coincides with a
+        // channel key (channel == dbName) — there it IS the channel fan-out key.
+        if (!channelKeys.includes(subscriptionKey)) {
+          wsSend.subscribedDocKeys.delete(subscriptionKey);
+        }
       } else {
         wsSend.subscribedDocKeys.add(subscriptionKey);
       }
@@ -507,6 +516,11 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
         if (channelKeys.length > 0) {
           for (const key of channelKeys) {
             vctx.registerDocSubscription(key).catch((e: unknown) => console.error("DocNotify error:", e));
+          }
+          // Mirror the narrowing in the external registry so cross-shard fan-out
+          // also stops matching the dropped bare db key (#2340).
+          if (!channelKeys.includes(subscriptionKey)) {
+            vctx.deregisterDocSubscription?.(subscriptionKey).catch((e: unknown) => console.error("DocNotify error:", e));
           }
         } else {
           vctx.registerDocSubscription(subscriptionKey).catch((e: unknown) => console.error("DocNotify error:", e));
