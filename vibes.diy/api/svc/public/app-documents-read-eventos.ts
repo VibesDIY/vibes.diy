@@ -38,6 +38,7 @@ import { filterDocsByChannel } from "./channel-read-filter.js";
 import { mintFilesUrls } from "./files-url-mint.js";
 import { applyQueryFilter } from "./app-documents-query-filter.js";
 import { readAllowed, clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
+import { resolveActiveHandle } from "./resolve-active-handle.js";
 
 // ── getDoc ──────────────────────────────────────────────────────────
 
@@ -165,14 +166,11 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
           reduce.addDoc(r.docId, extractContribution(JSON.parse(r.output) as AccessDescriptor));
         }
 
-        const userHandle = req._auth
-          ? await vctx.sql.db
-              .select({ handle: vctx.sql.tables.handleBinding.handle })
-              .from(vctx.sql.tables.handleBinding)
-              .where(eq(vctx.sql.tables.handleBinding.userId, req._auth.verifiedAuth.claims.userId))
-              .limit(1)
-              .then((r) => r[0]?.handle ?? null)
-          : null;
+        // Reader's ACTIVE handle (defaultHandle setting, else any bound handle) —
+        // shared with the write path and the viewer payload so a multi-handle
+        // reader's channel/grant access is computed for the handle they're
+        // actually acting as, not an arbitrary bound one (#2275).
+        const userHandle = req._auth ? ((await resolveActiveHandle(vctx, req._auth.verifiedAuth.claims.userId)) ?? null) : null;
 
         const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
         const hasAccess = docChannels.some((ch) => effectiveChannels.has(ch) || reduce.publicChannels.has(ch));
@@ -333,14 +331,11 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
           reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
         }
 
-        const userHandle = req._auth
-          ? await vctx.sql.db
-              .select({ handle: vctx.sql.tables.handleBinding.handle })
-              .from(vctx.sql.tables.handleBinding)
-              .where(eq(vctx.sql.tables.handleBinding.userId, req._auth.verifiedAuth.claims.userId))
-              .limit(1)
-              .then((r) => r[0]?.handle ?? null)
-          : null;
+        // Reader's ACTIVE handle (defaultHandle setting, else any bound handle) —
+        // shared with the write path and the viewer payload so a multi-handle
+        // reader's channel/grant access is computed for the handle they're
+        // actually acting as, not an arbitrary bound one (#2275).
+        const userHandle = req._auth ? ((await resolveActiveHandle(vctx, req._auth.verifiedAuth.claims.userId)) ?? null) : null;
 
         const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
         channelFilteredDocs = filterDocsByChannel(
@@ -487,14 +482,9 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
             reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
           }
 
-          const userHandle = req._auth
-            ? await vctx.sql.db
-                .select({ handle: vctx.sql.tables.handleBinding.handle })
-                .from(vctx.sql.tables.handleBinding)
-                .where(eq(vctx.sql.tables.handleBinding.userId, req._auth.verifiedAuth.claims.userId))
-                .limit(1)
-                .then((r) => r[0]?.handle ?? null)
-            : null;
+          // Reader's ACTIVE handle (see note above) so subscription channel keys
+          // match the handle this reader is acting as (#2275).
+          const userHandle = req._auth ? ((await resolveActiveHandle(vctx, req._auth.verifiedAuth.claims.userId)) ?? null) : null;
 
           const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
           const rawGrantChannels = [...effectiveChannels, ...reduce.publicChannels];
