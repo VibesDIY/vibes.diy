@@ -278,7 +278,7 @@ export default {
     }
 
     const cctx = ctx as unknown as ExecutionContext & CFInjectMutable;
-    cctx.cache = caches.default as unknown as CfCacheIf;
+    (cctx as CFInjectMutable).cache = caches.default as unknown as CfCacheIf;
     const cfCtx = await cfServeAppCtx(request, env, cctx);
     cctx.appCtx = cfCtx.appCtx;
 

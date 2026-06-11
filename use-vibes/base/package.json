@@ -40,17 +40,17 @@
     "@chromatic-com/storybook": "^5.2.1",
     "@fireproof/core-cli": "0.24.19",
     "@storybook/addon-a11y": "^10.4.2",
-    "@storybook/addon-docs": "^10.4.2",
-    "@storybook/react": "^10.4.2",
+    "@storybook/addon-docs": "^10.4.3",
+    "@storybook/react": "^10.4.3",
     "@storybook/react-vite": "^10.4.2",
     "@types/babel__standalone": "^7.1.9",
     "@types/react": "~19.2.14",
     "@types/react-dom": "^19.2.1",
-    "@vitest/browser-playwright": "~4.1.7",
-    "storybook": "^10.4.2",
+    "@vitest/browser-playwright": "~4.1.8",
+    "storybook": "^10.4.3",
     "typescript": "^6.0.3",
-    "vite": "^7.3.3",
-    "vitest": "~4.1.7"
+    "vite": "^7.3.5",
+    "vitest": "~4.1.8"
   },
   "repository": {
     "type": "git",
